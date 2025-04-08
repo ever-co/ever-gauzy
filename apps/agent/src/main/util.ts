@@ -2,21 +2,24 @@ import * as path from 'path';
 import { environment } from '../environments/environment';
 
 export function resolveHtmlPath(htmlFileName: string, hash: string) {
-  if (process.env.NODE_ENV === 'development') {
-    const port = process.env.PORT || 4200;
-    return `http://localhost:${port}#/${hash}`;
-  }
+	if (process.env.NODE_ENV === 'development') {
+		const port = process.env.PORT || 4200;
+		return `http://localhost:${port}#/${hash}`;
+	}
 
-  const pathUrl = path.resolve(__dirname, '..', `${htmlFileName}`);
-  return pathUrl;
+	const pathUrl = path.resolve(__dirname, '..', `${htmlFileName}`);
+	return pathUrl;
 }
 
-export function getApiBaseUrl(configs: any) {
+export function getApiBaseUrl(configs: {
+	serverUrl?: string,
+	port?: number
+} | { [key: string]: string }) {
 	if (configs?.serverUrl) return configs.serverUrl;
 	else {
 		return configs?.port
-				? `http://localhost:${configs?.port}`
-				: `http://localhost:${environment.API_DEFAULT_PORT}`;
+			? `http://localhost:${configs?.port}`
+			: `http://localhost:${environment.API_DEFAULT_PORT}`;
 	}
 };
 

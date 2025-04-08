@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	ICreateEmailInvitesOutput,
@@ -108,7 +108,9 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 		private readonly _inviteService: InviteService,
 		private readonly _rolesService: RoleService,
 		private readonly _store: Store,
-		private readonly _authService: AuthService
+		private readonly _authService: AuthService,
+		// Added ChangeDetectorRef for manual change detection
+		private readonly _cdr: ChangeDetectorRef
 	) {
 		super(translateService);
 	}
@@ -135,6 +137,14 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 	ngAfterViewInit() {}
 
 	/**
+	 * Force Angular change detection cycle
+	 * This helps ensure UI is properly updated
+	 */
+	detectChanges() {
+		this._cdr.detectChanges();
+	}
+
+	/**
 	 * Exclude roles
 	 */
 	async excludeRoles() {
@@ -157,62 +167,105 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 	 * SELECT all organization projects
 	 */
 	selectAllProjects() {
-		const currentValue = this.form.get('projects').value || [];
+		const formControl = this.form.get('projects');
+		const currentValue = formControl.value || [];
 		const allProjectIds = this.organizationProjects.map((project) => project.id).filter(Boolean);
 
-		if (currentValue.length === allProjectIds.length) {
-			// Deselect all if all are already selected
-			this.form.get('projects').setValue([]);
+		// Better check for complete selection - ensures all items are selected and no extras
+		const allSelected =
+			allProjectIds.length > 0 &&
+			currentValue.length === allProjectIds.length &&
+			allProjectIds.every((id) => currentValue.includes(id));
+
+		// Toggle selection based on current state
+		if (allSelected) {
+			formControl.setValue([]);
 		} else {
-			// Select all
-			this.form.get('projects').setValue(allProjectIds);
+			formControl.setValue([...allProjectIds]);
 		}
-		this.form.get('projects').updateValueAndValidity();
+
+		// Ensure Angular recognizes the changes
+		formControl.markAsDirty();
+		formControl.updateValueAndValidity();
+		this.detectChanges();
 	}
 
 	/**
 	 * SELECT all organization departments and update form control value
 	 */
 	selectAllDepartments() {
-		const currentValue = this.form.get('departments').value || [];
+		const formControl = this.form.get('departments');
+		const currentValue = formControl.value || [];
 		const allDepartmentIds = this.organizationDepartments.map((department) => department.id).filter(Boolean);
 
-		if (currentValue.length === allDepartmentIds.length) {
-			this.form.get('departments').setValue([]);
+		// Better check for complete selection - ensures all items are selected and no extras
+		const allSelected =
+			allDepartmentIds.length > 0 &&
+			currentValue.length === allDepartmentIds.length &&
+			allDepartmentIds.every((id) => currentValue.includes(id));
+
+		if (allSelected) {
+			formControl.setValue([]);
 		} else {
-			this.form.get('departments').setValue(allDepartmentIds);
+			formControl.setValue([...allDepartmentIds]);
 		}
-		this.form.get('departments').updateValueAndValidity();
+
+		// Ensure Angular recognizes the changes
+		formControl.markAsDirty();
+		formControl.updateValueAndValidity();
+		this.detectChanges();
 	}
 
 	/**
 	 * SELECT all organization contacts and update form control value
 	 */
 	selectAllOrganizationContacts() {
-		const currentValue = this.form.get('organizationContacts').value || [];
+		const formControl = this.form.get('organizationContacts');
+		const currentValue = formControl.value || [];
 		const allContactIds = this.organizationContacts.map((contact) => contact.id).filter(Boolean);
 
-		if (currentValue.length === allContactIds.length) {
-			this.form.get('organizationContacts').setValue([]);
+		// Better check for complete selection - ensures all items are selected and no extras
+		const allSelected =
+			allContactIds.length > 0 &&
+			currentValue.length === allContactIds.length &&
+			allContactIds.every((id) => currentValue.includes(id));
+
+		if (allSelected) {
+			formControl.setValue([]);
 		} else {
-			this.form.get('organizationContacts').setValue(allContactIds);
+			formControl.setValue([...allContactIds]);
 		}
-		this.form.get('organizationContacts').updateValueAndValidity();
+
+		// Ensure Angular recognizes the changes
+		formControl.markAsDirty();
+		formControl.updateValueAndValidity();
+		this.detectChanges();
 	}
 
 	/**
 	 * SELECT all organization teams and update form control value
 	 */
 	selectAllTeams() {
-		const currentValue = this.form.get('teams').value || [];
+		const formControl = this.form.get('teams');
+		const currentValue = formControl.value || [];
 		const allTeamIds = this.organizationTeams.map((team) => team.id).filter(Boolean);
 
-		if (currentValue.length === allTeamIds.length) {
-			this.form.get('teams').setValue([]);
+		// Better check for complete selection - ensures all items are selected and no extras
+		const allSelected =
+			allTeamIds.length > 0 &&
+			currentValue.length === allTeamIds.length &&
+			allTeamIds.every((id) => currentValue.includes(id));
+
+		if (allSelected) {
+			formControl.setValue([]);
 		} else {
-			this.form.get('teams').setValue(allTeamIds);
+			formControl.setValue([...allTeamIds]);
 		}
-		this.form.get('teams').updateValueAndValidity();
+
+		// Ensure Angular recognizes the changes
+		formControl.markAsDirty();
+		formControl.updateValueAndValidity();
+		this.detectChanges();
 	}
 
 	/**

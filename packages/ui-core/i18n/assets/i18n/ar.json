@@ -2597,6 +2597,7 @@
 		"TASKS_STATUS": "الحالة",
 		"TASK_PRIORITY": "الأولوية",
 		"TASK_SIZE": "حجم",
+		"PARENT_TASK": "المهمة الرئيسية",
 		"TODO": "الكل",
 		"OPEN": "فتح",
 		"READY_FOR_REVIEW": "جاهز للمراجعة",
@@ -3562,6 +3563,7 @@
 			"APPROVAL_POLICY_CREATED": "تمت إضافة سياسة الموافقة '{{ name }}'",
 			"APPROVAL_POLICY_UPDATED": "تم تغيير سياسة الموافقة \"{{ name }}\"",
 			"APPROVAL_POLICY_DELETED": "تم إزالة سياسة الموافقة '{{ name }}'",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "سياسة الموافقة '{{ name }}' موجودة بالفعل",
 			"CANDIDATE_CREATED": "تمت إضافة المرشح '{{ name }}' إلى '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "تم تعيين المرشح '{{ name }}' كمؤرشف.",
 			"CANDIDATE_REJECTED": "تم تعيين المرشح '{{ name }}' كمرفوض.",
@@ -3679,7 +3681,8 @@
 			"EDIT_POLICY": "تم تغيير سياسة الاستراحة '{{ name }}'",
 			"DELETE_POLICY": "سياسة إجازة '{{ name }}' تمت إزالتها",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "غير قادر على إنشاء سجل سياسة"
+			"SAVE_ERROR": "غير قادر على إنشاء سجل سياسة",
+			"POLICY_EXISTS": "سياسة الإجازة '{{ name }}' موجودة بالفعل"
 		},
 		"USER": {
 			"EDIT_PROFILE": "تم تحديث ملفك الشخصي بنجاح."
@@ -4826,7 +4829,10 @@
 				"REPOSITORY": "المستودع",
 				"REPOSITORY_PLACEHOLDER": "أدخل رابط المستودع"
 			},
-			"OR": "أو"
+			"OR": "أو",
+			"RELEASE_DATE": "تاريخ الاصدار",
+			"CHANGELOG": "تغييرات",
+			"CHANGELOG_PLACEHOLDER": "ادخل التغييرات"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "إحصائيات الاستخدام",
@@ -4836,11 +4842,19 @@
 			"UPLOADED_AT": "تم الرفع في",
 			"SECURITY_INFO": "معلومات الأمان",
 			"CHECKSUM": "المجموع الاختباري",
-			"SIGNATURE": "التوقيع"
+			"SIGNATURE": "التوقيع",
+			"INSTALLED": "مثبت",
+			"HIDDEN_FOR_SECURITY": "مخفية لسببات امنية"
 		},
 		"LAYOUT": {
 			"DISCOVER": "اكتشف",
 			"INSTALLED": "مثبت"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "الخادم غير متاح",
+		"DESCRIPTION": "لا يمكن الوصول إلى خادم {{companySite}} حاليًا. قد يكون هذا بسبب صيانة مجدولة أو توقف غير متوقع.",
+		"CONNECTING": "إعادة محاولة الاتصال تلقائيًا...",
+		"HINT": "الحالة: محاولة الاتصال بخوادم {{companySite}}. رمز الخطأ: 503."
 	}
 }

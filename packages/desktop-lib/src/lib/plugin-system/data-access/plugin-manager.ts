@@ -8,6 +8,7 @@ import { PluginEventManager } from '../events/plugin-event.manager';
 import { IPlugin, IPluginManager, IPluginMetadata, PluginDownloadContextType } from '../shared';
 import { lazyLoader } from '../shared/lazy-loader';
 import { DownloadContextFactory } from './download-context.factory';
+import { ID } from '@gauzy/contracts';
 
 export class PluginManager implements IPluginManager {
 	private plugins: Map<string, IPlugin> = new Map();
@@ -25,21 +26,27 @@ export class PluginManager implements IPluginManager {
 		return this.instance;
 	}
 
-	public async downloadPlugin<U extends { contextType: PluginDownloadContextType }>(config: U): Promise<void> {
+	public async downloadPlugin<U extends { contextType: PluginDownloadContextType; marketplaceId: ID; versionId: ID }>(
+		config: U
+	): Promise<IPluginMetadata> {
 		logger.info(`Downloading plugin...`);
 		process.noAsar = true;
 		const context = this.factory.getContext(config.contextType);
 		const { metadata, pathDirname } = await context.execute({ ...config, pluginPath: this.pluginPath });
 		const plugin = this.plugins.get(metadata.name);
 		if (plugin) {
-			await this.updatePlugin(metadata);
+			await this.updatePlugin({ ...metadata, versionId: config.versionId });
 		} else {
 			/* Install plugin */
-			await this.installPlugin(metadata, pathDirname);
+			await this.installPlugin(
+				{ ...metadata, marketplaceId: config.marketplaceId, versionId: config.versionId },
+				pathDirname
+			);
 			/* Activate plugin */
 			await this.activatePlugin(metadata.name);
 		}
 		process.noAsar = false;
+		return this.pluginMetadataService.findOne({ name: metadata.name });
 	}
 
 	public async updatePlugin(pluginMetadata: IPluginMetadata): Promise<void> {
@@ -68,7 +75,8 @@ export class PluginManager implements IPluginManager {
 		await this.pluginMetadataService.update({
 			name: pluginMetadata.name,
 			description: pluginMetadata.description,
-			version: pluginMetadata.version
+			version: pluginMetadata.version,
+			versionId: pluginMetadata.versionId ? pluginMetadata.versionId : null
 		});
 
 		if (persistance.isActivate) {
@@ -92,6 +100,8 @@ export class PluginManager implements IPluginManager {
 				version: pluginMetadata.version,
 				description: pluginMetadata.description,
 				main: pluginMetadata.main,
+				marketplaceId: pluginMetadata.marketplaceId ? pluginMetadata.marketplaceId : null,
+				versionId: pluginMetadata.versionId ? pluginMetadata.versionId : null,
 				renderer: pluginMetadata.renderer ? path.join(pluginDir, pluginMetadata.renderer) : null,
 				pathname: pluginDir
 			});
@@ -157,6 +167,10 @@ export class PluginManager implements IPluginManager {
 
 	public getOnePlugin(name: string): Promise<IPluginMetadata> {
 		return this.pluginMetadataService.findOne({ name });
+	}
+
+	public checkInstallation(marketplaceId: ID): Promise<IPluginMetadata> {
+		return this.pluginMetadataService.findOne({ marketplaceId });
 	}
 
 	public initializePlugins(): void {

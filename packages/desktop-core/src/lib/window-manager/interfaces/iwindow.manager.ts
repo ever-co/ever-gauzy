@@ -11,7 +11,8 @@ export enum RegisteredWindow {
 	SPLASH = 'splash',
 	MAIN = 'main',
 	SETUP = 'setup',
-	CAPTURE = 'capture'
+	CAPTURE = 'capture',
+	AUTH = 'auth'
 }
 
 export type IWindow = IBaseWindow | BrowserWindow;

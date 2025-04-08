@@ -2613,6 +2613,7 @@
 		"TASKS_STATUS": "Estado",
 		"TASK_PRIORITY": "Prioridad",
 		"TASK_SIZE": "Tamaño",
+		"PARENT_TASK": "Tarea principal",
 		"TODO": "Todo",
 		"OPEN": "Abrir",
 		"READY_FOR_REVIEW": "Listo para revisión",
@@ -3578,6 +3579,7 @@
 			"APPROVAL_POLICY_CREATED": "Se agregó la política de aprobación '{{ name }}'.",
 			"APPROVAL_POLICY_UPDATED": "La política de aprobación '{{ name }}' ha sido modificada.",
 			"APPROVAL_POLICY_DELETED": "La política de aprobación '{{name}}' ha sido eliminada.",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "La política de aprobación '{{ name }}' ya existe",
 			"CANDIDATE_CREATED": "El candidato '{{ name }}' fue añadido a '{{ organization }}'.",
 			"CANDIDATE_ARCHIVED": "Candidato '{{ name }}' establecido como archivado.",
 			"CANDIDATE_REJECTED": "Candidato '{{ name }}' establecido como rechazado.",
@@ -3695,7 +3697,8 @@
 			"EDIT_POLICY": "La política de tiempo libre '{{ name }}' fue cambiada",
 			"DELETE_POLICY": "La política de tiempo libre '{{ name }}' fue eliminada.",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "No se puede crear el registro de la política."
+			"SAVE_ERROR": "No se puede crear el registro de la política.",
+			"POLICY_EXISTS": "La política de tiempo libre '{{ name }}' ya existe"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Tu perfil ha sido actualizado con éxito."
@@ -4842,7 +4845,10 @@
 				"REPOSITORY": "Repositorio",
 				"REPOSITORY_PLACEHOLDER": "Ingrese la URL del repositorio"
 			},
-			"OR": "O"
+			"OR": "O",
+			"RELEASE_DATE": "Fecha de lanzamiento",
+			"CHANGELOG": "Changelog",
+			"CHANGELOG_PLACEHOLDER": "Ingrese el changelog"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Estadísticas de uso",
@@ -4852,11 +4858,19 @@
 			"UPLOADED_AT": "Subido en",
 			"SECURITY_INFO": "Información de seguridad",
 			"CHECKSUM": "Suma de verificación",
-			"SIGNATURE": "Firma"
+			"SIGNATURE": "Firma",
+			"INSTALLED": "Instalado",
+			"HIDDEN_FOR_SECURITY": "Ocultado por motivos de seguridad"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Descubrir",
 			"INSTALLED": "Instalado"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Servidor no disponible",
+		"DESCRIPTION": "El servidor de {{companySite}} no está disponible actualmente. Esto puede deberse a mantenimiento programado o tiempo de inactividad inesperado.",
+		"CONNECTING": "Reintentando conexión automáticamente...",
+		"HINT": "Estado: Intentando establecer conexión con los servidores de {{companySite}}. Código de error: 503."
 	}
 }

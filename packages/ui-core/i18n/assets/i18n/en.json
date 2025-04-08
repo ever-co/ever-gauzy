@@ -179,7 +179,8 @@
 		"SHARE": "Share",
 		"GET_INFO": "Get Info",
 		"RETRY": "Retry",
-		"UPLOAD": "Upload"
+		"UPLOAD": "Upload",
+		"ADD_VERSION": "Add Version"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -2735,6 +2736,7 @@
 		"TASKS_STATUS": "Status",
 		"TASK_PRIORITY": "Priority",
 		"TASK_SIZE": "Size",
+		"PARENT_TASK": "Parent Task",
 		"TODO": "Todo",
 		"OPEN": "Open",
 		"READY_FOR_REVIEW": "Ready for review",
@@ -3704,6 +3706,7 @@
 			"APPROVAL_POLICY_CREATED": "Approval policy '{{ name }}' was added",
 			"APPROVAL_POLICY_UPDATED": "Approval policy '{{ name }}' was changed",
 			"APPROVAL_POLICY_DELETED": "Approval policy '{{ name }}' was removed",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Approval policy '{{ name }}' already exists",
 			"CANDIDATE_CREATED": "Candidate '{{ name }}' was added to '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "Candidate '{{ name }}' set as archived.",
 			"CANDIDATE_REJECTED": "Candidate '{{ name }}' set as rejected.",
@@ -3821,7 +3824,8 @@
 			"EDIT_POLICY": "Time off policy '{{ name }}' was changed",
 			"DELETE_POLICY": "Time off policy '{{ name }}' was removed",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Unable to create Policy record"
+			"SAVE_ERROR": "Unable to create Policy record",
+			"POLICY_EXISTS": "Time off policy '{{ name }}' already exists"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Your profile has been updated successfully."
@@ -4192,7 +4196,8 @@
 			"WANT_LOGOUT": "Are you sure you want to logout?",
 			"ERROR_HANDLER": "Error Handler",
 			"ERROR_OCCURRED": "Error Occurred",
-			"SELECT_FILE": "Select file"
+			"SELECT_FILE": "Select file",
+			"EXIT_AGENT_CONFIRM": "Oops! You need to log in before you can use the app."
 		},
 		"NO_LIMIT": "∞ No Limit",
 		"TASK": "Task",
@@ -4994,7 +4999,10 @@
 				"REPOSITORY": "Repository",
 				"REPOSITORY_PLACEHOLDER": "Enter repository URL"
 			},
-			"OR": "Or"
+			"OR": "Or",
+			"RELEASE_DATE": "Release Date",
+			"CHANGELOG": "Changelog",
+			"CHANGELOG_PLACEHOLDER": "Enter changelog"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Usage Statistics",
@@ -5004,11 +5012,19 @@
 			"UPLOADED_AT": "Uploaded At",
 			"SECURITY_INFO": "Security Information",
 			"CHECKSUM": "Checksum",
-			"SIGNATURE": "Signature"
+			"SIGNATURE": "Signature",
+			"INSTALLED": "Installed",
+			"HIDDEN_FOR_SECURITY": "Hidden for security reasons"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Discover",
 			"INSTALLED": "Installed"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Server Unavailable",
+		"DESCRIPTION": "The {{companySite}} server is currently unreachable. This may be due to scheduled maintenance or unexpected downtime.",
+		"CONNECTING": "Automatically retrying connection...",
+		"HINT": "Status: Attempting to establish connection to {{companySite}} servers. Error code: 503."
 	}
 }

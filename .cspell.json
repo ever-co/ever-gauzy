@@ -560,7 +560,8 @@
 		"evergauzyagent",
 		"electronmon",
 		"apistage",
-		"agentapp"
+		"agentapp",
+		"uninstallation"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
