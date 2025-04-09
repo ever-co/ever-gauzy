@@ -27,7 +27,8 @@ import {
 	InvoiceTabsEnum,
 	DiscountTaxTypeEnum,
 	IDateRangePicker,
-	ICurrency
+	ICurrency,
+	IUser
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty, API_PREFIX, ComponentEnum, toInvoiceDateFilter } from '@gauzy/ui-core/common';
 import { Router } from '@angular/router';
@@ -91,6 +92,8 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 	invoices$: Subject<IInvoice[]> = this.subject$;
 	nbTab$: Subject<string> = new BehaviorSubject(InvoiceTabsEnum.ACTIONS);
 	private readonly _refresh$: Subject<void> = new Subject();
+
+	currentUser: IUser;
 
 	/*
 	 * getter setter for check estimate or invoice
@@ -211,6 +214,17 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 					});
 				}
 			});
+
+		// Get the current user
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				tap((user) => {
+					this.currentUser = user;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	setView() {

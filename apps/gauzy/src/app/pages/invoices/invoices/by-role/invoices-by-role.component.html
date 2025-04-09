@@ -29,7 +29,11 @@
 				<ng-template [ngxPermissionsOnly]="permissionsEnum.INVOICES_EDIT">
 					<div class="transition-container">
 						<div class="transition" [ngClass]="{ show: !disableButton, hide: disableButton }">
-							<span class="transition" [ngClass]="{ show: !disableButton, 'show-button': disableButton }">
+							<span
+								*ngIf="currentUser.employee"
+								class="transition"
+								[ngClass]="{ show: !disableButton, 'show-button': disableButton }"
+							>
 								<button nbButton status="success" (click)="add()" size="small">
 									<nb-icon icon="plus-outline"> </nb-icon>
 									{{ 'BUTTONS.ADD' | translate }}
