@@ -4885,6 +4885,43 @@
 				"DESCRIPTION": "Czy na pewno chcesz odinstalować tę wtyczkę?",
 				"CONFIRM": "Odinstaluj"
 			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Wersja wtyczki v{{number}} została pomyślnie utworzona!",
+					"UPDATED": "Wersja wtyczki v{{number}} została pomyślnie zaktualizowana!",
+					"DELETED": "Wersja wtyczki została pomyślnie usunięta!",
+					"RESTORED": "Wersja wtyczki została pomyślnie przywrócona!"
+				},
+				"UPLOADED": "Wtyczka została pomyślnie przesłana!",
+				"UPDATED": "Wtyczka została pomyślnie zaktualizowana!",
+				"DELETED": "Wtyczka została pomyślnie usunięta!",
+				"INSTALLED": "Wtyczka została pomyślnie zainstalowana!",
+				"UNINSTALLED": "Wtyczka została pomyślnie odinstalowana!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Dodawanie nowej wersji wtyczki...",
+					"UPDATING": "Aktualizowanie wersji wtyczki...",
+					"DELETING": "Usuwanie wersji wtyczki...",
+					"RESTORING": "Przywracanie wersji wtyczki..."
+				},
+				"UPLOADING": "Przesyłanie wtyczki...",
+				"UPDATING": "Aktualizowanie wtyczki...",
+				"DELETING": "Usuwanie wtyczki...",
+				"INSTALLING": "Instalowanie wtyczki...",
+				"UNINSTALLING": "Odinstalowywanie wtyczki..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Nie udało się przywrócić wersji wtyczki. Spróbuj ponownie!"
+				},
+				"UPLOAD": "Nie udało się przesłać wtyczki. Spróbuj ponownie!",
+				"NOT_FOUND": "Nie znaleziono wtyczki o ID {{ id }}.",
+				"INSTALL": "Nie udało się zainstalować wtyczki. Spróbuj ponownie!",
+				"REVERT_INSTALLATION": "Nie udało się cofnąć instalacji!"
+			}
 		}
 	},
 	"SERVER_DOWN": {

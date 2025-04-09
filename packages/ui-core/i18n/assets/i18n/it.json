@@ -4885,6 +4885,43 @@
 				"DESCRIPTION": "Sei sicuro di voler disinstallare questo plugin?",
 				"CONFIRM": "Disinstalla"
 			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Versione plugin v{{number}} creata con successo!",
+					"UPDATED": "Versione plugin v{{number}} aggiornata con successo!",
+					"DELETED": "Versione plugin eliminata con successo!",
+					"RESTORED": "Versione plugin ripristinata con successo!"
+				},
+				"UPLOADED": "Plugin caricato con successo!",
+				"UPDATED": "Plugin aggiornato con successo!",
+				"DELETED": "Plugin eliminato con successo!",
+				"INSTALLED": "Plugin installato con successo!",
+				"UNINSTALLED": "Plugin disinstallato con successo!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Aggiunta nuova versione plugin...",
+					"UPDATING": "Aggiornamento versione plugin...",
+					"DELETING": "Eliminazione versione plugin...",
+					"RESTORING": "Ripristino versione plugin..."
+				},
+				"UPLOADING": "Caricamento plugin...",
+				"UPDATING": "Aggiornamento plugin...",
+				"DELETING": "Eliminazione plugin...",
+				"INSTALLING": "Installazione plugin...",
+				"UNINSTALLING": "Disinstallazione plugin..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Ripristino versione plugin fallito. Riprova!"
+				},
+				"UPLOAD": "Caricamento plugin fallito. Riprova!",
+				"NOT_FOUND": "Plugin con ID {{ id }} non trovato.",
+				"INSTALL": "Installazione plugin fallita. Riprova!",
+				"REVERT_INSTALLATION": "Annullamento installazione fallito!"
+			}
 		}
 	},
 	"SERVER_DOWN": {

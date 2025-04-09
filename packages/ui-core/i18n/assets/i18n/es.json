@@ -4887,6 +4887,43 @@
 				"DESCRIPTION": "¿Estás seguro de que quieres desinstalar este complemento?",
 				"CONFIRM": "Desinstalar"
 			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "¡Versión del complemento v{{number}} creada con éxito!",
+					"UPDATED": "¡Versión del complemento v{{number}} actualizada con éxito!",
+					"DELETED": "¡Versión del complemento eliminada con éxito!",
+					"RESTORED": "¡Versión del complemento restaurada con éxito!"
+				},
+				"UPLOADED": "¡Complemento subido con éxito!",
+				"UPDATED": "¡Complemento actualizado con éxito!",
+				"DELETED": "¡Complemento eliminado con éxito!",
+				"INSTALLED": "¡Complemento instalado con éxito!",
+				"UNINSTALLED": "¡Complemento desinstalado con éxito!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Añadiendo nueva versión del complemento...",
+					"UPDATING": "Actualizando versión del complemento...",
+					"DELETING": "Eliminando versión del complemento...",
+					"RESTORING": "Restaurando versión del complemento..."
+				},
+				"UPLOADING": "Subiendo complemento...",
+				"UPDATING": "Actualizando complemento...",
+				"DELETING": "Eliminando complemento...",
+				"INSTALLING": "Instalando complemento...",
+				"UNINSTALLING": "Desinstalando complemento..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Error al restaurar la versión del complemento. ¡Por favor, inténtelo de nuevo!"
+				},
+				"UPLOAD": "Error al subir el complemento. ¡Por favor, inténtelo de nuevo!",
+				"NOT_FOUND": "Complemento con ID {{ id }} no encontrado.",
+				"INSTALL": "Error al instalar el complemento. ¡Por favor, inténtelo de nuevo!",
+				"REVERT_INSTALLATION": "¡Error al revertir la instalación!"
+			}
 		}
 	},
 	"SERVER_DOWN": {

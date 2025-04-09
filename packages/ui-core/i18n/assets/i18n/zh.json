@@ -4885,6 +4885,43 @@
 				"DESCRIPTION": "确定要卸载此插件吗？",
 				"CONFIRM": "卸载"
 			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "插件版本 v{{number}} 创建成功！",
+					"UPDATED": "插件版本 v{{number}} 更新成功！",
+					"DELETED": "插件版本删除成功！",
+					"RESTORED": "插件版本恢复成功！"
+				},
+				"UPLOADED": "插件上传成功！",
+				"UPDATED": "插件更新成功！",
+				"DELETED": "插件删除成功！",
+				"INSTALLED": "插件安装成功！",
+				"UNINSTALLED": "插件卸载成功！"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "正在添加新插件版本...",
+					"UPDATING": "正在更新插件版本...",
+					"DELETING": "正在删除插件版本...",
+					"RESTORING": "正在恢复插件版本..."
+				},
+				"UPLOADING": "正在上传插件...",
+				"UPDATING": "正在更新插件...",
+				"DELETING": "正在删除插件...",
+				"INSTALLING": "正在安装插件...",
+				"UNINSTALLING": "正在卸载插件..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "恢复插件版本失败。请重试！"
+				},
+				"UPLOAD": "上传插件失败。请重试！",
+				"NOT_FOUND": "未找到ID为 {{ id }} 的插件。",
+				"INSTALL": "安装插件失败。请重试！",
+				"REVERT_INSTALLATION": "回滚安装失败！"
+			}
 		}
 	},
 	"SERVER_DOWN": {

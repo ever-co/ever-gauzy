@@ -5038,6 +5038,43 @@
 				"DESCRIPTION": "Are you sure you want to uninstall this plugin?",
 				"CONFIRM": "Uninstall"
 			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Create plugin version v{{number}} successfully!",
+					"UPDATED": "Update plugin version v{{number}} successfully!",
+					"DELETED": "Delete plugin version successfully!",
+					"RESTORED": "Restore plugin version successfully!"
+				},
+				"UPLOADED": "Upload plugin successfully!",
+				"UPDATED": "Update plugin successfully!",
+				"DELETED": "Delete plugin successfully!",
+				"INSTALLED": "Install plugin successfully!",
+				"UNINSTALLED": "Uninstall plugin successfully!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Adding new plugin version...",
+					"UPDATING": "Updating plugin version...",
+					"DELETING": "Deleting plugin version...",
+					"RESTORING": "Restoring plugin version..."
+				},
+				"UPLOADING": "Uploading plugin...",
+				"UPDATING": "Updating plugin version...",
+				"DELETING": "Deleting plugin...",
+				"INSTALLING": "Installing plugin...",
+				"UNINSTALLING": "Uninstalling plugin..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Failed to restore plugin version. Please try again!"
+				},
+				"UPLOAD": "Failed to upload plugin. Please try again!",
+				"NOT_FOUND": "Plugin with ID {{ id }} not found.",
+				"INSTALL": "Failed to install plugin. Please try again!",
+				"REVERT_INSTALLATION": "Failed to revert installation!"
+			}
 		}
 	},
 	"SERVER_DOWN": {

@@ -4885,6 +4885,43 @@
 				"DESCRIPTION": "Tem certeza de que deseja desinstalar este plugin?",
 				"CONFIRM": "Desinstalar"
 			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Versão do plugin v{{number}} criada com sucesso!",
+					"UPDATED": "Versão do plugin v{{number}} atualizada com sucesso!",
+					"DELETED": "Versão do plugin excluída com sucesso!",
+					"RESTORED": "Versão do plugin restaurada com sucesso!"
+				},
+				"UPLOADED": "Plugin enviado com sucesso!",
+				"UPDATED": "Plugin atualizado com sucesso!",
+				"DELETED": "Plugin excluído com sucesso!",
+				"INSTALLED": "Plugin instalado com sucesso!",
+				"UNINSTALLED": "Plugin desinstalado com sucesso!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Adicionando nova versão do plugin...",
+					"UPDATING": "Atualizando versão do plugin...",
+					"DELETING": "Excluindo versão do plugin...",
+					"RESTORING": "Restaurando versão do plugin..."
+				},
+				"UPLOADING": "Enviando plugin...",
+				"UPDATING": "Atualizando plugin...",
+				"DELETING": "Excluindo plugin...",
+				"INSTALLING": "Instalando plugin...",
+				"UNINSTALLING": "Desinstalando plugin..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Falha ao restaurar versão do plugin. Por favor, tente novamente!"
+				},
+				"UPLOAD": "Falha ao enviar plugin. Por favor, tente novamente!",
+				"NOT_FOUND": "Plugin com ID {{ id }} não encontrado.",
+				"INSTALL": "Falha ao instalar plugin. Por favor, tente novamente!",
+				"REVERT_INSTALLATION": "Falha ao reverter instalação!"
+			}
 		}
 	},
 	"SERVER_DOWN": {

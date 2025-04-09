@@ -13,6 +13,7 @@ import { PluginMarketplaceQuery } from '../queries/plugin-marketplace.query';
 import { PluginInsatallationStore } from '../stores/plugin-installation.store';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginInstallationQuery } from '../queries/plugin-installation.query';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({ providedIn: 'root' })
 export class PluginInstallationEffects {
@@ -24,7 +25,8 @@ export class PluginInstallationEffects {
 		private readonly pluginInstallationQuery: PluginInstallationQuery,
 		private readonly pluginService: PluginService,
 		private readonly pluginElectronService: PluginElectronService,
-		private readonly toastrService: ToastrNotificationService
+		private readonly toastrService: ToastrNotificationService,
+		private readonly translateService: TranslateService
 	) {}
 
 	uninstall$ = createEffect(() =>
@@ -91,7 +93,9 @@ export class PluginInstallationEffects {
 					let plugin = state.plugins[existingPluginIndex] || this.pluginInstallationQuery.plugin;
 
 					if (!plugin) {
-						throw new Error(`Plugin with ID ${pluginId} not found`);
+						throw new Error(
+							this.translateService.instant('PLUGIN.TOASTR.ERROR.NOT_FOUND', { id: pluginId })
+						);
 					}
 
 					// Ensure the plugin is marked as installed
@@ -113,7 +117,7 @@ export class PluginInstallationEffects {
 
 				this.pluginInstallationStore.setToggle({ isChecked: true });
 
-				this.toastrService.success('Install plugin successfully!');
+				this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.INSTALLED'));
 			}),
 			catchError(async (error) => {
 				this.pluginInstallationStore.setToggle({ isChecked: false });
@@ -128,7 +132,9 @@ export class PluginInstallationEffects {
 			const plugin = await this.pluginElectronService.checkInstallation(pluginId);
 			this.pluginElectronService.uninstall(plugin);
 		} catch (err) {
-			this.toastrService.error(err?.message || 'Failed to revert installation');
+			this.toastrService.error(
+				err?.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.REVERT_INSTALLATION')
+			);
 		}
 	}
 
@@ -141,7 +147,7 @@ export class PluginInstallationEffects {
 	private handleError(error: any) {
 		const isChecked = !this.pluginInstallationQuery.checked;
 		this.pluginInstallationStore.setToggle({ isChecked });
-		this.toastrService.error(error?.message || 'Installation failed');
+		this.toastrService.error(error?.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.INSTALL'));
 		return EMPTY; // Ensure the stream does not break
 	}
 
@@ -154,7 +160,7 @@ export class PluginInstallationEffects {
 				let plugin = plugins[existingPluginIndex] || this.pluginInstallationQuery.plugin;
 
 				if (!plugin) {
-					throw new Error(`Plugin with ID ${pluginId} not found`);
+					throw new Error(this.translateService.instant('PLUGIN.TOASTR.ERROR.NOT_FOUND', { id: pluginId }));
 				}
 
 				// Ensure plugin is marked as uninstalled
@@ -171,7 +177,7 @@ export class PluginInstallationEffects {
 					plugin: updatedPlugin
 				});
 				this.pluginInstallationStore.setToggle({ isChecked: false });
-				this.toastrService.success(`Uninstall plugin successfully!`);
+				this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED'));
 			}),
 			catchError((error) => {
 				this.pluginInstallationStore.setToggle({ isChecked: true });

@@ -4885,6 +4885,43 @@
 				"DESCRIPTION": "Weet u zeker dat u deze plugin wilt verwijderen?",
 				"CONFIRM": "Verwijderen"
 			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Pluginversie v{{number}} succesvol aangemaakt!",
+					"UPDATED": "Pluginversie v{{number}} succesvol bijgewerkt!",
+					"DELETED": "Pluginversie succesvol verwijderd!",
+					"RESTORED": "Pluginversie succesvol hersteld!"
+				},
+				"UPLOADED": "Plugin succesvol geüpload!",
+				"UPDATED": "Plugin succesvol bijgewerkt!",
+				"DELETED": "Plugin succesvol verwijderd!",
+				"INSTALLED": "Plugin succesvol geïnstalleerd!",
+				"UNINSTALLED": "Plugin succesvol gedeïnstalleerd!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Nieuwe pluginversie wordt toegevoegd...",
+					"UPDATING": "Pluginversie wordt bijgewerkt...",
+					"DELETING": "Pluginversie wordt verwijderd...",
+					"RESTORING": "Pluginversie wordt hersteld..."
+				},
+				"UPLOADING": "Plugin wordt geüpload...",
+				"UPDATING": "Plugin wordt bijgewerkt...",
+				"DELETING": "Plugin wordt verwijderd...",
+				"INSTALLING": "Plugin wordt geïnstalleerd...",
+				"UNINSTALLING": "Plugin wordt gedeïnstalleerd..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Herstellen van pluginversie mislukt. Probeer het opnieuw!"
+				},
+				"UPLOAD": "Uploaden van plugin mislukt. Probeer het opnieuw!",
+				"NOT_FOUND": "Plugin met ID {{ id }} niet gevonden.",
+				"INSTALL": "Installeren van plugin mislukt. Probeer het opnieuw!",
+				"REVERT_INSTALLATION": "Terugdraaien van installatie mislukt!"
+			}
 		}
 	},
 	"SERVER_DOWN": {

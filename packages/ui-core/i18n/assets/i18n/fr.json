@@ -4876,6 +4876,43 @@
 				"DESCRIPTION": "Êtes-vous sûr de vouloir désinstaller cette extension ?",
 				"CONFIRM": "Désinstaller"
 			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Version du plugin v{{number}} créée avec succès !",
+					"UPDATED": "Version du plugin v{{number}} mise à jour avec succès !",
+					"DELETED": "Version du plugin supprimée avec succès !",
+					"RESTORED": "Version du plugin restaurée avec succès !"
+				},
+				"UPLOADED": "Plugin téléchargé avec succès !",
+				"UPDATED": "Plugin mis à jour avec succès !",
+				"DELETED": "Plugin supprimé avec succès !",
+				"INSTALLED": "Plugin installé avec succès !",
+				"UNINSTALLED": "Plugin désinstallé avec succès !"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Ajout d'une nouvelle version du plugin...",
+					"UPDATING": "Mise à jour de la version du plugin...",
+					"DELETING": "Suppression de la version du plugin...",
+					"RESTORING": "Restauration de la version du plugin..."
+				},
+				"UPLOADING": "Téléchargement du plugin...",
+				"UPDATING": "Mise à jour du plugin...",
+				"DELETING": "Suppression du plugin...",
+				"INSTALLING": "Installation du plugin...",
+				"UNINSTALLING": "Désinstallation du plugin..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Échec de la restauration de la version du plugin. Veuillez réessayer !"
+				},
+				"UPLOAD": "Échec du téléchargement du plugin. Veuillez réessayer !",
+				"NOT_FOUND": "Plugin avec l'ID {{ id }} introuvable.",
+				"INSTALL": "Échec de l'installation du plugin. Veuillez réessayer !",
+				"REVERT_INSTALLATION": "Échec de l'annulation de l'installation !"
+			}
 		}
 	},
 	"SERVER_DOWN": {
