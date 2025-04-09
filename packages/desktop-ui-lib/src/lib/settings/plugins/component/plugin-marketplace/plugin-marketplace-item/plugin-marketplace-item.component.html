@@ -9,7 +9,7 @@ marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ 
 <nb-card class="content-active first plugin-details-card">
 	<nb-card-header class="d-flex align-items-center justify-content-between">
 		<div class="d-flex align-items-center">
-			<h5 class="mb-0">{{ plugin?.name || 'Plugin Details' }}</h5>
+			<h5 class="mb-0">{{ plugin?.name || ('SM_TABLE.NO_DATA.LOADING' | translate) }}</h5>
 			<div class="ml-3">
 				<nb-badge
 					*ngIf="plugin"
@@ -101,7 +101,14 @@ marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ 
 					<!-- Description -->
 					@if(plugin.description) {
 					<div class="description-container mb-4">
-						<p [readMore]="256" class="plugin-description">{{ plugin.description }}</p>
+						<p
+							[readMore]="256"
+							[readMoreText]="'BUTTONS.READ_MORE' | translate"
+							[readLessText]="'BUTTONS.READ_LESS' | translate"
+							class="plugin-description"
+						>
+							{{ plugin.description }}
+						</p>
 					</div>
 					}
 
@@ -169,7 +176,14 @@ marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ 
 							<div class="label">Version {{ version.number }}</div>
 							<div class="value">{{ version.createdAt | humanize }}</div>
 						</div>
-						<p [readMore]="128" class="plugin-description">{{ version.changelog }}</p>
+						<p
+							[readMore]="128"
+							[readMoreText]="'BUTTONS.READ_MORE' | translate"
+							[readLessText]="'BUTTONS.READ_LESS' | translate"
+							class="plugin-description"
+						>
+							{{ version.changelog }}
+						</p>
 					</div>
 					}
 
