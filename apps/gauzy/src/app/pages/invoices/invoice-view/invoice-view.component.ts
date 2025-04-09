@@ -177,23 +177,24 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 				throw new Error('invalid-invoice');
 			}
 
+			// Gert the invoice Blob object as URL
 			const { id: invoiceId } = this.invoice;
-
-			// Download the invoice PDF
 			const blob = await firstValueFrom(this._invoicesService.downloadInvoicePdf(invoiceId));
+			if (!blob || blob.type !== 'application/pdf') {
+				throw new Error('invalid-invoice');
+			}
 			const fileURL = URL.createObjectURL(blob);
 
-			// Create an iframe to display the PDF
-			const iframe = document.createElement('iframe');
+			// Create an window to display the PDF
+			const pdfWindow = window.open(fileURL, '_blank', 'popup=true');
+			if (!pdfWindow) {
+				throw new Error('failed-to-open-pdf-window');
+			}
 
-			// Print the PDF when the iframe is loaded
-			iframe.onload = () => iframe.contentWindow.print();
-
-			// Set the iframe source to the file URL
-			iframe.src = fileURL;
-
-			// Append the iframe to the document body
-			document.body.appendChild(iframe);
+			// Print the PDF when the window is loaded
+			pdfWindow.onload = () => {
+				pdfWindow.print();
+			};
 		} catch (error) {
 			console.error('Failed to print the invoice:', error);
 			this._toastrService.danger('INVOICES_PAGE.ERRORS.PRINT');
