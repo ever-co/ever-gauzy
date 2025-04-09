@@ -171,7 +171,10 @@
 		"RETRY": "נסה שוב",
 		"UPLOAD": "העלה",
 		"MARKEPLACE": "מרקט",
-		"ADD_VERSION": "הוסף גרסה"
+		"ADD_VERSION": "הוסף גרסה",
+		"READ_MORE": "קרא עוד",
+		"READ_LESS": "קרא פחות",
+		"RECOVER": "שחזר"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -220,7 +223,8 @@
 			"PRODUCT_TYPE_NO_DATA": "לא יצרתם סוגי מוצרים.",
 			"TEAM_DASHBOARD": "אין לך שום צוותים.",
 			"PLUGIN": "לא התקנת שום תוסף.",
-			"PLUGIN_MARKETPLACE": "תוסף זה אינו זמין בשוק"
+			"PLUGIN_MARKETPLACE": "תוסף זה אינו זמין בשוק",
+			"HISTORY": "אין היסטוריה"
 		},
 		"TRANSACTION_TYPE": "סוג",
 		"AMOUNT": "כמות",
@@ -4789,7 +4793,9 @@
 				"INVALID_SCOPE": "פורמט היקף לא תקין",
 				"AUTHOR_TOO_LONG": "שם המחבר ארוך מדי",
 				"LICENSE_TOO_LONG": "שדה הרישיון ארוך מדי",
-				"FAILED": "האימות נכשל"
+				"FAILED": "האימות נכשל",
+				"CHANGELOG_TOO_SHORT": "שדה השינויים ארוך מדי",
+				"CHANGELOG_REQUIRED": "שדה השינויים נדרש"
 			},
 			"TYPE": "סוג התוסף",
 			"TYPE_PLACEHOLDER": "בחר סוג תוסף",
@@ -4863,7 +4869,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "לגלות",
-			"INSTALLED": "מותקן"
+			"INSTALLED": "מותקן",
+			"VERSION_HISTORY": "היסטוריית גרסאות"
 		},
 		"DIALOG": {
 			"DEACTIVATE": {
@@ -4876,6 +4883,11 @@
 				"DESCRIPTION": "האם אתה בטוח שברצונך להסיר את התוסף הזה?",
 				"CONFIRM": "הסר התקנה"
 			},
+			"DELETE": {
+				"TITLE": "מחיקת תוסף",
+				"DESCRIPTION": "האם אתה בטוח שברצונך למחוק תוסף זה?",
+				"CONFIRM": "מחק"
+			},
 			"VERSION": {
 				"UPDATE": {
 					"TITLE": "עדכון גרסה v{{number}}",
@@ -4886,6 +4898,16 @@
 					"TITLE": "צור גרסה חדשה עבור {{name}}",
 					"DESCRIPTION": "האם אתה בטוח שברצונך ליצור גרסה זו?",
 					"CONFIRM": "צור"
+				},
+				"DELETE": {
+					"TITLE": "מחיקת גרסה",
+					"DESCRIPTION": "האם אתה בטוח שברצונך למחוק גרסה זו?",
+					"CONFIRM": "מחק"
+				},
+				"RESTORE": {
+					"TITLE": "שחזור גרסה",
+					"DESCRIPTION": "האם אתה בטוח שברצונך לשחזר גרסה זו?",
+					"CONFIRM": "שחזר"
 				}
 			}
 		},

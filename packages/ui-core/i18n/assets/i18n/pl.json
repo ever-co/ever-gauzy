@@ -172,7 +172,10 @@
 		"RETRY": "Spróbuj ponownie",
 		"UPLOAD": "Prześlij",
 		"MARKETPLACE": "Rynek",
-		"ADD_VERSION": "Dodaj wersje"
+		"ADD_VERSION": "Dodaj wersje",
+		"READ_MORE": "Czytaj więcej",
+		"READ_LESS": "Czytaj mniej",
+		"RECOVER": "Przywróć"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4799,7 +4802,9 @@
 				"INVALID_SCOPE": "Nieprawidłowy format zakresu",
 				"AUTHOR_TOO_LONG": "Nazwa autora jest zbyt długa",
 				"LICENSE_TOO_LONG": "Pole licencji jest zbyt długie",
-				"FAILED": "Walidacja nie powiodła się"
+				"FAILED": "Walidacja nie powiodła się",
+				"CHANGELOG_TOO_SHORT": "Log zmian jest zbyt krotki",
+				"CHANGELOG_REQUIRED": "Log zmian jest wymagany"
 			},
 			"TYPE": "Typ wtyczki",
 			"TYPE_PLACEHOLDER": "Wybierz typ wtyczki",
@@ -4873,7 +4878,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Odkryj",
-			"INSTALLED": "Zainstalowane"
+			"INSTALLED": "Zainstalowane",
+			"VERSION_HISTORY": "Historia wersji"
 		},
 		"DIALOG": {
 			"DEACTIVATE": {
@@ -4886,6 +4892,11 @@
 				"DESCRIPTION": "Czy na pewno chcesz odinstalować tę wtyczkę?",
 				"CONFIRM": "Odinstaluj"
 			},
+			"DELETE": {
+				"TITLE": "Usuń wtyczkę",
+				"DESCRIPTION": "Czy na pewno chcesz usunąć tę wtyczkę?",
+				"CONFIRM": "Usuń"
+			},
 			"VERSION": {
 				"UPDATE": {
 					"TITLE": "Aktualizuj wersję v{{number}}",
@@ -4896,6 +4907,16 @@
 					"TITLE": "Utwórz nową wersję dla {{name}}",
 					"DESCRIPTION": "Czy na pewno chcesz utworzyć tę wersję?",
 					"CONFIRM": "Utwórz"
+				},
+				"DELETE": {
+					"TITLE": "Usuń wersję",
+					"DESCRIPTION": "Czy na pewno chcesz usunąć tę wersję?",
+					"CONFIRM": "Usuń"
+				},
+				"RESTORE": {
+					"TITLE": "Przywróć wersję",
+					"DESCRIPTION": "Czy na pewno chcesz przywrócić tę wersję?",
+					"CONFIRM": "Przywróć"
 				}
 			}
 		},

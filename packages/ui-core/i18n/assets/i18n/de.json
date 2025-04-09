@@ -172,10 +172,14 @@
 		"RETRY": "Erneut versuchen",
 		"UPLOAD": "Hochladen",
 		"ADD_VERSION": "Version hinzufügen",
-		"MARKETPLACE": "Marktplatz"
+		"MARKETPLACE": "Marktplatz",
+		"READ_MORE": "Mehr lesen",
+		"READ_LESS": "Weniger lesen",
+		"RECOVER": "Wiederherstellen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "Kein Verlauf vorhanden",
 			"RECEIVE_ESTIMATE": "Sie haben keine Schätzung erhalten.",
 			"INCOME": "Sie haben kein Einkommen erstellt.",
 			"EXPENSE_CATEGORY": "Du hast keine Ausgabekategorie erstellt.",
@@ -4795,7 +4799,9 @@
 				"INVALID_SCOPE": "Ungültiges Scope-Format",
 				"AUTHOR_TOO_LONG": "Autorenname ist zu lang",
 				"LICENSE_TOO_LONG": "Lizenzfeld ist zu lang",
-				"FAILED": "Validierung fehlgeschlagen"
+				"FAILED": "Validierung fehlgeschlagen",
+				"CHANGELOG_TOO_SHORT": "Changelog ist zu kurz",
+				"CHANGELOG_REQUIRED": "Changelog ist erforderlich"
 			},
 			"TYPE": "Plugin-Typ",
 			"TYPE_PLACEHOLDER": "Wählen Sie den Plugin-Typ",
@@ -4869,7 +4875,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Entdecken",
-			"INSTALLED": "Installiert"
+			"INSTALLED": "Installiert",
+			"VERSION_HISTORY": "Versionsverlauf"
 		},
 		"DIALOG": {
 			"DEACTIVATE": {
@@ -4882,6 +4889,11 @@
 				"DESCRIPTION": "Möchten Sie dieses Plugin wirklich deinstallieren?",
 				"CONFIRM": "Deinstallieren"
 			},
+			"DELETE": {
+				"TITLE": "Plugin löschen",
+				"DESCRIPTION": "Sind Sie sicher, dass Sie dieses Plugin löschen möchten?",
+				"CONFIRM": "Löschen"
+			},
 			"VERSION": {
 				"UPDATE": {
 					"TITLE": "Version v{{number}} aktualisieren",
@@ -4892,6 +4904,16 @@
 					"TITLE": "Neue Version für {{name}} erstellen",
 					"DESCRIPTION": "Sind Sie sicher, dass Sie diese Version erstellen möchten?",
 					"CONFIRM": "Erstellen"
+				},
+				"DELETE": {
+					"TITLE": "Version löschen",
+					"DESCRIPTION": "Sind Sie sicher, dass Sie diese Version löschen möchten?",
+					"CONFIRM": "Löschen"
+				},
+				"RESTORE": {
+					"TITLE": "Version wiederherstellen",
+					"DESCRIPTION": "Sind Sie sicher, dass Sie diese Version wiederherstellen möchten?",
+					"CONFIRM": "Wiederherstellen"
 				}
 			}
 		},

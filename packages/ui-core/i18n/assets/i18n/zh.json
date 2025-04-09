@@ -172,10 +172,14 @@
 		"RETRY": "重试",
 		"UPLOAD": "上传",
 		"MARKETPLACE": "市场",
-		"ADD_VERSION": "添加版本"
+		"ADD_VERSION": "添加版本",
+		"READ_MORE": "阅读更多",
+		"READ_LESS": "收起",
+		"RECOVER": "恢复"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "没有历史记录",
 			"RECEIVE_ESTIMATE": "您尚未收到任何估计。",
 			"INCOME": "您还没有创造任何收入。",
 			"EXPENSE_CATEGORY": "您尚未创建任何费用类别。",
@@ -4799,7 +4803,9 @@
 				"INVALID_SCOPE": "作用域格式无效",
 				"AUTHOR_TOO_LONG": "作者名称过长",
 				"LICENSE_TOO_LONG": "许可证字段过长",
-				"FAILED": "验证失败"
+				"FAILED": "验证失败",
+				"CHANGELOG_TOO_SHORT": "更新日志过短",
+				"CHANGELOG_REQUIRED": "更新日志必填"
 			},
 			"TYPE": "插件类型",
 			"TYPE_PLACEHOLDER": "选择插件类型",
@@ -4873,7 +4879,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "发现",
-			"INSTALLED": "已安装"
+			"INSTALLED": "已安装",
+			"VERSION_HISTORY": "版本历史"
 		},
 		"DIALOG": {
 			"DEACTIVATE": {
@@ -4886,6 +4893,11 @@
 				"DESCRIPTION": "确定要卸载此插件吗？",
 				"CONFIRM": "卸载"
 			},
+			"DELETE": {
+				"TITLE": "删除插件",
+				"DESCRIPTION": "您确定要删除此插件吗？",
+				"CONFIRM": "删除"
+			},
 			"VERSION": {
 				"UPDATE": {
 					"TITLE": "更新版本 v{{number}}",
@@ -4896,6 +4908,16 @@
 					"TITLE": "为 {{name}} 创建新版本",
 					"DESCRIPTION": "您确定要创建此版本吗？",
 					"CONFIRM": "创建"
+				},
+				"DELETE": {
+					"TITLE": "删除版本",
+					"DESCRIPTION": "您确定要删除此版本吗？",
+					"CONFIRM": "删除"
+				},
+				"RESTORE": {
+					"TITLE": "恢复版本",
+					"DESCRIPTION": "您确定要恢复此版本吗？",
+					"CONFIRM": "恢复"
 				}
 			}
 		},

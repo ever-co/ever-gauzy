@@ -172,10 +172,14 @@
 		"RETRY": "Réessayer",
 		"UPLOAD": "Téléverser",
 		"MARKETPLACE": "Marketplace",
-		"ADD_VERSION": "Ajouter une version"
+		"ADD_VERSION": "Ajouter une version",
+		"READ_MORE": "Lire plus",
+		"READ_LESS": "Lire moins",
+		"RECOVER": "Récupérer"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "Il n'y a pas d'historique",
 			"RECEIVE_ESTIMATE": "Vous n'avez reçu aucun devis.",
 			"INCOME": "Vous n'avez créé aucun revenu.",
 			"EXPENSE_CATEGORY": "Vous n'avez créé aucune catégorie de dépenses.",
@@ -4790,7 +4794,9 @@
 				"INVALID_SCOPE": "Format de portée invalide",
 				"AUTHOR_TOO_LONG": "Le nom de l'auteur est trop long",
 				"LICENSE_TOO_LONG": "Le champ de la licence est trop long",
-				"FAILED": "Échec de la validation"
+				"FAILED": "Échec de la validation",
+				"CHANGELOG_TOO_SHORT": "Le changelog est trop court",
+				"CHANGELOG_REQUIRED": "Le changelog est requis"
 			},
 			"TYPE": "Type de plugin",
 			"TYPE_PLACEHOLDER": "Sélectionnez le type de plugin",
@@ -4864,7 +4870,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Découvrir",
-			"INSTALLED": "Installé"
+			"INSTALLED": "Installé",
+			"VERSION_HISTORY": "Historique des versions"
 		},
 		"DIALOG": {
 			"DEACTIVATE": {
@@ -4877,6 +4884,11 @@
 				"DESCRIPTION": "Êtes-vous sûr de vouloir désinstaller cette extension ?",
 				"CONFIRM": "Désinstaller"
 			},
+			"DELETE": {
+				"TITLE": "Supprimer le plugin",
+				"DESCRIPTION": "Êtes-vous sûr de vouloir supprimer ce plugin ?",
+				"CONFIRM": "Supprimer"
+			},
 			"VERSION": {
 				"UPDATE": {
 					"TITLE": "Mettre à jour la version v{{number}}",
@@ -4887,6 +4899,16 @@
 					"TITLE": "Créer une nouvelle version pour {{name}}",
 					"DESCRIPTION": "Êtes-vous sûr de vouloir créer cette version ?",
 					"CONFIRM": "Créer"
+				},
+				"DELETE": {
+					"TITLE": "Supprimer la version",
+					"DESCRIPTION": "Êtes-vous sûr de vouloir supprimer cette version ?",
+					"CONFIRM": "Supprimer"
+				},
+				"RESTORE": {
+					"TITLE": "Restaurer la version",
+					"DESCRIPTION": "Êtes-vous sûr de vouloir restaurer cette version ?",
+					"CONFIRM": "Restaurer"
 				}
 			}
 		},

@@ -172,10 +172,14 @@
 		"RETRY": "Riprova",
 		"UPLOAD": "Carica",
 		"MARKETPLACE": "Mercato",
-		"ADD_VERSION": "Aggiungi versione"
+		"ADD_VERSION": "Aggiungi versione",
+		"READ_MORE": "Leggi di più",
+		"READ_LESS": "Leggi meno",
+		"RECOVER": "Recupera"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "Nessuna cronologia",
 			"RECEIVE_ESTIMATE": "Non hai ricevuto alcuna stima",
 			"INCOME": "Non hai creato alcun reddito",
 			"EXPENSE_CATEGORY": "Non hai creato nessuna categoria di spese",
@@ -4799,7 +4803,9 @@
 				"INVALID_SCOPE": "Formato dell'ambito non valido",
 				"AUTHOR_TOO_LONG": "Il nome dell'autore è troppo lungo",
 				"LICENSE_TOO_LONG": "Il campo della licenza è troppo lungo",
-				"FAILED": "Validazione fallita"
+				"FAILED": "Validazione fallita",
+				"CHANGELOG_TOO_SHORT": "Changelog troppo corto",
+				"CHANGELOG_REQUIRED": "Changelog obbligatorio"
 			},
 			"TYPE": "Tipo di plugin",
 			"TYPE_PLACEHOLDER": "Seleziona il tipo di plugin",
@@ -4873,7 +4879,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Scopri",
-			"INSTALLED": "Installato"
+			"INSTALLED": "Installato",
+			"VERSION_HISTORY": "Cronologia versioni"
 		},
 		"DIALOG": {
 			"DEACTIVATE": {
@@ -4886,6 +4893,11 @@
 				"DESCRIPTION": "Sei sicuro di voler disinstallare questo plugin?",
 				"CONFIRM": "Disinstalla"
 			},
+			"DELETE": {
+				"TITLE": "Elimina plugin",
+				"DESCRIPTION": "Sei sicuro di voler eliminare questo plugin?",
+				"CONFIRM": "Elimina"
+			},
 			"VERSION": {
 				"UPDATE": {
 					"TITLE": "Aggiorna versione v{{number}}",
@@ -4896,6 +4908,16 @@
 					"TITLE": "Crea nuova versione per {{name}}",
 					"DESCRIPTION": "Sei sicuro di voler creare questa versione?",
 					"CONFIRM": "Crea"
+				},
+				"DELETE": {
+					"TITLE": "Elimina versione",
+					"DESCRIPTION": "Sei sicuro di voler eliminare questa versione?",
+					"CONFIRM": "Elimina"
+				},
+				"RESTORE": {
+					"TITLE": "Ripristina versione",
+					"DESCRIPTION": "Sei sicuro di voler ripristinare questa versione?",
+					"CONFIRM": "Ripristina"
 				}
 			}
 		},

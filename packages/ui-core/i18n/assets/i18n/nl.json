@@ -172,10 +172,14 @@
 		"RETRY": "Opnieuw proberen",
 		"UPLOAD": "Uploaden",
 		"MARKETPLACE": "Marktplaats",
-		"ADD_VERSION": "Versie toevoegen"
+		"ADD_VERSION": "Versie toevoegen",
+		"READ_MORE": "Meer lezen",
+		"READ_LESS": "Minder lezen",
+		"RECOVER": "Herstellen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "Geen geschiedenis",
 			"RECEIVE_ESTIMATE": "Je hebt geen offerte ontvangen.",
 			"INCOME": "Je hebt geen enkel inkomen gecreëerd.",
 			"EXPENSE_CATEGORY": "U heeft geen uitgavencategorie gemaakt.",
@@ -4799,7 +4803,9 @@
 				"INVALID_SCOPE": "Ongeldig bereikformaat",
 				"AUTHOR_TOO_LONG": "Auteursnaam is te lang",
 				"LICENSE_TOO_LONG": "Licentieveld is te lang",
-				"FAILED": "Validatie mislukt"
+				"FAILED": "Validatie mislukt",
+				"CHANGELOG_TOO_SHORT": "Changelog is te kort",
+				"CHANGELOG_REQUIRED": "Changelog is vereist"
 			},
 			"TYPE": "Plugintype",
 			"TYPE_PLACEHOLDER": "Selecteer plugintype",
@@ -4873,7 +4879,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Ontdekken",
-			"INSTALLED": "Geïnstalleerd"
+			"INSTALLED": "Geïnstalleerd",
+			"VERSION_HISTORY": "Versiegeschiedenis"
 		},
 		"DIALOG": {
 			"DEACTIVATE": {
@@ -4882,6 +4889,11 @@
 				"CONFIRM": "Deactiveren"
 			},
 			"UNINSTALL": {
+				"TITLE": "Plugin verwijderen",
+				"DESCRIPTION": "Weet u zeker dat u deze plugin wilt verwijderen?",
+				"CONFIRM": "Verwijderen"
+			},
+			"DELETE": {
 				"TITLE": "Plugin verwijderen",
 				"DESCRIPTION": "Weet u zeker dat u deze plugin wilt verwijderen?",
 				"CONFIRM": "Verwijderen"
@@ -4896,6 +4908,16 @@
 					"TITLE": "Nieuwe versie maken voor {{name}}",
 					"DESCRIPTION": "Weet u zeker dat u deze versie wilt maken?",
 					"CONFIRM": "Maken"
+				},
+				"DELETE": {
+					"TITLE": "Versie verwijderen",
+					"DESCRIPTION": "Weet u zeker dat u deze versie wilt verwijderen?",
+					"CONFIRM": "Verwijderen"
+				},
+				"RESTORE": {
+					"TITLE": "Versie herstellen",
+					"DESCRIPTION": "Weet u zeker dat u deze versie wilt herstellen?",
+					"CONFIRM": "Herstellen"
 				}
 			}
 		},

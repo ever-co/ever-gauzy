@@ -172,10 +172,14 @@
 		"RETRY": "Tentar novamente",
 		"UPLOAD": "Carregar",
 		"MARKETPLACE": "Mercado",
-		"ADD_VERSION": "Adicionar versão"
+		"ADD_VERSION": "Adicionar versão",
+		"READ_MORE": "Ler mais",
+		"READ_LESS": "Ler menos",
+		"RECOVER": "Recuperar"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "Não há histórico",
 			"RECEIVE_ESTIMATE": "Você não recebeu nenhuma estimativa.",
 			"INCOME": "Você não criou nenhuma renda.",
 			"EXPENSE_CATEGORY": "Você não criou nenhuma categoria de despesa.",
@@ -4799,7 +4803,9 @@
 				"INVALID_SCOPE": "Formato de escopo inválido",
 				"AUTHOR_TOO_LONG": "O nome do autor é muito longo",
 				"LICENSE_TOO_LONG": "O campo da licença é muito longo",
-				"FAILED": "Validação falhou"
+				"FAILED": "Validação falhou",
+				"CHANGELOG_TOO_SHORT": "O changelog é muito curto",
+				"CHANGELOG_REQUIRED": "O changelog é obrigatório"
 			},
 			"TYPE": "Tipo de plugin",
 			"TYPE_PLACEHOLDER": "Selecione o tipo de plugin",
@@ -4873,7 +4879,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Descobrir",
-			"INSTALLED": "Instalado"
+			"INSTALLED": "Instalado",
+			"VERSION_HISTORY": "Histórico de versões"
 		},
 		"DIALOG": {
 			"DEACTIVATE": {
@@ -4886,6 +4893,11 @@
 				"DESCRIPTION": "Tem certeza de que deseja desinstalar este plugin?",
 				"CONFIRM": "Desinstalar"
 			},
+			"DELETE": {
+				"TITLE": "Excluir plugin",
+				"DESCRIPTION": "Tem certeza de que deseja excluir este plugin?",
+				"CONFIRM": "Excluir"
+			},
 			"VERSION": {
 				"UPDATE": {
 					"TITLE": "Atualizar versão v{{number}}",
@@ -4896,6 +4908,16 @@
 					"TITLE": "Criar nova versão para {{name}}",
 					"DESCRIPTION": "Tem certeza de que deseja criar esta versão?",
 					"CONFIRM": "Criar"
+				},
+				"DELETE": {
+					"TITLE": "Excluir versão",
+					"DESCRIPTION": "Tem certeza de que deseja excluir esta versão?",
+					"CONFIRM": "Excluir"
+				},
+				"RESTORE": {
+					"TITLE": "Restaurar versão",
+					"DESCRIPTION": "Tem certeza de que deseja restaurar esta versão?",
+					"CONFIRM": "Restaurar"
 				}
 			}
 		},

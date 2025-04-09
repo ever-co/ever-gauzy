@@ -172,10 +172,14 @@
 		"RETRY": "إعادة المحاولة",
 		"UPLOAD": "رفع",
 		"MARKETPLACE": "السوق",
-		"ADD_VERSION": "اضافة نسخة"
+		"ADD_VERSION": "اضافة نسخة",
+		"READ_MORE": "قراءة المزيد",
+		"READ_LESS": "قراءة أقل",
+		"RECOVER": "استعادة"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "لا يوجد سجل",
 			"RECEIVE_ESTIMATE": "لم تتلقَ أي تقدير.",
 			"INCOME": "لم تقم بإنشاء أي دخل.",
 			"EXPENSE_CATEGORY": "لم تقم بإنشاء أي فئة نفقات.",
@@ -4784,7 +4788,9 @@
 				"INVALID_SCOPE": "تنسيق النطاق غير صالح",
 				"AUTHOR_TOO_LONG": "اسم المؤلف طويل جدًا",
 				"LICENSE_TOO_LONG": "حقل الترخيص طويل جدًا",
-				"FAILED": "فشل التحقق"
+				"FAILED": "فشل التحقق",
+				"CHANGELOG_TOO_SHORT": "سجل التغييرات قصير جدًا",
+				"CHANGELOG_REQUIRED": "سجل التغييرات مطلوب"
 			},
 			"TYPE": "نوع الإضافة",
 			"TYPE_PLACEHOLDER": "اختر نوع الإضافة",
@@ -4858,7 +4864,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "اكتشف",
-			"INSTALLED": "مثبت"
+			"INSTALLED": "مثبت",
+			"VERSION_HISTORY": "سجل الإصدارات"
 		},
 		"DIALOG": {
 			"DEACTIVATE": {
@@ -4871,6 +4878,11 @@
 				"DESCRIPTION": "هل أنت متأكد أنك تريد إلغاء تثبيت هذه الإضافة؟",
 				"CONFIRM": "إلغاء التثبيت"
 			},
+			"DELETE": {
+				"TITLE": "حذف الملحق",
+				"DESCRIPTION": "هل أنت متأكد أنك تريد حذف هذا الملحق؟",
+				"CONFIRM": "حذف"
+			},
 			"VERSION": {
 				"UPDATE": {
 					"TITLE": "تحديث الإصدار v{{number}}",
@@ -4881,6 +4893,16 @@
 					"TITLE": "إنشاء إصدار جديد لـ {{name}}",
 					"DESCRIPTION": "هل أنت متأكد أنك تريد إنشاء هذا الإصدار؟",
 					"CONFIRM": "إنشاء"
+				},
+				"DELETE": {
+					"TITLE": "حذف الإصدار",
+					"DESCRIPTION": "هل أنت متأكد أنك تريد حذف هذا الإصدار؟",
+					"CONFIRM": "حذف"
+				},
+				"RESTORE": {
+					"TITLE": "استعادة الإصدار",
+					"DESCRIPTION": "هل أنت متأكد أنك تريد استعادة هذا الإصدار؟",
+					"CONFIRM": "استعادة"
 				}
 			}
 		},

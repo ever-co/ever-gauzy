@@ -181,7 +181,10 @@
 		"RETRY": "Retry",
 		"UPLOAD": "Upload",
 		"ADD_VERSION": "Add Version",
-		"MARKETPLACE": "Marketplace"
+		"MARKETPLACE": "Marketplace",
+		"READ_MORE": "Read More",
+		"READ_LESS": "Read Less",
+		"RECOVER": "Recover"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -230,7 +233,8 @@
 			"PRODUCT_TYPE_NO_DATA": "You have not created any product types.",
 			"TEAM_DASHBOARD": "You don't have any teams.",
 			"PLUGIN": "You haven't install any plugin.",
-			"PLUGIN_MARKETPLACE": "This plugin is unvailable on marketplace"
+			"PLUGIN_MARKETPLACE": "This plugin is unvailable on marketplace",
+			"HISTORY": "There's no history"
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Amount",
@@ -4952,6 +4956,8 @@
 				"INVALID_SCOPE": "Invalid scope format",
 				"AUTHOR_TOO_LONG": "Author name is too long",
 				"LICENSE_TOO_LONG": "License field is too long",
+				"CHANGELOG_TOO_SHORT": "Changelog is too short",
+				"CHANGELOG_REQUIRED": "Changelog is required",
 				"FAILED": "Validation failed"
 			},
 			"TYPE": "Plugin Type",
@@ -5026,7 +5032,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Discover",
-			"INSTALLED": "Installed"
+			"INSTALLED": "Installed",
+			"VERSION_HISTORY": "Version History"
 		},
 		"DIALOG": {
 			"DEACTIVATE": {
@@ -5039,6 +5046,11 @@
 				"DESCRIPTION": "Are you sure you want to uninstall this plugin?",
 				"CONFIRM": "Uninstall"
 			},
+			"DELETE": {
+				"TITLE": "Delete Plugin",
+				"DESCRIPTION": "Are you sure you want to delete this plugin?",
+				"CONFIRM": "Delete"
+			},
 			"VERSION": {
 				"UPDATE": {
 					"TITLE": "Update version v{{number}}",
@@ -5049,6 +5061,16 @@
 					"TITLE": "Create new version for {{name}}",
 					"DESCRIPTION": "Are you sure you want to create this version?",
 					"CONFIRM": "Create"
+				},
+				"DELETE": {
+					"TITLE": "Delete version",
+					"DESCRIPTION": "Are you sure you want to delete this version?",
+					"CONFIRM": "Delete"
+				},
+				"RESTORE": {
+					"TITLE": "Restore version",
+					"DESCRIPTION": "Are you sure you want to restore this version?",
+					"CONFIRM": "Restore"
 				}
 			}
 		},

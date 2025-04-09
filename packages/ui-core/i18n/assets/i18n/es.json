@@ -172,10 +172,14 @@
 		"RETRY": "Reintentar",
 		"UPLOAD": "Subir",
 		"MARKETPLACE": "Mercado",
-		"ADD_VERSION": "Añadir Versión"
+		"ADD_VERSION": "Añadir Versión",
+		"READ_MORE": "Leer más",
+		"READ_LESS": "Leer menos",
+		"RECOVER": "Recuperar"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "No hay historial",
 			"RECEIVE_ESTIMATE": "No has recibido ningún presupuesto.",
 			"INCOME": "No has creado ningún ingreso.",
 			"EXPENSE_CATEGORY": "No has creado ninguna categoría de gasto.",
@@ -4801,7 +4805,9 @@
 				"INVALID_SCOPE": "Formato de alcance no válido",
 				"AUTHOR_TOO_LONG": "El nombre del autor es demasiado largo",
 				"LICENSE_TOO_LONG": "El campo de la licencia es demasiado largo",
-				"FAILED": "Validación fallida"
+				"FAILED": "Validación fallida",
+				"CHANGELOG_TOO_SHORT": "El changelog es demasiado corto",
+				"CHANGELOG_REQUIRED": "El changelog es obligatorio"
 			},
 			"TYPE": "Tipo de complemento",
 			"TYPE_PLACEHOLDER": "Seleccione el tipo de complemento",
@@ -4875,7 +4881,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Descubrir",
-			"INSTALLED": "Instalado"
+			"INSTALLED": "Instalado",
+			"VERSION_HISTORY": "Historial de versiones"
 		},
 		"DIALOG": {
 			"DEACTIVATE": {
@@ -4888,6 +4895,11 @@
 				"DESCRIPTION": "¿Estás seguro de que quieres desinstalar este complemento?",
 				"CONFIRM": "Desinstalar"
 			},
+			"DELETE": {
+				"TITLE": "Eliminar complemento",
+				"DESCRIPTION": "¿Estás seguro de que quieres eliminar este complemento?",
+				"CONFIRM": "Eliminar"
+			},
 			"VERSION": {
 				"UPDATE": {
 					"TITLE": "Actualizar versión v{{number}}",
@@ -4898,6 +4910,16 @@
 					"TITLE": "Crear nueva versión para {{name}}",
 					"DESCRIPTION": "¿Estás seguro de que quieres crear esta versión?",
 					"CONFIRM": "Crear"
+				},
+				"DELETE": {
+					"TITLE": "Eliminar versión",
+					"DESCRIPTION": "¿Estás seguro de que quieres eliminar esta versión?",
+					"CONFIRM": "Eliminar"
+				},
+				"RESTORE": {
+					"TITLE": "Restaurar versión",
+					"DESCRIPTION": "¿Estás seguro de que quieres restaurar esta versión?",
+					"CONFIRM": "Restaurar"
 				}
 			}
 		},
