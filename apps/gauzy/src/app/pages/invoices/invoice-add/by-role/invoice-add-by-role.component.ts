@@ -160,6 +160,12 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			.pipe(
 				filter((user) => !!user),
 				tap((user) => {
+					// Check if the user has an employee, if not, then redirect to the invoices page
+					if (!user.employee) {
+						this.router.navigate(['/pages/accounting/invoices']);
+						return;
+					}
+
 					this.selectedEmployee = user;
 					this.initializeForm();
 					this._initializeMethods();
