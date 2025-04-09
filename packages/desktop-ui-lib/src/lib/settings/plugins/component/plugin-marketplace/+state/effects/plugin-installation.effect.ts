@@ -10,7 +10,7 @@ import { IPlugin } from '../../../../services/plugin-loader.service';
 import { PluginService } from '../../../../services/plugin.service';
 import { PluginInstallationActions } from '../actions/plugin-installation.action';
 import { PluginMarketplaceQuery } from '../queries/plugin-marketplace.query';
-import { PluginInsatallationStore } from '../stores/plugin-installation.store';
+import { PluginInstallationStore } from '../stores/plugin-installation.store';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginInstallationQuery } from '../queries/plugin-installation.query';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,7 +21,7 @@ export class PluginInstallationEffects {
 		private readonly action$: Actions,
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
 		private readonly pluginMarketplaceQuery: PluginMarketplaceQuery,
-		private readonly pluginInstallationStore: PluginInsatallationStore,
+		private readonly pluginInstallationStore: PluginInstallationStore,
 		private readonly pluginInstallationQuery: PluginInstallationQuery,
 		private readonly pluginService: PluginService,
 		private readonly pluginElectronService: PluginElectronService,

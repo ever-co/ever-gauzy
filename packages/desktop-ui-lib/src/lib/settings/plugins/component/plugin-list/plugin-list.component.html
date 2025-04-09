@@ -1,4 +1,4 @@
-@let installing = installationQuery.installing$ |async; @let uninstalling = installationQuery.unistalling$|async; @let
+@let installing = installationQuery.installing$ |async; @let uninstalling = installationQuery.uninstalling$|async; @let
 activating = query.activating$ |async; @let deactivating = query.deactivating$ |async; @let disabled = installing ||
 uninstalling || activating || deactivating; @let selected = query.plugin$ | async; @let loading = query.isLoading$ |
 async; @let source = sourceData$ | async;

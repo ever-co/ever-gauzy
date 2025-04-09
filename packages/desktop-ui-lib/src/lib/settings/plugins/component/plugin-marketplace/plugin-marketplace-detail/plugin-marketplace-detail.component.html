@@ -1,4 +1,4 @@
-@let installing = installationQuery.installing$ |async; @let uninstalling = installationQuery.unistalling$|async; @let
+@let installing = installationQuery.installing$ |async; @let uninstalling = installationQuery.uninstalling$|async; @let
 checked = isChecked$ | async; @let toggle = installationQuery.toggle$ | async ; @let disabled = installing ||
 uninstalling; @let isSelected = plugin?.id === toggle.plugin?.id; @let showProgress = disabled && isSelected; @let
 editing = marketplaceQuery.updating$ | async; @if(plugin) {
