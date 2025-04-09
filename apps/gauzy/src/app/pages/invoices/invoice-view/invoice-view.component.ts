@@ -21,8 +21,6 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 	public invoice: IInvoice;
 	public invoice$: Observable<IInvoice>;
 
-	private pdfFrame?: HTMLIFrameElement;
-
 	@Input() isEstimate: boolean;
 
 	constructor(
@@ -181,43 +179,25 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 
 			// Gert the invoice Blob object as URL
 			const { id: invoiceId } = this.invoice;
-			const blob = new Blob([await firstValueFrom(this._invoicesService.downloadInvoicePdf(invoiceId))], {
-				type: 'application/pdf'
-			});
+			const blob = await firstValueFrom(this._invoicesService.downloadInvoicePdf(invoiceId));
+			if (!blob || blob.type !== 'application/pdf') {
+				throw new Error('invalid-invoice');
+			}
 			const fileURL = URL.createObjectURL(blob);
 
-			// Create an iframe to display the PDF
-			this.clearPDFFrame();
-			this.pdfFrame = document.createElement('iframe');
+			// Create an window to display the PDF
+			const pdfWindow = window.open(fileURL, '_blank', 'popup=true');
+			if (!pdfWindow) {
+				throw new Error('failed-to-open-pdf-window');
+			}
 
-			// Print the PDF when the iframe is loaded
-			this.pdfFrame.onload = () => {
-				setTimeout(() => {
-					this.pdfFrame.focus();
-					this.pdfFrame.contentWindow.print();
-				}, 100);
+			// Print the PDF when the window is loaded
+			pdfWindow.onload = () => {
+				pdfWindow.print();
 			};
-
-			// Set the iframe source to the file URL
-			this.pdfFrame.src = fileURL;
-			// Append the iframe to the document body
-			document.body.appendChild(this.pdfFrame);
 		} catch (error) {
 			console.error('Failed to print the invoice:', error);
 			this._toastrService.danger('INVOICES_PAGE.ERRORS.PRINT');
 		}
-	}
-
-	/**
-	 * Destroy the PDF IFrame
-	 * @returns
-	 */
-	private clearPDFFrame() {
-		if (!this.pdfFrame) return;
-		this.pdfFrame.contentWindow?.close();
-		if (document.body.contains(this.pdfFrame)) {
-			document.body.removeChild(this.pdfFrame);
-		}
-		this.pdfFrame = undefined;
 	}
 }
