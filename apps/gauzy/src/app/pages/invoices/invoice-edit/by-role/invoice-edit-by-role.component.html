@@ -291,6 +291,7 @@
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
+					(createConfirm)="onCreateConfirm($event)"
 					(edit)="onEditRowSelect($event)"
 					(editConfirm)="onEditConfirm($event)"
 					(deleteConfirm)="onDeleteConfirm($event)"
