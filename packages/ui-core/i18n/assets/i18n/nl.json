@@ -224,7 +224,8 @@
 			"PRODUCT_TYPE_NO_DATA": "U heeft geen producttype gemaakt.",
 			"TEAM_DASHBOARD": "Je hebt geen teams.",
 			"PLUGIN": "Je hebt geen enkele plugin geïnstalleerd.",
-			"PLUGIN_MARKETPLACE": "Deze plugin is niet beschikbaar op de marktplaats"
+			"PLUGIN_MARKETPLACE": "Deze plugin is niet beschikbaar op de marktplaats",
+			"LOADING": "Laden..."
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Bedrag",

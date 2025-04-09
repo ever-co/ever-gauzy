@@ -224,7 +224,8 @@
 			"PRODUCT_TYPE_NO_DATA": "Sie haben keine Produktart erstellt.",
 			"TEAM_DASHBOARD": "Du hast keine Teams.",
 			"PLUGIN": "Sie haben kein Plugin installiert.",
-			"PLUGIN_MARKETPLACE": "Dieses Plugin ist im Marktplatz nicht verfügbar"
+			"PLUGIN_MARKETPLACE": "Dieses Plugin ist im Marktplatz nicht verfügbar",
+			"LOADING": "Laden..."
 		},
 		"TRANSACTION_TYPE": "Art\n",
 		"AMOUNT": "Menge",

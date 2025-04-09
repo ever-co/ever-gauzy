@@ -224,7 +224,8 @@
 			"PRODUCT_TYPE_NO_DATA": "Você não criou nenhum tipo de produto.",
 			"TEAM_DASHBOARD": "Você não tem nenhum time.",
 			"PLUGIN": "Você não instalou nenhum plugin.",
-			"PLUGIN_MARKETPLACE": "Este plugin não está disponível no marketplace"
+			"PLUGIN_MARKETPLACE": "Este plugin não está disponível no marketplace",
+			"LOADING": "Carregando..."
 		},
 		"TRANSACTION_TYPE": "Digite",
 		"AMOUNT": "Quantia.",

@@ -167,7 +167,7 @@ marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ 
 					@if(selectedVersion; as version) {
 					<div class="info-card mb-4">
 						<div class="d-flex align-items-center mb-3">
-							<h6 class="section-title m-0">What's New</h6>
+							<h6 class="section-title m-0">{{ 'CHANGELOG_MENU.HEADER' | translate }}</h6>
 							<button nbButton ghost status="basic" class="ml-2 mr-2" (click)="navigateToHistory()">
 								<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 							</button>

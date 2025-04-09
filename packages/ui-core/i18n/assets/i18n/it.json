@@ -224,7 +224,8 @@
 			"PRODUCT_TYPE_NO_DATA": "Non hai creato alcun tipo di prodotto",
 			"TEAM_DASHBOARD": "Non hai nessuna squadra",
 			"PLUGIN": "Non hai installato alcun plugin.",
-			"PLUGIN_MARKETPLACE": "Questo plugin non è disponibile sul marketplace"
+			"PLUGIN_MARKETPLACE": "Questo plugin non è disponibile sul marketplace",
+			"LOADING": "Caricamento..."
 		},
 		"TRANSACTION_TYPE": "Tipo",
 		"AMOUNT": "Importo",

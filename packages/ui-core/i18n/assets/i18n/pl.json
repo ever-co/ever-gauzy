@@ -223,7 +223,8 @@
 			"PRODUCT_TYPE_NO_DATA": "Nie utworzyłeś żadnego typu produktu",
 			"TEAM_DASHBOARD": "Nie masz żadnych zespołów",
 			"PLUGIN": "Nie zainstalowano żadnych wtyczek.",
-			"PLUGIN_MARKETPLACE": "Ta wtyczka nie jest dostępna na rynku"
+			"PLUGIN_MARKETPLACE": "Ta wtyczka nie jest dostępna na rynku",
+			"LOADING": "Ładuje..."
 		},
 		"TRANSACTION_TYPE": "Rodzaj",
 		"AMOUNT": "Kwota",
