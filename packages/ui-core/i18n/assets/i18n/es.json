@@ -4845,7 +4845,10 @@
 				"REPOSITORY": "Repositorio",
 				"REPOSITORY_PLACEHOLDER": "Ingrese la URL del repositorio"
 			},
-			"OR": "O"
+			"OR": "O",
+			"RELEASE_DATE": "Fecha de lanzamiento",
+			"CHANGELOG": "Changelog",
+			"CHANGELOG_PLACEHOLDER": "Ingrese el changelog"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Estadísticas de uso",
@@ -4855,11 +4858,19 @@
 			"UPLOADED_AT": "Subido en",
 			"SECURITY_INFO": "Información de seguridad",
 			"CHECKSUM": "Suma de verificación",
-			"SIGNATURE": "Firma"
+			"SIGNATURE": "Firma",
+			"INSTALLED": "Instalado",
+			"HIDDEN_FOR_SECURITY": "Ocultado por motivos de seguridad"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Descubrir",
 			"INSTALLED": "Instalado"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Servidor no disponible",
+		"DESCRIPTION": "El servidor de {{companySite}} no está disponible actualmente. Esto puede deberse a mantenimiento programado o tiempo de inactividad inesperado.",
+		"CONNECTING": "Reintentando conexión automáticamente...",
+		"HINT": "Estado: Intentando establecer conexión con los servidores de {{companySite}}. Código de error: 503."
 	}
 }

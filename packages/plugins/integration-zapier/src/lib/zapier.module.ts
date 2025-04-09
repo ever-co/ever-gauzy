@@ -1,6 +1,8 @@
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { CqrsModule, EventsHandler } from '@nestjs/cqrs';
+import { CqrsModule } from '@nestjs/cqrs';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, environment } from '@gauzy/config';
 import {
     IntegrationEntitySettingModule,
@@ -9,20 +11,19 @@ import {
     IntegrationSettingModule,
     IntegrationTenantModule,
     UserModule,
-    RolePermissionModule
+    RolePermissionModule,
+    TimerModule,
+    CommandHandlers,
+    QueryHandlers
 } from '@gauzy/core';
 import { ZapierService } from './zapier.service';
 import { ZapierController } from './zapier.controller';
 import { ZapierAuthorizationController } from './zapier-authorization.controller';
 import { ZapierWebhookService } from './zapier-webhook.service';
 import { ZapierWebhookController } from './zapier-webhook.controller';
+import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
 import { MikroOrmZapierWebhookSubscriptionRepository } from './repository/mikro-orm-zapier.repository';
 import { TypeOrmZapierWebhookSubscriptionRepository } from './repository/type-orm-zapier.repository';
-import { ZapierWebhookSubscriptionRepository } from './repository/zapier-repository.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { TimerModule } from '@gauzy/core';
-import { EventHandlers } from './handlers';
 
 @Module({
     imports: [
@@ -37,17 +38,18 @@ import { EventHandlers } from './handlers';
         IntegrationTenantModule,
         UserModule,
         TimerModule,
-        TypeOrmModule.forFeature([ZapierWebhookSubscriptionRepository]),
-        MikroOrmModule.forFeature([ZapierWebhookSubscriptionRepository])
+        TypeOrmModule.forFeature([ZapierWebhookSubscription]),
+        MikroOrmModule.forFeature([ZapierWebhookSubscription])
     ],
     controllers: [ZapierAuthorizationController, ZapierController, ZapierWebhookController],
     providers: [
-                ZapierService,
-                ZapierWebhookService,
-                MikroOrmZapierWebhookSubscriptionRepository,
-                TypeOrmZapierWebhookSubscriptionRepository,
-                ...EventHandlers
-                ],
-    exports: [ZapierService, ZapierWebhookService]
+        ZapierService,
+        ZapierWebhookService,
+        MikroOrmZapierWebhookSubscriptionRepository,
+        TypeOrmZapierWebhookSubscriptionRepository,
+        ...CommandHandlers,
+        ...QueryHandlers
+    ],
+    exports: [ZapierService, ZapierWebhookService, TimerModule]
 })
-export class ZapierModule {}
+export class ZapierModule { }

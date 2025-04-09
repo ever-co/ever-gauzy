@@ -17,12 +17,12 @@ import {
 } from '@gauzy/core';
 
 // Local imports
-import { MikroOrmZapierWebhookSubscriptionRepository } from './mikro-orm-zapier.repository';
+import { MikroOrmZapierWebhookSubscriptionRepository } from './repository/mikro-orm-zapier.repository';
 
 @MultiORMEntity('zapier_webhook_subscription', {
 	mikroOrmRepository: () => MikroOrmZapierWebhookSubscriptionRepository
 })
-export class ZapierWebhookSubscriptionRepository extends TenantOrganizationBaseEntity {
+export class ZapierWebhookSubscription extends TenantOrganizationBaseEntity {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@ColumnIndex()
@@ -37,7 +37,7 @@ export class ZapierWebhookSubscriptionRepository extends TenantOrganizationBaseE
 
 	@ApiProperty({ type: () => String })
 	@IsUUID()
-	@RelationId((it: ZapierWebhookSubscriptionRepository) => it.integration)
+	@RelationId((it: ZapierWebhookSubscription) => it.integration)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	integrationId!: ID;

@@ -9,37 +9,37 @@ $register-background-light-color: var(--gauzy-card-1);
 // Queries
 @mixin mobile-screen {
   @media screen and (max-width: 490px) {
-    @content
+    @content;
   }
 }
 
 @mixin small-mobile-screen {
   @media screen and (max-width: 320px) {
-    @content
+    @content;
   }
 }
 
 @mixin small-laptop-screen {
   @media screen and (max-width: 1024px) {
-    @content
+    @content;
   }
 }
 
 @mixin tablet-screen {
   @media screen and (max-width: 790px) {
-    @content
+    @content;
   }
 }
 
 @mixin not-mobile-screen {
   @media screen and (min-width: 491px) {
-    @content
+    @content;
   }
 }
 
 @mixin big-screen {
   @media screen and (min-width: 1400px) {
-    @content
+    @content;
   }
 }
 
@@ -61,7 +61,7 @@ $register-background-light-color: var(--gauzy-card-1);
   &:enabled {
     background-color: $button-color;
     border: 1px solid $button-color;
-    color: #FFFFFF;
+    color: #ffffff;
   }
 }
 
@@ -74,7 +74,6 @@ $register-background-light-color: var(--gauzy-card-1);
   }
 
   & .socials {
-
     & .social-link {
       margin: 0;
       border: 1px solid transparent;
@@ -174,7 +173,7 @@ $register-background-light-color: var(--gauzy-card-1);
 
 @mixin input-fields-color {
   ::ng-deep .input-full-width {
-    box-shadow: rgba(0, 0, 0, 0.1) 0px .5px 0.5px .5px inset;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 0.5px 0.5px 0.5px inset;
     border-radius: var(--border-radius);
     background-color: var(--gauzy-input-background) !important;
     border: unset;
@@ -186,5 +185,24 @@ $register-background-light-color: var(--gauzy-card-1);
 
   ::ng-deep ngx-register .register-wrapper.dark .input-full-width {
     background-color: rgba(255, 255, 255, 0.15) !important;
+  }
+}
+
+::ng-deep {
+  nb-card-body {
+    padding: 44px 1rem 1rem;
+  }
+
+  nb-card-header {
+    display: none;
+  }
+
+  nb-auth-block {
+    height: 100%;
+  }
+
+  label {
+    color: var(--gauzy-text-color-2) !important;
+    font-weight: 600 !important;
   }
 }

@@ -1,8 +1,9 @@
 /**
  * Base interface for tenant and organization-scoped entities
  */
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployee } from './employee.model';
+import { FileStorageProviderEnum } from './file-provider';
 
 /**
  * Defines the possible states of a plugin
@@ -52,7 +53,6 @@ export interface ICDNSource extends IPluginSource {
 export interface INPMSource extends IPluginSource {
 	type: PluginSourceType.NPM;
 	name: string; // Package name
-	version: string; // Semantic version
 	registry?: string; // Optional custom NPM registry URL
 	authToken?: string; // Optional auth token for private packages
 	scope?: string; // Optional package scope (e.g., '@organization')
@@ -71,42 +71,107 @@ export interface IGauzySource extends IPluginSource {
  * Main plugin interface definition
  */
 export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
-	// Core properties
-	name: string; // Human-readable plugin name
-	description?: string; // Brief description of plugin functionality
-	type: PluginType; // Platform target
-	status: PluginStatus; // Current lifecycle status
-	versions: string[]; // Semantic version (following semver)
+	name: string; // Plugin name
+	description?: string; // Optional description
+	type: PluginType; // Type of the plugin
+	status: PluginStatus; // Status of the plugin
+	versions: IPluginVersion[]; // List of plugin versions
+	version?: IPluginVersion; // Current version
 
-	// Source information
-	source: ICDNSource | INPMSource | IGauzySource; // Distribution source
+	installed: boolean; // Whether the plugin is currently installed
 
-	// Security and integrity
-	checksum?: string; // Verification hash
-	signature?: string; // Digital signature for verification
+	author?: string; // Optional author information
+	license?: string; // Optional license information
+	homepage?: string; // Optional homepage URL
+	repository?: string; // Optional repository URL
 
-	// Metadata
-	author?: string; // Plugin author
-	license?: string; // License type (e.g., MIT, GPL)
-	homepage?: string; // Plugin documentation URL
-	repository?: string; // Source code repository URL
-
-	// Usage tracking
 	uploadedBy?: IEmployee; // Employee who uploaded the plugin
-	uploadedAt?: Date; // When the plugin was uploaded
-	downloadCount: number; // Number of times downloaded/installed
-	lastDownloadedAt?: Date; // Most recent download timestamp
+	uploadedById?: ID; // ID reference for the employee who uploaded the plugin
+	uploadedAt?: Date; // Optional date when the plugin was uploaded
+
+	source?: IPluginSource; // Optional reference to the plugin's source
+
+	downloadCount: number; // Number of times the plugin has been downloaded
+	lastDownloadedAt?: Date; // Optional date when the plugin was last downloaded
 }
 
 /**
  * Interface for creating a new plugin
  */
 export interface ICreatePlugin
-	extends Omit<IPlugin, 'id' | 'downloadCount' | 'uploadedAt' | 'lastDownloadedAt' | 'versions'> {
-	version: string;
-}
+	extends Omit<IPlugin, 'id' | 'downloadCount' | 'uploadedAt' | 'lastDownloadedAt' | 'versions'> {}
 
 /**
  * Interface for updating an existing plugin
  */
 export interface IUpdatePlugin extends Partial<ICreatePlugin> {}
+
+export interface IPluginVersion extends IBasePerTenantAndOrganizationEntityModel {
+	number: string; // SemVer formatted string
+	changelog: string; // Description of changes in the version
+	releaseDate?: Date; // Optional ISO 8601 formatted date
+	downloadCount?: number; // Optional, defaults to 0
+	source?: IPluginSource; // Optional reference to the plugin's source
+	sourceId?: ID; // ID reference for the plugin's source
+
+	plugin?: IPlugin; // Optional reference to plugin
+	pluginId?: ID; // ID reference for plugin
+
+	// Security and integrity
+	checksum?: string; // Verification hash
+	signature?: string; // Digital signature for verification
+}
+
+export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel {
+	type: PluginSourceType; // Type of the plugin source (CDN, NPM, File Upload)
+
+	// CDN Source
+	url?: string; // URL of the plugin source
+	integrity?: string; // Integrity hash for the CDN source
+	crossOrigin?: string; // Cross-origin policy for the CDN source
+
+	// NPM Source
+	name?: string; // NPM package name
+	registry?: string; // NPM registry URL
+	authToken?: string; // NPM authentication token
+	scope?: string; // NPM scope
+
+	// File Upload (Gauzy source)
+	filePath?: string; // Path to the uploaded plugin file
+	fileName?: string; // Name of the uploaded plugin file (must end with `.zip`)
+	fileSize?: number; // File size in bytes (max 1GB)
+	mimeType?: string; // Must be `application/zip`
+	fileKey?: string; // Unique key for the uploaded file
+
+	// Storage
+	storageProvider?: FileStorageProviderEnum;
+
+	// Associated Plugin
+	plugin?: IPlugin; // Associated plugin entity
+	pluginId?: ID; // ID of the associated plugin
+}
+
+export enum PluginInstallationStatus {
+	INSTALLED = 'INSTALLED',
+	UNINSTALLED = 'UNINSTALLED',
+	FAILED = 'FAILED',
+	IN_PROGRESS = 'IN_PROGRESS'
+}
+/**
+ * Plugin installation record
+ */
+export interface IPluginInstallation extends IBasePerTenantAndOrganizationEntityModel {
+	plugin: IPlugin; // Installed plugin entity
+	pluginId?: ID; // ID reference for the installed plugin
+
+	version: IPluginVersion; // Installed version of the plugin
+	versionId?: ID; // ID reference for the installed plugin version
+
+	installedBy?: IEmployee; // Employee who installed the plugin
+	installedById?: ID; // ID reference for the employee who installed the plugin
+
+	installedAt?: Date; // Optional date when the plugin was installed
+	uninstalledAt?: Date; // Optional date when the plugin was uninstalled
+
+	status: PluginInstallationStatus; // Status of the plugin installation
+}

@@ -3,7 +3,10 @@ import { ExtraOptions, RouterModule, Routes } from '@angular/router';
 import {
 	AboutComponent,
 	AlwaysOnComponent,
+	AUTH_CONNECTION_GUARD_CONFIG,
+	AuthConnectionGuard,
 	AuthGuard,
+	DEFAULT_AUTH_CONNECTION_GUARD_CONFIG,
 	ImageViewerComponent,
 	ScreenCaptureComponent,
 	ServerDownPage,
@@ -23,12 +26,12 @@ const routes: Routes = [
 	{
 		path: 'auth',
 		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.authRoutes),
-		canActivate: [AppModuleGuard]
+		canActivate: [AppModuleGuard, AuthConnectionGuard]
 	},
 	{
 		path: 'time-tracker',
 		component: TimeTrackerComponent,
-		canActivate: [AppModuleGuard, AuthGuard],
+		canActivate: [AppModuleGuard, AuthGuard, AuthConnectionGuard],
 		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.recapRoutes)
 	},
 	{
@@ -63,7 +66,7 @@ const routes: Routes = [
 	{
 		path: '',
 		component: TimeTrackerComponent,
-		canActivate: [AppModuleGuard, AuthGuard]
+		canActivate: [AppModuleGuard, AuthGuard, AuthConnectionGuard]
 	},
 	{
 		path: 'about',
@@ -80,6 +83,12 @@ const config: ExtraOptions = {
 
 @NgModule({
 	imports: [RouterModule.forRoot(routes, config)],
-	exports: [RouterModule]
+	exports: [RouterModule],
+	providers: [
+		{
+			provide: AUTH_CONNECTION_GUARD_CONFIG,
+			useValue: DEFAULT_AUTH_CONNECTION_GUARD_CONFIG
+		}
+	]
 })
 export class AppRoutingModule {}

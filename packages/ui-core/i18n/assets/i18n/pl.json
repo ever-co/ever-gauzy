@@ -4844,7 +4844,10 @@
 				"REPOSITORY": "Repozytorium",
 				"REPOSITORY_PLACEHOLDER": "Wprowadź URL repozytorium"
 			},
-			"OR": "Lub"
+			"OR": "Lub",
+			"RELEASE_DATE": "Data wydania",
+			"CHANGELOG": "Przepraszam",
+			"CHANGELOG_PLACEHOLDER": "Wprowadź przepraszam"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Statystyki użytkowania",
@@ -4854,11 +4857,19 @@
 			"UPLOADED_AT": "Przesłane w",
 			"SECURITY_INFO": "Informacje o bezpieczeństwie",
 			"CHECKSUM": "Suma kontrolna",
-			"SIGNATURE": "Podpis"
+			"SIGNATURE": "Podpis",
+			"INSTALLED": "Zainstalowane",
+			"HIDDEN_FOR_SECURITY": "Ukryta w celach bezpieczeństwa"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Odkryj",
 			"INSTALLED": "Zainstalowane"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Serwer niedostępny",
+		"DESCRIPTION": "Serwer {{companySite}} jest obecnie niedostępny. Może to być spowodowane planowaną konserwacją lub nieoczekiwanym przestojem.",
+		"CONNECTING": "Automatyczne ponowne łączenie...",
+		"HINT": "Status: Próba nawiązania połączenia z serwerami {{companySite}}. Kod błędu: 503."
 	}
 }
