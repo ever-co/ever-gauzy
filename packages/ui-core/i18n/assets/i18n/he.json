@@ -4872,6 +4872,10 @@
 			"INSTALLED": "מותקן",
 			"VERSION_HISTORY": "היסטוריית גרסאות"
 		},
+		"MARKETPLACE": {
+			"UPLOAD": "העלה תוסף חדש",
+			"OFFLINE": "אתה לא מחובר כרגע ⛓️‍"
+		},
 		"DIALOG": {
 			"DEACTIVATE": {
 				"TITLE": "לבטל את ההפעלה של התוסף",

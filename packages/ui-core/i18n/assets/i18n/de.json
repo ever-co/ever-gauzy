@@ -4879,6 +4879,10 @@
 			"INSTALLED": "Installiert",
 			"VERSION_HISTORY": "Versionsverlauf"
 		},
+		"MARKETPLACE": {
+			"UPLOAD": "Neues Plugin hochladen",
+			"OFFLINE": "Sie sind derzeit offline/getrennt ⛓️‍"
+		},
 		"DIALOG": {
 			"DEACTIVATE": {
 				"TITLE": "Plugin deaktivieren",

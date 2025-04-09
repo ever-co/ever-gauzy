@@ -4883,6 +4883,10 @@
 			"INSTALLED": "Installato",
 			"VERSION_HISTORY": "Cronologia versioni"
 		},
+		"MARKETPLACE": {
+			"UPLOAD": "Carica nuovo plugin",
+			"OFFLINE": "Sei attualmente offline/disconnesso ⛓️‍"
+		},
 		"DIALOG": {
 			"DEACTIVATE": {
 				"TITLE": "Disattiva plugin",

@@ -5030,6 +5030,10 @@
 			"INSTALLED": "Installed",
 			"HIDDEN_FOR_SECURITY": "Hidden for security reasons"
 		},
+		"MARKETPLACE": {
+			"UPLOAD": "Upload New Plugin",
+			"OFFLINE": "You are currently offline/disconnected ⛓️‍"
+		},
 		"LAYOUT": {
 			"DISCOVER": "Discover",
 			"INSTALLED": "Installed",

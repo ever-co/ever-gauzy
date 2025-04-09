@@ -4883,6 +4883,10 @@
 			"INSTALLED": "Geïnstalleerd",
 			"VERSION_HISTORY": "Versiegeschiedenis"
 		},
+		"MARKETPLACE": {
+			"UPLOAD": "Nieuwe plugin uploaden",
+			"OFFLINE": "U bent momenteel offline/verbinding verbroken ⛓️‍"
+		},
 		"DIALOG": {
 			"DEACTIVATE": {
 				"TITLE": "Plugin deactiveren",

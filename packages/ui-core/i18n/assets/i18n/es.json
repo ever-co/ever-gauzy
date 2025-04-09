@@ -4885,6 +4885,10 @@
 			"INSTALLED": "Instalado",
 			"VERSION_HISTORY": "Historial de versiones"
 		},
+		"MARKETPLACE": {
+			"UPLOAD": "Subir nuevo complemento",
+			"OFFLINE": "Actualmente estás desconectado ⛓️‍"
+		},
 		"DIALOG": {
 			"DEACTIVATE": {
 				"TITLE": "Desactivar complemento",

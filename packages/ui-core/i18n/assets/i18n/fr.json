@@ -4874,6 +4874,10 @@
 			"INSTALLED": "Installé",
 			"VERSION_HISTORY": "Historique des versions"
 		},
+		"MARKETPLACE": {
+			"UPLOAD": "Télécharger un nouveau plugin",
+			"OFFLINE": "Vous êtes actuellement hors ligne/déconnecté ⛓️‍"
+		},
 		"DIALOG": {
 			"DEACTIVATE": {
 				"TITLE": "Désactiver l'extension",

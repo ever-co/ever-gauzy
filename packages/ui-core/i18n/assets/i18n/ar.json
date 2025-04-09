@@ -4868,6 +4868,10 @@
 			"INSTALLED": "مثبت",
 			"VERSION_HISTORY": "سجل الإصدارات"
 		},
+		"MARKETPLACE": {
+			"UPLOAD": "رفع ملحق جديد",
+			"OFFLINE": "أنت غير متصل حالياً ⛓️‍"
+		},
 		"DIALOG": {
 			"DEACTIVATE": {
 				"TITLE": "إلغاء تنشيط الإضافة",

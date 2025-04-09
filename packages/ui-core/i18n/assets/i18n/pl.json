@@ -4882,6 +4882,10 @@
 			"INSTALLED": "Zainstalowane",
 			"VERSION_HISTORY": "Historia wersji"
 		},
+		"MARKETPLACE": {
+			"UPLOAD": "Prześlij nową wtyczkę",
+			"OFFLINE": "Jesteś obecnie offline/rozłączony ⛓️‍"
+		},
 		"DIALOG": {
 			"DEACTIVATE": {
 				"TITLE": "Dezaktywuj wtyczkę",

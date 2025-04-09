@@ -4883,6 +4883,10 @@
 			"INSTALLED": "已安装",
 			"VERSION_HISTORY": "版本历史"
 		},
+		"MARKETPLACE": {
+			"UPLOAD": "上传新插件",
+			"OFFLINE": "您当前处于离线/断开连接状态 ⛓️‍"
+		},
 		"DIALOG": {
 			"DEACTIVATE": {
 				"TITLE": "停用插件",
