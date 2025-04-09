@@ -91,9 +91,9 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 	permissionsEnum = PermissionsEnum;
 	invoices$: Subject<IInvoice[]> = this.subject$;
 	nbTab$: Subject<string> = new BehaviorSubject(InvoiceTabsEnum.ACTIONS);
+	currentUser: IUser;
 	private readonly _refresh$: Subject<void> = new Subject();
 
-	currentUser: IUser;
 
 	/*
 	 * getter setter for check estimate or invoice
