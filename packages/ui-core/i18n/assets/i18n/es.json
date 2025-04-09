@@ -4800,7 +4800,8 @@
 				"INVALID_PACKAGE_NAME": "Formato de nombre de paquete no válido",
 				"INVALID_SCOPE": "Formato de alcance no válido",
 				"AUTHOR_TOO_LONG": "El nombre del autor es demasiado largo",
-				"LICENSE_TOO_LONG": "El campo de la licencia es demasiado largo"
+				"LICENSE_TOO_LONG": "El campo de la licencia es demasiado largo",
+				"FAILED": "Validación fallida"
 			},
 			"TYPE": "Tipo de complemento",
 			"TYPE_PLACEHOLDER": "Seleccione el tipo de complemento",
@@ -4886,6 +4887,18 @@
 				"TITLE": "Desinstalar complemento",
 				"DESCRIPTION": "¿Estás seguro de que quieres desinstalar este complemento?",
 				"CONFIRM": "Desinstalar"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Actualizar versión v{{number}}",
+					"DESCRIPTION": "¿Estás seguro de que quieres actualizar este complemento?",
+					"CONFIRM": "Actualizar"
+				},
+				"CREATE": {
+					"TITLE": "Crear nueva versión para {{name}}",
+					"DESCRIPTION": "¿Estás seguro de que quieres crear esta versión?",
+					"CONFIRM": "Crear"
+				}
 			}
 		},
 		"TOASTR": {

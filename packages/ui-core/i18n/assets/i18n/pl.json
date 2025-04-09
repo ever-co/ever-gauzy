@@ -4798,7 +4798,8 @@
 				"INVALID_PACKAGE_NAME": "Nieprawidłowy format nazwy pakietu",
 				"INVALID_SCOPE": "Nieprawidłowy format zakresu",
 				"AUTHOR_TOO_LONG": "Nazwa autora jest zbyt długa",
-				"LICENSE_TOO_LONG": "Pole licencji jest zbyt długie"
+				"LICENSE_TOO_LONG": "Pole licencji jest zbyt długie",
+				"FAILED": "Walidacja nie powiodła się"
 			},
 			"TYPE": "Typ wtyczki",
 			"TYPE_PLACEHOLDER": "Wybierz typ wtyczki",
@@ -4884,6 +4885,18 @@
 				"TITLE": "Odinstaluj wtyczkę",
 				"DESCRIPTION": "Czy na pewno chcesz odinstalować tę wtyczkę?",
 				"CONFIRM": "Odinstaluj"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Aktualizuj wersję v{{number}}",
+					"DESCRIPTION": "Czy na pewno chcesz zaktualizować tę wtyczkę?",
+					"CONFIRM": "Aktualizuj"
+				},
+				"CREATE": {
+					"TITLE": "Utwórz nową wersję dla {{name}}",
+					"DESCRIPTION": "Czy na pewno chcesz utworzyć tę wersję?",
+					"CONFIRM": "Utwórz"
+				}
 			}
 		},
 		"TOASTR": {

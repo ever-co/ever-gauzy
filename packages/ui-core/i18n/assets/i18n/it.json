@@ -4798,7 +4798,8 @@
 				"INVALID_PACKAGE_NAME": "Formato del nome del pacchetto non valido",
 				"INVALID_SCOPE": "Formato dell'ambito non valido",
 				"AUTHOR_TOO_LONG": "Il nome dell'autore è troppo lungo",
-				"LICENSE_TOO_LONG": "Il campo della licenza è troppo lungo"
+				"LICENSE_TOO_LONG": "Il campo della licenza è troppo lungo",
+				"FAILED": "Validazione fallita"
 			},
 			"TYPE": "Tipo di plugin",
 			"TYPE_PLACEHOLDER": "Seleziona il tipo di plugin",
@@ -4884,6 +4885,18 @@
 				"TITLE": "Disinstalla plugin",
 				"DESCRIPTION": "Sei sicuro di voler disinstallare questo plugin?",
 				"CONFIRM": "Disinstalla"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Aggiorna versione v{{number}}",
+					"DESCRIPTION": "Sei sicuro di voler aggiornare questo plugin?",
+					"CONFIRM": "Aggiorna"
+				},
+				"CREATE": {
+					"TITLE": "Crea nuova versione per {{name}}",
+					"DESCRIPTION": "Sei sicuro di voler creare questa versione?",
+					"CONFIRM": "Crea"
+				}
 			}
 		},
 		"TOASTR": {

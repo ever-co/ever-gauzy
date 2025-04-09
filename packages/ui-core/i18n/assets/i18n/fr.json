@@ -4789,7 +4789,8 @@
 				"INVALID_PACKAGE_NAME": "Format de nom de package invalide",
 				"INVALID_SCOPE": "Format de portée invalide",
 				"AUTHOR_TOO_LONG": "Le nom de l'auteur est trop long",
-				"LICENSE_TOO_LONG": "Le champ de la licence est trop long"
+				"LICENSE_TOO_LONG": "Le champ de la licence est trop long",
+				"FAILED": "Échec de la validation"
 			},
 			"TYPE": "Type de plugin",
 			"TYPE_PLACEHOLDER": "Sélectionnez le type de plugin",
@@ -4875,6 +4876,18 @@
 				"TITLE": "Désinstaller l'extension",
 				"DESCRIPTION": "Êtes-vous sûr de vouloir désinstaller cette extension ?",
 				"CONFIRM": "Désinstaller"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Mettre à jour la version v{{number}}",
+					"DESCRIPTION": "Êtes-vous sûr de vouloir mettre à jour cette version ?",
+					"CONFIRM": "Mettre à jour"
+				},
+				"CREATE": {
+					"TITLE": "Créer une nouvelle version pour {{name}}",
+					"DESCRIPTION": "Êtes-vous sûr de vouloir créer cette version ?",
+					"CONFIRM": "Créer"
+				}
 			}
 		},
 		"TOASTR": {

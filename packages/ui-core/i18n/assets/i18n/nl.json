@@ -4798,7 +4798,8 @@
 				"INVALID_PACKAGE_NAME": "Ongeldig pakketnaamformaat",
 				"INVALID_SCOPE": "Ongeldig bereikformaat",
 				"AUTHOR_TOO_LONG": "Auteursnaam is te lang",
-				"LICENSE_TOO_LONG": "Licentieveld is te lang"
+				"LICENSE_TOO_LONG": "Licentieveld is te lang",
+				"FAILED": "Validatie mislukt"
 			},
 			"TYPE": "Plugintype",
 			"TYPE_PLACEHOLDER": "Selecteer plugintype",
@@ -4884,6 +4885,18 @@
 				"TITLE": "Plugin verwijderen",
 				"DESCRIPTION": "Weet u zeker dat u deze plugin wilt verwijderen?",
 				"CONFIRM": "Verwijderen"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Versie v{{number}} bijwerken",
+					"DESCRIPTION": "Weet u zeker dat u deze plugin wilt bijwerken?",
+					"CONFIRM": "Bijwerken"
+				},
+				"CREATE": {
+					"TITLE": "Nieuwe versie maken voor {{name}}",
+					"DESCRIPTION": "Weet u zeker dat u deze versie wilt maken?",
+					"CONFIRM": "Maken"
+				}
 			}
 		},
 		"TOASTR": {

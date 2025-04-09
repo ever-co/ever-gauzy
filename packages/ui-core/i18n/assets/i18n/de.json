@@ -4794,7 +4794,8 @@
 				"INVALID_PACKAGE_NAME": "Ungültiges Paketnamenformat",
 				"INVALID_SCOPE": "Ungültiges Scope-Format",
 				"AUTHOR_TOO_LONG": "Autorenname ist zu lang",
-				"LICENSE_TOO_LONG": "Lizenzfeld ist zu lang"
+				"LICENSE_TOO_LONG": "Lizenzfeld ist zu lang",
+				"FAILED": "Validierung fehlgeschlagen"
 			},
 			"TYPE": "Plugin-Typ",
 			"TYPE_PLACEHOLDER": "Wählen Sie den Plugin-Typ",
@@ -4880,6 +4881,18 @@
 				"TITLE": "Plugin deinstallieren",
 				"DESCRIPTION": "Möchten Sie dieses Plugin wirklich deinstallieren?",
 				"CONFIRM": "Deinstallieren"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Version v{{number}} aktualisieren",
+					"DESCRIPTION": "Sind Sie sicher, dass Sie dieses Plugin aktualisieren möchten?",
+					"CONFIRM": "Aktualisieren"
+				},
+				"CREATE": {
+					"TITLE": "Neue Version für {{name}} erstellen",
+					"DESCRIPTION": "Sind Sie sicher, dass Sie diese Version erstellen möchten?",
+					"CONFIRM": "Erstellen"
+				}
 			}
 		},
 		"TOASTR": {

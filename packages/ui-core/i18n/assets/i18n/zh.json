@@ -4798,7 +4798,8 @@
 				"INVALID_PACKAGE_NAME": "包名称格式无效",
 				"INVALID_SCOPE": "作用域格式无效",
 				"AUTHOR_TOO_LONG": "作者名称过长",
-				"LICENSE_TOO_LONG": "许可证字段过长"
+				"LICENSE_TOO_LONG": "许可证字段过长",
+				"FAILED": "验证失败"
 			},
 			"TYPE": "插件类型",
 			"TYPE_PLACEHOLDER": "选择插件类型",
@@ -4884,6 +4885,18 @@
 				"TITLE": "卸载插件",
 				"DESCRIPTION": "确定要卸载此插件吗？",
 				"CONFIRM": "卸载"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "更新版本 v{{number}}",
+					"DESCRIPTION": "您确定要更新此插件吗？",
+					"CONFIRM": "更新"
+				},
+				"CREATE": {
+					"TITLE": "为 {{name}} 创建新版本",
+					"DESCRIPTION": "您确定要创建此版本吗？",
+					"CONFIRM": "创建"
+				}
 			}
 		},
 		"TOASTR": {

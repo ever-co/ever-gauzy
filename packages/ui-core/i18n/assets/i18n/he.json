@@ -4788,7 +4788,8 @@
 				"INVALID_PACKAGE_NAME": "פורמט שם חבילה לא תקין",
 				"INVALID_SCOPE": "פורמט היקף לא תקין",
 				"AUTHOR_TOO_LONG": "שם המחבר ארוך מדי",
-				"LICENSE_TOO_LONG": "שדה הרישיון ארוך מדי"
+				"LICENSE_TOO_LONG": "שדה הרישיון ארוך מדי",
+				"FAILED": "האימות נכשל"
 			},
 			"TYPE": "סוג התוסף",
 			"TYPE_PLACEHOLDER": "בחר סוג תוסף",
@@ -4874,6 +4875,18 @@
 				"TITLE": "הסר את התוסף",
 				"DESCRIPTION": "האם אתה בטוח שברצונך להסיר את התוסף הזה?",
 				"CONFIRM": "הסר התקנה"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "עדכון גרסה v{{number}}",
+					"DESCRIPTION": "האם אתה בטוח שברצונך לעדכן את התוסף הזה?",
+					"CONFIRM": "עדכן"
+				},
+				"CREATE": {
+					"TITLE": "צור גרסה חדשה עבור {{name}}",
+					"DESCRIPTION": "האם אתה בטוח שברצונך ליצור גרסה זו?",
+					"CONFIRM": "צור"
+				}
 			}
 		},
 		"TOASTR": {

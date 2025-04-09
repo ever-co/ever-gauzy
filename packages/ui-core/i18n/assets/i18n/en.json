@@ -4951,7 +4951,8 @@
 				"INVALID_PACKAGE_NAME": "Invalid package name format",
 				"INVALID_SCOPE": "Invalid scope format",
 				"AUTHOR_TOO_LONG": "Author name is too long",
-				"LICENSE_TOO_LONG": "License field is too long"
+				"LICENSE_TOO_LONG": "License field is too long",
+				"FAILED": "Validation failed"
 			},
 			"TYPE": "Plugin Type",
 			"TYPE_PLACEHOLDER": "Select plugin type",
@@ -5037,6 +5038,18 @@
 				"TITLE": "Uninstall Plugin",
 				"DESCRIPTION": "Are you sure you want to uninstall this plugin?",
 				"CONFIRM": "Uninstall"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Update version v{{number}}",
+					"DESCRIPTION": "Are you sure you want to update this plugin version?",
+					"CONFIRM": "Update"
+				},
+				"CREATE": {
+					"TITLE": "Create new version for {{name}}",
+					"DESCRIPTION": "Are you sure you want to create this version?",
+					"CONFIRM": "Create"
+				}
 			}
 		},
 		"TOASTR": {
