@@ -21,6 +21,8 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 	public invoice: IInvoice;
 	public invoice$: Observable<IInvoice>;
 
+	private pdfFrame?: HTMLIFrameElement;
+
 	@Input() isEstimate: boolean;
 
 	constructor(
@@ -177,26 +179,45 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 				throw new Error('invalid-invoice');
 			}
 
+			// Gert the invoice Blob object as URL
 			const { id: invoiceId } = this.invoice;
-
-			// Download the invoice PDF
-			const blob = await firstValueFrom(this._invoicesService.downloadInvoicePdf(invoiceId));
+			const blob = new Blob([await firstValueFrom(this._invoicesService.downloadInvoicePdf(invoiceId))], {
+				type: 'application/pdf'
+			});
 			const fileURL = URL.createObjectURL(blob);
 
 			// Create an iframe to display the PDF
-			const iframe = document.createElement('iframe');
+			this.clearPDFFrame();
+			this.pdfFrame = document.createElement('iframe');
 
 			// Print the PDF when the iframe is loaded
-			iframe.onload = () => iframe.contentWindow.print();
+			this.pdfFrame.onload = () => {
+				setTimeout(() => {
+					this.pdfFrame.focus();
+					this.pdfFrame.contentWindow.print();
+				}, 100);
+			};
 
 			// Set the iframe source to the file URL
-			iframe.src = fileURL;
-
+			this.pdfFrame.src = fileURL;
 			// Append the iframe to the document body
-			document.body.appendChild(iframe);
+			document.body.appendChild(this.pdfFrame);
 		} catch (error) {
 			console.error('Failed to print the invoice:', error);
 			this._toastrService.danger('INVOICES_PAGE.ERRORS.PRINT');
 		}
+	}
+
+	/**
+	 * Destroy the PDF IFrame
+	 * @returns
+	 */
+	private clearPDFFrame() {
+		if (!this.pdfFrame) return;
+		this.pdfFrame.contentWindow?.close();
+		if (document.body.contains(this.pdfFrame)) {
+			document.body.removeChild(this.pdfFrame);
+		}
+		this.pdfFrame = undefined;
 	}
 }
