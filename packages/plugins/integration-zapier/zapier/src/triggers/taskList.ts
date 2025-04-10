@@ -19,7 +19,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
             }
         });
 
-        return response.data.items.map((task: any) => ({
+        return response.data.items.map((task: { id: string; title?: string; name?: string }) => ({
             id: task.id,
             name: task.title || task.name
         }));
@@ -34,7 +34,7 @@ export default {
     noun: 'Task',
     display: {
         label: 'Task List',
-        description: 'Gets a list of tasks.',
+        description: 'Gets a list of tasks for dynamic dropdown selection',
         hidden: true, // Hidden from the UI as it's just for dynamic dropdowns
     },
     operation: {

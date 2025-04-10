@@ -80,6 +80,7 @@ interface ZapierCustomFields extends CustomEmbeddedFields {
 export class IntegrationZapierPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	// We enable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = true;
+	private readonly logger = new Logger(IntegrationZapierPlugin.name);
 
 	/**
 	 * Called when the plugin is being initialized.
@@ -87,6 +88,15 @@ export class IntegrationZapierPlugin implements IOnPluginBootstrap, IOnPluginDes
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
 			console.log(chalk.green(`${IntegrationZapierPlugin.name} is being bootstrapped...`));
+
+			// Log Zapier configuration status
+			const clientId = process.env['GAUZY_ZAPIER_CLIENT_ID'];
+			const clientSecret = process.env['GAUZY_ZAPIER_CLIENT_SECRET'];
+			if(!clientId || !clientSecret) {
+				this.logger.warn('Zapier OAuth credentials not fully configured! Please set GAUZY_ZAPIER_CLIENT_ID and GAUZY_ZAPIER_CLIENT_SECRET')
+			} else {
+				this.logger.log('Zapier OAuth credentials configured successfully');
+			}
 		}
 	}
 
@@ -95,8 +105,7 @@ export class IntegrationZapierPlugin implements IOnPluginBootstrap, IOnPluginDes
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
-			const logger = new Logger(IntegrationZapierPlugin.name);
-			logger.log(`${IntegrationZapierPlugin.name} is being destroyed...`)
+			this.logger.log(`${IntegrationZapierPlugin.name} is being destroyed...`)
 		}
 	}
 }

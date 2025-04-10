@@ -1,0 +1,24 @@
+import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { Injectable } from '@nestjs/common';
+import { TimerStoppedEvent } from '@gauzy/core';
+import { ZapierWebhookService } from '../zapier-webhook.service';
+
+@Injectable()
+@EventsHandler(TimerStoppedEvent)
+export class ZapierTimerStoppedHandler implements IEventHandler<TimerStoppedEvent> {
+    constructor(private readonly zapierWebhookService: ZapierWebhookService) {}
+
+    /**
+     * Handles the TimerStoppedEvent by notifying Zapier webhooks
+     *
+     * @param event - The TimerStoppedEvent that contains the time log details.
+     * @returns A Promise that resolves once the webhooks are notified
+     */
+    async handle(event: TimerStoppedEvent): Promise<void> {
+        await this.zapierWebhookService.notifyTimerStatusChanged({
+            event: 'timer.status.changed',
+            action: 'stop',
+            data: event.timeLog
+        });
+    }
+}

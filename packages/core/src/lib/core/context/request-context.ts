@@ -216,6 +216,37 @@ export class RequestContext {
 		}
 	}
 
+		/**
+	 * Retrieves the current organization ID from the request context.
+	 * @returns {string | null} - The current organization ID if available, otherwise null.
+	 */
+		static currentOrganizationId(): ID | null {
+			try {
+				// Retrieve the current user from the request context
+				const user: IUser = RequestContext.currentUser();
+				if(!user) {
+					return null;
+				}
+				// First check if lastOrganizationId exists (most recently used organization)
+				if (user.lastOrganizationId) {
+					return user.lastOrganizationId;
+				}
+
+				// If not, check defaultOrganizationId
+				if (user.defaultOrganizationId) {
+					return user.defaultOrganizationId;
+				}
+
+				// If none of the above, try to get the first organization from the organizations array
+				if (user.organizations && user.organizations.length > 0) {
+					return user.organizations[0].organizationId;
+				}
+				return null;
+			} catch (error) {
+				// Return null if an error occurs
+				return null;
+			}
+		}
 	/**
 	 * Retrieves the current user from the request context.
 	 * @param {boolean} throwError - Flag indicating whether to throw an error if user is not found.

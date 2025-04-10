@@ -86,9 +86,8 @@ export default {
           UPWORK: 'Upwork',
           TEAMS: 'Teams',
           CLOC: 'Cloc',
-          ZAPIER: 'Zapier'
         },
-        default: 'ZAPIER',
+        default: 'BROWSER',
         helpText: 'The source of this timer entry'
       },
       {
@@ -147,7 +146,7 @@ export default {
       organizationId: 'b894c374-7374-43cb-a1a2-afe46b9f5e28',
       sentTo: 'da2117d6-e6f6-45ec-86cb-80cc20470ba4',
       logType: 'TRACKED',
-      source: 'ZAPIER',
+      source: 'BROWSER',
       description: 'Timer stopped via Zapier integration',
       isBillable: false,
       version: '1.0.1',

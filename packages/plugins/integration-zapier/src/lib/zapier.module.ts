@@ -12,7 +12,7 @@ import {
     IntegrationTenantModule,
     UserModule,
     RolePermissionModule,
-    TimerModule
+    TimerModule,
 } from '@gauzy/core';
 import { ZapierService } from './zapier.service';
 import { ZapierController } from './zapier.controller';
@@ -22,6 +22,8 @@ import { ZapierWebhookController } from './zapier-webhook.controller';
 import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
 import { MikroOrmZapierWebhookSubscriptionRepository } from './repository/mikro-orm-zapier.repository';
 import { TypeOrmZapierWebhookSubscriptionRepository } from './repository/type-orm-zapier.repository';
+import { EventHandlers } from './handlers';
+import { ZapierAuthCodeService } from './zapier-auth-code.service';
 
 @Module({
     imports: [
@@ -41,13 +43,13 @@ import { TypeOrmZapierWebhookSubscriptionRepository } from './repository/type-or
     ],
     controllers: [ZapierAuthorizationController, ZapierController, ZapierWebhookController],
     providers: [
-        ZapierService,
-        ZapierWebhookService,
-        MikroOrmZapierWebhookSubscriptionRepository,
-        TypeOrmZapierWebhookSubscriptionRepository,
-        ...CommandHandlers,
-        ...QueryHandlers
-    ],
-    exports: [ZapierService, ZapierWebhookService, TimerModule]
+                ZapierService,
+                ZapierWebhookService,
+                ZapierAuthCodeService,
+                MikroOrmZapierWebhookSubscriptionRepository,
+                TypeOrmZapierWebhookSubscriptionRepository,
+                ...EventHandlers
+                ],
+    exports: [ZapierService, ZapierWebhookService, ZapierAuthCodeService]
 })
 export class ZapierModule { }
