@@ -18,6 +18,7 @@ const perform = async (z:ZObject, bundle: Bundle) => {
                 organizationId: organizationId
             }
         });
+        return response.data;
     } catch (error) {
         z.console.error('Error fetching organization teams:', error);
         throw new Error('Failed to fetch organization teams');

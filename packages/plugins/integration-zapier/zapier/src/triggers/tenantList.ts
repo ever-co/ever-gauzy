@@ -1,5 +1,11 @@
 import { ZObject, Bundle } from 'zapier-platform-core';
 
+interface Tenant {
+  id: string;
+  name: string;
+  [key: string]: any;
+}
+
 const perform = async (z: ZObject, bundle: Bundle) => {
     try {
         const response = await z.request({
@@ -10,7 +16,11 @@ const perform = async (z: ZObject, bundle: Bundle) => {
             },
         });
 
-        return response.data.items.map((tenant: any) => ({
+        if (!response.data || !Array.isArray(response.data.items)) {
+          throw new Error('Unexpected API response format');
+        }
+
+        return response.data.items.map((tenant: Tenant) => ({
             id: tenant.id,
             name: tenant.name
         }));
@@ -36,4 +46,3 @@ export default {
       }
     }
   };
-

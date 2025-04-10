@@ -27,7 +27,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
     return response.data;
   } catch (error) {
     z.console.error('Error starting timer', error);
-    throw new Error('Failed to start timer: ');
+    throw new Error('Failed to start timer');
   }
 };
 
@@ -87,7 +87,7 @@ export default {
           TEAMS: 'Teams',
           CLOC: 'Cloc'
         },
-        default: 'ZAPIER',
+        default: 'BROWSER',
         helpText: 'The source of this timer entry'
       },
       {

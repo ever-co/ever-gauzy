@@ -1,5 +1,10 @@
-import { url } from 'inspector';
 import { ZObject, Bundle } from 'zapier-platform-core';
+
+interface Contact {
+    id: string;
+    name: string;
+    [key: string]: any;
+}
 
 const perform = async (z: ZObject, bundle: Bundle) => {
     const organizationId = bundle.inputData.organizationId;
@@ -19,8 +24,11 @@ const perform = async (z: ZObject, bundle: Bundle) => {
                 organizationId: organizationId
             }
         });
+        if (!response.data || !Array.isArray(response.data.items)) {
+            throw new Error('Unexpected API response format');
+        }
 
-        return response.data.items.map((contact: any) => ({
+        return response.data.items.map((contact: Contact) => ({
             id: contact.id,
             name: contact.name
         }));
