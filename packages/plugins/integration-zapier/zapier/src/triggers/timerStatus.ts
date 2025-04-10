@@ -9,7 +9,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
         Authorization: `Bearer ${bundle.authData['access_token']}`,
       },
     });
-    const data = response.data;
+    const data = response.data as any;
 
     //Convert single object to array if needed
     if(!Array.isArray(data)) {
@@ -21,7 +21,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
       ];
     }
 
-    return data.map((item: any) => ({
+    return data.map((item: { id?: string; [key: string]: any }) => ({
       id: item.id || new Date().toString(),
       ...item
     }));
@@ -49,14 +49,19 @@ const performList = async (z: ZObject, bundle:Bundle) => {
       }
     });
 
+    // Validate response format
+    if (!response.data || !Array.isArray(response.data)) {
+      throw new Error('Unexpected API response format');
+    }
+
     // Format response to match Zapier's expected format
     return response.data.map((item: any) => ({
       id: item.lastLog?.id || new Date().toISOString(),
       ...item
     }));
-  } catch (error) {
+  } catch (error: any) {
     z.console.error('Error polling timer status:', error);
-    throw new Error('Failed to poll timer status');
+    throw new Error(`Failed to poll timer status: ${error.message || 'Unknown error'}`);
   }
 };
 

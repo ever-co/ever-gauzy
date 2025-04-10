@@ -22,8 +22,7 @@ export const authentication = {
 				url: `${process.env.API_BASE_URL}/api/user/me`,
 				headers: {
 					Authorization: `Bearer ${bundle.authData.access_token}`
-			}
-
+				}
 			});
 			// Format the connection label with user information
 			const userData = response.data;
