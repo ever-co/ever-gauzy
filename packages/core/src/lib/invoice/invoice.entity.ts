@@ -12,11 +12,13 @@ import {
 	IOrganizationContact,
 	IOrganization,
 	ITag,
-	IUser
+	IUser,
+	IEmployee
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import {
+	Employee,
 	InvoiceEstimateHistory,
 	InvoiceItem,
 	Organization,
@@ -216,8 +218,22 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@IsString()
 	@IsOptional()
 	@ColumnIndex()
-	@MultiORMColumn({ relationId: true })
+	@MultiORMColumn({ relationId: true, nullable: true })
 	fromUserId?: string;
+
+	// Field to track the employee related to the invoice
+	@ApiPropertyOptional({ type: () => () => Employee })
+	@MultiORMManyToOne(() => Employee, { onDelete: 'SET NULL', onUpdate: 'CASCADE', nullable: true })
+	@JoinColumn()
+	employee?: IEmployee;
+
+	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: Invoice) => it.employee)
+	@IsString()
+	@IsOptional()
+	@ColumnIndex()
+	@MultiORMColumn({ relationId: true, nullable: true })
+	employeeId?: string;
 
 	// Field to track how is the user that created the invoice
 	@ApiProperty({ type: () => () => User })

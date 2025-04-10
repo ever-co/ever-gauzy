@@ -1,6 +1,6 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
-import { IInvoiceItemCreateInput } from '@gauzy/contracts';
+import { IInvoice, IInvoiceItemCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { InvoiceItem } from './invoice-item.entity';
 import { MikroOrmInvoiceItemRepository } from './repository/mikro-orm-invoice-item.repository';
@@ -15,6 +15,20 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 		mikroOrmInvoiceItemRepository: MikroOrmInvoiceItemRepository
 	) {
 		super(typeOrmInvoiceItemRepository, mikroOrmInvoiceItemRepository);
+	}
+
+	/**
+	 * If the invoice is created by a user, force the employeeId for the invoice item
+	 *
+	 * @param invoice
+	 * @param input
+	 * @returns
+	 */
+	checkForEmployee(invoice: IInvoice, input: IInvoiceItemCreateInput[]) {
+		if (!invoice.fromUserId || !invoice.employeeId) return;
+		for (const item of input) {
+			item.employeeId = invoice.employeeId;
+		}
 	}
 
 	/**

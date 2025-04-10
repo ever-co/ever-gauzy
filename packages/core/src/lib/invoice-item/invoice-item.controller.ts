@@ -59,7 +59,8 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 		@Param('invoiceId', UUIDValidationPipe) invoiceId: string,
 		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) input: InvoiceItemBulkInputDTO
 	): Promise<any> {
-		await this.invoiceService.checkIfUserCanAccessInvoiceForWrite(invoiceId, true);
+		const { invoice } = await this.invoiceService.checkIfUserCanAccessInvoiceForWrite(invoiceId, true);
+		this.invoiceItemService.checkForEmployee(invoice, input.list);
 		return this.commandBus.execute(new InvoiceItemBulkCreateCommand(invoiceId, input.list));
 	}
 }

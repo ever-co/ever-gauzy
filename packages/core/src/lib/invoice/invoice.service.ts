@@ -119,7 +119,10 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * @param invoiceId
 	 * @param checkStatus
 	 */
-	async checkIfUserCanAccessInvoiceForWrite(invoiceId: string, checkStatus = false): Promise<boolean> {
+	async checkIfUserCanAccessInvoiceForWrite(
+		invoiceId: string,
+		checkStatus = false
+	): Promise<{ invoice: IInvoice; canHandleInvoices: boolean }> {
 		const invoiceFilter = { id: invoiceId };
 
 		// Check if the user is an admin or can handle invoices, then has access to all invoices
@@ -142,6 +145,8 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		const query = this.typeOrmInvoiceRepository
 			.createQueryBuilder('invoice')
 			.select('invoice.id', 'id')
+			.addSelect('invoice.employeeId', 'employeeId')
+			.addSelect('invoice.fromUserId', 'fromUserId')
 			.where(invoiceFilter);
 
 		// If checkStatus is true, we need to check if the invoice is in draft or sent status to be able to edit it
@@ -156,7 +161,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			throw new BadRequestException(InvoiceErrors.INVALID_INVOICE);
 		}
 
-		return isAdmin || canHandleInvoices;
+		return { invoice, canHandleInvoices: isAdmin || canHandleInvoices };
 	}
 
 	/**
