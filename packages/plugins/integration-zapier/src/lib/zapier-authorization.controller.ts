@@ -58,7 +58,7 @@ export class ZapierAuthorizationController {
 			}
 
 			if (responseType !== 'code') {
-				throw new HttpException('State parameter is required', HttpStatus.BAD_REQUEST);
+				throw new HttpException('Response type must be code', HttpStatus.BAD_REQUEST);
 			}
 
 			const configuredClientId = this._config.get<string>('zapier.clientId');
@@ -168,7 +168,7 @@ export class ZapierAuthorizationController {
 		try {
 			const { code, client_id, client_secret, redirect_uri, grant_type } = body;
 			if (grant_type !== 'authorization_code') {
-				throw new BadRequestException('Unsuported grant type');
+				throw new BadRequestException('Unsupported grant type');
 			}
 			if (!code || !client_id || !client_secret || !redirect_uri) {
 				throw new BadRequestException('Missing required parameters');
@@ -215,7 +215,7 @@ export class ZapierAuthorizationController {
 			throw new BadRequestException('Failed to exchange code for token');
 		}
 	}
-	    /**
+	/**
      * Refreshes an access token using a refresh token
      */
 		@Public()

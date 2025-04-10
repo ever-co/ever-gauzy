@@ -10,9 +10,9 @@ import {
     IntegrationModule,
     IntegrationSettingModule,
     IntegrationTenantModule,
-    UserModule,
     RolePermissionModule,
     TimerModule,
+    UserModule,
 } from '@gauzy/core';
 import { ZapierService } from './zapier.service';
 import { ZapierController } from './zapier.controller';
@@ -43,13 +43,13 @@ import { ZapierAuthCodeService } from './zapier-auth-code.service';
     ],
     controllers: [ZapierAuthorizationController, ZapierController, ZapierWebhookController],
     providers: [
-                ZapierService,
-                ZapierWebhookService,
-                ZapierAuthCodeService,
-                MikroOrmZapierWebhookSubscriptionRepository,
-                TypeOrmZapierWebhookSubscriptionRepository,
-                ...EventHandlers
-                ],
+        ZapierService,
+        ZapierWebhookService,
+        ZapierAuthCodeService,
+        MikroOrmZapierWebhookSubscriptionRepository,
+        TypeOrmZapierWebhookSubscriptionRepository,
+        ...EventHandlers
+    ],
     exports: [ZapierService, ZapierWebhookService, ZapierAuthCodeService]
 })
 export class ZapierModule { }

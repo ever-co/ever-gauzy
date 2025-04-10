@@ -5,12 +5,6 @@ import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from 
 import { ZapierModule } from './zapier.module';
 import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
 
-// Extend the CustomEmbeddedFields interface to include our custom entities
-interface ZapierCustomFields extends CustomEmbeddedFields {
-	IntegrationSetting?: CustomEmbeddedFieldConfig[];
-	ZapierWebhookSubscription?: CustomEmbeddedFieldConfig[];
-}
-
 @Plugin({
 	/**
 	 * An array of modules that will be imported and registered with the plugin.
@@ -92,7 +86,7 @@ export class IntegrationZapierPlugin implements IOnPluginBootstrap, IOnPluginDes
 			// Log Zapier configuration status
 			const clientId = process.env['GAUZY_ZAPIER_CLIENT_ID'];
 			const clientSecret = process.env['GAUZY_ZAPIER_CLIENT_SECRET'];
-			if(!clientId || !clientSecret) {
+			if (!clientId || !clientSecret) {
 				this.logger.warn('Zapier OAuth credentials not fully configured! Please set GAUZY_ZAPIER_CLIENT_ID and GAUZY_ZAPIER_CLIENT_SECRET')
 			} else {
 				this.logger.log('Zapier OAuth credentials configured successfully');

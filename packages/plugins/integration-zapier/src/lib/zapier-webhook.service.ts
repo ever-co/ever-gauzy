@@ -80,7 +80,7 @@ export class ZapierWebhookService {
     /**
      * Notify subscribers about timer status change
      *
-     * @param payload The data to send to webhooks
+     * @param timerData The data to send to webhooks
      */
     async notifyTimerStatusChanged(timerData: any): Promise<void> {
         try {
