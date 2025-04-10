@@ -6,6 +6,7 @@ import { ID } from '@gauzy/contracts';
 @Injectable()
 export class ZapierAuthCodeService {
     private readonly logger = new Logger(ZapierAuthCodeService.name);
+    private readonly MAX_AUTH_CODES = 1000; // Maximum number of auth codes to store
 
     // Using a Map to store temporary auth codes - this is temporary storage
     // and doesn't need to be persisted to the database
@@ -25,12 +26,21 @@ export class ZapierAuthCodeService {
      * @returns The generated authorization code
      */
 
-    generateAuthCode(userId: ID, tenantId: ID, organizationId?: ID): String {
+    generateAuthCode(userId: ID, tenantId: ID, organizationId?: ID): string {
         // Generation of a unique code
         const code = uuidv4();
         // Auth codes expire in 60 minutes
         const expiresAt = moment().add(60, 'minutes').toDate();
 
+        if (this.authCodes.size >= this.MAX_AUTH_CODES) {
+            this.logger.warn(`Maximum auth code limit (${this.MAX_AUTH_CODES}) reached. Cleaning up expired codes.`);
+            this.cleanupExpiredAuthCodes();
+
+            // If still at limit after cleanup, throw error
+            if (this.authCodes.size >= this.MAX_AUTH_CODES) {
+                throw new Error('Maximum auth code limit reached. Please try again later.');
+            }
+        }
         // Stores the code with user infos
         this.authCodes.set(code, {
             userId: userId.toString(),
@@ -65,6 +75,23 @@ export class ZapierAuthCodeService {
                 organizationId: authCodeData.organizationId
             };
         }
+        if (!authCodeData) {
+            this.logger.debug(`Auth Code not found: ${code}`);
+        } else {
+            this.logger.debug(`Auth Code ${code} expired at ${authCodeData.expiresAt} `);
+        }
         return null;
+    }
+    /**
+     * Removes all expired auth codes from memory
+     */
+    private cleanupExpiredAuthCodes(): void {
+        const now = new Date();
+        for (const [code, data] of this.authCodes.entries()) {
+            if (data.expiresAt < now) {
+                this.authCodes.delete(code);
+                this.logger.debug(`Removed expired auth code: ${code}`);
+            }
+        }
     }
 }

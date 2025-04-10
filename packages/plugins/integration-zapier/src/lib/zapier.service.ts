@@ -75,22 +75,18 @@ export class ZapierService {
 			if (!settings || settings.length === 0) {
 				throw new NotFoundException(`No settings found for integration ID ${integrationId}`);
 			}
-
-			const { client_id, client_secret, refresh_token } = settings.reduce(
-				(prev, current) => {
-					return {
-						...prev,
-						client_id: current.settingsName === 'client_id' ? current.settingsValue: prev.client_id,
-						client_secret: current.settingsName == 'client_secret' ? current.settingsValue: prev.client_secret,
-						refresh_token: current.settingsName === 'refresh_token' ? current.settingsValue : prev.refresh_token
-					};
-				},
-				{
-					client_id: '',
-					client_secret: '',
-					refresh_token: ''
+			let client_id = '';
+			let client_secret = '';
+			let refresh_token = '';
+			for (const current of settings) {
+				if (current.settingsName === 'client_id') {
+					client_id = current.settingsValue || client_id;
+				} else if (current.settingsName === 'client_secret') {
+					client_secret = current.settingsValue || client_secret;
+				} else if (current.settingsName === 'refresh_token') {
+					refresh_token = current.settingsValue || refresh_token;
 				}
-			);
+			}
 			if (!client_id || !client_secret || !refresh_token) {
 				throw new BadRequestException('Missing required zapier integration settings');
 			}
@@ -210,7 +206,7 @@ export class ZapierService {
 							settingsValue: client_secret
 						},
 						{
-							settingsName: 'access-token',
+							settingsName: 'access_token',
 							settingsValue: access_token
 						},
 						{

@@ -1,9 +1,6 @@
 import {
 	Controller,
-	Post,
-	Body,
 	Get,
-	Param,
 	UseGuards,
 	Query,
 	NotFoundException,
@@ -13,10 +10,9 @@ import {
 	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IIntegrationTenant, IIntegrationSetting, PermissionsEnum, ID, IZapierEndpoint, IZapierAccessTokens } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
+import {  PermissionsEnum, IZapierEndpoint } from '@gauzy/contracts';
+import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { ZapierService } from './zapier.service';
-import { CreateZapierIntegrationDto } from './dto';
 
 @ApiTags('Zapier Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -24,7 +20,8 @@ import { CreateZapierIntegrationDto } from './dto';
 @Controller('/integration/zapier')
 export class ZapierController {
 	private readonly logger = new Logger(ZapierController.name);
-	constructor(private readonly zapierService: ZapierService) {}
+
+	constructor(private readonly zapierService: ZapierService) { }
 
 	@ApiOperation({ summary: 'Get available Zapier triggers' })
 	@ApiResponse({
@@ -64,39 +61,38 @@ export class ZapierController {
 		}
 	}
 
-		/**
+	/**
 	 * Helper method to validate Zapier token
 	 */
-		private validateToken(token: string, isAction = false) {
-			const exception = isAction ? UnauthorizedException : BadRequestException;
-			if (!token) {
-				throw new exception('Token parameter is required');
-			}
-			if (!token.trim()) {
-				throw new exception('Token parameter cannot be empty');
-			}
+	private validateToken(token: string, isThrowUnauthorizedOnMissingToken = false) {
+		const exception = isThrowUnauthorizedOnMissingToken ? UnauthorizedException : BadRequestException;
+		if (!token) {
+			throw new exception('Token parameter is required');
 		}
-
-		/**
-		 * Helper method to handle Zapier endpoint errors
-		 */
-		private handleZapierError(error: any, endpointType: string): never {
-			this.logger.error(`Failed to fetch Zapier ${endpointType}`, error);
-
-			// Re-throw specific known errors
-			if (error instanceof UnauthorizedException) {
-				throw error;
-			}
-			if (error instanceof BadRequestException) {
-				throw error;
-			}
-			if (error instanceof NotFoundException) {
-				throw error;
-			}
-
-			// For unexpected errors, include original error message
-			throw new InternalServerErrorException(
-				`Failed to fetch Zapier ${endpointType}: ${error instanceof Error ? error.message : 'Unknown error'}`
-			);
+		if (!token.trim()) {
+			throw new exception('Token parameter cannot be empty');
 		}
+	}
+
+	/**
+	 * Helper method to handle Zapier endpoint errors
+	 */
+	private handleZapierError(error: any, endpointType: string): never {
+		this.logger.error(`Failed to fetch Zapier ${endpointType}`, error);
+
+		// Re-throw specific known errors
+		if (error instanceof UnauthorizedException) {
+			throw error;
+		}
+		if (error instanceof BadRequestException) {
+			throw error;
+		}
+		if (error instanceof NotFoundException) {
+			throw error;
+		}
+		// For unexpected errors, include original error message
+		throw new InternalServerErrorException(
+			`Failed to fetch Zapier ${endpointType}: ${error instanceof Error ? error.message : 'Unknown error'}`
+		);
+	}
 }

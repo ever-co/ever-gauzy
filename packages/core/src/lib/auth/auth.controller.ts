@@ -155,34 +155,36 @@ export class AuthController {
 	 * Handle successful login for Zapier OAuth flow
 	 * This endpoint is called after successful authentication when the login was initiated by Zapier
 	 */
-		@ApiOperation({ summary: 'Handle successful login for Zapier OAuth' })
-		@ApiResponse({
-			status: HttpStatus.CREATED,
-			description: 'Successful authentication and redirection to the callback URL'
-		})
-		@ApiResponse({
-			status: HttpStatus.BAD_REQUEST,
-			description: 'Invalid input, the response body may contain clues as to what went wrong'
-		})
-		@Get('login/success')
-		async loginSuccess(@Query() query: any, @Res() res: Response) {
-			try {
-				// Check if this is a Zapier auth flow
-				const { zapier_redirect_uri, zapier_state } = query;
+	@ApiOperation({ summary: 'Handle successful login for Zapier OAuth' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Successful authentication and redirection to the callback URL'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, the response body may contain clues as to what went wrong'
+	})
+	@Public()
+	@Get('login/success')
+	async loginSuccess(@Query() query: { zapier_state?: string }, @Res() res: Response) {
+		try {
+			// Check if this is a Zapier auth flow
+			const { zapier_state } = query;
 
-				if (zapier_redirect_uri && zapier_state) {
-					// This was a Zapier OAuth flow, redirect to callback with state
-					const callbackUrl = `${process.env['API_BASE_URL']}/api/integration/zapier/oauth/callback?state=${zapier_state}`;
+			if (zapier_state) {
+				// This was a Zapier OAuth flow, redirect to callback with state
+				const callbackUrl = `${process.env['API_BASE_URL'] ?? 'http://localhost:3000'}/api/integration/zapier/oauth/callback?state=${encodeURIComponent(zapier_state)}`;
 
-					return res.redirect(callbackUrl);
-				}
-
-				// Regular login flow
-				return res.redirect('/dashboard');
-			} catch (error) {
-				return res.redirect('/auth/login?error=authentication_failed');
+				return res.redirect(callbackUrl);
 			}
+
+			// Regular login flow
+			return res.redirect('/dashboard');
+		} catch (error) {
+			console.error('Zapier OAuth login error:', error);
+			return res.redirect('/auth/login?error=authentication_failed');
 		}
+	}
 
 	/**
 	 * Sign in workspaces by email and password.
