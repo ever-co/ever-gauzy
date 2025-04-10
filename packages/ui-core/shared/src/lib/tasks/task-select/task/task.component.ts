@@ -20,6 +20,22 @@ import { AuthService, Store, TasksService, ToastrService } from '@gauzy/ui-core/
 	]
 })
 export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
+	private _requiresEmployee = false;
+	public get requiresEmployee(): boolean {
+		return this._requiresEmployee;
+	}
+	@Input() public set requiresEmployee(value: boolean) {
+		this._requiresEmployee = value;
+	}
+
+	private _requiresProject = false;
+	public get requiresProject(): boolean {
+		return this._requiresProject;
+	}
+	@Input() public set requiresProject(value: boolean) {
+		this._requiresProject = value;
+	}
+
 	private _multiple = false;
 	public get multiple(): boolean {
 		return this._multiple;
@@ -192,6 +208,11 @@ export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
 		try {
 			// Check if organization is not defined, return if so
 			if (!this.organization) {
+				return;
+			}
+
+			// Check if Project or Employee are required and not provided, return if so
+			if ((this.requiresProject && !this.projectId) || (this.requiresEmployee && !this.employeeId)) {
 				return;
 			}
 

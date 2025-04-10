@@ -168,6 +168,7 @@
 							[employeeId]="form.get('employeeId')?.value"
 							[organizationContactId]="form.get('organizationContactId')?.value"
 							[required]="organization?.requireProject"
+							requiresEmployee="true"
 						></ga-project-selector>
 						<div
 							*ngIf="form.get('projectId')?.errors?.required && form.get('projectId')?.touched"
@@ -205,6 +206,8 @@
 						[projectId]="getControlValue('projectId')"
 						formControlName="taskId"
 						[required]="organization?.requireTask"
+						requiresProject="true"
+						requiresEmployee="true"
 					></ga-task-selector>
 					<div
 						*ngIf="form.get('taskId')?.errors?.required && form.get('taskId')?.touched"
