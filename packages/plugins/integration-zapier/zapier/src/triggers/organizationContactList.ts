@@ -44,17 +44,17 @@ export default {
     display: {
         label: 'Organization Contact List',
         description: 'Gets a list of organization contacts.',
-      hidden: true, // Hidden from the UI as it's just for dynamic dropdowns
+        hidden: true, // Hidden from the UI as it's just for dynamic dropdowns
     },
     operation: {
         inputFields: [
             {
-            key: 'organizationId',
-            type: 'string',
-            label: 'Organization',
-            required: true,
-            dynamic: 'organization_list.id.name',
-            helpText: 'Select the organization to get contacts for'
+                key: 'organizationId',
+                type: 'string',
+                label: 'Organization',
+                required: true,
+                dynamic: 'organization_list.id.name',
+                helpText: 'Select the organization to get contacts for'
             }
         ],
         perform,

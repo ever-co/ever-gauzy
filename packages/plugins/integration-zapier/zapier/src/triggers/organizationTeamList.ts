@@ -1,5 +1,11 @@
 import { ZObject, Bundle } from 'zapier-platform-core';
 
+interface OrganizationTeam {
+    id: string;
+    name: string;
+    [key: string]: any;
+}
+
 const perform = async (z:ZObject, bundle: Bundle) => {
     const organizationId = bundle.inputData.organizationId;
 
@@ -18,7 +24,10 @@ const perform = async (z:ZObject, bundle: Bundle) => {
                 organizationId: organizationId
             }
         });
-        return response.data;
+        return response.data.items.map((team: OrganizationTeam) => ({
+            id: team.id,
+            name: team.name
+        }));
     } catch (error) {
         z.console.error('Error fetching organization teams:', error);
         throw new Error('Failed to fetch organization teams');
@@ -35,14 +44,14 @@ export default {
     },
     operation: {
         inputFields: [
-        {
-            key: 'organizationId',
-            type: 'string',
-            label: 'Organization',
-            required: true,
-            dynamic: 'organization_list.id.name',
-            helpText: 'Select the organization to get teams for'
-        }
+            {
+                key: 'organizationId',
+                type: 'string',
+                label: 'Organization',
+                required: true,
+                dynamic: 'organization_list.id.name',
+                helpText: 'Select the organization to get teams for'
+            }
         ],
         perform,
         sample: {

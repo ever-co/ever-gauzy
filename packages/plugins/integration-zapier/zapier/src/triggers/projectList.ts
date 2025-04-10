@@ -33,9 +33,9 @@ const perform = async (z: ZObject, bundle: Bundle) => {
       id: project.id,
       name: project.name
     }));
-  } catch (error) {
+  } catch (error: any) {
     z.console.error('Error fetching projects:', error);
-    throw new Error('Failed to fetch projects');
+    throw new Error(`Failed to fetch projects: ${error.message || 'Unknown error'}`);
   }
 };
 

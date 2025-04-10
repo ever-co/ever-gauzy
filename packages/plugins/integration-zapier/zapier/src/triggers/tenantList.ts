@@ -16,6 +16,11 @@ const perform = async (z: ZObject, bundle: Bundle) => {
             },
         });
 
+        // Validate response object if exists
+        if (!response) {
+            throw new Error('Empty response received from API');
+        }
+
         if (!response.data || !Array.isArray(response.data.items)) {
           throw new Error('Unexpected API response format');
         }
@@ -24,9 +29,9 @@ const perform = async (z: ZObject, bundle: Bundle) => {
             id: tenant.id,
             name: tenant.name
         }));
-    } catch (error) {
+    } catch (error: any) {
         z.console.error('Error fetching tenants:', error);
-        throw new Error('Failed to fetch tenants');
+        throw new Error(`Failed to fetch tenants: ${error.message || 'Unknown error'}`);
     }
 };
 

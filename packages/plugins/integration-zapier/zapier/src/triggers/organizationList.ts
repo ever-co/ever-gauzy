@@ -14,15 +14,14 @@ const perform = async (z: ZObject, bundle: Bundle) => {
   }
 
   try {
+    const baseUrl = `${process.env.API_BASE_URL}` || 'http://localhost:3000';
     const response = await z.request({
-      url: `${process.env.API_BASE_URL}/api/organization`,
+      url: `${baseUrl}/api/organization`,
       method: 'GET',
       headers: {
         Authorization: `Bearer ${bundle.authData['access_token']}`,
       },
-      params: {
-        tenantId: tenantId
-      }
+      params: { tenantId },
     });
 
     if (!response.data || !Array.isArray(response.data.items)) {
@@ -33,9 +32,9 @@ const perform = async (z: ZObject, bundle: Bundle) => {
       id: org.id,
       name: org.name
     }));
-  } catch (error) {
+  } catch (error: any) {
     z.console.error('Error fetching organizations:', error);
-    throw new Error('Failed to fetch organizations');
+    throw new Error(`Failed to fetch organizations: ${error.message || 'Unknown error'}`);
   }
 };
 

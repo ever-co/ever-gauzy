@@ -1,5 +1,4 @@
 import { ZObject, Bundle } from 'zapier-platform-core';
-
 const perform = async (z: ZObject, bundle: Bundle) => {
     const projectId = bundle.inputData.projectId;
 
@@ -18,11 +17,15 @@ const perform = async (z: ZObject, bundle: Bundle) => {
                 projectId: projectId
             }
         });
-
-        return response.data.items.map((task: { id: string; title?: string; name?: string }) => ({
-            id: task.id,
-            name: task.title || task.name
-        }));
+        
+        // Check if response data is in expected format
+        if (response.data && response.data.items) {
+            return response.data.items.map((task: { id: string; title?: string; name?: string }) => ({
+                id: task.id,
+                name: task.title || task.name
+            }));
+        }
+        throw new Error('Failed to fetch tasks');
     } catch (error) {
         z.console.error('Error fetching tasks:', error);
         throw new Error('Failed to fetch tasks');
