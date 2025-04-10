@@ -231,12 +231,16 @@ export class InvoiceController extends CrudController<Invoice> {
 	@Permissions(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 	@UseValidationPipe({ transform: true })
 	async createOwn(@Body() entity: CreateInvoiceDTO): Promise<Invoice> {
-		const userId = RequestContext.currentUserId();
+		const user = RequestContext.currentUser();
+		if (!user.employeeId) {
+			throw new BadRequestException('user-dont-have-employee');
+		}
 		return await this.commandBus.execute(
 			new InvoiceCreateCommand({
 				...entity,
-				createdById: userId,
-				fromUserId: userId
+				createdById: user.id,
+				fromUserId: user.id,
+				employeeId: user.employeeId
 			})
 		);
 	}
@@ -345,7 +349,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	@Put('/:id/action')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async updateAction(@Param('id', UUIDValidationPipe) id: IInvoice['id'], @Body() entity: UpdateInvoiceActionDTO) {
-		const canHandleInvoices = await this.invoiceService.checkIfUserCanAccessInvoiceForWrite(id, true);
+		const { canHandleInvoices } = await this.invoiceService.checkIfUserCanAccessInvoiceForWrite(id, true);
 
 		// If the user can't handle all invoices and the status is different from DRAFT or SENT then fails
 		if (!canHandleInvoices && !EMPLOYEE_INVOICE_STATUSES.includes(entity.status)) {
