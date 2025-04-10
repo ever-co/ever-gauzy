@@ -14,14 +14,6 @@
 						{{ (isEstimate ? 'INVOICES_PAGE.EDIT_ESTIMATE' : 'INVOICES_PAGE.EDIT_INVOICE') | translate }}
 					</h4>
 				</div>
-				<ng-container *ngIf="!isEstimate">
-					<div>
-						<button status="basic" class="action secondary mr-2" size="small" (click)="payments()" nbButton>
-							<nb-icon icon="clipboard-outline"></nb-icon>
-							{{ 'BUTTONS.PAYMENTS' | translate }}
-						</button>
-					</div>
-				</ng-container>
 			</div>
 		</ng-template>
 	</nb-card-header>

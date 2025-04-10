@@ -2855,6 +2855,7 @@
 	},
 	"INVOICES_PAGE": {
 		"STATUS_WARNING": "ليس لديك الصلاحيات لتغيير هذه الحالة",
+		"EDIT_STATUS_WARNING": "ليس لديك إذن لتحرير فاتورة بهذا الحالة.",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "الرجاء اختيار جهة الاتصال",
 			"REQUIRED_INVOICE_NUMBER": "رقم الفاتورة مطلوب",

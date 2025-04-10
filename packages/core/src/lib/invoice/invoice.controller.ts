@@ -13,7 +13,8 @@ import {
 	Delete,
 	Res,
 	BadRequestException,
-	Headers
+	Headers,
+	ValidationPipe
 } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere } from 'typeorm';
 import { Response } from 'express';
@@ -268,7 +269,7 @@ export class InvoiceController extends CrudController<Invoice> {
 		PermissionsEnum.ALL_ORG_EDIT
 	)
 	@Put(':id')
-	@UseValidationPipe({ transform: true })
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
 		@Body() entity: UpdateInvoiceDTO

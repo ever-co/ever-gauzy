@@ -14,10 +14,10 @@ import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class InvoicesService {
-	private source = new BehaviorSubject(false);
+	private readonly source = new BehaviorSubject(false);
 	currentData = this.source.asObservable();
 
-	constructor(private http: HttpClient) {}
+	constructor(private readonly http: HttpClient) {}
 
 	getAll(where: IInvoiceFindInput, relations: string[] = []): Promise<IPagination<IInvoice>> {
 		return firstValueFrom(
@@ -101,9 +101,9 @@ export class InvoicesService {
 				params: {
 					isEstimate,
 					invoiceNumber,
-					invoiceId,
 					organizationId,
-					tenantId
+					tenantId,
+					invoiceId
 				}
 			})
 		);

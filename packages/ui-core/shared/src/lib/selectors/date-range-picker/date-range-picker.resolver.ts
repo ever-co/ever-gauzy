@@ -25,7 +25,7 @@ export const DateRangePickerResolver: ResolveFn<Observable<IDateRangePicker>> = 
 	const startDate = date ? moment(date).startOf('day') : moment().startOf(unitOfTime);
 
 	// Calculate the end date based on the route query parameter or the start date
-	let endDate = date_end ? moment(date_end).endOf('day') : moment(startDate).endOf(unitOfTime);
+	const endDate = date_end ? moment(date_end).endOf('day') : moment(startDate).endOf(unitOfTime);
 
 	// Determine if a custom date range is being used
 	const isCustomDate = parseToBoolean(is_custom_date) ?? !!date_end;

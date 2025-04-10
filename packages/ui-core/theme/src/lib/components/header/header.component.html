@@ -3,10 +3,7 @@
 	<a href="https://app.gauzy.co/#/auth/register"> Click here to Sign Up and start using for free! </a>
 </div>
 <div class="main-header">
-	<div class="header-container"
-		[class.left]="position === 'normal'"
-		[class.right]="position === 'inverse'"
-	></div>
+	<div class="header-container" [class.left]="position === 'normal'" [class.right]="position === 'inverse'"></div>
 
 	<div class="header-container">
 		<ng-template [ngIf]="createQuickActionsMenu?.length > 0">
@@ -52,12 +49,18 @@
 				<ga-employee-selector class="header-selector employee-selector"></ga-employee-selector>
 			</nb-action>
 
-			<nb-action *ngIf="showDateSelector && !showExtraActions && selectorsVisibility?.date">
-				<ng-container *ngIf="organization?.id">
-					<ngx-date-range-picker
-						[firstDayOfWeek]="organization.startWeekOn"
-						class="date-range-selector"
-					></ngx-date-range-picker>
+			<nb-action *ngIf="showDateSelector$ | async as showDateSelectorAsync">
+				<ng-container
+					*ngIf="
+						showDateSelectorAsync || (showDateSelector && !showExtraActions && selectorsVisibility?.date)
+					"
+				>
+					<ng-container *ngIf="organization?.id">
+						<ngx-date-range-picker
+							[firstDayOfWeek]="organization.startWeekOn"
+							class="date-range-selector"
+						></ngx-date-range-picker>
+					</ng-container>
 				</ng-container>
 			</nb-action>
 
@@ -134,7 +137,10 @@
 			<div>
 				<h6>{{ 'HEADER.SELECT_A_DATE' | translate }}</h6>
 			</div>
-			<ngx-date-range-picker *ngIf="showDateSelector" class="date-range-selector"></ngx-date-range-picker>
+			<ngx-date-range-picker
+				*ngIf="(showDateSelector$ | async) || showDateSelector"
+				class="date-range-selector"
+			></ngx-date-range-picker>
 		</ng-container>
 
 		<ng-container *ngIf="selectorsVisibility?.organization">

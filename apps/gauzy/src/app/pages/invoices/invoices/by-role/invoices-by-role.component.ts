@@ -259,6 +259,7 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 		}
 
 		const { id } = this.selectedInvoice;
+		if (!this.checkStatusPermissions('INVOICES_PAGE.EDIT_STATUS_WARNING')) return;
 		await this.navigateBasedOnPermissions(this.isEstimate, 'edit', id);
 	}
 
@@ -333,11 +334,18 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 
 	view() {
 		const { id } = this.selectedInvoice;
-		if (this.isEstimate) {
-			this.router.navigate([`/pages/accounting/invoices/estimates/view`, id]);
+		const basePath = this.isEstimate
+			? '/pages/accounting/invoices/estimates/view'
+			: '/pages/accounting/invoices/view';
+
+		let showEditButton: boolean;
+		if (this.checkStatusPermissions()) {
+			showEditButton = true;
 		} else {
-			this.router.navigate([`/pages/accounting/invoices/view`, id]);
+			showEditButton = false;
 		}
+
+		this.router.navigate([basePath, id], { queryParams: { showEditButton } });
 	}
 
 	/*
@@ -626,7 +634,7 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 				width: '5%',
 				isFilterable: false,
 				valuePrepareFunction: (row) => {
-					return row?.value?.toString() ?? '';
+					return row?.value ?? '';
 				}
 			};
 		}
@@ -693,6 +701,23 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 				}
 			};
 		}
+	}
+
+	private checkStatusPermissions(textKey?: string): boolean {
+		const forbiddenStatuses = [InvoiceStatusTypesEnum.SENT, InvoiceStatusTypesEnum.DRAFT];
+		const status = this.selectedInvoice.status as unknown as {
+			class: string;
+			originalValue: InvoiceStatusTypesEnum;
+			text: string;
+		};
+		if (
+			!this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT) &&
+			!forbiddenStatuses.includes(status?.originalValue)
+		) {
+			if (textKey) this.toastrService.warning(textKey);
+			return false;
+		}
+		return true;
 	}
 
 	showPerPage() {
@@ -781,19 +806,8 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 	}
 
 	async selectStatus($event) {
-		const forbiddenStatuses = [InvoiceStatusTypesEnum.SENT, InvoiceStatusTypesEnum.DRAFT];
-		const status = this.selectedInvoice.status as unknown as {
-			class: string;
-			originalValue: InvoiceStatusTypesEnum;
-			text: string;
-		};
-		if (
-			!this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT) &&
-			!forbiddenStatuses.includes(status?.originalValue)
-		) {
-			this.toastrService.warning('INVOICES_PAGE.STATUS_WARNING');
-			return;
-		}
+		if (!this.checkStatusPermissions('INVOICES_PAGE.STATUS_WARNING')) return;
+
 		await this.invoicesService.updateAction(this.selectedInvoice.id, {
 			status: $event
 		});

@@ -1,15 +1,9 @@
 <nb-card class="pdf-preview-card">
 	<nb-card-header>
-    <span class="cancel"
-			><i class="fas fa-times" (click)="cancel()"></i
-		></span>
+		<span class="cancel"><i class="fas fa-times" (click)="cancel()"></i></span>
 		<h5 class="title">
-			<span *ngIf="!isEstimate">{{
-				'INVOICES_PAGE.EMAIL.EMAIL_INVOICE' | translate
-			}}</span>
-			<span *ngIf="isEstimate">{{
-				'INVOICES_PAGE.EMAIL.EMAIL_ESTIMATE' | translate
-			}}</span>
+			<span *ngIf="!isEstimate">{{ 'INVOICES_PAGE.EMAIL.EMAIL_INVOICE' | translate }}</span>
+			<span *ngIf="isEstimate">{{ 'INVOICES_PAGE.EMAIL.EMAIL_ESTIMATE' | translate }}</span>
 		</h5>
 	</nb-card-header>
 	<nb-card-body class="invoice-email-body">
@@ -17,9 +11,7 @@
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
 				<div class="form-group col-12">
-					<label for="email" class="label">{{
-						'FORM.EMAIL' | translate
-					}}</label>
+					<label for="email" class="label required-asterisk">{{ 'FORM.EMAIL' | translate }}</label>
 					<textarea
 						type="text"
 						nbInput
@@ -28,6 +20,18 @@
 						id="email"
 						placeholder="{{ 'FORM.EMAIL' | translate }}"
 					></textarea>
+					<div
+						*ngIf="form.get('email')?.errors?.required && form.get('email')?.touched"
+						class="invalid-feedback d-block"
+					>
+						{{ 'TOASTR.MESSAGE.EMAIL_REQUIRED' | translate }}
+					</div>
+					<div
+						*ngIf="form.get('email')?.errors?.email && form.get('email')?.touched"
+						class="invalid-feedback d-block"
+					>
+						{{ 'INVENTORY_PAGE.EMAIL_WRONG_FORMAT' | translate }}
+					</div>
 				</div>
 			</div>
 		</form>
@@ -36,12 +40,7 @@
 		<button status="basic" outline class="mr-3" nbButton (click)="cancel()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button
-			(click)="sendEmail()"
-			status="success"
-			[disabled]="form.invalid"
-			nbButton
-		>
+		<button (click)="sendEmail()" status="success" [disabled]="form.invalid" nbButton>
 			{{ 'BUTTONS.SEND' | translate }}
 		</button>
 	</nb-card-footer>

@@ -9,7 +9,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-pdf',
-	template: `<iframe
+	template: `
+		<iframe
 			type="application/pdf"
 			id="iframe"
 			class="pdfDoc"
@@ -24,7 +25,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 			class="pdfDoc loading"
 			*ngIf="isLoading"
 		></div>
-		<div class="pdfDoc error" *ngIf="error">A error occurred, please reload.</div>`,
+		<div class="pdfDoc error" *ngIf="error">An error occurred, please reload.</div>
+	`,
 	styles: [
 		`
 			::ng-deep .pdf-preview-card {
@@ -58,22 +60,48 @@ export class InvoicePdfComponent extends TranslationBaseComponent implements OnI
 		this.loadInvoicePdf();
 	}
 
-	async loadInvoicePdf() {
+	loadInvoicePdf() {
+		if (!this.invoice?.id) {
+			this.isLoading = false;
+			return;
+		}
+
 		const { id: invoiceId } = this.invoice;
+
 		this.invoicesService
 			.downloadInvoicePdf(invoiceId)
 			.pipe(
-				tap((data) => this.embeddedPdfToIframe(data)),
+				tap((data) => {
+					if (data && data instanceof Blob) {
+						this.embeddedPdfToIframe(data);
+					} else {
+						this.error = true;
+						console.error('Received data is not a valid PDF blob or is an HTML response.');
+					}
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	embeddedPdfToIframe(data) {
+	embeddedPdfToIframe(data: Blob) {
 		const url = window.URL || window.webkitURL;
-		const rawUrl = url.createObjectURL(data);
-		this.fileURL = this.filterUrl(rawUrl) ? rawUrl : null;
-		this.error = !this.filterUrl(rawUrl);
+		if (!url) {
+			this.error = true;
+			console.error('Browser does not support URL.createObjectURL.');
+			this.isLoading = false;
+			return;
+		}
+
+		try {
+			const rawUrl = url.createObjectURL(data);
+			this.fileURL = this.filterUrl(rawUrl) ? rawUrl : null;
+			this.error = !this.filterUrl(rawUrl);
+		} catch (e) {
+			this.error = true;
+			console.error('Error creating object URL:', e);
+		}
+
 		this.isLoading = false;
 	}
 
@@ -81,7 +109,7 @@ export class InvoicePdfComponent extends TranslationBaseComponent implements OnI
 		const baseUrl = window.location.origin;
 		const uuidPattern = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
 		let isFilterUrl = false;
-		let uri = 'blob:' + baseUrl + '/';
+		const uri = 'blob:' + baseUrl + '/';
 		let regex = new RegExp(uri);
 		if (regex.test(url)) {
 			const uuid = url.replace(uri, '');

@@ -3,13 +3,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
-import { Observable, catchError, firstValueFrom, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, firstValueFrom, from, map, of, switchMap } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { saveAs } from 'file-saver';
-import { ID, IInvoice } from '@gauzy/contracts';
+import { ID, IInvoice, PermissionsEnum } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ErrorHandlingService, InvoicesService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -20,6 +21,7 @@ import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 export class InvoiceViewComponent extends TranslationBaseComponent implements OnInit {
 	public invoice: IInvoice;
 	public invoice$: Observable<IInvoice>;
+	public showEditButton: boolean;
 
 	@Input() isEstimate: boolean;
 
@@ -31,7 +33,8 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 		private readonly _store: Store,
 		private readonly _router: Router,
 		private readonly _dialogService: NbDialogService,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _ngxPermissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 	}
@@ -56,20 +59,34 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 			filter((params: ParamMap) => !!params.get('id')),
 			// Map the id to an observable
 			map((params: ParamMap) => params.get('id')),
-			// Switch to route data stream once id and token are confirmed
+			// Convert Promise to Observable and switchMap to continue the pipeline
 			switchMap((id: ID) =>
-				this._invoicesService.getById(id, relations, { tenantId: this._store.user.tenantId })
+				from(this._invoicesService.getById(id, relations, { tenantId: this._store.user.tenantId })).pipe(
+					// Catch error when fetching invoice
+					catchError((error) => {
+						console.log('Error while getting invoice:', error);
+						this._errorHandlingService.handleError(error);
+						this._router.navigate(['../../'], { relativeTo: this._activatedRoute });
+						return of(null); // Return null in case of error
+					})
+				)
 			),
-			map((invoice: IInvoice) => {
-				this.invoice = invoice;
-				return invoice;
-			}),
-			// Catch errors here
-			catchError((error) => {
-				console.log('Error while getting public invoice', error);
-				this._errorHandlingService.handleError(error);
-				// Navigate back to invoices page
-				this._router.navigate(['../../'], { relativeTo: this._activatedRoute });
+			// Handle the invoice once fetched
+			switchMap((invoice: IInvoice | null) => {
+				if (invoice) {
+					this.invoice = invoice; // Set the invoice
+
+					// Now, check for `showEditButton` query param
+					return this._activatedRoute.queryParamMap.pipe(
+						map((queryParams: ParamMap) => {
+							// Check and set the `showEditButton` flag
+							this.showEditButton = queryParams.get('showEditButton') === 'true';
+							return this.invoice; // Return the invoice
+						})
+					);
+				}
+
+				// If no invoice was found, return null (or handle accordingly)
 				return of(null);
 			}),
 			// Automatically unsubscribe when the component is destroyed
@@ -120,12 +137,20 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 	/**
 	 * Edits the invoice/estimate
 	 */
-	edit(): void {
-		// Define the route for the edit page
-		const route = this.isEstimate ? `/pages/accounting/invoices/estimates/edit` : `/pages/accounting/invoices/edit`;
-		// Navigate to the edit page with the invoice ID as a parameter
+	async edit() {
 		const { id: invoiceId } = this.invoice;
-		// Navigate to the edit page with the invoice ID as a parameter
+		let route = '';
+
+		if (this.isEstimate) {
+			route = `/pages/accounting/invoices/estimates/edit`;
+		} else if (await this._ngxPermissionsService.hasPermission(PermissionsEnum.INVOICES_EDIT)) {
+			route = `/pages/accounting/invoices/edit-by-role`;
+		} else if (await this._ngxPermissionsService.hasPermission(PermissionsEnum.ORG_INVOICES_EDIT)) {
+			route = `/pages/accounting/invoices/edit-by-organization`;
+		} else {
+			route = '/pages/dashboard';
+		}
+
 		this._router.navigate([route, invoiceId]);
 	}
 

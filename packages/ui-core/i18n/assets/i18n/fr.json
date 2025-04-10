@@ -2858,6 +2858,7 @@
 	},
 	"INVOICES_PAGE": {
 		"STATUS_WARNING": "Vous n'avez pas l'autorisation de modifier ce statut",
+		"EDIT_STATUS_WARNING": "Vous n'avez pas la permission de modifier une facture avec ce statut.",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "Veuillez sélectionner un contact",
 			"REQUIRED_INVOICE_NUMBER": "Le numéro de facture est requis",

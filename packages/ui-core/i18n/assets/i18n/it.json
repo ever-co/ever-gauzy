@@ -2857,6 +2857,7 @@
 	},
 	"INVOICES_PAGE": {
 		"STATUS_WARNING": "Non hai il permesso di modificare questo stato",
+		"EDIT_STATUS_WARNING": "Non hai il permesso di modificare una fattura con questo stato.",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "Seleziona un contatto",
 			"REQUIRED_INVOICE_NUMBER": "Il numero della fattura è obbligatorio",

@@ -1,16 +1,17 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable()
 export class SelectorService {
+	private readonly showDateSelectorSubject = new BehaviorSubject<boolean>(true);
+	public showDateSelector$ = this.showDateSelectorSubject.asObservable();
 	/**
 	 * Returns boolean values of selectors
 	 * Used to decide whether or not to show organization, employees etc
 	 * in the header and organization shortcuts in the sidebar
 	 * @param url Usually the current url
 	 */
-	public showSelectors(
-		url: string
-	): {
+	public showSelectors(url: string): {
 		showEmployeesSelector: boolean;
 		showDateSelector: boolean;
 		showOrganizationsSelector: boolean;
@@ -27,10 +28,7 @@ export class SelectorService {
 		}
 
 		const profileRegex = RegExp('/pages/employees/edit/.*/profile', 'i');
-		const organizationRegex = RegExp(
-			'/pages/organizations/edit/.*/settings',
-			'i'
-		);
+		const organizationRegex = RegExp('/pages/organizations/edit/.*/settings', 'i');
 
 		if (profileRegex.test(url)) {
 			showEmployeesSelector = false;
@@ -60,10 +58,7 @@ export class SelectorService {
 			showOrganizationShortcuts = false;
 		}
 
-		const organizationEditRegex = RegExp(
-			'/pages/organizations/edit/[A-Za-z0-9-]+$',
-			'i'
-		);
+		const organizationEditRegex = RegExp('/pages/organizations/edit/[A-Za-z0-9-]+$', 'i');
 
 		if (organizationEditRegex.test(url)) {
 			showEmployeesSelector = false;
@@ -78,5 +73,14 @@ export class SelectorService {
 			showOrganizationsSelector,
 			showOrganizationShortcuts
 		};
+	}
+
+	public updateSelectors(url: string): void {
+		let showDateSelector = true;
+		const addByRoleRegex = /\/pages\/accounting\/invoices\/add-by-role(\?.*)?$/;
+		if (addByRoleRegex.test(url)) {
+			showDateSelector = false;
+		}
+		this.showDateSelectorSubject.next(showDateSelector);
 	}
 }

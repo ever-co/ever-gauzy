@@ -3,7 +3,7 @@ import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
-import { Cell, LocalDataSource } from 'angular2-smart-table';
+import { LocalDataSource, Settings } from 'angular2-smart-table';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -15,7 +15,6 @@ import {
 	DiscountTaxTypeEnum,
 	ITag,
 	IInvoiceItemCreateInput,
-	IEmployee,
 	IOrganizationProject,
 	ITask,
 	IProduct,
@@ -35,7 +34,6 @@ import {
 } from '@gauzy/ui-core/core';
 import {
 	InvoiceApplyTaxDiscountComponent,
-	InvoiceEmployeesSelectorComponent,
 	InvoiceExpensesSelectorComponent,
 	InvoiceProductsSelectorComponent,
 	InvoiceProjectsSelectorComponent,
@@ -44,7 +42,6 @@ import {
 import { any } from 'underscore';
 import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
 
-//TODO: GZY-161 - refactor full component after availability generate invoices
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-edit-by-role',
@@ -54,14 +51,13 @@ import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/s
 export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent implements OnInit {
 	shouldLoadTable = false;
 	invoiceId: string;
-	settingsSmartTable: object;
+	settingsSmartTable: Settings;
 	smartTableSource = new LocalDataSource();
 	form: UntypedFormGroup;
 	invoice: IInvoice;
 	organization: IOrganization;
 	itemsToDelete: string[] = [];
 	invoiceItems: IInvoiceItem[] = [];
-	selectedContact: IOrganization;
 	duplicate: boolean;
 	discountAfterTax: boolean;
 	subtotal = 0;
@@ -171,21 +167,17 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 					'invoiceItems.expense',
 					'invoiceItems.task',
 					'tags',
-					'toContact',
-					'fromOrganization'
+					'fromOrganization',
+					'fromUser'
 				],
 				{ tenantId, organizationId }
 			)
 			.then(async (invoice: IInvoice) => {
 				this.invoice = invoice;
-				this.invoiceItems = invoice.invoiceItems;
-				//TODO: fix that - problem is that because toContact is null
-				this.selectedContact = invoice.toOrganization;
-				//TODO: fix that - problem is that because toContact is null
-				this.discountAfterTax = invoice.fromOrganization.discountAfterTax;
+				this.invoiceItems = invoice?.invoiceItems;
+				this.discountAfterTax = invoice?.toOrganization?.discountAfterTax;
 
-				await this._loadOrganizationData();
-				this.updateValueAndValidity(invoice);
+				await this._loadOrganizationData().finally(() => this.updateValueAndValidity(invoice));
 			})
 			.finally(() => {
 				this.loading = false;
@@ -196,12 +188,12 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 		this.form = this.fb.group({
 			id: ['', Validators.required],
 			invoiceDate: [this.organizationSettingService.getDateFromOrganizationSettings(), Validators.required],
-			invoiceNumber: ['', Validators.compose([Validators.required, Validators.min(1)])],
+			invoiceNumber: [this.invoice?.invoiceNumber, Validators.compose([Validators.required, Validators.min(1)])],
 			dueDate: ['', Validators.required],
 			discountValue: ['', Validators.compose([Validators.required, Validators.min(0)])],
 			tax: ['', Validators.compose([Validators.required, Validators.min(0)])],
 			tax2: ['', Validators.compose([Validators.required, Validators.min(0)])],
-			notes: [],
+			notes: [''],
 			organization: [{ value: '', disabled: true }, Validators.required],
 			discountType: [],
 			taxType: [],
@@ -220,7 +212,7 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 			tax: invoice.tax,
 			tax2: invoice.tax2,
 			notes: invoice.terms,
-			organizationContact: invoice.toOrganization,
+			organization: invoice.toOrganization?.name,
 			discountType: invoice.discountType,
 			taxType: invoice.taxType,
 			tax2Type: invoice.tax2Type,
@@ -232,8 +224,6 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 	async loadSmartTable() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
-			selectedRowIndex: -1,
-			mode: 'external',
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -264,12 +254,13 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 				this.settingsSmartTable['columns']['selectedItem'] = {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.EMPLOYEE'),
 					width: '13%',
+					isEditable: false,
+					isAddable: false,
 					editor: {
-						type: 'custom',
-						component: InvoiceEmployeesSelectorComponent
+						type: 'text'
 					},
-					valuePrepareFunction: (employee: IEmployee) => {
-						return employee?.user?.name || '';
+					valuePrepareFunction: (cell) => {
+						return `${cell ?? this.invoice?.fromUser?.name}`;
 					}
 				};
 				break;
@@ -341,14 +332,17 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (value: IInvoiceItem['price']) => {
-					return `${this.invoice?.currency} ${value}`;
+					return `${this.invoice?.currency} ${value ?? this.invoice.invoiceItems[0]?.price}`;
 				}
 			};
 			quantity = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.HOURS_WORKED'),
 				type: 'text',
 				isFilterable: false,
-				width: '13%'
+				width: '13%',
+				valuePrepareFunction: (cell) => {
+					return `${cell ?? 0}`;
+				}
 			};
 		} else if (
 			this.invoice.invoiceType === InvoiceTypeEnum.DETAILED_ITEMS ||
@@ -368,29 +362,26 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.QUANTITY'),
 				type: 'text',
 				isFilterable: false,
-				width: '13%'
+				width: '13%',
+				valuePrepareFunction: (cell) => {
+					return `${cell ?? 0}`;
+				}
 			};
 		}
-		this.settingsSmartTable['columns']['description'] = {
-			title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'),
-			type: 'text',
-			width: '13%'
-		};
 		this.settingsSmartTable['columns']['price'] = price;
 		this.settingsSmartTable['columns']['quantity'] = quantity;
 		this.settingsSmartTable['columns']['totalValue'] = {
 			title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'),
 			type: 'text',
-			addable: false,
-			editable: false,
-			valuePrepareFunction: (value: IInvoiceItem['totalValue'], cell: Cell) => {
-				const row = cell.getRow().getData();
-				return `${this.invoice?.currency} ${row.quantity * row.price}`;
+			isAddable: false,
+			isEditable: false,
+			valuePrepareFunction: (cell) => {
+				return `${this.invoice.currency} ${parseFloat(cell ?? '0')?.toFixed(2) ?? (0).toFixed(2)}`;
 			},
 			isFilterable: false,
 			width: '13%'
 		};
-		if (this.organization && this.organization.separateInvoiceItemTaxAndDiscount) {
+		if (this.organization?.separateInvoiceItemTaxAndDiscount) {
 			this.settingsSmartTable['columns']['applyTax'] = {
 				title: this.getTranslation('INVOICES_PAGE.APPLY_TAX'),
 				editor: {
@@ -413,7 +404,7 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 				},
 				isFilterable: false,
 				width: '10%',
-				valuePrepareFunction: (isApplied: any) => {
+				valuePrepareFunction: (isApplied: boolean) => {
 					return isApplied
 						? this.getTranslation('INVOICES_PAGE.APPLIED')
 						: this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
@@ -478,16 +469,16 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 				tax2Type: invoiceData.tax2Type,
 				terms: invoiceData.notes,
 				totalValue: +this.total.toFixed(2),
-				invoiceType: this.invoice.invoiceType,
-				organizationContactId: invoiceData.organizationContact.id,
-				toContactId: invoiceData?.organizationContact?.id,
+				invoiceType: this.invoice?.invoiceType,
+				fromOrganizationId: this.invoice?.toOrganization?.id,
+				fromUserId: this.invoice?.fromUser?.id,
+				currency: this.invoice?.currency,
 				organizationId,
 				tenantId,
 				tags: invoiceData.tags,
 				status: status,
 				sentTo: sendTo,
-				hasRemainingAmountInvoiced:
-					this.isRemainingAmount || this.invoice.hasRemainingAmountInvoiced ? true : false,
+				hasRemainingAmountInvoiced: Boolean(this.isRemainingAmount || this.invoice.hasRemainingAmountInvoiced),
 				alreadyPaid: this.invoice.alreadyPaid,
 				amountDue: this.invoice.amountDue
 			});
@@ -496,10 +487,9 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 			for (const invoiceItem of tableData) {
 				const id = invoiceItem.selectedItem ? invoiceItem.selectedItem.id : null;
 				const itemToAdd = {
-					description: invoiceItem.description,
 					price: Number(invoiceItem.price),
 					quantity: Number(invoiceItem.quantity),
-					totalValue: invoiceItem.totalValue,
+					totalValue: +invoiceItem.totalValue.toFixed(2),
 					invoiceId: this.invoice.id,
 					applyTax: invoiceItem.applyTax,
 					applyDiscount: invoiceItem.applyDiscount,
@@ -551,8 +541,8 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 					invoiceId: this.invoice.id,
 					user: this.store.user,
 					userId: this.store.userId,
-					organization: this.invoice.fromOrganization,
-					organizationId: this.invoice.fromOrganization.id
+					organization: this.invoice.toOrganization,
+					organizationId: this.invoice.toOrganization?.id
 				});
 			}
 
@@ -560,14 +550,14 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 				this.toastrService.success('INVOICES_PAGE.INVOICES_EDIT_ESTIMATE');
 				this.router.navigate(['/pages/accounting/invoices/estimates'], {
 					queryParams: {
-						date: moment(invoiceDate).format('MM-DD-YYYY')
+						date: moment(invoiceDate).format('YYYY-MM-DD')
 					}
 				});
 			} else {
 				this.toastrService.success('INVOICES_PAGE.INVOICES_EDIT_INVOICE');
 				this.router.navigate(['/pages/accounting/invoices'], {
 					queryParams: {
-						date: moment(invoiceDate).format('MM-DD-YYYY')
+						date: moment(invoiceDate).format('YYYY-MM-DD')
 					}
 				});
 			}
@@ -577,15 +567,15 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 	}
 
 	async sendToContact() {
-		if (this.form.value.organizationContact.id) {
-			await this.updateInvoice('SENT', this.form.value.organizationContact.id);
+		if (this.invoice.toOrganization?.id) {
+			await this.updateInvoice('SENT', this.invoice.toOrganization?.id);
 			await this.invoiceEstimateHistoryService.add({
 				action: this.isEstimate
 					? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
-							name: this.form.value.organizationContact.name
+							name: this.invoice.toOrganization?.name
 					  })
 					: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
-							name: this.form.value.organizationContact.name
+							name: this.invoice.toOrganization?.name
 					  }),
 				invoice: this.invoice,
 				invoiceId: this.invoice.id,
@@ -640,9 +630,8 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 				terms: invoiceData.notes,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
-				toContactId: invoiceData.organizationContact.id,
-				organizationContactId: invoiceData.organizationContact.id,
-				fromOrganizationId: this.organization.id,
+				fromUserId: this.invoice.fromUser?.id,
+				toOrganization: this.invoice.toOrganization,
 				organizationId,
 				tenantId,
 				invoiceType: this.invoice.invoiceType,
@@ -650,8 +639,7 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 				isEstimate: this.isEstimate,
 				alreadyPaid: this.invoice.alreadyPaid,
 				amountDue: this.invoice.amountDue,
-				hasRemainingAmountInvoiced:
-					this.isRemainingAmount || this.invoice.hasRemainingAmountInvoiced ? true : false,
+				hasRemainingAmountInvoiced: Boolean(this.isRemainingAmount || this.invoice.hasRemainingAmountInvoiced),
 				invoiceItems: []
 			};
 
@@ -659,10 +647,9 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 
 			for (const invoiceItem of tableData) {
 				const itemToAdd = {
-					description: invoiceItem.description,
 					price: invoiceItem.price,
 					quantity: invoiceItem.quantity,
-					totalValue: invoiceItem.totalValue,
+					totalValue: +invoiceItem.totalValue.toFixed(2),
 					applyTax: invoiceItem.applyTax,
 					applyDiscount: invoiceItem.applyDiscount,
 					organizationId,
@@ -715,7 +702,6 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 		let subtotal = 0;
 		for (const item of this.invoiceItems) {
 			data = {
-				description: item.description,
 				quantity: item.quantity,
 				price: item.price,
 				totalValue: +item.totalValue,
@@ -726,7 +712,7 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 
 			switch (this.invoice.invoiceType) {
 				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-					data['selectedItem'] = item.employee;
+					data['selectedItem'] = this.invoice.fromUser?.name;
 					break;
 				case InvoiceTypeEnum.BY_PROJECT_HOURS:
 					data['selectedItem'] = item.project;
@@ -832,43 +818,89 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 	}
 
 	async onCreateConfirm(event) {
+		let newData = event.newData;
+		const sourceData = event.source?.data;
+		if (sourceData?.length === 0) {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
+			event.confirm.reject();
+			return;
+		}
+		const lastSourceData = sourceData[sourceData.length - 1];
+		newData = {
+			...lastSourceData,
+			...newData,
+			price: newData.price !== undefined ? extractNumber(newData.price) : lastSourceData.price,
+			quantity:
+				newData.quantity !== undefined
+					? newData.quantity
+							?.toString()
+							.trim()
+							.replace(/^0+(?=\d)/, '')
+					: 0,
+			selectedItem: newData.selectedItem !== undefined ? newData.selectedItem : lastSourceData.selectedItem
+		};
+		const quantityIsValid = /^\d*\.?\d+$/.test(newData.quantity) && !/^0\d+/.test(newData.quantity);
 		if (
-			!isNaN(event.newData.quantity) &&
-			!isNaN(extractNumber(event.newData.price)) &&
-			event.newData.quantity &&
-			event.newData.price &&
-			event.newData.description &&
-			(event.newData.selectedItem || this.invoice.invoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
+			quantityIsValid &&
+			Number.isFinite(+newData.quantity) &&
+			Number.isFinite(+newData.price) &&
+			(newData.selectedItem || this.invoice.invoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
-			const newData = { ...event.newData, price: extractNumber(event.newData.price) };
-			const itemTotal = +event.newData.quantity * +extractNumber(event.newData.price);
+			newData = { ...newData, price: extractNumber(newData.price) };
+			const itemTotal = +newData.quantity * +extractNumber(newData.price);
 			newData.totalValue = itemTotal;
 			this.subtotal += itemTotal;
+
 			await event.confirm.resolve(newData);
 			await this.calculateTotal();
 		} else {
-			this.toastrService.danger('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM');
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
 			event.confirm.reject();
 		}
 	}
 
-	/**
-	 *
-	 * @param event
-	 */
 	async onEditConfirm(event) {
+		let newData = event.newData;
+		const sourceData = event.source?.data;
+		if (sourceData?.length === 0) {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
+			event.confirm.reject();
+			return;
+		}
+		const lastSourceData = sourceData[sourceData.length - 1];
+		newData = {
+			...newData,
+			price: newData.price !== undefined ? extractNumber(newData.price) : lastSourceData.price,
+			quantity:
+				newData.quantity !== undefined
+					? newData.quantity
+							?.toString()
+							.trim()
+							.replace(/^0+(?=\d)/, '')
+					: lastSourceData.quantity
+		};
+		const quantityIsValid = /^\d*\.?\d+$/.test(newData.quantity) && !/^0\d+/.test(newData.quantity);
+
 		if (
-			!isNaN(event.newData.quantity) &&
-			!isNaN(extractNumber(event.newData.price)) &&
-			event.newData.quantity &&
-			event.newData.price &&
-			event.newData.description &&
+			quantityIsValid &&
+			Number.isFinite(+newData.quantity) &&
+			Number.isFinite(+newData.price) &&
 			(event.newData.selectedItem || this.invoice.invoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
-			const newData = { ...event.newData, price: extractNumber(event.newData.price) };
+			newData = { ...newData, price: extractNumber(event.newData.price) };
 			const oldValue = +event.data.quantity * +event.data.price;
 			const newValue = +newData.quantity * +extractNumber(event.newData.price);
 			newData.totalValue = newValue;
+
 			if (newValue > oldValue) {
 				this.subtotal += newValue - oldValue;
 			} else if (oldValue > newValue) {
@@ -877,17 +909,20 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 			await event.confirm.resolve(newData);
 			await this.calculateTotal();
 		} else {
-			this.toastrService.danger('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM');
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
 			event.confirm.reject();
 		}
 	}
 
 	async onDeleteConfirm(event) {
-		if (event.data.id) {
-			this.itemsToDelete.push(event.data.id);
+		if (event.data?.id) {
+			this.itemsToDelete.push(event.data?.id);
 		}
 		this.subtotal -= +event.data.quantity * +event.data.price;
-		//await event.confirm.resolve(event.data);
+		await event.confirm.resolve(event.data);
 		await this.calculateTotal();
 	}
 
@@ -904,18 +939,12 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 		this.calculateTotal();
 	}
 
-	payments() {
-		if (this.invoice) {
-			this.router.navigate([`/pages/accounting/invoices/payments/${this.invoice.id}`]);
-		}
-	}
-
 	selectedTagsEvent(selectedTags: ITag[]) {
 		this.form.get('tags').setValue(selectedTags);
 		this.form.get('tags').updateValueAndValidity();
 	}
 
-	selectItem(item: any) {
+	selectItem(item) {
 		this.selectedItem = item;
 	}
 }

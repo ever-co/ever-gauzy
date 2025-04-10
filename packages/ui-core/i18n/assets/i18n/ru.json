@@ -2886,6 +2886,7 @@
 	},
 	"INVOICES_PAGE": {
 		"STATUS_WARNING": "У вас нет прав для изменения этого статуса",
+		"EDIT_STATUS_WARNING": "У вас нет прав для редактирования счета с этим статусом.",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "Пожалуйста, выберите контакт",
 			"REQUIRED_INVOICE_NUMBER": "Номер счета обязателен",

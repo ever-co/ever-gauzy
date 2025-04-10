@@ -55,8 +55,19 @@ export class DateTimeFormatPipe implements PipeTransform {
 			return;
 		}
 
-		let date = moment(value);
-		if (!date.isValid()) date = moment.utc(value);
+		let date: moment.Moment;
+
+		if (value instanceof Date) {
+			date = moment(value.toISOString());
+		} else if (typeof value === 'string' || typeof value === 'number') {
+			date = moment(value);
+		} else {
+			return;
+		}
+
+		if (!date.isValid()) {
+			date = moment.utc(value);
+		}
 
 		if (isEmpty(format)) {
 			const timeFormat =

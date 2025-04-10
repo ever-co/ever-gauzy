@@ -1,6 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { OnInit } from '@angular/core';
 import { IInvoice, InvoiceStatusTypesEnum, IInvoiceItem } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
@@ -37,19 +36,20 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent impl
 
 	initializeForm() {
 		this.form = this.fb.group({
-			email: ['', Validators.required]
+			email: ['', [Validators.required, Validators.email]]
 		});
 	}
 
 	async sendEmail() {
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.invoice.fromOrganization;
+		const organizationId = this.invoice.fromOrganization?.id ?? this.invoice.organizationId;
+
 		const { email } = this.form.value;
 
 		await this.invoiceService.sendEmail(
 			email,
 			this.invoice.invoiceNumber,
-			this.invoice.id ? this.invoice.id : this.createdInvoice.id,
+			this.invoice.id ? this.invoice?.id : this.createdInvoice?.id,
 			this.isEstimate,
 			organizationId,
 			tenantId

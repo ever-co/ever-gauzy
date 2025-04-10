@@ -26,7 +26,15 @@
 			<nb-icon icon="download-outline"></nb-icon>
 			{{ 'BUTTONS.DOWNLOAD' | translate }}
 		</button>
-		<button nbButton type="button" status="basic" class="action primary" size="small" (click)="edit()">
+		<button
+			*ngIf="showEditButton"
+			nbButton
+			type="button"
+			status="basic"
+			class="action primary"
+			size="small"
+			(click)="edit()"
+		>
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>

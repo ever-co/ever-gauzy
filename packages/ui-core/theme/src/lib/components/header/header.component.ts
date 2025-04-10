@@ -38,6 +38,7 @@ import {
 	OrganizationTeamsService,
 	OrganizationsService,
 	SelectorBuilderService,
+	SelectorService,
 	Store,
 	TimeTrackerService,
 	UsersOrganizationsService
@@ -79,6 +80,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	selectedDateRange: IDateRangePicker;
 
 	subject$: Subject<any> = new Subject();
+	showDateSelector$ = this.selectorService.showDateSelector$;
 	selectorsVisibility: ISelectorVisibility;
 
 	isCollapse = true;
@@ -141,6 +143,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		private readonly organizationTeamStore: OrganizationTeamStore,
 		private readonly employeeStore: EmployeeStore,
 		private readonly selectorBuilderService: SelectorBuilderService,
+		private readonly selectorService: SelectorService,
 		private readonly cd: ChangeDetectorRef,
 		private readonly dialogService: NbDialogService
 	) {
@@ -148,6 +151,16 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	}
 
 	ngOnInit() {
+		this.router.events
+			.pipe(
+				filter((event) => event instanceof NavigationEnd),
+				untilDestroyed(this)
+			)
+			.subscribe(() => {
+				const url = this.router.url;
+				this.selectorService.updateSelectors(url);
+			});
+
 		this.subject$
 			.pipe(
 				debounceTime(1300),

@@ -25,7 +25,7 @@ import {
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { compareDate, distinctUntilChange, extractNumber, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
-import { LocalDataSource } from 'angular2-smart-table';
+import { LocalDataSource, Settings } from 'angular2-smart-table';
 import { Observable, firstValueFrom, forkJoin, map } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
@@ -51,7 +51,6 @@ import { InvoiceEmailMutationComponent } from '../../invoice-email/invoice-email
 import { InvoiceExpensesSelectorComponent } from '../../table-components/invoice-expense-selector.component';
 import {
 	InvoiceApplyTaxDiscountComponent,
-	InvoiceEmployeesSelectorComponent,
 	InvoiceProductsSelectorComponent,
 	InvoiceProjectsSelectorComponent,
 	InvoiceTasksSelectorComponent
@@ -65,7 +64,7 @@ import { HoursDurationFormatPipe, IPaginationBase, PaginationFilterBaseComponent
 	styleUrls: ['./invoice-add-by-role.component.scss']
 })
 export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent implements OnInit {
-	settingsSmartTable: object;
+	settingsSmartTable: Settings;
 	loading: boolean;
 	form: UntypedFormGroup;
 	invoice?: IInvoice;
@@ -102,6 +101,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 	currency: string;
 	selectedLanguage: string;
 	selectedDateRange: IDateRangePicker;
+	private rate = 0;
 
 	private _isEstimate = false;
 	@Input() set isEstimate(val: boolean) {
@@ -142,6 +142,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			if (range) {
 				this.selectedDateRange = range;
 			}
+			this.subject$.next(true);
 		});
 		this.store.selectedOrganization$
 			.pipe(
@@ -245,6 +246,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			},
 			columns: {}
 		};
+
 		let price = {};
 		let quantity = {};
 		switch (this.invoiceType) {
@@ -252,13 +254,13 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 				this.settingsSmartTable['columns']['selectedItem'] = {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.EMPLOYEE'),
 					width: '13%',
+					isEditable: false,
+					isAddable: false,
 					editor: {
-						type: 'custom',
-						component: InvoiceEmployeesSelectorComponent
+						type: 'text'
 					},
 					valuePrepareFunction: (cell) => {
-						const employee = cell;
-						return `${employee}`;
+						return `${cell ?? this.selectedEmployee?.name}`;
 					}
 				};
 				break;
@@ -333,14 +335,17 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (cell) => {
-					return `${this.currency} ${cell}`;
+					return `${this.currency} ${cell ?? this.rate}`;
 				}
 			};
 			quantity = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.HOURS_WORKED'),
 				type: 'text',
 				isFilterable: false,
-				width: '13%'
+				width: '13%',
+				valuePrepareFunction: (cell) => {
+					return `${cell ?? 0}`;
+				}
 			};
 		} else if (
 			this.invoiceType === InvoiceTypeEnum.DETAILED_ITEMS ||
@@ -368,10 +373,10 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		this.settingsSmartTable['columns']['totalValue'] = {
 			title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'),
 			type: 'text',
-			addable: false,
-			editable: false,
-			valuePrepareFunction: (cell) => {
-				return `${this.currency} ${cell}`;
+			isAddable: false,
+			isEditable: false,
+			valuePrepareFunction: (cell: string) => {
+				return `${this.currency} ${parseFloat(cell ?? '0')?.toFixed(2) ?? (0).toFixed(2)}`;
 			},
 			isFilterable: false,
 			width: '13%'
@@ -582,7 +587,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			);
 			this.router.navigate(['/pages/accounting/invoices/estimates'], {
 				queryParams: {
-					date: moment(invoiceDate).format('MM-DD-YYYY')
+					date: moment(invoiceDate).format('YYYY-MM-DD')
 				}
 			});
 		} else {
@@ -592,7 +597,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			);
 			this.router.navigate(['/pages/accounting/invoices'], {
 				queryParams: {
-					date: moment(invoiceDate).format('MM-DD-YYYY')
+					date: moment(invoiceDate).format('YYYY-MM-DD')
 				}
 			});
 		}
@@ -638,6 +643,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		}
 
 		const { invoiceNumber, invoiceDate, dueDate } = this.form.value;
+
 		if (!invoiceDate || !dueDate || compareDate(invoiceDate, dueDate)) {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
@@ -649,6 +655,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		const invoiceExists = await this.invoicesService.getAll({
 			invoiceNumber
 		});
+
 		if (invoiceExists.items.length) {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER_DUPLICATE'),
@@ -677,7 +684,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			);
 			this.router.navigate(['/pages/accounting/invoices/estimates'], {
 				queryParams: {
-					date: moment(invoiceDate).format('MM-DD-YYYY')
+					date: moment(invoiceDate).format('YYYY-MM-DD')
 				}
 			});
 		} else {
@@ -687,7 +694,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			);
 			this.router.navigate(['/pages/accounting/invoices'], {
 				queryParams: {
-					date: moment(invoiceDate).format('MM-DD-YYYY')
+					date: moment(invoiceDate).format('YYYY-MM-DD')
 				}
 			});
 		}
@@ -730,7 +737,8 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			map((data: IEmployeeHourlyRate[]) => {
 				if (data && data.length > 0) {
 					const rate = data[0];
-					return rate.billRateValue;
+					this.rate = rate.billRateValue;
+					return this.rate;
 				} else {
 					return 0;
 				}
@@ -1042,17 +1050,43 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 	}
 
 	async onCreateConfirm(event) {
+		let newData = event.newData;
+		const sourceData = event.source?.data;
+		if (sourceData?.length === 0) {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
+			event.confirm.reject();
+			return;
+		}
+		const lastSourceData = sourceData[sourceData.length - 1];
+		newData = {
+			...lastSourceData,
+			...newData,
+			price: newData.price !== undefined ? extractNumber(newData.price) : this.rate?.toString(),
+			quantity:
+				newData.quantity !== undefined
+					? newData.quantity
+							?.toString()
+							.trim()
+							.replace(/^0+(?=\d)/, '')
+					: 0,
+			selectedItem: newData.selectedItem !== undefined ? newData.selectedItem : lastSourceData.selectedItem
+		};
+		const quantityIsValid = /^\d*\.?\d+$/.test(newData.quantity) && !/^0\d+/.test(newData.quantity);
+
 		if (
-			!isNaN(event.newData.quantity) &&
-			!isNaN(extractNumber(event.newData.price)) &&
-			event.newData.quantity &&
-			event.newData.price &&
-			(event.newData.selectedItem || this.selectedInvoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
+			quantityIsValid &&
+			Number.isFinite(+newData.quantity) &&
+			Number.isFinite(+newData.price) &&
+			(newData.selectedItem || this.selectedInvoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
-			const newData = { ...event.newData, price: extractNumber(event.newData.price) };
-			const itemTotal = +event.newData.quantity * +extractNumber(event.newData.price);
+			newData = { ...newData, price: extractNumber(newData.price) };
+			const itemTotal = +newData.quantity * +extractNumber(newData.price);
 			newData.totalValue = itemTotal;
 			this.subtotal += itemTotal;
+
 			await event.confirm.resolve(newData);
 			await this.calculateTotal();
 		} else {
@@ -1065,14 +1099,36 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 	}
 
 	async onEditConfirm(event) {
+		let newData = event.newData;
+		const sourceData = event.source?.data;
+		if (sourceData?.length === 0) {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
+			event.confirm.reject();
+			return;
+		}
+		newData = {
+			...newData,
+			price: newData.price !== undefined ? extractNumber(newData.price) : this.rate?.toString(),
+			quantity:
+				newData.quantity !== undefined
+					? newData.quantity
+							?.toString()
+							.trim()
+							.replace(/^0+(?=\d)/, '')
+					: 0
+		};
+		const quantityIsValid = /^\d*\.?\d+$/.test(newData.quantity) && !/^0\d+/.test(newData.quantity);
+
 		if (
-			!isNaN(event.newData.quantity) &&
-			!isNaN(extractNumber(event.newData.price)) &&
-			event.newData.quantity &&
-			event.newData.price &&
+			quantityIsValid &&
+			Number.isFinite(+newData.quantity) &&
+			Number.isFinite(+newData.price) &&
 			(event.newData.selectedItem || this.selectedInvoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
-			const newData = { ...event.newData, price: extractNumber(event.newData.price) };
+			newData = { ...newData, price: extractNumber(event.newData.price) };
 			const oldValue = +event.data.quantity * +event.data.price;
 			const newValue = +newData.quantity * +extractNumber(event.newData.price);
 			newData.totalValue = newValue;

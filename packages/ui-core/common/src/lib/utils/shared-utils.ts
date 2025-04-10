@@ -547,8 +547,8 @@ export function removeDuplicatesByProperty<T>(items: T[], property: keyof T): T[
  * @returns The numeric part of the string as a number. Returns NaN if no numeric value is found.
  */
 export function extractNumber(value: string): number {
-	const numericPart = value.toString().match(/-?\d+(\.\d+)?/); // Matches negative, decimal numbers.
-	return numericPart ? parseFloat(numericPart[0]) : NaN; // Converts the extracted part to a number or returns NaN if not found.
+	const numericPart = RegExp(/-?\d+(\.\d+)?/).exec(value?.toString()); // Matches negative, decimal numbers.
+	return numericPart ? parseFloat(numericPart[0]) : 0; // Converts the extracted part to a number or returns 0 if not found.
 }
 
 /**
