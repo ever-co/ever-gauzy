@@ -26,6 +26,7 @@ export class PosthogService {
 
 		this.client = new PostHog(this.options.apiKey, {
 			host: this.options.apiHost || 'https://app.posthog.com',
+			enableExceptionAutocapture: this.options.enableErrorTracking ?? false,
 			captureMode: 'form'
 		});
 
@@ -60,7 +61,7 @@ export class PosthogService {
 	 */
 	public async shutdown(): Promise<void> {
 		if (!this.client) return;
-		await this.client.shutdownAsync();
+		await this.client.shutdown();
 		this.logger.log('PostHog client shutdown complete');
 	}
 }
