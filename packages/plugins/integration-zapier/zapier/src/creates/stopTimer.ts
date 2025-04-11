@@ -28,7 +28,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
   } catch (error: any) {
     z.console.error('Error stopping timer:', { error });
     throw new Error(`Failed to stop timer: ${error.message || 'Unknown error'}`);
-  };
+  }
 };
 
 export const stopTimerKey = 'stop_timer';
