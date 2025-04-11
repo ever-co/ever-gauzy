@@ -7,6 +7,13 @@ export class ZapierAuthCodeService {
     private readonly logger = new Logger(ZapierAuthCodeService.name);
     private readonly MAX_AUTH_CODES = 1000; // Maximum number of auth codes to store
     private readonly AUTH_CODE_EXPIRATION_MINUTES = 60; // Auth code expiration time in minutes
+    private readonly ALLOWED_DOMAINS = [
+        'zapier.com',
+        'gauzy.co',
+        'demo.gauzy.co',
+        'staging.gauzy.co',
+        'localhost',
+    ];
 
     // Using a Map to store temporary auth codes - this is temporary storage
     // and doesn't need to be persisted to the database
@@ -14,7 +21,7 @@ export class ZapierAuthCodeService {
         userId: string,
         expiresAt: Date,
         tenantId: string,
-        organizationId?: string
+        organizationId?: string,
         redirectUri?: string
     }> = new Map();
 
@@ -27,13 +34,18 @@ export class ZapierAuthCodeService {
      * @param redirectUri The redirect URI (optional)
      * @returns The generated authorization code
      */
-
     generateAuthCode(userId: ID, tenantId: ID, organizationId?: ID, redirectUri?: string): string {
         // Generation of a unique code
         const code = uuidv4();
         // Auth codes expire in 60 minutes
         const expiresAt = new Date();
         expiresAt.setMinutes(expiresAt.getMinutes() + this.AUTH_CODE_EXPIRATION_MINUTES);
+
+        // Validate the redirect URI if provided
+        if (redirectUri && !this.isValidRedirectDomain(redirectUri)) {
+            this.logger.warn(`Rejected invalid redirect domain: ${redirectUri}`);
+            throw new Error('Invalid redirect URI domain');
+        }
 
         if (this.authCodes.size >= this.MAX_AUTH_CODES) {
             this.logger.warn(`Maximum auth code limit (${this.MAX_AUTH_CODES}) reached. Cleaning up expired codes.`);
@@ -44,6 +56,7 @@ export class ZapierAuthCodeService {
                 throw new Error('Maximum auth code limit reached. Please try again later.');
             }
         }
+
         // Stores the code with user infos
         this.authCodes.set(code, {
             userId: userId.toString(),
@@ -86,10 +99,11 @@ export class ZapierAuthCodeService {
         if (!authCodeData) {
             this.logger.debug(`Auth Code not found: ${code}`);
         } else {
-            this.logger.debug(`Auth Code ${code} expired at ${authCodeData.expiresAt} `);
+            this.logger.debug(`Auth Code ${code} expired at ${authCodeData.expiresAt}`);
         }
         return null;
     }
+
     /**
      * Removes all expired auth codes from memory
      */
@@ -100,6 +114,25 @@ export class ZapierAuthCodeService {
                 this.authCodes.delete(code);
                 this.logger.debug(`Removed expired auth code: ${code}`);
             }
+        }
+    }
+
+    /**
+     * Validates if a redirect URI belongs to an allowed domain
+     */
+    private isValidRedirectDomain(redirectUri: string): boolean {
+        try {
+            if (!redirectUri) return false;
+
+            const url = new URL(redirectUri);
+            const domain = url.hostname;
+
+            return this.ALLOWED_DOMAINS.some(allowedDomain =>
+                domain === allowedDomain || domain.endsWith(`.${allowedDomain}`)
+            );
+        } catch (error) {
+            this.logger.error(`Invalid redirect URI format: ${redirectUri}`);
+            return false;
         }
     }
 }

@@ -6,7 +6,7 @@ interface OrganizationTeam {
     [key: string]: any;
 }
 
-const perform = async (z:ZObject, bundle: Bundle) => {
+const perform = async (z: ZObject, bundle: Bundle) => {
     const organizationId = bundle.inputData.organizationId;
 
     if (!organizationId) {
@@ -14,7 +14,7 @@ const perform = async (z:ZObject, bundle: Bundle) => {
     }
 
     try {
-        const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000'
+        const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
         const response = await z.request({
             url: `${baseUrl}/api/organization-team`,
             method: 'GET',
@@ -30,9 +30,9 @@ const perform = async (z:ZObject, bundle: Bundle) => {
             id: team.id,
             name: team.name
         }));
-    } catch (error) {
+    } catch (error: any) {
         z.console.error('Error fetching organization teams:', error);
-        throw new Error('Failed to fetch organization teams');
+        throw new Error(`Failed to fetch organization teams: ${error.message || 'Unknow error'}`);
     }
 };
 
@@ -41,7 +41,7 @@ export default {
     noun: 'OrganizationTeam',
     display: {
         label: 'Organization Team List',
-        description: 'Gets a list of organization teams.',
+        description: 'Gets a list of organization teams for dynamic dropdown selection.',
         hidden: true, // Hidden from the UI as it's just for dynamic dropdowns
     },
     operation: {

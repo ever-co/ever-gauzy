@@ -8,8 +8,8 @@ import {
 	Headers,
 	Query,
 	UseGuards,
-	BadRequestException,
-	Res
+	Res,
+	BadRequestException
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiBadRequestResponse } from '@nestjs/swagger';
@@ -171,21 +171,14 @@ export class AuthController {
 			// Check if this is a Zapier auth flow
 			const { zapier_state, zapier_redirect_uri } = query;
 
+			const url = new URL(`${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/integration/zapier/oauth/callback`);
 			if (zapier_state) {
-				// This was a Zapier OAuth flow, redirect to callback with state
-				const callbackUrl = `${process.env['API_BASE_URL'] ?? 'http://localhost:3000'}/api/integration/zapier/oauth/callback}`;
-				// Add state parameter to the callback URL
-				if (zapier_state) {
-					const url = new URL(callbackUrl);
-					url.searchParams.append('state', zapier_state);
-				}
-				// Add redirect_uri parameter to the callback URL
-				if (zapier_redirect_uri) {
-					const url = new URL(callbackUrl);
-					url.searchParams.append('zapier_redirect_uri', zapier_redirect_uri);
-				}
-				return res.redirect(callbackUrl.toString());
+				url.searchParams.append('state', zapier_state);
 			}
+			if (zapier_redirect_uri) {
+				url.searchParams.append('zapier_redirect_uri', zapier_redirect_uri);
+			}
+			return res.redirect(url.toString());
 
 			// Regular login flow
 			return res.redirect('/dashboard');

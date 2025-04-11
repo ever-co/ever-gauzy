@@ -1,9 +1,17 @@
 import { ZObject, Bundle } from 'zapier-platform-core';
+
+interface Task {
+    id: string;
+    title?: string;
+    name?: string;
+    [key: string]: any;
+}
+
 const perform = async (z: ZObject, bundle: Bundle) => {
     const projectId = bundle.inputData.projectId;
 
     if (!projectId) {
-        throw new Error('Project ID is required')
+        throw new Error('Project ID is required');
     }
 
     try {
@@ -19,7 +27,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
 
         // Check if response data is in expected format
         if (response.data?.items) {
-            return response.data.items.map((task: { id: string; title?: string; name?: string }) => ({
+            return response.data.items.map((task: Task) => ({
                 id: task.id,
                 name: task.title || task.name
             }));
@@ -36,7 +44,7 @@ export default {
     noun: 'Task',
     display: {
         label: 'Task List',
-        description: 'Gets a list of tasks for dynamic dropdown selection',
+        description: 'Gets a list of tasks for dynamic dropdown selection.',
         hidden: true, // Hidden from the UI as it's just for dynamic dropdowns
     },
     operation: {
