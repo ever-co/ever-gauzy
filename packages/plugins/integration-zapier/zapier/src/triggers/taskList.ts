@@ -2,20 +2,19 @@ import { ZObject, Bundle } from 'zapier-platform-core';
 const perform = async (z: ZObject, bundle: Bundle) => {
     const projectId = bundle.inputData.projectId;
 
-    if(!projectId) {
+    if (!projectId) {
         throw new Error('Project ID is required')
     }
 
     try {
+        const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
         const response = await z.request({
-            url: `${process.env.API_BASE_URL}/api/tasks`,
+            url: `${baseUrl}/api/tasks`,
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${bundle.authData['access_token']}`,
             },
-            params: {
-                projectId: projectId
-            }
+            params: { projectId }
         });
 
         // Check if response data is in expected format
@@ -26,9 +25,9 @@ const perform = async (z: ZObject, bundle: Bundle) => {
             }));
         }
         throw new Error('Failed to fetch tasks');
-    } catch (error) {
+    } catch (error: any) {
         z.console.error('Error fetching tasks:', error);
-        throw new Error('Failed to fetch tasks: Invalid response format');
+        throw new Error(`Failed to fetch tasks: ${error.message || 'Unknown error'}`);
     }
 };
 

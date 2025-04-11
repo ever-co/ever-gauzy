@@ -8,8 +8,9 @@ interface Tenant {
 
 const perform = async (z: ZObject, bundle: Bundle) => {
     try {
+        const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
         const response = await z.request({
-            url: `${process.env.API_BASE_URL}/api/tenant`,
+            url: `${baseUrl}/api/tenant`,
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${bundle.authData['access_token']}`,

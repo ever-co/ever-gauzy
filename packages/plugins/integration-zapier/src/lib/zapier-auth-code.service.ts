@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import { ID } from '@gauzy/contracts';
 
@@ -7,6 +6,7 @@ import { ID } from '@gauzy/contracts';
 export class ZapierAuthCodeService {
     private readonly logger = new Logger(ZapierAuthCodeService.name);
     private readonly MAX_AUTH_CODES = 1000; // Maximum number of auth codes to store
+    private readonly AUTH_CODE_EXPIRATION_MINUTES = 60; // Auth code expiration time in minutes
 
     // Using a Map to store temporary auth codes - this is temporary storage
     // and doesn't need to be persisted to the database
@@ -15,6 +15,7 @@ export class ZapierAuthCodeService {
         expiresAt: Date,
         tenantId: string,
         organizationId?: string
+        redirectUri?: string
     }> = new Map();
 
     /**
@@ -23,14 +24,16 @@ export class ZapierAuthCodeService {
      * @param userId The user's ID
      * @param tenantId The tenant ID
      * @param organizationId The organization ID
+     * @param redirectUri The redirect URI (optional)
      * @returns The generated authorization code
      */
 
-    generateAuthCode(userId: ID, tenantId: ID, organizationId?: ID): string {
+    generateAuthCode(userId: ID, tenantId: ID, organizationId?: ID, redirectUri?: string): string {
         // Generation of a unique code
         const code = uuidv4();
         // Auth codes expire in 60 minutes
-        const expiresAt = moment().add(60, 'minutes').toDate();
+        const expiresAt = new Date();
+        expiresAt.setMinutes(expiresAt.getMinutes() + this.AUTH_CODE_EXPIRATION_MINUTES);
 
         if (this.authCodes.size >= this.MAX_AUTH_CODES) {
             this.logger.warn(`Maximum auth code limit (${this.MAX_AUTH_CODES}) reached. Cleaning up expired codes.`);
@@ -46,6 +49,7 @@ export class ZapierAuthCodeService {
             userId: userId.toString(),
             tenantId: tenantId.toString(),
             organizationId: organizationId?.toString(),
+            redirectUri,
             expiresAt
         });
         this.logger.debug(`Generated auth code for user ${userId}, expires at ${expiresAt}`);
@@ -58,7 +62,7 @@ export class ZapierAuthCodeService {
      * @param code The authorization code
      * @returns The user info or null if code is invalid or expired
      */
-    getUserInfoFromAuthCode(code: string): {
+    getUserInfoFromAuthCode(code: string, redirectUri?: string): {
         userId: string,
         tenantId: string,
         organizationId?: string
@@ -66,7 +70,11 @@ export class ZapierAuthCodeService {
         const authCodeData = this.authCodes.get(code);
 
         // Check if code exists and is not expired
-        if (authCodeData && moment().isBefore(authCodeData.expiresAt)) {
+        if (authCodeData && authCodeData.expiresAt > new Date()) {
+            if (authCodeData.redirectUri && redirectUri && authCodeData.redirectUri !== redirectUri) {
+                this.logger.warn(`Redirect URI mismatch for auth code ${code}. Expected: ${authCodeData.redirectUri}, Received: ${redirectUri}`);
+                return null;
+            }
             this.authCodes.delete(code);
 
             return {
@@ -87,13 +95,11 @@ export class ZapierAuthCodeService {
      */
     private cleanupExpiredAuthCodes(): void {
         const now = new Date();
-        setInterval(() => {
-            for (const [code, data] of this.authCodes.entries()) {
-                if (data.expiresAt < now) {
-                    this.authCodes.delete(code);
-                    this.logger.debug(`Removed expired auth code: ${code}`);
-                }
+        for (const [code, data] of this.authCodes.entries()) {
+            if (data.expiresAt < now) {
+                this.authCodes.delete(code);
+                this.logger.debug(`Removed expired auth code: ${code}`);
             }
-        }, 60000); // runs every minute
+        }
     }
 }

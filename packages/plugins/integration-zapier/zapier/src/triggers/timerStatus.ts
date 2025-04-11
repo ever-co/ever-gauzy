@@ -2,8 +2,9 @@ import { ZObject, Bundle } from 'zapier-platform-core';
 
 const perform = async (z: ZObject, bundle: Bundle) => {
   try {
+    const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
     const response = await z.request({
-      url: `${process.env.API_BASE_URL}/api/timesheet/timer/status`,
+      url: `${baseUrl}/api/timesheet/timer/status`,
       method: 'GET',
       headers: {
         Authorization: `Bearer ${bundle.authData['access_token']}`,

@@ -14,7 +14,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
   }
 
   try {
-    const baseUrl = `${process.env.API_BASE_URL}` || 'http://localhost:3000';
+    const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
     const response = await z.request({
       url: `${baseUrl}/api/organization`,
       method: 'GET',
