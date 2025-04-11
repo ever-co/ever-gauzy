@@ -34,7 +34,8 @@ const perform = async (z: ZObject, bundle: Bundle) => {
     }));
   } catch (error: any) {
     z.console.error('Error fetching organizations:', error);
-    throw new Error(`Failed to fetch organizations: ${error.message || 'Unknown error'}`);
+    const errorMessage: string = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Failed to fetch organizations: ${errorMessage}`);
   }
 };
 

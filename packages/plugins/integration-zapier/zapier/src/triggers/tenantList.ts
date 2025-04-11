@@ -1,9 +1,9 @@
 import { ZObject, Bundle } from 'zapier-platform-core';
 
 interface Tenant {
-  id: string;
-  name: string;
-  [key: string]: any;
+    id: string;
+    name: string;
+    [key: string]: any;
 }
 
 const perform = async (z: ZObject, bundle: Bundle) => {
@@ -17,18 +17,13 @@ const perform = async (z: ZObject, bundle: Bundle) => {
             },
         });
 
-        // Validate response object if exists
-        if (!response) {
-            throw new Error('Empty response received from API');
-        }
-
         if (!response.data || !Array.isArray(response.data.items)) {
-          throw new Error('Unexpected API response format');
+            throw new Error('Unexpected API response format');
         }
 
         return response.data.items.map((tenant: Tenant) => ({
             id: tenant.id,
-            name: tenant.name
+            name: tenant.name,
         }));
     } catch (error: any) {
         z.console.error('Error fetching tenants:', error);
@@ -40,15 +35,15 @@ export default {
     key: 'tenant_list',
     noun: 'Tenant',
     display: {
-      label: 'Tenant List',
-      description: 'Gets a list of tenants.',
-      hidden: true, // Hidden from the UI as it's just for dynamic dropdowns
+        label: 'Tenant List',
+        description: 'Gets a list of tenants for dynamic dropdown selection.',
+        hidden: true, // Hidden from the UI as it's just for dynamic dropdowns
     },
     operation: {
-      perform,
-      sample: {
-        id: '88507509-f7cb-44f4-ae60-894f950477a9',
-        name: 'Default Tenant'
-      }
-    }
-  };
+        perform,
+        sample: {
+            id: '88507509-f7cb-44f4-ae60-894f950477a9',
+            name: 'Default Tenant',
+        },
+    },
+};

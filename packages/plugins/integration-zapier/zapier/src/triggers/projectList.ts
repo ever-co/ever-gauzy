@@ -21,7 +21,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
       headers: {
         Authorization: `Bearer ${bundle.authData['access_token']}`,
       },
-      params: { organizationId }
+      params: { organizationId },
     });
 
     if (!response.data || !Array.isArray(response.data.items)) {
@@ -30,7 +30,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
 
     return response.data.items.map((project: Project) => ({
       id: project.id,
-      name: project.name
+      name: project.name,
     }));
   } catch (error: any) {
     z.console.error('Error fetching projects:', error);
@@ -54,13 +54,13 @@ export default {
         label: 'Organization',
         required: true,
         dynamic: 'organization_list.id.name',
-        helpText: 'Select the organization to get projects for'
-      }
+        helpText: 'Select the organization to get projects for',
+      },
     ],
     perform,
     sample: {
       id: '29bd6ac8-1408-4933-a8db-f50740a994b8',
-      name: 'Sample Project'
-    }
-  }
+      name: 'Sample Project',
+    },
+  },
 };

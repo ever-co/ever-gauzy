@@ -18,9 +18,11 @@ export interface ICreateZapierIntegrationInput extends IBasePerTenantAndOrganiza
     client_secret: string;
 }
 
+export type ActionType = 'start' | 'stop';
+
 export interface ITimerZapierWebhookData {
     event: string;
-    action: 'start' | 'stop' | string;
+    action: ActionType,
     data: ITimeLog;
     tenantId: string;
     organizationId: string;
