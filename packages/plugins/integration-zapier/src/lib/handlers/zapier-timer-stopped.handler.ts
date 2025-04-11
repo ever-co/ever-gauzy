@@ -15,10 +15,13 @@ export class ZapierTimerStoppedHandler implements IEventHandler<TimerStoppedEven
      * @returns A Promise that resolves once the webhooks are notified
      */
     async handle(event: TimerStoppedEvent): Promise<void> {
+        const timeLog = event.timeLog;
         await this.zapierWebhookService.notifyTimerStatusChanged({
             event: 'timer.status.changed',
             action: 'stop',
-            data: event.timeLog
+            data: timeLog,
+            tenantId: timeLog.tenantId!,
+            organizationId: timeLog.organizationId!
         });
     }
 }

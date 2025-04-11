@@ -17,9 +17,9 @@ const perform = async (z: ZObject, bundle: Bundle) => {
                 projectId: projectId
             }
         });
-        
+
         // Check if response data is in expected format
-        if (response.data && response.data.items) {
+        if (response.data?.items) {
             return response.data.items.map((task: { id: string; title?: string; name?: string }) => ({
                 id: task.id,
                 name: task.title || task.name
@@ -28,7 +28,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
         throw new Error('Failed to fetch tasks');
     } catch (error) {
         z.console.error('Error fetching tasks:', error);
-        throw new Error('Failed to fetch tasks');
+        throw new Error('Failed to fetch tasks: Invalid response format');
     }
 };
 

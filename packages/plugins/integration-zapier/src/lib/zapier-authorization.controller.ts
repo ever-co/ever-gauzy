@@ -47,8 +47,8 @@ export class ZapierAuthorizationController {
 		@Res() res: Response) {
 		try {
 			this.logger.debug('OAuth authorize request received');
-            this.logger.debug(`Redirect URI: ${redirectUri}`);
-            this.logger.debug(`State: ${state}`);
+			this.logger.debug(`Redirect URI: ${redirectUri}`);
+			this.logger.debug(`State: ${state}`);
 
 			if (!redirectUri) {
 				throw new HttpException('Redirect URI is required', HttpStatus.BAD_REQUEST);
@@ -70,7 +70,7 @@ export class ZapierAuthorizationController {
 			// Store these parameters in the session or state
 			// Redirect to the login page with these parameters preserved
 			const loginPageUrl = `${process.env['CLIENT_BASE_URL']}/#/auth/login?zapier_redirect_uri=${encodeURIComponent(redirectUri)}&zapier_state=${encodeURIComponent(state)}`;
-            this.logger.debug(`Redirecting to: ${loginPageUrl}`);
+			this.logger.debug(`Redirecting to: ${loginPageUrl}`);
 
 			res.redirect(loginPageUrl);
 		} catch (error) {
@@ -218,61 +218,67 @@ export class ZapierAuthorizationController {
 	/**
      * Refreshes an access token using a refresh token
      */
-		@Public()
-		@Post('refresh-token/:integrationId')
-		@ApiOperation({ summary: 'Refresh access token' })
-		@ApiResponse({
-			status: 200,
-			description: 'Successfully refreshed token'
-		})
-		@ApiResponse({
-			status: 401,
-			description: 'Unauthorized - Invalid refresh token'
-		})
-		async refreshToken(@Body() body: {
-			refresh_token: string;
-			client_id: string;
-			client_secret: string;
-			grant_type: ZapierGrantType;
-		}, @Param('integrationId') integrationId: string): Promise<IZapierAccessTokens> {
-			try {
-				const { refresh_token, client_id, client_secret, grant_type } = body;
+	@Public()
+	@Post('refresh-token/:integrationId')
+	@ApiOperation({ summary: 'Refresh access token' })
+	@ApiResponse({
+		status: 200,
+		description: 'Successfully refreshed token'
+	})
+	@ApiResponse({
+		status: 401,
+		description: 'Unauthorized - Invalid refresh token'
+	})
+	@ApiResponse({
+		status: 404,
+		description: 'NotFound - Integration not found'
+	})
+	async refreshToken(@Body() body: {
+		refresh_token: string;
+		client_id: string;
+		client_secret: string;
+		grant_type: ZapierGrantType;
+	}, @Param('integrationId') integrationId: string): Promise<IZapierAccessTokens | null> {
+		try {
+			const { refresh_token, client_id, client_secret, grant_type } = body;
 
-				this.logger.debug(`Refresh token request received: ${JSON.stringify(body)}`);
+			this.logger.debug(`Refresh token request received: ${JSON.stringify(body)}`);
 
-				if (grant_type !== 'refresh_token') {
-					throw new BadRequestException('Unsupported grant type');
-				}
-
-				if (!refresh_token || !client_id || !client_secret) {
-					throw new BadRequestException('Missing required parameters');
-				}
-
-				// Verify client credentials
-				const configuredClientId = this._config.get<string>('zapier.clientId');
-				const configuredClientSecret = this._config.get<string>('zapier.clientSecret');
-
-				if (client_id !== configuredClientId || client_secret !== configuredClientSecret) {
-					throw new UnauthorizedException('Invalid client credentials');
-				}
-
-				// Refresh the tokens
-				const tokens = await this.zapierService.refreshToken(integrationId);
-
-				// Return the token response
-				return {
-					access_token: tokens.access_token,
-					refresh_token: tokens.refresh_token,
-					expires_in: ZAPIER_TOKEN_EXPIRATION_TIME,
-					token_type: 'Bearer'
-				};
-			} catch (error) {
-				this.logger.error('Failed to refresh token', error);
-				if (error instanceof BadRequestException || error instanceof UnauthorizedException) {
-					throw error;
-				}
-				throw new UnauthorizedException('Failed to refresh token');
+			if (grant_type !== 'refresh_token') {
+				throw new BadRequestException('Unsupported grant type');
 			}
-		}
 
+			if (!refresh_token || !client_id || !client_secret) {
+				throw new BadRequestException('Missing required parameters');
+			}
+
+			// Verify client credentials
+			const configuredClientId = this._config.get<string>('zapier.clientId');
+			const configuredClientSecret = this._config.get<string>('zapier.clientSecret');
+
+			if (client_id !== configuredClientId || client_secret !== configuredClientSecret) {
+				throw new UnauthorizedException('Invalid client credentials');
+			}
+
+			// Refresh the tokens
+			const tokens = await this.zapierService.refreshToken(integrationId);
+			if (!tokens) {
+				throw new NotFoundException('Integration not found');
+			}
+
+			// Return the token response
+			return {
+				access_token: tokens.access_token,
+				refresh_token: tokens.refresh_token,
+				expires_in: ZAPIER_TOKEN_EXPIRATION_TIME,
+				token_type: 'Bearer'
+			};
+		} catch (error) {
+			this.logger.error('Failed to refresh token', error);
+			if (error instanceof BadRequestException || error instanceof UnauthorizedException || error instanceof NotFoundException) {
+				throw error;
+			}
+			throw new UnauthorizedException('Failed to refresh token');
+		}
+	}
 }

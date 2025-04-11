@@ -48,7 +48,7 @@ import { ZapierAuthCodeService } from './zapier-auth-code.service';
         ZapierAuthCodeService,
         MikroOrmZapierWebhookSubscriptionRepository,
         TypeOrmZapierWebhookSubscriptionRepository,
-        ...EventHandlers
+        ...EventHandlers,
     ],
     exports: [ZapierService, ZapierWebhookService, ZapierAuthCodeService]
 })

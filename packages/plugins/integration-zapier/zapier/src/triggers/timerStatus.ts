@@ -9,13 +9,13 @@ const perform = async (z: ZObject, bundle: Bundle) => {
         Authorization: `Bearer ${bundle.authData['access_token']}`,
       },
     });
-    const data = response.data as any;
+    const data = response.data;
 
     //Convert single object to array if needed
     if(!Array.isArray(data)) {
       return [
         {
-          id: new Date().toISOString(), // Use timestamp as ID for webhook mode
+          id: new Date().toString(), // Use timestamp as ID for webhook mode
           ...data
         }
       ];

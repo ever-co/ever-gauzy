@@ -9,7 +9,7 @@ interface OrganizationTeam {
 const perform = async (z:ZObject, bundle: Bundle) => {
     const organizationId = bundle.inputData.organizationId;
 
-    if(!organizationId) {
+    if (!organizationId) {
         throw new Error('Organization ID is required');
     }
 
@@ -24,6 +24,9 @@ const perform = async (z:ZObject, bundle: Bundle) => {
                 organizationId: organizationId
             }
         });
+        if (!response.data || !Array.isArray(response.data.items)) {
+            throw new Error('Unexpected API response format');
+        }
         return response.data.items.map((team: OrganizationTeam) => ({
             id: team.id,
             name: team.name
