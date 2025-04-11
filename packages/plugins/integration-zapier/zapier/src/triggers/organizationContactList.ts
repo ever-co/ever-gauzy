@@ -31,9 +31,9 @@ const perform = async (z: ZObject, bundle: Bundle) => {
             id: contact.id,
             name: contact.name
         }));
-    } catch (error) {
+    } catch (error: any) {
         z.console.error('Error fetching organization contacts:', error);
-        throw new Error('Failed to fetch organization contacts');
+        throw new Error(`Failed to fetch organization contacts: ${error.message || 'Unknown error'}`);
     }
 };
 
