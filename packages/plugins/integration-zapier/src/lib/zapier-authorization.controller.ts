@@ -107,7 +107,7 @@ export class ZapierAuthorizationController {
 			this.logger.debug('OAuth callback request received');
             this.logger.debug(`Query parameters: ${JSON.stringify(query)}`);
 
-            const { state } = query;
+            const { state, zapier_redirect_uri } = query;
 
 			// validate required parameters
 			if (!state) {
@@ -128,7 +128,8 @@ export class ZapierAuthorizationController {
 			const code = this.zapierAuthCodeService.generateAuthCode(
 				user.id as string,
 				user.tenantId as string,
-				organizationId as string
+				organizationId as string,
+				zapier_redirect_uri
 			);
 
 			// Convert query params object to string
@@ -139,7 +140,7 @@ export class ZapierAuthorizationController {
 			/**
 			 * Redirect the user back to Zapier's redirect_uri with the authorization code
 			 */
-			const url = `${ZAPIER_REDIRECT_URI}?${queryParamsString}`;
+			const url = `${zapier_redirect_uri || ZAPIER_REDIRECT_URI}?${queryParamsString}`;
 			this.logger.debug(`Redirecting to Zapier: ${url}`);
 			return res.redirect(url);
 		} catch (error) {
@@ -242,7 +243,12 @@ export class ZapierAuthorizationController {
 		try {
 			const { refresh_token, client_id, client_secret, grant_type } = body;
 
-			this.logger.debug(`Refresh token request received: ${JSON.stringify(body)}`);
+			this.logger.debug(`Refresh token request received: ${JSON.stringify({
+				refresh_token: '***',
+				client_id,
+				client_secret,
+				grant_type
+			})}`);
 
 			if (grant_type !== 'refresh_token') {
 				throw new BadRequestException('Unsupported grant type');

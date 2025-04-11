@@ -14,15 +14,14 @@ const perform = async (z:ZObject, bundle: Bundle) => {
     }
 
     try {
+        const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000'
         const response = await z.request({
-            url: `${process.env.API_BASE_URL}/api/organization-team`,
+            url: `${baseUrl}/api/organization-team`,
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${bundle.authData['access_token']}`,
             },
-            params: {
-                organizationId: organizationId
-            }
+            params: { organizationId }
         });
         if (!response.data || !Array.isArray(response.data.items)) {
             throw new Error('Unexpected API response format');

@@ -170,16 +170,25 @@ export class AuthController {
 	})
 	@Public()
 	@Get('login/success')
-	async loginSuccess(@Query() query: { zapier_state?: string }, @Res() res: Response) {
+	async loginSuccess(@Query() query: { zapier_state?: string, zapier_redirect_uri?: string }, @Res() res: Response) {
 		try {
 			// Check if this is a Zapier auth flow
-			const { zapier_state } = query;
+			const { zapier_state, zapier_redirect_uri } = query;
 
 			if (zapier_state) {
 				// This was a Zapier OAuth flow, redirect to callback with state
-				const callbackUrl = `${process.env['API_BASE_URL'] ?? 'http://localhost:3000'}/api/integration/zapier/oauth/callback?state=${encodeURIComponent(zapier_state)}`;
-
-				return res.redirect(callbackUrl);
+				const callbackUrl = `${process.env['API_BASE_URL'] ?? 'http://localhost:3000'}/api/integration/zapier/oauth/callback}`;
+				// Add state parameter to the callback URL
+				if (zapier_state) {
+					const url = new URL(callbackUrl);
+					url.searchParams.append('state', zapier_state);
+				}
+				// Add redirect_uri parameter to the callback URL
+				if (zapier_redirect_uri) {
+					const url = new URL(callbackUrl);
+					url.searchParams.append('zapier_redirect_uri', zapier_redirect_uri);
+				}
+				return res.redirect(callbackUrl.toString());
 			}
 
 			// Regular login flow

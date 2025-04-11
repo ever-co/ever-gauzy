@@ -14,15 +14,14 @@ const perform = async (z: ZObject, bundle: Bundle) => {
     }
 
     try {
+        const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
         const response = await z.request({
-            url: `${process.env.API_BASE_URL}/api/organization-contact`,
+            url: `${baseUrl}/api/organization-contact`,
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${bundle.authData['access_token']}`,
             },
-            params: {
-                organizationId: organizationId
-            }
+            params: { organizationId }
         });
         if (!response.data || !Array.isArray(response.data.items)) {
             throw new Error('Unexpected API response format');
@@ -43,7 +42,7 @@ export default {
     noun: 'OrganizationContact',
     display: {
         label: 'Organization Contact List',
-        description: 'Gets a list of organization contacts.',
+        description: 'Gets a list of organization contacts for dynamic dropdown selection.',
         hidden: true, // Hidden from the UI as it's just for dynamic dropdowns
     },
     operation: {
