@@ -3,7 +3,6 @@ import { ZObject, Bundle } from 'zapier-platform-core';
 interface Organization {
   id: string;
   name: string;
-  [key: string]: any;
 }
 
 const perform = async (z: ZObject, bundle: Bundle) => {
@@ -19,7 +18,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
       url: `${baseUrl}/api/organization`,
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${bundle.authData['access_token']}`,
+        Authorization: `Bearer ${bundle.authData.access_token}`,
       },
       params: { tenantId },
     });

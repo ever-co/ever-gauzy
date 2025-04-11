@@ -6,7 +6,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
       url: `${process.env.API_BASE_URL}/api/timesheet/timer/stop`,
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${bundle.authData['access_token']}`,
+        Authorization: `Bearer ${bundle.authData.access_token}`,
         'Content-Type': 'application/json'
       },
       body: {

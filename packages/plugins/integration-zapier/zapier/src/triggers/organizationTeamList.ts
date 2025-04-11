@@ -19,7 +19,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
             url: `${baseUrl}/api/organization-team`,
             method: 'GET',
             headers: {
-                Authorization: `Bearer ${bundle.authData['access_token']}`,
+                Authorization: `Bearer ${bundle.authData.access_token}`,
             },
             params: { organizationId }
         });
@@ -32,7 +32,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
         }));
     } catch (error: any) {
         z.console.error('Error fetching organization teams:', error);
-        throw new Error(`Failed to fetch organization teams: ${error.message || 'Unknow error'}`);
+        throw new Error(`Failed to fetch organization teams: ${error.message || 'Unknown error'}`);
     }
 };
 

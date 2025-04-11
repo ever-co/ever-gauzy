@@ -171,17 +171,18 @@ export class AuthController {
 			// Check if this is a Zapier auth flow
 			const { zapier_state, zapier_redirect_uri } = query;
 
-			const url = new URL(`${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/integration/zapier/oauth/callback`);
-			if (zapier_state) {
-				url.searchParams.append('state', zapier_state);
+			if (zapier_state || zapier_redirect_uri) {
+				const url = new URL(`${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/integration/zapier/oauth/callback`);
+				if (zapier_state) {
+					url.searchParams.append('state', zapier_state);
+				}
+				if (zapier_redirect_uri) {
+					url.searchParams.append('zapier_redirect_uri', zapier_redirect_uri);
+				}
+				return res.redirect(url.toString());
+			} else {
+				return res.redirect('/dashboard');
 			}
-			if (zapier_redirect_uri) {
-				url.searchParams.append('zapier_redirect_uri', zapier_redirect_uri);
-			}
-			return res.redirect(url.toString());
-
-			// Regular login flow
-			return res.redirect('/dashboard');
 		} catch (error) {
 			console.error('Zapier OAuth login error:', error);
 			return res.redirect('/auth/login?error=authentication_failed');

@@ -19,7 +19,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
             url: `${baseUrl}/api/organization-contact`,
             method: 'GET',
             headers: {
-                Authorization: `Bearer ${bundle.authData['access_token']}`,
+                Authorization: `Bearer ${bundle.authData.access_token}`,
             },
             params: { organizationId }
         });

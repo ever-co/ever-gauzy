@@ -1,9 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { ID } from '@gauzy/contracts';
 
 @Injectable()
 export class ZapierAuthCodeService {
+    constructor() {
+        this.startPeriodicCleanup();
+    }
     private readonly logger = new Logger(ZapierAuthCodeService.name);
     private readonly MAX_AUTH_CODES = 1000; // Maximum number of auth codes to store
     private readonly AUTH_CODE_EXPIRATION_MINUTES = 60; // Auth code expiration time in minutes
@@ -44,7 +47,7 @@ export class ZapierAuthCodeService {
         // Validate the redirect URI if provided
         if (redirectUri && !this.isValidRedirectDomain(redirectUri)) {
             this.logger.warn(`Rejected invalid redirect domain: ${redirectUri}`);
-            throw new Error('Invalid redirect URI domain');
+            throw new BadRequestException('Invalid redirect URI domain');
         }
 
         if (this.authCodes.size >= this.MAX_AUTH_CODES) {
@@ -86,7 +89,7 @@ export class ZapierAuthCodeService {
         if (authCodeData && authCodeData.expiresAt > new Date()) {
             if (authCodeData.redirectUri && redirectUri && authCodeData.redirectUri !== redirectUri) {
                 this.logger.warn(`Redirect URI mismatch for auth code ${code}. Expected: ${authCodeData.redirectUri}, Received: ${redirectUri}`);
-                return null;
+                throw new BadRequestException('Redirect URI mismatch');
             }
             this.authCodes.delete(code);
 
@@ -104,9 +107,6 @@ export class ZapierAuthCodeService {
         return null;
     }
 
-    /**
-     * Removes all expired auth codes from memory
-     */
     private cleanupExpiredAuthCodes(): void {
         const now = new Date();
         for (const [code, data] of this.authCodes.entries()) {
@@ -118,6 +118,18 @@ export class ZapierAuthCodeService {
     }
 
     /**
+     * Starts a periodic cleanup process to remove expired auth codes
+     */
+    private startPeriodicCleanup(): void {
+        const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // Cleanup every 5 minutes
+        setInterval(() => {
+            this.logger.debug('Running periodic cleanup of expired auth codes');
+            this.cleanupExpiredAuthCodes();
+        }, CLEANUP_INTERVAL_MS);
+    }
+
+
+    /**
      * Validates if a redirect URI belongs to an allowed domain
      */
     private isValidRedirectDomain(redirectUri: string): boolean {
@@ -126,6 +138,9 @@ export class ZapierAuthCodeService {
 
             const url = new URL(redirectUri);
             const domain = url.hostname;
+            if (domain === 'localhost' || domain.endsWith('localhost')) {
+                return true; // Allow localhost for local development
+            }
 
             return this.ALLOWED_DOMAINS.some(allowedDomain =>
                 domain === allowedDomain || domain.endsWith(`.${allowedDomain}`)
