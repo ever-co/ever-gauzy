@@ -1,12 +1,13 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { TimerStartedEvent } from '@gauzy/core';
 import { ZapierWebhookService } from '../zapier-webhook.service';
 
 @Injectable()
 @EventsHandler(TimerStartedEvent)
 export class ZapierTimerStartedHandler implements IEventHandler<TimerStartedEvent> {
-    constructor(private readonly zapierWebhookService: ZapierWebhookService) {}
+    private readonly logger = new Logger(ZapierTimerStartedHandler.name);
+    constructor(private readonly zapierWebhookService: ZapierWebhookService) { }
     /**
      * Handles the TimerStartedEvent by notifying Zapier webhooks
      *
@@ -14,10 +15,13 @@ export class ZapierTimerStartedHandler implements IEventHandler<TimerStartedEven
      * @returns A Promise that resolves once the webhooks are notified
      */
     async handle(event: TimerStartedEvent): Promise<void> {
+        const timeLog = event.timeLog;
         await this.zapierWebhookService.notifyTimerStatusChanged({
             event: 'timer.status.changed',
             action: 'start',
-            data: event.timeLog,
+            data: timeLog,
+            tenantId: timeLog.tenantId!,
+            organizationId: timeLog.organizationId!
         });
     }
 }

@@ -1,4 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from "./base-entity.model";
+import { ITimeLog } from "./timesheet.model";
 
 export interface IZapierAccessTokens {
     access_token: string;
@@ -15,6 +16,14 @@ export interface ICreateZapierIntegrationInput extends IBasePerTenantAndOrganiza
     grant_type: ZapierGrantType;
     redirect_uri: string;
     client_secret: string;
+}
+
+export interface ITimerZapierWebhookData {
+    event: string;
+    action: 'start' | 'stop' | string;
+    data: ITimeLog;
+    tenantId: string;
+    organizationId: string;
 }
 
 export interface IZapierEndpoint {

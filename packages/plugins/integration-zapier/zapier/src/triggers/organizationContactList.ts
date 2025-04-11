@@ -9,7 +9,7 @@ interface Contact {
 const perform = async (z: ZObject, bundle: Bundle) => {
     const organizationId = bundle.inputData.organizationId;
 
-    if(!organizationId) {
+    if (!organizationId) {
         throw new Error('Organization ID is required');
     }
 

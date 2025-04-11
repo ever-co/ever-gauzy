@@ -87,11 +87,13 @@ export class ZapierAuthCodeService {
      */
     private cleanupExpiredAuthCodes(): void {
         const now = new Date();
-        for (const [code, data] of this.authCodes.entries()) {
-            if (data.expiresAt < now) {
-                this.authCodes.delete(code);
-                this.logger.debug(`Removed expired auth code: ${code}`);
+        setInterval(() => {
+            for (const [code, data] of this.authCodes.entries()) {
+                if (data.expiresAt < now) {
+                    this.authCodes.delete(code);
+                    this.logger.debug(`Removed expired auth code: ${code}`);
+                }
             }
-        }
+        }, 60000); // runs every minute
     }
 }

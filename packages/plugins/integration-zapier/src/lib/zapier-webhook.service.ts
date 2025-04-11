@@ -1,5 +1,5 @@
 import { Injectable, Logger, ForbiddenException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
-import { ID } from '@gauzy/contracts';
+import { ID, ITimerZapierWebhookData } from '@gauzy/contracts';
 import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
 import { TypeOrmZapierWebhookSubscriptionRepository } from './repository/type-orm-zapier.repository';
 import { HttpService } from '@nestjs/axios';
@@ -82,8 +82,16 @@ export class ZapierWebhookService {
      *
      * @param timerData The data to send to webhooks
      */
-    async notifyTimerStatusChanged(timerData: any): Promise<void> {
+    async notifyTimerStatusChanged(timerData: ITimerZapierWebhookData): Promise<void> {
         try {
+            // Validate required IDs are present
+            if (!timerData.tenantId || !timerData.organizationId) {
+                this.logger.warn('Cannot notify webhook: missing tenantId or organizationId', {
+                    tenantId: timerData.tenantId,
+                    organizationId: timerData.organizationId
+                });
+                return;
+            }
             // Find all webhook subscriptions for timer status events
             const subscriptions = await this.subscriptionRepository.find({
                 where: {
