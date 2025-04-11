@@ -20,7 +20,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
             url: `${baseUrl}/api/tasks`,
             method: 'GET',
             headers: {
-                Authorization: `Bearer ${bundle.authData['access_token']}`,
+                Authorization: `Bearer ${bundle.authData.access_token}`,
             },
             params: { projectId }
         });

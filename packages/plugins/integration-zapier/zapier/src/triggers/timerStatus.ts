@@ -7,7 +7,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
       url: `${baseUrl}/api/timesheet/timer/status`,
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${bundle.authData['access_token']}`,
+        Authorization: `Bearer ${bundle.authData.access_token}`,
       },
     });
     const data = response.data;
@@ -49,14 +49,22 @@ const performList = async (z: ZObject, bundle: Bundle) => {
       },
     });
 
+    // Check HTTP response status
+    if (response.status !== 200) {
+      throw new Error(`Unexpected response status: ${response.status}`);
+    }
+
     // Validate response format
     if (!response.data || !Array.isArray(response.data)) {
       throw new Error('Unexpected API response format');
     }
 
-    // Format response to match Zapier's expected format
+    // Handle partial or missing data
     return response.data.map((item: any) => ({
       id: item.lastLog?.id || new Date().toISOString(),
+      duration: item.duration || 0, // Fallback for missing duration
+      running: item.running || false, // Fallback for missing running status
+      lastLog: item.lastLog || {}, // Fallback for missing lastLog
       ...item,
     }));
   } catch (error: any) {
