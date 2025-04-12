@@ -24,7 +24,7 @@ class PullActivities {
 			// this is not implemented yet
 			this.listenerModule = null;
 		} catch (error) {
-			console.log('error on get listener module', error);
+			console.error('error on get listener module', error);
 		}
 	}
 
@@ -37,7 +37,7 @@ class PullActivities {
 				this.isStarted = true;
 			}
 		} catch (error) {
-			console.log('error start tracking', error);
+			console.error('error start tracking', error);
 		}
 	}
 
@@ -48,7 +48,7 @@ class PullActivities {
 		try {
 			this.isStarted = false;
 		} catch (error) {
-			console.log('error to stop tracking');
+			console.error('error to stop tracking', error);
 		}
 	}
 }
