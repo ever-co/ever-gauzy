@@ -15,7 +15,6 @@ class PullActivities {
 	static getInstance(): PullActivities {
 		if (!PullActivities.instance) {
 			PullActivities.instance = new PullActivities();
-			return PullActivities.instance;
 		}
 		return PullActivities.instance;
 	}
