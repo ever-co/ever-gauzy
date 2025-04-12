@@ -1,4 +1,4 @@
-import { app, ipcMain,  } from 'electron';
+import { app, ipcMain } from 'electron';
 import * as path from 'path';
 import { logger as log, store } from '@gauzy/desktop-core';
 import {
