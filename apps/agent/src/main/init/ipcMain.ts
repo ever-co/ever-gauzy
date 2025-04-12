@@ -20,6 +20,8 @@ import AppWindow from '../window-manager';
 import * as moment from 'moment';
 import * as path from 'path';
 import PullActivities from '../workers/pull-activities';
+import { checkUserAuthentication } from '../auth';
+const rootPath = path.join(__dirname, '../..')
 
 const userService = new UserService();
 
@@ -44,13 +46,13 @@ function listenIO() {
 }
 
 async function closeLoginWindow() {
-	const rootPath = path.join(__dirname, '../..')
+
 	const appWindow = AppWindow.getInstance(rootPath);
 	await delaySync(2000); // delay 2s before destroy login window
-	appWindow.authWindow.browserWindow.destroy();
+	appWindow.destroyAuthWindow();
 }
 
-export default function AppIpcMain() {
+export default function AppIpcMain(){
 	remoteMain.initialize();
 
 	/* Set unlimited listeners */
@@ -127,9 +129,25 @@ export default function AppIpcMain() {
 		await closeLoginWindow();
 	});
 
-	ipcMain.on('update_app_setting', (event, arg) => {
+	ipcMain.on('update_app_setting', (_, arg) => {
 		log.info(`Update App Setting: ${moment().format()}`);
 		LocalStore.updateApplicationSetting(arg.values);
+	});
+
+	ipcMain.on('logout_desktop', async (_, arg) => {
+		try {
+			log.info('Logout Desktop');
+			store.set({
+				auth: null
+			});
+			const appWindow = AppWindow.getInstance(rootPath)
+			await appWindow.initSettingWindow();
+			appWindow.settingWindow.reload();
+			await checkUserAuthentication(rootPath);
+
+		} catch (error) {
+			log.error('Error Logout Desktop', error);
+		}
 	});
 
 	pluginListeners();

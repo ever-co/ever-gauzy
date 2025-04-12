@@ -9,7 +9,7 @@ import {
 	DesktopUpdater,
 	LocalStore,
 } from '@gauzy/desktop-lib';
-import { PullActivities } from './main/workers/pull-activities';
+import PullActivities from './main/workers/pull-activities';
 
 let popupWin: BrowserWindow | null = null;
 
