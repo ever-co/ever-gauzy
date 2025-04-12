@@ -15,7 +15,7 @@ function getAuthConfig() {
 	return authConfig;
 }
 
-export async function checkUserAuthentication(rootPath: string) {
+export async function checkUserAuthentication(rootPath: string): Promise<boolean> {
 	const authConfig = getAuthConfig();
 	if (!authConfig?.token) {
 		const appWindow = AppWindow.getInstance(rootPath);
@@ -27,7 +27,9 @@ export async function checkUserAuthentication(rootPath: string) {
 		})
 		await appWindow.authWindow.loadURL();
 		appWindow.authWindow.show();
+		return false;
 	}
+	return true;
 }
 
 async function handleCloseAuthWindow(authWindow: BrowserWindow) {

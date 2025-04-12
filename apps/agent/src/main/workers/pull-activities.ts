@@ -45,7 +45,7 @@ class PullActivities {
 				this.isStarted = true;
 			}
 		} catch (error) {
-			console.log('error start trackingk', error);
+			console.log('error start tracking', error);
 		}
 	}
 

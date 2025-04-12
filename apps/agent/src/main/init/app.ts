@@ -91,7 +91,6 @@ export async function startServer(value: any) {
 		appWindow?.splashScreenWindow?.close();
 		// timeTrackerWindow.webContents.toggleDevTools();
 	}
-	//const auth = store.get('auth');
 	trayMenu = TrayMenu.getInstance(
 		path.join(__dirname,'../..', CONSTANT.TRAY_ICON_PATH),
 		true,
@@ -105,8 +104,10 @@ export async function startServer(value: any) {
 	});
 
 	try {
-		await checkUserAuthentication(appRootPath);
-		listenIO();
+		const isAuthenticated = await checkUserAuthentication(appRootPath);
+		if (isAuthenticated) {
+			listenIO();
+		}
 	} catch (error) {
 		throw new AppError('MAIN_AUTH', error);
 	}
@@ -241,22 +242,4 @@ export async function InitApp() {
 	await app.whenReady();
 	await initiationLocalDatabase();
 	await appReady();
-
-
-	// app.on('ready', async () => {
-
-	// Set up theme listener for desktop windows
-
-	// default global
-
-
-
-	// updater.settingWindow = settingsWindow;
-	// updater.gauzyWindow = gauzyWindow;
-	// try {
-	// 	await updater.checkUpdate();
-	// } catch (error) {
-	// 	throw new UIError('400', error, 'MAINWININIT');
-	// }
-	// });
 }

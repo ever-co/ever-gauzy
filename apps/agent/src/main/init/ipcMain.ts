@@ -19,6 +19,7 @@ import { startServer } from './app';
 import AppWindow from '../window-manager';
 import * as moment from 'moment';
 import * as path from 'path';
+import PullActivities from '../workers/pull-activities';
 
 const userService = new UserService();
 
@@ -35,6 +36,11 @@ function getGlobalVariable(configs?: {
 		API_BASE_URL: getApiBaseUrl(appConfig),
 		IS_INTEGRATED_DESKTOP: appConfig?.isLocalServer || false
 	};
+}
+
+function listenIO() {
+	const pullActivities = PullActivities.getInstance();
+	pullActivities.startTracking();
 }
 
 async function closeLoginWindow() {
@@ -116,6 +122,8 @@ export default function AppIpcMain() {
 		store.set({
 			auth: { ...arg, isLogout: false }
 		});
+
+		listenIO();
 		await closeLoginWindow();
 	});
 
