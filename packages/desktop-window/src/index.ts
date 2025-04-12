@@ -11,4 +11,3 @@ export * from './lib/desktop-window-updater';
 export * from './lib/desktop-window-auth';
 export * from './lib/screen-capture-notification';
 export * from './lib/utils/desktop-window-utils';
-export * from './lib/desktop-window-auth';
