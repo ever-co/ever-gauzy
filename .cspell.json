@@ -561,7 +561,15 @@
 		"electronmon",
 		"apistage",
 		"agentapp",
-		"uninstallation"
+		"uninstallation",
+		"iohook",
+		"tsfn",
+		"hhook",
+		"lresult",
+		"wparam",
+		"lparam",
+		"refcon",
+		"cflags"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
