@@ -11,8 +11,22 @@ export interface PosthogModuleOptions {
 	flushInterval?: number;
 	personalApiKey?: string;
 	autocapture?: boolean;
+
+	/**
+	 * When mock is used, none of the events
+	 * are captured, only dumped to console.
+	 *
+	 * Useful for local development.
+	 *
+	 * @default false
+	 */
+	mock: boolean;
 }
 
+export interface PosthogSyncConfig {
+	// If true, registers `PosthogModule` as a global module.
+	isGlobal?: boolean;
+}
 /**
  * Interface for asynchronous PostHog module configuration.
  */
@@ -21,6 +35,9 @@ export interface PosthogModuleAsyncOptions extends Pick<ModuleMetadata, 'imports
 	inject?: any[];
 	useClass?: Type<PosthogOptionsFactory>;
 	useExisting?: Type<PosthogOptionsFactory>;
+
+	// If true, registers `PosthogModule` as a global module.
+	isGlobal?: boolean;
 }
 
 /**
