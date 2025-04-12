@@ -11,6 +11,11 @@
         "<!(node -p \"require('node-addon-api').gyp\")"
       ],
       "cflags_cc": ["-std=c++17"],
+      "msvs_settings": {
+        "VCCLCompilerTool": {
+          "AdditionalOptions": ["/std:c++17"]
+        }
+      },
       "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"]
     }
   ]
