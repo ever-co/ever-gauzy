@@ -8,6 +8,7 @@ import { PluginVersionActions } from '../actions/plugin-version.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginVersionStore } from '../stores/plugin-version.store';
 import { coalesceValue } from '../../../../../../utils';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({ providedIn: 'root' })
 export class PluginVersionEffects {
@@ -16,7 +17,8 @@ export class PluginVersionEffects {
 		private readonly pluginVersionStore: PluginVersionStore,
 		private readonly pluginService: PluginService,
 		private readonly toastrService: ToastrNotificationService,
-		private readonly pluginMarketplaceStore: PluginMarketplaceStore
+		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
+		private readonly translateService: TranslateService
 	) {}
 
 	getAll$ = createEffect(() =>
@@ -49,7 +51,7 @@ export class PluginVersionEffects {
 			tap(() => {
 				this.pluginVersionStore.update({ creating: true });
 				this.pluginMarketplaceStore.setUpload({ uploading: true });
-				this.toastrService.info('Adding new plugin version...');
+				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.VERSION.ADDING'));
 			}),
 			switchMap(({ pluginId, version }) =>
 				this.pluginService.addVersion(pluginId, version).pipe(
@@ -61,7 +63,11 @@ export class PluginVersionEffects {
 							version: created,
 							versions: [created, ...state.versions]
 						}));
-						this.toastrService.success(`Create plugin version v${created.number} successfully!`);
+						this.toastrService.success(
+							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.VERSION.CREATED', {
+								number: created.number
+							})
+						);
 					}),
 					finalize(() => {
 						this.pluginMarketplaceStore.setUpload({ uploading: false });
@@ -81,7 +87,7 @@ export class PluginVersionEffects {
 			ofType(PluginVersionActions.update),
 			tap(() => {
 				this.pluginVersionStore.update({ updating: true });
-				this.toastrService.info('Updating plugin version...');
+				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.VERSION.UPDATING'));
 			}),
 			switchMap(({ pluginId, versionId, version }) =>
 				this.pluginService.updateVersion(pluginId, versionId, version).pipe(
@@ -98,7 +104,11 @@ export class PluginVersionEffects {
 
 							return { versions, version };
 						});
-						this.toastrService.success('Update plugin version successfully!');
+						this.toastrService.success(
+							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.VERSION.UPDATED', {
+								number: version.number
+							})
+						);
 					}),
 					finalize(() => this.pluginVersionStore.update({ updating: false })),
 					catchError((error) => {
@@ -115,7 +125,7 @@ export class PluginVersionEffects {
 			ofType(PluginVersionActions.delete),
 			tap(() => {
 				this.pluginVersionStore.update({ deleting: true });
-				this.toastrService.info('Deleting plugin version...');
+				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.VERSION.DELETING'));
 			}),
 			mergeMap(({ pluginId, versionId }) =>
 				this.pluginService.deleteVersion(pluginId, versionId).pipe(
@@ -129,7 +139,9 @@ export class PluginVersionEffects {
 								)
 							]
 						}));
-						this.toastrService.success('Delete plugin version successfully!');
+						this.toastrService.success(
+							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.VERSION.DELETED')
+						);
 					}),
 					finalize(() => this.pluginVersionStore.update({ deleting: false })),
 					catchError((error) => {
@@ -146,7 +158,7 @@ export class PluginVersionEffects {
 			ofType(PluginVersionActions.restore),
 			tap(() => {
 				this.pluginVersionStore.update({ restoring: true });
-				this.toastrService.info('Restoring plugin version...');
+				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.VERSION.RESTORING'));
 			}),
 			mergeMap(({ pluginId, versionId }) =>
 				this.pluginService.restoreVersion(pluginId, versionId).pipe(
@@ -158,11 +170,13 @@ export class PluginVersionEffects {
 								version.id === versionId ? { ...version, deletedAt: null } : version
 							)
 						}));
-						this.toastrService.success('Plugin version restored successfully!');
+						this.toastrService.success(
+							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.VERSION.RESTORED')
+						);
 					}),
 					catchError((error) => {
 						console.error('Restore failed:', error);
-						this.toastrService.error('Failed to restore plugin version. Please try again.');
+						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.VERSION.RESTORE'));
 						return EMPTY;
 					}),
 					finalize(() => this.pluginVersionStore.update({ restoring: false }))

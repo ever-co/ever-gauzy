@@ -143,8 +143,9 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 				backdropClass: 'backdrop-blur',
 				context: {
 					data: {
-						title: 'Uninstall',
-						message: 'Would you like to uninstall this plugin?',
+						title: 'PLUGIN.DIALOG.UNINSTALL.TITLE',
+						message: 'PLUGIN.DIALOG.UNINSTALL.DESCRIPTION',
+						confirmText: 'PLUGIN.DIALOG.UNINSTALL.CONFIRM',
 						status: 'basic'
 					}
 				}

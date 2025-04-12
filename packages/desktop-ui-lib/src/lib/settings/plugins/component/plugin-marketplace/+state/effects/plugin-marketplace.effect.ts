@@ -8,6 +8,7 @@ import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { Router } from '@angular/router';
 import { coalesceValue } from '../../../../../../utils';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({ providedIn: 'root' })
 export class PluginMarketplaceEffects {
@@ -16,6 +17,7 @@ export class PluginMarketplaceEffects {
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
 		private readonly pluginService: PluginService,
 		private readonly toastrService: ToastrNotificationService,
+		private readonly translateService: TranslateService,
 		private readonly router: Router
 	) {}
 
@@ -24,7 +26,7 @@ export class PluginMarketplaceEffects {
 			ofType(PluginMarketplaceActions.upload),
 			tap(() => {
 				this.pluginMarketplaceStore.setUpload({ uploading: true });
-				this.toastrService.info('Uploading...');
+				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.UPLOADING'));
 			}),
 			switchMap(({ plugin }) =>
 				this.pluginService.upload(plugin).pipe(
@@ -36,11 +38,13 @@ export class PluginMarketplaceEffects {
 							plugins: [uploaded, ...state.plugins], // Immutable update
 							count: state.count + 1
 						}));
-						this.toastrService.success('Upload plugin successfully!');
+						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UPLOADED'));
 					}),
 					finalize(() => this.pluginMarketplaceStore.setUpload({ uploading: false })), // Always stop loading
 					catchError((error) => {
-						this.toastrService.error(error.message || 'Upload failed');
+						this.toastrService.error(
+							error.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UPLOAD')
+						);
 						return EMPTY; // Ensure the stream continues
 					})
 				)
@@ -97,7 +101,7 @@ export class PluginMarketplaceEffects {
 			ofType(PluginMarketplaceActions.update),
 			tap(() => {
 				this.pluginMarketplaceStore.update({ updating: true });
-				this.toastrService.info('Updating plugin...');
+				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.UPDATING'));
 			}),
 			switchMap(({ id, plugin }) =>
 				this.pluginService.update(id, plugin).pipe(
@@ -106,7 +110,7 @@ export class PluginMarketplaceEffects {
 							plugins: [...new Map([...state.plugins, plugin].map((item) => [item.id, item])).values()],
 							plugin: { ...state.plugin, ...plugin }
 						}));
-						this.toastrService.success('Update plugin successfully!');
+						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UPDATED'));
 					}),
 					finalize(() => this.pluginMarketplaceStore.update({ updating: false })),
 					catchError((error) => {
@@ -123,7 +127,7 @@ export class PluginMarketplaceEffects {
 			ofType(PluginMarketplaceActions.delete),
 			tap(() => {
 				this.pluginMarketplaceStore.update({ deleting: true });
-				this.toastrService.info('Deleting plugin...');
+				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.DELETING'));
 			}),
 			switchMap(({ id }) =>
 				this.pluginService.delete(id).pipe(
@@ -133,7 +137,7 @@ export class PluginMarketplaceEffects {
 							plugins: [...state.plugins.filter((plugin) => plugin.id !== id)],
 							plugin: null
 						}));
-						this.toastrService.success('Delete plugin successfully!');
+						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.DELETED'));
 					}),
 					finalize(() => this.pluginMarketplaceStore.update({ deleting: false })),
 					catchError((error) => {

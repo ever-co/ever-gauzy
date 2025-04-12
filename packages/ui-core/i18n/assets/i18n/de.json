@@ -179,31 +179,36 @@
 		"SHARE": "Teilen",
 		"GET_INFO": "Informationen abrufen",
 		"RETRY": "Erneut versuchen",
-		"UPLOAD": "Hochladen"
+		"UPLOAD": "Hochladen",
+		"ADD_VERSION": "Version hinzufügen",
+		"MARKETPLACE": "Marktplatz",
+		"READ_MORE": "Mehr lesen",
+		"READ_LESS": "Weniger lesen",
+		"RECOVER": "Wiederherstellen"
 	},
 	"SM_TABLE": {
 		"MEMBERS_COUNT": "Mitgliederanzahl",
 		"NO_DATA": {
-			"LOADING": "Laden, bitte warten...",
-			"RECEIVE_ESTIMATE": "Sie haben keine Schätzungen erhalten.",
-			"INCOME": "Sie haben keine Einnahmen erstellt.",
-			"EXPENSE_CATEGORY": "Sie haben keine Ausgabenkategorien erstellt.",
-			"REPORT": "Sie haben keine Berichte erstellt.",
-			"CONTRACT": "Sie haben keine Verträge erstellt.",
-			"TEAM": "Sie haben keine Teams erstellt.",
-			"HISTORY_RECORD": "Sie haben keine Aufzeichnungen erstellt.",
-			"PROFIT_HISTORY": "Sie haben keine Gewinnhistorien erstellt.",
-			"EMPLOYEE": "Sie haben keine Mitarbeiter erstellt.",
-			"EXPENSE": "Sie haben keine Ausgaben erstellt.",
-			"PAYMENT": "Sie haben keine Zahlungen erhalten.",
-			"PROPOSAL_TEMPLATE": "Sie haben keine Angebotsvorlagen erstellt.",
-			"PROPOSAL": "Sie haben keine Angebote erstellt.",
-			"PIPELINE": "Sie haben keine Pipelines erstellt.",
-			"TASK": "Sie haben keine Aufgaben erstellt.",
-			"INVITE": "Sie haben keine Benutzer eingeladen.",
-			"APPROVAL_REQUEST": "Sie haben keine Genehmigungsanfragen erstellt.",
-			"APPROVAL_POLICY": "Sie haben keine Genehmigungsrichtlinien erstellt.",
-			"TIME_OFF": "Sie haben keine Urlaube erstellt.",
+			"HISTORY": "Kein Verlauf vorhanden",
+			"RECEIVE_ESTIMATE": "Sie haben keine Schätzung erhalten.",
+			"INCOME": "Sie haben kein Einkommen erstellt.",
+			"EXPENSE_CATEGORY": "Du hast keine Ausgabekategorie erstellt.",
+			"REPORT": "Sie haben keinen Bericht erstellt.",
+			"CONTRACT": "Sie haben keinen Vertrag erstellt.",
+			"TEAM": "Du hast kein Team erstellt.",
+			"HISTORY_RECORD": "Du hast keine Aufzeichnung erstellt.",
+			"PROFIT_HISTORY": "Du hast keine Gewinnhistorie erstellt.",
+			"EMPLOYEE": "Du hast noch keinen Mitarbeiter erstellt.",
+			"EXPENSE": "Du hast keine Ausgaben erstellt.",
+			"PAYMENT": "Sie haben keine Zahlung erhalten.",
+			"PROPOSAL_TEMPLATE": "Sie haben keine Vorschlag Vorlage erstellt.",
+			"PROPOSAL": "Sie haben keinen Vorschlag erstellt.",
+			"PIPELINE": "Du hast keine Pipeline erstellt.",
+			"TASK": "Du hast keine Aufgabe erstellt.",
+			"INVITE": "Sie haben keinen Benutzer eingeladen.",
+			"APPROVAL_REQUEST": "Sie haben keine Genehmigungsanfrage erstellt.",
+			"APPROVAL_POLICY": "Sie haben keine Genehmigungsrichtlinie erstellt.",
+			"TIME_OFF": "Du hast keinen Urlaub erstellt.",
 			"TIME_OFF_POLICY": "Sie haben keine Urlaubsrichtlinien erstellt.",
 			"CANDIDATE": "Sie haben keine Kandidaten erstellt.",
 			"INTERVIEW": "Sie haben keine Interviews erstellt.",
@@ -229,7 +234,8 @@
 			"PRODUCT_TYPE_NO_DATA": "Sie haben keine Produktart erstellt.",
 			"TEAM_DASHBOARD": "Du hast keine Teams.",
 			"PLUGIN": "Sie haben kein Plugin installiert.",
-			"PLUGIN_MARKETPLACE": "Dieses Plugin ist im Marktplatz nicht verfügbar"
+			"PLUGIN_MARKETPLACE": "Dieses Plugin ist im Marktplatz nicht verfügbar",
+			"LOADING": "Laden..."
 		},
 		"TRANSACTION_TYPE": "Typ",
 		"AMOUNT": "Betrag",
@@ -4112,15 +4118,15 @@
 				"SSL_CERT_FILE": "SSL-Zertifikatdatei",
 				"SSL_CERT_FILE_INFO": "Pfad zur Client-Zertifikatdatei für SSL.",
 				"SECURE": "Sicher",
-				"SECURE_INFO": "Wahr, wenn Sie die SSL-Zertifikate überprüfen möchten."
+				"SECURE_INFO": "True, wenn Sie die SSL-Zertifikate überprüfen möchten."
 			},
-			"PLUGINS": "Plugins",
-			"PLUGIN_DESCRIPTION": "Plugins",
-			"PLUGIN": "Plugin",
-			"VERSION": "Version",
-			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Installieren Sie Plugins aus lokalen Dateien oder dem CDN. Lokal für benutzerdefinierte/private Plugins, CDN für öffentliche. Wählen Sie je nach Bedarf.",
-			"ADD_PLUGIN_CDN_DESCRIPTION": "CDN-Installation ermöglicht einfachen Zugriff auf öffentlich verfügbare Plugins.",
-			"ADD_PLUGIN_NPM_DESCRIPTION": "NPM-Installation ermöglicht Zugriff auf öffentlich und privat verfügbare Plugins."
+			"ADD_PLUGIN_NPM_DESCRIPTION": "Die NPM-Installation ermöglicht den Zugriff auf öffentlich und privat verfügbare Plugins.",
+			"PACKAGE_NAME": "NPM-Paketname",
+			"PACKAGE_VERSION": "NPM-Paketversion",
+			"REGISTRY": "NPM-Register",
+			"AUTH_TOKEN": "Authentifizierungs-Token",
+			"PRIVATE_REGISTRY_URL": "Private Registry-URL",
+			"PLUGIN_INSTALL_CDN_ERROR": "Die Server-URL darf nicht leer sein."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Wochenlimit überschritten",
 		"OF_HRS": "Von {{ limit }} Std.",
@@ -4991,7 +4997,10 @@
 				"INVALID_PACKAGE_NAME": "Ungültiges Paketnamenformat",
 				"INVALID_SCOPE": "Ungültiges Scope-Format",
 				"AUTHOR_TOO_LONG": "Autorenname ist zu lang",
-				"LICENSE_TOO_LONG": "Lizenzfeld ist zu lang"
+				"LICENSE_TOO_LONG": "Lizenzfeld ist zu lang",
+				"FAILED": "Validierung fehlgeschlagen",
+				"CHANGELOG_TOO_SHORT": "Changelog ist zu kurz",
+				"CHANGELOG_REQUIRED": "Changelog ist erforderlich"
 			},
 			"TYPE": "Plugin-Typ",
 			"TYPE_PLACEHOLDER": "Wählen Sie den Plugin-Typ",
@@ -5065,7 +5074,88 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Entdecken",
-			"INSTALLED": "Installiert"
+			"INSTALLED": "Installiert",
+			"VERSION_HISTORY": "Versionsverlauf"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Neues Plugin hochladen",
+			"OFFLINE": "Sie sind derzeit offline/getrennt ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Plugin deaktivieren",
+				"DESCRIPTION": "Möchten Sie dieses Plugin wirklich deaktivieren?",
+				"CONFIRM": "Deaktivieren"
+			},
+			"UNINSTALL": {
+				"TITLE": "Plugin deinstallieren",
+				"DESCRIPTION": "Möchten Sie dieses Plugin wirklich deinstallieren?",
+				"CONFIRM": "Deinstallieren"
+			},
+			"DELETE": {
+				"TITLE": "Plugin löschen",
+				"DESCRIPTION": "Sind Sie sicher, dass Sie dieses Plugin löschen möchten?",
+				"CONFIRM": "Löschen"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Version v{{number}} aktualisieren",
+					"DESCRIPTION": "Sind Sie sicher, dass Sie dieses Plugin aktualisieren möchten?",
+					"CONFIRM": "Aktualisieren"
+				},
+				"CREATE": {
+					"TITLE": "Neue Version für {{name}} erstellen",
+					"DESCRIPTION": "Sind Sie sicher, dass Sie diese Version erstellen möchten?",
+					"CONFIRM": "Erstellen"
+				},
+				"DELETE": {
+					"TITLE": "Version löschen",
+					"DESCRIPTION": "Sind Sie sicher, dass Sie diese Version löschen möchten?",
+					"CONFIRM": "Löschen"
+				},
+				"RESTORE": {
+					"TITLE": "Version wiederherstellen",
+					"DESCRIPTION": "Sind Sie sicher, dass Sie diese Version wiederherstellen möchten?",
+					"CONFIRM": "Wiederherstellen"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Plugin-Version v{{number}} erfolgreich erstellt!",
+					"UPDATED": "Plugin-Version v{{number}} erfolgreich aktualisiert!",
+					"DELETED": "Plugin-Version erfolgreich gelöscht!",
+					"RESTORED": "Plugin-Version erfolgreich wiederhergestellt!"
+				},
+				"UPLOADED": "Plugin erfolgreich hochgeladen!",
+				"UPDATED": "Plugin erfolgreich aktualisiert!",
+				"DELETED": "Plugin erfolgreich gelöscht!",
+				"INSTALLED": "Plugin erfolgreich installiert!",
+				"UNINSTALLED": "Plugin erfolgreich deinstalliert!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Neue Plugin-Version wird hinzugefügt...",
+					"UPDATING": "Plugin-Version wird aktualisiert...",
+					"DELETING": "Plugin-Version wird gelöscht...",
+					"RESTORING": "Plugin-Version wird wiederhergestellt..."
+				},
+				"UPLOADING": "Plugin wird hochgeladen...",
+				"UPDATING": "Plugin wird aktualisiert...",
+				"DELETING": "Plugin wird gelöscht...",
+				"INSTALLING": "Plugin wird installiert...",
+				"UNINSTALLING": "Plugin wird deinstalliert..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Wiederherstellung der Plugin-Version fehlgeschlagen. Bitte versuchen Sie es erneut!"
+				},
+				"UPLOAD": "Hochladen des Plugins fehlgeschlagen. Bitte versuchen Sie es erneut!",
+				"NOT_FOUND": "Plugin mit ID {{ id }} nicht gefunden.",
+				"INSTALL": "Installation des Plugins fehlgeschlagen. Bitte versuchen Sie es erneut!",
+				"REVERT_INSTALLATION": "Rückgängigmachen der Installation fehlgeschlagen!"
+			}
 		}
 	},
 	"SERVER_DOWN": {

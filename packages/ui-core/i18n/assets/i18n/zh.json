@@ -179,15 +179,20 @@
 		"SHARE": "分享",
 		"GET_INFO": "获取信息",
 		"RETRY": "重试",
-		"UPLOAD": "上传"
+		"UPLOAD": "上传",
+		"MARKETPLACE": "市场",
+		"ADD_VERSION": "添加版本",
+		"READ_MORE": "阅读更多",
+		"READ_LESS": "收起",
+		"RECOVER": "恢复"
 	},
 	"SM_TABLE": {
 		"MEMBERS_COUNT": "成员数",
 		"NO_DATA": {
-			"LOADING": "加载中，请稍候...",
-			"RECEIVE_ESTIMATE": "您尚未收到任何估算。",
-			"INCOME": "您尚未创建任何收入。",
-			"EXPENSE_CATEGORY": "您尚未创建任何支出类别。",
+			"HISTORY": "没有历史记录",
+			"RECEIVE_ESTIMATE": "您尚未收到任何估计。",
+			"INCOME": "您还没有创造任何收入。",
+			"EXPENSE_CATEGORY": "您尚未创建任何费用类别。",
 			"REPORT": "您尚未创建任何报告。",
 			"CONTRACT": "您尚未创建任何合同。",
 			"TEAM": "您尚未创建任何团队。",
@@ -229,7 +234,8 @@
 			"PRODUCT_TYPE_NO_DATA": "你还没有创建任何产品类型。",
 			"TEAM_DASHBOARD": "你没有任何团队",
 			"PLUGIN": "您尚未安装任何插件。",
-			"PLUGIN_MARKETPLACE": "该插件在市场上不可用"
+			"PLUGIN_MARKETPLACE": "该插件在市场上不可用",
+			"LOADING": "加载中..."
 		},
 		"TRANSACTION_TYPE": "类型",
 		"AMOUNT": "金额",
@@ -4117,10 +4123,13 @@
 			"PLUGINS": "插件",
 			"PLUGIN_DESCRIPTION": "插件",
 			"PLUGIN": "插件",
-			"VERSION": "版本",
-			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "从本地文件或CDN安装插件。本地用于自定义/私有插件，CDN用于公共插件。请根据需要选择。",
-			"ADD_PLUGIN_CDN_DESCRIPTION": "CDN安装便于访问公开可用插件。",
-			"ADD_PLUGIN_NPM_DESCRIPTION": "NPM安装便于访问公开和私有插件。"
+			"ADD_PLUGIN_NPM_DESCRIPTION": "NPM安装允许访问公开和私有的插件。",
+			"PACKAGE_NAME": "NPM包名称",
+			"PACKAGE_VERSION": "NPM包版本",
+			"REGISTRY": "NPM注册表",
+			"AUTH_TOKEN": "认证令牌",
+			"PRIVATE_REGISTRY_URL": "私有注册表URL",
+			"PLUGIN_INSTALL_CDN_ERROR": "服务器URL不能为空。"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "已超出每周上限",
 		"OF_HRS": "共{{ limit }}小时",
@@ -4991,7 +5000,10 @@
 				"INVALID_PACKAGE_NAME": "包名称格式无效",
 				"INVALID_SCOPE": "作用域格式无效",
 				"AUTHOR_TOO_LONG": "作者名称过长",
-				"LICENSE_TOO_LONG": "许可证字段过长"
+				"LICENSE_TOO_LONG": "许可证字段过长",
+				"FAILED": "验证失败",
+				"CHANGELOG_TOO_SHORT": "更新日志过短",
+				"CHANGELOG_REQUIRED": "更新日志必填"
 			},
 			"TYPE": "插件类型",
 			"TYPE_PLACEHOLDER": "选择插件类型",
@@ -5065,7 +5077,88 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "发现",
-			"INSTALLED": "已安装"
+			"INSTALLED": "已安装",
+			"VERSION_HISTORY": "版本历史"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "上传新插件",
+			"OFFLINE": "您当前处于离线/断开连接状态 ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "停用插件",
+				"DESCRIPTION": "确定要停用此插件吗？",
+				"CONFIRM": "停用"
+			},
+			"UNINSTALL": {
+				"TITLE": "卸载插件",
+				"DESCRIPTION": "确定要卸载此插件吗？",
+				"CONFIRM": "卸载"
+			},
+			"DELETE": {
+				"TITLE": "删除插件",
+				"DESCRIPTION": "您确定要删除此插件吗？",
+				"CONFIRM": "删除"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "更新版本 v{{number}}",
+					"DESCRIPTION": "您确定要更新此插件吗？",
+					"CONFIRM": "更新"
+				},
+				"CREATE": {
+					"TITLE": "为 {{name}} 创建新版本",
+					"DESCRIPTION": "您确定要创建此版本吗？",
+					"CONFIRM": "创建"
+				},
+				"DELETE": {
+					"TITLE": "删除版本",
+					"DESCRIPTION": "您确定要删除此版本吗？",
+					"CONFIRM": "删除"
+				},
+				"RESTORE": {
+					"TITLE": "恢复版本",
+					"DESCRIPTION": "您确定要恢复此版本吗？",
+					"CONFIRM": "恢复"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "插件版本 v{{number}} 创建成功！",
+					"UPDATED": "插件版本 v{{number}} 更新成功！",
+					"DELETED": "插件版本删除成功！",
+					"RESTORED": "插件版本恢复成功！"
+				},
+				"UPLOADED": "插件上传成功！",
+				"UPDATED": "插件更新成功！",
+				"DELETED": "插件删除成功！",
+				"INSTALLED": "插件安装成功！",
+				"UNINSTALLED": "插件卸载成功！"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "正在添加新插件版本...",
+					"UPDATING": "正在更新插件版本...",
+					"DELETING": "正在删除插件版本...",
+					"RESTORING": "正在恢复插件版本..."
+				},
+				"UPLOADING": "正在上传插件...",
+				"UPDATING": "正在更新插件...",
+				"DELETING": "正在删除插件...",
+				"INSTALLING": "正在安装插件...",
+				"UNINSTALLING": "正在卸载插件..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "恢复插件版本失败。请重试！"
+				},
+				"UPLOAD": "上传插件失败。请重试！",
+				"NOT_FOUND": "未找到ID为 {{ id }} 的插件。",
+				"INSTALL": "安装插件失败。请重试！",
+				"REVERT_INSTALLATION": "回滚安装失败！"
+			}
 		}
 	},
 	"SERVER_DOWN": {

@@ -36,17 +36,23 @@ isOffline = store.isOffline$ | async;
 	</div>
 	} } } @else if (isLoading) {
 	<div class="no-data">
-		<ngx-no-data-message message="Marketplace is loading plugins..."></ngx-no-data-message>
+		<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.LOADING' | translate"></ngx-no-data-message>
 	</div>
 	} @else {
 	<div class="no-data">
 		<ngx-no-data-message
-			[message]="isOffline ? 'You are currently offline/disconnected ⛓️‍' : 'There are no available plugins'"
+			[message]="(isOffline ? 'PLUGIN.MARKETPLACE.OFFLINE' : 'SM_TABLE.NO_DATA.PLUGIN') | translate"
 		></ngx-no-data-message>
 	</div>
 	} @if (isUploadAvailable) { @defer (on idle) {
 	<div class="button-upload">
-		<button (click)="upload()" nbTooltip="Upload new plugin" status="primary" nbButton [disabled]="isOffline">
+		<button
+			(click)="upload()"
+			[nbTooltip]="'PLUGIN.MARKETPLACE.UPLOAD' | translate"
+			status="primary"
+			nbButton
+			[disabled]="isOffline"
+		>
 			<nb-icon *gauzySpinnerButton="uploading" icon="cloud-upload-outline"></nb-icon>
 			@if (uploading) {
 			<span>{{ progress | percent : '1.2-2' }}</span>

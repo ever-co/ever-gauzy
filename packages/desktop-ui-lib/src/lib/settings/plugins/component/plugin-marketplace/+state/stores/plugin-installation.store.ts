@@ -28,7 +28,7 @@ export function createInitialInstallationState(): IPluginInstallationState {
 
 @StoreConfig({ name: '_plugin_installation' })
 @Injectable({ providedIn: 'root' })
-export class PluginInsatallationStore extends Store<IPluginInstallationState> {
+export class PluginInstallationStore extends Store<IPluginInstallationState> {
 	constructor() {
 		super(createInitialInstallationState());
 	}
