@@ -1,14 +1,14 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { environment } from '@gauzy/ui-config';
 import { ServerConnectionService, Store } from '@gauzy/ui-core/core';
-
+import { DSPOT_ERP_LOGO_LIGHT } from '@gauzy/ui-core/theme';
 @Component({
 	selector: 'ga-maintenance-mode',
 	styleUrls: ['./maintenance-mode.component.scss'],
 	templateUrl: './maintenance-mode.component.html'
 })
-export class MaintenanceModeComponent implements OnInit, OnDestroy {
+export class MaintenanceModeComponent implements OnInit {
 	noInternetLogo: string;
 	interval: any;
 
@@ -17,7 +17,7 @@ export class MaintenanceModeComponent implements OnInit, OnDestroy {
 		private readonly _location: Location,
 		private readonly _serverConnectionService: ServerConnectionService
 	) {
-		this.noInternetLogo = environment['NO_INTERNET_LOGO'];
+		this.noInternetLogo = DSPOT_ERP_LOGO_LIGHT;
 	}
 
 	ngOnInit(): void {
@@ -54,6 +54,4 @@ export class MaintenanceModeComponent implements OnInit, OnDestroy {
 	public get companySite(): string {
 		return environment.COMPANY_SITE_NAME;
 	}
-
-	ngOnDestroy(): void {}
 }

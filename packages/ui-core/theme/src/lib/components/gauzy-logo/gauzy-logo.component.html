@@ -29,19 +29,9 @@
 </div>
 
 <ng-template #logoTemplate>
-	<div
-		*ngIf="isCollapse"
-		class="logo"
-		[ngClass]="{ 'white-svg': isWhiteSvg() }"
-		(click)="navigateHome()"
-	>
-		<ng-container *ngIf="isSVG; else image">
-			<object [data]="logoUrl" type="image/svg+xml">
-				<img src="assets/images/logos/logo_Gauzy.png" />
-			</object>
+	<div *ngIf="isCollapse" class="logo" (click)="navigateHome()">
+		<ng-container>
+			<img [src]="getLogoUrl(isDarkTheme())" alt="DSpot ERP" />
 		</ng-container>
-		<ng-template #image>
-			<img [src]="logoUrl || 'assets/images/logos/logo_Gauzy.png'" />
-		</ng-template>
 	</div>
 </ng-template>
