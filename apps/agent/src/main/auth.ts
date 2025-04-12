@@ -50,7 +50,7 @@ async function handleCloseAuthWindow(authWindow: BrowserWindow) {
 				app.exit(0);
 				break;
 			default:
-				// Do nothing when other than exit button choosed
+				// Do nothing when other than exit button chosen
 				break;
 		}
 	}
