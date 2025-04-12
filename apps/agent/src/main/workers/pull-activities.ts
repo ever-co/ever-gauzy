@@ -1,5 +1,3 @@
-import * as path from 'path';
-
 class PullActivities {
 	static instance: PullActivities;
 	private listenerModule: any;

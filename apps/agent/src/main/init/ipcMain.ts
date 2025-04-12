@@ -40,9 +40,13 @@ function getGlobalVariable(configs?: {
 	};
 }
 
-function listenIO() {
+function listenIO(stop: boolean) {
 	const pullActivities = PullActivities.getInstance();
-	pullActivities.startTracking();
+	if (stop) {
+		pullActivities.stopTracking();
+	} else {
+		pullActivities.startTracking();
+	}
 }
 
 async function closeLoginWindow() {
@@ -125,7 +129,7 @@ export default function AppIpcMain(){
 			auth: { ...arg, isLogout: false }
 		});
 
-		listenIO();
+		listenIO(false);
 		await closeLoginWindow();
 	});
 
@@ -144,6 +148,7 @@ export default function AppIpcMain(){
 			await appWindow.initSettingWindow();
 			appWindow.settingWindow.reload();
 			await checkUserAuthentication(rootPath);
+			listenIO(true);
 
 		} catch (error) {
 			log.error('Error Logout Desktop', error);
