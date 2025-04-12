@@ -5,8 +5,10 @@ import {
 	ViewChild,
 	ElementRef,
 	NgZone,
+	OnDestroy
 } from '@angular/core';
 import { ElectronService } from '../electron/services';
+import { Event } from 'electron';
 
 @Component({
 	selector: 'ngx-updater',
@@ -14,7 +16,7 @@ import { ElectronService } from '../electron/services';
 	styleUrls: ['./updater.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UpdaterComponent implements OnInit {
+export class UpdaterComponent implements OnInit, OnDestroy {
 	@ViewChild('logBox') logBox: ElementRef;
 	@ViewChild('logUpdate') logAccordion;
 	constructor(
@@ -31,7 +33,7 @@ export class UpdaterComponent implements OnInit {
 	logContents: any = [];
 	logIsOpen: boolean = false;
 
-	handleIpcEvent(_: any, arg: { type: string, data: any }) {
+	handleIpcEvent(_: Event, arg: { type: string, data: any }) {
 		switch (arg.type) {
 			case 'update_available': {
 				this._ngZone.run(() => {
@@ -81,6 +83,10 @@ export class UpdaterComponent implements OnInit {
 	ngOnInit(): void {
 		this.electronService.ipcRenderer.on('setting_page_ipc', this.handleIpcEvent);
 		this.version = this.electronService.remote.app.getVersion();
+	}
+
+	ngOnDestroy(): void {
+	    this.electronService.ipcRenderer.removeListener('setting_page_ipc', this.handleIpcEvent);
 	}
 
 	checkForUpdate() {

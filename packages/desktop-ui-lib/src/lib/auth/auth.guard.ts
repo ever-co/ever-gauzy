@@ -1,10 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-	ActivatedRouteSnapshot,
-	CanActivate,
-	Router,
-	RouterStateSnapshot,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { AuthService, AuthStrategy } from './services';
 import { Store } from '../services';
 import { ElectronService } from '../electron/services';
@@ -19,20 +14,15 @@ export class AuthGuard implements CanActivate {
 		private readonly store: Store
 	) {}
 
-	async canActivate(
-		route: ActivatedRouteSnapshot,
-		state: RouterStateSnapshot
-	) {
+	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
 		let isAuthenticated = false;
 		try {
 			isAuthenticated = await this.authService.isAuthenticated();
 		} catch (error) {
 			console.error(error);
+			this.store.serverConnection = 0;
 		}
-		console.log(
-			'Token Authenticated:',
-			`${isAuthenticated ? 'true' : 'false'}`
-		);
+		console.log('Token Authenticated:', `${isAuthenticated ? 'true' : 'false'}`);
 
 		if (isAuthenticated) {
 			return true; // logged in so return true
@@ -63,7 +53,7 @@ export class AuthGuard implements CanActivate {
 
 	private async redirectToLogin(returnUrl: string) {
 		await this.router.navigate(['/auth/login'], {
-			queryParams: { returnUrl },
+			queryParams: { returnUrl }
 		});
 	}
 }

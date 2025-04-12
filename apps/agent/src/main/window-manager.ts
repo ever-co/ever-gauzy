@@ -14,12 +14,12 @@ class AppWindow {
 	splashScreenWindow: SplashScreen;
 	setupWindow: BrowserWindow;
 	rootPath: string;
-	authWindow: AuthWindow;
-	settingWindow: BrowserWindow;
+	authWindow: AuthWindow | null = null;
+	settingWindow: BrowserWindow | null = null;
 	private static instance: AppWindow;
 	constructor(rootPath: string) {
 		if (!AppWindow.instance) {
-			AppWindow.instance= this;
+			AppWindow.instance = this;
 			this.rootPath = rootPath;
 		}
 	}
@@ -102,11 +102,11 @@ class AppWindow {
 				this.authWindow = new AuthWindow(this.getUiPath('auth/login'), this.getPreloadPath(), true);
 				this.authWindow.config.options.titleBarStyle = 'hidden';
 				this.authWindow.config.options.titleBarOverlay = true;
-				this.authWindow.config.options.frame = false;
 				this.authWindow.browserWindow.on('close', () => {
 					this.authWindow.browserWindow.destroy();
+					this.authWindow = null;
 				});
-				this.authWindow.browserWindow.webContents.toggleDevTools();
+				// this.authWindow.browserWindow.webContents.toggleDevTools();
 			}
 		} catch (error) {
 			console.error('Failed to initialize auth window', error);
@@ -123,14 +123,14 @@ class AppWindow {
 					this.getPreloadPath(),
 					true
 				);
-				this.settingWindow.webContents.toggleDevTools();
+				// this.settingWindow.webContents.toggleDevTools();
 				this.settingWindow.removeAllListeners('close'); // remove the close default handle
 				// override the close event
 				this.settingWindow.on('close', () => {
 					this.settingWindow.destroy();
 					this.settingWindow = null;
 				});
-			};
+			}
 		} catch (error) {
 			console.error('Failed to initialize setting window', error);
 			throw new Error(`Setting window initialization failed ${error.message}`);

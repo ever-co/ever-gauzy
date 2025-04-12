@@ -1,0 +1,19 @@
+.form-section {
+  .section-title {
+    margin: 0 0 1rem;
+    font-weight: 600;
+    color: var(--gauzy-text-color-1);
+    font-size: 1rem;
+    padding-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background-color: var(--divider-color);
+      margin-left: 0.75rem;
+    }
+  }
+}

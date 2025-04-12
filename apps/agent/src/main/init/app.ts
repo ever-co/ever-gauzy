@@ -104,8 +104,13 @@ export async function startServer(value: any) {
 		trayMenu.updateTryMenu();
 	});
 
-	await checkUserAuthentication(appRootPath);
-	listenIO();
+	try {
+		await checkUserAuthentication(appRootPath);
+		listenIO();
+	} catch (error) {
+		throw new AppError('MAIN_AUTH', error);
+	}
+
 	return true;
 }
 

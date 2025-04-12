@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { IPlugin, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { NbDateService, NbDialogRef, NbStepperComponent, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { filter, Subject, takeUntil, tap } from 'rxjs';
 
 @Component({
 	selector: 'lib-plugin-marketplace-upload',
@@ -12,31 +12,28 @@ import { takeUntil } from 'rxjs/operators';
 	styleUrls: ['./plugin-marketplace-upload.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PluginMarketplaceUploadComponent implements OnInit {
-	@ViewChild('fileInput') fileInput: ElementRef;
+export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
+	@ViewChild('stepper', { static: false }) stepper: NbStepperComponent;
 
 	pluginForm: FormGroup;
 	plugin: IPlugin;
 	pluginTypes = Object.values(PluginType);
 	pluginStatuses = Object.values(PluginStatus);
 	sourceTypes = Object.values(PluginSourceType);
-	selectedFile: File | null = null;
-	errorMessage: string | null = null;
-	isDragOver = false;
 	isSubmitting = false;
 	formTouched = false;
-
-	readonly ALLOWED_EXTENSIONS = ['.zip'];
-	readonly MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1GB
-	private readonly destroy$ = new Subject<void>();
+	today: Date; // Ensures a proper date comparison
+	destroy$ = new Subject<void>();
 
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly dialogRef: NbDialogRef<PluginMarketplaceUploadComponent>,
-		private readonly cdr: ChangeDetectorRef,
 		private readonly toastrService: NbToastrService,
-		private readonly translateService: TranslateService
-	) {}
+		private readonly translateService: TranslateService,
+		protected readonly dateService: NbDateService<Date>
+	) {
+		this.today = dateService.today();
+	}
 
 	ngOnInit(): void {
 		this.initForm();
@@ -44,20 +41,14 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 		this.patch();
 	}
 
-	ngOnDestroy(): void {
-		this.destroy$.next();
-		this.destroy$.complete();
-	}
-
 	private initForm(): void {
 		this.pluginForm = this.fb.group({
+			...(this.plugin && this.plugin.id && { id: [this.plugin.id] }),
 			name: ['', [Validators.required, Validators.maxLength(100)]],
 			description: ['', Validators.maxLength(500)],
-			type: [this.pluginTypes[0], Validators.required],
-			status: [this.pluginStatuses[0], Validators.required],
-			version: ['', [Validators.required, Validators.pattern(/^\d+\.\d+\.\d+$/)]],
-			sourceType: [this.sourceTypes[0], Validators.required],
-			source: this.createSourceGroup(this.sourceTypes[0]),
+			type: [PluginType.DESKTOP, Validators.required],
+			status: [PluginStatus.ACTIVE, Validators.required],
+			version: this.createVersionGroup(),
 			author: ['', Validators.maxLength(100)],
 			license: ['', Validators.maxLength(50)],
 			homepage: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)],
@@ -68,58 +59,57 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 	private patch(): void {
 		if (!this.plugin) return;
 
-		const { name, description, type, status, versions, source, author, license, homepage, repository } =
-			this.plugin;
-		const { type: sourceType } = source;
+		const { name, description, type, status, version, source, author, license, homepage, repository } = this.plugin;
 
-		this.pluginForm.patchValue({
+		const data: Partial<IPlugin> = {
 			name,
 			description,
 			type,
 			status,
-			version: versions[0],
-			sourceType,
-			source: this.createSourceGroup(sourceType),
 			author,
 			license,
 			homepage,
 			repository
+		};
+
+		if (version) {
+			data.version = { ...version };
+			if (source) {
+				data.version.source = { ...source };
+				this.onSourceTypeChange(source.type);
+			}
+		}
+
+		this.pluginForm.patchValue(data);
+	}
+
+	private createVersionGroup(): FormGroup {
+		return this.fb.group({
+			...(this.plugin?.version?.id && { id: [this.plugin.version.id] }),
+			number: ['', [Validators.required, Validators.pattern(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/)]],
+			changelog: ['', [Validators.required, Validators.minLength(10)]],
+			releaseDate: [this.today, [Validators.required, this.pastDateValidator()]],
+			source: this.createSourceGroup(PluginSourceType.CDN)
 		});
-
-		const sourcePatch: Record<string, any> = {};
-
-		if (sourceType === PluginSourceType.CDN) {
-			Object.assign(sourcePatch, {
-				url: source.url,
-				integrity: source.integrity,
-				crossOrigin: source.crossOrigin
-			});
-		} else if (sourceType === PluginSourceType.NPM) {
-			Object.assign(sourcePatch, {
-				name,
-				version: versions[0],
-				scope: source.scope
-			});
-		}
-
-		if (Object.keys(sourcePatch).length > 0) {
-			this.pluginForm.get('source')?.patchValue(sourcePatch);
-		}
-
-		this.cdr.markForCheck();
 	}
 
-	private setupSourceTypeListener(): void {
-		this.pluginForm
-			.get('sourceType')
-			?.valueChanges.pipe(takeUntil(this.destroy$))
-			.subscribe((type) => this.onSourceTypeChange(type));
+	/**
+	 * Custom validator to ensure the release date is not in the future.
+	 */
+	private pastDateValidator(): ValidatorFn {
+		return (control: AbstractControl): ValidationErrors | null => {
+			if (!control.value) return null;
+			const inputDate = new Date(control.value);
+			return inputDate > this.today ? { futureDate: true } : null;
+		};
 	}
 
-	private createSourceGroup(type: string): FormGroup {
+	private createSourceGroup(type: PluginSourceType): FormGroup {
+		const sourceId = this.plugin && this.plugin.source.id ? { id: [this.plugin.source.id] } : {};
 		switch (type) {
 			case PluginSourceType.CDN:
 				return this.fb.group({
+					...sourceId,
 					type: [PluginSourceType.CDN],
 					url: [
 						'',
@@ -134,6 +124,7 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 
 			case PluginSourceType.NPM:
 				return this.fb.group({
+					...sourceId,
 					type: [PluginSourceType.NPM],
 					name: [
 						'',
@@ -148,124 +139,18 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 				});
 
 			case PluginSourceType.GAUZY:
+			default:
 				return this.fb.group({
+					...sourceId,
 					type: [PluginSourceType.GAUZY],
 					file: [null, Validators.required]
 				});
-
-			default:
-				throw new Error(`Unsupported plugin source type: ${type}`);
 		}
-	}
-
-	public onFileSelected(event: Event): void {
-		const input = event.target as HTMLInputElement;
-
-		if (input.files && input.files.length > 0) {
-			this.processFile(input.files[0]);
-			this.cdr.markForCheck();
-		}
-	}
-
-	public onDragEnter(event: DragEvent): void {
-		this.preventDefault(event);
-		this.isDragOver = true;
-		this.cdr.markForCheck();
-	}
-
-	public onDragOver(event: DragEvent): void {
-		this.preventDefault(event);
-		this.isDragOver = true;
-	}
-
-	public onDragLeave(event: DragEvent): void {
-		this.preventDefault(event);
-		this.isDragOver = false;
-		this.cdr.markForCheck();
-	}
-
-	public onDrop(event: DragEvent): void {
-		this.preventDefault(event);
-		this.isDragOver = false;
-
-		if (event.dataTransfer?.files.length > 0) {
-			this.processFile(event.dataTransfer.files[0]);
-			this.cdr.markForCheck();
-		}
-	}
-
-	private preventDefault(event: Event): void {
-		event.preventDefault();
-		event.stopPropagation();
-	}
-
-	private processFile(file: File): void {
-		const sourceGroup = this.pluginForm.get('source') as FormGroup;
-		const fileControl = sourceGroup.get('file');
-
-		// Reset previous errors
-		this.errorMessage = null;
-		fileControl?.setErrors(null);
-
-		// Validate file extension
-		const fileExtension = this.getFileExtension(file.name);
-		if (!this.ALLOWED_EXTENSIONS.includes(fileExtension)) {
-			this.errorMessage = this.translateService.instant('PLUGINS.FILE_VALIDATION.INVALID_TYPE', {
-				extensions: this.ALLOWED_EXTENSIONS.join(', ')
-			});
-			fileControl?.setErrors({ invalidType: true });
-			this.selectedFile = null;
-			return;
-		}
-
-		// Validate file size
-		if (file.size > this.MAX_FILE_SIZE) {
-			this.errorMessage = this.translateService.instant('PLUGINS.FILE_VALIDATION.MAX_SIZE_EXCEEDED', {
-				maxSize: this.formatFileSize(this.MAX_FILE_SIZE)
-			});
-			fileControl?.setErrors({ maxSizeExceeded: true });
-			this.selectedFile = null;
-			return;
-		}
-
-		this.selectedFile = file;
-		fileControl?.setValue(file);
-	}
-
-	private getFileExtension(filename: string): string {
-		return filename.substring(filename.lastIndexOf('.')).toLowerCase();
-	}
-
-	public removeFile(event: Event): void {
-		this.preventDefault(event);
-		const sourceGroup = this.pluginForm.get('source') as FormGroup;
-		sourceGroup.get('file')?.setValue(null);
-		this.selectedFile = null;
-		this.errorMessage = null;
-		this.cdr.markForCheck();
-	}
-
-	public formatFileSize(bytes: number): string {
-		if (bytes === 0) return '0 Bytes';
-		const k = 1024;
-		const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-		const i = Math.floor(Math.log(bytes) / Math.log(k));
-		return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-	}
-
-	public onSourceTypeChange(type: string): void {
-		this.pluginForm.setControl('source', this.createSourceGroup(type));
-		this.selectedFile = null;
-		this.errorMessage = null;
-		this.cdr.markForCheck();
 	}
 
 	public reset(): void {
 		this.initForm();
-		this.selectedFile = null;
-		this.errorMessage = null;
 		this.formTouched = false;
-		this.cdr.markForCheck();
 	}
 
 	public submit(): void {
@@ -281,18 +166,10 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 			return;
 		}
 
+		this.isSubmitting = true;
+
 		try {
-			this.isSubmitting = true;
-			this.cdr.markForCheck();
-
 			const pluginData = this.pluginForm.value;
-
-			// Add success notification
-			this.toastrService.success(
-				this.translateService.instant('PLUGINS.UPLOAD.SUCCESS'),
-				this.translateService.instant('TOASTR.TITLE.SUCCESS')
-			);
-
 			this.dialogRef.close(pluginData);
 		} catch (error) {
 			this.toastrService.danger(
@@ -301,7 +178,31 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 			);
 		} finally {
 			this.isSubmitting = false;
-			this.cdr.markForCheck();
+		}
+	}
+
+	private setupSourceTypeListener(): void {
+		this.pluginForm
+			?.get('version.source.type')
+			?.valueChanges.pipe(
+				distinctUntilChange(),
+				filter(Boolean),
+				tap((type: PluginSourceType) => this.onSourceTypeChange(type)),
+				takeUntil(this.destroy$)
+			)
+			.subscribe();
+	}
+
+	public onSourceTypeChange(type: PluginSourceType): void {
+		if (!this.pluginForm) return;
+		const source = this.createSourceGroup(type);
+		const versionControl = this.pluginForm.get('version') as FormGroup;
+
+		if (versionControl && source) {
+			if (versionControl.get('source')) {
+				versionControl.removeControl('source');
+			}
+			versionControl.addControl('source', source);
 		}
 	}
 
@@ -331,32 +232,9 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 		return this.pluginForm.invalid;
 	}
 
-	public getFieldError(controlName: string, errorType?: string): boolean {
-		const control = this.pluginForm.get(controlName);
-		if (!control) return false;
-
-		if (errorType) {
-			return control.touched && control.hasError(errorType);
-		}
-
-		return control.touched && control.invalid;
-	}
-
-	public getSourceFieldError(fieldName: string, errorType?: string): boolean {
-		const sourceGroup = this.pluginForm.get('source') as FormGroup;
-		if (!sourceGroup) return false;
-
-		const control = sourceGroup.get(fieldName);
-		if (!control) return false;
-
-		if (errorType) {
-			return control.touched && control.hasError(errorType);
-		}
-
-		return control.touched && control.invalid;
-	}
-
-	public triggerFileBrowse(): void {
-		this.fileInput?.nativeElement.click();
+	ngOnDestroy(): void {
+		this.reset();
+		this.destroy$.next();
+		this.destroy$.complete();
 	}
 }

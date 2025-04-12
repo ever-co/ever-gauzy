@@ -1,26 +1,35 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-
-import { EMPTY, firstValueFrom, Subject, tap } from 'rxjs';
-import { catchError, filter, switchMap, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, tap } from 'rxjs';
+import { catchError, concatMap, filter, take, takeUntil } from 'rxjs/operators';
 
 import {
 	ICDNSource,
 	IGauzySource,
 	INPMSource,
 	IPlugin,
+	IPluginVersion,
 	PluginSourceType,
 	PluginStatus,
 	PluginType
 } from '@gauzy/contracts';
 
 import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { Actions } from '@ngneat/effects-ng';
+import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
+import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
+import { PluginVersionActions } from '../+state/actions/plugin-version.action';
+import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
+import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
+import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
+import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
-import { PluginService } from '../../../services/plugin.service';
+import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
+import { DialogCreateVersionComponent } from './dialog-create-version/dialog-create-version.component';
 
 @Component({
 	selector: 'gauzy-plugin-marketplace-item',
@@ -30,16 +39,8 @@ import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/p
 })
 export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	private readonly destroy$ = new Subject<void>();
-
-	plugin: IPlugin | null = null;
-	pluginId = '';
-	loading = true;
-
-	selectedVersion = '';
-	installed = false;
-	needUpdate = false;
-	installing = false;
-	uninstalling = false;
+	installed$ = new BehaviorSubject<boolean>(false);
+	needUpdate$ = new BehaviorSubject<boolean>(false);
 
 	// Enum for template use
 	readonly pluginStatus = PluginStatus;
@@ -47,59 +48,36 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	readonly pluginSourceType = PluginSourceType;
 
 	constructor(
-		private route: ActivatedRoute,
-		private router: Router,
-		private pluginService: PluginService,
-		private pluginElectronService: PluginElectronService,
-		private dialogService: NbDialogService,
-		private store: Store,
-		public translateService: TranslateService,
-		private toastrService: ToastrNotificationService,
-		private ngZone: NgZone,
-		private cdr: ChangeDetectorRef
+		private readonly route: ActivatedRoute,
+		private readonly router: Router,
+		private readonly pluginElectronService: PluginElectronService,
+		private readonly dialogService: NbDialogService,
+		private readonly store: Store,
+		private readonly translateService: TranslateService,
+		private readonly toastrService: ToastrNotificationService,
+		private readonly action: Actions,
+		public readonly marketplaceQuery: PluginMarketplaceQuery,
+		public readonly installationQuery: PluginInstallationQuery,
+		public readonly versionQuery: PluginVersionQuery
 	) {}
 
 	ngOnInit(): void {
-		this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
-			this.pluginId = params['id'];
-			this.loadPlugin();
-		});
-		this.pluginElectronService.status
+		this.plugin$
 			.pipe(
+				filter(Boolean),
 				distinctUntilChange(),
-				tap(({ status, message }) =>
-					this.ngZone.run(() => {
-						this.handleStatus({ status, message });
-					})
-				),
+				concatMap((plugin) => {
+					this.action.dispatch(PluginVersionActions.selectVersion(plugin.version));
+					return this.checkInstallation(plugin);
+				}),
+				catchError((error) => this.handleError(error)),
 				takeUntil(this.destroy$)
 			)
 			.subscribe();
-	}
-
-	private handleStatus(notification: { status: string; message?: string }) {
-		switch (notification.status) {
-			case 'success':
-				this.installing = false;
-				this.uninstalling = this.installing;
-				this.toastrService.success(notification.message);
-				break;
-			case 'error':
-				this.installing = false;
-				this.uninstalling = this.installing;
-				this.toastrService.error(notification.message);
-				break;
-			case 'inProgress':
-				this.installing = !this.uninstalling;
-				this.toastrService.info(notification.message);
-				break;
-			default:
-				this.installing = false;
-				this.uninstalling = this.installing;
-				this.toastrService.warn('Unexpected Status');
-				break;
-		}
-		this.cdr.markForCheck();
+		this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+			this.action.dispatch(PluginVersionActions.setCurrentPluginId(params['id']));
+			this.loadPlugin();
+		});
 	}
 
 	ngOnDestroy(): void {
@@ -107,39 +85,41 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		this.destroy$.complete();
 	}
 
-	async loadPlugin(): Promise<void> {
-		this.loading = true;
+	public loadPlugin(): void {
+		this.action.dispatch(
+			PluginMarketplaceActions.getOne(this.pluginId, {
+				relations: ['versions', 'versions.source', 'uploadedBy', 'uploadedBy.user'],
+				order: { versions: { releaseDate: 'DESC' } }
+			})
+		);
+	}
+
+	private async handleError(error: any): Promise<void> {
+		this.toastrService.error(error);
+		await this.router.navigate(['/settings/marketplace-plugins']);
+	}
+
+	async checkInstallation(plugin: IPlugin): Promise<void> {
+		if (!plugin) return;
 
 		try {
-			this.plugin = await firstValueFrom(this.pluginService.getOne(this.pluginId));
-			this.selectedVersion = this.plugin.versions[this.plugin.versions.length - 1];
-			await this.checkInstallation();
+			const installed = await this.checkPlugin(plugin);
+			this.installed$.next(!!installed);
+
+			if (installed && plugin.versions) {
+				this.needUpdate$.next(installed.version !== plugin.version.number);
+			}
 		} catch (error) {
-			this.handleError(error);
-		} finally {
-			this.loading = false;
-			this.cdr.markForCheck();
+			this.installed$.next(false);
 		}
 	}
 
-	private handleError(error: any): void {
-		this.toastrService.error(error);
-		this.router.navigate(['/settings/marketplace-plugins']);
-	}
-
-	async checkInstallation(): Promise<void> {
-		if (!this.plugin) return;
-
+	async checkPlugin(plugin: IPlugin): Promise<IPluginInstalled> {
+		if (!plugin) return;
 		try {
-			const plugin = await this.pluginElectronService.plugin(this.plugin.name);
-			this.installed = !!plugin;
-
-			if (this.installed && this.plugin.versions) {
-				const latestVersion = this.plugin.versions[this.plugin.versions.length - 1];
-				this.needUpdate = plugin.version !== latestVersion;
-			}
+			return this.pluginElectronService.checkInstallation(plugin.id);
 		} catch (error) {
-			console.error('Installation check failed', error);
+			return null;
 		}
 	}
 
@@ -180,13 +160,22 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		return typeMap[type] || 'basic';
 	}
 
+	getPluginSourceTypeBadgeStatus(type: PluginSourceType): string {
+		const typeMap: Record<PluginSourceType, string> = {
+			[PluginSourceType.GAUZY]: 'primary',
+			[PluginSourceType.CDN]: 'info',
+			[PluginSourceType.NPM]: 'danger'
+		};
+		return typeMap[type] || 'basic';
+	}
+
 	getSourceDetails(plugin: IPlugin): string {
 		switch (plugin.source.type) {
 			case PluginSourceType.CDN:
 				return (plugin.source as ICDNSource).url;
 			case PluginSourceType.NPM:
 				const npmSource = plugin.source as INPMSource;
-				return `${npmSource.scope ? npmSource.scope + '/' : ''}${npmSource.name}@${npmSource.version}`;
+				return `${npmSource.scope ? npmSource.scope + '/' : ''}${npmSource.name}@${plugin.version.number}`;
 			case PluginSourceType.GAUZY:
 				return (
 					(plugin.source as IGauzySource).url || this.translateService.instant('PLUGIN.DETAILS.UPLOADED_FILE')
@@ -197,15 +186,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	async updatePluginStatus(status: PluginStatus): Promise<void> {
-		if (!this.plugin || !this.isOwner) return;
-
-		try {
-			await firstValueFrom(this.pluginService.update({ ...this.plugin, status }));
-			this.plugin.status = status;
-			this.toastrService.success(this.translateService.instant('PLUGIN.MESSAGES.STATUS_UPDATED'));
-		} catch (error) {
-			this.toastrService.error(this.translateService.instant('COMMON.UPDATE_FAILED'));
-		}
+		if (!this.pluginId || !this.isOwner) return;
+		this.action.dispatch(PluginMarketplaceActions.update(this.pluginId, { status }));
 	}
 
 	navigateToEdit(): void {
@@ -218,15 +200,12 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			})
 			.onClose.pipe(
 				filter(Boolean),
-				switchMap((plugin: IPlugin) =>
-					this.pluginService.update(plugin).pipe(
-						tap(() => this.toastrService.success('Plugin updated successfully!')),
-						catchError(() => {
-							this.toastrService.error('Plugin upload failed!');
-							return EMPTY;
-						})
-					)
-				),
+				tap((plugin: IPlugin) => {
+					this.action.dispatch(
+						PluginInstallationActions.toggle({ isChecked: this.isInstalled, plugin: this.plugin })
+					);
+					this.action.dispatch(PluginMarketplaceActions.update(this.pluginId, plugin));
+				}),
 				takeUntil(this.destroy$)
 			)
 			.subscribe();
@@ -234,6 +213,10 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	navigateBack(): void {
 		this.router.navigate(['/settings/marketplace-plugins']);
+	}
+
+	navigateToHistory(): void {
+		this.router.navigate(['settings', 'marketplace-plugins', this.pluginId, 'versions']);
 	}
 
 	formatDate(date: Date | string | null): string {
@@ -245,47 +228,141 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		return !!this.store.user && this.store.user.employee?.id === this.plugin?.uploadedBy?.id;
 	}
 
-	async onVersionChange(): Promise<void> {
-		await this.checkInstallation();
-	}
-
 	updatePlugin(): void {
 		this.installPlugin(true);
 	}
 
 	public async uninstallPlugin(): Promise<void> {
-		this.uninstalling = true;
-		this.pluginElectronService.uninstall(this.plugin as any);
-		await this.loadPlugin();
+		this.dialogService
+			.open(AlertComponent, {
+				backdropClass: 'backdrop-blur',
+				context: {
+					data: {
+						title: 'Uninstall',
+						message: 'Would you like to uninstall this plugin?',
+						status: 'basic'
+					}
+				}
+			})
+			.onClose.pipe(
+				take(1),
+				filter(Boolean),
+				concatMap(() => this.checkPlugin(this.plugin)),
+				filter(Boolean),
+				tap((plugin) => {
+					this.action.dispatch(PluginInstallationActions.toggle({ isChecked: false, plugin: this.plugin }));
+					this.action.dispatch(PluginInstallationActions.uninstall(plugin));
+				})
+			)
+			.subscribe();
 	}
 
 	installPlugin(isUpdate = false): void {
-		this.installing = true;
-		switch (this.plugin.source.type) {
+		const source = isUpdate ? this.plugin.source : this.selectedVersion.source;
+		const versionId = isUpdate ? this.plugin.version.id : this.selectedVersion.id;
+		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: true, plugin: this.plugin }));
+		switch (source.type) {
 			case PluginSourceType.GAUZY:
 			case PluginSourceType.CDN:
-				this.pluginElectronService.downloadAndInstall({ url: this.plugin.source.url, contextType: 'cdn' });
+				this.action.dispatch(
+					PluginInstallationActions.install({
+						url: source.url,
+						contextType: 'cdn',
+						marketplaceId: this.pluginId,
+						versionId
+					})
+				);
 				break;
 			case PluginSourceType.NPM:
-				this.pluginElectronService.downloadAndInstall({
-					...{
-						pkg: {
-							name: this.plugin.source.name,
-							version: isUpdate
-								? this.plugin.versions[this.plugin.versions.length - 1]
-								: this.selectedVersion
+				this.action.dispatch(
+					PluginInstallationActions.install({
+						...{
+							pkg: {
+								name: source.name,
+								version: isUpdate ? this.plugin.version.number : this.selectedVersionNumber
+							},
+							registry: {
+								privateURL: source.registry,
+								authToken: source.authToken
+							}
 						},
-						registry: {
-							privateURL: this.plugin.source.registry,
-							authToken: this.plugin.source.authToken
-						}
-					},
-					contextType: 'npm'
-				});
+						contextType: 'npm',
+						marketplaceId: this.pluginId,
+						versionId
+					})
+				);
 				break;
 			default:
-				this.installing = false;
 				break;
 		}
+	}
+
+	public get selectedVersionNumber(): string {
+		return this.selectedVersion.number;
+	}
+
+	public addVersion(): void {
+		if (!this.plugin || !this.isOwner || !this.pluginId) return;
+
+		this.dialogService
+			.open(DialogCreateVersionComponent, {
+				backdropClass: 'backdrop-blur',
+				context: { plugin: this.plugin }
+			})
+			.onClose.pipe(
+				filter(Boolean),
+				tap((version: IPluginVersion) => {
+					this.action.dispatch(
+						PluginInstallationActions.toggle({ isChecked: this.isInstalled, plugin: this.plugin })
+					);
+					this.action.dispatch(PluginVersionActions.add(this.pluginId, version));
+				}),
+				takeUntil(this.destroy$)
+			)
+			.subscribe();
+	}
+
+	public delete(): void {
+		this.dialogService
+			.open(AlertComponent, {
+				context: {
+					data: {
+						message: 'Would you like to delete this plugin?',
+						title: 'Delete plugin',
+						status: 'Danger'
+					}
+				}
+			})
+			.onClose.pipe(
+				take(1),
+				filter(Boolean),
+				tap(() => {
+					this.action.dispatch(
+						PluginInstallationActions.toggle({ isChecked: this.isInstalled, plugin: this.plugin })
+					);
+					this.action.dispatch(PluginMarketplaceActions.delete(this.pluginId));
+				})
+			)
+			.subscribe();
+	}
+
+	public get plugin$(): Observable<IPlugin> {
+		return this.marketplaceQuery.plugin$;
+	}
+
+	private get plugin(): IPlugin {
+		return this.marketplaceQuery.plugin;
+	}
+
+	public get pluginId(): string {
+		return this.versionQuery.pluginId;
+	}
+
+	private get isInstalled(): boolean {
+		return this.installed$.value;
+	}
+
+	private get selectedVersion(): IPluginVersion {
+		return this.versionQuery.version;
 	}
 }

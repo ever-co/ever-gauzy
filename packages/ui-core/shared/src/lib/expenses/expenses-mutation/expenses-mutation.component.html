@@ -12,11 +12,6 @@
 					{{ 'POP_UPS.ADD_EXPENSE' | translate }}
 				</h4>
 			</ng-template>
-			<ng-container *ngIf="showTooltip">
-				<span class="help-text" [nbTooltip]="'EXPENSES_PAGE.SPLIT_HELP' | translate">
-					<nb-icon size="small" status="primary" icon="alert-triangle-outline"></nb-icon>
-				</span>
-			</ng-container>
 		</div>
 	</nb-card-header>
 	<nb-card-body class="body">
@@ -88,7 +83,14 @@
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">{{ 'POP_UPS.AMOUNT' | translate }}</label>
+						<label class="label d-flex align-items-center">
+							{{ 'POP_UPS.AMOUNT' | translate }}
+							<ng-container *ngIf="showTooltip">
+								<span class="help-text ml-2" [nbTooltip]="'EXPENSES_PAGE.SPLIT_HELP' | translate">
+									<nb-icon size="small" status="danger" icon="alert-triangle-outline"></nb-icon>
+								</span>
+							</ng-container>
+						</label>
 						<input
 							nbInput
 							[min]="0"

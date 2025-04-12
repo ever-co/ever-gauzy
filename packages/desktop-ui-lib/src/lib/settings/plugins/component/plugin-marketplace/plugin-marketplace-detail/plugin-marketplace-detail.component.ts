@@ -1,15 +1,20 @@
-import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
-import { NbDialogService } from '@nebular/theme';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { BehaviorSubject, catchError, EMPTY, filter, Observable, switchMap, tap } from 'rxjs';
-import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
-import { PluginElectronService } from '../../../services/plugin-electron.service';
-import { IPlugin } from '../../../services/plugin-loader.service';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { IPlugin, PluginSourceType } from '@gauzy/contracts';
+import { NbDialogService } from '@nebular/theme';
+import { Actions } from '@ngneat/effects-ng';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { BehaviorSubject, catchError, filter, from, map, Observable, of, take, tap } from 'rxjs';
+import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
+import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
+import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
+import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
+import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
+import { Store } from '../../../../../services';
+import { PluginElectronService } from '../../../services/plugin-electron.service';
+import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
-import { Store, ToastrNotificationService } from '../../../../../services';
-import { PluginService } from '../../../services/plugin.service';
-import { PluginSourceType } from '@gauzy/contracts';
+import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 
 @UntilDestroy()
 @Component({
@@ -19,23 +24,54 @@ import { PluginSourceType } from '@gauzy/contracts';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMarketplaceDetailComponent implements OnInit {
-	@Input() plugin!: IPlugin;
-	public readonly _isChecked$ = new BehaviorSubject<boolean>(false);
-	private readonly pluginElectronService = inject(PluginElectronService);
-	private readonly pluginService = inject(PluginService);
-	private readonly dialog = inject(NbDialogService);
-	private readonly toastrService = inject(ToastrNotificationService);
-	private readonly router = inject(Router);
-	private readonly store = inject(Store);
+	@Input()
+	public plugin: IPlugin;
+	private readonly _isChecked$ = new BehaviorSubject<boolean>(false);
+
+	constructor(
+		private readonly dialog: NbDialogService,
+		private readonly router: Router,
+		private readonly store: Store,
+		private readonly action: Actions,
+		private readonly pluginService: PluginElectronService,
+		public readonly marketplaceQuery: PluginMarketplaceQuery,
+		public readonly installationQuery: PluginInstallationQuery
+	) {}
 
 	ngOnInit(): void {
-		if (this.plugin) {
-			this._isChecked$.next(this.plugin.installed);
+		// Set selector position
+		this._isChecked$.next(this.plugin.installed);
+		// Set selector on installation
+		this.installationQuery.toggle$
+			.pipe(
+				filter(({ plugin }) => !!plugin && this.plugin.id === plugin.id),
+				tap(({ isChecked }) => this._isChecked$.next(isChecked)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		// Check local installation
+		this.check(this.plugin).subscribe((isChecked) => this._isChecked$.next(isChecked));
+	}
+
+	public check(plugin: IPlugin): Observable<boolean> {
+		return from(this.checkInstallation(plugin)).pipe(
+			map((installed) => !!installed), // Convert the result to a boolean directly
+			catchError(() => of(false)), // Ensure the stream continues even on error
+			untilDestroyed(this)
+		);
+	}
+
+	public async checkInstallation(plugin: IPlugin): Promise<IPluginInstalled> {
+		if (!plugin) return;
+		try {
+			return this.pluginService.checkInstallation(plugin.id);
+		} catch (error) {
+			return null;
 		}
 	}
 
 	public togglePlugin(checked: boolean): void {
-		this._isChecked$.next(checked);
+		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: checked, plugin: this.plugin }));
 		checked ? this.installPlugin() : this.uninstallPlugin();
 	}
 
@@ -43,22 +79,33 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		switch (this.plugin.source.type) {
 			case PluginSourceType.GAUZY:
 			case PluginSourceType.CDN:
-				this.pluginElectronService.downloadAndInstall({ url: this.plugin.source.url, contextType: 'cdn' });
+				this.action.dispatch(
+					PluginInstallationActions.install({
+						url: this.plugin.source.url,
+						contextType: 'cdn',
+						marketplaceId: this.plugin.id,
+						versionId: this.plugin.version.id
+					})
+				);
 				break;
 			case PluginSourceType.NPM:
-				this.pluginElectronService.downloadAndInstall({
-					...{
-						pkg: {
-							name: this.plugin.source.name,
-							version: this.plugin.versions[this.plugin.versions.length - 1]
+				this.action.dispatch(
+					PluginInstallationActions.install({
+						...{
+							pkg: {
+								name: this.plugin.source.name,
+								version: this.plugin.version.number
+							},
+							registry: {
+								privateURL: this.plugin.source.registry,
+								authToken: this.plugin.source.authToken
+							}
 						},
-						registry: {
-							privateURL: this.plugin.source.registry,
-							authToken: this.plugin.source.authToken
-						}
-					},
-					contextType: 'npm'
-				});
+						contextType: 'npm',
+						marketplaceId: this.plugin.id,
+						versionId: this.plugin.version.id
+					})
+				);
 				break;
 			default:
 				break;
@@ -70,7 +117,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public async openPlugin(): Promise<void> {
-		this.router.navigate([`/settings/marketplace-plugins/${this.plugin.id}`]);
+		this.action.dispatch(PluginVersionActions.selectVersion(this.plugin.version));
+		await this.router.navigate([`/settings/marketplace-plugins/${this.plugin.id}`]);
 	}
 
 	public editPlugin(): void {
@@ -82,16 +130,9 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 				}
 			})
 			.onClose.pipe(
+				take(1),
 				filter(Boolean),
-				switchMap((plugin: IPlugin) =>
-					this.pluginService.update(plugin).pipe(
-						tap(() => this.toastrService.success('Plugin updated successfully!')),
-						catchError(() => {
-							this.toastrService.error('Plugin upload failed!');
-							return EMPTY;
-						})
-					)
-				)
+				tap((plugin: IPlugin) => this.action.dispatch(PluginMarketplaceActions.update(this.plugin.id, plugin)))
 			)
 			.subscribe();
 	}
@@ -108,10 +149,10 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 					}
 				}
 			})
-			.onClose.subscribe((isUninstall: boolean) => {
-				if (isUninstall) {
-					this.pluginElectronService.uninstall(this.plugin);
-					this._isChecked$.next(false);
+			.onClose.subscribe(async (isUninstall: boolean) => {
+				const plugin = await this.checkInstallation(this.plugin);
+				if (isUninstall && !!plugin) {
+					this.action.dispatch(PluginInstallationActions.uninstall(plugin));
 				} else {
 					this._isChecked$.next(true);
 				}
@@ -119,6 +160,6 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public get isOwner(): boolean {
-		return !!this.store.user && this.store.user.employee?.id === this.plugin?.uploadedBy?.id;
+		return !!this.store.user && this.store.user.employee?.id === this.plugin?.uploadedById;
 	}
 }

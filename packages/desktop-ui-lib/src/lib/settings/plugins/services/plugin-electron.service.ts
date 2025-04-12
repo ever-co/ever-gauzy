@@ -1,4 +1,5 @@
 import { inject, Injectable } from '@angular/core';
+import { ID } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { IPlugin } from './plugin-loader.service';
@@ -15,6 +16,10 @@ export class PluginElectronService {
 
 	public plugin(name: string): Promise<IPlugin> {
 		return this.electronService.ipcRenderer.invoke('plugins::getOne', name);
+	}
+
+	public checkInstallation(marketplaceId: ID): Promise<IPlugin> {
+		return this.electronService.ipcRenderer.invoke('plugins::check', marketplaceId);
 	}
 
 	public activate(plugin: IPlugin) {
@@ -43,6 +48,38 @@ export class PluginElectronService {
 
 	public lazyLoader(pluginPath: string) {
 		return this.electronService.ipcRenderer.invoke('plugins::lazy-loader', pluginPath);
+	}
+
+	public progress<T, U>(callBack?: (message?: string) => T): Observable<{ message?: string; data: U }> {
+		return new Observable<{ message?: string; data: U }>((observer) => {
+			const channel = 'plugin::status';
+
+			const listener = (_: any, arg: { status: string; message?: string; data?: U }) => {
+				try {
+					switch (arg.status) {
+						case 'success':
+							observer.next({ message: arg.message, data: arg.data });
+							observer.complete();
+							break;
+						case 'inProgress':
+							callBack?.(arg.message);
+							break;
+						case 'error':
+						default:
+							observer.error(arg.message);
+							break;
+					}
+				} catch (error) {
+					observer.error(error);
+				}
+			};
+
+			this.electronService.ipcRenderer.on(channel, listener);
+
+			return () => {
+				this.electronService.ipcRenderer.removeListener(channel, listener);
+			};
+		});
 	}
 
 	public get status(): Observable<{ status: string; message?: string }> {
