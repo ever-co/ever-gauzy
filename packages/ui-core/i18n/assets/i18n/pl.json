@@ -170,7 +170,12 @@
 		"SHARE": "Udostępnij",
 		"GET_INFO": "Pobierz informacje",
 		"RETRY": "Spróbuj ponownie",
-		"UPLOAD": "Prześlij"
+		"UPLOAD": "Prześlij",
+		"MARKETPLACE": "Rynek",
+		"ADD_VERSION": "Dodaj wersje",
+		"READ_MORE": "Czytaj więcej",
+		"READ_LESS": "Czytaj mniej",
+		"RECOVER": "Przywróć"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -218,7 +223,8 @@
 			"PRODUCT_TYPE_NO_DATA": "Nie utworzyłeś żadnego typu produktu",
 			"TEAM_DASHBOARD": "Nie masz żadnych zespołów",
 			"PLUGIN": "Nie zainstalowano żadnych wtyczek.",
-			"PLUGIN_MARKETPLACE": "Ta wtyczka nie jest dostępna na rynku"
+			"PLUGIN_MARKETPLACE": "Ta wtyczka nie jest dostępna na rynku",
+			"LOADING": "Ładuje..."
 		},
 		"TRANSACTION_TYPE": "Rodzaj",
 		"AMOUNT": "Kwota",
@@ -4017,7 +4023,14 @@
 				"SSL_CERT_FILE_INFO": "Ścieżka do pliku certyfikatu klienta dla SSL.",
 				"SECURE": "Bezpieczne",
 				"SECURE_INFO": "True, jeśli chcesz zweryfikować certyfikaty SSL."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "Instalacja NPM umożliwia dostęp do publicznie i prywatnie dostępnych wtyczek.",
+			"PACKAGE_NAME": "Nazwa pakietu NPM",
+			"PACKAGE_VERSION": "Wersja pakietu NPM",
+			"REGISTRY": "Rejestr NPM",
+			"AUTH_TOKEN": "Token uwierzytelniający",
+			"PRIVATE_REGISTRY_URL": "Prywatny adres URL rejestru",
+			"PLUGIN_INSTALL_CDN_ERROR": "Adres URL serwera nie może być pusty."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Przekroczono limit tygodniowy",
 		"OF_HRS": "Z {{ limit }} godz",
@@ -4789,7 +4802,10 @@
 				"INVALID_PACKAGE_NAME": "Nieprawidłowy format nazwy pakietu",
 				"INVALID_SCOPE": "Nieprawidłowy format zakresu",
 				"AUTHOR_TOO_LONG": "Nazwa autora jest zbyt długa",
-				"LICENSE_TOO_LONG": "Pole licencji jest zbyt długie"
+				"LICENSE_TOO_LONG": "Pole licencji jest zbyt długie",
+				"FAILED": "Walidacja nie powiodła się",
+				"CHANGELOG_TOO_SHORT": "Log zmian jest zbyt krotki",
+				"CHANGELOG_REQUIRED": "Log zmian jest wymagany"
 			},
 			"TYPE": "Typ wtyczki",
 			"TYPE_PLACEHOLDER": "Wybierz typ wtyczki",
@@ -4863,7 +4879,88 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Odkryj",
-			"INSTALLED": "Zainstalowane"
+			"INSTALLED": "Zainstalowane",
+			"VERSION_HISTORY": "Historia wersji"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Prześlij nową wtyczkę",
+			"OFFLINE": "Jesteś obecnie offline/rozłączony ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Dezaktywuj wtyczkę",
+				"DESCRIPTION": "Czy na pewno chcesz dezaktywować tę wtyczkę?",
+				"CONFIRM": "Dezaktywuj"
+			},
+			"UNINSTALL": {
+				"TITLE": "Odinstaluj wtyczkę",
+				"DESCRIPTION": "Czy na pewno chcesz odinstalować tę wtyczkę?",
+				"CONFIRM": "Odinstaluj"
+			},
+			"DELETE": {
+				"TITLE": "Usuń wtyczkę",
+				"DESCRIPTION": "Czy na pewno chcesz usunąć tę wtyczkę?",
+				"CONFIRM": "Usuń"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Aktualizuj wersję v{{number}}",
+					"DESCRIPTION": "Czy na pewno chcesz zaktualizować tę wtyczkę?",
+					"CONFIRM": "Aktualizuj"
+				},
+				"CREATE": {
+					"TITLE": "Utwórz nową wersję dla {{name}}",
+					"DESCRIPTION": "Czy na pewno chcesz utworzyć tę wersję?",
+					"CONFIRM": "Utwórz"
+				},
+				"DELETE": {
+					"TITLE": "Usuń wersję",
+					"DESCRIPTION": "Czy na pewno chcesz usunąć tę wersję?",
+					"CONFIRM": "Usuń"
+				},
+				"RESTORE": {
+					"TITLE": "Przywróć wersję",
+					"DESCRIPTION": "Czy na pewno chcesz przywrócić tę wersję?",
+					"CONFIRM": "Przywróć"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Wersja wtyczki v{{number}} została pomyślnie utworzona!",
+					"UPDATED": "Wersja wtyczki v{{number}} została pomyślnie zaktualizowana!",
+					"DELETED": "Wersja wtyczki została pomyślnie usunięta!",
+					"RESTORED": "Wersja wtyczki została pomyślnie przywrócona!"
+				},
+				"UPLOADED": "Wtyczka została pomyślnie przesłana!",
+				"UPDATED": "Wtyczka została pomyślnie zaktualizowana!",
+				"DELETED": "Wtyczka została pomyślnie usunięta!",
+				"INSTALLED": "Wtyczka została pomyślnie zainstalowana!",
+				"UNINSTALLED": "Wtyczka została pomyślnie odinstalowana!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Dodawanie nowej wersji wtyczki...",
+					"UPDATING": "Aktualizowanie wersji wtyczki...",
+					"DELETING": "Usuwanie wersji wtyczki...",
+					"RESTORING": "Przywracanie wersji wtyczki..."
+				},
+				"UPLOADING": "Przesyłanie wtyczki...",
+				"UPDATING": "Aktualizowanie wtyczki...",
+				"DELETING": "Usuwanie wtyczki...",
+				"INSTALLING": "Instalowanie wtyczki...",
+				"UNINSTALLING": "Odinstalowywanie wtyczki..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Nie udało się przywrócić wersji wtyczki. Spróbuj ponownie!"
+				},
+				"UPLOAD": "Nie udało się przesłać wtyczki. Spróbuj ponownie!",
+				"NOT_FOUND": "Nie znaleziono wtyczki o ID {{ id }}.",
+				"INSTALL": "Nie udało się zainstalować wtyczki. Spróbuj ponownie!",
+				"REVERT_INSTALLATION": "Nie udało się cofnąć instalacji!"
+			}
 		}
 	},
 	"SERVER_DOWN": {

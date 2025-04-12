@@ -34,7 +34,7 @@ export class AddPluginComponent {
 
 	public installPlugin(value: string) {
 		if (!value) {
-			this.error = "The server URL mustn't be empty.";
+			this.error = 'TIMER_TRACKER.SETTINGS.PLUGIN_INSTALL_CDN_ERROR';
 			return;
 		}
 		this.context = 'cdn';

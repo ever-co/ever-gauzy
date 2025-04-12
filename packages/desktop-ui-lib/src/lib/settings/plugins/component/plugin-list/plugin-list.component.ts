@@ -133,8 +133,9 @@ export class PluginListComponent implements OnInit, OnDestroy {
 					backdropClass: 'backdrop-blur',
 					context: {
 						data: {
-							title: 'Deactivate',
-							message: 'Would you like to deactivate this plugin?',
+							title: 'PLUGIN.DIALOG.DEACTIVATE.TITLE',
+							message: 'PLUGIN.DIALOG.DEACTIVATE.DESCRIPTION',
+							confirmText: 'PLUGIN.DIALOG.DEACTIVATE.CONFIRM',
 							status: 'basic'
 						}
 					}
@@ -173,8 +174,9 @@ export class PluginListComponent implements OnInit, OnDestroy {
 				backdropClass: 'backdrop-blur',
 				context: {
 					data: {
-						title: 'Uninstall',
-						message: 'Would you like to uninstall this plugin?',
+						title: 'PLUGIN.DIALOG.UNINSTALL.TITLE',
+						message: 'PLUGIN.DIALOG.UNINSTALL.DESCRIPTION',
+						confirmText: 'PLUGIN.DIALOG.UNINSTALL.CONFIRM',
 						status: 'basic'
 					}
 				}

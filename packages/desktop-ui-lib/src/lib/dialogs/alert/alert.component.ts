@@ -5,6 +5,8 @@ export interface AlertDialogOptions {
 	title?: string;
 	message?: string;
 	status?: string;
+	confirmText?: string;
+	dismissText?: string;
 }
 @Component({
 	selector: 'ngx-alert',
