@@ -7,6 +7,10 @@ export interface PosthogModuleOptions {
 	apiKey: string;
 	apiHost?: string;
 	enableErrorTracking?: boolean;
+	flushAt?: number;
+	flushInterval?: number;
+	personalApiKey?: string;
+	autocapture?: boolean;
 }
 
 /**
