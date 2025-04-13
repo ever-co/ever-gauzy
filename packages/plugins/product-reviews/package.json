@@ -30,7 +30,7 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"@nestjs/common": "^10.4.15",
+		"@nestjs/common": "^11.0.16",
 		"@nestjs/swagger": "^8.1.0",
 		"@nestjs/typeorm": "^10.0.2",
 		"chalk": "^4.1.0",
