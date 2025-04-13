@@ -3,10 +3,10 @@ import { MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap } from '@gauzy/plugin';
 import { PosthogRequestMiddleware } from './posthog-request.middleware';
 import { PosthogTraceMiddleware } from './posthog-trace.middleware';
-import { PosthogErrorInterceptor } from './posthog-error.interceptor';
 import { PosthogModule } from './posthog.module';
 import { PosthogModuleOptions } from './posthog.interfaces';
 import { POSTHOG_MODULE_OPTIONS } from './posthog.constants';
+import { PosthogCustomInterceptor } from './post-custom.interceptor';
 
 @Plugin({
 	imports: [
@@ -18,7 +18,7 @@ import { POSTHOG_MODULE_OPTIONS } from './posthog.constants';
 	providers: [
 		{
 			provide: APP_INTERCEPTOR,
-			useClass: PosthogErrorInterceptor
+			useClass: PosthogCustomInterceptor
 		}
 	]
 })

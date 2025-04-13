@@ -46,3 +46,30 @@ export interface PosthogModuleAsyncOptions extends Pick<ModuleMetadata, 'imports
 export interface PosthogOptionsFactory {
 	createPosthogOptions(): Promise<PosthogModuleOptions> | PosthogModuleOptions;
 }
+
+/**
+ * Options for PostHog interceptor
+ */
+export interface PosthogInterceptorOptions {
+	/**
+	 * Custom filters to determine if an exception should be tracked
+	 * @example [{ type: HttpException, filter: (ex) => ex.getStatus() >= 500 }]
+	 */
+	filters?: PosthogInterceptorOptionsFilter[];
+}
+
+/**
+ * Filter configuration for exceptions
+ */
+export interface PosthogInterceptorOptionsFilter {
+	/**
+	 * Exception type to filter
+	 */
+	type: any;
+
+	/**
+	 * Optional function to further filter exceptions of this type
+	 * Returns true if the exception should be filtered out (not reported)
+	 */
+	filter?: (exception: any) => boolean;
+}
