@@ -20,12 +20,10 @@ export interface ICreateZapierIntegrationInput extends IBasePerTenantAndOrganiza
 
 export type ActionType = 'start' | 'stop';
 
-export interface ITimerZapierWebhookData {
+export interface ITimerZapierWebhookData extends IBasePerTenantAndOrganizationEntityModel {
     event: string;
     action: ActionType,
     data: ITimeLog;
-    tenantId: string;
-    organizationId: string;
 }
 
 export interface IZapierEndpoint {

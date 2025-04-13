@@ -1,13 +1,13 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { TimerStartedEvent } from '@gauzy/core';
 import { ZapierWebhookService } from '../zapier-webhook.service';
 
 @Injectable()
 @EventsHandler(TimerStartedEvent)
 export class ZapierTimerStartedHandler implements IEventHandler<TimerStartedEvent> {
-    private readonly logger = new Logger(ZapierTimerStartedHandler.name);
     constructor(private readonly zapierWebhookService: ZapierWebhookService) { }
+
     /**
      * Handles the TimerStartedEvent by notifying Zapier webhooks
      *
