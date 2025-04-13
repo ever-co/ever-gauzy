@@ -98,20 +98,14 @@ export class SetupComponent implements OnInit {
 		});
 
 		electronService.ipcRenderer.send('reset_permissions');
-
-		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
 	}
 	appName: string = this.electronService.remote.app.getName();
-	loading: Boolean = false;
+	loading = false;
 	iconAw = './assets/icons/toggle-left.svg';
 	statusIcon = 'success';
 	awCheck = false;
-	awAPI: String = 'http://localhost:5600';
+	awAPI = 'http://localhost:5600';
 	buttonSave = false;
-	gauzyIcon: SafeResourceUrl =
-		this.isDesktopTimer || this.isServer
-			? './assets/images/logos/logo_Gauzy.svg'
-			: '../assets/images/logos/logo_Gauzy.svg';
 	desktopFeatures: any = {
 		gauzyPlatform: !this.isDesktopTimer,
 		timeTracking: !this.isServer
@@ -418,7 +412,7 @@ export class SetupComponent implements OnInit {
 		try {
 			const resp = await this.setupService.pingServer({
 				host: url.origin
-			})
+			});
 			this.serverConfig.custom.apiHost = url.origin;
 			return resp;
 		} catch (error) {

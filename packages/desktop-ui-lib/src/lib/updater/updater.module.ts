@@ -9,6 +9,7 @@ import {
 	NbAlertModule,
 	NbAccordionModule
 } from '@nebular/theme';
+import { LogoModule } from '../logo/logo.module';
 
 @NgModule({
 	declarations: [UpdaterComponent],
@@ -19,7 +20,8 @@ import {
 		NbIconModule,
 		NbButtonModule,
 		NbAlertModule,
-		NbAccordionModule
+		NbAccordionModule,
+		LogoModule
 	]
 })
 export class UpdaterModule {}

@@ -4,6 +4,7 @@ import { NbButtonModule, NbCardModule, NbIconModule, NbLayoutModule, NbSpinnerMo
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { LanguageModule } from '../language/language.module';
 import { SplashScreenComponent } from './splash-screen.component';
+import { LogoModule } from '../logo/logo.module';
 
 @NgModule({
 	declarations: [SplashScreenComponent],
@@ -15,7 +16,8 @@ import { SplashScreenComponent } from './splash-screen.component';
 		NbButtonModule,
 		DesktopDirectiveModule,
 		NbIconModule,
-		LanguageModule.forChild()
+		LanguageModule.forChild(),
+		LogoModule
 	],
 	exports: [SplashScreenComponent],
 	providers: []

@@ -1,7 +1,7 @@
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { GAUZY_ENV } from '../constants';
+import { DSPOT_ERP_LOGO_LIGHT, GAUZY_ENV } from '../constants';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { ServerConnectionService, Store } from '../services';
 
@@ -22,7 +22,7 @@ export class ServerDownPage implements OnInit, OnDestroy {
 		private readonly environment: any,
 		private readonly languageElectronService: LanguageElectronService
 	) {
-		this.noInternetLogo = environment['NO_INTERNET_LOGO'];
+		this.noInternetLogo = DSPOT_ERP_LOGO_LIGHT;
 	}
 
 	public get companySite() {

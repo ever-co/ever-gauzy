@@ -14,8 +14,7 @@ import { LanguageElectronService } from '../language/language-electron.service';
 export class SplashScreenComponent implements OnInit {
 	private _application = {
 		name: 'gauzy-dev',
-		version: 'dev',
-		iconPath: null
+		version: 'dev'
 	};
 
 	constructor(
@@ -31,8 +30,7 @@ export class SplashScreenComponent implements OnInit {
 				.split('-')
 				.join(' ')
 				.replace(/(^\w{1})|(\s+\w{1})/g, (letter) => letter.toUpperCase()),
-			version: _electronService.remote.app.getVersion(),
-			iconPath: this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO)
+			version: _electronService.remote.app.getVersion()
 		};
 	}
 

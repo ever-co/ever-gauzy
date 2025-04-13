@@ -12,6 +12,7 @@ import {
 } from '@nebular/theme';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { LanguageModule } from '../language/language.module';
+import { LogoModule } from '../logo/logo.module';
 import { ServerDashboardComponent } from './server-dashboard.component';
 
 @NgModule({
@@ -26,7 +27,8 @@ import { ServerDashboardComponent } from './server-dashboard.component';
 		NbSpinnerModule,
 		NbAccordionModule,
 		DesktopDirectiveModule,
-		LanguageModule.forChild()
+		LanguageModule.forChild(),
+		LogoModule
 	],
 	exports: [ServerDashboardComponent],
 	providers: [NbDialogService]
