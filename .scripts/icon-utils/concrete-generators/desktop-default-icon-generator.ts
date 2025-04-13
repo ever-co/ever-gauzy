@@ -1,9 +1,7 @@
 import { IIconGeneratorBase } from '../interfaces/i-icon-generator-base';
 import * as fs from 'fs';
 import { argv } from 'yargs';
-import { env } from '../../env';
 import * as path from 'path';
-import { DesktopEnvironmentManager } from '../../electron-desktop-environment/desktop-environment-manager';
 
 export class DesktopDefaultIconGenerator implements IIconGeneratorBase {
 	private readonly desktop: string;
@@ -31,12 +29,6 @@ export class DesktopDefaultIconGenerator implements IIconGeneratorBase {
 						reject(error);
 						return;
 					}
-					DesktopEnvironmentManager.environment.GAUZY_DESKTOP_LOGO_512X512 =
-						env.GAUZY_DESKTOP_LOGO_512X512;
-					DesktopEnvironmentManager.environment.PLATFORM_LOGO =
-						env.PLATFORM_LOGO;
-					DesktopEnvironmentManager.environment.NO_INTERNET_LOGO =
-						env.NO_INTERNET_LOGO;
 					console.log('✔ default icons generated successfully!');
 					resolve(true);
 				}

@@ -21,7 +21,7 @@ import { Environment } from './model';
 
 `;
 
-let isDocker = env.IS_DOCKER;
+const isDocker = env.IS_DOCKER;
 
 console.log('Is Running in Docker: ', isDocker);
 
@@ -106,8 +106,6 @@ if (!isDocker) {
 		MICROSOFT_AUTH_LINK: API_BASE_URL + '/api/auth/microsoft',
 		AUTH0_AUTH_LINK: API_BASE_URL + '/api/auth/auth0',
 
-		NO_INTERNET_LOGO: '${env.NO_INTERNET_LOGO}',
-
 		SENTRY_DSN: '${env.SENTRY_DSN}',
 		SENTRY_TRACES_SAMPLE_RATE: '${env.SENTRY_TRACES_SAMPLE_RATE}',
 
@@ -149,8 +147,6 @@ if (!isDocker) {
 		GAUZY_GITHUB_REDIRECT_URL: '${env.GAUZY_GITHUB_REDIRECT_URL}',
 		GAUZY_GITHUB_POST_INSTALL_URL: '${env.GAUZY_GITHUB_POST_INSTALL_URL}',
 
-		PLATFORM_LOGO: '${env.PLATFORM_LOGO}',
-		GAUZY_DESKTOP_LOGO_512X512: '${env.GAUZY_DESKTOP_LOGO_512X512}',
 		PLATFORM_PRIVACY_URL: '${env.PLATFORM_PRIVACY_URL}',
 		PLATFORM_TOS_URL: '${env.PLATFORM_TOS_URL}',
 		PROJECT_REPO: '${env.PROJECT_REPO}',
@@ -250,8 +246,6 @@ if (!isDocker) {
 		MICROSOFT_AUTH_LINK: API_BASE_URL + '/api/auth/microsoft',
 		AUTH0_AUTH_LINK: API_BASE_URL + '/api/auth/auth0',
 
-		NO_INTERNET_LOGO: 'DOCKER_NO_INTERNET_LOGO',
-
 		SENTRY_DSN: 'DOCKER_SENTRY_DSN',
 		SENTRY_TRACES_SAMPLE_RATE: 'DOCKER_SENTRY_TRACES_SAMPLE_RATE',
 
@@ -296,8 +290,6 @@ if (!isDocker) {
 		GAUZY_GITHUB_REDIRECT_URL: 'DOCKER_GAUZY_GITHUB_REDIRECT_URL',
 		GAUZY_GITHUB_POST_INSTALL_URL: 'DOCKER_GAUZY_GITHUB_POST_INSTALL_URL',
 
-		PLATFORM_LOGO: 'DOCKER_PLATFORM_LOGO',
-		GAUZY_DESKTOP_LOGO_512X512: 'DOCKER_GAUZY_DESKTOP_LOGO_512X512',
 		PLATFORM_PRIVACY_URL: 'DOCKER_PLATFORM_PRIVACY_URL',
 		PLATFORM_TOS_URL: 'DOCKER_PLATFORM_TOS_URL',
 
@@ -356,10 +348,10 @@ if (!isProd) {
 // we always want first to remove old generated files (one of them is not needed for current build)
 try {
 	unlinkSync(`./packages/ui-config/src/lib/environments/environment.ts`);
-} catch {}
+} catch { }
 try {
 	unlinkSync(`./packages/ui-config/src/lib/environments/environment.prod.ts`);
-} catch {}
+} catch { }
 
 const envFileDest: string = isProd ? 'environment.prod.ts' : 'environment.ts';
 const envFileDestOther: string = !isProd ? 'environment.prod.ts' : 'environment.ts';
@@ -390,7 +382,7 @@ writeFile(envFilePath, envFileContent, (error) => {
 	}
 });
 
-let envFileDestOtherContent = `export const environment = { production: ${!isProd} }`;
+const envFileDestOtherContent = `export const environment = { production: ${!isProd} }`;
 
 writeFile(envFileOtherPath, envFileDestOtherContent, (error) => {
 	if (error) {
