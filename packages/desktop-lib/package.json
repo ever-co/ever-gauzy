@@ -56,7 +56,8 @@
 		"tslib": "^2.6.2",
 		"underscore": "^1.13.3",
 		"undici": "^6.10.2",
-		"unzipper": "^0.12.1"
+		"unzipper": "^0.12.1",
+		"uiohook-napi": "^1.5.4"
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.9",
