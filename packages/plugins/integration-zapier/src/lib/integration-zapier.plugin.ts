@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import * as chalk from 'chalk';
-import { ApplicationPluginConfig, CustomEmbeddedFieldConfig, CustomEmbeddedFields } from '@gauzy/common';
+import { ApplicationPluginConfig, CustomEmbeddedFieldConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ZapierModule } from './zapier.module';
 import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
