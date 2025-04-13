@@ -41,7 +41,7 @@ export class PosthogPlugin implements NestModule, IOnPluginBootstrap {
 	 */
 	onPluginBootstrap(): void {
 		if (this.logEnabled) {
-			console.log('PostHog plugin initialized');
+			console.log('🚀 PostHog plugin initialized');
 		}
 	}
 
@@ -50,7 +50,7 @@ export class PosthogPlugin implements NestModule, IOnPluginBootstrap {
 	 */
 	onPluginDestroy(): void {
 		if (this.logEnabled) {
-			console.log('PostHog plugin destroyed');
+			console.log('🛑 PostHog plugin destroyed');
 		}
 	}
 
