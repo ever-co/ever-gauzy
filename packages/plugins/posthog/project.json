@@ -1,5 +1,5 @@
 {
-	"name": "posthog",
+	"name": "plugin-posthog",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/plugins/posthog/src",
 	"projectType": "library",
@@ -15,13 +15,17 @@
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": ["{options.outputPath}"],
+			"outputs": [
+				"{options.outputPath}"
+			],
 			"options": {
 				"outputPath": "dist/packages/plugins/posthog",
 				"tsConfig": "packages/plugins/posthog/tsconfig.lib.json",
 				"packageJson": "packages/plugins/posthog/package.json",
 				"main": "packages/plugins/posthog/src/index.ts",
-				"assets": ["packages/plugins/posthog/*.md"]
+				"assets": [
+					"packages/plugins/posthog/*.md"
+				]
 			}
 		},
 		"nx-release-publish": {
@@ -34,7 +38,9 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
 			"options": {
 				"jestConfig": "packages/plugins/posthog/jest.config.ts"
 			}

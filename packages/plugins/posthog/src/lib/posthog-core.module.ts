@@ -1,44 +1,37 @@
 import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
 import { PosthogModuleOptions, PosthogModuleAsyncOptions, PosthogOptionsFactory } from './posthog.interfaces';
-import { POSTHOG_MODULE_OPTIONS } from './posthog.constants';
+import { POSTHOG_MODULE_OPTIONS, POSTHOG_TOKEN } from './posthog.constants';
 import { PosthogService } from './posthog.service';
+import { createPosthogProviders } from './posthog.providers';
 
 @Global()
 @Module({})
 export class PosthogCoreModule {
-	/**
-	 * Creates a dynamic module with synchronous options.
-	 */
 	static forRoot(options: PosthogModuleOptions): DynamicModule {
-		const optionsProvider: Provider = {
-			provide: POSTHOG_MODULE_OPTIONS,
-			useValue: options
-		};
+		const provider = createPosthogProviders(options);
 
 		return {
 			module: PosthogCoreModule,
-			providers: [optionsProvider, PosthogService],
-			exports: [PosthogService]
+			providers: [provider, PosthogService],
+			exports: [provider, PosthogService]
 		};
 	}
 
-	/**
-	 * Creates a dynamic module with asynchronous options.
-	 */
 	static forRootAsync(options: PosthogModuleAsyncOptions): DynamicModule {
-		const asyncProviders = this.createAsyncProviders(options);
+		const provider: Provider = {
+			provide: POSTHOG_TOKEN,
+			useFactory: (options: PosthogModuleOptions) => new PosthogService(options),
+			inject: [POSTHOG_MODULE_OPTIONS]
+		};
 
 		return {
 			module: PosthogCoreModule,
 			imports: options.imports || [],
-			providers: [...asyncProviders, PosthogService],
-			exports: [PosthogService]
+			providers: [...this.createAsyncProviders(options), provider, PosthogService],
+			exports: [provider, PosthogService]
 		};
 	}
 
-	/**
-	 * Creates providers based on async options (useFactory, useClass, etc.).
-	 */
 	private static createAsyncProviders(options: PosthogModuleAsyncOptions): Provider[] {
 		if (options.useFactory) {
 			return [
@@ -52,21 +45,21 @@ export class PosthogCoreModule {
 
 		const inject = [(options.useClass || options.useExisting) as Type<PosthogOptionsFactory>];
 
-		return [
+		const providers: Provider[] = [
 			{
 				provide: POSTHOG_MODULE_OPTIONS,
-				useFactory: async (optionsFactory: PosthogOptionsFactory) =>
-					await optionsFactory.createPosthogOptions(),
+				useFactory: async (factory: PosthogOptionsFactory) => await factory.createPosthogOptions(),
 				inject
-			},
-			...(options.useClass
-				? [
-						{
-							provide: options.useClass,
-							useClass: options.useClass
-						}
-				  ]
-				: [])
+			}
 		];
+
+		if (options.useClass) {
+			providers.push({
+				provide: options.useClass,
+				useClass: options.useClass
+			});
+		}
+
+		return providers;
 	}
 }

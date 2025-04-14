@@ -5,20 +5,27 @@ import { PosthogRequestMiddleware } from './posthog-request.middleware';
 import { PosthogTraceMiddleware } from './posthog-trace.middleware';
 import { PosthogModule } from './posthog.module';
 import { PosthogModuleOptions } from './posthog.interfaces';
-import { POSTHOG_MODULE_OPTIONS } from './posthog.constants';
 import { PosthogCustomInterceptor } from './post-custom.interceptor';
+import { POSTHOG_MODULE_OPTIONS } from './posthog.constants';
+import { PosthogService } from './posthog.service';
+import { PosthogErrorInterceptor } from './posthog-error.interceptor';
 
 @Plugin({
 	imports: [
 		PosthogModule.forRootAsync({
-			useFactory: (options: PosthogModuleOptions) => parsePosthogOptions(options),
-			inject: [POSTHOG_MODULE_OPTIONS]
+			useFactory: () => parsePosthogOptions(PosthogPlugin.options),
+			inject: []
 		})
 	],
 	providers: [
 		{
+			provide: POSTHOG_MODULE_OPTIONS,
+			useValue: PosthogPlugin.options
+		},
+
+		{
 			provide: APP_INTERCEPTOR,
-			useClass: PosthogCustomInterceptor
+			useFactory: () => new PosthogCustomInterceptor()
 		}
 	]
 })

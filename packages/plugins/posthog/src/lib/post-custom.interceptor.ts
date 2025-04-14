@@ -5,14 +5,7 @@ import { PosthogErrorInterceptor } from './posthog-error.interceptor';
 export class PosthogCustomInterceptor extends PosthogErrorInterceptor {
 	constructor() {
 		super({
-			filters: [
-				// Filter out non-critical HTTP exceptions (client errors 4xx)
-				{
-					type: HttpException,
-					filter: (e: HttpException) => e.getStatus() < 500
-				}
-				// Add other filters as needed
-			]
+			filters: []
 		});
 	}
 

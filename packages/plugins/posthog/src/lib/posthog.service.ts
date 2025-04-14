@@ -3,31 +3,47 @@ import { PosthogModuleOptions } from './posthog.interfaces';
 import { POSTHOG_MODULE_OPTIONS } from './posthog.constants';
 import { PostHog } from 'posthog-node';
 
+/**
+ * Service that provides an interface to the PostHog analytics platform.
+ * Follows the singleton pattern to ensure only one instance exists.
+ * Implements OnModuleDestroy for proper cleanup when the module is destroyed.
+ */
 @Injectable()
 export class PosthogService implements OnModuleDestroy {
 	private readonly logger = new Logger(PosthogService.name);
 	private client: PostHog | null = null;
 	private static instance: PosthogService;
 
+	/**
+	 * Creates a new PosthogService instance.
+	 * Initializes the singleton instance if it doesn't already exist.
+	 *
+	 * @param options - Configuration options for the PostHog client
+	 */
 	constructor(
 		@Inject(POSTHOG_MODULE_OPTIONS)
 		private readonly options: PosthogModuleOptions
 	) {
-		this.initClient();
-		PosthogService.instance = this;
+		// Initialize the static instance if it doesn't exist
+		if (!PosthogService.instance) {
+			PosthogService.instance = this;
+			this.initClient();
+		}
 	}
 
 	/**
 	 * Gets the singleton instance of the PosthogService.
-	 * @returns {PosthogService} The singleton instance.
+	 *
+	 * @returns The singleton instance of PosthogService
 	 */
 	public static PosthogServiceInstance(): PosthogService {
 		return PosthogService.instance;
 	}
 
 	/**
-	 * Gets the PostHog client instance.
-	 * @returns {PostHog | null} The PostHog client instance or null if not initialized.
+	 * Gets the underlying PostHog client instance.
+	 *
+	 * @returns The PostHog client instance or null if not initialized
 	 */
 	public instance(): PostHog | null {
 		return this.client;
@@ -35,6 +51,7 @@ export class PosthogService implements OnModuleDestroy {
 
 	/**
 	 * Initializes the PostHog client with the provided configuration.
+	 * If the API key is missing, analytics will be disabled.
 	 */
 	private initClient() {
 		if (!this.options.apiKey) {
@@ -55,9 +72,10 @@ export class PosthogService implements OnModuleDestroy {
 
 	/**
 	 * Tracks a custom event for a specific user.
-	 * @param {string} event - The event to track.
-	 * @param {string} distinctId - The user's ID.
-	 * @param {Record<string, any>} properties - Additional properties.
+	 *
+	 * @param event - The name of the event to track
+	 * @param distinctId - The unique identifier for the user
+	 * @param properties - Optional additional properties to associate with the event
 	 */
 	public track(event: string, distinctId: string, properties?: Record<string, any>) {
 		if (!this.client) return;
@@ -69,9 +87,27 @@ export class PosthogService implements OnModuleDestroy {
 	}
 
 	/**
-	 * Identifies a user with additional traits.
-	 * @param {string} distinctId - The user's ID.
-	 * @param {Record<string, any>} properties - Additional properties.
+	 * Captures an exception or error event for a specific user.
+	 * Uses PostHog's captureException method to track errors.
+	 *
+	 * @param event - The name of the error event
+	 * @param distinctId - The unique identifier for the user
+	 * @param properties - Optional additional properties describing the error
+	 */
+	public captureException(event: string, distinctId: string, properties?: Record<string, any>) {
+		if (!this.client) return;
+		this.client.captureException({
+			event,
+			distinctId,
+			properties
+		});
+	}
+
+	/**
+	 * Identifies a user with additional traits or properties.
+	 *
+	 * @param distinctId - The unique identifier for the user
+	 * @param properties - Optional user traits or properties to associate with this user
 	 */
 	public identify(distinctId: string, properties?: Record<string, any>) {
 		if (!this.client) return;
@@ -82,21 +118,7 @@ export class PosthogService implements OnModuleDestroy {
 	}
 
 	/**
-	 * Tracks a page view for a specific user.
-	 * @param {string} distinctId - The user's ID.
-	 * @param {string} pageName - The name of the page.
-	 * @param {Record<string, any>} properties - Additional properties.
-	 */
-	public pageView(distinctId: string, pageName: string, properties?: Record<string, any>) {
-		if (!this.client) return;
-		this.track('$pageview', distinctId, {
-			$current_url: pageName,
-			...properties
-		});
-	}
-
-	/**
-	 * Updates feature flags in memory.
+	 * Updates feature flags in memory by fetching the latest values from PostHog.
 	 */
 	public reloadFeatureFlags() {
 		if (!this.client) return;
@@ -104,11 +126,12 @@ export class PosthogService implements OnModuleDestroy {
 	}
 
 	/**
-	 * Checks if a feature flag is enabled for a user.
-	 * @param {string} key - The feature flag key.
-	 * @param {string} distinctId - The user's ID.
-	 * @param {Record<string, any>} options - Additional options.
-	 * @returns {boolean} Whether the feature flag is enabled.
+	 * Checks if a feature flag is enabled for a specific user.
+	 *
+	 * @param key - The feature flag key to check
+	 * @param distinctId - The unique identifier for the user
+	 * @param options - Optional additional options for the feature flag
+	 * @returns Whether the feature flag is enabled (defaults to false if client isn't initialized)
 	 */
 	public isFeatureEnabled(key: string, distinctId: string, options?: Record<string, any>): boolean {
 		if (!this.client) return false;
@@ -119,11 +142,12 @@ export class PosthogService implements OnModuleDestroy {
 	}
 
 	/**
-	 * Gets the value of a feature flag for a user.
-	 * @param {string} key - The feature flag key.
-	 * @param {string} distinctId - The user's ID.
-	 * @param {Record<string, any>} options - Additional options.
-	 * @returns {string | boolean | number | Record<string, any> | null} The feature flag value.
+	 * Gets the value of a feature flag for a specific user.
+	 *
+	 * @param key - The feature flag key to retrieve
+	 * @param distinctId - The unique identifier for the user
+	 * @param options - Optional additional options for the feature flag
+	 * @returns The feature flag value, or null if not found or client isn't initialized
 	 */
 	public getFeatureFlag(
 		key: string,
@@ -137,9 +161,10 @@ export class PosthogService implements OnModuleDestroy {
 	}
 
 	/**
-	 * Gets all feature flags for a user.
-	 * @param {string} distinctId - The user's ID.
-	 * @returns {Record<string, string | boolean | number | Record<string, any>>} All feature flags.
+	 * Gets all feature flags for a specific user.
+	 *
+	 * @param distinctId - The unique identifier for the user
+	 * @returns Object containing all feature flags and their values
 	 */
 	public getAllFlags(distinctId: string): Record<string, string | boolean | number | Record<string, any>> {
 		if (!this.client) return {};
@@ -149,7 +174,9 @@ export class PosthogService implements OnModuleDestroy {
 	}
 
 	/**
-	 * Gracefully shuts down the PostHog client.
+	 * Gracefully shuts down the PostHog client, ensuring all queued events are sent.
+	 *
+	 * @returns Promise that resolves when shutdown is complete
 	 */
 	public async shutdown(): Promise<void> {
 		if (!this.client) return;
@@ -158,7 +185,10 @@ export class PosthogService implements OnModuleDestroy {
 	}
 
 	/**
-	 * Called when the module is being destroyed.
+	 * Lifecycle hook called when the NestJS module is being destroyed.
+	 * Automatically calls the shutdown method to ensure proper cleanup.
+	 *
+	 * @returns Promise that resolves when shutdown is complete
 	 */
 	async onModuleDestroy() {
 		await this.shutdown();

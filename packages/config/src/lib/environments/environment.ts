@@ -171,6 +171,13 @@ export const environment: IEnvironment = {
 		dsn: process.env.SENTRY_DSN
 	},
 
+	posthog: {
+		posthogKey: process.env.POSTHOG_KEY,
+		posthogHost: process.env.POSTHOG_HOST,
+		posthogEnabled: process.env.POSTHOG_ENABLED === 'true',
+		posthogFlushInterval: parseInt(process.env.POSTHOG_FLUSH_INTERVAL) || 10000
+	},
+
 	defaultIntegratedUserPass: process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
 
 	upwork: {
