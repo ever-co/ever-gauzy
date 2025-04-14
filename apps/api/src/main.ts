@@ -4,7 +4,7 @@ loadEnv();
 
 import { Logger } from '@nestjs/common';
 import { TimeMetric } from '@gauzy/metrics';
-const logger = new Logger('GZY - API');
+const logger = new Logger('GZY - API Service');
 
 // Start measuring the overall API startup time
 const timer = new TimeMetric();
