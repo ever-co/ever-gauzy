@@ -2858,6 +2858,7 @@
 	"INVOICES_PAGE": {
 		"STATUS_WARNING": "Você não tem permissão para alterar este status",
 		"EDIT_STATUS_WARNING": "Você não tem permissão para editar uma fatura com este status.",
+		"DELETE_STATUS_WARNING": "Nie masz uprawnień do usunięcia faktury o tym statusie.",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "Por favor, selecione um contato",
 			"REQUIRED_INVOICE_NUMBER": "O número da fatura é obrigatório",

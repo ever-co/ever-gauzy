@@ -21,7 +21,7 @@ import { NgxPermissionsService } from 'ngx-permissions';
 export class InvoiceViewComponent extends TranslationBaseComponent implements OnInit {
 	public invoice: IInvoice;
 	public invoice$: Observable<IInvoice>;
-	public showEditButton: boolean;
+	public showEditOrDeleteButton: boolean;
 
 	@Input() isEstimate: boolean;
 
@@ -76,11 +76,11 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 				if (invoice) {
 					this.invoice = invoice; // Set the invoice
 
-					// Now, check for `showEditButton` query param
+					// Now, check for `showEditOrDeleteButton` query param
 					return this._activatedRoute.queryParamMap.pipe(
 						map((queryParams: ParamMap) => {
-							// Check and set the `showEditButton` flag
-							this.showEditButton = queryParams.get('showEditButton') === 'true';
+							// Check and set the `showEditOrDeleteButton` flag
+							this.showEditOrDeleteButton = queryParams.get('showEditOrDeleteButton') === 'true';
 							return this.invoice; // Return the invoice
 						})
 					);

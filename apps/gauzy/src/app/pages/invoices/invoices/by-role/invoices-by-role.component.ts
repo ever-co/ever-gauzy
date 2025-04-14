@@ -94,7 +94,6 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 	currentUser: IUser;
 	private readonly _refresh$: Subject<void> = new Subject();
 
-
 	/*
 	 * getter setter for check estimate or invoice
 	 */
@@ -316,6 +315,7 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 				data: selectedItem
 			});
 		}
+		if (!this.checkStatusPermissions('INVOICES_PAGE.DELETE_STATUS_WARNING')) return;
 		const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 
 		if (result) {
@@ -338,14 +338,14 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 			? '/pages/accounting/invoices/estimates/view'
 			: '/pages/accounting/invoices/view';
 
-		let showEditButton: boolean;
+		let showEditOrDeleteButton: boolean;
 		if (this.checkStatusPermissions()) {
-			showEditButton = true;
+			showEditOrDeleteButton = true;
 		} else {
-			showEditButton = false;
+			showEditOrDeleteButton = false;
 		}
 
-		this.router.navigate([basePath, id], { queryParams: { showEditButton } });
+		this.router.navigate([basePath, id], { queryParams: { showEditOrDeleteButton } });
 	}
 
 	/*

@@ -2981,6 +2981,7 @@
 	"INVOICES_PAGE": {
 		"STATUS_WARNING": "You do not have permission to change this status",
 		"EDIT_STATUS_WARNING": "You do not have permission to edit an invoice with this status.",
+		"DELETE_STATUS_WARNING": "You do not have permission to delete an invoice with this status.",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "Please select contact",
 			"REQUIRED_INVOICE_NUMBER": "Invoice number is required",

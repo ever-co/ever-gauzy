@@ -27,7 +27,7 @@
 			{{ 'BUTTONS.DOWNLOAD' | translate }}
 		</button>
 		<button
-			*ngIf="showEditButton"
+			*ngIf="showEditOrDeleteButton"
 			nbButton
 			type="button"
 			status="basic"
@@ -39,6 +39,7 @@
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
 		<button
+			*ngIf="showEditOrDeleteButton"
 			nbButton
 			type="button"
 			status="basic"

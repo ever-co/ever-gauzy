@@ -2881,6 +2881,7 @@
 	"INVOICES_PAGE": {
 		"STATUS_WARNING": "אין לך הרשאה לשנות את הסטטוס הזה",
 		"EDIT_STATUS_WARNING": "אין לך הרשאה לערוך חשבונית עם סטטוס זה.",
+		"DELETE_STATUS_WARNING": "אין לך הרשאה למחוק חשבונית עם סטטוס זה.",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "אנא בחר קשר",
 			"REQUIRED_INVOICE_NUMBER": "דרוש מספר חשבונית",

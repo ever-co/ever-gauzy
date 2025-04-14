@@ -2854,6 +2854,7 @@
 	"INVOICES_PAGE": {
 		"STATUS_WARNING": "Sie haben keine Berechtigung, diesen Status zu ändern",
 		"EDIT_STATUS_WARNING": "Sie haben keine Berechtigung, eine Rechnung mit diesem Status zu bearbeiten.",
+		"DELETE_STATUS_WARNING": "Sie haben keine Berechtigung, eine Rechnung mit diesem Status zu löschen.",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "Bitte wählen Sie einen Kontakt aus",
 			"REQUIRED_INVOICE_NUMBER": "Rechnungsnummer ist erforderlich",

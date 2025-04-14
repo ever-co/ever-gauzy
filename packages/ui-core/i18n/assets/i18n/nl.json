@@ -2858,6 +2858,7 @@
 	"INVOICES_PAGE": {
 		"STATUS_WARNING": "Je hebt geen toestemming om deze status te wijzigen",
 		"EDIT_STATUS_WARNING": "Je hebt geen toestemming om een factuur met deze status te bewerken.",
+		"DELETE_STATUS_WARNING": "Je hebt geen toestemming om een factuur met deze status te verwijderen.",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "Selecteer een contactpersoon",
 			"REQUIRED_INVOICE_NUMBER": "Factuurnummer is verplicht",
