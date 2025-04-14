@@ -349,3 +349,5 @@ export const GAUZY_DARK = {
 		}
 	}
 } as NbJSThemeOptions;
+
+export const DSPOT_ERP_LOGO_DARK = 'assets/images/logos/dspot_erp_dark.svg';

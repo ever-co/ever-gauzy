@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { GAUZY_ENV } from '../../constants';
+import { GAUZY_ENV, DSPOT_ERP_LOGO } from '../../constants';
 import { ElectronService } from '../../electron/services';
 import { LanguageElectronService } from '../../language/language-electron.service';
 @UntilDestroy({ checkProperties: true })
@@ -53,7 +53,7 @@ export class AboutComponent implements OnInit {
 				.join(' ')
 				.replace(/(^\w{1})|(\s+\w{1})/g, (letter) => letter.toUpperCase()),
 			version: this._electronService.remote.app.getVersion(),
-			iconPath: this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.GAUZY_DESKTOP_LOGO_512X512),
+			iconPath: this._domSanitizer.bypassSecurityTrustResourceUrl(DSPOT_ERP_LOGO),
 			companyName: this._environment.COMPANY_NAME
 		};
 		return this._application;

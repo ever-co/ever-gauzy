@@ -1,6 +1,5 @@
 import {
 	Component,
-	OnDestroy,
 	OnInit,
 	EventEmitter,
 	Output,
@@ -9,7 +8,6 @@ import {
 	AfterViewInit,
 	Inject
 } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { tap, debounceTime, filter } from 'rxjs/operators';
 import { NbThemeService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
@@ -17,7 +15,14 @@ import { IOrganization } from '@gauzy/contracts';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
-import { COSMIC_THEME, DARK_THEME, GAUZY_DARK, MATERIAL_DARK_THEME } from '../../themes';
+import {
+	COSMIC_THEME,
+	DARK_THEME,
+	DSPOT_ERP_LOGO_DARK,
+	DSPOT_ERP_LOGO_LIGHT,
+	GAUZY_DARK,
+	MATERIAL_DARK_THEME
+} from '../../themes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,14 +30,13 @@ import { COSMIC_THEME, DARK_THEME, GAUZY_DARK, MATERIAL_DARK_THEME } from '../..
 	templateUrl: './gauzy-logo.component.html',
 	styleUrls: ['./gauzy-logo.component.scss']
 })
-export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
+export class GauzyLogoComponent implements AfterViewInit, OnInit {
 	public theme: string;
-	public isCollapse: boolean = true;
+	public isCollapse = true;
 	public organization: IOrganization;
-	public logoUrl: SafeResourceUrl;
 
-	@Input() controlled: boolean = true;
-	@Input() isAccordion: boolean = true;
+	@Input() controlled = true;
+	@Input() isAccordion = true;
 
 	@Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(this.isCollapse);
 
@@ -41,19 +45,16 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	 * @returns {boolean} True if the logo ends with '.svg' (case-insensitive), false otherwise.
 	 */
 	public isSVG(): boolean {
-		const logo = this.environment.PLATFORM_LOGO;
+		const logo = 'assets/images/logos/dspot_erp_dark.svg';
 		return logo ? logo.toLowerCase().endsWith('.svg') : false;
 	}
 
 	constructor(
 		private readonly _themeService: NbThemeService,
-		private readonly _domSanitizer: DomSanitizer,
 		private readonly _cd: ChangeDetectorRef,
 		private readonly _store: Store,
 		@Inject(GAUZY_ENV) private readonly environment: Environment
-	) {
-		this.logoUrl = this._domSanitizer.bypassSecurityTrustResourceUrl(environment.PLATFORM_LOGO);
-	}
+	) {}
 
 	ngOnInit(): void {
 		this._store.selectedOrganization$
@@ -95,14 +96,6 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	}
 
 	/**
-	 * Determines if the logo should have the 'white-svg' class.
-	 * @returns true if isSVG is true and the theme is dark; otherwise, false.
-	 */
-	isWhiteSvg(): boolean {
-		return this.isSVG && this.isDarkTheme();
-	}
-
-	/**
 	 * Checks if the current theme is a dark theme.
 	 * @returns true if the theme is dark; otherwise, false.
 	 */
@@ -110,5 +103,12 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 		return [DARK_THEME.name, COSMIC_THEME.name, GAUZY_DARK.name, MATERIAL_DARK_THEME.name].includes(this.theme);
 	}
 
-	ngOnDestroy(): void {}
+	/**
+	 * Gets the logo URL based on the theme.
+	 * @param isDark - Whether the theme is dark.
+	 * @returns The logo URL.
+	 */
+	getLogoUrl(isDark: boolean): string {
+		return isDark ? DSPOT_ERP_LOGO_DARK : DSPOT_ERP_LOGO_LIGHT;
+	}
 }

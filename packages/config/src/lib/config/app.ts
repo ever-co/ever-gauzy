@@ -15,11 +15,4 @@ export default registerAs('app', () => ({
      * If not provided through the environment variable APP_NAME, defaults to 'Gauzy'.
      */
     app_name: process.env.APP_NAME || 'Gauzy',
-
-    /**
-     * The URL of the application's logo.
-     * If not provided through the environment variable APP_LOGO,
-     * defaults to a URL constructed using the CLIENT_BASE_URL environment variable.
-     */
-    app_logo: process.env.APP_LOGO || `${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_Gauzy.png`,
 }));

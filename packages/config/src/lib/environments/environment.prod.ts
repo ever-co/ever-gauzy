@@ -212,9 +212,9 @@ export const environment: IEnvironment = {
 		apiSecret: process.env.GAUZY_AI_API_SECRET,
 		graphQLEndpoint: process.env.GAUZY_AI_GRAPHQL_ENDPOINT,
 		restEndpoint: process.env.GAUZY_AI_REST_ENDPOINT,
-		requestTimeout: process.env.GAUZY_AI_REQUEST_TIMEOUT ? parseInt(process.env.GAUZY_AI_REQUEST_TIMEOUT,10) : undefined
+		requestTimeout: process.env.GAUZY_AI_REQUEST_TIMEOUT ? parseInt(process.env.GAUZY_AI_REQUEST_TIMEOUT, 10) : undefined
 	},
-	
+
 	gauzyCloudEndpoint: process.env.GAUZY_CLOUD_ENDPOINT,
 
 	smtpConfig: {
@@ -246,7 +246,7 @@ export const environment: IEnvironment = {
 	 */
 	appIntegrationConfig: {
 		appName: process.env.APP_NAME || 'Gauzy',
-		appLogo: process.env.APP_LOGO || `${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_Gauzy.png`,
+		appLogo: `${process.env.CLIENT_BASE_URL}/assets/images/logos/dspot-erp-logo.png`,
 		appSignature: process.env.APP_SIGNATURE || 'Gauzy Team',
 		appLink: process.env.APP_LINK || 'https://app.gauzy.co/',
 		appEmailConfirmationUrl:

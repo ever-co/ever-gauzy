@@ -31,6 +31,7 @@ import { PluginsModule } from './plugins/plugins.module';
 import { SettingsComponent } from './settings.component';
 import { SslModule } from './ssl';
 import { SwitchThemeModule } from '../theme-selector/switch-theme/switch-theme.module';
+import { LogoModule } from '../logo/logo.module';
 
 @NgModule({
 	declarations: [SettingsComponent],
@@ -59,9 +60,10 @@ import { SwitchThemeModule } from '../theme-selector/switch-theme/switch-theme.m
 		SslModule,
 		PluginsModule,
 		PipeModule,
-		SwitchThemeModule
+		SwitchThemeModule,
+		LogoModule
 	],
 	providers: [NbToastrService, TimeTrackerService, NbDialogService, Store],
 	exports: [SettingsComponent]
 })
-export class SettingsModule { }
+export class SettingsModule {}

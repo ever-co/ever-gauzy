@@ -32,7 +32,6 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 	@ViewChild('logBox') logBox: ElementRef;
 	@ViewChild('logServer') logAccordion;
 	active_index: any;
-	gauzyIcon: SafeResourceUrl = './assets/images/logos/logo_Gauzy.svg';
 	running = false;
 	loading = false;
 	restart = false;
@@ -100,8 +99,6 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 			this.logIsOpen = true;
 			this._cdr.detectChanges();
 		});
-
-		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
 	}
 	ngAfterViewInit(): void {
 		this.electronService.ipcRenderer.on('dashboard_ready', (event, arg) => {

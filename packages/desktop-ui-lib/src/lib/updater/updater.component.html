@@ -3,10 +3,8 @@
 		<nb-card class="card-full-height">
 			<nb-card-body>
 				<div class="row center-content">
-					<div class="col-12 text-center margin-content">
-						<object data="../assets/images/logos/logo_Gauzy.svg" type="image/svg+xml">
-							<img src="../assets/images/logos/logo_Gauzy.svg" />
-						</object>
+					<div class="col-12 d-flex justify-content-center margin-content">
+						<gauzy-logo></gauzy-logo>
 					</div>
 					<div class="col-12 version-text">
 						<span>Version {{ version }}</span>
@@ -21,25 +19,13 @@
 						>
 							Check Update<nb-icon
 								icon="sync-outline"
-								[class]="
-									loading
-										? 'icon-medium icon-spin'
-										: 'icon-medium'
-								"
+								[class]="loading ? 'icon-medium icon-spin' : 'icon-medium'"
 							></nb-icon>
 						</button>
 					</div>
 					<div class="col-12 button-update" *ngIf="downloadFinish">
-						<button
-							nbButton
-							status="primary"
-							class="button-big"
-							(click)="restartAndUpdate()"
-						>
-							Update Now<nb-icon
-								icon="arrow-circle-up-outline"
-								class="icon-medium"
-							></nb-icon>
+						<button nbButton status="primary" class="button-big" (click)="restartAndUpdate()">
+							Update Now<nb-icon icon="arrow-circle-up-outline" class="icon-medium"></nb-icon>
 						</button>
 					</div>
 					<div class="col-12 update-message" *ngIf="notAvailable">

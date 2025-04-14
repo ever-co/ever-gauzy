@@ -4,9 +4,6 @@
 export interface IAppConfig extends IAppSetting {
     /** The name of the application. */
     app_name: string;
-
-    /** The URL of the application's logo. */
-    app_logo: string;
 }
 
 /**

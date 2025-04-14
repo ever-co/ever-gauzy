@@ -316,9 +316,6 @@ services:
           - key: APP_NAME
             scope: RUN_TIME
             value: '$APP_NAME'
-          - key: APP_LOGO
-            scope: RUN_TIME
-            value: '$APP_LOGO'
           - key: APP_SIGNATURE
             scope: RUN_TIME
             value: '$APP_SIGNATURE'

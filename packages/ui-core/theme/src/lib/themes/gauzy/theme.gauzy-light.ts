@@ -349,3 +349,5 @@ export const GAUZY_LIGHT = {
 		}
 	}
 } as NbJSThemeOptions;
+
+export const DSPOT_ERP_LOGO_LIGHT = 'assets/images/logos/dspot_erp_light.svg';

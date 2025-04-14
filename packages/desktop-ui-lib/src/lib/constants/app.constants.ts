@@ -59,3 +59,8 @@ export const socialLinks = [
 		icon: 'grid'
 	}
 ];
+
+export const DSPOT_ERP_LOGO_DARK = 'assets/images/logos/dspot_erp_dark.svg';
+export const DSPOT_ERP_LOGO_LIGHT = 'assets/images/logos/dspot_erp_light.svg';
+export const DSPOT_ERP_LOGO = 'assets/icons/icon.png';
+export const DEFAULT_SVG = 'assets/images/default.svg';

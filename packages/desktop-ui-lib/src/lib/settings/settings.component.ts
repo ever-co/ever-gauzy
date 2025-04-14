@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, Inject, NgZone, OnInit, Optional, ViewChild } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS, LanguagesEnum } from '@gauzy/contracts';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -52,10 +52,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	appName: string = this.electronService.remote.app.getName();
 	menus = [];
-	gauzyIcon: SafeResourceUrl =
-		this.isDesktopTimer || this.isServer
-			? './assets/images/logos/logo_Gauzy.svg'
-			: '../assets/images/logos/logo_Gauzy.svg';
 
 	private _monitorsOption$: BehaviorSubject<any> = new BehaviorSubject([
 		{
@@ -484,7 +480,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this.companyName = this._environment.COMPANY_NAME;
 		this.companySite = this._environment.COMPANY_SITE_NAME;
 		this.companyLink = this._environment.COMPANY_LINK;
-		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
 	}
 
 	ngOnInit(): void {

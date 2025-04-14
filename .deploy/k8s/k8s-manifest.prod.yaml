@@ -259,8 +259,6 @@ spec:
                         value: '$MAGIC_CODE_EXPIRATION_TIME'
                       - name: APP_NAME
                         value: '$APP_NAME'
-                      - name: APP_LOGO
-                        value: '$APP_LOGO'
                       - name: APP_SIGNATURE
                         value: '$APP_SIGNATURE'
                       - name: APP_LINK

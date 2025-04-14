@@ -1,17 +1,13 @@
 import { Component, OnInit, NgZone, Inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import {
-	DomSanitizer,
-	SafeResourceUrl,
-	SafeUrl,
-} from '@angular/platform-browser';
+import { DomSanitizer, SafeResourceUrl, SafeUrl } from '@angular/platform-browser';
 import { ElectronService } from '../electron/services';
-import { GAUZY_ENV } from '../constants';
+import { GAUZY_ENV, DSPOT_ERP_LOGO } from '../constants';
 
 @Component({
 	selector: 'ngx-screen-capture',
 	templateUrl: './screen-capture.component.html',
-	styleUrls: ['./screen-capture.component.scss'],
+	styleUrls: ['./screen-capture.component.scss']
 })
 export class ScreenCaptureComponent implements OnInit {
 	private _screenCaptureUrl$: BehaviorSubject<SafeUrl>;
@@ -30,17 +26,12 @@ export class ScreenCaptureComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		this.electronService.ipcRenderer.on(
-			'show_popup_screen_capture',
-			(event, arg) => {
-				this._ngZone.run(() => {
-					this.note = arg.note;
-					this._screenCaptureUrl$.next(
-						this.domSanitizer.bypassSecurityTrustUrl(arg.imgUrl)
-					);
-				});
-			}
-		);
+		this.electronService.ipcRenderer.on('show_popup_screen_capture', (event, arg) => {
+			this._ngZone.run(() => {
+				this.note = arg.note;
+				this._screenCaptureUrl$.next(this.domSanitizer.bypassSecurityTrustUrl(arg.imgUrl));
+			});
+		});
 	}
 
 	public get screenCaptureUrl$(): Observable<SafeUrl> {
@@ -48,8 +39,6 @@ export class ScreenCaptureComponent implements OnInit {
 	}
 
 	public get logoUrl(): SafeResourceUrl {
-		return this._domSanitizer.bypassSecurityTrustResourceUrl(
-			this._environment.GAUZY_DESKTOP_LOGO_512X512
-		);
+		return this._domSanitizer.bypassSecurityTrustResourceUrl(DSPOT_ERP_LOGO);
 	}
 }

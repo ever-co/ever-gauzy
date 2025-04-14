@@ -21,7 +21,7 @@ import { NgxLoginMagicComponent } from './features/login-magic/login-magic.compo
 import { NgxLoginWorkspaceComponent } from './features/login-workspace/login-workspace.component';
 import { NgxMagicSignInWorkspaceComponent } from './features/magic-login-workspace/magic-login-workspace.component';
 import { NgxLoginComponent } from './login.component';
-import { LogoComponent } from './shared/ui/logo/logo.component';
+import { LogoModule } from '../logo/logo.module';
 import { SocialLinksComponent } from './shared/ui/social-links/social-links.component';
 import { WorkspaceSelectionComponent } from './shared/ui/workspace-selection/workspace-selection.component';
 
@@ -50,9 +50,10 @@ const shared = [
 		ReactiveFormsModule,
 		SwitchThemeModule,
 		NbListModule,
-		AvatarModule
+		AvatarModule,
+		LogoModule
 	],
-	declarations: [LogoComponent, SocialLinksComponent, WorkspaceSelectionComponent, ...shared],
+	declarations: [SocialLinksComponent, WorkspaceSelectionComponent, ...shared],
 	exports: [...shared]
 })
 export class NgxLoginModule {}

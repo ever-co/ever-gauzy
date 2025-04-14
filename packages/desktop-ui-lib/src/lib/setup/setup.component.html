@@ -9,14 +9,10 @@
 							[setup]="true"
 							class="lang-selector"
 						></gauzy-language-selector>
-						<ng-template #labelOne>{{
-							'TIMER_TRACKER.SETUP.WELCOME'
-								| translate
-								| uppercase
-						}}</ng-template>
+						<ng-template #labelOne>{{ 'TIMER_TRACKER.SETUP.WELCOME' | translate | uppercase }}</ng-template>
 						<div class="row content-body">
-							<div class="col-12 text-center margin-content">
-								<img [src]="gauzyIcon" class="margin-icon" />
+							<div class="col-12 d-flex justify-content-center margin-content">
+								<gauzy-logo></gauzy-logo>
 							</div>
 							<div class="col-12 text-center margin-content">
 								<div class="row">
@@ -33,78 +29,43 @@
 								</div>
 							</div>
 							<div class="col-12 text-center margin-content">
-								<button
-									class="button-home"
-									status="primary"
-									nbButton
-									nbStepperNext
-								>
+								<button class="button-home" status="primary" nbButton nbStepperNext>
 									{{ 'BUTTONS.LET_S_GO' | translate }}
 								</button>
 							</div>
 						</div>
 					</nb-step>
-					<nb-step
-						[label]="labelTwo"
-						*ngIf="
-							!isDesktopTimer &&
-							!isServer
-						"
-					>
+					<nb-step [label]="labelTwo" *ngIf="!isDesktopTimer && !isServer">
 						<ng-template #labelTwo>{{
-							'TIMER_TRACKER.SETUP.FUNCTIONALITIES'
-								| translate
-								| uppercase
+							'TIMER_TRACKER.SETUP.FUNCTIONALITIES' | translate | uppercase
 						}}</ng-template>
 						<div class="row content-body">
 							<div class="col-12 text-center margin-content">
 								<h4>
-									{{
-										'TIMER_TRACKER.SETUP.WHAT_WOULD_LIKE_USE'
-											| translate
-									}}
+									{{ 'TIMER_TRACKER.SETUP.WHAT_WOULD_LIKE_USE' | translate }}
 								</h4>
 								<p>
-									{{
-										'TIMER_TRACKER.SETUP.SELECT_MULTIPLE_OPTIONS'
-											| translate
-									}}
+									{{ 'TIMER_TRACKER.SETUP.SELECT_MULTIPLE_OPTIONS' | translate }}
 								</p>
 							</div>
-							<div
-								class="col-10 text-center margin-content col-center"
-							>
+							<div class="col-10 text-center margin-content col-center">
 								<div class="row pb-1">
 									<div class="col-6">
 										<nb-card class="card-item">
 											<nb-card-body>
 												<div class="row">
-													<div
-														class="col-9 card-item-content"
-													>
+													<div class="col-9 card-item-content">
 														<nb-checkbox
 															status="primary"
-															[(ngModel)]="
-																desktopFeatures.timeTracking
-															"
+															[(ngModel)]="desktopFeatures.timeTracking"
 														>
-															<span
-																class="card-item-label"
-																>{{
-																	'TIMER_TRACKER.SETUP.TIME_ACTIVITY_FEATURES'
-																		| translate
-																}}</span
-															>
+															<span class="card-item-label">{{
+																'TIMER_TRACKER.SETUP.TIME_ACTIVITY_FEATURES' | translate
+															}}</span>
 														</nb-checkbox>
 													</div>
-													<div
-														class="col-3 card-item-icon"
-													>
-														<nb-icon
-															class="icon-item"
-															icon="clock"
-														>
-														</nb-icon>
+													<div class="col-3 card-item-icon">
+														<nb-icon class="icon-item" icon="clock"> </nb-icon>
 													</div>
 												</div>
 											</nb-card-body>
@@ -114,31 +75,17 @@
 										<nb-card class="card-item">
 											<nb-card-body>
 												<div class="row">
-													<div
-														class="col-9 card-item-content"
-													>
+													<div class="col-9 card-item-content">
 														<nb-checkbox
 															status="primary"
-															[(ngModel)]="
-																desktopFeatures.gauzyPlatform
-															"
-															><span
-																class="card-item-label"
-																>{{
-																	'TIMER_TRACKER.SETUP.GP_FEATURES'
-																		| translate
-																}}</span
-															></nb-checkbox
+															[(ngModel)]="desktopFeatures.gauzyPlatform"
+															><span class="card-item-label">{{
+																'TIMER_TRACKER.SETUP.GP_FEATURES' | translate
+															}}</span></nb-checkbox
 														>
 													</div>
-													<div
-														class="col-3 card-item-icon"
-													>
-														<nb-icon
-															class="icon-item"
-															icon="layers"
-														>
-														</nb-icon>
+													<div class="col-3 card-item-icon">
+														<nb-icon class="icon-item" icon="layers"> </nb-icon>
 													</div>
 												</div>
 											</nb-card-body>
@@ -149,16 +96,8 @@
 						</div>
 						<div class="row button-next-prev">
 							<div class="col-2">
-								<button
-									nbButton
-									nbStepperPrevious
-									class="button-home"
-									status="basic"
-								>
-									<nb-icon
-										icon="arrow-back-outline"
-										class="icon-medium"
-									></nb-icon
+								<button nbButton nbStepperPrevious class="button-home" status="basic">
+									<nb-icon icon="arrow-back-outline" class="icon-medium"></nb-icon
 									>{{ 'BUTTONS.BACK' | translate }}
 								</button>
 							</div>
@@ -168,86 +107,48 @@
 									nbStepperNext
 									class="btn-next"
 									status="primary"
-									[disabled]="
-										!desktopFeatures.gauzyPlatform &&
-										!desktopFeatures.timeTracking
-									"
+									[disabled]="!desktopFeatures.gauzyPlatform && !desktopFeatures.timeTracking"
 								>
 									{{ 'BUTTONS.CONTINUE' | translate
-									}}<nb-icon
-										icon="arrow-forward-outline"
-										class="icon-medium"
-									></nb-icon>
+									}}<nb-icon icon="arrow-forward-outline" class="icon-medium"></nb-icon>
 								</button>
 							</div>
 						</div>
 					</nb-step>
-					<nb-step
-						label="CONNECTIVITY"
-						*ngIf="!isServer"
-					>
+					<nb-step label="CONNECTIVITY" *ngIf="!isServer">
 						<div class="row content-body">
 							<div class="col-12 text-center margin-content">
 								<h4>
-									{{
-										'TIMER_TRACKER.SETUP.HOW_GONNA_USE_GP'
-											| translate
-									}}
+									{{ 'TIMER_TRACKER.SETUP.HOW_GONNA_USE_GP' | translate }}
 								</h4>
 								<p>
-									{{
-										'TIMER_TRACKER.SETUP.SELECT_ONE_OPTION'
-											| translate
-									}}
+									{{ 'TIMER_TRACKER.SETUP.SELECT_ONE_OPTION' | translate }}
 								</p>
 							</div>
-							<div
-								class="col-12 text-center margin-content col-center"
-							>
+							<div class="col-12 text-center margin-content col-center">
 								<div class="row">
 									<!-- <nb-radio-group> -->
-									<div
-										class="col-4 pb-1 col-center"
-										*ngIf="!isDesktopTimer"
-									>
+									<div class="col-4 pb-1 col-center" *ngIf="!isDesktopTimer">
 										<nb-card class="card-small-item">
 											<nb-card-body>
 												<div class="row">
 													<div class="col-12">
 														<nb-radio
-															[checked]="
-																connectivity.integrated
-															"
-															(valueChange)="
-																connectivityChange(
-																	$event,
-																	'integrated'
-																)
-															"
-															[value]="
-																connectivity.integrated
-															"
-															><span
-																class="card-item-label"
-																>{{
-																	'TIMER_TRACKER.SETUP.INTEGRATED'
-																		| translate
-																}}</span
-															></nb-radio
+															[checked]="connectivity.integrated"
+															(valueChange)="connectivityChange($event, 'integrated')"
+															[value]="connectivity.integrated"
+															><span class="card-item-label">{{
+																'TIMER_TRACKER.SETUP.INTEGRATED' | translate
+															}}</span></nb-radio
 														>
 													</div>
 													<div class="col-12">
 														<span>{{
-															'TIMER_TRACKER.SETUP.INSTALL_GP_LOCAL'
-																| translate
+															'TIMER_TRACKER.SETUP.INSTALL_GP_LOCAL' | translate
 														}}</span>
 													</div>
-													<div
-														class="col-12 icon-connectivity"
-													>
-														<img
-															src="./assets/icons/monitor.svg"
-														/>
+													<div class="col-12 icon-connectivity">
+														<img src="./assets/icons/monitor.svg" />
 													</div>
 												</div>
 											</nb-card-body>
@@ -259,39 +160,21 @@
 												<div class="row">
 													<div class="col-12">
 														<nb-radio
-															[checked]="
-																connectivity.custom
-															"
-															(valueChange)="
-																connectivityChange(
-																	$event,
-																	'custom'
-																)
-															"
-															[value]="
-																connectivity.custom
-															"
-															><span
-																class="card-item-label"
-																>{{
-																	'TIMER_TRACKER.SETUP.CUSTOM_NETWORK'
-																		| translate
-																}}</span
-															></nb-radio
+															[checked]="connectivity.custom"
+															(valueChange)="connectivityChange($event, 'custom')"
+															[value]="connectivity.custom"
+															><span class="card-item-label">{{
+																'TIMER_TRACKER.SETUP.CUSTOM_NETWORK' | translate
+															}}</span></nb-radio
 														>
 													</div>
 													<div class="col-12">
 														<span>{{
-															'TIMER_TRACKER.SETUP.SEPARATE_SERVER'
-																| translate
+															'TIMER_TRACKER.SETUP.SEPARATE_SERVER' | translate
 														}}</span>
 													</div>
-													<div
-														class="col-12 icon-connectivity"
-													>
-														<img
-															src="./assets/icons/icon local - network.svg"
-														/>
+													<div class="col-12 icon-connectivity">
+														<img src="./assets/icons/icon local - network.svg" />
 													</div>
 												</div>
 											</nb-card-body>
@@ -303,39 +186,21 @@
 												<div class="row">
 													<div class="col-12">
 														<nb-radio
-															[checked]="
-																connectivity.live
-															"
-															(valueChange)="
-																connectivityChange(
-																	$event,
-																	'live'
-																)
-															"
-															[value]="
-																connectivity.live
-															"
-															><span
-																class="card-item-label"
-																>{{
-																	'TIMER_TRACKER.SETUP.LIVE'
-																		| translate
-																}}</span
-															></nb-radio
+															[checked]="connectivity.live"
+															(valueChange)="connectivityChange($event, 'live')"
+															[value]="connectivity.live"
+															><span class="card-item-label">{{
+																'TIMER_TRACKER.SETUP.LIVE' | translate
+															}}</span></nb-radio
 														>
 													</div>
 													<div class="col-12">
 														<span>{{
-															'TIMER_TRACKER.SETUP.CONNECTED_LIVE_SERVER'
-																| translate
+															'TIMER_TRACKER.SETUP.CONNECTED_LIVE_SERVER' | translate
 														}}</span>
 													</div>
-													<div
-														class="col-12 icon-connectivity"
-													>
-														<img
-															src="./assets/icons/ic_payment_24px.svg"
-														/>
+													<div class="col-12 icon-connectivity">
+														<img src="./assets/icons/ic_payment_24px.svg" />
 													</div>
 												</div>
 											</nb-card-body>
@@ -347,16 +212,8 @@
 						</div>
 						<div class="row button-next-prev">
 							<div class="col-2">
-								<button
-									nbButton
-									nbStepperPrevious
-									class="button-home"
-									status="basic"
-								>
-									<nb-icon
-										icon="arrow-back-outline"
-										class="icon-medium"
-									></nb-icon
+								<button nbButton nbStepperPrevious class="button-home" status="basic">
+									<nb-icon icon="arrow-back-outline" class="icon-medium"></nb-icon
 									>{{ 'BUTTONS.BACK' | translate }}
 								</button>
 							</div>
@@ -375,8 +232,7 @@
 									"
 								>
 									{{
-										(connectivity.live &&
-										!desktopFeatures.timeTracking
+										(connectivity.live && !desktopFeatures.timeTracking
 											? 'BUTTONS.BACK'
 											: 'BUTTONS.CONTINUE'
 										) | translate
@@ -389,28 +245,17 @@
 							</div>
 						</div>
 					</nb-step>
-					<nb-step
-						label="INTEGRATION"
-						*ngIf="desktopFeatures.timeTracking"
-					>
+					<nb-step label="INTEGRATION" *ngIf="desktopFeatures.timeTracking">
 						<div class="row content-body">
 							<div class="col-12 text-center margin-content">
 								<h4>
-									{{
-										'TIMER_TRACKER.SETUP.GONNA_USE_3RD_PARTY'
-											| translate
-									}}
+									{{ 'TIMER_TRACKER.SETUP.GONNA_USE_3RD_PARTY' | translate }}
 								</h4>
 								<p>
-									{{
-										'TIMER_TRACKER.SETUP.SELECT_MULTIPLE_OPTIONS_3RD_PARTY'
-											| translate
-									}}
+									{{ 'TIMER_TRACKER.SETUP.SELECT_MULTIPLE_OPTIONS_3RD_PARTY' | translate }}
 								</p>
 							</div>
-							<div
-								class="col-10 text-center margin-content col-center"
-							>
+							<div class="col-10 text-center margin-content col-center">
 								<div class="row">
 									<div class="col-6">
 										<nb-card class="card-small-item">
@@ -419,38 +264,22 @@
 													<div class="col-12">
 														<div class="row">
 															<div class="col-10">
-																<nb-checkbox
-																	[(ngModel)]="
-																		thirdParty.activitywatch
-																	"
-																	><span
-																		class="card-item-label"
+																<nb-checkbox [(ngModel)]="thirdParty.activitywatch"
+																	><span class="card-item-label"
 																		>ActivityWatch</span
 																	></nb-checkbox
 																>
 															</div>
 															<div class="col-2">
-																<img
-																	[src]="
-																		iconAw
-																	"
-																/>
+																<img [src]="iconAw" />
 															</div>
 														</div>
 													</div>
 													<div class="col-12">
 														<span
-															>Track more activity
-															metrics and bad
-															screen habits. See
-															more at
-															<a
-																href="#"
-																(click)="
-																	openLink(
-																		'https://activitywatch.net'
-																	)
-																"
+															>Track more activity metrics and bad screen habits. See more
+															at
+															<a href="#" (click)="openLink('https://activitywatch.net')"
 																>activitywatch.net</a
 															>
 															and
@@ -461,8 +290,7 @@
 																		'https://github.com/ActivityWatch/activitywatch'
 																	)
 																"
-																>ActivityWatch
-																Github</a
+																>ActivityWatch Github</a
 															></span
 														>
 													</div>
@@ -477,48 +305,29 @@
 													<div class="col-12">
 														<div class="row">
 															<div class="col-10">
-																<nb-checkbox
-																	[(ngModel)]="
-																		thirdParty.wakatime
-																	"
-																	><span
-																		class="card-item-label"
+																<nb-checkbox [(ngModel)]="thirdParty.wakatime"
+																	><span class="card-item-label"
 																		>Wakatime</span
 																	></nb-checkbox
 																>
 															</div>
 															<div class="col-2">
-																<img
-																	src="./assets/icons/toggle-right.svg"
-																/>
+																<img src="./assets/icons/toggle-right.svg" />
 															</div>
 														</div>
 													</div>
 													<div class="col-12">
 														<span
-															>Open-source plugins
-															for metrics about
-															your programming.
-															See more at
-															<a
-																href="#"
-																(click)="
-																	openLink(
-																		'https://wakatime.com'
-																	)
-																"
+															>Open-source plugins for metrics about your programming. See
+															more at
+															<a href="#" (click)="openLink('https://wakatime.com')"
 																>wakatime.com</a
 															>
 															and
 															<a
 																href="#"
-																(click)="
-																	openLink(
-																		'https://github.com/wakatime'
-																	)
-																"
-																>wakatime
-																Github</a
+																(click)="openLink('https://github.com/wakatime')"
+																>wakatime Github</a
 															></span
 														>
 													</div>
@@ -528,29 +337,16 @@
 									</div>
 								</div>
 							</div>
-							<div
-								class="col-9 margin-setting-content col-center"
-							>
+							<div class="col-9 margin-setting-content col-center">
 								<span class="note">
-									{{
-										'TIMER_TRACKER.SETUP.LEGAL_NOTE'
-											| translate
-									}}
+									{{ 'TIMER_TRACKER.SETUP.LEGAL_NOTE' | translate }}
 								</span>
 							</div>
 						</div>
 						<div class="row button-next-prev">
 							<div class="col-2">
-								<button
-									nbButton
-									nbStepperPrevious
-									class="button-home"
-									status="basic"
-								>
-									<nb-icon
-										icon="arrow-back-outline"
-										class="icon-medium"
-									></nb-icon
+								<button nbButton nbStepperPrevious class="button-home" status="basic">
+									<nb-icon icon="arrow-back-outline" class="icon-medium"></nb-icon
 									>{{ 'BUTTONS.BACK' | translate }}
 								</button>
 							</div>
@@ -560,19 +356,11 @@
 									nbStepperNext
 									class="btn-next"
 									status="primary"
-									(click)="
-										connectivity.live
-											? saveChange()
-											: validation()
-									"
+									(click)="connectivity.live ? saveChange() : validation()"
 								>
-									{{
-										(connectivity.live
-											? 'BUTTONS.SAVE'
-											: 'BUTTONS.CONTINUE'
-										) | translate
+									{{ (connectivity.live ? 'BUTTONS.SAVE' : 'BUTTONS.CONTINUE') | translate
 									}}<nb-icon
-									    *gauzySpinnerButton="isSaving"
+										*gauzySpinnerButton="isSaving"
 										icon="arrow-forward-outline"
 										class="icon-medium"
 									></nb-icon>
@@ -588,126 +376,81 @@
 					</nb-step>
 					<nb-step [label]="labelFour" *ngIf="!connectivity.live">
 						<ng-template #labelFour>{{
-							'TIMER_TRACKER.SETUP.SETTING'
-								| translate
-								| uppercase
+							'TIMER_TRACKER.SETUP.SETTING' | translate | uppercase
 						}}</ng-template>
 						<div class="row content-body final-step">
 							<div class="col-12 text-center margin-content">
 								<h4>
-									{{
-										'TIMER_TRACKER.SETUP.READY_FOR_ADVANCED_SETTINGS'
-											| translate
-									}}
+									{{ 'TIMER_TRACKER.SETUP.READY_FOR_ADVANCED_SETTINGS' | translate }}
 								</h4>
 								<p>
-									{{
-										'TIMER_TRACKER.SETUP.FINAL_STEP_GP'
-											| translate
-									}}
+									{{ 'TIMER_TRACKER.SETUP.FINAL_STEP_GP' | translate }}
 								</p>
 							</div>
-							<div
-								class="col-8 margin-setting-content col-center"
-								*ngIf="connectivity.integrated"
-							>
+							<div class="col-8 margin-setting-content col-center" *ngIf="connectivity.integrated">
 								<div class="row">
-									<div
-										class="col-6 col-center margin-form"
-										*ngIf="!isServer"
-									>
+									<div class="col-6 col-center margin-form" *ngIf="!isServer">
 										<label class="integration-label">{{
-											'TIMER_TRACKER.SETUP.PORT'
-												| translate
+											'TIMER_TRACKER.SETUP.PORT' | translate
 										}}</label>
 										<input
 											type="number"
 											nbInput
 											fullWidth
 											status="basic"
-											[(ngModel)]="
-												serverConfig.integrated.port
-											"
+											[(ngModel)]="serverConfig.integrated.port"
 											(ngModelChange)="validation()"
 										/>
 									</div>
-									<ng-container
-										*ngIf="isServer"
-									>
+									<ng-container *ngIf="isServer">
 										<div class="col-4">
-											<label
-												class="integration-label"
-												>{{
-													'TIMER_TRACKER.SETTINGS.SERVER_HOSTNAME'
-														| translate
-												}}</label
-											>
+											<label class="integration-label">{{
+												'TIMER_TRACKER.SETTINGS.SERVER_HOSTNAME' | translate
+											}}</label>
 											<input
 												type="url"
 												nbInput
 												fullWidth
 												status="basic"
-												[(ngModel)]="
-													serverConfig.integrated
-														.host
-												"
-												(ngModelChange)="
-													validation()
-												"
+												[(ngModel)]="serverConfig.integrated.host"
+												(ngModelChange)="validation()"
 											/>
 										</div>
 										<div class="col-4">
-											<label
-												class="integration-label"
-												>{{
-													'TIMER_TRACKER.SETTINGS.API_SERVER_PORT'
-														| translate
-												}}</label
-											>
+											<label class="integration-label">{{
+												'TIMER_TRACKER.SETTINGS.API_SERVER_PORT' | translate
+											}}</label>
 											<input
 												type="number"
 												nbInput
 												fullWidth
 												status="basic"
-												[(ngModel)]="
-													serverConfig.integrated
-														.port
-												"
-												(ngModelChange)="
-													validation()
-												"
+												[(ngModel)]="serverConfig.integrated.port"
+												(ngModelChange)="validation()"
 											/>
 										</div>
-										<div
-											class="col-4"
-											*ngIf="!isServerApi"
-										>
-											<label
-												class="integration-label"
-												>{{
-													'TIMER_TRACKER.SETTINGS.UI_SERVER_PORT'
-														| translate
-												}}</label
-											>
+										<div class="col-4" *ngIf="!isServerApi">
+											<label class="integration-label">{{
+												'TIMER_TRACKER.SETTINGS.UI_SERVER_PORT' | translate
+											}}</label>
 											<input
 												type="number"
 												nbInput
 												fullWidth
 												status="basic"
-												[(ngModel)]="
-													serverConfig.integrated
-														.portUi
-												"
-												(ngModelChange)="
-													validation()
-												"
+												[(ngModel)]="serverConfig.integrated.portUi"
+												(ngModelChange)="validation()"
 											/>
 										</div>
 									</ng-container>
 								</div>
 							</div>
 							<div *ngIf="isServer" class="col-8 col-center margin-setting-content">
-								<gauzy-ssl class="ssl" [config]="proxyOptions" (update)="onChangeProxyConfig($event)" ></gauzy-ssl>
+								<gauzy-ssl
+									class="ssl"
+									[config]="proxyOptions"
+									(update)="onChangeProxyConfig($event)"
+								></gauzy-ssl>
 							</div>
 							<div
 								class="col-6 text-center margin-setting-content col-center"
@@ -718,22 +461,11 @@
 										<nb-card class="card-small-item">
 											<nb-card-body>
 												<nb-radio
-													[checked]="
-														databaseDriver.sqlite
-													"
-													(valueChange)="
-														databaseDriverChange(
-															$event,
-															'sqlite'
-														)
-													"
-													[value]="
-														databaseDriver.sqlite
-													"
+													[checked]="databaseDriver.sqlite"
+													(valueChange)="databaseDriverChange($event, 'sqlite')"
+													[value]="databaseDriver.sqlite"
 												>
-													<img
-														src="./assets/icons/1280px-SQLite370.svg.png"
-													/>
+													<img src="./assets/icons/1280px-SQLite370.svg.png" />
 												</nb-radio>
 											</nb-card-body>
 										</nb-card>
@@ -742,22 +474,11 @@
 										<nb-card class="card-small-item">
 											<nb-card-body>
 												<nb-radio
-													[checked]="
-														databaseDriver.postgre
-													"
-													(valueChange)="
-														databaseDriverChange(
-															$event,
-															'postgre'
-														)
-													"
-													[value]="
-														databaseDriver.postgre
-													"
+													[checked]="databaseDriver.postgre"
+													(valueChange)="databaseDriverChange($event, 'postgre')"
+													[value]="databaseDriver.postgre"
 												>
-													<img
-														src="./assets/icons/2106620.png"
-													/>
+													<img src="./assets/icons/2106620.png" />
 												</nb-radio>
 											</nb-card-body>
 										</nb-card>
@@ -766,197 +487,123 @@
 							</div>
 							<div class="col-8 col-center margin-setting-content">
 								<div class="row">
-									<div
-										class="col-6 margin-form"
-										*ngIf="connectivity.custom"
-									>
+									<div class="col-6 margin-form" *ngIf="connectivity.custom">
 										<div class="row">
 											<div class="col-12">
-												<label
-													class="integration-label"
-													>{{
-														'TIMER_TRACKER.SETUP.API_HOST'
-															| translate
-													}}</label
-												>
+												<label class="integration-label">{{
+													'TIMER_TRACKER.SETUP.API_HOST' | translate
+												}}</label>
 												<input
 													type="text"
 													nbInput
 													fullWidth
 													status="basic"
-													[(ngModel)]="
-														serverConfig.custom
-															.apiHost
-													"
-													(ngModelChange)="
-														validation()
-													"
+													[(ngModel)]="serverConfig.custom.apiHost"
+													(ngModelChange)="validation()"
 												/>
 											</div>
 										</div>
 									</div>
-									<div
-										class="col-6 col-center margin-form"
-										*ngIf="connectivity.custom"
-									>
+									<div class="col-6 col-center margin-form" *ngIf="connectivity.custom">
 										<div class="row">
 											<div class="col-12">
-												<label
-													class="integration-label"
-													>{{
-														'TIMER_TRACKER.SETUP.PORT'
-															| translate
-													}}</label
-												>
+												<label class="integration-label">{{
+													'TIMER_TRACKER.SETUP.PORT' | translate
+												}}</label>
 												<input
 													type="number"
 													nbInput
 													fullWidth
 													status="basic"
-													[(ngModel)]="
-														serverConfig.custom.port
-													"
-													(ngModelChange)="
-														validation()
-													"
+													[(ngModel)]="serverConfig.custom.port"
+													(ngModelChange)="validation()"
 												/>
 											</div>
 										</div>
 									</div>
 									<div
 										class="col-6 col-center margin-form"
-										*ngIf="
-											databaseDriver.postgre &&
-											connectivity.integrated
-										"
+										*ngIf="databaseDriver.postgre && connectivity.integrated"
 									>
 										<div class="row">
 											<div class="col-12">
-												<label
-													class="integration-label"
-													>{{
-														'TIMER_TRACKER.SETUP.HOST'
-															| translate
-													}}</label
-												>
+												<label class="integration-label">{{
+													'TIMER_TRACKER.SETUP.HOST' | translate
+												}}</label>
 												<input
 													type="text"
 													nbInput
 													fullWidth
 													status="basic"
-													[(ngModel)]="
-														databaseConfig.postgre
-															.host
-													"
-													(ngModelChange)="
-														validation()
-													"
+													[(ngModel)]="databaseConfig.postgre.host"
+													(ngModelChange)="validation()"
 												/>
 											</div>
 										</div>
 									</div>
 									<div
 										class="col-6 col-center margin-form"
-										*ngIf="
-											databaseDriver.postgre &&
-											connectivity.integrated
-										"
+										*ngIf="databaseDriver.postgre && connectivity.integrated"
 									>
 										<div class="row">
 											<div class="col-12">
-												<label
-													class="integration-label"
-													>{{
-														'TIMER_TRACKER.SETUP.DB_NAME'
-															| translate
-													}}</label
-												>
+												<label class="integration-label">{{
+													'TIMER_TRACKER.SETUP.DB_NAME' | translate
+												}}</label>
 												<input
 													type="text"
 													nbInput
 													fullWidth
 													status="basic"
-													[(ngModel)]="
-														databaseConfig.postgre
-															.dbName
-													"
-													(ngModelChange)="
-														validation()
-													"
+													[(ngModel)]="databaseConfig.postgre.dbName"
+													(ngModelChange)="validation()"
 												/>
 											</div>
 										</div>
 									</div>
 									<div
 										class="col-6 col-center margin-form"
-										*ngIf="
-											databaseDriver.postgre &&
-											connectivity.integrated
-										"
+										*ngIf="databaseDriver.postgre && connectivity.integrated"
 									>
 										<div class="row">
 											<div class="col-12">
-												<label
-													class="integration-label"
-													>{{
-														'TIMER_TRACKER.SETUP.DB_PORT'
-															| translate
-													}}</label
-												>
+												<label class="integration-label">{{
+													'TIMER_TRACKER.SETUP.DB_PORT' | translate
+												}}</label>
 												<input
 													type="number"
 													nbInput
 													fullWidth
 													status="basic"
-													[(ngModel)]="
-														databaseConfig.postgre
-															.dbPort
-													"
-													(ngModelChange)="
-														validation()
-													"
+													[(ngModel)]="databaseConfig.postgre.dbPort"
+													(ngModelChange)="validation()"
 												/>
 											</div>
 										</div>
 									</div>
 									<div
 										class="col-6 col-center margin-form"
-										*ngIf="
-											databaseDriver.postgre &&
-											connectivity.integrated
-										"
+										*ngIf="databaseDriver.postgre && connectivity.integrated"
 									>
 										<div class="row">
 											<div class="col-12">
-												<label
-													class="integration-label"
-													>{{
-														'TIMER_TRACKER.SETUP.USER'
-															| translate
-													}}</label
-												>
+												<label class="integration-label">{{
+													'TIMER_TRACKER.SETUP.USER' | translate
+												}}</label>
 												<input
 													type="text"
 													nbInput
 													fullWidth
 													status="basic"
-													[(ngModel)]="
-														databaseConfig.postgre
-															.dbUser
-													"
-													(ngModelChange)="
-														validation()
-													"
+													[(ngModel)]="databaseConfig.postgre.dbUser"
+													(ngModelChange)="validation()"
 												/>
 											</div>
 										</div>
 									</div>
 									<div
 										class="col-6 col-center margin-form"
-										*ngIf="
-											databaseDriver.postgre &&
-											connectivity.integrated
-										"
+										*ngIf="databaseDriver.postgre && connectivity.integrated"
 									>
 										<!-- <div class="row">
 								<div class="col-3">
@@ -969,53 +616,27 @@
 									</div>
 									<div
 										class="col-6 col-center margin-form"
-										*ngIf="
-											databaseDriver.postgre &&
-											connectivity.integrated
-										"
+										*ngIf="databaseDriver.postgre && connectivity.integrated"
 									>
 										<div class="row">
 											<div class="col-12">
-												<label
-													class="integration-label"
-													>{{
-														'TIMER_TRACKER.SETUP.PASSWORD'
-															| translate
-													}}</label
-												>
+												<label class="integration-label">{{
+													'TIMER_TRACKER.SETUP.PASSWORD' | translate
+												}}</label>
 												<nb-form-field>
 													<input
 														[type]="getInputType()"
 														nbInput
-														[(ngModel)]="
-															databaseConfig
-																.postgre
-																.dbPassword
-														"
-														(ngModelChange)="
-															validation()
-														"
+														[(ngModel)]="databaseConfig.postgre.dbPassword"
+														(ngModelChange)="validation()"
 														fullWidth
 													/>
-													<button
-														nbSuffix
-														nbButton
-														ghost
-														(click)="
-															toggleShowPassword()
-														"
-													>
+													<button nbSuffix nbButton ghost (click)="toggleShowPassword()">
 														<nb-icon
-															[icon]="
-																showPassword
-																	? 'eye-outline'
-																	: 'eye-off-2-outline'
-															"
+															[icon]="showPassword ? 'eye-outline' : 'eye-off-2-outline'"
 															pack="eva"
 															[attr.aria-label]="
-																showPassword
-																	? 'hide password'
-																	: 'show password'
+																showPassword ? 'hide password' : 'show password'
 															"
 														>
 														</nb-icon>
@@ -1029,16 +650,8 @@
 						</div>
 						<div class="row button-next-prev" *ngIf="!onProgress">
 							<div class="col-2">
-								<button
-									nbButton
-									nbStepperPrevious
-									class="button-home"
-									status="basic"
-								>
-									<nb-icon
-										icon="arrow-back-outline"
-										class="icon-medium"
-									></nb-icon
+								<button nbButton nbStepperPrevious class="button-home" status="basic">
+									<nb-icon icon="arrow-back-outline" class="icon-medium"></nb-icon
 									>{{ 'BUTTONS.BACK' | translate }}
 								</button>
 							</div>
@@ -1057,16 +670,10 @@
 											}}<nb-icon
 												icon="checkmark-circle-outline"
 												class="icon-medium"
-												*gauzySpinnerButton="
-													isCheckConnection
-												"
+												*gauzySpinnerButton="isCheckConnection"
 											></nb-icon>
 										</button>
-										<button
-											#dialogOpenBtn
-											(click)="open(true)"
-											style="display: none"
-										></button>
+										<button #dialogOpenBtn (click)="open(true)" style="display: none"></button>
 									</div>
 									<div class="col-6">
 										<button
@@ -1088,30 +695,21 @@
 								</div>
 							</div>
 						</div>
-						<div class="progress-setup" *ngIf="onProgress" [ngClass]="{init: onProgress}">
+						<div class="progress-setup" *ngIf="onProgress" [ngClass]="{ init: onProgress }">
 							<div class="progress-anim">
 								<div class="progress-header">
 									<div class="progress-icon">
-										<nb-icon
-												icon="settings-2-outline"
-												class="gear-small icon-spin"
-										></nb-icon>
-										<nb-icon
-												icon="settings-2-outline"
-												class="gear-medium icon-spin"
-										></nb-icon>
+										<nb-icon icon="settings-2-outline" class="gear-small icon-spin"></nb-icon>
+										<nb-icon icon="settings-2-outline" class="gear-medium icon-spin"></nb-icon>
 									</div>
-									<nb-progress-bar
-											[value]="progressSetup"
-											status="primary"
-									>{{ progressSetup }}%
-									</nb-progress-bar
-									>
+									<nb-progress-bar [value]="progressSetup" status="primary"
+										>{{ progressSetup }}%
+									</nb-progress-bar>
 								</div>
 								<div class="progress-message-container">
 									<div #logBox class="progress-message">
 										<p class="content-text" *ngFor="let content of logContents">
-											{{content}}
+											{{ content }}
 										</p>
 									</div>
 								</div>

@@ -1,32 +1,32 @@
 <nb-layout>
-    <nb-layout-column class="p-0">
-        <div class="about-container h-100">
-            <nb-card class="h-100">
-                <nb-card-body class="splash-screen">
-                    <div class="row">
-                        <div class="col-12 d-flex justify-content-center">
-                            <div class="ga-logo">
-                                <img [src]="application?.iconPath" />
-                            </div>
-                        </div>
-                        <div class="col-12 name-text text-center mt-3 mb-3">
-                            <nb-card>
-                                <nb-card-body>
-                                    <div class="col-12 version-text">
+	<nb-layout-column class="p-0">
+		<div class="about-container h-100">
+			<nb-card class="h-100">
+				<nb-card-body class="splash-screen">
+					<div class="row">
+						<div class="col-12 d-flex justify-content-center">
+							<gauzy-logo></gauzy-logo>
+						</div>
+						<div class="col-12 name-text text-center mt-3 mb-3">
+							<nb-card>
+								<nb-card-body>
+									<div class="col-12 version-text">
 										<button nbButton status="basic">
 											<nb-icon *gauzySpinnerButton="true"></nb-icon>
-											{{'TIMER_TRACKER.VERSION' | translate: {version: application?.version} }}
+											{{
+												'TIMER_TRACKER.VERSION' | translate : { version: application?.version }
+											}}
 										</button>
-                                    </div>
-                                </nb-card-body>
-                            </nb-card>
-                        </div>
-                        <div class="col-12 copyright-text text-center mt-2">
-                            {{'TIMER_TRACKER.WAIT_FOR' | translate: { name: application?.name } }}
-                        </div>
-                    </div>
-                </nb-card-body>
-            </nb-card>
-        </div>
-    </nb-layout-column>
+									</div>
+								</nb-card-body>
+							</nb-card>
+						</div>
+						<div class="col-12 copyright-text text-center mt-2">
+							{{ 'TIMER_TRACKER.WAIT_FOR' | translate : { name: application?.name } }}
+						</div>
+					</div>
+				</nb-card-body>
+			</nb-card>
+		</div>
+	</nb-layout-column>
 </nb-layout>

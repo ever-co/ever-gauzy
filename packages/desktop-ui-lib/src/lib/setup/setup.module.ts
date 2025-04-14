@@ -25,6 +25,7 @@ import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { LanguageModule } from '../language/language.module';
 import { SslModule } from '../settings/ssl';
 import { SetupService } from './setup.service';
+import { LogoModule } from '../logo/logo.module';
 
 @NgModule({
 	declarations: [SetupComponent],
@@ -49,7 +50,8 @@ import { SetupService } from './setup.service';
 		NbDialogModule,
 		DesktopDirectiveModule,
 		LanguageModule.forChild(),
-		SslModule
+		SslModule,
+		LogoModule
 	],
 	exports: [SetupComponent],
 	providers: [SetupService, NbDialogService]

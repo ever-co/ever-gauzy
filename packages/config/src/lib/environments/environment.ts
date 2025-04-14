@@ -248,7 +248,7 @@ export const environment: IEnvironment = {
 	 */
 	appIntegrationConfig: {
 		appName: process.env.APP_NAME || 'Gauzy',
-		appLogo: process.env.APP_LOGO || `${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_Gauzy.png`,
+		appLogo: `${process.env.CLIENT_BASE_URL}/assets/images/logos/dspot-erp-logo.png`,
 		appSignature: process.env.APP_SIGNATURE || 'Gauzy Team',
 		appLink: process.env.APP_LINK || 'http://localhost:4200/',
 		appEmailConfirmationUrl:

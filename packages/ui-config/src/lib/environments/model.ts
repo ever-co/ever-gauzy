@@ -12,7 +12,6 @@ export interface Environment {
 	DESKTOP_APP_DOWNLOAD_LINK_LINUX?: string;
 	MOBILE_APP_DOWNLOAD_LINK?: string;
 	EXTENSION_DOWNLOAD_LINK?: string;
-	PLATFORM_LOGO?: string;
 
 	COMPANY_NAME: string;
 	COMPANY_LINK: string;
@@ -31,8 +30,6 @@ export interface Environment {
 	TWITTER_AUTH_LINK: string;
 	MICROSOFT_AUTH_LINK: string;
 	AUTH0_AUTH_LINK: string;
-
-	NO_INTERNET_LOGO: string;
 
 	SENTRY_DSN?: string;
 	SENTRY_TRACES_SAMPLE_RATE?: string;
@@ -78,7 +75,6 @@ export interface Environment {
 	GAUZY_GITHUB_REDIRECT_URL: string;
 	GAUZY_GITHUB_POST_INSTALL_URL: string;
 
-	GAUZY_DESKTOP_LOGO_512X512: string;
 	PLATFORM_PRIVACY_URL: string;
 	PLATFORM_TOS_URL: string;
 

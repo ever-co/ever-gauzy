@@ -4,25 +4,20 @@ import * as path from 'path';
 import { IconGenerator } from '../interfaces/icon-generator';
 import { IDesktopIconGenerator } from '../interfaces/i-desktop-icon-generator';
 import { IconFactory } from '../icon-factory';
-import { env } from '../../env';
 import * as PngIco from 'png-to-ico';
-import { DesktopEnvironmentManager } from '../../electron-desktop-environment/desktop-environment-manager';
 
-export class DesktopIconGenerator
-	extends IconGenerator
-	implements IDesktopIconGenerator
-{
+export class DesktopIconGenerator extends IconGenerator implements IDesktopIconGenerator {
 	constructor() {
 		super();
-		this.imageUrl = env.GAUZY_DESKTOP_LOGO_512X512;
-		this.destination = path.join('apps', this.desktop, 'src', 'icons');
+		this.imageUrl = 'assets/icons/icon.png';
+		this.destination = path.join('apps', this.desktop ?? 'desktop', 'src', 'icons');
 	}
 
 	private async updateLogoPath(): Promise<void> {
 		const source = path.join(this.destination, 'icon.png');
 		const destination = path.join(
 			'apps',
-			this.desktop,
+			this.desktop ?? 'desktop',
 			'src',
 			'assets',
 			'icons',
@@ -31,17 +26,10 @@ export class DesktopIconGenerator
 		await new Promise((resolve, reject) =>
 			fs.copyFile(source, destination, (error) => {
 				if (error) {
-					console.error(
-						'ERROR: An error occurred while generating the files:',
-						error
-					);
+					console.error('ERROR: An error occurred while generating the files:', error);
 					reject(error);
 				} else {
-					DesktopEnvironmentManager.environment.GAUZY_DESKTOP_LOGO_512X512 =
-						'./assets/icons/desktop_logo_512x512.png';
-					console.log(
-						'✔ desktop logo 512x512 icons generated successfully.'
-					);
+					console.log('✔ desktop logo 512x512 icons generated successfully.');
 					resolve(true);
 				}
 			})
@@ -56,18 +44,13 @@ export class DesktopIconGenerator
 			console.log('✔ linux icons directory created.');
 		}
 		for (const iconSize of linuxIconSizes) {
-			const linuxIconFilePath = path.join(
-				linuxDestination,
-				`${iconSize}x${iconSize}.png`
-			);
+			const linuxIconFilePath = path.join(linuxDestination, `${iconSize}x${iconSize}.png`);
 			await new Promise((resolve) =>
 				originalImage
 					.clone()
 					.resize(iconSize, iconSize)
 					.write(linuxIconFilePath, () => {
-						console.log(
-							`✔ linux ${iconSize}x${iconSize}.png icon generated.`
-						);
+						console.log(`✔ linux ${iconSize}x${iconSize}.png icon generated.`);
 						resolve(true);
 					})
 			);
@@ -103,26 +86,16 @@ export class DesktopIconGenerator
 	public async generateTrayIcon(originalImage: Jimp): Promise<void> {
 		const REF_SIZE = 16;
 		const scales = [1, 1.25, 1.33, 1.4, 1.5, 1.8, 2, 2.5, 3, 4, 5];
-		const pngFilePath = path.join(
-			'apps',
-			this.desktop,
-			'src',
-			'assets',
-			'icons',
-			'tray'
-		);
+		const pngFilePath = path.join('apps', this.desktop ?? 'desktop', 'src', 'assets', 'icons', 'tray');
 		for (const scale of scales) {
 			const size = REF_SIZE * scale;
-			const icon =
-				scale === scales[0] ? 'icon.png' : `icon@${scale}x.png`;
+			const icon = scale === scales[0] ? 'icon.png' : `icon@${scale}x.png`;
 			await new Promise((resolve) =>
 				originalImage
 					.clone()
 					.resize(size, size)
 					.write(path.join(pngFilePath, icon), () => {
-						console.log(
-							`✔ tray icon ${icon} generated successfully.`
-						);
+						console.log(`✔ tray icon ${icon} generated successfully.`);
 						resolve(true);
 					})
 			);
@@ -130,21 +103,14 @@ export class DesktopIconGenerator
 	}
 
 	public async generateMenuIcon(originalImage: Jimp): Promise<void> {
-		const iconSizes = [ 512, 256, 192, 128, 96, 64, 48, 40, 32, 24, 20, 16];
+		const iconSizes = [512, 256, 192, 128, 96, 64, 48, 40, 32, 24, 20, 16];
 		// Remove 512x512 pixels for windows apps
-		if(process.platform === 'win32') {
+		if (process.platform === 'win32') {
 			iconSizes.shift();
 		}
-		const destination = path.join(
-			'apps',
-			this.desktop,
-			'src',
-			'assets',
-			'icons',
-			'menu'
-		);
-		for(const iconSize of iconSizes) {
-			const png = iconSize === iconSizes[0] ? 'icon.png' :`icon_${iconSize}x${iconSize}.png`;
+		const destination = path.join('apps', this.desktop ?? 'desktop', 'src', 'assets', 'icons', 'menu');
+		for (const iconSize of iconSizes) {
+			const png = iconSize === iconSizes[0] ? 'icon.png' : `icon_${iconSize}x${iconSize}.png`;
 			const menuIconFilePath = path.join(destination, png);
 			await originalImage
 				.clone()
@@ -162,9 +128,7 @@ export class DesktopIconGenerator
 				.clone()
 				.resize(512, 512)
 				.write(pngFilePath, () => {
-					console.log(
-						'✔ image converted to PNG format successfully.'
-					);
+					console.log('✔ image converted to PNG format successfully.');
 					resolve(true);
 				})
 		);

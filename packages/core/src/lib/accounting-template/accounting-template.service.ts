@@ -114,7 +114,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 					totalValue: '90'
 				}
 			],
-			imgPath: 'assets/images/logos/ever-large.jpg',
+			imgPath: 'assets/images/logos/dspot-erp-large.png',
 			receiptNumber: '1',
 			paymentDate: '2021-02-24',
 			paymentMethod: 'Bank Transfer',

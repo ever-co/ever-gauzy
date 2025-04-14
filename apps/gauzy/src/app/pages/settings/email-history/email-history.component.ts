@@ -247,7 +247,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 		} else if (organizationContact) {
 			return organizationContact.imageUrl;
 		} else if (!email.user) {
-			return '../../../../assets/images/logos/ever.jpg';
+			return '../../../../assets/images/logos/dspot-erp-large.png';
 		} else {
 			return '../../../../assets/images/avatars/avatar-default.svg';
 		}
@@ -258,5 +258,5 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 		this.filteredCount = 0;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
