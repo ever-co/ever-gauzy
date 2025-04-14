@@ -328,6 +328,9 @@ export class ProjectSelectorComponent implements OnInit, AfterViewInit {
 
 		// Check if Employee is required and not provided, return if so
 		if (this.requiresEmployee && !this.employeeId) {
+			// Cleanup previous projects and projectId
+			this.projects = [];
+			if (this.projectId) this.projectId = null;
 			return;
 		}
 
@@ -350,6 +353,11 @@ export class ProjectSelectorComponent implements OnInit, AfterViewInit {
 			if (this.showAllOption) {
 				this.projects.unshift(ALL_PROJECT_SELECTED);
 				this.selectProject(ALL_PROJECT_SELECTED);
+			}
+
+			// If projectId is provided and not found in projects, set projectId to null
+			if (this.projectId && !this.projects.find((project) => project.id === this.projectId)) {
+				this.projectId = null;
 			}
 		} catch (error) {
 			console.error('Error retrieving projects:', error);

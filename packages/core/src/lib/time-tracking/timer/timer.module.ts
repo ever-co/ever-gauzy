@@ -7,12 +7,14 @@ import { TimerController } from './timer.controller';
 import { TimerService } from './timer.service';
 import { StatisticModule } from '../statistic/statistic.module';
 import { TimerWeeklyLimitService } from './timer-weekly-limit.service';
+import { TaskModule } from '../../tasks';
 @Module({
 	imports: [
 		RolePermissionModule,
 		EmployeeModule,
 		forwardRef(() => TimeLogModule),
 		forwardRef(() => StatisticModule),
+		TaskModule,
 		CqrsModule
 	],
 	controllers: [TimerController],

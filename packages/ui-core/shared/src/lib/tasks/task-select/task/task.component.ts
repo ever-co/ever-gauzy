@@ -213,6 +213,9 @@ export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
 
 			// Check if Project or Employee are required and not provided, return if so
 			if ((this.requiresProject && !this.projectId) || (this.requiresEmployee && !this.employeeId)) {
+				// Cleanup previous tasks and taskId
+				this.tasks = [];
+				if (this.taskId) this.taskId = null;
 				return;
 			}
 
@@ -232,6 +235,11 @@ export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
 			} else {
 				const { items = [] } = await firstValueFrom(this.tasksService.getAllTasks({ ...queryOption }));
 				this.tasks = items;
+			}
+
+			// If taskId is provided and not found in tasks, set taskId to null
+			if (this.taskId && !this.tasks.find((task) => task.id === this.taskId)) {
+				this.taskId = null;
 			}
 		} catch (error) {
 			// Log error if task retrieval fails

@@ -15,9 +15,9 @@ import {
 	IEmployee,
 	IEmployeeFindInput,
 	ID,
-	ITimerStatusWithWeeklyLimits,
+	ITimerStatusWithWeeklyLimits
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty, SortOrderEnum } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
 import { TimeLog } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
@@ -43,6 +43,8 @@ import { MikroOrmTimeLogRepository, TypeOrmTimeLogRepository } from '../time-log
 import { TypeOrmEmployeeRepository, MikroOrmEmployeeRepository } from '../../employee/repository';
 import { addRelationsToQuery, buildCommonQueryParameters, buildLogQueryParameters } from './timer.helper';
 import { TimerWeeklyLimitService } from './timer-weekly-limit.service';
+import { TaskService } from '../../tasks';
+
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
 
@@ -58,8 +60,9 @@ export class TimerService {
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		private readonly _employeeService: EmployeeService,
 		private readonly _timerWeeklyLimitService: TimerWeeklyLimitService,
-		private readonly _commandBus: CommandBus
-	) { }
+		private readonly _commandBus: CommandBus,
+		private readonly _taskService: TaskService
+	) {}
 
 	/**
 	 * Fetches an employee based on the provided query.
@@ -183,7 +186,8 @@ export class TimerService {
 		// If the user reached the weekly limit, then stop the current timer
 		let lastLogStopped = false;
 		if (lastLog?.isRunning) {
-			const remainingWeeklyLimit = weeklyLimitStatus.remainWeeklyTime - now.diff(moment(lastLog.stoppedAt), 'seconds');
+			const remainingWeeklyLimit =
+				weeklyLimitStatus.remainWeeklyTime - now.diff(moment(lastLog.stoppedAt), 'seconds');
 			if (lastLog?.isRunning && remainingWeeklyLimit <= 0) {
 				lastLogStopped = true;
 				lastLog = await this.stopTimer({
@@ -215,7 +219,9 @@ export class TimerService {
 
 			// Include the last log into duration if it's running or was stopped
 			if (status.running || lastLogStopped) {
-				status.duration += Math.abs((lastLogStopped ? moment(lastLog.stoppedAt) : now).diff(moment(lastLog.startedAt), 'seconds'));
+				status.duration += Math.abs(
+					(lastLogStopped ? moment(lastLog.stoppedAt) : now).diff(moment(lastLog.startedAt), 'seconds')
+				);
 			}
 
 			// If timer is running, then add the non saved duration to the workedThisWeek
@@ -289,6 +295,25 @@ export class TimerService {
 
 		// Get the employee ID
 		const { id: employeeId, organizationId } = employee;
+
+		// Ensure that the tasks match with the given project and its associated to the current employee
+		const tasks = await this._taskService.getAllTasksByEmployee(employeeId, {
+			where: {
+				id: taskId,
+				projectId,
+				organizationId,
+				tenantId
+			},
+			take: 1,
+			skip: 0,
+			withDeleted: false,
+			order: {
+				createdAt: SortOrderEnum.DESC
+			}
+		});
+		if (tasks.length === 0) {
+			throw new ForbiddenException(`invalid-task-permissions`);
+		}
 
 		// Stop any previous running timers
 		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
@@ -365,12 +390,20 @@ export class TimerService {
 		}
 
 		// Check if the employee has reached the weekly limit
-		const weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, lastLog.startedAt, true);
+		const weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(
+			employee,
+			lastLog.startedAt,
+			true
+		);
 		this.logger.verbose(`Remaining weekly limit: ${weeklyLimitStatus.remainWeeklyTime}`);
 
 		// Calculate stoppedAt date or use current date if not provided
 		let stoppedAt = await this.calculateStoppedAt(request, lastLog);
-		stoppedAt = this._timerWeeklyLimitService.adjustStoppedAtBasedOnWeeklyLimit(stoppedAt, lastLog, weeklyLimitStatus.remainWeeklyTime);
+		stoppedAt = this._timerWeeklyLimitService.adjustStoppedAtBasedOnWeeklyLimit(
+			stoppedAt,
+			lastLog,
+			weeklyLimitStatus.remainWeeklyTime
+		);
 		this.logger.verbose(`Last stopped at: ${stoppedAt}`);
 
 		// Log the case where stoppedAt is less than startedAt
@@ -629,15 +662,15 @@ export class TimerService {
 		// Determine whether to fetch a single log or multiple logs
 		return fetchAll
 			? await this.typeOrmTimeLogRepository.find({
-				where: whereClause,
-				order: { startedAt: 'DESC', createdAt: 'DESC' }
-			})
+					where: whereClause,
+					order: { startedAt: SortOrderEnum.DESC, createdAt: SortOrderEnum.DESC }
+			  })
 			: await this.typeOrmTimeLogRepository.findOne({
-				where: whereClause,
-				order: { startedAt: 'DESC', createdAt: 'DESC' },
-				// Determine relations if includeTimeSlots is true
-				...(includeTimeSlots && { relations: { timeSlots: true } })
-			});
+					where: whereClause,
+					order: { startedAt: SortOrderEnum.DESC, createdAt: SortOrderEnum.DESC },
+					// Determine relations if includeTimeSlots is true
+					...(includeTimeSlots && { relations: { timeSlots: true } })
+			  });
 	}
 
 	/**
@@ -720,9 +753,9 @@ export class TimerService {
 
 					// Adds ordering to the SQL query.
 					sqlQuery = sqlQuery.orderBy([
-						{ column: 'employeeId', order: 'ASC' },
-						{ column: 'startedAt', order: 'DESC' },
-						{ column: 'createdAt', order: 'DESC' }
+						{ column: 'employeeId', order: SortOrderEnum.ASC },
+						{ column: 'startedAt', order: SortOrderEnum.DESC },
+						{ column: 'createdAt', order: SortOrderEnum.DESC }
 					]);
 
 					// Execute the raw SQL query and get the results
@@ -760,9 +793,9 @@ export class TimerService {
 						...(isNotEmpty(source) ? { source } : {}),
 						...(isNotEmpty(organizationTeamId) ? { organizationTeamId } : {})
 					});
-					query.orderBy(p(`"${query.alias}"."employeeId"`), 'ASC'); // Adjust ORDER BY to match the SELECT list
-					query.addOrderBy(p(`"${query.alias}"."startedAt"`), 'DESC');
-					query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
+					query.orderBy(p(`"${query.alias}"."employeeId"`), SortOrderEnum.ASC); // Adjust ORDER BY to match the SELECT list
+					query.addOrderBy(p(`"${query.alias}"."startedAt"`), SortOrderEnum.DESC);
+					query.addOrderBy(p(`"${query.alias}"."createdAt"`), SortOrderEnum.DESC);
 
 					// Get last logs group by employees (running or completed)
 					lastLogs = await query.distinctOn([p(`"${query.alias}"."employeeId"`)]).getMany();
