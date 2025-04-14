@@ -17,6 +17,7 @@ import { ConnectionEntityManager } from '../../database/connection-entity-manage
 import {
 	AccountingTemplate,
 	Activity,
+	ActivityLog,
 	AppointmentEmployee,
 	ApprovalPolicy,
 	AvailabilitySlot,
@@ -32,19 +33,28 @@ import {
 	CandidateSkill,
 	CandidateSource,
 	CandidateTechnologies,
+	Comment,
 	Contact,
 	Country,
 	Currency,
 	CustomSmtp,
+	DailyPlan,
+	Dashboard,
 	Deal,
 	EmailHistory,
+	EmailReset,
 	EmailTemplate,
 	Employee,
 	EmployeeAppointment,
+	EmployeeAvailability,
 	EmployeeAward,
 	EmployeeLevel,
+	EmployeeNotification,
+	EmployeeNotificationSetting,
+	EmployeePhone,
 	EmployeeRecurringExpense,
 	EmployeeSetting,
+	EntitySubscription,
 	Equipment,
 	EquipmentSharing,
 	EquipmentSharingPolicy,
@@ -52,6 +62,7 @@ import {
 	EventType,
 	Expense,
 	ExpenseCategory,
+	Favorite,
 	Feature,
 	FeatureOrganization,
 	Goal,
@@ -61,6 +72,8 @@ import {
 	GoalTemplate,
 	GoalTimeFrame,
 	ImageAsset,
+	ImportHistory,
+	ImportRecord,
 	Income,
 	Integration,
 	IntegrationEntitySetting,
@@ -73,10 +86,12 @@ import {
 	Invoice,
 	InvoiceEstimateHistory,
 	InvoiceItem,
+	IssueType,
 	KeyResult,
 	KeyResultTemplate,
 	KeyResultUpdate,
 	Language,
+	Mention,
 	Merchant,
 	Organization,
 	OrganizationAward,
@@ -87,10 +102,17 @@ import {
 	OrganizationLanguage,
 	OrganizationPosition,
 	OrganizationProject,
+	OrganizationProjectEmployee,
+	OrganizationProjectModuleEmployee,
 	OrganizationRecurringExpense,
 	OrganizationSprint,
+	OrganizationSprintEmployee,
+	OrganizationSprintTask,
+	OrganizationSprintTaskHistory,
+	OrganizationTaskSetting,
 	OrganizationTeam,
 	OrganizationTeamEmployee,
+	OrganizationTeamJoinRequest,
 	OrganizationVendor,
 	Payment,
 	Pipeline,
@@ -108,18 +130,30 @@ import {
 	ProductVariant,
 	ProductVariantPrice,
 	ProductVariantSetting,
+	Reaction,
 	Report,
 	ReportCategory,
 	ReportOrganization,
 	RequestApproval,
 	RequestApprovalEmployee,
 	RequestApprovalTeam,
+	ResourceLink,
 	Role,
 	RolePermission,
+	ScreeningTask,
 	Screenshot,
 	Skill,
+	SocialAccount,
 	Tag,
 	Task,
+	TaskEstimation,
+	TaskLinkedIssue,
+	TaskPriority,
+	TaskRelatedIssueType,
+	TaskSize,
+	TaskStatus,
+	TaskVersion,
+	TaskView,
 	Tenant,
 	TenantSetting,
 	TimeLog,
@@ -371,6 +405,41 @@ import { MikroOrmWarehouseRepository } from '../../warehouse/repository/mikro-or
 import { TypeOrmWarehouseProductVariantRepository } from '../../warehouse/repository/type-orm-warehouse-product-variant.repository';
 import { TypeOrmWarehouseProductRepository } from '../../warehouse/repository/type-orm-warehouse-product.repository ';
 import { TypeOrmWarehouseRepository } from '../../warehouse/repository/type-orm-warehouse.repository';
+import { TypeOrmActivityLogRepository } from '../../activity-log/repository/type-orm-activity-log.repository';
+import { TypeOrmEmployeeAvailabilityRepository } from '../../employee-availability/repository/type-orm-employee-availability.repository';
+import { TypeOrmCommentRepository } from '../../comment/repository/type-orm.comment.repository';
+import { TypeOrmDailyPlanRepository } from '../../tasks/daily-plan/repository/type-orm-daily-plan.repository';
+import { TypeOrmEmailResetRepository } from '../../email-reset/repository/type-orm-email-reset.repository';
+import { TypeOrmEmployeeNotificationRepository } from '../../employee-notification/repository/type-orm-employee-notification.repository';
+import { TypeOrmEmployeeNotificationSettingRepository } from '../../employee-notification-setting/repository/type-orm-employee-notification-setting.repository';
+import { TypeOrmEmployeePhoneRepository } from '../../employee-phone/repository/type-orm-employee-phone.repository';
+import { TypeOrmEntitySubscriptionRepository } from '../../entity-subscription/repository/type-orm-entity-subscription.repository';
+import { TypeOrmFavoriteRepository } from '../../favorite/repository/type-orm-favorite.repository';
+import { TypeOrmImportHistoryRepository } from '../import-history/repository/type-orm-import-history.repository';
+import { TypeOrmImportRecordRepository } from '../import-record/repository/type-orm-import-record.repository';
+import { TypeOrmIssueTypeRepository } from '../../tasks/issue-type/repository/type-orm-issue-type.repository';
+import { TypeOrmMentionRepository } from '../../mention/repository/type-orm-mention.repository';
+import { TypeOrmOrganizationProjectEmployeeRepository } from '../../organization-project/repository/type-orm-organization-project-employee.repository';
+import { OrganizationProjectModule } from '../../organization-project';
+import { TypeOrmOrganizationProjectModuleRepository } from '../../organization-project-module/repository/type-orm-organization-project-module.repository';
+import { TypeOrmOrganizationProjectModuleEmployeeRepository } from '../../organization-project-module/repository/type-orm-organization-project-module-employee.repository';
+import { TypeOrmOrganizationSprintEmployeeRepository } from '../../organization-sprint/repository/type-orm-organization-sprint-employee.repository';
+import { TypeOrmOrganizationSprintTaskHistoryRepository } from '../../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
+import { TypeOrmOrganizationSprintTaskRepository } from '../../organization-sprint/repository/type-orm-organization-sprint-task.repository';
+import { TypeOrmOrganizationTaskSettingRepository } from '../../organization-task-setting/repository/type-orm-organization-task-setting.repository';
+import { TypeOrmOrganizationTeamJoinRequestRepository } from '../../organization-team-join-request/repository/type-orm-organization-team-join-request.repository';
+import { TypeOrmReactionRepository } from '../../reaction/repository/type-orm-reaction.repository';
+import { TypeOrmResourceLinkRepository } from '../../resource-link/repository/type-orm-resource-link.repository';
+import { TypeOrmScreeningTaskRepository } from '../../tasks/screening-tasks/repository/type-orm-screening-task.repository';
+import { TypeOrmSocialAccountRepository } from '../../auth/social-account/repository/type-orm-social-account.repository';
+import { TypeOrmTaskEstimationRepository } from '../../tasks/estimation/repository/type-orm-estimation.repository';
+import { TypeOrmTaskLinkedIssueRepository } from '../../tasks/linked-issue/repository/type-orm-linked-issue.repository';
+import { TypeOrmTaskPriorityRepository } from '../../tasks/priorities/repository/type-orm-task-priority.repository';
+import { TypeOrmTaskRelatedIssueTypeRepository } from '../../tasks/related-issue-type/repository/type-orm-related-issue-type.repository';
+import { TypeOrmTaskSizeRepository } from '../../tasks/sizes/repository/type-orm-task-size.repository';
+import { TypeOrmTaskStatusRepository } from '../../tasks/statuses/repository/type-orm-task-status.repository';
+import { TypeOrmTaskVersionRepository } from '../../tasks/versions/repository/type-orm-task-version.repository';
+import { TypeOrmTaskViewRepository } from '../../tasks/views/repository/type-orm-task-view.repository';
 
 export interface IColumnRelationMetadata {
 	joinTableName: string;
@@ -983,6 +1052,108 @@ export class ExportService implements OnModuleInit {
 		private typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
 
 		mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
+
+		@InjectRepository(ActivityLog)
+		typeOrmActivityLogRepository: TypeOrmActivityLogRepository,
+
+		@InjectRepository(EmployeeAvailability)
+		typeOrmEmployeeAvailabilityRepository: TypeOrmEmployeeAvailabilityRepository,
+
+		@InjectRepository(Comment)
+		typeOrmCommentRepository: TypeOrmCommentRepository,
+
+		@InjectRepository(DailyPlan)
+		typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
+
+		@InjectRepository(EmailReset)
+		typeOrmEmailResetRepository: TypeOrmEmailResetRepository,
+
+		@InjectRepository(EmployeeNotification)
+		typeOrmEmployeeNotificationRepository: TypeOrmEmployeeNotificationRepository,
+
+		@InjectRepository(EmployeeNotificationSetting)
+		typeOrmEmployeeNotificationSettingRepository: TypeOrmEmployeeNotificationSettingRepository,
+
+		@InjectRepository(EmployeePhone)
+		typeOrmEmployeePhoneRepository: TypeOrmEmployeePhoneRepository,
+
+		@InjectRepository(EntitySubscription)
+		typeOrmEntitySubscriptionRepository: TypeOrmEntitySubscriptionRepository,
+
+		@InjectRepository(Favorite)
+		typeOrmFavoriteRepository: TypeOrmFavoriteRepository,
+
+		@InjectRepository(ImportHistory)
+		typeOrmImportHistoryRepository: TypeOrmImportHistoryRepository,
+
+		@InjectRepository(ImportRecord)
+		typeOrmImportRecordRepository: TypeOrmImportRecordRepository,
+
+		@InjectRepository(IssueType)
+		typeOrmIssueTypeRepository: TypeOrmIssueTypeRepository,
+
+		@InjectRepository(Mention)
+		typeOrmMentionRepository: TypeOrmMentionRepository,
+
+		@InjectRepository(OrganizationProjectEmployee)
+		typeOrmOrganizationProjectEmployeeRepository: TypeOrmOrganizationProjectEmployeeRepository,
+
+		@InjectRepository(OrganizationProjectModule)
+		typeOrmOrganizationProjectModuleRepository: TypeOrmOrganizationProjectModuleRepository,
+
+		@InjectRepository(OrganizationProjectModuleEmployee)
+		typeOrmOrganizationProjectModuleEmployeeRepository: TypeOrmOrganizationProjectModuleEmployeeRepository,
+
+		@InjectRepository(OrganizationSprintEmployee)
+		typeOrmOrganizationSprintEmployeeRepository: TypeOrmOrganizationSprintEmployeeRepository,
+
+		@InjectRepository(OrganizationSprintTask)
+		typeOrmOrganizationSprintTaskRepository: TypeOrmOrganizationSprintTaskRepository,
+
+		@InjectRepository(OrganizationSprintTaskHistory)
+		typeOrmOrganizationSprintTaskHistory: TypeOrmOrganizationSprintTaskHistoryRepository,
+
+		@InjectRepository(OrganizationTaskSetting)
+		typeOrmOrganizationTaskSettingRepository: TypeOrmOrganizationTaskSettingRepository,
+
+		@InjectRepository(OrganizationTeamJoinRequest)
+		typeOrmOrganizationTeamJoinRequestRepository: TypeOrmOrganizationTeamJoinRequestRepository,
+
+		@InjectRepository(Reaction)
+		typeOrmReactionRepository: TypeOrmReactionRepository,
+
+		@InjectRepository(ResourceLink)
+		typeOrmResourceLinkRepository: TypeOrmResourceLinkRepository,
+
+		@InjectRepository(ScreeningTask)
+		typeOrmScreeningTaskRepository: TypeOrmScreeningTaskRepository,
+
+		@InjectRepository(SocialAccount)
+		typeOrmSocialAccountRepository: TypeOrmSocialAccountRepository,
+
+		@InjectRepository(TaskEstimation)
+		typeOrmTaskEstimationRepository: TypeOrmTaskEstimationRepository,
+
+		@InjectRepository(TaskLinkedIssue)
+		typeOrmTaskLinkedIssueRepository: TypeOrmTaskLinkedIssueRepository,
+
+		@InjectRepository(TaskPriority)
+		typeOrmTaskPriorityRepository: TypeOrmTaskPriorityRepository,
+
+		@InjectRepository(TaskRelatedIssueType)
+		typeOrmTaskRelatedIssueTypeRepository: TypeOrmTaskRelatedIssueTypeRepository,
+
+		@InjectRepository(TaskSize)
+		typeOrmTaskSizeRepository: TypeOrmTaskSizeRepository,
+
+		@InjectRepository(TaskStatus)
+		typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
+
+		@InjectRepository(TaskVersion)
+		typeOrmTaskVersionRepository: TypeOrmTaskVersionRepository,
+
+		@InjectRepository(TaskView)
+		typeOrmTaskViewRepository: TypeOrmTaskViewRepository,
 
 		private readonly configService: ConfigService,
 		private readonly _connectionEntityManager: ConnectionEntityManager
