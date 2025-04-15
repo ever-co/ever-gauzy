@@ -94,10 +94,10 @@ export class PosthogService implements OnModuleDestroy {
 	 * @param distinctId - The unique identifier for the user
 	 * @param properties - Optional additional properties describing the error
 	 */
-	public captureException(event: string, distinctId: string, properties?: Record<string, any>) {
+	public captureException(exception: any, distinctId: string, properties?: Record<string, any>) {
 		if (!this.client) return;
 		this.client.captureException({
-			event,
+			exception,
 			distinctId,
 			properties
 		});
@@ -115,62 +115,6 @@ export class PosthogService implements OnModuleDestroy {
 			distinctId,
 			properties
 		});
-	}
-
-	/**
-	 * Updates feature flags in memory by fetching the latest values from PostHog.
-	 */
-	public reloadFeatureFlags() {
-		if (!this.client) return;
-		this.client.reloadFeatureFlags();
-	}
-
-	/**
-	 * Checks if a feature flag is enabled for a specific user.
-	 *
-	 * @param key - The feature flag key to check
-	 * @param distinctId - The unique identifier for the user
-	 * @param options - Optional additional options for the feature flag
-	 * @returns Whether the feature flag is enabled (defaults to false if client isn't initialized)
-	 */
-	public isFeatureEnabled(key: string, distinctId: string, options?: Record<string, any>): boolean {
-		if (!this.client) return false;
-		// If PostHog's isFeatureEnabled returns a Promise, use a default value
-		const result = this.client.isFeatureEnabled(key, distinctId, options);
-		// If result is a Promise, return false as default
-		return typeof result === 'boolean' ? result : false;
-	}
-
-	/**
-	 * Gets the value of a feature flag for a specific user.
-	 *
-	 * @param key - The feature flag key to retrieve
-	 * @param distinctId - The unique identifier for the user
-	 * @param options - Optional additional options for the feature flag
-	 * @returns The feature flag value, or null if not found or client isn't initialized
-	 */
-	public getFeatureFlag(
-		key: string,
-		distinctId: string,
-		options?: Record<string, any>
-	): string | boolean | number | Record<string, any> | null {
-		if (!this.client) return null;
-		const result = this.client.getFeatureFlag(key, distinctId, options);
-		// If result is a Promise, return null as default
-		return result instanceof Promise ? null : result;
-	}
-
-	/**
-	 * Gets all feature flags for a specific user.
-	 *
-	 * @param distinctId - The unique identifier for the user
-	 * @returns Object containing all feature flags and their values
-	 */
-	public getAllFlags(distinctId: string): Record<string, string | boolean | number | Record<string, any>> {
-		if (!this.client) return {};
-		const result = this.client.getAllFlags(distinctId);
-		// If result is a Promise, return an empty object as default
-		return result instanceof Promise ? {} : result;
 	}
 
 	/**

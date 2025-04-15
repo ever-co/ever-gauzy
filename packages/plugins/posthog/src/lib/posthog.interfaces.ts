@@ -1,8 +1,5 @@
 import { ModuleMetadata, Type } from '@nestjs/common';
 
-/**
- * Interface for synchronous PostHog module configuration.
- */
 export interface PosthogModuleOptions {
 	apiKey: string;
 	apiHost?: string;
@@ -11,65 +8,104 @@ export interface PosthogModuleOptions {
 	flushInterval?: number;
 	personalApiKey?: string;
 	autocapture?: boolean;
-
-	/**
-	 * When mock is used, none of the events
-	 * are captured, only dumped to console.
-	 *
-	 * Useful for local development.
-	 *
-	 * @default false
-	 */
-	mock: boolean;
+	mock?: boolean;
 }
 
-export interface PosthogSyncConfig {
-	// If true, registers `PosthogModule` as a global module.
-	isGlobal?: boolean;
-}
-/**
- * Interface for asynchronous PostHog module configuration.
- */
 export interface PosthogModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
 	useFactory?: (...args: any[]) => Promise<PosthogModuleOptions> | PosthogModuleOptions;
 	inject?: any[];
 	useClass?: Type<PosthogOptionsFactory>;
 	useExisting?: Type<PosthogOptionsFactory>;
-
-	// If true, registers `PosthogModule` as a global module.
 	isGlobal?: boolean;
 }
 
-/**
- * Interface to be implemented by a factory providing PostHog options.
- */
 export interface PosthogOptionsFactory {
 	createPosthogOptions(): Promise<PosthogModuleOptions> | PosthogModuleOptions;
 }
 
-/**
- * Options for PostHog interceptor
- */
+export interface PosthogEvent {
+	name: string;
+	distinctId: string;
+	properties: Record<string, any>;
+}
+
 export interface PosthogInterceptorOptions {
 	/**
-	 * Custom filters to determine if an exception should be tracked
-	 * @example [{ type: HttpException, filter: (ex) => ex.getStatus() >= 500 }]
+	 * Filters to determine which exceptions should not be reported
 	 */
 	filters?: PosthogInterceptorOptionsFilter[];
+
+	/**
+	 * Indicates if tags should be included for better categorization
+	 * @default true
+	 */
+	includeTags?: boolean;
+
+	/**
+	 * Limits the size of captured objects (in characters)
+	 * @default 10000
+	 */
+	maxObjectSize?: number;
+
+	/**
+	 * List of header keys to never capture (for privacy reasons)
+	 */
+	sensitiveHeaders?: string[];
+
+	/**
+	 * Detail level for error capturing
+	 * - basic: error message and status code only
+	 * - standard: basic details plus request context
+	 * - detailed: all available information
+	 * @default 'standard'
+	 */
+	detailLevel?: 'basic' | 'standard' | 'detailed';
+}
+
+export interface PosthogInterceptorOptionsFilter {
+	type: any;
+	filter?: (exception: any) => boolean;
 }
 
 /**
- * Filter configuration for exceptions
+ * Configuration options for the PostHogEventInterceptor
  */
-export interface PosthogInterceptorOptionsFilter {
+export interface PosthogEventInterceptorOptions {
 	/**
-	 * Exception type to filter
+	 * Paths that should be ignored for event tracking
 	 */
-	type: any;
+	ignoredPaths?: string[];
 
 	/**
-	 * Optional function to further filter exceptions of this type
-	 * Returns true if the exception should be filtered out (not reported)
+	 * Whether to track request performance metrics
 	 */
-	filter?: (exception: any) => boolean;
+	trackPerformance?: boolean;
+
+	/**
+	 * Whether to track user information when available
+	 */
+	trackUserInfo?: boolean;
+
+	/**
+	 * Custom properties to add to all events
+	 */
+	customProperties?: Record<string, any>;
 }
+
+/**
+ * Parses and validates PostHog options
+ * @param options Raw PostHog options
+ * @returns Normalized PostHog options
+ */
+export const parsePosthogOptions = (options: PosthogModuleOptions): PosthogModuleOptions => {
+	return {
+		apiKey: options.apiKey,
+		apiHost: options.apiHost || 'https://app.posthog.com',
+		enableErrorTracking: options.enableErrorTracking ?? true,
+		flushAt: options.flushAt || 20,
+		flushInterval: options.flushInterval || 10000,
+		personalApiKey: options.personalApiKey,
+		autocapture: options.autocapture ?? false,
+		mock: options.mock ?? false
+	};
+};

@@ -1,14 +1,13 @@
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap } from '@gauzy/plugin';
+import { PosthogModule } from './posthog.module';
+import { parsePosthogOptions, PosthogModuleOptions } from './posthog.interfaces';
+import { PosthogEventInterceptor } from './posthog-event.interceptor';
+import { PosthogErrorInterceptor } from './posthog-error.interceptor';
 import { PosthogRequestMiddleware } from './posthog-request.middleware';
 import { PosthogTraceMiddleware } from './posthog-trace.middleware';
-import { PosthogModule } from './posthog.module';
-import { PosthogModuleOptions } from './posthog.interfaces';
-import { PosthogCustomInterceptor } from './post-custom.interceptor';
 import { POSTHOG_MODULE_OPTIONS } from './posthog.constants';
-import { PosthogService } from './posthog.service';
-import { PosthogErrorInterceptor } from './posthog-error.interceptor';
 
 @Plugin({
 	imports: [
@@ -22,10 +21,14 @@ import { PosthogErrorInterceptor } from './posthog-error.interceptor';
 			provide: POSTHOG_MODULE_OPTIONS,
 			useValue: PosthogPlugin.options
 		},
+		{
+			provide: APP_INTERCEPTOR,
+			useClass: PosthogErrorInterceptor
+		},
 
 		{
 			provide: APP_INTERCEPTOR,
-			useFactory: () => new PosthogCustomInterceptor()
+			useClass: PosthogEventInterceptor
 		}
 	]
 })
@@ -78,22 +81,4 @@ export class PosthogPlugin implements NestModule, IOnPluginBootstrap {
 	private shouldEnableTracking(): boolean {
 		return !PosthogPlugin.options.mock && !!PosthogPlugin.options.apiKey;
 	}
-}
-
-/**
- * Parses and validates PostHog options
- * @param options Raw PostHog options
- * @returns Normalized PostHog options
- */
-function parsePosthogOptions(options: PosthogModuleOptions): PosthogModuleOptions {
-	return {
-		apiKey: options.apiKey,
-		apiHost: options.apiHost || 'https://app.posthog.com',
-		enableErrorTracking: options.enableErrorTracking ?? true,
-		flushAt: options.flushAt || 20,
-		flushInterval: options.flushInterval || 10000,
-		personalApiKey: options.personalApiKey,
-		autocapture: options.autocapture ?? false,
-		mock: options.mock ?? false
-	};
 }

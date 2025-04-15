@@ -7,6 +7,11 @@ import { createPosthogProviders } from './posthog.providers';
 @Global()
 @Module({})
 export class PosthogCoreModule {
+	/**
+	 * Synchronous registration of the Posthog module
+	 * @param options - Configuration object for Posthog
+	 * @returns A dynamic module with providers and exports
+	 */
 	static forRoot(options: PosthogModuleOptions): DynamicModule {
 		const provider = createPosthogProviders(options);
 
@@ -17,6 +22,12 @@ export class PosthogCoreModule {
 		};
 	}
 
+	/**
+	 * Asynchronous registration of the Posthog module
+	 * Supports useFactory, useClass, or useExisting strategies
+	 * @param options - Async module options including factory or class
+	 * @returns A dynamic module with async providers and exports
+	 */
 	static forRootAsync(options: PosthogModuleAsyncOptions): DynamicModule {
 		const provider: Provider = {
 			provide: POSTHOG_TOKEN,
@@ -32,7 +43,13 @@ export class PosthogCoreModule {
 		};
 	}
 
+	/**
+	 * Creates async providers based on the chosen async strategy
+	 * @param options - Configuration for async provider setup
+	 * @returns An array of providers to be used in the async module
+	 */
 	private static createAsyncProviders(options: PosthogModuleAsyncOptions): Provider[] {
+		// If a factory function is provided directly
 		if (options.useFactory) {
 			return [
 				{
@@ -43,6 +60,7 @@ export class PosthogCoreModule {
 			];
 		}
 
+		// Dependency injection array for useClass or useExisting
 		const inject = [(options.useClass || options.useExisting) as Type<PosthogOptionsFactory>];
 
 		const providers: Provider[] = [
@@ -53,6 +71,7 @@ export class PosthogCoreModule {
 			}
 		];
 
+		// Register useClass as a provider if defined
 		if (options.useClass) {
 			providers.push({
 				provide: options.useClass,

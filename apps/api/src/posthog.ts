@@ -16,21 +16,6 @@ export function initializePosthog(): typeof PosthogPlugin | null {
 		return null;
 	}
 
-	console.log(
-		'\x1b[36m%s\x1b[0m', // Cyan color
-		'=================================================================='
-	);
-	console.log(
-		'\x1b[33m%s\x1b[0m', // Yellow color
-		'🚀 Initializing PostHog Analytics',
-		`\nKey: ${environment.posthog.posthogKey.substring(0, 5)}...${environment.posthog.posthogKey.substring(-3)}`,
-		`\nHost: ${environment.posthog.posthogHost || 'https://app.posthog.com'}`
-	);
-	console.log(
-		'\x1b[36m%s\x1b[0m', // Cyan color
-		'=================================================================='
-	);
-
 	// Configure PostHog
 	return PosthogPlugin.init({
 		apiKey: environment.posthog.posthogKey,
