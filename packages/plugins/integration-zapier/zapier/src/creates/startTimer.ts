@@ -29,7 +29,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
     return response.data;
   } catch (error: any) {
     z.console.error('Error starting timer', error);
-    throw new Error(`Failed to start timer: ${error.message || 'Unknown error'}`);
+    throw new z.errors.HaltedError(`Failed to start timer: ${error.message || 'Unknown error'}`);
   }
 };
 

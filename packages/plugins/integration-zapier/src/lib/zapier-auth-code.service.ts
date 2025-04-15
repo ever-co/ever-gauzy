@@ -91,7 +91,8 @@ export class ZapierAuthCodeService {
     getUserInfoFromAuthCode(code: string, redirectUri?: string): {
         userId: string,
         tenantId: string,
-        organizationId?: string
+        organizationId?: string,
+        redirectUri?: string
     } | null {
         const authCodeData = this.authCodes.get(code);
 
@@ -99,6 +100,7 @@ export class ZapierAuthCodeService {
         if (authCodeData && authCodeData.expiresAt > new Date()) {
             if (authCodeData.redirectUri && redirectUri && authCodeData.redirectUri !== redirectUri) {
                 this.logger.warn(`Redirect URI mismatch for auth code ${code}. Expected: ${authCodeData.redirectUri}, Received: ${redirectUri}`);
+                this.logger.debug(`Auth Code Data: ${JSON.stringify(authCodeData)}`);
                 throw new BadRequestException('Redirect URI mismatch');
             }
             this.authCodes.delete(code);

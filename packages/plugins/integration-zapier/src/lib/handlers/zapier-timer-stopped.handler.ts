@@ -17,7 +17,8 @@ export class ZapierTimerStoppedHandler implements IEventHandler<TimerStoppedEven
     async handle(event: TimerStoppedEvent): Promise<void> {
         const timeLog = event.timeLog;
         if (!timeLog.tenantId || !timeLog.organizationId) {
-            console.warn('Cannot process timer started event: missing tenantId or organizationId')
+            console.warn('Cannot process timer stopped event: missing tenantId or organizationId')
+            return;
         }
         await this.zapierWebhookService.notifyTimerStatusChanged({
             event: 'timer.status.changed',

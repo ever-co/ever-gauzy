@@ -51,7 +51,16 @@ export class ZapierController {
 				// Check if this is a Zapier auth flow
 				const { zapier_state, zapier_redirect_uri } = query;
 				const baseUrl = this._config.get<string>('baseUrl');
+				const authorizedDomains = this._config.get<string[]>('zapier.allowedDomains'); // Add authorized domains here
+
 				if (zapier_state || zapier_redirect_uri) {
+					if (zapier_redirect_uri) {
+						const redirectUrl = new URL(zapier_redirect_uri);
+						if (!(authorizedDomains ?? []).some(domain => redirectUrl.hostname.endsWith(domain))) {
+							throw new BadRequestException('Unauthorized redirect URI');
+						}
+					}
+
 					const url = new URL(`${baseUrl ?? 'http://localhost:3000'}/api/integration/zapier/oauth/callback`);
 					if (zapier_state) {
 						url.searchParams.append('state', zapier_state);

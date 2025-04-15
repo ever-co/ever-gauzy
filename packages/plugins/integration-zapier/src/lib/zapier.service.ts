@@ -66,55 +66,62 @@ export class ZapierService {
 	 */
 	async refreshToken(integrationId: ID): Promise<IZapierAccessTokens> {
 		try {
+			// Fetch integration settings
 			const settings = await this._integrationSettingService.find({
 				where: {
 					integration: { id: integrationId },
 					integrationId
 				}
 			});
+
 			if (!settings || settings.length === 0) {
+				this.logger.warn(`No settings found for integration ID ${integrationId}`);
 				throw new NotFoundException(`No settings found for integration ID ${integrationId}`);
 			}
-			let client_id = '';
-			let client_secret = '';
-			let refresh_token = '';
-			for (const current of settings) {
-				if (current.settingsName === 'client_id') {
-					client_id = current.settingsValue || client_id;
-				} else if (current.settingsName === 'client_secret') {
-					client_secret = current.settingsValue || client_secret;
-				} else if (current.settingsName === 'refresh_token') {
-					refresh_token = current.settingsValue || refresh_token;
-				}
-			}
+
+			// Extract required settings
+			const client_id = settings.find(s => s.settingsName === 'client_id')?.settingsValue;
+			const client_secret = settings.find(s => s.settingsName === 'client_secret')?.settingsValue;
+			const refresh_token = settings.find(s => s.settingsName === 'refresh_token')?.settingsValue;
+
 			if (!client_id || !client_secret || !refresh_token) {
-				throw new BadRequestException('Missing required zapier integration settings');
+				this.logger.warn(`Missing required settings for integration ID ${integrationId}`);
+				throw new BadRequestException('Missing required Zapier integration settings');
 			}
 
 			// Generate new tokens
 			const access_token = uuidv4();
 			const new_refresh_token = uuidv4();
 
-			const settingsData = settings.map((setting) => {
+			// Update settings with new tokens
+			const updatedSettings = settings.map(setting => {
 				if (setting.settingsName === 'access_token') {
 					setting.settingsValue = access_token;
-				}
-
-				if (setting.settingsName === 'refresh_token') {
+				} else if (setting.settingsName === 'refresh_token') {
 					setting.settingsValue = new_refresh_token;
 				}
 				return setting;
 			}) as DeepPartial<IIntegrationEntitySetting>;
 
-			await this._integrationSettingService.create(settingsData);
+			await this._integrationSettingService.create(updatedSettings);
+
+			this.logger.log(`Successfully refreshed tokens for integration ID ${integrationId}`, {
+				integrationId,
+				client_id,
+				tenantId: settings[0]?.tenantId,
+				organizationId: settings[0]?.organizationId
+			});
 			return {
 				access_token,
 				refresh_token: new_refresh_token,
 				token_type: 'Bearer',
 				expires_in: ZAPIER_TOKEN_EXPIRATION_TIME
 			};
-		} catch (error) {
-			this.logger.error(`Failed to refresh token for integration ${integrationId}`, error);
+		} catch (error: any) {
+			this.logger.error(`Failed to refresh token for integration ID ${integrationId}`, {
+				error: error.message,
+				integrationId
+			});
 			throw error;
 		}
 	}
