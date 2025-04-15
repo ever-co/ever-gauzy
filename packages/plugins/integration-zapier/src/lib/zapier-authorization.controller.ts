@@ -183,22 +183,27 @@ export class ZapierAuthorizationController {
 				throw new UnauthorizedException('Invalid client credentials');
 			}
 
-			// Retrieve the user info associated with this auth code
+			// Retrieve the user info and stored redirect URI associated with this auth code
 			const userInfo = this.zapierAuthCodeService.getUserInfoFromAuthCode(code);
 			if (!userInfo) {
-				throw new BadRequestException('Invalid or expired authorization code')
+				throw new BadRequestException('Invalid or expired authorization code');
+			}
+
+			// Verify that the provided redirect_uri matches the stored redirect URI
+			if (redirect_uri !== userInfo.redirectUri) {
+				throw new BadRequestException('Redirect URI mismatch');
 			}
 
 			// Create integration and generate tokens
 			const tokens = await this.zapierService.createIntegration({
 				client_id,
-                client_secret,
-                code,
-                grant_type,
-                redirect_uri,
-                organizationId: userInfo.organizationId,
-                tenantId: userInfo.tenantId,
-                userId: userInfo.userId
+				client_secret,
+				code,
+				grant_type,
+				redirect_uri,
+				organizationId: userInfo.organizationId,
+				tenantId: userInfo.tenantId,
+				userId: userInfo.userId
 			});
 			return {
 				access_token: tokens.access_token,
@@ -208,11 +213,11 @@ export class ZapierAuthorizationController {
 			};
 		} catch (error) {
 			this.logger.error('Failed to exchange code for token', error);
-            if (error instanceof BadRequestException ||
-                error instanceof UnauthorizedException ||
-                error instanceof NotFoundException) {
-                throw error;
-            }
+			if (error instanceof BadRequestException ||
+				error instanceof UnauthorizedException ||
+				error instanceof NotFoundException) {
+				throw error;
+			}
 			throw new BadRequestException('Failed to exchange code for token');
 		}
 	}
