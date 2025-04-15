@@ -28,7 +28,7 @@ export class ZapierAuthorizationController {
 	 * and provides a clear error message to the user.
 	 */
 	onModuleInit() {
-		// Validate enssential Zapier configuration
+		// Validate essential Zapier configuration
 		const clientId = this._config.get<string>('zapier.clientId');
 		const clientSecret = this._config.get<string>('zapier.clientSecret');
 		const allowedDomains = this._config.get<string>('zapier.allowedDomains');
@@ -225,7 +225,7 @@ export class ZapierAuthorizationController {
 			if (!userInfo.tenantId || userInfo.userId) {
 				this.logger.error('Missing required user information for integration creation', {
 					organizationId: userInfo.tenantId,
-					unserId: userInfo.userId
+					userId: userInfo.userId
 				});
 				throw new BadRequestException('Incomplete user information for integration creation');
 			}
