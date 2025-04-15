@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { ID } from '@gauzy/contracts';
 import { ConfigService } from '@nestjs/config';
@@ -6,12 +6,13 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class ZapierAuthCodeService {
     private readonly logger = new Logger(ZapierAuthCodeService.name);
-    private readonly MAX_AUTH_CODES = 1000; // Maximum number of auth codes to store
+    private readonly MAX_AUTH_CODES: number;
     private readonly AUTH_CODE_EXPIRATION_MINUTES = 60; // Auth code expiration time in minutes
     private readonly ALLOWED_DOMAINS: string[];
     constructor(
         private readonly _config: ConfigService
     ) {
+        this.MAX_AUTH_CODES = this._config.get<number>('zapier.maxAuthCodes') || 1000;
         const configDomains = this._config.get<string>('zapier.allowedDomains');
         const defaultDomains = [
             'localhost'
@@ -66,7 +67,7 @@ export class ZapierAuthCodeService {
 
             // If still at limit after cleanup, throw error
             if (this.authCodes.size >= this.MAX_AUTH_CODES) {
-                throw new Error('Maximum auth code limit reached. Please try again later.');
+                throw new ServiceUnavailableException('Maximum auth code limit reached. Please try again later.');
             }
         }
 
