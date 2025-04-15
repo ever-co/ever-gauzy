@@ -16,4 +16,7 @@ export interface IZapierConfig {
 
 	/** Optional URL where users will be directed after installing the Zapier integration */
 	readonly postInstallUrl?: string;
+
+	/** Max authentication code number */
+	readonly maxAuthCodes?: number;
 }

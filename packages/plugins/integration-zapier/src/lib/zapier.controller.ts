@@ -114,15 +114,18 @@ export class ZapierController {
 		description: 'Successfully retrieved Zapier triggers'
 	})
 	@ApiResponse({
-		status: 400,
-		description: 'Bad Request - Missing or empty token parameter'
+		status: 401,
+		description: 'Unauthorized - Invalid or missing authorization token'
 	})
 	@Get('/triggers')
 	async getTriggers(@Query('token') token: string): Promise<IZapierEndpoint[]> {
-		this.validateToken(token);
 		try {
+			this.validateToken(token);
 			return await this.zapierService.fetchTriggers(token);
 		} catch (error) {
+			if (error) {
+				throw new UnauthorizedException('Invalid or missing authorization token');
+			}
 			this.handleZapierError(error, 'triggers');
 		}
 	}
@@ -139,7 +142,7 @@ export class ZapierController {
 	@Get('/actions')
 	async getActions(@Query('token') token: string): Promise<IZapierEndpoint[]> {
 		try {
-			await this.validateToken(token, true);
+			this.validateToken(token, true);
 			return await this.zapierService.fetchActions(token);
 		} catch (error) {
 			if (error) {

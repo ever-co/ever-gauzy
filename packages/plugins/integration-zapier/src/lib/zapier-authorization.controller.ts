@@ -16,6 +16,8 @@ import { CreateZapierIntegrationDto } from './dto';
 @Controller('/integration/zapier')
 export class ZapierAuthorizationController {
 	private readonly logger = new Logger(ZapierAuthorizationController.name);
+	private refreshLocks: Map<string, boolean> = new Map();
+
 
 	constructor(
 		private readonly _config: ConfigService,
@@ -133,25 +135,24 @@ export class ZapierAuthorizationController {
 	async callback(@Query() query: any, @Res() res: Response) {
 		try {
 			this.logger.debug('OAuth callback request received');
-            this.logger.debug(`Query parameters: ${JSON.stringify(query)}`);
+			this.logger.debug(`Query parameters: ${JSON.stringify({
+				...query,
+				code: query.code ? '***' : undefined, // Obfuscate sensitive data
+				state: query.state
+			})}`);
 
-            const { state, zapier_redirect_uri } = query;
+			const { state, zapier_redirect_uri } = query;
 
-			// validate required parameters
+			// Validate required parameters
 			if (!state) {
 				throw new HttpException('Missing state parameter', HttpStatus.BAD_REQUEST);
 			}
 
 			/** Generate an authorization code for this user */
-
 			const user = RequestContext.currentUser();
 			if (!user) {
 				throw new UnauthorizedException('User not authenticated');
 			}
-			// Determine organization ID with fallbacks
-			// const organizationId = user.lastOrganizationId ||
-			// user.defaultOrganizationId ||
-			// RequestContext.currentOrganizationId();
 
 			const code = this.zapierAuthCodeService.generateAuthCode(
 				user.id as string,
@@ -164,6 +165,7 @@ export class ZapierAuthorizationController {
 				code: code,
 				state: query.state
 			});
+
 			/**
 			 * Redirect the user back to Zapier's redirect_uri with the authorization code
 			 */
@@ -171,7 +173,10 @@ export class ZapierAuthorizationController {
 			this.logger.debug(`Redirecting to Zapier: ${url}`);
 			return res.redirect(url);
 		} catch (error) {
-			this.logger.error('Failed to process OAuth callback', error);
+			this.logger.error('Failed to process OAuth callback', {
+				error: error instanceof Error ? error.message : 'Unknown error',
+				stack: error instanceof Error ? error.stack : undefined
+			});
 			throw new HttpException(
 				`Failed to add ${IntegrationEnum.ZAPIER} integration: ${error instanceof Error ? error.message : 'Unknown error'}`,
 				HttpStatus.INTERNAL_SERVER_ERROR
@@ -222,7 +227,7 @@ export class ZapierAuthorizationController {
 			}
 
 			// Pre-check: Verify all required user information is available
-			if (!userInfo.tenantId || userInfo.userId) {
+			if (!userInfo.tenantId || !userInfo.userId) {
 				this.logger.error('Missing required user information for integration creation', {
 					organizationId: userInfo.tenantId,
 					userId: userInfo.userId
@@ -260,72 +265,97 @@ export class ZapierAuthorizationController {
 	/**
      * Refreshes an access token using a refresh token
      */
-	@Public()
-	@Post('refresh-token/:integrationId')
-	@ApiOperation({ summary: 'Refresh access token' })
-	@ApiResponse({
-		status: 200,
-		description: 'Successfully refreshed token'
-	})
-	@ApiResponse({
-		status: 401,
-		description: 'Unauthorized - Invalid refresh token'
-	})
-	@ApiResponse({
-		status: 404,
-		description: 'NotFound - Integration not found'
-	})
-	async refreshToken(@Body() body: {
-		refresh_token: string;
-		client_id: string;
-		client_secret: string;
-		grant_type: ZapierGrantType;
-	}, @Param('integrationId') integrationId: string): Promise<IZapierAccessTokens | null> {
-		try {
-			const { refresh_token, client_id, client_secret, grant_type } = body;
+    @Public()
+    @Post('refresh-token/:integrationId')
+    @ApiOperation({ summary: 'Refresh access token' })
+    @ApiResponse({
+        status: 200,
+        description: 'Successfully refreshed token'
+    })
+    @ApiResponse({
+        status: 401,
+        description: 'Unauthorized - Invalid refresh token'
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'NotFound - Integration not found'
+    })
+    @ApiResponse({
+        status: 409,
+        description: 'Conflict - Token refresh already in progress'
+    })
+    async refreshToken(@Body() body: {
+        refresh_token: string;
+        client_id: string;
+        client_secret: string;
+        grant_type: ZapierGrantType;
+    }, @Param('integrationId') integrationId: string): Promise<IZapierAccessTokens | null> {
+        try {
+            const { refresh_token, client_id, client_secret, grant_type } = body;
 
-			this.logger.debug(`Refresh token request received: ${JSON.stringify({
-				refresh_token: '***',
-				client_id,
-				client_secret,
-				grant_type
-			})}`);
+            this.logger.debug(`Refresh token request received: ${JSON.stringify({
+                refresh_token: '***',
+                client_id,
+                client_secret,
+                grant_type
+            })}`);
 
-			if (grant_type !== 'refresh_token') {
-				throw new BadRequestException('Unsupported grant type');
-			}
+            if (grant_type !== 'refresh_token') {
+                throw new BadRequestException('Unsupported grant type');
+            }
 
-			if (!refresh_token || !client_id || !client_secret) {
-				throw new BadRequestException('Missing required parameters');
-			}
+            if (!refresh_token || !client_id || !client_secret) {
+                throw new BadRequestException('Missing required parameters');
+            }
 
-			// Verify client credentials
-			const configuredClientId = this._config.get<string>('zapier.clientId');
-			const configuredClientSecret = this._config.get<string>('zapier.clientSecret');
+            // Verify client credentials
+            const configuredClientId = this._config.get<string>('zapier.clientId');
+            const configuredClientSecret = this._config.get<string>('zapier.clientSecret');
 
-			if (client_id !== configuredClientId || client_secret !== configuredClientSecret) {
-				throw new UnauthorizedException('Invalid client credentials');
-			}
+            if (client_id !== configuredClientId || client_secret !== configuredClientSecret) {
+                throw new UnauthorizedException('Invalid client credentials');
+            }
 
-			// Refresh the tokens
-			const tokens = await this.zapierService.refreshToken(integrationId);
-			if (!tokens) {
-				throw new NotFoundException('Integration not found');
-			}
+            // Check if there's an active refresh operation for this integration
+            if (this.refreshLocks.get(integrationId)) {
+                this.logger.warn(`Concurrent refresh attempt for integration ID ${integrationId}`);
+                throw new HttpException('Token refresh already in progress', HttpStatus.CONFLICT);
+            }
 
-			// Return the token response
-			return {
-				access_token: tokens.access_token,
-				refresh_token: tokens.refresh_token,
-				expires_in: ZAPIER_TOKEN_EXPIRATION_TIME,
-				token_type: 'Bearer'
-			};
-		} catch (error) {
-			this.logger.error('Failed to refresh token', error);
-			if (error instanceof BadRequestException || error instanceof UnauthorizedException || error instanceof NotFoundException) {
-				throw error;
-			}
-			throw new UnauthorizedException('Failed to refresh token');
-		}
-	}
+            try {
+                // Acquire lock
+                this.refreshLocks.set(integrationId, true);
+
+                // Refresh the tokens
+                const tokens = await this.zapierService.refreshToken(integrationId);
+                if (!tokens) {
+                    throw new NotFoundException('Integration not found');
+                }
+
+                // Return the token response
+                return {
+                    access_token: tokens.access_token,
+                    refresh_token: tokens.refresh_token,
+                    expires_in: ZAPIER_TOKEN_EXPIRATION_TIME,
+                    token_type: 'Bearer'
+                };
+            } finally {
+                // Release lock regardless of outcome
+                this.refreshLocks.set(integrationId, false);
+                setTimeout(() => {
+                    // Clean up locks after a short period to prevent memory leaks
+                    this.refreshLocks.delete(integrationId);
+                }, 30000); // 30 seconds timeout
+            }
+        } catch (error) {
+            this.logger.error('Failed to refresh token', error);
+            if (error instanceof BadRequestException ||
+                error instanceof UnauthorizedException ||
+                error instanceof NotFoundException ||
+                error instanceof HttpException) {
+                throw error;
+            }
+            throw new UnauthorizedException('Failed to refresh token');
+        }
+    }
 }

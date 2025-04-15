@@ -98,15 +98,16 @@ export class ZapierService {
 
 			// Update settings with new tokens
 			const updatedSettings = settings.map(setting => {
+				const updated = { ...setting };
 				if (setting.settingsName === 'access_token') {
-					setting.settingsValue = access_token;
+					updated.settingsValue = access_token;
 				} else if (setting.settingsName === 'refresh_token') {
-					setting.settingsValue = new_refresh_token;
+					updated.settingsValue = new_refresh_token;
 				}
-				return setting;
+				return updated;
 			}) as DeepPartial<IIntegrationEntitySetting>;
 
-			await this._integrationSettingService.create(updatedSettings);
+			await this._integrationSettingService.save(updatedSettings);
 
 			this.logger.log(`Successfully refreshed tokens for integration ID ${integrationId}`, {
 				integrationId,
