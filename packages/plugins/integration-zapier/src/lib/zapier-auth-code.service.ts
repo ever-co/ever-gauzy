@@ -1,22 +1,32 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { ID } from '@gauzy/contracts';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ZapierAuthCodeService {
-    constructor() {
-        this.startPeriodicCleanup();
-    }
     private readonly logger = new Logger(ZapierAuthCodeService.name);
     private readonly MAX_AUTH_CODES = 1000; // Maximum number of auth codes to store
     private readonly AUTH_CODE_EXPIRATION_MINUTES = 60; // Auth code expiration time in minutes
-    private readonly ALLOWED_DOMAINS = [
-        'zapier.com',
-        'gauzy.co',
-        'demo.gauzy.co',
-        'staging.gauzy.co',
-        'localhost',
-    ];
+    private readonly ALLOWED_DOMAINS: string[];
+    constructor(
+        private readonly _config: ConfigService
+    ) {
+        const configDomains = this._config.get<string>('zapier.allowedDomains');
+        const defaultDomains = [
+            'localhost'
+        ];
+        if (configDomains) {
+            this.ALLOWED_DOMAINS = [...new Set([
+                ...defaultDomains,
+                ...configDomains.split(',').map(domain => domain.trim())
+            ])];
+        } else {
+            this.ALLOWED_DOMAINS = defaultDomains;
+        }
+        this.logger.log(`Initialized with allowed domains: ${this.ALLOWED_DOMAINS.join(', ')}`);
+        this.startPeriodicCleanup();
+    }
 
     // Using a Map to store temporary auth codes - this is temporary storage
     // and doesn't need to be persisted to the database
@@ -138,16 +148,39 @@ export class ZapierAuthCodeService {
 
             const url = new URL(redirectUri);
             const domain = url.hostname;
-            if (domain === 'localhost' || domain.endsWith('localhost')) {
-                return true; // Allow localhost for local development
+
+            // Always allow localhost for development
+            if (domain === 'localhost' || domain.endsWith('.localhost')) {
+                return true;
             }
 
+            // Check against allowed domains list
             return this.ALLOWED_DOMAINS.some(allowedDomain =>
                 domain === allowedDomain || domain.endsWith(`.${allowedDomain}`)
             );
         } catch (error) {
-            this.logger.error(`Invalid redirect URI format: ${redirectUri}`);
+            this.logger.error(`Invalid redirect URI format: ${redirectUri}`, error);
             return false;
+        }
+    }
+    /**
+     * Get the current server domain from a request
+     * This can be used as an alternative approach to get the current domain
+     */
+    getServerDomainFromRequest(request: any): string | null {
+        try {
+            if (!request || !request.headers) {
+                return null;
+            }
+
+            // Get domain from host header
+            const host = request.headers.host || '';
+
+            // Remove port if present
+            return host.split(':')[0];
+        } catch (error) {
+            this.logger.error('Failed to get server domain from request', error);
+            return null;
         }
     }
 }

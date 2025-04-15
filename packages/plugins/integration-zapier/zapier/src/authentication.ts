@@ -2,6 +2,7 @@
  * Zapier authentication configuration for OAuth2 integration with Gauzy
  */
 import { ZObject, Bundle } from 'zapier-platform-core';
+const appName = process.env.APP_NAME || 'Gauzy';
 
 export const authentication = {
 	/** Specifies OAuth2 as the authentication type */
@@ -27,15 +28,15 @@ export const authentication = {
 			// Format the connection label with user information
 			const userData = response.data;
 			if (userData?.name) {
-				return `${userData.name} - Gauzy`;
+				return `${userData.name} - ${appName}`;
 			}
 			if (userData?.email) {
-				return `${userData.email} - Gauzy`;
+				return `${userData.email} - ${appName}`;
 			}
 
-			return 'Gauzy Connection';
+			return `${appName} Connection`;
 		} catch (error) {
-			return 'Gauzy Connection';
+			return `${appName} Connection`;
 		}
 	},
 

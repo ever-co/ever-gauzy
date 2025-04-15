@@ -14,6 +14,9 @@ export default registerAs (
         // Zapier OAuth Client Secret
         clientSecret: process.env.GAUZY_ZAPIER_CLIENT_SECRET || '',
 
+        // Zapier allowed domains
+        allowedDomains: process.env.GAUZY_ALLOWED_DOMAINS ? process.env.GAUZY_ALLOWED_DOMAINS.split(',').map(domain => domain.trim()): [],
+
         // Zapier Redirected URI after successful authentication
         redirectUri: process.env.GAUZY_ZAPIER_REDIRECT_URL || '',
 

@@ -1,14 +1,19 @@
 import {
 	Controller,
 	Get,
+	Res,
 	UseGuards,
 	Query,
 	NotFoundException,
 	InternalServerErrorException,
 	Logger,
 	UnauthorizedException,
-	BadRequestException
+	BadRequestException,
+	HttpStatus
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Public } from '@gauzy/common';
+import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {  PermissionsEnum, IZapierEndpoint } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
@@ -21,7 +26,48 @@ import { ZapierService } from './zapier.service';
 export class ZapierController {
 	private readonly logger = new Logger(ZapierController.name);
 
-	constructor(private readonly zapierService: ZapierService) { }
+	constructor(
+		private readonly zapierService: ZapierService,
+		private readonly _config: ConfigService
+	) { }
+
+		/**
+		 * Handle successful login for Zapier OAuth flow
+		 * This endpoint is called after successful authentication when the login was initiated by Zapier
+		 */
+		@ApiOperation({ summary: 'Handle successful login for Zapier OAuth' })
+		@ApiResponse({
+			status: HttpStatus.CREATED,
+			description: 'Successful authentication and redirection to the callback URL'
+		})
+		@ApiResponse({
+			status: HttpStatus.BAD_REQUEST,
+			description: 'Invalid input, the response body may contain clues as to what went wrong'
+		})
+		@Public()
+		@Get('login/success')
+		async loginSuccess(@Query() query: { zapier_state?: string, zapier_redirect_uri?: string }, @Res() res: Response) {
+			try {
+				// Check if this is a Zapier auth flow
+				const { zapier_state, zapier_redirect_uri } = query;
+				const baseUrl = this._config.get<string>('baseUrl');
+				if (zapier_state || zapier_redirect_uri) {
+					const url = new URL(`${baseUrl ?? 'http://localhost:3000'}/api/integration/zapier/oauth/callback`);
+					if (zapier_state) {
+						url.searchParams.append('state', zapier_state);
+					}
+					if (zapier_redirect_uri) {
+						url.searchParams.append('zapier_redirect_uri', zapier_redirect_uri);
+					}
+					return res.redirect(url.toString());
+				} else {
+					return res.redirect('/dashboard');
+				}
+			} catch (error) {
+				console.error('Zapier OAuth login error:', error);
+				return res.redirect('/auth/login?error=authentication_failed');
+			}
+		}
 
 	@ApiOperation({ summary: 'Get available Zapier triggers' })
 	@ApiResponse({

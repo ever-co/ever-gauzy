@@ -8,6 +8,9 @@ export interface IZapierConfig {
 	/** OAuth client secret provided by Zapier for secure authentication */
 	readonly clientSecret: string;
 
+	/** Allowed domains for Zapier OAuth redirects */
+	readonly allowedDomains: string[];
+
 	/** URI where Zapier will redirect after successful OAuth authorization */
 	readonly redirectUri: string;
 
