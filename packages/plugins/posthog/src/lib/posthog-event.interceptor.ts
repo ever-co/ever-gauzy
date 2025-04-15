@@ -39,7 +39,6 @@ export class PosthogEventInterceptor implements NestInterceptor {
 	 */
 	intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
 		const startTime = Date.now();
-		const ctxType = context.getType<ContextType>();
 
 		// Track the request start event
 		this.captureRequestStart(context);

@@ -5,7 +5,6 @@ import {
 	HttpException,
 	Inject,
 	Injectable,
-	Logger,
 	NestInterceptor,
 	Optional
 } from '@nestjs/common';
@@ -14,7 +13,7 @@ import { ContextType, HttpArgumentsHost, RpcArgumentsHost, WsArgumentsHost } fro
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
-import { PosthogInterceptorOptions, PosthogInterceptorOptionsFilter, PosthogModuleOptions } from './posthog.interfaces';
+import { PosthogInterceptorOptions, PosthogInterceptorOptionsFilter } from './posthog.interfaces';
 import { PosthogService } from './posthog.service';
 import { SanitizerUtil } from './utils';
 import { POSTHOG_MODULE_OPTIONS } from './posthog.constants';
