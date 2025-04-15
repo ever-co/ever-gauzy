@@ -22,6 +22,33 @@ export class ZapierAuthorizationController {
 		private readonly zapierAuthCodeService: ZapierAuthCodeService,
 		private readonly zapierService: ZapierService,
 	) { }
+	/***
+	 * Validate the required Zapier configuration on module initialization
+	 * This ensures missing environment variables are caught early
+	 * and provides a clear error message to the user.
+	 */
+	onModuleInit() {
+		// Validate enssential Zapier configuration
+		const clientId = this._config.get<string>('zapier.clientId');
+		const clientSecret = this._config.get<string>('zapier.clientSecret');
+		const allowedDomains = this._config.get<string>('zapier.allowedDomains');
+
+		if (!clientId || clientId.trim() === '') {
+			const errorMsg = 'Missing Zapier client ID in environment variables';
+			this.logger.error(errorMsg);
+			throw new Error(errorMsg);
+		}
+		if (!clientSecret || clientSecret.trim() === '') {
+			const errorMsg = 'Missing Zapier client secret in environment variables';
+			this.logger.error(errorMsg);
+			throw new Error(errorMsg);
+		}
+		if (!allowedDomains || !Array.isArray(allowedDomains) || allowedDomains.length === 0) {
+			this.logger.warn('No allowed domains configured for Zapier integration. This may limit functionality.');
+		}
+		this.logger.log('Zapier configuration validated successfully');
+	}
+
 	/**
 	 * Handles the OAuth2 authorization request
 	 * This is the entry point of the OAuth flow
@@ -192,6 +219,15 @@ export class ZapierAuthorizationController {
 			// Verify that the provided redirect_uri matches the stored redirect URI
 			if (redirect_uri !== userInfo.redirectUri) {
 				throw new BadRequestException('Redirect URI mismatch');
+			}
+
+			// Pre-check: Verify all required user information is available
+			if (!userInfo.tenantId || userInfo.userId) {
+				this.logger.error('Missing required user information for integration creation', {
+					organizationId: userInfo.tenantId,
+					unserId: userInfo.userId
+				});
+				throw new BadRequestException('Incomplete user information for integration creation');
 			}
 
 			// Create integration and generate tokens

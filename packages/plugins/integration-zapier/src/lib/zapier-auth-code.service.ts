@@ -112,9 +112,9 @@ export class ZapierAuthCodeService {
             };
         }
         if (!authCodeData) {
-            this.logger.debug(`Auth Code not found: ${code}`);
+            this.logger.debug('This could indicate an expired code that was already cleaned up or an invalid code attempt');
         } else {
-            this.logger.debug(`Auth Code ${code} expired at ${authCodeData.expiresAt}`);
+            this.logger.debug(`Current time: ${new Date()}, expired ${(new Date().getTime() - authCodeData.expiresAt.getTime()) / 1000} seconds ago`);
         }
         return null;
     }

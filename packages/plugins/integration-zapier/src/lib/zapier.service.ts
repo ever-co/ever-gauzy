@@ -63,6 +63,9 @@ export class ZapierService {
 	 *
 	 * @param {ID} integrationId - The ID of the integration.
 	 * @returns {Promise<any>} - The new tokens.
+	 * @throws {NotFoundException} - When no settings are found for the given integration ID
+ 	 * @throws {BadRequestException} - When required settings (client_id, client_secret, refresh_token) are missing
+
 	 */
 	async refreshToken(integrationId: ID): Promise<IZapierAccessTokens> {
 		try {
@@ -122,7 +125,10 @@ export class ZapierService {
 				error: error.message,
 				integrationId
 			});
-			throw error;
+			if (error instanceof NotFoundException || error instanceof BadRequestException) {
+				throw error;
+			}
+			throw new HttpException('Unexpected error refreshing token', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
