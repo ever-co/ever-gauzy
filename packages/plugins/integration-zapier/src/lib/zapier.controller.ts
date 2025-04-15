@@ -15,7 +15,7 @@ import { ConfigService } from '@nestjs/config';
 import { Public } from '@gauzy/common';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import {  PermissionsEnum, IZapierEndpoint } from '@gauzy/contracts';
+import { PermissionsEnum, IZapierEndpoint } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { ZapierService } from './zapier.service';
 
@@ -29,54 +29,84 @@ export class ZapierController {
 	constructor(
 		private readonly zapierService: ZapierService,
 		private readonly _config: ConfigService
-	) { }
+	) {}
 
-		/**
-		 * Handle successful login for Zapier OAuth flow
-		 * This endpoint is called after successful authentication when the login was initiated by Zapier
-		 */
-		@ApiOperation({ summary: 'Handle successful login for Zapier OAuth' })
-		@ApiResponse({
-			status: HttpStatus.CREATED,
-			description: 'Successful authentication and redirection to the callback URL'
-		})
-		@ApiResponse({
-			status: HttpStatus.BAD_REQUEST,
-			description: 'Invalid input, the response body may contain clues as to what went wrong'
-		})
-		@Public()
-		@Get('login/success')
-		async loginSuccess(@Query() query: { zapier_state?: string, zapier_redirect_uri?: string }, @Res() res: Response) {
-			try {
-				// Check if this is a Zapier auth flow
-				const { zapier_state, zapier_redirect_uri } = query;
-				const baseUrl = this._config.get<string>('baseUrl');
-				const authorizedDomains = this._config.get<string[]>('zapier.allowedDomains'); // Add authorized domains here
+	/**
+	 * Handle successful login for Zapier OAuth flow
+	 * This endpoint is called after successful authentication when the login was initiated by Zapier
+	 */
+	@ApiOperation({ summary: 'Handle successful login for Zapier OAuth' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Successful authentication and redirection to the callback URL'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, the response body may contain clues as to what went wrong'
+	})
+	@Public()
+	@Get('login/success')
+	async loginSuccess(
+		@Query() query: { zapier_state?: string; zapier_redirect_uri?: string },
+		@Res() res: Response
+	) {
+		try {
+			// Check if this is a Zapier auth flow
+			const { zapier_state, zapier_redirect_uri } = query;
+			const baseUrl = this._config.get<string>('baseUrl');
+			const authorizedDomains = this._config.get<string[]>('zapier.allowedDomains');
 
-				if (zapier_state || zapier_redirect_uri) {
-					if (zapier_redirect_uri) {
+			if (zapier_state || zapier_redirect_uri) {
+				// More robust domain validation if redirect URI is provided
+				if (zapier_redirect_uri) {
+					try {
 						const redirectUrl = new URL(zapier_redirect_uri);
-						if (!(authorizedDomains ?? []).some(domain => redirectUrl.hostname.endsWith(domain))) {
+						const hostname = redirectUrl.hostname;
+
+						// Check if hostname is localhost (for development)
+						const isLocalhost = hostname === 'localhost' || hostname.endsWith('.localhost');
+
+						// Check if hostname matches any of the authorized domains
+						const isDomainAuthorized = (authorizedDomains ?? []).some(domain => {
+							// Exact match
+							if (hostname === domain) return true;
+							// Subdomain match (handle both direct subdomains and nested subdomains)
+							if (hostname.endsWith(`.${domain}`)) {
+								// Ensure it's a proper subdomain by checking that the preceding character is a dot
+								return true;
+							}
+
+							return false;
+						});
+
+						if (!isLocalhost && !isDomainAuthorized) {
+							this.logger.warn(`Unauthorized redirect URI: ${zapier_redirect_uri}, hostname: ${hostname}`, {
+								authorizedDomains
+							});
 							throw new BadRequestException('Unauthorized redirect URI');
 						}
+					} catch (urlError) {
+						this.logger.error(`Invalid URL format in zapier_redirect_uri: ${zapier_redirect_uri}`, urlError);
+						throw new BadRequestException('Invalid redirect URI format');
 					}
-
-					const url = new URL(`${baseUrl ?? 'http://localhost:3000'}/api/integration/zapier/oauth/callback`);
-					if (zapier_state) {
-						url.searchParams.append('state', zapier_state);
-					}
-					if (zapier_redirect_uri) {
-						url.searchParams.append('zapier_redirect_uri', zapier_redirect_uri);
-					}
-					return res.redirect(url.toString());
-				} else {
-					return res.redirect('/dashboard');
 				}
-			} catch (error) {
-				console.error('Zapier OAuth login error:', error);
-				return res.redirect('/auth/login?error=authentication_failed');
+
+				const url = new URL(`${baseUrl ?? 'http://localhost:3000'}/api/integration/zapier/oauth/callback`);
+				if (zapier_state) {
+					url.searchParams.append('state', zapier_state);
+				}
+				if (zapier_redirect_uri) {
+					url.searchParams.append('zapier_redirect_uri', zapier_redirect_uri);
+				}
+				return res.redirect(url.toString());
+			} else {
+				return res.redirect('/dashboard');
 			}
+		} catch (error) {
+			this.logger.error('Zapier OAuth login error:', error);
+			return res.redirect('/auth/login?error=authentication_failed');
 		}
+	}
 
 	@ApiOperation({ summary: 'Get available Zapier triggers' })
 	@ApiResponse({
@@ -108,10 +138,13 @@ export class ZapierController {
 	})
 	@Get('/actions')
 	async getActions(@Query('token') token: string): Promise<IZapierEndpoint[]> {
-		this.validateToken(token, true);
 		try {
+			await this.validateToken(token, true);
 			return await this.zapierService.fetchActions(token);
 		} catch (error) {
+			if (error) {
+				throw new UnauthorizedException('Invalid or missing authorization token');
+			}
 			this.handleZapierError(error, 'actions');
 		}
 	}
