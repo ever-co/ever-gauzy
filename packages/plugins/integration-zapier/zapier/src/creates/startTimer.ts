@@ -1,5 +1,7 @@
 import { ZObject, Bundle } from 'zapier-platform-core';
 
+const appName = process.env.APP_NAME || 'Gauzy';
+
 const perform = async (z: ZObject, bundle: Bundle) => {
   try {
     const response = await z.request({
@@ -38,7 +40,7 @@ export default {
   noun: 'Timer',
   display: {
     label: 'Start Timer',
-    description: 'Starts a timer in Gauzy.'
+    description: `Starts a timer in ${appName}.`
   },
   operation: {
     inputFields: [

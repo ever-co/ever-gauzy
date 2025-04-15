@@ -1,9 +1,9 @@
 import { Logger } from '@nestjs/common';
-import * as chalk from 'chalk';
 import { ApplicationPluginConfig, CustomEmbeddedFieldConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ZapierModule } from './zapier.module';
 import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Plugin({
 	/**
@@ -72,34 +72,31 @@ import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity'
 	}
 })
 export class IntegrationZapierPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
-	// We enable by default additional logging for each event to avoid cluttering the logs
-	private logEnabled = true;
 	private readonly logger = new Logger(IntegrationZapierPlugin.name);
 
+	constructor(private readonly _config: ConfigService) { }
 	/**
 	 * Called when the plugin is being initialized.
 	 */
 	onPluginBootstrap(): void | Promise<void> {
-		if (this.logEnabled) {
-			console.log(chalk.green(`${IntegrationZapierPlugin.name} is being bootstrapped...`));
+		this.logger.log(`${IntegrationZapierPlugin.name} is being bootstrapped...`);
 
-			// Log Zapier configuration status
-			const clientId = process.env['GAUZY_ZAPIER_CLIENT_ID'];
-			const clientSecret = process.env['GAUZY_ZAPIER_CLIENT_SECRET'];
-			if (!clientId || !clientSecret) {
-				this.logger.warn('Zapier OAuth credentials not fully configured! Please set GAUZY_ZAPIER_CLIENT_ID and GAUZY_ZAPIER_CLIENT_SECRET')
-			} else {
-				this.logger.log('Zapier OAuth credentials configured successfully');
-			}
+		// Log Zapier configuration status
+		const clientId = this._config.get<string>('zapier.clientId');
+		const clientSecret = this._config.get<string>('zapier.clientSecret');
+		const apiBaseUrl = this._config.get<string>('baseUrl');
+		if (!clientId || !clientSecret) {
+			this.logger.warn('Zapier OAuth credentials not fully configured! Please set GAUZY_ZAPIER_CLIENT_ID and GAUZY_ZAPIER_CLIENT_SECRET')
+		} else {
+			this.logger.log('Zapier OAuth credentials configured successfully');
 		}
+		this.logger.debug(`Zapier API base URL: ${apiBaseUrl}`);
 	}
 
 	/**
 	 * Called when the plugin is being destroyed.
 	 */
 	onPluginDestroy(): void | Promise<void> {
-		if (this.logEnabled) {
-			this.logger.log(`${IntegrationZapierPlugin.name} is being destroyed...`)
-		}
+		this.logger.log(`${IntegrationZapierPlugin.name} is being destroyed...`)
 	}
 }

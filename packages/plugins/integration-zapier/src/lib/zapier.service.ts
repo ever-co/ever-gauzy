@@ -23,7 +23,7 @@ import {
 	DEFAULT_ENTITY_SETTINGS,
 	PROJECT_TIED_ENTITIES
 } from '@gauzy/core';
-import { ZAPIER_AUTHORIZATION_URL, ZAPIER_TOKEN_EXPIRATION_TIME } from './zapier.config';
+import { ZAPIER_TOKEN_EXPIRATION_TIME } from './zapier.config';
 
 @Injectable()
 export class ZapierService {

@@ -20,8 +20,8 @@ export class ZapierAuthorizationController {
 	constructor(
 		private readonly _config: ConfigService,
 		private readonly zapierAuthCodeService: ZapierAuthCodeService,
-		private readonly zapierService: ZapierService
-	) {}
+		private readonly zapierService: ZapierService,
+	) { }
 	/**
 	 * Handles the OAuth2 authorization request
 	 * This is the entry point of the OAuth flow
@@ -69,7 +69,8 @@ export class ZapierAuthorizationController {
 
 			// Store these parameters in the session or state
 			// Redirect to the login page with these parameters preserved
-			const loginPageUrl = `${process.env['CLIENT_BASE_URL']}/#/auth/login?zapier_redirect_uri=${encodeURIComponent(redirectUri)}&zapier_state=${encodeURIComponent(state)}`;
+			const clientUrl = this._config.get<string>('clientBaseUrl');
+			const loginPageUrl = `${clientUrl}/#/auth/login?zapier_redirect_uri=${encodeURIComponent(redirectUri)}&zapier_state=${encodeURIComponent(state)}`;
 			this.logger.debug(`Redirecting to: ${loginPageUrl}`);
 
 			res.redirect(loginPageUrl);
@@ -121,20 +122,19 @@ export class ZapierAuthorizationController {
 				throw new UnauthorizedException('User not authenticated');
 			}
 			// Determine organization ID with fallbacks
-			const organizationId = user.lastOrganizationId ||
-			user.defaultOrganizationId ||
-			RequestContext.currentOrganizationId();
+			// const organizationId = user.lastOrganizationId ||
+			// user.defaultOrganizationId ||
+			// RequestContext.currentOrganizationId();
 
 			const code = this.zapierAuthCodeService.generateAuthCode(
 				user.id as string,
 				user.tenantId as string,
-				organizationId as string,
 				zapier_redirect_uri
 			);
 
 			// Convert query params object to string
 			const queryParamsString = buildQueryString({
-				code: query.code,
+				code: code,
 				state: query.state
 			});
 			/**
@@ -157,11 +157,11 @@ export class ZapierAuthorizationController {
 	@Public()
 	@Post('token')
 	@ApiOperation({ summary: 'Exchange authorization code for access token' })
-    @ApiResponse({
+	@ApiResponse({
         status: 200,
         description: 'Successfully exchanged code for token'
     })
-    @ApiResponse({
+	@ApiResponse({
         status: 400,
         description: 'Bad Request - Invalid code or credentials'
     })
