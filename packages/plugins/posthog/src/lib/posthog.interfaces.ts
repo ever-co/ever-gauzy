@@ -1,13 +1,30 @@
 import { ModuleMetadata, Type } from '@nestjs/common';
 
+/**
+ * Configuration options for the PostHog module
+ */
 export interface PosthogModuleOptions {
 	apiKey: string;
+
+	/** PostHog API host URL (defaults to https://app.posthog.com) */
 	apiHost?: string;
+
+	/** Whether to enable error tracking (defaults to true) */
 	enableErrorTracking?: boolean;
+
+	/** Number of events to queue before sending (defaults to 20) */
 	flushAt?: number;
+
+	/** Maximum milliseconds to wait before sending data (defaults to 10000) */
 	flushInterval?: number;
+
+	/** Personal API key for PostHog */
 	personalApiKey?: string;
+
+	/** Whether to automatically capture clicks and form submissions (defaults to false) */
 	autocapture?: boolean;
+
+	/** Whether to use a mock client for testing (defaults to false) */
 	mock?: boolean;
 }
 
@@ -79,6 +96,18 @@ export interface PosthogInterceptorOptionsFilter {
 }
 
 /**
+ * Custom properties that can be added to all events
+ */
+export interface PosthogCustomProperties {
+	// Add some common properties your application uses
+	environment?: string;
+	version?: string;
+	userRole?: string;
+	// Allow additional custom properties
+	[key: string]: any;
+}
+
+/**
  * Configuration options for the PostHogEventInterceptor
  */
 export interface PosthogEventInterceptorOptions {
@@ -100,7 +129,7 @@ export interface PosthogEventInterceptorOptions {
 	/**
 	 * Custom properties to add to all events
 	 */
-	customProperties?: Record<string, any>;
+	customProperties?: PosthogCustomProperties;
 }
 
 /**

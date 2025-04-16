@@ -10,6 +10,15 @@ The PostHog Plugin seamlessly integrates your server with [PostHog](https://post
 -   **User Behavior Insights**: Gain comprehensive insights into user interactions within your application.
 -   **Event Tracking**: Capture custom application events for detailed analysis.
 
+## Configuration
+
+The plugin can be configured using the following environment variables:
+
+-   `POSTHOG_KEY`: Your PostHog API key
+-   `POSTHOG_HOST`: PostHog server URL (default: https://app.posthog.com)
+-   `POSTHOG_ENABLED`: Enable/disable the plugin (default: false)
+-   `POSTHOG_FLUSH_INTERVAL`: Interval for flushing events in milliseconds (default: 10000)
+
 ## Building
 
 Run `yarn nx build plugin-posthog` to build the library.

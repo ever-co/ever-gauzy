@@ -418,7 +418,7 @@ export class PosthogErrorInterceptor implements NestInterceptor {
 	 * @returns Client ID string or null
 	 */
 	private extractRpcClientId(ctx: any): string | null {
-		return ctx.clientId || (ctx.args && ctx.args[0] && ctx.args[0].user && ctx.args[0].user.id) || null;
+		return ctx.clientId ?? ctx.args?.[0]?.user?.id ?? null;
 	}
 
 	/**
@@ -431,12 +431,12 @@ export class PosthogErrorInterceptor implements NestInterceptor {
 		if (!client) return null;
 
 		// Try to extract user ID from handshake data
-		if (client.handshake && client.handshake.query && client.handshake.query.userId) {
+		if (client.handshake?.query?.userId) {
 			return client.handshake.query.userId;
 		}
 
 		// Try to extract from auth data
-		if (client.handshake && client.handshake.auth && client.handshake.auth.userId) {
+		if (client.handshake?.auth?.userId) {
 			return client.handshake.auth.userId;
 		}
 
@@ -483,7 +483,7 @@ export class PosthogErrorInterceptor implements NestInterceptor {
 	 */
 	private extractRouteInfo(request: any): string | undefined {
 		// Try to get route from NestJS route information
-		if (request.route && request.route.path) {
+		if (request.route?.path) {
 			return request.route.path;
 		}
 

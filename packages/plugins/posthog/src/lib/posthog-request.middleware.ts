@@ -26,7 +26,7 @@ export class PosthogRequestMiddleware implements NestMiddleware {
 				http_method: req.method
 			});
 		} catch (error) {
-			// Silently continue if analytics fails
+			console.debug('PostHog analytics error:', error);
 		}
 
 		next();
