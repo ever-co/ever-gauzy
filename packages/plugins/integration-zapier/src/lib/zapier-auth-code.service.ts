@@ -231,7 +231,7 @@ export class ZapierAuthCodeService {
             return false; // Handle boolean "false"
         }
 
-        const parsedCount = parseInt(instanceCount, 10);
+        const parsedCount = Number.parseInt(instanceCount, 10);
         if (!isNaN(parsedCount)) {
             return parsedCount === 1; // Single instance if count is 1
         }

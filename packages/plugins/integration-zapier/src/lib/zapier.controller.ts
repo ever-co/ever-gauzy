@@ -26,10 +26,16 @@ import { ZapierService } from './zapier.service';
 export class ZapierController {
 	private readonly logger = new Logger(ZapierController.name);
 
+	/**
+	 * Creates an instance of the ZapierController.
+	 * Note: Ensure that critical configuration values such as `baseUrl`, `zapier.clientId`, `zapier.clientSecret`, and `allowedDomains`
+	 * are properly set in the environment variables. These are essential for enabling secure
+	 * and functional Zapier integrations.
+	 */
 	constructor(
 		private readonly zapierService: ZapierService,
 		private readonly _config: ConfigService
-	) {}
+	) { }
 
 	/**
 	 * Handle successful login for Zapier OAuth flow
