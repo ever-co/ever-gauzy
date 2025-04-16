@@ -75,9 +75,10 @@ export class PosthogEventInterceptor implements NestInterceptor {
 				return this.captureRpcEvent(context.switchToRpc(), eventName, properties);
 			case 'ws':
 				return this.captureWsEvent(context.switchToWs(), eventName, properties);
+			default:
+				console.warn(`Unknown context type encountered while capturing event ${eventName}`);
 		}
 	}
-
 	/**
 	 * Captures HTTP request events with comprehensive request context
 	 *

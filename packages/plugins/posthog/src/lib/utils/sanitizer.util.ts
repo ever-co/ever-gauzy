@@ -6,8 +6,11 @@ export class SanitizerUtil {
 	static sanitizeHeaders(headers: Record<string, any>): Record<string, any> {
 		const sanitized = { ...headers };
 		for (const header of this.sensitiveHeaders) {
-			if (sanitized[header]) {
-				sanitized[header] = '[REDACTED]';
+			const headerLower = header.toLowerCase();
+			for (const key in sanitized) {
+				if (key.toLowerCase() === headerLower) {
+					sanitized[key] = '[REDACTED]';
+				}
 			}
 		}
 		return sanitized;

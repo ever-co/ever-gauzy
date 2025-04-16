@@ -7,7 +7,7 @@ The PostHog Plugin seamlessly integrates your server with [PostHog](https://post
 ## Features
 
 -   **Error Tracking**: Automatically report exceptions and errors to PostHog’s new error tracking feature.
--   **User Behavior Insights**: Gain deep insights into user interactions within your application.
+-   **User Behavior Insights**: Gain comprehensive insights into user interactions within your application.
 -   **Event Tracking**: Capture custom application events for detailed analysis.
 
 ## Building

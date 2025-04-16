@@ -1,6 +1,6 @@
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MiddlewareConsumer, NestModule } from '@nestjs/common';
-import { GauzyCorePlugin as Plugin, IOnPluginBootstrap } from '@gauzy/plugin';
+import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { PosthogModule } from './posthog.module';
 import { parsePosthogOptions, PosthogModuleOptions } from './posthog.interfaces';
 import { PosthogEventInterceptor } from './posthog-event.interceptor';
@@ -32,7 +32,7 @@ import { POSTHOG_MODULE_OPTIONS } from './posthog.constants';
 		}
 	]
 })
-export class PosthogPlugin implements NestModule, IOnPluginBootstrap {
+export class PosthogPlugin implements NestModule, IOnPluginBootstrap, IOnPluginDestroy {
 	private logEnabled = true;
 	static options: PosthogModuleOptions;
 

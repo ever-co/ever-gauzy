@@ -29,7 +29,7 @@ export const plugins = [
 	...(sentry && sentry.dsn ? [SentryPlugin] : []),
 
 	// Includes the PostHogPlugin based on the presence of PostHog configuration.
-	...(posthog && posthog.posthogEnabled && posthog.posthogKey ? [PosthogPlugin] : []),
+	...(posthog?.posthogEnabled && posthog?.posthogKey ? [PosthogPlugin] : []),
 
 	// Initializes the Jitsu Analytics Plugin by providing a configuration object.
 	JitsuAnalyticsPlugin.init({

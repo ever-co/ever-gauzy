@@ -21,7 +21,7 @@ export function initializePosthog(): typeof PosthogPlugin | null {
 		apiKey: environment.posthog.posthogKey,
 		apiHost: environment.posthog.posthogHost || 'https://app.posthog.com',
 		enableErrorTracking: true,
-		flushInterval: parseInt(process.env.POSTHOG_FLUSH_INTERVAL || '10000', 10),
+		flushInterval: environment.posthog.posthogFlushInterval || 10000,
 		flushAt: 20,
 		autocapture: true,
 		mock: false

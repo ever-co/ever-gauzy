@@ -48,7 +48,7 @@ export class PosthogErrorInterceptor implements NestInterceptor {
 		const requestStartTime = Date.now();
 
 		return next.handle().pipe(
-			tap(null, (exception: HttpException) => {
+			tap(null, (exception: any) => {
 				// Calculate error timing metrics
 				const errorTiming = {
 					timestamp: new Date().toISOString(),
@@ -72,7 +72,7 @@ export class PosthogErrorInterceptor implements NestInterceptor {
 	 */
 	protected captureException(
 		context: ExecutionContext,
-		exception: HttpException,
+		exception: any,
 		errorTiming: { timestamp: string; duration_ms: number }
 	) {
 		switch (context.getType<ContextType>()) {

@@ -61,6 +61,9 @@ export class PosthogCoreModule {
 		}
 
 		// Dependency injection array for useClass or useExisting
+		if (!options.useClass && !options.useExisting) {
+			throw new Error('Either useClass or useExisting must be provided for PosthogModule async configuration');
+		}
 		const inject = [(options.useClass || options.useExisting) as Type<PosthogOptionsFactory>];
 
 		const providers: Provider[] = [

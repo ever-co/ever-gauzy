@@ -12,8 +12,8 @@ export interface PosthogModuleOptions {
 }
 
 export interface PosthogModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
-	useFactory?: (...args: any[]) => Promise<PosthogModuleOptions> | PosthogModuleOptions;
-	inject?: any[];
+	useFactory?: (...args: unknown[]) => Promise<PosthogModuleOptions> | PosthogModuleOptions;
+	inject?: (string | symbol | Type<any>)[];
 	useClass?: Type<PosthogOptionsFactory>;
 	useExisting?: Type<PosthogOptionsFactory>;
 	isGlobal?: boolean;
@@ -23,10 +23,21 @@ export interface PosthogOptionsFactory {
 	createPosthogOptions(): Promise<PosthogModuleOptions> | PosthogModuleOptions;
 }
 
+// Common PostHog property types
+export interface PosthogEventProperties {
+	// Standard PostHog properties (prefixed with $)
+	$ip?: string;
+	$timestamp?: string;
+	$set?: Record<string, any>;
+	$set_once?: Record<string, any>;
+	// Custom properties
+	[key: string]: any;
+}
+
 export interface PosthogEvent {
 	name: string;
 	distinctId: string;
-	properties: Record<string, any>;
+	properties: PosthogEventProperties;
 }
 
 export interface PosthogInterceptorOptions {
@@ -98,12 +109,28 @@ export interface PosthogEventInterceptorOptions {
  * @returns Normalized PostHog options
  */
 export const parsePosthogOptions = (options: PosthogModuleOptions): PosthogModuleOptions => {
+	// Validate required options
+	if (!options.apiKey) {
+		throw new Error('PostHog API key is required');
+	}
+
+	// Validate numeric values
+	const flushAt = options.flushAt ?? 20;
+	if (flushAt <= 0) {
+		throw new Error('flushAt must be a positive number');
+	}
+
+	const flushInterval = options.flushInterval ?? 10000;
+	if (flushInterval <= 0) {
+		throw new Error('flushInterval must be a positive number');
+	}
+
 	return {
 		apiKey: options.apiKey,
 		apiHost: options.apiHost || 'https://app.posthog.com',
 		enableErrorTracking: options.enableErrorTracking ?? true,
-		flushAt: options.flushAt || 20,
-		flushInterval: options.flushInterval || 10000,
+		flushAt,
+		flushInterval,
 		personalApiKey: options.personalApiKey,
 		autocapture: options.autocapture ?? false,
 		mock: options.mock ?? false

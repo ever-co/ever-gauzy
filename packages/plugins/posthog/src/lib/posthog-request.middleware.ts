@@ -15,15 +15,19 @@ export class PosthogRequestMiddleware implements NestMiddleware {
 	 */
 	use(req: Request, res: Response, next: NextFunction) {
 		// Capture essential request properties as user identification
-		this.posthog.identify(req.ip || 'anonymous', {
-			$current_url: req.originalUrl,
-			$referrer: req.get('referer'),
-			$user_agent: req.get('user-agent'),
-			$host: req.get('host'),
-			$pathname: req.path,
-			ip: req.ip,
-			http_method: req.method
-		});
+		try {
+			this.posthog.identify(req.ip || 'anonymous', {
+				$current_url: req.originalUrl,
+				$referrer: req.get('referer'),
+				$user_agent: req.get('user-agent'),
+				$host: req.get('host'),
+				$pathname: req.path,
+				ip: req.ip,
+				http_method: req.method
+			});
+		} catch (error) {
+			// Silently continue if analytics fails
+		}
 
 		next();
 	}

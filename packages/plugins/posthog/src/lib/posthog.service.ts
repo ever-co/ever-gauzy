@@ -37,6 +37,9 @@ export class PosthogService implements OnModuleDestroy {
 	 * @returns The singleton instance of PosthogService
 	 */
 	public static PosthogServiceInstance(): PosthogService {
+		if (!PosthogService.instance) {
+			throw new Error('PosthogService instance not initialized');
+		}
 		return PosthogService.instance;
 	}
 
@@ -90,7 +93,7 @@ export class PosthogService implements OnModuleDestroy {
 	 * Captures an exception or error event for a specific user.
 	 * Uses PostHog's captureException method to track errors.
 	 *
-	 * @param event - The name of the error event
+	 * @param exception - The error or exception to capture
 	 * @param distinctId - The unique identifier for the user
 	 * @param properties - Optional additional properties describing the error
 	 */
