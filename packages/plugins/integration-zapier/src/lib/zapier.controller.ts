@@ -80,10 +80,13 @@ export class ZapierController {
 						});
 
 						if (!isLocalhost && !isDomainAuthorized) {
-							this.logger.warn(`Unauthorized redirect URI: ${zapier_redirect_uri}, hostname: ${hostname}`, {
-								authorizedDomains
-							});
-							throw new BadRequestException('Unauthorized redirect URI');
+							this.logger.warn(
+								`Unauthorized redirect URI blocked: ${zapier_redirect_uri}, hostname: ${hostname}`,
+								{ authorizedDomains }
+							);
+							throw new BadRequestException(
+								`Unauthorized redirect URI: ${hostname}. Only ${authorizedDomains} are allowed`
+							);
 						}
 					} catch (urlError) {
 						this.logger.error(`Invalid URL format in zapier_redirect_uri: ${zapier_redirect_uri}`, urlError);
@@ -120,12 +123,9 @@ export class ZapierController {
 	@Get('/triggers')
 	async getTriggers(@Query('token') token: string): Promise<IZapierEndpoint[]> {
 		try {
-			this.validateToken(token);
+			this.validateToken(token, true);
 			return await this.zapierService.fetchTriggers(token);
 		} catch (error) {
-			if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
-				throw error;
-			}
 			this.handleZapierError(error, 'triggers');
 		}
 	}
@@ -145,9 +145,6 @@ export class ZapierController {
 			this.validateToken(token, true);
 			return await this.zapierService.fetchActions(token);
 		} catch (error) {
-			if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
-				throw error;
-			}
 			this.handleZapierError(error, 'actions');
 		}
 	}

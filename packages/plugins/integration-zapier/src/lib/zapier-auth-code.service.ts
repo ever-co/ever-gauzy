@@ -26,7 +26,13 @@ export class ZapierAuthCodeService {
             this.ALLOWED_DOMAINS = defaultDomains;
         }
         this.logger.log(`Initialized with allowed domains: ${this.ALLOWED_DOMAINS.join(', ')}`);
-        this.startPeriodicCleanup();
+
+        // Validate concurrency implications before enabling periodic cleanup
+        if (this.isSingleInstanceDeployment()) {
+            this.startPeriodicCleanup();
+        } else {
+            this.logger.warn('Periodic cleanup is disabled in multi-instance deployments. Consider using distributed storage.');
+        }
     }
 
     // Using a Map to store temporary auth codes - this is temporary storage
@@ -57,8 +63,13 @@ export class ZapierAuthCodeService {
 
         // Validate the redirect URI if provided
         if (redirectUri && !this.isValidRedirectDomain(redirectUri)) {
+            const url = new URL(redirectUri);
+            const domain = url.hostname;
+
             this.logger.warn(`Rejected invalid redirect domain: ${redirectUri}`, {
-                ALLOWED_DOMAINS: this.ALLOWED_DOMAINS
+            attemptedDomain: domain,
+            allowedDomains: this.ALLOWED_DOMAINS,
+            subdomainConstraints: 'Only first-level subdomains are allowed for listed domains'
             });
             throw new BadRequestException('Invalid redirect URI domain');
         }
@@ -102,9 +113,14 @@ export class ZapierAuthCodeService {
         // Check if code exists and is not expired
         if (authCodeData && authCodeData.expiresAt > new Date()) {
             if (authCodeData.redirectUri && redirectUri && authCodeData.redirectUri !== redirectUri) {
-                this.logger.warn(`Redirect URI mismatch for auth code ${code}. Expected: ${authCodeData.redirectUri}, Received: ${redirectUri}`);
+                const errorMessage = `Redirect URI mismatch for auth code ${code}. Expected: ${authCodeData.redirectUri}, Received: ${redirectUri}`;
+                this.logger.warn(errorMessage);
                 this.logger.debug(`Auth Code Data: ${JSON.stringify(authCodeData)}`);
-                throw new BadRequestException('Redirect URI mismatch');
+                throw new BadRequestException({
+                    statusCode: 400,
+                    message: 'Redirect URI mismatch',
+                    details: errorMessage
+                });
             }
             this.authCodes.delete(code);
 
@@ -139,8 +155,10 @@ export class ZapierAuthCodeService {
         const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // Cleanup every 5 minutes
         setInterval(() => {
             this.logger.debug('Running periodic cleanup of expired auth codes');
+            this.cleanupExpiredAuthCodes();
         }, CLEANUP_INTERVAL_MS);
     }
+
     /**
      * Validates if a redirect URI belongs to an allowed domain
      */
@@ -156,17 +174,16 @@ export class ZapierAuthCodeService {
                 return true;
             }
 
-            // Strictly validate subdomains to prevent abuse
+            // Validate subdomains with more flexibility for nested levels
             const isSubdomain = (allowedDomain: string) => {
-                const allowedParts = allowedDomain.split('.');
-                const domainParts = domain.split('.');
-                if (domainParts.length !== allowedParts.length + 1) {
-                    return false; // Ensure it's a first-level subdomain
-                }
-                return allowedParts.every((part, index) => part === domainParts[index + 1]);
+                const allowedParts = allowedDomain.split('.').reverse();
+                const domainParts = domain.split('.').reverse();
+
+                // Ensure the allowed domain matches the end of the provided domain
+                return allowedParts.every((part, index) => domainParts[index] === part);
             };
 
-            // Check against allowed domains list with stricter subdomain validation
+            // Check against allowed domains list with flexible subdomain validation
             return this.ALLOWED_DOMAINS.some(allowedDomain =>
                 domain === allowedDomain || isSubdomain(allowedDomain)
             );
@@ -194,5 +211,31 @@ export class ZapierAuthCodeService {
             this.logger.error('Failed to get server domain from request', error);
             return null;
         }
+    }
+
+    /**
+     * Determines if the application is running in a single-instance deployment
+     */
+    private isSingleInstanceDeployment(): boolean {
+        const instanceCount = this._config.get<string>('zapier.instanceCount');
+
+        if (instanceCount === undefined) {
+            return true; // Default to single-instance if not defined
+        }
+
+        if (instanceCount.toLowerCase() === 'true') {
+            return true; // Handle boolean "true"
+        }
+
+        if (instanceCount.toLowerCase() === 'false') {
+            return false; // Handle boolean "false"
+        }
+
+        const parsedCount = parseInt(instanceCount, 10);
+        if (!isNaN(parsedCount)) {
+            return parsedCount === 1; // Single instance if count is 1
+        }
+
+        throw new Error(`Invalid INSTANCE_COUNT value: ${instanceCount}. Must be a boolean or a number.`);
     }
 }
