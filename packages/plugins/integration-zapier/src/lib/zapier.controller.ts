@@ -123,8 +123,8 @@ export class ZapierController {
 			this.validateToken(token);
 			return await this.zapierService.fetchTriggers(token);
 		} catch (error) {
-			if (error) {
-				throw new UnauthorizedException('Invalid or missing authorization token');
+			if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
+				throw error;
 			}
 			this.handleZapierError(error, 'triggers');
 		}
@@ -145,8 +145,8 @@ export class ZapierController {
 			this.validateToken(token, true);
 			return await this.zapierService.fetchActions(token);
 		} catch (error) {
-			if (error) {
-				throw new UnauthorizedException('Invalid or missing authorization token');
+			if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
+				throw error;
 			}
 			this.handleZapierError(error, 'actions');
 		}

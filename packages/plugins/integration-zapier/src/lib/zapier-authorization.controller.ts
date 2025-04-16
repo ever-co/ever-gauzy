@@ -17,7 +17,7 @@ import { CreateZapierIntegrationDto } from './dto';
 export class ZapierAuthorizationController {
 	private readonly logger = new Logger(ZapierAuthorizationController.name);
 	private refreshLocks: Map<string, boolean> = new Map();
-
+	private allowedDomains: string[] = [];
 
 	constructor(
 		private readonly _config: ConfigService,
@@ -33,7 +33,10 @@ export class ZapierAuthorizationController {
 		// Validate essential Zapier configuration
 		const clientId = this._config.get<string>('zapier.clientId');
 		const clientSecret = this._config.get<string>('zapier.clientSecret');
-		const allowedDomains = this._config.get<string>('zapier.allowedDomains');
+		const allowedDomainsStr = this._config.get<string>('zapier.allowedDomains');
+		const allowedDomains = allowedDomainsStr
+			? allowedDomainsStr.split(',').map(d => d.trim())
+			: [];
 
 		if (!clientId || clientId.trim() === '') {
 			const errorMsg = 'Missing Zapier client ID in environment variables';
@@ -50,6 +53,22 @@ export class ZapierAuthorizationController {
 		}
 		this.logger.log('Zapier configuration validated successfully');
 	}
+
+	/**
+	 * Helper method to validate the redirect URI against  allowed domains
+	 */
+	private validateRedirectDomain(redirectUri: string): void {
+        try {
+            const url = new URL(redirectUri);
+            const hostname = url.hostname;
+
+            if (!this.allowedDomains.includes(hostname)) {
+                throw new BadRequestException(`Redirect URI domain "${hostname}" is not allowed.`);
+            }
+        } catch (error) {
+            throw new BadRequestException('Invalid redirect URI format.');
+        }
+    }
 
 	/**
 	 * Handles the OAuth2 authorization request
@@ -95,6 +114,9 @@ export class ZapierAuthorizationController {
 			if (clientId !== configuredClientId) {
 				throw new HttpException('Invalid client ID', HttpStatus.BAD_REQUEST);
 			}
+
+			// Validate the redirect URI against allowed domains
+			this.validateRedirectDomain(redirectUri);
 
 			// Store these parameters in the session or state
 			// Redirect to the login page with these parameters preserved
@@ -147,6 +169,9 @@ export class ZapierAuthorizationController {
 			if (!state) {
 				throw new HttpException('Missing state parameter', HttpStatus.BAD_REQUEST);
 			}
+
+			// Validate the redirect URI against allowed domains
+			this.validateRedirectDomain(zapier_redirect_uri);
 
 			/** Generate an authorization code for this user */
 			const user = RequestContext.currentUser();
@@ -212,7 +237,7 @@ export class ZapierAuthorizationController {
 			const configuredClientSecret = this._config.get<string>('zapier.clientSecret');
 
 			if (client_id !== configuredClientId || client_secret !== configuredClientSecret) {
-				throw new UnauthorizedException('Invalid client credentials');
+				throw new HttpException('Invalid client ID', HttpStatus.BAD_REQUEST);
 			}
 
 			// Retrieve the user info and stored redirect URI associated with this auth code

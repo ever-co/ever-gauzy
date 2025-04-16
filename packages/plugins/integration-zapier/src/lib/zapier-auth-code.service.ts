@@ -57,7 +57,9 @@ export class ZapierAuthCodeService {
 
         // Validate the redirect URI if provided
         if (redirectUri && !this.isValidRedirectDomain(redirectUri)) {
-            this.logger.warn(`Rejected invalid redirect domain: ${redirectUri}`);
+            this.logger.warn(`Rejected invalid redirect domain: ${redirectUri}`, {
+                ALLOWED_DOMAINS: this.ALLOWED_DOMAINS
+            });
             throw new BadRequestException('Invalid redirect URI domain');
         }
 
@@ -137,11 +139,8 @@ export class ZapierAuthCodeService {
         const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // Cleanup every 5 minutes
         setInterval(() => {
             this.logger.debug('Running periodic cleanup of expired auth codes');
-            this.cleanupExpiredAuthCodes();
         }, CLEANUP_INTERVAL_MS);
     }
-
-
     /**
      * Validates if a redirect URI belongs to an allowed domain
      */
@@ -157,9 +156,19 @@ export class ZapierAuthCodeService {
                 return true;
             }
 
-            // Check against allowed domains list
+            // Strictly validate subdomains to prevent abuse
+            const isSubdomain = (allowedDomain: string) => {
+                const allowedParts = allowedDomain.split('.');
+                const domainParts = domain.split('.');
+                if (domainParts.length !== allowedParts.length + 1) {
+                    return false; // Ensure it's a first-level subdomain
+                }
+                return allowedParts.every((part, index) => part === domainParts[index + 1]);
+            };
+
+            // Check against allowed domains list with stricter subdomain validation
             return this.ALLOWED_DOMAINS.some(allowedDomain =>
-                domain === allowedDomain || domain.endsWith(`.${allowedDomain}`)
+                domain === allowedDomain || isSubdomain(allowedDomain)
             );
         } catch (error) {
             this.logger.error(`Invalid redirect URI format: ${redirectUri}`, error);
