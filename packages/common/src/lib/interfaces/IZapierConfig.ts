@@ -19,4 +19,7 @@ export interface IZapierConfig {
 
 	/** Max authentication code number */
 	readonly maxAuthCodes?: number;
+
+	/** Instance count for periodic cleanup */
+	readonly instanceCount?: boolean | number;
 }

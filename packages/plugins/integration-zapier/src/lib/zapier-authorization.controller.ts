@@ -48,6 +48,9 @@ export class ZapierAuthorizationController {
 			this.logger.error(errorMsg);
 			throw new Error(errorMsg);
 		}
+
+		this.allowedDomains = allowedDomains;
+		
 		if (!allowedDomains || !Array.isArray(allowedDomains) || allowedDomains.length === 0) {
 			this.logger.warn('No allowed domains configured for Zapier integration. This may limit functionality.');
 		}
