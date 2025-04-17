@@ -12,7 +12,7 @@ export const INITIAL_CHANGELOG_TEMPLATE: IChangelog[] = [
 	},
 	{
 		icon: 'globe-outline',
-		title: 'Ready to give Gauzy a try?',
+		title: 'Ready to give DSpot ERP a try?',
 		date: new Date(),
 		isFeature: false,
 		content:

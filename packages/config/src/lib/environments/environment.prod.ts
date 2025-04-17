@@ -205,14 +205,16 @@ export const environment: IEnvironment = {
 	allowSuperAdminRole: process.env.ALLOW_SUPER_ADMIN_ROLE !== 'false',
 
 	/**
-	 * Gauzy AI Configuration
+	 *AI Configuration
 	 */
 	gauzyAI: {
 		apiKey: process.env.GAUZY_AI_API_KEY,
 		apiSecret: process.env.GAUZY_AI_API_SECRET,
 		graphQLEndpoint: process.env.GAUZY_AI_GRAPHQL_ENDPOINT,
 		restEndpoint: process.env.GAUZY_AI_REST_ENDPOINT,
-		requestTimeout: process.env.GAUZY_AI_REQUEST_TIMEOUT ? parseInt(process.env.GAUZY_AI_REQUEST_TIMEOUT, 10) : undefined
+		requestTimeout: process.env.GAUZY_AI_REQUEST_TIMEOUT
+			? parseInt(process.env.GAUZY_AI_REQUEST_TIMEOUT, 10)
+			: undefined
 	},
 
 	gauzyCloudEndpoint: process.env.GAUZY_CLOUD_ENDPOINT,
@@ -245,25 +247,25 @@ export const environment: IEnvironment = {
 	 * Email Template Config
 	 */
 	appIntegrationConfig: {
-		appName: process.env.APP_NAME || 'Gauzy',
+		appName: process.env.APP_NAME || 'DSpot ERP',
 		appLogo: `${process.env.CLIENT_BASE_URL}/assets/images/logos/dspot-erp-logo.png`,
-		appSignature: process.env.APP_SIGNATURE || 'Gauzy Team',
+		appSignature: process.env.APP_SIGNATURE || 'DSpot ERP Team',
 		appLink: process.env.APP_LINK || 'https://app.gauzy.co/',
 		appEmailConfirmationUrl:
 			process.env.APP_EMAIL_CONFIRMATION_URL || `${process.env.CLIENT_BASE_URL}/#/auth/confirm-email`,
 		appMagicSignUrl: process.env.APP_MAGIC_SIGN_URL || `${process.env.CLIENT_BASE_URL}/#/auth/magic-sign-in`,
-		companyLink: process.env.COMPANY_LINK || 'https://ever.co',
-		companyName: process.env.COMPANY_NAME || 'Ever Co. LTD'
+		companyLink: process.env.COMPANY_LINK || 'https://www.dspot.com.pl',
+		companyName: process.env.COMPANY_NAME || 'DSpot sp. z o.o.'
 	},
 
 	demo: process.env.DEMO === 'true',
 
 	demoCredentialConfig: {
-		superAdminEmail: process.env.DEMO_SUPER_ADMIN_EMAIL || `admin@ever.co`,
+		superAdminEmail: process.env.DEMO_SUPER_ADMIN_EMAIL || `admin@dspot.com.pl`,
 		superAdminPassword: process.env.DEMO_SUPER_ADMIN_PASSWORD || `admin`,
-		adminEmail: process.env.DEMO_ADMIN_EMAIL || `local.admin@ever.co`,
+		adminEmail: process.env.DEMO_ADMIN_EMAIL || `local.admin@dspot.com.pl`,
 		adminPassword: process.env.DEMO_ADMIN_PASSWORD || `admin`,
-		employeeEmail: process.env.DEMO_EMPLOYEE_EMAIL || `employee@ever.co`,
+		employeeEmail: process.env.DEMO_EMPLOYEE_EMAIL || `employee@dspot.com.pl`,
 		employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD || `123456`
 	},
 
@@ -274,7 +276,7 @@ export const environment: IEnvironment = {
 	periodicTimeSaveTimeframe: parseInt(process.env.PERIODIC_TIME_SAVE_TIMEFRAME) || 600, // 10 minutes
 
 	/**
-	 * Gauzy Additional Plugins Configuration
+	 * DSpot ERP Additional Plugins Configuration
 	 */
 	plugins: {
 		useChangelog: process.env.USE_PLUGIN_CHANGELOG !== 'false',
@@ -287,7 +289,7 @@ export const environment: IEnvironment = {
 };
 
 /**
- * Gauzy Toggle Features
+ * DSpot ERP Toggle Features
  */
 export const gauzyToggleFeatures: IGauzyFeatures = {
 	FEATURE_DASHBOARD: isFeatureEnabled('FEATURE_DASHBOARD'),

@@ -186,7 +186,7 @@ export class GauzyAIService {
 	}
 
 	/**
-	 * Analyze an image/screenshot using Gauzy AI.
+	 * Analyze an image/screenshot usingAI.
 	 *
 	 * @param files - Array of Buffers representing the uploaded images.
 	 * @returns Promise<any> - The analysis result for the image.
@@ -284,7 +284,7 @@ export class GauzyAIService {
 	}
 
 	/**
-	 * Get statistic from Gauzy AI about how many jobs are available for given employee
+	 * Get statistic fromAI about how many jobs are available for given employee
 	 * and to how many of jobs employee already applied and more statistic in the future.
 	 */
 	public async getEmployeesStatistics(): Promise<IEmployeeJobsStatistics[]> {
@@ -292,8 +292,8 @@ export class GauzyAIService {
 	}
 
 	/**
-	 * Updates in Gauzy AI if given Employee looking for a jobs or not.
-	 * If not looking, Gauzy AI will NOT return jobs for such employee and will NOT crawl sources for jobs for such employee
+	 * Updates inAI if given Employee looking for a jobs or not.
+	 * If not looking,AI will NOT return jobs for such employee and will NOT crawl sources for jobs for such employee
 	 * @param employeeId
 	 * @param isJobSearchActive
 	 */
@@ -316,9 +316,7 @@ export class GauzyAIService {
 		// First we need to get employee id because we have only externalId
 		const gauzyAIEmployeeId = await this.getEmployeeGauzyAIId(employeeId);
 
-		console.log(
-			`updateEmployeeStatus called. EmployeeId: ${employeeId}. Gauzy AI EmployeeId: ${gauzyAIEmployeeId}`
-		);
+		console.log(`updateEmployeeStatus called. EmployeeId: ${employeeId}.AI EmployeeId: ${gauzyAIEmployeeId}`);
 
 		const update: UpdateEmployee = {
 			externalEmployeeId: employeeId,
@@ -374,7 +372,7 @@ export class GauzyAIService {
 		const jobPostId = await this.getJobPostId(input.providerCode, input.providerJobId);
 		console.log(chalk.green(`Method 'apply' is called. jobPostId: ${jobPostId}`));
 
-		// Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
+		// Next, we need to find `public employee job post` table record inAI to get id of record.
 		// We can find by employeeId and jobPostId
 
 		const employeeJobPostId = await this.getEmployeeJobPostId(employeeId, jobPostId);
@@ -426,9 +424,9 @@ export class GauzyAIService {
 
 	/**
 	 * Updates job visibility
-	 * @param hide Should job be hidden or visible. This will set isActive field to false in Gauzy AI
-	 * @param employeeId If employeeId set, job will be set not active only for that specific employee (using EmployeeJobPost record update in Gauzy AI)
-	 * If employeeId is not set, job will be set not active for all employees (using JobPost record update in Gauzy AI)
+	 * @param hide Should job be hidden or visible. This will set isActive field to false inAI
+	 * @param employeeId If employeeId set, job will be set not active only for that specific employee (using EmployeeJobPost record update inAI)
+	 * If employeeId is not set, job will be set not active for all employees (using JobPost record update inAI)
 	 * @param providerCode e.g. 'upwork'
 	 * @param providerJobId Unique job id in the provider, e.g. in Upwork. If this value is not set, it will update ALL jobs for given provider
 	 */
@@ -449,7 +447,7 @@ export class GauzyAIService {
 
 			console.log(`updateVisibility called. jobPostId: ${jobPostId}`);
 
-			// Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
+			// Next, we need to find `public employee job post` table record inAI to get id of record.
 			// We can find by employeeId and jobPostId
 
 			const employeeJobPostId = await this.getEmployeeJobPostId(employeeId, jobPostId);
@@ -502,7 +500,7 @@ export class GauzyAIService {
 	 * NOTE: We will not use this method for now.
 	 *
 	 * Inside interface IEmployeeJobApplication we get below fields
-	 *	applied: boolean; <- This will set isApplied and appliedDate fields in Gauzy AI
+	 *	applied: boolean; <- This will set isApplied and appliedDate fields inAI
 	 *	employeeId: string; <- Employee who applied for a job
 	 *	providerCode: string; <- e.g. 'upwork'
 	 *	providerJobId: string; <- Unique job id in the provider, e.g. in Upwork
@@ -524,7 +522,7 @@ export class GauzyAIService {
 		const jobPostId = await this.getJobPostId(input.providerCode, input.providerJobId);
 		console.log(chalk.green(`updateApplied called. jobPostId: ${jobPostId}`));
 
-		// Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
+		// Next, we need to find `public employee job post` table record inAI to get id of record.
 		// We can find by employeeId and jobPostId
 
 		const employeeJobPostId = await this.getEmployeeJobPostId(employeeId, jobPostId);
@@ -589,7 +587,7 @@ export class GauzyAIService {
 			});
 
 			// ------------------ Update Employee Job Post Record ------------------
-			// Note: it's just set isApplied and appliedDate fields in Gauzy AI
+			// Note: it's just set isApplied and appliedDate fields inAI
 
 			const update: UpdateEmployeeJobPost = {
 				employeeId: employeeId,
@@ -622,9 +620,9 @@ export class GauzyAIService {
 			});
 		}
 
-		// TODO: here we need to check what returned from Gauzy AI
+		// TODO: here we need to check what returned fromAI
 		// Because for some providers (e.g. Upwork), redirect to apply manually required
-		// But for other providers, apply can work inside Gauzy AI automatically
+		// But for other providers, apply can work insideAI automatically
 		return { isRedirectRequired: true };
 	}
 
@@ -632,14 +630,14 @@ export class GauzyAIService {
 	// Both when Preset saved for given employee and when any criteria saved for given employee (new criteria or changes in criteria)
 	// You should pass `employee` entity for which anything on Matching page was changes
 	// IMPORTANT: You should ALWAYS pass ALL criteria defined for given employee on Matching page, not only new or changed!
-	// Best way to call this method, is to reload from Gauzy DB all criteria for given employee before call this method.
+	// Best way to call this method, is to reload from DSpot ERP DB all criteria for given employee before call this method.
 	// We DO NOT USE DATA YOU PASS FROM UI!
 	// INSTEAD, We CALL THIS METHOD FROM YOUR CQRS COMMAND HANDLERS when you detect that anything related to matching changes
 	// But as explained above, we must reload criteria from DB, not use anything you have in the local variables
-	// (because it might not be full data, but this method requires all data to be synced to Gauzy AI, even if such data was previously already synced)
+	// (because it might not be full data, but this method requires all data to be synced toAI, even if such data was previously already synced)
 	// How this method will work internally:
-	// - it will call sync for employee first and if no such employee exists in Gauzy AI, it will create new. If exists, it will update employee properties, e.g. lastName
-	// - next, it will remove all criteria for employee in Gauzy AI and create new records again for criterions.
+	// - it will call sync for employee first and if no such employee exists inAI, it will create new. If exists, it will update employee properties, e.g. lastName
+	// - next, it will remove all criteria for employee inAI and create new records again for criterions.
 	// I.e. no update will be done, it will be full replacement
 	// The reason it's acceptable is because such data changes rarely for given employee, so it's totally fine to recreate it
 	// NOTE: will need to call this method from multiple different CQRS command handlers!
@@ -722,7 +720,7 @@ export class GauzyAIService {
 				)}`
 			);
 
-			// now let's create new criteria in Gauzy AI based on Gauzy criterions data
+			// now let's create new criteria inAI based on DSpot ERP criterions data
 
 			if (criteria && criteria.length > 0) {
 				const gauzyAICriteria: UpworkJobsSearchCriterion[] = [];
@@ -774,11 +772,11 @@ export class GauzyAIService {
 	}
 
 	/**
-	 * Creates employees in Gauzy AI if not exists yet. If exists, updates fields, including externalEmployeeId
+	 * Creates employees inAI if not exists yet. If exists, updates fields, including externalEmployeeId
 	 * How it works:
-	 * - search done externalEmployeeId field first in Gauzy AI to be equal to Gauzy employee Id.
-	 * - if no record found in Gauzy AI, it search Gauzy AI employees records by employee name
-	 * - if no record found in Gauzy AI, it creates new employee in Gauzy AI
+	 * - search done externalEmployeeId field first inAI to be equal to DSpot ERP employee Id.
+	 * - if no record found inAI, it searchAI employees records by employee name
+	 * - if no record found inAI, it creates new employee inAI
 	 *
 	 * @param employees
 	 */
@@ -1023,7 +1021,7 @@ export class GauzyAIService {
 			// e.g. if it's page 7 and limit is 10, it mean we need to load first 70 records, i.e. do 2 trips to server because each trip get 50 records
 			const loadCounts = Math.ceil((data.page * data.limit) / graphQLPageSize);
 
-			console.log(`Round trips to Gauzy API: ${loadCounts}`);
+			console.log(`Round trips to DSpot ERP API: ${loadCounts}`);
 
 			let currentCount = 1;
 
@@ -1234,7 +1232,7 @@ export class GauzyAIService {
 			};
 
 			if (this.logging) {
-				console.log(this._requestConfigProvider.getConfig(), 'Runtime Gauzy AI Integration Config');
+				console.log(this._requestConfigProvider.getConfig(), 'RuntimeAI Integration Config');
 				console.log('Custom Run Time Headers: %s', customHeaders);
 			}
 
@@ -1274,7 +1272,7 @@ export class GauzyAIService {
 			console.log(chalk.magenta(`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
 
 			if (this.gauzyAIGraphQLEndpoint && gauzyAIRESTEndpoint) {
-				this._logger.log('Gauzy AI Endpoints (GraphQL & REST) are configured in the environment');
+				this._logger.log('DSpot ERP AI Endpoints (GraphQL & REST) are configured in the environment');
 
 				this.initClient();
 
@@ -1312,24 +1310,24 @@ export class GauzyAIService {
 
 				// testConnectionQuery();
 			} else {
-				this._logger.warn('Gauzy AI Endpoints are not configured in the environment');
+				this._logger.warn('DSpot ERP AI Endpoints are not configured in the environment');
 				this._client = null;
 			}
 		} catch (err) {
-			this._logger.warn('Gauzy AI Endpoints are not configured in the environment');
+			this._logger.warn('DSpot ERP AI Endpoints are not configured in the environment');
 			this._logger.error(err);
 			this._client = null;
 		}
 	}
 
-	/** Sync Employee between Gauzy and Gauzy AI
-	 *  Creates new Employee in Gauzy AI if it's not yet exists there yet (it try to find by externalEmployeeId field value or by name)
-	 *  Update existed Gauzy AI Employee record with new data from Gauzy DB
+	/** Sync Employee between DSpot ERP andAI
+	 *  Creates new Employee inAI if it's not yet exists there yet (it try to find by externalEmployeeId field value or by name)
+	 *  Update existedAI Employee record with new data from DSpot ERP DB
 	 */
 	private async syncEmployee(employee: Employee): Promise<Employee> {
 		console.log('-------------------------- Sync Employee --------------------------', employee);
 		try {
-			// First, let's search by employee.externalEmployeeId (which is Gauzy employeeId)
+			// First, let's search by employee.externalEmployeeId (which is DSpot ERP employeeId)
 			let employeesQuery: DocumentNode<EmployeeQuery> = gql`
 				query employeeByExternalEmployeeId($externalEmployeeIdFilter: String!) {
 					employees(filter: { externalEmployeeId: { eq: $externalEmployeeIdFilter } }) {
@@ -1356,7 +1354,7 @@ export class GauzyAIService {
 			let isAlreadyCreated = employeesResponse.length > 0;
 
 			console.log(
-				`Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated} by externalEmployeeId field`
+				`Is Employee ${employee.externalEmployeeId} already exists inAI: ${isAlreadyCreated} by externalEmployeeId field`
 			);
 
 			if (!isAlreadyCreated) {
@@ -1391,7 +1389,7 @@ export class GauzyAIService {
 				isAlreadyCreated = employeesResponse.length > 0;
 
 				console.log(
-					`Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated} by name fields`
+					`Is Employee ${employee.externalEmployeeId} already exists inAI: ${isAlreadyCreated} by name fields`
 				);
 
 				if (!isAlreadyCreated) {
@@ -1468,13 +1466,13 @@ export class GauzyAIService {
 	}
 
 	/**
-	 * Sync User between Gauzy and Gauzy AI
-	 * Creates new User in Gauzy AI if it's not yet exists there yet (it try to find by externalUserId field value or by email)
-	 * Update existed Gauzy AI User record with new data from Gauzy DB
+	 * Sync User between DSpot ERP andAI
+	 * Creates new User inAI if it's not yet exists there yet (it try to find by externalUserId field value or by email)
+	 * Update existedAI User record with new data from DSpot ERP DB
 	 */
 	private async syncUser(user: User) {
 		console.log('-------------------------- Sync User --------------------------', user);
-		// First, let's search by user.externalUserId & user.externalTenantId (which is Gauzy userId)
+		// First, let's search by user.externalUserId & user.externalTenantId (which is DSpot ERP userId)
 		let userFilterByExternalFieldsQuery: DocumentNode<UserConnection> = gql`
 			query userFilterByExternalFieldsQuery($externalUserIdFilter: String!, $externalTenantIdFilter: String!) {
 				users(
@@ -1521,7 +1519,7 @@ export class GauzyAIService {
 			let isAlreadyCreated = usersQueryResult.data.users.totalCount > 0;
 
 			console.log(
-				`Is User already exists in Gauzy AI: ${isAlreadyCreated} by externalUserId: %s and externalTenantId: %s fields`,
+				`Is User already exists inAI: ${isAlreadyCreated} by externalUserId: %s and externalTenantId: %s fields`,
 				user.externalUserId,
 				user.externalTenantId
 			);
@@ -1603,7 +1601,7 @@ export class GauzyAIService {
 	}
 
 	/**
-	 * Updates the API key of a tenant in the Gauzy AI service.
+	 * Updates the API key of a tenant in theAI service.
 	 *
 	 * @param input - The updated API key data.
 	 * @returns The updated tenant API key information.

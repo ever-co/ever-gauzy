@@ -10,9 +10,9 @@ import { registerAs } from '@nestjs/config';
  * @returns An object representing the application configuration.
  */
 export default registerAs('app', () => ({
-    /**
-     * The name of the application.
-     * If not provided through the environment variable APP_NAME, defaults to 'Gauzy'.
-     */
-    app_name: process.env.APP_NAME || 'Gauzy',
+	/**
+	 * The name of the application.
+	 * If not provided through the environment variable APP_NAME, defaults to 'DSpot ERP'.
+	 */
+	app_name: process.env.APP_NAME || 'DSpot ERP'
 }));

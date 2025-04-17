@@ -8,16 +8,10 @@ import { moment } from '../../../core/moment-extend';
 import { generateRandomAlphaNumericCode } from './../../../core/utils';
 
 @QueryHandler(EmailTemplateGeneratePreviewQuery)
-export class EmailTemplateGeneratePreviewHandler
-	implements IQueryHandler<EmailTemplateGeneratePreviewQuery> {
+export class EmailTemplateGeneratePreviewHandler implements IQueryHandler<EmailTemplateGeneratePreviewQuery> {
+	constructor(private readonly configService: ConfigService) {}
 
-	constructor(
-		private readonly configService: ConfigService
-	) { }
-
-	public async execute(
-		command: EmailTemplateGeneratePreviewQuery
-	): Promise<{ html: string }> {
+	public async execute(command: EmailTemplateGeneratePreviewQuery): Promise<{ html: string }> {
 		const { input } = command;
 		let textToHtml = input;
 
@@ -39,8 +33,8 @@ export class EmailTemplateGeneratePreviewHandler
 			name: 'John Doe',
 			role: 'USER_ROLE',
 			host: clientBaseUrl || host,
-			hostEmail: '(alish@ever.com)',
-			agenda: 'This booking is for gauzy call',
+			hostEmail: '(info@dspot.com.pl)',
+			agenda: 'This booking is for DSpot ERP call',
 			description: 'This is a test appointment booking',
 			participantEmails: 'kdashora@gmail.com,testmail@hotmail.com',
 			location: 'zoom.us',
@@ -51,8 +45,8 @@ export class EmailTemplateGeneratePreviewHandler
 			total_hours: '16',
 			average_activates: '25',
 			log_type: 'tracked',
-			projects: ['Gauzy Web Site', 'Gauzy Platform(open-source)'],
-			project: 'Gauzy Web Site',
+			projects: ['DSpot ERP Web Site', 'DSpot ERP Platform(open-source)'],
+			project: 'DSpot ERP Web Site',
 			timesheet_action: 'APPROVE/REJECT',
 			equipment_status: 'APPROVE/REJECT',
 			reason: 'reason for this',
@@ -77,11 +71,11 @@ export class EmailTemplateGeneratePreviewHandler
 			task_update_estimate: 'estimate',
 			task_update_due_date: moment(new Date()).add(10, 'days').toDate(),
 			task_status: 'In Progress',
-			task_update_project: 'Gauzy Project',
+			task_update_project: 'DSpot ERP Project',
 			task_update_assign_by: 'Ruslan Konviser',
-			task_update_url: 'https://github.com/ever-co/ever-gauzy/issues/1688',
+			task_update_url: 'https://github.com/DSpotDevelopers/gauzy/issues/1688',
 			inviteCode: generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH),
-			teams: 'Gauzy Team',
+			teams: 'DSpot ERP Team',
 			verificationCode: generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH),
 			appName: appName,
 			appLogo: appLogo,
@@ -89,9 +83,9 @@ export class EmailTemplateGeneratePreviewHandler
 			appLink: appLink,
 			items: [
 				{
-					tenantName: "Default",
-					userName: "Default",
-					resetLink: "https://github.com/ever-co/ever-gauzy"
+					tenantName: 'Default',
+					userName: 'Default',
+					resetLink: 'https://github.com/DSpotDevelopers/gauzy'
 				}
 			],
 			companyLink,

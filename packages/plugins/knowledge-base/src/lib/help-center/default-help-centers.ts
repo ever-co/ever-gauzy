@@ -2,7 +2,7 @@ import { IHelpCenter } from '@gauzy/contracts';
 
 export const DEFAULT_HELP_CENTER_MENUS: IHelpCenter[] = [
 	{
-		name: 'Gauzy Platform',
+		name: 'DSpot ERP Platform',
 		icon: 'book-open-outline',
 		flag: 'base',
 		privacy: 'eye-outline',
@@ -35,7 +35,7 @@ export const DEFAULT_HELP_CENTER_MENUS: IHelpCenter[] = [
 				icon: 'book-open-outline',
 				privacy: 'eye-off-outline',
 				name: 'Privacy',
-				description: 'Gauzy Privacy Statement',
+				description: 'DSpot ERP Privacy Statement',
 				data: 'Usage Information',
 				language: 'en',
 				color: '#d53636',
@@ -46,7 +46,7 @@ export const DEFAULT_HELP_CENTER_MENUS: IHelpCenter[] = [
 				icon: 'book-open-outline',
 				privacy: 'eye-off-outline',
 				name: 'Testing',
-				description: 'Gauzy Testing',
+				description: 'DSpot ERP Testing',
 				language: 'en',
 				color: '#d53636',
 				index: 3
@@ -54,7 +54,7 @@ export const DEFAULT_HELP_CENTER_MENUS: IHelpCenter[] = [
 		]
 	},
 	{
-		name: 'Ever Platform',
+		name: 'DSpot ERP Platform',
 		icon: 'book-open-outline',
 		flag: 'base',
 		privacy: 'eye-off-outline',

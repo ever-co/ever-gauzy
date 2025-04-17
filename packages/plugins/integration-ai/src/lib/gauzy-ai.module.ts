@@ -31,7 +31,7 @@ import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
 })
 export class GauzyAIModule {
 	/**
-	 * Configure the GauzyAI module for integration with Ever Gauzy Platform.
+	 * Configure the GauzyAI module for integration with DSpot ERP Platform.
 	 * @param options Optional configuration options for GauzyAI.
 	 * @returns A dynamic module configuration object.
 	 */

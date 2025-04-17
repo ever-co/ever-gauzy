@@ -54,7 +54,7 @@ export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePr
 		// Save new employee job search criteria
 		await this._typeOrmEmployeeUpworkJobsSearchCriterionRepository.save(employeeCriterions);
 
-		// Sync Gauzy employee job search criteria
+		// Sync DSpot ERP employee job search criteria
 		this._gauzyAIService.syncGauzyEmployeeJobSearchCriteria(employee, employeeCriterions);
 
 		// Find the employee with related data

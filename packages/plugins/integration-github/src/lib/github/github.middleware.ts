@@ -37,7 +37,7 @@ export class GithubMiddleware implements NestMiddleware {
 						// Fetch integration settings from the service
 						if (this.logging) {
 							console.log(
-								`Getting Gauzy integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+								`Getting DSpot ERP integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
 							);
 						}
 
@@ -48,7 +48,7 @@ export class GithubMiddleware implements NestMiddleware {
 						if (!integrationTenantSettings) {
 							if (this.logging) {
 								console.log(
-									`Gauzy integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+									`DSpot ERP integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
 								);
 							}
 
@@ -76,14 +76,14 @@ export class GithubMiddleware implements NestMiddleware {
 
 								if (this.logging) {
 									console.log(
-										`Gauzy integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+										`DSpot ERP integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
 									);
 								}
 							}
 						} else {
 							if (this.logging) {
 								console.log(
-									`Gauzy integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+									`DSpot ERP integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
 								);
 							}
 						}

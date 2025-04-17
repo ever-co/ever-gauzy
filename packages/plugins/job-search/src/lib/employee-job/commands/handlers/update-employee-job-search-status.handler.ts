@@ -46,7 +46,7 @@ export class UpdateEmployeeJobSearchStatusHandler implements ICommandHandler<Upd
 			// Get the user ID from the employee
 			const userId = employee.userId;
 
-			// Attempt to sync the employee with Gauzy AI
+			// Attempt to sync the employee with AI
 			const syncResult = await this.gauzyAIService.syncEmployees([employee]);
 
 			if (syncResult) {
@@ -62,15 +62,15 @@ export class UpdateEmployeeJobSearchStatusHandler implements ICommandHandler<Upd
 					console.log('Employee synced and job search status updated successfully.');
 				} catch (error) {
 					// Handle errors during the status update operation
-					console.error('Error while updating employee job search status with Gauzy AI:', error.message);
+					console.error('Error while updating employee job search status with AI:', error.message);
 				}
 			} else {
 				// Sync was not successful
-				console.log('Employee sync with Gauzy AI failed.');
+				console.log('Employee sync with AI failed.');
 			}
 		} catch (error) {
 			// Handle errors during the sync operation
-			console.error('Error while syncing employee with Gauzy AI:', error.message);
+			console.error('Error while syncing employee with AI:', error.message);
 		}
 
 		// Update the employee's job search status locally

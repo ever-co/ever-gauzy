@@ -146,12 +146,12 @@ export class RoleController extends CrudController<Role> {
 	}
 
 	/**
-	 * Import self hosted to gauzy cloud
+	 * Import self hosted to DSpot ERP cloud
 	 *
 	 * @param input
 	 * @returns
 	 */
-	@ApiOperation({ summary: 'Import role from self hosted to gauzy cloud hosted in bulk' })
+	@ApiOperation({ summary: 'Import role from self hosted to DSpot ERP cloud hosted in bulk' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'Role have been successfully imported.'

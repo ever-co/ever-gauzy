@@ -45,7 +45,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 
 	/*
 	|--------------------------------------------------------------------------
-	| Image/Screenshot Analysis Through Gauzy AI
+	| Image/Screenshot Analysis ThroughAI
 	|--------------------------------------------------------------------------
 	*/
 

@@ -37,16 +37,16 @@ export class IntegrationAIController {
 	}
 
 	/**
-	 * Update Gauzy AI integration by ID.
+	 * Update AI integration by ID.
 	 *
 	 * @param id - The ID of the integration to update.
 	 * @param input - The updated data for the integration.
 	 * @returns A promise that resolves to the updated Integration Tenant entity.
 	 */
-	@ApiOperation({ summary: 'Update Gauzy AI integration.' })
+	@ApiOperation({ summary: 'Update AI integration.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Update Gauzy AI integration'
+		description: 'Update AI integration'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,

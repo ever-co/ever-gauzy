@@ -1,6 +1,6 @@
 export const DEFAULT_ORGANIZATION_PROJECTS: string[] = [
-	'Gauzy Platform (Open-Source)',
-	'Gauzy Web Site',
-	'Gauzy Platform SaaS',
-	'Gauzy Platform DevOps'
+	'DSpot ERP Platform (Open-Source)',
+	'DSpot ERP Web Site',
+	'DSpot ERP Platform SaaS',
+	'DSpot ERP Platform DevOps'
 ];

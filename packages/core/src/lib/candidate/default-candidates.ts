@@ -2,7 +2,7 @@ import { ComponentLayoutStyleEnum, LanguagesEnum } from '@gauzy/contracts';
 
 export const DEFAULT_CANDIDATES = [
 	{
-		email: 'john@example-ever.co',
+		email: 'john@example-dspot.com.pl',
 		password: '123456',
 		firstName: 'John',
 		lastName: 'S.',
@@ -12,7 +12,7 @@ export const DEFAULT_CANDIDATES = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'jaye@example-ever.co',
+		email: 'jaye@example-dspot.com.pl',
 		password: '123456',
 		firstName: 'Jaye',
 		lastName: 'J.',
@@ -22,7 +22,7 @@ export const DEFAULT_CANDIDATES = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'kasey@example-ever.co',
+		email: 'kasey@example-dspot.com.pl',
 		password: '123456',
 		firstName: 'Kasey',
 		lastName: 'K.',
@@ -32,7 +32,7 @@ export const DEFAULT_CANDIDATES = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'norris@example-ever.co',
+		email: 'norris@example-dspot.com.pl',
 		password: '123456',
 		firstName: 'Norris ',
 		lastName: 'N.',
@@ -42,7 +42,7 @@ export const DEFAULT_CANDIDATES = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'estella@example-ever.co',
+		email: 'estella@example-dspot.com.pl',
 		password: '123456',
 		firstName: 'Estella',
 		lastName: 'E.',
@@ -52,7 +52,7 @@ export const DEFAULT_CANDIDATES = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'greg@example-ever.co',
+		email: 'greg@example-dspot.com.pl',
 		password: '123456',
 		firstName: 'Greg ',
 		lastName: 'G.',

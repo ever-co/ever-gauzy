@@ -1,5 +1,5 @@
 /**
- * Gauzy Additional Plugins Configuration
+ * DSpot ERP Additional Plugins Configuration
  */
 export interface IPluginsConfig {
 	readonly useChangelog: boolean;
