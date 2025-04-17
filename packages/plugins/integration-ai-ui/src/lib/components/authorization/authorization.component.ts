@@ -97,7 +97,7 @@ export class IntegrationAIAuthorizationComponent implements AfterViewInit, OnIni
 	ngOnDestroy(): void {}
 
 	/**
-	 * Gauzy AI integration remember state API call
+	 * DSpot ERP AI integration remember state API call
 	 */
 	private _redirectToGauzyAIIntegration(integrationId: string) {
 		this._router.navigate(['pages/integrations/gauzy-ai', integrationId]);
@@ -144,7 +144,7 @@ export class IntegrationAIAuthorizationComponent implements AfterViewInit, OnIni
 							});
 						}
 					}),
-					// Redirect to the Gauzy AI integration after creation
+					// Redirect to the DSpot ERP AI integration after creation
 					tap((integration: IIntegrationTenant) => {
 						this._redirectToGauzyAIIntegration(integration.id);
 					}),

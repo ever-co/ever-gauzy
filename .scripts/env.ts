@@ -12,7 +12,7 @@ export type Env = Readonly<{
 
 	COOKIE_DOMAIN: string;
 
-	// Base URL of Gauzy UI website
+	// Base URL of DSpot ERP UI website
 	CLIENT_BASE_URL: string;
 
 	// Base API URL
@@ -178,13 +178,13 @@ export const env: Env = cleanEnv(
 
 		DEMO: bool({ default: false }),
 
-		DEMO_SUPER_ADMIN_EMAIL: str({ default: 'admin@ever.co' }),
+		DEMO_SUPER_ADMIN_EMAIL: str({ default: 'admin@dspot.com.pl' }),
 		DEMO_SUPER_ADMIN_PASSWORD: str({ default: 'admin' }),
 
-		DEMO_ADMIN_EMAIL: str({ default: 'local.admin@ever.co' }),
+		DEMO_ADMIN_EMAIL: str({ default: 'local.admin@dspot.com.pl' }),
 		DEMO_ADMIN_PASSWORD: str({ default: 'admin' }),
 
-		DEMO_EMPLOYEE_EMAIL: str({ default: 'employee@ever.co' }),
+		DEMO_EMPLOYEE_EMAIL: str({ default: 'employee@dspot.com.pl' }),
 		DEMO_EMPLOYEE_PASSWORD: str({ default: '123456' }),
 
 		CHATWOOT_SDK_TOKEN: str({ default: '' }),
@@ -212,81 +212,81 @@ export const env: Env = cleanEnv(
 		}),
 
 		COMPANY_NAME: str({
-			default: 'Ever Co. LTD'
+			default: 'DSpot sp. z o.o.'
 		}),
 		COMPANY_LINK: str({
-			default: 'https://ever.co'
+			default: 'https://www.dspot.com.pl'
 		}),
 		COMPANY_SITE_NAME: str({
-			default: 'Gauzy'
+			default: 'DSpot ERP'
 		}),
 		COMPANY_SITE_LINK: str({
-			default: 'https://gauzy.co'
+			default: 'https://www.dspot.com.pl'
 		}),
 		COMPANY_GITHUB_LINK: str({
-			default: 'https://github.com/ever-co'
+			default: 'https://github.com/DSpotDevelopers'
 		}),
 		COMPANY_GITLAB_LINK: str({
-			default: 'https://gitlab.com/ever-co'
+			default: 'https://gitlab.com/DSpotDevelopers'
 		}),
 		COMPANY_FACEBOOK_LINK: str({
-			default: 'https://www.facebook.com/gauzyplatform'
+			default: 'https://www.facebook.com/DSpotTeam'
 		}),
 		COMPANY_TWITTER_LINK: str({
-			default: 'https://twitter.com/gauzyplatform'
+			default: 'https://x.com/DSpotTeam'
 		}),
 		COMPANY_IN_LINK: str({
-			default: 'https://www.linkedin.com/company/everhq'
+			default: 'https://www.linkedin.com/company/dspotteam'
 		}),
 		PROJECT_REPO: str({
-			default: 'https://github.com/ever-co/ever-gauzy.git'
+			default: 'https://github.com/DSpotDevelopers/gauzy'
 		}),
 
 		DESKTOP_TIMER_APP_NAME: str({
-			default: 'gauzy-desktop-timer'
+			default: 'dspot-erp-desktop-timer'
 		}),
 		DESKTOP_TIMER_APP_DESCRIPTION: str({
-			default: 'Gauzy Desktop Timer'
+			default: 'DSpot ERP Desktop Timer'
 		}),
 		DESKTOP_TIMER_APP_ID: str({
-			default: 'com.ever.gauzydesktoptimer'
+			default: 'pl.com.dspot.erpdesktoptimer'
 		}),
 		DESKTOP_TIMER_APP_REPO_NAME: str({
-			default: 'ever-gauzy-desktop-timer'
+			default: 'dspot-erp-desktop-timer'
 		}),
-		DESKTOP_TIMER_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_TIMER_APP_REPO_OWNER: str({ default: 'DSpot' }),
 		DESKTOP_TIMER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_TIMER_APP_WELCOME_CONTENT: str({ default: '' }),
 
 		DESKTOP_APP_NAME: str({
-			default: 'gauzy-desktop'
+			default: 'dspot-erp-desktop'
 		}),
 		DESKTOP_APP_DESCRIPTION: str({
-			default: 'Ever Gauzy Desktop'
+			default: 'DSpot ERP Desktop'
 		}),
 		DESKTOP_APP_ID: str({
-			default: 'com.ever.gauzydesktop'
+			default: 'pl.com.dspot.erpdesktop'
 		}),
 		DESKTOP_APP_REPO_NAME: str({
-			default: 'ever-gauzy-desktop'
+			default: 'dspot-erp-desktop'
 		}),
-		DESKTOP_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_APP_REPO_OWNER: str({ default: 'DSpot' }),
 		DESKTOP_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_APP_WELCOME_CONTENT: str({ default: '' }),
 
 		DESKTOP_SERVER_APP_NAME: str({
-			default: 'gauzy-server'
+			default: 'dspot-erp-server'
 		}),
 		DESKTOP_SERVER_APP_DESCRIPTION: str({
-			default: 'Ever Gauzy Server'
+			default: 'DSpot ERP Server'
 		}),
 		DESKTOP_SERVER_APP_ID: str({
-			default: 'com.ever.gauzyserver'
+			default: 'pl.com.dspot.erpserver'
 		}),
 		DESKTOP_SERVER_APP_REPO_NAME: str({
-			default: 'ever-gauzy-server'
+			default: 'dspot-erp-server'
 		}),
-		DESKTOP_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_SERVER_APP_REPO_OWNER: str({ default: 'DSpot' }),
 		DESKTOP_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
 
@@ -297,18 +297,18 @@ export const env: Env = cleanEnv(
 		SCREENSHOTS_ENGINE_METHOD: str({ default: 'ScreenshotDesktopLib' }),
 
 		DESKTOP_API_SERVER_APP_NAME: str({
-			default: 'gauzy-api-server'
+			default: 'dspot-erp-api-server'
 		}),
 		DESKTOP_API_SERVER_APP_DESCRIPTION: str({
-			default: 'Ever Gauzy API Server'
+			default: 'DSpot ERP API Server'
 		}),
 		DESKTOP_API_SERVER_APP_ID: str({
-			default: 'com.ever.gauzyapiserver'
+			default: 'pl.com.dspot.erpapiserver'
 		}),
 		DESKTOP_API_SERVER_APP_REPO_NAME: str({
-			default: 'ever-gauzy-api-server'
+			default: 'dspot-erp-api-server'
 		}),
-		DESKTOP_API_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_API_SERVER_APP_REPO_OWNER: str({ default: 'DSpot' }),
 		DESKTOP_API_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_API_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
 

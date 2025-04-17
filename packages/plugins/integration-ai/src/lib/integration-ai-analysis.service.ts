@@ -18,7 +18,7 @@ export class IntegrationAIAnalysisService {
 	) {}
 
 	/**
-	 * Analyze screenshot using Gauzy AI service.
+	 * Analyze screenshot using AI service.
 	 *
 	 * @param event The screenshot event containing necessary data.
 	 */
@@ -26,7 +26,7 @@ export class IntegrationAIAnalysisService {
 		const { entity, data, file } = event;
 		const user = RequestContext.currentUser();
 
-		// Analyze image using Gauzy AI service
+		// Analyze image using AI service
 		await this.analyzeImage(entity, data, file, async (result: ImageAnalysisResult['data']['analysis']) => {
 			try {
 				if (result) {
@@ -51,7 +51,7 @@ export class IntegrationAIAnalysisService {
 	}
 
 	/**
-	 * Analyze an image using Gauzy AI service.
+	 * Analyze an image using AI service.
 	 * @param input The screenshot input data.
 	 * @param data The image data buffer.
 	 * @param file The uploaded file information.
@@ -88,7 +88,7 @@ export class IntegrationAIAnalysisService {
 						entityType: IntegrationEntity.EMPLOYEE_PERFORMANCE
 					});
 
-					// Analyze image using Gauzy AI service
+					// Analyze image using AI service
 					const [analysis] = await this._gauzyAIService.analyzeImage(data, file);
 
 					if (!analysis.success) {
@@ -102,7 +102,7 @@ export class IntegrationAIAnalysisService {
 
 					return analysis;
 				} catch (error) {
-					console.log('Error while getting Integration for Gauzy AI', error.message);
+					console.log('Error while getting Integration for AI', error.message);
 					return null;
 				}
 			}

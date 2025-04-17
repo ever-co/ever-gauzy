@@ -123,7 +123,7 @@ export const createRandomOrganizations = async (
 
 	for await (const tenant of tenants) {
 		const randomOrganizations: IOrganization[] = [];
-		if (tenant.name === 'Ever') {
+		if (tenant.name === 'DSpot') {
 			tenantOrganizations.set(tenant, defaultOrganizationsInserted);
 		} else {
 			for (let index = 0; index < organizationsPerTenant; index++) {

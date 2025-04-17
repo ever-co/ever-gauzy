@@ -22,7 +22,7 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/ga
 })
 export class ExpensesReportGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	dailyData: IExpenseReportData[] = [];
-	loading: boolean = false;
+	loading = false;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 
 	private _filters: ITimeLogFilters;
@@ -71,7 +71,7 @@ export class ExpensesReportGridComponent extends BaseSelectorFilterComponent imp
 
 	/**
 	 * Get header selectors request
-	 * Get gauzy timesheet filters request
+	 * Get DSpot ERP timesheet filters request
 	 *
 	 * @returns
 	 */

@@ -1,4 +1,4 @@
-# Ever Gauzy Server
+# DSpot ERP Server
 
 how to:
 
@@ -38,7 +38,7 @@ build execute app
 build:desktop:windows:quick
 ```
 
-uninstall gauzy desktop macOS
+uninstall DSpot ERP desktop macOS
 
 ```bash
 - delete app data

@@ -1,13 +1,23 @@
 {
 	"name": "@gauzy/e2e",
 	"version": "0.1.0",
-	"description": "Gauzy e2e tests",
+	"description": "DSpot ERP e2e tests",
 	"license": "GPL-3.0",
 	"homepage": "https://gauzy.co",
-	"repository": "https://github.com/ever-co/ever-gauzy.git",
-	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/DSpotDevelopers/gauzy"
 	},
+	"bugs": {
+		"url": "https://github.com/DSpotDevelopers/gauzy/issues"
+	},
+	"contributors": [
+		{
+			"name": "DSpot sp. z o.o.",
+			"email": "info@dspot.com.pl",
+			"url": "https://www.dspot.com.pl/"
+		}
+	],
 	"private": true,
 	"author": "Ever Co. LTD <ever@ever.co> (https://ever.co)",
 	"dependencies": {

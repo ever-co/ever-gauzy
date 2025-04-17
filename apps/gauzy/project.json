@@ -28,9 +28,7 @@
 					"includePaths": ["packages/ui-core/static/styles"]
 				},
 				"assets": [
-					"apps/gauzy/src/favicon.ico",
 					"apps/gauzy/src/assets",
-					"apps/gauzy/src/manifest.json",
 					"apps/gauzy/src/silent-refresh.html",
 					{
 						"glob": "**/*",
@@ -181,9 +179,7 @@
 					"includePaths": ["packages/ui-core/static/styles"]
 				},
 				"assets": [
-					"apps/gauzy/src/favicon.ico",
 					"apps/gauzy/src/assets",
-					"apps/gauzy/src/manifest.json",
 					"apps/gauzy/src/silent-refresh.html",
 					{
 						"glob": "**/*",
@@ -285,9 +281,7 @@
 					"includePaths": ["packages/ui-core/static/styles"]
 				},
 				"assets": [
-					"apps/gauzy/src/favicon.ico",
 					"apps/gauzy/src/assets",
-					"apps/gauzy/src/manifest.json",
 					"apps/gauzy/src/silent-refresh.html",
 					{
 						"glob": "**/*",

@@ -114,7 +114,7 @@ let imageView: BrowserWindow = null;
 let tray = null;
 let isAlreadyRun = false;
 let onWaitingServer = false;
-let dialogErr = false;
+const dialogErr = false;
 let willQuit = true;
 let serverDesktop = null;
 let popupWin: BrowserWindow | null = null;
@@ -271,9 +271,7 @@ async function startServer(value, restart = false) {
 					pathWindow.preloadPath
 				);
 			} else {
-				await timeTrackerWindow.loadURL(
-					timeTrackerPage(pathWindow.timeTrackerUi)
-				);
+				await timeTrackerWindow.loadURL(timeTrackerPage(pathWindow.timeTrackerUi));
 			}
 			notificationWindow = new ScreenCaptureNotification(pathWindow.timeTrackerUi);
 			await notificationWindow.loadURL();
@@ -661,7 +659,7 @@ app.on('before-quit', async (e) => {
 			try {
 				serverGauzy.kill();
 			} catch (error) {
-				console.error('ERROR: Occurred while serverGauzy stop:' + error);
+				console.error('ERROR: Occurred while server stop:' + error);
 			}
 		}
 

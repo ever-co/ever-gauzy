@@ -5,14 +5,14 @@ export const INITIAL_CHANGELOG_TEMPLATE: IChangelog[] = [
 		icon: 'cube-outline',
 		title: 'See new features',
 		date: new Date(),
-		content: 'Now you can read latest features changelog directly in Gauzy',
+		content: 'Now you can read latest features changelog directly in DSpot ERP',
 		isFeature: false,
 		learnMoreUrl: '',
 		imageUrl: ''
 	},
 	{
 		icon: 'globe-outline',
-		title: 'Ready to give Gauzy a try?',
+		title: 'Ready to give DSpot ERP a try?',
 		date: new Date(),
 		isFeature: false,
 		content:
@@ -34,7 +34,7 @@ export const INITIAL_CHANGELOG_TEMPLATE: IChangelog[] = [
 		title: 'New CRM',
 		date: new Date(),
 		isFeature: true,
-		content: 'Now you can read latest features changelog directly in Gauzy',
+		content: 'Now you can read latest features changelog directly in DSpot ERP',
 		learnMoreUrl: '',
 		imageUrl: 'assets/images/features/macbook-2.png'
 	},

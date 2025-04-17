@@ -128,7 +128,7 @@ export interface IEnvironment {
 	gauzySeedPath?: string;
 
 	/**
-	 * Gauzy AI Configuration
+	 *AI Configuration
 	 */
 	gauzyAI?: IGauzyAIConfig;
 
@@ -164,7 +164,7 @@ export interface IEnvironment {
 	periodicTimeSaveTimeframe: number;
 
 	/**
-	 * Gauzy Additional Plugins Configuration
+	 * DSpot ERP Additional Plugins Configuration
 	 */
 	plugins: IPluginsConfig;
 }

@@ -1,13 +1,4 @@
-import {
-	BadRequestException,
-	Body,
-	Controller,
-	Get,
-	HttpStatus,
-	Post,
-	Query,
-	UseGuards
-} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FeatureInterface } from 'unleash-client/lib/feature';
@@ -35,7 +26,7 @@ export class FeatureToggleController {
 		private readonly _featureService: FeatureService,
 		private readonly _featureOrganizationService: FeatureOrganizationService,
 		private readonly _commandBus: CommandBus
-	) { }
+	) {}
 
 	@Get('definition')
 	@Public()
@@ -46,7 +37,7 @@ export class FeatureToggleController {
 		if (unleashConfig.url) {
 			featureToggles = getFeatureToggleDefinitions();
 
-			// only support gauzy feature and removed other
+			// only support DSpot ERP feature and removed other
 			const featureEnums: string[] = Object.values(FeatureEnum);
 			if (featureToggles) {
 				featureToggles = featureToggles.filter((toggle: FeatureInterface) =>
@@ -101,13 +92,13 @@ export class FeatureToggleController {
 				where: {
 					...(params.tenantId
 						? {
-							tenantId: params.tenantId
-						}
+								tenantId: params.tenantId
+						  }
 						: {}),
 					...(params.organizationId
 						? {
-							organizationId: params.organizationId
-						}
+								organizationId: params.organizationId
+						  }
 						: {})
 				},
 				relations: params.relations || []

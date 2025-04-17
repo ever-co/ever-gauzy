@@ -95,7 +95,7 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 
 	/**
 	 * Get header selectors request
-	 * Get gauzy timesheet filters request
+	 * Get DSpot ERP timesheet filters request
 	 *
 	 * @returns
 	 */

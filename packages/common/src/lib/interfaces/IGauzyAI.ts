@@ -1,5 +1,5 @@
 /**
- * Gauzy AI Configuration
+ *AI Configuration
  */
 export interface IGauzyAIConfig {
 	readonly apiKey?: string;

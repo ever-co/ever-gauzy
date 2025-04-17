@@ -34,9 +34,9 @@ export class EmployeeJobPostService {
 
 	/**
 	 * Updates job visibility
-	 * @param hide Should job be hidden or visible. This will set isActive field to false in Gauzy AI
-	 * @param employeeId If employeeId set, job will be set not active only for that specific employee (using EmployeeJobPost record update in Gauzy AI)
-	 * If employeeId is not set, job will be set not active for all employees (using JobPost record update in Gauzy AI)
+	 * @param hide Should job be hidden or visible. This will set isActive field to false in AI
+	 * @param employeeId If employeeId set, job will be set not active only for that specific employee (using EmployeeJobPost record update inAI)
+	 * If employeeId is not set, job will be set not active for all employees (using JobPost record update in AI)
 	 * @param providerCode e.g. 'upwork'
 	 * @param providerJobId Unique job id in the provider, e.g. in Upwork
 	 */
@@ -46,7 +46,7 @@ export class EmployeeJobPostService {
 
 	/**
 	 * Create Employee Job Application and updates Employee Job Post record that employee applied for a job
-	 * @param applied This will set isApplied and appliedDate fields in Gauzy AI
+	 * @param applied This will set isApplied and appliedDate fields in AI
 	 * @param employeeId Employee who applied for a job
 	 * @param providerCode e.g. 'upwork', 'linkedin', 'indeed', etc.
 	 * @param providerJobId Unique job id in the provider, e.g. Job Id in Upwork
@@ -76,7 +76,7 @@ export class EmployeeJobPostService {
 	}
 
 	/**
-	 * Find all available Jobs matched to Gauzy Employees
+	 * Find all available Jobs matched to DSpot ERP Employees
 	 * @param data
 	 */
 	public async findAll(data: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
@@ -104,7 +104,7 @@ export class EmployeeJobPostService {
 				});
 
 				// Check if integration exists
-				if (!!integration) {
+				if (integration) {
 					const integrationId = integration['id'];
 
 					// Check if job matching entity sync is enabled
@@ -117,7 +117,7 @@ export class EmployeeJobPostService {
 					const result = await this._gauzyAIService.getEmployeesJobPosts(data);
 					if (result === null) {
 						if (env.production) {
-							// OK, so for some reason connection go Gauzy AI failed, we can't get jobs ...
+							// OK, so for some reason connection goAI failed, we can't get jobs ...
 							jobs = {
 								items: [],
 								total: 0

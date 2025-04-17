@@ -4,7 +4,7 @@ This library was generated with [Nx](https://nx.dev).
 
 ## Overview
 
-The Plugin Job Employee UI is a Gauzy plugin that provides a user-friendly interface for managing job employees within the Gauzy platform.
+The Plugin Job Employee UI is a DSpot ERP plugin that provides a user-friendly interface for managing job employees within the DSpot ERP platform.
 
 ## Building
 

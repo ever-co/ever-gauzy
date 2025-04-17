@@ -106,15 +106,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	app.enableCors({
 		origin: '*',
 		credentials: true,
-		methods: [
-			'GET',
-			'HEAD',
-			'PUT',
-			'PATCH',
-			'POST',
-			'DELETE',
-			'OPTIONS'
-		].join(','),
+		methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'].join(','),
 		allowedHeaders: [
 			'Authorization',
 			'Language',
@@ -160,12 +152,12 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			const isTls = url.startsWith('rediss://');
 
 			// Removing the protocol part
-			let authPart = url.split('://')[1];
+			const authPart = url.split('://')[1];
 
 			// Check if the URL contains '@' (indicating the presence of username/password)
 			if (authPart.includes('@')) {
 				// Splitting user:password and host:port
-				let [userPass, hostPort] = authPart.split('@');
+				const [userPass, hostPort] = authPart.split('@');
 				[username, password] = userPass.split(':');
 				[host, port] = hostPort.split(':');
 			} else {
@@ -273,7 +265,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	console.log(chalk.green(`Configured Port: ${port}`));
 
 	// Configure Swagger for API documentation
-	const options = new DocumentBuilder().setTitle('Gauzy API').setVersion(env.gitHash).addBearerAuth().build();
+	const options = new DocumentBuilder().setTitle('DSpot ERP API').setVersion(env.gitHash).addBearerAuth().build();
 	const document = SwaggerModule.createDocument(app, options);
 	SwaggerModule.setup('swg', app, document);
 	console.log(chalk.green(`Swagger UI available at http://${host}:${port}/swg`));
@@ -504,8 +496,8 @@ export function getMigrationsConfig() {
 	const migrationsDir = path.resolve(
 		__dirname,
 		isElectron
-			? './../database/migrations/*.js'           // Only .ts if Electron
-			: './../database/migrations/*{.ts,.js}'      // Otherwise .ts or .js
+			? './../database/migrations/*.js' // Only .ts if Electron
+			: './../database/migrations/*{.ts,.js}' // Otherwise .ts or .js
 	);
 	console.log('Migration migrationsDir: ->', migrationsDir);
 

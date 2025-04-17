@@ -1,4 +1,4 @@
-# Ever Gauzy Platform API (Core)
+# DSpot ERP Platform API (Core)
 
 ARG DEPENDENCIES_IMAGE
 ARG GIT_HASH
@@ -109,8 +109,8 @@ ARG MIKRO_ORM_ALLOW_GLOBAL_CONTEXT
 
 FROM ${DEPENDENCIES_IMAGE:-"no-image"}:latest-api-dev AS builder
 
-LABEL maintainer="ever@ever.co"
-LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
+LABEL maintainer="info@dspot.com.pl"
+LABEL org.opencontainers.image.source="https://github.com/DSpotDevelopers/gauzy"
 
 ARG NODE_ENV
 ARG DEMO

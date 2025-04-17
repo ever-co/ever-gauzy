@@ -1,6 +1,6 @@
 export const EditProfilePageData = {
 	preferredLanguage: 'English',
-	email: 'local.admin@ever.co',
+	email: 'local.admin@dspot.com.pl',
 	password: 'admin',
 	firstName: 'Admin',
 	lastName: 'Local'

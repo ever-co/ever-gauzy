@@ -1,7 +1,21 @@
 {
 	"name": "@gauzy/auth",
 	"version": "0.1.0",
-	"description": "Authentication module for the Ever Gauzy Platform, providing various authentication strategies and integrations.",
+	"description": "Authentication module for the DSpot ERP Platform, providing various authentication strategies and integrations.",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/DSpotDevelopers/gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/DSpotDevelopers/gauzy/issues"
+	},
+	"contributors": [
+		{
+			"name": "DSpot sp. z o.o.",
+			"email": "info@dspot.com.pl",
+			"url": "https://www.dspot.com.pl/"
+		}
+	],
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",

@@ -228,7 +228,7 @@ export class UserController extends CrudController<User> {
 	}
 
 	/**
-	 * To permanently delete your account from your Gauzy app:
+	 * To permanently delete your account from your DSpot ERP app:
 	 *
 	 * @param id
 	 * @returns

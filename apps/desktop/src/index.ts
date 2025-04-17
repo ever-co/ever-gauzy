@@ -60,7 +60,7 @@ import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
 
 /**
- * Describes the configuration for building the Gauzy API base URL.
+ * Describes the configuration for building the DSpot ERP API base URL.
  */
 export interface ApiConfig {
 	/**
@@ -429,7 +429,7 @@ function setEnvAdditional() {
 }
 
 /**
- * Retrieves the base URL for the Gauzy API based on a configuration object.
+ * Retrieves the base URL for the DSpot ERP API based on a configuration object.
  *
  * If `configs.serverUrl` is defined, this function returns that URL directly.
  * Otherwise, it constructs a local address using `configs.host`, `configs.protocol`,
@@ -468,7 +468,7 @@ const closeSplashScreen = () => {
 		splashScreen.close();
 		splashScreen = null;
 	}
-}
+};
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -553,7 +553,7 @@ app.on('ready', async () => {
 			if (!configs.serverConfigConnected && !configs?.isLocalServer) {
 				setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
 				setupWindow.show();
-				closeSplashScreen()
+				closeSplashScreen();
 				setupWindow.webContents.send('setup-data', {
 					...configs
 				});

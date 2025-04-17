@@ -1,6 +1,6 @@
 # @gauzy/plugin-changelog
 
-This library was generated with [Nx](https://nx.dev). It contains the authentication for the Gauzy API platform.
+This library was generated with [Nx](https://nx.dev). It contains the authentication for the DSpot ERP API platform.
 
 ## Building
 

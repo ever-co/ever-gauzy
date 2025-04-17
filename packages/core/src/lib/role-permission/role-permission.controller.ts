@@ -37,7 +37,7 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	 * @param input
 	 * @returns
 	 */
-	@ApiOperation({ summary: 'Import role-permissions from self hosted to gauzy cloud hosted in bulk' })
+	@ApiOperation({ summary: 'Import role-permissions from self hosted to DSpot ERP cloud hosted in bulk' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'Role Permissions have been successfully imported.'

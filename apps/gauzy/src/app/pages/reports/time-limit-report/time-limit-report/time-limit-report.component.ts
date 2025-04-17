@@ -72,7 +72,7 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent implem
 	}
 
 	/**
-	 * Get header selectors request and Gauzy timesheet filters request.
+	 * Get header selectors request and DSpot ERP timesheet filters request.
 	 */
 	prepareRequest(): void {
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
@@ -90,7 +90,7 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent implem
 	}
 
 	/**
-	 * Updates Gauzy timesheet default filters, saves the filters if configured to do so,
+	 * Updates DSpot ERP timesheet default filters, saves the filters if configured to do so,
 	 * and notifies subscribers about the change.
 	 *
 	 * @param filters - An object representing time log filters (ITimeLogFilters).

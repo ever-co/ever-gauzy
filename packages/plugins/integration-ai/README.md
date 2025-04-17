@@ -1,6 +1,6 @@
 # @gauzy/plugin-integration-ai
 
-This library was generated with [Nx](https://nx.dev). It contains the AI Integration Plugin for the Gauzy platform.
+This library was generated with [Nx](https://nx.dev). It contains the AI Integration Plugin for the DSpot ERP platform.
 
 ## Building
 

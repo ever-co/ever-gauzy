@@ -1,7 +1,21 @@
 {
 	"name": "@gauzy/desktop-core",
 	"version": "0.1.0",
-	"description": "Core library for Gauzy Desktop application",
+	"description": "Core library for DSpot ERP Desktop application",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/DSpotDevelopers/gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/DSpotDevelopers/gauzy/issues"
+	},
+	"contributors": [
+		{
+			"name": "DSpot sp. z o.o.",
+			"email": "info@dspot.com.pl",
+			"url": "https://www.dspot.com.pl/"
+		}
+	],
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -18,7 +32,11 @@
 		"lib:watch": "yarn nx build desktop-core --watch"
 	},
 	"dependencies": {
-		"tslib": "^2.6.2"
+		"tslib": "^2.6.2",
+		"@electron/remote": "^2.0.8",
+		"electron": "^30.0.1",
+		"electron-log": "4.4.8",
+		"electron-store": "8.2.0"
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.9"

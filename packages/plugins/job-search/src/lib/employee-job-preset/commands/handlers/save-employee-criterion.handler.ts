@@ -52,7 +52,7 @@ export class SaveEmployeeCriterionHandler implements ICommandHandler<SaveEmploye
 			jobPresetId: input.jobPresetId
 		});
 
-		// Sync Gauzy AI criteria with the employee
+		// SyncAI criteria with the employee
 		this._gauzyAIService.syncGauzyEmployeeJobSearchCriteria(employee, criteria);
 
 		return creation;

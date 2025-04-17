@@ -1,12 +1,12 @@
 /**
  * @description
- * Current version of the Gauzy Desktop Timer Application.
+ * Current version of the DSpot ERP Desktop Timer Application.
  *
  * @example
  * ```
  * import { version } from './version';
  *
- * console.log('Gauzy Desktop Timer Application Version:', version);
+ * console.log('DSpot ERP Desktop Timer Application Version:', version);
  * ```
  *
  * @since 0.1.0

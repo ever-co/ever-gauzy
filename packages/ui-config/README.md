@@ -4,11 +4,11 @@ This library was generated with [Nx](https://nx.dev).
 
 ## Features
 
-- **Environment Settings:** Provides environment settings and configurations to be shared across various Angular applications within the Gauzy ecosystem.
+- **Environment Settings:** Provides environment settings and configurations to be shared across various Angular applications within the DSpot ERP ecosystem.
 
 ## Getting Started
 
-The `@gauzy/ui-config` library is generated with [Nx](https://nx.dev) and is intended to be used within the Gauzy ecosystem. Before installing, make sure you have a Gauzy workspace set up and that all necessary dependencies are in place.
+The `@gauzy/ui-config` library is generated with [Nx](https://nx.dev) and is intended to be used within the DSpot ERP ecosystem. Before installing, make sure you have a DSpot ERP workspace set up and that all necessary dependencies are in place.
 
 ## Table of Contents
 

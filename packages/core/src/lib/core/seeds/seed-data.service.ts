@@ -321,7 +321,7 @@ export class SeedDataService {
 	}
 
 	/**
-	 * Seed Default Ever Data
+	 * Seed Default DSpot ERP Data
 	 */
 	public async runEverSeed() {
 		try {
@@ -344,7 +344,7 @@ export class SeedDataService {
 			// Disconnect to database
 			await this.closeConnection();
 
-			console.log('Database Ever Seed Completed');
+			console.log('Database DSpot ERP Seed Completed');
 		} catch (error) {
 			this.handleError(error);
 		}

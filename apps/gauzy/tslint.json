@@ -7,7 +7,7 @@
 			"element",
 			[
 				"ngx",
-				"ga" // ga = gauzy
+				"ga"
 			],
 			"kebab-case"
 		]

@@ -76,7 +76,7 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent impleme
 
 	/**
 	 * Get header selectors request
-	 * Get gauzy timesheet filters request
+	 * Get DSpot ERP timesheet filters request
 	 *
 	 * @returns
 	 */
@@ -113,7 +113,7 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent impleme
 	}
 
 	/**
-	 * Gauzy timesheet default filters
+	 * DSpot ERP timesheet default filters
 	 *
 	 * @param filters
 	 */

@@ -1,1 +1,1 @@
-# Ever Gauzy Plugins
+# DSpot ERP Plugins

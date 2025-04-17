@@ -28,7 +28,7 @@ export class IntegrationAIEventSubscriber implements OnModuleInit, OnModuleDestr
 					try {
 						switch (event.type) {
 							case BaseEntityEventTypeEnum.CREATED:
-								// Analyze image using Gauzy AI
+								// Analyze image using AI
 								await this._integrationAIAnalysisService.analyzeAndSaveScreenshot(event);
 								break;
 							default:

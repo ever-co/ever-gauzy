@@ -1,12 +1,26 @@
 {
 	"name": "@gauzy/contracts",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform Contracts module",
+	"description": "DSport ERP Platform Contracts module",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/DSpotDevelopers/gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/DSpotDevelopers/gauzy/issues"
+	},
+	"contributors": [
+		{
+			"name": "DSpot sp. z o.o.",
+			"email": "info@dspot.com.pl",
+			"url": "https://www.dspot.com.pl/"
+		}
+	],
 	"license": "AGPL-3.0",
 	"private": true,
 	"type": "commonjs",

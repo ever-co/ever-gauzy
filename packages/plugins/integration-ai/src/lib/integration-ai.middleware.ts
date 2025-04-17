@@ -49,7 +49,7 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 			if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
 				if (this.logging) {
 					console.log(
-						`Getting Gauzy AI integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`
+						`Getting AI integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`
 					);
 				}
 
@@ -61,7 +61,7 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 				if (!integrationTenantSettings) {
 					if (this.logging) {
 						console.log(
-							`Gauzy AI integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`
+							`DSpot ERP AI integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`
 						);
 					}
 
@@ -80,14 +80,14 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 
 						if (this.logging) {
 							console.log(
-								`Gauzy AI integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`
+								`DSpot ERP AI integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`
 							);
 						}
 					}
 				} else {
 					if (this.logging) {
 						console.log(
-							`Gauzy AI integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`
+							`DSpot ERP AI integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`
 						);
 					}
 				}

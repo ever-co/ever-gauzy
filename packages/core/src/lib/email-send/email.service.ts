@@ -1157,7 +1157,7 @@ export class EmailService {
 		// 	}
 		// });
 		const info = await transporter.sendMail({
-			from: 'Gauzy',
+			from: 'DSpot ERP',
 			to: user.email,
 			subject: 'Forgotten Password',
 			text: 'Forgot Password',

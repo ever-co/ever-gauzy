@@ -91,7 +91,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 
 	/**
 	 * Get header selectors request
-	 * Get gauzy timesheet filters request
+	 * Get DSpot ERP timesheet filters request
 	 *
 	 * @returns
 	 */
@@ -113,7 +113,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 	}
 
 	/**
-	 * Updates Gauzy timesheet default filters and notifies subscribers about the change.
+	 * Updates DSpot ERP timesheet default filters and notifies subscribers about the change.
 	 *
 	 * @param filters - An object representing time log filters (ITimeLogFilters).
 	 */

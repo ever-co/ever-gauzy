@@ -519,7 +519,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * To permanently delete your account from your Gauzy app:
+	 * To permanently delete your account from your DSpot ERP app:
 	 *
 	 * @param userId
 	 * @param options
@@ -527,7 +527,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	public async delete(userId: IUser['id']): Promise<DeleteResult> {
 		// Do not allow user to delete account in Demo server.
-		if (!!this._configService.get('demo')) {
+		if (this._configService.get('demo')) {
 			throw new ForbiddenException('Do not allow user to delete account in Demo server');
 		}
 

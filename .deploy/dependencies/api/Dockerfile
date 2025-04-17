@@ -1,4 +1,4 @@
-# Gauzy API dependencies image
+# DSpot ERP API dependencies image
 
 ARG ENVIRONMENT=development
 

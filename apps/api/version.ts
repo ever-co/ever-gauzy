@@ -1,12 +1,12 @@
 /**
  * @description
- * Current version of the Gauzy API.
+ * Current version of the DSpot ERP API.
  *
  * @example
  * ```
  * import { version } from './version';
  *
- * console.log('Gauzy API version:', version);
+ * console.log('DSpot ERP API version:', version);
  * ```
  *
  * @since 0.1.0

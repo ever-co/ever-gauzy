@@ -1,6 +1,6 @@
 # @gauzy/plugin-knowledge-base
 
-This library was generated with [Nx](https://nx.dev). It contains the knowledge base for the Gauzy API platform.
+This library was generated with [Nx](https://nx.dev). It contains the knowledge base for the DSpot ERP API platform.
 
 ## Building
 

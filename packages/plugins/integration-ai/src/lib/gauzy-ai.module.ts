@@ -31,8 +31,8 @@ import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
 })
 export class GauzyAIModule {
 	/**
-	 * Configure the GauzyAI module for integration with Ever Gauzy Platform.
-	 * @param options Optional configuration options for GauzyAI.
+	 * Configure the DSpot ERP AI module for integration with DSpot ERP Platform.
+	 * @param options Optional configuration options for DSpot ERP AI.
 	 * @returns A dynamic module configuration object.
 	 */
 	static forRoot(options?: IConfigurationOptions): DynamicModule {

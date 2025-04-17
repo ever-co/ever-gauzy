@@ -119,9 +119,9 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	allowModifyTime?: boolean;
 	allowDeleteTime?: boolean;
 
-	/** Upwork ID For Gauzy AI*/
+	/** Upwork ID For DSpot ERP AI*/
 	upworkId?: string;
-	/** LinkedIn ID For Gauzy AI*/
+	/** LinkedIn ID For DSpot ERP AI*/
 	linkedInId?: string;
 	/** Employee status (Online/Offline) */
 	isOnline?: boolean;
@@ -185,9 +185,9 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	allowManualTime?: boolean;
 	allowModifyTime?: boolean;
 	allowDeleteTime?: boolean;
-	/** Upwork ID For Gauzy AI*/
+	/** Upwork ID For DSpot ERP AI*/
 	upworkId?: string;
-	/** LinkedIn ID For Gauzy AI*/
+	/** LinkedIn ID For DSpot ERP AI*/
 	linkedInId?: string;
 	/** Employee status (Online/Offline) */
 	isOnline?: boolean;
@@ -211,9 +211,9 @@ export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntit
 	description?: string;
 	originalUrl?: string;
 	isActive?: boolean;
-	/** Upwork ID For Gauzy AI*/
+	/** Upwork ID For DSpot ERP AI*/
 	upworkId?: string;
-	/** LinkedIn ID For Gauzy AI*/
+	/** LinkedIn ID For DSpot ERP AI*/
 	linkedInId?: string;
 	/** Employee status (Online/Offline) */
 	isOnline?: boolean;
