@@ -284,7 +284,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	 * @param item
 	 */
 	onProposalTemplateChange(item: IEmployeeProposalTemplate | null): void {
-		/** Generate proposal using GauzyAI */
+		/** Generate proposal using DSpot ERP AI */
 		this.proposalTemplate = item || null;
 
 		/** Patch proposal value inside form directive */

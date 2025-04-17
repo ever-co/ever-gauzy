@@ -1265,11 +1265,11 @@ export class GauzyAIService {
 		try {
 			const gauzyAIRESTEndpoint = this._configService.get<string>('gauzyAI.gauzyAIRESTEndpoint');
 
-			console.log(chalk.magenta(`GauzyAI REST Endpoint: ${gauzyAIRESTEndpoint}`));
+			console.log(chalk.magenta(`DSpot ERP AI REST Endpoint: ${gauzyAIRESTEndpoint}`));
 
 			this.gauzyAIGraphQLEndpoint = this._configService.get<string>('gauzyAI.gauzyAIGraphQLEndpoint');
 
-			console.log(chalk.magenta(`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
+			console.log(chalk.magenta(`DSpot ERP AI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
 
 			if (this.gauzyAIGraphQLEndpoint && gauzyAIRESTEndpoint) {
 				this._logger.log('DSpot ERP AI Endpoints (GraphQL & REST) are configured in the environment');

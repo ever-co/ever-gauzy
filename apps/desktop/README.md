@@ -1,6 +1,6 @@
 # DSpot ERP Desktop Application
 
-DSpot ERP Desktop is a cross-platform application built with [nstudio/electron](https://github.com/nstudio/xplat) for seamless integration with Gauzy. This README provides setup, build, and uninstall instructions for macOS and Windows.
+DSpot ERP Desktop is a cross-platform application built with [nstudio/electron](https://github.com/nstudio/xplat) for seamless integration with DSpot ERP. This README provides setup, build, and uninstall instructions for macOS and Windows.
 
 ---
 

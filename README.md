@@ -16,7 +16,7 @@ It's built with a React (NextJs) / ReactNative (Expo) stack and connects to head
 
 ## 🌟 What is it
 
-[Ever® Gauzy™][uri_gauzy] - **Open Business Management Platform** for Collaborative, On-Demand and Sharing Economies.
+[DSpot ERP][uri_gauzy] - **Open Business Management Platform** for Collaborative, On-Demand and Sharing Economies.
 
 -   **Enterprise Resource Planning** (ERP)
 -   **Customer Relationship Management** (CRM)
@@ -27,7 +27,7 @@ It's built with a React (NextJs) / ReactNative (Expo) stack and connects to head
 
 ![overview](https://docs.gauzy.co/overview.png)
 
-Ever® Gauzy™ Platform is a part of our larger Open Platform for **Collaborative, On-Demand and Sharing Economies** - [Ever® Platform™](https://ever.co).
+DSpot ERP Platform is a part of our larger Open Platform for **Collaborative, On-Demand and Sharing Economies** - [Ever® Platform™](https://ever.co).
 
 ## ✨ Features
 
@@ -77,7 +77,7 @@ A more detailed list of the features available in the platform:
 -   Multi-lingual
 -   Dark / Light / Corporate / Material and other Themes
 
-Read more [about Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) and [how to use it](https://github.com/ever-co/ever-gauzy/wiki/How-to-use-Gauzy) at your company, on-demand business, freelance business, agency, studio or in-house teams.
+Read more [about DSpot ERP](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) and [how to use it](https://github.com/ever-co/ever-gauzy/wiki/How-to-use-Gauzy) at your company, on-demand business, freelance business, agency, studio or in-house teams.
 
 ## 🌼 Screenshots
 
@@ -136,7 +136,7 @@ In addition, all downloads are also available from the following pages:
 
 ### Production (SaaS)
 
-Ever® Gauzy™ Platform SaaS is available at <https://app.gauzy.co>.
+DSpot ERP Platform SaaS is available at <https://app.gauzy.co>.
 
 Note: it's currently in Alpha version/testing mode, please use it cautiously!
 
@@ -150,11 +150,11 @@ Note: it's currently in Alpha version/testing mode, please use it cautiously!
 
 We have DSpot ERP Server and two Desktop Apps (for Windows/Mac/Linux):
 
--   Ever® Gauzy™ Server - includes DSpot ERP API, SQLite DB (or connects to external PostgreSQL) and serves Guazy frontend. It allows to quickly run DSpot ERP Server for multiple clients (browser-based or Desktop-based). It's a recommended option if you want to setup the DSpot ERP Platform in small to medium organizations.
+-   DSpot ERP Server - includes DSpot ERP API, SQLite DB (or connects to external PostgreSQL) and serves Guazy frontend. It allows to quickly run DSpot ERP Server for multiple clients (browser-based or Desktop-based). It's a recommended option if you want to setup the DSpot ERP Platform in small to medium organizations.
 
--   Ever® Gauzy™ Desktop App - includes DSpot ERP frontend (UI), DSpot ERP API, SQLite DB, etc., all-in-one! It allows to quickly run the whole DSpot ERP solution locally, both UI and Timer (for time tracking, optionally of course). In addition, it allows you to connect to the external database (e.g. PostgreSQL) or external API (if you have DSpot ERP Server with API / DB installed on a different computer or if you want to connect to our live API). It's a recommended option if you want to try DSpot ERP quickly / for personal use or if you want to connect to DSpot ERP Server in the "client-server" configuration (and use Desktop App instead of web browser).
+-   DSpot ERP Desktop App - includes DSpot ERP frontend (UI), DSpot ERP API, SQLite DB, etc., all-in-one! It allows to quickly run the whole DSpot ERP solution locally, both UI and Timer (for time tracking, optionally of course). In addition, it allows you to connect to the external database (e.g. PostgreSQL) or external API (if you have DSpot ERP Server with API / DB installed on a different computer or if you want to connect to our live API). It's a recommended option if you want to try DSpot ERP quickly / for personal use or if you want to connect to DSpot ERP Server in the "client-server" configuration (and use Desktop App instead of web browser).
 
--   Ever® Gauzy™ Desktop Timer App - allows running Time and Activity Tracking for employees/contractors with screenshots and activity monitoring. It is recommended to setup by organization employees as long as they are not interested in other DSpot ERP Platform features (e.g. accounting) and only need to track work time.
+-   DSpot ERP Desktop Timer App - allows running Time and Activity Tracking for employees/contractors with screenshots and activity monitoring. It is recommended to setup by organization employees as long as they are not interested in other DSpot ERP Platform features (e.g. accounting) and only need to track work time.
 
 More information about our Server & Desktop Apps:
 
@@ -207,7 +207,7 @@ Notes:
 -   while demo `docker-compose.demo.yml` runs a minimum amount of containers (API, Web UI, and DB), other Docker Compose files run multiple infrastructure dependencies (see full list below).
 -   you can also run ONLY infra dependencies (without our API / Web containers) with `docker-compose -f docker-compose.infra.yml up` command. We already doing it using `include` in our main docker compose files.
 
-Together with Gauzy, Docker Compose (i.e. `docker-compose.yml` and `docker-compose.build.yml`, not Demo `docker-compose.demo.yml`) will run the following:
+Together with DSpot ERP, Docker Compose (i.e. `docker-compose.yml` and `docker-compose.build.yml`, not Demo `docker-compose.demo.yml`) will run the following:
 
 -   [PostgreSQL](https://www.postgresql.org) - Primary Database.
 -   [Pgweb](https://github.com/sosedoff/pgweb) - Cross-platform client for PostgreSQL DBs, available on <http://localhost:8081>.
@@ -306,7 +306,7 @@ This software is available under the following licenses:
 -   [DSpot ERP™ Platform Small Business](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-small-business-license)
 -   [DSpot ERP™ Platform Enterprise](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-enterprise-license)
 
-#### The default Ever® Gauzy™ Platform license, without a valid Ever® Gauzy™ Platform Enterprise or Ever® Gauzy™ Platform Small Business License agreement, is the Ever® Gauzy™ Platform Community Edition License
+#### The default DSpot ERP Platform license, without a valid DSpot ERP Platform Enterprise or DSpot ERP Platform Small Business License agreement, is the DSpot ERP Platform Community Edition License
 
 #### Please see [LICENSE](LICENSE.md) for more information on licenses. You can also [compare our offering](https://ever.co/compare-gauzy/#compare)
 

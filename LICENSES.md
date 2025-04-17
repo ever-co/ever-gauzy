@@ -55,8 +55,8 @@ Please see [CREDITS.md](CREDITS.md) files for a list of libraries and software i
 
 ## Trademarks
 
-**Ever**® is a registered trademark of [DSpot sp. z o.o.](https://www.dspot.com.pl).
-**Gauzy**™ is a trademark of [DSpot sp. z o.o.](https://www/dspot.com.pl).
+**DSpot** is a registered trademark of [DSpot sp. z o.o.](https://www.dspot.com.pl).
+**DSpot ERP** is a trademark of [DSpot sp. z o.o.](https://www/dspot.com.pl).
 
 The trademarks and logos may only be used with the written permission of DSpot sp. z o.o. and may not be used to promote or otherwise market competitive products or services. If you wish to use these trademarks and logos you should contact our licensing department at <mailto:info@dspot.com.pl> to determine the necessary steps you must take.
 

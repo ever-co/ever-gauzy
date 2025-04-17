@@ -4,11 +4,11 @@
 			<mj-column>
 				<mj-image width="100px" src="{{appLogo}}"></mj-image>
 				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
-				<mj-text font-size="20px" font-family="helvetica">You've been invited to Gauzy!</mj-text>
+				<mj-text font-size="20px" font-family="helvetica">You've been invited to DSpot ERP!</mj-text>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Dear {{name}},</p>
 					<p style="line-height: 1.5rem">
-						{{organizationName}} has invited you to join Ever® Gauzy™ - Open-Source Business Management
+						{{organizationName}} has invited you to join DSpot ERP - Open-Source Business Management
 						Platform (ERP/CRM/HRM) focused on Fairness and Transparency!
 					</p>
 				</mj-text>

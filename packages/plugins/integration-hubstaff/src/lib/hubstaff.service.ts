@@ -898,7 +898,7 @@ export class HubstaffService {
 	 *
 	 * @param {string} sourceId - The ID of the organization in the third-party integration.
 	 * @param {string} integrationId - The ID of the integration.
-	 * @param {string} gauzyId - The ID of the local organization in Gauzy.
+	 * @param {string} gauzyId - The ID of the local organization in DSpot ERP.
 	 * @param {string} token - The access token for authentication with the third-party API.
 	 * @returns {Promise<IIntegrationMap[]>} - A promise that resolves to the synchronized projects.
 	 * @throws {BadRequestException} - Throws a bad request exception if the sync operation fails.
@@ -933,7 +933,7 @@ export class HubstaffService {
 	 *
 	 * @param {string} sourceId - The ID of the organization in the third-party integration.
 	 * @param {string} integrationId - The ID of the integration.
-	 * @param {string} gauzyId - The ID of the local organization in Gauzy.
+	 * @param {string} gauzyId - The ID of the local organization in DSpot ERP.
 	 * @param {string} token - The access token for authentication with the third-party API.
 	 * @returns {Promise<IIntegrationMap[]>} - A promise that resolves to the synchronized clients.
 	 * @throws {BadRequestException} - Throws a bad request exception if the sync operation fails.
@@ -962,7 +962,7 @@ export class HubstaffService {
 	 * @param {any[]} projectsMap - Array of projects mapped with sourceId and gauzyId.
 	 * @param {string} integrationId - The ID of the integration.
 	 * @param {string} token - The access token for authentication with the third-party API.
-	 * @param {string} gauzyId - The ID of the local organization in Gauzy.
+	 * @param {string} gauzyId - The ID of the local organization in DSpot ERP.
 	 * @returns {Promise<IIntegrationMap[][]>} - A promise that resolves to an array of synchronized tasks.
 	 * @throws {BadRequestException} - Throws a bad request exception if the sync operation fails.
 	 */
@@ -998,7 +998,7 @@ export class HubstaffService {
 	 * @param {string} param0.projectId - The ID of the project associated with the activities.
 	 * @param {object[]} param0.activities - Array of URL activities to sync.
 	 * @param {string} param0.token - Access token for authentication with the third-party API.
-	 * @param {string} param0.organizationId - The ID of the local organization in Gauzy.
+	 * @param {string} param0.organizationId - The ID of the local organization in DSpot ERP.
 	 * @returns {Promise<IIntegrationMap[]>} - A promise that resolves to an array of synchronized integration maps.
 	 * @throws {BadRequestException} - Throws a bad request exception if the sync operation fails.
 	 */
@@ -1063,7 +1063,7 @@ export class HubstaffService {
 	 * @param {IIntegrationMap[]} projectsMap - Array of projects to sync URL activities for.
 	 * @param {string} integrationId - The ID of the integration.
 	 * @param {string} token - Access token for authentication with the third-party API.
-	 * @param {string} organizationId - The ID of the local organization in Gauzy.
+	 * @param {string} organizationId - The ID of the local organization in DSpot ERP.
 	 * @param {IDateRangeActivityFilter} dateRange - Date range filter for activities.
 	 * @returns {Promise<any[]>} - A promise that resolves to an array of mapped URL activities.
 	 * @throws {BadRequestException} - Throws a bad request exception if the sync operation fails.
@@ -1133,7 +1133,7 @@ export class HubstaffService {
 	 * @param {string} param0.projectId - The ID of the project associated with the activities.
 	 * @param {any[]} param0.activities - Array of application activities to sync.
 	 * @param {string} param0.token - Access token for authentication with the third-party API.
-	 * @param {string} param0.organizationId - The ID of the local organization in Gauzy.
+	 * @param {string} param0.organizationId - The ID of the local organization in DSpot ERP.
 	 * @returns {Promise<IIntegrationMap[]>} - A promise that resolves to an array of integration mappings.
 	 * @throws {BadRequestException} - Throws a bad request exception if the sync operation fails.
 	 */
@@ -1207,7 +1207,7 @@ export class HubstaffService {
 	 * @param {IIntegrationMap[]} projectsMap - Array of projects to sync application activities for.
 	 * @param {string} integrationId - The ID of the integration.
 	 * @param {string} token - Access token for authentication with the third-party API.
-	 * @param {string} organizationId - The ID of the local organization in Gauzy.
+	 * @param {string} organizationId - The ID of the local organization in DSpot ERP.
 	 * @param {IDateRangeActivityFilter} dateRange - Date range filter for activities to sync.
 	 * @returns {Promise<any[]>} - A promise that resolves to an array of mapped application activities.
 	 * @throws {BadRequestException} - Throws a bad request exception if the sync operation fails.
@@ -1285,7 +1285,7 @@ export class HubstaffService {
 	 * @param {IIntegrationMap[]} projectsMap - Array of projects to sync activities for.
 	 * @param {string} integrationId - The ID of the integration.
 	 * @param {string} token - Access token for authentication with the third-party API.
-	 * @param {string} organizationId - The ID of the local organization in Gauzy.
+	 * @param {string} organizationId - The ID of the local organization in DSpot ERP.
 	 * @param {IDateRangeActivityFilter} dateRange - Date range filter for activities to sync.
 	 * @returns {Promise<IIntegrationMap[]>} - A promise that resolves to an array of integrated time logs.
 	 * @throws {HttpException|BadRequestException} - Throws an HTTP exception or bad request exception if the sync operation fails.
@@ -1347,7 +1347,7 @@ export class HubstaffService {
 	 * @param {IIntegrationMap[]} projectsMap - Array of projects to sync screenshots activities for.
 	 * @param {string} integrationId - The ID of the integration.
 	 * @param {string} token - Access token for authentication with the third-party API.
-	 * @param {string} organizationId - The ID of the local organization in Gauzy.
+	 * @param {string} organizationId - The ID of the local organization in DSpot ERP.
 	 * @param {IDateRangeActivityFilter} dateRange - Date range filter for screenshots activities to sync.
 	 * @returns {Promise<IIntegrationMap[][]>} - A promise that resolves to an array of arrays of integrated screenshots activities.
 	 * @throws {BadRequestException} - Throws a bad request exception with a detailed error message if the sync operation fails.
@@ -1421,7 +1421,7 @@ export class HubstaffService {
 	 *
 	 * @param {Object} params - Parameters object containing integration details and synchronization configurations.
 	 * @param {string} params.integrationId - The ID of the integration.
-	 * @param {string} params.gauzyId - The ID of the local organization in Gauzy.
+	 * @param {string} params.gauzyId - The ID of the local organization in DSpot ERP.
 	 * @param {string} params.sourceId - The ID of the organization/source in the external system.
 	 * @param {string} params.token - Access token for authentication with the third-party API.
 	 * @param {IDateRangeActivityFilter} params.dateRange - Date range filter for activities to sync.
