@@ -1,6 +1,6 @@
 # @gauzy/ui-core
 
-The `@gauzy/ui-core` library is generated with [Nx](https://nx.dev) and is intended to be used within the Gauzy ecosystem. Before installing, make sure you have a Gauzy workspace set up and that all necessary dependencies are in place.
+The `@gauzy/ui-core` library is generated with [Nx](https://nx.dev) and is intended to be used within the DSpot ERP ecosystem. Before installing, make sure you have a DSpot ERP workspace set up and that all necessary dependencies are in place.
 
 ## Getting Started
 

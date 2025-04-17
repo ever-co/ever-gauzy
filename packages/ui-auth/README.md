@@ -1,6 +1,6 @@
 # @gauzy/ui-auth
 
-The `@gauzy/ui-auth` library provides authentication-related components, services, and utilities specifically designed for the Gauzy platform, enabling streamlined and secure user authentication and management.
+The `@gauzy/ui-auth` library provides authentication-related components, services, and utilities specifically designed for the DSpot ERP platform, enabling streamlined and secure user authentication and management.
 
 ## Features
 
@@ -9,7 +9,7 @@ The `@gauzy/ui-auth` library provides authentication-related components, service
 
 ## Getting Started
 
-The `@gauzy/ui-auth` library is generated with [Nx](https://nx.dev) and is intended to be used within the Gauzy ecosystem. Before installing, make sure you have a Gauzy workspace set up and that all necessary dependencies are in place.
+The `@gauzy/ui-auth` library is generated with [Nx](https://nx.dev) and is intended to be used within the DSpot ERP ecosystem. Before installing, make sure you have a DSpot ERP workspace set up and that all necessary dependencies are in place.
 
 ## Building
 
@@ -25,7 +25,7 @@ After building your library with `yarn nx build ui-auth`, go to the dist folder 
 
 ## Installation
 
-To install `@gauzy/ui-auth` in your Gauzy project, run one of the following commands in your terminal:
+To install `@gauzy/ui-auth` in your DSpot ERP project, run one of the following commands in your terminal:
 
 ```bash
 npm install @gauzy/ui-auth

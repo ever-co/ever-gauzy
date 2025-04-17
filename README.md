@@ -1,4 +1,4 @@
-# Ever Gauzy Platform
+# DSpot ERP Platform
 
 [uri_gauzy]: https://gauzy.co
 [uri_license]: https://www.gnu.org/licenses/agpl-3.0.html
@@ -10,9 +10,9 @@
 
 ## 💡 What's New
 
-We released [Ever Teams](https://github.com/ever-co/ever-teams) platform for Work & Project Management.
-Please check <https://github.com/ever-co/ever-teams> and make it ⭐ on GitHub!
-It's built with a React (NextJs) / ReactNative (Expo) stack and connects to headless [Ever Gauzy Platform APIs](https://api.gauzy.co/swg).
+We released [DSpot ERP](https://github.com/DSpotDevelopers/gauzy) platform for Work & Project Management.
+Please check <https://github.com/DSpotDevelopers/gauzy> and make it ⭐ on GitHub!
+It's built with a React (NextJs) / ReactNative (Expo) stack and connects to headless [DSpot ERP Platform APIs](https://api.gauzy.co/swg).
 
 ## 🌟 What is it
 
@@ -115,17 +115,17 @@ Read more [about Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) 
 
 ### Demo
 
-Ever Gauzy Platform Demo at <https://demo.gauzy.co>.
+DSpot ERP Platform Demo at <https://demo.gauzy.co>.
 
 Notes:
 
--   Default super-admin user login is `admin@ever.co` and the password is `admin`
+-   Default super-admin user login is `admin@dspot.com.pl` and the password is `admin`
 -   Content of demo DB resets on each deployment to the demo environment (usually daily)
 -   Demo environment deployed using CI/CD from the `develop` branch
 
 ### Downloads
 
-You can download Gauzy Platform, Gauzy Server, or Desktop Apps (Windows/Mac/Linux) from the official [Downloads](https://web.gauzy.co/downloads) page.
+You can download DSpot ERP Platform, DSpot ERP Server, or Desktop Apps (Windows/Mac/Linux) from the official [Downloads](https://web.gauzy.co/downloads) page.
 
 In addition, all downloads are also available from the following pages:
 
@@ -142,28 +142,28 @@ Note: it's currently in Alpha version/testing mode, please use it cautiously!
 
 ### Staging
 
--   Gauzy Platform Staging builds (using CI/CD, from the `stage` branch) are available at <https://stage.gauzy.co>
+-   DSpot ERP Platform Staging builds (using CI/CD, from the `stage` branch) are available at <https://stage.gauzy.co>
 -   We are using the Staging environment to test releases before they are deployed to the production environment
 -   Our pre-releases of desktop/server apps are built from this environment and can be configured manually (in settings) to connect to Stage API: <https://apistage.gauzy.co>
 
 ### Server & Desktop Apps
 
-We have Gauzy Server and two Desktop Apps (for Windows/Mac/Linux):
+We have DSpot ERP Server and two Desktop Apps (for Windows/Mac/Linux):
 
--   Ever® Gauzy™ Server - includes Gauzy API, SQLite DB (or connects to external PostgreSQL) and serves Guazy frontend. It allows to quickly run Gauzy Server for multiple clients (browser-based or Desktop-based). It's a recommended option if you want to setup the Ever Gauzy Platform in small to medium organizations.
+-   Ever® Gauzy™ Server - includes DSpot ERP API, SQLite DB (or connects to external PostgreSQL) and serves Guazy frontend. It allows to quickly run DSpot ERP Server for multiple clients (browser-based or Desktop-based). It's a recommended option if you want to setup the DSpot ERP Platform in small to medium organizations.
 
--   Ever® Gauzy™ Desktop App - includes Gauzy frontend (UI), Gauzy API, SQLite DB, etc., all-in-one! It allows to quickly run the whole Gauzy solution locally, both UI and Timer (for time tracking, optionally of course). In addition, it allows you to connect to the external database (e.g. PostgreSQL) or external API (if you have Gauzy Server with API / DB installed on a different computer or if you want to connect to our live API). It's a recommended option if you want to try Gauzy quickly / for personal use or if you want to connect to Gauzy Server in the "client-server" configuration (and use Desktop App instead of web browser).
+-   Ever® Gauzy™ Desktop App - includes DSpot ERP frontend (UI), DSpot ERP API, SQLite DB, etc., all-in-one! It allows to quickly run the whole DSpot ERP solution locally, both UI and Timer (for time tracking, optionally of course). In addition, it allows you to connect to the external database (e.g. PostgreSQL) or external API (if you have DSpot ERP Server with API / DB installed on a different computer or if you want to connect to our live API). It's a recommended option if you want to try DSpot ERP quickly / for personal use or if you want to connect to DSpot ERP Server in the "client-server" configuration (and use Desktop App instead of web browser).
 
--   Ever® Gauzy™ Desktop Timer App - allows running Time and Activity Tracking for employees/contractors with screenshots and activity monitoring. It is recommended to setup by organization employees as long as they are not interested in other Gauzy Platform features (e.g. accounting) and only need to track work time.
+-   Ever® Gauzy™ Desktop Timer App - allows running Time and Activity Tracking for employees/contractors with screenshots and activity monitoring. It is recommended to setup by organization employees as long as they are not interested in other DSpot ERP Platform features (e.g. accounting) and only need to track work time.
 
 More information about our Server & Desktop Apps:
 
 -   Download for your OS from the official [Downloads](https://web.gauzy.co/downloads) page or see the section "Download" above for other links to our releases pages.
--   Setup Gauzy Server with default choices in Setup Wizard and run it.
--   You can also setup Gauzy Desktop App (can run independently or connect to Gauzy Server) or Gauzy Desktop Timer App (should be connected to Gauzy Server)
--   You can login with `admin@ever.co` and password `admin` to check Admin functionality if you installed Gauzy Server or Gauzy Desktop App. Note: such an Admin user is not an employee, so you will not be able to track time.
--   You can login with `employee@ever.co` and password `123456` to check Employee-related functionality in Gauzy UI or to run Desktop Timer from an "Employee" perspective (such a user is an Employee and can track time).
--   If you install Gauzy Server, it is possible to connect to it using a browser (by default on <http://localhost:4200>) or using Gauzy Desktop Apps (make sure to configure Desktop apps to connect to Gauzy API on <http://127.0.0.1:3000/api> because it's where Gauzy Server API runs by default).
+-   Setup DSpot ERP Server with default choices in Setup Wizard and run it.
+-   You can also setup DSpot ERP Desktop App (can run independently or connect to DSpot ERP Server) or DSpot ERP Desktop Timer App (should be connected to DSpot ERP Server)
+-   You can login with `admin@dspot.com.pl` and password `admin` to check Admin functionality if you installed DSpot ERP Server or DSpot ERP Desktop App. Note: such an Admin user is not an employee, so you will not be able to track time.
+-   You can login with `employee@dspot.com.pl` and password `123456` to check Employee-related functionality in DSpot ERP UI or to run Desktop Timer from an "Employee" perspective (such a user is an Employee and can track time).
+-   If you install DSpot ERP Server, it is possible to connect to it using a browser (by default on <http://localhost:4200>) or using DSpot ERP Desktop Apps (make sure to configure Desktop apps to connect to DSpot ERP API on <http://127.0.0.1:3000/api> because it's where DSpot ERP Server API runs by default).
 -   You can read more information about our Desktop Apps on the [Desktop Apps Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-Apps) and our Server at the [Server Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Server).
 
 ## 🧱 Technology Stack and Requirements
@@ -179,7 +179,7 @@ For Production, we recommend:
 -   [PostgreSQL](https://www.postgresql.org) or [MySQL](https://dev.mysql.com)
 -   [Kubernetes](https://kubernetes.io), [Docker](https://www.docker.com) or [PM2](https://github.com/Unitech/pm2)
 
-Note: thanks to TypeORM / MikroORM, Gauzy will support lots of DBs: SQLite (default, for demos), PostgreSQL (development/production), MySql (development/production), MariaDb, CockroachDb, MS SQL, Oracle, MongoDb, and others (with minimal changes).
+Note: thanks to TypeORM / MikroORM, DSpot ERP will support lots of DBs: SQLite (default, for demos), PostgreSQL (development/production), MySql (development/production), MariaDb, CockroachDb, MS SQL, Oracle, MongoDb, and others (with minimal changes).
 
 #### See also README.md and CREDITS.md files in relevant folders for lists of libraries and software included in the Platform, information about licenses, and other details
 
@@ -198,8 +198,8 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 -   Run `docker-compose -f docker-compose.build.yml up`, if you want to build everything (code and Docker images) locally. Check `.env.compose` file for different settings (optionally), e.g. DB type. _(Note: this is extremely long process because it builds whole platform locally. Other options above are much faster!)_
 -   :coffee: time... It might take some time for our API to seed fake data in the DB during the first Docker Compose run, even if you used prebuilt Docker images.
 -   Open <http://localhost:4200> in your browser.
--   Login with email `admin@ever.co` and password: `admin` for Super Admin user.
--   Login with email `employee@ever.co` and password: `123456` for Employee user.
+-   Login with email `admin@dspot.com.pl` and password: `admin` for Super Admin user.
+-   Login with email `employee@dspot.com.pl` and password: `123456` for Employee user.
 -   Enjoy!
 
 Notes:
@@ -230,9 +230,9 @@ Together with Gauzy, Docker Compose (i.e. `docker-compose.yml` and `docker-compo
 -   Adjust settings in the [`.env.local`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.local) which is used in local runs.
 -   Alternatively, you can copy [`.env.sample`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.sample) to `.env` and change default settings there, e.g. database type, name, user, password, etc.
 -   Run both API and UI with a single command: `yarn start`.
--   Open Gauzy UI on <http://localhost:4200> in your browser (API runs on <http://localhost:3000/api>).
--   Login with email `admin@ever.co` and password: `admin` for Super Admin user.
--   Login with email `employee@ever.co` and password: `123456` for Employee user.
+-   Open DSpot ERP UI on <http://localhost:4200> in your browser (API runs on <http://localhost:3000/api>).
+-   Login with email `admin@dspot.com.pl` and password: `admin` for Super Admin user.
+-   Login with email `employee@dspot.com.pl` and password: `123456` for Employee user.
 -   Enjoy!
 
 Notes:
@@ -254,12 +254,12 @@ Notes:
 
 #### General information
 
--   See [Setup Gauzy for Client Server](https://github.com/ever-co/ever-gauzy/wiki/Setup-Gauzy-for-Client-Server) for more information about production setup on your servers.
+-   See [Setup DSpot ERP for Client Server](https://github.com/ever-co/ever-gauzy/wiki/Setup-Gauzy-for-Client-Server) for more information about production setup on your servers.
 
 #### Kubernetes
 
 -   We recommend deploying to Kubernetes (k8s), either manually (see below) or with our [Terraform Modules](https://github.com/ever-co/ever-gauzy-terraform) or [Ever Helm Charts](https://github.com/ever-co/ever-charts).
--   For more simple deployment scenarios with k8s, please see [Kubernetes configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.deploy/k8s), which we are using to deploy Gauzy into [DigitalOcean k8s cluster](https://www.digitalocean.com/products/kubernetes).
+-   For more simple deployment scenarios with k8s, please see [Kubernetes configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.deploy/k8s), which we are using to deploy DSpot ERP into [DigitalOcean k8s cluster](https://www.digitalocean.com/products/kubernetes).
 
 #### DigitalOcean App Platform
 
@@ -267,11 +267,11 @@ Notes:
 
 #### Virtual Instances / Droplets (via SSH)
 
--   Another variant to deploy Gauzy is to use DigitalOcean Droplets or any other virtual instance (with Ubuntu OS) and deploy using SCP/SSH, for example, following [GitHub Action](https://github.com/ever-co/ever-gauzy/blob/develop/.github/workflows/deploy-do-droplet-demo.yml)
+-   Another variant to deploy DSpot ERP is to use DigitalOcean Droplets or any other virtual instance (with Ubuntu OS) and deploy using SCP/SSH, for example, following [GitHub Action](https://github.com/ever-co/ever-gauzy/blob/develop/.github/workflows/deploy-do-droplet-demo.yml)
 
 #### Pulumi
 
--   In addition, check [Gauzy Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project (WIP), it makes complex Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
+-   In addition, check [DSpot ERP Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project (WIP), it makes complex Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
 
 ## 💌 Contact Us
 
@@ -281,30 +281,30 @@ Notes:
 -   [![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/gauzy)
 -   [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/ever-gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 -   [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
--   For business inquiries: <mailto:gauzy@ever.co>
--   Please report security vulnerabilities to <mailto:security@ever.co>
--   [Gauzy Platform @ Twitter](https://twitter.com/gauzyplatform)
--   [Gauzy Platform @ Facebook](https://www.facebook.com/gauzyplatform)
+-   For business inquiries: <mailto:info@dspot.com.pl>
+-   Please report security vulnerabilities to <mailto:info@dspot.com.pl>
+-   [DSpot ERP Platform @ Twitter](https://twitter.com/gauzyplatform)
+-   [DSpot ERP Platform @ Facebook](https://www.facebook.com/gauzyplatform)
 
 ## 🔐 Security
 
-Ever® Gauzy™ follows good security practices, but 100% security cannot be guaranteed in any software!
-Ever® Gauzy™ is provided AS IS without any warranty. Use at your own risk!
+DSpot ERP™ follows good security practices, but 100% security cannot be guaranteed in any software!
+DSpot ERP™ is provided AS IS without any warranty. Use at your own risk!
 See more details in the [LICENSE](LICENSE.md).
 
 In a production setup, all client-side to server-side (backend, APIs) communications should be encrypted using HTTPS/WSS/SSL (REST APIs, GraphQL endpoint, Socket.io WebSockets, etc.).
 
-If you discover any issue regarding security, please disclose the information responsibly by sending an email to <mailto:security@ever.co> or on [![huntr](https://cdn.huntr.dev/huntr_security_badge_mono.svg)](https://huntr.dev) and not by creating a GitHub issue.
+If you discover any issue regarding security, please disclose the information responsibly by sending an email to <mailto:info@dspot.com.pl> or on [![huntr](https://cdn.huntr.dev/huntr_security_badge_mono.svg)](https://huntr.dev) and not by creating a GitHub issue.
 
 ## 🛡️ License
 
-We support the open-source community. If you're building awesome non-profit/open-source projects, we're happy to help and will provide (subject to [acceptance criteria](https://github.com/ever-co/ever-gauzy/wiki/Free-license-and-hosting-for-Non-profit-and-Open-Source-projects)) Ever Gauzy Enterprise edition license and free hosting option! Feel free to contact us at <mailto:ever@ever.co> to make a request. More details are explained in our [Wiki](https://github.com/ever-co/ever-gauzy/wiki/Free-license-and-hosting-for-Non-profit-and-Open-Source-projects).
+We support the open-source community. If you're building awesome non-profit/open-source projects, we're happy to help and will provide (subject to [acceptance criteria](https://github.com/ever-co/ever-gauzy/wiki/Free-license-and-hosting-for-Non-profit-and-Open-Source-projects)) DSpot ERP Enterprise edition license and free hosting option! Feel free to contact us at <mailto:info@dspot.com.pl> to make a request. More details are explained in our [Wiki](https://github.com/ever-co/ever-gauzy/wiki/Free-license-and-hosting-for-Non-profit-and-Open-Source-projects).
 
 This software is available under the following licenses:
 
--   [Ever® Gauzy™ Platform Community Edition](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-community-edition-license)
--   [Ever® Gauzy™ Platform Small Business](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-small-business-license)
--   [Ever® Gauzy™ Platform Enterprise](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-enterprise-license)
+-   [DSpot ERP™ Platform Community Edition](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-community-edition-license)
+-   [DSpot ERP™ Platform Small Business](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-small-business-license)
+-   [DSpot ERP™ Platform Enterprise](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-enterprise-license)
 
 #### The default Ever® Gauzy™ Platform license, without a valid Ever® Gauzy™ Platform Enterprise or Ever® Gauzy™ Platform Small Business License agreement, is the Ever® Gauzy™ Platform Community Edition License
 
@@ -314,10 +314,9 @@ This software is available under the following licenses:
 
 ## ™️ Trademarks
 
-**Ever**® is a registered trademark of [Ever Co. LTD](https://ever.co).
-**Ever® Demand™**, **Ever® Gauzy™**, **Ever® Teams™**, **Ever® Recu™**, **Ever® Clokr™** and **Ever® OpenSaaS™** are all trademarks of [Ever Co. LTD](https://ever.co).
+**DSpot** and **DSpot ERP™** are all trademarks of [DSpot sp. z o.o.](https://www.dspot.com.pl).
 
-The trademarks may only be used with the written permission of Ever Co. LTD. and may not be used to promote or otherwise market competitive products or services.
+The trademarks may only be used with the written permission of DSpot and may not be used to promote or otherwise market competitive products or services.
 
 All other brand and product names are trademarks, registered trademarks, or service marks of their respective holders.
 
@@ -348,7 +347,7 @@ You can also view a full list of our [contributors tracked by Github](https://gi
 
 ## ©️ Copyright
 
-#### Copyright © 2019-present, Ever Co. LTD. All rights reserved
+#### Copyright © 2025-present, DSpot sp. z o.o. All rights reserved
 
 [![Circle CI](https://circleci.com/gh/ever-co/ever-gauzy.svg?style=svg)](https://circleci.com/gh/ever-co/ever-gauzy)
 [![codecov](https://codecov.io/gh/ever-co/ever-gauzy/branch/master/graph/badge.svg)](https://codecov.io/gh/ever-co/ever-gauzy)
@@ -357,8 +356,3 @@ You can also view a full list of our [contributors tracked by Github](https://gi
 [![Known Vulnerabilities](https://snyk.io/test/github/ever-co/ever-gauzy/badge.svg)](https://snyk.io/test/github/ever-co/ever-gauzy)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fever-gauzy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_shield)
 [![Crowdin](https://badges.crowdin.net/e/1d2b3405d65a56ec116d0984fd579cc9/localized.svg)](https://ever.crowdin.com/gauzy)
-
-## 🔥 P.S
-
--   If you are interested in running an on-demand (delivery) or digital marketplace business, check open-source [Ever Demand Platform](https://github.com/ever-co/ever-demand)
--   [We are Hiring: remote TypeScript / NestJS / Angular developers](https://github.com/ever-co/jobs#available-positions)
