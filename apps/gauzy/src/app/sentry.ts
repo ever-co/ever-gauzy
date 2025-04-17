@@ -24,9 +24,7 @@ export function initializeSentry(): void {
 		// Set `tracePropagationTargets` to control for which URLs distributed tracing should be enabled
 		tracePropagationTargets: [
 			'localhost',
-			/^https:\/\/api\.gauzy\.co\/api/,
-			/^https:\/\/apistage\.gauzy\.co\/api/,
-			/^https:\/\/apidemo\.gauzy\.co\/api/
+			/^https:\/\/.*\.dspot\.com\.pl\/api/
 		],
 
 		// Capture Replay for 10% of all sessions,
@@ -35,7 +33,7 @@ export function initializeSentry(): void {
 			? parseInt(environment.SENTRY_TRACES_SAMPLE_RATE)
 			: 0.01,
 		replaysOnErrorSampleRate: 1.0,
-		release: 'gauzy@' + version,
+		release: 'dspot-erp@' + version,
 		// set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring
 		tracesSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE ? parseInt(environment.SENTRY_TRACES_SAMPLE_RATE) : 0.01
 	});

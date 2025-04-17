@@ -12,7 +12,7 @@ if (environment.production) {
 }
 
 persistState({
-	key: '_gauzyStore'
+	key: '_dspotErpStore'
 });
 
 akitaConfig({

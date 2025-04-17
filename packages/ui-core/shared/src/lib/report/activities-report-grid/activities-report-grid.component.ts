@@ -78,7 +78,7 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent i
 
 	/**
 	 * Get header selectors request
-	 * Get gauzy timesheet filters request
+	 * Get DSpot ERP timesheet filters request
 	 *
 	 * @returns
 	 */

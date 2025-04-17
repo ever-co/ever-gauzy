@@ -214,7 +214,7 @@ export class HubstaffService {
 			.currentValue.filter((setting) => setting.sync)
 			.find((setting) => setting.entity === IntegrationEntity.ORGANIZATION);
 
-		// if organization is set to true, map all entities to this organizations, else use hubstaff organizations id and map all entities to current selected gauzy organization
+		// if organization is set to true, map all entities to this organizations, else use hubstaff organizations id and map all entities to current selected DSpot ERP organization
 		if (organizationEntityToSync && organizationEntityToSync.sync) {
 			const organizationsMap$ = this._http.post<IIntegrationMap[]>(
 				`${API_PREFIX}/integration/hubstaff/sync-organizations`,

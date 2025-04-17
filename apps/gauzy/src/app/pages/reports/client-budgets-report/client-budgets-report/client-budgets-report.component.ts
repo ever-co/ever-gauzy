@@ -96,7 +96,7 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent im
 	}
 
 	/**
-	 * Updates Gauzy timesheet default filters, saves the filters if configured to do so,
+	 * Updates DSpot ERP timesheet default filters, saves the filters if configured to do so,
 	 * and notifies subscribers about the change.
 	 *
 	 * @param filters - An object representing time log filters (ITimeLogFilters).

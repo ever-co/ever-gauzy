@@ -86,7 +86,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	}
 
 	/*
-	 * Migrate Self Hosted to Gauzy Cloud Hosted
+	 * Migrate Self Hosted to Cloud Hosted
 	 */
 	onMigrateIntoCloud(password: string) {
 		const {

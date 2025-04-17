@@ -112,7 +112,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 	}
 
 	/**
-	 * Gauzy timesheet default filters
+	 * DSpot ERP timesheet default filters
 	 *
 	 * @param filters
 	 */

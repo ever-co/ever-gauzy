@@ -79,7 +79,7 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 	}
 
 	/**
-	 * Gauzy timesheet default filters
+	 * DSpot ERP timesheet default filters
 	 *
 	 * @param filters
 	 */
@@ -93,7 +93,7 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 
 	/**
 	 * Get header selectors request
-	 * Get gauzy timesheet filters request
+	 * Get DSpot ERP timesheet filters request
 	 *
 	 * @returns
 	 */

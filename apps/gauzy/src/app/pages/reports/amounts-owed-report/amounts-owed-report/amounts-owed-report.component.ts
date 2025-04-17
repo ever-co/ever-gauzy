@@ -105,7 +105,7 @@ export class AmountsOwedReportComponent extends BaseSelectorFilterComponent impl
 	}
 
 	/**
-	 * Handles changes in Gauzy timesheet filters.
+	 * Handles changes in DSpot ERP timesheet filters.
 	 * @param filters - The updated filters.
 	 */
 	filtersChange(filters: ITimeLogFilters) {
