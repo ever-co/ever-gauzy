@@ -9,18 +9,18 @@ import { handleCloseEvent } from './utils/desktop-window-utils';
 setupElectronLog();
 
 /**
- * Creates and initializes the Gauzy main window for the Electron application.
+ * Creates and initializes the DSpot ERP main window for the Electron application.
  *
  * This function sets up a new Electron `BrowserWindow` instance with the specified settings,
  * loads the appropriate URL or file path, and attaches listeners for close and IPC events.
  * It also registers the window with the `WindowManager` for centralized control.
  *
- * @param {Electron.BrowserWindow | null} gauzyWindow - The Gauzy window instance to initialize or recreate.
+ * @param {Electron.BrowserWindow | null} gauzyWindow - The DSpot ERP window instance to initialize or recreate.
  * @param {boolean} serve - Indicates if the application is running in development mode (serve).
  * @param {object} config - The configuration object containing app-specific settings.
  * @param {string} filePath - The path to the local file to load if not in serve mode.
  * @param {string} [preloadPath] - An optional path to the preload script for the window.
- * @returns {Promise<Electron.BrowserWindow>} - A promise resolving to the initialized Gauzy window.
+ * @returns {Promise<Electron.BrowserWindow>} - A promise resolving to the initialized DSpot ERP window.
  */
 export async function createGauzyWindow(
 	gauzyWindow: Electron.BrowserWindow | null,
@@ -29,7 +29,7 @@ export async function createGauzyWindow(
 	filePath: string,
 	preloadPath?: string
 ): Promise<Electron.BrowserWindow> {
-	console.info('Creating Gauzy main window: Initialization process started');
+	console.info('Creating DSpot ERP main window: Initialization process started');
 	// Get the WindowManager instance
 	const manager = WindowManager.getInstance();
 
@@ -65,7 +65,7 @@ export async function createGauzyWindow(
 	// Init main listener for electron
 	initMainListener();
 
-	console.info('Gauzy main window creation completed successfully');
+	console.info('DSpot ERP main window creation completed successfully');
 
 	// Register the window with the WindowManager
 	manager.register(RegisteredWindow.MAIN, gauzyWindow);
@@ -81,7 +81,7 @@ export async function createGauzyWindow(
 }
 
 /**
- * Conditionally hides the Gauzy window based on the configuration.
+ * Conditionally hides the DSpot ERP window based on the configuration.
  *
  * If the `gauzyWindow` property in the `config` object is falsy, this function
  * hides the provided `BrowserWindow` instance.
@@ -96,7 +96,7 @@ function hideWindowIfConfigured(gauzyWindow: Electron.BrowserWindow, config: { g
 }
 
 /**
- * Sets the launch path for the Gauzy window and loads the specified URL.
+ * Sets the launch path for the DSpot ERP window and loads the specified URL.
  *
  * This function constructs a `file:` protocol URL using the provided file path and
  * loads it into the Electron `BrowserWindow` instance.
@@ -105,10 +105,7 @@ function hideWindowIfConfigured(gauzyWindow: Electron.BrowserWindow, config: { g
  * @param {string} filePath - The local file path to be loaded into the window.
  * @returns {Promise<void>} - Resolves when the URL is successfully loaded.
  */
-async function setLaunchPathAndLoad(
-	window: Electron.BrowserWindow,
-	filePath: string
-): Promise<string> {
+async function setLaunchPathAndLoad(window: Electron.BrowserWindow, filePath: string): Promise<string> {
 	// Construct the file URL
 	const launchPath = url.format({
 		pathname: filePath,
@@ -120,7 +117,7 @@ async function setLaunchPathAndLoad(
 	await window.loadURL(launchPath);
 
 	// Log the loaded URL for debugging purposes
-	console.info(`Loaded URL in Gauzy window: ${launchPath}`);
+	console.info(`Loaded URL in DSpot ERP window: ${launchPath}`);
 	return launchPath;
 }
 
@@ -155,7 +152,7 @@ const windowSetting = (preloadPath?: string): Electron.BrowserWindowConstructorO
 		height: sizes.height,
 		x: 0,
 		y: 0,
-		title: process.env.DESCRIPTION || 'Gauzy Desktop',
+		title: process.env.DESCRIPTION || 'DSpot ERP Desktop',
 		show: false,
 		icon: filesPath.iconPath
 	};
@@ -200,6 +197,9 @@ function initMainListener(): void {
  * @param {object} envConfig - Environment configurations with `API_DEFAULT_PORT`.
  * @returns {string} - The API base URL.
  */
-export function getApiBaseUrl(configs: { serverUrl?: string; port?: number }, envConfig: { API_DEFAULT_PORT: number }): string {
+export function getApiBaseUrl(
+	configs: { serverUrl?: string; port?: number },
+	envConfig: { API_DEFAULT_PORT: number }
+): string {
 	return configs.serverUrl || `http://localhost:${configs.port || envConfig.API_DEFAULT_PORT}`;
 }
