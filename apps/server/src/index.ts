@@ -107,7 +107,7 @@ console.log('App is packaged', app.isPackaged);
 const gauzyUIPath = app.isPackaged
 	? path.join(__dirname, '../data/ui/index.html')
 	: path.join(__dirname, './data/ui/index.html');
-console.log('Gauzy UI path', gauzyUIPath);
+console.log('DSpot ERP UI path', gauzyUIPath);
 
 const uiPath = path.join(__dirname, 'index.html');
 console.log('UI path', uiPath);
@@ -252,7 +252,7 @@ const closeSplashScreen = () => {
 		splashScreen.close();
 		splashScreen = null;
 	}
-}
+};
 
 const runSetup = async () => {
 	// Set default configuration
@@ -447,7 +447,7 @@ ipcMain.on('start_server', async (event, arg) => {
 });
 
 ipcMain.on('run_gauzy_server', async (event, arg) => {
-	console.log('Run Ever Gauzy Server Event Handler');
+	console.log('Run DSpot ERP Server Event Handler');
 	await runServer();
 });
 
@@ -456,7 +456,7 @@ const stopServer = () => {
 };
 
 ipcMain.on('stop_gauzy_server', (event, arg) => {
-	console.log('Stop Ever Gauzy Server Event Handler');
+	console.log('Stop DSpot ERP Server Event Handler');
 	stopServer();
 });
 

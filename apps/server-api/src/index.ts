@@ -243,7 +243,7 @@ const closeSplashScreen = () => {
 		splashScreen.close();
 		splashScreen = null;
 	}
-}
+};
 
 const runSetup = async () => {
 	// Set default configuration
@@ -432,7 +432,7 @@ ipcMain.on('start_server', async (event, arg) => {
 });
 
 ipcMain.on('run_gauzy_server', async (event, arg) => {
-	console.log('Run Gauzy Server Event Handler');
+	console.log('Run DSpot ERP Server Event Handler');
 	await runServer();
 });
 
@@ -441,7 +441,7 @@ const stopServer = () => {
 };
 
 ipcMain.on('stop_gauzy_server', (event, arg) => {
-	console.log('Stop Gauzy Server Event Handler');
+	console.log('Stop DSpot ERP Server Event Handler');
 	stopServer();
 });
 
