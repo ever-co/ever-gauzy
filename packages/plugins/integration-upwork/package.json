@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/plugin-integration-upwork",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform plugin for integration with Upwork APIs",
+	"description": "DSpot ERP Platform plugin for integration with Upwork APIs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -10,12 +10,19 @@
 	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy"
+		"url": "https://github.com/DSpotDevelopers/gauzy"
 	},
 	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
+		"url": "https://github.com/DSpotDevelopers/gauzy/issues"
 	},
-	"homepage": "https://ever.co",
+	"contributors": [
+		{
+			"name": "DSpot sp. z o.o.",
+			"email": "info@dspot.com.pl",
+			"url": "https://www.dspot.com.pl/"
+		}
+	],
+	"homepage": "https://www.dspot.com.pl",
 	"private": true,
 	"type": "commonjs",
 	"main": "./src/index.js",

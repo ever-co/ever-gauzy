@@ -1,17 +1,24 @@
 {
 	"name": "gauzy-desktop",
-	"productName": "Ever Gauzy Desktop",
+	"productName": "DSpot ERP Desktop",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Desktop",
+	"description": "DSpot ERP Desktop",
 	"license": "AGPL-3.0",
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy.git"
+		"url": "https://github.com/DSpotDevelopers/gauzy"
 	},
 	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
+		"url": "https://github.com/DSpotDevelopers/gauzy/issues"
 	},
+	"contributors": [
+		{
+			"name": "DSpot sp. z o.o.",
+			"email": "info@dspot.com.pl",
+			"url": "https://www.dspot.com.pl/"
+		}
+	],
 	"private": true,
 	"author": {
 		"name": "Ever Co. LTD",
@@ -49,10 +56,10 @@
 		]
 	},
 	"build": {
-		"appId": "com.ever.gauzydesktop",
+		"appId": "pl.com.dspot.erpdesktop",
 		"artifactName": "${name}-${version}.${ext}",
-		"productName": "Ever Gauzy Desktop",
-		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
+		"productName": "DSpot ERP Desktop",
+		"copyright": "Copyright © 2025-Present. DSpot sp. z o.o.",
 		"dmg": {
 			"sign": false
 		},

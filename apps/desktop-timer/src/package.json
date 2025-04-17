@@ -1,17 +1,24 @@
 {
 	"name": "gauzy-desktop-timer",
-	"productName": "Gauzy Desktop Timer",
+	"productName": "DSpot ERP Desktop Timer",
 	"version": "0.1.0",
-	"description": "Gauzy Desktop Timer",
+	"description": "DSpot ERP Desktop Timer",
 	"license": "AGPL-3.0",
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy.git"
+		"url": "https://github.com/DSpotDevelopers/gauzy"
 	},
 	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
+		"url": "https://github.com/DSpotDevelopers/gauzy/issues"
 	},
+	"contributors": [
+		{
+			"name": "DSpot sp. z o.o.",
+			"email": "info@dspot.com.pl",
+			"url": "https://www.dspot.com.pl/"
+		}
+	],
 	"private": true,
 	"author": {
 		"name": "Ever Co. LTD",
@@ -29,10 +36,10 @@
 		]
 	},
 	"build": {
-		"appId": "com.ever.gauzydesktoptimer",
+		"appId": "pl.com.dspot.erpdesktoptimer",
 		"artifactName": "${name}-${version}.${ext}",
-		"productName": "Gauzy Desktop Timer",
-		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
+		"productName": "DSpot ERP Desktop Timer",
+		"copyright": "Copyright © 2025-Present. DSpot sp. z o.o.",
 		"afterSign": "tools/notarize.js",
 		"dmg": {
 			"sign": false
@@ -78,7 +85,7 @@
 			"entitlementsInherit": "tools/build/entitlements.mas.plist",
 			"extendInfo": {
 				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup.",
-				"NSCameraUsageDescription": "Please allow access to Gauzy Desktop Timer to make screenshot"
+				"NSCameraUsageDescription": "Please allow access to DSpot ERP Desktop Timer to make screenshot"
 			}
 		},
 		"win": {

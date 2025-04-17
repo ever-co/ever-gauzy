@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/plugin-legal-ui",
 	"version": "0.1.0",
-	"description": "A plugin for the legal UI in the Ever Gauzy platform, providing components and modules for managing legal documents and agreements.",
+	"description": "A plugin for the legal UI in the DSpot ERP platform, providing components and modules for managing legal documents and agreements.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -9,12 +9,19 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy"
+		"url": "https://github.com/DSpotDevelopers/gauzy"
 	},
 	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
+		"url": "https://github.com/DSpotDevelopers/gauzy/issues"
 	},
-	"homepage": "https://ever.co",
+	"contributors": [
+		{
+			"name": "DSpot sp. z o.o.",
+			"email": "info@dspot.com.pl",
+			"url": "https://www.dspot.com.pl/"
+		}
+	],
+	"homepage": "https://www.dspot.com.pl",
 	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {

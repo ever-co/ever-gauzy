@@ -1,20 +1,27 @@
 {
 	"name": "@gauzy/plugin-changelog",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform Change Log plugin",
+	"description": "DSpot ERP Platform Change Log plugin",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"homepage": "https://ever.co",
+	"homepage": "https://www.dspot.com.pl",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy"
+		"url": "https://github.com/DSpotDevelopers/gauzy"
 	},
 	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
+		"url": "https://github.com/DSpotDevelopers/gauzy/issues"
 	},
+	"contributors": [
+		{
+			"name": "DSpot sp. z o.o.",
+			"email": "info@dspot.com.pl",
+			"url": "https://www.dspot.com.pl/"
+		}
+	],
 	"license": "AGPL-3.0",
 	"private": true,
 	"type": "commonjs",
