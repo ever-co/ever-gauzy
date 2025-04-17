@@ -1,4 +1,4 @@
-# Ever Gauzy Platform UI
+# DSpot ERP Platform UI
 
 ARG DEPENDENCIES_IMAGE
 
@@ -58,8 +58,8 @@ ARG EXTENSION_DOWNLOAD_LINK
 
 FROM ${DEPENDENCIES_IMAGE:-"no-image"} AS builder
 
-LABEL maintainer="ever@ever.co"
-LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
+LABEL maintainer="info@dspot.com.pl"
+LABEL org.opencontainers.image.source="https://github.com/DSpotDevelopers/gauzy"
 
 # We make NODE_ENV and other env vars passed as build argument to be available in this stage
 ARG NODE_ENV
@@ -133,17 +133,17 @@ ENV CI=true \
 	FILE_PROVIDER=${FILE_PROVIDER:-"LOCAL"} \
 	PLATFORM_PRIVACY_URL=${PLATFORM_PRIVACY_URL:-"https://gauzy.co/privacy"} \
 	PLATFORM_TOS_URL=${PLATFORM_TOS_URL:-"https://gauzy.co/tos"} \
-	PROJECT_REPO=${PROJECT_REPO:-"https://github.com/ever-co/ever-gauzy.git"} \
+	PROJECT_REPO=${PROJECT_REPO:-"https://github.com/DSpotDevelopers/gauzy"} \
 	I18N_FILES_URL=${I18N_FILES_URL} \
-	COMPANY_NAME=${COMPANY_NAME:-"Ever Co. LTD"} \
-	COMPANY_LINK=${COMPANY_LINK:-"https://ever.co"} \
-	COMPANY_SITE_NAME=${COMPANY_SITE_NAME:-"Gauzy"} \
-	COMPANY_SITE_LINK=${COMPANY_SITE_LINK:-"https://gauzy.co"} \
-	COMPANY_GITHUB_LINK=${COMPANY_GITHUB_LINK:-"https://github.com/ever-co"} \
-	COMPANY_GITLAB_LINK=${COMPANY_GITLAB_LINK:-"https://gitlab.com/ever-co"} \
-	COMPANY_FACEBOOK_LINK=${COMPANY_FACEBOOK_LINK:-"https://www.facebook.com/gauzyplatform"} \
-	COMPANY_TWITTER_LINK=${COMPANY_TWITTER_LINK:-"https://twitter.com/gauzyplatform"} \
-	COMPANY_IN_LINK=${COMPANY_IN_LINK:-"https://www.linkedin.com/company/everhq"} \
+	COMPANY_NAME=${COMPANY_NAME:-"DSpot sp. z o.o."} \
+	COMPANY_LINK=${COMPANY_LINK:-"https://www.dspot.com.pl"} \
+	COMPANY_SITE_NAME=${COMPANY_SITE_NAME:-"DSpot ERP"} \
+	COMPANY_SITE_LINK=${COMPANY_SITE_LINK:-"https://www.dspot.com.pl"} \
+	COMPANY_GITHUB_LINK=${COMPANY_GITHUB_LINK:-"https://github.com/DSpotDevelopers"} \
+	COMPANY_GITLAB_LINK=${COMPANY_GITLAB_LINK:-"https://gitlab.com/DSpotDevelopers"} \
+	COMPANY_FACEBOOK_LINK=${COMPANY_FACEBOOK_LINK:-"https://www.facebook.com/DSpotTeam"} \
+	COMPANY_TWITTER_LINK=${COMPANY_TWITTER_LINK:-"https://x.com/DSpotTeam"} \
+	COMPANY_IN_LINK=${COMPANY_IN_LINK:-"https://www.linkedin.com/company/dspotteam"} \
 	PLATFORM_WEBSITE_URL=${PLATFORM_WEBSITE_URL:-"https://gauzy.co"} \
 	PLATFORM_WEBSITE_DOWNLOAD_URL=${PLATFORM_WEBSITE_DOWNLOAD_URL:-"https://gauzy.co/downloads"} \
 	DESKTOP_APP_DOWNLOAD_LINK_APPLE=${DESKTOP_APP_DOWNLOAD_LINK_APPLE:-"https://gauzy.co/downloads#desktop/apple"} \

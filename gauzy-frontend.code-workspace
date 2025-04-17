@@ -12,7 +12,7 @@
         "configurations": [
             {
                 "type": "node-terminal",
-                "name": "Start Gauzy WebApp Server",
+                "name": "Start DSpot ERP WebApp Server",
                 "request": "launch",
                 "command": "yarn start:gauzy",
                 "cwd": "${workspaceFolder}/../../",

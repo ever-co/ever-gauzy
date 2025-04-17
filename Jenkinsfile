@@ -35,7 +35,7 @@ pipeline {
         stage("Clone") {
             steps{
                 git branch: 'develop',
-                    url: 'https://github.com/ever-co/ever-gauzy.git'
+                    url: 'https://github.com/DSpotDevelopers/gauzy'
 
                 sh """
                     curl 'https://api.github.com/repos/ever-co/${REPO_NAME}/statuses/$GIT_COMMIT' -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Content-Type: application/json' -X POST -d '{"state": "pending", "context": "Jenkins", "description": "Jenkins pipeline is running", "target_url": "https://$CI_URL/job/${JOB_NAME}/$BUILD_NUMBER/console"}'
@@ -65,7 +65,7 @@ pipeline {
                         }
                     }
                 }
-                stage("Gauzy WebApp Image") {
+                stage("DSpot ERP WebApp Image") {
                     steps {
                         sh "docker build -t ${env.IMAGE_WEBAPP} -f .deploy/webapp/Dockerfile ."
                     }
@@ -165,13 +165,13 @@ pipeline {
     }
     post {
         success {
-            echo "Gauzy CI/CD pipeline executed successfully!"
+            echo "DSpot ERP CI/CD pipeline executed successfully!"
             sh """
                 curl 'https://api.github.com/repos/ever-co/${REPO_NAME}/statuses/$GIT_COMMIT' -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Content-Type: application/json' -X POST -d '{"state": "success", "context": "Jenkins", "description": "Jenkins pipeline succeeded", "target_url": "https://$CI_URL/job/${JOB_NAME}/$BUILD_NUMBER/console"}'
             """
 		}
         failure {
-            echo "Gauzy CI/CD pipeline failed..."
+            echo "DSpot ERP CI/CD pipeline failed..."
 			sh """
                 curl 'https://api.github.com/repos/ever-co/${REPO_NAME}/statuses/$GIT_COMMIT' -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Content-Type: application/json' -X POST -d '{"state": "failure", "context": "Jenkins", "description": "Jenkins pipeline failed", "target_url": "https://$CI_URL/job/${JOB_NAME}/$BUILD_NUMBER/console"}'
             """
