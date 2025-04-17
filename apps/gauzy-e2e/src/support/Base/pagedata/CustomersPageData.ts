@@ -1,5 +1,5 @@
 export const CustomersPageData = {
-	defaultProject: 'Gauzy Web Site',
+	defaultProject: 'DSpot ERP Web Site',
 	defaultPhone: '00359878561239',
 	country: 'Bulgaria',
 	hours: 12,
