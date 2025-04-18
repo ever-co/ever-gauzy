@@ -159,7 +159,8 @@ RUN rm -rf ./node_modules/@gauzy \
 	mv  "./packages/plugins/$plugin/node_modules" "./node_modules/@gauzy/plugin-${plugin}/node_modules"; \
 	fi; \
 	done \
-	&& mv "./node_modules/@gauzy/plugin-sentry-tracing" "./node_modules/@gauzy/plugin-sentry"
+	&& mv "./node_modules/@gauzy/plugin-sentry-tracing" "./node_modules/@gauzy/plugin-sentry" \
+	&& cp -r ./seed/* ./apps/api/public
 
 # Copy the entrypoint scripts
 COPY --chmod=755 wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh ./
