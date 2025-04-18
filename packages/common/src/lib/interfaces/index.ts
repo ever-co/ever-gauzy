@@ -12,6 +12,7 @@ export * from './IGithubConfig';
 export * from './IGoogleConfig';
 export * from './IKeycloakConfig';
 export * from './ILinkedinIConfig';
+export * from './IMakeComConfig';
 export * from './IMicrosoftConfig';
 export * from './ISMTPConfig';
 export * from './ITwitterConfig';
