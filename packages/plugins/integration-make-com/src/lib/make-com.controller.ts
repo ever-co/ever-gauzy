@@ -1,17 +1,20 @@
 import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TenantPermissionGuard, Permissions } from '@gauzy/core';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { PermissionsEnum, IMakeComIntegrationSettings } from '@gauzy/contracts';
 import { MakeComService } from './make-com.service';
 import { UpdateMakeComSettingsDTO } from './dto/update-make-com-settings.dto';
-import { IMakeComIntegrationSettings } from './types';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('Make.com Integrations')
 @UseGuards(TenantPermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller('/integration/make-com')
 export class MakeComController {
-	constructor(private readonly makeComService: MakeComService) {}
+	constructor(
+		private readonly makeComService: MakeComService,
+		private readonly _config: ConfigService
+	) {}
 
 	/**
 	 * Retrieves the Make.com integration settings for the current tenant.
@@ -35,7 +38,7 @@ export class MakeComController {
 	/**
 	 * Updates the Make.com integration settings for the current tenant.
 	 *
-	 * @param input - The DTO containing the updated Make.com settings.
+	 * @param {UpdateMakeComSettingsDTO} input - The DTO containing the updated Make.com settings.
 	 * @returns {Promise<IMakeComIntegrationSettings>} A promise that resolves to the updated integration settings.
 	 */
 	@ApiOperation({ summary: 'Update Make.com integration settings for tenant' })
@@ -49,7 +52,59 @@ export class MakeComController {
 	})
 	@Post('/')
 	async updateSettings(@Body() input: UpdateMakeComSettingsDTO): Promise<IMakeComIntegrationSettings> {
-		// Pass the tenantId along with the input data for updating settings.
 		return this.makeComService.updateIntegrationSettings(input);
+	}
+
+	/**
+	 * Updates the Make.com OAuth settings for the current tenant.
+	 *
+	 * @param {UpdateMakeComOAuthSettingsDTO} input - The DTO containing the updated Make.com OAuth settings.
+	 * @returns {Promise<IMakeComIntegrationSettings>} A promise that resolves to the updated integration settings.
+	 */
+	@ApiOperation({ summary: 'Update Make.com OAuth settings for tenant' })
+	@ApiResponse({
+		status: 200,
+		description: 'Make.com OAuth settings updated successfully'
+	})
+	@ApiResponse({
+		status: 404,
+		description: 'Tenant ID not found in request context'
+	})
+	@Post('/oauth-settings')
+	async updateOAuthSettings(@Body() input: UpdateMakeComSettingsDTO): Promise<IMakeComIntegrationSettings> {
+		// Update environment variables with provided OAuth settings if they exist
+		let client_id = this._config.get<string>('makeCom.clientId');
+		let client_secret = this._config.get<string>('makeCom.clientSecret');
+
+		if (input.clientId) {
+			client_id = input.clientId;
+		}
+		if (input.clientSecret) {
+			client_secret = input.clientSecret;
+		}
+
+		// Update webhook settings
+		return this.makeComService.updateIntegrationSettings({
+			isEnabled: input.isEnabled,
+			webhookUrl: input.webhookUrl
+		});
+	}
+
+	/**
+	 * Gets the OAuth configuration details needed for the frontend.
+	 *
+	 * @returns {Promise<Object>} A promise that resolves to the OAuth configuration.
+	 */
+	@ApiOperation({ summary: 'Get Make.com OAuth configuration' })
+	@ApiResponse({
+		status: 200,
+		description: 'Retrieved Make.com OAuth configuration'
+	})
+	@Get('/oauth-config')
+	async getOAuthConfig(): Promise<{ clientId: string; redirectUri: string }> {
+		return {
+			clientId: this._config.get<string>('makeCom.clientId'),
+			redirectUri: this._config.get<string>('makeCom.redirectUri')
+		};
 	}
 }

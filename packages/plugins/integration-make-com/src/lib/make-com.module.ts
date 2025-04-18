@@ -10,9 +10,11 @@ import {
 	UserModule
 } from '@gauzy/core';
 import { MakeComController } from './make-com.controller';
+import { MakeComAuthorizationController } from './make-com-authorization.controller';
 import { MakeComService } from './make-com.service';
 import { WebhookService } from './webhook.service';
 import { EventHandlers } from './handlers';
+import { MakeComOAuthService } from './make-com-oauth.service';
 
 @Module({
 	imports: [
@@ -25,8 +27,8 @@ import { EventHandlers } from './handlers';
 		IntegrationTenantModule,
 		UserModule
 	],
-	controllers: [MakeComController],
-	providers: [WebhookService, MakeComService, ...EventHandlers],
-	exports: [WebhookService, MakeComService]
+	controllers: [MakeComController, MakeComAuthorizationController],
+	providers: [WebhookService, MakeComService, MakeComOAuthService, ...EventHandlers],
+	exports: [WebhookService, MakeComService, MakeComOAuthService],
 })
 export class MakeComModule {}
