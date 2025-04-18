@@ -151,6 +151,7 @@ export * from './lib/user.model';
 export * from './lib/wakatime.model';
 export * from './lib/plugin.model';
 export * from './lib/zapier.model';
+export * from './lib/make-com.model';
 
 export {
 	ActorTypeEnum,
