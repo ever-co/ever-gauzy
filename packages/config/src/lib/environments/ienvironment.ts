@@ -19,7 +19,8 @@ import {
 	IDigitalOceanConfig,
 	IGauzyAIConfig,
 	IPluginsConfig,
-	IZapierConfig
+	IZapierConfig,
+	IPosthogConfig
 } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 
@@ -111,6 +112,8 @@ export interface IEnvironment {
 	sentry?: {
 		dsn: string;
 	};
+
+	posthog?: IPosthogConfig;
 
 	/**
 	 * Default Integrated User Password

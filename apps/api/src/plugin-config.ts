@@ -9,11 +9,13 @@ import {
 	dbKnexConnectionConfig
 } from '@gauzy/config';
 import { SentryService } from '@gauzy/plugin-sentry';
+import { PosthogService } from '@gauzy/plugin-posthog';
+import { PosthogAnalytics as PosthogPlugin } from './posthog';
 import { SentryTracing as SentryPlugin } from './sentry';
 import { version } from './../version';
 import { plugins } from './plugins';
 
-const { sentry } = environment;
+const { sentry, posthog } = environment;
 
 const logger = new Logger('GZY - Plugin Config');
 
@@ -63,6 +65,30 @@ export const pluginConfig: ApplicationPluginConfig = {
 		assetPath: assetPath,
 		assetPublicPath: assetPublicPath
 	},
-	...(sentry?.dsn ? { logger: new SentryService(SentryPlugin.options) } : {}),
+	logger: (() => {
+		const loggers = [];
+
+		if (sentry?.dsn) {
+			loggers.push(new SentryService(SentryPlugin.options));
+		}
+		if (posthog?.posthogEnabled && posthog?.posthogKey) {
+			loggers.push(new PosthogService(PosthogPlugin.options));
+		}
+
+		// Combine both, or return undefined if no logger is configured
+		if (loggers.length === 0) {
+			return undefined;
+		} else if (loggers.length === 1) {
+			return loggers[0];
+		} else {
+			return {
+				log: (...args) => loggers.forEach((logger) => logger.log?.(...args)),
+				error: (...args) => loggers.forEach((logger) => logger.error?.(...args)),
+				warn: (...args) => loggers.forEach((logger) => logger.warn?.(...args)),
+				debug: (...args) => loggers.forEach((logger) => logger.debug?.(...args)),
+				verbose: (...args) => loggers.forEach((logger) => logger.verbose?.(...args))
+			};
+		}
+	})(),
 	plugins
 };
