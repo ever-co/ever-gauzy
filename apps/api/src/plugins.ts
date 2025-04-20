@@ -17,8 +17,9 @@ import { VideosPlugin } from '@gauzy/plugin-videos';
 import { RegistryPlugin } from '@gauzy/plugin-registry';
 
 import { SentryTracing as SentryPlugin } from './sentry';
+import { PosthogAnalytics as PosthogPlugin } from './posthog';
 
-const { jitsu, sentry } = environment;
+const { jitsu, sentry, posthog } = environment;
 
 /**
  * An array of plugins to be included or used in the codebase.
@@ -26,6 +27,10 @@ const { jitsu, sentry } = environment;
 export const plugins = [
 	// Includes the SentryPlugin based on the presence of Sentry configuration.
 	...(sentry && sentry.dsn ? [SentryPlugin] : []),
+
+	// Includes the PostHogPlugin based on the presence of PostHog configuration.
+	...(posthog?.posthogEnabled && posthog?.posthogKey ? [PosthogPlugin] : []),
+
 	// Initializes the Jitsu Analytics Plugin by providing a configuration object.
 	JitsuAnalyticsPlugin.init({
 		config: {
