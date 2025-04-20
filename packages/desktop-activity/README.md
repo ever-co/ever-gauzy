@@ -16,7 +16,7 @@ After building your library with `yarn nx build desktop-activity`, go to the dis
 
 ## Installation
 
-Install the Desktop Libs Library using your preferred package manager:
+Install the Desktop Activity Library using your preferred package manager:
 
 ```bash
 npm install @gauzy/desktop-activity

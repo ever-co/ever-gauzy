@@ -20,7 +20,6 @@ class PullActivities {
 
 	getListenerModule() {
 		try {
-			// this is not implemented yet
 			this.listenerModule = new KeyboardMouseEventCounter();
 		} catch (error) {
 			console.error('error on get listener module', error);
