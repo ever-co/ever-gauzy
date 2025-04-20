@@ -7040,9 +7040,9 @@
     webpack-node-externals "3.0.0"
 
 "@nestjs/common@^10.4.15":
-  version "10.4.15"
-  resolved "https://registry.yarnpkg.com/@nestjs/common/-/common-10.4.15.tgz#27c291466d9100eb86fdbe6f7bbb4d1a6ad55f70"
-  integrity sha512-vaLg1ZgwhG29BuLDxPA9OAcIlgqzp9/N8iG0wGapyUNTf4IY4O6zAHgN6QalwLhFxq7nOI021vdRojR1oF3bqg==
+  version "10.4.16"
+  resolved "https://registry.yarnpkg.com/@nestjs/common/-/common-10.4.16.tgz#d53ac2d4b9e8e1723a10265ab337ac51d77b432b"
+  integrity sha512-40jE0Na48HJ0xDcvmejzOQzaZttqwc0wkMyfDveG70L4hKBohL1FV1nEHoPicqbifkxOQAI+vrWaVwtRwm5g5g==
   dependencies:
     uid "2.0.2"
     iterare "1.2.1"
