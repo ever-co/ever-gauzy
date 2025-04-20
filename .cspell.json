@@ -569,7 +569,9 @@
 		"wparam",
 		"lparam",
 		"refcon",
-		"cflags"
+		"cflags",
+		"uiohook",
+		"gauzyagent"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
