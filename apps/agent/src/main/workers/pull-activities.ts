@@ -1,7 +1,7 @@
-import { KeyboardMouseCounter } from '@gauzy/desktop-lib';
+import { KeyboardMouseEventCounter } from '@gauzy/desktop-activity';
 class PullActivities {
 	static instance: PullActivities;
-	private listenerModule: KeyboardMouseCounter;
+	private listenerModule: KeyboardMouseEventCounter;
 	private isStarted: boolean;
 	constructor() {
 		if (!PullActivities.instance) {
@@ -21,7 +21,7 @@ class PullActivities {
 	getListenerModule() {
 		try {
 			// this is not implemented yet
-			this.listenerModule = KeyboardMouseCounter.getInstance();
+			this.listenerModule = new KeyboardMouseEventCounter();
 		} catch (error) {
 			console.error('error on get listener module', error);
 		}

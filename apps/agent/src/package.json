@@ -1,8 +1,8 @@
 {
     "name": "gauzy-agent",
-    "productName": "Ever Gauzy Agent",
+    "productName": "Gauzy Agent",
     "version": "0.1.0",
-    "description": "Ever Gauzy Agent",
+    "description": "Gauzy Agent",
     "license": "AGPL-3.0",
     "homepage": "https://gauzy.co",
     "repository": {
@@ -23,6 +23,7 @@
         "packages": [
             "../../../dist/packages/contracts",
             "../../../dist/packages/desktop-core",
+            "../../../dist/packages/desktop-activity",
             "../../../dist/packages/desktop-lib",
             "../../../dist/packages/desktop-window",
             "../../../dist/packages/ui-config",
@@ -30,9 +31,9 @@
         ]
     },
     "build": {
-        "appId": "com.ever.agentapp",
+        "appId": "com.ever.gauzyagent",
         "artifactName": "${name}-${version}.${ext}",
-        "productName": "Ever Agent App",
+        "productName": "Gauzy Agent",
         "copyright": "Copyright © 2019-Present. Ever Co. LTD",
         "afterSign": "tools/notarize.js",
         "dmg": {
@@ -97,7 +98,7 @@
                 "deb",
                 "tar.gz"
             ],
-            "executableName": "Agent",
+            "executableName": "ever-gauzy-agent",
             "artifactName": "${name}-${version}.${ext}",
             "synopsis": "Desktop",
             "category": "Development"
@@ -132,6 +133,7 @@
         "node-notifier": "^8.0.0",
         "@gauzy/contracts": "file:../../../dist/packages/contracts",
         "@gauzy/desktop-core": "file:../../../dist/packages/desktop-core",
+        "@gauzy/desktop-activity": "file:../../../dist/packages/desktop-activity",
         "@gauzy/desktop-lib": "file:../../../dist/packages/desktop-lib",
         "@gauzy/desktop-window": "file:../../../dist/packages/desktop-window",
         "@gauzy/ui-config": "file:../../../dist/packages/ui-config",
@@ -144,6 +146,6 @@
         "@sentry/tracing": "^7.101.1",
         "@sentry/types": "^7.101.1",
         "auto-launch": "5.0.5",
-        "custom-electron-titlebar": "^4.2.8"        
+        "custom-electron-titlebar": "^4.2.8"
     }
 }

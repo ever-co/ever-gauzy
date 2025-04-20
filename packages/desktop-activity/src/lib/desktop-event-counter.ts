@@ -1,3 +1,4 @@
+
 import { powerMonitor } from 'electron';
 
 export class DesktopEventCounter {
