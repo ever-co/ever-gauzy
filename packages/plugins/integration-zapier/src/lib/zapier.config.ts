@@ -15,5 +15,3 @@ export const ZAPIER_REDIRECT_URI = 'https://zapier.com/dashboard/auth/oauth/retu
 
 /** OAuth token expiration time in seconds (1 hour) */
 export const ZAPIER_TOKEN_EXPIRATION_TIME = 3600;
-
-console.log('Zapier Config -> ZAPIER_API_URL: ' + process.env);

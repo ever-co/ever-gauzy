@@ -17,7 +17,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { Public } from '@gauzy/common';
-import { IntegrationEnum } from '@gauzy/contracts';
+import { ID, IntegrationEnum } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { buildQueryString } from '@gauzy/utils';
 import { IZapierAccessTokens, ZapierGrantType } from './zapier.types';
@@ -199,6 +199,7 @@ export class ZapierAuthorizationController {
 			);
 		}
 	}
+
 	/**
 	 * Exchanges an authorization code for an access token
 	 */
@@ -216,7 +217,7 @@ export class ZapierAuthorizationController {
 	async getToken(@Body() body: CreateZapierIntegrationDto): Promise<IZapierAccessTokens> {
 		try {
 			const { code, client_id, client_secret, redirect_uri, grant_type } = body;
-			if (grant_type !== ZapierGrantType.AUTHORIZATION_CODE) {
+			if (grant_type !== 'authorization_code') {
 				throw new BadRequestException('Unsupported grant type');
 			}
 			if (!code || !client_id || !client_secret || !redirect_uri) {
@@ -311,7 +312,7 @@ export class ZapierAuthorizationController {
 			client_secret: string;
 			grant_type: ZapierGrantType;
 		},
-		@Param('integrationId') integrationId: string
+		@Param('integrationId') integrationId: ID
 	): Promise<IZapierAccessTokens | null> {
 		try {
 			const { refresh_token, client_id, client_secret, grant_type } = body;
