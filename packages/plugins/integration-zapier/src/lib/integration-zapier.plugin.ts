@@ -1,9 +1,9 @@
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApplicationPluginConfig, CustomEmbeddedFieldConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ZapierModule } from './zapier.module';
 import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
-import { ConfigService } from '@nestjs/config';
 
 @Plugin({
 	/**
@@ -74,7 +74,7 @@ import { ConfigService } from '@nestjs/config';
 export class IntegrationZapierPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	private readonly logger = new Logger(IntegrationZapierPlugin.name);
 
-	constructor(private readonly _config: ConfigService) { }
+	constructor(private readonly _config: ConfigService) {}
 	/**
 	 * Called when the plugin is being initialized.
 	 */
@@ -86,7 +86,9 @@ export class IntegrationZapierPlugin implements IOnPluginBootstrap, IOnPluginDes
 		const clientSecret = this._config.get<string>('zapier.clientSecret');
 		const apiBaseUrl = this._config.get<string>('baseUrl');
 		if (!clientId || !clientSecret) {
-			this.logger.warn('Zapier OAuth credentials not fully configured! Please set GAUZY_ZAPIER_CLIENT_ID and GAUZY_ZAPIER_CLIENT_SECRET')
+			this.logger.warn(
+				'Zapier OAuth credentials not fully configured! Please set GAUZY_ZAPIER_CLIENT_ID and GAUZY_ZAPIER_CLIENT_SECRET'
+			);
 		} else {
 			this.logger.log('Zapier OAuth credentials configured successfully');
 		}
@@ -97,6 +99,6 @@ export class IntegrationZapierPlugin implements IOnPluginBootstrap, IOnPluginDes
 	 * Called when the plugin is being destroyed.
 	 */
 	onPluginDestroy(): void | Promise<void> {
-		this.logger.log(`${IntegrationZapierPlugin.name} is being destroyed...`)
+		this.logger.log(`${IntegrationZapierPlugin.name} is being destroyed...`);
 	}
 }
