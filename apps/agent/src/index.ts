@@ -9,6 +9,7 @@ import {
 	DesktopUpdater,
 	LocalStore,
 } from '@gauzy/desktop-lib';
+import PullActivities from './main/workers/pull-activities';
 
 let popupWin: BrowserWindow | null = null;
 
@@ -45,6 +46,8 @@ app.on('before-quit', async (e) => {
 	e.preventDefault();
 	try {
 		updater.cancel();
+		const pullActivities = PullActivities.getInstance();
+		pullActivities.stopTracking();
 	} catch (e) {
 		console.error('ERROR: Occurred while cancel update:' + e);
 		throw new AppError('MAINUPDTABORT', e);

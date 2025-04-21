@@ -10,7 +10,7 @@ export class PluginStatusComponent {
 
 	public get state() {
 		return this.rowData.isActivate
-			? { message: 'active', status: 'success' }
-			: { message: 'inactive', status: 'danger' };
+			? { message: 'PLUGIN.FORM.STATUSES.ACTIVE', status: 'success' }
+			: { message: 'PLUGIN.FORM.STATUSES.INACTIVE', status: 'danger' };
 	}
 }

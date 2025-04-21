@@ -5,10 +5,12 @@ import { PluginManager } from '../data-access/plugin-manager';
 import { IPluginManager, PluginChannel, PluginHandlerChannel } from '../shared';
 import { PluginEventManager } from './plugin-event.manager';
 import { ID } from '@gauzy/contracts';
+import { TranslateService } from '../../translation';
 
 class ElectronPluginListener {
 	private pluginManager: IPluginManager;
 	private eventManager = PluginEventManager.getInstance();
+	private readonly translateService = TranslateService;
 
 	constructor(pluginManager: IPluginManager) {
 		this.pluginManager = pluginManager;
@@ -122,9 +124,16 @@ class ElectronPluginListener {
 	}
 
 	private async downloadPlugin(event: IpcMainEvent, config: any): Promise<void> {
-		event.reply(PluginChannel.STATUS, { status: 'inProgress', message: 'Plugin Downloading...' });
+		event.reply(PluginChannel.STATUS, {
+			status: 'inProgress',
+			message: this.translateService.instant('PLUGIN.TOASTR.INFO.INSTALLING')
+		});
 		const data = await this.pluginManager.downloadPlugin(config);
-		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugin Downloaded', data });
+		event.reply(PluginChannel.STATUS, {
+			status: 'success',
+			message: this.translateService.instant('PLUGIN.TOASTR.SUCCESS.INSTALLED'),
+			data
+		});
 	}
 
 	private async activatePlugin(event: IpcMainEvent, name: string): Promise<void> {
@@ -140,9 +149,15 @@ class ElectronPluginListener {
 	}
 
 	private async uninstallPlugin(event: IpcMainEvent, name: string): Promise<void> {
-		event.reply(PluginChannel.STATUS, { status: 'inProgress', message: 'Plugin Uninstalling...' });
+		event.reply(PluginChannel.STATUS, {
+			status: 'inProgress',
+			message: this.translateService.instant('PLUGIN.TOASTR.INFO.UNINSTALLING')
+		});
 		await this.pluginManager.uninstallPlugin(name);
-		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugin Uninstalled' });
+		event.reply(PluginChannel.STATUS, {
+			status: 'success',
+			message: this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED')
+		});
 	}
 }
 
