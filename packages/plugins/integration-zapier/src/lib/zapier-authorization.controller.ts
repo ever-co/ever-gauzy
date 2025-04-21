@@ -43,16 +43,18 @@ export class ZapierAuthorizationController {
 	 * Helper method to validate the redirect URI against  allowed domains
 	 */
 	private validateRedirectDomain(redirectUri: string): void {
+		let url: URL;
 		try {
-			const url = new URL(redirectUri);
-			const hostname = url.hostname.toLowerCase();
-			const isAllowed = this.allowedDomains.some((d) => hostname === d || hostname.endsWith(`.${d}`));
-
-			if (!isAllowed) {
-				throw new BadRequestException(`Redirect URI domain "${hostname}" is not allowed.`);
-			}
-		} catch (error) {
+			url = new URL(redirectUri);
+		} catch {
 			throw new BadRequestException('Invalid redirect URI format.');
+		}
+
+		const hostname = url.hostname.toLowerCase();
+		const isAllowed = this.allowedDomains.some((d) => hostname === d || hostname.endsWith(`.${d}`));
+
+		if (!isAllowed) {
+			throw new BadRequestException(`Redirect URI domain "${hostname}" is not allowed.`);
 		}
 	}
 
@@ -99,7 +101,7 @@ export class ZapierAuthorizationController {
 			const configuredClientId = this._config.get<string>('zapier.clientId');
 
 			if (clientId !== configuredClientId) {
-				throw new HttpException('Invalid client ID', HttpStatus.BAD_REQUEST);
+				throw new HttpException('Invalid client credentials', HttpStatus.BAD_REQUEST);
 			}
 
 			// Validate the redirect URI against allowed domains
@@ -229,7 +231,7 @@ export class ZapierAuthorizationController {
 			const configuredClientSecret = this._config.get<string>('zapier.clientSecret');
 
 			if (client_id !== configuredClientId || client_secret !== configuredClientSecret) {
-				throw new HttpException('Invalid client ID', HttpStatus.BAD_REQUEST);
+				throw new HttpException('Invalid client credentials', HttpStatus.BAD_REQUEST);
 			}
 
 			// Retrieve the user info and stored redirect URI associated with this auth code
