@@ -569,7 +569,9 @@
 		"wparam",
 		"lparam",
 		"refcon",
-		"cflags"
+		"cflags",
+		"PostHog",
+		"posthog"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
