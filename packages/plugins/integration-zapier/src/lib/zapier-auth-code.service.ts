@@ -29,13 +29,16 @@ export class ZapierAuthCodeService {
 		// Define default allowed domains
 		const defaultDomains = ['localhost'];
 
-		// Retrieve and process allowed domains from configuration
-		const configDomains = this._config.get<string>('zapier.allowedDomains');
-		this.ALLOWED_DOMAINS = configDomains
-			? Array.from(new Set([...defaultDomains, ...configDomains.split(',').map((domain) => domain.trim())]))
-			: defaultDomains;
+		// Retrieve and merge allowed domains from configuration
+		const configDomains = this._config.get<string[]>('zapier.allowedDomains', []);
 
-		this.logger.log(`Initialized with allowed domains: ${this.ALLOWED_DOMAINS.join(', ')}`);
+		// Merge with defaults and dedupe
+		this.ALLOWED_DOMAINS = Array.from(
+			new Set([...defaultDomains, ...configDomains.map((domain) => domain.trim()).filter(Boolean)])
+		);
+
+		// (Optional) Log the final list
+		this.logger.debug(`Initialized with allowed domains: ${this.ALLOWED_DOMAINS.join(', ')}`);
 
 		// Determine deployment type and initiate periodic cleanup accordingly
 		if (this.isSingleInstanceDeployment()) {
@@ -48,28 +51,30 @@ export class ZapierAuthCodeService {
 	}
 
 	/**
-	 * Generates and stores an authentication code for a user
+	 * Generates and stores a time‑limited authorization code for a user.
 	 *
-	 * @param userId The user's ID
-	 * @param tenantId The tenant ID
-	 * @param organizationId The organization ID
-	 * @param redirectUri The redirect URI (optional)
-	 * @returns The generated authorization code
+	 * @param userId         The user’s unique identifier.
+	 * @param tenantId       The tenant’s unique identifier.
+	 * @param organizationId (Optional) The organization’s unique identifier.
+	 * @param redirectUri    (Optional) The URI to which the user will be redirected—must match an allowed domain.
+	 * @returns The newly generated auth code.
+	 * @throws BadRequestException         If a provided redirectUri doesn’t match an allowed domain.
+	 * @throws ServiceUnavailableException If the in‑memory store has reached its max capacity.
 	 */
 	generateAuthCode(userId: ID, tenantId: ID, organizationId?: ID, redirectUri?: string): string {
-		// Generation of a unique code
+		// 1) Prepare IDs and timestamps
+		const userIdStr = userId.toString();
+		const tenantIdStr = tenantId.toString();
+		const orgIdStr = organizationId?.toString();
 		const code = uuidv4();
-		// Auth codes expire in 60 minutes
-		const expiresAt = new Date();
-		expiresAt.setMinutes(expiresAt.getMinutes() + this.AUTH_CODE_EXPIRATION_MINUTES);
+		const expiresAt = new Date(Date.now() + this.AUTH_CODE_EXPIRATION_MINUTES * 60_000);
 
-		// Validate the redirect URI if provided
+		// 2) Validate redirect URI (if provided)
 		if (redirectUri && !this.isValidRedirectDomain(redirectUri)) {
-			const url = new URL(redirectUri);
-			const domain = url.hostname;
+			const hostname = new URL(redirectUri).hostname;
 
 			this.logger.warn(`Rejected invalid redirect domain: ${redirectUri}`, {
-				attemptedDomain: domain,
+				attemptedDomain: hostname,
 				allowedDomains: this.ALLOWED_DOMAINS,
 				subdomainConstraints: 'Only first-level subdomains are allowed for listed domains'
 			});
@@ -77,26 +82,39 @@ export class ZapierAuthCodeService {
 			throw new BadRequestException('Invalid redirect URI domain');
 		}
 
-		if (this.authCodes.size >= this.MAX_AUTH_CODES) {
-			this.logger.warn(`Maximum auth code limit (${this.MAX_AUTH_CODES}) reached. Cleaning up expired codes.`);
-			this.cleanupExpiredAuthCodes();
+		// 3) Ensure we haven’t exceeded our in‑memory capacity
+		this.ensureAuthCodeCapacity();
 
-			// If still at limit after cleanup, throw error
-			if (this.authCodes.size >= this.MAX_AUTH_CODES) {
-				throw new ServiceUnavailableException('Maximum auth code limit reached. Please try again later.');
-			}
-		}
-
-		// Stores the code with user infos
+		// 4) Store the auth code
 		this.authCodes.set(code, {
-			userId: userId.toString(),
-			tenantId: tenantId.toString(),
-			organizationId: organizationId?.toString(),
+			userId: userIdStr,
+			tenantId: tenantIdStr,
+			organizationId: orgIdStr,
 			redirectUri,
 			expiresAt
 		});
-		this.logger.debug(`Generated auth code for user ${userId}, expires at ${expiresAt}`);
+
+		this.logger.debug(`Generated auth code ${code} (user=${userIdStr}, expires=${expiresAt.toISOString()})`);
+
 		return code;
+	}
+
+	/**
+	 * Ensures there is capacity to store a new auth code,
+	 * cleaning up expired codes if necessary, and throws
+	 * if the limit is still reached.
+	 */
+	private ensureAuthCodeCapacity(): void {
+		if (this.authCodes.size < this.MAX_AUTH_CODES) {
+			return;
+		}
+
+		this.logger.warn(`Max auth codes reached (${this.MAX_AUTH_CODES}). Running cleanup.`);
+		this.cleanupExpiredAuthCodes();
+
+		if (this.authCodes.size >= this.MAX_AUTH_CODES) {
+			throw new ServiceUnavailableException('Maximum auth code limit reached. Please try again later.');
+		}
 	}
 
 	/**
@@ -109,9 +127,9 @@ export class ZapierAuthCodeService {
 		code: string,
 		redirectUri?: string
 	): {
-		userId: string;
-		tenantId: string;
-		organizationId?: string;
+		userId: ID;
+		tenantId: ID;
+		organizationId?: ID;
 		redirectUri?: string;
 	} | null {
 		const authCodeData = this.authCodes.get(code);
@@ -228,31 +246,30 @@ export class ZapierAuthCodeService {
 	/**
 	 * Determines if the application is running in a single-instance deployment
 	 */
-private isSingleInstanceDeployment(): boolean {
-    const instanceCountRaw = this._config.get<boolean | number | string>('zapier.instanceCount');
+	private isSingleInstanceDeployment(): boolean {
+		const instanceCountRaw = this._config.get<boolean | number | string>('zapier.instanceCount');
 
-    if (instanceCountRaw === undefined) {
-        return true; // Default to single-instance if not defined
-    }
+		if (instanceCountRaw === undefined) {
+			return true; // Default to single-instance if not defined
+		}
 
-    const normalized = String(instanceCountRaw).trim().toLowerCase();
+		const normalized = String(instanceCountRaw).trim().toLowerCase();
 
-    if (normalized === 'true') {
-        return true;
-    }
+		if (normalized === 'true') {
+			return true;
+		}
 
-    if (normalized === 'false') {
-        return false;
-    }
+		if (normalized === 'false') {
+			return false;
+		}
 
-    const parsedCount = Number.parseInt(normalized, 10);
-    if (!isNaN(parsedCount)) {
-        return parsedCount === 1;
-    }
+		const parsedCount = Number.parseInt(normalized, 10);
+		if (!isNaN(parsedCount)) {
+			return parsedCount === 1;
+		}
 
-    throw new Error(
-        `Invalid zapier.instanceCount value: "${instanceCountRaw}". Must be a boolean ("true"/"false") or a numeric string.`
-    );
-}
+		throw new Error(
+			`Invalid zapier.instanceCount value: "${instanceCountRaw}". Must be a boolean ("true"/"false") or a numeric string.`
+		);
 	}
 }

@@ -75,24 +75,24 @@ export class IntegrationZapierPlugin implements IOnPluginBootstrap, IOnPluginDes
 	private readonly logger = new Logger(IntegrationZapierPlugin.name);
 
 	constructor(private readonly _config: ConfigService) {}
+
 	/**
-	 * Called when the plugin is being initialized.
+	 * Lifecycle hook invoked during the plugin's bootstrap phase.
+	 * Validates essential Zapier OAuth configurations and logs the API base URL.
 	 */
-	onPluginBootstrap(): void | Promise<void> {
+	onPluginBootstrap(): void {
 		this.logger.log(`${IntegrationZapierPlugin.name} is being bootstrapped...`);
 
-		// Log Zapier configuration status
 		const clientId = this._config.get<string>('zapier.clientId');
 		const clientSecret = this._config.get<string>('zapier.clientSecret');
-		const apiBaseUrl = this._config.get<string>('baseUrl');
+
 		if (!clientId || !clientSecret) {
 			this.logger.warn(
-				'Zapier OAuth credentials not fully configured! Please set GAUZY_ZAPIER_CLIENT_ID and GAUZY_ZAPIER_CLIENT_SECRET'
+				'Zapier OAuth credentials are not fully configured. Please set GAUZY_ZAPIER_CLIENT_ID and GAUZY_ZAPIER_CLIENT_SECRET.'
 			);
 		} else {
-			this.logger.log('Zapier OAuth credentials configured successfully');
+			this.logger.log('Zapier OAuth credentials are configured successfully.');
 		}
-		this.logger.debug(`Zapier API base URL: ${apiBaseUrl}`);
 	}
 
 	/**

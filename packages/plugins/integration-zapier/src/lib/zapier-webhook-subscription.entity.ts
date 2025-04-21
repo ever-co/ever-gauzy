@@ -11,7 +11,7 @@ import {
 	MultiORMManyToOne,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
-import { MikroOrmZapierWebhookSubscriptionRepository } from './repository/mikro-orm-zapier.repository';
+import { MikroOrmZapierWebhookSubscriptionRepository } from './repository/mikro-orm-zapier-webhook-subscription.repository';
 
 @MultiORMEntity('zapier_webhook_subscription', {
 	mikroOrmRepository: () => MikroOrmZapierWebhookSubscriptionRepository
@@ -40,7 +40,7 @@ export class ZapierWebhookSubscription extends TenantOrganizationBaseEntity {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 		/** Database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	integration?: IIntegrationTenant;
