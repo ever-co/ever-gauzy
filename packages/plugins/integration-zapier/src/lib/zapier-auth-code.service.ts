@@ -1,16 +1,15 @@
-import { Injectable, Logger, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
+import { Injectable, Logger, BadRequestException, ServiceUnavailableException, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { v4 as uuidv4 } from 'uuid';
 import { ID } from '@gauzy/contracts';
 
 @Injectable()
-export class ZapierAuthCodeService {
+export class ZapierAuthCodeService implements OnModuleDestroy {
 	private readonly logger = new Logger(ZapierAuthCodeService.name);
 	private readonly MAX_AUTH_CODES: number;
 	private readonly AUTH_CODE_EXPIRATION_MINUTES = 60; // Auth code expiration time in minutes
 	private readonly ALLOWED_DOMAINS: string[];
-	// Using a Map to store temporary auth codes - this is temporary storage
-	// and doesn't need to be persisted to the database
+	private cleanupIntervalId?: NodeJS.Timeout;
 	private authCodes: Map<
 		string,
 		{
@@ -179,13 +178,13 @@ export class ZapierAuthCodeService {
 	}
 
 	/**
-	 * Starts a periodic cleanup process to remove expired auth codes
+	 * Starts a periodic cleanup process to remove expired auth codes.
 	 */
 	private startPeriodicCleanup(): void {
 		// Cleanup every 5 minutes
 		const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 
-		setInterval(() => {
+		this.cleanupIntervalId = setInterval(() => {
 			this.logger.debug('Running periodic cleanup of expired auth codes');
 			this.cleanupExpiredAuthCodes();
 		}, CLEANUP_INTERVAL_MS);
@@ -271,5 +270,16 @@ export class ZapierAuthCodeService {
 		throw new Error(
 			`Invalid zapier.instanceCount value: "${instanceCountRaw}". Must be a boolean ("true"/"false") or a numeric string.`
 		);
+	}
+
+	/**
+	 * Called when the module is destroyed or the application shuts down.
+	 * Clears the periodic cleanup interval to prevent memory leaks.
+	 */
+	onModuleDestroy(): void {
+		if (this.cleanupIntervalId) {
+			clearInterval(this.cleanupIntervalId);
+			this.logger.log('Cleared periodic auth code cleanup interval');
+		}
 	}
 }
