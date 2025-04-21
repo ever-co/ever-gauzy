@@ -70,8 +70,7 @@ export class ZapierService {
 			// Fetch integration settings
 			const settings = await this._integrationSettingService.find({
 				where: {
-					integration: { id: integrationId },
-					integrationId
+					integration: { id: integrationId }
 				}
 			});
 
