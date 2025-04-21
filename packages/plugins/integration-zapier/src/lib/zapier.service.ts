@@ -280,45 +280,44 @@ export class ZapierService {
 	}
 
 	/**
-	 * Finds an integration tenant by verifying the provided access token.
-	 * @param token The access token to verify
-	 * @returns A promise resolving to IIIntegrationTenant if found or undefined if not found
-	 * @throws NotFoundException if no integration is found for the given token
+	 * Retrieves the Zapier integration tenant associated with the given access token.
+	 *
+	 * 1. Looks up the integration setting named "access_token" matching the provided token.
+	 * 2. Verifies that an integration ID was found.
+	 * 3. Loads the integration tenant (filtered to Zapier) along with its settings.
+	 * 4. Throws a NotFoundException if the token is invalid or no matching integration exists.
+	 *
+	 * @param token - The OAuth access token to verify.
+	 * @returns The matching IIntegrationTenant.
+	 * @throws NotFoundException if the token is invalid or no Zapier integration is found.
 	 */
-	async findIntegrationByToken(token: string): Promise<IIntegrationTenant | undefined> {
-		// Find the integration setting with the given access token
-		const settings = await this._integrationSettingService.find({
-			where: {
-				settingsName: 'access_token',
-				settingsValue: token
-			},
-			relations: ['integration'] // Ensure the integration relation is loaded
+	async findIntegrationByToken(token: string): Promise<IIntegrationTenant> {
+		// 1) Lookup the access_token setting
+		const setting = await this._integrationSettingService.findOneByWhereOptions({
+			settingsName: 'access_token',
+			settingsValue: token
 		});
 
-		if (!settings || settings.length === 0) {
-			throw new NotFoundException(`No integration found for token ${token}`);
+		// 2) Ensure we have an integrationId
+		if (!setting?.integrationId) {
+			throw new NotFoundException('Invalid access token');
 		}
 
-		// Get the first matching setting (assuming unique tokens per integration)
-		const setting = settings[0];
-
-		if (!setting.integrationId) {
-			throw new NotFoundException('Integration ID is undefined');
-		}
+		// 3) Load the integration tenant, scoped to Zapier, including its settings
 		const integrationTenant = await this._integrationService.findOneByIdString(setting.integrationId, {
-			where: {
-				name: IntegrationEnum.ZAPIER
-			},
-			relations: ['settings'] // Load settings to include all related data
+			where: { name: IntegrationEnum.ZAPIER },
+			relations: ['settings']
 		});
 
+		// 4) Handle missing tenant
 		if (!integrationTenant) {
-			throw new NotFoundException(`No Zapier integration tenant found for token ${token}`);
+			throw new NotFoundException('Zapier integration not found for the provided token');
 		}
 
+		// 5) Return with correct enum typing
 		return {
 			...integrationTenant,
-			name: integrationTenant.name as IntegrationEnum
+			name: IntegrationEnum.ZAPIER
 		};
 	}
 }
