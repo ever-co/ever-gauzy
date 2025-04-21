@@ -571,7 +571,8 @@
 		"refcon",
 		"cflags",
 		"PostHog",
-		"posthog"
+		"posthog",
+		"autocapture"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
