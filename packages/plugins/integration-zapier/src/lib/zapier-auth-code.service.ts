@@ -228,30 +228,31 @@ export class ZapierAuthCodeService {
 	/**
 	 * Determines if the application is running in a single-instance deployment
 	 */
-	private isSingleInstanceDeployment(): boolean {
-		const instanceCountRaw = this._config.get<string>('zapier.instanceCount');
+private isSingleInstanceDeployment(): boolean {
+    const instanceCountRaw = this._config.get<boolean | number | string>('zapier.instanceCount');
 
-		if (instanceCountRaw === undefined) {
-			return true; // Default to single-instance if not defined
-		}
+    if (instanceCountRaw === undefined) {
+        return true; // Default to single-instance if not defined
+    }
 
-		const normalized = instanceCountRaw.trim().toLowerCase();
+    const normalized = String(instanceCountRaw).trim().toLowerCase();
 
-		if (normalized === 'true') {
-			return true;
-		}
+    if (normalized === 'true') {
+        return true;
+    }
 
-		if (normalized === 'false') {
-			return false;
-		}
+    if (normalized === 'false') {
+        return false;
+    }
 
-		const parsedCount = Number.parseInt(normalized, 10);
-		if (!isNaN(parsedCount)) {
-			return parsedCount === 1;
-		}
+    const parsedCount = Number.parseInt(normalized, 10);
+    if (!isNaN(parsedCount)) {
+        return parsedCount === 1;
+    }
 
-		throw new Error(
-			`Invalid zapier.instanceCount value: "${instanceCountRaw}". Must be a boolean ("true"/"false") or a numeric string.`
-		);
+    throw new Error(
+        `Invalid zapier.instanceCount value: "${instanceCountRaw}". Must be a boolean ("true"/"false") or a numeric string.`
+    );
+}
 	}
 }
