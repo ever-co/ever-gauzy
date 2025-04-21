@@ -19,13 +19,18 @@ export class PosthogTraceMiddleware implements NestMiddleware {
 
 		res.on('finish', () => {
 			const duration = Date.now() - start;
-			this.posthog.track('http_request', req.ip || 'unknown', {
-				method,
-				path,
-				status_code: res.statusCode,
-				duration_ms: duration,
-				$timestamp: new Date(start).toISOString()
-			});
+			try {
+				this.posthog.track('http_request', req.ip || 'unknown', {
+					method,
+					path,
+					status_code: res.statusCode,
+					duration_ms: duration,
+					$timestamp: new Date(start).toISOString()
+				});
+			} catch (e) {
+				// Silently continue if analytics tracking fails
+				console.error('Error capturing HTTP status code', e);
+			}
 		});
 
 		next();

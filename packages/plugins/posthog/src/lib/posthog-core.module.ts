@@ -38,7 +38,7 @@ export class PosthogCoreModule {
 		return {
 			module: PosthogCoreModule,
 			imports: options.imports || [],
-			providers: [...this.createAsyncProviders(options), provider, PosthogService],
+			providers: [...PosthogCoreModule.createAsyncProviders(options), provider, PosthogService],
 			exports: [provider, PosthogService]
 		};
 	}
@@ -64,6 +64,7 @@ export class PosthogCoreModule {
 		if (!options.useClass && !options.useExisting) {
 			throw new Error('Either useClass or useExisting must be provided for PosthogModule async configuration');
 		}
+
 		const inject = [(options.useClass || options.useExisting) as Type<PosthogOptionsFactory>];
 
 		const providers: Provider[] = [

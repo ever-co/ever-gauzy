@@ -70,8 +70,8 @@ export class PosthogPlugin implements NestModule, IOnPluginBootstrap, IOnPluginD
 	 * @returns The plugin instance
 	 */
 	static init(options: PosthogModuleOptions): typeof PosthogPlugin {
-		this.options = parsePosthogOptions(options);
-		return this;
+		PosthogPlugin.options = parsePosthogOptions(options);
+		return PosthogPlugin;
 	}
 
 	/**

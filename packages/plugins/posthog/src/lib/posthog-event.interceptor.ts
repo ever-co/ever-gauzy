@@ -1,10 +1,7 @@
-// Nestjs imports
 import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor, Optional } from '@nestjs/common';
 import { ContextType, HttpArgumentsHost, RpcArgumentsHost, WsArgumentsHost } from '@nestjs/common/interfaces';
-// Rxjs imports
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-
 import { PosthogEventInterceptorOptions } from './posthog.interfaces';
 import { PosthogService } from './posthog.service';
 import { SanitizerUtil } from './utils';
@@ -228,7 +225,7 @@ export class PosthogEventInterceptor implements NestInterceptor {
 	 * @param duration - Duration until the error occurred in milliseconds
 	 */
 	protected captureRequestError(context: ExecutionContext, error: any, duration: number): void {
-		let statusCode = error?.getStatus?.() || 500;
+		const statusCode = error?.getStatus?.() || 500;
 
 		this.captureEvent(context, error?.name || 'request_error', {
 			handler: this.getHandlerName(context),
@@ -259,7 +256,7 @@ export class PosthogEventInterceptor implements NestInterceptor {
 	 */
 	private extractRouteFromRequest(request: any): string {
 		// Try to access NestJS route information if available
-		if (request.route && request.route.path) {
+		if (request.route?.path) {
 			return request.route.path;
 		}
 
@@ -291,6 +288,9 @@ export class PosthogEventInterceptor implements NestInterceptor {
 	 * @returns User ID string or 'anonymous' if not found
 	 */
 	private extractUserId(request: any): string {
+		// Generate a random ID if no user identifier is found
+		const anonymousId = `anon-${Math.random().toString(36).substring(2, 15)}`;
+
 		// Check common user ID locations
 		return (
 			request.user?.id ||
@@ -298,7 +298,7 @@ export class PosthogEventInterceptor implements NestInterceptor {
 			request.headers['x-user-id'] ||
 			request.cookies?.userId ||
 			request.ip ||
-			'anonymous'
+			anonymousId
 		);
 	}
 
@@ -322,12 +322,12 @@ export class PosthogEventInterceptor implements NestInterceptor {
 		if (!client) return null;
 
 		// Try to extract user ID from handshake data
-		if (client.handshake && client.handshake.query && client.handshake.query.userId) {
+		if (client.handshake?.query?.userId) {
 			return client.handshake.query.userId;
 		}
 
 		// Try to extract from auth data
-		if (client.handshake && client.handshake.auth && client.handshake.auth.userId) {
+		if (client.handshake?.auth?.userId) {
 			return client.handshake.auth.userId;
 		}
 
