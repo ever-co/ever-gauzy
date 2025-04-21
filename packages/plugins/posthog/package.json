@@ -32,6 +32,7 @@
 		"@gauzy/plugin": "^0.1.0",
 		"@nestjs/common": "^10.4.15",
 		"chalk": "^4.1.0",
+		"express": "^4.21.2",
 		"posthog-node": "^4.11.3",
 		"tslib": "^2.6.2"
 	},
