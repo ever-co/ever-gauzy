@@ -15,9 +15,10 @@ import { ConfigService } from '@nestjs/config';
 import { Public } from '@gauzy/common';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { PermissionsEnum, IZapierEndpoint } from '@gauzy/contracts';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { ZapierService } from './zapier.service';
+import { IZapierEndpoint } from './zapier.types';
 
 @ApiTags('Zapier Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -32,10 +33,7 @@ export class ZapierController {
 	 * are properly set in the environment variables. These are essential for enabling secure
 	 * and functional Zapier integrations.
 	 */
-	constructor(
-		private readonly zapierService: ZapierService,
-		private readonly _config: ConfigService
-	) { }
+	constructor(private readonly zapierService: ZapierService, private readonly _config: ConfigService) {}
 
 	/**
 	 * Handle successful login for Zapier OAuth flow
@@ -51,16 +49,13 @@ export class ZapierController {
 		description: 'Invalid input, the response body may contain clues as to what went wrong'
 	})
 	@Public()
-	@Get('login/success')
-	async loginSuccess(
-		@Query() query: { zapier_state?: string; zapier_redirect_uri?: string },
-		@Res() res: Response
-	) {
+	@Get('/login/success')
+	async loginSuccess(@Query() query: { zapier_state?: string; zapier_redirect_uri?: string }, @Res() res: Response) {
 		try {
 			// Check if this is a Zapier auth flow
 			const { zapier_state, zapier_redirect_uri } = query;
 			const baseUrl = this._config.get<string>('baseUrl');
-			const authorizedDomains = this._config.get<string[]>('zapier.allowedDomains');
+			const authorizedDomains = this._config.get<string[]>('zapier.allowedDomains', []);
 
 			if (zapier_state || zapier_redirect_uri) {
 				// More robust domain validation if redirect URI is provided
@@ -73,7 +68,7 @@ export class ZapierController {
 						const isLocalhost = hostname === 'localhost' || hostname.endsWith('.localhost');
 
 						// Check if hostname matches any of the authorized domains
-						const isDomainAuthorized = (authorizedDomains ?? []).some(domain => {
+						const isDomainAuthorized = (authorizedDomains ?? []).some((domain) => {
 							// Exact match
 							if (hostname === domain) return true;
 							// Subdomain match (handle both direct subdomains and nested subdomains)
@@ -95,7 +90,10 @@ export class ZapierController {
 							);
 						}
 					} catch (urlError) {
-						this.logger.error(`Invalid URL format in zapier_redirect_uri: ${zapier_redirect_uri}`, urlError);
+						this.logger.error(
+							`Invalid URL format in zapier_redirect_uri: ${zapier_redirect_uri}`,
+							urlError
+						);
 						throw new BadRequestException('Invalid redirect URI format');
 					}
 				}

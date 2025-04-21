@@ -20,11 +20,10 @@ export default registerAs(
 		instanceCount: Number.parseInt(process.env.GAUZY_ZAPIER_INSTANCE_COUNT) || 1,
 
 		// Zapier allowed domains
-		allowedDomains: process.env.GAUZY_ZAPIER_ALLOWED_DOMAINS
-			? process.env.GAUZY_ZAPIER_ALLOWED_DOMAINS.split(',')
-					.filter(Boolean)
-					.map((domain) => domain.trim())
-			: [],
+		allowedDomains: (process.env.GAUZY_ZAPIER_ALLOWED_DOMAINS ?? '')
+			.split(',')
+			.map((d) => d.trim())
+			.filter(Boolean),
 
 		// Zapier Redirected URI after successful authentication
 		redirectUri: process.env.GAUZY_ZAPIER_REDIRECT_URL || '',

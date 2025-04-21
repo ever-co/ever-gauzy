@@ -17,9 +17,10 @@ import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { Public } from '@gauzy/common';
-import { IntegrationEnum, IZapierAccessTokens, ZapierGrantType } from '@gauzy/contracts';
+import { IntegrationEnum } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { buildQueryString } from '@gauzy/utils';
+import { IZapierAccessTokens, ZapierGrantType } from './zapier.types';
 import { ZAPIER_REDIRECT_URI, ZAPIER_TOKEN_EXPIRATION_TIME } from './zapier.config';
 import { ZapierAuthCodeService } from './zapier-auth-code.service';
 import { ZapierService } from './zapier.service';
@@ -37,41 +38,6 @@ export class ZapierAuthorizationController {
 		private readonly zapierAuthCodeService: ZapierAuthCodeService,
 		private readonly zapierService: ZapierService
 	) {}
-
-	/***
-	 * Validate the required Zapier configuration on module initialization
-	 * This ensures missing environment variables are caught early
-	 * and provides a clear error message to the user.
-	 */
-	onModuleInit(): void {
-		const clientId = this._config.get<string>('zapier.clientId')?.trim();
-		const clientSecret = this._config.get<string>('zapier.clientSecret')?.trim();
-		const allowedDomains = this._config.get<string>('zapier.allowedDomains');
-		this.allowedDomains = allowedDomains
-			? allowedDomains
-					.split(',')
-					.map((d) => d.trim())
-					.filter(Boolean)
-			: [];
-
-		if (!clientId) {
-			const errorMsg = 'Missing Zapier client ID in environment variables';
-			this.logger.error(errorMsg);
-			throw new Error(errorMsg);
-		}
-
-		if (!clientSecret) {
-			const errorMsg = 'Missing Zapier client secret in environment variables';
-			this.logger.error(errorMsg);
-			throw new Error(errorMsg);
-		}
-
-		if (this.allowedDomains.length === 0) {
-			this.logger.warn('No allowed domains configured for Zapier integration. This may limit functionality.');
-		}
-
-		this.logger.log('Zapier configuration validated successfully');
-	}
 
 	/**
 	 * Helper method to validate the redirect URI against  allowed domains

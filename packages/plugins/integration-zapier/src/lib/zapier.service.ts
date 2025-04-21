@@ -11,10 +11,7 @@ import {
 	IntegrationEntity,
 	IIntegrationSetting,
 	IIntegrationEntitySetting,
-	ID,
-	ICreateZapierIntegrationInput,
-	IZapierEndpoint,
-	IZapierAccessTokens
+	ID
 } from '@gauzy/contracts';
 import {
 	IntegrationSettingService,
@@ -24,6 +21,7 @@ import {
 	PROJECT_TIED_ENTITIES
 } from '@gauzy/core';
 import { ZAPIER_TOKEN_EXPIRATION_TIME } from './zapier.config';
+import { ICreateZapierIntegrationInput, IZapierAccessTokens, IZapierEndpoint } from './zapier.types';
 
 @Injectable()
 export class ZapierService {
@@ -281,6 +279,7 @@ export class ZapierService {
 			throw new Error('Unable to fetch actions from Zapier');
 		}
 	}
+
 	/**
 	 * Finds an integration tenant by verifying the provided access token.
 	 * @param token The access token to verify
