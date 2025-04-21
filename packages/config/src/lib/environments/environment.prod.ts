@@ -202,8 +202,8 @@ export const environment: IEnvironment = {
 		clientSecret: process.env.GAUZY_ZAPIER_CLIENT_SECRET,
 		allowedDomains: (process.env.GAUZY_ZAPIER_ALLOWED_DOMAINS ?? process.env.GAUZY_ALLOWED_DOMAINS ?? '')
 			.split(',')
-			.filter(Boolean)
-			.map((domain) => domain.trim()),
+			.map((d) => d.trim())
+			.filter(Boolean),
 		maxAuthCodes: Number.parseInt(process.env.GAUZY_ZAPIER_MAX_AUTH_CODES) || 1000,
 		instanceCount: process.env.GAUZY_ZAPIER_INSTANCE_COUNT === 'true',
 		redirectUri:
