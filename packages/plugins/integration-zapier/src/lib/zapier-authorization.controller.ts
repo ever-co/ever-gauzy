@@ -45,9 +45,10 @@ export class ZapierAuthorizationController {
 	private validateRedirectDomain(redirectUri: string): void {
 		try {
 			const url = new URL(redirectUri);
-			const hostname = url.hostname;
+			const hostname = url.hostname.toLowerCase();
+			const isAllowed = this.allowedDomains.some((d) => hostname === d || hostname.endsWith(`.${d}`));
 
-			if (!this.allowedDomains.includes(hostname)) {
+			if (!isAllowed) {
 				throw new BadRequestException(`Redirect URI domain "${hostname}" is not allowed.`);
 			}
 		} catch (error) {
@@ -215,7 +216,7 @@ export class ZapierAuthorizationController {
 	async getToken(@Body() body: CreateZapierIntegrationDto): Promise<IZapierAccessTokens> {
 		try {
 			const { code, client_id, client_secret, redirect_uri, grant_type } = body;
-			if (grant_type !== 'authorization_code') {
+			if (grant_type !== ZapierGrantType.AUTHORIZATION_CODE) {
 				throw new BadRequestException('Unsupported grant type');
 			}
 			if (!code || !client_id || !client_secret || !redirect_uri) {
