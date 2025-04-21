@@ -1,126 +1,137 @@
-import { Injectable, Logger, ForbiddenException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import {
+	Injectable,
+	Logger,
+	ForbiddenException,
+	NotFoundException,
+	InternalServerErrorException
+} from '@nestjs/common';
+import { catchError, firstValueFrom, of } from 'rxjs';
 import { ID, ITimerZapierWebhookData } from '@gauzy/contracts';
 import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
 import { TypeOrmZapierWebhookSubscriptionRepository } from './repository/type-orm-zapier.repository';
-import { HttpService } from '@nestjs/axios';
-import { catchError, firstValueFrom, of } from 'rxjs';
 
 @Injectable()
 export class ZapierWebhookService {
-    private readonly logger = new Logger(ZapierWebhookService.name);
+	private readonly logger = new Logger(ZapierWebhookService.name);
 
-    constructor(
-        private readonly subscriptionRepository: TypeOrmZapierWebhookSubscriptionRepository,
-        private readonly _httpService: HttpService,
-    ) { }
+	constructor(
+		private readonly subscriptionRepository: TypeOrmZapierWebhookSubscriptionRepository,
+		private readonly _httpService: HttpService
+	) {}
 
-    async createSubscription(input: {
-        targetUrl: string;
-        event: string;
-        integrationId?: ID;
-        tenantId?: ID;
-        organizationId?: ID
-    }): Promise<ZapierWebhookSubscription> {
-        try {
-            // Check if subscription already exists to avoid duplicates
-            const existing = await this.subscriptionRepository.findOne({
-                where: {
-                    targetUrl: input.targetUrl,
-                    event: input.event,
-                    integrationId: input.integrationId,
-                    tenantId: input.tenantId,
-                    organizationId: input.organizationId
-                }
-            });
+	async createSubscription(input: {
+		targetUrl: string;
+		event: string;
+		integrationId?: ID;
+		tenantId?: ID;
+		organizationId?: ID;
+	}): Promise<ZapierWebhookSubscription> {
+		try {
+			// Check if subscription already exists to avoid duplicates
+			const existing = await this.subscriptionRepository.findOne({
+				where: {
+					targetUrl: input.targetUrl,
+					event: input.event,
+					integrationId: input.integrationId,
+					tenantId: input.tenantId,
+					organizationId: input.organizationId
+				}
+			});
 
-            if (existing) {
-                return existing;
-            }
+			if (existing) {
+				return existing;
+			}
 
-            const subscription = this.subscriptionRepository.create(input);
-            return await this.subscriptionRepository.save(subscription);
-        } catch (error) {
-            this.logger.error('Failed to create webhook subscription', error);
-            throw new InternalServerErrorException('Failed to create webhook subscription');
-        }
-    }
+			const subscription = this.subscriptionRepository.create(input);
+			return await this.subscriptionRepository.save(subscription);
+		} catch (error) {
+			this.logger.error('Failed to create webhook subscription', error);
+			throw new InternalServerErrorException('Failed to create webhook subscription');
+		}
+	}
 
-    async deleteSubscription(id: string, tenantId: string): Promise<void> {
-        try {
-            // First find the subscription to verify ownership
-            const subscription = await this.subscriptionRepository.findOne({
-                where: { id }
-            });
+	async deleteSubscription(id: string, tenantId: string): Promise<void> {
+		try {
+			// First find the subscription to verify ownership
+			const subscription = await this.subscriptionRepository.findOne({
+				where: { id }
+			});
 
-            if (!subscription) {
-                this.logger.warn(`No webhook subscription found with id ${id}`);
-                throw new NotFoundException(`No webhook subscription found with id ${id}`);
-            }
+			if (!subscription) {
+				this.logger.warn(`No webhook subscription found with id ${id}`);
+				throw new NotFoundException(`No webhook subscription found with id ${id}`);
+			}
 
-            // Verify tenant ownership
-            if (subscription.tenantId !== tenantId) {
-                this.logger.warn(`Attempted to delete webhook subscription ${id} from different tenant ${tenantId}`);
-                throw new ForbiddenException('You do not have permission to delete this webhook subscription');
-            }
+			// Verify tenant ownership
+			if (subscription.tenantId !== tenantId) {
+				this.logger.warn(`Attempted to delete webhook subscription ${id} from different tenant ${tenantId}`);
+				throw new ForbiddenException('You do not have permission to delete this webhook subscription');
+			}
 
-            // Delete the subscription if ownership is verified
-            const result = await this.subscriptionRepository.delete(id);
-            if (result.affected === 0) {
-                throw new NotFoundException('No webhook subscription found');
-            }
-        } catch (error) {
-            if (error instanceof ForbiddenException) {
-                throw error;
-            }
-            this.logger.error(`Failed to delete webhook subscription with id ${id}`, error);
-            throw new InternalServerErrorException('Failed to delete webhook subscription');
-        }
-    }
+			// Delete the subscription if ownership is verified
+			const result = await this.subscriptionRepository.delete(id);
+			if (result.affected === 0) {
+				throw new NotFoundException('No webhook subscription found');
+			}
+		} catch (error) {
+			if (error instanceof ForbiddenException) {
+				throw error;
+			}
+			this.logger.error(`Failed to delete webhook subscription with id ${id}`, error);
+			throw new InternalServerErrorException('Failed to delete webhook subscription');
+		}
+	}
 
-    /**
-     * Notify subscribers about timer status change
-     *
-     * @param timerData The data to send to webhooks
-     */
-    async notifyTimerStatusChanged(timerData: ITimerZapierWebhookData): Promise<void> {
-        try {
-            // Validate required IDs are present
-            if (!timerData.tenantId || !timerData.organizationId) {
-                this.logger.warn('Cannot notify webhook: missing tenantId or organizationId', {
-                    tenantId: timerData.tenantId,
-                    organizationId: timerData.organizationId
-                });
-                return;
-            }
-            // Find all webhook subscriptions for timer status events
-            const subscriptions = await this.subscriptionRepository.find({
-                where: {
-                    event: 'timer.status.changed',
-                    tenantId: timerData.tenantId,
-                    organizationId: timerData.organizationId
-                }
-            });
+	/**
+	 * Notify subscribers about timer status change
+	 *
+	 * @param timerData The data to send to webhooks
+	 */
+	async notifyTimerStatusChanged(timerData: ITimerZapierWebhookData): Promise<void> {
+		try {
+			// Validate required IDs are present
+			if (!timerData.tenantId || !timerData.organizationId) {
+				this.logger.warn('Cannot notify webhook: missing tenantId or organizationId', {
+					tenantId: timerData.tenantId,
+					organizationId: timerData.organizationId
+				});
+				return;
+			}
+			// Find all webhook subscriptions for timer status events
+			const subscriptions = await this.subscriptionRepository.find({
+				where: {
+					event: 'timer.status.changed',
+					tenantId: timerData.tenantId,
+					organizationId: timerData.organizationId
+				}
+			});
 
-            if (!subscriptions || subscriptions.length === 0) {
-                return;
-            }
+			if (!subscriptions || subscriptions.length === 0) {
+				return;
+			}
 
-            // Notify each subscriber
-            for (const subscription of subscriptions) {
-                await firstValueFrom(
-                    this._httpService.post(subscription.targetUrl, {
-                        event: 'timer.status.changed',
-                        data: timerData
-                    }).pipe(
-                        catchError(error => {
-                            this.logger.error(`Failed to notify webhook ${subscription.id} at ${subscription.targetUrl}`, error);
-                            return of(null);
-                        })
-                    )
-                );
-            }
-        } catch (error) {
-            this.logger.error('Failed to process timer status change webhooks', error);
-        }
-    }
+			// Notify each subscriber
+			for (const subscription of subscriptions) {
+				await firstValueFrom(
+					this._httpService
+						.post(subscription.targetUrl, {
+							event: 'timer.status.changed',
+							data: timerData
+						})
+						.pipe(
+							catchError((error) => {
+								this.logger.error(
+									`Failed to notify webhook ${subscription.id} at ${subscription.targetUrl}`,
+									error
+								);
+								return of(null);
+							})
+						)
+				);
+			}
+		} catch (error) {
+			this.logger.error('Failed to process timer status change webhooks', error);
+		}
+	}
 }
