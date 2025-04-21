@@ -205,7 +205,7 @@ export const environment: IEnvironment = {
 			.filter(Boolean)
 			.map((domain) => domain.trim()),
 		maxAuthCodes: Number.parseInt(process.env.GAUZY_ZAPIER_MAX_AUTH_CODES) || 1000,
-		instanceCount: process.env.GAUZY_ZAPIER_INSTANCE_COUNT === 'true' ? true : false,
+		instanceCount: process.env.GAUZY_ZAPIER_INSTANCE_COUNT === 'true',
 		redirectUri:
 			process.env.GAUZY_ZAPIER_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/zapier/callback`,
 		postInstallUrl:
