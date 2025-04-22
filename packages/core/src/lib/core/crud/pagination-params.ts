@@ -54,6 +54,13 @@ export class OptionParams<T> extends OptionsRelations<T> {
 	@IsOptional()
 	@Transform(({ value }: TransformFnParams) => (value ? parseToBoolean(value) : false))
 	readonly withDeleted: boolean;
+
+	/**
+	 * Filters condition that should be applied to match entities.
+	 */
+	@ApiPropertyOptional({ type: Object, default: {} })
+	@IsOptional()
+	readonly filters?: FindOptionsWhere<T>;
 }
 
 /**

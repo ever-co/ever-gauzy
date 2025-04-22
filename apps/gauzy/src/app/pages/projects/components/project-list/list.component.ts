@@ -52,8 +52,8 @@ import {
 	styleUrls: ['./list.component.scss']
 })
 export class ProjectListComponent extends PaginationFilterBaseComponent implements OnInit {
-	public loading: boolean = false;
-	public disableButton: boolean = true;
+	public loading = false;
+	public disableButton = true;
 	public settingsSmartTable: any;
 	public viewComponentName: ComponentEnum;
 	public PermissionsEnum = PermissionsEnum;
@@ -387,7 +387,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		switch (this.dataLayoutStyle) {
 			case this.componentLayoutStyleEnum.TABLE:
 				columns = {
-					project: {
+					name: {
 						title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 						type: 'custom',
 						renderComponent: ProjectOrganizationComponent,
@@ -491,7 +491,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 				break;
 			case this.componentLayoutStyleEnum.CARDS_GRID:
 				columns = {
-					project: {
+					name: {
 						title: 'Image',
 						type: 'custom',
 						renderComponent: ProjectOrganizationGridComponent,
