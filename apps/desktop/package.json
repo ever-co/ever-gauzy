@@ -66,7 +66,6 @@
 		"auto-launch": "5.0.5",
 		"consolidate": "^0.16.0",
 		"electron-log": "^4.4.8",
-		"electron-notarize": "^1.2.2",
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
 		"electron-util": "^0.18.1",

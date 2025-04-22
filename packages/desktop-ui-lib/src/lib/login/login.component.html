@@ -111,13 +111,10 @@
 					'LOGIN_PAGE.REMEMBER_ME_TITLE' | translate }}</nb-checkbox>
 			</div>
 			<div class="submit-btn-wrapper">
-				<a class="forgot-password caption-2 forgot-password-big" routerLink="/auth/request-password">
+				<a class="forgot-password caption-2 forgot-password-small" (click)="forgot()">
 					{{ 'LOGIN_PAGE.FORGOT_PASSWORD_TITLE' | translate }}
 				</a>
 				<div class="submit-inner-wrapper">
-					<a class="forgot-password caption-2 forgot-password-small" (click)="forgot()">
-						{{ 'LOGIN_PAGE.FORGOT_PASSWORD_TITLE' | translate }}
-					</a>
 					<button type="submit" nbButton size="small" class="submit-btn" [disabled]="submitted || !form.valid"
 						[class.btn-pulse]="submitted">
 						{{ 'BUTTONS.LOGIN' | translate }}
@@ -133,7 +130,7 @@
 			</div>
 		</form>
 		<div class="hr-div-soft"></div>
-		<ngx-social-links></ngx-social-links>
+		<ngx-social-links *ngIf="!isAgent"></ngx-social-links>
 		<div class="hr-div-soft"></div>
 		<section class="another-action" aria-label="Sign In Workspace">
 			{{ 'WORKSPACES.UNKNOWN_WORKSPACE' | translate }}

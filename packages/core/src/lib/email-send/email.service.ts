@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { IsNull } from 'typeorm';
 import { IAppIntegrationConfig } from '@gauzy/common';
@@ -19,7 +19,8 @@ import {
 	EmailTemplateEnum,
 	IResendEmailInput,
 	EmailStatusEnum,
-	ITenant
+	ITenant,
+	ID
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { deepMerge } from '@gauzy/utils';
@@ -1099,55 +1100,79 @@ export class EmailService {
 		}
 	}
 
-	async resendEmail(input: IResendEmailInput, languageCode: LanguagesEnum) {
-		const { id } = input;
-		const emailHistory: IEmailHistory = await this.typeOrmEmailHistoryRepository.findOne({
-			where: {
-				id
-			},
-			relations: {
-				emailTemplate: true,
-				organization: true
-			}
-		});
-		if (!emailHistory) {
-			throw Error('Email History does not exist');
-		}
-		// Organization
-		const organization: IOrganization = emailHistory.organization;
-		const email: IEmailHistory['email'] = emailHistory.email;
+	/**
+	 * Resend an email based on the provided email history ID, input details, and language code.
+	 *
+	 * @param id - The unique identifier of the email history record.
+	 * @param input - The input object containing organization and tenant details for resending the email.
+	 * @param languageCode - The language code used for localizing email content (if applicable).
+	 * @returns A promise that resolves to the updated email history record.
+	 */
+	async resendEmail(id: ID, input: IResendEmailInput, languageCode: LanguagesEnum): Promise<IEmailHistory> {
+		// Destructure the organization and tenant IDs from the input.
+		const { organizationId, tenantId } = input;
 
+		// Fetch the email history record with its associated email template and organization.
+		const emailHistory = await this.typeOrmEmailHistoryRepository.findOne({
+			where: { id, organizationId, tenantId },
+			relations: { emailTemplate: true, organization: true }
+		});
+
+		// Throw an exception if the email history record is not found.
+		if (!emailHistory) {
+			throw new NotFoundException('Email History does not exist');
+		}
+
+		// Extract organization and email details.
+		const { organization } = emailHistory;
+		const email = emailHistory.email;
+
+		// Construct email send options.
 		const sendOptions = {
 			template: emailHistory.emailTemplate.name,
 			message: {
-				to: `${email}`,
+				to: email,
 				subject: emailHistory.name,
 				html: emailHistory.content
 			}
 		};
 
-		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => sendOptions.message.to.includes(server));
+		// Check if the recipient email is blocked based on domain restrictions.
+		const isEmailBlocked = DISALLOW_EMAIL_SERVER_DOMAIN.some((server) => sendOptions.message.to.includes(server));
+		if (isEmailBlocked) {
+			throw new BadRequestException(`Email address ${sendOptions.message.to} is blocked by domain restrictions.`);
+		}
 
-		if (!isEmailBlocked) {
-			try {
-				const instance = await this.emailSendService.getEmailInstance({
-					organizationId: organization.id,
-					tenantId: emailHistory.tenantId
-				});
-				await instance.send(sendOptions);
-				emailHistory.status = EmailStatusEnum.SENT;
+		try {
+			// Retrieve the email instance for the organization and tenant.
+			const instance = await this.emailSendService.getEmailInstance({
+				organizationId: organization.id,
+				tenantId: emailHistory.tenantId
+			});
 
-				return await this.typeOrmEmailHistoryRepository.save(emailHistory);
-			} catch (error) {
-				console.log(`Error while re-sending mail: %s`, error?.message);
+			// Attempt to send the email.
+			await instance.send(sendOptions);
 
-				emailHistory.status = EmailStatusEnum.FAILED;
-				await this.typeOrmEmailHistoryRepository.save(emailHistory);
-				throw new BadRequestException(`Error while re-sending mail: ${error?.message}`);
-			}
+			// Update the email history status to SENT.
+			emailHistory.status = EmailStatusEnum.SENT;
+			return await this.typeOrmEmailHistoryRepository.save(emailHistory);
+		} catch (error) {
+			console.error(`Error while re-sending mail: ${error?.message}`);
+
+			// Update the email history status to FAILED and save.
+			emailHistory.status = EmailStatusEnum.FAILED;
+			await this.typeOrmEmailHistoryRepository.save(emailHistory);
+
+			// Propagate the error wrapped in a BadRequestException.
+			throw new BadRequestException(`Error while re-sending mail: ${error?.message}`);
 		}
 	}
 
+	/**
+	 *
+	 * @param createEmailOptions
+	 * @returns
+	 */
 	private async createEmailRecord(createEmailOptions: {
 		templateName: string;
 		email: string;

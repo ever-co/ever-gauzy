@@ -8,62 +8,88 @@ import { environment } from '@gauzy/config';
 @Injectable()
 export class LinkedinStrategy extends PassportStrategy(Strategy, 'linkedin') {
 	constructor(protected readonly configService: ConfigService) {
-		super(config(configService));
+		super(parseLinkedinConfig(configService));
 	}
 
 	/**
+	 * Validates the provided OAuth profile and constructs a simplified user object.
 	 *
-	 * @param request
-	 * @param accessToken
-	 * @param refreshToken
-	 * @param profile
-	 * @param done
+	 * This function extracts the user's email(s) from the OAuth profile and combines it
+	 * with the access token. If validation succeeds, the user object is passed to the callback.
+	 * Otherwise, the error is forwarded to the callback.
+	 *
+	 * @param request - The incoming request object.
+	 * @param accessToken - The OAuth access token.
+	 * @param refreshToken - The OAuth refresh token.
+	 * @param profile - The user profile returned by the OAuth provider.
+	 * @param done - The callback to be invoked with either an error or the user object.
+	 * @returns A promise that resolves when the validation process is complete.
 	 */
 	async validate(
 		request: any,
 		accessToken: string,
 		refreshToken: string,
 		profile: any,
-		done: Function
-	) {
+		done: (err: unknown, user?: unknown) => void
+	): Promise<void> {
 		try {
+			// Extract emails from the OAuth profile.
 			const { emails } = profile;
+
+			// Create a user object with the required properties.
 			const user = {
 				emails,
-				accessToken
+				accessToken,
+				refreshToken
 			};
+
+			// Invoke the callback with no error and the constructed user.
 			done(null, user);
-		} catch (err) {
-			done(err, false);
+		} catch (error) {
+			// If an error occurs, pass the error to the callback.
+			console.error('Error during LinkedIn OAuth validation:', error);
+			done(error, false);
 		}
 	}
 }
 
 /**
- * Creates a configuration object for LinkedIn OAuth based on the provided ConfigService.
+ * Parses the LinkedIn OAuth configuration using the provided ConfigService.
  *
- * @param configService - An instance of the ConfigService to retrieve configuration values.
- * @returns An object containing LinkedIn OAuth configuration.
+ * Retrieves the LinkedIn client ID, client secret, callback URL, and other related settings
+ * from the configuration. If any required configuration is missing, a warning is logged and default values are applied.
+ *
+ * @param configService - An instance of the ConfigService used to access application configuration.
+ * @returns An object containing the LinkedIn OAuth configuration parameters.
  */
-export const config = (configService: ConfigService) => ({
+export const parseLinkedinConfig = (configService: ConfigService): Record<string, any> => {
 	// Retrieve LinkedIn OAuth client ID from the configuration service, default to 'disabled' if not found.
-	clientID: <string>configService.get<string>('linkedin.clientId') || 'disabled',
-
+	const clientID = configService.get<string>('linkedin.clientId');
 	// Retrieve LinkedIn OAuth client secret from the configuration service, default to 'disabled' if not found.
-	clientSecret: <string>configService.get<string>('linkedin.clientSecret') || 'disabled',
-
+	const clientSecret = configService.get<string>('linkedin.clientSecret');
 	// Retrieve LinkedIn OAuth callback URL from the configuration service.
-	callbackURL: <string>configService.get<string>('linkedin.callbackURL'),
+	const callbackURL = configService.get<string>('linkedin.callbackURL');
 
-	// Pass the request object to the callback.
-	passReqToCallback: true,
+	// Validate required LinkedIn configurations. Log a warning if any are missing.
+	if (!clientID || !clientSecret || !callbackURL) {
+		console.warn('⚠️ LinkedIn OAuth configuration is incomplete. Defaulting to "disabled".');
+	}
 
-	// Specify the scope for LinkedIn OAuth (read user data and user email).
-	scope: ['r_liteprofile', 'r_emailaddress'],
-
-	// JWT secret for LinkedIn OAuth.
-	secretOrKey: environment.JWT_SECRET,
-
-	// Extract JWT from the request's Authorization header as a bearer token.
-	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
-});
+	// Return the configuration object with defaults as needed.
+	return {
+		// Use the retrieved clientID, or default to 'disabled' if not provided.
+		clientID: clientID || 'disabled',
+		// Use the retrieved clientSecret, or default to 'disabled' if not provided.
+		clientSecret: clientSecret || 'disabled',
+		// Use the retrieved callbackURL, or default to a constructed URL based on API_BASE_URL.
+		callbackURL: callbackURL || `${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/auth/linkedin/callback`,
+		// Include the request object in the OAuth callback.
+		passReqToCallback: true,
+		// Specify the scope for LinkedIn OAuth (for reading basic profile and email).
+		scope: ['r_liteprofile', 'r_emailaddress'],
+		// Use the JWT secret from the environment for LinkedIn OAuth.
+		secretOrKey: environment.JWT_SECRET,
+		// Define how to extract the JWT from the request's Authorization header.
+		jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
+	};
+};

@@ -10,13 +10,13 @@ export function ThemeInitializerFactory(
     electronService: ElectronService
 ) {
     return async () => {
-        const theme = await electronService.ipcRenderer.invoke(
+        const theme = await electronService?.ipcRenderer?.invoke(
             'PREFERRED_THEME'
         );
         themeService.changeTheme(themes[theme]);
         try {
-            electronService.ipcRenderer.removeAllListeners('THEME_CHANGE');
-            electronService.ipcRenderer.on('THEME_CHANGE', (_, theme) => {
+            electronService?.ipcRenderer?.removeAllListeners('THEME_CHANGE');
+            electronService?.ipcRenderer?.on('THEME_CHANGE', (_, theme) => {
                 themeService.changeTheme(themes[theme]);
             })
         } catch (error) {

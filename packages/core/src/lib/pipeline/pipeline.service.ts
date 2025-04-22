@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { FindManyOptions, FindOneOptions, FindOptionsWhere, Raw, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IDeal, IPagination, IPipeline, IPipelineStage } from '@gauzy/contracts';
-import { isPostgres } from '@gauzy/config';
 import { ConnectionEntityManager } from '../database/connection-entity-manager';
 import { Pipeline } from './pipeline.entity';
-import { PipelineStage } from './../core/entities/internal';
+import { Deal, PipelineStage } from './../core/entities/internal';
 import { RequestContext } from '../core/context/request-context';
+import { LIKE_OPERATOR } from '../core/util';
 import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
 import { TypeOrmDealRepository } from '../deal/repository/type-orm-deal.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
@@ -43,38 +43,40 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	 * @param where - Additional conditions to filter the deals.
 	 * @returns An object containing an array of deals and the total number of deals.
 	 */
-	public async getPipelineDeals(pipelineId: ID, where?: FindOptionsWhere<Pipeline>): Promise<IPagination<IDeal>> {
-		// Retrieve the current tenant ID from the request context
+	public async getPipelineDeals(
+		pipelineId: ID,
+		where?: FindOptionsWhere<Pipeline>,
+		relations: string[] = []
+	): Promise<IPagination<IDeal>> {
+		// Destructure organizationId and tenantId from where; fallback to current tenant if not provided
+		const { organizationId } = where ?? {};
 		const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
-		const { organizationId } = where || {};
+
+		// Prepare query options with ordering; add relations only if provided
+		const queryOptions: FindManyOptions<Deal> = {
+			// Build the where clause for the query
+			where: {
+				organizationId,
+				tenantId,
+				stage: {
+					pipelineId,
+					tenantId,
+					organizationId
+				}
+			},
+			order: { stage: { index: 'ASC' } }
+		};
+
+		if (relations.length) {
+			queryOptions.relations = relations;
+		}
 
 		try {
-			// Fetch deals related to the specified pipeline
-			const items: IDeal[] = await this.typeOrmDealRepository.find({
-				relations: {
-					stage: true,
-					createdByUser: true
-				},
-				where: {
-					organizationId,
-					tenantId,
-					stage: {
-						pipelineId,
-						tenantId,
-						organizationId
-					}
-				},
-				order: {
-					stage: {
-						index: 'ASC'
-					}
-				}
-			});
-
-			// Return the deals and their total count
-			return { items, total: items.length };
+			// Fetch deals and their total count
+			const [items, total] = await this.typeOrmDealRepository.findAndCount(queryOptions);
+			return { items, total };
 		} catch (error) {
-			console.error('Error fetching pipeline deals:', error);
+			console.error(`Error fetching pipeline deals: ${error.message}`, error);
 			return { items: [], total: 0 };
 		}
 	}
@@ -160,35 +162,35 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	 * @param filter - The filtering options.
 	 * @returns The paginated result.
 	 */
-	public async pagination(filter: FindManyOptions<Pipeline>): Promise<IPagination<IPipeline>> {
-		const whereFilter = filter.where as FindOptionsWhere<Pipeline>;
-		const whereOptions: FindOptionsWhere<Pipeline> = {};
+	public async pagination(filters?: FindManyOptions<Pipeline>): Promise<IPagination<IPipeline>> {
+		const whereOptions = filters?.where as FindOptionsWhere<Pipeline>;
 
-		if (whereFilter) {
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
-			const { name, description, stages } = whereFilter as FindOptionsWhere<Pipeline>;
+		if (whereOptions) {
+			const { name, description, stages } = whereOptions as FindOptionsWhere<Pipeline>;
+			const additionalFilters: FindOptionsWhere<Pipeline> = {};
 
 			if (name) {
-				whereOptions['name'] = Raw((alias) => `${alias} ${likeOperator} '%${name}%'`);
+				additionalFilters['name'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :name`, {
+					name: `%${name}%`
+				});
 			}
 
 			if (description) {
-				whereOptions['description'] = Raw((alias) => `${alias} ${likeOperator} '%${description}%'`);
+				additionalFilters['description'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :description`, {
+					description: `%${description}%`
+				});
 			}
 
 			if (stages) {
-				whereOptions['stages'] = {
-					name: Raw((alias) => `${alias} ${likeOperator} '%${stages}%'`)
+				additionalFilters['stages'] = {
+					name: Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :stages`, { stages: `%${stages}%` })
 				};
 			}
 
 			// Merge existing 'where' conditions with the new 'conditions'
-			filter.where = {
-				...whereFilter,
-				...whereOptions
-			};
+			filters.where = { ...whereOptions, ...additionalFilters };
 		}
 
-		return await super.paginate(filter);
+		return super.paginate(filters ?? {});
 	}
 }

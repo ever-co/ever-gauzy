@@ -7,11 +7,9 @@ import { IDeal } from '@gauzy/contracts';
     standalone: false
 })
 export class PipelineDealProbabilityComponent implements OnInit {
-	@Input()
-	value: string | number;
+	@Input() value: string | number;
 
-	@Input()
-	rowData: IDeal;
+	@Input() rowData: IDeal;
 
 	probability: number;
 

@@ -3,15 +3,15 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { UpdateResult } from 'typeorm';
 import {
 	BaseEntityEnum,
+	EntitySubscriptionTypeEnum,
 	IComment,
 	ICommentCreateInput,
 	ICommentUpdateInput,
-	ID,
-	SubscriptionTypeEnum
+	ID
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { CreateSubscriptionEvent } from '../subscription/events';
+import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { EmployeeService } from '../employee/employee.service';
 import { MentionService } from '../mention/mention.service';
 import { Comment } from './comment.entity';
@@ -67,27 +67,27 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 
 			// Publish mentions for each mentioned employee, if any.
 			await Promise.all(
-				mentionEmployeeIds.map((mentionedUserId) =>
+				mentionEmployeeIds.map((mentionedEmployeeId: ID) =>
 					this._mentionService.publishMention({
 						entity: BaseEntityEnum.Comment,
 						entityId: comment.id,
 						entityName: input.entityName,
-						mentionedUserId,
-						mentionById: employee.id,
 						parentEntityId: comment.entityId,
 						parentEntityType: comment.entity,
+						mentionedEmployeeId,
 						organizationId: comment.organizationId,
 						tenantId: comment.tenantId
 					})
 				)
 			);
 
-			// Subscribe the comment creator to the entity.
+			// Subscribe the comment created by user to the entity.
 			this._eventBus.publish(
-				new CreateSubscriptionEvent({
+				new CreateEntitySubscriptionEvent({
 					entity: input.entity,
 					entityId: input.entityId,
-					type: SubscriptionTypeEnum.COMMENT,
+					employeeId,
+					type: EntitySubscriptionTypeEnum.COMMENT,
 					organizationId: comment.organizationId,
 					tenantId: comment.tenantId
 				})

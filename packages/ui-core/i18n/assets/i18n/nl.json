@@ -169,10 +169,17 @@
 		"ADD_MODULE": "Module toevoegen",
 		"SHARE": "Delen",
 		"GET_INFO": "Informatie ophalen",
-		"RETRY": "Opnieuw proberen"
+		"RETRY": "Opnieuw proberen",
+		"UPLOAD": "Uploaden",
+		"MARKETPLACE": "Marktplaats",
+		"ADD_VERSION": "Versie toevoegen",
+		"READ_MORE": "Meer lezen",
+		"READ_LESS": "Minder lezen",
+		"RECOVER": "Herstellen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "Geen geschiedenis",
 			"RECEIVE_ESTIMATE": "Je hebt geen offerte ontvangen.",
 			"INCOME": "Je hebt geen enkel inkomen gecreëerd.",
 			"EXPENSE_CATEGORY": "U heeft geen uitgavencategorie gemaakt.",
@@ -216,7 +223,9 @@
 			"EVENT_TYPE": "U heeft geen evenementtype aangemaakt.",
 			"PRODUCT_TYPE_NO_DATA": "U heeft geen producttype gemaakt.",
 			"TEAM_DASHBOARD": "Je hebt geen teams.",
-			"PLUGIN": "Je hebt geen enkele plugin geïnstalleerd."
+			"PLUGIN": "Je hebt geen enkele plugin geïnstalleerd.",
+			"PLUGIN_MARKETPLACE": "Deze plugin is niet beschikbaar op de marktplaats",
+			"LOADING": "Laden..."
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Bedrag",
@@ -2031,6 +2040,10 @@
 			"ORG_TAGS_VIEW": "Bekijk Tags",
 			"ORG_TAGS_EDIT": "Bewerk tags",
 			"ORG_TAGS_DELETE": "Verwijder tags.",
+			"ORG_TAG_TYPES_ADD": "Aggiungi tipo di tag",
+			"ORG_TAG_TYPES_VIEW": "Visualizza tipi di tag",
+			"ORG_TAG_TYPES_EDIT": "Modifica tipo di tag",
+			"ORG_TAG_TYPES_DELETE": "Elimina tipo di tag",
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Maak/Bewerk/Verwijder Kandidaat Feedback",
 			"ALL_ORG_VIEW": "Bekijk alle organisaties",
 			"ALL_ORG_EDIT": "Maak/Bewerk/Verwijder Alle Organisaties",
@@ -2038,6 +2051,7 @@
 			"TIME_OFF_POLICY_VIEW": "Bekijk Verlofbeleid",
 			"TIME_OFF_POLICY_EDIT": "Bewerk Verlofbeleid",
 			"TIME_OFF_POLICY_DELETE": "Verwijder Verlofbeleid",
+			"SELECT_EMPLOYEE": "Selecteer werknemer",
 			"CHANGE_SELECTED_EMPLOYEE": "Wijzig geselecteerde werknemer",
 			"CHANGE_SELECTED_CANDIDATE": "Geselecteerde kandidaat wijzigen",
 			"CHANGE_SELECTED_ORGANIZATION": "Verander Geselecteerde Organisatie",
@@ -2143,6 +2157,8 @@
 			"ORG_TASK_DELETE": "Taken verwijderen",
 			"ORG_TASK_SETTING": "Taakinstellingen",
 			"ORG_MEMBER_LAST_LOG_VIEW": "Bekijk laatste logboek",
+			"API_CALL_LOG_READ": "Lees API-aanroeplogboek",
+			"API_CALL_LOG_DELETE": "Verwijder API-aanroeplogboek",
 			"TENANT_API_KEY_CREATE": "API-sleutel maken",
 			"TENANT_API_KEY_VIEW": "API-sleutel bekijken",
 			"TENANT_API_KEY_DELETE": "API-sleutel verwijderen",
@@ -2603,6 +2619,7 @@
 		"TASKS_STATUS": "Status",
 		"TASK_PRIORITY": "Prioriteit",
 		"TASK_SIZE": "Grootte",
+		"PARENT_TASK": "Hoofdtaak",
 		"TODO": "Todo",
 		"OPEN": "Open",
 		"READY_FOR_REVIEW": "Klaar voor beoordeling",
@@ -2943,6 +2960,9 @@
 		"ALREADY_PAID": "Al betaald",
 		"AMOUNT_DUE": "Openstaand bedrag",
 		"INVOICED_REMAINING_AMOUNT": "Ingevoerd resterend bedrag",
+		"TAX_CALCULATION_TYPE": "Soort belastingberekening",
+		"SIMPLE": "Eenvoudig",
+		"COMPOSED": "Samengesteld",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Factuurtype",
 			"ESTIMATE_TYPE": "Schattingstype",
@@ -3565,6 +3585,7 @@
 			"APPROVAL_POLICY_CREATED": "Goedkeuringsbeleid '{{ name }}' is toegevoegd",
 			"APPROVAL_POLICY_UPDATED": "Goedkeuringsbeleid '{{ name }}' is gewijzigd",
 			"APPROVAL_POLICY_DELETED": "Goedkeuringsbeleid '{{ name }}' is verwijderd",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Goedkeuringsbeleid '{{ name }}' bestaat al",
 			"CANDIDATE_CREATED": "Kandidaat '{{ name }}' is toegevoegd aan '{{ organization }}'.",
 			"CANDIDATE_ARCHIVED": "Kandidaat '{{ name }}' ingesteld als gearchiveerd.",
 			"CANDIDATE_REJECTED": "Kandidaat '{{ name }}' is ingesteld als afgewezen.",
@@ -3682,7 +3703,8 @@
 			"EDIT_POLICY": "Het beleid voor verlof '{{ name }}' is gewijzigd.",
 			"DELETE_POLICY": "Het verlofbeleid '{{ name }}' is verwijderd.",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Kan geen beleidsrecord maken"
+			"SAVE_ERROR": "Kan geen beleidsrecord maken",
+			"POLICY_EXISTS": "Het verlofbeleid '{{ name }}' bestaat al"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Uw profiel is succesvol bijgewerkt."
@@ -4002,7 +4024,14 @@
 				"SSL_CERT_FILE_INFO": "Pad naar het client-certificaatbestand voor SSL.",
 				"SECURE": "Veilig",
 				"SECURE_INFO": "True, als je de SSL-certificaten wilt verifiëren."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "NPM-installatie biedt toegang tot openbaar en privé beschikbare plug-ins.",
+			"PACKAGE_NAME": "NPM-pakketnaam",
+			"PACKAGE_VERSION": "NPM-pakketversie",
+			"REGISTRY": "NPM-register",
+			"AUTH_TOKEN": "Authenticatietoken",
+			"PRIVATE_REGISTRY_URL": "URL van privéregister",
+			"PLUGIN_INSTALL_CDN_ERROR": "De server-URL mag niet leeg zijn."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weeklimiet overschreden",
 		"OF_HRS": "Van {{ limit }} uur",
@@ -4410,6 +4439,7 @@
 		"LOW": "Laag",
 		"MEDIUM": "Gemiddeld",
 		"HIGH": "Hoog",
+		"UNKNOWN": "Onbekend",
 		"DEAL_DELETED": "Deal '{{ name }}' is verwijderd",
 		"DEAL_EDITED": "Deal '{{ name }}' werd gewijzigd",
 		"DEAL_ADDED": "Deal '{{ name }}' is toegevoegd"
@@ -4755,6 +4785,189 @@
 				"SHARE_NOT_ALLOWED": "Delen is niet toegestaan",
 				"UNEXPECTED_SHARING_ERROR": "Onverwachte fout bij delen"
 			}
+		},
+		"FORM": {
+			"TITLE": "Plugin uploaden",
+			"BASIC_INFO": "Basisinformatie",
+			"NAME": "Pluginaam",
+			"NAME_PLACEHOLDER": "Voer de pluginaam in",
+			"VALIDATION": {
+				"NAME_REQUIRED": "Pluginaam is vereist",
+				"NAME_TOO_LONG": "Pluginaam is te lang",
+				"VERSION_REQUIRED": "Versie is vereist",
+				"VERSION_FORMAT": "Ongeldig versieformaat",
+				"DESCRIPTION_TOO_LONG": "Beschrijving is te lang",
+				"URL_REQUIRED": "URL is vereist",
+				"INVALID_URL": "Ongeldig URL-formaat",
+				"PACKAGE_NAME_REQUIRED": "Pakketnaam is vereist",
+				"INVALID_PACKAGE_NAME": "Ongeldig pakketnaamformaat",
+				"INVALID_SCOPE": "Ongeldig bereikformaat",
+				"AUTHOR_TOO_LONG": "Auteursnaam is te lang",
+				"LICENSE_TOO_LONG": "Licentieveld is te lang",
+				"FAILED": "Validatie mislukt",
+				"CHANGELOG_TOO_SHORT": "Changelog is te kort",
+				"CHANGELOG_REQUIRED": "Changelog is vereist"
+			},
+			"TYPE": "Plugintype",
+			"TYPE_PLACEHOLDER": "Selecteer plugintype",
+			"TYPES": {
+				"DESKTOP": "Desktop",
+				"WEB": "Web",
+				"MOBILE": "Mobiel"
+			},
+			"VERSION": "Versie",
+			"STATUS": "Status",
+			"STATUSES": {
+				"ACTIVE": "Actief",
+				"INACTIVE": "Inactief",
+				"DEPRECATED": "Verouderd",
+				"ARCHIVED": "Gearchiveerd"
+			},
+			"DESCRIPTION": "Beschrijving",
+			"DESCRIPTION_PLACEHOLDER": "Voer een pluginbeschrijving in",
+			"SOURCE": "Bron",
+			"SOURCE_TYPE": "Brontype",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "CDN-URL",
+				"INTEGRITY": "Integriteit",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "NPM-pakketnaam",
+				"REGISTRY": "NPM-register",
+				"SCOPE": "Bereik",
+				"AUTH_TOKEN": "Authenticatietoken"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Sleep je bestand hierheen",
+				"BROWSE": "Bladeren",
+				"REMOVE": "Bestand verwijderen",
+				"RESTRICTIONS": "Alleen .zip-bestanden zijn toegestaan",
+				"FILE": "Bestand"
+			},
+			"METADATA": {
+				"TITLE": "Metadata",
+				"AUTHOR": "Auteur",
+				"AUTHOR_PLACEHOLDER": "Voer de auteursnaam in",
+				"LICENSE": "Licentie",
+				"LICENSE_PLACEHOLDER": "Voer de licentie in",
+				"HOMEPAGE": "Homepage",
+				"HOMEPAGE_PLACEHOLDER": "Voer de homepage-URL in",
+				"REPOSITORY": "Repository",
+				"REPOSITORY_PLACEHOLDER": "Voer de repository-URL in"
+			},
+			"OR": "Of",
+			"RELEASE_DATE": "Uitgaandatum",
+			"CHANGELOG": "Wijzigingslogboek",
+			"CHANGELOG_PLACEHOLDER": "Voer de wijzigingslogboek in"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Gebruiksstatistieken",
+			"DOWNLOAD_COUNT": "Aantal downloads",
+			"LAST_DOWNLOADED": "Laatst gedownload",
+			"UPLOADED_BY": "Geüpload door",
+			"UPLOADED_AT": "Geüpload op",
+			"SECURITY_INFO": "Beveiligingsinformatie",
+			"CHECKSUM": "Controlesom",
+			"SIGNATURE": "Handtekening",
+			"INSTALLED": "Geïnstalleerd",
+			"HIDDEN_FOR_SECURITY": "Verborgen voor beveiligingsredenen"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Ontdekken",
+			"INSTALLED": "Geïnstalleerd",
+			"VERSION_HISTORY": "Versiegeschiedenis"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Nieuwe plugin uploaden",
+			"OFFLINE": "U bent momenteel offline/verbinding verbroken ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Plugin deactiveren",
+				"DESCRIPTION": "Weet u zeker dat u deze plugin wilt deactiveren?",
+				"CONFIRM": "Deactiveren"
+			},
+			"UNINSTALL": {
+				"TITLE": "Plugin verwijderen",
+				"DESCRIPTION": "Weet u zeker dat u deze plugin wilt verwijderen?",
+				"CONFIRM": "Verwijderen"
+			},
+			"DELETE": {
+				"TITLE": "Plugin verwijderen",
+				"DESCRIPTION": "Weet u zeker dat u deze plugin wilt verwijderen?",
+				"CONFIRM": "Verwijderen"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Versie v{{number}} bijwerken",
+					"DESCRIPTION": "Weet u zeker dat u deze plugin wilt bijwerken?",
+					"CONFIRM": "Bijwerken"
+				},
+				"CREATE": {
+					"TITLE": "Nieuwe versie maken voor {{name}}",
+					"DESCRIPTION": "Weet u zeker dat u deze versie wilt maken?",
+					"CONFIRM": "Maken"
+				},
+				"DELETE": {
+					"TITLE": "Versie verwijderen",
+					"DESCRIPTION": "Weet u zeker dat u deze versie wilt verwijderen?",
+					"CONFIRM": "Verwijderen"
+				},
+				"RESTORE": {
+					"TITLE": "Versie herstellen",
+					"DESCRIPTION": "Weet u zeker dat u deze versie wilt herstellen?",
+					"CONFIRM": "Herstellen"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Pluginversie v{{number}} succesvol aangemaakt!",
+					"UPDATED": "Pluginversie v{{number}} succesvol bijgewerkt!",
+					"DELETED": "Pluginversie succesvol verwijderd!",
+					"RESTORED": "Pluginversie succesvol hersteld!"
+				},
+				"UPLOADED": "Plugin succesvol geüpload!",
+				"UPDATED": "Plugin succesvol bijgewerkt!",
+				"DELETED": "Plugin succesvol verwijderd!",
+				"INSTALLED": "Plugin succesvol geïnstalleerd!",
+				"UNINSTALLED": "Plugin succesvol gedeïnstalleerd!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Nieuwe pluginversie wordt toegevoegd...",
+					"UPDATING": "Pluginversie wordt bijgewerkt...",
+					"DELETING": "Pluginversie wordt verwijderd...",
+					"RESTORING": "Pluginversie wordt hersteld..."
+				},
+				"UPLOADING": "Plugin wordt geüpload...",
+				"UPDATING": "Plugin wordt bijgewerkt...",
+				"DELETING": "Plugin wordt verwijderd...",
+				"INSTALLING": "Plugin wordt geïnstalleerd...",
+				"UNINSTALLING": "Plugin wordt gedeïnstalleerd..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Herstellen van pluginversie mislukt. Probeer het opnieuw!"
+				},
+				"UPLOAD": "Uploaden van plugin mislukt. Probeer het opnieuw!",
+				"NOT_FOUND": "Plugin met ID {{ id }} niet gevonden.",
+				"INSTALL": "Installeren van plugin mislukt. Probeer het opnieuw!",
+				"REVERT_INSTALLATION": "Terugdraaien van installatie mislukt!"
+			}
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Server niet beschikbaar",
+		"DESCRIPTION": "De {{companySite}}-server is momenteel niet bereikbaar. Dit kan komen door gepland onderhoud of onverwachte uitval.",
+		"CONNECTING": "Automatisch verbinding opnieuw proberen...",
+		"HINT": "Status: Poging om verbinding te maken met {{companySite}}-servers. Foutcode: 503."
 	}
 }

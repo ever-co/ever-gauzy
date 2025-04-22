@@ -56,6 +56,7 @@ export class VariantTableComponent extends TranslationBaseComponent implements O
 
 				this.variants = res.items;
 			}
+
 			this.loading = false;
 			this.smartTableSource.load(this.variants);
 		});
@@ -75,9 +76,9 @@ export class VariantTableComponent extends TranslationBaseComponent implements O
 				options: {
 					title: this.getTranslation('INVENTORY_PAGE.OPTIONS'),
 					type: 'string',
-					valuePrepareFunction: (_, variant) => {
-						return variant.options && variant.options.length > 0
-							? variant.options.map((option) => option.name).join(', ')
+					valuePrepareFunction: (_, options) => {
+						return options.value && options.value.length > 0
+							? options.value.map((option) => option.name).join(', ')
 							: this.getTranslation('INVENTORY_PAGE.NO_OPTIONS_LABEL');
 					}
 				},

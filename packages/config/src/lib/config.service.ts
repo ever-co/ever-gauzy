@@ -109,13 +109,17 @@ export class ConfigService {
 	}
 
 	/**
-	 * Get an environment variable value.
+	 * Retrieves an environment variable value with proper type inference.
 	 *
-	 * @param key The environment variable key.
-	 * @returns The corresponding environment value.
+	 * @param {K} key - The environment variable key.
+	 * @returns {IEnvironment[K]} - The corresponding environment value.
+	 * @throws {Error} If the key does not exist in the environment.
 	 */
-	get<T>(key: keyof IEnvironment): IEnvironment[keyof IEnvironment] {
-		return this.environment[key] as T;
+	get<K extends keyof IEnvironment>(key: K): IEnvironment[K] {
+		if (!(key in this.environment)) {
+			throw new Error(`Environment variable "${String(key)}" is not defined.`);
+		}
+		return this.environment[key];
 	}
 
 	/**

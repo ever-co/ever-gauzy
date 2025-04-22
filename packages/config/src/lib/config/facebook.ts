@@ -14,6 +14,6 @@ export default registerAs(
 		clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
 
 		// Callback URL for handling the OAuth response after authentication
-		callbackURL: process.env.FACEBOOK_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/facebook/callback`
+		callbackURL: process.env.FACEBOOK_CALLBACK_URL
 	})
 );

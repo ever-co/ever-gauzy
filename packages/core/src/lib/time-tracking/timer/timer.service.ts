@@ -57,7 +57,7 @@ export class TimerService {
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		private readonly _employeeService: EmployeeService,
-		private readonly _commandBus: CommandBus
+		private readonly _commandBus: CommandBus,
 	) {}
 
 	/**
@@ -79,10 +79,8 @@ export class TimerService {
 	}
 
 	/**
-	 * Get timer status
-	 *
-	 * @param request
-	 * @returns
+	 * Implementation of timer status logic
+	 * This is intended to be used directly by the command handler
 	 */
 	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
@@ -191,10 +189,8 @@ export class TimerService {
 	}
 
 	/**
-	 * Start time tracking for an employee.
-	 *
-	 * @param request The timer toggle input details.
-	 * @returns A Promise resolving to the created ITimeLog entry.
+	 * Implementation of start timer logic
+	 * This is intended to be used directly by the command handler
 	 */
 	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
 		console.log(
@@ -271,10 +267,8 @@ export class TimerService {
 	}
 
 	/**
-	 * Stop time tracking for the current employee.
-	 *
-	 * @param request The input data for stopping the timer.
-	 * @returns A Promise resolving to the updated ITimeLog entry.
+	 * Implementation of stop timer logic
+	 * This is intended to be used directly by the command handler
 	 */
 	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
 		console.log(

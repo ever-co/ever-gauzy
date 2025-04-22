@@ -19,8 +19,7 @@ import {
 	ITaskSize,
 	ITaskStatus,
 	ITaskVersion,
-	ITaskView,
-	IUser
+	ITaskView
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
@@ -43,8 +42,7 @@ import {
 	TaskStatus,
 	TaskVersion,
 	TaskView,
-	TenantOrganizationBaseEntity,
-	User
+	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import {
 	ColumnIndex,
@@ -159,35 +157,12 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	|--------------------------------------------------------------------------
 	*/
 	/**
-	 * The user who created the Team.
-	 */
-	@MultiORMManyToOne(() => User, {
-		// The relationship is optional (nullable).
-		nullable: true,
-		// On deletion of the user, set the foreign key value to NULL.
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	createdByUser?: IUser;
-
-	/**
-	 * The ID of the user who created the Team.
-	 */
-	@RelationId((it: OrganizationTeam) => it.createdByUser)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	createdByUserId?: ID;
-
-	/**
 	 * The ImageAsset that is associated with this OrganizationTeam.
 	 */
 	@MultiORMManyToOne(() => ImageAsset, {
-		// Indicates that the relation is optional (i.e. the value may be null).
-		nullable: true,
-		// If the referenced ImageAsset is deleted, set this foreign key to NULL.
-		onDelete: 'SET NULL',
-		// The related ImageAsset is eagerly loaded, meaning it is automatically fetched with the OrganizationTeam entity.
-		eager: true
+		nullable: true, // Indicates that the relation is optional (i.e. the value may be null)
+		onDelete: 'SET NULL', // If the referenced ImageAsset is deleted, set this foreign key to NULL.
+		eager: true // The related ImageAsset is eagerly loaded, meaning it is automatically fetched with the OrganizationTeam entity.
 	})
 	@JoinColumn()
 	image?: IImageAsset;

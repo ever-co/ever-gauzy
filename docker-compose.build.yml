@@ -24,6 +24,10 @@ services:
       SENTRY_HTTP_TRACING_ENABLED: ${SENTRY_HTTP_TRACING_ENABLED:-}
       SENTRY_POSTGRES_TRACKING_ENABLED: ${SENTRY_POSTGRES_TRACKING_ENABLED:-}
       SENTRY_PROFILING_ENABLED: ${SENTRY_PROFILING_ENABLED:-}
+      POSTHOG_KEY: ${POSTHOG_KEY:-}
+      POSTHOG_HOST: ${POSTHOG_HOST:-}
+      POSTHOG_ENABLED: ${POSTHOG_ENABLED:-}
+      POSTHOG_FLUSH_INTERVAL: ${POSTHOG_FLUSH_INTERVAL:-}
       JITSU_SERVER_URL: ${JITSU_SERVER_URL:-}
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-}
       OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
@@ -64,10 +68,10 @@ services:
       redis:
         condition: service_started
       minio:
-        condition: service_started
+        condition: service_healthy
       minio_create_buckets:
         condition: service_started
-      elasticsearch:
+      opensearch:
         condition: service_healthy
       cube:
         condition: service_started
@@ -76,7 +80,7 @@ services:
       - cube:${CUBE_HOST:-cube}
       - redis:${REDIS_HOST:-redis}
       - minio:${MINIO_HOST:-minio}
-      - elasticsearch:${ES_HOST:-elasticsearch}
+      - opensearch:${ES_HOST:-opensearch}
     # volumes:
     # - webapp_node_modules:/srv/gauzy/node_modules
     # - api_node_modules:/srv/gauzy/apps/api/node_modules
@@ -154,18 +158,18 @@ services:
       - cube:${CUBE_HOST:-cube}
       - redis:${REDIS_HOST:-redis}
       - minio:${MINIO_HOST:-minio}
-      - elasticsearch:${ES_HOST:-elasticsearch}
+      - opensearch:${ES_HOST:-opensearch}
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_started
       minio:
-        condition: service_started
+        condition: service_healthy
       minio_create_buckets:
         condition: service_started
-      elasticsearch:
-        condition: service_healthy
+      opensearch:
+        condition: service_started
       api:
         condition: service_started
     # volumes:

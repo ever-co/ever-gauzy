@@ -1,0 +1,129 @@
+@let versions = query.versions$ | async; @let isAvailable = (query.count$ | async) > 0; @let isRemoving =
+query.deleting$ | async; @let isRecovering = query.restoring$ | async; @let isLoading = (query.isLoading$ | async) &&
+versions.length === 0; @let isEditing = query.updating$ | async; @let isDisabled = isRemoving || isRecovering ||
+isEditing; @let selectedVersionId = (query.version$ | async)?.id;
+
+<nb-card class="content-active first">
+	<nb-card-header class="d-flex justify-content-between header">
+		<h5 class="title">{{ 'PLUGIN.LAYOUT.VERSION_HISTORY' | translate }}</h5>
+		<button nbButton ghost size="small" (click)="navigateBack()">
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</nb-card-header>
+
+	@if (isAvailable) {
+	<nb-card-body
+		nbInfiniteList
+		[threshold]="500"
+		[throttleTime]="300"
+		(bottomThreshold)="loadMore()"
+		class="version-container"
+	>
+		@for (version of versions; track version.id) { @defer (on viewport; when isLoading) {
+		<nb-card class="version">
+			<nb-card-header>
+				<h6 class="title">
+					<time [dateTime]="version.releaseDate">
+						{{ version.releaseDate | date : 'MMMM d, y' }}
+					</time>
+					&middot; {{ version.number }}
+				</h6>
+			</nb-card-header>
+			<nb-card-body class="changelog">
+				<p
+					[readMore]="256"
+					[readMoreText]="'BUTTONS.READ_MORE' | translate"
+					[readLessText]="'BUTTONS.READ_LESS' | translate"
+				>
+					{{ version.changelog }}
+				</p>
+			</nb-card-body>
+			@if(isOwner(version)){
+			<nb-card-footer class="version-actions">
+				@if(version.deletedAt) {
+				<button
+					nbButton
+					size="small"
+					type="button"
+					class="action warning"
+					status="basic"
+					(click)="restore(version)"
+					[disabled]="isDisabled"
+				>
+					<nb-icon
+						*gauzySpinnerButton="selectedVersionId === version.id && isRecovering"
+						icon="refresh-outline"
+					></nb-icon>
+					{{ 'BUTTONS.RECOVER' | translate }}
+				</button>
+				} @else {
+				<button
+					nbButton
+					size="small"
+					type="button"
+					class="action secondary"
+					status="basic"
+					[disabled]="isDisabled"
+					(click)="edit(version)"
+				>
+					<nb-icon
+						*gauzySpinnerButton="selectedVersionId === version.id && isEditing"
+						icon="edit-2-outline"
+					></nb-icon>
+					{{ 'BUTTONS.EDIT' | translate }}
+				</button>
+				<button
+					nbButton
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+					size="small"
+					type="button"
+					status="basic"
+					class="action"
+					(click)="remove(version)"
+					[disabled]="isDisabled"
+				>
+					<nb-icon
+						*gauzySpinnerButton="selectedVersionId === version.id && isRemoving"
+						status="danger"
+						icon="trash-2-outline"
+					></nb-icon>
+				</button>
+				}
+			</nb-card-footer>
+			}
+		</nb-card>
+		} @placeholder(minimum 500ms) {
+		<nb-card class="version skeleton-loader">
+			<nb-card-header>
+				<h6 class="title">
+					<div class="skeleton-line date" style="width: 120px"></div>
+					<div class="skeleton-line version-number" style="width: 60px"></div>
+				</h6>
+			</nb-card-header>
+
+			<nb-card-body class="changelog">
+				<div class="skeleton-line" style="width: 100%; height: 16px; margin-bottom: 8px"></div>
+				<div class="skeleton-line" style="width: 90%; height: 16px; margin-bottom: 8px"></div>
+				<div class="skeleton-line" style="width: 80%; height: 16px"></div>
+			</nb-card-body>
+
+			<nb-card-footer class="version-actions">
+				<div class="skeleton-button" style="width: 80px; height: 32px"></div>
+				<div class="skeleton-button" style="width: 32px; height: 32px; margin-left: 8px"></div>
+			</nb-card-footer>
+		</nb-card>
+		} }
+	</nb-card-body>
+	} @else if (isLoading) {
+	<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.LOADING' | translate"></ngx-no-data-message>
+	} @else {
+	<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.HISTORY' | translate"></ngx-no-data-message>
+	}
+
+	<nb-card-footer class="d-flex justify-content-between footer">
+		<button nbButton type="button" status="basic" size="small" class="action secondary" (click)="navigateBack()">
+			<nb-icon icon="arrow-back-outline" class="mr-1"></nb-icon>
+			{{ 'BUTTONS.BACK' | translate | titlecase }}
+		</button>
+	</nb-card-footer>
+</nb-card>

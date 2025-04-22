@@ -1,0 +1,62 @@
+<lib-form-section [formGroup]="form" class="version-section" title="{{ 'PLUGIN.FORM.VERSION' | translate }}">
+	<lib-form-row>
+		<nb-form-field class="form-group">
+			<label class="label" for="version-number">{{ 'PLUGIN.FORM.VERSION' | translate }} *</label>
+			<input
+				nbInput
+				fullWidth
+				id="version-number"
+				formControlName="number"
+				placeholder="1.0.0"
+				[status]="getFieldError('number') ? 'danger' : 'basic'"
+			/>
+			<nb-hint *ngIf="getFieldError('number', 'required')" status="danger">
+				{{ 'PLUGIN.FORM.VALIDATION.VERSION_REQUIRED' | translate }}
+			</nb-hint>
+			<nb-hint *ngIf="getFieldError('number', 'pattern')" status="danger">
+				{{ 'PLUGIN.FORM.VALIDATION.VERSION_FORMAT' | translate }}
+			</nb-hint>
+		</nb-form-field>
+
+		<nb-form-field class="form-group">
+			<label class="label" for="release-date">{{ 'PLUGIN.FORM.RELEASE_DATE' | translate }} *</label>
+			<input
+				nbInput
+				fullWidth
+				id="release-date"
+				formControlName="releaseDate"
+				[nbDatepicker]="datepicker"
+				placeholder="YYYY-MM-DD"
+				[status]="getFieldError('releaseDate') ? 'danger' : 'basic'"
+			/>
+			<nb-datepicker #datepicker [max]="max"></nb-datepicker>
+			<nb-hint *ngIf="getFieldError('releaseDate', 'required')" status="danger">
+				{{ 'PLUGIN.FORM.VALIDATION.RELEASE_DATE_REQUIRED' | translate }}
+			</nb-hint>
+			<nb-hint *ngIf="getFieldError('releaseDate', 'futureDate')" status="danger">
+				{{ 'PLUGIN.FORM.VALIDATION.FUTURE_DATE' | translate }}
+			</nb-hint>
+		</nb-form-field>
+	</lib-form-row>
+
+	<lib-form-row>
+		<nb-form-field class="form-group full-width">
+			<label class="label" for="version-changelog">{{ 'PLUGIN.FORM.CHANGELOG' | translate }} *</label>
+			<textarea
+				nbInput
+				fullWidth
+				id="version-changelog"
+				formControlName="changelog"
+				placeholder="{{ 'PLUGIN.FORM.CHANGELOG_PLACEHOLDER' | translate }}"
+				[status]="getFieldError('changelog') ? 'danger' : 'basic'"
+				rows="3"
+			></textarea>
+			<nb-hint *ngIf="getFieldError('changelog', 'required')" status="danger">
+				{{ 'PLUGIN.FORM.VALIDATION.CHANGELOG_REQUIRED' | translate }}
+			</nb-hint>
+			<nb-hint *ngIf="getFieldError('changelog', 'minlength')" status="danger">
+				{{ 'PLUGIN.FORM.VALIDATION.CHANGELOG_TOO_SHORT' | translate }}
+			</nb-hint>
+		</nb-form-field>
+	</lib-form-row>
+</lib-form-section>

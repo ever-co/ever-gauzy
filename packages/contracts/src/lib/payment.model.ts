@@ -1,7 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IInvoice } from './invoice.model';
 import { ITaggable } from './tag.model';
-import { IHasUserCreator } from './user.model';
 import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IPaginationInput } from './core.model';
@@ -17,7 +16,7 @@ export interface PaymentStats {
 }
 
 // Base interface for common properties
-interface IBasePaymentProperties extends IBasePerTenantAndOrganizationEntityModel, ITaggable, IHasUserCreator {
+interface IBasePaymentProperties extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	note?: string;
 	employeeId?: ID;
 	employee?: IEmployee;

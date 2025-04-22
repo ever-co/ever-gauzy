@@ -19,7 +19,7 @@ import {
 	AddTaskDialogComponent,
 	ALL_PROJECT_SELECTED,
 	AssignedToComponent,
-	CreateByComponent,
+	CreatedByUserComponent,
 	CreatedAtComponent,
 	DateViewComponent,
 	DeleteConfirmationComponent,
@@ -176,6 +176,23 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						return this._hashNumberPipe.transform(value);
 					}
 				},
+				parent: {
+					title: this.getTranslation('TASKS_PAGE.PARENT_TASK'),
+					type: 'string',
+					width: '10%',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (prefix: string) => {
+						this.setFilter({ field: 'parent.prefix', search: prefix });
+					},
+					valuePrepareFunction: (value: ITask, cell: Cell) => {
+						const parentTaskNumber = cell.getRow().getData()?.parent?.taskNumber;
+						if (!parentTaskNumber) return '-';
+						return this._hashNumberPipe.transform(parentTaskNumber);
+					}
+				},
 				description: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
 					type: 'custom',
@@ -212,11 +229,11 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						instance.value = cell.getValue();
 					}
 				},
-				creator: {
+				createdByUser: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_CREATOR'),
 					type: 'custom',
-					renderComponent: CreateByComponent,
-					componentInitFunction: (instance: CreateByComponent, cell: Cell) => {
+					renderComponent: CreatedByUserComponent<ITask>,
+					componentInitFunction: (instance: CreatedByUserComponent<ITask>, cell: Cell) => {
 						instance.value = cell.getValue();
 						instance.rowData = cell.getRow().getData();
 					},
@@ -226,7 +243,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					},
 					filterFunction: (value: string) => {
 						this.setFilter({
-							field: 'creator.firstName',
+							field: 'createdByUser.firstName',
 							search: value
 						});
 					}
@@ -422,13 +439,14 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				'members',
 				'members.user',
 				'project',
+				'parent',
 				'modules',
 				'tags',
 				'teams',
 				'teams.members',
 				'teams.members.employee',
 				'teams.members.employee.user',
-				'creator',
+				'createdByUser',
 				'organizationSprint',
 				'taskStatus',
 				'taskSize',

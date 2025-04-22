@@ -1,0 +1,75 @@
+<nb-card class="dialog-card" status="basic">
+	<nb-card-header class="mb-0">
+		<h5 class="title">{{ (!!plugin ? 'POP_UPS.EDIT' : 'PLUGIN.FORM.TITLE') | translate }}</h5>
+		<span class="cancel"><i (click)="dismiss()" class="fas fa-times"></i></span>
+	</nb-card-header>
+
+	<nb-card-body>
+		<form [formGroup]="pluginForm" (ngSubmit)="submit()">
+			<nb-stepper orientation="horizontal" #stepper>
+				<!-- Step 1: Basic Info -->
+				<nb-step [stepControl]="pluginForm?.get('name')" [label]="'PLUGIN.FORM.BASIC_INFO' | translate">
+					<lib-plugin-basic-information
+						[form]="pluginForm"
+						[pluginTypes]="pluginTypes"
+						[pluginStatuses]="pluginStatuses"
+						class="grow"
+					></lib-plugin-basic-information>
+					<div class="stepper-buttons">
+						<button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
+					</div>
+				</nb-step>
+
+				<!-- Step 2: Source -->
+				<nb-step [stepControl]="pluginForm?.get('version.source')" [label]="'PLUGIN.FORM.SOURCE' | translate">
+					<lib-plugin-source
+						class="grow"
+						[form]="pluginForm?.get('version.source')"
+						[sourceTypes]="sourceTypes"
+					></lib-plugin-source>
+					<div class="stepper-buttons">
+						<button nbButton outline status="basic" nbStepperPrevious>
+							{{ 'BUTTONS.PREVIOUS' | translate }}
+						</button>
+						<button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
+					</div>
+				</nb-step>
+
+				<!-- Step 3: Version -->
+				<nb-step [stepControl]="pluginForm?.get('version')" [label]="'PLUGIN.FORM.VERSION' | translate">
+					<lib-plugin-version class="grow" [form]="pluginForm?.get('version')"></lib-plugin-version>
+					<div class="stepper-buttons">
+						<button nbButton outline status="basic" nbStepperPrevious>
+							{{ 'BUTTONS.PREVIOUS' | translate }}
+						</button>
+						<button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
+					</div>
+				</nb-step>
+
+				<!-- Step 4: Metadata -->
+				<nb-step [label]="'PLUGIN.FORM.METADATA' | translate">
+					<lib-plugin-metadata class="grow" [form]="pluginForm"></lib-plugin-metadata>
+					<div class="stepper-buttons">
+						<button nbButton outline status="basic" nbStepperPrevious>
+							{{ 'BUTTONS.PREVIOUS' | translate }}
+						</button>
+						<button nbButton type="button" (click)="dismiss()" outline status="danger">
+							{{ 'BUTTONS.CANCEL' | translate }}
+						</button>
+						<button
+							nbButton
+							type="submit"
+							status="success"
+							[disabled]="isFormInvalid || isSubmitting"
+							[nbSpinner]="isSubmitting"
+							nbSpinnerStatus="success"
+							nbSpinnerSize="small"
+						>
+							{{ (!!plugin ? 'BUTTONS.UPDATE' : 'BUTTONS.UPLOAD') | translate }}
+						</button>
+					</div>
+				</nb-step>
+			</nb-stepper>
+		</form>
+	</nb-card-body>
+</nb-card>

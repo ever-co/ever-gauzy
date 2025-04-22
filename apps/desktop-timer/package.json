@@ -65,7 +65,6 @@
 		"consolidate": "^0.16.0",
 		"custom-electron-titlebar": "^4.2.8",
 		"electron-log": "^4.4.8",
-		"electron-notarize": "^1.2.2",
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
 		"electron-util": "^0.18.1",

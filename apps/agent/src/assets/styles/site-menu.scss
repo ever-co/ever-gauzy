@@ -1,0 +1,27 @@
+nb-sidebar nb-menu {
+	height: 93%;
+	.scrollable::-webkit-scrollbar {
+		display: none;
+	}
+
+	.menu-items {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		overflow-y: overlay !important;
+
+		.menu-item.menu-group {
+			margin-top: auto;
+		}
+
+		.menu-item {
+			a {
+				padding-right: 0rem;
+				padding-left: 0.5rem;
+			}
+			.menu-items {
+				overflow-y: hidden !important;
+			}
+		}
+	}
+}

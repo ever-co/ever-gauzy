@@ -169,10 +169,17 @@
 		"ADD_MODULE": "Modul hinzufügen",
 		"SHARE": "Teilen",
 		"GET_INFO": "Informationen abrufen",
-		"RETRY": "Erneut versuchen"
+		"RETRY": "Erneut versuchen",
+		"UPLOAD": "Hochladen",
+		"ADD_VERSION": "Version hinzufügen",
+		"MARKETPLACE": "Marktplatz",
+		"READ_MORE": "Mehr lesen",
+		"READ_LESS": "Weniger lesen",
+		"RECOVER": "Wiederherstellen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "Kein Verlauf vorhanden",
 			"RECEIVE_ESTIMATE": "Sie haben keine Schätzung erhalten.",
 			"INCOME": "Sie haben kein Einkommen erstellt.",
 			"EXPENSE_CATEGORY": "Du hast keine Ausgabekategorie erstellt.",
@@ -216,7 +223,9 @@
 			"EVENT_TYPE": "Sie haben keine Veranstaltungsart erstellt.",
 			"PRODUCT_TYPE_NO_DATA": "Sie haben keine Produktart erstellt.",
 			"TEAM_DASHBOARD": "Du hast keine Teams.",
-			"PLUGIN": "Sie haben kein Plugin installiert."
+			"PLUGIN": "Sie haben kein Plugin installiert.",
+			"PLUGIN_MARKETPLACE": "Dieses Plugin ist im Marktplatz nicht verfügbar",
+			"LOADING": "Laden..."
 		},
 		"TRANSACTION_TYPE": "Art\n",
 		"AMOUNT": "Menge",
@@ -2027,6 +2036,10 @@
 			"ORG_TAGS_VIEW": "Ansicht von Tags",
 			"ORG_TAGS_EDIT": "Bearbeite Tags",
 			"ORG_TAGS_DELETE": "Löschen Sie Tags.",
+			"ORG_TAG_TYPES_ADD": "Tag-Typ hinzufügen",
+			"ORG_TAG_TYPES_VIEW": "Tag-Typen anzeigen",
+			"ORG_TAG_TYPES_EDIT": "Tag-Typ bearbeiten",
+			"ORG_TAG_TYPES_DELETE": "Tag-Typ löschen",
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Kandidatenfeedback erstellen/bearbeiten/löschen.",
 			"ALL_ORG_VIEW": "Alle Organisationen anzeigen",
 			"ALL_ORG_EDIT": "Erstellen/Bearbeiten/Löschen aller Organisationen",
@@ -2034,6 +2047,7 @@
 			"TIME_OFF_POLICY_VIEW": "Urlaubsrichtlinie Anzeigen",
 			"TIME_OFF_POLICY_EDIT": "Urlaubsrichtlinie Bearbeiten",
 			"TIME_OFF_POLICY_DELETE": "Urlaubsrichtlinie Löschen",
+			"SELECT_EMPLOYEE": "Mitarbeiter auswählen",
 			"CHANGE_SELECTED_EMPLOYEE": "Ausgewählten Mitarbeiter ändern",
 			"CHANGE_SELECTED_CANDIDATE": "Ändern Sie ausgewählten Kandidaten",
 			"CHANGE_SELECTED_ORGANIZATION": "Ändere die ausgewählte Organisation.",
@@ -2139,6 +2153,8 @@
 			"ORG_TASK_DELETE": "Aufgaben löschen",
 			"ORG_TASK_SETTING": "Aufgabeeinstellungen",
 			"ORG_MEMBER_LAST_LOG_VIEW": "Letztes Protokoll anzeigen",
+			"API_CALL_LOG_READ": "API-Aufrufprotokoll lesen",
+			"API_CALL_LOG_DELETE": "API-Aufrufprotokoll löschen",
 			"TENANT_API_KEY_CREATE": "API-Schlüssel erstellen",
 			"TENANT_API_KEY_VIEW": "API-Schlüssel anzeigen",
 			"TENANT_API_KEY_DELETE": "API-Schlüssel löschen",
@@ -2599,6 +2615,7 @@
 		"TASKS_STATUS": "Status",
 		"TASK_PRIORITY": "Priorität",
 		"TASK_SIZE": "Größe",
+		"PARENT_TASK": "Übergeordnete Aufgabe",
 		"TODO": "Alles/Aufgabe/Alles",
 		"OPEN": "Öffnen",
 		"READY_FOR_REVIEW": "Bereit zur Überprüfung",
@@ -2939,6 +2956,9 @@
 		"ALREADY_PAID": "Bereits bezahlt.",
 		"AMOUNT_DUE": "Betrag fällig",
 		"INVOICED_REMAINING_AMOUNT": "In Rechnung gestellter Restbetrag",
+		"TAX_CALCULATION_TYPE": "Steuerberechnungsart",
+		"SIMPLE": "Einfach",
+		"COMPOSED": "Zusammengesetzt",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Rechnungstyp",
 			"ESTIMATE_TYPE": "Schätzungstyp",
@@ -3561,6 +3581,7 @@
 			"APPROVAL_POLICY_CREATED": "Die Genehmigungsrichtlinie '{{ name }}' wurde hinzugefügt.",
 			"APPROVAL_POLICY_UPDATED": "Die Genehmigungspolitik '{{ name }}' wurde geändert.",
 			"APPROVAL_POLICY_DELETED": "Die Genehmigungsrichtlinie '{{ name }}' wurde entfernt.",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Genehmigungsrichtlinie '{{ name }}' existiert bereits",
 			"CANDIDATE_CREATED": "Kandidat '{{ name }}' wurde zu '{{ organization }}' hinzugefügt.",
 			"CANDIDATE_ARCHIVED": "Kandidat '{{ name }}' als archiviert festgelegt.",
 			"CANDIDATE_REJECTED": "Kandidat '{{ name }}' als abgelehnt festgelegt.",
@@ -3678,7 +3699,8 @@
 			"EDIT_POLICY": "Die Richtlinie für Freizeit '{{ name }}' wurde geändert.",
 			"DELETE_POLICY": "Die Freizeitpolitik \"{{ name }}\" wurde entfernt.",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Unfähig, einen Policy-Eintrag zu erstellen"
+			"SAVE_ERROR": "Unfähig, einen Policy-Eintrag zu erstellen",
+			"POLICY_EXISTS": "Die Urlaubsrichtlinie '{{ name }}' existiert bereits"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Ihr Profil wurde erfolgreich aktualisiert."
@@ -3998,7 +4020,14 @@
 				"SSL_CERT_FILE_INFO": "Pfad zur Client-Zertifikatsdatei für SSL.",
 				"SECURE": "Sicher",
 				"SECURE_INFO": "True, wenn Sie die SSL-Zertifikate überprüfen möchten."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "Die NPM-Installation ermöglicht den Zugriff auf öffentlich und privat verfügbare Plugins.",
+			"PACKAGE_NAME": "NPM-Paketname",
+			"PACKAGE_VERSION": "NPM-Paketversion",
+			"REGISTRY": "NPM-Register",
+			"AUTH_TOKEN": "Authentifizierungs-Token",
+			"PRIVATE_REGISTRY_URL": "Private Registry-URL",
+			"PLUGIN_INSTALL_CDN_ERROR": "Die Server-URL darf nicht leer sein."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Wöchentliches Limit überschritten",
 		"OF_HRS": "Von {{ limit }} Stunden",
@@ -4406,6 +4435,7 @@
 		"LOW": "Niedrig",
 		"MEDIUM": "Mittel",
 		"HIGH": "Hoch",
+		"UNKNOWN": "Unbekannt",
 		"DEAL_DELETED": "Der Deal '{{ name }}' wurde entfernt.",
 		"DEAL_EDITED": "Deal '{{ name }}' wurde geändert.",
 		"DEAL_ADDED": "Deal '{{ name }}' wurde hinzugefügt."
@@ -4751,6 +4781,189 @@
 				"SHARE_NOT_ALLOWED": "Teilen ist nicht erlaubt",
 				"UNEXPECTED_SHARING_ERROR": "Unerwarteter Fehler beim Teilen"
 			}
+		},
+		"FORM": {
+			"TITLE": "Plugin hochladen",
+			"BASIC_INFO": "Grundlegende Informationen",
+			"NAME": "Plugin-Name",
+			"NAME_PLACEHOLDER": "Geben Sie den Plugin-Namen ein",
+			"VALIDATION": {
+				"NAME_REQUIRED": "Plugin-Name ist erforderlich",
+				"NAME_TOO_LONG": "Plugin-Name ist zu lang",
+				"VERSION_REQUIRED": "Version ist erforderlich",
+				"VERSION_FORMAT": "Ungültiges Versionsformat",
+				"DESCRIPTION_TOO_LONG": "Beschreibung ist zu lang",
+				"URL_REQUIRED": "URL ist erforderlich",
+				"INVALID_URL": "Ungültiges URL-Format",
+				"PACKAGE_NAME_REQUIRED": "Paketname ist erforderlich",
+				"INVALID_PACKAGE_NAME": "Ungültiges Paketnamenformat",
+				"INVALID_SCOPE": "Ungültiges Scope-Format",
+				"AUTHOR_TOO_LONG": "Autorenname ist zu lang",
+				"LICENSE_TOO_LONG": "Lizenzfeld ist zu lang",
+				"FAILED": "Validierung fehlgeschlagen",
+				"CHANGELOG_TOO_SHORT": "Changelog ist zu kurz",
+				"CHANGELOG_REQUIRED": "Changelog ist erforderlich"
+			},
+			"TYPE": "Plugin-Typ",
+			"TYPE_PLACEHOLDER": "Wählen Sie den Plugin-Typ",
+			"TYPES": {
+				"DESKTOP": "Desktop",
+				"WEB": "Web",
+				"MOBILE": "Mobil"
+			},
+			"VERSION": "Version",
+			"STATUS": "Status",
+			"STATUSES": {
+				"ACTIVE": "Aktiv",
+				"INACTIVE": "Inaktiv",
+				"DEPRECATED": "Veraltet",
+				"ARCHIVED": "Archiviert"
+			},
+			"DESCRIPTION": "Beschreibung",
+			"DESCRIPTION_PLACEHOLDER": "Geben Sie eine Plugin-Beschreibung ein",
+			"SOURCE": "Quelle",
+			"SOURCE_TYPE": "Quellentyp",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "CDN-URL",
+				"INTEGRITY": "Integrität",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "NPM-Paketname",
+				"REGISTRY": "NPM-Registry",
+				"SCOPE": "Scope",
+				"AUTH_TOKEN": "Authentifizierungs-Token"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Ziehen Sie Ihre Datei hierher",
+				"BROWSE": "Durchsuchen",
+				"REMOVE": "Datei entfernen",
+				"RESTRICTIONS": "Nur .zip-Dateien sind erlaubt",
+				"FILE": "Datei"
+			},
+			"METADATA": {
+				"TITLE": "Metadaten",
+				"AUTHOR": "Autor",
+				"AUTHOR_PLACEHOLDER": "Geben Sie den Autorennamen ein",
+				"LICENSE": "Lizenz",
+				"LICENSE_PLACEHOLDER": "Geben Sie die Lizenz ein",
+				"HOMEPAGE": "Homepage",
+				"HOMEPAGE_PLACEHOLDER": "Geben Sie die Homepage-URL ein",
+				"REPOSITORY": "Repository",
+				"REPOSITORY_PLACEHOLDER": "Geben Sie die Repository-URL ein"
+			},
+			"OR": "Oder",
+			"RELEASE_DATE": "Erscheinungsdatum",
+			"CHANGELOG": "Änderungsprotokoll",
+			"CHANGELOG_PLACEHOLDER": "Geben Sie den Änderungsprotokoll ein"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Nutzungsstatistiken",
+			"DOWNLOAD_COUNT": "Anzahl der Downloads",
+			"LAST_DOWNLOADED": "Zuletzt heruntergeladen",
+			"UPLOADED_BY": "Hochgeladen von",
+			"UPLOADED_AT": "Hochgeladen am",
+			"SECURITY_INFO": "Sicherheitsinformationen",
+			"CHECKSUM": "Prüfsumme",
+			"SIGNATURE": "Signatur",
+			"INSTALLED": "Installiert",
+			"HIDDEN_FOR_SECURITY": "Zur Sicherheit versteckt"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Entdecken",
+			"INSTALLED": "Installiert",
+			"VERSION_HISTORY": "Versionsverlauf"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Neues Plugin hochladen",
+			"OFFLINE": "Sie sind derzeit offline/getrennt ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Plugin deaktivieren",
+				"DESCRIPTION": "Möchten Sie dieses Plugin wirklich deaktivieren?",
+				"CONFIRM": "Deaktivieren"
+			},
+			"UNINSTALL": {
+				"TITLE": "Plugin deinstallieren",
+				"DESCRIPTION": "Möchten Sie dieses Plugin wirklich deinstallieren?",
+				"CONFIRM": "Deinstallieren"
+			},
+			"DELETE": {
+				"TITLE": "Plugin löschen",
+				"DESCRIPTION": "Sind Sie sicher, dass Sie dieses Plugin löschen möchten?",
+				"CONFIRM": "Löschen"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Version v{{number}} aktualisieren",
+					"DESCRIPTION": "Sind Sie sicher, dass Sie dieses Plugin aktualisieren möchten?",
+					"CONFIRM": "Aktualisieren"
+				},
+				"CREATE": {
+					"TITLE": "Neue Version für {{name}} erstellen",
+					"DESCRIPTION": "Sind Sie sicher, dass Sie diese Version erstellen möchten?",
+					"CONFIRM": "Erstellen"
+				},
+				"DELETE": {
+					"TITLE": "Version löschen",
+					"DESCRIPTION": "Sind Sie sicher, dass Sie diese Version löschen möchten?",
+					"CONFIRM": "Löschen"
+				},
+				"RESTORE": {
+					"TITLE": "Version wiederherstellen",
+					"DESCRIPTION": "Sind Sie sicher, dass Sie diese Version wiederherstellen möchten?",
+					"CONFIRM": "Wiederherstellen"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Plugin-Version v{{number}} erfolgreich erstellt!",
+					"UPDATED": "Plugin-Version v{{number}} erfolgreich aktualisiert!",
+					"DELETED": "Plugin-Version erfolgreich gelöscht!",
+					"RESTORED": "Plugin-Version erfolgreich wiederhergestellt!"
+				},
+				"UPLOADED": "Plugin erfolgreich hochgeladen!",
+				"UPDATED": "Plugin erfolgreich aktualisiert!",
+				"DELETED": "Plugin erfolgreich gelöscht!",
+				"INSTALLED": "Plugin erfolgreich installiert!",
+				"UNINSTALLED": "Plugin erfolgreich deinstalliert!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Neue Plugin-Version wird hinzugefügt...",
+					"UPDATING": "Plugin-Version wird aktualisiert...",
+					"DELETING": "Plugin-Version wird gelöscht...",
+					"RESTORING": "Plugin-Version wird wiederhergestellt..."
+				},
+				"UPLOADING": "Plugin wird hochgeladen...",
+				"UPDATING": "Plugin wird aktualisiert...",
+				"DELETING": "Plugin wird gelöscht...",
+				"INSTALLING": "Plugin wird installiert...",
+				"UNINSTALLING": "Plugin wird deinstalliert..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Wiederherstellung der Plugin-Version fehlgeschlagen. Bitte versuchen Sie es erneut!"
+				},
+				"UPLOAD": "Hochladen des Plugins fehlgeschlagen. Bitte versuchen Sie es erneut!",
+				"NOT_FOUND": "Plugin mit ID {{ id }} nicht gefunden.",
+				"INSTALL": "Installation des Plugins fehlgeschlagen. Bitte versuchen Sie es erneut!",
+				"REVERT_INSTALLATION": "Rückgängigmachen der Installation fehlgeschlagen!"
+			}
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Server nicht verfügbar",
+		"DESCRIPTION": "Der {{companySite}}-Server ist derzeit nicht erreichbar. Dies könnte an geplanter Wartung oder unerwarteten Ausfallzeiten liegen.",
+		"CONNECTING": "Verbindung wird automatisch wiederhergestellt...",
+		"HINT": "Status: Versuch, eine Verbindung zu {{companySite}}-Servern herzustellen. Fehlercode: 503."
 	}
 }

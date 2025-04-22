@@ -33,7 +33,7 @@
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
-		"@types/express": "^4.17.13",
+		"@types/express": "^5.0.0",
 		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
 		"typescript": "5.5.4"

@@ -357,3 +357,85 @@ module.exports.desktopTimer = async (isProd) => {
 		console.log('Version releasing', updated.version);
 	}
 };
+
+module.exports.agent = async (isProd) => {
+	if (fs.existsSync('./apps/agent/src/package.json')) {
+		let package = require('../apps/agent/src/package.json');
+		let currentVersion = package.version;
+
+		const repoURL = process.env.PROJECT_REPO;
+		console.log('repoURL', repoURL);
+
+		const appName = process.env.AGENT_APP_NAME;
+		console.log('appName', appName);
+
+		const stdout = await getLatestTag(repoURL);
+
+		let newVersion = stdout.trim();
+		console.log('latest tag', newVersion);
+
+		if (newVersion) {
+			// let's remove "v" from version, i.e. first character
+			newVersion = newVersion.substring(1);
+			package.version = newVersion;
+
+			console.log('Version updated to version', newVersion);
+		} else {
+			console.log('Latest tag is not found. Build Agent App with default version', currentVersion);
+		}
+
+		package.name = appName;
+		package.productName = process.env.AGENT_APP_DESCRIPTION;
+		package.description = process.env.AGENT_APP_DESCRIPTION;
+		package.homepage = process.env.COMPANY_SITE_LINK;
+
+		package.build.appId = process.env.AGENT_APP_ID;
+		package.build.productName = process.env.AGENT_APP_DESCRIPTION;
+		package.build.linux.executableName = appName;
+
+		const appRepoName = process.env.AGENT_APP_REPO_NAME || appName;
+		const appRepoOwner = process.env.AGENT_APP_REPO_OWNER || 'ever-co';
+
+		// For GitHub options see https://www.electron.build/configuration/publish.html
+
+		if (!isProd) {
+			package.build.publish = [
+				{
+					provider: 'github',
+					repo: appRepoName,
+					owner: appRepoOwner,
+					releaseType: 'prerelease'
+				},
+				{
+					provider: 'spaces',
+					name: 'ever',
+					region: 'sfo3',
+					path: `/${appName}-pre`,
+					acl: 'public-read'
+				}
+			];
+		} else {
+			package.build.publish = [
+				{
+					provider: 'github',
+					repo: appRepoName,
+					owner: appRepoOwner,
+					releaseType: 'release'
+				},
+				{
+					provider: 'spaces',
+					name: 'ever',
+					region: 'sfo3',
+					path: `/${appName}`,
+					acl: 'public-read'
+				}
+			];
+		}
+
+		fs.writeFileSync('./apps/agent/src/package.json', JSON.stringify(package, null, 2));
+
+		let updated = require('../apps/agent/src/package.json');
+
+		console.log('Version releasing', updated.version);
+	}
+};

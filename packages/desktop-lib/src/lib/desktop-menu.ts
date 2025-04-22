@@ -56,9 +56,11 @@ export class AppMenu {
 						async click() {
 							if (!settingsWindow) {
 								settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
+								settingsWindow.show();
 							}
-							settingsWindow.show();
-							settingsWindow.webContents.send('goto_update');
+							settingsWindow.webContents.send('setting_page_ipc', {
+								type: 'goto_update'
+							});
 							settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 						}
 					},
@@ -145,7 +147,9 @@ export class AppMenu {
 							}
 							settingsWindow.show();
 							settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
-							settingsWindow.webContents.send(timeTrackerWindow ? 'goto_top_menu' : 'goto_update');
+							settingsWindow.webContents.send('setting_page_ipc', {
+								type: timeTrackerWindow ? 'goto_top_menu' : 'goto_update'
+							});
 							settingsWindow.webContents.send('refresh_menu');
 						}
 					},

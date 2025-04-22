@@ -5,8 +5,10 @@ import {
 	ViewChild,
 	ElementRef,
 	NgZone,
+	OnDestroy
 } from '@angular/core';
 import { ElectronService } from '../electron/services';
+import { Event } from 'electron';
 
 @Component({
     selector: 'ngx-updater',
@@ -15,13 +17,15 @@ import { ElectronService } from '../electron/services';
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })
-export class UpdaterComponent implements OnInit {
+export class UpdaterComponent implements OnInit, OnDestroy {
 	@ViewChild('logBox') logBox: ElementRef;
 	@ViewChild('logUpdate') logAccordion;
 	constructor(
 		private electronService: ElectronService,
 		private _ngZone: NgZone
-	) {}
+	) {
+		this.handleIpcEvent = this.handleIpcEvent.bind(this);
+	}
 	version = '0.0.0';
 	loading = false;
 	notAvailable = false;
@@ -30,49 +34,60 @@ export class UpdaterComponent implements OnInit {
 	logContents: any = [];
 	logIsOpen: boolean = false;
 
-	ngOnInit(): void {
-		this.electronService.ipcRenderer.on('update-not-available', () =>
-			this._ngZone.run(() => {
-				this.notAvailable = true;
-				this.message = 'Application Update';
-				this.logContents.push(this.message);
-				this.scrollToBottom();
-			})
-		);
-
-		this.electronService.ipcRenderer.on('update_available', () =>
-			this._ngZone.run(() => {
-				this.notAvailable = true;
-				this.message = 'Update Available';
-				this.logContents.push(this.message);
-				this.scrollToBottom();
-			})
-		);
-
-		this.electronService.ipcRenderer.on('update_downloaded', () =>
-			this._ngZone.run(() => {
-				this.notAvailable = true;
-				this.message = 'Update Download Completed';
-				this.logContents.push(this.message);
-				this.scrollToBottom();
-				this.downloadFinish = true;
-				this.loading = false;
-			})
-		);
-
-		this.electronService.ipcRenderer.on(
-			'download_on_progress',
-			(event, arg) =>
+	handleIpcEvent(_: Event, arg: { type: string, data: any }) {
+		switch (arg.type) {
+			case 'update_available': {
+				this._ngZone.run(() => {
+					this.notAvailable = true;
+					this.message = 'Update Available';
+					this.logContents.push(this.message);
+					this.scrollToBottom();
+				});
+				break;
+			}
+			case 'update-not-available': {
+				this._ngZone.run(() => {
+					this.notAvailable = true;
+					this.message = 'Application Update';
+					this.logContents.push(this.message);
+					this.scrollToBottom();
+				});
+				break;
+			}
+			case 'update_downloaded': {
+				this._ngZone.run(() => {
+					this.notAvailable = true;
+					this.message = 'Update Download Completed';
+					this.logContents.push(this.message);
+					this.scrollToBottom();
+					this.downloadFinish = true;
+					this.loading = false;
+				});
+				break;
+			}
+			case 'download_on_progress': {
 				this._ngZone.run(() => {
 					this.notAvailable = true;
 					this.message = `Update Downloading ${
-						arg.percent ? Math.floor(Number(arg.percent)) : 0
+						arg.data.percent ? Math.floor(Number(arg.data.percent)) : 0
 					}%`;
 					this.logContents.push(this.message);
 					this.scrollToBottom();
-				})
-		);
+				});
+				break;
+			}
+			default:
+				break;
+		}
+	}
+
+	ngOnInit(): void {
+		this.electronService.ipcRenderer.on('setting_page_ipc', this.handleIpcEvent);
 		this.version = this.electronService.remote.app.getVersion();
+	}
+
+	ngOnDestroy(): void {
+	    this.electronService.ipcRenderer.removeListener('setting_page_ipc', this.handleIpcEvent);
 	}
 
 	checkForUpdate() {

@@ -14,6 +14,7 @@ docker-compose*.yml
 .git/
 .gitignore
 Jenkinsfile
+.env.prod
 
 node_modules
 apps/api/node_modules

@@ -15,7 +15,7 @@ import {
 	IOrganizationProjectUpdateInput,
 	IPagination,
 	RolesEnum,
-	SubscriptionTypeEnum
+	EntitySubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
 import { CustomEmbeddedFieldConfig } from '@gauzy/common';
@@ -26,10 +26,10 @@ import { OrganizationProjectEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { RoleService } from '../role/role.service';
-import { SubscriptionService } from '../subscription/subscription.service';
+import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
+import { EntitySubscriptionService } from '../entity-subscription/entity-subscription.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { EmployeeService } from '../employee/employee.service';
-import { CreateSubscriptionEvent } from '../subscription/events';
 import { OrganizationProject } from './organization-project.entity';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
@@ -47,7 +47,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		private readonly _eventBus: EventBus,
 		private readonly _roleService: RoleService,
 		private readonly _employeeService: EmployeeService,
-		private readonly _subscriptionService: SubscriptionService,
+		private readonly _entitySubscriptionService: EntitySubscriptionService,
 		private readonly _activityLogService: ActivityLogService
 	) {
 		super(typeOrmOrganizationProjectRepository, mikroOrmOrganizationProjectRepository);
@@ -57,10 +57,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * Creates an organization project based on the provided input.
 	 * @param input - Input data for creating the organization project.
 	 * @returns A Promise resolving to the created organization project.
-	 * @throws BadRequestException if there is an error in the creation process.
 	 */
 	async create(input: IOrganizationProjectCreateInput): Promise<IOrganizationProject> {
-		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 		const employeeId = RequestContext.currentEmployeeId();
 		const currentRoleId = RequestContext.currentRoleId();
 
@@ -128,16 +127,16 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			// Subscribe creator and assignees to the project
 			try {
 				await Promise.all(
-					employees.map(({ id, userId }) =>
+					employees.map(({ id }: IEmployee) =>
 						this._eventBus.publish(
-							new CreateSubscriptionEvent({
+							new CreateEntitySubscriptionEvent({
 								entity: BaseEntityEnum.OrganizationProject,
 								entityId: project.id,
-								userId,
+								employeeId: id,
 								type:
 									id === employeeId
-										? SubscriptionTypeEnum.CREATED_ENTITY
-										: SubscriptionTypeEnum.ASSIGNMENT,
+										? EntitySubscriptionTypeEnum.CREATED_ENTITY
+										: EntitySubscriptionTypeEnum.ASSIGNMENT,
 								organizationId,
 								tenantId
 							})
@@ -174,12 +173,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @param id - The ID of the organization project to be updated.
 	 * @param input - The updated information for the organization project.
 	 * @returns A Promise resolving to the updated organization project.
-	 * @throws ForbiddenException if the user lacks permission or if certain conditions are not met.
-	 * @throws BadRequestException if there's an error during the update process.
 	 */
 	async update(id: ID, input: IOrganizationProjectUpdateInput): Promise<IOrganizationProject> {
-		const tenantId = RequestContext.currentTenantId() || input.tenantId;
-		const { memberIds = [], managerIds = [], organizationId } = input;
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+		const { memberIds, managerIds, organizationId, ...entity } = input;
 
 		const organizationProject = await super.findOneByIdString(id, {
 			where: { organizationId, tenantId },
@@ -189,23 +186,32 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		try {
 			// Retrieve members and managers IDs
 			// Combine memberIds and managerIds into a single array
-			const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
+			if (Array.isArray(managerIds) || Array.isArray(memberIds)) {
+				const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
 
-			// Retrieves a collection of employees based on specified criteria.
-			const projectMembers = await this._employeeService.findActiveEmployeesByEmployeeIds(
-				employeeIds,
-				organizationId,
-				tenantId
-			);
+				// Retrieves a collection of employees based on specified criteria.
+				const projectMembers = await this._employeeService.findActiveEmployeesByEmployeeIds(
+					employeeIds,
+					organizationId,
+					tenantId
+				);
 
+				await this.updateOrganizationProjectMembers(
+					id,
+					organizationId,
+					tenantId,
+					projectMembers,
+					managerIds,
+					memberIds
+				);
+			}
 			// Update nested entity (Organization Project Members)
-			await this.updateOrganizationProjectMembers(id, organizationId, projectMembers, managerIds, memberIds);
 
 			const { id: organizationProjectId } = organizationProject;
 
 			// Update the organization project with the prepared members
 			const updatedProject = await super.create({
-				...input,
+				...entity,
 				organizationId,
 				tenantId,
 				id: organizationProjectId
@@ -261,11 +267,11 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	async updateOrganizationProjectMembers(
 		organizationProjectId: ID,
 		organizationId: ID,
+		tenantId: ID,
 		employees: IEmployee[],
 		managerIds: ID[],
 		memberIds: ID[]
 	): Promise<void> {
-		const tenantId = RequestContext.currentTenantId();
 		const membersToUpdate = new Set([...managerIds, ...memberIds].filter(Boolean));
 
 		// Find the manager role
@@ -295,11 +301,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				await Promise.all(
 					removedMembers.map(
 						async (member) =>
-							await this._subscriptionService.delete({
+							await this._entitySubscriptionService.delete({
 								entity: BaseEntityEnum.OrganizationProject,
 								entityId: organizationProjectId,
-								userId: member.employee.userId,
-								type: SubscriptionTypeEnum.ASSIGNMENT
+								employeeId: member.employee.id,
+								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+								organizationId,
+								tenantId
 							})
 					)
 				);
@@ -341,13 +349,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			// Subscribe new assignees to the project
 			try {
 				await Promise.all(
-					newMembers.map(({ userId }) =>
+					newMembers.map((member: IEmployee) =>
 						this._eventBus.publish(
-							new CreateSubscriptionEvent({
+							new CreateEntitySubscriptionEvent({
 								entity: BaseEntityEnum.OrganizationProject,
 								entityId: organizationProjectId,
-								userId,
-								type: SubscriptionTypeEnum.ASSIGNMENT,
+								employeeId: member.id,
+								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 								organizationId,
 								tenantId
 							})
@@ -368,7 +376,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @returns A promise that resolves with a list of projects assigned to the employee.
 	 */
 	async findByEmployee(employeeId: ID, input: IOrganizationProjectsFindInput): Promise<IOrganizationProject[]> {
-		const tenantId = RequestContext.currentTenantId() || input.tenantId; // Use the current tenant ID or fallback to input tenantId
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId; // Use the current tenant ID or fallback to input tenantId
 		const { organizationId, organizationContactId, organizationTeamId, relations = [] } = input;
 
 		// Create a query to fetch organization projects
@@ -651,5 +659,26 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			console.log('Error while updating project by employee:', error);
 			throw new HttpException({ message: 'Error while updating project by employee' }, HttpStatus.BAD_REQUEST);
 		}
+	}
+
+	/**
+	 * Checks if a given employee is a manager of a specific project.
+	 *
+	 * @param projectId - The ID of the project.
+	 * @param employeeId - The ID of the employee.
+	 * @returns A boolean indicating whether the employee is a manager of the project.
+	 */
+	async isManagerOfProject(projectId: ID, employeeId: ID): Promise<boolean> {
+		const project = await this.typeOrmRepository
+			.createQueryBuilder('project')
+			.innerJoin('project.members', 'members')
+			.where('project.id = :projectId', { projectId })
+			.andWhere('members.employeeId = :employeeId', { employeeId })
+			.andWhere('members.isActive = :isActive', { isActive: true })
+			.andWhere('members.isArchived = :isArchived', { isArchived: false })
+			.andWhere('members.isManager = :isManager', { isManager: true })
+			.getOne();
+
+		return !!project;
 	}
 }

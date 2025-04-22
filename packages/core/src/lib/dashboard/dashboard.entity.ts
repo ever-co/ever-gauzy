@@ -4,8 +4,8 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsArray, IsBoolean, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { isMySQL, isPostgres } from '@gauzy/config';
-import { ID, IDashboard, IEmployee, IUser, JsonData } from '@gauzy/contracts';
-import { DashboardWidget, Employee, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
+import { ID, IDashboard, IEmployee, JsonData } from '@gauzy/contracts';
+import { DashboardWidget, Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -96,30 +96,11 @@ export class Dashboard extends TenantOrganizationBaseEntity implements IDashboar
 	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: ID;
 
-	/**
-	 * The user who created the dashboard
-	 */
-	@MultiORMManyToOne(() => User, {
-		/** Database cascade action on delete. */
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	createdByUser?: IUser;
-
-	/**
-	 * The user ID who created the dashboard
-	 */
-	@RelationId((dashboard: Dashboard) => dashboard.createdByUser)
-	@ColumnIndex()
-	@MultiORMColumn({ relationId: true })
-	createdByUserId?: ID;
-
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
 	 * Dashboard Widgets
 	 */

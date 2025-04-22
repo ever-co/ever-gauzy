@@ -52,11 +52,20 @@ if (!isDocker) {
 	const userAgent = navigator.userAgent.toLowerCase();
 	if (userAgent.indexOf(' electron/') > -1) {
 		try {
-			const remote = window.require('@electron/remote');
-			const variableGlobal = remote.getGlobal('variableGlobal');
+			let variableGlobal: {
+				API_BASE_URL: string;
+				IS_INTEGRATED_DESKTOP: boolean;
+			} | any;
+
+			if (window.electronAPI && window.electronAPI.getGlobal) {
+				variableGlobal = window.electronAPI.getGlobal();
+			} else {
+				const remote = window.require('@electron/remote');
+				variableGlobal = remote.getGlobal('variableGlobal');
+			}
 			API_BASE_URL = variableGlobal.API_BASE_URL;
 			IS_ELECTRON = true;
-			IS_INTEGRATED_DESKTOP = variableGlobal.IS_INTEGRATED_DESKTOP
+			IS_INTEGRATED_DESKTOP = variableGlobal.IS_INTEGRATED_DESKTOP;
 		} catch(e) {
 			console.log(e);
 		}

@@ -28,7 +28,7 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 			const { input } = command;
 
 			const organizationId = input.organizationId;
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
 			// If members are empty and projects are provided, populate members from projects
 			if (isEmpty(input.members) && isNotEmpty(input.projects)) {

@@ -7,7 +7,6 @@ import { MikroOrmRoleRepository } from './repository/mikro-orm-role.repository';
 
 @MultiORMEntity('role', { mikroOrmRepository: () => MikroOrmRoleRepository })
 export class Role extends TenantBaseEntity implements IRole {
-
 	@ApiProperty({ type: () => String, enum: RolesEnum })
 	@IsNotEmpty()
 	@ColumnIndex()
@@ -25,12 +24,9 @@ export class Role extends TenantBaseEntity implements IRole {
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
 	 * Role Permissions
 	 */
-	@MultiORMOneToMany(() => RolePermission, (it) => it.role, {
-		cascade: true
-	})
+	@MultiORMOneToMany(() => RolePermission, (it) => it.role, { cascade: true })
 	rolePermissions?: IRolePermission[];
 }

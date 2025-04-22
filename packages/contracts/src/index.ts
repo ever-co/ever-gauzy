@@ -125,7 +125,7 @@ export * from './lib/shared-types';
 export * from './lib/skill-entity.model';
 export * from './lib/sms.model';
 export * from './lib/social-account.model';
-export * from './lib/subscription.model';
+export * from './lib/entity-subscription.model';
 export * from './lib/tag.model';
 export * from './lib/task-estimation.model';
 export * from './lib/task-linked-issue.model';
@@ -149,6 +149,7 @@ export * from './lib/employee-notification-setting.model';
 export * from './lib/user-organization.model';
 export * from './lib/user.model';
 export * from './lib/wakatime.model';
+export * from './lib/plugin.model';
 
 export {
 	ActorTypeEnum,

@@ -169,10 +169,17 @@
 		"ADD_MODULE": "Añadir módulo",
 		"SHARE": "Compartir",
 		"GET_INFO": "Obtener información",
-		"RETRY": "Reintentar"
+		"RETRY": "Reintentar",
+		"UPLOAD": "Subir",
+		"MARKETPLACE": "Mercado",
+		"ADD_VERSION": "Añadir Versión",
+		"READ_MORE": "Leer más",
+		"READ_LESS": "Leer menos",
+		"RECOVER": "Recuperar"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "No hay historial",
 			"RECEIVE_ESTIMATE": "No has recibido ningún presupuesto.",
 			"INCOME": "No has creado ningún ingreso.",
 			"EXPENSE_CATEGORY": "No has creado ninguna categoría de gasto.",
@@ -216,7 +223,9 @@
 			"EVENT_TYPE": "No has creado ningún tipo de evento.",
 			"PRODUCT_TYPE_NO_DATA": "No has creado ningún tipo de producto.",
 			"TEAM_DASHBOARD": "No tienes ningún equipo.",
-			"PLUGIN": "No has instalado ningún complemento."
+			"PLUGIN": "No has instalado ningún complemento.",
+			"PLUGIN_MARKETPLACE": "Este complemento no está disponible en el mercado",
+			"LOADING": "Cargando..."
 		},
 		"TRANSACTION_TYPE": "Tipo",
 		"AMOUNT": "Cantidad",
@@ -2033,6 +2042,10 @@
 			"ORG_TAGS_VIEW": "Ver Etiquetas",
 			"ORG_TAGS_EDIT": "Editar etiquetas",
 			"ORG_TAGS_DELETE": "Eliminar etiquetas",
+			"ORG_TAG_TYPES_ADD": "Agregar tipo de etiqueta",
+			"ORG_TAG_TYPES_VIEW": "Ver tipos de etiqueta",
+			"ORG_TAG_TYPES_EDIT": "Editar tipo de etiqueta",
+			"ORG_TAG_TYPES_DELETE": "Eliminar tipo de etiqueta",
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Crear/Editar/Eliminar Retroalimentación del candidato.",
 			"ALL_ORG_VIEW": "Ver todas las organizaciones",
 			"ALL_ORG_EDIT": "Crear/Editar/Eliminar todas las Organizaciones",
@@ -2040,6 +2053,7 @@
 			"TIME_OFF_POLICY_VIEW": "Ver Política de Vacaciones",
 			"TIME_OFF_POLICY_EDIT": "Editar Política de Vacaciones",
 			"TIME_OFF_POLICY_DELETE": "Eliminar Política de Vacaciones",
+			"SELECT_EMPLOYEE": "Seleccionar empleado",
 			"CHANGE_SELECTED_EMPLOYEE": "Cambiar Empleado Seleccionado",
 			"CHANGE_SELECTED_CANDIDATE": "Cambiar Candidato Seleccionado",
 			"CHANGE_SELECTED_ORGANIZATION": "Cambiar Organización Seleccionada",
@@ -2145,6 +2159,8 @@
 			"ORG_TASK_DELETE": "Eliminar tareas",
 			"ORG_TASK_SETTING": "Configuración de tarea",
 			"ORG_MEMBER_LAST_LOG_VIEW": "Ver último registro",
+			"API_CALL_LOG_READ": "Leer registro de llamadas de API",
+			"API_CALL_LOG_DELETE": "Eliminar registro de llamadas de API",
 			"TENANT_API_KEY_CREATE": "Crear clave API",
 			"TENANT_API_KEY_VIEW": "Ver clave API",
 			"TENANT_API_KEY_DELETE": "Eliminar clave API",
@@ -2605,6 +2621,7 @@
 		"TASKS_STATUS": "Estado",
 		"TASK_PRIORITY": "Prioridad",
 		"TASK_SIZE": "Tamaño",
+		"PARENT_TASK": "Tarea principal",
 		"TODO": "Todo",
 		"OPEN": "Abrir",
 		"READY_FOR_REVIEW": "Listo para revisión",
@@ -2945,6 +2962,9 @@
 		"ALREADY_PAID": "Ya pagado",
 		"AMOUNT_DUE": "Cantidad a pagar",
 		"INVOICED_REMAINING_AMOUNT": "Cantidad pendiente facturada",
+		"TAX_CALCULATION_TYPE": "Tipo de cálculo de impuestos",
+		"SIMPLE": "Sencillo",
+		"COMPOSED": "Compuesto",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Tipo de factura",
 			"ESTIMATE_TYPE": "Tipo de estimado",
@@ -3567,6 +3587,7 @@
 			"APPROVAL_POLICY_CREATED": "Se agregó la política de aprobación '{{ name }}'.",
 			"APPROVAL_POLICY_UPDATED": "La política de aprobación '{{ name }}' ha sido modificada.",
 			"APPROVAL_POLICY_DELETED": "La política de aprobación '{{name}}' ha sido eliminada.",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "La política de aprobación '{{ name }}' ya existe",
 			"CANDIDATE_CREATED": "El candidato '{{ name }}' fue añadido a '{{ organization }}'.",
 			"CANDIDATE_ARCHIVED": "Candidato '{{ name }}' establecido como archivado.",
 			"CANDIDATE_REJECTED": "Candidato '{{ name }}' establecido como rechazado.",
@@ -3684,7 +3705,8 @@
 			"EDIT_POLICY": "La política de tiempo libre '{{ name }}' fue cambiada",
 			"DELETE_POLICY": "La política de tiempo libre '{{ name }}' fue eliminada.",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "No se puede crear el registro de la política."
+			"SAVE_ERROR": "No se puede crear el registro de la política.",
+			"POLICY_EXISTS": "La política de tiempo libre '{{ name }}' ya existe"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Tu perfil ha sido actualizado con éxito."
@@ -4004,7 +4026,14 @@
 				"SSL_CERT_FILE_INFO": "Ruta al archivo de certificado de cliente para SSL.",
 				"SECURE": "Seguro",
 				"SECURE_INFO": "Verdadero, si desea verificar los certificados SSL."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "La instalación de NPM permite el acceso a complementos disponibles públicamente y de forma privada.",
+			"PACKAGE_NAME": "Nombre del paquete NPM",
+			"PACKAGE_VERSION": "Versión del paquete NPM",
+			"REGISTRY": "Registro de NPM",
+			"AUTH_TOKEN": "Token de autenticación",
+			"PRIVATE_REGISTRY_URL": "URL del registro privado",
+			"PLUGIN_INSTALL_CDN_ERROR": "La URL del servidor no debe estar vacía."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Límite semanal excedido",
 		"OF_HRS": "De {{ limit }} horas.",
@@ -4412,6 +4441,7 @@
 		"LOW": "Bajo.",
 		"MEDIUM": "Medio",
 		"HIGH": "Alto",
+		"UNKNOWN": "Desconocido",
 		"DEAL_DELETED": "El trato '{{ name }}' fue eliminado",
 		"DEAL_EDITED": "El acuerdo '{{ name }}' fue cambiado.",
 		"DEAL_ADDED": "El acuerdo '{{ name }}' fue añadido."
@@ -4757,6 +4787,189 @@
 				"SHARE_NOT_ALLOWED": "No se permite compartir",
 				"UNEXPECTED_SHARING_ERROR": "Error inesperado al compartir"
 			}
+		},
+		"FORM": {
+			"TITLE": "Subir complemento",
+			"BASIC_INFO": "Información básica",
+			"NAME": "Nombre del complemento",
+			"NAME_PLACEHOLDER": "Ingrese el nombre del complemento",
+			"VALIDATION": {
+				"NAME_REQUIRED": "El nombre del complemento es obligatorio",
+				"NAME_TOO_LONG": "El nombre del complemento es demasiado largo",
+				"VERSION_REQUIRED": "La versión es obligatoria",
+				"VERSION_FORMAT": "Formato de versión no válido",
+				"DESCRIPTION_TOO_LONG": "La descripción es demasiado larga",
+				"URL_REQUIRED": "La URL es obligatoria",
+				"INVALID_URL": "Formato de URL no válido",
+				"PACKAGE_NAME_REQUIRED": "El nombre del paquete es obligatorio",
+				"INVALID_PACKAGE_NAME": "Formato de nombre de paquete no válido",
+				"INVALID_SCOPE": "Formato de alcance no válido",
+				"AUTHOR_TOO_LONG": "El nombre del autor es demasiado largo",
+				"LICENSE_TOO_LONG": "El campo de la licencia es demasiado largo",
+				"FAILED": "Validación fallida",
+				"CHANGELOG_TOO_SHORT": "El changelog es demasiado corto",
+				"CHANGELOG_REQUIRED": "El changelog es obligatorio"
+			},
+			"TYPE": "Tipo de complemento",
+			"TYPE_PLACEHOLDER": "Seleccione el tipo de complemento",
+			"TYPES": {
+				"DESKTOP": "Escritorio",
+				"WEB": "Web",
+				"MOBILE": "Móvil"
+			},
+			"VERSION": "Versión",
+			"STATUS": "Estado",
+			"STATUSES": {
+				"ACTIVE": "Activo",
+				"INACTIVE": "Inactivo",
+				"DEPRECATED": "Obsoleto",
+				"ARCHIVED": "Archivado"
+			},
+			"DESCRIPTION": "Descripción",
+			"DESCRIPTION_PLACEHOLDER": "Ingrese la descripción del complemento",
+			"SOURCE": "Fuente",
+			"SOURCE_TYPE": "Tipo de fuente",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "URL de CDN",
+				"INTEGRITY": "Integridad",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "Nombre del paquete NPM",
+				"REGISTRY": "Registro de NPM",
+				"SCOPE": "Alcance",
+				"AUTH_TOKEN": "Token de autenticación"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Arrastre y suelte su archivo aquí",
+				"BROWSE": "Explorar",
+				"REMOVE": "Eliminar archivo",
+				"RESTRICTIONS": "Solo se permiten archivos .zip",
+				"FILE": "Archivo"
+			},
+			"METADATA": {
+				"TITLE": "Metadatos",
+				"AUTHOR": "Autor",
+				"AUTHOR_PLACEHOLDER": "Ingrese el nombre del autor",
+				"LICENSE": "Licencia",
+				"LICENSE_PLACEHOLDER": "Ingrese la licencia",
+				"HOMEPAGE": "Página de inicio",
+				"HOMEPAGE_PLACEHOLDER": "Ingrese la URL de la página de inicio",
+				"REPOSITORY": "Repositorio",
+				"REPOSITORY_PLACEHOLDER": "Ingrese la URL del repositorio"
+			},
+			"OR": "O",
+			"RELEASE_DATE": "Fecha de lanzamiento",
+			"CHANGELOG": "Changelog",
+			"CHANGELOG_PLACEHOLDER": "Ingrese el changelog"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Estadísticas de uso",
+			"DOWNLOAD_COUNT": "Número de descargas",
+			"LAST_DOWNLOADED": "Última descarga",
+			"UPLOADED_BY": "Subido por",
+			"UPLOADED_AT": "Subido en",
+			"SECURITY_INFO": "Información de seguridad",
+			"CHECKSUM": "Suma de verificación",
+			"SIGNATURE": "Firma",
+			"INSTALLED": "Instalado",
+			"HIDDEN_FOR_SECURITY": "Ocultado por motivos de seguridad"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Descubrir",
+			"INSTALLED": "Instalado",
+			"VERSION_HISTORY": "Historial de versiones"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Subir nuevo complemento",
+			"OFFLINE": "Actualmente estás desconectado ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Desactivar complemento",
+				"DESCRIPTION": "¿Estás seguro de que quieres desactivar este complemento?",
+				"CONFIRM": "Desactivar"
+			},
+			"UNINSTALL": {
+				"TITLE": "Desinstalar complemento",
+				"DESCRIPTION": "¿Estás seguro de que quieres desinstalar este complemento?",
+				"CONFIRM": "Desinstalar"
+			},
+			"DELETE": {
+				"TITLE": "Eliminar complemento",
+				"DESCRIPTION": "¿Estás seguro de que quieres eliminar este complemento?",
+				"CONFIRM": "Eliminar"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Actualizar versión v{{number}}",
+					"DESCRIPTION": "¿Estás seguro de que quieres actualizar este complemento?",
+					"CONFIRM": "Actualizar"
+				},
+				"CREATE": {
+					"TITLE": "Crear nueva versión para {{name}}",
+					"DESCRIPTION": "¿Estás seguro de que quieres crear esta versión?",
+					"CONFIRM": "Crear"
+				},
+				"DELETE": {
+					"TITLE": "Eliminar versión",
+					"DESCRIPTION": "¿Estás seguro de que quieres eliminar esta versión?",
+					"CONFIRM": "Eliminar"
+				},
+				"RESTORE": {
+					"TITLE": "Restaurar versión",
+					"DESCRIPTION": "¿Estás seguro de que quieres restaurar esta versión?",
+					"CONFIRM": "Restaurar"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "¡Versión del complemento v{{number}} creada con éxito!",
+					"UPDATED": "¡Versión del complemento v{{number}} actualizada con éxito!",
+					"DELETED": "¡Versión del complemento eliminada con éxito!",
+					"RESTORED": "¡Versión del complemento restaurada con éxito!"
+				},
+				"UPLOADED": "¡Complemento subido con éxito!",
+				"UPDATED": "¡Complemento actualizado con éxito!",
+				"DELETED": "¡Complemento eliminado con éxito!",
+				"INSTALLED": "¡Complemento instalado con éxito!",
+				"UNINSTALLED": "¡Complemento desinstalado con éxito!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Añadiendo nueva versión del complemento...",
+					"UPDATING": "Actualizando versión del complemento...",
+					"DELETING": "Eliminando versión del complemento...",
+					"RESTORING": "Restaurando versión del complemento..."
+				},
+				"UPLOADING": "Subiendo complemento...",
+				"UPDATING": "Actualizando complemento...",
+				"DELETING": "Eliminando complemento...",
+				"INSTALLING": "Instalando complemento...",
+				"UNINSTALLING": "Desinstalando complemento..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Error al restaurar la versión del complemento. ¡Por favor, inténtelo de nuevo!"
+				},
+				"UPLOAD": "Error al subir el complemento. ¡Por favor, inténtelo de nuevo!",
+				"NOT_FOUND": "Complemento con ID {{ id }} no encontrado.",
+				"INSTALL": "Error al instalar el complemento. ¡Por favor, inténtelo de nuevo!",
+				"REVERT_INSTALLATION": "¡Error al revertir la instalación!"
+			}
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Servidor no disponible",
+		"DESCRIPTION": "El servidor de {{companySite}} no está disponible actualmente. Esto puede deberse a mantenimiento programado o tiempo de inactividad inesperado.",
+		"CONNECTING": "Reintentando conexión automáticamente...",
+		"HINT": "Estado: Intentando establecer conexión con los servidores de {{companySite}}. Código de error: 503."
 	}
 }

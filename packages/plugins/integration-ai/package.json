@@ -37,7 +37,7 @@
 		"@nestjs/config": "^3.2.0",
 		"@nestjs/cqrs": "^10.2.8",
 		"@nestjs/swagger": "^8.1.0",
-		"axios": "^1.7.4",
+		"axios": "^1.8.2",
 		"cache-manager": "^5.3.2",
 		"chalk": "^4.1.0",
 		"express": "^4.21.2",

@@ -23,8 +23,9 @@ export class EmployeeNotificationSettingService extends TenantAwareCrudService<E
 	 */
 	async create(input: IEmployeeNotificationSettingCreateInput): Promise<EmployeeNotificationSetting> {
 		try {
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
-			const employeeId = input.employeeId || RequestContext.currentEmployeeId();
+			const user = RequestContext.currentUser();
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+			const employeeId = input.employeeId ?? user?.employeeId;
 
 			return super.create({ ...input, employeeId, tenantId });
 		} catch (error) {

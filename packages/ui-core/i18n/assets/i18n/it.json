@@ -169,10 +169,17 @@
 		"ADD_MODULE": "Aggiungi modulo",
 		"SHARE": "Condividi",
 		"GET_INFO": "Ottieni informazioni",
-		"RETRY": "Riprova"
+		"RETRY": "Riprova",
+		"UPLOAD": "Carica",
+		"MARKETPLACE": "Mercato",
+		"ADD_VERSION": "Aggiungi versione",
+		"READ_MORE": "Leggi di più",
+		"READ_LESS": "Leggi meno",
+		"RECOVER": "Recupera"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "Nessuna cronologia",
 			"RECEIVE_ESTIMATE": "Non hai ricevuto alcuna stima",
 			"INCOME": "Non hai creato alcun reddito",
 			"EXPENSE_CATEGORY": "Non hai creato nessuna categoria di spese",
@@ -216,7 +223,9 @@
 			"EVENT_TYPE": "Non hai creato alcun tipo di evento",
 			"PRODUCT_TYPE_NO_DATA": "Non hai creato alcun tipo di prodotto",
 			"TEAM_DASHBOARD": "Non hai nessuna squadra",
-			"PLUGIN": "Non hai installato alcun plugin."
+			"PLUGIN": "Non hai installato alcun plugin.",
+			"PLUGIN_MARKETPLACE": "Questo plugin non è disponibile sul marketplace",
+			"LOADING": "Caricamento..."
 		},
 		"TRANSACTION_TYPE": "Tipo",
 		"AMOUNT": "Importo",
@@ -2031,6 +2040,10 @@
 			"ORG_TAGS_VIEW": "Visualizza i tag",
 			"ORG_TAGS_EDIT": "Modifica Etichette",
 			"ORG_TAGS_DELETE": "Elimina i tag",
+			"ORG_TAG_TYPES_ADD": "Aggiungi tipo di tag",
+			"ORG_TAG_TYPES_VIEW": "Visualizza tipi di tag",
+			"ORG_TAG_TYPES_EDIT": "Modifica tipo di tag",
+			"ORG_TAG_TYPES_DELETE": "Elimina tipo di tag",
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Creare/Modificare/Eliminare Feedback del Candidato",
 			"ALL_ORG_VIEW": "Visualizza tutte le organizzazioni",
 			"ALL_ORG_EDIT": "Crea/Modifica/Elimina tutte le organizzazioni",
@@ -2038,6 +2051,7 @@
 			"TIME_OFF_POLICY_VIEW": "Visualizza Politica di Ferie",
 			"TIME_OFF_POLICY_EDIT": "Modifica Politica di Ferie",
 			"TIME_OFF_POLICY_DELETE": "Elimina Politica di Ferie",
+			"SELECT_EMPLOYEE": "Seleziona dipendente",
 			"CHANGE_SELECTED_EMPLOYEE": "Cambia Dipendente Selezionato",
 			"CHANGE_SELECTED_CANDIDATE": "Cambia candidato selezionato",
 			"CHANGE_SELECTED_ORGANIZATION": "Cambia Organizzazione Selezionata",
@@ -2143,6 +2157,8 @@
 			"ORG_TASK_DELETE": "Elimina compiti",
 			"ORG_TASK_SETTING": "Impostazioni attività",
 			"ORG_MEMBER_LAST_LOG_VIEW": "Visualizza l'ultimo registro",
+			"API_CALL_LOG_READ": "Leggi il registro delle chiamate API",
+			"API_CALL_LOG_DELETE": "Elimina il registro delle chiamate API",
 			"TENANT_API_KEY_CREATE": "Crea chiave API",
 			"TENANT_API_KEY_VIEW": "Visualizza chiave API",
 			"TENANT_API_KEY_DELETE": "Elimina chiave API",
@@ -2603,6 +2619,7 @@
 		"TASKS_STATUS": "Stato",
 		"TASK_PRIORITY": "Priorità",
 		"TASK_SIZE": "Taglia",
+		"PARENT_TASK": "Attività principale",
 		"TODO": "Fare tutto",
 		"OPEN": "Aperto",
 		"READY_FOR_REVIEW": "Pronto per la revisione",
@@ -2943,6 +2960,9 @@
 		"ALREADY_PAID": "Già pagato",
 		"AMOUNT_DUE": "Importo dovuto",
 		"INVOICED_REMAINING_AMOUNT": "Importo rimanente da fatturare",
+		"TAX_CALCULATION_TYPE": "Tipo di calcolo dell'imposta",
+		"SIMPLE": "Semplice",
+		"COMPOSED": "Composto",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Tipo di fattura",
 			"ESTIMATE_TYPE": "Tipo di stima",
@@ -3565,6 +3585,7 @@
 			"APPROVAL_POLICY_CREATED": "La politica di approvazione '{{ name }}' è stata aggiunta",
 			"APPROVAL_POLICY_UPDATED": "La politica di approvazione '{{ name }}' è stata cambiata",
 			"APPROVAL_POLICY_DELETED": "La politica di approvazione '{{ name }}' è stata rimossa",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "La politica di approvazione '{{ name }}' esiste già",
 			"CANDIDATE_CREATED": "Il candidato '{{ name }}' è stato aggiunto a '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "Candidato '{{ name }}' impostato come archiviato",
 			"CANDIDATE_REJECTED": "Candidato '{{ name }}' impostato come rifiutato",
@@ -3682,7 +3703,8 @@
 			"EDIT_POLICY": "La politica di ferie '{{ name }}' è stata modificata",
 			"DELETE_POLICY": "La politica di permesso '{{ name }}' è stata rimossa",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Impossibile creare il record della polizza"
+			"SAVE_ERROR": "Impossibile creare il record della polizza",
+			"POLICY_EXISTS": "La politica di ferie '{{ name }}' esiste già"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Il tuo profilo è stato aggiornato con successo"
@@ -4002,7 +4024,14 @@
 				"SSL_CERT_FILE_INFO": "Percorso del file certificato client per SSL.",
 				"SECURE": "Sicuro",
 				"SECURE_INFO": "True, se desideri verificare i certificati SSL."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "L'installazione di NPM consente l'accesso a plugin disponibili pubblicamente e privati.",
+			"PACKAGE_NAME": "Nome del pacchetto NPM",
+			"PACKAGE_VERSION": "Versione del pacchetto NPM",
+			"REGISTRY": "Registro NPM",
+			"AUTH_TOKEN": "Token di autenticazione",
+			"PRIVATE_REGISTRY_URL": "URL del registro privato",
+			"PLUGIN_INSTALL_CDN_ERROR": "L'URL del server non deve essere vuoto."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Limite settimanale superato",
 		"OF_HRS": "Di {{ limit }} ore",
@@ -4410,6 +4439,7 @@
 		"LOW": "Basso",
 		"MEDIUM": "Medio",
 		"HIGH": "Alto",
+		"UNKNOWN": "Sconosciuto",
 		"DEAL_DELETED": "L'accordo '{{ name }}' è stato rimosso",
 		"DEAL_EDITED": "L'accordo '{{ name }}' è stato modificato",
 		"DEAL_ADDED": "L'accordo '{{ name }}' è stato aggiunto"
@@ -4755,6 +4785,189 @@
 				"SHARE_NOT_ALLOWED": "Condivisione non consentita",
 				"UNEXPECTED_SHARING_ERROR": "Errore inaspettato nella condivisione"
 			}
+		},
+		"FORM": {
+			"TITLE": "Carica plugin",
+			"BASIC_INFO": "Informazioni di base",
+			"NAME": "Nome del plugin",
+			"NAME_PLACEHOLDER": "Inserisci il nome del plugin",
+			"VALIDATION": {
+				"NAME_REQUIRED": "Il nome del plugin è obbligatorio",
+				"NAME_TOO_LONG": "Il nome del plugin è troppo lungo",
+				"VERSION_REQUIRED": "La versione è obbligatoria",
+				"VERSION_FORMAT": "Formato della versione non valido",
+				"DESCRIPTION_TOO_LONG": "La descrizione è troppo lunga",
+				"URL_REQUIRED": "L'URL è obbligatorio",
+				"INVALID_URL": "Formato URL non valido",
+				"PACKAGE_NAME_REQUIRED": "Il nome del pacchetto è obbligatorio",
+				"INVALID_PACKAGE_NAME": "Formato del nome del pacchetto non valido",
+				"INVALID_SCOPE": "Formato dell'ambito non valido",
+				"AUTHOR_TOO_LONG": "Il nome dell'autore è troppo lungo",
+				"LICENSE_TOO_LONG": "Il campo della licenza è troppo lungo",
+				"FAILED": "Validazione fallita",
+				"CHANGELOG_TOO_SHORT": "Changelog troppo corto",
+				"CHANGELOG_REQUIRED": "Changelog obbligatorio"
+			},
+			"TYPE": "Tipo di plugin",
+			"TYPE_PLACEHOLDER": "Seleziona il tipo di plugin",
+			"TYPES": {
+				"DESKTOP": "Desktop",
+				"WEB": "Web",
+				"MOBILE": "Mobile"
+			},
+			"VERSION": "Versione",
+			"STATUS": "Stato",
+			"STATUSES": {
+				"ACTIVE": "Attivo",
+				"INACTIVE": "Inattivo",
+				"DEPRECATED": "Deprecato",
+				"ARCHIVED": "Archiviato"
+			},
+			"DESCRIPTION": "Descrizione",
+			"DESCRIPTION_PLACEHOLDER": "Inserisci la descrizione del plugin",
+			"SOURCE": "Fonte",
+			"SOURCE_TYPE": "Tipo di fonte",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "URL CDN",
+				"INTEGRITY": "Integrità",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "Nome del pacchetto NPM",
+				"REGISTRY": "Registro NPM",
+				"SCOPE": "Ambito",
+				"AUTH_TOKEN": "Token di autenticazione"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Trascina e rilascia il tuo file qui",
+				"BROWSE": "Sfoglia",
+				"REMOVE": "Rimuovi file",
+				"RESTRICTIONS": "Sono consentiti solo file .zip",
+				"FILE": "File"
+			},
+			"METADATA": {
+				"TITLE": "Metadati",
+				"AUTHOR": "Autore",
+				"AUTHOR_PLACEHOLDER": "Inserisci il nome dell'autore",
+				"LICENSE": "Licenza",
+				"LICENSE_PLACEHOLDER": "Inserisci la licenza",
+				"HOMEPAGE": "Homepage",
+				"HOMEPAGE_PLACEHOLDER": "Inserisci l'URL della homepage",
+				"REPOSITORY": "Repository",
+				"REPOSITORY_PLACEHOLDER": "Inserisci l'URL del repository"
+			},
+			"OR": "O",
+			"RELEASE_DATE": "Data di rilascio",
+			"CHANGELOG": "Changelog",
+			"CHANGELOG_PLACEHOLDER": "Inserisci il changelog"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Statistiche di utilizzo",
+			"DOWNLOAD_COUNT": "Numero di download",
+			"LAST_DOWNLOADED": "Ultimo scaricamento",
+			"UPLOADED_BY": "Caricato da",
+			"UPLOADED_AT": "Caricato il",
+			"SECURITY_INFO": "Informazioni sulla sicurezza",
+			"CHECKSUM": "Checksum",
+			"SIGNATURE": "Firma",
+			"INSTALLED": "Installato",
+			"HIDDEN_FOR_SECURITY": "Nascosto per motivi di sicurezza"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Scopri",
+			"INSTALLED": "Installato",
+			"VERSION_HISTORY": "Cronologia versioni"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Carica nuovo plugin",
+			"OFFLINE": "Sei attualmente offline/disconnesso ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Disattiva plugin",
+				"DESCRIPTION": "Sei sicuro di voler disattivare questo plugin?",
+				"CONFIRM": "Disattiva"
+			},
+			"UNINSTALL": {
+				"TITLE": "Disinstalla plugin",
+				"DESCRIPTION": "Sei sicuro di voler disinstallare questo plugin?",
+				"CONFIRM": "Disinstalla"
+			},
+			"DELETE": {
+				"TITLE": "Elimina plugin",
+				"DESCRIPTION": "Sei sicuro di voler eliminare questo plugin?",
+				"CONFIRM": "Elimina"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Aggiorna versione v{{number}}",
+					"DESCRIPTION": "Sei sicuro di voler aggiornare questo plugin?",
+					"CONFIRM": "Aggiorna"
+				},
+				"CREATE": {
+					"TITLE": "Crea nuova versione per {{name}}",
+					"DESCRIPTION": "Sei sicuro di voler creare questa versione?",
+					"CONFIRM": "Crea"
+				},
+				"DELETE": {
+					"TITLE": "Elimina versione",
+					"DESCRIPTION": "Sei sicuro di voler eliminare questa versione?",
+					"CONFIRM": "Elimina"
+				},
+				"RESTORE": {
+					"TITLE": "Ripristina versione",
+					"DESCRIPTION": "Sei sicuro di voler ripristinare questa versione?",
+					"CONFIRM": "Ripristina"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Versione plugin v{{number}} creata con successo!",
+					"UPDATED": "Versione plugin v{{number}} aggiornata con successo!",
+					"DELETED": "Versione plugin eliminata con successo!",
+					"RESTORED": "Versione plugin ripristinata con successo!"
+				},
+				"UPLOADED": "Plugin caricato con successo!",
+				"UPDATED": "Plugin aggiornato con successo!",
+				"DELETED": "Plugin eliminato con successo!",
+				"INSTALLED": "Plugin installato con successo!",
+				"UNINSTALLED": "Plugin disinstallato con successo!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Aggiunta nuova versione plugin...",
+					"UPDATING": "Aggiornamento versione plugin...",
+					"DELETING": "Eliminazione versione plugin...",
+					"RESTORING": "Ripristino versione plugin..."
+				},
+				"UPLOADING": "Caricamento plugin...",
+				"UPDATING": "Aggiornamento plugin...",
+				"DELETING": "Eliminazione plugin...",
+				"INSTALLING": "Installazione plugin...",
+				"UNINSTALLING": "Disinstallazione plugin..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Ripristino versione plugin fallito. Riprova!"
+				},
+				"UPLOAD": "Caricamento plugin fallito. Riprova!",
+				"NOT_FOUND": "Plugin con ID {{ id }} non trovato.",
+				"INSTALL": "Installazione plugin fallita. Riprova!",
+				"REVERT_INSTALLATION": "Annullamento installazione fallito!"
+			}
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Server non disponibile",
+		"DESCRIPTION": "Il server {{companySite}} non è attualmente raggiungibile. Ciò potrebbe essere dovuto a manutenzione programmata o tempi di inattività imprevisti.",
+		"CONNECTING": "Tentativo automatico di riconnessione...",
+		"HINT": "Stato: Tentativo di stabilire una connessione ai server {{companySite}}. Codice errore: 503."
 	}
 }

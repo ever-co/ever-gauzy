@@ -139,6 +139,9 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_APP_PASSWORD: ${{ secrets.APPLE_ID_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
   release-windows:
     runs-on: ${{ matrix.os }}

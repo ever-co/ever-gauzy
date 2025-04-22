@@ -47,6 +47,7 @@ testem.log
 Thumbs.db
 
 .env
+.env.prod
 
 # Nx
 .nx

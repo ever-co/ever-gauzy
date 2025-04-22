@@ -1,7 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID, OmitFields } from './base-entity.model';
 import { IMentionEmployeeIds } from './mention.model';
 import { ITask } from './task.model';
-import { IHasUserCreator } from './user.model';
 
 export enum ScreeningTaskStatusEnum {
 	ACCEPTED = 'accepted',
@@ -16,7 +15,7 @@ interface IScreeningTaskBase extends IBasePerTenantAndOrganizationEntityModel {
 	onHoldUntil?: Date; // The date and time until which the screening task is temporarily paused or put on hold.
 }
 
-interface IScreeningTaskAssociations extends IHasUserCreator {
+interface IScreeningTaskAssociations {
 	task: ITask;
 	taskId: ID;
 }

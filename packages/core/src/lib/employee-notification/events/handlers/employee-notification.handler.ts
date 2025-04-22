@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { EmployeeCreateNotificationEvent } from '../employee-notification.event';
 import { EmployeeNotificationService } from '../../employee-notification.service';
@@ -18,11 +18,11 @@ export class EmployeeCreateNotificationEventHandler implements IEventHandler<Emp
 	 */
 	async handle(event: EmployeeCreateNotificationEvent) {
 		try {
-			this.logger.debug(`Creating notification for employee: ${event.input.receiverId}`);
+			this.logger.debug(`Creating notification for employee: ${event.input.receiverEmployeeId}`);
 			return await this.employeeNotificationService.create(event.input);
 		} catch (error) {
 			this.logger.error(`Failed to create notification: ${error.message}`, error.stack);
-			throw new Error(`Failed to create employee notification: ${error.message}`);
+			throw new BadRequestException(`Failed to create employee notification: ${error.message}`, error);
 		}
 	}
 }

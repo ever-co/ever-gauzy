@@ -4,7 +4,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { MentionService } from './mention.service';
-import { SubscriptionModule } from '../subscription/subscription.module';
+import { EntitySubscriptionModule } from '../entity-subscription/entity-subscription.module';
 import { MentionController } from './mention.controller';
 import { Mention } from './mention.entity';
 import { EventHandlers } from './events/handlers';
@@ -18,7 +18,7 @@ import { EmployeeNotificationModule } from '../employee-notification/employee-no
 		MikroOrmModule.forFeature([Mention]),
 		CqrsModule,
 		RolePermissionModule,
-		SubscriptionModule,
+		EntitySubscriptionModule,
 		EmployeeNotificationModule
 	],
 	controllers: [MentionController],

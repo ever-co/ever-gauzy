@@ -158,3 +158,8 @@ export enum InvoiceTabsEnum {
 	SEARCH = 'SEARCH',
 	HISTORY = 'HISTORY'
 }
+
+export enum TaxCalculationTypeEnum {
+	SIMPLE = 'SIMPLE',
+	COMPOSED = 'COMPOSED'
+}

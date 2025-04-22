@@ -7,6 +7,7 @@ import { ProjectResolver } from './project.resolver';
 import { ProjectCreateMutationComponent } from './components/project-create/create.component';
 import { ProjectEditMutationComponent } from './components/project-edit/edit.component';
 import { ProjectListComponent } from './components/project-list/list.component';
+import { ProjectManagerOrPermissionGuard } from './guards/project-manager-or-permission.guard';
 
 const routes: Routes = [
 	{
@@ -44,6 +45,7 @@ const routes: Routes = [
 			{
 				path: ':id',
 				data: {
+					allowMissingIntegration: true,
 					integration: IntegrationEnum.GITHUB, // Custom data associated with this route
 					relations: ['integration'],
 					selectors: {
@@ -55,13 +57,14 @@ const routes: Routes = [
 				},
 				resolve: {
 					project: ProjectResolver,
-					integration: IntegrationResolver
+					integration: IntegrationResolver || null
 				},
+
 				children: [
 					{
 						path: 'edit',
 						component: ProjectEditMutationComponent,
-						canActivate: [PermissionsGuard],
+						canActivate: [ProjectManagerOrPermissionGuard],
 						data: {
 							permissions: {
 								only: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT],

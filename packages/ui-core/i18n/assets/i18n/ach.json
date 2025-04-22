@@ -1869,6 +1869,7 @@
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "crwdns4082:0crwdne4082:0",
 			"ALL_ORG_VIEW": "crwdns2675:0crwdne2675:0",
 			"ALL_ORG_EDIT": "crwdns2677:0crwdne2677:0",
+			"SELECT_EMPLOYEE": "Yer Employee",
 			"CHANGE_SELECTED_EMPLOYEE": "crwdns2739:0crwdne2739:0",
 			"CHANGE_SELECTED_CANDIDATE": "crwdns3384:0crwdne3384:0",
 			"CHANGE_SELECTED_ORGANIZATION": "crwdns2741:0crwdne2741:0",
@@ -2377,6 +2378,7 @@
 		"TASK_UPDATED": "crwdns8826:0crwdne8826:0",
 		"TASK_DELETED": "crwdns8828:0crwdne8828:0",
 		"TASKS_PROJECT": "crwdns3047:0crwdne3047:0",
+		"PARENT_TASK": "Laponi me tic",
 		"TASKS_CREATOR": "crwdns7162:0crwdne7162:0",
 		"TASK_MEMBERS": "crwdns4100:0crwdne4100:0",
 		"TASK_ASSIGNED_TO": "crwdns4190:0crwdne4190:0",
@@ -2684,6 +2686,9 @@
 		"ALREADY_PAID": "crwdns10038:0crwdne10038:0",
 		"AMOUNT_DUE": "crwdns10040:0crwdne10040:0",
 		"INVOICED_REMAINING_AMOUNT": "crwdns10042:0crwdne10042:0",
+		"TAX_CALCULATION_TYPE": "Lonyo ki kiwero wa kodo",
+		"SIMPLE": "Pe woko",
+		"COMPOSED": "Pe lworo",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "crwdns3650:0crwdne3650:0",
 			"ESTIMATE_TYPE": "crwdns4444:0crwdne4444:0",
@@ -3297,6 +3302,7 @@
 			"APPROVAL_POLICY_CREATED": "crwdns8916:0{{ name }}crwdne8916:0",
 			"APPROVAL_POLICY_UPDATED": "crwdns8918:0{{ name }}crwdne8918:0",
 			"APPROVAL_POLICY_DELETED": "crwdns8920:0{{ name }}crwdne8920:0",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Approval policy '{{ name }}' tye kany",
 			"CANDIDATE_CREATED": "crwdns8922:0{{ name }}crwdnd8922:0{{ organization }}crwdne8922:0",
 			"CANDIDATE_ARCHIVED": "crwdns8924:0{{ name }}crwdne8924:0",
 			"CANDIDATE_REJECTED": "crwdns8926:0{{ name }}crwdne8926:0",
@@ -3410,7 +3416,8 @@
 			"EDIT_POLICY": "crwdns8934:0{{ name }}crwdne8934:0",
 			"DELETE_POLICY": "crwdns8936:0{{ name }}crwdne8936:0",
 			"ERROR": "crwdns2789:0{{ error }}crwdne2789:0",
-			"SAVE_ERROR": "crwdns8938:0crwdne8938:0"
+			"SAVE_ERROR": "crwdns8938:0crwdne8938:0",
+			"POLICY_EXISTS": "Time off policy '{{ name }}' kiti dong matek"
 		},
 		"USER": {
 			"EDIT_PROFILE": "crwdns2737:0crwdne2737:0"

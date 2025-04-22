@@ -161,14 +161,6 @@ export const environment: IEnvironment = {
 		clientSecret: process.env.FIVERR_CLIENT_SECRET
 	},
 
-	keycloakConfig: {
-		realm: process.env.KEYCLOAK_REALM,
-		clientId: process.env.KEYCLOAK_CLIENT_ID,
-		secret: process.env.KEYCLOAK_SECRET,
-		authServerUrl: process.env.KEYCLOAK_AUTH_SERVER_URL,
-		cookieKey: process.env.KEYCLOAK_COOKIE_KEY
-	},
-
 	auth0Config: {
 		clientID: process.env.AUTH0_CLIENT_ID,
 		clientSecret: process.env.AUTH0_CLIENT_SECRET,
@@ -177,6 +169,13 @@ export const environment: IEnvironment = {
 
 	sentry: {
 		dsn: process.env.SENTRY_DSN
+	},
+
+	posthog: {
+		posthogKey: process.env.POSTHOG_KEY,
+		posthogHost: process.env.POSTHOG_HOST,
+		posthogEnabled: process.env.POSTHOG_ENABLED === 'true',
+		posthogFlushInterval: Number.parseInt(process.env.POSTHOG_FLUSH_INTERVAL) || 10000
 	},
 
 	defaultIntegratedUserPass: process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
@@ -196,6 +195,21 @@ export const environment: IEnvironment = {
 		/** Hubstaff Integration Post Install URL */
 		postInstallUrl:
 			process.env.HUBSTAFF_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/hubstaff`
+	},
+
+	zapier: {
+		clientId: process.env.GAUZY_ZAPIER_CLIENT_ID,
+		clientSecret: process.env.GAUZY_ZAPIER_CLIENT_SECRET,
+		allowedDomains: (process.env.GAUZY_ZAPIER_ALLOWED_DOMAINS ?? process.env.GAUZY_ALLOWED_DOMAINS ?? '')
+			.split(',')
+			.filter(Boolean)
+			.map((domain) => domain.trim()),
+		maxAuthCodes: Number.parseInt(process.env.GAUZY_ZAPIER_MAX_AUTH_CODES) || 1000,
+		instanceCount: process.env.GAUZY_ZAPIER_INSTANCE_COUNT === 'true',
+		redirectUri:
+			process.env.GAUZY_ZAPIER_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/zapier/callback`,
+		postInstallUrl:
+			process.env.GAUZY_ZAPIER_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/zapier`
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,

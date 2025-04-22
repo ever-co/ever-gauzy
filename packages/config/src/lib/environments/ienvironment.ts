@@ -11,13 +11,14 @@ import {
 	IGithubIntegrationConfig,
 	IHubstaffConfig,
 	IJitsuConfig,
-	IKeycloakConfig,
 	ISMTPConfig,
 	IUnleashConfig,
 	IUpworkConfig,
 	IWasabiConfig,
 	IJiraIntegrationConfig,
-	IDigitalOceanConfig
+	IDigitalOceanConfig,
+	IPosthogConfig,
+	IZapierConfig
 } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 
@@ -103,12 +104,13 @@ export interface IEnvironment {
 	github: IGithubIntegrationConfig /** Github Configuration */;
 	jira: IJiraIntegrationConfig /** Jira Configuration */;
 	fiverrConfig: IFiverrConfig;
-	keycloakConfig: IKeycloakConfig;
 	auth0Config: IAuth0Config;
 
 	sentry?: {
 		dsn: string;
 	};
+
+	posthog?: IPosthogConfig;
 
 	/**
 	 * Default Integrated User Password
@@ -118,6 +120,7 @@ export interface IEnvironment {
 	/** Third Party Integrations */
 	upwork?: IUpworkConfig;
 	hubstaff?: IHubstaffConfig;
+	zapier?: IZapierConfig;
 
 	isElectron?: boolean;
 	gauzyUserPath?: string;

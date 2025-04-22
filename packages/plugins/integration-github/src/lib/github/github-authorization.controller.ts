@@ -23,7 +23,7 @@ export class GitHubAuthorizationController {
 			}
 
 			/** Github Config Options */
-			const { postInstallUrl } = this._config.get<IGithubIntegrationConfig>('github') as IGithubIntegrationConfig;
+			const { postInstallUrl } = this._config.get('github') as IGithubIntegrationConfig;
 
 			/** Construct the redirect URL with query parameters */
 			const urlParams = new URLSearchParams();

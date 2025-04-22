@@ -29,8 +29,8 @@ export class GoogleController {
 	 * @returns The result of the Google login callback.
 	 */
 	@Get('/google/callback')
-	async googleLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res: Response) {
-		const { user } = requestCtx;
+	async googleLoginCallback(@RequestCtx() context: IIncomingRequest, @Res() res: Response): Promise<any> {
+		const { user } = context;
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);
 	}

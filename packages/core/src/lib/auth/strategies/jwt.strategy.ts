@@ -24,7 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	 * @param {Function} done - The callback function to call when validation is complete.
 	 * @returns {void}
 	 */
-	async validate(payload: JwtPayload, done: Function): Promise<void> {
+	async validate(payload: JwtPayload, done: (err: unknown, user?: unknown) => void): Promise<void> {
 		try {
 			const { id, thirdPartyId, employeeId } = payload;
 

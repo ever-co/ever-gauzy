@@ -34,9 +34,9 @@ export class DashboardWidgetService extends TenantAwareCrudService<DashboardWidg
 	 */
 	async create(input: IDashboardWidgetCreateInput): Promise<DashboardWidget> {
 		try {
-			const employeeId = input.employeeId || RequestContext.currentEmployeeId();
-			const tenantId = RequestContext.currentTenantId();
-			const { organizationId } = input;
+			const user = RequestContext.currentUser();
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+			const { organizationId, employeeId = user?.employeeId } = input;
 
 			// create dashboard widget
 			const dashboardWidget = await super.create({
@@ -72,7 +72,7 @@ export class DashboardWidgetService extends TenantAwareCrudService<DashboardWidg
 	 * @returns {Promise<DashboardWidget>} The updated dashboard widget
 	 */
 	async update(id: ID, input: IDashboardWidgetUpdateInput): Promise<DashboardWidget> {
-		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
 		try {
 			const { organizationId } = input;

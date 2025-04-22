@@ -157,7 +157,7 @@ import { ApiCallLogModule } from '../api-call-log/api-call-log.module'; // Globa
 import { TaskViewModule } from '../tasks/views/view.module';
 import { ResourceLinkModule } from '../resource-link/resource-link.module';
 import { MentionModule } from '../mention/mention.module';
-import { SubscriptionModule } from '../subscription/subscription.module';
+import { EntitySubscriptionModule } from '../entity-subscription/entity-subscription.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
 import { DashboardWidgetModule } from '../dashboard/dashboard-widget/dashboard-widget.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
@@ -469,7 +469,7 @@ if (environment.THROTTLE_ENABLED) {
 		TaskViewModule,
 		ResourceLinkModule,
 		MentionModule,
-		SubscriptionModule,
+		EntitySubscriptionModule,
 		DashboardModule,
 		DashboardWidgetModule,
 		EmployeeNotificationModule,
