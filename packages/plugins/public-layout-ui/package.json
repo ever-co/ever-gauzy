@@ -27,8 +27,8 @@
 		"@angular/core": "^19.0.0"
 	},
 	"dependencies": {
-		"@angular/forms": "^19.1.6",
-		"@angular/router": "^19.1.6",
+		"@angular/forms": "19.2.7",
+		"@angular/router": "19.2.7",
 		"@fullcalendar/angular": "^6.1.16",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^15.0.0",
