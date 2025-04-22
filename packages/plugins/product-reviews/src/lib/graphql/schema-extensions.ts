@@ -1,9 +1,9 @@
-import { gql } from 'graphql-tag';
+import { gql } from '@apollo/client';
 
 export const schemaExtensions = gql`
-    type ProductReview {
-        id: ID!
-        body: String
-        rating: Float!
-    }
+	type ProductReview {
+		id: ID!
+		body: String
+		rating: Float!
+	}
 `;
