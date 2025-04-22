@@ -1,4 +1,4 @@
-@import './themes';
+@use 'themes' as *;
 
 .image-item {
   height: 100px;

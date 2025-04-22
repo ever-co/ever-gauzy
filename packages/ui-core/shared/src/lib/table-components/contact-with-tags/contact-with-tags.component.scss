@@ -1,4 +1,8 @@
-@import '../picture-name-tags/picture-name-tags.component';
+@use 'themes' as *;
+
+.badges-block {
+  margin-top: 10px;
+}
 
 .image-container {
     width: 70px;
