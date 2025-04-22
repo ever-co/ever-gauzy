@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, FindManyOptions, IsNull, Repository } from 'typeorm';
 import { camelCase } from 'typeorm/util/StringUtils';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import { BehaviorSubject } from 'rxjs';
@@ -1054,106 +1054,106 @@ export class ExportService implements OnModuleInit {
 		mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 
 		@InjectRepository(ActivityLog)
-		typeOrmActivityLogRepository: TypeOrmActivityLogRepository,
+		private typeOrmActivityLogRepository: TypeOrmActivityLogRepository,
 
 		@InjectRepository(EmployeeAvailability)
-		typeOrmEmployeeAvailabilityRepository: TypeOrmEmployeeAvailabilityRepository,
+		private typeOrmEmployeeAvailabilityRepository: TypeOrmEmployeeAvailabilityRepository,
 
 		@InjectRepository(Comment)
-		typeOrmCommentRepository: TypeOrmCommentRepository,
+		private typeOrmCommentRepository: TypeOrmCommentRepository,
 
 		@InjectRepository(DailyPlan)
-		typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
+		private typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
 
 		@InjectRepository(EmailReset)
-		typeOrmEmailResetRepository: TypeOrmEmailResetRepository,
+		private typeOrmEmailResetRepository: TypeOrmEmailResetRepository,
 
 		@InjectRepository(EmployeeNotification)
-		typeOrmEmployeeNotificationRepository: TypeOrmEmployeeNotificationRepository,
+		private typeOrmEmployeeNotificationRepository: TypeOrmEmployeeNotificationRepository,
 
 		@InjectRepository(EmployeeNotificationSetting)
-		typeOrmEmployeeNotificationSettingRepository: TypeOrmEmployeeNotificationSettingRepository,
+		private typeOrmEmployeeNotificationSettingRepository: TypeOrmEmployeeNotificationSettingRepository,
 
 		@InjectRepository(EmployeePhone)
-		typeOrmEmployeePhoneRepository: TypeOrmEmployeePhoneRepository,
+		private typeOrmEmployeePhoneRepository: TypeOrmEmployeePhoneRepository,
 
 		@InjectRepository(EntitySubscription)
-		typeOrmEntitySubscriptionRepository: TypeOrmEntitySubscriptionRepository,
+		private typeOrmEntitySubscriptionRepository: TypeOrmEntitySubscriptionRepository,
 
 		@InjectRepository(Favorite)
-		typeOrmFavoriteRepository: TypeOrmFavoriteRepository,
+		private typeOrmFavoriteRepository: TypeOrmFavoriteRepository,
 
 		@InjectRepository(ImportHistory)
-		typeOrmImportHistoryRepository: TypeOrmImportHistoryRepository,
+		private typeOrmImportHistoryRepository: TypeOrmImportHistoryRepository,
 
 		@InjectRepository(ImportRecord)
-		typeOrmImportRecordRepository: TypeOrmImportRecordRepository,
+		private typeOrmImportRecordRepository: TypeOrmImportRecordRepository,
 
 		@InjectRepository(IssueType)
-		typeOrmIssueTypeRepository: TypeOrmIssueTypeRepository,
+		private typeOrmIssueTypeRepository: TypeOrmIssueTypeRepository,
 
 		@InjectRepository(Mention)
-		typeOrmMentionRepository: TypeOrmMentionRepository,
+		private typeOrmMentionRepository: TypeOrmMentionRepository,
 
 		@InjectRepository(OrganizationProjectEmployee)
-		typeOrmOrganizationProjectEmployeeRepository: TypeOrmOrganizationProjectEmployeeRepository,
+		private typeOrmOrganizationProjectEmployeeRepository: TypeOrmOrganizationProjectEmployeeRepository,
 
 		@InjectRepository(OrganizationProjectModule)
-		typeOrmOrganizationProjectModuleRepository: TypeOrmOrganizationProjectModuleRepository,
+		private typeOrmOrganizationProjectModuleRepository: TypeOrmOrganizationProjectModuleRepository,
 
 		@InjectRepository(OrganizationProjectModuleEmployee)
-		typeOrmOrganizationProjectModuleEmployeeRepository: TypeOrmOrganizationProjectModuleEmployeeRepository,
+		private typeOrmOrganizationProjectModuleEmployeeRepository: TypeOrmOrganizationProjectModuleEmployeeRepository,
 
 		@InjectRepository(OrganizationSprintEmployee)
-		typeOrmOrganizationSprintEmployeeRepository: TypeOrmOrganizationSprintEmployeeRepository,
+		private typeOrmOrganizationSprintEmployeeRepository: TypeOrmOrganizationSprintEmployeeRepository,
 
 		@InjectRepository(OrganizationSprintTask)
-		typeOrmOrganizationSprintTaskRepository: TypeOrmOrganizationSprintTaskRepository,
+		private typeOrmOrganizationSprintTaskRepository: TypeOrmOrganizationSprintTaskRepository,
 
 		@InjectRepository(OrganizationSprintTaskHistory)
-		typeOrmOrganizationSprintTaskHistory: TypeOrmOrganizationSprintTaskHistoryRepository,
+		private typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
 
 		@InjectRepository(OrganizationTaskSetting)
-		typeOrmOrganizationTaskSettingRepository: TypeOrmOrganizationTaskSettingRepository,
+		private typeOrmOrganizationTaskSettingRepository: TypeOrmOrganizationTaskSettingRepository,
 
 		@InjectRepository(OrganizationTeamJoinRequest)
-		typeOrmOrganizationTeamJoinRequestRepository: TypeOrmOrganizationTeamJoinRequestRepository,
+		private typeOrmOrganizationTeamJoinRequestRepository: TypeOrmOrganizationTeamJoinRequestRepository,
 
 		@InjectRepository(Reaction)
-		typeOrmReactionRepository: TypeOrmReactionRepository,
+		private typeOrmReactionRepository: TypeOrmReactionRepository,
 
 		@InjectRepository(ResourceLink)
-		typeOrmResourceLinkRepository: TypeOrmResourceLinkRepository,
+		private typeOrmResourceLinkRepository: TypeOrmResourceLinkRepository,
 
 		@InjectRepository(ScreeningTask)
-		typeOrmScreeningTaskRepository: TypeOrmScreeningTaskRepository,
+		private typeOrmScreeningTaskRepository: TypeOrmScreeningTaskRepository,
 
 		@InjectRepository(SocialAccount)
-		typeOrmSocialAccountRepository: TypeOrmSocialAccountRepository,
+		private typeOrmSocialAccountRepository: TypeOrmSocialAccountRepository,
 
 		@InjectRepository(TaskEstimation)
-		typeOrmTaskEstimationRepository: TypeOrmTaskEstimationRepository,
+		private typeOrmTaskEstimationRepository: TypeOrmTaskEstimationRepository,
 
 		@InjectRepository(TaskLinkedIssue)
-		typeOrmTaskLinkedIssueRepository: TypeOrmTaskLinkedIssueRepository,
+		private typeOrmTaskLinkedIssueRepository: TypeOrmTaskLinkedIssueRepository,
 
 		@InjectRepository(TaskPriority)
-		typeOrmTaskPriorityRepository: TypeOrmTaskPriorityRepository,
+		private typeOrmTaskPriorityRepository: TypeOrmTaskPriorityRepository,
 
 		@InjectRepository(TaskRelatedIssueType)
-		typeOrmTaskRelatedIssueTypeRepository: TypeOrmTaskRelatedIssueTypeRepository,
+		private typeOrmTaskRelatedIssueTypeRepository: TypeOrmTaskRelatedIssueTypeRepository,
 
 		@InjectRepository(TaskSize)
-		typeOrmTaskSizeRepository: TypeOrmTaskSizeRepository,
+		private typeOrmTaskSizeRepository: TypeOrmTaskSizeRepository,
 
 		@InjectRepository(TaskStatus)
-		typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
+		private typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
 
 		@InjectRepository(TaskVersion)
-		typeOrmTaskVersionRepository: TypeOrmTaskVersionRepository,
+		private typeOrmTaskVersionRepository: TypeOrmTaskVersionRepository,
 
 		@InjectRepository(TaskView)
-		typeOrmTaskViewRepository: TypeOrmTaskViewRepository,
+		private typeOrmTaskViewRepository: TypeOrmTaskViewRepository,
 
 		private readonly configService: ConfigService,
 		private readonly _connectionEntityManager: ConnectionEntityManager
@@ -1230,8 +1230,8 @@ export class ExportService implements OnModuleInit {
 		});
 	}
 
-	async getAsCsv(item: IRepositoryModel<any>, where: { tenantId: string }): Promise<any> {
-		const conditions = {};
+	async getAsCsv(item: IRepositoryModel<any>, where: { tenantId: string }, organizationId: string): Promise<any> {
+		const conditions: FindManyOptions = {};
 		if (item.tenantBase !== false) {
 			conditions['where'] = {
 				tenantId: where['tenantId']
@@ -1254,9 +1254,40 @@ export class ExportService implements OnModuleInit {
 		const { repository } = item;
 		const nameFile = repository.metadata.tableName;
 
-		const [items, count] = await repository.findAndCount(conditions);
+		const [items, itemsCount] = await repository.findAndCount(conditions);
+
+		/**
+		 * Include global (default) entities used in the current organization.
+		 * E.g., task statuses, task priorities, etc.
+		 */
+
+		const columnNames = repository.metadata.columns.map((col) => col.databaseName);
+		const hasTenantId = columnNames.includes('tenantId');
+		const hasOrganizationId = columnNames.includes('organizationId');
+
+		let defaultItems: unknown[] = [];
+		let defaultItemsCount = 0;
+
+		if (item.tenantBase !== false && hasTenantId && hasOrganizationId) {
+			[defaultItems, defaultItemsCount] = await repository.findAndCount({
+				where: {
+					tenantId: IsNull(),
+					organizationId: IsNull()
+				}
+			});
+		}
+
+		const count = itemsCount + defaultItemsCount;
+
+		if (defaultItemsCount > 0) {
+			defaultItems.forEach((el) => {
+				el['organizationId'] = organizationId;
+				el['tenantId'] = RequestContext.currentTenantId();
+			});
+		}
+
 		if (count > 0) {
-			return await this.csvWriter(nameFile, items);
+			return await this.csvWriter(nameFile, [...items, ...defaultItems]);
 		}
 
 		return false;
@@ -1369,13 +1400,17 @@ export class ExportService implements OnModuleInit {
 		});
 	}
 
-	async exportTables() {
+	async exportTables(organizationId: string) {
 		return new Promise(async (resolve, reject) => {
 			try {
 				for await (const item of this.repositories) {
-					await this.getAsCsv(item, {
-						tenantId: RequestContext.currentTenantId()
-					});
+					await this.getAsCsv(
+						item,
+						{
+							tenantId: RequestContext.currentTenantId()
+						},
+						organizationId
+					);
 
 					// export pivot relational tables
 					if (isNotEmpty(item.relations)) {
@@ -1391,15 +1426,19 @@ export class ExportService implements OnModuleInit {
 		});
 	}
 
-	async exportSpecificTables(names: string[]) {
+	async exportSpecificTables(names: string[], organizationId: string) {
 		return new Promise(async (resolve, reject) => {
 			try {
 				for await (const item of this.repositories) {
 					const nameFile = item.repository.metadata.tableName;
 					if (names.includes(nameFile)) {
-						await this.getAsCsv(item, {
-							tenantId: RequestContext.currentTenantId()
-						});
+						await this.getAsCsv(
+							item,
+							{
+								tenantId: RequestContext.currentTenantId()
+							},
+							organizationId
+						);
 
 						// export pivot relational tables
 						if (isNotEmpty(item.relations)) {
@@ -1603,7 +1642,12 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmEmployeeLevelRepository,
-				relations: [{ joinTableName: 'tag_organization_employee_level' }]
+				relations: [
+					{ joinTableName: 'tag_organization_employee_level' },
+					{
+						joinTableName: 'tag_employee_level'
+					}
+				]
 			},
 			{
 				repository: this.typeOrmEmployeeRecurringExpenseRepository
@@ -1893,7 +1937,19 @@ export class ExportService implements OnModuleInit {
 				repository: this.typeOrmPipelineStageRepository
 			},
 			{
-				repository: this.typeOrmTagRepository
+				repository: this.typeOrmTagRepository,
+				relations: [
+					{
+						joinTableName: 'tag_user'
+					},
+
+					{
+						joinTableName: 'tag_proposal'
+					},
+					{
+						joinTableName: 'tag_request_approval'
+					}
+				]
 			},
 			{
 				repository: this.typeOrmTaskRepository,
@@ -1926,7 +1982,12 @@ export class ExportService implements OnModuleInit {
 				repository: this.typeOrmTimesheetRepository
 			},
 			{
-				repository: this.typeOrmTimeSlotRepository
+				repository: this.typeOrmTimeSlotRepository,
+				relations: [
+					{
+						joinTableName: 'time_slot_time_logs'
+					}
+				]
 			},
 			{
 				repository: this.typeOrmTimeSlotMinuteRepository
@@ -1936,6 +1997,126 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmUserRepository
+			},
+			{
+				repository: this.typeOrmActivityLogRepository
+			},
+			{
+				repository: this.typeOrmEmployeeAvailabilityRepository
+			},
+			{
+				repository: this.typeOrmCommentRepository,
+				relations: [
+					{
+						joinTableName: 'comment_employee'
+					},
+					{
+						joinTableName: 'comment_team'
+					}
+				]
+			},
+			{
+				repository: this.typeOrmDailyPlanRepository,
+				relations: [
+					{
+						joinTableName: 'daily_plan_task'
+					}
+				]
+			},
+			{
+				repository: this.typeOrmEmployeeNotificationRepository
+			},
+			{
+				repository: this.typeOrmEmployeeNotificationSettingRepository
+			},
+			{
+				repository: this.typeOrmEmployeePhoneRepository
+			},
+			{
+				repository: this.typeOrmEntitySubscriptionRepository
+			},
+			{
+				repository: this.typeOrmFavoriteRepository
+			},
+			{
+				repository: this.typeOrmIssueTypeRepository
+			},
+			{
+				repository: this.typeOrmMentionRepository
+			},
+			{
+				repository: this.typeOrmOrganizationProjectEmployeeRepository
+			},
+			{
+				repository: this.typeOrmOrganizationProjectModuleRepository,
+				relations: [
+					{
+						joinTableName: 'project_module_sprint'
+					},
+					{
+						joinTableName: 'project_module_employee'
+					},
+					{
+						joinTableName: 'project_module_team'
+					},
+					{
+						joinTableName: 'project_module_task'
+					}
+				]
+			},
+			{
+				repository: this.typeOrmOrganizationProjectModuleEmployeeRepository
+			},
+			{
+				repository: this.typeOrmOrganizationSprintEmployeeRepository
+			},
+			{
+				repository: this.typeOrmOrganizationSprintTaskRepository
+			},
+			{
+				repository: this.typeOrmOrganizationSprintTaskHistoryRepository
+			},
+			{
+				repository: this.typeOrmOrganizationTaskSettingRepository
+			},
+			{
+				repository: this.typeOrmOrganizationTeamJoinRequestRepository
+			},
+			{
+				repository: this.typeOrmReactionRepository
+			},
+			{
+				repository: this.typeOrmResourceLinkRepository
+			},
+			{
+				repository: this.typeOrmScreeningTaskRepository
+			},
+			{
+				repository: this.typeOrmSocialAccountRepository
+			},
+			{
+				repository: this.typeOrmTaskEstimationRepository
+			},
+			{
+				repository: this.typeOrmTaskLinkedIssueRepository
+			},
+			{
+				repository: this.typeOrmTaskPriorityRepository
+			},
+			{
+				repository: this.typeOrmTaskRelatedIssueTypeRepository
+			},
+			{
+				repository: this.typeOrmTaskSizeRepository
+			},
+			{
+				repository: this.typeOrmTaskStatusRepository
+			},
+			{
+				repository: this.typeOrmTaskVersionRepository
+			},
+			{
+				repository: this.typeOrmTaskViewRepository
 			},
 			...this.dynamicEntitiesClassMap
 		] as IRepositoryModel<any>[];

@@ -8,7 +8,7 @@ import { Subject } from 'rxjs';
 import { finalize, tap } from 'rxjs/operators';
 import { IEntityModel } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ExportAllService } from '@gauzy/ui-core/core';
+import { ExportAllService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,7 +24,11 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	subject$: Subject<any> = new Subject();
 	loading: boolean;
 
-	constructor(private readonly exportAll: ExportAllService, public readonly translateService: TranslateService) {
+	constructor(
+		private readonly exportAll: ExportAllService,
+		public readonly translateService: TranslateService,
+		private readonly store: Store
+	) {
 		super(translateService);
 	}
 
@@ -99,7 +103,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 		this.loading = true;
 		const entities = this.selectedEntities.filter(isNotEmpty);
 		this.exportAll
-			.downloadSpecificTable(entities)
+			.downloadSpecificTable(entities, this.store.selectedOrganization.id)
 			.pipe(
 				finalize(() => (this.loading = false)),
 				untilDestroyed(this)
@@ -351,8 +355,8 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK'),
 				value: 'task',
 				checked: true,
-				isGroup: false,
-				entities: []
+				isGroup: true,
+				entities: this.getTaskEntities()
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TENANT'),
@@ -381,6 +385,172 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				checked: true,
 				isGroup: true,
 				entities: this.getUserEntities()
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ACTIVITY'),
+				value: 'activity',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('INVOICES_PAGE.COMMENT'),
+				value: 'comment',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.DAILY_PLAN'),
+				value: 'daily_plan',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.FAVORITE'),
+				value: 'favorite',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.MENTION'),
+				value: 'mention',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.REACTION'),
+				value: 'reaction',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.RESOURCE_LINK'),
+				value: 'resource_link',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.SCREENING_TASK'),
+				value: 'screening_task',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('PLUGIN.VIDEO.SINGLE'),
+				value: 'video',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('INVOICES_PAGE.EMAIL.EMAIL_SENT'),
+				value: 'email_sent',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ACTIVITY_LOG'),
+				value: 'activity_log',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ENTTITY_SUBSCRIPTION'),
+				value: 'entity_subscription',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.SOCIAL_ACCOUNT'),
+				value: 'social_account',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.CHANGELOG'),
+				value: 'changelog',
+				checked: true,
+				isGroup: false,
+				entities: []
+			}
+		];
+	}
+
+	getTaskEntities(): IEntityModel[] {
+		return [
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ISSUE_TYPE'),
+				value: 'issue_type',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_ESTIMATION'),
+				value: 'task_estimation',
+				checked: true,
+				isGroup: true,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_PRIORITY'),
+				value: 'task_priority',
+				checked: true,
+				isGroup: true,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_SIZE'),
+				value: 'task_size',
+				checked: true,
+				isGroup: true,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_STATUS'),
+				value: 'task_status',
+				checked: true,
+				isGroup: true,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_VERSION'),
+				value: 'task_version',
+				checked: true,
+				isGroup: true,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_VIEW'),
+				value: 'task_view',
+				checked: true,
+				isGroup: true,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_LINKED_ISSUES'),
+				value: 'task_linked_issues',
+				checked: true,
+				isGroup: true,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_RELATED_ISSUE_TYPE'),
+				value: 'task_related_issue_type',
+				checked: true,
+				isGroup: true,
+				entities: []
 			}
 		];
 	}
@@ -566,6 +736,76 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				checked: true,
 				isGroup: false,
 				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_PROJECT_EMPLOYEE'),
+				value: 'organization_project_employee',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_PROJECT_MODULE'),
+				value: 'organization_project_module',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_PROJECT_MODULE_EMPLOYEE'),
+				value: 'organization_project_module_employee',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_SPRINT_EMPLOYEE'),
+				value: 'organization_sprint_employee',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_SPRINT_TASK'),
+				value: 'organization_sprint_task',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_SPRINT_TASK_HISTORY'),
+				value: 'organization_sprint_task_history',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_TASK_SETTING'),
+				value: 'organization_task_setting',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_TEAM_JOIN_REQUEST'),
+				value: 'organization_team_join_request',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_GITHUB_REPOSITORY'),
+				value: 'organization_github_repository',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_GITHUB_REPOSITORY_ISSUE'),
+				value: 'organization_github_repository_issue',
+				checked: true,
+				isGroup: false,
+				entities: []
 			}
 		];
 	}
@@ -632,6 +872,48 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				checked: true,
 				isGroup: false,
 				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.EMPLOYEE_AVAILABILITY'),
+				value: 'employee_availability',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.EMPLOYEE_NOTIFICATION'),
+				value: 'employee_notification',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.EMPLOYEE_PHONE'),
+				value: 'employee_phone',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.APPOINTMENT_EMPLOYEE'),
+				value: 'appointment_employee',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('SETTINGS_FEATURES_TEXT.EMPLOYEES.EMPLOYEE_LEVEL'),
+				value: 'employee_level',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.EMPLOYEE_NOTIFICATION'),
+				value: 'employee_notification_setting',
+				checked: true,
+				isGroup: false,
+				entities: []
 			}
 		];
 	}
@@ -676,6 +958,13 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.INTEGRATION_TENANT'),
 				value: 'integration_tenant',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.INTEGRATION_ENTITY_SETTING_TIED_ENTITY'),
+				value: 'integration_entity_setting_tied',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -807,6 +1096,13 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.WAREHOUSE_PRODUCT_VARIANT'),
 				value: 'warehouse_product_variant',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_REVIEW'),
+				value: 'product_review',
 				checked: true,
 				isGroup: false,
 				entities: []

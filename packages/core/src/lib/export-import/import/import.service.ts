@@ -19,6 +19,7 @@ import { FileStorage } from '../../core/file-storage';
 import {
 	AccountingTemplate,
 	Activity,
+	ActivityLog,
 	AppointmentEmployee,
 	ApprovalPolicy,
 	AvailabilitySlot,
@@ -34,17 +35,25 @@ import {
 	CandidateSkill,
 	CandidateSource,
 	CandidateTechnologies,
+	Comment,
 	Contact,
 	CustomSmtp,
+	DailyPlan,
 	Deal,
 	EmailHistory,
+	EmailReset,
 	EmailTemplate,
 	Employee,
 	EmployeeAppointment,
+	EmployeeAvailability,
 	EmployeeAward,
 	EmployeeLevel,
+	EmployeeNotification,
+	EmployeeNotificationSetting,
+	EmployeePhone,
 	EmployeeRecurringExpense,
 	EmployeeSetting,
+	EntitySubscription,
 	Equipment,
 	EquipmentSharing,
 	EquipmentSharingPolicy,
@@ -52,6 +61,7 @@ import {
 	EventType,
 	Expense,
 	ExpenseCategory,
+	Favorite,
 	Feature,
 	FeatureOrganization,
 	Goal,
@@ -61,6 +71,7 @@ import {
 	GoalTemplate,
 	GoalTimeFrame,
 	ImageAsset,
+	ImportHistory,
 	Income,
 	Integration,
 	IntegrationEntitySetting,
@@ -73,10 +84,12 @@ import {
 	Invoice,
 	InvoiceEstimateHistory,
 	InvoiceItem,
+	IssueType,
 	KeyResult,
 	KeyResultTemplate,
 	KeyResultUpdate,
 	Language,
+	Mention,
 	Merchant,
 	Organization,
 	OrganizationAward,
@@ -87,10 +100,18 @@ import {
 	OrganizationLanguage,
 	OrganizationPosition,
 	OrganizationProject,
+	OrganizationProjectEmployee,
+	OrganizationProjectModule,
+	OrganizationProjectModuleEmployee,
 	OrganizationRecurringExpense,
 	OrganizationSprint,
+	OrganizationSprintEmployee,
+	OrganizationSprintTask,
+	OrganizationSprintTaskHistory,
+	OrganizationTaskSetting,
 	OrganizationTeam,
 	OrganizationTeamEmployee,
+	OrganizationTeamJoinRequest,
 	OrganizationVendor,
 	Payment,
 	Pipeline,
@@ -108,19 +129,31 @@ import {
 	ProductVariant,
 	ProductVariantPrice,
 	ProductVariantSetting,
+	Reaction,
 	Report,
 	ReportCategory,
 	ReportOrganization,
 	RequestApproval,
 	RequestApprovalEmployee,
 	RequestApprovalTeam,
+	ResourceLink,
 	Role,
 	RolePermission,
+	ScreeningTask,
 	Screenshot,
 	Skill,
+	SocialAccount,
 	Tag,
 	TagType,
 	Task,
+	TaskEstimation,
+	TaskLinkedIssue,
+	TaskPriority,
+	TaskRelatedIssueType,
+	TaskSize,
+	TaskStatus,
+	TaskVersion,
+	TaskView,
 	Tenant,
 	TenantSetting,
 	TimeLog,
@@ -137,7 +170,7 @@ import {
 } from '../../core/entities/internal';
 import { RequestContext } from '../../core';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
-import { ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from '../import-record';
+import { ImportRecord, ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from '../import-record';
 import { MikroOrmAccountingTemplateRepository } from '../../accounting-template/repository/mikro-orm-accounting-template.repository';
 import { TypeOrmAccountingTemplateRepository } from '../../accounting-template/repository/type-orm-accounting-template.repository';
 import { MikroOrmAppointmentEmployeeRepository } from '../../appointment-employees/repository/mikro-orm-appointment-employee.repository';
@@ -370,6 +403,40 @@ import { TypeOrmWarehouseProductRepository } from '../../warehouse/repository/ty
 import { TypeOrmWarehouseRepository } from '../../warehouse/repository/type-orm-warehouse.repository';
 import { TypeOrmTagTypeRepository } from '../../tag-type/repository/type-orm-tag-type.repository';
 import { TypeOrmTenantRepository } from '../../tenant/repository/type-orm-tenant.repository';
+import { TypeOrmActivityLogRepository } from '../../activity-log/repository/type-orm-activity-log.repository';
+import { TypeOrmSocialAccountRepository } from '../../auth/social-account/repository/type-orm-social-account.repository';
+import { TypeOrmCommentRepository } from '../../comment/repository/type-orm.comment.repository';
+import { TypeOrmEmailResetRepository } from '../../email-reset/repository/type-orm-email-reset.repository';
+import { TypeOrmEmployeeAvailabilityRepository } from '../../employee-availability/repository/type-orm-employee-availability.repository';
+import { TypeOrmEmployeeNotificationSettingRepository } from '../../employee-notification-setting/repository/type-orm-employee-notification-setting.repository';
+import { TypeOrmEmployeeNotificationRepository } from '../../employee-notification/repository/type-orm-employee-notification.repository';
+import { TypeOrmEmployeePhoneRepository } from '../../employee-phone/repository/type-orm-employee-phone.repository';
+import { TypeOrmEntitySubscriptionRepository } from '../../entity-subscription/repository/type-orm-entity-subscription.repository';
+import { TypeOrmFavoriteRepository } from '../../favorite/repository/type-orm-favorite.repository';
+import { TypeOrmMentionRepository } from '../../mention/repository/type-orm-mention.repository';
+import { TypeOrmOrganizationProjectModuleEmployeeRepository } from '../../organization-project-module/repository/type-orm-organization-project-module-employee.repository';
+import { TypeOrmOrganizationProjectModuleRepository } from '../../organization-project-module/repository/type-orm-organization-project-module.repository';
+import { TypeOrmOrganizationProjectEmployeeRepository } from '../../organization-project/repository/type-orm-organization-project-employee.repository';
+import { TypeOrmOrganizationSprintEmployeeRepository } from '../../organization-sprint/repository/type-orm-organization-sprint-employee.repository';
+import { TypeOrmOrganizationSprintTaskHistoryRepository } from '../../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
+import { TypeOrmOrganizationSprintTaskRepository } from '../../organization-sprint/repository/type-orm-organization-sprint-task.repository';
+import { TypeOrmOrganizationTaskSettingRepository } from '../../organization-task-setting/repository/type-orm-organization-task-setting.repository';
+import { TypeOrmOrganizationTeamJoinRequestRepository } from '../../organization-team-join-request/repository/type-orm-organization-team-join-request.repository';
+import { TypeOrmReactionRepository } from '../../reaction/repository/type-orm-reaction.repository';
+import { TypeOrmResourceLinkRepository } from '../../resource-link/repository/type-orm-resource-link.repository';
+import { TypeOrmDailyPlanRepository } from '../../tasks/daily-plan/repository/type-orm-daily-plan.repository';
+import { TypeOrmTaskEstimationRepository } from '../../tasks/estimation/repository/type-orm-estimation.repository';
+import { TypeOrmIssueTypeRepository } from '../../tasks/issue-type/repository/type-orm-issue-type.repository';
+import { TypeOrmTaskLinkedIssueRepository } from '../../tasks/linked-issue/repository/type-orm-linked-issue.repository';
+import { TypeOrmTaskPriorityRepository } from '../../tasks/priorities/repository/type-orm-task-priority.repository';
+import { TypeOrmTaskRelatedIssueTypeRepository } from '../../tasks/related-issue-type/repository/type-orm-related-issue-type.repository';
+import { TypeOrmScreeningTaskRepository } from '../../tasks/screening-tasks/repository/type-orm-screening-task.repository';
+import { TypeOrmTaskSizeRepository } from '../../tasks/sizes/repository/type-orm-task-size.repository';
+import { TypeOrmTaskStatusRepository } from '../../tasks/statuses/repository/type-orm-task-status.repository';
+import { TypeOrmTaskVersionRepository } from '../../tasks/versions/repository/type-orm-task-version.repository';
+import { TypeOrmTaskViewRepository } from '../../tasks/views/repository/type-orm-task-view.repository';
+import { TypeOrmImportHistoryRepository } from '../import-history/repository/type-orm-import-history.repository';
+import { TypeOrmImportRecordRepository } from '../import-record/repository/type-orm-import-record.repository';
 
 export interface IForeignKey<T> {
 	column: string;
@@ -990,6 +1057,108 @@ export class ImportService implements OnModuleInit {
 		@InjectRepository(Tenant)
 		private typeOrmTenantRepository: TypeOrmTenantRepository,
 
+		@InjectRepository(ActivityLog)
+		private typeOrmActivityLogRepository: TypeOrmActivityLogRepository,
+
+		@InjectRepository(EmployeeAvailability)
+		private typeOrmEmployeeAvailabilityRepository: TypeOrmEmployeeAvailabilityRepository,
+
+		@InjectRepository(Comment)
+		private typeOrmCommentRepository: TypeOrmCommentRepository,
+
+		@InjectRepository(DailyPlan)
+		private typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
+
+		@InjectRepository(EmailReset)
+		private typeOrmEmailResetRepository: TypeOrmEmailResetRepository,
+
+		@InjectRepository(EmployeeNotification)
+		private typeOrmEmployeeNotificationRepository: TypeOrmEmployeeNotificationRepository,
+
+		@InjectRepository(EmployeeNotificationSetting)
+		private typeOrmEmployeeNotificationSettingRepository: TypeOrmEmployeeNotificationSettingRepository,
+
+		@InjectRepository(EmployeePhone)
+		private typeOrmEmployeePhoneRepository: TypeOrmEmployeePhoneRepository,
+
+		@InjectRepository(EntitySubscription)
+		private typeOrmEntitySubscriptionRepository: TypeOrmEntitySubscriptionRepository,
+
+		@InjectRepository(Favorite)
+		private typeOrmFavoriteRepository: TypeOrmFavoriteRepository,
+
+		@InjectRepository(ImportHistory)
+		private typeOrmImportHistoryRepository: TypeOrmImportHistoryRepository,
+
+		@InjectRepository(ImportRecord)
+		private typeOrmImportRecordRepository: TypeOrmImportRecordRepository,
+
+		@InjectRepository(IssueType)
+		private typeOrmIssueTypeRepository: TypeOrmIssueTypeRepository,
+
+		@InjectRepository(Mention)
+		private typeOrmMentionRepository: TypeOrmMentionRepository,
+
+		@InjectRepository(OrganizationProjectEmployee)
+		private typeOrmOrganizationProjectEmployeeRepository: TypeOrmOrganizationProjectEmployeeRepository,
+
+		@InjectRepository(OrganizationProjectModule)
+		private typeOrmOrganizationProjectModuleRepository: TypeOrmOrganizationProjectModuleRepository,
+
+		@InjectRepository(OrganizationProjectModuleEmployee)
+		private typeOrmOrganizationProjectModuleEmployeeRepository: TypeOrmOrganizationProjectModuleEmployeeRepository,
+
+		@InjectRepository(OrganizationSprintEmployee)
+		private typeOrmOrganizationSprintEmployeeRepository: TypeOrmOrganizationSprintEmployeeRepository,
+
+		@InjectRepository(OrganizationSprintTask)
+		private typeOrmOrganizationSprintTaskRepository: TypeOrmOrganizationSprintTaskRepository,
+
+		@InjectRepository(OrganizationSprintTaskHistory)
+		private typeOrmOrganizationSprintTaskHistory: TypeOrmOrganizationSprintTaskHistoryRepository,
+
+		@InjectRepository(OrganizationTaskSetting)
+		private typeOrmOrganizationTaskSettingRepository: TypeOrmOrganizationTaskSettingRepository,
+
+		@InjectRepository(OrganizationTeamJoinRequest)
+		private typeOrmOrganizationTeamJoinRequestRepository: TypeOrmOrganizationTeamJoinRequestRepository,
+
+		@InjectRepository(Reaction)
+		private typeOrmReactionRepository: TypeOrmReactionRepository,
+
+		@InjectRepository(ResourceLink)
+		private typeOrmResourceLinkRepository: TypeOrmResourceLinkRepository,
+
+		@InjectRepository(ScreeningTask)
+		private typeOrmScreeningTaskRepository: TypeOrmScreeningTaskRepository,
+
+		@InjectRepository(SocialAccount)
+		private typeOrmSocialAccountRepository: TypeOrmSocialAccountRepository,
+
+		@InjectRepository(TaskEstimation)
+		private typeOrmTaskEstimationRepository: TypeOrmTaskEstimationRepository,
+
+		@InjectRepository(TaskLinkedIssue)
+		private typeOrmTaskLinkedIssueRepository: TypeOrmTaskLinkedIssueRepository,
+
+		@InjectRepository(TaskPriority)
+		private typeOrmTaskPriorityRepository: TypeOrmTaskPriorityRepository,
+
+		@InjectRepository(TaskRelatedIssueType)
+		private typeOrmTaskRelatedIssueTypeRepository: TypeOrmTaskRelatedIssueTypeRepository,
+
+		@InjectRepository(TaskSize)
+		private typeOrmTaskSizeRepository: TypeOrmTaskSizeRepository,
+
+		@InjectRepository(TaskStatus)
+		private typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
+
+		@InjectRepository(TaskVersion)
+		private typeOrmTaskVersionRepository: TypeOrmTaskVersionRepository,
+
+		@InjectRepository(TaskView)
+		private typeOrmTaskViewRepository: TypeOrmTaskViewRepository,
+
 		private readonly configService: ConfigService,
 		private readonly _connectionEntityManager: ConnectionEntityManager,
 		private readonly commandBus: CommandBus
@@ -1299,9 +1468,10 @@ export class ImportService implements OnModuleInit {
 			try {
 				const { foreignKeys = [], isCheckRelation = false } = item;
 
-				// Always map base entity relations fields first
+				// Map base entity relations fields
 				await this.mapRelationSet(data, this.baseEntityRelationFields);
 
+				// Other entity relation fields
 				if (isCheckRelation && isNotEmpty(foreignKeys)) {
 					await this.mapRelationSet(data, foreignKeys);
 				}
@@ -1876,11 +2046,6 @@ export class ImportService implements OnModuleInit {
 			/*
 			 * Goal KPI & Related Entities
 			 */
-			// {
-			// 	repository: this.typeOrmGoalKPIRepository,
-			// 	isCheckRelation: true,
-			// 	foreignKeys: [{ column: 'leadId', repository: this.typeOrmEmployeeRepository }]
-			// },
 			{
 				repository: this.typeOrmGoalKPITemplateRepository,
 				isCheckRelation: true,
@@ -2154,10 +2319,10 @@ export class ImportService implements OnModuleInit {
 				foreignKeys: [
 					{ column: 'projectId', repository: this.typeOrmOrganizationProjectRepository },
 					{ column: 'parentId', repository: this.typeOrmTaskRepository },
-					// { column: 'taskStatusId', repository: this.taskStatusRepository },
-					// { column: 'taskSizeId', repository: this.taskSizeRepository },
-					// { column: 'taskPriorityId', repository: this.taskPriorityRepository },
-					// { column: 'taskTypeId', repository: this.taskTypeRepository },
+					{ column: 'taskStatusId', repository: this.typeOrmTaskStatusRepository },
+					{ column: 'taskSizeId', repository: this.typeOrmTaskSizeRepository },
+					{ column: 'taskPriorityId', repository: this.typeOrmTaskPriorityRepository },
+					{ column: 'taskTypeId', repository: this.typeOrmIssueTypeRepository },
 					{ column: 'organizationSprintId', repository: this.typeOrmOrganizationSprintRepository }
 				],
 				relations: [{ joinTableName: 'task_employee' }, { joinTableName: 'task_team' }]
@@ -2206,7 +2371,12 @@ export class ImportService implements OnModuleInit {
 			{
 				repository: this.typeOrmTimeSlotRepository,
 				isCheckRelation: true,
-				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }],
+				relations: [
+					{
+						joinTableName: 'time_slot_time_logs'
+					}
+				]
 			},
 			{
 				repository: this.typeOrmTimeSlotMinuteRepository,
@@ -2262,11 +2432,259 @@ export class ImportService implements OnModuleInit {
 					{ joinTableName: 'tag_proposal' },
 					{ joinTableName: 'tag_request_approval' },
 					{ joinTableName: 'tag_task' },
-					{ joinTableName: 'tag_warehouse' }
+					{ joinTableName: 'tag_warehouse' },
+					{
+						joinTableName: 'tag_employee_level'
+					},
+					{
+						joinTableName: 'tag_user'
+					}
 				],
+
 				foreignKeys: [
 					{ column: 'tagTypeId', repository: this.typeOrmTagTypeRepository },
 					{ column: 'organizationTeamId', repository: this.typeOrmOrganizationTeamRepository }
+				]
+			},
+			{
+				repository: this.typeOrmCommentRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'resolvedByEmployeeId', repository: this.typeOrmEmployeeRepository },
+					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
+				],
+				relations: [
+					{
+						joinTableName: 'comment_employee'
+					},
+					{
+						joinTableName: 'comment_team'
+					}
+				]
+			},
+			{
+				repository: this.typeOrmDailyPlanRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository },
+					{ column: 'organizationId', repository: this.typeOrmOrganizationRepository }
+				],
+				relations: [
+					{
+						joinTableName: 'daily_plan_task'
+					}
+				]
+			},
+			{
+				repository: this.typeOrmEmployeeNotificationRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'sentByEmployeeId', repository: this.typeOrmEmployeeRepository },
+					{ column: 'receivedByEmployeeId', repository: this.typeOrmEmployeeRepository }
+				]
+			},
+			{
+				repository: this.typeOrmEmployeeNotificationSettingRepository,
+				isCheckRelation: true,
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
+			},
+			{
+				repository: this.typeOrmEmployeePhoneRepository,
+				isCheckRelation: true,
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
+			},
+			{
+				repository: this.typeOrmEntitySubscriptionRepository,
+				isCheckRelation: true,
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
+			},
+			{
+				repository: this.typeOrmFavoriteRepository,
+				isCheckRelation: true,
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
+			},
+			{
+				repository: this.typeOrmIssueTypeRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'imageId', repository: this.typeOrmImageAssetRepository },
+					{ column: 'projectId', repository: this.typeOrmOrganizationProjectRepository },
+					{ column: 'organizationTeamId', repository: this.typeOrmOrganizationTeamRepository }
+				]
+			},
+			{
+				repository: this.typeOrmMentionRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository },
+					{ column: 'mentionedEmployeeId', repository: this.typeOrmEmployeeRepository }
+				]
+			},
+			{
+				repository: this.typeOrmOrganizationProjectEmployeeRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository },
+					{ column: 'organizationProjectId', repository: this.typeOrmOrganizationProjectRepository },
+					{ column: 'roleId', repository: this.typeOrmRoleRepository }
+				]
+			},
+			{
+				repository: this.typeOrmOrganizationProjectModuleRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'parentId', repository: this.typeOrmOrganizationProjectModuleRepository },
+					{ column: 'projectId', repository: this.typeOrmOrganizationProjectRepository }
+				],
+				relations: [
+					{
+						joinTableName: 'project_module_sprint'
+					},
+					{
+						joinTableName: 'project_module_employee'
+					},
+					{
+						joinTableName: 'project_module_team'
+					},
+					{
+						joinTableName: 'project_module_task'
+					}
+				]
+			},
+			{
+				repository: this.typeOrmOrganizationProjectModuleEmployeeRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository },
+					{ column: 'roleId', repository: this.typeOrmRoleRepository }
+				]
+			},
+			{
+				repository: this.typeOrmOrganizationSprintEmployeeRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository },
+					{ column: 'roleId', repository: this.typeOrmRoleRepository }
+				]
+			},
+			{
+				repository: this.typeOrmOrganizationSprintTaskRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'organizationSprintId', repository: this.typeOrmOrganizationSprintRepository },
+					{ column: 'taskId', repository: this.typeOrmTaskRepository }
+				]
+			},
+			{
+				repository: this.typeOrmOrganizationSprintTaskHistory,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'taskId', repository: this.typeOrmTaskRepository },
+					{ column: 'fromSprintId', repository: this.typeOrmOrganizationSprintRepository },
+					{ column: 'toSprintId', repository: this.typeOrmOrganizationSprintRepository },
+					{ column: 'movedById', repository: this.typeOrmUserRepository }
+				]
+			},
+			{
+				repository: this.typeOrmOrganizationTaskSettingRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'organizationTeamId', repository: this.typeOrmOrganizationTeamRepository },
+					{ column: 'projectId', repository: this.typeOrmOrganizationProjectRepository }
+				]
+			},
+			{
+				repository: this.typeOrmOrganizationTeamJoinRequestRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'userId', repository: this.typeOrmUserRepository },
+					{ column: 'organizationTeamId', repository: this.typeOrmOrganizationTeamRepository }
+				]
+			},
+			{
+				repository: this.typeOrmReactionRepository,
+				isCheckRelation: true,
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
+			},
+			{
+				repository: this.typeOrmResourceLinkRepository,
+				isCheckRelation: true,
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
+			},
+			{
+				repository: this.typeOrmScreeningTaskRepository,
+				isCheckRelation: true,
+				foreignKeys: [{ column: 'taskId', repository: this.typeOrmTaskRepository }]
+			},
+			{
+				repository: this.typeOrmSocialAccountRepository,
+				isCheckRelation: true,
+				foreignKeys: [{ column: 'userId', repository: this.typeOrmUserRepository }]
+			},
+			{
+				repository: this.typeOrmTaskEstimationRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'taskId', repository: this.typeOrmTaskRepository },
+					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
+				]
+			},
+			{
+				repository: this.typeOrmTaskLinkedIssueRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'taskFromId', repository: this.typeOrmTaskRepository },
+					{ column: 'taskToId', repository: this.typeOrmTaskRepository }
+				]
+			},
+			{
+				repository: this.typeOrmTaskPriorityRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'projectId', repository: this.typeOrmOrganizationProjectRepository },
+					{ column: 'organizationTeamId', repository: this.typeOrmOrganizationTeamRepository }
+				]
+			},
+			{
+				repository: this.typeOrmTaskRelatedIssueTypeRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'projectId', repository: this.typeOrmOrganizationProjectRepository },
+					{ column: 'organizationTeamId', repository: this.typeOrmOrganizationTeamRepository }
+				]
+			},
+			{
+				repository: this.typeOrmTaskSizeRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'projectId', repository: this.typeOrmOrganizationProjectRepository },
+					{ column: 'organizationTeamId', repository: this.typeOrmOrganizationTeamRepository }
+				]
+			},
+			{
+				repository: this.typeOrmTaskStatusRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'projectId', repository: this.typeOrmOrganizationProjectRepository },
+					{ column: 'organizationTeamId', repository: this.typeOrmOrganizationTeamRepository }
+				]
+			},
+			{
+				repository: this.typeOrmTaskVersionRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'projectId', repository: this.typeOrmOrganizationProjectRepository },
+					{ column: 'organizationTeamId', repository: this.typeOrmOrganizationTeamRepository }
+				]
+			},
+			{
+				repository: this.typeOrmTaskViewRepository,
+				isCheckRelation: true,
+				foreignKeys: [
+					{ column: 'projectId', repository: this.typeOrmOrganizationProjectRepository },
+					{ column: 'organizationTeamId', repository: this.typeOrmOrganizationTeamRepository },
+					{ column: 'projectModuleId', repository: this.typeOrmOrganizationProjectModuleRepository },
+					{ column: 'organizationSprintId', repository: this.typeOrmOrganizationSprintRepository }
 				]
 			},
 			...this.dynamicEntitiesClassMap
