@@ -14544,10 +14544,10 @@ angular-eslint@^19.3.0:
     "@typescript-eslint/types" "^8.0.0"
     "@typescript-eslint/utils" "^8.0.0"
 
-angular2-smart-table@^3.4.0, angular2-smart-table@^3.5.0:
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/angular2-smart-table/-/angular2-smart-table-3.5.0.tgz#7e36424a4bff07f190cc2cbbc0e29491c6a0366a"
-  integrity sha512-LCUILtsRZbvaOqr+Liqyh9BM5z1e+T46M1IECaBHoQliR2Cn1CoXSjlppwHEwTH+eEVoPUJ0uJ1tAX8rGJ1TbQ==
+angular2-smart-table@^3.6.1:
+  version "3.6.1"
+  resolved "https://registry.yarnpkg.com/angular2-smart-table/-/angular2-smart-table-3.6.1.tgz#90e08717ca6176a79331971dec07bee0417fcb50"
+  integrity sha512-qAc4+obs+vSacO48g20NBsNZNfDRHlCPX8Pib9EA4zc4//eSqc3aVrJAjgiBtKGvDhe/cNan6ZIzxlSPxS3wag==
   dependencies:
     tslib "~2.7.0"
 
@@ -39032,11 +39032,6 @@ undici-types@~6.20.0:
   version "6.20.0"
   resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-6.20.0.tgz#8171bf22c1f588d1554d55bf204bc624af388433"
   integrity sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==
-
-undici-types@~6.21.0:
-  version "6.21.0"
-  resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-6.21.0.tgz#691d00af3909be93a7faa13be61b3a5b50ef12cb"
-  integrity sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==
 
 undici@^6.10.2, undici@^6.19.5:
   version "6.21.1"

@@ -442,7 +442,7 @@
 		"@ng-select/ng-select": "^14.2.2",
 		"@ngx-translate/core": "^16.0.4",
 		"@ngx-translate/http-loader": "^16.0.1",
-		"angular2-smart-table": "^3.4.0",
+		"angular2-smart-table": "^3.6.1",
 		"autoprefixer": "^10.4.20",
 		"bcrypt": "^5.1.1",
 		"camelcase": "^6.3.0",

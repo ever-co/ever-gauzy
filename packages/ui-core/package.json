@@ -68,7 +68,7 @@
 		"@ngx-translate/core": "^16.0.4",
 		"@ngx-translate/http-loader": "^16.0.1",
 		"@sentry/angular-ivy": "^7.101.1",
-		"angular2-smart-table": "^3.5.0",
+		"angular2-smart-table": "^3.6.1",
 		"bootstrap": "^4.3.1",
 		"camelcase": "^6.3.0",
 		"chart.js": "^4.4.1",
