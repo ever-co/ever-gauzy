@@ -452,7 +452,7 @@
 		"lodash-es": "^4.17.21",
 		"minizlib": "^2.1.2",
 		"mobx": "~4.14.1",
-		"ng2-file-upload": "^7.0.1",
+		"ng2-file-upload": "^8.0.0",
 		"ngx-draggable-dom": "^3.4.1",
 		"ngx-infinite-scroll": "^19.0.0",
 		"ngx-permissions": "^19.0.0",

@@ -129,7 +129,7 @@
 		"moment-timezone": "^0.5.45",
 		"nebular-icons": "^1.1.0",
 		"ng2-charts": "^5.0.4",
-		"ng2-file-upload": "^7.0.1",
+		"ng2-file-upload": "^8.0.0",
 		"ngx-ace-editor-wrapper": "^9.1.12",
 		"ngx-clipboard": "^16.0.0",
 		"ngx-color-picker": "^17.0.0",
