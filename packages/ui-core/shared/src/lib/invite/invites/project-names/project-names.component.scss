@@ -1,4 +1,4 @@
-@use 'var' as *;
+@import 'var';
 
 @include nb-install-component() {
 	.project-badge {
