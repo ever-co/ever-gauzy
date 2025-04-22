@@ -12,6 +12,7 @@ import { IVideo } from '../../models/video.model';
 	selector: 'plug-video-item',
 	templateUrl: './video-item.component.html',
 	styleUrl: './video-item.component.scss',
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VideoItemComponent {

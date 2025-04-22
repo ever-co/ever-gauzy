@@ -5,6 +5,7 @@ import { FormGroup } from '@angular/forms';
 	selector: 'lib-plugin-basic-information',
 	templateUrl: './plugin-basic-information.component.html',
 	styleUrls: ['./plugin-basic-information.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginBasicInformationComponent {

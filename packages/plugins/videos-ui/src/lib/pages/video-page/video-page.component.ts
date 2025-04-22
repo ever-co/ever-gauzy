@@ -17,6 +17,7 @@ import { VideoStore } from '../../+state/video.store';
 	selector: 'lib-video-page',
 	templateUrl: './video-page.component.html',
 	styleUrl: './video-page.component.scss',
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VideoPageComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {

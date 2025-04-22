@@ -11,11 +11,11 @@ import { ActionButtonQuery } from './+state/action-button.query';
 import { ActionButton, ActionButtonStore } from './+state/action-button.store';
 
 @Component({
-    selector: 'ngx-action-button',
-    templateUrl: './action-button.component.html',
-    styleUrls: ['./action-button.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+	selector: 'ngx-action-button',
+	templateUrl: './action-button.component.html',
+	styleUrls: ['./action-button.component.scss'],
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActionButtonComponent {
 	constructor(

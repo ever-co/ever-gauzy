@@ -14,7 +14,8 @@ import { Store } from '../../../../services';
 @Component({
 	selector: 'lib-plugin-marketplace',
 	templateUrl: './plugin-marketplace.component.html',
-	styleUrls: ['./plugin-marketplace.component.scss']
+	styleUrls: ['./plugin-marketplace.component.scss'],
+	standalone: false
 })
 export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 	private skip = 1;

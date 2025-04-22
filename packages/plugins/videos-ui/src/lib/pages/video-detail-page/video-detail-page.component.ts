@@ -20,6 +20,7 @@ import { VideoStore } from '../../+state/video.store';
 	selector: 'lib-video-detail-page',
 	templateUrl: './video-detail-page.component.html',
 	styleUrl: './video-detail-page.component.scss',
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VideoDetailPageComponent implements OnInit, AfterViewInit, OnDestroy {
