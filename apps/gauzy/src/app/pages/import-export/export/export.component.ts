@@ -464,7 +464,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				entities: []
 			},
 			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.ENTTITY_SUBSCRIPTION'),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ENTITY_SUBSCRIPTION'),
 				value: 'entity_subscription',
 				checked: true,
 				isGroup: false,
@@ -907,13 +907,6 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				checked: true,
 				isGroup: false,
 				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.EMPLOYEE_NOTIFICATION'),
-				value: 'employee_notification_setting',
-				checked: true,
-				isGroup: false,
-				entities: []
 			}
 		];
 	}
@@ -958,13 +951,6 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.INTEGRATION_TENANT'),
 				value: 'integration_tenant',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.INTEGRATION_ENTITY_SETTING_TIED_ENTITY'),
-				value: 'integration_entity_setting_tied',
 				checked: true,
 				isGroup: false,
 				entities: []

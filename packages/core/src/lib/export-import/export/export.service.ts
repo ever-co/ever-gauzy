@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, FindManyOptions, IsNull, Repository } from 'typeorm';
+import { FindManyOptions, IsNull, Repository } from 'typeorm';
 import { camelCase } from 'typeorm/util/StringUtils';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import { BehaviorSubject } from 'rxjs';
@@ -407,7 +407,7 @@ import { TypeOrmWarehouseProductRepository } from '../../warehouse/repository/ty
 import { TypeOrmWarehouseRepository } from '../../warehouse/repository/type-orm-warehouse.repository';
 import { TypeOrmActivityLogRepository } from '../../activity-log/repository/type-orm-activity-log.repository';
 import { TypeOrmEmployeeAvailabilityRepository } from '../../employee-availability/repository/type-orm-employee-availability.repository';
-import { TypeOrmCommentRepository } from '../../comment/repository/type-orm.comment.repository';
+import { TypeOrmCommentRepository } from '../../comment/repository/type-orm-comment.repository';
 import { TypeOrmDailyPlanRepository } from '../../tasks/daily-plan/repository/type-orm-daily-plan.repository';
 import { TypeOrmEmailResetRepository } from '../../email-reset/repository/type-orm-email-reset.repository';
 import { TypeOrmEmployeeNotificationRepository } from '../../employee-notification/repository/type-orm-employee-notification.repository';

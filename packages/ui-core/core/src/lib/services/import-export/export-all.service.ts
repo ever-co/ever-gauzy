@@ -23,6 +23,9 @@ export class ExportAllService {
 
 	downloadSpecificTable(names: string[], organizationId: string) {
 		const data = JSON.stringify({ entities: { names } });
+
+		if (!names || !organizationId) return;
+
 		return this.http.get(`${API_PREFIX}/export/filter`, {
 			responseType: 'blob',
 			params: { data, organizationId }

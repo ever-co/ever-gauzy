@@ -405,7 +405,7 @@ import { TypeOrmTagTypeRepository } from '../../tag-type/repository/type-orm-tag
 import { TypeOrmTenantRepository } from '../../tenant/repository/type-orm-tenant.repository';
 import { TypeOrmActivityLogRepository } from '../../activity-log/repository/type-orm-activity-log.repository';
 import { TypeOrmSocialAccountRepository } from '../../auth/social-account/repository/type-orm-social-account.repository';
-import { TypeOrmCommentRepository } from '../../comment/repository/type-orm.comment.repository';
+import { TypeOrmCommentRepository } from '../../comment/repository/type-orm-comment.repository';
 import { TypeOrmEmailResetRepository } from '../../email-reset/repository/type-orm-email-reset.repository';
 import { TypeOrmEmployeeAvailabilityRepository } from '../../employee-availability/repository/type-orm-employee-availability.repository';
 import { TypeOrmEmployeeNotificationSettingRepository } from '../../employee-notification-setting/repository/type-orm-employee-notification-setting.repository';
@@ -472,6 +472,7 @@ export class ImportService implements OnModuleInit {
 		{ column: 'createdByUserId', repository: this.typeOrmUserRepository },
 		{ column: 'updatedByUserId', repository: this.typeOrmUserRepository },
 		{ column: 'deletedByUserId', repository: this.typeOrmUserRepository },
+		{ column: 'organizationId', repository: this.typeOrmOrganizationRepository },
 		{ column: 'tenantId', repository: this.typeOrmTenantRepository }
 	];
 
@@ -1486,14 +1487,6 @@ export class ImportService implements OnModuleInit {
 
 	//load plugins entities for import data
 	private async createDynamicInstanceForPluginEntities() {
-		const alreadyMappedForeignKeys = [
-			'tenantId',
-			'organizationId',
-			'createdByUserId',
-			'updatedByUserId',
-			'deletedByUserId'
-		];
-
 		for await (const entity of getEntitiesFromPlugins(this.configService.plugins)) {
 			if (!isFunction(entity)) {
 				continue;
@@ -1504,7 +1497,10 @@ export class ImportService implements OnModuleInit {
 
 			const foreignKeys = [
 				...repository.metadata.foreignKeys
-					.filter((fk) => !alreadyMappedForeignKeys.includes(fk.columns[0].propertyName))
+					.filter(
+						(fk) =>
+							!this.baseEntityRelationFields.map((el) => el.column).includes(fk.columns[0].propertyName)
+					)
 					.map((fk) => ({
 						column: fk.columns[0].propertyName, // Should be adjusted if the relation references more than 1 table
 						repository: this._connectionEntityManager.getRepository(fk.referencedEntityMetadata.target)

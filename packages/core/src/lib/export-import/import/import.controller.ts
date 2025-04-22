@@ -9,7 +9,7 @@ import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { Permissions } from '../../shared/decorators';
 import { ImportHistoryCreateCommand } from '../import-history';
 import { FileInterceptor } from '@nestjs/platform-express';
-import * as path from 'path';
+import * as path from 'node:path';
 
 @ApiTags('Import')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -18,7 +18,6 @@ import * as path from 'path';
 export class ImportController {
 	constructor(private readonly _importService: ImportService, private readonly _commandBus: CommandBus) {}
 
-	// We need to investigate this and fix it.
 	/**
 	 *
 	 * @param param0
