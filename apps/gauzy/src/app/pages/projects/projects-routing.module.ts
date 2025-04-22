@@ -7,6 +7,7 @@ import { ProjectResolver } from './project.resolver';
 import { ProjectCreateMutationComponent } from './components/project-create/create.component';
 import { ProjectEditMutationComponent } from './components/project-edit/edit.component';
 import { ProjectListComponent } from './components/project-list/list.component';
+import { environment } from '@gauzy/ui-config';
 
 const routes: Routes = [
 	{
@@ -73,7 +74,7 @@ const routes: Routes = [
 								'members.employee.user',
 								'tags',
 								'teams',
-								'customFields.repository'
+								...(environment.GAUZY_GITHUB_CLIENT_ID?.length > 0 ? ['customFields.repository'] : [])
 							]
 						}
 					}
