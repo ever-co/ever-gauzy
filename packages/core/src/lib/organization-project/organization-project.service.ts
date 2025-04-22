@@ -447,6 +447,28 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			options.where.name = ILike(`%${options.where.name}%`);
 		}
 
+		// Transform the filters to where conditions
+		if (options?.filters) {
+			// Project name
+			if (options.filters.name) {
+				options.where.name = ILike(`%${options.filters.name}%`);
+			}
+			// Organization contact name
+			if (options.filters.organizationContact) {
+				options.where.organizationContact = { name: ILike(`%${options.filters.organizationContact}%`) };
+			}
+			// Employee name
+			if (Object.hasOwn(options.filters, 'employeesMergedTeams')) {
+				// Create an OR condition for firstName and lastName
+				const searchTerm = (options.filters as any).employeesMergedTeams;
+				options.where.members = {
+					employee: {
+						user: [{ firstName: ILike(`%${searchTerm}%`) }, { lastName: ILike(`%${searchTerm}%`) }]
+					}
+				};
+			}
+		}
+
 		// Call the parent class's paginate method with the modified options
 		return super.paginate(options);
 	}
