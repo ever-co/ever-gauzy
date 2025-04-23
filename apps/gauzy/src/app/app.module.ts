@@ -115,7 +115,8 @@ const THIRD_PARTY_MODULES = [
 		options: {
 			api_host: environment.POSTHOG_HOST,
 			capture_pageview: true,
-			capture_exceptions: true
+			capture_exceptions: true,
+			capture_pageleave: true
 		}
 	})
 ];

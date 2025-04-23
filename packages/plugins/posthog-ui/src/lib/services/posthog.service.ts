@@ -2,8 +2,8 @@ import { Injectable, Inject, Optional, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import posthog, { PostHog, Properties } from 'posthog-js';
-import { POSTHOG_CONFIG } from '../interfaces/posthog.interface';
+import posthog, { PostHog, PostHogConfig, Properties } from 'posthog-js';
+import { POSTHOG_CONFIG, PostHogModuleConfig } from '../interfaces/posthog.interface';
 
 /**
  * Complete PostHog service for Angular applications
@@ -29,10 +29,7 @@ export class PostHogService {
 		@Inject(PLATFORM_ID) private platformId: Object,
 		@Optional()
 		@Inject(POSTHOG_CONFIG)
-		private injectedConfig: {
-			apiKey: string;
-			options?: any;
-		}
+		private injectedConfig: PostHogModuleConfig
 	) {
 		// Auto-initialize if config was provided via DI
 		if (this.injectedConfig?.apiKey) {

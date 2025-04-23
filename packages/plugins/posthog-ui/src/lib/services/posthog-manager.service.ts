@@ -1,12 +1,7 @@
 import { Injectable, Inject, Optional } from '@angular/core';
 import { PostHogService } from './posthog.service';
-import { POSTHOG_CONFIG } from '../interfaces/posthog.interface';
+import { POSTHOG_CONFIG, PostHogModuleConfig } from '../interfaces/posthog.interface';
 import { PostHogConfig } from 'posthog-js';
-
-export interface PostHogModuleConfig {
-	apiKey: string;
-	options?: Partial<PostHogConfig>;
-}
 
 /**
  * Service manager that initializes and calls appropriate PostHog methods
