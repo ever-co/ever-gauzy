@@ -2,7 +2,7 @@ import { Injectable, Inject, Optional, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import posthog, { PostHog, PostHogConfig, Properties } from 'posthog-js';
+import posthog, { PostHog, Properties } from 'posthog-js';
 import { POSTHOG_CONFIG, PostHogModuleConfig } from '../interfaces/posthog.interface';
 
 /**
