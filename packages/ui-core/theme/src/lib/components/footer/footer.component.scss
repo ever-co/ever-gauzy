@@ -1,6 +1,6 @@
+@use 'themes' as *;
 @import '@nebular/theme/styles/global/breakpoints';
 @import 'bootstrap/scss/mixins/breakpoints';
-@import 'themes';
 
 @include nb-install-component() {
   width: 100%;
