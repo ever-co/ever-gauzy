@@ -1,5 +1,5 @@
-@use 'gauzy/_gauzy-table';
-@import 'gauzy/_gauzy-dialogs';
+@use 'gauzy/_gauzy-table' as *;
+@use 'gauzy/_gauzy-dialogs';
 @import 'gauzy/_gauzy-overrides';
 
 :host nb-card {
