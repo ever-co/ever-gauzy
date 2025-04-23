@@ -47,6 +47,7 @@ import {
 	TenantInterceptor,
 	TokenInterceptor
 } from '@gauzy/ui-core/core';
+import { PostHogModule } from '@gauzy/plugin-posthog-ui';
 import { CommonModule } from '@gauzy/ui-core/common';
 import { HttpLoaderFactory, I18nModule, I18nService } from '@gauzy/ui-core/i18n';
 import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
@@ -63,6 +64,14 @@ if (environment.SENTRY_DSN) {
 	} else {
 		console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
 		initializeSentry();
+	}
+}
+
+if (environment.POSTHOG_KEY) {
+	if (environment.POSTHOG_KEY === 'DOCKER_POSTHOG_API_KEY') {
+		console.warn('You are running inside Docker but does not have POSTHOG_API_KEY env set');
+	} else {
+		console.log(`Enabling PostHog with API Key: ${environment.POSTHOG_KEY}`);
 	}
 }
 
@@ -99,6 +108,14 @@ const THIRD_PARTY_MODULES = [
 			provide: TranslateLoader,
 			useFactory: HttpLoaderFactory,
 			deps: [HttpClient]
+		}
+	}),
+	PostHogModule.forRoot({
+		apiKey: environment.POSTHOG_KEY,
+		options: {
+			api_host: environment.POSTHOG_HOST,
+			capture_pageview: true,
+			capture_exceptions: true
 		}
 	})
 ];
@@ -199,6 +216,7 @@ const FEATURE_MODULES = [
 			provide: GAUZY_ENV,
 			useValue: environment
 		},
+
 		provideHttpClient(withInterceptorsFromDi())
 	]
 })

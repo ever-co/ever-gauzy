@@ -1,15 +1,11 @@
-import { NgModule, ModuleWithProviders, InjectionToken } from '@angular/core';
+import { NgModule, ModuleWithProviders, APP_INITIALIZER } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { PostHogTrackDirective } from './directives/posthog-track.directive';
 import { PostHogInterceptor } from './interceptors/posthog.interceptor';
 import { PostHogService } from './services/posthog.service';
-import { PostHogConfig } from 'posthog-js';
-
-/**
- * Injection token for providing PostHog configuration
- */
-export const POSTHOG_CONFIG = new InjectionToken<PostHogConfig>('POSTHOG_CONFIG');
+import { POSTHOG_CONFIG, PostHogModuleConfig } from './interfaces/posthog.interface';
+import { initializePostHogFactory } from './services/posthog-init.factory';
 
 /**
  * Module for integrating PostHog into Angular applications
@@ -25,7 +21,7 @@ export class PostHogModule {
 	 * @param config - Configuration options including API key
 	 * @returns Module with providers configured
 	 */
-	static forRoot(config: PostHogConfig): ModuleWithProviders<PostHogModule> {
+	static forRoot(config: PostHogModuleConfig): ModuleWithProviders<PostHogModule> {
 		return {
 			ngModule: PostHogModule,
 			providers: [
@@ -34,8 +30,14 @@ export class PostHogModule {
 					provide: POSTHOG_CONFIG,
 					useValue: config
 				},
+				{
+					provide: APP_INITIALIZER,
+					useFactory: initializePostHogFactory,
+					deps: [PostHogService],
+					multi: true
+				},
 				// Optionally add HTTP interceptor if capture_exceptions is enabled
-				...(config.capture_exceptions
+				...(config.options?.capture_exceptions
 					? [
 							{
 								provide: HTTP_INTERCEPTORS,
