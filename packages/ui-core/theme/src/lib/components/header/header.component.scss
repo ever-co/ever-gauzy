@@ -1,6 +1,6 @@
+@use '@nebular/theme/styles/global/breakpoints' as *;
+@use 'bootstrap/scss/mixins/breakpoints';
 @use 'themes' as *;
-@use 'bootstrap/scss/mixins/breakpoints' as *;
-@import '@nebular/theme/styles/global/breakpoints';
 
 $orange: #f56d58;
 

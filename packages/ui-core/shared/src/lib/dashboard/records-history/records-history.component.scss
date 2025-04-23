@@ -1,6 +1,6 @@
 @use 'gauzy/_gauzy-table' as *;
-@use 'gauzy/_gauzy-dialogs';
-@import 'gauzy/_gauzy-overrides';
+@use 'gauzy/_gauzy-dialogs' as ga-dialogs;
+@use 'gauzy/_gauzy-overrides' as ga-overrides;
 
 :host nb-card {
   border-radius: nb-theme(border-radius);
@@ -10,7 +10,7 @@
   }
   nb-card-body {
     overflow: unset;
-    @include input-appearance(2rem, var(--gauzy-sidebar-background-4));
+    @include ga-overrides.input-appearance(2rem, var(--gauzy-sidebar-background-4));
     background-color: var(--gauzy-card-2);
     padding: 1rem 11px;
     .table-scroll-container {

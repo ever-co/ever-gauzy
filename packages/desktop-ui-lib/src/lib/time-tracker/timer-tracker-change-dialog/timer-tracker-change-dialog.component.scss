@@ -1,4 +1,4 @@
-@import 'gauzy/_gauzy-dialogs';
+@use 'gauzy/_gauzy-dialogs' as *;
 
 nb-card {
 	width: 320px;
