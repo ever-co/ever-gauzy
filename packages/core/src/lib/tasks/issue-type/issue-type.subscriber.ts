@@ -1,13 +1,15 @@
+import { Logger } from '@nestjs/common';
 import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
-import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { FileStorage } from './../../core/file-storage';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { IssueType } from './issue-type.entity';
+import { setFullIconUrl } from '../utils';
 
 @EventSubscriber()
 export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
+	private readonly logger = new Logger(IssueTypeSubscriber.name);
+
 	/**
 	 * Indicates that this subscriber only listen to IssueType events.
 	 */
@@ -25,15 +27,15 @@ export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
 	async afterEntityLoad(entity: IssueType): Promise<void> {
 		try {
 			// Update the fullIconUrl if an icon is present
-			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
+			if (Object.hasOwn(entity, 'image')) {
 				// Use the fullUrl from the image property if available
-				await this.setImageUrl(entity);
-			} else if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
+				this.setImageUrl(entity);
+			} else if (Object.hasOwn(entity, 'icon')) {
 				// Otherwise, generate the full URL for the icon
-				await this.setFullIconUrl(entity);
+				await setFullIconUrl([entity]);
 			}
 		} catch (error) {
-			console.error('IssueTypeSubscriber: An error occurred during the afterEntityLoad process:', error);
+			this.logger.error(`An error occurred during the afterEntityLoad process: ${error}`);
 		}
 	}
 
@@ -56,31 +58,8 @@ export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
 				entity.value = sluggable(entity.name);
 			}
 		} catch (error) {
-			console.error('IssueTypeSubscriber: An error occurred during the beforeEntityCreate process:', error);
+			this.logger.error(`An error occurred during the beforeEntityCreate process: ${error}`);
 		}
-	}
-
-	/**
-	 * Simulate an asynchronous operation to set the full icon URL.
-	 *
-	 * @param entity
-	 * @returns
-	 */
-	private async setFullIconUrl(entity: IssueType): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(async () => {
-					// Otherwise, generate the full URL for the icon
-					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-					entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
-					resolve();
-				});
-			} catch (error) {
-				console.error('TaskPrioritySubscriber: Error during the setFullIconUrl process:', error);
-				reject(null);
-			}
-		});
 	}
 
 	/**
@@ -89,18 +68,7 @@ export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
 	 * @param entity
 	 * @returns
 	 */
-	private setImageUrl(entity: IssueType): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(() => {
-					entity.fullIconUrl = entity.image?.fullUrl ?? entity.fullIconUrl;
-					resolve();
-				});
-			} catch (error) {
-				console.error('TaskPrioritySubscriber: Error during the setImageUrl process:', error);
-				reject(null);
-			}
-		});
+	private setImageUrl(entity: IssueType) {
+		entity.fullIconUrl = entity.image?.fullUrl ?? entity.fullIconUrl;
 	}
 }

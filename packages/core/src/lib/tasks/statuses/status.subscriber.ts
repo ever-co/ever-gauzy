@@ -1,13 +1,15 @@
+import { Logger } from '@nestjs/common';
 import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
-import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { FileStorage } from '../../core/file-storage';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { TaskStatus } from './status.entity';
+import { setFullIconUrl } from '../utils';
 
 @EventSubscriber()
 export class TaskStatusSubscriber extends BaseEntityEventSubscriber<TaskStatus> {
+	private readonly logger = new Logger(TaskStatusSubscriber.name);
+
 	/**
 	 * Indicates that this subscriber only listen to TaskStatus events.
 	 */
@@ -25,11 +27,11 @@ export class TaskStatusSubscriber extends BaseEntityEventSubscriber<TaskStatus> 
 	async afterEntityLoad(entity: TaskStatus): Promise<void> {
 		try {
 			// Update the fullIconUrl if an icon is present
-			if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
-				await this.setFullIconUrl(entity);
+			if (Object.hasOwn(entity, 'icon')) {
+				await setFullIconUrl([entity]);
 			}
 		} catch (error) {
-			console.error('TaskStatusSubscriber: An error occurred during the afterEntityLoad process:', error);
+			this.logger.error(`An error occurred during the afterEntityLoad process: ${error}`);
 		}
 	}
 
@@ -46,41 +48,11 @@ export class TaskStatusSubscriber extends BaseEntityEventSubscriber<TaskStatus> 
 			entity.color = entity.color || faker.internet.color();
 
 			// Set a sluggable value based on the name, if provided
-			if ('name' in entity) {
+			if (Object.hasOwn(entity, 'name')) {
 				entity.value = sluggable(entity.name);
 			}
 		} catch (error) {
-			console.error('TaskStatusSubscriber: An error occurred during the beforeEntityCreate process:', error);
+			this.logger.error(`An error occurred during the beforeEntityCreate process: ${error}`);
 		}
-	}
-
-	/**
-	 * Sets the full icon URL for a `TaskStatus` entity using a file storage provider.
-	 *
-	 * @param entity - The `TaskStatus` entity whose `fullIconUrl` needs to be set.
-	 * @returns A promise that resolves when the `fullIconUrl` is successfully set.
-	 */
-	private async setFullIconUrl(entity: TaskStatus): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation with a delay
-				setTimeout(async () => {
-					try {
-						// Initialize the file storage provider (e.g., LOCAL, S3, etc.)
-						const provider = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-						// Fetch and set the full URL for the icon
-						entity.fullIconUrl = await provider.getProviderInstance().url(entity.icon);
-						// Resolve the promise once the URL is set
-						resolve();
-					} catch (innerError) {
-						console.error('Error fetching the icon URL:', innerError);
-						reject(innerError);
-					}
-				}, 0); // Delay of 0ms to simulate async operation
-			} catch (error) {
-				console.error('TaskStatusSubscriber: Error during the setFullIconUrl process:', error);
-				reject(error);
-			}
-		});
 	}
 }

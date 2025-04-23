@@ -1,9 +1,8 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, FindOptionsWhere } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
-import { v4 as uuidv4 } from 'uuid';
 import {
 	ID,
 	IOrganization,
@@ -24,19 +23,16 @@ import { TaskStatus } from './status.entity';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
 import { TASK_STATUSES_TEMPLATES } from './standard-statuses-template';
 import { MikroOrmTaskStatusRepository, TypeOrmTaskStatusRepository } from './repository';
+import { setFullIconUrl } from '../utils';
 
 @Injectable()
 export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus> {
-	// Logger for tracking operations
-	logger = new Logger('TaskStatusService'); // Update with your service name
-
 	constructor(
 		@InjectRepository(TaskStatus)
 		readonly typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
 		readonly mikroOrmTaskStatusRepository: MikroOrmTaskStatusRepository,
 		@InjectConnection() readonly knexConnection: KnexConnection
 	) {
-		console.log(`TaskStatusService initialized. Unique Service ID: ${uuidv4()} `);
 		super(typeOrmTaskStatusRepository, mikroOrmTaskStatusRepository, knexConnection);
 	}
 
@@ -71,20 +67,16 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	 */
 	async fetchAll(params: ITaskStatusFindInput): Promise<IPagination<TaskStatus>> {
 		try {
-			if (this.ormType == MultiORMEnum.TypeORM && isPostgres()) {
-				return await super.fetchAllByKnex(params);
-			} else {
-				return await super.fetchAll(params);
-			}
+			const result =
+				this.ormType == MultiORMEnum.TypeORM && isPostgres()
+					? await super.fetchAllByKnex(params)
+					: await super.fetchAll(params);
+
+			// Ensure the fullIconUrl is set for each status
+			await setFullIconUrl(result.items);
+			return result;
 		} catch (error) {
-			console.log(
-				'Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.',
-				error
-			);
-			throw new BadRequestException(
-				'Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.',
-				error
-			);
+			throw new BadRequestException(error);
 		}
 	}
 
@@ -132,7 +124,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			return await this.typeOrmRepository.save(statuses);
 		} catch (error) {
 			// If an error occurs during the creation process, log the error.
-			console.error('Error while creating task statuses', error.message);
+			throw new BadRequestException(`Error while creating task statuses: ${error}`);
 		}
 	}
 
@@ -186,7 +178,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			return await this.typeOrmRepository.save(statuses);
 		} catch (error) {
 			// If an error occurs during the creation process, log the error.
-			console.error('Error while creating task statuses for organization', error.message);
+			throw new BadRequestException(`Error while creating task statuses for organization: ${error}`);
 		}
 	}
 
@@ -212,7 +204,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			let index = 0;
 
 			// Iterate over each found entity.
-			for await (const item of items) {
+			for (const item of items) {
 				// Extract properties from the entity.
 				const { name, value, description, icon, color, order, isCollapsed } = item;
 
@@ -240,7 +232,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			return statuses;
 		} catch (error) {
 			// If an error occurs during the creation process, log the error.
-			console.error('Error while creating task statuses', error);
+			throw new BadRequestException(`Error while creating task statuses: ${error}`);
 		}
 	}
 
@@ -253,9 +245,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	async reorder(list: IReorderDTO[]): Promise<{ success: boolean; list?: IReorderDTO[] }> {
 		try {
 			// Loop through the list and update each item's order
-			for await (const item of list) {
-				this.logger.log(`Updating item with ID: ${item.id} to order: ${item.order}`); // Logging operation
-
+			for (const item of list) {
 				// Update the entity with the new order value
 				if (item.id) {
 					await super.update({ id: item.id, isSystem: false }, { order: item.order });
@@ -266,7 +256,6 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			return { success: true, list };
 		} catch (error) {
 			// Handle errors during reordering
-			this.logger.error('Error during reordering of task statues:', error); // Log the error for debugging
 			throw new BadRequestException('An error occurred while reordering task statues. Please try again.', error); // Return error
 		}
 	}

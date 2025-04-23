@@ -1,13 +1,15 @@
+import { Logger } from '@nestjs/common';
 import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
-import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { FileStorage } from '../../core/file-storage';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { TaskVersion } from './version.entity';
+import { setFullIconUrl } from '../utils';
 
 @EventSubscriber()
 export class TaskVersionSubscriber extends BaseEntityEventSubscriber<TaskVersion> {
+	private readonly logger = new Logger(TaskVersionSubscriber.name);
+
 	/**
 	 * Indicates that this subscriber only listen to TaskVersion events.
 	 */
@@ -25,11 +27,11 @@ export class TaskVersionSubscriber extends BaseEntityEventSubscriber<TaskVersion
 	async afterEntityLoad(entity: TaskVersion): Promise<void> {
 		try {
 			// Generate and set the full icon URL if an icon property exists
-			if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
-				await this.setFullIconUrl(entity);
+			if (Object.hasOwn(entity, 'icon')) {
+				await setFullIconUrl([entity]);
 			}
 		} catch (error) {
-			console.error('TaskVersionSubscriber: An error occurred during the afterEntityLoad process:', error);
+			this.logger.error(`An error occurred during the afterEntityLoad process: ${error}`);
 		}
 	}
 
@@ -50,29 +52,7 @@ export class TaskVersionSubscriber extends BaseEntityEventSubscriber<TaskVersion
 				entity.value = sluggable(entity.name);
 			}
 		} catch (error) {
-			console.error('TaskVersionSubscriber: An error occurred during the beforeEntityCreate process:', error);
+			this.logger.error(`An error occurred during the beforeEntityCreate process: ${error}`);
 		}
-	}
-
-	/**
-	 * Simulate an asynchronous operation to set the full icon URL.
-	 *
-	 * @param entity
-	 * @returns
-	 */
-	private async setFullIconUrl(entity: TaskVersion): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(async () => {
-					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-					entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
-					resolve();
-				});
-			} catch (error) {
-				console.error('TaskStatusSubscriber: Error during the setImageUrl process:', error);
-				reject(null);
-			}
-		});
 	}
 }

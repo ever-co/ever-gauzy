@@ -3,7 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
-import { IOrganization, IPagination, ITaskSize, ITaskSizeCreateInput, ITaskSizeFindInput, ITenant } from '@gauzy/contracts';
+import {
+	IOrganization,
+	IPagination,
+	ITaskSize,
+	ITaskSizeCreateInput,
+	ITaskSizeFindInput,
+	ITenant
+} from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
 import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
@@ -12,11 +19,10 @@ import { TaskSize } from './size.entity';
 import { DEFAULT_GLOBAL_SIZES } from './default-global-sizes';
 import { TypeOrmTaskSizeRepository } from './repository/type-orm-task-size.repository';
 import { MikroOrmTaskSizeRepository } from './repository/mikro-orm-task-size.repository';
-
+import { setFullIconUrl } from '../utils';
 
 @Injectable()
 export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
-
 	constructor(
 		@InjectRepository(TaskSize)
 		readonly typeOrmTaskSizeRepository: TypeOrmTaskSizeRepository,
@@ -39,7 +45,7 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 		return await super.delete(id, {
 			where: {
 				isSystem: false
-			},
+			}
 		});
 	}
 
@@ -51,14 +57,16 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 	 */
 	public async fetchAll(params: ITaskSizeFindInput): Promise<IPagination<ITaskSize>> {
 		try {
-			if (this.ormType == MultiORMEnum.TypeORM && isPostgres()) {
-				return await super.fetchAllByKnex(params);
-			} else {
-				return await super.fetchAll(params);
-			}
+			const result =
+				this.ormType == MultiORMEnum.TypeORM && isPostgres()
+					? await super.fetchAllByKnex(params)
+					: await super.fetchAll(params);
+
+			// Ensure the fullIconUrl is set for each size
+			await setFullIconUrl(result.items);
+			return result;
 		} catch (error) {
-			console.log('Failed to retrieve task sizes. Please ensure that all required parameters are provided correctly.', error);
-			throw new BadRequestException('Failed to retrieve task sizes. Ensure that the provided parameters are valid and complete.', error);
+			throw new BadRequestException(error);
 		}
 	}
 

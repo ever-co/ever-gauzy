@@ -16,7 +16,6 @@ import { UseValidationPipe } from '../../shared/pipes';
 import { CrudFactory, PaginationParams } from './../../core/crud';
 import { TaskStatusService } from './status.service';
 import { TaskStatus } from './status.entity';
-import { FindStatusesQuery } from './queries';
 import { CreateStatusDTO, StatusQueryDTO, UpdatesStatusDTO } from './dto';
 import { ReorderRequestDTO } from './dto/reorder.dto';
 
@@ -81,7 +80,7 @@ export class TaskStatusController extends CrudFactory<
 	@Get('/')
 	@UseValidationPipe({ whitelist: true })
 	async findTaskStatuses(@Query() params: StatusQueryDTO): Promise<IPagination<ITaskStatus>> {
-		return await this.queryBus.execute(new FindStatusesQuery(params));
+		return await this.taskStatusService.fetchAll(params);
 	}
 
 	/**

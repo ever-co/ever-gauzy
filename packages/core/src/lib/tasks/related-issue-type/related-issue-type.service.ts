@@ -8,7 +8,7 @@ import {
 	IPagination,
 	ITaskRelatedIssueType,
 	ITaskRelatedIssueTypeCreateInput,
-	ITaskRelatedIssueTypeFindInput,
+	ITaskRelatedIssueTypeFindInput
 } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
@@ -17,6 +17,7 @@ import { RequestContext } from '../../core/context';
 import { TaskRelatedIssueType } from './related-issue-type.entity';
 import { TypeOrmTaskRelatedIssueTypeRepository } from './repository/type-orm-related-issue-type.repository';
 import { MikroOrmTaskRelatedIssueTypeRepository } from './repository/mikro-orm-related-issue-type.repository';
+import { setFullIconUrl } from '../utils';
 
 @Injectable()
 export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<TaskRelatedIssueType> {
@@ -41,14 +42,16 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 	 */
 	async fetchAll(params: ITaskRelatedIssueTypeFindInput): Promise<IPagination<TaskRelatedIssueType>> {
 		try {
-			if (this.ormType == MultiORMEnum.TypeORM && isPostgres()) {
-				return await super.fetchAllByKnex(params);
-			} else {
-				return await super.fetchAll(params);
-			}
+			const result =
+				this.ormType == MultiORMEnum.TypeORM && isPostgres()
+					? await super.fetchAllByKnex(params)
+					: await super.fetchAll(params);
+
+			// Ensure the fullIconUrl is set for each task related issue type
+			await setFullIconUrl(result.items);
+			return result;
 		} catch (error) {
-			console.log('Failed to retrieve related issue types for tasks. Please ensure that the provided parameters are valid and complete.', error);
-			throw new BadRequestException('Failed to retrieve related issue types for tasks. Please ensure that the provided parameters are valid and complete.', error);
+			throw new BadRequestException(error);
 		}
 	}
 
@@ -62,7 +65,7 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 		return await super.delete(id, {
 			where: {
 				isSystem: false
-			},
+			}
 		});
 	}
 
@@ -90,7 +93,7 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 					icon,
 					color,
 					organization,
-					isSystem: false,
+					isSystem: false
 				});
 				statuses.push(status);
 			}
@@ -129,7 +132,7 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 					description,
 					icon,
 					color,
-					isSystem: false,
+					isSystem: false
 				});
 				statuses.push(status);
 			}

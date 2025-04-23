@@ -1,13 +1,15 @@
+import { Logger } from '@nestjs/common';
 import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
-import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { FileStorage } from './../../core/file-storage';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { TaskSize } from './size.entity';
+import { setFullIconUrl } from '../utils';
 
 @EventSubscriber()
 export class TaskSizeSubscriber extends BaseEntityEventSubscriber<TaskSize> {
+	private readonly logger = new Logger(TaskSizeSubscriber.name);
+
 	/**
 	 * Indicates that this subscriber only listen to TaskSize events.
 	 */
@@ -25,14 +27,11 @@ export class TaskSizeSubscriber extends BaseEntityEventSubscriber<TaskSize> {
 	async afterEntityLoad(entity: TaskSize): Promise<void> {
 		try {
 			// Update the fullIconUrl if an icon property is present
-			if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
-				await this.setFullIconUrl(entity);
+			if (Object.hasOwn(entity, 'icon')) {
+				await setFullIconUrl([entity]);
 			}
 		} catch (error) {
-			console.error(
-				`TaskSizeSubscriber: An error occurred during the afterEntityLoad process for entity ID ${entity.id}:`,
-				error
-			);
+			this.logger.error(`An error occurred during the afterEntityLoad process: ${error}`);
 		}
 	}
 
@@ -49,36 +48,11 @@ export class TaskSizeSubscriber extends BaseEntityEventSubscriber<TaskSize> {
 			entity.color = entity.color || faker.internet.color();
 
 			// Set a sluggable value based on the name, if provided
-			if ('name' in entity) {
+			if (Object.hasOwn(entity, 'name')) {
 				entity.value = sluggable(entity.name);
 			}
 		} catch (error) {
-			console.error('TaskSizeSubscriber: An error occurred during the beforeEntityCreate process:', error);
+			this.logger.error(`An error occurred during the beforeEntityCreate process: ${error}`);
 		}
-	}
-
-	/**
-	 * Sets the full icon URL for a `TaskSize` entity using a file storage provider.
-	 *
-	 * @param entity - The `TaskSize` entity whose `fullIconUrl` needs to be set.
-	 * @returns A promise that resolves when the `fullIconUrl` is successfully set.
-	 */
-	private async setFullIconUrl(entity: TaskSize): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation with a delay
-				setTimeout(async () => {
-					// Initialize the file storage provider
-					const provider = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-					// Fetch and set the full URL for the icon
-					entity.fullIconUrl = await provider.getProviderInstance().url(entity.icon);
-					// Resolve the promise once the URL is set
-					resolve();
-				});
-			} catch (error) {
-				console.error('TaskSizeSubscriber: Error during the setImageUrl process:', error);
-				reject(null);
-			}
-		});
 	}
 }

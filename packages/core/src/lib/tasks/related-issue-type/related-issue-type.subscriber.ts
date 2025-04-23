@@ -1,13 +1,15 @@
+import { Logger } from '@nestjs/common';
 import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
-import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { FileStorage } from '../../core/file-storage';
 import { TaskRelatedIssueType } from './related-issue-type.entity';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
+import { setFullIconUrl } from '../utils';
 
 @EventSubscriber()
 export class TaskRelatedIssueTypeSubscriber extends BaseEntityEventSubscriber<TaskRelatedIssueType> {
+	private readonly logger = new Logger(TaskRelatedIssueTypeSubscriber.name);
+
 	/**
 	 * Indicates that this subscriber only listen to TaskRelatedIssueType events.
 	 */
@@ -25,14 +27,12 @@ export class TaskRelatedIssueTypeSubscriber extends BaseEntityEventSubscriber<Ta
 	async afterEntityLoad(entity: TaskRelatedIssueType): Promise<void> {
 		try {
 			// Update the fullIconUrl if an icon is present
-			if ('icon' in entity) {
-				console.log('TaskRelatedIssueType: Setting fullIconUrl for task related issue type ID ' + entity.id);
-				await this.setFullIconUrl(entity);
+			if (Object.hasOwn(entity, 'icon')) {
+				await setFullIconUrl([entity]);
 			}
 		} catch (error) {
-			console.error(
-				`TaskRelatedIssueTypeSubscriber: An error occurred during the afterEntityLoad process for entity ID ${entity.id}:`,
-				error
+			this.logger.error(
+				`An error occurred during the afterEntityLoad process for entity ID ${entity.id}: ${error}`
 			);
 		}
 	}
@@ -50,36 +50,11 @@ export class TaskRelatedIssueTypeSubscriber extends BaseEntityEventSubscriber<Ta
 			entity.color = entity.color || faker.internet.color();
 
 			// Set a sluggable value based on the name, if provided
-			if ('name' in entity) {
+			if (Object.hasOwn(entity, 'name')) {
 				entity.value = sluggable(entity.name);
 			}
 		} catch (error) {
-			console.error(
-				'TaskRelatedIssueTypeSubscriber: An error occurred during the beforeEntityCreate process:',
-				error
-			);
+			this.logger.error(`An error occurred during the beforeEntityCreate process: ${error}`);
 		}
-	}
-
-	/**
-	 * Simulate an asynchronous operation to set the full icon URL.
-	 *
-	 * @param entity
-	 * @returns
-	 */
-	private async setFullIconUrl(entity: TaskRelatedIssueType): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(async () => {
-					const provider = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-					entity.fullIconUrl = await provider.getProviderInstance().url(entity.icon);
-					resolve();
-				});
-			} catch (error) {
-				console.error('TaskRelatedIssueTypeSubscriber: Error during the setImageUrl process:', error);
-				reject(null);
-			}
-		});
 	}
 }
