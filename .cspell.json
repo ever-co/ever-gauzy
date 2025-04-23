@@ -570,6 +570,8 @@
 		"lparam",
 		"refcon",
 		"cflags",
+		"uiohook",
+		"gauzyagent",
 		"PostHog",
 		"posthog",
 		"autocapture"

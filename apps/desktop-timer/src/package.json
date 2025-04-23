@@ -30,6 +30,7 @@
         "packages": [
             "../../../dist/packages/contracts",
             "../../../dist/packages/desktop-core",
+			"../../../dist/packages/desktop-activity",
             "../../../dist/packages/desktop-lib",
             "../../../dist/packages/desktop-window",
             "../../../dist/packages/ui-config",
@@ -144,6 +145,7 @@
         "@electron/remote": "^2.0.8",
         "@gauzy/contracts": "file:../../../dist/packages/contracts",
         "@gauzy/desktop-core": "file:../../../dist/packages/desktop-core",
+		"@gauzy/desktop-activity": "file:../../../dist/packages/desktop-activity",
         "@gauzy/desktop-lib": "file:../../../dist/packages/desktop-lib",
         "@gauzy/desktop-window": "file:../../../dist/packages/desktop-window",
         "@gauzy/ui-config": "file:../../../dist/packages/ui-config",
