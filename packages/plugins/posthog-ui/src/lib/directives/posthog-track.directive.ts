@@ -1,66 +1,36 @@
-import { Directive, Input, HostListener, OnInit } from '@angular/core';
-import { PostHogService } from '../services/posthog.service';
+import { Directive, Input, HostListener, ElementRef } from '@angular/core';
+import { PostHogServiceManager } from '../services/posthog-manager.service';
 
 /**
- * Directive to automatically track user interactions with PostHog
- *
- * Usage:
- * <button
- *   [phTrack]="'button_clicked'"
- *   [phProperties]="{ buttonName: 'submit' }"
- *   [phOnInit]="true"
- *   [phEventType]="'click'"
- *   [phStopPropagation]="true"
- * >
- *   Submit
- * </button>
+ * Directive pour capturer facilement des événements de clic avec PostHog
+ * Exemple: <button posthogTrack="button_clicked" [posthogProps]="{button_name: 'submit'}">Click me</button>
  */
 @Directive({
-	selector: '[phTrack]'
+	selector: '[posthogTrack]'
 })
-export class PostHogTrackDirective implements OnInit {
-	@Input('phTrack') eventName!: string;
-	@Input('phProperties') properties: Record<string, any> = {};
-	@Input('phOnInit') captureOnInit = false;
-	@Input('phEventType') eventType: string = 'click'; // default to click
-	@Input('phStopPropagation') stopPropagation = false;
+export class PostHogTrackDirective {
+	@Input('posthogTrack') eventName: string = '';
+	@Input('posthogProps') properties: Record<string, any> = {};
 
-	constructor(private posthogService: PostHogService) {}
-
-	ngOnInit(): void {
-		if (this.captureOnInit && this.eventName) {
-			this.capture();
-		}
-	}
+	constructor(private el: ElementRef, private posthogManager: PostHogServiceManager) {}
 
 	@HostListener('click', ['$event'])
-	handleClick(event: Event): void {
-		if (this.eventType === 'click') {
-			this.capture(event);
-		}
-	}
-
-	@HostListener('mouseenter', ['$event'])
-	handleMouseEnter(event: Event): void {
-		if (this.eventType === 'mouseenter') {
-			this.capture(event);
-		}
-	}
-
-	@HostListener('focus', ['$event'])
-	handleFocus(event: Event): void {
-		if (this.eventType === 'focus') {
-			this.capture(event);
-		}
-	}
-
-	private capture(event?: Event): void {
-		if (!this.eventName) return;
-
-		if (this.stopPropagation && event) {
-			event.stopPropagation();
+	onClick(event: Event): void {
+		if (!this.eventName) {
+			return;
 		}
 
-		this.posthogService.captureEvent(this.eventName, this.properties || {});
+		// Capturer des informations supplémentaires sur l'élément
+		const element = this.el.nativeElement;
+		const elementProperties = {
+			element_type: element.tagName.toLowerCase(),
+			element_text: element.textContent?.trim() || '',
+			element_id: element.id || undefined,
+			element_class: element.className || undefined,
+			...this.properties
+		};
+
+		// Capturer l'événement avec PostHog
+		this.posthogManager.trackEvent(this.eventName, elementProperties);
 	}
 }
