@@ -11,10 +11,9 @@ $radius: var(--button-rectangle-border-radius);
   height: 2.5rem;
 
   .avatar-group {
-    position: absolute;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
 
     .avatar {
       background-color: var(--gauzy-primary-background);
@@ -41,7 +40,29 @@ $radius: var(--button-rectangle-border-radius);
       &:hover {
         text-overflow: clip;
         width: fit-content;
+        z-index: 10;
       }
+    }
+
+    .remaining-count {
+      background-color: #3366ff;
+      color: white;
+      border-radius: $radius;
+      padding: 5px 7px;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 2;
+      border: 2px solid #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 2rem;
+      min-width: 2rem;
+      cursor: pointer;
+
+      position: static;
+      margin-left: 0;
+      order: 999;
     }
   }
 }
@@ -57,12 +78,8 @@ $radius: var(--button-rectangle-border-radius);
 }
 
 :host {
-  .avatar-group .avatar+.avatar {
+  .avatar-group .avatar + .avatar {
     @include nb-ltr(margin-left, -4rem);
     @include nb-rtl(margin-right, -4rem);
   }
-}
-
-.main {
-  width: 7rem;
 }
