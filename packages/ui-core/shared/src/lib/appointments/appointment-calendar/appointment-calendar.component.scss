@@ -1,4 +1,4 @@
-@use '@shared/_pg-card' as *;
+@forward '@shared/_pg-card';
 
 .main-header {
   display: flex;
