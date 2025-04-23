@@ -19,11 +19,10 @@ import {
 	IntegrationTenantUpdateOrCreateCommand,
 	RequestContext,
 	DEFAULT_ENTITY_SETTINGS,
-    PROJECT_TIED_ENTITIES
+	PROJECT_TIED_ENTITIES
 } from '@gauzy/core';
 import { MAKE_BASE_URL } from './make-com.config';
 import { DeepPartial } from 'typeorm';
-
 
 @Injectable()
 export class MakeComOAuthService {
@@ -35,7 +34,7 @@ export class MakeComOAuthService {
 		private readonly _config: ConfigService,
 		private readonly commandBus: CommandBus,
 		private readonly integrationService: IntegrationService,
-		private readonly integrationSettingService: IntegrationSettingService,
+		private readonly integrationSettingService: IntegrationSettingService
 	) {}
 
 	/**
@@ -61,7 +60,7 @@ export class MakeComOAuthService {
 
 		// Store the state in memory or some other storage mechanism
 		// This is used to verify the state parameter during the callback
-		this.storeStateForVeriification(state);
+		this.storeStateForVerification(state);
 
 		// Build the authorization URL with required parameters
 		const params = new URLSearchParams({
@@ -96,7 +95,7 @@ export class MakeComOAuthService {
 	 * This is a simple in-memory storage for small scale applications
 	 * For scalability, we'll consider using cache, Redis for our case as it already exists in the project
 	 */
-	private	storeStateForVeriification(state: string): void {
+	private storeStateForVerification(state: string): void {
 		// In a real implementation, you would store the state in a database or some other storage mechanism like cache or redis
 		if (!this.pendingStates) {
 			this.pendingStates = new Map<string, { timestamp: number }>();
@@ -188,14 +187,14 @@ export class MakeComOAuthService {
 	 * @param {string} state - The state parameter to verify.
 	 * @returns {boolean} True if the state parameter is valid, false otherwise.
 	 */
-	private	verifyState(state: string): boolean {
+	private verifyState(state: string): boolean {
 		if (!this.pendingStates) {
 			this.logger.warn('No pending states found for verification');
 			return false;
 		}
 
 		const pendingState = this.pendingStates.get(state);
-		if(!pendingState) {
+		if (!pendingState) {
 			this.logger.warn(`State ${state} not found in pending states`);
 			return false;
 		}
@@ -220,15 +219,16 @@ export class MakeComOAuthService {
 		const { organizationId } = tokenData;
 		try {
 			// Find existing Make.com integration or create it if it doesn't exist
-			const integration = (await this.integrationService.findOneByOptions({
-				where: { provider: IntegrationEnum.MakeCom }
-			})) || undefined;
+			const integration =
+				(await this.integrationService.findOneByOptions({
+					where: { provider: IntegrationEnum.MakeCom }
+				})) || undefined;
 
-            const tiedEntities = PROJECT_TIED_ENTITIES.map((entity) => ({
-                ...entity,
-                organizationId,
-                tenantId
-            }));
+			const tiedEntities = PROJECT_TIED_ENTITIES.map((entity) => ({
+				...entity,
+				organizationId,
+				tenantId
+			}));
 
 			// Prepare entity settings
 			const entitySettings = DEFAULT_ENTITY_SETTINGS.map((settingEntity) => {
@@ -329,7 +329,7 @@ export class MakeComOAuthService {
 				}
 			});
 
-			const refreshToken = settings.find(setting => setting.settingsName === 'refresh_token')?.settingsValue;
+			const refreshToken = settings.find((setting) => setting.settingsName === 'refresh_token')?.settingsValue;
 			if (!refreshToken) {
 				throw new BadRequestException('Refresh token not found');
 			}
@@ -370,7 +370,7 @@ export class MakeComOAuthService {
 			const tenantId = RequestContext.currentTenantId();
 
 			const tokenData = response.data;
-			const updatedSettings = settings.map(setting => {
+			const updatedSettings = settings.map((setting) => {
 				if (setting.settingsName === 'access_token') {
 					setting.settingsValue = tokenData.access_token;
 				}
@@ -382,7 +382,7 @@ export class MakeComOAuthService {
 				}
 				return {
 					...setting,
-					tenantId,
+					tenantId
 				};
 			}) as DeepPartial<IIntegrationSetting>[];
 

@@ -23,7 +23,6 @@ export class ZapierWebhookService {
 
 	/**
 	 * Creates a new Zapier webhook subscription if it doesn't already exist.
-	 * Ensures idempotency by checking for existing subscriptions with the same parameters.
 	 *
 	 * @param input - The subscription details including targetUrl, event, integrationId, tenantId, and organizationId.
 	 * @returns The existing or newly created ZapierWebhookSubscription.
