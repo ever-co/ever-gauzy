@@ -2109,8 +2109,6 @@
   version "7.26.3"
   resolved "https://registry.yarnpkg.com/@babel/plugin-transform-exponentiation-operator/-/plugin-transform-exponentiation-operator-7.26.3.tgz#e29f01b6de302c7c2c794277a48f04a9ca7f03bc"
   integrity sha512-7CAHcQ58z2chuXPWblnn1K6rLDnDWieghSOEmqQsrBenH0P9InCUtOJYD89pvngljmZlJcz3fcmgYsXFNGa1ZQ==
-  dependencies:
-    "@babel/helper-plugin-utils" "^7.25.9"
 
 "@babel/plugin-transform-export-namespace-from@^7.24.7", "@babel/plugin-transform-export-namespace-from@^7.25.8", "@babel/plugin-transform-export-namespace-from@^7.25.9":
   version "7.25.9"
@@ -32592,10 +32590,10 @@ postgres-range@^1.1.1:
   resolved "https://registry.yarnpkg.com/postgres-range/-/postgres-range-1.1.4.tgz#a59c5f9520909bcec5e63e8cf913a92e4c952863"
   integrity sha512-i/hbxIE9803Alj/6ytL7UHQxRvZkI9O4Sy+J3HGc4F4oo/2eQAjTSNJ0bfxyse3bH0nuVesCk+3IRLaMtG3H6w==
 
-posthog-node@^4.11.3:
-  version "4.11.3"
-  resolved "https://registry.yarnpkg.com/posthog-node/-/posthog-node-4.11.3.tgz#b01c3b32b524bfdb1c1e2aef256b36933e6b91c0"
-  integrity sha512-Ye7d9ZJX1reWP9084Gm9+O7NnvlW7LnbU09GzlsSdD0HzGTfxeKTQZsl9h1+CDHhfvpdWJRm8uc91/aDmXzaCA==
+posthog-node@^4.13.0:
+  version "4.13.0"
+  resolved "https://registry.yarnpkg.com/posthog-node/-/posthog-node-4.13.0.tgz#b0b0fb9038243d8ffcc28cbc14db8416cbf5cbcb"
+  integrity sha512-4rGi+9hf4WmMcKjWuzBtQYzFRltfVmSPCB5N364AhchFAT2Eoclx1M7KUWJZ0C2fMObdNGRNw1NQYEO4iGnviQ==
   dependencies:
     axios "^1.8.2"
 
