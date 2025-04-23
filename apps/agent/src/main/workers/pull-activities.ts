@@ -1,6 +1,7 @@
+import { KeyboardMouseEventCounter } from '@gauzy/desktop-activity';
 class PullActivities {
 	static instance: PullActivities;
-	private listenerModule: any;
+	private listenerModule: KeyboardMouseEventCounter;
 	private isStarted: boolean;
 	constructor() {
 		if (!PullActivities.instance) {
@@ -19,8 +20,7 @@ class PullActivities {
 
 	getListenerModule() {
 		try {
-			// this is not implemented yet
-			this.listenerModule = null;
+			this.listenerModule = new KeyboardMouseEventCounter();
 		} catch (error) {
 			console.error('error on get listener module', error);
 		}
@@ -32,6 +32,7 @@ class PullActivities {
 		}
 		try {
 			if (!this.isStarted) {
+				this.listenerModule.startListener();
 				this.isStarted = true;
 			}
 		} catch (error) {
@@ -44,6 +45,7 @@ class PullActivities {
 			this.getListenerModule();
 		}
 		try {
+			this.listenerModule.stopListener();
 			this.isStarted = false;
 		} catch (error) {
 			console.error('error to stop tracking', error);
