@@ -1,6 +1,6 @@
 @use 'var' as *;
+@use 'gauzy/_gauzy-overrides' as *;
 @forward 'filters.component';
-@import 'gauzy/_gauzy-overrides';
 
 $button-radius : nb-theme(button-rectangle-border-radius);
 
