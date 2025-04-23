@@ -6,6 +6,7 @@ import { PostHogInterceptor } from './interceptors/posthog.interceptor';
 import { PostHogService } from './services/posthog.service';
 import { POSTHOG_CONFIG, PostHogModuleConfig } from './interfaces/posthog.interface';
 import { initializePostHogFactory } from './services/posthog-init.factory';
+import { PostHogServiceManager } from './services/posthog-manager.service';
 
 /**
  * Module for integrating PostHog into Angular applications
@@ -26,6 +27,7 @@ export class PostHogModule {
 			ngModule: PostHogModule,
 			providers: [
 				PostHogService,
+				PostHogServiceManager,
 				{
 					provide: POSTHOG_CONFIG,
 					useValue: config
@@ -33,11 +35,11 @@ export class PostHogModule {
 				{
 					provide: APP_INITIALIZER,
 					useFactory: initializePostHogFactory,
-					deps: [PostHogService],
+					deps: [PostHogServiceManager],
 					multi: true
 				},
-				// Optionally add HTTP interceptor if capture_exceptions is enabled
-				...(config.options?.capture_exceptions
+
+				...(config.options?.capture_exceptions !== false
 					? [
 							{
 								provide: HTTP_INTERCEPTORS,
