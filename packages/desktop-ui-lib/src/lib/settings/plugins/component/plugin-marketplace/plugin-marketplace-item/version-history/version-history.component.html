@@ -5,7 +5,7 @@ isEditing; @let selectedVersionId = (query.version$ | async)?.id;
 
 <nb-card class="content-active first">
 	<nb-card-header class="d-flex justify-content-between header">
-		<h5 class="title">Version History</h5>
+		<h5 class="title">{{ 'PLUGIN.LAYOUT.VERSION_HISTORY' | translate }}</h5>
 		<button nbButton ghost size="small" (click)="navigateBack()">
 			<nb-icon icon="close-outline"></nb-icon>
 		</button>
@@ -30,7 +30,13 @@ isEditing; @let selectedVersionId = (query.version$ | async)?.id;
 				</h6>
 			</nb-card-header>
 			<nb-card-body class="changelog">
-				<p [readMore]="256">{{ version.changelog }}</p>
+				<p
+					[readMore]="256"
+					[readMoreText]="'BUTTONS.READ_MORE' | translate"
+					[readLessText]="'BUTTONS.READ_LESS' | translate"
+				>
+					{{ version.changelog }}
+				</p>
 			</nb-card-body>
 			@if(isOwner(version)){
 			<nb-card-footer class="version-actions">
@@ -48,7 +54,7 @@ isEditing; @let selectedVersionId = (query.version$ | async)?.id;
 						*gauzySpinnerButton="selectedVersionId === version.id && isRecovering"
 						icon="refresh-outline"
 					></nb-icon>
-					{{ 'Recover' | translate }}
+					{{ 'BUTTONS.RECOVER' | translate }}
 				</button>
 				} @else {
 				<button
@@ -109,9 +115,9 @@ isEditing; @let selectedVersionId = (query.version$ | async)?.id;
 		} }
 	</nb-card-body>
 	} @else if (isLoading) {
-	<ngx-no-data-message message="Loading changelogs..."></ngx-no-data-message>
+	<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.LOADING' | translate"></ngx-no-data-message>
 	} @else {
-	<ngx-no-data-message message="No history"></ngx-no-data-message>
+	<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.HISTORY' | translate"></ngx-no-data-message>
 	}
 
 	<nb-card-footer class="d-flex justify-content-between footer">

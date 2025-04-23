@@ -54,7 +54,7 @@ import { PluginVersion } from '../../domain/entities/plugin-version.entity';
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/plugins/:pluginId/versions')
 export class PluginVersionController {
-	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
+	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) { }
 
 	@ApiOperation({ summary: 'List all plugin versions' })
 	@ApiResponse({
@@ -154,7 +154,7 @@ export class PluginVersionController {
 	})
 	@ApiBody({
 		type: UpdatePluginVersionDTO,
-		description: 'Updated plugin version data transfert object'
+		description: 'Updated plugin version data transfer object'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,

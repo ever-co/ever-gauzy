@@ -2,9 +2,10 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { IPlugin, IPluginVersion, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { NbDateService, NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDateService, NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, Subject, takeUntil, tap } from 'rxjs';
+import { ToastrNotificationService } from '../../../../../../services';
 
 @Component({
 	selector: 'lib-dialog-create-version',
@@ -27,7 +28,7 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly dialogRef: NbDialogRef<DialogCreateVersionComponent>,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService,
 		protected readonly dateService: NbDateService<Date>
 	) {
@@ -134,10 +135,7 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 		if (this.versionForm.invalid) {
 			this.markFormGroupTouched(this.versionForm);
 			this.scrollToFirstInvalidControl();
-			this.toastrService.danger(
-				this.translateService.instant('Validation failed'),
-				this.translateService.instant('Gauzy')
-			);
+			this.toastrService.error(this.translateService.instant('PLUGIN.FORM.VALIDATION.FAILED'));
 			return;
 		}
 
@@ -147,10 +145,7 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 			const data = this.versionForm.value;
 			this.dialogRef.close(data);
 		} catch (error) {
-			this.toastrService.danger(
-				error.message || this.translateService.instant('PLUGINS.UPLOAD.ERROR'),
-				this.translateService.instant('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.error(error.message || error);
 		} finally {
 			this.isSubmitting = false;
 		}

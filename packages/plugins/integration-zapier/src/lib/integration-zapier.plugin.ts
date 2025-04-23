@@ -1,15 +1,9 @@
 import { Logger } from '@nestjs/common';
-import * as chalk from 'chalk';
-import { ApplicationPluginConfig, CustomEmbeddedFieldConfig, CustomEmbeddedFields } from '@gauzy/common';
+import { ConfigService } from '@nestjs/config';
+import { ApplicationPluginConfig, CustomEmbeddedFieldConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ZapierModule } from './zapier.module';
 import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
-
-// Extend the CustomEmbeddedFields interface to include our custom entities
-interface ZapierCustomFields extends CustomEmbeddedFields {
-	IntegrationSetting?: CustomEmbeddedFieldConfig[];
-	ZapierWebhookSubscription?: CustomEmbeddedFieldConfig[];
-}
 
 @Plugin({
 	/**
@@ -78,15 +72,26 @@ interface ZapierCustomFields extends CustomEmbeddedFields {
 	}
 })
 export class IntegrationZapierPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
-	// We enable by default additional logging for each event to avoid cluttering the logs
-	private logEnabled = true;
+	private readonly logger = new Logger(IntegrationZapierPlugin.name);
+
+	constructor(private readonly _config: ConfigService) {}
 
 	/**
-	 * Called when the plugin is being initialized.
+	 * Lifecycle hook invoked during the plugin's bootstrap phase.
+	 * Validates essential Zapier OAuth configurations and logs the API base URL.
 	 */
-	onPluginBootstrap(): void | Promise<void> {
-		if (this.logEnabled) {
-			console.log(chalk.green(`${IntegrationZapierPlugin.name} is being bootstrapped...`));
+	onPluginBootstrap(): void {
+		this.logger.log(`${IntegrationZapierPlugin.name} is being bootstrapped...`);
+
+		const clientId = this._config.get<string>('zapier.clientId');
+		const clientSecret = this._config.get<string>('zapier.clientSecret');
+
+		if (!clientId || !clientSecret) {
+			this.logger.warn(
+				'Zapier OAuth credentials are not fully configured. Please set GAUZY_ZAPIER_CLIENT_ID and GAUZY_ZAPIER_CLIENT_SECRET.'
+			);
+		} else {
+			this.logger.log('Zapier OAuth credentials are configured successfully.');
 		}
 	}
 
@@ -94,9 +99,6 @@ export class IntegrationZapierPlugin implements IOnPluginBootstrap, IOnPluginDes
 	 * Called when the plugin is being destroyed.
 	 */
 	onPluginDestroy(): void | Promise<void> {
-		if (this.logEnabled) {
-			const logger = new Logger(IntegrationZapierPlugin.name);
-			logger.log(`${IntegrationZapierPlugin.name} is being destroyed...`)
-		}
+		this.logger.log(`${IntegrationZapierPlugin.name} is being destroyed...`);
 	}
 }

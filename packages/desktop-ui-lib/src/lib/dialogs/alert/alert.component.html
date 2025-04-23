@@ -1,4 +1,4 @@
-<nb-card class="dialog-card" [status]="data.status">
+<nb-card class="dialog-card" [status]="data.status || 'basic'">
 	<nb-card-header class="mb-0">
 		<span class="cancel"><i (click)="dismiss()" class="fas fa-times"></i></span>
 		<h5 class="title">{{ data.title | translate }}</h5>
@@ -8,8 +8,10 @@
 	</nb-card-body>
 	<nb-card-footer class="text-right mt-0">
 		<button nbButton type="button" (click)="dismiss()" outline status="basic">
-			{{ 'BUTTONS.CANCEL' | translate }}
+			{{ data?.dismissText || 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button nbButton type="submit" status="success" (click)="confirm()">{{ 'BUTTONS.OK' | translate }}</button>
+		<button nbButton type="submit" status="success" (click)="confirm()">
+			{{ data?.confirmText || 'BUTTONS.OK' | translate }}
+		</button>
 	</nb-card-footer>
 </nb-card>

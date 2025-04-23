@@ -170,10 +170,16 @@
 		"SHARE": "Delen",
 		"GET_INFO": "Informatie ophalen",
 		"RETRY": "Opnieuw proberen",
-		"UPLOAD": "Uploaden"
+		"UPLOAD": "Uploaden",
+		"MARKETPLACE": "Marktplaats",
+		"ADD_VERSION": "Versie toevoegen",
+		"READ_MORE": "Meer lezen",
+		"READ_LESS": "Minder lezen",
+		"RECOVER": "Herstellen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "Geen geschiedenis",
 			"RECEIVE_ESTIMATE": "Je hebt geen offerte ontvangen.",
 			"INCOME": "Je hebt geen enkel inkomen gecreëerd.",
 			"EXPENSE_CATEGORY": "U heeft geen uitgavencategorie gemaakt.",
@@ -218,7 +224,8 @@
 			"PRODUCT_TYPE_NO_DATA": "U heeft geen producttype gemaakt.",
 			"TEAM_DASHBOARD": "Je hebt geen teams.",
 			"PLUGIN": "Je hebt geen enkele plugin geïnstalleerd.",
-			"PLUGIN_MARKETPLACE": "Deze plugin is niet beschikbaar op de marktplaats"
+			"PLUGIN_MARKETPLACE": "Deze plugin is niet beschikbaar op de marktplaats",
+			"LOADING": "Laden..."
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Bedrag",
@@ -4017,7 +4024,14 @@
 				"SSL_CERT_FILE_INFO": "Pad naar het client-certificaatbestand voor SSL.",
 				"SECURE": "Veilig",
 				"SECURE_INFO": "True, als je de SSL-certificaten wilt verifiëren."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "NPM-installatie biedt toegang tot openbaar en privé beschikbare plug-ins.",
+			"PACKAGE_NAME": "NPM-pakketnaam",
+			"PACKAGE_VERSION": "NPM-pakketversie",
+			"REGISTRY": "NPM-register",
+			"AUTH_TOKEN": "Authenticatietoken",
+			"PRIVATE_REGISTRY_URL": "URL van privéregister",
+			"PLUGIN_INSTALL_CDN_ERROR": "De server-URL mag niet leeg zijn."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weeklimiet overschreden",
 		"OF_HRS": "Van {{ limit }} uur",
@@ -4789,7 +4803,10 @@
 				"INVALID_PACKAGE_NAME": "Ongeldig pakketnaamformaat",
 				"INVALID_SCOPE": "Ongeldig bereikformaat",
 				"AUTHOR_TOO_LONG": "Auteursnaam is te lang",
-				"LICENSE_TOO_LONG": "Licentieveld is te lang"
+				"LICENSE_TOO_LONG": "Licentieveld is te lang",
+				"FAILED": "Validatie mislukt",
+				"CHANGELOG_TOO_SHORT": "Changelog is te kort",
+				"CHANGELOG_REQUIRED": "Changelog is vereist"
 			},
 			"TYPE": "Plugintype",
 			"TYPE_PLACEHOLDER": "Selecteer plugintype",
@@ -4863,7 +4880,88 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Ontdekken",
-			"INSTALLED": "Geïnstalleerd"
+			"INSTALLED": "Geïnstalleerd",
+			"VERSION_HISTORY": "Versiegeschiedenis"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Nieuwe plugin uploaden",
+			"OFFLINE": "U bent momenteel offline/verbinding verbroken ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Plugin deactiveren",
+				"DESCRIPTION": "Weet u zeker dat u deze plugin wilt deactiveren?",
+				"CONFIRM": "Deactiveren"
+			},
+			"UNINSTALL": {
+				"TITLE": "Plugin verwijderen",
+				"DESCRIPTION": "Weet u zeker dat u deze plugin wilt verwijderen?",
+				"CONFIRM": "Verwijderen"
+			},
+			"DELETE": {
+				"TITLE": "Plugin verwijderen",
+				"DESCRIPTION": "Weet u zeker dat u deze plugin wilt verwijderen?",
+				"CONFIRM": "Verwijderen"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Versie v{{number}} bijwerken",
+					"DESCRIPTION": "Weet u zeker dat u deze plugin wilt bijwerken?",
+					"CONFIRM": "Bijwerken"
+				},
+				"CREATE": {
+					"TITLE": "Nieuwe versie maken voor {{name}}",
+					"DESCRIPTION": "Weet u zeker dat u deze versie wilt maken?",
+					"CONFIRM": "Maken"
+				},
+				"DELETE": {
+					"TITLE": "Versie verwijderen",
+					"DESCRIPTION": "Weet u zeker dat u deze versie wilt verwijderen?",
+					"CONFIRM": "Verwijderen"
+				},
+				"RESTORE": {
+					"TITLE": "Versie herstellen",
+					"DESCRIPTION": "Weet u zeker dat u deze versie wilt herstellen?",
+					"CONFIRM": "Herstellen"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Pluginversie v{{number}} succesvol aangemaakt!",
+					"UPDATED": "Pluginversie v{{number}} succesvol bijgewerkt!",
+					"DELETED": "Pluginversie succesvol verwijderd!",
+					"RESTORED": "Pluginversie succesvol hersteld!"
+				},
+				"UPLOADED": "Plugin succesvol geüpload!",
+				"UPDATED": "Plugin succesvol bijgewerkt!",
+				"DELETED": "Plugin succesvol verwijderd!",
+				"INSTALLED": "Plugin succesvol geïnstalleerd!",
+				"UNINSTALLED": "Plugin succesvol gedeïnstalleerd!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Nieuwe pluginversie wordt toegevoegd...",
+					"UPDATING": "Pluginversie wordt bijgewerkt...",
+					"DELETING": "Pluginversie wordt verwijderd...",
+					"RESTORING": "Pluginversie wordt hersteld..."
+				},
+				"UPLOADING": "Plugin wordt geüpload...",
+				"UPDATING": "Plugin wordt bijgewerkt...",
+				"DELETING": "Plugin wordt verwijderd...",
+				"INSTALLING": "Plugin wordt geïnstalleerd...",
+				"UNINSTALLING": "Plugin wordt gedeïnstalleerd..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Herstellen van pluginversie mislukt. Probeer het opnieuw!"
+				},
+				"UPLOAD": "Uploaden van plugin mislukt. Probeer het opnieuw!",
+				"NOT_FOUND": "Plugin met ID {{ id }} niet gevonden.",
+				"INSTALL": "Installeren van plugin mislukt. Probeer het opnieuw!",
+				"REVERT_INSTALLATION": "Terugdraaien van installatie mislukt!"
+			}
 		}
 	},
 	"SERVER_DOWN": {
