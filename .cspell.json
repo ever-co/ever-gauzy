@@ -571,7 +571,10 @@
 		"refcon",
 		"cflags",
 		"uiohook",
-		"gauzyagent"
+		"gauzyagent",
+		"PostHog",
+		"posthog",
+		"autocapture"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

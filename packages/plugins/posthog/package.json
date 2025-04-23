@@ -7,7 +7,6 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy",
@@ -17,6 +16,7 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
 	"private": true,
 	"type": "commonjs",
 	"main": "./src/index.js",
@@ -32,7 +32,8 @@
 		"@gauzy/plugin": "^0.1.0",
 		"@nestjs/common": "^10.4.15",
 		"chalk": "^4.1.0",
-		"posthog-node": "^4.11.3",
+		"express": "^4.21.2",
+		"posthog-node": "^4.13.0",
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {

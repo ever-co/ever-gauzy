@@ -1,4 +1,3 @@
-// Nestjs imports
 import {
 	CallHandler,
 	ExecutionContext,
@@ -9,10 +8,8 @@ import {
 	Optional
 } from '@nestjs/common';
 import { ContextType, HttpArgumentsHost, RpcArgumentsHost, WsArgumentsHost } from '@nestjs/common/interfaces';
-// Rxjs imports
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-
 import { PosthogInterceptorOptions, PosthogInterceptorOptionsFilter } from './posthog.interfaces';
 import { PosthogService } from './posthog.service';
 import { SanitizerUtil } from './utils';
@@ -418,7 +415,7 @@ export class PosthogErrorInterceptor implements NestInterceptor {
 	 * @returns Client ID string or null
 	 */
 	private extractRpcClientId(ctx: any): string | null {
-		return ctx.clientId ?? ctx.args?.[0]?.user?.id ?? null;
+		return ctx.clientId || ctx.args?.[0]?.user?.id || null;
 	}
 
 	/**
