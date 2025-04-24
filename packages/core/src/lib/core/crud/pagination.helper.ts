@@ -1,4 +1,5 @@
 import { isClassInstance, isObject } from '@gauzy/common';
+import { isDateString } from 'class-validator';
 
 /**
  * Interface of the simple literal object with any string keys.
@@ -42,9 +43,8 @@ export const convertNativeParameters = (parameters: any): any => {
 			}
 
 			// Check if the value is a date
-			const dateValue = new Date(parameters);
-			if (!isNaN(dateValue.getTime())) {
-				return dateValue;
+			if (isDateString(parameters)) {
+				return new Date(parameters);
 			}
 
 			// Try to convert string param to boolean

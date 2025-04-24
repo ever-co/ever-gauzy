@@ -1,5 +1,5 @@
 import { EventBus } from '@nestjs/cqrs';
-import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpStatus, HttpException, Logger } from '@nestjs/common';
 import {
 	IsNull,
 	SelectQueryBuilder,
@@ -10,9 +10,11 @@ import {
 	FindOptionsWhere,
 	FindManyOptions,
 	Between,
-	FindOptionsRelations
+	FindOptionsRelations,
+	ILike
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
+import * as moment from 'moment';
 import {
 	BaseEntityEnum,
 	ActorTypeEnum,
@@ -26,9 +28,10 @@ import {
 	PermissionsEnum,
 	ActionTypeEnum,
 	ITaskDateFilterInput,
-	SubscriptionTypeEnum
+	SubscriptionTypeEnum,
+	IUser
 } from '@gauzy/contracts';
-import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/common';
 import { isPostgres, isSqlite } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { addBetween } from './../core/util';
@@ -47,6 +50,8 @@ import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
+	private readonly logger = new Logger(TaskService.name);
+
 	constructor(
 		private readonly _eventBus: EventBus,
 		readonly typeOrmTaskRepository: TypeOrmTaskRepository,
@@ -142,7 +147,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				try {
 					await this.mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionUserIds);
 				} catch (error) {
-					console.error('Error synchronizing mentions:', error);
+					this.logger.error(`Error synchronizing mentions: ${error}`);
 				}
 			}
 
@@ -162,7 +167,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						)
 					);
 				} catch (error) {
-					console.error('Error unsubscribing members from the task:', error);
+					this.logger.error(`Error unsubscribing members from the task: ${error}`);
 				}
 			}
 
@@ -184,7 +189,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						)
 					);
 				} catch (error) {
-					console.error('Error publishing CreateSubscriptionEvent:', error);
+					this.logger.error(`Error publishing CreateSubscriptionEvent: ${error}`);
 				}
 			}
 
@@ -205,7 +210,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Return the updated Task
 			return updatedTask;
 		} catch (error) {
-			console.error(`Error while updating task: ${error.message}`, error.message);
+			this.logger.error(`Error while updating task: ${error}`);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -269,6 +274,114 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		return await this.getEmployeeTasks(options);
 	}
 
+	private addTaskCommonFilters(query: SelectQueryBuilder<Task>, options: PaginationParams<Task>) {
+		const { where } = options;
+
+		const {
+			status,
+			title,
+			prefix,
+			isDraft,
+			dueDate,
+			creator,
+			organizationId,
+			projectId,
+			isScreeningTask = false,
+			organizationSprintId = null
+		} = where;
+		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+
+		// Join with the creator if it is user for filtering
+		if (isNotEmpty((creator as IUser)?.firstName)) {
+			query.innerJoin(`${query.alias}.creator`, 'creator');
+		}
+
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				const tenantId = RequestContext.currentTenantId();
+				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				if (isNotEmpty(projectId)) {
+					qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+				}
+				if (isNotEmpty(status)) {
+					qb.andWhere(p(`"${query.alias}"."status" = :status`), {
+						status
+					});
+				}
+				if (isNotEmpty(isDraft)) {
+					qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), {
+						isDraft
+					});
+				}
+
+				// Filter by task title
+				if (isNotEmpty(title)) {
+					qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
+						title: `%${title as string}%`
+					});
+				}
+
+				// Filter by task prefix and number
+				if (isNotEmpty(prefix)) {
+					qb.andWhere(
+						p(`CONCAT("${query.alias}"."prefix", '-', "${query.alias}"."number") ${likeOperator} :prefix`),
+						{
+							prefix: `%${prefix as string}%`
+						}
+					);
+				}
+
+				// Filter by due date
+				if (dueDate && dueDate instanceof Date) {
+					qb.andWhere(p(`"${query.alias}"."dueDate" BETWEEN :start AND :end`), {
+						start: moment(dueDate).startOf('day').toDate(),
+						end: moment(dueDate).endOf('day').toDate()
+					});
+				}
+
+				// Filter by creator name
+				if (isNotEmpty((creator as IUser)?.firstName)) {
+					qb.andWhere(
+						p(`CONCAT("creator"."firstName", ' ', "creator"."lastName") ${likeOperator} :creatorName`),
+						{
+							creatorName: `%${(creator as IUser).firstName}%`
+						}
+					);
+				}
+
+				if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
+					qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
+				}
+
+				qb.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), {
+					isScreeningTask
+				});
+			})
+		);
+
+		/**
+		 * If find options
+		 */
+		if (isNotEmpty(options)) {
+			if ('skip' in options) {
+				query.setFindOptions({
+					skip: (options.take || 10) * (options.skip - 1),
+					take: options.take || 10
+				});
+			}
+			query.setFindOptions({
+				...(options.select ? { select: options.select } : {}),
+				...(options.relations ? { relations: options.relations } : {}),
+				...(options.order ? { order: options.order } : {})
+			});
+		}
+	}
+
 	/**
 	 * Find employee tasks
 	 *
@@ -278,26 +391,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async getEmployeeTasks(options: PaginationParams<Task>) {
 		try {
 			const { where } = options;
-			const { status, title, prefix, isDraft, isScreeningTask = false, organizationSprintId = null } = where;
-			const { organizationId, projectId, members } = where;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+			const { members } = where;
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.innerJoin(`${query.alias}.members`, 'members');
-			/**
-			 * If find options
-			 */
-			if (isNotEmpty(options)) {
-				if ('skip' in options) {
-					query.setFindOptions({
-						skip: (options.take || 10) * (options.skip - 1),
-						take: options.take || 10
-					});
-				}
-				query.setFindOptions({
-					...(options.relations ? { relations: options.relations } : {})
-				});
-			}
+
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
 				const subQuery = qb.subQuery();
 				subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
@@ -317,53 +415,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				}
 				return p('"task_members"."taskId" IN ') + subQuery.distinct(true).getQuery();
 			});
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					const tenantId = RequestContext.currentTenantId();
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				})
-			);
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(projectId)) {
-						qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-					}
-					if (isNotEmpty(status)) {
-						qb.andWhere(p(`"${query.alias}"."status" = :status`), {
-							status
-						});
-					}
-					if (isNotEmpty(isDraft)) {
-						qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), {
-							isDraft
-						});
-					}
-					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
-							title: `%${title}%`
-						});
-					}
-					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), {
-							prefix: `%${prefix}%`
-						});
-					}
-					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
-						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
-					}
 
-					qb.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), {
-						isScreeningTask
-					});
-				})
-			);
+			// Apply common filters for tasks
+			this.addTaskCommonFilters(query, options);
 
-			console.log('query.getSql', query.getSql());
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
-			console.log(error);
+			this.logger.error(`Error while getting employee tasks: ${error}`);
 			throw new BadRequestException(error);
 		}
 	}
@@ -443,38 +502,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async findTeamTasks(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		try {
 			const { where } = options;
-
-			const {
-				status,
-				teams = [],
-				title,
-				prefix,
-				isDraft,
-				isScreeningTask = false,
-				organizationSprintId = null
-			} = where;
-			const { organizationId, projectId, members } = where;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+			const { teams = [] } = where;
+			const { members } = where;
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.teams`, 'teams');
 
-			/**
-			 * If find options
-			 */
-			if (isNotEmpty(options)) {
-				if ('skip' in options) {
-					query.setFindOptions({
-						skip: (options.take || 10) * (options.skip - 1),
-						take: options.take || 10
-					});
-				}
-				query.setFindOptions({
-					...(options.select ? { select: options.select } : {}),
-					...(options.relations ? { relations: options.relations } : {}),
-					...(options.order ? { order: options.order } : {})
-				});
-			}
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
 				const subQuery = qb.subQuery();
 				subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
@@ -503,50 +536,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				}
 				return p(`"task_teams"."taskId" IN `) + subQuery.distinct(true).getQuery();
 			});
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					const tenantId = RequestContext.currentTenantId();
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				})
-			);
-			if (isNotEmpty(projectId) && isNotEmpty(teams)) {
-				query.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-			}
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(projectId) && isEmpty(teams)) {
-						qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-					}
-					if (isNotEmpty(status)) {
-						qb.andWhere(p(`"${query.alias}"."status" = :status`), {
-							status
-						});
-					}
-					if (isNotEmpty(isDraft)) {
-						qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), {
-							isDraft
-						});
-					}
-					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
-							title: `%${title}%`
-						});
-					}
-					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), {
-							prefix: `%${prefix}%`
-						});
-					}
-					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
-						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
-					}
 
-					qb.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), {
-						isScreeningTask
-					});
-				})
-			);
+			// Apply common filters for tasks
+			this.addTaskCommonFilters(query, options);
+
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
@@ -567,25 +560,51 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		// Check if there are any filters in the options
 		if (options?.where) {
 			const { where } = options;
-			const { isScreeningTask = false } = where;
+			const {
+				title,
+				prefix,
+				isDraft,
+				dueDate,
+				creator,
+				isScreeningTask = false,
+				organizationSprintId = null
+			} = where;
 
-			// Apply filters for task title with like operator
-			if (where.title) {
-				options.where.title = Raw((alias) => `${alias} ${likeOperator} '%${where.title}%'`);
+			// Filter by task title
+			if (isNotEmpty(title)) {
+				options.where.title = ILike(`%${title as string}%`);
 			}
 
-			// Apply filters for task prefix with like operator
-			if (where.prefix) {
-				options.where.prefix = Raw((alias) => `${alias} ${likeOperator} '%${where.prefix}%'`);
+			// Filter by task prefix and number
+			if (isNotEmpty(prefix)) {
+				options.where.prefix = Raw(
+					(alias) => `CONCAT(${alias}, '-', "task"."number") ${likeOperator} '%${prefix as string}%'`
+				);
+			}
+
+			// Filter by due date
+			if (dueDate && dueDate instanceof Date) {
+				options.where.dueDate = Between(
+					moment(dueDate).startOf('day').toDate(),
+					moment(dueDate).endOf('day').toDate()
+				);
+			}
+
+			// Filter by creator name
+			if (isNotEmpty((creator as IUser)?.firstName)) {
+				const name = (creator as IUser).firstName;
+				(options.where.creator as any).firstName = Raw(
+					(alias) => `CONCAT(${alias}, ' ', "task__task_creator"."lastName") ${likeOperator} '%${name}%'`
+				);
 			}
 
 			// Apply filters for isDraft, setting null if not a boolean
-			if (where.isDraft !== undefined && !isBoolean(where.isDraft)) {
+			if (isNotEmpty(isDraft) && !isBoolean(isDraft)) {
 				options.where.isDraft = IsNull();
 			}
 
 			// Apply filters for organizationSprintId, setting null if not a valid UUID
-			if (where.organizationSprintId && !isUUID(where.organizationSprintId)) {
+			if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 				options.where.organizationSprintId = IsNull();
 			}
 
@@ -645,12 +664,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Execute the query and parse the result to a number
 			const result = await query.getRawOne();
 			const maxTaskNumber = parseInt(result.maxTaskNumber, 10);
-			console.log('get max task number', maxTaskNumber);
+			this.logger.log(`get max task number: ${maxTaskNumber}`);
 
 			return maxTaskNumber;
 		} catch (error) {
 			// Log the error and throw a detailed exception
-			console.log(`Error fetching max task number: ${error.message}`, error.stack);
+			this.logger.error(`Error fetching max task number: ${error}`);
 			throw new HttpException({ message: 'Failed to get the max task number', error }, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -747,33 +766,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async findModuleTasks(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		try {
 			const { where } = options;
-			const {
-				status,
-				modules = [],
-				title,
-				prefix,
-				isDraft,
-				isScreeningTask = false,
-				organizationSprintId = null,
-				organizationId,
-				projectId,
-				members
-			} = where;
+			const { modules = [], organizationId, members } = where;
 			const tenantId = RequestContext.currentTenantId() || where.tenantId;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 			// Initialize the query
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.modules`, 'modules');
-
-			// Apply find options if provided
-			if (isNotEmpty(options)) {
-				query.setFindOptions({
-					...(options.select && { select: options.select }),
-					...(options.relations && { relations: options.relations }),
-					...(options.order && { order: options.order })
-				});
-			}
 
 			// Filter by project_module_task with a sub query
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
@@ -802,52 +800,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				return p(`"task_modules"."taskId" IN `) + subQuery.distinct(true).getQuery();
 			});
 
-			// Add organization and tenant filters
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				})
-			);
-
-			// Filter by projectId and modules
-			if (isNotEmpty(projectId)) {
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						if (isEmpty(modules)) {
-							qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-						}
-					})
-				);
-			}
-
-			// Add additional filters (status, draft, title, etc.)
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(status)) {
-						qb.andWhere(p(`"${query.alias}"."status" = :status`), { status });
-					}
-					if (isNotEmpty(isDraft)) {
-						qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), { isDraft });
-					}
-					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), { title: `%${title}%` });
-					}
-					if (isNotEmpty(prefix)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), { prefix: `%${prefix}%` });
-					}
-					if (!isUUID(organizationSprintId)) {
-						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
-					}
-
-					qb.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), { isScreeningTask });
-				})
-			);
+			// Apply common filters for tasks
+			this.addTaskCommonFilters(query, options);
 
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
-			console.log('Error while retrieving module tasks', error);
+			this.logger.error(`Error while retrieving module tasks: ${error}`);
 			throw new BadRequestException(error);
 		}
 	}
@@ -869,15 +828,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Extract `queryParams` from the view
 			const queryParams = taskView.queryParams;
-			let viewFilters: IGetTasksByViewFilters = {};
-
-			try {
-				viewFilters = isSqlite()
-					? (JSON.parse(queryParams as string) as IGetTasksByViewFilters)
-					: (queryParams as IGetTasksByViewFilters) || {};
-			} catch (error) {
-				throw new HttpException('Invalid query parameters in task view', HttpStatus.BAD_REQUEST);
-			}
+			const viewFilters: IGetTasksByViewFilters = isSqlite()
+				? (JSON.parse(queryParams as string) as IGetTasksByViewFilters)
+				: (queryParams as IGetTasksByViewFilters) || {};
 
 			// Extract filters
 			const {
@@ -953,7 +906,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Retrieve tasks using base class method
 			return await super.findAll(findOptions);
 		} catch (error) {
-			console.error(`Error while retrieve view tasks: ${error.message}`, error.message);
+			this.logger.error(`Error while retrieve view tasks: ${error}`);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
