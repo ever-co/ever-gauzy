@@ -47,12 +47,12 @@
 		"@fortawesome/free-brands-svg-icons": "^6.7.2",
 		"@fortawesome/free-regular-svg-icons": "^6.7.2",
 		"@fortawesome/free-solid-svg-icons": "^6.7.2",
-		"@fullcalendar/angular": "~6.1.17",
-		"@fullcalendar/core": "~6.1.17",
-		"@fullcalendar/daygrid": "~6.1.17",
-		"@fullcalendar/interaction": "~6.1.17",
-		"@fullcalendar/moment-timezone": "~6.1.17",
-		"@fullcalendar/timegrid": "~6.1.17",
+		"@fullcalendar/angular": "^6.1.17",
+		"@fullcalendar/core": "^6.1.17",
+		"@fullcalendar/daygrid": "^6.1.17",
+		"@fullcalendar/interaction": "^6.1.17",
+		"@fullcalendar/moment-timezone": "^6.1.17",
+		"@fullcalendar/timegrid": "^6.1.17",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/plugin-job-employee-ui": "^0.1.0",
 		"@gauzy/plugin-job-proposal-ui": "^0.1.0",
@@ -164,7 +164,7 @@
 		"uuid": "^8.3.2",
 		"web-animations-js": "^2.3.2",
 		"yargs": "^17.5.0",
-		"zone.js": "0.15.0"
+		"zone.js": "0.14.8"
 	},
 	"devDependencies": {
 		"@types/async": "^3.2.5",
