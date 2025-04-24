@@ -4,7 +4,7 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { PostHogTrackDirective } from './directives/posthog-track.directive';
 import { PostHogInterceptor } from './interceptors/posthog.interceptor';
 import { PostHogService } from './services/posthog.service';
-import { POSTHOG_CONFIG, PostHogModuleConfig } from './interfaces/posthog.interface';
+import { POSTHOG_CONFIG, PostHogModuleConfig, POSTHOG_DEBUG_MODE } from './interfaces/posthog.interface';
 import { initializePostHogFactory } from './services/posthog-init.factory';
 import { PostHogServiceManager } from './services/posthog-manager.service';
 
@@ -33,12 +33,15 @@ export class PostHogModule {
 					useValue: config
 				},
 				{
+					provide: POSTHOG_DEBUG_MODE,
+					useValue: config.debug || false
+				},
+				{
 					provide: APP_INITIALIZER,
 					useFactory: initializePostHogFactory,
-					deps: [PostHogServiceManager],
+					deps: [PostHogServiceManager, POSTHOG_CONFIG],
 					multi: true
 				},
-
 				...(config.options?.capture_exceptions !== false
 					? [
 							{
@@ -48,6 +51,27 @@ export class PostHogModule {
 							}
 					  ]
 					: [])
+			]
+		};
+	}
+
+	/**
+	 * Provides PostHog for testing/mocking purposes without automatic initialization
+	 */
+	static forTesting(): ModuleWithProviders<PostHogModule> {
+		return {
+			ngModule: PostHogModule,
+			providers: [
+				PostHogService,
+				PostHogServiceManager,
+				{
+					provide: POSTHOG_CONFIG,
+					useValue: { apiKey: 'test-key', options: { loaded: () => {} } }
+				},
+				{
+					provide: POSTHOG_DEBUG_MODE,
+					useValue: true
+				}
 			]
 		};
 	}
