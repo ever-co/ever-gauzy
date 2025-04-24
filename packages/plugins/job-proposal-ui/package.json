@@ -28,9 +28,9 @@
 		"@angular/core": "^19.2.0"
 	},
 	"dependencies": {
-		"@angular/forms": "19.2.7",
-		"@angular/platform-browser": "19.2.7",
-		"@angular/router": "19.2.7",
+		"@angular/forms": "^19.2.7",
+		"@angular/platform-browser": "^19.2.7",
+		"@angular/router": "^19.2.7",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^15.0.0",
 		"@ng-select/ng-select": "^14.2.2",
