@@ -7,14 +7,15 @@ import { PostHogService } from './services/posthog.service';
 import { POSTHOG_CONFIG, PostHogModuleConfig, POSTHOG_DEBUG_MODE } from './interfaces/posthog.interface';
 import { initializePostHogFactory } from './services/posthog-init.factory';
 import { PostHogServiceManager } from './services/posthog-manager.service';
+import { PostHogFormTrackDirective } from './directives/posthog-form-track.directive';
 
 /**
  * Module for integrating PostHog into Angular applications
  */
 @NgModule({
-	declarations: [PostHogTrackDirective],
+	declarations: [PostHogTrackDirective, PostHogFormTrackDirective],
 	imports: [CommonModule],
-	exports: [PostHogTrackDirective]
+	exports: [PostHogTrackDirective, PostHogFormTrackDirective]
 })
 export class PostHogModule {
 	/**
