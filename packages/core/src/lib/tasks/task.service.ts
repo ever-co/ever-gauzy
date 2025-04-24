@@ -1,5 +1,5 @@
 import { EventBus } from '@nestjs/cqrs';
-import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpStatus, HttpException, Logger } from '@nestjs/common';
 import {
 	IsNull,
 	SelectQueryBuilder,
@@ -13,6 +13,7 @@ import {
 	FindOptionsRelations
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
+import * as moment from 'moment';
 import {
 	BaseEntityEnum,
 	ActorTypeEnum,
@@ -26,7 +27,8 @@ import {
 	PermissionsEnum,
 	ActionTypeEnum,
 	ITaskDateFilterInput,
-	SubscriptionTypeEnum
+	SubscriptionTypeEnum,
+	IUser
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres, isSqlite } from '@gauzy/config';
@@ -47,6 +49,8 @@ import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
+	private readonly logger = new Logger(TaskService.name);
+
 	constructor(
 		private readonly _eventBus: EventBus,
 		readonly typeOrmTaskRepository: TypeOrmTaskRepository,
@@ -142,7 +146,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				try {
 					await this.mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionUserIds);
 				} catch (error) {
-					console.error('Error synchronizing mentions:', error);
+					this.logger.error(`Error synchronizing mentions: ${error}`);
 				}
 			}
 
@@ -162,7 +166,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						)
 					);
 				} catch (error) {
-					console.error('Error unsubscribing members from the task:', error);
+					this.logger.error(`Error unsubscribing members from the task: ${error}`);
 				}
 			}
 
@@ -184,7 +188,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						)
 					);
 				} catch (error) {
-					console.error('Error publishing CreateSubscriptionEvent:', error);
+					this.logger.error(`Error publishing CreateSubscriptionEvent: ${error}`);
 				}
 			}
 
@@ -205,7 +209,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Return the updated Task
 			return updatedTask;
 		} catch (error) {
-			console.error(`Error while updating task: ${error.message}`, error.message);
+			this.logger.error(`Error while updating task: ${error}`);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -278,12 +282,27 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async getEmployeeTasks(options: PaginationParams<Task>) {
 		try {
 			const { where } = options;
-			const { status, title, prefix, isDraft, isScreeningTask = false, organizationSprintId = null } = where;
+			const {
+				status,
+				title,
+				prefix,
+				isDraft,
+				dueDate,
+				creator,
+				isScreeningTask = false,
+				organizationSprintId = null
+			} = where;
 			const { organizationId, projectId, members } = where;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.innerJoin(`${query.alias}.members`, 'members');
+
+			// Join with the creator if it is user for filtering
+			if (isNotEmpty((creator as IUser)?.firstName)) {
+				query.innerJoin(`${query.alias}.creator`, 'creator');
+			}
+
 			/**
 			 * If find options
 			 */
@@ -339,16 +358,44 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							isDraft
 						});
 					}
+
+					// Filter by task title
 					if (isNotEmpty(title)) {
 						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
 							title: `%${title}%`
 						});
 					}
-					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), {
-							prefix: `%${prefix}%`
+
+					// Filter by task prefix and number
+					if (isNotEmpty(prefix)) {
+						qb.andWhere(
+							p(
+								`CONCAT("${query.alias}"."prefix", '-', "${query.alias}"."number") ${likeOperator} :prefix`
+							),
+							{
+								prefix: `%${prefix}%`
+							}
+						);
+					}
+
+					// Filter by due date
+					if (dueDate && dueDate instanceof Date) {
+						qb.andWhere(p(`"${query.alias}"."dueDate" BETWEEN :start AND :end`), {
+							start: moment(dueDate).startOf('day').toDate(),
+							end: moment(dueDate).endOf('day').toDate()
 						});
 					}
+
+					// Filter by creator name
+					if (isNotEmpty((creator as IUser)?.firstName)) {
+						qb.andWhere(
+							p(`CONCAT("creator"."firstName", ' ', "creator"."lastName") ${likeOperator} :creatorName`),
+							{
+								creatorName: `%${(creator as IUser).firstName}%`
+							}
+						);
+					}
+
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
 					}
@@ -359,11 +406,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				})
 			);
 
-			console.log('query.getSql', query.getSql());
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
-			console.log(error);
+			this.logger.error(`Error while getting employee tasks: ${error}`);
 			throw new BadRequestException(error);
 		}
 	}
@@ -645,12 +691,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Execute the query and parse the result to a number
 			const result = await query.getRawOne();
 			const maxTaskNumber = parseInt(result.maxTaskNumber, 10);
-			console.log('get max task number', maxTaskNumber);
+			this.logger.log(`get max task number: ${maxTaskNumber}`);
 
 			return maxTaskNumber;
 		} catch (error) {
 			// Log the error and throw a detailed exception
-			console.log(`Error fetching max task number: ${error.message}`, error.stack);
+			this.logger.error(`Error fetching max task number: ${error}`);
 			throw new HttpException({ message: 'Failed to get the max task number', error }, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -847,7 +893,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
-			console.log('Error while retrieving module tasks', error);
+			this.logger.error(`Error while retrieving module tasks: ${error}`);
 			throw new BadRequestException(error);
 		}
 	}
@@ -953,7 +999,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Retrieve tasks using base class method
 			return await super.findAll(findOptions);
 		} catch (error) {
-			console.error(`Error while retrieve view tasks: ${error.message}`, error.message);
+			this.logger.error(`Error while retrieve view tasks: ${error}`);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
