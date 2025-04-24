@@ -432,7 +432,7 @@
 		"@angular/router": "19.2.7",
 		"@angular/service-worker": "19.2.7",
 		"@fortawesome/angular-fontawesome": "^1.0.0",
-		"@fullcalendar/angular": "^6.1.17",
+		"@fullcalendar/angular": "~6.1.17",
 		"@nebular/auth": "^15.0.0",
 		"@nebular/bootstrap": "^9.1.0-rc.6",
 		"@nebular/eva-icons": "^15.0.0",
@@ -464,7 +464,7 @@
 		"rxjs": "^7.8.0",
 		"tslib": "^2.6.2",
 		"yargs": "^17.5.0",
-		"zone.js": "0.14.8"
+		"zone.js": "0.15.0"
 	},
 	"devDependencies": {
 		"@angular-builders/custom-webpack": "^18.0.0",
@@ -512,9 +512,9 @@
 		"@semantic-release/git": "^10.0.1",
 		"@semantic-release/github": "^9.2.6",
 		"@semantic-release/npm": "^11.0.0",
-		"@swc-node/register": "~1.9.1",
-		"@swc/core": "~1.5.7",
-		"@swc/helpers": "~0.5.11",
+		"@swc-node/register": "^1.10.10",
+		"@swc/core": "^1.11.22",
+		"@swc/helpers": "^0.5.17",
 		"@types/bcrypt": "^5.0.2",
 		"@types/google.maps": "^3.58.1",
 		"@types/jest": "29.5.14",
