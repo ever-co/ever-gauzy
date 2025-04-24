@@ -53,7 +53,7 @@
 		"@ngx-translate/core": "^16.0.4",
 		"@ngx-translate/http-loader": "^16.0.1",
 		"@ngneat/effects-ng": "3.1.4",
-		"@swimlane/ngx-charts": "20.5.0",
+		"@swimlane/ngx-charts": "^22.0.0-alpha.1",
 		"angular2-smart-table": "^3.6.1",
 		"ckeditor4-angular": "4.0.1",
 		"electron-log": "^4.4.8",
