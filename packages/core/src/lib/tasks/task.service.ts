@@ -31,7 +31,7 @@ import {
 	SubscriptionTypeEnum,
 	IUser
 } from '@gauzy/contracts';
-import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/common';
 import { isPostgres, isSqlite } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { addBetween } from './../core/util';
@@ -274,6 +274,114 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		return await this.getEmployeeTasks(options);
 	}
 
+	private addTaskCommonFilters(query: SelectQueryBuilder<Task>, options: PaginationParams<Task>) {
+		const { where } = options;
+
+		const {
+			status,
+			title,
+			prefix,
+			isDraft,
+			dueDate,
+			creator,
+			organizationId,
+			projectId,
+			isScreeningTask = false,
+			organizationSprintId = null
+		} = where;
+		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+
+		// Join with the creator if it is user for filtering
+		if (isNotEmpty((creator as IUser)?.firstName)) {
+			query.innerJoin(`${query.alias}.creator`, 'creator');
+		}
+
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				const tenantId = RequestContext.currentTenantId();
+				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				if (isNotEmpty(projectId)) {
+					qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+				}
+				if (isNotEmpty(status)) {
+					qb.andWhere(p(`"${query.alias}"."status" = :status`), {
+						status
+					});
+				}
+				if (isNotEmpty(isDraft)) {
+					qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), {
+						isDraft
+					});
+				}
+
+				// Filter by task title
+				if (isNotEmpty(title)) {
+					qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
+						title: `%${title as string}%`
+					});
+				}
+
+				// Filter by task prefix and number
+				if (isNotEmpty(prefix)) {
+					qb.andWhere(
+						p(`CONCAT("${query.alias}"."prefix", '-', "${query.alias}"."number") ${likeOperator} :prefix`),
+						{
+							prefix: `%${prefix as string}%`
+						}
+					);
+				}
+
+				// Filter by due date
+				if (dueDate && dueDate instanceof Date) {
+					qb.andWhere(p(`"${query.alias}"."dueDate" BETWEEN :start AND :end`), {
+						start: moment(dueDate).startOf('day').toDate(),
+						end: moment(dueDate).endOf('day').toDate()
+					});
+				}
+
+				// Filter by creator name
+				if (isNotEmpty((creator as IUser)?.firstName)) {
+					qb.andWhere(
+						p(`CONCAT("creator"."firstName", ' ', "creator"."lastName") ${likeOperator} :creatorName`),
+						{
+							creatorName: `%${(creator as IUser).firstName}%`
+						}
+					);
+				}
+
+				if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
+					qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
+				}
+
+				qb.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), {
+					isScreeningTask
+				});
+			})
+		);
+
+		/**
+		 * If find options
+		 */
+		if (isNotEmpty(options)) {
+			if ('skip' in options) {
+				query.setFindOptions({
+					skip: (options.take || 10) * (options.skip - 1),
+					take: options.take || 10
+				});
+			}
+			query.setFindOptions({
+				...(options.select ? { select: options.select } : {}),
+				...(options.relations ? { relations: options.relations } : {}),
+				...(options.order ? { order: options.order } : {})
+			});
+		}
+	}
+
 	/**
 	 * Find employee tasks
 	 *
@@ -283,41 +391,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async getEmployeeTasks(options: PaginationParams<Task>) {
 		try {
 			const { where } = options;
-			const {
-				status,
-				title,
-				prefix,
-				isDraft,
-				dueDate,
-				creator,
-				isScreeningTask = false,
-				organizationSprintId = null
-			} = where;
-			const { organizationId, projectId, members } = where;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+			const { members } = where;
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.innerJoin(`${query.alias}.members`, 'members');
 
-			// Join with the creator if it is user for filtering
-			if (isNotEmpty((creator as IUser)?.firstName)) {
-				query.innerJoin(`${query.alias}.creator`, 'creator');
-			}
-
-			/**
-			 * If find options
-			 */
-			if (isNotEmpty(options)) {
-				if ('skip' in options) {
-					query.setFindOptions({
-						skip: (options.take || 10) * (options.skip - 1),
-						take: options.take || 10
-					});
-				}
-				query.setFindOptions({
-					...(options.relations ? { relations: options.relations } : {})
-				});
-			}
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
 				const subQuery = qb.subQuery();
 				subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
@@ -337,75 +415,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				}
 				return p('"task_members"."taskId" IN ') + subQuery.distinct(true).getQuery();
 			});
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					const tenantId = RequestContext.currentTenantId();
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				})
-			);
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(projectId)) {
-						qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-					}
-					if (isNotEmpty(status)) {
-						qb.andWhere(p(`"${query.alias}"."status" = :status`), {
-							status
-						});
-					}
-					if (isNotEmpty(isDraft)) {
-						qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), {
-							isDraft
-						});
-					}
 
-					// Filter by task title
-					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
-							title: `%${title}%`
-						});
-					}
-
-					// Filter by task prefix and number
-					if (isNotEmpty(prefix)) {
-						qb.andWhere(
-							p(
-								`CONCAT("${query.alias}"."prefix", '-', "${query.alias}"."number") ${likeOperator} :prefix`
-							),
-							{
-								prefix: `%${prefix}%`
-							}
-						);
-					}
-
-					// Filter by due date
-					if (dueDate && dueDate instanceof Date) {
-						qb.andWhere(p(`"${query.alias}"."dueDate" BETWEEN :start AND :end`), {
-							start: moment(dueDate).startOf('day').toDate(),
-							end: moment(dueDate).endOf('day').toDate()
-						});
-					}
-
-					// Filter by creator name
-					if (isNotEmpty((creator as IUser)?.firstName)) {
-						qb.andWhere(
-							p(`CONCAT("creator"."firstName", ' ', "creator"."lastName") ${likeOperator} :creatorName`),
-							{
-								creatorName: `%${(creator as IUser).firstName}%`
-							}
-						);
-					}
-
-					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
-						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
-					}
-
-					qb.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), {
-						isScreeningTask
-					});
-				})
-			);
+			// Apply common filters for tasks
+			this.addTaskCommonFilters(query, options);
 
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
@@ -490,38 +502,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async findTeamTasks(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		try {
 			const { where } = options;
-
-			const {
-				status,
-				teams = [],
-				title,
-				prefix,
-				isDraft,
-				isScreeningTask = false,
-				organizationSprintId = null
-			} = where;
-			const { organizationId, projectId, members } = where;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+			const { teams = [] } = where;
+			const { members } = where;
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.teams`, 'teams');
 
-			/**
-			 * If find options
-			 */
-			if (isNotEmpty(options)) {
-				if ('skip' in options) {
-					query.setFindOptions({
-						skip: (options.take || 10) * (options.skip - 1),
-						take: options.take || 10
-					});
-				}
-				query.setFindOptions({
-					...(options.select ? { select: options.select } : {}),
-					...(options.relations ? { relations: options.relations } : {}),
-					...(options.order ? { order: options.order } : {})
-				});
-			}
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
 				const subQuery = qb.subQuery();
 				subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
@@ -550,50 +536,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				}
 				return p(`"task_teams"."taskId" IN `) + subQuery.distinct(true).getQuery();
 			});
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					const tenantId = RequestContext.currentTenantId();
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				})
-			);
-			if (isNotEmpty(projectId) && isNotEmpty(teams)) {
-				query.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-			}
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(projectId) && isEmpty(teams)) {
-						qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-					}
-					if (isNotEmpty(status)) {
-						qb.andWhere(p(`"${query.alias}"."status" = :status`), {
-							status
-						});
-					}
-					if (isNotEmpty(isDraft)) {
-						qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), {
-							isDraft
-						});
-					}
-					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
-							title: `%${title}%`
-						});
-					}
-					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), {
-							prefix: `%${prefix}%`
-						});
-					}
-					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
-						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
-					}
 
-					qb.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), {
-						isScreeningTask
-					});
-				})
-			);
+			// Apply common filters for tasks
+			this.addTaskCommonFilters(query, options);
+
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
@@ -820,33 +766,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async findModuleTasks(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		try {
 			const { where } = options;
-			const {
-				status,
-				modules = [],
-				title,
-				prefix,
-				isDraft,
-				isScreeningTask = false,
-				organizationSprintId = null,
-				organizationId,
-				projectId,
-				members
-			} = where;
+			const { modules = [], organizationId, members } = where;
 			const tenantId = RequestContext.currentTenantId() || where.tenantId;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 			// Initialize the query
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.modules`, 'modules');
-
-			// Apply find options if provided
-			if (isNotEmpty(options)) {
-				query.setFindOptions({
-					...(options.select && { select: options.select }),
-					...(options.relations && { relations: options.relations }),
-					...(options.order && { order: options.order })
-				});
-			}
 
 			// Filter by project_module_task with a sub query
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
@@ -875,47 +800,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				return p(`"task_modules"."taskId" IN `) + subQuery.distinct(true).getQuery();
 			});
 
-			// Add organization and tenant filters
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				})
-			);
-
-			// Filter by projectId and modules
-			if (isNotEmpty(projectId)) {
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						if (isEmpty(modules)) {
-							qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-						}
-					})
-				);
-			}
-
-			// Add additional filters (status, draft, title, etc.)
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(status)) {
-						qb.andWhere(p(`"${query.alias}"."status" = :status`), { status });
-					}
-					if (isNotEmpty(isDraft)) {
-						qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), { isDraft });
-					}
-					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), { title: `%${title}%` });
-					}
-					if (isNotEmpty(prefix)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), { prefix: `%${prefix}%` });
-					}
-					if (!isUUID(organizationSprintId)) {
-						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
-					}
-
-					qb.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), { isScreeningTask });
-				})
-			);
+			// Apply common filters for tasks
+			this.addTaskCommonFilters(query, options);
 
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
@@ -942,15 +828,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Extract `queryParams` from the view
 			const queryParams = taskView.queryParams;
-			let viewFilters: IGetTasksByViewFilters = {};
-
-			try {
-				viewFilters = isSqlite()
-					? (JSON.parse(queryParams as string) as IGetTasksByViewFilters)
-					: (queryParams as IGetTasksByViewFilters) || {};
-			} catch (error) {
-				throw new HttpException('Invalid query parameters in task view', HttpStatus.BAD_REQUEST);
-			}
+			const viewFilters: IGetTasksByViewFilters = isSqlite()
+				? (JSON.parse(queryParams as string) as IGetTasksByViewFilters)
+				: (queryParams as IGetTasksByViewFilters) || {};
 
 			// Extract filters
 			const {
