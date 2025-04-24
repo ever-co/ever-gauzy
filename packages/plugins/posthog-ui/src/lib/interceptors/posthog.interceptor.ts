@@ -62,11 +62,9 @@ export class PostHogInterceptor implements HttpInterceptor {
 						if (this.config.httpTracking?.captureResponseBodies && event.body) {
 							try {
 								// Attempt to safely stringify the body, omitting sensitive fields
-
 								eventProperties['responseBody'] = this.sanitizeResponseBody(event.body);
 							} catch (e) {
 								// If we can't stringify, just set a flag that there was a body
-
 								eventProperties['hasResponseBody'] = true;
 							}
 						}
