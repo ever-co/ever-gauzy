@@ -178,6 +178,42 @@ export class TimerService {
 				throw new Error(`Not implemented for ${ormType}`);
 		}
 
+		// If last log is not found, we need to check if there is any running log
+		// If there is a running log, that means that the timer is still running
+		// since previous day, so, we need to stop it saving the time and start new
+		// timer for the current day
+		if (!lastLog) {
+			const runningLog = (await this.getRunningLogs()) as ITimeLog;
+			if (runningLog) {
+				const newTimerStartedAt = moment.utc(todayStart || moment().startOf('day'));
+
+				// Ensure that the new timer won't be started in the past
+				if (moment(runningLog.startedAt).isBefore(newTimerStartedAt)) {
+					// Stop the current running log and save the time at end of day
+					await this.stopTimer({
+						tenantId,
+						organizationId,
+						startedAt: runningLog.startedAt,
+						stoppedAt: moment(runningLog.startedAt).endOf('day').toDate()
+					});
+
+					// Start new timer for the current day
+					lastLog = await this.startTimer({
+						tenantId,
+						organizationId,
+						projectId: runningLog.projectId,
+						taskId: runningLog.taskId,
+						description: runningLog.description,
+						logType: runningLog.logType,
+						source: runningLog.source,
+						tags: (runningLog.tags ?? []).map((tag) => tag.id),
+						isBillable: runningLog.isBillable,
+						startedAt: newTimerStartedAt.toDate()
+					});
+				}
+			}
+		}
+
 		const now = moment();
 
 		// Get weekly statistics
