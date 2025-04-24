@@ -10,7 +10,8 @@ import {
 	FindOptionsWhere,
 	FindManyOptions,
 	Between,
-	FindOptionsRelations
+	FindOptionsRelations,
+	ILike
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import * as moment from 'moment';
@@ -613,25 +614,51 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		// Check if there are any filters in the options
 		if (options?.where) {
 			const { where } = options;
-			const { isScreeningTask = false } = where;
+			const {
+				title,
+				prefix,
+				isDraft,
+				dueDate,
+				creator,
+				isScreeningTask = false,
+				organizationSprintId = null
+			} = where;
 
-			// Apply filters for task title with like operator
-			if (where.title) {
-				options.where.title = Raw((alias) => `${alias} ${likeOperator} '%${where.title}%'`);
+			// Filter by task title
+			if (isNotEmpty(title)) {
+				options.where.title = ILike(`%${title as string}%`);
 			}
 
-			// Apply filters for task prefix with like operator
-			if (where.prefix) {
-				options.where.prefix = Raw((alias) => `${alias} ${likeOperator} '%${where.prefix}%'`);
+			// Filter by task prefix and number
+			if (isNotEmpty(prefix)) {
+				options.where.prefix = Raw(
+					(alias) => `CONCAT(${alias}, '-', "task"."number") ${likeOperator} '%${prefix as string}%'`
+				);
+			}
+
+			// Filter by due date
+			if (dueDate && dueDate instanceof Date) {
+				options.where.dueDate = Between(
+					moment(dueDate).startOf('day').toDate(),
+					moment(dueDate).endOf('day').toDate()
+				);
+			}
+
+			// Filter by creator name
+			if (isNotEmpty((creator as IUser)?.firstName)) {
+				const name = (creator as IUser).firstName;
+				(options.where.creator as any).firstName = Raw(
+					(alias) => `CONCAT(${alias}, ' ', "task__task_creator"."lastName") ${likeOperator} '%${name}%'`
+				);
 			}
 
 			// Apply filters for isDraft, setting null if not a boolean
-			if (where.isDraft !== undefined && !isBoolean(where.isDraft)) {
+			if (isNotEmpty(isDraft) && !isBoolean(isDraft)) {
 				options.where.isDraft = IsNull();
 			}
 
 			// Apply filters for organizationSprintId, setting null if not a valid UUID
-			if (where.organizationSprintId && !isUUID(where.organizationSprintId)) {
+			if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 				options.where.organizationSprintId = IsNull();
 			}
 
