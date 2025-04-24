@@ -24,8 +24,8 @@
 		"lib:watch": "yarn nx build ui-core --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^19.0.0",
-		"@angular/core": "^19.0.0"
+		"@angular/common": "^19.2.0",
+		"@angular/core": "^19.2.0"
 	},
 	"dependencies": {
 		"@ali-hm/angular-tree-component": "^19.0.1",

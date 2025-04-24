@@ -24,8 +24,8 @@
 		"lib:watch": "yarn nx build ui-config --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^19.0.0",
-		"@angular/core": "^19.0.0"
+		"@angular/common": "^19.2.0",
+		"@angular/core": "^19.2.0"
 	},
 	"dependencies": {
 		"tslib": "^2.6.2"
