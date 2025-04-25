@@ -1,4 +1,14 @@
-import { Directive, Input, OnInit, ElementRef, Renderer2, HostListener, Inject, Optional } from '@angular/core';
+import {
+	Directive,
+	Input,
+	OnInit,
+	ElementRef,
+	Renderer2,
+	HostListener,
+	Inject,
+	Optional,
+	OnDestroy
+} from '@angular/core';
 import { PostHogServiceManager } from '../services/posthog-manager.service';
 import { POSTHOG_DEBUG_MODE } from '../interfaces/posthog.interface';
 import { NgForm } from '@angular/forms';
@@ -23,16 +33,16 @@ import { NgForm } from '@angular/forms';
 @Directive({
 	selector: 'form[phFormTrack]'
 })
-export class PostHogFormTrackDirective implements OnInit {
-	@Input() phFormName: string = 'form';
-	@Input() phTrackFields: boolean = false;
+export class PostHogFormTrackDirective implements OnInit, OnDestroy {
+	@Input() phFormName = 'form';
+	@Input() phTrackFields = false;
 	@Input() phExcludeFields: (string | RegExp)[] = ['password', 'secret', 'token', 'credit', 'card'];
-	@Input() phSanitizeValues: boolean = true;
-	@Input() phTrackFocus: boolean = false;
-	@Input() phTrackBlur: boolean = false;
-	@Input() phTrackChange: boolean = true;
-	@Input() phIncludeMetadata: boolean = true;
-	@Input() phFieldPrefix: string = ''; // Prefix for tracking field interactions
+	@Input() phSanitizeValues = true;
+	@Input() phTrackFocus = false;
+	@Input() phTrackBlur = false;
+	@Input() phTrackChange = true;
+	@Input() phIncludeMetadata = true;
+	@Input() phFieldPrefix = ''; // Prefix for tracking field interactions
 
 	// Field interaction listeners
 	private fieldListeners: (() => void)[] = [];
@@ -42,7 +52,7 @@ export class PostHogFormTrackDirective implements OnInit {
 		private elementRef: ElementRef<HTMLFormElement>,
 		private renderer: Renderer2,
 		private ngForm: NgForm,
-		@Optional() @Inject(POSTHOG_DEBUG_MODE) private debugMode: boolean = false
+		@Optional() @Inject(POSTHOG_DEBUG_MODE) private debugMode = false
 	) {}
 
 	ngOnInit(): void {
@@ -52,15 +62,17 @@ export class PostHogFormTrackDirective implements OnInit {
 		}
 
 		// Track form viewed event
-		this.posthogServiceManager.trackEvent(`form_viewed`, {
-			form_name: this.phFormName,
-			form_id: this.elementRef.nativeElement.id || undefined,
-			form_action: this.elementRef.nativeElement.action || undefined,
-			form_fields: this.getFieldNames()
-		});
-
-		if (this.debugMode) {
-			console.debug(`[PostHog] Form tracking enabled for "${this.phFormName}"`);
+		try {
+			this.posthogServiceManager.trackEvent(`form_viewed`, {
+				form_name: this.phFormName,
+				form_id: this.elementRef.nativeElement.id || undefined,
+				form_action: this.elementRef.nativeElement.action || undefined,
+				form_fields: this.getFieldNames()
+			});
+		} catch (err) {
+			if (this.debugMode) {
+				console.warn('[PostHog] Skipped form_viewed event – service not ready', err);
+			}
 		}
 	}
 

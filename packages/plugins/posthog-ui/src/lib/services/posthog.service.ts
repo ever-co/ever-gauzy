@@ -1,8 +1,8 @@
 import { Injectable, Inject, Optional, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router, NavigationEnd, NavigationStart } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import posthog, { PostHog, Properties } from 'posthog-js';
+import posthog, { PostHog, PostHogConfig, Properties } from 'posthog-js';
 import { POSTHOG_CONFIG, PostHogModuleConfig } from '../interfaces/posthog.interface';
 
 /**
@@ -22,11 +22,11 @@ import { POSTHOG_CONFIG, PostHogModuleConfig } from '../interfaces/posthog.inter
 })
 export class PostHogService {
 	private initialized = false;
-	private config: any = {};
+	private config: Partial<PostHogConfig> = {};
 
 	constructor(
 		private router: Router,
-		@Inject(PLATFORM_ID) private platformId: Object,
+		@Inject(PLATFORM_ID) private platformId: object,
 		@Optional()
 		@Inject(POSTHOG_CONFIG)
 		private injectedConfig: PostHogModuleConfig
@@ -44,7 +44,7 @@ export class PostHogService {
 	 * @param apiKey - Your PostHog API key
 	 * @param config - Configuration options for PostHog
 	 */
-	initialize(apiKey: string, config: any = {}): void {
+	initialize(apiKey: string, config: Partial<PostHogConfig> = {}): void {
 		// Only initialize in browser environment to prevent SSR issues
 		if (isPlatformBrowser(this.platformId) && !this.initialized) {
 			this.config = {
@@ -81,23 +81,20 @@ export class PostHogService {
 	private setupRouteTracking(): void {
 		if (!isPlatformBrowser(this.platformId)) return;
 
-		let routeStartTime: number | null = null;
-
-		// Set start time at the beginning of navigation
-		this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
-			const navigationEndTime = Date.now();
-			const loadTime = routeStartTime ? navigationEndTime - routeStartTime : 0;
-
-			// Capture detailed page view with route information
-			this.capturePageview(event.urlAfterRedirects, {
-				referrer: document.referrer,
-				route: event.urlAfterRedirects,
-				load_time_ms: loadTime,
-				route_id: this.router.routerState.snapshot.root.firstChild?.routeConfig?.path || '/'
-			});
-
-			// Reset for next navigation
-			routeStartTime = Date.now(); // Set for next navigation
+		let routeStartTime = Date.now(); // first page load
+		this.router.events.subscribe((event) => {
+			if (event instanceof NavigationStart) {
+				routeStartTime = Date.now();
+			}
+			if (event instanceof NavigationEnd) {
+				const loadTime = Date.now() - routeStartTime;
+				this.capturePageview(event.urlAfterRedirects, {
+					load_time_ms: loadTime,
+					referrer: document.referrer,
+					route: event.urlAfterRedirects,
+					route_id: this.router.routerState.snapshot.root.firstChild?.routeConfig?.path || '/'
+				});
+			}
 		});
 	}
 
@@ -222,6 +219,7 @@ export class PostHogService {
 	 * Resets the current user, clearing the distinctId and associated data
 	 */
 	reset(): void {
+		if (!this.ensureInitialized()) return;
 		posthog.reset();
 	}
 
@@ -230,12 +228,12 @@ export class PostHogService {
 	 * @param key - Feature flag key
 	 * @param options - Additional options for the feature flag check
 	 */
-	isFeatureEnabled(key: string, options: { send_event: boolean }): void {
+	isFeatureEnabled(key: string, options: { send_event: boolean }): boolean | undefined {
 		if (!this.ensureInitialized()) {
 			return;
 		}
 
-		posthog.isFeatureEnabled(key, options);
+		return posthog.isFeatureEnabled(key, options);
 	}
 
 	/**
@@ -267,17 +265,6 @@ export class PostHogService {
 	 */
 	reloadFeatureFlags(): void {
 		if (!this.ensureInitialized()) return;
-
-		posthog.reloadFeatureFlags();
-	}
-
-	/**
-	 * Reloads all feature flags from the server with callback
-	 */
-	reloadFeatureFlagsWithCallback(): void {
-		if (!this.ensureInitialized()) {
-			return;
-		}
 
 		posthog.reloadFeatureFlags();
 	}

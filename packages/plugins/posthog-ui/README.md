@@ -220,7 +220,7 @@ Set properties that will be sent with every event:
 
 ```typescript
 // Set once during app initialization
-this.posthogService.register({
+this.posthogManager.register({
 	app_version: '1.2.3',
 	theme: 'dark',
 	locale: 'en-US'

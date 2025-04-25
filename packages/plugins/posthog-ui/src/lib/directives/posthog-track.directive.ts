@@ -22,7 +22,7 @@ export class PostHogTrackDirective implements OnInit {
 	@Input('phTrack') eventName!: string;
 	@Input('phProperties') properties: Record<string, any> = {};
 	@Input('phOnInit') captureOnInit = false;
-	@Input('phEventType') eventType: string = 'click'; // default to click
+	@Input('phEventType') eventType = 'click'; // default to click
 	@Input('phStopPropagation') stopPropagation = false;
 
 	constructor(private posthogServiceManager: PostHogServiceManager) {}
@@ -61,6 +61,6 @@ export class PostHogTrackDirective implements OnInit {
 			event.stopPropagation();
 		}
 
-		this.posthogServiceManager.trackEvent(this.eventName, this.properties || {});
+		this.posthogServiceManager.trackEvent(this.eventName, this.properties);
 	}
 }

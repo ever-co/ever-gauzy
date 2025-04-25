@@ -1,7 +1,7 @@
 import { Injectable, Inject, Optional } from '@angular/core';
 import { PostHogService } from './posthog.service';
 import { POSTHOG_CONFIG, PostHogModuleConfig } from '../interfaces/posthog.interface';
-import { PostHogConfig } from 'posthog-js';
+import { PostHog, PostHogConfig } from 'posthog-js';
 
 /**
  * Service manager that initializes and calls appropriate PostHog methods
@@ -39,10 +39,10 @@ export class PostHogServiceManager {
 
 		// Initialize the base service
 		this.posthogService.initialize(apiKey, options);
-		this.initialized = true;
 
-		// Set up specific behaviors based on config options
 		this.setupConfigBasedBehaviors(options);
+
+		this.initialized = true;
 	}
 
 	/**
@@ -80,8 +80,8 @@ export class PostHogServiceManager {
 		// Add application info if needed
 		if (options.persistence !== 'memory') {
 			// Using a persistent method, set up any default properties
-			// Using a persistent method, set up any default properties
 			superProps['app_version'] = this.getAppVersion();
+
 			this.posthogService.register(superProps);
 		}
 	}
@@ -206,7 +206,7 @@ export class PostHogServiceManager {
 	/**
 	 * Get the raw PostHog instance for advanced usage
 	 */
-	getPostHogInstance(): any {
+	getPostHogInstance(): PostHog {
 		this.ensureInitialized();
 		return this.posthogService.getInstance();
 	}

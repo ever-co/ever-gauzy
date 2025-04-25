@@ -1,5 +1,6 @@
 import { PostHogServiceManager } from './posthog-manager.service';
 import { PostHogModuleConfig } from '../interfaces/posthog.interface';
+import { PostHog } from 'posthog-js';
 
 /**
  * Factory function for initializing PostHog during app startup
@@ -26,7 +27,7 @@ export function initializePostHogFactory(posthogManager: PostHogServiceManager, 
 				// Set up a custom callback to know when PostHog is fully loaded
 				const originalLoaded = config.options?.loaded;
 				if (originalLoaded) {
-					const enhancedLoadedCallback = (posthog: any) => {
+					const enhancedLoadedCallback = (posthog: PostHog) => {
 						originalLoaded(posthog);
 						resolve();
 					};

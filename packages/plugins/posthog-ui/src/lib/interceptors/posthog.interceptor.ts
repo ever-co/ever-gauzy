@@ -17,7 +17,7 @@ export class PostHogInterceptor implements HttpInterceptor {
 	constructor(
 		private posthogServiceManager: PostHogServiceManager,
 		@Inject(POSTHOG_CONFIG) config: PostHogModuleConfig,
-		@Optional() @Inject(POSTHOG_DEBUG_MODE) debugMode: boolean = false
+		@Optional() @Inject(POSTHOG_DEBUG_MODE) debugMode = false
 	) {
 		this.config = config;
 		this.debugMode = debugMode;
@@ -109,23 +109,28 @@ export class PostHogInterceptor implements HttpInterceptor {
 	/**
 	 * Sanitizes response body to remove potentially sensitive information
 	 */
-	private sanitizeResponseBody(body: any): any {
+	private sanitizeResponseBody(body: any, depth: number = 0): any {
 		if (!body) return undefined;
-
+		// Limit recursion depth to avoid stack overflow
+		if (depth > 10) return '[Max depth reached]';
 		// List of sensitive fields to redact
 		const sensitiveFields = ['password', 'token', 'secret', 'key', 'auth', 'credit', 'card'];
 
 		try {
+			// Handle arrays
+			if (Array.isArray(body)) {
+				return body.map((item) => this.sanitizeResponseBody(item, depth + 1));
+			}
 			if (typeof body === 'object') {
 				// Create a copy to avoid modifying the original
 				const sanitized = { ...body };
 
 				// Redact sensitive fields
 				for (const key in sanitized) {
-					if (sensitiveFields.some((field) => key.toLowerCase().includes(field))) {
+					if (sensitiveFields.some((field) => key.toLowerCase() === field.toLowerCase())) {
 						sanitized[key] = '[REDACTED]';
 					} else if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
-						sanitized[key] = this.sanitizeResponseBody(sanitized[key]);
+						sanitized[key] = this.sanitizeResponseBody(sanitized[key], depth + 1);
 					}
 				}
 

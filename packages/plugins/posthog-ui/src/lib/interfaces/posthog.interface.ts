@@ -25,7 +25,7 @@ export interface PostHogModuleConfig {
 		/**
 		 * Whether to track API response bodies (use with caution - may contain sensitive data)
 		 */
-		captureResponseBodies?: boolean;
+		captureResponseBodies?: boolean; // defaults to false
 		/**
 		 * Exclude specific routes from tracking
 		 */
@@ -33,7 +33,7 @@ export interface PostHogModuleConfig {
 		/**
 		 * Custom properties to include with API tracking events
 		 */
-		additionalProperties?: Record<string, any>;
+		additionalProperties?: Record<string, unknown>;
 	};
 }
 
