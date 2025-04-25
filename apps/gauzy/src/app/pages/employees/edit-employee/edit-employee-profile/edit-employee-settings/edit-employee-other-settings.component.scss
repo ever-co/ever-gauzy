@@ -1,5 +1,5 @@
 @use 'themes' as *;
-@import 'var';
+@use 'var' as *;
 
 :host {
   height: 100%;
