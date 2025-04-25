@@ -1,4 +1,4 @@
-@import 'gauzy/_gauzy-cards';
+@use 'gauzy/_gauzy-cards' as *;
 @import 'gauzy/_gauzy-table';
 @import 'gauzy/_gauzy-overrides';
 
