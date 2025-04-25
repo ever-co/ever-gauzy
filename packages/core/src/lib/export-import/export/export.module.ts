@@ -8,6 +8,7 @@ import { coreEntities } from '../../core/entities';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { ExportController } from './export.controller';
 import { ExportService } from './export.service';
+import { RepositoriesService } from '../repositories/repositories.service';
 
 @Module({
 	imports: [
@@ -17,6 +18,6 @@ import { ExportService } from './export.service';
 		CqrsModule
 	],
 	controllers: [ExportController],
-	providers: [ExportService]
+	providers: [ExportService, RepositoriesService]
 })
 export class ExportModule {}

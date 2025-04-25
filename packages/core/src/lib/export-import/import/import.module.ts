@@ -12,6 +12,7 @@ import { ImportRecordModule } from '../import-record';
 import { ImportHistoryModule } from '../import-history';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { UserModule } from '../../user/user.module';
+import { RepositoriesService } from '../repositories/repositories.service';
 
 @Module({
 	imports: [
@@ -24,6 +25,6 @@ import { UserModule } from '../../user/user.module';
 		CqrsModule
 	],
 	controllers: [ImportController],
-	providers: [ImportService, ...CommandHandlers]
+	providers: [ImportService, RepositoriesService, ...CommandHandlers]
 })
 export class ImportModule {}

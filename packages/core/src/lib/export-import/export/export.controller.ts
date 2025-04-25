@@ -28,6 +28,7 @@ export class ExportController {
 		@Query('organizationId') organizationId: string,
 		@Res() res
 	): Promise<any> {
+		await this._exportService.registerAllRepositories();
 		await this._exportService.createFolders();
 		await this._exportService.exportTables(organizationId);
 		await this._exportService.archiveAndDownload();
@@ -73,6 +74,7 @@ export class ExportController {
 		const {
 			entities: { names }
 		} = data;
+		await this._exportService.registerAllRepositories();
 		await this._exportService.createFolders();
 		await this._exportService.exportSpecificTables(names, organizationId);
 		await this._exportService.archiveAndDownload();

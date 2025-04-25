@@ -54,7 +54,9 @@ export class ImportController {
 
 		try {
 			/** */
+			await this._importService.registerAllRepositories();
 			await this._importService.unzipAndParse(key, importType === ImportTypeEnum.CLEAN);
+			await this._importService.addCurrentUserToImportedOrganizations();
 			this._importService.removeExtractedFiles();
 			/** */
 			return await this._commandBus.execute(

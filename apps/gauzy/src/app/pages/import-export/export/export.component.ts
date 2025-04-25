@@ -387,13 +387,6 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				entities: this.getUserEntities()
 			},
 			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.ACTIVITY'),
-				value: 'activity',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
 				name: this.getTranslation('INVOICES_PAGE.COMMENT'),
 				value: 'comment',
 				checked: true,
