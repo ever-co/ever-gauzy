@@ -1,5 +1,5 @@
+@use 'gauzy/_gauzy-overrides' as *;
 @forward 'report';
-@import 'gauzy/_gauzy-overrides';
 
 :host {
   .filters {

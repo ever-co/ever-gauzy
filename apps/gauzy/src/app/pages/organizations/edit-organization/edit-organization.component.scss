@@ -1,6 +1,6 @@
 @use 'var' as *;
-@import "themes";
-@import 'gauzy/_gauzy-overrides';
+@use 'themes' as *;
+@use 'gauzy/_gauzy-overrides' as ga-overrides;
 
 :host .card-scroll {
     background-color: nb-theme(gauzy-card-2);
@@ -143,5 +143,5 @@
     nb-card{
         height: unset;
     }
-    @include input-appearance(42px, var(--gauzy-card-1));
+    @include ga-overrides.input-appearance(42px, var(--gauzy-card-1));
 }

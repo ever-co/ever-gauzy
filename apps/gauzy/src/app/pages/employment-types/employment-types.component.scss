@@ -1,5 +1,5 @@
-@import '../expenses/expense-categories/expense-categories.component';
-@import 'gauzy/_gauzy-dialogs';
+@use 'gauzy/_gauzy-dialogs' as *;
+@forward '../expenses/expense-categories/expense-categories.component';
 
 :host {
     height: 100%;

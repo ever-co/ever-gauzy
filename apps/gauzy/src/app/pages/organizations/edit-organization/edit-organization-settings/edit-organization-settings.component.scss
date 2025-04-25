@@ -1,6 +1,6 @@
 @use 'var' as *;
 @use 'themes' as *;
-@import '@shared/_edit-profile-form';
+@forward '@shared/_edit-profile-form';
 
 .form-group input {
   width: 100%;
