@@ -1,5 +1,5 @@
-@import '../keyresult-details/keyresult-details.component';
-@import '../edit-keyresults/edit-keyresults.component';
+@forward '../keyresult-details/keyresult-details.component';
+@forward '../edit-keyresults/edit-keyresults.component';
 
 .main-header {
   display: flex;
