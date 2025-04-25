@@ -1,4 +1,4 @@
-@import 'apps/gauzy/src/app/pages/expenses/expense-categories/expense-categories.component.scss';
+@use '../expenses/expense-categories/expense-categories.component' as *;
 
 .editable {
   width: 525px;

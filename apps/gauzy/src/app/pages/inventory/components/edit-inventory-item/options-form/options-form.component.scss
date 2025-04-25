@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 .options-wrap {
   display: flex;

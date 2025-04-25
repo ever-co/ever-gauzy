@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 @import 'gauzy/_gauzy-button-action';
 
 @include nb-install-component() {

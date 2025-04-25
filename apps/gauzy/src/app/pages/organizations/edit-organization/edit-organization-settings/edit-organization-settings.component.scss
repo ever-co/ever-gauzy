@@ -1,5 +1,5 @@
-@import 'var';
-@import 'themes';
+@use 'var' as *;
+@use 'themes' as *;
 @import '@shared/_edit-profile-form';
 
 .form-group input {

@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 :host {
   nb-accordion-item-header ::ng-deep nb-icon {
