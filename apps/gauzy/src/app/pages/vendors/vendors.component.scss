@@ -1,4 +1,5 @@
-@use '../expenses/expense-categories/expense-categories.component' as *;
+@use 'gauzy/_gauzy-cards' as *;
+@forward '../expenses/expense-categories/expense-categories.component';
 
 .editable {
   width: 525px;
