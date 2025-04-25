@@ -1,13 +1,5 @@
 /* It's a pagination component that works with the angular2-smart-table component */
-import {
-	Component,
-	EventEmitter,
-	Input,
-	OnChanges,
-	OnDestroy,
-	Output,
-	SimpleChanges,
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { LocalDataSource } from 'angular2-smart-table';
 import { Subscription, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -16,18 +8,18 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @Component({
 	selector: 'ga-pagination',
 	templateUrl: './pagination.component.html',
-	styleUrls: ['./pagination.component.scss'],
+	styleUrls: ['./pagination.component.scss']
 })
-export class PaginationComponent implements OnChanges, OnDestroy {
+export class PaginationComponent implements OnChanges {
 	private _source: LocalDataSource;
-	private _perPageSelect: any[];
-	private _currentPerPage: any;
-	private _pages: Array<any>;
+	private _perPageSelect: number[];
+	private _currentPerPage: number | string;
+	private _pages: Array<number>;
 	private _page: number;
-	private _count: number = 0;
+	private _count = 0;
 	private _perPage: number;
-	private _changePage: EventEmitter<{ page: number }>;
 	private _dataChangedSub: Subscription;
+	private readonly _changePage: EventEmitter<{ page: number }>;
 
 	constructor() {
 		this._changePage = new EventEmitter<{ page: number }>();
@@ -46,8 +38,7 @@ export class PaginationComponent implements OnChanges, OnDestroy {
 	private _initPages() {
 		const pagesCount = this.last;
 		let showPagesCount = 4;
-		showPagesCount =
-			pagesCount < showPagesCount ? pagesCount : showPagesCount;
+		showPagesCount = pagesCount < showPagesCount ? pagesCount : showPagesCount;
 		this._pages = [];
 
 		if (this.isShouldShow) {
@@ -92,7 +83,7 @@ export class PaginationComponent implements OnChanges, OnDestroy {
 	}
 
 	public get isShouldShow(): boolean {
-		return this._source.count() > this._perPage;
+		return this._source.count() > this._perPageSelect?.[1] && this._perPageSelect?.length > 1;
 	}
 
 	public paginate(page: number): boolean {
@@ -115,24 +106,20 @@ export class PaginationComponent implements OnChanges, OnDestroy {
 	}
 
 	public get isPageOutOfBounce(): boolean {
-		return (
-			this._page * this._perPage >= this._count + this._perPage &&
-			this._page > 1
-		);
+		return this._page * this._perPage >= this._count + this._perPage && this._page > 1;
 	}
 
-	public onChangePerPage(event: any) {
+	public onChangePerPage(event: number | string): void {
 		this._currentPerPage = event;
-		console.log('PerPage', event);
-		if (this._currentPerPage) {
-			if (
-				typeof this._currentPerPage === 'string' &&
-				this._currentPerPage.toLowerCase() === 'all'
-			) {
+		if (this._currentPerPage != null) {
+			if (typeof this._currentPerPage === 'string' && this._currentPerPage.toLowerCase() === 'all') {
 				this._source.getPaging().perPage = null;
 			} else {
-				this._source.getPaging().perPage = this._currentPerPage * 1;
-				this._source.refresh();
+				const perPage = Number(this._currentPerPage);
+				if (!isNaN(perPage)) {
+					this._source.getPaging().perPage = perPage;
+					this._source.refresh();
+				}
 			}
 			this._initPages();
 		}
@@ -142,8 +129,7 @@ export class PaginationComponent implements OnChanges, OnDestroy {
 		return (this._page - 1) * this._perPage + 1;
 	}
 	public get endCount() {
-		const entriesEndPage: number =
-			(this._page - 1) * this._perPage + this._perPage;
+		const entriesEndPage: number = (this._page - 1) * this._perPage + this._perPage;
 
 		if (entriesEndPage > this._count) {
 			return this._count;
@@ -160,24 +146,24 @@ export class PaginationComponent implements OnChanges, OnDestroy {
 	}
 
 	@Input()
-	public set perPageSelect(values: any[]) {
+	public set perPageSelect(values: number[]) {
 		this._perPageSelect = values;
 	}
 
-	public get perPageSelect(): any[] {
+	public get perPageSelect(): number[] {
 		return this._perPageSelect;
 	}
 
-	public get currentPerPage(): any {
+	public get currentPerPage(): number | string {
 		return this._currentPerPage;
 	}
-	public set currentPerPage(value: any) {
+	public set currentPerPage(value: number | string) {
 		this._currentPerPage = value;
 	}
-	protected get pages(): Array<any> {
+	protected get pages(): Array<number> {
 		return this._pages;
 	}
-	protected set pages(value: Array<any>) {
+	protected set pages(value: Array<number>) {
 		this._pages = value;
 	}
 
@@ -210,5 +196,4 @@ export class PaginationComponent implements OnChanges, OnDestroy {
 	protected set dataChangedSub(value: Subscription) {
 		this._dataChangedSub = value;
 	}
-	ngOnDestroy(): void { }
 }
