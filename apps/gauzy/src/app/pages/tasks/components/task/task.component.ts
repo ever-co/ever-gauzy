@@ -21,10 +21,10 @@ import {
 	AssignedToComponent,
 	CreateByComponent,
 	CreatedAtComponent,
+	DateFilterComponent,
 	DateViewComponent,
 	DeleteConfirmationComponent,
 	EmployeesMergedTeamsComponent,
-	HashNumberPipe,
 	InputFilterComponent,
 	IPaginationBase,
 	NotesWithTagsComponent,
@@ -58,8 +58,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	private _refresh$: Subject<boolean> = new Subject();
 	private _tasks: ITask[] = [];
 	settingsSmartTable: object;
-	loading: boolean = false;
-	disableButton: boolean = true;
+	loading = false;
+	disableButton = true;
 	smartTableSource: ServerDataSource;
 	availableTasks$: Observable<ITask[]>;
 	tasks$: Observable<ITask[]> = this._taskStore.tasks$;
@@ -90,8 +90,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		private readonly _store: Store,
 		private readonly route: ActivatedRoute,
 		private readonly httpClient: HttpClient,
-		private readonly _errorHandlingService: ErrorHandlingService,
-		private readonly _hashNumberPipe: HashNumberPipe
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 		this.initTasks();
@@ -172,7 +171,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						this.setFilter({ field: 'prefix', search: prefix });
 					},
 					valuePrepareFunction: (value: string, cell: Cell) => {
-						return this._hashNumberPipe.transform(value);
+						return value;
 					}
 				},
 				description: {
@@ -236,7 +235,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					type: 'custom',
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent
+						component: DateFilterComponent
 					},
 					filterFunction: (value) => {
 						this.setFilter({ field: 'dueDate', search: value });

@@ -18,14 +18,14 @@ export interface IPaginationBase {
 	template: ''
 })
 export class PaginationFilterBaseComponent extends TranslationBaseComponent implements AfterViewInit {
-	public activePage: number = 1;
-	public totalItems: number = 0;
-	public itemsPerPage: number = 10;
+	public activePage = 1;
+	public totalItems = 0;
+	public itemsPerPage = 10;
 	/**
 	 * Getter for minimum items per page
 	 * Can't be modified outside the class
 	 */
-	private _minItemPerPage: number = 10;
+	private _minItemPerPage = 10;
 	public get minItemPerPage() {
 		return this._minItemPerPage;
 	}
@@ -85,12 +85,12 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 	 * @param filter - The filter object containing information about the field and search criteria.
 	 * @param doEmit - A boolean flag indicating whether to emit a notification after setting the filter. Default is true.
 	 */
-	protected setFilter(filter: any, doEmit: boolean = true) {
+	protected setFilter(filter: any, doEmit = true) {
 		// Split the field path into an array of field names
 		const fields = filter.field.split('.');
 
 		// Check if the search criteria is not empty or a boolean
-		if (isNotEmpty(filter.search) || 'boolean' === typeof filter.search) {
+		if (filter.search != null && (filter.search.trim()?.length > 0 || typeof filter.search === 'boolean')) {
 			const search = filter.search;
 
 			// Create an object with nested keys representing the field path and set the search value
@@ -177,7 +177,7 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 	protected scrollTop() {
 		try {
 			const table = document.querySelector('angular2-smart-table > table');
-			if (!!table) {
+			if (table) {
 				table.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			}
 		} catch (error) {

@@ -8,3 +8,4 @@ export * from './tags-color-filter.component';
 export * from './task-status-filter.component';
 export * from './toggle-filter/toggle-filter.component';
 export * from './vendor-filter.component';
+export * from './date-filter.component';

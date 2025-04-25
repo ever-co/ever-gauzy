@@ -1,0 +1,42 @@
+import { Component, OnInit, OnDestroy, SimpleChanges } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { DefaultFilter } from 'angular2-smart-table';
+
+@Component({
+	selector: 'ga-date-filter',
+	template: `
+		<div class="d-flex align-items-center">
+			<input
+				nbInput
+				[nbDatepicker]="datePicker"
+				[formControl]="dateControl"
+				placeholder="{{ column.title }}"
+				fullWidth
+			/>
+			<nb-datepicker #datePicker></nb-datepicker>
+		</div>
+	`
+})
+export class DateFilterComponent extends DefaultFilter implements OnInit, OnDestroy {
+	dateControl = new FormControl();
+	private destroy$ = new Subject<void>();
+
+	ngOnInit() {
+		this.dateControl.valueChanges
+			.pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+			.subscribe((val) => {
+				this.column.filterFunction(val?.toISOString?.() || null, this.column.id);
+			});
+	}
+
+	ngOnChanges(changes: SimpleChanges): void {
+		// Required for angular2-smart-table, even if unused
+	}
+
+	ngOnDestroy() {
+		this.destroy$.next();
+		this.destroy$.complete();
+	}
+}

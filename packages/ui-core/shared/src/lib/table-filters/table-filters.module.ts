@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NbToggleModule } from '@nebular/theme';
+import { NbDatepickerModule, NbToggleModule } from '@nebular/theme';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
@@ -19,6 +19,7 @@ import { ToggleFilterComponent } from './toggle-filter/toggle-filter.component';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 import { ContactSelectModule } from '../contact-select/contact-select.module';
 import { TaskStatusSelectModule } from '../tasks/task-status-select/task-status-select.module';
+import { DateFilterComponent } from './date-filter.component';
 
 @NgModule({
 	imports: [
@@ -33,7 +34,8 @@ import { TaskStatusSelectModule } from '../tasks/task-status-select/task-status-
 		ContactSelectModule,
 		TaskStatusSelectModule,
 		NbToggleModule,
-		FontAwesomeModule
+		FontAwesomeModule,
+		NbDatepickerModule
 	],
 	declarations: [
 		OrganizationContactFilterComponent,
@@ -44,7 +46,8 @@ import { TaskStatusSelectModule } from '../tasks/task-status-select/task-status-
 		InputFilterComponent,
 		OrganizationTeamFilterComponent,
 		TaskStatusFilterComponent,
-		ToggleFilterComponent
+		ToggleFilterComponent,
+		DateFilterComponent
 	],
 	exports: [],
 	providers: []
