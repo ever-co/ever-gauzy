@@ -1,4 +1,4 @@
-@import 'gauzy/_gauzy-table.scss';
+@use 'gauzy/_gauzy-table' as *;
 
 .main-header {
   display: flex;

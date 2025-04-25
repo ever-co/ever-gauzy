@@ -1,7 +1,18 @@
-@use 'report' as *;
-@import 'gauzy/_gauzy-overrides';
+@use 'gauzy/_gauzy-overrides' as *;
+@use 'report' as ga-report;
 
 :host {
+	::ng-deep {
+        @include ng-select-overrides(
+			2.25rem,
+            $default-button-radius,
+            $default-box-shadow
+		);
+
+        .weekly-logs .no-data-found {
+            height: calc(100vh - 20.1rem) !important;
+        }
+    }
     nb-badge {
 		border: 2px solid var(--gauzy-border-default-color);
 		position: relative;
@@ -47,20 +58,8 @@
     }
 }
 
-@include respond(ipad) {
-    @include mobile-table-styles;
-}
-
-:host {
-    ::ng-deep {
-        @include ng-select-overrides(2.25rem,
-            $default-button-radius,
-            $default-box-shadow );
-
-        .weekly-logs .no-data-found {
-            height: calc(100vh - 20.1rem) !important;
-        }
-    }
+@include ga-report.respond(ipad) {
+    @include ga-report.mobile-table-styles;
 }
 
 nb-card-body.report-body {

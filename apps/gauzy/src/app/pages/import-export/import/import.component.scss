@@ -1,5 +1,5 @@
-@import 'gauzy/gauzy-table';
-@import '../export/export.component.scss';
+@use 'gauzy/gauzy-table' as *;
+@forward '../export/export.component';
 
 .well {
   height: 180px;

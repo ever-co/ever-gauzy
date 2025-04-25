@@ -1,4 +1,4 @@
-@use '@shared/_pg-card' as *;
+@import '@shared/_pg-card';
 
 :host nb-card {
   background-color: var(--gauzy-card-2);

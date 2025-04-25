@@ -1,4 +1,4 @@
-@use '../../daily/daily/daily.component' as *;
+@import '../../daily/daily/daily.component';
 
 :host {
   .filters {

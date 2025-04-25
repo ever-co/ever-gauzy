@@ -1,5 +1,6 @@
-@import '../keyresult-details/keyresult-details.component.scss';
-@import '../edit-keyresults/edit-keyresults.component.scss';
+@import '../keyresult-details/keyresult-details.component';
+@import '../edit-keyresults/edit-keyresults.component';
+
 .main-header {
   display: flex;
   align-items: center;
