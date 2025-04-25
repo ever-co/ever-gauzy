@@ -27,6 +27,7 @@ export class PostHogModule {
 		return {
 			ngModule: PostHogModule,
 			providers: [
+				// Core services
 				PostHogService,
 				PostHogServiceManager,
 				{
@@ -37,12 +38,14 @@ export class PostHogModule {
 					provide: POSTHOG_DEBUG_MODE,
 					useValue: config.debug || false
 				},
+				// Initialize PostHog during app startup
 				{
 					provide: APP_INITIALIZER,
 					useFactory: initializePostHogFactory,
 					deps: [PostHogServiceManager, POSTHOG_CONFIG],
 					multi: true
 				},
+				// Conditionally add HTTP interceptor for error tracking
 				...(config.options?.capture_exceptions !== false
 					? [
 							{
@@ -57,7 +60,7 @@ export class PostHogModule {
 	}
 
 	/**
-	 * Provides PostHog for testing/mocking purposes without automatic initialization
+	 * Provides PostHog for testing/mocking purposes without initialization
 	 */
 	static forTesting(): ModuleWithProviders<PostHogModule> {
 		return {
