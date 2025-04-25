@@ -1,6 +1,4 @@
-@forward '../email-templates/email-templates.component';
-
-$height: calc(100vh - 25.5rem);
+@use '../email-templates/email-templates.component' as *;
 
 :host {
   .ace-editor {
