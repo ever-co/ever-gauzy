@@ -1,4 +1,6 @@
-@import '../email-templates/email-templates.component.scss';
+@forward '../email-templates/email-templates.component';
+
+$height: calc(100vh - 25.5rem);
 
 :host {
   .ace-editor {

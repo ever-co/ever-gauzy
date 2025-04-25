@@ -1,5 +1,5 @@
+@use 'var' as *;
 @import "themes";
-@import "var";
 @import 'gauzy/_gauzy-overrides';
 
 :host .card-scroll {
