@@ -1,4 +1,4 @@
-@import '../sms-gateway/sms-gateway.component.scss';
+@forward '../sms-gateway/sms-gateway.component';
 
 :host {
     .label {
