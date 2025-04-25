@@ -493,56 +493,56 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_ESTIMATION'),
 				value: 'task_estimation',
 				checked: true,
-				isGroup: true,
+				isGroup: false,
 				entities: []
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_PRIORITY'),
 				value: 'task_priority',
 				checked: true,
-				isGroup: true,
+				isGroup: false,
 				entities: []
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_SIZE'),
 				value: 'task_size',
 				checked: true,
-				isGroup: true,
+				isGroup: false,
 				entities: []
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_STATUS'),
 				value: 'task_status',
 				checked: true,
-				isGroup: true,
+				isGroup: false,
 				entities: []
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_VERSION'),
 				value: 'task_version',
 				checked: true,
-				isGroup: true,
+				isGroup: false,
 				entities: []
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_VIEW'),
 				value: 'task_view',
 				checked: true,
-				isGroup: true,
+				isGroup: false,
 				entities: []
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_LINKED_ISSUES'),
 				value: 'task_linked_issues',
 				checked: true,
-				isGroup: true,
+				isGroup: false,
 				entities: []
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.TASK_RELATED_ISSUE_TYPE'),
 				value: 'task_related_issue_type',
 				checked: true,
-				isGroup: true,
+				isGroup: false,
 				entities: []
 			}
 		];

@@ -198,7 +198,7 @@ export class ImportService implements OnModuleInit {
 			try {
 				const source = JSON.parse(JSON.stringify(entity));
 				const where = [];
-				if (isNotEmpty(uniqueIdentifiers) && uniqueIdentifiers instanceof Array) {
+				if (isNotEmpty(uniqueIdentifiers) && Array.isArray(uniqueIdentifiers)) {
 					if ('tenantId' in entity && isNotEmpty(entity['tenantId'])) {
 						where.push({ tenantId: RequestContext.currentTenantId() });
 					}
@@ -360,7 +360,7 @@ export class ImportService implements OnModuleInit {
 		const organizationsCsvPath = path.join(this._extractPath, 'organization.csv');
 
 		return new Promise(async (resolve, reject) => {
-			let results: Organization[] = [];
+			const results: Organization[] = [];
 			const stream = fs.createReadStream(organizationsCsvPath, 'utf8').pipe(csv());
 			stream.on('data', (data) => {
 				if (isNotEmpty(data)) results.push(data);
@@ -382,14 +382,14 @@ export class ImportService implements OnModuleInit {
 
 						if (!record || !record['destinationId']) continue;
 
-						const isAlreadyin = await this.repositoriesService.typeOrmUserOrganizationRepository.findOne({
+						const isAlreadyIn = await this.repositoriesService.typeOrmUserOrganizationRepository.findOne({
 							where: {
 								userId,
 								organizationId: record['destinationId']
 							}
 						});
 
-						if (isAlreadyin) continue;
+						if (isAlreadyIn) continue;
 
 						await this.repositoriesService.typeOrmUserOrganizationRepository.save({
 							userId,

@@ -471,7 +471,6 @@ export interface IRepositoryModel<T = any> {
 	isTenantBased?: boolean;
 	substitute?: {
 		originalField: string;
-
 		substituteField: string;
 	};
 }
@@ -1118,7 +1117,7 @@ export class RepositoriesService implements OnModuleInit {
 		public typeOrmOrganizationSprintTaskRepository: TypeOrmOrganizationSprintTaskRepository,
 
 		@InjectRepository(OrganizationSprintTaskHistory)
-		public typeOrmOrganizationSprintTaskHistory: TypeOrmOrganizationSprintTaskHistoryRepository,
+		public typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
 
 		@InjectRepository(OrganizationTaskSetting)
 		public typeOrmOrganizationTaskSettingRepository: TypeOrmOrganizationTaskSettingRepository,
@@ -1193,81 +1192,89 @@ export class RepositoriesService implements OnModuleInit {
 	}
 
 	/**
-	 *
-	 * A helper function that builds dynamically a dependacies / relations
-	 * graph for each respository registered
-	 *
+	 * A helper function to get the repository relations graph
+	 * @param repository the repository to work on
 	 */
+	private async getRepositoryRelationsGraph(repository: Repository<any>): Promise<IRepositoryModel> {
+		const entityMetadata = repository.metadata;
 
-	async buildRepositoriesRelationsGraph() {
-		const result: IRepositoryModel<any>[] = [];
-		for await (const item of this.repositories) {
-			const { repository, isStatic, substitute } = item;
+		// Get unique identifiers (assuming they are part of unique constraints)
+		const uniqueIdentifiers =
+			entityMetadata.uniques.map((unique) => {
+				return {
+					column: unique.columns
+						.map((col) => col.propertyName)
+						.filter((propertyName) => {
+							return !repository.metadata.relations.some(
+								(relation) => relation.propertyName === propertyName
+							);
+						})[0]
+				};
+			}) || [];
 
-			const entityMetadata = repository.metadata;
-
-			// Get unique identifiers (assuming they are part of unique constraints)
-			const uniqueIdentifiers =
-				entityMetadata.uniques.map((unique) => {
+		// Get foreign keys and relations
+		const foreignKeys =
+			entityMetadata.relations
+				.filter((relation) => relation.propertyName && (relation.isManyToOne || relation.isOneToOne))
+				.filter(
+					(relation) =>
+						![
+							...this.baseEntityRelationFields.map((el) => el.column),
+							'organizationId',
+							'tenantId'
+						].includes(relation.joinColumns[0]?.databaseName || `${relation.propertyName}Id`)
+				)
+				.map((relation) => {
 					return {
-						column: unique.columns
-							.map((col) => col.propertyName)
-							.filter((propertyName) => {
-								return !repository.metadata.relations.some(
-									(relation) => relation.propertyName === propertyName
-								);
-							})
-							.join(', ')
+						column: relation.joinColumns[0]?.databaseName || `${relation.propertyName}Id`,
+						repository: this._connectionEntityManager.getRepository(relation.type)
 					};
 				}) || [];
 
-			// Get foreign keys and relations
-			const foreignKeys =
-				entityMetadata.relations
-					.filter((relation) => relation.propertyName && (relation.isManyToOne || relation.isOneToOne))
-					.filter(
-						(relation) =>
-							![
-								...this.baseEntityRelationFields.map((el) => el.column),
-								'organizationId',
-								'tenantId'
-							].includes(relation.joinColumns[0]?.databaseName || `${relation.propertyName}Id`)
-					)
-					.map((relation) => {
-						return {
-							column: relation.joinColumns[0]?.databaseName || `${relation.propertyName}Id`,
-							repository: this._connectionEntityManager.getRepository(relation.type)
-						};
-					}) || [];
+		const relations =
+			entityMetadata.relations
+				.filter((relation) => relation.isManyToMany && relation.joinTableName)
+				.map((relation) => {
+					const foreignKeys =
+						relation.foreignKeys.map((fk) => ({
+							column: fk.columns[0]?.propertyName,
+							repository: this._connectionEntityManager.getRepository(fk.referencedEntityMetadata.target)
+						})) || [];
+					return {
+						joinTableName: relation.joinTableName,
+						foreignKeys,
+						isCheckRelation: foreignKeys.length > 0
+					};
+				}) || [];
 
-			const relations =
-				entityMetadata.relations
-					.filter((relation) => relation.isManyToMany && relation.joinTableName)
-					.map((relation) => {
-						const foreignKeys =
-							relation.foreignKeys.map((fk) => ({
-								column: fk.columns[0]?.propertyName,
-								repository: this._connectionEntityManager.getRepository(
-									fk.referencedEntityMetadata.target
-								)
-							})) || [];
-						return {
-							joinTableName: relation.joinTableName,
-							foreignKeys,
-							isCheckRelation: foreignKeys.length > 0
-						};
-					}) || [];
+		const isTenantBased = entityMetadata.foreignKeys.flatMap((el) => el.columnNames)?.includes('tenantId');
 
-			const isTenantBased = entityMetadata.foreignKeys.flatMap((el) => el.columnNames)?.includes('tenantId');
+		return {
+			repository,
+			isCheckRelation: foreignKeys.length > 0,
+			uniqueIdentifiers,
+			foreignKeys,
+			relations,
+			isTenantBased
+		};
+	}
+
+	/**
+	 *
+	 * A helper function that builds dynamically a dependencies / relations
+	 * graph for each repository registered
+	 *
+	 */
+	async buildRepositoriesRelationsGraph() {
+		const result: IRepositoryModel[] = [];
+		for await (const item of this.repositories) {
+			const { repository, isStatic, substitute } = item;
+
+			const repositoryRelationsGraph = await this.getRepositoryRelationsGraph(item.repository);
 
 			result.push({
-				repository,
-				isCheckRelation: foreignKeys.length > 0,
-				uniqueIdentifiers,
-				foreignKeys,
-				relations,
+				...repositoryRelationsGraph,
 				isStatic,
-				isTenantBased,
 				substitute
 			});
 		}
@@ -1284,21 +1291,10 @@ export class RepositoriesService implements OnModuleInit {
 			const className = camelCase(entity.name);
 			const repository = this._connectionEntityManager.getRepository(entity);
 
-			const foreignKeys = [
-				...repository.metadata.foreignKeys
-					.filter(
-						(fk) =>
-							!this.baseEntityRelationFields.map((el) => el.column).includes(fk.columns[0].propertyName)
-					)
-					.map((fk) => ({
-						column: fk.columns[0]?.propertyName, // Should be adjusted if the foreign key is composite
-						inverseColumn: fk.referencedColumns[0]?.propertyName,
-						repository: this._connectionEntityManager.getRepository(fk.referencedEntityMetadata.target)
-					}))
-			];
+			const repositoryRelationsGraph = await this.getRepositoryRelationsGraph(repository);
 
 			this[className] = repository;
-			this.dynamicEntitiesClassMap.push({ repository, foreignKeys, isCheckRelation: true });
+			this.dynamicEntitiesClassMap.push(repositoryRelationsGraph);
 		}
 	}
 
@@ -1809,7 +1805,7 @@ export class RepositoriesService implements OnModuleInit {
 				repository: this.typeOrmOrganizationSprintTaskRepository
 			},
 			{
-				repository: this.typeOrmOrganizationSprintTaskHistory
+				repository: this.typeOrmOrganizationSprintTaskHistoryRepository
 			},
 			{
 				repository: this.typeOrmOrganizationTaskSettingRepository
