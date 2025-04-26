@@ -5,6 +5,7 @@ import { FormGroup } from '@angular/forms';
 	selector: 'lib-plugin-source',
 	templateUrl: './plugin-source.component.html',
 	styleUrls: ['./plugin-source.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginSourceComponent {

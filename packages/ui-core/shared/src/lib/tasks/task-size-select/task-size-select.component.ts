@@ -21,15 +21,16 @@ import { TaskSizesService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-task-size-select',
-	templateUrl: './task-size-select.component.html',
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TaskSizeSelectComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-task-size-select',
+    templateUrl: './task-size-select.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TaskSizeSelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TaskSizeSelectComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	private subject$: Subject<boolean> = new Subject();

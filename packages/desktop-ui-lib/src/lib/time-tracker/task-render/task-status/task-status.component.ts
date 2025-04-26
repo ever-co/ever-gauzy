@@ -8,9 +8,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-task-status',
-	templateUrl: './task-status.component.html',
-	styleUrls: ['./task-status.component.scss'],
+    selector: 'gauzy-task-status',
+    templateUrl: './task-status.component.html',
+    styleUrls: ['./task-status.component.scss'],
+    standalone: false
 })
 export class TaskStatusComponent extends TaskRenderComponent implements OnInit {
 	public statuses$: Observable<ITaskStatus[]>;

@@ -1,4 +1,5 @@
-@import 'gauzy/_gauzy-dialogs';
+@use 'gauzy/_gauzy-dialogs' as *;
+
 nb-card {
   width: 645px;
   background-color: nb-theme(gauzy-card-1);

@@ -1,5 +1,5 @@
-@import 'report';
-@import 'var';
+@use 'var' as *;
+@forward 'report';
 
 .employees-column {
   width: 25%;

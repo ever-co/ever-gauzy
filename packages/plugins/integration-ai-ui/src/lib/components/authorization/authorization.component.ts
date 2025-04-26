@@ -10,10 +10,11 @@ import { ReplacePipe } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-gauzy-ai-authorization',
-	templateUrl: './authorization.component.html',
-	styleUrls: ['./authorization.component.scss'],
-	providers: []
+    selector: 'ngx-gauzy-ai-authorization',
+    templateUrl: './authorization.component.html',
+    styleUrls: ['./authorization.component.scss'],
+    providers: [],
+    standalone: false
 })
 export class IntegrationAIAuthorizationComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organization: IOrganization;

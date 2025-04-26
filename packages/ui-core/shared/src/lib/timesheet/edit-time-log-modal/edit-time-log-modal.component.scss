@@ -1,5 +1,5 @@
-@import 'gauzy/_gauzy-dialogs';
-@import 'gauzy/_gauzy-table';
+@use 'gauzy/_gauzy-dialogs' as *;
+@use 'gauzy/_gauzy-table' as *;
 @import '@shared/required-asterisk';
 
 :host {

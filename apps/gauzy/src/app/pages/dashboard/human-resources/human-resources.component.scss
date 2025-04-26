@@ -1,4 +1,5 @@
-@import 'gauzy/_gauzy-cards';
+@use 'gauzy/_gauzy-cards' as *;
+
 .header {
 	background-color: unset;
 	.header-container {

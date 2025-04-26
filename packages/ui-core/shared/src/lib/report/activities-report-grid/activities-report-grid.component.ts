@@ -20,9 +20,10 @@ import { DateFormatPipe, DurationFormatPipe } from '../../pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-activities-report-grid',
-	templateUrl: './activities-report-grid.component.html',
-	styleUrls: ['./activities-report-grid.component.scss']
+    selector: 'ga-activities-report-grid',
+    templateUrl: './activities-report-grid.component.html',
+    styleUrls: ['./activities-report-grid.component.scss'],
+    standalone: false
 })
 export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	dailyData: IReportDayData[] = [];

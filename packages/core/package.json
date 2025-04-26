@@ -118,7 +118,6 @@
 		"chalk": "^4.1.0",
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.14.0",
-		"cli-ux": "^5.5.0",
 		"cloudinary": "^1.33.0",
 		"connect-redis": "^7.1.0",
 		"cross-fetch": "^3.1.5",
@@ -217,7 +216,7 @@
 		"ts-jest": "29.1.1",
 		"ts-node": "^10.9.2",
 		"tslint-config-prettier": "^1.18.0",
-		"typescript": "5.5.4"
+		"typescript": "^5.8.3"
 	},
 	"keywords": [
 		"gauzy",

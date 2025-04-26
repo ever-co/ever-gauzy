@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 .summary {
   min-width: 45rem;

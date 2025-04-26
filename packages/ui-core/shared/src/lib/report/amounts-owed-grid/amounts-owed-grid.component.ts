@@ -18,9 +18,10 @@ import { generateCsv } from '../../generate-csv-pdf';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-amounts-owed-grid',
-	templateUrl: './amounts-owed-grid.component.html',
-	styleUrls: ['./amounts-owed-grid.component.scss']
+    selector: 'ga-amounts-owed-grid',
+    templateUrl: './amounts-owed-grid.component.html',
+    styleUrls: ['./amounts-owed-grid.component.scss'],
+    standalone: false
 })
 export class AmountsOwedGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public loading: boolean;

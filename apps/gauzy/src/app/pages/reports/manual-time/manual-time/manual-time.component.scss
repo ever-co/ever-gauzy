@@ -1,44 +1,60 @@
-@import 'report';
-@import 'gauzy/_gauzy-overrides';
+@use 'gauzy/_gauzy-overrides' as *;
+@use 'report' as ga-report;
 
 :host {
-  nb-badge {
-    border: 2px solid var(--gauzy-border-default-color);
-    position: relative;
-    color: var(--gauzy-text-color-2);
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 15px;
-    letter-spacing: 0em;
-  }
-  .table-row {
-    height: auto;
-  }
-  .table-inner-wrapper {
-    align-items: flex-start;
-  }
-  .employee-column {
-    width: 15%;
-    min-width: 115px;
-    max-width: 185px;
-  }
-  .project-column {
-    width: 20%;
-    min-width: 15%;
-  }
-  .to-do-column {
-    width: 15%;
-    min-width: 9%;
-  }
-  .small-column {
-    width: 10%;
-    min-width: 5%;
-  }
-  .filters {
-    display: flex;
-    justify-content: flex-end;
-    ng-select {
-      min-width: 7rem;
+	::ng-deep {
+        @include ng-select-overrides(
+			2.25rem,
+            $default-button-radius,
+            $default-box-shadow
+		);
+
+        .weekly-logs .no-data-found {
+            height: calc(100vh - 20.1rem) !important;
+        }
+    }
+    nb-badge {
+		border: 2px solid var(--gauzy-border-default-color);
+		position: relative;
+		color: var(--gauzy-text-color-2);
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 15px;
+		letter-spacing: 0em;
+
+	}
+    .table-row {
+        height: auto;
+    }
+    .table-inner-wrapper {
+        align-items: flex-start;
+    }
+    .employee-column {
+        width: 15%;
+        min-width: 115px;
+        max-width: 185px;
+    }
+    .project-column {
+        width: 20%;
+        min-width: 15%;
+    }
+    .to-do-column {
+        width: 15%;
+        min-width: 9%;
+    }
+    .small-column {
+        width: 10%;
+        min-width: 5%;
+    }
+    .filters {
+        display: flex;
+        justify-content: flex-end;
+        ng-select{
+            min-width: 7rem;
+        }
+    }
+    .justify-end {
+        text-align: right;
     }
   }
   .justify-end {
@@ -46,18 +62,8 @@
   }
 }
 
-@include respond(ipad) {
-  @include mobile-table-styles;
-}
-
-:host {
-  ::ng-deep {
-    @include ng-select-overrides(2.25rem, $default-button-radius, $default-box-shadow);
-
-    .weekly-logs .no-data-found {
-      height: calc(100vh - 20.1rem) !important;
-    }
-  }
+@include ga-report.respond(ipad) {
+    @include ga-report.mobile-table-styles;
 }
 
 nb-card-body.report-body {

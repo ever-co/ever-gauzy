@@ -10,10 +10,11 @@ import { TaskStatisticsAdapter } from '../../shared/utils/adapters/task.adapter'
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-tasks',
-	templateUrl: './tasks.component.html',
-	styleUrls: ['./tasks.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-tasks',
+    templateUrl: './tasks.component.html',
+    styleUrls: ['./tasks.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class TasksComponent implements OnInit {
 	constructor(

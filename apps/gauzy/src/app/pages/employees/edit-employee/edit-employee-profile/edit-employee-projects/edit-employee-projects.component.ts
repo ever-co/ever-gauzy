@@ -22,10 +22,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-employee-projects',
-	templateUrl: './edit-employee-projects.component.html',
-	styles: [
-		`
+    selector: 'ga-edit-employee-projects',
+    templateUrl: './edit-employee-projects.component.html',
+    styles: [
+        `
 			:host {
 				height: calc(100vh - 20.5rem);
 
@@ -41,7 +41,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 				}
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class EditEmployeeProjectsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	private subject$: Subject<boolean> = new Subject();

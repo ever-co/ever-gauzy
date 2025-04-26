@@ -11,7 +11,8 @@ import { IProductTypeTranslated } from '@gauzy/contracts';
 			[label]="''"
 			(onChanged)="selectedProductTypeEvent($event)"
 		></ngx-product-type-selector>
-	`
+	`,
+	standalone: false
 })
 export class ProductTypeFilterComponent extends DefaultFilter implements OnChanges {
 	constructor() {

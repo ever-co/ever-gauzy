@@ -7,9 +7,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { InviteService, OrganizationContactService, ToastrService, UsersService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-invite-contact',
-	templateUrl: './invite-contact.component.html',
-	styleUrls: ['./invite-contact.component.scss']
+    selector: 'ga-invite-contact',
+    templateUrl: './invite-contact.component.html',
+    styleUrls: ['./invite-contact.component.scss'],
+    standalone: false
 })
 export class InviteContactComponent extends TranslationBaseComponent implements OnInit {
 	constructor(

@@ -7,8 +7,9 @@ import { GithubService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-integration-github-installation',
-	templateUrl: './installation.component.html'
+    selector: 'ngx-integration-github-installation',
+    templateUrl: './installation.component.html',
+    standalone: false
 })
 export class GithubInstallationComponent implements AfterViewInit, OnInit {
 	public isLoading: boolean = true;

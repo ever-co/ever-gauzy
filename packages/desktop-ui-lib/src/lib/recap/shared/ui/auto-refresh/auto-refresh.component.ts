@@ -5,10 +5,11 @@ import { AutoRefreshService } from '../../../+state/auto-refresh/auto-refresh.se
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-auto-refresh',
-	templateUrl: './auto-refresh.component.html',
-	styleUrls: ['./auto-refresh.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-auto-refresh',
+    templateUrl: './auto-refresh.component.html',
+    styleUrls: ['./auto-refresh.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class AutoRefreshComponent {
 	private service = inject(AutoRefreshService);

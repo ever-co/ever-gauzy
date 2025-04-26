@@ -1,7 +1,8 @@
 import { Directive, ElementRef, EventEmitter, Output, HostListener } from '@angular/core';
 
 @Directive({
-	selector: '[gauzyOutside]'
+    selector: '[gauzyOutside]',
+    standalone: false
 })
 export class OutsideDirective {
 	constructor(private readonly elementRef: ElementRef) {}

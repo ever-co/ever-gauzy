@@ -11,9 +11,10 @@ import { patterns } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-login-magic',
-	templateUrl: './login-magic.component.html',
-	styleUrls: ['./login-magic.component.scss']
+    selector: 'ngx-login-magic',
+    templateUrl: './login-magic.component.html',
+    styleUrls: ['./login-magic.component.scss'],
+    standalone: false
 })
 export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	public countdown: number;

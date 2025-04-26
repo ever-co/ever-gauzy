@@ -33,9 +33,10 @@ import { FormHelpers } from '../../forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-add-task-dialog',
-	templateUrl: './add-task-dialog.component.html',
-	styleUrls: ['./add-task-dialog.component.scss']
+    selector: 'ngx-add-task-dialog',
+    templateUrl: './add-task-dialog.component.html',
+    styleUrls: ['./add-task-dialog.component.scss'],
+    standalone: false
 })
 export class AddTaskDialogComponent extends TranslationBaseComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;

@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 :host nb-card-header {
     display: flex;

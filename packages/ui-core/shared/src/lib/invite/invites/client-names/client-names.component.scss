@@ -1,5 +1,5 @@
-@import 'themes';
-@import '@shared/_contact-links';
+@use 'themes' as *;
+@forward '@shared/_contact-links';
 
 @include nb-install-component() {
   .client-badge {

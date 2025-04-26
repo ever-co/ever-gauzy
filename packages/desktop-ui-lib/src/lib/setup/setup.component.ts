@@ -21,10 +21,11 @@ import { ErrorHandlerService, Store, ToastrNotificationService } from '../servic
 import { SetupService } from './setup.service';
 
 @Component({
-	selector: 'ngx-setup',
-	templateUrl: './setup.component.html',
-	styleUrls: ['./setup.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-setup',
+    templateUrl: './setup.component.html',
+    styleUrls: ['./setup.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class SetupComponent implements OnInit, OnDestroy {
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;

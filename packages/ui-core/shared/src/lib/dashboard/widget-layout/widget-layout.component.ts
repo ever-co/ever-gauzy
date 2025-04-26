@@ -19,9 +19,10 @@ import { WidgetService } from '../widget/widget.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-widget-layout',
-	templateUrl: './widget-layout.component.html',
-	styleUrls: ['./widget-layout.component.scss']
+    selector: 'ga-widget-layout',
+    templateUrl: './widget-layout.component.html',
+    styleUrls: ['./widget-layout.component.scss'],
+    standalone: false
 })
 export class WidgetLayoutComponent
 	extends LayoutWithDraggableObject

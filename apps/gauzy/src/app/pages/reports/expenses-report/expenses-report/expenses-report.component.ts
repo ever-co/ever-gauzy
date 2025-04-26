@@ -18,9 +18,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-expenses-report',
-	templateUrl: './expenses-report.component.html',
-	styleUrls: ['./expenses-report.component.scss']
+    selector: 'ga-expenses-report',
+    templateUrl: './expenses-report.component.html',
+    styleUrls: ['./expenses-report.component.scss'],
+    standalone: false
 })
 export class ExpensesReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public filters: ITimeLogFilters;

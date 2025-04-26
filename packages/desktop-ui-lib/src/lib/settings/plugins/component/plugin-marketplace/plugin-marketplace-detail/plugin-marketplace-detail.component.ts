@@ -21,6 +21,7 @@ import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 	selector: 'lib-plugin-marketplace-detail',
 	templateUrl: './plugin-marketplace-detail.component.html',
 	styleUrls: ['./plugin-marketplace-detail.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMarketplaceDetailComponent implements OnInit {

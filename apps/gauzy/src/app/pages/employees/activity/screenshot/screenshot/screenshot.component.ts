@@ -31,9 +31,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-screenshots',
-	templateUrl: './screenshot.component.html',
-	styleUrls: ['./screenshot.component.scss']
+    selector: 'ngx-screenshots',
+    templateUrl: './screenshot.component.html',
+    styleUrls: ['./screenshot.component.scss'],
+    standalone: false
 })
 export class ScreenshotComponent extends BaseSelectorFilterComponent implements AfterViewInit, OnInit, OnDestroy {
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);

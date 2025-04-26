@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
-	selector: 'ngx-resync-button',
-	templateUrl: './resync-button.component.html',
-	styleUrls: []
+    selector: 'ngx-resync-button',
+    templateUrl: './resync-button.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class ResyncButtonComponent {
 	/**

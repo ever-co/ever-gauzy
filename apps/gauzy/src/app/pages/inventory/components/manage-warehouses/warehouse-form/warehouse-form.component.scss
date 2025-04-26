@@ -1,5 +1,4 @@
-@import '../../manage-merchants/merchant-form/merchant-form.component.scss';
-
+@forward '../../manage-merchants/merchant-form/merchant-form.component';
 
 :host {
 	nb-stepper ::ng-deep .step-content {

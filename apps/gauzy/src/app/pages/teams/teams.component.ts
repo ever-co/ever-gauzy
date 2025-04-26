@@ -40,9 +40,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-teams',
-	templateUrl: './teams.component.html',
-	styleUrls: ['./teams.component.scss']
+    selector: 'ga-teams',
+    templateUrl: './teams.component.html',
+    styleUrls: ['./teams.component.scss'],
+    standalone: false
 })
 export class TeamsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	@ViewChild('addEditTemplate')

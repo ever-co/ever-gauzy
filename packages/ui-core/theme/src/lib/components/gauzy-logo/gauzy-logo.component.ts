@@ -26,9 +26,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-gauzy-logo',
-	templateUrl: './gauzy-logo.component.html',
-	styleUrls: ['./gauzy-logo.component.scss']
+    selector: 'ngx-gauzy-logo',
+    templateUrl: './gauzy-logo.component.html',
+    styleUrls: ['./gauzy-logo.component.scss'],
+    standalone: false
 })
 export class GauzyLogoComponent implements AfterViewInit, OnInit {
 	public theme: string;

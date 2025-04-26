@@ -1,5 +1,7 @@
-@import 'themes';
+@use 'themes' as *;
+
 $radius: nb-theme(border-radius);
+
 :host {
   background-color: var(--gauzy-card-2);
   border-radius: $radius;

@@ -8,9 +8,10 @@ import { CandidateCriterionsRatingService, CandidateFeedbacksService } from '@ga
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-delete-feedback',
-	templateUrl: 'delete-feedback.component.html',
-	styleUrls: ['delete-feedback.component.scss']
+    selector: 'ga-delete-feedback',
+    templateUrl: 'delete-feedback.component.html',
+    styleUrls: ['delete-feedback.component.scss'],
+    standalone: false
 })
 export class DeleteFeedbackComponent extends TranslationBaseComponent implements OnDestroy {
 	@Input() feedbackId: string;

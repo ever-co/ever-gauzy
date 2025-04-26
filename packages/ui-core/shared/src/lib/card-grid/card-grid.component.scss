@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 :host .card-layout {
   display: grid;

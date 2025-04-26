@@ -21,9 +21,10 @@ import { generateCsv } from '../../generate-csv-pdf';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-daily-grid',
-	templateUrl: './daily-grid.component.html',
-	styleUrls: ['./daily-grid.component.scss']
+    selector: 'ga-daily-grid',
+    templateUrl: './daily-grid.component.html',
+    styleUrls: ['./daily-grid.component.scss'],
+    standalone: false
 })
 export class DailyGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	// This constant holds the URL for downloading content from the platform's website.

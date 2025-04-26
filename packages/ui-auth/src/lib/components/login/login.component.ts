@@ -14,9 +14,10 @@ import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-login',
-	templateUrl: './login.component.html',
-	styleUrls: ['./login.component.scss']
+    selector: 'ngx-login',
+    templateUrl: './login.component.html',
+    styleUrls: ['./login.component.scss'],
+    standalone: false
 })
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	@ViewChild('form') private readonly form: FormGroupDirective;

@@ -12,6 +12,7 @@ import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
 	selector: 'gauzy-version-selector',
 	templateUrl: './version-selector.component.html',
 	styleUrls: ['./version-selector.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VersionSelectorComponent implements OnInit, OnDestroy {

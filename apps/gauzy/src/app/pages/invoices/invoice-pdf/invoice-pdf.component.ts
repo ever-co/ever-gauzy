@@ -42,7 +42,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 				width: 60vw;
 			}
 		`
-	]
+	],
+	standalone: false
 })
 export class InvoicePdfComponent extends TranslationBaseComponent implements OnInit {
 	@Input() invoice: IInvoice;

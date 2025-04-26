@@ -12,9 +12,10 @@ import { EmployeesService, OrganizationContactService } from '@gauzy/ui-core/cor
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-contact-view',
-	templateUrl: './contact-view.component.html',
-	styleUrls: ['./contact-view.component.scss']
+    selector: 'ngx-contact-view',
+    templateUrl: './contact-view.component.html',
+    styleUrls: ['./contact-view.component.scss'],
+    standalone: false
 })
 export class ContactViewComponent extends TranslationBaseComponent implements OnInit {
 	tabs: any[];

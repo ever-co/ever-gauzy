@@ -38,10 +38,11 @@ import { ALL_EMPLOYEES_SELECTED } from './default-employee';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-employee-selector',
-	templateUrl: './employee.component.html',
-	styleUrls: ['./employee.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ga-employee-selector',
+    templateUrl: './employee.component.html',
+    styleUrls: ['./employee.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
 	public hasEditEmployee$: Observable<boolean>;

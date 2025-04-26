@@ -3,8 +3,8 @@ import { DefaultFilter } from 'angular2-smart-table';
 import { IOrganizationVendor } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ga-vendor-select-filter',
-	template: `
+    selector: 'ga-vendor-select-filter',
+    template: `
 		<ga-vendor-select
 			[clearable]="true"
 			[searchable]="false"
@@ -12,7 +12,8 @@ import { IOrganizationVendor } from '@gauzy/contracts';
 			[placeholder]="'SM_TABLE.VENDOR' | translate"
 			(onChanged)="selectedVendorEvent($event)"
 		></ga-vendor-select>
-	`
+	`,
+    standalone: false
 })
 export class VendorFilterComponent extends DefaultFilter implements OnChanges {
 	constructor() {

@@ -11,9 +11,10 @@ import { combineLatest, Observable, Subject, takeUntil } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-view-time-log',
-	templateUrl: './view-time-log.component.html',
-	styleUrls: ['./view-time-log.component.scss']
+    selector: 'ngx-view-time-log',
+    templateUrl: './view-time-log.component.html',
+    styleUrls: ['./view-time-log.component.scss'],
+    standalone: false
 })
 export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	organization: IOrganization;

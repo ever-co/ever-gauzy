@@ -17,6 +17,7 @@ import { VideoPlayerComponent } from '../../shared/ui/video-player/video-player.
 	selector: 'plug-video',
 	templateUrl: './video.component.html',
 	styleUrl: './video.component.scss',
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VideoComponent implements AfterViewInit {

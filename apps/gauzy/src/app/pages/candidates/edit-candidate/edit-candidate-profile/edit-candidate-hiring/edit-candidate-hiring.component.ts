@@ -6,9 +6,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-edit-candidate-hiring',
-	templateUrl: './edit-candidate-hiring.component.html',
-	styleUrls: ['./edit-candidate-hiring.component.scss']
+    selector: 'ga-edit-candidate-hiring',
+    templateUrl: './edit-candidate-hiring.component.html',
+    styleUrls: ['./edit-candidate-hiring.component.scss'],
+    standalone: false
 })
 export class EditCandidateHiringComponent implements OnInit, OnDestroy {
 	form: UntypedFormGroup;

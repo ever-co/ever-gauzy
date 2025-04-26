@@ -7,9 +7,10 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-departments-mutation',
-	templateUrl: './departments-mutation.component.html',
-	styleUrls: ['./departments-mutation.component.scss']
+    selector: 'ga-departments-mutation',
+    templateUrl: './departments-mutation.component.html',
+    styleUrls: ['./departments-mutation.component.scss'],
+    standalone: false
 })
 export class DepartmentsMutationComponent implements OnInit {
 	/*

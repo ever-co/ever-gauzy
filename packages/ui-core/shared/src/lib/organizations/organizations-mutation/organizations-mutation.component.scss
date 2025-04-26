@@ -1,4 +1,4 @@
-@import 'gauzy/_gauzy-overrides';
+@use 'gauzy/_gauzy-overrides' as *;
 
 :host ga-organizations-step-form ::ng-deep {
   @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));

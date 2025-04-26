@@ -22,9 +22,10 @@ import { InvoicesService, OrganizationSettingService, Store } from '@gauzy/ui-co
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-payment-add',
-	templateUrl: './payment-mutation.component.html',
-	styleUrls: ['./payment-mutation.component.scss']
+    selector: 'ga-payment-add',
+    templateUrl: './payment-mutation.component.html',
+    styleUrls: ['./payment-mutation.component.scss'],
+    standalone: false
 })
 export class PaymentMutationComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {
 	invoice: IInvoice;

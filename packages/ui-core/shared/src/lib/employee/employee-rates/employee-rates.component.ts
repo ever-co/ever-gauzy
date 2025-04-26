@@ -7,9 +7,10 @@ import { CandidateStore, EmployeeStore, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-employee-rates',
-	templateUrl: 'employee-rates.component.html',
-	styleUrls: ['employee-rates.component.scss']
+    selector: 'ga-employee-rates',
+    templateUrl: 'employee-rates.component.html',
+    styleUrls: ['employee-rates.component.scss'],
+    standalone: false
 })
 export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	@Input() public isEmployee: boolean;

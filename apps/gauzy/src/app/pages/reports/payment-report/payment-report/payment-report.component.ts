@@ -26,9 +26,10 @@ import { DateRangePickerBuilderService, PaymentService, Store, TimesheetFilterSe
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-payment-report',
-	templateUrl: './payment-report.component.html',
-	styleUrls: ['./payment-report.component.scss']
+    selector: 'ga-payment-report',
+    templateUrl: './payment-report.component.html',
+    styleUrls: ['./payment-report.component.scss'],
+    standalone: false
 })
 export class PaymentReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public filters: IGetPaymentInput;

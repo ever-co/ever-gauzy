@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 	selector: 'ngx-contact-links',
 	template: `
 		<div class="contact-links-container">
-			<ng-container *ngIf="value && value?.name">
+			<ng-container *ngIf="value?.name">
 				<div [nbTooltip]="value.name" (click)="navigateToContact()" class="inner-wrapper">
 					<div *ngIf="!value.imageUrl" class="prefix">
 						{{ value.name.substr(0, 1).toUpperCase() }}
@@ -20,7 +20,8 @@ import { Router } from '@angular/router';
 			</ng-container>
 		</div>
 	`,
-	styleUrls: ['./contact-links.component.scss']
+	styleUrls: ['./contact-links.component.scss'],
+	standalone: false
 })
 export class ContactLinksComponent {
 	@Input() rowData: any;

@@ -17,9 +17,10 @@ export interface SelectAssetSettings {
 
 @UntilDestroy()
 @Component({
-	selector: 'ngx-select-asset',
-	templateUrl: './select-asset.component.html',
-	styleUrls: ['./select-asset.component.scss']
+    selector: 'ngx-select-asset',
+    templateUrl: './select-asset.component.html',
+    styleUrls: ['./select-asset.component.scss'],
+    standalone: false
 })
 export class SelectAssetComponent extends TranslationBaseComponent implements OnInit {
 	activeImage: IImageAsset;

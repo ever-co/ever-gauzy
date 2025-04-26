@@ -1,2 +1,2 @@
-@import 'gauzy/_gauzy-dialogs';
+@use 'gauzy/_gauzy-dialogs' as *;
 @import '@shared/required-asterisk';
