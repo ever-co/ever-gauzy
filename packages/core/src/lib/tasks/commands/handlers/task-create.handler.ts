@@ -22,6 +22,7 @@ import { Task } from './../../task.entity';
 import { EmployeeService } from '../../../employee/employee.service';
 import { MentionService } from '../../../mention/mention.service';
 import { ActivityLogService } from '../../../activity-log/activity-log.service';
+import { TaskProjectSequenceService } from '../../project-sequence/project-sequence.service';
 
 @CommandHandler(TaskCreateCommand)
 export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
@@ -34,7 +35,8 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 		private readonly _organizationProjectService: OrganizationProjectService,
 		private readonly _employeeService: EmployeeService,
 		private readonly mentionService: MentionService,
-		private readonly activityLogService: ActivityLogService
+		private readonly activityLogService: ActivityLogService,
+		private readonly taskProjectSequenceService: TaskProjectSequenceService
 	) {}
 
 	/**
@@ -43,7 +45,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 	 * @param command The command containing task creation input and event triggering flag.
 	 * @returns The created task.
 	 */
-	public async execute(command: TaskCreateCommand, attempt = 0): Promise<ITask> {
+	public async execute(command: TaskCreateCommand): Promise<ITask> {
 		try {
 			// Destructure input and triggered event flag from the command
 			const { input, triggeredEvent } = command;
@@ -62,35 +64,21 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 			// Log or throw an exception if both projectId and project are not provided (optional)
 			if (!project) {
-				this.logger.warn('No projectId or project provided. Proceeding without project information.');
+				this.logger.error('No projectId or project provided. Proceeding without project information.');
+				throw new Error('no-project-provided');
 			}
 
-			// Retrieve the maximum task number for the specified project, or handle null projectId if no project
-			const maxNumber = await this._taskService.getMaxTaskNumberByProject({
-				tenantId,
-				organizationId,
-				projectId: project?.id ?? null // If no project is provided, this will pass null for projectId
+			const taskNumber = await this.taskProjectSequenceService.getTaskNumber(project?.id);
+
+			// Create the task with incremented number, project prefix, and other task details
+			const task = await this._taskService.create({
+				...data, // Spread the input properties
+				members: (members || []).map(({ id }) => new Employee({ id })),
+				number: taskNumber,
+				prefix: projectPrefix, // Use the project prefix, or null if no project
+				tenantId, // Pass the tenant ID
+				organizationId // Pass the organization ID
 			});
-
-			let task;
-			try {
-				// Create the task with incremented number, project prefix, and other task details
-				task = await this._taskService.create({
-					...data, // Spread the input properties
-					members: (members || []).map(({ id }) => new Employee({ id })),
-					number: maxNumber + 1, // Increment the task number
-					prefix: projectPrefix, // Use the project prefix, or null if no project
-					tenantId, // Pass the tenant ID
-					organizationId // Pass the organization ID
-				});
-			} catch (error) {
-				this.logger.error('Error while creating task', error);
-				// Retry the command if the error is due to a unique constraint violation
-				if (attempt < 10) {
-					return await this.execute(command, attempt + 1);
-				}
-				throw error;
-			}
 
 			// Publish a task created event if triggeredEvent flag is set
 			if (triggeredEvent) {
@@ -172,7 +160,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			return task; // Return the created task
 		} catch (error) {
 			// Handle errors during task creation
-			this.logger.error(`Error while creating task: ${error.message}`, error.message);
+			this.logger.error(`Error while creating task: ${error}`);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}

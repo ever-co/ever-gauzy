@@ -16,7 +16,7 @@ import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
 import { TypeOrmTaskRepository } from './repository';
-
+import { TaskProjectSequenceModule } from './project-sequence/project-sequence.module';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Task, TaskStatus, IntegrationMap]),
@@ -29,7 +29,8 @@ import { TypeOrmTaskRepository } from './repository';
 		OrganizationSprintModule,
 		TaskViewModule,
 		CqrsModule,
-		EventBusModule
+		EventBusModule,
+		TaskProjectSequenceModule
 	],
 	controllers: [TaskController],
 	providers: [TaskService, TypeOrmTaskRepository, ...CommandHandlers],
