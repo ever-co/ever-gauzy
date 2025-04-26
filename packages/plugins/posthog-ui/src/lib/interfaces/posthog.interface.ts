@@ -1,5 +1,5 @@
 import { InjectionToken } from '@angular/core';
-import { PostHogConfig } from 'posthog-js';
+import { PostHogConfig, Properties } from 'posthog-js';
 
 /**
  * Configuration interface for PostHog initialization
@@ -33,7 +33,7 @@ export interface PostHogModuleConfig {
 		/**
 		 * Custom properties to include with API tracking events
 		 */
-		additionalProperties?: Record<string, unknown>;
+		additionalProperties?: Properties;
 	};
 }
 

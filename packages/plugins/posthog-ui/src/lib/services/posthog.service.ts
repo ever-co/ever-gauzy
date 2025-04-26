@@ -133,7 +133,7 @@ export class PostHogService {
 	 * @param properties - Properties to include with the event
 	 * @param sendInstantly - Optional flag to send the event instantly
 	 */
-	captureEvent(eventName: string, properties: Record<string, any> = {}, sendInstantly?: boolean): void {
+	captureEvent(eventName: string, properties: Properties = {}, sendInstantly?: boolean): void {
 		if (!this.initialized) return;
 
 		posthog.capture(

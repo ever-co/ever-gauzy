@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { PostHogService } from './posthog.service';
 import { PostHogModuleConfig } from '../interfaces/posthog.interface';
-import { PostHog, PostHogConfig } from 'posthog-js';
+import { PostHog, PostHogConfig, Properties } from 'posthog-js';
 import { Router } from '@angular/router';
 
 /**
@@ -82,7 +82,7 @@ export class PostHogServiceManager {
 	/**
 	 * Track a custom event with the appropriate properties
 	 */
-	trackEvent(eventName: string, properties: Record<string, any> = {}): void {
+	trackEvent(eventName: string, properties: Properties = {}): void {
 		if (!this.posthogService.isInitialized()) return;
 		this.posthogService.captureEvent(eventName, properties);
 	}
@@ -90,7 +90,7 @@ export class PostHogServiceManager {
 	/**
 	 * Track a page view, respecting the configuration settings
 	 */
-	trackPageView(url?: string, properties: Record<string, any> = {}): void {
+	trackPageView(url?: string, properties: Properties = {}): void {
 		if (!this.posthogService.isInitialized()) return;
 		this.posthogService.capturePageview(url, properties);
 	}
@@ -98,7 +98,7 @@ export class PostHogServiceManager {
 	/**
 	 * Identify a user with the given ID and properties
 	 */
-	identifyUser(userId: string, properties: Record<string, any> = {}): void {
+	identifyUser(userId: string, properties: Properties = {}): void {
 		if (!this.posthogService.isInitialized()) return;
 		this.posthogService.getInstance().identify(userId, properties);
 	}
@@ -146,7 +146,7 @@ export class PostHogServiceManager {
 	/**
 	 * Set person properties for the current user
 	 */
-	setUserProperties(properties: Record<string, any>): void {
+	setUserProperties(properties: Properties): void {
 		if (!this.posthogService.isInitialized()) return;
 		this.posthogService.getInstance().people.set(properties);
 	}
@@ -178,7 +178,7 @@ export class PostHogServiceManager {
 	/**
 	 * Associate the current user with a group
 	 */
-	setGroup(groupType: string, groupKey: string, groupProperties: Record<string, any> = {}): void {
+	setGroup(groupType: string, groupKey: string, groupProperties: Properties = {}): void {
 		if (!this.posthogService.isInitialized()) return;
 		this.posthogService.getInstance().group(groupType, groupKey, groupProperties);
 	}
@@ -186,7 +186,7 @@ export class PostHogServiceManager {
 	/**
 	 * Track an error with the appropriate context
 	 */
-	trackError(error: Error, properties: Record<string, any> = {}): void {
+	trackError(error: Error, properties: Properties = {}): void {
 		if (!this.posthogService.isInitialized()) return;
 		this.posthogService.captureError(error, properties);
 	}
