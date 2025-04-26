@@ -2,13 +2,13 @@ import { Component, Output, EventEmitter, TemplateRef, ViewChild } from '@angula
 import { NbCardComponent } from '@nebular/theme';
 
 @Component({
-    selector: 'gauzy-under-construction-popup',
-    templateUrl: './popup.component.html',
-    styleUrls: ['./popup.component.scss'],
-    standalone: false
+	selector: 'gauzy-under-construction-popup',
+	templateUrl: './popup.component.html',
+	styleUrls: ['./popup.component.scss'],
+	standalone: false
 })
 export class UnderConstructionPopupComponent {
-	@Output() onClosed: EventEmitter<any>;
+	@Output() onClosed: EventEmitter<void>;
 
 	private _popup: TemplateRef<NbCardComponent>;
 	public get popup(): TemplateRef<NbCardComponent> {

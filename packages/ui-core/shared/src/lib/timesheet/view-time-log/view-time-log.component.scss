@@ -2,7 +2,7 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 
 :host {
-  .time-log-view-contiainer {
+  .time-log-view-container {
     width: 430px;
     box-shadow: 0px 0px 0px 2px nb-theme(color-primary-transparent-default);
     border-radius: nb-theme(border-radius);

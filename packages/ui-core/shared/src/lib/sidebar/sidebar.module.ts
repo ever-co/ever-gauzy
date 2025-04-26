@@ -18,7 +18,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { HelpCenterService } from '@gauzy/ui-core/core';
 import { AddIconModule } from './add-icon/add-icon.module';
 import { SidebarComponent } from './sidebar.component';
-import { KnowledgeBaseModule } from './knowledeg-base/knowledeg-base.module';
+import { KnowledgeBaseModule } from './knowledge-base/knowledge-base.module';
 import { DeleteCategoryModule } from './delete-category/delete-category.module';
 import { DeleteBaseModule } from './delete-base/delete-base.module';
 

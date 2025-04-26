@@ -1,1 +1,7 @@
 @use 'gauzy/_gauzy-dialogs' as *;
+
+:host {
+	.center {
+		width: 300px;
+	}
+}
