@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { InvoiceTotalValueComponent } from '../invoice-total-value/invoice-total-value.component';
 
 @Component({
-	selector: 'ga-income-amount',
-	template: `
+    selector: 'ga-income-amount',
+    template: `
 		<span
 			>{{ value | currency : rowData?.currency | position : organization?.currencyPosition }}
 			<nb-icon
@@ -33,6 +33,7 @@ import { InvoiceTotalValueComponent } from '../invoice-total-value/invoice-total
 			</nb-icon>
 		</span>
 	`,
-	styles: []
+    styles: [],
+    standalone: false
 })
 export class IncomeExpenseAmountComponent extends InvoiceTotalValueComponent {}

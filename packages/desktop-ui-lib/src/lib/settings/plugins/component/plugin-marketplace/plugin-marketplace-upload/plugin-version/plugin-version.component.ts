@@ -6,6 +6,7 @@ import { NbDateService } from '@nebular/theme';
 	selector: 'lib-plugin-version',
 	templateUrl: './plugin-version.component.html',
 	styleUrls: ['./plugin-version.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginVersionComponent {

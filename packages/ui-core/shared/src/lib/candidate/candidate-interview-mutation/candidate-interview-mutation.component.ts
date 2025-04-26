@@ -32,9 +32,10 @@ import { CommunicationService } from './communication.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-candidate-interview-mutation',
-	templateUrl: 'candidate-interview-mutation.component.html',
-	styleUrls: ['candidate-interview-mutation.component.scss']
+    selector: 'ga-candidate-interview-mutation',
+    templateUrl: 'candidate-interview-mutation.component.html',
+    styleUrls: ['candidate-interview-mutation.component.scss'],
+    standalone: false
 })
 export class CandidateInterviewMutationComponent implements AfterViewInit, OnInit, OnDestroy {
 	@Input() editData: ICandidateInterview;

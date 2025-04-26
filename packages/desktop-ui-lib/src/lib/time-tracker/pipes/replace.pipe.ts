@@ -2,7 +2,8 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { isRegExp, isString, isUndefined } from 'underscore';
 
 @Pipe({
-	name: 'replace',
+    name: 'replace',
+    standalone: false
 })
 export class ReplacePipe implements PipeTransform {
 	transform(input: any, pattern: any, replacement: any): any {

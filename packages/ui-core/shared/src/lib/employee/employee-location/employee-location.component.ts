@@ -10,9 +10,10 @@ import { LeafletMapComponent, LocationFormComponent } from '../../forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-employee-location',
-	templateUrl: './employee-location.component.html',
-	styleUrls: ['./employee-location.component.scss']
+    selector: 'ga-employee-location',
+    templateUrl: './employee-location.component.html',
+    styleUrls: ['./employee-location.component.scss'],
+    standalone: false
 })
 export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	@Input() public isEmployee: boolean;

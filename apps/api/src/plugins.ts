@@ -26,7 +26,7 @@ const { jitsu, sentry, posthog } = environment;
  */
 export const plugins = [
 	// Includes the SentryPlugin based on the presence of Sentry configuration.
-	...(sentry && sentry.dsn ? [SentryPlugin] : []),
+	...(sentry?.dsn ? [SentryPlugin] : []),
 
 	// Includes the PostHogPlugin based on the presence of PostHog configuration.
 	...(posthog?.posthogEnabled && posthog?.posthogKey ? [PosthogPlugin] : []),

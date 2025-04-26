@@ -1,4 +1,4 @@
-@import 'gauzy/_gauzy-dialogs';
+@use 'gauzy/_gauzy-dialogs' as *;
 
 .main {
     $orange: rgba(245, 109, 88, 1);

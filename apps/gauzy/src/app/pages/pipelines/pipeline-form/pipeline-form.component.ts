@@ -9,9 +9,10 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './pipeline-form.component.html',
-	styleUrls: ['./pipeline-form.component.scss'],
-	selector: 'ga-pipeline-mutation-form'
+    templateUrl: './pipeline-form.component.html',
+    styleUrls: ['./pipeline-form.component.scss'],
+    selector: 'ga-pipeline-mutation-form',
+    standalone: false
 })
 export class PipelineFormComponent implements OnInit {
 	public isActive: boolean = true;

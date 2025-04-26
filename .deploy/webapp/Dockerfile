@@ -109,6 +109,7 @@ COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/p
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
+COPY --chown=node:node packages/plugins/posthog/package.json ./packages/plugins/posthog/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
 COPY --chown=node:node packages/plugins/job-employee-ui/package.json ./packages/plugins/job-employee-ui/

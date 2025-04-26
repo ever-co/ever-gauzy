@@ -12,10 +12,11 @@ import { EmployeeSelectorComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-pick-employee',
-	templateUrl: './pick-employee.component.html',
-	styleUrls: ['./pick-employee.component.scss'],
-	providers: [EventTypeService]
+    selector: 'ga-pick-employee',
+    templateUrl: './pick-employee.component.html',
+    styleUrls: ['./pick-employee.component.scss'],
+    providers: [EventTypeService],
+    standalone: false
 })
 export class PickEmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public loading: boolean;

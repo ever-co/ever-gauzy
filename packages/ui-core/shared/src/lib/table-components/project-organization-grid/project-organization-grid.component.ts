@@ -2,9 +2,10 @@ import { Component, Input } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
 @Component({
-	selector: 'gauzy-project-organization-grid',
-	templateUrl: './project-organization-grid.component.html',
-	styleUrls: ['./project-organization-grid.component.scss']
+    selector: 'gauzy-project-organization-grid',
+    templateUrl: './project-organization-grid.component.html',
+    styleUrls: ['./project-organization-grid.component.scss'],
+    standalone: false
 })
 export class ProjectOrganizationGridComponent {
 	@Input() value: string | number;

@@ -1,8 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
-	selector: 'ga-custom-render-selector',
-	template: `
+    selector: 'ga-custom-render-selector',
+    template: `
 		<div class="d-flex align-items-center">
 			<ng-container *ngIf="isSelected">
 				<nb-icon
@@ -14,7 +14,8 @@ import { Component, Input, OnInit } from '@angular/core';
 			{{ rowData.taskNumber + ' ' + rowData.title }}
 		</div>
 	`,
-	styleUrls: ['./time-tracker.component.scss'],
+    styleUrls: ['./time-tracker.component.scss'],
+    standalone: false
 })
 export class CustomRenderComponent implements OnInit {
 	isSelected: boolean = false;
@@ -30,13 +31,14 @@ export class CustomRenderComponent implements OnInit {
 }
 
 @Component({
-	selector: 'ga-custom-description-selector',
-	template: `
+    selector: 'ga-custom-description-selector',
+    template: `
 		<span class="hidden-long-text">
 			{{ value.toString() }}
 		</span>
 	`,
-	styleUrls: ['./time-tracker.component.scss'],
+    styleUrls: ['./time-tracker.component.scss'],
+    standalone: false
 })
 export class CustomDescriptionComponent {
 

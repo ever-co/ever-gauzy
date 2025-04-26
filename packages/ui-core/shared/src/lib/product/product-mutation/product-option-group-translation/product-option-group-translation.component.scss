@@ -1,4 +1,4 @@
-@import 'gauzy/_gauzy-dialogs';
+@use 'gauzy/_gauzy-dialogs' as *;
 
 .main {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);

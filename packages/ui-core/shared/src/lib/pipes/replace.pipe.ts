@@ -3,7 +3,8 @@ import { isRegExp, isString, isUndefined } from 'underscore';
 import { replaceAll } from '@gauzy/ui-core/common';
 
 @Pipe({
-	name: 'replace'
+    name: 'replace',
+    standalone: false
 })
 export class ReplacePipe implements PipeTransform {
 	/**

@@ -18,9 +18,10 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-timesheet-approvals',
-	templateUrl: './approvals.component.html',
-	styleUrls: ['./approvals.component.scss']
+    selector: 'ngx-timesheet-approvals',
+    templateUrl: './approvals.component.html',
+    styleUrls: ['./approvals.component.scss'],
+    standalone: false
 })
 export class ApprovalsComponent extends BaseSelectorFilterComponent implements AfterViewInit, OnInit, OnDestroy {
 	timesheets: ITimesheet[] = [];

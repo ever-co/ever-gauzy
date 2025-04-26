@@ -1,4 +1,4 @@
-@import 'gauzy/gauzy-overrides';
+@use 'gauzy/gauzy-overrides' as *;
 
 :host {
 	::ng-deep {

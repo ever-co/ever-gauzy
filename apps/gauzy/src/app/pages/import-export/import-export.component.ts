@@ -32,9 +32,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-import-export',
-	templateUrl: './import-export.component.html',
-	styleUrls: ['./import-export.component.scss']
+    selector: 'ngx-import-export',
+    templateUrl: './import-export.component.html',
+    styleUrls: ['./import-export.component.scss'],
+    standalone: false
 })
 export class ImportExportComponent extends TranslationBaseComponent implements OnInit {
 	user: IUser;

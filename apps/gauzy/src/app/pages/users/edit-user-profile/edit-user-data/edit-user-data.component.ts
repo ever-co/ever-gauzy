@@ -11,9 +11,10 @@ import { UsersService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-edit-user-data',
-	templateUrl: './edit-user-data.component.html',
-	styleUrls: ['./edit-user-data.component.scss']
+    selector: 'ngx-edit-user-data',
+    templateUrl: './edit-user-data.component.html',
+    styleUrls: ['./edit-user-data.component.scss'],
+    standalone: false
 })
 export class EditUserDataComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	params: Params;

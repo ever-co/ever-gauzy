@@ -7,7 +7,8 @@ import { SelectorService } from '../../+state/selector.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	template: ''
+    template: '',
+    standalone: false
 })
 export abstract class AbstractSelectorComponent<T> implements ControlValueAccessor {
 	public search$ = new Subject<string>();

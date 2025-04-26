@@ -10,10 +10,11 @@ import { ProjectStatisticsAdapter } from '../../shared/utils/adapters/project.ad
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-projects',
-	templateUrl: './projects.component.html',
-	styleUrls: ['./projects.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-projects',
+    templateUrl: './projects.component.html',
+    styleUrls: ['./projects.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ProjectsComponent implements OnInit {
 	constructor(

@@ -15,9 +15,10 @@ import { GoalSettingsService, KeyResultUpdateService } from '@gauzy/ui-core/core
 import { Store } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-keyresult-update',
-	templateUrl: './keyresult-update.component.html',
-	styleUrls: ['./keyresult-update.component.scss']
+    selector: 'ga-keyresult-update',
+    templateUrl: './keyresult-update.component.html',
+    styleUrls: ['./keyresult-update.component.scss'],
+    standalone: false
 })
 export class KeyResultUpdateComponent extends TranslationBaseComponent implements OnInit {
 	keyResultUpdateForm: UntypedFormGroup;

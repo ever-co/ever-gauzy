@@ -1,4 +1,4 @@
-@import '../video-edit/video-edit.component';
+@forward '../video-edit/video-edit.component';
 
 .video-details-container {
   border-radius: var(--border-radius);

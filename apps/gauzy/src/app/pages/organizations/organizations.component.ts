@@ -31,8 +31,9 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './organizations.component.html',
-	styleUrls: ['./organizations.component.scss']
+    templateUrl: './organizations.component.html',
+    styleUrls: ['./organizations.component.scss'],
+    standalone: false
 })
 export class OrganizationsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	settingsSmartTable: object;

@@ -5,6 +5,7 @@ import { IActionButton } from '../../../../../shared/models/action-button.model'
 	selector: 'plug-action-button-group',
 	templateUrl: './action-button-group.component.html',
 	styleUrl: './action-button-group.component.scss',
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActionButtonGroupComponent {

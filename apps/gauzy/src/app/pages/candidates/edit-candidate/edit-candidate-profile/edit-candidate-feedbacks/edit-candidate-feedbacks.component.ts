@@ -34,9 +34,10 @@ import { FeedbackStatusTableComponent } from './table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-candidate-feedbacks',
-	templateUrl: './edit-candidate-feedbacks.component.html',
-	styleUrls: ['./edit-candidate-feedbacks.component.scss']
+    selector: 'ga-edit-candidate-feedbacks',
+    templateUrl: './edit-candidate-feedbacks.component.html',
+    styleUrls: ['./edit-candidate-feedbacks.component.scss'],
+    standalone: false
 })
 export class EditCandidateFeedbacksComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	feedbackId = null;

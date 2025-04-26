@@ -8,9 +8,10 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-proposal-details',
-	templateUrl: './proposal-details.component.html',
-	styleUrls: ['./proposal-details.component.scss']
+    selector: 'ngx-proposal-details',
+    templateUrl: './proposal-details.component.html',
+    styleUrls: ['./proposal-details.component.scss'],
+    standalone: false
 })
 export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestroy {
 	public user: IUser;

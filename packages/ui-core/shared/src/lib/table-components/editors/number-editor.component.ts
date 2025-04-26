@@ -2,14 +2,15 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Cell, DefaultEditor } from 'angular2-smart-table';
 
 @Component({
-	template: `<input
+    template: `<input
 		class="form-control"
 		[min]="0"
 		[type]="'number'"
 		[(ngModel)]="cellValue"
 		(input)="onInputChange($event)"
 		[name]="cell.getId()"
-	/>`
+	/>`,
+    standalone: false
 })
 export class NumberEditorComponent extends DefaultEditor implements OnInit {
 	cellValue!: number;

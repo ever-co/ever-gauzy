@@ -1,4 +1,5 @@
-@import 'themes';
+@use 'themes' as *;
+
 :host {
   border-radius: nb-theme(border-radius);
   nb-tab {

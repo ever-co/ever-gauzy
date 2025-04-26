@@ -1,5 +1,7 @@
-@import 'gauzy/_gauzy-cards';
+@use 'gauzy/_gauzy-cards' as *;
+
 $radius: nb-theme(border-radius);
+
 .notes {
   margin-top: 16px;
   padding: 10px;

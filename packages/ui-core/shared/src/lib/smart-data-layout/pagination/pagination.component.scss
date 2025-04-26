@@ -1,5 +1,5 @@
-@import 'themes';
-@import 'gauzy/_gauzy-overrides';
+@use 'themes' as *;
+@use 'gauzy/_gauzy-overrides' as *;
 
 :host {
   a,

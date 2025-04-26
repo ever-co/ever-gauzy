@@ -12,8 +12,9 @@ import { AccountingTemplateService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './accounting-templates.component.html',
-	styleUrls: ['./accounting-templates.component.scss']
+    templateUrl: './accounting-templates.component.html',
+    styleUrls: ['./accounting-templates.component.scss'],
+    standalone: false
 })
 export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDestroy {
 	previewTemplate: SafeHtml;

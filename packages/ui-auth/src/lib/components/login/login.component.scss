@@ -1,5 +1,5 @@
-@import 'themes';
-@import '@shared/reusable';
+@use 'themes' as *;
+@use '@shared/reusable' as *;
 
 .login-container {
   width: 765px;
@@ -118,8 +118,8 @@
     }
   }
   & .another-action {
+	margin-top: 10px;
     @include another-action;
-    margin-top: 10px;
   }
 }
 .features-wrapper {
@@ -330,8 +330,8 @@
 }
 
 .hr-div-soft {
-  @include hr-div-soft;
   margin-bottom: 12px;
+  @include hr-div-soft;
 }
 .theme-switch {
   @include not-mobile-screen {

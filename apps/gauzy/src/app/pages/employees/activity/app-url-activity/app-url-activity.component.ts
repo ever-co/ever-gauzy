@@ -21,9 +21,10 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-app-url-activity',
-	styleUrls: ['./app-url-activity.component.scss'],
-	templateUrl: './app-url-activity.component.html'
+    selector: 'ngx-app-url-activity',
+    styleUrls: ['./app-url-activity.component.scss'],
+    templateUrl: './app-url-activity.component.html',
+    standalone: false
 })
 export class AppUrlActivityComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
 	filters: ITimeLogFilters = this.request;

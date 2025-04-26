@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { PostHog } from 'posthog-node';
 import { PosthogModuleOptions } from './posthog.interfaces';
 import { POSTHOG_MODULE_OPTIONS } from './posthog.constants';
-import { PostHog } from 'posthog-node';
 
 /**
  * Service that provides an interface to the PostHog analytics platform.

@@ -1,4 +1,4 @@
-@import '../email-templates/email-templates.component.scss';
+@use '../email-templates/email-templates.component' as *;
 
 :host {
   .ace-editor {

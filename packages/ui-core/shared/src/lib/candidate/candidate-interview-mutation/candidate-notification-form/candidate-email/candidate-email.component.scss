@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 .email-wrap {
   max-width: 45rem;

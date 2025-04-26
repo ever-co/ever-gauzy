@@ -8,6 +8,7 @@ import { IVideo } from '../../models/video.model';
 	selector: 'plug-video-edit',
 	templateUrl: './video-edit.component.html',
 	styleUrl: './video-edit.component.scss',
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VideoEditComponent implements OnInit {

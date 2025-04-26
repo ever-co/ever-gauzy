@@ -1,6 +1,9 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-@Pipe({ name: 'timing' })
+@Pipe({
+    name: 'timing',
+    standalone: false
+})
 export class TimingPipe implements PipeTransform {
 	/**
 	 * Formats a time in seconds into minutes and seconds

@@ -2,8 +2,9 @@ import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ngx-equipment-sharing-action',
-	templateUrl: './equipment-sharing-action.component.html'
+    selector: 'ngx-equipment-sharing-action',
+    templateUrl: './equipment-sharing-action.component.html',
+    standalone: false
 })
 export class EquipmentSharingActionComponent implements OnInit {
 	@Input() rowData: any;

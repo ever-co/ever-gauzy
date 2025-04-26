@@ -9,9 +9,10 @@ export interface TaskViewMode {
 }
 
 @Component({
-	selector: 'ngx-project-view',
-	templateUrl: './project-view.component.html',
-	styleUrls: ['./project-view.component.scss']
+    selector: 'ngx-project-view',
+    templateUrl: './project-view.component.html',
+    styleUrls: ['./project-view.component.scss'],
+    standalone: false
 })
 export class ProjectViewComponent implements OnInit {
 	@Input() project: IOrganizationProject;

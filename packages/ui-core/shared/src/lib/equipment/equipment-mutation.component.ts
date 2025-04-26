@@ -13,9 +13,10 @@ import { SelectAssetComponent } from '../select-asset-modal/select-asset.compone
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-equipment-mutation',
-	templateUrl: './equipment-mutation.component.html',
-	styleUrls: ['./equipment-mutation.component.scss']
+    selector: 'ngx-equipment-mutation',
+    templateUrl: './equipment-mutation.component.html',
+    styleUrls: ['./equipment-mutation.component.scss'],
+    standalone: false
 })
 export class EquipmentMutationComponent extends TranslationBaseComponent implements OnInit {
 	form: UntypedFormGroup;

@@ -11,6 +11,7 @@ import { ToastrNotificationService } from '../../../../../../services';
 	selector: 'lib-dialog-create-version',
 	templateUrl: './dialog-create-version.component.html',
 	styleUrls: ['./dialog-create-version.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DialogCreateVersionComponent implements OnInit, OnDestroy {

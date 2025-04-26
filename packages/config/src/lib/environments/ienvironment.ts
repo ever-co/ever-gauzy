@@ -17,8 +17,8 @@ import {
 	IWasabiConfig,
 	IJiraIntegrationConfig,
 	IDigitalOceanConfig,
-	IZapierConfig,
-	IPosthogConfig
+	IPosthogConfig,
+	IZapierConfig
 } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 

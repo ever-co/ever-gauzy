@@ -15,16 +15,17 @@ import { ErrorHandlingService, ProductTypeService, Store } from '@gauzy/ui-core/
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-product-type-selector',
-	templateUrl: './product-type-selector.component.html',
-	styleUrls: ['./product-type-selector.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => ProductTypeSelectorComponent),
-			multi: true
-		}
-	]
+    selector: 'ngx-product-type-selector',
+    templateUrl: './product-type-selector.component.html',
+    styleUrls: ['./product-type-selector.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ProductTypeSelectorComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 	public organization: IOrganization;

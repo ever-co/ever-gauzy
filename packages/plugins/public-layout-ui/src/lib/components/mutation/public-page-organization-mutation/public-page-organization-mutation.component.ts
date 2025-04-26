@@ -19,9 +19,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @Component({
-	selector: 'ngx-public-page-organization-mutation',
-	templateUrl: './public-page-organization-mutation.component.html',
-	styleUrls: ['./public-page-organization-mutation.component.scss']
+    selector: 'ngx-public-page-organization-mutation',
+    templateUrl: './public-page-organization-mutation.component.html',
+    styleUrls: ['./public-page-organization-mutation.component.scss'],
+    standalone: false
 })
 export class PublicPageOrganizationMutationComponent extends TranslationBaseComponent implements OnInit {
 	income: IIncome;

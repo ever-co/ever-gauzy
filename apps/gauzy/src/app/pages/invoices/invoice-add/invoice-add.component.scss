@@ -1,4 +1,5 @@
-@import '../invoice-edit/invoice-edit.component.scss';
+@forward '../invoice-edit/invoice-edit.component';
+
 $green: rgba(37, 184, 105, 1);
 $shadow: 0 0 0 nb-theme(button-outline-width)
     rgba(

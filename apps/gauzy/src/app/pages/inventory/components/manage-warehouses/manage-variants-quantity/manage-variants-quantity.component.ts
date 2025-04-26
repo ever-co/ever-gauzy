@@ -7,9 +7,10 @@ import { InventoryStore } from '@gauzy/ui-core/core';
 import { ManageVariantsQuantityFormComponent } from '../manage-variants-quantity-form/manage-variants-quantity-form.component';
 
 @Component({
-	selector: 'ga-manage-variants-quantity',
-	templateUrl: './manage-variants-quantity.component.html',
-	styleUrls: ['./manage-variants-quantity.component.scss']
+    selector: 'ga-manage-variants-quantity',
+    templateUrl: './manage-variants-quantity.component.html',
+    styleUrls: ['./manage-variants-quantity.component.scss'],
+    standalone: false
 })
 export class ManageVariantsQuantityComponent extends TranslationBaseComponent {
 	@Input() value: any;

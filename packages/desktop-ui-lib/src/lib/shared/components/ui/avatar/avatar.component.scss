@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 @mixin avatarMixin($radius: var(--border-radius), $imageSize: 48px) {
 	.inner-wrapper {

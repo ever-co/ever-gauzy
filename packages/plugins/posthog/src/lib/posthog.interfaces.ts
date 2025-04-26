@@ -30,7 +30,7 @@ export interface PosthogModuleOptions {
 
 export interface PosthogModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
 	useFactory?: (...args: unknown[]) => Promise<PosthogModuleOptions> | PosthogModuleOptions;
-	inject?: (string | symbol | Type<any>)[];
+	inject?: (string | symbol | Type<unknown>)[];
 	useClass?: Type<PosthogOptionsFactory>;
 	useExisting?: Type<PosthogOptionsFactory>;
 	isGlobal?: boolean;
@@ -45,8 +45,8 @@ export interface PosthogEventProperties {
 	// Standard PostHog properties (prefixed with $)
 	$ip?: string;
 	$timestamp?: string;
-	$set?: Record<string, any>;
-	$set_once?: Record<string, any>;
+	$set?: Record<string, string | number | boolean | null | undefined>;
+	$set_once?: Record<string, string | number | boolean | null | undefined>;
 	// Custom properties
 	[key: string]: any;
 }
@@ -92,7 +92,7 @@ export interface PosthogInterceptorOptions {
 
 export interface PosthogInterceptorOptionsFilter {
 	type: any;
-	filter?: (exception: any) => boolean;
+	filter?: (exception: Error | unknown) => boolean;
 }
 
 /**
@@ -156,7 +156,7 @@ export const parsePosthogOptions = (options: PosthogModuleOptions): PosthogModul
 
 	return {
 		apiKey: options.apiKey,
-		apiHost: options.apiHost || 'https://app.posthog.com',
+		apiHost: options.apiHost ?? 'https://app.posthog.com',
 		enableErrorTracking: options.enableErrorTracking ?? true,
 		flushAt,
 		flushInterval,

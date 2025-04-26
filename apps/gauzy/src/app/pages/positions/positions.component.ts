@@ -16,9 +16,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-positions',
-	templateUrl: './positions.component.html',
-	styleUrls: ['positions.component.scss']
+    selector: 'ga-positions',
+    templateUrl: './positions.component.html',
+    styleUrls: ['positions.component.scss'],
+    standalone: false
 })
 export class PositionsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	showAddCard: boolean;

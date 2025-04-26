@@ -1,8 +1,9 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Validators, UntypedFormBuilder } from '@angular/forms';
 @Component({
-	selector: 'ga-candidate-cv',
-	templateUrl: 'candidate-cv.component.html'
+    selector: 'ga-candidate-cv',
+    templateUrl: 'candidate-cv.component.html',
+    standalone: false
 })
 export class CandidateCvComponent implements OnInit {
 	@Input() documentUrl: any;

@@ -4,8 +4,9 @@ import { filter, tap } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-sign-in-success',
-	templateUrl: './sign-in-success.component.html'
+    selector: 'ga-sign-in-success',
+    templateUrl: './sign-in-success.component.html',
+    standalone: false
 })
 export class SignInSuccessComponent {
 	constructor(

@@ -1,5 +1,5 @@
-@import 'var';
-@import 'gauzy/_gauzy-dialogs';
+@use 'var' as *;
+@use 'gauzy/_gauzy-dialogs' as *;
 
 @include nb-install-component() {
   nb-card {
