@@ -660,7 +660,8 @@
 		"PostHog",
 		"posthog",
 		"autocapture",
-		"pageview"
+		"pageview",
+		"signup"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
