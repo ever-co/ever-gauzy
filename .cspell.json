@@ -569,7 +569,9 @@
 		"wparam",
 		"lparam",
 		"refcon",
-		"cflags"
+		"cflags",
+		"pageview",
+		"signup",
 	],
 	"useGitignore": true,
 	"ignorePaths": [

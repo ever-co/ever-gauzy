@@ -14,7 +14,7 @@ import posthog, { PostHogConfig, Properties } from 'posthog-js';
  * - Group analytics
  * - Funnel analysis
  * - Error monitoring
- * - page view(s)
+ * - Page views
  */
 @Injectable({
 	providedIn: 'root'
@@ -35,7 +35,7 @@ export class PostHogService {
 		if (isPlatformBrowser(this.platformId) && !this.initialized) {
 			this.config = {
 				api_host: config.api_host || 'https://app.posthog.com',
-				capture_pageview: false, // We'll handle pageviews manually for more control
+				capture_pageview: false, // We'll handle page views manually for more control
 				...config
 			};
 

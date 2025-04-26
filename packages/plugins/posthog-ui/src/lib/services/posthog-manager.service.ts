@@ -1,6 +1,6 @@
-import { Injectable, Inject, Optional } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { PostHogService } from './posthog.service';
-import { POSTHOG_CONFIG, PostHogModuleConfig } from '../interfaces/posthog.interface';
+import { PostHogModuleConfig } from '../interfaces/posthog.interface';
 import { PostHog, PostHogConfig } from 'posthog-js';
 import { Router } from '@angular/router';
 
