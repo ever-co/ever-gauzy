@@ -8,8 +8,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-invoice-pdf',
-    template: `<iframe
+	selector: 'ga-invoice-pdf',
+	template: `<iframe
 			type="application/pdf"
 			id="iframe"
 			class="pdfDoc"
@@ -24,9 +24,9 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 			class="pdfDoc loading"
 			*ngIf="isLoading"
 		></div>
-		<div class="pdfDoc error" *ngIf="error">A error occurred, please reload.</div>`,
-    styles: [
-        `
+		<div class="pdfDoc error" *ngIf="error">An error occurred, please reload.</div>`,
+	styles: [
+		`
 			::ng-deep .pdf-preview-card {
 				height: 90vh;
 				resize: horizontal;
@@ -40,8 +40,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 				width: 60vw;
 			}
 		`
-    ],
-    standalone: false
+	],
+	standalone: false
 })
 export class InvoicePdfComponent extends TranslationBaseComponent implements OnInit {
 	@Input() invoice: IInvoice;

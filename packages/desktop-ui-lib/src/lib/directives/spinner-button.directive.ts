@@ -1,19 +1,12 @@
-import {
-	ComponentFactoryResolver,
-	Directive,
-	Input,
-	Renderer2,
-	TemplateRef,
-	ViewContainerRef,
-} from '@angular/core';
+import { ComponentFactoryResolver, Directive, Input, Renderer2, TemplateRef, ViewContainerRef } from '@angular/core';
 import { NbSpinnerComponent } from '@nebular/theme';
 
 @Directive({
-    selector: '[gauzySpinnerButton]',
-    standalone: false
+	selector: '[gauzySpinnerButton]',
+	standalone: false
 })
 export class SpinnerButtonDirective {
-	private _isSpinning = null;
+	private _isSpinning = false;
 	private _spinner: HTMLElement;
 
 	constructor(
@@ -42,14 +35,8 @@ export class SpinnerButtonDirective {
 	}
 
 	private _addSpinner() {
-		const componentFactory =
-			this._componentFactoryResolver.resolveComponentFactory(
-				NbSpinnerComponent
-			);
-		const container =
-			this._viewContainer.createComponent<NbSpinnerComponent>(
-				componentFactory
-			);
+		const componentFactory = this._componentFactoryResolver.resolveComponentFactory(NbSpinnerComponent);
+		const container = this._viewContainer.createComponent<NbSpinnerComponent>(componentFactory);
 
 		container.instance.size = 'small';
 		container.instance.message = '';
@@ -58,33 +45,13 @@ export class SpinnerButtonDirective {
 		this._render.setStyle(spinner, 'background', 'unset');
 		this._render.setStyle(spinner, 'position', 'relative');
 
-		this._render.setStyle(
-			spinner.firstChild,
-			'border-top-color',
-			'inherit'
-		);
-		this._render.setStyle(
-			spinner.firstChild,
-			'border-bottom-color',
-			'inherit'
-		);
-		this._render.setStyle(
-			spinner.firstChild,
-			'border-left-color',
-			'inherit'
-		);
+		this._render.setStyle(spinner.firstChild, 'border-top-color', 'inherit');
+		this._render.setStyle(spinner.firstChild, 'border-bottom-color', 'inherit');
+		this._render.setStyle(spinner.firstChild, 'border-left-color', 'inherit');
 
-		this._render.setStyle(
-			spinner.firstChild,
-			'width',
-			'14px'
-		);
+		this._render.setStyle(spinner.firstChild, 'width', '14px');
 
-		this._render.setStyle(
-			spinner.firstChild,
-			'height',
-			'14px'
-		);
+		this._render.setStyle(spinner.firstChild, 'height', '14px');
 
 		this._render.setStyle(spinner.parentElement, 'display', 'flex');
 		this._render.setStyle(spinner.parentElement, 'gap', '0.5rem');
