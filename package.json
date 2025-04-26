@@ -582,7 +582,7 @@
 		"tslint-config-prettier": "^1.18.0",
 		"tslint-language-service": "^0.9.9",
 		"typedoc": "^0.23.24",
-		"typescript": "5.5.4",
+		"typescript": "^5.8.3",
 		"verdaccio": "^5.0.4",
 		"webpack": "5.98.0",
 		"webpack-bundle-analyzer": "^4.10.2",
