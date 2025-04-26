@@ -127,6 +127,7 @@ export * from './lib/tag.model';
 export * from './lib/task-estimation.model';
 export * from './lib/task-linked-issue.model';
 export * from './lib/task-priority.model';
+export * from './lib/task-project-sequence.model';
 export * from './lib/task-related-issue-type.model';
 export * from './lib/task-size.model';
 export * from './lib/task-status.model';
