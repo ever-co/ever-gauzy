@@ -47,6 +47,7 @@ import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
+import { TaskProjectSequenceService } from './project-sequence/project-sequence.service';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
@@ -60,7 +61,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		private readonly taskViewService: TaskViewService,
 		private readonly _subscriptionService: SubscriptionService,
 		private readonly mentionService: MentionService,
-		private readonly activityLogService: ActivityLogService
+		private readonly activityLogService: ActivityLogService,
+		private readonly taskProjectSequenceService: TaskProjectSequenceService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -106,19 +108,15 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const newMembers = (data.members || []).filter((member) => !existingMemberIdSet.has(member.id));
 
 			if (data.projectId && data.projectId !== task.projectId) {
-				const { organizationId, projectId } = task;
+				const { projectId } = task;
 
 				// Get the maximum task number for the project
-				const maxNumber = await this.getMaxTaskNumberByProject({
-					tenantId,
-					organizationId,
-					projectId
-				});
+				const taskNumber = await this.taskProjectSequenceService.getTaskNumber(projectId);
 
 				// Update the task with the new project and task number
 				await super.update(id, {
 					projectId,
-					number: maxNumber + 1
+					number: taskNumber
 				});
 			}
 
