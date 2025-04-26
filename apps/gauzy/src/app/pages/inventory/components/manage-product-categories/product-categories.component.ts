@@ -19,9 +19,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-product-categories',
-	templateUrl: './product-categories.component.html',
-	styleUrls: ['./product-categories.component.scss']
+    selector: 'ngx-product-categories',
+    templateUrl: './product-categories.component.html',
+    styleUrls: ['./product-categories.component.scss'],
+    standalone: false
 })
 export class ProductCategoriesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 	smartTableSource: ServerDataSource;

@@ -19,9 +19,10 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-tags',
-	templateUrl: './tags.component.html',
-	styleUrls: ['./tags.component.scss']
+    selector: 'ngx-tags',
+    templateUrl: './tags.component.html',
+    styleUrls: ['./tags.component.scss'],
+    standalone: false
 })
 export class TagsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	settingsSmartTable: object;

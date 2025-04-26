@@ -1,5 +1,5 @@
-@import 'report';
-@import '../../time-activities/time-activities/time-activities.component.scss';
+@forward 'report';
+@forward '../../time-activities/time-activities/time-activities.component';
 
 :host {
   ::ng-deep {

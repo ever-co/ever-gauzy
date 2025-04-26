@@ -4,9 +4,10 @@ import { IEmployee, ISelectedEmployee } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ngx-employee-with-links',
-	templateUrl: './employee-with-links.component.html',
-	styleUrls: ['./employee-with-links.component.scss']
+    selector: 'ngx-employee-with-links',
+    templateUrl: './employee-with-links.component.html',
+    styleUrls: ['./employee-with-links.component.scss'],
+    standalone: false
 })
 export class EmployeeWithLinksComponent implements OnInit {
 	@Input() rowData: any;

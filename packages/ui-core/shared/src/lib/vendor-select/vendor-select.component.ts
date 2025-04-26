@@ -10,16 +10,17 @@ import { OrganizationVendorsService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-vendor-select',
-	templateUrl: './vendor-select.component.html',
-	styleUrls: ['./vendor-select.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => VendorSelectComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-vendor-select',
+    templateUrl: './vendor-select.component.html',
+    styleUrls: ['./vendor-select.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => VendorSelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class VendorSelectComponent implements OnInit, OnDestroy {
 	vendors: IOrganizationVendor[] = [];

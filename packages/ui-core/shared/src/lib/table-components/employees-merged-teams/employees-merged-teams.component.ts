@@ -2,9 +2,10 @@ import { Component, Input, OnInit } from '@angular/core';
 import { IEmployee } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ngx-employees-merged-teams',
-	templateUrl: './employees-merged-teams.component.html',
-	styleUrls: ['./employees-merged-teams.component.scss']
+    selector: 'ngx-employees-merged-teams',
+    templateUrl: './employees-merged-teams.component.html',
+    styleUrls: ['./employees-merged-teams.component.scss'],
+    standalone: false
 })
 export class EmployeesMergedTeamsComponent implements OnInit {
 	@Input() value: any;

@@ -21,16 +21,17 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-country',
-	templateUrl: './country.component.html',
-	styleUrls: ['./country.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => CountryComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-country',
+    templateUrl: './country.component.html',
+    styleUrls: ['./country.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CountryComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CountryComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, ControlValueAccessor {
 	@Input() formControl: FormControl = new FormControl();

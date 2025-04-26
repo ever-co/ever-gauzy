@@ -16,6 +16,7 @@ import { DialogCreateVersionComponent } from '../dialog-create-version/dialog-cr
 	selector: 'lib-version-history',
 	templateUrl: './version-history.component.html',
 	styleUrls: ['./version-history.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VersionHistoryComponent implements OnInit, OnDestroy {

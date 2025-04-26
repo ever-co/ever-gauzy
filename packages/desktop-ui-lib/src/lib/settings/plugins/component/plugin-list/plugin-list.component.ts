@@ -18,9 +18,10 @@ import { PluginInstallationQuery } from '../plugin-marketplace/+state/queries/pl
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-plugin-list',
-	templateUrl: './plugin-list.component.html',
-	styleUrls: ['./plugin-list.component.scss']
+    selector: 'ngx-plugin-list',
+    templateUrl: './plugin-list.component.html',
+    styleUrls: ['./plugin-list.component.scss'],
+    standalone: false
 })
 export class PluginListComponent implements OnInit, OnDestroy {
 	private readonly translateService = inject(TranslateService);

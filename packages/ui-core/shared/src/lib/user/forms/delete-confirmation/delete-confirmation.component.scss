@@ -1,9 +1,10 @@
-@import 'gauzy/_gauzy-dialogs.scss';
-.center {
-  width: 300px;
-}
+@use 'gauzy/_gauzy-dialogs';
+
 :host {
   nb-card {
     background-color: nb-theme(gauzy-card-1);
+  }
+  .center {
+	width: 300px;
   }
 }

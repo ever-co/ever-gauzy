@@ -3,9 +3,10 @@ import { DefaultFilter } from 'angular2-smart-table';
 import { faCheck, faBan, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-	selector: 'ga-toggle-filter',
-	templateUrl: './toggle-filter.component.html',
-	styleUrls: ['./toggle-filter.component.scss']
+    selector: 'ga-toggle-filter',
+    templateUrl: './toggle-filter.component.html',
+    styleUrls: ['./toggle-filter.component.scss'],
+    standalone: false
 })
 export class ToggleFilterComponent extends DefaultFilter implements OnChanges {
 	faCheck = faCheck;

@@ -30,9 +30,10 @@ import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-proposal-register',
-	templateUrl: './proposal-register.component.html',
-	styleUrls: ['././proposal-register.component.scss']
+    selector: 'ga-proposal-register',
+    templateUrl: './proposal-register.component.html',
+    styleUrls: ['././proposal-register.component.scss'],
+    standalone: false
 })
 export class ProposalRegisterComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	proposalTemplate: IEmployeeProposalTemplate;

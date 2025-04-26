@@ -22,9 +22,10 @@ import { Store } from '@gauzy/ui-core/core';
 import { EmployeeSelectorComponent } from '../../selectors/employee';
 
 @Component({
-	selector: 'ga-candidate-interview-feedback',
-	templateUrl: './candidate-interview-feedback.component.html',
-	styleUrls: ['./candidate-interview-feedback.component.scss']
+    selector: 'ga-candidate-interview-feedback',
+    templateUrl: './candidate-interview-feedback.component.html',
+    styleUrls: ['./candidate-interview-feedback.component.scss'],
+    standalone: false
 })
 export class CandidateInterviewFeedbackComponent extends TranslationBaseComponent implements OnInit {
 	@Input() candidateId: string;

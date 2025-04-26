@@ -19,9 +19,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-product-type-mutation',
-	templateUrl: './product-type-mutation.component.html',
-	styleUrls: ['./product-type-mutation.component.scss']
+    selector: 'ngx-product-type-mutation',
+    templateUrl: './product-type-mutation.component.html',
+    styleUrls: ['./product-type-mutation.component.scss'],
+    standalone: false
 })
 export class ProductTypeMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() productType: IProductTypeTranslatable;

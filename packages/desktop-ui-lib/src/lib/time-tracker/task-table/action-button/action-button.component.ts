@@ -14,6 +14,7 @@ import { ActionButton, ActionButtonStore } from './+state/action-button.store';
 	selector: 'ngx-action-button',
 	templateUrl: './action-button.component.html',
 	styleUrls: ['./action-button.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActionButtonComponent {

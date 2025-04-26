@@ -1,7 +1,10 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { CurrencyPosition } from '@gauzy/contracts';
 
-@Pipe({ name: 'position' })
+@Pipe({
+    name: 'position',
+    standalone: false
+})
 export class CurrencyPositionPipe implements PipeTransform {
 	/**
 	 * Transforms the given data string based on the specified position.

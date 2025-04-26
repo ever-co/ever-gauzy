@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 .sidemenu-wrap {
   display: flex;
@@ -80,7 +80,7 @@
   line-height: 14px;
   letter-spacing: 0em;
   text-align: center;
-  
+
   &.privacy-category {
     margin-right: 0.5rem;
   }

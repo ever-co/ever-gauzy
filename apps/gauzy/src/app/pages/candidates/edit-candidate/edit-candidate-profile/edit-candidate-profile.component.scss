@@ -1,6 +1,6 @@
-@import 'gauzy/_gauzy-overrides';
-@import 'var';
-@import '@shared/_edit-profile-form';
+@use 'var' as *;
+@use 'gauzy/_gauzy-overrides' as *;
+@forward '@shared/_edit-profile-form';
 
 .form-group input {
   width: 100%;

@@ -13,9 +13,10 @@ import { CandidateFeedbacksService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-average-criterions-rating-chart',
-	templateUrl: './average-criterions-rating-chart.component.html',
-	styleUrls: ['./average-criterions-rating-chart.component.scss']
+    selector: 'ga-average-criterions-rating-chart',
+    templateUrl: './average-criterions-rating-chart.component.html',
+    styleUrls: ['./average-criterions-rating-chart.component.scss'],
+    standalone: false
 })
 export class AverageCriterionsRatingChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];

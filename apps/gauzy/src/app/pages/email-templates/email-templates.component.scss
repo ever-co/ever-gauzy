@@ -1,4 +1,4 @@
-@import 'gauzy/_gauzy-overrides';
+@use 'gauzy/_gauzy-overrides' as *;
 
 $height: calc(100vh - 25.5rem);
 

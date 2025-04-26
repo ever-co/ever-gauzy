@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 nb-card {
 	margin: 0 !important;

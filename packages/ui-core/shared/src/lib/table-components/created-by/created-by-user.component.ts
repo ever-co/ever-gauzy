@@ -5,7 +5,8 @@ import { ID } from '@gauzy/contracts';
 @Component({
 	selector: 'ngx-created-by-user',
 	templateUrl: './created-by-user.component.html',
-	styleUrls: ['./created-by-user.component.scss']
+	styleUrls: ['./created-by-user.component.scss'],
+	standalone: false
 })
 export class CreatedByUserComponent<Entity = any> {
 	@Input() value: any;

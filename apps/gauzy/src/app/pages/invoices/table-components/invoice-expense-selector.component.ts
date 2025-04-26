@@ -7,7 +7,7 @@ import { ExpensesService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	template: `
+    template: `
 		<nb-select
 			fullWidth
 			[placeholder]="'FORM.PLACEHOLDERS.SELECT_EXPENSE' | translate"
@@ -19,7 +19,8 @@ import { ExpensesService, Store } from '@gauzy/ui-core/core';
 			</nb-option>
 		</nb-select>
 	`,
-	styles: []
+    styles: [],
+    standalone: false
 })
 export class InvoiceExpensesSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {
 	public expense: IExpense;

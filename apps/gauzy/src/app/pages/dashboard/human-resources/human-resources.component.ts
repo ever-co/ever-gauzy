@@ -19,9 +19,10 @@ import { ProfitHistoryComponent, RecordsHistoryComponent } from '@gauzy/ui-core/
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-human-resources',
-	templateUrl: './human-resources.component.html',
-	styleUrls: ['./human-resources.component.scss']
+    selector: 'ga-human-resources',
+    templateUrl: './human-resources.component.html',
+    styleUrls: ['./human-resources.component.scss'],
+    standalone: false
 })
 export class HumanResourcesComponent implements OnInit, OnDestroy {
 	loading: boolean;

@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 $radius: nb-theme(border-radius);
 

@@ -45,8 +45,9 @@ import { EmployeeWorkStatusComponent } from '../employees/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './users.component.html',
-	styleUrls: ['./users.component.scss']
+    templateUrl: './users.component.html',
+    styleUrls: ['./users.component.scss'],
+    standalone: false
 })
 export class UsersComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public PermissionsEnum = PermissionsEnum;

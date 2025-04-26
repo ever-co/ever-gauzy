@@ -20,15 +20,16 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-password-form-field',
-	templateUrl: './password.component.html',
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => PasswordFormFieldComponent),
-			multi: true
-		}
-	]
+    selector: 'ngx-password-form-field',
+    templateUrl: './password.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => PasswordFormFieldComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class PasswordFormFieldComponent
 	extends TranslationBaseComponent

@@ -3,7 +3,7 @@ import { getContrastColor } from '@gauzy/ui-core/common';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
-	template: `
+    template: `
 		<div class="img-tags-container">
 			<div *ngIf="imageUrl" class="image-container">
 				<img [src]="imageUrl" />
@@ -36,8 +36,8 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 			</div>
 		</div>
 	`,
-	styles: [
-		`
+    styles: [
+        `
 			.img-tags-container {
 				display: flex;
 				gap: 10px;
@@ -96,7 +96,8 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				margin-bottom: 4px;
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class ItemImgTagsComponent {
 	@Input()

@@ -4,7 +4,6 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable, Subject, tap } from 'rxjs';
 import { catchError, concatMap, filter, take, takeUntil } from 'rxjs/operators';
-
 import {
 	ICDNSource,
 	IGauzySource,
@@ -35,6 +34,7 @@ import { DialogCreateVersionComponent } from './dialog-create-version/dialog-cre
 	selector: 'gauzy-plugin-marketplace-item',
 	templateUrl: './plugin-marketplace-item.component.html',
 	styleUrls: ['./plugin-marketplace-item.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {

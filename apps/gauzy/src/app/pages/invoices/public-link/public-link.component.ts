@@ -8,9 +8,10 @@ import { ClipboardService } from 'ngx-clipboard';
 import { InvoicesService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'public-invoice-link',
-	templateUrl: './public-link.component.html',
-	styleUrls: ['./public-link.component.scss']
+    selector: 'public-invoice-link',
+    templateUrl: './public-link.component.html',
+    styleUrls: ['./public-link.component.scss'],
+    standalone: false
 })
 export class PublicLinkComponent implements OnInit {
 	public publicLink: string;
