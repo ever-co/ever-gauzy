@@ -109,7 +109,7 @@ export class PostHogInterceptor implements HttpInterceptor {
 	/**
 	 * Sanitizes response body to remove potentially sensitive information
 	 */
-	private sanitizeResponseBody(body: any, depth: number = 0): any {
+	private sanitizeResponseBody(body: any, depth = 0): any {
 		if (!body) return undefined;
 		// Limit recursion depth to avoid stack overflow
 		if (depth > 10) return '[Max depth reached]';

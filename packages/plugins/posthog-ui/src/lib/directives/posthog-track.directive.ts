@@ -20,7 +20,7 @@ import { PostHogServiceManager } from '../services/posthog-manager.service';
 })
 export class PostHogTrackDirective implements OnInit {
 	@Input('phTrack') eventName!: string;
-	@Input('phProperties') properties: Record<string, any> = {};
+	@Input('phProperties') properties: Record<string, unknown> = {};
 	@Input('phOnInit') captureOnInit = false;
 	@Input('phEventType') eventType = 'click'; // default to click
 	@Input('phStopPropagation') stopPropagation = false;

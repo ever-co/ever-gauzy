@@ -1,9 +1,7 @@
-import { Injectable, Inject, Optional, PLATFORM_ID } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router, NavigationEnd, NavigationStart } from '@angular/router';
-import { filter } from 'rxjs/operators';
-import posthog, { PostHog, PostHogConfig, Properties } from 'posthog-js';
-import { POSTHOG_CONFIG, PostHogModuleConfig } from '../interfaces/posthog.interface';
+import posthog, { PostHogConfig, Properties } from 'posthog-js';
 
 /**
  * Complete PostHog service for Angular applications
@@ -12,10 +10,11 @@ import { POSTHOG_CONFIG, PostHogModuleConfig } from '../interfaces/posthog.inter
  * - User identification
  * - Feature flags
  * - Session recording
- * - Heatmaps
+ * - Heat maps
  * - Group analytics
  * - Funnel analysis
  * - Error monitoring
+ * - page view(s)
  */
 @Injectable({
 	providedIn: 'root'
@@ -68,8 +67,10 @@ export class PostHogService {
 	/**
 	 * Sets up automatic tracking of route changes
 	 */
-	setupRouteTracking(router: Router): void {
-		if (!isPlatformBrowser(this.platformId) || !this.initialized) return;
+	setupRouteTracking(router: Router = this.router): void {
+		if (!isPlatformBrowser(this.platformId) || !this.initialized || (this as any)._routeTrackingAttached) return;
+
+		(this as any)._routeTrackingAttached = true;
 
 		let routeStartTime = Date.now();
 		router.events.subscribe((event) => {
@@ -135,9 +136,11 @@ export class PostHogService {
 	captureEvent(eventName: string, properties: Record<string, any> = {}, sendInstantly?: boolean): void {
 		if (!this.initialized) return;
 
-		posthog.capture(eventName, properties, {
-			send_instantly: sendInstantly
-		});
+		posthog.capture(
+			eventName,
+			properties,
+			sendInstantly !== undefined ? { send_instantly: sendInstantly } : undefined
+		);
 	}
 
 	/**
@@ -179,17 +182,8 @@ export class PostHogService {
 	alias(alias: string, distinctId?: string, callback?: () => void): void {
 		if (!this.initialized) return;
 
-		if (callback) {
-			// For PostHog's API, we need to use the result to call the callback
-			const result = posthog.alias(alias, distinctId);
-			if (typeof result === 'number') {
-				setTimeout(callback, result);
-			} else {
-				callback();
-			}
-		} else {
-			posthog.alias(alias, distinctId);
-		}
+		posthog.alias(alias, distinctId);
+		callback?.();
 	}
 
 	/**

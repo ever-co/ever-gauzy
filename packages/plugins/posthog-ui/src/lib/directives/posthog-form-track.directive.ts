@@ -51,7 +51,7 @@ export class PostHogFormTrackDirective implements OnInit, OnDestroy {
 		private posthogServiceManager: PostHogServiceManager,
 		private elementRef: ElementRef<HTMLFormElement>,
 		private renderer: Renderer2,
-		private ngForm: NgForm,
+		@Optional() private ngForm?: NgForm,
 		@Optional() @Inject(POSTHOG_DEBUG_MODE) private debugMode = false
 	) {}
 
@@ -84,7 +84,7 @@ export class PostHogFormTrackDirective implements OnInit, OnDestroy {
 			form_name: this.phFormName,
 			form_id: this.elementRef.nativeElement.id || undefined,
 			form_action: this.elementRef.nativeElement.action || undefined,
-			form_valid: this.ngForm.valid,
+			form_valid: this.ngForm?.valid ?? this.elementRef.nativeElement.checkValidity?.() ?? true,
 			...formData
 		});
 
@@ -171,7 +171,9 @@ export class PostHogFormTrackDirective implements OnInit, OnDestroy {
 			if (field instanceof HTMLInputElement && field.type === 'checkbox') {
 				value = field.checked;
 			} else if (field instanceof HTMLInputElement && field.type === 'radio') {
-				value = field.checked ? field.value : undefined;
+				if (field.checked) {
+					value = field.value;
+				}
 			} else if (field instanceof HTMLSelectElement && field.multiple) {
 				value = Array.from(field.selectedOptions).map((option) => option.value);
 			} else {
