@@ -1,6 +1,14 @@
 import { CommandHandler, ICommandHandler, EventBus as CqrsEventBus } from '@nestjs/cqrs';
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { BaseEntityEnum, ActorTypeEnum, ITask, ActionTypeEnum, SubscriptionTypeEnum, ID, IEmployee } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	ActorTypeEnum,
+	ITask,
+	ActionTypeEnum,
+	SubscriptionTypeEnum,
+	ID,
+	IEmployee
+} from '@gauzy/contracts';
 import { EventBus } from '../../../event-bus';
 import { TaskEvent } from '../../../event-bus/events';
 import { BaseEntityEventTypeEnum } from '../../../event-bus/base-entity-event';
@@ -35,7 +43,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 	 * @param command The command containing task creation input and event triggering flag.
 	 * @returns The created task.
 	 */
-	public async execute(command: TaskCreateCommand): Promise<ITask> {
+	public async execute(command: TaskCreateCommand, attempt = 0): Promise<ITask> {
 		try {
 			// Destructure input and triggered event flag from the command
 			const { input, triggeredEvent } = command;
@@ -64,15 +72,25 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				projectId: project?.id ?? null // If no project is provided, this will pass null for projectId
 			});
 
-			// Create the task with incremented number, project prefix, and other task details
-			const task = await this._taskService.create({
-				...data, // Spread the input properties
-				members: (members || []).map(({ id }) => new Employee({ id })),
-				number: maxNumber + 1, // Increment the task number
-				prefix: projectPrefix, // Use the project prefix, or null if no project
-				tenantId, // Pass the tenant ID
-				organizationId // Pass the organization ID
-			});
+			let task;
+			try {
+				// Create the task with incremented number, project prefix, and other task details
+				task = await this._taskService.create({
+					...data, // Spread the input properties
+					members: (members || []).map(({ id }) => new Employee({ id })),
+					number: maxNumber + 1, // Increment the task number
+					prefix: projectPrefix, // Use the project prefix, or null if no project
+					tenantId, // Pass the tenant ID
+					organizationId // Pass the organization ID
+				});
+			} catch (error) {
+				this.logger.error('Error while creating task', error);
+				// Retry the command if the error is due to a unique constraint violation
+				if (attempt < 10) {
+					return await this.execute(command, attempt + 1);
+				}
+				throw error;
+			}
 
 			// Publish a task created event if triggeredEvent flag is set
 			if (triggeredEvent) {
@@ -121,16 +139,18 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 					// Publish subscription events for each employee
 					await Promise.all(
-						employees.map(({ userId }: IEmployee) => this._cqrsEventBus.publish(
-							new CreateSubscriptionEvent({
-								entity: BaseEntityEnum.Task,
-								entityId: task.id,
-								userId,
-								type: SubscriptionTypeEnum.ASSIGNMENT,
-								organizationId,
-								tenantId
-							})
-						))
+						employees.map(({ userId }: IEmployee) =>
+							this._cqrsEventBus.publish(
+								new CreateSubscriptionEvent({
+									entity: BaseEntityEnum.Task,
+									entityId: task.id,
+									userId,
+									type: SubscriptionTypeEnum.ASSIGNMENT,
+									organizationId,
+									tenantId
+								})
+							)
+						)
 					);
 				} catch (error) {
 					this.logger.error('Error while subscribing members to task', error);
