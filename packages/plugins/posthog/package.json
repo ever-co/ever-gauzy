@@ -30,7 +30,7 @@
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"@nestjs/common": "^10.4.15",
+		"@nestjs/common": "^11.1.0",
 		"chalk": "^4.1.0",
 		"express": "^4.21.2",
 		"posthog-node": "^4.13.0",
