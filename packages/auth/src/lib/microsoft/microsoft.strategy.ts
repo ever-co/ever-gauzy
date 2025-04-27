@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
 import { HttpService } from '@nestjs/axios';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PassportStrategy } from '@nestjs/passport';
 import { AxiosResponse } from 'axios';
-import { Strategy, VerifyCallback } from 'passport-oauth2';
+import { Strategy, StrategyOptionsWithRequest } from 'passport-microsoft';
 import { firstValueFrom, map } from 'rxjs';
 
 @Injectable()
@@ -21,7 +21,12 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
 	 * @param profile - The initial profile information (may be overwritten).
 	 * @param done - The callback to pass either the error or the user object.
 	 */
-	async validated(accessToken: string, refreshToken: string, profile: any, done: VerifyCallback): Promise<void> {
+	async validate(
+		accessToken: string,
+		refreshToken: string,
+		profile: any,
+		done: (error: any, user: any, info?: any) => void
+	): Promise<void> {
 		try {
 			const url = `${this.configService.get<string>('microsoft.graphApiURL')}/me`;
 
@@ -59,7 +64,7 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
  * @param configService - An instance of ConfigService to access configuration values.
  * @returns An object containing the Microsoft OAuth configuration parameters.
  */
-export const parseMicrosoftConfig = (configService: ConfigService): Record<string, any> => {
+export const parseMicrosoftConfig = (configService: ConfigService): StrategyOptionsWithRequest => {
 	// Retrieve Microsoft OAuth client ID from the configuration service; default to 'disabled' if not found.
 	const clientID = configService.get<string>('microsoft.clientId');
 	// Retrieve Microsoft OAuth client secret from the configuration service; default to 'disabled' if not found.
@@ -92,6 +97,6 @@ export const parseMicrosoftConfig = (configService: ConfigService): Record<strin
 		// Include the request object in the callback.
 		passReqToCallback: true,
 		// Specify the scope for Microsoft OAuth.
-		scope: ['openid', 'profile', 'email', 'User.Read']
+		scope: ['openid', 'profile', 'email', 'user.read']
 	};
 };

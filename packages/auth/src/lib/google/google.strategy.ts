@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, VerifyCallback } from 'passport-google-oauth20';
+import { Strategy, StrategyOptionsWithRequest, VerifyCallback } from 'passport-google-oauth20';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -62,7 +62,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
  * @param configService - An instance of ConfigService to access application configuration.
  * @returns An object containing the Google OAuth configuration parameters.
  */
-export const parseGoogleConfig = (configService: ConfigService): Record<string, any> => {
+export const parseGoogleConfig = (configService: ConfigService): StrategyOptionsWithRequest => {
 	// Retrieve Google OAuth client ID from the configuration service, default to 'disabled' if not found.
 	const clientID = configService.get<string>('google.clientId');
 	// Retrieve Google OAuth client secret from the configuration service, default to 'disabled' if not found.

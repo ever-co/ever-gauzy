@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
-import { Profile, Strategy } from 'passport-github2';
+import { Profile, Strategy, StrategyOptionsWithRequest } from 'passport-github2';
 
 @Injectable()
 export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
@@ -65,7 +65,7 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
  * @param configService - An instance of the ConfigService to access application configuration.
  * @returns An object containing the GitHub OAuth configuration.
  */
-export const parseGithubConfig = (configService: ConfigService): Record<string, any> => {
+export const parseGithubConfig = (configService: ConfigService): StrategyOptionsWithRequest => {
 	// Retrieve the GitHub client ID from the configuration.
 	const clientID = configService.get<string>('github.clientId');
 	// Retrieve the GitHub client secret from the configuration.

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-google-oauth20';
+import { Strategy, StrategyOptions } from 'passport-keycloak-oauth2-oidc';
 
 @Injectable()
 export class KeycloakStrategy extends PassportStrategy(Strategy, 'keycloak') {
@@ -12,14 +12,14 @@ export class KeycloakStrategy extends PassportStrategy(Strategy, 'keycloak') {
 	/**
 	 * Validates the provided tokens and user profile from the OAuth provider.
 	 *
-	 * @param request - The HTTP request object.
+	 * @param _request - The HTTP request object.
 	 * @param accessToken - The access token from the provider.
 	 * @param refreshToken - The refresh token from the provider.
 	 * @param profile - The user profile information.
 	 * @param done - The callback function to return the user or an error.
 	 */
 	async validate(
-		request: any,
+		_request: any,
 		accessToken: string,
 		refreshToken: string,
 		profile: any,
@@ -56,7 +56,7 @@ export class KeycloakStrategy extends PassportStrategy(Strategy, 'keycloak') {
  * @param configService - The configuration service instance.
  * @returns A Keycloak configuration object.
  */
-export const parseKeycloakConfig = (configService: ConfigService): Record<string, any> => {
+export const parseKeycloakConfig = (configService: ConfigService): StrategyOptions => {
 	// Retrieve the client ID from the configuration
 	const clientID = configService.get<string>('keycloak.clientId');
 

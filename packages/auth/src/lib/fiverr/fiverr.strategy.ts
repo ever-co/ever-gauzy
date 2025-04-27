@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-google-oauth20';
-import { ConfigService } from '@gauzy/config';
+import { Strategy, StrategyOptionsWithRequest } from 'passport-google-oauth20';
 import passport from 'passport';
+import { ConfigService } from '@gauzy/config';
 
 @Injectable()
 export class FiverrStrategy extends PassportStrategy(Strategy, 'fiverr') {
@@ -40,10 +40,9 @@ export class FiverrStrategy extends PassportStrategy(Strategy, 'fiverr') {
  * Retrieves the configuration for the Fiverr OAuth strategy.
  *
  * @param {ConfigService} configService - The configuration service instance.
- * @returns {Record<string, string | boolean>} - The configuration object for Fiverr authentication.
- * @throws {Error} If required Fiverr configuration values are missing.
+ * @returns {StrategyOptionsWithRequest} - The configuration object for Fiverr authentication.
  */
-export const parseFiverrConfig = (configService: ConfigService): Record<string, string | boolean> => {
+export const parseFiverrConfig = (configService: ConfigService): StrategyOptionsWithRequest => {
 	// Retrieve Fiverr configuration from the environment
 	const fiverrConfig = configService.get('fiverrConfig');
 	// Retrieve API base URL
@@ -58,6 +57,6 @@ export const parseFiverrConfig = (configService: ConfigService): Record<string, 
 		clientID: fiverrConfig?.clientId ?? 'disabled',
 		clientSecret: fiverrConfig?.clientSecret ?? 'disabled',
 		callbackURL: `${baseUrl ?? 'http://localhost:3000'}/api/auth/fiverr/callback`, // Ensure a fallback URL
-		passReqToCallback: true
+		passReqToCallback: true // Important for strategies expecting req
 	};
 };
