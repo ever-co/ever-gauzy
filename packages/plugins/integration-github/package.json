@@ -54,7 +54,7 @@
 		"rxjs": "^7.8.2",
 		"smee-client": "^1.2.3",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.20",
+		"typeorm": "^0.3.22",
 		"underscore": "^1.13.3",
 		"uuid": "^8.3.0"
 	},
