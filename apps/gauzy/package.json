@@ -133,7 +133,7 @@
 		"ng2-file-upload": "^8.0.0",
 		"ngx-ace-editor-wrapper": "^9.1.12",
 		"ngx-clipboard": "^16.0.0",
-		"ngx-color-picker": "^17.0.0",
+		"ngx-color-picker": "^19.0.0",
 		"ngx-cookie-service": "^19.0.0",
 		"ngx-countdown": "^19.0.0",
 		"ngx-daterangepicker-material": "^6.0.4",
