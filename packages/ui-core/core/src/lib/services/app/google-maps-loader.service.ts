@@ -18,6 +18,7 @@ export class GoogleMapsLoaderService {
 			}
 
 			window['__onGoogleLoaded'] = () => {
+				delete window['__onGoogleLoaded'];
 				resolve('google maps api loaded');
 			};
 
