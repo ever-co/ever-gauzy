@@ -38,7 +38,7 @@
 		"@apollo/subgraph": "^2.9.3",
 		"@aws-sdk/client-s3": "^3.717.0",
 		"@aws-sdk/s3-request-presigner": "^3.717.0",
-		"@faker-js/faker": "^9.3.0",
+		"@faker-js/faker": "^9.7.0",
 		"@fastify/swagger": "^9.4.0",
 		"@gauzy/auth": "^0.1.0",
 		"@gauzy/common": "^0.1.0",
@@ -180,7 +180,7 @@
 		"underscore": "^1.13.3",
 		"unleash-client": "^3.16.1",
 		"unzipper": "^0.10.11",
-		"uuid": "^8.3.0",
+		"uuid": "^11.1.0",
 		"web-push": "^3.4.4",
 		"yargs": "^17.5.0"
 	},

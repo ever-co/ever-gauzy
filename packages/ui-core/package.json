@@ -28,7 +28,7 @@
 		"@angular/core": "^19.2.0"
 	},
 	"dependencies": {
-		"@ali-hm/angular-tree-component": "^19.0.1",
+		"@ali-hm/angular-tree-component": "^19.2.5",
 		"@angular-slider/ngx-slider": "^19.0.0",
 		"@angular/animations": "19.2.7",
 		"@angular/cdk": "19.2.7",
@@ -55,7 +55,7 @@
 		"@gauzy/constants": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@jitsu/js": "^1.10.0",
-		"@kurkle/color": "^0.3.2",
+		"@kurkle/color": "^0.3.4",
 		"@nebular/auth": "^15.0.0",
 		"@nebular/bootstrap": "^9.1.0-rc.6",
 		"@nebular/eva-icons": "^15.0.0",
@@ -63,7 +63,7 @@
 		"@nebular/theme": "^15.0.0",
 		"@ng-maps/core": "^8.0.0",
 		"@ng-maps/google": "^8.0.0",
-		"@ng-select/ng-select": "^14.2.2",
+		"@ng-select/ng-select": "^14.7.0",
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.4",
 		"@ngx-translate/http-loader": "^16.0.1",
@@ -105,7 +105,7 @@
 		"tslib": "^2.6.2",
 		"underscore": "^1.13.3",
 		"underscore.string": "^3.3.6",
-		"uuid": "^8.3.2"
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@types/ckeditor": "^4.9.10",

@@ -27,10 +27,10 @@
   resolved "https://registry.yarnpkg.com/@akveo/ng2-completer/-/ng2-completer-9.0.1.tgz#49d2914fb62b78cc6ae5aed861ea7fa4ed5863d1"
   integrity sha512-iACL0heOUmGV1GBKD3srwBJMFLZykld1MiTDvmbgEEXMhavp0UA45GdNsv7BBKI9XauuFKpOqHLlC+fT6DLGAQ==
 
-"@ali-hm/angular-tree-component@^19.0.1":
-  version "19.0.1"
-  resolved "https://registry.yarnpkg.com/@ali-hm/angular-tree-component/-/angular-tree-component-19.0.1.tgz#961590db5e8a65ffd83de88763457eeaaedc6cc8"
-  integrity sha512-VG/iMC2rVnvbBntlyYHsOW47bw1iiuQHzu+puiUmxg9y6BLQmvIsCejcHp3VM19hsbbm2lZHfFVBPVKcmEJnNw==
+"@ali-hm/angular-tree-component@^19.2.5":
+  version "19.2.5"
+  resolved "https://registry.yarnpkg.com/@ali-hm/angular-tree-component/-/angular-tree-component-19.2.5.tgz#aca1f4af81eba3aa71b8a674e4387d2121e5f25c"
+  integrity sha512-INkTnYsWK/r+73tplO8lCg1hrQ6t3LI41shuK3vcHK36gGnJY+CJdIP6oYxHf6fbKvuXAdTXXaoOj3QTf38ztQ==
   dependencies:
     mobx "~4.14.1"
     tslib "^2.5.0"
@@ -4530,10 +4530,10 @@
   dependencies:
     eslint-visitor-keys "^3.4.3"
 
-"@faker-js/faker@^9.3.0":
-  version "9.4.0"
-  resolved "https://registry.yarnpkg.com/@faker-js/faker/-/faker-9.4.0.tgz#3e85604df3a318729436677565e9433d964276d2"
-  integrity sha512-85+k0AxaZSTowL0gXp8zYWDIrWclTbRPg/pm/V0dSFZ6W6D4lhcG3uuZl4zLsEKfEvs69xDbLN2cHQudwp95JA==
+"@faker-js/faker@^9.7.0":
+  version "9.7.0"
+  resolved "https://registry.yarnpkg.com/@faker-js/faker/-/faker-9.7.0.tgz#1cf1fecfcad5e2da2332140bf3b5f23cc1c2a7f4"
+  integrity sha512-aozo5vqjCmDoXLNUJarFZx2IN/GgGaogY4TMJ6so/WLZOWpSV7fvj2dmrV6sEAnUm1O7aCrhTibjpzeDFgNqbg==
 
 "@fastify/swagger@^9.4.0":
   version "9.4.2"
@@ -5752,7 +5752,7 @@
   resolved "https://registry.yarnpkg.com/@jsonjoy.com/util/-/util-1.5.0.tgz#6008e35b9d9d8ee27bc4bfaa70c8cbf33a537b4c"
   integrity sha512-ojoNsrIuPI9g6o8UxhraZQSyF2ByJanAY4cTFbc8Mf2AXEF4aQRGY1dJxyJpuyav8r9FGflEt/Ff3u5Nt6YMPA==
 
-"@kurkle/color@^0.3.0", "@kurkle/color@^0.3.2":
+"@kurkle/color@^0.3.0", "@kurkle/color@^0.3.4":
   version "0.3.4"
   resolved "https://registry.yarnpkg.com/@kurkle/color/-/color-0.3.4.tgz#4d4ff677e1609214fc71c580125ddddd86abcabf"
   integrity sha512-M5UknZPHRu3DEDWoipU6sE8PdkZ6Z/S+v4dD+Ke8IaNlpdSQah50lz1KtcFBa2vsdOnwbbnxJwVM4wty6udA5w==
@@ -7240,10 +7240,10 @@
   dependencies:
     tslib "^2.0.0"
 
-"@ng-select/ng-select@^14.2.2":
-  version "14.2.2"
-  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-14.2.2.tgz#31a8c6adea192388ab0a8cb0a33be5dd046e13e9"
-  integrity sha512-K7AAeaVpWiwkkWXQFb4+ywoSRDMazCcqptAtpVnJ5+A1W/RJsYOZwf0xLR2Lqe/8PykbQg5+fw6pVve+FFv6eg==
+"@ng-select/ng-select@^14.7.0":
+  version "14.7.0"
+  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-14.7.0.tgz#7ae6121d3160d5d3194f9026626e0692922e085a"
+  integrity sha512-KVSrMt5JoMzf1U9RyyS1WfWXxWyy62rqSeu0cV+OKA5SV1q8CVxgScqXwzUaoCRdBVvRcpRNEFpjWdbsprrUJw==
   dependencies:
     tslib "^2.3.1"
 
@@ -38821,6 +38821,11 @@ uuid@^10.0.0:
   version "10.0.0"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-10.0.0.tgz#5a95aa454e6e002725c79055fd42aaba30ca6294"
   integrity sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==
+
+uuid@^11.1.0:
+  version "11.1.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-11.1.0.tgz#9549028be1753bb934fc96e2bca09bb4105ae912"
+  integrity sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==
 
 uuid@^3.3.2:
   version "3.4.0"
