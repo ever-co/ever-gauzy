@@ -18,7 +18,7 @@ export class GoogleMapsLoaderService {
 			}
 
 			window['__onGoogleLoaded'] = () => {
-				delete window['__onGoogleLoaded'];
+				window['__onGoogleLoaded'] = undefined;
 				resolve('google maps api loaded');
 			};
 
@@ -28,7 +28,7 @@ export class GoogleMapsLoaderService {
 			script.defer = true;
 			script.type = 'text/javascript';
 			script.onerror = (err) => {
-				delete window['__onGoogleLoaded'];
+				window['__onGoogleLoaded'] = undefined;
 				document.head.removeChild(script);
 				reject(new Error('Failed to load Google Maps API'));
 			};
