@@ -207,7 +207,7 @@ export const environment: IEnvironment = {
 		maxAuthCodes: Number.parseInt(process.env.GAUZY_ZAPIER_MAX_AUTH_CODES) || 1000,
 		instanceCount: process.env.GAUZY_ZAPIER_INSTANCE_COUNT === 'true',
 		redirectUri:
-			process.env.GAUZY_ZAPIER_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/zapier/callback`,
+			process.env.GAUZY_ZAPIER_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integration/zapier/oauth/callback`,
 		postInstallUrl:
 			process.env.GAUZY_ZAPIER_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/zapier`
 	},
@@ -215,9 +215,9 @@ export const environment: IEnvironment = {
 	makeCom: {
 		clientId: process.env.GAUZY_MAKE_CLIENT_ID,
 		clientSecret: process.env.GAUZY_MAKE_CLIENT_SECRET,
-		webhookUrl: process.env.GAUZY_MAKE_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integrations/make/webhook`,
+		webhookUrl: process.env.GAUZY_MAKE_WEBHOOK_URL || `${process.env.GAUZY_MAKE_WEBHOOK_URL}`,
 		redirectUri:
-			process.env.GAUZY_MAKE_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/make/callback`,
+			process.env.GAUZY_MAKE_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integration/make-com/oauth/callback`,
 		postInstallUrl:
 			process.env.GAUZY_MAKE_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/make`
 	},
