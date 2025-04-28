@@ -27,7 +27,11 @@ export class GoogleMapsLoaderService {
 			script.async = true;
 			script.defer = true;
 			script.type = 'text/javascript';
-			script.onerror = (err) => reject(new Error('Failed to load Google Maps API'));
+			script.onerror = (err) => {
+				delete window['__onGoogleLoaded'];
+				document.head.removeChild(script);
+				reject(new Error('Failed to load Google Maps API'));
+			};
 			document.head.appendChild(script);
 		});
 	}
