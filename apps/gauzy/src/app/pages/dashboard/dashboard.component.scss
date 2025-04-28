@@ -1,4 +1,5 @@
-@import 'var';
+@use 'var' as *;
+
 .header {
   padding: 30px;
 

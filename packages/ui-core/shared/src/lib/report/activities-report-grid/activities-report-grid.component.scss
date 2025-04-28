@@ -1,5 +1,5 @@
-@import 'report';
-@import "var";
+@forward 'report';
+@use 'var' as *;
 
 .project-row {
     margin-bottom: 10px;

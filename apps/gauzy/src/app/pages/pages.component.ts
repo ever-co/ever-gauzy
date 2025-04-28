@@ -23,14 +23,15 @@ import { ReportService } from './reports/all-report/report.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-pages',
-	styleUrls: ['pages.component.scss'],
-	template: `
+    selector: 'ngx-pages',
+    styleUrls: ['pages.component.scss'],
+    template: `
 		<ngx-one-column-layout *ngIf="!!menu && user">
 			<ga-main-nav-menu></ga-main-nav-menu>
 			<router-outlet></router-outlet>
 		</ngx-one-column-layout>
-	`
+	`,
+    standalone: false
 })
 export class PagesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organization: IOrganization;

@@ -17,7 +17,7 @@ import {
 	NbTooltipModule,
 	NbAccordionModule
 } from '@nebular/theme';
-import { ColorPickerModule } from 'ngx-color-picker';
+import { ColorPickerComponent, ColorPickerDirective } from 'ngx-color-picker';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import {
@@ -66,7 +66,8 @@ import { EditOrganizationSettingsComponent } from './edit-organization-settings.
 		NbSpinnerModule,
 		NbActionsModule,
 		NgSelectModule,
-		ColorPickerModule,
+		ColorPickerComponent,
+		ColorPickerDirective,
 		NbTooltipModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild(),

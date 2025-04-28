@@ -7,10 +7,11 @@ import { ITimeLogFilters, PermissionsEnum, TimeFormatEnum, TimeLogSourceEnum, Ti
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-gauzy-filters',
-	templateUrl: './gauzy-filters.component.html',
-	styleUrls: ['./gauzy-filters.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-gauzy-filters',
+    templateUrl: './gauzy-filters.component.html',
+    styleUrls: ['./gauzy-filters.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class GauzyFiltersComponent implements OnInit, OnDestroy {
 	// declaration of variables

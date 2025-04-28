@@ -4,9 +4,10 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-	selector: 'ga-employee-end-work',
-	templateUrl: 'employee-end-work.component.html',
-	styleUrls: ['employee-end-work.component.scss']
+    selector: 'ga-employee-end-work',
+    templateUrl: 'employee-end-work.component.html',
+    styleUrls: ['employee-end-work.component.scss'],
+    standalone: false
 })
 export class EmployeeEndWorkComponent {
 	backToWork: boolean;

@@ -9,15 +9,16 @@ import { AuthService, Store, TasksService, ToastrService } from '@gauzy/ui-core/
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-task-selector',
-	templateUrl: './task.component.html',
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TaskSelectorComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-task-selector',
+    templateUrl: './task.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TaskSelectorComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TaskSelectorComponent implements OnInit, OnDestroy, ControlValueAccessor {
 	private _multiple: boolean = false;

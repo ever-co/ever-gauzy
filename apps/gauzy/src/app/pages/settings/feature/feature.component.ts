@@ -8,9 +8,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-feature',
-	templateUrl: './feature.component.html',
-	styleUrls: ['./feature.component.scss']
+    selector: 'ngx-feature',
+    templateUrl: './feature.component.html',
+    styleUrls: ['./feature.component.scss'],
+    standalone: false
 })
 export class FeatureComponent extends TranslationBaseComponent implements OnInit {
 	public tabs: NbRouteTab[] = [];

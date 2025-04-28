@@ -1,9 +1,10 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-	selector: 'ga-phone-url',
-	templateUrl: './phone-url.component.html',
-	styleUrls: ['./phone-url.component.scss']
+    selector: 'ga-phone-url',
+    templateUrl: './phone-url.component.html',
+    styleUrls: ['./phone-url.component.scss'],
+    standalone: false
 })
 export class PhoneUrlComponent {
 

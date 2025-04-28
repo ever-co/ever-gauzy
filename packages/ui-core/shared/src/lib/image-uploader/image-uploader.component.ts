@@ -9,8 +9,8 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy()
 @Component({
-	selector: 'ngx-image-uploader',
-	template: `
+    selector: 'ngx-image-uploader',
+    template: `
 		<input
 			type="file"
 			accept="image/*"
@@ -22,7 +22,8 @@ import { Store } from '@gauzy/ui-core/core';
 			[uploader]="uploader"
 		/>
 	`,
-	styleUrls: ['./image-uploader.component.scss']
+    styleUrls: ['./image-uploader.component.scss'],
+    standalone: false
 })
 export class ImageUploaderComponent implements AfterViewInit, OnInit {
 	public organization: IOrganization;

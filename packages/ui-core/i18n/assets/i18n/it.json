@@ -170,10 +170,16 @@
 		"SHARE": "Condividi",
 		"GET_INFO": "Ottieni informazioni",
 		"RETRY": "Riprova",
-		"UPLOAD": "Carica"
+		"UPLOAD": "Carica",
+		"MARKETPLACE": "Mercato",
+		"ADD_VERSION": "Aggiungi versione",
+		"READ_MORE": "Leggi di più",
+		"READ_LESS": "Leggi meno",
+		"RECOVER": "Recupera"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "Nessuna cronologia",
 			"RECEIVE_ESTIMATE": "Non hai ricevuto alcuna stima",
 			"INCOME": "Non hai creato alcun reddito",
 			"EXPENSE_CATEGORY": "Non hai creato nessuna categoria di spese",
@@ -218,7 +224,8 @@
 			"PRODUCT_TYPE_NO_DATA": "Non hai creato alcun tipo di prodotto",
 			"TEAM_DASHBOARD": "Non hai nessuna squadra",
 			"PLUGIN": "Non hai installato alcun plugin.",
-			"PLUGIN_MARKETPLACE": "Questo plugin non è disponibile sul marketplace"
+			"PLUGIN_MARKETPLACE": "Questo plugin non è disponibile sul marketplace",
+			"LOADING": "Caricamento..."
 		},
 		"TRANSACTION_TYPE": "Tipo",
 		"AMOUNT": "Importo",
@@ -4054,7 +4061,14 @@
 				"SSL_CERT_FILE_INFO": "Percorso del file certificato client per SSL.",
 				"SECURE": "Sicuro",
 				"SECURE_INFO": "True, se desideri verificare i certificati SSL."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "L'installazione di NPM consente l'accesso a plugin disponibili pubblicamente e privati.",
+			"PACKAGE_NAME": "Nome del pacchetto NPM",
+			"PACKAGE_VERSION": "Versione del pacchetto NPM",
+			"REGISTRY": "Registro NPM",
+			"AUTH_TOKEN": "Token di autenticazione",
+			"PRIVATE_REGISTRY_URL": "URL del registro privato",
+			"PLUGIN_INSTALL_CDN_ERROR": "L'URL del server non deve essere vuoto."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Limite settimanale superato",
 		"OF_HRS": "Di {{ limit }} ore",
@@ -4826,7 +4840,10 @@
 				"INVALID_PACKAGE_NAME": "Formato del nome del pacchetto non valido",
 				"INVALID_SCOPE": "Formato dell'ambito non valido",
 				"AUTHOR_TOO_LONG": "Il nome dell'autore è troppo lungo",
-				"LICENSE_TOO_LONG": "Il campo della licenza è troppo lungo"
+				"LICENSE_TOO_LONG": "Il campo della licenza è troppo lungo",
+				"FAILED": "Validazione fallita",
+				"CHANGELOG_TOO_SHORT": "Changelog troppo corto",
+				"CHANGELOG_REQUIRED": "Changelog obbligatorio"
 			},
 			"TYPE": "Tipo di plugin",
 			"TYPE_PLACEHOLDER": "Seleziona il tipo di plugin",
@@ -4881,7 +4898,10 @@
 				"REPOSITORY": "Repository",
 				"REPOSITORY_PLACEHOLDER": "Inserisci l'URL del repository"
 			},
-			"OR": "O"
+			"OR": "O",
+			"RELEASE_DATE": "Data di rilascio",
+			"CHANGELOG": "Changelog",
+			"CHANGELOG_PLACEHOLDER": "Inserisci il changelog"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Statistiche di utilizzo",
@@ -4891,11 +4911,100 @@
 			"UPLOADED_AT": "Caricato il",
 			"SECURITY_INFO": "Informazioni sulla sicurezza",
 			"CHECKSUM": "Checksum",
-			"SIGNATURE": "Firma"
+			"SIGNATURE": "Firma",
+			"INSTALLED": "Installato",
+			"HIDDEN_FOR_SECURITY": "Nascosto per motivi di sicurezza"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Scopri",
-			"INSTALLED": "Installato"
+			"INSTALLED": "Installato",
+			"VERSION_HISTORY": "Cronologia versioni"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Carica nuovo plugin",
+			"OFFLINE": "Sei attualmente offline/disconnesso ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Disattiva plugin",
+				"DESCRIPTION": "Sei sicuro di voler disattivare questo plugin?",
+				"CONFIRM": "Disattiva"
+			},
+			"UNINSTALL": {
+				"TITLE": "Disinstalla plugin",
+				"DESCRIPTION": "Sei sicuro di voler disinstallare questo plugin?",
+				"CONFIRM": "Disinstalla"
+			},
+			"DELETE": {
+				"TITLE": "Elimina plugin",
+				"DESCRIPTION": "Sei sicuro di voler eliminare questo plugin?",
+				"CONFIRM": "Elimina"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Aggiorna versione v{{number}}",
+					"DESCRIPTION": "Sei sicuro di voler aggiornare questo plugin?",
+					"CONFIRM": "Aggiorna"
+				},
+				"CREATE": {
+					"TITLE": "Crea nuova versione per {{name}}",
+					"DESCRIPTION": "Sei sicuro di voler creare questa versione?",
+					"CONFIRM": "Crea"
+				},
+				"DELETE": {
+					"TITLE": "Elimina versione",
+					"DESCRIPTION": "Sei sicuro di voler eliminare questa versione?",
+					"CONFIRM": "Elimina"
+				},
+				"RESTORE": {
+					"TITLE": "Ripristina versione",
+					"DESCRIPTION": "Sei sicuro di voler ripristinare questa versione?",
+					"CONFIRM": "Ripristina"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Versione plugin v{{number}} creata con successo!",
+					"UPDATED": "Versione plugin v{{number}} aggiornata con successo!",
+					"DELETED": "Versione plugin eliminata con successo!",
+					"RESTORED": "Versione plugin ripristinata con successo!"
+				},
+				"UPLOADED": "Plugin caricato con successo!",
+				"UPDATED": "Plugin aggiornato con successo!",
+				"DELETED": "Plugin eliminato con successo!",
+				"INSTALLED": "Plugin installato con successo!",
+				"UNINSTALLED": "Plugin disinstallato con successo!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Aggiunta nuova versione plugin...",
+					"UPDATING": "Aggiornamento versione plugin...",
+					"DELETING": "Eliminazione versione plugin...",
+					"RESTORING": "Ripristino versione plugin..."
+				},
+				"UPLOADING": "Caricamento plugin...",
+				"UPDATING": "Aggiornamento plugin...",
+				"DELETING": "Eliminazione plugin...",
+				"INSTALLING": "Installazione plugin...",
+				"UNINSTALLING": "Disinstallazione plugin..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Ripristino versione plugin fallito. Riprova!"
+				},
+				"UPLOAD": "Caricamento plugin fallito. Riprova!",
+				"NOT_FOUND": "Plugin con ID {{ id }} non trovato.",
+				"INSTALL": "Installazione plugin fallita. Riprova!",
+				"REVERT_INSTALLATION": "Annullamento installazione fallito!"
+			}
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Server non disponibile",
+		"DESCRIPTION": "Il server {{companySite}} non è attualmente raggiungibile. Ciò potrebbe essere dovuto a manutenzione programmata o tempi di inattività imprevisti.",
+		"CONNECTING": "Tentativo automatico di riconnessione...",
+		"HINT": "Stato: Tentativo di stabilire una connessione ai server {{companySite}}. Codice errore: 503."
 	}
 }

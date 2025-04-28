@@ -7,9 +7,10 @@ import { ChangelogService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-register-side-features',
-	templateUrl: './register-side-features.component.html',
-	styleUrls: ['./register-side-features.component.scss']
+    selector: 'ngx-register-side-features',
+    templateUrl: './register-side-features.component.html',
+    styleUrls: ['./register-side-features.component.scss'],
+    standalone: false
 })
 export class NgxRegisterSideFeaturesComponent implements OnInit {
 	subject$: Subject<any> = new Subject();

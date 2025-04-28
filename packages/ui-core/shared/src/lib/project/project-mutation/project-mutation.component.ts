@@ -51,9 +51,10 @@ import { ProjectModuleMutationComponent } from '../../project-module/project-mod
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-project-mutation',
-	templateUrl: './project-mutation.component.html',
-	styleUrls: ['./project-mutation.component.scss']
+    selector: 'ga-project-mutation',
+    templateUrl: './project-mutation.component.html',
+    styleUrls: ['./project-mutation.component.scss'],
+    standalone: false
 })
 export class ProjectMutationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public FormHelpers: typeof FormHelpers = FormHelpers;

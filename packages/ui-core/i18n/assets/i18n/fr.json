@@ -170,10 +170,16 @@
 		"SHARE": "Partager",
 		"GET_INFO": "Obtenir des infos",
 		"RETRY": "Réessayer",
-		"UPLOAD": "Téléverser"
+		"UPLOAD": "Téléverser",
+		"MARKETPLACE": "Marketplace",
+		"ADD_VERSION": "Ajouter une version",
+		"READ_MORE": "Lire plus",
+		"READ_LESS": "Lire moins",
+		"RECOVER": "Récupérer"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "Il n'y a pas d'historique",
 			"RECEIVE_ESTIMATE": "Vous n'avez reçu aucun devis.",
 			"INCOME": "Vous n'avez créé aucun revenu.",
 			"EXPENSE_CATEGORY": "Vous n'avez créé aucune catégorie de dépenses.",
@@ -218,7 +224,8 @@
 			"PRODUCT_TYPE_NO_DATA": "Vous n'avez créé aucun type de produit.",
 			"TEAM_DASHBOARD": "Vous n'avez aucune équipe.",
 			"PLUGIN": "Vous n'avez installé aucun plugin.",
-			"PLUGIN_MARKETPLACE": "Ce plugin n'est pas disponible sur le marché"
+			"PLUGIN_MARKETPLACE": "Ce plugin n'est pas disponible sur le marché",
+			"LOADING": "Chargement..."
 		},
 		"TRANSACTION_TYPE": "Taper",
 		"AMOUNT": "Montant",
@@ -2644,7 +2651,6 @@
 		"TASKS_STATUS": "Statut",
 		"TASK_PRIORITY": "Priorité",
 		"TASK_SIZE": "Taille",
-		"PARENT_TASK": "Tâche parente",
 		"TODO": "Tout",
 		"OPEN": "Ouvrir",
 		"READY_FOR_REVIEW": "Prêt pour l'examen.",
@@ -3610,7 +3616,6 @@
 			"APPROVAL_POLICY_CREATED": "La politique d'approbation '{{ name }}' a été ajoutée.",
 			"APPROVAL_POLICY_UPDATED": "La politique d'approbation '{{ name }}' a été modifiée.",
 			"APPROVAL_POLICY_DELETED": "La politique d'approbation '{{ name }}' a été supprimée.",
-			"APPROVAL_POLICY_ALREADY_EXISTS": "La politique d'approbation '{{ name }}' existe déjà",
 			"CANDIDATE_CREATED": "Le candidat '{{ name }}' a été ajouté à '{{ organization }}'.",
 			"CANDIDATE_ARCHIVED": "Candidat '{{ name }}' archivé.",
 			"CANDIDATE_REJECTED": "Candidat '{{ name }}' déclaré comme rejeté.",
@@ -3728,8 +3733,7 @@
 			"EDIT_POLICY": "La politique de congé \"{{ name }}\" a été modifiée",
 			"DELETE_POLICY": "La politique de congés '{{ name }}' a été supprimée.",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Impossible de créer un enregistrement de politique.",
-			"POLICY_EXISTS": "La politique de congé '{{ name }}' existe déjà"
+			"SAVE_ERROR": "Impossible de créer un enregistrement de politique."
 		},
 		"USER": {
 			"EDIT_PROFILE": "Votre profil a été mis à jour avec succès."
@@ -4048,7 +4052,14 @@
 				"SSL_CERT_FILE_INFO": "Chemin du fichier de certificat client pour SSL.",
 				"SECURE": "Sécurisé",
 				"SECURE_INFO": "Vrai, si vous souhaitez vérifier les certificats SSL."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "L'installation NPM permet d'accéder à des plugins disponibles publiquement et en privé.",
+			"PACKAGE_NAME": "Nom du package NPM",
+			"PACKAGE_VERSION": "Version du package NPM",
+			"REGISTRY": "Registre NPM",
+			"AUTH_TOKEN": "Jeton d'authentification",
+			"PRIVATE_REGISTRY_URL": "URL du registre privé",
+			"PLUGIN_INSTALL_CDN_ERROR": "L'URL du serveur ne doit pas être null."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "La limite hebdomadaire est dépassée.",
 		"OF_HRS": "De {{ limit }} heures",
@@ -4820,7 +4831,10 @@
 				"INVALID_PACKAGE_NAME": "Format de nom de package invalide",
 				"INVALID_SCOPE": "Format de portée invalide",
 				"AUTHOR_TOO_LONG": "Le nom de l'auteur est trop long",
-				"LICENSE_TOO_LONG": "Le champ de la licence est trop long"
+				"LICENSE_TOO_LONG": "Le champ de la licence est trop long",
+				"FAILED": "Échec de la validation",
+				"CHANGELOG_TOO_SHORT": "Le changelog est trop court",
+				"CHANGELOG_REQUIRED": "Le changelog est requis"
 			},
 			"TYPE": "Type de plugin",
 			"TYPE_PLACEHOLDER": "Sélectionnez le type de plugin",
@@ -4875,7 +4889,10 @@
 				"REPOSITORY": "Dépôt",
 				"REPOSITORY_PLACEHOLDER": "Entrez l'URL du dépôt"
 			},
-			"OR": "Ou"
+			"OR": "Ou",
+			"RELEASE_DATE": "Date de sortie",
+			"CHANGELOG": "Journal des modifications",
+			"CHANGELOG_PLACEHOLDER": "Entrez les modifications"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Statistiques d'utilisation",
@@ -4885,11 +4902,100 @@
 			"UPLOADED_AT": "Téléversé le",
 			"SECURITY_INFO": "Informations de sécurité",
 			"CHECKSUM": "Somme de contrôle",
-			"SIGNATURE": "Signature"
+			"SIGNATURE": "Signature",
+			"INSTALLED": "Installé",
+			"HIDDEN_FOR_SECURITY": "Masqué pour des raisons de sécurité"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Découvrir",
-			"INSTALLED": "Installé"
+			"INSTALLED": "Installé",
+			"VERSION_HISTORY": "Historique des versions"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Télécharger un nouveau plugin",
+			"OFFLINE": "Vous êtes actuellement hors ligne/déconnecté ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Désactiver l'extension",
+				"DESCRIPTION": "Êtes-vous sûr de vouloir désactiver cette extension ?",
+				"CONFIRM": "Désactiver"
+			},
+			"UNINSTALL": {
+				"TITLE": "Désinstaller l'extension",
+				"DESCRIPTION": "Êtes-vous sûr de vouloir désinstaller cette extension ?",
+				"CONFIRM": "Désinstaller"
+			},
+			"DELETE": {
+				"TITLE": "Supprimer le plugin",
+				"DESCRIPTION": "Êtes-vous sûr de vouloir supprimer ce plugin ?",
+				"CONFIRM": "Supprimer"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Mettre à jour la version v{{number}}",
+					"DESCRIPTION": "Êtes-vous sûr de vouloir mettre à jour cette version ?",
+					"CONFIRM": "Mettre à jour"
+				},
+				"CREATE": {
+					"TITLE": "Créer une nouvelle version pour {{name}}",
+					"DESCRIPTION": "Êtes-vous sûr de vouloir créer cette version ?",
+					"CONFIRM": "Créer"
+				},
+				"DELETE": {
+					"TITLE": "Supprimer la version",
+					"DESCRIPTION": "Êtes-vous sûr de vouloir supprimer cette version ?",
+					"CONFIRM": "Supprimer"
+				},
+				"RESTORE": {
+					"TITLE": "Restaurer la version",
+					"DESCRIPTION": "Êtes-vous sûr de vouloir restaurer cette version ?",
+					"CONFIRM": "Restaurer"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Version du plugin v{{number}} créée avec succès !",
+					"UPDATED": "Version du plugin v{{number}} mise à jour avec succès !",
+					"DELETED": "Version du plugin supprimée avec succès !",
+					"RESTORED": "Version du plugin restaurée avec succès !"
+				},
+				"UPLOADED": "Plugin téléchargé avec succès !",
+				"UPDATED": "Plugin mis à jour avec succès !",
+				"DELETED": "Plugin supprimé avec succès !",
+				"INSTALLED": "Plugin installé avec succès !",
+				"UNINSTALLED": "Plugin désinstallé avec succès !"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Ajout d'une nouvelle version du plugin...",
+					"UPDATING": "Mise à jour de la version du plugin...",
+					"DELETING": "Suppression de la version du plugin...",
+					"RESTORING": "Restauration de la version du plugin..."
+				},
+				"UPLOADING": "Téléchargement du plugin...",
+				"UPDATING": "Mise à jour du plugin...",
+				"DELETING": "Suppression du plugin...",
+				"INSTALLING": "Installation du plugin...",
+				"UNINSTALLING": "Désinstallation du plugin..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Échec de la restauration de la version du plugin. Veuillez réessayer !"
+				},
+				"UPLOAD": "Échec du téléchargement du plugin. Veuillez réessayer !",
+				"NOT_FOUND": "Plugin avec l'ID {{ id }} introuvable.",
+				"INSTALL": "Échec de l'installation du plugin. Veuillez réessayer !",
+				"REVERT_INSTALLATION": "Échec de l'annulation de l'installation !"
+			}
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Serveur indisponible",
+		"DESCRIPTION": "Le serveur {{companySite}} est actuellement inaccessible. Cela peut être dû à une maintenance planifiée ou à un temps d'arrêt inattendu.",
+		"CONNECTING": "Nouvelle tentative de connexion automatique...",
+		"HINT": "Statut : Tentative de connexion aux serveurs {{companySite}}. Code d'erreur : 503."
 	}
 }

@@ -3,7 +3,8 @@ import { environment } from '@gauzy/ui-config';
 import { AVATAR_DEFAULT_SVG, DEFAULT_SVG } from '@gauzy/ui-core/common';
 
 @Directive({
-	selector: 'img'
+    selector: 'img',
+    standalone: false
 })
 export class ImgDirective implements OnDestroy, OnInit {
 	@Input() type: 'user' | 'default' = 'default';

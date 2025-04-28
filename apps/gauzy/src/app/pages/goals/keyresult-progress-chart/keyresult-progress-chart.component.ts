@@ -7,9 +7,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-	selector: 'ga-keyresult-progress-chart',
-	templateUrl: './keyresult-progress-chart.component.html',
-	styleUrls: ['./keyresult-progress-chart.component.scss']
+    selector: 'ga-keyresult-progress-chart',
+    templateUrl: './keyresult-progress-chart.component.html',
+    styleUrls: ['./keyresult-progress-chart.component.scss'],
+    standalone: false
 })
 export class KeyResultProgressChartComponent extends TranslationBaseComponent implements OnInit {
 	data: any;

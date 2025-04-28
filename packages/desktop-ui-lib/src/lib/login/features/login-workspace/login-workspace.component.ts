@@ -9,9 +9,10 @@ import { ErrorHandlerService, Store, TimeTrackerDateManager } from '../../../ser
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-login-workspace',
-	templateUrl: './login-workspace.component.html',
-	styleUrls: ['./login-workspace.component.scss']
+    selector: 'ngx-login-workspace',
+    templateUrl: './login-workspace.component.html',
+    styleUrls: ['./login-workspace.component.scss'],
+    standalone: false
 })
 export class NgxLoginWorkspaceComponent implements OnInit {
 	public confirmedEmail: string;

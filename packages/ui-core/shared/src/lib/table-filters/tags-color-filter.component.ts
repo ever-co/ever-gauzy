@@ -3,15 +3,16 @@ import { DefaultFilter } from 'angular2-smart-table';
 import { ITag } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ga-tag-color-filter',
-	template: `
+    selector: 'ga-tag-color-filter',
+    template: `
 		<ga-tags-color-input
 			(selectedTagsEvent)="selectedTagsEvent($event)"
 			[multiple]="true"
 			[isOrgLevel]="true"
 			[label]="false"
 		></ga-tags-color-input>
-	`
+	`,
+    standalone: false
 })
 export class TagsColorFilterComponent extends DefaultFilter implements OnChanges {
 	constructor() {

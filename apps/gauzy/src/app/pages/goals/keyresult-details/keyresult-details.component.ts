@@ -32,9 +32,10 @@ import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.c
 import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
 
 @Component({
-	selector: 'ga-keyresult-details',
-	templateUrl: './keyresult-details.component.html',
-	styleUrls: ['./keyresult-details.component.scss']
+    selector: 'ga-keyresult-details',
+    templateUrl: './keyresult-details.component.html',
+    styleUrls: ['./keyresult-details.component.scss'],
+    standalone: false
 })
 export class KeyResultDetailsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	src: string;

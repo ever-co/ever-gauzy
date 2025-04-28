@@ -5,7 +5,8 @@ import { ConfirmComponent, ConfirmDialogOptions } from '../confirm/confirm.compo
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
-	selector: '[ngxConfirmDialog]'
+    selector: '[ngxConfirmDialog]',
+    standalone: false
 })
 export class ConfirmDirective implements OnDestroy {
 	data: ConfirmDialogOptions = {};

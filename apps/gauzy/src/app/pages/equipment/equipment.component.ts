@@ -24,8 +24,9 @@ import { ImageRowComponent } from '../inventory/components/inventory-table-compo
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './equipment.component.html',
-	styleUrls: ['./equipment.component.scss']
+    templateUrl: './equipment.component.html',
+    styleUrls: ['./equipment.component.scss'],
+    standalone: false
 })
 export class EquipmentComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	settingsSmartTable: object;

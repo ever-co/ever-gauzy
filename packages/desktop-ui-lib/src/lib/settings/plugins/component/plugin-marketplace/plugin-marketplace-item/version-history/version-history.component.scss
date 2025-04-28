@@ -1,0 +1,76 @@
+@use 'gauzy/_gauzy-table' as *;
+
+:host {
+  nb-card,
+  nb-card-header {
+    padding: 1rem 1.5rem;
+  }
+
+  nb-card.first {
+    padding: 1rem;
+  }
+
+  nb-card-header.header {
+    border-bottom: 1px solid var(--gauzy-border-default-color);
+  }
+
+  nb-card-footer.footer {
+    border-top: 1px solid var(--gauzy-border-default-color);
+  }
+
+  .title {
+    color: var(--gauzy-text-color-1);
+  }
+
+  .version-container {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    .version {
+      background: var(--gauzy-card-1);
+      border-radius: var(--border-radius);
+      padding: 0;
+    }
+
+    .changelog {
+      color: var(--gauzy-text-color-2);
+      padding: 0 1.5rem;
+    }
+
+    .version-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+  }
+  /* Skeleton loader styles */
+  .skeleton-loader .skeleton-line,
+  .skeleton-loader .skeleton-button {
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+  }
+
+  .skeleton-loader .title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .skeleton-loader .version-actions {
+    display: flex;
+  }
+
+  @keyframes skeleton-pulse {
+    0% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0.6;
+    }
+  }
+}

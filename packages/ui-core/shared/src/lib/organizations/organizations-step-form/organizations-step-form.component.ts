@@ -36,12 +36,13 @@ import { FormHelpers, LeafletMapComponent, LocationFormComponent } from '../../f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-organizations-step-form',
-	templateUrl: './organizations-step-form.component.html',
-	styleUrls: [
-		'./organizations-step-form.component.scss',
-		'./../../user/edit-profile-form/edit-profile-form.component.scss'
-	]
+    selector: 'ga-organizations-step-form',
+    templateUrl: './organizations-step-form.component.html',
+    styleUrls: [
+        './organizations-step-form.component.scss',
+        './../../user/edit-profile-form/edit-profile-form.component.scss'
+    ],
+    standalone: false
 })
 export class OrganizationsStepFormComponent implements OnInit, OnDestroy, AfterViewInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;

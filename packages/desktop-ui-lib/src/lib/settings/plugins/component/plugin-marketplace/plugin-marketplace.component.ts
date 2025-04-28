@@ -1,80 +1,64 @@
-import { Component, inject, NgZone, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { IPlugin } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
+import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, catchError, EMPTY, filter, from, switchMap, tap } from 'rxjs';
-import { ToastrNotificationService } from '../../../../services';
-import { PluginElectronService } from '../../services/plugin-electron.service';
-import { IPlugin } from '../../services/plugin-loader.service';
-import { PluginService } from '../../services/plugin.service';
+import { distinctUntilChanged, filter, map, tap } from 'rxjs';
+import { PluginMarketplaceActions } from './+state/actions/plugin-marketplace.action';
+import { PluginMarketplaceQuery } from './+state/queries/plugin-marketplace.query';
 import { PluginMarketplaceUploadComponent } from './plugin-marketplace-upload/plugin-marketplace-upload.component';
+import { Store } from '../../../../services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'lib-plugin-marketplace',
 	templateUrl: './plugin-marketplace.component.html',
-	styleUrls: ['./plugin-marketplace.component.scss']
+	styleUrls: ['./plugin-marketplace.component.scss'],
+	standalone: false
 })
-export class PluginMarketplaceComponent implements OnInit {
-	public plugins$ = new BehaviorSubject<IPlugin[]>([]);
-	private readonly pluginElectronService = inject(PluginElectronService);
-	private readonly pluginService = inject(PluginService);
-	private readonly toastrNotificationService = inject(ToastrNotificationService);
-	private readonly dialog = inject(NbDialogService);
-	private readonly ngZone = inject(NgZone);
-	private readonly route = inject(ActivatedRoute);
-	public processing = false;
+export class PluginMarketplaceComponent implements OnInit, OnDestroy {
+	private skip = 1;
+	private hasNext = false;
+	private readonly take = 10;
+
+	constructor(
+		private readonly dialog: NbDialogService,
+		private readonly route: ActivatedRoute,
+		private readonly action: Actions,
+		public readonly query: PluginMarketplaceQuery,
+		public readonly store: Store
+	) {}
 
 	ngOnInit(): void {
-		this.observePlugins();
+		this.query
+			.select()
+			.pipe(
+				map(({ count }) => count > this.skip * this.take),
+				distinctUntilChanged(),
+				tap((hasNext) => (this.hasNext = hasNext)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.load();
 	}
 
-	private observePlugins(): void {
-		this.pluginElectronService.status
-			.pipe(
-				tap((response) => this.ngZone.run(() => this.handleStatus(response))),
-				filter((response) => response.status === 'success'),
-				switchMap(() => from(this.pluginElectronService.plugins)),
-				tap((plugins) => this.ngZone.run(() => this.plugins$.next(plugins))),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	private handleStatus(notification: { status: string; message?: string }) {
-		switch (notification.status) {
-			case 'success':
-				this.processing = false;
-				this.toastrNotificationService.success(notification.message);
-				break;
-			case 'error':
-				this.processing = false;
-				this.toastrNotificationService.error(notification.message);
-				break;
-			case 'inProgress':
-				this.processing = true;
-				this.toastrNotificationService.info(notification.message);
-				break;
-			default:
-				this.processing = false;
-				this.toastrNotificationService.warn('Unexpected Status');
-				break;
-		}
-	}
-
 	public load(): void {
-		from(this.pluginElectronService.plugins)
-			.pipe(
-				tap((plugins: IPlugin[]) =>
-					this.ngZone.run(() => {
-						const installed = plugins.map((plugin) => ({ ...plugin, installed: true }));
-						this.plugins$.next(installed);
-					})
-				),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.action.dispatch(
+			PluginMarketplaceActions.getAll({
+				skip: this.skip,
+				take: this.take,
+				relations: ['versions', 'versions.source', 'uploadedBy', 'uploadedBy.user'],
+				order: { createdAt: 'DESC' }
+			})
+		);
+	}
+
+	public loadMore(): void {
+		if (this.hasNext) {
+			this.skip++;
+			this.load();
+		}
 	}
 
 	public get isUploadAvailable(): boolean {
@@ -89,17 +73,15 @@ export class PluginMarketplaceComponent implements OnInit {
 			})
 			.onClose.pipe(
 				filter(Boolean),
-				switchMap((plugin) =>
-					this.pluginService.upload(plugin).pipe(
-						tap(() => this.toastrNotificationService.success('Plugin uploaded successfully!')),
-						catchError(() => {
-							this.toastrNotificationService.error('Plugin upload failed!');
-							return EMPTY;
-						})
-					)
-				),
+				tap((plugin: IPlugin) => this.action.dispatch(PluginMarketplaceActions.upload(plugin))),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	ngOnDestroy(): void {
+		this.skip = 1;
+		this.hasNext = false;
+		this.action.dispatch(PluginMarketplaceActions.reset());
 	}
 }

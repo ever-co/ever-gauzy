@@ -3,8 +3,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
-	templateUrl: './layout.component.html',
-	styleUrls: ['./layout.component.scss']
+    templateUrl: './layout.component.html',
+    styleUrls: ['./layout.component.scss'],
+    standalone: false
 })
 export class LayoutComponent extends TranslationBaseComponent implements OnInit {
 	tabs = [

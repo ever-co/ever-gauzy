@@ -7,9 +7,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gz-doughnut-chart',
-	templateUrl: './chart.component.html',
-	styleUrls: ['./chart.component.scss']
+    selector: 'gz-doughnut-chart',
+    templateUrl: './chart.component.html',
+    styleUrls: ['./chart.component.scss'],
+    standalone: false
 })
 export class ChartComponent extends TranslationBaseComponent implements OnInit, OnChanges, OnDestroy {
 	public data: any;

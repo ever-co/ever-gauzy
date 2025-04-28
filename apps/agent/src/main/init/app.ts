@@ -13,6 +13,7 @@ import AppWindow from '../window-manager';
 import TrayMenu from '../tray';
 import { CONSTANT } from '../../constant';
 import { checkUserAuthentication } from '../auth';
+import PullActivities from '../workers/pull-activities';
 
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
@@ -90,7 +91,6 @@ export async function startServer(value: any) {
 		appWindow?.splashScreenWindow?.close();
 		// timeTrackerWindow.webContents.toggleDevTools();
 	}
-	//const auth = store.get('auth');
 	trayMenu = TrayMenu.getInstance(
 		path.join(__dirname,'../..', CONSTANT.TRAY_ICON_PATH),
 		true,
@@ -104,10 +104,14 @@ export async function startServer(value: any) {
 	});
 
 	try {
-		await checkUserAuthentication(appRootPath);
+		const isAuthenticated = await checkUserAuthentication(appRootPath);
+		if (isAuthenticated) {
+			listenIO();
+		}
 	} catch (error) {
 		throw new AppError('MAIN_AUTH', error);
 	}
+
 	return true;
 }
 
@@ -165,6 +169,11 @@ async function appReady() {
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
 	}
+}
+
+function listenIO() {
+	const pullActivities = PullActivities.getInstance();
+	pullActivities.startTracking();
 }
 
 
@@ -233,22 +242,4 @@ export async function InitApp() {
 	await app.whenReady();
 	await initiationLocalDatabase();
 	await appReady();
-
-
-	// app.on('ready', async () => {
-
-	// Set up theme listener for desktop windows
-
-	// default global
-
-
-
-	// updater.settingWindow = settingsWindow;
-	// updater.gauzyWindow = gauzyWindow;
-	// try {
-	// 	await updater.checkUpdate();
-	// } catch (error) {
-	// 	throw new UIError('400', error, 'MAINWININIT');
-	// }
-	// });
 }

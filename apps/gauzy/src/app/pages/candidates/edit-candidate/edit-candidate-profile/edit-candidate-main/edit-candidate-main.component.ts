@@ -13,20 +13,21 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
  */
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-candidate-main',
-	templateUrl: './edit-candidate-main.component.html',
-	styleUrls: [
-		'../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss'
-	],
-	styles: [
-		`
+    selector: 'ga-edit-candidate-main',
+    templateUrl: './edit-candidate-main.component.html',
+    styleUrls: [
+        '../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss'
+    ],
+    styles: [
+        `
 			:host {
 				overflow-y: auto;
 				max-height: calc(100vh - 24rem);
 				height: 100%;
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class EditCandidateMainComponent implements OnInit, OnDestroy {
 	hoverState: boolean;

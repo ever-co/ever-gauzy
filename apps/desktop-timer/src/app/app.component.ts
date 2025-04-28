@@ -15,9 +15,10 @@ import { AppService } from './app.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-root',
-	template: '<router-outlet></router-outlet>',
-	styleUrls: ['./app.component.scss']
+    selector: 'gauzy-root',
+    template: '<router-outlet></router-outlet>',
+    styleUrls: ['./app.component.scss'],
+    standalone: false
 })
 export class AppComponent implements OnInit, AfterViewInit {
 	constructor(
@@ -39,7 +40,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 		const nebularLinkMedia = document.querySelector('link[media="print"]');
 		if (nebularLinkMedia) this._renderer.setAttribute(nebularLinkMedia, 'media', 'all');
 
-
 		this.electronService.ipcRenderer.send('app_is_init');
 	}
 
@@ -53,9 +53,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 						await this.appService.pingServer(arg);
 						console.log('Server Found');
 						event.sender.send('server_is_ready');
+						this.store.serverConnection = 200;
 						clearInterval(pingHost);
 					} catch (error) {
 						console.log('ping status result', error.status);
+						this.store.serverConnection = 0;
 						if (this.store.userId) {
 							event.sender.send('server_is_ready');
 							clearInterval(pingHost);
@@ -72,9 +74,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 						await this.appService.pingServer(arg);
 						console.log('Server Found');
 						event.sender.send('server_already_start');
+						this.store.serverConnection = 200;
 						clearInterval(pingHost);
 					} catch (error) {
 						console.log('ping status result', error.status);
+						this.store.serverConnection = 0;
 						if (this.store.userId) {
 							event.sender.send('server_already_start');
 							clearInterval(pingHost);

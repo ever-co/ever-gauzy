@@ -8,8 +8,9 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-confirm-email',
-	templateUrl: './confirm-email.component.html'
+    selector: 'ngx-confirm-email',
+    templateUrl: './confirm-email.component.html',
+    standalone: false
 })
 export class ConfirmEmailComponent extends TranslationBaseComponent implements OnInit {
 	public loading: boolean = true;

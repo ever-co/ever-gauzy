@@ -5,9 +5,10 @@ import {
 } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ga-entity-with-members-card',
-	templateUrl: './entity-with-members-card.component.html',
-	styleUrls: ['./entity-with-members-card.component.scss']
+    selector: 'ga-entity-with-members-card',
+    templateUrl: './entity-with-members-card.component.html',
+    styleUrls: ['./entity-with-members-card.component.scss'],
+    standalone: false
 })
 export class EntityWithMembersCardComponent {
 	@Input() entityWithMembers: IBaseEntityWithMembers;

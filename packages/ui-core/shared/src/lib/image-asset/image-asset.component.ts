@@ -9,9 +9,10 @@ import { ImageAssetService, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-image-asset',
-	templateUrl: './image-asset.component.html',
-	styleUrls: ['./image-asset.component.scss']
+    selector: 'ga-image-asset',
+    templateUrl: './image-asset.component.html',
+    styleUrls: ['./image-asset.component.scss'],
+    standalone: false
 })
 export class ImageAssetComponent extends TranslationBaseComponent implements OnInit {
 	form: UntypedFormGroup;

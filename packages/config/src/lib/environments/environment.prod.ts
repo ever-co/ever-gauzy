@@ -171,6 +171,13 @@ export const environment: IEnvironment = {
 		dsn: process.env.SENTRY_DSN
 	},
 
+	posthog: {
+		posthogKey: process.env.POSTHOG_KEY,
+		posthogHost: process.env.POSTHOG_HOST,
+		posthogEnabled: process.env.POSTHOG_ENABLED === 'true',
+		posthogFlushInterval: Number.parseInt(process.env.POSTHOG_FLUSH_INTERVAL) || 10000
+	},
+
 	defaultIntegratedUserPass: process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
 
 	upwork: {
@@ -188,6 +195,21 @@ export const environment: IEnvironment = {
 		/** Hubstaff Integration Post Install URL */
 		postInstallUrl:
 			process.env.HUBSTAFF_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/hubstaff`
+	},
+
+	zapier: {
+		clientId: process.env.GAUZY_ZAPIER_CLIENT_ID,
+		clientSecret: process.env.GAUZY_ZAPIER_CLIENT_SECRET,
+		allowedDomains: (process.env.GAUZY_ZAPIER_ALLOWED_DOMAINS ?? process.env.GAUZY_ALLOWED_DOMAINS ?? '')
+			.split(',')
+			.map((d) => d.trim())
+			.filter(Boolean),
+		maxAuthCodes: Number.parseInt(process.env.GAUZY_ZAPIER_MAX_AUTH_CODES) || 1000,
+		instanceCount: process.env.GAUZY_ZAPIER_INSTANCE_COUNT === 'true',
+		redirectUri:
+			process.env.GAUZY_ZAPIER_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/zapier/callback`,
+		postInstallUrl:
+			process.env.GAUZY_ZAPIER_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/zapier`
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,

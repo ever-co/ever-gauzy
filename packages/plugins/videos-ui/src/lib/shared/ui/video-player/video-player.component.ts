@@ -4,6 +4,7 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 	selector: 'plug-video-player',
 	templateUrl: './video-player.component.html',
 	styleUrl: './video-player.component.scss',
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VideoPlayerComponent {

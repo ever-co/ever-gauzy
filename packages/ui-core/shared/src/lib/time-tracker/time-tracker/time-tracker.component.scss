@@ -1,4 +1,5 @@
-@import 'gauzy/_gauzy-overrides';
+@use 'gauzy/_gauzy-overrides' as *;
+
 :host {
   position: fixed;
   height: 0;

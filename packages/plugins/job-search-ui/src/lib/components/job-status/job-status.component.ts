@@ -4,10 +4,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
-	selector: 'job-status',
-	templateUrl: './job-status.component.html',
-	styleUrls: ['./job-status.component.scss'],
-	providers: []
+    selector: 'job-status',
+    templateUrl: './job-status.component.html',
+    styleUrls: ['./job-status.component.scss'],
+    providers: [],
+    standalone: false
 })
 export class JobStatusComponent extends TranslationBaseComponent {
 	constructor(translateService: TranslateService) {

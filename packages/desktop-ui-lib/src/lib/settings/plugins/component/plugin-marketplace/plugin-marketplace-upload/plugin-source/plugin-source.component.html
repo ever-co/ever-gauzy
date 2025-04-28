@@ -1,0 +1,148 @@
+<lib-form-section [formGroup]="form" title="{{ 'PLUGIN.FORM.SOURCE' | translate }}">
+	<lib-form-row>
+		<nb-form-field *ngIf="form.get('type')" class="form-group full-width">
+			<label class="label" for="source-type">{{ 'PLUGIN.FORM.SOURCE_TYPE' | translate }} *</label>
+			<nb-select
+				fullWidth
+				id="source-type"
+				formControlName="type"
+				[status]="getFieldError('type') ? 'danger' : 'basic'"
+			>
+				<nb-option *ngFor="let source of sourceTypes" [value]="source">
+					{{ 'PLUGIN.FORM.SOURCE_TYPES.' + source | translate }}
+				</nb-option>
+			</nb-select>
+		</nb-form-field>
+	</lib-form-row>
+
+	<!-- Source-specific fields -->
+	<div class="source-container">
+		<!-- CDN Source -->
+		<div *ngIf="form.get('type')?.value === 'CDN'" class="source-content">
+			<!-- CDN fields here -->
+			<lib-form-row>
+				<nb-form-field *ngIf="form.get('url')" class="form-group full-width">
+					<label class="label" for="cdn-url">{{ 'PLUGIN.FORM.CDN.URL' | translate }} *</label>
+					<input
+						nbInput
+						fullWidth
+						id="cdn-url"
+						formControlName="url"
+						placeholder="https://cdn.example.com/plugin.js"
+						type="url"
+						[status]="getFieldError('url') ? 'danger' : 'basic'"
+					/>
+					<nb-hint *ngIf="getFieldError('url', 'required')" status="danger">
+						{{ 'PLUGIN.FORM.VALIDATION.URL_REQUIRED' | translate }}
+					</nb-hint>
+					<nb-hint *ngIf="getFieldError('url', 'pattern')" status="danger">
+						{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
+					</nb-hint>
+				</nb-form-field>
+			</lib-form-row>
+
+			<lib-form-row>
+				<nb-form-field *ngIf="form.get('integrity')" class="form-group">
+					<label class="label" for="cdn-integrity">{{ 'PLUGIN.FORM.CDN.INTEGRITY' | translate }}</label>
+					<input nbInput fullWidth id="cdn-integrity" formControlName="integrity" placeholder="sha384-..." />
+				</nb-form-field>
+
+				<nb-form-field *ngIf="form.get('crossOrigin')" class="form-group">
+					<label class="label" for="cdn-crossorigin">{{ 'PLUGIN.FORM.CDN.CROSS_ORIGIN' | translate }}</label>
+					<input
+						nbInput
+						fullWidth
+						id="cdn-crossorigin"
+						formControlName="crossOrigin"
+						placeholder="anonymous"
+					/>
+				</nb-form-field>
+			</lib-form-row>
+		</div>
+
+		<!-- NPM Source -->
+		<div *ngIf="form.get('type')?.value === 'NPM'" class="source-content">
+			<!-- NPM fields here -->
+			<lib-form-row>
+				<nb-form-field *ngIf="form.get('name')" class="form-group full-width">
+					<label class="label" for="npm-name">{{ 'PLUGIN.FORM.NPM.PACKAGE_NAME' | translate }} *</label>
+					<input
+						nbInput
+						fullWidth
+						id="npm-name"
+						formControlName="name"
+						placeholder="@scope/package-name"
+						[status]="getFieldError('name') ? 'danger' : 'basic'"
+					/>
+					<nb-hint *ngIf="getFieldError('name', 'required')" status="danger">
+						{{ 'PLUGIN.FORM.VALIDATION.PACKAGE_NAME_REQUIRED' | translate }}
+					</nb-hint>
+					<nb-hint *ngIf="getFieldError('name', 'pattern')" status="danger">
+						{{ 'PLUGIN.FORM.VALIDATION.INVALID_PACKAGE_NAME' | translate }}
+					</nb-hint>
+				</nb-form-field>
+			</lib-form-row>
+
+			<lib-form-row>
+				<nb-form-field *ngIf="form.get('registry')" class="form-group">
+					<label class="label" for="npm-registry">{{ 'PLUGIN.FORM.NPM.REGISTRY' | translate }}</label>
+					<input
+						nbInput
+						fullWidth
+						id="npm-registry"
+						formControlName="registry"
+						placeholder="https://registry.npmjs.org"
+						[status]="getFieldError('registry') ? 'danger' : 'basic'"
+					/>
+					<nb-hint *ngIf="getFieldError('registry', 'pattern')" status="danger">
+						{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
+					</nb-hint>
+				</nb-form-field>
+
+				<nb-form-field *ngIf="form.get('scope')" class="form-group">
+					<label class="label" for="npm-scope">{{ 'PLUGIN.FORM.NPM.SCOPE' | translate }}</label>
+					<input
+						nbInput
+						fullWidth
+						id="npm-scope"
+						formControlName="scope"
+						placeholder="@organization"
+						[status]="getFieldError('scope') ? 'danger' : 'basic'"
+					/>
+					<nb-hint *ngIf="getFieldError('scope', 'pattern')" status="danger">
+						{{ 'PLUGIN.FORM.VALIDATION.INVALID_SCOPE' | translate }}
+					</nb-hint>
+				</nb-form-field>
+			</lib-form-row>
+			<lib-form-row>
+				<nb-form-field *ngIf="form.get('authToken')" class="form-group full-width">
+					<label class="label" for="npm-auth-token">{{ 'PLUGIN.FORM.NPM.AUTH_TOKEN' | translate }}</label>
+					<input
+						nbInput
+						fullWidth
+						id="npm-auth-token"
+						formControlName="authToken"
+						placeholder="npm_xxxxxxxx"
+						type="password"
+						autocomplete="new-password"
+					/>
+				</nb-form-field>
+			</lib-form-row>
+		</div>
+
+		<!-- GAUZY Source -->
+		<div *ngIf="form.get('type')?.value === 'GAUZY'" class="source-inputs">
+			<lib-file-upload
+				[allowedExtensions]="['.zip']"
+				[maxFileSize]="1024 * 1024 * 1024"
+				[dragDropText]="'PLUGIN.FORM.FILE_UPLOAD.DRAG_DROP' | translate"
+				[orText]="'PLUGIN.FORM.OR' | translate"
+				[browseText]="'PLUGIN.FORM.FILE_UPLOAD.BROWSE' | translate"
+				[restrictionsText]="'PLUGIN.FORM.FILE_UPLOAD.RESTRICTIONS' | translate"
+				[removeText]="'PLUGIN.FORM.FILE_UPLOAD.REMOVE' | translate"
+				(fileSelected)="onFileSelected($event)"
+				(fileRemoved)="removeFile()"
+			></lib-file-upload>
+		</div>
+	</div>
+</lib-form-section>

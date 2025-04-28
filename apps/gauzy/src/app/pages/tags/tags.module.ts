@@ -14,7 +14,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { ColorPickerModule } from 'ngx-color-picker';
+import { ColorPickerComponent, ColorPickerDirective } from 'ngx-color-picker';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
@@ -47,7 +47,8 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 		NgSelectModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		ColorPickerModule,
+		ColorPickerComponent,
+		ColorPickerDirective,
 		TagsRoutingModule,
 		SharedModule,
 		UserFormsModule,

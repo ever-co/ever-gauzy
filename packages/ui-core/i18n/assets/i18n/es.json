@@ -169,10 +169,17 @@
 		"ADD_MODULE": "Añadir módulo",
 		"SHARE": "Compartir",
 		"GET_INFO": "Obtener información",
-		"RETRY": "Reintentar"
+		"RETRY": "Reintentar",
+		"UPLOAD": "Subir",
+		"MARKETPLACE": "Mercado",
+		"ADD_VERSION": "Añadir Versión",
+		"READ_MORE": "Leer más",
+		"READ_LESS": "Leer menos",
+		"RECOVER": "Recuperar"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "No hay historial",
 			"RECEIVE_ESTIMATE": "No has recibido ningún presupuesto.",
 			"INCOME": "No has creado ningún ingreso.",
 			"EXPENSE_CATEGORY": "No has creado ninguna categoría de gasto.",
@@ -217,7 +224,8 @@
 			"PRODUCT_TYPE_NO_DATA": "No has creado ningún tipo de producto.",
 			"TEAM_DASHBOARD": "No tienes ningún equipo.",
 			"PLUGIN": "No has instalado ningún complemento.",
-			"PLUGIN_MARKETPLACE": "Este complemento no está disponible en el mercado"
+			"PLUGIN_MARKETPLACE": "Este complemento no está disponible en el mercado",
+			"LOADING": "Cargando..."
 		},
 		"TRANSACTION_TYPE": "Tipo",
 		"AMOUNT": "Cantidad",
@@ -4055,7 +4063,14 @@
 				"SSL_CERT_FILE_INFO": "Ruta al archivo de certificado de cliente para SSL.",
 				"SECURE": "Seguro",
 				"SECURE_INFO": "Verdadero, si desea verificar los certificados SSL."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "La instalación de NPM permite el acceso a complementos disponibles públicamente y de forma privada.",
+			"PACKAGE_NAME": "Nombre del paquete NPM",
+			"PACKAGE_VERSION": "Versión del paquete NPM",
+			"REGISTRY": "Registro de NPM",
+			"AUTH_TOKEN": "Token de autenticación",
+			"PRIVATE_REGISTRY_URL": "URL del registro privado",
+			"PLUGIN_INSTALL_CDN_ERROR": "La URL del servidor no debe estar vacía."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Límite semanal excedido",
 		"OF_HRS": "De {{ limit }} horas.",
@@ -4827,7 +4842,10 @@
 				"INVALID_PACKAGE_NAME": "Formato de nombre de paquete no válido",
 				"INVALID_SCOPE": "Formato de alcance no válido",
 				"AUTHOR_TOO_LONG": "El nombre del autor es demasiado largo",
-				"LICENSE_TOO_LONG": "El campo de la licencia es demasiado largo"
+				"LICENSE_TOO_LONG": "El campo de la licencia es demasiado largo",
+				"FAILED": "Validación fallida",
+				"CHANGELOG_TOO_SHORT": "El changelog es demasiado corto",
+				"CHANGELOG_REQUIRED": "El changelog es obligatorio"
 			},
 			"TYPE": "Tipo de complemento",
 			"TYPE_PLACEHOLDER": "Seleccione el tipo de complemento",
@@ -4882,7 +4900,10 @@
 				"REPOSITORY": "Repositorio",
 				"REPOSITORY_PLACEHOLDER": "Ingrese la URL del repositorio"
 			},
-			"OR": "O"
+			"OR": "O",
+			"RELEASE_DATE": "Fecha de lanzamiento",
+			"CHANGELOG": "Changelog",
+			"CHANGELOG_PLACEHOLDER": "Ingrese el changelog"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Estadísticas de uso",
@@ -4892,11 +4913,100 @@
 			"UPLOADED_AT": "Subido en",
 			"SECURITY_INFO": "Información de seguridad",
 			"CHECKSUM": "Suma de verificación",
-			"SIGNATURE": "Firma"
+			"SIGNATURE": "Firma",
+			"INSTALLED": "Instalado",
+			"HIDDEN_FOR_SECURITY": "Ocultado por motivos de seguridad"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Descubrir",
-			"INSTALLED": "Instalado"
+			"INSTALLED": "Instalado",
+			"VERSION_HISTORY": "Historial de versiones"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Subir nuevo complemento",
+			"OFFLINE": "Actualmente estás desconectado ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Desactivar complemento",
+				"DESCRIPTION": "¿Estás seguro de que quieres desactivar este complemento?",
+				"CONFIRM": "Desactivar"
+			},
+			"UNINSTALL": {
+				"TITLE": "Desinstalar complemento",
+				"DESCRIPTION": "¿Estás seguro de que quieres desinstalar este complemento?",
+				"CONFIRM": "Desinstalar"
+			},
+			"DELETE": {
+				"TITLE": "Eliminar complemento",
+				"DESCRIPTION": "¿Estás seguro de que quieres eliminar este complemento?",
+				"CONFIRM": "Eliminar"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Actualizar versión v{{number}}",
+					"DESCRIPTION": "¿Estás seguro de que quieres actualizar este complemento?",
+					"CONFIRM": "Actualizar"
+				},
+				"CREATE": {
+					"TITLE": "Crear nueva versión para {{name}}",
+					"DESCRIPTION": "¿Estás seguro de que quieres crear esta versión?",
+					"CONFIRM": "Crear"
+				},
+				"DELETE": {
+					"TITLE": "Eliminar versión",
+					"DESCRIPTION": "¿Estás seguro de que quieres eliminar esta versión?",
+					"CONFIRM": "Eliminar"
+				},
+				"RESTORE": {
+					"TITLE": "Restaurar versión",
+					"DESCRIPTION": "¿Estás seguro de que quieres restaurar esta versión?",
+					"CONFIRM": "Restaurar"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "¡Versión del complemento v{{number}} creada con éxito!",
+					"UPDATED": "¡Versión del complemento v{{number}} actualizada con éxito!",
+					"DELETED": "¡Versión del complemento eliminada con éxito!",
+					"RESTORED": "¡Versión del complemento restaurada con éxito!"
+				},
+				"UPLOADED": "¡Complemento subido con éxito!",
+				"UPDATED": "¡Complemento actualizado con éxito!",
+				"DELETED": "¡Complemento eliminado con éxito!",
+				"INSTALLED": "¡Complemento instalado con éxito!",
+				"UNINSTALLED": "¡Complemento desinstalado con éxito!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Añadiendo nueva versión del complemento...",
+					"UPDATING": "Actualizando versión del complemento...",
+					"DELETING": "Eliminando versión del complemento...",
+					"RESTORING": "Restaurando versión del complemento..."
+				},
+				"UPLOADING": "Subiendo complemento...",
+				"UPDATING": "Actualizando complemento...",
+				"DELETING": "Eliminando complemento...",
+				"INSTALLING": "Instalando complemento...",
+				"UNINSTALLING": "Desinstalando complemento..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Error al restaurar la versión del complemento. ¡Por favor, inténtelo de nuevo!"
+				},
+				"UPLOAD": "Error al subir el complemento. ¡Por favor, inténtelo de nuevo!",
+				"NOT_FOUND": "Complemento con ID {{ id }} no encontrado.",
+				"INSTALL": "Error al instalar el complemento. ¡Por favor, inténtelo de nuevo!",
+				"REVERT_INSTALLATION": "¡Error al revertir la instalación!"
+			}
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Servidor no disponible",
+		"DESCRIPTION": "El servidor de {{companySite}} no está disponible actualmente. Esto puede deberse a mantenimiento programado o tiempo de inactividad inesperado.",
+		"CONNECTING": "Reintentando conexión automáticamente...",
+		"HINT": "Estado: Intentando establecer conexión con los servidores de {{companySite}}. Código de error: 503."
 	}
 }

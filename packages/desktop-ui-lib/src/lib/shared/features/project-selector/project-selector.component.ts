@@ -14,17 +14,18 @@ import { ProjectSelectorStore } from './+state/project-selector.store';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-project-selector',
-	templateUrl: './project-selector.component.html',
-	styleUrls: ['./project-selector.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => ProjectSelectorComponent),
-			multi: true
-		}
-	]
+    selector: 'gauzy-project-selector',
+    templateUrl: './project-selector.component.html',
+    styleUrls: ['./project-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ProjectSelectorComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganizationProject> implements OnInit {
 	constructor(

@@ -6,12 +6,13 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-invoice-total-amount',
-	template: `
+    selector: 'ga-invoice-total-amount',
+    template: `
 		<span>
 			{{ value | currency : rowData?.currency | position : organization?.currencyPosition }}
 		</span>
-	`
+	`,
+    standalone: false
 })
 export class InvoiceTotalValueComponent implements OnInit {
 	@Input() value: string;

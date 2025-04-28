@@ -17,9 +17,10 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-candidate-interviews-calendar-info',
-	templateUrl: './candidate-calendar-info.component.html',
-	styleUrls: ['./candidate-calendar-info.component.scss']
+    selector: 'ga-candidate-interviews-calendar-info',
+    templateUrl: './candidate-calendar-info.component.html',
+    styleUrls: ['./candidate-calendar-info.component.scss'],
+    standalone: false
 })
 export class CandidateCalendarInfoComponent implements OnInit {
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;

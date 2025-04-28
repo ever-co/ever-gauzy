@@ -12,9 +12,10 @@ import { DateViewComponent, IncomeExpenseAmountComponent } from '@gauzy/ui-core/
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-upwork-reports',
-	templateUrl: './reports.component.html',
-	styleUrls: ['./reports.component.scss']
+    selector: 'ngx-upwork-reports',
+    templateUrl: './reports.component.html',
+    styleUrls: ['./reports.component.scss'],
+    standalone: false
 })
 export class ReportsComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	public reports$: Observable<any> = this._upworkStoreService.reports$;

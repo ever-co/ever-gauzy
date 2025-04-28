@@ -9,9 +9,10 @@ export type ItemActionType = 'create' | 'edit' | 'delete';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-editable-grid',
-	templateUrl: './gauzy-editable-grid.component.html',
-	styleUrls: ['./gauzy-editable-grid.component.scss']
+    selector: 'ga-editable-grid',
+    templateUrl: './gauzy-editable-grid.component.html',
+    styleUrls: ['./gauzy-editable-grid.component.scss'],
+    standalone: false
 })
 export class GauzyEditableGridComponent<T extends { id?: string }>
 	extends TranslationBaseComponent

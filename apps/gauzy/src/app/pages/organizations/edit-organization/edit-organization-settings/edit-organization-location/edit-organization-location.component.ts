@@ -13,9 +13,10 @@ import { LeafletMapComponent, LocationFormComponent } from '@gauzy/ui-core/share
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-org-location',
-	templateUrl: './edit-organization-location.component.html',
-	styleUrls: ['./edit-organization-location.component.scss']
+    selector: 'ga-edit-org-location',
+    templateUrl: './edit-organization-location.component.html',
+    styleUrls: ['./edit-organization-location.component.scss'],
+    standalone: false
 })
 export class EditOrganizationLocationComponent
 	extends TranslationBaseComponent

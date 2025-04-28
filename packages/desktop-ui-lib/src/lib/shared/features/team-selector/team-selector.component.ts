@@ -14,17 +14,18 @@ import { TeamSelectorStore } from './+state/team-selector.store';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-team-selector',
-	templateUrl: './team-selector.component.html',
-	styleUrls: ['./team-selector.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TeamSelectorComponent),
-			multi: true
-		}
-	]
+    selector: 'gauzy-team-selector',
+    templateUrl: './team-selector.component.html',
+    styleUrls: ['./team-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TeamSelectorComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizationTeam> implements OnInit {
 	constructor(

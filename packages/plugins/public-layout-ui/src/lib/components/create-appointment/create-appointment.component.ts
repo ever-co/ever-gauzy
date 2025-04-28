@@ -9,9 +9,10 @@ import { EmployeesService, ErrorHandlingService, EventTypeService } from '@gauzy
 
 @UntilDestroy()
 @Component({
-	templateUrl: './create-appointment.component.html',
-	styleUrls: ['../public-appointment/public-appointment.component.scss'],
-	providers: [EventTypeService]
+    templateUrl: './create-appointment.component.html',
+    styleUrls: ['../public-appointment/public-appointment.component.scss'],
+    providers: [EventTypeService],
+    standalone: false
 })
 export class CreateAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public employee$: Observable<IEmployee | null>;

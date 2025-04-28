@@ -169,7 +169,12 @@
 		"SHARE": "שיתוף",
 		"GET_INFO": "קבל מידע",
 		"RETRY": "נסה שוב",
-		"UPLOAD": "העלה"
+		"UPLOAD": "העלה",
+		"MARKEPLACE": "מרקט",
+		"ADD_VERSION": "הוסף גרסה",
+		"READ_MORE": "קרא עוד",
+		"READ_LESS": "קרא פחות",
+		"RECOVER": "שחזר"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -218,7 +223,8 @@
 			"PRODUCT_TYPE_NO_DATA": "לא יצרתם סוגי מוצרים.",
 			"TEAM_DASHBOARD": "אין לך שום צוותים.",
 			"PLUGIN": "לא התקנת שום תוסף.",
-			"PLUGIN_MARKETPLACE": "תוסף זה אינו זמין בשוק"
+			"PLUGIN_MARKETPLACE": "תוסף זה אינו זמין בשוק",
+			"HISTORY": "אין היסטוריה"
 		},
 		"TRANSACTION_TYPE": "סוג",
 		"AMOUNT": "כמות",
@@ -4065,7 +4071,14 @@
 				"SSL_CERT_FILE_INFO": "נתיב לקובץ תעודת הלקוח עבור SSL.",
 				"SECURE": "מאובטח",
 				"SECURE_INFO": "נכון, אם ברצונך לאמת את תעודות ה-SSL."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "התקנת NPM מאפשרת גישה לתוספים זמינים לציבור ופרטיים.",
+			"PACKAGE_NAME": "שם חבילת NPM",
+			"PACKAGE_VERSION": "גרסת חבילת NPM",
+			"REGISTRY": "מרשם NPM",
+			"AUTH_TOKEN": "אסימון אימות",
+			"PRIVATE_REGISTRY_URL": "כתובת URL של מרשם פרטי",
+			"PLUGIN_INSTALL_CDN_ERROR": "כתובת ה-URL של השרת לא יכולה להיות ריקה."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "הגעת למגבלת השבוע",
 		"OF_HRS": "מתוך {{ limit }} שעות",
@@ -4816,7 +4829,10 @@
 				"INVALID_PACKAGE_NAME": "פורמט שם חבילה לא תקין",
 				"INVALID_SCOPE": "פורמט היקף לא תקין",
 				"AUTHOR_TOO_LONG": "שם המחבר ארוך מדי",
-				"LICENSE_TOO_LONG": "שדה הרישיון ארוך מדי"
+				"LICENSE_TOO_LONG": "שדה הרישיון ארוך מדי",
+				"FAILED": "האימות נכשל",
+				"CHANGELOG_TOO_SHORT": "שדה השינויים ארוך מדי",
+				"CHANGELOG_REQUIRED": "שדה השינויים נדרש"
 			},
 			"TYPE": "סוג התוסף",
 			"TYPE_PLACEHOLDER": "בחר סוג תוסף",
@@ -4871,7 +4887,10 @@
 				"REPOSITORY": "מאגר",
 				"REPOSITORY_PLACEHOLDER": "הזן את כתובת המאגר"
 			},
-			"OR": "או"
+			"OR": "או",
+			"RELEASE_DATE": "תאריך הרישיון",
+			"CHANGELOG": "יומן השינויים",
+			"CHANGELOG_PLACEHOLDER": "הזן יומן השינויים"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "סטטיסטיקות שימוש",
@@ -4881,11 +4900,100 @@
 			"UPLOADED_AT": "הועלה בתאריך",
 			"SECURITY_INFO": "מידע על אבטחה",
 			"CHECKSUM": "סכום ביקורת",
-			"SIGNATURE": "חתימה"
+			"SIGNATURE": "חתימה",
+			"INSTALLED": "התקנה",
+			"HIDDEN_FOR_SECURITY": "הוסרה מהספרייה לכרטיסי אבטחה"
 		},
 		"LAYOUT": {
 			"DISCOVER": "לגלות",
-			"INSTALLED": "מותקן"
+			"INSTALLED": "מותקן",
+			"VERSION_HISTORY": "היסטוריית גרסאות"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "העלה תוסף חדש",
+			"OFFLINE": "אתה לא מחובר כרגע ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "לבטל את ההפעלה של התוסף",
+				"DESCRIPTION": "האם אתה בטוח שברצונך לבטל את ההפעלה של התוסף הזה?",
+				"CONFIRM": "בטל הפעלה"
+			},
+			"UNINSTALL": {
+				"TITLE": "הסר את התוסף",
+				"DESCRIPTION": "האם אתה בטוח שברצונך להסיר את התוסף הזה?",
+				"CONFIRM": "הסר התקנה"
+			},
+			"DELETE": {
+				"TITLE": "מחיקת תוסף",
+				"DESCRIPTION": "האם אתה בטוח שברצונך למחוק תוסף זה?",
+				"CONFIRM": "מחק"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "עדכון גרסה v{{number}}",
+					"DESCRIPTION": "האם אתה בטוח שברצונך לעדכן את התוסף הזה?",
+					"CONFIRM": "עדכן"
+				},
+				"CREATE": {
+					"TITLE": "צור גרסה חדשה עבור {{name}}",
+					"DESCRIPTION": "האם אתה בטוח שברצונך ליצור גרסה זו?",
+					"CONFIRM": "צור"
+				},
+				"DELETE": {
+					"TITLE": "מחיקת גרסה",
+					"DESCRIPTION": "האם אתה בטוח שברצונך למחוק גרסה זו?",
+					"CONFIRM": "מחק"
+				},
+				"RESTORE": {
+					"TITLE": "שחזור גרסה",
+					"DESCRIPTION": "האם אתה בטוח שברצונך לשחזר גרסה זו?",
+					"CONFIRM": "שחזר"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "גרסת התוסף v{{number}} נוצרה בהצלחה!",
+					"UPDATED": "גרסת התוסף v{{number}} עודכנה בהצלחה!",
+					"DELETED": "גרסת התוסף נמחקה בהצלחה!",
+					"RESTORED": "גרסת התוסף שוחזרה בהצלחה!"
+				},
+				"UPLOADED": "התוסף הועלה בהצלחה!",
+				"UPDATED": "התוסף עודכן בהצלחה!",
+				"DELETED": "התוסף נמחק בהצלחה!",
+				"INSTALLED": "התוסף הותקן בהצלחה!",
+				"UNINSTALLED": "התוסף הוסר בהצלחה!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "מוסיף גרסת תוסף חדשה...",
+					"UPDATING": "מעדכן גרסת תוסף...",
+					"DELETING": "מוחק גרסת תוסף...",
+					"RESTORING": "משחזר גרסת תוסף..."
+				},
+				"UPLOADING": "מעלה תוסף...",
+				"UPDATING": "מעדכן תוסף...",
+				"DELETING": "מוחק תוסף...",
+				"INSTALLING": "מתקין תוסף...",
+				"UNINSTALLING": "מסיר תוסף..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "שחזור גרסת התוסף נכשל. נא לנסות שוב!"
+				},
+				"UPLOAD": "העלאת התוסף נכשלה. נא לנסות שוב!",
+				"NOT_FOUND": "תוסף עם מזהה {{ id }} לא נמצא.",
+				"INSTALL": "התקנת התוסף נכשלה. נא לנסות שוב!",
+				"REVERT_INSTALLATION": "ביטול ההתקנה נכשל!"
+			}
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "השרת לא זמין",
+		"DESCRIPTION": "שרת {{companySite}} אינו נגיש כרגע. ייתכן שהסיבה לכך היא תחזוקה מתוכננת או השבתה בלתי צפויה.",
+		"CONNECTING": "מנסה להתחבר מחדש אוטומטית...",
+		"HINT": "סטטוס: מנסה ליצור חיבור לשרתי {{companySite}}. קוד שגיאה: 503."
 	}
 }
