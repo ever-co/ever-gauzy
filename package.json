@@ -549,7 +549,7 @@
 		"jest-environment-jsdom": "29.7.0",
 		"jest-environment-node": "^29.7.0",
 		"jest-jasmine2": "29.7.0",
-		"jest-preset-angular": "14.4.2",
+		"jest-preset-angular": "14.5.5",
 		"jsonc-eslint-parser": "^2.1.0",
 		"lerna": "^8.1.9",
 		"lerna-changelog": "^2.2.0",
