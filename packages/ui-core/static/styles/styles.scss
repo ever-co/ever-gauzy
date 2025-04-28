@@ -1,11 +1,11 @@
 @use 'fonts/google-fonts';
 
+// framework component themes (styles tied to theme variables)
+@use '@nebular/theme/styles/globals' as nb-theme-globals;
+@use '@nebular/auth/styles/globals' as nb-auth-globals;
+
 // themes - our custom or/and out of the box themes
 @forward 'themes';
-
-// framework component themes (styles tied to theme variables)
-@import '@nebular/theme/styles/globals';
-@import '@nebular/auth/styles/globals';
 
 @import 'bootstrap/scss/functions';
 @import 'bootstrap/scss/variables';
@@ -44,8 +44,8 @@
   @include angular-material();
 
   // framework global styles
-  @include nb-theme-global();
-  @include nb-auth-global();
+  @include nb-theme-globals.nb-theme-global();
+  @include nb-auth-globals.nb-auth-global();
 
   @include ngx-layout();
   // loading progress bar
