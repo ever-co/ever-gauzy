@@ -205,7 +205,6 @@
 		"@types/passport-jwt": "^3.0.6",
 		"@types/socket.io": "^2.1.12",
 		"@types/supertest": "^2.0.10",
-		"@types/uuid": "^10.0.0",
 		"@types/web-push": "^3.3.0",
 		"@types/yargs": "^15.0.9",
 		"copyfiles": "^2.4.1",

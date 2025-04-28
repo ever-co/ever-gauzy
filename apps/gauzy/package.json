@@ -182,7 +182,6 @@
 		"@types/node": "^20.14.9",
 		"@types/underscore": "^1.11.4",
 		"@types/underscore.string": "^0.0.38",
-		"@types/uuid": "^10.0.0",
 		"@types/yargs": "^15.0.9",
 		"jasmine-core": "^3.6.0",
 		"jasmine-spec-reporter": "^6.0.0",
