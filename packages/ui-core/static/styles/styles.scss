@@ -1,11 +1,7 @@
-@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap');
-@import url('https://fonts.googleapis.com/css?family=Crimson+Text:600i&display=swap');
-@import url('https://fonts.googleapis.com/css?family=Roboto:200,300,400,500,600,700,800&display=swap');
-// Google Inter font
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@use 'fonts/google-fonts';
 
 // themes - our custom or/and out of the box themes
-@import 'themes';
+@forward 'themes';
 
 // framework component themes (styles tied to theme variables)
 @import '@nebular/theme/styles/globals';
@@ -15,6 +11,11 @@
 @import 'bootstrap/scss/variables';
 @import 'bootstrap/scss/mixins';
 @import 'bootstrap/scss/grid';
+
+// install swiper.js
+@import 'swiper/css';
+@import 'swiper/css/pagination';
+@import 'swiper/css/navigation';
 
 @import './spinner'; // loading spinner
 @import './chat-woot'; // chat woot widget
@@ -37,11 +38,6 @@
 @import './includes/ng5-slider';
 @import './includes/dialog';
 @import './includes/scroll';
-
-// install swiper.js
-@import 'swiper/css';
-@import 'swiper/css/pagination';
-@import 'swiper/css/navigation';
 
 // install the framework and custom global styles
 @include nb-install() {
