@@ -136,6 +136,7 @@ export * from '../../tasks/estimation/task-estimation.entity';
 export * from '../../tasks/issue-type/issue-type.entity';
 export * from '../../tasks/linked-issue/task-linked-issue.entity';
 export * from '../../tasks/priorities/priority.entity';
+export * from '../../tasks/project-sequence/project-sequence.entity';
 export * from '../../tasks/related-issue-type/related-issue-type.entity';
 export * from '../../tasks/sizes/size.entity';
 export * from '../../tasks/statuses/status.entity';

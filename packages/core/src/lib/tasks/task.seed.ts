@@ -1,11 +1,10 @@
-import { Brackets, DataSource, WhereExpressionBuilder } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { filter, uniq } from 'underscore';
 import { lastValueFrom, map } from 'rxjs';
-import { isNotEmpty } from '@gauzy/common';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
-import { IGetTaskOptions, IOrganization, ITag, ITenant } from '@gauzy/contracts';
+import { IOrganization, ITag, ITenant } from '@gauzy/contracts';
 import {
 	Organization,
 	OrganizationProject,
@@ -13,9 +12,9 @@ import {
 	Tag,
 	Task,
 	User,
-	Employee
+	Employee,
+	TaskProjectSequence
 } from './../core/entities/internal';
-import { prepareSQLQuery as p } from './../database/database.helper';
 
 // GITHUB API URL
 export const GITHUB_API_URL = 'https://api.github.com';
@@ -48,13 +47,9 @@ export const createDefaultTask = async (dataSource: DataSource, tenant: ITenant,
 	const employees = await dataSource.manager.find(Employee);
 
 	let count = 0;
-	for await (const issue of issues) {
+	for (const issue of issues) {
 		const project = faker.helpers.arrayElement(defaultProjects);
-		const maxTaskNumber = await getMaxTaskNumberByProject(dataSource, {
-			tenantId: tenant.id,
-			organizationId: organization.id,
-			projectId: project.id
-		});
+		const taskNumber = await getTaskNumber(dataSource, project.id);
 
 		const task = new Task();
 		task.tags = filter(tags, (tag: ITag) => !!issue.labels.find((label: any) => label.name === tag.name));
@@ -68,7 +63,7 @@ export const createDefaultTask = async (dataSource: DataSource, tenant: ITenant,
 		task.dueDate = faker.date.future({ years: 0.3 });
 		task.project = project;
 		task.prefix = project.name.substring(0, 3);
-		task.number = maxTaskNumber + 1;
+		task.number = taskNumber;
 		task.creator = faker.helpers.arrayElement(users);
 
 		if (count % 2 === 0) {
@@ -98,7 +93,7 @@ export const createRandomTask = async (dataSource: DataSource, tenants: ITenant[
 
 	labels = uniq(labels, (label) => label.name);
 
-	for await (const tenant of tenants || []) {
+	for (const tenant of tenants || []) {
 		const { id: tenantId } = tenant;
 		const users = await dataSource.manager.find(User, {
 			where: {
@@ -110,7 +105,7 @@ export const createRandomTask = async (dataSource: DataSource, tenants: ITenant[
 				tenantId
 			}
 		});
-		for await (const organization of organizations) {
+		for (const organization of organizations) {
 			const { id: organizationId } = organization;
 			const projects = await dataSource.manager.findBy(OrganizationProject, {
 				tenantId,
@@ -132,13 +127,9 @@ export const createRandomTask = async (dataSource: DataSource, tenants: ITenant[
 			});
 			let count = 0;
 
-			for await (const issue of issues) {
+			for (const issue of issues) {
 				const project = faker.helpers.arrayElement(projects);
-				const maxTaskNumber = await getMaxTaskNumberByProject(dataSource, {
-					tenantId: tenant.id,
-					organizationId: organization.id,
-					projectId: project.id
-				});
+				const taskNumber = await getTaskNumber(dataSource, project.id);
 
 				const task = new Task();
 				task.tags = filter(tags, (tag: ITag) => !!issue.labels.find((label: any) => label.name === tag.name));
@@ -150,7 +141,7 @@ export const createRandomTask = async (dataSource: DataSource, tenants: ITenant[
 				task.isDraft = false;
 				task.project = project;
 				task.prefix = project.name.substring(0, 3);
-				task.number = maxTaskNumber + 1;
+				task.number = taskNumber;
 				task.teams = [faker.helpers.arrayElement(teams)];
 				task.creator = faker.helpers.arrayElement(users);
 				task.organization = organization;
@@ -190,30 +181,44 @@ export async function createTags(dataSource: DataSource, labels, tenant: ITenant
 }
 
 /**
- * GET maximum task number by project filter
+ * GET task number by project
  *
- * @param options
+ * @param dataSource
+ * @param projectId
+ * @returns
  */
-export async function getMaxTaskNumberByProject(dataSource: DataSource, options: IGetTaskOptions) {
-	const { tenantId, organizationId, projectId } = options;
-	/**
-	 * GET maximum task number by project
-	 */
-	const query = dataSource.createQueryBuilder(Task, 'task');
-	// Build the query to get the maximum task number
-	query.select(p(`COALESCE(MAX("${query.alias}"."number"), 0)`), 'maxTaskNumber');
-	query.andWhere(
-		new Brackets((qb: WhereExpressionBuilder) => {
-			qb.andWhere(p(`"${query.alias}"."organizationId" =:organizationId`), { organizationId });
-			qb.andWhere(p(`"${query.alias}"."tenantId" =:tenantId`), { tenantId });
+export async function getTaskNumber(dataSource: DataSource, projectId: string): Promise<number> {
+	const queryRunner = dataSource.createQueryRunner();
+	await queryRunner.startTransaction();
 
-			if (isNotEmpty(projectId)) {
-				qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-			} else {
-				qb.andWhere(p(`"${query.alias}"."projectId" IS NULL`));
-			}
-		})
-	);
-	const { maxTaskNumber } = await query.getRawOne();
-	return maxTaskNumber;
+	try {
+		let projectTaskSequence = await queryRunner.manager.findOne(TaskProjectSequence, {
+			where: { projectId },
+			lock: { mode: 'pessimistic_write' }
+		});
+		let taskNumber = 1;
+
+		if (!projectTaskSequence) {
+			// If the current project task sequence doesn't exist, create a new one
+			projectTaskSequence = queryRunner.manager.create(TaskProjectSequence, {
+				projectId,
+				taskNumber
+			});
+		} else {
+			// If the current project task sequence exists, increment the task number
+			projectTaskSequence.taskNumber += 1;
+			taskNumber = projectTaskSequence.taskNumber;
+		}
+
+		// Save the project task sequence
+		await queryRunner.manager.save(projectTaskSequence);
+		await queryRunner.commitTransaction();
+
+		return taskNumber;
+	} catch (error) {
+		await queryRunner.rollbackTransaction();
+		throw error;
+	} finally {
+		await queryRunner.release();
+	}
 }

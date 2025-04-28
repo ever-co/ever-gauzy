@@ -151,7 +151,8 @@ import {
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant
+	WarehouseProductVariant,
+	TaskProjectSequence
 } from './internal';
 
 export const coreEntities = [
@@ -290,6 +291,7 @@ export const coreEntities = [
 	TaskEstimation,
 	TaskLinkedIssue,
 	TaskPriority,
+	TaskProjectSequence,
 	TaskRelatedIssueType,
 	TaskSize,
 	TaskStatus,
