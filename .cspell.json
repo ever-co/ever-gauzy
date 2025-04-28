@@ -661,7 +661,8 @@
 		"posthog",
 		"autocapture",
 		"pageview",
-		"signup"
+		"signup",
+		"wrapp"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
