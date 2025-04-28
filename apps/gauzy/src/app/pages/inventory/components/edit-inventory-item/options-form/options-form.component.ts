@@ -42,9 +42,10 @@ export interface IProductOptionUI extends IProductOptionTranslatable {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-options-form',
-	templateUrl: './options-form.component.html',
-	styleUrls: ['./options-form.component.scss']
+    selector: 'ngx-options-form',
+    templateUrl: './options-form.component.html',
+    styleUrls: ['./options-form.component.scss'],
+    standalone: false
 })
 export class OptionsFormComponent implements OnInit {
 	editOption: IProductOption;

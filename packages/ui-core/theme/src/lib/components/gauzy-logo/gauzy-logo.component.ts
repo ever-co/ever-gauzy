@@ -21,9 +21,10 @@ import { COSMIC_THEME, DARK_THEME, GAUZY_DARK, MATERIAL_DARK_THEME } from '../..
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-gauzy-logo',
-	templateUrl: './gauzy-logo.component.html',
-	styleUrls: ['./gauzy-logo.component.scss']
+    selector: 'ngx-gauzy-logo',
+    templateUrl: './gauzy-logo.component.html',
+    styleUrls: ['./gauzy-logo.component.scss'],
+    standalone: false
 })
 export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	public theme: string;

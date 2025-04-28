@@ -11,6 +11,7 @@ import { ToastrNotificationService } from '../../../../../services';
 	selector: 'lib-plugin-marketplace-upload',
 	templateUrl: './plugin-marketplace-upload.component.html',
 	styleUrls: ['./plugin-marketplace-upload.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {

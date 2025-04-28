@@ -1,15 +1,15 @@
-@import 'gauzy/_gauzy-cards';
+@use 'gauzy/_gauzy-cards' as *;
 
 :host {
   .header-title-with-back {
-    display: flex; 
+    display: flex;
     align-items: center;
     @include nb-rtl(gap, 24px);
     margin-bottom: 50px;
   }
 
   ::ng-deep ngx-back-navigation button {
-    @include nb-rtl(margin-right, 0px !important);    
+    @include nb-rtl(margin-right, 0px !important);
   }
 
   nb-card,
@@ -72,7 +72,7 @@
 .info-text {
   display: flex;
   align-items: center;
-  gap: 50px;  
+  gap: 50px;
 }
 
 .title {

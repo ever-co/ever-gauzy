@@ -1,6 +1,6 @@
-@import 'gauzy/gauzy-table';
-@import 'gauzy/gauzy-cards';
-@import '../../payments/payments.component';
+@use 'gauzy/gauzy-table' as *;
+@use 'gauzy/gauzy-cards' as *;
+@forward '../../payments/payments.component';
 
 :host {
   nb-card,

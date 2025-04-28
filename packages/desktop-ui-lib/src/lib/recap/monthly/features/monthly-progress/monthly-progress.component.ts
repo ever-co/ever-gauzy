@@ -10,10 +10,11 @@ export interface IMonthWeekdays {
 }
 
 @Component({
-	selector: 'ngx-monthly-progress',
-	templateUrl: './monthly-progress.component.html',
-	styleUrls: ['./monthly-progress.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-monthly-progress',
+    templateUrl: './monthly-progress.component.html',
+    styleUrls: ['./monthly-progress.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class MonthlyProgressComponent {
 	public monthWeekdays: IMonthWeekdays[] = [];

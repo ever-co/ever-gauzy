@@ -1,4 +1,4 @@
-@import '@shared/reusable';
+@use '@shared/reusable' as *;
 
 .links {
   margin-top: 21px;

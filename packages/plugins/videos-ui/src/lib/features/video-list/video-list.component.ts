@@ -7,6 +7,7 @@ import { IVideo } from '../../shared/models/video.model';
 	selector: 'plug-video-list',
 	templateUrl: './video-list.component.html',
 	styleUrl: './video-list.component.scss',
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VideoListComponent {

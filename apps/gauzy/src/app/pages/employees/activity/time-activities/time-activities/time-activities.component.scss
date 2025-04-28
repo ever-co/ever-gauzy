@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 :host .custom-card {
   border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius);

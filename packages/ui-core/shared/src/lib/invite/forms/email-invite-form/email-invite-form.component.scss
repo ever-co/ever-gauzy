@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 @include nb-install-component {
   .remove-icon {

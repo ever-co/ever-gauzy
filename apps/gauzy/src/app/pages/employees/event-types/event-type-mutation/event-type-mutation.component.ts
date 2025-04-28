@@ -10,8 +10,9 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './event-type-mutation.component.html',
-	styleUrls: ['./event-type-mutation.component.scss']
+    templateUrl: './event-type-mutation.component.html',
+    styleUrls: ['./event-type-mutation.component.scss'],
+    standalone: false
 })
 export class EventTypeMutationComponent extends TranslationBaseComponent implements OnInit {
 	public organization: IOrganization;

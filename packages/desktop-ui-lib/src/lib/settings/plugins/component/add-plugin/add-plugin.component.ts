@@ -9,9 +9,10 @@ import { PluginInstallationQuery } from '../plugin-marketplace/+state/queries/pl
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-add-plugin',
-	templateUrl: './add-plugin.component.html',
-	styleUrls: ['./add-plugin.component.scss']
+    selector: 'ngx-add-plugin',
+    templateUrl: './add-plugin.component.html',
+    styleUrls: ['./add-plugin.component.scss'],
+    standalone: false
 })
 export class AddPluginComponent {
 	private readonly dialogRef = inject(NbDialogRef<AddPluginComponent>);

@@ -1,5 +1,5 @@
-@import 'themes';
-@import '@shared/reusable';
+@use 'themes' as *;
+@use '@shared/reusable' as *;
 
 @mixin addPaddings {
   padding-left: 10px;
@@ -43,8 +43,8 @@
     @include hr-div-soft;
   }
   & .another-action {
+	margin-top: 12px;
     @include another-action;
-    margin-top: 12px;
   }
   & .form-control-group {
     @include mobile-screen {

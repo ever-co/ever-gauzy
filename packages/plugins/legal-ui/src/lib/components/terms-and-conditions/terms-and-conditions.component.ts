@@ -5,9 +5,10 @@ import { LegalService } from '../../providers/legal.service';
 export const TERM_AND_POLICY_ENDPOINT = 'https://www.iubenda.com/api/terms-and-conditions/7927924';
 
 @Component({
-	selector: 'ga-terms-conditions',
-	templateUrl: './terms-and-conditions.component.html',
-	styleUrls: ['./terms-and-conditions.component.scss']
+    selector: 'ga-terms-conditions',
+    templateUrl: './terms-and-conditions.component.html',
+    styleUrls: ['./terms-and-conditions.component.scss'],
+    standalone: false
 })
 export class TermsAndConditionsComponent implements OnInit, OnDestroy {
 	public term_and_policy: string;

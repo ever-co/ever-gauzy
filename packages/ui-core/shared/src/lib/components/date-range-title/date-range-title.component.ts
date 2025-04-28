@@ -5,10 +5,10 @@ import { DateFormatPipe } from '../../pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-date-range-title',
-	template: `<span>{{ title }}</span>`,
-	styles: [
-		`
+    selector: 'ngx-date-range-title',
+    template: `<span>{{ title }}</span>`,
+    styles: [
+        `
 			span {
 				font-size: 14px;
 				font-weight: 600;
@@ -17,7 +17,8 @@ import { DateFormatPipe } from '../../pipes';
 				color: var(--gauzy-text-color-2);
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class DateRangeTitleComponent {
 	/**

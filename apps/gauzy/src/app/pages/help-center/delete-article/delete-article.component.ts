@@ -7,9 +7,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { HelpCenterArticleService, HelpCenterAuthorService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-article-category',
-	templateUrl: 'delete-article.component.html',
-	styleUrls: ['delete-article.component.scss']
+    selector: 'ga-article-category',
+    templateUrl: 'delete-article.component.html',
+    styleUrls: ['delete-article.component.scss'],
+    standalone: false
 })
 export class DeleteArticleComponent extends TranslationBaseComponent implements OnDestroy {
 	@Input() article: IHelpCenterArticle;

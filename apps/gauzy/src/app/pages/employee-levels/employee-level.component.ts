@@ -17,9 +17,10 @@ import { EmployeeLevelService, Store, ToastrService } from '@gauzy/ui-core/core'
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-employee-level',
-	templateUrl: './employee-level.component.html',
-	styleUrls: ['employee-level.component.scss']
+    selector: 'ga-employee-level',
+    templateUrl: './employee-level.component.html',
+    styleUrls: ['employee-level.component.scss'],
+    standalone: false
 })
 export class EmployeeLevelComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	organization: IOrganization;

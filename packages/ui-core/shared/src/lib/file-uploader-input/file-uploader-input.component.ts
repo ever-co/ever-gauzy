@@ -5,9 +5,10 @@ import { Store } from '@gauzy/ui-core/core';
 import { ImageUploaderBaseComponent } from '../image-uploader/image-uploader-base.component';
 
 @Component({
-	selector: 'ngx-file-uploader-input',
-	templateUrl: './file-uploader-input.component.html',
-	styleUrls: ['./file-uploader-input.component.scss']
+    selector: 'ngx-file-uploader-input',
+    templateUrl: './file-uploader-input.component.html',
+    styleUrls: ['./file-uploader-input.component.scss'],
+    standalone: false
 })
 export class FileUploaderInputComponent extends ImageUploaderBaseComponent implements AfterViewInit, OnInit {
 	public inputControl = new FormControl();

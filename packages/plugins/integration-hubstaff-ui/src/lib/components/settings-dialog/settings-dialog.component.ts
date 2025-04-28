@@ -7,9 +7,10 @@ import { IDateRangeActivityFilter, IntegrationEntity } from '@gauzy/contracts';
 import { HubstaffService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ngx-hubstaff-settings-dialog',
-	templateUrl: './settings-dialog.component.html',
-	styleUrls: ['./settings-dialog.component.scss']
+    selector: 'ngx-hubstaff-settings-dialog',
+    templateUrl: './settings-dialog.component.html',
+    styleUrls: ['./settings-dialog.component.scss'],
+    standalone: false
 })
 export class SettingsDialogComponent implements OnInit, AfterViewInit {
 	entitiesToSync$: Observable<any> = this._hubstaffService.entitiesToSync$;

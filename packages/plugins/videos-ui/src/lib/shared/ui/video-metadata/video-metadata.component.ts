@@ -6,6 +6,7 @@ import { IVideo } from '../../models/video.model';
 	selector: 'lib-video-metadata',
 	templateUrl: './video-metadata.component.html',
 	styleUrl: './video-metadata.component.scss',
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VideoMetadataComponent {

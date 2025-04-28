@@ -7,9 +7,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { EquipmentSharingPolicyService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ngx-equipment-sharing-policy-mutation',
-	templateUrl: './equipment-sharing-policy-mutation.component.html',
-	styleUrls: ['./equipment-sharing-policy-mutation.component.scss']
+    selector: 'ngx-equipment-sharing-policy-mutation',
+    templateUrl: './equipment-sharing-policy-mutation.component.html',
+    styleUrls: ['./equipment-sharing-policy-mutation.component.scss'],
+    standalone: false
 })
 export class EquipmentSharingPolicyMutationComponent extends TranslationBaseComponent implements OnInit {
 	equipmentSharingPolicy: IEquipmentSharingPolicy;

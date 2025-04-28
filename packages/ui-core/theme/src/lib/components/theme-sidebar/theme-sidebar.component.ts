@@ -13,10 +13,11 @@ import {
 import { ISidebarConfig } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ngx-theme-sidebar',
-	templateUrl: './theme-sidebar.component.html',
-	styleUrls: ['./theme-sidebar.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-theme-sidebar',
+    templateUrl: './theme-sidebar.component.html',
+    styleUrls: ['./theme-sidebar.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ThemeSidebarComponent implements AfterViewInit, OnDestroy {
 	@Input() config: ISidebarConfig;

@@ -11,9 +11,10 @@ import { GalleryComponent, GalleryService, ImageAssetComponent, SelectAssetCompo
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-product-gallery',
-	templateUrl: './product-gallery.component.html',
-	styleUrls: ['./product-gallery.component.scss']
+    selector: 'ngx-product-gallery',
+    templateUrl: './product-gallery.component.html',
+    styleUrls: ['./product-gallery.component.scss'],
+    standalone: false
 })
 export class ProductGalleryComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	selectedImage: IImageAsset;

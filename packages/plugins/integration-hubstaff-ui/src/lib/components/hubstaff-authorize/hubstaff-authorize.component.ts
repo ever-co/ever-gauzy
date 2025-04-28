@@ -8,9 +8,10 @@ import { ErrorHandlingService, HubstaffService, IntegrationsService, Store } fro
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-hubstaff-authorize',
-	templateUrl: './hubstaff-authorize.component.html',
-	styleUrls: ['./hubstaff-authorize.component.scss']
+    selector: 'ngx-hubstaff-authorize',
+    templateUrl: './hubstaff-authorize.component.html',
+    styleUrls: ['./hubstaff-authorize.component.scss'],
+    standalone: false
 })
 export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	public hubStaffAuthorizeCode: string;

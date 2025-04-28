@@ -1,4 +1,4 @@
-@import 'gauzy/_gauzy-dialogs';
+@use 'gauzy/_gauzy-dialogs' as *;
 
 .product-variant-container {
   width: 100%;
@@ -28,7 +28,7 @@
     object-fit: cover;
     border-radius: var(--border-radius);
   }
-  
+
 
   input {
     width: 100%;

@@ -1,25 +1,24 @@
 import { HelpCenterActionEnum, HelpCenterFlagEnum, IHelpCenter, IOrganization } from '@gauzy/contracts';
 import { Component, ViewChild, OnInit, OnDestroy, Output, EventEmitter, AfterViewInit } from '@angular/core';
 import { TreeComponent, ITreeOptions } from '@ali-hm/angular-tree-component';
+import { firstValueFrom } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, HelpCenterService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
 import { filter, tap } from 'rxjs/operators';
 import { DeleteCategoryComponent } from './delete-category/delete-category.component';
 import { DeleteBaseComponent } from './delete-base/delete-base.component';
-import { HelpCenterService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { KnowledgeBaseComponent } from './knowledeg-base/knowledeg-base.component';
-import { firstValueFrom } from 'rxjs';
+import { KnowledgeBaseComponent } from './knowledge-base/knowledge-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-sidebar',
 	templateUrl: './sidebar.component.html',
-	styleUrls: ['./sidebar.component.scss']
+	styleUrls: ['./sidebar.component.scss'],
+	standalone: false
 })
 export class SidebarComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	public organization: IOrganization;

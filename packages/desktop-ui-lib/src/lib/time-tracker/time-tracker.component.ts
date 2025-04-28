@@ -90,16 +90,17 @@ enum TimerStartMode {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-desktop-time-tracker',
-	templateUrl: './time-tracker.component.html',
-	styleUrls: ['./time-tracker.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TimeTrackerComponent),
-			multi: true
-		}
-	]
+    selector: 'ngx-desktop-time-tracker',
+    templateUrl: './time-tracker.component.html',
+    styleUrls: ['./time-tracker.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeTrackerComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _lastTotalWorkedToday$: BehaviorSubject<number> = new BehaviorSubject(0);

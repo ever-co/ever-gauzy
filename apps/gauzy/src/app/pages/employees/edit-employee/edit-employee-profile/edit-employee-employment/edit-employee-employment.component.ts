@@ -28,9 +28,10 @@ import { ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-employee-employment',
-	templateUrl: './edit-employee-employment.component.html',
-	styleUrls: ['./edit-employee-employment.component.scss']
+    selector: 'ga-edit-employee-employment',
+    templateUrl: './edit-employee-employment.component.html',
+    styleUrls: ['./edit-employee-employment.component.scss'],
+    standalone: false
 })
 export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	selectedEmployee: IEmployee;

@@ -18,9 +18,10 @@ import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-time-off-request-mutation',
-	templateUrl: './time-off-request-mutation.component.html',
-	styleUrls: ['../time-off-mutation.components.scss']
+    selector: 'ngx-time-off-request-mutation',
+    templateUrl: './time-off-request-mutation.component.html',
+    styleUrls: ['../time-off-mutation.components.scss'],
+    standalone: false
 })
 export class TimeOffRequestMutationComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;

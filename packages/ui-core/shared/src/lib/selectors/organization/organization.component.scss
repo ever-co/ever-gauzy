@@ -1,5 +1,7 @@
-@import 'var';
+@use 'var' as *;
+
 $radius: nb-theme(button-rectangle-border-radius);
+
 ng-select {
   .selector-template {
     display: flex;

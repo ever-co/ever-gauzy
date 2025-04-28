@@ -2,7 +2,7 @@ import { ActivityType, IActivityWatchCollectEventData, ITimeLog, TimeLogSourceEn
 import { app, screen } from 'electron';
 import * as moment from 'moment';
 import { DesktopActiveWindow } from './desktop-active-window';
-import { DesktopEventCounter } from './desktop-event-counter';
+import { DesktopEventCounter } from '@gauzy/desktop-activity';
 import NotificationDesktop from './desktop-notifier';
 import { detectActiveWindow, getScreenshot } from './desktop-screenshot';
 import { LocalStore } from './desktop-store';

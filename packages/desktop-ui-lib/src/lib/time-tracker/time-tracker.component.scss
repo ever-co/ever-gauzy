@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 .border-vertical {
   border-right: solid 0.1px rgba($color: #000000, $alpha: 0.1);

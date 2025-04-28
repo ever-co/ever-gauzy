@@ -1,12 +1,13 @@
 import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
-	selector: 'ga-document-url',
-	template: `
+    selector: 'ga-document-url',
+    template: `
 		<div *ngIf="rowData?.documentUrl">
 			{{ url }}
 		</div>
-	`
+	`,
+    standalone: false
 })
 export class DocumentUrlTableComponent implements OnInit {
 	@Input()

@@ -4,9 +4,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
-	selector: 'ngx-plugin-layout',
-	templateUrl: './plugin-layout.component.html',
-	styleUrls: ['./plugin-layout.component.scss']
+    selector: 'ngx-plugin-layout',
+    templateUrl: './plugin-layout.component.html',
+    styleUrls: ['./plugin-layout.component.scss'],
+    standalone: false
 })
 export class PluginLayoutComponent implements OnInit, OnDestroy {
 	public tabs: NbRouteTab[] = [];

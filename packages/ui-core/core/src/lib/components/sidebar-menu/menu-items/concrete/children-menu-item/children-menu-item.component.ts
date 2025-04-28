@@ -7,9 +7,10 @@ import { IMenuItem } from '../../interface/menu-item.interface';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-children-menu-item',
-	templateUrl: './children-menu-item.component.html',
-	styleUrls: ['./children-menu-item.component.scss']
+    selector: 'ga-children-menu-item',
+    templateUrl: './children-menu-item.component.html',
+    styleUrls: ['./children-menu-item.component.scss'],
+    standalone: false
 })
 export class ChildrenMenuItemComponent implements OnInit {
 	/**

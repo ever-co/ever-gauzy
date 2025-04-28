@@ -14,9 +14,10 @@ import { EnabledStatusComponent, ImageRowComponent } from '../inventory-table-co
 
 @UntilDestroy()
 @Component({
-	selector: 'ngx-view-inventory-item',
-	templateUrl: './view-inventory-item.component.html',
-	styleUrls: ['./view-inventory-item.component.scss']
+    selector: 'ngx-view-inventory-item',
+    templateUrl: './view-inventory-item.component.html',
+    styleUrls: ['./view-inventory-item.component.scss'],
+    standalone: false
 })
 export class InventoryItemViewComponent extends TranslationBaseComponent implements OnInit {
 	inventoryItem: IProductTranslatable;

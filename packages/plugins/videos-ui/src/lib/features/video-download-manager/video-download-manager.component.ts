@@ -10,7 +10,8 @@ import { extractFilenameFromUrl } from '../../shared/utilities/extract-filename-
 @Component({
 	selector: 'plug-video-download-manager',
 	templateUrl: './video-download-manager.component.html',
-	styleUrl: './video-download-manager.component.scss'
+	styleUrl: './video-download-manager.component.scss',
+	standalone: false
 })
 export class VideoDownloadManagerComponent {
 	public readonly retryButton: IActionButton = {

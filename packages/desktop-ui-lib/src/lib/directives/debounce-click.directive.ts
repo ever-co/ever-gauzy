@@ -3,7 +3,8 @@ import { Subject, Subscription, tap } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
 @Directive({
-	selector: '[debounceClick]'
+    selector: '[debounceClick]',
+    standalone: false
 })
 export class DebounceClickDirective implements OnInit, OnDestroy {
 	private clicks: Subject<Event> = new Subject<Event>();

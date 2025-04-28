@@ -20,9 +20,10 @@ import { ActivityLevel, TimesheetFilterService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-gauzy-filters',
-	templateUrl: './gauzy-filters.component.html',
-	styleUrls: ['./gauzy-filters.component.scss']
+    selector: 'ngx-gauzy-filters',
+    templateUrl: './gauzy-filters.component.html',
+    styleUrls: ['./gauzy-filters.component.scss'],
+    standalone: false
 })
 export class GauzyFiltersComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	// declaration of variables

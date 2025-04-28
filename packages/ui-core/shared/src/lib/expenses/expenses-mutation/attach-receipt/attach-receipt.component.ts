@@ -3,9 +3,10 @@ import { NbDialogRef } from '@nebular/theme';
 import { IImageAsset } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ga-attach-receipt',
-	templateUrl: './attach-receipt.component.html',
-	styleUrls: ['./attach-receipt.component.scss']
+    selector: 'ga-attach-receipt',
+    templateUrl: './attach-receipt.component.html',
+    styleUrls: ['./attach-receipt.component.scss'],
+    standalone: false
 })
 export class AttachReceiptComponent implements OnInit {
 	constructor(private dialogRef: NbDialogRef<AttachReceiptComponent>) { }

@@ -8,10 +8,11 @@ import { LoggerService } from '../../../../electron/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-weekly-recap',
-	templateUrl: './weekly-recap.component.html',
-	styleUrls: ['./weekly-recap.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-weekly-recap',
+    templateUrl: './weekly-recap.component.html',
+    styleUrls: ['./weekly-recap.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class WeeklyRecapComponent implements OnInit {
 	public isLoading$ = new BehaviorSubject(false);
