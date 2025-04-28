@@ -55,6 +55,8 @@ export class MakeComAuthorizationController {
 	})
 	@Get('/callback')
 	async callback(@Query() query: any, @Res() response: Response) {
+		// Get the post-installation redirect URL from config
+		const postInstallUrl = this._config.get<string>('makeCom.postInstallUrl');
 		try {
 			// Validate the input data
 			if (!query || !query.code) {
@@ -69,8 +71,6 @@ export class MakeComAuthorizationController {
 			// Exchange the authorization code for access token
 			await this.makeComOAuthService.exchangeCodeForToken(query.code, query.state);
 
-			// Get the post-installation redirect URL from config
-			const postInstallUrl = this._config.get<string>('makeCom.postInstallUrl');
 			if (!postInstallUrl) {
 				throw new HttpException('Post-installation URL not configured', HttpStatus.INTERNAL_SERVER_ERROR);
 			}
@@ -86,10 +86,9 @@ export class MakeComAuthorizationController {
 			// Redirect to the application
 			return response.redirect(url);
 		} catch (error) {
-			const postInstallUrl = this._config.get<string>('makeCom.postInstallUrl');
 
 			if (postInstallUrl) {
-				const errorMessage = `Failed to complete OAuth flow: ${error.message}`;
+				const errorMessage = 'Failed to complete OAuth flow';
 				const queryParamsString = buildQueryString({
 					success: 'false',
 					integration: 'make_com',

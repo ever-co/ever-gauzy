@@ -96,12 +96,7 @@ export class MakeComOAuthService {
 	 * For scalability, we'll consider using cache, Redis for our case as it already exists in the project
 	 */
 	private storeStateForVerification(state: string): void {
-		// In a real implementation, you would store the state in a database or some other storage mechanism like cache or redis
-		if (!this.pendingStates) {
-			this.pendingStates = new Map<string, { timestamp: number }>();
-		}
 		this.pendingStates.set(state, { timestamp: Date.now() });
-
 		this.cleanupExpiredStates();
 	}
 
@@ -386,7 +381,7 @@ export class MakeComOAuthService {
 				};
 			}) as DeepPartial<IIntegrationSetting>[];
 
-			await this.integrationSettingService.create(updatedSettings);
+			await this.integrationSettingService.save(updatedSettings);
 
 			return response.data;
 		} catch (error) {

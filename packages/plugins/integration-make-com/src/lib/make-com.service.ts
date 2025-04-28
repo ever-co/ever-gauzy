@@ -107,7 +107,7 @@ export class MakeComService {
 				);
 				if (enabledSetting) {
 					enabledSetting.settingsValue = input.isEnabled.toString();
-					updates.push(this.integrationSettingService.create(enabledSetting));
+					updates.push(this.integrationSettingService.save(enabledSetting));
 				}
 			}
 
@@ -141,7 +141,7 @@ export class MakeComService {
 	 * @param {any} data - The data to send with the request.
 	 * @returns {Promise<any>} - The API response.
 	 */
-	async makeApiCall(makeApiUrl: string, method: string = 'GET', data: any = null): Promise<any> {
+	async makeApiCall(makeApiUrl: string, method: string = 'GET', data: any = null, retryLimit: number = 1): Promise<any> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			if (!tenantId) {
@@ -175,55 +175,43 @@ export class MakeComService {
 				'Content-Type': 'application/json'
 			};
 
+			const requestConfig = { headers };
 			let response;
+
 			switch (method.toUpperCase()) {
 				case 'GET':
 					response = await firstValueFrom(
-						this.httpService.get(makeApiUrl, { headers }).pipe(
-							catchError((error: AxiosError) => {
-								// Handle token expiration
-								if (error.response?.status === 401) {
-									// Token might be expired, try refreshing
-									return this.handleTokenRefresh(integrationTenant.id, makeApiUrl, method, data);
-								}
-								throw error;
-							})
+						this.httpService.get(makeApiUrl, requestConfig).pipe(
+							catchError((error: AxiosError) =>
+								this.handleApiError(error, integrationTenant.id, makeApiUrl, method, data, retryLimit)
+							)
 						)
 					);
 					break;
 				case 'POST':
 					response = await firstValueFrom(
-						this.httpService.post(makeApiUrl, data, { headers }).pipe(
-							catchError((error: AxiosError) => {
-								if (error.response?.status === 401) {
-									return this.handleTokenRefresh(integrationTenant.id, makeApiUrl, method, data);
-								}
-								throw error;
-							})
+						this.httpService.post(makeApiUrl, data, requestConfig).pipe(
+							catchError((error: AxiosError) =>
+								this.handleApiError(error, integrationTenant.id, makeApiUrl, method, data, retryLimit)
+							)
 						)
 					);
 					break;
 				case 'PUT':
 					response = await firstValueFrom(
-						this.httpService.put(makeApiUrl, data, { headers }).pipe(
-							catchError((error: AxiosError) => {
-								if (error.response?.status === 401) {
-									return this.handleTokenRefresh(integrationTenant.id, makeApiUrl, method, data);
-								}
-								throw error;
-							})
+						this.httpService.put(makeApiUrl, data, requestConfig).pipe(
+							catchError((error: AxiosError) =>
+								this.handleApiError(error, integrationTenant.id, makeApiUrl, method, data, retryLimit)
+							)
 						)
 					);
 					break;
 				case 'DELETE':
 					response = await firstValueFrom(
-						this.httpService.delete(makeApiUrl, { headers }).pipe(
-							catchError((error: AxiosError) => {
-								if (error.response?.status === 401) {
-									return this.handleTokenRefresh(integrationTenant.id, makeApiUrl, method, data);
-								}
-								throw error;
-							})
+						this.httpService.delete(makeApiUrl, requestConfig).pipe(
+							catchError((error: AxiosError) =>
+								this.handleApiError(error, integrationTenant.id, makeApiUrl, method, data, retryLimit)
+							)
 						)
 					);
 					break;
@@ -245,23 +233,55 @@ export class MakeComService {
 	 * @param {string} makeApiUrl - The makeApiUrl to retry after token refresh.
 	 * @param {string} method - The HTTP method to use.
 	 * @param {any} data - The data to send with the request.
+	 * @param {number} retryLimit - The maximum number of retries allowed.
 	 * @returns {Promise<any>} - The API response after token refresh.
 	 */
 	private async handleTokenRefresh(
 		integrationId: string,
 		makeApiUrl: string,
 		method: string,
-		data: any
+		data: any,
+		retryLimit: number = 1
 	): Promise<any> {
+		if (retryLimit <= 0) {
+			throw new Error('Token refresh retry limit exceeded');
+		}
+
 		try {
 			// Refresh the token
 			await this.makeComOAuthService.refreshToken(integrationId);
 
 			// Retry the API call with the new token
-			return this.makeApiCall(makeApiUrl, method, data);
+			return this.makeApiCall(makeApiUrl, method, data, retryLimit - 1);
 		} catch (error) {
 			this.logger.error('Failed to refresh token:', error);
 			throw error;
 		}
+	}
+
+	/**
+	 * Handles API call errors, including token expiration.
+	 *
+	 * @param {AxiosError} error - The error object from the API call.
+	 * @param {string} integrationId - The integration ID.
+	 * @param {string} makeApiUrl - The Make.com API endpoint.
+	 * @param {string} method - The HTTP method to use.
+	 * @param {any} data - The data to send with the request.
+	 * @param {number} retryLimit - The maximum number of retries allowed.
+	 * @returns {Promise<any>} - The API response after handling the error.
+	 */
+	private async handleApiError(
+		error: AxiosError,
+		integrationId: string,
+		makeApiUrl: string,
+		method: string,
+		data: any,
+		retryLimit: number
+	): Promise<any> {
+		// Handle token expiration
+		if (error.response?.status === 401) {
+			return this.handleTokenRefresh(integrationId, makeApiUrl, method, data, retryLimit);
+		}
+		throw error;
 	}
 }

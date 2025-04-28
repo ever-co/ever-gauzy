@@ -9,7 +9,7 @@ export class UpdateMakeComSettingsDTO {
         example: true
     })
     @IsBoolean()
-    @Transform(({ value }) => value === 'true' || value === true)
+    @Transform(({ value }) => ['true', '1', true].includes(value))
     isEnabled: boolean;
 
     @ApiPropertyOptional({

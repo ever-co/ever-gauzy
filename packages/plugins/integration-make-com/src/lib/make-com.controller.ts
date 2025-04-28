@@ -58,7 +58,7 @@ export class MakeComController {
 	/**
 	 * Updates the Make.com OAuth settings for the current tenant.
 	 *
-	 * @param {UpdateMakeComOAuthSettingsDTO} input - The DTO containing the updated Make.com OAuth settings.
+	 * @param {UpdateMakeComSettingsDTO} input - The DTO containing the updated Make.com OAuth settings.
 	 * @returns {Promise<IMakeComIntegrationSettings>} A promise that resolves to the updated integration settings.
 	 */
 	@ApiOperation({ summary: 'Update Make.com OAuth settings for tenant' })
@@ -73,14 +73,11 @@ export class MakeComController {
 	@Post('/oauth-settings')
 	async updateOAuthSettings(@Body() input: UpdateMakeComSettingsDTO): Promise<IMakeComIntegrationSettings> {
 		// Update environment variables with provided OAuth settings if they exist
-		let client_id = this._config.get<string>('makeCom.clientId');
-		let client_secret = this._config.get<string>('makeCom.clientSecret');
-
 		if (input.clientId) {
-			client_id = input.clientId;
+			this._config.set('makeCom.clientId', input.clientId);
 		}
 		if (input.clientSecret) {
-			client_secret = input.clientSecret;
+			this._config.set('makeCom.clientSecret', input.clientSecret);
 		}
 
 		// Update webhook settings
