@@ -29328,10 +29328,10 @@ ngx-clipboard@^16.0.0:
     ngx-window-token ">=7.0.0"
     tslib "^2.0.0"
 
-ngx-color-picker@^17.0.0:
-  version "17.0.0"
-  resolved "https://registry.yarnpkg.com/ngx-color-picker/-/ngx-color-picker-17.0.0.tgz#7efd64382f93909bc580f0a19170bda8d2a6c0f1"
-  integrity sha512-kHuhW4vErpb0LlBlgTnf1+cYWdaq0gOvDwiX9LeaFKNvhV5li+YEyk7tC3o1Sbhqd4lsFKb8zHyqi1teLWN4Zg==
+ngx-color-picker@^19.0.0:
+  version "19.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-color-picker/-/ngx-color-picker-19.0.0.tgz#1084c332b7a7e9c8e2aae0e06e88c0f2bbedde25"
+  integrity sha512-jZs7nk/DJB6FryElYnfkojWYCgpEc650s800g+39ebocVMZ18fAHf/CQd5+Bdm4E3zoRod0a0sErJ+c8tGQcCg==
   dependencies:
     tslib "^2.3.0"
 

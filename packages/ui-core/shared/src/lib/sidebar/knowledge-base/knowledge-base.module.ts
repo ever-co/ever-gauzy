@@ -9,7 +9,7 @@ import {
 	NbSelectModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { ColorPickerModule, ColorPickerService } from 'ngx-color-picker';
+import { ColorPickerComponent, ColorPickerDirective, ColorPickerService } from 'ngx-color-picker';
 import { TranslateModule } from '@ngx-translate/core';
 import { KnowledgeBaseComponent } from './knowledge-base.component';
 import { LanguageSelectorModule } from '../../language/language-selector';
@@ -25,7 +25,8 @@ import { LanguageSelectorModule } from '../../language/language-selector';
 		NbInputModule,
 		NbSelectModule,
 		NbToggleModule,
-		ColorPickerModule,
+		ColorPickerComponent,
+		ColorPickerDirective,
 		TranslateModule.forChild(),
 		LanguageSelectorModule
 	],
