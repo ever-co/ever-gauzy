@@ -8,10 +8,9 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 export class ExportAllService {
 	constructor(private readonly http: HttpClient) {}
 
-	downloadAllData(organizationId: string) {
+	downloadAllData() {
 		return this.http.get(`${API_PREFIX}/download`, {
-			responseType: 'blob',
-			params: { organizationId }
+			responseType: 'blob'
 		});
 	}
 
@@ -21,14 +20,14 @@ export class ExportAllService {
 		});
 	}
 
-	downloadSpecificTable(names: string[], organizationId: string) {
+	downloadSpecificTable(names: string[]) {
 		const data = JSON.stringify({ entities: { names } });
 
-		if (!names || !organizationId) return;
+		if (!names) return;
 
 		return this.http.get(`${API_PREFIX}/export/filter`, {
 			responseType: 'blob',
-			params: { data, organizationId }
+			params: { data }
 		});
 	}
 }

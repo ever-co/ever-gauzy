@@ -99,7 +99,7 @@ export class ExportService implements OnModuleInit {
 		});
 	}
 
-	async getAsCsv(item: IRepositoryModel, where: { tenantId: string }, organizationId: string): Promise<any> {
+	async getAsCsv(item: IRepositoryModel, where: { tenantId: string }, organizationId?: string): Promise<any> {
 		const conditions: FindManyOptions = {};
 		if (item.isTenantBased !== false) {
 			conditions['where'] = {
@@ -150,7 +150,7 @@ export class ExportService implements OnModuleInit {
 
 		if (defaultItemsCount > 0) {
 			defaultItems.forEach((el) => {
-				el['organizationId'] = organizationId;
+				el['organizationId'] = organizationId ?? null;
 				el['tenantId'] = RequestContext.currentTenantId();
 			});
 		}
@@ -295,7 +295,7 @@ export class ExportService implements OnModuleInit {
 		});
 	}
 
-	async exportSpecificTables(names: string[], organizationId: string) {
+	async exportSpecificTables(names: string[], organizationId?: string) {
 		return new Promise(async (resolve, reject) => {
 			try {
 				for await (const item of this.repositories) {

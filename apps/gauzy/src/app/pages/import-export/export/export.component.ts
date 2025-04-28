@@ -12,10 +12,10 @@ import { ExportAllService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-export',
-    templateUrl: './export.component.html',
-    styleUrls: ['./export.component.scss'],
-    standalone: false
+	selector: 'ngx-export',
+	templateUrl: './export.component.html',
+	styleUrls: ['./export.component.scss'],
+	standalone: false
 })
 export class ExportComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	entities: Array<IEntityModel> = [];
@@ -104,7 +104,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 		this.loading = true;
 		const entities = this.selectedEntities.filter(isNotEmpty);
 		this.exportAll
-			.downloadSpecificTable(entities, this.store.selectedOrganization.id)
+			.downloadSpecificTable(entities)
 			.pipe(
 				finalize(() => (this.loading = false)),
 				untilDestroyed(this)

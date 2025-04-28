@@ -1,4 +1,4 @@
-import { Controller, HttpStatus, Get, Res, Query, UseGuards } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Res, Query, UseGuards, Headers } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { ParseJsonPipe } from '../../shared/pipes/parse-json.pipe';
@@ -68,12 +68,13 @@ export class ExportController {
 	@Get('filter')
 	async exportByName(
 		@Query('data', ParseJsonPipe) data: any,
-		@Query('organizationId') organizationId: string,
+		@Headers() headers: Record<string, string>,
 		@Res() res
 	): Promise<any> {
 		const {
 			entities: { names }
 		} = data;
+		const organizationId = headers['Organization-Id'];
 		await this._exportService.registerAllRepositories();
 		await this._exportService.createFolders();
 		await this._exportService.exportSpecificTables(names, organizationId);
