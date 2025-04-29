@@ -164,7 +164,7 @@
 		"uuid": "^11.1.0",
 		"web-animations-js": "^2.3.2",
 		"yargs": "^17.5.0",
-		"zone.js": "0.14.8"
+		"zone.js": "0.15.0"
 	},
 	"devDependencies": {
 		"@types/async": "^3.2.5",

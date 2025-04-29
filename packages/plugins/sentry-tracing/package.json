@@ -36,7 +36,7 @@
 		"@sentry/node": "^7.101.1",
 		"@sentry/types": "^7.101.1",
 		"chalk": "^4.1.0",
-		"express": "^4.21.2",
+		"express": "^5.1.0",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2"
 	},
