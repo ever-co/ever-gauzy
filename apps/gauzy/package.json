@@ -61,6 +61,7 @@
 		"@gauzy/plugin-maintenance-ui": "^0.1.0",
 		"@gauzy/plugin-onboarding-ui": "^0.1.0",
 		"@gauzy/plugin-public-layout-ui": "^0.1.0",
+		"@gauzy/plugin-posthog-ui": "^0.1.0",
 		"@jitsu/js": "^1.10.0",
 		"@kurkle/color": "^0.3.4",
 		"@nebular/auth": "^15.0.0",
