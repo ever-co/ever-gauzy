@@ -31,7 +31,8 @@ import { NgForm } from '@angular/forms';
  * </form>
  */
 @Directive({
-	selector: 'form[phFormTrack]'
+	selector: 'form[phFormTrack]',
+	standalone: true
 })
 export class PostHogFormTrackDirective implements OnInit, OnDestroy {
 	@Input() phFormName = 'form';

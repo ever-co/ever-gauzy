@@ -13,8 +13,7 @@ import { PostHogFormTrackDirective } from './directives/posthog-form-track.direc
  * Module for integrating PostHog into Angular applications
  */
 @NgModule({
-	declarations: [PostHogTrackDirective, PostHogFormTrackDirective],
-	imports: [CommonModule],
+	imports: [CommonModule, PostHogTrackDirective, PostHogFormTrackDirective],
 	exports: [PostHogTrackDirective, PostHogFormTrackDirective]
 })
 export class PostHogModule {
