@@ -10,7 +10,6 @@ import * as path from 'path';
 import * as fse from 'fs-extra';
 import { ConfigService } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
-import { ConnectionEntityManager } from '../../database/connection-entity-manager';
 import { RequestContext } from './../../core/context';
 
 import { IColumnRelationMetadata, IRepositoryModel, RepositoriesService } from '../repositories/repositories.service';
