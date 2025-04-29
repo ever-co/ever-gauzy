@@ -42,7 +42,7 @@
 		"chalk": "^4.1.0",
 		"express": "^4.21.2",
 		"form-data": "^4.0.1",
-		"rxjs": "^7.8.0"
+		"rxjs": "^7.8.2"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",

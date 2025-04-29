@@ -171,7 +171,7 @@
 		"redis": "^4.6.12",
 		"reflect-metadata": "^0.2.2",
 		"request": "^2.88.2",
-		"rxjs": "^7.8.0",
+		"rxjs": "^7.8.2",
 		"sharp": "^0.33.5",
 		"sql.js": "^1.5.0",
 		"streamifier": "^0.1.1",

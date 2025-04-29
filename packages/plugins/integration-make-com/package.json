@@ -42,7 +42,7 @@
 		"chalk": "^4.1.0",
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.14.0",
-		"rxjs": "^7.8.0",
+		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2",
 		"typeorm": "^0.3.20"
 	},

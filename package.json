@@ -413,7 +413,7 @@
 		"@typescript-eslint/utils": "^8.31.0",
 		"@typescript-eslint/visitor-keys": "^8.31.0",
 		"camelcase": "^6.3.0",
-		"rxjs": "^7.8.0",
+		"rxjs": "^7.8.2",
 		"autoprefixer": "^10.4.20",
 		"locutus": "^2.0.30",
 		"minizlib": "^2.1.2"
@@ -456,12 +456,12 @@
 		"minizlib": "^2.1.2",
 		"mobx": "~4.14.1",
 		"ng2-file-upload": "^8.0.0",
-		"ngx-draggable-dom": "^3.4.1",
+		"ngx-draggable-dom": "^19.0.7",
 		"ngx-infinite-scroll": "^19.0.0",
 		"ngx-permissions": "^19.0.0",
 		"parse5": "^7.1.2",
 		"reflect-metadata": "^0.2.2",
-		"rxjs": "^7.8.0",
+		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2",
 		"yargs": "^17.5.0",
 		"zone.js": "0.14.8"
