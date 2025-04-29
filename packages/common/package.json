@@ -30,7 +30,7 @@
 		"@apollo/server": "^4.11.3",
 		"@gauzy/constants": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
-		"@mikro-orm/nestjs": "^6.0.2",
+		"@mikro-orm/nestjs": "^6.1.1",
 		"@nestjs/common": "^11.1.0",
 		"@nestjs/core": "^11.1.0",
 		"@nestjs/typeorm": "^11.0.0",

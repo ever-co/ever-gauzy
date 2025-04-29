@@ -6132,67 +6132,67 @@
   resolved "https://registry.yarnpkg.com/@microsoft/tsdoc/-/tsdoc-0.15.1.tgz#d4f6937353bc4568292654efb0a0e0532adbcba2"
   integrity sha512-4aErSrCR/On/e5G2hDP0wjooqDdauzEbIq8hIkIe5pXV0rtWJZvdCEKL0ykZxex+IxIwBp0eGeV48hQN07dXtw==
 
-"@mikro-orm/better-sqlite@6.4.5":
-  version "6.4.5"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/better-sqlite/-/better-sqlite-6.4.5.tgz#1ae6a8c22a600d7b9e74efb4022b9449f0493167"
-  integrity sha512-gbQm8tgs6m14ZKaB7+g3mdN3vLPHkFBha6QmOJ/6ItswYGYLxJquuNd7HBjkC3OBjquMu1T2YPUfR2vgRt7xxw==
+"@mikro-orm/better-sqlite@^6.4.13":
+  version "6.4.13"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/better-sqlite/-/better-sqlite-6.4.13.tgz#f77c9add9c5b324b56d6c0ced64b1d0249654565"
+  integrity sha512-1Nz3EbU21YaNSGKEEucJfeThiE0QAMODy6Be6CFJ63tzljYuY6jnLQNNJvJ/T1Xn3TFVLpp50LLJPYJECuJnIg==
   dependencies:
-    "@mikro-orm/knex" "6.4.5"
-    better-sqlite3 "11.8.1"
+    "@mikro-orm/knex" "6.4.13"
+    better-sqlite3 "11.9.1"
     fs-extra "11.3.0"
     sqlstring-sqlite "0.1.1"
 
-"@mikro-orm/core@6.4.5":
-  version "6.4.5"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/core/-/core-6.4.5.tgz#9f1e6feeb49ccfdcb01d66f4d2659361a21040c5"
-  integrity sha512-9/CZ5oSbf4P1oBZA2HHKzuxh5yYKDNUZZq/RvJmzMdJDgV8fpTt26po/7J6UytABqZp9yXj1jXc+Kqv73vGGOA==
+"@mikro-orm/core@^6.4.13":
+  version "6.4.13"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/core/-/core-6.4.13.tgz#77a1bc50c50d9453b1b6d685ebca5f7e173521f6"
+  integrity sha512-DG6QGr3J9bBy64DBBxoA6WwvnKr35QqOGsQ8OE2B8ccUaK4jrpMolCkKYbZpJmCHGG4qKaECRu46at6nYZzogA==
   dependencies:
     dataloader "2.2.3"
-    dotenv "16.4.7"
+    dotenv "16.5.0"
     esprima "4.0.1"
     fs-extra "11.3.0"
     globby "11.1.0"
-    mikro-orm "6.4.5"
+    mikro-orm "6.4.13"
     reflect-metadata "0.2.2"
 
-"@mikro-orm/knex@6.4.5":
-  version "6.4.5"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/knex/-/knex-6.4.5.tgz#2d0bca97404b1fc5b1471eb2dd29f6a43dade3df"
-  integrity sha512-5D4NGD9bxmROUf8MVhR4mmZjzQtuM/Sg+eOnfOPzVaIkvuQItE4zR0Bg7gRr1XSgZ/OcJ/6q2ZoXH1HxSjykkw==
+"@mikro-orm/knex@6.4.13", "@mikro-orm/knex@^6.4.13":
+  version "6.4.13"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/knex/-/knex-6.4.13.tgz#27136cfd455759eca1c314ef59e1f54c6a953d4c"
+  integrity sha512-S1FD0VJ0zyGnWdmigZEq11vA+Yf9vb5VotbkZOB1s2jC3WH2x8uFM27M8rpmVGHMlJx7LSEZmOw18uFN+w+tOQ==
   dependencies:
     fs-extra "11.3.0"
     knex "3.1.0"
     sqlstring "2.3.3"
 
-"@mikro-orm/mongodb@6.4.5":
-  version "6.4.5"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/mongodb/-/mongodb-6.4.5.tgz#f2925a75a889fa13c866c707cca60ab02c4d11b8"
-  integrity sha512-YPlLl6jjM+XH5FRT/X5C7MqS0MVGYijgtQsWjx9NubtJAP+GEqgOGA9OmYHyKRi5SBloB9lrpkd6emSOIeFTAw==
+"@mikro-orm/mongodb@^6.4.13":
+  version "6.4.13"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/mongodb/-/mongodb-6.4.13.tgz#23fccc746bfd37efc227af9caa30c1eee143dcdb"
+  integrity sha512-nBALSAcO7GaPf1v02D3BBBfW6tViC74GI+KSJqtvBZ4Xc1pSmyR5Bm7MSWOzs1ggTJBzii3ZS1SzYtPagExOmw==
   dependencies:
     bson "^6.10.1"
-    mongodb "6.12.0"
+    mongodb "6.15.0"
 
-"@mikro-orm/mysql@6.4.5":
-  version "6.4.5"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/mysql/-/mysql-6.4.5.tgz#30176b48ffcda9b68b1e5364af31944dcbab4fc7"
-  integrity sha512-DAVroZqmXyAgIUXdiTCSRC3wG00FxE8FTi6YqcI0tE5SptJxc2t87lloRoU0oqzrwwKrlIDuBQ8le/opeiogkQ==
+"@mikro-orm/mysql@^6.4.13":
+  version "6.4.13"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/mysql/-/mysql-6.4.13.tgz#e39692f6e4eb5c6b5e50eac4db27005b139f9318"
+  integrity sha512-EeOtlfTF1N5cNwY2jgdpu46cex8XuAMGjh7R1/yofo25exnwhW60e4QYdCwv4zIBoybY/uwqgu0bFB2gpoco4w==
   dependencies:
-    "@mikro-orm/knex" "6.4.5"
-    mysql2 "3.12.0"
+    "@mikro-orm/knex" "6.4.13"
+    mysql2 "3.14.0"
 
-"@mikro-orm/nestjs@^6.0.2":
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/nestjs/-/nestjs-6.1.0.tgz#b377bf810c2c1d5e1ea61c4b607f008a576c45ff"
-  integrity sha512-nuCjYSzEfcvFRjXAdVoKoCLw2TeZi1Ig3j1thTo1bo7Yjvko3lGchOBlYjx/vnC4HDQaAdAhRuAa6ceGZVMR8w==
+"@mikro-orm/nestjs@^6.1.1":
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/nestjs/-/nestjs-6.1.1.tgz#eb997289985c0a25769e59261e5e7dda776d4c8a"
+  integrity sha512-aluD3eTeuCvIePDk5UBanHIhu1zAJQXqWAg47MZdHJmFkNuXn62DCXbD2c4X5TCpKW/m0zjba22ilyZ/AFG9qg==
 
-"@mikro-orm/postgresql@6.4.5":
-  version "6.4.5"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/postgresql/-/postgresql-6.4.5.tgz#1fec83f7771a4266b66068259c420fa5b06b9366"
-  integrity sha512-LXFMsEXSiD5ftGIDMT2RqOSWIcJY5YfGI4Hhy6YQiLU8ovuJmZ7EHANb2VsccTNkEAO8kiK11ZVxIQPaFqPX+Q==
+"@mikro-orm/postgresql@^6.4.13":
+  version "6.4.13"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/postgresql/-/postgresql-6.4.13.tgz#721368d38ccefb16f81f439fc34d0ee0878e2353"
+  integrity sha512-m2ovsYZx9F64ffBV61cHkGKMaR7fk5ETFw65kJZMAcsPEwOqUkZKS272IrMRrI//bLygirHkw+Kj60XYHmQh+w==
   dependencies:
-    "@mikro-orm/knex" "6.4.5"
-    pg "8.13.1"
-    postgres-array "3.0.2"
+    "@mikro-orm/knex" "6.4.13"
+    pg "8.14.1"
+    postgres-array "3.0.4"
     postgres-date "2.1.0"
     postgres-interval "4.0.2"
 
@@ -15260,10 +15260,10 @@ before-after-hook@^2.2.0:
   resolved "https://registry.yarnpkg.com/before-after-hook/-/before-after-hook-2.2.3.tgz#c51e809c81a4e354084422b9b26bad88249c517c"
   integrity sha512-NzUnlZexiaH/46WDhANlyR2bXRopNg4F/zuSA3OpZnllCUgRaOF2znDioDWrmbNVsuZk6l9pMquQB38cfBZwkQ==
 
-better-sqlite3@11.8.1:
-  version "11.8.1"
-  resolved "https://registry.yarnpkg.com/better-sqlite3/-/better-sqlite3-11.8.1.tgz#bcb1c494984065a7ed76a5df5ecbcb0f068d47fa"
-  integrity sha512-9BxNaBkblMjhJW8sMRZxnxVTRgbRmssZW0Oxc1MPBTfiR+WW21e2Mk4qu8CzrcZb1LwPCnFsfDEzq+SNcBU8eg==
+better-sqlite3@11.9.1:
+  version "11.9.1"
+  resolved "https://registry.yarnpkg.com/better-sqlite3/-/better-sqlite3-11.9.1.tgz#0540da2f2ce24cbd766bb35db412f4be2c75b8bb"
+  integrity sha512-Ba0KR+Fzxh2jDRhdg6TSH0SJGzb8C0aBY4hR8w8madIdIzzC6Y1+kx5qR6eS1Z+Gy20h6ZU28aeyg0z1VIrShQ==
   dependencies:
     bindings "^1.5.0"
     prebuild-install "^7.1.1"
@@ -15833,6 +15833,11 @@ bson@^6.10.1:
   version "6.10.2"
   resolved "https://registry.yarnpkg.com/bson/-/bson-6.10.2.tgz#092ba1d2abee7e126320003f88d6883c3b1897df"
   integrity sha512-5afhLTjqDSA3akH56E+/2J6kTDuSIlBxyXPdQslj9hcIgOUE378xdOfZvC/9q3LifJNI6KR/juZ+d0NRNYBwXg==
+
+bson@^6.10.3:
+  version "6.10.3"
+  resolved "https://registry.yarnpkg.com/bson/-/bson-6.10.3.tgz#5f9a463af6b83e264bedd08b236d1356a30eda47"
+  integrity sha512-MTxGsqgYTwfshYWTRdmZRC+M7FnG1b4y7RO7p2k3X24Wq0yv1m77Wsj0BzlPzd/IowgESfsruQCUToa7vbOpPQ==
 
 btoa-lite@^1.0.0:
   version "1.0.0"
@@ -19853,7 +19858,7 @@ dotenv@16.4.7, dotenv@^16.0.3, dotenv@^16.4.5, dotenv@~16.4.5:
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.4.7.tgz#0e20c5b82950140aa99be360a8a5f52335f53c26"
   integrity sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==
 
-dotenv@^16.4.7:
+dotenv@16.5.0, dotenv@^16.4.7:
   version "16.5.0"
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.5.0.tgz#092b49f25f808f020050051d1ff258e404c78692"
   integrity sha512-m/C+AwOAr9/W1UOIZUo232ejMNnJAJtYQjUbHoNTBNTJSvqzzDh7vnrei3o3r3m9blf6ZoDkvcw0VmozNRFJxg==
@@ -28230,10 +28235,10 @@ mikro-orm-soft-delete@^1.0.0-alpha.1:
   resolved "https://registry.yarnpkg.com/mikro-orm-soft-delete/-/mikro-orm-soft-delete-1.0.0-alpha.1.tgz#8912a8a7be00d84b786de7f12b579849ca1f3888"
   integrity sha512-C06kX4hKGcgLleVoZa9oafYaUK4+T7I+R+aDy64HY+sHuYn/H/HZShpZIt4Lg1DUOhyjau6dA3ZuJYiu02Su1g==
 
-mikro-orm@6.4.5:
-  version "6.4.5"
-  resolved "https://registry.yarnpkg.com/mikro-orm/-/mikro-orm-6.4.5.tgz#ff299bfb48170853fcb299dd4203c7560de023f3"
-  integrity sha512-CFQf87MG4c1N3J/3ELtmwFKXHBzp62o/da7dt43V9cGXygBs65KSk3EBCAdyd5VYNtu/09mt/rztanQSWNWzog==
+mikro-orm@6.4.13:
+  version "6.4.13"
+  resolved "https://registry.yarnpkg.com/mikro-orm/-/mikro-orm-6.4.13.tgz#1fe42b85f78b779a5c7a8bde14618771af6f2184"
+  integrity sha512-sQZezhVLjH/gHUjVqsn+k60xC4TsL7h+Q/0UPe+OF4LoywTZNKwid1mN3WPxNd4c5eI6Aavl11KIsu2t9OKqzQ==
 
 miller-rabin@^4.0.0:
   version "4.0.1"
@@ -29048,13 +29053,13 @@ mongodb@5.9.1:
   optionalDependencies:
     "@mongodb-js/saslprep" "^1.1.0"
 
-mongodb@6.12.0:
-  version "6.12.0"
-  resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-6.12.0.tgz#8b0bda1b18cbb3f0aec8ab4119c5dc535a43c444"
-  integrity sha512-RM7AHlvYfS7jv7+BXund/kR64DryVI+cHbVAy9P61fnb1RcWZqOW1/Wj2YhqMCx+MuYhqTRGv7AwHBzmsCKBfA==
+mongodb@6.15.0:
+  version "6.15.0"
+  resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-6.15.0.tgz#4303ce0f7d5e5750749b1cb318dc7a115778f92e"
+  integrity sha512-ifBhQ0rRzHDzqp9jAQP6OwHSH7dbYIQjD3SbJs9YYk9AikKEettW/9s/tbSFDTpXcRbF+u1aLrhHxDFaYtZpFQ==
   dependencies:
     "@mongodb-js/saslprep" "^1.1.9"
-    bson "^6.10.1"
+    bson "^6.10.3"
     mongodb-connection-string-url "^3.0.0"
 
 moo@^0.5.0, moo@^0.5.1:
@@ -29277,7 +29282,22 @@ mv@2.1.1:
     ncp "~2.0.0"
     rimraf "~2.4.0"
 
-mysql2@3.12.0, mysql2@^3.12.0:
+mysql2@3.14.0:
+  version "3.14.0"
+  resolved "https://registry.yarnpkg.com/mysql2/-/mysql2-3.14.0.tgz#5a7ab528f3249ace2d0ac1180c7ac1ea40bfe20b"
+  integrity sha512-8eMhmG6gt/hRkU1G+8KlGOdQi2w+CgtNoD1ksXZq9gQfkfDsX4LHaBwTe1SY0Imx//t2iZA03DFnyYKPinxSRw==
+  dependencies:
+    aws-ssl-profiles "^1.1.1"
+    denque "^2.1.0"
+    generate-function "^2.3.1"
+    iconv-lite "^0.6.3"
+    long "^5.2.1"
+    lru.min "^1.0.0"
+    named-placeholders "^1.1.3"
+    seq-queue "^0.0.5"
+    sqlstring "^2.3.2"
+
+mysql2@^3.12.0:
   version "3.12.0"
   resolved "https://registry.yarnpkg.com/mysql2/-/mysql2-3.12.0.tgz#db8fc770f8b76ebaba49dc4bbfe2a1754057d882"
   integrity sha512-C8fWhVysZoH63tJbX8d10IAoYCyXy4fdRFz2Ihrt9jtPILYynFEKUUzpp1U7qxzDc3tMbotvaBH+sl6bFnGZiw==
@@ -32074,10 +32094,20 @@ pg-pool@^3.7.0:
   resolved "https://registry.yarnpkg.com/pg-pool/-/pg-pool-3.7.0.tgz#d4d3c7ad640f8c6a2245adc369bafde4ebb8cbec"
   integrity sha512-ZOBQForurqh4zZWjrgSwwAtzJ7QiRX0ovFkZr2klsen3Nm0aoh33Ls0fzfv3imeH/nw/O27cjdz5kzYJfeGp/g==
 
+pg-pool@^3.8.0:
+  version "3.9.6"
+  resolved "https://registry.yarnpkg.com/pg-pool/-/pg-pool-3.9.6.tgz#c6fde89dee615d6c262724e68a3a37e9593157fc"
+  integrity sha512-rFen0G7adh1YmgvrmE5IPIqbb+IgEzENUm+tzm6MLLDSlPRoZVhzU1WdML9PV2W5GOdRA9qBKURlbt1OsXOsPw==
+
 pg-protocol@*, pg-protocol@^1.7.0:
   version "1.7.0"
   resolved "https://registry.yarnpkg.com/pg-protocol/-/pg-protocol-1.7.0.tgz#ec037c87c20515372692edac8b63cf4405448a93"
   integrity sha512-hTK/mE36i8fDDhgDFjy6xNOG+LCorxLG3WO17tku+ij6sVHXh1jQUJ8hYAnRhNla4QVD2H8er/FOjc/+EgC6yQ==
+
+pg-protocol@^1.8.0:
+  version "1.9.5"
+  resolved "https://registry.yarnpkg.com/pg-protocol/-/pg-protocol-1.9.5.tgz#e544eff37d6ab79c26281d7c0b59ac9be4862686"
+  integrity sha512-DYTWtWpfd5FOro3UnAfwvhD8jh59r2ig8bPtc9H8Ds7MscE/9NYruUQWFAOuraRl29jwcT2kyMFQ3MxeaVjUhg==
 
 pg-query-stream@^4.7.1:
   version "4.7.1"
@@ -32110,7 +32140,20 @@ pg-types@^4.0.1:
     postgres-interval "^3.0.0"
     postgres-range "^1.1.1"
 
-pg@8.13.1, pg@^8.13.1:
+pg@8.14.1:
+  version "8.14.1"
+  resolved "https://registry.yarnpkg.com/pg/-/pg-8.14.1.tgz#2e3d1f287b64797cdfc8d1ba000f61a7ff8d66ed"
+  integrity sha512-0TdbqfjwIun9Fm/r89oB7RFQ0bLgduAhiIqIXOsyKoiC/L54DbuAAzIEN/9Op0f1Po9X7iCPXGoa/Ah+2aI8Xw==
+  dependencies:
+    pg-connection-string "^2.7.0"
+    pg-pool "^3.8.0"
+    pg-protocol "^1.8.0"
+    pg-types "^2.1.0"
+    pgpass "1.x"
+  optionalDependencies:
+    pg-cloudflare "^1.1.1"
+
+pg@^8.13.1:
   version "8.13.1"
   resolved "https://registry.yarnpkg.com/pg/-/pg-8.13.1.tgz#6498d8b0a87ff76c2df7a32160309d3168c0c080"
   integrity sha512-OUir1A0rPNZlX//c7ksiu7crsGZTKSOXJPgtNiHGIlC9H0lO+NC6ZDYksSgBYY/thSWhnSRBv8w1lieNNGATNQ==
@@ -33082,15 +33125,20 @@ postcss@^8.5.3:
     picocolors "^1.1.1"
     source-map-js "^1.2.1"
 
-postgres-array@3.0.2, postgres-array@~3.0.1:
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/postgres-array/-/postgres-array-3.0.2.tgz#68d6182cb0f7f152a7e60dc6a6889ed74b0a5f98"
-  integrity sha512-6faShkdFugNQCLwucjPcY5ARoW1SlbnrZjmGl0IrrqewpvxvhSLHimCVzqeuULCbG0fQv7Dtk1yDbG3xv7Veog==
+postgres-array@3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/postgres-array/-/postgres-array-3.0.4.tgz#4efcaf4d2c688d8bcaa8620ed13f35f299f7528c"
+  integrity sha512-nAUSGfSDGOaOAEGwqsRY27GPOea7CNipJPOA7lPbdEpx5Kg3qzdP0AaWC5MlhTWV9s4hFX39nomVZ+C4tnGOJQ==
 
 postgres-array@~2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/postgres-array/-/postgres-array-2.0.0.tgz#48f8fce054fbc69671999329b8834b772652d82e"
   integrity sha512-VpZrUqU5A69eQyW2c5CA1jtLecCsN2U/bD6VilrFDWq5+5UIEVO7nazS3TEcHf1zuPYO/sqGvUvW62g86RXZuA==
+
+postgres-array@~3.0.1:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/postgres-array/-/postgres-array-3.0.2.tgz#68d6182cb0f7f152a7e60dc6a6889ed74b0a5f98"
+  integrity sha512-6faShkdFugNQCLwucjPcY5ARoW1SlbnrZjmGl0IrrqewpvxvhSLHimCVzqeuULCbG0fQv7Dtk1yDbG3xv7Veog==
 
 postgres-bytea@~1.0.0:
   version "1.0.0"

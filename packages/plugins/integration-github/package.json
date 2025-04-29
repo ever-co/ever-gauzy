@@ -33,7 +33,7 @@
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
-		"@mikro-orm/nestjs": "^6.0.2",
+		"@mikro-orm/nestjs": "^6.1.1",
 		"@nestjs/axios": "^4.0.0",
 		"@nestjs/cache-manager": "^3.0.1",
 		"@nestjs/common": "^11.1.0",
