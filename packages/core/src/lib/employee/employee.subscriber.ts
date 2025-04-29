@@ -60,7 +60,9 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			}
 
 			// Set a default avatar image if none is provided
-			entity.user.imageUrl = entity.user.imageUrl ?? getUserDummyImage(entity.user);
+			if (entity.user) {
+				entity.user.imageUrl = entity.user.imageUrl ?? getUserDummyImage(entity.user);
+			}
 
 			// Updates the employee's status based on the start and end work dates.
 			this.updateEmployeeStatus(entity, em);

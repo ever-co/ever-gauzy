@@ -16,10 +16,10 @@ import { ImportService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-import',
-    templateUrl: './import.component.html',
-    styleUrls: ['./import.component.scss'],
-    standalone: false
+	selector: 'ngx-import',
+	templateUrl: './import.component.html',
+	styleUrls: ['./import.component.scss'],
+	standalone: false
 })
 export class ImportComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	history$: Observable<IImportHistory[]> = this.importService.history$;
@@ -84,9 +84,16 @@ export class ImportComponent extends TranslationBaseComponent implements AfterVi
 				{
 					name: 'Tenant-Id',
 					value: `${this.store.user.tenantId}`
+				},
+				{
+					name: 'Organization-Id',
+					value: `${this.store.selectedOrganization.id}`
 				}
 			]
 		});
+		this.uploader.onAfterAddingFile = (file) => {
+			file.withCredentials = false;
+		};
 		this.uploader.onBuildItemForm = (item, form) => {
 			form.append('importType', this.importType);
 		};

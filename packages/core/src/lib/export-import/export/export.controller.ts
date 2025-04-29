@@ -1,4 +1,4 @@
-import { Controller, HttpStatus, Get, Res, Query, UseGuards } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Res, Query, UseGuards, Headers } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { ParseJsonPipe } from '../../shared/pipes/parse-json.pipe';
@@ -23,9 +23,14 @@ export class ExportController {
 		description: 'Record not found'
 	})
 	@Get()
-	async exportAll(@Query('data', ParseJsonPipe) data: any, @Res() res): Promise<any> {
+	async exportAll(
+		@Query('data', ParseJsonPipe) data: any,
+		@Query('organizationId') organizationId: string,
+		@Res() res
+	): Promise<any> {
+		await this._exportService.registerAllRepositories();
 		await this._exportService.createFolders();
-		await this._exportService.exportTables();
+		await this._exportService.exportTables(organizationId);
 		await this._exportService.archiveAndDownload();
 		await this._exportService.downloadToUser(res);
 		await this._exportService.deleteCsvFiles();
@@ -61,12 +66,18 @@ export class ExportController {
 		description: 'Record not found'
 	})
 	@Get('filter')
-	async exportByName(@Query('data', ParseJsonPipe) data: any, @Res() res): Promise<any> {
+	async exportByName(
+		@Query('data', ParseJsonPipe) data: any,
+		@Headers() headers: Record<string, string>,
+		@Res() res
+	): Promise<any> {
 		const {
 			entities: { names }
 		} = data;
+		const organizationId = headers['Organization-Id'];
+		await this._exportService.registerAllRepositories();
 		await this._exportService.createFolders();
-		await this._exportService.exportSpecificTables(names);
+		await this._exportService.exportSpecificTables(names, organizationId);
 		await this._exportService.archiveAndDownload();
 		await this._exportService.downloadToUser(res);
 		await this._exportService.deleteCsvFiles();
