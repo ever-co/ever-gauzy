@@ -1,21 +1,11 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CommandBus } from '@nestjs/cqrs';
-import { IsNull, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { camelCase } from 'typeorm/util/StringUtils';
-import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
-import * as fs from 'fs';
-import * as unzipper from 'unzipper';
-import * as csv from 'csv-parser';
-import * as rimraf from 'rimraf';
-import * as path from 'path';
-import * as chalk from 'chalk';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
-import { isEmpty, isFunction, isNotEmpty } from '@gauzy/utils';
+import { isFunction } from '@gauzy/utils';
 import { ConnectionEntityManager } from '../../database/connection-entity-manager';
-import { convertToDatetime } from '../../core/utils';
-import { FileStorage } from '../../core/file-storage';
 import {
 	AccountingTemplate,
 	Activity,
@@ -172,8 +162,7 @@ import {
 	WarehouseProduct,
 	WarehouseProductVariant
 } from '../../core/entities/internal';
-import { RequestContext } from '../../core';
-import { ImportRecord, ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from '../import-record';
+import { ImportRecord } from '../import-record';
 import { MikroOrmAccountingTemplateRepository } from '../../accounting-template/repository/mikro-orm-accounting-template.repository';
 import { TypeOrmAccountingTemplateRepository } from '../../accounting-template/repository/type-orm-accounting-template.repository';
 import { MikroOrmAppointmentEmployeeRepository } from '../../appointment-employees/repository/mikro-orm-appointment-employee.repository';
@@ -1270,7 +1259,7 @@ export class RepositoriesService implements OnModuleInit {
 		for await (const item of this.repositories) {
 			const { repository, isStatic, substitute } = item;
 
-			const repositoryRelationsGraph = await this.getRepositoryRelationsGraph(item.repository);
+			const repositoryRelationsGraph = await this.getRepositoryRelationsGraph(repository);
 
 			result.push({
 				...repositoryRelationsGraph,
