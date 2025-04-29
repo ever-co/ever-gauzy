@@ -16,7 +16,8 @@ import { PostHogServiceManager } from '../services/posthog-manager.service';
  * </button>
  */
 @Directive({
-	selector: '[phTrack]'
+	selector: '[phTrack]',
+	standalone: true
 })
 export class PostHogTrackDirective implements OnInit {
 	@Input('phTrack') eventName!: string;
