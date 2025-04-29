@@ -1,17 +1,20 @@
-import * as fs from 'fs';
-import * as path from 'path';
+/**
+ * This script finds native modules (either using binding.gyp or .node binary files) inside node_modules.
+ *
+ * Usage:
+ * ```
+ * yarn node .scripts/find-native-deps.js
+ * ```
+ */
 
-interface NativeModule {
-	package: string;
-	directory: string;
-	type: 'gyp' | 'binary';
-}
+const fs = require('fs');
+const path = require('path');
 
 const nodeModulesPath = path.resolve('node_modules');
-const nativeModules: NativeModule[] = [];
+const nativeModules = [];
 
 // Check if a directory contains native bindings
-function checkNativeBindings(dir: string): void {
+function checkNativeBindings(dir) {
 	const bindingGypPath = path.join(dir, 'binding.gyp');
 	const binaryFiles = fs.readdirSync(dir).filter((file) => file.endsWith('.node'));
 
@@ -25,7 +28,7 @@ function checkNativeBindings(dir: string): void {
 }
 
 // Traverse node_modules for native modules
-function findNativeModules(): void {
+function findNativeModules() {
 	if (!fs.existsSync(nodeModulesPath)) {
 		console.error('node_modules directory not found. Please run yarn install first.');
 		return;
