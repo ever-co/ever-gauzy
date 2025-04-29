@@ -698,6 +698,7 @@
 		"docker-compose.demo.yml",
 		"docker-compose.yml",
 		"**/agent/src/assets/icons/**",
-		"**/agent/src/assets/images/**"
+		"**/agent/src/assets/images/**",
+		"./qodo/**"
 	]
 }
