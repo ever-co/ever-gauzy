@@ -8,14 +8,27 @@ import { TypeOrmTimeSlotMinuteRepository } from '../../repository/type-orm-time-
 @CommandHandler(CreateTimeSlotMinutesCommand)
 export class CreateTimeSlotMinutesHandler implements ICommandHandler<CreateTimeSlotMinutesCommand> {
 	constructor(
-		private readonly typeOrmTimeSlotMinuteRepository: TypeOrmTimeSlotMinuteRepository,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly typeOrmTimeSlotMinuteRepository: TypeOrmTimeSlotMinuteRepository
 	) {}
 
+	/**
+	 * Handles creation or update of a time slot minute record.
+	 *
+	 * If a `TimeSlotMinute` already exists for the given `timeSlotId` and `datetime`,
+	 * it performs an update via `UpdateTimeSlotMinutesCommand`. Otherwise, it creates a new one.
+	 *
+	 * @param command - The command containing input data for a time slot minute.
+	 * @returns A Promise that resolves to the created or updated `TimeSlotMinute` entity.
+	 */
 	public async execute(command: CreateTimeSlotMinutesCommand): Promise<TimeSlotMinute> {
 		const { input } = command;
 		const { id: timeSlotId } = input.timeSlot;
 
+		// Extract tenant ID from the request context or the provided input
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+
+		// Check if a time slot minute already exists for the given time slot ID and datetime
 		const timeMinute = await this.typeOrmTimeSlotMinuteRepository.findOneBy({
 			timeSlotId: timeSlotId,
 			datetime: input.datetime
@@ -29,8 +42,10 @@ export class CreateTimeSlotMinutesHandler implements ICommandHandler<CreateTimeS
 				})
 			);
 		} else {
-			input.tenantId = RequestContext.currentTenantId();
-			return this.typeOrmTimeSlotMinuteRepository.save(input);
+			return this.typeOrmTimeSlotMinuteRepository.save({
+				...input,
+				tenantId
+			});
 		}
 	}
 }

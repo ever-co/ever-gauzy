@@ -7,26 +7,36 @@ import { TypeOrmTimeSlotMinuteRepository } from '../../repository/type-orm-time-
 export class UpdateTimeSlotMinutesHandler implements ICommandHandler<UpdateTimeSlotMinutesCommand> {
 	constructor(private readonly typeOrmTimeSlotMinuteRepository: TypeOrmTimeSlotMinuteRepository) {}
 
+	/**
+	 * Updates an existing `TimeSlotMinute` entity by its ID.
+	 *
+	 * If the entity is found, it updates the record with the given input data
+	 * (excluding `timeSlotId` to prevent relational inconsistency), then fetches
+	 * and returns the updated record with its `timeSlot` relation.
+	 *
+	 * @param command - Contains the ID of the time slot minute and updated input data.
+	 * @returns A Promise resolving to the updated `TimeSlotMinute` entity, or `null` if not found.
+	 */
 	public async execute(command: UpdateTimeSlotMinutesCommand): Promise<TimeSlotMinute> {
 		const { input, id } = command;
-		let timeMinute = await this.typeOrmTimeSlotMinuteRepository.findOneBy({
-			id
-		});
+
+		let timeMinute = await this.typeOrmTimeSlotMinuteRepository.findOneBy({ id });
 
 		if (timeMinute) {
+			// Prevent changing the timeSlot relationship during update
 			delete input.timeSlotId;
+
 			await this.typeOrmTimeSlotMinuteRepository.update(id, input);
 
+			// Fetch and return the updated entity including its timeSlot relation
 			return await this.typeOrmTimeSlotMinuteRepository.findOne({
-				where: {
-					id: id
-				},
+				where: { id },
 				relations: {
 					timeSlot: true
 				}
 			});
-		} else {
-			return null;
 		}
+
+		return null;
 	}
 }

@@ -1,11 +1,12 @@
 import { RelationId, Unique, JoinColumn } from 'typeorm';
-import { ID, ITimeSlot, ITimeSlotMinute } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsDateString, IsUUID } from 'class-validator';
+import { ID, ITimeSlot, ITimeSlotMinute, JsonData } from '@gauzy/contracts';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNumber, IsDateString, IsUUID, IsOptional, IsArray, IsObject } from 'class-validator';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
 import { TimeSlot } from './time-slot.entity';
 import { MikroOrmTimeSlotMinuteRepository } from './repository/mikro-orm-time-slot-minute.repository';
+import { isMySQL, isPostgres } from '@gauzy/config';
 
 @MultiORMEntity('time_slot_minute', { mikroOrmRepository: () => MikroOrmTimeSlotMinuteRepository })
 @Unique(['timeSlotId', 'datetime'])
@@ -29,6 +30,20 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	mouse?: number;
 
 	/**
+	 * Number of movements (e.g., mouse or device movements) detected within one minute.
+	 * Used to track activity levels during time tracking sessions.
+	 */
+	@ApiProperty({
+		type: Number,
+		description: 'Number of movements detected in 1 minute',
+		example: 42,
+		default: 0
+	})
+	@IsNumber()
+	@MultiORMColumn({ default: 0 })
+	location?: number;
+
+	/**
 	 * The specific datetime for this time slot minute.
 	 * It records the exact minute in which the activity was tracked.
 	 */
@@ -36,6 +51,42 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	@IsDateString()
 	@MultiORMColumn()
 	datetime?: Date;
+
+	/**
+	 * Raw keyboard and mouse activity data (e.g., event logs or durations).
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
+	@MultiORMColumn({
+		type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text',
+		nullable: true
+	})
+	kb_mouse_activity?: JsonData;
+
+	/**
+	 * Raw location activity data (e.g., coordinates or movement patterns).
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
+	@MultiORMColumn({
+		type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text',
+		nullable: true
+	})
+	location_activity?: JsonData;
+
+	/**
+	 * Custom-defined activity data (e.g., domain-specific or extension usage).
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
+	@MultiORMColumn({
+		type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text',
+		nullable: true
+	})
+	custom_activity?: JsonData;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -47,7 +98,8 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	 * This establishes a many-to-one relationship with the `TimeSlot` entity.
 	 * The deletion of a `TimeSlot` cascades down to its `TimeSlotMinute` records.
 	 */
-	@MultiORMManyToOne(() => TimeSlot, (it) => it.timeSlotMinutes, {
+	@MultiORMManyToOne(() => TimeSlot, (timeSlot) => timeSlot.timeSlotMinutes, {
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()

@@ -1,5 +1,16 @@
 import * as moment from 'moment';
 
+/**
+ * Generates time slots in 10-minute intervals between a start and end time.
+ *
+ * - If the start time is aligned with a 10-minute boundary (e.g., 10:20), a full 10-minute slot is created.
+ * - If not, it adjusts the current slot to end at the next 10-minute boundary.
+ * - The function handles partial slots if the end time falls within a slot.
+ *
+ * @param start The start time of the range
+ * @param end The end time of the range
+ * @returns An array of time slots with { startedAt, stoppedAt, duration }
+ */
 export function generateTimeSlots(start: Date, end: Date) {
 	let mStart = moment(start);
 	const mEnd = moment(end);
@@ -9,28 +20,17 @@ export function generateTimeSlots(start: Date, end: Date) {
 		let tempEnd: moment.Moment;
 		let duration = 0;
 
-		/* Check start time is Rounded 10 minutes slot I.E 10:20, false if 10:14 */
+		// Check if start time is aligned to a 10-minute boundary (e.g., 10:20)
 		if (mStart.get('minute') % 10 === 0) {
 			tempEnd = mStart.clone().add(10, 'minute');
-			if (tempEnd.isBefore(mEnd)) {
-				duration = tempEnd.diff(mStart, 'seconds');
-			} else {
-				duration = mEnd.diff(mStart, 'seconds');
-			}
+			duration = tempEnd.isBefore(mEnd) ? tempEnd.diff(mStart, 'seconds') : mEnd.diff(mStart, 'seconds');
 		} else {
-			/* Calculate duration for without round time IE. 10:14-10:20 */
-			const tempStart = mStart
-				.clone()
-				.set('minute', mStart.get('minute') - (mStart.minutes() % 10));
-
-			/* Added 10 min for next slot */
+			// Align to previous 10-minute boundary
+			const tempStart = mStart.clone().set('minute', mStart.get('minute') - (mStart.minutes() % 10));
 			tempEnd = tempStart.clone().add(10, 'minute');
 
-			if (mEnd.isBefore(tempEnd)) {
-				duration = mEnd.diff(mStart, 'seconds');
-			} else {
-				duration = tempEnd.diff(mStart, 'seconds');
-			}
+			duration = mEnd.isBefore(tempEnd) ? mEnd.diff(mStart, 'seconds') : tempEnd.diff(mStart, 'seconds');
+
 			mStart = tempStart;
 		}
 
@@ -59,17 +59,13 @@ export function getStartEndIntervals(
 	start: moment.Moment,
 	end: moment.Moment
 ): {
-	start: string | Date,
-	end: string | Date
+	start: string | Date;
+	end: string | Date;
 } {
 	let startMinute = moment(start).utc().get('minute');
 	startMinute = startMinute - (startMinute % 10);
 
-	let startDate: any = moment(start)
-		.utc()
-		.set('minute', startMinute)
-		.set('second', 0)
-		.set('millisecond', 0);
+	let startDate: any = moment(start).utc().set('minute', startMinute).set('second', 0).set('millisecond', 0);
 
 	let endMinute = moment(end).utc().get('minute');
 	endMinute = endMinute - (endMinute % 10);
@@ -83,5 +79,5 @@ export function getStartEndIntervals(
 	return {
 		start: startDate,
 		end: endDate
-	}
+	};
 }
