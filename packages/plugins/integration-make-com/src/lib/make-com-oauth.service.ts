@@ -91,9 +91,9 @@ export class MakeComOAuthService {
 	 */
 
 	/**
-	 * TODO: Implement a more robust storage mechanism for state parameters
-	 * This is a simple in-memory storage for small scale applications
-	 * For scalability, we'll consider using cache, Redis for our case as it already exists in the project
+	 * TODO: Implement a more robust storage mechanism for state parameters by Q4 2025.
+	 * This is a simple in-memory storage for small scale applications.
+	 * For scalability, we'll consider using cache, Redis for our case as it already exists in the project.
 	 */
 	private storeStateForVerification(state: string): void {
 		this.pendingStates.set(state, { timestamp: Date.now() });
@@ -183,12 +183,8 @@ export class MakeComOAuthService {
 	 * @returns {boolean} True if the state parameter is valid, false otherwise.
 	 */
 	private verifyState(state: string): boolean {
-		if (!this.pendingStates) {
-			this.logger.warn('No pending states found for verification');
-			return false;
-		}
-
 		const pendingState = this.pendingStates.get(state);
+
 		if (!pendingState) {
 			this.logger.warn(`State ${state} not found in pending states`);
 			return false;
@@ -403,6 +399,10 @@ export class MakeComOAuthService {
 				integrationId,
 				settingsName: 'access_token'
 			});
+
+			if (!setting || !setting.settingsValue) {
+				throw new BadRequestException('Access token not found for this integration');
+			}
 
 			return setting.settingsValue;
 		} catch (error) {

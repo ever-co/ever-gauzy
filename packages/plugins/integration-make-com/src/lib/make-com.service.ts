@@ -102,13 +102,19 @@ export class MakeComService {
 
 			// Update isEnabled setting if provided
 			if (input.isEnabled !== undefined) {
-				const enabledSetting = integrationTenant.settings.find(
+				let enabledSetting = integrationTenant.settings.find(
 					(setting) => setting.settingsName === MakeSettingName.IS_ENABLED
 				);
 				if (enabledSetting) {
 					enabledSetting.settingsValue = input.isEnabled.toString();
-					updates.push(this.integrationSettingService.save(enabledSetting));
+				} else {
+					enabledSetting = {
+						settingsName: MakeSettingName.IS_ENABLED,
+						settingsValue: input.isEnabled.toString(),
+						integration: integrationTenant
+					};
 				}
+				updates.push(this.integrationSettingService.save(enabledSetting));
 			}
 
 			// Update webhookUrl setting if provided
@@ -141,21 +147,28 @@ export class MakeComService {
 	 * @param {any} data - The data to send with the request.
 	 * @returns {Promise<any>} - The API response.
 	 */
-	async makeApiCall(makeApiUrl: string, method: string = 'GET', data: any = null, retryLimit: number = 1): Promise<any> {
+	async makeApiCall(makeApiUrl: string, method: string = 'GET', data: any = null, retryLimit = 1): Promise<any> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			if (!tenantId) {
 				throw new NotFoundException('Tenant ID not found in request context');
 			}
 
-			// Find the integration for the current tenant
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: {
-					name: IntegrationEnum.MakeCom,
-					tenantId
-				},
-				relations: ['settings']
-			});
+			// Accept the already-loaded integration tenant as an optional parameter
+			// This is useful for cases where the integration tenant is already loaded
+			// and we don't want to query the database again.
+			let integrationTenant = RequestContext.currentIntegrationTenant();
+
+			// Only lookup if not provided
+			if (!integrationTenant) {
+				integrationTenant = await this.integrationTenantService.findOneByOptions({
+					where: {
+						name: IntegrationEnum.MakeCom,
+						tenantId
+					},
+					relations: ['settings']
+				});
+			}
 
 			if (!integrationTenant) {
 				throw new NotFoundException(`${IntegrationEnum.MakeCom} integration not found for this tenant`);
@@ -163,7 +176,7 @@ export class MakeComService {
 
 			// Get the access token
 			const accessTokenSetting = integrationTenant.settings.find(
-				(setting) => setting.settingsName === 'access_token'
+				(setting) => setting.settingsName === MakeSettingName.ACCESS_TOKEN
 			);
 
 			if (!accessTokenSetting) {

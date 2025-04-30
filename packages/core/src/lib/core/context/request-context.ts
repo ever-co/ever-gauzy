@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Request, Response } from 'express';
 import { ExtractJwt } from 'passport-jwt';
 import { JsonWebTokenError, verify } from 'jsonwebtoken';
-import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum, ID } from '@gauzy/contracts';
+import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum, IIntegrationTenant, ID } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { SerializedRequestContext } from './types';
@@ -243,6 +243,20 @@ export class RequestContext {
 		// If throwError is false or not provided, return null
 		return null;
 	}
+
+	/**
+	 * Retrieves the current integration tenant from the request context.
+	 *
+	 * @param {boolean} throwError - Flag indicating whether to throw an error if integration tenant is not found.
+	 * @returns The current integration tenant if found, otherwise null.
+	 */
+		static currentIntegrationTenant(): IIntegrationTenant | null {
+			const requestContext = RequestContext.currentRequestContext();
+			if (requestContext && requestContext._req) {
+				return requestContext._req['integrationTenant'] || null;
+			}
+			return null;
+		}
 
 	/**
 	 * Checks if the current user has a specific permission.
