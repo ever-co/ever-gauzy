@@ -3,8 +3,9 @@ import { HttpService } from '@nestjs/axios';
 import { catchError, firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
 import { IntegrationSettingService, IntegrationTenantService, RequestContext } from '@gauzy/core';
-import { IMakeComIntegrationSettings, MakeSettingName, IntegrationEnum } from '@gauzy/contracts';
+import { IntegrationEnum } from '@gauzy/contracts';
 import { MakeComOAuthService } from './make-com-oauth.service';
+import { IMakeComIntegrationSettings, MakeSettingName } from './interfaces/make-com.model';
 
 @Injectable()
 export class MakeComService {

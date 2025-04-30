@@ -1,13 +1,14 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { TenantPermissionGuard, Permissions } from '@gauzy/core';
-import { PermissionsEnum, IMakeComIntegrationSettings } from '@gauzy/contracts';
+import { TenantPermissionGuard, Permissions, PermissionGuard } from '@gauzy/core';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { MakeComService } from './make-com.service';
 import { UpdateMakeComSettingsDTO } from './dto/update-make-com-settings.dto';
-import { ConfigService } from '@nestjs/config';
+import { IMakeComIntegrationSettings } from './interfaces/make-com.model';
 
 @ApiTags('Make.com Integrations')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller('/integration/make-com')
 export class MakeComController {
@@ -98,11 +99,8 @@ export class MakeComController {
 	}
 
 	/**
-	 * Gets the OAuth configuration details needed for the frontend.
-	 *
-	 * Note: Client secret is intentionally not returned for security reasons.
-	 *
-	 * @returns {Promise<Object>} A promise that resolves to the OAuth configuration.
+	 * Gets the Make.com OAuth configuration for the frontend.
+	 * Note: Client secret is intentionally excluded for security reasons.
 	 */
 	@ApiOperation({ summary: 'Get Make.com OAuth configuration' })
 	@ApiResponse({
@@ -111,14 +109,15 @@ export class MakeComController {
 	})
 	@Get('/oauth-config')
 	async getOAuthConfig(): Promise<{ clientId: string; redirectUri: string }> {
-		const clientId = this._config.get<string>('makeCom.clientId');
-		const redirectUri = this._config.get<string>('makeCom.redirectUri');
-		if (!clientId || !redirectUri) {
-			throw new BadRequestException('OAuth configuration is not set up properly. Missing required values.');
-		}
-		return {
-			clientId,
-			redirectUri
+		const { clientId, redirectUri } = {
+			clientId: this._config.get<string>('makeCom.clientId'),
+			redirectUri: this._config.get<string>('makeCom.redirectUri')
 		};
+
+		if (!clientId || !redirectUri) {
+			throw new BadRequestException('OAuth configuration is missing required values.');
+		}
+
+		return { clientId, redirectUri };
 	}
 }

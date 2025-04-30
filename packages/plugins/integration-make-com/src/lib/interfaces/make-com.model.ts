@@ -1,4 +1,6 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from '@gauzy/contracts';
+
+export type GrantType = 'authorization_code' | 'refresh_token';
 
 // Define Make.com integration setting names
 export enum MakeSettingName {
@@ -6,7 +8,8 @@ export enum MakeSettingName {
 	WEBHOOK_URL = 'make_webhook_url',
 	ACCESS_TOKEN = 'access_token',
 	REFRESH_TOKEN = 'refresh_token',
-	EXPIRES_IN = 'expires_in'
+	EXPIRES_IN = 'expires_in',
+	TOKEN_TYPE = 'token_type'
 }
 
 // Define the return type for the settings
@@ -33,8 +36,6 @@ export interface IMakeComAuthConfig {
 	redirectUri: string;
 	postInstallUrl: string;
 }
-
-export type GrantType = 'authorization_code' | 'refresh_token';
 
 export interface IMakeComCreateIntegration extends IBasePerTenantAndOrganizationEntityModel {
 	// OAuth credentials and parameters

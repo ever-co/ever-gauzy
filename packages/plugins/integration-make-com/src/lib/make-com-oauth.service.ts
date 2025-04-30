@@ -240,25 +240,25 @@ export class MakeComOAuthService {
 			// Define the settings to save
 			const settings = [
 				{
-					settingsName: 'access_token',
+					settingsName: MakeSettingName.ACCESS_TOKEN,
 					settingsValue: tokenData.access_token,
 					tenantId,
 					organizationId
 				},
 				{
-					settingsName: 'refresh_token',
+					settingsName: MakeSettingName.REFRESH_TOKEN,
 					settingsValue: tokenData.refresh_token,
 					tenantId,
 					organizationId
 				},
 				{
-					settingsName: 'token_type',
+					settingsName: MakeSettingName.TOKEN_TYPE,
 					settingsValue: tokenData.token_type,
 					tenantId,
 					organizationId
 				},
 				{
-					settingsName: 'expires_in',
+					settingsName: MakeSettingName.EXPIRES_IN,
 					settingsValue: tokenData.expires_in.toString(),
 					tenantId,
 					organizationId

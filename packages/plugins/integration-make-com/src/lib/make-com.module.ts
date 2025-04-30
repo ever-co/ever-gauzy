@@ -29,6 +29,6 @@ import { MakeComOAuthService } from './make-com-oauth.service';
 	],
 	controllers: [MakeComController, MakeComAuthorizationController],
 	providers: [WebhookService, MakeComService, MakeComOAuthService, ...EventHandlers],
-	exports: [WebhookService, MakeComService, MakeComOAuthService],
+	exports: [WebhookService, MakeComService, MakeComOAuthService]
 })
 export class MakeComModule {}

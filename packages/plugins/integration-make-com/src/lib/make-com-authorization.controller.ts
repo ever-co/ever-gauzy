@@ -1,20 +1,17 @@
 import { Controller, Get, Query, Res, HttpException, HttpStatus } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { Public } from '@gauzy/common';
-import { buildQueryString } from '@gauzy/utils';
 import { IntegrationEnum } from '@gauzy/contracts';
-import { ConfigService } from '@nestjs/config';
+import { buildQueryString } from '@gauzy/utils';
 import { MakeComOAuthService } from './make-com-oauth.service';
 
 @ApiTags('Make.com OAuth')
 @Public()
 @Controller('/integration/make-com/oauth')
 export class MakeComAuthorizationController {
-	constructor(
-		private readonly _config: ConfigService,
-		private readonly makeComOAuthService: MakeComOAuthService
-	) {}
+	constructor(private readonly _config: ConfigService, private readonly makeComOAuthService: MakeComOAuthService) {}
 
 	/**
 	 * Initiates the OAuth 2.0 authorization flow with Make.com.
@@ -91,7 +88,6 @@ export class MakeComAuthorizationController {
 			// Redirect to the application
 			return response.redirect(url);
 		} catch (error) {
-
 			if (postInstallUrl) {
 				const errorMessage = 'Failed to complete OAuth flow';
 				const queryParamsString = buildQueryString({
