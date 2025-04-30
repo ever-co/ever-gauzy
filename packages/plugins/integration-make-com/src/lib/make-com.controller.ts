@@ -114,7 +114,7 @@ export class MakeComController {
 		const clientId = this._config.get<string>('makeCom.clientId');
 		const redirectUri = this._config.get<string>('makeCom.redirectUri');
 		if (!clientId || !redirectUri) {
-			throw new Error('OAuth configuration is not set up properly. Missing required values.');
+			throw new BadRequestException('OAuth configuration is not set up properly. Missing required values.');
 		}
 		return {
 			clientId,
