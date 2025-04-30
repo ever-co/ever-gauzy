@@ -6,6 +6,7 @@ import { Public } from '@gauzy/common';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { buildQueryString } from '@gauzy/utils';
 import { MakeComOAuthService } from './make-com-oauth.service';
+import { randomBytes } from 'crypto';
 
 @ApiTags('Make.com OAuth')
 @Public()
@@ -62,7 +63,15 @@ export class MakeComAuthorizationController {
 
 			// Validate state parameter - it's required by Make.com
 			if (!query.state) {
-				throw new HttpException('Invalid callback parameters: state is required', HttpStatus.BAD_REQUEST);
+				// Generate a secure random state if none provided
+				const state = randomBytes(16).toString('hex');
+				const authorizationUrl = this.makeComOAuthService.getAuthorizationUrl(state);
+				return response.redirect(authorizationUrl);
+			}
+
+			// Otherwise use provided state
+			if (!query.state || query.state.length < 32) {
+				throw new HttpException('Invalid state parameter', HttpStatus.BAD_REQUEST);
 			}
 
 			// Exchange the authorization code for access token

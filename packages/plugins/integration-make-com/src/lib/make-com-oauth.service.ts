@@ -345,6 +345,12 @@ export class MakeComOAuthService {
 			};
 
 			// Make the token refresh request
+			// Find the tenant ID from the integration settings since we can't rely on request context
+			const tenantId = settings[0]?.tenantId;
+			if (!tenantId) {
+				throw new BadRequestException('Unable to determine tenant ID from integration settings');
+			}
+
 			const response = await firstValueFrom(
 				this.httpService.post(`${MAKE_BASE_URL}/oauth/token`, refreshParams, { headers }).pipe(
 					catchError((error: AxiosError) => {
@@ -356,9 +362,6 @@ export class MakeComOAuthService {
 					})
 				)
 			);
-
-			// Update the tokens in the database
-			const tenantId = RequestContext.currentTenantId();
 
 			const tokenData = response.data;
 			const updatedSettings = settings.map((setting) => {
