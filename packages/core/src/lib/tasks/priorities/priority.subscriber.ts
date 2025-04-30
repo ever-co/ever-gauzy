@@ -46,7 +46,7 @@ export class TaskPrioritySubscriber extends BaseEntityEventSubscriber<TaskPriori
 	async beforeEntityCreate(entity: TaskPriority): Promise<void> {
 		try {
 			// Set a default color using faker if not provided
-			entity.color = entity.color || faker.color.rgb();
+			entity.color ??= faker.color.rgb();
 
 			// Set a sluggable value based on the name, if provided
 			if (Object.prototype.hasOwnProperty.call(entity, 'name')) {
