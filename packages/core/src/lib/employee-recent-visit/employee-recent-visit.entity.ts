@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsArray, IsDate, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsDate, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { ID, IEmployee, IEmployeeRecentVisit, JsonData } from '@gauzy/contracts';
@@ -23,7 +23,6 @@ export class EmployeeRecentVisit extends BasePerEntityType implements IEmployeeR
 
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@IsArray()
 	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	data?: JsonData;
 
