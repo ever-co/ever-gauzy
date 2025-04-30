@@ -10,8 +10,6 @@ import {
 	IntegrationEnum,
 	IIntegrationEntitySetting,
 	IIntegrationSetting,
-	MakeSettingName,
-	IMakeComOAuthTokens,
 	IntegrationEntity,
 	ID
 } from '@gauzy/contracts';
