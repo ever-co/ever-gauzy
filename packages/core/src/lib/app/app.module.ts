@@ -166,7 +166,6 @@ import { EmployeeNotificationModule } from '../employee-notification/employee-no
 import { EmployeeNotificationSettingModule } from '../employee-notification-setting/employee-notification-setting.module';
 
 const { unleashConfig } = environment;
-console.log(process.env.GAUZY_MAKE_POST_INSTALL_URL, 'GAUZY_MAKE_POST_INSTALL_URL');
 
 if (unleashConfig.url) {
 	const unleashInstanceConfig: UnleashConfig = {
