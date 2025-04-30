@@ -46,6 +46,7 @@ export * from './lib/employee-award.model';
 export * from './lib/employee-job.model';
 export * from './lib/employee-phone.model';
 export * from './lib/employee-proposal-template.model';
+export * from './lib/employee-recent-visit.model';
 export * from './lib/employee-recurring-expense.model';
 export * from './lib/employee-settings.model';
 export * from './lib/employee-statistics.model';
