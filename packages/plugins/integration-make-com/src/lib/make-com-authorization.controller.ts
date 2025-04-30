@@ -69,7 +69,12 @@ export class MakeComAuthorizationController {
 			}
 
 			// Exchange the authorization code for access token
-			await this.makeComOAuthService.exchangeCodeForToken(query.code, query.state);
+			const tokenResponse = await this.makeComOAuthService.exchangeCodeForToken(query.code, query.state);
+
+			// Check if the token exchange was successful
+			if (!tokenResponse || !tokenResponse.success) {
+				throw new HttpException('Failed to exchange authorization code for token', HttpStatus.BAD_REQUEST);
+			}
 
 			if (!postInstallUrl) {
 				throw new HttpException('Post-installation URL not configured', HttpStatus.INTERNAL_SERVER_ERROR);

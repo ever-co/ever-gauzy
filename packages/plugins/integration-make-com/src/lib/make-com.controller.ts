@@ -67,17 +67,30 @@ export class MakeComController {
 		description: 'Make.com OAuth settings updated successfully'
 	})
 	@ApiResponse({
+		status: 400,
+		description: 'Both clientId and clientSecret must be provided together'
+	})
+	@ApiResponse({
 		status: 404,
 		description: 'Tenant ID not found in request context'
 	})
 	@Post('/oauth-settings')
 	async updateOAuthSettings(@Body() input: UpdateMakeComSettingsDTO): Promise<IMakeComIntegrationSettings> {
-		// Update environment variables with provided OAuth settings if they exist
-		if (input.clientId) {
-			this._config.set('makeCom.clientId', input.clientId);
+		// Validate that both clientId and clientSecret are provided together
+		if ((input.clientId && !input.clientSecret) || (!input.clientId && input.clientSecret)) {
+			throw new Error('Both clientId and clientSecret must be provided together');
 		}
-		if (input.clientSecret) {
-			this._config.set('makeCom.clientSecret', input.clientSecret);
+
+		// Update environment variables with provided OAuth settings if they exist
+		if (input.clientId && input.clientSecret) {
+			let clientId = this._config.get<string>('makeCom.clientId');
+			let clientSecret = this._config.get<string>('makeCom.clientSecret');
+			if (clientId !== input.clientId) {
+				this._config.set('makeCom.clientId', input.clientId);
+			}
+			if (clientSecret !== input.clientSecret) {
+				this._config.set('makeCom.clientSecret', input.clientSecret);
+			}
 		}
 
 		// Update webhook settings
@@ -90,6 +103,8 @@ export class MakeComController {
 	/**
 	 * Gets the OAuth configuration details needed for the frontend.
 	 *
+	 * Note: Client secret is intentionally not returned for security reasons.
+	 *
 	 * @returns {Promise<Object>} A promise that resolves to the OAuth configuration.
 	 */
 	@ApiOperation({ summary: 'Get Make.com OAuth configuration' })
@@ -99,9 +114,14 @@ export class MakeComController {
 	})
 	@Get('/oauth-config')
 	async getOAuthConfig(): Promise<{ clientId: string; redirectUri: string }> {
+		const clientId = this._config.get<string>('makeCom.clientId');
+		const redirectUri = this._config.get<string>('makeCom.redirectUri');
+		if (!clientId || !redirectUri) {
+			throw new Error('OAuth configuration is not set up properly. Missing required values.');
+		}
 		return {
-			clientId: this._config.get<string>('makeCom.clientId'),
-			redirectUri: this._config.get<string>('makeCom.redirectUri')
+			clientId,
+			redirectUri
 		};
 	}
 }

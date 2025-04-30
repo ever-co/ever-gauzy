@@ -98,13 +98,19 @@ export class MakeComService {
 
 			// Update isEnabled setting if provided
 			if (input.isEnabled !== undefined) {
-				const enabledSetting = integrationTenant.settings.find(
+				let enabledSetting = integrationTenant.settings.find(
 					(setting) => setting.settingsName === MakeSettingName.IS_ENABLED
 				);
 				if (enabledSetting) {
 					enabledSetting.settingsValue = input.isEnabled.toString();
-					updates.push(this.integrationSettingService.save(enabledSetting));
+				} else {
+					enabledSetting = {
+						settingsName: MakeSettingName.IS_ENABLED,
+						settingsValue: input.isEnabled.toString(),
+						integration: integrationTenant
+					};
 				}
+				updates.push(this.integrationSettingService.save(enabledSetting));
 			}
 
 			// Update webhookUrl setting if provided
@@ -149,14 +155,21 @@ export class MakeComService {
 				throw new NotFoundException('Tenant ID not found in request context');
 			}
 
-			// Find the integration for the current tenant
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: {
-					name: IntegrationEnum.MakeCom,
-					tenantId
-				},
-				relations: ['settings']
-			});
+			// Accept the already-loaded integration tenant as an optional parameter
+			// This is useful for cases where the integration tenant is already loaded
+			// and we don't want to query the database again.
+			let integrationTenant = RequestContext.currentIntegrationTenant();
+
+			// Only lookup if not provided
+			if (!integrationTenant) {
+				integrationTenant = await this.integrationTenantService.findOneByOptions({
+					where: {
+						name: IntegrationEnum.MakeCom,
+						tenantId
+					},
+					relations: ['settings']
+				});
+			}
 
 			if (!integrationTenant) {
 				throw new NotFoundException(`${IntegrationEnum.MakeCom} integration not found for this tenant`);

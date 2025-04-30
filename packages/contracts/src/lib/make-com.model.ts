@@ -16,6 +16,10 @@ export interface IMakeComIntegrationSettings {
 }
 
 // OAuth related types
+/**
+ * OAuth token data as returned by Make.com OAuth service.
+ * Properties use snake_case to match the OAuth provider's response format.
+ */
 export interface IMakeComOAuthTokens extends IBasePerTenantAndOrganizationEntityModel {
 	access_token: string;
 	refresh_token: string;
@@ -30,15 +34,19 @@ export interface IMakeComAuthConfig {
 	postInstallUrl: string;
 }
 
-export type grantType = 'authorization_code' | 'refresh_token';
+export type GrantType = 'authorization_code' | 'refresh_token';
 
 export interface IMakeComCreateIntegration extends IBasePerTenantAndOrganizationEntityModel {
-	client_id: string;
-	code: string;
-	grant_type: grantType;
-	redirect_uri: string;
-	client_secret: string;
+	// OAuth credentials and parameters
+	oauthParams: {
+		client_id: string;
+		code: string;
+		grant_type: GrantType;
+		redirect_uri: string;
+		client_secret: string;
+	};
 }
+
 export interface IMakeComOAuthCodeExchange {
 	code: string;
 	state?: string;
