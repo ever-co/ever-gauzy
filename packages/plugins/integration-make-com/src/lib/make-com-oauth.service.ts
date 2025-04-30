@@ -366,13 +366,13 @@ export class MakeComOAuthService {
 
 			const tokenData = response.data;
 			const updatedSettings = settings.map((setting) => {
-				if (setting.settingsName === 'access_token') {
+				if (setting.settingsName === MakeSettingName.ACCESS_TOKEN) {
 					setting.settingsValue = tokenData.access_token;
 				}
-				if (setting.settingsName === 'refresh_token') {
+				if (setting.settingsName === MakeSettingName.REFRESH_TOKEN) {
 					setting.settingsValue = tokenData.refresh_token;
 				}
-				if (setting.settingsName === 'expires_in') {
+				if (setting.settingsName === MakeSettingName.EXPIRES_IN) {
 					setting.settingsValue = tokenData.expires_in.toString();
 				}
 				return {

@@ -2,11 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { catchError, firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
-import {
-	IntegrationSettingService,
-	IntegrationTenantService,
-	RequestContext
-} from '@gauzy/core';
+import { IntegrationSettingService, IntegrationTenantService, RequestContext } from '@gauzy/core';
 import { IMakeComIntegrationSettings, MakeSettingName, IntegrationEnum } from '@gauzy/contracts';
 import { MakeComOAuthService } from './make-com-oauth.service';
 
@@ -141,7 +137,12 @@ export class MakeComService {
 	 * @param {any} data - The data to send with the request.
 	 * @returns {Promise<any>} - The API response.
 	 */
-	async makeApiCall(makeApiUrl: string, method: string = 'GET', data: any = null, retryLimit: number = 1): Promise<any> {
+	async makeApiCall(
+		makeApiUrl: string,
+		method: string = 'GET',
+		data: any = null,
+		retryLimit: number = 1
+	): Promise<any> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			if (!tenantId) {
@@ -163,7 +164,7 @@ export class MakeComService {
 
 			// Get the access token
 			const accessTokenSetting = integrationTenant.settings.find(
-				(setting) => setting.settingsName === 'access_token'
+				(setting) => setting.settingsName === MakeSettingName.ACCESS_TOKEN
 			);
 
 			if (!accessTokenSetting) {
@@ -181,38 +182,74 @@ export class MakeComService {
 			switch (method.toUpperCase()) {
 				case 'GET':
 					response = await firstValueFrom(
-						this.httpService.get(makeApiUrl, requestConfig).pipe(
-							catchError((error: AxiosError) =>
-								this.handleApiError(error, integrationTenant.id, makeApiUrl, method, data, retryLimit)
+						this.httpService
+							.get(makeApiUrl, requestConfig)
+							.pipe(
+								catchError((error: AxiosError) =>
+									this.handleApiError(
+										error,
+										integrationTenant.id,
+										makeApiUrl,
+										method,
+										data,
+										retryLimit
+									)
+								)
 							)
-						)
 					);
 					break;
 				case 'POST':
 					response = await firstValueFrom(
-						this.httpService.post(makeApiUrl, data, requestConfig).pipe(
-							catchError((error: AxiosError) =>
-								this.handleApiError(error, integrationTenant.id, makeApiUrl, method, data, retryLimit)
+						this.httpService
+							.post(makeApiUrl, data, requestConfig)
+							.pipe(
+								catchError((error: AxiosError) =>
+									this.handleApiError(
+										error,
+										integrationTenant.id,
+										makeApiUrl,
+										method,
+										data,
+										retryLimit
+									)
+								)
 							)
-						)
 					);
 					break;
 				case 'PUT':
 					response = await firstValueFrom(
-						this.httpService.put(makeApiUrl, data, requestConfig).pipe(
-							catchError((error: AxiosError) =>
-								this.handleApiError(error, integrationTenant.id, makeApiUrl, method, data, retryLimit)
+						this.httpService
+							.put(makeApiUrl, data, requestConfig)
+							.pipe(
+								catchError((error: AxiosError) =>
+									this.handleApiError(
+										error,
+										integrationTenant.id,
+										makeApiUrl,
+										method,
+										data,
+										retryLimit
+									)
+								)
 							)
-						)
 					);
 					break;
 				case 'DELETE':
 					response = await firstValueFrom(
-						this.httpService.delete(makeApiUrl, requestConfig).pipe(
-							catchError((error: AxiosError) =>
-								this.handleApiError(error, integrationTenant.id, makeApiUrl, method, data, retryLimit)
+						this.httpService
+							.delete(makeApiUrl, requestConfig)
+							.pipe(
+								catchError((error: AxiosError) =>
+									this.handleApiError(
+										error,
+										integrationTenant.id,
+										makeApiUrl,
+										method,
+										data,
+										retryLimit
+									)
+								)
 							)
-						)
 					);
 					break;
 				default:

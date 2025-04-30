@@ -212,6 +212,17 @@ export const environment: IEnvironment = {
 			process.env.GAUZY_ZAPIER_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/zapier`
 	},
 
+	makeCom: {
+		clientId: process.env.GAUZY_MAKE_CLIENT_ID,
+		clientSecret: process.env.GAUZY_MAKE_CLIENT_SECRET,
+		webhookUrl: process.env.GAUZY_MAKE_WEBHOOK_URL || `${process.env.GAUZY_MAKE_WEBHOOK_URL}`,
+		redirectUri:
+			process.env.GAUZY_MAKE_REDIRECT_URL ||
+			`${process.env.API_BASE_URL}/api/integration/make-com/oauth/callback`,
+		postInstallUrl:
+			process.env.GAUZY_MAKE_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/make`
+	},
+
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,
 	gauzyUserPath: process.env.GAUZY_USER_PATH,
 	gauzySeedPath: process.env.GAUZY_SEED_PATH,
