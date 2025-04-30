@@ -48,7 +48,7 @@ export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
 		try {
 			// Set a default color if not provided
 			if (!entity.color) {
-				entity.color = faker.internet.color();
+				entity.color = faker.color.rgb();
 			}
 
 			// Generate a slug from the name, if the name property exists

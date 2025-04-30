@@ -57,7 +57,7 @@ export class OrganizationSubscriber extends BaseEntityEventSubscriber<Organizati
 
 				// Assign a random color for brandColor if it's not provided
 				if (!entity.brandColor) {
-					entity.brandColor = faker.internet.color();
+					entity.brandColor = faker.color.rgb();
 				}
 			}
 		} catch (error) {
