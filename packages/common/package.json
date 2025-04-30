@@ -37,7 +37,7 @@
 		"graphql": "^16.10.0",
 		"nest-knexjs": "^0.0.25",
 		"slugify": "^1.6.6",
-		"typeorm": "^0.3.20",
+		"typeorm": "^0.3.22",
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {

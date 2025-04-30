@@ -27,8 +27,8 @@
 		"@angular/core": "^19.2.0"
 	},
 	"dependencies": {
-		"@angular/forms": "19.2.7",
-		"@angular/router": "19.2.7",
+		"@angular/forms": "^19.2.8",
+		"@angular/router": "^19.2.8",
 		"@fullcalendar/angular": "^6.1.17",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^15.0.0",
@@ -39,7 +39,7 @@
 		"moment": "^2.30.1",
 		"ng2-file-upload": "^8.0.0",
 		"ngx-permissions": "^19.0.0",
-		"rxjs": "^7.8.0",
+		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
