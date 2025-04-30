@@ -11,10 +11,7 @@ import { ConfigService } from '@nestjs/config';
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller('/integration/make-com')
 export class MakeComController {
-	constructor(
-		private readonly makeComService: MakeComService,
-		private readonly _config: ConfigService
-	) {}
+	constructor(private readonly makeComService: MakeComService, private readonly _config: ConfigService) {}
 
 	/**
 	 * Retrieves the Make.com integration settings for the current tenant.
@@ -83,8 +80,8 @@ export class MakeComController {
 
 		// Update environment variables with provided OAuth settings if they exist
 		if (input.clientId && input.clientSecret) {
-			let clientId = this._config.get<string>('makeCom.clientId');
-			let clientSecret = this._config.get<string>('makeCom.clientSecret');
+			const clientId = this._config.get<string>('makeCom.clientId');
+			const clientSecret = this._config.get<string>('makeCom.clientSecret');
 			if (clientId !== input.clientId) {
 				this._config.set('makeCom.clientId', input.clientId);
 			}

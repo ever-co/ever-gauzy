@@ -143,12 +143,7 @@ export class MakeComService {
 	 * @param {any} data - The data to send with the request.
 	 * @returns {Promise<any>} - The API response.
 	 */
-	async makeApiCall(
-		makeApiUrl: string,
-		method: string = 'GET',
-		data: any = null,
-		retryLimit: number = 1
-	): Promise<any> {
+	async makeApiCall(makeApiUrl: string, method: string = 'GET', data: any = null, retryLimit = 1): Promise<any> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			if (!tenantId) {

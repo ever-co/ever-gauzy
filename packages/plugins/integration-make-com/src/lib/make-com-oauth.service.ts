@@ -2,8 +2,10 @@ import { Injectable, BadRequestException, Logger, HttpException, HttpStatus } fr
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { CommandBus } from '@nestjs/cqrs';
-import { firstValueFrom, catchError } from 'rxjs';
 import { AxiosError } from 'axios';
+import { randomBytes } from 'crypto';
+import { firstValueFrom, catchError } from 'rxjs';
+import { DeepPartial } from 'typeorm';
 import {
 	IntegrationEnum,
 	IIntegrationEntitySetting,
@@ -22,7 +24,6 @@ import {
 	PROJECT_TIED_ENTITIES
 } from '@gauzy/core';
 import { MAKE_BASE_URL } from './make-com.config';
-import { DeepPartial } from 'typeorm';
 
 @Injectable()
 export class MakeComOAuthService {
@@ -81,7 +82,7 @@ export class MakeComOAuthService {
 	 * This helps to prevent CSRF attacks during the OAuth flow.
 	 */
 	private generateRandomState(): string {
-		return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+		return randomBytes(16).toString('hex'); // import { randomBytes } from 'crypto';
 	}
 
 	/**

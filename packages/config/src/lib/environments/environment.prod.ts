@@ -215,7 +215,7 @@ export const environment: IEnvironment = {
 	makeCom: {
 		clientId: process.env.GAUZY_MAKE_CLIENT_ID,
 		clientSecret: process.env.GAUZY_MAKE_CLIENT_SECRET,
-		webhookUrl: process.env.GAUZY_MAKE_WEBHOOK_URL || `${process.env.GAUZY_MAKE_WEBHOOK_URL}`,
+		webhookUrl: process.env.GAUZY_MAKE_WEBHOOK_URL,
 		redirectUri:
 			process.env.GAUZY_MAKE_REDIRECT_URL ||
 			`${process.env.API_BASE_URL}/api/integration/make-com/oauth/callback`,

@@ -247,16 +247,15 @@ export class RequestContext {
 	/**
 	 * Retrieves the current integration tenant from the request context.
 	 *
-	 * @param {boolean} throwError - Flag indicating whether to throw an error if integration tenant is not found.
 	 * @returns The current integration tenant if found, otherwise null.
 	 */
-		static currentIntegrationTenant(): IIntegrationTenant | null {
-			const requestContext = RequestContext.currentRequestContext();
-			if (requestContext && requestContext._req) {
-				return requestContext._req['integrationTenant'] || null;
-			}
-			return null;
+	static currentIntegrationTenant(): IIntegrationTenant | null {
+		const requestContext = RequestContext.currentRequestContext();
+		if (requestContext?._req) {
+			return requestContext._req['integrationTenant'] || null;
 		}
+		return null;
+	}
 
 	/**
 	 * Checks if the current user has a specific permission.
