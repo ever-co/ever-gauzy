@@ -27,7 +27,7 @@
 		"lib:watch": "yarn nx build plugin-job-search --watch"
 	},
 	"dependencies": {
-		"@faker-js/faker": "^9.3.0",
+		"@faker-js/faker": "^9.7.0",
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
@@ -44,7 +44,7 @@
 		"class-validator": "^0.14.0",
 		"html-to-text": "^9.0.5",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.20"
+		"typeorm": "^0.3.22"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
