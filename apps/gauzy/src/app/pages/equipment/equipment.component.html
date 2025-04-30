@@ -27,10 +27,7 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
+		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
 			<div class="table-scroll-container">
 				<angular2-smart-table
 					style="cursor: pointer"
@@ -41,9 +38,7 @@
 			</div>
 			<div class="pagination-container align-self-end">
 				<ng-container *ngIf="smartTableSource">
-					<ngx-pagination
-						[source]="smartTableSource"
-					></ngx-pagination>
+					<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 				</ng-container>
 			</div>
 		</ng-template>
@@ -58,11 +53,7 @@
 		</ng-template>
 	</nb-card-body>
 </nb-card>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<div class="btn-group actions">
 		<button
 			(click)="save(this.selectedEquipment)"
@@ -88,13 +79,7 @@
 	</div>
 </ng-template>
 <ng-template #visibleButton>
-	<button
-		(click)="save()"
-		nbButton
-		status="success"
-		class="action"
-		size="small"
-	>
+	<button (click)="save()" nbButton status="success" class="action" size="small">
 		<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 		{{ 'BUTTONS.ADD' | translate }}
 	</button>

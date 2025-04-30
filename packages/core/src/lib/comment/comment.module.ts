@@ -9,7 +9,7 @@ import { CommandHandlers } from './commands/handlers';
 import { CommentService } from './comment.service';
 import { CommentController } from './comment.controller';
 import { Comment } from './comment.entity';
-import { TypeOrmCommentRepository } from './repository/type-orm.comment.repository';
+import { TypeOrmCommentRepository } from './repository/type-orm-comment.repository';
 
 @Module({
 	imports: [
