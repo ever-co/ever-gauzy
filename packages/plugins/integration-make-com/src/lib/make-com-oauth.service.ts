@@ -22,6 +22,7 @@ import {
 	PROJECT_TIED_ENTITIES
 } from '@gauzy/core';
 import { MAKE_BASE_URL } from './make-com.config';
+import { IMakeComOAuthTokens, MakeSettingName } from './interfaces/make-com.model';
 
 @Injectable()
 export class MakeComOAuthService {
