@@ -1,15 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { SelectQueryBuilder } from 'typeorm';
-import { PermissionsEnum, IGetTimeSlotInput, ID, ITimeSlot } from '@gauzy/contracts';
+import { PermissionsEnum, IGetTimeSlotInput, ID, ITimeSlot, ITimeSlotMinute } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
+import { RequestContext } from '../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { moment } from '../../core/moment-extend';
-import { RequestContext } from '../../core/context';
 import { getDateRangeFormat } from './../../core/utils';
 import { generateTimeSlots } from './utils';
 import { TimeSlot } from './time-slot.entity';
-import { TimeSlotMinute } from './time-slot-minute.entity';
 import {
 	CreateTimeSlotMinutesCommand,
 	TimeSlotBulkCreateCommand,
@@ -216,7 +215,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	/*
 	 *create time slot minute activity for specific TimeSlot
 	 */
-	async createTimeSlotMinute(request: TimeSlotMinute) {
+	async createTimeSlotMinute(request: ITimeSlotMinute) {
 		// const { keyboard, mouse, datetime, timeSlot } = request;
 		return await this._commandBus.execute(new CreateTimeSlotMinutesCommand(request));
 	}
@@ -224,7 +223,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	/*
 	 * Update TimeSlot minute activity for specific TimeSlot
 	 */
-	async updateTimeSlotMinute(id: ID, request: TimeSlotMinute) {
+	async updateTimeSlotMinute(id: ID, request: ITimeSlotMinute) {
 		return await this._commandBus.execute(new UpdateTimeSlotMinutesCommand(id, request));
 	}
 }
