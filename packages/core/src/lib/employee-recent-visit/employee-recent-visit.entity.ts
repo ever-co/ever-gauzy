@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsDate, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsDate, IsNotEmpty, IsObject, IsOptional, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { ID, IEmployee, IEmployeeRecentVisit, JsonData } from '@gauzy/contracts';
@@ -14,6 +14,9 @@ import { MikroOrmEmployeeRecentVisitRepository } from './repository/mikro-orm-em
 export class EmployeeRecentVisit extends BasePerEntityType implements IEmployeeRecentVisit {
 	[EntityRepositoryType]?: MikroOrmEmployeeRecentVisitRepository;
 
+	/**
+	 * The date and time when the employee visited the some entity.
+	 */
 	@ApiProperty({ type: () => Date })
 	@Type(() => Date)
 	@IsNotEmpty()
@@ -21,9 +24,16 @@ export class EmployeeRecentVisit extends BasePerEntityType implements IEmployeeR
 	@MultiORMColumn()
 	visitedAt: Date;
 
+	/**
+	 * The data associated with the some entity.
+	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	@IsObject()
+	@MultiORMColumn({
+		type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text',
+		nullable: true
+	})
 	data?: JsonData;
 
 	/*
@@ -32,18 +42,20 @@ export class EmployeeRecentVisit extends BasePerEntityType implements IEmployeeR
 	|--------------------------------------------------------------------------
 	*/
 	/**
-	 * Employee
+	 * The employee who recently visited the some entity.
 	 */
 	@MultiORMManyToOne(() => Employee, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
-
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	employee?: IEmployee;
 
+	/**
+	 * The ID of the employee who recently visited the some entity.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
