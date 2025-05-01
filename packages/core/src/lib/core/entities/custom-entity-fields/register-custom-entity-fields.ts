@@ -2,11 +2,10 @@ import { Column, JoinColumn, JoinTable, RelationId } from 'typeorm';
 import * as chalk from 'chalk';
 import { ApplicationPluginConfig, CustomEmbeddedFields, RelationCustomEmbeddedFieldConfig } from '@gauzy/common';
 import { getColumnType } from '../../../core/decorators/entity/column.helper';
-import { ColumnIndex, MultiORMColumn, MultiORMManyToMany, MultiORMManyToOne } from '../../../core/decorators';
+import { ColumnIndex, MultiORMManyToMany, MultiORMManyToOne } from '../../../core/decorators';
 import { ColumnDataType, ColumnOptions } from '../../../core/decorators/entity/column-options.types';
 import { getDBType } from '../../../core/utils';
 import { mikroOrmCustomEntityFieldRegistrations, typeOrmCustomEntityFieldRegistrations } from './custom-entity-fields';
-import { __FIX_RELATIONAL_CUSTOM_FIELDS__ } from './mikro-orm-base-custom-entity-field';
 
 /**
  * Defines a column with or without a relation ID and optional indexing.
@@ -24,7 +23,7 @@ const defineColumn = (
 	const { nullable, relationId, index = false } = customField;
 
 	// Get the database type from the connection options
-	let dbEngine = getDBType(config.dbConnectionOptions);
+	const dbEngine = getDBType(config.dbConnectionOptions);
 
 	const options: ColumnDataType | ColumnOptions<any> = {
 		type: getColumnType(dbEngine, customField.type),
@@ -112,18 +111,6 @@ async function registerCustomFieldsForEntity<T>(
 			await registerFields(config, customField, name, instance); // Register the custom column
 		})
 	);
-
-	/**
-	 * If there are only relations are defined for an Entity for customFields, then TypeORM not saving relations for entity ("Cannot set properties of undefined (<fieldName>)").
-	 * So we have to add a "fake" column to the customFields embedded type to prevent this error from occurring.
-	 */
-	if (customFields.length > 0) {
-		MultiORMColumn({
-			type: 'boolean',
-			nullable: true,
-			select: false // This ensures the property is not selected by default
-		})(instance, __FIX_RELATIONAL_CUSTOM_FIELDS__);
-	}
 }
 
 /**
