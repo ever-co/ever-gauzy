@@ -48,7 +48,7 @@ import { EmployeeNotificationService } from '../employee-notification/employee-n
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
-import { GetTaskByIdDTO } from './dto';
+import { GetTaskByIdDTO, TaskQueryDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
@@ -333,7 +333,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			prefix,
 			isDraft,
 			dueDate,
-			creator,
+			createdByUser,
 			organizationId,
 			projectId,
 			isScreeningTask = false,
@@ -341,8 +341,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		} = where;
 
 		// Join with the creator if it is user for filtering
-		if (isNotEmpty((creator as IUser)?.firstName)) {
-			query.innerJoin(`${query.alias}.creator`, 'creator');
+		if (isNotEmpty((createdByUser as IUser)?.firstName)) {
+			query.innerJoin(`${query.alias}.createdByUser`, 'createdByUser');
 		}
 
 		// Apply advanced filters
@@ -400,11 +400,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				}
 
 				// Filter by creator name
-				if (isNotEmpty((creator as IUser)?.firstName)) {
+				if (isNotEmpty((createdByUser as IUser)?.firstName)) {
 					qb.andWhere(
-						p(`CONCAT("creator"."firstName", ' ', "creator"."lastName") ${LIKE_OPERATOR} :creatorName`),
+						p(
+							`CONCAT("createdByUser"."firstName", ' ', "createdByUser"."lastName") ${LIKE_OPERATOR} :creatorName`
+						),
 						{
-							creatorName: `%${(creator as IUser).firstName}%`
+							creatorName: `%${(createdByUser as IUser).firstName}%`
 						}
 					);
 				}
@@ -625,7 +627,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param filters - Optional filters for advanced task filtering.
 	 * @returns A Promise that resolves to a paginated list of tasks.
 	 */
-	public async pagination(options: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
+	public async pagination(options: TaskQueryDTO): Promise<IPagination<ITask>> {
 		const filters = options?.filters;
 		const where = options?.where;
 
@@ -636,7 +638,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				prefix,
 				isDraft,
 				dueDate,
-				creator,
+				createdByUser,
 				isScreeningTask = false,
 				organizationSprintId = null
 			} = where;
@@ -662,9 +664,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 
 			// Filter by creator name
-			if (isNotEmpty((creator as IUser)?.firstName)) {
-				const name = (creator as IUser).firstName;
-				(options.where.creator as any).firstName = Raw(
+			if (isNotEmpty((createdByUser as IUser)?.firstName)) {
+				const name = (createdByUser as IUser).firstName;
+				(options.where.createdByUser as any).firstName = Raw(
 					(alias) => `CONCAT(${alias}, ' ', "task__task_creator"."lastName") ${LIKE_OPERATOR} '%${name}%'`
 				);
 			}

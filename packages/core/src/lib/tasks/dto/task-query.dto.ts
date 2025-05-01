@@ -1,11 +1,11 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsOptional, ValidateNested } from 'class-validator';
 import { PaginationParams } from '../../core/crud';
 import { TaskAdvancedFilterDTO } from './task-advanced-filter.dto';
 import { Task } from '../task.entity';
 
-export class TaskQueryDTO extends PaginationParams<Task> {
+export class TaskQueryDTO extends OmitType(PaginationParams<Task>, ['filters']) {
 	/**
 	 * Advanced filters for retrieving tasks.
 	 */

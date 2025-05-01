@@ -14,7 +14,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
-import { PermissionsEnum, ITask, IPagination, ID } from '@gauzy/contracts';
+import { PermissionsEnum, ITask, IPagination, ID, IAdvancedTaskFiltering } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
 import { CountQueryDTO } from './../shared/dto';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -69,7 +69,7 @@ export class TaskController extends CrudController<Task> {
 	@ApiOperation({ summary: 'Get tasks by pagination.' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Tasks retrieved successfully.' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input.' })
-	async pagination(@Query() params: TaskQueryDTO): Promise<IPagination<ITask>> {
+	async pagination(@Query() params: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
 		return this.taskService.pagination(params);
 	}
 
@@ -101,7 +101,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('/me')
 	@UseValidationPipe({ transform: true })
-	async findMyTasks(@Query() params: PaginationParams<Task>): Promise<IPagination<ITask>> {
+	async findMyTasks(@Query() params: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
 		return this.taskService.getMyTasks(params);
 	}
 
@@ -230,7 +230,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() params: TaskQueryDTO): Promise<IPagination<ITask>> {
+	async findAll(@Query() params: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
 		return this.taskService.findAll(params);
 	}
 
