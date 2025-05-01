@@ -56,10 +56,6 @@
     .justify-end {
         text-align: right;
     }
-  }
-  .justify-end {
-    text-align: right;
-  }
 }
 
 @include ga-report.respond(ipad) {
@@ -67,15 +63,15 @@
 }
 
 nb-card-body.report-body {
-  height: calc(100% - 9rem) !important;
+	height: calc(100% - 9rem) !important;
 }
 
 .manual-time-container {
-  padding-bottom: 6px !important;
+	padding-bottom: 6px !important;
 }
 
 .label-wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
