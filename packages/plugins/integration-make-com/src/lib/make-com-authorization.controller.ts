@@ -87,12 +87,11 @@ export class MakeComAuthorizationController {
 			}
 
 			// Combine post-install URL with query params (if any)
-			const queryParamsString = buildQueryString({
-				success: 'true',
-				integration: 'make_com',
-				message: 'Successfully connected to Make.com'
-			});
-			const url = [postInstallUrl, queryParamsString].filter(Boolean).join('?');
+			const urlObj = new URL(postInstallUrl);
+			urlObj.searchParams.set('success', 'true');
+			urlObj.searchParams.set('integration', IntegrationEnum.MakeCom);
+			urlObj.searchParams.set('message', 'Successfully authorized Make.com');
+			const url = urlObj.toString();
 
 			// Redirect to the application
 			return response.redirect(url);

@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, NestMiddleware } from '@nestjs/common';
+import { Inject, Injectable, Logger, NestMiddleware, NotFoundException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Request, Response, NextFunction } from 'express';
@@ -80,15 +80,19 @@ export class MakeComMiddleware implements NestMiddleware {
 							);
 						}
 
-						if (integrationTenantSettings && integrationTenantSettings.length > 0) {
+						if (integrationTenantSettings?.length) {
 							/** Create an 'integration' object and assign properties to it. */
-							request['integration'] = new Object({
+							request['integration'] = {
 								// Assign properties to the integration object
 								id: integrationId,
 								name: IntegrationEnum.MakeCom,
 								// Convert the 'settings' array to an object using the 'settingsName' and 'settingsValue' properties
 								settings: arrayToObject(integrationTenantSettings, 'settingsName', 'settingsValue')
-							});
+							};
+						} else {
+							return next(
+								new NotFoundException('Make.com integration settings not found')
+							)
 						}
 					} catch (error) {
 						this.logger.error(

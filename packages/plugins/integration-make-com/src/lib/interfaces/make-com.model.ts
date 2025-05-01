@@ -8,7 +8,7 @@ export enum MakeSettingName {
 	WEBHOOK_URL = 'make_webhook_url',
 	ACCESS_TOKEN = 'access_token',
 	REFRESH_TOKEN = 'refresh_token',
-	EXPIRES_IN_SECONDS = 'expires_in',
+	EXPIRES_IN = 'expires_in',
 	EXPIRES_AT = 'expires_at',
 	TOKEN_TYPE = 'token_type',
 	CLIENT_ID = 'client_id',

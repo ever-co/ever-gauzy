@@ -17,7 +17,7 @@ import {
 	DEFAULT_ENTITY_SETTINGS,
 	PROJECT_TIED_ENTITIES
 } from '@gauzy/core';
-import { MAKE_BASE_URL } from './make-com.config';
+import { MAKE_BASE_URL, MAKE_DEFAULT_SCOPES } from './make-com.config';
 import { IMakeComOAuthTokens, MakeSettingName } from './interfaces/make-com.model';
 import { randomBytes } from 'node:crypto';
 import { MakeComService } from './make-com.service';
@@ -67,7 +67,7 @@ export class MakeComOAuthService {
 			client_id: clientId,
 			redirect_uri: redirectUri,
 			response_type: 'code',
-			scope: 'offline_access',
+			scope: MAKE_DEFAULT_SCOPES,
 			state
 		});
 
@@ -183,7 +183,7 @@ export class MakeComOAuthService {
 	 * @param {string} state - The state parameter to verify.
 	 * @returns {boolean} True if the state parameter is valid, false otherwise.
 	 */
-	private verifyState(state: string): boolean {
+	verifyState(state: string): boolean {
 		const pendingState = this.pendingStates.get(state);
 
 		if (!pendingState) {
@@ -208,9 +208,9 @@ export class MakeComOAuthService {
 	 * @param {any} tokenData - The token data from Make.com.
 	 * @returns {Promise<void>}
 	 */
-	private async saveIntegrationSettings(tokenData: IMakeComOAuthTokens): Promise<void> {
+	private async saveIntegrationSettings(tokenData: IMakeComOAuthTokens, organizationId?: string): Promise<void> {
 		const tenantId = RequestContext.currentTenantId();
-		const organizationId = tokenData.organizationId;
+		// organizationId is now passed as parameter instead of trying to get it from tokenData
 		try {
 			// Find existing Make.com integration or create it if it doesn't exist
 			const integration =
@@ -240,6 +240,7 @@ export class MakeComOAuthService {
 			}) as IIntegrationEntitySetting[];
 
 			// Define the settings to save
+			const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
 			const settings = [
 				{
 					settingsName: MakeSettingName.ACCESS_TOKEN,
@@ -260,8 +261,14 @@ export class MakeComOAuthService {
 					organizationId
 				},
 				{
-					settingsName: MakeSettingName.EXPIRES_IN_SECONDS,
+					settingsName: MakeSettingName.EXPIRES_IN,
 					settingsValue: tokenData.expires_in.toString(),
+					tenantId,
+					organizationId
+				},
+				{
+					settingsName: MakeSettingName.EXPIRES_AT,
+					settingsValue: expiresAt,
 					tenantId,
 					organizationId
 				},
@@ -361,23 +368,32 @@ async refreshToken(integrationId: string): Promise<void> {
 
 		// Calculate the expiry time
 		const expiresAt = new Date();
-		expiresAt.setSeconds(expiresAt.getSeconds() + expires_in);
+		expiresAt.setSeconds(expiresAt.getSeconds() + expires_in.toString());
 
 		// Update the integration settings
+		// Get the tenant and organization IDs from the existing settings
+		const { tenantId, organizationId } = refreshTokenSetting;
+
 		const settingsToUpdate = [
 			{
 				settingsName: MakeSettingName.ACCESS_TOKEN,
 				settingsValue: access_token,
+				tenantId,
+				organizationId,
 				integration: { name: IntegrationEnum.MakeCom }
 			},
 			{
 				settingsName: MakeSettingName.REFRESH_TOKEN,
 				settingsValue: refresh_token,
+				tenantId,
+				organizationId,
 				integration: { name: IntegrationEnum.MakeCom }
 			},
 			{
 				settingsName: MakeSettingName.EXPIRES_AT,
 				settingsValue: expiresAt.toISOString(),
+				tenantId,
+				organizationId,
 				integration: { name: IntegrationEnum.MakeCom }
 			}
 		];

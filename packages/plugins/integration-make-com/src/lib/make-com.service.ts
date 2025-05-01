@@ -286,22 +286,45 @@ async getOAuthCredentials(integrationId: string): Promise<{ clientId: string; cl
 	 * @param {any} data - The data to send with the request.
 	 * @returns {Promise<any>} - The API response.
 	 */
-	async makeApiCall(makeApiUrl: string, method: string = 'GET', data: any = null, retryLimit = 1): Promise<any> {
+	async makeApiCall(
+		makeApiUrl: string,
+		method: string = 'GET',
+		data: any = null,
+		retryLimit = 1,
+		preloadedIntegration?: any // Add optional parameter for pre-loaded integration
+	): Promise<any> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
-			if (!tenantId) {
-				throw new NotFoundException('Tenant ID not found in request context');
+			// Use preloaded integration if available, otherwise fallback to DB lookup
+			if (!preloadedIntegration) {
+				const tenantId = RequestContext.currentTenantId();
+				if (!tenantId) {
+					throw new NotFoundException('Tenant ID not found in request context');
+				}
 			}
+			// Safely retrieve the Express request and context
+			const req = RequestContext.currentRequest();
+			if (!req) {
+				// No request context-fallback to DB lookup
+				const dbSettings = await this.getIntegrationSettings();
+				const settingsMap = Object.fromEntries(Object.entries(dbSettings));
+				const accessToken = settingsMap[MakeSettingName.ACCESS_TOKEN];
+				if (!accessToken) {
+					throw new NotFoundException('Access token not found for Make.com integration');
+				}
+				return accessToken;
+				}
 
-			// Get the integration from the request object (set by middleware)
-			const integration = RequestContext.currentRequest()['integration'];
-
+				const integration = req.integration;
 			if (!integration || integration.name !== IntegrationEnum.MakeCom) {
 				throw new NotFoundException(`${IntegrationEnum.MakeCom} integration not found in request context`);
-			}
+				}
 
-			// Get the access token from the integration settings
-			const accessToken = integration.settings[MakeSettingName.ACCESS_TOKEN];
+			 // Middleware already converts IIntegrationSetting[] → Record via arrayToObject,
+			// but if you ever bypass it, this guard ensures it’s a map:
+			const settingsObj = Array.isArray(integration.settings)
+			? Object.fromEntries(integration.settings.map(s => [s.settingsName, s.settingsValue]))
+			: integration.settings;
+			const accessToken = settingsObj[MakeSettingName.ACCESS_TOKEN];
 
 			if (!accessToken) {
 				throw new NotFoundException('Access token not found for Make.com integration');
