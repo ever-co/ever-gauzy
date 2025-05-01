@@ -23,11 +23,12 @@ export class UpdateTimeSlotMinutesHandler implements ICommandHandler<UpdateTimeS
 		const timeMinute = await this.typeOrmTimeSlotMinuteRepository.findOneBy({ id });
 
 		if (timeMinute) {
-			// Prevent changing the timeSlot relationship during update
-			input.timeSlotId = undefined;
+			// Prevent changing the timeSlot relation – remove the key entirely
+			if ('timeSlotId' in input) {
+				delete (input as any).timeSlotId;
+			}
 
 			await this.typeOrmTimeSlotMinuteRepository.update(id, input);
-
 			// Fetch and return the updated entity including its timeSlot relation
 			return await this.typeOrmTimeSlotMinuteRepository.findOne({
 				where: { id },
