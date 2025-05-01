@@ -163,7 +163,7 @@ export class AlterTimeSlotMinuteEntityTable1746017213155 implements MigrationInt
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`ALTER TABLE \`time_slot_minute\` ADD \`location\` int NOT NULL DEFAULT '0'`);
+		await queryRunner.query(`ALTER TABLE \`time_slot_minute\` ADD \`location\` int NOT NULL DEFAULT 0`);
 		await queryRunner.query(`ALTER TABLE \`time_slot_minute\` ADD \`kbMouseActivity\` json NULL`);
 		await queryRunner.query(`ALTER TABLE \`time_slot_minute\` ADD \`locationActivity\` json NULL`);
 		await queryRunner.query(`ALTER TABLE \`time_slot_minute\` ADD \`customActivity\` json NULL`);

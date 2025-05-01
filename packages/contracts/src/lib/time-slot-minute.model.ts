@@ -3,7 +3,7 @@ import { ITimeSlot } from './timesheet.model';
 
 export interface ITimeSlotMinute extends IBasePerTenantAndOrganizationEntityModel {
 	timeSlot?: ITimeSlot;
-	timeSlotId?: ID;
+	timeSlotId: ID;
 
 	/**
 	 * Activity count metrics within the recorded minute.
@@ -16,7 +16,7 @@ export interface ITimeSlotMinute extends IBasePerTenantAndOrganizationEntityMode
 	location?: number;
 
 	// Activity timestamp
-	datetime?: Date;
+	datetime: Date;
 
 	/**
 	 * Detailed log of keyboard and mouse activity events for the minute,

@@ -63,7 +63,7 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@MultiORMColumn()
-	datetime?: Date;
+	datetime!: Date;
 
 	/**
 	 * Raw keyboard and mouse activity data (e.g., event logs or durations).
@@ -116,7 +116,7 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	timeSlot?: ITimeSlot;
+	timeSlot!: ITimeSlot;
 
 	/**
 	 * The ID of the related `TimeSlot` entity, stored as a UUID.
@@ -127,5 +127,5 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	@RelationId((it: TimeSlotMinute) => it.timeSlot)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	timeSlotId?: ID;
+	timeSlotId: ID;
 }
