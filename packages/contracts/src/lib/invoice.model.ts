@@ -80,7 +80,6 @@ export interface IInvoiceCreateInput extends IBasePerTenantAndOrganizationEntity
 	isAccepted?: boolean;
 	isEstimate?: boolean;
 	isArchived?: boolean;
-	createdById?: string;
 	fromUserId?: string;
 	employeeId?: string;
 }

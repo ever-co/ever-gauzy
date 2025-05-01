@@ -14,7 +14,7 @@ export class CreateInvoiceDTO
 		RelationalTagDTO,
 		DiscountInvoiceDTO
 	)
-	implements Omit<IInvoiceCreateInput, 'createdById' | 'fromUserId'>
+	implements Omit<IInvoiceCreateInput, 'fromUserId'>
 {
 	@ApiProperty({ type: () => String, readOnly: true })
 	@ValidateIf((it) => !it.fromOrganization)

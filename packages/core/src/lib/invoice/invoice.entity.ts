@@ -235,19 +235,6 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@MultiORMColumn({ relationId: true, nullable: true })
 	employeeId?: string;
 
-	// Field to track how is the user that created the invoice
-	@ApiProperty({ type: () => () => User })
-	@MultiORMManyToOne(() => User, { onDelete: 'RESTRICT', onUpdate: 'CASCADE', nullable: false })
-	@JoinColumn()
-	createdBy?: IUser;
-
-	@ApiProperty({ type: () => String })
-	@RelationId((it: Invoice) => it.createdBy)
-	@IsString()
-	@ColumnIndex()
-	@MultiORMColumn({ relationId: true })
-	createdById?: string;
-
 	// From Organization
 	@ApiPropertyOptional({ type: () => () => Organization })
 	@MultiORMManyToOne(() => Organization)

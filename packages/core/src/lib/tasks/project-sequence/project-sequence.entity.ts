@@ -1,16 +1,22 @@
-import { JoinColumn, RelationId } from 'typeorm';
-import { EntityRepositoryType } from '@mikro-orm/core';
-import { ApiProperty } from '@nestjs/swagger';
+import { JoinColumn, PrimaryGeneratedColumn, RelationId } from 'typeorm';
+import { EntityRepositoryType, PrimaryKey } from '@mikro-orm/core';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsUUID } from 'class-validator';
 import { ID, IOrganizationProject, ITaskProjectSequence } from '@gauzy/contracts';
-import { OrganizationProject, BaseEntity } from '../../core/entities/internal';
+import { OrganizationProject } from '../../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMOneToOne } from './../../core/decorators/entity';
 import { MikroOrmTaskProjectSequenceRepository } from './repository/mikro-orm-task-project-sequence.repository';
 
 @MultiORMEntity('task_project_sequence', { mikroOrmRepository: () => MikroOrmTaskProjectSequenceRepository })
 @ColumnIndex('projectSequence', ['projectId'], { unique: true })
-export class TaskProjectSequence extends BaseEntity implements ITaskProjectSequence {
+export class TaskProjectSequence implements ITaskProjectSequence {
 	[EntityRepositoryType]?: MikroOrmTaskProjectSequenceRepository;
+
+	// Primary key of UUID type
+	@ApiPropertyOptional({ type: () => String })
+	@PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' }) // For Mikro-ORM compatibility
+	@PrimaryGeneratedColumn('uuid')
+	id?: ID;
 
 	/**
 	 * Organization Project
