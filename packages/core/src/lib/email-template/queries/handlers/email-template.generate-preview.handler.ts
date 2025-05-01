@@ -1,11 +1,11 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { ALPHA_NUMERIC_CODE_LENGTH } from '@gauzy/constants';
 import * as Handlebars from 'handlebars';
 import * as mjml2html from 'mjml';
 import { ConfigService, environment } from '@gauzy/config';
 import { generateAlphaNumericCode } from '@gauzy/utils';
 import { EmailTemplateGeneratePreviewQuery } from '../email-template.generate-preview.query';
 import { moment } from '../../../core/moment-extend';
-import { ALPHA_NUMERIC_CODE_LENGTH } from 'packages/constants/src/lib/code';
 
 @QueryHandler(EmailTemplateGeneratePreviewQuery)
 export class EmailTemplateGeneratePreviewHandler implements IQueryHandler<EmailTemplateGeneratePreviewQuery> {
