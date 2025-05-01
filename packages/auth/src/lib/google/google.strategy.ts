@@ -70,7 +70,7 @@ export const parseGoogleConfig = (configService: ConfigService): Record<string, 
 	// Retrieve Google OAuth callback URL from the configuration service.
 	const callbackURL = configService.get<string>('google.callbackURL');
 	// Rewrite the authorization URL to show the Google account selector dialog
-	const authorizationURL = configService.get<string>('google.authorizationURL'),
+	const authorizationURL = configService.get<string>('google.authorizationURL');
 
 	// Log a warning if any of the required configuration values are missing.
 	if (!clientID || !clientSecret || !callbackURL) {
