@@ -534,7 +534,7 @@
 		"concurrently": "^5.3.0",
 		"conventional-changelog": "^3.1.23",
 		"conventional-changelog-cli": "^2.1.0",
-		"copy-webpack-plugin": "^12.0.2",
+		"copy-webpack-plugin": "^13.0.0",
 		"cross-env": "^7.0.3",
 		"cspell": "^6.18.1",
 		"cypress": "^9.4.1",
@@ -587,10 +587,10 @@
 		"typedoc": "^0.23.24",
 		"typescript": "^5.8.3",
 		"verdaccio": "^5.0.4",
-		"webpack": "5.98.0",
+		"webpack": "^5.99.7",
 		"webpack-bundle-analyzer": "^4.10.2",
-		"webpack-cli": "^4.9.0",
-		"webpack-merge": "^5.10.0",
+		"webpack-cli": "^6.0.1",
+		"webpack-merge": "^6.0.1",
 		"webpack-node-externals": "^3.0.0"
 	},
 	"overrides": {
