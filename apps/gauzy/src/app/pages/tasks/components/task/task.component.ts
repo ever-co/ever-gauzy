@@ -189,7 +189,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					valuePrepareFunction: (value: ITask, cell: Cell) => {
 						const parentTaskNumber = cell.getRow().getData()?.parent?.taskNumber;
 						if (!parentTaskNumber) return '-';
-						return this._hashNumberPipe.transform(parentTaskNumber);
+						return parentTaskNumber;
 					}
 				},
 				description: {
