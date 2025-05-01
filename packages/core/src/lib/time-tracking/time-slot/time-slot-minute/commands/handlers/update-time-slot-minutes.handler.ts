@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TimeSlotMinute } from './../../time-slot-minute.entity';
 import { UpdateTimeSlotMinutesCommand } from '../update-time-slot-minutes.command';
-import { TypeOrmTimeSlotMinuteRepository } from '../../repository/type-orm-time-slot-minute.repository';
+import { TypeOrmTimeSlotMinuteRepository } from '../../repositories/type-orm-time-slot-minute.repository';
 
 @CommandHandler(UpdateTimeSlotMinutesCommand)
 export class UpdateTimeSlotMinutesHandler implements ICommandHandler<UpdateTimeSlotMinutesCommand> {
@@ -20,11 +20,11 @@ export class UpdateTimeSlotMinutesHandler implements ICommandHandler<UpdateTimeS
 	public async execute(command: UpdateTimeSlotMinutesCommand): Promise<TimeSlotMinute> {
 		const { input, id } = command;
 
-		let timeMinute = await this.typeOrmTimeSlotMinuteRepository.findOneBy({ id });
+		const timeMinute = await this.typeOrmTimeSlotMinuteRepository.findOneBy({ id });
 
 		if (timeMinute) {
 			// Prevent changing the timeSlot relationship during update
-			delete input.timeSlotId;
+			input.timeSlotId = undefined;
 
 			await this.typeOrmTimeSlotMinuteRepository.update(id, input);
 

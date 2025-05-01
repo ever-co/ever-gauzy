@@ -3,7 +3,6 @@ import { RelationId, JoinTable } from 'typeorm';
 import { IsNumber, IsDateString, IsUUID, IsNotEmpty, IsOptional } from 'class-validator';
 import { ITimeSlot, ITimeSlotMinute, IActivity, IScreenshot, IEmployee, ITimeLog, ID } from '@gauzy/contracts';
 import { Activity, Employee, Screenshot, TenantOrganizationBaseEntity, TimeLog } from './../../core/entities/internal';
-import { TimeSlotMinute } from './time-slot-minute.entity';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -13,6 +12,7 @@ import {
 	MultiORMOneToMany,
 	VirtualMultiOrmColumn
 } from './../../core/decorators/entity';
+import { TimeSlotMinute } from './time-slot-minute/time-slot-minute.entity';
 import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
 
 @MultiORMEntity('time_slot', { mikroOrmRepository: () => MikroOrmTimeSlotRepository })

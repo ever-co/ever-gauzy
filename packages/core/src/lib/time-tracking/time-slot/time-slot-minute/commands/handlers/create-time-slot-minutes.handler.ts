@@ -1,9 +1,9 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
+import { RequestContext } from '../../../../../core/context';
 import { CreateTimeSlotMinutesCommand } from '../create-time-slot-minutes.command';
-import { TimeSlotMinute } from './../../time-slot-minute.entity';
 import { UpdateTimeSlotMinutesCommand } from '../update-time-slot-minutes.command';
-import { RequestContext } from '../../../../core/context';
-import { TypeOrmTimeSlotMinuteRepository } from '../../repository/type-orm-time-slot-minute.repository';
+import { TimeSlotMinute } from '../../time-slot-minute.entity';
+import { TypeOrmTimeSlotMinuteRepository } from '../../repositories/type-orm-time-slot-minute.repository';
 
 @CommandHandler(CreateTimeSlotMinutesCommand)
 export class CreateTimeSlotMinutesHandler implements ICommandHandler<CreateTimeSlotMinutesCommand> {

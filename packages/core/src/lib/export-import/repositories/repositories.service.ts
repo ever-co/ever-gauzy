@@ -377,10 +377,10 @@ import { MikroOrmScreenshotRepository } from '../../time-tracking/screenshot/rep
 import { TypeOrmScreenshotRepository } from '../../time-tracking/screenshot/repository/type-orm-screenshot.repository';
 import { MikroOrmTimeLogRepository } from '../../time-tracking/time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../../time-tracking/time-log/repository/type-orm-time-log.repository';
-import { MikroOrmTimeSlotMinuteRepository } from '../../time-tracking/time-slot/repository/mikro-orm-time-slot-minute.repository';
 import { MikroOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/mikro-orm-time-slot.repository';
-import { TypeOrmTimeSlotMinuteRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot-minute.repository';
 import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
+import { MikroOrmTimeSlotMinuteRepository } from '../../time-tracking/time-slot/time-slot-minute/repositories/mikro-orm-time-slot-minute.repository';
+import { TypeOrmTimeSlotMinuteRepository } from '../../time-tracking/time-slot/time-slot-minute/repositories/type-orm-time-slot-minute.repository';
 import { MikroOrmTimesheetRepository } from '../../time-tracking/timesheet/repository/mikro-orm-timesheet.repository';
 import { TypeOrmTimesheetRepository } from '../../time-tracking/timesheet/repository/type-orm-timesheet.repository';
 import { MikroOrmUserOrganizationRepository } from '../../user-organization/repository/mikro-orm-user-organization.repository';

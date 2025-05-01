@@ -1,12 +1,12 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RelationId, Unique, JoinColumn } from 'typeorm';
 import { ID, ITimeSlot, ITimeSlotMinute, JsonData } from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsDateString, IsUUID, IsOptional, IsArray, IsObject } from 'class-validator';
-import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
-import { TimeSlot } from './time-slot.entity';
-import { MikroOrmTimeSlotMinuteRepository } from './repository/mikro-orm-time-slot-minute.repository';
 import { isMySQL, isPostgres } from '@gauzy/config';
+import { IsNumber, IsDateString, IsUUID, IsOptional, IsObject } from 'class-validator';
+import { TenantOrganizationBaseEntity } from '../../../core/entities/internal';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../../core/decorators/entity';
+import { TimeSlot } from '../time-slot.entity';
+import { MikroOrmTimeSlotMinuteRepository } from './repositories/mikro-orm-time-slot-minute.repository';
 
 @MultiORMEntity('time_slot_minute', { mikroOrmRepository: () => MikroOrmTimeSlotMinuteRepository })
 @Unique(['timeSlotId', 'datetime'])
@@ -15,7 +15,12 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	 * The number of keyboard interactions in the given time slot minute.
 	 * Defaults to 0 if not provided.
 	 */
-	@ApiProperty({ type: () => Number })
+	@ApiProperty({
+		type: () => Number,
+		description: 'Number of keyboard interactions in the given time slot minute.',
+		example: 42,
+		default: 0
+	})
 	@IsNumber()
 	@MultiORMColumn({ default: 0 })
 	keyboard?: number;
@@ -24,7 +29,12 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	 * The number of mouse interactions in the given time slot minute.
 	 * Defaults to 0 if not provided.
 	 */
-	@ApiProperty({ type: () => Number })
+	@ApiProperty({
+		type: () => Number,
+		description: 'Number of mouse interactions in the given time slot minute.',
+		example: 42,
+		default: 0
+	})
 	@IsNumber()
 	@MultiORMColumn({ default: 0 })
 	mouse?: number;
@@ -62,7 +72,7 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 		type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text',
 		nullable: true
 	})
-	kb_mouse_activity?: JsonData;
+	kbMouseActivity?: JsonData;
 
 	/**
 	 * Raw location activity data (e.g., coordinates or movement patterns).
@@ -74,7 +84,7 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 		type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text',
 		nullable: true
 	})
-	location_activity?: JsonData;
+	locationActivity?: JsonData;
 
 	/**
 	 * Custom-defined activity data (e.g., domain-specific or extension usage).
@@ -86,7 +96,7 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 		type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text',
 		nullable: true
 	})
-	custom_activity?: JsonData;
+	customActivity?: JsonData;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -110,8 +120,8 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	 * This is a relation ID that helps link the minute to the corresponding `TimeSlot`.
 	 */
 	@ApiProperty({ type: () => String })
-	@RelationId((it: TimeSlotMinute) => it.timeSlot)
 	@IsUUID()
+	@RelationId((it: TimeSlotMinute) => it.timeSlot)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	timeSlotId?: ID;
