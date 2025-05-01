@@ -8,7 +8,8 @@ export enum MakeSettingName {
 	WEBHOOK_URL = 'make_webhook_url',
 	ACCESS_TOKEN = 'access_token',
 	REFRESH_TOKEN = 'refresh_token',
-	EXPIRES_IN = 'expires_in',
+	EXPIRES_IN_SECONDS = 'expires_in',
+	EXPIRES_AT = 'expires_at',
 	TOKEN_TYPE = 'token_type',
 	CLIENT_ID = 'client_id',
 	CLIENT_SECRET = 'client_secret'
@@ -25,12 +26,20 @@ export interface IMakeComIntegrationSettings {
  * OAuth token data as returned by Make.com OAuth service.
  * Properties use snake_case to match the OAuth provider's response format.
  */
-export interface IMakeComOAuthTokens extends IBasePerTenantAndOrganizationEntityModel {
+/**
+ * Pure DTO representing Make.com OAuth token response
+ */
+export interface IMakeComOAuthTokenDTO {
 	access_token: string;
 	refresh_token: string;
 	token_type: string;
 	expires_in: number;
 }
+
+/**
+ * Persistence model combining token data with organizational metadata
+ */
+export interface IMakeComOAuthTokens extends IBasePerTenantAndOrganizationEntityModel, IMakeComOAuthTokenDTO {}
 
 export interface IMakeComAuthConfig {
 	clientId: string;

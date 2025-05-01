@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Request, Response } from 'express';
 import { ExtractJwt } from 'passport-jwt';
 import { JsonWebTokenError, verify } from 'jsonwebtoken';
-import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum, IIntegrationTenant, ID } from '@gauzy/contracts';
+import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum, ID } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { SerializedRequestContext } from './types';

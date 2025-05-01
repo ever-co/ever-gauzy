@@ -6,7 +6,6 @@ import { Public } from '@gauzy/common';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { buildQueryString } from '@gauzy/utils';
 import { MakeComOAuthService } from './make-com-oauth.service';
-import { randomBytes } from 'crypto';
 
 @ApiTags('Make.com OAuth')
 @Public()
@@ -26,9 +25,8 @@ export class MakeComAuthorizationController {
 		description: 'Redirects to Make.com authorization page'
 	})
 	@Get('/authorize')
-	async authorize(@Query() query: any, @Res() response: Response) {
+	async authorize(@Query() { state }: { state?: string }, @Res() response: Response) {
 		try {
-			const state = query.state || undefined;
 			const authorizationUrl = this.makeComOAuthService.getAuthorizationUrl(state);
 			return response.redirect(authorizationUrl);
 		} catch (error) {
@@ -52,30 +50,32 @@ export class MakeComAuthorizationController {
 		description: 'Redirects to the application with token information'
 	})
 	@Get('/callback')
-	async callback(@Query() query: any, @Res() response: Response) {
+	async callback(
+		@Query() { code, state }: { code?: string; state?: string },
+		@Res() response: Response
+	) {
 		// Get the post-installation redirect URL from config
 		const postInstallUrl = this._config.get<string>('makeCom.postInstallUrl');
 		try {
 			// Validate the input data
-			if (!query || !query.code) {
+			if (!code) {
 				throw new HttpException('Invalid callback parameters', HttpStatus.BAD_REQUEST);
 			}
-
 			// Validate state parameter - it's required by Make.com
-			if (!query.state) {
-				// Generate a secure random state if none provided
-				const state = randomBytes(16).toString('hex');
-				const authorizationUrl = this.makeComOAuthService.getAuthorizationUrl(state);
-				return response.redirect(authorizationUrl);
+			if (!state) {
+				throw new HttpException(
+					'Missing required state parameter in callback',
+					HttpStatus.BAD_REQUEST
+				);
 			}
 
 			// Otherwise use provided state
-			if (!query.state || query.state.length < 32) {
+			if (state.length < 32) {
 				throw new HttpException('Invalid state parameter', HttpStatus.BAD_REQUEST);
 			}
 
 			// Exchange the authorization code for access token
-			const tokenResponse = await this.makeComOAuthService.exchangeCodeForToken(query.code, query.state);
+			const tokenResponse = await this.makeComOAuthService.exchangeCodeForToken(code, state);
 
 			// Check if the token exchange was successful
 			if (!tokenResponse || !tokenResponse.access_token) {

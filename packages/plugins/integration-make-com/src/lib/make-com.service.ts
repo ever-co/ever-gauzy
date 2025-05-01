@@ -3,6 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { catchError, firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
 import { IntegrationSettingService, IntegrationTenantService, RequestContext } from '@gauzy/core';
+import { In } from 'typeorm';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { MakeComOAuthService } from './make-com-oauth.service';
 import { IMakeComIntegrationSettings, MakeSettingName } from './interfaces/make-com.model';
@@ -160,7 +161,7 @@ export class MakeComService {
 			}
 
 			// Find the integration for the current tenant
-			let integrationTenant = await this.integrationTenantService.findOneByOptions({
+			const integrationTenant = await this.integrationTenantService.findOneByOptions({
 				where: {
 					name: IntegrationEnum.MakeCom,
 					tenantId
@@ -177,12 +178,12 @@ export class MakeComService {
 				{
 					settingsName: MakeSettingName.CLIENT_ID,
 					settingsValue: credentials.clientId,
-					integration: { name: integrationTenant.name }
+					integration: integrationTenant
 				},
 				{
 					settingsName: MakeSettingName.CLIENT_SECRET,
 					settingsValue: credentials.clientSecret,
-					integration: { name: integrationTenant.name }
+					integration: integrationTenant
 				}
 			];
 
@@ -211,7 +212,10 @@ async getOAuthCredentials(integrationId: string): Promise<{ clientId: string; cl
 		const settings = await this.integrationSettingService.find({
 			where: {
 				integration: { id: integrationId },
-				settingsName: MakeSettingName.CLIENT_ID || MakeSettingName.CLIENT_SECRET
+				settingsName: In([
+					MakeSettingName.CLIENT_ID,
+					MakeSettingName.CLIENT_SECRET
+				])
 			}
 		});
 

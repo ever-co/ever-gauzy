@@ -21,22 +21,4 @@ export class UpdateMakeComSettingsDTO {
     @IsString()
     @IsUrl({ require_tld: false }, { message: 'Webhook URL must be a valid URL' })
     webhookUrl?: string;
-
-    @ApiPropertyOptional({
-        type: String,
-        description: 'Client ID for Make.com OAuth',
-        example: 'your-make-client-id'
-    })
-    @IsOptional()
-    @IsString()
-    clientId?: string;
-
-    @ApiPropertyOptional({
-        type: String,
-        description: 'Client Secret for Make.com OAuth',
-        example: 'your-make-client-secret'
-    })
-    @IsOptional()
-    @IsString()
-    clientSecret?: string;
 }

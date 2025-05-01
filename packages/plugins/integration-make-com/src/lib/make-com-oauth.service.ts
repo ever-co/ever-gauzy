@@ -4,13 +4,10 @@ import { ConfigService } from '@nestjs/config';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError } from 'axios';
 import { firstValueFrom, catchError } from 'rxjs';
-import { DeepPartial } from 'typeorm';
 import {
 	IntegrationEnum,
 	IIntegrationEntitySetting,
-	IIntegrationSetting,
 	IntegrationEntity,
-	ID
 } from '@gauzy/contracts';
 import {
 	IntegrationService,
@@ -125,12 +122,13 @@ export class MakeComOAuthService {
 	 * @param {string} code - The authorization code received from Make.com.
 	 * @returns {Promise<any>} The token response.
 	 */
-	async exchangeCodeForToken(code: string, state?: string): Promise<any> {
+	async exchangeCodeForToken(code: string, state: string): Promise<any> {
 		try {
-			// Verify the state parameter if provided
-			if (state && !this.verifyState(state)) {
+			// State is now required, so this check will always run
+			if (!this.verifyState(state)) {
 				throw new BadRequestException('Invalid state parameter - possible CSRF attack');
 			}
+
 			const tenantId = RequestContext.currentTenantId();
 			if (!tenantId) {
 				throw new BadRequestException('Tenant ID not found in request context');
@@ -262,7 +260,7 @@ export class MakeComOAuthService {
 					organizationId
 				},
 				{
-					settingsName: MakeSettingName.EXPIRES_IN,
+					settingsName: MakeSettingName.EXPIRES_IN_SECONDS,
 					settingsValue: tokenData.expires_in.toString(),
 					tenantId,
 					organizationId
@@ -378,7 +376,7 @@ async refreshToken(integrationId: string): Promise<void> {
 				integration: { name: IntegrationEnum.MakeCom }
 			},
 			{
-				settingsName: MakeSettingName.EXPIRES_IN,
+				settingsName: MakeSettingName.EXPIRES_AT,
 				settingsValue: expiresAt.toISOString(),
 				integration: { name: IntegrationEnum.MakeCom }
 			}

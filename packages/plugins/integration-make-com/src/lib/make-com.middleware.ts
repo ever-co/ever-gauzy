@@ -1,4 +1,4 @@
-import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
+import { Inject, Injectable, Logger, NestMiddleware } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Request, Response, NextFunction } from 'express';
@@ -8,7 +8,7 @@ import { arrayToObject, isNotEmpty } from '@gauzy/utils';
 
 @Injectable()
 export class MakeComMiddleware implements NestMiddleware {
-	private logging = true;
+	private readonly logger = new Logger(MakeComMiddleware.name);
 
 	constructor(
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -16,10 +16,10 @@ export class MakeComMiddleware implements NestMiddleware {
 	) {}
 
 	/**
-	 *
-	 * @param request 
-	 * @param _response
-	 * @param next
+	 * Middleware to handle Make.com integration requests
+	 * @param request - Express request object
+	 * @param _response - Express response object
+	 * @param next - Express next function
 	 */
 	async use(request: Request, _response: Response, next: NextFunction) {
 		try {
@@ -35,22 +35,18 @@ export class MakeComMiddleware implements NestMiddleware {
 				if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
 					try {
 						// Fetch integration settings from the service
-						if (this.logging) {
-							console.log(
-								`Getting Make.com integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
-							);
-						}
+						this.logger.log(
+							`Make.com integration settings loading for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+						);
 
 						const cacheKey = `integrationTenantSettings_${tenantId}_${organizationId}_${integrationId}`;
 
 						let integrationTenantSettings: IIntegrationSetting[] = await this.cacheManager.get(cacheKey);
 
 						if (!integrationTenantSettings) {
-							if (this.logging) {
-								console.log(
-									`Make.com integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
-								);
-							}
+							this.logger.log(
+								`Make.com integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+							);
 
 							const fromDb = await this._integrationTenantService.findOneByIdString(integrationId, {
 								where: {
@@ -68,24 +64,20 @@ export class MakeComMiddleware implements NestMiddleware {
 								}
 							});
 
-							if (fromDb && fromDb.settings) {
+							if (fromDb?.settings?.length) {
 								integrationTenantSettings = fromDb.settings;
 
-								const ttl = 5 * 60 * 1000; // 5 min caching period for Make.com Integration Tenant Settings
+								const ttl = 5 * 60; // 5 min expressed in seconds
 								await this.cacheManager.set(cacheKey, integrationTenantSettings, ttl);
 
-								if (this.logging) {
-									console.log(
-										`Make.com integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
-									);
-								}
-							}
-						} else {
-							if (this.logging) {
-								console.log(
-									`Make.com integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+								this.logger.log(
+									`Make.com integration settings loaded from DB for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
 								);
 							}
+						} else {
+							this.logger.log(
+								`Make.com integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+							);
 						}
 
 						if (integrationTenantSettings && integrationTenantSettings.length > 0) {
@@ -99,20 +91,20 @@ export class MakeComMiddleware implements NestMiddleware {
 							});
 						}
 					} catch (error) {
-						console.log(
-							`Error while getting integration (${IntegrationEnum.MakeCom}) tenant inside middleware: %s`,
+						this.logger.error(
+							`Error while getting integration (${IntegrationEnum.MakeCom}) tenant: %s`,
 							error?.message
 						);
-						console.log(request.path, request.url);
+						this.logger.error(request.path, request.url);
 					}
 				}
 			}
 		} catch (error) {
-			console.log(
+			this.logger.error(
 				`Error while getting integration (${IntegrationEnum.MakeCom}) tenant inside middleware: %s`,
 				error?.message
 			);
-			console.log(request.path, request.url);
+			this.logger.error(request.path, request.url);
 		}
 
 		// Continue to the next middleware or route handler

@@ -4,8 +4,8 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TenantPermissionGuard, Permissions, PermissionGuard, RequestContext } from '@gauzy/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { MakeComService } from './make-com.service';
-import { UpdateMakeComSettingsDTO } from './dto/update-make-com-settings.dto';
 import { IMakeComIntegrationSettings } from './interfaces/make-com.model';
+import { UpdateMakeComOAuthSettingsDTO, UpdateMakeComSettingsDTO } from './dto';
 
 @ApiTags('Make.com Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -49,9 +49,20 @@ export class MakeComController {
 		description: 'Tenant ID not found in request context'
 	})
 	@Post('/')
-	async updateSettings(@Body() input: UpdateMakeComSettingsDTO): Promise<IMakeComIntegrationSettings> {
-		return this.makeComService.updateIntegrationSettings(input);
-	}
+    async updateIntegrationSettings(
+        @Body() settings: UpdateMakeComSettingsDTO
+    ): Promise<IMakeComIntegrationSettings> {
+        // Verify tenant context exists
+        if (!RequestContext.currentTenantId()) {
+            throw new NotFoundException('Tenant ID not found in request context');
+        }
+
+        // Update webhook settings
+        return this.makeComService.updateIntegrationSettings({
+            isEnabled: settings.isEnabled,
+            webhookUrl: settings.webhookUrl
+        });
+    }
 
 	/**
 	 * Updates the Make.com OAuth settings for the current tenant.
@@ -73,31 +84,23 @@ export class MakeComController {
 		description: 'Tenant ID not found in request context'
 	})
 	@Post('/oauth-settings')
-	async updateOAuthSettings(@Body() input: UpdateMakeComSettingsDTO): Promise<IMakeComIntegrationSettings> {
+	async updateOAuthSettings(@Body() input: UpdateMakeComOAuthSettingsDTO): Promise<IMakeComIntegrationSettings> {
 		// Validate that both clientId and clientSecret are provided together
 		if ((input.clientId && !input.clientSecret) || (!input.clientId && input.clientSecret)) {
 			throw new BadRequestException('Both clientId and clientSecret must be provided together');
 		}
 
-		// Get the current tenant ID
-		const tenantId = RequestContext.currentTenantId();
-		if (!tenantId) {
+		// Verify tenant context exists
+		if (!RequestContext.currentTenantId()) {
 			throw new NotFoundException('Tenant ID not found in request context');
 		}
-
-		// Store OAuth credentials in the database if provided
-		if (input.clientId && input.clientSecret) {
-			await this.makeComService.saveOAuthCredentials({
-				clientId: input.clientId,
-				clientSecret: input.clientSecret
-			});
-		}
-
-		// Update webhook settings
-		return this.makeComService.updateIntegrationSettings({
-			isEnabled: input.isEnabled,
-			webhookUrl: input.webhookUrl
+		// Store new OAuth credentials
+		await this.makeComService.saveOAuthCredentials({
+			clientId: input.clientId,
+			clientSecret: input.clientSecret
 		});
+
+		return this.makeComService.getIntegrationSettings();
 	}
 
 	/**
