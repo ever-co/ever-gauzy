@@ -103,7 +103,7 @@ export class MakeComMiddleware implements NestMiddleware {
 							`Error while getting integration (${IntegrationEnum.MakeCom}) tenant inside middleware: %s`,
 							error?.message
 						);
-						console.log(request.path, request.url);
+						console.log("Request path: %s, Request URL: %s", request.path, request.url);
 					}
 				}
 			}
@@ -112,7 +112,7 @@ export class MakeComMiddleware implements NestMiddleware {
 				`Error while getting integration (${IntegrationEnum.MakeCom}) tenant inside middleware: %s`,
 				error?.message
 			);
-			console.log(request.path, request.url);
+			console.log("Request path: %s, Request URL: %s", request.path, request.url);
 		}
 
 		// Continue to the next middleware or route handler
