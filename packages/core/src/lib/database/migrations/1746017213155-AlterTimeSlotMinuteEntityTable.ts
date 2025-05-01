@@ -162,12 +162,22 @@ export class AlterTimeSlotMinuteEntityTable1746017213155 implements MigrationInt
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`time_slot_minute\` ADD \`location\` int NOT NULL DEFAULT '0'`);
+		await queryRunner.query(`ALTER TABLE \`time_slot_minute\` ADD \`kbMouseActivity\` json NULL`);
+		await queryRunner.query(`ALTER TABLE \`time_slot_minute\` ADD \`locationActivity\` json NULL`);
+		await queryRunner.query(`ALTER TABLE \`time_slot_minute\` ADD \`customActivity\` json NULL`);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`time_slot_minute\` DROP COLUMN \`customActivity\``);
+		await queryRunner.query(`ALTER TABLE \`time_slot_minute\` DROP COLUMN \`locationActivity\``);
+		await queryRunner.query(`ALTER TABLE \`time_slot_minute\` DROP COLUMN \`kbMouseActivity\``);
+		await queryRunner.query(`ALTER TABLE \`time_slot_minute\` DROP COLUMN \`location\``);
+	}
 }
