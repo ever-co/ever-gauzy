@@ -36,7 +36,13 @@ export function traceModuleInit(app: INestApplication): void {
 
 				instance.onModuleInit = async function (...args: any[]) {
 					const start = performance.now();
-					await original(...args);
+					try {
+						await original(...args);
+					} catch (error) {
+						const end = performance.now();
+						logger.error(`${providerToken.toString()} in ${name} failed to initialize after ${(end - start).toFixed(2)}ms`, error);
+						throw error;
+					}
 					const end = performance.now();
 					logger.log(`${providerToken.toString()} in ${name} initialized in ${(end - start).toFixed(2)}ms`);
 				};
