@@ -188,7 +188,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		let invoiceData: IReportDayData;
 		switch (request.groupBy) {
 			case ReportGroupFilterEnum.employee:
-				invoiceData = await this.commandBus.execute(new GetTimeLogGroupByEmployeeCommand(timeLogs, timeZone));
+				invoiceData = await this.commandBus.execute(new GetTimeLogGroupByEmployeeCommand(timeLogs, {}, timeZone));
 				break;
 			case ReportGroupFilterEnum.project:
 				invoiceData = await this.commandBus.execute(
