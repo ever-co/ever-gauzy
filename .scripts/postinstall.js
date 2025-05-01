@@ -1,36 +1,32 @@
-/* This script manually run postinstall scripts for each installed node_modules that require it
-Can be used with `yarn install --ignore-scripts` where we skip running postinstall scripts
-and instead manually run them one by one using this script.
-You can run this script from root of mono-repo with command below:
-```
-yarn ts-node .scripts/postinstall.ts
-```
+/**
+ * This script manually runs postinstall scripts for each installed node_modules that require it.
+ * Can be used with `yarn install --ignore-scripts` where we skip running postinstall scripts
+ * and instead manually run them one by one using this script.
+ *
+ * Usage:
+ * ```
+ * yarn node .scripts/postinstall.js
+ * ```
+ *
+ * Note: if you want to get list of native packages that need to be added to `nativePackages` const,
+ * please run:
+ * ```
+ * yarn node .scripts/find-native-deps.js
+ * ```
+ */
 
-Note: if you want to get list of native packages that needs to be added to `nativePackages` const,
-please run below script:
-```
-yarn ts-node .scripts/find-native-deps.ts
-```
-*/
-
-import * as fs from 'fs';
-import * as path from 'path';
-import { execSync } from 'child_process';
-
-interface PackageScript {
-	package: string;
-	script: string;
-	directory: string;
-}
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
 
 const nodeModulesPath = path.resolve('node_modules');
-const foundScripts: PackageScript[] = [];
+const foundScripts = [];
 
 // List of native packages to always handle
 const nativePackages = ['@sentry/profiling-node', 'bcrypt', 'better-sqlite3', 'active-win'];
 
 // Function to check for postinstall scripts in a package.json
-function checkPackageScripts(dir: string): void {
+function checkPackageScripts(dir) {
 	const packageJsonPath = path.join(dir, 'package.json');
 	if (fs.existsSync(packageJsonPath)) {
 		try {
@@ -49,7 +45,7 @@ function checkPackageScripts(dir: string): void {
 }
 
 // Traverse node_modules and collect postinstall scripts
-function findPostInstallScripts(): void {
+function findPostInstallScripts() {
 	console.log(`Checking node_modules path: ${nodeModulesPath}`);
 	if (!fs.existsSync(nodeModulesPath)) {
 		console.error('node_modules directory not found. Please run yarn install first.');
@@ -71,11 +67,10 @@ function findPostInstallScripts(): void {
 }
 
 // Execute found scripts sequentially in their respective directories
-function runScriptsSequentially(): void {
+function runScriptsSequentially() {
 	for (const { package: packageName, script, directory } of foundScripts) {
 		console.log(`Running postinstall script for ${packageName}: ${script} in directory ${directory}`);
 		try {
-			// Run the package's postinstall script
 			execSync(`yarn run postinstall`, { stdio: 'inherit', cwd: directory });
 		} catch (error) {
 			console.error(`Failed to run postinstall script for ${packageName}:`, error);
@@ -84,7 +79,7 @@ function runScriptsSequentially(): void {
 }
 
 // Rebuild or force install native packages
-function handleNativePackages(): void {
+function handleNativePackages() {
 	console.log('Handling native packages...');
 	for (const packageName of nativePackages) {
 		const packagePath = path.join(nodeModulesPath, packageName);
@@ -103,9 +98,7 @@ function handleNativePackages(): void {
 					console.error(`Failed to rebuild native package ${packageName}:`, error);
 				}
 			} else {
-				console.warn(
-					`Native package ${packageName} does not have a package.json at ${packageJsonPath}. Skipping.`
-				);
+				console.warn(`Native package ${packageName} does not have a package.json at ${packageJsonPath}. Skipping.`);
 			}
 		} else {
 			console.warn(`Native package ${packageName} is not installed in ${packagePath}. Skipping.`);

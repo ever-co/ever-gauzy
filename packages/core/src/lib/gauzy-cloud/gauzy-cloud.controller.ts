@@ -23,7 +23,12 @@ import {
 export class GauzyCloudController {
 	constructor(private readonly commandBus: CommandBus) {}
 
-	@ApiOperation({ summary: 'Migrate self hosted to DSpot ERP cloud hosted' })
+	/**
+	 *
+	 * @param body
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Migrate self hosted to gauzy cloud hosted' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The user has been successfully created in the DSpot ERP cloud.'
@@ -37,7 +42,13 @@ export class GauzyCloudController {
 		return await this.commandBus.execute(new GauzyCloudUserMigrateCommand(body));
 	}
 
-	@ApiOperation({ summary: 'Migrate self hosted tenant into the DSpot ERP cloud tenant' })
+	/**
+	 *
+	 * @param body
+	 * @param token
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Migrate self hosted tenant into the gauzy cloud tenant' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The tenant has been successfully created in the DSpot ERP cloud.'
@@ -51,7 +62,13 @@ export class GauzyCloudController {
 		return await this.commandBus.execute(new GauzyCloudTenantMigrateCommand(body, token));
 	}
 
-	@ApiOperation({ summary: 'Migrate self hosted organization into the DSpot ERP cloud organization' })
+	/**
+	 *
+	 * @param body
+	 * @param token
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Migrate self hosted organization into the gauzy cloud organization' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The organization has been successfully created in the DSpot ERP cloud.'

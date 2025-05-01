@@ -21,11 +21,11 @@ import { ErrorHandlerService, Store, ToastrNotificationService } from '../servic
 import { SetupService } from './setup.service';
 
 @Component({
-    selector: 'ngx-setup',
-    templateUrl: './setup.component.html',
-    styleUrls: ['./setup.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+	selector: 'ngx-setup',
+	templateUrl: './setup.component.html',
+	styleUrls: ['./setup.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	standalone: false
 })
 export class SetupComponent implements OnInit, OnDestroy {
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
@@ -502,12 +502,12 @@ export class SetupComponent implements OnInit, OnDestroy {
 		this.open(hasBackdrop);
 	}
 
-	handleIpcEvent(_: any, arg: { type: string, data: any }) {
+	handleIpcEvent(_: any, arg: { type: string; data: any }) {
 		if (arg.type === 'database_status') {
 			if (arg.data.status) {
 				this._notifier.success(arg.data.message);
 			} else {
-				this._notifier.warn(arg.data.message)
+				this._notifier.warn(arg.data.message);
 			}
 
 			if (arg.data.status && this.runApp) {
@@ -530,7 +530,7 @@ export class SetupComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy(): void {
-	    this.electronService.ipcRenderer.removeListener('setting_page_ipc', this.handleIpcEvent);
+		this.electronService.ipcRenderer.removeListener('setting_page_ipc', this.handleIpcEvent);
 	}
 
 	public get isDesktopTimer(): boolean {

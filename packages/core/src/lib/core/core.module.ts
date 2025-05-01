@@ -4,7 +4,7 @@
 // Originally MIT Licensed
 // - see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // - original code `Copyright (c) 2018 Sumanth Chinthagunta`;
-import { MiddlewareConsumer, Module, NestModule, Logger } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import * as path from 'path';
 import { ConfigService, environment } from '@gauzy/config';
 import { RequestContextMiddleware } from './context';
@@ -13,12 +13,6 @@ import { GraphqlModule } from '../graphql/graphql.module';
 import { GraphqlApiModule } from '../graphql/graphql-api.module';
 import { DatabaseModule } from '../database/database.module';
 import { MeasurementsModule } from '@gauzy/metrics';
-
-const logger = new Logger('GZY - CoreModule');
-
-logger.verbose(path.join(path.resolve(__dirname, '../**/', 'schema'), '*.gql'));
-logger.verbose(path.join(path.resolve(__dirname, '../../../../../../../data/'), '*.gql'));
-logger.verbose(environment.isElectron, 'Environment Is Electron');
 
 @Module({
 	imports: [

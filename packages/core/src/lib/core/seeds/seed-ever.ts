@@ -10,7 +10,7 @@ import { SeederModule } from './seeder.module';
 
 /**
  * WARNING: Running this file will DELETE all data in your database
- * and generate and insert new, organization related data into your database.
+ * and generate and insert new, ever organization related data into your database.
  *
  * BE CAREFUL running this file in production env. It's possible to delete all production data.
  * SeedData checks if environment is in production or not by checking src/environments/environment.ts file configs.

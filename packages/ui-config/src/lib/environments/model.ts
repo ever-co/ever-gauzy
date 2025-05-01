@@ -34,6 +34,11 @@ export interface Environment {
 	SENTRY_DSN?: string;
 	SENTRY_TRACES_SAMPLE_RATE?: string;
 
+	POSTHOG_KEY?: string;
+	POSTHOG_HOST?: string;
+	POSTHOG_ENABLED?: boolean;
+	POSTHOG_FLUSH_INTERVAL?: number;
+
 	HUBSTAFF_REDIRECT_URL?: string;
 
 	IS_ELECTRON: boolean;

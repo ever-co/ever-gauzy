@@ -109,7 +109,7 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.show_employees_count = true;
 		defaultOrganization.banner = faker.lorem.sentence();
 		defaultOrganization.skills = skills;
-		defaultOrganization.brandColor = faker.internet.color();
+		defaultOrganization.brandColor = faker.color.rgb();
 		defaultOrganization.timeZone = faker.helpers.arrayElement(
 			timezone.tz.names().filter((zone) => zone.includes('/'))
 		);
@@ -232,7 +232,7 @@ const generateRandomOrganization = async (
 	organization.show_employees_count = true;
 	organization.banner = faker.lorem.sentence();
 	organization.skills = skills;
-	organization.brandColor = faker.internet.color();
+	organization.brandColor = faker.color.rgb();
 	organization.contact = getRandomElement(contacts);
 	organization.timeZone = timeZone;
 	organization.dateFormat = faker.helpers.arrayElement(DEFAULT_DATE_FORMATS);

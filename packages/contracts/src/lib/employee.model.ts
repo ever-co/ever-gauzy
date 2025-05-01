@@ -34,6 +34,11 @@ import { IDateRangePicker } from './date-picker.model';
  */
 export type ExcludeEmployeeAuthorFields<T, K extends keyof T = never> = Omit<T, 'employee' | 'employeeId' | K>;
 
+/**
+ * Utility type to exclude `employee` and `employeeId` fields.
+ */
+export type ExcludeEmployeeAuthorFields<T, K extends keyof T = never> = Omit<T, 'employee' | 'employeeId' | K>;
+
 export interface IFindMembersInput extends IBasePerTenantAndOrganizationEntityModel {
 	organizationTeamId: ID;
 	organizationProjectId: ID;

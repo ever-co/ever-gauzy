@@ -188,9 +188,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		let invoiceData: IReportDayData;
 		switch (request.groupBy) {
 			case ReportGroupFilterEnum.employee:
-				invoiceData = await this.commandBus.execute(
-					new GetTimeLogGroupByEmployeeCommand(timeLogs, {}, timeZone)
-				);
+				invoiceData = await this.commandBus.execute(new GetTimeLogGroupByEmployeeCommand(timeLogs, timeZone));
 				break;
 			case ReportGroupFilterEnum.project:
 				invoiceData = await this.commandBus.execute(
@@ -1151,7 +1149,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		let timeToRemove = 0;
 		if (conflicts?.length) {
 			// Loop through each conflicting time log
-			for await (const timeLog of conflicts) {
+			for (const timeLog of conflicts) {
 				// Entire time log is overlapped
 				if (timeLog.startedAt >= startedAt && timeLog.stoppedAt <= stoppedAt) {
 					timeToRemove += timeLog.duration;

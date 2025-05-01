@@ -41,6 +41,7 @@ export * from '../../employee-availability/employee-availability.entity';
 export * from '../../employee-award/employee-award.entity';
 export * from '../../employee-level/employee-level.entity';
 export * from '../../employee-phone/employee-phone.entity';
+export * from '../../employee-recent-visit/employee-recent-visit.entity';
 export * from '../../employee-recurring-expense/employee-recurring-expense.entity';
 export * from '../../employee-setting/employee-setting.entity';
 export * from '../../employee/employee.entity';

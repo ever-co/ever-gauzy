@@ -627,7 +627,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param filters - Optional filters for advanced task filtering.
 	 * @returns A Promise that resolves to a paginated list of tasks.
 	 */
-	public async pagination(options: TaskQueryDTO): Promise<IPagination<ITask>> {
+	public async pagination(options: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
 		const filters = options?.filters;
 		const where = options?.where;
 

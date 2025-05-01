@@ -1,5 +1,5 @@
-import { sluggable } from '@gauzy/utils';
 import { IntegrationEnum, IntegrationTypeEnum } from '@gauzy/contracts';
+import { sluggable } from '@gauzy/utils';
 
 /**
  *

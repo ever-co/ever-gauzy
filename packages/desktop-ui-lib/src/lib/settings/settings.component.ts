@@ -1,4 +1,14 @@
-import { AfterViewInit, Component, ElementRef, Inject, NgZone, OnInit, Optional, ViewChild, OnDestroy } from '@angular/core';
+import {
+	AfterViewInit,
+	Component,
+	ElementRef,
+	Inject,
+	NgZone,
+	OnInit,
+	Optional,
+	ViewChild,
+	OnDestroy
+} from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS } from '@gauzy/constants';
 import { LanguagesEnum } from '@gauzy/contracts';
@@ -18,17 +28,17 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-settings',
-    templateUrl: './settings.component.html',
-    styleUrls: ['./settings.component.scss'],
-    styles: [
-        `
+	selector: 'ngx-settings',
+	templateUrl: './settings.component.html',
+	styleUrls: ['./settings.component.scss'],
+	styles: [
+		`
 			:host nb-tab {
 				padding: 1rem;
 			}
 		`
-    ],
-    standalone: false
+	],
+	standalone: false
 })
 export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
@@ -399,9 +409,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	waitRestart = false;
 	serverIsRunning = false;
 
-	serverOptions = this.isDesktopTimer || this.isAgent
-		? [this.serverTypes.custom, this.serverTypes.live]
-		: [this.serverTypes.integrated, this.serverTypes.custom, this.serverTypes.live];
+	serverOptions =
+		this.isDesktopTimer || this.isAgent
+			? [this.serverTypes.custom, this.serverTypes.live]
+			: [this.serverTypes.integrated, this.serverTypes.custom, this.serverTypes.live];
 
 	driverOptions = ['better-sqlite', 'sqlite', 'postgres', ...(this.isDesktopTimer || this.isAgent ? ['mysql'] : [])];
 	muted: boolean;
@@ -513,77 +524,76 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	ngOnDestroy(): void {
-	    this.electronService.ipcRenderer.removeListener('setting_page_ipc', this.handleIpcEvent);
+		this.electronService.ipcRenderer.removeListener('setting_page_ipc', this.handleIpcEvent);
 	}
 
 	async getAppSetting() {
 		const appSetting = await this.electronService.ipcRenderer.invoke('app_setting');
 		this._ngZone.run(async () => {
 			const { setting, config, auth, additionalSetting } = appSetting;
-				this.appSetting = {
-					...this.appSetting,
-					...setting
-				};
-				this.config = {
-					...this.config,
-					...config
-				};
-				this.checkDatabaseConnectivity();
-				this.authSetting = auth;
-				this.mappingAdditionalSetting(additionalSetting || null);
-				this.selectedZone = setting?.zone || ZoneEnum.LOCAL;
-				this._timeZoneManager.changeZone(this.selectedZone);
-				if (!this.isServer && !this.config?.isLocalServer) {
-					await this.checkHostConnectivity();
-				} else {
-					this._isCheckHost$.next({
-						...this._isCheckHost,
-						status: true
-					});
-				}
-				this.config.awPort = this.config.timeTrackerWindow ? this.config.awHost.split('t:')[1] : null;
-				this.serverConnectivity();
-				this._monitorsOption = { value: setting?.monitor?.captured };
-				this.screenshotNotification = setting?.screenshotNotification;
-				this.muted = setting?.mutedNotification;
-				this.autoLaunch = setting?.autoLaunch;
-				this.minimizeOnStartup = setting?.minimizeOnStartup;
-				this._automaticUpdate$.next(setting?.automaticUpdate);
-				this._automaticUpdateDelay$.next(setting?.automaticUpdateDelay);
-				this._prerelease$.next(setting?.prerelease);
-				this._updaterServer$ = new BehaviorSubject({
-					github: setting?.cdnUpdater?.github == true,
-					digitalOcean: setting?.cdnUpdater?.digitalOcean == true,
-					local: false
+			this.appSetting = {
+				...this.appSetting,
+				...setting
+			};
+			this.config = {
+				...this.config,
+				...config
+			};
+			this.checkDatabaseConnectivity();
+			this.authSetting = auth;
+			this.mappingAdditionalSetting(additionalSetting || null);
+			this.selectedZone = setting?.zone || ZoneEnum.LOCAL;
+			this._timeZoneManager.changeZone(this.selectedZone);
+			if (!this.isServer && !this.config?.isLocalServer) {
+				await this.checkHostConnectivity();
+			} else {
+				this._isCheckHost$.next({
+					...this._isCheckHost,
+					status: true
 				});
-				this._simpleScreenshotNotification$.next(setting?.simpleScreenshotNotification);
-				this.selectedPeriod = setting?.timer?.updatePeriod;
-				if (this.isDesktopTimer || this.isAgent) {
-					await this.getUserDetails();
-				}
-				this.menus = this.isServer
-					? [
-							'TIMER_TRACKER.SETTINGS.UPDATE',
-							'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
-							'TIMER_TRACKER.SETTINGS.PLUGINS',
-							'MENU.ABOUT'
-					  ]
-					: [
-							...(auth && auth.allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
-							'TIMER_TRACKER.TIMER',
-							'TIMER_TRACKER.SETTINGS.UPDATE',
-							'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
-							'TIMER_TRACKER.SETTINGS.PLUGINS',
-							'MENU.ABOUT'
-					  ];
-				const lastMenu =
-					this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
-				this._selectedMenu$.next(lastMenu);
-		})
+			}
+			this.config.awPort = this.config.timeTrackerWindow ? this.config.awHost.split('t:')[1] : null;
+			this.serverConnectivity();
+			this._monitorsOption = { value: setting?.monitor?.captured };
+			this.screenshotNotification = setting?.screenshotNotification;
+			this.muted = setting?.mutedNotification;
+			this.autoLaunch = setting?.autoLaunch;
+			this.minimizeOnStartup = setting?.minimizeOnStartup;
+			this._automaticUpdate$.next(setting?.automaticUpdate);
+			this._automaticUpdateDelay$.next(setting?.automaticUpdateDelay);
+			this._prerelease$.next(setting?.prerelease);
+			this._updaterServer$ = new BehaviorSubject({
+				github: setting?.cdnUpdater?.github == true,
+				digitalOcean: setting?.cdnUpdater?.digitalOcean == true,
+				local: false
+			});
+			this._simpleScreenshotNotification$.next(setting?.simpleScreenshotNotification);
+			this.selectedPeriod = setting?.timer?.updatePeriod;
+			if (this.isDesktopTimer || this.isAgent) {
+				await this.getUserDetails();
+			}
+			this.menus = this.isServer
+				? [
+						'TIMER_TRACKER.SETTINGS.UPDATE',
+						'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
+						'TIMER_TRACKER.SETTINGS.PLUGINS',
+						'MENU.ABOUT'
+				  ]
+				: [
+						...(auth && auth.allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
+						'TIMER_TRACKER.TIMER',
+						'TIMER_TRACKER.SETTINGS.UPDATE',
+						'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
+						'TIMER_TRACKER.SETTINGS.PLUGINS',
+						'MENU.ABOUT'
+				  ];
+			const lastMenu =
+				this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
+			this._selectedMenu$.next(lastMenu);
+		});
 	}
 
-
-	handleIpcEvent(_: any, arg: { type: string, data: any }) {
+	handleIpcEvent(_: any, arg: { type: string; data: any }) {
 		switch (arg.type) {
 			case 'app_setting_update':
 				this._ngZone.run(() => {
@@ -677,7 +687,9 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			case 'goto_top_menu': {
 				this._ngZone.run(() => {
 					const lastMenu =
-						this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
+						this._selectedMenu && this.menus.includes(this._selectedMenu)
+							? this._selectedMenu
+							: this.menus[0];
 					this.selectMenu(lastMenu);
 				});
 				break;

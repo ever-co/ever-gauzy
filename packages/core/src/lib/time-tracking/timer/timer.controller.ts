@@ -39,7 +39,7 @@ export class TimerController {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_TRACKER)
 	@UseValidationPipe({ whitelist: true })
 	async getTimerStatus(@Query() query: TimerStatusQueryDTO): Promise<ITimerStatusWithWeeklyLimits> {
-		const status = await this._queryBus.execute(new GetTimerStatusQuery(query));;
+		const status = await this._queryBus.execute(new GetTimerStatusQuery(query));
 		this.timerService.checkForPeriodicSave(status.lastLog);
 		return status;
 	}

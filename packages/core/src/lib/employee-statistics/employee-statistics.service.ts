@@ -332,7 +332,7 @@ export class EmployeeStatisticsService {
 				stat.expense.push(expense);
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
-				const { total: splitAmong } = await this.employeeService.findWorkingEmployees(employee.organization.id);
+				const { total: splitAmong } = await this.employeeService.findWorkingEmployees(employee.organization.id, {startDate, endDate});
 
 				const newStat = {
 					month: expense.valueDate.getMonth(),
@@ -427,7 +427,8 @@ export class EmployeeStatisticsService {
 					stat.valueDate = date;
 				} else {
 					const { total: splitAmong } = await this.employeeService.findWorkingEmployees(
-						employee.organization.id
+						employee.organization.id,
+						{startDate, endDate}
 					);
 
 					// Add a new map entry if the key(month-year) does not already exist
