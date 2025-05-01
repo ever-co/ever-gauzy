@@ -31,9 +31,7 @@ export class UpdateTimeSlotMinutesHandler implements ICommandHandler<UpdateTimeS
 			// Fetch and return the updated entity including its timeSlot relation
 			return await this.typeOrmTimeSlotMinuteRepository.findOne({
 				where: { id },
-				relations: {
-					timeSlot: true
-				}
+				relations: { timeSlot: true }
 			});
 		}
 

@@ -11,7 +11,7 @@ export class AlterTimeSlotMinuteEntityTable1746017213155 implements MigrationInt
 	 * @param queryRunner
 	 */
 	public async up(queryRunner: QueryRunner): Promise<void> {
-		console.log(chalk.yellow(`${this.name} start running!`));
+		console.log(chalk.yellow(this.name + ' start running!'));
 
 		switch (queryRunner.connection.options.type) {
 			case DatabaseTypeEnum.sqlite:
@@ -35,7 +35,7 @@ export class AlterTimeSlotMinuteEntityTable1746017213155 implements MigrationInt
 	 * @param queryRunner
 	 */
 	public async down(queryRunner: QueryRunner): Promise<void> {
-		console.log(chalk.yellow(`${this.name} reverting changes!`));
+		console.log(chalk.yellow(this.name + ' reverting changes!'));
 
 		switch (queryRunner.connection.options.type) {
 			case DatabaseTypeEnum.sqlite:

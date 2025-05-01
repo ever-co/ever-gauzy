@@ -65,10 +65,7 @@ export function getStartEndIntervals(
 	let startMinute = moment(start).utc().get('minute');
 	startMinute = startMinute - (startMinute % 10);
 
-const startDate: any = moment(start).utc()
-    .set('minute', startMinute)
-    .set('second', 0)
-    .set('millisecond', 0);
+	const startDate: any = moment(start).utc().set('minute', startMinute).set('second', 0).set('millisecond', 0);
 
 	let endMinute = moment(end).utc().get('minute');
 	endMinute = endMinute - (endMinute % 10);

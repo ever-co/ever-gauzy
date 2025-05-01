@@ -21,6 +21,7 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 		example: 42,
 		default: 0
 	})
+	@IsOptional()
 	@IsNumber()
 	@MultiORMColumn({ default: 0 })
 	keyboard?: number;
@@ -35,6 +36,7 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 		example: 42,
 		default: 0
 	})
+	@IsOptional()
 	@IsNumber()
 	@MultiORMColumn({ default: 0 })
 	mouse?: number;
@@ -49,6 +51,7 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 		example: 42,
 		default: 0
 	})
+	@IsOptional()
 	@IsNumber()
 	@MultiORMColumn({ default: 0 })
 	location?: number;
