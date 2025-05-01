@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { catchError, firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
@@ -15,6 +15,7 @@ export class MakeComService {
 		private readonly httpService: HttpService,
 		private readonly integrationSettingService: IntegrationSettingService,
 		private readonly integrationTenantService: IntegrationTenantService,
+		@Inject(forwardRef(() => MakeComOAuthService))
 		private readonly makeComOAuthService: MakeComOAuthService
 	) {}
 
@@ -116,13 +117,19 @@ export class MakeComService {
 
 			// Update webhookUrl setting if provided
 			if (input.webhookUrl !== undefined) {
-				const webhookUrlSetting = integrationTenant.settings.find(
+				let webhookUrlSetting = integrationTenant.settings.find(
 					(setting) => setting.settingsName === MakeSettingName.WEBHOOK_URL
 				);
 				if (webhookUrlSetting) {
 					webhookUrlSetting.settingsValue = input.webhookUrl;
-					updates.push(this.integrationSettingService.create(webhookUrlSetting));
+				} else {
+					webhookUrlSetting = {
+						settingsName: MakeSettingName.WEBHOOK_URL,
+						settingsValue: input.webhookUrl,
+						integration: integrationTenant
+					};
 				}
+				updates.push(this.integrationSettingService.save(webhookUrlSetting));
 			}
 
 			// Wait for all updates to complete
@@ -132,6 +139,137 @@ export class MakeComService {
 			return this.getIntegrationSettings();
 		} catch (error) {
 			this.logger.error('Error updating Make.com integration settings:', error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Saves OAuth credentials for the Make.com integration.
+	 * This method stores the credentials in the database for persistence across server restarts.
+	 *
+	 * @param {Object} credentials - The OAuth credentials to save.
+	 * @param {string} credentials.clientId - The OAuth client ID.
+	 * @param {string} credentials.clientSecret - The OAuth client secret.
+	 * @returns {Promise<void>} A promise that resolves when the credentials have been saved.
+	 */
+	async saveOAuthCredentials(credentials: { clientId: string; clientSecret: string }): Promise<void> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				throw new NotFoundException('Tenant ID not found in request context');
+			}
+
+			// Find the integration for the current tenant
+			let integrationTenant = await this.integrationTenantService.findOneByOptions({
+				where: {
+					name: IntegrationEnum.MakeCom,
+					tenantId
+				},
+				relations: ['settings']
+			});
+
+			if (!integrationTenant) {
+				throw new NotFoundException(`${IntegrationEnum.MakeCom} integration not found for this tenant`);
+			}
+
+			// Define the settings to be saved or updated
+			const settingsToSave = [
+				{
+					settingsName: MakeSettingName.CLIENT_ID,
+					settingsValue: credentials.clientId,
+					integration: { name: integrationTenant.name }
+				},
+				{
+					settingsName: MakeSettingName.CLIENT_SECRET,
+					settingsValue: credentials.clientSecret,
+					integration: { name: integrationTenant.name }
+				}
+			];
+
+			// Use the bulkUpdateOrCreate method to save the settings
+			await this.integrationSettingService.bulkUpdateOrCreate(
+				integrationTenant.id,
+				settingsToSave,
+			);
+
+			this.logger.log(`OAuth credentials updated for tenant: ${tenantId}`);
+		} catch (error) {
+			this.logger.error('Error saving Make.com OAuth credentials:', error);
+			throw error;
+		}
+	}
+
+	/**
+ * Retrieves the OAuth credentials for the Make.com integration.
+ *
+ * @param {string} integrationId - The ID of the integration to get credentials for.
+ * @returns {Promise<{clientId: string, clientSecret: string}>} A promise that resolves to the OAuth credentials.
+ */
+async getOAuthCredentials(integrationId: string): Promise<{ clientId: string; clientSecret: string }> {
+	try {
+		// Find the integration settings
+		const settings = await this.integrationSettingService.find({
+			where: {
+				integration: { id: integrationId },
+				settingsName: MakeSettingName.CLIENT_ID || MakeSettingName.CLIENT_SECRET
+			}
+		});
+
+		if (!settings || settings.length < 2) {
+			throw new NotFoundException('OAuth credentials not found for this integration');
+		}
+
+		// Extract client ID and client secret
+		const clientIdSetting = settings.find(setting => setting.settingsName === MakeSettingName.CLIENT_ID);
+		const clientSecretSetting = settings.find(setting => setting.settingsName === MakeSettingName.CLIENT_SECRET);
+
+		if (!clientIdSetting || !clientSecretSetting) {
+			throw new NotFoundException('OAuth credentials are incomplete for this integration');
+		}
+
+		return {
+			clientId: clientIdSetting.settingsValue,
+			clientSecret: clientSecretSetting.settingsValue
+		};
+	} catch (error) {
+		this.logger.error('Error retrieving Make.com OAuth credentials:', error);
+		throw error;
+	}
+}
+
+	/**
+	 * Retrieves the OAuth client ID for the Make.com integration.
+	 *
+	 * @returns {Promise<string>} A promise that resolves to the OAuth client ID or null if not found.
+	 */
+	async getOAuthClientId(): Promise<string | null> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				throw new NotFoundException('Tenant ID not found in request context');
+			}
+
+			// Find the integration for the current tenant
+			const integrationTenant = await this.integrationTenantService.findOneByOptions({
+				where: {
+					name: IntegrationEnum.MakeCom,
+					tenantId
+				},
+				relations: ['settings']
+			});
+
+			if (!integrationTenant) {
+				return null;
+			}
+
+			// Find the client ID setting
+			const clientIdSetting = integrationTenant.settings.find(
+				(setting) => setting.settingsName === MakeSettingName.CLIENT_ID
+			);
+
+			return clientIdSetting ? clientIdSetting.settingsValue : null;
+		} catch (error) {
+			this.logger.error('Error retrieving Make.com OAuth client ID:', error);
 			throw error;
 		}
 	}
@@ -151,37 +289,22 @@ export class MakeComService {
 				throw new NotFoundException('Tenant ID not found in request context');
 			}
 
-			// Accept the already-loaded integration tenant as an optional parameter
-			// This is useful for cases where the integration tenant is already loaded
-			// and we don't want to query the database again.
-			let integrationTenant = RequestContext.currentIntegrationTenant();
+			// Get the integration from the request object (set by middleware)
+			const integration = RequestContext.currentRequest()['integration'];
 
-			// Only lookup if not provided
-			if (!integrationTenant) {
-				integrationTenant = await this.integrationTenantService.findOneByOptions({
-					where: {
-						name: IntegrationEnum.MakeCom,
-						tenantId
-					},
-					relations: ['settings']
-				});
+			if (!integration || integration.name !== IntegrationEnum.MakeCom) {
+				throw new NotFoundException(`${IntegrationEnum.MakeCom} integration not found in request context`);
 			}
 
-			if (!integrationTenant) {
-				throw new NotFoundException(`${IntegrationEnum.MakeCom} integration not found for this tenant`);
-			}
+			// Get the access token from the integration settings
+			const accessToken = integration.settings[MakeSettingName.ACCESS_TOKEN];
 
-			// Get the access token
-			const accessTokenSetting = integrationTenant.settings.find(
-				(setting) => setting.settingsName === MakeSettingName.ACCESS_TOKEN
-			);
-
-			if (!accessTokenSetting) {
+			if (!accessToken) {
 				throw new NotFoundException('Access token not found for Make.com integration');
 			}
 
 			const headers = {
-				Authorization: `Bearer ${accessTokenSetting.settingsValue}`,
+				Authorization: `Bearer ${accessToken}`,
 				'Content-Type': 'application/json'
 			};
 
@@ -197,7 +320,7 @@ export class MakeComService {
 								catchError((error: AxiosError) =>
 									this.handleApiError(
 										error,
-										integrationTenant.id,
+										integration.id,
 										makeApiUrl,
 										method,
 										data,
@@ -215,7 +338,7 @@ export class MakeComService {
 								catchError((error: AxiosError) =>
 									this.handleApiError(
 										error,
-										integrationTenant.id,
+										integration.id,
 										makeApiUrl,
 										method,
 										data,
@@ -233,7 +356,7 @@ export class MakeComService {
 								catchError((error: AxiosError) =>
 									this.handleApiError(
 										error,
-										integrationTenant.id,
+										integration.id,
 										makeApiUrl,
 										method,
 										data,
@@ -251,7 +374,7 @@ export class MakeComService {
 								catchError((error: AxiosError) =>
 									this.handleApiError(
 										error,
-										integrationTenant.id,
+										integration.id,
 										makeApiUrl,
 										method,
 										data,
@@ -264,7 +387,6 @@ export class MakeComService {
 				default:
 					throw new Error(`Unsupported HTTP method: ${method}`);
 			}
-
 			return response.data;
 		} catch (error) {
 			this.logger.error(`Error making API call to Make.com: ${error.message}`, error.stack);
@@ -317,15 +439,22 @@ export class MakeComService {
 	 * @returns {Promise<any>} - The API response after handling the error.
 	 */
 	private async handleApiError(
-		error: AxiosError,
+		error: any,
 		integrationId: string,
 		makeApiUrl: string,
 		method: string,
 		data: any,
 		retryLimit: number
 	): Promise<any> {
-		// Handle token expiration
-		if (error.response?.status === 401) {
+		// Handle token expiration (common HTTP statuses and OAuth error codes)
+		const status = error.response?.status;
+		const oauthError = error.response?.data?.error || error.response?.data?.error_description;
+		if (
+			status === 401 ||
+			status === 403 ||
+			status === 400 ||
+			['invalid_token', 'invalid_grant'].includes(oauthError)
+		) {
 			return this.handleTokenRefresh(integrationId, makeApiUrl, method, data, retryLimit);
 		}
 		throw error;

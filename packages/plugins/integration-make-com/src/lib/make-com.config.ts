@@ -7,7 +7,7 @@
 const { GAUZY_MAKE_POST_INSTALL_URL, GAUZY_MAKE_REDIRECT_URL, CLIENT_BASE_URL, API_BASE_URL } = process.env;
 
 /** Make authentication server URL */
-export const MAKE_BASE_URL = process.env.GAUZY_MAKE_BASE_URL ?? 'https://auth.make.com';
+export const MAKE_BASE_URL = process.env.GAUZY_MAKE_BASE_URL ?? 'https://www.make.com';
 
 /** Make post-install URL */
 export const MAKE_POST_INSTALL_URL = GAUZY_MAKE_POST_INSTALL_URL ?? `${CLIENT_BASE_URL}/#/pages/integrations/make`;

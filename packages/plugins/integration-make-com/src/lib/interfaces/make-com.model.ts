@@ -9,7 +9,9 @@ export enum MakeSettingName {
 	ACCESS_TOKEN = 'access_token',
 	REFRESH_TOKEN = 'refresh_token',
 	EXPIRES_IN = 'expires_in',
-	TOKEN_TYPE = 'token_type'
+	TOKEN_TYPE = 'token_type',
+	CLIENT_ID = 'client_id',
+	CLIENT_SECRET = 'client_secret'
 }
 
 // Define the return type for the settings
@@ -39,6 +41,7 @@ export interface IMakeComAuthConfig {
 
 export interface IMakeComCreateIntegration extends IBasePerTenantAndOrganizationEntityModel {
 	// OAuth credentials and parameters
+	// NB: property names use snake_case to match Make.com's expected payload
 	oauthParams: {
 		client_id: string;
 		code: string;

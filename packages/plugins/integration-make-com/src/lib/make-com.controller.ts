@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { TenantPermissionGuard, Permissions, PermissionGuard } from '@gauzy/core';
+import { TenantPermissionGuard, Permissions, PermissionGuard, RequestContext } from '@gauzy/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { MakeComService } from './make-com.service';
 import { UpdateMakeComSettingsDTO } from './dto/update-make-com-settings.dto';
@@ -76,19 +76,21 @@ export class MakeComController {
 	async updateOAuthSettings(@Body() input: UpdateMakeComSettingsDTO): Promise<IMakeComIntegrationSettings> {
 		// Validate that both clientId and clientSecret are provided together
 		if ((input.clientId && !input.clientSecret) || (!input.clientId && input.clientSecret)) {
-			throw new Error('Both clientId and clientSecret must be provided together');
+			throw new BadRequestException('Both clientId and clientSecret must be provided together');
 		}
 
-		// Update environment variables with provided OAuth settings if they exist
+		// Get the current tenant ID
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new NotFoundException('Tenant ID not found in request context');
+		}
+
+		// Store OAuth credentials in the database if provided
 		if (input.clientId && input.clientSecret) {
-			const clientId = this._config.get<string>('makeCom.clientId');
-			const clientSecret = this._config.get<string>('makeCom.clientSecret');
-			if (clientId !== input.clientId) {
-				this._config.set('makeCom.clientId', input.clientId);
-			}
-			if (clientSecret !== input.clientSecret) {
-				this._config.set('makeCom.clientSecret', input.clientSecret);
-			}
+			await this.makeComService.saveOAuthCredentials({
+				clientId: input.clientId,
+				clientSecret: input.clientSecret
+			});
 		}
 
 		// Update webhook settings
@@ -109,10 +111,11 @@ export class MakeComController {
 	})
 	@Get('/oauth-config')
 	async getOAuthConfig(): Promise<{ clientId: string; redirectUri: string }> {
-		const { clientId, redirectUri } = {
-			clientId: this._config.get<string>('makeCom.clientId'),
-			redirectUri: this._config.get<string>('makeCom.redirectUri')
-		};
+		// Get client ID from the database
+		const clientId = await this.makeComService.getOAuthClientId();
+
+		// Get redirect URI from config (this is typically an environment variable)
+		const redirectUri = this._config.get<string>('makeCom.redirectUri');
 
 		if (!clientId || !redirectUri) {
 			throw new BadRequestException('OAuth configuration is missing required values.');

@@ -78,7 +78,7 @@ export class MakeComAuthorizationController {
 			const tokenResponse = await this.makeComOAuthService.exchangeCodeForToken(query.code, query.state);
 
 			// Check if the token exchange was successful
-			if (!tokenResponse || !tokenResponse.success) {
+			if (!tokenResponse || !tokenResponse.access_token) {
 				throw new HttpException('Failed to exchange authorization code for token', HttpStatus.BAD_REQUEST);
 			}
 
