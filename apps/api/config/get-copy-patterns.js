@@ -41,7 +41,7 @@ function getCopyPatterns(distPackagesDir, targetNodeModulesDir) {
 	return allPackageDirs.map((packageDir) => {
 		const packageJsonPath = path.join(packageDir, 'package.json');
 		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-		const packageName = packageJson.name.split('/').pop();
+		const packageName = (packageJson.name || '').split('/').pop() || '';
 
 		return {
 			from: packageDir,
