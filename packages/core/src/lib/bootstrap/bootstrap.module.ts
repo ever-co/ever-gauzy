@@ -3,10 +3,9 @@ import { ConfigModule } from '@gauzy/config';
 import { PluginModule } from '@gauzy/plugin';
 import { Logger, LoggerModule } from '../logger';
 import { AppModule } from '../app/app.module';
-import { ProfilingModule } from '../common/profiling/profiling.module';
 
 @Module({
-	imports: [ConfigModule, LoggerModule.forRoot(), PluginModule.init(), AppModule, ProfilingModule.forRoot()]
+	imports: [ConfigModule, LoggerModule.forRoot(), PluginModule.init(), AppModule]
 })
 export class BootstrapModule implements NestModule, OnApplicationShutdown {
 	/**

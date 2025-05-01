@@ -88,7 +88,7 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 				show_clients_count: input.show_clients_count !== false,
 				show_clients: input.show_clients !== false,
 				show_employees_count: input.show_employees_count !== false,
-				brandColor: faker.internet.color(),
+				brandColor: faker.color.rgb(),
 				...(input.standardWorkHoursPerDay && {
 					standardWorkHoursPerDay: input.standardWorkHoursPerDay
 				})
