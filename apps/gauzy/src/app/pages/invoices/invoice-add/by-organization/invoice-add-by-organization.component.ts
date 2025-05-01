@@ -55,7 +55,8 @@ import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/s
 @Component({
 	selector: 'ga-invoice-add-by-organization',
 	templateUrl: './invoice-add-by-organization.component.html',
-	styleUrls: ['./invoice-add-by-organization.component.scss']
+	styleUrls: ['./invoice-add-by-organization.component.scss'],
+	standalone: false
 })
 export class InvoiceAddByOrganizationComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	settingsSmartTable: object;

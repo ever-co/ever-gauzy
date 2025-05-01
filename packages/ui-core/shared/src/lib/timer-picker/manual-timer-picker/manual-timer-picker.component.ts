@@ -13,7 +13,8 @@ import * as moment from 'moment';
 			useExisting: forwardRef(() => ManualTimerPickerComponent),
 			multi: true
 		}
-	]
+	],
+	standalone: false,
 })
 export class ManualTimerPickerComponent {
 	private _value = '';

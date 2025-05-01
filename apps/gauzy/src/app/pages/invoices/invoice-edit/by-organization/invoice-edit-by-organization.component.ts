@@ -23,7 +23,6 @@ import {
 	IExpense
 } from '@gauzy/contracts';
 import { compareDate, distinctUntilChange, extractNumber } from '@gauzy/ui-core/common';
-import { Store, ToastrService } from '@gauzy/ui-core/core';
 import moment from 'moment';
 import { InvoiceEmailMutationComponent } from '../../invoice-email/invoice-email-mutation.component';
 import {
@@ -31,7 +30,9 @@ import {
 	InvoiceItemService,
 	InvoicesService,
 	OrganizationSettingService,
-	TranslatableService
+	TranslatableService,
+	Store,
+	ToastrService
 } from '@gauzy/ui-core/core';
 import {
 	InvoiceApplyTaxDiscountComponent,
@@ -48,7 +49,8 @@ import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/s
 @Component({
 	selector: 'ga-invoice-edit-by-organization',
 	templateUrl: './invoice-edit-by-organization.component.html',
-	styleUrls: ['./invoice-edit-by-organization.component.scss']
+	styleUrls: ['./invoice-edit-by-organization.component.scss'],
+	standalone: false
 })
 export class InvoiceEditByOrganizationComponent extends PaginationFilterBaseComponent implements OnInit {
 	shouldLoadTable = false;

@@ -46,7 +46,8 @@ import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/s
 @Component({
 	selector: 'ga-invoice-edit-by-role',
 	templateUrl: './invoice-edit-by-role.component.html',
-	styleUrls: ['./invoice-edit-by-role.component.scss']
+	styleUrls: ['./invoice-edit-by-role.component.scss'],
+	standalone: false
 })
 export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent implements OnInit {
 	shouldLoadTable = false;

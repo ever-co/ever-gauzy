@@ -1,13 +1,12 @@
 // Some of the code is modified from https://github.com/akveo/ngx-admin/blob/master/src/app/app.module.ts,
 // that licensed under the MIT License and Copyright (c) 2017 akveo.com.
 
-import { VERSION } from '@angular/core';
+import { NgModule, ErrorHandler, inject, provideAppInitializer, VERSION } from '@angular/core';
 import { APP_BASE_HREF } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ExtraOptions, Router, RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgModule, ErrorHandler, inject, provideAppInitializer } from '@angular/core';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
 import {
 	NbChatModule,

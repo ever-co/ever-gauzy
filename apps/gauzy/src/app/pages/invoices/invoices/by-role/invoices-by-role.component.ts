@@ -63,7 +63,8 @@ import { environment as ENV } from '@gauzy/ui-config';
 @Component({
 	selector: 'ngx-invoices-by-role',
 	templateUrl: './invoices-by-role.component.html',
-	styleUrls: ['invoices-by-role.component.scss']
+	styleUrls: ['invoices-by-role.component.scss'],
+	standalone: false
 })
 export class InvoicesByRoleComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 	settingsSmartTable: Settings;

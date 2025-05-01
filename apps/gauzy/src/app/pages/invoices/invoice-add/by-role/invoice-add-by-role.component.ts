@@ -61,7 +61,8 @@ import { HoursDurationFormatPipe, IPaginationBase, PaginationFilterBaseComponent
 @Component({
 	selector: 'ga-invoice-add-by-role',
 	templateUrl: './invoice-add-by-role.component.html',
-	styleUrls: ['./invoice-add-by-role.component.scss']
+	styleUrls: ['./invoice-add-by-role.component.scss'],
+	standalone: false
 })
 export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent implements OnInit {
 	settingsSmartTable: Settings;

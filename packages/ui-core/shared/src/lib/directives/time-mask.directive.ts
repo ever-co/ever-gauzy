@@ -3,6 +3,7 @@ import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 
 @Directive({
 	selector: '[timeMask]',
+	standalone: false,
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,

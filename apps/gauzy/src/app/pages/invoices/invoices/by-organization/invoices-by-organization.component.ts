@@ -69,7 +69,8 @@ import { InvoicePaidComponent } from '../../table-components';
 @Component({
 	selector: 'ngx-invoices-by-organization',
 	templateUrl: './invoices-by-organization.component.html',
-	styleUrls: ['invoices-by-organization.component.scss']
+	styleUrls: ['invoices-by-organization.component.scss'],
+	standalone: false
 })
 export class InvoicesByOrganizationComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 	settingsSmartTable: object;

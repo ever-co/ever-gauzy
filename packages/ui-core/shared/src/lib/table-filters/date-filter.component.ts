@@ -17,7 +17,8 @@ import { DefaultFilter } from 'angular2-smart-table';
 			/>
 			<nb-datepicker #datePicker></nb-datepicker>
 		</div>
-	`
+	`,
+	standalone: false
 })
 export class DateFilterComponent extends DefaultFilter implements OnInit, OnDestroy {
 	dateControl = new FormControl();
