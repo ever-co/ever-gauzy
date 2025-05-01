@@ -189,13 +189,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	@Permissions(PermissionsEnum.ORG_INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 	@UseValidationPipe({ transform: true })
 	async create(@Body() entity: CreateInvoiceDTO): Promise<Invoice> {
-		const userId = RequestContext.currentUserId();
-		return await this.commandBus.execute(
-			new InvoiceCreateCommand({
-				...entity,
-				createdById: userId
-			})
-		);
+		return await this.commandBus.execute(new InvoiceCreateCommand(entity));
 	}
 
 	/**
@@ -238,7 +232,6 @@ export class InvoiceController extends CrudController<Invoice> {
 		return await this.commandBus.execute(
 			new InvoiceCreateCommand({
 				...entity,
-				createdById: user.id,
 				fromUserId: user.id,
 				employeeId: user.employeeId
 			})
