@@ -1,4 +1,4 @@
-import { currencyWithSymbol } from '@gauzy/common';
+import { currencyWithSymbol } from '@gauzy/utils';
 import { IInvoice, IOrganization, IOrganizationContact, InvoiceTypeEnum } from '@gauzy/contracts';
 import * as moment from 'moment';
 
@@ -85,7 +85,9 @@ export async function generateInvoicePdfDefinition(
 						bold: true,
 						width: '50%',
 						alignment: 'right',
-						text: `${invoice.isEstimate ? translatedText.estimate : translatedText.invoice} ${translatedText.number}: ${invoice.invoiceNumber}`
+						text: `${invoice.isEstimate ? translatedText.estimate : translatedText.invoice} ${
+							translatedText.number
+						}: ${invoice.invoiceNumber}`
 					}
 				]
 			},
@@ -97,7 +99,9 @@ export async function generateInvoicePdfDefinition(
 						text: [
 							{
 								bold: true,
-								text: `${invoice.isEstimate ? translatedText.estimate : translatedText.invoice} ${translatedText.date}: `
+								text: `${invoice.isEstimate ? translatedText.estimate : translatedText.invoice} ${
+									translatedText.date
+								}: `
 							},
 							`${moment(invoice.invoiceDate).format(organization.dateFormat)}`
 						]
@@ -161,25 +165,27 @@ export async function generateInvoicePdfDefinition(
 			' ',
 			{
 				table: {
-					widths: ['60%', '20%', "20%"],
+					widths: ['60%', '20%', '20%'],
 					body: [
 						[
-							invoice.terms?.length > 0 ? {
-								rowSpan: 7,
-								alignment: 'top',
-								columns: [
-									{
-										width: '*',
-										text: [
+							invoice.terms?.length > 0
+								? {
+										rowSpan: 7,
+										alignment: 'top',
+										columns: [
 											{
-												bold: true,
-												text: `${translatedText.notes}\n\n`
-											},
-											`${invoice.terms}`
+												width: '*',
+												text: [
+													{
+														bold: true,
+														text: `${translatedText.notes}\n\n`
+													},
+													`${invoice.terms}`
+												]
+											}
 										]
-									}
-								]
-							} : '',
+								  }
+								: '',
 							{
 								bold: true,
 								alignment: 'right',
@@ -187,7 +193,10 @@ export async function generateInvoicePdfDefinition(
 							},
 							{
 								alignment: 'right',
-								text: invoice.taxType === 'PERCENT' ? `${invoice.tax}%` : currencyWithSymbol(invoice.tax, invoice.currency)
+								text:
+									invoice.taxType === 'PERCENT'
+										? `${invoice.tax}%`
+										: currencyWithSymbol(invoice.tax, invoice.currency)
 							}
 						],
 						[
@@ -199,7 +208,10 @@ export async function generateInvoicePdfDefinition(
 							},
 							{
 								alignment: 'right',
-								text: invoice.tax2Type === 'PERCENT' ? `${invoice.tax2}%` : currencyWithSymbol(invoice.tax2, invoice.currency)
+								text:
+									invoice.tax2Type === 'PERCENT'
+										? `${invoice.tax2}%`
+										: currencyWithSymbol(invoice.tax2, invoice.currency)
 							}
 						],
 						[
@@ -211,7 +223,10 @@ export async function generateInvoicePdfDefinition(
 							},
 							{
 								alignment: 'right',
-								text: invoice.discountType === 'PERCENT' ? `${invoice.discountValue}%` : currencyWithSymbol(invoice.discountValue, invoice.currency)
+								text:
+									invoice.discountType === 'PERCENT'
+										? `${invoice.discountValue}%`
+										: currencyWithSymbol(invoice.discountValue, invoice.currency)
 							}
 						],
 						[
@@ -227,37 +242,38 @@ export async function generateInvoicePdfDefinition(
 								text: currencyWithSymbol(invoice.totalValue, invoice.currency)
 							}
 						],
-						...(invoice.hasRemainingAmountInvoiced ? [
-							[
-								'',
-								{
-									bold: true,
-									alignment: 'right',
-									text: `${translatedText.alreadyPaid}:`
-								},
-								{
-									alignment: 'right',
-									text: currencyWithSymbol(invoice.alreadyPaid, invoice.currency)
-								}
-							],
-							[
-								'',
-								{
-									bold: true,
-									alignment: 'right',
-									text: `${translatedText.amountDue}:`
-								},
-								{
-									alignment: 'right',
-									text: currencyWithSymbol(invoice.amountDue, invoice.currency)
-								}
-							]
-						] : [['', '', ''], ['', '', '']]),
-						[
-							'',
-							'',
-							''
-						]
+						...(invoice.hasRemainingAmountInvoiced
+							? [
+									[
+										'',
+										{
+											bold: true,
+											alignment: 'right',
+											text: `${translatedText.alreadyPaid}:`
+										},
+										{
+											alignment: 'right',
+											text: currencyWithSymbol(invoice.alreadyPaid, invoice.currency)
+										}
+									],
+									[
+										'',
+										{
+											bold: true,
+											alignment: 'right',
+											text: `${translatedText.amountDue}:`
+										},
+										{
+											alignment: 'right',
+											text: currencyWithSymbol(invoice.amountDue, invoice.currency)
+										}
+									]
+							  ]
+							: [
+									['', '', ''],
+									['', '', '']
+							  ]),
+						['', '', '']
 					]
 				},
 				layout: {
@@ -265,7 +281,7 @@ export async function generateInvoicePdfDefinition(
 					border: [false, false, false, false],
 					fillColor: function (rowIndex, node, columnIndex) {
 						return rowIndex === 3 && columnIndex > 0 ? '#E6E6E6' : null;
-					},
+					}
 				}
 			}
 		]

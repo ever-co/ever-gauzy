@@ -9,6 +9,7 @@ export * from './lib/chunks';
 export * from './lib/class-mixins';
 export * from './lib/code-generator';
 export * from './lib/convert-to-hex';
+export * from './lib/currency';
 export * from './lib/deduplicate';
 export * from './lib/deep-clone';
 export * from './lib/deep-merge';
