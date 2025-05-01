@@ -157,47 +157,47 @@ export class CreateZapierWebhookSubscriptionRepositoryTable1744014217496 impleme
 			`CREATE TABLE "zapier_webhook_subscription" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "targetUrl" varchar NOT NULL, "event" varchar NOT NULL, "integrationId" varchar)`
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_7ac5d8545140784b6cefa771b6" ON "zapier_webhook_subscription" ("createdByUserId") `
+			`CREATE INDEX "IDX_bb6329dba3611e13d777e77178" ON "zapier_webhook_subscription" ("createdByUserId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_41a8a30ed05b7c03ba4ffa0a5a" ON "zapier_webhook_subscription" ("updatedByUserId") `
+			`CREATE INDEX "IDX_faf0707617abf423320b5a8377" ON "zapier_webhook_subscription" ("updatedByUserId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_00d7295263f758a465acc55028" ON "zapier_webhook_subscription" ("deletedByUserId") `
+			`CREATE INDEX "IDX_3bf7411675f6cb093aadd19689" ON "zapier_webhook_subscription" ("deletedByUserId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_4a20a462973171ee872620eb0c" ON "zapier_webhook_subscription" ("isActive") `
+			`CREATE INDEX "IDX_08f81916eaa1967b6f6b1903bd" ON "zapier_webhook_subscription" ("isActive") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_5feb24771dd5f4e24ce01f988d" ON "zapier_webhook_subscription" ("isArchived") `
+			`CREATE INDEX "IDX_e6ce7627d2bb5bd4ba0ed53217" ON "zapier_webhook_subscription" ("isArchived") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_4eeb6acd2b5eee53148b52526b" ON "zapier_webhook_subscription" ("tenantId") `
+			`CREATE INDEX "IDX_4481c88f8c66731a436bb3d5d8" ON "zapier_webhook_subscription" ("tenantId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_7257011058fb1c910277b5ea0b" ON "zapier_webhook_subscription" ("organizationId") `
+			`CREATE INDEX "IDX_14479d220903bd9110f0267072" ON "zapier_webhook_subscription" ("organizationId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_5e200877326e3bb0f8cbc1c600" ON "zapier_webhook_subscription" ("targetUrl") `
+			`CREATE INDEX "IDX_22d421bdeb03778ca787febacf" ON "zapier_webhook_subscription" ("targetUrl") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_b72a0994510a7705a4ae15f75a" ON "zapier_webhook_subscription" ("event") `
+			`CREATE INDEX "IDX_8ca54536e5f73094ccc51a74ea" ON "zapier_webhook_subscription" ("event") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_2d6e5ddfbfc190b802b8373a1c" ON "zapier_webhook_subscription" ("integrationId") `
+			`CREATE INDEX "IDX_b9bb1dffd8837c6909ec342a7d" ON "zapier_webhook_subscription" ("integrationId") `
 		);
-		await queryRunner.query(`DROP INDEX "IDX_7ac5d8545140784b6cefa771b6"`);
-		await queryRunner.query(`DROP INDEX "IDX_41a8a30ed05b7c03ba4ffa0a5a"`);
-		await queryRunner.query(`DROP INDEX "IDX_00d7295263f758a465acc55028"`);
-		await queryRunner.query(`DROP INDEX "IDX_4a20a462973171ee872620eb0c"`);
-		await queryRunner.query(`DROP INDEX "IDX_5feb24771dd5f4e24ce01f988d"`);
-		await queryRunner.query(`DROP INDEX "IDX_4eeb6acd2b5eee53148b52526b"`);
-		await queryRunner.query(`DROP INDEX "IDX_7257011058fb1c910277b5ea0b"`);
-		await queryRunner.query(`DROP INDEX "IDX_5e200877326e3bb0f8cbc1c600"`);
-		await queryRunner.query(`DROP INDEX "IDX_b72a0994510a7705a4ae15f75a"`);
-		await queryRunner.query(`DROP INDEX "IDX_2d6e5ddfbfc190b802b8373a1c"`);
+		await queryRunner.query(`DROP INDEX "IDX_bb6329dba3611e13d777e77178"`);
+		await queryRunner.query(`DROP INDEX "IDX_faf0707617abf423320b5a8377"`);
+		await queryRunner.query(`DROP INDEX "IDX_3bf7411675f6cb093aadd19689"`);
+		await queryRunner.query(`DROP INDEX "IDX_08f81916eaa1967b6f6b1903bd"`);
+		await queryRunner.query(`DROP INDEX "IDX_e6ce7627d2bb5bd4ba0ed53217"`);
+		await queryRunner.query(`DROP INDEX "IDX_4481c88f8c66731a436bb3d5d8"`);
+		await queryRunner.query(`DROP INDEX "IDX_14479d220903bd9110f0267072"`);
+		await queryRunner.query(`DROP INDEX "IDX_22d421bdeb03778ca787febacf"`);
+		await queryRunner.query(`DROP INDEX "IDX_8ca54536e5f73094ccc51a74ea"`);
+		await queryRunner.query(`DROP INDEX "IDX_b9bb1dffd8837c6909ec342a7d"`);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_zapier_webhook_subscription" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "targetUrl" varchar NOT NULL, "event" varchar NOT NULL, "integrationId" varchar, CONSTRAINT "FK_7ac5d8545140784b6cefa771b65" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_41a8a30ed05b7c03ba4ffa0a5a6" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_00d7295263f758a465acc550281" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_4eeb6acd2b5eee53148b52526b1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_7257011058fb1c910277b5ea0b7" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_2d6e5ddfbfc190b802b8373a1c1" FOREIGN KEY ("integrationId") REFERENCES "integration_tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+			`CREATE TABLE "temporary_zapier_webhook_subscription" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "targetUrl" varchar NOT NULL, "event" varchar NOT NULL, "integrationId" varchar, CONSTRAINT "FK_bb6329dba3611e13d777e771787" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_faf0707617abf423320b5a8377f" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_3bf7411675f6cb093aadd19689f" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_4481c88f8c66731a436bb3d5d8a" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_14479d220903bd9110f02670723" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_b9bb1dffd8837c6909ec342a7df" FOREIGN KEY ("integrationId") REFERENCES "integration_tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "temporary_zapier_webhook_subscription"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "targetUrl", "event", "integrationId") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "targetUrl", "event", "integrationId" FROM "zapier_webhook_subscription"`
@@ -207,34 +207,34 @@ export class CreateZapierWebhookSubscriptionRepositoryTable1744014217496 impleme
 			`ALTER TABLE "temporary_zapier_webhook_subscription" RENAME TO "zapier_webhook_subscription"`
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_7ac5d8545140784b6cefa771b6" ON "zapier_webhook_subscription" ("createdByUserId") `
+			`CREATE INDEX "IDX_bb6329dba3611e13d777e77178" ON "zapier_webhook_subscription" ("createdByUserId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_41a8a30ed05b7c03ba4ffa0a5a" ON "zapier_webhook_subscription" ("updatedByUserId") `
+			`CREATE INDEX "IDX_faf0707617abf423320b5a8377" ON "zapier_webhook_subscription" ("updatedByUserId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_00d7295263f758a465acc55028" ON "zapier_webhook_subscription" ("deletedByUserId") `
+			`CREATE INDEX "IDX_3bf7411675f6cb093aadd19689" ON "zapier_webhook_subscription" ("deletedByUserId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_4a20a462973171ee872620eb0c" ON "zapier_webhook_subscription" ("isActive") `
+			`CREATE INDEX "IDX_08f81916eaa1967b6f6b1903bd" ON "zapier_webhook_subscription" ("isActive") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_5feb24771dd5f4e24ce01f988d" ON "zapier_webhook_subscription" ("isArchived") `
+			`CREATE INDEX "IDX_e6ce7627d2bb5bd4ba0ed53217" ON "zapier_webhook_subscription" ("isArchived") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_4eeb6acd2b5eee53148b52526b" ON "zapier_webhook_subscription" ("tenantId") `
+			`CREATE INDEX "IDX_4481c88f8c66731a436bb3d5d8" ON "zapier_webhook_subscription" ("tenantId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_7257011058fb1c910277b5ea0b" ON "zapier_webhook_subscription" ("organizationId") `
+			`CREATE INDEX "IDX_14479d220903bd9110f0267072" ON "zapier_webhook_subscription" ("organizationId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_5e200877326e3bb0f8cbc1c600" ON "zapier_webhook_subscription" ("targetUrl") `
+			`CREATE INDEX "IDX_22d421bdeb03778ca787febacf" ON "zapier_webhook_subscription" ("targetUrl") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_b72a0994510a7705a4ae15f75a" ON "zapier_webhook_subscription" ("event") `
+			`CREATE INDEX "IDX_8ca54536e5f73094ccc51a74ea" ON "zapier_webhook_subscription" ("event") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_2d6e5ddfbfc190b802b8373a1c" ON "zapier_webhook_subscription" ("integrationId") `
+			`CREATE INDEX "IDX_b9bb1dffd8837c6909ec342a7d" ON "zapier_webhook_subscription" ("integrationId") `
 		);
 	}
 
@@ -244,16 +244,16 @@ export class CreateZapierWebhookSubscriptionRepositoryTable1744014217496 impleme
 	 * @param queryRunner
 	 */
 	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`DROP INDEX "IDX_2d6e5ddfbfc190b802b8373a1c"`);
-		await queryRunner.query(`DROP INDEX "IDX_b72a0994510a7705a4ae15f75a"`);
-		await queryRunner.query(`DROP INDEX "IDX_5e200877326e3bb0f8cbc1c600"`);
-		await queryRunner.query(`DROP INDEX "IDX_7257011058fb1c910277b5ea0b"`);
-		await queryRunner.query(`DROP INDEX "IDX_4eeb6acd2b5eee53148b52526b"`);
-		await queryRunner.query(`DROP INDEX "IDX_5feb24771dd5f4e24ce01f988d"`);
-		await queryRunner.query(`DROP INDEX "IDX_4a20a462973171ee872620eb0c"`);
-		await queryRunner.query(`DROP INDEX "IDX_00d7295263f758a465acc55028"`);
-		await queryRunner.query(`DROP INDEX "IDX_41a8a30ed05b7c03ba4ffa0a5a"`);
-		await queryRunner.query(`DROP INDEX "IDX_7ac5d8545140784b6cefa771b6"`);
+		await queryRunner.query(`DROP INDEX "IDX_b9bb1dffd8837c6909ec342a7d"`);
+		await queryRunner.query(`DROP INDEX "IDX_8ca54536e5f73094ccc51a74ea"`);
+		await queryRunner.query(`DROP INDEX "IDX_22d421bdeb03778ca787febacf"`);
+		await queryRunner.query(`DROP INDEX "IDX_14479d220903bd9110f0267072"`);
+		await queryRunner.query(`DROP INDEX "IDX_4481c88f8c66731a436bb3d5d8"`);
+		await queryRunner.query(`DROP INDEX "IDX_e6ce7627d2bb5bd4ba0ed53217"`);
+		await queryRunner.query(`DROP INDEX "IDX_08f81916eaa1967b6f6b1903bd"`);
+		await queryRunner.query(`DROP INDEX "IDX_3bf7411675f6cb093aadd19689"`);
+		await queryRunner.query(`DROP INDEX "IDX_faf0707617abf423320b5a8377"`);
+		await queryRunner.query(`DROP INDEX "IDX_bb6329dba3611e13d777e77178"`);
 		await queryRunner.query(
 			`ALTER TABLE "zapier_webhook_subscription" RENAME TO "temporary_zapier_webhook_subscription"`
 		);
@@ -265,45 +265,45 @@ export class CreateZapierWebhookSubscriptionRepositoryTable1744014217496 impleme
 		);
 		await queryRunner.query(`DROP TABLE "temporary_zapier_webhook_subscription"`);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_2d6e5ddfbfc190b802b8373a1c" ON "zapier_webhook_subscription" ("integrationId") `
+			`CREATE INDEX "IDX_b9bb1dffd8837c6909ec342a7d" ON "zapier_webhook_subscription" ("integrationId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_b72a0994510a7705a4ae15f75a" ON "zapier_webhook_subscription" ("event") `
+			`CREATE INDEX "IDX_8ca54536e5f73094ccc51a74ea" ON "zapier_webhook_subscription" ("event") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_5e200877326e3bb0f8cbc1c600" ON "zapier_webhook_subscription" ("targetUrl") `
+			`CREATE INDEX "IDX_22d421bdeb03778ca787febacf" ON "zapier_webhook_subscription" ("targetUrl") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_7257011058fb1c910277b5ea0b" ON "zapier_webhook_subscription" ("organizationId") `
+			`CREATE INDEX "IDX_14479d220903bd9110f0267072" ON "zapier_webhook_subscription" ("organizationId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_4eeb6acd2b5eee53148b52526b" ON "zapier_webhook_subscription" ("tenantId") `
+			`CREATE INDEX "IDX_4481c88f8c66731a436bb3d5d8" ON "zapier_webhook_subscription" ("tenantId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_5feb24771dd5f4e24ce01f988d" ON "zapier_webhook_subscription" ("isArchived") `
+			`CREATE INDEX "IDX_e6ce7627d2bb5bd4ba0ed53217" ON "zapier_webhook_subscription" ("isArchived") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_4a20a462973171ee872620eb0c" ON "zapier_webhook_subscription" ("isActive") `
+			`CREATE INDEX "IDX_08f81916eaa1967b6f6b1903bd" ON "zapier_webhook_subscription" ("isActive") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_00d7295263f758a465acc55028" ON "zapier_webhook_subscription" ("deletedByUserId") `
+			`CREATE INDEX "IDX_3bf7411675f6cb093aadd19689" ON "zapier_webhook_subscription" ("deletedByUserId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_41a8a30ed05b7c03ba4ffa0a5a" ON "zapier_webhook_subscription" ("updatedByUserId") `
+			`CREATE INDEX "IDX_faf0707617abf423320b5a8377" ON "zapier_webhook_subscription" ("updatedByUserId") `
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_7ac5d8545140784b6cefa771b6" ON "zapier_webhook_subscription" ("createdByUserId") `
+			`CREATE INDEX "IDX_bb6329dba3611e13d777e77178" ON "zapier_webhook_subscription" ("createdByUserId") `
 		);
-		await queryRunner.query(`DROP INDEX "IDX_2d6e5ddfbfc190b802b8373a1c"`);
-		await queryRunner.query(`DROP INDEX "IDX_b72a0994510a7705a4ae15f75a"`);
-		await queryRunner.query(`DROP INDEX "IDX_5e200877326e3bb0f8cbc1c600"`);
-		await queryRunner.query(`DROP INDEX "IDX_7257011058fb1c910277b5ea0b"`);
-		await queryRunner.query(`DROP INDEX "IDX_4eeb6acd2b5eee53148b52526b"`);
-		await queryRunner.query(`DROP INDEX "IDX_5feb24771dd5f4e24ce01f988d"`);
-		await queryRunner.query(`DROP INDEX "IDX_4a20a462973171ee872620eb0c"`);
-		await queryRunner.query(`DROP INDEX "IDX_00d7295263f758a465acc55028"`);
-		await queryRunner.query(`DROP INDEX "IDX_41a8a30ed05b7c03ba4ffa0a5a"`);
-		await queryRunner.query(`DROP INDEX "IDX_7ac5d8545140784b6cefa771b6"`);
+		await queryRunner.query(`DROP INDEX "IDX_b9bb1dffd8837c6909ec342a7d"`);
+		await queryRunner.query(`DROP INDEX "IDX_8ca54536e5f73094ccc51a74ea"`);
+		await queryRunner.query(`DROP INDEX "IDX_22d421bdeb03778ca787febacf"`);
+		await queryRunner.query(`DROP INDEX "IDX_14479d220903bd9110f0267072"`);
+		await queryRunner.query(`DROP INDEX "IDX_4481c88f8c66731a436bb3d5d8"`);
+		await queryRunner.query(`DROP INDEX "IDX_e6ce7627d2bb5bd4ba0ed53217"`);
+		await queryRunner.query(`DROP INDEX "IDX_08f81916eaa1967b6f6b1903bd"`);
+		await queryRunner.query(`DROP INDEX "IDX_3bf7411675f6cb093aadd19689"`);
+		await queryRunner.query(`DROP INDEX "IDX_faf0707617abf423320b5a8377"`);
+		await queryRunner.query(`DROP INDEX "IDX_bb6329dba3611e13d777e77178"`);
 		await queryRunner.query(`DROP TABLE "zapier_webhook_subscription"`);
 	}
 
