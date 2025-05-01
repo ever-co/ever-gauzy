@@ -12,8 +12,7 @@ import {
 	IMatchingCriterions,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { LIKE_OPERATOR, RequestContext, TenantAwareCrudService, TypeOrmEmployeeRepository } from '@gauzy/core';
-import { prepareSQLQuery as p } from '@gauzy/core';
+import { LIKE_OPERATOR, RequestContext, TenantAwareCrudService, TypeOrmEmployeeRepository, prepareSQLQuery as p } from '@gauzy/core';
 import { JobPreset } from './job-preset.entity';
 import {
 	CreateJobPresetCommand,
