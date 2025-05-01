@@ -51,7 +51,6 @@ import { AppService } from '../app/app.service';
 import { AppModule } from '../app/app.module';
 import { configureRedisSession } from './redis-store';
 import { setupSwagger } from './swagger';
-import { traceModuleInit } from './bootstrap-trace';
 
 /**
  * Bootstrap the NestJS application, configuring various settings and initializing the server.
@@ -189,9 +188,6 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	});
 
 	console.timeEnd(chalk.yellow('✔ Total Application Bootstrap Time'));
-
-	// Trace initialization times
-	traceModuleInit(app);
 
 	return app;
 }
