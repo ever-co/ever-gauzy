@@ -11,10 +11,14 @@ import { MigrationUtils } from './migration-utils';
 import { isDatabaseType, isSqliteDB } from './../core/utils';
 
 /**
- * @description
- * Run pending database migrations. See [TypeORM migration docs](https://typeorm.io/#/migrations)
+ * Executes all pending database migrations using TypeORM for the provided plugin configuration.
  *
- * @param pluginConfig - Partial application plugin config
+ * Applies each migration in a separate transaction and logs the outcome. If no migrations are pending, a warning is logged.
+ *
+ * @param pluginConfig - Partial plugin configuration specifying database connection details.
+ *
+ * @remark
+ * If an error occurs during migration execution, the process will terminate with a failure exit code after logging the error.
  */
 export async function runDatabaseMigrations(pluginConfig: Partial<ApplicationPluginConfig>): Promise<void> {
 	const config = await registerPluginConfig(pluginConfig);
@@ -40,10 +44,11 @@ export async function runDatabaseMigrations(pluginConfig: Partial<ApplicationPlu
 }
 
 /**
- * @description
- * Reverts last applied database migration. See [TypeORM migration docs](https://typeorm.io/#/migrations)
+ * Reverts the most recently applied database migration using TypeORM.
  *
- * @param pluginConfig - Partial application plugin config
+ * Applies the revert operation within a transaction for each migration step. Logs success or error messages and ensures the database connection is properly closed after the operation.
+ *
+ * @param pluginConfig - Partial plugin configuration containing database connection details.
  */
 export async function revertLastDatabaseMigration(pluginConfig: Partial<ApplicationPluginConfig>): Promise<void> {
 	const config = await registerPluginConfig(pluginConfig);
@@ -62,11 +67,15 @@ export async function revertLastDatabaseMigration(pluginConfig: Partial<Applicat
 }
 
 /**
- * @description
- * Generates a new migration file with SQL required to update the schema.
+ * Generates a new migration file containing SQL statements to update the database schema based on detected changes.
  *
- * @param pluginConfig - Partial application plugin configuration
- * @param options - Migration generation options including name and output directory
+ * If no schema changes are detected, no migration file is created and a warning is logged.
+ *
+ * @param pluginConfig - Partial plugin configuration used to initialize the database connection.
+ * @param options - Migration generation options, including the migration name and output directory.
+ *
+ * @remark
+ * Exits the process with a failure code if an error occurs during migration generation.
  */
 export async function generateMigration(
 	pluginConfig: Partial<ApplicationPluginConfig>,
@@ -138,11 +147,11 @@ export async function generateMigration(
 }
 
 /**
- * Resolves the directory where migration files should be generated.
+ * Determines the directory path for generating migration files based on provided options or plugin configuration.
  *
- * @param options - Migration options that may include a `dir` path
- * @param config - Plugin configuration containing possible CLI migration settings
- * @returns The resolved directory path or `undefined` if not found
+ * @param options - Migration options that may specify a target directory.
+ * @param config - Plugin configuration that may include CLI migration directory settings.
+ * @returns The directory path for migration files, or `undefined` if it cannot be determined.
  */
 export function resolveMigrationDirectory(
 	options: IMigrationOptions,
@@ -163,11 +172,14 @@ export function resolveMigrationDirectory(
 }
 
 /**
- * @description
- * Creates a new blank migration file to be used for schema changes.
+ * Creates a new blank migration file with the specified name and directory.
  *
- * @param pluginConfig - Partial application plugin configuration
- * @param options - Migration creation options including name and optional directory
+ * Generates a timestamped TypeScript migration file containing empty `up` and `down` methods, ready for manual schema changes.
+ *
+ * @param options - Migration creation options, including the migration name and optional output directory.
+ *
+ * @remark
+ * If the migration name is not provided in {@link options}, the function logs a warning and does not create a file.
  */
 export async function createMigration(
 	pluginConfig: Partial<ApplicationPluginConfig>,
@@ -200,11 +212,13 @@ export async function createMigration(
 }
 
 /**
- * @description
- * Initializes a new database connection. See [TypeORM migration docs](https://typeorm.io/#/connection)
+ * Initializes and returns a new TypeORM DataSource using the provided plugin configuration.
  *
- * @param config - Partial application plugin configuration
- * @returns An initialized TypeORM DataSource instance
+ * @param config - Plugin configuration containing database connection options.
+ * @returns The initialized TypeORM DataSource instance.
+ *
+ * @throws {Error} If database connection options are missing in {@link config}.
+ * @remark Exits the process if the database connection fails to initialize.
  */
 export async function initializeDatabaseConnection(config: Partial<ApplicationPluginConfig>): Promise<DataSource> {
 	const { dbConnectionOptions } = config;
@@ -238,10 +252,9 @@ export async function initializeDatabaseConnection(config: Partial<ApplicationPl
 }
 
 /**
- * @description
- * Gracefully shuts down the database connection after use.
+ * Closes an active TypeORM database connection if it is initialized.
  *
- * @param dataSource - An initialized TypeORM DataSource
+ * Logs a warning if the connection is not initialized or already closed.
  */
 export async function shutdownDatabaseConnection(dataSource: DataSource): Promise<void> {
 	if (!dataSource || !dataSource.isInitialized) {
@@ -269,7 +282,18 @@ function queryParams(parameters: any[] | undefined): string {
 }
 
 /**
- * Gets contents of the migration file.
+ * Generates a TypeScript migration class template for TypeORM with database-specific up and down methods.
+ *
+ * The generated class includes methods for applying and reverting schema changes for supported databases (Postgres, SQLite, MySQL), with SQL statements provided for each direction.
+ *
+ * @param connection - The TypeORM DataSource used to determine the database type.
+ * @param name - The base name for the migration class.
+ * @param timestamp - A timestamp to ensure the migration class name is unique.
+ * @param upSqls - SQL statements to execute when applying the migration.
+ * @param downSqls - SQL statements to execute when reverting the migration.
+ * @returns The contents of the migration file as a TypeScript string.
+ *
+ * @throws {Error} If the generated migration is run on an unsupported database type.
  */
 function getTemplate(
 	connection: DataSource,
