@@ -15,7 +15,7 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	 * The number of keyboard interactions in the given time slot minute.
 	 * Defaults to 0 if not provided.
 	 */
-	@ApiProperty({
+	@ApiPropertyOptional({
 		type: () => Number,
 		description: 'Number of keyboard interactions in the given time slot minute.',
 		example: 42,
@@ -30,7 +30,7 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	 * The number of mouse interactions in the given time slot minute.
 	 * Defaults to 0 if not provided.
 	 */
-	@ApiProperty({
+	@ApiPropertyOptional({
 		type: () => Number,
 		description: 'Number of mouse interactions in the given time slot minute.',
 		example: 42,
@@ -45,7 +45,7 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	 * Number of movements (e.g., mouse or device movements) detected within one minute.
 	 * Used to track activity levels during time tracking sessions.
 	 */
-	@ApiProperty({
+	@ApiPropertyOptional({
 		type: Number,
 		description: 'Number of movements detected in 1 minute',
 		example: 42,
