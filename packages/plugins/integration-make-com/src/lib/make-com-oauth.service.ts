@@ -367,8 +367,7 @@ async refreshToken(integrationId: string): Promise<void> {
 		const { access_token, refresh_token, expires_in } = response.data;
 
 		// Calculate the expiry time
-		const expiresAt = new Date();
-		expiresAt.setSeconds(expiresAt.getSeconds() + expires_in.toString());
+		const expiresAt = new Date(Date.now() + Number(expires_in) * 1000);
 
 		// Update the integration settings
 		// Get the tenant and organization IDs from the existing settings

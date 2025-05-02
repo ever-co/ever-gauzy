@@ -21,11 +21,6 @@ export interface IMakeComIntegrationSettings {
 	webhookUrl: string | null;
 }
 
-// OAuth related types
-/**
- * OAuth token data as returned by Make.com OAuth service.
- * Properties use snake_case to match the OAuth provider's response format.
- */
 /**
  * Pure DTO representing Make.com OAuth token response
  */
@@ -50,7 +45,6 @@ export interface IMakeComAuthConfig {
 
 export interface IMakeComCreateIntegration extends IBasePerTenantAndOrganizationEntityModel {
 	// OAuth credentials and parameters
-	// NB: property names use snake_case to match Make.com's expected payload
 	oauthParams: {
 		client_id: string;
 		code: string;

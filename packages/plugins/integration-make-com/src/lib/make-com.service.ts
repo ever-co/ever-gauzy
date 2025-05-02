@@ -288,14 +288,15 @@ async getOAuthCredentials(integrationId: string): Promise<{ clientId: string; cl
 	 */
 	async makeApiCall(
 		makeApiUrl: string,
-		method: string = 'GET',
+		method = 'GET',
 		data: any = null,
 		retryLimit = 1,
 		preloadedIntegration?: any // Add optional parameter for pre-loaded integration
 	): Promise<any> {
 		try {
 			// Use preloaded integration if available, otherwise fallback to DB lookup
-			if (!preloadedIntegration) {
+			const integrationMake = preloadedIntegration || RequestContext.currentRequest()?.integration;
+			if (!integrationMake) {
 				const tenantId = RequestContext.currentTenantId();
 				if (!tenantId) {
 					throw new NotFoundException('Tenant ID not found in request context');
@@ -305,25 +306,27 @@ async getOAuthCredentials(integrationId: string): Promise<{ clientId: string; cl
 			const req = RequestContext.currentRequest();
 			if (!req) {
 				// No request context-fallback to DB lookup
-				const dbSettings = await this.getIntegrationSettings();
-				const settingsMap = Object.fromEntries(Object.entries(dbSettings));
-				const accessToken = settingsMap[MakeSettingName.ACCESS_TOKEN];
-				if (!accessToken) {
+				const tokenSetting = await this.integrationSettingService.findOneByOptions({
+					where: {
+						integration: { name: IntegrationEnum.MakeCom },
+						settingsName: MakeSettingName.ACCESS_TOKEN
+					}
+				});
+				if (!tokenSetting) {
 					throw new NotFoundException('Access token not found for Make.com integration');
 				}
-				return accessToken;
-				}
+			}
 
-				const integration = req.integration;
+			const integration = req.integration;
 			if (!integration || integration.name !== IntegrationEnum.MakeCom) {
 				throw new NotFoundException(`${IntegrationEnum.MakeCom} integration not found in request context`);
-				}
+			}
 
-			 // Middleware already converts IIntegrationSetting[] → Record via arrayToObject,
-			// but if you ever bypass it, this guard ensures it’s a map:
+			// Middleware already converts IIntegrationSetting[] → Record via arrayToObject,
+			// but if you ever bypass it, this guard ensures it's a map:
 			const settingsObj = Array.isArray(integration.settings)
-			? Object.fromEntries(integration.settings.map(s => [s.settingsName, s.settingsValue]))
-			: integration.settings;
+				? Object.fromEntries(integration.settings.map(s => [s.settingsName, s.settingsValue]))
+				: integration.settings;
 			const accessToken = settingsObj[MakeSettingName.ACCESS_TOKEN];
 
 			if (!accessToken) {
@@ -436,7 +439,7 @@ async getOAuthCredentials(integrationId: string): Promise<{ clientId: string; cl
 		makeApiUrl: string,
 		method: string,
 		data: any,
-		retryLimit: number = 1
+		retryLimit = 1
 	): Promise<any> {
 		if (retryLimit <= 0) {
 			throw new Error('Token refresh retry limit exceeded');
