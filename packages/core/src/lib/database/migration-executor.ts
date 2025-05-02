@@ -278,10 +278,9 @@ function getTemplate(
 	upSqls: string[],
 	downSqls: string[]
 ): string {
-	return `
-import { MigrationInterface, QueryRunner } from "typeorm";
+	return `import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
-import { DatabaseTypeEnum } from "@gauzy/config";
+import { DatabaseTypeEnum } from '@gauzy/config';
 
 export class ${camelCase(name, true)}${timestamp} implements MigrationInterface {
     name = '${camelCase(name, true)}${timestamp}';
