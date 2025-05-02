@@ -17,6 +17,7 @@ import {
 	IWasabiConfig,
 	IJiraIntegrationConfig,
 	IDigitalOceanConfig,
+	IMakeComConfig,
 	IPosthogConfig,
 	IZapierConfig
 } from '@gauzy/common';
@@ -121,6 +122,7 @@ export interface IEnvironment {
 	upwork?: IUpworkConfig;
 	hubstaff?: IHubstaffConfig;
 	zapier?: IZapierConfig;
+	makeCom?: IMakeComConfig;
 
 	isElectron?: boolean;
 	gauzyUserPath?: string;
