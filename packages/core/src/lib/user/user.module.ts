@@ -19,12 +19,12 @@ import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 
 @Module({
 	imports: [
-		forwardRef(() => TypeOrmModule.forFeature([User])),
-		forwardRef(() => MikroOrmModule.forFeature([User])),
+		CqrsModule,
+		TypeOrmModule.forFeature([User]),
+		MikroOrmModule.forFeature([User]),
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => TaskModule),
 		forwardRef(() => EmployeeModule),
-		CqrsModule,
 		FactoryResetModule
 	],
 	controllers: [UserController],

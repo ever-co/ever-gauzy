@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -11,10 +11,10 @@ import { TypeOrmAccountingTemplateRepository } from './repository/type-orm-accou
 
 @Module({
 	imports: [
-		forwardRef(() => TypeOrmModule.forFeature([AccountingTemplate])),
-		forwardRef(() => MikroOrmModule.forFeature([AccountingTemplate])),
-		forwardRef(() => RolePermissionModule),
-		CqrsModule
+		CqrsModule,
+		TypeOrmModule.forFeature([AccountingTemplate]),
+		MikroOrmModule.forFeature([AccountingTemplate]),
+		RolePermissionModule
 	],
 	controllers: [AccountingTemplateController],
 	providers: [AccountingTemplateService, TypeOrmAccountingTemplateRepository, ...QueryHandlers]

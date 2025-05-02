@@ -17,8 +17,8 @@ import { MikroOrmUserOrganizationRepository } from './repository/mikro-orm-user-
 
 @Module({
 	imports: [
-		forwardRef(() => TypeOrmModule.forFeature([UserOrganization])),
-		forwardRef(() => MikroOrmModule.forFeature([UserOrganization])),
+		TypeOrmModule.forFeature([UserOrganization]),
+		MikroOrmModule.forFeature([UserOrganization]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => OrganizationModule),
