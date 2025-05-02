@@ -14,29 +14,28 @@ import { isDatabaseType, isSqliteDB } from './../core/utils';
  * @description
  * Run pending database migrations. See [TypeORM migration docs](https://typeorm.io/#/migrations)
  *
- * @param pluginConfig
+ * @param pluginConfig - Partial application plugin config
  */
-export async function runDatabaseMigrations(pluginConfig: Partial<ApplicationPluginConfig>) {
+export async function runDatabaseMigrations(pluginConfig: Partial<ApplicationPluginConfig>): Promise<void> {
 	const config = await registerPluginConfig(pluginConfig);
-	const dataSource: DataSource = await establishDatabaseConnection(config);
+	const dataSource = await initializeDatabaseConnection(config);
 
 	try {
 		const migrations = await dataSource.runMigrations({ transaction: 'each' });
+
 		if (isNotEmpty(migrations)) {
-			for (const migration of migrations) {
+			migrations.forEach((migration) => {
 				console.log(chalk.green(`Migration ${migration.name} has been run successfully!`));
-			}
+			});
 		} else {
 			console.log(chalk.yellow(`There are no pending migrations to run.`));
 		}
 	} catch (error) {
-		if (dataSource) await closeConnection(dataSource);
-
-		console.log(chalk.black.bgRed('Error during migration run:'));
+		console.error(chalk.black.bgRed('Error during migration run:'));
 		console.error(error);
 		process.exit(1);
 	} finally {
-		await closeConnection(dataSource);
+		await shutdownDatabaseConnection(dataSource);
 	}
 }
 
@@ -44,54 +43,45 @@ export async function runDatabaseMigrations(pluginConfig: Partial<ApplicationPlu
  * @description
  * Reverts last applied database migration. See [TypeORM migration docs](https://typeorm.io/#/migrations)
  *
- * @param pluginConfig
+ * @param pluginConfig - Partial application plugin config
  */
-export async function revertLastDatabaseMigration(pluginConfig: Partial<ApplicationPluginConfig>) {
+export async function revertLastDatabaseMigration(pluginConfig: Partial<ApplicationPluginConfig>): Promise<void> {
 	const config = await registerPluginConfig(pluginConfig);
-	const connection = await establishDatabaseConnection(config);
+	const dataSource = await initializeDatabaseConnection(config);
 
 	try {
-		await connection.undoLastMigration({ transaction: 'each' });
-		console.log(chalk.green(`Migration has been reverted successfully!`));
+		await dataSource.undoLastMigration({ transaction: 'each' });
+		console.log(chalk.green('Last migration has been reverted successfully!'));
 	} catch (error) {
-		if (connection) await closeConnection(connection);
-
-		console.log(chalk.black.bgRed('Error during migration revert:'));
+		console.error(chalk.black.bgRed('Error during migration revert:'));
 		console.error(error);
 		process.exit(1);
 	} finally {
-		await closeConnection(connection);
+		await shutdownDatabaseConnection(dataSource);
 	}
 }
 
 /**
  * @description
- * Generates a new migration file with sql needs to be executed to update schema.
+ * Generates a new migration file with SQL required to update the schema.
  *
- * @param pluginConfig
+ * @param pluginConfig - Partial application plugin configuration
+ * @param options - Migration generation options including name and output directory
  */
-export async function generateMigration(pluginConfig: Partial<ApplicationPluginConfig>, options: IMigrationOptions) {
+export async function generateMigration(
+	pluginConfig: Partial<ApplicationPluginConfig>,
+	options: IMigrationOptions
+): Promise<void> {
 	if (!options.name) {
 		console.log(chalk.yellow('Migration name must be required.Please specify migration name!'));
 		return;
 	}
 	const config = await registerPluginConfig(pluginConfig);
+	const dataSource = await initializeDatabaseConnection(config);
+	const directory = resolveMigrationDirectory(options, config);
 
-	let directory = options.dir;
-	// if directory is not set then try to open plugin config and find default path there
-	if (!directory) {
-		try {
-			directory = config.dbConnectionOptions['cli']
-				? config.dbConnectionOptions['cli']['migrationsDir']
-				: undefined;
-		} catch (err) {
-			console.log('Error while finding migration directory', err);
-		}
-	}
-
-	const connection = await establishDatabaseConnection(config);
 	try {
-		const sqlInMemory = await connection.driver.createSchemaBuilder().log();
+		const sqlInMemory = await dataSource.driver.createSchemaBuilder().log();
 		const upSqls: string[] = [];
 		const downSqls: string[] = [];
 
@@ -119,7 +109,7 @@ export async function generateMigration(pluginConfig: Partial<ApplicationPluginC
 			/**
 			 *  Gets contents of the migration file.
 			 */
-			const fileContent = getTemplate(connection, options.name as any, timestamp, upSqls, downSqls.reverse());
+			const fileContent = getTemplate(dataSource, options.name as any, timestamp, upSqls, downSqls.reverse());
 
 			const filename = timestamp + '-' + options.name + '.ts';
 			const outputPath = directory ? path.join(directory, filename) : path.join(process.cwd(), filename);
@@ -139,122 +129,131 @@ export async function generateMigration(pluginConfig: Partial<ApplicationPluginC
 			);
 		}
 	} catch (error) {
-		if (connection) await closeConnection(connection);
-
-		console.log(chalk.black.bgRed('Error during migration generation:'));
+		console.error(chalk.red('❌ Error during migration generation:'));
 		console.error(error);
 		process.exit(1);
 	} finally {
-		await closeConnection(connection);
+		await shutdownDatabaseConnection(dataSource);
+	}
+}
+
+/**
+ * Resolves the directory where migration files should be generated.
+ *
+ * @param options - Migration options that may include a `dir` path
+ * @param config - Plugin configuration containing possible CLI migration settings
+ * @returns The resolved directory path or `undefined` if not found
+ */
+export function resolveMigrationDirectory(
+	options: IMigrationOptions,
+	config: Partial<ApplicationPluginConfig>
+): string | undefined {
+	if (options.dir) {
+		return options.dir;
+	}
+
+	try {
+		return config.dbConnectionOptions && config.dbConnectionOptions['cli']
+			? config.dbConnectionOptions['cli']['migrationsDir']
+			: undefined;
+	} catch (err) {
+		console.error(chalk.red('❌ Error while resolving migration directory:'), err);
+		return undefined;
 	}
 }
 
 /**
  * @description
- * Create a new blank migration file to be executed to create/update schema.
+ * Creates a new blank migration file to be used for schema changes.
  *
- * @param pluginConfig
+ * @param pluginConfig - Partial application plugin configuration
+ * @param options - Migration creation options including name and optional directory
  */
-export async function createMigration(pluginConfig: Partial<ApplicationPluginConfig>, options: IMigrationOptions) {
+export async function createMigration(
+	pluginConfig: Partial<ApplicationPluginConfig>,
+	options: IMigrationOptions
+): Promise<void> {
 	if (!options.name) {
-		console.log(chalk.yellow('Migration name must be required.Please specify migration name!'));
+		console.log(chalk.yellow('Migration name is required. Please specify a name using "--name".'));
 		return;
 	}
+
 	const config = await registerPluginConfig(pluginConfig);
+	const dataSource = await initializeDatabaseConnection(config);
+	const directory = resolveMigrationDirectory(options, config);
 
-	let directory = options.dir;
-	// if directory is not set then try to open plugin config and find default path there
-	if (!directory) {
-		try {
-			directory = config.dbConnectionOptions['cli']
-				? config.dbConnectionOptions['cli']['migrationsDir']
-				: undefined;
-		} catch (err) {
-			console.log('Error while finding migration directory', err);
-		}
-	}
-
-	const connection = await establishDatabaseConnection(config);
 	try {
-		const timestamp = new Date().getTime();
-		/**
-		 *  Gets contents of the migration file.
-		 */
-		const fileContent = getTemplate(connection, options.name as any, timestamp, [], []);
-
-		const filename = timestamp + '-' + options.name + '.ts';
+		const timestamp = Date.now();
+		const fileContent = getTemplate(dataSource, options.name, timestamp, [], []);
+		const filename = `${timestamp}-${options.name}.ts`;
 		const outputPath = directory ? path.join(directory, filename) : path.join(process.cwd(), filename);
 
-		try {
-			await MigrationUtils.createFile(outputPath, fileContent);
-			console.log(chalk.green(`Migration ${chalk.blue(outputPath)} has been created successfully.`));
-		} catch (error) {
-			console.log(chalk.black.bgRed('Error during migration creating files:'));
-			console.error(error);
-		}
+		await MigrationUtils.createFile(outputPath, fileContent);
+		console.log(chalk.green(`Migration ${chalk.blue(outputPath)} has been created successfully.`));
 	} catch (error) {
-		if (connection) await closeConnection(connection);
-
-		console.log(chalk.black.bgRed('Error during migration create:'));
+		console.error(chalk.red('❌ Error while creating migration file:'));
 		console.error(error);
 		process.exit(1);
 	} finally {
-		await closeConnection(connection);
+		await shutdownDatabaseConnection(dataSource);
 	}
 }
 
 /**
  * @description
- * Establish new database connection, if not found any connection. See [TypeORM migration docs](https://typeorm.io/#/connection)
+ * Initializes a new database connection. See [TypeORM migration docs](https://typeorm.io/#/connection)
  *
- * @param config
+ * @param config - Partial application plugin configuration
+ * @returns An initialized TypeORM DataSource instance
  */
-export async function establishDatabaseConnection(config: Partial<ApplicationPluginConfig>): Promise<DataSource> {
+export async function initializeDatabaseConnection(config: Partial<ApplicationPluginConfig>): Promise<DataSource> {
 	const { dbConnectionOptions } = config;
-	const overrideDbConfig = {
+
+	if (!dbConnectionOptions) {
+		throw new Error('❌ Missing database connection options in plugin config.');
+	}
+
+	const dataSource = new DataSource({
+		...dbConnectionOptions,
 		subscribers: [],
 		synchronize: false,
 		migrationsRun: false,
-		dropSchema: false,
-		logging: ['all']
-	};
+		dropSchema: false
+	} as DataSourceOptions);
 
-	let dataSource: DataSource;
+	console.log(chalk.yellow('NOTE: No existing database connection found. Creating a new one...'));
+
 	try {
-		console.log(chalk.yellow('NOTE: DATABASE CONNECTION DOES NOT EXIST YET. NEW ONE WILL BE CREATED!'));
-		try {
-			console.log(chalk.green(`CONNECTING TO DATABASE...`));
-			dataSource = new DataSource({
-				...dbConnectionOptions,
-				...overrideDbConfig
-			} as DataSourceOptions);
-			if (!dataSource.isInitialized) {
-				await dataSource.initialize();
-				console.log(chalk.green(`✅ CONNECTED TO DATABASE!`));
-			}
-		} catch (error) {
-			console.log('Unable to connect to database', error);
+		if (!dataSource.isInitialized) {
+			console.log(chalk.blue('Connecting to the database...'));
+			await dataSource.initialize();
+			console.log(chalk.green('✅ Successfully connected to the database.'));
 		}
 	} catch (error) {
-		console.log('Error while connecting to the database', error);
+		console.error(chalk.red('❌ Failed to connect to the database:'), error);
+		process.exit(1);
 	}
+
 	return dataSource;
 }
 
 /**
  * @description
- * Close database connection, after complete or failed process
+ * Gracefully shuts down the database connection after use.
  *
- * @param connection
+ * @param dataSource - An initialized TypeORM DataSource
  */
-async function closeConnection(dataSource: DataSource) {
+export async function shutdownDatabaseConnection(dataSource: DataSource): Promise<void> {
+	if (!dataSource || !dataSource.isInitialized) {
+		console.log(chalk.yellow('⚠️ Database connection is not initialized or already closed.'));
+		return;
+	}
+
 	try {
-		if (dataSource && dataSource.isInitialized) {
-			await dataSource.destroy();
-			console.log(chalk.green(`✅ DISCONNECTED TO DATABASE!`));
-		}
+		await dataSource.destroy();
+		console.log(chalk.green('✅ Database connection closed successfully.'));
 	} catch (error) {
-		console.log('Error while disconnecting to the database', error);
+		console.error(chalk.red('❌ Failed to close the database connection:'), error);
 	}
 }
 
@@ -285,7 +284,6 @@ import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class ${camelCase(name, true)}${timestamp} implements MigrationInterface {
-
     name = '${camelCase(name, true)}${timestamp}';
 
     /**
@@ -318,6 +316,8 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
      * @param queryRunner
      */
     public async down(queryRunner: QueryRunner): Promise<void> {
+		console.log(chalk.yellow(this.name + ' reverting changes!'));
+
         switch (queryRunner.connection.options.type) {
             case DatabaseTypeEnum.sqlite:
             case DatabaseTypeEnum.betterSqlite3:
