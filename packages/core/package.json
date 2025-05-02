@@ -128,7 +128,7 @@
 		"date-fns": "^2.28.0",
 		"dotenv": "^16.0.3",
 		"email-templates": "^8.0.8",
-		"express": "^4.21.2",
+		"express": "^5.1.0",
 		"express-session": "^1.18.1",
 		"fast-json-stringify": "^2.4.1",
 		"fs-extra": "^10.1.0",
@@ -187,7 +187,7 @@
 	"devDependencies": {
 		"@types/bcrypt": "^5.0.2",
 		"@types/email-templates": "^7.1.0",
-		"@types/express": "^5.0.0",
+		"@types/express": "^5.0.1",
 		"@types/fs-extra": "5.0.2",
 		"@types/graphql": "^14.5.0",
 		"@types/html-to-text": "^9.0.1",

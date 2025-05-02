@@ -1,9 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RelationId, JoinTable } from 'typeorm';
-import { IsNumber, IsDateString, IsUUID, IsNotEmpty, IsOptional } from 'class-validator';
-import { ITimeSlot, ITimeSlotMinute, IActivity, IScreenshot, IEmployee, ITimeLog, ID } from '@gauzy/contracts';
+import { IsNumber, IsDateString, IsUUID, IsNotEmpty, IsOptional, IsObject } from 'class-validator';
+import {
+	ITimeSlot,
+	ITimeSlotMinute,
+	IActivity,
+	IScreenshot,
+	IEmployee,
+	ITimeLog,
+	ID,
+	JsonData
+} from '@gauzy/contracts';
+import { isMySQL, isPostgres } from '@gauzy/config';
 import { Activity, Employee, Screenshot, TenantOrganizationBaseEntity, TimeLog } from './../../core/entities/internal';
-import { TimeSlotMinute } from './time-slot-minute.entity';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -13,29 +22,74 @@ import {
 	MultiORMOneToMany,
 	VirtualMultiOrmColumn
 } from './../../core/decorators/entity';
+import { TimeSlotMinute } from './time-slot-minute/time-slot-minute.entity';
 import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
 
 @MultiORMEntity('time_slot', { mikroOrmRepository: () => MikroOrmTimeSlotRepository })
 export class TimeSlot extends TenantOrganizationBaseEntity implements ITimeSlot {
-	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	/**
+	 * The number of seconds employee spent in the given time slot.
+	 * Defaults to 0 if not provided.
+	 */
+	@ApiPropertyOptional({
+		type: () => Number,
+		description: 'The number of seconds employee spent in the given time slot',
+		default: 0
+	})
 	@IsOptional()
 	@IsNumber()
 	@ColumnIndex()
 	@MultiORMColumn({ default: 0 })
 	duration?: number;
 
-	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	/**
+	 * The number of keyboard interactions in the given time slot minute.
+	 * Defaults to 0 if not provided.
+	 */
+	@ApiPropertyOptional({
+		type: () => Number,
+		description: 'Number of keyboard interactions in the given time slot.',
+		example: 42,
+		default: 0
+	})
 	@IsOptional()
 	@IsNumber()
 	@MultiORMColumn({ default: 0 })
 	keyboard?: number;
 
-	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	/**
+	 * The number of mouse interactions in the given time slot minute.
+	 * Defaults to 0 if not provided.
+	 */
+	@ApiPropertyOptional({
+		type: () => Number,
+		description: 'Number of mouse interactions in the given time slot.',
+		example: 42,
+		default: 0
+	})
 	@IsOptional()
 	@IsNumber()
 	@MultiORMColumn({ default: 0 })
 	mouse?: number;
 
+	/**
+	 * Number of movements (e.g., mouse or device movements) detected within 10 minutes.
+	 * Used to track activity levels during time tracking sessions.
+	 */
+	@ApiPropertyOptional({
+		type: Number,
+		description: 'Number of movements detected in 10 minutes',
+		example: 42,
+		default: 0
+	})
+	@IsOptional()
+	@IsNumber()
+	@MultiORMColumn({ default: 0 })
+	location?: number;
+
+	/**
+	 * The overall activity time of the time slot.
+	 */
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
@@ -43,6 +97,9 @@ export class TimeSlot extends TenantOrganizationBaseEntity implements ITimeSlot 
 	@MultiORMColumn({ default: 0 })
 	overall?: number;
 
+	/**
+	 * The start time of the time slot.
+	 */
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsNotEmpty()
 	@IsDateString()
@@ -51,17 +108,54 @@ export class TimeSlot extends TenantOrganizationBaseEntity implements ITimeSlot 
 	startedAt: Date;
 
 	/**
-	 * Additional virtual columns
+	 * Raw keyboard and mouse activity data (e.g., event logs or durations).
 	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
+	@MultiORMColumn({
+		type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text',
+		nullable: true
+	})
+	kbMouseActivity?: JsonData;
+
+	/**
+	 * Raw location activity data (e.g., coordinates or movement patterns).
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
+	@MultiORMColumn({
+		type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text',
+		nullable: true
+	})
+	locationActivity?: JsonData;
+
+	/**
+	 * Custom-defined activity data (e.g., domain-specific or extension usage).
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
+	@MultiORMColumn({
+		type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text',
+		nullable: true
+	})
+	customActivity?: JsonData;
+
+	// The stopped time of the time slot.
 	@VirtualMultiOrmColumn()
 	stoppedAt?: Date;
 
+	// The percentage of interactions in the given time slot.
 	@VirtualMultiOrmColumn()
 	percentage?: number;
 
+	// The percentage of keyboard interactions in the given time slot.
 	@VirtualMultiOrmColumn()
 	keyboardPercentage?: number;
 
+	// The percentage of mouse interactions in the given time slot.
 	@VirtualMultiOrmColumn()
 	mousePercentage?: number;
 
@@ -70,8 +164,9 @@ export class TimeSlot extends TenantOrganizationBaseEntity implements ITimeSlot 
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
+
 	/**
-	 * Employee
+	 * The reference to the `Employee` entity to which this time slot belongs.
 	 */
 	@MultiORMManyToOne(() => Employee, (it) => it.timeSlots, {
 		/** Database cascade action on delete. */
@@ -79,6 +174,9 @@ export class TimeSlot extends TenantOrganizationBaseEntity implements ITimeSlot 
 	})
 	employee?: IEmployee;
 
+	/**
+	 * The ID of the related `Employee` entity, stored as a UUID.
+	 */
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsUUID()
@@ -94,27 +192,21 @@ export class TimeSlot extends TenantOrganizationBaseEntity implements ITimeSlot 
 	*/
 
 	/**
-	 * Screenshot
+	 * The reference to the `Screenshot` entity to which this time slot belongs.
 	 */
-	@MultiORMOneToMany(() => Screenshot, (it) => it.timeSlot, {
-		cascade: true
-	})
+	@MultiORMOneToMany(() => Screenshot, (it) => it.timeSlot, { cascade: true })
 	screenshots?: IScreenshot[];
 
 	/**
-	 * Activity
+	 * The reference to the `Activity` entity to which this time slot belongs.
 	 */
-	@MultiORMOneToMany(() => Activity, (it) => it.timeSlot, {
-		cascade: true
-	})
+	@MultiORMOneToMany(() => Activity, (it) => it.timeSlot, { cascade: true })
 	activities?: IActivity[];
 
 	/**
-	 * TimeSlotMinute
+	 * The reference to the `TimeSlotMinute` entity to which this time slot belongs.
 	 */
-	@MultiORMOneToMany(() => TimeSlotMinute, (it) => it.timeSlot, {
-		cascade: true
-	})
+	@MultiORMOneToMany(() => TimeSlotMinute, (it) => it.timeSlot, { cascade: true })
 	timeSlotMinutes?: ITimeSlotMinute[];
 
 	/*
@@ -122,8 +214,9 @@ export class TimeSlot extends TenantOrganizationBaseEntity implements ITimeSlot 
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
+
 	/**
-	 * TimeLog
+	 * The reference to the `TimeLog` entity to which this time slot belongs.
 	 */
 	@MultiORMManyToMany(() => TimeLog, (it) => it.timeSlots, {
 		/**  Database cascade action on update. */

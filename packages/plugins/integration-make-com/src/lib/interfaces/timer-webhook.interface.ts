@@ -6,6 +6,11 @@ import { ID, ITimeLog, ITimerStatus } from '@gauzy/contracts';
 export type TimerEventDataType = ITimeLog | ITimerStatus;
 
 /**
+ * Timer event type
+ */
+export type TimerEventType = 'start' | 'stop' | 'status';
+
+/**
  * Generic timer event interface
  */
 export interface ITimerWebhookEvent<T extends TimerEventDataType = TimerEventDataType> {
@@ -30,8 +35,3 @@ export interface ITimerStopEvent extends ITimerWebhookEvent<ITimeLog> {
 export interface ITimerStatusEvent extends ITimerWebhookEvent<ITimerStatus> {
 	event: 'timer.status';
 }
-
-/**
- * Timer event type
- */
-export type TimerEventType = 'start' | 'stop' | 'status';

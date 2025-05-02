@@ -689,7 +689,7 @@ export class UpworkService {
 
 			const integratedTimeSlotsMinutes = await Promise.all(
 				minutes.map(async (minute) => {
-					const { record: findTimeSlot } = await this._timeSlotService.findOneOrFailByOptions({
+					const { record: timeSlot } = await this._timeSlotService.findOneOrFailByOptions({
 						where: {
 							tenantId,
 							employeeId,
@@ -697,17 +697,18 @@ export class UpworkService {
 						}
 					});
 
-					if (!findTimeSlot) {
+					if (!timeSlot) {
 						return;
 					}
 
 					const { time, mouse, keyboard } = minute;
+
 					const gauzyTimeSlotMinute = await this._commandBus.execute(
 						new CreateTimeSlotMinutesCommand({
 							mouse,
 							keyboard,
 							datetime: new Date(moment.unix(time).format('YYYY-MM-DD HH:mm:ss')),
-							timeSlot: findTimeSlot,
+							timeSlotId: timeSlot.id,
 							organizationId,
 							tenantId
 						})

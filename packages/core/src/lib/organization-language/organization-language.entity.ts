@@ -2,16 +2,12 @@ import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { IOrganizationLanguage } from '@gauzy/contracts';
-import {
-	Language,
-	TenantOrganizationBaseEntity
-} from '../core/entities/internal';
+import { Language, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmOrganizationLanguageRepository } from './repository/mikro-orm-organization-language.repository';
 
 @MultiORMEntity('organization_language', { mikroOrmRepository: () => MikroOrmOrganizationLanguageRepository })
 export class OrganizationLanguage extends TenantOrganizationBaseEntity implements IOrganizationLanguage {
-
 	@ApiProperty({ type: () => Language })
 	@MultiORMManyToOne(() => Language, {
 		/** Database cascade action on delete. */
@@ -19,7 +15,7 @@ export class OrganizationLanguage extends TenantOrganizationBaseEntity implement
 		referenceColumnName: 'code',
 		joinColumn: 'languageCode'
 	})
-	@JoinColumn({ referencedColumnName: "code" })
+	@JoinColumn({ referencedColumnName: 'code' })
 	language: Language;
 
 	@ApiProperty({ type: () => String })

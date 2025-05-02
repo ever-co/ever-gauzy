@@ -15,9 +15,9 @@ import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-or
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateCommand> {
 	constructor(
+		private readonly commandBus: CommandBus,
 		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
-		private readonly commandBus: CommandBus,
 		private readonly timeSlotService: TimeSlotService
 	) {}
 

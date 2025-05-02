@@ -76,7 +76,7 @@ export class LanguageUtils {
 				language.code = key;
 				language.is_system = systemLanguages.indexOf(key) >= 0;
 				language.description = nativeName;
-				language.color = faker.internet.color();
+				language.color = faker.color.rgb();
 				languages.push(language);
 			}
 		}
