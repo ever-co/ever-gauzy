@@ -56,16 +56,18 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
  * @returns {StrategyOption} - The Facebook OAuth configuration object.
  */
 export const parseFacebookConfig = (configService: ConfigService): StrategyOption => {
-	const clientID = configService.get<string>('facebook.clientId');
-	const clientSecret = configService.get<string>('facebook.clientSecret');
-	const callbackURL = configService.get<string>('facebook.callbackURL');
+	const { clientId, clientSecret, callbackURL } = {
+		clientId: configService.get<string>('facebook.clientId'),
+		clientSecret: configService.get<string>('facebook.clientSecret'),
+		callbackURL: configService.get<string>('facebook.callbackURL')
+	};
 
-	if (!clientID || !clientSecret || !callbackURL) {
+	if (!clientId || !clientSecret || !callbackURL) {
 		console.warn('⚠️ Facebook OAuth configuration is incomplete. Defaulting to "disabled".');
 	}
 
 	return {
-		clientID: clientID || 'disabled',
+		clientID: clientId || 'disabled',
 		clientSecret: clientSecret || 'disabled',
 		callbackURL: callbackURL || `${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/auth/facebook/callback`,
 		profileFields: ['id', 'emails', 'name'],

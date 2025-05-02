@@ -65,35 +65,37 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
  * @returns An object containing the Microsoft OAuth configuration parameters.
  */
 export const parseMicrosoftConfig = (configService: ConfigService): StrategyOptionsWithRequest => {
-	// Retrieve Microsoft OAuth client ID from the configuration service; default to 'disabled' if not found.
-	const clientID = configService.get<string>('microsoft.clientId');
-	// Retrieve Microsoft OAuth client secret from the configuration service; default to 'disabled' if not found.
-	const clientSecret = configService.get<string>('microsoft.clientSecret');
-	// Retrieve Microsoft OAuth callback URL from the configuration service.
-	const callbackURL = configService.get<string>('microsoft.callbackURL');
+	const { clientId, clientSecret, callbackURL, authorizationURL, tokenURL } = {
+		// Retrieve the Microsoft client ID from the configuration.
+		clientId: configService.get<string>('microsoft.clientId'),
+		// Retrieve the Microsoft client Secret from the configuration.
+		clientSecret: configService.get<string>('microsoft.clientSecret'),
+		// Retrieve the callback URL from the configuration.
+		callbackURL: configService.get<string>('microsoft.callbackURL'),
+		// Retrieve the authorization URL from the configuration.
+		authorizationURL: configService.get<string>('microsoft.authorizationURL'),
+		// Retrieve the token URL from the configuration.
+		tokenURL: configService.get<string>('microsoft.tokenURL')
+	};
 
 	// Log a warning if any required configuration values are missing.
-	if (!clientID || !clientSecret || !callbackURL) {
+	if (!clientId || !clientSecret || !callbackURL) {
 		console.warn('⚠️ Microsoft OAuth configuration is incomplete. Defaulting to "disabled".');
 	}
 
-	// Retrieve the authorization URL and token URL from the configuration service.
-	const authorizationURL = configService.get<string>('microsoft.authorizationURL');
-	const tokenURL = configService.get<string>('microsoft.tokenURL');
-
 	// Return the configuration object for Microsoft OAuth.
 	return {
-		// Authorization URL for Microsoft OAuth.
-		authorizationURL,
-		// Token URL where Microsoft exchanges the authorization code for an access token.
-		tokenURL,
 		// Use the retrieved clientID, or default to 'disabled' if not provided.
-		clientID: clientID || 'disabled',
+		clientID: clientId || 'disabled',
 		// Use the retrieved clientSecret, or default to 'disabled' if not provided.
 		clientSecret: clientSecret || 'disabled',
 		// Use the retrieved callbackURL, or default to the API_BASE_URL (or localhost) plus the callback path.
 		callbackURL:
 			callbackURL || `${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/auth/microsoft/callback`,
+		// Authorization URL for Microsoft OAuth.
+		authorizationURL,
+		// Token URL where Microsoft exchanges the authorization code for an access token.
+		tokenURL,
 		// Include the request object in the callback.
 		passReqToCallback: true,
 		// Specify the scope for Microsoft OAuth.
