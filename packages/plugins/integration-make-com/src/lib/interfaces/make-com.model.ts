@@ -56,5 +56,5 @@ export interface IMakeComCreateIntegration extends IBasePerTenantAndOrganization
 
 export interface IMakeComOAuthCodeExchange {
 	code: string;
-	state?: string;
+	state: string; // CSRF protection
 }

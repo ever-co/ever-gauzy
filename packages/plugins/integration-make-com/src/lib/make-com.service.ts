@@ -483,7 +483,7 @@ async getOAuthCredentials(integrationId: string): Promise<{ clientId: string; cl
 			status === 401 ||
 			status === 403 ||
 			status === 400 ||
-			['invalid_token', 'invalid_grant'].includes(oauthError)
+			['invalid_token', 'invalid_grant', 'expired_token'].includes(oauthError)
 		) {
 			return this.handleTokenRefresh(integrationId, makeApiUrl, method, data, retryLimit);
 		}
