@@ -39,7 +39,7 @@
 		"typeorm": "^0.3.22"
 	},
 	"devDependencies": {
-		"@nestjs/testing": "^10.4.15",
+		"@nestjs/testing": "^11.0.0",
 		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
 		"typescript": "^5.8.3"

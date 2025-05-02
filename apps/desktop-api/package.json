@@ -46,7 +46,7 @@
 		"@gauzy/plugin-integration-wakatime": "^0.1.0"
 	},
 	"devDependencies": {
-		"@nestjs/testing": "^10.4.15",
+		"@nestjs/testing": "^11.0.0",
 		"@types/node": "^20.14.9"
 	},
 	"engines": {
