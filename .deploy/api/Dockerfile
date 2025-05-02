@@ -142,15 +142,15 @@ COPY --chown=node:node --from=builder /srv/gauzy/packages/ /srv/gauzy/packages/
 # Fix @guazy dependencies
 RUN rm -rf ./node_modules/@gauzy \
 	&& mkdir -p ./node_modules/@gauzy \
-	&& for pkg in auth common utils config contracts core metrics plugin; do \
+	&& for pkg in auth constants common utils config contracts core metrics plugin; do \
 	mv "./dist/packages/$pkg" "./node_modules/@gauzy/$pkg" \
 	&& if [ -d "./packages/$pkg/node_modules" ]; then \
 	mv  "./packages/$pkg/node_modules" "./node_modules/@gauzy/$pkg/node_modules"; \
 	fi; \
 	done \
 	&& for plugin in changelog integration-ai integration-github integration-hubstaff \
-	integration-jira integration-upwork jitsu-analytics job-proposal job-search \
-	knowledge-base product-reviews sentry-tracing videos; do \
+	integration-jira integration-make-com integration-upwork integration-zapier jitsu-analytics \
+	job-proposal job-search knowledge-base posthog product-reviews registry sentry-tracing videos; do \
 	mv "./dist/packages/plugins/$plugin" "./node_modules/@gauzy/plugin-${plugin}" \
 	&& if [ -d "./packages/plugins/$plugin/node_modules" ]; then \
 	mv  "./packages/plugins/$plugin/node_modules" "./node_modules/@gauzy/plugin-${plugin}/node_modules"; \

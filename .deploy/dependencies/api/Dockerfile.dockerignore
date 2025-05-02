@@ -42,8 +42,7 @@ tools
 .*
 
 # Scripts and deployment entrypoint scripts
-.scripts
-!.scripts/postinstall.ts
+!.scripts
 .deploy
 !.deploy/api/entrypoint.compose.sh
 !.deploy/api/entrypoint.prod.sh
