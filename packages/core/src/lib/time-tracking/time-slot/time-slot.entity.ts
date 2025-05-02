@@ -73,7 +73,7 @@ export class TimeSlot extends TenantOrganizationBaseEntity implements ITimeSlot 
 	mouse?: number;
 
 	/**
-	 * Number of movements (e.g., mouse or device movements) detected within one minute.
+	 * Number of movements (e.g., mouse or device movements) detected within 10 minutes.
 	 * Used to track activity levels during time tracking sessions.
 	 */
 	@ApiPropertyOptional({
