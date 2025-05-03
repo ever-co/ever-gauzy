@@ -15,6 +15,7 @@ export * from './IJiraIntegrationConfig';
 export * from './IJitsuConfig';
 export * from './IKeycloakConfig';
 export * from './ILinkedinIConfig';
+export * from './IMakeComConfig';
 export * from './IMicrosoftConfig';
 export * from './IPosthogConfig';
 export * from './ISMTPConfig';

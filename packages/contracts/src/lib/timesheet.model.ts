@@ -14,6 +14,7 @@ import { IUser } from './user.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IScreenshot } from './screenshot.model';
 import { TimeFormatEnum } from './organization.model';
+import { ITimeSlotMinute } from './time-slot-minute.model';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	employee: IEmployee;
@@ -228,14 +229,6 @@ export interface ITimeSlotTimeLogs extends IBasePerTenantAndOrganizationEntityMo
 	timeSlots: ITimeSlot[];
 	timeLogId: ID;
 	timeSlotId: ID;
-}
-
-export interface ITimeSlotMinute extends IBasePerTenantAndOrganizationEntityModel {
-	timeSlot?: ITimeSlot;
-	timeSlotId?: ID;
-	keyboard?: number;
-	mouse?: number;
-	datetime?: Date;
 }
 
 export interface IActivity extends IBasePerTenantAndOrganizationEntityModel {

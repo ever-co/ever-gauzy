@@ -1,14 +1,24 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString, IsUrl } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class UpdateMakeComSettingsDTO {
-	@ApiProperty({ type: Boolean, required: true, description: 'Whether Make.com integration is enabled' })
-	@IsBoolean()
-	isEnabled: boolean;
+    @ApiProperty({
+        type: Boolean,
+        description: 'Whether the Make.com integration is enabled',
+        example: true
+    })
+    @IsBoolean()
+    @Transform(({ value }) => ['true', '1', true].includes(value))
+    isEnabled: boolean;
 
-	@ApiProperty({ type: String, required: false, description: 'Webhook URL for Make.com integration' })
-	@IsOptional()
-	@IsString()
-	@IsUrl(undefined, { message: 'Please provide a valid webhook URL' })
-	webhookUrl?: string;
+    @ApiPropertyOptional({
+        type: String,
+        description: 'The webhook URL for Make.com integration',
+        example: 'https://hook.make.com/your-webhook-path'
+    })
+    @IsOptional()
+    @IsString()
+    @IsUrl({ require_tld: false }, { message: 'Webhook URL must be a valid URL' })
+    webhookUrl?: string;
 }

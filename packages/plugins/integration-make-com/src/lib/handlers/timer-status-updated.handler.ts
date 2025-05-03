@@ -1,8 +1,9 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
+import { ITimerStatus } from '@gauzy/contracts';
 import { TimerStatusUpdatedEvent } from '@gauzy/core';
 import { WebhookService } from '../webhook.service';
-import { ITimerStatus } from '@gauzy/contracts';
+
 @Injectable()
 @EventsHandler(TimerStatusUpdatedEvent)
 export class TimerStatusUpdatedHandler implements IEventHandler<TimerStatusUpdatedEvent> {
