@@ -29,7 +29,8 @@
 	"dependencies": {
 		"moment": "^2.30.1",
 		"uiohook-napi": "^1.5.4",
-		"tslib": "^2.6.2"
+		"tslib": "^2.6.2",
+		"underscore": "^1.13.3"
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.9",

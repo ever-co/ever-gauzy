@@ -32,7 +32,7 @@ class KeyboardMouseActivityStores {
 	}
 
 	writeData() {
-		console.log('current last data activities', this.currentActivityData);
+		console.log('current last data activities', JSON.stringify(this.currentActivityData, null, 2));
 	}
 
 	resetCurrentAcitivity() {
@@ -70,8 +70,8 @@ class KeyboardMouseActivityStores {
 		(this.currentActivityData?.kbSequence || []).push(keyCode);
 	}
 
-	updateMouseEvents() {
-
+	updateMouseEvents(mouseEventMovement: TMouseEvents) {
+		(this.currentActivityData?.mouseEvents || []).push(mouseEventMovement);
 	}
 
 	flushCurrentData() {

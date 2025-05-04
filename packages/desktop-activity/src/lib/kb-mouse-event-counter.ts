@@ -1,5 +1,12 @@
 import KeyboardMouse from './kb-mouse';
 import KeyboardMouseActivityStores from './kb-mouse-activity-stores';
+import { UiohookMouseEvent, UiohookWheelEvent } from 'uiohook-napi';
+import { debounce } from 'underscore';
+
+type TMousePosition = {
+	x: number,
+	y: number
+}
 
 export class KeyboardMouseEventCounter {
 	private isStarted: boolean;
@@ -11,9 +18,15 @@ export class KeyboardMouseEventCounter {
 	private activityBuffer: number = 10;
 	private currentTimeActivity: number = 0;
 	private currentTimeSlot: number = 0;
+	private currentMousePosition: TMousePosition;
+	private startMousePosition: TMousePosition;
+	private readonly mouseMoveThreshold: number = 10;
+	private mouseIsMove: boolean;
+	private debounceMovement: () => void;
 	constructor() {
 		this.isStarted = false;
 		this.keyboardMouse = new KeyboardMouse();
+		this.debounceMovement = debounce(this.mouseMeasureMovement.bind(this), 300);
 	}
 
 	registerEvent() {
@@ -37,14 +50,44 @@ export class KeyboardMouseEventCounter {
 		});
 
 		this.keyboardMouse.on('mousemove', (e) => {
-			// console.log('mouse moved at position', `${e.x}, ${e.y}`)
-			this.keyboardMouseActivityStores.updateMouseMovementsCount();
-			console.log('movement', e);
+			this.mouseMoveEventHandler(e);
 		});
 
 		this.keyboardMouse.on('wheel', (e) => {
 			// console.log('mouse wheeled at position', `${e.direction} to ${e.x}, ${e.y}`);
+			this.mouseMoveEventHandler(e);
 		});
+	}
+
+	mouseMeasureMovement() {
+		if (this.startMousePosition) {
+			const yPositionMovement = Math.abs(this.startMousePosition.y - this.currentMousePosition.y);
+			const xPositionMovement = Math.abs(this.startMousePosition.x - this.currentMousePosition.x);
+			if (yPositionMovement >= this.mouseMoveThreshold && xPositionMovement >= this.mouseMoveThreshold) {
+				this.keyboardMouseActivityStores.updateMouseMovementsCount();
+				this.keyboardMouseActivityStores.updateMouseEvents({
+					moveTo: {
+						from: this.startMousePosition,
+						to: this.currentMousePosition
+					}
+				})
+			}
+		}
+		this.mouseIsMove = false;
+	}
+	mouseMoveEventHandler(e: UiohookMouseEvent | UiohookWheelEvent) {
+		if (!this.mouseIsMove) {
+			this.mouseIsMove = true;
+			this.startMousePosition = {
+				x: e.x,
+				y: e.y
+			}
+		}
+		this.currentMousePosition = {
+			x: e.x,
+			y: e.y
+		}
+		this.debounceMovement();
 	}
 
 	timeActivity() {

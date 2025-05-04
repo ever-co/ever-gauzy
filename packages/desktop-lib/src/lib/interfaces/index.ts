@@ -1,5 +1,5 @@
 export * from './i-current-application';
-export * from './i-data-application';
+export * from './i-data-application';j
 export * from './serializable';
 export * from './i-power-manager';
 export * from './i-sleep-tracking-strategy';
@@ -41,3 +41,5 @@ export * from './i-desktop-event';
 export * from './i-desktop-save-dialog';
 export * from './i-server-config';
 export * from './i-ssl-factory';
+export * from './i-kb-mouse-activity';
+export * from './i-kb-mouse-transaction';
