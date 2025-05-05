@@ -37,7 +37,7 @@
 		"@nestjs/cqrs": "^11.0.3",
 		"@nestjs/platform-express": "^11.1.0",
 		"@nestjs/swagger": "^11.1.5",
-		"class-validator": "^0.14.0",
+		"class-validator": "^0.14.2",
 		"csv-parser": "^2.3.2",
 		"express": "^5.1.0",
 		"fs-extra": "^10.1.0",
