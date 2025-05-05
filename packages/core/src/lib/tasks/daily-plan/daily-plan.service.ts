@@ -74,7 +74,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			if (taskId) {
 				const task = await this._taskService.findOneByIdString(taskId);
 				if (!task) {
-					throw new BadRequestException('Cannot found the task');
+					throw new BadRequestException('Task not found');
 				}
 				dailyPlan.tasks.push(task);
 			}
