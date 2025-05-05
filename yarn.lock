@@ -1065,7 +1065,7 @@
     "@smithy/util-waiter" "^4.0.2"
     tslib "^2.6.2"
 
-"@aws-sdk/client-s3@^3.802.0":
+"@aws-sdk/client-s3@^3.717.0":
   version "3.802.0"
   resolved "https://registry.yarnpkg.com/@aws-sdk/client-s3/-/client-s3-3.802.0.tgz#2991a9429ad082125d8a061fdf7584efca5aed7a"
   integrity sha512-YIwLLiqRZArEmRI94X8MOpWuXlmxI3NnxYv+3kk6HIc2YWPaOAf0YN7vWlnQFWo6Yi1gBRtP0HM8WzK4Bn5ORQ==
@@ -1842,7 +1842,7 @@
     "@smithy/util-middleware" "^4.0.2"
     tslib "^2.6.2"
 
-"@aws-sdk/s3-request-presigner@^3.802.0":
+"@aws-sdk/s3-request-presigner@^3.717.0":
   version "3.802.0"
   resolved "https://registry.yarnpkg.com/@aws-sdk/s3-request-presigner/-/s3-request-presigner-3.802.0.tgz#14e261a35688e6c0df08c8c88000b739c609214a"
   integrity sha512-gXavOjkIIbd89ooAKziPWPnvwA3ZuJvpLMWr2xB/RyDZIgnjSwvRGFpRJ5EZPZjkhBFk0QQcEVp2FIrPI9wHlA==
@@ -38252,7 +38252,7 @@ terser-webpack-plugin@^5.3.10, terser-webpack-plugin@^5.3.3:
     serialize-javascript "^6.0.2"
     terser "^5.31.1"
 
-terser-webpack-plugin@^5.3.11:
+terser-webpack-plugin@^5.3.11, terser-webpack-plugin@^5.3.14:
   version "5.3.14"
   resolved "https://registry.yarnpkg.com/terser-webpack-plugin/-/terser-webpack-plugin-5.3.14.tgz#9031d48e57ab27567f02ace85c7d690db66c3e06"
   integrity sha512-vkZjpUjb6OMS7dhV+tILUW6BhpDR7P2L/aQSAv+Uwk+m8KATX9EccViHTJR2qDtACKPIYndLGCyl3FMo+r2LMw==

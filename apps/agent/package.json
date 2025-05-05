@@ -31,7 +31,7 @@
 		"electron-packager": "^17.1.1",
 		"electron-reload": "~1.5.0",
 		"node-polyfill-webpack-plugin": "^1.1.4",
-		"terser-webpack-plugin": "^5.3.10",
+		"terser-webpack-plugin": "^5.3.14",
 		"electronmon": "^2.0.2"
 	},
 	"dependencies": {
