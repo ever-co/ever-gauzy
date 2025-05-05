@@ -2,7 +2,9 @@ name: Deploy API to AWS
 
 on:
   push:
-    branches: [master, dev]
+    branches: [dev-dspot]
+    tags:
+      - 'v*'
     paths:
       - 'apps/api/**/*.*'
       - 'packages/auth/**/*.*'
@@ -43,9 +45,20 @@ jobs:
     name: Deploy API to AWS
     needs: check-dependencies
     runs-on: ubuntu-latest
+    # Define which environment to use based on branch or tag
+    environment: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging' }}
     permissions:
       contents: read
       id-token: write
+    # Environment variables are now defined at the job level
+    env:
+      # These values come from the environment configuration in GitHub
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+      ECR_REPOSITORY_API: ${{ vars.ECR_REPOSITORY_API }}
+      ECR_REPOSITORY_DEPENDENCIES: ${{ vars.ECR_REPOSITORY_DEPENDENCIES }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+      ECS_SERVICE_API: ${{ vars.ECS_SERVICE_API }}
 
     steps:
       - name: Checkout Repository
@@ -55,7 +68,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -65,18 +78,18 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build --build-arg GIT_HASH="${{ github.sha }}" --build-arg DEPENDENCIES_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}" -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:latest -f .deploy/api/Dockerfile .
+          docker build --build-arg GIT_HASH="${{ github.sha }}" --build-arg DEPENDENCIES_IMAGE="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }}" -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_API }}:$IMAGE_TAG -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_API }}:latest -f .deploy/api/Dockerfile .
 
       - name: Push API image to Amazon ECR
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker push ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }} --all-tags
-          echo "api_image=${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:$IMAGE_TAG" >> $GITHUB_ENV
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_API }} --all-tags
+          echo "api_image=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_API }}:$IMAGE_TAG" >> $GITHUB_ENV
 
       - name: Update API ECS service
         run: |
           aws ecs update-service \
-            --cluster ${{ vars.ECS_CLUSTER }} \
-            --service ${{ vars.ECS_SERVICE_API }} \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE_API }} \
             --force-new-deployment

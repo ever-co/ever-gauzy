@@ -7,16 +7,24 @@ on:
     workflows: ['Generate dependencies image']
     types:
       - completed
-    branches: [master, dev]
+    branches: [dev-dspot]
   workflow_dispatch:
 
 jobs:
   deploy-api:
     name: Run linter code analysis
     runs-on: ubuntu-latest
+    # Only run on staging environment
+    environment: staging
     permissions:
       contents: read
       id-token: write
+    # Environment variables are defined at the job level
+    env:
+      # These values come from the environment configuration in GitHub
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+      ECR_REPOSITORY_DEPENDENCIES: ${{ vars.ECR_REPOSITORY_DEPENDENCIES }}
 
     steps:
       - name: Checkout Repository
@@ -26,7 +34,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -34,7 +42,7 @@ jobs:
 
       - name: Build image with updated source code
         run: |
-          docker build --build-arg DEPENDENCIES_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest" -t guazy-code -f .deploy/code-analysis/Dockerfile .
+          docker build --build-arg DEPENDENCIES_IMAGE="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }}:latest" -t guazy-code -f .deploy/code-analysis/Dockerfile .
 
       - name: Run linter
         run: |

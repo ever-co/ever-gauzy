@@ -2,7 +2,9 @@ name: Deploy WebApp to AWS
 
 on:
   push:
-    branches: [master, dev]
+    branches: [dev-dspot]
+    tags:
+      - 'v*'
     paths:
       - 'apps/gauzy/**/*.*'
       - 'packages/contracts/**/*.*'
@@ -24,9 +26,20 @@ jobs:
     name: Deploy WebApp to AWS
     needs: check-web-dependencies
     runs-on: ubuntu-latest
+    # Define which environment to use based on branch or tag
+    environment: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging' }}
     permissions:
       contents: read
       id-token: write
+    # Environment variables are now defined at the job level
+    env:
+      # These values come from the environment configuration in GitHub
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+      ECR_REPOSITORY_WEBAPP: ${{ vars.ECR_REPOSITORY_WEBAPP }}
+      ECR_REPOSITORY_DEPENDENCIES: ${{ vars.ECR_REPOSITORY_DEPENDENCIES }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+      ECS_SERVICE_WEBAPP: ${{ vars.ECS_SERVICE_WEBAPP }}
 
     steps:
       - name: Checkout Repository
@@ -36,7 +49,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -46,20 +59,20 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build --build-arg DEPENDENCIES_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest-webapp" -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }}:latest -f .deploy/webapp/Dockerfile .
+          docker build --build-arg DEPENDENCIES_IMAGE="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }}:latest-webapp" -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_WEBAPP }}:$IMAGE_TAG -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_WEBAPP }}:latest -f .deploy/webapp/Dockerfile .
 
       - name: Push WebApp image to Amazon ECR
         run: |
-          docker push ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }} --all-tags
-          echo "webapp_image=${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }}:$IMAGE_TAG" >> $GITHUB_ENV
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_WEBAPP }} --all-tags
+          echo "webapp_image=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_WEBAPP }}:$IMAGE_TAG" >> $GITHUB_ENV
 
       - name: Update WebApp ECS service
         run: |
           aws ecs update-service \
-            --cluster ${{ vars.ECS_CLUSTER }} \
-            --service ${{ vars.ECS_SERVICE_WEBAPP }} \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE_WEBAPP }} \
             --force-new-deployment
 
           aws ecs wait services-stable \
-            --cluster ${{ vars.ECS_CLUSTER }} \
-            --services ${{ vars.ECS_SERVICE_WEBAPP }}
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE_WEBAPP }}

@@ -56,9 +56,17 @@ jobs:
     needs: check-changes
     if: needs.check-changes.outputs.changes_detected == 'true'
     runs-on: ubuntu-latest
+    # Determine environment based on ref (if tag or dev-dspot branch)
+    environment: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging' }}
     permissions:
       contents: read
       id-token: write
+    # Environment variables are defined at the job level
+    env:
+      # These values come from the environment configuration in GitHub
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+      ECR_REPOSITORY_DEPENDENCIES: ${{ vars.ECR_REPOSITORY_DEPENDENCIES }}
 
     steps:
       - name: Checkout Repository
@@ -70,7 +78,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -78,9 +86,9 @@ jobs:
 
       - name: Build dependency images
         run: |
-          docker build -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest-api-dev -f .deploy/dependencies/api/Dockerfile .
-          docker build --build-arg ENVIRONMENT=production -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest-api-prod -f .deploy/dependencies/api/Dockerfile .
+          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }}:latest-api-dev -f .deploy/dependencies/api/Dockerfile .
+          docker build --build-arg ENVIRONMENT=production -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }}:latest-api-prod -f .deploy/dependencies/api/Dockerfile .
 
       - name: Push images to Amazon ECR
         run: |
-          docker push ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }} --all-tags
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }} --all-tags
