@@ -223,6 +223,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No record found with the given ID.'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_CREATE, PermissionsEnum.DAILY_PLAN_UPDATE)
 	@Put('/:taskId/remove')
 	async removeTaskFromManyPlans(
 		@Param('taskId') taskId: ID,
