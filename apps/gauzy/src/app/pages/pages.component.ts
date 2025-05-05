@@ -2,9 +2,10 @@ import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, map, merge, pairwise, take, tap } from 'rxjs';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { FeatureEnum, IOrganization, IRolePermission, IUser, IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
 import {
 	AuthStrategy,
@@ -17,21 +18,20 @@ import {
 	Store,
 	UsersService
 } from '@gauzy/ui-core/core';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ReportService } from './reports/all-report/report.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-pages',
-    styleUrls: ['pages.component.scss'],
-    template: `
+	selector: 'ngx-pages',
+	styleUrls: ['pages.component.scss'],
+	template: `
 		<ngx-one-column-layout *ngIf="!!menu && user">
 			<ga-main-nav-menu></ga-main-nav-menu>
 			<router-outlet></router-outlet>
 		</ngx-one-column-layout>
 	`,
-    standalone: false
+	standalone: false
 })
 export class PagesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organization: IOrganization;
@@ -40,14 +40,14 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 	public reportMenuItems: NavMenuSectionItem[] = [];
 
 	constructor(
-		private readonly router: Router,
-		private readonly route: ActivatedRoute,
 		public readonly translate: TranslateService,
-		private readonly store: Store,
-		private readonly reportService: ReportService,
-		private readonly ngxPermissionsService: NgxPermissionsService,
-		private readonly usersService: UsersService,
-		private readonly authStrategy: AuthStrategy,
+		private readonly _router: Router,
+		private readonly _route: ActivatedRoute,
+		private readonly _store: Store,
+		private readonly _reportService: ReportService,
+		private readonly _ngxPermissionsService: NgxPermissionsService,
+		private readonly _usersService: UsersService,
+		private readonly _authStrategy: AuthStrategy,
 		private readonly _integrationsService: IntegrationsService,
 		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
 		private readonly _navMenuBuilderService: NavMenuBuilderService,
@@ -57,14 +57,14 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 	}
 
 	async ngOnInit() {
-		this.route.data
+		this._route.data
 			.pipe(
 				filter(({ user }: Data) => !!user),
 				tap(({ user }: Data) => {
 					//When a new user registers & logs in for the first time, he/she does not have tenantId.
 					//In this case, we have to redirect the user to the onboarding page to create their first organization, tenant, role.
 					if (!user.tenantId) {
-						this.router.navigate(['/onboarding/tenant']);
+						this._router.navigate(['/onboarding/tenant']);
 						return;
 					}
 				}),
@@ -74,7 +74,7 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 			.subscribe();
 		await this._createEntryPoint();
 
-		this.store.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
@@ -87,7 +87,7 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 			)
 			.subscribe();
 
-		this.store.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
@@ -98,19 +98,19 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 			)
 			.subscribe();
 
-		this.store.userRolePermissions$
+		this._store.userRolePermissions$
 			.pipe(
 				filter((permissions: IRolePermission[]) => isNotEmpty(permissions)),
 				map((permissions) => permissions.map(({ permission }) => permission)),
 				tap((permissions) => {
-					this.ngxPermissionsService.flushPermissions();
-					this.ngxPermissionsService.loadPermissions(permissions);
+					this._ngxPermissionsService.flushPermissions();
+					this._ngxPermissionsService.loadPermissions(permissions);
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 
-		this.reportService.menuItems$.pipe(distinctUntilChange(), untilDestroyed(this)).subscribe((menuItems) => {
+		this._reportService.menuItems$.pipe(distinctUntilChange(), untilDestroyed(this)).subscribe((menuItems) => {
 			// Convert the menuItems object to an array
 			const reportItems = menuItems ? Object.values(menuItems) : [];
 
@@ -148,13 +148,13 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 						: this.removeJobsNavigationMenuItems();
 				})
 			),
-			this.store.user$.pipe(
+			this._store.user$.pipe(
 				take(1),
 				distinctUntilChange(),
 				filter((user: IUser) => !!user && !!user.employee?.id),
 				tap(() => this.addTasksNavigationMenuItems())
 			),
-			this.store.selectedOrganization$.pipe(
+			this._store.selectedOrganization$.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.addOrganizationManageMenuItem(organization))
@@ -281,7 +281,7 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 					translationKey: 'MENU.MY_TASKS', // Key for translation (i18n)
 					permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW], // Array of permission keys required for this item
 					featureKey: FeatureEnum.FEATURE_MY_TASK, //
-					...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD) && {
+					...(this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD) && {
 						add: '/pages/tasks/me?openAddDialog=true' //
 					})
 				}
@@ -368,40 +368,40 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 		}
 
 		const { id: organizationId, tenantId } = this.organization;
-		await this.reportService.getReportMenuItems({ tenantId, organizationId });
+		await this._reportService.getReportMenuItems({ tenantId, organizationId });
 	}
 
 	/*
 	 * This is app entry point after login
 	 */
 	private async _createEntryPoint() {
-		const id = this.store.userId;
+		const id = this._store.userId;
 
 		if (!id) return;
 
 		const relations = ['role', 'tenant', 'tenant.featureOrganizations', 'tenant.featureOrganizations.feature'];
-		this.user = await this.usersService.getMe(relations, true);
+		this.user = await this._usersService.getMe(relations, true);
 
-		this.authStrategy.electronAuthentication({
+		this._authStrategy.electronAuthentication({
 			user: this.user,
-			token: this.store.token
+			token: this._store.token
 		});
 
 		//When a new user registers & logs in for the first time, he/she does not have tenantId.
 		//In this case, we have to redirect the user to the onboarding page to create their first organization, tenant, role.
 		if (!this.user.tenantId) {
-			this.router.navigate(['/onboarding/tenant']);
+			this._router.navigate(['/onboarding/tenant']);
 			return;
 		}
 
-		this.store.user = this.user;
+		this._store.user = this.user;
 
 		//Load permissions
 		this._permissionsService.loadPermissions();
 
 		//tenant enabled/disabled features for relatives organizations
 		const { tenant } = this.user;
-		this.store.featureTenant = tenant.featureOrganizations.filter((item) => !item.organizationId);
+		this._store.featureTenant = tenant.featureOrganizations.filter((item) => !item.organizationId);
 	}
 
 	ngOnDestroy() {
