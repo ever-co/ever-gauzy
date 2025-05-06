@@ -87,15 +87,15 @@ jobs:
       - name: Build dependency images
         run: |
           docker build \
-            -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }}:latest-api-dev \
+            -t ${{ env.ECR_REGISTRY }}/gauzy-staging-dependencies:latest-api-dev \
             -f .deploy/dependencies/api/Dockerfile \
             .
           docker build \
             --build-arg ENVIRONMENT=production \
-            -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }}:latest-api-prod -f \
+            -t ${{ env.ECR_REGISTRY }}/gauzy-staging-dependencies:latest-api-prod -f \
             .deploy/dependencies/api/Dockerfile \
             .
 
       - name: Push images to Amazon ECR
         run: |
-          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }} --all-tags
+          docker push ${{ env.ECR_REGISTRY }}/gauzy-staging-dependencies --all-tags
