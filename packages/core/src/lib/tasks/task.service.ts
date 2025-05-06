@@ -392,10 +392,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				}
 
 				// Filter by due date
-				if (dueDate && dueDate instanceof Date) {
+				if (dueDate) {
+					const startDate = moment(dueDate as Date);
+					const endDate = moment(dueDate as Date).add(23, 'hours').add(59, 'minutes').add(59, 'seconds');
 					qb.andWhere(p(`"${query.alias}"."dueDate" BETWEEN :start AND :end`), {
-						start: moment(dueDate).startOf('day').toDate(),
-						end: moment(dueDate).endOf('day').toDate()
+						start: startDate.toDate(),
+						end: endDate.toDate()
 					});
 				}
 
@@ -517,12 +519,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.where) && {
-						where: options.where
-					}),
+					where: options.where
+				}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
-						relations: options.relations
-					})
+					relations: options.relations
+				})
 			});
 
 			query.andWhere(
@@ -656,10 +658,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 
 			// Filter by due date
-			if (dueDate && dueDate instanceof Date) {
+			if (dueDate) {
+				const startDate = moment(dueDate as Date);
+				const endDate = moment(dueDate as Date).add(23, 'hours').add(59, 'minutes').add(59, 'seconds');
 				options.where.dueDate = Between(
-					moment(dueDate).startOf('day').toDate(),
-					moment(dueDate).endOf('day').toDate()
+					startDate.toDate(),
+					endDate.toDate()
 				);
 			}
 
@@ -667,7 +671,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			if (isNotEmpty((createdByUser as IUser)?.firstName)) {
 				const name = (createdByUser as IUser).firstName;
 				(options.where.createdByUser as any).firstName = Raw(
-					(alias) => `CONCAT(${alias}, ' ', "task__task_creator"."lastName") ${LIKE_OPERATOR} '%${name}%'`
+					(alias) => `CONCAT(${alias}, ' ', "task__task_createdByUser"."lastName") ${LIKE_OPERATOR} '%${name}%'`
 				);
 			}
 
@@ -927,21 +931,21 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const getMinMaxDates = (dates: Date[]) =>
 				dates.length
 					? [
-							new Date(
-								Math.min(
-									...dates
-										.filter((date) => !Number.isNaN(new Date(date).getTime()))
-										.map((date) => new Date(date).getTime())
-								)
-							),
-							new Date(
-								Math.max(
-									...dates
-										.filter((date) => !Number.isNaN(new Date(date).getTime()))
-										.map((date) => new Date(date).getTime())
-								)
+						new Date(
+							Math.min(
+								...dates
+									.filter((date) => !Number.isNaN(new Date(date).getTime()))
+									.map((date) => new Date(date).getTime())
 							)
-					  ]
+						),
+						new Date(
+							Math.max(
+								...dates
+									.filter((date) => !Number.isNaN(new Date(date).getTime()))
+									.map((date) => new Date(date).getTime())
+							)
+						)
+					]
 					: [undefined, undefined];
 
 			const [minStartDate, maxStartDate] = getMinMaxDates(startDates);
