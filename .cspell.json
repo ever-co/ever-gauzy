@@ -662,7 +662,8 @@
 		"autocapture",
 		"pageview",
 		"signup",
-		"wrapp"
+		"wrapp",
+		"dyld"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
