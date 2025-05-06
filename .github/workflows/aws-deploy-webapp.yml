@@ -12,6 +12,7 @@ on:
       - 'packages/plugins/*-ui/**/*.*'
       - '.deploy/webapp/**/*'
       - '.github/workflows/aws-deploy-webapp.yml'
+      - '.github/workflows/webapp-dependencies.yml'
       - 'package.json'
       - 'yarn.lock'
   workflow_dispatch:
@@ -37,7 +38,7 @@ jobs:
       AWS_REGION: ${{ vars.AWS_REGION }}
       ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
       ECR_REPOSITORY_WEBAPP: ${{ vars.ECR_REPOSITORY_WEBAPP }}
-      ECR_REPOSITORY_DEPENDENCIES: ${{ vars.ECR_REPOSITORY_DEPENDENCIES }}
+      ECR_REPOSITORY_DEPENDENCIES: 'gauzy-staging-dependencies'
       ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
       ECS_SERVICE_WEBAPP: ${{ vars.ECS_SERVICE_WEBAPP }}
 
@@ -59,7 +60,12 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build --build-arg DEPENDENCIES_IMAGE="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }}:latest-webapp" -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_WEBAPP }}:$IMAGE_TAG -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_WEBAPP }}:latest -f .deploy/webapp/Dockerfile .
+          docker build \
+            --build-arg DEPENDENCIES_IMAGE="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }}:latest-webapp" \
+            -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_WEBAPP }}:$IMAGE_TAG \
+            -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_WEBAPP }}:latest \
+            -f .deploy/webapp/Dockerfile \
+            .
 
       - name: Push WebApp image to Amazon ECR
         run: |

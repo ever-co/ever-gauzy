@@ -41,12 +41,12 @@ jobs:
           fi
 
   handle-no-changes:
-    name: Handle No Changes
+    name: Handle no changes
     needs: check-web-changes
     if: needs.check-web-changes.outputs.changes_detected != 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: No Changes Required
+      - name: No changes required
         run: |
           echo "No dependency changes detected. No rebuild required."
           exit 0
@@ -66,7 +66,7 @@ jobs:
       # These values come from the environment configuration in GitHub
       AWS_REGION: ${{ vars.AWS_REGION }}
       ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
-      ECR_REPOSITORY_DEPENDENCIES: ${{ vars.ECR_REPOSITORY_DEPENDENCIES }}
+      ECR_REPOSITORY_DEPENDENCIES: 'gauzy-staging-dependencies'
 
     steps:
       - name: Checkout Repository
@@ -86,7 +86,10 @@ jobs:
 
       - name: Build dependency images
         run: |
-          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }}:latest-webapp -f .deploy/dependencies/webapp/Dockerfile .
+          docker build \
+            -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }}:latest-webapp \
+            -f .deploy/dependencies/webapp/Dockerfile \
+            .
 
       - name: Push images to Amazon ECR
         run: |

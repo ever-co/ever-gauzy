@@ -57,7 +57,7 @@ jobs:
       AWS_REGION: ${{ vars.AWS_REGION }}
       ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
       ECR_REPOSITORY_API: ${{ vars.ECR_REPOSITORY_API }}
-      ECR_REPOSITORY_DEPENDENCIES: ${{ vars.ECR_REPOSITORY_DEPENDENCIES }}
+      ECR_REPOSITORY_DEPENDENCIES: 'gauzy-staging-dependencies'
       ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
       ECS_SERVICE_API: ${{ vars.ECS_SERVICE_API }}
 
@@ -79,7 +79,13 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build --build-arg GIT_HASH="${{ github.sha }}" --build-arg DEPENDENCIES_IMAGE="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }}" -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_API }}:$IMAGE_TAG -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_API }}:latest -f .deploy/api/Dockerfile .
+          docker build \
+            --build-arg GIT_HASH="${{ github.sha }}" \
+            --build-arg DEPENDENCIES_IMAGE="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_DEPENDENCIES }}" \
+            -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_API }}:$IMAGE_TAG \
+            -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY_API }}:latest \
+            -f .deploy/api/Dockerfile \
+            .
 
       - name: Push API image to Amazon ECR
         env:
