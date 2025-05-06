@@ -41,12 +41,12 @@ jobs:
           fi
 
   handle-no-changes:
-    name: Handle No Changes
+    name: Handle no changes
     needs: check-changes
     if: needs.check-changes.outputs.changes_detected != 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: No Changes Required
+      - name: No changes required
         run: |
           echo "No dependency changes detected. No rebuild required."
           exit 0
