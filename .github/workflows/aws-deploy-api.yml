@@ -31,6 +31,7 @@ on:
       - 'packages/plugins/videos/**/*.*'
       - '.deploy/api/**/*'
       - '.github/workflows/aws-deploy-api.yml'
+      - '.github/workflows/api-dependencies.yml'
       - 'package.json'
       - 'yarn.lock'
   workflow_dispatch:
