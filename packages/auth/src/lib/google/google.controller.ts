@@ -6,21 +6,20 @@ import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 import { AuthError, FeatureEnum } from '@gauzy/contracts';
 import { GoogleAuthGuard } from './google-auth-guard';
 
-@Controller()
 @UseGuards(FeatureFlagEnabledGuard, GoogleAuthGuard)
 @FeatureFlag(FeatureEnum.FEATURE_GOOGLE_LOGIN)
 @Public()
 @Controller('/auth')
 export class GoogleController {
 	private readonly logger = new Logger(`GZY - ${GoogleController.name}`);
-	constructor(public readonly service: SocialAuthService) {}
+	constructor(public readonly service: SocialAuthService) { }
 
 	/**
 	 * Initiates Google login.
 	 *
 	 * @param req
 	 */
-	@Get('google')
+	@Get('/google')
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	googleLogin(@Req() _: Request) {
 		// Initiate Google login
