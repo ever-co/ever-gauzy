@@ -57,7 +57,7 @@ jobs:
       AWS_REGION: ${{ vars.AWS_REGION }}
       ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
       ECR_REPOSITORY_API: ${{ vars.ECR_REPOSITORY_API }}
-      ECR_REPOSITORY_DEPENDENCIES: 'gauzy-staging-dependencies'
+      ECR_REPOSITORY_DEPENDENCIES: ${{ vars.ECR_REPOSITORY_DEPENDENCIES }}
       ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
       ECS_SERVICE_API: ${{ vars.ECS_SERVICE_API }}
 
