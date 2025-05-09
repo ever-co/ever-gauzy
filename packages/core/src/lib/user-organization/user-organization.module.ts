@@ -17,6 +17,7 @@ import { MikroOrmUserOrganizationRepository } from './repository/mikro-orm-user-
 
 @Module({
 	imports: [
+		CqrsModule,
 		TypeOrmModule.forFeature([UserOrganization]),
 		MikroOrmModule.forFeature([UserOrganization]),
 		forwardRef(() => TenantModule),
@@ -24,8 +25,7 @@ import { MikroOrmUserOrganizationRepository } from './repository/mikro-orm-user-
 		forwardRef(() => OrganizationModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => EmployeeModule),
-		forwardRef(() => RoleModule),
-		CqrsModule
+		forwardRef(() => RoleModule)
 	],
 	controllers: [UserOrganizationController],
 	providers: [
