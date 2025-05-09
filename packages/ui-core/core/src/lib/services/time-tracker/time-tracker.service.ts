@@ -153,6 +153,34 @@ export class TimeTrackerService implements OnDestroy {
 					status.workedThisWeek = 0;
 				}
 				const newValues = { workedThisWeek: status?.workedThisWeek, reWeeklyLimit: status?.reWeeklyLimit };
+
+				// If the timer is running and there is a mismatch in project, task, or startedAt, update the timer config
+				// For some reason, sometimes the sync loses data and doesn't allow the timer to be stopped
+				if (
+					status.lastLog?.isRunning &&
+					(this.timerConfig.id !== status.lastLog?.id ||
+						this.timerConfig.projectId !== status.lastLog?.projectId ||
+						this.timerConfig.taskId !== status.lastLog?.taskId ||
+						this.timerConfig.startedAt !== status.lastLog?.startedAt)
+				) {
+					this.timerConfig = {
+						...this.timerConfig,
+						id: status.lastLog?.id,
+						organizationId: status.lastLog?.organizationId,
+						tenantId: status.lastLog?.tenantId,
+						projectId: status.lastLog?.projectId,
+						taskId: status.lastLog?.taskId,
+						organizationContactId: status.lastLog?.organizationContactId,
+						description: status.lastLog?.description,
+						logType: status.lastLog?.logType,
+						source: status.lastLog?.source,
+						tags: (status.lastLog?.tags ?? []).map((tag) => tag.name),
+						isBillable: status.lastLog?.isBillable,
+						startedAt: status.lastLog?.startedAt,
+						stoppedAt: status.lastLog?.stoppedAt
+					};
+				}
+
 				this.updateTimerStore(newValues);
 				this.duration = status.duration;
 				if (status?.lastLog?.isRunning) {
