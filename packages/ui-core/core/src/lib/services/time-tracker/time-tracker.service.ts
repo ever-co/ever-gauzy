@@ -155,7 +155,7 @@ export class TimeTrackerService implements OnDestroy {
 				const newValues = { workedThisWeek: status?.workedThisWeek, reWeeklyLimit: status?.reWeeklyLimit };
 
 				// If the timer is running and there is a mismatch in project, task, or startedAt, update the timer config
-				// For some reason sometimed the sync lost the data and don't allow to stop the timer
+				// For some reason, sometimes the sync loses data and doesn't allow the timer to be stopped
 				if (
 					status.lastLog?.isRunning &&
 					(this.timerConfig.id !== status.lastLog?.id ||
