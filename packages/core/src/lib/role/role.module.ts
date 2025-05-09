@@ -12,10 +12,10 @@ import { MikroOrmRoleRepository } from './repository/mikro-orm-role.repository';
 
 @Module({
 	imports: [
-		forwardRef(() => TypeOrmModule.forFeature([Role])),
-		forwardRef(() => MikroOrmModule.forFeature([Role])),
-		forwardRef(() => RolePermissionModule),
-		CqrsModule
+		CqrsModule,
+		TypeOrmModule.forFeature([Role]),
+		MikroOrmModule.forFeature([Role]),
+		forwardRef(() => RolePermissionModule)
 	],
 	controllers: [RoleController],
 	providers: [RoleService, TypeOrmRoleRepository, MikroOrmRoleRepository, ...CommandHandlers],
