@@ -35,6 +35,17 @@ export const getTlsOptions = (dbSslMode: boolean): TlsOptions | undefined => {
 		return undefined;
 	}
 
+	/**
+	 * Bypass SSL certificate verification if the DB_ALLOW_INSECURE_SSL environment variable is set to true
+	 * Used for local testing purposes against cloud secured databases
+	 */
+	if (process.env.DB_ALLOW_INSECURE_SSL === 'true') {
+		return {
+			rejectUnauthorized: false
+		};
+	}
+
+
 	// Obtain the CA certificate from the environment variable and decode it
 	const base64data = process.env.DB_CA_CERT;
 	if (!base64data) {
