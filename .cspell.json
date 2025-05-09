@@ -663,6 +663,7 @@
 		"pageview",
 		"signup",
 		"wrapp",
+		"wrapp",
 		"oidc"
 	],
 	"useGitignore": true,
