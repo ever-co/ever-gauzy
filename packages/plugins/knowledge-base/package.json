@@ -31,7 +31,7 @@
 		"@nestjs/swagger": "^8.1.0",
 		"@nestjs/typeorm": "^10.0.2",
 		"chalk": "^4.1.0",
-		"class-validator": "^0.14.0",
+		"class-validator": "^0.14.2",
 		"tslib": "^2.6.2",
 		"typeorm": "^0.3.22"
 	},

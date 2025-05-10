@@ -30,7 +30,7 @@
 		"electron-packager": "^17.1.1",
 		"electron-reload": "~1.5.0",
 		"node-polyfill-webpack-plugin": "^1.1.4",
-		"terser-webpack-plugin": "^5.3.10"
+		"terser-webpack-plugin": "^5.3.14"
 	},
 	"dependencies": {
 		"@angular/animations": "^19.2.8",
@@ -73,7 +73,7 @@
 		"moment": "^2.30.1",
 		"moment-duration-format": "^2.3.2",
 		"moment-range": "^4.0.2",
-		"moment-timezone": "^0.5.45",
+		"moment-timezone": "^0.5.48",
 		"mysql2": "^3.12.0",
 		"node-fetch": "^2.6.7",
 		"node-notifier": "^8.0.0",
