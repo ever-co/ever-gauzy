@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 .badge-danger {
 	text-align: flex-start;

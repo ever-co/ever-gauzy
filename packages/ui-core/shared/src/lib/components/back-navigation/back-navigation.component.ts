@@ -2,9 +2,10 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 
 @Component({
-	selector: 'ngx-back-navigation',
-	templateUrl: './back-navigation.component.html',
-	styleUrls: ['./back-navigation.component.scss']
+    selector: 'ngx-back-navigation',
+    templateUrl: './back-navigation.component.html',
+    styleUrls: ['./back-navigation.component.scss'],
+    standalone: false
 })
 export class BackNavigationComponent implements OnInit {
 	@Input() haveLink = false;

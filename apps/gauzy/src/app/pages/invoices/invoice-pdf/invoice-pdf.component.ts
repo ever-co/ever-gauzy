@@ -24,7 +24,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 			class="pdfDoc loading"
 			*ngIf="isLoading"
 		></div>
-		<div class="pdfDoc error" *ngIf="error">A error occurred, please reload.</div>`,
+		<div class="pdfDoc error" *ngIf="error">An error occurred, please reload.</div>`,
 	styles: [
 		`
 			::ng-deep .pdf-preview-card {
@@ -40,7 +40,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 				width: 60vw;
 			}
 		`
-	]
+	],
+	standalone: false
 })
 export class InvoicePdfComponent extends TranslationBaseComponent implements OnInit {
 	@Input() invoice: IInvoice;

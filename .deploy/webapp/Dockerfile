@@ -109,6 +109,7 @@ COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/p
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
+COPY --chown=node:node packages/plugins/posthog/package.json ./packages/plugins/posthog/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
 COPY --chown=node:node packages/plugins/job-employee-ui/package.json ./packages/plugins/job-employee-ui/
@@ -118,6 +119,7 @@ COPY --chown=node:node packages/plugins/job-search-ui/package.json ./packages/pl
 COPY --chown=node:node packages/plugins/legal-ui/package.json ./packages/plugins/legal-ui/
 COPY --chown=node:node packages/plugins/maintenance-ui/package.json ./packages/plugins/maintenance-ui/
 COPY --chown=node:node packages/plugins/onboarding-ui/package.json ./packages/plugins/onboarding-ui/
+COPY --chown=node:node packages/plugins/posthog-ui/package.json ./packages/plugins/posthog-ui/
 COPY --chown=node:node packages/plugins/public-layout-ui/package.json ./packages/plugins/public-layout-ui/
 COPY --chown=node:node packages/plugins/videos-ui/package.json ./packages/plugins/videos-ui/
 COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
@@ -130,7 +132,7 @@ COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
-COPY --chown=node:node .scripts/postinstall.ts ./.scripts/
+COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 # Must be without --production because we need dev deps installed
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts

@@ -21,7 +21,8 @@ import { ProjectModuleMutationComponent } from '../project-module-mutation/proje
 @Component({
 	selector: 'ngx-project-module-table',
 	templateUrl: './project-module-table.component.html',
-	styleUrl: './project-module-table.component.scss'
+	styleUrl: './project-module-table.component.scss',
+	standalone: false
 })
 export class ProjectModuleTableComponent extends TranslationBaseComponent implements OnInit {
 	public modules: IOrganizationProjectModule[] = [];

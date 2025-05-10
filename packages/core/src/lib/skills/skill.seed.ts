@@ -17,11 +17,11 @@ export const createDefaultSkills = async (
 			skill.tenant = tenant;
 			skill.organization = organization;
 			skill.description = '';
-			skill.color = faker.internet.color();
+			skill.color = faker.color.rgb();
 			skills.push(skill);
 		}
 		return await dataSource.manager.save(skills);
 	} catch (error) {
-		console.log({ error })
+		console.log({ error });
 	}
 };

@@ -1,4 +1,4 @@
-@import '@shared/_edit-profile-form';
+@forward '@shared/_edit-profile-form';
 
 :host {
   ::ng-deep .tabset-container .route-tabset {

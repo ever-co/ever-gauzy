@@ -1,4 +1,5 @@
-@import 'gauzy/_gauzy-table';
+@use 'gauzy/_gauzy-table' as *;
+
 .date-and-value {
   display: flex;
   flex-direction: column;

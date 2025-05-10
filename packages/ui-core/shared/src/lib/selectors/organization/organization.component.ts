@@ -16,9 +16,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-organization-selector',
-	templateUrl: './organization.component.html',
-	styleUrls: ['./organization.component.scss']
+    selector: 'ga-organization-selector',
+    templateUrl: './organization.component.html',
+    styleUrls: ['./organization.component.scss'],
+    standalone: false
 })
 export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organizations: IOrganization[] = [];

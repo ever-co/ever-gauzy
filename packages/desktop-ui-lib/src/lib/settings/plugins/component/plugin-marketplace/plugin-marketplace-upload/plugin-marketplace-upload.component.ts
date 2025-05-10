@@ -2,14 +2,16 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { IPlugin, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { NbDateService, NbDialogRef, NbStepperComponent, NbToastrService } from '@nebular/theme';
+import { NbDateService, NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, Subject, takeUntil, tap } from 'rxjs';
+import { ToastrNotificationService } from '../../../../../services';
 
 @Component({
 	selector: 'lib-plugin-marketplace-upload',
 	templateUrl: './plugin-marketplace-upload.component.html',
 	styleUrls: ['./plugin-marketplace-upload.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
@@ -28,7 +30,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly dialogRef: NbDialogRef<PluginMarketplaceUploadComponent>,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService,
 		protected readonly dateService: NbDateService<Date>
 	) {
@@ -159,10 +161,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		if (this.pluginForm.invalid) {
 			this.markFormGroupTouched(this.pluginForm);
 			this.scrollToFirstInvalidControl();
-			this.toastrService.danger(
-				this.translateService.instant('PLUGINS.VALIDATION.FORM_INVALID'),
-				this.translateService.instant('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.error(this.translateService.instant('PLUGIN.FORM.VALIDATION.FAILED'));
 			return;
 		}
 
@@ -172,10 +171,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			const pluginData = this.pluginForm.value;
 			this.dialogRef.close(pluginData);
 		} catch (error) {
-			this.toastrService.danger(
-				error.message || this.translateService.instant('PLUGINS.UPLOAD.ERROR'),
-				this.translateService.instant('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.error(error.message || error);
 		} finally {
 			this.isSubmitting = false;
 		}

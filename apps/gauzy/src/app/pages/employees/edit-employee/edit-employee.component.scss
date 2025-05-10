@@ -1,5 +1,5 @@
-@import 'gauzy/_gauzy-cards';
-@import 'gauzy/_gauzy-overrides';
+@use 'gauzy/_gauzy-cards' as *;
+@use 'gauzy/_gauzy-overrides' as ga-overrides;
 
 .edit-icon {
   margin-left: 30px;
@@ -107,5 +107,5 @@
     calc($default-card-height + 3.5rem),
     $default-radius
   );
-  @include input-appearance(42px, var(--gauzy-card-1));
+  @include ga-overrides.input-appearance(42px, var(--gauzy-card-1));
 }

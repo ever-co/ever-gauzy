@@ -12,9 +12,10 @@ import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-income-mutation',
-	templateUrl: './income-mutation.component.html',
-	styleUrls: ['./income-mutation.component.scss']
+    selector: 'ngx-income-mutation',
+    templateUrl: './income-mutation.component.html',
+    styleUrls: ['./income-mutation.component.scss'],
+    standalone: false
 })
 export class IncomeMutationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;

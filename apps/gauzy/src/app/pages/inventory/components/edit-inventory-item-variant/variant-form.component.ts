@@ -28,9 +28,10 @@ export interface IVariantCreateInput {
 }
 
 @Component({
-	selector: 'ngx-inventory-variant-form',
-	templateUrl: './variant-form.component.html',
-	styleUrls: ['./variant-form.component.scss']
+    selector: 'ngx-inventory-variant-form',
+    templateUrl: './variant-form.component.html',
+    styleUrls: ['./variant-form.component.scss'],
+    standalone: false
 })
 export class InventoryVariantFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	itemVariant: IProductVariant;

@@ -8,8 +8,9 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Pipe({
-	name: 'dateFormat',
-	pure: false
+    name: 'dateFormat',
+    pure: false,
+    standalone: false
 })
 export class DateFormatPipe implements PipeTransform {
 	dateFormat: string = 'd MMMM, y';

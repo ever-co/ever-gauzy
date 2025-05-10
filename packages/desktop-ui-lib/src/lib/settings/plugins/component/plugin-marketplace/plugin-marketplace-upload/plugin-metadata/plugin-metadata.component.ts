@@ -5,6 +5,7 @@ import { FormGroup } from '@angular/forms';
 	selector: 'lib-plugin-metadata',
 	templateUrl: './plugin-metadata.component.html',
 	styleUrls: ['./plugin-metadata.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMetadataComponent {

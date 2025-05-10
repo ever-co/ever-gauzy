@@ -28,9 +28,10 @@ import { RecurringExpenseMutationComponent, RecurringExpenseDeleteConfirmationCo
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-recurring-expenses-employee',
-	templateUrl: './recurring-expense-employee.component.html',
-	styleUrls: ['./recurring-expense-employee.component.scss']
+    selector: 'ga-recurring-expenses-employee',
+    templateUrl: './recurring-expense-employee.component.html',
+    styleUrls: ['./recurring-expense-employee.component.scss'],
+    standalone: false
 })
 export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	selectedEmployee: IEmployee;

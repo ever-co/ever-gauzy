@@ -6,9 +6,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { OrganizationsService, Store, UserIdService, UsersOrganizationsService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-edit-user-organizations-mutation',
-	templateUrl: './edit-user-organizations-mutation.component.html',
-	styleUrls: ['../../../edit-user-mutation/edit-user-mutation.component.scss']
+    selector: 'ga-edit-user-organizations-mutation',
+    templateUrl: './edit-user-organizations-mutation.component.html',
+    styleUrls: ['../../../edit-user-mutation/edit-user-mutation.component.scss'],
+    standalone: false
 })
 export class EditUserOrganizationsMutationComponent extends TranslationBaseComponent implements OnInit {
 	@Input()

@@ -4,9 +4,10 @@ import { environment } from '@gauzy/ui-config';
 import { ServerConnectionService, Store } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-maintenance-mode',
-	styleUrls: ['./maintenance-mode.component.scss'],
-	templateUrl: './maintenance-mode.component.html'
+    selector: 'ga-maintenance-mode',
+    styleUrls: ['./maintenance-mode.component.scss'],
+    templateUrl: './maintenance-mode.component.html',
+    standalone: false
 })
 export class MaintenanceModeComponent implements OnInit, OnDestroy {
 	noInternetLogo: string;

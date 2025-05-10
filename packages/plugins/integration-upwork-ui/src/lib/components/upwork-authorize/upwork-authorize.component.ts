@@ -15,9 +15,10 @@ import { IntegrationsService, Store, UpworkService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-upwork-authorize',
-	templateUrl: './upwork-authorize.component.html',
-	styleUrls: ['./upwork-authorize.component.scss']
+    selector: 'ngx-upwork-authorize',
+    templateUrl: './upwork-authorize.component.html',
+    styleUrls: ['./upwork-authorize.component.scss'],
+    standalone: false
 })
 export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	public rememberState: boolean;

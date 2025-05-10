@@ -15,7 +15,7 @@ import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { EmployeeService } from '../employee/employee.service';
 import { MentionService } from '../mention/mention.service';
 import { Comment } from './comment.entity';
-import { TypeOrmCommentRepository } from './repository/type-orm.comment.repository';
+import { TypeOrmCommentRepository } from './repository/type-orm-comment.repository';
 import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.repository';
 
 @Injectable()

@@ -10,7 +10,8 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	template: ''
+    template: '',
+    standalone: false
 })
 export class ImageUploaderBaseComponent {
 	public organization: IOrganization;

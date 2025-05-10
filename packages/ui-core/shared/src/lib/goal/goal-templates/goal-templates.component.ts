@@ -9,9 +9,10 @@ import {
 import { NbDialogRef } from '@nebular/theme';
 
 @Component({
-	selector: 'ga-goal-templates',
-	templateUrl: './goal-templates.component.html',
-	styleUrls: ['./goal-templates.component.scss']
+    selector: 'ga-goal-templates',
+    templateUrl: './goal-templates.component.html',
+    styleUrls: ['./goal-templates.component.scss'],
+    standalone: false
 })
 export class GoalTemplatesComponent implements OnInit {
 	goalTemplateForm: UntypedFormGroup;

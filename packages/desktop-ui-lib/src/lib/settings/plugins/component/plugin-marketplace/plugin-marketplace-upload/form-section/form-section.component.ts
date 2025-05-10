@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 	selector: 'lib-form-section',
 	templateUrl: './form-section.component.html',
 	styleUrls: ['./form-section.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FormSectionComponent {

@@ -24,7 +24,8 @@ export interface GalleryItem {
 }
 
 @Directive({
-	selector: '[ngxGallery]'
+    selector: '[ngxGallery]',
+    standalone: false
 })
 export class GalleryDirective implements OnDestroy, OnInit {
 	public disableClick: boolean = false;

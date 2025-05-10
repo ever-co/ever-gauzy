@@ -6,9 +6,10 @@ import { ElectronService } from '../../electron/services';
 import { LanguageElectronService } from '../../language/language-electron.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-about',
-	templateUrl: './about.component.html',
-	styleUrls: ['./about.component.scss']
+    selector: 'gauzy-about',
+    templateUrl: './about.component.html',
+    styleUrls: ['./about.component.scss'],
+    standalone: false
 })
 export class AboutComponent implements OnInit {
 	private _application = {

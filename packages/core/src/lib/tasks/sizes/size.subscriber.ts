@@ -46,7 +46,7 @@ export class TaskSizeSubscriber extends BaseEntityEventSubscriber<TaskSize> {
 	async beforeEntityCreate(entity: TaskSize): Promise<void> {
 		try {
 			// Set a default color using faker if not provided
-			entity.color = entity.color || faker.internet.color();
+			entity.color ??= faker.color.rgb();
 
 			// Set a sluggable value based on the name, if provided
 			if ('name' in entity) {

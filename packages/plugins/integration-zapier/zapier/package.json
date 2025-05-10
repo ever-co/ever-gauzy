@@ -13,13 +13,13 @@
     "clean": "rimraf lib dist"
   },
   "dependencies": {
-    "zapier-platform-core": "16.3.1"
+    "zapier-platform-core": "16.5.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",
     "rimraf": "^3.0.2",
     "typescript": "^5.8.2",
-    "zapier-platform-cli": "16.3.1"
+    "zapier-platform-cli": "16.5.0"
   },
   "private": true
 }

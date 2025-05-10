@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-	template: `
+    template: `
 		<div>
 			<a
 				class="link-text mr-2 mb-2"
@@ -12,7 +12,8 @@ import { Component, Input } from '@angular/core';
 			</a>
 		</div>
 	`,
-	styleUrls: ['./client-names.component.scss']
+    styleUrls: ['./client-names.component.scss'],
+    standalone: false
 })
 export class ClientNamesComponent {
 	@Input()

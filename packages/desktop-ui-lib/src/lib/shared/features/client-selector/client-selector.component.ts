@@ -13,17 +13,18 @@ import { ClientSelectorStore } from './+state/client-selector.store';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-client-selector',
-	templateUrl: './client-selector.component.html',
-	styleUrls: ['./client-selector.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => ClientSelectorComponent),
-			multi: true
-		}
-	]
+    selector: 'gauzy-client-selector',
+    templateUrl: './client-selector.component.html',
+    styleUrls: ['./client-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ClientSelectorComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganizationContact> implements OnInit {
 	constructor(

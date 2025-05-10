@@ -47,7 +47,7 @@ export class TaskRelatedIssueTypeSubscriber extends BaseEntityEventSubscriber<Ta
 	async beforeEntityCreate(entity: TaskRelatedIssueType): Promise<void> {
 		try {
 			// Set a default color using faker if not provided
-			entity.color = entity.color || faker.internet.color();
+			entity.color ??= faker.color.rgb();
 
 			// Set a sluggable value based on the name, if provided
 			if ('name' in entity) {

@@ -26,7 +26,8 @@ export enum ServerStatus {
 	selector: 'ngx-server-dashboard',
 	templateUrl: './server-dashboard.component.html',
 	styleUrls: ['./server-dashboard.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	standalone: false
 })
 export class ServerDashboardComponent implements OnInit, AfterViewInit {
 	@ViewChild('logBox') logBox: ElementRef;
@@ -106,7 +107,7 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 	ngAfterViewInit(): void {
 		this.electronService.ipcRenderer.on('dashboard_ready', (event, arg) => {
 			this._ngZone.run(() => {
-				if (!!arg.setting?.autoStart ?? true) {
+				if (arg.setting?.autoStart ?? true) {
 					this.runServer();
 				}
 			});

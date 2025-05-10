@@ -1,4 +1,4 @@
-@import './reusable';
+@use './reusable' as *;
 
 .login-container {
   width: 560px;
@@ -140,9 +140,9 @@
   }
 
   & .links {
-    margin-top: 10px;
-    @include social-links-style;
-    width: 100%;
+	margin-top: 10px;
+	width: 100%;
+	@include social-links-style;
 
     & .socials {
       display: flex;
@@ -153,8 +153,8 @@
   }
 
   & .another-action {
+	margin-top: 10px;
     @include another-action;
-    margin-top: 10px;
   }
 }
 
@@ -396,8 +396,8 @@
 }
 
 .hr-div-soft {
-  @include hr-div-soft;
-  margin-bottom: 12px;
+	margin-bottom: 12px;
+  	@include hr-div-soft;
 }
 
 .theme-switch {

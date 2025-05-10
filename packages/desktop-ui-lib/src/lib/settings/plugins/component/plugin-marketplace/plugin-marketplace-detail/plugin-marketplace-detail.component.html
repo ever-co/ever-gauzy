@@ -1,4 +1,4 @@
-@let installing = installationQuery.installing$ |async; @let uninstalling = installationQuery.unistalling$|async; @let
+@let installing = installationQuery.installing$ |async; @let uninstalling = installationQuery.uninstalling$|async; @let
 checked = isChecked$ | async; @let toggle = installationQuery.toggle$ | async ; @let disabled = installing ||
 uninstalling; @let isSelected = plugin?.id === toggle.plugin?.id; @let showProgress = disabled && isSelected; @let
 editing = marketplaceQuery.updating$ | async; @if(plugin) {
@@ -8,7 +8,14 @@ editing = marketplaceQuery.updating$ | async; @if(plugin) {
 			<div class="plugin-name" (click)="openPlugin()">{{ plugin.name }}</div>
 			<div class="plugin-version">{{ plugin.version.number || plugin.version }}</div>
 		</div>
-		<div [readMore]="80" class="plugin-description">{{ plugin.description }}</div>
+		<div
+			[readMore]="80"
+			[readMoreText]="'BUTTONS.READ_MORE' | translate"
+			[readLessText]="'BUTTONS.READ_LESS' | translate"
+			class="plugin-description"
+		>
+			{{ plugin.description }}
+		</div>
 	</div>
 	<div class="plugin-actions">
 		@if(isOwner){

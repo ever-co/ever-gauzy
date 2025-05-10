@@ -1,5 +1,5 @@
-@import '@shared/_whats-new';
-@import 'gauzy/_gauzy-dialogs';
+@use '@shared/_whats-new';
+@use 'gauzy/_gauzy-dialogs';
 
 ::ng-deep.changelog-sidebar {
   .main-container {

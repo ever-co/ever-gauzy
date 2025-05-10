@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 :host {
   .percentage-col {
     width: 90px;

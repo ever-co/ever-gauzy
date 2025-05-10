@@ -1,4 +1,4 @@
-@import '../../daily/daily/daily.component.scss';
+@use '../../daily/daily/daily.component' as *;
 
 :host {
   .filters {

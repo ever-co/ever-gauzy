@@ -18,9 +18,10 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-project-budgets-report',
-	templateUrl: './project-budgets-report.component.html',
-	styleUrls: ['./project-budgets-report.component.scss']
+    selector: 'ga-project-budgets-report',
+    templateUrl: './project-budgets-report.component.html',
+    styleUrls: ['./project-budgets-report.component.scss'],
+    standalone: false
 })
 export class ProjectBudgetsReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public loading: boolean = false;

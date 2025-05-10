@@ -2,9 +2,10 @@ import { AfterViewInit, Component } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
-	selector: 'ngx-not-found',
-	styleUrls: ['./not-found.component.scss'],
-	templateUrl: './not-found.component.html'
+    selector: 'ngx-not-found',
+    styleUrls: ['./not-found.component.scss'],
+    templateUrl: './not-found.component.html',
+    standalone: false
 })
 export class NotFoundComponent implements AfterViewInit {
 	constructor(private readonly router: Router) {}

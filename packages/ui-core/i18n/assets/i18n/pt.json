@@ -170,10 +170,16 @@
 		"SHARE": "Compartilhar",
 		"GET_INFO": "Obter informações",
 		"RETRY": "Tentar novamente",
-		"UPLOAD": "Carregar"
+		"UPLOAD": "Carregar",
+		"MARKETPLACE": "Mercado",
+		"ADD_VERSION": "Adicionar versão",
+		"READ_MORE": "Ler mais",
+		"READ_LESS": "Ler menos",
+		"RECOVER": "Recuperar"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "Não há histórico",
 			"RECEIVE_ESTIMATE": "Você não recebeu nenhuma estimativa.",
 			"INCOME": "Você não criou nenhuma renda.",
 			"EXPENSE_CATEGORY": "Você não criou nenhuma categoria de despesa.",
@@ -218,7 +224,8 @@
 			"PRODUCT_TYPE_NO_DATA": "Você não criou nenhum tipo de produto.",
 			"TEAM_DASHBOARD": "Você não tem nenhum time.",
 			"PLUGIN": "Você não instalou nenhum plugin.",
-			"PLUGIN_MARKETPLACE": "Este plugin não está disponível no marketplace"
+			"PLUGIN_MARKETPLACE": "Este plugin não está disponível no marketplace",
+			"LOADING": "Carregando..."
 		},
 		"TRANSACTION_TYPE": "Digite",
 		"AMOUNT": "Quantia.",
@@ -1044,7 +1051,44 @@
 			"FEATURE_ORGANIZATION": "Organização de recursos.",
 			"EXPORT_DATA": "Exportar dados",
 			"IMPORT_DATA": "Importar Dados",
-			"ALL_ENTITIES": "TODAS as entidades"
+			"ALL_ENTITIES": "TODAS as entidades",
+			"ACTIVITY_LOG": "Registro de atividades",
+			"DAILY_PLAN": "Plano diário",
+			"ENTITY_SUBSCRIPTION": "Assinatura de entidade",
+			"FAVORITE": "Favorito",
+			"MENTION": "Menção",
+			"REACTION": "Reação",
+			"RESOURCE_LINK": "Link de recurso",
+			"SCREENING_TASK": "Tarefa de triagem",
+			"SOCIAL_ACCOUNT": "Conta social",
+			"CHANGELOG": "Registro de alterações",
+			"ISSUE_TYPE": "Tipo de problema",
+			"TASK_ESTIMATION": "Estimativa de tarefa",
+			"TASK_LINKED_ISSUE": "Problema vinculado à tarefa",
+			"TASK_PRIORITY": "Prioridade da tarefa",
+			"TASK_RELATED_ISSUE": "Problema relacionado à tarefa",
+			"TASK_SIZE": "Tamanho da tarefa",
+			"TASK_STATUS": "Status da tarefa",
+			"TASK_VERSION": "Versão da tarefa",
+			"TASK_RELATED_ISSUE_TYPE": "Tipo de problema relacionado",
+			"ORGANIZATION_PROJECT_EMPLOYEE": "Funcionário do projeto da organização",
+			"ORGANIZATION_PROJECT_MODULE": "Módulo do projeto da organização",
+			"ORGANIZATION_PROJECT_MODULE_EMPLOYEE": "Funcionário do módulo do projeto da organização",
+			"ORGANIZATION_SPRINT_EMPLOYEE": "Funcionário do sprint da organização",
+			"ORGANIZATION_SPRINT_TASK": "Tarefa do sprint da organização",
+			"ORGANIZATION_SPRINT_TASK_HISTORY": "Histórico de tarefas do sprint da organização",
+			"ORGANIZATION_TASK_SETTING": "Configuração de tarefa da organização",
+			"ORGANIZATION_TEAM_JOIN_REQUEST": "Solicitação para entrar na equipe da organização",
+			"ORGANIZATION_GITHUB_REPOSITORY": "Repositório GitHub da organização",
+			"ORGANIZATION_GITHUB_REPOSITORY_ISSUE": "Problema no repositório GitHub da organização",
+			"EMPLOYEE_AVAILABILITY": "Disponibilidade do funcionário",
+			"EMPLOYEE_NOTIFICATION": "Notificação do funcionário",
+			"EMPLOYEE_PHONE": "Telefone do funcionário",
+			"APPOINTMENT_EMPLOYEE": "Agendamento com funcionário",
+			"EMPLOYEE_NOTIFICATION_SETTING": "Configuração de notificação do funcionário",
+			"PRODUCT_REVIEW": "Avaliação do produto",
+			"TASK_LINKED_ISSUES": "Problemas vinculados",
+			"TASK_VIEW": "Visualização da tarefa"
 		},
 		"TAGS": "Tags",
 		"LANGUAGE": "Linguagem",
@@ -4017,7 +4061,14 @@
 				"SSL_CERT_FILE_INFO": "Caminho para o arquivo de certificado do cliente para SSL.",
 				"SECURE": "Seguro",
 				"SECURE_INFO": "True, se desejar verificar os certificados SSL."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "A instalação do NPM permite o acesso a plug-ins disponíveis publicamente e privados.",
+			"PACKAGE_NAME": "Nome do pacote NPM",
+			"PACKAGE_VERSION": "Versão do pacote NPM",
+			"REGISTRY": "Registro NPM",
+			"AUTH_TOKEN": "Token de autenticação",
+			"PRIVATE_REGISTRY_URL": "URL do registro privado",
+			"PLUGIN_INSTALL_CDN_ERROR": "O URL do servidor não deve estar vazio."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Limite semanal excedido",
 		"OF_HRS": "De {{ limit }} horas.",
@@ -4789,7 +4840,10 @@
 				"INVALID_PACKAGE_NAME": "Formato de nome de pacote inválido",
 				"INVALID_SCOPE": "Formato de escopo inválido",
 				"AUTHOR_TOO_LONG": "O nome do autor é muito longo",
-				"LICENSE_TOO_LONG": "O campo da licença é muito longo"
+				"LICENSE_TOO_LONG": "O campo da licença é muito longo",
+				"FAILED": "Validação falhou",
+				"CHANGELOG_TOO_SHORT": "O changelog é muito curto",
+				"CHANGELOG_REQUIRED": "O changelog é obrigatório"
 			},
 			"TYPE": "Tipo de plugin",
 			"TYPE_PLACEHOLDER": "Selecione o tipo de plugin",
@@ -4863,7 +4917,88 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Descobrir",
-			"INSTALLED": "Instalado"
+			"INSTALLED": "Instalado",
+			"VERSION_HISTORY": "Histórico de versões"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Enviar novo plugin",
+			"OFFLINE": "Você está atualmente offline/desconectado ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Desativar plugin",
+				"DESCRIPTION": "Tem certeza de que deseja desativar este plugin?",
+				"CONFIRM": "Desativar"
+			},
+			"UNINSTALL": {
+				"TITLE": "Desinstalar plugin",
+				"DESCRIPTION": "Tem certeza de que deseja desinstalar este plugin?",
+				"CONFIRM": "Desinstalar"
+			},
+			"DELETE": {
+				"TITLE": "Excluir plugin",
+				"DESCRIPTION": "Tem certeza de que deseja excluir este plugin?",
+				"CONFIRM": "Excluir"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Atualizar versão v{{number}}",
+					"DESCRIPTION": "Tem certeza de que deseja atualizar este plugin?",
+					"CONFIRM": "Atualizar"
+				},
+				"CREATE": {
+					"TITLE": "Criar nova versão para {{name}}",
+					"DESCRIPTION": "Tem certeza de que deseja criar esta versão?",
+					"CONFIRM": "Criar"
+				},
+				"DELETE": {
+					"TITLE": "Excluir versão",
+					"DESCRIPTION": "Tem certeza de que deseja excluir esta versão?",
+					"CONFIRM": "Excluir"
+				},
+				"RESTORE": {
+					"TITLE": "Restaurar versão",
+					"DESCRIPTION": "Tem certeza de que deseja restaurar esta versão?",
+					"CONFIRM": "Restaurar"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Versão do plugin v{{number}} criada com sucesso!",
+					"UPDATED": "Versão do plugin v{{number}} atualizada com sucesso!",
+					"DELETED": "Versão do plugin excluída com sucesso!",
+					"RESTORED": "Versão do plugin restaurada com sucesso!"
+				},
+				"UPLOADED": "Plugin enviado com sucesso!",
+				"UPDATED": "Plugin atualizado com sucesso!",
+				"DELETED": "Plugin excluído com sucesso!",
+				"INSTALLED": "Plugin instalado com sucesso!",
+				"UNINSTALLED": "Plugin desinstalado com sucesso!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Adicionando nova versão do plugin...",
+					"UPDATING": "Atualizando versão do plugin...",
+					"DELETING": "Excluindo versão do plugin...",
+					"RESTORING": "Restaurando versão do plugin..."
+				},
+				"UPLOADING": "Enviando plugin...",
+				"UPDATING": "Atualizando plugin...",
+				"DELETING": "Excluindo plugin...",
+				"INSTALLING": "Instalando plugin...",
+				"UNINSTALLING": "Desinstalando plugin..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Falha ao restaurar versão do plugin. Por favor, tente novamente!"
+				},
+				"UPLOAD": "Falha ao enviar plugin. Por favor, tente novamente!",
+				"NOT_FOUND": "Plugin com ID {{ id }} não encontrado.",
+				"INSTALL": "Falha ao instalar plugin. Por favor, tente novamente!",
+				"REVERT_INSTALLATION": "Falha ao reverter instalação!"
+			}
 		}
 	},
 	"SERVER_DOWN": {

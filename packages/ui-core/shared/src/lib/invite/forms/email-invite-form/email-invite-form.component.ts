@@ -25,9 +25,10 @@ import { FormHelpers } from '../../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-email-invite-form',
-	templateUrl: 'email-invite-form.component.html',
-	styleUrls: ['email-invite-form.component.scss']
+    selector: 'ga-email-invite-form',
+    templateUrl: 'email-invite-form.component.html',
+    styleUrls: ['email-invite-form.component.scss'],
+    standalone: false
 })
 export class EmailInviteFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;

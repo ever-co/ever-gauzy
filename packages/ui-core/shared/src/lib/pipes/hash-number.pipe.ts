@@ -1,7 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-	name: 'hash'
+    name: 'hash',
+    standalone: false
 })
 export class HashNumberPipe implements PipeTransform {
 	/**

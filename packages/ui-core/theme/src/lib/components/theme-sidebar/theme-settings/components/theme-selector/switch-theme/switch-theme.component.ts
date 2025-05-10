@@ -8,9 +8,10 @@ import { filter, tap } from 'rxjs/operators';
 import { untilDestroyed } from '@ngneat/until-destroy';
 
 @Component({
-	selector: 'gauzy-switch-theme',
-	templateUrl: './switch-theme.component.html',
-	styleUrls: ['./switch-theme.component.scss']
+    selector: 'gauzy-switch-theme',
+    templateUrl: './switch-theme.component.html',
+    styleUrls: ['./switch-theme.component.scss'],
+    standalone: false
 })
 export class SwitchThemeComponent extends ThemeSelectorComponent {
 	private DARK_OS_SCHEME = '(prefers-color-scheme: dark)';

@@ -9,10 +9,11 @@ import { RequestQuery } from '../../../+state/request/request.query';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-activity-report',
-	templateUrl: './activity-report.component.html',
-	styleUrls: ['./activity-report.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-activity-report',
+    templateUrl: './activity-report.component.html',
+    styleUrls: ['./activity-report.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ActivityReportComponent implements OnInit {
 	public isLoading$ = new BehaviorSubject<boolean>(false);

@@ -19,6 +19,9 @@ import { startServer } from './app';
 import AppWindow from '../window-manager';
 import * as moment from 'moment';
 import * as path from 'path';
+import PullActivities from '../workers/pull-activities';
+import { checkUserAuthentication } from '../auth';
+const rootPath = path.join(__dirname, '../..')
 
 const userService = new UserService();
 
@@ -37,14 +40,23 @@ function getGlobalVariable(configs?: {
 	};
 }
 
-async function closeLoginWindow() {
-	const rootPath = path.join(__dirname, '../..')
-	const appWindow = AppWindow.getInstance(rootPath);
-	await delaySync(2000); // delay 2s before destroy login window
-	appWindow.authWindow.browserWindow.destroy();
+function listenIO(stop: boolean) {
+	const pullActivities = PullActivities.getInstance();
+	if (stop) {
+		pullActivities.stopTracking();
+	} else {
+		pullActivities.startTracking();
+	}
 }
 
-export default function AppIpcMain() {
+async function closeLoginWindow() {
+
+	const appWindow = AppWindow.getInstance(rootPath);
+	await delaySync(2000); // delay 2s before destroy login window
+	appWindow.destroyAuthWindow();
+}
+
+export default function AppIpcMain(){
 	remoteMain.initialize();
 
 	/* Set unlimited listeners */
@@ -116,12 +128,31 @@ export default function AppIpcMain() {
 		store.set({
 			auth: { ...arg, isLogout: false }
 		});
+
+		listenIO(false);
 		await closeLoginWindow();
 	});
 
-	ipcMain.on('update_app_setting', (event, arg) => {
+	ipcMain.on('update_app_setting', (_, arg) => {
 		log.info(`Update App Setting: ${moment().format()}`);
 		LocalStore.updateApplicationSetting(arg.values);
+	});
+
+	ipcMain.on('logout_desktop', async (_, arg) => {
+		try {
+			log.info('Logout Desktop');
+			store.set({
+				auth: null
+			});
+			const appWindow = AppWindow.getInstance(rootPath)
+			await appWindow.initSettingWindow();
+			appWindow.settingWindow.reload();
+			await checkUserAuthentication(rootPath);
+			listenIO(true);
+
+		} catch (error) {
+			log.error('Error Logout Desktop', error);
+		}
 	});
 
 	pluginListeners();

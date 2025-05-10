@@ -1,4 +1,4 @@
-@import 'var';
+@use 'var' as *;
 
 @include nb-install-component {
 	.item-invalid {

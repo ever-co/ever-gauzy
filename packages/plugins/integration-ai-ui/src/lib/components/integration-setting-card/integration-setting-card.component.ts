@@ -13,9 +13,10 @@ export enum SettingTitlesEnum {
 }
 
 @Component({
-	selector: 'ngx-integration-setting-card',
-	styleUrls: ['./integration-setting-card.component.scss'],
-	templateUrl: './integration-setting-card.component.html'
+    selector: 'ngx-integration-setting-card',
+    styleUrls: ['./integration-setting-card.component.scss'],
+    templateUrl: './integration-setting-card.component.html',
+    standalone: false
 })
 export class IntegrationSettingCardComponent extends TranslationBaseComponent {
 	public isIntegrationAISettingsEdit: boolean = false;
