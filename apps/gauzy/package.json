@@ -195,7 +195,7 @@
 		"karma-jasmine": "^4.0.1",
 		"karma-jasmine-html-reporter": "^1.5.4",
 		"terser": "^5.30.3",
-		"terser-webpack-plugin": "^5.3.10",
+		"terser-webpack-plugin": "^5.3.14",
 		"webpack": "^5.99.7",
 		"webpack-cli": "^6.0.1",
 		"webpack-merge": "^6.0.1",
