@@ -16,8 +16,8 @@ import { TypeOrmHelpCenterArticleRepository } from './repository/type-orm-help-c
 		MikroOrmModule.forFeature([HelpCenterArticle]),
 		RolePermissionModule
 	],
-	providers: [HelpCenterArticleService, TypeOrmHelpCenterArticleRepository, ...CommandHandlers],
 	controllers: [HelpCenterArticleController],
+	providers: [HelpCenterArticleService, TypeOrmHelpCenterArticleRepository, ...CommandHandlers],
 	exports: [HelpCenterArticleService, TypeOrmHelpCenterArticleRepository]
 })
 export class HelpCenterArticleModule {}
