@@ -90,7 +90,12 @@
 			"hardenedRuntime": true,
 			"gatekeeperAssess": false,
 			"entitlements": "tools/build/entitlements.mas.plist",
-			"entitlementsInherit": "tools/build/entitlements.mas.plist"
+			"entitlementsInherit": "tools/build/entitlements.mas.plist",
+			"extendInfo": {
+				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup.",
+				"NSMicrophoneUsageDescription": "This app requires microphone access when recording sounds or detecting loudness.",
+				"NSCameraUsageDescription": "This app requires camera access when using the video sensing blocks."
+			}
 		},
 		"win": {
 			"publisherName": "Ever",
