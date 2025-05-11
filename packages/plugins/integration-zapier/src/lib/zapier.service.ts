@@ -47,8 +47,13 @@ export class ZapierService {
 		return firstValueFrom(
 			this._httpService.get(url, { headers }).pipe(
 				catchError((error: AxiosError<any>) => {
-					const response = error.response || { status: HttpStatus.INTERNAL_SERVER_ERROR };
-
+					if (!error.response) {
+						throw new HttpException(
+							{ message: error.message, error },
+							HttpStatus.INTERNAL_SERVER_ERROR
+						);
+					}
+					const response: AxiosResponse<any> = error.response;
 					throw new HttpException({ message: error.message, error }, response.status);
 				}),
 				map((response: AxiosResponse<T>) => response.data)
