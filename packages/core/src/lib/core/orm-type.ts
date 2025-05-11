@@ -1,4 +1,3 @@
-import { Collection } from "@mikro-orm/core";
-
+import { Collection } from '@mikro-orm/core';
 
 export const MikroCollection = Collection;

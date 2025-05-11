@@ -21,6 +21,23 @@
     <key>com.apple.security.inherit</key>
     <true/>
     <key>com.apple.security.automation.apple-events</key>
+	<true/>
+    <!-- Media access entitlements -->
+    <key>com.apple.security.device.camera</key>
+    <true/>
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
+    <key>com.apple.security.device.screen-capture</key>
+    <true/>
+    <key>com.apple.security.device.microphone</key>
+    <true/>
+
+    <!-- For screen recording on macOS 10.15+ -->
+    <key>com.apple.security.screen-capture</key>
+    <true/>
+
+    <!-- Optional: if you need accessibility features -->
+    <key>com.apple.security.accessibility.client</key>
     <true/>
   </dict>
 </plist>

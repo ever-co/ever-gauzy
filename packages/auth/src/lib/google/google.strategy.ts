@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, VerifyCallback } from 'passport-google-oauth20';
+import { Strategy, StrategyOptionsWithRequest, VerifyCallback } from 'passport-google-oauth20';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -62,23 +62,25 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
  * @param configService - An instance of ConfigService to access application configuration.
  * @returns An object containing the Google OAuth configuration parameters.
  */
-export const parseGoogleConfig = (configService: ConfigService): Record<string, any> => {
-	// Retrieve Google OAuth client ID from the configuration service, default to 'disabled' if not found.
-	const clientID = configService.get<string>('google.clientId');
-	// Retrieve Google OAuth client secret from the configuration service, default to 'disabled' if not found.
-	const clientSecret = configService.get<string>('google.clientSecret');
-	// Retrieve Google OAuth callback URL from the configuration service.
-	const callbackURL = configService.get<string>('google.callbackURL');
+export const parseGoogleConfig = (configService: ConfigService): StrategyOptionsWithRequest => {
+	const { clientId, clientSecret, callbackURL } = {
+		// Retrieve the Google client ID from the configuration.
+		clientId: configService.get<string>('google.clientId'),
+		// Retrieve the Google client Secret from the configuration.
+		clientSecret: configService.get<string>('google.clientSecret'),
+		// Retrieve the callback URL from the configuration.
+		callbackURL: configService.get<string>('google.callbackURL')
+	};
 
 	// Log a warning if any of the required configuration values are missing.
-	if (!clientID || !clientSecret || !callbackURL) {
+	if (!clientId || !clientSecret || !callbackURL) {
 		console.warn('⚠️ Google OAuth configuration is incomplete. Defaulting to "disabled".');
 	}
 
 	// Return the Google OAuth configuration object.
 	return {
 		// Use the retrieved clientID, or default to 'disabled' if not provided.
-		clientID: clientID || 'disabled',
+		clientID: clientId || 'disabled',
 		// Use the retrieved clientSecret, or default to 'disabled' if not provided.
 		clientSecret: clientSecret || 'disabled',
 		// Use the retrieved callbackURL, or default to the API_BASE_URL (or localhost) plus the callback path.

@@ -17,9 +17,12 @@ export default registerAs(
 		realm: process.env.KEYCLOAK_REALM,
 
 		// Keycloak OAuth Auth Server URL
-		authServerUrl: process.env.KEYCLOAK_AUTH_SERVER_URL,
+		authServerURL: process.env.KEYCLOAK_AUTH_SERVER_URL || 'https://keycloak.example.com/auth',
 
 		// Keycloak OAuth Cookie Key
-		cookieKey: process.env.KEYCLOAK_COOKIE_KEY
+		cookieKey: process.env.KEYCLOAK_COOKIE_KEY,
+
+		// Keycloak OAuth Callback URL
+		callbackURL: process.env.KEYCLOAK_CALLBACK_URL
 	})
 );

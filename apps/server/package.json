@@ -27,7 +27,7 @@
 		"electron-packager": "^17.1.1",
 		"electron-reload": "~1.5.0",
 		"node-polyfill-webpack-plugin": "^1.1.4",
-		"terser-webpack-plugin": "^5.3.10"
+		"terser-webpack-plugin": "^5.3.14"
 	},
 	"dependencies": {
 		"@angular/animations": "^19.2.8",
@@ -46,7 +46,7 @@
 		"@nebular/eva-icons": "^15.0.0",
 		"@nebular/security": "^15.0.0",
 		"@nebular/theme": "^15.0.0",
-		"@nestjs/typeorm": "^10.0.2",
+		"@nestjs/typeorm": "^11.0.0",
 		"@ng-select/ng-select": "^14.7.0",
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.4",

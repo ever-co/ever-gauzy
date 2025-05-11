@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-google-oauth20';
+import { Strategy, StrategyOptions } from 'passport-keycloak-oauth2-oidc';
 
 @Injectable()
 export class KeycloakStrategy extends PassportStrategy(Strategy, 'keycloak') {
@@ -12,14 +12,14 @@ export class KeycloakStrategy extends PassportStrategy(Strategy, 'keycloak') {
 	/**
 	 * Validates the provided tokens and user profile from the OAuth provider.
 	 *
-	 * @param request - The HTTP request object.
+	 * @param _request - The HTTP request object.
 	 * @param accessToken - The access token from the provider.
 	 * @param refreshToken - The refresh token from the provider.
 	 * @param profile - The user profile information.
 	 * @param done - The callback function to return the user or an error.
 	 */
 	async validate(
-		request: any,
+		_request: any,
 		accessToken: string,
 		refreshToken: string,
 		profile: any,
@@ -56,33 +56,32 @@ export class KeycloakStrategy extends PassportStrategy(Strategy, 'keycloak') {
  * @param configService - The configuration service instance.
  * @returns A Keycloak configuration object.
  */
-export const parseKeycloakConfig = (configService: ConfigService): Record<string, any> => {
-	// Retrieve the client ID from the configuration
-	const clientID = configService.get<string>('keycloak.clientId');
+export const parseKeycloakConfig = (configService: ConfigService): StrategyOptions => {
+	const { clientId, clientSecret, realm, authServerURL, cookieKey, callbackURL } = {
+		// Retrieve the Keycloak client ID from the configuration.
+		clientId: configService.get<string>('keycloak.clientId'),
+		// Retrieve the Keycloak client Secret from the configuration.
+		clientSecret: configService.get<string>('keycloak.clientSecret'),
+		// Retrieve the Keycloak realm from the configuration.
+		realm: configService.get<string>('keycloak.realm'),
+		// Retrieve the Keycloak auth server URL from the configuration.
+		authServerURL: configService.get<string>('keycloak.authServerURL', 'https://keycloak.example.com/auth'),
+		// Retrieve the Keycloak cookie key from the configuration.
+		cookieKey: configService.get<string>('keycloak.cookieKey'),
+		// Retrieve the callback URL from the configuration.
+		callbackURL: configService.get<string>('keycloak.callbackURL')
+	};
 
-	// Retrieve the client secret from the configuration
-	const clientSecret = configService.get<string>('keycloak.clientSecret');
-
-	// Retrieve the realm from the configuration
-	const realm = configService.get<string>('keycloak.realm');
-
-	// Retrieve the auth server URL from the configuration
-	const authServerUrl = configService.get<string>('keycloak.authServerUrl');
-
-	// Retrieve the cookie key from the configuration
-	const cookieKey = configService.get<string>('keycloak.cookieKey');
-
-	// Validate required configurations
-	if (!clientID || !clientSecret) {
+	if (!clientId || !clientSecret) {
 		console.warn('⚠️ Keycloak authentication configuration is incomplete. Defaulting to "disabled".');
 	}
 
-	// Construct and return the Keycloak configuration object
 	return {
-		clientID: clientID || 'disabled',
+		clientID: clientId || 'disabled',
 		clientSecret: clientSecret || 'disabled',
-		realm: realm,
-		authServerUrl: authServerUrl,
-		cookieKey: cookieKey
+		realm,
+		authServerURL,
+		cookieKey,
+		callbackURL: callbackURL || `${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/auth/keycloak/callback`
 	};
 };
