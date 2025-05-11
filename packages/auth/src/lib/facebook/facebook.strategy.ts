@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { Profile, Strategy, StrategyOption } from 'passport-facebook';
+import { Profile, Strategy, StrategyOptions } from 'passport-facebook';
 
 @Injectable()
 export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
@@ -29,7 +29,6 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
 		done: (err: any, user?: any, info?: any) => void
 	): Promise<void> {
 		try {
-			console.log('Facebook OAuth validate:', profile);
 			// Extract relevant information from the user's profile
 			const { emails } = profile;
 
@@ -55,7 +54,7 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
  * @param {ConfigService} configService - The configuration service instance.
  * @returns {StrategyOption} - The Facebook OAuth configuration object.
  */
-export const parseFacebookConfig = (configService: ConfigService): StrategyOption => {
+export const parseFacebookConfig = (configService: ConfigService): StrategyOptions => {
 	const { clientId, clientSecret, callbackURL } = {
 		clientId: configService.get<string>('facebook.clientId'),
 		clientSecret: configService.get<string>('facebook.clientSecret'),
@@ -71,6 +70,7 @@ export const parseFacebookConfig = (configService: ConfigService): StrategyOptio
 		clientSecret: clientSecret || 'disabled',
 		callbackURL: callbackURL || `${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/auth/facebook/callback`,
 		profileFields: ['id', 'emails', 'name'],
+		scope: ['email'],
 		enableProof: true
 	};
 };
