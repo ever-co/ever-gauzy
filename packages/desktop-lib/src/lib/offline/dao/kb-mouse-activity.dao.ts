@@ -30,13 +30,14 @@ export class KbMouseActivityDAO implements DAO<KbMouseActivityTO> {
 		await this._trx.update(id, value);
 	}
 	public async delete(value?: Partial<KbMouseActivityTO>): Promise<void> {
-		await this._provider.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY).del();
+		await this._provider.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
+		.where('id', '=', value.id).del();
 	}
 
 	public async current(): Promise<KbMouseActivityTO> {
 		const [activites] = await this._provider
 			.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
-			.orderBy('id', 'desc')
+			.orderBy('timeStart', 'asc')
 			.limit(1);
 		return activites;
 	}

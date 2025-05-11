@@ -1,38 +1,27 @@
-
 import { app } from 'electron';
+import { TMouseEvents, TkbMouseActivity } from './i-kb-mouse';
 
-type TMouseEvents = {
-	moveTo: {
-		from: {
-			x: number;
-			y: number;
-		},
-		to: {
-			x: number;
-			y: number;
-		}
-	}
-}
-
-type TkbMouseActivity = {
-	kbPressCount: number;
-	kbSequence: number[];
-	mouseMovementsCount: number;
-	mouseLeftClickCount: number;
-	mouseRightClickCount: number;
-	mouseEvents: TMouseEvents[]
-
-}
-class KeyboardMouseActivityStores {
+export class KeyboardMouseActivityStores {
 	currentActivityData: TkbMouseActivity;
 	userPath: string;
+	static instance: KeyboardMouseActivityStores;
 	constructor() {
 		this.userPath = app.getPath('userData');
 		this.resetCurrentAcitivity();
 	}
 
-	writeData() {
-		console.log('current last data activities', JSON.stringify(this.currentActivityData, null, 2));
+	static getInstance(): KeyboardMouseActivityStores {
+		if (!KeyboardMouseActivityStores.instance) {
+			KeyboardMouseActivityStores.instance = new KeyboardMouseActivityStores();
+			return KeyboardMouseActivityStores.instance;
+		}
+		return KeyboardMouseActivityStores.instance;
+	}
+
+	getCurrentActivities(): TkbMouseActivity  {
+		const activities: TkbMouseActivity = {...this.currentActivityData };
+		this.resetCurrentAcitivity();
+		return activities;
 	}
 
 	resetCurrentAcitivity() {
@@ -44,10 +33,6 @@ class KeyboardMouseActivityStores {
 			mouseMovementsCount: 0,
 			mouseEvents: []
 		};
-	}
-
-	readLastData() {
-
 	}
 
 	updateCurrentKeyPressCount() {
@@ -73,10 +58,4 @@ class KeyboardMouseActivityStores {
 	updateMouseEvents(mouseEventMovement: TMouseEvents) {
 		(this.currentActivityData?.mouseEvents || []).push(mouseEventMovement);
 	}
-
-	flushCurrentData() {
-
-	}
 }
-
-export default KeyboardMouseActivityStores;

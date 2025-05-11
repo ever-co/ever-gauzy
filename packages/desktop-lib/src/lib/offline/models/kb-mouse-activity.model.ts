@@ -16,8 +16,8 @@ interface IMouseEvent {
 }
 
 export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializable<KbMouseActivityTO> {
-	private _timeStart : number;
-	private _timeEnd: number | null;
+	private _timeStart: Date;
+	private _timeEnd: Date | null;
 	private _kbPressCount: number;
 	private _kbSequence: number[];
 	private _mouseMovementsCount: number;
@@ -41,16 +41,16 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 		this._mouseEvents = kbMOuseActivity.mouseEvents;
 	}
 
-	public get timeStart(): number {
+	public get timeStart(): Date {
 		return this._timeStart;
 	}
-	public set name(value: number) {
+	public set name(value: Date) {
 		this._timeStart = value;
 	}
-	public get timeEnd(): number | null {
+	public get timeEnd(): Date | null {
 		return this._timeEnd;
 	}
-	public set timeEnd(value: number) {
+	public set timeEnd(value: Date) {
 		this._timeEnd = value;
 	}
 	public get kbPressCount(): number {

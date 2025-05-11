@@ -14,12 +14,13 @@ import {
 	UserService,
 	pluginListeners
 } from '@gauzy/desktop-lib';
-import { getApiBaseUrl, delaySync } from '../util';
+import { getApiBaseUrl, delaySync, getAuthConfig } from '../util';
 import { startServer } from './app';
 import AppWindow from '../window-manager';
 import * as moment from 'moment';
 import * as path from 'path';
 import PullActivities from '../workers/pull-activities';
+import PushActivities from '../workers/push-activities';
 import { checkUserAuthentication } from '../auth';
 const rootPath = path.join(__dirname, '../..')
 
@@ -41,11 +42,19 @@ function getGlobalVariable(configs?: {
 }
 
 function listenIO(stop: boolean) {
-	const pullActivities = PullActivities.getInstance();
+	const auth = getAuthConfig();
+	const pullActivities = PullActivities.getInstance({
+		tenantId: auth.user.employee.tenantId,
+		organizationId: auth.user.employee.organizationId,
+		remoteId: auth.user.id
+	});
+	const pushActivities = PushActivities.getInstance();
 	if (stop) {
 		pullActivities.stopTracking();
+		pushActivities.stopPooling();
 	} else {
 		pullActivities.startTracking();
+		pushActivities.startPooling();
 	}
 }
 

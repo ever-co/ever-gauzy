@@ -37,17 +37,20 @@ export class KbMouseActivityService implements IKbMouseActivityService<KbMouseAc
 	public async retrieve(): Promise<KbMouseActivityTO> {
 		try {
 			const activitiesDao = await this._kbmouseDAO.current();
-			const activities = new KbMouseActivity(activitiesDao);
-			return activities;
+			if (activitiesDao) {
+				const activities = new KbMouseActivity(activitiesDao);
+				return activities;
+			}
+			return null;
 		} catch (error) {
 			console.error(error);
 			return null;
 		}
 	}
 
-	public async remove(): Promise<void> {
+	public async remove(activity: Partial<KbMouseActivityTO>): Promise<void> {
 		try {
-			await this._kbmouseDAO.delete();
+			await this._kbmouseDAO.delete(activity);
 		} catch (error) {
 			throw new AppError('KBMOUSE_SERVICE', error);
 		}

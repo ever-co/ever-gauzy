@@ -14,14 +14,14 @@ type TMouseEvents = {
 
 export interface KbMouseActivityTO {
 	id?: number;
-	timeStart: number;
-	timeEnd: number | null;
+	timeStart: Date;
+	timeEnd: Date | null;
 	kbPressCount: number;
-	kbSequence: number[];
+	kbSequence: number[] | any;
 	mouseMovementsCount: number;
 	mouseLeftClickCount: number;
 	mouseRightClickCount: number;
-	mouseEvents: TMouseEvents[];
+	mouseEvents: TMouseEvents[] | any;
 	organizationId: string;
 	tenantId: string;
 	remoteId: string;

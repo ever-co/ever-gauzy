@@ -13,7 +13,8 @@ export async function up(knex: Knex): Promise<void> {
 		table.integer('mouseRightClickCount');
 		table.json('mouseEvents');
 		table.string('organizationId');
-		table.string('tenantId')
+		table.string('tenantId');
+		table.string('remoteId');
 		table.timestamps(true, true, true);
 	});
 }

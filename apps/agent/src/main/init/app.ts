@@ -8,12 +8,13 @@ import {
 	ProviderFactory,
 	TranslateService
 } from '@gauzy/desktop-lib';
-import { delaySync, getApiBaseUrl } from '../util';
+import { delaySync, getApiBaseUrl, getAuthConfig } from '../util';
 import AppWindow from '../window-manager';
 import TrayMenu from '../tray';
 import { CONSTANT } from '../../constant';
 import { checkUserAuthentication } from '../auth';
 import PullActivities from '../workers/pull-activities';
+import PushActivities from '../workers/push-activities';
 
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
@@ -107,6 +108,7 @@ export async function startServer(value: any) {
 		const isAuthenticated = await checkUserAuthentication(appRootPath);
 		if (isAuthenticated) {
 			listenIO();
+			runActivityConsumer();
 		}
 	} catch (error) {
 		throw new AppError('MAIN_AUTH', error);
@@ -172,8 +174,18 @@ async function appReady() {
 }
 
 function listenIO() {
-	const pullActivities = PullActivities.getInstance();
+	const auth = getAuthConfig();
+	const pullActivities = PullActivities.getInstance({
+		tenantId: auth.user.employee.tenantId,
+		organizationId: auth.user.employee.organizationId,
+		remoteId: auth.user.id
+	});
 	pullActivities.startTracking();
+}
+
+function runActivityConsumer() {
+	const pushActivities = PushActivities.getInstance();
+	pushActivities.startPooling();
 }
 
 
