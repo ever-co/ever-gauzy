@@ -31,7 +31,7 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
-		"@nestjs/axios": "^4.0.0",
+		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
 		"@nestjs/cache-manager": "^3.0.1",
 		"@nestjs/common": "^11.1.0",
 		"@nestjs/config": "^4.0.2",
