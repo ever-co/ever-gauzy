@@ -3,10 +3,19 @@ import { getAuthConfig, getApiBaseUrl } from './util';
 import fetch, { HeadersInit } from 'node-fetch';
 
 export class ApiService {
+	static instance: ApiService;
 	get token() {
 		const auth = getAuthConfig();
 		const token = auth.token;
 		return token;
+	}
+
+	static getInstance(): ApiService {
+		if (!ApiService.instance) {
+			ApiService.instance = new ApiService();
+			return ApiService.instance;
+		}
+		return ApiService.instance;
 	}
 
 	get defaultHeaders() {

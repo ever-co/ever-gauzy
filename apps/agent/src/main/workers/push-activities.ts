@@ -8,6 +8,7 @@ class PushActivities {
 	static instance: PushActivities;
 	private kbMousePool: KbMouseActivityPool;
 	private kbMouseActivityService: KbMouseActivityService;
+	private apiService = ApiService.getInstance();
 	constructor() {
 		this.kbMouseActivityService = new KbMouseActivityService();
 		this.getKbMousePoolModule();
@@ -62,9 +63,8 @@ class PushActivities {
 
 	async saveTimeSlot(activities: KbMouseActivityTO) {
 		try {
-			const api = new ApiService();
 			const params = this.timeSlotParams(activities);
-			const resp = await api.saveTimeSlot(params);
+			const resp = await this.apiService.saveTimeSlot(params);
 			console.log('response', resp);
 		} catch (error) {
 			console.error('error on save timeslot', error);
