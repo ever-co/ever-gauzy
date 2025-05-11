@@ -21,6 +21,7 @@ import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 	selector: 'lib-plugin-marketplace-detail',
 	templateUrl: './plugin-marketplace-detail.component.html',
 	styleUrls: ['./plugin-marketplace-detail.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMarketplaceDetailComponent implements OnInit {
@@ -143,8 +144,9 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 				backdropClass: 'backdrop-blur',
 				context: {
 					data: {
-						title: 'Uninstall',
-						message: 'Would you like to uninstall this plugin?',
+						title: 'PLUGIN.DIALOG.UNINSTALL.TITLE',
+						message: 'PLUGIN.DIALOG.UNINSTALL.DESCRIPTION',
+						confirmText: 'PLUGIN.DIALOG.UNINSTALL.CONFIRM',
 						status: 'basic'
 					}
 				}

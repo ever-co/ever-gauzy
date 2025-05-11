@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 :host a {
   background-color: nb-theme(color-primary-transparent-100);

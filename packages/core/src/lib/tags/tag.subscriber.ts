@@ -45,7 +45,7 @@ export class TagSubscriber extends BaseEntityEventSubscriber<Tag> {
 	async beforeEntityCreate(entity: Tag): Promise<void> {
 		try {
 			// Set a default color using faker if not provided
-			entity.color = entity.color || faker.internet.color();
+			entity.color ??= faker.color.rgb();
 		} catch (error) {
 			console.error('TagSubscriber: An error occurred during the beforeEntityCreate process:', error);
 		}

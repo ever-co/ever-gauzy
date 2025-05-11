@@ -1,5 +1,6 @@
-@import 'var';
+@use 'var' as *;
 $button-radius: nb-theme(button-rectangle-border-radius);
+
 .filter-input {
     width: fit-content;
     display: flex;

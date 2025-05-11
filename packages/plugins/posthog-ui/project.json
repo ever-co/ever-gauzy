@@ -1,0 +1,50 @@
+{
+	"name": "plugin-posthog-ui",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/posthog-ui/src",
+	"prefix": "lib",
+	"projectType": "library",
+	"tags": [
+		"analytics",
+		"tracking",
+		"posthog"
+	],
+	"targets": {
+		"build": {
+			"executor": "@nx/angular:package",
+			"outputs": [
+				"{workspaceRoot}/dist/{projectRoot}"
+			],
+			"options": {
+				"project": "packages/plugins/posthog-ui/ng-package.json"
+			},
+			"configurations": {
+				"production": {
+					"tsConfig": "packages/plugins/posthog-ui/tsconfig.lib.prod.json"
+				},
+				"development": {
+					"tsConfig": "packages/plugins/posthog-ui/tsconfig.lib.json"
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
+			"options": {
+				"jestConfig": "packages/plugins/posthog-ui/jest.config.ts"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint",
+			"options": {
+				"lintFilePatterns": [
+					"packages/plugins/posthog-ui/**/*.ts",
+					"packages/plugins/posthog-ui/**/*.html"
+				]
+			}
+		}
+	}
+}

@@ -5,11 +5,14 @@ export interface AlertDialogOptions {
 	title?: string;
 	message?: string;
 	status?: string;
+	confirmText?: string;
+	dismissText?: string;
 }
 @Component({
 	selector: 'ngx-alert',
 	templateUrl: './alert.component.html',
-	styleUrls: ['./alert.component.scss']
+	styleUrls: ['./alert.component.scss'],
+	standalone: false
 })
 export class AlertComponent {
 	@Input() data: AlertDialogOptions;

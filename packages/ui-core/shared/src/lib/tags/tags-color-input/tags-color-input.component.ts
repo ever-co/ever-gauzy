@@ -24,9 +24,10 @@ import { PictureNameTagsComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-tags-color-input',
-	templateUrl: './tags-color-input.component.html',
-	styleUrls: ['./tags-color-input.component.scss']
+    selector: 'ga-tags-color-input',
+    templateUrl: './tags-color-input.component.html',
+    styleUrls: ['./tags-color-input.component.scss'],
+    standalone: false
 })
 export class TagsColorInputComponent extends PictureNameTagsComponent implements OnInit, OnDestroy {
 	public subject$: Subject<boolean> = new Subject();

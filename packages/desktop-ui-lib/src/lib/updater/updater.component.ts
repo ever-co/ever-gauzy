@@ -11,10 +11,11 @@ import { ElectronService } from '../electron/services';
 import { Event } from 'electron';
 
 @Component({
-	selector: 'ngx-updater',
-	templateUrl: './updater.component.html',
-	styleUrls: ['./updater.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'ngx-updater',
+    templateUrl: './updater.component.html',
+    styleUrls: ['./updater.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class UpdaterComponent implements OnInit, OnDestroy {
 	@ViewChild('logBox') logBox: ElementRef;

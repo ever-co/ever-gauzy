@@ -8,7 +8,8 @@ import { filterOptions } from './entity.helper';
  * ColumnEmbeddedOptions combines options from TypeORM and MikroORM embedded columns.
  * It merges all properties from TypeOrmEmbeddedOptions and MikroOrmEmbeddedOptions.
  */
-export type ColumnEmbeddedOptions = TypeOrmEmbeddedOptions & MikroOrmEmbeddedOptions;
+export type ColumnEmbeddedOptions<Owner = any, Target = any> = TypeOrmEmbeddedOptions &
+	MikroOrmEmbeddedOptions<Owner, Target>;
 
 /**
  * Options for embedding columns in entities.
@@ -30,9 +31,9 @@ export type EntityColumnEmbeddedOptions = {
  * Decorator for creating entities with both MikroORM and TypeORM decorators.
  * @param options Options for the entity.
  */
-export function EmbeddedColumn(
+export function EmbeddedColumn<Owner = any, Target = any>(
 	typeOrTarget?: EntityColumnEmbeddedOptions,
-	options?: ColumnEmbeddedOptions
+	options?: ColumnEmbeddedOptions<Owner, Target>
 ): PropertyDecorator;
 
 /**
@@ -41,12 +42,12 @@ export function EmbeddedColumn(
  * @param options Additional options for the MikroORM & TypeORM column.
  * @returns A property decorator.
  */
-export function EmbeddedColumn<T>(
+export function EmbeddedColumn<Owner = any, Target = any>(
 	typeOrTarget?: EntityColumnEmbeddedOptions,
-	options?: ColumnEmbeddedOptions
+	options?: ColumnEmbeddedOptions<Owner, Target>
 ): PropertyDecorator {
 	// If options are not provided, initialize an empty object
-	if (!options) options = { prefix: false } as ColumnEmbeddedOptions;
+	if (!options) options = { prefix: false } as ColumnEmbeddedOptions<Owner, Target>;
 
 	// Return a property decorator function
 	return (target: any, propertyKey: string) => {
@@ -67,9 +68,9 @@ export function EmbeddedColumn<T>(
  * @param restOptions Additional MikroOrmEmbeddedOptions to be filtered and processed.
  * @returns A new object with only key-value pairs where the value is defined.
  */
-export const parseMikroOrmEmbeddableColumnOptions = (
+export const parseMikroOrmEmbeddableColumnOptions = <Owner = any, Target = any>(
 	{ mikroOrmEmbeddableEntity }: EntityColumnEmbeddedOptions,
-	restOptions: MikroOrmEmbeddedOptions
+	restOptions: MikroOrmEmbeddedOptions<Owner, Target>
 ): Record<string, any> => {
 	// Create a new object with entity and other options, filtering out undefined values
 	const filteredOptions = filterOptions({

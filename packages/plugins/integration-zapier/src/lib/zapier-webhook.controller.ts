@@ -12,7 +12,7 @@ import {
 	InternalServerErrorException
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IZapierCreateWebhookInput } from '@gauzy/contracts';
+import { IZapierCreateWebhookInput } from './zapier.types';
 import { ZapierWebhookService } from './zapier-webhook.service';
 import { ZapierService } from './zapier.service';
 import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
@@ -24,16 +24,36 @@ export class ZapierWebhookController {
 	constructor(
 		private readonly zapierWebhookService: ZapierWebhookService,
 		private readonly zapierService: ZapierService
-	) { }
+	) {}
 
+	/**
+	 * Handles the incoming request with the provided request body and authorization token.
+	 *
+	 * @param body - The request payload containing the data required for processing.
+	 * @param authorization - The authorization token used for authenticating the request.
+	 * @returns A promise or response object indicating the outcome of the request (e.g., success status, data, or error).
+	 */
 	@ApiOperation({ summary: 'Create a new Zapier webhook subscription' })
 	@ApiResponse({
-		status: 200,
-		description: 'Webhook subscription created successfully'
+		status: 201,
+		description: 'Webhook subscription created successfully',
+		type: ZapierWebhookSubscription
+	})
+	@ApiResponse({
+		status: 400,
+		description: 'Bad Request - Missing required fields'
 	})
 	@ApiResponse({
 		status: 401,
 		description: 'Unauthorized - Invalid or missing authorization token'
+	})
+	@ApiResponse({
+		status: 403,
+		description: 'Forbidden - Invalid token'
+	})
+	@ApiResponse({
+		status: 500,
+		description: 'Internal Server Error'
 	})
 	@Post('/webhooks')
 	async createWebhook(
@@ -43,9 +63,11 @@ export class ZapierWebhookController {
 		if (!authorization) {
 			throw new UnauthorizedException('Authorization header is required');
 		}
-		if (!authorization.startsWith('Bearer')) {
+
+		if (!authorization.startsWith('Bearer ')) {
 			throw new UnauthorizedException('Authorization header must start with Bearer');
 		}
+
 		const token = authorization.split(' ')[1];
 
 		try {
@@ -55,53 +77,75 @@ export class ZapierWebhookController {
 				throw new ForbiddenException('Invalid token');
 			}
 
-			if (!body.target_url || !body.event) {
+			const { target_url, event } = body;
+
+			if (!target_url || !event) {
 				throw new BadRequestException('target_url and event are required');
 			}
 
-			if (!integration.tenantId) {
+			const { tenantId, organizationId, id: integrationId } = integration;
+
+			if (!tenantId) {
 				throw new BadRequestException('Integration tenant ID is required');
 			}
 
-			if (!integration.organizationId) {
+			if (!organizationId) {
 				throw new BadRequestException('Integration organization ID is required');
 			}
 
 			const subscription = await this.zapierWebhookService.createSubscription({
-				targetUrl: body.target_url,
-				event: body.event,
-				integrationId: integration.id,
-				tenantId: integration.tenantId,
-				organizationId: integration.organizationId
+				targetUrl: target_url,
+				event,
+				integrationId,
+				tenantId,
+				organizationId
 			});
+
 			return subscription;
 		} catch (error) {
-			if (error instanceof ForbiddenException || error instanceof BadRequestException) {
-				throw error;
-			}
 			this.logger.error('Failed to create webhook subscription', error);
 			throw new InternalServerErrorException('Failed to create webhook subscription');
 		}
 	}
 
+	/**
+	 * Deletes an existing Zapier webhook subscription.
+	 *
+	 * @param id - The unique identifier of the webhook subscription to delete.
+	 * @param authorization - The Bearer token for authenticating the request.
+	 */
 	@ApiOperation({ summary: 'Delete an existing Zapier webhook subscription' })
 	@ApiResponse({
 		status: 200,
 		description: 'Webhook subscription deleted successfully'
 	})
 	@ApiResponse({
+		status: 400,
+		description: 'Bad Request - Missing or invalid parameters'
+	})
+	@ApiResponse({
 		status: 401,
 		description: 'Unauthorized - Invalid or missing authorization token'
 	})
+	@ApiResponse({
+		status: 403,
+		description: 'Forbidden - Invalid token'
+	})
+	@ApiResponse({
+		status: 500,
+		description: 'Internal Server Error'
+	})
 	@Delete('/webhooks/:id')
-	async deleteWebhook(
-		@Param('id') id: string,
-		@Headers('Authorization') authorization: string
-	): Promise<void> {
+	async deleteWebhook(@Param('id') id: string, @Headers('Authorization') authorization: string): Promise<void> {
 		if (!authorization) {
 			throw new UnauthorizedException('Authorization header is required');
 		}
-		const token = authorization.replace('Bearer ', '');
+
+		if (!authorization.startsWith('Bearer ')) {
+			throw new UnauthorizedException('Authorization header must start with Bearer');
+		}
+
+		const token = authorization.split(' ')[1];
 
 		try {
 			const integration = await this.zapierService.findIntegrationByToken(token);
@@ -111,16 +155,13 @@ export class ZapierWebhookController {
 			}
 
 			if (!integration.tenantId) {
-				throw new BadRequestException('Integration tenant ID is required');
+				throw new BadRequestException('Integration tenant ID is required.');
 			}
 
 			await this.zapierWebhookService.deleteSubscription(id, integration.tenantId);
 		} catch (error) {
-			if (error instanceof ForbiddenException || error instanceof UnauthorizedException || error instanceof BadRequestException) {
-				throw error;
-			}
 			this.logger.error(`Failed to delete webhook subscription with id ${id}`, error);
-			throw new InternalServerErrorException('Failed to delete webhook subscription');
+			throw new InternalServerErrorException('Failed to delete webhook subscription.');
 		}
 	}
 }

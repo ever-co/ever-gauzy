@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-	selector: 'ngx-organizations-fullname',
-	template: `
+    selector: 'ngx-organizations-fullname',
+    template: `
 		<div style="display: flex; align-items: center;">
 			<div class="image-container">
 				<img [src]="rowData.imageUrl" />
@@ -10,8 +10,8 @@ import { Component, Input } from '@angular/core';
 			<div class="d-block" style="margin-left:15px;">{{ value }}</div>
 		</div>
 	`,
-	styles: [
-		`
+    styles: [
+        `
 			.image-container {
 				width: 70px;
 				height: 63px;
@@ -24,7 +24,8 @@ import { Component, Input } from '@angular/core';
 				max-width: 70px;
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class OrganizationsFullnameComponent {
 	@Input()

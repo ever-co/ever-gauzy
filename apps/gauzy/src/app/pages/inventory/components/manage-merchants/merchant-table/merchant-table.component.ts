@@ -20,9 +20,10 @@ import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } fro
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-merchant-table',
-	templateUrl: './merchant-table.component.html',
-	styleUrls: ['./merchant-table.component.scss']
+    selector: 'ga-merchant-table',
+    templateUrl: './merchant-table.component.html',
+    styleUrls: ['./merchant-table.component.scss'],
+    standalone: false
 })
 export class MerchantTableComponent extends PaginationFilterBaseComponent implements OnInit {
 	settingsSmartTable: object;

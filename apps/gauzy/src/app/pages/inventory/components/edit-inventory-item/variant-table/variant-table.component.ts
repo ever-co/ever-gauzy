@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { LocalDataSource } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -22,13 +22,11 @@ export interface SelectedProductVariant {
 @Component({
 	selector: 'ngx-variant-table',
 	templateUrl: './variant-table.component.html',
-	styleUrls: ['./variant-table.component.scss']
+	styleUrls: ['./variant-table.component.scss'],
+	standalone: false
 })
 export class VariantTableComponent extends TranslationBaseComponent implements OnInit {
-	@ViewChild('variantTable') variantTable;
-
 	variants: IProductVariant[] = [];
-
 	selectedItem: IProductVariant;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
@@ -66,6 +64,7 @@ export class VariantTableComponent extends TranslationBaseComponent implements O
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
 			columns: {
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
@@ -105,12 +104,8 @@ export class VariantTableComponent extends TranslationBaseComponent implements O
 	}
 
 	async selectItem({ isSelected, data }) {
-		const selectedItem = isSelected ? data : null;
-		if (this.variantTable) {
-			this.variantTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedItem = selectedItem;
+		this.selectedItem = isSelected ? data : null;
 	}
 
 	async delete() {

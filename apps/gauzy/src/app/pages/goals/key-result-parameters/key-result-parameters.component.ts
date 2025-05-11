@@ -16,9 +16,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-key-result-parameters',
-	templateUrl: './key-result-parameters.component.html',
-	styleUrls: ['../edit-keyresults/edit-keyresults.component.scss']
+    selector: 'ga-key-result-parameters',
+    templateUrl: './key-result-parameters.component.html',
+    styleUrls: ['../edit-keyresults/edit-keyresults.component.scss'],
+    standalone: false
 })
 export class KeyResultParametersComponent implements OnInit, OnDestroy {
 	weightForm: UntypedFormGroup;

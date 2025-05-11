@@ -150,6 +150,7 @@ COPY --chown=node:node packages/plugins/integration-make-com/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
+COPY --chown=node:node packages/plugins/posthog/package.json ./packages/plugins/posthog/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
@@ -162,7 +163,7 @@ COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
-COPY --chown=node:node .scripts/postinstall.ts ./.scripts/
+COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn postinstall.manual && yarn cache clean
 
@@ -209,6 +210,7 @@ COPY --chown=node:node packages/plugins/integration-make-com/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
+COPY --chown=node:node packages/plugins/posthog/package.json ./packages/plugins/posthog/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
@@ -221,7 +223,7 @@ COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
-COPY --chown=node:node .scripts/postinstall.ts ./.scripts/
+COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && yarn postinstall.manual && yarn cache clean
 
@@ -333,6 +335,7 @@ RUN cp -r ./packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugi
 RUN cp -r ./packages/plugins/knowledge-base/node_modules ./node_modules/@gauzy/plugin-knowledge-base/
 RUN cp -r ./packages/plugins/product-reviews/node_modules ./node_modules/@gauzy/plugin-product-reviews/
 RUN cp -r ./packages/plugins/sentry-tracing/node_modules ./node_modules/@gauzy/plugin-sentry/
+RUN cp -r ./packages/plugins/posthog/node_modules ./node_modules/@gauzy/plugin-posthog/
 RUN cp -r ./packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/
 RUN cp -r ./packages/plugins/registry/node_modules ./node_modules/@gauzy/plugin-registry/
 

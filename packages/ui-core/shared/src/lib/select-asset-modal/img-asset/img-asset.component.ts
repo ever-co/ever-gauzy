@@ -8,9 +8,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
 
 @Component({
-	selector: 'ngx-img-asset',
-	templateUrl: './img-asset.component.html',
-	styleUrls: ['./img-asset.component.scss']
+    selector: 'ngx-img-asset',
+    templateUrl: './img-asset.component.html',
+    styleUrls: ['./img-asset.component.scss'],
+    standalone: false
 })
 export class NgxImageAssetComponent extends TranslationBaseComponent implements OnInit {
 	@Input()

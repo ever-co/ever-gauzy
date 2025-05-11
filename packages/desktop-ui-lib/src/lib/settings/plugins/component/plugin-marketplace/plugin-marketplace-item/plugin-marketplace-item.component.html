@@ -1,6 +1,6 @@
 @let plugin = plugin$ | async; @let editing = marketplaceQuery.updating$ | async; @let toggle =
 installationQuery.toggle$ | async; @let isSelected = toggle.plugin?.id === plugin?.id; @let installing =
-installationQuery.installing$ |async; @let uninstalling = installationQuery.unistalling$ |async; @let deleting =
+installationQuery.installing$ |async; @let uninstalling = installationQuery.uninstalling$ |async; @let deleting =
 marketplaceQuery.deleting$ | async; @let adding = versionQuery.creating$ | async; @let needUpdate = needUpdate$ | async;
 @let installed = installed$ | async; @let loading = marketplaceQuery.isLoading$ | async; @let disabled = editing ||
 installing || uninstalling || deleting || adding; @let selectedVersion = versionQuery.version$ | async; @let uploading =
@@ -9,7 +9,7 @@ marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ 
 <nb-card class="content-active first plugin-details-card">
 	<nb-card-header class="d-flex align-items-center justify-content-between">
 		<div class="d-flex align-items-center">
-			<h5 class="mb-0">{{ plugin?.name || 'Plugin Details' }}</h5>
+			<h5 class="mb-0">{{ plugin?.name || ('SM_TABLE.NO_DATA.LOADING' | translate) }}</h5>
 			<div class="ml-3">
 				<nb-badge
 					*ngIf="plugin"
@@ -101,7 +101,14 @@ marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ 
 					<!-- Description -->
 					@if(plugin.description) {
 					<div class="description-container mb-4">
-						<p [readMore]="256" class="plugin-description">{{ plugin.description }}</p>
+						<p
+							[readMore]="256"
+							[readMoreText]="'BUTTONS.READ_MORE' | translate"
+							[readLessText]="'BUTTONS.READ_LESS' | translate"
+							class="plugin-description"
+						>
+							{{ plugin.description }}
+						</p>
 					</div>
 					}
 
@@ -160,7 +167,7 @@ marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ 
 					@if(selectedVersion; as version) {
 					<div class="info-card mb-4">
 						<div class="d-flex align-items-center mb-3">
-							<h6 class="section-title m-0">What's New</h6>
+							<h6 class="section-title m-0">{{ 'CHANGELOG_MENU.HEADER' | translate }}</h6>
 							<button nbButton ghost status="basic" class="ml-2 mr-2" (click)="navigateToHistory()">
 								<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 							</button>
@@ -169,7 +176,14 @@ marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ 
 							<div class="label">Version {{ version.number }}</div>
 							<div class="value">{{ version.createdAt | humanize }}</div>
 						</div>
-						<p [readMore]="128" class="plugin-description">{{ version.changelog }}</p>
+						<p
+							[readMore]="128"
+							[readMoreText]="'BUTTONS.READ_MORE' | translate"
+							[readLessText]="'BUTTONS.READ_LESS' | translate"
+							class="plugin-description"
+						>
+							{{ version.changelog }}
+						</p>
 					</div>
 					}
 

@@ -7,13 +7,12 @@ import {
 	IDailyPlansTasksUpdateInput,
 	IDailyPlanTasksUpdateInput,
 	IDailyPlanUpdateInput,
-	IEmployee,
 	IPagination
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { PaginationParams, TenantAwareCrudService } from '../../core/crud';
-import { RequestContext } from '../../core/context';
+import { RequestContext } from '../../core/context/request-context';
 import { EmployeeService } from '../../employee/employee.service';
 import { TaskService } from '../task.service';
 import { DailyPlan } from './daily-plan.entity';
@@ -23,10 +22,10 @@ import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.rep
 @Injectable()
 export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	constructor(
-		readonly typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
-		readonly mikroOrmDailyPlanRepository: MikroOrmDailyPlanRepository,
-		private readonly employeeService: EmployeeService,
-		private readonly taskService: TaskService
+		protected readonly typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
+		protected readonly mikroOrmDailyPlanRepository: MikroOrmDailyPlanRepository,
+		private readonly _employeeService: EmployeeService,
+		private readonly _taskService: TaskService
 	) {
 		super(typeOrmDailyPlanRepository, mikroOrmDailyPlanRepository);
 	}
@@ -40,19 +39,19 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 */
 	async createDailyPlan(partialEntity: IDailyPlanCreateInput): Promise<IDailyPlan> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, organizationId, organizationTeamId, taskId } = partialEntity;
+			const tenantId = RequestContext.currentTenantId() ?? partialEntity.tenantId;
 
 			const dailyPlanDate = new Date(partialEntity.date).toISOString().split('T')[0];
 
 			// Validate employee existence
-			const employee = await this.employeeService.findOneByIdString(employeeId);
+			const employee = await this._employeeService.findOneByIdString(employeeId);
 			if (!employee) {
 				throw new NotFoundException('Employee not found');
 			}
 
 			// Check for existing DailyPlan
-			const query = this.typeOrmRepository.createQueryBuilder('dailyPlan');
+			const query = this.typeOrmDailyPlanRepository.createQueryBuilder('dailyPlan');
 			query.setFindOptions({ relations: { tasks: true } });
 			query.where('"dailyPlan"."tenantId" = :tenantId', { tenantId });
 			query.andWhere('"dailyPlan"."organizationId" = :organizationId', { organizationId });
@@ -73,18 +72,18 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 			// If a taskId is provided, add the task to the DailyPlan
 			if (taskId) {
-				const task = await this.taskService.findOneByIdString(taskId);
+				const task = await this._taskService.findOneByIdString(taskId);
 				if (!task) {
-					throw new BadRequestException('Cannot found the task');
+					throw new BadRequestException('Task not found');
 				}
 				dailyPlan.tasks.push(task);
 			}
+
 			await this.save(dailyPlan); // Save changes
 
 			return dailyPlan; // Return the created/updated DailyPlan
 		} catch (error) {
-			console.error(error); // Improved logging
-			throw new BadRequestException(error.message); // Clearer error messaging
+			throw new BadRequestException(error); // Clearer error messaging
 		}
 	}
 
@@ -95,17 +94,13 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns A promise that resolves to an object containing the list of daily plans and the total count.
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
-	async getAllPlans(
-		options: PaginationParams<DailyPlan>,
-		employeeId?: IEmployee['id']
-	): Promise<IPagination<IDailyPlan>> {
+	async getAllPlans(options: PaginationParams<DailyPlan>, employeeId?: ID): Promise<IPagination<IDailyPlan>> {
 		try {
 			const { where } = options;
-			const { organizationId } = where;
-			const tenantId = RequestContext.currentTenantId();
+			const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
 
 			// Create the initial query
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
 			// Join related entities
 			query.leftJoin(`${query.alias}.employee`, 'employee');
@@ -124,7 +119,9 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			});
 
 			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), {
+				organizationId: where?.organizationId
+			});
 
 			if (employeeId) {
 				query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
@@ -148,12 +145,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
 	async getDailyPlansByEmployee(options: PaginationParams, employeeId?: ID): Promise<IPagination<IDailyPlan>> {
-		try {
-			// Fetch all daily plans for specific employee
-			return await this.getAllPlans(options, employeeId);
-		} catch (error) {
-			console.log('Error fetching all daily plans');
-		}
+		// Fetch all daily plans for specific employee
+		return await this.getAllPlans(options, employeeId);
 	}
 
 	/**
@@ -169,10 +162,10 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			// Apply optional find options if provided
 			const { where, relations = [] } = options || {};
 			const { organizationId, organizationTeamId } = where;
-			const tenantId = RequestContext.currentTenantId();
+			const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
 
 			// Create the initial query
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
 			// Join related entities
 			query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
@@ -211,15 +204,10 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns A promise resolving to daily plans for the current employee.
 	 */
 	async getMyPlans(options: PaginationParams<DailyPlan>): Promise<IPagination<IDailyPlan>> {
-		try {
-			// Get the current employee ID from the request context
-			const currentEmployeeId = RequestContext.currentEmployeeId();
+		const currentEmployeeId = RequestContext.currentEmployeeId();
 
-			// Fetch daily plans for the current employee
-			return await this.getAllPlans(options, currentEmployeeId);
-		} catch (error) {
-			console.error('Error fetching daily plans for me:', error); // Log the error for debugging
-		}
+		// Fetch daily plans for the current employee
+		return await this.getAllPlans(options, currentEmployeeId);
 	}
 
 	/**
@@ -249,7 +237,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			}
 
 			// Fetch the task to be added
-			const taskToAdd = await this.taskService.findOneByIdString(taskId, {
+			const taskToAdd = await this._taskService.findOneByIdString(taskId, {
 				where: { organizationId, tenantId }
 			});
 
@@ -289,13 +277,14 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			}
 
 			// Get task to be removed
-			const taskToRemove = await this.taskService.findOneByIdString(taskId, {
+			const taskToRemove = await this._taskService.findOneByIdString(taskId, {
 				where: { organizationId, tenantId }
 			});
 
 			if (!taskToRemove) {
 				throw new BadRequestException('The task to remove not found');
 			}
+
 			// Remove the task form the daily plan's tasks array
 			const { tasks } = dailyPlan;
 			dailyPlan.tasks = tasks.filter((task) => task.id !== taskId);
@@ -322,7 +311,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const currentDate = new Date().toISOString().split('T')[0];
 
 			// Initial query
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
 			// Joins
 			query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
@@ -361,7 +350,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			}
 
 			// Get task to be removed
-			const taskToRemove = await this.taskService.findOneByIdString(taskId, {
+			const taskToRemove = await this._taskService.findOneByIdString(taskId, {
 				where: { organizationId, tenantId }
 			});
 
@@ -376,7 +365,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			});
 
 			// save and return the updatedDailyPlan
-			return await this.typeOrmRepository.save(updatedPlans);
+			return await this.typeOrmDailyPlanRepository.save(updatedPlans);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -410,8 +399,9 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			if (!dailyPlan) {
 				throw new BadRequestException('Daily plan not found');
 			}
+
 			// Return the updated daily plan
-			const updatedDailyPlan = await this.typeOrmRepository.preload({
+			const updatedDailyPlan = await this.typeOrmDailyPlanRepository.preload({
 				id,
 				...partialEntity,
 				tasks: dailyPlan.tasks
@@ -435,7 +425,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const tenantId = RequestContext.currentTenantId();
 
 			// Initial query
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
 			// Joins
 			query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');

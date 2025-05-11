@@ -1,4 +1,4 @@
-@import '@shared/_pg-card';
+@use '@shared/_pg-card' as *;
 
 .action {
   box-shadow: var(--gauzy-shadow);

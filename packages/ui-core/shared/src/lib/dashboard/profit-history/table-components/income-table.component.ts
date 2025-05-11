@@ -6,12 +6,13 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-income-table-selector',
-	template: `
+    selector: 'ga-income-table-selector',
+    template: `
 		<span>
 			{{ rowData.income ? '+ ' + rowData.income + ' ' + organization?.currency : '' }}
 		</span>
-	`
+	`,
+    standalone: false
 })
 export class IncomeTableComponent implements OnInit {
 	public organization: IOrganization;

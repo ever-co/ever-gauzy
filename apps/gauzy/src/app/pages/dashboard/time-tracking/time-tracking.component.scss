@@ -1,4 +1,4 @@
-@import 'gauzy/_gauzy-cards.scss';
+@use 'gauzy/_gauzy-cards' as *;
 
 :host {
   background-color: rgba(50, 50, 50, 0.02);

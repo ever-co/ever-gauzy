@@ -1,4 +1,4 @@
-@import 'gauzy/_gauzy-table';
+@use 'gauzy/_gauzy-table' as *;
 
 .selected-item {
 	background: rgba(126, 126, 143, 0.1);

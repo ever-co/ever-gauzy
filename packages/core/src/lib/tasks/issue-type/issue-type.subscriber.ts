@@ -46,10 +46,8 @@ export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
 	 */
 	async beforeEntityCreate(entity: IssueType): Promise<void> {
 		try {
-			// Set a default color if not provided
-			if (!entity.color) {
-				entity.color = faker.internet.color();
-			}
+			// Set a default color using faker if not provided
+			entity.color ??= faker.color.rgb();
 
 			// Generate a slug from the name, if the name property exists
 			if (typeof entity.name === 'string') {

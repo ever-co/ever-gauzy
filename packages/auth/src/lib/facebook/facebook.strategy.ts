@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { Profile, Strategy } from 'passport-facebook';
+import { Profile, Strategy, StrategyOptions } from 'passport-facebook';
 
 @Injectable()
 export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
@@ -29,7 +29,6 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
 		done: (err: any, user?: any, info?: any) => void
 	): Promise<void> {
 		try {
-			console.log('Facebook OAuth validate:', profile);
 			// Extract relevant information from the user's profile
 			const { emails } = profile;
 
@@ -53,24 +52,25 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
  * Generates the configuration object for Facebook OAuth authentication.
  *
  * @param {ConfigService} configService - The configuration service instance.
- * @returns {Record<string, any>} - The Facebook OAuth configuration object.
- * @throws {Error} If required Facebook OAuth configuration values are missing.
+ * @returns {StrategyOption} - The Facebook OAuth configuration object.
  */
-export const parseFacebookConfig = (configService: ConfigService): Record<string, any> => {
-	const clientID = configService.get<string>('facebook.clientId');
-	const clientSecret = configService.get<string>('facebook.clientSecret');
-	const callbackURL = configService.get<string>('facebook.callbackURL');
+export const parseFacebookConfig = (configService: ConfigService): StrategyOptions => {
+	const { clientId, clientSecret, callbackURL } = {
+		clientId: configService.get<string>('facebook.clientId'),
+		clientSecret: configService.get<string>('facebook.clientSecret'),
+		callbackURL: configService.get<string>('facebook.callbackURL')
+	};
 
-	if (!clientID || !clientSecret || !callbackURL) {
+	if (!clientId || !clientSecret || !callbackURL) {
 		console.warn('⚠️ Facebook OAuth configuration is incomplete. Defaulting to "disabled".');
 	}
 
 	return {
-		clientID: clientID || 'disabled',
+		clientID: clientId || 'disabled',
 		clientSecret: clientSecret || 'disabled',
 		callbackURL: callbackURL || `${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/auth/facebook/callback`,
-		scope: ['email'],
 		profileFields: ['id', 'emails', 'name'],
+		scope: ['email'],
 		enableProof: true
 	};
 };

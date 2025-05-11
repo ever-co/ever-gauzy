@@ -4,8 +4,8 @@ import { IPayment } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
-	selector: 'ga-invoice-paid',
-	template: `
+    selector: 'ga-invoice-paid',
+    template: `
 		<div class="progress-bar-container">
 			<div class="progress-bar">
 				<div class="paid-percent">
@@ -20,11 +20,12 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 			</div>
 		</div>
 	`,
-	styles: [
-		'.progress-bar-inner {background-color: rgba(0, 214, 143, 1); position: absolute; height: 32px; width:100%; border-radius: 4px;}',
-		'.progress-bar {background-color: rgba(126, 126, 143, 0.2); border-radius: 4px; position: relative; height: 32px}',
-		'.paid-percent {color: #ffffff; z-index: 1; font-weight: bold;}'
-	]
+    styles: [
+        '.progress-bar-inner {background-color: rgba(0, 214, 143, 1); position: absolute; height: 32px; width:100%; border-radius: 4px;}',
+        '.progress-bar {background-color: rgba(126, 126, 143, 0.2); border-radius: 4px; position: relative; height: 32px}',
+        '.paid-percent {color: #ffffff; z-index: 1; font-weight: bold;}'
+    ],
+    standalone: false
 })
 export class InvoicePaidComponent extends TranslationBaseComponent implements OnInit {
 	public paidAmountPercentage: number;

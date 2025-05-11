@@ -8,7 +8,8 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
-	selector: '[ngxTimeTrackingAuthorized]'
+    selector: '[ngxTimeTrackingAuthorized]',
+    standalone: false
 })
 export class TimeTrackingAuthorizedDirective implements OnInit {
 	private _permission: string | string[] = []; // Default initialization

@@ -103,8 +103,7 @@ class AppWindow {
 				this.authWindow.config.options.titleBarStyle = 'hidden';
 				this.authWindow.config.options.titleBarOverlay = true;
 				this.authWindow.browserWindow.on('close', () => {
-					this.authWindow.browserWindow.destroy();
-					this.authWindow = null;
+					this.destroyAuthWindow();
 				});
 				// this.authWindow.browserWindow.webContents.toggleDevTools();
 			}
@@ -112,6 +111,11 @@ class AppWindow {
 			console.error('Failed to initialize auth window', error);
 			throw new Error(`Auth Window initialization failed ${error.message}`);
 		}
+	}
+
+	destroyAuthWindow() {
+		this.authWindow.browserWindow.destroy();
+		this.authWindow = null;
 	}
 
 	async initSettingWindow(): Promise<void> {

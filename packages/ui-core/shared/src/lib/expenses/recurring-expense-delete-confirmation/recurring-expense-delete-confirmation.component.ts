@@ -3,8 +3,8 @@ import { NbDialogRef } from '@nebular/theme';
 import { RecurringExpenseDeletionEnum } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ga-delete-confirmation',
-	template: `
+    selector: 'ga-delete-confirmation',
+    template: `
 		<nb-card class="center">
 			<nb-card-header class="d-flex flex-column">
 				<span class="cancel"
@@ -58,7 +58,8 @@ import { RecurringExpenseDeletionEnum } from '@gauzy/contracts';
 			</nb-card-footer>
 		</nb-card>
 	`,
-	styleUrls: ['./recurring-expense-delete-confirmation.component.scss']
+    styleUrls: ['./recurring-expense-delete-confirmation.component.scss'],
+    standalone: false
 })
 export class RecurringExpenseDeleteConfirmationComponent {
 	recordType: string;

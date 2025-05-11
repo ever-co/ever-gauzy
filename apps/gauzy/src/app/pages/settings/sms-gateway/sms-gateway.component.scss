@@ -1,7 +1,6 @@
-@import '../feature/feature.component.scss';
+@forward '../feature/feature.component';
 
 :host {
-
     nb-card,
     nb-card-body {
         background-color: nb-theme(gauzy-card-2);

@@ -15,9 +15,10 @@ import { AppService } from './app.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-root',
-	template: '<router-outlet></router-outlet>',
-	styleUrls: ['./app.component.scss']
+    selector: 'gauzy-root',
+    template: '<router-outlet></router-outlet>',
+    styleUrls: ['./app.component.scss'],
+    standalone: false
 })
 export class AppComponent implements OnInit, AfterViewInit {
 	constructor(

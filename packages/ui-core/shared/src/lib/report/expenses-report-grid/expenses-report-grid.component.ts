@@ -16,9 +16,10 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/ga
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-expenses-report-grid',
-	templateUrl: './expenses-report-grid.component.html',
-	styleUrls: ['./expenses-report-grid.component.scss']
+    selector: 'ga-expenses-report-grid',
+    templateUrl: './expenses-report-grid.component.html',
+    styleUrls: ['./expenses-report-grid.component.scss'],
+    standalone: false
 })
 export class ExpensesReportGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	dailyData: IExpenseReportData[] = [];

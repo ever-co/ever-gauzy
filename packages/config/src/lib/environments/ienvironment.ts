@@ -17,6 +17,8 @@ import {
 	IWasabiConfig,
 	IJiraIntegrationConfig,
 	IDigitalOceanConfig,
+	IMakeComConfig,
+	IPosthogConfig,
 	IZapierConfig
 } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
@@ -109,6 +111,8 @@ export interface IEnvironment {
 		dsn: string;
 	};
 
+	posthog?: IPosthogConfig;
+
 	/**
 	 * Default Integrated User Password
 	 */
@@ -118,6 +122,7 @@ export interface IEnvironment {
 	upwork?: IUpworkConfig;
 	hubstaff?: IHubstaffConfig;
 	zapier?: IZapierConfig;
+	makeCom?: IMakeComConfig;
 
 	isElectron?: boolean;
 	gauzyUserPath?: string;

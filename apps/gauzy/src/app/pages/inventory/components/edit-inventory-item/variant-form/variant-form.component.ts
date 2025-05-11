@@ -7,9 +7,10 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy()
 @Component({
-	selector: 'ngx-variant-form',
-	templateUrl: './variant-form.component.html',
-	styleUrls: ['./variant-form.component.scss']
+    selector: 'ngx-variant-form',
+    templateUrl: './variant-form.component.html',
+    styleUrls: ['./variant-form.component.scss'],
+    standalone: false
 })
 export class VariantFormComponent implements OnInit {
 	options: IProductOptionTranslatable[] = [];

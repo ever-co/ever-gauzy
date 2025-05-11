@@ -148,7 +148,6 @@ export class AuthController {
 	async login(@Body() input: UserLoginDTO): Promise<IAuthResponse | null> {
 		return await this.commandBus.execute(new AuthLoginCommand(input));
 	}
-
 	/**
 	 * Sign in workspaces by email and password.
 	 *

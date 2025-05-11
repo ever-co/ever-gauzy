@@ -59,7 +59,7 @@ export function ColumnIndex<T>(
 		applyTypeOrmIndex(target, propertyKey, name, fields, options as TypeOrmIndexOptions);
 
 		// Apply MikroORM index. It behaves similarly to the TypeORM index application, but with specifics to MikroORM.
-		applyMikroOrmIndex(target, propertyKey, name, fields, options as TypeOrmIndexOptions);
+		applyMikroOrmIndex(target, propertyKey as never, name, fields as never[], options as TypeOrmIndexOptions);
 	};
 }
 
@@ -109,10 +109,10 @@ export function applyTypeOrmIndex(
  * @param options Optional TypeORM indexing options that will be adapted for MikroORM.
  */
 export function applyMikroOrmIndex(
-	target: any,
-	propertyKey: string | undefined,
+	target: object,
+	propertyKey: never,
 	name: string | undefined,
-	properties: string[] | undefined,
+	properties: never[] | undefined,
 	options: TypeOrmIndexOptions | undefined
 ) {
 	// Converts provided indexing parameters into MikroORM-compatible index options.
@@ -120,18 +120,18 @@ export function applyMikroOrmIndex(
 
 	if (mikroOptions.name && mikroOptions.properties && Array.isArray(properties)) {
 		// Applies a named index on specified properties
-		MikroOrmIndex(mikroOptions)(target, propertyKey);
+		MikroOrmIndex(mikroOptions as MikroOrmIndexOptions<object, string>)(target, propertyKey);
 	} else if (mikroOptions.name) {
 		// Applies a named index without specific properties
-		MikroOrmIndex({ name: mikroOptions.name })(target, propertyKey);
+		MikroOrmIndex({ name: mikroOptions.name } as MikroOrmIndexOptions<object, string>)(target, propertyKey);
 	} else {
 		// Applies a default index without specific options or fields
-		MikroOrmIndex()(target, propertyKey);
+		MikroOrmIndex({} as MikroOrmIndexOptions<object, string>)(target, propertyKey);
 	}
 
 	// Apply a MikroORM unique constraint if 'unique' is specified in the options
 	if (options?.unique && Array.isArray(properties)) {
-		MikroUnique({ properties })(target, propertyKey);
+		MikroUnique({ properties: properties as never[] })(target, propertyKey);
 	}
 }
 

@@ -9,7 +9,8 @@ import { EmployeesService } from '@gauzy/ui-core/core';
 
 @UntilDestroy()
 @Component({
-	templateUrl: './appointment-form.component.html'
+    templateUrl: './appointment-form.component.html',
+    standalone: false
 })
 export class AppointmentFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public loading: boolean = true;

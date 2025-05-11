@@ -5,12 +5,13 @@ import { monthNames } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-date-selector',
-	templateUrl: './date.component.html',
-	styleUrls: ['./date.component.scss'],
-	host: {
-		'(document:click)': 'clickOutside($event)'
-	}
+    selector: 'ga-date-selector',
+    templateUrl: './date.component.html',
+    styleUrls: ['./date.component.scss'],
+    host: {
+        '(document:click)': 'clickOutside($event)'
+    },
+    standalone: false
 })
 export class DateSelectorComponent implements OnInit {
 	loadCalendar = false;

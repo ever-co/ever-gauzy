@@ -11,9 +11,10 @@ import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.c
 import { KeyResultDetailsComponent } from '../keyresult-details/keyresult-details.component';
 
 @Component({
-	selector: 'ga-goal-details',
-	templateUrl: './goal-details.component.html',
-	styleUrls: ['./goal-details.component.scss']
+    selector: 'ga-goal-details',
+    templateUrl: './goal-details.component.html',
+    styleUrls: ['./goal-details.component.scss'],
+    standalone: false
 })
 export class GoalDetailsComponent extends TranslationBaseComponent implements OnInit {
 	goal: IGoal;

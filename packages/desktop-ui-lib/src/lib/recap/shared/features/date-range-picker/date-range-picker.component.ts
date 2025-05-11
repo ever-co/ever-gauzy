@@ -30,10 +30,11 @@ import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-date-range-picker',
-	templateUrl: './date-range-picker.component.html',
-	styleUrls: ['./date-range-picker.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-date-range-picker',
+    templateUrl: './date-range-picker.component.html',
+    styleUrls: ['./date-range-picker.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class DateRangePickerComponent implements OnInit, OnDestroy {
 	public picker: NgxDateRangePickerComponent;

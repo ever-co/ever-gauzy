@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 @include nb-install-component() {
 	ngx-echarts-pie,
@@ -12,7 +12,6 @@
 		height: nb-theme(card-height-medium);
 		width: 100%;
 	}
-
 	::ng-deep .echart {
 		height: 100%;
 		width: 100%;

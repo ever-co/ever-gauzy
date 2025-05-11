@@ -1,4 +1,4 @@
-@import 'gauzy/_gauzy-dialogs';
+@use 'gauzy/_gauzy-dialogs' as *;
 
 :host nb-card {
   background-color: nb-theme(gauzy-card-1);

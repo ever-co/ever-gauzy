@@ -2,9 +2,10 @@ import { Component, Input } from '@angular/core';
 import { FormControl, NgModel } from '@angular/forms';
 
 @Component({
-	selector: 'ngx-error-message',
-	templateUrl: './error-message.component.html',
-	styleUrls: ['./error-message.component.scss']
+    selector: 'ngx-error-message',
+    templateUrl: './error-message.component.html',
+    styleUrls: ['./error-message.component.scss'],
+    standalone: false
 })
 export class ErrorMessageComponent {
 	@Input() field: FormControl | NgModel;

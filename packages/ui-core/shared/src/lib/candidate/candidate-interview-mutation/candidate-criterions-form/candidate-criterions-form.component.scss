@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 :host .form {
   width: 45rem;

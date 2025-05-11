@@ -4,7 +4,6 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable, Subject, tap } from 'rxjs';
 import { catchError, concatMap, filter, take, takeUntil } from 'rxjs/operators';
-
 import {
 	ICDNSource,
 	IGauzySource,
@@ -35,6 +34,7 @@ import { DialogCreateVersionComponent } from './dialog-create-version/dialog-cre
 	selector: 'gauzy-plugin-marketplace-item',
 	templateUrl: './plugin-marketplace-item.component.html',
 	styleUrls: ['./plugin-marketplace-item.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
@@ -238,8 +238,9 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				backdropClass: 'backdrop-blur',
 				context: {
 					data: {
-						title: 'Uninstall',
-						message: 'Would you like to uninstall this plugin?',
+						title: 'PLUGIN.DIALOG.UNINSTALL.TITLE',
+						message: 'PLUGIN.DIALOG.UNINSTALL.DESCRIPTION',
+						confirmText: 'PLUGIN.DIALOG.UNINSTALL.CONFIRM',
 						status: 'basic'
 					}
 				}
@@ -327,8 +328,9 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			.open(AlertComponent, {
 				context: {
 					data: {
-						message: 'Would you like to delete this plugin?',
-						title: 'Delete plugin',
+						message: 'PLUGIN.DIALOG.DELETE.DESCRIPTION',
+						title: 'PLUGIN.DIALOG.DELETE.TITLE',
+						confirmText: 'PLUGIN.DIALOG.DELETE.CONFIRM',
 						status: 'Danger'
 					}
 				}

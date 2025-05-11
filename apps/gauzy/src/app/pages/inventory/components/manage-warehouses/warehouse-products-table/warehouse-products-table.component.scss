@@ -1,5 +1,5 @@
-@import "gauzy/gauzy-overrides";
-@import "gauzy/gauzy-table";
+@use "gauzy/gauzy-overrides" as *;
+@use "gauzy/gauzy-table" as *;
 
 :host {
 	@include input-appearance(2rem, var(--gauzy-sidebar-background-3));

@@ -9,10 +9,10 @@ import { DefaultEditor } from 'angular2-smart-table';
 			(checkedChange)="toggleSeparateTaxDiscount($event)"
 		></nb-toggle>
 	`,
-	styles: ['.apply-tax {text-align: center}']
+	styles: ['.apply-tax {text-align: center}'],
+	standalone: false
 })
 export class InvoiceApplyTaxDiscountComponent extends DefaultEditor implements OnInit {
-
 	ngOnInit() {
 		this.cell.setValue(this.cell.getValue());
 	}

@@ -16,6 +16,7 @@ import { DialogCreateVersionComponent } from '../dialog-create-version/dialog-cr
 	selector: 'lib-version-history',
 	templateUrl: './version-history.component.html',
 	styleUrls: ['./version-history.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VersionHistoryComponent implements OnInit, OnDestroy {
@@ -106,8 +107,9 @@ export class VersionHistoryComponent implements OnInit, OnDestroy {
 			.open(AlertComponent, {
 				context: {
 					data: {
-						message: `Would you like to delete version ${version.number}?`,
-						title: 'Delete plugin version',
+						message: 'PLUGIN.DIALOG.VERSION.DELETE.DESCRIPTION',
+						title: 'PLUGIN.DIALOG.VERSION.DELETE.TITLE',
+						confirmText: 'PLUGIN.DIALOG.VERSION.DELETE.CONFIRM',
 						status: 'basic'
 					}
 				}
@@ -129,8 +131,9 @@ export class VersionHistoryComponent implements OnInit, OnDestroy {
 			.open(AlertComponent, {
 				context: {
 					data: {
-						message: `Would you like to restore version ${version.number}?`,
-						title: 'Restore plugin version',
+						message: 'PLUGIN.DIALOG.VERSION.RESTORE.DESCRIPTION',
+						title: 'PLUGIN.DIALOG.VERSION.RESTORE.TITLE',
+						confirmText: 'PLUGIN.DIALOG.VERSION.RESTORE.CONFIRM',
 						status: 'warn'
 					}
 				}

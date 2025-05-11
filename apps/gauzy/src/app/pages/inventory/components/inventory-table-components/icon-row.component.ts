@@ -2,13 +2,13 @@ import { Component, Input } from '@angular/core';
 import { IProductTypeTranslated } from '@gauzy/contracts';
 
 @Component({
-	template: `
+    template: `
 		<div class="icon-container">
 			<nb-icon *ngIf="rowData.icon" [icon]="rowData.icon"></nb-icon>
 		</div>
 	`,
-	styles: [
-		`
+    styles: [
+        `
 			.icon-container {
 				width: 35px;
 				height: 35px;
@@ -25,7 +25,8 @@ import { IProductTypeTranslated } from '@gauzy/contracts';
 				width: 25px;
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class IconRowComponent {
 	@Input() value: string | number;

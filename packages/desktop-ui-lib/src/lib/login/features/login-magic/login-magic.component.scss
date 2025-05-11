@@ -1,5 +1,5 @@
-@import 'themes';
-@import '../../_reusable.scss';
+@use 'themes' as *;
+@use '../../_reusable' as *;
 
 $button-color: #fa754e;
 
@@ -247,8 +247,8 @@ $button-color: #fa754e;
   }
 
   & .another-action {
+	margin-top: 10px;
     @include another-action;
-    margin-top: 10px;
   }
 }
 

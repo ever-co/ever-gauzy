@@ -3,10 +3,10 @@ import { NbComponentStatus } from '@nebular/theme';
 import { TaskStatusEnum } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ngx-status-view',
-	templateUrl: './status-view.component.html',
-	styles: [
-		`
+    selector: 'ngx-status-view',
+    templateUrl: './status-view.component.html',
+    styles: [
+        `
 			:host {
 				display: flex;
 			}
@@ -26,7 +26,8 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 				text-align: left;
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class StatusViewComponent implements OnInit {
 	@Input() value: string;

@@ -7,7 +7,7 @@ import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromD
 import { ExtraOptions, Router, RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
+import { NgModule, ErrorHandler, inject, provideAppInitializer } from '@angular/core';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
 import {
 	NbChatModule,
@@ -47,6 +47,7 @@ import {
 	TenantInterceptor,
 	TokenInterceptor
 } from '@gauzy/ui-core/core';
+import { PostHogModule } from '@gauzy/plugin-posthog-ui';
 import { CommonModule } from '@gauzy/ui-core/common';
 import { HttpLoaderFactory, I18nModule, I18nService } from '@gauzy/ui-core/i18n';
 import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
@@ -63,6 +64,14 @@ if (environment.SENTRY_DSN) {
 	} else {
 		console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
 		initializeSentry();
+	}
+}
+
+if (environment.POSTHOG_KEY) {
+	if (environment.POSTHOG_KEY === 'DOCKER_POSTHOG_API_KEY') {
+		console.warn('You are running inside Docker but does not have POSTHOG_API_KEY env set');
+	} else {
+		console.log(`Enabling PostHog with API Key: ${environment.POSTHOG_KEY}`);
 	}
 }
 
@@ -100,7 +109,19 @@ const THIRD_PARTY_MODULES = [
 			useFactory: HttpLoaderFactory,
 			deps: [HttpClient]
 		}
-	})
+	}),
+
+	...(environment.POSTHOG_KEY && environment.POSTHOG_KEY !== 'DOCKER_POSTHOG_API_KEY'
+		? [
+				PostHogModule.forRoot({
+					apiKey: environment.POSTHOG_KEY,
+					options: {
+						api_host: environment.POSTHOG_HOST,
+						capture_pageview: true
+					}
+				})
+		  ]
+		: [])
 ];
 
 // Feature Modules
@@ -161,33 +182,29 @@ const FEATURE_MODULES = [
 			multi: true
 		},
 		ServerConnectionService,
-		{
-			provide: APP_INITIALIZER,
-			useFactory: serverConnectionFactory,
-			deps: [ServerConnectionService, Store, Router],
-			multi: true
-		},
+		provideAppInitializer(() => {
+			const initializerFn = serverConnectionFactory(
+				inject(ServerConnectionService),
+				inject(Store),
+				inject(Router)
+			);
+			return initializerFn();
+		}),
 		GoogleMapsLoaderService,
-		{
-			provide: APP_INITIALIZER,
-			useFactory: googleMapsLoaderFactory,
-			deps: [GoogleMapsLoaderService],
-			multi: true
-		},
+		provideAppInitializer(() => {
+			const initializerFn = googleMapsLoaderFactory(inject(GoogleMapsLoaderService));
+			return initializerFn();
+		}),
 		FeatureService,
-		{
-			provide: APP_INITIALIZER,
-			useFactory: featureToggleLoaderFactory,
-			deps: [FeatureService, Store],
-			multi: true
-		},
+		provideAppInitializer(() => {
+			const initializerFn = featureToggleLoaderFactory(inject(FeatureService), inject(Store));
+			return initializerFn();
+		}),
 		AppInitService,
-		{
-			provide: APP_INITIALIZER,
-			useFactory: initializeApp,
-			deps: [AppInitService],
-			multi: true
-		},
+		provideAppInitializer(() => {
+			const initializerFn = initializeApp(inject(AppInitService));
+			return initializerFn();
+		}),
 		{
 			provide: ErrorHandler,
 			useClass: SentryErrorHandler
@@ -199,6 +216,7 @@ const FEATURE_MODULES = [
 			provide: GAUZY_ENV,
 			useValue: environment
 		},
+
 		provideHttpClient(withInterceptorsFromDi())
 	]
 })

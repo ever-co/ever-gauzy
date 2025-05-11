@@ -169,10 +169,16 @@
 		"SHARE": "Поделиться",
 		"GET_INFO": "Получить информацию",
 		"RETRY": "Повторить попытку",
-		"UPLOAD": "Загрузить"
+		"UPLOAD": "Загрузить",
+		"MARKETPLACE": "Рынок",
+		"ADD_VERSION": "Добавить версию",
+		"READ_MORE": "Читать далее",
+		"READ_LESS": "Свернуть",
+		"RECOVER": "Восстановить"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "Нет истории",
 			"LOADING": "Загрузка, пожалуйста, подождите...",
 			"RECEIVE_ESTIMATE": "Вы не получили ни одной оценки.",
 			"INCOME": "Вы не создали ни одного дохода.",
@@ -1052,7 +1058,44 @@
 			"FEATURE_ORGANIZATION": "Функциональная организация",
 			"EXPORT_DATA": "Экспорт данных",
 			"IMPORT_DATA": "Импорт данных",
-			"ALL_ENTITIES": "ВСЕ сущности"
+			"ALL_ENTITIES": "ВСЕ сущности",
+			"ACTIVITY_LOG": "Журнал активности",
+			"DAILY_PLAN": "Дневной план",
+			"ENTITY_SUBSCRIPTION": "Подписка на объект",
+			"FAVORITE": "Избранное",
+			"MENTION": "Упоминание",
+			"REACTION": "Реакция",
+			"RESOURCE_LINK": "Ссылка на ресурс",
+			"SCREENING_TASK": "Задача проверки",
+			"SOCIAL_ACCOUNT": "Социальная учетная запись",
+			"CHANGELOG": "Журнал изменений",
+			"ISSUE_TYPE": "Тип задачи",
+			"TASK_ESTIMATION": "Оценка задачи",
+			"TASK_LINKED_ISSUE": "Связанная задача",
+			"TASK_PRIORITY": "Приоритет задачи",
+			"TASK_RELATED_ISSUE": "Связанная проблема задачи",
+			"TASK_SIZE": "Размер задачи",
+			"TASK_STATUS": "Статус задачи",
+			"TASK_VERSION": "Версия задачи",
+			"TASK_RELATED_ISSUE_TYPE": "Тип связанной проблемы",
+			"ORGANIZATION_PROJECT_EMPLOYEE": "Сотрудник проекта организации",
+			"ORGANIZATION_PROJECT_MODULE": "Модуль проекта организации",
+			"ORGANIZATION_PROJECT_MODULE_EMPLOYEE": "Сотрудник модуля проекта организации",
+			"ORGANIZATION_SPRINT_EMPLOYEE": "Сотрудник спринта организации",
+			"ORGANIZATION_SPRINT_TASK": "Задача спринта организации",
+			"ORGANIZATION_SPRINT_TASK_HISTORY": "История задач спринта организации",
+			"ORGANIZATION_TASK_SETTING": "Настройки задач организации",
+			"ORGANIZATION_TEAM_JOIN_REQUEST": "Запрос на присоединение к команде",
+			"ORGANIZATION_GITHUB_REPOSITORY": "Репозиторий GitHub организации",
+			"ORGANIZATION_GITHUB_REPOSITORY_ISSUE": "Задача в репозитории GitHub организации",
+			"EMPLOYEE_AVAILABILITY": "Доступность сотрудника",
+			"EMPLOYEE_NOTIFICATION": "Уведомление сотрудника",
+			"EMPLOYEE_PHONE": "Телефон сотрудника",
+			"APPOINTMENT_EMPLOYEE": "Запись к сотруднику",
+			"EMPLOYEE_NOTIFICATION_SETTING": "Настройки уведомлений сотрудника",
+			"PRODUCT_REVIEW": "Отзыв о продукте",
+			"TASK_LINKED_ISSUES": "Связанные задачи",
+			"TASK_VIEW": "Просмотр задачи"
 		},
 		"TAGS": "Теги",
 		"LANGUAGE": "Язык",
@@ -4035,7 +4078,14 @@
 				"SSL_CERT_FILE_INFO": "Путь к файлу сертификата клиента для SSL.",
 				"SECURE": "Безопасно",
 				"SECURE_INFO": "True, если вы хотите проверить SSL-сертификаты."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "Установка через NPM позволяет получить доступ к общедоступным и частным плагинам.",
+			"PACKAGE_NAME": "Имя пакета NPM",
+			"PACKAGE_VERSION": "Версия пакета NPM",
+			"REGISTRY": "Реестр NPM",
+			"AUTH_TOKEN": "Токен аутентификации",
+			"PRIVATE_REGISTRY_URL": "URL частного реестра",
+			"PLUGIN_INSTALL_CDN_ERROR": "URL сервера не должен быть пустым."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Еженедельный лимит превышен",
 		"OF_HRS": "Из {{ limit }} часов",
@@ -4786,7 +4836,10 @@
 				"INVALID_PACKAGE_NAME": "Неверный формат имени пакета",
 				"INVALID_SCOPE": "Неверный формат области",
 				"AUTHOR_TOO_LONG": "Имя автора слишком длинное",
-				"LICENSE_TOO_LONG": "Поле лицензии слишком длинное"
+				"LICENSE_TOO_LONG": "Поле лицензии слишком длинное",
+				"FAILED": "Проверка не удалась",
+				"CHANGELOG_TOO_SHORT": "Changelog слишком короткий",
+				"CHANGELOG_REQUIRED": "Changelog обязателен"
 			},
 			"TYPE": "Тип плагина",
 			"TYPE_PLACEHOLDER": "Выберите тип плагина",
@@ -4860,7 +4913,88 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Открыть",
-			"INSTALLED": "Установлено"
+			"INSTALLED": "Установлено",
+			"VERSION_HISTORY": "История версий"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Загрузить новый плагин",
+			"OFFLINE": "Вы сейчас не в сети/отключены ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Деактивировать плагин",
+				"DESCRIPTION": "Вы уверены, что хотите деактивировать этот плагин?",
+				"CONFIRM": "Деактивировать"
+			},
+			"UNINSTALL": {
+				"TITLE": "Удалить плагин",
+				"DESCRIPTION": "Вы уверены, что хотите удалить этот плагин?",
+				"CONFIRM": "Удалить"
+			},
+			"DELETE": {
+				"TITLE": "Удалить плагин",
+				"DESCRIPTION": "Вы уверены, что хотите удалить этот плагин?",
+				"CONFIRM": "Удалить"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Обновить версию v{{number}}",
+					"DESCRIPTION": "Вы уверены, что хотите обновить этот плагин?",
+					"CONFIRM": "Обновить"
+				},
+				"CREATE": {
+					"TITLE": "Создать новую версию для {{name}}",
+					"DESCRIPTION": "Вы уверены, что хотите создать эту версию?",
+					"CONFIRM": "Создать"
+				},
+				"DELETE": {
+					"TITLE": "Удалить версию",
+					"DESCRIPTION": "Вы уверены, что хотите удалить эту версию?",
+					"CONFIRM": "Удалить"
+				},
+				"RESTORE": {
+					"TITLE": "Восстановить версию",
+					"DESCRIPTION": "Вы уверены, что хотите восстановить эту версию?",
+					"CONFIRM": "Восстановить"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Версия плагина v{{number}} успешно создана!",
+					"UPDATED": "Версия плагина v{{number}} успешно обновлена!",
+					"DELETED": "Версия плагина успешно удалена!",
+					"RESTORED": "Версия плагина успешно восстановлена!"
+				},
+				"UPLOADED": "Плагин успешно загружен!",
+				"UPDATED": "Плагин успешно обновлен!",
+				"DELETED": "Плагин успешно удален!",
+				"INSTALLED": "Плагин успешно установлен!",
+				"UNINSTALLED": "Плагин успешно удален!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Добавление новой версии плагина...",
+					"UPDATING": "Обновление версии плагина...",
+					"DELETING": "Удаление версии плагина...",
+					"RESTORING": "Восстановление версии плагина..."
+				},
+				"UPLOADING": "Загрузка плагина...",
+				"UPDATING": "Обновление плагина...",
+				"DELETING": "Удаление плагина...",
+				"INSTALLING": "Установка плагина...",
+				"UNINSTALLING": "Удаление плагина..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Не удалось восстановить версию плагина. Пожалуйста, попробуйте еще раз!"
+				},
+				"UPLOAD": "Не удалось загрузить плагин. Пожалуйста, попробуйте еще раз!",
+				"NOT_FOUND": "Плагин с ID {{ id }} не найден.",
+				"INSTALL": "Не удалось установить плагин. Пожалуйста, попробуйте еще раз!",
+				"REVERT_INSTALLATION": "Не удалось отменить установку!"
+			}
 		}
 	},
 	"SERVER_DOWN": {

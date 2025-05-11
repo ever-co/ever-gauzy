@@ -1,5 +1,5 @@
 // Import Gauzy dialogs styles
-@import 'gauzy/_gauzy-dialogs';
+@use 'gauzy/_gauzy-dialogs' as *;
 
 // Define styles for the .project-toggle class
 .project-toggle {

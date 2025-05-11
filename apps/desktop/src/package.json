@@ -28,6 +28,7 @@
 			"../../../dist/packages/contracts",
 			"../../../dist/packages/core",
 			"../../../dist/packages/desktop-core",
+			"../../../dist/packages/desktop-activity",
 			"../../../dist/packages/desktop-lib",
 			"../../../dist/packages/desktop-window",
 			"../../../dist/packages/plugin",
@@ -100,7 +101,9 @@
 			"entitlements": "tools/build/entitlements.mas.plist",
 			"entitlementsInherit": "tools/build/entitlements.mas.plist",
 			"extendInfo": {
-				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup."
+				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup.",
+				"NSMicrophoneUsageDescription": "This app requires microphone access when recording sounds or detecting loudness.",
+				"NSCameraUsageDescription": "This app requires camera access when using the video sensing blocks."
 			}
 		},
 		"win": {
@@ -154,6 +157,7 @@
 		"@gauzy/contracts": "file:../../../dist/packages/contracts",
 		"@gauzy/core": "file:../../../dist/packages/core",
 		"@gauzy/desktop-core": "file:../../../dist/packages/desktop-core",
+		"@gauzy/desktop-activity": "file:../../../dist/packages/desktop-activity",
 		"@gauzy/desktop-lib": "file:../../../dist/packages/desktop-lib",
 		"@gauzy/desktop-window": "file:../../../dist/packages/desktop-window",
 		"@gauzy/plugin": "file:../../../dist/packages/plugin",
@@ -175,7 +179,7 @@
 		"@gauzy/plugin-registry": "file:../../../dist/packages/plugins/registry",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@gauzy/utils": "file:../../../dist/packages/utils",
-		"@nestjs/platform-express": "^10.4.15",
+		"@nestjs/platform-express": "^11.1.0",
 		"@sentry/electron": "^4.18.0",
 		"@sentry/node": "^7.101.1",
 		"@sentry/profiling-node": "^7.101.1",

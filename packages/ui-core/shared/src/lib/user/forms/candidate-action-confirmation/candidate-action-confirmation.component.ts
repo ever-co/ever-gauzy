@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 
 @Component({
-	selector: 'ga-candidate-action-confirmation',
-	template: `
+    selector: 'ga-candidate-action-confirmation',
+    template: `
 		<nb-card class="center">
 			<nb-card-header>
 				<h6>{{ 'FORM.CONFIRM' | translate }}</h6>
@@ -27,8 +27,8 @@ import { NbDialogRef } from '@nebular/theme';
 			</nb-card-footer>
 		</nb-card>
 	`,
-	styles: [
-		`
+    styles: [
+        `
 			nb-card-body {
 				text-align: center;
 			}
@@ -38,7 +38,8 @@ import { NbDialogRef } from '@nebular/theme';
 				width: 300px;
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class CandidateActionConfirmationComponent {
 	recordType: string;

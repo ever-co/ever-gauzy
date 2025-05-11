@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Ou
 	selector: 'lib-file-upload',
 	templateUrl: './file-upload.component.html',
 	styleUrls: ['./file-upload.component.scss'],
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FileUploadComponent {

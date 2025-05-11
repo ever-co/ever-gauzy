@@ -1,4 +1,4 @@
-@import 'var';
+@use 'var' as *;
 
 :host .calendar-picker {
   position: relative;

@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 $button-radius: var(--button-rectangle-border-radius);
 
