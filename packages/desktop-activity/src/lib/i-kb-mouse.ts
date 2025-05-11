@@ -1,3 +1,6 @@
+/**
+ * Represents mouse movement events with start and end coordinates.
+ */
 export type TMouseEvents = {
 	moveTo: {
 		from: {
@@ -11,7 +14,10 @@ export type TMouseEvents = {
 	}
 }
 
-export type TkbMouseActivity = {
+/**
+ * Aggregates keyboard and mouse activity data for tracking user interactions.
+ */
+export type TKbMouseActivity = {
 	kbPressCount: number;
 	kbSequence: number[];
 	mouseMovementsCount: number;

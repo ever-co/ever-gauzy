@@ -1,3 +1,7 @@
+/**
+ * Service interface for managing keyboard and mouse activity data.
+ * @template T The type of activity data being managed
+*/
 export interface IKbMouseActivityService<T> {
 	save(activities: T): Promise<void>;
 	retrieve(): Promise<T>;
@@ -5,6 +9,10 @@ export interface IKbMouseActivityService<T> {
 	update(activities: Partial<T>): Promise<void>;
 }
 
+/**
+ * Represents a time slot record with keyboard and mouse activity metrics.
+ * Used for tracking user activity during specific time periods.
+ */
 export type TTimeSlot = {
 	employeeId: string,
 	projectId?: string,
@@ -13,7 +21,7 @@ export type TTimeSlot = {
 	mouse: number,
 	overall: number,
 	startedAt: string,
-	activities: any,
+	activities: Record<string, unknown>,
 	timeLogId?: string,
 	organizationId: string,
 	tenantId: string,

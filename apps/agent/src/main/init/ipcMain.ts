@@ -18,7 +18,7 @@ import { getApiBaseUrl, delaySync, getAuthConfig } from '../util';
 import { startServer } from './app';
 import AppWindow from '../window-manager';
 import * as moment from 'moment';
-import * as path from 'path';
+import * as path from 'node:path';
 import PullActivities from '../workers/pull-activities';
 import PushActivities from '../workers/push-activities';
 import { checkUserAuthentication } from '../auth';

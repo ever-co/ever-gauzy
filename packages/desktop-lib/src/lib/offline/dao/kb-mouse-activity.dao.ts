@@ -22,23 +22,27 @@ export class KbMouseActivityDAO implements DAO<KbMouseActivityTO> {
 		await this._trx.create(value);
 	}
 	public async findOneById(id: number): Promise<KbMouseActivityTO> {
-		return await this._provider
+		const result = await this._provider
 			.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
-			.where('id', '=', id)[0];
+			.where('id', '=', id);
+		return result[0];
 	}
 	public async update(id: number, value: Partial<KbMouseActivityTO>): Promise<void> {
 		await this._trx.update(id, value);
 	}
 	public async delete(value?: Partial<KbMouseActivityTO>): Promise<void> {
+		if (!value || value.id === undefined) {
+			throw new Error('Cannot delete activity: Missing or invalid id');
+		}
 		await this._provider.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
-		.where('id', '=', value.id).del();
+			.where('id', '=', value.id).del();
 	}
 
 	public async current(): Promise<KbMouseActivityTO> {
-		const [activites] = await this._provider
+		const [activities] = await this._provider
 			.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
 			.orderBy('timeStart', 'asc')
 			.limit(1);
-		return activites;
+		return activities;
 	}
 }

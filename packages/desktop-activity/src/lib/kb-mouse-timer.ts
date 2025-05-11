@@ -1,7 +1,7 @@
 export class KbMouseTimer {
 	private static instance: KbMouseTimer;
 
-	private flushIntervalSeconds: number = 60;
+	private flushIntervalSeconds = 60;
 	private intervalId: ReturnType<typeof setInterval> | null = null;
 	private onFlushCallback: ((timeData: { timeStart: Date; timeEnd: Date }) => void) | null = null;
 	private lastFlushTime: Date = new Date();
@@ -19,7 +19,7 @@ export class KbMouseTimer {
 		this.flushIntervalSeconds = seconds;
 	}
 
-	public onFlush(callback: () => void): void {
+	public onFlush(callback: (timeData: { timeStart: Date; timeEnd: Date }) => void): void {
 		this.onFlushCallback = callback;
 	}
 
@@ -36,10 +36,12 @@ export class KbMouseTimer {
 	public stop(): void {
 		if (this.intervalId) {
 			clearInterval(this.intervalId);
-			this.onFlushCallback({
-				timeStart: this.lastFlushTime,
-				timeEnd: new Date()
-			})
+			if (this.onFlushCallback) {
+				this.onFlushCallback({
+					timeStart: this.lastFlushTime,
+					timeEnd: new Date()
+				});
+			}
 			this.intervalId = null;
 		}
 	}
@@ -49,10 +51,12 @@ export class KbMouseTimer {
 		const elapsedSeconds = Math.floor((now.getTime() - this.lastFlushTime.getTime()) / 1000);
 
 		if (elapsedSeconds >= this.flushIntervalSeconds) {
-			this.onFlushCallback({
-				timeStart: this.lastFlushTime,
-				timeEnd: now
-			});
+			if (this.onFlushCallback) {
+				this.onFlushCallback({
+					timeStart: this.lastFlushTime,
+					timeEnd: now
+				});
+			}
 			this.lastFlushTime = now;
 		}
 	}

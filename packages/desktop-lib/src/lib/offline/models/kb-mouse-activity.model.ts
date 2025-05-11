@@ -1,19 +1,6 @@
 import { Serializable } from '../../interfaces';
-import { KbMouseActivityTO } from '../dto/kb-mouse-activity.dto';
+import { KbMouseActivityTO,  TMouseEvents } from '../dto/kb-mouse-activity.dto';
 import { Base } from './base.model';
-
-interface IMouseEvent {
-	moveTo: {
-		from: {
-			x: number;
-			y: number;
-		},
-		to: {
-			x: number;
-			y: number;
-		}
-	}
-}
 
 export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializable<KbMouseActivityTO> {
 	private _timeStart: Date;
@@ -23,28 +10,28 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	private _mouseMovementsCount: number;
 	private _mouseLeftClickCount: number;
 	private _mouseRightClickCount: number;
-	private _mouseEvents: IMouseEvent[];
+	private _mouseEvents: TMouseEvents[];
 
-	constructor(kbMOuseActivity: KbMouseActivityTO) {
+	constructor(kbMouseActivity: KbMouseActivityTO) {
 		super(
-			kbMOuseActivity.id,
-			kbMOuseActivity.tenantId,
-			kbMOuseActivity.organizationId
+			kbMouseActivity.id,
+			kbMouseActivity.tenantId,
+			kbMouseActivity.organizationId
 		);
-		this._timeStart = kbMOuseActivity.timeStart;
-		this._timeEnd = kbMOuseActivity.timeEnd;
-		this._kbPressCount = kbMOuseActivity.kbPressCount;
-		this._kbSequence = kbMOuseActivity.kbSequence;
-		this._mouseMovementsCount = kbMOuseActivity.mouseMovementsCount;
-		this._mouseLeftClickCount = kbMOuseActivity.mouseLeftClickCount;
-		this._mouseRightClickCount = kbMOuseActivity.mouseRightClickCount;
-		this._mouseEvents = kbMOuseActivity.mouseEvents;
+		this._timeStart = kbMouseActivity.timeStart;
+		this._timeEnd = kbMouseActivity.timeEnd;
+		this._kbPressCount = kbMouseActivity.kbPressCount;
+		this._kbSequence = kbMouseActivity.kbSequence;
+		this._mouseMovementsCount = kbMouseActivity.mouseMovementsCount;
+		this._mouseLeftClickCount = kbMouseActivity.mouseLeftClickCount;
+		this._mouseRightClickCount = kbMouseActivity.mouseRightClickCount;
+		this._mouseEvents = kbMouseActivity.mouseEvents;
 	}
 
 	public get timeStart(): Date {
 		return this._timeStart;
 	}
-	public set name(value: Date) {
+	public set timeStart(value: Date) {
 		this._timeStart = value;
 	}
 	public get timeEnd(): Date | null {
@@ -83,10 +70,10 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	public set mouseRightClickCount(value: number) {
 		this._mouseRightClickCount = value;
 	}
-	public get mouseEvents(): IMouseEvent[] {
+	public get mouseEvents(): TMouseEvents[] {
 		return this._mouseEvents;
 	}
-	public set mouseEvents(value: IMouseEvent[]) {
+	public set mouseEvents(value: TMouseEvents[]) {
 		this._mouseEvents = value;
 	}
 
@@ -95,11 +82,11 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 			timeStart: this.timeStart,
 			timeEnd: this.timeEnd,
 			kbPressCount: this.kbPressCount,
-			kbSequence: this.kbSequence,
+			kbSequence: Array.isArray(this.kbSequence) ? this.kbSequence : [],
 			mouseMovementsCount: this.mouseMovementsCount,
 			mouseRightClickCount: this.mouseRightClickCount,
 			mouseLeftClickCount: this.mouseLeftClickCount,
-			mouseEvents: this.mouseEvents,
+			mouseEvents: Array.isArray(this.mouseEvents) ? this.mouseEvents : [],
 			id: this.id,
 			organizationId: this.organizationId,
 			tenantId: this.tenantId,

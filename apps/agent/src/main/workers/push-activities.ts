@@ -1,5 +1,5 @@
 import { KbMouseActivityService, KbMouseActivityTO, TTimeSlot } from '@gauzy/desktop-lib';
-import { KbMouseActivityPool, TkbMouseActivity } from '@gauzy/desktop-activity';
+import { KbMouseActivityPool, TKbMouseActivity } from '@gauzy/desktop-activity';
 import { ApiService } from '../api';
 import { getAuthConfig } from '../util';
 import * as moment from 'moment';
@@ -10,11 +10,13 @@ class PushActivities {
 	private kbMouseActivityService: KbMouseActivityService;
 	constructor() {
 		this.kbMouseActivityService = new KbMouseActivityService();
+		this.getKbMousePoolModule();
 	}
 
 	static getInstance(): PushActivities {
 		if (!PushActivities.instance) {
 			PushActivities.instance = new PushActivities();
+
 			return PushActivities.instance;
 		}
 		return PushActivities.instance;
@@ -29,16 +31,18 @@ class PushActivities {
 	}
 
 	startPooling() {
-		this.getKbMousePoolModule();
-		this.kbMousePool.start();
+		try {
+			this.kbMousePool.start();
+		} catch (error) {
+			console.error('Failed to start push activity pooling', error);
+		}
 	}
 
 	stopPooling() {
-		this.getKbMousePoolModule();
 		this.kbMousePool.stop();
 	}
 
-	async getFirstOldestActity(): Promise<KbMouseActivityTO | null> {
+	async getOldestActivity(): Promise<KbMouseActivityTO | null> {
 		try {
 			const activity = await this.kbMouseActivityService.retrieve();
 			return activity;
@@ -73,7 +77,7 @@ class PushActivities {
 		return Math.floor((timeEnd.getTime() - timeStart.getTime()) / 1000);
 	}
 
-	getActivities(activities: KbMouseActivityTO): TkbMouseActivity {
+	getActivities(activities: KbMouseActivityTO): TKbMouseActivity {
 		return {
 			kbPressCount: activities.kbPressCount,
 			kbSequence: activities.kbSequence,
@@ -102,14 +106,14 @@ class PushActivities {
 
 	async saveActivities() {
 		try {
-			const activity = await this.getFirstOldestActity();
+			const activity = await this.getOldestActivity();
 			if (activity?.id) {
 				// remove activity from temp local database
 				try {
 					await this.saveTimeSlot(activity);
 					await this.removeCurrentActivity(activity.id);
 				} catch (error) {
-
+					console.error(`Failed to upload activity ${activity.id}`, error);
 				}
 
 			}

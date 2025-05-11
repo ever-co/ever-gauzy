@@ -66,7 +66,7 @@ export class KeyboardMouseEventCounter {
 		if (this.startMousePosition) {
 			const yPositionMovement = Math.abs(this.startMousePosition.y - this.currentMousePosition.y);
 			const xPositionMovement = Math.abs(this.startMousePosition.x - this.currentMousePosition.x);
-			if (yPositionMovement >= this.mouseMoveThreshold && xPositionMovement >= this.mouseMoveThreshold) {
+			if (yPositionMovement >= this.mouseMoveThreshold || xPositionMovement >= this.mouseMoveThreshold) {
 				this.keyboardMouseActivityStores.updateMouseMovementsCount();
 				this.keyboardMouseActivityStores.updateMouseEvents({
 					moveTo: {

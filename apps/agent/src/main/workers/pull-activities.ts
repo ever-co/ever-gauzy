@@ -78,10 +78,6 @@ class PullActivities {
 		}
 	}
 
-	getActivityOfflineService() {
-		this.activityService = new KbMouseActivityService()
-	}
-
 	timerProcess() {
 		this.getTimerModule();
 		this.timerModule.start();
@@ -93,21 +89,25 @@ class PullActivities {
 	}
 
 	async activityProcess(timeData: { timeStart: Date; timeEnd: Date}) {
-		const activityStores = KeyboardMouseActivityStores.getInstance();
-		const activities = activityStores.getCurrentActivities();
-		await this.activityService.save({
-			timeStart: timeData.timeStart,
-			timeEnd: timeData.timeEnd,
-			tenantId: this.tenantId,
-			organizationId: this.organizationId,
-			kbPressCount: activities.kbPressCount,
-			kbSequence: JSON.stringify(activities.kbSequence),
-			mouseLeftClickCount: activities.mouseLeftClickCount,
-			mouseRightClickCount: activities.mouseRightClickCount,
-			mouseMovementsCount: activities.mouseMovementsCount,
-			mouseEvents: JSON.stringify(activities.mouseEvents),
-			remoteId: this.remoteId
-		});
+		try {
+			const activityStores = KeyboardMouseActivityStores.getInstance();
+			const activities = activityStores.getCurrentActivities();
+			await this.activityService.save({
+				timeStart: timeData.timeStart,
+				timeEnd: timeData.timeEnd,
+				tenantId: this.tenantId,
+				organizationId: this.organizationId,
+				kbPressCount: activities.kbPressCount,
+				kbSequence: JSON.stringify(activities.kbSequence),
+				mouseLeftClickCount: activities.mouseLeftClickCount,
+				mouseRightClickCount: activities.mouseRightClickCount,
+				mouseMovementsCount: activities.mouseMovementsCount,
+				mouseEvents: JSON.stringify(activities.mouseEvents),
+				remoteId: this.remoteId
+			});
+		} catch (error) {
+			console.error('KB/M activity persist failed', error);
+		}
 	}
 }
 

@@ -4,18 +4,19 @@ import { Knex } from 'knex';
 export async function up(knex: Knex): Promise<void> {
 	await knex.schema.createTable(TABLE_NAME_KB_MOUSE_ACTIVITY, (table) => {
 		table.increments('id').primary().notNullable().unique();
-		table.timestamp('timeStart');
-		table.timestamp('timeEnd');
-		table.integer('kbPressCount');
-		table.json('kbSequence');
-		table.integer('mouseMovementsCount');
-		table.integer('mouseLeftClickCount');
-		table.integer('mouseRightClickCount');
-		table.json('mouseEvents');
-		table.string('organizationId');
-		table.string('tenantId');
-		table.string('remoteId');
+		table.timestamp('timeStart').notNullable();
+		table.timestamp('timeEnd').notNullable();
+		table.integer('kbPressCount').notNullable().defaultTo(0);
+		table.json('kbSequence').notNullable();
+		table.integer('mouseMovementsCount').notNullable().defaultTo(0);
+		table.integer('mouseLeftClickCount').notNullable().defaultTo(0);
+		table.integer('mouseRightClickCount').notNullable().defaultTo(0);
+		table.json('mouseEvents').notNullable();
+		table.string('organizationId').notNullable();
+		table.string('tenantId').notNullable();
+		table.string('remoteId').notNullable();
 		table.timestamps(true, true, true);
+		table.index(['timeStart', 'timeEnd']);
 	});
 }
 

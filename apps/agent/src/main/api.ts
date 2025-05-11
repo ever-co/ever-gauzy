@@ -1,28 +1,9 @@
-import { LocalStore } from '@gauzy/desktop-lib';
+import { LocalStore, TTimeSlot } from '@gauzy/desktop-lib';
 import { getAuthConfig, getApiBaseUrl } from './util';
 import fetch, { HeadersInit } from 'node-fetch';
 
-type TTimeSlot = {
-	employeeId: string,
-	projectId?: string,
-	duration: number,
-	keyboard: number,
-	mouse: number,
-	overall: number,
-	startedAt: string,
-	activities: any,
-	timeLogId?: string,
-	organizationId: string,
-	tenantId: string,
-	organizationContactId?: string,
-	recordedAt: string
-}
-
 export class ApiService {
-	constructor() {
-	}
-
-	get getToken() {
+	get token() {
 		const auth = getAuthConfig();
 		const token = auth.token;
 		return token;
@@ -30,13 +11,13 @@ export class ApiService {
 
 	get defaultHeaders() {
 		return {
-			'Authorization': 'Bearer ' + this.getToken,
+			'Authorization': `Bearer ${this.token}`,
 			'Content-Type': 'application/json'
 		}
 	}
 
 	get baseURL(): string {
-		const configs: { serverUrl: string; port: string} = LocalStore.getStore('configs');
+		const configs: { serverUrl: string; port: string } = LocalStore.getStore('configs');
 		const baseUrl = getApiBaseUrl(configs);
 		return baseUrl;
 	}
@@ -55,8 +36,8 @@ export class ApiService {
 		options: {
 			headers?: HeadersInit;
 			method: 'POST' | 'GET';
-			body: string;
-		} = { method: 'GET', body: JSON.stringify({}) }
+			body?: string;
+		} = { method: 'GET' }
 	) {
 		const url = this.baseURL + path;
 		const headers = {
@@ -64,17 +45,26 @@ export class ApiService {
 			...options.headers
 		};
 
+		const requestOptions = options.method === 'GET'
+			? { method: options.method, headers }
+			: { ...options, headers };
+
 		try {
-			const response = await fetch(url, { ...options, headers });
+			const response = await fetch(url, requestOptions);
 			if (!response.ok) {
 				console.warn('[Response Error]', response.status, response.statusText);
-				throw Error(response.statusText);
+				const error = new Error(`API error: ${response.status} ${response.statusText}`);
+				error['status'] = response.status;
+				throw error;
 			}
 
 			return response;
 		} catch (err) {
 			console.error('[Network Error]', err);
-			throw err;
+			const enhancedError = err instanceof Error ? err : new Error(String(err));
+			enhancedError['url'] = url;
+			enhancedError['isNetworkError'] = true;
+			throw enhancedError;
 		}
 	}
 }

@@ -1,5 +1,5 @@
 
-type TMouseEvents = {
+export type TMouseEvents = {
 	moveTo: {
 		from: {
 			x: number;

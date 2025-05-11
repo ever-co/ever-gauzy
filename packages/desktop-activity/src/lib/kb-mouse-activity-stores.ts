@@ -1,15 +1,25 @@
 import { app } from 'electron';
-import { TMouseEvents, TkbMouseActivity } from './i-kb-mouse';
+import { TMouseEvents, TKbMouseActivity } from './i-kb-mouse';
 
+/**
+ * Singleton class for managing keyboard and mouse activity data.
+ * Tracks and provides access to user input metrics like key presses,
+ * mouse clicks, and movements.
+*/
 export class KeyboardMouseActivityStores {
-	currentActivityData: TkbMouseActivity;
+	currentActivityData: TKbMouseActivity;
 	userPath: string;
 	static instance: KeyboardMouseActivityStores;
 	constructor() {
 		this.userPath = app.getPath('userData');
-		this.resetCurrentAcitivity();
+		this.resetCurrentActivity();
 	}
 
+	/**
+		* Returns the singleton instance of KeyboardMouseActivityStores.
+		* Creates a new instance if one doesn't exist.
+		* @returns {KeyboardMouseActivityStores} The singleton instance
+	*/
 	static getInstance(): KeyboardMouseActivityStores {
 		if (!KeyboardMouseActivityStores.instance) {
 			KeyboardMouseActivityStores.instance = new KeyboardMouseActivityStores();
@@ -18,13 +28,13 @@ export class KeyboardMouseActivityStores {
 		return KeyboardMouseActivityStores.instance;
 	}
 
-	getCurrentActivities(): TkbMouseActivity  {
-		const activities: TkbMouseActivity = {...this.currentActivityData };
-		this.resetCurrentAcitivity();
+	getCurrentActivities(): TKbMouseActivity {
+		const activities: TKbMouseActivity = { ...this.currentActivityData };
+		this.resetCurrentActivity();
 		return activities;
 	}
 
-	resetCurrentAcitivity() {
+	resetCurrentActivity() {
 		this.currentActivityData = {
 			kbSequence: [],
 			kbPressCount: 0,
@@ -36,11 +46,11 @@ export class KeyboardMouseActivityStores {
 	}
 
 	updateCurrentKeyPressCount() {
-		this.currentActivityData.kbPressCount = (this.currentActivityData?.kbPressCount || 0) + 1;
+		this.currentActivityData.kbPressCount += 1;
 	}
 
 	updateMouseMovementsCount() {
-		this.currentActivityData.mouseMovementsCount = (this.currentActivityData?.mouseMovementsCount || 0) + 1;
+		this.currentActivityData.mouseMovementsCount += 1;
 	}
 
 	updateMouseLeftClick() {

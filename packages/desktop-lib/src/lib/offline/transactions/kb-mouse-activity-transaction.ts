@@ -21,7 +21,7 @@ export class KbMouseTransaction implements IKbMouseTransaction {
 					await trx.commit();
 				} catch (error) {
 					await trx.rollback();
-					throw new AppError('KBMOUSETRX', error);
+					throw new AppError('KB_MOUSE_TRX', error);
 				}
 			}
 		);
@@ -37,7 +37,7 @@ export class KbMouseTransaction implements IKbMouseTransaction {
 					await trx.commit();
 				} catch (error) {
 					await trx.rollback();
-					throw new AppError('KBMOUSETRX', error);
+					throw new AppError('KB_MOUSE_TRX', error);
 				}
 			}
 		);
