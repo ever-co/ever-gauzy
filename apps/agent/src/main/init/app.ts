@@ -184,8 +184,12 @@ function listenIO() {
 }
 
 function runActivityConsumer() {
-	const pushActivities = PushActivities.getInstance();
-	pushActivities.startPooling();
+	try {
+		const pushActivities = PushActivities.getInstance();
+		pushActivities.startPooling();
+	} catch (error) {
+		log.error('Failed to start activity consumer', error);
+	}
 }
 
 

@@ -24,5 +24,4 @@ export type TKbMouseActivity = {
 	mouseLeftClickCount: number;
 	mouseRightClickCount: number;
 	mouseEvents: TMouseEvents[]
-
 }

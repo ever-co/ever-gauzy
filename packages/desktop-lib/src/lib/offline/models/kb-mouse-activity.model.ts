@@ -46,7 +46,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	public set kbPressCount(value: number) {
 		this._kbPressCount = value;
 	}
-	public get kbSequence() {
+	public get kbSequence(): number[] {
 		return this._kbSequence;
 	}
 	public set kbSequence(value: number[]) {

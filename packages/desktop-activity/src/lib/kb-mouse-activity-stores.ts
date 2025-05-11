@@ -28,7 +28,7 @@ export class KeyboardMouseActivityStores {
 		return KeyboardMouseActivityStores.instance;
 	}
 
-	getCurrentActivities(): TKbMouseActivity {
+	getAndResetCurrentActivities(): TKbMouseActivity {
 		const activities: TKbMouseActivity = { ...this.currentActivityData };
 		this.resetCurrentActivity();
 		return activities;
@@ -54,18 +54,18 @@ export class KeyboardMouseActivityStores {
 	}
 
 	updateMouseLeftClick() {
-		this.currentActivityData.mouseLeftClickCount = (this.currentActivityData?.mouseLeftClickCount || 0) + 1;
+		this.currentActivityData.mouseLeftClickCount += 1;
 	}
 
 	updateMouseRightClick() {
-		this.currentActivityData.mouseRightClickCount = (this.currentActivityData?.mouseRightClickCount || 0) + 1;
+		this.currentActivityData.mouseRightClickCount += 1;
 	}
 
 	updateKbSequence(keyCode: number) {
-		(this.currentActivityData?.kbSequence || []).push(keyCode);
+		this.currentActivityData.kbSequence.push(keyCode);
 	}
 
 	updateMouseEvents(mouseEventMovement: TMouseEvents) {
-		(this.currentActivityData?.mouseEvents || []).push(mouseEventMovement);
+		this.currentActivityData.mouseEvents.push(mouseEventMovement);
 	}
 }

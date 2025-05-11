@@ -91,7 +91,7 @@ class PullActivities {
 	async activityProcess(timeData: { timeStart: Date; timeEnd: Date}) {
 		try {
 			const activityStores = KeyboardMouseActivityStores.getInstance();
-			const activities = activityStores.getCurrentActivities();
+			const activities = activityStores.getAndResetCurrentActivities();
 			await this.activityService.save({
 				timeStart: timeData.timeStart,
 				timeEnd: timeData.timeEnd,
