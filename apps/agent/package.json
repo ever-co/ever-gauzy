@@ -35,13 +35,13 @@
 		"electronmon": "^2.0.2"
 	},
 	"dependencies": {
-		"@angular/animations": "^19.2.8",
+		"@angular/animations": "^19.2.10",
 		"@angular/cdk": "^19.2.11",
-		"@angular/common": "^19.2.8",
-		"@angular/core": "^19.2.8",
-		"@angular/forms": "^19.2.8",
+		"@angular/common": "^19.2.10",
+		"@angular/core": "^19.2.10",
+		"@angular/forms": "^19.2.10",
 		"@angular/material": "^19.2.11",
-		"@angular/router": "^19.2.8",
+		"@angular/router": "^19.2.10",
 		"@datorama/akita": "^8.0.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
