@@ -57,7 +57,7 @@ class PushActivities {
 		try {
 			await this.kbMouseActivityService.remove({ id })
 		} catch (error) {
-			console.error('error on remove current activity');
+			console.error('error on remove current activity', error);
 		}
 	}
 
