@@ -5,5 +5,6 @@ export * from './column-numeric-transformer.pipe';
 export * from './employee-setting-type-transformer.pipe';
 export * from './http-method-transformer.pipe';
 export * from './parse-json.pipe';
+export * from './parse-nested-query.pipe';
 export * from './use-validation.pipe';
 export * from './uuid-validation.pipe';

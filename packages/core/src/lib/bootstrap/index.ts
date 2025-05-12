@@ -46,6 +46,7 @@ import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
 import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
 import { AuthGuard } from '../shared/guards';
+import { ParseNestedQueryPipe } from '../shared/pipes';
 import { SharedModule } from '../shared/shared.module';
 import { AppService } from '../app/app.service';
 import { AppModule } from '../app/app.module';
@@ -89,6 +90,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// This will lock all routes and make them accessible by authenticated users only.
 	const reflector = app.get(Reflector);
 	app.useGlobalGuards(new AuthGuard(reflector));
+	app.useGlobalPipes(new ParseNestedQueryPipe());
 
 	// Configure Sentry for error tracking, if applicable
 	const { sentry } = env;

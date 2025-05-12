@@ -124,13 +124,11 @@ export class UserService extends TenantAwareCrudService<User> {
 
 		// Fetch the user along with requested relations (excluding employee).
 		const user = await this.findMe(options.relations);
-
 		console.log('findMe found User with Id:', user.id);
 
 		// Fetch employee details if 'includeEmployee' is true
 		if (options.includeEmployee) {
 			const relations = options.includeOrganization ? { organization: true } : [];
-
 			employee = await this._employeeService.findOneByUserId(user.id, { relations });
 		}
 
@@ -147,7 +145,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @param relations An array of strings indicating which relations of the user to include.
 	 * @returns A Promise resolving to the IUser object with the desired relations.
 	 */
-	private async findMe(relations: string[]): Promise<IUser> {
+	private async findMe(relations: string[] = []): Promise<IUser> {
 		try {
 			// Get the current user's ID from the RequestContext
 			const userId = RequestContext.currentUserId();
