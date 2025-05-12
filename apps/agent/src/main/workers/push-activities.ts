@@ -112,10 +112,11 @@ class PushActivities {
 				try {
 					await this.saveTimeSlot(activity);
 					await this.removeCurrentActivity(activity.id);
+					return true;
 				} catch (error) {
 					console.error(`Failed to upload activity ${activity.id}`, error);
+					return false;
 				}
-
 			}
 		} catch (error) {
 			console.error('error on save activity', error);
