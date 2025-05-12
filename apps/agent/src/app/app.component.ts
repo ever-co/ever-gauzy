@@ -17,7 +17,8 @@ import { AppService } from './app.service';
 @Component({
 	selector: 'agent-root',
 	template: '<router-outlet></router-outlet>',
-	styleUrls: ['./app.component.scss']
+	styleUrls: ['./app.component.scss'],
+	standalone: false
 })
 export class AppComponent implements OnInit, AfterViewInit {
 	constructor(
