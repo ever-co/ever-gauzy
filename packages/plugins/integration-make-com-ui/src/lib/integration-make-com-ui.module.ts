@@ -1,24 +1,34 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
+import { NbCardModule, NbButtonModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { ReactiveFormsModule } from '@angular/forms';
+import { NgxBackNavigationModule } from '@gauzy/ui-sdk/shared';
+import { IntegrationMakeComRoutes } from './integration-make-com.routes';
+import { WebhooksComponent } from './components/webhooks/webhooks.component';
+import { ScenariosComponent } from './components/scenarios/scenarios.component';
+import { AuthorizationComponent } from './components/authorization/authorization.component';
 import { IntegrationMakeComLayoutComponent } from './integration-make-com.layout.component';
-import { integrationMakeComRoutes } from './integration-make-com.routes';
 
 @NgModule({
 	imports: [
 		CommonModule,
-		RouterModule.forChild(integrationMakeComRoutes),
+		IntegrationMakeComRoutes,
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
+		NbInputModule,
 		TranslateModule,
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		ReactiveFormsModule,
+		NgxBackNavigationModule
 	],
 	declarations: [
-		IntegrationMakeComLayoutComponent
+		IntegrationMakeComLayoutComponent,
+		WebhooksComponent,
+		ScenariosComponent,
+		AuthorizationComponent
 	]
 })
-export class IntegrationMakeComUIModule { }
+export class IntegrationMakeComUiModule {}
