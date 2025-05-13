@@ -65,7 +65,7 @@ export class TimerService {
 		private readonly _timerWeeklyLimitService: TimerWeeklyLimitService,
 		private readonly _commandBus: CommandBus,
 		private readonly _taskService: TaskService
-	) {}
+	) { }
 
 	/**
 	 * Fetches an employee based on the provided query.
@@ -216,6 +216,34 @@ export class TimerService {
 		}
 
 		const now = moment();
+
+		// If the timer is running, ensure that the employee is assigned to the project/task of the running timer
+		if (lastLog?.isRunning) {
+			const tasks = await this._taskService.getAllTasksByEmployee(employeeId, {
+				where: {
+					id: lastLog.taskId,
+					projectId: lastLog.projectId,
+					organizationId,
+					tenantId
+				},
+				take: 1,
+				skip: 0,
+				withDeleted: false,
+				order: {
+					createdAt: SortOrderEnum.DESC
+				}
+			});
+			if (tasks.length === 0) {
+				// If the employee is not assigned to the project/task of the running timer, stop the timer
+				await this.stopTimer({
+					tenantId,
+					organizationId,
+					startedAt: lastLog.startedAt,
+					stoppedAt: now.toDate()
+				});
+				throw new ForbiddenException(`invalid-task-permissions`);
+			}
+		}
 
 		// Get weekly statistics
 		let weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, start as Date, true);
@@ -704,15 +732,15 @@ export class TimerService {
 		// Determine whether to fetch a single log or multiple logs
 		return fetchAll
 			? await this.typeOrmTimeLogRepository.find({
-					where: whereClause,
-					order: { startedAt: SortOrderEnum.DESC, createdAt: SortOrderEnum.DESC }
-			  })
+				where: whereClause,
+				order: { startedAt: SortOrderEnum.DESC, createdAt: SortOrderEnum.DESC }
+			})
 			: await this.typeOrmTimeLogRepository.findOne({
-					where: whereClause,
-					order: { startedAt: SortOrderEnum.DESC, createdAt: SortOrderEnum.DESC },
-					// Determine relations if includeTimeSlots is true
-					...(includeTimeSlots && { relations: { timeSlots: true } })
-			  });
+				where: whereClause,
+				order: { startedAt: SortOrderEnum.DESC, createdAt: SortOrderEnum.DESC },
+				// Determine relations if includeTimeSlots is true
+				...(includeTimeSlots && { relations: { timeSlots: true } })
+			});
 	}
 
 	/**
