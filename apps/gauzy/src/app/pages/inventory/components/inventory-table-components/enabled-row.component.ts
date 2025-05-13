@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-	template: `<div>
+    template: `<div>
 		<div *ngIf="!value">
 			<div class="badge badge-disabled">
 				{{ 'INVENTORY_PAGE.INACTIVE' | translate }}
@@ -13,8 +13,8 @@ import { Component, Input } from '@angular/core';
 			</div>
 		</div>
 	</div> `,
-	styles: [
-		`
+    styles: [
+        `
 			.badge-disabled {
 				background-color: #ccc;
 			}
@@ -30,7 +30,8 @@ import { Component, Input } from '@angular/core';
 				text-align: left;
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class EnabledStatusComponent {
 	@Input() value: any;

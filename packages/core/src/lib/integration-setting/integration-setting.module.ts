@@ -18,6 +18,6 @@ import { TypeOrmIntegrationSettingRepository } from './repository/type-orm-integ
 	],
 	controllers: [IntegrationSettingController],
 	providers: [IntegrationSettingService, TypeOrmIntegrationSettingRepository, ...CommandHandlers],
-	exports: [IntegrationSettingService]
+	exports: [TypeOrmModule, MikroOrmModule, IntegrationSettingService, TypeOrmIntegrationSettingRepository]
 })
 export class IntegrationSettingModule {}

@@ -3,8 +3,8 @@ import { DefaultFilter } from 'angular2-smart-table';
 import { PaymentMethodEnum } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ga-payment-method-filter',
-	template: `
+    selector: 'ga-payment-method-filter',
+    template: `
 		<ng-select
 			[clearable]="true"
 			[closeOnSelect]="true"
@@ -15,7 +15,8 @@ import { PaymentMethodEnum } from '@gauzy/contracts';
 				{{ 'INVOICES_PAGE.PAYMENTS.' + paymentMethod | translate }}
 			</ng-option>
 		</ng-select>
-	`
+	`,
+    standalone: false
 })
 export class PaymentMethodFilterComponent extends DefaultFilter implements OnChanges {
 	public paymentMethods = Object.values(PaymentMethodEnum);

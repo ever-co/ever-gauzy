@@ -4,7 +4,10 @@ export interface IPluginMetadata {
 	main: string;
 	renderer?: string;
 	description?: string;
+	logo?: string;
 	author?: string;
+	marketplaceId?: string;
+	versionId?: string;
 }
 
 export type IPluginMetadataCreate = IPluginMetadata & {
@@ -13,11 +16,16 @@ export type IPluginMetadataCreate = IPluginMetadata & {
 };
 
 export type IPluginMetadataUpdate = Partial<
-	Pick<IPluginMetadataCreate, 'isActivate' | 'name' | 'version'> & { id?: string }
+	Pick<
+		IPluginMetadataCreate,
+		'isActivate' | 'name' | 'version' | 'description' | 'logo' | 'marketplaceId' | 'versionId'
+	> & {
+		id?: string;
+	}
 >;
 
 export type IPluginMetadataPersistance = IPluginMetadataCreate & IPluginMetadataUpdate;
 
-export type IPluginMetadataFindOne = Pick<IPluginMetadataUpdate, 'id' | 'name'>;
+export type IPluginMetadataFindOne = Pick<IPluginMetadataUpdate, 'id' | 'name' | 'marketplaceId'>;
 
 export type IPluginMetadataDelete = IPluginMetadataFindOne;

@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 
 ::ng-deep {
   .nb-theme-default .tab-link:focus {

@@ -1,7 +1,8 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-	template: `<div>{{address}}</div> `
+    template: `<div>{{address}}</div> `,
+    standalone: false
 })
 export class ContactRowComponent {
 	@Input() value: any;

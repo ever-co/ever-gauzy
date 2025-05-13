@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { IOrganizationProjectModule, IPagination, ID, IOrganizationProjectModuleFindInput } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { catchError } from 'rxjs/operators';
@@ -13,8 +13,25 @@ import { ToastrService } from '../notification';
 export class OrganizationProjectModuleService extends CrudService<IOrganizationProjectModule> {
 	private static readonly API_URL = `${API_PREFIX}/organization-project-modules`;
 
+	/**
+	 * BehaviorSubject to notify components when project modules are updated.
+	 * This ensures that all components displaying modules stay synchronized.
+	 */
+	private moduleUpdatedSubject = new BehaviorSubject<void>(null);
+	/**
+	 * Observable that components can subscribe to for module update notifications.
+	 */
+	moduleUpdated$ = this.moduleUpdatedSubject.asObservable();
+
 	constructor(http: HttpClient, private readonly toastrService: ToastrService) {
 		super(http, OrganizationProjectModuleService.API_URL);
+	}
+
+	/**
+	 * Notifies subscribers that a module update has occurred.
+	 */
+	notifyModuleUpdated(): void {
+		this.moduleUpdatedSubject.next();
 	}
 
 	getAllModulesByProjectId(

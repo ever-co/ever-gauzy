@@ -1,5 +1,5 @@
-@import 'gauzy/_gauzy-overrides';
-@import '@shared/_pg-card';
+@use 'gauzy/_gauzy-overrides' as *;
+@forward '@shared/_pg-card';
 
 .custom-header {
   display: flex;

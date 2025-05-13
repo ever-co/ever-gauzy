@@ -24,6 +24,7 @@ import {
 } from '@gauzy/ui-core/core';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
+	CreatedByUserComponent,
 	DateViewComponent,
 	DeleteConfirmationComponent,
 	EquipmentSharingMutationComponent,
@@ -35,8 +36,9 @@ import { EquipmentSharingPolicyTableComponent } from './table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './equipment-sharing.component.html',
-	styleUrls: ['./equipment-sharing.component.scss']
+    templateUrl: './equipment-sharing.component.html',
+    styleUrls: ['./equipment-sharing.component.scss'],
+    standalone: false
 })
 export class EquipmentSharingComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	loading: boolean = false;
@@ -190,9 +192,14 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 						instance.value = cell.getValue();
 					}
 				},
-				createdByName: {
+				createdByUser: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.CREATED_BY'),
-					type: 'string'
+					type: 'custom',
+					isFilterable: false,
+					renderComponent: CreatedByUserComponent<IEquipmentSharing>,
+					componentInitFunction: (instance: CreatedByUserComponent<IEquipmentSharing>, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				sharingStatus: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.STATUS'),

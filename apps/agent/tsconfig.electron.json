@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "outDir": "../../dist/apps/agent",
+        "sourceMap": true,
+        "declaration": false,
+        "moduleResolution": "node",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "downlevelIteration": true,
+        "module": "commonjs",
+        "target": "ES2022",
+        "types": []
+    },
+    "files": [
+        "global.d.ts"
+    ],
+    "include": [
+        "src/index.ts",
+        "src/main/preload.ts"
+    ],
+    "exclude": [
+        "jest.config.ts"
+    ]
+}

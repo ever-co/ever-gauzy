@@ -9,7 +9,8 @@ import { Store } from '@gauzy/ui-core/core';
 @Component({
 	selector: 'gauzy-layout-selector',
 	templateUrl: './layout-selector.component.html',
-	styleUrls: ['./layout-selector.component.scss']
+	styleUrls: ['./layout-selector.component.scss'],
+	standalone: false
 })
 export class LayoutSelectorComponent implements OnInit, OnDestroy {
 	user: IUser;
@@ -54,19 +55,20 @@ export class LayoutSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Changed User Selected Preferred Component Layout
+	 * Updates the user's preferred component layout.
 	 *
-	 * @param payload
-	 * @returns
+	 * @param input - User update payload containing layout preferences.
 	 */
-	private async changePreferredComponentLayout(payload: IUserUpdateInput) {
+	private async changePreferredComponentLayout(input: IUserUpdateInput): Promise<void> {
 		if (!this.user) {
+			console.warn('No user available. Skipping preferred layout update.');
 			return;
 		}
+
 		try {
-			await this.userService.updatePreferredComponentLayout(payload);
+			await this.userService.updatePreferredComponentLayout(input);
 		} catch (error) {
-			console.error(`Failed to update user preferred component layout`);
+			console.error('Failed to update user preferred component layout:', error);
 		}
 	}
 

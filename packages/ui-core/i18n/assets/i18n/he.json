@@ -168,7 +168,13 @@
 		"ADD_MODULE": "הוסף מודול",
 		"SHARE": "שיתוף",
 		"GET_INFO": "קבל מידע",
-		"RETRY": "נסה שוב"
+		"RETRY": "נסה שוב",
+		"UPLOAD": "העלה",
+		"MARKEPLACE": "מרקט",
+		"ADD_VERSION": "הוסף גרסה",
+		"READ_MORE": "קרא עוד",
+		"READ_LESS": "קרא פחות",
+		"RECOVER": "שחזר"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -216,7 +222,9 @@
 			"EVENT_TYPE": "לא יצרתם סוגי אירועים.",
 			"PRODUCT_TYPE_NO_DATA": "לא יצרתם סוגי מוצרים.",
 			"TEAM_DASHBOARD": "אין לך שום צוותים.",
-			"PLUGIN": "לא התקנת שום תוסף."
+			"PLUGIN": "לא התקנת שום תוסף.",
+			"PLUGIN_MARKETPLACE": "תוסף זה אינו זמין בשוק",
+			"HISTORY": "אין היסטוריה"
 		},
 		"TRANSACTION_TYPE": "סוג",
 		"AMOUNT": "כמות",
@@ -1046,7 +1054,44 @@
 			"FEATURE_ORGANIZATION": "Feature Organization",
 			"EXPORT_DATA": "Export Data",
 			"IMPORT_DATA": "Import Data",
-			"ALL_ENTITIES": "ALL Entities"
+			"ALL_ENTITIES": "כל הישויות",
+			"ACTIVITY_LOG": "יומן פעילות",
+			"DAILY_PLAN": "תוכנית יומית",
+			"ENTITY_SUBSCRIPTION": "מנוי ישות",
+			"FAVORITE": "מועדף",
+			"MENTION": "אזכור",
+			"REACTION": "תגובה",
+			"RESOURCE_LINK": "קישור משאב",
+			"SCREENING_TASK": "משימת סינון",
+			"SOCIAL_ACCOUNT": "חשבון חברתי",
+			"CHANGELOG": "יומן שינויים",
+			"ISSUE_TYPE": "סוג בעיה",
+			"TASK_ESTIMATION": "הערכת משימה",
+			"TASK_LINKED_ISSUE": "בעיה מקושרת למשימה",
+			"TASK_PRIORITY": "עדיפות משימה",
+			"TASK_RELATED_ISSUE": "בעיה קשורה למשימה",
+			"TASK_SIZE": "גודל משימה",
+			"TASK_STATUS": "סטטוס משימה",
+			"TASK_VERSION": "גרסת משימה",
+			"TASK_RELATED_ISSUE_TYPE": "סוג בעיה קשורה",
+			"ORGANIZATION_PROJECT_EMPLOYEE": "עובד פרויקט בארגון",
+			"ORGANIZATION_PROJECT_MODULE": "מודול פרויקט בארגון",
+			"ORGANIZATION_PROJECT_MODULE_EMPLOYEE": "עובד מודול פרויקט בארגון",
+			"ORGANIZATION_SPRINT_EMPLOYEE": "עובד ספרינט בארגון",
+			"ORGANIZATION_SPRINT_TASK": "משימת ספרינט בארגון",
+			"ORGANIZATION_SPRINT_TASK_HISTORY": "היסטוריית משימת ספרינט בארגון",
+			"ORGANIZATION_TASK_SETTING": "הגדרת משימה בארגון",
+			"ORGANIZATION_TEAM_JOIN_REQUEST": "בקשת הצטרפות לצוות בארגון",
+			"ORGANIZATION_GITHUB_REPOSITORY": "מאגר GitHub של הארגון",
+			"ORGANIZATION_GITHUB_REPOSITORY_ISSUE": "בעיה במאגר GitHub של הארגון",
+			"EMPLOYEE_AVAILABILITY": "זמינות עובד",
+			"EMPLOYEE_NOTIFICATION": "הודעת עובד",
+			"EMPLOYEE_PHONE": "טלפון עובד",
+			"APPOINTMENT_EMPLOYEE": "פגישת עובד",
+			"EMPLOYEE_NOTIFICATION_SETTING": "הגדרת הודעת עובד",
+			"PRODUCT_REVIEW": "סקירת מוצר",
+			"TASK_LINKED_ISSUES": "בעיות מקושרות",
+			"TASK_VIEW": "תצוגת משימה"
 		},
 		"TAGS": "Tags",
 		"LANGUAGE": "Language",
@@ -2072,6 +2117,7 @@
 			"TIME_OFF_POLICY_VIEW": "צפה במדיניות חופשה",
 			"TIME_OFF_POLICY_EDIT": "ערוך מדיניות חופשה",
 			"TIME_OFF_POLICY_DELETE": "מחק מדיניות חופשה",
+			"SELECT_EMPLOYEE": "בחר עובד",
 			"CHANGE_SELECTED_EMPLOYEE": "Change Selected Employee",
 			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Change Selected Organization",
@@ -2634,6 +2680,7 @@
 		"TASKS_STATUS": "עבודה",
 		"TASK_PRIORITY": "עדיפות",
 		"TASK_SIZE": "גודל",
+		"PARENT_TASK": "משימה ראשית",
 		"TODO": "Todo",
 		"IN_PROGRESS": "In Progress",
 		"FOR_TESTING": "For Testing",
@@ -3591,6 +3638,7 @@
 			"APPROVAL_POLICY_CREATED": "Approval policy '{{ name }}' was added",
 			"APPROVAL_POLICY_UPDATED": "Approval policy '{{ name }}' was changed",
 			"APPROVAL_POLICY_DELETED": "Approval policy '{{ name }}' was removed",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "מדיניות האישור '{{ name }}' כבר קיימת",
 			"CANDIDATE_CREATED": "Candidate '{{ name }}' was added to '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "Candidate '{{ name }}' set as archived.",
 			"CANDIDATE_REJECTED": "Candidate '{{ name }}' set as rejected.",
@@ -3704,7 +3752,8 @@
 			"EDIT_POLICY": "Time off policy '{{ name }}' was changed",
 			"DELETE_POLICY": "Time off policy '{{ name }}' was removed",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Unable to create Policy record"
+			"SAVE_ERROR": "Unable to create Policy record",
+			"POLICY_EXISTS": "מדיניות חופשה '{{ name }}' כבר קיימת"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Your profile has been updated successfully."
@@ -4022,7 +4071,14 @@
 				"SSL_CERT_FILE_INFO": "נתיב לקובץ תעודת הלקוח עבור SSL.",
 				"SECURE": "מאובטח",
 				"SECURE_INFO": "נכון, אם ברצונך לאמת את תעודות ה-SSL."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "התקנת NPM מאפשרת גישה לתוספים זמינים לציבור ופרטיים.",
+			"PACKAGE_NAME": "שם חבילת NPM",
+			"PACKAGE_VERSION": "גרסת חבילת NPM",
+			"REGISTRY": "מרשם NPM",
+			"AUTH_TOKEN": "אסימון אימות",
+			"PRIVATE_REGISTRY_URL": "כתובת URL של מרשם פרטי",
+			"PLUGIN_INSTALL_CDN_ERROR": "כתובת ה-URL של השרת לא יכולה להיות ריקה."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "הגעת למגבלת השבוע",
 		"OF_HRS": "מתוך {{ limit }} שעות",
@@ -4755,6 +4811,189 @@
 				"SHARE_NOT_ALLOWED": "השיתוף אינו מותר",
 				"UNEXPECTED_SHARING_ERROR": "שגיאה בלתי צפויה בשיתוף"
 			}
+		},
+		"FORM": {
+			"TITLE": "העלאת תוסף",
+			"BASIC_INFO": "מידע בסיסי",
+			"NAME": "שם התוסף",
+			"NAME_PLACEHOLDER": "הזן את שם התוסף",
+			"VALIDATION": {
+				"NAME_REQUIRED": "שם התוסף נדרש",
+				"NAME_TOO_LONG": "שם התוסף ארוך מדי",
+				"VERSION_REQUIRED": "גרסה נדרשת",
+				"VERSION_FORMAT": "פורמט גרסה לא תקין",
+				"DESCRIPTION_TOO_LONG": "התיאור ארוך מדי",
+				"URL_REQUIRED": "נדרש URL",
+				"INVALID_URL": "פורמט URL לא תקין",
+				"PACKAGE_NAME_REQUIRED": "נדרש שם חבילה",
+				"INVALID_PACKAGE_NAME": "פורמט שם חבילה לא תקין",
+				"INVALID_SCOPE": "פורמט היקף לא תקין",
+				"AUTHOR_TOO_LONG": "שם המחבר ארוך מדי",
+				"LICENSE_TOO_LONG": "שדה הרישיון ארוך מדי",
+				"FAILED": "האימות נכשל",
+				"CHANGELOG_TOO_SHORT": "שדה השינויים ארוך מדי",
+				"CHANGELOG_REQUIRED": "שדה השינויים נדרש"
+			},
+			"TYPE": "סוג התוסף",
+			"TYPE_PLACEHOLDER": "בחר סוג תוסף",
+			"TYPES": {
+				"DESKTOP": "שולחן עבודה",
+				"WEB": "אינטרנט",
+				"MOBILE": "נייד"
+			},
+			"VERSION": "גרסה",
+			"STATUS": "סטטוס",
+			"STATUSES": {
+				"ACTIVE": "פעיל",
+				"INACTIVE": "לא פעיל",
+				"DEPRECATED": "מיושן",
+				"ARCHIVED": "בארכיון"
+			},
+			"DESCRIPTION": "תיאור",
+			"DESCRIPTION_PLACEHOLDER": "הזן תיאור לתוסף",
+			"SOURCE": "מקור",
+			"SOURCE_TYPE": "סוג המקור",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "כתובת CDN",
+				"INTEGRITY": "שלמות",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "שם חבילת NPM",
+				"REGISTRY": "רישום NPM",
+				"SCOPE": "היקף",
+				"AUTH_TOKEN": "אסימון אימות"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "גרור ושחרר את הקובץ שלך כאן",
+				"BROWSE": "עיון",
+				"REMOVE": "הסר קובץ",
+				"RESTRICTIONS": "רק קבצי .zip מותרים",
+				"FILE": "קובץ"
+			},
+			"METADATA": {
+				"TITLE": "מטא-נתונים",
+				"AUTHOR": "מחבר",
+				"AUTHOR_PLACEHOLDER": "הזן את שם המחבר",
+				"LICENSE": "רישיון",
+				"LICENSE_PLACEHOLDER": "הזן רישיון",
+				"HOMEPAGE": "דף הבית",
+				"HOMEPAGE_PLACEHOLDER": "הזן את כתובת דף הבית",
+				"REPOSITORY": "מאגר",
+				"REPOSITORY_PLACEHOLDER": "הזן את כתובת המאגר"
+			},
+			"OR": "או",
+			"RELEASE_DATE": "תאריך הרישיון",
+			"CHANGELOG": "יומן השינויים",
+			"CHANGELOG_PLACEHOLDER": "הזן יומן השינויים"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "סטטיסטיקות שימוש",
+			"DOWNLOAD_COUNT": "מספר הורדות",
+			"LAST_DOWNLOADED": "הורדה אחרונה",
+			"UPLOADED_BY": "הועלה על ידי",
+			"UPLOADED_AT": "הועלה בתאריך",
+			"SECURITY_INFO": "מידע על אבטחה",
+			"CHECKSUM": "סכום ביקורת",
+			"SIGNATURE": "חתימה",
+			"INSTALLED": "התקנה",
+			"HIDDEN_FOR_SECURITY": "הוסרה מהספרייה לכרטיסי אבטחה"
+		},
+		"LAYOUT": {
+			"DISCOVER": "לגלות",
+			"INSTALLED": "מותקן",
+			"VERSION_HISTORY": "היסטוריית גרסאות"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "העלה תוסף חדש",
+			"OFFLINE": "אתה לא מחובר כרגע ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "לבטל את ההפעלה של התוסף",
+				"DESCRIPTION": "האם אתה בטוח שברצונך לבטל את ההפעלה של התוסף הזה?",
+				"CONFIRM": "בטל הפעלה"
+			},
+			"UNINSTALL": {
+				"TITLE": "הסר את התוסף",
+				"DESCRIPTION": "האם אתה בטוח שברצונך להסיר את התוסף הזה?",
+				"CONFIRM": "הסר התקנה"
+			},
+			"DELETE": {
+				"TITLE": "מחיקת תוסף",
+				"DESCRIPTION": "האם אתה בטוח שברצונך למחוק תוסף זה?",
+				"CONFIRM": "מחק"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "עדכון גרסה v{{number}}",
+					"DESCRIPTION": "האם אתה בטוח שברצונך לעדכן את התוסף הזה?",
+					"CONFIRM": "עדכן"
+				},
+				"CREATE": {
+					"TITLE": "צור גרסה חדשה עבור {{name}}",
+					"DESCRIPTION": "האם אתה בטוח שברצונך ליצור גרסה זו?",
+					"CONFIRM": "צור"
+				},
+				"DELETE": {
+					"TITLE": "מחיקת גרסה",
+					"DESCRIPTION": "האם אתה בטוח שברצונך למחוק גרסה זו?",
+					"CONFIRM": "מחק"
+				},
+				"RESTORE": {
+					"TITLE": "שחזור גרסה",
+					"DESCRIPTION": "האם אתה בטוח שברצונך לשחזר גרסה זו?",
+					"CONFIRM": "שחזר"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "גרסת התוסף v{{number}} נוצרה בהצלחה!",
+					"UPDATED": "גרסת התוסף v{{number}} עודכנה בהצלחה!",
+					"DELETED": "גרסת התוסף נמחקה בהצלחה!",
+					"RESTORED": "גרסת התוסף שוחזרה בהצלחה!"
+				},
+				"UPLOADED": "התוסף הועלה בהצלחה!",
+				"UPDATED": "התוסף עודכן בהצלחה!",
+				"DELETED": "התוסף נמחק בהצלחה!",
+				"INSTALLED": "התוסף הותקן בהצלחה!",
+				"UNINSTALLED": "התוסף הוסר בהצלחה!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "מוסיף גרסת תוסף חדשה...",
+					"UPDATING": "מעדכן גרסת תוסף...",
+					"DELETING": "מוחק גרסת תוסף...",
+					"RESTORING": "משחזר גרסת תוסף..."
+				},
+				"UPLOADING": "מעלה תוסף...",
+				"UPDATING": "מעדכן תוסף...",
+				"DELETING": "מוחק תוסף...",
+				"INSTALLING": "מתקין תוסף...",
+				"UNINSTALLING": "מסיר תוסף..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "שחזור גרסת התוסף נכשל. נא לנסות שוב!"
+				},
+				"UPLOAD": "העלאת התוסף נכשלה. נא לנסות שוב!",
+				"NOT_FOUND": "תוסף עם מזהה {{ id }} לא נמצא.",
+				"INSTALL": "התקנת התוסף נכשלה. נא לנסות שוב!",
+				"REVERT_INSTALLATION": "ביטול ההתקנה נכשל!"
+			}
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "השרת לא זמין",
+		"DESCRIPTION": "שרת {{companySite}} אינו נגיש כרגע. ייתכן שהסיבה לכך היא תחזוקה מתוכננת או השבתה בלתי צפויה.",
+		"CONNECTING": "מנסה להתחבר מחדש אוטומטית...",
+		"HINT": "סטטוס: מנסה ליצור חיבור לשרתי {{companySite}}. קוד שגיאה: 503."
 	}
 }

@@ -1,0 +1,35 @@
+@let installing = installationQuery.installing$ |async; @let uninstalling = installationQuery.uninstalling$|async; @let
+checked = isChecked$ | async; @let toggle = installationQuery.toggle$ | async ; @let disabled = installing ||
+uninstalling; @let isSelected = plugin?.id === toggle.plugin?.id; @let showProgress = disabled && isSelected; @let
+editing = marketplaceQuery.updating$ | async; @if(plugin) {
+<div class="plugin-container">
+	<div class="plugin-details">
+		<div class="plugin-header">
+			<div class="plugin-name" (click)="openPlugin()">{{ plugin.name }}</div>
+			<div class="plugin-version">{{ plugin.version.number || plugin.version }}</div>
+		</div>
+		<div
+			[readMore]="80"
+			[readMoreText]="'BUTTONS.READ_MORE' | translate"
+			[readLessText]="'BUTTONS.READ_LESS' | translate"
+			class="plugin-description"
+		>
+			{{ plugin.description }}
+		</div>
+	</div>
+	<div class="plugin-actions">
+		@if(isOwner){
+		<nb-icon
+			*gauzySpinnerButton="editing && isSelected"
+			class="plugin-edit"
+			icon="edit-outline"
+			(click)="editPlugin()"
+		></nb-icon>
+		} @if(showProgress){
+		<nb-icon *gauzySpinnerButton="true" icon="swap-outline"></nb-icon>
+		}@else {
+		<nb-toggle [disabled]="disabled" [checked]="checked" (checkedChange)="togglePlugin($event)"></nb-toggle>
+		}
+	</div>
+</div>
+}

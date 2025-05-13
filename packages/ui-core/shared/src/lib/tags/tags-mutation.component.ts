@@ -9,9 +9,10 @@ import { TagsService } from '@gauzy/ui-core/core';
 import { NotesWithTagsComponent } from '../table-components';
 
 @Component({
-	selector: 'ngx-tags-mutation',
-	templateUrl: './tags-mutation.component.html',
-	styleUrls: ['./tags-mutation.component.scss']
+    selector: 'ngx-tags-mutation',
+    templateUrl: './tags-mutation.component.html',
+    styleUrls: ['./tags-mutation.component.scss'],
+    standalone: false
 })
 export class TagsMutationComponent extends NotesWithTagsComponent implements OnInit {
 	/**
@@ -75,7 +76,7 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 	 */
 	private async _loadTagTypes() {
 		const { tenantId } = this.store.user;
-		const organizationId = this.store.organizationId;
+		const { id: organizationId } = this.store.selectedOrganization;
 
 		try {
 			const { items } = await this.tagTypeService.getTagTypes({

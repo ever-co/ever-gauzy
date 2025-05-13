@@ -21,15 +21,16 @@ import { ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-task-priority-select',
-	templateUrl: './task-priority-select.component.html',
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TaskPrioritySelectComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-task-priority-select',
+    templateUrl: './task-priority-select.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TaskPrioritySelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TaskPrioritySelectComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	private subject$: Subject<boolean> = new Subject();

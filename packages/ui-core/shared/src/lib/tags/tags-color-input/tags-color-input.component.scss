@@ -1,4 +1,4 @@
-@import 'themes';
+@use 'themes' as *;
 .tag-color {
   position: unset;
   display: inline-flex;

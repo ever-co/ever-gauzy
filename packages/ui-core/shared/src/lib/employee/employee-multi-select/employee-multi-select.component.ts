@@ -9,16 +9,17 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-employee-multi-select',
-	templateUrl: './employee-multi-select.component.html',
-	styleUrls: ['./employee-multi-select.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => EmployeeSelectComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-employee-multi-select',
+    templateUrl: './employee-multi-select.component.html',
+    styleUrls: ['./employee-multi-select.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EmployeeSelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	loaded: boolean;
@@ -161,7 +162,10 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	 * Get working employees of the selected month
 	 */
 	private async getWorkingEmployees(): Promise<void> {
-		if (!this.store.hasAnyPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+		if (
+			!this.store.hasAnyPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+			!this.store.hasAnyPermission(PermissionsEnum.SELECT_EMPLOYEE)
+		) {
 			return;
 		}
 		const { tenantId } = this.store.user;

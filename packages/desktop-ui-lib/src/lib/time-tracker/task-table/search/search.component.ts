@@ -8,10 +8,11 @@ import { SearchTermStore } from './+state/search-term.store';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-search',
-	templateUrl: './search.component.html',
-	styleUrls: ['./search.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-search',
+    templateUrl: './search.component.html',
+    styleUrls: ['./search.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class SearchComponent implements AfterViewInit {
 	@ViewChild('search') search!: ElementRef;

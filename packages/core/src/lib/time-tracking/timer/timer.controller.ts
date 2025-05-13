@@ -1,4 +1,5 @@
 import { Controller, UseGuards, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ITimeLog, ITimerStatus, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
@@ -6,32 +7,42 @@ import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
 import { TimerService } from './timer.service';
 import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO } from './dto';
+import { GetTimerStatusQuery } from './queries/get-timer-status.query';
+import { StartTimerCommand, StopTimerCommand } from './commands';
 
 @ApiTags('Timer Tracker')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller('/timesheet/timer')
 export class TimerController {
-	constructor(private readonly timerService: TimerService) {}
+	constructor(
+		private readonly timerService: TimerService,
+		private readonly _commandBus: CommandBus,
+		private readonly _queryBus: QueryBus
+	) {}
 
 	/**
-	 * GET timer today's status
+	 * GET timer today's status.
 	 *
-	 * @param query
-	 * @returns
+	 * Retrieves the timer status for today based on the provided query parameters.
+	 *
+	 * @param query - An object of type TimerStatusQueryDTO containing query parameters.
+	 * @returns A promise that resolves to an ITimerStatus object representing today's timer status.
 	 */
 	@Get('/status')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_TRACKER)
 	@UseValidationPipe({ whitelist: true })
 	async getTimerStatus(@Query() query: TimerStatusQueryDTO): Promise<ITimerStatus> {
-		return await this.timerService.getTimerStatus(query);
+		return this._queryBus.execute(new GetTimerStatusQuery(query));
 	}
 
 	/**
-	 * GET timer last worked status
+	 * GET timer last worked status.
 	 *
-	 * @param query
-	 * @returns
+	 * Retrieves the last worked timer statuses based on the provided query parameters.
+	 *
+	 * @param query - An object of type TimerStatusQueryDTO containing query parameters.
+	 * @returns A promise that resolves to an array of ITimerStatus objects representing the last worked statuses.
 	 */
 	@Get('/status/worked')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_TRACKER)
@@ -41,9 +52,13 @@ export class TimerController {
 	}
 
 	/**
+	 * Toggle timer.
 	 *
-	 * @param entity
-	 * @returns
+	 * Toggles the timer state (On/Off) based on the provided data.
+	 *
+	 * @param entity - A StartTimerDTO object containing the necessary data to toggle the timer.
+	 * @returns A promise that resolves to an ITimeLog object representing the timer log after toggling,
+	 *          or null if no log is created.
 	 */
 	@ApiOperation({ summary: 'Toggle timer' })
 	@ApiResponse({
@@ -61,9 +76,12 @@ export class TimerController {
 	}
 
 	/**
+	 * Start timer endpoint.
 	 *
-	 * @param entity
-	 * @returns
+	 * This endpoint starts the timer by executing the StartTimerCommand.
+	 *
+	 * @param entity - A StartTimerDTO object containing the necessary data to start the timer.
+	 * @returns A promise that resolves to an ITimeLog object representing the timer's log after it has started.
 	 */
 	@ApiOperation({ summary: 'Start timer' })
 	@ApiResponse({
@@ -77,13 +95,17 @@ export class TimerController {
 	@Post('/start')
 	@UseValidationPipe()
 	async startTimer(@Body() entity: StartTimerDTO): Promise<ITimeLog> {
-		return await this.timerService.startTimer(entity);
+		return this._commandBus.execute(new StartTimerCommand(entity));
 	}
 
 	/**
+	 * Stop timer endpoint.
 	 *
-	 * @param entity
-	 * @returns
+	 * This endpoint stops the timer by executing the StopTimerCommand.
+	 *
+	 * @param entity - A StopTimerDTO object containing the necessary data to stop the timer.
+	 * @returns A promise that resolves to an ITimeLog object representing the timer's log after it has stopped,
+	 *          or null if the timer was not running.
 	 */
 	@ApiOperation({ summary: 'Stop timer' })
 	@ApiResponse({
@@ -97,6 +119,6 @@ export class TimerController {
 	@Post('/stop')
 	@UseValidationPipe()
 	async stopTimer(@Body() entity: StopTimerDTO): Promise<ITimeLog | null> {
-		return await this.timerService.stopTimer(entity);
+		return this._commandBus.execute(new StopTimerCommand(entity));
 	}
 }

@@ -1,5 +1,5 @@
-@import 'themes';
-@import '@shared/reusable';
+@use 'themes' as *;
+@use '@shared/reusable' as *;
 
 .feature-wrapper {
   width: 100%;

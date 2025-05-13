@@ -5,12 +5,12 @@ import {
 	SelectQueryBuilder,
 	Brackets,
 	WhereExpressionBuilder,
-	Raw,
 	In,
 	FindOptionsWhere,
 	FindManyOptions,
 	Between,
-	FindOptionsRelations
+	FindOptionsRelations,
+	Raw
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import {
@@ -33,9 +33,9 @@ import {
 	NotificationActionTypeEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
-import { isPostgres, isSqlite } from '@gauzy/config';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
-import { addBetween } from './../core/util';
+import { isSqlite } from '@gauzy/config';
+import { TenantAwareCrudService, PaginationParams } from './../core/crud';
+import { addBetween, LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
 import { EntitySubscriptionService } from '../entity-subscription/entity-subscription.service';
@@ -57,11 +57,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
 		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
 		private readonly _eventBus: EventBus,
-		private readonly taskViewService: TaskViewService,
+		private readonly _taskViewService: TaskViewService,
 		private readonly _entitySubscriptionService: EntitySubscriptionService,
-		private readonly mentionService: MentionService,
-		private readonly activityLogService: ActivityLogService,
-		private readonly employeeNotificationService: EmployeeNotificationService
+		private readonly _mentionService: MentionService,
+		private readonly _activityLogService: ActivityLogService,
+		private readonly _employeeNotificationService: EmployeeNotificationService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -148,7 +148,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Synchronize mentions
 			if (data.description) {
 				try {
-					await this.mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionEmployeeIds);
+					await this._mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionEmployeeIds);
 				} catch (error) {
 					console.error('Error synchronizing mentions:', error);
 				}
@@ -193,7 +193,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 								})
 							);
 
-							this.employeeNotificationService.publishNotificationEvent(
+							this._employeeNotificationService.publishNotificationEvent(
 								{
 									entity: BaseEntityEnum.Task,
 									entityId: task.id,
@@ -215,7 +215,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 
 			// Generate the activity log
-			this.activityLogService.logActivity<Task>(
+			this._activityLogService.logActivity<Task>(
 				BaseEntityEnum.Task,
 				ActionTypeEnum.Updated,
 				ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
@@ -330,7 +330,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { where, filters } = options;
 			const { status, title, prefix, isDraft, isScreeningTask = false, organizationSprintId = null } = where;
 			const { organizationId, projectId, members } = where;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.innerJoin(`${query.alias}.members`, 'members');
@@ -397,12 +396,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						});
 					}
 					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
+						qb.andWhere(p(`"${query.alias}"."title" ${LIKE_OPERATOR} :title`), {
 							title: `%${title}%`
 						});
 					}
-					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), {
+					if (isNotEmpty(prefix)) {
+						qb.andWhere(p(`"${query.alias}"."prefix" ${LIKE_OPERATOR} :prefix`), {
 							prefix: `%${prefix}%`
 						});
 					}
@@ -522,7 +521,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				organizationSprintId = null
 			} = where;
 			const { organizationId, projectId, members } = where;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.teams`, 'teams');
@@ -604,12 +602,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						});
 					}
 					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
+						qb.andWhere(p(`"${query.alias}"."title" ${LIKE_OPERATOR} :title`), {
 							title: `%${title}%`
 						});
 					}
-					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), {
+					if (isNotEmpty(prefix)) {
+						qb.andWhere(p(`"${query.alias}"."prefix" ${LIKE_OPERATOR} :prefix`), {
 							prefix: `%${prefix}%`
 						});
 					}
@@ -637,24 +635,23 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns A Promise that resolves to a paginated list of tasks.
 	 */
 	public async pagination(options: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
-		// Define the like operator based on the database type
-		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
-
 		const filters = options?.filters;
+		const where = options?.where;
 
 		// Check if there are any filters in the options
-		if (options?.where) {
-			const { where } = options;
+		if (where) {
 			const { isScreeningTask = false } = where;
 
 			// Apply filters for task title with like operator
 			if (where.title) {
-				options.where.title = Raw((alias) => `${alias} ${likeOperator} '%${where.title}%'`);
+				options.where.title = Raw((alias) => `${alias} ${LIKE_OPERATOR} :title`, { title: `%${where.title}%` });
 			}
 
 			// Apply filters for task prefix with like operator
 			if (where.prefix) {
-				options.where.prefix = Raw((alias) => `${alias} ${likeOperator} '%${where.prefix}%'`);
+				options.where.prefix = Raw((alias) => `${alias} ${LIKE_OPERATOR} :prefix`, {
+					prefix: `%${where.prefix}%`
+				});
 			}
 
 			// Apply filters for isDraft, setting null if not a boolean
@@ -670,7 +667,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Apply filters for teams, ensuring it uses In for array comparison
 			if (where.teams) {
 				options.where.teams = {
-					id: In(where.teams as string[])
+					id: In(where.teams as ID[])
 				};
 			}
 
@@ -681,11 +678,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		// Apply Advanced filters
 		let advancedFilters: FindOptionsWhere<Task> = {};
 		if (filters) {
-			advancedFilters = this.buildAdvancedWhereCondition(filters, options?.where);
+			advancedFilters = this.buildAdvancedWhereCondition(filters, where);
 		}
 
 		// Call the base paginate method
-		return await super.paginate({ ...options, where: { ...advancedFilters, ...options?.where } });
+		return await super.paginate({ ...options, where: { ...advancedFilters, ...where } });
 	}
 
 	/**
@@ -844,8 +841,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				projectId,
 				members
 			} = where;
-			const tenantId = RequestContext.currentTenantId() || where.tenantId;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+			const tenantId = RequestContext.currentTenantId() ?? where.tenantId;
 
 			// Initialize the query
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
@@ -916,10 +912,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), { isDraft });
 					}
 					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), { title: `%${title}%` });
+						qb.andWhere(p(`"${query.alias}"."title" ${LIKE_OPERATOR} :title`), { title: `%${title}%` });
 					}
 					if (isNotEmpty(prefix)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), { prefix: `%${prefix}%` });
+						qb.andWhere(p(`"${query.alias}"."prefix" ${LIKE_OPERATOR} :prefix`), { prefix: `%${prefix}%` });
 					}
 					if (isUUID(organizationSprintId)) {
 						qb.andWhere(p(`"${query.alias}"."organizationSprintId" = :organizationSprintId`), {
@@ -948,7 +944,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const tenantId = RequestContext.currentTenantId();
 		try {
 			// Retrieve Task View by ID for getting their pre-defined query params
-			const taskView = await this.taskViewService.findOneByWhereOptions({ id: viewId, tenantId });
+			const taskView = await this._taskViewService.findOneByWhereOptions({ id: viewId, tenantId });
 			if (!taskView) {
 				throw new HttpException('View not found', HttpStatus.NOT_FOUND);
 			}

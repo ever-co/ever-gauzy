@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { FindManyOptions, FindOneOptions, FindOptionsWhere, Raw, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IDeal, IPagination, IPipeline, IPipelineStage } from '@gauzy/contracts';
-import { isPostgres } from '@gauzy/config';
 import { ConnectionEntityManager } from '../database/connection-entity-manager';
 import { Pipeline } from './pipeline.entity';
 import { Deal, PipelineStage } from './../core/entities/internal';
 import { RequestContext } from '../core/context/request-context';
+import { LIKE_OPERATOR } from '../core/util';
 import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
 import { TypeOrmDealRepository } from '../deal/repository/type-orm-deal.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
@@ -162,35 +162,35 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	 * @param filter - The filtering options.
 	 * @returns The paginated result.
 	 */
-	public async pagination(filter: FindManyOptions<Pipeline>): Promise<IPagination<IPipeline>> {
-		const whereFilter = filter.where as FindOptionsWhere<Pipeline>;
-		const whereOptions: FindOptionsWhere<Pipeline> = {};
+	public async pagination(filters?: FindManyOptions<Pipeline>): Promise<IPagination<IPipeline>> {
+		const whereOptions = filters?.where as FindOptionsWhere<Pipeline>;
 
-		if (whereFilter) {
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
-			const { name, description, stages } = whereFilter as FindOptionsWhere<Pipeline>;
+		if (whereOptions) {
+			const { name, description, stages } = whereOptions as FindOptionsWhere<Pipeline>;
+			const additionalFilters: FindOptionsWhere<Pipeline> = {};
 
 			if (name) {
-				whereOptions['name'] = Raw((alias) => `${alias} ${likeOperator} '%${name}%'`);
+				additionalFilters['name'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :name`, {
+					name: `%${name}%`
+				});
 			}
 
 			if (description) {
-				whereOptions['description'] = Raw((alias) => `${alias} ${likeOperator} '%${description}%'`);
+				additionalFilters['description'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :description`, {
+					description: `%${description}%`
+				});
 			}
 
 			if (stages) {
-				whereOptions['stages'] = {
-					name: Raw((alias) => `${alias} ${likeOperator} '%${stages}%'`)
+				additionalFilters['stages'] = {
+					name: Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :stages`, { stages: `%${stages}%` })
 				};
 			}
 
 			// Merge existing 'where' conditions with the new 'conditions'
-			filter.where = {
-				...whereFilter,
-				...whereOptions
-			};
+			filters.where = { ...whereOptions, ...additionalFilters };
 		}
 
-		return await super.paginate(filter);
+		return super.paginate(filters ?? {});
 	}
 }

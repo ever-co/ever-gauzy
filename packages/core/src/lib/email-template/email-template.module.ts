@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -13,10 +13,10 @@ import { TypeOrmEmailTemplateRepository } from './repository/type-orm-email-temp
 
 @Module({
 	imports: [
-		forwardRef(() => TypeOrmModule.forFeature([EmailTemplate])),
-		forwardRef(() => MikroOrmModule.forFeature([EmailTemplate])),
-		forwardRef(() => RolePermissionModule),
-		CqrsModule
+		CqrsModule,
+		TypeOrmModule.forFeature([EmailTemplate]),
+		MikroOrmModule.forFeature([EmailTemplate]),
+		RolePermissionModule
 	],
 	controllers: [EmailTemplateController],
 	providers: [

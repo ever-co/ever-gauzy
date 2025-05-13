@@ -12,9 +12,10 @@ import { FormHelpers } from '../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-approval-policy-mutation',
-	templateUrl: './approval-policy-mutation.component.html',
-	styleUrls: ['./approval-policy-mutation.component.scss']
+    selector: 'ngx-approval-policy-mutation',
+    templateUrl: './approval-policy-mutation.component.html',
+    styleUrls: ['./approval-policy-mutation.component.scss'],
+    standalone: false
 })
 export class ApprovalPolicyMutationComponent extends TranslationBaseComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;
@@ -84,6 +85,24 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent im
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		const { name } = this.form.getRawValue();
+
+		const { items: existingPolicies } = await this.approvalPolicyService.getAll([], {
+			name,
+			organizationId,
+			tenantId
+		});
+
+		// For a new policy, any existing policy with the same name is a duplicate
+		// For an existing policy, only other policies with different IDs are duplicates
+		const isDuplicate = this.approvalPolicy
+			? existingPolicies.some((policy) => policy.id !== this.approvalPolicy.id)
+			: existingPolicies.length > 0;
+
+		if (isDuplicate) {
+			this.toastrService.danger(this.getTranslation('TOASTR.MESSAGE.APPROVAL_POLICY_ALREADY_EXISTS', { name }));
+			return;
+		}
 
 		const approvalPolicy: IApprovalPolicyCreateInput = {
 			tenantId,

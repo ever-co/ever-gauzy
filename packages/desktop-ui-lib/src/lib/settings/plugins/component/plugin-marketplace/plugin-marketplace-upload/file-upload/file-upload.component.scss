@@ -1,0 +1,113 @@
+@use 'gauzy/_gauzy-dialogs' as *;
+
+.file-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  border: 2px dashed var(--gauzy-border-default-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: var(--background-basic-color-1);
+  min-height: 200px;
+  border-radius: var(--border-radius);
+  width: 100%;
+  position: relative;
+
+  &:hover {
+    border-color: var(--color-primary-hover);
+    background-color: var(--background-basic-color-2);
+  }
+
+  &.drag-over {
+    border-color: var(--color-primary-active);
+    background-color: var(--background-basic-color-2);
+    transform: scale(1.01);
+  }
+
+  &.has-file {
+    border-color: var(--color-success-default);
+    background-color: rgba(nb-theme(color-success-500), 0.05);
+  }
+
+  &.error {
+    border-color: var(--color-danger-default);
+    background-color: rgba(nb-theme(color-danger-500), 0.05);
+  }
+
+  .upload-icon {
+    font-size: 48px;
+    color: var(--text-hint-color);
+    margin-bottom: 16px;
+
+    nb-icon {
+      width: 2rem;
+      height: 2rem;
+
+      &[status='success'] {
+        color: var(--color-success-default);
+      }
+    }
+  }
+
+  .upload-text {
+    text-align: center;
+    color: var(--text-basic-color);
+
+    p {
+      margin: 8px 0;
+      font-weight: 500;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--text-hint-color);
+      margin-top: 16px;
+    }
+
+    button {
+      margin: 0.75rem 0;
+    }
+  }
+
+  .file-info {
+    text-align: center;
+
+    .file-name {
+      font-weight: 600;
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+
+    .file-size {
+      color: var(--text-hint-color);
+      margin-bottom: 16px;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+
+      nb-icon {
+        margin-right: 0.5rem;
+      }
+    }
+  }
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  color: var(--color-danger-default);
+  background-color: rgba(nb-theme(color-danger-500), 0.1);
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+
+  nb-icon {
+    margin-right: 0.5rem;
+    font-size: 1.25rem;
+  }
+}

@@ -18,7 +18,7 @@ export class LinkedinStrategy extends PassportStrategy(Strategy, 'linkedin') {
 	 * with the access token. If validation succeeds, the user object is passed to the callback.
 	 * Otherwise, the error is forwarded to the callback.
 	 *
-	 * @param request - The incoming request object.
+	 * @param _request - The incoming request object.
 	 * @param accessToken - The OAuth access token.
 	 * @param refreshToken - The OAuth refresh token.
 	 * @param profile - The user profile returned by the OAuth provider.
@@ -26,7 +26,7 @@ export class LinkedinStrategy extends PassportStrategy(Strategy, 'linkedin') {
 	 * @returns A promise that resolves when the validation process is complete.
 	 */
 	async validate(
-		request: any,
+		_request: any,
 		accessToken: string,
 		refreshToken: string,
 		profile: any,
@@ -63,22 +63,24 @@ export class LinkedinStrategy extends PassportStrategy(Strategy, 'linkedin') {
  * @returns An object containing the LinkedIn OAuth configuration parameters.
  */
 export const parseLinkedinConfig = (configService: ConfigService): Record<string, any> => {
-	// Retrieve LinkedIn OAuth client ID from the configuration service, default to 'disabled' if not found.
-	const clientID = configService.get<string>('linkedin.clientId');
-	// Retrieve LinkedIn OAuth client secret from the configuration service, default to 'disabled' if not found.
-	const clientSecret = configService.get<string>('linkedin.clientSecret');
-	// Retrieve LinkedIn OAuth callback URL from the configuration service.
-	const callbackURL = configService.get<string>('linkedin.callbackURL');
+	const { clientId, clientSecret, callbackURL } = {
+		// Retrieve the LinkedIn client ID from the configuration.
+		clientId: configService.get<string>('linkedin.clientId'),
+		// Retrieve the LinkedIn client Secret from the configuration.
+		clientSecret: configService.get<string>('linkedin.clientSecret'),
+		// Retrieve the callback URL from the configuration.
+		callbackURL: configService.get<string>('linkedin.callbackURL')
+	};
 
 	// Validate required LinkedIn configurations. Log a warning if any are missing.
-	if (!clientID || !clientSecret || !callbackURL) {
+	if (!clientId || !clientSecret || !callbackURL) {
 		console.warn('⚠️ LinkedIn OAuth configuration is incomplete. Defaulting to "disabled".');
 	}
 
 	// Return the configuration object with defaults as needed.
 	return {
 		// Use the retrieved clientID, or default to 'disabled' if not provided.
-		clientID: clientID || 'disabled',
+		clientID: clientId || 'disabled',
 		// Use the retrieved clientSecret, or default to 'disabled' if not provided.
 		clientSecret: clientSecret || 'disabled',
 		// Use the retrieved callbackURL, or default to a constructed URL based on API_BASE_URL.

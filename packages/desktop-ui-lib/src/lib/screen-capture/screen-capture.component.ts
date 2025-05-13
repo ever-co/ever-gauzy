@@ -9,9 +9,10 @@ import { ElectronService } from '../electron/services';
 import { GAUZY_ENV } from '../constants';
 
 @Component({
-	selector: 'ngx-screen-capture',
-	templateUrl: './screen-capture.component.html',
-	styleUrls: ['./screen-capture.component.scss'],
+    selector: 'ngx-screen-capture',
+    templateUrl: './screen-capture.component.html',
+    styleUrls: ['./screen-capture.component.scss'],
+    standalone: false
 })
 export class ScreenCaptureComponent implements OnInit {
 	private _screenCaptureUrl$: BehaviorSubject<SafeUrl>;

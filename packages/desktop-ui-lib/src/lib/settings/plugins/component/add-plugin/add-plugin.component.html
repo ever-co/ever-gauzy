@@ -1,3 +1,5 @@
+@let installing = installing$ |async;
+
 <nb-card>
 	<nb-card-header class="d-flex flex-column">
 		<span class="cancel"><i (click)="close()" class="fas fa-times"></i></span>
@@ -40,6 +42,17 @@
 				>
 					<i class="fab fa-npm"></i>
 				</button>
+				<button
+					nbButton
+					[disabled]="installing"
+					class="full-width button"
+					status="warning"
+					type="submit"
+					(click)="redirectToStore()"
+				>
+					<nb-icon icon="grid-outline"></nb-icon>
+					{{ 'BUTTONS.MARKETPLACE' | translate }}
+				</button>
 			</div>
 		</ng-container>
 	</nb-card-body>
@@ -65,7 +78,7 @@
 				placeholder="https://cdn.server.tld/public/plugin.zip"
 			/>
 			<div class="error" *ngIf="error">
-				{{ error }}
+				{{ error | translate }}
 			</div>
 			<button
 				nbButton
@@ -104,7 +117,7 @@
 				required
 				#pkgName="ngModel"
 				[status]="error ? 'danger' : 'basic'"
-				placeholder="Package name"
+				[placeholder]="'TIMER_TRACKER.SETTINGS.PACKAGE_NAME' | translate"
 			/>
 
 			<input
@@ -114,11 +127,11 @@
 				name="pkgVersion"
 				[(ngModel)]="npmModel.pkg.version"
 				[status]="error ? 'danger' : 'basic'"
-				placeholder="Package version"
+				[placeholder]="'TIMER_TRACKER.SETTINGS.PACKAGE_VERSION' | translate"
 			/>
 
 			<nb-toggle [checked]="showRegistry" (checkedChange)="toggleRegistry($event)" status="basic">
-				{{ 'Registry' | translate }}
+				{{ 'TIMER_TRACKER.SETTINGS.REGISTRY' | translate }}
 			</nb-toggle>
 
 			<ng-container *ngIf="showRegistry">
@@ -135,7 +148,7 @@
 					id="authToken"
 					name="authToken"
 					[status]="error ? 'danger' : 'basic'"
-					placeholder="Authentication Token"
+					[placeholder]="'TIMER_TRACKER.SETTINGS.AUTH_TOKEN' | translate"
 				/>
 				<input
 					nbInput
@@ -146,12 +159,12 @@
 					pattern="https?://.+"
 					#privateURL="ngModel"
 					[status]="error ? 'danger' : 'basic'"
-					placeholder="Private registry URL"
+					[placeholder]="'TIMER_TRACKER.SETTINGS.PRIVATE_REGISTRY_URL' | translate"
 				/>
 			</ng-container>
 
 			<div class="error" *ngIf="error">
-				{{ error }}
+				{{ error | translate }}
 			</div>
 
 			<button nbButton [disabled]="!pkgName.value || installing" status="primary" type="submit">

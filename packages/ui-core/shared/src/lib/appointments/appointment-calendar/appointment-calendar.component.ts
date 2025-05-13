@@ -39,16 +39,17 @@ import { TimezoneSelectorComponent } from '../timezone-selector/timezone-selecto
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-appointment-calendar',
-	templateUrl: './appointment-calendar.component.html',
-	styleUrls: ['./appointment-calendar.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => AppointmentCalendarComponent),
-			multi: true
-		}
-	]
+    selector: 'ngx-appointment-calendar',
+    templateUrl: './appointment-calendar.component.html',
+    styleUrls: ['./appointment-calendar.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AppointmentCalendarComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AppointmentCalendarComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	organization: IOrganization;

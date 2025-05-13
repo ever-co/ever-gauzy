@@ -12,17 +12,18 @@ import { TaskSelectorStore } from './+state/task-selector.store';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-task-selector',
-	templateUrl: './task-selector.component.html',
-	styleUrls: ['./task-selector.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TaskSelectorComponent),
-			multi: true
-		}
-	]
+    selector: 'gauzy-task-selector',
+    templateUrl: './task-selector.component.html',
+    styleUrls: ['./task-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TaskSelectorComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> implements OnInit {
 	constructor(

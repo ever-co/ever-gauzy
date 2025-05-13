@@ -1,5 +1,5 @@
-@import 'themes';
-@import 'gauzy/_gauzy-dialogs';
+@use 'themes' as *;
+@use 'gauzy/_gauzy-dialogs' as *;
 
 @include nb-install-component() {
   h6 {

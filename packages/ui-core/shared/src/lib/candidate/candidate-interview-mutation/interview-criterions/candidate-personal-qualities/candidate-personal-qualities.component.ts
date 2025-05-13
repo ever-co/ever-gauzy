@@ -10,9 +10,10 @@ import { Store } from '@gauzy/ui-core/core';
 import { CommunicationService } from '../../communication.service';
 
 @Component({
-	selector: 'ga-candidate-personal-qualities',
-	templateUrl: './candidate-personal-qualities.component.html',
-	styleUrls: ['./candidate-personal-qualities.component.scss']
+    selector: 'ga-candidate-personal-qualities',
+    templateUrl: './candidate-personal-qualities.component.html',
+    styleUrls: ['./candidate-personal-qualities.component.scss'],
+    standalone: false
 })
 export class CandidatePersonalQualitiesComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();

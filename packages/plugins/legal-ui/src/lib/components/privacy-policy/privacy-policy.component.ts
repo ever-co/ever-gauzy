@@ -6,8 +6,9 @@ export const PRIVACY_POLICY_ENDPOINT = 'https://www.iubenda.com/api/privacy-poli
 export const COOKIE_PRIVACY_POLICY_ENDPOINT = 'https://www.iubenda.com/api/privacy-policy/18120170/cookie-policy';
 
 @Component({
-	templateUrl: './privacy-policy.component.html',
-	styleUrls: ['./privacy-policy.component.scss']
+    templateUrl: './privacy-policy.component.html',
+    styleUrls: ['./privacy-policy.component.scss'],
+    standalone: false
 })
 export class PrivacyPolicyComponent implements OnInit, OnDestroy {
 	public privacy_policy: string;

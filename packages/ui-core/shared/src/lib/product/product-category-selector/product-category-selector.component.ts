@@ -14,16 +14,17 @@ import { ProductCategoryService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-product-category-selector',
-	templateUrl: './product-category-selector.component.html',
-	styleUrls: ['./product-category-selector.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => ProductCategorySelectorComponent),
-			multi: true
-		}
-	]
+    selector: 'ngx-product-category-selector',
+    templateUrl: './product-category-selector.component.html',
+    styleUrls: ['./product-category-selector.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ProductCategorySelectorComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ProductCategorySelectorComponent implements OnInit, OnDestroy {
 	public organization: IOrganization;
@@ -63,6 +64,15 @@ export class ProductCategorySelectorComponent implements OnInit, OnDestroy {
 	}
 	@Input() set addTag(value: boolean) {
 		this._addTag = value;
+	}
+
+	private _label: string;
+	get label(): string {
+		return this._label;
+	}
+
+	@Input() set label(value: string) {
+		this._label = value;
 	}
 
 	private _productCategoryId: IProductCategoryTranslated['id'];

@@ -1,0 +1,72 @@
+{
+	"name": "@gauzy/plugin-integration-zapier",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Platform plugin for Zapier",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/integration-zapier"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-integration-zapier",
+		"lib:build:prod": "yarn nx build plugin-integration-zapier",
+		"lib:watch": "yarn nx build plugin-integration-zapier --watch"
+	},
+	"dependencies": {
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
+		"@nestjs/common": "^11.1.0",
+		"@nestjs/config": "^4.0.2",
+		"@nestjs/core": "^11.1.0",
+		"@nestjs/cqrs": "^11.0.3",
+		"@nestjs/swagger": "^11.1.5",
+		"@nestjs/typeorm": "^11.0.0",
+		"axios": "^1.9.0",
+		"chalk": "^4.1.0",
+		"class-transformer": "^0.5.1",
+		"class-validator": "^0.14.2",
+		"rxjs": "^7.8.2",
+		"tslib": "^2.6.2",
+		"typeorm": "^0.3.22",
+		"zapier-platform-core": "16.5.0"
+	},
+	"devDependencies": {
+		"@types/jest": "29.5.14",
+		"@types/node": "^20.14.9",
+		"typescript": "^5.8.3",
+		"zapier-platform-cli": "16.5.0"
+	},
+	"keywords": [
+		"zapier",
+		"integration",
+		"plugin",
+		"Ever Gauzy",
+		"NestJS",
+		"typescript",
+		"project management",
+		"APIs",
+		"microservices"
+	],
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
+}

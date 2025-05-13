@@ -51,9 +51,10 @@ import { NotesWithTagsComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-org-other-settings',
-	templateUrl: './edit-organization-other-settings.component.html',
-	styleUrls: ['./edit-organization-other-settings.component.scss']
+    selector: 'ga-edit-org-other-settings',
+    templateUrl: './edit-organization-other-settings.component.html',
+    styleUrls: ['./edit-organization-other-settings.component.scss'],
+    standalone: false
 })
 export class EditOrganizationOtherSettingsComponent
 	extends NotesWithTagsComponent
@@ -682,16 +683,23 @@ export class EditOrganizationOtherSettingsComponent
 			tenantId
 		});
 
+		// Function to ensure no duplicate templates are added to the lists
+		const addUniqueTemplate = (templates: IAccountingTemplate[], template: IAccountingTemplate) => {
+			if (!templates.some((t) => t.id === template.id)) {
+				templates.push(template);
+			}
+		};
+
 		items.forEach((template: IAccountingTemplate) => {
 			switch (template.templateType) {
 				case AccountingTemplateTypeEnum.INVOICE:
-					this.invoiceTemplates.push(template);
+					addUniqueTemplate(this.invoiceTemplates, template);
 					break;
 				case AccountingTemplateTypeEnum.ESTIMATE:
-					this.estimateTemplates.push(template);
+					addUniqueTemplate(this.estimateTemplates, template);
 					break;
 				case AccountingTemplateTypeEnum.RECEIPT:
-					this.receiptTemplates.push(template);
+					addUniqueTemplate(this.receiptTemplates, template);
 					break;
 				default:
 					// Ignore templates that don't match predefined types

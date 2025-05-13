@@ -169,7 +169,13 @@
 		"ADD_MODULE": "Dodaj moduł",
 		"SHARE": "Udostępnij",
 		"GET_INFO": "Pobierz informacje",
-		"RETRY": "Spróbuj ponownie"
+		"RETRY": "Spróbuj ponownie",
+		"UPLOAD": "Prześlij",
+		"MARKETPLACE": "Rynek",
+		"ADD_VERSION": "Dodaj wersje",
+		"READ_MORE": "Czytaj więcej",
+		"READ_LESS": "Czytaj mniej",
+		"RECOVER": "Przywróć"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -216,7 +222,9 @@
 			"EVENT_TYPE": "Nie utworzyłeś żadnego typu wydarzenia",
 			"PRODUCT_TYPE_NO_DATA": "Nie utworzyłeś żadnego typu produktu",
 			"TEAM_DASHBOARD": "Nie masz żadnych zespołów",
-			"PLUGIN": "Nie zainstalowano żadnych wtyczek."
+			"PLUGIN": "Nie zainstalowano żadnych wtyczek.",
+			"PLUGIN_MARKETPLACE": "Ta wtyczka nie jest dostępna na rynku",
+			"LOADING": "Ładuje..."
 		},
 		"TRANSACTION_TYPE": "Rodzaj",
 		"AMOUNT": "Kwota",
@@ -1042,7 +1050,44 @@
 			"FEATURE_ORGANIZATION": "Organizacja funkcji",
 			"EXPORT_DATA": "Eksportuj dane",
 			"IMPORT_DATA": "Importuj dane",
-			"ALL_ENTITIES": "WSZYSTKIE podmioty"
+			"ALL_ENTITIES": "WSZYSTKIE podmioty",
+			"ACTIVITY_LOG": "Dziennik aktywności",
+			"DAILY_PLAN": "Plan dnia",
+			"ENTITY_SUBSCRIPTION": "Subskrypcja jednostki",
+			"FAVORITE": "Ulubione",
+			"MENTION": "Wzmianka",
+			"REACTION": "Reakcja",
+			"RESOURCE_LINK": "Link do zasobu",
+			"SCREENING_TASK": "Zadanie przesiewowe",
+			"SOCIAL_ACCOUNT": "Konto społecznościowe",
+			"CHANGELOG": "Dziennik zmian",
+			"ISSUE_TYPE": "Typ zgłoszenia",
+			"TASK_ESTIMATION": "Szacowanie zadania",
+			"TASK_LINKED_ISSUE": "Powiązane zgłoszenie zadania",
+			"TASK_PRIORITY": "Priorytet zadania",
+			"TASK_RELATED_ISSUE": "Powiązane zgłoszenie zadania",
+			"TASK_SIZE": "Rozmiar zadania",
+			"TASK_STATUS": "Status zadania",
+			"TASK_VERSION": "Wersja zadania",
+			"TASK_RELATED_ISSUE_TYPE": "Typ powiązanego zgłoszenia",
+			"ORGANIZATION_PROJECT_EMPLOYEE": "Pracownik projektu organizacji",
+			"ORGANIZATION_PROJECT_MODULE": "Moduł projektu organizacji",
+			"ORGANIZATION_PROJECT_MODULE_EMPLOYEE": "Pracownik modułu projektu organizacji",
+			"ORGANIZATION_SPRINT_EMPLOYEE": "Pracownik sprintu organizacji",
+			"ORGANIZATION_SPRINT_TASK": "Zadanie sprintu organizacji",
+			"ORGANIZATION_SPRINT_TASK_HISTORY": "Historia zadań sprintu organizacji",
+			"ORGANIZATION_TASK_SETTING": "Ustawienia zadań organizacji",
+			"ORGANIZATION_TEAM_JOIN_REQUEST": "Prośba o dołączenie do zespołu organizacji",
+			"ORGANIZATION_GITHUB_REPOSITORY": "Repozytorium GitHub organizacji",
+			"ORGANIZATION_GITHUB_REPOSITORY_ISSUE": "Zgłoszenie w repozytorium GitHub organizacji",
+			"EMPLOYEE_AVAILABILITY": "Dostępność pracownika",
+			"EMPLOYEE_NOTIFICATION": "Powiadomienie pracownika",
+			"EMPLOYEE_PHONE": "Telefon pracownika",
+			"APPOINTMENT_EMPLOYEE": "Umówiony pracownik",
+			"EMPLOYEE_NOTIFICATION_SETTING": "Ustawienia powiadomień pracownika",
+			"PRODUCT_REVIEW": "Opinia o produkcie",
+			"TASK_LINKED_ISSUES": "Powiązane zgłoszenia",
+			"TASK_VIEW": "Widok zadania"
 		},
 		"TAGS": "Tagi",
 		"LANGUAGE": "Język",
@@ -2042,6 +2087,7 @@
 			"TIME_OFF_POLICY_VIEW": "Zobacz Politykę Urlopową",
 			"TIME_OFF_POLICY_EDIT": "Edytuj Politykę Urlopową",
 			"TIME_OFF_POLICY_DELETE": "Usuń Politykę Urlopową",
+			"SELECT_EMPLOYEE": "Wybierz pracownika",
 			"CHANGE_SELECTED_EMPLOYEE": "Zmień wybranego pracownika",
 			"CHANGE_SELECTED_CANDIDATE": "Zmień wybranego kandydata",
 			"CHANGE_SELECTED_ORGANIZATION": "Zmień wybraną organizację",
@@ -2609,6 +2655,7 @@
 		"TASKS_STATUS": "Status",
 		"TASK_PRIORITY": "Priorytet",
 		"TASK_SIZE": "Rozmiar",
+		"PARENT_TASK": "Zadanie nadrzędne",
 		"TODO": "Zrobić",
 		"OPEN": "Otwarte",
 		"READY_FOR_REVIEW": "Gotowe do recenzji",
@@ -3574,6 +3621,7 @@
 			"APPROVAL_POLICY_CREATED": "Polityka zatwierdzania \"{{ name }}\" została dodana",
 			"APPROVAL_POLICY_UPDATED": "Polityka zatwierdzania '{{ name }}' została zmieniona",
 			"APPROVAL_POLICY_DELETED": "Polityka zatwierdzania '{{ name }}' została usunięta",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Polityka zatwierdzania '{{ name }}' już istnieje",
 			"CANDIDATE_CREATED": "Kandydat '{{ name }}' został dodany do '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "Kandydat '{{ name }}' został archiwizowany",
 			"CANDIDATE_REJECTED": "Kandydat '{{ name }}' został odrzucony",
@@ -3691,7 +3739,8 @@
 			"EDIT_POLICY": "Polityka urlopu '{{ name }}' została zmieniona",
 			"DELETE_POLICY": "Polityka urlopu '{{ name }}' została usunięta",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Nie można utworzyć rekordu Polisy"
+			"SAVE_ERROR": "Nie można utworzyć rekordu Polisy",
+			"POLICY_EXISTS": "Polityka urlopowa '{{ name }}' już istnieje"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Twój profil został zaktualizowany pomyślnie"
@@ -4011,7 +4060,14 @@
 				"SSL_CERT_FILE_INFO": "Ścieżka do pliku certyfikatu klienta dla SSL.",
 				"SECURE": "Bezpieczne",
 				"SECURE_INFO": "True, jeśli chcesz zweryfikować certyfikaty SSL."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "Instalacja NPM umożliwia dostęp do publicznie i prywatnie dostępnych wtyczek.",
+			"PACKAGE_NAME": "Nazwa pakietu NPM",
+			"PACKAGE_VERSION": "Wersja pakietu NPM",
+			"REGISTRY": "Rejestr NPM",
+			"AUTH_TOKEN": "Token uwierzytelniający",
+			"PRIVATE_REGISTRY_URL": "Prywatny adres URL rejestru",
+			"PLUGIN_INSTALL_CDN_ERROR": "Adres URL serwera nie może być pusty."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Przekroczono limit tygodniowy",
 		"OF_HRS": "Z {{ limit }} godz",
@@ -4765,6 +4821,189 @@
 				"SHARE_NOT_ALLOWED": "Udostępnianie nie jest dozwolone",
 				"UNEXPECTED_SHARING_ERROR": "Nieoczekiwany błąd udostępniania"
 			}
+		},
+		"FORM": {
+			"TITLE": "Prześlij wtyczkę",
+			"BASIC_INFO": "Podstawowe informacje",
+			"NAME": "Nazwa wtyczki",
+			"NAME_PLACEHOLDER": "Wprowadź nazwę wtyczki",
+			"VALIDATION": {
+				"NAME_REQUIRED": "Nazwa wtyczki jest wymagana",
+				"NAME_TOO_LONG": "Nazwa wtyczki jest zbyt długa",
+				"VERSION_REQUIRED": "Wersja jest wymagana",
+				"VERSION_FORMAT": "Nieprawidłowy format wersji",
+				"DESCRIPTION_TOO_LONG": "Opis jest zbyt długi",
+				"URL_REQUIRED": "URL jest wymagany",
+				"INVALID_URL": "Nieprawidłowy format URL",
+				"PACKAGE_NAME_REQUIRED": "Nazwa pakietu jest wymagana",
+				"INVALID_PACKAGE_NAME": "Nieprawidłowy format nazwy pakietu",
+				"INVALID_SCOPE": "Nieprawidłowy format zakresu",
+				"AUTHOR_TOO_LONG": "Nazwa autora jest zbyt długa",
+				"LICENSE_TOO_LONG": "Pole licencji jest zbyt długie",
+				"FAILED": "Walidacja nie powiodła się",
+				"CHANGELOG_TOO_SHORT": "Log zmian jest zbyt krotki",
+				"CHANGELOG_REQUIRED": "Log zmian jest wymagany"
+			},
+			"TYPE": "Typ wtyczki",
+			"TYPE_PLACEHOLDER": "Wybierz typ wtyczki",
+			"TYPES": {
+				"DESKTOP": "Pulpit",
+				"WEB": "Internet",
+				"MOBILE": "Mobilny"
+			},
+			"VERSION": "Wersja",
+			"STATUS": "Status",
+			"STATUSES": {
+				"ACTIVE": "Aktywny",
+				"INACTIVE": "Nieaktywny",
+				"DEPRECATED": "Przestarzały",
+				"ARCHIVED": "Zarchiwizowany"
+			},
+			"DESCRIPTION": "Opis",
+			"DESCRIPTION_PLACEHOLDER": "Wprowadź opis wtyczki",
+			"SOURCE": "Źródło",
+			"SOURCE_TYPE": "Typ źródła",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "URL CDN",
+				"INTEGRITY": "Integralność",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "Nazwa pakietu NPM",
+				"REGISTRY": "Rejestr NPM",
+				"SCOPE": "Zakres",
+				"AUTH_TOKEN": "Token uwierzytelniający"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Przeciągnij i upuść plik tutaj",
+				"BROWSE": "Przeglądaj",
+				"REMOVE": "Usuń plik",
+				"RESTRICTIONS": "Dozwolone są tylko pliki .zip",
+				"FILE": "Plik"
+			},
+			"METADATA": {
+				"TITLE": "Metadane",
+				"AUTHOR": "Autor",
+				"AUTHOR_PLACEHOLDER": "Wprowadź nazwę autora",
+				"LICENSE": "Licencja",
+				"LICENSE_PLACEHOLDER": "Wprowadź licencję",
+				"HOMEPAGE": "Strona główna",
+				"HOMEPAGE_PLACEHOLDER": "Wprowadź URL strony głównej",
+				"REPOSITORY": "Repozytorium",
+				"REPOSITORY_PLACEHOLDER": "Wprowadź URL repozytorium"
+			},
+			"OR": "Lub",
+			"RELEASE_DATE": "Data wydania",
+			"CHANGELOG": "Przepraszam",
+			"CHANGELOG_PLACEHOLDER": "Wprowadź przepraszam"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Statystyki użytkowania",
+			"DOWNLOAD_COUNT": "Liczba pobrań",
+			"LAST_DOWNLOADED": "Ostatnio pobrane",
+			"UPLOADED_BY": "Przesłane przez",
+			"UPLOADED_AT": "Przesłane w",
+			"SECURITY_INFO": "Informacje o bezpieczeństwie",
+			"CHECKSUM": "Suma kontrolna",
+			"SIGNATURE": "Podpis",
+			"INSTALLED": "Zainstalowane",
+			"HIDDEN_FOR_SECURITY": "Ukryta w celach bezpieczeństwa"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Odkryj",
+			"INSTALLED": "Zainstalowane",
+			"VERSION_HISTORY": "Historia wersji"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Prześlij nową wtyczkę",
+			"OFFLINE": "Jesteś obecnie offline/rozłączony ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Dezaktywuj wtyczkę",
+				"DESCRIPTION": "Czy na pewno chcesz dezaktywować tę wtyczkę?",
+				"CONFIRM": "Dezaktywuj"
+			},
+			"UNINSTALL": {
+				"TITLE": "Odinstaluj wtyczkę",
+				"DESCRIPTION": "Czy na pewno chcesz odinstalować tę wtyczkę?",
+				"CONFIRM": "Odinstaluj"
+			},
+			"DELETE": {
+				"TITLE": "Usuń wtyczkę",
+				"DESCRIPTION": "Czy na pewno chcesz usunąć tę wtyczkę?",
+				"CONFIRM": "Usuń"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Aktualizuj wersję v{{number}}",
+					"DESCRIPTION": "Czy na pewno chcesz zaktualizować tę wtyczkę?",
+					"CONFIRM": "Aktualizuj"
+				},
+				"CREATE": {
+					"TITLE": "Utwórz nową wersję dla {{name}}",
+					"DESCRIPTION": "Czy na pewno chcesz utworzyć tę wersję?",
+					"CONFIRM": "Utwórz"
+				},
+				"DELETE": {
+					"TITLE": "Usuń wersję",
+					"DESCRIPTION": "Czy na pewno chcesz usunąć tę wersję?",
+					"CONFIRM": "Usuń"
+				},
+				"RESTORE": {
+					"TITLE": "Przywróć wersję",
+					"DESCRIPTION": "Czy na pewno chcesz przywrócić tę wersję?",
+					"CONFIRM": "Przywróć"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Wersja wtyczki v{{number}} została pomyślnie utworzona!",
+					"UPDATED": "Wersja wtyczki v{{number}} została pomyślnie zaktualizowana!",
+					"DELETED": "Wersja wtyczki została pomyślnie usunięta!",
+					"RESTORED": "Wersja wtyczki została pomyślnie przywrócona!"
+				},
+				"UPLOADED": "Wtyczka została pomyślnie przesłana!",
+				"UPDATED": "Wtyczka została pomyślnie zaktualizowana!",
+				"DELETED": "Wtyczka została pomyślnie usunięta!",
+				"INSTALLED": "Wtyczka została pomyślnie zainstalowana!",
+				"UNINSTALLED": "Wtyczka została pomyślnie odinstalowana!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Dodawanie nowej wersji wtyczki...",
+					"UPDATING": "Aktualizowanie wersji wtyczki...",
+					"DELETING": "Usuwanie wersji wtyczki...",
+					"RESTORING": "Przywracanie wersji wtyczki..."
+				},
+				"UPLOADING": "Przesyłanie wtyczki...",
+				"UPDATING": "Aktualizowanie wtyczki...",
+				"DELETING": "Usuwanie wtyczki...",
+				"INSTALLING": "Instalowanie wtyczki...",
+				"UNINSTALLING": "Odinstalowywanie wtyczki..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Nie udało się przywrócić wersji wtyczki. Spróbuj ponownie!"
+				},
+				"UPLOAD": "Nie udało się przesłać wtyczki. Spróbuj ponownie!",
+				"NOT_FOUND": "Nie znaleziono wtyczki o ID {{ id }}.",
+				"INSTALL": "Nie udało się zainstalować wtyczki. Spróbuj ponownie!",
+				"REVERT_INSTALLATION": "Nie udało się cofnąć instalacji!"
+			}
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Serwer niedostępny",
+		"DESCRIPTION": "Serwer {{companySite}} jest obecnie niedostępny. Może to być spowodowane planowaną konserwacją lub nieoczekiwanym przestojem.",
+		"CONNECTING": "Automatyczne ponowne łączenie...",
+		"HINT": "Status: Próba nawiązania połączenia z serwerami {{companySite}}. Kod błędu: 503."
 	}
 }

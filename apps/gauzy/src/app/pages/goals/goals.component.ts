@@ -33,9 +33,10 @@ import { GoalTemplateSelectComponent } from './goal-template-select/goal-templat
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-goals',
-	templateUrl: './goals.component.html',
-	styleUrls: ['./goals.component.scss']
+    selector: 'ga-goals',
+    templateUrl: './goals.component.html',
+    styleUrls: ['./goals.component.scss'],
+    standalone: false
 })
 export class GoalsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;

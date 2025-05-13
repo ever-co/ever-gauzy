@@ -28,14 +28,16 @@
 			"../../../dist/packages/contracts",
 			"../../../dist/packages/core",
 			"../../../dist/packages/desktop-core",
+			"../../../dist/packages/desktop-activity",
 			"../../../dist/packages/desktop-lib",
 			"../../../dist/packages/desktop-window",
 			"../../../dist/packages/plugin",
 			"../../../dist/packages/plugins/changelog",
 			"../../../dist/packages/plugins/integration-ai",
-			"../../../dist/packages/plugins/integration-github",
 			"../../../dist/packages/plugins/integration-hubstaff",
+			"../../../dist/packages/plugins/integration-github",
 			"../../../dist/packages/plugins/integration-jira",
+			"../../../dist/packages/plugins/integration-make-com",
 			"../../../dist/packages/plugins/integration-upwork",
 			"../../../dist/packages/plugins/integration-wakatime",
 			"../../../dist/packages/plugins/jitsu-analytics",
@@ -45,6 +47,7 @@
 			"../../../dist/packages/plugins/product-reviews",
 			"../../../dist/packages/plugins/sentry-tracing",
 			"../../../dist/packages/plugins/videos",
+			"../../../dist/packages/plugins/registry",
 			"../../../dist/packages/ui-config",
 			"../../../dist/packages/utils"
 		]
@@ -54,6 +57,7 @@
 		"artifactName": "${name}-${version}.${ext}",
 		"productName": "Ever Gauzy Desktop",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
+		"afterSign": "tools/notarize.js",
 		"dmg": {
 			"sign": false
 		},
@@ -97,7 +101,9 @@
 			"entitlements": "tools/build/entitlements.mas.plist",
 			"entitlementsInherit": "tools/build/entitlements.mas.plist",
 			"extendInfo": {
-				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup."
+				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup.",
+				"NSMicrophoneUsageDescription": "This app requires microphone access when recording sounds or detecting loudness.",
+				"NSCameraUsageDescription": "This app requires camera access when using the video sensing blocks."
 			}
 		},
 		"win": {
@@ -151,6 +157,7 @@
 		"@gauzy/contracts": "file:../../../dist/packages/contracts",
 		"@gauzy/core": "file:../../../dist/packages/core",
 		"@gauzy/desktop-core": "file:../../../dist/packages/desktop-core",
+		"@gauzy/desktop-activity": "file:../../../dist/packages/desktop-activity",
 		"@gauzy/desktop-lib": "file:../../../dist/packages/desktop-lib",
 		"@gauzy/desktop-window": "file:../../../dist/packages/desktop-window",
 		"@gauzy/plugin": "file:../../../dist/packages/plugin",
@@ -159,6 +166,7 @@
 		"@gauzy/plugin-integration-github": "file:../../../dist/packages/plugins/integration-github",
 		"@gauzy/plugin-integration-hubstaff": "file:../../../dist/packages/plugins/integration-hubstaff",
 		"@gauzy/plugin-integration-jira": "file:../../../dist/packages/plugins/integration-jira",
+		"@gauzy/plugin-integration-make-com": "file:../../../dist/packages/plugins/integration-make-com",
 		"@gauzy/plugin-integration-upwork": "file:../../../dist/packages/plugins/integration-upwork",
 		"@gauzy/plugin-integration-wakatime": "file:../../../dist/packages/plugins/integration-wakatime",
 		"@gauzy/plugin-jitsu-analytics": "file:../../../dist/packages/plugins/jitsu-analytics",
@@ -168,9 +176,10 @@
 		"@gauzy/plugin-product-reviews": "file:../../../dist/packages/plugins/product-reviews",
 		"@gauzy/plugin-sentry": "file:../../../dist/packages/plugins/sentry-tracing",
 		"@gauzy/plugin-videos": "file:../../../dist/packages/plugins/videos",
+		"@gauzy/plugin-registry": "file:../../../dist/packages/plugins/registry",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@gauzy/utils": "file:../../../dist/packages/utils",
-		"@nestjs/platform-express": "^10.4.15",
+		"@nestjs/platform-express": "^11.1.0",
 		"@sentry/electron": "^4.18.0",
 		"@sentry/node": "^7.101.1",
 		"@sentry/profiling-node": "^7.101.1",

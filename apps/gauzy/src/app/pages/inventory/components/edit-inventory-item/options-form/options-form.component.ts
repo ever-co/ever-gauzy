@@ -42,9 +42,10 @@ export interface IProductOptionUI extends IProductOptionTranslatable {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-options-form',
-	templateUrl: './options-form.component.html',
-	styleUrls: ['./options-form.component.scss']
+    selector: 'ngx-options-form',
+    templateUrl: './options-form.component.html',
+    styleUrls: ['./options-form.component.scss'],
+    standalone: false
 })
 export class OptionsFormComponent implements OnInit {
 	editOption: IProductOption;
@@ -171,6 +172,9 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	onCreateOptionClick() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization;
+
 		if (!this.activeOptionGroup) return;
 
 		let formValue = this.form.value;
@@ -181,6 +185,8 @@ export class OptionsFormComponent implements OnInit {
 			formOptionId: this.generateUniqueId(),
 			name: formValue['activeOptionName'],
 			code: formValue['activeOptionCode'],
+			organizationId,
+			tenantId,
 			translations: [
 				{
 					name: formValue['activeOptionName'],

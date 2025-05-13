@@ -15,7 +15,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { ColorPickerModule } from 'ngx-color-picker';
+import { ColorPickerComponent, ColorPickerDirective } from 'ngx-color-picker';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { CurrencyModule } from '../../modules/currency/currency.module';
@@ -47,7 +47,8 @@ import { SmartDataViewLayoutModule } from '../../smart-data-layout';
 		NbIconModule,
 		NgSelectModule,
 		CKEditorModule,
-		ColorPickerModule,
+		ColorPickerComponent,
+		ColorPickerDirective,
 		SharedModule,
 		TranslateModule.forChild(),
 		CurrencyModule,

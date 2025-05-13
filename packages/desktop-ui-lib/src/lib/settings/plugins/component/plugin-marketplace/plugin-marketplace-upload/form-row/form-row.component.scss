@@ -1,0 +1,80 @@
+@use 'gauzy/_gauzy-dialogs' as *;
+
+// Custom variables
+$card-border-radius: 0.75rem;
+$input-padding: 0.75rem 1rem;
+$button-spacing: 0.75rem;
+$transition-speed: 0.2s;
+
+:host ::ng-deep {
+  .form-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 0;
+
+    .form-group {
+      flex: 1;
+      min-width: 0;
+
+      &.full-width {
+        flex-basis: 100%;
+        width: 100%;
+      }
+    }
+
+    nb-form-field {
+      flex: 1;
+      min-width: 0;
+
+      &.full-width {
+        flex-basis: 100%;
+        width: 100%;
+      }
+    }
+
+    label.label {
+      margin-bottom: 0.5rem;
+      display: block;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    nb-select {
+      width: 100%;
+    }
+
+    input,
+    textarea,
+    nb-select {
+      width: 100%;
+      transition: border-color $transition-speed ease, box-shadow $transition-speed ease;
+
+      &:focus {
+        box-shadow: 0 0 0 2px rgba(nb-theme(color-primary-500), 0.2);
+      }
+    }
+
+    input,
+    textarea {
+      padding: $input-padding;
+      border-radius: var(--border-radius);
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+  }
+
+  // Form validation styling
+  input.ng-touched.ng-invalid,
+  select.ng-touched.ng-invalid,
+  textarea.ng-touched.ng-invalid {
+    border-color: var(--color-danger-default);
+  }
+
+  [nbInput].size-medium:not(.input-full-width) {
+    max-width: 100% !important;
+  }
+}

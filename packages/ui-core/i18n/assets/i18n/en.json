@@ -178,7 +178,13 @@
 		"ADD_MODULE": "Add Module",
 		"SHARE": "Share",
 		"GET_INFO": "Get Info",
-		"RETRY": "Retry"
+		"RETRY": "Retry",
+		"UPLOAD": "Upload",
+		"ADD_VERSION": "Add Version",
+		"MARKETPLACE": "Marketplace",
+		"READ_MORE": "Read More",
+		"READ_LESS": "Read Less",
+		"RECOVER": "Recover"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -226,7 +232,9 @@
 			"EVENT_TYPE": "You have not created any event types.",
 			"PRODUCT_TYPE_NO_DATA": "You have not created any product types.",
 			"TEAM_DASHBOARD": "You don't have any teams.",
-			"PLUGIN": "You haven't install any plugin."
+			"PLUGIN": "You haven't install any plugin.",
+			"PLUGIN_MARKETPLACE": "This plugin is unvailable on marketplace",
+			"HISTORY": "There's no history"
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Amount",
@@ -1081,7 +1089,44 @@
 			"FEATURE_ORGANIZATION": "Feature Organization",
 			"EXPORT_DATA": "Export Data",
 			"IMPORT_DATA": "Import Data",
-			"ALL_ENTITIES": "ALL Entities"
+			"ALL_ENTITIES": "ALL Entities",
+			"ACTIVITY_LOG": "Activity log",
+			"DAILY_PLAN": "Daily plan",
+			"ENTITY_SUBSCRIPTION": "Entity subscription",
+			"FAVORITE": "Favorite",
+			"MENTION": "Mention",
+			"REACTION": "Reaction",
+			"RESOURCE_LINK": "Resource link",
+			"SCREENING_TASK": "Screening task",
+			"SOCIAL_ACCOUNT": "Social account",
+			"CHANGELOG": "Changelog",
+			"ISSUE_TYPE": "Issue type",
+			"TASK_ESTIMATION": "Task estimation",
+			"TASK_LINKED_ISSUE": "Task linked issue",
+			"TASK_PRIORITY": "Task priority",
+			"TASK_RELATED_ISSUE": "Task related issue",
+			"TASK_SIZE": "Task size",
+			"TASK_STATUS": "Task status",
+			"TASK_VERSION": "Task version",
+			"TASK_RELATED_ISSUE_TYPE": "Task related issue type",
+			"ORGANIZATION_PROJECT_EMPLOYEE": "Organization project employee",
+			"ORGANIZATION_PROJECT_MODULE": "Organization project module",
+			"ORGANIZATION_PROJECT_MODULE_EMPLOYEE": "Organization project module employee",
+			"ORGANIZATION_SPRINT_EMPLOYEE": "Organization sprint employee",
+			"ORGANIZATION_SPRINT_TASK": "Organization sprint task",
+			"ORGANIZATION_SPRINT_TASK_HISTORY": "Organization sprint task history",
+			"ORGANIZATION_TASK_SETTING": "Organization task setting",
+			"ORGANIZATION_TEAM_JOIN_REQUEST": "Organization team join request",
+			"ORGANIZATION_GITHUB_REPOSITORY": "Organization GitHub repository",
+			"ORGANIZATION_GITHUB_REPOSITORY_ISSUE": "Organization GitHub repository issue",
+			"EMPLOYEE_AVAILABILITY": "Employee availability",
+			"EMPLOYEE_NOTIFICATION": "Employee notification",
+			"EMPLOYEE_PHONE": "Employee phone",
+			"APPOINTMENT_EMPLOYEE": "Appointment employee",
+			"EMPLOYEE_NOTIFICATION_SETTING": "Employee notification setting",
+			"PRODUCT_REVIEW": "Product review",
+			"TASK_LINKED_ISSUES": "Linked Issues",
+			"TASK_VIEW": "Task View"
 		},
 		"TAGS": "Tags",
 		"LANGUAGE": "Language",
@@ -2151,6 +2196,7 @@
 			"TIME_OFF_POLICY_VIEW": "View Time Off Policy",
 			"TIME_OFF_POLICY_EDIT": "Edit Time Off Policy",
 			"TIME_OFF_POLICY_DELETE": "Delete Time Off Policy",
+			"SELECT_EMPLOYEE": "Select Employee",
 			"CHANGE_SELECTED_EMPLOYEE": "Change Selected Employee",
 			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Change Selected Organization",
@@ -2732,6 +2778,7 @@
 		"TASKS_STATUS": "Status",
 		"TASK_PRIORITY": "Priority",
 		"TASK_SIZE": "Size",
+		"PARENT_TASK": "Parent Task",
 		"TODO": "Todo",
 		"OPEN": "Open",
 		"READY_FOR_REVIEW": "Ready for review",
@@ -3701,6 +3748,7 @@
 			"APPROVAL_POLICY_CREATED": "Approval policy '{{ name }}' was added",
 			"APPROVAL_POLICY_UPDATED": "Approval policy '{{ name }}' was changed",
 			"APPROVAL_POLICY_DELETED": "Approval policy '{{ name }}' was removed",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Approval policy '{{ name }}' already exists",
 			"CANDIDATE_CREATED": "Candidate '{{ name }}' was added to '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "Candidate '{{ name }}' set as archived.",
 			"CANDIDATE_REJECTED": "Candidate '{{ name }}' set as rejected.",
@@ -3818,7 +3866,8 @@
 			"EDIT_POLICY": "Time off policy '{{ name }}' was changed",
 			"DELETE_POLICY": "Time off policy '{{ name }}' was removed",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Unable to create Policy record"
+			"SAVE_ERROR": "Unable to create Policy record",
+			"POLICY_EXISTS": "Time off policy '{{ name }}' already exists"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Your profile has been updated successfully."
@@ -4141,7 +4190,13 @@
 			"VERSION": "Version",
 			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Install plugins from local files or CDN. Local for custom/private plugins, CDN for public ones. Choose based on your needs.",
 			"ADD_PLUGIN_CDN_DESCRIPTION": "CDN installation allows for easy access to publicly available plugins.",
-			"ADD_PLUGIN_NPM_DESCRIPTION": "NPM installation allows for access to publicly and private available plugins."
+			"ADD_PLUGIN_NPM_DESCRIPTION": "NPM installation allows for access to publicly and private available plugins.",
+			"PACKAGE_NAME": "NPM Package Name",
+			"PACKAGE_VERSION": "NPM Package Version",
+			"REGISTRY": "NPM Registry",
+			"AUTH_TOKEN": "Authentication Token",
+			"PRIVATE_REGISTRY_URL": "Private Registry URL",
+			"PLUGIN_INSTALL_CDN_ERROR": "The server URL mustn't be empty."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
 		"OF_HRS": "Of {{ limit }} hrs",
@@ -4189,7 +4244,8 @@
 			"WANT_LOGOUT": "Are you sure you want to logout?",
 			"ERROR_HANDLER": "Error Handler",
 			"ERROR_OCCURRED": "Error Occurred",
-			"SELECT_FILE": "Select file"
+			"SELECT_FILE": "Select file",
+			"EXIT_AGENT_CONFIRM": "Oops! You need to log in before you can use the app."
 		},
 		"NO_LIMIT": "∞ No Limit",
 		"TASK": "Task",
@@ -4918,6 +4974,189 @@
 				"SHARE_NOT_ALLOWED": "Share is not allowed",
 				"UNEXPECTED_SHARING_ERROR": "Unexpected sharing error"
 			}
+		},
+		"FORM": {
+			"TITLE": "Upload Plugin",
+			"BASIC_INFO": "Basic Information",
+			"NAME": "Plugin Name",
+			"NAME_PLACEHOLDER": "Enter plugin name",
+			"VALIDATION": {
+				"NAME_REQUIRED": "Plugin name is required",
+				"NAME_TOO_LONG": "Plugin name is too long",
+				"VERSION_REQUIRED": "Version is required",
+				"VERSION_FORMAT": "Invalid version format",
+				"DESCRIPTION_TOO_LONG": "Description is too long",
+				"URL_REQUIRED": "URL is required",
+				"INVALID_URL": "Invalid URL format",
+				"PACKAGE_NAME_REQUIRED": "Package name is required",
+				"INVALID_PACKAGE_NAME": "Invalid package name format",
+				"INVALID_SCOPE": "Invalid scope format",
+				"AUTHOR_TOO_LONG": "Author name is too long",
+				"LICENSE_TOO_LONG": "License field is too long",
+				"CHANGELOG_TOO_SHORT": "Changelog is too short",
+				"CHANGELOG_REQUIRED": "Changelog is required",
+				"FAILED": "Validation failed"
+			},
+			"TYPE": "Plugin Type",
+			"TYPE_PLACEHOLDER": "Select plugin type",
+			"TYPES": {
+				"DESKTOP": "Desktop",
+				"WEB": "Web",
+				"MOBILE": "Mobile"
+			},
+			"VERSION": "Version",
+			"STATUS": "Status",
+			"STATUSES": {
+				"ACTIVE": "Active",
+				"INACTIVE": "Inactive",
+				"DEPRECATED": "Deprecated",
+				"ARCHIVED": "Archived"
+			},
+			"DESCRIPTION": "Description",
+			"DESCRIPTION_PLACEHOLDER": "Enter plugin description",
+			"SOURCE": "Source",
+			"SOURCE_TYPE": "Source Type",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "CDN URL",
+				"INTEGRITY": "Integrity",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "NPM Package Name",
+				"REGISTRY": "NPM Registry",
+				"SCOPE": "Scope",
+				"AUTH_TOKEN": "Authentication Token"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Drag & Drop your file here",
+				"BROWSE": "Browse",
+				"REMOVE": "Remove File",
+				"RESTRICTIONS": "Only .zip files are allowed",
+				"FILE": "File"
+			},
+			"METADATA": {
+				"TITLE": "Metadata",
+				"AUTHOR": "Author",
+				"AUTHOR_PLACEHOLDER": "Enter author name",
+				"LICENSE": "License",
+				"LICENSE_PLACEHOLDER": "Enter license",
+				"HOMEPAGE": "Homepage",
+				"HOMEPAGE_PLACEHOLDER": "Enter homepage URL",
+				"REPOSITORY": "Repository",
+				"REPOSITORY_PLACEHOLDER": "Enter repository URL"
+			},
+			"OR": "Or",
+			"RELEASE_DATE": "Release Date",
+			"CHANGELOG": "Changelog",
+			"CHANGELOG_PLACEHOLDER": "Enter changelog"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Usage Statistics",
+			"DOWNLOAD_COUNT": "Download Count",
+			"LAST_DOWNLOADED": "Last Downloaded",
+			"UPLOADED_BY": "Uploaded By",
+			"UPLOADED_AT": "Uploaded At",
+			"SECURITY_INFO": "Security Information",
+			"CHECKSUM": "Checksum",
+			"SIGNATURE": "Signature",
+			"INSTALLED": "Installed",
+			"HIDDEN_FOR_SECURITY": "Hidden for security reasons"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Upload New Plugin",
+			"OFFLINE": "You are currently offline/disconnected ⛓️‍"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Discover",
+			"INSTALLED": "Installed",
+			"VERSION_HISTORY": "Version History"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Deactivate Plugin",
+				"DESCRIPTION": "Are you sure you want to deactivate this plugin?",
+				"CONFIRM": "Deactivate"
+			},
+			"UNINSTALL": {
+				"TITLE": "Uninstall Plugin",
+				"DESCRIPTION": "Are you sure you want to uninstall this plugin?",
+				"CONFIRM": "Uninstall"
+			},
+			"DELETE": {
+				"TITLE": "Delete Plugin",
+				"DESCRIPTION": "Are you sure you want to delete this plugin?",
+				"CONFIRM": "Delete"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Update version v{{number}}",
+					"DESCRIPTION": "Are you sure you want to update this plugin version?",
+					"CONFIRM": "Update"
+				},
+				"CREATE": {
+					"TITLE": "Create new version for {{name}}",
+					"DESCRIPTION": "Are you sure you want to create this version?",
+					"CONFIRM": "Create"
+				},
+				"DELETE": {
+					"TITLE": "Delete version",
+					"DESCRIPTION": "Are you sure you want to delete this version?",
+					"CONFIRM": "Delete"
+				},
+				"RESTORE": {
+					"TITLE": "Restore version",
+					"DESCRIPTION": "Are you sure you want to restore this version?",
+					"CONFIRM": "Restore"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Create plugin version v{{number}} successfully!",
+					"UPDATED": "Update plugin version v{{number}} successfully!",
+					"DELETED": "Delete plugin version successfully!",
+					"RESTORED": "Restore plugin version successfully!"
+				},
+				"UPLOADED": "Upload plugin successfully!",
+				"UPDATED": "Update plugin successfully!",
+				"DELETED": "Delete plugin successfully!",
+				"INSTALLED": "Install plugin successfully!",
+				"UNINSTALLED": "Uninstall plugin successfully!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Adding new plugin version...",
+					"UPDATING": "Updating plugin version...",
+					"DELETING": "Deleting plugin version...",
+					"RESTORING": "Restoring plugin version..."
+				},
+				"UPLOADING": "Uploading plugin...",
+				"UPDATING": "Updating plugin version...",
+				"DELETING": "Deleting plugin...",
+				"INSTALLING": "Installing plugin...",
+				"UNINSTALLING": "Uninstalling plugin..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Failed to restore plugin version. Please try again!"
+				},
+				"UPLOAD": "Failed to upload plugin. Please try again!",
+				"NOT_FOUND": "Plugin with ID {{ id }} not found.",
+				"INSTALL": "Failed to install plugin. Please try again!",
+				"REVERT_INSTALLATION": "Failed to revert installation!"
+			}
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Server Unavailable",
+		"DESCRIPTION": "The {{companySite}} server is currently unreachable. This may be due to scheduled maintenance or unexpected downtime.",
+		"CONNECTING": "Automatically retrying connection...",
+		"HINT": "Status: Attempting to establish connection to {{companySite}} servers. Error code: 503."
 	}
 }

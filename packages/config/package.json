@@ -31,27 +31,27 @@
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
-		"@mikro-orm/better-sqlite": "^6.4.2",
-		"@mikro-orm/core": "^6.4.2",
-		"@mikro-orm/mysql": "^6.4.2",
-		"@mikro-orm/nestjs": "^6.0.2",
-		"@mikro-orm/postgresql": "^6.4.2",
-		"@nestjs/common": "^10.4.15",
-		"@nestjs/config": "^3.2.0",
-		"@nestjs/typeorm": "^10.0.2",
+		"@mikro-orm/better-sqlite": "^6.4.13",
+		"@mikro-orm/core": "^6.4.13",
+		"@mikro-orm/mysql": "^6.4.13",
+		"@mikro-orm/nestjs": "^6.1.1",
+		"@mikro-orm/postgresql": "^6.4.13",
+		"@nestjs/common": "^11.1.0",
+		"@nestjs/config": "^4.0.2",
+		"@nestjs/typeorm": "^11.0.0",
 		"app-root-path": "^3.0.0",
 		"chalk": "^4.1.0",
 		"dotenv": "^16.0.3",
 		"mikro-orm-soft-delete": "^1.0.0-alpha.1",
-		"nest-knexjs": "^0.0.25",
+		"nest-knexjs": "^0.0.26",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.20"
+		"typeorm": "^0.3.22"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
 		"cross-env": "^7.0.3",
-		"typescript": "5.5.4"
+		"typescript": "^5.8.3"
 	},
 	"keywords": [
 		"api",

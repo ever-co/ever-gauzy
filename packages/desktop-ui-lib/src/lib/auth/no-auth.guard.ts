@@ -1,10 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-	ActivatedRouteSnapshot,
-	CanActivate,
-	Router,
-	RouterStateSnapshot,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { Store } from '../services';
 import { AuthService } from './services';
 
@@ -13,21 +8,15 @@ import { AuthService } from './services';
  */
 @Injectable()
 export class NoAuthGuard implements CanActivate {
-	constructor(
-		private readonly router: Router,
-		private authService: AuthService,
-		private readonly store: Store
-	) {}
+	constructor(private readonly router: Router, private authService: AuthService, private readonly store: Store) {}
 
-	async canActivate(
-		route: ActivatedRouteSnapshot,
-		state: RouterStateSnapshot
-	) {
+	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
 		let isAuthenticated = false;
 		try {
 			isAuthenticated = await this.authService.isAuthenticated();
 		} catch (error) {
 			console.error(error);
+			this.store.serverConnection = 0;
 		}
 		if (!this.store.token || !isAuthenticated) {
 			return true;

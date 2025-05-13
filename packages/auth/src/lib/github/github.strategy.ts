@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
-import { Profile, Strategy } from 'passport-github2';
+import { Profile, Strategy, StrategyOptionsWithRequest } from 'passport-github2';
 
 @Injectable()
 export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
@@ -65,23 +65,27 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
  * @param configService - An instance of the ConfigService to access application configuration.
  * @returns An object containing the GitHub OAuth configuration.
  */
-export const parseGithubConfig = (configService: ConfigService): Record<string, any> => {
-	// Retrieve the GitHub client ID from the configuration.
-	const clientID = configService.get<string>('github.clientId');
-	// Retrieve the GitHub client secret from the configuration.
-	const clientSecret = configService.get<string>('github.clientSecret');
-	// Retrieve the GitHub callback URL from the configuration.
-	const callbackURL = configService.get<string>('github.callbackURL');
+export const parseGithubConfig = (configService: ConfigService): StrategyOptionsWithRequest => {
+	const { clientId, clientSecret, callbackURL, userAgent } = {
+		// Retrieve the GitHub client ID from the configuration.
+		clientId: configService.get<string>('github.clientId'),
+		// Retrieve the GitHub client Secret from the configuration.
+		clientSecret: configService.get<string>('github.clientSecret'),
+		// Retrieve the callback URL from the configuration.
+		callbackURL: configService.get<string>('github.callbackURL'),
+		// Retrieve the user agent from the configuration.
+		userAgent: configService.get<string>('github.userAgent')
+	};
 
 	// Log a warning if any of the required configuration values are missing.
-	if (!clientID || !clientSecret || !callbackURL) {
+	if (!clientId || !clientSecret || !callbackURL) {
 		console.warn('⚠️ GitHub OAuth configuration is incomplete. Defaulting to "disabled".');
 	}
 
 	// Return the GitHub OAuth configuration object.
 	return {
 		// Use the retrieved clientID, or default to 'disabled' if not provided.
-		clientID: clientID || 'disabled',
+		clientID: clientId || 'disabled',
 		// Use the retrieved clientSecret, or default to 'disabled' if not provided.
 		clientSecret: clientSecret || 'disabled',
 		// Use the retrieved callbackURL, or default to the API_BASE_URL (or localhost) plus the callback path.
@@ -91,6 +95,6 @@ export const parseGithubConfig = (configService: ConfigService): Record<string, 
 		// Specify the scope for GitHub OAuth (read user data and user email).
 		scope: ['read:user', 'user:email'],
 		// Retrieve the GitHub user agent from the configuration.
-		userAgent: <string>configService.get<string>('github.userAgent')
+		userAgent: userAgent
 	};
 };

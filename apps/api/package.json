@@ -45,6 +45,8 @@
 		"@gauzy/plugin-integration-ai": "^0.1.0",
 		"@gauzy/plugin-integration-github": "^0.1.0",
 		"@gauzy/plugin-integration-hubstaff": "^0.1.0",
+		"@gauzy/plugin-integration-make-com": "^0.1.0",
+		"@gauzy/plugin-integration-zapier": "^0.1.0",
 		"@gauzy/plugin-integration-jira": "^0.1.0",
 		"@gauzy/plugin-integration-upwork": "^0.1.0",
 		"@gauzy/plugin-jitsu-analytics": "^0.1.0",
@@ -53,16 +55,18 @@
 		"@gauzy/plugin-knowledge-base": "^0.1.0",
 		"@gauzy/plugin-product-reviews": "^0.1.0",
 		"@gauzy/plugin-sentry": "^0.1.0",
+		"@gauzy/plugin-posthog": "^0.1.0",
 		"@gauzy/plugin-videos": "^0.1.0",
+		"@gauzy/plugin-registry": "^0.1.0",
 		"dotenv": "^16.0.3",
 		"yargs": "^17.5.0"
 	},
 	"devDependencies": {
-		"@nestjs/cli": "^10.4.9",
-		"@nestjs/schematics": "^10.2.3",
-		"@nestjs/testing": "^10.4.15",
+		"@nestjs/cli": "^11.0.7",
+		"@nestjs/schematics": "^11.0.5",
+		"@nestjs/testing": "^11.0.0",
 		"nodemon": "^3.1.0",
 		"ts-node": "^10.9.2",
-		"typescript": "5.5.4"
+		"typescript": "^5.8.3"
 	}
 }

@@ -1,0 +1,65 @@
+@let plugins = query.plugins$ | async; @let available = (query.count$ | async) > 0; @let isLoading = (query.isLoading$ |
+async) && plugins.length === 0; @let uploading = query.uploading$ | async; @let progress = query.progress$ | async; @let
+isOffline = store.isOffline$ | async;
+
+<nb-card
+	nbInfiniteList
+	[threshold]="500"
+	[throttleTime]="300"
+	(bottomThreshold)="loadMore()"
+	class="content-active first"
+>
+	@if (available) { @for (plugin of plugins; track plugin.id; let isLast = $last) { @defer (on viewport; when
+	isLoading) {
+	<lib-plugin-marketplace-detail
+		class="plugin"
+		[ngClass]="{ none: isLast }"
+		[plugin]="plugin"
+	></lib-plugin-marketplace-detail>
+	} @placeholder (minimum 500ms) {
+	<div class="plugin-container skeleton-loader">
+		<div class="plugin-details">
+			<div class="plugin-header">
+				<div class="skeleton-line plugin-name" style="width: 180px; height: 24px"></div>
+				<div class="skeleton-line plugin-version" style="width: 60px; height: 18px"></div>
+			</div>
+			<div class="plugin-description">
+				<div class="skeleton-line" style="width: 100%; height: 16px; margin-bottom: 6px"></div>
+				<div class="skeleton-line" style="width: 90%; height: 16px; margin-bottom: 6px"></div>
+				<div class="skeleton-line" style="width: 80%; height: 16px"></div>
+			</div>
+		</div>
+		<div class="plugin-actions">
+			<div class="skeleton-icon" style="width: 24px; height: 24px; margin-right: 12px"></div>
+			<div class="skeleton-toggle" style="width: 48px; height: 24px"></div>
+		</div>
+	</div>
+	} } } @else if (isLoading) {
+	<div class="no-data">
+		<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.LOADING' | translate"></ngx-no-data-message>
+	</div>
+	} @else {
+	<div class="no-data">
+		<ngx-no-data-message
+			[message]="(isOffline ? 'PLUGIN.MARKETPLACE.OFFLINE' : 'SM_TABLE.NO_DATA.PLUGIN') | translate"
+		></ngx-no-data-message>
+	</div>
+	} @if (isUploadAvailable) { @defer (on idle) {
+	<div class="button-upload">
+		<button
+			(click)="upload()"
+			[nbTooltip]="'PLUGIN.MARKETPLACE.UPLOAD' | translate"
+			status="primary"
+			nbButton
+			[disabled]="isOffline"
+		>
+			<nb-icon *gauzySpinnerButton="uploading" icon="cloud-upload-outline"></nb-icon>
+			@if (uploading) {
+			<span>{{ progress | percent : '1.2-2' }}</span>
+			}
+		</button>
+	</div>
+	} @placeholder {
+	<div class="upload-placeholder"></div>
+	} }
+</nb-card>

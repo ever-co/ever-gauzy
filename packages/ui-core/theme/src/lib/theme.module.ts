@@ -33,8 +33,7 @@ import {
 	LanguagesService,
 	OrganizationsService,
 	SelectorService,
-	UsersOrganizationsService,
-	UsersService
+	UsersOrganizationsService
 } from '@gauzy/ui-core/core';
 import {
 	DirectivesModule,
@@ -123,7 +122,6 @@ const EXPORT_IMPORT = [ThemeSidebarModule, MatRippleModule];
 	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS],
 	declarations: [...COMPONENTS, ...PIPES],
 	providers: [
-		UsersService,
 		SelectorService,
 		UsersOrganizationsService,
 		OrganizationsService,

@@ -1,4 +1,4 @@
-@import 'var';
+@use 'var' as *;
 
 .recurring-expense-history {
   background-color: transparent;

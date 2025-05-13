@@ -1,4 +1,4 @@
-@import '@shared/_pg-card';
+@use '@shared/_pg-card' as *;
 
 [nbButton].sharing.appearance-filled.status-primary {
   color: nb-theme(text-primary-color);

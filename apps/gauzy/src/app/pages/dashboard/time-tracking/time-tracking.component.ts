@@ -84,9 +84,10 @@ enum Windows {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-time-tracking-dashboard',
-	templateUrl: './time-tracking.component.html',
-	styleUrls: ['./time-tracking.component.scss']
+    selector: 'ga-time-tracking-dashboard',
+    templateUrl: './time-tracking.component.html',
+    styleUrls: ['./time-tracking.component.scss'],
+    standalone: false
 })
 export class TimeTrackingComponent
 	extends TranslationBaseComponent

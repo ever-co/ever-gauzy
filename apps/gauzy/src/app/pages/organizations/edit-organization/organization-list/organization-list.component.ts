@@ -1,9 +1,10 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { ListsInputTypeEnum } from '@gauzy/contracts';
 @Component({
-	selector: 'ngx-organization-list',
-	templateUrl: './organization-list.component.html',
-	styleUrls: ['./organization-list.component.scss']
+    selector: 'ngx-organization-list',
+    templateUrl: './organization-list.component.html',
+    styleUrls: ['./organization-list.component.scss'],
+    standalone: false
 })
 export class OrganizationListComponent {
 	@Input()

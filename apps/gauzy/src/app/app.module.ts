@@ -7,7 +7,7 @@ import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromD
 import { ExtraOptions, Router, RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
+import { NgModule, ErrorHandler, inject, provideAppInitializer } from '@angular/core';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
 import {
 	NbChatModule,
@@ -22,7 +22,6 @@ import {
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { CloudinaryModule } from '@cloudinary/ng';
 import { FileUploadModule } from 'ng2-file-upload';
 import { CookieService } from 'ngx-cookie-service';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
@@ -48,6 +47,7 @@ import {
 	TenantInterceptor,
 	TokenInterceptor
 } from '@gauzy/ui-core/core';
+import { PostHogModule } from '@gauzy/plugin-posthog-ui';
 import { CommonModule } from '@gauzy/ui-core/common';
 import { HttpLoaderFactory, I18nModule, I18nService } from '@gauzy/ui-core/i18n';
 import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
@@ -64,6 +64,14 @@ if (environment.SENTRY_DSN) {
 	} else {
 		console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
 		initializeSentry();
+	}
+}
+
+if (environment.POSTHOG_KEY) {
+	if (environment.POSTHOG_KEY === 'DOCKER_POSTHOG_API_KEY') {
+		console.warn('You are running inside Docker but does not have POSTHOG_API_KEY env set');
+	} else {
+		console.log(`Enabling PostHog with API Key: ${environment.POSTHOG_KEY}`);
 	}
 }
 
@@ -92,7 +100,6 @@ const NB_MODULES = [
 // Third Party Modules
 const THIRD_PARTY_MODULES = [
 	isProd ? [] : AkitaNgDevtools,
-	CloudinaryModule,
 	FeatureToggleModule,
 	FileUploadModule,
 	NgxPermissionsModule.forRoot(),
@@ -102,7 +109,19 @@ const THIRD_PARTY_MODULES = [
 			useFactory: HttpLoaderFactory,
 			deps: [HttpClient]
 		}
-	})
+	}),
+
+	...(environment.POSTHOG_KEY && environment.POSTHOG_KEY !== 'DOCKER_POSTHOG_API_KEY'
+		? [
+				PostHogModule.forRoot({
+					apiKey: environment.POSTHOG_KEY,
+					options: {
+						api_host: environment.POSTHOG_HOST,
+						capture_pageview: true
+					}
+				})
+		  ]
+		: [])
 ];
 
 // Feature Modules
@@ -118,91 +137,87 @@ const FEATURE_MODULES = [
 
 @NgModule({
 	declarations: [AppComponent],
-    bootstrap: [AppComponent],
+	bootstrap: [AppComponent],
 	imports: [
 		BrowserModule,
-        BrowserAnimationsModule,
-        RouterModule.forRoot(appRoutes, config),
-        ...NB_MODULES,
-        ...FEATURE_MODULES,
-        ...THIRD_PARTY_MODULES
+		BrowserAnimationsModule,
+		RouterModule.forRoot(appRoutes, config),
+		...NB_MODULES,
+		...FEATURE_MODULES,
+		...THIRD_PARTY_MODULES
 	],
 	providers: [
-        {
-            provide: Sentry.TraceService,
-            deps: [Router]
-        },
-        { provide: APP_BASE_HREF, useValue: '/' },
-        {
-            provide: ErrorHandler,
-            useClass: SentryErrorHandler
-        },
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: APIInterceptor,
-            multi: true
-        },
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: HubstaffTokenInterceptor,
-            multi: true
-        },
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: TokenInterceptor,
-            multi: true
-        },
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: LanguageInterceptor,
-            multi: true
-        },
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: TenantInterceptor,
-            multi: true
-        },
-        ServerConnectionService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: serverConnectionFactory,
-            deps: [ServerConnectionService, Store, Router],
-            multi: true
-        },
-        GoogleMapsLoaderService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: googleMapsLoaderFactory,
-            deps: [GoogleMapsLoaderService],
-            multi: true
-        },
-        FeatureService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: featureToggleLoaderFactory,
-            deps: [FeatureService, Store],
-            multi: true
-        },
-        AppInitService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: initializeApp,
-            deps: [AppInitService],
-            multi: true
-        },
-        {
-            provide: ErrorHandler,
-            useClass: SentryErrorHandler
-        },
-        AppModuleGuard,
-        ColorPickerService,
-        CookieService,
-        {
-            provide: GAUZY_ENV,
-            useValue: environment
-        },
-        provideHttpClient(withInterceptorsFromDi())
-    ]
+		{
+			provide: Sentry.TraceService,
+			deps: [Router]
+		},
+		{ provide: APP_BASE_HREF, useValue: '/' },
+		{
+			provide: ErrorHandler,
+			useClass: SentryErrorHandler
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: APIInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: HubstaffTokenInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: TokenInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: LanguageInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: TenantInterceptor,
+			multi: true
+		},
+		ServerConnectionService,
+		provideAppInitializer(() => {
+			const initializerFn = serverConnectionFactory(
+				inject(ServerConnectionService),
+				inject(Store),
+				inject(Router)
+			);
+			return initializerFn();
+		}),
+		GoogleMapsLoaderService,
+		provideAppInitializer(() => {
+			const initializerFn = googleMapsLoaderFactory(inject(GoogleMapsLoaderService));
+			return initializerFn();
+		}),
+		FeatureService,
+		provideAppInitializer(() => {
+			const initializerFn = featureToggleLoaderFactory(inject(FeatureService), inject(Store));
+			return initializerFn();
+		}),
+		AppInitService,
+		provideAppInitializer(() => {
+			const initializerFn = initializeApp(inject(AppInitService));
+			return initializerFn();
+		}),
+		{
+			provide: ErrorHandler,
+			useClass: SentryErrorHandler
+		},
+		AppModuleGuard,
+		ColorPickerService,
+		CookieService,
+		{
+			provide: GAUZY_ENV,
+			useValue: environment
+		},
+		provideHttpClient(withInterceptorsFromDi())
+	]
 })
 export class AppModule {
 	/**

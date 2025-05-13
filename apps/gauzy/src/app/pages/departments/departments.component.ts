@@ -29,9 +29,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-departments',
-	templateUrl: './departments.component.html',
-	styleUrls: ['./departments.component.scss']
+    selector: 'ga-departments',
+    templateUrl: './departments.component.html',
+    styleUrls: ['./departments.component.scss'],
+    standalone: false
 })
 export class DepartmentsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	@ViewChild('addEditTemplate')
@@ -248,8 +249,9 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent implemen
 
 			if (validateUniqueString(existingNames, input.name)) {
 				this.toastrService.danger(
-					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.ALREADY_EXISTS'),
-					input.name
+					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.ALREADY_EXISTS', {
+						name: input.name
+					})
 				);
 				return;
 			}

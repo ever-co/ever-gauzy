@@ -23,9 +23,10 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-candidate-employment',
-	templateUrl: './edit-candidate-employment.component.html',
-	styleUrls: ['./edit-candidate-employment.component.scss']
+    selector: 'ga-edit-candidate-employment',
+    templateUrl: './edit-candidate-employment.component.html',
+    styleUrls: ['./edit-candidate-employment.component.scss'],
+    standalone: false
 })
 export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 	selectedCandidate: ICandidate;

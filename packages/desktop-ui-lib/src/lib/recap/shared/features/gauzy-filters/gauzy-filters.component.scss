@@ -1,5 +1,5 @@
-@import 'gauzy/_gauzy-overrides';
-@import 'filters.component.scss';
+@use 'gauzy/_gauzy-overrides' as *;
+@forward 'filters.component';
 
 $button-radius : var(--button-rectangle-border-radius);
 

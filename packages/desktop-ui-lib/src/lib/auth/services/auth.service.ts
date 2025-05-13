@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
+import { GAUZY_ENV } from '../../constants';
 import {
 	IAuthResponse,
 	IUser,
@@ -19,7 +20,12 @@ import { ElectronService } from '../../electron/services';
 
 @Injectable()
 export class AuthService {
-	constructor(private http: HttpClient, private readonly electronService: ElectronService) {}
+	constructor(
+		private http: HttpClient,
+		private readonly electronService: ElectronService,
+		@Inject(GAUZY_ENV)
+		private readonly _environment: any,
+	) {}
 
 	isAuthenticated(): Promise<boolean> {
 		return firstValueFrom(this.http.get<boolean>(`${API_PREFIX}/auth/authenticated`));
@@ -129,17 +135,27 @@ export class AuthService {
 	public electronAuthentication({ user, token }: IAuthResponse) {
 		try {
 			if (this.electronService.isElectron) {
-				this.electronService.ipcRenderer.send('auth_success', {
+				const channel = this.isAgent ? 'AUTH_SUCCESS' : 'auth_success';
+				const authArg = {
 					user: user,
 					token: token,
 					userId: user.id,
 					employeeId: user.employee ? user.employee.id : null,
 					organizationId: user.employee ? user.employee.organizationId : null,
 					tenantId: user.tenantId ? user.tenantId : null
-				});
+				};
+				if (this.isAgent) {
+					this.electronService.ipcRenderer.invoke(channel, authArg);
+				} else {
+					this.electronService.ipcRenderer.send(channel, authArg);
+				}
 			}
 		} catch (error) {
 			console.log(error);
 		}
+	}
+
+	private get isAgent() {
+		return this._environment.IS_AGENT;
 	}
 }

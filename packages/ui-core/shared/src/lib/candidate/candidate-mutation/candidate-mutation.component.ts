@@ -21,9 +21,10 @@ import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-candidate-mutation',
-	templateUrl: 'candidate-mutation.component.html',
-	styleUrls: ['candidate-mutation.component.scss']
+    selector: 'ga-candidate-mutation',
+    templateUrl: 'candidate-mutation.component.html',
+    styleUrls: ['candidate-mutation.component.scss'],
+    standalone: false
 })
 export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	@ViewChild('userBasicInfo')

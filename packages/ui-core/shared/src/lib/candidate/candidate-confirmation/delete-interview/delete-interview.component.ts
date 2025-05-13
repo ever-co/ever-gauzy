@@ -14,9 +14,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-delete-interview',
-	templateUrl: 'delete-interview.component.html',
-	styleUrls: ['delete-interview.component.scss']
+    selector: 'ga-delete-interview',
+    templateUrl: 'delete-interview.component.html',
+    styleUrls: ['delete-interview.component.scss'],
+    standalone: false
 })
 export class DeleteInterviewComponent extends TranslationBaseComponent implements OnDestroy {
 	@Input() interview: ICandidateInterview;

@@ -1,6 +1,6 @@
-@import 'report';
-@import "themes";
-@import "var";
+@forward 'report';
+@use "themes" as *;
+@use "var" as *;
 
 :host {
   display: block;

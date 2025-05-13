@@ -10,7 +10,6 @@ import { NbDialogService } from '@nebular/theme';
 import { pluck } from 'underscore';
 import {
 	ComponentLayoutStyleEnum,
-	IApprovalsData,
 	IOrganization,
 	IRequestApproval,
 	RequestApprovalStatusTypesEnum
@@ -33,15 +32,15 @@ import { ApprovalPolicyComponent } from './table-components/approval-policy/appr
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-approvals',
-	templateUrl: './approvals.component.html',
-	styleUrls: ['./approvals.component.scss']
+    selector: 'ngx-approvals',
+    templateUrl: './approvals.component.html',
+    styleUrls: ['./approvals.component.scss'],
+    standalone: false
 })
 export class ApprovalsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public settingsSmartTable: object;
 	public loading: boolean;
 	public selectedRequestApproval: IRequestApproval;
-	public listApprovals: IApprovalsData[] = [];
 	public disableButton = true;
 	public smartTableSource = new LocalDataSource();
 	public hasEditPermission = false;
@@ -239,14 +238,13 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 						instance.value = cell.getRawValue();
 					}
 				},
-				createdByName: {
+				createdByUser: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.CREATED_BY'),
 					type: 'custom',
 					isFilterable: false,
 					renderComponent: CreatedByUserComponent<IRequestApproval>,
 					componentInitFunction: (instance: CreatedByUserComponent<IRequestApproval>, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-						instance.value = cell.getRawValue();
 					}
 				},
 				createdAt: {

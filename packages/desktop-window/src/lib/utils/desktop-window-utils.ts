@@ -38,6 +38,10 @@ export async function setLaunchPathAndLoad(
 ): Promise<void> {
 	console.log(`Loading URL: ${filePath} with hash: ${hash}`);
 	console.log(`Loading Window: ${window.getTitle()}`);
+	if (process.env.NODE_ENV === 'development') {
+		console.log('development process');
+		return devLaunchPathAndLoad(window, filePath);
+	}
 
     // Construct the URL with the provided file path and hash
     const launchPath = url.format({
@@ -52,4 +56,9 @@ export async function setLaunchPathAndLoad(
 
     // Log the constructed path for debugging purposes
     console.log('Launched Electron with:', launchPath);
+}
+
+async function devLaunchPathAndLoad(window: BrowserWindow, url: string){
+	window.loadURL(url);
+	return;
 }

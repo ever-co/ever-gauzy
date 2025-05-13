@@ -18,7 +18,7 @@ export class PluginMetadataService {
 
 	public async update(input: IPluginMetadataUpdate): Promise<void> {
 		const query = this.buildQuery(input);
-		await query.update({ isActivate: input.isActivate, version: input.version });
+		await query.update({ isActivate: input.isActivate, version: input.version, description: input.description });
 	}
 
 	public async delete(input: IPluginMetadataDelete): Promise<void> {
@@ -43,18 +43,21 @@ export class PluginMetadataService {
 		return this.db.connection<IPluginMetadataPersistance>(TABLE_PLUGINS).select('*').where('isActivate', true);
 	}
 
-	private buildQuery(input: { id?: string; name?: string }) {
+	private buildQuery(input: { id?: string; name?: string; marketplaceId?: string }) {
 		const query = this.db.connection<IPluginMetadataPersistance>(TABLE_PLUGINS).select('*');
+
 		if (input.id) {
 			query.where('id', input.id);
 		}
+
 		if (input.name) {
-			if (input.id) {
-				query.orWhere('name', input.name);
-			} else {
-				query.where('name', input.name);
-			}
+			query.where('name', input.name);
 		}
+
+		if (input.marketplaceId) {
+			query.where('marketplaceId', input.marketplaceId);
+		}
+
 		return query;
 	}
 }

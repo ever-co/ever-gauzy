@@ -178,10 +178,17 @@
 		"ADD_MODULE": "Добавяне на модул",
 		"SHARE": "Споделяне",
 		"GET_INFO": "Получаване на информация",
-		"RETRY": "Опитайте отново"
+		"RETRY": "Опитайте отново",
+		"UPLOAD": "Качване",
+		"ADD_VERSION": "Добавяне на версия",
+		"MARKETPLACE": "Маркетплейс",
+		"READ_MORE": "Прочети още",
+		"READ_LESS": "Прочети по-малко",
+		"RECOVER": "Възстанови"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "Няма история",
 			"LOADING": "Зареждане, моля изчакайте...",
 			"RECEIVE_ESTIMATE": "Не сте получили никакви оценки.",
 			"INCOME": "Не сте създали никакви приходи.",
@@ -226,7 +233,8 @@
 			"EVENT_TYPE": "Не сте създали никакви типове събития.",
 			"PRODUCT_TYPE_NO_DATA": "Не сте създали никакви типове продукти.",
 			"TEAM_DASHBOARD": "Нямате никакви екипи.",
-			"PLUGIN": "Не сте инсталирали никакви плъгини."
+			"PLUGIN": "Не сте инсталирали никакви плъгини.",
+			"PLUGIN_MARKETPLACE": "Този плъгин не е наличен на пазара"
 		},
 		"TRANSACTION_TYPE": "Тип",
 		"AMOUNT": "Сума",
@@ -1071,7 +1079,44 @@
 			"FEATURE_ORGANIZATION": "Функция на организация",
 			"EXPORT_DATA": "Експортиране на данни",
 			"IMPORT_DATA": "Импортиране на данни",
-			"ALL_ENTITIES": "ВСИЧКИ СУЩНОСТИ"
+			"ALL_ENTITIES": "ВСИЧКИ СУЩНОСТИ",
+			"ACTIVITY_LOG": "Дневник на активността",
+			"DAILY_PLAN": "Дневен план",
+			"ENTITY_SUBSCRIPTION": "Абонамент за обект",
+			"FAVORITE": "Любим",
+			"MENTION": "Споменаване",
+			"REACTION": "Реакция",
+			"RESOURCE_LINK": "Връзка към ресурс",
+			"SCREENING_TASK": "Задача за скрининг",
+			"SOCIAL_ACCOUNT": "Социален акаунт",
+			"CHANGELOG": "Дневник на промените",
+			"ISSUE_TYPE": "Тип на проблема",
+			"TASK_ESTIMATION": "Оценка на задачата",
+			"TASK_LINKED_ISSUE": "Свързан проблем с задачата",
+			"TASK_PRIORITY": "Приоритет на задачата",
+			"TASK_RELATED_ISSUE": "Свързан проблем с задачата",
+			"TASK_SIZE": "Размер на задачата",
+			"TASK_STATUS": "Статус на задачата",
+			"TASK_VERSION": "Версия на задачата",
+			"TASK_RELATED_ISSUE_TYPE": "Тип на свързания проблем с задачата",
+			"ORGANIZATION_PROJECT_EMPLOYEE": "Служител на проект в организацията",
+			"ORGANIZATION_PROJECT_MODULE": "Модул на проект в организацията",
+			"ORGANIZATION_PROJECT_MODULE_EMPLOYEE": "Служител на модул на проект в организацията",
+			"ORGANIZATION_SPRINT_EMPLOYEE": "Служител на спринт в организацията",
+			"ORGANIZATION_SPRINT_TASK": "Задача на спринт в организацията",
+			"ORGANIZATION_SPRINT_TASK_HISTORY": "История на задачи на спринт в организацията",
+			"ORGANIZATION_TASK_SETTING": "Настройка на задачи в организацията",
+			"ORGANIZATION_TEAM_JOIN_REQUEST": "Заявка за присъединяване към екип в организацията",
+			"ORGANIZATION_GITHUB_REPOSITORY": "GitHub хранилище на организацията",
+			"ORGANIZATION_GITHUB_REPOSITORY_ISSUE": "Проблем в GitHub хранилище на организацията",
+			"EMPLOYEE_AVAILABILITY": "Наличност на служителя",
+			"EMPLOYEE_NOTIFICATION": "Известие на служителя",
+			"EMPLOYEE_PHONE": "Телефон на служителя",
+			"APPOINTMENT_EMPLOYEE": "Назначен служител",
+			"EMPLOYEE_NOTIFICATION_SETTING": "Настройка на известия на служителя",
+			"PRODUCT_REVIEW": "Преглед на продукта",
+			"TASK_LINKED_ISSUES": "Свързани проблеми",
+			"TASK_VIEW": "Изглед на задачата"
 		},
 		"TAGS": "Тагове",
 		"LANGUAGE": "Език",
@@ -2106,6 +2151,7 @@
 			"TIME_OFF_POLICY_VIEW": "Преглед на Политика за Отпуск",
 			"TIME_OFF_POLICY_EDIT": "Редактиране на Политика за Отпуск",
 			"TIME_OFF_POLICY_DELETE": "Изтриване на Политика за Отпуск",
+			"SELECT_EMPLOYEE": "Избор на служител",
 			"CHANGE_SELECTED_EMPLOYEE": "Промени избрания служител",
 			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Промени избраната организация",
@@ -2668,6 +2714,7 @@
 		"TASKS_STATUS": "Статус",
 		"TASK_PRIORITY": "Приоритет",
 		"TASK_SIZE": "Размер",
+		"PARENT_TASK": "Основна задача",
 		"TODO": "За изпълнение",
 		"IN_PROGRESS": "В процес",
 		"FOR_TESTING": "За тестване",
@@ -3626,6 +3673,7 @@
 			"APPROVAL_POLICY_CREATED": "Политиката за одобрение '{{ name }}' беше добавена",
 			"APPROVAL_POLICY_UPDATED": "Политиката за одобрение '{{ name }}' беше променена",
 			"APPROVAL_POLICY_DELETED": "Политиката за одобрение '{{ name }}' беше премахната",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Политиката за одобрение '{{ name }}' вече съществува",
 			"CANDIDATE_CREATED": "Кандидатът '{{ name }}' беше добавен в '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "Кандидатът '{{ name }}' беше маркиран като архивиран.",
 			"CANDIDATE_REJECTED": "Кандидатът '{{ name }}' беше маркиран като отхвърлен.",
@@ -3740,7 +3788,8 @@
 			"EDIT_POLICY": "Time off policy '{{ name }}' was changed",
 			"DELETE_POLICY": "Time off policy '{{ name }}' was removed",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Unable to create Policy record"
+			"SAVE_ERROR": "Unable to create Policy record",
+			"POLICY_EXISTS": "Политиката за отпуск '{{ name }}' вече съществува"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Your profile has been updated successfully."
@@ -4059,7 +4108,14 @@
 				"SSL_CERT_FILE_INFO": "Път към файла с клиентски сертификат за SSL.",
 				"SECURE": "Сигурно",
 				"SECURE_INFO": "Вярно, ако искате да проверите SSL сертификатите."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "Инсталацията чрез NPM позволява достъп до публично достъпни и частни приставки.",
+			"PACKAGE_NAME": "Име на NPM пакет",
+			"PACKAGE_VERSION": "Версия на NPM пакет",
+			"REGISTRY": "NPM регистър",
+			"AUTH_TOKEN": "Удостоверителен токен",
+			"PRIVATE_REGISTRY_URL": "URL на частен регистър",
+			"PLUGIN_INSTALL_CDN_ERROR": "URL адресът на сървъра не трябва да е празен."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Седмичната лимита е превишена",
 		"OF_HRS": "От {{ limit }} часа",
@@ -4792,6 +4848,189 @@
 				"SHARE_NOT_ALLOWED": "Споделянето не е позволено",
 				"UNEXPECTED_SHARING_ERROR": "Неочаквана грешка при споделяне"
 			}
+		},
+		"FORM": {
+			"TITLE": "Качване на приставка",
+			"BASIC_INFO": "Основна информация",
+			"NAME": "Име на приставката",
+			"NAME_PLACEHOLDER": "Въведете име на приставката",
+			"VALIDATION": {
+				"NAME_REQUIRED": "Името на приставката е задължително",
+				"NAME_TOO_LONG": "Името на приставката е твърде дълго",
+				"VERSION_REQUIRED": "Версията е задължителна",
+				"VERSION_FORMAT": "Невалиден формат на версията",
+				"DESCRIPTION_TOO_LONG": "Описанието е твърде дълго",
+				"URL_REQUIRED": "URL адресът е задължителен",
+				"INVALID_URL": "Невалиден формат на URL адреса",
+				"PACKAGE_NAME_REQUIRED": "Името на пакета е задължително",
+				"INVALID_PACKAGE_NAME": "Невалиден формат на името на пакета",
+				"INVALID_SCOPE": "Невалиден формат на обхвата",
+				"AUTHOR_TOO_LONG": "Името на автора е твърде дълго",
+				"LICENSE_TOO_LONG": "Полето за лиценз е твърде дълго",
+				"FAILED": "Проверката не бе успешна",
+				"CHANGELOG_TOO_SHORT": "Измененията са твърде кратки",
+				"CHANGELOG_REQUIRED": "Измененията са задължителни"
+			},
+			"TYPE": "Тип на приставката",
+			"TYPE_PLACEHOLDER": "Изберете тип на приставката",
+			"TYPES": {
+				"DESKTOP": "Настолен",
+				"WEB": "Уеб",
+				"MOBILE": "Мобилен"
+			},
+			"VERSION": "Версия",
+			"STATUS": "Статус",
+			"STATUSES": {
+				"ACTIVE": "Активен",
+				"INACTIVE": "Неактивен",
+				"DEPRECATED": "Остарял",
+				"ARCHIVED": "Архивиран"
+			},
+			"DESCRIPTION": "Описание",
+			"DESCRIPTION_PLACEHOLDER": "Въведете описание на приставката",
+			"SOURCE": "Източник",
+			"SOURCE_TYPE": "Тип на източника",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "CDN URL",
+				"INTEGRITY": "Цялост",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "Име на NPM пакет",
+				"REGISTRY": "NPM регистър",
+				"SCOPE": "Обхват",
+				"AUTH_TOKEN": "Токен за удостоверяване"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Провлачете и пуснете файла тук",
+				"BROWSE": "Преглед",
+				"REMOVE": "Премахване на файл",
+				"RESTRICTIONS": "Позволени са само .zip файлове",
+				"FILE": "Файл"
+			},
+			"METADATA": {
+				"TITLE": "Метаданни",
+				"AUTHOR": "Автор",
+				"AUTHOR_PLACEHOLDER": "Въведете име на автора",
+				"LICENSE": "Лиценз",
+				"LICENSE_PLACEHOLDER": "Въведете лиценз",
+				"HOMEPAGE": "Начална страница",
+				"HOMEPAGE_PLACEHOLDER": "Въведете URL адрес на началната страница",
+				"REPOSITORY": "Хранилище",
+				"REPOSITORY_PLACEHOLDER": "Въведете URL адрес на хранилището"
+			},
+			"OR": "Или",
+			"RELEASE_DATE": "Дата на издаване",
+			"CHANGELOG": "Промени",
+			"CHANGELOG_PLACEHOLDER": "Въведете промени"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Статистика на използване",
+			"DOWNLOAD_COUNT": "Брой изтегляния",
+			"LAST_DOWNLOADED": "Последно изтеглено",
+			"UPLOADED_BY": "Качено от",
+			"UPLOADED_AT": "Качено на",
+			"SECURITY_INFO": "Информация за сигурност",
+			"CHECKSUM": "Контролна сума",
+			"SIGNATURE": "Подпис",
+			"INSTALLED": "Инсталирани",
+			"HIDDEN_FOR_SECURITY": "Скрита за сигурностни причини"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Открийте",
+			"INSTALLED": "Инсталирани",
+			"VERSION_HISTORY": "История на версиите"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "Качване на нов плъгин",
+			"OFFLINE": "В момента сте офлайн/изключен ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Деактивиране на приставката",
+				"DESCRIPTION": "Сигурни ли сте, че искате да деактивирате тази приставка?",
+				"CONFIRM": "Деактивирай"
+			},
+			"UNINSTALL": {
+				"TITLE": "Деинсталиране на приставката",
+				"DESCRIPTION": "Сигурни ли сте, че искате да деинсталирате тази приставка?",
+				"CONFIRM": "Деинсталирай"
+			},
+			"DELETE": {
+				"TITLE": "Изтриване на приставка",
+				"DESCRIPTION": "Сигурни ли сте, че искате да изтриете тази приставка?",
+				"CONFIRM": "Изтрий"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "Актуализиране на версия v{{number}}",
+					"DESCRIPTION": "Сигурни ли сте, че искате да актуализирате тази приставка?",
+					"CONFIRM": "Актуализиране"
+				},
+				"CREATE": {
+					"TITLE": "Създаване на нова версия за {{name}}",
+					"DESCRIPTION": "Сигурни ли сте, че искате да създадете тази версия?",
+					"CONFIRM": "Създай"
+				},
+				"DELETE": {
+					"TITLE": "Изтриване на версия",
+					"DESCRIPTION": "Сигурни ли сте, че искате да изтриете тази версия?",
+					"CONFIRM": "Изтрий"
+				},
+				"RESTORE": {
+					"TITLE": "Възстановяване на версия",
+					"DESCRIPTION": "Сигурни ли сте, че искате да възстановите тази версия?",
+					"CONFIRM": "Възстанови"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "Версия на приставката v{{number}} е създадена успешно!",
+					"UPDATED": "Версия на приставката v{{number}} е обновена успешно!",
+					"DELETED": "Версия на приставката е изтрита успешно!",
+					"RESTORED": "Версия на приставката е възстановена успешно!"
+				},
+				"UPLOADED": "Приставката е качена успешно!",
+				"UPDATED": "Приставката е обновена успешно!",
+				"DELETED": "Приставката е изтрита успешно!",
+				"INSTALLED": "Приставката е инсталирана успешно!",
+				"UNINSTALLED": "Приставката е деинсталирана успешно!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "Добавяне на нова версия на приставката...",
+					"UPDATING": "Обновяване на версия на приставката...",
+					"DELETING": "Изтриване на версия на приставката...",
+					"RESTORING": "Възстановяване на версия на приставката..."
+				},
+				"UPLOADING": "Качване на приставка...",
+				"UPDATING": "Обновяване на версия на приставката...",
+				"DELETING": "Изтриване на приставка...",
+				"INSTALLING": "Инсталиране на приставка...",
+				"UNINSTALLING": "Деинсталиране на приставка..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "Неуспешно възстановяване на версия на приставката. Моля, опитайте отново!"
+				},
+				"UPLOAD": "Неуспешно качване на приставка. Моля, опитайте отново!",
+				"NOT_FOUND": "Приставка с ID {{ id }} не е намерена.",
+				"INSTALL": "Неуспешно инсталиране на приставка. Моля, опитайте отново!",
+				"REVERT_INSTALLATION": "Неуспешен обратен ход на инсталацията!"
+			}
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Сървърът е недостъпен",
+		"DESCRIPTION": "Сървърът на {{companySite}} в момента е недостъпен. Това може да се дължи на планирана поддръжка или неочакван престой.",
+		"CONNECTING": "Автоматично опит за повторно свързване...",
+		"HINT": "Статус: Опит за установяване на връзка със сървърите на {{companySite}}. Код на грешката: 503."
 	}
 }

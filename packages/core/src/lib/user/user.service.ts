@@ -124,13 +124,11 @@ export class UserService extends TenantAwareCrudService<User> {
 
 		// Fetch the user along with requested relations (excluding employee).
 		const user = await this.findMe(options.relations);
-
 		console.log('findMe found User with Id:', user.id);
 
 		// Fetch employee details if 'includeEmployee' is true
 		if (options.includeEmployee) {
 			const relations = options.includeOrganization ? { organization: true } : [];
-
 			employee = await this._employeeService.findOneByUserId(user.id, { relations });
 		}
 
@@ -147,7 +145,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @param relations An array of strings indicating which relations of the user to include.
 	 * @returns A Promise resolving to the IUser object with the desired relations.
 	 */
-	private async findMe(relations: string[]): Promise<IUser> {
+	private async findMe(relations: string[] = []): Promise<IUser> {
 		try {
 			// Get the current user's ID from the RequestContext
 			const userId = RequestContext.currentUserId();
@@ -165,7 +163,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @param id
 	 * @returns
 	 */
-	public async markEmailAsVerified(id: IUser['id']) {
+	public async markEmailAsVerified(id: ID) {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroOrmRepository.nativeUpdate(
@@ -436,7 +434,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @param {string} userId - The ID of the user for whom to set the refresh token.
 	 * @returns {Promise<void>} - A promise that resolves once the refresh token is set.
 	 */
-	async setCurrentRefreshToken(refreshToken: string, userId: string): Promise<UpdateResult> {
+	async setCurrentRefreshToken(refreshToken: string, userId: ID): Promise<UpdateResult> {
 		try {
 			// Hash the refresh token using bcrypt if refreshToken is provided
 			if (refreshToken) {
@@ -464,12 +462,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			const tenantId = RequestContext.currentTenantId();
 
 			try {
-				await this.typeOrmRepository.update(
-					{ id: userId, tenantId },
-					{
-						refreshToken: null
-					}
-				);
+				await this.typeOrmRepository.update({ id: userId, tenantId }, { refreshToken: null });
 			} catch (error) {
 				console.log('Error while remove refresh token', error);
 			}
@@ -576,7 +569,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @param options
 	 * @returns
 	 */
-	public async delete(userId: IUser['id']): Promise<DeleteResult> {
+	public async delete(userId: ID): Promise<DeleteResult> {
 		// Do not allow user to delete account in Demo server.
 		if (!!this._configService.get('demo')) {
 			throw new ForbiddenException('Do not allow user to delete account in Demo server');

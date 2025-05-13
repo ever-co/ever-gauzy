@@ -1,7 +1,7 @@
 import { EventSubscriber } from 'typeorm';
 import { OrganizationContact } from './organization-contact.entity';
-import { getDummyImage } from './../core/utils';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
+import { getDummyImage } from './../core/utils';
 
 @EventSubscriber()
 export class OrganizationContactSubscriber extends BaseEntityEventSubscriber<OrganizationContact> {

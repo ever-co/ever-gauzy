@@ -1,11 +1,12 @@
 import * as dotenv from 'dotenv';
+dotenv.config();
+
 import { PlatformLogoGenerator } from './concrete-generators/platform-logo-generator';
 import { DesktopIconGenerator } from './concrete-generators/desktop-icon-generator';
 import { DesktopDefaultIconGenerator } from './concrete-generators/desktop-default-icon-generator';
 import { NoInternetLogoGenerator } from './concrete-generators/no-internet-logo-generator';
 import { DesktopEnvironmentManager } from '../electron-desktop-environment/desktop-environment-manager';
 
-dotenv.config();
 
 export class IconFactory {
 	public static async generateDefaultIcons(): Promise<void> {

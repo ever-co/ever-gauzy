@@ -16,9 +16,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-positions',
-	templateUrl: './positions.component.html',
-	styleUrls: ['positions.component.scss']
+    selector: 'ga-positions',
+    templateUrl: './positions.component.html',
+    styleUrls: ['positions.component.scss'],
+    standalone: false
 })
 export class PositionsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	showAddCard: boolean;
@@ -181,8 +182,7 @@ export class PositionsComponent extends PaginationFilterBaseComponent implements
 
 		if (validateUniqueString(existingNames, name)) {
 			this.toastrService.danger(
-				this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ALREADY_EXISTS'),
-				name
+				this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ALREADY_EXISTS', { name })
 			);
 			return;
 		}
@@ -211,8 +211,7 @@ export class PositionsComponent extends PaginationFilterBaseComponent implements
 
 			if (validateUniqueString(existingNames, name)) {
 				this.toastrService.danger(
-					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ALREADY_EXISTS'),
-					name
+					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ALREADY_EXISTS', { name })
 				);
 				return;
 			}

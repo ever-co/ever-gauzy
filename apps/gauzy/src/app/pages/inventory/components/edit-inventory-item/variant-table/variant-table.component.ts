@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { LocalDataSource } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -22,13 +22,11 @@ export interface SelectedProductVariant {
 @Component({
 	selector: 'ngx-variant-table',
 	templateUrl: './variant-table.component.html',
-	styleUrls: ['./variant-table.component.scss']
+	styleUrls: ['./variant-table.component.scss'],
+	standalone: false
 })
 export class VariantTableComponent extends TranslationBaseComponent implements OnInit {
-	@ViewChild('variantTable') variantTable;
-
 	variants: IProductVariant[] = [];
-
 	selectedItem: IProductVariant;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
@@ -55,6 +53,7 @@ export class VariantTableComponent extends TranslationBaseComponent implements O
 
 				this.variants = res.items;
 			}
+
 			this.loading = false;
 			this.smartTableSource.load(this.variants);
 		});
@@ -65,6 +64,7 @@ export class VariantTableComponent extends TranslationBaseComponent implements O
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
 			columns: {
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
@@ -74,9 +74,9 @@ export class VariantTableComponent extends TranslationBaseComponent implements O
 				options: {
 					title: this.getTranslation('INVENTORY_PAGE.OPTIONS'),
 					type: 'string',
-					valuePrepareFunction: (_, variant) => {
-						return variant.options && variant.options.length > 0
-							? variant.options.map((option) => option.name).join(', ')
+					valuePrepareFunction: (_, options) => {
+						return options.value && options.value.length > 0
+							? options.value.map((option) => option.name).join(', ')
 							: this.getTranslation('INVENTORY_PAGE.NO_OPTIONS_LABEL');
 					}
 				},
@@ -104,12 +104,8 @@ export class VariantTableComponent extends TranslationBaseComponent implements O
 	}
 
 	async selectItem({ isSelected, data }) {
-		const selectedItem = isSelected ? data : null;
-		if (this.variantTable) {
-			this.variantTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedItem = selectedItem;
+		this.selectedItem = isSelected ? data : null;
 	}
 
 	async delete() {

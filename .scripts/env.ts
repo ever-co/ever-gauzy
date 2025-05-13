@@ -133,6 +133,14 @@ export type Env = Readonly<{
 
 	REGISTER_URL: string;
 	FORGOT_PASSWORD_URL: string;
+
+	AGENT_APP_NAME: string;
+	AGENT_APP_DESCRIPTION: string;
+	AGENT_APP_REPO_OWNER: string;
+	AGENT_APP_REPO_NAME: string;
+	AGENT_APP_ID: string;
+	AGENT_APP_WELCOME_TITLE: string;
+	AGENT_APP_WELCOME_CONTENT: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -331,7 +339,28 @@ export const env: Env = cleanEnv(
 		DESKTOP_API_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
 
 		REGISTER_URL: str({ default: 'https://app.gauzy.co/#/auth/register' }),
-		FORGOT_PASSWORD_URL: str({ default: 'https://app.gauzy.co/#/auth/request-password' })
+		FORGOT_PASSWORD_URL: str({ default: 'https://app.gauzy.co/#/auth/request-password' }),
+		AGENT_APP_NAME: str({
+			default: 'ever-gauzy-agent'
+		}),
+		AGENT_APP_ID: str({
+			default: 'com.ever.gauzyagent'
+		}),
+		AGENT_APP_DESCRIPTION: str({
+			default: 'Ever Gauzy Agent'
+		}),
+		AGENT_APP_REPO_NAME: str({
+			default: 'ever-gauzy-agent'
+		}),
+		AGENT_APP_REPO_OWNER: str({
+			default: 'ever-co'
+		}),
+		AGENT_APP_WELCOME_TITLE: str({
+			default: ''
+		}),
+		AGENT_APP_WELCOME_CONTENT: str({
+			default: ''
+		})
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );

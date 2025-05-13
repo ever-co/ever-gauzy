@@ -169,10 +169,17 @@
 		"ADD_MODULE": "إضافة وحدة",
 		"SHARE": "مشاركة",
 		"GET_INFO": "الحصول على المعلومات",
-		"RETRY": "إعادة المحاولة"
+		"RETRY": "إعادة المحاولة",
+		"UPLOAD": "رفع",
+		"MARKETPLACE": "السوق",
+		"ADD_VERSION": "اضافة نسخة",
+		"READ_MORE": "قراءة المزيد",
+		"READ_LESS": "قراءة أقل",
+		"RECOVER": "استعادة"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "لا يوجد سجل",
 			"RECEIVE_ESTIMATE": "لم تتلقَ أي تقدير.",
 			"INCOME": "لم تقم بإنشاء أي دخل.",
 			"EXPENSE_CATEGORY": "لم تقم بإنشاء أي فئة نفقات.",
@@ -215,7 +222,9 @@
 			"EVENT_TYPE": "لم تقم بإنشاء أي نوع فعالية.",
 			"PRODUCT_TYPE_NO_DATA": "لم تقم بإنشاء أي نوع منتج.",
 			"TEAM_DASHBOARD": "ليس لديك أي فرق",
-			"PLUGIN": "لم تقم بتثبيت أي ملحق."
+			"PLUGIN": "لم تقم بتثبيت أي ملحق.",
+			"PLUGIN_MARKETPLACE": "هذا المكون الإضافي غير متوفر في السوق",
+			"LOADING": "جار التحميل"
 		},
 		"TRANSACTION_TYPE": "النوع",
 		"AMOUNT": "المبلغ",
@@ -1041,7 +1050,44 @@
 			"FEATURE_ORGANIZATION": "تنظيم الميزات",
 			"EXPORT_DATA": "تصدير البيانات",
 			"IMPORT_DATA": "استيراد البيانات",
-			"ALL_ENTITIES": "جميع الكيانات"
+			"ALL_ENTITIES": "جميع الكيانات",
+			"ACTIVITY_LOG": "سجل النشاط",
+			"DAILY_PLAN": "الخطة اليومية",
+			"ENTITY_SUBSCRIPTION": "اشتراك الكيان",
+			"FAVORITE": "المفضل",
+			"MENTION": "إشارة",
+			"REACTION": "رد فعل",
+			"RESOURCE_LINK": "رابط المورد",
+			"SCREENING_TASK": "مهمة الفحص",
+			"SOCIAL_ACCOUNT": "الحساب الاجتماعي",
+			"CHANGELOG": "سجل التغييرات",
+			"ISSUE_TYPE": "نوع المشكلة",
+			"TASK_ESTIMATION": "تقدير المهمة",
+			"TASK_LINKED_ISSUE": "مشكلة مرتبطة بالمهمة",
+			"TASK_PRIORITY": "أولوية المهمة",
+			"TASK_RELATED_ISSUE": "مشكلة ذات صلة بالمهمة",
+			"TASK_SIZE": "حجم المهمة",
+			"TASK_STATUS": "حالة المهمة",
+			"TASK_VERSION": "إصدار المهمة",
+			"TASK_RELATED_ISSUE_TYPE": "نوع المشكلة ذات الصلة بالمهمة",
+			"ORGANIZATION_PROJECT_EMPLOYEE": "موظف مشروع المنظمة",
+			"ORGANIZATION_PROJECT_MODULE": "وحدة مشروع المنظمة",
+			"ORGANIZATION_PROJECT_MODULE_EMPLOYEE": "موظف وحدة مشروع المنظمة",
+			"ORGANIZATION_SPRINT_EMPLOYEE": "موظف سباق المنظمة",
+			"ORGANIZATION_SPRINT_TASK": "مهمة سباق المنظمة",
+			"ORGANIZATION_SPRINT_TASK_HISTORY": "تاريخ مهمة سباق المنظمة",
+			"ORGANIZATION_TASK_SETTING": "إعداد مهمة المنظمة",
+			"ORGANIZATION_TEAM_JOIN_REQUEST": "طلب الانضمام إلى فريق المنظمة",
+			"ORGANIZATION_GITHUB_REPOSITORY": "مستودع GitHub للمنظمة",
+			"ORGANIZATION_GITHUB_REPOSITORY_ISSUE": "مشكلة مستودع GitHub للمنظمة",
+			"EMPLOYEE_AVAILABILITY": "توفر الموظف",
+			"EMPLOYEE_NOTIFICATION": "إشعار الموظف",
+			"EMPLOYEE_PHONE": "هاتف الموظف",
+			"APPOINTMENT_EMPLOYEE": "تعيين الموظف",
+			"EMPLOYEE_NOTIFICATION_SETTING": "إعداد إشعار الموظف",
+			"PRODUCT_REVIEW": "مراجعة المنتج",
+			"TASK_LINKED_ISSUES": "المشكلات المرتبطة",
+			"TASK_VIEW": "عرض المهمة"
 		},
 		"TAGS": "الوسوم",
 		"LANGUAGE": "اللغة",
@@ -2036,6 +2082,7 @@
 			"TIME_OFF_POLICY_VIEW": "View Time Off Policy",
 			"TIME_OFF_POLICY_EDIT": "Edit Time Off Policy",
 			"TIME_OFF_POLICY_DELETE": "Delete Time Off Policy",
+			"SELECT_EMPLOYEE": "تحديد الموظف",
 			"CHANGE_SELECTED_EMPLOYEE": "تغيير الموظف المحدد",
 			"CHANGE_SELECTED_CANDIDATE": "تغيير المرشح المحدد",
 			"CHANGE_SELECTED_ORGANIZATION": "تغيير المنظمة المحددة",
@@ -2594,6 +2641,7 @@
 		"TASKS_STATUS": "الحالة",
 		"TASK_PRIORITY": "الأولوية",
 		"TASK_SIZE": "حجم",
+		"PARENT_TASK": "المهمة الرئيسية",
 		"TODO": "الكل",
 		"OPEN": "فتح",
 		"READY_FOR_REVIEW": "جاهز للمراجعة",
@@ -3559,6 +3607,7 @@
 			"APPROVAL_POLICY_CREATED": "تمت إضافة سياسة الموافقة '{{ name }}'",
 			"APPROVAL_POLICY_UPDATED": "تم تغيير سياسة الموافقة \"{{ name }}\"",
 			"APPROVAL_POLICY_DELETED": "تم إزالة سياسة الموافقة '{{ name }}'",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "سياسة الموافقة '{{ name }}' موجودة بالفعل",
 			"CANDIDATE_CREATED": "تمت إضافة المرشح '{{ name }}' إلى '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "تم تعيين المرشح '{{ name }}' كمؤرشف.",
 			"CANDIDATE_REJECTED": "تم تعيين المرشح '{{ name }}' كمرفوض.",
@@ -3676,7 +3725,8 @@
 			"EDIT_POLICY": "تم تغيير سياسة الاستراحة '{{ name }}'",
 			"DELETE_POLICY": "سياسة إجازة '{{ name }}' تمت إزالتها",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "غير قادر على إنشاء سجل سياسة"
+			"SAVE_ERROR": "غير قادر على إنشاء سجل سياسة",
+			"POLICY_EXISTS": "سياسة الإجازة '{{ name }}' موجودة بالفعل"
 		},
 		"USER": {
 			"EDIT_PROFILE": "تم تحديث ملفك الشخصي بنجاح."
@@ -3996,7 +4046,14 @@
 			},
 			"VERSION": "الإصدار",
 			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "قم بتثبيت المكونات الإضافية من الملفات المحلية أو CDN. محلي للمكونات الإضافية المخصصة/الخاصة، وCDN للمكونات العامة. اختر بناءً على احتياجاتك.",
-			"ADD_PLUGIN_CDN_DESCRIPTION": "تتيح لك التثبيت من CDN الوصول بسهولة إلى المكونات الإضافية المتاحة علنًا."
+			"ADD_PLUGIN_CDN_DESCRIPTION": "تتيح لك التثبيت من CDN الوصول بسهولة إلى المكونات الإضافية المتاحة علنًا.",
+			"ADD_PLUGIN_NPM_DESCRIPTION": "يتيح تثبيت NPM الوصول إلى الإضافات المتاحة للعموم والخاصة.",
+			"PACKAGE_NAME": "اسم حزمة NPM",
+			"PACKAGE_VERSION": "إصدار حزمة NPM",
+			"REGISTRY": "سجل NPM",
+			"AUTH_TOKEN": "رمز المصادقة",
+			"PRIVATE_REGISTRY_URL": "رابط السجل الخاص",
+			"PLUGIN_INSTALL_CDN_ERROR": "يجب ألا يكون عنوان URL للخادم فارغًا."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "تجاوز الحد الأسبوعي",
 		"OF_HRS": "من {{ limit }} ساعة",
@@ -4750,6 +4807,189 @@
 				"SHARE_NOT_ALLOWED": "المشاركة غير مسموحة",
 				"UNEXPECTED_SHARING_ERROR": "خطأ غير متوقع في المشاركة"
 			}
+		},
+		"FORM": {
+			"TITLE": "تحميل الإضافة",
+			"BASIC_INFO": "المعلومات الأساسية",
+			"NAME": "اسم الإضافة",
+			"NAME_PLACEHOLDER": "أدخل اسم الإضافة",
+			"VALIDATION": {
+				"NAME_REQUIRED": "اسم الإضافة مطلوب",
+				"NAME_TOO_LONG": "اسم الإضافة طويل جدًا",
+				"VERSION_REQUIRED": "الإصدار مطلوب",
+				"VERSION_FORMAT": "تنسيق الإصدار غير صالح",
+				"DESCRIPTION_TOO_LONG": "الوصف طويل جدًا",
+				"URL_REQUIRED": "الرابط مطلوب",
+				"INVALID_URL": "تنسيق الرابط غير صالح",
+				"PACKAGE_NAME_REQUIRED": "اسم الحزمة مطلوب",
+				"INVALID_PACKAGE_NAME": "تنسيق اسم الحزمة غير صالح",
+				"INVALID_SCOPE": "تنسيق النطاق غير صالح",
+				"AUTHOR_TOO_LONG": "اسم المؤلف طويل جدًا",
+				"LICENSE_TOO_LONG": "حقل الترخيص طويل جدًا",
+				"FAILED": "فشل التحقق",
+				"CHANGELOG_TOO_SHORT": "سجل التغييرات قصير جدًا",
+				"CHANGELOG_REQUIRED": "سجل التغييرات مطلوب"
+			},
+			"TYPE": "نوع الإضافة",
+			"TYPE_PLACEHOLDER": "اختر نوع الإضافة",
+			"TYPES": {
+				"DESKTOP": "سطح المكتب",
+				"WEB": "ويب",
+				"MOBILE": "جوال"
+			},
+			"VERSION": "الإصدار",
+			"STATUS": "الحالة",
+			"STATUSES": {
+				"ACTIVE": "نشط",
+				"INACTIVE": "غير نشط",
+				"DEPRECATED": "مهمل",
+				"ARCHIVED": "مؤرشف"
+			},
+			"DESCRIPTION": "الوصف",
+			"DESCRIPTION_PLACEHOLDER": "أدخل وصف الإضافة",
+			"SOURCE": "المصدر",
+			"SOURCE_TYPE": "نوع المصدر",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "رابط CDN",
+				"INTEGRITY": "التكامل",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "اسم حزمة NPM",
+				"REGISTRY": "سجل NPM",
+				"SCOPE": "النطاق",
+				"AUTH_TOKEN": "رمز المصادقة"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "اسحب وأفلت ملفك هنا",
+				"BROWSE": "تصفح",
+				"REMOVE": "إزالة الملف",
+				"RESTRICTIONS": "يُسمح فقط بملفات .zip",
+				"FILE": "ملف"
+			},
+			"METADATA": {
+				"TITLE": "البيانات الوصفية",
+				"AUTHOR": "المؤلف",
+				"AUTHOR_PLACEHOLDER": "أدخل اسم المؤلف",
+				"LICENSE": "الترخيص",
+				"LICENSE_PLACEHOLDER": "أدخل الترخيص",
+				"HOMEPAGE": "الصفحة الرئيسية",
+				"HOMEPAGE_PLACEHOLDER": "أدخل رابط الصفحة الرئيسية",
+				"REPOSITORY": "المستودع",
+				"REPOSITORY_PLACEHOLDER": "أدخل رابط المستودع"
+			},
+			"OR": "أو",
+			"RELEASE_DATE": "تاريخ الاصدار",
+			"CHANGELOG": "تغييرات",
+			"CHANGELOG_PLACEHOLDER": "ادخل التغييرات"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "إحصائيات الاستخدام",
+			"DOWNLOAD_COUNT": "عدد التنزيلات",
+			"LAST_DOWNLOADED": "آخر تنزيل",
+			"UPLOADED_BY": "تم الرفع بواسطة",
+			"UPLOADED_AT": "تم الرفع في",
+			"SECURITY_INFO": "معلومات الأمان",
+			"CHECKSUM": "المجموع الاختباري",
+			"SIGNATURE": "التوقيع",
+			"INSTALLED": "مثبت",
+			"HIDDEN_FOR_SECURITY": "مخفية لسببات امنية"
+		},
+		"LAYOUT": {
+			"DISCOVER": "اكتشف",
+			"INSTALLED": "مثبت",
+			"VERSION_HISTORY": "سجل الإصدارات"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "رفع ملحق جديد",
+			"OFFLINE": "أنت غير متصل حالياً ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "إلغاء تنشيط الإضافة",
+				"DESCRIPTION": "هل أنت متأكد أنك تريد إلغاء تنشيط هذه الإضافة؟",
+				"CONFIRM": "إلغاء التنشيط"
+			},
+			"UNINSTALL": {
+				"TITLE": "إلغاء تثبيت الإضافة",
+				"DESCRIPTION": "هل أنت متأكد أنك تريد إلغاء تثبيت هذه الإضافة؟",
+				"CONFIRM": "إلغاء التثبيت"
+			},
+			"DELETE": {
+				"TITLE": "حذف الملحق",
+				"DESCRIPTION": "هل أنت متأكد أنك تريد حذف هذا الملحق؟",
+				"CONFIRM": "حذف"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "تحديث الإصدار v{{number}}",
+					"DESCRIPTION": "هل أنت متأكد أنك تريد تحديث هذا الملحق؟",
+					"CONFIRM": "تحديث"
+				},
+				"CREATE": {
+					"TITLE": "إنشاء إصدار جديد لـ {{name}}",
+					"DESCRIPTION": "هل أنت متأكد أنك تريد إنشاء هذا الإصدار؟",
+					"CONFIRM": "إنشاء"
+				},
+				"DELETE": {
+					"TITLE": "حذف الإصدار",
+					"DESCRIPTION": "هل أنت متأكد أنك تريد حذف هذا الإصدار؟",
+					"CONFIRM": "حذف"
+				},
+				"RESTORE": {
+					"TITLE": "استعادة الإصدار",
+					"DESCRIPTION": "هل أنت متأكد أنك تريد استعادة هذا الإصدار؟",
+					"CONFIRM": "استعادة"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "تم إنشاء إصدار الملحق v{{number}} بنجاح!",
+					"UPDATED": "تم تحديث إصدار الملحق v{{number}} بنجاح!",
+					"DELETED": "تم حذف إصدار الملحق بنجاح!",
+					"RESTORED": "تم استعادة إصدار الملحق بنجاح!"
+				},
+				"UPLOADED": "تم رفع الملحق بنجاح!",
+				"UPDATED": "تم تحديث الملحق بنجاح!",
+				"DELETED": "تم حذف الملحق بنجاح!",
+				"INSTALLED": "تم تثبيت الملحق بنجاح!",
+				"UNINSTALLED": "تم إلغاء تثبيت الملحق بنجاح!"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "جاري إضافة إصدار جديد للملحق...",
+					"UPDATING": "جاري تحديث إصدار الملحق...",
+					"DELETING": "جاري حذف إصدار الملحق...",
+					"RESTORING": "جاري استعادة إصدار الملحق..."
+				},
+				"UPLOADING": "جاري رفع الملحق...",
+				"UPDATING": "جاري تحديث إصدار الملحق...",
+				"DELETING": "جاري حذف الملحق...",
+				"INSTALLING": "جاري تثبيت الملحق...",
+				"UNINSTALLING": "جاري إلغاء تثبيت الملحق..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "فشل في استعادة إصدار الملحق. يرجى المحاولة مرة أخرى!"
+				},
+				"UPLOAD": "فشل في رفع الملحق. يرجى المحاولة مرة أخرى!",
+				"NOT_FOUND": "الملحق بالمعرف {{ id }} غير موجود.",
+				"INSTALL": "فشل في تثبيت الملحق. يرجى المحاولة مرة أخرى!",
+				"REVERT_INSTALLATION": "فشل في التراجع عن التثبيت!"
+			}
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "الخادم غير متاح",
+		"DESCRIPTION": "لا يمكن الوصول إلى خادم {{companySite}} حاليًا. قد يكون هذا بسبب صيانة مجدولة أو توقف غير متوقع.",
+		"CONNECTING": "إعادة محاولة الاتصال تلقائيًا...",
+		"HINT": "الحالة: محاولة الاتصال بخوادم {{companySite}}. رمز الخطأ: 503."
 	}
 }

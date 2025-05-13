@@ -408,7 +408,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		}
 
 		// Check for permission CHANGE_SELECTED_EMPLOYEE
-		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+		if (
+			!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+			!RequestContext.hasPermission(PermissionsEnum.SELECT_EMPLOYEE)
+		) {
 			// Filter by current employee ID if the permission is not present
 			const employeeId = RequestContext.currentEmployeeId();
 			qb.andWhere(p(`"${qb.alias}"."id" = :employeeId`), { employeeId });

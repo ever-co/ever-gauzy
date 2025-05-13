@@ -1,4 +1,4 @@
-@import '../menu-item/menu-item.component.scss';
+@use '../menu-item/menu-item.component';
 
 [nbButton].plus.appearance-outline.size-tiny {
     padding: 2px 3px;

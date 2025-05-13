@@ -59,9 +59,14 @@ export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
  */
 export const parseTwitterConfig = (configService: ConfigService): Record<string, any> => {
 	// Retrieve Twitter configuration values from the configuration service
-	const consumerKey = configService.get<string>('twitter.consumerKey');
-	const consumerSecret = configService.get<string>('twitter.consumerSecret');
-	const callbackURL = configService.get<string>('twitter.callbackURL');
+	const { consumerKey, consumerSecret, callbackURL } = {
+		// Retrieve the consumer key from the configuration.
+		consumerKey: configService.get<string>('twitter.consumerKey'),
+		// Retrieve the consumer secret from the configuration.
+		consumerSecret: configService.get<string>('twitter.consumerSecret'),
+		// Retrieve the callback URL from the configuration.
+		callbackURL: configService.get<string>('twitter.callbackURL')
+	};
 
 	// If any of the required configuration values are missing, log a warning.
 	if (!consumerKey || !consumerSecret || !callbackURL) {

@@ -7,9 +7,10 @@ import { ChangelogService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-whats-new',
-	templateUrl: './whats-new.component.html',
-	styleUrls: ['./whats-new.component.scss']
+    selector: 'ngx-whats-new',
+    templateUrl: './whats-new.component.html',
+    styleUrls: ['./whats-new.component.scss'],
+    standalone: false
 })
 export class NgxWhatsNewComponent implements OnInit {
 	learnMore: string;

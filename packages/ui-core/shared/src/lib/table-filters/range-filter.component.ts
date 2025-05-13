@@ -1,8 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
-import { Subscription } from 'rxjs/internal/Subscription';
 import { DefaultFilter } from 'angular2-smart-table';
+import { debounceTime, distinctUntilChanged, filter, Subscription, tap } from 'rxjs';
 
 @Component({
 	selector: 'ga-range-filter-selector',
@@ -25,7 +24,8 @@ import { DefaultFilter } from 'angular2-smart-table';
 				aria-label="Maximum value"
 			/>
 		</div>
-	`
+	`,
+	standalone: false
 })
 export class RangeFilterComponent extends DefaultFilter implements OnInit, OnDestroy {
 	public rangeControl = new FormGroup({
@@ -39,22 +39,21 @@ export class RangeFilterComponent extends DefaultFilter implements OnInit, OnDes
 	}
 
 	ngOnInit() {
-		// Subscribe to both min and max value changes
+		// Subscribe to both min and max value changes with optimized operators
 		this.subscription = this.rangeControl.valueChanges
 			.pipe(
 				debounceTime(this.debounceTime), // Reduce unnecessary requests
-				distinctUntilChanged(), // Avoid redundant filtering
-				tap(({ min, max }) => {
-					if (min !== null || max !== null) {
-						this.column.filterFunction({ min, max }, this.column.id);
-					}
-				})
+				distinctUntilChanged((prev, curr) => prev.min === curr.min && prev.max === curr.max), // Compare min and max values
+				filter(({ min, max }) => min !== null || max !== null), // Only process when at least one value is provided
+				tap(({ min, max }) => this.column.filterFunction({ min, max }, this.column.id))
 			)
 			.subscribe();
 	}
 
 	ngOnDestroy() {
 		// Cleanup subscription to avoid memory leaks
-		this.subscription.unsubscribe();
+		if (this.subscription) {
+			this.subscription.unsubscribe();
+		}
 	}
 }

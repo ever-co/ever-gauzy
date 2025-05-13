@@ -1,4 +1,4 @@
-import { ManyToOne, OneToMany, OneToOne, ManyToMany } from "@mikro-orm/core";
+import { ManyToOne, OneToMany, OneToOne, ManyToMany } from '@mikro-orm/core';
 
 /**
  * Mikro-ORM Decorator Aliases.
@@ -7,8 +7,8 @@ import { ManyToOne, OneToMany, OneToOne, ManyToMany } from "@mikro-orm/core";
  * It simplifies import statements and enhances code readability.
  */
 export {
-    ManyToOne as MikroOrmManyToOne,
-    OneToMany as MikroOrmOneToMany,
-    OneToOne as MikroOrmOneToOne,
-    ManyToMany as MikroOrmManyToMany,
+	ManyToOne as MikroOrmManyToOne,
+	OneToMany as MikroOrmOneToMany,
+	OneToOne as MikroOrmOneToOne,
+	ManyToMany as MikroOrmManyToMany
 };

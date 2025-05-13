@@ -1,33 +1,37 @@
-import { Component, inject, NgZone, OnInit, ViewChild } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
+import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Angular2SmartTableComponent, Cell, LocalDataSource } from 'angular2-smart-table';
-import { BehaviorSubject, concatMap, filter, from, Observable, switchMap, tap } from 'rxjs';
-import { ToastrNotificationService } from '../../../../services';
-import { PluginElectronService } from '../../services/plugin-electron.service';
+import { BehaviorSubject, concatMap, filter, Observable, take, tap } from 'rxjs';
+import { PluginActions } from '../+state/plugin.action';
+import { PluginQuery } from '../+state/plugin.query';
+import { AlertComponent } from '../../../../dialogs/alert/alert.component';
 import { IPlugin } from '../../services/plugin-loader.service';
 import { AddPluginComponent } from '../add-plugin/add-plugin.component';
 import { PluginStatusComponent } from './plugin-status/plugin-status.component';
 import { PluginUpdateComponent } from './plugin-update/plugin-update.component';
+import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
+import { PluginInstallationQuery } from '../plugin-marketplace/+state/queries/plugin-installation.query';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-plugin-list',
-	templateUrl: './plugin-list.component.html',
-	styleUrls: ['./plugin-list.component.scss']
+    selector: 'ngx-plugin-list',
+    templateUrl: './plugin-list.component.html',
+    styleUrls: ['./plugin-list.component.scss'],
+    standalone: false
 })
-export class PluginListComponent implements OnInit {
+export class PluginListComponent implements OnInit, OnDestroy {
 	private readonly translateService = inject(TranslateService);
-	private readonly pluginElectronService = inject(PluginElectronService);
-	private readonly toastrNotificationService = inject(ToastrNotificationService);
+	private readonly action = inject(Actions);
+	public readonly query = inject(PluginQuery);
+	public readonly installationQuery = inject(PluginInstallationQuery);
 	private readonly dialog = inject(NbDialogService);
 	private readonly router = inject(Router);
-	private readonly ngZone = inject(NgZone);
 
 	public plugins$ = new BehaviorSubject<IPlugin[]>([]);
-	public plugin: IPlugin = null;
 	private _sourceData$ = new BehaviorSubject(new LocalDataSource([]));
 
 	public get sourceData$(): Observable<LocalDataSource> {
@@ -88,73 +92,70 @@ export class PluginListComponent implements OnInit {
 	};
 
 	ngOnInit(): void {
+		this.reset();
 		this.observePlugins();
 		this.loadPlugins();
 		this.onLanguageChange();
 	}
 
 	private observePlugins(): void {
-		this.pluginElectronService.status
-			.pipe(
-				tap((response) => this.ngZone.run(() => this.handleStatus(response))),
-				filter((response) => response.status === 'success'),
-				switchMap(() => from(this.pluginElectronService.plugins)),
-				tap((plugins) => this.ngZone.run(() => (this.plugins = plugins))),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.plugins$
 			.pipe(
 				tap(() => this.clearItem()),
-				tap(() => (this.plugin = null)),
 				concatMap((plugins) => this.sourceData.load(plugins)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
 
-	private handleStatus(notification: { status: string; message?: string }) {
-		switch (notification.status) {
-			case 'success':
-				this.processing = false;
-				this.toastrNotificationService.success(notification.message);
-				break;
-			case 'error':
-				this.processing = false;
-				this.toastrNotificationService.error(notification.message);
-				break;
-			case 'inProgress':
-				this.processing = true;
-				this.toastrNotificationService.info(notification.message);
-				break;
-			default:
-				this.processing = false;
-				this.toastrNotificationService.warn('Unexpected Status');
-				break;
-		}
-	}
-
-	private loadPlugins(): void {
-		from(this.pluginElectronService.plugins)
+		this.query.plugins$
 			.pipe(
-				tap((plugins) => this.ngZone.run(() => (this.plugins = plugins))),
+				tap((plugins) => this.plugins$.next(plugins)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
+	private loadPlugins(): void {
+		this.action.dispatch(PluginActions.getPlugins());
+	}
+
 	public handleRowSelection({ isSelected, data }) {
-		this.plugin = isSelected ? data : null;
+		this.action.dispatch(PluginActions.selectPlugin(isSelected ? data : null));
 	}
 
 	public changeStatus() {
-		this.processing = true;
-		if (this.plugin.isActivate) {
-			this.pluginElectronService.deactivate(this.plugin);
+		if (!this.plugin) return;
+
+		const { isActivate } = this.plugin;
+
+		if (isActivate) {
+			this.dialog
+				.open(AlertComponent, {
+					backdropClass: 'backdrop-blur',
+					context: {
+						data: {
+							title: 'PLUGIN.DIALOG.DEACTIVATE.TITLE',
+							message: 'PLUGIN.DIALOG.DEACTIVATE.DESCRIPTION',
+							confirmText: 'PLUGIN.DIALOG.DEACTIVATE.CONFIRM',
+							status: 'basic'
+						}
+					}
+				})
+				.onClose.pipe(
+					take(1),
+					filter(Boolean),
+					tap(() => this.handlePluginAction(false))
+				)
+				.subscribe();
 		} else {
-			this.pluginElectronService.activate(this.plugin);
+			this.handlePluginAction(true);
 		}
-		this.plugin = null;
+	}
+
+	private handlePluginAction(activate: boolean) {
+		activate
+			? this.action.dispatch(PluginActions.activate(this.plugin))
+			: this.action.dispatch(PluginActions.deactivate(this.plugin));
 	}
 
 	public view() {
@@ -169,9 +170,24 @@ export class PluginListComponent implements OnInit {
 	}
 
 	public uninstall() {
-		this.processing = true;
-		this.pluginElectronService.uninstall(this.plugin);
-		this.plugin = null;
+		this.dialog
+			.open(AlertComponent, {
+				backdropClass: 'backdrop-blur',
+				context: {
+					data: {
+						title: 'PLUGIN.DIALOG.UNINSTALL.TITLE',
+						message: 'PLUGIN.DIALOG.UNINSTALL.DESCRIPTION',
+						confirmText: 'PLUGIN.DIALOG.UNINSTALL.CONFIRM',
+						status: 'basic'
+					}
+				}
+			})
+			.onClose.pipe(
+				take(1),
+				filter(Boolean),
+				tap(() => this.action.dispatch(PluginInstallationActions.uninstall(this.plugin)))
+			)
+			.subscribe();
 	}
 
 	private clearItem(): void {
@@ -199,14 +215,6 @@ export class PluginListComponent implements OnInit {
 			.subscribe();
 	}
 
-	private get plugins(): IPlugin[] {
-		return this.plugins$.getValue();
-	}
-
-	private set plugins(plugins: IPlugin[]) {
-		this.plugins$.next(plugins);
-	}
-
 	private onLanguageChange() {
 		this.translateService.onLangChange
 			.pipe(
@@ -216,5 +224,17 @@ export class PluginListComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	public get plugin(): IPlugin {
+		return this.query.plugin;
+	}
+
+	public reset() {
+		this.action.dispatch(PluginActions.selectPlugin(null));
+	}
+
+	public ngOnDestroy(): void {
+		this.reset();
 	}
 }

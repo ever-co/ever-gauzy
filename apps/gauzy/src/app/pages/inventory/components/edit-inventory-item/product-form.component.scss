@@ -1,5 +1,5 @@
-@import 'gauzy/_gauzy-overrides';
-@import 'gauzy/_gauzy-cards';
+@use 'gauzy/_gauzy-cards' as *;
+@use 'gauzy/_gauzy-overrides' as ga-overrides;
 
 .d-bottom {
   display: flex;

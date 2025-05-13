@@ -6,9 +6,10 @@ import { Store } from '@gauzy/ui-core/core';
 import { CandidatePersonalQualitiesService, CandidateTechnologiesService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-candidate-criterions-form',
-	templateUrl: 'candidate-criterions-form.component.html',
-	styleUrls: ['candidate-criterions-form.component.scss']
+    selector: 'ga-candidate-criterions-form',
+    templateUrl: 'candidate-criterions-form.component.html',
+    styleUrls: ['candidate-criterions-form.component.scss'],
+    standalone: false
 })
 export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 	@Input() editSelectedTechnologies: ICandidateTechnologies[] = [];

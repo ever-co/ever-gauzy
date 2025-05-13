@@ -13,9 +13,10 @@ import { ErrorHandlerService } from '../services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-desktop-timer-login',
-	templateUrl: './login.component.html',
-	styleUrls: ['./login.component.scss']
+    selector: 'ngx-desktop-timer-login',
+    templateUrl: './login.component.html',
+    styleUrls: ['./login.component.scss'],
+    standalone: false
 })
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	@ViewChild('form')
@@ -111,5 +112,9 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 
 	get registerUrl(): string {
 		return this.environment.REGISTER_URL || 'https://app.gauzy.co/#/auth/register';
+	}
+
+	get isAgent(): boolean {
+		return this.environment.IS_AGENT;
 	}
 }

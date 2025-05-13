@@ -50,9 +50,10 @@ import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.co
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-tasks',
-	templateUrl: './task.component.html',
-	styleUrls: ['task.component.scss']
+    selector: 'ngx-tasks',
+    templateUrl: './task.component.html',
+    styleUrls: ['task.component.scss'],
+    standalone: false
 })
 export class TaskComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	private _refresh$: Subject<boolean> = new Subject();
@@ -173,6 +174,23 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					},
 					valuePrepareFunction: (value: string, cell: Cell) => {
 						return this._hashNumberPipe.transform(value);
+					}
+				},
+				parent: {
+					title: this.getTranslation('TASKS_PAGE.PARENT_TASK'),
+					type: 'string',
+					width: '10%',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (prefix: string) => {
+						this.setFilter({ field: 'parent.prefix', search: prefix });
+					},
+					valuePrepareFunction: (value: ITask, cell: Cell) => {
+						const parentTaskNumber = cell.getRow().getData()?.parent?.taskNumber;
+						if (!parentTaskNumber) return '-';
+						return this._hashNumberPipe.transform(parentTaskNumber);
 					}
 				},
 				description: {
@@ -421,6 +439,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				'members',
 				'members.user',
 				'project',
+				'parent',
 				'modules',
 				'tags',
 				'teams',

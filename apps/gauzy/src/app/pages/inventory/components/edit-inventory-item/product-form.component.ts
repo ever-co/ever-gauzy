@@ -19,9 +19,10 @@ import { InventoryStore, ProductService, ProductVariantService, Store, ToastrSer
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-product-form',
-	templateUrl: './product-form.component.html',
-	styleUrls: ['./product-form.component.scss']
+    selector: 'ngx-product-form',
+    templateUrl: './product-form.component.html',
+    styleUrls: ['./product-form.component.scss'],
+    standalone: false
 })
 export class ProductFormComponent extends TranslationBaseComponent implements OnInit {
 	form: UntypedFormGroup;
@@ -88,9 +89,9 @@ export class ProductFormComponent extends TranslationBaseComponent implements On
 			name: [this.activeTranslation ? this.activeTranslation.name : '', this.validateTranslationProperty('name')],
 			code: [this.inventoryItem ? this.inventoryItem.code : '', Validators.required],
 			productTypeId: [this.inventoryItem ? this.inventoryItem.productTypeId : null, Validators.required],
-			productType: [],
+			productType: [this.inventoryItem ? this.inventoryItem.productType : null],
 			productCategoryId: [this.inventoryItem ? this.inventoryItem.productCategoryId : null, Validators.required],
-			productCategory: [],
+			productCategory: [this.inventoryItem ? this.inventoryItem.productCategory : null],
 			enabled: [this.inventoryItem ? this.inventoryItem.enabled : true],
 			description: [this.activeTranslation ? this.activeTranslation.description : ''],
 			languageCode: [this.translateService.currentLang, Validators.required]
@@ -112,7 +113,16 @@ export class ProductFormComponent extends TranslationBaseComponent implements On
 			const { id: organizationId, tenantId } = this.organization;
 			this.inventoryItem = await this.productService.getById(
 				id,
-				['productCategory', 'productType', 'optionGroups', 'variants', 'tags', 'gallery', 'featuredImage'],
+				[
+					'productCategory',
+					'productType',
+					'optionGroups',
+					'optionGroups.options.translations',
+					'variants',
+					'tags',
+					'gallery',
+					'featuredImage'
+				],
 				{ organizationId, tenantId }
 			);
 

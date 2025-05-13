@@ -78,5 +78,5 @@ export class TaskAdvancedFilterDTO implements ITaskAdvancedFilter {
 	@IsArray()
 	@ArrayMaxSize(25)
 	@IsUUID('all', { each: true })
-	creators?: ID[] = [];
+	createdByUserIds?: ID[] = [];
 }

@@ -7,7 +7,6 @@ import { MikroOrmImportRecordRepository } from './repository/mikro-orm-import-re
 
 @MultiORMEntity('import-record', { mikroOrmRepository: () => MikroOrmImportRecordRepository })
 export class ImportRecord extends TenantBaseEntity implements IImportRecord {
-
 	@ApiProperty({ type: () => String })
 	@MultiORMColumn({ nullable: false })
 	entityType: string;

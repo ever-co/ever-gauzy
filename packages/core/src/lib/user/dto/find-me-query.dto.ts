@@ -16,7 +16,7 @@ export class FindMeQueryDTO extends RelationsQueryDTO implements IFindMeUser {
 	 */
 	@ApiPropertyOptional({ type: Boolean })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) => (value ? parseToBoolean(value) : false))
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
 	readonly includeEmployee: boolean;
 
 	/**
@@ -26,6 +26,6 @@ export class FindMeQueryDTO extends RelationsQueryDTO implements IFindMeUser {
 	 */
 	@ApiPropertyOptional({ type: Boolean })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) => (value ? parseToBoolean(value) : false))
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
 	readonly includeOrganization: boolean;
 }

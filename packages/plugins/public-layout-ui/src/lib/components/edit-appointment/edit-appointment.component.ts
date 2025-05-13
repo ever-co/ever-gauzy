@@ -10,8 +10,9 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-edit-appointment',
-	templateUrl: './edit-appointment.component.html'
+    selector: 'ga-edit-appointment',
+    templateUrl: './edit-appointment.component.html',
+    standalone: false
 })
 export class EditAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public loading: boolean;

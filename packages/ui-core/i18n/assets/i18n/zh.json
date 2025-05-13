@@ -169,10 +169,17 @@
 		"ADD_MODULE": "添加模块",
 		"SHARE": "分享",
 		"GET_INFO": "获取信息",
-		"RETRY": "重试"
+		"RETRY": "重试",
+		"UPLOAD": "上传",
+		"MARKETPLACE": "市场",
+		"ADD_VERSION": "添加版本",
+		"READ_MORE": "阅读更多",
+		"READ_LESS": "收起",
+		"RECOVER": "恢复"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"HISTORY": "没有历史记录",
 			"RECEIVE_ESTIMATE": "您尚未收到任何估计。",
 			"INCOME": "您还没有创造任何收入。",
 			"EXPENSE_CATEGORY": "您尚未创建任何费用类别。",
@@ -216,7 +223,9 @@
 			"EVENT_TYPE": "你还没有创建任何事件类型。",
 			"PRODUCT_TYPE_NO_DATA": "你还没有创建任何产品类型。",
 			"TEAM_DASHBOARD": "你没有任何团队",
-			"PLUGIN": "您尚未安装任何插件。"
+			"PLUGIN": "您尚未安装任何插件。",
+			"PLUGIN_MARKETPLACE": "该插件在市场上不可用",
+			"LOADING": "加载中..."
 		},
 		"TRANSACTION_TYPE": "类型 (Lèixíng)",
 		"AMOUNT": "金额",
@@ -1042,7 +1051,44 @@
 			"FEATURE_ORGANIZATION": "特征组织",
 			"EXPORT_DATA": "导出数据",
 			"IMPORT_DATA": "导入数据",
-			"ALL_ENTITIES": "所有实体"
+			"ALL_ENTITIES": "所有实体",
+			"ACTIVITY_LOG": "活动日志",
+			"DAILY_PLAN": "每日计划",
+			"ENTITY_SUBSCRIPTION": "实体订阅",
+			"FAVORITE": "收藏",
+			"MENTION": "提及",
+			"REACTION": "反应",
+			"RESOURCE_LINK": "资源链接",
+			"SCREENING_TASK": "筛选任务",
+			"SOCIAL_ACCOUNT": "社交账户",
+			"CHANGELOG": "变更日志",
+			"ISSUE_TYPE": "问题类型",
+			"TASK_ESTIMATION": "任务估算",
+			"TASK_LINKED_ISSUE": "任务关联问题",
+			"TASK_PRIORITY": "任务优先级",
+			"TASK_RELATED_ISSUE": "任务相关问题",
+			"TASK_SIZE": "任务大小",
+			"TASK_STATUS": "任务状态",
+			"TASK_VERSION": "任务版本",
+			"TASK_RELATED_ISSUE_TYPE": "任务相关问题类型",
+			"ORGANIZATION_PROJECT_EMPLOYEE": "组织项目员工",
+			"ORGANIZATION_PROJECT_MODULE": "组织项目模块",
+			"ORGANIZATION_PROJECT_MODULE_EMPLOYEE": "组织项目模块员工",
+			"ORGANIZATION_SPRINT_EMPLOYEE": "组织冲刺员工",
+			"ORGANIZATION_SPRINT_TASK": "组织冲刺任务",
+			"ORGANIZATION_SPRINT_TASK_HISTORY": "组织冲刺任务历史",
+			"ORGANIZATION_TASK_SETTING": "组织任务设置",
+			"ORGANIZATION_TEAM_JOIN_REQUEST": "组织团队加入请求",
+			"ORGANIZATION_GITHUB_REPOSITORY": "组织GitHub仓库",
+			"ORGANIZATION_GITHUB_REPOSITORY_ISSUE": "组织GitHub仓库问题",
+			"EMPLOYEE_AVAILABILITY": "员工可用性",
+			"EMPLOYEE_NOTIFICATION": "员工通知",
+			"EMPLOYEE_PHONE": "员工电话",
+			"APPOINTMENT_EMPLOYEE": "任命员工",
+			"EMPLOYEE_NOTIFICATION_SETTING": "员工通知设置",
+			"PRODUCT_REVIEW": "产品评论",
+			"TASK_LINKED_ISSUES": "关联问题",
+			"TASK_VIEW": "任务视图"
 		},
 		"TAGS": "标签",
 		"LANGUAGE": "语言",
@@ -2042,6 +2088,7 @@
 			"TIME_OFF_POLICY_VIEW": "查看休假政策",
 			"TIME_OFF_POLICY_EDIT": "编辑休假政策",
 			"TIME_OFF_POLICY_DELETE": "删除休假政策",
+			"SELECT_EMPLOYEE": "选择员工",
 			"CHANGE_SELECTED_EMPLOYEE": "更改选定的员工",
 			"CHANGE_SELECTED_CANDIDATE": "改变选定的候选人",
 			"CHANGE_SELECTED_ORGANIZATION": "更改所选组织",
@@ -2609,6 +2656,7 @@
 		"TASKS_STATUS": "状态",
 		"TASK_PRIORITY": "优先",
 		"TASK_SIZE": "大小",
+		"PARENT_TASK": "父任务",
 		"TODO": "完成",
 		"OPEN": "开放",
 		"READY_FOR_REVIEW": "准备好检查了",
@@ -3574,6 +3622,7 @@
 			"APPROVAL_POLICY_CREATED": "添加了认可政策'{{name}}'",
 			"APPROVAL_POLICY_UPDATED": "批准政策'{{ name }}'已更改",
 			"APPROVAL_POLICY_DELETED": "批准政策'{{ name }}'已被移除",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "审批政策 '{{ name }}' 已经存在",
 			"CANDIDATE_CREATED": "候选人'{{ name }}'已被添加到'{{ organization }}'中。",
 			"CANDIDATE_ARCHIVED": "候选人 '{{ name }}' 已被设置为已归档。",
 			"CANDIDATE_REJECTED": "候选人 '{{ name }}' 被设定为被拒绝。",
@@ -3691,7 +3740,8 @@
 			"EDIT_POLICY": "{{ name }}的休假政策已更改。",
 			"DELETE_POLICY": "请假政策“{{ name }}”已被删除。",
 			"ERROR": "{{错误}}",
-			"SAVE_ERROR": "无法创建策略记录"
+			"SAVE_ERROR": "无法创建策略记录",
+			"POLICY_EXISTS": "请假政策 '{{ name }}' 已存在"
 		},
 		"USER": {
 			"EDIT_PROFILE": "您的个人资料已经成功更新。"
@@ -4011,7 +4061,14 @@
 				"SSL_CERT_FILE_INFO": "SSL 客户端证书文件路径。",
 				"SECURE": "安全",
 				"SECURE_INFO": "True，如果您想要验证 SSL 证书。"
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "NPM安装允许访问公开和私有的插件。",
+			"PACKAGE_NAME": "NPM包名称",
+			"PACKAGE_VERSION": "NPM包版本",
+			"REGISTRY": "NPM注册表",
+			"AUTH_TOKEN": "认证令牌",
+			"PRIVATE_REGISTRY_URL": "私有注册表URL",
+			"PLUGIN_INSTALL_CDN_ERROR": "服务器URL不能为空。"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "每周限制已超过。",
 		"OF_HRS": "的{{ limit }}小时",
@@ -4765,6 +4822,189 @@
 				"SHARE_NOT_ALLOWED": "不允许分享",
 				"UNEXPECTED_SHARING_ERROR": "意外的分享错误"
 			}
+		},
+		"FORM": {
+			"TITLE": "上传插件",
+			"BASIC_INFO": "基本信息",
+			"NAME": "插件名称",
+			"NAME_PLACEHOLDER": "输入插件名称",
+			"VALIDATION": {
+				"NAME_REQUIRED": "插件名称必填",
+				"NAME_TOO_LONG": "插件名称过长",
+				"VERSION_REQUIRED": "版本必填",
+				"VERSION_FORMAT": "版本格式无效",
+				"DESCRIPTION_TOO_LONG": "描述过长",
+				"URL_REQUIRED": "URL必填",
+				"INVALID_URL": "URL格式无效",
+				"PACKAGE_NAME_REQUIRED": "包名称必填",
+				"INVALID_PACKAGE_NAME": "包名称格式无效",
+				"INVALID_SCOPE": "作用域格式无效",
+				"AUTHOR_TOO_LONG": "作者名称过长",
+				"LICENSE_TOO_LONG": "许可证字段过长",
+				"FAILED": "验证失败",
+				"CHANGELOG_TOO_SHORT": "更新日志过短",
+				"CHANGELOG_REQUIRED": "更新日志必填"
+			},
+			"TYPE": "插件类型",
+			"TYPE_PLACEHOLDER": "选择插件类型",
+			"TYPES": {
+				"DESKTOP": "桌面",
+				"WEB": "网页",
+				"MOBILE": "移动"
+			},
+			"VERSION": "版本",
+			"STATUS": "状态",
+			"STATUSES": {
+				"ACTIVE": "活跃",
+				"INACTIVE": "不活跃",
+				"DEPRECATED": "已弃用",
+				"ARCHIVED": "已归档"
+			},
+			"DESCRIPTION": "描述",
+			"DESCRIPTION_PLACEHOLDER": "输入插件描述",
+			"SOURCE": "来源",
+			"SOURCE_TYPE": "来源类型",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "CDN URL",
+				"INTEGRITY": "完整性",
+				"CROSS_ORIGIN": "跨域"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "NPM包名称",
+				"REGISTRY": "NPM注册表",
+				"SCOPE": "作用域",
+				"AUTH_TOKEN": "认证令牌"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "拖放文件到这里",
+				"BROWSE": "浏览",
+				"REMOVE": "删除文件",
+				"RESTRICTIONS": "仅允许.zip文件",
+				"FILE": "文件"
+			},
+			"METADATA": {
+				"TITLE": "元数据",
+				"AUTHOR": "作者",
+				"AUTHOR_PLACEHOLDER": "输入作者名称",
+				"LICENSE": "许可证",
+				"LICENSE_PLACEHOLDER": "输入许可证",
+				"HOMEPAGE": "主页",
+				"HOMEPAGE_PLACEHOLDER": "输入主页URL",
+				"REPOSITORY": "仓库",
+				"REPOSITORY_PLACEHOLDER": "输入仓库URL"
+			},
+			"OR": "或",
+			"RELEASE_DATE": "发布日期",
+			"CHANGELOG": "更新日志",
+			"CHANGELOG_PLACEHOLDER": "输入更新日志"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "使用统计",
+			"DOWNLOAD_COUNT": "下载次数",
+			"LAST_DOWNLOADED": "上次下载",
+			"UPLOADED_BY": "上传者",
+			"UPLOADED_AT": "上传时间",
+			"SECURITY_INFO": "安全信息",
+			"CHECKSUM": "校验和",
+			"SIGNATURE": "签名",
+			"INSTALLED": "已安",
+			"HIDDEN_FOR_SECURITY": "安全原因隐藏"
+		},
+		"LAYOUT": {
+			"DISCOVER": "发现",
+			"INSTALLED": "已安装",
+			"VERSION_HISTORY": "版本历史"
+		},
+		"MARKETPLACE": {
+			"UPLOAD": "上传新插件",
+			"OFFLINE": "您当前处于离线/断开连接状态 ⛓️‍"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "停用插件",
+				"DESCRIPTION": "确定要停用此插件吗？",
+				"CONFIRM": "停用"
+			},
+			"UNINSTALL": {
+				"TITLE": "卸载插件",
+				"DESCRIPTION": "确定要卸载此插件吗？",
+				"CONFIRM": "卸载"
+			},
+			"DELETE": {
+				"TITLE": "删除插件",
+				"DESCRIPTION": "您确定要删除此插件吗？",
+				"CONFIRM": "删除"
+			},
+			"VERSION": {
+				"UPDATE": {
+					"TITLE": "更新版本 v{{number}}",
+					"DESCRIPTION": "您确定要更新此插件吗？",
+					"CONFIRM": "更新"
+				},
+				"CREATE": {
+					"TITLE": "为 {{name}} 创建新版本",
+					"DESCRIPTION": "您确定要创建此版本吗？",
+					"CONFIRM": "创建"
+				},
+				"DELETE": {
+					"TITLE": "删除版本",
+					"DESCRIPTION": "您确定要删除此版本吗？",
+					"CONFIRM": "删除"
+				},
+				"RESTORE": {
+					"TITLE": "恢复版本",
+					"DESCRIPTION": "您确定要恢复此版本吗？",
+					"CONFIRM": "恢复"
+				}
+			}
+		},
+		"TOASTR": {
+			"SUCCESS": {
+				"VERSION": {
+					"CREATED": "插件版本 v{{number}} 创建成功！",
+					"UPDATED": "插件版本 v{{number}} 更新成功！",
+					"DELETED": "插件版本删除成功！",
+					"RESTORED": "插件版本恢复成功！"
+				},
+				"UPLOADED": "插件上传成功！",
+				"UPDATED": "插件更新成功！",
+				"DELETED": "插件删除成功！",
+				"INSTALLED": "插件安装成功！",
+				"UNINSTALLED": "插件卸载成功！"
+			},
+			"INFO": {
+				"VERSION": {
+					"ADDING": "正在添加新插件版本...",
+					"UPDATING": "正在更新插件版本...",
+					"DELETING": "正在删除插件版本...",
+					"RESTORING": "正在恢复插件版本..."
+				},
+				"UPLOADING": "正在上传插件...",
+				"UPDATING": "正在更新插件...",
+				"DELETING": "正在删除插件...",
+				"INSTALLING": "正在安装插件...",
+				"UNINSTALLING": "正在卸载插件..."
+			},
+			"ERROR": {
+				"VERSION": {
+					"RESTORE": "恢复插件版本失败。请重试！"
+				},
+				"UPLOAD": "上传插件失败。请重试！",
+				"NOT_FOUND": "未找到ID为 {{ id }} 的插件。",
+				"INSTALL": "安装插件失败。请重试！",
+				"REVERT_INSTALLATION": "回滚安装失败！"
+			}
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "服务器不可用",
+		"DESCRIPTION": "当前无法访问{{companySite}}服务器。这可能是由于计划维护或意外停机。",
+		"CONNECTING": "正在自动重试连接...",
+		"HINT": "状态：正在尝试连接到{{companySite}}服务器。错误代码：503。"
 	}
 }

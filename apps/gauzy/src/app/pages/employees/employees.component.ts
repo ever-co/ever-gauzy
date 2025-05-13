@@ -54,9 +54,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-employees-list',
-	templateUrl: './employees.component.html',
-	styleUrls: ['./employees.component.scss']
+    selector: 'ga-employees-list',
+    templateUrl: './employees.component.html',
+    styleUrls: ['./employees.component.scss'],
+    standalone: false
 })
 export class EmployeesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public dataTableId: PageDataTableRegistryId = this._route.snapshot.data.dataTableId; // The identifier for the data table

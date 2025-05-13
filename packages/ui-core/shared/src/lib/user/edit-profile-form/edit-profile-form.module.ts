@@ -12,7 +12,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
-import { OrganizationsService, RoleService, UsersService } from '@gauzy/ui-core/core';
+import { OrganizationsService, RoleService } from '@gauzy/ui-core/core';
 import { EditProfileFormComponent } from './edit-profile-form.component';
 import { UserFormsModule } from '../forms/user-forms.module';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
@@ -50,6 +50,6 @@ import { TimeZoneSelectorModule } from '../../modules/selectors';
 	],
 	exports: [EditProfileFormComponent],
 	declarations: [EditProfileFormComponent],
-	providers: [OrganizationsService, UsersService, RoleService]
+	providers: [OrganizationsService, RoleService]
 })
 export class EditProfileFormModule {}

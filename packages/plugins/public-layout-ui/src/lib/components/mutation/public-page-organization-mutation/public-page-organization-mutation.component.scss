@@ -1,5 +1,5 @@
-@import 'gauzy/gauzy-dialogs';
-@import 'gauzy/gauzy-overrides';
+@use 'gauzy/gauzy-dialogs' as *;
+@use 'gauzy/gauzy-overrides' as ga-overrides;
 
 .main {
   background-color: var(--gauzy-card-1);
@@ -111,7 +111,7 @@
 
   .content-active {
     nb-card {
-      @include input-appearance(42px, var(--gauzy-sidebar-background-4));
+      @include ga-overrides.input-appearance(42px, var(--gauzy-sidebar-background-4));
     }
   }
 }
@@ -121,7 +121,7 @@
   nb-card-footer {
     background-color: var(--gauzy-card-2);
   }
-  @include input-appearance(42px, var(--gauzy-card-1));
+  @include ga-overrides.input-appearance(42px, var(--gauzy-card-1));
   ::ng-deep nb-tabset .tabset .tab.active a.tab-link {
     border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
     display: flex;

@@ -1,6 +1,6 @@
 import { EventSubscriber } from 'typeorm';
-import { TimeOffRequest } from './time-off-request.entity';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
+import { TimeOffRequest } from './time-off-request.entity';
 
 @EventSubscriber()
 export class TimeOffRequestSubscriber extends BaseEntityEventSubscriber<TimeOffRequest> {

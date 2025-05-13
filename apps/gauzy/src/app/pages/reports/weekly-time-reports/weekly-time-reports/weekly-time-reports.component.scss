@@ -1,5 +1,5 @@
-@import 'report';
-@import 'themes';
+@use 'themes' as *;
+@use 'report' as *;
 
 :host {
     .employee-column {
