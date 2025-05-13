@@ -58,7 +58,6 @@ export class UserController extends CrudController<User> {
 	@Get('/me')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async findMe(@Query() options: FindMeQueryDTO): Promise<IUser> {
-		console.log(`User Find Me`, options);
 		return await this._userService.findMeUser(options);
 	}
 
