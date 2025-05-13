@@ -53,7 +53,7 @@ export class AppInitService {
 				this._store.featureTenant = tenant.featureOrganizations.filter((item) => !item.organizationId);
 			}
 		} catch (error) {
-			console.log(error);
+			console.log('Error on init', error);
 		}
 	}
 }
