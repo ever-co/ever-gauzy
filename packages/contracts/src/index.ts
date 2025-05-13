@@ -1,13 +1,16 @@
+/**
+ * Public API Surface of @gauzy/contracts
+ */
 export * from './lib/accounting-template.model';
+/** App Setting Model */
 export * from './lib/activity-log.model';
 export * from './lib/activity-watch.model';
 export * from './lib/api-call-log.model';
 export * from './lib/app.model';
 export * from './lib/appointment-employees.model';
 export * from './lib/approval-policy.model';
-export * from './lib/auth.model';
 export * from './lib/availability-slots.model';
-export * from './lib/base-entity.model';
+export * from './lib/auth.model';
 export * from './lib/candidate-criterions-rating.model';
 export * from './lib/candidate-document.model';
 export * from './lib/candidate-education.model';
@@ -30,9 +33,9 @@ export * from './lib/country.model';
 export * from './lib/currency.model';
 export * from './lib/custom-smtp.model';
 export * from './lib/daily-plan.model';
-export * from './lib/dashboard-widget.model';
-export * from './lib/dashboard.model';
 export * from './lib/date-picker.model';
+export * from './lib/dashboard.model';
+export * from './lib/dashboard-widget.model';
 export * from './lib/deal.model';
 export * from './lib/email-reset.model';
 export * from './lib/email-template.model';
@@ -41,8 +44,6 @@ export * from './lib/employee-appointment.model';
 export * from './lib/employee-availability.model';
 export * from './lib/employee-award.model';
 export * from './lib/employee-job.model';
-export * from './lib/employee-notification-setting.model';
-export * from './lib/employee-notification.model';
 export * from './lib/employee-phone.model';
 export * from './lib/employee-proposal-template.model';
 export * from './lib/employee-recent-visit.model';
@@ -50,7 +51,6 @@ export * from './lib/employee-recurring-expense.model';
 export * from './lib/employee-settings.model';
 export * from './lib/employee-statistics.model';
 export * from './lib/employee.model';
-export * from './lib/entity-subscription.model';
 export * from './lib/entity-with-members.model';
 export * from './lib/equipment-sharing-policy.model';
 export * from './lib/equipment-sharing.model';
@@ -84,8 +84,8 @@ export * from './lib/job-matching.model';
 export * from './lib/job-search-category.model';
 export * from './lib/job-search-occupation.model';
 export * from './lib/language.model';
-export * from './lib/make-com.model';
 export * from './lib/mention.model';
+export * from './lib/make-com.model';
 export * from './lib/organization-award.model';
 export * from './lib/organization-contact.model';
 export * from './lib/organization-department.model';
@@ -108,11 +108,9 @@ export * from './lib/password-reset.model';
 export * from './lib/payment.model';
 export * from './lib/pipeline-stage.model';
 export * from './lib/pipeline.model';
-export * from './lib/plugin.model';
 export * from './lib/product.model';
 export * from './lib/project.model';
 export * from './lib/proposal.model';
-export * from './lib/proxy.model';
 export * from './lib/reaction.model';
 export * from './lib/recurring-expense.model';
 export * from './lib/report.model';
@@ -129,6 +127,7 @@ export * from './lib/shared-types';
 export * from './lib/skill-entity.model';
 export * from './lib/sms.model';
 export * from './lib/social-account.model';
+export * from './lib/entity-subscription.model';
 export * from './lib/tag.model';
 export * from './lib/task-estimation.model';
 export * from './lib/task-linked-issue.model';
@@ -142,12 +141,30 @@ export * from './lib/task.model';
 export * from './lib/tenant-api-key.model';
 export * from './lib/tenant.model';
 export * from './lib/time-off.model';
-export * from './lib/time-slot-minute.model';
 export * from './lib/timesheet-statistics.model';
 export * from './lib/timesheet.model';
+export * from './lib/time-slot-minute.model';
 export * from './lib/translation.model';
 export * from './lib/tree-node.model';
 export * from './lib/upwork.model';
+export * from './lib/employee-notification.model';
+export * from './lib/employee-notification-setting.model';
 export * from './lib/user-organization.model';
 export * from './lib/user.model';
 export * from './lib/wakatime.model';
+export * from './lib/plugin.model';
+
+export {
+	ActorTypeEnum,
+	BaseEntityEnum,
+	IBaseEntityModel as BaseEntityModel,
+	IBasePerTenantAndOrganizationEntityModel,
+	IBasePerTenantEntityModel,
+	IBaseRelationsEntityModel,
+	IBaseSoftDeleteEntityModel,
+	ID,
+	JsonData,
+	IBasePerEntityType
+} from './lib/base-entity.model';
+
+export * from './lib/proxy.model';
