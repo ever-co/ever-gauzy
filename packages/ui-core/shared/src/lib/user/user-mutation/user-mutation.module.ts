@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { UsersService } from '@gauzy/ui-core/core';
 import { UserMutationComponent } from './user-mutation.component';
 import { UserFormsModule } from '../forms/user-forms.module';
 
@@ -19,6 +18,6 @@ import { UserFormsModule } from '../forms/user-forms.module';
 	],
 	exports: [UserMutationComponent],
 	declarations: [UserMutationComponent],
-	providers: [UsersService]
+	providers: []
 })
 export class UserMutationModule {}
