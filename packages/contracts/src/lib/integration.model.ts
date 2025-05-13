@@ -139,7 +139,8 @@ export enum IntegrationEnum {
 	GITHUB = 'Github',
 	JIRA = 'Jira',
 	MakeCom = 'MakeCom',
-	ZAPIER = 'Zapier'
+	ZAPIER = 'Zapier',
+	ACTIVE_PIECES = 'ActivePieces'
 }
 
 export enum IntegrationEntity {
