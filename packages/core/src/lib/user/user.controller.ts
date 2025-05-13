@@ -1,7 +1,6 @@
 // Modified code from https://github.com/xmlking/ngx-starter-kit.
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
-
 import {
 	Controller,
 	Get,
@@ -57,7 +56,7 @@ export class UserController extends CrudController<User> {
 	@ApiResponse({ status: HttpStatus.OK, description: 'Found current user', type: User })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
 	@Get('/me')
-	@UseValidationPipe({ whitelist: true })
+	@UseValidationPipe({ whitelist: true, transform: true })
 	async findMe(@Query() options: FindMeQueryDTO): Promise<IUser> {
 		return await this._userService.findMeUser(options);
 	}

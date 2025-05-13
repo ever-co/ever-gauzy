@@ -77,6 +77,9 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	});
 	console.timeEnd(chalk.yellow('✔ Create NestJS Application Time'));
 
+	// Set query parser to extended (In Express v5, query parameters are no longer parsed using the qs library by default.)
+	app.set('query parser', 'extended');
+
 	// Register custom entity fields for Mikro ORM
 	await registerMikroOrmCustomFields(config);
 

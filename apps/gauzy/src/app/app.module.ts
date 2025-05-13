@@ -216,7 +216,6 @@ const FEATURE_MODULES = [
 			provide: GAUZY_ENV,
 			useValue: environment
 		},
-
 		provideHttpClient(withInterceptorsFromDi())
 	]
 })
