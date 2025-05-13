@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IMakeComApiConfig } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
+import { IMakeComIntegrationSettings } from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'
@@ -11,64 +11,60 @@ export class MakeComService {
 	constructor(private readonly http: HttpClient) {}
 
 	/**
-	 * Get Make.com API configuration
+	 * Get Make.com integration settings for the current tenant
 	 */
-	getConfig(input: { integrationId: string; data: string }): Observable<IMakeComApiConfig> {
-		const { integrationId, data } = input;
-		return this.http.get<IMakeComApiConfig>(`${API_PREFIX}/integrations/make-com/config/${integrationId}`, {
-			params: { data }
-		});
+	getIntegrationSettings(): Observable<IMakeComIntegrationSettings> {
+		return this.http.get<IMakeComIntegrationSettings>(`${API_PREFIX}/integration/make-com`);
 	}
 
 	/**
-	 * Get all webhooks
+	 * Update Make.com integration settings
 	 */
-	getAllWebhooks(input: { integrationId: string; data: string }): Observable<any> {
-		const { integrationId, data } = input;
-		return this.http.get(`${API_PREFIX}/integrations/make-com/webhooks/${integrationId}`, {
-			params: { data }
-		});
+	updateIntegrationSettings(settings: {
+		isEnabled: boolean;
+		webhookUrl: string;
+	}): Observable<IMakeComIntegrationSettings> {
+		return this.http.post<IMakeComIntegrationSettings>(`${API_PREFIX}/integration/make-com`, settings);
 	}
 
 	/**
-	 * Get all scenarios
+	 * Update Make.com OAuth credentials
 	 */
-	getAllScenarios(input: { integrationId: string; data: string }): Observable<any> {
-		const { integrationId, data } = input;
-		return this.http.get(`${API_PREFIX}/integrations/make-com/scenarios/${integrationId}`, {
-			params: { data }
-		});
+	updateOAuthSettings(credentials: {
+		clientId: string;
+		clientSecret: string;
+	}): Observable<IMakeComIntegrationSettings> {
+		return this.http.post<IMakeComIntegrationSettings>(
+			`${API_PREFIX}/integration/make-com/oauth-settings`,
+			credentials
+		);
 	}
 
 	/**
-	 * Create a new webhook
+	 * Get Make.com OAuth configuration
 	 */
-	createWebhook(input: { integrationId: string; data: any }): Observable<any> {
-		const { integrationId, data } = input;
-		return this.http.post(`${API_PREFIX}/integrations/make-com/webhooks/${integrationId}`, data);
+	getOAuthConfig(): Observable<{ clientId: string; redirectUri: string }> {
+		return this.http.get<{ clientId: string; redirectUri: string }>(
+			`${API_PREFIX}/integration/make-com/oauth-config`
+		);
 	}
 
 	/**
-	 * Delete a webhook
+	 * Initiates the OAuth authorization flow
+	 * Returns the URL to redirect the user to
 	 */
-	deleteWebhook(input: { integrationId: string; webhookId: string }): Observable<any> {
-		const { integrationId, webhookId } = input;
-		return this.http.delete(`${API_PREFIX}/integrations/make-com/webhooks/${integrationId}/${webhookId}`);
+	getAuthorizeUrl(state?: string): string {
+		const baseUrl = `${API_PREFIX}/integration/make-com/oauth/authorize`;
+		return state ? `${baseUrl}?state=${encodeURIComponent(state)}` : baseUrl;
 	}
 
 	/**
-	 * Create a new scenario
+	 * Handles the redirect after OAuth authorization
+	 * Note: This is generally handled by the controller, not directly called by the client
 	 */
-	createScenario(input: { integrationId: string; data: any }): Observable<any> {
-		const { integrationId, data } = input;
-		return this.http.post(`${API_PREFIX}/integrations/make-com/scenarios/${integrationId}`, data);
-	}
-
-	/**
-	 * Delete a scenario
-	 */
-	deleteScenario(input: { integrationId: string; scenarioId: string }): Observable<any> {
-		const { integrationId, scenarioId } = input;
-		return this.http.delete(`${API_PREFIX}/integrations/make-com/scenarios/${integrationId}/${scenarioId}`);
+	handleOAuthCallback(code: string, state: string): Observable<any> {
+		// This method might not be needed in the Angular service as the backend handles
+		// the redirect automatically, but included for completeness
+		return this.http.get(`${API_PREFIX}/integration/make-com/oauth/callback`, { params: { code, state } });
 	}
 }

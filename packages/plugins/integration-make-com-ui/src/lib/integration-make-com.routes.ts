@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { WebhooksComponent } from './components/webhooks/webhooks.component';
-import { ScenariosComponent } from './components/scenarios/scenarios.component';
-import { AuthorizationComponent } from './components/authorization/authorization.component';
+import { AuthorizationComponent } from './components/make-com-authorize/make-com-authorize.component';
 import { IntegrationMakeComLayoutComponent } from './integration-make-com.layout.component';
 
 @NgModule({
@@ -23,25 +21,17 @@ import { IntegrationMakeComLayoutComponent } from './integration-make-com.layout
 						data: { state: false }
 					},
 					{
-						path: ':id',
-						children: [
-							{
-								path: '',
-								redirectTo: 'webhooks',
-								pathMatch: 'full'
-							},
-							{
-								path: 'webhooks',
-								component: WebhooksComponent
-							},
-							{
-								path: 'scenarios',
-								component: ScenariosComponent
-							}
-						]
+						path: 'authorize',
+						component: AuthorizationComponent,
+						data: { state: false }
 					},
 					{
-						path: ':id/settings',
+						path: 'callback',
+						component: AuthorizationComponent,
+						data: { state: false }
+					},
+					{
+						path: 'settings',
 						loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule)
 					}
 				]

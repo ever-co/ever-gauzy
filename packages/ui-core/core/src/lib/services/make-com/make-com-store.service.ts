@@ -1,161 +1,120 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, EMPTY } from 'rxjs';
-import { tap, switchMap, map } from 'rxjs/operators';
-import { ID, IOrganization, IMakeComApiConfig } from '@gauzy/contracts';
-import { Store } from '../store/store.service';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
+import { IMakeComIntegrationSettings } from '@gauzy/contracts';
 import { MakeComService } from './make-com.service';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class MakeComStoreService {
-	private _config$: BehaviorSubject<IMakeComApiConfig | null> = new BehaviorSubject<IMakeComApiConfig | null>(null);
-	private _selectedIntegrationId$: BehaviorSubject<ID | null> = new BehaviorSubject<ID | null>(null);
-	private _webhooks$: BehaviorSubject<any[]> = new BehaviorSubject<any[]>([]);
-	public webhooks$: Observable<any[]> = this._webhooks$.asObservable();
+	private _settings$: BehaviorSubject<IMakeComIntegrationSettings | null> =
+		new BehaviorSubject<IMakeComIntegrationSettings | null>(null);
+	public settings$: Observable<IMakeComIntegrationSettings | null> = this._settings$.asObservable();
 
-	private _scenarios$: BehaviorSubject<any[]> = new BehaviorSubject<any[]>([]);
-	public scenarios$: Observable<any[]> = this._scenarios$.asObservable();
+	private _oauthConfig$: BehaviorSubject<{ clientId: string; redirectUri: string } | null> = new BehaviorSubject<{
+		clientId: string;
+		redirectUri: string;
+	} | null>(null);
+	public oauthConfig$: Observable<{ clientId: string; redirectUri: string } | null> =
+		this._oauthConfig$.asObservable();
 
-	constructor(
-		private readonly _makeComService: MakeComService,
-		private readonly _storeService: Store
-	) {}
-
-	/**
-	 * Sets the selected integration ID.
-	 * @param integrationId The ID of the integration to set.
-	 */
-	setSelectedIntegrationId(integrationId: ID): void {
-		this._selectedIntegrationId$.next(integrationId);
-	}
+	constructor(private readonly _makeComService: MakeComService) {}
 
 	/**
-	 * Gets the configuration for Make.com API.
-	 * @param input The input parameters to find the configuration.
-	 * @returns An observable of the Make.com API configuration.
+	 * Loads the current Make.com integration settings
+	 * @returns An observable of the settings
 	 */
-	getConfig(input: { integrationId: ID; organizationId: ID; tenantId: ID }): Observable<IMakeComApiConfig> {
-		const { integrationId, organizationId, tenantId } = input;
-		this.setSelectedIntegrationId(integrationId);
-
-		const config$ = this._config$.getValue();
-		if (config$) {
-			return EMPTY;
-		}
-
-		const data = JSON.stringify({
-			filter: { organizationId, tenantId }
-		});
-
-		return this._makeComService.getConfig({ integrationId, data }).pipe(
-			tap((config) => this._config$.next(config))
-		);
-	}
-
-	/**
-	 * Gets the selected organization from the store.
-	 * @returns The selected organization.
-	 */
-	getSelectedOrganization() {
-		return this._storeService.selectedOrganization;
-	}
-
-	/**
-	 * Loads webhooks for the current organization.
-	 * @param organization The organization to load webhooks for.
-	 * @returns An observable of webhooks.
-	 */
-	loadWebhooks(organization: IOrganization): Observable<any> {
-		const { id: organizationId, tenantId } = organization;
-		const integrationId = this._selectedIntegrationId$.getValue();
-
-		const data = JSON.stringify({
-			filter: { organizationId, tenantId }
-		});
-
-		return this._makeComService.getAllWebhooks({ integrationId, data }).pipe(
-			map((response) => response.items),
-			tap((webhooks) => this._webhooks$.next(webhooks))
-		);
-	}
-
-	/**
-	 * Loads scenarios for the current organization.
-	 * @param organization The organization to load scenarios for.
-	 * @returns An observable of scenarios.
-	 */
-	loadScenarios(organization: IOrganization): Observable<any> {
-		const { id: organizationId, tenantId } = organization;
-		const integrationId = this._selectedIntegrationId$.getValue();
-
-		const data = JSON.stringify({
-			filter: { organizationId, tenantId }
-		});
-
-		return this._makeComService.getAllScenarios({ integrationId, data }).pipe(
-			map((response) => response.items),
-			tap((scenarios) => this._scenarios$.next(scenarios))
-		);
-	}
-
-	/**
-	 * Creates a new webhook.
-	 * @param webhookData The data for the new webhook.
-	 * @returns An observable of the created webhook.
-	 */
-	createWebhook(webhookData: any): Observable<any> {
-		const integrationId = this._selectedIntegrationId$.getValue();
-		return this._makeComService.createWebhook({ integrationId, data: webhookData }).pipe(
-			tap(() => {
-				const organization = this.getSelectedOrganization();
-				this.loadWebhooks(organization).subscribe();
+	loadIntegrationSettings(): Observable<IMakeComIntegrationSettings> {
+		return this._makeComService.getIntegrationSettings().pipe(
+			tap((settings) => this._settings$.next(settings)),
+			catchError((error) => {
+				console.error('Error loading Make.com integration settings:', error);
+				return throwError(() => error);
 			})
 		);
 	}
 
 	/**
-	 * Deletes a webhook.
-	 * @param webhookId The ID of the webhook to delete.
-	 * @returns An observable that completes after deletion.
+	 * Updates the Make.com integration settings
+	 * @param settings The updated settings
+	 * @returns An observable of the updated settings
 	 */
-	deleteWebhook(webhookId: string): Observable<any> {
-		const integrationId = this._selectedIntegrationId$.getValue();
-		return this._makeComService.deleteWebhook({ integrationId, webhookId }).pipe(
-			tap(() => {
-				const organization = this.getSelectedOrganization();
-				this.loadWebhooks(organization).subscribe();
+	updateIntegrationSettings(settings: {
+		isEnabled: boolean;
+		webhookUrl: string;
+	}): Observable<IMakeComIntegrationSettings> {
+		return this._makeComService.updateIntegrationSettings(settings).pipe(
+			tap((updatedSettings) => this._settings$.next(updatedSettings)),
+			catchError((error) => {
+				console.error('Error updating Make.com integration settings:', error);
+				return throwError(() => error);
 			})
 		);
 	}
 
 	/**
-	 * Creates a new scenario.
-	 * @param scenarioData The data for the new scenario.
-	 * @returns An observable of the created scenario.
+	 * Updates the Make.com OAuth credentials
+	 * @param credentials The OAuth credentials
+	 * @returns An observable of the updated settings
 	 */
-	createScenario(scenarioData: any): Observable<any> {
-		const integrationId = this._selectedIntegrationId$.getValue();
-		return this._makeComService.createScenario({ integrationId, data: scenarioData }).pipe(
-			tap(() => {
-				const organization = this.getSelectedOrganization();
-				this.loadScenarios(organization).subscribe();
+	updateOAuthSettings(credentials: {
+		clientId: string;
+		clientSecret: string;
+	}): Observable<IMakeComIntegrationSettings> {
+		return this._makeComService.updateOAuthSettings(credentials).pipe(
+			tap((updatedSettings) => this._settings$.next(updatedSettings)),
+			catchError((error) => {
+				console.error('Error updating Make.com OAuth settings:', error);
+				return throwError(() => error);
 			})
 		);
 	}
 
 	/**
-	 * Deletes a scenario.
-	 * @param scenarioId The ID of the scenario to delete.
-	 * @returns An observable that completes after deletion.
+	 * Loads the OAuth configuration
+	 * @returns An observable of the OAuth config
 	 */
-	deleteScenario(scenarioId: string): Observable<any> {
-		const integrationId = this._selectedIntegrationId$.getValue();
-		return this._makeComService.deleteScenario({ integrationId, scenarioId }).pipe(
-			tap(() => {
-				const organization = this.getSelectedOrganization();
-				this.loadScenarios(organization).subscribe();
+	loadOAuthConfig(): Observable<{ clientId: string; redirectUri: string }> {
+		return this._makeComService.getOAuthConfig().pipe(
+			tap((config) => this._oauthConfig$.next(config)),
+			catchError((error) => {
+				console.error('Error loading Make.com OAuth config:', error);
+				return throwError(() => error);
 			})
 		);
+	}
+
+	/**
+	 * Gets the authorization URL for Make.com OAuth
+	 * @param state Optional state parameter for OAuth flow
+	 * @returns The authorization URL
+	 */
+	getAuthorizeUrl(state?: string): string {
+		return this._makeComService.getAuthorizeUrl(state);
+	}
+
+	/**
+	 * Gets the current integration settings without making an API call
+	 * @returns The current settings or null if not loaded
+	 */
+	getCurrentSettings(): IMakeComIntegrationSettings | null {
+		return this._settings$.getValue();
+	}
+
+	/**
+	 * Gets the current OAuth configuration without making an API call
+	 * @returns The current OAuth config or null if not loaded
+	 */
+	getCurrentOAuthConfig(): { clientId: string; redirectUri: string } | null {
+		return this._oauthConfig$.getValue();
+	}
+
+	/**
+	 * Clears all stored data
+	 */
+	clearStore(): void {
+		this._settings$.next(null);
+		this._oauthConfig$.next(null);
 	}
 }

@@ -1,34 +1,62 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { NbCardModule, NbButtonModule, NbIconModule, NbInputModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
-import { NgxPermissionsModule } from 'ngx-permissions';
-import { ReactiveFormsModule } from '@angular/forms';
-import { NgxBackNavigationModule } from '@gauzy/ui-sdk/shared';
+import { HttpClient } from '@angular/common/http';
+import {
+	NbActionsModule,
+	NbButtonModule,
+	NbCalendarKitModule,
+	NbCardModule,
+	NbCheckboxModule,
+	NbContextMenuModule,
+	NbDatepickerModule,
+	NbIconModule,
+	NbInputModule,
+	NbRouteTabsetModule,
+	NbTabsetModule,
+	NbToggleModule,
+	NbTooltipModule
+} from '@nebular/theme';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
+import {
+	SmartDataViewLayoutModule,
+	SelectorsModule,
+	SharedModule,
+	TableComponentsModule,
+	getBrowserLanguage
+} from '@gauzy/ui-core/shared';
 import { IntegrationMakeComRoutes } from './integration-make-com.routes';
-import { WebhooksComponent } from './components/webhooks/webhooks.component';
-import { ScenariosComponent } from './components/scenarios/scenarios.component';
-import { AuthorizationComponent } from './components/authorization/authorization.component';
+import { AuthorizationComponent } from './components/make-com-authorize/make-com-authorize.component';
 import { IntegrationMakeComLayoutComponent } from './integration-make-com.layout.component';
 
 @NgModule({
 	imports: [
-		CommonModule,
-		IntegrationMakeComRoutes,
-		NbCardModule,
+		NbActionsModule,
 		NbButtonModule,
+		NbCalendarKitModule,
+		NbCardModule,
+		NbCheckboxModule,
+		NbContextMenuModule,
+		NbDatepickerModule,
 		NbIconModule,
 		NbInputModule,
-		TranslateModule,
-		NgxPermissionsModule.forChild(),
-		ReactiveFormsModule,
-		NgxBackNavigationModule
+		NbRouteTabsetModule,
+		NbTabsetModule,
+		NbToggleModule,
+		NbTooltipModule,
+		TranslateModule.forRoot({
+			defaultLanguage: getBrowserLanguage(),
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		}),
+		IntegrationMakeComRoutes,
+		SmartDataViewLayoutModule,
+		SelectorsModule,
+		SharedModule,
+		TableComponentsModule
 	],
-	declarations: [
-		IntegrationMakeComLayoutComponent,
-		WebhooksComponent,
-		ScenariosComponent,
-		AuthorizationComponent
-	]
+	declarations: [IntegrationMakeComLayoutComponent, AuthorizationComponent]
 })
 export class IntegrationMakeComUiModule {}
