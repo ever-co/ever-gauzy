@@ -46,7 +46,6 @@ import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
 import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
 import { AuthGuard } from '../shared/guards';
-import { ParseNestedQueryPipe } from '../shared/pipes';
 import { SharedModule } from '../shared/shared.module';
 import { AppService } from '../app/app.service';
 import { AppModule } from '../app/app.module';
@@ -78,6 +77,9 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	});
 	console.timeEnd(chalk.yellow('✔ Create NestJS Application Time'));
 
+	// Set query parser to extended (In Express v5, query parameters are no longer parsed using the qs library by default.)
+	app.set('query parser', 'extended');
+
 	// Register custom entity fields for Mikro ORM
 	await registerMikroOrmCustomFields(config);
 
@@ -90,7 +92,6 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// This will lock all routes and make them accessible by authenticated users only.
 	const reflector = app.get(Reflector);
 	app.useGlobalGuards(new AuthGuard(reflector));
-	app.useGlobalPipes(new ParseNestedQueryPipe());
 
 	// Configure Sentry for error tracking, if applicable
 	const { sentry } = env;

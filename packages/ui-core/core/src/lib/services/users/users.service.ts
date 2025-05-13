@@ -2,8 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ID, IUser, IUserUpdateInput } from '@gauzy/contracts';
-import { API_PREFIX } from '@gauzy/ui-core/common';
-import { buildHttpParams } from '../../build-http-params';
+import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
 
 @Injectable({ providedIn: 'root' })
 export class UsersService {
@@ -17,23 +16,7 @@ export class UsersService {
 	 * @returns A promise that resolves to the IUser object.
 	 */
 	async getMe(relations: string[] = [], includeEmployee: boolean = false): Promise<IUser> {
-		// const params = { relations, includeEmployee };
-		const query = {
-			filter: {
-				name: 'John',
-				age: 30,
-				address: {
-					city: 'New York',
-					zip: '10001'
-				}
-			},
-			tags: ['angular', 'nestjs'],
-			sort: 'asc',
-			relations,
-			includeEmployee
-		};
-
-		const params = buildHttpParams(query);
+		const params = buildHttpParams({ relations, includeEmployee });
 		return firstValueFrom(this.http.get<IUser>(`${API_PREFIX}/user/me`, { params }));
 	}
 

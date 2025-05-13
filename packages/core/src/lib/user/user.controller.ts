@@ -1,7 +1,6 @@
 // Modified code from https://github.com/xmlking/ngx-starter-kit.
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
-
 import {
 	Controller,
 	Get,
@@ -34,7 +33,6 @@ import {
 	UpdateUserDTO,
 	FindMeQueryDTO
 } from './dto';
-import { ParseNestedQueryPipe } from '../shared/pipes/parse-nested-query.pipe';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -58,8 +56,8 @@ export class UserController extends CrudController<User> {
 	@ApiResponse({ status: HttpStatus.OK, description: 'Found current user', type: User })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
 	@Get('/me')
-	@UseValidationPipe()
-	async findMe(@Query(new ParseNestedQueryPipe()) options: FindMeQueryDTO): Promise<IUser> {
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async findMe(@Query() options: FindMeQueryDTO): Promise<IUser> {
 		console.log(`User Find Me`, options);
 		return await this._userService.findMeUser(options);
 	}
