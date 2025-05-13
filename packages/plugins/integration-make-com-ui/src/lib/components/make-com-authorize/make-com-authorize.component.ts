@@ -11,7 +11,8 @@ import { IntegrationsService, Store, MakeComService, MakeComStoreService } from 
 @Component({
 	selector: 'ngx-make-com-authorize',
 	templateUrl: './make-com-authorize.component.html',
-	styleUrls: ['./make-com-authorize.component.scss']
+	styleUrls: ['./make-com-authorize.component.scss'],
+	standalone: false
 })
 export class AuthorizationComponent implements OnInit, OnDestroy {
 	public rememberState: boolean = false;

@@ -9,7 +9,8 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 
 @Component({
 	selector: 'ngx-integration-make-com-layout',
-	template: ` <router-outlet></router-outlet> `
+	template: ` <router-outlet></router-outlet> `,
+	standalone: false
 })
 export class IntegrationMakeComLayoutComponent implements OnInit, OnDestroy {
 	constructor(

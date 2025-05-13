@@ -4,19 +4,8 @@
 	"sourceRoot": "packages/plugins/integration-make-com-ui/src",
 	"prefix": "lib",
 	"projectType": "library",
-	"release": {
-		"version": {
-			"generatorOptions": {
-				"packageRoot": "dist/{projectRoot}",
-				"currentVersionResolver": "git-tag",
-				"fallbackCurrentVersionResolver": "disk"
-			}
-		}
-	},
-	"tags": [
-		"scope:plugins",
-		"type:ui"
-	],
+	"tags": [],
+	"implicitDependencies": [],
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:package",
@@ -24,7 +13,8 @@
 				"{workspaceRoot}/dist/{projectRoot}"
 			],
 			"options": {
-				"project": "packages/plugins/integration-make-com-ui/ng-package.json"
+				"project": "packages/plugins/integration-upwork-ui/ng-package.json",
+				"tsConfig": "packages/plugins/integration-make-com-ui/tsconfig.json"
 			},
 			"configurations": {
 				"production": {
@@ -35,11 +25,6 @@
 				}
 			},
 			"defaultConfiguration": "production"
-		},
-		"nx-release-publish": {
-			"options": {
-				"packageRoot": "dist/{projectRoot}"
-			}
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
