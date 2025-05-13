@@ -198,7 +198,11 @@ export class TimeTrackerService implements OnDestroy {
 				return status;
 			})
 			.catch((error) => {
-				console.error(error);
+				if (error.status == 403 && error.error?.message === 'invalid-task-permissions') {
+					this.turnOffTimer();
+				} else {
+					console.error(error);
+				}
 				throw error;
 			});
 	}

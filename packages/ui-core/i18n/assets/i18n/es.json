@@ -4166,6 +4166,7 @@
 			"PLUGIN_INSTALL_CDN_ERROR": "La URL del servidor no debe estar vacía."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Límite semanal excedido",
+		"PROJECT_TASK_PERMISSION_ERROR": "Temporizador detenido porque no tienes permiso para acceder a este proyecto/tarea",
 		"OF_HRS": "De {{ limit }} hrs",
 		"TIME_TRACKER_DISABLED": "El rastreador de tiempo ha sido deshabilitado",
 		"STOP_TIMER_CHANGE_CLIENT": "Por favor detenga el temporizador antes de cambiar el cliente",

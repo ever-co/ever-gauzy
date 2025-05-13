@@ -4166,6 +4166,7 @@
 			"PLUGIN_INSTALL_CDN_ERROR": "Adres URL serwera nie może być pusty."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Przekroczono tygodniowy limit",
+		"PROJECT_TASK_PERMISSION_ERROR": "Timer został zatrzymany, ponieważ nie masz uprawnień dostępu do tego projektu/zadania",
 		"OF_HRS": "Z {{ limit }} godz.",
 		"TIME_TRACKER_DISABLED": "Śledzenie czasu zostało wyłączone",
 		"STOP_TIMER_CHANGE_CLIENT": "Zatrzymaj timer przed zmianą klienta",

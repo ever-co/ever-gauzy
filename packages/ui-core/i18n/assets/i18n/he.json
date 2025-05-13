@@ -1094,7 +1094,7 @@
 			"FEATURE": "פיצ'ר",
 			"FEATURE_ORGANIZATION": "פיצ'ר ארגון",
 			"EXPORT_DATA": "ייצוא נתונים",
-			"IMPORT_DATA": "ייבוא נתונים",,
+			"IMPORT_DATA": "ייבוא נתונים",
 			"ACTIVITY_LOG": "יומן פעילות",
 			"DAILY_PLAN": "תוכנית יומית",
 			"ENTITY_SUBSCRIPTION": "מנוי ישות",
@@ -4160,6 +4160,7 @@
 			"PLUGIN_INSTALL_CDN_ERROR": "כתובת ה-URL של השרת לא יכולה להיות ריקה."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "חרגת מהמגבלה השבועית",
+		"PROJECT_TASK_PERMISSION_ERROR": "הטיימר נעצר מכיוון שאין לך הרשאה לגשת לפרויקט/משימה זו",
 		"OF_HRS": "מתוך {{ limit }} שעות",
 		"TIME_TRACKER_DISABLED": "מעקב זמן הושבת",
 		"STOP_TIMER_CHANGE_CLIENT": "אנא עצור את הטיימר לפני שינוי לקוח",

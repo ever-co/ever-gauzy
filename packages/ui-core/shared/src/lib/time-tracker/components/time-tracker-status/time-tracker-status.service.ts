@@ -16,7 +16,7 @@ import {
 } from 'rxjs';
 import { IEmployee, ITimerStatusWithWeeklyLimits, IUser } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { ITimerIcon, ITimerSynced, Store, TimeTrackerService } from '@gauzy/ui-core/core';
+import { ITimerIcon, ITimerSynced, Store, TimeTrackerService, ToastrService } from '@gauzy/ui-core/core';
 import { TimerIconFactory } from './factory';
 import { TimerSynced } from './concretes';
 
@@ -29,15 +29,24 @@ export class TimeTrackerStatusService {
 	private readonly _external$: Subject<ITimerSynced> = new Subject<ITimerSynced>();
 	private readonly _userUpdate$: Subject<IUser> = new Subject();
 
-	constructor(private readonly _timeTrackerService: TimeTrackerService, private readonly _store: Store) {
+	constructor(
+		private readonly _timeTrackerService: TimeTrackerService,
+		private readonly _store: Store,
+		private toastrService: ToastrService
+	) {
 		defer(() =>
 			of<boolean>(!!this._store.token && !!this._store.user?.employee).pipe(
 				switchMap((isEmployeeLoggedIn: boolean) =>
 					isEmployeeLoggedIn
 						? from(this.status()).pipe(
-								catchError(() => EMPTY),
-								untilDestroyed(this)
-						  )
+							catchError((error) => {
+								if (error.error?.message === 'invalid-task-permissions') {
+									this.toastrService.danger('TIMER_TRACKER.PROJECT_TASK_PERMISSION_ERROR');
+								}
+								return EMPTY
+							}),
+							untilDestroyed(this)
+						)
 						: EMPTY
 				),
 				untilDestroyed(this)

@@ -769,7 +769,7 @@
 			"PROJECT_NAME": "项目名称为必填项。",
 			"PROJECT_URL": "项目网址无效。",
 			"OPEN_SOURCE_PROJECT_URL": "开源项目网址无效。",
-			"INVALID_IMAGE_URL": "无效的图片 URL。"	,
+			"INVALID_IMAGE_URL": "无效的图片 URL。",
 			"PROJECT_EMPLOYEE": "此字段为必填项。请选择至少一名员工。",
 			"PROJECT_ORGANIZATION_CONTACT": "此字段为必填项。请选择一个客户。",
 			"PROJECT_OWNER": "项目所有者为必填项。"
@@ -4169,6 +4169,7 @@
 			"PLUGIN_INSTALL_CDN_ERROR": "服务器URL不能为空。"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "已超出每周上限",
+		"PROJECT_TASK_PERMISSION_ERROR": "由于您没有访问此项目/任务的权限，计时器已停止",
 		"OF_HRS": "共{{ limit }}小时",
 		"TIME_TRACKER_DISABLED": "计时器已禁用",
 		"STOP_TIMER_CHANGE_CLIENT": "请在更改客户前停止计时器",
