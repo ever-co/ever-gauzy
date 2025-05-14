@@ -10,7 +10,7 @@ import {
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { Deal } from './deal.entity';
 import { DealService } from './deal.service';
-import { CrudController, OptionParams, PaginationParams } from '../core/crud';
+import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { UseValidationPipe, UUIDValidationPipe } from '../shared/pipes';
@@ -37,7 +37,7 @@ export class DealController extends CrudController<Deal> {
 		description: 'Successfully retrieved deals.'
 	})
 	@Get('/')
-	async findAll(@Query() params: PaginationParams<Deal>): Promise<IPagination<Deal>> {
+	async findAll(@Query() params: BaseQueryDTO<Deal>): Promise<IPagination<Deal>> {
 		return await this._dealService.findAll(params);
 	}
 
@@ -54,7 +54,10 @@ export class DealController extends CrudController<Deal> {
 	@ApiResponse({ status: 200, description: 'The found deal' })
 	@ApiResponse({ status: 404, description: 'Deal not found' })
 	@Get('/:id')
-	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() options: OptionParams<Deal>): Promise<Deal> {
+	async findById(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() options: FindOptionsQueryDTO<Deal>
+	): Promise<Deal> {
 		return await this._dealService.findOneByIdString(id, options);
 	}
 

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { FindManyOptions, Between, In, Raw } from 'typeorm';
 import * as moment from 'moment';
 import { ID, IDateRangePicker, IIncome, IPagination } from '@gauzy/contracts';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { LIKE_OPERATOR } from '../core/util';
 import { Income } from './income.entity';
 import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
@@ -65,7 +65,7 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 	 * @param filter - Pagination parameters including custom filters.
 	 * @returns A promise resolving to paginated results.
 	 */
-	public pagination(filter?: PaginationParams<any>): Promise<IPagination<IIncome>> {
+	public pagination(filter?: BaseQueryDTO<any>): Promise<IPagination<IIncome>> {
 		if (filter?.where) {
 			const { where } = filter;
 

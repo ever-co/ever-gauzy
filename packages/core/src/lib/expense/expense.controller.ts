@@ -23,7 +23,7 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOptionsWhere } from 'typeorm';
-import { CrudController, PaginationParams } from '../core/crud';
+import { CrudController, BaseQueryDTO } from '../core/crud';
 import { EmployeeService } from '../employee/employee.service';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -73,7 +73,7 @@ export class ExpenseController extends CrudController<Expense> {
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() params: PaginationParams<Expense>): Promise<IPagination<IExpense>> {
+	async pagination(@Query() params: BaseQueryDTO<Expense>): Promise<IPagination<IExpense>> {
 		return this.expenseService.pagination(params);
 	}
 

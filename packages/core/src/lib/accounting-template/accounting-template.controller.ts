@@ -22,7 +22,7 @@ import {
 	LanguagesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from '../core/crud';
+import { CrudController, BaseQueryDTO } from '../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
 import { Permissions, LanguageDecorator } from './../shared/decorators';
@@ -63,9 +63,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	 */
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(
-		@Query() options: PaginationParams<AccountingTemplate>
-	): Promise<IPagination<IAccountingTemplate>> {
+	async pagination(@Query() options: BaseQueryDTO<AccountingTemplate>): Promise<IPagination<IAccountingTemplate>> {
 		return await this.accountingTemplateService.paginate(options);
 	}
 
@@ -138,7 +136,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	}
 
 	@Get()
-	async findAll(@Query() options: PaginationParams<AccountingTemplate>): Promise<IPagination<IAccountingTemplate>> {
+	async findAll(@Query() options: BaseQueryDTO<AccountingTemplate>): Promise<IPagination<IAccountingTemplate>> {
 		return await this.queryBus.execute(new AccountingTemplateQuery(options));
 	}
 

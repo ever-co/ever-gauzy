@@ -18,7 +18,7 @@ import { ID, IPagination } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Permissions } from '../shared/decorators';
 import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
-import { CrudController, PaginationParams } from '../core/crud';
+import { CrudController, BaseQueryDTO } from '../core/crud';
 import { EmployeeNotificationSetting } from './employee-notification-setting.entity';
 import { EmployeeNotificationSettingService } from './employee-notification-setting.service';
 import { EmployeeNotificationSettingCreateCommand, EmployeeNotificationSettingUpdateCommand } from './commands';
@@ -39,10 +39,10 @@ export class EmployeeNotificationSettingController extends CrudController<Employ
 	 * Retrieves paginated employee notification settings.
 	 *
 	 * This endpoint returns a list of employee notification settings based on the provided pagination parameters.
-	 * The query parameters are defined by `PaginationParams<EmployeeNotificationSetting>`, and the response is
+	 * The query parameters are defined by `BaseQueryDTO<EmployeeNotificationSetting>`, and the response is
 	 * a paginated object containing employee notification settings.
 	 *
-	 * @param {PaginationParams<EmployeeNotificationSetting>} params - The pagination and filter parameters.
+	 * @param {BaseQueryDTO<EmployeeNotificationSetting>} params - The pagination and filter parameters.
 	 * @returns {Promise<IPagination<EmployeeNotificationSetting>>} A promise that resolves to the paginated employee notification settings.
 	 */
 	@ApiOperation({ summary: 'Get employees notification settings.' })
@@ -57,7 +57,7 @@ export class EmployeeNotificationSettingController extends CrudController<Employ
 	})
 	@Get()
 	async findAll(
-		@Query() params: PaginationParams<EmployeeNotificationSetting>
+		@Query() params: BaseQueryDTO<EmployeeNotificationSetting>
 	): Promise<IPagination<EmployeeNotificationSetting>> {
 		return this._employeeNotificationSettingService.findAll(params);
 	}
@@ -66,7 +66,7 @@ export class EmployeeNotificationSettingController extends CrudController<Employ
 	 * Retrieves a single employee notification setting by its unique identifier.
 	 *
 	 * @param {ID} id - The UUID of the employee notification setting.
-	 * @param {PaginationParams<EmployeeNotificationSetting>} params - Additional query parameters for pagination.
+	 * @param {BaseQueryDTO<EmployeeNotificationSetting>} params - Additional query parameters for pagination.
 	 * @returns {Promise<EmployeeNotificationSetting>} The employee notification setting if found.
 	 */
 	@ApiOperation({ summary: 'Find by id.' })
@@ -83,7 +83,7 @@ export class EmployeeNotificationSettingController extends CrudController<Employ
 	@UseValidationPipe()
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() params: PaginationParams<EmployeeNotificationSetting>
+		@Query() params: BaseQueryDTO<EmployeeNotificationSetting>
 	): Promise<EmployeeNotificationSetting> {
 		return this._employeeNotificationSettingService.findOneByIdString(id, params);
 	}

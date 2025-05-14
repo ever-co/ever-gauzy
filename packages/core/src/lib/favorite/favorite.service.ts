@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, In } from 'typeorm';
 import { BaseEntityEnum, ID, IFavorite, IFavoriteCreateInput, IPagination } from '@gauzy/contracts';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Favorite } from './favorite.entity';
 import { TypeOrmFavoriteRepository } from './repository/type-orm-favorite.repository';
@@ -22,11 +22,11 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 
 	/**
 	 * @description Find favorites by employee
-	 * @param {PaginationParams<Favorite>} options Filter criteria to find favorites
+	 * @param {BaseQueryDTO<Favorite>} options Filter criteria to find favorites
 	 * @returns A promise that resolves to paginated list of favorites
 	 * @memberof FavoriteService
 	 */
-	async findFavoritesByEmployee(options: PaginationParams<Favorite>): Promise<IPagination<IFavorite>> {
+	async findFavoritesByEmployee(options: BaseQueryDTO<Favorite>): Promise<IPagination<IFavorite>> {
 		try {
 			const { where, relations = [], take, skip } = options;
 
@@ -105,7 +105,7 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 	 * @returns A promise resolved at favorites elements records
 	 * @memberof FavoriteService
 	 */
-	async getFavoriteDetails(options?: PaginationParams<Favorite>) {
+	async getFavoriteDetails(options?: BaseQueryDTO<Favorite>) {
 		try {
 			const { where } = options;
 			const { entity } = where;

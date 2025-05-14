@@ -10,7 +10,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
-import { PaginationParams } from '../core/crud';
+import { BaseQueryDTO } from '../core/crud';
 import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
 import { LanguageDecorator, Permissions } from '../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -53,7 +53,7 @@ export class OrganizationTeamJoinRequestController {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW)
 	@UseValidationPipe()
 	async findAll(
-		@Query() params: PaginationParams<OrganizationTeamJoinRequest>
+		@Query() params: BaseQueryDTO<OrganizationTeamJoinRequest>
 	): Promise<IPagination<IOrganizationTeamJoinRequest>> {
 		return await this._organizationTeamJoinRequestService.findAll(params);
 	}

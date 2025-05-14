@@ -9,7 +9,7 @@ import { TenantOrganizationBaseDTO } from '../../core/dto';
 import { AbstractValidationPipe, UUIDValidationPipe } from './../../shared/pipes';
 import { ICrudController } from './icrud.controller';
 import { ICrudService } from './icrud.service';
-import { PaginationParams } from './pagination-params';
+import { BaseQueryDTO } from './pagination-params';
 
 /**
  * Base crud controller
@@ -58,10 +58,7 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 		@HttpCode(HttpStatus.OK)
 		@Get('pagination')
 		@UsePipes(new AbstractValidationPipe({ transform: true, whitelist: true }, { query: queryDTO }))
-		async pagination(
-			@Query() filter?: PaginationParams<BaseType>,
-			...options: any[]
-		): Promise<IPagination<BaseType>> {
+		async pagination(@Query() filter?: BaseQueryDTO<BaseType>, ...options: any[]): Promise<IPagination<BaseType>> {
 			return await this.crudService.paginate(filter);
 		}
 
@@ -79,7 +76,7 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 		@HttpCode(HttpStatus.OK)
 		@Get()
 		@UsePipes(new AbstractValidationPipe({ transform: true, whitelist: true }, { query: queryDTO }))
-		async findAll(@Query() filter?: PaginationParams<BaseType>, ...options: any[]): Promise<IPagination<BaseType>> {
+		async findAll(@Query() filter?: BaseQueryDTO<BaseType>, ...options: any[]): Promise<IPagination<BaseType>> {
 			return await this.crudService.findAll(filter);
 		}
 

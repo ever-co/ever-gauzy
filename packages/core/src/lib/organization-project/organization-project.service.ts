@@ -20,7 +20,7 @@ import {
 import { getConfig } from '@gauzy/config';
 import { CustomEmbeddedFieldConfig } from '@gauzy/common';
 import { isNotEmpty } from '@gauzy/utils';
-import { PaginationParams, TenantAwareCrudService } from '../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProjectEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
@@ -422,7 +422,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @param options - Pagination parameters with optional filters.
 	 * @returns A promise that resolves with the paginated result of organization projects.
 	 */
-	public async findAll(options?: PaginationParams<OrganizationProject>): Promise<IPagination<OrganizationProject>> {
+	public async findAll(options?: BaseQueryDTO<OrganizationProject>): Promise<IPagination<OrganizationProject>> {
 		// Check and handle the case where `organizationContactId` is explicitly set to 'null'
 		if (options?.where?.organizationContactId === 'null') {
 			options.where.organizationContactId = IsNull();
@@ -438,9 +438,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @param options - Pagination parameters with optional filters.
 	 * @returns A promise that resolves with the paginated result of organization projects.
 	 */
-	public async pagination(
-		options?: PaginationParams<OrganizationProject>
-	): Promise<IPagination<OrganizationProject>> {
+	public async pagination(options?: BaseQueryDTO<OrganizationProject>): Promise<IPagination<OrganizationProject>> {
 		// Check if there is a `where` clause and handle the `tags` filter
 		if (options?.where?.tags) {
 			options.where.tags = {
@@ -572,9 +570,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @param options - Query and pagination options (optional).
 	 * @returns A paginated list of synchronized organization projects with associated issue counts.
 	 */
-	async findSyncedProjects(
-		options?: PaginationParams<OrganizationProject>
-	): Promise<IPagination<OrganizationProject>> {
+	async findSyncedProjects(options?: BaseQueryDTO<OrganizationProject>): Promise<IPagination<OrganizationProject>> {
 		// Get the list of custom fields for the specified entity, defaulting to an empty array if none are found
 		const customFields = getConfig().customFields?.['OrganizationProject'] ?? [];
 

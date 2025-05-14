@@ -15,7 +15,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { ID, IIntegrationTenant, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from '../core/crud';
+import { CrudController, BaseQueryDTO } from '../core/crud';
 import { TenantOrganizationBaseDTO } from '../core/dto';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
@@ -70,7 +70,7 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	@Get('/')
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<IntegrationTenant>): Promise<IPagination<IntegrationTenant>> {
+	async findAll(@Query() params: BaseQueryDTO<IntegrationTenant>): Promise<IPagination<IntegrationTenant>> {
 		// Delegate the logic to your service
 		return await this._integrationTenantService.findAll(params);
 	}

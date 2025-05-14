@@ -2,7 +2,7 @@ import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { Controller, HttpStatus, Get, Query, UseGuards, HttpCode, Post, Body, Param, Put } from '@nestjs/common';
 import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import { ID, IPagination, ITagType, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from '../core/crud';
+import { CrudController, BaseQueryDTO } from '../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { TagType } from './tag-type.entity';
 import { TagTypeService } from './tag-type.service';
@@ -60,7 +60,7 @@ export class TagTypeController extends CrudController<TagType> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TAG_TYPES_VIEW)
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() options: PaginationParams<TagType>): Promise<IPagination<TagType>> {
+	async findAll(@Query() options: BaseQueryDTO<TagType>): Promise<IPagination<TagType>> {
 		return await this.tagTypesService.findAll(options);
 	}
 

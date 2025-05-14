@@ -1,7 +1,7 @@
 import { ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
 import { IsDateString, IsNumber, IsOptional, IsUUID } from 'class-validator';
 import { ID } from '@gauzy/contracts';
-import { PaginationParams } from '../../core/crud/pagination-params';
+import { BaseQueryDTO } from '../../core/crud/pagination-params';
 import { TenantOrganizationBaseDTO } from '../../core/dto/tenant-organization-base.dto';
 import { ApiCallLog } from '../api-call-log.entity';
 
@@ -10,7 +10,7 @@ import { ApiCallLog } from '../api-call-log.entity';
  */
 export class ApiCallLogFilterDTO extends IntersectionType(
 	TenantOrganizationBaseDTO,
-	PickType(PaginationParams, ['skip', 'take', 'order']),
+	PickType(BaseQueryDTO, ['skip', 'take', 'order']),
 	PickType(ApiCallLog, ['userId', 'ipAddress', 'method'] as const)
 ) {
 	// Correlation ID to filter the request against.

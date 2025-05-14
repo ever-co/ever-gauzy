@@ -17,7 +17,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
 import { CandidateStatusType, PermissionsEnum, LanguagesEnum, ICandidate, IPagination, ID } from '@gauzy/contracts';
 import { FindOptionsWhere } from 'typeorm';
-import { CrudController, OptionParams, PaginationParams } from './../core/crud';
+import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from './../core/crud';
 import { CandidateService } from './candidate.service';
 import { Candidate } from './candidate.entity';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
@@ -106,7 +106,7 @@ export class CandidateController extends CrudController<Candidate> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() options: PaginationParams<Candidate>): Promise<IPagination<ICandidate>> {
+	async pagination(@Query() options: BaseQueryDTO<Candidate>): Promise<IPagination<ICandidate>> {
 		return await this.candidateService.pagination(options);
 	}
 
@@ -129,7 +129,7 @@ export class CandidateController extends CrudController<Candidate> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get('/')
 	@UseValidationPipe({ transform: true })
-	async findAll(@Query() options: PaginationParams<Candidate>): Promise<IPagination<ICandidate>> {
+	async findAll(@Query() options: BaseQueryDTO<Candidate>): Promise<IPagination<ICandidate>> {
 		return await this.candidateService.findAll(options);
 	}
 
@@ -154,7 +154,7 @@ export class CandidateController extends CrudController<Candidate> {
 	@UseValidationPipe({ transform: true })
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() params: OptionParams<Candidate>
+		@Query() params: FindOptionsQueryDTO<Candidate>
 	): Promise<ICandidate> {
 		return await this.candidateService.findOneByIdString(id, params);
 	}
