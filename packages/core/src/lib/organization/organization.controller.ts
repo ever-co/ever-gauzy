@@ -3,7 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FindOptionsWhere } from 'typeorm';
 import { ID, IOrganization, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { BaseQueryDTO, CrudController, FindOptionsQueryDTO } from './../core/crud';
+import { BaseQueryDTO, CrudController } from './../core/crud';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
