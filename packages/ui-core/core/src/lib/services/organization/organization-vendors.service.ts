@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IOrganizationVendorCreateInput, IOrganizationVendor, IOrganizationVendorFindInput } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
@@ -8,7 +8,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 	providedIn: 'root'
 })
 export class OrganizationVendorsService {
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	create(createInput: IOrganizationVendorCreateInput): Promise<IOrganizationVendor> {
 		return firstValueFrom(this.http.post<IOrganizationVendor>(`${API_PREFIX}/organization-vendors`, createInput));

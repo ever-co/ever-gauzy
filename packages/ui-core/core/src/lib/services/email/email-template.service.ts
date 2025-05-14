@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
 	IEmailTemplate,
@@ -9,36 +9,30 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
-import { toParams } from '@gauzy/ui-core/common';
-import { API_PREFIX } from '@gauzy/ui-core/common';
+import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class EmailTemplateService {
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	getAll(where: IEmailTemplateFindInput): Promise<IPagination<IEmailTemplate>> {
-		return firstValueFrom(
-			this.http.get<IPagination<IEmailTemplate>>(`${API_PREFIX}/email-template`, {
-				params: toParams({ where })
-			})
-		);
+		const params = buildHttpParams({ where });
+		return firstValueFrom(this.http.get<IPagination<IEmailTemplate>>(`${API_PREFIX}/email-template`, { params }));
 	}
 
 	getTemplate(where?: ICustomizeEmailTemplateFindInput): Promise<ICustomizableEmailTemplate> {
 		return firstValueFrom(
 			this.http.get<ICustomizableEmailTemplate>(`${API_PREFIX}/email-template/template`, {
-				params: toParams({ ...where })
+				params: buildHttpParams({ ...where })
 			})
 		);
 	}
 
 	generateTemplatePreview(data: string): Promise<{ html: string }> {
 		return firstValueFrom(
-			this.http.post<{ html: string }>(`${API_PREFIX}/email-template/template/preview`, {
-				data
-			})
+			this.http.post<{ html: string }>(`${API_PREFIX}/email-template/template/preview`, { data })
 		);
 	}
 

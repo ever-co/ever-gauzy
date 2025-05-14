@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IInvoiceEstimateHistory, IInvoiceEstimateHistoryFindInput } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
@@ -6,7 +6,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class InvoiceEstimateHistoryService {
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	getAll(
 		relations?: string[],

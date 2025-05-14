@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, firstValueFrom } from 'rxjs';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
@@ -25,18 +25,15 @@ import {
 	IDeleteTimeSlot,
 	IDeleteScreenshot
 } from '@gauzy/contracts';
-import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class TimesheetService {
-	interval: any;
-
+	private http = inject(HttpClient);
 	private _updateLog$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	public updateLog$: Observable<boolean> = this._updateLog$.asObservable();
-
-	constructor(private http: HttpClient) {}
 
 	updateLogs(value: boolean) {
 		this._updateLog$.next(value);
@@ -53,7 +50,7 @@ export class TimesheetService {
 	checkOverlaps(request: IGetTimeLogConflictInput): Promise<ITimeLog[]> {
 		return firstValueFrom(
 			this.http.get<ITimeLog[]>(`${API_PREFIX}/timesheet/time-log/conflict`, {
-				params: toParams(request)
+				params: buildHttpParams(request)
 			})
 		);
 	}
@@ -69,7 +66,7 @@ export class TimesheetService {
 	}
 
 	getTimeSheets(request?: IGetTimesheetInput) {
-		return firstValueFrom(this.http.get(`${API_PREFIX}/timesheet`, { params: toParams(request) })).then(
+		return firstValueFrom(this.http.get(`${API_PREFIX}/timesheet`, { params: buildHttpParams(request) })).then(
 			(data: ITimesheet[]) => {
 				return data;
 			}
@@ -77,11 +74,11 @@ export class TimesheetService {
 	}
 
 	getTimeSheetCount(request?: IGetTimesheetInput) {
-		return firstValueFrom(this.http.get(`${API_PREFIX}/timesheet/count`, { params: toParams(request) })).then(
-			(data: number) => {
-				return data;
-			}
-		);
+		return firstValueFrom(
+			this.http.get(`${API_PREFIX}/timesheet/count`, { params: buildHttpParams(request) })
+		).then((data: number) => {
+			return data;
+		});
 	}
 
 	updateStatus(request: IUpdateTimesheetStatusInput): Promise<ITimesheet[]> {
@@ -103,7 +100,7 @@ export class TimesheetService {
 	getTimeLogs(request?: IGetTimeLogInput, relations = []) {
 		return firstValueFrom(
 			this.http.get<ITimeLog[]>(`${API_PREFIX}/timesheet/time-log`, {
-				params: toParams({ ...request, relations })
+				params: buildHttpParams({ ...request, relations })
 			})
 		);
 	}
@@ -116,7 +113,7 @@ export class TimesheetService {
 	 */
 	async getDailyReport(request: IGetTimeLogInput): Promise<IReportDayData[]> {
 		// Convert the request parameters to URL query parameters
-		const params = toParams(request);
+		const params = buildHttpParams(request);
 		// Fetch the daily report data
 		return firstValueFrom(
 			this.http.get<IReportDayData[]>(`${API_PREFIX}/timesheet/time-log/report/daily`, { params })
@@ -131,7 +128,7 @@ export class TimesheetService {
 	 */
 	async getDailyReportChart(request: IGetTimeLogReportInput) {
 		// Convert the request parameters to URL query parameters
-		const params = toParams(request);
+		const params = buildHttpParams(request);
 		return firstValueFrom(this.http.get(`${API_PREFIX}/timesheet/time-log/report/daily-chart`, { params }));
 	}
 
@@ -143,7 +140,7 @@ export class TimesheetService {
 	 */
 	async getOwedAmountReport(request: IGetTimeLogInput = {}): Promise<IAmountOwedReport[]> {
 		// Convert the request parameters to URL query parameters
-		const params = toParams(request);
+		const params = buildHttpParams(request);
 		return firstValueFrom(
 			this.http.get<IAmountOwedReport[]>(`${API_PREFIX}/timesheet/time-log/report/owed-report`, { params })
 		);
@@ -157,7 +154,7 @@ export class TimesheetService {
 	 */
 	async getOwedAmountReportChartData(request: IGetTimeLogInput = {}): Promise<any> {
 		// Convert the request parameters to URL query parameters
-		const params = toParams(request);
+		const params = buildHttpParams(request);
 		return firstValueFrom(this.http.get(`${API_PREFIX}/timesheet/time-log/report/owed-charts`, { params }));
 	}
 
@@ -169,7 +166,7 @@ export class TimesheetService {
 	 */
 	async getWeeklyReportChart(request?: IGetTimeLogInput) {
 		// Convert the request parameters to URL query parameters
-		const params = toParams(request);
+		const params = buildHttpParams(request);
 		return firstValueFrom(
 			this.http.get<ReportDayData[]>(`${API_PREFIX}/timesheet/time-log/report/weekly`, { params })
 		);
@@ -183,7 +180,7 @@ export class TimesheetService {
 	 */
 	async getTimeLimit(request: IGetTimeLimitReportInput) {
 		// Convert the request parameters to URL query parameters
-		const params = toParams(request);
+		const params = buildHttpParams(request);
 		return firstValueFrom(
 			this.http.get<ITimeLimitReport[]>(`${API_PREFIX}/timesheet/time-log/time-limit`, { params })
 		);
@@ -197,7 +194,7 @@ export class TimesheetService {
 	 */
 	async getProjectBudgetLimit(request: IGetTimeLogReportInput) {
 		// Convert the request parameters to URL query parameters
-		const params = toParams(request);
+		const params = buildHttpParams(request);
 		return firstValueFrom(
 			this.http.get<IProjectBudgetLimitReport[]>(`${API_PREFIX}/timesheet/time-log/project-budget-limit`, {
 				params
@@ -213,7 +210,7 @@ export class TimesheetService {
 	 */
 	async getClientBudgetLimit(request: IGetTimeLogReportInput): Promise<IClientBudgetLimitReport[]> {
 		// Convert the request parameters to URL query parameters
-		const params = toParams(request);
+		const params = buildHttpParams(request);
 		return firstValueFrom(
 			this.http.get<IClientBudgetLimitReport[]>(`${API_PREFIX}/timesheet/time-log/client-budget-limit`, {
 				params
@@ -222,7 +219,7 @@ export class TimesheetService {
 	}
 
 	getTimeLog(id: string, findOptions) {
-		const params = toParams(findOptions);
+		const params = buildHttpParams(findOptions);
 		return firstValueFrom(this.http.get(`${API_PREFIX}/timesheet/time-log/${id}`, { params })).then(
 			(data: ITimeLog) => {
 				return data;
@@ -231,7 +228,7 @@ export class TimesheetService {
 	}
 
 	getTimeSlot(id, request?: IGetTimeSlotInput) {
-		const params = toParams(request);
+		const params = buildHttpParams(request);
 		return firstValueFrom(
 			this.http.get<ITimeSlot>(`${API_PREFIX}/timesheet/time-slot/${id}`, {
 				params
@@ -240,7 +237,7 @@ export class TimesheetService {
 	}
 
 	getTimeSlots(request?: IGetTimeSlotInput) {
-		const params = toParams(request);
+		const params = buildHttpParams(request);
 		return firstValueFrom(this.http.get<ITimeSlot[]>(`${API_PREFIX}/timesheet/time-slot`, { params }));
 	}
 
@@ -253,7 +250,7 @@ export class TimesheetService {
 	deleteTimeSlots(request: IDeleteTimeSlot): Promise<Object> {
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/timesheet/time-slot`, {
-				params: toParams(request)
+				params: buildHttpParams(request)
 			})
 		);
 	}
@@ -261,7 +258,7 @@ export class TimesheetService {
 	deleteLogs(request) {
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/timesheet/time-log`, {
-				params: toParams(request)
+				params: buildHttpParams(request)
 			})
 		);
 	}
@@ -276,7 +273,7 @@ export class TimesheetService {
 	deleteScreenshot(id: ID, params: IDeleteScreenshot): Promise<Object> {
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/timesheet/screenshot/${id}`, {
-				params: toParams(params)
+				params: buildHttpParams(params)
 			})
 		);
 	}

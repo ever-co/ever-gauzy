@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IEquipment, IEquipmentFindInput } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
@@ -8,7 +8,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 export class EquipmentService {
 	EQUIPMENT_URL = `${API_PREFIX}/equipment`;
 
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	getAll(relations?: string[], findInput?: IEquipmentFindInput): Promise<{ items: IEquipment[] }> {
 		const data = JSON.stringify({ relations: relations || [], findInput });

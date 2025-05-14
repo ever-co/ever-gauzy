@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ICandidateLevelInput } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
@@ -7,7 +7,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 	providedIn: 'root'
 })
 export class CandidateLevelService {
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	getAll(orgId: string) {
 		return this.http.get(`${API_PREFIX}/candidate-level/${orgId}`);

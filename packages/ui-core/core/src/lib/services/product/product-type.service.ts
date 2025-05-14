@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
@@ -11,9 +11,8 @@ import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable({ providedIn: 'root' })
 export class ProductTypeService {
+	private http = inject(HttpClient);
 	PRODUCT_TYPES_URL = `${API_PREFIX}/product-types`;
-
-	constructor(private http: HttpClient) {}
 
 	getById(id: string = ''): Promise<IProductTypeTranslatable> {
 		return firstValueFrom(this.http.get<IProductTypeTranslatable>(`${this.PRODUCT_TYPES_URL}/${id}`));

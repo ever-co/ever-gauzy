@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ICandidateFeedback, ICandidateFeedbackFindInput, ICandidateFeedbackCreateInput } from '@gauzy/contracts';
@@ -8,7 +8,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 	providedIn: 'root'
 })
 export class CandidateFeedbacksService {
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	create(createInput: ICandidateFeedbackCreateInput): Promise<ICandidateFeedback> {
 		return firstValueFrom(this.http.post<ICandidateFeedback>(`${API_PREFIX}/candidate-feedbacks`, createInput));

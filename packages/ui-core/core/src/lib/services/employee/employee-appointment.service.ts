@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, firstValueFrom } from 'rxjs';
 import {
@@ -14,7 +14,7 @@ import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 export class EmployeeAppointmentService {
 	API_URL = `${API_PREFIX}/employee-appointment`;
 
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	/**
 	 * Get all employee appointments.

@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
 	IFindStartDateUpdateTypeInput,
 	IStartUpdateTypeInfo,
@@ -18,7 +18,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 export class OrganizationRecurringExpenseService {
 	private readonly API_URL = `${API_PREFIX}/organization-recurring-expense`;
 
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	create(createInput: IOrganizationRecurringExpense): Promise<any> {
 		return firstValueFrom(this.http.post<IOrganizationRecurringExpense>(this.API_URL, createInput));

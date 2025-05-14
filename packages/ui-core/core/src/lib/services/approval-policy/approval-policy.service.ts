@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IApprovalPolicy, IApprovalPolicyFindInput, IApprovalPolicyCreateInput, IPagination } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
@@ -7,9 +7,9 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class ApprovalPolicyService {
-	APPROVAL_POLICY_URL = `${API_PREFIX}/approval-policy`;
+	private http = inject(HttpClient);
 
-	constructor(private http: HttpClient) {}
+	APPROVAL_POLICY_URL = `${API_PREFIX}/approval-policy`;
 
 	getAll(relations?: string[], where?: IApprovalPolicyFindInput): Promise<IPagination<IApprovalPolicy>> {
 		return firstValueFrom(

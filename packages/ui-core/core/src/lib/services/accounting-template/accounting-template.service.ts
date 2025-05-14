@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IAccountingTemplateFindInput, IAccountingTemplate } from '@gauzy/contracts';
@@ -8,7 +8,7 @@ import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 	providedIn: 'root'
 })
 export class AccountingTemplateService {
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	getAll(relations?: string[], where?: IAccountingTemplateFindInput): Promise<{ items: IAccountingTemplate[] }> {
 		return firstValueFrom(

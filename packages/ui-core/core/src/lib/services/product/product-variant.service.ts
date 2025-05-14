@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { IProductVariant, IVariantCreateInput, IPagination } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -8,7 +8,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 export class ProductVariantService {
 	PRODUCT_VARIANTS_URL = `${API_PREFIX}/product-variants`;
 
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	getVariantsByProductId(productId: string): Promise<IPagination<IProductVariant>> {
 		return firstValueFrom(

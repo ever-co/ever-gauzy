@@ -1,14 +1,14 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IEmployeeSetting, IEmployeeSettingFindInput } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
+import { IEmployeeSetting, IEmployeeSettingFindInput } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class EmployeeSettingService {
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	create(createInput: IEmployeeSetting): Promise<any> {
 		return firstValueFrom(this.http.post<IEmployeeSetting>(`${API_PREFIX}/employee-setting`, createInput));

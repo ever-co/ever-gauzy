@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ICandidateExperience, IExperienceCreateInput, IExperienceFindInput, IPagination } from '@gauzy/contracts';
@@ -9,7 +9,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 	providedIn: 'root'
 })
 export class CandidateExperienceService {
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	create(createInput: IExperienceCreateInput): Promise<ICandidateExperience> {
 		return firstValueFrom(this.http.post<ICandidateExperience>(`${API_PREFIX}/candidate-experience`, createInput));

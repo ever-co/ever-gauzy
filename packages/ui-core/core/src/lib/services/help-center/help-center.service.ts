@@ -1,5 +1,5 @@
 import { IHelpCenter, IHelpCenterFind } from '@gauzy/contracts';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
@@ -8,7 +8,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 	providedIn: 'root'
 })
 export class HelpCenterService {
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	create(createInput: IHelpCenter): Promise<IHelpCenter> {
 		return firstValueFrom(this.http.post<IHelpCenter>(`${API_PREFIX}/help-center`, createInput));

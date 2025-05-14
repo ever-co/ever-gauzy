@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ID, ILanguage } from '@gauzy/contracts';
@@ -6,7 +6,7 @@ import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class LanguagesService {
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	insertLanguage(createLanguage: ILanguage): Promise<ILanguage> {
 		return firstValueFrom(this.http.post<ILanguage>(`${API_PREFIX}/languages`, createLanguage));

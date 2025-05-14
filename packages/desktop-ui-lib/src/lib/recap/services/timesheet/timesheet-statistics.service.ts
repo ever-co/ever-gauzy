@@ -16,7 +16,7 @@ import {
 	ITasksStatistics,
 	IManualTimesStatistics
 } from '@gauzy/contracts';
-import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
@@ -27,7 +27,7 @@ export class TimesheetStatisticsService {
 	getCounts(request: IGetCountsStatistics) {
 		return firstValueFrom(
 			this.http.get<ICountsStatistics>(`${API_PREFIX}/timesheet/statistics/counts`, {
-				params: toParams(request)
+				params: buildHttpParams(request)
 			})
 		);
 	}
@@ -35,7 +35,7 @@ export class TimesheetStatisticsService {
 	getTimeSlots(request?: IGetTimeSlotStatistics) {
 		return firstValueFrom(
 			this.http.get<ITimeSlotStatistics[]>(`${API_PREFIX}/timesheet/statistics/time-slots`, {
-				params: toParams(request)
+				params: buildHttpParams(request)
 			})
 		);
 	}
@@ -43,7 +43,7 @@ export class TimesheetStatisticsService {
 	getActivities(request?: IGetActivitiesStatistics) {
 		return firstValueFrom(
 			this.http.get<IActivitiesStatistics[]>(`${API_PREFIX}/timesheet/statistics/activities`, {
-				params: toParams(request)
+				params: buildHttpParams(request)
 			})
 		);
 	}
@@ -62,15 +62,15 @@ export class TimesheetStatisticsService {
 	getManualTimes(request: any) {
 		return firstValueFrom(
 			this.http.get<IManualTimesStatistics[]>(`${API_PREFIX}/timesheet/statistics/manual-times`, {
-				params: toParams(request)
+				params: buildHttpParams(request)
 			})
 		);
 	}
 
-	getProjects(request?: IGetProjectsStatistics) {
+	getProjects(request?: IGetProjectsStatistics): Promise<IProjectsStatistics[]> {
 		return firstValueFrom(
 			this.http.get<IProjectsStatistics[]>(`${API_PREFIX}/timesheet/statistics/projects`, {
-				params: toParams(request)
+				params: buildHttpParams(request)
 			})
 		);
 	}
@@ -78,7 +78,7 @@ export class TimesheetStatisticsService {
 	getMembers(request: IGetMembersStatistics) {
 		return firstValueFrom(
 			this.http.get<IMembersStatistics[]>(`${API_PREFIX}/timesheet/statistics/members`, {
-				params: toParams(request)
+				params: buildHttpParams(request)
 			})
 		);
 	}

@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
 	ID,
@@ -9,15 +9,15 @@ import {
 	IEmployeeProposalTemplateUpdateInput,
 	IPagination
 } from '@gauzy/contracts';
-import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class ProposalTemplateService {
-	API_URL = `${API_PREFIX}/employee-proposal-template`;
+	private http = inject(HttpClient);
 
-	constructor(private readonly http: HttpClient) {}
+	API_URL = `${API_PREFIX}/employee-proposal-template`;
 
 	/**
 	 * Fetches all employee proposal templates based on the given request parameters.
@@ -28,7 +28,7 @@ export class ProposalTemplateService {
 	getAll(request: any = {}) {
 		return firstValueFrom(
 			this.http.get<IPagination<IEmployeeProposalTemplate>>(this.API_URL, {
-				params: toParams(request)
+				params: buildHttpParams(request)
 			})
 		);
 	}

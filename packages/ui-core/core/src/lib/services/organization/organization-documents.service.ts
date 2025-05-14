@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IOrganizationDocument, IOrganizationDocumentFindInput } from '@gauzy/contracts';
@@ -8,7 +8,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 	providedIn: 'root'
 })
 export class OrganizationDocumentsService {
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	create(newDocument: IOrganizationDocument): Observable<IOrganizationDocument> {
 		return this.http.post<IOrganizationDocument>(`${API_PREFIX}/organization-documents`, newDocument);

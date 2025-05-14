@@ -1,15 +1,14 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom, Observable } from 'rxjs';
 import { IAppointmentEmployee } from '@gauzy/contracts';
-import { firstValueFrom } from 'rxjs';
-import { Observable } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class AppointmentEmployeesService {
-	URI = `${API_PREFIX}/appointment-employees`;
+	private http = inject(HttpClient);
 
-	constructor(private http: HttpClient) {}
+	URI = `${API_PREFIX}/appointment-employees`;
 
 	getAll(): Promise<{ items: IAppointmentEmployee[] }> {
 		return firstValueFrom(this.http.get<{ items: IAppointmentEmployee[] }>(this.URI));

@@ -1,18 +1,18 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import {
 	IOrganizationPositionCreateInput,
 	IOrganizationPosition,
 	IOrganizationPositionFindInput
 } from '@gauzy/contracts';
-import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class OrganizationPositionsService {
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	create(createInput: IOrganizationPositionCreateInput): Promise<IOrganizationPosition> {
 		return firstValueFrom(

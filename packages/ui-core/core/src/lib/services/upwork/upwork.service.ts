@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
@@ -16,7 +16,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 	providedIn: 'root'
 })
 export class UpworkService {
-	constructor(private http: HttpClient) {}
+	private http = inject(HttpClient);
 
 	uploadTransaction(formData: FormData): Observable<any> {
 		return this.http.post(`${API_PREFIX}/integrations/upwork/transactions`, formData);
