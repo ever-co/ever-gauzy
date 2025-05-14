@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IEmployeeLevelInput, IEmployeeLevel, IEmployeeLevelFindInput, IPagination } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
@@ -8,7 +8,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 	providedIn: 'root'
 })
 export class EmployeeLevelService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	getAll(relations?: string[], findInput?: IEmployeeLevelFindInput): Promise<IPagination<IEmployeeLevel>> {
 		const data = JSON.stringify({ relations: relations || [], findInput });

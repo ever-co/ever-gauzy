@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
 	ID,
@@ -14,9 +14,10 @@ import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class InvoicesService {
-	private http = inject(HttpClient);
 	private source = new BehaviorSubject(false);
 	currentData = this.source.asObservable();
+
+	constructor(private http: HttpClient) {}
 
 	getAll(where: IInvoiceFindInput, relations: string[] = []): Promise<IPagination<IInvoice>> {
 		return firstValueFrom(

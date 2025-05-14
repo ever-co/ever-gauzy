@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
 	IGetPaymentInput,
@@ -18,7 +18,7 @@ import { firstValueFrom } from 'rxjs';
 	providedIn: 'root'
 })
 export class PaymentService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	getAll(relations: string[] = [], where?: IPaymentFindInput): Promise<IPagination<IPayment>> {
 		return firstValueFrom(

@@ -1,14 +1,14 @@
-import { inject, Injectable } from '@angular/core';
+import { IHelpCenterArticle, IHelpCenterArticleUpdate } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { IHelpCenterArticle, IHelpCenterArticleUpdate } from '@gauzy/contracts';
+import { Injectable } from '@angular/core';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class HelpCenterArticleService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	create(createInput: IHelpCenterArticle): Promise<IHelpCenterArticle> {
 		return firstValueFrom(this.http.post<IHelpCenterArticle>(`${API_PREFIX}/help-center-article`, createInput));

@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -10,7 +10,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class CandidateTechnologiesService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	create(createInput: ICandidateTechnologiesCreateInput): Promise<ICandidateTechnologies> {
 		return firstValueFrom(

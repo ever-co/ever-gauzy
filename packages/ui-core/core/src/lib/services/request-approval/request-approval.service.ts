@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IRequestApproval, IRequestApprovalCreateInput, IRequestApprovalFindInput } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
@@ -6,9 +6,9 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class RequestApprovalService {
-	private http = inject(HttpClient);
-
 	REQUESTS_APPROVAL_URL = `${API_PREFIX}/request-approval`;
+
+	constructor(private http: HttpClient) {}
 
 	getAll(relations?: string[], findInput?: IRequestApprovalFindInput): Promise<{ items: IRequestApproval[] }> {
 		const data = JSON.stringify({ relations, findInput });

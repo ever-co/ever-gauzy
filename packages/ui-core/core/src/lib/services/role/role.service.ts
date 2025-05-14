@@ -1,16 +1,16 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { IRole, IPagination, IRoleCreateInput, IRoleFindInput } from '@gauzy/contracts';
-import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
+import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class RoleService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	getRoleByOptions(options: IRoleFindInput): Observable<IRole> {
 		return this.http.get<IRole>(`${API_PREFIX}/roles/options`, {
-			params: buildHttpParams({ ...options })
+			params: toParams({ ...options })
 		});
 	}
 
@@ -19,7 +19,9 @@ export class RoleService {
 	}
 
 	create(role: IRoleCreateInput): Observable<IRole> {
-		return this.http.post<IRole>(`${API_PREFIX}/roles`, { ...role });
+		return this.http.post<IRole>(`${API_PREFIX}/roles`, {
+			...role
+		});
 	}
 
 	delete(role: IRole): Observable<IRole> {

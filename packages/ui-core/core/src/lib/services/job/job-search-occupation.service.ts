@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IJobSearchOccupation, IPagination } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-core/common';
@@ -9,7 +9,7 @@ import { firstValueFrom } from 'rxjs';
 	providedIn: 'root'
 })
 export class JobSearchOccupationService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	getAll(request?: any) {
 		return firstValueFrom(

@@ -1,12 +1,12 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
 import { ISkill } from '@gauzy/contracts';
+import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class SkillsService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	insertSkills(createSkills: ISkill[]): Promise<ISkill[]> {
 		return firstValueFrom(this.http.post<ISkill[]>(`${API_PREFIX}/skills`, createSkills));

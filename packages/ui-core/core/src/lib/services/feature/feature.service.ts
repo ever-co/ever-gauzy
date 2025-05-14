@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
 	IFeature,
@@ -14,7 +14,7 @@ import { firstValueFrom, Observable } from 'rxjs';
 export class FeatureService {
 	API_URL = `${API_PREFIX}/feature/toggle`;
 
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	getFeatureToggleDefinition() {
 		return firstValueFrom(this.http.get(`${this.API_URL}/definition`));

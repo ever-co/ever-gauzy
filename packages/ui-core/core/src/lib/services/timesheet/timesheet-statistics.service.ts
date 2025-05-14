@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -16,18 +16,18 @@ import {
 	ITasksStatistics,
 	IManualTimesStatistics
 } from '@gauzy/contracts';
-import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
+import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class TimesheetStatisticsService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	getCounts(request: IGetCountsStatistics) {
 		return firstValueFrom(
 			this.http.get<ICountsStatistics>(`${API_PREFIX}/timesheet/statistics/counts`, {
-				params: buildHttpParams(request)
+				params: toParams(request)
 			})
 		);
 	}
@@ -35,7 +35,7 @@ export class TimesheetStatisticsService {
 	getTimeSlots(request?: IGetTimeSlotStatistics) {
 		return firstValueFrom(
 			this.http.get<ITimeSlotStatistics[]>(`${API_PREFIX}/timesheet/statistics/time-slots`, {
-				params: buildHttpParams(request)
+				params: toParams(request)
 			})
 		);
 	}
@@ -43,7 +43,7 @@ export class TimesheetStatisticsService {
 	getActivities(request?: IGetActivitiesStatistics) {
 		return firstValueFrom(
 			this.http.get<IActivitiesStatistics[]>(`${API_PREFIX}/timesheet/statistics/activities`, {
-				params: buildHttpParams(request)
+				params: toParams(request)
 			})
 		);
 	}
@@ -62,7 +62,7 @@ export class TimesheetStatisticsService {
 	getManualTimes(request: any) {
 		return firstValueFrom(
 			this.http.get<IManualTimesStatistics[]>(`${API_PREFIX}/timesheet/statistics/manual-times`, {
-				params: buildHttpParams(request)
+				params: toParams(request)
 			})
 		);
 	}
@@ -70,7 +70,7 @@ export class TimesheetStatisticsService {
 	getProjects(request?: IGetProjectsStatistics) {
 		return firstValueFrom(
 			this.http.get<IProjectsStatistics[]>(`${API_PREFIX}/timesheet/statistics/projects`, {
-				params: buildHttpParams(request)
+				params: toParams(request)
 			})
 		);
 	}
@@ -78,7 +78,7 @@ export class TimesheetStatisticsService {
 	getMembers(request: IGetMembersStatistics) {
 		return firstValueFrom(
 			this.http.get<IMembersStatistics[]>(`${API_PREFIX}/timesheet/statistics/members`, {
-				params: buildHttpParams(request)
+				params: toParams(request)
 			})
 		);
 	}

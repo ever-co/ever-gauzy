@@ -1,14 +1,15 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, firstValueFrom } from 'rxjs';
 import { ID, IPagination, IProposal, IProposalCreateInput, IProposalFindInput } from '@gauzy/contracts';
-import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
+import { toParams } from '@gauzy/ui-core/common';
+import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class ProposalsService {
-	private http = inject(HttpClient);
+	constructor(private readonly http: HttpClient) {}
 
 	/**
 	 * Retrieves all proposals with optional filtering by relations and conditions.
@@ -20,7 +21,7 @@ export class ProposalsService {
 	getAll(relations: string[] = [], where?: IProposalFindInput): Promise<IPagination<IProposal>> {
 		return firstValueFrom(
 			this.http.get<IPagination<IProposal>>(`${API_PREFIX}/proposal`, {
-				params: buildHttpParams({ where, relations })
+				params: toParams({ where, relations })
 			})
 		);
 	}
@@ -65,7 +66,7 @@ export class ProposalsService {
 	 */
 	getById(id: ID, relations: string[] = []): Observable<IProposal> {
 		return this.http.get<IProposal>(`${API_PREFIX}/proposal/${id}`, {
-			params: buildHttpParams({ relations })
+			params: toParams({ relations })
 		});
 	}
 }

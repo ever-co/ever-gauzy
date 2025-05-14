@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
 	IOrganizationLanguageCreateInput,
@@ -12,7 +12,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 	providedIn: 'root'
 })
 export class OrganizationLanguagesService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	create(createInput: IOrganizationLanguageCreateInput): Promise<IOrganizationLanguage> {
 		return firstValueFrom(

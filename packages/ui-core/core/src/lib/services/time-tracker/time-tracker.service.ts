@@ -18,7 +18,7 @@ import {
 	ITimerStatusInput,
 	ITimerPosition
 } from '@gauzy/contracts';
-import { API_PREFIX, BACKGROUND_SYNC_INTERVAL, buildHttpParams, toLocal, toUTC } from '@gauzy/ui-core/common';
+import { API_PREFIX, BACKGROUND_SYNC_INTERVAL, toLocal, toParams, toUTC } from '@gauzy/ui-core/common';
 import { Store as AppStore } from '../store/store.service';
 import { ITimerSynced } from './interfaces';
 
@@ -258,14 +258,21 @@ export class TimeTrackerService implements OnDestroy {
 
 	/**
 	 * Retrieves the timer status using the provided parameters.
-	 * @param input The input parameters for retrieving timer status.
+	 * @param params The input parameters for retrieving timer status.
 	 * @returns A promise that resolves to the timer status.
 	 */
-	getTimerStatus(input: ITimerStatusInput): Promise<ITimerStatus> {
+	getTimerStatus(params: ITimerStatusInput): Promise<ITimerStatus> {
 		const todayStart = toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss');
 		const todayEnd = toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss');
-		const params = buildHttpParams({ ...input, todayStart, todayEnd });
-		return firstValueFrom(this.http.get<ITimerStatus>(`${API_PREFIX}/timesheet/timer/status`, { params }));
+		return firstValueFrom(
+			this.http.get<ITimerStatus>(`${API_PREFIX}/timesheet/timer/status`, {
+				params: toParams({
+					...params,
+					todayStart,
+					todayEnd
+				})
+			})
+		);
 	}
 
 	// toggleTimer(request: ITimerToggleInput): Promise<ITimeLog> {

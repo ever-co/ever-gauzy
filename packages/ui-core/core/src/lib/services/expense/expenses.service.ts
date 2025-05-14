@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Injectable } from '@angular/core';
 import {
 	IExpense,
 	IExpenseCreateInput,
@@ -10,13 +9,15 @@ import {
 	IPagination,
 	ISplitExpenseOutput
 } from '@gauzy/contracts';
-import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { toParams } from '@gauzy/ui-core/common';
+import { firstValueFrom } from 'rxjs';
+import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class ExpensesService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	create(createInput: IExpenseCreateInput): Promise<IExpense> {
 		return firstValueFrom(this.http.post<IExpense>(`${API_PREFIX}/expense`, createInput));

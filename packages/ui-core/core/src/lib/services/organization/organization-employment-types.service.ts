@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { Observable } from 'rxjs';
@@ -15,7 +15,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 export class OrganizationEmploymentTypesService {
 	private readonly API_URL = `${API_PREFIX}/organization-employment-type`;
 
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	getAllWithPagination(
 		findInput?: IOrganizationEmploymentTypeFindInput,

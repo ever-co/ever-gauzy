@@ -1,19 +1,20 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
 import { IActivity, IGetActivitiesInput, IDailyActivity } from '@gauzy/contracts';
-import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
+import { toParams } from '@gauzy/ui-core/common';
+import { firstValueFrom } from 'rxjs';
+import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class ActivityService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	getActivities(request: IGetActivitiesInput) {
 		return firstValueFrom(
 			this.http.get<IActivity[]>(`${API_PREFIX}/timesheet/activity`, {
-				params: buildHttpParams(request)
+				params: toParams(request)
 			})
 		);
 	}
@@ -21,7 +22,7 @@ export class ActivityService {
 	getDailyActivities(request: IGetActivitiesInput) {
 		return firstValueFrom(
 			this.http.get<IDailyActivity[]>(`${API_PREFIX}/timesheet/activity/daily`, {
-				params: buildHttpParams(request)
+				params: toParams(request)
 			})
 		);
 	}
@@ -29,7 +30,7 @@ export class ActivityService {
 	getDailyActivitiesReport(request: IGetActivitiesInput) {
 		return firstValueFrom(
 			this.http.get<IDailyActivity[]>(`${API_PREFIX}/timesheet/activity/report`, {
-				params: buildHttpParams(request)
+				params: toParams(request)
 			})
 		);
 	}

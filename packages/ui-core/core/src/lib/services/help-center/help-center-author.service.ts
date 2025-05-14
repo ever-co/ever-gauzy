@@ -1,14 +1,14 @@
 import { IHelpCenterAuthor, IHelpCenterAuthorCreate, IHelpCenterAuthorFind } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class HelpCenterAuthorService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	createBulk(input: IHelpCenterAuthorCreate): Promise<IHelpCenterAuthor[]> {
 		return firstValueFrom(

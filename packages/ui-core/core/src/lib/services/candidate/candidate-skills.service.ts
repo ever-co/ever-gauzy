@@ -1,14 +1,15 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ICandidateSkillCreateInput, ISkill, ICandidateSkillFindInput, IPagination } from '@gauzy/contracts';
-import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { toParams } from '@gauzy/ui-core/common';
+import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class CandidateSkillsService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	create(createInput: ICandidateSkillCreateInput): Promise<ISkill> {
 		return firstValueFrom(this.http.post<ISkill>(`${API_PREFIX}/candidate-skills`, createInput));

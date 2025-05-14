@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -13,9 +13,9 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class ProductService {
-	private http = inject(HttpClient);
-
 	PRODUCTS_URL = `${API_PREFIX}/products`;
+
+	constructor(private http: HttpClient) {}
 
 	getAll(
 		relations?: string[],

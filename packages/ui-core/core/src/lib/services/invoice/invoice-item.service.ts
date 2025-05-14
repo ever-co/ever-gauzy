@@ -1,12 +1,11 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IInvoiceItem, IInvoiceItemCreateInput, IInvoiceItemFindInput } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
-
 @Injectable()
 export class InvoiceItemService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	getAll(relations?: string[], findInput?: IInvoiceItemFindInput): Promise<{ items: IInvoiceItem[] }> {
 		const data = JSON.stringify({ relations, findInput });

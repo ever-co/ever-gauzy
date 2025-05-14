@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 import {
 	ID,
@@ -8,11 +8,11 @@ import {
 	IUserOrganizationCreateInput,
 	IUserOrganizationFindInput
 } from '@gauzy/contracts';
-import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
+import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class UsersOrganizationsService {
-	private http = inject(HttpClient);
+	constructor(private readonly http: HttpClient) {}
 
 	/**
 	 * Count the number of user organizations based on the provided filter.
@@ -21,8 +21,9 @@ export class UsersOrganizationsService {
 	 * @returns A promise that resolves to the count of user organizations.
 	 */
 	getCount(where?: IUserOrganizationFindInput): Promise<number> {
-		const params = buildHttpParams(where);
-		return firstValueFrom(this.http.get<number>(`${API_PREFIX}/user-organization/count`, { params }));
+		return firstValueFrom(
+			this.http.get<number>(`${API_PREFIX}/user-organization/count`, { params: toParams(where) })
+		);
 	}
 
 	/**
@@ -39,11 +40,13 @@ export class UsersOrganizationsService {
 		includeEmployee: boolean = false
 	): Promise<IPagination<IUserOrganization>> {
 		// Construct request parameters
-		const params = buildHttpParams({ relations, where, includeEmployee });
+		const params: any = { relations, where, includeEmployee };
 
 		// Send HTTP GET request to retrieve user organizations
 		return firstValueFrom(
-			this.http.get<IPagination<IUserOrganization>>(`${API_PREFIX}/user-organization`, { params })
+			this.http.get<IPagination<IUserOrganization>>(`${API_PREFIX}/user-organization`, {
+				params: toParams(params)
+			})
 		);
 	}
 
@@ -55,7 +58,9 @@ export class UsersOrganizationsService {
 	 */
 	setUserAsInactive(id: ID): Promise<IUserOrganization> {
 		return firstValueFrom(
-			this.http.put<IUserOrganization>(`${API_PREFIX}/user-organization/${id}`, { isActive: false })
+			this.http.put<IUserOrganization>(`${API_PREFIX}/user-organization/${id}`, {
+				isActive: false
+			})
 		);
 	}
 

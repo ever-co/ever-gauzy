@@ -1,14 +1,15 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ICustomSmtp, ICustomSmtpFindInput } from '@gauzy/contracts';
-import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { toParams } from '@gauzy/ui-core/common';
+import { API_PREFIX } from '@gauzy/ui-core/common';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class CustomSmtpService {
-	private http = inject(HttpClient);
-
 	API_URL = `${API_PREFIX}/smtp`;
+
+	constructor(private http: HttpClient) {}
 
 	saveSMTPSetting(request: ICustomSmtp) {
 		return firstValueFrom(this.http.post<ICustomSmtp>(`${this.API_URL}`, request));

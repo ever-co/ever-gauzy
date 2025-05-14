@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import {
 	IAggregatedEmployeeStatistic,
 	IAggregatedEmployeeStatisticFindInput,
@@ -18,7 +18,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 	providedIn: 'root'
 })
 export class EmployeeStatisticsService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	/**
 	 * Gets the aggregated statistics for all employees of the organization from the start of time till now.

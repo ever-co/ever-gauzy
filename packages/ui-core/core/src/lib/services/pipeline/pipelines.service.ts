@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { ID, IDeal, IPagination, IPipeline, IPipelineCreateInput, IPipelineFindInput } from '@gauzy/contracts';
-import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
+import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { Service } from '../crud/service';
 
 @Injectable()
@@ -19,8 +19,11 @@ export class PipelinesService extends Service<IPipeline, IPipelineFindInput, IPi
 	 * @returns A promise that resolves with the paginated pipelines.
 	 */
 	getAll(relations?: string[], where?: IPipelineFindInput): Promise<IPagination<IPipeline>> {
-		const params = buildHttpParams({ where, relations });
-		return firstValueFrom(this.http.get<IPagination<IPipeline>>(`${this.basePath}`, { params }));
+		return firstValueFrom(
+			this.http.get<IPagination<IPipeline>>(`${this.basePath}`, {
+				params: toParams({ where, relations })
+			})
+		);
 	}
 
 	/**
@@ -31,8 +34,9 @@ export class PipelinesService extends Service<IPipeline, IPipelineFindInput, IPi
 	 * @returns A promise that resolves with the pipeline.
 	 */
 	getById(id: ID, where?: IPipelineFindInput, relations: string[] = []): Observable<IPipeline> {
-		const params = buildHttpParams({ where, relations });
-		return this.http.get<IPipeline>(`${this.basePath}/${id}`, { params });
+		return this.http.get<IPipeline>(`${this.basePath}/${id}`, {
+			params: toParams({ where, relations })
+		});
 	}
 
 	/**
@@ -47,7 +51,10 @@ export class PipelinesService extends Service<IPipeline, IPipelineFindInput, IPi
 		where?: IPipelineFindInput,
 		relations: string[] = []
 	): Promise<IPagination<IDeal>> {
-		const params = buildHttpParams({ where, relations });
-		return firstValueFrom(this.http.get<IPagination<IDeal>>(`${this.basePath}/${pipelineId}/deals`, { params }));
+		return firstValueFrom(
+			this.http.get<IPagination<IDeal>>(`${this.basePath}/${pipelineId}/deals`, {
+				params: toParams({ where, relations })
+			})
+		);
 	}
 }

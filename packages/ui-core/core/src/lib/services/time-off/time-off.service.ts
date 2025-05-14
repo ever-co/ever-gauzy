@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
 	ITimeOffPolicy,
@@ -15,7 +15,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable({ providedIn: 'root' })
 export class TimeOffService {
-	private http = inject(HttpClient);
+	constructor(private http: HttpClient) {}
 
 	createPolicy(createInput: ITimeOffPolicyCreateInput): Observable<ITimeOffPolicy> {
 		return this.http.post<ITimeOffPolicy>(`${API_PREFIX}/time-off-policy`, createInput);
