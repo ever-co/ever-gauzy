@@ -17,7 +17,7 @@ import { DeleteResult } from 'typeorm';
 import { ID, IPagination, IScreeningTask } from '@gauzy/contracts';
 import { Permissions } from '../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
-import { CrudController, OptionParams, PaginationParams } from '../../core/crud';
+import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from '../../core/crud';
 import { UseValidationPipe, UUIDValidationPipe } from '../../shared/pipes';
 import { ScreeningTask } from './screening-task.entity';
 import { ScreeningTasksService } from './screening-tasks.service';
@@ -54,7 +54,7 @@ export class ScreeningTasksController extends CrudController<ScreeningTask> {
 	})
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<ScreeningTask>): Promise<IPagination<IScreeningTask>> {
+	async findAll(@Query() params: BaseQueryDTO<ScreeningTask>): Promise<IPagination<IScreeningTask>> {
 		return await this.screeningTasksService.findAll(params);
 	}
 
@@ -78,7 +78,7 @@ export class ScreeningTasksController extends CrudController<ScreeningTask> {
 	@Get('/:id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() params: OptionParams<ScreeningTask>
+		@Query() params: FindOptionsQueryDTO<ScreeningTask>
 	): Promise<IScreeningTask> {
 		return this.screeningTasksService.findOneByIdString(id, params);
 	}

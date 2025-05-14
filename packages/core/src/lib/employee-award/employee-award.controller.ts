@@ -16,7 +16,7 @@ import { DeleteResult, UpdateResult } from 'typeorm';
 import { IEmployeeAward, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { EmployeeAward } from './employee-award.entity';
 import { EmployeeAwardService } from './employee-award.service';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -45,7 +45,7 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	})
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<EmployeeAward>): Promise<IPagination<IEmployeeAward>> {
+	async findAll(@Query() params: BaseQueryDTO<EmployeeAward>): Promise<IPagination<IEmployeeAward>> {
 		return await this.employeeAwardService.findAll({
 			where: params.where
 		});

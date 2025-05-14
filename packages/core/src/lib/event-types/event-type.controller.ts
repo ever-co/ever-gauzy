@@ -3,7 +3,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, Put, Post, Query, U
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 import { EventTypeCreateCommand } from './commands';
@@ -38,7 +38,7 @@ export class EventTypeController extends CrudController<EventType> {
 	 */
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() filter: PaginationParams<EventType>): Promise<IPagination<IEventType>> {
+	async pagination(@Query() filter: BaseQueryDTO<EventType>): Promise<IPagination<IEventType>> {
 		return this.eventTypeService.paginate(filter);
 	}
 

@@ -1,3 +1,3 @@
-import { OptionsRelations } from '../../core/crud';
+import { FindRelationsQueryDTO } from '../../core/crud';
 
-export class OrganizationFindOptionsDTO<T = any> extends OptionsRelations<T> {}
+export class OrganizationFindOptionsQueryDTO extends FindRelationsQueryDTO {}

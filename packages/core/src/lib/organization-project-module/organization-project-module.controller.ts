@@ -18,7 +18,7 @@ import { ID, IOrganizationProjectModule, IPagination, PermissionsEnum } from '@g
 import { UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Permissions } from '../shared/decorators';
-import { CrudController, PaginationParams } from '../core/crud';
+import { CrudController, BaseQueryDTO } from '../core/crud';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { OrganizationProjectModuleService } from './organization-project-module.service';
 import {
@@ -60,7 +60,7 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 	@Get('employee')
 	@UseValidationPipe({ transform: true })
 	async getEmployeeProjectModules(
-		@Query() params: PaginationParams<OrganizationProjectModule>
+		@Query() params: BaseQueryDTO<OrganizationProjectModule>
 	): Promise<IPagination<IOrganizationProjectModule>> {
 		return await this.organizationProjectModuleService.getEmployeeProjectModules(params);
 	}
@@ -85,7 +85,7 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 	@Get('team')
 	@UseValidationPipe({ transform: true })
 	async findTeamProjectModules(
-		@Query() params: PaginationParams<OrganizationProjectModule>
+		@Query() params: BaseQueryDTO<OrganizationProjectModule>
 	): Promise<IPagination<IOrganizationProjectModule>> {
 		return await this.organizationProjectModuleService.findTeamProjectModules(params);
 	}
@@ -132,7 +132,7 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.PROJECT_MODULE_READ)
 	@Get()
 	async findAll(
-		@Query() params: PaginationParams<OrganizationProjectModule>
+		@Query() params: BaseQueryDTO<OrganizationProjectModule>
 	): Promise<IPagination<IOrganizationProjectModule>> {
 		return await this.organizationProjectModuleService.findAll(params);
 	}
@@ -151,7 +151,7 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() params: PaginationParams<OrganizationProjectModule>
+		@Query() params: BaseQueryDTO<OrganizationProjectModule>
 	): Promise<OrganizationProjectModule> {
 		return this.organizationProjectModuleService.findOneByIdString(id, params);
 	}

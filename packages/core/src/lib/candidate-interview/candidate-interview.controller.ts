@@ -8,7 +8,7 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { CandidateInterview } from './candidate-interview.entity';
 import { CandidateInterviewService } from './candidate-interview.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -79,7 +79,7 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 	})
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() params: PaginationParams<CandidateInterview>): Promise<IPagination<ICandidateInterview>> {
+	async pagination(@Query() params: BaseQueryDTO<CandidateInterview>): Promise<IPagination<ICandidateInterview>> {
 		return await this.candidateInterviewService.paginate(params);
 	}
 
@@ -103,7 +103,7 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 	})
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<CandidateInterview>): Promise<IPagination<ICandidateInterview>> {
+	async findAll(@Query() params: BaseQueryDTO<CandidateInterview>): Promise<IPagination<ICandidateInterview>> {
 		return await this.candidateInterviewService.findAll(params);
 	}
 

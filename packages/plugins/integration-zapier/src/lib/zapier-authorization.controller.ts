@@ -42,19 +42,16 @@ export class ZapierAuthorizationController {
 	/**
 	 * Helper method to validate the redirect URI against  allowed domains
 	 */
-	private validateRedirectDomain(redirectUri: string): void {
+	private validateRedirectDomain(redirectUri: string): boolean {
 		let url: URL;
 		try {
 			url = new URL(redirectUri);
+			const hostname = url.hostname.toLowerCase();
+			const isAllowed = this.allowedDomains.some((d) => hostname === d || hostname.endsWith(`.${d}`));
+
+			return isAllowed;
 		} catch {
-			throw new BadRequestException('Invalid redirect URI format.');
-		}
-
-		const hostname = url.hostname.toLowerCase();
-		const isAllowed = this.allowedDomains.some((d) => hostname === d || hostname.endsWith(`.${d}`));
-
-		if (!isAllowed) {
-			throw new BadRequestException(`Redirect URI domain "${hostname}" is not allowed.`);
+			return false;
 		}
 	}
 
@@ -162,7 +159,8 @@ export class ZapierAuthorizationController {
 			}
 
 			// Validate the redirect URI against allowed domains
-			this.validateRedirectDomain(zapier_redirect_uri);
+			const isValidRedirect = this.validateRedirectDomain(zapier_redirect_uri);
+			const safeRedirectUri = isValidRedirect ? zapier_redirect_uri : ZAPIER_REDIRECT_URI;
 
 			/** Generate an authorization code for this user */
 			const user = RequestContext.currentUser();
@@ -173,7 +171,7 @@ export class ZapierAuthorizationController {
 			const code = this.zapierAuthCodeService.generateAuthCode(
 				user.id as string,
 				user.tenantId as string,
-				zapier_redirect_uri
+				safeRedirectUri
 			);
 
 			// Convert query params object to string

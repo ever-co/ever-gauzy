@@ -18,7 +18,7 @@ import {
 	UUIDValidationPipe,
 	UseValidationPipe,
 	Permissions,
-	PaginationParams,
+	BaseQueryDTO,
 	Employee,
 	TenantPermissionGuard,
 	PermissionGuard
@@ -82,7 +82,7 @@ export class EmployeeJobPostController {
 	@Permissions(PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW)
 	@Get('/statistics')
 	@UseValidationPipe({ transform: true })
-	async getEmployeeJobsStatistics(@Query() query: PaginationParams<Employee>): Promise<IPagination<IEmployee>> {
+	async getEmployeeJobsStatistics(@Query() query: BaseQueryDTO<Employee>): Promise<IPagination<IEmployee>> {
 		return await this._queryBus.execute(new GetEmployeeJobStatisticsQuery(query));
 	}
 

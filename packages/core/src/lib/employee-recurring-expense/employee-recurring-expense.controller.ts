@@ -22,7 +22,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
@@ -103,7 +103,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	@Get()
 	@UseValidationPipe()
 	async findAll(
-		@Query() params: PaginationParams<EmployeeRecurringExpense>
+		@Query() params: BaseQueryDTO<EmployeeRecurringExpense>
 	): Promise<IPagination<IEmployeeRecurringExpense>> {
 		try {
 			return this.employeeRecurringExpenseService.findAll({

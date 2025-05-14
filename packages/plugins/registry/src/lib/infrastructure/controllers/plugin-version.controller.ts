@@ -3,7 +3,7 @@ import {
 	FileStorage,
 	FileStorageFactory,
 	LazyFileInterceptor,
-	PaginationParams,
+	BaseQueryDTO,
 	PermissionGuard,
 	TenantPermissionGuard,
 	UseValidationPipe,
@@ -54,7 +54,7 @@ import { PluginVersion } from '../../domain/entities/plugin-version.entity';
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/plugins/:pluginId/versions')
 export class PluginVersionController {
-	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) { }
+	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
 	@ApiOperation({ summary: 'List all plugin versions' })
 	@ApiResponse({
@@ -71,7 +71,7 @@ export class PluginVersionController {
 	@Get()
 	public async findAllVersions(
 		@Param('pluginId', UUIDValidationPipe) id: ID,
-		@Query() params: PaginationParams<IPluginVersion>
+		@Query() params: BaseQueryDTO<IPluginVersion>
 	): Promise<IPagination<IPluginVersion>> {
 		return this.queryBus.execute(new ListPluginVersionsQuery(id, params));
 	}

@@ -15,7 +15,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import { IComment, ID, IPagination } from '@gauzy/contracts';
-import { CrudController, OptionParams, PaginationParams } from '../core/crud';
+import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from '../core/crud';
 import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Comment } from './comment.entity';
@@ -49,7 +49,7 @@ export class CommentController extends CrudController<Comment> {
 	})
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<Comment>): Promise<IPagination<IComment>> {
+	async findAll(@Query() params: BaseQueryDTO<Comment>): Promise<IPagination<IComment>> {
 		return await this.commentService.findAll(params);
 	}
 
@@ -70,7 +70,10 @@ export class CommentController extends CrudController<Comment> {
 		description: 'Record not found'
 	})
 	@Get('/:id')
-	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() params: OptionParams<Comment>): Promise<Comment> {
+	async findById(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() params: FindOptionsQueryDTO<Comment>
+	): Promise<Comment> {
 		return this.commentService.findOneByIdString(id, params);
 	}
 

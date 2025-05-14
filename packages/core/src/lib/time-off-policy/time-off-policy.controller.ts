@@ -8,7 +8,7 @@ import {
 	IPagination,
 	ID
 } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -32,7 +32,7 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_POLICY_VIEW)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() filter: PaginationParams<TimeOffPolicy>): Promise<IPagination<ITimeOffPolicy>> {
+	async pagination(@Query() filter: BaseQueryDTO<TimeOffPolicy>): Promise<IPagination<ITimeOffPolicy>> {
 		return this.timeOffPolicyService.paginate(filter);
 	}
 

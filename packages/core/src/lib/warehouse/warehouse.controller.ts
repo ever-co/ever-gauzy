@@ -10,7 +10,7 @@ import {
 	IWarehouse,
 	ID
 } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { RelationsQueryDTO } from './../shared/dto';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -166,7 +166,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() params: PaginationParams<Warehouse>): Promise<IPagination<IWarehouse>> {
+	async pagination(@Query() params: BaseQueryDTO<Warehouse>): Promise<IPagination<IWarehouse>> {
 		return await this.warehouseService.paginate(params);
 	}
 
@@ -191,7 +191,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<Warehouse>): Promise<IPagination<IWarehouse>> {
+	async findAll(@Query() params: BaseQueryDTO<Warehouse>): Promise<IPagination<IWarehouse>> {
 		return await this.warehouseService.findAll(params);
 	}
 

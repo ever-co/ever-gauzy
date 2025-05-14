@@ -8,7 +8,7 @@ import {
 	ITaskPriorityFindInput,
 	ITaskPriorityUpdateInput
 } from '@gauzy/contracts';
-import { CrudFactory, PaginationParams } from '../../core/crud';
+import { CrudFactory, BaseQueryDTO } from '../../core/crud';
 import { TenantPermissionGuard } from '../../shared/guards';
 import { CountQueryDTO } from '../../shared/dto';
 import { UseValidationPipe } from '../../shared/pipes';
@@ -25,7 +25,7 @@ export class TaskPriorityController extends CrudFactory<
 	ITaskPriorityCreateInput,
 	ITaskPriorityUpdateInput,
 	ITaskPriorityFindInput
->(PaginationParams, CreateTaskPriorityDTO, UpdateTaskPriorityDTO, CountQueryDTO) {
+>(BaseQueryDTO, CreateTaskPriorityDTO, UpdateTaskPriorityDTO, CountQueryDTO) {
 	constructor(protected readonly taskPriorityService: TaskPriorityService) {
 		super(taskPriorityService);
 	}

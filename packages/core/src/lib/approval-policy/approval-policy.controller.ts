@@ -12,7 +12,7 @@ import {
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CrudController, PaginationParams } from '../core';
+import { CrudController, BaseQueryDTO } from '../core';
 import { ApprovalPolicy } from './approval-policy.entity';
 import { ApprovalPolicyService } from './approval-policy.service';
 import {
@@ -72,7 +72,7 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
 	@Get('/pagination')
 	@UseValidationPipe()
-	async pagination(@Query() options: PaginationParams<ApprovalPolicy>): Promise<IPagination<IApprovalPolicy>> {
+	async pagination(@Query() options: BaseQueryDTO<ApprovalPolicy>): Promise<IPagination<IApprovalPolicy>> {
 		return this.approvalPolicyService.pagination(options);
 	}
 
@@ -96,7 +96,7 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() options: PaginationParams<ApprovalPolicy>): Promise<IPagination<IApprovalPolicy>> {
+	async findAll(@Query() options: BaseQueryDTO<ApprovalPolicy>): Promise<IPagination<IApprovalPolicy>> {
 		return await this.commandBus.execute(new ApprovalPolicyGetCommand(options));
 	}
 

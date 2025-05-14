@@ -12,7 +12,7 @@ import {
 import { TenantPermissionGuard } from '../../shared/guards';
 import { CountQueryDTO } from '../../shared/dto';
 import { UseValidationPipe } from '../../shared/pipes';
-import { CrudFactory, PaginationParams } from '../../core/crud';
+import { CrudFactory, BaseQueryDTO } from '../../core/crud';
 import { TaskRelatedIssueTypeService } from './related-issue-type.service';
 import { TaskRelatedIssueType } from './related-issue-type.entity';
 import { FindRelatedIssueTypesQuery } from './queries';
@@ -27,7 +27,7 @@ export class TaskRelatedIssueTypeController extends CrudFactory<
 	ITaskRelatedIssueTypeCreateInput,
 	ITaskRelatedIssueTypeUpdateInput,
 	ITaskRelatedIssueTypeFindInput
->(PaginationParams, CreateRelatedIssueTypeDTO, UpdatesRelatedIssueTypeDTO, CountQueryDTO) {
+>(BaseQueryDTO, CreateRelatedIssueTypeDTO, UpdatesRelatedIssueTypeDTO, CountQueryDTO) {
 	constructor(
 		private readonly queryBus: QueryBus,
 		protected readonly TaskRelatedIssueTypeService: TaskRelatedIssueTypeService

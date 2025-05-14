@@ -6,7 +6,7 @@ import { I18nLang } from 'nestjs-i18n';
 import { LanguagesEnum, IPagination, PermissionsEnum, IProductCategoryTranslatable } from '@gauzy/contracts';
 import { ProductCategory } from './product-category.entity';
 import { ProductCategoryService } from './product-category.service';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
@@ -67,7 +67,7 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(
-		@Query() options: PaginationParams<ProductCategory>,
+		@Query() options: BaseQueryDTO<ProductCategory>,
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IPagination<ProductCategory>> {
@@ -99,7 +99,7 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	@Get()
 	@UseValidationPipe()
 	async findAll(
-		@Query() options: PaginationParams<ProductCategory>,
+		@Query() options: BaseQueryDTO<ProductCategory>,
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IPagination<ProductCategory>> {

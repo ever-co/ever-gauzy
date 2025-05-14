@@ -1,5 +1,5 @@
 import { ID } from '@gauzy/contracts';
-import { PaginationParams } from '@gauzy/core';
+import { BaseQueryDTO } from '@gauzy/core';
 import { IQuery } from '@nestjs/cqrs';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 
@@ -12,5 +12,5 @@ export class ListPluginVersionsQuery implements IQuery {
 	/**
 	 * @param params - Pagination and filtering parameters for plugin versions
 	 */
-	constructor(public readonly pluginId: ID, public readonly params: PaginationParams<IPluginVersion>) {}
+	constructor(public readonly pluginId: ID, public readonly params: BaseQueryDTO<IPluginVersion>) {}
 }
