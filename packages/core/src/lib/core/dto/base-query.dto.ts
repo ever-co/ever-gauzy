@@ -68,7 +68,7 @@ export class PaginationQueryDTO<T> extends FindOptionsQueryDTO<T> {
 	@IsOptional()
 	@Min(0)
 	@Max(100)
-	@Transform((params: TransformFnParams) => parseInt(params.value, 10))
+	@Transform((params: TransformFnParams) => Number.parseInt(params.value, 10))
 	readonly take?: number;
 
 	/**
@@ -77,7 +77,7 @@ export class PaginationQueryDTO<T> extends FindOptionsQueryDTO<T> {
 	@ApiPropertyOptional({ type: () => 'number', minimum: 0 })
 	@IsOptional()
 	@Min(0)
-	@Transform((params: TransformFnParams) => parseInt(params.value, 10))
+	@Transform((params: TransformFnParams) => Number.parseInt(params.value, 10))
 	readonly skip?: number;
 }
 
