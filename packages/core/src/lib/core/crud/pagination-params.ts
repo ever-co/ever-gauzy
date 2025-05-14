@@ -1,19 +1,15 @@
-// Code from https://github.com/xmlking/ngx-starter-kit.
-// MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
-// Copyright (c) 2018 Sumanth Chinthagunta
-
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { FindOptionsOrder, FindOptionsRelations, FindOptionsSelect, FindOptionsWhere } from 'typeorm';
 import { Transform, TransformFnParams, Type, plainToClass } from 'class-transformer';
 import { IsNotEmpty, IsOptional, Max, Min, ValidateNested } from 'class-validator';
 import { parseToBoolean } from '@gauzy/utils';
-import { TenantOrganizationBaseDTO } from './../../core/dto';
+import { TenantOrganizationBaseDTO } from '../dto/tenant-organization-base.dto';
 import { SimpleObjectLiteral, convertNativeParameters, parseObject } from './pagination.helper';
 
 /**
- * Specifies what columns should be retrieved.
+ * Base DTO for 'select' fields. What fields should be selected.
  */
-export class OptionsSelect<T = any> {
+export class FindSelectQueryDTO<T = any> {
 	@ApiPropertyOptional({ type: Object })
 	@IsOptional()
 	@Transform(({ value }: TransformFnParams) => parseObject(value, parseToBoolean))
@@ -21,45 +17,50 @@ export class OptionsSelect<T = any> {
 }
 
 /**
- * Indicates what relations of entity should be loaded (simplified left join form).
+ * Base DTO for 'relations' to load (joined entities).
  */
-export class OptionsRelations<T = any> extends OptionsSelect<T> {
+export class FindRelationsQueryDTO<T = any> extends FindSelectQueryDTO<T> {
 	@ApiPropertyOptional({ type: Object })
 	@IsOptional()
 	readonly relations?: FindOptionsRelations<T>;
 }
 
-export class OptionParams<T> extends OptionsRelations<T> {
-	/**
-	 * Order, in which entities should be ordered.
-	 */
-	@ApiPropertyOptional({ type: Object })
-	@IsOptional()
-	readonly order: FindOptionsOrder<T>;
-
-	/**
-	 * Simple condition that should be applied to match entities.
-	 */
+/**
+ * Simple condition that should be applied to match entities.
+ */
+export class FindWhereQueryDTO<T> extends FindRelationsQueryDTO<T> {
 	@ApiProperty({ type: Object })
 	@IsNotEmpty()
 	@ValidateNested({ each: true })
 	@Type(() => TenantOrganizationBaseDTO)
 	@Transform(({ value }: TransformFnParams) => (value ? escapeQueryWithParameters(value) : {}))
 	readonly where: FindOptionsWhere<T>;
+}
+
+/**
+ * Base DTO for filtering options (ordering, soft-delete, etc.).
+ */
+export class FindOptionsQueryDTO<T> extends FindWhereQueryDTO<T> {
+	/**
+	 * Order, in which entities should be ordered.
+	 */
+	@ApiPropertyOptional({ type: Object })
+	@IsOptional()
+	readonly order?: FindOptionsOrder<T>;
 
 	/**
 	 * Indicates if soft-deleted rows should be included in entity result.
 	 */
 	@ApiPropertyOptional({ type: 'boolean' })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) => (value ? parseToBoolean(value) : false))
-	readonly withDeleted: boolean;
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+	readonly withDeleted?: boolean;
 }
 
 /**
- * Describes generic pagination params
+ * Base DTO for pagination (skip/take).
  */
-export class PaginationParams<T = any> extends OptionParams<T> {
+export class PaginationQueryDTO<T> extends FindOptionsQueryDTO<T> {
 	/**
 	 * Limit (paginated) - max number of entities should be taken.
 	 */
@@ -68,7 +69,7 @@ export class PaginationParams<T = any> extends OptionParams<T> {
 	@Min(0)
 	@Max(100)
 	@Transform((params: TransformFnParams) => parseInt(params.value, 10))
-	readonly take: number;
+	readonly take?: number;
 
 	/**
 	 * Offset (paginated) where from entities should be taken.
@@ -77,8 +78,13 @@ export class PaginationParams<T = any> extends OptionParams<T> {
 	@IsOptional()
 	@Min(0)
 	@Transform((params: TransformFnParams) => parseInt(params.value, 10))
-	readonly skip: number;
+	readonly skip?: number;
 }
+
+/**
+ * Describes generic query params
+ */
+export class BaseQueryDTO<T = any> extends PaginationQueryDTO<T> {}
 
 /**
  * Function to escape query parameters and convert to DTO class.
