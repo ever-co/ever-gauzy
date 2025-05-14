@@ -11,6 +11,7 @@ import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDTO, UpdateOrganizationDTO } from './dto';
+import { OrganizationFindOptionsQueryDTO } from './dto/organization-find-options.dto';
 
 @ApiTags('Organization')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -113,7 +114,7 @@ export class OrganizationController extends CrudController<Organization> {
 	@UseValidationPipe({ transform: true })
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() options: FindOptionsQueryDTO<Organization>
+		@Query() options: OrganizationFindOptionsQueryDTO
 	): Promise<IOrganization> {
 		return await this.organizationService.findOneByIdString(id, options);
 	}

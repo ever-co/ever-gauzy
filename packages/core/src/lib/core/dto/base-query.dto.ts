@@ -100,28 +100,29 @@ export function escapeQueryWithParameters(nativeParameters: PlainObject): Tenant
 }
 
 /**
- * Converts native parameters based on the database connection type.
+ * Recursively converts raw parameters, parsing booleans and handling arrays and objects.
  *
- * @param parameters - The parameters to be converted.
- * @returns {any} - The converted parameters based on the database connection type.
+ * @param parameters - Raw input parameters
+ * @returns Converted parameters with booleans properly parsed
  */
-export const convertNativeParameters = (parameters: any): any => {
-	try {
-		// Mapping boolean values to their numeric representation
-		if (Array.isArray(parameters)) {
-			// If it's an array, process each element
-			return parameters.map((item: any) => convertNativeParameters(item));
-			// Mapping boolean values to their numeric representation
-		} else if (typeof parameters === 'object' && parameters !== null) {
-			// Recursively convert nested objects
-			return Object.keys(parameters).reduce((acc, key) => {
-				acc[key] = convertNativeParameters(parameters[key]);
-				return acc;
-			}, {} as Record<string, any>);
-		} else {
-			return parseToBoolean(parameters);
-		}
-	} catch (error) {
+export function convertNativeParameters(parameters: PlainObject): any {
+	if (parameters === null || parameters === undefined) {
 		return parameters;
 	}
-};
+
+	if (Array.isArray(parameters)) {
+		// Process each array item recursively
+		return parameters.map((item) => convertNativeParameters(item));
+	}
+
+	if (typeof parameters === 'object') {
+		// Recursively convert nested objects
+		return Object.keys(parameters).reduce((acc, key) => {
+			acc[key] = convertNativeParameters(parameters[key]);
+			return acc;
+		}, {} as Record<string, any>);
+	}
+
+	// Primitive value: try to parse boolean
+	return parseToBoolean(parameters);
+}
