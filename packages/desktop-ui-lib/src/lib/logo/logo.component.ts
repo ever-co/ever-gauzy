@@ -6,7 +6,8 @@ import { NbThemeService } from '@nebular/theme';
 @Component({
 	selector: 'gauzy-logo',
 	templateUrl: './logo.component.html',
-	styleUrls: ['./logo.component.scss']
+	styleUrls: ['./logo.component.scss'],
+	standalone: false
 })
 export class LogoComponent implements AfterViewInit {
 	theme: string;
@@ -16,7 +17,7 @@ export class LogoComponent implements AfterViewInit {
 		private readonly _domSanitizer: DomSanitizer,
 		public readonly _themeService: NbThemeService,
 		private readonly _cd: ChangeDetectorRef
-	) {}
+	) { }
 
 	ngAfterViewInit() {
 		this._themeService.onThemeChange().subscribe((theme) => {
