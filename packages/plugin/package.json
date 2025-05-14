@@ -21,14 +21,6 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy",
-		"directory": "packages/plugin"
-	},
-	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
-	},
 	"homepage": "https://ever.co",
 	"license": "AGPL-3.0",
 	"private": true,
@@ -47,7 +39,8 @@
 		"@nestjs/core": "^10.4.15",
 		"chalk": "^4.1.0",
 		"tslib": "^2.6.2",
-		"underscore": "^1.13.3"
+		"underscore": "^1.13.3",
+		"@gauzy/common": "0.1.0"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",

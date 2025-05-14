@@ -20,14 +20,6 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy",
-		"directory": "packages/desktop-window"
-	},
-	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
-	},
 	"homepage": "https://ever.co",
 	"license": "AGPL-3.0",
 	"private": true,
@@ -42,9 +34,10 @@
 	"dependencies": {
 		"@electron/remote": "^2.0.8",
 		"@gauzy/desktop-core": "^0.1.0",
-		"electron-log": "^4.4.8",
-		"electron-store": "^8.1.0",
-		"tslib": "^2.6.2"
+		"tslib": "^2.6.2",
+		"electron": "^30.0.1",
+		"custom-electron-titlebar": "4.2.8",
+		"electron-reload": "1.5.0"
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.9",
