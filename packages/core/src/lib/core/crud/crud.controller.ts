@@ -57,9 +57,8 @@ export abstract class CrudController<T extends BaseEntity> {
 		description: 'Records retrieved successfully'
 	})
 	@Get('pagination')
-async pagination(@Query() filter?: BaseQueryDTO<T>, ...options: any[]): Promise<IPagination<T> | undefined> {
-    return this.crudService.paginate(filter);
-}
+	async pagination(@Query() filter?: BaseQueryDTO<T>, ...options: any[]): Promise<IPagination<T> | undefined> {
+		return this.crudService.paginate(filter);
 	}
 
 	/**
