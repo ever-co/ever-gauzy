@@ -21,6 +21,7 @@ import {
 	LanguagesEnum
 } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
+import { parseToBoolean } from '@gauzy/utils';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
 import {
@@ -30,7 +31,6 @@ import {
 	WorkspaceSigninVerifyTokenCommand
 } from './commands';
 import { RequestContext } from '../core/context';
-import { convertNativeParameters } from '../core/crud/pagination.helper';
 import { AuthRefreshGuard } from './../shared/guards';
 import { UseValidationPipe } from '../shared/pipes';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
@@ -159,10 +159,7 @@ export class AuthController {
 	@Public()
 	@UseValidationPipe()
 	async signinWorkspacesByPassword(@Body() input: UserSigninWorkspaceDTO): Promise<IUserSigninWorkspaceResponse> {
-		return await this.authService.signinWorkspacesByEmailPassword(
-			input,
-			convertNativeParameters(input.includeTeams)
-		);
+		return await this.authService.signinWorkspacesByEmailPassword(input, parseToBoolean(input.includeTeams));
 	}
 
 	/**
@@ -193,7 +190,7 @@ export class AuthController {
 	@Public()
 	@UseValidationPipe()
 	async signinWorkspacesBySocial(@Body() input: SocialLoginBodyRequestDTO): Promise<IUserSigninWorkspaceResponse> {
-		return await this.authService.signinWorkspacesByEmailSocial(input, convertNativeParameters(input.includeTeams));
+		return await this.authService.signinWorkspacesByEmailSocial(input, parseToBoolean(input.includeTeams));
 	}
 
 	@HttpCode(HttpStatus.OK)
@@ -231,7 +228,7 @@ export class AuthController {
 	async confirmWorkspaceSigninByCode(
 		@Body() input: WorkspaceSigninEmailVerifyDTO
 	): Promise<IUserSigninWorkspaceResponse> {
-		return await this.authService.confirmWorkspaceSigninByCode(input, convertNativeParameters(input.includeTeams));
+		return await this.authService.confirmWorkspaceSigninByCode(input, parseToBoolean(input.includeTeams));
 	}
 
 	/**

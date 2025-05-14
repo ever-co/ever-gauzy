@@ -30,6 +30,7 @@ export * from './lib/is-object';
 export * from './lib/is-plain-object';
 export * from './lib/is-string';
 export * from './lib/match';
+export * from './lib/parse-object';
 export * from './lib/parse-to-boolean';
 export * from './lib/password-generator';
 export * from './lib/slugify';

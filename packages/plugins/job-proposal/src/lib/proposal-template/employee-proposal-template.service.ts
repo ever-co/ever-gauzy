@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ID, IEmployeeProposalTemplate, IEmployeeProposalTemplateMakeDefaultInput, IPagination } from '@gauzy/contracts';
-import { PaginationParams, TenantAwareCrudService } from '@gauzy/core';
+import {
+	ID,
+	IEmployeeProposalTemplate,
+	IEmployeeProposalTemplateMakeDefaultInput,
+	IPagination
+} from '@gauzy/contracts';
+import { BaseQueryDTO, TenantAwareCrudService } from '@gauzy/core';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 import { MikroOrmEmployeeProposalTemplateRepository } from './repository/mikro-orm-employee-proposal-template.repository';
 import { TypeOrmEmployeeProposalTemplateRepository } from './repository/type-orm-employee-proposal-template.repository';
@@ -47,11 +52,11 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 	/**
 	 * Finds all proposal templates matching the given pagination params.
 	 *
-	 * @param {PaginationParams<IEmployeeProposalTemplate>} [params] - Pagination parameters.
+	 * @param {BaseQueryDTO<IEmployeeProposalTemplate>} [params] - Pagination parameters.
 	 * @returns {Promise<IPagination<IEmployeeProposalTemplate>>} Paginated result.
 	 */
 	public async findAll(
-		params?: PaginationParams<IEmployeeProposalTemplate>
+		params?: BaseQueryDTO<IEmployeeProposalTemplate>
 	): Promise<IPagination<IEmployeeProposalTemplate>> {
 		// Directly return the result of `super.findAll`.
 		return super.findAll(params);

@@ -4,11 +4,12 @@ import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import {
 	IBaseRelationsEntityModel,
+	ID,
 	IIntegration,
 	IIntegrationTenant,
 	IIntegrationTenantFindInput
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/ui-core/common';
+import { buildHttpParams, toParams } from '@gauzy/ui-core/common';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable({
@@ -61,9 +62,8 @@ export class IntegrationsService {
 	 * @returns The integration tenant if found, or `false` if not found or an error occurs.
 	 */
 	getIntegrationByOptions(input: IIntegrationTenantFindInput) {
-		return this._http.get<any>(`${API_PREFIX}/integration-tenant/integration`, {
-			params: toParams({ ...input })
-		});
+		const params = buildHttpParams(input);
+		return this._http.get<IIntegrationTenant>(`${API_PREFIX}/integration-tenant/integration`, { params });
 	}
 
 	/**
@@ -73,10 +73,7 @@ export class IntegrationsService {
 	 * @param relations - Optional relations for the request.
 	 * @returns {Observable<any>} An Observable of the HTTP response.
 	 */
-	getIntegrationTenant(
-		id: IIntegrationTenant['id'],
-		relations: IBaseRelationsEntityModel
-	): Observable<IIntegrationTenant> {
+	getIntegrationTenant(id: ID, relations: IBaseRelationsEntityModel): Observable<IIntegrationTenant> {
 		return this._http.get<any>(`${API_PREFIX}/integration-tenant/${id}`, {
 			params: toParams({ ...relations })
 		});

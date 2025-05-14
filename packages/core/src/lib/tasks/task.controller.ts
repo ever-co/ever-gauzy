@@ -19,7 +19,7 @@ import { Permissions } from './../shared/decorators';
 import { CountQueryDTO } from './../shared/dto';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
@@ -101,7 +101,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('/me')
 	@UseValidationPipe({ transform: true })
-	async findMyTasks(@Query() params: PaginationParams<Task>): Promise<IPagination<ITask>> {
+	async findMyTasks(@Query() params: BaseQueryDTO<Task>): Promise<IPagination<ITask>> {
 		return this.taskService.getMyTasks(params);
 	}
 

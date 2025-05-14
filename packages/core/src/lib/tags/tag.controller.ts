@@ -15,7 +15,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { IPagination, ITag, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -56,7 +56,7 @@ export class TagController extends CrudController<Tag> {
 	 */
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() options: PaginationParams<Tag>): Promise<any> {
+	async findAll(@Query() options: BaseQueryDTO<Tag>): Promise<any> {
 		return await this.commandBus.execute(new TagListCommand(options.where, options.relations));
 	}
 

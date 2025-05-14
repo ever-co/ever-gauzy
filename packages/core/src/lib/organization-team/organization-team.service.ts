@@ -28,7 +28,7 @@ import { isNotEmpty, parseToBoolean } from '@gauzy/utils';
 import { FavoriteService } from '../core/decorators';
 import { Employee, OrganizationTeamEmployee } from '../core/entities/internal';
 import { MultiORMEnum, enhanceWhereWithTenantId, parseTypeORMFindToMikroOrm } from '../core/utils';
-import { PaginationParams, TenantAwareCrudService } from '../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
 import { UserService } from './../user/user.service';
@@ -376,7 +376,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @returns A Promise resolving to the paginated list of teams.
 	 * @throws UnauthorizedException if an unauthorized user attempts to access this information.
 	 */
-	public async findMyTeams(options: PaginationParams<OrganizationTeam>): Promise<IPagination<OrganizationTeam>> {
+	public async findMyTeams(options: BaseQueryDTO<OrganizationTeam>): Promise<IPagination<OrganizationTeam>> {
 		try {
 			return await this.findAll(options);
 		} catch (error) {
@@ -390,7 +390,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param options - The pagination parameters including filters.
 	 * @returns A promise that resolves to a paginated list of organization teams.
 	 */
-	public async pagination(options?: PaginationParams<OrganizationTeam>): Promise<IPagination<OrganizationTeam>> {
+	public async pagination(options?: BaseQueryDTO<OrganizationTeam>): Promise<IPagination<OrganizationTeam>> {
 		if (options?.where) {
 			const { where } = options;
 
@@ -415,7 +415,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param options - Pagination and filtering options.
 	 * @returns A Promise resolving to an object containing paginated organization teams.
 	 */
-	public async findAll(options?: PaginationParams<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
+	public async findAll(options?: BaseQueryDTO<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
 		// Retrieve tenantId from RequestContext or options
 		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
 

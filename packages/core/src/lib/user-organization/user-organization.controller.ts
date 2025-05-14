@@ -3,7 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { parseToBoolean } from '@gauzy/utils';
 import { IUserOrganization, IPagination, ID } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 import { UserOrganizationService } from './user-organization.services';
@@ -40,7 +40,7 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 	})
 	@Get()
 	async findAll(
-		@Query() params: PaginationParams<UserOrganization>,
+		@Query() params: BaseQueryDTO<UserOrganization>,
 		@Query() query: FindMeUserOrganizationDTO
 	): Promise<IPagination<IUserOrganization>> {
 		return await this.userOrganizationService.findUserOrganizations(params, parseToBoolean(query.includeEmployee));

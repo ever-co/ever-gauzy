@@ -1,5 +1,5 @@
 import { HttpStatus, ID, IPagination } from '@gauzy/contracts';
-import { PaginationParams, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
+import { BaseQueryDTO, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -36,7 +36,7 @@ export class PluginController {
 		description: 'Unauthorized access.'
 	})
 	@Get()
-	public async findAll(@Query() params: PaginationParams<IPlugin>): Promise<IPagination<IPlugin>> {
+	public async findAll(@Query() params: BaseQueryDTO<IPlugin>): Promise<IPagination<IPlugin>> {
 		return this.queryBus.execute(new ListPluginsQuery(params));
 	}
 

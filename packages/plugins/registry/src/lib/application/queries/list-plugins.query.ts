@@ -1,4 +1,4 @@
-import { PaginationParams } from '@gauzy/core';
+import { BaseQueryDTO } from '@gauzy/core';
 import { IQuery } from '@nestjs/cqrs';
 import { IPlugin } from '../../shared/models/plugin.model';
 
@@ -11,5 +11,5 @@ export class ListPluginsQuery implements IQuery {
 	/**
 	 * @param params - Pagination and filtering parameters for plugins
 	 */
-	constructor(public readonly params: PaginationParams<IPlugin>) {}
+	constructor(public readonly params: BaseQueryDTO<IPlugin>) {}
 }
