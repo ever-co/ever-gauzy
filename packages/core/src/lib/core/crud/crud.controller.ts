@@ -9,7 +9,7 @@ import { DeepPartial, FindOptionsWhere } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';
-import { BaseQueryDTO } from './pagination-params';
+import { BaseQueryDTO } from '../dto/base-query.dto';
 import { AbstractValidationPipe, UUIDValidationPipe } from '../../shared/pipes';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
 

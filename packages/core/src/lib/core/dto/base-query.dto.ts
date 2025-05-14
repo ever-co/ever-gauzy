@@ -1,10 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { FindOptionsOrder, FindOptionsRelations, FindOptionsSelect, FindOptionsWhere } from 'typeorm';
-import { Transform, TransformFnParams, Type, plainToClass } from 'class-transformer';
+import { plainToClass, Transform, TransformFnParams, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, Max, Min, ValidateNested } from 'class-validator';
-import { parseToBoolean } from '@gauzy/utils';
-import { TenantOrganizationBaseDTO } from '../dto/tenant-organization-base.dto';
-import { SimpleObjectLiteral, convertNativeParameters, parseObject } from './pagination.helper';
+import { PlainObject } from '@gauzy/contracts';
+import { parseObject, parseToBoolean } from '@gauzy/utils';
+import { TenantOrganizationBaseDTO } from './tenant-organization-base.dto';
 
 /**
  * Base DTO for 'select' fields. What fields should be selected.
@@ -91,10 +91,37 @@ export class BaseQueryDTO<T = any> extends PaginationQueryDTO<T> {}
  * @param nativeParameters - The original query parameters.
  * @returns {TenantOrganizationBaseDTO} - The escaped and converted query parameters as a DTO instance.
  */
-export function escapeQueryWithParameters(nativeParameters: SimpleObjectLiteral): TenantOrganizationBaseDTO {
+export function escapeQueryWithParameters(nativeParameters: PlainObject): TenantOrganizationBaseDTO {
 	// Convert native parameters based on the database connection type
-	const builtParameters: SimpleObjectLiteral = convertNativeParameters(nativeParameters);
+	const builtParameters: PlainObject = convertNativeParameters(nativeParameters);
 
 	// Convert to DTO class using class-transformer's plainToClass
 	return plainToClass(TenantOrganizationBaseDTO, builtParameters, { enableImplicitConversion: true });
 }
+
+/**
+ * Converts native parameters based on the database connection type.
+ *
+ * @param parameters - The parameters to be converted.
+ * @returns {any} - The converted parameters based on the database connection type.
+ */
+export const convertNativeParameters = (parameters: any): any => {
+	try {
+		// Mapping boolean values to their numeric representation
+		if (Array.isArray(parameters)) {
+			// If it's an array, process each element
+			return parameters.map((item: any) => convertNativeParameters(item));
+			// Mapping boolean values to their numeric representation
+		} else if (typeof parameters === 'object' && parameters !== null) {
+			// Recursively convert nested objects
+			return Object.keys(parameters).reduce((acc, key) => {
+				acc[key] = convertNativeParameters(parameters[key]);
+				return acc;
+			}, {} as Record<string, any>);
+		} else {
+			return parseToBoolean(parameters);
+		}
+	} catch (error) {
+		return parameters;
+	}
+};

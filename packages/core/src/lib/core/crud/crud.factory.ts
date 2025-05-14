@@ -9,7 +9,7 @@ import { TenantOrganizationBaseDTO } from '../../core/dto';
 import { AbstractValidationPipe, UUIDValidationPipe } from './../../shared/pipes';
 import { ICrudController } from './icrud.controller';
 import { ICrudService } from './icrud.service';
-import { BaseQueryDTO } from './pagination-params';
+import { BaseQueryDTO } from '../dto/base-query.dto';
 
 /**
  * Base crud controller

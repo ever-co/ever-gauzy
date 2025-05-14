@@ -30,7 +30,7 @@ import {
 	WorkspaceSigninVerifyTokenCommand
 } from './commands';
 import { RequestContext } from '../core/context';
-import { convertNativeParameters } from '../core/crud/pagination.helper';
+import { convertNativeParameters } from '../core/crud';
 import { AuthRefreshGuard } from './../shared/guards';
 import { UseValidationPipe } from '../shared/pipes';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
