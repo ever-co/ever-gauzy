@@ -14,7 +14,7 @@ import {
 	switchMap,
 	tap
 } from 'rxjs';
-import { IEmployee, ITimerStatusWithWeeklyLimits, IUser } from '@gauzy/contracts';
+import { IEmployee, ITimerStatusWithWeeklyLimits, IUser, TimeErrorsEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { ITimerIcon, ITimerSynced, Store, TimeTrackerService, ToastrService } from '@gauzy/ui-core/core';
 import { TimerIconFactory } from './factory';
@@ -40,7 +40,7 @@ export class TimeTrackerStatusService {
 					isEmployeeLoggedIn
 						? from(this.status()).pipe(
 							catchError((error) => {
-								if (error.error?.message === 'invalid-task-permissions') {
+								if (error.error?.message === TimeErrorsEnum.INVALID_TASK_PERMISSIONS) {
 									this.toastrService.danger('TIMER_TRACKER.PROJECT_TASK_PERMISSION_ERROR');
 								}
 								return EMPTY

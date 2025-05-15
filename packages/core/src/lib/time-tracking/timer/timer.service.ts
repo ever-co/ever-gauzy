@@ -15,7 +15,8 @@ import {
 	IEmployee,
 	IEmployeeFindInput,
 	ID,
-	ITimerStatusWithWeeklyLimits
+	ITimerStatusWithWeeklyLimits,
+	TimeErrorsEnum
 } from '@gauzy/contracts';
 import { SortOrderEnum } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
@@ -241,7 +242,7 @@ export class TimerService {
 					startedAt: lastLog.startedAt,
 					stoppedAt: now.toDate()
 				});
-				throw new ForbiddenException(`invalid-task-permissions`);
+				throw new ForbiddenException(TimeErrorsEnum.INVALID_TASK_PERMISSIONS);
 			}
 		}
 
@@ -381,7 +382,7 @@ export class TimerService {
 			}
 		});
 		if (tasks.length === 0) {
-			throw new ForbiddenException(`invalid-task-permissions`);
+			throw new ForbiddenException(TimeErrorsEnum.INVALID_TASK_PERMISSIONS);
 		}
 
 		// Stop any previous running timers
