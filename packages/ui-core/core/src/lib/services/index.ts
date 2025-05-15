@@ -70,3 +70,4 @@ export * from './page';
 export * from './store';
 export * from './time-tracker';
 export * from './widget';
+export * from './make-com';
