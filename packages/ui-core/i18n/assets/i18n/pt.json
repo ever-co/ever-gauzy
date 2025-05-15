@@ -4166,6 +4166,7 @@
 			"PLUGIN_INSTALL_CDN_ERROR": "O URL do servidor não deve estar vazio."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Limite semanal excedido",
+		"PROJECT_TASK_PERMISSION_ERROR": "Timer parado porque você não tem permissão para acessar este projeto/tarefa",
 		"OF_HRS": "De {{ limit }} hrs",
 		"TIME_TRACKER_DISABLED": "Rastreador de tempo foi desativado",
 		"STOP_TIMER_CHANGE_CLIENT": "Por favor, pare o timer antes de mudar o cliente",

@@ -4062,6 +4062,7 @@
 			"PLUGIN_INSTALL_CDN_ERROR": "L'URL du serveur ne doit pas être null."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "La limite hebdomadaire est dépassée.",
+		"PROJECT_TASK_PERMISSION_ERROR": "Le minuteur s'est arrêté car vous n'avez pas la permission d'accéder à ce projet/tâche",
 		"OF_HRS": "De {{ limit }} heures",
 		"TIME_TRACKER_DISABLED": "Le suivi du temps a été désactivé.",
 		"STOP_TIMER_CHANGE_CLIENT": "Veuillez arrêter le chronomètre avant de changer de client.",

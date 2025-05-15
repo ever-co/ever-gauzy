@@ -16,7 +16,8 @@ import {
 	TimeLogSourceEnum,
 	ITimerStatusInput,
 	ITimerPosition,
-	ITimerStatusWithWeeklyLimits
+	ITimerStatusWithWeeklyLimits,
+	TimeErrorsEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, BACKGROUND_SYNC_INTERVAL, toLocal, toParams, toUTC } from '@gauzy/ui-core/common';
 import { Store as AppStore } from '../store/store.service';
@@ -198,7 +199,11 @@ export class TimeTrackerService implements OnDestroy {
 				return status;
 			})
 			.catch((error) => {
-				console.error(error);
+				if (error.status == 403 && error.error?.message === TimeErrorsEnum.INVALID_TASK_PERMISSIONS) {
+					this.turnOffTimer();
+				} else {
+					console.error(error);
+				}
 				throw error;
 			});
 	}

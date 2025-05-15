@@ -4166,6 +4166,7 @@
 			"PLUGIN_INSTALL_CDN_ERROR": "De server-URL mag niet leeg zijn."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Wekelijkse limiet overschreden",
+		"PROJECT_TASK_PERMISSION_ERROR": "Timer gestopt omdat u geen toestemming heeft om dit project/deze taak te openen",
 		"OF_HRS": "Van {{ limit }} uur",
 		"TIME_TRACKER_DISABLED": "Tijdregistratie is uitgeschakeld",
 		"STOP_TIMER_CHANGE_CLIENT": "Stop de timer voordat u de klant wijzigt",
