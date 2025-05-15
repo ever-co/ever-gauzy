@@ -10,6 +10,8 @@ import {
 	LocalStore,
 } from '@gauzy/desktop-lib';
 import PullActivities from './main/workers/pull-activities';
+import PushActivities from './main/workers/push-activities';
+import { getAuthConfig } from './main/util';
 
 let popupWin: BrowserWindow | null = null;
 
@@ -46,8 +48,15 @@ app.on('before-quit', async (e) => {
 	e.preventDefault();
 	try {
 		updater.cancel();
-		const pullActivities = PullActivities.getInstance();
+		const auth = getAuthConfig();
+		const pullActivities = PullActivities.getInstance({
+			tenantId: auth.user.employee.tenantId,
+			organizationId: auth.user.employee.organizationId,
+			remoteId: auth.user.id
+		});
 		pullActivities.stopTracking();
+		const pushActivities = PushActivities.getInstance();
+		pushActivities.stopPooling();
 	} catch (e) {
 		console.error('ERROR: Occurred while cancel update:' + e);
 		throw new AppError('MAINUPDTABORT', e);
