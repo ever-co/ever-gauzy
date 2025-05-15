@@ -2,6 +2,7 @@ import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor, Opt
 import { ContextType, HttpArgumentsHost, RpcArgumentsHost, WsArgumentsHost } from '@nestjs/common/interfaces';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import * as crypto from 'crypto';
 import { PosthogEventInterceptorOptions } from './posthog.interfaces';
 import { PosthogService } from './posthog.service';
 import { SanitizerUtil } from './utils';
@@ -289,7 +290,7 @@ export class PosthogEventInterceptor implements NestInterceptor {
 	 */
 	private extractUserId(request: any): string {
 		// Generate a random ID if no user identifier is found
-		const anonymousId = `anon-${Math.random().toString(36).substring(2, 15)}`;
+		const anonymousId = `anon-${crypto.randomUUID()}`;
 
 		// Check common user ID locations
 		return (

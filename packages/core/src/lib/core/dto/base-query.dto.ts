@@ -100,29 +100,37 @@ export function escapeQueryWithParameters(nativeParameters: PlainObject): Tenant
 }
 
 /**
- * Recursively converts raw parameters, parsing booleans and handling arrays and objects.
+ * Parses the given value and converts it to a boolean using JSON.parse.
  *
- * @param parameters - Raw input parameters
- * @returns Converted parameters with booleans properly parsed
+ * @param value - The value to be parsed.
+ * @returns {boolean} - The boolean representation of the parsed value.
  */
-export function convertNativeParameters(parameters: PlainObject): any {
-	if (parameters === null || parameters === undefined) {
+export const parseBool = (value: any): boolean => Boolean(JSON.parse(value));
+
+/**
+ * Converts native parameters based on the database connection type.
+ *
+ * @param parameters - The parameters to be converted.
+ * @returns {any} - The converted parameters based on the database connection type.
+ */
+export const convertNativeParameters = (parameters: PlainObject): any => {
+	try {
+		if (Array.isArray(parameters)) {
+			// Process each array item recursively
+			return parameters.map((item) => convertNativeParameters(item));
+		}
+
+		if (typeof parameters === 'object' && parameters !== null) {
+			// Recursively convert nested objects
+			return Object.keys(parameters).reduce((acc, key) => {
+				acc[key] = convertNativeParameters(parameters[key]);
+				return acc;
+			}, {});
+		}
+
+		// Convert boolean values to their numeric representation
+		return parseBool(parameters);
+	} catch (error) {
 		return parameters;
 	}
-
-	if (Array.isArray(parameters)) {
-		// Process each array item recursively
-		return parameters.map((item) => convertNativeParameters(item));
-	}
-
-	if (typeof parameters === 'object') {
-		// Recursively convert nested objects
-		return Object.keys(parameters).reduce((acc, key) => {
-			acc[key] = convertNativeParameters(parameters[key]);
-			return acc;
-		}, {} as Record<string, any>);
-	}
-
-	// Primitive value: try to parse boolean
-	return parseToBoolean(parameters);
-}
+};
