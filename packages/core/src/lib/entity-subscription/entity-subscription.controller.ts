@@ -5,7 +5,7 @@ import { DeleteResult } from 'typeorm';
 import { ID, IPagination, IEntitySubscription } from '@gauzy/contracts';
 import { UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
-import { CrudController, OptionParams, PaginationParams } from './../core/crud';
+import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from './../core/crud';
 import { EntitySubscription } from './entity-subscription.entity';
 import { EntitySubscriptionService } from './entity-subscription.service';
 import { EntitySubscriptionCreateCommand } from './commands/entity-subscription.create.command';
@@ -37,7 +37,7 @@ export class EntitySubscriptionController extends CrudController<EntitySubscript
 	@ApiQuery({
 		name: 'params',
 		description: 'Pagination and filter parameters for subscriptions',
-		type: PaginationParams // Ensure PaginationParams is decorated for Swagger if needed
+		type: BaseQueryDTO // Ensure BaseQueryDTO is decorated for Swagger if needed
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -50,7 +50,7 @@ export class EntitySubscriptionController extends CrudController<EntitySubscript
 	})
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<EntitySubscription>): Promise<IPagination<IEntitySubscription>> {
+	async findAll(@Query() params: BaseQueryDTO<EntitySubscription>): Promise<IPagination<IEntitySubscription>> {
 		return this._entitySubscriptionService.findAll(params);
 	}
 
@@ -77,7 +77,7 @@ export class EntitySubscriptionController extends CrudController<EntitySubscript
 	@ApiQuery({
 		name: 'params',
 		description: 'Optional query parameters for filtering the subscription data',
-		type: OptionParams // Ensure OptionParams is properly defined elsewhere
+		type: FindOptionsQueryDTO // Ensure FindOptionsQueryDTO is properly defined elsewhere
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -92,7 +92,7 @@ export class EntitySubscriptionController extends CrudController<EntitySubscript
 	@Get('/:id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() params: OptionParams<EntitySubscription>
+		@Query() params: FindOptionsQueryDTO<EntitySubscription>
 	): Promise<IEntitySubscription> {
 		return this._entitySubscriptionService.findOneByIdString(id, params);
 	}

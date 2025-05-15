@@ -9,7 +9,7 @@ import {
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe,
-	PaginationParams
+	BaseQueryDTO
 } from '@gauzy/core';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 import { EmployeeProposalTemplateService } from './employee-proposal-template.service';
@@ -59,7 +59,7 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(
-		@Query() params: PaginationParams<EmployeeProposalTemplate>
+		@Query() params: BaseQueryDTO<EmployeeProposalTemplate>
 	): Promise<IPagination<IEmployeeProposalTemplate>> {
 		return await this.employeeProposalTemplateService.paginate(params);
 	}
@@ -131,7 +131,7 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 	@Get('/')
 	@UseValidationPipe()
 	async findAll(
-		@Query() params?: PaginationParams<EmployeeProposalTemplate>
+		@Query() params?: BaseQueryDTO<EmployeeProposalTemplate>
 	): Promise<IPagination<IEmployeeProposalTemplate>> {
 		return await this.employeeProposalTemplateService.findAll(params);
 	}
@@ -160,9 +160,7 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 	})
 	@Post('/')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async create(
-		@Body() entity: CreateProposalTemplateDTO
-	): Promise<IEmployeeProposalTemplate> {
+	async create(@Body() entity: CreateProposalTemplateDTO): Promise<IEmployeeProposalTemplate> {
 		return await this.employeeProposalTemplateService.create(entity);
 	}
 

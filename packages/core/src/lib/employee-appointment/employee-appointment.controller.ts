@@ -10,7 +10,7 @@ import {
 	IEmployeeAppointment,
 	IPagination
 } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { RelationsQueryDTO } from '../shared/dto';
 import { TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -80,9 +80,7 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 	 */
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(
-		@Query() filter: PaginationParams<EmployeeAppointment>
-	): Promise<IPagination<IEmployeeAppointment>> {
+	async pagination(@Query() filter: BaseQueryDTO<EmployeeAppointment>): Promise<IPagination<IEmployeeAppointment>> {
 		return this.employeeAppointmentService.paginate(filter);
 	}
 

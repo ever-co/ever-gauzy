@@ -13,11 +13,11 @@ export interface IPaginationInput {
  */
 export type IOptionsSelect<T> = {
 	[P in keyof T]?: NonNullable<T[P]> | boolean;
-}
+};
 
 /**
-* Generic pagination interface
-*/
+ * Generic pagination interface
+ */
 export interface IPagination<T> {
 	/**
 	 * Items included in the current listing
@@ -31,15 +31,15 @@ export interface IPagination<T> {
 }
 
 /*
-* Common query parameter
-*/
+ * Common query parameter
+ */
 export interface IListQueryInput<T> {
 	/**
 	 * Model entity defined relations
 	 */
 	readonly relations?: string[];
 	readonly findInput?: T | any;
-	readonly where?: any;
+	readonly where?: Record<string, any>;
 }
 
 /**
@@ -49,24 +49,24 @@ export interface IPaginationParam extends IOptionParams {
 	/**
 	 * Limit (paginated) - max number of entities should be taken.
 	 */
-	readonly take: number;
+	readonly take?: number;
 	/**
 	 * Offset (paginated) where from entities should be taken.
 	 */
-	readonly skip: number;
+	readonly skip?: number;
 }
 
 export interface IOptionParams {
 	/**
 	 * Order, in which entities should be ordered.
 	 */
-	readonly order: any;
+	readonly order?: Record<string, any>;
 	/**
 	 * Simple condition that should be applied to match entities.
 	 */
-	readonly where: any;
+	readonly where: Record<string, any>;
 	/**
-	* Indicates if soft-deleted rows should be included in entity result.
-	*/
-	readonly withDeleted: boolean;
+	 * Indicates if soft-deleted rows should be included in entity result.
+	 */
+	readonly withDeleted?: boolean;
 }

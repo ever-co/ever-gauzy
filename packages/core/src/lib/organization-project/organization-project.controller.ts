@@ -22,7 +22,7 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import {
 	OrganizationProjectCreateCommand,
 	OrganizationProjectEditByEmployeeCommand,
@@ -213,7 +213,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	@UseValidationPipe()
 	@Get('/synced')
 	async findSyncedProjects(
-		@Query() params: PaginationParams<OrganizationProject>
+		@Query() params: BaseQueryDTO<OrganizationProject>
 	): Promise<IPagination<IOrganizationProject>> {
 		return await this.organizationProjectService.findSyncedProjects(params);
 	}
@@ -267,9 +267,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
 	@UseValidationPipe({ transform: true })
 	@Get('/pagination')
-	async pagination(
-		@Query() filter: PaginationParams<OrganizationProject>
-	): Promise<IPagination<IOrganizationProject>> {
+	async pagination(@Query() filter: BaseQueryDTO<OrganizationProject>): Promise<IPagination<IOrganizationProject>> {
 		return await this.organizationProjectService.pagination(filter);
 	}
 
@@ -292,7 +290,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
 	@UseValidationPipe()
 	@Get('/')
-	async findAll(@Query() params: PaginationParams<OrganizationProject>): Promise<IPagination<IOrganizationProject>> {
+	async findAll(@Query() params: BaseQueryDTO<OrganizationProject>): Promise<IPagination<IOrganizationProject>> {
 		return await this.organizationProjectService.findAll(params);
 	}
 

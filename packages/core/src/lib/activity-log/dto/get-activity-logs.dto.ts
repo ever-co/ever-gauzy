@@ -1,7 +1,7 @@
 import { ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
 import { IsEnum, IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ActionTypeEnum, BaseEntityEnum, ID } from '@gauzy/contracts';
-import { PaginationParams } from '../../core/crud';
+import { BaseQueryDTO } from '../../core/crud';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
 import { ActivityLog } from '../activity-log.entity';
 
@@ -14,7 +14,7 @@ export const allowedOrderDirections = ['ASC', 'DESC', 'asc', 'desc'];
  */
 export class GetActivityLogsDTO extends IntersectionType(
 	TenantOrganizationBaseDTO,
-	PickType(PaginationParams<ActivityLog>, ['skip', 'take', 'relations']),
+	PickType(BaseQueryDTO<ActivityLog>, ['skip', 'take', 'relations']),
 	PickType(ActivityLog, ['isActive', 'isArchived', 'actorType'])
 ) {
 	// Filter by entity (example: Organization, Task, OrganizationContact)

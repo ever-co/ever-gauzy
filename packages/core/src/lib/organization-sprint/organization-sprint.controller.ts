@@ -15,7 +15,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { ID, IOrganizationSprint, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationSprint } from './organization-sprint.entity';
@@ -63,7 +63,7 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 	@Get('/:id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() params: PaginationParams<OrganizationSprint>
+		@Query() params: BaseQueryDTO<OrganizationSprint>
 	): Promise<IOrganizationSprint> {
 		return await this.organizationSprintService.findOneByIdString(id, params);
 	}

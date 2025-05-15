@@ -1,7 +1,7 @@
 import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '@gauzy/contracts';
-import { PaginationParams } from './../core/crud';
+import { BaseQueryDTO } from './../core/crud';
 import { ReportCategory } from './report-category.entity';
 import { ReportCategoryService } from './report-category.service';
 
@@ -16,7 +16,7 @@ export class ReportCategoryController {
 		description: 'Found records'
 	})
 	@Get('/')
-	async findAll(@Query() filter?: PaginationParams<ReportCategory>): Promise<IPagination<ReportCategory>> {
+	async findAll(@Query() filter?: BaseQueryDTO<ReportCategory>): Promise<IPagination<ReportCategory>> {
 		return this.reportCategoryService.findAll(filter);
 	}
 }

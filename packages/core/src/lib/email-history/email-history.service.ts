@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IEmailHistory, IPagination } from '@gauzy/contracts';
-import { PaginationParams, TenantAwareCrudService } from '../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { EmailHistory } from './email-history.entity';
 import { TypeOrmEmailHistoryRepository } from './repository/type-orm-email-history.repository';
@@ -19,7 +19,7 @@ export class EmailHistoryService extends TenantAwareCrudService<EmailHistory> {
 	 * @param filter Optional filtering options.
 	 * @returns A paginated list of email history records.
 	 */
-	public async findAll(filter?: PaginationParams<EmailHistory>): Promise<IPagination<IEmailHistory>> {
+	public async findAll(filter?: BaseQueryDTO<EmailHistory>): Promise<IPagination<IEmailHistory>> {
 		const query = this.typeOrmRepository.createQueryBuilder('email_sent');
 		query.leftJoin(`${query.alias}.user`, 'user');
 		query.leftJoin(`${query.alias}.emailTemplate`, 'emailTemplate');

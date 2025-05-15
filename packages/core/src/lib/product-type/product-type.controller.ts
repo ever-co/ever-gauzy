@@ -9,7 +9,7 @@ import { ProductType } from './product-type.entity';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { ProductTypeDTO } from './dto';
 import { ProductTypeCreateCommand } from './commands';
 
@@ -66,7 +66,7 @@ export class ProductTypeController extends CrudController<ProductType> {
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(
-		@Query() options: PaginationParams<ProductType>,
+		@Query() options: BaseQueryDTO<ProductType>,
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IPagination<ProductType>> {
@@ -96,7 +96,7 @@ export class ProductTypeController extends CrudController<ProductType> {
 	@Get()
 	@UseValidationPipe()
 	async findAll(
-		@Query() options: PaginationParams<ProductType>,
+		@Query() options: BaseQueryDTO<ProductType>,
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IPagination<ProductType>> {

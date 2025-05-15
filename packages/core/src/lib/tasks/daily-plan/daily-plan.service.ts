@@ -11,7 +11,7 @@ import {
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
-import { PaginationParams, TenantAwareCrudService } from '../../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context/request-context';
 import { EmployeeService } from '../../employee/employee.service';
 import { TaskService } from '../task.service';
@@ -94,7 +94,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns A promise that resolves to an object containing the list of daily plans and the total count.
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
-	async getAllPlans(options: PaginationParams<DailyPlan>, employeeId?: ID): Promise<IPagination<IDailyPlan>> {
+	async getAllPlans(options: BaseQueryDTO<DailyPlan>, employeeId?: ID): Promise<IPagination<IDailyPlan>> {
 		try {
 			const { where } = options;
 			const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
@@ -144,7 +144,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns A promise that resolves to an object containing the list of daily plans and the total count.
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
-	async getDailyPlansByEmployee(options: PaginationParams, employeeId?: ID): Promise<IPagination<IDailyPlan>> {
+	async getDailyPlansByEmployee(options: BaseQueryDTO, employeeId?: ID): Promise<IPagination<IDailyPlan>> {
 		// Fetch all daily plans for specific employee
 		return await this.getAllPlans(options, employeeId);
 	}
@@ -157,7 +157,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns A promise that resolves to an object containing the list of daily plans and the total count.
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
-	async getTeamDailyPlans(options: PaginationParams<DailyPlan>): Promise<IPagination<IDailyPlan>> {
+	async getTeamDailyPlans(options: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
 		try {
 			// Apply optional find options if provided
 			const { where, relations = [] } = options || {};
@@ -203,7 +203,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @param options Pagination options for fetching daily plans.
 	 * @returns A promise resolving to daily plans for the current employee.
 	 */
-	async getMyPlans(options: PaginationParams<DailyPlan>): Promise<IPagination<IDailyPlan>> {
+	async getMyPlans(options: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
 		const currentEmployeeId = RequestContext.currentEmployeeId();
 
 		// Fetch daily plans for the current employee
@@ -418,7 +418,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @param taskId - The ID of the task for whom to retrieve daily plans.
 	 * @returns A promise that resolves to an object containing the list of plans and total count
 	 */
-	async getDailyPlansByTask(options: PaginationParams, taskId: ID): Promise<IPagination<IDailyPlan>> {
+	async getDailyPlansByTask(options: BaseQueryDTO, taskId: ID): Promise<IPagination<IDailyPlan>> {
 		try {
 			const { where } = options;
 			const { organizationId } = where;

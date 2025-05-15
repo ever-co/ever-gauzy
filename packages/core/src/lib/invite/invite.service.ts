@@ -29,7 +29,7 @@ import {
 } from '@gauzy/contracts';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import { generateAlphaNumericCode, isEmpty, isNotEmpty } from '@gauzy/utils';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import {
 	MultiORMEnum,
@@ -674,7 +674,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * @param options
 	 * @returns
 	 */
-	public async findAllInvites(options: PaginationParams<any>) {
+	public async findAllInvites(options: BaseQueryDTO<any>) {
 		try {
 			return await super.findAll({
 				...(options && options.skip

@@ -1,4 +1,4 @@
-import { PlainObject } from './collection.types';
+import { PlainObject } from '@gauzy/contracts';
 
 /**
  *	Base class for collections

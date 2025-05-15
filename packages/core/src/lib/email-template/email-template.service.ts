@@ -4,7 +4,7 @@ import * as mjml2html from 'mjml';
 import { EmailTemplateEnum, IEmailTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { EmailTemplate } from './email-template.entity';
-import { CrudService, PaginationParams } from './../core/crud';
+import { CrudService, BaseQueryDTO } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmailTemplateRepository } from './repository/mikro-orm-email-template.repository';
@@ -24,7 +24,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 	 * @param params
 	 * @returns
 	 */
-	async findAll(params: PaginationParams<EmailTemplate>): Promise<IPagination<IEmailTemplate>> {
+	async findAll(params: BaseQueryDTO<EmailTemplate>): Promise<IPagination<IEmailTemplate>> {
 		const query = this.typeOrmRepository.createQueryBuilder('email_template');
 		query.setFindOptions({
 			select: {

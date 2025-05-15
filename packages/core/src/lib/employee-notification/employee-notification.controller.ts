@@ -1,7 +1,7 @@
 import { Controller, Get, HttpCode, HttpStatus, Param, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ID, IEmployeeNotification, IMarkAllAsReadResponse, IPagination } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from '../core/crud';
+import { CrudController, BaseQueryDTO } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
@@ -19,7 +19,7 @@ export class EmployeeNotificationController extends CrudController<EmployeeNotif
 	/**
 	 * Retrieves a paginated list of employee notifications.
 	 *
-	 * @param {PaginationParams<EmployeeNotification>} params - The query parameters for pagination.
+	 * @param {BaseQueryDTO<EmployeeNotification>} params - The query parameters for pagination.
 	 * @returns {Promise<IPagination<EmployeeNotification>>} A promise that resolves to the paginated notifications.
 	 */
 	@ApiOperation({ summary: 'Get employees notifications.' })
@@ -33,9 +33,7 @@ export class EmployeeNotificationController extends CrudController<EmployeeNotif
 		description: 'Records not found'
 	})
 	@Get('/')
-	async findAll(
-		@Query() params: PaginationParams<EmployeeNotification>
-	): Promise<IPagination<IEmployeeNotification>> {
+	async findAll(@Query() params: BaseQueryDTO<EmployeeNotification>): Promise<IPagination<IEmployeeNotification>> {
 		return this._employeeNotificationService.findAll(params);
 	}
 
@@ -43,7 +41,7 @@ export class EmployeeNotificationController extends CrudController<EmployeeNotif
 	 * Retrieves an employee notification by its unique identifier.
 	 *
 	 * @param {ID} id - The UUID of the employee notification.
-	 * @param {PaginationParams<EmployeeNotification>} params - Additional query parameters.
+	 * @param {BaseQueryDTO<EmployeeNotification>} params - Additional query parameters.
 	 * @returns {Promise<EmployeeNotification>} A promise that resolves to the found notification.
 	 */
 	@ApiOperation({ summary: 'Find by id.' })
@@ -60,7 +58,7 @@ export class EmployeeNotificationController extends CrudController<EmployeeNotif
 	@UseValidationPipe()
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() params: PaginationParams<EmployeeNotification>
+		@Query() params: BaseQueryDTO<EmployeeNotification>
 	): Promise<IEmployeeNotification> {
 		return this._employeeNotificationService.findOneByIdString(id, params);
 	}

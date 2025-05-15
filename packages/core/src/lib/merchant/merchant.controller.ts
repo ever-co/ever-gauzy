@@ -15,7 +15,7 @@ import {
 import { ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { ID, IMerchant, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { FindOptionsWhere } from 'typeorm';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
@@ -59,7 +59,7 @@ export class MerchantController extends CrudController<Merchant> {
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() params: PaginationParams<Merchant>): Promise<IPagination<IMerchant>> {
+	async pagination(@Query() params: BaseQueryDTO<Merchant>): Promise<IPagination<IMerchant>> {
 		return await this.merchantService.paginate(params);
 	}
 
@@ -84,7 +84,7 @@ export class MerchantController extends CrudController<Merchant> {
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<Merchant>): Promise<IPagination<IMerchant>> {
+	async findAll(@Query() params: BaseQueryDTO<Merchant>): Promise<IPagination<IMerchant>> {
 		try {
 			return await this.merchantService.findAll(params);
 		} catch (error) {

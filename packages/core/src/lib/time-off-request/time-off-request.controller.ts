@@ -11,7 +11,7 @@ import {
 	StatusTypesEnum,
 	ID
 } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { TimeOffRequest } from './time-off-request.entity';
 import { TimeOffRequestService } from './time-off-request.service';
 import { TimeOffStatusCommand } from './commands';
@@ -34,7 +34,7 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_VIEW)
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() options: PaginationParams<TimeOffRequest>): Promise<IPagination<ITimeOffRequest>> {
+	async pagination(@Query() options: BaseQueryDTO<TimeOffRequest>): Promise<IPagination<ITimeOffRequest>> {
 		return await this.timeOffRequestService.pagination(options);
 	}
 

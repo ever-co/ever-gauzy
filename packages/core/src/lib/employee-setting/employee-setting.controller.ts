@@ -17,7 +17,7 @@ import { DeleteResult } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import { UseValidationPipe, UUIDValidationPipe } from '../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
-import { CrudController, OptionParams, PaginationParams } from './../core/crud';
+import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from './../core/crud';
 import { EmployeeSettingService } from './employee-setting.service';
 import { EmployeeSetting } from './employee-setting.entity';
 import { EmployeeSettingCreateCommand, EmployeeSettingUpdateCommand } from './commands';
@@ -48,7 +48,7 @@ export class EmployeeSettingController extends CrudController<EmployeeSetting> {
 	})
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<EmployeeSetting>): Promise<IPagination<EmployeeSetting>> {
+	async findAll(@Query() params: BaseQueryDTO<EmployeeSetting>): Promise<IPagination<EmployeeSetting>> {
 		return await this.employeeSettingService.findAll(params);
 	}
 
@@ -64,7 +64,7 @@ export class EmployeeSettingController extends CrudController<EmployeeSetting> {
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() params: OptionParams<EmployeeSetting>
+		@Query() params: FindOptionsQueryDTO<EmployeeSetting>
 	): Promise<EmployeeSetting> {
 		return this.employeeSettingService.findOneByIdString(id, params);
 	}

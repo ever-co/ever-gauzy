@@ -9,7 +9,7 @@ import {
 	ITaskVersionFindInput,
 	ITaskVersionUpdateInput
 } from '@gauzy/contracts';
-import { CrudFactory, PaginationParams } from '../../core/crud';
+import { CrudFactory, BaseQueryDTO } from '../../core/crud';
 import { TenantPermissionGuard } from '../../shared/guards';
 import { CountQueryDTO } from '../../shared/dto';
 import { UseValidationPipe } from '../../shared/pipes';
@@ -27,7 +27,7 @@ export class TaskVersionController extends CrudFactory<
 	ITaskVersionCreateInput,
 	ITaskVersionUpdateInput,
 	ITaskVersionFindInput
->(PaginationParams, CreateVersionDTO, UpdatesVersionDTO, CountQueryDTO) {
+>(BaseQueryDTO, CreateVersionDTO, UpdatesVersionDTO, CountQueryDTO) {
 	constructor(private readonly queryBus: QueryBus, protected readonly taskVersionService: TaskVersionService) {
 		super(taskVersionService);
 	}
