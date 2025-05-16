@@ -5,7 +5,7 @@ import { PluginSourceDTO } from './plugin-source.dto';
 import { IPluginSourceUpdate } from '../models/plugin-source.model';
 
 export class UpdatePluginSourceDTO
-	extends PartialType(OmitType(PluginSourceDTO, ['versions'] as const))
+	extends PartialType(OmitType(PluginSourceDTO, ['version'] as const))
 	implements IPluginSourceUpdate
 {
 	@ApiProperty({

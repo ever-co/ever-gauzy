@@ -8,7 +8,7 @@ import { IPluginVersionUpdate } from '../models/plugin-version.model';
 import { IPluginSourceUpdate } from '../models/plugin-source.model';
 
 export class UpdatePluginVersionDTO
-	extends PartialType(OmitType(PluginVersionDTO, ['source', 'sourceId', 'pluginId', 'plugin'] as const))
+	extends PartialType(OmitType(PluginVersionDTO, ['sources', 'pluginId', 'plugin'] as const))
 	implements IPluginVersionUpdate
 {
 	@ApiProperty({
@@ -26,5 +26,5 @@ export class UpdatePluginVersionDTO
 	})
 	@ValidateNested()
 	@Type(() => UpdatePluginSourceDTO)
-	readonly source?: IPluginSourceUpdate;
+	readonly sources?: IPluginSourceUpdate[];
 }

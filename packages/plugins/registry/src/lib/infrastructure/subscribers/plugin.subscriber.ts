@@ -1,4 +1,4 @@
-import { ID, IPluginVersion } from '@gauzy/contracts';
+import { ID } from '@gauzy/contracts';
 import { Logger } from '@nestjs/common';
 import { DataSource, EntitySubscriberInterface, EventSubscriber, InsertEvent } from 'typeorm';
 import { Plugin } from '../../domain/entities/plugin.entity';
@@ -7,6 +7,7 @@ import { PluginSourceService } from '../../domain/services/plugin-source.service
 import { PluginInstallationService } from '../../domain/services/plugin-installation.service';
 import { RequestContext } from '@gauzy/core';
 import { PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
+import { IPluginVersion } from '../../shared/models/plugin-version.model';
 
 @EventSubscriber()
 export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
@@ -64,20 +65,25 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			// Compute latest version
 			const version = await this.computeLatestVersion(entity.id);
 
-			// Compute latest source associated to version
-			const source = version
-				? await this.pluginSourceService.findOneOrFailByWhereOptions({
-						versions: {
-							id: version.id
-						}
-				  })
-				: { success: false, record: null };
 			// compute installation
 			const installation = await this.pluginInstallationService.findOneOrFailByWhereOptions({
 				pluginId: entity.id,
 				installedById: RequestContext.currentEmployeeId(),
 				status: PluginInstallationStatus.INSTALLED
 			});
+
+			// Compute latest source associated to version
+			const source =
+				version && installation.success
+					? await this.pluginSourceService.findOneOrFailByWhereOptions({
+							version: {
+								id: version.id,
+								installations: {
+									id: installation.record.id
+								}
+							}
+					  })
+					: { success: false, record: null };
 
 			// Add the computed property to the entity
 			entity.downloadCount = downloadCount;
