@@ -30,6 +30,18 @@ export enum PluginSourceType {
 	GAUZY = 'GAUZY'
 }
 
+export enum PluginOSType {
+	LINUX = 'LINUX',
+	MAC = 'MAC',
+	WINDOWS = 'WINDOWS',
+	UNIVERSAL = 'UNIVERSAL'
+}
+
+export enum PluginOSArch {
+	X64 = 'X64',
+	ARM = 'ARM'
+}
+
 /**
  * Common interface for all source types
  */
