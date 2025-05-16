@@ -1,18 +1,22 @@
-import { Controller, Get, Post, Body, UseGuards, BadRequestException, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Controller, Get, Post, Body, UseGuards, BadRequestException, NotFoundException, HttpStatus, Redirect } from '@nestjs/common';
+import { ConfigService } from '@gauzy/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { TenantPermissionGuard, Permissions, PermissionGuard, RequestContext } from '@gauzy/core';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { TenantPermissionGuard, Permissions, PermissionGuard, RequestContext, Organization } from '@gauzy/core';
+import { ID, IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
 import { MakeComService } from './make-com.service';
-import { IMakeComIntegrationSettings } from './interfaces/make-com.model';
+import { IMakeComCreateIntegration, IMakeComIntegrationSettings } from './interfaces/make-com.model';
 import { UpdateMakeComOAuthSettingsDTO, UpdateMakeComSettingsDTO } from './dto';
+import { MakeComOAuthService } from './make-com-oauth.service';
 
 @ApiTags('Make.com Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller('/integration/make-com')
 export class MakeComController {
-	constructor(private readonly makeComService: MakeComService, private readonly _config: ConfigService) {}
+	constructor(
+		private readonly makeComService: MakeComService,
+		private readonly makeComOAuthService: MakeComOAuthService,
+		private readonly _config: ConfigService) {}
 
 	/**
 	 * Retrieves the Make.com integration settings for the current tenant.
@@ -84,23 +88,33 @@ export class MakeComController {
 		description: 'Tenant ID not found in request context'
 	})
 	@Post('/oauth-settings')
-	async updateOAuthSettings(@Body() input: UpdateMakeComOAuthSettingsDTO): Promise<IMakeComIntegrationSettings> {
-		// Validate that both clientId and clientSecret are provided together
-		if ((input.clientId && !input.clientSecret) || (!input.clientId && input.clientSecret)) {
-			throw new BadRequestException('Both clientId and clientSecret must be provided together');
-		}
+	async addOAuthSettings(@Body() input: IMakeComCreateIntegration): Promise<{
+	authorizationUrl: string;
+	integrationId: string;
+	}> {
 
-		// Verify tenant context exists
-		if (!RequestContext.currentTenantId()) {
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
 			throw new NotFoundException('Tenant ID not found in request context');
 		}
-		// Store new OAuth credentials
-		await this.makeComService.saveOAuthCredentials({
-			clientId: input.clientId,
-			clientSecret: input.clientSecret
+
+		// Validate input
+		if (!input.client_id || !input.client_secret) {
+			throw new BadRequestException('Both client_id and client_secret are required');
+		}
+
+		// Save the credentials and create/update integration
+		const integration = await this.makeComService.addIntegrationSettings(input);
+
+		// Generate authorization URL
+		const authorizationUrl = this.makeComOAuthService.getAuthorizationUrl({
+			clientId: input.client_id,
 		});
 
-		return this.makeComService.getIntegrationSettings();
+		return {
+			authorizationUrl,
+			integrationId: integration.id
+		};
 	}
 
 	/**
@@ -118,7 +132,7 @@ export class MakeComController {
 		const clientId = await this.makeComService.getOAuthClientId();
 
 		// Get redirect URI from config (this is typically an environment variable)
-		const redirectUri = this._config.get<string>('makeCom.redirectUri');
+		const redirectUri = this._config.get('makeCom').redirectUri;
 
 		if (!clientId || !redirectUri) {
 			throw new BadRequestException('OAuth configuration is missing required values.');

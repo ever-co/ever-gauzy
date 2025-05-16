@@ -24,4 +24,12 @@ export const MAKE_REDIRECT_URL = process.env.GAUZY_MAKE_REDIRECT_URL ??
     );
 
 /** Default scopes for Make.com OAuth */
-export const MAKE_DEFAULT_SCOPES = process.env.GAUZY_MAKE_DEFAULT_SCOPES ?? 'offline_access openid';
+export const MAKE_DEFAULT_SCOPES =
+    [
+        'identify',
+        'users:read',
+        'team:read',
+        'channels:read',
+        'channels:history',
+        'files:write:user'
+    ].join(',');

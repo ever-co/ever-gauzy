@@ -1,11 +1,12 @@
-import { Controller, Get, Query, Res, HttpException, HttpStatus } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Controller, Get, Query, Res, HttpException, HttpStatus, BadRequestException, NotFoundException, Redirect } from '@nestjs/common';
+import { ConfigService } from '@gauzy/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { Public } from '@gauzy/common';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { buildQueryString } from '@gauzy/utils';
 import { MakeComOAuthService } from './make-com-oauth.service';
+import { RequestContext } from '@gauzy/core';
 
 @ApiTags('Make.com OAuth')
 @Public()
@@ -24,18 +25,18 @@ export class MakeComAuthorizationController {
 		status: 302,
 		description: 'Redirects to Make.com authorization page'
 	})
-	@Get('/authorize')
-	async authorize(@Query() { state }: { state?: string }, @Res() response: Response) {
-		try {
-			const authorizationUrl = this.makeComOAuthService.getAuthorizationUrl(state);
-			return response.redirect(authorizationUrl);
-		} catch (error) {
-			throw new HttpException(
-				`Failed to initiate OAuth flow with ${IntegrationEnum.MakeCom}: ${error.message}`,
-				HttpStatus.INTERNAL_SERVER_ERROR
-			);
-		}
-	}
+    @Get('/authorize')
+    @Redirect()
+    async authorize(
+        @Query() { state}: { state?: string }
+    ) {
+        return {
+            url: this.makeComOAuthService.getAuthorizationUrl({
+                state
+            }),
+            statusCode: HttpStatus.FOUND
+        };
+    }
 
 	/**
 	 * Handles the callback from Make.com after user authorization.
@@ -49,67 +50,86 @@ export class MakeComAuthorizationController {
 		status: 302,
 		description: 'Redirects to the application with token information'
 	})
-	@Get('/callback')
-	async callback(
-		@Query() { code, state }: { code?: string; state?: string },
-		@Res() response: Response
-	) {
-		// Get the post-installation redirect URL from config
-		const postInstallUrl = this._config.get<string>('makeCom.postInstallUrl');
-		try {
-			// Validate the input data
-			if (!code) {
-				throw new HttpException('Invalid callback parameters', HttpStatus.BAD_REQUEST);
-			}
-			// Validate state parameter - it's required by Make.com
-			if (!state) {
-				throw new HttpException(
-					'Missing required state parameter in callback',
-					HttpStatus.BAD_REQUEST
-				);
-			}
+    @Get('/callback')
+    async callback(
+        @Query() { code, state }: { code?: string; state?: string },
+        @Res() response: Response
+    ) {
+        // Get the post-installation redirect URL from config
+        const postInstallUrl = this._config.get('makeCom').postInstallUrl;
 
-			// Otherwise use provided state
-			if (state.length < 32) {
-				throw new HttpException('Invalid state parameter', HttpStatus.BAD_REQUEST);
-			}
+        try {
+            // Validate the input data
+            if (!code) {
+                throw new HttpException('Invalid callback parameters - missing authorization code', HttpStatus.BAD_REQUEST);
+            }
 
-			// Exchange the authorization code for access token
-			const tokenResponse = await this.makeComOAuthService.exchangeCodeForToken(code, state);
+            // Validate state parameter
+            if (!state) {
+                throw new HttpException(
+                    'Missing required state parameter in callback',
+                    HttpStatus.BAD_REQUEST
+                );
+            }
 
-			// Check if the token exchange was successful
-			if (!tokenResponse || !tokenResponse.access_token) {
-				throw new HttpException('Failed to exchange authorization code for token', HttpStatus.BAD_REQUEST);
-			}
+            // Decode the state parameter
+            let decodedState;
+            try {
+                decodedState = JSON.parse(Buffer.from(state, 'base64').toString());
+            } catch (error) {
+                throw new HttpException('Invalid state parameter format', HttpStatus.BAD_REQUEST);
+            }
 
-			if (!postInstallUrl) {
-				throw new HttpException('Post-installation URL not configured', HttpStatus.INTERNAL_SERVER_ERROR);
-			}
+            const { tenantId, organizationId } = decodedState;
 
-			// Combine post-install URL with query params (if any)
-			const urlObj = new URL(postInstallUrl);
-			urlObj.searchParams.set('success', 'true');
-			urlObj.searchParams.set('integration', IntegrationEnum.MakeCom);
-			urlObj.searchParams.set('message', 'Successfully authorized Make.com');
-			const url = urlObj.toString();
+            // Validate decoded state
+            if (!tenantId || !organizationId) {
+                throw new HttpException('Invalid state parameter - missing tenant or organization context', HttpStatus.BAD_REQUEST);
+            }
 
-			// Redirect to the application
-			return response.redirect(url);
-		} catch (error) {
-			if (postInstallUrl) {
-				const errorMessage = 'Failed to complete OAuth flow';
-				const queryParamsString = buildQueryString({
-					success: 'false',
-					integration: 'make_com',
-					message: errorMessage
-				});
-				const url = [postInstallUrl, queryParamsString].filter(Boolean).join('?');
-				return response.redirect(url);
-			}
-			throw new HttpException(
-				`Failed to complete OAuth flow with ${IntegrationEnum.MakeCom}: ${error.message}`,
-				HttpStatus.INTERNAL_SERVER_ERROR
-			);
-		}
-	}
+            // Exchange the authorization code for access token
+            const tokenResponse = await this.makeComOAuthService.exchangeCodeForToken(code, state);
+
+            // Check if the token exchange was successful
+            if (!tokenResponse || !tokenResponse.access_token) {
+                throw new HttpException('Failed to exchange authorization code for token', HttpStatus.BAD_REQUEST);
+            }
+
+            if (!postInstallUrl) {
+                throw new HttpException('Post-installation URL not configured', HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            // Combine post-install URL with query params
+            const urlObj = new URL(postInstallUrl);
+            urlObj.searchParams.set('success', 'true');
+            urlObj.searchParams.set('integration', IntegrationEnum.MakeCom);
+            urlObj.searchParams.set('message', 'Successfully authorized Make.com');
+
+            // Add tenant and organization IDs to the redirect URL for reference
+            urlObj.searchParams.set('tenantId', tenantId);
+            urlObj.searchParams.set('organizationId', organizationId);
+
+            const url = urlObj.toString();
+
+            // Redirect to the application
+            return response.redirect(url);
+        } catch (error) {
+            if (postInstallUrl) {
+                const errorMessage = error.response?.message || error.message || 'Failed to complete OAuth flow';
+                const queryParamsString = new URLSearchParams({
+                    success: 'false',
+                    integration: IntegrationEnum.MakeCom,
+                    message: errorMessage
+                }).toString();
+
+                const url = `${postInstallUrl}?${queryParamsString}`;
+                return response.redirect(url);
+            }
+
+            throw new HttpException(
+                `Failed to complete OAuth flow with ${IntegrationEnum.MakeCom}: ${error.message}`,
+                error.status || HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
 }

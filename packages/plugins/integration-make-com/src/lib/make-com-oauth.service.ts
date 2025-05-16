@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, Logger, HttpException, HttpStatus, NotFoundException, forwardRef, Inject } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
+import { ConfigService } from '@gauzy/config';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError } from 'axios';
 import { firstValueFrom, catchError } from 'rxjs';
@@ -19,7 +19,6 @@ import {
 } from '@gauzy/core';
 import { MAKE_BASE_URL, MAKE_DEFAULT_SCOPES } from './make-com.config';
 import { IMakeComOAuthTokens, MakeSettingName } from './interfaces/make-com.model';
-import { randomBytes } from 'node:crypto';
 import { MakeComService } from './make-com.service';
 
 @Injectable()
@@ -40,48 +39,47 @@ export class MakeComOAuthService {
 	/**
 	 * Generate the authorization URL for the Make.com OAuth flow.
 	 *
-	 * @param {string} [stateOverride] - Optional override for the state parameter.
-	 * @returns {string} The authorization URL to redirect the user to.
 	 */
-	getAuthorizationUrl(stateOverride?: string): string {
-		const clientId = this._config.get<string>('makeCom.clientId');
+	getAuthorizationUrl(options?: { state?: string; clientId?: string; organizationId?: string }): string {
+	try {
+		const redirectUri = this._config.get('makeCom').redirectUri;
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = options?.organizationId;
+
+		// Use provided clientId or fallback to config
+		const clientId = options?.clientId || this._config.get('makeCom').clientId;
 		if (!clientId) {
-			throw new BadRequestException('Make.com client ID is not configured');
+			throw new Error('Make.com client ID is not configured');
 		}
 
-		const redirectUri = this._config.get<string>('makeCom.redirectUri');
-		if (!redirectUri) {
-			throw new BadRequestException('Make.com redirect URI is not configured');
-		}
+		// Generate state with encoded tenant and organization data
+		const stateData = {
+			tenantId,
+			organizationId,
+			timestamp: Date.now()
+		};
+		const state = Buffer.from(JSON.stringify(stateData)).toString('base64');
 
-		// Generate a random state parameter
-		// The state parameter is required by Make.com to prevent CSRF attacks and should be verified during the callback
-		const state = stateOverride || this.generateRandomState();
-
-		// Store the state in memory or some other storage mechanism
-		// This is used to verify the state parameter during the callback
+		// Store state for verification (defense against CSRF)
 		this.storeStateForVerification(state);
 
-		// Build the authorization URL with required parameters
+		// Prepare scopes according to Make.com documentation
+		const scopes = MAKE_DEFAULT_SCOPES.split(' ').join(',');
+
+		// Build authorization URL according to Make.com documentation
 		const params = new URLSearchParams({
 			client_id: clientId,
 			redirect_uri: redirectUri,
 			response_type: 'code',
-			scope: MAKE_DEFAULT_SCOPES,
-			state
+			state,
+			scope: scopes
 		});
 
 		return `${MAKE_BASE_URL}/oauth/authorize?${params.toString()}`;
-	}
-
-	/**
-	 * Generate a random state parameter.
-	 *
-	 * @returns {string} A random string to use as the state parameter.
-	 * This helps to prevent CSRF attacks during the OAuth flow.
-	 */
-	private generateRandomState(): string {
-		return randomBytes(16).toString('hex'); // import { randomBytes } from 'crypto';
+		} catch (error) {
+			this.logger.error('Error generating Make.com authorization URL:', error);
+			throw error;
+		}
 	}
 
 	/**
@@ -124,19 +122,21 @@ export class MakeComOAuthService {
 	 */
 	async exchangeCodeForToken(code: string, state: string): Promise<any> {
 		try {
-			// State is now required, so this check will always run
-			if (!this.verifyState(state)) {
-				throw new BadRequestException('Invalid state parameter - possible CSRF attack');
-			}
+			// Decode the state parameter
+			const decodedState = JSON.parse(Buffer.from(state, 'base64').toString());
+        	const { tenantId, organizationId } = decodedState;
 
-			const tenantId = RequestContext.currentTenantId();
 			if (!tenantId) {
 				throw new BadRequestException('Tenant ID not found in request context');
 			}
 
-			const clientId = this._config.get<string>('makeCom.clientId');
-			const clientSecret = this._config.get<string>('makeCom.clientSecret');
-			const redirectUri = this._config.get<string>('makeCom.redirectUri');
+			// Get client credentials from database
+			const { clientId, clientSecret } = await this.makeComService.getOAuthCredentials(tenantId, organizationId);
+			if (!clientId || !clientSecret) {
+				throw new BadRequestException('Make.com OAuth credentials are not fully configured');
+			}
+
+			const redirectUri = this._config.get('makeCom').redirectUri;
 
 			if (!clientId || !clientSecret || !redirectUri) {
 				throw new BadRequestException('Make.com OAuth credentials are not fully configured');
@@ -157,7 +157,7 @@ export class MakeComOAuthService {
 
 			// Make the token request
 			const tokenResponse = await firstValueFrom(
-				this.httpService.post(`${MAKE_BASE_URL}/oauth/token`, tokenRequestParams, { headers }).pipe(
+				this.httpService.post(`${MAKE_BASE_URL}/api/v2/oauth/token`, tokenRequestParams, { headers }).pipe(
 					catchError((error: AxiosError) => {
 						this.logger.error('Error while exchanging code for token:', error.response?.data);
 						throw new HttpException(
@@ -175,31 +175,6 @@ export class MakeComOAuthService {
 			this.logger.error('Failed to exchange code for token:', error);
 			throw new BadRequestException(`Failed to exchange authorization code: ${error.message}`);
 		}
-	}
-
-	/**
-	 * Verify  the state parameter to prevent CSRF attacks.
-	 *
-	 * @param {string} state - The state parameter to verify.
-	 * @returns {boolean} True if the state parameter is valid, false otherwise.
-	 */
-	verifyState(state: string): boolean {
-		const pendingState = this.pendingStates.get(state);
-
-		if (!pendingState) {
-			this.logger.warn(`State ${state} not found in pending states`);
-			return false;
-		}
-		const now = Date.now();
-		const expirationTime = 10 * 60 * 1000; // 10 minutes in milliseconds
-		if (now - pendingState.timestamp > expirationTime) {
-			this.logger.warn(`State ${state} has expired`);
-			this.pendingStates.delete(state);
-			return false;
-		}
-		// Valid and used - remove it to free memory
-		this.pendingStates.delete(state);
-		return true;
 	}
 
 	/**
