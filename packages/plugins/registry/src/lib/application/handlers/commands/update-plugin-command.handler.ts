@@ -7,7 +7,7 @@ import { PluginSourceService } from '../../../domain/services/plugin-source.serv
 import { PluginVersionService } from '../../../domain/services/plugin-version.service';
 import { PluginService } from '../../../domain/services/plugin.service';
 import { UpdatePluginVersionDTO } from '../../../shared/dto/update-plugin-version.dto';
-import { IPluginSource } from '../../../shared/models/plugin-source.model';
+import { IPluginSource, IPluginSourceUpdate } from '../../../shared/models/plugin-source.model';
 import { IPluginVersion } from '../../../shared/models/plugin-version.model';
 import { IPlugin } from '../../../shared/models/plugin.model';
 import { UpdatePluginCommand } from '../../commands/update-plugin.command';
@@ -51,8 +51,12 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 			if (input.version) {
 				await this.updateVersion(input.version, id);
 
-				if (input.version.source) {
-					await this.updateSource(input.version.source, input.version.id);
+				if (input.version.sources.length > 0) {
+					await Promise.all(
+						input.version.sources.map(async (source) => {
+							this.updateSource(source, input.version.id);
+						})
+					);
 				}
 			}
 
@@ -98,15 +102,13 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 	 * @param pluginId - ID of the plugin
 	 * @throws NotFoundException if source is not found
 	 */
-	private async updateSource(data: Partial<IPluginSource>, versionId: IPluginVersion['id']): Promise<void> {
+	private async updateSource(data: Partial<IPluginSourceUpdate>, versionId: IPluginVersion['id']): Promise<void> {
 		if (!data || !data.id) {
 			throw new BadRequestException('Source data and ID are required');
 		}
 
 		const found = await this.sourceService.findOneOrFailByWhereOptions({
-			versions: {
-				id: versionId
-			},
+			versionId,
 			id: data.id
 		});
 
@@ -125,7 +127,7 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 				registry: data.registry,
 				name: data.name,
 				scope: data.scope,
-				authToken: data.authToken
+				privtae: data.private
 			}),
 			...(data.type === PluginSourceType.GAUZY && data)
 		};

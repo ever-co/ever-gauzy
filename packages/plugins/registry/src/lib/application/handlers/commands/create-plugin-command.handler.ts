@@ -33,7 +33,7 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 		const { input } = command;
 
 		// Validate input
-		if (!input || !input.version || (input.version.source && !input.version)) {
+		if (!input || !input.version || (input.version.sources && !input.version)) {
 			throw new BadRequestException('Invalid plugin data: Source requires version information');
 		}
 
@@ -48,8 +48,8 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 			const savedPlugin = await this.pluginService.save(plugin);
 
 			// Process source and version if provided
-			if (input.version.source) {
-				const savedSource = await this.createPluginSource(input.version.source);
+			if (input.version.sources.length > 0) {
+				const savedSource = await this.createPluginSource(input.version.sources);
 				await this.createPluginVersion(input.version, savedPlugin, savedSource);
 			}
 
@@ -57,7 +57,7 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 
 			// Return the complete plugin with all relations
 			return this.pluginService.findOneByIdString(savedPlugin.id, {
-				relations: ['versions', 'versions.source']
+				relations: ['versions', 'versions.sources']
 			});
 		} catch (error) {
 			// Rollback transaction on error
@@ -78,27 +78,27 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 	private async createPluginVersion(
 		versionData: IPluginVersion,
 		plugin: IPlugin,
-		source: IPluginSource
+		sources: IPluginSource[]
 	): Promise<void> {
 		if (!versionData) {
 			throw new BadRequestException('Version data is required');
 		}
-		const version = Object.assign(new PluginVersion(), { ...versionData, plugin, source });
+		const version = Object.assign(new PluginVersion(), { ...versionData, plugin, sources });
 		await this.versionService.save(version);
 	}
 
 	/**
 	 * Creates a plugin source
 	 *
-	 * @param sourceData - Source data to create
+	 * @param sources - Source data to create
 	 * @param plugin - Associated plugin
 	 * @returns The created plugin source
 	 */
-	private async createPluginSource(sourceData: IPluginSource): Promise<IPluginSource> {
-		if (!sourceData) {
+	private async createPluginSource(sources: IPluginSource[]): Promise<IPluginSource[]> {
+		if (!sources) {
 			throw new BadRequestException('Source data is required');
 		}
-		const source = Object.assign(new PluginSource(), sourceData);
-		return this.sourceService.save(source);
+		const data = sources.map((source) => Object.assign(new PluginSource(), source));
+		return this.sourceService.saveSources(data);
 	}
 }

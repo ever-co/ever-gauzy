@@ -1,9 +1,9 @@
 import { HttpStatus, ID, IPagination, PluginSourceType } from '@gauzy/contracts';
 import {
+	BaseQueryDTO,
 	FileStorage,
 	FileStorageFactory,
 	LazyFileInterceptor,
-	BaseQueryDTO,
 	PermissionGuard,
 	TenantPermissionGuard,
 	UseValidationPipe,
@@ -34,19 +34,19 @@ import {
 	ApiTags
 } from '@nestjs/swagger';
 import { CreatePluginVersionCommand } from '../../application/commands/create-plugin-version.command';
-import { ListPluginVersionsQuery } from '../../application/queries/list-plugin-versions.query';
-import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
-import { FileDTO } from '../../shared/dto/file.dto';
-import { PluginVersionDTO } from '../../shared/dto/plugin-version.dto';
-import { IPluginVersion } from '../../shared/models/plugin-version.model';
-import { PluginFactory } from '../../shared/utils/plugin-factory.util';
-import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provider';
-import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
 import { DeletePluginVersionCommand } from '../../application/commands/delete-plugin-version.command';
 import { RecoverPluginVersionCommand } from '../../application/commands/recover-plugin-version.command';
-import { UpdatePluginVersionDTO } from '../../shared/dto/update-plugin-version.dto';
 import { UpdatePluginVersionCommand } from '../../application/commands/update-plugin-version.command';
+import { ListPluginVersionsQuery } from '../../application/queries/list-plugin-versions.query';
+import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
 import { PluginVersion } from '../../domain/entities/plugin-version.entity';
+import { FileDTO } from '../../shared/dto/file.dto';
+import { PluginVersionDTO } from '../../shared/dto/plugin-version.dto';
+import { UpdatePluginVersionDTO } from '../../shared/dto/update-plugin-version.dto';
+import { IPluginSource } from '../../shared/models/plugin-source.model';
+import { IPluginVersion } from '../../shared/models/plugin-version.model';
+import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provider';
+import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
 
 @ApiTags('Plugin Versions')
 @ApiBearerAuth('Bearer')
@@ -99,42 +99,53 @@ export class PluginVersionController {
 	public async createVersion(
 		@Param('pluginId', UUIDValidationPipe) id: ID,
 		@Body() input: PluginVersionDTO,
-		@UploadedPluginStorage() file: FileDTO
+		@UploadedPluginStorage({ multiple: true }) files: FileDTO[]
 	): Promise<IPluginVersion> {
-		if (input.source.type === PluginSourceType.GAUZY && !file?.key) {
-			throw new BadRequestException('Plugin file key is empty');
-		}
-
 		try {
-			const dto = PluginFactory.createVersion(input);
-
-			if (input.source.type === PluginSourceType.GAUZY) {
-				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
-				// Convert the plain object to a class instance
-				await gauzyStorageProvider.validate(file);
-				// Get metadata
-				const metadata = gauzyStorageProvider.extractMetadata(file);
-				// Create a new plugin version record
-				return this.commandBus.execute(
-					new CreatePluginVersionCommand(id, {
-						...dto,
-						source: {
-							...dto.source,
-							...metadata
+			// Validate files against sources
+			this.validateFilesAgainstSources(input.sources, files);
+			// Get the appropriate file storage provider
+			const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
+			// Process each source
+			const sources = await Promise.all(
+				input.sources.map(async (source) => {
+					if (source.type === PluginSourceType.GAUZY) {
+						// Find matching file for this source
+						const file = this.findFileForSource(files, source as IPluginSource);
+						if (!file?.key) {
+							throw new BadRequestException(`Plugin file key is empty for source: ${source.name}`);
 						}
-					})
-				);
-			} else {
-				return this.commandBus.execute(new CreatePluginVersionCommand(id, dto));
-			}
+						// Validate and extract metadata
+						await gauzyStorageProvider.validate(file);
+						const metadata = gauzyStorageProvider.extractMetadata(file);
+						return {
+							...source,
+							...metadata
+						};
+					} else {
+						return source;
+					}
+				})
+			);
+			return this.commandBus.execute(
+				new CreatePluginVersionCommand(id, {
+					...input,
+					sources
+				})
+			);
 		} catch (error) {
-			// Ensure cleanup of uploaded file
-			if (file?.key) {
+			// Cleanup any uploaded files if error occurs
+			if (files?.length > 0) {
 				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
-				await gauzyStorageProvider.delete(file.key);
+				await Promise.all(
+					files.map((file) => (file?.key ? gauzyStorageProvider.delete(file.key) : Promise.resolve()))
+				);
 			}
-			// Throw a bad request exception with the validation errors
-			throw new BadRequestException(error);
+			// Improved error handling
+			if (error instanceof BadRequestException) {
+				throw error;
+			}
+			throw new BadRequestException(error.response?.message || error.message || 'Failed to create plugin');
 		}
 	}
 
@@ -190,38 +201,48 @@ export class PluginVersionController {
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
 		@Body() input: UpdatePluginVersionDTO,
-		@UploadedPluginStorage() file: FileDTO
+		@UploadedPluginStorage({ multiple: true }) files: FileDTO[]
 	): Promise<IPluginVersion> {
 		try {
-			if (input.source.type === PluginSourceType.GAUZY) {
-				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
-				// Convert the plain object to a class instance
-				await gauzyStorageProvider.validate(file);
-				// Get metadata
-				const metadata = gauzyStorageProvider.extractMetadata(file);
-
-				// Create a new plugin record
-				return this.commandBus.execute(
-					new UpdatePluginVersionCommand(pluginId, versionId, {
-						...input,
-						source: {
-							...input.source,
-							...metadata
+			// Validate files against sources
+			this.validateFilesAgainstSources(input.sources as IPluginSource[], files);
+			// Get the appropriate file storage provider
+			const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
+			// Process each source
+			const sources = await Promise.all(
+				input.sources.map(async (source) => {
+					if (source.type === PluginSourceType.GAUZY) {
+						// Find matching file for this source
+						const file = this.findFileForSource(files, source as IPluginSource);
+						if (!file?.key) {
+							throw new BadRequestException(`Plugin file key is empty for source: ${source.name}`);
 						}
-					})
-				);
-			} else {
-				return this.commandBus.execute(new UpdatePluginVersionCommand(pluginId, versionId, input));
-			}
+						// Validate and extract metadata
+						await gauzyStorageProvider.validate(file);
+						const metadata = gauzyStorageProvider.extractMetadata(file);
+						return {
+							...source,
+							...metadata
+						};
+					} else {
+						return source;
+					}
+				})
+			);
+			return this.commandBus.execute(new UpdatePluginVersionCommand(pluginId, versionId, { ...input, sources }));
 		} catch (error) {
-			// Ensure cleanup of uploaded file
-			if (file?.key) {
+			// Cleanup any uploaded files if error occurs
+			if (files?.length > 0) {
 				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
-				await gauzyStorageProvider.delete(file.key);
+				await Promise.all(
+					files.map((file) => (file?.key ? gauzyStorageProvider.delete(file.key) : Promise.resolve()))
+				);
 			}
-
-			// Throw a bad request exception with the validation errors
-			throw new BadRequestException(error);
+			// Improved error handling
+			if (error instanceof BadRequestException) {
+				throw error;
+			}
+			throw new BadRequestException(error.response?.message || error.message || 'Failed to create plugin');
 		}
 	}
 
@@ -318,5 +339,25 @@ export class PluginVersionController {
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID
 	): Promise<void> {
 		return this.commandBus.execute(new DeletePluginVersionCommand(versionId, pluginId));
+	}
+
+	private validateFilesAgainstSources(sources: IPluginSource[], files: FileDTO[]): void {
+		const gauzySources = sources.filter((s) => s.type === PluginSourceType.GAUZY);
+
+		// Check file count matches GAUZY sources count
+		if (gauzySources.length > 0 && (!files || files.length < gauzySources.length)) {
+			throw new BadRequestException(
+				`Expected ${gauzySources.length} files for GAUZY sources, got ${files?.length || 0}`
+			);
+		}
+	}
+
+	/**
+	 * Find the appropriate file for a given source
+	 */
+	private findFileForSource(files: FileDTO[], source: IPluginSource): FileDTO | undefined {
+		// Implement your matching logic here
+		// This could be based on filename, metadata, or other criteria
+		return files.find((file) => file.originalname.includes(source.name) || file.mimetype === source.mimeType);
 	}
 }
