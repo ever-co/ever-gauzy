@@ -123,8 +123,9 @@ export interface IPluginVersion extends IBasePerTenantAndOrganizationEntityModel
 	changelog: string; // Description of changes in the version
 	releaseDate?: Date; // Optional ISO 8601 formatted date
 	downloadCount?: number; // Optional, defaults to 0
-	source?: IPluginSource; // Optional reference to the plugin's source
-	sourceId?: ID; // ID reference for the plugin's source
+
+	sources?: IPluginSource[]; // Optional reference to the plugin's source
+	installations?: IPluginInstallation[]; // Optional reference to the plugin's installations
 
 	plugin?: IPlugin; // Optional reference to plugin
 	pluginId?: ID; // ID reference for plugin
@@ -136,6 +137,8 @@ export interface IPluginVersion extends IBasePerTenantAndOrganizationEntityModel
 
 export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel {
 	type: PluginSourceType; // Type of the plugin source (CDN, NPM, File Upload)
+	operatingSystem: PluginOSType; // Operating system target
+	architecture: PluginOSArch;
 
 	// CDN Source
 	url?: string; // URL of the plugin source
@@ -145,7 +148,7 @@ export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel 
 	// NPM Source
 	name?: string; // NPM package name
 	registry?: string; // NPM registry URL
-	authToken?: string; // NPM authentication token
+	private?: boolean; // NPM authentication token
 	scope?: string; // NPM scope
 
 	// File Upload (Gauzy source)
@@ -159,8 +162,8 @@ export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel 
 	storageProvider?: FileStorageProviderEnum;
 
 	// Associated Plugin
-	plugin?: IPlugin; // Associated plugin entity
-	pluginId?: ID; // ID of the associated plugin
+	version?: IPluginVersion; // Associated plugin entity
+	versionId?: ID; // ID of the associated plugin
 }
 
 export enum PluginInstallationStatus {
