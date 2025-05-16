@@ -60,7 +60,7 @@ export class VersionHistoryComponent implements OnInit, OnDestroy {
 			PluginVersionActions.getAll(this.pluginId, {
 				skip: this.skip,
 				take: this.take,
-				relations: ['plugin', 'source'],
+				relations: ['plugin', 'sources'],
 				order: { releaseDate: 'DESC' },
 				withDeleted: true
 			})
