@@ -3,6 +3,7 @@ import {
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
+	MultiORMOneToMany,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -17,6 +18,8 @@ import { IPlugin } from '../../shared/models/plugin.model';
 import { PluginSource } from './plugin-source.entity';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { isMySQL } from '@gauzy/config';
+import { PluginInstallation } from './plugin-installation.entity';
+import { IPluginInstallation } from '../../shared/models/plugin-installation.model';
 
 @Index(
 	'version_number_unique',
@@ -82,12 +85,15 @@ export class PluginVersion extends TenantOrganizationBaseEntity implements IPlug
 	pluginId?: ID;
 
 	@ApiProperty({ type: () => PluginSource, description: 'Source of the plugin version', required: false })
-	@MultiORMManyToOne(() => PluginSource, { nullable: true, onDelete: 'CASCADE' })
+	@MultiORMOneToMany(() => PluginSource, (source) => source.version, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	source?: IPluginSource;
+	sources?: IPluginSource[];
 
-	@RelationId((version: PluginVersion) => version.source)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	sourceId?: ID;
+	@ApiProperty({
+		type: () => PluginInstallation,
+		description: 'Installations of the plugin version',
+		required: false
+	})
+	@MultiORMOneToMany(() => PluginInstallation, (source) => source.version, { nullable: true, onDelete: 'CASCADE' })
+	installations?: IPluginInstallation[];
 }
