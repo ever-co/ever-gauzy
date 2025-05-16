@@ -98,9 +98,9 @@ export interface IDateRange {
 }
 export interface ITimeLog
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalOrganizationProject,
-		IRelationalOrganizationTeam,
-		ITaggable {
+	IRelationalOrganizationProject,
+	IRelationalOrganizationTeam,
+	ITaggable {
 	employee: IEmployee;
 	employeeId: ID;
 	timesheet?: ITimesheet;
@@ -303,9 +303,9 @@ export interface IURLMetaData {
 
 export interface ITimerStatusInput
 	extends ITimeLogTodayFilters,
-		IBaseRelationsEntityModel,
-		IEmployeeEntityInput,
-		IRelationalOrganizationTeam {
+	IBaseRelationsEntityModel,
+	IEmployeeEntityInput,
+	IRelationalOrganizationTeam {
 	source?: TimeLogSourceEnum;
 	employeeIds?: ID[];
 }
@@ -341,7 +341,7 @@ export interface ITimerPosition {
 
 export interface ITimerToggleInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		Pick<IRelationalOrganizationTeam, 'organizationTeamId'> {
+	Pick<IRelationalOrganizationTeam, 'organizationTeamId'> {
 	projectId?: ID;
 	taskId?: ID;
 	organizationContactId?: ID;
@@ -595,4 +595,8 @@ export interface IGetInvoiceTimeLogs {
 	employeeIds?: string[];
 	groupBy?: string;
 	relations?: string[];
+}
+
+export enum TimeErrorsEnum {
+	INVALID_TASK_PERMISSIONS = 'invalid-task-permissions'
 }

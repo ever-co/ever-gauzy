@@ -4162,6 +4162,7 @@
 			"PLUGIN_INSTALL_CDN_ERROR": "URL сервера не должен быть пустым."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Превышен недельный лимит",
+		"PROJECT_TASK_PERMISSION_ERROR": "Таймер остановлен, так как у вас нет разрешения на доступ к этому проекту/задаче",
 		"OF_HRS": "Из {{ limit }} ч",
 		"TIME_TRACKER_DISABLED": "Трекер времени был отключен",
 		"STOP_TIMER_CHANGE_CLIENT": "Пожалуйста, остановите таймер перед сменой клиента",

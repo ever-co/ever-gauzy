@@ -4166,6 +4166,7 @@
 			"PLUGIN_INSTALL_CDN_ERROR": "URL адресът на сървъра не трябва да е празен."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Седмичният лимит е надвишен",
+		"PROJECT_TASK_PERMISSION_ERROR": "Таймерът е спрян, защото нямате разрешение за достъп до този проект/задача",
 		"OF_HRS": "От {{ limit }} ч.",
 		"TIME_TRACKER_DISABLED": "Тракерът на време е деактивиран",
 		"STOP_TIMER_CHANGE_CLIENT": "Моля, спрете таймера преди да смените клиента",
