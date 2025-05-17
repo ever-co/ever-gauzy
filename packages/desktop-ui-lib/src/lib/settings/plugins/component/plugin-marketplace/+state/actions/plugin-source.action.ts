@@ -7,6 +7,6 @@ export class PluginSourceActions {
 		pluginId,
 		versionId
 	}));
-	public static selectVersion = createAction('[Plugin Source] Select', (source: IPluginSource) => ({ source }));
+	public static selectSource = createAction('[Plugin Source] Select', (source: IPluginSource) => ({ source }));
 	public static reset = createAction('[Plugin Source] Reset');
 }

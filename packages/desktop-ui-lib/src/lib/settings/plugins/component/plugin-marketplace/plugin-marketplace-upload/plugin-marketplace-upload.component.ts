@@ -77,7 +77,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		if (version) {
 			data.version = { ...version };
 			if (source) {
-				data.version.source = { ...source };
+				data.source = { ...source };
 				this.onSourceTypeChange(source.type);
 			}
 		}
