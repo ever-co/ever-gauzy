@@ -1,4 +1,3 @@
-import { saveTempImage } from '@gauzy/desktop-lib';
 import * as electron from 'electron';
 import * as fs from 'fs';
 import * as path from 'node:path';
@@ -23,16 +22,6 @@ type TScreenShot = {
 	id: string,
 	filePath?: string,
 	fullScreen: Buffer
-}
-
-function determineScreenshot(screenSize: { width: number; height: number }): { width: number; height: number } {
-	const maxDimension = Math.max(screenSize.width, screenSize.height);
-	console.log(maxDimension);
-
-	return {
-		width: screenSize.width,
-		height: screenSize.height
-	};
 }
 
 function saveTempImageStream(screen: TScreenShot): Promise<TScreenShot> {

@@ -88,7 +88,7 @@ class PushActivities {
 			if (!pathTemp) {
 				return;
 			}
-			const respImage = await this.apiService.uploadImages({
+			await this.apiService.uploadImages({
 				tenantId: auth.user.employee.tenantId,
 				organizationId: auth.user.employee.organizationId,
 				recordedAt
