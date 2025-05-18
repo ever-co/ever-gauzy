@@ -25,17 +25,14 @@ class PullActivities {
 	private agentLogger: AgentLogger;
 	private appWindow: AppWindow;
 	constructor(user: UserLogin) {
-		if (!PullActivities.instance) {
-			PullActivities.instance = this;
-			this.listenerModule = null;
-			this.isStarted = false;
-			this.tenantId = user.tenantId;
-			this.organizationId = user.organizationId;
-			this.remoteId = user.remoteId;
-			this.agentLogger = AgentLogger.getInstance();
-			this.appWindow = AppWindow.getInstance(path.join(__dirname, '../..'));
-			this.appWindow.initScreenShotNotification();
-		}
+		this.listenerModule = null;
+		this.isStarted = false;
+		this.tenantId = user.tenantId;
+		this.organizationId = user.organizationId;
+		this.remoteId = user.remoteId;
+		this.agentLogger = AgentLogger.getInstance();
+		this.appWindow = AppWindow.getInstance(path.join(__dirname, '../..'));
+		this.appWindow.initScreenShotNotification();
 	}
 
 	static getInstance(user: UserLogin): PullActivities {

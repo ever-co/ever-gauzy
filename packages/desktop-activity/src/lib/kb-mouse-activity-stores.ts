@@ -23,7 +23,6 @@ export class KeyboardMouseActivityStores {
 	static getInstance(): KeyboardMouseActivityStores {
 		if (!KeyboardMouseActivityStores.instance) {
 			KeyboardMouseActivityStores.instance = new KeyboardMouseActivityStores();
-			return KeyboardMouseActivityStores.instance;
 		}
 		return KeyboardMouseActivityStores.instance;
 	}

@@ -28,7 +28,6 @@ export class KeyboardMouseEventCounter {
 	static getInstance(): KeyboardMouseEventCounter {
 		if (!KeyboardMouseEventCounter.instance) {
 			KeyboardMouseEventCounter.instance = new KeyboardMouseEventCounter();
-			return KeyboardMouseEventCounter.instance;
 		}
 		return KeyboardMouseEventCounter.instance;
 	}
