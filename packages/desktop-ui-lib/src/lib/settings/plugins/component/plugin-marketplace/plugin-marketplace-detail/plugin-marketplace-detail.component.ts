@@ -99,7 +99,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 							},
 							registry: {
 								privateURL: this.plugin.source.registry,
-								authToken: this.plugin.source.authToken
+								authToken: this.plugin.source.private
 							}
 						},
 						contextType: 'npm',
