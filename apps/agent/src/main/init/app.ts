@@ -1,4 +1,4 @@
-import { app, ipcMain } from 'electron';
+import { app, ipcMain, systemPreferences } from 'electron';
 import * as path from 'path';
 import { logger as log, store } from '@gauzy/desktop-core';
 import {
@@ -28,7 +28,7 @@ const appRootPath: string = path.join(__dirname, '../..');
 const appWindow = AppWindow.getInstance(appRootPath);
 let trayMenu: TrayMenu;
 
-function launchAtStartup(autoLaunch:boolean, hidden: boolean) {
+function launchAtStartup(autoLaunch: boolean, hidden: boolean) {
 	switch (process.platform) {
 		case 'darwin':
 			app.setLoginItemSettings({
@@ -63,7 +63,7 @@ async function handleSplashScreen() {
 		await appWindow.splashScreenWindow.loadURL();
 		appWindow.splashScreenWindow.show();
 		await delaySync(2000);
-	} catch(error) {
+	} catch (error) {
 		console.log('error splashScreenWindow', error);
 		// ignore error splashScreen
 	}
@@ -73,7 +73,6 @@ async function handleSetupWindow() {
 	await appWindow.initSetupWindow()
 	appWindow.setupWindow.show();
 }
-
 
 export async function startServer(value: any) {
 	try {
@@ -93,7 +92,7 @@ export async function startServer(value: any) {
 		// timeTrackerWindow.webContents.toggleDevTools();
 	}
 	trayMenu = TrayMenu.getInstance(
-		path.join(__dirname,'../..', CONSTANT.TRAY_ICON_PATH),
+		path.join(__dirname, '../..', CONSTANT.TRAY_ICON_PATH),
 		true,
 		{ helpSiteUrl: 'https://gauzy.co' },
 	);
@@ -134,15 +133,6 @@ async function initiationLocalDatabase() {
 	}
 }
 
-app.on('window-all-closed', (event: Event) => {
-	// On OS X it is common for applications and their menu bar
-	// to stay active until the user quits explicitly with Cmd + Q
-	event.preventDefault();
-	if (process.platform === 'darwin') {
-		app.dock.hide();
-	}
-});
-
 async function appReady() {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
@@ -173,6 +163,16 @@ async function appReady() {
 	}
 }
 
+function listenGrantAccess(pullActivities: PullActivities) {
+	const grantCheckInterval = setInterval(() => {
+		const isPermissionGrant = systemPreferences.isTrustedAccessibilityClient(false);
+		if (isPermissionGrant) {
+			clearInterval(grantCheckInterval);
+			pullActivities.startTracking();
+		}
+	}, 1000);
+}
+
 function listenIO() {
 	const auth = getAuthConfig();
 	const pullActivities = PullActivities.getInstance({
@@ -180,7 +180,16 @@ function listenIO() {
 		organizationId: auth.user.employee.organizationId,
 		remoteId: auth.user.id
 	});
-	pullActivities.startTracking();
+	if (process.platform === 'darwin') {
+		const isPermissionGrant = systemPreferences.isTrustedAccessibilityClient(true);
+		if (isPermissionGrant) {
+			pullActivities.startTracking();
+		} else {
+			listenGrantAccess(pullActivities);
+		}
+	} else {
+		pullActivities.startTracking();
+	}
 }
 
 function runActivityConsumer() {
@@ -231,7 +240,7 @@ export async function InitApp() {
 	});
 
 	ipcMain.on('app_is_init', () => {
-		console.log('app is waiting triggered')	;
+		console.log('app is waiting triggered');
 	});
 
 	ipcMain.on('check_database_connection', async (event, arg) => {
@@ -252,6 +261,15 @@ export async function InitApp() {
 					message: error.message
 				}
 			});
+		}
+	});
+
+	app.on('window-all-closed', (event: Event) => {
+		// On OS X it is common for applications and their menu bar
+		// to stay active until the user quits explicitly with Cmd + Q
+		event.preventDefault();
+		if (process.platform === 'darwin') {
+			app.dock.hide();
 		}
 	});
 

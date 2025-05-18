@@ -1,6 +1,7 @@
 import * as path from 'path';
 import { environment } from '../environments/environment';
 import { LocalStore } from '@gauzy/desktop-lib';
+import { screen } from 'electron';
 
 type TAuthConfig = {
 	user: {
@@ -12,6 +13,17 @@ type TAuthConfig = {
 		id: string
 	};
 	token: string;
+}
+
+type TAppSetting = {
+	monitor?: {
+		captured?: string
+	},
+	timer: {
+		updatePeriod: number
+	},
+	screenshotNotification: boolean,
+	simpleScreenshotNotification: boolean
 }
 
 export function resolveHtmlPath(htmlFileName: string, hash: string) {
@@ -43,6 +55,30 @@ export function delaySync(duration: number) {
 }
 
 export function getAuthConfig(): TAuthConfig {
-	const auth:TAuthConfig  = LocalStore.getStore('auth');
+	const auth: TAuthConfig = LocalStore.getStore('auth');
 	return auth;
 }
+
+export function getScreen() {
+	const displays = screen.getAllDisplays();
+	const cursor = screen.getCursorScreenPoint();
+
+	const currentDisplay = displays.find(display => {
+		const { x, y, width, height } = display.bounds;
+		return cursor.x >= x && cursor.x <= x + width &&
+			cursor.y >= y && cursor.y <= y + height;
+	});
+
+	// const displayIndex = displays.indexOf(currentDisplay);
+	return {
+		activeWindow: { id: currentDisplay.id },
+		screenSize: screen.getPrimaryDisplay().workAreaSize
+	}
+}
+
+export function getAppSetting(): TAppSetting {
+	const appConfig: TAppSetting = LocalStore.getStore('appSetting');
+	return appConfig;
+}
+
+

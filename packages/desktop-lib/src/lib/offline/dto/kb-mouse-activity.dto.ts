@@ -25,6 +25,7 @@ export interface KbMouseActivityTO {
 	organizationId: string;
 	tenantId: string;
 	remoteId: string;
+	screenshots: string[] | any
 }
 
 export const TABLE_NAME_KB_MOUSE_ACTIVITY: string = 'kb_mouse_activity';

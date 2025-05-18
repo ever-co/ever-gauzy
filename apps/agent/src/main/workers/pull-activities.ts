@@ -1,5 +1,11 @@
 import { KeyboardMouseEventCounter, KbMouseTimer, KeyboardMouseActivityStores } from '@gauzy/desktop-activity';
-import { KbMouseActivityService } from '@gauzy/desktop-lib';
+import { KbMouseActivityService, TranslateService, notifyScreenshot } from '@gauzy/desktop-lib';
+import AppWindow from '../window-manager';
+import * as path from 'path';
+import { getScreen, getAppSetting, delaySync } from '../util';
+import { getScreenshot } from '../screenshot';
+import { Notification } from 'electron';
+import { AgentLogger } from '../agent-logger';
 
 type UserLogin = {
 	tenantId: string;
@@ -16,6 +22,8 @@ class PullActivities {
 	private readonly tenantId: string;
 	private readonly organizationId: string;
 	private readonly remoteId: string;
+	private agentLogger: AgentLogger;
+	private appWindow: AppWindow;
 	constructor(user: UserLogin) {
 		if (!PullActivities.instance) {
 			PullActivities.instance = this;
@@ -24,6 +32,9 @@ class PullActivities {
 			this.tenantId = user.tenantId;
 			this.organizationId = user.organizationId;
 			this.remoteId = user.remoteId;
+			this.agentLogger = AgentLogger.getInstance();
+			this.appWindow = AppWindow.getInstance(path.join(__dirname, '../..'));
+			this.appWindow.initScreenShotNotification();
 		}
 	}
 
@@ -48,6 +59,7 @@ class PullActivities {
 		}
 		try {
 			if (!this.isStarted) {
+				this.agentLogger.info('Listener keyboard and mouse starting');
 				this.listenerModule.startListener();
 				this.timerProcess();
 				this.isStarted = true;
@@ -62,6 +74,7 @@ class PullActivities {
 			this.getListenerModule();
 		}
 		try {
+			this.agentLogger.info('Listener keyboard and mouse stopping');
 			this.listenerModule.stopListener();
 			this.isStarted = false;
 			this.stopTimerProcess();
@@ -73,23 +86,92 @@ class PullActivities {
 	getTimerModule() {
 		if (!this.timerModule) {
 			this.timerModule = KbMouseTimer.getInstance();
-			this.timerModule.setFlushInterval(60);
 			this.timerModule.onFlush(this.activityProcess.bind(this));
 		}
+		this.timerModule.setFlushInterval(60);
+		const appSetting = getAppSetting();
+		this.timerModule.setSecreenshotInterval(120);
+		this.agentLogger.info('Agent started with 60 second interval keyboard and mouse activities collected');
+		this.agentLogger.info('screenshot will taken every 120 seconds');
 	}
 
 	timerProcess() {
 		this.getTimerModule();
 		this.timerModule.start();
+		this.agentLogger.info('Agent is started');
 	}
 
 	stopTimerProcess() {
 		this.getTimerModule();
 		this.timerModule.stop();
+		this.agentLogger.info('Agent is stopped');
 	}
 
-	async activityProcess(timeData: { timeStart: Date; timeEnd: Date}) {
+	async showScreenshot(imgs, appSetting) {
+		if (imgs.length > 0) {
+			const img: any = imgs[0];
+			img.img = this.buffToB64(img);
+			if (appSetting) {
+				if (appSetting.simpleScreenshotNotification) {
+					this.showNotification(
+						process.env.DESCRIPTION,
+						TranslateService.instant('TIMER_TRACKER.NATIVE_NOTIFICATION.SCREENSHOT_TAKEN')
+					);
+				} else if (appSetting.screenshotNotification) {
+					try {
+						await this.appWindow.initScreenShotNotification();
+						await delaySync(100);
+						await notifyScreenshot(this.appWindow.notificationWindow, img, null, '', null);
+					} catch (error) {
+
+					}
+				}
+			}
+		}
+	}
+
+	showNotification(title: string, message: string) {
+		const notification = new Notification({
+			title: title,
+			body: message,
+			closeButtonText: TranslateService.instant('BUTTONS.CLOSE'),
+			silent: true,
+		});
+
+		notification.show();
+		setTimeout(() => {
+			notification.close();
+		}, 3000);
+	}
+
+	buffToB64(imgs: any) {
+		const bufferImg: Buffer = Buffer.isBuffer(imgs.img) ? imgs.img : Buffer.from(imgs.img);
+		const b64img = bufferImg.toString('base64');
+		return b64img;
+	}
+
+	async getScreenShot() {
+		console.log('take the screen shot');
+		const screenData = getScreen();
+		const appSetting = getAppSetting();
+		const imgs = await getScreenshot({
+			monitor: {
+				captured: appSetting.monitor.captured
+			},
+			screenSize: screenData.screenSize,
+			activeWindow: screenData.activeWindow
+		});
+		this.agentLogger.info(`screenshot taken ${imgs.length ? imgs[0].filePath : imgs}`)
+		await this.showScreenshot(imgs, appSetting);
+		return imgs;
+	}
+
+	async activityProcess(timeData: { timeStart: Date; timeEnd: Date }, isScreenshot?: boolean) {
 		try {
+			let imgs = [];
+			if (isScreenshot) {
+				imgs = await this.getScreenShot();
+			}
 			const activityStores = KeyboardMouseActivityStores.getInstance();
 			const activities = activityStores.getAndResetCurrentActivities();
 			await this.activityService.save({
@@ -103,10 +185,13 @@ class PullActivities {
 				mouseRightClickCount: activities.mouseRightClickCount,
 				mouseMovementsCount: activities.mouseMovementsCount,
 				mouseEvents: JSON.stringify(activities.mouseEvents),
-				remoteId: this.remoteId
+				remoteId: this.remoteId,
+				screenshots: JSON.stringify(imgs.map((img) => img.filePath))
 			});
-		} catch (error) {
+			this.agentLogger.info('Keyboard and mouse activities saved');
+		} catch (error: unknown) {
 			console.error('KB/M activity persist failed', error);
+			this.agentLogger.error(`KB/M activity persist failed ${JSON.stringify(error)}`)
 		}
 	}
 }

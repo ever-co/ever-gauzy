@@ -11,6 +11,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	private _mouseLeftClickCount: number;
 	private _mouseRightClickCount: number;
 	private _mouseEvents: TMouseEvents[];
+	private _screenshots: string[]
 
 	constructor(kbMouseActivity: KbMouseActivityTO) {
 		super(
@@ -26,6 +27,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 		this._mouseLeftClickCount = kbMouseActivity.mouseLeftClickCount;
 		this._mouseRightClickCount = kbMouseActivity.mouseRightClickCount;
 		this._mouseEvents = kbMouseActivity.mouseEvents;
+		this._screenshots = kbMouseActivity.screenshots;
 	}
 
 	public get timeStart(): Date {
@@ -76,6 +78,12 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	public set mouseEvents(value: TMouseEvents[]) {
 		this._mouseEvents = value;
 	}
+	public get screenshots(): string[] {
+		return this._screenshots;
+	}
+	public set screenshots(value: string[]) {
+		this._screenshots = value;
+	}
 
 	public toObject(): KbMouseActivityTO {
 		return {
@@ -90,7 +98,8 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 			id: this.id,
 			organizationId: this.organizationId,
 			tenantId: this.tenantId,
-			remoteId: this.remoteId
+			remoteId: this.remoteId,
+			screenshots: this.screenshots
 		};
 	}
 }

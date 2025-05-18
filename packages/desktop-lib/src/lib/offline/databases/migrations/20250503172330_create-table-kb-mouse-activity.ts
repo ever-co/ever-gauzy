@@ -3,7 +3,7 @@ import { Knex } from 'knex';
 
 export async function up(knex: Knex): Promise<void> {
 	await knex.schema.createTable(TABLE_NAME_KB_MOUSE_ACTIVITY, (table) => {
-		table.increments('id').primary().notNullable().unique();
+		table.increments('id').primary().unique();
 		table.timestamp('timeStart').notNullable();
 		table.timestamp('timeEnd').notNullable();
 		table.integer('kbPressCount').notNullable().defaultTo(0);
@@ -15,6 +15,7 @@ export async function up(knex: Knex): Promise<void> {
 		table.string('organizationId').notNullable();
 		table.string('tenantId').notNullable();
 		table.string('remoteId').notNullable();
+		table.json('screenshots')
 		table.timestamps(true, true, true);
 		table.index(['timeStart', 'timeEnd']);
 	});

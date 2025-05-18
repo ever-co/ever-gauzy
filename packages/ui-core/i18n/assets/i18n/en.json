@@ -4930,6 +4930,8 @@
 		"AVAILABLE": "Image not available"
 	},
 	"SERVER_API": "API Server",
+	"AGENT_APP": "Agent",
+	"AGENT_LOG": "Agent Log",
 	"SERVER_API_LOG": "API Server Log",
 	"COMING_SOON": "This page is coming soon!",
 	"PLUGIN": {
