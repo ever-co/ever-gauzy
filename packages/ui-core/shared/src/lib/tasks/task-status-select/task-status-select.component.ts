@@ -10,16 +10,16 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-task-status-select',
-    templateUrl: './task-status-select.component.html',
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => TaskStatusSelectComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'ga-task-status-select',
+	templateUrl: './task-status-select.component.html',
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TaskStatusSelectComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
 export class TaskStatusSelectComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organization: IOrganization;
@@ -47,7 +47,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 	 *
 	 * @property addTag - Whether adding new tags is allowed (default: true).
 	 */
-	@Input() addTag: boolean = true;
+	@Input() addTag = true;
 
 	/**
 	 * The placeholder text to be displayed in the project selector.
@@ -62,7 +62,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 	 *
 	 * @default true
 	 */
-	@Input() defaultSelected: boolean = true;
+	@Input() defaultSelected = true;
 
 	/*
 	 * Getter and Setter for the selected organization project ID.
@@ -85,7 +85,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 	get status(): ITaskStatus {
 		return this._status;
 	}
-	set status(val: ITaskStatus) {
+	@Input() set status(val: ITaskStatus | null) {
 		this._status = val;
 		this.onChange(val); // Notify form control value change
 		this.onTouched(); // Mark as touched in form control

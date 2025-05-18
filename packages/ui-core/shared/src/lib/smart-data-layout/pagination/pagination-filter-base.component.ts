@@ -15,8 +15,8 @@ export interface IPaginationBase {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    template: '',
-    standalone: false
+	template: '',
+	standalone: false
 })
 export class PaginationFilterBaseComponent extends TranslationBaseComponent implements AfterViewInit {
 	public activePage = 1;
@@ -88,12 +88,12 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 	 */
 	protected setFilter(filter: any, doEmit = true) {
 		// Split the field path into an array of field names
-		const fields = filter.field.split('.');
+		const fields = filter?.field?.split?.('.');
+		const search = filter?.search;
 
-		// Check if the search criteria is not empty or a boolean
-		if (filter.search != null && (filter.search.trim()?.length > 0 || typeof filter.search === 'boolean')) {
-			const search = filter.search;
+		if (!fields || fields.length === 0) return;
 
+		if (isNotEmpty(search)) {
 			// Create an object with nested keys representing the field path and set the search value
 			const keys = fields.reduceRight((value: string, key: string) => ({ [key]: value }), search);
 

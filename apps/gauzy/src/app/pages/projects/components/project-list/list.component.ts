@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, debounceTime, filter, firstValueFrom, Subject, tap } from 'rxjs';
-import { Cell } from 'angular2-smart-table';
+import { Cell, IColumns, Settings } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import {
@@ -34,6 +34,7 @@ import {
 	DeleteConfirmationComponent,
 	EmployeesMergedTeamsComponent,
 	EmployeeWithLinksComponent,
+	InputFilterComponent,
 	PaginationFilterBaseComponent,
 	ProjectModuleMutationComponent,
 	ProjectOrganizationComponent,
@@ -47,15 +48,15 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-project-list',
-    templateUrl: './list.component.html',
-    styleUrls: ['./list.component.scss'],
-    standalone: false
+	selector: 'ga-project-list',
+	templateUrl: './list.component.html',
+	styleUrls: ['./list.component.scss'],
+	standalone: false
 })
 export class ProjectListComponent extends PaginationFilterBaseComponent implements OnInit {
 	public loading = false;
 	public disableButton = true;
-	public settingsSmartTable: any;
+	public settingsSmartTable: Settings;
 	public viewComponentName: ComponentEnum;
 	public PermissionsEnum = PermissionsEnum;
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -382,7 +383,6 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		const pagination = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
-			selectedRowIndex: -1,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROJECT'),
 			pager: {
 				display: false,
@@ -396,8 +396,8 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	 * Map and configure the columns for the Smart Table component based on the data layout style.
 	 * @returns The configured columns for the Smart Table.
 	 */
-	private columnsSmartTableMapper(): any {
-		let columns: any;
+	private columnsSmartTableMapper(): IColumns {
+		let columns: IColumns;
 
 		switch (this.dataLayoutStyle) {
 			case this.componentLayoutStyleEnum.TABLE:
@@ -405,6 +405,17 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 					name: {
 						title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 						type: 'custom',
+						filter: {
+							type: 'custom',
+							component: InputFilterComponent,
+							config: {
+								initialValueInput: this.filters?.where?.name ?? null
+							}
+						},
+						filterFunction: (name: string) => {
+							this.setFilter({ field: 'name', search: name });
+							return false;
+						},
 						renderComponent: ProjectOrganizationComponent,
 						componentInitFunction: (instance: ProjectOrganizationComponent, cell: Cell) => {
 							instance.rowData = cell.getRow().getData();
@@ -434,6 +445,17 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.CONTACT'),
 						type: 'custom',
 						class: 'text-center',
+						filter: {
+							type: 'custom',
+							component: InputFilterComponent,
+							config: {
+								initialValueInput: this.filters?.where?.organizationContact ?? null
+							}
+						},
+						filterFunction: (organizationContact: string) => {
+							this.setFilter({ field: 'organizationContact', search: organizationContact });
+							return false;
+						},
 						renderComponent: ContactLinksComponent,
 						componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
 							instance.rowData = cell.getRow().getData();
@@ -474,6 +496,17 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 					employeesMergedTeams: {
 						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.MEMBERS'),
 						type: 'custom',
+						filter: {
+							type: 'custom',
+							component: InputFilterComponent,
+							config: {
+								initialValueInput: this.filters?.where?.employeesMergedTeams ?? null
+							}
+						},
+						filterFunction: (name: string) => {
+							this.setFilter({ field: 'employeesMergedTeams', search: name });
+							return false;
+						},
 						renderComponent: EmployeesMergedTeamsComponent,
 						componentInitFunction: (instance: EmployeesMergedTeamsComponent, cell: Cell) => {
 							instance.rowData = cell.getRow().getData();
@@ -491,14 +524,18 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 						},
 						filter: {
 							type: 'custom',
-							component: TagsColorFilterComponent
+							component: TagsColorFilterComponent,
+							config: {
+								initialValueIds: this.filters?.where?.tags ?? null
+							}
 						},
 						filterFunction: (tags: ITag[]) => {
-							const tagIds = [];
-							for (const tag of tags) {
-								tagIds.push(tag.id);
-							}
-							this.setFilter({ field: 'tags', search: tagIds });
+							const tagIds = Array.isArray(tags) ? tags.map((tag) => tag.id) : [];
+							this.setFilter({
+								field: 'tags',
+								search: tagIds.length > 0 ? [...tagIds] : null
+							});
+							return false;
 						},
 						isSortable: false
 					}
