@@ -26,8 +26,8 @@ export class PluginService {
 
 	public upload(plugin: IPlugin): Observable<{ plugin?: IPlugin; progress?: number }> {
 		const formData = new PluginFormDataBuilder(this.store)
-			.withPluginData(plugin)
-			.appendFiles(plugin.version?.sources)
+			.appendPlugin(plugin)
+			.appendFiles(plugin?.version?.sources)
 			.build();
 
 		return this.http
@@ -40,8 +40,8 @@ export class PluginService {
 
 	public update(pluginId: ID, plugin: Partial<IPlugin>): Observable<IPlugin> {
 		const formData = new PluginFormDataBuilder(this.store)
-			.withPluginData(plugin)
-			.appendFiles(plugin.version?.sources)
+			.appendPlugin(plugin)
+			.appendFiles(plugin?.version?.sources)
 			.build();
 
 		return this.http.put<IPlugin>(`${this.endPoint}/${pluginId}`, formData);
@@ -84,8 +84,8 @@ export class PluginService {
 		version: IPluginVersion
 	): Observable<{ version?: IPluginVersion; progress?: number }> {
 		const formData = new PluginFormDataBuilder(this.store)
-			.withVersionData(version)
-			.appendFiles(version.sources)
+			.appendVersion(version)
+			.appendFiles(version?.sources)
 			.build();
 
 		return this.http
@@ -104,8 +104,8 @@ export class PluginService {
 
 	public updateVersion(pluginId: string, versionId: string, version: IPluginVersion): Observable<IPluginVersion> {
 		const formData = new PluginFormDataBuilder(this.store)
-			.withVersionData(version)
-			.appendFiles(version.sources)
+			.appendVersion(version)
+			.appendFiles(version?.sources)
 			.build();
 
 		return this.http.put<IPluginVersion>(`${this.endPoint}/${pluginId}/versions/${versionId}`, formData);

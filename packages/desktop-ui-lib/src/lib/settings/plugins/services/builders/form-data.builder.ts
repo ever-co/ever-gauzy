@@ -1,4 +1,4 @@
-import { IPlugin, IPluginVersion } from '@gauzy/contracts';
+import { IPlugin, IPluginSource, IPluginVersion } from '@gauzy/contracts';
 import { Store } from '../../../../services';
 import { SourceStrategyFactory } from '../factories/source.factory';
 
@@ -13,7 +13,7 @@ export class PluginFormDataBuilder {
 		};
 	}
 
-	public withPluginData(plugin: Partial<IPlugin>): this {
+	public appendPlugin(plugin: Partial<IPlugin>): this {
 		const pluginData = {
 			...(plugin.id && { id: plugin.id }),
 			name: plugin.name,
@@ -24,17 +24,38 @@ export class PluginFormDataBuilder {
 			license: plugin.license,
 			homepage: plugin.homepage,
 			repository: plugin.repository,
-			...this.commonData,
-			version: plugin.version ? this.buildVersionData(plugin.version) : undefined
+			...this.commonData
 		};
 
-		this.appendFilteredData('plugin', pluginData);
+		this.appendFiltered(pluginData);
+		this.appendVersion(plugin.version, 'version');
+		this.appendSource(plugin.version.sources, 'sources', 'version');
 		return this;
 	}
 
-	public withVersionData(version: IPluginVersion): this {
-		const versionData = this.buildVersionData(version);
-		this.appendFilteredData('version', versionData);
+	public appendVersion(version: IPluginVersion, key?: string): this {
+		if (version) {
+			const versionData = this.buildVersionData(version);
+			this.appendFiltered(versionData, key);
+
+			if (!key) {
+				this.appendSource(version.sources, 'sources', 'version');
+			}
+		}
+		return this;
+	}
+
+	public appendSource(data: IPluginSource | IPluginSource[], key?: string, parentKey?: string): this {
+		key = parentKey ? `${parentKey}[${key}]` : key;
+
+		if (Array.isArray(data)) {
+			const sourceData = data.map((source) => this.buildSourceData(source));
+			this.appendFiltered(sourceData, key);
+		} else if (data) {
+			const sourceData = this.buildSourceData(data);
+			this.appendFiltered(sourceData, key);
+		}
+
 		return this;
 	}
 
@@ -43,39 +64,46 @@ export class PluginFormDataBuilder {
 			...(version.id && { id: version.id }),
 			number: version.number,
 			changelog: version.changelog,
-			releaseDate: new Date(version.releaseDate).toISOString(),
-			...this.commonData,
-			sources: version.sources?.map((source) => this.buildSourceData(source))
-		};
-	}
-
-	private buildSourceData(source: any) {
-		const strategy = SourceStrategyFactory.getStrategy(source.type);
-		return {
-			...(source.id && { id: source.id }),
-			...strategy.getSourceData(source),
+			releaseDate: this.toISOString(version.releaseDate),
 			...this.commonData
 		};
 	}
 
-	private appendFilteredData(key: string, data: any): void {
-		const filtered = Object.fromEntries(Object.entries(data).filter(([_, value]) => value !== undefined));
-		this.appendJsonToFormData(key, filtered);
+	private buildSourceData(source: IPluginSource) {
+		const strategy = SourceStrategyFactory.getStrategy(source.type);
+		const commonData = {
+			architecture: source.architecture,
+			operatingSystem: source.operatingSystem
+		};
+		return {
+			...(source.id && { id: source.id }),
+			...strategy.getSourceData(source),
+			...commonData,
+			...this.commonData
+		};
 	}
 
-	private appendJsonToFormData(key: string, data: any): void {
-		for (const [dataKey, value] of Object.entries(data)) {
-			const fullKey = `${key}[${dataKey}]`;
-			if (value && typeof value === 'object' && !(value instanceof Date) && !(value instanceof File)) {
-				this.appendJsonToFormData(fullKey, value);
-			} else {
-				const value = data == null ? '' : data;
-				this.formData.append(fullKey, value as any);
-			}
+	private toISOString(date: Date | undefined): string {
+		return new Date(date ?? Date.now()).toISOString();
+	}
+
+	private appendFiltered<T>(data: T, key?: string): void {
+		const filtered = Object.fromEntries(Object.entries(data).filter(([_, value]) => value !== undefined));
+		this.appendJsonToFormData(filtered, key);
+	}
+
+	private appendJsonToFormData<T>(data: T, parentKey?: string): void {
+		if (data && typeof data === 'object' && !(data instanceof Date) && !(data instanceof File)) {
+			Object.keys(data).forEach((key) => {
+				this.appendJsonToFormData(data[key], parentKey ? `${parentKey}[${key}]` : key);
+			});
+		} else {
+			const value = data == null ? '' : data;
+			this.formData.append(parentKey, value as any);
 		}
 	}
 
-	public appendFiles(sources: any[] | undefined): this {
+	public appendFiles(sources: IPluginSource[] | undefined): this {
 		if (!sources) return this;
 
 		for (const source of sources) {

@@ -59,6 +59,8 @@ import { PluginComponent } from './component/plugin/plugin.component';
 import { PluginElectronService } from './services/plugin-electron.service';
 import { PluginLoaderService } from './services/plugin-loader.service';
 import { PluginService } from './services/plugin.service';
+import { DialogInstallationValidationComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
+import { NbEvaIconsModule } from '@nebular/eva-icons';
 
 @NgModule({
 	declarations: [
@@ -82,7 +84,8 @@ import { PluginService } from './services/plugin.service';
 		DialogCreateVersionComponent,
 		VersionHistoryComponent,
 		VersionSelectorComponent,
-		SourceSelectorComponent
+		SourceSelectorComponent,
+		DialogInstallationValidationComponent
 	],
 	imports: [
 		CommonModule,
@@ -111,7 +114,8 @@ import { PluginService } from './services/plugin.service';
 		NbAlertModule,
 		PipeModule,
 		NbListModule,
-		SelectModule
+		SelectModule,
+		NbEvaIconsModule
 	],
 	exports: [PluginLayoutComponent],
 	providers: [
