@@ -1,6 +1,15 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { IPlugin, IPluginVersion, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
+import {
+	IPlugin,
+	IPluginSource,
+	IPluginVersion,
+	PluginOSArch,
+	PluginOSType,
+	PluginSourceType,
+	PluginStatus,
+	PluginType
+} from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDateService, NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,6 +27,7 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	versionForm: FormGroup;
 	plugin: IPlugin;
 	version: IPluginVersion;
+	source: IPluginSource;
 	pluginTypes = Object.values(PluginType);
 	pluginStatuses = Object.values(PluginStatus);
 	sourceTypes = Object.values(PluginSourceType);
@@ -57,14 +67,13 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	}
 
 	private patch(): void {
-		if (!this.version) return;
+		if (!this.source) return;
 		const version: Partial<IPluginVersion> = {
-			...this.version,
-			...(this.version.source && { source: { ...this.version.source } })
+			...this.version
 		}; //create a copy of the version
 
-		if (version?.source?.type) {
-			this.onSourceTypeChange(version.source.type);
+		if (this.source?.type) {
+			this.onSourceTypeChange(this.source.type);
 		}
 
 		this.versionForm.patchValue(version);
@@ -82,11 +91,16 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	}
 
 	private createSourceGroup(type: string): FormGroup {
-		const sourceId = this.version?.sourceId ? { id: this.version.sourceId } : {};
+		const sourceId = this.source.id ? { id: this.source.id } : {};
+		const common = {
+			...sourceId,
+			operatingSystem: [PluginOSType.WINDOWS, Validators.required],
+			architecture: [PluginOSArch.X64, Validators.required]
+		};
 		switch (type) {
 			case PluginSourceType.CDN:
 				return this.fb.group({
-					...sourceId,
+					...common,
 					type: [PluginSourceType.CDN],
 					url: [
 						'',
@@ -101,7 +115,7 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 
 			case PluginSourceType.NPM:
 				return this.fb.group({
-					...sourceId,
+					...common,
 					type: [PluginSourceType.NPM],
 					name: [
 						'',
@@ -111,14 +125,14 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 						]
 					],
 					registry: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})(\/[\w.-]*)*\/?$/)],
-					authToken: [''],
+					private: [false],
 					scope: ['', Validators.pattern(/^@[a-z0-9-~][a-z0-9-._~]*$/)]
 				});
 
 			case PluginSourceType.GAUZY:
 			default:
 				return this.fb.group({
-					...sourceId,
+					...common,
 					type: [PluginSourceType.GAUZY],
 					file: [null, Validators.required]
 				});

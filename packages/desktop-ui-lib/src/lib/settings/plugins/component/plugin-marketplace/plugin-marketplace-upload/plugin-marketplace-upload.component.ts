@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { IPlugin, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
+import { IPlugin, PluginOSArch, PluginOSType, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDateService, NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -108,10 +108,15 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 	private createSourceGroup(type: PluginSourceType): FormGroup {
 		const sourceId = this.plugin && this.plugin.source.id ? { id: [this.plugin.source.id] } : {};
+		const common = {
+			...sourceId,
+			operatingSystem: [PluginOSType.WINDOWS, Validators.required],
+			architecture: [PluginOSArch.X64, Validators.required]
+		};
 		switch (type) {
 			case PluginSourceType.CDN:
 				return this.fb.group({
-					...sourceId,
+					...common,
 					type: [PluginSourceType.CDN],
 					url: [
 						'',
@@ -126,7 +131,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 			case PluginSourceType.NPM:
 				return this.fb.group({
-					...sourceId,
+					...common,
 					type: [PluginSourceType.NPM],
 					name: [
 						'',
@@ -136,14 +141,14 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 						]
 					],
 					registry: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)],
-					authToken: [''],
+					private: [false],
 					scope: ['', Validators.pattern(/^@[a-z0-9-~][a-z0-9-._~]*$/)]
 				});
 
 			case PluginSourceType.GAUZY:
 			default:
 				return this.fb.group({
-					...sourceId,
+					...common,
 					type: [PluginSourceType.GAUZY],
 					file: [null, Validators.required]
 				});
@@ -168,7 +173,13 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		this.isSubmitting = true;
 
 		try {
-			const pluginData = this.pluginForm.value;
+			const pluginData = {
+				...this.pluginForm.value,
+				version: {
+					...this.pluginForm.value.version,
+					sources: [this.pluginForm.value.version.source]
+				}
+			};
 			this.dialogRef.close(pluginData);
 		} catch (error) {
 			this.toastrService.error(error.message || error);

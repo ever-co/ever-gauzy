@@ -43,7 +43,7 @@ export class VersionSelectorComponent implements OnInit, OnDestroy {
 			PluginVersionActions.getAll(this.pluginId, {
 				skip: this.skip,
 				take: this.take,
-				relations: ['plugin', 'source'],
+				relations: ['plugin', 'sources'],
 				order: { releaseDate: 'DESC' },
 				withDeleted: false
 			})
@@ -60,10 +60,6 @@ export class VersionSelectorComponent implements OnInit, OnDestroy {
 	public async onVersionChange(id: IPluginVersion['id']): Promise<void> {
 		const version = this.query.versions.find((version) => version.id === id);
 		this.action.dispatch(PluginVersionActions.selectVersion(version));
-	}
-
-	public compareVersions(v1: IPluginVersion, v2: IPluginVersion): boolean {
-		return v1 && v2 ? v1.id === v2.id : v1 === v2;
 	}
 
 	public get unlockInfiniteList(): boolean {

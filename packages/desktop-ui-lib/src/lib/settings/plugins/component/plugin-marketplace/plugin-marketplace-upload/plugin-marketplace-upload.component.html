@@ -22,11 +22,7 @@
 
 				<!-- Step 2: Source -->
 				<nb-step [stepControl]="pluginForm?.get('version.source')" [label]="'PLUGIN.FORM.SOURCE' | translate">
-					<lib-plugin-source
-						class="grow"
-						[form]="pluginForm?.get('version.source')"
-						[sourceTypes]="sourceTypes"
-					></lib-plugin-source>
+					<lib-plugin-source class="grow" [form]="pluginForm?.get('version.source')"></lib-plugin-source>
 					<div class="stepper-buttons">
 						<button nbButton outline status="basic" nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}

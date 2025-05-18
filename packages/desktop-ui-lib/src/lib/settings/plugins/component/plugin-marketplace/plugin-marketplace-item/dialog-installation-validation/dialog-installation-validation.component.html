@@ -1,0 +1,54 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+	<nb-card class="dialog-card" status="basic">
+		<nb-card-header class="mb-0 d-flex justify-content-between align-items-center">
+			<h5 class="title m-0">{{ 'TIMER_TRACKER.SETTINGS.AUTH_TOKEN' | translate }}</h5>
+			<button nbButton appearance="ghost" size="small" (click)="dismiss()" class="cancel p-0">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</nb-card-header>
+
+		<nb-card-body class="py-3">
+			<div class="form-group">
+				<gauzy-source-selector [pluginId]="pluginId" [versionId]="versionId"></gauzy-source-selector>
+			</div>
+			<div class="form-group">
+				<label for="authToken" class="form-label">
+					{{ 'TIMER_TRACKER.SETTINGS.AUTH_TOKEN_LABEL' | translate }}
+				</label>
+				<input
+					nbInput
+					fullWidth
+					type="password"
+					id="authToken"
+					formControlName="authToken"
+					[placeholder]="'TIMER_TRACKER.SETTINGS.AUTH_TOKEN_PLACEHOLDER' | translate"
+					[status]="
+						form.controls['authToken'].invalid && form.controls['authToken'].touched ? 'danger' : 'basic'
+					"
+					autocomplete="off"
+					autocorrect="off"
+					autocapitalize="off"
+					spellcheck="false"
+				/>
+				<small class="text-hint">
+					{{ 'TIMER_TRACKER.SETTINGS.AUTH_TOKEN_HELP' | translate }}
+				</small>
+				<ng-container *ngIf="form.controls['authToken'].invalid && form.controls['authToken'].touched">
+					<p class="text-danger mt-1 mb-0 small">
+						<nb-icon icon="alert-circle-outline"></nb-icon>
+						{{ 'VALIDATION.REQUIRED' | translate }}
+					</p>
+				</ng-container>
+			</div>
+		</nb-card-body>
+
+		<nb-card-footer class="d-flex justify-content-between align-items-center pt-3 pb-0">
+			<button nbButton type="button" appearance="outline" status="basic" (click)="dismiss()">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+			<button nbButton type="submit" status="primary" [disabled]="form.invalid">
+				{{ 'BUTTONS.CONTINUE' | translate }}
+			</button>
+		</nb-card-footer>
+	</nb-card>
+</form>

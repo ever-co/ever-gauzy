@@ -1,27 +1,30 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NbDialogService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject, Observable, Subject, tap } from 'rxjs';
-import { catchError, concatMap, filter, take, takeUntil } from 'rxjs/operators';
 import {
 	ICDNSource,
+	ID,
 	IGauzySource,
 	INPMSource,
 	IPlugin,
+	IPluginSource,
 	IPluginVersion,
 	PluginSourceType,
 	PluginStatus,
 	PluginType
 } from '@gauzy/contracts';
-
+import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { BehaviorSubject, Observable, of, Subject, tap } from 'rxjs';
+import { catchError, concatMap, filter, take, takeUntil } from 'rxjs/operators';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Actions } from '@ngneat/effects-ng';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
+import { PluginSourceActions } from '../+state/actions/plugin-source.action';
 import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
+import { PluginSourceQuery } from '../+state/queries/plugin-source.query';
 import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store, ToastrNotificationService } from '../../../../../services';
@@ -29,6 +32,7 @@ import { PluginElectronService } from '../../../services/plugin-electron.service
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { DialogCreateVersionComponent } from './dialog-create-version/dialog-create-version.component';
+import { DialogInstallationValidationComponent } from './dialog-installation-validation/dialog-installation-validation.component';
 
 @Component({
 	selector: 'gauzy-plugin-marketplace-item',
@@ -58,7 +62,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		private readonly action: Actions,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery,
-		public readonly versionQuery: PluginVersionQuery
+		public readonly versionQuery: PluginVersionQuery,
+		public readonly sourceQuery: PluginSourceQuery
 	) {}
 
 	ngOnInit(): void {
@@ -68,6 +73,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				distinctUntilChange(),
 				concatMap((plugin) => {
 					this.action.dispatch(PluginVersionActions.selectVersion(plugin.version));
+					this.action.dispatch(PluginSourceActions.selectSource(plugin.source));
 					return this.checkInstallation(plugin);
 				}),
 				catchError((error) => this.handleError(error)),
@@ -88,7 +94,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	public loadPlugin(): void {
 		this.action.dispatch(
 			PluginMarketplaceActions.getOne(this.pluginId, {
-				relations: ['versions', 'versions.source', 'uploadedBy', 'uploadedBy.user'],
+				relations: ['versions', 'versions.sources', 'uploadedBy', 'uploadedBy.user'],
 				order: { versions: { releaseDate: 'DESC' } }
 			})
 		);
@@ -259,7 +265,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	installPlugin(isUpdate = false): void {
-		const source = isUpdate ? this.plugin.source : this.selectedVersion.source;
+		const source = isUpdate ? this.plugin.source : this.selectedSource;
 		const versionId = isUpdate ? this.plugin.version.id : this.selectedVersion.id;
 		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: true, plugin: this.plugin }));
 		switch (source.type) {
@@ -275,23 +281,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				);
 				break;
 			case PluginSourceType.NPM:
-				this.action.dispatch(
-					PluginInstallationActions.install({
-						...{
-							pkg: {
-								name: source.name,
-								version: isUpdate ? this.plugin.version.number : this.selectedVersionNumber
-							},
-							registry: {
-								privateURL: source.registry,
-								authToken: source.authToken
-							}
-						},
-						contextType: 'npm',
-						marketplaceId: this.pluginId,
-						versionId
-					})
-				);
+				this.npmInstallation(source, versionId, isUpdate).pipe(take(1)).subscribe();
 				break;
 			default:
 				break;
@@ -366,5 +356,44 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	private get selectedVersion(): IPluginVersion {
 		return this.versionQuery.version;
+	}
+
+	private get selectedSource(): IPluginSource {
+		return this.sourceQuery.source;
+	}
+
+	private npmInstallation(source: IPluginSource, versionId: ID, isUpdate = false): Observable<void> {
+		if (!source.private) {
+			return of(this.prepareNpmInstallation(source, versionId, isUpdate));
+		}
+
+		return this.dialogService
+			.open(DialogInstallationValidationComponent, {
+				backdropClass: 'backdrop-blur'
+			})
+			.onClose.pipe(
+				filter(Boolean),
+				tap(({ authToken }) => this.prepareNpmInstallation(source, versionId, isUpdate, authToken))
+			);
+	}
+
+	private prepareNpmInstallation(source: IPluginSource, versionId: ID, isUpdate = false, authToken = null) {
+		this.action.dispatch(
+			PluginInstallationActions.install({
+				...{
+					pkg: {
+						name: source.name,
+						version: isUpdate ? this.plugin.version.number : this.selectedVersionNumber
+					},
+					registry: {
+						privateURL: source.registry,
+						authToken
+					}
+				},
+				contextType: 'npm',
+				marketplaceId: this.pluginId,
+				versionId
+			})
+		);
 	}
 }

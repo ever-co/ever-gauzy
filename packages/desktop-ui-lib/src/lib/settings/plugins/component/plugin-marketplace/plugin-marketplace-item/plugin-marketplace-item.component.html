@@ -4,7 +4,8 @@ installationQuery.installing$ |async; @let uninstalling = installationQuery.unin
 marketplaceQuery.deleting$ | async; @let adding = versionQuery.creating$ | async; @let needUpdate = needUpdate$ | async;
 @let installed = installed$ | async; @let loading = marketplaceQuery.isLoading$ | async; @let disabled = editing ||
 installing || uninstalling || deleting || adding; @let selectedVersion = versionQuery.version$ | async; @let uploading =
-marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ | async;
+marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ | async; @let sources =
+this.sourceQuery.sources$ | async;
 
 <nb-card class="content-active first plugin-details-card">
 	<nb-card-header class="d-flex align-items-center justify-content-between">
@@ -323,7 +324,7 @@ marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ 
 									<div class="label">{{ 'PLUGIN.FORM.NPM.REGISTRY' | translate }}</div>
 									<div class="value code-like">{{ source.registry }}</div>
 								</div>
-								} @if(source.authToken) {
+								} @if(source.private) {
 								<div class="info-item">
 									<div class="label">{{ 'PLUGIN.FORM.NPM.AUTH_TOKEN' | translate }}</div>
 									<div class="value">
@@ -440,8 +441,9 @@ marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ 
 				size="small"
 				(click)="delete()"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
+				*gauzySpinnerButton="deleting && isSelected"
 			>
-				<nb-icon *gauzySpinnerButton="deleting && isSelected" icon="trash-2-outline" status="danger"></nb-icon>
+				<nb-icon icon="trash-2-outline" status="danger"></nb-icon>
 			</button>
 			}
 		</div>

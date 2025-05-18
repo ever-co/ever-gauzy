@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import { PluginOSArch, PluginOSType, PluginSourceType } from '@gauzy/contracts';
 
 @Component({
 	selector: 'lib-plugin-source',
@@ -10,7 +11,9 @@ import { FormGroup } from '@angular/forms';
 })
 export class PluginSourceComponent {
 	@Input() form: FormGroup;
-	@Input() sourceTypes: string[];
+	sourceTypes = Object.values(PluginSourceType);
+	sourceArchs = Object.values(PluginOSArch);
+	sourceOs = Object.values(PluginOSType);
 
 	public getFieldError(controlName: string, errorType?: string): boolean {
 		const control = this.form.get(controlName);

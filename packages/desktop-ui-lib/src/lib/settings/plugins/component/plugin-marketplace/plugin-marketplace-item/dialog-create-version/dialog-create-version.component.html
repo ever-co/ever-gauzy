@@ -14,11 +14,7 @@
 			<!-- Version -->
 			<lib-plugin-version class="grow" [form]="versionForm"></lib-plugin-version>
 			<!-- Source -->
-			<lib-plugin-source
-				class="grow"
-				[form]="versionForm?.get('source')"
-				[sourceTypes]="sourceTypes"
-			></lib-plugin-source>
+			<lib-plugin-source class="grow" [form]="versionForm?.get('source')"></lib-plugin-source>
 		</nb-card-body>
 		<nb-card-footer class="text-right mt-0">
 			<button nbButton type="button" (click)="dismiss()" outline status="basic">

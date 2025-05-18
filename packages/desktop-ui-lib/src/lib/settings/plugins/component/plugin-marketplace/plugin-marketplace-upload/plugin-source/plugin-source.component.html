@@ -1,5 +1,34 @@
 <lib-form-section [formGroup]="form" title="{{ 'PLUGIN.FORM.SOURCE' | translate }}">
 	<lib-form-row>
+		<nb-form-field *ngIf="form.get('operatingSystem')" class="form-group">
+			<label class="label" for="source-os">{{ 'Operating System' | translate }} *</label>
+			<nb-select
+				fullWidth
+				id="source-os"
+				formControlName="operatingSystem"
+				[status]="getFieldError('operatingSystem') ? 'danger' : 'basic'"
+			>
+				<nb-option *ngFor="let os of sourceOs" [value]="os">
+					{{ os | translate | titlecase }}
+				</nb-option>
+			</nb-select>
+		</nb-form-field>
+		<nb-form-field *ngIf="form.get('architecture')" class="form-group">
+			<label class="label" for="source-arch">{{ 'Architecture' | translate }} *</label>
+			<nb-select
+				fullWidth
+				id="source-arch"
+				formControlName="architecture"
+				[status]="getFieldError('architecture') ? 'danger' : 'basic'"
+			>
+				<nb-option *ngFor="let arch of sourceArchs" [value]="arch">
+					{{ arch | translate }}
+				</nb-option>
+			</nb-select>
+		</nb-form-field>
+	</lib-form-row>
+
+	<lib-form-row>
 		<nb-form-field *ngIf="form.get('type')" class="form-group full-width">
 			<label class="label" for="source-type">{{ 'PLUGIN.FORM.SOURCE_TYPE' | translate }} *</label>
 			<nb-select
@@ -114,19 +143,11 @@
 					</nb-hint>
 				</nb-form-field>
 			</lib-form-row>
-			<lib-form-row>
-				<nb-form-field *ngIf="form.get('authToken')" class="form-group full-width">
+			<lib-form-row *ngIf="form.get('private')">
+				<div class="form-group full-width">
 					<label class="label" for="npm-auth-token">{{ 'PLUGIN.FORM.NPM.AUTH_TOKEN' | translate }}</label>
-					<input
-						nbInput
-						fullWidth
-						id="npm-auth-token"
-						formControlName="authToken"
-						placeholder="npm_xxxxxxxx"
-						type="password"
-						autocomplete="new-password"
-					/>
-				</nb-form-field>
+					<nb-toggle formControlName="private">Required</nb-toggle>
+				</div>
 			</lib-form-row>
 		</div>
 
