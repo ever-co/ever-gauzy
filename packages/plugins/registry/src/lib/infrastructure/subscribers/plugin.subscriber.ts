@@ -40,6 +40,8 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 		if (!event.entity) return;
 
 		const entity = event.entity;
+		// Set uploadedBy and uploadedAt
+		entity.uploadedById = RequestContext.currentEmployeeId();
 		entity.uploadedAt = new Date();
 		// Normalize string fields
 		if (entity.name) entity.name = entity.name.trim();
@@ -73,17 +75,18 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			});
 
 			// Compute latest source associated to version
-			const source =
-				version && installation.success
-					? await this.pluginSourceService.findOneOrFailByWhereOptions({
+			const source = version
+				? await this.pluginSourceService.findOneOrFailByOptions({
+						where: {
 							version: {
-								id: version.id,
-								installations: {
-									id: installation.record.id
-								}
+								id: version.id
 							}
-					  })
-					: { success: false, record: null };
+						},
+						order: {
+							createdAt: 'DESC'
+						}
+				  })
+				: { success: false, record: null };
 
 			// Add the computed property to the entity
 			entity.downloadCount = downloadCount;
@@ -154,7 +157,7 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			// This is needed because SQL doesn't natively support semantic version sorting
 			const allVersions = await this.pluginVersionService.typeOrmPluginVersionRepository
 				.createQueryBuilder('version')
-				.leftJoinAndSelect('version.source', 'source')
+				.leftJoinAndSelect('version.sources', 'sources')
 				.where('version.pluginId = :pluginId', { pluginId })
 				.getMany();
 
