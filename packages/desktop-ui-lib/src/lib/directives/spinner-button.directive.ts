@@ -6,7 +6,7 @@ import { NbSpinnerComponent } from '@nebular/theme';
 	standalone: false
 })
 export class SpinnerButtonDirective {
-	private _isSpinning = false;
+	private _isSpinning = null;
 	private _spinner: HTMLElement | null = null;
 	private _viewContainer = inject(ViewContainerRef);
 	private _templateRef = inject(TemplateRef<any>);
