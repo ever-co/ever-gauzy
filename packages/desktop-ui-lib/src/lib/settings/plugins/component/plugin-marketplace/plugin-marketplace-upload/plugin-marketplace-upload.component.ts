@@ -1,11 +1,19 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { IPlugin, PluginOSArch, PluginOSType, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-core/common';
+import {
+	AbstractControl,
+	FormArray,
+	FormBuilder,
+	FormGroup,
+	ValidationErrors,
+	ValidatorFn,
+	Validators
+} from '@angular/forms';
+import { IPlugin, IPluginSource, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { NbDateService, NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, Subject, takeUntil, tap } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../services';
+import { SourceContext } from './plugin-source/creator/source.context';
 
 @Component({
 	selector: 'lib-plugin-marketplace-upload',
@@ -26,20 +34,21 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	formTouched = false;
 	today: Date; // Ensures a proper date comparison
 	destroy$ = new Subject<void>();
+	selectedSourceType: PluginSourceType = PluginSourceType.CDN;
 
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly dialogRef: NbDialogRef<PluginMarketplaceUploadComponent>,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService,
-		protected readonly dateService: NbDateService<Date>
+		protected readonly dateService: NbDateService<Date>,
+		private readonly sourceContext: SourceContext
 	) {
 		this.today = dateService.today();
 	}
 
 	ngOnInit(): void {
 		this.initForm();
-		this.setupSourceTypeListener();
 		this.patch();
 	}
 
@@ -61,7 +70,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	private patch(): void {
 		if (!this.plugin) return;
 
-		const { name, description, type, status, version, source, author, license, homepage, repository } = this.plugin;
+		const { name, description, type, status, version, author, license, homepage, repository } = this.plugin;
 
 		const data: Partial<IPlugin> = {
 			name,
@@ -74,15 +83,39 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			repository
 		};
 
-		if (version) {
-			data.version = { ...version };
-			if (source) {
-				data.source = { ...source };
-				this.onSourceTypeChange(source.type);
-			}
+		if (!version) {
+			this.addSource();
+			return;
+		}
+
+		data.version = { ...version };
+
+		const sources = version.sources ?? [];
+		const hasSources = sources.length > 0;
+
+		if (!hasSources) {
+			this.addSource();
+			return;
+		}
+
+		const versionGroup = this.pluginForm.get('version') as FormGroup;
+		const sourcesArray = versionGroup.get('sources') as FormArray;
+		sourcesArray.clear();
+
+		for (const source of sources) {
+			this.addSource(source.type, source);
 		}
 
 		this.pluginForm.patchValue(data);
+	}
+
+	public addSource(type: PluginSourceType = this.selectedSourceType, data?: IPluginSource): void {
+		const source = this.sourceContext.getCreator(type).createSource(data);
+		this.sources.push(source);
+	}
+
+	public removeSource(index: number): void {
+		this.sources.removeAt(index);
 	}
 
 	private createVersionGroup(): FormGroup {
@@ -91,7 +124,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			number: ['', [Validators.required, Validators.pattern(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/)]],
 			changelog: ['', [Validators.required, Validators.minLength(10)]],
 			releaseDate: [this.today, [Validators.required, this.pastDateValidator()]],
-			source: this.createSourceGroup(PluginSourceType.CDN)
+			sources: this.fb.array([])
 		});
 	}
 
@@ -104,55 +137,6 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			const inputDate = new Date(control.value);
 			return inputDate > this.today ? { futureDate: true } : null;
 		};
-	}
-
-	private createSourceGroup(type: PluginSourceType): FormGroup {
-		const sourceId = this.plugin && this.plugin.source.id ? { id: [this.plugin.source.id] } : {};
-		const common = {
-			...sourceId,
-			operatingSystem: [PluginOSType.WINDOWS, Validators.required],
-			architecture: [PluginOSArch.X64, Validators.required]
-		};
-		switch (type) {
-			case PluginSourceType.CDN:
-				return this.fb.group({
-					...common,
-					type: [PluginSourceType.CDN],
-					url: [
-						'',
-						[
-							Validators.required,
-							Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)
-						]
-					],
-					integrity: [''],
-					crossOrigin: ['', Validators.maxLength(50)]
-				});
-
-			case PluginSourceType.NPM:
-				return this.fb.group({
-					...common,
-					type: [PluginSourceType.NPM],
-					name: [
-						'',
-						[
-							Validators.required,
-							Validators.pattern(/^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/)
-						]
-					],
-					registry: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)],
-					private: [false],
-					scope: ['', Validators.pattern(/^@[a-z0-9-~][a-z0-9-._~]*$/)]
-				});
-
-			case PluginSourceType.GAUZY:
-			default:
-				return this.fb.group({
-					...common,
-					type: [PluginSourceType.GAUZY],
-					file: [null, Validators.required]
-				});
-		}
 	}
 
 	public reset(): void {
@@ -188,29 +172,8 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private setupSourceTypeListener(): void {
-		this.pluginForm
-			?.get('version.source.type')
-			?.valueChanges.pipe(
-				distinctUntilChange(),
-				filter(Boolean),
-				tap((type: PluginSourceType) => this.onSourceTypeChange(type)),
-				takeUntil(this.destroy$)
-			)
-			.subscribe();
-	}
-
-	public onSourceTypeChange(type: PluginSourceType): void {
-		if (!this.pluginForm) return;
-		const source = this.createSourceGroup(type);
-		const versionControl = this.pluginForm.get('version') as FormGroup;
-
-		if (versionControl && source) {
-			if (versionControl.get('source')) {
-				versionControl.removeControl('source');
-			}
-			versionControl.addControl('source', source);
-		}
+	public get sources(): FormArray {
+		return this.pluginForm.get('version.sources') as FormArray;
 	}
 
 	private scrollToFirstInvalidControl(): void {

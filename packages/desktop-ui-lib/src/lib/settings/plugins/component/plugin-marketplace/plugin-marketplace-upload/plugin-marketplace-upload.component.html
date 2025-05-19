@@ -21,8 +21,40 @@
 				</nb-step>
 
 				<!-- Step 2: Source -->
-				<nb-step [stepControl]="pluginForm?.get('version.source')" [label]="'PLUGIN.FORM.SOURCE' | translate">
-					<lib-plugin-source class="grow" [form]="pluginForm?.get('version.source')"></lib-plugin-source>
+				<nb-step [stepControl]="pluginForm?.get('version.sources')" [label]="'PLUGIN.FORM.SOURCE' | translate">
+					<div class="sources-container">
+						@for(source of sources.controls; track source; let idx = $index){
+						<div class="source-card" [formGroup]="source">
+							<div class="source-header">
+								<h5>{{ 'PLUGIN.FORM.SOURCE' | translate }} #{{ idx + 1 }}</h5>
+								<button
+									nbButton
+									ghost
+									status="danger"
+									size="small"
+									(click)="removeSource(idx)"
+									*ngIf="sources.length > 1"
+								>
+									<nb-icon icon="trash-2-outline"></nb-icon>
+								</button>
+							</div>
+							<lib-plugin-source
+								class="grow"
+								[form]="pluginForm?.get('version.source')"
+							></lib-plugin-source>
+						</div>
+						<div class="add-source">
+							<nb-select [(ngModel)]="selectedSourceType" placeholder="Select Source Type">
+								<nb-option *ngFor="let source of sourceTypes" [value]="source">
+									{{ 'PLUGIN.FORM.SOURCE_TYPES.' + source | translate }}
+								</nb-option>
+							</nb-select>
+							<button nbButton outline status="primary" (click)="addSource()">
+								<nb-icon icon="plus-outline"></nb-icon> {{ 'PLUGIN.FORM.ADD_SOURCE' | translate }}
+							</button>
+						</div>
+						}
+					</div>
 					<div class="stepper-buttons">
 						<button nbButton outline status="basic" nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
