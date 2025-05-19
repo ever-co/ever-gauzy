@@ -460,7 +460,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		}
 
 		// Employee name
-		if (Object.prototype.hasOwnProperty.call(options.where, 'employeesMergedTeams')) {
+		if (Object.hasOwn(options.where, 'employeesMergedTeams')) {
 			const searchTerm = (options.where as any).employeesMergedTeams;
 
 			options.where.members = {
@@ -468,6 +468,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					user: [{ firstName: ILike(`%${searchTerm}%`) }, { lastName: ILike(`%${searchTerm}%`) }]
 				}
 			};
+
+			delete (options.where as any).employeesMergedTeams;
 		}
 
 		// Transform the filters to where conditions
