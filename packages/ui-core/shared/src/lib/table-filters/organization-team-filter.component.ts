@@ -3,18 +3,21 @@ import { DefaultFilter } from 'angular2-smart-table';
 import { combineLatest, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IOrganization, IOrganizationTeam, ISelectedEmployee } from '@gauzy/contracts';
+import { CustomFilterConfig, IOrganization, IOrganizationTeam, ISelectedEmployee } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { OrganizationTeamsService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-organization-team-select-filter',
-    template: `
+	selector: 'ga-organization-team-select-filter',
+	template: `
 		<ng-select
 			[clearable]="true"
 			[closeOnSelect]="true"
 			[placeholder]="'TASKS_PAGE.SELECT' | translate"
+			[items]="teams"
+			[(ngModel)]="selectedTeam"
+			bindLabel="name"
 			(change)="onChange($event)"
 		>
 			<ng-option *ngFor="let team of teams" [value]="team">
@@ -22,10 +25,11 @@ import { OrganizationTeamsService, Store } from '@gauzy/ui-core/core';
 			</ng-option>
 		</ng-select>
 	`,
-    standalone: false
+	standalone: false
 })
 export class OrganizationTeamFilterComponent extends DefaultFilter implements OnInit, OnChanges {
 	public teams: IOrganizationTeam[] = [];
+	public selectedTeam: IOrganizationTeam;
 	public organization: IOrganization;
 	public selectedEmployeeId: ISelectedEmployee['id'];
 	public subject$: Subject<any> = new Subject();
@@ -105,6 +109,12 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
 
 			// Update the teams property with the fetched items
 			this.teams = items;
+
+			const config = this.column?.filter?.config as CustomFilterConfig;
+			if (config?.initialValueIds) {
+				const teams = items.filter((t) => config.initialValueIds.includes(t.id));
+				this.selectedTeam = teams[0];
+			}
 		} catch (error) {
 			// Handle errors, log or display error messages
 			console.error('Error while fetching teams:', error);

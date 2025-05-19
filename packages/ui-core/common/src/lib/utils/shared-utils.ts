@@ -307,7 +307,9 @@ export function mergeDeep(target: any, ...sources: any) {
 
 	if (isObject(target) && isObject(source)) {
 		for (const key in source) {
-			if (isObject(source[key])) {
+			if (Array.isArray(source[key])) {
+				target[key] = [...source[key]];
+			} else if (isObject(source[key])) {
 				if (!target[key])
 					Object.assign(target, {
 						[key]: {}

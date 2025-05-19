@@ -1,14 +1,4 @@
-import {
-	Component,
-	OnInit,
-	Input,
-	Output,
-	EventEmitter,
-	OnDestroy,
-	ElementRef,
-	HostListener,
-	Renderer2
-} from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ElementRef, HostListener, Renderer2 } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
@@ -24,12 +14,12 @@ import { PictureNameTagsComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-tags-color-input',
-    templateUrl: './tags-color-input.component.html',
-    styleUrls: ['./tags-color-input.component.scss'],
-    standalone: false
+	selector: 'ga-tags-color-input',
+	templateUrl: './tags-color-input.component.html',
+	styleUrls: ['./tags-color-input.component.scss'],
+	standalone: false
 })
-export class TagsColorInputComponent extends PictureNameTagsComponent implements OnInit, OnDestroy {
+export class TagsColorInputComponent extends PictureNameTagsComponent implements OnInit {
 	public subject$: Subject<boolean> = new Subject();
 	public hasAddTag$: Observable<boolean>;
 	public tags: ITag[] = [];
@@ -48,9 +38,20 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 	}
 
 	/*
+	 * Getter & Setter selected tags Ids
+	 */
+	_selectedTagsIds: string[];
+	get selectedTagsIds(): string[] {
+		return this._selectedTagsIds;
+	}
+	@Input() set selectedTagsIds(value: string[]) {
+		this._selectedTagsIds = value;
+	}
+
+	/*
 	 * Getter & Setter for check organization level
 	 */
-	_isOrgLevel: boolean = false;
+	_isOrgLevel = false;
 	get isOrgLevel(): boolean {
 		return this._isOrgLevel;
 	}
@@ -61,7 +62,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 	/*
 	 * Getter & Setter for check tenant level
 	 */
-	_isTenantLevel: boolean = false;
+	_isTenantLevel = false;
 	get isTenantLevel(): boolean {
 		return this._isTenantLevel;
 	}
@@ -72,7 +73,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 	/*
 	 * Getter & Setter for multiple selection
 	 */
-	_multiple: boolean = true;
+	_multiple = true;
 	get multiple(): boolean {
 		return this._multiple;
 	}
@@ -83,7 +84,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 	/*
 	 * Getter & Setter for display label
 	 */
-	_label: boolean = true;
+	_label = true;
 	get label(): boolean {
 		return this._label;
 	}
@@ -94,7 +95,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 	/*
 	 * Getter & Setter for dynamic add tag option
 	 */
-	_addTag: boolean = true;
+	_addTag = true;
 	get addTag(): boolean {
 		return this._addTag;
 	}
@@ -104,8 +105,8 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 
 	@Output() selectedTagsEvent = new EventEmitter<ITag[]>();
 
-	selectedTagsOverflow: boolean = false;
-	noOfTagsFits: number = 0;
+	selectedTagsOverflow = false;
+	noOfTagsFits = 0;
 
 	@HostListener('window:resize')
 	onResize(): void {
@@ -173,6 +174,10 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 				tenantId
 			});
 			this.tags = items;
+		}
+
+		if (this.selectedTagsIds) {
+			this.selectedTags = this.tags?.filter((item) => this.selectedTagsIds?.includes(item.id));
 		}
 	}
 
@@ -253,6 +258,4 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 		this.renderer.removeChild(container, testBadge);
 		return badgeWidth;
 	}
-
-	ngOnDestroy(): void {}
 }

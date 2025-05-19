@@ -9,4 +9,4 @@ import { NbThemeModule } from '@nebular/theme';
 	exports: [LogoComponent],
 	providers: []
 })
-export class LogoModule { }
+export class LogoModule {}

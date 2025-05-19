@@ -3,11 +3,12 @@ import { FormControl } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/internal/Subscription';
 import { DefaultFilter } from 'angular2-smart-table';
+import { CustomFilterConfig } from '@gauzy/contracts';
 
 @Component({
-    selector: 'ga-input-filter-selector',
-    template: ` <input [formControl]="inputControl" class="form-control" [placeholder]="column.title" /> `,
-    standalone: false
+	selector: 'ga-input-filter-selector',
+	template: ` <input [formControl]="inputControl" class="form-control" [placeholder]="column.title" /> `,
+	standalone: false
 })
 export class InputFilterComponent extends DefaultFilter implements OnInit, OnDestroy, OnChanges {
 	public inputControl = new FormControl();
@@ -18,6 +19,9 @@ export class InputFilterComponent extends DefaultFilter implements OnInit, OnDes
 	}
 
 	ngOnInit() {
+		const config = this.column?.filter?.config as CustomFilterConfig;
+		if (config?.initialValueInput) this.inputControl.setValue(config.initialValueInput, { emitEvent: false });
+
 		// Subscribe to value changes of the inputControl
 		this.subscription = this.inputControl.valueChanges
 			.pipe(
