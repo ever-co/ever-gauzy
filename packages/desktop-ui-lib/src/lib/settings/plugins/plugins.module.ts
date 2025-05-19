@@ -61,6 +61,9 @@ import { PluginLoaderService } from './services/plugin-loader.service';
 import { PluginService } from './services/plugin.service';
 import { DialogInstallationValidationComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
+import { CdnFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/cdn-form/cdn-form.component';
+import { GauzyFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/gauzy-form/gauzy-form.component';
+import { NpmFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/npm-form/npm-form.component';
 
 @NgModule({
 	declarations: [
@@ -85,7 +88,10 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 		VersionHistoryComponent,
 		VersionSelectorComponent,
 		SourceSelectorComponent,
-		DialogInstallationValidationComponent
+		DialogInstallationValidationComponent,
+		CdnFormComponent,
+		GauzyFormComponent,
+		NpmFormComponent
 	],
 	imports: [
 		CommonModule,
