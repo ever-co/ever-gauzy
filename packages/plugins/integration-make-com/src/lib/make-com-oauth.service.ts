@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger, HttpException, HttpStatus, NotFoundException, forwardRef, Inject } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@gauzy/config';
 import { CommandBus } from '@nestjs/cqrs';
@@ -12,6 +12,7 @@ import {
 import {
 	IntegrationService,
 	IntegrationSettingService,
+	IntegrationTenantService,
 	IntegrationTenantUpdateOrCreateCommand,
 	RequestContext,
 	DEFAULT_ENTITY_SETTINGS,
@@ -29,11 +30,11 @@ export class MakeComOAuthService {
 	constructor(
 		private readonly httpService: HttpService,
 		private readonly _config: ConfigService,
-		private readonly commandBus: CommandBus,
-		@Inject(forwardRef(() => MakeComService))
 		private readonly makeComService: MakeComService,
+		private readonly integrationSettingService: IntegrationSettingService,
+		private readonly integrationTenantService: IntegrationTenantService,
 		private readonly integrationService: IntegrationService,
-		private readonly integrationSettingService: IntegrationSettingService
+		private readonly commandBus: CommandBus
 	) {}
 
 	/**
@@ -64,7 +65,7 @@ export class MakeComOAuthService {
 		this.storeStateForVerification(state);
 
 		// Prepare scopes according to Make.com documentation
-		const scopes = MAKE_DEFAULT_SCOPES.split(' ').join(',');
+		const scopes = MAKE_DEFAULT_SCOPES.join(' ');
 
 		// Build authorization URL according to Make.com documentation
 		const params = new URLSearchParams({
@@ -82,82 +83,47 @@ export class MakeComOAuthService {
 		}
 	}
 
-	/**
-	 * Store the state parameter for later verification.
-	 *
-	 * @param {string} state - The state parameter to store.
-	 */
-
-	/**
-	 * TODO: Implement a more robust storage mechanism for state parameters by Q4 2025.
-	 * This is a simple in-memory storage for small scale applications.
-	 * For scalability, we'll consider using cache, Redis for our case as it already exists in the project.
-	 */
-	private storeStateForVerification(state: string): void {
-		this.pendingStates.set(state, { timestamp: Date.now() });
-		this.cleanupExpiredStates();
-	}
-
-	/**
-	 * Clean up expired state parameters to prevent memory leaks.
-	 */
-	private cleanupExpiredStates(): void {
-		if (!this.pendingStates) return;
-
-		const now = Date.now();
-		const expirationTime = 10 * 60 * 1000; // 10 minutes in milliseconds
-
-		for (const [state, { timestamp }] of this.pendingStates.entries()) {
-			if (now - timestamp > expirationTime) {
-				this.pendingStates.delete(state);
-			}
-		}
-	}
-
-	/**
-	 * Exchange the authorization code for access and refresh tokens.
-	 *
-	 * @param {string} code - The authorization code received from Make.com.
-	 * @returns {Promise<any>} The token response.
-	 */
-	async exchangeCodeForToken(code: string, state: string): Promise<any> {
+	async exchangeCodeForToken(code: string, state: string): Promise<IMakeComOAuthTokens> {
 		try {
+			if (!this.verifyState(state)) {
+				throw new BadRequestException('Invalid state parameter');
+			}
+
 			// Decode the state parameter
 			const decodedState = JSON.parse(Buffer.from(state, 'base64').toString());
-        	const { tenantId, organizationId } = decodedState;
+			const { tenantId, organizationId } = decodedState;
 
-			if (!tenantId) {
-				throw new BadRequestException('Tenant ID not found in request context');
-			}
+			// Set the tenant context for subsequent operations
+			RequestContext.currentTenantId();
 
 			// Get client credentials from database
-			const { clientId, clientSecret } = await this.makeComService.getOAuthCredentials(tenantId, organizationId);
+			const integrationTenant = await this.getIntegrationTenant(tenantId, organizationId);
+			const clientId = await this.getSettingValue(integrationTenant, MakeSettingName.CLIENT_ID);
+			const clientSecret = await this.getSettingValue(integrationTenant, MakeSettingName.CLIENT_SECRET);
+
 			if (!clientId || !clientSecret) {
 				throw new BadRequestException('Make.com OAuth credentials are not fully configured');
 			}
 
 			const redirectUri = this._config.get('makeCom').redirectUri;
 
-			if (!clientId || !clientSecret || !redirectUri) {
-				throw new BadRequestException('Make.com OAuth credentials are not fully configured');
-			}
-
-			// Prepare the request body
+			// Prepare the request body for Make.com token endpoint
 			const tokenRequestParams = new URLSearchParams({
 				grant_type: 'authorization_code',
+				code,
+				redirect_uri: redirectUri,
 				client_id: clientId,
-				client_secret: clientSecret,
-				code: code,
-				redirect_uri: redirectUri
+				client_secret: clientSecret
 			});
 
 			const headers = {
-				'Content-Type': 'application/x-www-form-urlencoded'
+				'Content-Type': 'application/x-www-form-urlencoded',
+				'Accept': 'application/json'
 			};
 
-			// Make the token request
+			// Make the token request to Make.com
 			const tokenResponse = await firstValueFrom(
-				this.httpService.post(`${MAKE_BASE_URL}/api/v2/oauth/token`, tokenRequestParams, { headers }).pipe(
+				this.httpService.post(`${MAKE_BASE_URL}/oauth/token`, tokenRequestParams, { headers, timeout: 10000 }).pipe(
 					catchError((error: AxiosError) => {
 						this.logger.error('Error while exchanging code for token:', error.response?.data);
 						throw new HttpException(
@@ -168,8 +134,12 @@ export class MakeComOAuthService {
 				)
 			);
 
+			if (!tokenResponse.data.access_token) {
+				throw new BadRequestException('Invalid token response from Make.com');
+			}
+
 			// Save the tokens in the database
-			await this.saveIntegrationSettings(tokenResponse.data);
+			await this.saveIntegrationSettings(tokenResponse.data, tenantId, organizationId);
 			return tokenResponse.data;
 		} catch (error) {
 			this.logger.error('Failed to exchange code for token:', error);
@@ -178,20 +148,39 @@ export class MakeComOAuthService {
 	}
 
 	/**
-	 * Save the OAuth tokens as integration settings.
-	 *
-	 * @param {any} tokenData - The token data from Make.com.
-	 * @returns {Promise<void>}
+	 * Get integration tenant by tenantId and organizationId
 	 */
-	private async saveIntegrationSettings(tokenData: IMakeComOAuthTokens, organizationId?: string): Promise<void> {
-		const tenantId = RequestContext.currentTenantId();
-		// organizationId is now passed as parameter instead of trying to get it from tokenData
+	private async getIntegrationTenant(tenantId: string, organizationId?: string) {
+		return await this.makeComService['integrationTenantService'].findOneByOptions({
+			where: {
+				name: IntegrationEnum.MakeCom,
+				tenantId,
+				...(organizationId && { organizationId })
+			},
+			relations: ['settings']
+		});
+	}
+
+	/**
+	 * Get setting value from integration tenant
+	 */
+	private async getSettingValue(integrationTenant: any, settingName: string): Promise<string | null> {
+		if (!integrationTenant || !integrationTenant.settings) {
+			return null;
+		}
+		const setting = integrationTenant.settings.find((s: any) => s.settingsName === settingName);
+		return setting ? setting.settingsValue : null;
+	}
+
+	/**
+	 * Save the OAuth tokens as integration settings.
+	 */
+	private async saveIntegrationSettings(tokenData: IMakeComOAuthTokens, tenantId: string, organizationId?: string): Promise<void> {
 		try {
 			// Find existing Make.com integration or create it if it doesn't exist
-			const integration =
-				(await this.integrationService.findOneByOptions({
-					where: { provider: IntegrationEnum.MakeCom }
-				})) || undefined;
+			const integration = await this.integrationService.findOneByOptions({
+				where: { provider: IntegrationEnum.MakeCom }
+			});
 
 			const tiedEntities = PROJECT_TIED_ENTITIES.map((entity) => ({
 				...entity,
@@ -253,12 +242,6 @@ export class MakeComOAuthService {
 					settingsValue: 'true',
 					tenantId,
 					organizationId
-				},
-				{
-					settingsName: MakeSettingName.WEBHOOK_URL,
-					settingsValue: '',
-					tenantId,
-					organizationId
 				}
 			];
 
@@ -281,7 +264,6 @@ export class MakeComOAuthService {
 					}
 				)
 			);
-
 			this.logger.log(`Successfully saved ${IntegrationEnum.MakeCom} OAuth tokens for tenant ${tenantId}`);
 		} catch (error) {
 			this.logger.error(`Failed to save ${IntegrationEnum.MakeCom} OAuth tokens:`, error);
@@ -289,97 +271,218 @@ export class MakeComOAuthService {
 		}
 	}
 
-/**
- * Refreshes the access token for the Make.com integration.
- *
- * @param {string} integrationId - The ID of the integration to refresh the token for.
- * @returns {Promise<void>} A promise that resolves when the token has been refreshed.
- */
-async refreshToken(integrationId: string): Promise<void> {
-	try {
-		// Find the integration setting for refresh token
-		const refreshTokenSetting = await this.integrationSettingService.findOneByOptions({
-			where: {
-				integration: { id: integrationId },
-				settingsName: MakeSettingName.REFRESH_TOKEN
-			}
-		});
+	/**
+	 * Verify the state parameter to prevent CSRF attacks.
+	 */
+	verifyState(state: string): boolean {
+		const pendingState = this.pendingStates.get(state);
 
-		if (!refreshTokenSetting) {
-			throw new NotFoundException('Refresh token not found for this integration');
+		if (!pendingState) {
+			this.logger.warn(`State ${state} not found in pending states`);
+			return false;
 		}
-
-		// Get OAuth credentials from the database
-		const { clientId, clientSecret } = await this.makeComService.getOAuthCredentials(integrationId);
-
-		// Get the Make.com token endpoint URL
-		const tokenUrl = `${MAKE_BASE_URL}/oauth/token`
-
-		// Create the form data for the token request
-		const formData = new URLSearchParams();
-		formData.append('grant_type', 'refresh_token');
-		formData.append('refresh_token', refreshTokenSetting.settingsValue);
-		formData.append('client_id', clientId);
-		formData.append('client_secret', clientSecret);
-
-		// Send the token request
-		const response = await firstValueFrom(
-			this.httpService
-				.post(tokenUrl, formData, {
-					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded'
-					}
-				})
-				.pipe(
-					catchError((error: AxiosError) => {
-						this.logger.error('Failed to refresh Make.com token:', error.response?.data);
-						throw new Error(`Failed to refresh token: ${error.message}`);
-					})
-				)
-		);
-
-		// Extract the new tokens
-		const { access_token, refresh_token, expires_in } = response.data;
-
-		// Calculate the expiry time
-		const expiresAt = new Date(Date.now() + Number(expires_in) * 1000);
-
-		// Update the integration settings
-		// Get the tenant and organization IDs from the existing settings
-		const { tenantId, organizationId } = refreshTokenSetting;
-
-		const settingsToUpdate = [
-			{
-				settingsName: MakeSettingName.ACCESS_TOKEN,
-				settingsValue: access_token,
-				tenantId,
-				organizationId,
-				integration: { name: IntegrationEnum.MakeCom }
-			},
-			{
-				settingsName: MakeSettingName.REFRESH_TOKEN,
-				settingsValue: refresh_token,
-				tenantId,
-				organizationId,
-				integration: { name: IntegrationEnum.MakeCom }
-			},
-			{
-				settingsName: MakeSettingName.EXPIRES_AT,
-				settingsValue: expiresAt.toISOString(),
-				tenantId,
-				organizationId,
-				integration: { name: IntegrationEnum.MakeCom }
-			}
-		];
-
-		await this.integrationSettingService.bulkUpdateOrCreate(integrationId, settingsToUpdate);
-
-		this.logger.log(`Successfully refreshed token for integration: ${integrationId}`);
-	} catch (error) {
-		this.logger.error('Error refreshing Make.com token:', error);
-		throw error;
+		const now = Date.now();
+		const expirationTime = 10 * 60 * 1000; // 10 minutes in milliseconds
+		if (now - pendingState.timestamp > expirationTime) {
+			this.logger.warn(`State ${state} has expired`);
+			this.pendingStates.delete(state);
+			return false;
+		}
+		// Valid and used - remove it to free memory
+		this.pendingStates.delete(state);
+		return true;
 	}
-}
+
+	/**
+	 * Store the state parameter for later verification.
+	 *
+	 * @param {string} state - The state parameter to store.
+	 */
+
+	/**
+	 * TODO: Implement a more robust storage mechanism for state parameters by Q4 2025.
+	 * This is a simple in-memory storage for small scale applications.
+	 * For scalability, we'll consider using cache, Redis for our case as it already exists in the project.
+	 */
+	private storeStateForVerification(state: string): void {
+		this.pendingStates.set(state, { timestamp: Date.now() });
+		this.cleanupExpiredStates();
+	}
+
+	/**
+	 * Clean up expired state parameters to prevent memory leaks.
+	 */
+	private cleanupExpiredStates(): void {
+		if (!this.pendingStates) return;
+
+		const now = Date.now();
+		const expirationTime = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+		for (const [state, { timestamp }] of this.pendingStates.entries()) {
+			if (now - timestamp > expirationTime) {
+				this.pendingStates.delete(state);
+			}
+		}
+	}
+
+	/**
+	 * Handles the callback from Make.com OAuth flow
+	 * This method stores information for future use
+	 */
+	async handleAuthorizationCallback(code: string, state: string): Promise<void> {
+		try {
+			// Decode the state to get context
+			const decodedState = JSON.parse(Buffer.from(state, 'base64').toString());
+			const { organizationId } = decodedState;
+
+			// Find the integration tenant
+			const tenantId = RequestContext.currentTenantId();
+			const integrationTenant = await this.integrationTenantService.findOneByOptions({
+				where: {
+					name: IntegrationEnum.MakeCom,
+					tenantId,
+					...(organizationId && { organizationId })
+				},
+				relations: ['settings']
+			});
+
+			if (!integrationTenant) {
+				this.logger.warn(`Integration not found for tenant ${tenantId}`);
+				return;
+			}
+
+			// Store the authorization code
+			// but since Make.com handles the OAuth flow, we just store the fact
+			// that the integration was authorized
+			let authCodeSetting = integrationTenant.settings.find(
+				(setting) => setting.settingsName === MakeSettingName.AUTH_CODE
+			);
+
+			if (authCodeSetting) {
+				authCodeSetting.settingsValue = code;
+			} else {
+				authCodeSetting = {
+					settingsName: MakeSettingName.AUTH_CODE,
+					settingsValue: code,
+					integration: integrationTenant
+				} as any;
+			}
+
+			await this.integrationSettingService.save(authCodeSetting);
+
+			// Set integration as enabled
+			let enabledSetting = integrationTenant.settings.find(
+				(setting) => setting.settingsName === MakeSettingName.IS_ENABLED
+			);
+
+			if (enabledSetting) {
+				enabledSetting.settingsValue = 'true';
+			} else {
+				enabledSetting = {
+					settingsName: MakeSettingName.IS_ENABLED,
+					settingsValue: 'true',
+					integration: integrationTenant
+				} as any;
+			}
+			await this.integrationSettingService.save(enabledSetting);
+			this.logger.log(`Successfully handled OAuth callback for tenant ${tenantId}`);
+		} catch (error) {
+			this.logger.error('Error handling Make.com authorization callback:', error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Refreshes the access token for the Make.com integration.
+	 *
+	 * @param {string} integrationId - The ID of the integration to refresh the token for.
+	 * @returns {Promise<void>} A promise that resolves when the token has been refreshed.
+	 */
+	async refreshToken(integrationId: string): Promise<void> {
+		try {
+			// Find the integration setting for refresh token
+			const refreshTokenSetting = await this.integrationSettingService.findOneByOptions({
+				where: {
+					integration: { id: integrationId },
+					settingsName: MakeSettingName.REFRESH_TOKEN
+				}
+			});
+
+			if (!refreshTokenSetting) {
+				throw new NotFoundException('Refresh token not found for this integration');
+			}
+
+			// Get OAuth credentials from the database
+			const { clientId, clientSecret } = await this.makeComService.getOAuthCredentials(integrationId);
+
+			// Get the Make.com token endpoint URL
+			const tokenUrl = `${MAKE_BASE_URL}/oauth/token`
+
+			// Create the form data for the token request
+			const formData = new URLSearchParams();
+			formData.append('grant_type', 'refresh_token');
+			formData.append('refresh_token', refreshTokenSetting.settingsValue);
+			formData.append('client_id', clientId);
+			formData.append('client_secret', clientSecret);
+
+			// Send the token request
+			const response = await firstValueFrom(
+				this.httpService
+					.post(tokenUrl, formData, {
+						headers: {
+							'Content-Type': 'application/x-www-form-urlencoded'
+						}
+					})
+					.pipe(
+						catchError((error: AxiosError) => {
+							this.logger.error('Failed to refresh Make.com token:', error.response?.data);
+							throw new Error(`Failed to refresh token: ${error.message}`);
+						})
+					)
+			);
+
+			// Extract the new tokens
+			const { access_token, refresh_token, expires_in } = response.data;
+
+			// Calculate the expiry time
+			const expiresAt = new Date(Date.now() + Number(expires_in) * 1000);
+
+			// Update the integration settings
+			// Get the tenant and organization IDs from the existing settings
+			const { tenantId, organizationId } = refreshTokenSetting;
+
+			const settingsToUpdate = [
+				{
+					settingsName: MakeSettingName.ACCESS_TOKEN,
+					settingsValue: access_token,
+					tenantId,
+					organizationId,
+					integration: { name: IntegrationEnum.MakeCom }
+				},
+				{
+					settingsName: MakeSettingName.REFRESH_TOKEN,
+					settingsValue: refresh_token,
+					tenantId,
+					organizationId,
+					integration: { name: IntegrationEnum.MakeCom }
+				},
+				{
+					settingsName: MakeSettingName.EXPIRES_AT,
+					settingsValue: expiresAt.toISOString(),
+					tenantId,
+					organizationId,
+					integration: { name: IntegrationEnum.MakeCom }
+				}
+			];
+
+			await this.integrationSettingService.bulkUpdateOrCreate(integrationId, settingsToUpdate);
+
+			this.logger.log(`Successfully refreshed token for integration: ${integrationId}`);
+		} catch (error) {
+			this.logger.error('Error refreshing Make.com token:', error);
+			throw error;
+		}
+	}
 
 	/**
 	 * Get the access token for a Make.com integration.
@@ -392,7 +495,7 @@ async refreshToken(integrationId: string): Promise<void> {
 			const setting = await this.integrationSettingService.findOneByWhereOptions({
 				integration: { id: integrationId },
 				integrationId,
-				settingsName: 'access_token'
+				settingsName: MakeSettingName.ACCESS_TOKEN
 			});
 
 			if (!setting || !setting.settingsValue) {

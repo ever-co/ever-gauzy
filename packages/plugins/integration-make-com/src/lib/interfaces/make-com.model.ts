@@ -12,7 +12,8 @@ export enum MakeSettingName {
 	EXPIRES_AT = 'expires_at',
 	TOKEN_TYPE = 'token_type',
 	CLIENT_ID = 'client_id',
-	CLIENT_SECRET = 'client_secret'
+	CLIENT_SECRET = 'client_secret',
+	AUTH_CODE = 'auth_code',
 }
 
 // Define the return type for the settings

@@ -1,11 +1,11 @@
-import { Controller, Get, Post, Body, UseGuards, BadRequestException, NotFoundException, HttpStatus, Redirect } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@gauzy/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { TenantPermissionGuard, Permissions, PermissionGuard, RequestContext, Organization } from '@gauzy/core';
-import { ID, IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
+import { TenantPermissionGuard, Permissions, PermissionGuard, RequestContext } from '@gauzy/core';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { MakeComService } from './make-com.service';
 import { IMakeComCreateIntegration, IMakeComIntegrationSettings } from './interfaces/make-com.model';
-import { UpdateMakeComOAuthSettingsDTO, UpdateMakeComSettingsDTO } from './dto';
+import { UpdateMakeComSettingsDTO } from './dto';
 import { MakeComOAuthService } from './make-com-oauth.service';
 
 @ApiTags('Make.com Integrations')
@@ -140,4 +140,56 @@ export class MakeComController {
 
 		return { clientId, redirectUri };
 	}
+
+	/**
+     * Handle Token requests from Make.com custom apps.
+     * This endpoint is called by your Make.com custom app during the OAuth flow.
+     * It's configured in your custom app's "token" section.
+     */
+    @Post('/token')
+    @ApiOperation({ summary: 'Handle Make.com token requests (For Custom Apps)' })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns OAuth tokens'
+    })
+    @ApiResponse({
+        status: 400,
+        description: 'Invalid request or grant type'
+    })
+    async tokenEndpoint(@Body() body: {
+        grant_type: string;
+        code: string;
+        state: string;
+        client_id: string;
+        client_secret: string;
+        redirect_uri: string;
+    }): Promise<any> {
+        try {
+            // Verify grant_type
+            if (body.grant_type !== 'authorization_code') {
+                throw new BadRequestException('Unsupported grant type');
+            }
+
+            // Validate required fields
+            if (!body.code || !body.state) {
+                throw new BadRequestException('Missing required parameters');
+            }
+
+            // Exchange code for tokens
+            const tokenResponse = await this.makeComOAuthService.exchangeCodeForToken(
+                body.code,
+                body.state
+            );
+
+            // Return the token response in the format expected by Make.com
+            return {
+                access_token: tokenResponse.access_token,
+                token_type: tokenResponse.token_type,
+                expires_in: tokenResponse.expires_in,
+                refresh_token: tokenResponse.refresh_token,
+            };
+        } catch (error) {
+            throw new BadRequestException(error.message || 'Invalid request');
+        }
+    }
 }

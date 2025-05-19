@@ -1,11 +1,7 @@
-import { BadRequestException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { catchError, firstValueFrom, lastValueFrom, switchMap } from 'rxjs';
-import { AxiosError } from 'axios';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { IntegrationSettingService, IntegrationService, IntegrationTenantService, RequestContext, DEFAULT_ENTITY_SETTINGS, PROJECT_TIED_ENTITIES, IntegrationTenantUpdateOrCreateCommand } from '@gauzy/core';
 import { In } from 'typeorm';
 import { IIntegrationEntitySetting, IIntegrationTenant, IntegrationEntity, IntegrationEnum } from '@gauzy/contracts';
-import { MakeComOAuthService } from './make-com-oauth.service';
 import { IMakeComIntegrationSettings, MakeSettingName, IMakeComCreateIntegration } from './interfaces/make-com.model';
 import { CommandBus } from '@nestjs/cqrs';
 
@@ -14,13 +10,10 @@ export class MakeComService {
 	private readonly logger = new Logger(MakeComService.name);
 
 	constructor(
-		private readonly httpService: HttpService,
 		private readonly _commandBus: CommandBus,
 		private readonly integrationSettingService: IntegrationSettingService,
 		private readonly integrationTenantService: IntegrationTenantService,
 		private readonly integrationService: IntegrationService,
-		@Inject(forwardRef(() => MakeComOAuthService))
-		private readonly makeComOAuthService: MakeComOAuthService
 	) {}
 
 	/**
@@ -114,7 +107,7 @@ export class MakeComService {
 						settingsName: MakeSettingName.IS_ENABLED,
 						settingsValue: input.isEnabled.toString(),
 						integration: integrationTenant
-					};
+					} as any;
 				}
 				updates.push(this.integrationSettingService.save(enabledSetting));
 			}
@@ -159,9 +152,20 @@ export class MakeComService {
 			const tenantId = RequestContext.currentTenantId();
 			const { client_id, client_secret, organizationId } = settings;
 
-			const integration = await this.integrationService.findOneByOptions({
+			if (!tenantId) {
+				throw new NotFoundException('Tenant ID not found in request context');
+			}
+
+			// Find or create the base integration
+			let integration = await this.integrationService.findOneByOptions({
 				where: { provider: IntegrationEnum.MakeCom }
 			});
+			if (!integration) {
+				integration = await this.integrationService.create({
+					name: IntegrationEnum.MakeCom,
+					provider: IntegrationEnum.MakeCom
+				});
+			}
 
 		// Map project-tied entities with organization and tenant IDs.
 		const tiedEntities = PROJECT_TIED_ENTITIES.map((entity) => ({
@@ -278,46 +282,46 @@ export class MakeComService {
 	}
 
 	/**
- * Retrieves the OAuth credentials for the Make.com integration.
- *
- * @param {string} integrationId - The ID of the integration to get credentials for.
- * @returns {Promise<{clientId: string, clientSecret: string}>} A promise that resolves to the OAuth credentials.
- */
-async getOAuthCredentials(integrationId: string, organizationId?: string): Promise<{ clientId: string; clientSecret: string }> {
-	try {
-		// Find the integration settings
-		const settings = await this.integrationSettingService.find({
-			where: {
-				integration: { id: integrationId },
-				organizationId,
-				settingsName: In([
-					MakeSettingName.CLIENT_ID,
-					MakeSettingName.CLIENT_SECRET
-				])
+	 * Retrieves the OAuth credentials for the Make.com integration.
+	 *
+	 * @param {string} integrationId - The ID of the integration to get credentials for.
+	 * @returns {Promise<{clientId: string, clientSecret: string}>} A promise that resolves to the OAuth credentials.
+	 */
+	async getOAuthCredentials(integrationId: string, organizationId?: string): Promise<{ clientId: string; clientSecret: string }> {
+		try {
+			// Find the integration settings
+			const settings = await this.integrationSettingService.find({
+				where: {
+					integration: { id: integrationId },
+					organizationId,
+					settingsName: In([
+						MakeSettingName.CLIENT_ID,
+						MakeSettingName.CLIENT_SECRET
+					])
+				}
+			});
+
+			if (!settings || settings.length < 2) {
+				throw new NotFoundException('OAuth credentials not found for this integration');
 			}
-		});
 
-		if (!settings || settings.length < 2) {
-			throw new NotFoundException('OAuth credentials not found for this integration');
+			// Extract client ID and client secret
+			const clientIdSetting = settings.find(setting => setting.settingsName === MakeSettingName.CLIENT_ID);
+			const clientSecretSetting = settings.find(setting => setting.settingsName === MakeSettingName.CLIENT_SECRET);
+
+			if (!clientIdSetting || !clientSecretSetting) {
+				throw new NotFoundException('OAuth credentials are incomplete for this integration');
+			}
+
+			return {
+				clientId: clientIdSetting.settingsValue,
+				clientSecret: clientSecretSetting.settingsValue
+			};
+		} catch (error) {
+			this.logger.error('Error retrieving Make.com OAuth credentials:', error);
+			throw error;
 		}
-
-		// Extract client ID and client secret
-		const clientIdSetting = settings.find(setting => setting.settingsName === MakeSettingName.CLIENT_ID);
-		const clientSecretSetting = settings.find(setting => setting.settingsName === MakeSettingName.CLIENT_SECRET);
-
-		if (!clientIdSetting || !clientSecretSetting) {
-			throw new NotFoundException('OAuth credentials are incomplete for this integration');
-		}
-
-		return {
-			clientId: clientIdSetting.settingsValue,
-			clientSecret: clientSecretSetting.settingsValue
-		};
-	} catch (error) {
-		this.logger.error('Error retrieving Make.com OAuth credentials:', error);
-		throw error;
 	}
-}
 
 	/**
 	 * Retrieves the OAuth client ID for the Make.com integration.
