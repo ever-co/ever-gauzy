@@ -22,6 +22,7 @@ import {
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { FileUploadModule } from 'ng2-file-upload';
 import { CookieService } from 'ngx-cookie-service';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
@@ -216,7 +217,8 @@ const FEATURE_MODULES = [
 			provide: GAUZY_ENV,
 			useValue: environment
 		},
-		provideHttpClient(withInterceptorsFromDi())
+		provideHttpClient(withInterceptorsFromDi()),
+		provideCharts(withDefaultRegisterables())
 	]
 })
 export class AppModule {
