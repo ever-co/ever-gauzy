@@ -27,16 +27,11 @@
 						<div class="source-card" [formGroupName]="idx">
 							<div class="source-header">
 								<h5>{{ 'PLUGIN.FORM.SOURCE' | translate }} #{{ idx + 1 }}</h5>
-								<button
-									nbButton
-									ghost
-									status="danger"
-									size="small"
-									(click)="removeSource(idx)"
-									*ngIf="sources.length > 1"
-								>
+								@if(sources.length > 1){
+								<button nbButton ghost status="danger" size="small" (click)="removeSource(idx)">
 									<nb-icon icon="trash-2-outline"></nb-icon>
 								</button>
+								}
 							</div>
 							<lib-plugin-source class="grow" [form]="source"></lib-plugin-source>
 						</div>

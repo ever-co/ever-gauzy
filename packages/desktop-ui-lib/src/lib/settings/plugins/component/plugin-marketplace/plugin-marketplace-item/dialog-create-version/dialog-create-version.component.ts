@@ -1,20 +1,19 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import {
-	IPlugin,
-	IPluginSource,
-	IPluginVersion,
-	PluginOSArch,
-	PluginOSType,
-	PluginSourceType,
-	PluginStatus,
-	PluginType
-} from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-core/common';
+	AbstractControl,
+	FormArray,
+	FormControl,
+	FormGroup,
+	ValidationErrors,
+	ValidatorFn,
+	Validators
+} from '@angular/forms';
+import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { NbDateService, NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, Subject, takeUntil, tap } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
+import { SourceContext } from '../../plugin-marketplace-upload/plugin-source/creator/source.context';
 
 @Component({
 	selector: 'lib-dialog-create-version',
@@ -35,20 +34,20 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	formTouched = false;
 	today: Date;
 	destroy$ = new Subject<void>();
+	selectedSourceType: PluginSourceType = PluginSourceType.CDN;
 
 	constructor(
-		private readonly fb: FormBuilder,
 		private readonly dialogRef: NbDialogRef<DialogCreateVersionComponent>,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService,
-		protected readonly dateService: NbDateService<Date>
+		protected readonly dateService: NbDateService<Date>,
+		private readonly sourceContext: SourceContext
 	) {
 		this.today = dateService.today();
 	}
 
 	ngOnInit(): void {
 		this.initForm();
-		this.setupSourceTypeListener();
 		this.patch();
 	}
 
@@ -57,23 +56,35 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	}
 
 	private createVersionGroup(): FormGroup {
-		return this.fb.group({
-			...(this.version?.id && { id: this.version.id }),
-			number: ['', [Validators.required, Validators.pattern(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/)]],
-			changelog: ['', [Validators.required, Validators.minLength(10)]],
-			releaseDate: [this.today, [Validators.required, this.pastDateValidator()]],
-			source: this.createSourceGroup(PluginSourceType.CDN)
+		return new FormGroup({
+			...(this.version?.id && { id: new FormControl(this.version.id) }),
+			number: new FormControl('', [
+				Validators.required,
+				Validators.pattern(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/)
+			]),
+			changelog: new FormControl('', [Validators.required, Validators.minLength(10)]),
+			releaseDate: new FormControl(this.today, [Validators.required, this.pastDateValidator()]),
+			sources: new FormArray([this.sourceContext.getCreator(PluginSourceType.CDN).createSource()])
 		});
 	}
 
 	private patch(): void {
 		if (!this.source) return;
+
 		const version: Partial<IPluginVersion> = {
 			...this.version
 		}; //create a copy of the version
 
-		if (this.source?.type) {
-			this.onSourceTypeChange(this.source.type);
+		const sources = version.sources ?? [];
+		const hasSources = sources.length > 0;
+
+		if (!hasSources) return;
+
+		const sourcesArray = this.versionForm.get('sources') as FormArray;
+		sourcesArray.clear();
+
+		for (const source of sources) {
+			this.addSource(source.type, source);
 		}
 
 		this.versionForm.patchValue(version);
@@ -90,53 +101,13 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 		};
 	}
 
-	private createSourceGroup(type: string): FormGroup {
-		const sourceId = this.source.id ? { id: this.source.id } : {};
-		const common = {
-			...sourceId,
-			operatingSystem: [PluginOSType.WINDOWS, Validators.required],
-			architecture: [PluginOSArch.X64, Validators.required]
-		};
-		switch (type) {
-			case PluginSourceType.CDN:
-				return this.fb.group({
-					...common,
-					type: [PluginSourceType.CDN],
-					url: [
-						'',
-						[
-							Validators.required,
-							Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})(\/[\w.-]*)*\/?$/)
-						]
-					],
-					integrity: [''],
-					crossOrigin: ['', Validators.maxLength(50)]
-				});
+	public addSource(type: PluginSourceType = this.selectedSourceType, data?: IPluginSource): void {
+		const source = this.sourceContext.getCreator(type).createSource(data);
+		this.sources.push(source);
+	}
 
-			case PluginSourceType.NPM:
-				return this.fb.group({
-					...common,
-					type: [PluginSourceType.NPM],
-					name: [
-						'',
-						[
-							Validators.required,
-							Validators.pattern(/^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/)
-						]
-					],
-					registry: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})(\/[\w.-]*)*\/?$/)],
-					private: [false],
-					scope: ['', Validators.pattern(/^@[a-z0-9-~][a-z0-9-._~]*$/)]
-				});
-
-			case PluginSourceType.GAUZY:
-			default:
-				return this.fb.group({
-					...common,
-					type: [PluginSourceType.GAUZY],
-					file: [null, Validators.required]
-				});
-		}
+	public removeSource(index: number): void {
+		this.sources.removeAt(index);
 	}
 
 	public reset(): void {
@@ -166,27 +137,8 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private setupSourceTypeListener(): void {
-		this.versionForm
-			?.get('source.type')
-			?.valueChanges.pipe(
-				distinctUntilChange(),
-				filter(Boolean),
-				tap((type: PluginSourceType) => this.onSourceTypeChange(type)),
-				takeUntil(this.destroy$)
-			)
-			.subscribe();
-	}
-
-	public onSourceTypeChange(type: PluginSourceType): void {
-		if (!this.versionForm) return;
-		const source = this.createSourceGroup(type);
-		if (source) {
-			if (this.versionForm.get('source')) {
-				this.versionForm.removeControl('source');
-			}
-			this.versionForm.addControl('source', source);
-		}
+	public get sources(): FormArray {
+		return this.versionForm.get('sources') as FormArray;
 	}
 
 	private scrollToFirstInvalidControl(): void {

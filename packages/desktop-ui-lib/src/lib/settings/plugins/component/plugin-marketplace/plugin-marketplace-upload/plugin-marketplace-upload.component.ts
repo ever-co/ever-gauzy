@@ -73,9 +73,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	}
 
 	private patch(): void {
-		if (!this.plugin) {
-			return this.addSource();
-		}
+		if (!this.plugin) return;
 
 		const { name, description, type, status, version, author, license, homepage, repository } = this.plugin;
 
@@ -90,18 +88,14 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			repository
 		};
 
-		if (!version) {
-			return this.addSource();
-		}
+		if (!version) return;
 
 		data.version = { ...version };
 
 		const sources = version.sources ?? [];
 		const hasSources = sources.length > 0;
 
-		if (!hasSources) {
-			return this.addSource();
-		}
+		if (!hasSources) return;
 
 		const versionGroup = this.pluginForm.get('version') as FormGroup;
 		const sourcesArray = versionGroup.get('sources') as FormArray;
@@ -117,7 +111,6 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	public addSource(type: PluginSourceType = this.selectedSourceType, data?: IPluginSource): void {
 		const source = this.sourceContext.getCreator(type).createSource(data);
 		this.sources.push(source);
-		console.log(this.pluginForm);
 	}
 
 	public removeSource(index: number): void {
@@ -133,7 +126,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			]),
 			changelog: new FormControl('', [Validators.required, Validators.minLength(10)]),
 			releaseDate: new FormControl(this.today, [Validators.required, this.pastDateValidator()]),
-			sources: new FormArray([])
+			sources: new FormArray([this.sourceContext.getCreator(PluginSourceType.CDN).createSource()])
 		});
 	}
 
