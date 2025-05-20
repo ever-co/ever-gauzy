@@ -7,6 +7,7 @@ import {
 	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
+	NbCdkMappingModule,
 	NbDatepickerModule,
 	NbFormFieldModule,
 	NbIconModule,
@@ -64,6 +65,7 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CdnFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/cdn-form/cdn-form.component';
 import { GauzyFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/gauzy-form/gauzy-form.component';
 import { NpmFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/npm-form/npm-form.component';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 @NgModule({
 	declarations: [
@@ -121,7 +123,8 @@ import { NpmFormComponent } from './component/plugin-marketplace/plugin-marketpl
 		PipeModule,
 		NbListModule,
 		SelectModule,
-		NbEvaIconsModule
+		NbEvaIconsModule,
+		DragDropModule
 	],
 	exports: [PluginLayoutComponent],
 	providers: [

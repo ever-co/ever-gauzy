@@ -22,39 +22,85 @@
 
 				<!-- Step 2: Source -->
 				<nb-step [stepControl]="pluginForm?.get('version.sources')" [label]="'PLUGIN.FORM.SOURCE' | translate">
-					<div class="sources-container grow">
-						@for(source of sources.controls; track source; let idx = $index){
-						<div class="source-card" [formGroupName]="idx">
-							<div class="source-header">
-								<h5>{{ 'PLUGIN.FORM.SOURCE' | translate }} #{{ idx + 1 }}</h5>
-								@if(sources.length > 1){
-								<button nbButton ghost status="danger" size="small" (click)="removeSource(idx)">
-									<nb-icon icon="trash-2-outline"></nb-icon>
-								</button>
-								}
+					<div class="sources-container">
+						<!-- Sources List with Advanced Interactions -->
+						<div cdkDropList (cdkDropListDropped)="drop($event)" class="sources-list">
+							@for(source of sources.controls; track source; let idx = $index){
+							<div class="source-card" [formGroupName]="idx" cdkDrag>
+								<!-- Glow effect on hover -->
+								<div class="card-glow"></div>
+
+								<!-- Interactive elements -->
+								<div class="source-header">
+									<div class="drag-area" cdkDragHandle>
+										<h5>{{ 'PLUGIN.FORM.SOURCE' | translate }} #{{ idx + 1 }}</h5>
+										<nb-icon icon="grid-view" class="drag-icon"></nb-icon>
+									</div>
+
+									<button
+										nbButton
+										ghost
+										status="danger"
+										size="small"
+										(click)="removeSource(idx)"
+										class="delete-btn"
+										[nbTooltip]="'Delete source' | translate"
+										nbTooltipPlacement="top"
+									>
+										<nb-icon icon="trash-2-outline"></nb-icon>
+									</button>
+								</div>
+
+								<lib-plugin-source class="grow" [form]="source"></lib-plugin-source>
+
+								<!-- Hover actions -->
+								<div class="hover-actions">
+									<button nbButton ghost status="primary" size="small">
+										<nb-icon icon="edit-2-outline"></nb-icon>
+									</button>
+									<button nbButton ghost status="info" size="small">
+										<nb-icon icon="copy-outline"></nb-icon>
+									</button>
+								</div>
 							</div>
-							<lib-plugin-source class="grow" [form]="source"></lib-plugin-source>
+							} @empty {
+							<div class="empty-state">
+								<nb-icon icon="file-add-outline" class="empty-icon"></nb-icon>
+								<h4>No sources added yet</h4>
+								<p>Add your first source to begin configuration</p>
+							</div>
+							}
 						</div>
-						} @empty {
-						<ngx-no-data-message message="Add at least one source"></ngx-no-data-message>
-						}
+
+						<!-- Add Source Section with Futuristic Design -->
 						<div class="add-source">
-							<nb-select [(selected)]="selectedSourceType" placeholder="Select Source Type">
-								@for(source of sourceTypes; track source){
-								<nb-option [value]="source">
-									{{ 'PLUGIN.FORM.SOURCE_TYPES.' + source | translate }}
-								</nb-option>
-								}
-							</nb-select>
-							<button
-								nbButton
-								outline
-								status="primary"
-								[disabled]="!selectedSourceType"
-								(click)="addSource(selectedSourceType)"
-							>
-								<nb-icon icon="plus-outline"></nb-icon> {{ 'Add Source' | translate }}
-							</button>
+							<div class="add-source-card" (click)="openSourceTypeSelector()">
+								<div class="add-content">
+									<nb-icon icon="plus-circle-outline" class="add-icon"></nb-icon>
+									<h4>Add New Source</h4>
+									<p>Click to select source type</p>
+								</div>
+
+								<div class="source-selector" *ngIf="showSourceSelector">
+									<div class="selector-header">
+										<h5>Select Source Type</h5>
+										<button nbButton ghost size="small" (click)="closeSourceTypeSelector()">
+											<nb-icon icon="close-outline"></nb-icon>
+										</button>
+									</div>
+									<div class="source-options">
+										@for(source of sourceTypes; track source){
+										<div
+											class="source-option"
+											(click)="addSource(source); $event.stopPropagation()"
+										>
+											<nb-icon [icon]="getSourceIcon(source)" class="option-icon"></nb-icon>
+											<span>{{ 'PLUGIN.FORM.SOURCE_TYPES.' + source | translate }}</span>
+										</div>
+										}
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
 					<div class="stepper-buttons">
