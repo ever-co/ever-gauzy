@@ -73,7 +73,9 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	}
 
 	private patch(): void {
-		if (!this.plugin) return;
+		if (!this.plugin) {
+			return this.addSource();
+		}
 
 		const { name, description, type, status, version, author, license, homepage, repository } = this.plugin;
 
@@ -89,8 +91,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		};
 
 		if (!version) {
-			this.addSource();
-			return;
+			return this.addSource();
 		}
 
 		data.version = { ...version };
@@ -99,8 +100,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		const hasSources = sources.length > 0;
 
 		if (!hasSources) {
-			this.addSource();
-			return;
+			return this.addSource();
 		}
 
 		const versionGroup = this.pluginForm.get('version') as FormGroup;
@@ -133,7 +133,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			]),
 			changelog: new FormControl('', [Validators.required, Validators.minLength(10)]),
 			releaseDate: new FormControl(this.today, [Validators.required, this.pastDateValidator()]),
-			sources: new FormArray([this.sourceContext.getCreator(PluginSourceType.CDN).createSource()])
+			sources: new FormArray([])
 		});
 	}
 
@@ -166,7 +166,6 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		this.isSubmitting = true;
 
 		try {
-			console.log(this.pluginForm);
 			this.dialogRef.close(this.pluginForm.value);
 		} catch (error) {
 			this.toastrService.error(error.message || error);
