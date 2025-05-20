@@ -149,6 +149,7 @@ $transition-speed: 0.2s;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   margin-bottom: 1rem;
+  min-width: 482px;
 
   &:hover {
     transform: translateY(-3px);
