@@ -1,9 +1,9 @@
 import { KeyboardMouseEventCounter, KbMouseTimer, KeyboardMouseActivityStores } from '@gauzy/desktop-activity';
 import { KbMouseActivityService, TranslateService, notifyScreenshot } from '@gauzy/desktop-lib';
 import AppWindow from '../window-manager';
-import * as path from 'path';
-import { getScreen, getAppSetting, delaySync } from '../util';
-import { getScreenshot } from '../screenshot';
+import * as path from 'node:path';
+import { getScreen, getAppSetting, delaySync, TAppSetting } from '../util';
+import { getScreenshot, TScreenShot } from '../screenshot';
 import { Notification } from 'electron';
 import { AgentLogger } from '../agent-logger';
 
@@ -66,6 +66,20 @@ class PullActivities {
 		}
 	}
 
+	startListener() {
+		if (!this.listenerModule) {
+			this.getListenerModule();
+		}
+		this.listenerModule.startListener();
+	}
+
+	stopListener() {
+		if (!this.listenerModule) {
+			this.getListenerModule();
+		}
+		this.listenerModule.stopListener();
+	}
+
 	stopTracking() {
 		if (!this.listenerModule) {
 			this.getListenerModule();
@@ -84,10 +98,10 @@ class PullActivities {
 		if (!this.timerModule) {
 			this.timerModule = KbMouseTimer.getInstance();
 			this.timerModule.onFlush(this.activityProcess.bind(this));
+			this.timerModule.setFlushInterval(60);
 		}
-		this.timerModule.setFlushInterval(60);
 		const appSetting = getAppSetting();
-		this.timerModule.setSecreenshotInterval((appSetting.timer.updatePeriod || 5) * 60); // value is in seconds and default to 5 minutes
+		this.timerModule.setScreenshotInterval((appSetting.timer.updatePeriod || 5) * 60); // value is in seconds and default to 5 minutes
 		this.agentLogger.info('Agent started with 60 second interval keyboard and mouse activities collected');
 		this.agentLogger.info('screenshot will taken every 120 seconds');
 	}
@@ -104,7 +118,7 @@ class PullActivities {
 		this.agentLogger.info('Agent is stopped');
 	}
 
-	async showScreenshot(imgs, appSetting) {
+	async showScreenshot(imgs: TScreenShot[], appSetting: Partial<TAppSetting>) {
 		if (imgs.length > 0) {
 			const img: any = imgs[0];
 			img.img = this.buffToB64(img);
@@ -148,7 +162,7 @@ class PullActivities {
 	}
 
 	async getScreenShot() {
-		console.log('take the screen shot');
+		this.agentLogger.info('Taking screenshot');
 		const screenData = getScreen();
 		const appSetting = getAppSetting();
 		const imgs = await getScreenshot({

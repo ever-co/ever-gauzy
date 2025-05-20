@@ -8,10 +8,8 @@ import { TMouseEvents, TKbMouseActivity } from './i-kb-mouse';
 */
 export class KeyboardMouseActivityStores {
 	currentActivityData: TKbMouseActivity;
-	userPath: string;
-	static instance: KeyboardMouseActivityStores;
-	constructor() {
-		this.userPath = app.getPath('userData');
+	private static instance: KeyboardMouseActivityStores;
+	private constructor() {
 		this.resetCurrentActivity();
 	}
 

@@ -4,6 +4,9 @@ import { ApiService } from '../api';
 import { getAuthConfig } from '../util';
 import * as moment from 'moment';
 import { AgentLogger } from '../agent-logger';
+import { environment } from '../../environments/environment';
+import * as fs from 'node:fs';
+import path from 'node:path';
 
 
 class PushActivities {
@@ -33,13 +36,14 @@ class PushActivities {
 			this.kbMousePool = KbMouseActivityPool.getInstance();
 			this.kbMousePool.setCallback(this.saveActivities.bind(this));
 			this.kbMousePool.setErrorCallback(this.poolErrorHandler.bind(this));
+			this.kbMousePool.setPollingInterval(environment.AGENT_POOL_ACTIVITY_INTERVAL || 5000)
 		}
 	}
 
 	startPooling() {
 		try {
 			this.kbMousePool?.start();
-			this.agentLogger.info('Pulling scheduller started');
+			this.agentLogger.info('Pulling scheduler started');
 		} catch (error) {
 			console.error('Failed to start push activity pooling', error);
 			this.agentLogger.error(`Failed to start push activity pooling ${JSON.stringify(error)}`)
@@ -84,7 +88,7 @@ class PushActivities {
 		try {
 			const auth = getAuthConfig();
 			const pathTemp = image && Array.isArray(image) && image.length && image[0];
-			console.log('path temp', pathTemp);
+			this.agentLogger.info(`image temporarry path ${pathTemp}`);
 			if (!pathTemp) {
 				return;
 			}
@@ -93,6 +97,8 @@ class PushActivities {
 				organizationId: auth.user.employee.organizationId,
 				recordedAt
 			}, { filePath: pathTemp })
+			fs.unlinkSync(pathTemp);
+
 		} catch (error) {
 			console.log(error);
 			throw error;
@@ -158,12 +164,13 @@ class PushActivities {
 		} catch (error) {
 			console.error('error on save activity', error);
 			this.agentLogger.error(`error on save activity ${JSON.stringify(error)}`);
+			return false;
 		}
 	}
 
 	poolErrorHandler(error: Error) {
 		console.error(error);
-		this.agentLogger.error(`Activity pulling scheduller error ${JSON.stringify(error)}`);
+		this.agentLogger.error(`Activity pulling scheduler error ${JSON.stringify(error)}`);
 	}
 }
 

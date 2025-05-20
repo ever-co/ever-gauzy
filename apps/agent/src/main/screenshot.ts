@@ -1,7 +1,7 @@
 import * as electron from 'electron';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as os from 'os';
+import * as os from 'node:os';
 
 type TArgScreen = {
 	monitor: {
@@ -16,7 +16,7 @@ type TArgScreen = {
 	}
 }
 
-type TScreenShot = {
+export type TScreenShot = {
 	img: Buffer,
 	name: string,
 	id: string,
@@ -44,7 +44,6 @@ function saveTempImageStream(screen: TScreenShot): Promise<TScreenShot> {
 
 export async function getScreenshot(args: TArgScreen): Promise<TScreenShot[]> {
 	try {
-		console.log('getscreenshot', args);
 		const monitor = args.monitor;
 		const thumbSize = {
 			width: 320,
@@ -64,29 +63,29 @@ export async function getScreenshot(args: TArgScreen): Promise<TScreenShot[]> {
 		const screens = [];
 
 		sources.forEach((source) => {
-			if (
-				monitor &&
-				monitor.captured &&
-				monitor.captured === 'active-only'
-			) {
+			if (monitor?.captured === 'active-only') {
 				if (args.activeWindow && source.display_id === args.activeWindow.id.toString()) {
 					const fullScreen = sourcesFull.find((src) => src.id === source.id);
-					screens.push({
-						img: source.thumbnail.toPNG(),
-						name: source.name,
-						id: source.display_id,
-						fullScreen: fullScreen.thumbnail.toPNG()
-					});
+					if (fullScreen) {
+						screens.push({
+							img: source.thumbnail.toPNG(),
+							name: source.name,
+							id: source.display_id,
+							fullScreen: fullScreen.thumbnail.toPNG()
+						});
+					}
 				}
 			} else {
 				if (args.activeWindow) {
 					const fullScreen = sourcesFull.find((src) => src.id === source.id);
-					screens.push({
-						img: source.thumbnail.toPNG(),
-						name: source.name,
-						id: source.display_id,
-						fullScreen: fullScreen.thumbnail.toPNG()
-					});
+					if (fullScreen) {
+						screens.push({
+							img: source.thumbnail.toPNG(),
+							name: source.name,
+							id: source.display_id,
+							fullScreen: fullScreen.thumbnail.toPNG()
+						});
+					}
 				}
 			}
 		});

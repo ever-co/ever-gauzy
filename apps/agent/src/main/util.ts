@@ -15,7 +15,7 @@ type TAuthConfig = {
 	token: string;
 }
 
-type TAppSetting = {
+export type TAppSetting = {
 	monitor?: {
 		captured?: string
 	},
@@ -69,6 +69,15 @@ export function getScreen() {
 			cursor.y >= y && cursor.y <= y + height;
 	});
 
+	if (!currentDisplay) {
+		// Fallback to primary monitor to keep the agent running
+		const primary = screen.getPrimaryDisplay();
+		return {
+			activeWindow: { id: primary.id },
+			screenSize: primary.workAreaSize
+		};
+	}
+
 	// const displayIndex = displays.indexOf(currentDisplay);
 	return {
 		activeWindow: { id: currentDisplay.id },
@@ -76,8 +85,8 @@ export function getScreen() {
 	}
 }
 
-export function getAppSetting(): TAppSetting {
-	const appConfig: TAppSetting = LocalStore.getStore('appSetting');
+export function getAppSetting(): Partial<TAppSetting> {
+	const appConfig = (LocalStore.getStore('appSetting') ?? {}) as Partial<TAppSetting>;
 	return appConfig;
 }
 

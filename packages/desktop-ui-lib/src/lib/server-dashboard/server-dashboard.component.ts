@@ -162,7 +162,6 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 	}
 
 	public get isAgent(): boolean {
-		console.log('is agent', this._environment.IS_AGENT);
 		return this._environment.IS_AGENT;
 	}
 }

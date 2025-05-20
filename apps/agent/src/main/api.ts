@@ -2,8 +2,8 @@ import { LocalStore, TTimeSlot } from '@gauzy/desktop-lib';
 import { getAuthConfig, getApiBaseUrl } from './util';
 import fetch, { HeadersInit } from 'node-fetch';
 import * as moment from 'moment';
-import * as fs from 'fs';
-import * as FormData from 'form-data';
+import * as fs from 'node:fs';
+import { FormData } from 'undici';
 
 type UploadParams = {
 	timeSlotId?: string;
@@ -62,7 +62,7 @@ export class ApiService {
 
 	uploadImages(params: UploadParams, img: any) {
 		const formData = new FormData();
-		formData.append('file', fs.createReadStream(img.filePath), img.fileName);
+		formData.append('file', fs.createReadStream(img.filePath));
 		formData.append('tenantId', params.tenantId);
 		formData.append('organizationId', params.organizationId);
 		formData.append('recordedAt', moment(params.recordedAt).utc().toISOString());
@@ -92,7 +92,7 @@ export class ApiService {
 
 		try {
 			const response = await fetch(url, requestOptions);
-			console.log('json response', response.json());
+			console.log('response status', response.status);
 			if (!response.ok) {
 				console.warn('[Response Error]', response.status, response.statusText);
 				const error = new Error(`API error: ${response.status} ${response.statusText}`);

@@ -12,13 +12,13 @@ export class KeyboardMouseEventCounter {
 	private isStarted: boolean;
 	private keyboardMouse: KeyboardMouse;
 	private keyboardMouseActivityStores: KeyboardMouseActivityStores;
-	private currentMousePosition: TMousePosition;
-	private startMousePosition: TMousePosition;
+	private currentMousePosition: TMousePosition = { x: 0, y: 0 };
+	private startMousePosition: TMousePosition = { x:0, y: 0 };
 	private readonly mouseMoveThreshold: number = 10;
 	private mouseIsMove: boolean;
 	private debounceMovement: () => void;
-	static instance: KeyboardMouseEventCounter;
-	constructor() {
+	private static instance: KeyboardMouseEventCounter;
+	private constructor() {
 		this.isStarted = false;
 		this.keyboardMouse = new KeyboardMouse();
 		this.debounceMovement = debounce(this.mouseMeasureMovement.bind(this), 300);

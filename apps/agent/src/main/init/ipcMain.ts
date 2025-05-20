@@ -2,7 +2,8 @@ import {
 	ipcMain,
 	nativeTheme,
 	shell,
-	app
+	app,
+    ipcRenderer
 } from 'electron';
 import * as remoteMain from '@electron/remote/main';
 import { logger as log, store } from '@gauzy/desktop-core';
@@ -55,6 +56,20 @@ function listenIO(stop: boolean) {
 	} else {
 		pullActivities.startTracking();
 		pushActivities.startPooling();
+	}
+}
+
+function kbMouseListener(activate: boolean) {
+	const auth = getAuthConfig();
+	const pullActivities = PullActivities.getInstance({
+		tenantId: auth.user.employee.tenantId,
+		organizationId: auth.user.employee.organizationId,
+		remoteId: auth.user.id
+	});
+	if (activate) {
+		pullActivities.startListener();
+	} else {
+		pullActivities.stopListener();
 	}
 }
 
@@ -163,6 +178,12 @@ export default function AppIpcMain(){
 			log.error('Error Logout Desktop', error);
 		}
 	});
+
+	ipcMain.handle('mouse_kb_tracking', (_, arg: boolean) => {
+		LocalStore.updateApplicationSetting({ trackKbMouse: arg });
+		kbMouseListener(arg);
+		return true;
+	})
 
 	pluginListeners();
 }

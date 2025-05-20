@@ -1,6 +1,6 @@
 import AppWindow from "./window-manager";
 import * as moment from 'moment';
-import * as path from 'path';
+import * as path from 'node:path';
 
 export class AgentLogger {
 	static instance: AgentLogger;
@@ -18,7 +18,7 @@ export class AgentLogger {
 	}
 
 	formatMessage(message: string, type: string) {
-		return `${moment().format('YYYY-MM-YY HH:mm:ss')} ${type}: ${message}`;
+		return `${moment().format('YYYY-MM-DD HH:mm:ss')} ${type}: ${message}`;
 	}
 
 	async showMessage(message: string) {

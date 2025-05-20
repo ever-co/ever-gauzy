@@ -21,7 +21,7 @@ export class KbMouseTimer {
 		this.flushIntervalSeconds = seconds;
 	}
 
-	public setSecreenshotInterval(seconds: number): void {
+	public setScreenshotInterval(seconds: number): void {
 		this.screenshotIntervalSeconds = seconds;
 	}
 
