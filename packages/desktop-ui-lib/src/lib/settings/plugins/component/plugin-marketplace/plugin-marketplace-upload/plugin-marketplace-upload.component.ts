@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from
 import {
 	AbstractControl,
 	FormArray,
-	FormBuilder,
+	FormControl,
 	FormGroup,
 	ValidationErrors,
 	ValidatorFn,
@@ -37,7 +37,6 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	selectedSourceType: PluginSourceType = PluginSourceType.CDN;
 
 	constructor(
-		private readonly fb: FormBuilder,
 		private readonly dialogRef: NbDialogRef<PluginMarketplaceUploadComponent>,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService,
@@ -53,17 +52,23 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	}
 
 	private initForm(): void {
-		this.pluginForm = this.fb.group({
-			...(this.plugin && this.plugin.id && { id: [this.plugin.id] }),
-			name: ['', [Validators.required, Validators.maxLength(100)]],
-			description: ['', Validators.maxLength(500)],
-			type: [PluginType.DESKTOP, Validators.required],
-			status: [PluginStatus.ACTIVE, Validators.required],
+		this.pluginForm = new FormGroup({
+			...(this.plugin && this.plugin.id && { id: new FormControl(this.plugin.id) }),
+			name: new FormControl('', [Validators.required, Validators.maxLength(100)]),
+			description: new FormControl('', Validators.maxLength(500)),
+			type: new FormControl(PluginType.DESKTOP, Validators.required),
+			status: new FormControl(PluginStatus.ACTIVE, Validators.required),
 			version: this.createVersionGroup(),
-			author: ['', Validators.maxLength(100)],
-			license: ['', Validators.maxLength(50)],
-			homepage: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)],
-			repository: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)]
+			author: new FormControl('', Validators.maxLength(100)),
+			license: new FormControl('', Validators.maxLength(50)),
+			homepage: new FormControl(
+				'',
+				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)
+			),
+			repository: new FormControl(
+				'',
+				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)
+			)
 		});
 	}
 
@@ -120,12 +125,15 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	}
 
 	private createVersionGroup(): FormGroup {
-		return this.fb.group({
-			...(this.plugin?.version?.id && { id: [this.plugin.version.id] }),
-			number: ['', [Validators.required, Validators.pattern(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/)]],
-			changelog: ['', [Validators.required, Validators.minLength(10)]],
-			releaseDate: [this.today, [Validators.required, this.pastDateValidator()]],
-			sources: this.fb.array([])
+		return new FormGroup({
+			...(this.plugin?.version?.id && { id: new FormControl(this.plugin.version.id) }),
+			number: new FormControl('', [
+				Validators.required,
+				Validators.pattern(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/)
+			]),
+			changelog: new FormControl('', [Validators.required, Validators.minLength(10)]),
+			releaseDate: new FormControl(this.today, [Validators.required, this.pastDateValidator()]),
+			sources: new FormArray([this.sourceContext.getCreator(PluginSourceType.CDN).createSource()])
 		});
 	}
 

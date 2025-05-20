@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
 import { PluginSourceType } from '@gauzy/contracts';
 import { CdnSourceCreator } from './concretes/cdn-source.creator';
 import { GauzySourceCreator } from './concretes/gauzy-source.creator';
@@ -12,10 +11,10 @@ import { SourceCreator } from './source.creator';
 export class SourceContext {
 	private creators: Map<PluginSourceType, SourceCreator> = new Map();
 
-	constructor(fb: FormBuilder) {
-		this.creators.set(PluginSourceType.CDN, new CdnSourceCreator(fb));
-		this.creators.set(PluginSourceType.NPM, new NpmSourceCreator(fb));
-		this.creators.set(PluginSourceType.GAUZY, new GauzySourceCreator(fb));
+	constructor() {
+		this.creators.set(PluginSourceType.CDN, new CdnSourceCreator());
+		this.creators.set(PluginSourceType.NPM, new NpmSourceCreator());
+		this.creators.set(PluginSourceType.GAUZY, new GauzySourceCreator());
 	}
 
 	public getCreator(type: PluginSourceType): SourceCreator {
