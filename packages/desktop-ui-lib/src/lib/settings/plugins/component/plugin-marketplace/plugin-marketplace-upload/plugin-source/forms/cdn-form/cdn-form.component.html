@@ -1,7 +1,7 @@
-<div class="source-content">
+<lib-form-section [formGroup]="form" class="source-content">
 	<!-- CDN fields here -->
 	<lib-form-row>
-		<nb-form-field *ngIf="form.get('url')" class="form-group full-width">
+		<nb-form-field class="form-group full-width">
 			<label class="label" for="cdn-url">{{ 'PLUGIN.FORM.CDN.URL' | translate }} *</label>
 			<input
 				nbInput
@@ -22,14 +22,14 @@
 	</lib-form-row>
 
 	<lib-form-row>
-		<nb-form-field *ngIf="form.get('integrity')" class="form-group">
+		<nb-form-field class="form-group">
 			<label class="label" for="cdn-integrity">{{ 'PLUGIN.FORM.CDN.INTEGRITY' | translate }}</label>
 			<input nbInput fullWidth id="cdn-integrity" formControlName="integrity" placeholder="sha384-..." />
 		</nb-form-field>
 
-		<nb-form-field *ngIf="form.get('crossOrigin')" class="form-group">
+		<nb-form-field class="form-group">
 			<label class="label" for="cdn-crossorigin">{{ 'PLUGIN.FORM.CDN.CROSS_ORIGIN' | translate }}</label>
 			<input nbInput fullWidth id="cdn-crossorigin" formControlName="crossOrigin" placeholder="anonymous" />
 		</nb-form-field>
 	</lib-form-row>
-</div>
+</lib-form-section>

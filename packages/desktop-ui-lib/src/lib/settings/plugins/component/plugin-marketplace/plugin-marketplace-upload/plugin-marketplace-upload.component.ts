@@ -112,6 +112,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	public addSource(type: PluginSourceType = this.selectedSourceType, data?: IPluginSource): void {
 		const source = this.sourceContext.getCreator(type).createSource(data);
 		this.sources.push(source);
+		console.log(this.pluginForm);
 	}
 
 	public removeSource(index: number): void {
@@ -157,14 +158,8 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		this.isSubmitting = true;
 
 		try {
-			const pluginData = {
-				...this.pluginForm.value,
-				version: {
-					...this.pluginForm.value.version,
-					sources: [this.pluginForm.value.version.source]
-				}
-			};
-			this.dialogRef.close(pluginData);
+			console.log(this.pluginForm);
+			this.dialogRef.close(this.pluginForm.value);
 		} catch (error) {
 			this.toastrService.error(error.message || error);
 		} finally {

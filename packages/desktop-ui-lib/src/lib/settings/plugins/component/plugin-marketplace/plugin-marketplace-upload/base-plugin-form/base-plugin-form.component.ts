@@ -6,6 +6,8 @@ export abstract class BasePluginFormComponent {
 	@Input() form: FormGroup;
 
 	public getFieldError(controlName: string, errorType?: string): boolean {
+		if (!this.form) return false;
+
 		const control = this.form.get(controlName);
 		if (!control) return false;
 

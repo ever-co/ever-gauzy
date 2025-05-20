@@ -1,4 +1,4 @@
-<div class="source-inputs">
+<lib-form-section [formGroup]="form" class="source-inputs">
 	<lib-file-upload
 		[allowedExtensions]="['.zip']"
 		[maxFileSize]="1024 * 1024 * 1024"
@@ -10,4 +10,4 @@
 		(fileSelected)="onFileSelected($event)"
 		(fileRemoved)="removeFile()"
 	></lib-file-upload>
-</div>
+</lib-form-section>
