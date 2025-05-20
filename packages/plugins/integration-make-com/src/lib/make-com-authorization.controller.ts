@@ -11,7 +11,7 @@ import { MakeComOAuthService } from './make-com-oauth.service';
 @Controller('/integration/make-com/oauth')
 export class MakeComAuthorizationController {
     constructor(
-        private readonly _config: ConfigService,
+        private readonly config: ConfigService,
         private readonly makeComOAuthService: MakeComOAuthService
     ) {}
 
@@ -27,14 +27,9 @@ export class MakeComAuthorizationController {
         description: 'Redirects to Make.com authorization page'
     })
     @Get('/authorize')
-    async authorize(
-        @Query() { state }: { state?: string }
-    ) {
+    async authorize(@Query() { state }: { state?: string }) {
         return {
-            url: this.makeComOAuthService.getAuthorizationUrl({
-                state
-            }),
-            statusCode: HttpStatus.FOUND
+            authorizationUrl: this.makeComOAuthService.getAuthorizationUrl({ state })
         };
     }
 
@@ -56,7 +51,10 @@ export class MakeComAuthorizationController {
         @Res() response: Response
     ) {
         // Get the post-installation redirect URL from config
-        const postInstallUrl = this._config.get('makeCom').postInstallUrl;
+        const postInstallUrl = this.config.get('makeCom')?.postInstallUrl;
+        if (!postInstallUrl) {
+            throw new HttpException('postInstallUrl not found in config', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         try {
             // Handle error from Make.com

@@ -24,4 +24,6 @@ export const MAKE_REDIRECT_URL = process.env.GAUZY_MAKE_REDIRECT_URL ??
     );
 
 /** Default scopes for Make.com OAuth - Updated to match Make.com documentation */
-export const MAKE_DEFAULT_SCOPES = process.env.GAUZY_MAKE_DEFAULT_SCOPES?.split(',') ?? ['offline_access'];
+export const MAKE_DEFAULT_SCOPES = process.env.GAUZY_MAKE_DEFAULT_SCOPES
+    ? process.env.GAUZY_MAKE_DEFAULT_SCOPES.trim().split(/\s+/).filter(Boolean)
+    : ['offline_access'];

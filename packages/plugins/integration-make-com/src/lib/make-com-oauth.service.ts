@@ -16,7 +16,7 @@ import {
 	IntegrationTenantUpdateOrCreateCommand,
 	RequestContext,
 	DEFAULT_ENTITY_SETTINGS,
-	PROJECT_TIED_ENTITIES
+	PROJECT_TIED_ENTITIES,
 } from '@gauzy/core';
 import { MAKE_BASE_URL, MAKE_DEFAULT_SCOPES } from './make-com.config';
 import { IMakeComOAuthTokens, MakeSettingName } from './interfaces/make-com.model';
@@ -29,7 +29,7 @@ export class MakeComOAuthService {
 
 	constructor(
 		private readonly httpService: HttpService,
-		private readonly _config: ConfigService,
+		private readonly config: ConfigService,
 		private readonly makeComService: MakeComService,
 		private readonly integrationSettingService: IntegrationSettingService,
 		private readonly integrationTenantService: IntegrationTenantService,
@@ -43,23 +43,23 @@ export class MakeComOAuthService {
 	 */
 	getAuthorizationUrl(options?: { state?: string; clientId?: string; organizationId?: string }): string {
 	try {
-		const redirectUri = this._config.get('makeCom').redirectUri;
+		const redirectUri = this.config.get('makeCom').redirectUri;
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = options?.organizationId;
 
 		// Use provided clientId or fallback to config
-		const clientId = options?.clientId || this._config.get('makeCom').clientId;
+		const clientId = options?.clientId || this.config.get('makeCom').clientId;
 		if (!clientId) {
 			throw new Error('Make.com client ID is not configured');
 		}
 
-		// Generate state with encoded tenant and organization data
-		const stateData = {
-			tenantId,
-			organizationId,
-			timestamp: Date.now()
-		};
-		const state = Buffer.from(JSON.stringify(stateData)).toString('base64');
+		// Use provided state or generate a new one
+		const state = options?.state ?? Buffer.from(JSON.stringify({ tenantId, organizationId })).toString('base64');
+
+		// only store generated states to avoid duplicates
+		if (!options?.state) {
+			this.storeStateForVerification(state);
+		}
 
 		// Store state for verification (defense against CSRF)
 		this.storeStateForVerification(state);
@@ -94,7 +94,10 @@ export class MakeComOAuthService {
 			const { tenantId, organizationId } = decodedState;
 
 			// Set the tenant context for subsequent operations
-			RequestContext.currentTenantId();
+			const currentTenantId = RequestContext.currentTenantId();
+			if (currentTenantId !== tenantId) {
+				throw new BadRequestException('Tenant ID mismatch');
+			}
 
 			// Get client credentials from database
 			const integrationTenant = await this.getIntegrationTenant(tenantId, organizationId);
@@ -105,7 +108,7 @@ export class MakeComOAuthService {
 				throw new BadRequestException('Make.com OAuth credentials are not fully configured');
 			}
 
-			const redirectUri = this._config.get('makeCom').redirectUri;
+			const redirectUri = this.config.get('makeCom').redirectUri;
 
 			// Prepare the request body for Make.com token endpoint
 			const tokenRequestParams = new URLSearchParams({
@@ -151,7 +154,7 @@ export class MakeComOAuthService {
 	 * Get integration tenant by tenantId and organizationId
 	 */
 	private async getIntegrationTenant(tenantId: string, organizationId?: string) {
-		return await this.makeComService['integrationTenantService'].findOneByOptions({
+		return await this.integrationTenantService.findOneByOptions({
 			where: {
 				name: IntegrationEnum.MakeCom,
 				tenantId,
@@ -313,8 +316,6 @@ export class MakeComOAuthService {
 	 * Clean up expired state parameters to prevent memory leaks.
 	 */
 	private cleanupExpiredStates(): void {
-		if (!this.pendingStates) return;
-
 		const now = Date.now();
 		const expirationTime = 10 * 60 * 1000; // 10 minutes in milliseconds
 
@@ -333,10 +334,8 @@ export class MakeComOAuthService {
 		try {
 			// Decode the state to get context
 			const decodedState = JSON.parse(Buffer.from(state, 'base64').toString());
-			const { organizationId } = decodedState;
+			const { organizationId, tenantId } = decodedState;
 
-			// Find the integration tenant
-			const tenantId = RequestContext.currentTenantId();
 			const integrationTenant = await this.integrationTenantService.findOneByOptions({
 				where: {
 					name: IntegrationEnum.MakeCom,
@@ -348,7 +347,7 @@ export class MakeComOAuthService {
 
 			if (!integrationTenant) {
 				this.logger.warn(`Integration not found for tenant ${tenantId}`);
-				return;
+				throw new NotFoundException('Integration not found');
 			}
 
 			// Store the authorization code
@@ -436,7 +435,7 @@ export class MakeComOAuthService {
 					.pipe(
 						catchError((error: AxiosError) => {
 							this.logger.error('Failed to refresh Make.com token:', error.response?.data);
-							throw new Error(`Failed to refresh token: ${error.message}`);
+							throw new HttpException(`Failed to refresh token: ${error.message}`, error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR);
 						})
 					)
 			);

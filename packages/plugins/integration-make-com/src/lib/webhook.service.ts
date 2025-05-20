@@ -41,7 +41,7 @@ export class WebhookService {
 		}
 
 		// Fallback to the global webhook URL from the environment variable.
-		const globalWebhookUrl = this.configService.get('makeCom').webhookUrl || null;
+		const globalWebhookUrl = this.configService.get('makeCom')?.webhookUrl ?? null;
 		return { enabled: !!globalWebhookUrl, webhookUrl: globalWebhookUrl };
 	}
 

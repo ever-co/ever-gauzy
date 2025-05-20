@@ -45,11 +45,7 @@ export interface IMakeComAuthConfig {
 }
 
 export interface IMakeComCreateIntegration extends IBasePerTenantAndOrganizationEntityModel {
-	// OAuth credentials and parameters
 	client_id: string;
-	// code: string;
-	// grant_type: GrantType;
-	// redirect_uri: string;
 	client_secret: string;
 }
 

@@ -39,7 +39,7 @@ export class MakeComService {
 
 			if (!integrationTenant) {
 				return {
-					isEnabled: true,
+					isEnabled: false,
 					webhookUrl: null
 				};
 			}
@@ -107,7 +107,7 @@ export class MakeComService {
 						settingsName: MakeSettingName.IS_ENABLED,
 						settingsValue: input.isEnabled.toString(),
 						integration: integrationTenant
-					} as any;
+					};
 				}
 				updates.push(this.integrationSettingService.save(enabledSetting));
 			}
@@ -147,10 +147,10 @@ export class MakeComService {
 	 * @param {Object} settings - The settings to add.
 	 * @returns The created settings.
 	 */
-	async addIntegrationSettings(settings: IMakeComCreateIntegration): Promise<IIntegrationTenant> {
+	async addIntegrationSettings(settings: IMakeComCreateIntegration, organizationId?: string): Promise<IIntegrationTenant> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const { client_id, client_secret, organizationId } = settings;
+			const { client_id, client_secret } = settings;
 
 			if (!tenantId) {
 				throw new NotFoundException('Tenant ID not found in request context');
@@ -290,16 +290,14 @@ export class MakeComService {
 	async getOAuthCredentials(integrationId: string, organizationId?: string): Promise<{ clientId: string; clientSecret: string }> {
 		try {
 			// Find the integration settings
-			const settings = await this.integrationSettingService.find({
-				where: {
-					integration: { id: integrationId },
-					organizationId,
-					settingsName: In([
-						MakeSettingName.CLIENT_ID,
-						MakeSettingName.CLIENT_SECRET
-					])
-				}
-			});
+			const where: any = {
+				integration: { id: integrationId },
+				settingsName: In([MakeSettingName.CLIENT_ID, MakeSettingName.CLIENT_SECRET])
+			};
+			if (organizationId) {
+				where.organizationId = organizationId;
+			}
+			const settings = await this.integrationSettingService.find({ where });
 
 			if (!settings || settings.length < 2) {
 				throw new NotFoundException('OAuth credentials not found for this integration');

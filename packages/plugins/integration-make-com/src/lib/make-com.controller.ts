@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { ConfigService } from '@gauzy/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TenantPermissionGuard, Permissions, PermissionGuard, RequestContext } from '@gauzy/core';
@@ -7,6 +7,7 @@ import { MakeComService } from './make-com.service';
 import { IMakeComCreateIntegration, IMakeComIntegrationSettings } from './interfaces/make-com.model';
 import { UpdateMakeComSettingsDTO } from './dto';
 import { MakeComOAuthService } from './make-com-oauth.service';
+import * as crypto from 'crypto';
 
 @ApiTags('Make.com Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -16,7 +17,7 @@ export class MakeComController {
 	constructor(
 		private readonly makeComService: MakeComService,
 		private readonly makeComOAuthService: MakeComOAuthService,
-		private readonly _config: ConfigService) {}
+		private readonly config: ConfigService) {}
 
 	/**
 	 * Retrieves the Make.com integration settings for the current tenant.
@@ -89,10 +90,9 @@ export class MakeComController {
 	})
 	@Post('/oauth-settings')
 	async addOAuthSettings(@Body() input: IMakeComCreateIntegration): Promise<{
-	authorizationUrl: string;
-	integrationId: string;
+		authorizationUrl: string;
+		integrationId: string;
 	}> {
-
 		const tenantId = RequestContext.currentTenantId();
 		if (!tenantId) {
 			throw new NotFoundException('Tenant ID not found in request context');
@@ -103,8 +103,20 @@ export class MakeComController {
 			throw new BadRequestException('Both client_id and client_secret are required');
 		}
 
-		// Save the credentials and create/update integration
-		const integration = await this.makeComService.addIntegrationSettings(input);
+		// Encrypt client secret before passing to service
+		const algorithm = 'aes-256-cbc';
+		const key = crypto.randomBytes(32);
+		const iv = crypto.randomBytes(16);
+
+		const cipher = crypto.createCipheriv(algorithm, key, iv);
+		let encryptedSecret = cipher.update(input.client_secret, 'utf8', 'hex');
+		encryptedSecret += cipher.final('hex');
+
+		// Save the credentials and create/update integration with encrypted secret
+		const integration = await this.makeComService.addIntegrationSettings({
+			...input,
+			client_secret: encryptedSecret,
+		});
 
 		// Generate authorization URL
 		const authorizationUrl = this.makeComOAuthService.getAuthorizationUrl({
@@ -132,7 +144,7 @@ export class MakeComController {
 		const clientId = await this.makeComService.getOAuthClientId();
 
 		// Get redirect URI from config (this is typically an environment variable)
-		const redirectUri = this._config.get('makeCom').redirectUri;
+		const redirectUri = this.config.get('makeCom').redirectUri;
 
 		if (!clientId || !redirectUri) {
 			throw new BadRequestException('OAuth configuration is missing required values.');
@@ -171,7 +183,7 @@ export class MakeComController {
             }
 
             // Validate required fields
-            if (!body.code || !body.state) {
+            if (!body.code || !body.state || !body.client_id || !body.client_secret) {
                 throw new BadRequestException('Missing required parameters');
             }
 
