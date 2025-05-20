@@ -37,6 +37,11 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	destroy$ = new Subject<void>();
 	selectedSourceType: PluginSourceType = PluginSourceType.CDN;
 	showSourceSelector = false;
+	private readonly sourceIcons = new Map<PluginSourceType, string>([
+		[PluginSourceType.CDN, 'layers-outline'],
+		[PluginSourceType.GAUZY, 'cube-outline'],
+		[PluginSourceType.NPM, 'code-outline']
+	]);
 
 	constructor(
 		private readonly dialogRef: NbDialogRef<PluginMarketplaceUploadComponent>,
@@ -212,13 +217,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	}
 
 	public getSourceIcon(sourceType: PluginSourceType): string {
-		// Return appropriate icon based on source type
-		const icons = {
-			[PluginSourceType.CDN]: 'database-outline',
-			[PluginSourceType.GAUZY]: 'code-outline',
-			[PluginSourceType.NPM]: 'file-text-outline'
-		};
-		return icons[sourceType] || 'cube-outline';
+		return this.sourceIcons.get(sourceType);
 	}
 
 	ngOnDestroy(): void {

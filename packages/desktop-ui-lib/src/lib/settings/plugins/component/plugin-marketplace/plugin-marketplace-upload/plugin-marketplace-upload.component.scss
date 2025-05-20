@@ -250,7 +250,7 @@ $transition-speed: 0.2s;
     margin-bottom: 1rem;
   }
 
-  h4 {
+  h5 {
     margin: 0.5rem 0;
     color: var(--text-primary-color);
   }
@@ -296,7 +296,7 @@ $transition-speed: 0.2s;
     transition: all 0.3s ease;
   }
 
-  h4 {
+  h5 {
     margin: 0.5rem 0;
     color: var(--text-primary-color);
   }
@@ -335,8 +335,8 @@ $transition-speed: 0.2s;
 }
 
 .source-options {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  display: flex;
+  justify-content: space-between;
   gap: 1rem;
 }
 
@@ -347,6 +347,10 @@ $transition-speed: 0.2s;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-grow: 2;
+  display: flex;
+  gap: 4px;
+  align-items: center;
 
   &:hover {
     background: var(--color-primary-default);
@@ -359,7 +363,6 @@ $transition-speed: 0.2s;
 
   .option-icon {
     font-size: 1.8rem;
-    margin-bottom: 0.5rem;
     color: var(--color-primary-default);
     display: block;
   }

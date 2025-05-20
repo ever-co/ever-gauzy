@@ -66,7 +66,7 @@
 							} @empty {
 							<div class="empty-state">
 								<nb-icon icon="file-add-outline" class="empty-icon"></nb-icon>
-								<h4>No sources added yet</h4>
+								<h5>No sources added yet</h5>
 								<p>Add your first source to begin configuration</p>
 							</div>
 							}
@@ -74,17 +74,22 @@
 
 						<!-- Add Source Section with Futuristic Design -->
 						<div class="add-source">
-							<div class="add-source-card" (click)="openSourceTypeSelector()">
+							<div class="add-source-card" (click)="openSourceTypeSelector(); $event.stopPropagation()">
 								<div class="add-content">
 									<nb-icon icon="plus-circle-outline" class="add-icon"></nb-icon>
-									<h4>Add New Source</h4>
+									<h5>Add New Source</h5>
 									<p>Click to select source type</p>
 								</div>
 
 								<div class="source-selector" *ngIf="showSourceSelector">
 									<div class="selector-header">
 										<h5>Select Source Type</h5>
-										<button nbButton ghost size="small" (click)="closeSourceTypeSelector()">
+										<button
+											nbButton
+											ghost
+											size="small"
+											(click)="closeSourceTypeSelector(); $event.stopPropagation()"
+										>
 											<nb-icon icon="close-outline"></nb-icon>
 										</button>
 									</div>
