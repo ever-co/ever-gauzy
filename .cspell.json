@@ -664,7 +664,8 @@
 		"signup",
 		"wrapp",
 		"dyld",
-		"oidc"
+		"oidc",
+		"Registerables"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
