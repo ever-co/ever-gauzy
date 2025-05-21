@@ -766,7 +766,7 @@
 			"WAIT_UNTIL_RELOAD": "Bitte warten Sie, bis die Anwendung neu geladen wird"
 		},
 		"ERROR": {
-			"PROJECT_NAME": "Projektname ist erforderlich.",
+			"PROJECT_NAME": "Projektname ist erforderlich und darf nicht leer sein.",
 			"PROJECT_URL": "Projekt-URL ist ungültig.",
 			"OPEN_SOURCE_PROJECT_URL": "Open-Source-Projekt-URL ist ungültig.",
 			"INVALID_IMAGE_URL": "Ungültige Bild-URL.",

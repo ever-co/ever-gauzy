@@ -639,7 +639,7 @@
 			"WAIT_UNTIL_RELOAD": "crwdns10541:0crwdne10541:0"
 		},
 		"ERROR": {
-			"PROJECT_NAME": "crwdns8332:0crwdne8332:0",
+			"PROJECT_NAME": "crwdnsXXXXX:0crwdneXXXXX:0",
 			"PROJECT_URL": "crwdns138:0crwdne138:0",
 			"OPEN_SOURCE_PROJECT_URL": "crwdns140:0crwdne140:0",
 			"PROJECT_EMPLOYEE": "crwdns7984:0crwdne7984:0",
@@ -967,7 +967,6 @@
 			"EXPORT_DATA": "crwdns11197:0crwdne11197:0",
 			"IMPORT_DATA": "crwdns11199:0crwdne11199:0",
 			"ALL_ENTITIES": "crwdns11203:0crwdne11203:0",
-
 			"ACTIVITY_LOG": "Kit ma gityeko",
 			"DAILY_PLAN": "Cik me nino",
 			"ENTITY_SUBSCRIPTION": "Keto nying i jami",

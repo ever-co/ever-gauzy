@@ -766,7 +766,7 @@
 			"WAIT_UNTIL_RELOAD": "Please wait till application reloads"
 		},
 		"ERROR": {
-			"PROJECT_NAME": "Project name is required.",
+			"PROJECT_NAME": "Project name is required and cannot be empty.",
 			"PROJECT_URL": "Project url is invalid.",
 			"OPEN_SOURCE_PROJECT_URL": "Open source project url is invalid.",
 			"INVALID_IMAGE_URL": "Invalid image URL.",

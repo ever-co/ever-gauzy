@@ -41,7 +41,8 @@ import {
 	CompareDateValidator,
 	ErrorHandlingService,
 	ToastrService,
-	Store
+	Store,
+	emptyStringValidator
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { patterns } from '../../regex/regex-patterns.const';
@@ -51,10 +52,10 @@ import { ProjectModuleMutationComponent } from '../../project-module/project-mod
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-project-mutation',
-    templateUrl: './project-mutation.component.html',
-    styleUrls: ['./project-mutation.component.scss'],
-    standalone: false
+	selector: 'ga-project-mutation',
+	templateUrl: './project-mutation.component.html',
+	styleUrls: ['./project-mutation.component.scss'],
+	standalone: false
 })
 export class ProjectMutationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public FormHelpers: typeof FormHelpers = FormHelpers;
@@ -87,7 +88,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 				teams: [],
 				public: [],
 				billable: [],
-				name: [null, Validators.required],
+				name: [null, [Validators.required, emptyStringValidator]],
 				organizationContact: [],
 				billing: [ProjectBillingEnum.RATE],
 				currency: [environment.DEFAULT_CURRENCY],
@@ -479,7 +480,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 
 		return {
 			// Main Step
-			name,
+			name: name?.trim(),
 			code,
 			projectUrl,
 			owner,
