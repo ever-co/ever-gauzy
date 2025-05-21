@@ -78,27 +78,42 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public installPlugin(isUpdate = false): void {
-		const installation$ = this.dialog
+		const installation$ = this.createInstallationObservable(isUpdate);
+		installation$.subscribe({
+			error: (err) => this.handleInstallationError(err)
+		});
+	}
+
+	private createInstallationObservable(isUpdate: boolean): Observable<void> {
+		return this.dialog
 			.open(DialogInstallationValidationComponent, {
-				context: {
-					pluginId: this.plugin.id
-				},
+				context: { pluginId: this.plugin.id },
 				backdropClass: 'backdrop-blur'
 			})
 			.onClose.pipe(
 				take(1),
-				switchMap((data) => (!data ? this.handleDialogCloseWithoutData() : of(data).pipe(filter(Boolean)))),
-				tap(({ version, source, authToken }) => {
-					this.preparePluginInstallation(version, source, isUpdate, authToken);
+				switchMap((data) => this.handleDialogResponse(data, isUpdate)),
+				catchError((err) => {
+					this.handleInstallationError(err);
+					return EMPTY;
 				})
 			);
-
-		installation$.subscribe({
-			error: (err) => console.error('Plugin installation failed:', err)
-		});
 	}
 
-	private handleDialogCloseWithoutData() {
+	private handleDialogResponse(data: any, isUpdate: boolean): Observable<void> {
+		if (!data) {
+			return this.handleDialogCloseWithoutData();
+		}
+
+		return of(data).pipe(
+			filter(Boolean),
+			tap(({ version, source, authToken }) => {
+				this.preparePluginInstallation(version, source, isUpdate, authToken);
+			})
+		);
+	}
+
+	private handleDialogCloseWithoutData(): Observable<never> {
 		this.action.dispatch(
 			PluginInstallationActions.toggle({
 				isChecked: false,
@@ -106,6 +121,10 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			})
 		);
 		return EMPTY;
+	}
+
+	private handleInstallationError(err: any): void {
+		console.error('Plugin installation failed:', err);
 	}
 
 	public preparePluginInstallation(
