@@ -1,4 +1,4 @@
-import { FileStorageProviderEnum, PluginSourceType } from '@gauzy/contracts';
+import { FileStorageProviderEnum, IPluginSource, PluginSourceType } from '@gauzy/contracts';
 import { BaseEntityEventSubscriber, FileStorage } from '@gauzy/core';
 import { Logger } from '@nestjs/common';
 import { DataSource, EventSubscriber, InsertEvent, RemoveEvent } from 'typeorm';
@@ -70,6 +70,35 @@ export class PluginSourceSubscriber extends BaseEntityEventSubscriber<PluginSour
 			this.logger.error(
 				`Error deleting file for PluginSource entity with ID ${entity.id}: ${(error as Error).message}`
 			);
+		}
+	}
+
+	public async afterLoad(entity: PluginSource): Promise<void> {
+		if (!entity || !entity.id) {
+			return;
+		}
+		entity.fullName = this.generateFullName(entity);
+	}
+
+	private generateFullName(source: IPluginSource): string {
+		const { type, operatingSystem, architecture } = source;
+
+		switch (type) {
+			case PluginSourceType.CDN:
+				// e.g., "CDN::https://cdn.example.com::linux::x64"
+				return `CDN::${source.url ?? 'unknown-url'}::${operatingSystem}::${architecture}`;
+
+			case PluginSourceType.NPM:
+				// e.g., "NPM::@scope/package-name::linux::x64"
+				const packageName = source.scope ? `@${source.scope}/${source.name}` : source.name ?? 'unknown-package';
+				return `NPM::${packageName}::${operatingSystem}::${architecture}`;
+
+			case PluginSourceType.GAUZY:
+				// e.g., "FILE::plugin-name.zip::linux::x64"
+				return `FILE::${source.fileName ?? 'unknown-file'}::${operatingSystem}::${architecture}`;
+
+			default:
+				return `UNKNOWN::${operatingSystem}::${architecture}`;
 		}
 	}
 

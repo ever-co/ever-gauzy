@@ -143,4 +143,7 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: FileStorageProviderEnum })
 	storageProvider?: FileStorageProviderEnum;
+
+	// Computed version
+	fullName?: string;
 }
