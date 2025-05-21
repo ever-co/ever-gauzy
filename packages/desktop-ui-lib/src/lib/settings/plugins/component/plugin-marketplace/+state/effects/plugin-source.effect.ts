@@ -6,6 +6,7 @@ import { ToastrNotificationService } from '../../../../../../services';
 import { PluginService } from '../../../../services/plugin.service';
 import { PluginSourceActions } from '../actions/plugin-source.action';
 import { PluginSourceStore } from '../stores/plugin-source.store';
+import { IPluginSource } from '@gauzy/contracts';
 
 @Injectable({ providedIn: 'root' })
 export class PluginSourceEffects {
@@ -23,12 +24,27 @@ export class PluginSourceEffects {
 			switchMap(({ pluginId, versionId, params = {} }) =>
 				this.pluginService.getSources(pluginId, versionId, params).pipe(
 					tap(({ items, total }) => {
-						this.pluginSourceStore.update((state) => ({
-							versions: [
-								...new Map([...state.sources, ...items].map((item) => [item.id, item])).values()
-							],
-							count: total
-						}));
+						this.pluginSourceStore.update((state) => {
+							if (!items?.length) {
+								return {
+									sources: state.sources || [],
+									source: state.source,
+									count: total
+								};
+							}
+
+							const sourceMap = new Map<string, IPluginSource>(
+								(state.sources || []).map((item) => [item.id, item])
+							);
+
+							items.forEach((item) => sourceMap.set(item.id, item));
+
+							return {
+								sources: Array.from(sourceMap.values()),
+								source: state.source ?? items[0],
+								count: total
+							};
+						});
 					}),
 					finalize(() => this.pluginSourceStore.setLoading(false)), // Always stop loading
 					catchError((error) => {

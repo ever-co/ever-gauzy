@@ -1,6 +1,6 @@
 import { HttpClient, HttpEvent, HttpEventType, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { ID, IPagination, IPlugin, IPluginVersion } from '@gauzy/contracts';
+import { ID, IPagination, IPlugin, IPluginSource, IPluginVersion } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { catchError, map, Observable } from 'rxjs';
 import { Store } from '../../../services';
@@ -119,13 +119,10 @@ export class PluginService {
 		return this.http.post<void>(`${this.endPoint}/${pluginId}/versions/${versionId}`, {});
 	}
 
-	public getSources<T>(pluginId: ID, versionId: ID, params: T): Observable<IPagination<IPluginVersion>> {
-		return this.http.get<IPagination<IPluginVersion>>(
-			`${this.endPoint}/${pluginId}/versions/${versionId}/sources`,
-			{
-				params: toParams(params)
-			}
-		);
+	public getSources<T>(pluginId: ID, versionId: ID, params: T): Observable<IPagination<IPluginSource>> {
+		return this.http.get<IPagination<IPluginSource>>(`${this.endPoint}/${pluginId}/versions/${versionId}/sources`, {
+			params: toParams(params)
+		});
 	}
 
 	private handleProgressResponse<T>() {

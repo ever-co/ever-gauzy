@@ -1,13 +1,14 @@
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
 	NbAlertModule,
 	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
-	NbCdkMappingModule,
 	NbDatepickerModule,
 	NbFormFieldModule,
 	NbIconModule,
@@ -40,9 +41,11 @@ import { PluginStatusComponent } from './component/plugin-list/plugin-status/plu
 import { PluginUpdateComponent } from './component/plugin-list/plugin-update/plugin-update.component';
 import { PluginInstallationEffects } from './component/plugin-marketplace/+state/effects/plugin-installation.effect';
 import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/effects/plugin-marketplace.effect';
+import { PluginSourceEffects } from './component/plugin-marketplace/+state/effects/plugin-source.effect';
 import { PluginVersionEffects } from './component/plugin-marketplace/+state/effects/plugin-version.effect';
 import { PluginMarketplaceDetailComponent } from './component/plugin-marketplace/plugin-marketplace-detail/plugin-marketplace-detail.component';
 import { DialogCreateVersionComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-version/dialog-create-version.component';
+import { DialogInstallationValidationComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
 import { PluginMarketplaceItemComponent } from './component/plugin-marketplace/plugin-marketplace-item/plugin-marketplace-item.component';
 import { SourceSelectorComponent } from './component/plugin-marketplace/plugin-marketplace-item/source-selector/source-selector.component';
 import { VersionHistoryComponent } from './component/plugin-marketplace/plugin-marketplace-item/version-history/version-history.component';
@@ -53,6 +56,9 @@ import { FormSectionComponent } from './component/plugin-marketplace/plugin-mark
 import { PluginBasicInformationComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-basic-information/plugin-basic-information.component';
 import { PluginMarketplaceUploadComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginMetadataComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-metadata/plugin-metadata.component';
+import { CdnFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/cdn-form/cdn-form.component';
+import { GauzyFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/gauzy-form/gauzy-form.component';
+import { NpmFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/npm-form/npm-form.component';
 import { PluginSourceComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/plugin-source.component';
 import { PluginVersionComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-version/plugin-version.component';
 import { PluginMarketplaceComponent } from './component/plugin-marketplace/plugin-marketplace.component';
@@ -60,12 +66,6 @@ import { PluginComponent } from './component/plugin/plugin.component';
 import { PluginElectronService } from './services/plugin-electron.service';
 import { PluginLoaderService } from './services/plugin-loader.service';
 import { PluginService } from './services/plugin.service';
-import { DialogInstallationValidationComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
-import { CdnFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/cdn-form/cdn-form.component';
-import { GauzyFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/gauzy-form/gauzy-form.component';
-import { NpmFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/npm-form/npm-form.component';
-import { DragDropModule } from '@angular/cdk/drag-drop';
 
 @NgModule({
 	declarations: [
@@ -132,7 +132,13 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 		PluginElectronService,
 		PluginService,
 		provideEffectsManager(),
-		provideEffects(PluginEffects, PluginInstallationEffects, PluginMarketplaceEffects, PluginVersionEffects),
+		provideEffects(
+			PluginEffects,
+			PluginInstallationEffects,
+			PluginMarketplaceEffects,
+			PluginVersionEffects,
+			PluginSourceEffects
+		),
 		PluginQuery,
 		PluginStore,
 		NbInfiniteListDirective
