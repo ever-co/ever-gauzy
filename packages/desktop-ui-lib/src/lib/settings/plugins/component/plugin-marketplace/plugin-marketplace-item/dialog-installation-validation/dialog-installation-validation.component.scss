@@ -1,1 +1,7 @@
 @use '../dialog-create-version/dialog-create-version.component' as *;
+
+.dialog-card {
+  min-width: 360px;
+  max-height: 40vh;
+  width: 100%;
+}

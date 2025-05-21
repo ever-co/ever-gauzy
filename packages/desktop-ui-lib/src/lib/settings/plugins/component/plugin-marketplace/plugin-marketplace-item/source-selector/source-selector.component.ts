@@ -41,6 +41,9 @@ export class SourceSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	public load(): void {
+		if (!this.pluginId || !this.versionId) {
+			return;
+		}
 		this.action.dispatch(
 			PluginSourceActions.getAll(this.pluginId, this.versionId, {
 				skip: this.skip,
@@ -67,9 +70,13 @@ export class SourceSelectorComponent implements OnInit, OnDestroy {
 		return this.pluginId && this.query.sources.length > 0;
 	}
 
-	ngOnDestroy(): void {
+	public reset() {
 		this.skip = 1;
 		this.hasNext = false;
 		this.action.dispatch(PluginSourceActions.reset());
+	}
+
+	ngOnDestroy(): void {
+		this.reset();
 	}
 }

@@ -1,27 +1,27 @@
 <form [formGroup]="form" (ngSubmit)="submit()">
 	<nb-card class="dialog-card" status="basic">
-		<nb-card-header class="mb-0 d-flex justify-content-between align-items-center">
-			<h5 class="title m-0">{{ 'TIMER_TRACKER.SETTINGS.AUTH_TOKEN' | translate }}</h5>
-			<button nbButton appearance="ghost" size="small" (click)="dismiss()" class="cancel p-0">
+		<nb-card-header class="mb-0">
+			<h5 class="title m-0">{{ 'Installation' | translate }}</h5>
+			<button nbButton ghost size="small" (click)="dismiss()" class="close-button">
 				<nb-icon icon="close-outline"></nb-icon>
 			</button>
 		</nb-card-header>
 
 		<nb-card-body class="py-3">
 			<div class="form-group">
-				<gauzy-source-selector [pluginId]="pluginId" [versionId]="versionId"></gauzy-source-selector>
+				<gauzy-version-selector [pluginId]="pluginId"></gauzy-version-selector>
 			</div>
 			<div class="form-group">
-				<label for="authToken" class="form-label">
-					{{ 'TIMER_TRACKER.SETTINGS.AUTH_TOKEN_LABEL' | translate }}
-				</label>
+				<gauzy-source-selector [pluginId]="pluginId" [versionId]="versionId$ | async"></gauzy-source-selector>
+			</div>
+			<div class="form-group">
 				<input
 					nbInput
 					fullWidth
 					type="password"
 					id="authToken"
 					formControlName="authToken"
-					[placeholder]="'TIMER_TRACKER.SETTINGS.AUTH_TOKEN_PLACEHOLDER' | translate"
+					[placeholder]="'TIMER_TRACKER.SETTINGS.AUTH_TOKEN' | translate"
 					[status]="
 						form.controls['authToken'].invalid && form.controls['authToken'].touched ? 'danger' : 'basic'
 					"
@@ -30,9 +30,9 @@
 					autocapitalize="off"
 					spellcheck="false"
 				/>
-				<small class="text-hint">
-					{{ 'TIMER_TRACKER.SETTINGS.AUTH_TOKEN_HELP' | translate }}
-				</small>
+				<!-- <small class="text-hint"> -->
+				<!-- 	{{ 'TIMER_TRACKER.SETTINGS.AUTH_TOKEN_HELP' | translate }} -->
+				<!-- </small> -->
 				<ng-container *ngIf="form.controls['authToken'].invalid && form.controls['authToken'].touched">
 					<p class="text-danger mt-1 mb-0 small">
 						<nb-icon icon="alert-circle-outline"></nb-icon>
@@ -42,7 +42,7 @@
 			</div>
 		</nb-card-body>
 
-		<nb-card-footer class="d-flex justify-content-between align-items-center pt-3 pb-0">
+		<nb-card-footer class="d-flex justify-content-end align-items-center">
 			<button nbButton type="button" appearance="outline" status="basic" (click)="dismiss()">
 				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>

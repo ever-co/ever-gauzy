@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/
 import { ActivatedRoute, Router } from '@angular/router';
 import {
 	ICDNSource,
-	ID,
 	IGauzySource,
 	INPMSource,
 	IPlugin,
@@ -12,12 +11,12 @@ import {
 	PluginStatus,
 	PluginType
 } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject, Observable, of, Subject, tap } from 'rxjs';
-import { catchError, concatMap, filter, take, takeUntil } from 'rxjs/operators';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
+import { TranslateService } from '@ngx-translate/core';
+import { BehaviorSubject, Observable, Subject, tap } from 'rxjs';
+import { catchError, concatMap, filter, take, takeUntil } from 'rxjs/operators';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginSourceActions } from '../+state/actions/plugin-source.action';
@@ -264,9 +263,30 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	installPlugin(isUpdate = false): void {
-		const source = isUpdate ? this.plugin.source : this.selectedSource;
-		const versionId = isUpdate ? this.plugin.version.id : this.selectedVersion.id;
+	public installPlugin(isUpdate = false): void {
+		this.dialogService
+			.open(DialogInstallationValidationComponent, {
+				context: {
+					pluginId: this.pluginId
+				},
+				backdropClass: 'backdrop-blur'
+			})
+			.onClose.pipe(
+				take(1),
+				filter(Boolean),
+				tap(({ version, source, authToken }) =>
+					this.preparePluginInstallation(version, source, isUpdate, authToken)
+				)
+			)
+			.subscribe();
+	}
+
+	preparePluginInstallation(
+		version: IPluginVersion,
+		source: IPluginSource,
+		isUpdate = false,
+		authToken: string
+	): void {
 		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: true, plugin: this.plugin }));
 		switch (source.type) {
 			case PluginSourceType.GAUZY:
@@ -276,12 +296,28 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 						url: source.url,
 						contextType: 'cdn',
 						marketplaceId: this.pluginId,
-						versionId
+						versionId: version.id
 					})
 				);
 				break;
 			case PluginSourceType.NPM:
-				this.npmInstallation(source, versionId, isUpdate).pipe(take(1)).subscribe();
+				this.action.dispatch(
+					PluginInstallationActions.install({
+						...{
+							pkg: {
+								name: source.name,
+								version: isUpdate ? this.plugin.version.number : version.number
+							},
+							registry: {
+								privateURL: source.registry,
+								authToken
+							}
+						},
+						contextType: 'npm',
+						marketplaceId: this.pluginId,
+						versionId: version.id
+					})
+				);
 				break;
 			default:
 				break;
@@ -356,44 +392,5 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	private get selectedVersion(): IPluginVersion {
 		return this.versionQuery.version;
-	}
-
-	private get selectedSource(): IPluginSource {
-		return this.sourceQuery.source;
-	}
-
-	private npmInstallation(source: IPluginSource, versionId: ID, isUpdate = false): Observable<void> {
-		if (!source.private) {
-			return of(this.prepareNpmInstallation(source, versionId, isUpdate));
-		}
-
-		return this.dialogService
-			.open(DialogInstallationValidationComponent, {
-				backdropClass: 'backdrop-blur'
-			})
-			.onClose.pipe(
-				filter(Boolean),
-				tap(({ authToken }) => this.prepareNpmInstallation(source, versionId, isUpdate, authToken))
-			);
-	}
-
-	private prepareNpmInstallation(source: IPluginSource, versionId: ID, isUpdate = false, authToken = null) {
-		this.action.dispatch(
-			PluginInstallationActions.install({
-				...{
-					pkg: {
-						name: source.name,
-						version: isUpdate ? this.plugin.version.number : this.selectedVersionNumber
-					},
-					registry: {
-						privateURL: source.registry,
-						authToken
-					}
-				},
-				contextType: 'npm',
-				marketplaceId: this.pluginId,
-				versionId
-			})
-		);
 	}
 }

@@ -1,20 +1,21 @@
 import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { IPlugin, PluginSourceType } from '@gauzy/contracts';
+import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, catchError, filter, from, map, Observable, of, take, tap } from 'rxjs';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
+import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
+import { DialogInstallationValidationComponent } from '../plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
-import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 
 @UntilDestroy()
 @Component({
@@ -76,16 +77,40 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		checked ? this.installPlugin() : this.uninstallPlugin();
 	}
 
-	private installPlugin(): void {
-		switch (this.plugin.source.type) {
+	public installPlugin(isUpdate = false): void {
+		this.dialog
+			.open(DialogInstallationValidationComponent, {
+				context: {
+					pluginId: this.plugin.id
+				},
+				backdropClass: 'backdrop-blur'
+			})
+			.onClose.pipe(
+				take(1),
+				filter(Boolean),
+				tap(({ version, source, authToken }) =>
+					this.preparePluginInstallation(version, source, isUpdate, authToken)
+				)
+			)
+			.subscribe();
+	}
+
+	public preparePluginInstallation(
+		version: IPluginVersion,
+		source: IPluginSource,
+		isUpdate = false,
+		authToken: string
+	): void {
+		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: true, plugin: this.plugin }));
+		switch (source.type) {
 			case PluginSourceType.GAUZY:
 			case PluginSourceType.CDN:
 				this.action.dispatch(
 					PluginInstallationActions.install({
-						url: this.plugin.source.url,
+						url: source.url,
 						contextType: 'cdn',
 						marketplaceId: this.plugin.id,
-						versionId: this.plugin.version.id
+						versionId: version.id
 					})
 				);
 				break;
@@ -94,17 +119,17 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 					PluginInstallationActions.install({
 						...{
 							pkg: {
-								name: this.plugin.source.name,
-								version: this.plugin.version.number
+								name: source.name,
+								version: isUpdate ? this.plugin.version.number : version.number
 							},
 							registry: {
-								privateURL: this.plugin.source.registry,
-								authToken: this.plugin.source.private
+								privateURL: source.registry,
+								authToken
 							}
 						},
 						contextType: 'npm',
 						marketplaceId: this.plugin.id,
-						versionId: this.plugin.version.id
+						versionId: version.id
 					})
 				);
 				break;

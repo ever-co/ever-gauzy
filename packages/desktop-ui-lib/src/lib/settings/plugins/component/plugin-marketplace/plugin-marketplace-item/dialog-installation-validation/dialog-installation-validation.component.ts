@@ -1,10 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { ID, IPluginSource, PluginSourceType } from '@gauzy/contracts';
+import { ID, IPluginSource, IPluginVersion } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { filter, Observable, tap } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { combineLatest, filter, map, Observable, tap } from 'rxjs';
 import { PluginSourceQuery } from '../../+state/queries/plugin-source.query';
+import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'lib-dialog-installation-validation',
 	templateUrl: './dialog-installation-validation.component.html',
@@ -15,34 +18,50 @@ import { PluginSourceQuery } from '../../+state/queries/plugin-source.query';
 export class DialogInstallationValidationComponent implements OnInit {
 	public form: FormGroup;
 	public pluginId: ID;
-	public versionId: ID;
 
 	constructor(
 		private readonly sourceQuery: PluginSourceQuery,
+		private readonly versionQuery: PluginVersionQuery,
 		private readonly dialogRef: NbDialogRef<DialogInstallationValidationComponent>
 	) {}
 
 	ngOnInit(): void {
 		this.form = new FormGroup({
-			source: new FormControl<IPluginSource>(null, [Validators.required])
+			source: new FormControl<IPluginSource>(null, [Validators.required]),
+			version: new FormControl<IPluginVersion>(null, [Validators.required]),
+			authToken: new FormControl(null, Validators.required)
 		});
-		this.source$
+
+		combineLatest([this.source$, this.version$])
 			.pipe(
 				filter(Boolean),
-				tap((source) => {
-					this.form.removeControl('authToken');
+				tap(([source, version]) => {
+					this.form.patchValue({
+						source,
+						version
+					});
 
-					if (source.type === PluginSourceType.NPM) {
-						this.form.addControl('authToken', new FormControl('', [Validators.required]));
+					if (source?.private) {
+						this.form.controls['authToken'].enable();
+					} else {
+						this.form.controls['authToken'].disable();
 					}
-					this.form.get('source').setValue(source);
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	public get source$(): Observable<IPluginSource> {
 		return this.sourceQuery.source$;
+	}
+
+	public get version$(): Observable<IPluginVersion> {
+		return this.versionQuery.version$;
+	}
+
+	public get versionId$(): Observable<ID> {
+		return this.version$.pipe(map((version) => version.id));
 	}
 
 	public dismiss(): void {
