@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { IPluginSource } from '@gauzy/contracts';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { EMPTY, catchError, finalize, switchMap, tap } from 'rxjs';
@@ -6,7 +7,6 @@ import { ToastrNotificationService } from '../../../../../../services';
 import { PluginService } from '../../../../services/plugin.service';
 import { PluginSourceActions } from '../actions/plugin-source.action';
 import { PluginSourceStore } from '../stores/plugin-source.store';
-import { IPluginSource } from '@gauzy/contracts';
 
 @Injectable({ providedIn: 'root' })
 export class PluginSourceEffects {
@@ -52,6 +52,24 @@ export class PluginSourceEffects {
 						return EMPTY; // Return a fallback observable
 					})
 				)
+			)
+		)
+	);
+
+	select$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginSourceActions.selectSource),
+			tap(({ source }) => this.pluginSourceStore.update((state) => ({ ...state, source })))
+		)
+	);
+
+	reset$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginSourceActions.reset),
+			tap(() =>
+				this.pluginSourceStore.update({
+					sources: []
+				})
 			)
 		)
 	);
