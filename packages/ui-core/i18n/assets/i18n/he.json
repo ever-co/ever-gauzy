@@ -766,7 +766,7 @@
 			"WAIT_UNTIL_RELOAD": "אנא המתן לטעינת האפליקציה מחדש"
 		},
 		"ERROR": {
-			"PROJECT_NAME": "נדרש שם פרויקט.",
+			"PROJECT_NAME": "שם הפרויקט נדרש ואינו יכול להיות ריק.",
 			"PROJECT_URL": "כתובת פרויקט לא תקינה.",
 			"OPEN_SOURCE_PROJECT_URL": "כתובת פרויקט קוד פתוח לא תקינה.",
 			"INVALID_IMAGE_URL": "כתובת URL של התמונה אינה תקינה.",

@@ -766,7 +766,7 @@
 			"WAIT_UNTIL_RELOAD": "Por favor espere mientras se recarga la aplicación"
 		},
 		"ERROR": {
-			"PROJECT_NAME": "El nombre del proyecto es obligatorio.",
+			"PROJECT_NAME": "El nombre del proyecto es obligatorio y no puede estar vacío.",
 			"PROJECT_URL": "La URL del proyecto no es válida.",
 			"OPEN_SOURCE_PROJECT_URL": "La URL del proyecto de código abierto no es válida.",
 			"INVALID_IMAGE_URL": "URL de imagen no válida.",

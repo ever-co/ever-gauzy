@@ -766,7 +766,7 @@
 			"WAIT_UNTIL_RELOAD": "请等待应用程序重新加载"
 		},
 		"ERROR": {
-			"PROJECT_NAME": "项目名称为必填项。",
+			"PROJECT_NAME": "项目名称是必填项，不能为空。",
 			"PROJECT_URL": "项目网址无效。",
 			"OPEN_SOURCE_PROJECT_URL": "开源项目网址无效。",
 			"INVALID_IMAGE_URL": "无效的图片 URL。",

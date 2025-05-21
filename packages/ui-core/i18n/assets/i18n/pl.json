@@ -766,7 +766,7 @@
 			"WAIT_UNTIL_RELOAD": "Poczekaj, aż aplikacja się przeładuje"
 		},
 		"ERROR": {
-			"PROJECT_NAME": "Nazwa projektu jest wymagana.",
+			"PROJECT_NAME": "Nazwa projektu jest wymagana i nie może być pusta.",
 			"PROJECT_URL": "URL projektu jest nieprawidłowy.",
 			"OPEN_SOURCE_PROJECT_URL": "URL projektu open-source jest nieprawidłowy.",
 			"INVALID_IMAGE_URL": "Nieprawidłowy adres URL obrazu.",

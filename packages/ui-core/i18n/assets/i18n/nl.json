@@ -766,7 +766,7 @@
 			"WAIT_UNTIL_RELOAD": "Wacht tot de applicatie opnieuw is geladen"
 		},
 		"ERROR": {
-			"PROJECT_NAME": "Projectnaam is verplicht.",
+			"PROJECT_NAME": "Projectnaam is verplicht en mag niet leeg zijn.",
 			"PROJECT_URL": "Project-URL is ongeldig.",
 			"OPEN_SOURCE_PROJECT_URL": "Open source project-URL is ongeldig.",
 			"INVALID_IMAGE_URL": "Ongeldige afbeelding-URL.",
