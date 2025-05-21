@@ -39,7 +39,7 @@ export class PluginFormDataBuilder {
 			this.appendFiltered(versionData, key);
 
 			if (!key) {
-				this.appendSource(version.sources, 'sources', 'version');
+				this.appendSource(version.sources, 'sources');
 			}
 		}
 		return this;

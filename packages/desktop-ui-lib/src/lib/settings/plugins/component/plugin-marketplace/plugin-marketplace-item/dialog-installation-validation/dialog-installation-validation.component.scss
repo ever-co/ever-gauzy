@@ -2,6 +2,11 @@
 
 .dialog-card {
   min-width: 360px;
+  max-width: 420px;
   max-height: 40vh;
   width: 100%;
+}
+
+nb-card-footer {
+  gap: 1rem;
 }
