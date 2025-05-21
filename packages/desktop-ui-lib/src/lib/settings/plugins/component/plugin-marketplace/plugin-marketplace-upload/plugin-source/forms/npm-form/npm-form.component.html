@@ -1,6 +1,6 @@
-<lib-form-section [formGroup]="form" class="source-content">
+<lib-form-section *ngIf="form" [formGroup]="form" class="source-content">
 	<!-- NPM fields here -->
-	<lib-form-row>
+	<lib-form-row *ngIf="form.get('name')">
 		<nb-form-field class="form-group full-width">
 			<label class="label" for="npm-name">{{ 'PLUGIN.FORM.NPM.PACKAGE_NAME' | translate }} *</label>
 			<input
@@ -21,7 +21,7 @@
 	</lib-form-row>
 
 	<lib-form-row>
-		<nb-form-field class="form-group">
+		<nb-form-field *ngIf="form.get('registry')" class="form-group">
 			<label class="label" for="npm-registry">{{ 'PLUGIN.FORM.NPM.REGISTRY' | translate }}</label>
 			<input
 				nbInput
@@ -36,7 +36,7 @@
 			</nb-hint>
 		</nb-form-field>
 
-		<nb-form-field class="form-group">
+		<nb-form-field *ngIf="form.get('scope')" class="form-group">
 			<label class="label" for="npm-scope">{{ 'PLUGIN.FORM.NPM.SCOPE' | translate }}</label>
 			<input
 				nbInput
@@ -51,7 +51,7 @@
 			</nb-hint>
 		</nb-form-field>
 	</lib-form-row>
-	<lib-form-row>
+	<lib-form-row *ngIf="form.get('private')">
 		<div class="form-group full-width">
 			<label class="label" for="npm-auth-token">{{ 'PLUGIN.FORM.NPM.AUTH_TOKEN' | translate }}</label>
 			<nb-toggle formControlName="private">Required</nb-toggle>

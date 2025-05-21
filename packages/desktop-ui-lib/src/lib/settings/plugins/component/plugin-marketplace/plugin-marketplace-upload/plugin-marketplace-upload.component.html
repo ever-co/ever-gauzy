@@ -26,7 +26,7 @@
 						<!-- Sources List with Advanced Interactions -->
 						<div cdkDropList (cdkDropListDropped)="drop($event)" class="sources-list">
 							@for(source of sources.controls; track source; let idx = $index){
-							<div class="source-card" [formGroupName]="idx" cdkDrag>
+							<div class="source-card" cdkDrag>
 								<!-- Glow effect on hover -->
 								<div class="card-glow"></div>
 

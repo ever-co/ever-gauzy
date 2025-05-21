@@ -1,6 +1,6 @@
-<lib-form-section [formGroup]="form" title="{{ 'PLUGIN.FORM.SOURCE' | translate }}">
+<lib-form-section *ngIf="form" [formGroup]="form" title="{{ 'PLUGIN.FORM.SOURCE' | translate }}">
 	<lib-form-row>
-		<nb-form-field class="form-group">
+		<nb-form-field *ngIf="form.get('operatingSystem')" class="form-group">
 			<label class="label" for="source-os">{{ 'Operating System' | translate }} *</label>
 			<nb-select
 				fullWidth
@@ -15,7 +15,7 @@
 				}
 			</nb-select>
 		</nb-form-field>
-		<nb-form-field class="form-group">
+		<nb-form-field *ngIf="form.get('architecture')" class="form-group">
 			<label class="label" for="source-arch">{{ 'Architecture' | translate }} *</label>
 			<nb-select
 				fullWidth
@@ -32,7 +32,7 @@
 		</nb-form-field>
 	</lib-form-row>
 
-	<lib-form-row>
+	<lib-form-row *ngIf="form.get('type')">
 		<nb-form-field class="form-group full-width">
 			<label class="label" for="source-type">{{ 'PLUGIN.FORM.SOURCE_TYPE' | translate }} *</label>
 			<nb-select

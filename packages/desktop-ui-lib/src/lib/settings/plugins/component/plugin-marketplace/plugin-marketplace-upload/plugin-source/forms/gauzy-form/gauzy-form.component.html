@@ -1,5 +1,6 @@
-<lib-form-section [formGroup]="form" class="source-inputs">
+<lib-form-section *ngIf="form" [formGroup]="form" class="source-inputs">
 	<lib-file-upload
+		*ngIf="form.get('file')"
 		[allowedExtensions]="['.zip']"
 		[maxFileSize]="1024 * 1024 * 1024"
 		[dragDropText]="'PLUGIN.FORM.FILE_UPLOAD.DRAG_DROP' | translate"
