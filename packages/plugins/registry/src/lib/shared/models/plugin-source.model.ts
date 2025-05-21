@@ -16,6 +16,7 @@ export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel 
 	type: PluginSourceType; // Type of the plugin source (CDN, NPM, File Upload)
 	operatingSystem: PluginOSType; // Operating system type
 	architecture: PluginOSArch; // CPU architecture
+	fullName?: string; // Full name of the plugin source
 
 	// CDN Source
 	url?: string; // URL of the plugin source

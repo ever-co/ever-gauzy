@@ -47,6 +47,7 @@ export enum PluginOSArch {
  */
 export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel {
 	type: PluginSourceType; // Discriminator field for the source type
+	fullName?: string; // Full name of the source
 }
 
 /**
