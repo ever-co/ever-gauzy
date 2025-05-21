@@ -4,7 +4,7 @@ import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType } from '@gauzy
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, catchError, filter, from, map, Observable, of, take, tap } from 'rxjs';
+import { BehaviorSubject, catchError, EMPTY, filter, from, map, Observable, of, switchMap, take, tap } from 'rxjs';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginVersionActions } from '../+state/actions/plugin-version.action';
@@ -78,7 +78,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public installPlugin(isUpdate = false): void {
-		this.dialog
+		const installation$ = this.dialog
 			.open(DialogInstallationValidationComponent, {
 				context: {
 					pluginId: this.plugin.id
@@ -87,12 +87,25 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			})
 			.onClose.pipe(
 				take(1),
-				filter(Boolean),
-				tap(({ version, source, authToken }) =>
-					this.preparePluginInstallation(version, source, isUpdate, authToken)
-				)
-			)
-			.subscribe();
+				switchMap((data) => (!data ? this.handleDialogCloseWithoutData() : of(data).pipe(filter(Boolean)))),
+				tap(({ version, source, authToken }) => {
+					this.preparePluginInstallation(version, source, isUpdate, authToken);
+				})
+			);
+
+		installation$.subscribe({
+			error: (err) => console.error('Plugin installation failed:', err)
+		});
+	}
+
+	private handleDialogCloseWithoutData() {
+		this.action.dispatch(
+			PluginInstallationActions.toggle({
+				isChecked: false,
+				plugin: this.plugin
+			})
+		);
+		return EMPTY;
 	}
 
 	public preparePluginInstallation(
