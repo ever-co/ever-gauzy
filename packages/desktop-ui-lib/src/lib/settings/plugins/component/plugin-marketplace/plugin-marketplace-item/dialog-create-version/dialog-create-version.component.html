@@ -8,67 +8,111 @@
 						: ('PLUGIN.DIALOG.VERSION.CREATE.TITLE' | translate : { name: plugin?.name })
 				}}
 			</h5>
-			<span class="cancel"><i (click)="dismiss()" class="fas fa-times"></i></span>
+			<button nbButton ghost size="small" (click)="dismiss()" class="close-button">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
 		</nb-card-header>
 		<nb-card-body>
-			<!-- Version -->
-			<lib-plugin-version class="grow" [form]="versionForm"></lib-plugin-version>
-			<!-- Source -->
-			<div class="sources-container grow">
-				@for(source of sources.controls; track source; let idx = $index){
-				<div class="source-card" [formGroupName]="idx">
-					<div class="source-header">
-						<h5>{{ 'PLUGIN.FORM.SOURCE' | translate }} #{{ idx + 1 }}</h5>
-						@if(sources.length > 1){
-						<button nbButton ghost status="danger" size="small" (click)="removeSource(idx)">
-							<nb-icon icon="trash-2-outline"></nb-icon>
-						</button>
-						}
+			<nb-stepper orientation="horizontal" #stepper>
+				<!-- Step 1 : Sources -->
+				<nb-step [stepControl]="versionForm?.get('sources')" [label]="'PLUGIN.FORM.SOURCES' | translate">
+					<div class="sources-container">
+						<!-- Sources List with Drag & Drop -->
+						<div cdkDropList (cdkDropListDropped)="drop($event)" class="sources-list">
+							@for(source of sources.controls; track source; let idx = $index){
+							<div class="source-card" cdkDrag>
+								<!-- Glow effect on hover -->
+								<div class="card-glow"></div>
+
+								<div class="source-header">
+									<div class="drag-area" cdkDragHandle>
+										<h5>{{ 'PLUGIN.FORM.SOURCE' | translate }} #{{ idx + 1 }}</h5>
+										<nb-icon icon="grid-view" class="drag-icon"></nb-icon>
+									</div>
+									@if(sources.length > 1){
+									<button
+										nbButton
+										ghost
+										status="danger"
+										size="small"
+										(click)="removeSource(idx)"
+										class="delete-btn"
+										[nbTooltip]="'Delete source' | translate"
+										nbTooltipPlacement="top"
+									>
+										<nb-icon icon="trash-2-outline"></nb-icon>
+									</button>
+									}
+								</div>
+								<lib-plugin-source class="grow" [form]="source"></lib-plugin-source>
+							</div>
+							} @empty {
+							<div class="empty-state">
+								<nb-icon icon="file-add-outline" class="empty-icon"></nb-icon>
+								<h5>{{ 'No Source' | translate }}</h5>
+								<p>{{ 'Add First Source' | translate }}</p>
+							</div>
+							}
+						</div>
+
+						<!-- Add Source Section -->
+						<div class="add-source">
+							<div class="add-source-card" (click)="openSourceTypeSelector(); $event.stopPropagation()">
+								<div class="add-content">
+									<nb-icon icon="plus-circle-outline" class="add-icon"></nb-icon>
+									<h5>{{ 'Add New Source' | translate }}</h5>
+									<p>{{ 'Click to select source' | translate }}</p>
+								</div>
+
+								<div class="source-selector" *ngIf="showSourceSelector">
+									<div class="selector-header">
+										<h5>{{ 'PLUGIN.FORM.SELECT_SOURCE_TYPE' | translate }}</h5>
+										<button
+											nbButton
+											ghost
+											size="small"
+											(click)="closeSourceTypeSelector(); $event.stopPropagation()"
+										>
+											<nb-icon icon="close-outline"></nb-icon>
+										</button>
+									</div>
+									<div class="source-options">
+										@for(source of sourceTypes; track source){
+										<div
+											class="source-option"
+											(click)="addSource(source); $event.stopPropagation()"
+										>
+											<nb-icon [icon]="getSourceIcon(source)" class="option-icon"></nb-icon>
+											<span>{{ 'PLUGIN.FORM.SOURCE_TYPES.' + source | translate }}</span>
+										</div>
+										}
+									</div>
+								</div>
+							</div>
+						</div>
 					</div>
-					<lib-plugin-source class="grow" [form]="source"></lib-plugin-source>
-				</div>
-				} @empty {
-				<ngx-no-data-message message="Add at least one source"></ngx-no-data-message>
-				}
-				<div class="add-source">
-					<nb-select [(selected)]="selectedSourceType" placeholder="Select Source Type">
-						@for(source of sourceTypes; track source){
-						<nb-option [value]="source">
-							{{ 'PLUGIN.FORM.SOURCE_TYPES.' + source | translate }}
-						</nb-option>
-						}
-					</nb-select>
-					<button
-						nbButton
-						outline
-						status="primary"
-						[disabled]="!selectedSourceType"
-						(click)="addSource(selectedSourceType)"
-					>
-						<nb-icon icon="plus-outline"></nb-icon> {{ 'Add Source' | translate }}
-					</button>
-				</div>
-			</div>
+					<div class="stepper-buttons">
+						<button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
+					</div>
+				</nb-step>
+
+				<!-- Step 2: Version -->
+				<nb-step [stepControl]="versionForm?.get('number')" [label]="'PLUGIN.FORM.VERSION' | translate">
+					<lib-plugin-version class="grow" [form]="versionForm"></lib-plugin-version>
+					<div class="stepper-buttons">
+						<button nbButton outline status="basic" nbStepperPrevious>
+							{{ 'BUTTONS.PREVIOUS' | translate }}
+						</button>
+						<button nbButton status="primary" type="submit" [disabled]="isFormInvalid || isSubmitting">
+							{{
+								version
+									? ('BUTTONS.UPDATE' | translate)
+									: ('BUTTONS.CREATE' | translate) + (versionNumber ? ' v' + versionNumber : '')
+							}}
+						</button>
+					</div>
+				</nb-step>
+			</nb-stepper>
 		</nb-card-body>
-		<nb-card-footer class="text-right mt-0">
-			<button nbButton type="button" (click)="dismiss()" outline status="basic">
-				{{ 'BUTTONS.CANCEL' | translate }}
-			</button>
-			<button
-				nbButton
-				type="submit"
-				status="success"
-				[disabled]="isFormInvalid || isSubmitting"
-				[nbSpinner]="isSubmitting"
-				nbSpinnerStatus="success"
-				nbSpinnerSize="small"
-			>
-				{{
-					version
-						? ('BUTTONS.UPDATE' | translate)
-						: ('BUTTONS.CREATE' | translate) + (versionNumber ? ' v' + versionNumber : '')
-				}}
-			</button>
-		</nb-card-footer>
 	</nb-card>
 </form>

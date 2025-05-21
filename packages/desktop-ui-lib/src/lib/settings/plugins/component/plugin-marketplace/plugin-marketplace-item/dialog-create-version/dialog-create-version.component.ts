@@ -1,3 +1,4 @@
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import {
 	AbstractControl,
@@ -35,6 +36,12 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	today: Date;
 	destroy$ = new Subject<void>();
 	selectedSourceType: PluginSourceType = PluginSourceType.CDN;
+	showSourceSelector = false;
+	private readonly sourceIcons = new Map<PluginSourceType, string>([
+		[PluginSourceType.CDN, 'layers-outline'],
+		[PluginSourceType.GAUZY, 'cube-outline'],
+		[PluginSourceType.NPM, 'code-outline']
+	]);
 
 	constructor(
 		private readonly dialogRef: NbDialogRef<DialogCreateVersionComponent>,
@@ -171,6 +178,21 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 		return this.versionForm?.get('number')?.value;
 	}
 
+	public drop(event: CdkDragDrop<string[]>) {
+		moveItemInArray(this.sources.controls, event.previousIndex, event.currentIndex);
+	}
+
+	public openSourceTypeSelector() {
+		this.showSourceSelector = true;
+	}
+
+	public closeSourceTypeSelector() {
+		this.showSourceSelector = false;
+	}
+
+	public getSourceIcon(sourceType: PluginSourceType): string {
+		return this.sourceIcons.get(sourceType);
+	}
 	ngOnDestroy(): void {
 		this.reset();
 		this.destroy$.next();

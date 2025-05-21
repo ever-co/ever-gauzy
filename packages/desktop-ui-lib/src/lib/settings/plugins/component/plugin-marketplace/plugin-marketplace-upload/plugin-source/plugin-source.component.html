@@ -32,24 +32,6 @@
 		</nb-form-field>
 	</lib-form-row>
 
-	<lib-form-row *ngIf="form.get('type')">
-		<nb-form-field class="form-group full-width">
-			<label class="label" for="source-type">{{ 'PLUGIN.FORM.SOURCE_TYPE' | translate }} *</label>
-			<nb-select
-				fullWidth
-				id="source-type"
-				formControlName="type"
-				[status]="getFieldError('type') ? 'danger' : 'basic'"
-			>
-				@for(source of sourceTypes; track source) {
-				<nb-option [value]="source">
-					{{ 'PLUGIN.FORM.SOURCE_TYPES.' + source | translate }}
-				</nb-option>
-				}
-			</nb-select>
-		</nb-form-field>
-	</lib-form-row>
-
 	<!-- Source-specific fields -->
 	<div class="source-container">
 		<div class="source-content">
