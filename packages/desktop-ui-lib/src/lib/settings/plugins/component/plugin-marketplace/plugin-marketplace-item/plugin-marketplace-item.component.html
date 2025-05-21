@@ -5,7 +5,7 @@ marketplaceQuery.deleting$ | async; @let adding = versionQuery.creating$ | async
 @let installed = installed$ | async; @let loading = marketplaceQuery.isLoading$ | async; @let disabled = editing ||
 installing || uninstalling || deleting || adding; @let selectedVersion = versionQuery.version$ | async; @let uploading =
 marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ | async; @let sources =
-this.sourceQuery.sources$ | async;
+this.sourceQuery.sources$ | async; @let selectedSource = this.sourceQuery.source$ | async;
 
 <nb-card class="content-active first plugin-details-card">
 	<nb-card-header class="d-flex align-items-center justify-content-between">
@@ -158,6 +158,16 @@ this.sourceQuery.sources$ | async;
 							</div>
 
 							<div class="info-item">
+								<div class="label">{{ 'PLUGIN.FORM.SOURCE' | translate }}</div>
+								<div class="value">
+									<gauzy-source-selector
+										[pluginId]="plugin.id"
+										[versionId]="selectedVersion.id"
+									></gauzy-source-selector>
+								</div>
+							</div>
+
+							<div class="info-item">
 								<div class="label">{{ 'PLUGIN.FORM.TYPE' | translate }}</div>
 								<div class="value">{{ getTypeLabel(plugin.type) }}</div>
 							</div>
@@ -271,7 +281,7 @@ this.sourceQuery.sources$ | async;
 
 				<nb-tab tabTitle="{{ 'PLUGIN.DETAILS.SOURCE_CODE' | translate }}">
 					<!-- Source Information Section -->
-					@if(selectedVersion?.source; as source) {
+					@if(selectedSource; as source) {
 					<div class="info-card">
 						<div class="d-flex justify-content-between align-items-center mb-3">
 							<h6 class="section-title mb-0">{{ 'PLUGIN.FORM.SOURCE' | translate }}</h6>
