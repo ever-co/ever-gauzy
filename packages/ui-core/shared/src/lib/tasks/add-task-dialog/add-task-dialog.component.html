@@ -24,7 +24,9 @@
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label required-asterisk">{{ 'CONTEXT_MENU.PROJECT' | translate }}</label>
+						<label for="projectId" class="label required-asterisk">{{
+							'CONTEXT_MENU.PROJECT' | translate
+						}}</label>
 						<ga-project-selector
 							formControlName="projectId"
 							[placeholder]="'CONTEXT_MENU.PROJECT' | translate"
@@ -37,14 +39,14 @@
 							*ngIf="FormHelpers.isInvalidControl(form, 'projectId') && form.get('projectId').touched"
 						>
 							<p class="caption status-danger mt-1">
-								{{ 'FORM.ERROR.PROJECT_NAME' | translate }}
+								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 							</p>
 						</ng-container>
 					</div>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">
+						<label for="taskStatus" class="label required-asterisk">
 							{{ 'TASKS_PAGE.TASKS_STATUS' | translate }}
 						</label>
 						<ga-task-status-select
@@ -52,13 +54,20 @@
 							formControlName="taskStatus"
 							[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
 						></ga-task-status-select>
+						<ng-container
+							*ngIf="FormHelpers.isInvalidControl(form, 'taskStatus') && form.get('taskStatus').touched"
+						>
+							<p class="caption status-danger mt-1">
+								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							</p>
+						</ng-container>
 					</div>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col-sm-12">
 					<div class="form-group">
-						<label class="label">{{ 'TASKS_PAGE.MODULE' | translate }}</label>
+						<label for="modules" class="label">{{ 'TASKS_PAGE.MODULE' | translate }}</label>
 						<nb-select
 							formControlName="modules"
 							[placeholder]="'TASKS_PAGE.SELECT_MODULE' | translate"
@@ -77,7 +86,7 @@
 			<div class="row">
 				<div class="col-sm-12">
 					<div class="form-group">
-						<label class="label">{{ 'TASKS_PAGE.PARENT_TASK' | translate }}</label>
+						<label for="parentId" class="label">{{ 'TASKS_PAGE.PARENT_TASK' | translate }}</label>
 						<ga-task-selector
 							name="parentId"
 							[projectId]="getControlValue('projectId')"
@@ -110,7 +119,7 @@
 							</ga-employee-multi-select>
 						</ng-container>
 						<ng-container *ngIf="participants === taskParticipantEnum.TEAMS">
-							<label class="label">{{ 'TASKS_PAGE.TASK_TEAMS' | translate }}</label>
+							<label for="teams" class="label">{{ 'TASKS_PAGE.TASK_TEAMS' | translate }}</label>
 							<nb-select
 								formControlName="teams"
 								multiple
@@ -128,7 +137,9 @@
 			<div class="row">
 				<div class="col-sm-12">
 					<div class="form-group">
-						<label class="label required-asterisk">{{ 'TASKS_PAGE.TASKS_TITLE' | translate }}</label>
+						<label for="title" class="label required-asterisk">{{
+							'TASKS_PAGE.TASKS_TITLE' | translate
+						}}</label>
 						<input
 							class="name-input"
 							formControlName="title"
@@ -145,7 +156,7 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">
+						<label for="taskPriority" class="label">
 							{{ 'TASKS_PAGE.TASK_PRIORITY' | translate }}
 						</label>
 						<ga-task-priority-select
@@ -157,7 +168,7 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">
+						<label for="taskSize" class="label">
 							{{ 'TASKS_PAGE.TASK_SIZE' | translate }}
 						</label>
 						<ga-task-size-select
@@ -195,7 +206,7 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">{{ 'TASKS_PAGE.ESTIMATE' | translate }}</label>
+						<label for="estimateDays" class="label">{{ 'TASKS_PAGE.ESTIMATE' | translate }}</label>
 						<div class="estimate-inputs">
 							<input
 								formControlName="estimateDays"
@@ -231,7 +242,7 @@
 			<div class="row">
 				<div class="col-sm-12">
 					<div class="form-group">
-						<label class="label">{{ 'TASKS_PAGE.TASKS_DESCRIPTION' | translate }}</label>
+						<label for="description" class="label">{{ 'TASKS_PAGE.TASKS_DESCRIPTION' | translate }}</label>
 						<ckeditor class="description" formControlName="description" [config]="ckConfig"></ckeditor>
 					</div>
 				</div>

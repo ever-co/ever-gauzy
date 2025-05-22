@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import moment from 'moment';
 import { firstValueFrom } from 'rxjs';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { richTextCKEditorConfig } from '@gauzy/ui-core/shared';
+import { FormHelpers, richTextCKEditorConfig } from '@gauzy/ui-core/shared';
 import {
 	EmployeesService,
 	ErrorHandlingService,
@@ -29,19 +29,19 @@ const initialTaskValue = {
 };
 
 @Component({
-    selector: 'ngx-my-task-dialog',
-    templateUrl: './my-task-dialog.component.html',
-    styleUrls: ['./my-task-dialog.component.scss'],
-    standalone: false
+	selector: 'ngx-my-task-dialog',
+	templateUrl: './my-task-dialog.component.html',
+	styleUrls: ['./my-task-dialog.component.scss'],
+	standalone: false
 })
 export class MyTaskDialogComponent extends TranslationBaseComponent implements OnInit {
+	FormHelpers: typeof FormHelpers = FormHelpers;
 	selectedTaskId: string;
 	projects: IOrganizationProject[];
 	employees: IEmployee[] = [];
 	selectedMembers: string[];
 	selectedTask: ITask;
 	organizationId: string;
-	selectedTags: any;
 	participants = 'employees';
 	employeeId;
 	tags: ITag[] = [];
@@ -68,7 +68,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent implements O
 			number: [{ value: '', disabled: true }],
 			title: [null, Validators.required],
 			project: [],
-			projectId: [],
+			projectId: [null, Validators.required],
 			status: [TaskStatusEnum.OPEN],
 			priority: [],
 			size: [],
@@ -80,7 +80,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent implements O
 			description: [],
 			tags: [],
 			teams: [],
-			taskStatus: [],
+			taskStatus: [null, Validators.required],
 			taskSize: [],
 			taskPriority: []
 		});

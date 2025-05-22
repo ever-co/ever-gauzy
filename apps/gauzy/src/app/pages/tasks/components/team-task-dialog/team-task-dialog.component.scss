@@ -1,5 +1,5 @@
 @forward '@shared/_add-task-dialog';
-@import '@shared/required-asterisk';
+@forward '@shared/required-asterisk';
 
 .body {
   width: 550px;

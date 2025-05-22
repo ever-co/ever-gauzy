@@ -1,15 +1,8 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex flex-column">
-		<span class="cancel"
-			><i (click)="dialogRef.close()" class="fas fa-times"></i
-		></span>
+		<span class="cancel"><i (click)="dialogRef.close()" class="fas fa-times"></i></span>
 		<h5 class="title">
-			{{
-				(selectedTask
-					? 'TASKS_PAGE.EDIT_TASKS'
-					: 'TASKS_PAGE.ADD_TASKS'
-				) | translate
-			}}
+			{{ (selectedTask ? 'TASKS_PAGE.EDIT_TASKS' : 'TASKS_PAGE.ADD_TASKS') | translate }}
 		</h5>
 	</nb-card-header>
 	<nb-card-body class="body">
@@ -29,7 +22,7 @@
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">{{
+						<label for="projectId" class="label required-asterisk">{{
 							'CONTEXT_MENU.PROJECT' | translate
 						}}</label>
 						<ga-project-selector
@@ -40,20 +33,32 @@
 							[skipGlobalChange]="true"
 							formControlName="projectId"
 						></ga-project-selector>
+						<ng-container
+							*ngIf="FormHelpers.isInvalidControl(form, 'projectId') && form.get('projectId').touched"
+						>
+							<p class="caption status-danger mt-1">
+								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							</p>
+						</ng-container>
 					</div>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">{{
+						<label for="taskStatus" class="label required-asterisk">{{
 							'TASKS_PAGE.TASKS_STATUS' | translate
 						}}</label>
 						<ga-task-status-select
-							[placeholder]="
-								'TASKS_PAGE.TASKS_STATUS' | translate
-							"
+							[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
 							[projectId]="form.get('projectId').value"
 							formControlName="taskStatus"
 						></ga-task-status-select>
+						<ng-container
+							*ngIf="FormHelpers.isInvalidControl(form, 'taskStatus') && form.get('taskStatus').touched"
+						>
+							<p class="caption status-danger mt-1">
+								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							</p>
+						</ng-container>
 					</div>
 				</div>
 			</div>
@@ -72,29 +77,30 @@
 			<div class="row">
 				<div class="col-sm-12">
 					<div class="form-group">
-						<label class="label">{{
+						<label for="title" class="label required-asterisk">{{
 							'TASKS_PAGE.TASKS_TITLE' | translate
 						}}</label>
 						<input
 							class="name-input"
 							formControlName="title"
 							nbInput
-							placeholder="{{
-								'FORM.PLACEHOLDERS.ADD_TITLE' | translate
-							}}"
+							placeholder="{{ 'FORM.PLACEHOLDERS.ADD_TITLE' | translate }}"
 							type="text"
 						/>
+						<ng-container *ngIf="FormHelpers.isInvalidControl(form, 'title')">
+							<p class="caption status-danger mt-1">
+								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							</p>
+						</ng-container>
 					</div>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">
+						<label for="taskPriority" class="label">
 							{{ 'TASKS_PAGE.TASK_PRIORITY' | translate }}
 						</label>
 						<ga-task-priority-select
-							[placeholder]="
-								'TASKS_PAGE.TASK_PRIORITY' | translate
-							"
+							[placeholder]="'TASKS_PAGE.TASK_PRIORITY' | translate"
 							[projectId]="form.get('projectId').value"
 							formControlName="taskPriority"
 						></ga-task-priority-select>
@@ -102,7 +108,7 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">
+						<label for="taskSize" class="label">
 							{{ 'TASKS_PAGE.TASK_SIZE' | translate }}
 						</label>
 						<ga-task-size-select
@@ -126,18 +132,14 @@
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label" for="dueDate">{{
-							'TASKS_PAGE.DUE_DATE' | translate
-						}}</label>
+						<label class="label" for="dueDate">{{ 'TASKS_PAGE.DUE_DATE' | translate }}</label>
 						<input
 							[nbDatepicker]="taskDueDatePicker"
 							formControlName="dueDate"
 							fullWidth
 							id="dueDate"
 							nbInput
-							placeholder="{{
-								'TASKS_PAGE.DUE_DATE' | translate
-							}}"
+							placeholder="{{ 'TASKS_PAGE.DUE_DATE' | translate }}"
 							type="text"
 						/>
 						<nb-datepicker #taskDueDatePicker></nb-datepicker>
@@ -145,51 +147,35 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">{{
-							'TASKS_PAGE.ESTIMATE' | translate
-						}}</label>
+						<label for="estimateDays" class="label">{{ 'TASKS_PAGE.ESTIMATE' | translate }}</label>
 						<div class="estimate-inputs">
 							<input
 								[min]="0"
 								formControlName="estimateDays"
 								nbInput
-								placeholder="{{
-									'TASKS_PAGE.ESTIMATE_DAYS' | translate
-								}}"
+								placeholder="{{ 'TASKS_PAGE.ESTIMATE_DAYS' | translate }}"
 								type="number"
 							/>
 
 							<input
 								[min]="0"
-								[status]="
-									form.get('estimateHours').errors
-										? 'danger'
-										: 'basic'
-								"
+								[status]="form.get('estimateHours').errors ? 'danger' : 'basic'"
 								formControlName="estimateHours"
 								max="23"
 								min="0"
 								nbInput
-								placeholder="{{
-									'TASKS_PAGE.ESTIMATE_HOURS' | translate
-								}}"
+								placeholder="{{ 'TASKS_PAGE.ESTIMATE_HOURS' | translate }}"
 								type="number"
 							/>
 
 							<input
 								[min]="0"
-								[status]="
-									form.get('estimateMinutes').errors
-										? 'danger'
-										: 'basic'
-								"
+								[status]="form.get('estimateMinutes').errors ? 'danger' : 'basic'"
 								formControlName="estimateMinutes"
 								max="59"
 								min="0"
 								nbInput
-								placeholder="{{
-									'TASKS_PAGE.ESTIMATE_MINUTES' | translate
-								}}"
+								placeholder="{{ 'TASKS_PAGE.ESTIMATE_MINUTES' | translate }}"
 								type="number"
 							/>
 						</div>
@@ -198,34 +184,17 @@
 			</div>
 			<div class="row">
 				<div class="col-sm-12">
-					<label class="label">{{
-						'TASKS_PAGE.TASKS_DESCRIPTION' | translate
-					}}</label>
-					<ckeditor
-						[config]="ckConfig"
-						class="description"
-						formControlName="description"
-					></ckeditor>
+					<label for="description" class="label">{{ 'TASKS_PAGE.TASKS_DESCRIPTION' | translate }}</label>
+					<ckeditor [config]="ckConfig" class="description" formControlName="description"></ckeditor>
 				</div>
 			</div>
 		</form>
 	</nb-card-body>
 	<nb-card-footer>
-		<button
-			(click)="dialogRef.close()"
-			class="mr-3"
-			nbButton
-			outline
-			status="basic"
-		>
+		<button (click)="dialogRef.close()" class="mr-3" nbButton outline status="basic">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button
-			(click)="onSave()"
-			[disabled]="form.invalid || employeeId === null"
-			nbButton
-			status="success"
-		>
+		<button (click)="onSave()" [disabled]="form.invalid || employeeId === null" nbButton status="success">
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

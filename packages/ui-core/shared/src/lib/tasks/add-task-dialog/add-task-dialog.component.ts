@@ -33,10 +33,10 @@ import { FormHelpers } from '../../forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-add-task-dialog',
-    templateUrl: './add-task-dialog.component.html',
-    styleUrls: ['./add-task-dialog.component.scss'],
-    standalone: false
+	selector: 'ngx-add-task-dialog',
+	templateUrl: './add-task-dialog.component.html',
+	styleUrls: ['./add-task-dialog.component.scss'],
+	standalone: false
 })
 export class AddTaskDialogComponent extends TranslationBaseComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;
@@ -77,7 +77,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 			project: [],
 			projectId: [null, Validators.required],
 			parentId: [],
-			status: [TaskStatusEnum.OPEN, Validators.required],
+			status: [TaskStatusEnum.OPEN],
 			priority: [],
 			size: [],
 			members: [],
@@ -89,7 +89,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 			tags: [],
 			teams: [],
 			modules: [],
-			taskStatus: [],
+			taskStatus: [null, Validators.required],
 			taskSize: [],
 			taskPriority: []
 		});

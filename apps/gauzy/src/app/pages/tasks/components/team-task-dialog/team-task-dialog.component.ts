@@ -43,10 +43,10 @@ const initialTaskValue = {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-team-task-dialog',
-    templateUrl: './team-task-dialog.component.html',
-    styleUrls: ['./team-task-dialog.component.scss'],
-    standalone: false
+	selector: 'ngx-team-task-dialog',
+	templateUrl: './team-task-dialog.component.html',
+	styleUrls: ['./team-task-dialog.component.scss'],
+	standalone: false
 })
 export class TeamTaskDialogComponent extends TranslationBaseComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;
@@ -100,7 +100,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 			description: [],
 			tags: [],
 			teams: [],
-			taskStatus: [],
+			taskStatus: [null, Validators.required],
 			taskSize: [],
 			taskPriority: []
 		});
