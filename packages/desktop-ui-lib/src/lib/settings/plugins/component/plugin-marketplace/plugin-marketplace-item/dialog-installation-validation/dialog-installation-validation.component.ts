@@ -68,6 +68,10 @@ export class DialogInstallationValidationComponent implements OnInit {
 		this.dialogRef.close();
 	}
 
+	public get showAuthToken(): boolean {
+		return this.form?.get('source')?.value?.private || false;
+	}
+
 	public submit(): void {
 		if (this.form.invalid) {
 			this.form.markAllAsTouched();
