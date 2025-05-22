@@ -15,19 +15,9 @@ import {
 	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
+import { UntilDestroy } from '@ngneat/until-destroy';
 
-const initialTaskValue = {
-	title: '',
-	project: null,
-	status: '',
-	members: null,
-	teams: null,
-	estimate: null,
-	dueDate: null,
-	description: '',
-	tags: null
-};
-
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-my-task-dialog',
 	templateUrl: './my-task-dialog.component.html',
@@ -118,57 +108,60 @@ export class MyTaskDialogComponent extends TranslationBaseComponent implements O
 		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		await this.loadProjects();
 		await this.loadEmployees();
-		this.initializeForm(Object.assign({}, initialTaskValue, this.selectedTask || this.task));
+		this.initializeForm();
 	}
 
-	initializeForm({
-		title,
-		description,
-		project,
-		status,
-		members,
-		estimate,
-		dueDate,
-		tags,
-		priority,
-		size,
-		taskStatus,
-		taskSize,
-		taskPriority
-	}: ITask) {
-		const duration = moment.duration(estimate, 'seconds');
-		// select members from database of default value
-		this.selectedMembers = (members || []).map((member) => member.id);
-		// employee id of logged in user, if value is null, disable the save button
-		this.employeeId = null;
+	initializeForm() {
+		if (this.selectedTask) {
+			const {
+				description,
+				dueDate,
+				estimate,
+				members,
+				project,
+				status,
+				tags,
+				title,
+				priority,
+				size,
+				taskStatus,
+				taskSize,
+				taskPriority
+			} = this.selectedTask;
+			const duration = moment.duration(estimate, 'seconds');
+			// select members from database of default value
+			this.selectedMembers = (members || []).map((member) => member.id);
+			// employee id of logged in user, if value is null, disable the save button
+			this.employeeId = null;
 
-		if (this.store.user) {
-			this.employeeId = this.store.user?.employee?.id || null;
+			if (this.store.user) {
+				this.employeeId = this.store.user?.employee?.id || null;
+			}
+			// select default id of logged in user
+			if (members === null) {
+				this.selectedMembers = [this.employeeId];
+			}
+
+			this.form.patchValue({
+				title,
+				project,
+				projectId: project ? project.id : null,
+				status,
+				priority,
+				size,
+				estimateDays: duration.days(),
+				estimateHours: duration.hours(),
+				estimateMinutes: duration.minutes(),
+				dueDate: dueDate ? new Date(dueDate) : null,
+				description,
+				tags,
+				teams: [],
+				members: [this.selectedMembers],
+				taskStatus,
+				taskSize,
+				taskPriority
+			});
 		}
-		// select default id of logged in user
-		if (members === null) {
-			this.selectedMembers = [this.employeeId];
-		}
-		this.form.patchValue({
-			title,
-			project,
-			projectId: project ? project.id : null,
-			status,
-			priority,
-			size,
-			estimateDays: duration.days(),
-			estimateHours: duration.hours(),
-			estimateMinutes: duration.minutes(),
-			dueDate: dueDate ? new Date(dueDate) : null,
-			description,
-			tags,
-			members: [this.selectedMembers],
-			taskStatus,
-			taskSize,
-			taskPriority,
-			teams: []
-		});
-		this.tags = this.form.get('tags').value || [];
 	}
 
 	addNewProject = (name: string): Promise<IOrganizationProject> => {
@@ -207,5 +200,19 @@ export class MyTaskDialogComponent extends TranslationBaseComponent implements O
 
 	selectedProject(project: IOrganizationProject) {
 		this.form.patchValue({ project });
+	}
+
+	/**
+	 * Retrieves the value of a form control by its name.
+	 *
+	 * @param control - The name of the form control whose value is to be retrieved.
+	 * @returns string - The value of the form control. If the control is not found or the value is null, an empty string is returned.
+	 */
+	getControlValue(control: string): string {
+		// Retrieve the form control using the given control name.
+		const formControl = this.form.get(control);
+
+		// If the control exists, return its value. Otherwise, return an empty string.
+		return formControl ? formControl.value : '';
 	}
 }

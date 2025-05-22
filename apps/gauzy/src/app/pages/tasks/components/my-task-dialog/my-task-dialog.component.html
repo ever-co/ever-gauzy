@@ -49,7 +49,7 @@
 						}}</label>
 						<ga-task-status-select
 							[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
-							[projectId]="form.get('projectId').value"
+							[projectId]="getControlValue('projectId')"
 							formControlName="taskStatus"
 						></ga-task-status-select>
 						<ng-container

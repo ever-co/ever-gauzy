@@ -26,21 +26,6 @@ import {
 } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
-const initialTaskValue = {
-	title: '',
-	project: null,
-	status: '',
-	members: null,
-	teams: null,
-	estimate: null,
-	dueDate: null,
-	description: '',
-	tags: null,
-	taskStatus: null,
-	taskSize: null,
-	taskPriority: null
-};
-
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-team-task-dialog',
@@ -130,59 +115,64 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 			.valueChanges.pipe(untilDestroyed(this))
 			.subscribe(() => this.loadAvailableModules());
 
-		this.initializeForm(Object.assign({}, initialTaskValue, this.selectedTask || this.task));
+		this.initializeForm();
 	}
 
-	initializeForm({
-		title,
-		description,
-		project,
-		status,
-		members,
-		teams,
-		modules,
-		estimate,
-		dueDate,
-		tags,
-		priority,
-		size,
-		taskStatus,
-		taskSize,
-		taskPriority
-	}: ITask) {
-		const duration = moment.duration(estimate, 'seconds');
-		this.selectedTeams = (teams || []).map((team) => team.id);
-		this.selectedModules = (modules || []).map((module) => module.id);
-		// employee id of logged in user, if value is null, disable the save button
-		// this.teamIds = null;
-		// if (this.store.user) {
-		// 	this.teamIds = this.store.user || null;
-		// }
-		// // select default id of logged in user
-		// if (teams === null) {
-		// 	this.selectedTeams = [this.employeeId];
-		// }
-		this.form.patchValue({
-			title,
-			project,
-			projectId: project ? project.id : null,
-			status,
-			priority,
-			size,
-			modules: this.selectedModules,
-			estimateDays: duration.days(),
-			estimateHours: duration.hours(),
-			estimateMinutes: duration.minutes(),
-			dueDate: dueDate ? new Date(dueDate) : null,
-			members,
-			description,
-			tags,
-			teams: this.selectedTeams,
-			taskStatus,
-			taskSize,
-			taskPriority
-		});
-		this.tags = this.form.get('tags').value || [];
+	initializeForm() {
+		if (this.selectedTask) {
+			const {
+				description,
+				dueDate,
+				estimate,
+				members,
+				project,
+				status,
+				tags,
+				teams,
+				title,
+				priority,
+				size,
+				taskStatus,
+				taskSize,
+				modules,
+				taskPriority
+			} = this.selectedTask;
+			const duration = moment.duration(estimate, 'seconds');
+
+			this.selectedMembers = (members || []).map((member) => member.id);
+			this.selectedTeams = (teams || []).map((team) => team.id);
+			this.selectedModules = (modules || []).map((module) => module.id);
+			// employee id of logged in user, if value is null, disable the save button
+			// this.teamIds = null;
+			// if (this.store.user) {
+			// 	this.teamIds = this.store.user || null;
+			// }
+			// // select default id of logged in user
+			// if (teams === null) {
+			// 	this.selectedTeams = [this.employeeId];
+			// }
+
+			this.form.patchValue({
+				title,
+				project,
+				projectId: project ? project.id : null,
+				status,
+				priority,
+				size,
+				estimateDays: duration.days(),
+				estimateHours: duration.hours(),
+				estimateMinutes: duration.minutes(),
+				dueDate: dueDate ? new Date(dueDate) : null,
+				description,
+				tags,
+				teams: this.selectedTeams,
+				members: this.selectedMembers,
+				modules: this.selectedModules,
+				taskStatus,
+				taskSize,
+				taskPriority
+			});
+		}
 	}
 
 	addNewProject = (name: string): Promise<IOrganizationProject> => {
@@ -272,5 +262,19 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 			this.errorHandler.handleError(error);
 			this.toastrService.danger('Error loading modules', 'Error');
 		}
+	}
+
+	/**
+	 * Retrieves the value of a form control by its name.
+	 *
+	 * @param control - The name of the form control whose value is to be retrieved.
+	 * @returns string - The value of the form control. If the control is not found or the value is null, an empty string is returned.
+	 */
+	getControlValue(control: string): string {
+		// Retrieve the form control using the given control name.
+		const formControl = this.form.get(control);
+
+		// If the control exists, return its value. Otherwise, return an empty string.
+		return formControl ? formControl.value : '';
 	}
 }
