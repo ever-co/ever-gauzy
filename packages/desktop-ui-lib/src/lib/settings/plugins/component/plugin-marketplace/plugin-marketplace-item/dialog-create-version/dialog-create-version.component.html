@@ -29,7 +29,6 @@
 										<h5>{{ 'PLUGIN.FORM.SOURCE' | translate }} #{{ idx + 1 }}</h5>
 										<nb-icon icon="grid-view" class="drag-icon"></nb-icon>
 									</div>
-									@if(sources.length > 1){
 									<button
 										nbButton
 										ghost
@@ -42,7 +41,6 @@
 									>
 										<nb-icon icon="trash-2-outline"></nb-icon>
 									</button>
-									}
 								</div>
 								<lib-plugin-source class="grow" [form]="source"></lib-plugin-source>
 							</div>

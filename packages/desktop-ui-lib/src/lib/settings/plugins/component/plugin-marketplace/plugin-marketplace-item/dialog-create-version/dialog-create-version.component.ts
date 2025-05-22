@@ -27,7 +27,6 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	versionForm: FormGroup;
 	plugin: IPlugin;
 	version: IPluginVersion;
-	source: IPluginSource;
 	pluginTypes = Object.values(PluginType);
 	pluginStatuses = Object.values(PluginStatus);
 	sourceTypes = Object.values(PluginSourceType);
@@ -76,7 +75,7 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	}
 
 	private patch(): void {
-		if (!this.source) return;
+		if (!this.version) return;
 
 		const version: Partial<IPluginVersion> = {
 			...this.version
