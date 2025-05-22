@@ -9,7 +9,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Transform } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
-import { RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { MikroOrmPluginSourceRepository } from '../repositories/mikro-orm-plugin-source.repository';
@@ -129,6 +129,7 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 
 	@ApiProperty({ type: () => [PluginVersion], description: 'Version' })
 	@MultiORMManyToOne(() => PluginVersion, (version) => version.sources, { onDelete: 'SET NULL' })
+	@JoinColumn()
 	version: IPluginVersion;
 
 	@RelationId((source: PluginSource) => source.version)

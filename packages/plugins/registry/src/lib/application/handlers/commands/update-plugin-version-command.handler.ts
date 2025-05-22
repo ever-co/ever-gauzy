@@ -62,7 +62,7 @@ export class UpdatePluginVersionCommandHandler implements ICommandHandler<Update
 
 			// Return the updated plugin with relations
 			return this.versionService.findOneByIdString(versionId, {
-				relations: ['source', 'plugin']
+				relations: ['sources', 'plugin']
 			});
 		} catch (error) {
 			// Roll back transaction on error
@@ -102,6 +102,8 @@ export class UpdatePluginVersionCommandHandler implements ICommandHandler<Update
 
 		const source: Partial<IPluginSource> = {
 			type: data.type,
+			architecture: data.architecture,
+			operatingSystem: data.operatingSystem,
 			...(data.type === PluginSourceType.CDN && {
 				url: data.url,
 				integrity: data.integrity,

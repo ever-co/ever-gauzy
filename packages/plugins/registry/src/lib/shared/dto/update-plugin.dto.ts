@@ -1,7 +1,7 @@
 import { ID } from '@gauzy/contracts';
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsUUID, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsUUID, ValidateNested } from 'class-validator';
 import { CreatePluginDTO } from './create-plugin.dto';
 import { UpdatePluginVersionDTO } from './update-plugin-version.dto';
 import { IPluginUpdate } from '../models/plugin.model';
@@ -24,7 +24,8 @@ export class UpdatePluginDTO
 		required: false,
 		type: UpdatePluginVersionDTO
 	})
-	@ValidateNested()
+	@ValidateNested({ each: true })
+	@IsOptional()
 	@Type(() => UpdatePluginVersionDTO)
 	readonly version?: IPluginVersionUpdate;
 }

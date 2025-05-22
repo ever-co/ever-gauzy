@@ -12,7 +12,7 @@ export class PluginVersionDTO extends OmitType(PluginVersion, [
 	'sources',
 	'downloadCount'
 ] as const) {
-	@ValidateNested()
+	@ValidateNested({ each: true })
 	@IsNotEmptyObject(
 		{ nullable: true },
 		{

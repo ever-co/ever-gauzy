@@ -78,7 +78,7 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 
 			// Return the updated plugin with relations
 			return this.pluginService.findOneByIdString(id, {
-				relations: ['versions', 'versions.source']
+				relations: ['versions', 'versions.sources']
 			});
 		} catch (error) {
 			// Roll back transaction on error
@@ -118,6 +118,8 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 
 		const source: Partial<IPluginSource> = {
 			type: data.type,
+			architecture: data.architecture,
+			operatingSystem: data.operatingSystem,
 			...(data.type === PluginSourceType.CDN && {
 				url: data.url,
 				integrity: data.integrity,
@@ -132,7 +134,7 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 			...(data.type === PluginSourceType.GAUZY && data)
 		};
 
-		await this.sourceService.update(data.id, source);
+		await this.sourceService.update(data.id, Object.assign(found.record, source));
 	}
 
 	/**

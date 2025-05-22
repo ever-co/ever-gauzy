@@ -84,14 +84,13 @@ export class PluginVersion extends TenantOrganizationBaseEntity implements IPlug
 	@MultiORMColumn({ nullable: true, relationId: true })
 	pluginId?: ID;
 
-	@ApiProperty({ type: () => PluginSource, description: 'Source of the plugin version', required: false })
+	@ApiProperty({ type: () => [PluginSource], description: 'Sources of the plugin version', required: false })
 	@MultiORMOneToMany(() => PluginSource, (source) => source.version, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
 	sources?: IPluginSource[];
 
 	@ApiProperty({
-		type: () => PluginInstallation,
-		description: 'Installations of the plugin version',
+		type: () => [PluginInstallation],
+		description: 'Related installations to plugin version',
 		required: false
 	})
 	@MultiORMOneToMany(() => PluginInstallation, (source) => source.version, { nullable: true, onDelete: 'CASCADE' })
