@@ -1,13 +1,4 @@
-import {
-	ChangeDetectionStrategy,
-	Component,
-	Input,
-	OnChanges,
-	OnDestroy,
-	OnInit,
-	SimpleChanges,
-	ViewChild
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { ID, IPluginSource } from '@gauzy/contracts';
 import { NbSelectComponent } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
@@ -24,7 +15,7 @@ import { PluginSourceQuery } from '../../+state/queries/plugin-source.query';
 	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SourceSelectorComponent implements OnInit, OnChanges, OnDestroy {
+export class SourceSelectorComponent implements OnInit, OnChanges {
 	@ViewChild(NbSelectComponent) select: NbSelectComponent;
 	private skip = 1;
 	private hasNext = false;
@@ -42,6 +33,7 @@ export class SourceSelectorComponent implements OnInit, OnChanges, OnDestroy {
 			this.load();
 		}
 	}
+
 	ngOnInit(): void {
 		this.query
 			.select()
@@ -88,9 +80,5 @@ export class SourceSelectorComponent implements OnInit, OnChanges, OnDestroy {
 		this.skip = 1;
 		this.hasNext = false;
 		this.action.dispatch(PluginSourceActions.reset());
-	}
-
-	ngOnDestroy(): void {
-		this.reset();
 	}
 }
