@@ -80,26 +80,59 @@ export class PluginSourceSubscriber extends BaseEntityEventSubscriber<PluginSour
 		entity.fullName = this.generateFullName(entity);
 	}
 
+	/**
+	 * Generates a full name for a plugin source based on its type and properties
+	 * @param pluginSource The plugin source to generate the full name for
+	 * @returns A descriptive full name for the plugin source
+	 */
 	private generateFullName(source: IPluginSource): string {
-		const { type, operatingSystem, architecture } = source;
+		const { type, operatingSystem, architecture, version } = source;
+
+		// Base parts that are common to all types
+		const baseParts = [`${version ? 'v' + version.number : undefined}`, operatingSystem, architecture];
+
+		// Type-specific parts
+		let typeSpecificPart = '';
 
 		switch (type) {
 			case PluginSourceType.CDN:
-				// e.g., "CDN::https://cdn.example.com::linux::x64"
-				return `CDN::${source.url ?? 'unknown-url'}::${operatingSystem}::${architecture}`;
+				if (source.url) {
+					try {
+						const url = new URL(source.url);
+						typeSpecificPart = `cdn-${url.hostname}`;
+					} catch {
+						typeSpecificPart = 'cdn-source';
+					}
+				} else {
+					typeSpecificPart = 'cdn-source';
+				}
+				break;
 
 			case PluginSourceType.NPM:
-				// e.g., "NPM::@scope/package-name::linux::x64"
-				const packageName = source.scope ? `@${source.scope}/${source.name}` : source.name ?? 'unknown-package';
-				return `NPM::${packageName}::${operatingSystem}::${architecture}`;
+				typeSpecificPart = source.scope ? `npm-${source.scope}/${source.name}` : `npm-${source.name}`;
+				if (source.registry) {
+					try {
+						const registryUrl = new URL(source.registry);
+						typeSpecificPart += `-${registryUrl.hostname}`;
+					} catch {
+						// Ignore invalid registry URLs
+					}
+				}
+				break;
 
 			case PluginSourceType.GAUZY:
-				// e.g., "FILE::plugin-name.zip::linux::x64"
-				return `FILE::${source.fileName ?? 'unknown-file'}::${operatingSystem}::${architecture}`;
+				typeSpecificPart = source.fileName ? `file-${source.fileName.replace('.zip', '')}` : 'uploaded-file';
+				break;
 
 			default:
-				return `UNKNOWN::${operatingSystem}::${architecture}`;
+				typeSpecificPart = 'unknown-source';
 		}
+
+		// Combine all parts and clean up any undefined/null values
+		const allParts = [...baseParts, typeSpecificPart].filter((part) => !!part);
+
+		// Join with underscores and convert to lowercase for consistency
+		return allParts.join('_').toLowerCase();
 	}
 
 	private getFileStorageProvider(storageProvider: string) {
