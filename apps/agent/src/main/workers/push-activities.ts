@@ -6,8 +6,7 @@ import * as moment from 'moment';
 import { AgentLogger } from '../agent-logger';
 import { environment } from '../../environments/environment';
 import * as fs from 'node:fs';
-import path from 'node:path';
-
+import * as path from 'node:path';
 
 class PushActivities {
 	static instance: PushActivities;
@@ -30,13 +29,12 @@ class PushActivities {
 		return PushActivities.instance;
 	}
 
-
 	getKbMousePoolModule() {
 		if (!this.kbMousePool) {
 			this.kbMousePool = KbMouseActivityPool.getInstance();
 			this.kbMousePool.setCallback(this.saveActivities.bind(this));
 			this.kbMousePool.setErrorCallback(this.poolErrorHandler.bind(this));
-			this.kbMousePool.setPollingInterval(environment.AGENT_POOL_ACTIVITY_INTERVAL || 5000)
+			this.kbMousePool.setPollingInterval(environment.AGENT_POOL_ACTIVITY_INTERVAL || 5000);
 		}
 	}
 
@@ -46,7 +44,7 @@ class PushActivities {
 			this.agentLogger.info('Pulling scheduler started');
 		} catch (error) {
 			console.error('Failed to start push activity pooling', error);
-			this.agentLogger.error(`Failed to start push activity pooling ${JSON.stringify(error)}`)
+			this.agentLogger.error(`Failed to start push activity pooling ${JSON.stringify(error)}`);
 		}
 	}
 
@@ -66,7 +64,7 @@ class PushActivities {
 
 	async removeCurrentActivity(id: number) {
 		try {
-			await this.kbMouseActivityService.remove({ id })
+			await this.kbMouseActivityService.remove({ id });
 		} catch (error) {
 			console.error('error on remove current activity', error);
 		}
@@ -81,7 +79,6 @@ class PushActivities {
 			console.error('error on save timeslot', error);
 			throw error;
 		}
-
 	}
 
 	async saveImage(recordedAt: string, image: string[]) {
@@ -92,13 +89,15 @@ class PushActivities {
 			if (!pathTemp) {
 				return;
 			}
-			await this.apiService.uploadImages({
-				tenantId: auth.user.employee.tenantId,
-				organizationId: auth.user.employee.organizationId,
-				recordedAt
-			}, { filePath: pathTemp })
+			await this.apiService.uploadImages(
+				{
+					tenantId: auth.user.employee.tenantId,
+					organizationId: auth.user.employee.organizationId,
+					recordedAt
+				},
+				{ filePath: pathTemp }
+			);
 			fs.unlinkSync(pathTemp);
-
 		} catch (error) {
 			console.log(error);
 			throw error;
@@ -120,7 +119,7 @@ class PushActivities {
 			mouseRightClickCount: activities.mouseRightClickCount,
 			mouseMovementsCount: activities.mouseMovementsCount,
 			mouseEvents: activities.mouseEvents
-		}
+		};
 	}
 
 	timeSlotParams(activities: KbMouseActivityTO): TTimeSlot {
@@ -136,7 +135,7 @@ class PushActivities {
 			recordedAt: moment(activities.timeStart).toISOString(),
 			activities: this.getActivities(activities),
 			employeeId: auth.user.employee.employeeId
-		}
+		};
 	}
 
 	async saveActivities() {
@@ -151,7 +150,7 @@ class PushActivities {
 					await this.saveImage(
 						moment(activity.timeStart).toISOString(),
 						activity.screenshots ? JSON.parse(activity.screenshots) : []
-					)
+					);
 					this.agentLogger.info('request activity successfully');
 					await this.removeCurrentActivity(activity.id);
 					return true;
