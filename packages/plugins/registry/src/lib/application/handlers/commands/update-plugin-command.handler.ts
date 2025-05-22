@@ -127,7 +127,7 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 				registry: data.registry,
 				name: data.name,
 				scope: data.scope,
-				privtae: data.private
+				private: data.private
 			}),
 			...(data.type === PluginSourceType.GAUZY && data)
 		};
