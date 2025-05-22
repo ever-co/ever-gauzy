@@ -14,8 +14,9 @@
                         <h4 *ngIf="isExpandWindow">{{'server_api' | translate| uppercase}}</h4>
                         <h5 *ngIf="!isExpandWindow">{{'server_api' | translate| uppercase}}</h5>
                     </div>
-					<h4 *ngIf="isExpandWindow">{{'AGENT_APP' | translate| uppercase}}</h4>
+
 					<div class="col-12 text-center margin-content" *ngIf="isAgent">
+						<h4 *ngIf="isExpandWindow">{{'AGENT_APP' | translate| uppercase}}</h4>
                         <h5 *ngIf="!isExpandWindow">{{'AGENT_APP' | translate| uppercase}}</h5>
                     </div>
                     <div class="col-12 text-center accordion margin-content" *ngIf="isExpandWindow || isAgent">
