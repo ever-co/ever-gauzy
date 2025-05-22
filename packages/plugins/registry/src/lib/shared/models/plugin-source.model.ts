@@ -8,7 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { IPluginVersion } from './plugin-version.model';
 
-export interface IPluginSourceUpdate extends Partial<Omit<IPluginSource, 'storageProvider' | 'versions'>> {
+export interface IPluginSourceUpdate extends Partial<Omit<IPluginSource, 'storageProvider' | 'versions' | 'fullName'>> {
 	id: ID;
 }
 

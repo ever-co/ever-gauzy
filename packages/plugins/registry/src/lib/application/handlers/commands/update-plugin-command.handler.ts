@@ -134,7 +134,7 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 			...(data.type === PluginSourceType.GAUZY && data)
 		};
 
-		await this.sourceService.update(data.id, Object.assign(found.record, source));
+		await this.sourceService.update(data.id, source);
 	}
 
 	/**

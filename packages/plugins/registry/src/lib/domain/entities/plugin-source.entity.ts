@@ -8,7 +8,7 @@ import {
 } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Transform } from 'class-transformer';
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
@@ -76,9 +76,22 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 	@MultiORMColumn({ nullable: true })
 	registry?: string;
 
-	@ApiProperty({ type: String, description: 'Marks private if a NPM authentication token is required.' })
+	@ApiProperty({
+		type: Boolean,
+		description: 'Indicates if the package is private (requires NPM authentication token for access).',
+		required: false,
+		default: false
+	})
 	@IsOptional()
-	@IsString({ message: 'Marks private if authentication token must be a string' })
+	@IsBoolean({ message: 'private must be a boolean value' })
+	@Transform(
+		({ value }) => {
+			if (value === 'true') return true;
+			if (value === 'false') return false;
+			return value;
+		},
+		{ toClassOnly: true }
+	)
 	@MultiORMColumn({ nullable: true, default: false })
 	private?: boolean;
 
