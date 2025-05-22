@@ -1,10 +1,25 @@
 @use '../dialog-create-version/dialog-create-version.component' as *;
 
 .dialog-card {
-  min-width: 360px;
-  max-width: 420px;
+  width: 360px;
   max-height: 40vh;
-  width: 100%;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .header-icon {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+  }
+
+  .title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-basic-color);
+  }
 }
 
 nb-card-footer {
