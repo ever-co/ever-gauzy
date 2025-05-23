@@ -8,7 +8,6 @@ export class CdnSourceStrategy implements ISourceStrategy {
 
 	public getSourceData(source: ICDNSource): Partial<IPluginSource> {
 		return {
-			type: source.type,
 			url: source.url,
 			integrity: source.integrity,
 			crossOrigin: source.crossOrigin

@@ -8,7 +8,6 @@ export class NpmSourceStrategy implements ISourceStrategy {
 
 	public getSourceData(source: INPMSource): Partial<IPluginSource> {
 		return {
-			type: source.type,
 			name: source.name,
 			registry: source.registry,
 			private: source.private,
