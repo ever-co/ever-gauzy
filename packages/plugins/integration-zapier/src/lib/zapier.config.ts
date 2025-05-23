@@ -1,5 +1,18 @@
-/** Base URL for Zapier's REST API endpoints */
-export const ZAPIER_API_URL = 'https://api.zapier.com/v1';
+/**
+ * Zapier base API URL
+ */
+export const ZAPIER_BASE_URL = 'https://zapier.com';
+
+/**
+ * Zapier API URL
+ */
+export const ZAPIER_API_URL = 'https://api.zapier.com';
+
+/**
+ * Zapier token expiration time (in seconds)
+ * 10 hours = 36000 seconds
+ */
+export const ZAPIER_TOKEN_EXPIRATION_TIME = 36000;
 
 /** URL for initiating OAuth authorization flow with Gauzy */
 export const ZAPIER_AUTHORIZATION_URL = `${process.env['API_BASE_URL']}/api/integration/zapier/oauth/authorize`;
@@ -12,6 +25,3 @@ export const ZAPIER_TOKEN_URL = `${process.env['API_BASE_URL']}/api/integration/
 
 /** URL for redirecting users after OAuth authorization */
 export const ZAPIER_REDIRECT_URI = 'https://zapier.com/dashboard/auth/oauth/return/App221848CLIAPI/';
-
-/** OAuth token expiration time in seconds (1 hour) */
-export const ZAPIER_TOKEN_EXPIRATION_TIME = 3600;

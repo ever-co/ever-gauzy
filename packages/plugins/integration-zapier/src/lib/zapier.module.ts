@@ -23,7 +23,6 @@ import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity'
 import { MikroOrmZapierWebhookSubscriptionRepository } from './repository/mikro-orm-zapier-webhook-subscription.repository';
 import { TypeOrmZapierWebhookSubscriptionRepository } from './repository/type-orm-zapier-webhook-subscription.repository';
 import { EventHandlers } from './handlers';
-import { ZapierAuthCodeService } from './zapier-auth-code.service';
 
 @Module({
 	imports: [
@@ -45,11 +44,10 @@ import { ZapierAuthCodeService } from './zapier-auth-code.service';
 	providers: [
 		ZapierService,
 		ZapierWebhookService,
-		ZapierAuthCodeService,
 		MikroOrmZapierWebhookSubscriptionRepository,
 		TypeOrmZapierWebhookSubscriptionRepository,
 		...EventHandlers
 	],
-	exports: [ZapierService, ZapierWebhookService, ZapierAuthCodeService]
+	exports: [ZapierService, ZapierWebhookService]
 })
 export class ZapierModule {}

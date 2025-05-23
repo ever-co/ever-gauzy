@@ -12,10 +12,9 @@ export interface IZapierAccessTokens {
 
 export interface ICreateZapierIntegrationInput extends IBasePerTenantAndOrganizationEntityModel {
 	client_id: string;
-	code: string;
-	grant_type: ZapierGrantType;
-	redirect_uri: string;
 	client_secret: string;
+	code?: string | undefined;
+	redirect_uri?: string | undefined;
 }
 
 export interface ITimerZapierWebhookData extends IBasePerTenantAndOrganizationEntityModel {
@@ -27,10 +26,17 @@ export interface ITimerZapierWebhookData extends IBasePerTenantAndOrganizationEn
 export interface IZapierEndpoint {
 	id: string;
 	name: string;
-	description: string;
+	description?: string;
+	slug: string;
 }
 
 export interface IZapierCreateWebhookInput {
 	target_url: string;
 	event: string;
+}
+
+export interface IZapierAuthState {
+	tenantId: string;
+	organizationId?: string;
+	integrationId?: string;
 }

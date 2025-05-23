@@ -56,7 +56,7 @@ export const authentication = {
 		/** Configuration for obtaining access token */
 		getAccessToken: {
 			method: 'POST',
-			url: `${process.env.API_BASE_URL}/api/integration/zapier/token/:integrationId`,
+			url: `${process.env.API_BASE_URL}/api/integration/zapier/token`,
 			body: {
 				code: '{{bundle.inputData.code}}',
 				client_id: '{{process.env.CLIENT_ID}}',
@@ -65,13 +65,14 @@ export const authentication = {
 				grant_type: 'authorization_code'
 			},
 			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded'
+				'Content-Type': 'application/x-www-form-urlencoded',
+				Accept: 'application/json'
 			}
 		},
 		/** Configuration for refreshing access token */
 		refreshAccessToken: {
 			method: 'POST',
-			url: `${process.env.API_BASE_URL}/api/integration/zapier/refresh-token/:integrationId`,
+			url: `${process.env.API_BASE_URL}/api/integration/zapier/refresh-token`,
 			body: {
 				refresh_token: '{{bundle.authData.refresh_token}}',
 				client_id: '{{process.env.CLIENT_ID}}',
@@ -79,10 +80,13 @@ export const authentication = {
 				grant_type: 'refresh_token'
 			},
 			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded'
+				'Content-Type': 'application/x-www-form-urlencoded',
+				Accept: 'application/json'
 			}
 		},
 		/** OAuth2 scopes required for the integration */
-		scope: 'read write'
-	},
+		scope: 'read write',
+		/** Enable automatic token refresh */
+		autoRefresh: true
+	}
 };
