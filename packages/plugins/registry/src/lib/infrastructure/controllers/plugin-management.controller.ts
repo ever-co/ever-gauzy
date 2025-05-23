@@ -2,7 +2,6 @@ import { HttpStatus, ID, PluginSourceType } from '@gauzy/contracts';
 import {
 	FileStorage,
 	FileStorageFactory,
-	LazyFileInterceptor,
 	PermissionGuard,
 	TenantPermissionGuard,
 	UseValidationPipe,
@@ -34,6 +33,7 @@ import { CreatePluginCommand } from '../../application/commands/create-plugin.co
 import { DeletePluginCommand } from '../../application/commands/delete-plugin.command';
 import { UpdatePluginCommand } from '../../application/commands/update-plugin.command';
 import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
+import { LazyAnyFileInterceptor } from '../../core/interceptors/lazy-any-file.interceptor';
 import { Plugin } from '../../domain/entities/plugin.entity';
 import { CreatePluginDTO } from '../../shared/dto/create-plugin.dto';
 import { FileDTO } from '../../shared/dto/file.dto';
@@ -82,7 +82,7 @@ export class PluginManagementController {
 		forbidNonWhitelisted: true
 	})
 	@UseInterceptors(
-		LazyFileInterceptor('file', {
+		LazyAnyFileInterceptor({
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
@@ -102,6 +102,7 @@ export class PluginManagementController {
 					if (source.type === PluginSourceType.GAUZY) {
 						// Find matching file for this source
 						const file = this.findFileForSource(files, source);
+
 						if (!file?.key) {
 							throw new BadRequestException(`Plugin file key is empty for source: ${source.name}`);
 						}
@@ -184,7 +185,7 @@ export class PluginManagementController {
 		forbidNonWhitelisted: true
 	})
 	@UseInterceptors(
-		LazyFileInterceptor('file', {
+		LazyAnyFileInterceptor({
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
@@ -266,7 +267,7 @@ export class PluginManagementController {
 	private findFileForSource(files: FileDTO[], source: IPluginSource): FileDTO | undefined {
 		// Implement your matching logic here
 		// This could be based on filename, metadata, or other criteria
-		return files.find((file) => file.originalname.includes(source.name) || file.mimetype === source.mimeType);
+		return files.find((file) => file.originalname.includes(source.fileName));
 	}
 
 	/**

@@ -1,4 +1,4 @@
-import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
+import { IPlugin, IPluginSource, IPluginVersion } from '@gauzy/contracts';
 import { Store } from '../../../../services';
 import { SourceStrategyFactory } from '../factories/source.factory';
 
@@ -107,11 +107,9 @@ export class PluginFormDataBuilder {
 	public appendFiles(sources: IPluginSource[] | undefined): this {
 		if (!sources) return this;
 
-		let index = 0;
 		for (const source of sources) {
 			const strategy = SourceStrategyFactory.getStrategy(source.type);
-			strategy.appendToFormData(this.formData, source, index);
-			index = source.type === PluginSourceType.GAUZY ? index + 1 : index;
+			strategy.appendToFormData(this.formData, source);
 		}
 		return this;
 	}

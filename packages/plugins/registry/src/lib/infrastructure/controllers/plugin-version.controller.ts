@@ -3,7 +3,6 @@ import {
 	BaseQueryDTO,
 	FileStorage,
 	FileStorageFactory,
-	LazyFileInterceptor,
 	PermissionGuard,
 	TenantPermissionGuard,
 	UseValidationPipe,
@@ -39,6 +38,7 @@ import { RecoverPluginVersionCommand } from '../../application/commands/recover-
 import { UpdatePluginVersionCommand } from '../../application/commands/update-plugin-version.command';
 import { ListPluginVersionsQuery } from '../../application/queries/list-plugin-versions.query';
 import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
+import { LazyAnyFileInterceptor } from '../../core/interceptors/lazy-any-file.interceptor';
 import { PluginVersion } from '../../domain/entities/plugin-version.entity';
 import { FileDTO } from '../../shared/dto/file.dto';
 import { PluginVersionDTO } from '../../shared/dto/plugin-version.dto';
@@ -90,7 +90,7 @@ export class PluginVersionController {
 	@ApiConsumes('multipart/form-data')
 	@UseValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true })
 	@UseInterceptors(
-		LazyFileInterceptor('file', {
+		LazyAnyFileInterceptor({
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
@@ -191,7 +191,7 @@ export class PluginVersionController {
 		forbidNonWhitelisted: true
 	})
 	@UseInterceptors(
-		LazyFileInterceptor('file', {
+		LazyAnyFileInterceptor({
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
@@ -356,8 +356,7 @@ export class PluginVersionController {
 	 * Find the appropriate file for a given source
 	 */
 	private findFileForSource(files: FileDTO[], source: IPluginSource): FileDTO | undefined {
-		// Implement your matching logic here
 		// This could be based on filename, metadata, or other criteria
-		return files.find((file) => file.originalname.includes(source.name) || file.mimetype === source.mimeType);
+		return files.find((file) => file.originalname.includes(source.fileName));
 	}
 }

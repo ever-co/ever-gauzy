@@ -2,15 +2,15 @@ import { IGauzySource, IPluginSource } from '@gauzy/contracts';
 import { ISourceStrategy } from '../../shared/plugin.model';
 
 export class GauzySourceStrategy implements ISourceStrategy {
-	public appendToFormData(formData: FormData, source: any, index?: number): void {
+	public appendToFormData(formData: FormData, source: any): void {
 		if (source.file instanceof File) {
-			formData.append(`files[${index}]`, source.file, source.file.name);
+			formData.append('file', source.file);
 		}
 	}
 
-	public getSourceData(_: IGauzySource): Partial<IPluginSource> {
+	public getSourceData(source: IGauzySource): Partial<IPluginSource> {
 		return {
-			// ^_^
+			fileName: source.file.name
 		};
 	}
 }
