@@ -85,13 +85,13 @@ class PushActivities {
 		try {
 			const auth = getAuthConfig();
 			const pathTemp = image && Array.isArray(image) && image.length && image[0];
-			this.agentLogger.info(`image temporarry path ${pathTemp}`);
+			this.agentLogger.info(`image temporary path ${pathTemp}`);
 			if (!pathTemp) {
 				return;
 			}
 
 			if (!fs.existsSync(pathTemp)) {
-				this.agentLogger.info(`temporarry image doesn't exists ${pathTemp}`);
+				this.agentLogger.info(`temporary image doesn't exists ${pathTemp}`);
 				return;
 			}
 
