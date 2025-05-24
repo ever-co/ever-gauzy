@@ -172,7 +172,7 @@ class PullActivities {
 		const appSetting = getAppSetting();
 		const imgs = await getScreenshot({
 			monitor: {
-				captured: appSetting.monitor.captured
+				captured: appSetting?.monitor?.captured
 			},
 			screenSize: screenData.screenSize,
 			activeWindow: screenData.activeWindow
