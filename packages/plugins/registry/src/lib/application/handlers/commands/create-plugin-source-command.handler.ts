@@ -20,7 +20,7 @@ export class CreatePluginSourceCommandHandler implements ICommandHandler<CreateP
 	 * @returns {Promise<IPluginVersion>} - The created plugin version.
 	 * @throws {NotFoundException} - If the plugin with the given ID does not exist.
 	 */
-	public async execute(command: CreatePluginSourceCommand): Promise<IPluginSource> {
+	public async execute(command: CreatePluginSourceCommand): Promise<IPluginSource[]> {
 		const { pluginId, versionId, input } = command;
 
 		// Fetch plugin by ID
@@ -33,9 +33,9 @@ export class CreatePluginSourceCommandHandler implements ICommandHandler<CreateP
 		}
 
 		// Create a plugin source
-		const source = Object.assign(new PluginSource(), { versionId }, input);
+		const sources = input.map((source) => Object.assign(new PluginSource(), { versionId }, source));
 
 		// Save the plugin source
-		return this.pluginSourceService.save(source);
+		return this.pluginSourceService.saveSources(sources);
 	}
 }

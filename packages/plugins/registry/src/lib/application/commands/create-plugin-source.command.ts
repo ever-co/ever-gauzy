@@ -4,5 +4,9 @@ import { ID } from '@gauzy/contracts';
 
 export class CreatePluginSourceCommand implements ICommand {
 	public static readonly type = '[Plugin Source] Create';
-	constructor(public readonly pluginId: ID, public readonly versionId: ID, public readonly input: PluginSourceDTO) {}
+	constructor(
+		public readonly pluginId: ID,
+		public readonly versionId: ID,
+		public readonly input: PluginSourceDTO[]
+	) {}
 }

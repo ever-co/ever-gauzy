@@ -15,7 +15,7 @@ export class PluginSourceService extends TenantAwareCrudService<PluginSource> {
 		super(typeOrmPluginSourceRepository, mikroOrmPluginSourceRepository);
 	}
 
-	private saveSources(sources: PluginSource[]): Promise<IPluginSource[]> {
+	public saveSources(sources: PluginSource[]): Promise<IPluginSource[]> {
 		return this.typeOrmPluginSourceRepository.save(sources);
 	}
 

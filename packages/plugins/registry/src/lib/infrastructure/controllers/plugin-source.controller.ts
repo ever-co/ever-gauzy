@@ -40,6 +40,7 @@ import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provider';
 import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
 import { CreatePluginSourceCommand } from '../../application/commands/create-plugin-source.command';
+import { CreatePluginSourceDTO } from '../../shared/dto/create-plugin-source.dto';
 
 @ApiTags('Plugin Sources')
 @ApiBearerAuth('Bearer')
@@ -99,33 +100,36 @@ export class PluginSourceController {
 	public async createVersion(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
-		@Body() source: PluginSourceDTO,
+		@Body() input: CreatePluginSourceDTO,
 		@UploadedPluginStorage({ multiple: true }) files: FileDTO[]
-	): Promise<IPluginSource> {
+	): Promise<IPluginSource[]> {
 		try {
 			// Validate files against sources
-			if (files.length > 0 && source.type !== PluginSourceType.GAUZY) {
-				throw new BadRequestException(`We cant upload files for: ${source.type}`);
-			}
+			this.validateFilesAgainstSources(input.sources, files);
 			// Get the appropriate file storage provider
 			const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
-
 			// Process each source
-			if (source.type === PluginSourceType.GAUZY) {
-				// Find matching file for this source
-				const file = files.find((file) => file.originalname.includes(source.fileName));
-				if (!file?.key) {
-					throw new BadRequestException(`Plugin file key is empty for source: ${source.name}`);
-				}
-				// Validate and extract metadata
-				await gauzyStorageProvider.validate(file);
-				const metadata = gauzyStorageProvider.extractMetadata(file);
-				source = {
-					...source,
-					...metadata
-				};
-			}
-			return this.commandBus.execute(new CreatePluginSourceCommand(pluginId, versionId, source));
+			const sources = await Promise.all(
+				input.sources.map(async (source: IPluginSource) => {
+					if (source.type === PluginSourceType.GAUZY) {
+						// Find matching file for this source
+						const file = this.findFileForSource(files, source as IPluginSource);
+						if (!file?.key) {
+							throw new BadRequestException(`Plugin file key is empty for source: ${source.type}`);
+						}
+						// Validate and extract metadata
+						await gauzyStorageProvider.validate(file);
+						const metadata = gauzyStorageProvider.extractMetadata(file);
+						return {
+							...source,
+							...metadata
+						};
+					} else {
+						return source;
+					}
+				})
+			);
+			return this.commandBus.execute(new CreatePluginSourceCommand(pluginId, versionId, sources));
 		} catch (error) {
 			// Cleanup any uploaded files if error occurs
 			if (files?.length > 0) {
@@ -140,5 +144,28 @@ export class PluginSourceController {
 			}
 			throw new BadRequestException(error.response?.message || error.message || 'Failed to create plugin');
 		}
+	}
+
+	/**
+	 * Validate that files match the required sources
+	 */
+	private validateFilesAgainstSources(sources: IPluginSource[], files: FileDTO[]): void {
+		const gauzySources = sources.filter((s) => s.type === PluginSourceType.GAUZY);
+
+		// Check file count matches GAUZY sources count
+		if (gauzySources.length > 0 && (!files || files.length < gauzySources.length)) {
+			throw new BadRequestException(
+				`Expected ${gauzySources.length} files for GAUZY sources, got ${files?.length || 0}`
+			);
+		}
+	}
+
+	/**
+	 * Find the appropriate file for a given source
+	 */
+	private findFileForSource(files: FileDTO[], source: IPluginSource): FileDTO | undefined {
+		// Implement your matching logic here
+		// This could be based on filename, metadata, or other criteria
+		return files.find((file) => file.originalname.includes(source.fileName));
 	}
 }
