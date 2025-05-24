@@ -23,8 +23,8 @@ export class MakeComAuthorizationController {
      */
     @ApiOperation({ summary: 'Initiate OAuth 2.0 flow with Make.com' })
     @ApiResponse({
-        status: 302,
-        description: 'Redirects to Make.com authorization page'
+        status: 200,
+        description: 'Returns the Make.com authorization URL'
     })
     @Get('/authorize')
     async authorize(@Query() { state }: { state?: string }) {
@@ -66,8 +66,8 @@ export class MakeComAuthorizationController {
                 throw new BadRequestException('Missing required parameters: code and state')
             }
 
-            // Exchange the authorization code for access token - this now simply stores the token
-            // We don't exchange it ourselves, Make does that for us
+            // Process the OAuth callback - store the authorization code and enable the integration
+            // The actual token exchange is handled by Make.com when they call our token endpoint
             await this.makeComOAuthService.handleAuthorizationCallback(code, state);
 
             // Build successful URL with access token
@@ -79,22 +79,16 @@ export class MakeComAuthorizationController {
             // Redirect to the application
             return response.redirect(urlObj.toString());
         } catch (error) {
-            if (postInstallUrl) {
-                const errorMessage = error.response?.message || error.message || 'Failed to complete OAuth flow';
-                const queryParamsString = new URLSearchParams({
-                    success: 'false',
-                    integration: IntegrationEnum.MakeCom,
-                    message: errorMessage
-                }).toString();
+            // postInstallUrl is guaranteed to exist here due to earlier check
+            const errorMessage = error.response?.message || error.message || 'Failed to complete OAuth flow';
+            const queryParamsString = new URLSearchParams({
+                success: 'false',
+                integration: IntegrationEnum.MakeCom,
+                message: errorMessage
+            }).toString();
 
-                const url = `${postInstallUrl}?${queryParamsString}`;
-                return response.redirect(url);
-            }
-
-            throw new HttpException(
-                `Failed to complete OAuth flow with ${IntegrationEnum.MakeCom}: ${error.message}`,
-                error.status || HttpStatus.INTERNAL_SERVER_ERROR
-            );
+            const url = `${postInstallUrl}?${queryParamsString}`;
+            return response.redirect(url);
         }
     }
 }

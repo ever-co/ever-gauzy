@@ -300,7 +300,7 @@ export class MakeComService {
 			const settings = await this.integrationSettingService.find({ where });
 
 			if (!settings || settings.length < 2) {
-				throw new NotFoundException('OAuth credentials not found for this integration');
+				throw new NotFoundException('OAuth credentials not found for this integration missing client_id or client_secret');
 			}
 
 			// Extract client ID and client secret

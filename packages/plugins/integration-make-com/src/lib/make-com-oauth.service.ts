@@ -61,9 +61,6 @@ export class MakeComOAuthService {
 			this.storeStateForVerification(state);
 		}
 
-		// Store state for verification (defense against CSRF)
-		this.storeStateForVerification(state);
-
 		// Prepare scopes according to Make.com documentation
 		const scopes = MAKE_DEFAULT_SCOPES.join(' ');
 
@@ -360,11 +357,13 @@ export class MakeComOAuthService {
 			if (authCodeSetting) {
 				authCodeSetting.settingsValue = code;
 			} else {
-				authCodeSetting = {
+				authCodeSetting = await this.integrationSettingService.create({
 					settingsName: MakeSettingName.AUTH_CODE,
 					settingsValue: code,
-					integration: integrationTenant
-				} as any;
+					integrationId: integrationTenant.id,
+					tenantId: integrationTenant.tenantId,
+					organizationId: integrationTenant.organizationId
+				});
 			}
 
 			await this.integrationSettingService.save(authCodeSetting);
@@ -415,7 +414,7 @@ export class MakeComOAuthService {
 			const { clientId, clientSecret } = await this.makeComService.getOAuthCredentials(integrationId);
 
 			// Get the Make.com token endpoint URL
-			const tokenUrl = `${MAKE_BASE_URL}/oauth/token`
+			const tokenUrl = `${MAKE_BASE_URL}/oauth/token`;
 
 			// Create the form data for the token request
 			const formData = new URLSearchParams();

@@ -7,7 +7,6 @@ import { MakeComService } from './make-com.service';
 import { IMakeComCreateIntegration, IMakeComIntegrationSettings } from './interfaces/make-com.model';
 import { UpdateMakeComSettingsDTO } from './dto';
 import { MakeComOAuthService } from './make-com-oauth.service';
-import * as crypto from 'crypto';
 
 @ApiTags('Make.com Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -103,19 +102,10 @@ export class MakeComController {
 			throw new BadRequestException('Both client_id and client_secret are required');
 		}
 
-		// Encrypt client secret before passing to service
-		const algorithm = 'aes-256-cbc';
-		const key = crypto.randomBytes(32);
-		const iv = crypto.randomBytes(16);
-
-		const cipher = crypto.createCipheriv(algorithm, key, iv);
-		let encryptedSecret = cipher.update(input.client_secret, 'utf8', 'hex');
-		encryptedSecret += cipher.final('hex');
-
 		// Save the credentials and create/update integration with encrypted secret
 		const integration = await this.makeComService.addIntegrationSettings({
 			...input,
-			client_secret: encryptedSecret,
+			client_secret: input.client_secret
 		});
 
 		// Generate authorization URL
