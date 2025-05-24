@@ -32,6 +32,7 @@ import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.ser
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { DialogCreateVersionComponent } from './dialog-create-version/dialog-create-version.component';
 import { DialogInstallationValidationComponent } from './dialog-installation-validation/dialog-installation-validation.component';
+import { DialogCreateSourceComponent } from './dialog-create-source/dialog-create-source.component';
 
 @Component({
 	selector: 'gauzy-plugin-marketplace-item',
@@ -343,6 +344,22 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 						PluginInstallationActions.toggle({ isChecked: this.isInstalled, plugin: this.plugin })
 					);
 					this.action.dispatch(PluginVersionActions.add(this.pluginId, version));
+				}),
+				takeUntil(this.destroy$)
+			)
+			.subscribe();
+	}
+
+	public addSource(): void {
+		this.dialogService
+			.open(DialogCreateSourceComponent, {
+				backdropClass: 'backdrop-blur',
+				context: { plugin: this.plugin, version: this.selectedVersion }
+			})
+			.onClose.pipe(
+				filter(Boolean),
+				tap(({ pluginId, versionId, sources }) => {
+					this.action.dispatch(PluginSourceActions.add(pluginId, versionId, sources));
 				}),
 				takeUntil(this.destroy$)
 			)

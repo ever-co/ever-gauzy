@@ -44,6 +44,7 @@ import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/
 import { PluginSourceEffects } from './component/plugin-marketplace/+state/effects/plugin-source.effect';
 import { PluginVersionEffects } from './component/plugin-marketplace/+state/effects/plugin-version.effect';
 import { PluginMarketplaceDetailComponent } from './component/plugin-marketplace/plugin-marketplace-detail/plugin-marketplace-detail.component';
+import { DialogCreateSourceComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-source/dialog-create-source.component';
 import { DialogCreateVersionComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-version/dialog-create-version.component';
 import { DialogInstallationValidationComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
 import { PluginMarketplaceItemComponent } from './component/plugin-marketplace/plugin-marketplace-item/plugin-marketplace-item.component';
@@ -66,6 +67,7 @@ import { PluginComponent } from './component/plugin/plugin.component';
 import { PluginElectronService } from './services/plugin-electron.service';
 import { PluginLoaderService } from './services/plugin-loader.service';
 import { PluginService } from './services/plugin.service';
+import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 
 @NgModule({
 	declarations: [
@@ -93,7 +95,9 @@ import { PluginService } from './services/plugin.service';
 		DialogInstallationValidationComponent,
 		CdnFormComponent,
 		GauzyFormComponent,
-		NpmFormComponent
+		NpmFormComponent,
+		DialogCreateSourceComponent,
+		SourceContainerComponent
 	],
 	imports: [
 		CommonModule,

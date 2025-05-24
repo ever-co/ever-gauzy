@@ -35,7 +35,10 @@ export class PluginService {
 				reportProgress: true,
 				observe: 'events'
 			})
-			.pipe(this.handleProgressResponse<IPlugin>());
+			.pipe(
+				this.handleProgressResponse<IPlugin>(),
+				map((res) => ({ ...res, plugin: res?.data }))
+			);
 	}
 
 	public update(pluginId: ID, plugin: Partial<IPlugin>): Observable<IPlugin> {
@@ -93,7 +96,10 @@ export class PluginService {
 				reportProgress: true,
 				observe: 'events'
 			})
-			.pipe(this.handleProgressResponse<IPluginVersion>());
+			.pipe(
+				this.handleProgressResponse<IPluginVersion>(),
+				map((res) => ({ ...res, version: res?.data }))
+			);
 	}
 
 	public getVersions<T>(pluginId: ID, params: T): Observable<IPagination<IPluginVersion>> {
@@ -125,18 +131,39 @@ export class PluginService {
 		});
 	}
 
+	public addSources(
+		pluginId: ID,
+		versionId: ID,
+		sources: IPluginSource[]
+	): Observable<{ sources?: IPluginSource[]; progress?: number }> {
+		const formData = new PluginFormDataBuilder(this.store)
+			.appendSource(sources, 'sources')
+			.appendFiles(sources)
+			.build();
+
+		return this.http
+			.post<IPluginSource[]>(`${this.endPoint}/${pluginId}/versions/${versionId}/sources`, formData, {
+				reportProgress: true,
+				observe: 'events'
+			})
+			.pipe(
+				this.handleProgressResponse<IPluginSource[]>(),
+				map((res) => ({ ...res, sources: res?.data }))
+			);
+	}
+
 	private handleProgressResponse<T>() {
 		return (source: Observable<HttpEvent<T>>) => {
 			return source.pipe(
 				map((event: HttpEvent<T>) => {
 					if (event.type === HttpEventType.UploadProgress) {
 						return {
-							plugin: null,
+							data: null,
 							progress: event.loaded / (event.total ?? event.loaded)
 						};
 					} else if (event instanceof HttpResponse) {
 						return {
-							plugin: event.body,
+							data: event.body as T,
 							progress: 1
 						};
 					}

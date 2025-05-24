@@ -5,7 +5,8 @@ marketplaceQuery.deleting$ | async; @let adding = versionQuery.creating$ | async
 @let installed = installed$ | async; @let loading = marketplaceQuery.isLoading$ | async; @let disabled = editing ||
 installing || uninstalling || deleting || adding; @let selectedVersion = versionQuery.version$ | async; @let uploading =
 marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ | async; @let sources =
-this.sourceQuery.sources$ | async; @let selectedSource = this.sourceQuery.source$ | async;
+this.sourceQuery.sources$ | async; @let selectedSource = this.sourceQuery.source$ | async; @let creatingSource =
+this.sourceQuery.creating$ | async;
 
 <nb-card class="content-active first plugin-details-card">
 	<nb-card-header class="d-flex align-items-center justify-content-between">
@@ -418,13 +419,25 @@ this.sourceQuery.sources$ | async; @let selectedSource = this.sourceQuery.source
 				(click)="addVersion()"
 				class="mr-2 action primary soft"
 			>
-				<nb-icon
-					*gauzySpinnerButton="(adding || uploading) && isSelected"
-					icon="plus-outline"
-					class="mr-1"
-				></nb-icon>
+				<nb-icon *gauzySpinnerButton="adding && isSelected" icon="plus-outline" class="mr-1"></nb-icon>
 				{{ 'BUTTONS.ADD_VERSION' | translate }}
-				@if(uploading){
+				@if(uploading && adding){
+				<span> {{ progress | percent : '1.2-2' }} </span>
+				}
+			</button>
+
+			<button
+				nbButton
+				type="button"
+				status="basic"
+				[disabled]="disabled"
+				size="small"
+				(click)="addSource()"
+				class="mr-2 action info"
+			>
+				<nb-icon *gauzySpinnerButton="creatingSource && isSelected" icon="plus-outline" class="mr-1"></nb-icon>
+				{{ 'Add More Sources' | translate }}
+				@if(uploading && creatingSource){
 				<span> {{ progress | percent : '1.2-2' }} </span>
 				}
 			</button>
