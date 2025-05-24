@@ -1,15 +1,10 @@
-import { IPluginSource } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
-
-import { PluginSource } from '../../../domain/entities/plugin-source.entity';
-import { PluginVersion } from '../../../domain/entities/plugin-version.entity';
 import { Plugin } from '../../../domain/entities/plugin.entity';
 import { PluginSourceService } from '../../../domain/services/plugin-source.service';
 import { PluginVersionService } from '../../../domain/services/plugin-version.service';
 import { PluginService } from '../../../domain/services/plugin.service';
-import { IPluginVersion } from '../../../shared/models/plugin-version.model';
 import { IPlugin } from '../../../shared/models/plugin.model';
 import { CreatePluginCommand } from '../../commands/create-plugin.command';
 
@@ -49,8 +44,8 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 
 			// Process source and version if provided
 			if (input.version.sources.length > 0) {
-				const savedSource = await this.createPluginSource(input.version.sources);
-				await this.createPluginVersion(input.version, savedPlugin, savedSource);
+				const savedSource = await this.sourceService.createSources(input.version.sources);
+				await this.versionService.createVersion(input.version, savedPlugin, savedSource);
 			}
 
 			await queryRunner.commitTransaction();
@@ -67,38 +62,5 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 			// Release queryRunner resources
 			await queryRunner.release();
 		}
-	}
-
-	/**
-	 * Creates a plugin version
-	 *
-	 * @param versionData - Version data to create
-	 * @param plugin - Associated plugin
-	 */
-	private async createPluginVersion(
-		versionData: IPluginVersion,
-		plugin: IPlugin,
-		sources: IPluginSource[]
-	): Promise<void> {
-		if (!versionData) {
-			throw new BadRequestException('Version data is required');
-		}
-		const version = Object.assign(new PluginVersion(), { ...versionData, plugin, sources });
-		await this.versionService.save(version);
-	}
-
-	/**
-	 * Creates a plugin source
-	 *
-	 * @param sources - Source data to create
-	 * @param plugin - Associated plugin
-	 * @returns The created plugin source
-	 */
-	private async createPluginSource(sources: IPluginSource[]): Promise<IPluginSource[]> {
-		if (!sources) {
-			throw new BadRequestException('Source data is required');
-		}
-		const data = sources.map((source) => Object.assign(new PluginSource(), source));
-		return this.sourceService.saveSources(data);
 	}
 }
