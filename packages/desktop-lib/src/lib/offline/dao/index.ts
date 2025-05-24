@@ -5,3 +5,4 @@ export * from './task.dao';
 export * from './client.dao';
 export * from './tag.dao';
 export * from './timer.dao';
+export * from './kb-mouse-activity.dao';
