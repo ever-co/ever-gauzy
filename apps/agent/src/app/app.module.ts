@@ -50,7 +50,9 @@ import {
 	TokenInterceptor,
 	UnauthorizedInterceptor,
 	UpdaterModule,
-	serverConnectionFactory
+	serverConnectionFactory,
+	ServerDashboardModule,
+	ScreenCaptureModule
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { environment } from '../environments/environment';
@@ -96,6 +98,8 @@ if (environment.SENTRY_DSN) {
 		SetupModule,
 		SettingsModule,
 		UpdaterModule,
+		ServerDashboardModule,
+		ScreenCaptureModule,
 		ImageViewerModule,
 		NgSelectModule,
 		SplashScreenModule,
