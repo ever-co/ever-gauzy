@@ -27,6 +27,7 @@ import {
 import { IntegrationMakeComRoutes } from './integration-make-com.routes';
 import { AuthorizationComponent } from './components/make-com-authorize/make-com-authorize.component';
 import { IntegrationMakeComLayoutComponent } from './integration-make-com.layout.component';
+import { MakeComponent } from './components/make/make.component';
 
 @NgModule({
 	imports: [
@@ -57,6 +58,6 @@ import { IntegrationMakeComLayoutComponent } from './integration-make-com.layout
 		SharedModule,
 		TableComponentsModule
 	],
-	declarations: [IntegrationMakeComLayoutComponent, AuthorizationComponent]
+	declarations: [IntegrationMakeComLayoutComponent, MakeComponent, AuthorizationComponent]
 })
 export class IntegrationMakeComUiModule {}
