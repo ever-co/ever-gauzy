@@ -1,4 +1,3 @@
-import { app } from 'electron';
 import { TMouseEvents, TKbMouseActivity } from './i-kb-mouse';
 
 /**

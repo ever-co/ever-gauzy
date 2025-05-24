@@ -6,7 +6,6 @@ import * as moment from 'moment';
 import { AgentLogger } from '../agent-logger';
 import { environment } from '../../environments/environment';
 import * as fs from 'node:fs';
-import * as path from 'node:path';
 
 class PushActivities {
 	static instance: PushActivities;
