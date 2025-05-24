@@ -92,7 +92,7 @@ export async function getScreenshot(args: TArgScreen): Promise<TScreenShot[]> {
 		const imgs: TScreenShot[] = await Promise.all(screens.map((buffer) => saveTempImageStream(buffer)));
 		return imgs;
 	} catch (error) {
-		console.log('error', error);
+		console.log('Error capturing screenshot:', error);
 		return [];
 	}
 }

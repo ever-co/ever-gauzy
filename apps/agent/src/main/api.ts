@@ -1,6 +1,6 @@
 import { LocalStore, TTimeSlot } from '@gauzy/desktop-lib';
 import { getAuthConfig, getApiBaseUrl } from './util';
-import fetch, { HeadersInit } from 'node-fetch';
+import fetch, { HeadersInit, Response } from 'node-fetch';
 import * as moment from 'moment';
 import * as fs from 'node:fs';
 import { FormData } from 'undici';
@@ -47,15 +47,15 @@ export class ApiService {
 		return baseUrl;
 	}
 
-	post(uriPath: string, payload: Record<string, unknown>) {
+	post(uriPath: string, payload: Record<string, unknown>): Promise<Response> {
 		return this.request(uriPath, { method: 'POST', body: JSON.stringify(payload) })
 	}
 
-	postFile(uriPath: string, payload: any) {
+	postFile(uriPath: string, payload: any): Promise<Response> {
 		return this.request(uriPath, { method: 'POST', body: payload, headers: payload.getHeaders() })
 	}
 
-	saveTimeSlot(payload: TTimeSlot) {
+	saveTimeSlot(payload: TTimeSlot): Promise<Response> {
 		const path: string = '/api/timesheet/time-slot';
 		return this.post(path, payload);
 	}
@@ -92,7 +92,7 @@ export class ApiService {
 
 		try {
 			const response = await fetch(url, requestOptions);
-			console.log('response status', response.status);
+			console.log(`API ${options.method} ${path}: ${response.status} ${response.statusText}`);
 			if (!response.ok) {
 				console.warn('[Response Error]', response.status, response.statusText);
 				const error = new Error(`API error: ${response.status} ${response.statusText}`);

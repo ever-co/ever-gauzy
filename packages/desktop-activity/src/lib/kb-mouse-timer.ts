@@ -25,7 +25,7 @@ export class KbMouseTimer {
 		this.screenshotIntervalSeconds = seconds;
 	}
 
-	public onFlush(callback: (timeData: { timeStart: Date; timeEnd: Date }) => void): void {
+	public onFlush(callback: (timeData: { timeStart: Date; timeEnd: Date }, screenshot?: boolean) => void): void {
 		this.onFlushCallback = callback;
 	}
 

@@ -34,14 +34,14 @@ class PushActivities {
 			this.kbMousePool = KbMouseActivityPool.getInstance();
 			this.kbMousePool.setCallback(this.saveActivities.bind(this));
 			this.kbMousePool.setErrorCallback(this.poolErrorHandler.bind(this));
-			this.kbMousePool.setPollingInterval(environment.AGENT_POOL_ACTIVITY_INTERVAL || 5000);
+			this.kbMousePool.setPollingInterval(Number(environment.AGENT_POOL_ACTIVITY_INTERVAL || 5000));
 		}
 	}
 
 	startPooling() {
 		try {
 			this.kbMousePool?.start();
-			this.agentLogger.info('Pulling scheduler started');
+			this.agentLogger.info('Polling scheduler started');
 		} catch (error) {
 			console.error('Failed to start push activity pooling', error);
 			this.agentLogger.error(`Failed to start push activity pooling ${JSON.stringify(error)}`);
@@ -89,6 +89,12 @@ class PushActivities {
 			if (!pathTemp) {
 				return;
 			}
+
+			if (!fs.existsSync(pathTemp)) {
+				this.agentLogger.info(`temporarry image doesn't exists ${pathTemp}`);
+				return;
+			}
+
 			await this.apiService.uploadImages(
 				{
 					tenantId: auth.user.employee.tenantId,
@@ -141,9 +147,12 @@ class PushActivities {
 	async saveActivities() {
 		try {
 			const activity = await this.getOldestActivity();
-			this.agentLogger.info('Got 1 activity from temp');
+			if (!activity?.id) {
+				this.agentLogger.info('Got 0 activity from temp');
+			}
 			if (activity?.id) {
 				// remove activity from temp local database
+				this.agentLogger.info('Got 1 activity from temp');
 				try {
 					this.agentLogger.info('Preparing send activity to service');
 					await this.saveTimeSlot(activity);
@@ -169,7 +178,7 @@ class PushActivities {
 
 	poolErrorHandler(error: Error) {
 		console.error(error);
-		this.agentLogger.error(`Activity pulling scheduler error ${JSON.stringify(error)}`);
+		this.agentLogger.error(`Activity polling scheduler error ${JSON.stringify(error)}`);
 	}
 }
 

@@ -4196,7 +4196,8 @@
 			"REGISTRY": "NPM Registry",
 			"AUTH_TOKEN": "Authentication Token",
 			"PRIVATE_REGISTRY_URL": "Private Registry URL",
-			"PLUGIN_INSTALL_CDN_ERROR": "The server URL mustn't be empty."
+			"PLUGIN_INSTALL_CDN_ERROR": "The server URL mustn't be empty.",
+			"TRACK_KEYBOARD_MOUSE": "Exact Input Tracking"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
 		"OF_HRS": "Of {{ limit }} hrs",

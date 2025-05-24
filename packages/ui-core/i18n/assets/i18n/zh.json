@@ -4068,7 +4068,8 @@
 			"REGISTRY": "NPM注册表",
 			"AUTH_TOKEN": "认证令牌",
 			"PRIVATE_REGISTRY_URL": "私有注册表URL",
-			"PLUGIN_INSTALL_CDN_ERROR": "服务器URL不能为空。"
+			"PLUGIN_INSTALL_CDN_ERROR": "服务器URL不能为空。",
+			"TRACK_KEYBOARD_MOUSE": "精确输入跟踪"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "每周限制已超过。",
 		"OF_HRS": "的{{ limit }}小时",
@@ -4779,6 +4780,8 @@
 	},
 	"SERVER_API": "API服务器",
 	"SERVER_API_LOG": "API服务器日志",
+	"AGENT_APP": "代理",
+	"AGENT_LOG": "代理日志",
 	"COMING_SOON": "This page is coming soon!",
 	"PLUGIN": {
 		"VIDEO": {

@@ -21,7 +21,7 @@ export class AgentLogger {
 		return `${moment().format('YYYY-MM-DD HH:mm:ss')} ${type}: ${message}`;
 	}
 
-	async showMessage(message: string) {
+	showMessage(message: string) {
 		this.appWindow.logWindow?.webContents?.send('log_state', {
 			msg: message
 		});
@@ -41,7 +41,7 @@ export class AgentLogger {
 
 	error(message: string) {
 		const logMsg = this.formatMessage(message, 'Error');
-		console.log(logMsg);
+		console.error(logMsg);
 		this.showMessage(logMsg);
 	}
 }
