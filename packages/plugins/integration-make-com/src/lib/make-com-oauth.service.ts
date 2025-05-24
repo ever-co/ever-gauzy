@@ -376,13 +376,13 @@ export class MakeComOAuthService {
 			if (enabledSetting) {
 				enabledSetting.settingsValue = 'true';
 			} else {
-				enabledSetting = {
+				enabledSetting = await this.integrationSettingService.create({
 					settingsName: MakeSettingName.IS_ENABLED,
 					settingsValue: 'true',
 					integrationId: integrationTenant.id,
 					tenantId: integrationTenant.tenantId,
 					organizationId: integrationTenant.organizationId
-				};
+				});
 			}
 			await this.integrationSettingService.save(enabledSetting);
 			this.logger.log(`Successfully handled OAuth callback for tenant ${tenantId}`);
