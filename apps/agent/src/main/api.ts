@@ -52,7 +52,7 @@ export class ApiService {
 	}
 
 	postFile(uriPath: string, payload: any): Promise<Response> {
-		return this.request(uriPath, { method: 'POST', body: payload, headers: payload.getHeaders() })
+		return this.request(uriPath, { method: 'POST', body: payload, headers: {} }, true)
 	}
 
 	saveTimeSlot(payload: TTimeSlot): Promise<Response> {
@@ -78,11 +78,12 @@ export class ApiService {
 			headers?: HeadersInit;
 			method: 'POST' | 'GET';
 			body?: string;
-		} = { method: 'GET' }
+		} = { method: 'GET' },
+		isFile?: boolean
 	) {
 		const url = this.baseURL + path;
 		const headers = {
-			...this.defaultHeaders,
+			...(isFile ? this.defaultHeadersForm : this.defaultHeaders),
 			...options.headers
 		};
 

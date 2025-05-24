@@ -55,9 +55,12 @@ class PullActivities {
 			this.getListenerModule();
 		}
 		try {
+			const appSetting = getAppSetting();
 			if (!this.isStarted) {
 				this.agentLogger.info('Listener keyboard and mouse starting');
-				this.listenerModule.startListener();
+				if (appSetting?.kbMouseTracking) {
+					this.startListener();
+				}
 				this.timerProcess();
 				this.isStarted = true;
 			}
@@ -71,6 +74,7 @@ class PullActivities {
 			this.getListenerModule();
 		}
 		this.listenerModule.startListener();
+		this.agentLogger.info('Keyboard and mouse activity listener starting');
 	}
 
 	stopListener() {
@@ -78,6 +82,7 @@ class PullActivities {
 			this.getListenerModule();
 		}
 		this.listenerModule.stopListener();
+		this.agentLogger.info('Keyboard and mouse activity listener stopped');
 	}
 
 	stopTracking() {

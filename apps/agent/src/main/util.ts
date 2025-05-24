@@ -23,7 +23,8 @@ export type TAppSetting = {
 		updatePeriod: number
 	},
 	screenshotNotification: boolean,
-	simpleScreenshotNotification: boolean
+	simpleScreenshotNotification: boolean,
+	kbMouseTracking: boolean
 }
 
 export function resolveHtmlPath(htmlFileName: string, hash: string) {
