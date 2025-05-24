@@ -8,6 +8,7 @@ export interface IPluginSourceState {
 	pluginId: ID;
 	versionId: ID;
 	count: number;
+	creating: boolean;
 }
 
 export function createInitialPluginSourceState(): IPluginSourceState {
@@ -16,6 +17,7 @@ export function createInitialPluginSourceState(): IPluginSourceState {
 		source: null,
 		pluginId: null,
 		versionId: null,
+		creating: false,
 		count: 0
 	};
 }

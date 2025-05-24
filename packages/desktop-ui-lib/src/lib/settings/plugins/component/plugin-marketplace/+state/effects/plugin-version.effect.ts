@@ -61,7 +61,8 @@ export class PluginVersionEffects {
 					tap((created) => {
 						this.pluginVersionStore.update((state) => ({
 							version: created,
-							versions: [created, ...state.versions]
+							versions: [created, ...state.versions],
+							count: state.count + 1
 						}));
 						this.toastrService.success(
 							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.VERSION.CREATED', {

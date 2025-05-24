@@ -13,6 +13,7 @@ export class PluginSourceQuery extends Query<IPluginSourceState> {
 	public readonly pluginId$: Observable<ID> = this.select((state) => state.pluginId);
 	public readonly count$: Observable<number> = this.select((state) => state.count);
 	public readonly isLoading$: Observable<boolean> = this.selectLoading();
+	public readonly creating$: Observable<boolean> = this.select((state) => state.creating);
 
 	constructor(readonly pluginSourceStore: PluginSourceStore) {
 		super(pluginSourceStore);
