@@ -877,6 +877,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.electronService.ipcRenderer.send(value ? 'show_ao' : 'hide_ao');
 	}
 
+	async toggleTrackKbMouse(value: boolean) {
+		this.updateSetting(value, 'kbMouseTracking');
+		this.electronService.ipcRenderer.invoke('mouse_kb_tracking', value);
+	}
+
 	public async restartApp(): Promise<void> {
 		this._isRestart$.next(true);
 		if (!this.isServer && !this.authSetting.isLogout) {

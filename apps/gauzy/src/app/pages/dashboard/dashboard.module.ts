@@ -19,7 +19,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgChartsModule } from 'ng2-charts';
+import { BaseChartDirective } from 'ng2-charts';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { SwiperModule } from 'swiper/angular';
@@ -84,7 +84,6 @@ const THIRD_PARTY_MODULES = [
 	LineChartModule,
 	NgSelectModule,
 	NgxPermissionsModule.forChild(),
-	NgChartsModule,
 	SwiperModule,
 	TranslateModule.forChild()
 ];
@@ -114,6 +113,7 @@ const COMPONENTS = [
 		DashboardRoutingModule,
 		...NB_MODULES,
 		...THIRD_PARTY_MODULES,
+		BaseChartDirective,
 		// Feature Modules
 		RecordsHistoryModule,
 		ProfitHistoryModule,

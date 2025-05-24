@@ -4068,7 +4068,8 @@
 			"REGISTRY": "NPM-register",
 			"AUTH_TOKEN": "Authenticatietoken",
 			"PRIVATE_REGISTRY_URL": "URL van privéregister",
-			"PLUGIN_INSTALL_CDN_ERROR": "De server-URL mag niet leeg zijn."
+			"PLUGIN_INSTALL_CDN_ERROR": "De server-URL mag niet leeg zijn.",
+			"TRACK_KEYBOARD_MOUSE": "Exacte invoerregistratie"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weeklimiet overschreden",
 		"OF_HRS": "Van {{ limit }} uur",
@@ -4779,6 +4780,8 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "API Server Log",
+	"AGENT_APP": "Agent",
+	"AGENT_LOG": "Agentlogboek",
 	"COMING_SOON": "This page is coming soon!",
 	"PLUGIN": {
 		"VIDEO": {

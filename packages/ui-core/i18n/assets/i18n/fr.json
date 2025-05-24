@@ -4059,7 +4059,8 @@
 			"REGISTRY": "Registre NPM",
 			"AUTH_TOKEN": "Jeton d'authentification",
 			"PRIVATE_REGISTRY_URL": "URL du registre privé",
-			"PLUGIN_INSTALL_CDN_ERROR": "L'URL du serveur ne doit pas être null."
+			"PLUGIN_INSTALL_CDN_ERROR": "L'URL du serveur ne doit pas être null.",
+			"TRACK_KEYBOARD_MOUSE": "Suivi précis des saisies"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "La limite hebdomadaire est dépassée.",
 		"OF_HRS": "De {{ limit }} heures",
@@ -4770,6 +4771,8 @@
 	},
 	"SERVER_API": "Serveur API",
 	"SERVER_API_LOG": "Journal du serveur API",
+	"AGENT_APP": "Agent",
+	"AGENT_LOG": "Journal de l'agent",
 	"COMING_SOON": "This page is coming soon!",
 	"PLUGIN": {
 		"VIDEO": {

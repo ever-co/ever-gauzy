@@ -4064,7 +4064,8 @@
 			"REGISTRY": "NPM-Register",
 			"AUTH_TOKEN": "Authentifizierungs-Token",
 			"PRIVATE_REGISTRY_URL": "Private Registry-URL",
-			"PLUGIN_INSTALL_CDN_ERROR": "Die Server-URL darf nicht leer sein."
+			"PLUGIN_INSTALL_CDN_ERROR": "Die Server-URL darf nicht leer sein.",
+			"TRACK_KEYBOARD_MOUSE": "Genaue Eingabeverfolgung"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Wöchentliches Limit überschritten",
 		"OF_HRS": "Von {{ limit }} Stunden",
@@ -4775,6 +4776,8 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "API Server Log",
+	"AGENT_APP": "Agent",
+	"AGENT_LOG": "Agentenprotokoll",
 	"COMING_SOON": "This page is coming soon!",
 	"PLUGIN": {
 		"VIDEO": {

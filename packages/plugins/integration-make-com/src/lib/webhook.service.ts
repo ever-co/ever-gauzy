@@ -1,6 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { ConfigService } from '@gauzy/config';
 import { firstValueFrom } from 'rxjs';
 import { RequestContext } from '@gauzy/core';
 import { ITimerWebhookEvent, TimerEventType, TimerEventDataType } from './interfaces/timer-webhook.interface';
@@ -41,7 +41,7 @@ export class WebhookService {
 		}
 
 		// Fallback to the global webhook URL from the environment variable.
-		const globalWebhookUrl = this.configService.get<string>('MAKE_WEBHOOK_URL') || null;
+		const globalWebhookUrl = this.configService.get('makeCom')?.webhookUrl ?? null;
 		return { enabled: !!globalWebhookUrl, webhookUrl: globalWebhookUrl };
 	}
 

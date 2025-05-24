@@ -22,7 +22,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { NgChartsModule } from 'ng2-charts';
+import { BaseChartDirective } from 'ng2-charts';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import {
 	CandidateInterviewersService,
@@ -142,6 +142,7 @@ const COMPONENTS = [
 @NgModule({
 	imports: [
 		FullCalendarModule,
+		BaseChartDirective,
 		NbAccordionModule,
 		NbActionsModule,
 		NbBadgeModule,
@@ -161,7 +162,6 @@ const COMPONENTS = [
 		NbTabsetModule,
 		NbToggleModule,
 		NbTooltipModule,
-		NgChartsModule,
 		NgSelectModule,
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),

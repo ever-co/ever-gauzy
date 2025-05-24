@@ -14,9 +14,9 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { NgChartsModule } from 'ng2-charts';
-import { NgxPermissionsModule } from 'ngx-permissions';
 import { CKEditorModule } from 'ckeditor4-angular';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { BaseChartDirective } from 'ng2-charts';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PageRouteRegistryService, PermissionsGuard } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
@@ -68,7 +68,6 @@ const NB_MODULES = [
  */
 const THIRD_PARTY_MODULES = [
 	CKEditorModule,
-	NgChartsModule,
 	NgSelectModule,
 	NgxPermissionsModule.forRoot(),
 	TranslateModule.forRoot({
@@ -86,6 +85,7 @@ const THIRD_PARTY_MODULES = [
 		RouterModule.forChild([]),
 		...NB_MODULES,
 		...THIRD_PARTY_MODULES,
+		BaseChartDirective,
 		SharedModule,
 		TagsColorInputModule,
 		TableComponentsModule,

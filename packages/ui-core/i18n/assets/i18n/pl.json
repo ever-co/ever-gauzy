@@ -4067,7 +4067,8 @@
 			"REGISTRY": "Rejestr NPM",
 			"AUTH_TOKEN": "Token uwierzytelniający",
 			"PRIVATE_REGISTRY_URL": "Prywatny adres URL rejestru",
-			"PLUGIN_INSTALL_CDN_ERROR": "Adres URL serwera nie może być pusty."
+			"PLUGIN_INSTALL_CDN_ERROR": "Adres URL serwera nie może być pusty.",
+			"TRACK_KEYBOARD_MOUSE": "Dokładne śledzenie danych wejściowych"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Przekroczono limit tygodniowy",
 		"OF_HRS": "Z {{ limit }} godz",
@@ -4778,6 +4779,8 @@
 	},
 	"SERVER_API": "Serwer API",
 	"SERVER_API_LOG": "Dziennik serwera API",
+	"AGENT_APP": "Agent",
+	"AGENT_LOG": "Dziennik agenta",
 	"COMING_SOON": "This page is coming soon!",
 	"PLUGIN": {
 		"VIDEO": {

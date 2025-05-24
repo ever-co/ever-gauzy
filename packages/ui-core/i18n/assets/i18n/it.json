@@ -4068,7 +4068,8 @@
 			"REGISTRY": "Registro NPM",
 			"AUTH_TOKEN": "Token di autenticazione",
 			"PRIVATE_REGISTRY_URL": "URL del registro privato",
-			"PLUGIN_INSTALL_CDN_ERROR": "L'URL del server non deve essere vuoto."
+			"PLUGIN_INSTALL_CDN_ERROR": "L'URL del server non deve essere vuoto.",
+			"TRACK_KEYBOARD_MOUSE": "Tracciamento Input Preciso"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Limite settimanale superato",
 		"OF_HRS": "Di {{ limit }} ore",
@@ -4779,6 +4780,8 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "Registro del server API",
+	"AGENT_APP": "Agente",
+	"AGENT_LOG": "Registro Agente",
 	"COMING_SOON": "This page is coming soon!",
 	"PLUGIN": {
 		"VIDEO": {

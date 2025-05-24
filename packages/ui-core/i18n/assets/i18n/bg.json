@@ -4115,7 +4115,8 @@
 			"REGISTRY": "NPM регистър",
 			"AUTH_TOKEN": "Удостоверителен токен",
 			"PRIVATE_REGISTRY_URL": "URL на частен регистър",
-			"PLUGIN_INSTALL_CDN_ERROR": "URL адресът на сървъра не трябва да е празен."
+			"PLUGIN_INSTALL_CDN_ERROR": "URL адресът на сървъра не трябва да е празен.",
+			"TRACK_KEYBOARD_MOUSE": "Прецизно проследяване на въвеждането"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Седмичната лимита е превишена",
 		"OF_HRS": "От {{ limit }} часа",
@@ -4805,6 +4806,8 @@
 	},
 	"SERVER_API": "API сървър",
 	"SERVER_API_LOG": "Дневник на API сървъра",
+	"AGENT_APP": "Агент",
+	"AGENT_LOG": "Дневник на агента",
 	"COMING_SOON": "Тази страница ще бъде скоро!",
 	"PLUGIN": {
 		"VIDEO": {

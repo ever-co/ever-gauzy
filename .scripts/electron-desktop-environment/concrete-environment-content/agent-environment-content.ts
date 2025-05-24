@@ -30,7 +30,8 @@ export class AgentEnvironmentContent implements IContentGenerator {
 			IS_AGENT: ${true},
 			IS_DESKTOP: ${false},
 			IS_SERVER: ${false},
-			IS_SERVER_API: ${false}
+			IS_SERVER_API: ${false},
+			AGENT_POOL_ACTIVITY_INTERVAL: ${variable.AGENT_POOL_ACTIVITY_INTERVAL}
 		`;
 	}
 }

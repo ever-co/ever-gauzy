@@ -17,11 +17,6 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"dependencies": {
-		"@faker-js/faker": "^9.7.0",
-		"dayjs": "^1.11.4",
-		"resolve": "^1.20.0"
-	},
 	"scripts": {
 		"config": "yarn ts-node ./.scripts/configure.ts",
 		"config:dev": "yarn run config -- --environment=dev",
@@ -52,6 +47,11 @@
 		"build:package:plugin:integration-jira": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/plugins/integration-jira build",
 		"build:package:plugin:product-reviews": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/plugins/product-reviews build",
 		"postinstall.web": "yarn node ./decorate-angular-cli.js && yarn node tools/web/postinstall"
+	},
+	"dependencies": {
+		"@faker-js/faker": "^9.7.0",
+		"dayjs": "^1.11.4",
+		"resolve": "^1.20.0"
 	},
 	"devDependencies": {
 		"@4tw/cypress-drag-drop": "^2.1.0",

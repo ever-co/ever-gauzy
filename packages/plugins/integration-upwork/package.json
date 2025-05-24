@@ -52,7 +52,6 @@
 		"@types/express": "^5.0.1",
 		"@types/fs-extra": "5.0.2",
 		"@types/jest": "29.5.14",
-		"@types/multer": "^1.4.12",
 		"@types/node": "^20.14.9",
 		"typescript": "^5.8.3"
 	},

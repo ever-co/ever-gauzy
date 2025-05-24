@@ -12,20 +12,33 @@ import { tap } from 'rxjs/operators';
 import { NbJSThemeOptions, NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { ActiveElement, Chart, ChartConfiguration, ChartDataset, ChartEvent, ChartType, TooltipItem } from 'chart.js';
+import {
+	Chart,
+	LineController,
+	CategoryScale,
+	LinearScale,
+	PointElement,
+	LineElement,
+	ChartType,
+	ChartConfiguration,
+	ActiveElement,
+	ChartEvent,
+	TooltipItem,
+	ChartDataset
+} from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
-import annotationPlugin, { AnnotationPluginOptions } from 'chartjs-plugin-annotation';
+import AnnotationPlugin, { AnnotationPluginOptions } from 'chartjs-plugin-annotation';
 import { DEFAULT_STANDARD_WORK_HOURS_PER_DAY } from '@gauzy/constants';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ChartUtil } from './chart-utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
+	standalone: false,
 	selector: 'ngx-line-chart',
 	templateUrl: './line-chart.component.html',
 	styleUrls: ['./line-chart.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LineChartComponent extends TranslationBaseComponent implements OnChanges, OnDestroy, OnInit {
 	public lineChartType: ChartType = 'line';
@@ -104,7 +117,18 @@ export class LineChartComponent extends TranslationBaseComponent implements OnCh
 
 	constructor(private readonly themeService: NbThemeService, public readonly translate: TranslateService) {
 		super(translate);
-		Chart.register(annotationPlugin); // Register the annotation plugin globally
+		Chart.register(
+			// Controllers
+			LineController,
+			// Scales
+			CategoryScale,
+			LinearScale,
+			// Elements
+			PointElement,
+			LineElement,
+			// Plugins
+			AnnotationPlugin
+		);
 	}
 
 	ngOnInit() {

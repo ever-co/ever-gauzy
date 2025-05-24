@@ -3,7 +3,9 @@ import {
 	SplashScreen,
 	createSetupWindow,
 	AuthWindow,
-	createSettingsWindow
+	createSettingsWindow,
+	createServerWindow,
+	ScreenCaptureNotification
 } from '@gauzy/desktop-window';
 import { BrowserWindow } from 'electron';
 import { resolveHtmlPath } from './util';
@@ -14,8 +16,10 @@ class AppWindow {
 	splashScreenWindow: SplashScreen;
 	setupWindow: BrowserWindow;
 	rootPath: string;
-	authWindow: AuthWindow | null = null;
-	settingWindow: BrowserWindow | null = null;
+	authWindow: AuthWindow | null;
+	settingWindow: BrowserWindow | null;
+	logWindow: BrowserWindow | null;
+	notificationWindow: ScreenCaptureNotification | null;
 	private static instance: AppWindow;
 	constructor(rootPath: string) {
 		if (!AppWindow.instance) {
@@ -138,6 +142,43 @@ class AppWindow {
 		} catch (error) {
 			console.error('Failed to initialize setting window', error);
 			throw new Error(`Setting window initialization failed ${error.message}`);
+		}
+	}
+
+	async initLogWindow(): Promise<void> {
+		try {
+			if (!this.logWindow) {
+				console.log('this log window', this.logWindow);
+				this.logWindow = await createServerWindow(
+					null,
+					this.getUiPath('server-dashboard'),
+					this.getPreloadPath(),
+					true
+				);
+				const maxHeight = 480;
+				const maxWidth = 640;
+				this.logWindow.setSize(maxWidth, maxHeight);
+				// this.LogWindow.webContents.toggleDevTools();
+				this.logWindow.on('close', () => {
+					this.logWindow.hide();
+				});
+			}
+		} catch (error) {
+			console.error('Failed to initialize log window', error);
+			throw new Error(`Log window initialization failed ${error.message}`);
+		}
+	}
+
+	async initScreenShotNotification() {
+		try {
+			if (!this.notificationWindow) {
+				this.notificationWindow = new ScreenCaptureNotification(this.getUiPath('screen-capture'));
+				this.notificationWindow.loadURL();
+				return;
+			}
+			this.notificationWindow.show();
+		} catch (error) {
+
 		}
 	}
 }
