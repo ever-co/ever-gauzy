@@ -6799,10 +6799,10 @@
   dependencies:
     tslib "^2.0.0"
 
-"@ng-select/ng-select@^14.7.0":
-  version "14.7.0"
-  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-14.7.0.tgz#7ae6121d3160d5d3194f9026626e0692922e085a"
-  integrity sha512-KVSrMt5JoMzf1U9RyyS1WfWXxWyy62rqSeu0cV+OKA5SV1q8CVxgScqXwzUaoCRdBVvRcpRNEFpjWdbsprrUJw==
+"@ng-select/ng-select@^14.8.0":
+  version "14.8.0"
+  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-14.8.0.tgz#43148bfa343506f1ee147e7d483edc1f01d97b66"
+  integrity sha512-KoJd6en9tC1F4aOn3FJ/iibWuI2KI7TAR1GznIIWEApSVPOS+oUiqt7YYPSa6EqVka0YaeUA8pvQvKJ+tCwYAw==
   dependencies:
     tslib "^2.3.1"
 
@@ -13702,10 +13702,10 @@ angular-eslint@^19.3.0:
     "@typescript-eslint/types" "^8.0.0"
     "@typescript-eslint/utils" "^8.0.0"
 
-angular2-smart-table@^3.6.1:
-  version "3.6.1"
-  resolved "https://registry.yarnpkg.com/angular2-smart-table/-/angular2-smart-table-3.6.1.tgz#90e08717ca6176a79331971dec07bee0417fcb50"
-  integrity sha512-qAc4+obs+vSacO48g20NBsNZNfDRHlCPX8Pib9EA4zc4//eSqc3aVrJAjgiBtKGvDhe/cNan6ZIzxlSPxS3wag==
+angular2-smart-table@^3.6.2:
+  version "3.6.2"
+  resolved "https://registry.yarnpkg.com/angular2-smart-table/-/angular2-smart-table-3.6.2.tgz#18524be85ded07607e905ba9f5b4281c4dbb8d0f"
+  integrity sha512-bnFWgKBReG5DRKgyLwLkePSzHlsrLBpzRkleqIeQL0kS5be7yhqnmHSb7JPyhWKGxS2FZqMDC2DYnTF0T8vcRg==
   dependencies:
     tslib "~2.7.0"
 
@@ -28774,10 +28774,10 @@ ngx-draggable-dom@^19.0.7:
   dependencies:
     tslib "^2.3.1"
 
-ngx-echarts@^8.0.1:
-  version "8.0.1"
-  resolved "https://registry.yarnpkg.com/ngx-echarts/-/ngx-echarts-8.0.1.tgz#413428a3693bfd2685158b1d169a67ad1d556e74"
-  integrity sha512-CP+WnCcnMCNpCL9BVmDIZmhGSVPnkJhhFbQEKt0nrwV0L6d4QTAGZ+e4y6G1zTTFKkIMPHpaO0nhtDRgSXAW/w==
+ngx-echarts@^19.0.0:
+  version "19.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-echarts/-/ngx-echarts-19.0.0.tgz#9b2c739366738f171efdd2430bfe5703a8f8ea99"
+  integrity sha512-CtW6RSNmUs5CENUDJqI9VSAVG9zqFjDLfzpJRLNn/HA35j10/D+sEuRH7RHB1/DLmojoD9rA6q0R57jlN0hqwg==
   dependencies:
     tslib "^2.3.0"
 
