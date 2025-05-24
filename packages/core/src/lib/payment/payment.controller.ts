@@ -22,7 +22,7 @@ import {
 	PermissionsEnum,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from '../core';
+import { CrudController, BaseQueryDTO } from '../core';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
@@ -126,7 +126,7 @@ export class PaymentController extends CrudController<Payment> {
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() params: PaginationParams<Payment>): Promise<IPagination<IPayment>> {
+	async pagination(@Query() params: BaseQueryDTO<Payment>): Promise<IPagination<IPayment>> {
 		return await this.paymentService.pagination(params);
 	}
 
@@ -140,7 +140,7 @@ export class PaymentController extends CrudController<Payment> {
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<Payment>): Promise<IPagination<IPayment>> {
+	async findAll(@Query() params: BaseQueryDTO<Payment>): Promise<IPagination<IPayment>> {
 		return await this.paymentService.findAll(params);
 	}
 

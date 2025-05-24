@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
-import { IOrganization } from '@gauzy/contracts';
+import { ID, IOrganization } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../../core/context';
 import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
@@ -27,59 +27,64 @@ export class OrganizationBelongsToUserConstraint implements ValidatorConstraintI
 	 * @param value - The organization ID or organization object.
 	 * @returns {Promise<boolean>} - True if the user belongs to the organization, otherwise false.
 	 */
-	async validate(value: IOrganization['id'] | IOrganization): Promise<boolean> {
+	async validate(value: ID | IOrganization): Promise<boolean> {
 		if (isEmpty(value)) {
 			return true;
 		}
 
-		// 'value' can be either a string (organization ID) or an organization object.
-		const organizationId: string = typeof value === 'string' ? value : value.id;
+		const organizationId = typeof value === 'string' ? value : value.id;
 
 		// Use the consolidated ORM logic function
-		return await this.checkOrganizationExistence(organizationId);
+		return this.checkOrganizationExistence(organizationId);
 	}
 
 	/**
 	 * Checks if the given organization exists for the current user in the database.
 	 *
-	 * @param organizationId The ID of the organization.
+	 * @param organizationId - The ID of the organization.
 	 * @returns {Promise<boolean>} - True if found, false otherwise.
 	 */
 	async checkOrganizationExistence(organizationId: string): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
 		const userId = RequestContext.currentUserId();
 
+		if (!tenantId || !userId) {
+			return false;
+		}
+
 		try {
 			switch (ormType) {
-				case MultiORMEnum.MikroORM:
-					return !!(await this.mikroOrmUserOrganizationRepository.findOneOrFail({
+				case MultiORMEnum.MikroORM: {
+					await this.mikroOrmUserOrganizationRepository.findOneOrFail({
 						tenantId,
 						userId,
 						organizationId
-					}));
-				case MultiORMEnum.TypeORM:
-					return !!(await this.typeOrmUserOrganizationRepository.findOneByOrFail({
+					});
+					return true;
+				}
+				case MultiORMEnum.TypeORM: {
+					await this.typeOrmUserOrganizationRepository.findOneByOrFail({
 						tenantId,
 						userId,
 						organizationId
-					}));
+					});
+					return true;
+				}
 				default:
-					throw new Error(`Not implemented for ${ormType}`);
+					throw new Error(`ORM type "${ormType}" not implemented.`);
 			}
-		} catch (error) {
+		} catch {
 			return false;
 		}
 	}
 
 	/**
-	 * Gets the default error message when the validation fails.
-	 * @param validationArguments - Validation arguments containing the value.
+	 * Gets the default error message when validation fails.
+	 *
 	 * @returns {string} - Default error message.
 	 */
-	defaultMessage(validationArguments?: ValidationArguments): string {
-		const { value } = validationArguments;
-		return `The user with ID ${RequestContext.currentUserId()} is not associated with the specified organization (${JSON.stringify(
-			value
-		)}).`;
+	defaultMessage(): string {
+		const userId = RequestContext.currentUserId();
+		return `The user with ID ${userId} is not associated with the specified organization.`;
 	}
 }

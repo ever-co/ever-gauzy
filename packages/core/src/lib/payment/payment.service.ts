@@ -14,7 +14,7 @@ import {
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { Payment } from './payment.entity';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { LIKE_OPERATOR } from '../core/util';
 import { getDateRangeFormat, getDaysBetweenDates } from '../core/utils';
@@ -247,7 +247,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	 * @param filter - The pagination parameters including custom filters.
 	 * @returns A promise resolving to paginated PaymentEntity data.
 	 */
-	public pagination(filter?: PaginationParams<any>): Promise<IPagination<IPayment>> {
+	public pagination(filter?: BaseQueryDTO<any>): Promise<IPagination<IPayment>> {
 		if (filter?.where) {
 			const { where } = filter;
 

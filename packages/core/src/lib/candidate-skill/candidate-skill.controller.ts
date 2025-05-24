@@ -2,7 +2,7 @@ import { Controller, HttpStatus, Get, Query, UseGuards, Post, Body, Put, Param }
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
 import { ICandidateSkill, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { CandidateSkill } from './candidate-skill.entity';
 import { CandidateSkillService } from './candidate-skill.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -28,7 +28,7 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() params: PaginationParams<CandidateSkill>): Promise<IPagination<ICandidateSkill>> {
+	async pagination(@Query() params: BaseQueryDTO<CandidateSkill>): Promise<IPagination<ICandidateSkill>> {
 		return await this.candidateSkillService.paginate(params);
 	}
 
@@ -53,7 +53,7 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<CandidateSkill>): Promise<IPagination<ICandidateSkill>> {
+	async findAll(@Query() params: BaseQueryDTO<CandidateSkill>): Promise<IPagination<ICandidateSkill>> {
 		return await this.candidateSkillService.findAll({
 			where: params.where
 		});

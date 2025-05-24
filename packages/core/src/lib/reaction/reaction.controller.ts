@@ -17,7 +17,7 @@ import { DeleteResult, UpdateResult } from 'typeorm';
 import { IReaction, ID, IPagination } from '@gauzy/contracts';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
-import { CrudController, OptionParams, PaginationParams } from './../core/crud';
+import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from './../core/crud';
 import { Reaction } from './reaction.entity';
 import { ReactionService } from './reaction.service';
 import { ReactionCreateCommand, ReactionUpdateCommand } from './commands';
@@ -49,7 +49,7 @@ export class ReactionController extends CrudController<Reaction> {
 	})
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<Reaction>): Promise<IPagination<IReaction>> {
+	async findAll(@Query() params: BaseQueryDTO<Reaction>): Promise<IPagination<IReaction>> {
 		return await this.reactionService.findAll(params);
 	}
 
@@ -74,7 +74,7 @@ export class ReactionController extends CrudController<Reaction> {
 	@Get('/:id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() params: OptionParams<Reaction>
+		@Query() params: FindOptionsQueryDTO<Reaction>
 	): Promise<Reaction> {
 		// Retrieve the reaction using the service
 		return await this.reactionService.findOneByIdString(id, params);

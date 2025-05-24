@@ -2,7 +2,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Controller, HttpStatus, Get, UseGuards, Put, Param, Body, Query, Post } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
 import { ID, IEquipmentSharingPolicy, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
@@ -39,7 +39,7 @@ export class EquipmentSharingPolicyController extends CrudController<EquipmentSh
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(
-		@Query() filter: PaginationParams<EquipmentSharingPolicy>
+		@Query() filter: BaseQueryDTO<EquipmentSharingPolicy>
 	): Promise<IPagination<IEquipmentSharingPolicy>> {
 		return await this.equipmentSharingPolicyService.paginate(filter);
 	}
@@ -63,7 +63,7 @@ export class EquipmentSharingPolicyController extends CrudController<EquipmentSh
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.EQUIPMENT_SHARING_POLICY_VIEW)
 	@Get('/')
 	async findAll(
-		@Query() params: PaginationParams<EquipmentSharingPolicy>
+		@Query() params: BaseQueryDTO<EquipmentSharingPolicy>
 	): Promise<IPagination<IEquipmentSharingPolicy>> {
 		return await this.equipmentSharingPolicyService.findAll(params);
 	}

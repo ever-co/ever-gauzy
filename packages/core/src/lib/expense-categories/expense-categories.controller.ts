@@ -2,7 +2,7 @@ import { Controller, UseGuards, Get, Query, Put, Param, Body, Post } from '@nest
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IExpenseCategory, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -26,7 +26,7 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 	/**
 	 * Retrieves a paginated list of all expense categories.
 	 *
-	 * @param {PaginationParams<ExpenseCategory>} options - Pagination options.
+	 * @param {BaseQueryDTO<ExpenseCategory>} options - Pagination options.
 	 * @returns {Promise<IPagination<IExpenseCategory>>} - Paginated expense category data.
 	 *
 	 * @example
@@ -40,14 +40,14 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() options: PaginationParams<ExpenseCategory>): Promise<IPagination<IExpenseCategory>> {
+	async pagination(@Query() options: BaseQueryDTO<ExpenseCategory>): Promise<IPagination<IExpenseCategory>> {
 		return this._expenseCategoriesService.paginate(options);
 	}
 
 	/**
 	 * Retrieves a list of all expense categories.
 	 *
-	 * @param {PaginationParams<ExpenseCategory>} options - Query parameters for filtering expense categories.
+	 * @param {BaseQueryDTO<ExpenseCategory>} options - Query parameters for filtering expense categories.
 	 * @returns {Promise<IPagination<IExpenseCategory>>} - List of expense categories.
 	 *
 	 * @example
@@ -60,7 +60,7 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 	@ApiResponse({ status: 403, description: 'Forbidden' })
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('/')
-	async findAll(@Query() options: PaginationParams<ExpenseCategory>): Promise<IPagination<IExpenseCategory>> {
+	async findAll(@Query() options: BaseQueryDTO<ExpenseCategory>): Promise<IPagination<IExpenseCategory>> {
 		return await this._expenseCategoriesService.findAll(options);
 	}
 

@@ -4,7 +4,7 @@ import { DeleteResult } from 'typeorm';
 import { ID, IFavorite } from '@gauzy/contracts';
 import { UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from '../shared/guards';
-import { CrudController, PaginationParams } from '../core/crud';
+import { CrudController, BaseQueryDTO } from '../core/crud';
 import { Favorite } from './favorite.entity';
 import { FavoriteService } from './favorite.service';
 import { CreateFavoriteDTO } from './dto';
@@ -41,7 +41,7 @@ export class FavoriteController extends CrudController<Favorite> {
 
 	/**
 	 * @description Find favorites by employee
-	 * @param {PaginationParams<Favorite>} params Filter criteria to find favorites
+	 * @param {BaseQueryDTO<Favorite>} params Filter criteria to find favorites
 	 * @returns A promise that resolves to paginated list of favorites
 	 * @memberof FavoriteController
 	 */
@@ -57,7 +57,7 @@ export class FavoriteController extends CrudController<Favorite> {
 	})
 	@Get('/employee')
 	@UseValidationPipe({ transform: true })
-	async findFavoritesByEmployee(@Query() params: PaginationParams<Favorite>) {
+	async findFavoritesByEmployee(@Query() params: BaseQueryDTO<Favorite>) {
 		return await this.favoriteService.findFavoritesByEmployee(params);
 	}
 
@@ -79,7 +79,7 @@ export class FavoriteController extends CrudController<Favorite> {
 	})
 	@Get('/type')
 	@UseValidationPipe({ transform: true })
-	async getFavoriteDetails(@Query() params: PaginationParams<Favorite>) {
+	async getFavoriteDetails(@Query() params: BaseQueryDTO<Favorite>) {
 		return await this.favoriteService.getFavoriteDetails(params);
 	}
 

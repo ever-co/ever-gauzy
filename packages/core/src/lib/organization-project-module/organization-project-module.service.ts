@@ -27,7 +27,7 @@ import {
 	ITask
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { LIKE_OPERATOR } from '../core/util';
 import { OrganizationProjectModule } from './organization-project-module.entity';
@@ -213,7 +213,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	 * @memberof OrganizationProjectModuleService
 	 */
 	async getEmployeeProjectModules(
-		options: PaginationParams<OrganizationProjectModule>
+		options: BaseQueryDTO<OrganizationProjectModule>
 	): Promise<IPagination<IOrganizationProjectModule>> {
 		try {
 			const { where } = options;
@@ -292,7 +292,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	 * @memberof OrganizationProjectModuleService
 	 */
 	async findTeamProjectModules(
-		options: PaginationParams<OrganizationProjectModule>
+		options: BaseQueryDTO<OrganizationProjectModule>
 	): Promise<IPagination<IOrganizationProjectModule>> {
 		try {
 			const { where } = options;
@@ -508,7 +508,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	 */
 	private applyPaginationAndOptions(
 		query: SelectQueryBuilder<OrganizationProjectModule>,
-		params: PaginationParams<OrganizationProjectModule>
+		params: BaseQueryDTO<OrganizationProjectModule>
 	) {
 		if (isNotEmpty(params)) {
 			const options: FindManyOptions<OrganizationProjectModule> = {};

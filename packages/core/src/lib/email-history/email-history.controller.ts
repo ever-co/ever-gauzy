@@ -15,7 +15,7 @@ import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UpdateEmailHistoryDTO } from './dto';
-import { PaginationParams } from './../core/crud';
+import { BaseQueryDTO } from './../core/crud';
 import { ResendEmailHistoryDTO } from './dto/resend-email-history.dto';
 import { CommandBus } from '@nestjs/cqrs';
 import { EmailHistoryResendCommand } from './commands';
@@ -46,7 +46,7 @@ export class EmailHistoryController {
 	})
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<EmailHistory>): Promise<IPagination<IEmailHistory>> {
+	async findAll(@Query() params: BaseQueryDTO<EmailHistory>): Promise<IPagination<IEmailHistory>> {
 		return await this._emailHistoryService.findAll(params);
 	}
 

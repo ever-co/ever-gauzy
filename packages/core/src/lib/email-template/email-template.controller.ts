@@ -15,7 +15,7 @@ import {
 import { QueryBus, CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FindOptionsWhere, UpdateResult } from 'typeorm';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -62,7 +62,7 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	 */
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() options: PaginationParams<EmailTemplate>): Promise<IPagination<IEmailTemplate>> {
+	async pagination(@Query() options: BaseQueryDTO<EmailTemplate>): Promise<IPagination<IEmailTemplate>> {
 		return await this.emailTemplateService.paginate(options);
 	}
 
@@ -141,7 +141,7 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	 */
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() options: PaginationParams<EmailTemplate>): Promise<IPagination<IEmailTemplate>> {
+	async findAll(@Query() options: BaseQueryDTO<EmailTemplate>): Promise<IPagination<IEmailTemplate>> {
 		return await this.queryBus.execute(new EmailTemplateQuery(options));
 	}
 

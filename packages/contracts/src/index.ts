@@ -108,6 +108,7 @@ export * from './lib/password-reset.model';
 export * from './lib/payment.model';
 export * from './lib/pipeline-stage.model';
 export * from './lib/pipeline.model';
+export * from './lib/plain-object.model';
 export * from './lib/product.model';
 export * from './lib/project.model';
 export * from './lib/proposal.model';

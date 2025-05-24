@@ -12,7 +12,7 @@ import {
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { MultiORMEnum, getDateRangeFormat, parseTypeORMFindToMikroOrm } from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
@@ -424,7 +424,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param options Pagination options
 	 * @returns Promise containing paginated employees and total count
 	 */
-	public async pagination(options: PaginationParams<any>): Promise<IPagination<IEmployee>> {
+	public async pagination(options: BaseQueryDTO<any>): Promise<IPagination<IEmployee>> {
 		try {
 			// Retrieve the current tenant ID from the RequestContext
 			const tenantId = RequestContext.currentTenantId();

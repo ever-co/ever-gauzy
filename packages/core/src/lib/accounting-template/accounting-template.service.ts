@@ -12,7 +12,7 @@ import {
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { AccountingTemplate } from './accounting-template.entity';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmAccountingTemplateRepository } from './repository/type-orm-accounting-template.repository';
@@ -233,7 +233,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	 * @param params
 	 * @returns
 	 */
-	async findAll(params: PaginationParams<AccountingTemplate>): Promise<IPagination<IAccountingTemplate>> {
+	async findAll(params: BaseQueryDTO<AccountingTemplate>): Promise<IPagination<IAccountingTemplate>> {
 		const query = this.typeOrmRepository.createQueryBuilder('accounting_template');
 		query.setFindOptions({
 			select: {

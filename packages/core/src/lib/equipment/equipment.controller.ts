@@ -1,4 +1,4 @@
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Controller, UseGuards, HttpStatus, Get, Put, Param, Body, Query, Post } from '@nestjs/common';
 import { IEquipment, IPagination } from '@gauzy/contracts';
@@ -30,7 +30,7 @@ export class EquipmentController extends CrudController<Equipment> {
 	})
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() filter: PaginationParams<Equipment>): Promise<IPagination<IEquipment>> {
+	async pagination(@Query() filter: BaseQueryDTO<Equipment>): Promise<IPagination<IEquipment>> {
 		return this.equipmentService.pagination(filter);
 	}
 
