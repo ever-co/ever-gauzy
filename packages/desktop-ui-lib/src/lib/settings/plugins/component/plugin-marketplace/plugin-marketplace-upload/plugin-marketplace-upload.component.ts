@@ -14,7 +14,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../services';
 import { SourceContext } from './plugin-source/creator/source.context';
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
 	selector: 'lib-plugin-marketplace-upload',
@@ -36,12 +35,6 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	today: Date; // Ensures a proper date comparison
 	destroy$ = new Subject<void>();
 	selectedSourceType: PluginSourceType = PluginSourceType.CDN;
-	showSourceSelector = false;
-	private readonly sourceIcons = new Map<PluginSourceType, string>([
-		[PluginSourceType.CDN, 'layers-outline'],
-		[PluginSourceType.GAUZY, 'cube-outline'],
-		[PluginSourceType.NPM, 'code-outline']
-	]);
 
 	constructor(
 		private readonly dialogRef: NbDialogRef<PluginMarketplaceUploadComponent>,
@@ -202,22 +195,6 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 	public get isFormInvalid(): boolean {
 		return this.pluginForm.invalid;
-	}
-
-	public drop(event: CdkDragDrop<string[]>) {
-		moveItemInArray(this.sources.controls, event.previousIndex, event.currentIndex);
-	}
-
-	public openSourceTypeSelector() {
-		this.showSourceSelector = true;
-	}
-
-	public closeSourceTypeSelector() {
-		this.showSourceSelector = false;
-	}
-
-	public getSourceIcon(sourceType: PluginSourceType): string {
-		return this.sourceIcons.get(sourceType);
 	}
 
 	ngOnDestroy(): void {
