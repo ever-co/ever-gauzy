@@ -6799,10 +6799,10 @@
   dependencies:
     tslib "^2.0.0"
 
-"@ng-select/ng-select@^14.8.0":
-  version "14.8.0"
-  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-14.8.0.tgz#43148bfa343506f1ee147e7d483edc1f01d97b66"
-  integrity sha512-KoJd6en9tC1F4aOn3FJ/iibWuI2KI7TAR1GznIIWEApSVPOS+oUiqt7YYPSa6EqVka0YaeUA8pvQvKJ+tCwYAw==
+"@ng-select/ng-select@^14.8.1":
+  version "14.8.1"
+  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-14.8.1.tgz#07f9d4f6417e66f725fb9cf24101c548d5faeb27"
+  integrity sha512-ZAl8BkUzVGrkXfuGBHqU2NylK/Uh5aP5iEENPoFXwSgsuyIGg/J5c+JQIN6eRC2GvmorsXDfhCdBJhJ0E+/gwA==
   dependencies:
     tslib "^2.3.1"
 
