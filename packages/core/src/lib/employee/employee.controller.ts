@@ -18,7 +18,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';
 import { PermissionsEnum, LanguagesEnum, IPagination, IEmployee, ID } from '@gauzy/contracts';
-import { CrudController, OptionParams, PaginationParams } from './../core/crud';
+import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { TenantOrganizationBaseDTO } from './../core/dto';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
@@ -192,7 +192,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() params: PaginationParams<Employee>): Promise<IPagination<IEmployee>> {
+	async pagination(@Query() params: BaseQueryDTO<Employee>): Promise<IPagination<IEmployee>> {
 		return await this._employeeService.pagination(params);
 	}
 
@@ -250,7 +250,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() options: PaginationParams<Employee>): Promise<IPagination<IEmployee>> {
+	async findAll(@Query() options: BaseQueryDTO<Employee>): Promise<IPagination<IEmployee>> {
 		// Enforce that only active, non-archived users are retrieved
 		const where = {
 			...(options.where || {}),
@@ -287,7 +287,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get('/:id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() params: OptionParams<Employee>
+		@Query() params: FindOptionsQueryDTO<Employee>
 	): Promise<IEmployee> {
 		// Check permissions to determine the correct ID to retrieve
 		const searchCriteria = {

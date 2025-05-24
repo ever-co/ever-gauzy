@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { PermissionsEnum, ICandidateFeedbackCreateInput, IPagination, ICandidateFeedback } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { CandidateFeedback } from './candidate-feedbacks.entity';
 import { CandidateFeedbacksService } from './candidate-feedbacks.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -101,7 +101,7 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 	})
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() filter: PaginationParams<CandidateFeedback>): Promise<IPagination<ICandidateFeedback>> {
+	async pagination(@Query() filter: BaseQueryDTO<CandidateFeedback>): Promise<IPagination<ICandidateFeedback>> {
 		return this.candidateFeedbacksService.paginate(filter);
 	}
 

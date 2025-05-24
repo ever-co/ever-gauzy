@@ -15,7 +15,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { ID, IPagination, ITaskLinkedIssue, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from '../../core/crud';
+import { CrudController, BaseQueryDTO } from '../../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
 import { Permissions } from '../../shared/decorators';
@@ -57,7 +57,7 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<TaskLinkedIssue>): Promise<IPagination<ITaskLinkedIssue>> {
+	async findAll(@Query() params: BaseQueryDTO<TaskLinkedIssue>): Promise<IPagination<ITaskLinkedIssue>> {
 		return this.taskLinkedIssueService.findAll(params);
 	}
 

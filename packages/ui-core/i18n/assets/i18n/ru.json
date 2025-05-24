@@ -4085,7 +4085,8 @@
 			"REGISTRY": "Реестр NPM",
 			"AUTH_TOKEN": "Токен аутентификации",
 			"PRIVATE_REGISTRY_URL": "URL частного реестра",
-			"PLUGIN_INSTALL_CDN_ERROR": "URL сервера не должен быть пустым."
+			"PLUGIN_INSTALL_CDN_ERROR": "URL сервера не должен быть пустым.",
+			"TRACK_KEYBOARD_MOUSE": "Точное отслеживание ввода"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Еженедельный лимит превышен",
 		"OF_HRS": "Из {{ limit }} часов",
@@ -4775,6 +4776,8 @@
 	},
 	"SERVER_API": "API-сервер",
 	"SERVER_API_LOG": "Журнал API-сервера",
+	"AGENT_APP": "Агент",
+	"AGENT_LOG": "Журнал агента",
 	"COMING_SOON": "Эта страница скоро появится!",
 	"PLUGIN": {
 		"VIDEO": {

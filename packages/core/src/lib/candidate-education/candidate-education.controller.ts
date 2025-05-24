@@ -2,7 +2,7 @@ import { Controller, HttpStatus, Get, Query, UseGuards, Post, Body, Put, Param }
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
 import { ICandidateEducation, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { CandidateEducationService } from './candidate-education.service';
 import { CandidateEducation } from './candidate-education.entity';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -28,7 +28,7 @@ export class CandidateEducationController extends CrudController<CandidateEducat
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() params: PaginationParams<CandidateEducation>): Promise<IPagination<ICandidateEducation>> {
+	async pagination(@Query() params: BaseQueryDTO<CandidateEducation>): Promise<IPagination<ICandidateEducation>> {
 		return await this.candidateEducationService.paginate(params);
 	}
 
@@ -53,7 +53,7 @@ export class CandidateEducationController extends CrudController<CandidateEducat
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<CandidateEducation>): Promise<IPagination<ICandidateEducation>> {
+	async findAll(@Query() params: BaseQueryDTO<CandidateEducation>): Promise<IPagination<ICandidateEducation>> {
 		return await this.candidateEducationService.findAll({
 			where: params.where
 		});

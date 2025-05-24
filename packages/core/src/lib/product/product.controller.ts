@@ -15,7 +15,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import { PermissionsEnum, IProductTranslated, IImageAsset, IPagination, LanguagesEnum, ID } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { ProductService } from './product.service';
 import { Product } from './product.entity';
@@ -235,7 +235,7 @@ export class ProductController extends CrudController<Product> {
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(
-		@Query() filter: PaginationParams<Product>,
+		@Query() filter: BaseQueryDTO<Product>,
 		@LanguageDecorator() themeLanguage: LanguagesEnum
 	): Promise<IPagination<Product>> {
 		return this.productService.pagination(filter, themeLanguage);

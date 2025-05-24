@@ -8,7 +8,7 @@ import {
 	ITaskSizeFindInput,
 	ITaskSizeUpdateInput
 } from '@gauzy/contracts';
-import { CrudFactory, PaginationParams } from '../../core/crud';
+import { CrudFactory, BaseQueryDTO } from '../../core/crud';
 import { CountQueryDTO } from '../../shared/dto';
 import { TenantPermissionGuard } from '../../shared/guards';
 import { UseValidationPipe } from '../../shared/pipes';
@@ -25,7 +25,7 @@ export class TaskSizeController extends CrudFactory<
 	ITaskSizeCreateInput,
 	ITaskSizeUpdateInput,
 	ITaskSizeFindInput
->(PaginationParams, CreateTaskSizeDTO, UpdateTaskSizeDTO, CountQueryDTO) {
+>(BaseQueryDTO, CreateTaskSizeDTO, UpdateTaskSizeDTO, CountQueryDTO) {
 	constructor(protected readonly taskSizeService: TaskSizeService) {
 		super(taskSizeService);
 	}

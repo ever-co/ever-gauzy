@@ -36,7 +36,7 @@ import { InviteService } from './invite.service';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
-import { PaginationParams } from './../core/crud';
+import { BaseQueryDTO } from './../core/crud';
 import {
 	InviteAcceptCommand,
 	InviteAcceptOrganizationContactCommand,
@@ -309,7 +309,7 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
 	@UseValidationPipe()
 	@Get('/')
-	async findAll(@Query() options: PaginationParams<Invite>): Promise<IPagination<IInvite>> {
+	async findAll(@Query() options: BaseQueryDTO<Invite>): Promise<IPagination<IInvite>> {
 		return await this.inviteService.findAllInvites(options);
 	}
 

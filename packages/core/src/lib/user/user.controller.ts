@@ -18,7 +18,7 @@ import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagg
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { ID, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { UUIDValidationPipe, ParseJsonPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
@@ -133,7 +133,7 @@ export class UserController extends CrudController<User> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get('/pagination')
-	async pagination(@Query() options: PaginationParams<User>): Promise<IPagination<IUser>> {
+	async pagination(@Query() options: BaseQueryDTO<User>): Promise<IPagination<IUser>> {
 		return await this._userService.paginate(options);
 	}
 
@@ -156,7 +156,7 @@ export class UserController extends CrudController<User> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get('/')
-	async findAll(@Query() options: PaginationParams<User>): Promise<IPagination<IUser>> {
+	async findAll(@Query() options: BaseQueryDTO<User>): Promise<IPagination<IUser>> {
 		return await this._userService.findAll(options);
 	}
 

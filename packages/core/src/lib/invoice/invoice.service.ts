@@ -1,4 +1,4 @@
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { Between, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
@@ -255,7 +255,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * @param filter
 	 * @returns
 	 */
-	public pagination(filter?: PaginationParams<any>) {
+	public pagination(filter?: BaseQueryDTO<any>) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if (where.tags) {

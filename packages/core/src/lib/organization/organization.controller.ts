@@ -3,14 +3,15 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FindOptionsWhere } from 'typeorm';
 import { ID, IOrganization, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController } from './../core/crud';
+import { BaseQueryDTO, CrudController } from './../core/crud';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
-import { CreateOrganizationDTO, OrganizationFindOptionsDTO, UpdateOrganizationDTO } from './dto';
+import { CreateOrganizationDTO, UpdateOrganizationDTO } from './dto';
+import { OrganizationFindOptionsQueryDTO } from './dto/organization-find-options.dto';
 
 @ApiTags('Organization')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -55,7 +56,7 @@ export class OrganizationController extends CrudController<Organization> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() options: OrganizationFindOptionsDTO<Organization>): Promise<IPagination<IOrganization>> {
+	async pagination(@Query() options: BaseQueryDTO<Organization>): Promise<IPagination<IOrganization>> {
 		return await this.organizationService.paginate(options);
 	}
 
@@ -81,7 +82,7 @@ export class OrganizationController extends CrudController<Organization> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get('/')
 	@UseValidationPipe({ transform: true })
-	async findAll(@Query() options: OrganizationFindOptionsDTO<Organization>): Promise<IPagination<IOrganization>> {
+	async findAll(@Query() options: BaseQueryDTO<Organization>): Promise<IPagination<IOrganization>> {
 		return await this.organizationService.findAll(options);
 	}
 
@@ -113,7 +114,7 @@ export class OrganizationController extends CrudController<Organization> {
 	@UseValidationPipe({ transform: true })
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() options: OrganizationFindOptionsDTO<Organization>
+		@Query() options: OrganizationFindOptionsQueryDTO
 	): Promise<IOrganization> {
 		return await this.organizationService.findOneByIdString(id, options);
 	}

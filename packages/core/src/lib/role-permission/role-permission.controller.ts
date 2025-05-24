@@ -14,7 +14,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { ID, IPagination, IRolePermission, IRolePermissions, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -76,7 +76,7 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	/**
 	 * GET role permissions for a specific tenant with pagination.
 	 *
-	 * @param {PaginationParams<RolePermission>} query - The query parameters for pagination and filtering.
+	 * @param {BaseQueryDTO<RolePermission>} query - The query parameters for pagination and filtering.
 	 * @returns {Promise<IPagination<IRolePermission>>} - Returns a promise that resolves to a paginated list of role permissions.
 	 */
 	@ApiOperation({ summary: 'Retrieve role permissions for a specific tenant.' })
@@ -91,9 +91,7 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get(['/pagination', '/'])
-	async findAllRolePermissions(
-		@Query() query: PaginationParams<RolePermission>
-	): Promise<IPagination<IRolePermission>> {
+	async findAllRolePermissions(@Query() query: BaseQueryDTO<RolePermission>): Promise<IPagination<IRolePermission>> {
 		return this._rolePermissionService.findAllRolePermissions(query);
 	}
 

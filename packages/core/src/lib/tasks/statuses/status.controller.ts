@@ -13,7 +13,7 @@ import {
 import { TenantPermissionGuard } from './../../shared/guards';
 import { CountQueryDTO } from './../../shared/dto';
 import { UseValidationPipe } from '../../shared/pipes';
-import { CrudFactory, PaginationParams } from './../../core/crud';
+import { CrudFactory, BaseQueryDTO } from './../../core/crud';
 import { TaskStatusService } from './status.service';
 import { TaskStatus } from './status.entity';
 import { FindStatusesQuery } from './queries';
@@ -29,7 +29,7 @@ export class TaskStatusController extends CrudFactory<
 	ITaskStatusCreateInput,
 	ITaskStatusUpdateInput,
 	ITaskStatusFindInput
->(PaginationParams, CreateStatusDTO, UpdatesStatusDTO, CountQueryDTO) {
+>(BaseQueryDTO, CreateStatusDTO, UpdatesStatusDTO, CountQueryDTO) {
 	constructor(private readonly queryBus: QueryBus, protected readonly taskStatusService: TaskStatusService) {
 		super(taskStatusService);
 	}

@@ -251,6 +251,13 @@
 								| translate
 								}}
 							</nb-toggle>
+							<nb-toggle *ngIf="isAgent" [(ngModel)]="appSetting.trackKbMouse"
+								(ngModelChange)="toggleTrackKbMouse($event)"
+								[disabled]="appSetting?.timerStarted" status="basic">{{
+								'TIMER_TRACKER.SETTINGS.TRACK_KEYBOARD_MOUSE'
+								| translate
+								}}
+							</nb-toggle>
 						</nb-card-body>
 					</nb-card>
 				</div>

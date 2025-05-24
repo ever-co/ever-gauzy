@@ -11,7 +11,7 @@ import {
 import { CountQueryDTO } from '../../shared/dto';
 import { UseValidationPipe } from '../../shared/pipes';
 import { TenantPermissionGuard } from '../../shared/guards';
-import { CrudFactory, PaginationParams } from './../../core/crud';
+import { CrudFactory, BaseQueryDTO } from './../../core/crud';
 import { IssueType } from './issue-type.entity';
 import { IssueTypeService } from './issue-type.service';
 import { CreateIssueTypeDTO, IssueTypeQueryDTO, UpdateIssueTypeDTO } from './dto';
@@ -25,7 +25,7 @@ export class IssueTypeController extends CrudFactory<
 	IIssueTypeCreateInput,
 	IIssueTypeUpdateInput,
 	IIssueTypeFindInput
->(PaginationParams, CreateIssueTypeDTO, UpdateIssueTypeDTO, CountQueryDTO) {
+>(BaseQueryDTO, CreateIssueTypeDTO, UpdateIssueTypeDTO, CountQueryDTO) {
 	constructor(protected readonly issueTypeService: IssueTypeService) {
 		super(issueTypeService);
 	}

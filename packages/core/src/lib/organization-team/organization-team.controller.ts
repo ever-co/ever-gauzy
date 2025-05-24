@@ -15,7 +15,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import { PermissionsEnum, IPagination, IOrganizationTeam, ID } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
@@ -60,7 +60,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('/me')
 	@UseValidationPipe()
-	async findMyTeams(@Query() params: PaginationParams<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
+	async findMyTeams(@Query() params: BaseQueryDTO<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
 		return await this._organizationTeamService.findMyTeams(params);
 	}
 
@@ -86,7 +86,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() params: PaginationParams<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
+	async pagination(@Query() params: BaseQueryDTO<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
 		return await this._organizationTeamService.pagination(params);
 	}
 
@@ -111,7 +111,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
+	async findAll(@Query() params: BaseQueryDTO<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
 		return await this._organizationTeamService.findAll(params);
 	}
 
