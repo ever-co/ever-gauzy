@@ -21,7 +21,7 @@ export type TTimeSlot = {
 	mouse: number,
 	overall: number,
 	startedAt: string,
-	activities: Record<string, unknown>,
+	activities: Record<string, unknown>[],
 	timeLogId?: string,
 	organizationId: string,
 	tenantId: string,

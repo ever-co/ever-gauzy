@@ -1,7 +1,6 @@
 import * as electron from 'electron';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as os from 'node:os';
 
 type TArgScreen = {
 	monitor: {
@@ -24,22 +23,16 @@ export type TScreenShot = {
 	fullScreen: Buffer
 }
 
-function saveTempImageStream(screen: TScreenShot): Promise<TScreenShot> {
-	return new Promise((resolve, reject) => {
-		const buffer = screen.fullScreen;
-		const filePath = path.join(os.tmpdir(), `screenshot-${Date.now()}.png`);
-		const writeStream = fs.createWriteStream(filePath);
 
-		writeStream.on('finish', () => resolve({
-			...screen,
-			filePath
-		}));
-
-		writeStream.on('error', reject);
-
-		writeStream.write(buffer);
-		writeStream.end();
-	});
+async function saveTempImage(screen: TScreenShot): Promise<TScreenShot> {
+	const buffer = screen.fullScreen;
+	const tempPath = electron.app.getPath('temp');
+	const filePath = path.join(tempPath, `screenshot-${Date.now()}.png`);
+	fs.writeFileSync(filePath, buffer);
+	return {
+		...screen,
+		filePath
+	}
 }
 
 export async function getScreenshot(args: TArgScreen): Promise<TScreenShot[]> {
@@ -89,7 +82,7 @@ export async function getScreenshot(args: TArgScreen): Promise<TScreenShot[]> {
 				}
 			}
 		});
-		const imgs: TScreenShot[] = await Promise.all(screens.map((buffer) => saveTempImageStream(buffer)));
+		const imgs: TScreenShot[] = await Promise.all(screens.map((buffer) => saveTempImage(buffer)));
 		return imgs;
 	} catch (error) {
 		console.log('Error capturing screenshot:', error);

@@ -147,6 +147,6 @@
         "@sentry/types": "^7.101.1",
         "auto-launch": "5.0.5",
         "custom-electron-titlebar": "^4.2.8",
-		"undici": "^6.10.2"
+		"form-data": "^4.0.1"
     }
 }
