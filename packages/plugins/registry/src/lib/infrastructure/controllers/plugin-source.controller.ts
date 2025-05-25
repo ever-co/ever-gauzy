@@ -15,6 +15,7 @@ import {
 	Delete,
 	Get,
 	Param,
+	Patch,
 	Post,
 	Query,
 	UseGuards,
@@ -31,18 +32,19 @@ import {
 	ApiSecurity,
 	ApiTags
 } from '@nestjs/swagger';
+import { CreatePluginSourceCommand } from '../../application/commands/create-plugin-source.command';
+import { DeletePluginSourceCommand } from '../../application/commands/delete-plugin-source.command';
+import { RecoverPluginSourceCommand } from '../../application/commands/recover-plugin-source.command';
 import { ListPluginSourcesQuery } from '../../application/queries/list-plugin-sources.query';
 import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
 import { LazyAnyFileInterceptor } from '../../core/interceptors/lazy-any-file.interceptor';
+import { CreatePluginSourceDTO } from '../../shared/dto/create-plugin-source.dto';
 import { FileDTO } from '../../shared/dto/file.dto';
 import { PluginSourceDTO } from '../../shared/dto/plugin-source.dto';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provider';
 import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
-import { CreatePluginSourceCommand } from '../../application/commands/create-plugin-source.command';
-import { CreatePluginSourceDTO } from '../../shared/dto/create-plugin-source.dto';
-import { DeletePluginSourceCommand } from '../../application/commands/delete-plugin-source.command';
 
 @ApiTags('Plugin Sources')
 @ApiBearerAuth('Bearer')
@@ -228,5 +230,64 @@ export class PluginSourceController {
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID
 	): Promise<void> {
 		return this.commandBus.execute(new DeletePluginSourceCommand(sourceId, versionId, pluginId));
+	}
+
+	/**
+	 * Recover a soft-deleted plugin source.
+	 */
+	@ApiOperation({
+		summary: 'Recover a deleted plugin source',
+		description: 'Soft-recovers a previously deleted plugin source using its UUID and, version UUID the plugin ID.'
+	})
+	@ApiParam({
+		name: 'pluginId',
+		type: String,
+		format: 'uuid',
+		description: "UUID of the plugin to which the source's version belongs",
+		required: true
+	})
+	@ApiParam({
+		name: 'versionId',
+		type: String,
+		format: 'uuid',
+		description: "UUID of the plugin source's version on to recover",
+		required: true
+	})
+	@ApiParam({
+		name: 'versionId',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin source to recover',
+		required: true
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin source recovered successfully.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin source record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'User does not have permission to recover this plugin source.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@UseGuards(PluginOwnerGuard)
+	@Patch(':sourceId')
+	public async recover(
+		@Param('sourceId', UUIDValidationPipe) sourceId: ID,
+		@Param('versionId', UUIDValidationPipe) versionId: ID,
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID
+	): Promise<void> {
+		return this.commandBus.execute(new RecoverPluginSourceCommand(sourceId, versionId, pluginId));
 	}
 }

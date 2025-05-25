@@ -7,6 +7,7 @@ import { DeletePluginSourceCommandHandler } from './delete-command-plugin-source
 import { DeletePluginCommandHandler } from './delete-plugin-command.handler';
 import { DeletePluginVersionCommandHandler } from './delete-plugin-version-command.handler';
 import { InstallPluginCommandHandler } from './install-plugin-command.handler';
+import { RecoverPluginSourceCommandHandler } from './recover-plugin-source-command.handler';
 import { RecoverPluginVersionCommandHandler } from './recover-plugin-version-command.handler';
 import { UninstallPluginCommandHandler } from './uninstall-plugin-command.handler';
 import { UpdatePluginCommandHandler } from './update-plugin-command.handler';
@@ -27,5 +28,6 @@ export const commands = [
 	RecoverPluginVersionCommandHandler,
 	UpdatePluginVersionCommandHandler,
 	CreatePluginSourceCommandHandler,
-	DeletePluginSourceCommandHandler
+	DeletePluginSourceCommandHandler,
+	RecoverPluginSourceCommandHandler
 ];
