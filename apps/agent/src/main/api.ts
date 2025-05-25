@@ -50,7 +50,7 @@ export class ApiService {
 
 	get defaultHeadersForm() {
 		return {
-			'Authorization': `Bearer ${this.auth.token}`,
+			'Authorization': `Bearer ${this.auth?.token}`,
 			'tenant-id': this.auth?.user?.employee.tenantId,
 			'organization-id': this.auth?.user?.employee.organizationId
 		}
@@ -110,7 +110,7 @@ export class ApiService {
 			const response = await fetch(url, requestOptions);
 			console.log(`API ${options.method} ${path}: ${response.status} ${response.statusText}`);
 			if (!response.ok) {
-				const respText = response.text();
+				const respText = await response.text();
 				console.warn('[Response Error]', response.status, respText);
 				const error = new Error(`API error: ${response.status} ${respText}`);
 				error['status'] = response.status;
