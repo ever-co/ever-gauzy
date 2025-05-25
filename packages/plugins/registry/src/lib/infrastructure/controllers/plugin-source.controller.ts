@@ -12,6 +12,7 @@ import {
 	BadRequestException,
 	Body,
 	Controller,
+	Delete,
 	Get,
 	Param,
 	Post,
@@ -41,6 +42,7 @@ import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provide
 import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
 import { CreatePluginSourceCommand } from '../../application/commands/create-plugin-source.command';
 import { CreatePluginSourceDTO } from '../../shared/dto/create-plugin-source.dto';
+import { DeletePluginSourceCommand } from '../../application/commands/delete-plugin-source.command';
 
 @ApiTags('Plugin Sources')
 @ApiBearerAuth('Bearer')
@@ -167,5 +169,64 @@ export class PluginSourceController {
 		// Implement your matching logic here
 		// This could be based on filename, metadata, or other criteria
 		return files.find((file) => file.originalname.includes(source.fileName));
+	}
+
+	/**
+	 * Deletes a plugin source by ID.
+	 */
+	@ApiOperation({
+		summary: 'Delete plugin source',
+		description: 'Soft removes a plugin source from the system based on the provided ID.'
+	})
+	@ApiParam({
+		name: 'sourceId',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin source to delete',
+		required: true
+	})
+	@ApiParam({
+		name: 'versionId',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the associated plugin version to delete',
+		required: true
+	})
+	@ApiParam({
+		name: 'pluginId',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the associated plugin to delete',
+		required: true
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin source deleted successfully.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin source record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'User does not have permission to delete this plugin source.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@UseGuards(PluginOwnerGuard)
+	@Delete(':sourceId')
+	public async delete(
+		@Param('sourceId', UUIDValidationPipe) sourceId: ID,
+		@Param('versionId', UUIDValidationPipe) versionId: ID,
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID
+	): Promise<void> {
+		return this.commandBus.execute(new DeletePluginSourceCommand(sourceId, versionId, pluginId));
 	}
 }
