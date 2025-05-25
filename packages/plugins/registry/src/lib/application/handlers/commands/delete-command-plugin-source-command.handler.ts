@@ -29,7 +29,7 @@ export class DeletePluginSourceCommandHandler implements ICommandHandler<DeleteP
 		});
 
 		if (count <= 1) {
-			throw new ForbiddenException('Cannot delete last version of plugin');
+			throw new ForbiddenException('Cannot delete last source of plugin');
 		}
 
 		const result = await this.pluginSourceService.softDelete(sourceId, {
