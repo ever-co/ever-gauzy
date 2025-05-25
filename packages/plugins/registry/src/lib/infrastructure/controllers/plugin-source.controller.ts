@@ -84,8 +84,8 @@ export class PluginSourceController {
 		format: 'uuid',
 		description: 'The UUID of the version for which a new source is being created.'
 	})
-	@ApiBody({ type: PluginSourceDTO, description: 'The data required to create a new plugin source.' })
-	@ApiResponse({ status: 201, description: 'Plugin source successfully created.', type: PluginSourceDTO })
+	@ApiBody({ type: CreatePluginSourceDTO, description: 'The data required to create a new plugin source.' })
+	@ApiResponse({ status: 201, description: 'Plugin source successfully created.', type: [PluginSourceDTO] })
 	@ApiResponse({ status: 400, description: 'Bad request - Validation failed.' })
 	@ApiResponse({ status: 404, description: 'Version not found.' })
 	@ApiConsumes('multipart/form-data')
@@ -97,7 +97,7 @@ export class PluginSourceController {
 	)
 	@UseGuards(PluginOwnerGuard)
 	@Post()
-	public async createVersion(
+	public async create(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
 		@Body() input: CreatePluginSourceDTO,
