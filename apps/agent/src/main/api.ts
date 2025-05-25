@@ -1,9 +1,9 @@
 import { LocalStore, TTimeSlot } from '@gauzy/desktop-lib';
-import { getAuthConfig, getApiBaseUrl } from './util';
-import fetch, { HeadersInit, Response } from 'node-fetch';
+import { getAuthConfig, getApiBaseUrl, TAuthConfig } from './util';
+import fetch, { HeadersInit } from 'node-fetch';
 import * as moment from 'moment';
 import * as fs from 'node:fs';
-import { FormData } from 'undici';
+import * as FormData from 'form-data';
 
 type UploadParams = {
 	timeSlotId?: string;
@@ -12,12 +12,23 @@ type UploadParams = {
 	recordedAt: string;
 }
 
+export type TResponseTimeSlot = {
+	id?: string,
+	recordedAt?: string,
+
+}
+
+export type TResponseScreenshot = {
+	id?: string,
+	recordedAt?: string,
+	timeSlotId?: string
+}
+
 export class ApiService {
 	static instance: ApiService;
-	get token() {
+	get auth(): Partial<TAuthConfig> {
 		const auth = getAuthConfig();
-		const token = auth.token;
-		return token;
+		return auth;
 	}
 
 	static getInstance(): ApiService {
@@ -30,14 +41,18 @@ export class ApiService {
 
 	get defaultHeaders() {
 		return {
-			'Authorization': `Bearer ${this.token}`,
-			'Content-Type': 'application/json'
+			'Authorization': `Bearer ${this.auth?.token}`,
+			'Content-Type': 'application/json',
+			'tenant-id': this.auth?.user?.employee.tenantId,
+			'organization-id': this.auth?.user?.employee.organizationId
 		}
 	}
 
 	get defaultHeadersForm() {
 		return {
-			'Authorization': `Bearer ${this.token}`
+			'Authorization': `Bearer ${this.auth?.token}`,
+			'tenant-id': this.auth?.user?.employee.tenantId,
+			'organization-id': this.auth?.user?.employee.organizationId
 		}
 	}
 
@@ -47,20 +62,20 @@ export class ApiService {
 		return baseUrl;
 	}
 
-	post(uriPath: string, payload: Record<string, unknown>): Promise<Response> {
+	post(uriPath: string, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
 		return this.request(uriPath, { method: 'POST', body: JSON.stringify(payload) })
 	}
 
-	postFile(uriPath: string, payload: any): Promise<Response> {
+	postFile(uriPath: string, payload: any): Promise<Record<string, unknown>> {
 		return this.request(uriPath, { method: 'POST', body: payload, headers: {} }, true)
 	}
 
-	saveTimeSlot(payload: TTimeSlot): Promise<Response> {
+	saveTimeSlot(payload: TTimeSlot): Promise<TResponseTimeSlot> {
 		const path: string = '/api/timesheet/time-slot';
 		return this.post(path, payload);
 	}
 
-	uploadImages(params: UploadParams, img: any) {
+	uploadImages(params: UploadParams, img: any): Promise<Partial<TResponseScreenshot>> {
 		const formData = new FormData();
 		formData.append('file', fs.createReadStream(img.filePath));
 		formData.append('tenantId', params.tenantId);
@@ -80,7 +95,7 @@ export class ApiService {
 			body?: string;
 		} = { method: 'GET' },
 		isFile?: boolean
-	) {
+	): Promise<Record<string, unknown>> {
 		const url = this.baseURL + path;
 		const headers = {
 			...(isFile ? this.defaultHeadersForm : this.defaultHeaders),
@@ -95,13 +110,14 @@ export class ApiService {
 			const response = await fetch(url, requestOptions);
 			console.log(`API ${options.method} ${path}: ${response.status} ${response.statusText}`);
 			if (!response.ok) {
-				console.warn('[Response Error]', response.status, response.statusText);
-				const error = new Error(`API error: ${response.status} ${response.statusText}`);
+				const respText = await response.text();
+				console.warn('[Response Error]', response.status, respText);
+				const error = new Error(`API error: ${response.status} ${respText}`);
 				error['status'] = response.status;
 				throw error;
 			}
-
-			return response;
+			const respJson = await response.json();
+			return respJson;
 		} catch (err) {
 			console.error('[Network Error]', err);
 			const enhancedError = err instanceof Error ? err : new Error(String(err));
