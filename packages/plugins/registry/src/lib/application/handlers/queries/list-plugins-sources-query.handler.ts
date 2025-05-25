@@ -5,6 +5,8 @@ import { FindManyOptions, FindOptionsWhere, IsNull } from 'typeorm';
 import { PluginSourceService } from '../../../domain/services/plugin-source.service';
 import { IPluginSource } from '../../../shared/models/plugin-source.model';
 import { ListPluginSourcesQuery } from '../../queries/list-plugin-sources.query';
+import { RequestContext } from '@gauzy/core';
+import { PluginService } from '../../../domain/services/plugin.service';
 
 /**
  * Query handler for listing plugin sources with pagination and filtering capabilities.
@@ -13,7 +15,10 @@ import { ListPluginSourcesQuery } from '../../queries/list-plugin-sources.query'
 @Injectable()
 @QueryHandler(ListPluginSourcesQuery)
 export class ListPluginSourcesQueryHandler implements IQueryHandler<ListPluginSourcesQuery> {
-	constructor(private readonly pluginSourceService: PluginSourceService) {}
+	constructor(
+		private readonly pluginSourceService: PluginSourceService,
+		private readonly pluginService: PluginService
+	) {}
 
 	/**
 	 * Handles the ListPluginSourcesQuery and returns a paginated list of plugin sources.
@@ -25,6 +30,7 @@ export class ListPluginSourcesQueryHandler implements IQueryHandler<ListPluginSo
 	public async execute(query: ListPluginSourcesQuery): Promise<IPagination<IPluginSource>> {
 		try {
 			const { pluginId, versionId, params = {} as FindManyOptions<IPluginSource> } = query;
+			const employeeId = RequestContext.currentEmployeeId();
 
 			// Validate required parameters
 			if (!pluginId) {
@@ -60,9 +66,13 @@ export class ListPluginSourcesQueryHandler implements IQueryHandler<ListPluginSo
 				}
 			};
 
+			// Validate plugin ownership
+			const withDeleted = await this.pluginService.validatePluginOwnership(pluginId, employeeId);
+
 			// Execute paginated query
 			return await this.pluginSourceService.paginate({
 				...params,
+				withDeleted,
 				relations,
 				where
 			});
