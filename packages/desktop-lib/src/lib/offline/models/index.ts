@@ -5,3 +5,4 @@ export * from './task.model';
 export * from './tag.model';
 export * from './user.model';
 export * from './timer.model';
+export * from './kb-mouse-activity.model';

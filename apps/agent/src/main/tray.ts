@@ -59,6 +59,14 @@ class TrayMenu {
 	getCommonMenu(siteUrls: ISiteUrl): MenuItemConstructorOptions[] {
 		return [
 			{
+				id: 'tray_log',
+				label: TranslateService.instant('MENU.DASHBOARD'),
+				async click() {
+					await appWindow.initLogWindow();
+					appWindow.logWindow.show();
+				}
+			},
+			{
 				id: 'tray_setting',
 				label: TranslateService.instant('MENU.SETTINGS'),
 				async click() {
@@ -89,7 +97,7 @@ class TrayMenu {
 			},
 			{
 				id: 'server_exit',
-				label: `${TranslateService.instant('BUTTONS.EXIT')} ${app.getName()}`,
+				label: `${TranslateService.instant('BUTTONS.EXIT')}`,
 				click() {
 					app.quit();
 				}

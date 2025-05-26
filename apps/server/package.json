@@ -47,7 +47,7 @@
 		"@nebular/security": "^15.0.0",
 		"@nebular/theme": "^15.0.0",
 		"@nestjs/typeorm": "^11.0.0",
-		"@ng-select/ng-select": "^14.7.0",
+		"@ng-select/ng-select": "^14.8.1",
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.4",
 		"@ngx-translate/http-loader": "^16.0.1",
@@ -80,7 +80,7 @@
 		"rxjs": "^7.8.2",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
-		"typeorm": "^0.3.22",
+		"typeorm": "^0.3.24",
 		"undici": "^6.10.2",
 		"custom-electron-titlebar": "^4.2.8"
 	},
