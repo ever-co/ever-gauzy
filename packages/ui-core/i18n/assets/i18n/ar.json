@@ -4053,7 +4053,8 @@
 			"REGISTRY": "سجل NPM",
 			"AUTH_TOKEN": "رمز المصادقة",
 			"PRIVATE_REGISTRY_URL": "رابط السجل الخاص",
-			"PLUGIN_INSTALL_CDN_ERROR": "يجب ألا يكون عنوان URL للخادم فارغًا."
+			"PLUGIN_INSTALL_CDN_ERROR": "يجب ألا يكون عنوان URL للخادم فارغًا.",
+			"TRACK_KEYBOARD_MOUSE": "تتبع الإدخال الدقيق"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "تجاوز الحد الأسبوعي",
 		"OF_HRS": "من {{ limit }} ساعة",
@@ -4764,6 +4765,8 @@
 	},
 	"SERVER_API": "خادم واجهة برمجة التطبيقات",
 	"SERVER_API_LOG": "سجل خادم API",
+	"AGENT_APP": "العميل",
+	"AGENT_LOG": "سجل العميل",
 	"COMING_SOON": "This page is coming soon!",
 	"PLUGIN": {
 		"VIDEO": {

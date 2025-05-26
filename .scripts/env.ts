@@ -141,6 +141,7 @@ export type Env = Readonly<{
 	AGENT_APP_ID: string;
 	AGENT_APP_WELCOME_TITLE: string;
 	AGENT_APP_WELCOME_CONTENT: string;
+	AGENT_POOL_ACTIVITY_INTERVAL: number;
 }>;
 
 export const env: Env = cleanEnv(
@@ -360,6 +361,9 @@ export const env: Env = cleanEnv(
 		}),
 		AGENT_APP_WELCOME_CONTENT: str({
 			default: ''
+		}),
+		AGENT_POOL_ACTIVITY_INTERVAL: num({
+			default: 5000
 		})
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
