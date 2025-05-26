@@ -2,7 +2,7 @@ import { registerAs } from '@nestjs/config';
 import { IKeycloakConfig } from '@gauzy/common';
 
 /**
- * Register Facebook OAuth configuration using @nestjs/config
+ * Register Keycloak OAuth configuration using @nestjs/config
  */
 export default registerAs(
 	'keycloak',
