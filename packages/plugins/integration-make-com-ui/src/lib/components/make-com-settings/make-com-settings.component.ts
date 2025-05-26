@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap, catchError } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
-import { MakeComStoreService } from '@gauzy/ui-core/core/src/lib/services/make-com/make-com-store.service';
+import { MakeComStoreService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 

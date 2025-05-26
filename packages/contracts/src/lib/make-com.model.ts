@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from '@gauzy/contracts';
 
 export type GrantType = 'authorization_code' | 'refresh_token';
 
@@ -12,7 +12,8 @@ export enum MakeSettingName {
 	EXPIRES_AT = 'expires_at',
 	TOKEN_TYPE = 'token_type',
 	CLIENT_ID = 'client_id',
-	CLIENT_SECRET = 'client_secret'
+	CLIENT_SECRET = 'client_secret',
+	AUTH_CODE = 'auth_code'
 }
 
 // Define the return type for the settings
@@ -44,14 +45,8 @@ export interface IMakeComAuthConfig {
 }
 
 export interface IMakeComCreateIntegration extends IBasePerTenantAndOrganizationEntityModel {
-	// OAuth credentials and parameters
-	oauthParams: {
-		client_id: string;
-		code: string;
-		grant_type: GrantType;
-		redirect_uri: string;
-		client_secret: string;
-	};
+	client_id: string;
+	client_secret: string;
 }
 
 export interface IMakeComOAuthCodeExchange {

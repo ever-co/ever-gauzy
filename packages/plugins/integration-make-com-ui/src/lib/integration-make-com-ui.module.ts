@@ -36,6 +36,7 @@ import { MakeComSettingsComponent } from './components/make-com-settings/make-co
 	imports: [
 		NbActionsModule,
 		NbButtonModule,
+		NbSpinnerModule,
 		NbCalendarKitModule,
 		NbCardModule,
 		NbCheckboxModule,
@@ -44,7 +45,6 @@ import { MakeComSettingsComponent } from './components/make-com-settings/make-co
 		NbIconModule,
 		NbInputModule,
 		NbRouteTabsetModule,
-		NbSpinnerModule,
 		NbTabsetModule,
 		NbToggleModule,
 		NbTooltipModule,

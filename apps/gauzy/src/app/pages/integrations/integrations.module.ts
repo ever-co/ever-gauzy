@@ -92,8 +92,8 @@ export class IntegrationsModule {
 			data: { selectors: false },
 			// Register the location 'integrations'
 			location: 'integrations',
-			// Register the path 'hubstaff'
-			path: 'make-com',
+			// Register the path 'makecom'
+			path: 'makecom',
 			// Register the loadChildren function to load the MakeComModule lazy module
 			loadChildren: () =>
 				import('@gauzy/plugin-integration-make-com-ui').then((m) => m.IntegrationMakeComUiModule)

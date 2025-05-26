@@ -6,8 +6,7 @@ import { tap, switchMap, filter, debounceTime, catchError } from 'rxjs/operators
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IIntegrationTenant, IOrganization, IntegrationEnum, IMakeComCreateIntegration } from '@gauzy/contracts';
 import { IntegrationsService, Store } from '@gauzy/ui-core/core';
-import { MakeComService } from '@gauzy/ui-core/core/src/lib/services/make-com/make-com.service';
-import { MakeComStoreService } from '@gauzy/ui-core/core/src/lib/services/make-com/make-com-store.service';
+import { MakeComService, MakeComStoreService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -162,29 +161,18 @@ export class AuthorizationComponent implements OnInit, OnDestroy {
 		const client_id = this.form.get('client_id').value;
 		const client_secret = this.form.get('client_secret').value;
 
-		// Get OAuth config to get redirect URI
+		const credentials: IMakeComCreateIntegration = {
+			client_id,
+			client_secret
+		};
+
+		// Add OAuth settings and get authorization URL
 		this._makeComStoreService
-			.loadOAuthConfig()
+			.addOAuthSettings(credentials)
 			.pipe(
-				switchMap((config) => {
-					if (!config) {
-						throw new Error('OAuth configuration not found');
-					}
-
-					const credentials: IMakeComCreateIntegration = {
-						oauthParams: {
-							client_id,
-							client_secret,
-							grant_type: 'authorization_code',
-							code: '', // This will be filled by the backend
-							redirect_uri: config.redirectUri
-						}
-					};
-
-					// Add OAuth settings and get authorization URL
-					return this._makeComStoreService.addOAuthSettings(credentials);
-				}),
 				tap(({ authorizationUrl }) => {
+					console.log(authorizationUrl);
+
 					// Redirect user to Make.com authorization page
 					window.location.href = authorizationUrl;
 				}),

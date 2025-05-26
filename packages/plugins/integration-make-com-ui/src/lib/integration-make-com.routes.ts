@@ -2,6 +2,9 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AuthorizationComponent } from './components/make-com-authorize/make-com-authorize.component';
 import { IntegrationMakeComLayoutComponent } from './integration-make-com.layout.component';
+import { MakeComponent } from './components/make/make.component';
+import { MakeComCallbackComponent } from './components/make-com-callback/make-com-callback.component';
+import { MakeComSettingsComponent } from './components/make-com-settings/make-com-settings.component';
 
 @NgModule({
 	imports: [
@@ -12,27 +15,43 @@ import { IntegrationMakeComLayoutComponent } from './integration-make-com.layout
 				children: [
 					{
 						path: '',
-						component: AuthorizationComponent,
-						data: { state: true }
-					},
-					{
-						path: 'regenerate',
-						component: AuthorizationComponent,
-						data: { state: false }
+						redirectTo: 'authorize',
+						pathMatch: 'full'
 					},
 					{
 						path: 'authorize',
-						component: AuthorizationComponent,
-						data: { state: false }
+						component: AuthorizationComponent
 					},
 					{
 						path: 'callback',
-						component: AuthorizationComponent,
-						data: { state: false }
+						component: MakeComCallbackComponent
 					},
 					{
-						path: 'settings',
-						loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule)
+						path: 'dashboard',
+						component: MakeComponent,
+						children: [
+							{
+								path: '',
+								redirectTo: 'scenarios',
+								pathMatch: 'full'
+							},
+							{
+								path: 'scenarios',
+								component: MakeComponent
+							},
+							{
+								path: 'executions',
+								component: MakeComponent
+							},
+							{
+								path: 'history',
+								component: MakeComponent
+							},
+							{
+								path: 'settings',
+								component: MakeComSettingsComponent
+							}
+						]
 					}
 				]
 			}

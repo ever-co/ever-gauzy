@@ -7,8 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ID, IOrganization, IntegrationEnum } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store, IntegrationsService } from '@gauzy/ui-core/core';
-import { MakeComStoreService } from '@gauzy/ui-core/core/src/lib/services/make-com/make-com-store.service';
+import { Store, IntegrationsService, MakeComStoreService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

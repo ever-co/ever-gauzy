@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap, catchError } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
-import { MakeComService } from '@gauzy/ui-core/core/src/lib/services/make-com/make-com.service';
+import { MakeComService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -12,7 +12,6 @@ import { TranslateService } from '@ngx-translate/core';
 	selector: 'ngx-make-com-callback',
 	template: `
 		<div class="d-flex justify-content-center align-items-center h-100">
-			<nb-spinner></nb-spinner>
 			<span class="ml-2">{{ 'INTEGRATIONS.MAKE_COM_PAGE.PROCESSING' | translate }}</span>
 		</div>
 	`,

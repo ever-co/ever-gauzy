@@ -13,7 +13,7 @@
 				"{workspaceRoot}/dist/{projectRoot}"
 			],
 			"options": {
-				"project": "packages/plugins/integration-upwork-ui/ng-package.json",
+				"project": "packages/plugins/integration-make-com-ui/ng-package.json",
 				"tsConfig": "packages/plugins/integration-make-com-ui/tsconfig.json"
 			},
 			"configurations": {

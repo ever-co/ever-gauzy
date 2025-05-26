@@ -7,6 +7,7 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-integration-make-com-layout',
 	template: ` <router-outlet></router-outlet> `,
