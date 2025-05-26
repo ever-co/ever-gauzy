@@ -98,10 +98,12 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 			return await this._addUserToAllOrganizations(user.id, user.tenantId);
 		}
 
-		const entity: IUserOrganization = new UserOrganization();
-		entity.organizationId = organizationId;
-		entity.tenantId = user.tenantId;
-		entity.userId = user.id;
+		const entity = new UserOrganization({
+			organizationId,
+			tenantId: user.tenantId,
+			userId: user.id
+		});
+
 		return await this.typeOrmUserOrganizationRepository.save(entity);
 	}
 
@@ -118,9 +120,9 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 			where: { tenantId }
 		});
 
-		const entities: IUserOrganization[] = organizations.map((organization: IOrganization) => {
+		const entities = organizations.map(({ id: organizationId }: IOrganization) => {
 			const entity = new UserOrganization();
-			entity.organizationId = organization.id;
+			entity.organizationId = organizationId;
 			entity.tenantId = tenantId;
 			entity.userId = userId;
 			return entity;
