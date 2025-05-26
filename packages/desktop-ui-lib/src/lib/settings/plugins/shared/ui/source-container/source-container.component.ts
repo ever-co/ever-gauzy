@@ -18,7 +18,7 @@ export class SourceContainerComponent {
 
 	@Output() add = new EventEmitter<PluginSourceType>();
 	@Output() remove = new EventEmitter<number>();
-	@Output() restore = new EventEmitter<void>();
+	@Output() restore = new EventEmitter<number>();
 
 	public drop(event: CdkDragDrop<string[]>) {
 		moveItemInArray(this.sources.controls, event.previousIndex, event.currentIndex);
