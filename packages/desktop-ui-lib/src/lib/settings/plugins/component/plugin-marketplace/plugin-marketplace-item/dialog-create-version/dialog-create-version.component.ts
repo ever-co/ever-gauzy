@@ -12,13 +12,16 @@ import {
 import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { NbDateService, NbDialogRef, NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, Subject, take, tap } from 'rxjs';
 import { PluginSourceActions } from '../../+state/actions/plugin-source.action';
+import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
 import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../../services';
 import { SourceContext } from '../../plugin-marketplace-upload/plugin-source/creator/source.context';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'lib-dialog-create-version',
 	templateUrl: './dialog-create-version.component.html',
@@ -52,14 +55,27 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 		protected readonly dateService: NbDateService<Date>,
 		private readonly sourceContext: SourceContext,
 		private readonly action: Actions,
-		private readonly dialog: NbDialogService
+		private readonly dialog: NbDialogService,
+		private readonly versionQuery: PluginVersionQuery
 	) {
 		this.today = dateService.today();
 	}
 
 	ngOnInit(): void {
 		this.initForm();
-		this.patch();
+		this.setupVersionListerners();
+	}
+
+	private setupVersionListerners() {
+		this.versionQuery.version$
+			.pipe(
+				tap((version) => {
+					this.version = this.version ? version : null;
+					this.patch();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	private initForm(): void {
@@ -135,8 +151,8 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 					filter(Boolean),
 					tap(() => {
 						const { id } = this.sources.at(idx).value as IPluginSource;
-						this.action.dispatch(PluginSourceActions.delete(this.plugin.id, this.version.id, id));
 						this.sources.removeAt(idx);
+						this.action.dispatch(PluginSourceActions.delete(this.plugin.id, this.version.id, id));
 					})
 				)
 				.subscribe();

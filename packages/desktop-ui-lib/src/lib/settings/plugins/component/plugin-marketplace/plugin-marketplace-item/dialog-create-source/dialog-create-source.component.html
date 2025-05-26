@@ -7,6 +7,14 @@
 			</button>
 		</nb-card-header>
 		<nb-card-body>
+			@if(plugin){
+			<lib-form-row>
+				<div class="d-flex flex-column">
+					<label class="label" for="version-number">{{ 'PLUGIN.FORM.VERSION' | translate }}</label>
+					<gauzy-version-selector [pluginId]="plugin?.id"></gauzy-version-selector>
+				</div>
+			</lib-form-row>
+			}
 			<lib-source-container
 				class="overflow-auto grow"
 				[sources]="sources"

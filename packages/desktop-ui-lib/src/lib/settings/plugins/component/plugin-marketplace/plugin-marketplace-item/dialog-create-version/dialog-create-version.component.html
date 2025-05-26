@@ -1,9 +1,11 @@
+@let isEdit = !!version;
+<!-- form -->
 <form [formGroup]="versionForm" (ngSubmit)="submit()">
 	<nb-card class="dialog-card" status="basic">
 		<nb-card-header class="mb-0">
 			<h5 class="title">
 				{{
-					version
+					isEdit
 						? ('PLUGIN.DIALOG.VERSION.UPDATE.TITLE' | translate : { number: version.number })
 						: ('PLUGIN.DIALOG.VERSION.CREATE.TITLE' | translate : { name: plugin?.name })
 				}}
@@ -16,6 +18,14 @@
 			<nb-stepper orientation="horizontal" #stepper>
 				<!-- Step 1 : Sources -->
 				<nb-step [stepControl]="versionForm?.get('sources')" [label]="'PLUGIN.FORM.SOURCES' | translate">
+					@if(isEdit && plugin){
+					<lib-form-row>
+						<div class="d-flex flex-column">
+							<label class="label" for="version-number">{{ 'PLUGIN.FORM.VERSION' | translate }}</label>
+							<gauzy-version-selector [pluginId]="plugin?.id"></gauzy-version-selector>
+						</div>
+					</lib-form-row>
+					}
 					<lib-source-container
 						class="overflow-auto grow"
 						[sources]="sources"
@@ -24,6 +34,7 @@
 						(add)="addSource($event)"
 						(remove)="removeSource($event)"
 						(restore)="restoreSource($event)"
+						(click)="$event.stopPropagation()"
 					></lib-source-container>
 					<div class="stepper-buttons">
 						<button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
@@ -32,7 +43,12 @@
 
 				<!-- Step 2: Version -->
 				<nb-step [stepControl]="versionForm?.get('number')" [label]="'PLUGIN.FORM.VERSION' | translate">
-					<lib-plugin-version class="grow" [form]="versionForm"></lib-plugin-version>
+					<lib-plugin-version
+						class="grow"
+						[pluginId]="plugin?.id"
+						[isEdit]="isEdit"
+						[form]="versionForm"
+					></lib-plugin-version>
 					<div class="stepper-buttons">
 						<button nbButton outline status="basic" nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}

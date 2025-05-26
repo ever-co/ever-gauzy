@@ -2,11 +2,16 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormArray, FormControl, FormGroup, Validators } from '@angular/forms';
 import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { tap } from 'rxjs';
+import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
 import { SourceContext } from '../../plugin-marketplace-upload/plugin-source/creator/source.context';
 
 /**
  * Component for creating a new plugin source through a dialog
  */
+
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'lib-dialog-create-source',
 	standalone: false,
@@ -17,15 +22,16 @@ import { SourceContext } from '../../plugin-marketplace-upload/plugin-source/cre
 export class DialogCreateSourceComponent implements OnInit {
 	/** The plugin for which the source is being created */
 	public readonly plugin!: IPlugin;
-	/** The version of the plugin for which the source is being created */
-	public readonly version!: IPluginVersion;
 	/** Available source types for the plugin */
 	public readonly sourceTypes = Object.values(PluginSourceType);
+	/** The version of the plugin for which the source is being created */
+	public version!: IPluginVersion;
 	/** Form group for managing the source creation */
 	public form!: FormGroup;
 
 	constructor(
 		private readonly dialogRef: NbDialogRef<DialogCreateSourceComponent>,
+		private readonly versionQuery: PluginVersionQuery,
 		private readonly sourceContext: SourceContext
 	) {}
 
@@ -34,6 +40,19 @@ export class DialogCreateSourceComponent implements OnInit {
 	 */
 	ngOnInit(): void {
 		this.initializeForm();
+		this.setupVersionListerners();
+	}
+
+	private setupVersionListerners() {
+		this.versionQuery.version$
+			.pipe(
+				tap((version) => {
+					this.version = version;
+					this.form.patchValue({ versionId: version.id });
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**

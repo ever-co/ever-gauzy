@@ -17,7 +17,10 @@ import { PluginSourceActions } from '../+state/actions/plugin-source.action';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../services';
 import { SourceContext } from './plugin-source/creator/source.context';
+import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'lib-plugin-marketplace-upload',
 	templateUrl: './plugin-marketplace-upload.component.html',
@@ -45,6 +48,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		private readonly translateService: TranslateService,
 		protected readonly dateService: NbDateService<Date>,
 		private readonly sourceContext: SourceContext,
+		private readonly versionQuery: PluginVersionQuery,
 		private readonly dialog: NbDialogService,
 		private readonly action: Actions
 	) {
@@ -53,7 +57,20 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 	ngOnInit(): void {
 		this.initForm();
-		this.patch();
+		this.setupVersionListerners();
+	}
+
+	private setupVersionListerners() {
+		this.versionQuery.version$
+			.pipe(
+				tap((version) => {
+					this.plugin.version = this.plugin.version ? version : null;
+					this.patch();
+					console.log('sources', this.sources);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	private initForm(): void {
@@ -119,7 +136,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	}
 
 	public removeSource(idx: number): void {
-		if (this.plugin) {
+		if (this.plugin && this.plugin.version) {
 			this.dialog
 				.open(AlertComponent, {
 					context: {
@@ -140,8 +157,8 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 							id: pluginId,
 							version: { id: versionId }
 						} = this.plugin;
-						this.action.dispatch(PluginSourceActions.delete(pluginId, versionId, id));
 						this.sources.removeAt(idx);
+						this.action.dispatch(PluginSourceActions.delete(pluginId, versionId, id));
 					})
 				)
 				.subscribe();
