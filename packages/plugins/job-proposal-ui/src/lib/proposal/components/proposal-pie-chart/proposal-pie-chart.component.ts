@@ -8,16 +8,16 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 type JSThemeVariable = string | NbJSThemeVariable | string[];
 
 @Component({
-    selector: 'ngx-proposal-pie-chart',
-    template: `<canvas baseChart [options]="options" class="echart"></canvas>`,
-    styleUrls: ['./proposal-pie-chart.component.scss'],
-    standalone: false
+	standalone: false,
+	selector: 'ngx-proposal-pie-chart',
+	template: `<canvas baseChart [options]="options" class="echart"></canvas>`,
+	styleUrls: ['./proposal-pie-chart.component.scss']
 })
 export class ProposalPieChartComponent extends TranslationBaseComponent implements AfterViewInit, OnDestroy {
-	@Input() values: { name: string; value: number }[];
-
-	options: any = {};
+	public options: any = {};
 	private subscription: Subscription;
+
+	@Input() values: { name: string; value: number }[];
 
 	constructor(private readonly nbThemeService: NbThemeService, translateService: TranslateService) {
 		super(translateService);

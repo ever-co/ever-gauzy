@@ -6,23 +6,31 @@
                     <div class="col-12 text-center margin-content">
                         <img [src]="gauzyIcon" [class]="styles.icon" />
                     </div>
-                    <div class="col-12 text-center margin-content" *ngIf="!isServerApi">
+                    <div class="col-12 text-center margin-content" *ngIf="!isServerApi && !isAgent">
                         <h4 *ngIf="isExpandWindow">{{'SERVER' | translate| uppercase}}</h4>
                         <h5 *ngIf="!isExpandWindow">{{'SERVER' | translate| uppercase}}</h5>
                     </div>
                     <div class="col-12 text-center margin-content" *ngIf="isServerApi">
-                        <h4 *ngIf="isExpandWindow">{{'SERVER_API' | translate| uppercase}}</h4>
-                        <h5 *ngIf="!isExpandWindow">{{'SERVER_API' | translate| uppercase}}</h5>
+                        <h4 *ngIf="isExpandWindow">{{'server_api' | translate| uppercase}}</h4>
+                        <h5 *ngIf="!isExpandWindow">{{'server_api' | translate| uppercase}}</h5>
                     </div>
-                    <div class="col-12 text-center accordion margin-content" *ngIf="isExpandWindow">
+
+					<div class="col-12 text-center margin-content" *ngIf="isAgent">
+						<h4 *ngIf="isExpandWindow">{{'AGENT_APP' | translate| uppercase}}</h4>
+                        <h5 *ngIf="!isExpandWindow">{{'AGENT_APP' | translate| uppercase}}</h5>
+                    </div>
+                    <div class="col-12 text-center accordion margin-content" *ngIf="isExpandWindow || isAgent">
                         <nb-accordion multi>
-                            <nb-accordion-item #logServer [expanded]="logIsOpen"
+                            <nb-accordion-item #logServer [expanded]="logIsOpen || isAgent"
                                 (collapsedChange)="logBoxChange($event)">
-                                <nb-accordion-item-header *ngIf="!isServerApi">
+                                <nb-accordion-item-header *ngIf="!isServerApi && !isAgent">
                                     {{'SERVER_LOG' | translate}}
                                 </nb-accordion-item-header>
                                 <nb-accordion-item-header *ngIf="isServerApi">
                                     {{'SERVER_API_LOG' | translate}}
+                                </nb-accordion-item-header>
+								<nb-accordion-item-header *ngIf="isAgent">
+                                    {{'AGENT_LOG' | translate}}
                                 </nb-accordion-item-header>
                                 <nb-accordion-item-body class="log-box">
                                     <div class="log-content" #logBox>
@@ -34,7 +42,7 @@
                             </nb-accordion-item>
                         </nb-accordion>
                     </div>
-                    <div [class]="'col-12 text-'+(logIsOpen ? 'left d-flex justify-content-between': 'center')+' button margin-content'">
+                    <div *ngIf="!isAgent" [class]="'col-12 text-'+(logIsOpen ? 'left d-flex justify-content-between': 'center')+' button margin-content'">
                         <button nbButton status="primary" [class]="styles.btnStart"
                             (click)="running ? stopServer() : runServer()" [disabled]="loading">
                             <nb-icon *gauzySpinnerButton="loading || restart" [icon]="btn.icon" class="icon-medium"></nb-icon> {{btn.name | translate}}
