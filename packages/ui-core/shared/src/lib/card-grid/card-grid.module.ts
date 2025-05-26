@@ -4,7 +4,8 @@ import { NbButtonModule, NbCardModule, NbIconModule } from '@nebular/theme';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { TranslateModule } from '@ngx-translate/core';
 import { Store } from '@gauzy/ui-core/core';
-import { CardGridComponent } from './card-grid.component';
+import { CardGridComponent } from './card-grid/card-grid.component';
+import { CardGridWithInitFunctionComponent } from './card-grid-with-init-function/card-grid-with-init-function.component';
 import { CustomViewComponent } from './card-grid-custom.component';
 import { NoDataMessageModule } from '../smart-data-layout/no-data-message/no-data-message.module';
 
@@ -18,8 +19,8 @@ import { NoDataMessageModule } from '../smart-data-layout/no-data-message/no-dat
 		TranslateModule.forChild(),
 		NoDataMessageModule
 	],
-	declarations: [CardGridComponent, CustomViewComponent],
-	exports: [CardGridComponent],
+	declarations: [CardGridComponent, CustomViewComponent, CardGridWithInitFunctionComponent],
+	exports: [CardGridComponent, CardGridWithInitFunctionComponent],
 	providers: [Store]
 })
 export class CardGridModule {}

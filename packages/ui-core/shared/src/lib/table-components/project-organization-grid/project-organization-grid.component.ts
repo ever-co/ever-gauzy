@@ -1,14 +1,16 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
 @Component({
-    selector: 'gauzy-project-organization-grid',
-    templateUrl: './project-organization-grid.component.html',
-    styleUrls: ['./project-organization-grid.component.scss'],
-    standalone: false
+	selector: 'gauzy-project-organization-grid',
+	templateUrl: './project-organization-grid.component.html',
+	styleUrls: ['./project-organization-grid.component.scss'],
+	standalone: false
 })
 export class ProjectOrganizationGridComponent {
 	@Input() value: string | number;
+	@Input() isDisabled = false;
+	@Output() visibilityClicked = new EventEmitter<boolean>();
 	private _rowData: any;
 	private _visibility$: BehaviorSubject<boolean>;
 
@@ -19,6 +21,7 @@ export class ProjectOrganizationGridComponent {
 
 	public onVisibilityChange(state: boolean): void {
 		this._visibility$.next(state);
+		this.visibilityClicked.emit(state);
 	}
 
 	public get visibility(): boolean {

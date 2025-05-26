@@ -4772,6 +4772,34 @@
 	"SERVER_API": "Serveur API",
 	"SERVER_API_LOG": "Journal du serveur API",
 	"COMING_SOON": "This page is coming soon!",
+	"DEFAULT_ERRORS": {
+		"TITLE": {
+			"BAD_REQUEST": "Requête incorrecte",
+			"UNAUTHORIZED": "Non autorisé",
+			"FORBIDDEN": "Interdit",
+			"NOT_FOUND": "Non trouvé",
+			"CONFLICT": "Conflit",
+			"INTERNAL_SERVER_ERROR": "Erreur interne du serveur",
+			"GATEWAY_TIMEOUT": "Délai d'attente de la passerelle dépassé",
+			"SERVICE_UNAVAILABLE": "Service indisponible",
+			"NETWORK_ERROR": "Erreur réseau",
+			"DEFAULT": "Erreur",
+			"CONNECTION_ERROR": "Erreur de connexion"
+		},
+		"MESSAGES": {
+			"BAD_REQUEST": "La requête n'a pas pu être comprise ou des paramètres requis manquaient.",
+			"UNAUTHORIZED": "L'authentification a échoué ou l'utilisateur n'a pas les droits nécessaires.",
+			"FORBIDDEN": "Vous n'avez pas la permission d'accéder à la ressource demandée.",
+			"NOT_FOUND": "La ressource demandée est introuvable.",
+			"CONFLICT": "Un conflit est survenu avec l'état actuel de la ressource.",
+			"INTERNAL_SERVER_ERROR": "Une erreur interne est survenue sur le serveur.",
+			"GATEWAY_TIMEOUT": "Le serveur a dépassé le délai d'attente.",
+			"SERVICE_UNAVAILABLE": "Le service est temporairement indisponible. Veuillez réessayer plus tard.",
+			"NETWORK_ERROR": "Connexion au serveur impossible. Veuillez vérifier votre connexion réseau.",
+			"DEFAULT": "Une erreur inattendue est survenue.",
+			"CONNECTION_ERROR": "Connexion au serveur perdue. Veuillez réessayer plus tard."
+		}
+	},
 	"PLUGIN": {
 		"VIDEO": {
 			"SINGLE": "Vidéo",

@@ -38,14 +38,14 @@
 
 				<!-- Card Grid View -->
 				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.CARDS_GRID">
-					<ga-card-grid
+					<ga-card-grid-with-init-function
 						[totalItems]="pagination?.totalItems"
 						(onSelectedItem)="selectProject($event)"
 						(scroll)="onScroll()"
 						[settings]="settingsSmartTable"
 						[source]="projects"
 						#grid
-					></ga-card-grid>
+					></ga-card-grid-with-init-function>
 				</ng-template>
 
 				<!-- Optional: Default case if no specific layout matches -->

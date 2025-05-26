@@ -1,39 +1,36 @@
-import { Component, OnDestroy, OnInit, Input, ViewChild, ElementRef } from '@angular/core';
-
+import { Component, OnInit, Input, ViewChild, ElementRef } from '@angular/core';
 import { Output, EventEmitter } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, combineLatest, debounceTime, filter, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { CustomViewComponent } from './card-grid-custom.component';
+import { CustomViewComponent } from '../card-grid-custom.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-card-grid',
-    templateUrl: './card-grid.component.html',
-    styleUrls: ['./card-grid.component.scss'],
-    standalone: false
+	selector: 'ga-card-grid',
+	templateUrl: './card-grid.component.html',
+	styleUrls: ['./card-grid.component.scss'],
+	standalone: false
 })
-export class CardGridComponent implements OnInit, OnDestroy {
+export class CardGridComponent implements OnInit {
 	source$: BehaviorSubject<any> = new BehaviorSubject([]);
+	selected: any = { isSelected: false, data: null };
+	columns: any = [];
+
 	@Input() set source(content: any) {
 		this.source$.next(content);
 	}
-	@Output() onSelectedItem: EventEmitter<any> = new EventEmitter<any>();
-	@Output() scroll: EventEmitter<any> = new EventEmitter<any>();
-	selected: any = { isSelected: false, data: null };
-	private _grid$: BehaviorSubject<ElementRef> = new BehaviorSubject(null);
-	@ViewChild('grid', { static: false })
-	set grid(content: ElementRef) {
-		if (content) {
-			this._grid$.next(content);
-		}
+	public get source() {
+		return this.source$.getValue();
 	}
-	get grid(): ElementRef {
-		return this._grid$.getValue();
-	}
-	private _showMore: boolean = false;
 
-	private _selectedCustomViewComponent: CustomViewComponent;
+	_totalItems$: BehaviorSubject<number> = new BehaviorSubject(0);
+	@Input() set totalItems(content: any) {
+		this._totalItems$.next(content);
+	}
+	public get totalItems() {
+		return this._totalItems$.getValue();
+	}
 
 	/*
 	 * Getter & Setter for dynamic columns settings
@@ -47,19 +44,23 @@ export class CardGridComponent implements OnInit, OnDestroy {
 		this._settings = settings;
 	}
 
-	/**
-	 * GRID defined columns
-	 */
-	columns: any = [];
+	@Output() onSelectedItem: EventEmitter<any> = new EventEmitter<any>();
+	@Output() scroll: EventEmitter<any> = new EventEmitter<any>();
 
-	_totalItems$: BehaviorSubject<number> = new BehaviorSubject(0);
-	@Input() set totalItems(content: any) {
-		this._totalItems$.next(content);
+	@ViewChild('grid', { static: false })
+	set grid(content: ElementRef) {
+		if (content) {
+			this._grid$.next(content);
+		}
+	}
+	get grid(): ElementRef {
+		return this._grid$.getValue();
 	}
 
+	private _showMore = false;
+	private _selectedCustomViewComponent: CustomViewComponent;
+	private readonly _grid$: BehaviorSubject<ElementRef> = new BehaviorSubject(null);
 	private _arrayOverflow: boolean;
-
-	constructor() {}
 
 	getNoDataMessage() {
 		return this.settings.noDataMessage;
@@ -158,14 +159,4 @@ export class CardGridComponent implements OnInit, OnDestroy {
 	public set showMore(value: boolean) {
 		this._showMore = value;
 	}
-
-	public get source() {
-		return this.source$.getValue();
-	}
-
-	public get totalItems() {
-		return this._totalItems$.getValue();
-	}
-
-	ngOnDestroy() {}
 }

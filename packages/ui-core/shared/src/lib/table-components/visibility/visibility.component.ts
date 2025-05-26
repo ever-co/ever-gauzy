@@ -4,17 +4,18 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'gauzy-visibility',
-    templateUrl: './visibility.component.html',
-    styleUrls: ['./visibility.component.scss'],
-    standalone: false
+	selector: 'gauzy-visibility',
+	templateUrl: './visibility.component.html',
+	styleUrls: ['./visibility.component.scss'],
+	standalone: false
 })
 export class VisibilityComponent implements OnInit {
 	@Input() value: string | number;
+	@Input() disabled = false;
 	@Output() visibilityChange: EventEmitter<boolean>;
 
 	private _rowData: any;
-	private _visibility$: BehaviorSubject<boolean>;
+	private readonly _visibility$: BehaviorSubject<boolean>;
 
 	constructor() {
 		this.visibilityChange = new EventEmitter();
@@ -28,7 +29,7 @@ export class VisibilityComponent implements OnInit {
 				tap((isPublic: boolean) => this._visibility$.next(isPublic)),
 				untilDestroyed(this)
 			)
-			.subscribe()
+			.subscribe();
 	}
 
 	onCheckedChange(event: boolean) {

@@ -67,7 +67,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	public smartTableSource: ServerDataSource;
 	public projects: IOrganizationProject[] = [];
 	public project$: Subject<boolean> = this.subject$;
-	private _refresh$: Subject<boolean> = new Subject();
+	private readonly _refresh$: Subject<boolean> = new Subject();
 
 	/**
 	 * Represents a component property for handling the project view.
@@ -428,10 +428,16 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 						isFilterable: false,
 						renderComponent: VisibilityComponent,
 						componentInitFunction: (instance: VisibilityComponent, cell: Cell) => {
+							const hasAllPermissions = this._hasAllPermissions([
+								PermissionsEnum.ALL_ORG_EDIT,
+								PermissionsEnum.ORG_PROJECT_EDIT,
+								PermissionsEnum.ORG_PROJECT_DELETE
+							]);
+							instance.disabled = !hasAllPermissions;
 							instance.rowData = cell.getRow().getData();
 							instance.value = cell.getValue();
 
-							instance.visibilityChange.subscribe({
+							instance.visibilityChange.pipe(untilDestroyed(this)).subscribe({
 								next: (visibility: boolean) => {
 									this.updateProjectVisibility(instance.rowData.id, visibility);
 								},
@@ -547,29 +553,34 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 						title: 'Image',
 						type: 'custom',
 						renderComponent: ProjectOrganizationGridComponent,
-						componentInitFunction: (instance: ProjectOrganizationGridComponent, cell: Cell) => {
-							instance.rowData = cell.getRow().getData();
-							instance.value = cell.getValue();
+						componentInitFunction: (instance: ProjectOrganizationGridComponent) => {
+							const hasAllPermissions = this._hasAllPermissions([
+								PermissionsEnum.ALL_ORG_EDIT,
+								PermissionsEnum.ORG_PROJECT_EDIT,
+								PermissionsEnum.ORG_PROJECT_DELETE
+							]);
+							instance.isDisabled = !hasAllPermissions;
+
+							instance.visibilityClicked.pipe(untilDestroyed(this)).subscribe({
+								next: (visibility: boolean) => {
+									this.updateProjectVisibility(instance.rowData.id, visibility);
+								},
+								error: (err: any) => {
+									console.warn(err);
+								}
+							});
 						}
 					},
 					organizationContact: {
 						title: 'Image',
 						type: 'custom',
 						class: 'text-center',
-						renderComponent: ProjectOrganizationGridDetailsComponent,
-						componentInitFunction: (instance: ProjectOrganizationGridDetailsComponent, cell: Cell) => {
-							instance.rowData = cell.getRow().getData();
-							instance.value = cell.getValue();
-						}
+						renderComponent: ProjectOrganizationGridDetailsComponent
 					},
 					employeesMergedTeams: {
 						title: 'Image',
 						type: 'custom',
-						renderComponent: ProjectOrganizationEmployeesComponent,
-						componentInitFunction: (instance: ProjectOrganizationEmployeesComponent, cell: Cell) => {
-							instance.rowData = cell.getRow().getData();
-							instance.value = cell.getValue();
-						}
+						renderComponent: ProjectOrganizationEmployeesComponent
 					}
 				};
 				break;
@@ -610,16 +621,6 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 							? this._permissionsService.addPermission(permission)
 							: this._permissionsService.removePermission(permission)
 					);
-				}
-			}
-
-			if (this._isGridCardLayout && this._grid) {
-				if (this._grid.customComponentInstance().constructor === ProjectOrganizationGridComponent) {
-					this.disableButton = true;
-
-					// Get the instance of the ProjectOrganizationGridComponent
-					const instance = this._grid.customComponentInstance<ProjectOrganizationGridComponent>();
-					await this.updateProjectVisibility(data.id, !instance.visibility);
 				}
 			}
 		} catch (error) {

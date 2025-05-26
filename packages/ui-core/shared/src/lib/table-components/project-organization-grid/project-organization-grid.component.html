@@ -1,4 +1,8 @@
 <div class="d-flex justify-content-between">
-	<gauzy-project-organization [rowData]="rowData" ></gauzy-project-organization>
-	<gauzy-visibility (visibilityChange)="onVisibilityChange($event)" [rowData]="rowData"></gauzy-visibility>
+	<gauzy-project-organization [rowData]="rowData"></gauzy-project-organization>
+	<gauzy-visibility
+		[disabled]="isDisabled"
+		[rowData]="rowData"
+		(visibilityChange)="onVisibilityChange($event)"
+	></gauzy-visibility>
 </div>

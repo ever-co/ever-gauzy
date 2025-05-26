@@ -1,8 +1,7 @@
 <nb-toggle
 	status="primary"
 	[checked]="visibility$ | async"
+	[disabled]="disabled"
 	(checkedChange)="onCheckedChange($event)"
-	>{{
-		((visibility$ | async) ? 'BUTTONS.PRIVATE' : 'BUTTONS.PUBLIC') | translate
-	}}</nb-toggle
+	>{{ ((visibility$ | async) ? 'BUTTONS.PRIVATE' : 'BUTTONS.PUBLIC') | translate }}</nb-toggle
 >
