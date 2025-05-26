@@ -1,6 +1,6 @@
 import { KbMouseActivityService, KbMouseActivityTO, TTimeSlot } from '@gauzy/desktop-lib';
 import { KbMouseActivityPool, TKbMouseActivity } from '@gauzy/desktop-activity';
-import { ApiService } from '../api';
+import { ApiService, TResponseTimeSlot } from '../api';
 import { getAuthConfig } from '../util';
 import * as moment from 'moment';
 import { AgentLogger } from '../agent-logger';
@@ -69,18 +69,30 @@ class PushActivities {
 		}
 	}
 
-	async saveTimeSlot(activities: KbMouseActivityTO) {
+	async saveTimeSlot(activities: KbMouseActivityTO): Promise<Partial<TResponseTimeSlot>> {
 		try {
 			const params = this.timeSlotParams(activities);
+			this.agentLogger.info(`Preparing send activity recordedAt ${params.recordedAt} to service`);
 			const resp = await this.apiService.saveTimeSlot(params);
-			console.log(`Time slot saved for activity ${activities.id}:`, resp.status);
+			console.log(`Time slot saved for activity ${activities.id}:`, resp?.id);
+			return resp;
 		} catch (error) {
 			console.error('error on save timeslot', error);
 			throw error;
 		}
 	}
 
-	async saveImage(recordedAt: string, image: string[]) {
+	async imageAccessed(filePath: string) {
+		try {
+			fs.accessSync(filePath, fs.constants.R_OK);
+			return true;
+		} catch (error) {
+			console.log('access file image error', error);
+			return false;
+		}
+	}
+
+	async saveImage(recordedAt: string, image: string[], timeSlotId?: string) {
 		try {
 			const auth = getAuthConfig();
 			const pathTemp = image && Array.isArray(image) && image.length && image[0];
@@ -89,20 +101,34 @@ class PushActivities {
 				return;
 			}
 
+			const isAccessed = await this.imageAccessed(pathTemp);
+			if (!isAccessed) {
+				return;
+			}
+
 			if (!fs.existsSync(pathTemp)) {
 				this.agentLogger.info(`temporary image doesn't exists ${pathTemp}`);
 				return;
 			}
 
-			await this.apiService.uploadImages(
+			this.agentLogger.info(`Preparing to save screenshots recordedAt ${recordedAt} in timeSlotId ${timeSlotId}`);
+
+			const respScreenshot = await this.apiService.uploadImages(
 				{
 					tenantId: auth.user.employee.tenantId,
 					organizationId: auth.user.employee.organizationId,
-					recordedAt
+					recordedAt,
+					timeSlotId
 				},
 				{ filePath: pathTemp }
 			);
-			fs.unlinkSync(pathTemp);
+			if (respScreenshot?.timeSlotId) {
+				this.agentLogger.info(`Screenshot image successfully added to timeSlotId ${respScreenshot?.timeSlotId}`)
+				fs.unlinkSync(pathTemp);
+				this.agentLogger.info(`temp image unlink from the temp directory`);
+				return;
+			}
+			this.agentLogger.error(`Failed to save screenshots to the api with response ${JSON.stringify(respScreenshot)}`);
 		} catch (error) {
 			console.log(error);
 			throw error;
@@ -116,15 +142,15 @@ class PushActivities {
 		return 0;
 	}
 
-	getActivities(activities: KbMouseActivityTO): TKbMouseActivity {
-		return {
+	getActivities(activities: KbMouseActivityTO): TKbMouseActivity[] {
+		return [{
 			kbPressCount: activities.kbPressCount,
 			kbSequence: activities.kbSequence,
 			mouseLeftClickCount: activities.mouseLeftClickCount,
 			mouseRightClickCount: activities.mouseRightClickCount,
 			mouseMovementsCount: activities.mouseMovementsCount,
 			mouseEvents: activities.mouseEvents
-		};
+		}];
 	}
 
 	timeSlotParams(activities: KbMouseActivityTO): TTimeSlot {
@@ -153,13 +179,15 @@ class PushActivities {
 				// remove activity from temp local database
 				this.agentLogger.info('Got 1 activity from temp');
 				try {
-					this.agentLogger.info('Preparing send activity to service');
-					await this.saveTimeSlot(activity);
-					await this.saveImage(
-						moment(activity.timeStart).toISOString(),
-						activity.screenshots ? JSON.parse(activity.screenshots) : []
-					);
-					this.agentLogger.info('request activity successfully');
+					const timeSlot = await this.saveTimeSlot(activity);
+					this.agentLogger.info(`Activity successfully recorded to api with timeSlotId ${timeSlot?.id}`);
+					if (timeSlot?.id) {
+						await this.saveImage(
+							moment(activity.timeStart).toISOString(),
+							activity.screenshots ? JSON.parse(activity.screenshots) : [],
+							timeSlot?.id
+						);
+					}
 					await this.removeCurrentActivity(activity.id);
 					return true;
 				} catch (error) {

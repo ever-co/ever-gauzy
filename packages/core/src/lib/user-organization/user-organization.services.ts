@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ID, IOrganization, IPagination, IUser, IUserOrganization, RolesEnum } from '@gauzy/contracts';
+import { ID, IOrganization, IPagination, IUser, IUserOrganization, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { Employee } from '../core/entities/internal';
@@ -30,8 +30,12 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 		filter: BaseQueryDTO<UserOrganization>,
 		includeEmployee: boolean
 	): Promise<IPagination<UserOrganization>> {
-		// Call the base class method to find all user organizations
-		let { items, total } = await super.findAll(filter);
+		// Prepare filter with appropriate permissions
+		// Ensure we never pass an undefined filter to the helper
+		const modifiedFilter = this.applySensitiveRelationsFilter(filter ?? ({} as BaseQueryDTO<UserOrganization>));
+
+		// Execute the query with the potentially modified relations
+		let { items, total } = await super.findAll(modifiedFilter);
 
 		// If 'includeEmployee' is set to true, fetch employee details associated with each user organization
 		if (includeEmployee) {
@@ -61,9 +65,9 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 				// Merge employee details into each user organization object
 				const itemsWithEmployees = items.map((organization: UserOrganization) => {
 					// If user ID is available, fetch employee details
-					if (organization.user.id) {
+					if (organization.userId) {
 						// Fetch employee details using the user ID
-						const employee = employeeMap.get(organization.user.id);
+						const employee = employeeMap.get(organization.userId);
 						return { ...organization, user: { ...organization.user, employee } };
 					}
 					// If user ID is not available, return the original organization object
@@ -94,10 +98,12 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 			return await this._addUserToAllOrganizations(user.id, user.tenantId);
 		}
 
-		const entity: IUserOrganization = new UserOrganization();
-		entity.organizationId = organizationId;
-		entity.tenantId = user.tenantId;
-		entity.userId = user.id;
+		const entity = new UserOrganization({
+			organizationId,
+			tenantId: user.tenantId,
+			userId: user.id
+		});
+
 		return await this.typeOrmUserOrganizationRepository.save(entity);
 	}
 
@@ -114,14 +120,89 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 			where: { tenantId }
 		});
 
-		const entities: IUserOrganization[] = organizations.map((organization: IOrganization) => {
+		const entities = organizations.map(({ id: organizationId }: IOrganization) => {
 			const entity = new UserOrganization();
-			entity.organizationId = organization.id;
+			entity.organizationId = organizationId;
 			entity.tenantId = tenantId;
 			entity.userId = userId;
 			return entity;
 		});
 
 		return await this.typeOrmUserOrganizationRepository.save(entities);
+	}
+
+	/**
+	 * Applies permission-based filtering to relations with fine-grained control over sub-paths.
+	 *
+	 * @param filter The original filter object from the request
+	 * @returns A modified filter with restricted relations based on permissions
+	 */
+	private applySensitiveRelationsFilter(filter: BaseQueryDTO<UserOrganization>): BaseQueryDTO<UserOrganization> {
+		// Deep clone the filter to avoid modifying the original
+		const modifiedFilter = JSON.parse(JSON.stringify(filter));
+
+		// Early return if no relations
+		if (!modifiedFilter.relations) {
+			return modifiedFilter;
+		}
+
+		const PERMISSION_CONFIG = {
+			organization: {
+				_self: null,
+				payments: PermissionsEnum.ORG_PAYMENT_VIEW,
+				invoices: PermissionsEnum.INVOICES_VIEW,
+				invoiceEstimateHistories: PermissionsEnum.INVOICES_VIEW,
+				accountingTemplates: PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES,
+				employees: {
+					_self: PermissionsEnum.ORG_EMPLOYEES_VIEW,
+					user: PermissionsEnum.ORG_USERS_VIEW
+				},
+				featureOrganizations: PermissionsEnum.ALL_ORG_VIEW,
+				contact: PermissionsEnum.ORG_CONTACT_VIEW,
+				organizationSprints: PermissionsEnum.ORG_SPRINT_VIEW
+			}
+		};
+		// Filter relations based on complex permission hierarchy
+		modifiedFilter.relations = modifiedFilter.relations.filter((relation) => {
+			const pathParts = relation.split('.');
+
+			// Start navigation from the root of our permission tree
+			let currentPermissionNode = PERMISSION_CONFIG;
+			let requiredPermission = null;
+
+			// Navigate through relation path and permission tree together
+			for (let i = 0; i < pathParts.length; i++) {
+				const pathPart = pathParts[i];
+
+				// If we've reached the end of our defined permission tree, allow access to deeper paths
+				if (!currentPermissionNode || typeof currentPermissionNode !== 'object') {
+					break;
+				}
+
+				// Check if this part of the path is in our permission config
+				if (currentPermissionNode[pathPart]) {
+					if (typeof currentPermissionNode[pathPart] === 'object') {
+						if (currentPermissionNode[pathPart]['_self']) {
+							requiredPermission = currentPermissionNode[pathPart]['_self'];
+						}
+						// Continue navigating deeper
+						currentPermissionNode = currentPermissionNode[pathPart];
+					} else {
+						requiredPermission = currentPermissionNode[pathPart];
+						break;
+					}
+				} else {
+					break;
+				}
+			}
+
+			if (requiredPermission) {
+				return RequestContext.hasPermission(requiredPermission);
+			}
+
+			return true;
+		});
+
+		return modifiedFilter;
 	}
 }

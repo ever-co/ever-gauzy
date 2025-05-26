@@ -3,7 +3,7 @@ import { environment } from '../environments/environment';
 import { LocalStore } from '@gauzy/desktop-lib';
 import { screen } from 'electron';
 
-type TAuthConfig = {
+export type TAuthConfig = {
 	user: {
 		employee: {
 			tenantId: string;
