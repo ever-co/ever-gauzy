@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
-import { IMakeComIntegrationSettings } from '@gauzy/contracts';
+import { IMakeComIntegrationSettings, IMakeComCreateIntegration } from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'
@@ -28,16 +28,16 @@ export class MakeComService {
 	}
 
 	/**
-	 * Update Make.com OAuth credentials
+	 * Add or update Make.com OAuth settings
 	 */
-	updateOAuthSettings(credentials: {
-		clientId: string;
-		clientSecret: string;
-	}): Observable<IMakeComIntegrationSettings> {
-		return this.http.post<IMakeComIntegrationSettings>(
-			`${API_PREFIX}/integration/make-com/oauth-settings`,
-			credentials
-		);
+	addOAuthSettings(credentials: IMakeComCreateIntegration): Observable<{
+		authorizationUrl: string;
+		integrationId: string;
+	}> {
+		return this.http.post<{
+			authorizationUrl: string;
+			integrationId: string;
+		}>(`${API_PREFIX}/integration/make-com/oauth-settings`, credentials);
 	}
 
 	/**
@@ -50,21 +50,16 @@ export class MakeComService {
 	}
 
 	/**
-	 * Initiates the OAuth authorization flow
-	 * Returns the URL to redirect the user to
+	 * Handle token requests from Make.com custom apps
 	 */
-	getAuthorizeUrl(state?: string): string {
-		const baseUrl = `${API_PREFIX}/integration/make-com/oauth/authorize`;
-		return state ? `${baseUrl}?state=${encodeURIComponent(state)}` : baseUrl;
-	}
-
-	/**
-	 * Handles the redirect after OAuth authorization
-	 * Note: This is generally handled by the controller, not directly called by the client
-	 */
-	handleOAuthCallback(code: string, state: string): Observable<any> {
-		// This method might not be needed in the Angular service as the backend handles
-		// the redirect automatically, but included for completeness
-		return this.http.get(`${API_PREFIX}/integration/make-com/oauth/callback`, { params: { code, state } });
+	handleTokenRequest(body: {
+		grant_type: string;
+		code: string;
+		state: string;
+		client_id: string;
+		client_secret: string;
+		redirect_uri: string;
+	}): Observable<any> {
+		return this.http.post(`${API_PREFIX}/integration/make-com/token`, body);
 	}
 }

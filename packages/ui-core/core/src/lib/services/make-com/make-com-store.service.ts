@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
-import { IMakeComIntegrationSettings } from '@gauzy/contracts';
+import { IMakeComIntegrationSettings, IMakeComCreateIntegration } from '@gauzy/contracts';
 import { MakeComService } from './make-com.service';
 
 @Injectable({
@@ -54,18 +54,17 @@ export class MakeComStoreService {
 	}
 
 	/**
-	 * Updates the Make.com OAuth credentials
+	 * Adds or updates Make.com OAuth settings
 	 * @param credentials The OAuth credentials
 	 * @returns An observable of the updated settings
 	 */
-	updateOAuthSettings(credentials: {
-		clientId: string;
-		clientSecret: string;
-	}): Observable<IMakeComIntegrationSettings> {
-		return this._makeComService.updateOAuthSettings(credentials).pipe(
-			tap((updatedSettings) => this._settings$.next(updatedSettings)),
+	addOAuthSettings(credentials: IMakeComCreateIntegration): Observable<{
+		authorizationUrl: string;
+		integrationId: string;
+	}> {
+		return this._makeComService.addOAuthSettings(credentials).pipe(
 			catchError((error) => {
-				console.error('Error updating Make.com OAuth settings:', error);
+				console.error('Error adding Make.com OAuth settings:', error);
 				return throwError(() => error);
 			})
 		);
@@ -83,15 +82,6 @@ export class MakeComStoreService {
 				return throwError(() => error);
 			})
 		);
-	}
-
-	/**
-	 * Gets the authorization URL for Make.com OAuth
-	 * @param state Optional state parameter for OAuth flow
-	 * @returns The authorization URL
-	 */
-	getAuthorizeUrl(state?: string): string {
-		return this._makeComService.getAuthorizeUrl(state);
 	}
 
 	/**

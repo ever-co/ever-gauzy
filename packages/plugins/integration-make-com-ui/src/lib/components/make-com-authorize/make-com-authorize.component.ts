@@ -4,8 +4,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
 import { tap, switchMap, filter, debounceTime, catchError } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
-import { IntegrationsService, Store, MakeComService, MakeComStoreService } from '@gauzy/ui-core/core';
+import { IIntegrationTenant, IOrganization, IntegrationEnum, IMakeComCreateIntegration } from '@gauzy/contracts';
+import { IntegrationsService, Store } from '@gauzy/ui-core/core';
+import { MakeComService } from '@gauzy/ui-core/core/src/lib/services/make-com/make-com.service';
+import { MakeComStoreService } from '@gauzy/ui-core/core/src/lib/services/make-com/make-com-store.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -22,8 +24,8 @@ export class AuthorizationComponent implements OnInit, OnDestroy {
 	readonly form: UntypedFormGroup = AuthorizationComponent.buildForm(this._fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
-			clientId: [null, Validators.required],
-			clientSecret: [null, Validators.required]
+			client_id: [null, Validators.required],
+			client_secret: [null, Validators.required]
 		});
 	}
 
@@ -85,13 +87,25 @@ export class AuthorizationComponent implements OnInit, OnDestroy {
 	 * Process OAuth callback parameters
 	 */
 	private _handleOAuthCallback(code: string, state: string) {
-		// Note: This is a user-interface call to display the callback results
-		// The actual exchange is handled by the backend automatically
 		this.loading = true;
 
-		return this._makeComService.handleOAuthCallback(code, state).pipe(
+		// Get current OAuth config
+		return this._makeComStoreService.loadOAuthConfig().pipe(
+			switchMap((config) => {
+				if (!config) {
+					throw new Error('OAuth configuration not found');
+				}
+				// Handle token request
+				return this._makeComService.handleTokenRequest({
+					grant_type: 'authorization_code',
+					code,
+					state,
+					client_id: config.clientId,
+					client_secret: '', // This should be handled securely by the backend
+					redirect_uri: config.redirectUri
+				});
+			}),
 			tap(() => {
-				// Redirect to dashboard or appropriate page after successful authentication
 				this._redirectToIntegrationsList();
 			}),
 			catchError((error) => {
@@ -138,29 +152,41 @@ export class AuthorizationComponent implements OnInit, OnDestroy {
 	/**
 	 * Authorize Make.com integration with the provided credentials
 	 */
-	authorizeMakeCom(credentials: { clientId: string; clientSecret: string }) {
+	authorizeMakeCom() {
 		if (!this.organization || this.form.invalid) {
 			return;
 		}
 
 		this.loading = true;
 
-		// Update OAuth settings
-		this._makeComStoreService
-			.updateOAuthSettings(credentials)
-			.pipe(
-				switchMap(() => {
-					// After updating OAuth settings, initiate the OAuth flow
-					// Get OAuth config
-					return this._makeComStoreService.loadOAuthConfig();
-				}),
-				tap((config) => {
-					// Generate authorization URL with a state parameter
-					const state = this._generateRandomState();
-					const authUrl = this._makeComStoreService.getAuthorizeUrl(state);
+		const client_id = this.form.get('client_id').value;
+		const client_secret = this.form.get('client_secret').value;
 
+		// Get OAuth config to get redirect URI
+		this._makeComStoreService
+			.loadOAuthConfig()
+			.pipe(
+				switchMap((config) => {
+					if (!config) {
+						throw new Error('OAuth configuration not found');
+					}
+
+					const credentials: IMakeComCreateIntegration = {
+						oauthParams: {
+							client_id,
+							client_secret,
+							grant_type: 'authorization_code',
+							code: '', // This will be filled by the backend
+							redirect_uri: config.redirectUri
+						}
+					};
+
+					// Add OAuth settings and get authorization URL
+					return this._makeComStoreService.addOAuthSettings(credentials);
+				}),
+				tap(({ authorizationUrl }) => {
 					// Redirect user to Make.com authorization page
-					window.location.href = authUrl;
+					window.location.href = authorizationUrl;
 				}),
 				catchError((error) => {
 					console.error('Error during Make.com authorization:', error);
@@ -170,15 +196,6 @@ export class AuthorizationComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	/**
-	 * Generate a random state parameter for OAuth security
-	 */
-	private _generateRandomState(): string {
-		const array = new Uint32Array(8);
-		window.crypto.getRandomValues(array);
-		return Array.from(array, (x) => x.toString(16).padStart(8, '0')).join('');
 	}
 
 	/**

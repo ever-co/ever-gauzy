@@ -2,12 +2,13 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NbMenuItem, NbRouteTab } from '@nebular/theme';
 import { filter } from 'rxjs/operators';
-import { tap } from 'rxjs';
+import { tap, catchError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ID, IOrganization } from '@gauzy/contracts';
+import { ID, IOrganization, IntegrationEnum } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/core';
+import { Store, IntegrationsService } from '@gauzy/ui-core/core';
+import { MakeComStoreService } from '@gauzy/ui-core/core/src/lib/services/make-com/make-com-store.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -20,12 +21,15 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 	public menus: NbMenuItem[] = [];
 	public integrationId: ID;
 	public organization: IOrganization;
+	public loading: boolean = false;
 
 	constructor(
 		private readonly _router: Router,
 		public readonly translateService: TranslateService,
 		private readonly _activatedRoute: ActivatedRoute,
-		private readonly _store: Store
+		private readonly _store: Store,
+		private readonly _integrationsService: IntegrationsService,
+		private readonly _makeComStoreService: MakeComStoreService
 	) {
 		super(translateService);
 	}
@@ -37,7 +41,9 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 		this._activatedRoute.params
 			.pipe(
 				tap((params: Params) => (this.integrationId = params['id'])),
-				tap(() => this._loadMenus())
+				tap(() => this._loadMenus()),
+				tap(() => this._loadIntegrationSettings()),
+				untilDestroyed(this)
 			)
 			.subscribe();
 
@@ -79,6 +85,12 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 				icon: 'clock-outline',
 				responsive: true,
 				route: this.getRoute('history')
+			},
+			{
+				title: this.getTranslation('INTEGRATIONS.MAKE_PAGE.SETTINGS'),
+				icon: 'settings-2-outline',
+				responsive: true,
+				route: this.getRoute('settings')
 			}
 		];
 	}
@@ -91,14 +103,46 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 			{
 				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
 				icon: 'text-outline',
-				link: `pages/integrations/make/regenerate`
+				link: `pages/integrations/make-com/authorize`
 			},
 			{
 				title: this.getTranslation('INTEGRATIONS.SETTINGS'),
 				icon: 'settings-2-outline',
-				link: `pages/integrations/make/${this.integrationId}/settings`
+				link: `pages/integrations/make-com/${this.integrationId}/settings`
 			}
 		];
+	}
+
+	/**
+	 * Load integration settings
+	 */
+	private _loadIntegrationSettings() {
+		if (!this.organization) return;
+
+		this.loading = true;
+		const { id: organizationId, tenantId } = this.organization;
+
+		this._integrationsService
+			.getIntegrationByOptions({
+				name: IntegrationEnum.MakeCom,
+				organizationId,
+				tenantId
+			})
+			.pipe(
+				tap((integration) => {
+					if (integration) {
+						this._makeComStoreService.loadIntegrationSettings().subscribe();
+					}
+				}),
+				catchError((error) => {
+					console.error('Error loading Make.com integration settings:', error);
+					return [];
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe(() => {
+				this.loading = false;
+			});
 	}
 
 	/**
@@ -123,5 +167,7 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 		this._router.navigate(['/pages/integrations']);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._makeComStoreService.clearStore();
+	}
 }

@@ -11,6 +11,7 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbRouteTabsetModule,
+	NbSpinnerModule,
 	NbTabsetModule,
 	NbToggleModule,
 	NbTooltipModule
@@ -28,6 +29,8 @@ import { IntegrationMakeComRoutes } from './integration-make-com.routes';
 import { AuthorizationComponent } from './components/make-com-authorize/make-com-authorize.component';
 import { IntegrationMakeComLayoutComponent } from './integration-make-com.layout.component';
 import { MakeComponent } from './components/make/make.component';
+import { MakeComCallbackComponent } from './components/make-com-callback/make-com-callback.component';
+import { MakeComSettingsComponent } from './components/make-com-settings/make-com-settings.component';
 
 @NgModule({
 	imports: [
@@ -41,6 +44,7 @@ import { MakeComponent } from './components/make/make.component';
 		NbIconModule,
 		NbInputModule,
 		NbRouteTabsetModule,
+		NbSpinnerModule,
 		NbTabsetModule,
 		NbToggleModule,
 		NbTooltipModule,
@@ -58,6 +62,12 @@ import { MakeComponent } from './components/make/make.component';
 		SharedModule,
 		TableComponentsModule
 	],
-	declarations: [IntegrationMakeComLayoutComponent, MakeComponent, AuthorizationComponent]
+	declarations: [
+		IntegrationMakeComLayoutComponent,
+		MakeComponent,
+		AuthorizationComponent,
+		MakeComCallbackComponent,
+		MakeComSettingsComponent
+	]
 })
 export class IntegrationMakeComUiModule {}
