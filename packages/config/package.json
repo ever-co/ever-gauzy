@@ -45,7 +45,7 @@
 		"mikro-orm-soft-delete": "^1.0.0-alpha.1",
 		"nest-knexjs": "^0.0.26",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.22"
+		"typeorm": "^0.3.24"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",

@@ -32,10 +32,10 @@
 		"@angular/router": "^19.2.10",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^15.0.0",
-		"@ng-select/ng-select": "^14.7.0",
+		"@ng-select/ng-select": "^14.8.1",
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.4",
-		"angular2-smart-table": "^3.6.1",
+		"angular2-smart-table": "^3.6.2",
 		"ngx-permissions": "^19.0.0",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2"
