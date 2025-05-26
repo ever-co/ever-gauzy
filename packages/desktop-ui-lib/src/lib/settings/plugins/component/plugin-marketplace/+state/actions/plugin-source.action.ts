@@ -15,6 +15,16 @@ export class PluginSourceActions {
 		pluginId,
 		versionId
 	}));
+	public static delete = createAction('[Plugin Source] Delete', (pluginId: ID, versionId: ID, sourceId: ID) => ({
+		pluginId,
+		versionId,
+		sourceId
+	}));
+	public static restore = createAction('[Plugin Source] Restore', (pluginId: ID, versionId: ID, sourceId) => ({
+		pluginId,
+		versionId,
+		sourceId
+	}));
 	public static selectSource = createAction('[Plugin Source] Select', (source: IPluginSource) => ({ source }));
 	public static reset = createAction('[Plugin Source] Reset');
 }

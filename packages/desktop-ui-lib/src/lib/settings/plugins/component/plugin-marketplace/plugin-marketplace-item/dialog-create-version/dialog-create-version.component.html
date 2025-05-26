@@ -17,12 +17,13 @@
 				<!-- Step 1 : Sources -->
 				<nb-step [stepControl]="versionForm?.get('sources')" [label]="'PLUGIN.FORM.SOURCES' | translate">
 					<lib-source-container
-						class="overflow-auto"
+						class="overflow-auto grow"
 						[sources]="sources"
 						[sourceTypes]="sourceTypes"
 						[cantAddMore]="!!version"
-						(addSource)="addSource($event)"
-						(removeSource)="removeSource($event)"
+						(add)="addSource($event)"
+						(remove)="removeSource($event)"
+						(restore)="restoreSource($event)"
 					></lib-source-container>
 					<div class="stepper-buttons">
 						<button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>

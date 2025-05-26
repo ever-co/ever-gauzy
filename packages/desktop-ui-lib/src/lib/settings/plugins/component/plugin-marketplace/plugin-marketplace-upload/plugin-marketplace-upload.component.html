@@ -23,12 +23,13 @@
 				<!-- Step 2: Source -->
 				<nb-step [stepControl]="pluginForm?.get('version.sources')" [label]="'PLUGIN.FORM.SOURCE' | translate">
 					<lib-source-container
-						class="overflow-auto"
+						class="overflow-auto grow"
 						[sources]="sources"
 						[sourceTypes]="sourceTypes"
 						[cantAddMore]="!!plugin"
-						(addSource)="addSource($event)"
-						(removeSource)="removeSource($event)"
+						(add)="addSource($event)"
+						(remove)="removeSource($event)"
+						(restore)="restoreSource($event)"
 					></lib-source-container>
 					<div class="stepper-buttons">
 						<button nbButton outline status="basic" nbStepperPrevious>

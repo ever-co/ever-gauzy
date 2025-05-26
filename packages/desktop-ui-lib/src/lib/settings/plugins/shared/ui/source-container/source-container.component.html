@@ -12,18 +12,34 @@
 					<h5>{{ 'PLUGIN.FORM.SOURCE' | translate }} #{{ idx + 1 }}</h5>
 					<nb-icon icon="grid-view" class="drag-icon"></nb-icon>
 				</div>
-				<button
-					nbButton
-					ghost
-					status="danger"
-					size="small"
-					(click)="removeSource.emit(idx)"
-					class="delete-btn"
-					[nbTooltip]="'Delete source' | translate"
-					nbTooltipPlacement="top"
-				>
-					<nb-icon icon="trash-2-outline"></nb-icon>
-				</button>
+				<div class="header-actions">
+					@if(!!source?.value?.deletedAt && cantAddMore) {
+					<button
+						nbButton
+						ghost
+						status="warning"
+						size="small"
+						(click)="restore.emit(idx); $event.stopPropagation()"
+						class="restore-btn"
+						[nbTooltip]="'Restore source' | translate"
+						nbTooltipPlacement="top"
+					>
+						<nb-icon icon="refresh-outline"></nb-icon>
+					</button>
+					}
+					<button
+						nbButton
+						ghost
+						status="danger"
+						size="small"
+						(click)="remove.emit(idx); $event.stopPropagation()"
+						class="delete-btn"
+						[nbTooltip]="'Delete source' | translate"
+						nbTooltipPlacement="top"
+					>
+						<nb-icon icon="trash-2-outline"></nb-icon>
+					</button>
+				</div>
 			</div>
 			<lib-plugin-source class="grow" [form]="source"></lib-plugin-source>
 		</div>
@@ -54,7 +70,7 @@
 				</div>
 				<div class="source-options">
 					@for(source of sourceTypes; track source){
-					<div class="source-option" (click)="addSource.emit(source); $event.stopPropagation()">
+					<div class="source-option" (click)="add.emit(source); $event.stopPropagation()">
 						<nb-icon [icon]="getSourceIcon(source)" class="option-icon"></nb-icon>
 						<span>{{ 'PLUGIN.FORM.SOURCE_TYPES.' + source | translate }}</span>
 					</div>

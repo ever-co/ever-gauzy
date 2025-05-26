@@ -10,9 +10,12 @@ import {
 	Validators
 } from '@angular/forms';
 import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
-import { NbDateService, NbDialogRef } from '@nebular/theme';
+import { NbDateService, NbDialogRef, NbDialogService } from '@nebular/theme';
+import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
+import { filter, Subject, take, tap } from 'rxjs';
+import { PluginSourceActions } from '../../+state/actions/plugin-source.action';
+import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../../services';
 import { SourceContext } from '../../plugin-marketplace-upload/plugin-source/creator/source.context';
 
@@ -47,7 +50,9 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService,
 		protected readonly dateService: NbDateService<Date>,
-		private readonly sourceContext: SourceContext
+		private readonly sourceContext: SourceContext,
+		private readonly action: Actions,
+		private readonly dialog: NbDialogService
 	) {
 		this.today = dateService.today();
 	}
@@ -112,8 +117,55 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 		this.sources.push(source);
 	}
 
-	public removeSource(index: number): void {
-		this.sources.removeAt(index);
+	public removeSource(idx: number): void {
+		if (this.version) {
+			this.dialog
+				.open(AlertComponent, {
+					context: {
+						data: {
+							message: 'Delete this source?',
+							title: 'Delete Source',
+							confirmText: 'Delete',
+							status: 'basic'
+						}
+					}
+				})
+				.onClose.pipe(
+					take(1),
+					filter(Boolean),
+					tap(() => {
+						const { id } = this.sources.at(idx).value as IPluginSource;
+						this.action.dispatch(PluginSourceActions.delete(this.plugin.id, this.version.id, id));
+						this.sources.removeAt(idx);
+					})
+				)
+				.subscribe();
+		} else {
+			this.sources.removeAt(idx);
+		}
+	}
+
+	public restoreSource(idx: number): void {
+		this.dialog
+			.open(AlertComponent, {
+				context: {
+					data: {
+						message: 'Restore this source?',
+						title: 'Restore Source',
+						confirmText: 'Restore',
+						status: 'basic'
+					}
+				}
+			})
+			.onClose.pipe(
+				take(1),
+				filter(Boolean),
+				tap(() => {
+					const { id, versionId } = this.sources.at(idx).value as IPluginSource;
+					this.action.dispatch(PluginSourceActions.restore(this.plugin.id, versionId, id));
+				})
+			)
+			.subscribe();
 	}
 
 	public reset(): void {

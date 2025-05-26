@@ -10,6 +10,12 @@
   align-items: center;
 }
 
+/* Header actions*/
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 /* Source Cards with Futuristic Design */
 .source-card {
   position: relative;

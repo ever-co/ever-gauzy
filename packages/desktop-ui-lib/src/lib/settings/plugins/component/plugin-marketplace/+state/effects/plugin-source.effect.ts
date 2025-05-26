@@ -3,7 +3,7 @@ import { IPluginSource } from '@gauzy/contracts';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, catchError, filter, finalize, map, switchMap, tap } from 'rxjs';
+import { EMPTY, catchError, filter, finalize, map, mergeMap, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
 import { coalesceValue } from '../../../../../../utils';
 import { PluginService } from '../../../../services/plugin.service';
@@ -109,6 +109,67 @@ export class PluginSourceEffects {
 				this.pluginSourceStore.update({
 					sources: []
 				})
+			)
+		)
+	);
+
+	delete$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginSourceActions.delete),
+			tap(() => {
+				this.pluginSourceStore.update({ deleting: true });
+				this.toastrService.info(this.translateService.instant('Deleting...'));
+			}),
+			mergeMap(({ pluginId, versionId, sourceId }) =>
+				this.pluginService.deleteSource(pluginId, versionId, sourceId).pipe(
+					tap(() => {
+						const deletedAt = new Date();
+						this.pluginSourceStore.update((state) => ({
+							source: state.source && { ...state.source, deletedAt },
+							sources: [
+								...state.sources.map((source) =>
+									source.id === sourceId ? { ...source, deletedAt } : source
+								)
+							]
+						}));
+						this.toastrService.success(this.translateService.instant('Source deleted successfully.'));
+					}),
+					finalize(() => this.pluginSourceStore.update({ deleting: false })),
+					catchError((error) => {
+						this.toastrService.error(error.message || error);
+						return EMPTY;
+					})
+				)
+			)
+		)
+	);
+
+	restore$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginSourceActions.restore),
+			tap(() => {
+				this.pluginSourceStore.update({ restoring: true });
+				this.toastrService.info(this.translateService.instant('Restoring...'));
+			}),
+			mergeMap(({ pluginId, versionId, sourceId }) =>
+				this.pluginService.restoreSource(pluginId, versionId, sourceId).pipe(
+					tap(() => {
+						this.pluginSourceStore.update((state) => ({
+							version:
+								state.source?.id === versionId ? { ...state.source, deletedAt: null } : state.source,
+							sources: state.sources.map((source) =>
+								source.id === sourceId ? { ...source, deletedAt: null } : source
+							)
+						}));
+						this.toastrService.success(this.translateService.instant('Source restored successfully'));
+					}),
+					catchError((error) => {
+						console.error('Restore failed:', error);
+						this.toastrService.error(this.translateService.instant('An error occurred while restoring'));
+						return EMPTY;
+					}),
+					finalize(() => this.pluginSourceStore.update({ restoring: false }))
+				)
 			)
 		)
 	);

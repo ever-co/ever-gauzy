@@ -8,11 +8,11 @@
 		</nb-card-header>
 		<nb-card-body>
 			<lib-source-container
-				class="overflow-auto"
+				class="overflow-auto grow"
 				[sources]="sources"
 				[sourceTypes]="sourceTypes"
-				(addSource)="addSource($event)"
-				(removeSource)="removeSource($event)"
+				(add)="addSource($event)"
+				(remove)="removeSource($event)"
 			></lib-source-container>
 		</nb-card-body>
 		<nb-card-footer class="d-flex justify-content-end">

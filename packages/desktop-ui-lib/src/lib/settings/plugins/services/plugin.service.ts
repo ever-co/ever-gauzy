@@ -131,6 +131,16 @@ export class PluginService {
 		});
 	}
 
+	public deleteSource(pluginId: ID, versionId: ID, sourceId: ID): Observable<void> {
+		return this.http.delete<void>(`${this.endPoint}/${pluginId}/versions/${versionId}/sources/${sourceId}`);
+	}
+
+	public restoreSource(pluginId: ID, versionId: ID, sourceId: ID): Observable<void> {
+		return this.http.patch<void>(`${this.endPoint}/${pluginId}/versions/${versionId}/sources/${sourceId}`, {
+			deleted: false
+		});
+	}
+
 	public addSources(
 		pluginId: ID,
 		versionId: ID,

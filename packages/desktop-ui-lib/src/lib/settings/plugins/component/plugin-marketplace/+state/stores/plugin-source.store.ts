@@ -9,6 +9,9 @@ export interface IPluginSourceState {
 	versionId: ID;
 	count: number;
 	creating: boolean;
+	updating: boolean;
+	deleting: boolean;
+	restoring: boolean;
 }
 
 export function createInitialPluginSourceState(): IPluginSourceState {
@@ -18,6 +21,9 @@ export function createInitialPluginSourceState(): IPluginSourceState {
 		pluginId: null,
 		versionId: null,
 		creating: false,
+		updating: false,
+		deleting: false,
+		restoring: false,
 		count: 0
 	};
 }
