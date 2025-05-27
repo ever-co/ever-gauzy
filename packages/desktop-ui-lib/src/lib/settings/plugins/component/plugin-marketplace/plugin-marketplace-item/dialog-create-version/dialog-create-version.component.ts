@@ -63,10 +63,10 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 
 	ngOnInit(): void {
 		this.initForm();
-		this.setupVersionListerners();
+		this.setupVersionListener();
 	}
 
-	private setupVersionListerners() {
+	private setupVersionListener() {
 		this.versionQuery.version$
 			.pipe(
 				tap((version) => {
