@@ -596,6 +596,8 @@
 			"BUDGET": "الميزانية",
 			"HOURS": "ساعات",
 			"COST": "تكلفة",
+			"MAKE_COM_CLIENT_ID": "أدخل معرف عميل Make.com الخاص بك",
+			"MAKE_COM_CLIENT_SECRET": "أدخل الرمز السري لعميل Make.com الخاص بك",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "اسم المدرسة",
 				"DEGREE": "الدرجة/الشهادة",
@@ -829,6 +831,7 @@
 		"POSITIONS": "الوظائف",
 		"INTEGRATIONS": "التطبيقات والتكاملات",
 		"UPWORK": "أبوورك",
+		"MAKE_COM": "Make.com",
 		"GAUZY_AI": "جوزي الذكاء الاصطناعي",
 		"PROPOSALS": "مقترحات",
 		"TIME_OFF": "وقت مرتاح",
@@ -1273,6 +1276,21 @@
 			"CONTRACTS_RELATED_DATA": "تزامن كيانات العقود ذات الصلة",
 			"DATE_RANGE_PLACEHOLDER": "اختر تاريخًا بين",
 			"HOURLY": "بالساعة"
+		},
+		"MAKE_COM_PAGE": {
+			"CLIENT_ID": "معرف العميل",
+			"CLIENT_SECRET": "الرمز السري للعميل",
+			"NEXT_STEP_INFO": "بعد التفويض، سيتم توجيهك إلى Make.com لإكمال إعداد التكامل"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "إعدادات Make.com",
+				"ENABLE_INTEGRATION": "تفعيل تكامل Make.com",
+				"WEBHOOK_URL": "رابط الويب هوك",
+				"WEBHOOK_URL_PLACEHOLDER": "أدخل رابط الويب هوك",
+				"WEBHOOK_URL_INVALID": "الرجاء إدخال رابط ويب هوك صالح",
+				"SAVE": "حفظ الإعدادات"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "مفتاح Gauzy AI",

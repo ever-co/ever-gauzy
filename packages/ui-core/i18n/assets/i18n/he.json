@@ -603,6 +603,8 @@
 			"BUDGET": "Budget",
 			"HOURS": "Hours",
 			"COST": "Cost",
+			"MAKE_COM_CLIENT_ID": "הזן את מזהה הלקוח Make.com שלך",
+			"MAKE_COM_CLIENT_SECRET": "הזן את סיסמת הלקוח Make.com שלך",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -834,6 +836,7 @@
 		"POSITIONS": "עמדות",
 		"INTEGRATIONS": "Apps & Integrations",
 		"UPWORK": "Upwork",
+		"MAKE_COM": "Make.com",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"APPROVALS": "Approvals",
@@ -1277,6 +1280,21 @@
 			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
 			"HOURLY": "Hourly"
+		},
+		"MAKE_COM_PAGE": {
+			"CLIENT_ID": "מזהה לקוח",
+			"CLIENT_SECRET": "סיסמת לקוח",
+			"NEXT_STEP_INFO": "לאחר האישור, תועבר ל-Make.com להשלמת הגדרות האינטגרציה"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "הגדרות Make.com",
+				"ENABLE_INTEGRATION": "הפעל אינטגרציית Make.com",
+				"WEBHOOK_URL": "כתובת Webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "הזן כתובת webhook",
+				"WEBHOOK_URL_INVALID": "אנא הזן כתובת webhook תקינה",
+				"SAVE": "שמור הגדרות"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"TITLE": "Gauzy AI Integration",

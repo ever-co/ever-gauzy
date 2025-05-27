@@ -669,6 +669,8 @@
 			"UPWORK_ORGANIZATION_NAME": "Upwork 组织名称",
 			"UPWORK_ID": "Upwork标识",
 			"LINKEDIN_ID": "领英帐号",
+			"MAKE_COM_CLIENT_ID": "输入您的Make.com客户端ID",
+			"MAKE_COM_CLIENT_SECRET": "输入您的Make.com客户端密钥",
 			"STANDARD_WORK_HOURS_PER_DAY": "输入每天的标准工作时间（例如 8 小时）"
 		},
 		"RATES": {
@@ -851,6 +853,7 @@
 		"DANGER_ZONE": "危险区",
 		"FILE_STORAGE": "文件存储",
 		"INVITE_PEOPLE": "邀请人们",
+		"MAKE_COM": "Make.com",
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "进口/出口",
 			"IMPORT_EXPORT_DATA": "导入/导出数据",
@@ -1259,6 +1262,7 @@
 			"GRANT_PERMISSION": "接下来，您将被带到Hubstaff以授予Gauzy权限。",
 			"ENTER_CLIENT_SECRET": "输入客户端秘钥以获取访问令牌。"
 		},
+
 		"UPWORK_PAGE": {
 			"ACTIVITIES": "活动",
 			"REPORTS": "报告",
@@ -1274,6 +1278,21 @@
 			"CONTRACTS_RELATED_DATA": "同步合同相关的实体",
 			"DATE_RANGE_PLACEHOLDER": "在之间选择日期",
 			"HOURLY": "每小时"
+		},
+		"MAKE_COM_PAGE": {
+			"CLIENT_ID": "客户端ID",
+			"CLIENT_SECRET": "客户端密钥",
+			"NEXT_STEP_INFO": "授权后，您将被重定向到Make.com以完成集成设置"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Make.com设置",
+				"ENABLE_INTEGRATION": "启用Make.com集成",
+				"WEBHOOK_URL": "Webhook URL",
+				"WEBHOOK_URL_PLACEHOLDER": "输入webhook URL",
+				"WEBHOOK_URL_INVALID": "请输入有效的webhook URL",
+				"SAVE": "保存设置"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Gauzy AI 密钥",

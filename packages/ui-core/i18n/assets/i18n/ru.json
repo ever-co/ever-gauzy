@@ -603,6 +603,8 @@
 			"BUDGET": "Бюджет",
 			"HOURS": "Часы",
 			"COST": "Затраты",
+			"MAKE_COM_CLIENT_ID": "Введите ваш ID клиента Make.com",
+			"MAKE_COM_CLIENT_SECRET": "Введите ваш секрет клиента Make.com",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
 				"DEGREE": "Диплом",
@@ -837,6 +839,7 @@
 		"RECURRING_EXPENSE": "Периодические расходы",
 		"POSITIONS": "Позиции",
 		"INTEGRATIONS": "Приложения и интеграция",
+		"MAKE_COM": "Make.com",
 		"UPWORK": "Обновления",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Время выключено",
@@ -1282,6 +1285,22 @@
 			"DATE_RANGE_PLACEHOLDER": "Выберите дату между",
 			"HOURLY": "Почасовой"
 		},
+		"MAKE_COM_PAGE": {
+			"CLIENT_ID": "ID клиента",
+			"CLIENT_SECRET": "Секрет клиента",
+			"NEXT_STEP_INFO": "После авторизации вы будете перенаправлены на Make.com для завершения настройки интеграции"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Настройки Make.com",
+				"ENABLE_INTEGRATION": "Включить интеграцию Make.com",
+				"WEBHOOK_URL": "URL вебхука",
+				"WEBHOOK_URL_PLACEHOLDER": "Введите URL вебхука",
+				"WEBHOOK_URL_INVALID": "Пожалуйста, введите действительный URL вебхука",
+				"SAVE": "Сохранить настройки"
+			}
+		},
+
 		"GAUZY_AI_PAGE": {
 			"TITLE": "Интеграция Gauzy AI",
 			"API_KEY": "Непрозрачный ключ AI",

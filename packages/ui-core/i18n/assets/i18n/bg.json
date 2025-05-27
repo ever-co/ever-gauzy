@@ -624,6 +624,8 @@
 			"BUDGET": "Бюджет",
 			"HOURS": "Часове",
 			"COST": "Разход",
+			"MAKE_COM_CLIENT_ID": "Въведете вашия Make.com ID на клиент",
+			"MAKE_COM_CLIENT_SECRET": "Въведете вашата Make.com тайна на клиент",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Име на училище",
 				"DEGREE": "Степен/Диплома",
@@ -859,6 +861,7 @@
 		"POSITIONS": "Позиции",
 		"INTEGRATIONS": "Интеграции",
 		"UPWORK": "Апуърк",
+		"MAKE_COM": "Make.com",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Отпуска",
 		"APPROVALS": "Одобрения",
@@ -1305,6 +1308,21 @@
 			"DATE_RANGE_PLACEHOLDER": "Изберете дата между",
 			"HOURLY": "По час",
 			"DESCRIPTION": "Активирайте Upwork интеграцията за управление на фрийланс работна сила."
+		},
+		"MAKE_COM_PAGE": {
+			"CLIENT_ID": "ID на клиент",
+			"CLIENT_SECRET": "Тайна на клиент",
+			"NEXT_STEP_INFO": "След оторизацията ще бъдете пренасочени към Make.com, за да завършите настройката на интеграцията"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Настройки на Make.com",
+				"ENABLE_INTEGRATION": "Активиране на интеграция с Make.com",
+				"WEBHOOK_URL": "Webhook URL",
+				"WEBHOOK_URL_PLACEHOLDER": "Въведете webhook URL",
+				"WEBHOOK_URL_INVALID": "Моля, въведете валиден webhook URL",
+				"SAVE": "Запазване на настройките"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"TITLE": "Gauzy AI Интеграция",

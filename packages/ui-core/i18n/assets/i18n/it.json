@@ -597,6 +597,8 @@
 			"BUDGET": "Bilancio",
 			"HOURS": "Ore",
 			"COST": "Costo",
+			"MAKE_COM_CLIENT_ID": "Inserisci il tuo ID cliente Make.com",
+			"MAKE_COM_CLIENT_SECRET": "Inserisci il tuo segreto cliente Make.com",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Nome della scuola",
 				"DEGREE": "Laurea/Diploma",
@@ -830,6 +832,7 @@
 		"POSITIONS": "Posizioni",
 		"INTEGRATIONS": "Applicazioni e integrazioni",
 		"UPWORK": "Upwork",
+		"MAKE_COM": "Make.com",
 		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Proposte",
 		"TIME_OFF": "Tempo libero",
@@ -1274,6 +1277,21 @@
 			"CONTRACTS_RELATED_DATA": "Entità correlate dei contratti sincronizzati",
 			"DATE_RANGE_PLACEHOLDER": "Scegli una data compresa tra",
 			"HOURLY": "Orario"
+		},
+		"MAKE_COM_PAGE": {
+			"CLIENT_ID": "ID Cliente",
+			"CLIENT_SECRET": "Segreto Cliente",
+			"NEXT_STEP_INFO": "Dopo l'autorizzazione, sarai reindirizzato a Make.com per completare la configurazione dell'integrazione"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Impostazioni Make.com",
+				"ENABLE_INTEGRATION": "Abilita integrazione Make.com",
+				"WEBHOOK_URL": "URL Webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "Inserisci URL webhook",
+				"WEBHOOK_URL_INVALID": "Inserisci un URL webhook valido",
+				"SAVE": "Salva impostazioni"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Chiave Gauzy AI",
