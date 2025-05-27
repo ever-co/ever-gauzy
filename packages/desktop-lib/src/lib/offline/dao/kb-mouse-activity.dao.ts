@@ -37,7 +37,7 @@ export class KbMouseActivityDAO implements DAO<KbMouseActivityTO> {
 			.del();
 	}
 
-	public async current(): Promise<KbMouseActivityTO> {
+	public async current(): Promise<KbMouseActivityTO | undefined> {
 		const [activities] = await this._provider
 			.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
 			.orderBy('timeStart', 'desc')
