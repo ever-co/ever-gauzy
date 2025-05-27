@@ -17,7 +17,8 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import { ZapierService } from './zapier.service';
 import { ICreateZapierIntegrationInput, IZapierEndpoint } from './zapier.types';
-import { v4 as uuidv4 } from 'uuid';
+import { randomBytes } from 'node:crypto';
+import { ZAPIER_TOKEN_EXPIRATION_TIME } from './zapier.config';
 
 @ApiTags('Zapier Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -28,8 +29,9 @@ export class ZapierController {
 
 	/**
 	 * Creates an instance of the ZapierController.
-	 * are properly set in the environment variables. These are essential for enabling secure
-	 * and functional Zapier integrations.
+	 * Initializes the controller with the required services for managing Zapier integrations.
+	 * Ensures that the necessary configuration values are properly set in the environment variables.
+	 * These are essential for enabling secure and functional Zapier integrations.
 	 */
 	constructor(private readonly zapierService: ZapierService, private readonly _config: ConfigService) {}
 
@@ -77,7 +79,7 @@ export class ZapierController {
 	}
 
 	/**
-	 * Get availables Zapier triggers.
+	 * Get available Zapier triggers.
 	 * This method retrieves the available triggers from Zapier based on the provided token.
 	 */
 	@ApiOperation({ summary: 'Get available Zapier triggers' })
@@ -178,6 +180,12 @@ export class ZapierController {
 		}
 	) {
 		try {
+			// Add tenant validation to token exchange endpoint
+			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID is required');
+			}
+
 			// Validate required parameters
 			if (!body.code || !body.client_id || !body.client_secret || !body.redirect_uri) {
 				throw new BadRequestException('Missing required parameters');
@@ -188,20 +196,22 @@ export class ZapierController {
 			}
 
 			// Generate new tokens (simplified approach)
-			const access_token = uuidv4();
-			const refresh_token = uuidv4();
+			const access_token = randomBytes(32).toString('hex');
+			const refresh_token = randomBytes(32).toString('hex');
 
-			// Find integration by client_id
+			// Find the integration record using the client_id from the request
 			const integration = await this.zapierService.findIntegrationByClientId(body.client_id);
-
-			// Store tokens in integration settings
-			await this.zapierService.storeTokens(integration.id ?? '', access_token, refresh_token);
+			if (!integration.id) {
+				throw new BadRequestException('Invalid integration ID');
+			}
+			// Store the generated access and refresh tokens for this integration
+			await this.zapierService.storeTokens(integration.id, access_token, refresh_token);
 
 			return {
 				access_token,
 				refresh_token,
 				token_type: 'Bearer',
-				expires_in: 3600 // 1 hour
+				expires_in: ZAPIER_TOKEN_EXPIRATION_TIME
 			};
 		} catch (error) {
 			this.logger.error('Failed to exchange code for token', error);

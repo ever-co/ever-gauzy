@@ -24,6 +24,7 @@ import {
 } from '@gauzy/core';
 import { ZAPIER_API_URL, ZAPIER_BASE_URL, ZAPIER_TOKEN_EXPIRATION_TIME } from './zapier.config';
 import { ICreateZapierIntegrationInput, IZapierAccessTokens, IZapierEndpoint, IZapierAuthState } from './zapier.types';
+import { randomBytes } from 'node:crypto';
 
 @Injectable()
 export class ZapierService {
@@ -168,9 +169,13 @@ export class ZapierService {
 			if (!redirect_uri) {
 				throw new Error('Zapier redirect URI is not configured');
 			}
-			const tenantId = RequestContext.currentTenantId();
 			const organizationId = options?.organizationId;
 			const integrationId = options?.integrationId;
+			const tenantId = RequestContext.currentTenantId();
+
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID is required');
+			}
 
 			// Use provided clientId or fallback to config
 			const clientId = options?.clientId || this.config.get('zapier')?.clientId;
@@ -188,6 +193,11 @@ export class ZapierService {
 						integrationId
 					})
 				).toString('base64');
+
+			if (!state || !state?.trim()) {
+				throw new BadRequestException('State parameter is required');
+			}
+
 			// Build authorization URL according to Zapier documentation
 			const params = new URLSearchParams({
 				client_id: clientId,
@@ -578,6 +588,20 @@ export class ZapierService {
 		await this._integrationSettingService.save(allSettings);
 	}
 
+	private async generateAndStoreNewTokens(integration: ID, settings: any[]): Promise<IZapierAccessTokens> {
+		const access_token = randomBytes(32).toString('hex');
+		const new_refresh_token = randomBytes(32).toString('hex');
+
+		await this.storeTokens(integration, access_token, new_refresh_token);
+
+		return {
+			access_token,
+			refresh_token: new_refresh_token,
+			token_type: 'Bearer',
+			expires_in: ZAPIER_TOKEN_EXPIRATION_TIME
+		};
+	}
+
 	/**
 	 * Refresh token using refresh token (alternative to refreshToken method)
 	 * @param integrationId - The integration ID
@@ -612,21 +636,7 @@ export class ZapierService {
 				throw new BadRequestException('Missing required Zapier integration settings');
 			}
 
-			// Generate new tokens
-			const access_token = uuidv4();
-			const new_refresh_token = uuidv4();
-
-			// Store the new tokens
-			await this.storeTokens(integrationId, access_token, new_refresh_token);
-
-			this.logger.log(`Successfully refreshed tokens for integration ID ${integrationId}`);
-
-			return {
-				access_token,
-				refresh_token: new_refresh_token,
-				token_type: 'Bearer',
-				expires_in: ZAPIER_TOKEN_EXPIRATION_TIME
-			};
+			return this.generateAndStoreNewTokens(integrationId, settings);
 		} catch (error: any) {
 			this.logger.error(`Failed to refresh token for integration ID ${integrationId}`, {
 				error: error.message,

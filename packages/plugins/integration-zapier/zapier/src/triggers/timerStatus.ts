@@ -4,36 +4,32 @@ import { ZObject, Bundle } from 'zapier-platform-core';
  * Ensures date fields are properly formatted in ISO-8601 format
  * This helps prevent T003 warnings from Zapier validation
  */
-const formatDateFields = (item: any) => {
+
+export interface DateFormattable {
+	[key: string]: any;
+	lastLog?: DateFormattable;
+}
+
+/** Formats a single date field to ISO-8601 format */
+const formatSingleDateField = (value: any): string | null => {
+	if (!value) return null;
+	const date = new Date(value);
+	return isNaN(date.getTime()) ? null : date.toISOString();
+};
+
+const formatDateFields = (item: DateFormattable): DateFormattable => {
 	const dateFields = ['createdAt', 'updatedAt', 'startedAt', 'stoppedAt', 'editedAt', 'archivedAt', 'deletedAt'];
 
 	const formatted = { ...item };
 
 	dateFields.forEach((field) => {
-		if (formatted[field]) {
-			// Ensure dates are in ISO-8601 format with timezone
-			const date = new Date(formatted[field]);
-			if (isNaN(date.getTime())) {
-				// Invalid date, set to null
-				formatted[field] = null;
-			} else {
-				// Ensure proper ISO-8601 format with timezone
-				formatted[field] = date.toISOString();
-			}
-		}
+		formatted[field] = formatSingleDateField(formatted[field]);
 	});
 
 	// Also format nested lastLog dates if present
 	if (formatted.lastLog && typeof formatted.lastLog === 'object') {
 		dateFields.forEach((field) => {
-			if (formatted.lastLog[field]) {
-				const date = new Date(formatted.lastLog[field]);
-				if (isNaN(date.getTime())) {
-					formatted.lastLog[field] = null;
-				} else {
-					formatted.lastLog[field] = date.toISOString();
-				}
-			}
+			formatted.lastLog![field] = formatSingleDateField(formatted.lastLog![field]);
 		});
 	}
 
