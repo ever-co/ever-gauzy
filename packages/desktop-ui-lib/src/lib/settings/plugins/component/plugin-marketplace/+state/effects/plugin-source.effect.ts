@@ -3,13 +3,14 @@ import { IPluginSource } from '@gauzy/contracts';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, catchError, filter, finalize, map, mergeMap, switchMap, tap } from 'rxjs';
+import { EMPTY, catchError, filter, finalize, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
 import { coalesceValue } from '../../../../../../utils';
 import { PluginService } from '../../../../services/plugin.service';
 import { PluginSourceActions } from '../actions/plugin-source.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginSourceStore } from '../stores/plugin-source.store';
+import { PluginElectronService } from '../../../../services/plugin-electron.service';
 
 @Injectable({ providedIn: 'root' })
 export class PluginSourceEffects {
@@ -19,8 +20,9 @@ export class PluginSourceEffects {
 		private readonly pluginSourceStore: PluginSourceStore,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
+		private readonly pluginElectronService: PluginElectronService,
 		private readonly translateService: TranslateService
-	) {}
+	) { }
 
 	createMany$ = createEffect(() =>
 		this.action$.pipe(
@@ -35,10 +37,15 @@ export class PluginSourceEffects {
 					tap((res) => this.pluginMarketplaceStore.setUpload({ progress: coalesceValue(res?.progress, 0) })),
 					filter((res) => Boolean(res?.sources)), // Filter out null or undefined responses
 					map((res) => res.sources),
-					tap((created) => {
+					withLatestFrom(this.pluginElectronService.getOS()),
+					tap(([created, os]) => {
 						this.pluginSourceStore.update((state) => ({
 							source: created[0],
-							sources: [...created, ...state.sources],
+							sources: [...created, ...state.sources].sort((a, b) => {
+								if (a.operatingSystem === os.platform) return -1;
+								if (b.operatingSystem === os.platform) return 1;
+								return 0;
+							}),
 							count: state.count + created.length
 						}));
 						this.toastrService.success(this.translateService.instant('Source added successfully'));
@@ -62,7 +69,8 @@ export class PluginSourceEffects {
 			tap(() => this.pluginSourceStore.setLoading(true)), // Start loading state
 			switchMap(({ pluginId, versionId, params = {} }) =>
 				this.pluginService.getSources(pluginId, versionId, params).pipe(
-					tap(({ items, total }) => {
+					withLatestFrom(this.pluginElectronService.getOS()),
+					tap(([{ items, total }, os]) => {
 						this.pluginSourceStore.update((state) => {
 							if (!items?.length) {
 								return {
@@ -78,9 +86,15 @@ export class PluginSourceEffects {
 
 							items.forEach((item) => sourceMap.set(item.id, item));
 
+							const sortedSources = Array.from(sourceMap.values()).sort((a, b) => {
+								if (a.operatingSystem === os.platform) return -1;
+								if (b.operatingSystem === os.platform) return 1;
+								return 0;
+							});
+
 							return {
-								sources: Array.from(sourceMap.values()),
-								source: state.source ?? items[0],
+								sources: sortedSources,
+								source: state.source ?? sortedSources[0],
 								count: total
 							};
 						});
