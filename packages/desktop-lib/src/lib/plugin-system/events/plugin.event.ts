@@ -1,13 +1,12 @@
+import { ID, PluginOSArch, PluginOSType } from '@gauzy/contracts';
 import { logger } from '@gauzy/desktop-core';
 import { ipcMain, IpcMainEvent } from 'electron';
+import * as os from 'os';
 import * as path from 'path';
+import { TranslateService } from '../../translation';
 import { PluginManager } from '../data-access/plugin-manager';
 import { IPluginManager, PluginChannel, PluginHandlerChannel } from '../shared';
 import { PluginEventManager } from './plugin-event.manager';
-import { ID, PluginOSArch, PluginOSType } from '@gauzy/contracts';
-import { TranslateService } from '../../translation';
-import * as os from 'os';
-import { arch } from 'os';
 
 class ElectronPluginListener {
 	private pluginManager: IPluginManager;
@@ -69,19 +68,19 @@ class ElectronPluginListener {
 			const platform = os.platform();
 			const arch = os.arch();
 			const archMap = {
-				'x64': PluginOSArch.X64,
-				'arm64': PluginOSArch.ARM
+				x64: PluginOSArch.X64,
+				arm64: PluginOSArch.ARM
 			};
 			const platformMap = {
-				'darwin': PluginOSType.MAC,
-				'win32': PluginOSType.WINDOWS,
-				'linux': PluginOSType.LINUX
+				darwin: PluginOSType.MAC,
+				win32: PluginOSType.WINDOWS,
+				linux: PluginOSType.LINUX
 			};
 
 			return {
 				platform: platformMap[platform] || PluginOSType.UNIVERSAL,
 				arch: archMap[arch] || arch
-			}
+			};
 		});
 
 		ipcMain.handle(PluginHandlerChannel.LAZY_LOADER, async (_, pathname) => {
