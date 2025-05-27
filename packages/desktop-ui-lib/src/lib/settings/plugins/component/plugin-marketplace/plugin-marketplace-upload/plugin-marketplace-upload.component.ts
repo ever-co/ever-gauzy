@@ -88,11 +88,11 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			license: new FormControl('', Validators.maxLength(50)),
 			homepage: new FormControl(
 				'',
-				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/)
+				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w\-]*)*\/?$/)
 			),
 			repository: new FormControl(
 				'',
-				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/)
+				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w\-]*)*\/?$/)
 			)
 		});
 	}
