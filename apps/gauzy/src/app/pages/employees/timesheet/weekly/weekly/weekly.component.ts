@@ -10,12 +10,13 @@ import {
 	IDatePickerConfig,
 	moment,
 	Store,
+	TimeLogEventService,
 	TimesheetFilterService,
 	TimesheetService,
 	TimeTrackerService
 } from '@gauzy/ui-core/core';
 import { IGetTimeLogInput, ITimeLog, IOrganizationProject, ITimeLogFilters, PermissionsEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { isEmpty } from '@gauzy/ui-core/common';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	BaseSelectorFilterComponent,
@@ -33,10 +34,10 @@ interface WeeklyDayData {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-weekly-timesheet',
-    templateUrl: './weekly.component.html',
-    styleUrls: ['./weekly.component.scss'],
-    standalone: false
+	selector: 'ngx-weekly-timesheet',
+	templateUrl: './weekly.component.html',
+	styleUrls: ['./weekly.component.scss'],
+	standalone: false
 })
 export class WeeklyComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
@@ -66,7 +67,8 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 		private readonly timeTrackerService: TimeTrackerService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		protected readonly timeZoneService: TimeZoneService
+		protected readonly timeZoneService: TimeZoneService,
+		protected readonly timeLogEventService: TimeLogEventService
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
@@ -82,12 +84,16 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 			.subscribe();
 		this.payloads$
 			.pipe(
-				distinctUntilChange(),
 				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.getWeeklyTimesheetLogs()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.timeLogEventService.changes$.pipe(untilDestroyed(this)).subscribe((action) => {
+			if (action === 'added' || action === 'deleted') {
+				this.subject$.next(true);
+			}
+		});
 		this.timesheetService.updateLog$
 			.pipe(
 				filter((val) => val === true),
@@ -224,12 +230,20 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	 */
 	openAddEdit(timeLog?: ITimeLog) {
 		if (this.limitReached) return;
+
+		const defaultTimeLog = {
+			startedAt: moment().set({ hour: 8, minute: 0, second: 0 }).toDate(),
+			stoppedAt: moment().set({ hour: 9, minute: 0, second: 0 }).toDate(),
+			employeeId: this.request.employeeIds?.[0] || null,
+			projectId: this.request.projectIds?.[0] || null
+		};
+
 		if (!this.nbDialogService) {
 			throw new Error('NbDialogService is not available.');
 		}
 
 		const dialogRef = this.nbDialogService.open(EditTimeLogModalComponent, {
-			context: { timeLog }
+			context: { timeLog: timeLog ?? defaultTimeLog }
 		});
 
 		dialogRef.onClose
@@ -251,17 +265,8 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	 */
 	openAddByDateProject(date: string, project: IOrganizationProject): void {
 		if (this.limitReached) return;
-		// Calculate the nearest previous 10-minute mark for stoppedAt
-		const currentMoment = moment();
-		const minutes = moment().minutes();
-		const nearestTenMinutes = minutes - (minutes % 10);
-
-		const stoppedAt = new Date(
-			moment(date).format('YYYY-MM-DD') + ' ' + currentMoment.set('minutes', nearestTenMinutes).format('HH:mm')
-		);
-
-		// Calculate startedAt by subtracting one hour from stoppedAt
-		const startedAt = moment(stoppedAt).subtract('1', 'hour').toDate();
+		const startedAt = moment().set({ hour: 8, minute: 0, second: 0 }).toDate();
+		const stoppedAt = moment().set({ hour: 9, minute: 0, second: 0 }).toDate();
 
 		if (!this.nbDialogService) {
 			throw new Error('NbDialogService is not available.');

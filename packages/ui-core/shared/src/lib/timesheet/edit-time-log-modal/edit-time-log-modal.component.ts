@@ -17,16 +17,16 @@ import {
 	ITimerStatusWithWeeklyLimits
 } from '@gauzy/contracts';
 import { toUTC, toLocal, distinctUntilChange } from '@gauzy/ui-core/common';
-import { Store, TimesheetService, TimeTrackerService, ToastrService } from '@gauzy/ui-core/core';
+import { Store, TimeLogEventService, TimesheetService, TimeTrackerService, ToastrService } from '@gauzy/ui-core/core';
 import { DurationFormatPipe } from '../../pipes';
 import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-edit-time-log-modal',
-    templateUrl: './edit-time-log-modal.component.html',
-    styleUrls: ['./edit-time-log-modal.component.scss'],
-    standalone: false
+	selector: 'ngx-edit-time-log-modal',
+	templateUrl: './edit-time-log-modal.component.html',
+	styleUrls: ['./edit-time-log-modal.component.scss'],
+	standalone: false
 })
 export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestroy {
 	// Permissions and basic state initialization
@@ -98,7 +98,8 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		private readonly _toastrService: ToastrService,
 		private readonly _timeTrackerService: TimeTrackerService,
 		private readonly _durationFormatPipe: DurationFormatPipe,
-		public readonly _translateService: TranslateService
+		public readonly _translateService: TranslateService,
+		public readonly _timeLogEventService: TimeLogEventService
 	) {}
 
 	ngOnInit() {
@@ -421,6 +422,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 
 			// Close the dialog and reset the form
 			this._dialogRef.close(timeLog);
+			this._timeLogEventService.notifyChange('added');
 			this.form.reset();
 			this.selectedRange = { start: null, end: null };
 
@@ -469,6 +471,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 
 			// Close the dialog after successful deletion.
 			this._dialogRef.close(res);
+			this._timeLogEventService.notifyChange('deleted');
 		} catch (error) {
 			// Optionally handle any errors (e.g., show an error message).
 			console.error('Error deleting time log:', error);

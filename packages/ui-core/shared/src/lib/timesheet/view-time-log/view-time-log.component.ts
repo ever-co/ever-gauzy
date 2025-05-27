@@ -11,10 +11,10 @@ import { combineLatest, Observable, Subject, takeUntil } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-view-time-log',
-    templateUrl: './view-time-log.component.html',
-    styleUrls: ['./view-time-log.component.scss'],
-    standalone: false
+	selector: 'ngx-view-time-log',
+	templateUrl: './view-time-log.component.html',
+	styleUrls: ['./view-time-log.component.scss'],
+	standalone: false
 })
 export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
@@ -54,15 +54,9 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	openAddByDateProject($event: MouseEvent) {
 		if (this.limitReached) return;
 		const [timeLog] = this.timeLogs;
-		const minutes = moment().minutes();
-		const stoppedAt = new Date(
-			moment(timeLog.startedAt).format('YYYY-MM-DD') +
-				' ' +
-				moment()
-					.set('minutes', minutes - (minutes % 10))
-					.format('HH:mm')
-		);
-		const startedAt = moment(stoppedAt).subtract('1', 'hour').toDate();
+		const startedAt = moment().set({ hour: 8, minute: 0, second: 0 }).toDate();
+		const stoppedAt = moment().set({ hour: 9, minute: 0, second: 0 }).toDate();
+
 		this.openEdit($event, {
 			startedAt,
 			stoppedAt,

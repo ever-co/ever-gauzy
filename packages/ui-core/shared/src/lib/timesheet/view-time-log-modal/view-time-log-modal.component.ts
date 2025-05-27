@@ -1,21 +1,21 @@
-import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITimeLog, PermissionsEnum, IOrganization, TimeLogSourceEnum } from '@gauzy/contracts';
 import { TimeLogsLabel } from '@gauzy/ui-core/common';
-import { Store, TimeTrackerService, TimesheetService } from '@gauzy/ui-core/core';
+import { Store, TimeLogEventService, TimeTrackerService, TimesheetService } from '@gauzy/ui-core/core';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-view-time-log-modal',
-    templateUrl: './view-time-log-modal.component.html',
-    styleUrls: ['view-time-log-modal.component.scss'],
-    standalone: false
+	selector: 'ngx-view-time-log-modal',
+	templateUrl: './view-time-log-modal.component.html',
+	styleUrls: ['view-time-log-modal.component.scss'],
+	standalone: false
 })
-export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
+export class ViewTimeLogModalComponent implements OnInit {
 	organization: IOrganization;
 	PermissionsEnum = PermissionsEnum;
 	TimeLogsLabel = TimeLogsLabel;
@@ -28,7 +28,8 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 		private readonly dialogRef: NbDialogRef<ViewTimeLogModalComponent>,
 		private readonly store: Store,
 		private readonly timeTrackerService: TimeTrackerService,
-		private readonly router: Router
+		private readonly router: Router,
+		public readonly timeLogEventService: TimeLogEventService
 	) {}
 
 	ngOnInit(): void {
@@ -45,6 +46,7 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 		if (this.timeLog.isRunning) {
 			return;
 		}
+
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, {
 				context: { timeLog: this.timeLog }
@@ -68,6 +70,7 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 		};
 		this.timesheetService.deleteLogs(request).then((res) => {
 			this.dialogRef.close(res);
+			this.timeLogEventService.notifyChange('deleted');
 			this.checkTimerStatus();
 		});
 	}
@@ -91,6 +94,4 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 	redirectToClient() {
 		this.router.navigate(['/pages/contacts/view/', this.timeLog.organizationContact.id]);
 	}
-
-	ngOnDestroy(): void {}
 }
