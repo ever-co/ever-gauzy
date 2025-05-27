@@ -9,7 +9,7 @@ export class CdnSourceCreator extends SourceCreator {
 			...base,
 			url: new FormControl(source?.url || '', [
 				Validators.required,
-				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)
+				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w.-]*)\/?$/)
 			]),
 			integrity: new FormControl(source?.integrity || ''),
 			crossOrigin: new FormControl(source?.crossOrigin || '', Validators.maxLength(50))
