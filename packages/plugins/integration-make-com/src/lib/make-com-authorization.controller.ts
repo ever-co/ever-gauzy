@@ -93,7 +93,9 @@ export class MakeComAuthorizationController {
 				message: errorMessage
 			}).toString();
 
-			const url = `${postInstallUrl}?${queryParamsString}`;
+			const urlObj = new URL(postInstallUrl);
+			urlObj.search = queryParamsString;
+			const url = urlObj.toString();
 			return response.redirect(url);
 		}
 	}

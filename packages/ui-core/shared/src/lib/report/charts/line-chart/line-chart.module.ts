@@ -8,6 +8,6 @@ import { LineChartComponent } from './line-chart.component';
 @NgModule({
 	declarations: [LineChartComponent],
 	exports: [LineChartComponent],
-	imports: [CommonModule, NbIconModule, TranslateModule.forChild(), [BaseChartDirective]]
+	imports: [CommonModule, NbIconModule, TranslateModule.forChild(), BaseChartDirective]
 })
 export class LineChartModule {}
