@@ -33,17 +33,17 @@ export class DialogCreateSourceComponent implements OnInit {
 		private readonly dialogRef: NbDialogRef<DialogCreateSourceComponent>,
 		private readonly versionQuery: PluginVersionQuery,
 		private readonly sourceContext: SourceContext
-	) {}
+	) { }
 
 	/**
 	 * Initializes the component and sets up the form
 	 */
 	ngOnInit(): void {
 		this.initializeForm();
-		this.setupVersionListerners();
+		this.setupVersionListener();
 	}
 
-	private setupVersionListerners() {
+	private setupVersionListener() {
 		this.versionQuery.version$
 			.pipe(
 				tap((version) => {
