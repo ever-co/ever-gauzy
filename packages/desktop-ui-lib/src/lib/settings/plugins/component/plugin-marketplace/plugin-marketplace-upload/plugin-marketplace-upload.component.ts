@@ -11,14 +11,14 @@ import {
 import { IPlugin, IPluginSource, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { NbDateService, NbDialogRef, NbDialogService, NbStepperComponent } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, Subject, take, tap } from 'rxjs';
 import { PluginSourceActions } from '../+state/actions/plugin-source.action';
+import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../services';
 import { SourceContext } from './plugin-source/creator/source.context';
-import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -57,16 +57,19 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 	ngOnInit(): void {
 		this.initForm();
-		this.setupVersionListerners();
+		this.setupVersionListeners();
 	}
 
-	private setupVersionListerners() {
+	private setupVersionListeners() {
 		this.versionQuery.version$
 			.pipe(
+				filter(() => Boolean(this.plugin)),
 				tap((version) => {
-					this.plugin.version = this.plugin.version ? version : null;
+					this.plugin = {
+						...this.plugin,
+						version: this.plugin?.version ? version : null
+					};
 					this.patch();
-					console.log('sources', this.sources);
 				}),
 				untilDestroyed(this)
 			)
@@ -85,11 +88,11 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			license: new FormControl('', Validators.maxLength(50)),
 			homepage: new FormControl(
 				'',
-				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)
+				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/)
 			),
 			repository: new FormControl(
 				'',
-				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)
+				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/)
 			)
 		});
 	}
@@ -115,10 +118,6 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		data.version = { ...version };
 
 		const sources = version.sources ?? [];
-		const hasSources = sources.length > 0;
-
-		if (!hasSources) return;
-
 		const versionGroup = this.pluginForm.get('version') as FormGroup;
 		const sourcesArray = versionGroup.get('sources') as FormArray;
 		sourcesArray.clear();
@@ -205,12 +204,14 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 	/**
 	 * Custom validator to ensure the release date is not in the future.
+	 * Note: today is recalculated each time for accuracy.
 	 */
 	private pastDateValidator(): ValidatorFn {
 		return (control: AbstractControl): ValidationErrors | null => {
 			if (!control.value) return null;
 			const inputDate = new Date(control.value);
-			return inputDate > this.today ? { futureDate: true } : null;
+			const today = this.dateService.today();
+			return inputDate > today ? { futureDate: true } : null;
 		};
 	}
 
@@ -231,23 +232,24 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 		this.isSubmitting = true;
 
-		try {
-			this.dialogRef.close(this.pluginForm.value);
-		} catch (error) {
-			this.toastrService.error(error.message || error);
-		} finally {
-			this.isSubmitting = false;
-		}
+		this.dialogRef.close(this.pluginForm.value);
+		this.isSubmitting = false;
 	}
 
 	public get sources(): FormArray {
-		return this.pluginForm.get('version.sources') as FormArray;
+		if (!this.pluginForm) return new FormArray([]);
+		const versionGroup = this.pluginForm.get('version');
+		if (!versionGroup) return new FormArray([]);
+		const sourcesArray = (versionGroup as FormGroup).get('sources');
+		if (!sourcesArray) return new FormArray([]);
+		return sourcesArray as FormArray;
 	}
 
 	private scrollToFirstInvalidControl(): void {
-		const firstInvalidControl = document.querySelector('form .ng-invalid');
+		const firstInvalidControl = document.querySelector('form .ng-invalid') as HTMLElement;
 		if (firstInvalidControl) {
 			firstInvalidControl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			firstInvalidControl.focus?.();
 		}
 	}
 
