@@ -10,6 +10,7 @@ async; @let selected = query.source$| async;
 	placeholder="PLUGIN.FORM.SOURCE"
 	[canAddTag]="false"
 	(modelChange)="onSourceChange($event)"
-	[isLoading]="isLoading || !isAvailable"
+	[isLoading]="isLoading"
 	(scrollToEnd)="loadMore()"
-></gauzy-select>
+>
+</gauzy-select>
