@@ -4,8 +4,10 @@ import * as path from 'path';
 import { PluginManager } from '../data-access/plugin-manager';
 import { IPluginManager, PluginChannel, PluginHandlerChannel } from '../shared';
 import { PluginEventManager } from './plugin-event.manager';
-import { ID } from '@gauzy/contracts';
+import { ID, PluginOSArch, PluginOSType } from '@gauzy/contracts';
 import { TranslateService } from '../../translation';
+import * as os from 'os';
+import { arch } from 'os';
 
 class ElectronPluginListener {
 	private pluginManager: IPluginManager;
@@ -60,6 +62,25 @@ class ElectronPluginListener {
 			} catch (error) {
 				logger.error(error);
 				return null;
+			}
+		});
+
+		ipcMain.handle(PluginHandlerChannel.GET_OS, async () => {
+			const platform = os.platform();
+			const arch = os.arch();
+			const archMap = {
+				'x64': PluginOSArch.X64,
+				'arm64': PluginOSArch.ARM
+			};
+			const platformMap = {
+				'darwin': PluginOSType.MAC,
+				'win32': PluginOSType.WINDOWS,
+				'linux': PluginOSType.LINUX
+			};
+
+			return {
+				platform: platformMap[platform] || PluginOSType.UNIVERSAL,
+				arch: archMap[arch] || arch
 			}
 		});
 
