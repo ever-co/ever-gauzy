@@ -1,4 +1,3 @@
-
 import { DAO, IDatabaseProvider, IKbMouseTransaction } from '../../interfaces';
 import { ProviderFactory } from '../databases';
 import { TABLE_NAME_KB_MOUSE_ACTIVITY, KbMouseActivityTO } from '../dto';
@@ -14,14 +13,12 @@ export class KbMouseActivityDAO implements DAO<KbMouseActivityTO> {
 	}
 
 	public async findAll(): Promise<KbMouseActivityTO[]> {
-		return await this._provider
-			.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
-			.select('*');
+		return await this._provider.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY).select('*');
 	}
 	public async save(value: KbMouseActivityTO): Promise<void> {
 		await this._trx.create(value);
 	}
-	public async findOneById(id: number): Promise<KbMouseActivityTO> {
+	public async findOneById(id: number): Promise<KbMouseActivityTO | undefined> {
 		const result = await this._provider
 			.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
 			.where('id', '=', id);
@@ -34,14 +31,16 @@ export class KbMouseActivityDAO implements DAO<KbMouseActivityTO> {
 		if (!value || value.id === undefined) {
 			throw new Error('Cannot delete activity: Missing or invalid id');
 		}
-		await this._provider.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
-			.where('id', '=', value.id).del();
+		await this._provider
+			.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
+			.where('id', '=', value.id)
+			.del();
 	}
 
 	public async current(): Promise<KbMouseActivityTO> {
 		const [activities] = await this._provider
 			.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
-			.orderBy('timeStart', 'asc')
+			.orderBy('timeStart', 'desc')
 			.limit(1);
 		return activities;
 	}

@@ -1,4 +1,3 @@
-
 import { AppError } from '../../error-handler';
 import { IKbMouseActivityService } from '../../interfaces';
 import { KbMouseActivityDAO } from '../dao';
@@ -15,7 +14,7 @@ export class KbMouseActivityService implements IKbMouseActivityService<KbMouseAc
 	public async save(activities: KbMouseActivityTO): Promise<void> {
 		try {
 			if (!activities) {
-				return console.error('WARN[KB_MOUSE_SERVICE]: No keyboard and mouse data, cannot save');
+				throw new AppError('KB_MOUSE_SERVICE', 'No keyboard and mouse data, cannot save');
 			}
 			await this._kbMouseDAO.save(activities);
 		} catch (error) {
@@ -26,7 +25,7 @@ export class KbMouseActivityService implements IKbMouseActivityService<KbMouseAc
 	public async update(activities: Partial<KbMouseActivityTO>): Promise<void> {
 		try {
 			if (!activities.id) {
-				return console.error('WARN[KB_MOUSE_SERVICE]: No keyboard and mouse data, cannot update');
+				throw new AppError('KB_MOUSE_SERVICE', 'No keyboard and mouse data, cannot update');
 			}
 			await this._kbMouseDAO.update(activities.id, activities);
 		} catch (error) {
