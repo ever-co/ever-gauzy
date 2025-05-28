@@ -94,7 +94,7 @@ export class ZapierService {
 				throw new BadRequestException('Missing required Zapier integration settings');
 			}
 
-			const result = await this.generateAndStoreNewTokens(integrationId, settings);
+			const result = await this.generateAndStoreNewTokens(integrationId);
 
 			this.logger.log(
 				`Successfully refreshed tokens for integration ID ${integrationId}`,
@@ -651,7 +651,7 @@ export class ZapierService {
 		await this._integrationSettingService.save(allSettings);
 	}
 
-	private async generateAndStoreNewTokens(integration: ID, settings: any[]): Promise<IZapierAccessTokens> {
+	private async generateAndStoreNewTokens(integration: ID): Promise<IZapierAccessTokens> {
 		const access_token = randomBytes(32).toString('hex');
 		const new_refresh_token = randomBytes(32).toString('hex');
 
@@ -699,7 +699,7 @@ export class ZapierService {
 				throw new BadRequestException('Missing required Zapier integration settings');
 			}
 
-			return this.generateAndStoreNewTokens(integrationId, settings);
+			return this.generateAndStoreNewTokens(integrationId);
 		} catch (error: any) {
 			this.logger.error(`Failed to refresh token for integration ID ${integrationId}`, {
 				error: error.message,
