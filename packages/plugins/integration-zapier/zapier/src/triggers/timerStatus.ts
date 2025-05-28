@@ -5,9 +5,9 @@ import { ZObject, Bundle } from 'zapier-platform-core';
  * This helps prevent T003 warnings from Zapier validation
  */
 
-export interface DateFormattable {
+export interface DateFormatTable {
 	[key: string]: any;
-	lastLog?: DateFormattable;
+	lastLog?: DateFormatTable;
 }
 
 /** Formats a single date field to ISO-8601 format */
@@ -17,7 +17,7 @@ const formatSingleDateField = (value: any): string | null => {
 	return isNaN(date.getTime()) ? null : date.toISOString();
 };
 
-const formatDateFields = (item: DateFormattable): DateFormattable => {
+const formatDateFields = (item: DateFormatTable): DateFormatTable => {
 	const dateFields = ['createdAt', 'updatedAt', 'startedAt', 'stoppedAt', 'editedAt', 'archivedAt', 'deletedAt'];
 
 	const formatted = { ...item };

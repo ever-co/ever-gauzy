@@ -37,7 +37,7 @@ export interface IZapierCreateWebhookInput {
 
 /**
  * Interface or OAuth state data structure used in Zapier OAuth flow
- * Contains tenant and organization contextfor maintening state during OAuth
+ * Contains tenant and organization context for maintaining state during OAuth
  */
 export interface IZapierAuthState {
 	tenantId: string;
