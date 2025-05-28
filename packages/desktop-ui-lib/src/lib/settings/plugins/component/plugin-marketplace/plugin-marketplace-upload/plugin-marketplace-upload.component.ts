@@ -16,6 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { filter, Subject, take, tap } from 'rxjs';
 import { PluginSourceActions } from '../+state/actions/plugin-source.action';
 import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
+import { patterns } from '../../../../../constants';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../services';
 import { SourceContext } from './plugin-source/creator/source.context';
@@ -86,14 +87,8 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			version: this.createVersionGroup(),
 			author: new FormControl('', Validators.maxLength(100)),
 			license: new FormControl('', Validators.maxLength(50)),
-			homepage: new FormControl(
-				'',
-				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w&&[^-]-]*)*\/?$/)
-			),
-			repository: new FormControl(
-				'',
-				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w&&[^-]-]*)*\/?$/)
-			)
+			homepage: new FormControl('', Validators.pattern(patterns.websiteUrl)),
+			repository: new FormControl('', Validators.pattern(patterns.websiteUrl))
 		});
 	}
 
