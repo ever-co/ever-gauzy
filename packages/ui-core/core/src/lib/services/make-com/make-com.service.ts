@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
-import { IMakeComIntegrationSettings, IMakeComCreateIntegration } from '@gauzy/contracts';
+import { IMakeComIntegrationSettings } from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'
@@ -30,7 +30,7 @@ export class MakeComService {
 	/**
 	 * Add or update Make.com OAuth settings
 	 */
-	addOAuthSettings(credentials: IMakeComCreateIntegration): Observable<{
+	addOAuthSettings(credentials: { client_id: string; client_secret: string }): Observable<{
 		authorizationUrl: string;
 		integrationId: string;
 	}> {

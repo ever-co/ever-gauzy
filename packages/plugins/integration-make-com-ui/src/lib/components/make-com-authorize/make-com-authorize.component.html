@@ -6,36 +6,36 @@
 	<nb-card-body>
 		<form class="col-xl-6 col-12" [formGroup]="form" (ngSubmit)="authorizeMakeCom()">
 			<div class="form-group">
-				<label for="client_id" class="label">{{ 'INTEGRATIONS.MAKE_COM_PAGE.CLIENT_ID' | translate }}</label>
+				<label for="clientId" class="label">{{ 'INTEGRATIONS.MAKE_COM_PAGE.CLIENT_ID' | translate }}</label>
 				<input
 					fullWidth
-					id="client_id"
-					formControlName="client_id"
+					id="clientId"
+					formControlName="clientId"
 					type="text"
 					nbInput
 					[placeholder]="'FORM.PLACEHOLDERS.MAKE_COM_CLIENT_ID' | translate"
 				/>
 				<div
-					*ngIf="form.get('client_id').touched && form.get('client_id').errors?.required"
+					*ngIf="form.get('clientId').touched && form.get('clientId').errors?.required"
 					class="error-message"
 				>
 					{{ 'FORM.VALIDATION.REQUIRED' | translate }}
 				</div>
 			</div>
 			<div class="form-group">
-				<label for="client_secret" class="label">{{
+				<label for="clientSecret" class="label">{{
 					'INTEGRATIONS.MAKE_COM_PAGE.CLIENT_SECRET' | translate
 				}}</label>
 				<input
 					fullWidth
-					id="client_secret"
-					formControlName="client_secret"
+					id="clientSecret"
+					formControlName="clientSecret"
 					type="password"
 					nbInput
 					[placeholder]="'FORM.PLACEHOLDERS.MAKE_COM_CLIENT_SECRET' | translate"
 				/>
 				<div
-					*ngIf="form.get('client_secret').touched && form.get('client_secret').errors?.required"
+					*ngIf="form.get('clientSecret').touched && form.get('clientSecret').errors?.required"
 					class="error-message"
 				>
 					{{ 'FORM.VALIDATION.REQUIRED' | translate }}

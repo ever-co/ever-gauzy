@@ -23,8 +23,8 @@ export class AuthorizationComponent implements OnInit, OnDestroy {
 	readonly form: UntypedFormGroup = AuthorizationComponent.buildForm(this._fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
-			client_id: [null, Validators.required],
-			client_secret: [null, Validators.required]
+			clientId: [null, Validators.required],
+			clientSecret: [null, Validators.required]
 		});
 	}
 
@@ -157,21 +157,19 @@ export class AuthorizationComponent implements OnInit, OnDestroy {
 
 		this.loading = true;
 
-		const client_id = this.form.get('client_id').value;
-		const client_secret = this.form.get('client_secret').value;
+		const clientId = this.form.get('clientId').value;
+		const clientSecret = this.form.get('clientSecret').value;
 
 		const credentials: IMakeComCreateIntegration = {
-			client_id,
-			client_secret
+			clientId,
+			clientSecret
 		};
 
 		// Add OAuth settings and get authorization URL
 		this._makeComStoreService
-			.addOAuthSettings(credentials)
+			.addOAuthSettings({ client_id: credentials.clientId, client_secret: credentials.clientSecret })
 			.pipe(
 				tap(({ authorizationUrl }) => {
-
-
 					// Redirect user to Make.com authorization page
 					window.location.href = authorizationUrl;
 				}),
@@ -189,7 +187,7 @@ export class AuthorizationComponent implements OnInit, OnDestroy {
 	 * Redirect to Make.com integration page
 	 */
 	private _redirectToMakeComIntegration(integrationId: string) {
-		this._router.navigate(['pages/integrations/make-com', integrationId]);
+		this._router.navigate(['pages/integrations/makecom', integrationId]);
 	}
 
 	/**

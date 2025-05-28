@@ -58,7 +58,7 @@ export class MakeComStoreService {
 	 * @param credentials The OAuth credentials
 	 * @returns An observable of the updated settings
 	 */
-	addOAuthSettings(credentials: IMakeComCreateIntegration): Observable<{
+	addOAuthSettings(credentials: { client_id: string; client_secret: string }): Observable<{
 		authorizationUrl: string;
 		integrationId: string;
 	}> {
