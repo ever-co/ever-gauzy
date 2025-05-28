@@ -65,7 +65,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		private readonly employeesService: EmployeesService,
 		private readonly tasksService: TasksService,
 		private readonly organizationTeamsService: OrganizationTeamsService,
-		private organizationProjectModuleService: OrganizationProjectModuleService
+		private readonly organizationProjectModuleService: OrganizationProjectModuleService
 	) {
 		super(translateService);
 	}

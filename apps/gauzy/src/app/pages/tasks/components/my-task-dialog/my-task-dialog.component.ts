@@ -6,6 +6,8 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import moment from 'moment';
 import { firstValueFrom } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FormHelpers, richTextCKEditorConfig } from '@gauzy/ui-core/shared';
 import {
@@ -15,7 +17,6 @@ import {
 	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { UntilDestroy } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -29,11 +30,11 @@ export class MyTaskDialogComponent extends TranslationBaseComponent implements O
 	selectedTaskId: string;
 	projects: IOrganizationProject[];
 	employees: IEmployee[] = [];
-	selectedMembers: string[];
+	selectedMembers: string[] = [];
 	selectedTask: ITask;
 	organizationId: string;
 	participants = 'employees';
-	employeeId;
+	employeeId: string;
 	tags: ITag[] = [];
 	@Input() task: Partial<ITask> = {};
 	public ckConfig: CKEditor4.Config = richTextCKEditorConfig;
@@ -106,6 +107,17 @@ export class MyTaskDialogComponent extends TranslationBaseComponent implements O
 
 	async ngOnInit() {
 		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				tap((user) => {
+					if (!this.selectedTask) {
+						this.selectedMembers.push(user?.employee?.id);
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		await this.loadProjects();
 		await this.loadEmployees();
 		this.initializeForm();
@@ -156,7 +168,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent implements O
 				description,
 				tags,
 				teams: [],
-				members: [this.selectedMembers],
+				members: this.selectedMembers,
 				taskStatus,
 				taskSize,
 				taskPriority
@@ -195,7 +207,8 @@ export class MyTaskDialogComponent extends TranslationBaseComponent implements O
 	}
 
 	selectedTagsHandler(currentSelection: ITag[]) {
-		this.form.patchValue({ tags: currentSelection });
+		this.form.get('tags').setValue(currentSelection);
+		this.form.get('tags').updateValueAndValidity();
 	}
 
 	selectedProject(project: IOrganizationProject) {

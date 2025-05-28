@@ -123,7 +123,7 @@
 						<ga-tags-color-input
 							(selectedTagsEvent)="selectedTagsHandler($event)"
 							[isOrgLevel]="true"
-							[selectedTags]="tags"
+							[selectedTags]="form.get('tags').value"
 						>
 						</ga-tags-color-input>
 					</div>
