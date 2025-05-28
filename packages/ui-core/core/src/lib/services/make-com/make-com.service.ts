@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
-import { IMakeComIntegrationSettings } from '@gauzy/contracts';
+import { IMakeComIntegrationSettings, IMakeComCreateIntegration, IMakeComOAuthTokenDTO } from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'
@@ -30,14 +30,17 @@ export class MakeComService {
 	/**
 	 * Add or update Make.com OAuth settings
 	 */
-	addOAuthSettings(credentials: { client_id: string; client_secret: string }): Observable<{
+	addOAuthSettings(credentials: IMakeComCreateIntegration): Observable<{
 		authorizationUrl: string;
 		integrationId: string;
 	}> {
 		return this.http.post<{
 			authorizationUrl: string;
 			integrationId: string;
-		}>(`${API_PREFIX}/integration/make-com/oauth-settings`, credentials);
+		}>(`${API_PREFIX}/integration/make-com/oauth-settings`, {
+			client_id: credentials.clientId,
+			client_secret: credentials.clientSecret
+		});
 	}
 
 	/**
@@ -50,6 +53,15 @@ export class MakeComService {
 	}
 
 	/**
+	 * Handle OAuth callback from Make.com
+	 */
+	handleOAuthCallback(code: string, state: string): Observable<IMakeComOAuthTokenDTO> {
+		return this.http.get<IMakeComOAuthTokenDTO>(`${API_PREFIX}/integration/make-com/oauth/callback`, {
+			params: { code, state }
+		});
+	}
+
+	/**
 	 * Handle token requests from Make.com custom apps
 	 */
 	handleTokenRequest(body: {
@@ -59,7 +71,7 @@ export class MakeComService {
 		client_id: string;
 		client_secret: string;
 		redirect_uri: string;
-	}): Observable<unknown> {
-		return this.http.post(`${API_PREFIX}/integration/make-com/token`, body);
+	}): Observable<IMakeComOAuthTokenDTO> {
+		return this.http.post<IMakeComOAuthTokenDTO>(`${API_PREFIX}/integration/make-com/token`, body);
 	}
 }

@@ -13702,7 +13702,7 @@ angular-eslint@^19.3.0:
     "@typescript-eslint/types" "^8.0.0"
     "@typescript-eslint/utils" "^8.0.0"
 
-angular2-smart-table@^3.6.2:
+angular2-smart-table@^3.6.1, angular2-smart-table@^3.6.2:
   version "3.6.2"
   resolved "https://registry.yarnpkg.com/angular2-smart-table/-/angular2-smart-table-3.6.2.tgz#18524be85ded07607e905ba9f5b4281c4dbb8d0f"
   integrity sha512-bnFWgKBReG5DRKgyLwLkePSzHlsrLBpzRkleqIeQL0kS5be7yhqnmHSb7JPyhWKGxS2FZqMDC2DYnTF0T8vcRg==

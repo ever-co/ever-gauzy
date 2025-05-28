@@ -102,7 +102,7 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 			{
 				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
 				icon: 'text-outline',
-				link: `pages/integrations/make-com/authorize`
+				link: `pages/integrations/make-com/${this.integrationId}/authorize`
 			},
 			{
 				title: this.getTranslation('INTEGRATIONS.SETTINGS'),

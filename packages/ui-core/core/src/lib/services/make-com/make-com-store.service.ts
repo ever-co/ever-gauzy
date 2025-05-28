@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
-import { IMakeComIntegrationSettings, IMakeComCreateIntegration } from '@gauzy/contracts';
+import { IMakeComIntegrationSettings } from '@gauzy/contracts';
 import { MakeComService } from './make-com.service';
 
 @Injectable({
@@ -58,7 +58,7 @@ export class MakeComStoreService {
 	 * @param credentials The OAuth credentials
 	 * @returns An observable of the updated settings
 	 */
-	addOAuthSettings(credentials: { client_id: string; client_secret: string }): Observable<{
+	addOAuthSettings(credentials: { clientId: string; clientSecret: string }): Observable<{
 		authorizationUrl: string;
 		integrationId: string;
 	}> {

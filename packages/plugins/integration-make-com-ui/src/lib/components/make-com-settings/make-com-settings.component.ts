@@ -6,6 +6,8 @@ import { EMPTY } from 'rxjs';
 import { MakeComStoreService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
+import { IMakeComIntegrationSettings } from '@gauzy/contracts';
+import { ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -15,12 +17,13 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class MakeComSettingsComponent extends TranslationBaseComponent implements OnInit {
 	public form: FormGroup;
-	public loading: boolean = false;
-	public settings: any = null;
+	public loading = false;
+	public settings: IMakeComIntegrationSettings = null;
 
 	constructor(
 		private readonly _fb: FormBuilder,
 		private readonly _makeComStoreService: MakeComStoreService,
+		private readonly _toastrService: ToastrService,
 		public readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -43,7 +46,7 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 		this._makeComStoreService
 			.loadIntegrationSettings()
 			.pipe(
-				tap((settings) => {
+				tap((settings: IMakeComIntegrationSettings) => {
 					this.settings = settings;
 					this.form.patchValue({
 						isEnabled: settings.isEnabled,
@@ -51,6 +54,10 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 					});
 				}),
 				catchError((error) => {
+					this._toastrService.error(
+						this.getTranslation('INTEGRATIONS.MAKE_PAGE.ERRORS.LOAD_SETTINGS'),
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
 					console.error('Error loading Make.com settings:', error);
 					return EMPTY;
 				}),
@@ -65,16 +72,30 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 	 * Save Make.com integration settings
 	 */
 	saveSettings() {
-		if (this.form.invalid) return;
+		if (this.form.invalid) {
+			this._toastrService.error(
+				this.getTranslation('INTEGRATIONS.MAKE_PAGE.ERRORS.INVALID_FORM'),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+			return;
+		}
 
 		this.loading = true;
 		this._makeComStoreService
 			.updateIntegrationSettings(this.form.value)
 			.pipe(
-				tap((settings) => {
+				tap((settings: IMakeComIntegrationSettings) => {
 					this.settings = settings;
+					this._toastrService.success(
+						this.getTranslation('INTEGRATIONS.MAKE_PAGE.SUCCESS.SETTINGS_SAVED'),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
 				}),
 				catchError((error) => {
+					this._toastrService.error(
+						this.getTranslation('INTEGRATIONS.MAKE_PAGE.ERRORS.SAVE_SETTINGS'),
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
 					console.error('Error saving Make.com settings:', error);
 					return EMPTY;
 				}),

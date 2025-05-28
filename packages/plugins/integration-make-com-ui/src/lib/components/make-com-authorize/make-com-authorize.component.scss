@@ -1,51 +1,51 @@
 .authorization-container {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	min-height: 300px;
-	padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  padding: 2rem;
 }
 
 .authorization-content {
-	max-width: 600px;
-	text-align: center;
+  max-width: 600px;
+  text-align: center;
 
-	h2 {
-		margin-bottom: 1rem;
-		color: var(--gauzy-text-color-1);
-	}
+  h2 {
+    margin-bottom: 1rem;
+    color: var(--gauzy-text-color-1);
+  }
 
-	p {
-		margin-bottom: 2rem;
-		color: var(--gauzy-text-color-2);
-	}
+  p {
+    margin-bottom: 2rem;
+    color: var(--gauzy-text-color-2);
+  }
 }
 
 .authorization-actions {
-	margin-bottom: 1rem;
+  margin-bottom: 1rem;
 
-	button {
-		min-width: 200px;
-	}
+  button {
+    min-width: 200px;
+  }
 }
 
 .error-message {
-	color: var(--gauzy-danger-color);
-	margin-top: 1rem;
+  color: var(--gauzy-danger-color);
+  margin-top: 1rem;
 }
 
 .hint {
-	margin-bottom: 20px;
+  margin-bottom: 2rem;
 }
 
 button {
-	box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.15);
-	border: none !important;
+  box-shadow: var(--gauzy-shadow) (0, 0, 0, 0.15);
+  border: none !important;
 }
 
 :host {
-	nb-card,
-	nb-card-body {
-		background-color: var(--gauzy-card-2);
-	}
+  nb-card,
+  nb-card-body {
+    background-color: var(--gauzy-card-2);
+  }
 }
