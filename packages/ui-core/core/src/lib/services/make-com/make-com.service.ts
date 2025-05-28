@@ -59,7 +59,7 @@ export class MakeComService {
 		client_id: string;
 		client_secret: string;
 		redirect_uri: string;
-	}): Observable<any> {
+	}): Observable<unknown> {
 		return this.http.post(`${API_PREFIX}/integration/make-com/token`, body);
 	}
 }

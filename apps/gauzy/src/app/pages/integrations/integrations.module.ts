@@ -92,7 +92,7 @@ export class IntegrationsModule {
 			data: { selectors: false },
 			// Register the location 'integrations'
 			location: 'integrations',
-			// Register the path 'makecom'
+			// Register the path 'make-com'
 			path: 'make-com',
 			// Register the loadChildren function to load the MakeComModule lazy module
 			loadChildren: () =>
