@@ -21,8 +21,7 @@ export class IntegrationMakeComLayoutComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
-		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
-		console.log(`Integration Make.com UI module plugin initialized`);
+		this.initializeUiLanguagesAndLocale();
 	}
 
 	/**

@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NbMenuItem, NbRouteTab } from '@nebular/theme';
-import { filter } from 'rxjs/operators';
-import { tap, catchError } from 'rxjs';
+import { filter, finalize } from 'rxjs/operators';
+import { tap, catchError, EMPTY } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ID, IOrganization, IntegrationEnum } from '@gauzy/contracts';
@@ -135,13 +135,12 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 				}),
 				catchError((error) => {
 					console.error('Error loading Make.com integration settings:', error);
-					return [];
+					return EMPTY;
 				}),
 				untilDestroyed(this)
 			)
-			.subscribe(() => {
-				this.loading = false;
-			});
+			.pipe(finalize(() => (this.loading = false)))
+			.subscribe();
 	}
 
 	/**

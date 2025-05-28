@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import {
 	NbActionsModule,
@@ -48,7 +49,7 @@ import { MakeComSettingsComponent } from './components/make-com-settings/make-co
 		NbTabsetModule,
 		NbToggleModule,
 		NbTooltipModule,
-		TranslateModule.forRoot({
+		TranslateModule.forChild({
 			defaultLanguage: getBrowserLanguage(),
 			loader: {
 				provide: TranslateLoader,
@@ -60,7 +61,8 @@ import { MakeComSettingsComponent } from './components/make-com-settings/make-co
 		SmartDataViewLayoutModule,
 		SelectorsModule,
 		SharedModule,
-		TableComponentsModule
+		TableComponentsModule,
+		CommonModule
 	],
 	declarations: [
 		IntegrationMakeComLayoutComponent,

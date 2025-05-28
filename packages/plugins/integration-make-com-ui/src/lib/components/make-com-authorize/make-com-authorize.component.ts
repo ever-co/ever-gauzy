@@ -100,7 +100,6 @@ export class AuthorizationComponent implements OnInit, OnDestroy {
 					code,
 					state,
 					client_id: config.clientId,
-					client_secret: '', // This should be handled securely by the backend
 					redirect_uri: config.redirectUri
 				});
 			}),
@@ -171,7 +170,7 @@ export class AuthorizationComponent implements OnInit, OnDestroy {
 			.addOAuthSettings(credentials)
 			.pipe(
 				tap(({ authorizationUrl }) => {
-					console.log(authorizationUrl);
+
 
 					// Redirect user to Make.com authorization page
 					window.location.href = authorizationUrl;

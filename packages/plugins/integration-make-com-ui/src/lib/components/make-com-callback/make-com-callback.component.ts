@@ -37,7 +37,8 @@ export class MakeComCallbackComponent extends TranslationBaseComponent implement
 						this._redirectToError();
 					}
 				}),
-				catchError(() => {
+				catchError((error) => {
+					console.error('Error processing Make.com callback:', error);
 					this._redirectToError();
 					return EMPTY;
 				}),

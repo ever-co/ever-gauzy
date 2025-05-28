@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap, catchError } from 'rxjs/operators';
@@ -13,7 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 	templateUrl: './make-com-settings.component.html',
 	standalone: false
 })
-export class MakeComSettingsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class MakeComSettingsComponent extends TranslationBaseComponent implements OnInit {
 	public form: FormGroup;
 	public loading: boolean = false;
 	public settings: any = null;
@@ -84,6 +84,4 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 				this.loading = false;
 			});
 	}
-
-	ngOnDestroy(): void {}
 }
