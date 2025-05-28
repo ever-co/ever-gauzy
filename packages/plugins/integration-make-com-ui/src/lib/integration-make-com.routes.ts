@@ -37,15 +37,15 @@ import { MakeComSettingsComponent } from './components/make-com-settings/make-co
 							},
 							{
 								path: 'scenarios',
-								component: MakeComponent
+								loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule)
 							},
 							{
 								path: 'executions',
-								component: MakeComponent
+								loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule)
 							},
 							{
 								path: 'history',
-								component: MakeComponent
+								loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule)
 							},
 							{
 								path: 'settings',
