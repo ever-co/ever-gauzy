@@ -200,7 +200,7 @@ export const environment: IEnvironment = {
 	zapier: {
 		clientId: process.env.GAUZY_ZAPIER_CLIENT_ID,
 		clientSecret: process.env.GAUZY_ZAPIER_CLIENT_SECRET,
-		allowedDomains: (process.env.GAUZY_ZAPIER_ALLOWED_DOMAINS ?? process.env.GAUZY_ALLOWED_DOMAINS ?? '')
+		allowedDomains: (process.env.GAUZY_ZAPIER_ALLOWED_DOMAINS ?? process.env.GAUZY_ALLOWED_DOMAINS)
 			.split(',')
 			.map((d) => d.trim())
 			.filter(Boolean),

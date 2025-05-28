@@ -9,11 +9,25 @@ export const ZAPIER_BASE_URL = 'https://zapier.com';
 export const ZAPIER_API_URL = 'https://api.zapier.com';
 
 /**
+ * Standard Zapier OAuth scopes for comprehensive integration
+ * Based on: https://docs.zapier.com/powered-by-zapier/api-reference/authentication
+ *
+ * Scopes included:
+ * - 'zap': Read access to Zaps (view existing Zaps)
+ * - 'zap:write': Write access to Zaps (create, update, delete Zaps)
+ * - 'authentication': Access to authentication information (manage user auth)
+ *
+ * These scopes provide full access to the Zapier Workflow API for managing
+ * Zaps and user authentication on behalf of the authenticated user.
+ */
+export const ZAPIER_OAUTH_SCOPES = 'zap zap:write authentication';
+
+/**
  * Zapier token expiration time (in seconds)
  * 10 hours = 36000 seconds
  * Default to shorter expiration in production for security
  */
-export const ZAPIER_TOKEN_EXPIRATION_TIME = process.env["NODE_ENV"] === 'production' ? 7200 : 36000;
+export const ZAPIER_TOKEN_EXPIRATION_TIME = process.env['NODE_ENV'] === 'production' ? 7200 : 36000;
 
 /** URL for initiating OAuth authorization flow with Gauzy */
 export const ZAPIER_AUTHORIZATION_URL = `${process.env['API_BASE_URL']}/api/integration/zapier/oauth/authorize`;

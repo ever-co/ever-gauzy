@@ -85,7 +85,7 @@ export const authentication = {
 			}
 		},
 		/** OAuth2 scopes required for the integration */
-		scope: 'read write',
+		scope: 'zap zap:write authentication',
 		/** Enable automatic token refresh */
 		autoRefresh: true
 	}

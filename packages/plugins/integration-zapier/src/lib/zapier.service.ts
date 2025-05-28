@@ -2,7 +2,6 @@ import { Injectable, BadRequestException, HttpException, HttpStatus, NotFoundExc
 import { HttpService } from '@nestjs/axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError, AxiosResponse } from 'axios';
-import { v4 as uuidv4 } from 'uuid';
 import { DeepPartial } from 'typeorm';
 import { catchError, firstValueFrom, map } from 'rxjs';
 import { ConfigService } from '@gauzy/config';
@@ -22,7 +21,7 @@ import {
 	PROJECT_TIED_ENTITIES,
 	RequestContext
 } from '@gauzy/core';
-import { ZAPIER_API_URL, ZAPIER_BASE_URL, ZAPIER_TOKEN_EXPIRATION_TIME } from './zapier.config';
+import { ZAPIER_API_URL, ZAPIER_BASE_URL, ZAPIER_TOKEN_EXPIRATION_TIME, ZAPIER_OAUTH_SCOPES } from './zapier.config';
 import { ICreateZapierIntegrationInput, IZapierAccessTokens, IZapierEndpoint, IZapierAuthState } from './zapier.types';
 import { randomBytes } from 'node:crypto';
 
@@ -95,9 +94,9 @@ export class ZapierService {
 				throw new BadRequestException('Missing required Zapier integration settings');
 			}
 
-			// Generate new tokens
-			const access_token = uuidv4();
-			const new_refresh_token = uuidv4();
+			// Generate cryptographically secure tokens
+			const access_token = randomBytes(32).toString('hex');
+			const new_refresh_token = randomBytes(32).toString('hex');
 
 			// Update settings with new tokens
 			const updatedSettings = settings.map((setting) => {
@@ -169,6 +168,10 @@ export class ZapierService {
 			if (!redirect_uri) {
 				throw new Error('Zapier redirect URI is not configured');
 			}
+
+			// Validate redirect URI against allowed domains
+			this.validateRedirectUri(redirect_uri);
+
 			const organizationId = options?.organizationId;
 			const integrationId = options?.integrationId;
 			const tenantId = RequestContext.currentTenantId();
@@ -190,7 +193,10 @@ export class ZapierService {
 					JSON.stringify({
 						tenantId,
 						organizationId,
-						integrationId
+						integrationId,
+						// Add cryptographically secure random component to prevent state prediction
+						nonce: randomBytes(16).toString('hex'),
+						timestamp: Date.now()
 					})
 				).toString('base64');
 
@@ -204,7 +210,7 @@ export class ZapierService {
 				redirect_uri,
 				response_type: 'code',
 				state,
-				scope: 'zap zap:write authentication'
+				scope: ZAPIER_OAUTH_SCOPES
 			});
 
 			return `${ZAPIER_API_URL}/v2/authorize?${params.toString()}`;
@@ -215,11 +221,85 @@ export class ZapierService {
 	}
 
 	/**
+	 * Validate redirect URI against allowed domains
+	 */
+	private validateRedirectUri(redirectUri: string): void {
+		try {
+			const url = new URL(redirectUri);
+
+			// Ensure HTTPS in production
+			if (process.env['NODE_ENV'] === 'production' && url.protocol !== 'https:') {
+				this.logger.warn(`Redirect URI rejected: non-HTTPS in production - ${url.hostname}`);
+				throw new BadRequestException('Redirect URI must use HTTPS in production');
+			}
+
+			// Get allowed domains from configuration
+			const allowedDomains = this.config.get('zapier')?.allowedDomains || [];
+
+			this.logger.debug(
+				`Validating redirect URI: ${url.hostname} against allowed domains: ${allowedDomains.join(', ')}`
+			);
+
+			// If allowed domains are configured, validate against them
+			if (allowedDomains.length > 0) {
+				const isAllowed = allowedDomains.some((domain) => {
+					// Support wildcard subdomains (e.g., *.zapier.com)
+					if (domain.startsWith('*.')) {
+						const baseDomain = domain.substring(2);
+						const matches = url.hostname === baseDomain || url.hostname.endsWith('.' + baseDomain);
+						if (matches) {
+							this.logger.debug(`Redirect URI allowed by wildcard domain: ${domain}`);
+						}
+						return matches;
+					}
+					const matches = url.hostname === domain;
+					if (matches) {
+						this.logger.debug(`Redirect URI allowed by exact domain: ${domain}`);
+					}
+					return matches;
+				});
+
+				if (!isAllowed) {
+					this.logger.warn(`Redirect URI rejected: domain not in allowed list - ${url.hostname}`);
+					throw new BadRequestException(`Redirect URI domain not allowed: ${url.hostname}`);
+				}
+			} else {
+				this.logger.warn('No allowed domains configured - allowing all redirect URIs (security risk)');
+			}
+
+			this.logger.debug(`Redirect URI validation passed: ${url.hostname}`);
+		} catch (error) {
+			if (error instanceof BadRequestException) {
+				throw error;
+			}
+			this.logger.error(
+				`Redirect URI validation error: ${error instanceof Error ? error.message : 'Unknown error'}`
+			);
+			throw new BadRequestException('Invalid redirect URI format');
+		}
+	}
+
+	/**
 	 * Parse the state parameter from the OAuth callback
 	 */
 	parseAuthState(state: string): IZapierAuthState {
 		try {
 			const decodedState = JSON.parse(Buffer.from(state, 'base64').toString());
+
+			// Validate timestamp to prevent replay attacks (5 minutes max)
+			if (decodedState.timestamp) {
+				const maxAge = 5 * 60 * 1000; // 5 minutes in milliseconds
+				const age = Date.now() - decodedState.timestamp;
+				if (age > maxAge) {
+					throw new BadRequestException('State parameter has expired');
+				}
+			}
+
+			// Validate required fields
+			if (!decodedState.tenantId) {
+				throw new BadRequestException('Invalid state parameter: missing tenant ID');
+			}
+
 			return {
 				tenantId: decodedState.tenantId,
 				organizationId: decodedState.organizationId,

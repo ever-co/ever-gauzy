@@ -46,23 +46,38 @@ export class ZapierAuthorizationController {
 	@Get('/oauth/callback')
 	async callback(@Query() query: any, @Res() res: Response) {
 		try {
+			// Add security headers
+			res.setHeader('X-Content-Type-Options', 'nosniff');
+			res.setHeader('X-Frame-Options', 'DENY');
+			res.setHeader('X-XSS-Protection', '1; mode=block');
+			res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
 			if (!query || !query.code || !query.state) {
-				throw new BadRequestException('Authorization code is required');
+				throw new BadRequestException('Authorization code and state are required');
 			}
+
+			// Validate authorization code format (basic validation)
+			if (typeof query.code !== 'string' || query.code.length < 10) {
+				throw new BadRequestException('Invalid authorization code format');
+			}
+
 			const postInstallUrl = this._config.get('zapier')?.postInstallUrl;
 			if (!postInstallUrl) {
 				throw new BadRequestException('Zapier post-install URL is not configured');
 			}
+
 			// Parse state to get stored information (tenant, org, integration IDs)
 			const stateData = this.zapierService.parseAuthState(query.state);
 
 			// Complete the OAuth flow by exchanging the code for tokens
 			const integration = await this.zapierService.completeOAuthFlow(query.code, stateData);
+
 			// convert query params object to string
 			const queryParamsString = buildQueryString({
 				code: query.code,
 				state: query.state
 			});
+
 			// Combine Zapier post install URL with query params
 			const url = [postInstallUrl, queryParamsString].filter(Boolean).join('?');
 

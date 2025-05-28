@@ -83,6 +83,12 @@ export class ZapierWebhookController {
 				throw new BadRequestException('target_url and event are required');
 			}
 
+			// Validate webhook URL
+			this.validateWebhookUrl(target_url);
+
+			// Validate event name
+			this.validateEventName(event);
+
 			const { tenantId, organizationId, id: integrationId } = integration;
 
 			if (!tenantId) {
@@ -104,7 +110,75 @@ export class ZapierWebhookController {
 			return subscription;
 		} catch (error) {
 			this.logger.error('Failed to create webhook subscription', error);
+			if (error instanceof BadRequestException || error instanceof UnauthorizedException || error instanceof ForbiddenException) {
+				throw error;
+			}
 			throw new InternalServerErrorException('Failed to create webhook subscription');
+		}
+	}
+
+	/**
+	 * Validate webhook URL for security
+	 */
+	private validateWebhookUrl(url: string): void {
+		try {
+			const parsedUrl = new URL(url);
+
+			// Ensure HTTPS for webhook URLs
+			if (parsedUrl.protocol !== 'https:') {
+				throw new BadRequestException('Webhook URL must use HTTPS');
+			}
+
+			// Prevent localhost and private IP ranges in production
+			if (process.env['NODE_ENV'] === 'production') {
+				const hostname = parsedUrl.hostname.toLowerCase();
+
+				// Block localhost
+				if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+					throw new BadRequestException('Localhost URLs are not allowed for webhooks');
+				}
+
+				// Block private IP ranges
+				const privateIpRanges = [
+					/^10\./,
+					/^172\.(1[6-9]|2[0-9]|3[0-1])\./,
+					/^192\.168\./,
+					/^169\.254\./ // Link-local
+				];
+
+				if (privateIpRanges.some(range => range.test(hostname))) {
+					throw new BadRequestException('Private IP addresses are not allowed for webhooks');
+				}
+			}
+
+			// Validate URL length
+			if (url.length > 2048) {
+				throw new BadRequestException('Webhook URL is too long (max 2048 characters)');
+			}
+
+		} catch (error) {
+			if (error instanceof BadRequestException) {
+				throw error;
+			}
+			throw new BadRequestException('Invalid webhook URL format');
+		}
+	}
+
+	/**
+	 * Validate event name
+	 */
+	private validateEventName(event: string): void {
+		if (typeof event !== 'string') {
+			throw new BadRequestException('Event must be a string');
+		}
+
+		if (event.length < 1 || event.length > 100) {
+			throw new BadRequestException('Event name must be between 1 and 100 characters');
+		}
+
+		// Allow only alphanumeric characters, dots, underscores, and hyphens
+		if (!/^[a-zA-Z0-9._-]+$/.test(event)) {
+			throw new BadRequestException('Event name can only contain alphanumeric characters, dots, underscores, and hyphens');
 		}
 	}
 
