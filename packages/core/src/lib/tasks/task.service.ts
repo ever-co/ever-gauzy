@@ -34,7 +34,7 @@ import {
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isSqlite } from '@gauzy/config';
-import { TenantAwareCrudService, PaginationParams } from './../core/crud';
+import { TenantAwareCrudService, BaseQueryDTO } from './../core/crud';
 import { addBetween, LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
@@ -262,7 +262,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns A promise that resolves to a paginated list of tasks.
 	 * @throws If an error occurs during the retrieval process.
 	 */
-	async findAll(options: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<Task>> {
+	async findAll(options: BaseQueryDTO<Task> & IAdvancedTaskFiltering): Promise<IPagination<Task>> {
 		try {
 			const { filters } = options;
 			let advancedFilters: FindOptionsWhere<Task> = {};
@@ -314,7 +314,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param options
 	 * @returns
 	 */
-	async getMyTasks(options: PaginationParams<Task>) {
+	async getMyTasks(options: BaseQueryDTO<Task>) {
 		return await this.getEmployeeTasks(options);
 	}
 
@@ -325,7 +325,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param filters - Optional filters for advanced task filtering.
 	 * @returns
 	 */
-	async getEmployeeTasks(options: PaginationParams<Task> & IAdvancedTaskFiltering) {
+	async getEmployeeTasks(options: BaseQueryDTO<Task> & IAdvancedTaskFiltering) {
 		try {
 			const { where, filters } = options;
 			const { status, title, prefix, isDraft, isScreeningTask = false, organizationSprintId = null } = where;
@@ -432,7 +432,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param filters - Optional filters for advanced task filtering.
 	 * @returns
 	 */
-	async getAllTasksByEmployee(employeeId: IEmployee['id'], options: PaginationParams<Task> & IAdvancedTaskFiltering) {
+	async getAllTasksByEmployee(employeeId: IEmployee['id'], options: BaseQueryDTO<Task> & IAdvancedTaskFiltering) {
 		try {
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.members`, 'members');
@@ -507,7 +507,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param filters - Optional filters for advanced task filtering.
 	 * @returns
 	 */
-	async findTeamTasks(options: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
+	async findTeamTasks(options: BaseQueryDTO<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
 		try {
 			const { where, filters } = options;
 
@@ -634,7 +634,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param filters - Optional filters for advanced task filtering.
 	 * @returns A Promise that resolves to a paginated list of tasks.
 	 */
-	public async pagination(options: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
+	public async pagination(options: BaseQueryDTO<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
 		const filters = options?.filters;
 		const where = options?.where;
 
@@ -826,7 +826,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param filters - Optional filters for advanced task filtering.
 	 * @returns A promise that resolves with pagination task items and total count.
 	 */
-	async findModuleTasks(options: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
+	async findModuleTasks(options: BaseQueryDTO<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
 		try {
 			const { where, filters } = options;
 			const {

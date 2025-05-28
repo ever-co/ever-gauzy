@@ -17,7 +17,7 @@ import { DeleteResult } from 'typeorm';
 import { ID, IPagination, ITaskView } from '@gauzy/contracts';
 import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
-import { CrudController, OptionParams, PaginationParams } from '../../core/crud';
+import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from '../../core/crud';
 import { TaskView } from './view.entity';
 import { TaskViewService } from './view.service';
 import { CreateViewDTO, UpdateViewDTO } from './dto';
@@ -45,7 +45,7 @@ export class TaskViewController extends CrudController<TaskView> {
 	})
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<TaskView>): Promise<IPagination<ITaskView>> {
+	async findAll(@Query() params: BaseQueryDTO<TaskView>): Promise<IPagination<ITaskView>> {
 		return await this.taskViewService.findAll(params);
 	}
 
@@ -61,7 +61,7 @@ export class TaskViewController extends CrudController<TaskView> {
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() params: OptionParams<TaskView>
+		@Query() params: FindOptionsQueryDTO<TaskView>
 	): Promise<ITaskView> {
 		return this.taskViewService.findOneByIdString(id, params);
 	}

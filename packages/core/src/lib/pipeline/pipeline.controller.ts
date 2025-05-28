@@ -14,7 +14,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { ID, IDeal, IPagination, IPipeline, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, OptionParams, PaginationParams } from './../core/crud';
+import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from './../core/crud';
 import { Pipeline } from './pipeline.entity';
 import { PipelineService } from './pipeline.service';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -40,7 +40,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() filter: PaginationParams<Pipeline>): Promise<IPagination<IPipeline>> {
+	async pagination(@Query() filter: BaseQueryDTO<Pipeline>): Promise<IPagination<IPipeline>> {
 		return await this.pipelineService.pagination(filter);
 	}
 
@@ -57,7 +57,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	})
 	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
 	@Get('/')
-	public async findAll(@Query() filter: PaginationParams<Pipeline>): Promise<IPagination<IPipeline>> {
+	public async findAll(@Query() filter: BaseQueryDTO<Pipeline>): Promise<IPagination<IPipeline>> {
 		return await this.pipelineService.findAll(filter);
 	}
 
@@ -95,7 +95,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	@Get('/:id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() options: OptionParams<Pipeline>
+		@Query() options: FindOptionsQueryDTO<Pipeline>
 	): Promise<IPipeline> {
 		return await this.pipelineService.findById(id, options);
 	}

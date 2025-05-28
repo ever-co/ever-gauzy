@@ -20,7 +20,7 @@ import { Response } from 'express';
 import { CommandBus } from '@nestjs/cqrs';
 import { I18nLang } from 'nestjs-i18n';
 import { PermissionsEnum, IInvoice, LanguagesEnum, IPagination } from '@gauzy/contracts';
-import { CrudController, OptionParams, PaginationParams } from './../core/crud';
+import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { InvoiceService } from './invoice.service';
 import { Permissions } from './../shared/decorators';
@@ -66,7 +66,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	 */
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get('pagination')
-	async pagination(@Query() options: PaginationParams<Invoice>): Promise<IPagination<IInvoice>> {
+	async pagination(@Query() options: BaseQueryDTO<Invoice>): Promise<IPagination<IInvoice>> {
 		return await this.invoiceService.pagination(options);
 	}
 
@@ -89,7 +89,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	 */
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get()
-	async findAll(@Query() options: OptionParams<IInvoice>): Promise<IPagination<IInvoice>> {
+	async findAll(@Query() options: FindOptionsQueryDTO<IInvoice>): Promise<IPagination<IInvoice>> {
 		try {
 			return await this.invoiceService.findAll(options);
 		} catch (error) {

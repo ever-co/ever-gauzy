@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { IPagination, IProductCategoryTranslatable, LanguagesEnum } from '@gauzy/contracts';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { ProductCategory } from './product-category.entity';
 import { TypeOrmProductCategoryRepository } from './repository/type-orm-product-category.repository';
 import { MikroOrmProductCategoryRepository } from './repository/mikro-orm-product-category.repository';
@@ -21,7 +21,7 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 	 * @param language
 	 * @returns
 	 */
-	public async pagination(options: PaginationParams<ProductCategory>, language: LanguagesEnum) {
+	public async pagination(options: BaseQueryDTO<ProductCategory>, language: LanguagesEnum) {
 		const { items, total } = await super.paginate(options);
 		return await this.mapTranslatedProductCategories(items as any, language).then((items) => {
 			return { items, total };
@@ -52,7 +52,7 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 	 * @returns
 	 */
 	public async findProductCategories(
-		options: PaginationParams<ProductCategory>,
+		options: BaseQueryDTO<ProductCategory>,
 		language: LanguagesEnum
 	): Promise<IPagination<ProductCategory>> {
 		const { relations = [], where } = options;

@@ -9,7 +9,7 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { TenantOrganizationBaseDTO } from './../core/dto';
 import {
 	OrganizationContactCreateCommand,
@@ -73,9 +73,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	@Permissions(PermissionsEnum.ORG_CONTACT_VIEW)
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(
-		@Query() filter: PaginationParams<OrganizationContact>
-	): Promise<IPagination<IOrganizationContact>> {
+	async pagination(@Query() filter: BaseQueryDTO<OrganizationContact>): Promise<IPagination<IOrganizationContact>> {
 		return await this.organizationContactService.pagination(filter);
 	}
 

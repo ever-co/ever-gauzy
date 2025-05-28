@@ -6,7 +6,9 @@ import {
 	SettingsComponent,
 	SetupComponent,
 	SplashScreenComponent,
-	UpdaterComponent
+	UpdaterComponent,
+	ServerDashboardComponent,
+	ScreenCaptureComponent
 } from '@gauzy/desktop-ui-lib';
 import { AppModuleGuard } from './app.module.guards';
 
@@ -44,7 +46,15 @@ const routes: Routes = [
 	{
 		path: 'about',
 		component: AboutComponent
-	}
+	},
+	{
+		path: 'server-dashboard',
+		component: ServerDashboardComponent
+	},
+	{
+		path: 'screen-capture',
+		component: ScreenCaptureComponent
+	},
 ];
 
 /**

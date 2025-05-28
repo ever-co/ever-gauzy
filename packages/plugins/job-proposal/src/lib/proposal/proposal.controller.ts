@@ -14,9 +14,9 @@ import {
 	PermissionGuard,
 	TenantPermissionGuard,
 	UseValidationPipe,
-	PaginationParams,
+	BaseQueryDTO,
 	UUIDValidationPipe,
-	OptionParams,
+	FindOptionsQueryDTO,
 	CrudFactory,
 	CountQueryDTO
 } from '@gauzy/core';
@@ -35,7 +35,7 @@ export class ProposalController extends CrudFactory<
 	IProposalCreateInput,
 	IProposalCreateInput,
 	IProposalFindInput
->(PaginationParams, CreateProposalDTO, UpdateProposalDTO, CountQueryDTO) {
+>(BaseQueryDTO, CreateProposalDTO, UpdateProposalDTO, CountQueryDTO) {
 	constructor(private readonly _proposalService: ProposalService, private readonly _commandBus: CommandBus) {
 		super(_proposalService);
 	}
@@ -85,7 +85,7 @@ export class ProposalController extends CrudFactory<
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() params: PaginationParams<Proposal>): Promise<IPagination<IProposal>> {
+	async pagination(@Query() params: BaseQueryDTO<Proposal>): Promise<IPagination<IProposal>> {
 		return await this._proposalService.pagination(params);
 	}
 
@@ -108,7 +108,7 @@ export class ProposalController extends CrudFactory<
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() options: PaginationParams<Proposal>): Promise<IPagination<IProposal>> {
+	async findAll(@Query() options: BaseQueryDTO<Proposal>): Promise<IPagination<IProposal>> {
 		return await this._proposalService.findAll(options);
 	}
 
@@ -133,7 +133,7 @@ export class ProposalController extends CrudFactory<
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Query() options: OptionParams<Proposal>
+		@Query() options: FindOptionsQueryDTO<Proposal>
 	): Promise<IProposal> {
 		return await this._proposalService.findOneByIdString(id, { relations: options.relations || [] });
 	}

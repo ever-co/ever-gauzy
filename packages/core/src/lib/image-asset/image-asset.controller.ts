@@ -21,7 +21,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as Jimp from 'jimp';
 import { IImageAsset, IPagination, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { FileStorage, UploadedFileStorage } from './../core/file-storage';
 import { LazyFileInterceptor } from './../core/interceptors';
 import { RequestContext } from './../core/context';
@@ -165,7 +165,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() params: PaginationParams<ImageAsset>): Promise<IPagination<IImageAsset>> {
+	async pagination(@Query() params: BaseQueryDTO<ImageAsset>): Promise<IPagination<IImageAsset>> {
 		return await this._imageAssetService.paginate(params);
 	}
 
@@ -178,7 +178,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<ImageAsset>): Promise<IPagination<IImageAsset>> {
+	async findAll(@Query() params: BaseQueryDTO<ImageAsset>): Promise<IPagination<IImageAsset>> {
 		return await this._imageAssetService.findAll(params);
 	}
 

@@ -9,14 +9,28 @@ import { ThemeLanguageSelectorService } from './theme-language-selector.service'
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-theme-language-selector',
-    styleUrls: ['./theme-language-selector.component.scss'],
-    templateUrl: './theme-language-selector.component.html',
-    standalone: false
+	selector: 'ngx-theme-language-selector',
+	styleUrls: ['./theme-language-selector.component.scss'],
+	templateUrl: './theme-language-selector.component.html',
+	standalone: false
 })
 export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterViewInit {
 	user: IUser;
 	languages: ILanguage[] = [];
+
+	/**
+	 * Get preferred language
+	 */
+	public get preferredLanguage(): LanguagesEnum {
+		return this._selectorService.preferredLanguage;
+	}
+
+	/**
+	 * Set preferred language
+	 */
+	public set preferredLanguage(value: LanguagesEnum) {
+		this._selectorService.preferredLanguage = value;
+	}
 
 	constructor(
 		private readonly _store: Store,
@@ -113,35 +127,21 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 	}
 
 	/**
-	 * Changed User Selected Preferred Language
+	 * Updates the user's preferred language.
 	 *
-	 * @param payload
-	 * @returns
+	 * @param input - User update payload containing preferred language information.
 	 */
-	private async changePreferredLanguage(payload: IUserUpdateInput) {
-		if (!this.user || !this.user.tenantId) {
+	private async changePreferredLanguage(input: IUserUpdateInput): Promise<void> {
+		if (!this.user?.tenantId) {
+			console.warn('User or tenantId not available. Skipping preferred language update.');
 			return;
 		}
 
 		try {
-			await this._userService.updatePreferredLanguage(payload);
+			await this._userService.updatePreferredLanguage(input);
 		} catch (error) {
-			console.error(`Failed to update user preferred language`);
+			console.error('Failed to update user preferred language:', error);
 		}
-	}
-
-	/**
-	 * Get preferred language
-	 */
-	public get preferredLanguage(): LanguagesEnum {
-		return this._selectorService.preferredLanguage;
-	}
-
-	/**
-	 * Set preferred language
-	 */
-	public set preferredLanguage(value: LanguagesEnum) {
-		this._selectorService.preferredLanguage = value;
 	}
 
 	ngOnDestroy(): void {}

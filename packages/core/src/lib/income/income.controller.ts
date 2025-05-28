@@ -16,7 +16,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IIncome, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { DeleteResult, FindOptionsWhere } from 'typeorm';
 import { RequestContext } from '../core/context';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { EmployeeService } from '../employee/employee.service';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -78,7 +78,7 @@ export class IncomeController extends CrudController<Income> {
 	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() params: PaginationParams<Income>): Promise<IPagination<IIncome>> {
+	async pagination(@Query() params: BaseQueryDTO<Income>): Promise<IPagination<IIncome>> {
 		return await this.incomeService.pagination(params);
 	}
 

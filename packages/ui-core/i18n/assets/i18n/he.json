@@ -4078,7 +4078,8 @@
 			"REGISTRY": "מרשם NPM",
 			"AUTH_TOKEN": "אסימון אימות",
 			"PRIVATE_REGISTRY_URL": "כתובת URL של מרשם פרטי",
-			"PLUGIN_INSTALL_CDN_ERROR": "כתובת ה-URL של השרת לא יכולה להיות ריקה."
+			"PLUGIN_INSTALL_CDN_ERROR": "כתובת ה-URL של השרת לא יכולה להיות ריקה.",
+			"TRACK_KEYBOARD_MOUSE": "מעקב קלט מדויק"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "הגעת למגבלת השבוע",
 		"OF_HRS": "מתוך {{ limit }} שעות",
@@ -4768,6 +4769,8 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "API Server Log",
+	"AGENT_APP": "סוכן",
+	"AGENT_LOG": "יומן סוכן",
 	"COMING_SOON": "דף זה יגיע בקרוב!",
 	"PLUGIN": {
 		"VIDEO": {

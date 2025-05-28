@@ -9,7 +9,7 @@ import {
 	IApprovalPolicyCreateInput
 } from '@gauzy/contracts';
 import { ApprovalPolicy } from './approval-policy.entity';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { TypeOrmApprovalPolicyRepository } from './repository/type-orm-approval-policy.repository';
 import { MikroOrmApprovalPolicyRepository } from './repository/mikro-orm-approval-policy.repository';
@@ -29,7 +29,7 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 	 * @param options
 	 * @returns
 	 */
-	public pagination(options: PaginationParams<ApprovalPolicy>) {
+	public pagination(options: BaseQueryDTO<ApprovalPolicy>) {
 		if ('where' in options) {
 			const { where } = options;
 			if ('name' in where) {
@@ -42,7 +42,7 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 	/*
 	 * Get all approval policies
 	 */
-	async findAllApprovalPolicies(options: PaginationParams<ApprovalPolicy>): Promise<IPagination<IApprovalPolicy>> {
+	async findAllApprovalPolicies(options: BaseQueryDTO<ApprovalPolicy>): Promise<IPagination<IApprovalPolicy>> {
 		return await super.findAll({
 			...(options && options.where
 				? {

@@ -7,8 +7,7 @@ import {
 	OrganizationContactService,
 	OrganizationDepartmentsService,
 	OrganizationProjectsService,
-	OrganizationsService,
-	UsersService
+	OrganizationsService
 } from '@gauzy/ui-core/core';
 import { InviteMutationComponent } from './invite-mutation.component';
 import { InviteFormsModule } from '../forms/invite-forms.module';
@@ -29,8 +28,7 @@ import { InviteFormsModule } from '../forms/invite-forms.module';
 		OrganizationsService,
 		OrganizationProjectsService,
 		OrganizationContactService,
-		OrganizationDepartmentsService,
-		UsersService
+		OrganizationDepartmentsService
 	]
 })
 export class InviteMutationModule {}

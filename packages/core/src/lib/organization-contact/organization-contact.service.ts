@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Brackets, In, Raw } from 'typeorm';
 import { ID, IOrganizationContact, IOrganizationContactFindInput, IPagination } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { isNotEmpty } from '@gauzy/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { OrganizationContact } from './organization-contact.entity';
@@ -128,9 +128,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 	 * @param filter - The pagination parameters, including custom filters.
 	 * @returns A promise that resolves with paginated organization contacts.
 	 */
-	public async pagination(
-		filter?: PaginationParams<OrganizationContact>
-	): Promise<IPagination<IOrganizationContact>> {
+	public async pagination(filter?: BaseQueryDTO<OrganizationContact>): Promise<IPagination<IOrganizationContact>> {
 		if (filter?.where) {
 			const { where } = filter;
 

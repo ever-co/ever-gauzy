@@ -3,7 +3,7 @@ import {
 	FileStorage,
 	FileStorageFactory,
 	LazyFileInterceptor,
-	PaginationParams,
+	BaseQueryDTO,
 	PermissionGuard,
 	Permissions,
 	RequestContext,
@@ -72,7 +72,7 @@ export class VideosController {
 		description: 'No videos found matching the provided criteria.'
 	})
 	@Get('/')
-	public async findAll(@Query() params: PaginationParams<Video>): Promise<IPagination<IVideo>> {
+	public async findAll(@Query() params: BaseQueryDTO<Video>): Promise<IPagination<IVideo>> {
 		return this.queryBus.execute(new GetVideosQuery(params));
 	}
 

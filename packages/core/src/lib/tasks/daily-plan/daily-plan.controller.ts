@@ -14,7 +14,7 @@ import {
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IDailyPlan, IDailyPlanTasksUpdateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from '../../core/crud';
+import { CrudController, BaseQueryDTO } from '../../core/crud';
 import { UseValidationPipe } from '../../shared/pipes';
 import { CreateDailyPlanDTO, RemoveTaskFromManyPlansDTO, UpdateDailyPlanDTO } from './dto';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
@@ -54,7 +54,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DAILY_PLAN_READ)
 	@Get('/me')
 	@UseValidationPipe()
-	async getMyPlans(@Query() params: PaginationParams<DailyPlan>): Promise<IPagination<IDailyPlan>> {
+	async getMyPlans(@Query() params: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
 		return await this.dailyPlanService.getMyPlans(params);
 	}
 
@@ -81,7 +81,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Get('/team')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DAILY_PLAN_READ)
 	@UseValidationPipe()
-	async getTeamDailyPlans(@Query() params: PaginationParams<DailyPlan>): Promise<IPagination<IDailyPlan>> {
+	async getTeamDailyPlans(@Query() params: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
 		return await this.dailyPlanService.getTeamDailyPlans(params);
 	}
 
@@ -110,7 +110,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Get('/employee/:id')
 	async getEmployeeDailyPlans(
 		@Param('id') employeeId: ID,
-		@Query() params: PaginationParams<DailyPlan>
+		@Query() params: BaseQueryDTO<DailyPlan>
 	): Promise<IPagination<IDailyPlan>> {
 		return await this.dailyPlanService.getDailyPlansByEmployee(params, employeeId);
 	}
@@ -140,7 +140,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Get('/task/:id')
 	async getDailyPlansForTaskId(
 		@Param('id') taskId: ID,
-		@Query() params: PaginationParams<IDailyPlan>
+		@Query() params: BaseQueryDTO<IDailyPlan>
 	): Promise<IPagination<IDailyPlan>> {
 		return await this.dailyPlanService.getDailyPlansByTask(params, taskId);
 	}
@@ -256,7 +256,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Get('/')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DAILY_PLAN_READ)
 	@UseValidationPipe()
-	async get(@Query() params: PaginationParams<DailyPlan>): Promise<IPagination<IDailyPlan>> {
+	async get(@Query() params: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
 		return await this.dailyPlanService.getAllPlans(params);
 	}
 

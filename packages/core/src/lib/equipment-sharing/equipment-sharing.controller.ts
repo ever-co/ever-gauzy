@@ -2,7 +2,7 @@ import { Controller, HttpStatus, Get, HttpCode, UseGuards, Put, Param, Body, Que
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ID, IEquipmentSharing, IPagination, PermissionsEnum, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { EquipmentSharingService } from './equipment-sharing.service';
 
@@ -167,7 +167,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@Permissions(PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW)
 	@UseValidationPipe({ transform: true })
 	@Get('/pagination')
-	async pagination(@Query() filter: PaginationParams<EquipmentSharing>): Promise<IPagination<IEquipmentSharing>> {
+	async pagination(@Query() filter: BaseQueryDTO<EquipmentSharing>): Promise<IPagination<IEquipmentSharing>> {
 		return this.equipmentSharingService.pagination(filter);
 	}
 

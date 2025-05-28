@@ -9,7 +9,7 @@ import {
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Put, Query, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { OrganizationDepartmentEditByEmployeeCommand, OrganizationDepartmentUpdateCommand } from './commands';
 import { OrganizationDepartment } from './organization-department.entity';
 import { OrganizationDepartmentService } from './organization-department.service';
@@ -118,7 +118,7 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(
-		@Query() filter: PaginationParams<OrganizationDepartment>
+		@Query() filter: BaseQueryDTO<OrganizationDepartment>
 	): Promise<IPagination<IOrganizationDepartment>> {
 		return this.organizationDepartmentService.pagination(filter);
 	}

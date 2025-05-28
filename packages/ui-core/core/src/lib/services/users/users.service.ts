@@ -1,81 +1,95 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { IUser, IUserFindInput, IUserUpdateInput } from '@gauzy/contracts';
-import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { ID, IUser, IUserUpdateInput } from '@gauzy/contracts';
+import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class UsersService {
-	constructor(private readonly http: HttpClient) {}
-
-	API_URL = `${API_PREFIX}/user`;
+	private http = inject(HttpClient);
 
 	/**
 	 * Retrieves the current user's details, optionally including specified relations and employee data.
 	 *
-	 * @param relations An array of strings indicating relations to include in the response.
-	 * @param includeEmployee A boolean flag to include employee details in the response.
-	 * @returns A Promise resolving to the IUser object.
+	 * @param relations - An array of relation names to include in the response.
+	 * @param includeEmployee - Whether to include employee details.
+	 * @returns A promise that resolves to the IUser object.
 	 */
-	getMe(relations: string[] = [], includeEmployee: boolean = false): Promise<IUser> {
-		return firstValueFrom(
-			this.http.get<IUser>(`${this.API_URL}/me`, {
-				params: toParams({ relations, includeEmployee })
-			})
-		);
+	async getMe(relations: string[] = [], includeEmployee: boolean = false): Promise<IUser> {
+		const params = buildHttpParams({ relations, includeEmployee });
+		return firstValueFrom(this.http.get<IUser>(`${API_PREFIX}/user/me`, { params }));
 	}
 
-	getUserByEmail(emailId: string): Promise<IUser> {
-		return firstValueFrom(this.http.get<IUser>(`${this.API_URL}/email/${emailId}`));
+	/**
+	 * Retrieves a user by their email address.
+	 *
+	 * @param emailId - The email address of the user to retrieve.
+	 * @returns A Promise that resolves with the user information.
+	 */
+	async getUserByEmail(emailId: string): Promise<IUser> {
+		return await firstValueFrom(this.http.get<IUser>(`${API_PREFIX}/user/email/${emailId}`));
 	}
 
-	getUserById(id: string, relations?: string[]): Promise<IUser> {
+	/**
+	 * Retrieves a user by their unique ID, optionally including related entities.
+	 *
+	 * @param id - The unique identifier of the user to retrieve.
+	 * @param relations - (Optional) An array of related entity names to include in the result.
+	 * @returns A Promise that resolves with the user information.
+	 */
+	async getUserById(id: string, relations?: string[]): Promise<IUser> {
 		const data = JSON.stringify({ relations });
-		return firstValueFrom(
-			this.http.get<IUser>(`${this.API_URL}/${id}`, {
-				params: { data }
-			})
-		);
-	}
-
-	getAll(relations?: string[], findInput?: IUserFindInput): Promise<{ items: IUser[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput });
-		return firstValueFrom(
-			this.http.get<{ items: IUser[]; total: number }>(`${this.API_URL}`, {
-				params: { data }
-			})
-		);
-	}
-
-	update(userId: string, updateInput: IUserUpdateInput) {
-		return firstValueFrom(this.http.put(`${this.API_URL}/${userId}`, updateInput));
-	}
-
-	delete(userId, user) {
-		return firstValueFrom(this.http.delete(`${this.API_URL}/${userId}`, user));
-	}
-
-	deleteAllData() {
-		return firstValueFrom(this.http.delete(`${this.API_URL}/reset`));
+		return await firstValueFrom(this.http.get<IUser>(`${API_PREFIX}/user/${id}`, { params: { data } }));
 	}
 
 	/**
-	 * Update user preferred language
+	 * Updates the user information for a specific user ID.
 	 *
-	 * @param input
-	 * @returns
+	 * @param id - The unique identifier of the user to update.
+	 * @param input - An object containing the updated user details.
+	 * @returns A Promise that resolves with the server's response after updating the user.
 	 */
-	updatePreferredLanguage(input: IUserUpdateInput) {
-		return firstValueFrom(this.http.put(`${this.API_URL}/preferred-language`, input));
+	async update(id: ID, input: IUserUpdateInput): Promise<any> {
+		return await firstValueFrom(this.http.put(`${API_PREFIX}/user/${id}`, input));
 	}
 
 	/**
-	 * Update user preferred component layout
+	 * Deletes a user by their ID.
 	 *
-	 * @param input
-	 * @returns
+	 * @param id - The unique identifier of the user to delete.
+	 * @param user - Additional user data or options (if required by the API) to be passed in the request.
+	 * @returns A Promise that resolves with the server's response after deleting the user.
 	 */
-	updatePreferredComponentLayout(input: IUserUpdateInput) {
-		return firstValueFrom(this.http.put(`${this.API_URL}/preferred-layout`, input));
+	async delete(id: ID, user: any): Promise<any> {
+		return await firstValueFrom(this.http.delete(`${API_PREFIX}/user/${id}`, { body: user }));
+	}
+
+	/**
+	 * Deletes all user-related data from the system.
+	 *
+	 * @returns A Promise that resolves once all user data has been successfully deleted.
+	 */
+	async deleteAllData(): Promise<any> {
+		return await firstValueFrom(this.http.delete(`${API_PREFIX}/user/reset`));
+	}
+
+	/**
+	 * Updates the user's preferred language setting.
+	 *
+	 * @param input - An object containing the user update information, including the new preferred language.
+	 * @returns A Promise that resolves once the preferred language has been successfully updated.
+	 */
+	async updatePreferredLanguage(input: IUserUpdateInput): Promise<any> {
+		return await firstValueFrom(this.http.put(`${API_PREFIX}/user/preferred-language`, input));
+	}
+
+	/**
+	 * Updates the user's preferred component layout setting.
+	 *
+	 * @param input - An object containing the user update information, including the new preferred layout preference.
+	 * @returns A Promise that resolves once the preferred layout has been successfully updated.
+	 */
+	async updatePreferredComponentLayout(input: IUserUpdateInput): Promise<any> {
+		return await firstValueFrom(this.http.put(`${API_PREFIX}/user/preferred-layout`, input));
 	}
 }

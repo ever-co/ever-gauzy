@@ -2,7 +2,7 @@ import { HttpStatus, Get, Query, UseGuards, Post, Controller, Body, Delete, Put,
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { ICandidateCriterionsRating, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { CandidateCriterionsRatingService } from './candidate-criterion-rating.service';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -80,7 +80,7 @@ export class CandidateCriterionsRatingController extends CrudController<Candidat
 	@Get()
 	@UseValidationPipe()
 	async findAll(
-		@Query() params: PaginationParams<CandidateCriterionsRating>
+		@Query() params: BaseQueryDTO<CandidateCriterionsRating>
 	): Promise<IPagination<ICandidateCriterionsRating>> {
 		return await this.candidateCriterionsRatingService.findAll(params);
 	}

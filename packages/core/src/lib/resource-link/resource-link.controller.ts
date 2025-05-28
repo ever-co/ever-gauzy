@@ -17,7 +17,7 @@ import { DeleteResult } from 'typeorm';
 import { IResourceLink, IResourceLinkUpdateInput, ID, IPagination } from '@gauzy/contracts';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
-import { CrudController, OptionParams, PaginationParams } from './../core/crud';
+import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from './../core/crud';
 import { ResourceLink } from './resource-link.entity';
 import { ResourceLinkService } from './resource-link.service';
 import { ResourceLinkCreateCommand, ResourceLinkUpdateCommand } from './commands';
@@ -35,7 +35,7 @@ export class ResourceLinkController extends CrudController<ResourceLink> {
 	 * @description Retrieves all resource links, optionally filtered by type.
 	 * This endpoint supports pagination and returns a list of resource links.
 	 *
-	 * @param {PaginationParams<ResourceLink>} params - The pagination and filter parameters.
+	 * @param {BaseQueryDTO<ResourceLink>} params - The pagination and filter parameters.
 	 * @returns {Promise<IPagination<IResourceLink>>} - A promise that resolves to a paginated list of resource links.
 	 * @memberof ResourceLinkController
 	 */
@@ -53,7 +53,7 @@ export class ResourceLinkController extends CrudController<ResourceLink> {
 	})
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<ResourceLink>): Promise<IPagination<IResourceLink>> {
+	async findAll(@Query() params: BaseQueryDTO<ResourceLink>): Promise<IPagination<IResourceLink>> {
 		// Call the service to retrieve the paginated list of resource links
 		return await this.resourceLinkService.findAll(params);
 	}
@@ -63,7 +63,7 @@ export class ResourceLinkController extends CrudController<ResourceLink> {
 	 * This endpoint returns a resource link by its unique identifier, optionally filtered by query parameters.
 	 *
 	 * @param {ID} id - The unique identifier of the resource link to retrieve.
-	 * @param {OptionParams<ResourceLink>} params - The optional query parameters for filtering or additional options.
+	 * @param {FindOptionsQueryDTO<ResourceLink>} params - The optional query parameters for filtering or additional options.
 	 * @returns {Promise<ResourceLink>} - A promise that resolves to the found resource link.
 	 * @memberof ResourceLinkController
 	 */
@@ -80,7 +80,7 @@ export class ResourceLinkController extends CrudController<ResourceLink> {
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID, // Validate and retrieve the ID parameter
-		@Query() params: OptionParams<ResourceLink> // Retrieve optional query parameters
+		@Query() params: FindOptionsQueryDTO<ResourceLink> // Retrieve optional query parameters
 	): Promise<ResourceLink> {
 		// Call the service to find the resource link by ID, applying optional filters if present
 		return this.resourceLinkService.findOneByIdString(id, params);

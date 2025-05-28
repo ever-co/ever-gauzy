@@ -2,7 +2,7 @@ import { Controller, HttpStatus, Get, Query, UseGuards, Post, Body, Put, Param }
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ICandidateExperience, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { UpdateResult } from 'typeorm';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, BaseQueryDTO } from './../core/crud';
 import { CandidateExperienceService } from './candidate-experience.service';
 import { CandidateExperience } from './candidate-experience.entity';
 import { Permissions } from './../shared/decorators';
@@ -28,9 +28,7 @@ export class CandidateExperienceController extends CrudController<CandidateExper
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(
-		@Query() params: PaginationParams<CandidateExperience>
-	): Promise<IPagination<ICandidateExperience>> {
+	async pagination(@Query() params: BaseQueryDTO<CandidateExperience>): Promise<IPagination<ICandidateExperience>> {
 		return await this.candidateExperienceService.paginate(params);
 	}
 
@@ -55,7 +53,7 @@ export class CandidateExperienceController extends CrudController<CandidateExper
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<CandidateExperience>): Promise<IPagination<ICandidateExperience>> {
+	async findAll(@Query() params: BaseQueryDTO<CandidateExperience>): Promise<IPagination<ICandidateExperience>> {
 		return await this.candidateExperienceService.findAll(params);
 	}
 

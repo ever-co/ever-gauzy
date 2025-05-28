@@ -7,7 +7,7 @@ import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { Permissions } from '../../shared/decorators';
 import { UseValidationPipe, UUIDValidationPipe } from '../../shared/pipes';
-import { CrudController, PaginationParams } from '../../core/crud';
+import { CrudController, BaseQueryDTO } from '../../core/crud';
 import { DashboardWidget } from './dashboard-widget.entity';
 import { DashboardWidgetCreateCommand, DashboardWidgetUpdateCommand } from './commands';
 import { DashboardWidgetService } from './dashboard-widget.service';
@@ -37,7 +37,7 @@ export class DashboardWidgetController extends CrudController<DashboardWidget> {
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DASHBOARD_READ)
 	@Get()
-	async findAll(@Query() params: PaginationParams<DashboardWidget>): Promise<IPagination<DashboardWidget>> {
+	async findAll(@Query() params: BaseQueryDTO<DashboardWidget>): Promise<IPagination<DashboardWidget>> {
 		return this.dashboardWidgetService.findAll(params);
 	}
 
@@ -56,7 +56,7 @@ export class DashboardWidgetController extends CrudController<DashboardWidget> {
 	@UseValidationPipe()
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() params: PaginationParams<DashboardWidget>
+		@Query() params: BaseQueryDTO<DashboardWidget>
 	): Promise<DashboardWidget> {
 		return this.dashboardWidgetService.findOneByIdString(id, params);
 	}

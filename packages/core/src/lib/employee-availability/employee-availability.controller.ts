@@ -3,7 +3,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, U
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IEmployeeAvailability, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from '../core/crud';
+import { CrudController, BaseQueryDTO } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { UseValidationPipe, UUIDValidationPipe } from '../shared/pipes';
@@ -66,9 +66,7 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_READ)
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(
-		@Query() filter: PaginationParams<EmployeeAvailability>
-	): Promise<IPagination<IEmployeeAvailability>> {
+	async findAll(@Query() filter: BaseQueryDTO<EmployeeAvailability>): Promise<IPagination<IEmployeeAvailability>> {
 		return this.availabilityService.findAll(filter);
 	}
 
