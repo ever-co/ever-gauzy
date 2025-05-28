@@ -139,12 +139,13 @@ export class ZapierWebhookController {
 				}
 
 				// Block private IP ranges
-				const privateIpRanges = [
+				const PRIVATE_IP_RANGES = [
 					/^10\./,
 					/^172\.(1[6-9]|2[0-9]|3[0-1])\./,
 					/^192\.168\./,
 					/^169\.254\./ // Link-local
 				];
+				const privateIpRanges = PRIVATE_IP_RANGES;
 
 				if (privateIpRanges.some(range => range.test(hostname))) {
 					throw new BadRequestException('Private IP addresses are not allowed for webhooks');
@@ -160,7 +161,12 @@ export class ZapierWebhookController {
 			if (error instanceof BadRequestException) {
 				throw error;
 			}
-			throw new BadRequestException('Invalid webhook URL format');
+			if (error instanceof TypeError) {
+				// TypeError is thrown by the URL constructor for invalid URLs
+				throw new BadRequestException('Invalid webhook URL format');
+			}
+			// For other errors (e.g., network issues, unexpected errors), rethrow or wrap as InternalServerError
+			throw new InternalServerErrorException('Unexpected error during webhook URL validation');
 		}
 	}
 
@@ -177,7 +183,8 @@ export class ZapierWebhookController {
 		}
 
 		// Allow only alphanumeric characters, dots, underscores, and hyphens
-		if (!/^[a-zA-Z0-9._-]+$/.test(event)) {
+		const EVENT_NAME_REGEX = /^[a-zA-Z0-9._-]+$/;
+		if (!EVENT_NAME_REGEX.test(event)) {
 			throw new BadRequestException('Event name can only contain alphanumeric characters, dots, underscores, and hyphens');
 		}
 	}

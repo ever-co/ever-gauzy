@@ -29,7 +29,9 @@ const formatDateFields = (item: DateFormatTable): DateFormatTable => {
 	// Also format nested lastLog dates if present
 	if (formatted.lastLog && typeof formatted.lastLog === 'object') {
 		dateFields.forEach((field) => {
-			formatted.lastLog![field] = formatSingleDateField(formatted.lastLog![field]);
+			if (formatted.lastLog) {
+				formatted.lastLog[field] = formatSingleDateField(formatted.lastLog[field]);
+			}
 		});
 	}
 

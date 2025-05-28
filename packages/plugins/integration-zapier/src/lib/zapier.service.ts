@@ -94,35 +94,18 @@ export class ZapierService {
 				throw new BadRequestException('Missing required Zapier integration settings');
 			}
 
-			// Generate cryptographically secure tokens
-			const access_token = randomBytes(32).toString('hex');
-			const new_refresh_token = randomBytes(32).toString('hex');
+			const result = await this.generateAndStoreNewTokens(integrationId, settings);
 
-			// Update settings with new tokens
-			const updatedSettings = settings.map((setting) => {
-				const updated = { ...setting };
-				if (setting.settingsName === 'access_token') {
-					updated.settingsValue = access_token;
-				} else if (setting.settingsName === 'refresh_token') {
-					updated.settingsValue = new_refresh_token;
+			this.logger.log(
+				`Successfully refreshed tokens for integration ID ${integrationId}`,
+				{
+					integrationId,
+					client_id,
+					tenantId: settings[0]?.tenantId,
+					organizationId: settings[0]?.organizationId
 				}
-				return updated;
-			}) as DeepPartial<IIntegrationEntitySetting>;
-
-			await this._integrationSettingService.save(updatedSettings);
-
-			this.logger.log(`Successfully refreshed tokens for integration ID ${integrationId}`, {
-				integrationId,
-				client_id,
-				tenantId: settings[0]?.tenantId,
-				organizationId: settings[0]?.organizationId
-			});
-			return {
-				access_token,
-				refresh_token: new_refresh_token,
-				token_type: 'Bearer',
-				expires_in: ZAPIER_TOKEN_EXPIRATION_TIME
-			};
+			);
+			return result;
 		} catch (error: any) {
 			this.logger.error(`Failed to refresh token for integration ID ${integrationId}`, {
 				error: error.message,
@@ -246,7 +229,7 @@ export class ZapierService {
 					// Support wildcard subdomains (e.g., *.zapier.com)
 					if (domain.startsWith('*.')) {
 						const baseDomain = domain.substring(2);
-						const matches = url.hostname === baseDomain || url.hostname.endsWith('.' + baseDomain);
+						const matches = url.hostname === baseDomain || url.hostname.endsWith(`.${baseDomain}`);
 						if (matches) {
 							this.logger.debug(`Redirect URI allowed by wildcard domain: ${domain}`);
 						}
