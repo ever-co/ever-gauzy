@@ -1,4 +1,4 @@
-## @gauzy/plugin-integration-make-com-ui
+# @gauzy/plugin-integration-make-com-ui
 
 This library was generated with [Nx](https://nx.dev).
 
