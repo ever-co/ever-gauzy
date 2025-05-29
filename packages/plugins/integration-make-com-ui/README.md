@@ -12,7 +12,9 @@ Run `yarn nx test plugin-integration-make-com-ui` to execute the unit tests via 
 
 ## Publishing
 
-After building your library with `yarn nx build plugin-integration-make-com-ui`, go to the dist folder `dist/packages/plugins/integration-make-com-ui` and run `npm publish`.
+After building your library with `yarn nx build plugin-integration-make-com-ui`,
+go to the dist folder `dist/packages/plugins/integration-make-com-ui`
+and run `npm publish`.
 
 ## Installation
 
