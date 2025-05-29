@@ -13,7 +13,7 @@ export class NpmSourceCreator extends SourceCreator {
 			]),
 			registry: new FormControl(
 				source?.registry || '',
-				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w\-]+)*\/?$/)
+				Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})(?:\/|[\w\-])*\/?$/)
 			),
 			private: new FormControl(source?.private || false),
 			scope: new FormControl(source?.scope || '', Validators.pattern(/^@[a-z0-9-~][a-z0-9-._~]*$/))
