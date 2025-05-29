@@ -19,7 +19,6 @@ export class KbMouseTimer {
 	}
 
 	public setFlushInterval(seconds: number): void {
-		if (seconds <= 0) throw new Error('Flush interval must be positive');
 		this.flushIntervalSeconds = seconds;
 	}
 
