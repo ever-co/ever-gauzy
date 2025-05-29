@@ -4,19 +4,19 @@ import { TMouseEvents, TKbMouseActivity } from './i-kb-mouse';
  * Singleton class for managing keyboard and mouse activity data.
  * Tracks and provides access to user input metrics like key presses,
  * mouse clicks, and movements.
-*/
+ */
 export class KeyboardMouseActivityStores {
-	currentActivityData: TKbMouseActivity;
+	private currentActivityData: TKbMouseActivity;
 	private static instance: KeyboardMouseActivityStores;
 	private constructor() {
 		this.resetCurrentActivity();
 	}
 
 	/**
-		* Returns the singleton instance of KeyboardMouseActivityStores.
-		* Creates a new instance if one doesn't exist.
-		* @returns {KeyboardMouseActivityStores} The singleton instance
-	*/
+	 * Returns the singleton instance of KeyboardMouseActivityStores.
+	 * Creates a new instance if one doesn't exist.
+	 * @returns {KeyboardMouseActivityStores} The singleton instance
+	 */
 	static getInstance(): KeyboardMouseActivityStores {
 		if (!KeyboardMouseActivityStores.instance) {
 			KeyboardMouseActivityStores.instance = new KeyboardMouseActivityStores();
