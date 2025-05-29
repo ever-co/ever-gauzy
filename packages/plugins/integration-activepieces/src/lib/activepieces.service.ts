@@ -1,281 +1,309 @@
-import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@gauzy/config';
+import { firstValueFrom, catchError } from 'rxjs';
+import { AxiosError } from 'axios';
+import { IntegrationEnum } from '@gauzy/contracts';
+import { IntegrationSettingService, IntegrationService, IntegrationTenantService, RequestContext } from '@gauzy/core';
 import {
-  IIntegrationTenant,
-  IntegrationEnum,
-  IIntegrationSetting,
-  ID
-} from '@gauzy/contracts';
-import {
-  IntegrationSettingService,
-  IntegrationService,
-} from '@gauzy/core';
-import {
-  IActivepiecesOAuthCredentials,
-  ActivepiecesSettingName
+	IActivepiecesConnection,
+	IActivepiecesConnectionRequest,
+	ActivepiecesSettingName,
+	ActivepiecesConnectionType,
+	ICreateActivepiecesIntegrationInput
 } from './activepieces.type';
+import { ACTIVEPIECES_CONNECTIONS_URL } from './activepieces.config';
 
 @Injectable()
 export class ActivepiecesService {
-  private readonly logger = new Logger(ActivepiecesService.name);
+	private readonly logger = new Logger(ActivepiecesService.name);
 
-  constructor(
-    private readonly _integrationSettingService: IntegrationSettingService,
-    private readonly _integrationService: IntegrationService
-  ) {}
+	constructor(
+		private readonly httpService: HttpService,
+		private readonly configService: ConfigService,
+		private readonly integrationSettingService: IntegrationSettingService,
+		private readonly integrationService: IntegrationService,
+		private readonly integrationTenantService: IntegrationTenantService
+	) {}
 
-  /**
-   * Get OAuth credentials for an ActivePieces integration
-   */
-  async getOAuthCredentials(integrationId: string): Promise<IActivepiecesOAuthCredentials> {
-    try {
-      const clientIdSetting = await this._integrationSettingService.findOneByOptions({
-        where: {
-          integration: { id: integrationId },
-          settingsName: ActivepiecesSettingName.CLIENT_ID
-        }
-      });
+	/**
+	 * Create a new ActivePieces connection for the tenant
+	 */
+	async createConnection(input: ICreateActivepiecesIntegrationInput): Promise<IActivepiecesConnection> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			const organizationId = input.organizationId;
 
-      const clientSecretSetting = await this._integrationSettingService.findOneByOptions({
-        where: {
-          integration: { id: integrationId },
-          settingsName: ActivepiecesSettingName.CLIENT_SECRET
-        }
-      });
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID not found in request context');
+			}
 
-      if (!clientIdSetting?.settingsValue || !clientSecretSetting?.settingsValue) {
-        throw new NotFoundException('OAuth credentials not found for this integration');
-      }
+			// Get ActivePieces OAuth credentials from configuration
+			const clientId = this.configService.get('activepieces')?.clientId;
+			const clientSecret = this.configService.get('activepieces')?.clientSecret;
 
-      return {
-        clientId: clientIdSetting.settingsValue,
-        clientSecret: clientSecretSetting.settingsValue
-      };
-    } catch (error: any) {
-      this.logger.error('Failed to get OAuth credentials:', error);
-      throw new BadRequestException(`Failed to get OAuth credentials: ${error.message}`);
-    }
-  }
+			if (!clientId || !clientSecret) {
+				throw new BadRequestException('ActivePieces OAuth credentials are not configured');
+			}
 
-  /**
-   * Find integration by token
-   */
-  async findIntegrationByToken(token: string): Promise<IIntegrationTenant> {
-    // Look up the access_token setting
-    const setting = await this._integrationSettingService.findOneByWhereOptions({
-      settingsName: 'access_token',
-      settingsValue: token
-    });
+			// Create external ID for the connection (unique identifier for this tenant)
+			const externalId = `gauzy-tenant-${tenantId}${organizationId ? `-org-${organizationId}` : ''}`;
 
-    // Ensure we have an integrationId
-    if (!setting?.integrationId) {
-      throw new NotFoundException('Invalid access token');
-    }
+			// Create display name for the connection
+			const displayName = input.connectionName || `Ever Gauzy - ${tenantId}`;
 
-    // Load the integration tenant, scoped to ActivePieces, including its settings
-    const integrationTenant = await this._integrationService.findOneByIdString(setting.integrationId, {
-      where: { name: IntegrationEnum.ACTIVE_PIECES },
-      relations: ['settings']
-    });
+			// Prepare the connection request for ActivePieces
+			const connectionRequest: IActivepiecesConnectionRequest = {
+				externalId,
+				displayName,
+				pieceName: 'Ever-gauzy', // Your piece name in ActivePieces
+				projectId: input.projectId,
+				metadata: {
+					tenantId,
+					organizationId,
+					createdAt: new Date().toISOString()
+				},
+				type: ActivepiecesConnectionType.OAUTH2,
+				value: {
+					type: ActivepiecesConnectionType.OAUTH2,
+					client_id: clientId,
+					client_secret: clientSecret,
+					data: {
+						tenantId,
+						organizationId
+					}
+				}
+			};
 
-    // Handle missing tenant
-    if (!integrationTenant) {
-      throw new NotFoundException('ActivePieces integration not found for the provided token');
-    }
+			// Make the API call to create the connection
+			const response = await firstValueFrom(
+				this.httpService
+					.post<IActivepiecesConnection>(ACTIVEPIECES_CONNECTIONS_URL, connectionRequest, {
+						headers: {
+							Authorization: `Bearer ${input.accessToken}`,
+							'Content-Type': 'application/json'
+						}
+					})
+					.pipe(
+						catchError((error: AxiosError) => {
+							this.logger.error('Error creating ActivePieces connection:', error.response?.data);
+							throw new HttpException(
+								`Failed to create ActivePieces connection: ${error.message}`,
+								error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
+							);
+						})
+					)
+			);
 
-    // Return with correct enum typing
-    return {
-      ...integrationTenant,
-      name: IntegrationEnum.ACTIVE_PIECES
-    };
-  }
+			// Save the connection details to the database
+			await this.saveConnectionSettings(response.data, input.accessToken, tenantId, organizationId);
 
-  /**
-   * Get ActivePieces token for an integration
-   */
-  async getActivepiecesToken(integrationId: ID): Promise<IIntegrationSetting> {
-    try {
-      return await this._integrationSettingService.findOneByWhereOptions({
-        integration: { id: integrationId },
-        integrationId,
-        settingsName: 'access_token'
-      });
-    } catch (error) {
-      throw new NotFoundException(`Access token for integration ID ${integrationId} not found`);
-    }
-  }
+			this.logger.log(`Successfully created ActivePieces connection: ${response.data.id}`);
+			return response.data;
+		} catch (error: any) {
+			this.logger.error('Failed to create ActivePieces connection:', error);
+			throw new BadRequestException(`Failed to create connection: ${error.message}`);
+		}
+	}
 
-  /**
-   * Check if a token is expired and needs refreshing
-   */
-  async isTokenExpired(integrationId: string): Promise<boolean> {
-    try {
-      const expiresAtSetting = await this._integrationSettingService.findOneByOptions({
-        where: {
-          integration: { id: integrationId },
-          settingsName: ActivepiecesSettingName.EXPIRES_AT
-        }
-      });
+	/**
+	 * Get ActivePieces connection by integration ID
+	 */
+	async getConnection(integrationId: string): Promise<IActivepiecesConnection | null> {
+		try {
+			const connectionIdSetting = await this.integrationSettingService.findOneByOptions({
+				where: {
+					integration: { id: integrationId },
+					settingsName: ActivepiecesSettingName.CONNECTION_ID
+				}
+			});
 
-      if (!expiresAtSetting?.settingsValue) {
-        // If no expiration time is set, assume token is valid
-        return false;
-      }
+			if (!connectionIdSetting?.settingsValue) {
+				return null;
+			}
 
-      const expiresAt = new Date(expiresAtSetting.settingsValue);
-      const now = new Date();
+			const accessToken = await this.getValidAccessToken(integrationId);
 
-      // Add a 5-minute buffer to refresh tokens before they expire
-      const bufferTime = 5 * 60 * 1000; // 5 minutes in milliseconds
-      return (expiresAt.getTime() - now.getTime()) < bufferTime;
-    } catch (error) {
-      this.logger.error('Error checking token expiration:', error);
-      return false;
-    }
-  }
+			const response = await firstValueFrom(
+				this.httpService
+					.get<IActivepiecesConnection>(
+						`${ACTIVEPIECES_CONNECTIONS_URL}/${connectionIdSetting.settingsValue}`,
+						{
+							headers: {
+								Authorization: `Bearer ${accessToken}`,
+								'Content-Type': 'application/json'
+							}
+						}
+					)
+					.pipe(
+						catchError((error: AxiosError) => {
+							this.logger.error('Error fetching ActivePieces connection:', error.response?.data);
+							throw new HttpException(
+								`Failed to fetch ActivePieces connection: ${error.message}`,
+								error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
+							);
+						})
+					)
+			);
 
-  /**
-   * Get a valid access token, refreshing if necessary
-   */
-  async getValidAccessToken(integrationId: string): Promise<string> {
-    try {
-      // Check if token is expired
-      const isExpired = await this.isTokenExpired(integrationId);
+			return response.data;
+		} catch (error: any) {
+			this.logger.error('Failed to get ActivePieces connection:', error);
+			return null;
+		}
+	}
 
-      if (isExpired) {
-        // Token is expired, try to refresh it
-        const refreshTokenSetting = await this._integrationSettingService.findOneByOptions({
-          where: {
-            integration: { id: integrationId },
-            settingsName: ActivepiecesSettingName.REFRESH_TOKEN
-          }
-        });
+	/**
+	 * Delete ActivePieces connection
+	 */
+	async deleteConnection(integrationId: string): Promise<boolean> {
+		try {
+			const connectionIdSetting = await this.integrationSettingService.findOneByOptions({
+				where: {
+					integration: { id: integrationId },
+					settingsName: ActivepiecesSettingName.CONNECTION_ID
+				}
+			});
 
-        if (refreshTokenSetting) {
-          // We have a refresh token, use it to get a new access token
-          // This would typically involve calling the ActivePieces OAuth refresh endpoint
-          this.logger.log(`Token expired for integration ${integrationId}, attempting refresh...`);
-          // The actual refresh logic would be handled by the OAuth service
-        }
-      }
+			if (!connectionIdSetting?.settingsValue) {
+				this.logger.warn(`No connection ID found for integration: ${integrationId}`);
+				return false;
+			}
 
-      // Get the current access token
-      const tokenSetting = await this._integrationSettingService.findOneByOptions({
-        where: {
-          integration: { id: integrationId },
-          settingsName: ActivepiecesSettingName.ACCESS_TOKEN
-        }
-      });
+			const accessToken = await this.getValidAccessToken(integrationId);
 
-      if (!tokenSetting?.settingsValue) {
-        throw new NotFoundException('Access token not found for this integration');
-      }
+			await firstValueFrom(
+				this.httpService
+					.delete(`${ACTIVEPIECES_CONNECTIONS_URL}/${connectionIdSetting.settingsValue}`, {
+						headers: {
+							Authorization: `Bearer ${accessToken}`,
+							'Content-Type': 'application/json'
+						}
+					})
+					.pipe(
+						catchError((error: AxiosError) => {
+							this.logger.error('Error deleting ActivePieces connection:', error.response?.data);
+							throw new HttpException(
+								`Failed to delete ActivePieces connection: ${error.message}`,
+								error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
+							);
+						})
+					)
+			);
 
-      return tokenSetting.settingsValue;
-    } catch (error: any) {
-      this.logger.error('Failed to get valid access token:', error);
-      throw new BadRequestException(`Failed to get valid access token: ${error.message}`);
-    }
-  }
+			this.logger.log(`Successfully deleted ActivePieces connection: ${connectionIdSetting.settingsValue}`);
+			return true;
+		} catch (error: any) {
+			this.logger.error('Failed to delete ActivePieces connection:', error);
+			return false;
+		}
+	}
 
-  /**
-   * Check if ActivePieces integration is enabled
-   */
-  async isIntegrationEnabled(integrationId: string): Promise<boolean> {
-    try {
-      const enabledSetting = await this._integrationSettingService.findOneByOptions({
-        where: {
-          integration: { id: integrationId },
-          settingsName: ActivepiecesSettingName.IS_ENABLED
-        }
-      });
+	/**
+	 * Get valid access token for API calls
+	 */
+	async getValidAccessToken(integrationId: string): Promise<string> {
+		try {
+			const tokenSetting = await this.integrationSettingService.findOneByOptions({
+				where: {
+					integration: { id: integrationId },
+					settingsName: ActivepiecesSettingName.ACCESS_TOKEN
+				}
+			});
 
-      return enabledSetting?.settingsValue === 'true';
-    } catch (error) {
-      this.logger.error('Error checking if integration is enabled:', error);
-      return false;
-    }
-  }
+			if (!tokenSetting?.settingsValue) {
+				throw new NotFoundException('Access token not found for this integration');
+			}
 
-  /**
-   * Enable or disable ActivePieces integration
-   */
-  async setIntegrationEnabled(integrationId: string, enabled: boolean): Promise<void> {
-    try {
-      const setting = await this._integrationSettingService.findOneByOptions({
-        where: {
-          integration: { id: integrationId },
-          settingsName: ActivepiecesSettingName.IS_ENABLED
-        }
-      });
+			return tokenSetting.settingsValue;
+		} catch (error: any) {
+			this.logger.error('Failed to get valid access token:', error);
+			throw new BadRequestException(`Failed to get valid access token: ${error.message}`);
+		}
+	}
 
-      if (setting) {
-        setting.settingsValue = enabled.toString();
-        await this._integrationSettingService.save(setting);
-      } else {
-        // Create new setting if it doesn't exist
-        const newSetting = await this._integrationSettingService.create({
-          integration: { id: integrationId },
-          settingsName: ActivepiecesSettingName.IS_ENABLED,
-          settingsValue: enabled.toString()
-        });
-        await this._integrationSettingService.save(newSetting);
-      }
+	/**
+	 * Check if ActivePieces integration is enabled
+	 */
+	async isIntegrationEnabled(integrationId: string): Promise<boolean> {
+		try {
+			const enabledSetting = await this.integrationSettingService.findOneByOptions({
+				where: {
+					integration: { id: integrationId },
+					settingsName: ActivepiecesSettingName.IS_ENABLED
+				}
+			});
 
-      this.logger.log(`ActivePieces integration ${integrationId} ${enabled ? 'enabled' : 'disabled'}`);
-    } catch (error: any) {
-      this.logger.error('Error updating integration enabled status:', error);
-      throw new BadRequestException(`Failed to update integration status: ${error.message}`);
-    }
-  }
+			return enabledSetting?.settingsValue === 'true';
+		} catch (error) {
+			this.logger.error('Error checking if integration is enabled:', error);
+			return false;
+		}
+	}
 
-  /**
-   * Get webhook URL for ActivePieces integration
-   */
-  async getWebhookUrl(integrationId: string): Promise<string | null> {
-    try {
-      const webhookSetting = await this._integrationSettingService.findOneByOptions({
-        where: {
-          integration: { id: integrationId },
-          settingsName: ActivepiecesSettingName.WEBHOOK_URL
-        }
-      });
+	/**
+	 * Save connection settings to the database
+	 */
+	private async saveConnectionSettings(
+		connection: IActivepiecesConnection,
+		accessToken: string,
+		tenantId: string,
+		organizationId?: string
+	): Promise<void> {
+		try {
+			// Find or create the integration
+			let integration = await this.integrationService.findOneByOptions({
+				where: { provider: IntegrationEnum.ACTIVE_PIECES }
+			});
 
-      return webhookSetting?.settingsValue || null;
-    } catch (error) {
-      this.logger.error('Error getting webhook URL:', error);
-      return null;
-    }
-  }
+			if (!integration) {
+				integration = await this.integrationService.create({
+					provider: IntegrationEnum.ACTIVE_PIECES,
+					name: IntegrationEnum.ACTIVE_PIECES
+				});
+			}
 
-  /**
-   * Set webhook URL for ActivePieces integration
-   */
-  async setWebhookUrl(integrationId: string, webhookUrl: string): Promise<void> {
-    try {
-      const setting = await this._integrationSettingService.findOneByOptions({
-        where: {
-          integration: { id: integrationId },
-          settingsName: ActivepiecesSettingName.WEBHOOK_URL
-        }
-      });
+			// Define the settings to save
+			const settings = [
+				{
+					settingsName: ActivepiecesSettingName.ACCESS_TOKEN,
+					settingsValue: accessToken,
+					tenantId,
+					organizationId
+				},
+				{
+					settingsName: ActivepiecesSettingName.CONNECTION_ID,
+					settingsValue: connection.id,
+					tenantId,
+					organizationId
+				},
+				{
+					settingsName: ActivepiecesSettingName.PROJECT_ID,
+					settingsValue: connection.projectId,
+					tenantId,
+					organizationId
+				},
+				{
+					settingsName: ActivepiecesSettingName.IS_ENABLED,
+					settingsValue: 'true',
+					tenantId,
+					organizationId
+				}
+			];
 
-      if (setting) {
-        setting.settingsValue = webhookUrl;
-        await this._integrationSettingService.save(setting);
-      } else {
-        // Create new setting if it doesn't exist
-        const newSetting = await this._integrationSettingService.create({
-          integration: { id: integrationId },
-          settingsName: ActivepiecesSettingName.WEBHOOK_URL,
-          settingsValue: webhookUrl
-        });
-        await this._integrationSettingService.save(newSetting);
-      }
+			// Create or update integration tenant
+			const integrationTenant = await this.integrationTenantService.create({
+				name: IntegrationEnum.ACTIVE_PIECES,
+				integration,
+				tenantId,
+				organizationId,
+				settings
+			});
 
-      this.logger.log(`Updated webhook URL for integration ${integrationId}: ${webhookUrl}`);
-    } catch (error: any) {
-      this.logger.error('Error updating webhook URL:', error);
-      throw new BadRequestException(`Failed to update webhook URL: ${error.message}`);
-    }
-  }
+			this.logger.log(`Successfully saved ActivePieces connection settings for tenant ${tenantId}`);
+		} catch (error: any) {
+			this.logger.error('Failed to save ActivePieces connection settings:', error);
+			throw new BadRequestException(`Failed to save connection settings: ${error.message}`);
+		}
+	}
 }

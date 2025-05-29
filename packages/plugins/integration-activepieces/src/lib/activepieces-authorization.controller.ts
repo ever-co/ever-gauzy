@@ -1,122 +1,119 @@
-import {  Get, Query, Res, HttpException, HttpStatus, Controller } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
-import { Public } from '@gauzy/common';
+import { ConfigService } from '@gauzy/config';
+import { Public, IActivepiecesConfig } from '@gauzy/common';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { buildQueryString } from '@gauzy/utils';
-import { ActivepiecesOAuthService } from './activepieces-oauth.service';
+import { ACTIVEPIECES_OAUTH_AUTHORIZE_URL, ACTIVEPIECES_SCOPES, OAUTH_RESPONSE_TYPE } from './activepieces.config';
 
-@ApiTags('Activepieces OAuth')
+@ApiTags('ActivePieces Integration')
 @Public()
-@Controller('./integration/activepieces/oauth')
+@Controller('/integration/activepieces')
 export class ActivepiecesAuthorizationController {
-    constructor(
-        private readonly _config: ConfigService,
-        private readonly activepiecesOAuthService: ActivepiecesOAuthService
-    ) { }
+	constructor(private readonly configService: ConfigService) {}
 
-    /**
-     * Initiates the OAuth 2.0 authorization flow with Activepieces.
-     * Redirects the user to the Activepieces authorization page.
-     * @param {Response} response - Express Response object.
-     */
-    @ApiOperation({ summary: 'Initiate OAuth 2.0 flow with Activepieces' })
-    @ApiResponse({
-        status: 302,
-        description: 'Redirects to Activepieces authorization page'
-    })
-    @Get('/authorize')
-    async authorize(@Query() { state }: { state?: string }, @Res() response: Response) {
-        try {
-            const authorizationUrl = this.activepiecesOAuthService.getAuthorizationUrl(state);
-            return response.redirect(authorizationUrl);
-        } catch (error: any) {
-            throw new HttpException(
-                `Failed to initiate OAuth flow with ${IntegrationEnum.ACTIVE_PIECES}: ${error.message}`,
-                HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
-    }
+	/**
+	 * Generate a random state parameter for CSRF protection
+	 *
+	 * @returns {string} Random state string
+	 */
+	private generateState(): string {
+		return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+	}
+	/**
+	 * Initiate OAuth authorization flow with ActivePieces
+	 *
+	 * @param {any} query - Query parameters including state
+	 * @param {Response} response - Express Response object
+	 */
+	@ApiOperation({ summary: 'Initiate OAuth flow with ActivePieces' })
+	@ApiResponse({
+		status: 302,
+		description: 'Redirects to ActivePieces authorization page'
+	})
+	@Get('/authorize')
+	async authorize(@Query() query: any, @Res() response: Response) {
+		try {
+			// Get ActivePieces configuration
+			const activepiecesConfig = this.configService.get('activepieces') as IActivepiecesConfig;
 
-    /**
-     * Handles the callback from Activepieces after user authorization.
-     * Exchanges the authorization code for access and refresh tokens.
-     * @param {object} query - The query parameters from the callback.
-     * @param {Response} response - Express Response object.
-     */
-    @ApiOperation({ summary: 'Handle Activepieces OAuth callback' })
-    @ApiResponse({
-        status: 302,
-        description: 'Redirects to the application with token information'
-    })
-    @Get('/callback')
-    async callback(
-        @Query() { code, state }: { code?: string; state?: string },
-        @Res() response: Response
-    ) {
-        // Get the post-installation redirect URL from config
-        const postInstallUrl = this._config.get<string>('activepieces.postInstallUrl');
-        try {
-            // Validate the input data
-            if (!code) {
-                throw new HttpException('Invalid query parameters', HttpStatus.BAD_REQUEST);
-            }
-            // Validate state parameter - required for CSRF protection
-            if (!state) {
-                throw new HttpException(
-                    'Invalid state parameter - required for CSRF protection',
-                    HttpStatus.BAD_REQUEST
-                );
-            }
-            // Verify state parameter minimum length
-            if (state.length < 32) {
-                throw new HttpException(
-                    'Invalid state parameter - minimum length is 32 characters',
-                    HttpStatus.BAD_REQUEST
-                );
-            }
-            // Exchange the authorization code for access token
-            const tokenResponse = await this.activepiecesOAuthService.exchangeCodeForToken(code, state);
+			if (!activepiecesConfig?.clientId || !activepiecesConfig?.callbackUrl) {
+				throw new HttpException('ActivePieces configuration is incomplete', HttpStatus.INTERNAL_SERVER_ERROR);
+			}
 
-            // Check if the token exchange was successful
-            if (!tokenResponse || !tokenResponse.access_token) {
-                throw new HttpException(
-                    'Failed to exchange authorization code for access token',
-                    HttpStatus.INTERNAL_SERVER_ERROR
-                );
-            }
-            if (!postInstallUrl) {
-                throw new HttpException(
-                    'Post-installation URL is not configured',
-                    HttpStatus.INTERNAL_SERVER_ERROR
-                );
-            }
-            // Create succes redirect URL
-            const urlObj = new URL(postInstallUrl);
-            urlObj.searchParams.set('success', 'true');
-            urlObj.searchParams.set('integration', IntegrationEnum.ACTIVE_PIECES);
-            urlObj.searchParams.set('message', 'Integration added successfully');
-            const url = urlObj.toString();
+			// Generate state parameter for CSRF protection if not provided
+			const state = query.state || this.generateState();
 
-            // Redirect to the applcation
-            return response.redirect(url);
+			// Build authorization URL parameters
+			const authParams = new URLSearchParams({
+				client_id: activepiecesConfig.clientId,
+				redirect_uri: activepiecesConfig.callbackUrl,
+				response_type: OAUTH_RESPONSE_TYPE,
+				scope: ACTIVEPIECES_SCOPES,
+				state: state
+			});
 
-        } catch (error: any) {
-            if (postInstallUrl) {
-                const errorMessage = 'Failed to complete OAuth flow';
-                const queryParamsString = buildQueryString({
-                    success: 'false',
-                    integration: IntegrationEnum.ACTIVE_PIECES,
-                    message: errorMessage
-                });
-                const url = [postInstallUrl, queryParamsString].filter(Boolean).join('?');
-                return response.redirect(url);
-            }
-            throw new HttpException(
-                `Failed to add ${IntegrationEnum.ACTIVE_PIECES} integration: ${error.message}`,
-                HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
-    }
+			// Construct the full authorization URL
+			const authorizationUrl = `${ACTIVEPIECES_OAUTH_AUTHORIZE_URL}?${authParams.toString()}`;
+
+			// Redirect user to ActivePieces authorization page
+			return response.redirect(authorizationUrl);
+		} catch (error: any) {
+			throw new HttpException(
+				`Failed to initiate ${IntegrationEnum.ACTIVE_PIECES} authorization: ${error.message}`,
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
+	}
+
+	/**
+	 * Handle the callback from ActivePieces after user authorization
+	 *
+	 * @param {any} query - The query parameters from the callback
+	 * @param {Response} response - Express Response object
+	 */
+	@ApiOperation({ summary: 'Handle ActivePieces OAuth callback' })
+	@ApiResponse({
+		status: 302,
+		description: 'Redirects to the application with authorization code'
+	})
+	@Get('/callback')
+	async callback(@Query() query: any, @Res() response: Response) {
+		try {
+			// Validate the input data
+			if (!query || !query.code || !query.state) {
+				throw new HttpException('Invalid query parameters', HttpStatus.BAD_REQUEST);
+			}
+
+			// Get ActivePieces configuration for post-install URL
+			const activepiecesConfig = this.configService.get('activepieces') as IActivepiecesConfig;
+
+			if (!activepiecesConfig?.postInstallUrl) {
+				throw new HttpException(
+					'ActivePieces post-install URL is not configured',
+					HttpStatus.INTERNAL_SERVER_ERROR
+				);
+			}
+
+			// Convert query params object to string
+			const queryParamsString = buildQueryString({
+				code: query.code,
+				state: query.state,
+				integration: IntegrationEnum.ACTIVE_PIECES
+			});
+
+			// Combine post install URL with query params
+			const redirectUrl = [activepiecesConfig.postInstallUrl, queryParamsString].filter(Boolean).join('?');
+
+			// Redirect to the application with the authorization code
+			return response.redirect(redirectUrl);
+		} catch (error: any) {
+			// Handle errors and return an appropriate error response
+			throw new HttpException(
+				`Failed to handle ${IntegrationEnum.ACTIVE_PIECES} callback: ${error.message}`,
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
+	}
 }

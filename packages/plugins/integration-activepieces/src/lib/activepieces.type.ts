@@ -4,130 +4,121 @@ import { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
  * ActivePieces OAuth token response interface
  */
 export interface IActivepiecesOAuthTokens {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-  expires_in: number;
+	access_token: string;
+	refresh_token?: string;
+	token_type: string;
+	expires_in: number;
+	scope?: string;
 }
 
 /**
- * ActivePieces OAuth token data with additional metadata
+ * ActivePieces connection types according to their API
  */
-export interface IActivepiecesTokenData extends IActivepiecesOAuthTokens {
-  scope?: string;
-  expires_at?: string;
+export enum ActivepiecesConnectionType {
+	SECRET_TEXT = 'SECRET_TEXT',
+	OAUTH2 = 'OAUTH2',
+	CLOUD_OAUTH2 = 'CLOUD_OAUTH2',
+	PLATFORM_OAUTH2 = 'PLATFORM_OAUTH2',
+	BASIC_AUTH = 'BASIC_AUTH',
+	CUSTOM_AUTH = 'CUSTOM_AUTH'
+}
+
+/**
+ * ActivePieces connection value for OAuth2
+ */
+export interface IActivepiecesOAuth2ConnectionValue {
+	type: ActivepiecesConnectionType.OAUTH2;
+	client_id: string;
+	client_secret: string;
+	data: Record<string, any>;
+}
+
+/**
+ * ActivePieces connection creation request
+ */
+export interface IActivepiecesConnectionRequest {
+	externalId: string;
+	displayName: string;
+	pieceName: string;
+	projectId: string;
+	metadata?: Record<string, any>;
+	type: ActivepiecesConnectionType;
+	value: IActivepiecesOAuth2ConnectionValue;
+}
+
+/**
+ * ActivePieces connection response
+ */
+export interface IActivepiecesConnection {
+	id: string;
+	externalId: string;
+	displayName: string;
+	pieceName: string;
+	projectId: string;
+	type: ActivepiecesConnectionType;
+	status: 'ACTIVE' | 'ERROR';
+	created: string;
+	updated: string;
 }
 
 /**
  * ActivePieces setting names for database storage
  */
 export enum ActivepiecesSettingName {
-  ACCESS_TOKEN = 'access_token',
-  REFRESH_TOKEN = 'refresh_token',
-  TOKEN_TYPE = 'token_type',
-  EXPIRES_IN = 'expires_in',
-  EXPIRES_AT = 'expires_at',
-  IS_ENABLED = 'is_enabled',
-  WEBHOOK_URL = 'webhook_url',
-  API_URL = 'api_url',
-  CLIENT_ID = 'client_id',
-  CLIENT_SECRET = 'client_secret'
+	ACCESS_TOKEN = 'access_token',
+	REFRESH_TOKEN = 'refresh_token',
+	TOKEN_TYPE = 'token_type',
+	EXPIRES_IN = 'expires_in',
+	EXPIRES_AT = 'expires_at',
+	CONNECTION_ID = 'connection_id',
+	PROJECT_ID = 'project_id',
+	IS_ENABLED = 'is_enabled'
 }
 
 /**
  * ActivePieces OAuth credentials interface
  */
 export interface IActivepiecesOAuthCredentials {
-  clientId: string;
-  clientSecret: string;
-}
-
-/**
- * ActivePieces grant types
- */
-export type ActivepiecesGrantType = 'authorization_code' | 'refresh_token';
-
-/**
- * ActivePieces user information stored during OAuth flow
- */
-export interface IActivepiecesUserInfo {
-  userId: string;
-  tenantId: string;
-  organizationId: string;
-  createdAt: Date;
+	clientId: string;
+	clientSecret: string;
 }
 
 /**
  * ActivePieces integration creation input
  */
 export interface ICreateActivepiecesIntegrationInput extends IBasePerTenantAndOrganizationEntityModel {
-  client_id: string;
-  client_secret: string;
-  code: string;
-  grant_type: ActivepiecesGrantType;
+	accessToken: string;
+	projectId: string;
+	connectionName?: string;
 }
 
 /**
- * ActivePieces token request body
+ * ActivePieces project information
  */
-export interface IActivepiecesTokenRequest {
-  code: string;
-  client_id: string;
-  client_secret: string;
-  grant_type: ActivepiecesGrantType;
-}
-
-/**
- * ActivePieces webhook creation input
- */
-export interface IActivepiecesCreateWebhookInput {
-  targetUrl: string;
-  events: string[];
-  name?: string;
-  active?: boolean;
-}
-
-/**
- * ActivePieces webhook subscription creation input
- */
-export interface IActivepiecesWebhookSubscriptionCreate {
-  targetUrl: string;
-  events: string;
-  integrationId: ID;
-  tenantId: ID;
-  organizationId: ID;
-}
-
-/**
- * ActivePieces webhook data structure
- */
-export interface IActivepiecesWebhookData {
-  tenantId: string;
-  organizationId: string;
-  eventType: string;
-  data: any;
-  timestamp?: string;
+export interface IActivepiecesProject {
+	id: string;
+	displayName: string;
+	ownerId: string;
+	created: string;
+	updated: string;
 }
 
 /**
  * ActivePieces API response wrapper
  */
 export interface IActivepiecesApiResponse<T> {
-  data: T;
-  meta?: {
-    cursor?: string;
-    limit?: number;
-    total?: number;
-  };
+	data: T;
+	status: number;
+	headers?: Record<string, string>;
 }
 
 /**
  * ActivePieces error response
  */
 export interface IActivepiecesErrorResponse {
-  error: {
-    code: string;
-    message: string;
-    details?: any;
-  };
+	error: {
+		code: string;
+		message: string;
+		details?: any;
+	};
 }

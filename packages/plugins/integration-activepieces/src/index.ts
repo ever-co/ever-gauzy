@@ -1,1 +1,4 @@
-export * from './lib/activepieces.module';
+/**
+ * Public API Surface of @gauzy/plugin-integration-activepieces
+ */
+export * from './lib/integration-activepieces.plugin';

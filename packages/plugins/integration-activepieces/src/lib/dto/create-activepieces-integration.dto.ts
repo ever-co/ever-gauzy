@@ -1,38 +1,36 @@
-import { IsString, IsNotEmpty, IsOptional, IsIn } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-import { ActivepiecesGrantType } from '../activepieces.type';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ICreateActivepiecesIntegrationInput } from '../activepieces.type';
+import { TenantOrganizationBaseDTO } from '@gauzy/core';
 
-export class CreateActivepiecesIntegrationDto {
-    @ApiProperty({
-        description: 'The client ID of the ActivePieces integration',
-        type: String,
-    })
-    @IsString()
-    @IsNotEmpty()
-    client_id!: string;
+/**
+ * DTO for creating ActivePieces integration connection
+ */
+export class CreateActivepiecesIntegrationDto
+	extends TenantOrganizationBaseDTO
+	implements ICreateActivepiecesIntegrationInput
+{
+	@ApiProperty({
+		description: 'ActivePieces access token for API authentication',
+		example: 'ap_1234567890abcdef'
+	})
+	@IsNotEmpty()
+	@IsString()
+	readonly accessToken!: string;
 
-    @ApiProperty({
-        description: 'The client secret of the ActivePieces integration',
-        type: String,
-    })
-    @IsString()
-    @IsNotEmpty()
-    client_secret!: string;
+	@ApiProperty({
+		description: 'ActivePieces project ID where the connection will be created',
+		example: 'proj_1234567890abcdef'
+	})
+	@IsNotEmpty()
+	@IsString()
+	readonly projectId!: string;
 
-    @ApiProperty({
-        description: 'The authorization code received from ActivePieces',
-        type: String,
-    })
-    @IsString()
-    @IsNotEmpty()
-    cod!: string;
-
-    @ApiProperty({
-        description: 'The grant type for the ActivePieces integration',
-        type: () => String
-    })
-    @IsString()
-    @IsIn(['authorization_code', 'refresh_token'])
-    @IsOptional()
-    grant_type?: ActivepiecesGrantType;
+	@ApiPropertyOptional({
+		description: 'Display name for the connection (defaults to tenant name)',
+		example: 'Ever Gauzy Connection'
+	})
+	@IsOptional()
+	@IsString()
+	readonly connectionName?: string;
 }

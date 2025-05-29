@@ -1,5 +1,5 @@
 {
-	"name": "integration-activepieces",
+	"name": "plugin-integration-activepieces",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/plugins/integration-activepieces/src",
 	"projectType": "library",
