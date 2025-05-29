@@ -6,11 +6,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { EMPTY, catchError, filter, finalize, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
 import { coalesceValue } from '../../../../../../utils';
+import { PluginElectronService } from '../../../../services/plugin-electron.service';
 import { PluginService } from '../../../../services/plugin.service';
 import { PluginSourceActions } from '../actions/plugin-source.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginSourceStore } from '../stores/plugin-source.store';
-import { PluginElectronService } from '../../../../services/plugin-electron.service';
 
 @Injectable({ providedIn: 'root' })
 export class PluginSourceEffects {
@@ -22,7 +22,7 @@ export class PluginSourceEffects {
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
 		private readonly pluginElectronService: PluginElectronService,
 		private readonly translateService: TranslateService
-	) { }
+	) {}
 
 	createMany$ = createEffect(() =>
 		this.action$.pipe(
@@ -30,7 +30,7 @@ export class PluginSourceEffects {
 			tap(() => {
 				this.pluginSourceStore.update({ creating: true });
 				this.pluginMarketplaceStore.setUpload({ uploading: true });
-				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.VERSION.ADDING'));
+				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.SOURCE.ADDING'));
 			}),
 			switchMap(({ pluginId, versionId, sources }) =>
 				this.pluginService.addSources(pluginId, versionId, sources).pipe(
@@ -48,14 +48,14 @@ export class PluginSourceEffects {
 							}),
 							count: state.count + created.length
 						}));
-						this.toastrService.success(this.translateService.instant('Source added successfully'));
+						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.SOURCE.ADD'));
 					}),
 					finalize(() => {
 						this.pluginMarketplaceStore.setUpload({ uploading: false });
 						this.pluginSourceStore.update({ creating: false });
 					}), // Always stop loading
 					catchError((error) => {
-						this.toastrService.error(error.message || error); // Handle error properly
+						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.SOURCE.ADD')); // Handle error properly
 						return EMPTY; // Return a fallback value to keep the stream alive
 					})
 				)
@@ -132,7 +132,7 @@ export class PluginSourceEffects {
 			ofType(PluginSourceActions.delete),
 			tap(() => {
 				this.pluginSourceStore.update({ deleting: true });
-				this.toastrService.info(this.translateService.instant('Deleting...'));
+				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.SOURCE.DELETING'));
 			}),
 			mergeMap(({ pluginId, versionId, sourceId }) =>
 				this.pluginService.deleteSource(pluginId, versionId, sourceId).pipe(
@@ -146,11 +146,13 @@ export class PluginSourceEffects {
 								)
 							]
 						}));
-						this.toastrService.success(this.translateService.instant('Source deleted successfully.'));
+						this.toastrService.success(
+							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.SOURCE.DELETE')
+						);
 					}),
 					finalize(() => this.pluginSourceStore.update({ deleting: false })),
 					catchError((error) => {
-						this.toastrService.error(error.message || error);
+						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.SOURCE.DELETE'));
 						return EMPTY;
 					})
 				)
@@ -163,7 +165,7 @@ export class PluginSourceEffects {
 			ofType(PluginSourceActions.restore),
 			tap(() => {
 				this.pluginSourceStore.update({ restoring: true });
-				this.toastrService.info(this.translateService.instant('Restoring...'));
+				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.SOURCE.RESTORING'));
 			}),
 			mergeMap(({ pluginId, versionId, sourceId }) =>
 				this.pluginService.restoreSource(pluginId, versionId, sourceId).pipe(
@@ -175,11 +177,13 @@ export class PluginSourceEffects {
 								source.id === sourceId ? { ...source, deletedAt: null } : source
 							)
 						}));
-						this.toastrService.success(this.translateService.instant('Source restored successfully'));
+						this.toastrService.success(
+							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.SOURCE.RESTORE')
+						);
 					}),
 					catchError((error) => {
 						console.error('Restore failed:', error);
-						this.toastrService.error(this.translateService.instant('An error occurred while restoring'));
+						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.SOURCE.RESTORE'));
 						return EMPTY;
 					}),
 					finalize(() => this.pluginSourceStore.update({ restoring: false }))

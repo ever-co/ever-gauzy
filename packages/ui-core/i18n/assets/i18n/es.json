@@ -4966,6 +4966,18 @@
 					"DESCRIPTION": "¿Estás seguro de que quieres restaurar esta versión?",
 					"CONFIRM": "Restaurar"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "Crear nueva fuente para la versión v{{ number }} del plugin {{ name }}",
+					"DESCRIPTION": "¿Está seguro de que desea crear esta versión?",
+					"CONFIRM": "Crear"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "Instalar plugin",
+				"DESCRIPTION": "¿Está seguro de que desea instalar este plugin?",
+				"CONFIRM": "Instalar"
 			}
 		},
 		"TOASTR": {
@@ -4975,6 +4987,12 @@
 					"UPDATED": "¡Versión del complemento v{{number}} actualizada con éxito!",
 					"DELETED": "¡Versión del complemento eliminada con éxito!",
 					"RESTORED": "¡Versión del complemento restaurada con éxito!"
+				},
+				"SOURCE": {
+					"CREATED": "¡Fuente del plugin creada con éxito!",
+					"UPDATED": "¡Fuente del plugin actualizada con éxito!",
+					"DELETED": "¡Fuente del plugin eliminada con éxito!",
+					"RESTORED": "¡Fuente del plugin restaurada con éxito!"
 				},
 				"UPLOADED": "¡Complemento subido con éxito!",
 				"UPDATED": "¡Complemento actualizado con éxito!",
@@ -4989,6 +5007,12 @@
 					"DELETING": "Eliminando versión del complemento...",
 					"RESTORING": "Restaurando versión del complemento..."
 				},
+				"SOURCE": {
+					"ADDING": "Agregando nueva fuente...",
+					"UPDATING": "Actualizando versión del plugin...",
+					"DELETING": "Eliminando versión del plugin...",
+					"RESTORING": "Restaurando versión del plugin..."
+				},
 				"UPLOADING": "Subiendo complemento...",
 				"UPDATING": "Actualizando complemento...",
 				"DELETING": "Eliminando complemento...",
@@ -4998,6 +5022,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "Error al restaurar la versión del complemento. ¡Por favor, inténtelo de nuevo!"
+				},
+				"SOURCE": {
+					"RESTORE": "Error al restaurar la fuente del plugin. ¡Por favor, inténtelo de nuevo!"
 				},
 				"UPLOAD": "Error al subir el complemento. ¡Por favor, inténtelo de nuevo!",
 				"NOT_FOUND": "Complemento con ID {{ id }} no encontrado.",

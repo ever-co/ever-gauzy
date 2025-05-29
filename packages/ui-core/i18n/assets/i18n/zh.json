@@ -4964,6 +4964,18 @@
 					"DESCRIPTION": "您确定要恢复此版本吗？",
 					"CONFIRM": "恢复"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "为插件 {{ name }} 的版本 v{{ number }} 创建新源",
+					"DESCRIPTION": "您确定要创建此版本吗？",
+					"CONFIRM": "创建"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "安装插件",
+				"DESCRIPTION": "您确定要安装此插件吗？",
+				"CONFIRM": "安装"
 			}
 		},
 		"TOASTR": {
@@ -4973,6 +4985,12 @@
 					"UPDATED": "插件版本 v{{number}} 更新成功！",
 					"DELETED": "插件版本删除成功！",
 					"RESTORED": "插件版本恢复成功！"
+				},
+				"SOURCE": {
+					"CREATED": "插件源创建成功！",
+					"UPDATED": "插件源更新成功！",
+					"DELETED": "插件源删除成功！",
+					"RESTORED": "插件源恢复成功！"
 				},
 				"UPLOADED": "插件上传成功！",
 				"UPDATED": "插件更新成功！",
@@ -4987,6 +5005,12 @@
 					"DELETING": "正在删除插件版本...",
 					"RESTORING": "正在恢复插件版本..."
 				},
+				"SOURCE": {
+					"ADDING": "正在添加新源...",
+					"UPDATING": "正在更新插件版本...",
+					"DELETING": "正在删除插件版本...",
+					"RESTORING": "正在恢复插件版本..."
+				},
 				"UPLOADING": "正在上传插件...",
 				"UPDATING": "正在更新插件...",
 				"DELETING": "正在删除插件...",
@@ -4996,6 +5020,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "恢复插件版本失败。请重试！"
+				},
+				"SOURCE": {
+					"RESTORE": "恢复插件源失败。请再试一次！"
 				},
 				"UPLOAD": "上传插件失败。请重试！",
 				"NOT_FOUND": "未找到ID为 {{ id }} 的插件。",

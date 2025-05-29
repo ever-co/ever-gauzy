@@ -3,7 +3,7 @@
 		<nb-card-header class="mb-0">
 			<div class="header-title">
 				<nb-icon icon="cube-outline" class="header-icon"></nb-icon>
-				<h5 class="title m-0">{{ 'Installation' | translate }}</h5>
+				<h5 class="title m-0">{{ 'PLUGIN.DIALOG.INSTALLATION.TITLE' | translate }}</h5>
 			</div>
 			<button nbButton ghost size="small" (click)="dismiss()" class="close-button">
 				<nb-icon icon="close-outline"></nb-icon>
@@ -18,28 +18,17 @@
 				<gauzy-source-selector [pluginId]="pluginId" [versionId]="versionId$ | async"></gauzy-source-selector>
 			</div>
 			<div *ngIf="showAuthToken" class="form-group">
-				<input
-					nbInput
-					fullWidth
-					type="password"
-					id="authToken"
-					formControlName="authToken"
-					[placeholder]="'TIMER_TRACKER.SETTINGS.AUTH_TOKEN' | translate"
-					[status]="
+				<input nbInput fullWidth type="password" id="authToken" formControlName="authToken"
+					[placeholder]="'TIMER_TRACKER.SETTINGS.AUTH_TOKEN' | translate" [status]="
 						form.controls['authToken'].invalid && form.controls['authToken'].touched ? 'danger' : 'basic'
-					"
-					autocomplete="off"
-					autocorrect="off"
-					autocapitalize="off"
-					spellcheck="false"
-				/>
+					" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
 				<!-- <small class="text-hint"> -->
 				<!-- 	{{ 'TIMER_TRACKER.SETTINGS.AUTH_TOKEN_HELP' | translate }} -->
 				<!-- </small> -->
 				<ng-container *ngIf="form.controls['authToken'].invalid && form.controls['authToken'].touched">
 					<p class="text-danger mt-1 mb-0 small">
 						<nb-icon icon="alert-circle-outline"></nb-icon>
-						{{ 'VALIDATION.REQUIRED' | translate }}
+						{{ 'PLUGIN.DIALOG.INSTALLATION.VALIDATION.REQUIRED' | translate }}
 					</p>
 				</ng-container>
 			</div>

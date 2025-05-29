@@ -1,7 +1,12 @@
 <form [formGroup]="form" (ngSubmit)="submit()">
 	<nb-card class="dialog-card" status="basic">
 		<nb-card-header class="mb-0">
-			<h5 class="title">Create new source for version v{{ version?.number }} of plugin {{ plugin?.name }}</h5>
+			<h5 class="title">
+				{{
+					'PLUGIN.DIALOG.SOURCE.CREATE.TITLE'
+						| translate : { name: plugin?.name, number: plugin?.version?.number }
+				}}
+			</h5>
 			<button nbButton ghost size="small" (click)="dismiss()" class="close-button">
 				<nb-icon icon="close-outline"></nb-icon>
 			</button>
