@@ -48,6 +48,7 @@ import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-
 import { addRelationsToQuery, buildCommonQueryParameters, buildLogQueryParameters } from './timer.helper';
 import { TimerWeeklyLimitService } from './timer-weekly-limit.service';
 import { TaskService } from '../../tasks';
+import { OrganizationProjectService } from '../../organization-project';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -65,8 +66,9 @@ export class TimerService {
 		private readonly _employeeService: EmployeeService,
 		private readonly _timerWeeklyLimitService: TimerWeeklyLimitService,
 		private readonly _commandBus: CommandBus,
-		private readonly _taskService: TaskService
-	) { }
+		private readonly _taskService: TaskService,
+		private readonly _organizationProjectService: OrganizationProjectService
+	) {}
 
 	/**
 	 * Fetches an employee based on the provided query.
@@ -234,6 +236,21 @@ export class TimerService {
 					createdAt: SortOrderEnum.DESC
 				}
 			});
+			const projects = await this._organizationProjectService.findByEmployee(employeeId, {
+				tenantId,
+				organizationId,
+				relations: ['members']
+			});
+			const isAssignedToProject = projects.some((project) => project.id === lastLog.projectId);
+			if (!isAssignedToProject) {
+				await this.stopTimer({
+					tenantId,
+					organizationId,
+					startedAt: lastLog.startedAt,
+					stoppedAt: now.toDate()
+				});
+				throw new ForbiddenException(TimeErrorsEnum.INVALID_PROJECT_PERMISSIONS);
+			}
 			if (tasks.length === 0) {
 				// If the employee is not assigned to the project/task of the running timer, stop the timer
 				await this.stopTimer({
@@ -366,23 +383,38 @@ export class TimerService {
 		// Get the employee ID
 		const { id: employeeId, organizationId } = employee;
 
-		// Ensure that the tasks match with the given project and its associated to the current employee
-		const tasks = await this._taskService.getAllTasksByEmployee(employeeId, {
-			where: {
-				id: taskId,
-				projectId,
-				organizationId,
-				tenantId
-			},
-			take: 1,
-			skip: 0,
-			withDeleted: false,
-			order: {
-				createdAt: SortOrderEnum.DESC
+		// ✅ Validate assigned task
+		if (taskId && projectId) {
+			const tasks = await this._taskService.getAllTasksByEmployee(employeeId, {
+				where: {
+					id: taskId,
+					projectId,
+					organizationId,
+					tenantId
+				},
+				take: 1,
+				skip: 0,
+				withDeleted: false,
+				order: {
+					createdAt: SortOrderEnum.DESC
+				}
+			});
+			if (tasks.length === 0) {
+				throw new ForbiddenException(TimeErrorsEnum.INVALID_TASK_PERMISSIONS);
 			}
-		});
-		if (tasks.length === 0) {
-			throw new ForbiddenException(TimeErrorsEnum.INVALID_TASK_PERMISSIONS);
+		}
+
+		// ✅ Validate assigned project
+		if (projectId) {
+			const projects = await this._organizationProjectService.findByEmployee(employeeId, {
+				tenantId,
+				organizationId,
+				relations: ['members']
+			});
+			const isAssignedToProject = projects.some((project) => project.id === projectId);
+			if (!isAssignedToProject) {
+				throw new ForbiddenException(TimeErrorsEnum.INVALID_PROJECT_PERMISSIONS);
+			}
 		}
 
 		// Stop any previous running timers
@@ -733,15 +765,15 @@ export class TimerService {
 		// Determine whether to fetch a single log or multiple logs
 		return fetchAll
 			? await this.typeOrmTimeLogRepository.find({
-				where: whereClause,
-				order: { startedAt: SortOrderEnum.DESC, createdAt: SortOrderEnum.DESC }
-			})
+					where: whereClause,
+					order: { startedAt: SortOrderEnum.DESC, createdAt: SortOrderEnum.DESC }
+			  })
 			: await this.typeOrmTimeLogRepository.findOne({
-				where: whereClause,
-				order: { startedAt: SortOrderEnum.DESC, createdAt: SortOrderEnum.DESC },
-				// Determine relations if includeTimeSlots is true
-				...(includeTimeSlots && { relations: { timeSlots: true } })
-			});
+					where: whereClause,
+					order: { startedAt: SortOrderEnum.DESC, createdAt: SortOrderEnum.DESC },
+					// Determine relations if includeTimeSlots is true
+					...(includeTimeSlots && { relations: { timeSlots: true } })
+			  });
 	}
 
 	/**

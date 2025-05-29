@@ -90,14 +90,14 @@ export interface IOrganizationProjectsFindInput
 
 export interface IOrganizationProjectCreateInput extends IOrganizationProjectBase, IMemberEntityBased {}
 
-export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput {}
+export type IOrganizationProjectUpdateInput = IOrganizationProjectCreateInput;
 
 export interface IOrganizationProjectStoreState {
 	project: IOrganizationProject;
 	action: CrudActionEnum;
 }
 
-export interface IOrganizationProjectEmployeeFindInput extends Partial<IOrganizationProjectEmployee> {}
+export type IOrganizationProjectEmployeeFindInput = Partial<IOrganizationProjectEmployee>;
 
 export interface IOrganizationProjectEmployee
 	extends IBasePerTenantAndOrganizationEntityModel,

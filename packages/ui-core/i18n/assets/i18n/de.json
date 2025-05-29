@@ -4167,6 +4167,7 @@
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Wochenlimit überschritten",
 		"PROJECT_TASK_PERMISSION_ERROR": "Timer wurde gestoppt, da Sie keine Berechtigung haben, auf dieses Projekt/diese Aufgabe zuzugreifen",
+		"PROJECT_PROJECT_PERMISSION_ERROR": "Der Timer wurde gestoppt, da Sie keine Berechtigung für dieses Projekt haben",
 		"OF_HRS": "Von {{ limit }} Std.",
 		"TIME_TRACKER_DISABLED": "Zeiterfassung wurde deaktiviert",
 		"STOP_TIMER_CHANGE_CLIENT": "Bitte stoppen Sie den Timer, bevor Sie den Kunden wechseln",

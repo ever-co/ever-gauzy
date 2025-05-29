@@ -3665,6 +3665,8 @@
 		"TIMER": "crwdns3230:0crwdne3230:0",
 		"MANUAL": "crwdns3232:0crwdne3232:0",
 		"MANUAL_NOT_ALLOW": "crwdns3552:0crwdne3552:0",
+		"PROJECT_TASK_PERMISSION_ERROR": "crwdnsXXXXX:0crwdneXXXXX:0",
+		"PROJECT_PROJECT_PERMISSION_ERROR": "crwdnsXXXXX:0crwdneXXXXX:0",
 		"SELECT_PROJECT": "crwdns3234:0crwdne3234:0",
 		"SELECT_TASK": "crwdns3236:0crwdne3236:0",
 		"SELECT_CLIENT": "crwdns7554:0crwdne7554:0",

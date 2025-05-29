@@ -4163,6 +4163,7 @@
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Превышен недельный лимит",
 		"PROJECT_TASK_PERMISSION_ERROR": "Таймер остановлен, так как у вас нет разрешения на доступ к этому проекту/задаче",
+		"PROJECT_PROJECT_PERMISSION_ERROR": "Таймер остановлен, так как у вас нет доступа к этому проекту",
 		"OF_HRS": "Из {{ limit }} ч",
 		"TIME_TRACKER_DISABLED": "Трекер времени был отключен",
 		"STOP_TIMER_CHANGE_CLIENT": "Пожалуйста, остановите таймер перед сменой клиента",

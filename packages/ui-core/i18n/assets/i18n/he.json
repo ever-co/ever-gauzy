@@ -4161,6 +4161,7 @@
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "חרגת מהמגבלה השבועית",
 		"PROJECT_TASK_PERMISSION_ERROR": "הטיימר נעצר מכיוון שאין לך הרשאה לגשת לפרויקט/משימה זו",
+		"PROJECT_PROJECT_PERMISSION_ERROR": "הטיימר נעצר כי אין לך הרשאה לגשת לפרויקט הזה",
 		"OF_HRS": "מתוך {{ limit }} שעות",
 		"TIME_TRACKER_DISABLED": "מעקב זמן הושבת",
 		"STOP_TIMER_CHANGE_CLIENT": "אנא עצור את הטיימר לפני שינוי לקוח",

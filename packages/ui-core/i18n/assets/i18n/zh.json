@@ -4170,6 +4170,7 @@
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "已超出每周上限",
 		"PROJECT_TASK_PERMISSION_ERROR": "由于您没有访问此项目/任务的权限，计时器已停止",
+		"PROJECT_PROJECT_PERMISSION_ERROR": "计时器已停止，因为您没有访问该项目的权限",
 		"OF_HRS": "共{{ limit }}小时",
 		"TIME_TRACKER_DISABLED": "计时器已禁用",
 		"STOP_TIMER_CHANGE_CLIENT": "请在更改客户前停止计时器",

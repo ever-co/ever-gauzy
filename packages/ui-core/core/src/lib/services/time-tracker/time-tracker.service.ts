@@ -199,7 +199,11 @@ export class TimeTrackerService implements OnDestroy {
 				return status;
 			})
 			.catch((error) => {
-				if (error.status == 403 && error.error?.message === TimeErrorsEnum.INVALID_TASK_PERMISSIONS) {
+				if (
+					error.status == 403 &&
+					(error.error?.message === TimeErrorsEnum.INVALID_TASK_PERMISSIONS ||
+						error.error?.message === TimeErrorsEnum.INVALID_PROJECT_PERMISSIONS)
+				) {
 					this.turnOffTimer();
 				} else {
 					console.error(error);

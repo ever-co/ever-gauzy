@@ -234,8 +234,7 @@
 			"PRODUCT_TYPE_NO_DATA": "Nie utworzyłeś żadnego typu produktu",
 			"TEAM_DASHBOARD": "Nie masz żadnych zespołów",
 			"PLUGIN": "Nie zainstalowano żadnych wtyczek.",
-			"PLUGIN_MARKETPLACE": "Ta wtyczka nie jest dostępna na rynku",
-			"LOADING": "Ładuje..."
+			"PLUGIN_MARKETPLACE": "Ta wtyczka nie jest dostępna na rynku"
 		},
 		"TRANSACTION_TYPE": "Typ",
 		"AMOUNT": "Kwota",
@@ -4167,6 +4166,7 @@
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Przekroczono tygodniowy limit",
 		"PROJECT_TASK_PERMISSION_ERROR": "Timer został zatrzymany, ponieważ nie masz uprawnień dostępu do tego projektu/zadania",
+		"PROJECT_PROJECT_PERMISSION_ERROR": "Timer został zatrzymany, ponieważ nie masz uprawnień do tego projektu",
 		"OF_HRS": "Z {{ limit }} godz.",
 		"TIME_TRACKER_DISABLED": "Śledzenie czasu zostało wyłączone",
 		"STOP_TIMER_CHANGE_CLIENT": "Zatrzymaj timer przed zmianą klienta",

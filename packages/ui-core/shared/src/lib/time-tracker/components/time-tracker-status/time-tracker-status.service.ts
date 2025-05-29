@@ -39,14 +39,17 @@ export class TimeTrackerStatusService {
 				switchMap((isEmployeeLoggedIn: boolean) =>
 					isEmployeeLoggedIn
 						? from(this.status()).pipe(
-							catchError((error) => {
-								if (error.error?.message === TimeErrorsEnum.INVALID_TASK_PERMISSIONS) {
-									this.toastrService.danger('TIMER_TRACKER.PROJECT_TASK_PERMISSION_ERROR');
-								}
-								return EMPTY
-							}),
-							untilDestroyed(this)
-						)
+								catchError((error) => {
+									if (error.error?.message === TimeErrorsEnum.INVALID_TASK_PERMISSIONS) {
+										this.toastrService.danger('TIMER_TRACKER.PROJECT_TASK_PERMISSION_ERROR');
+									}
+									if (error.error?.message === TimeErrorsEnum.INVALID_PROJECT_PERMISSIONS) {
+										this.toastrService.danger('TIMER_TRACKER.PROJECT_PROJECT_PERMISSION_ERROR');
+									}
+									return EMPTY;
+								}),
+								untilDestroyed(this)
+						  )
 						: EMPTY
 				),
 				untilDestroyed(this)

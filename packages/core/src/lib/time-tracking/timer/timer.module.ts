@@ -10,10 +10,12 @@ import { TimerWeeklyLimitService } from './timer-weekly-limit.service';
 import { TaskModule } from '../../tasks';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
+import { OrganizationProjectModule } from '../../organization-project/organization-project.module';
 
 @Module({
 	imports: [
 		RolePermissionModule,
+		OrganizationProjectModule,
 		EmployeeModule,
 		forwardRef(() => TimeLogModule),
 		forwardRef(() => StatisticModule),

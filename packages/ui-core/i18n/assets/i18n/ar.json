@@ -4162,6 +4162,7 @@
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "تم تجاوز الحد الأسبوعي",
 		"PROJECT_TASK_PERMISSION_ERROR": "تم إيقاف المؤقت لأنه ليس لديك إذن للوصول إلى هذا المشروع/المهمة",
+		"PROJECT_PROJECT_PERMISSION_ERROR": "تم إيقاف المؤقت لأنك لا تملك إذنًا للوصول إلى هذا المشروع",
 		"OF_HRS": "من {{ limit }} ساعة",
 		"TIME_TRACKER_DISABLED": "تم تعطيل متتبع الوقت",
 		"STOP_TIMER_CHANGE_CLIENT": "يرجى إيقاف المؤقت قبل تغيير العميل",

@@ -4063,6 +4063,7 @@
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "La limite hebdomadaire est dépassée.",
 		"PROJECT_TASK_PERMISSION_ERROR": "Le minuteur s'est arrêté car vous n'avez pas la permission d'accéder à ce projet/tâche",
+		"PROJECT_PROJECT_PERMISSION_ERROR": "Le minuteur a été arrêté car vous n'avez pas l'autorisation d'accéder à ce projet",
 		"OF_HRS": "De {{ limit }} heures",
 		"TIME_TRACKER_DISABLED": "Le suivi du temps a été désactivé.",
 		"STOP_TIMER_CHANGE_CLIENT": "Veuillez arrêter le chronomètre avant de changer de client.",
