@@ -175,7 +175,8 @@
 		"ADD_VERSION": "Añadir Versión",
 		"READ_MORE": "Leer más",
 		"READ_LESS": "Leer menos",
-		"RECOVER": "Recuperar"
+		"RECOVER": "Recuperar",
+		"ADD_MORE_SOURCES": "Añadir más fuentes"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4906,7 +4907,10 @@
 			"OR": "O",
 			"RELEASE_DATE": "Fecha de lanzamiento",
 			"CHANGELOG": "Changelog",
-			"CHANGELOG_PLACEHOLDER": "Ingrese el changelog"
+			"CHANGELOG_PLACEHOLDER": "Ingrese el changelog",
+			"CLICK_TO_SELECT_SOURCE": "Haz clic para seleccionar fuente",
+			"SELECT_SOURCE_TYPE": "Seleccionar tipo de fuente",
+			"ADD_SOURCE": "Agregar nueva fuente"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Estadísticas de uso",

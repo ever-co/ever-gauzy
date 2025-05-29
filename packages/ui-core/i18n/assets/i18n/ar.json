@@ -175,7 +175,8 @@
 		"ADD_VERSION": "اضافة نسخة",
 		"READ_MORE": "قراءة المزيد",
 		"READ_LESS": "قراءة أقل",
-		"RECOVER": "استعادة"
+		"RECOVER": "استعادة",
+		"ADD_MORE_SOURCES": "إضافة مصدر آخر"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4889,7 +4890,10 @@
 			"OR": "أو",
 			"RELEASE_DATE": "تاريخ الاصدار",
 			"CHANGELOG": "تغييرات",
-			"CHANGELOG_PLACEHOLDER": "ادخل التغييرات"
+			"CHANGELOG_PLACEHOLDER": "ادخل التغييرات",
+			"CLICK_TO_SELECT_SOURCE": "انقر لتحديد المصدر",
+			"SELECT_SOURCE_TYPE": "اختر نوع المصدر",
+			"ADD_SOURCE": "إضافة مصدر جديد"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "إحصائيات الاستخدام",
@@ -4999,6 +5003,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "فشل في استعادة إصدار الملحق. يرجى المحاولة مرة أخرى!"
+				},
+				"SOURCE": {
+					"RESTORE": "فشل في استعادة مصدر المكون الإضافي. يرجى المحاولة مرة أخرى!"
 				},
 				"UPLOAD": "فشل في رفع الملحق. يرجى المحاولة مرة أخرى!",
 				"NOT_FOUND": "الملحق بالمعرف {{ id }} غير موجود.",

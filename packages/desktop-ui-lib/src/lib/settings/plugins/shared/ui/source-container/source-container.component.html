@@ -14,40 +14,20 @@
 				</div>
 				<div class="header-actions">
 					@if(!!source?.value?.deletedAt && cantAddMore) {
-					<button
-						nbButton
-						ghost
-						status="warning"
-						size="small"
-						(click)="restore.emit(idx); $event.stopPropagation()"
-						class="restore-btn"
-						[nbTooltip]="'Restore source' | translate"
-						nbTooltipPlacement="top"
-					>
+					<button nbButton ghost status="warning" size="small"
+						(click)="restore.emit(idx); $event.stopPropagation()" class="restore-btn"
+						[nbTooltip]="'BUTTONS.RESTORE' | translate" nbTooltipPlacement="top">
 						<nb-icon icon="refresh-outline"></nb-icon>
 					</button>
 					}
-					<button
-						nbButton
-						ghost
-						status="danger"
-						size="small"
-						(click)="remove.emit(idx); $event.stopPropagation()"
-						class="delete-btn"
-						[nbTooltip]="'Delete source' | translate"
-						nbTooltipPlacement="top"
-					>
+					<button nbButton ghost status="danger" size="small"
+						(click)="remove.emit(idx); $event.stopPropagation()" class="delete-btn"
+						[nbTooltip]="'BUTTONS.DELETE' | translate" nbTooltipPlacement="top">
 						<nb-icon icon="trash-2-outline"></nb-icon>
 					</button>
 				</div>
 			</div>
 			<lib-plugin-source class="grow" [form]="source"></lib-plugin-source>
-		</div>
-		} @empty {
-		<div class="empty-state">
-			<nb-icon icon="file-add-outline" class="empty-icon"></nb-icon>
-			<h5>{{ 'No Source' | translate }}</h5>
-			<p>{{ 'Add First Source' | translate }}</p>
 		</div>
 		}
 	</div>
@@ -57,13 +37,13 @@
 		<div class="add-source-card" (click)="openSourceTypeSelector(); $event.stopPropagation()">
 			<div class="add-content">
 				<nb-icon icon="plus-circle-outline" class="add-icon"></nb-icon>
-				<h5>{{ 'Add New Source' | translate }}</h5>
-				<p>{{ 'Click to select source' | translate }}</p>
+				<h5>{{ 'PLUGIN.FORM.ADD_SOURCE' | translate }}</h5>
+				<p>{{ 'PLUGIN.FORM.CLICK_TO_SELECT_SOURCE' | translate }}</p>
 			</div>
 
 			<div class="source-selector" *ngIf="showSourceSelector">
 				<div class="selector-header">
-					<h5>Select Source Type</h5>
+					<h5>{{ 'PLUGIN.FORM.SELECT_SOURCE_TYPE' | translate }}</h5>
 					<button nbButton ghost size="small" (click)="closeSourceTypeSelector(); $event.stopPropagation()">
 						<nb-icon icon="close-outline"></nb-icon>
 					</button>

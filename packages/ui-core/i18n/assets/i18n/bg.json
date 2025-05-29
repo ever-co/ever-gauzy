@@ -184,7 +184,8 @@
 		"MARKETPLACE": "Маркетплейс",
 		"READ_MORE": "Прочети още",
 		"READ_LESS": "Прочети по-малко",
-		"RECOVER": "Възстанови"
+		"RECOVER": "Възстанови",
+		"ADD_MORE_SOURCES": "Добавяне на повече източници"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4930,7 +4931,10 @@
 			"OR": "Или",
 			"RELEASE_DATE": "Дата на издаване",
 			"CHANGELOG": "Промени",
-			"CHANGELOG_PLACEHOLDER": "Въведете промени"
+			"CHANGELOG_PLACEHOLDER": "Въведете промени",
+			"CLICK_TO_SELECT_SOURCE": "Щракнете, за да изберете източник",
+			"SELECT_SOURCE_TYPE": "Изберете тип източник",
+			"ADD_SOURCE": "Добавяне на нов източник"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Статистика на използване",

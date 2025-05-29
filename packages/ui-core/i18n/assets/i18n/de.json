@@ -175,7 +175,8 @@
 		"MARKETPLACE": "Marktplatz",
 		"READ_MORE": "Mehr lesen",
 		"READ_LESS": "Weniger lesen",
-		"RECOVER": "Wiederherstellen"
+		"RECOVER": "Wiederherstellen",
+		"ADD_MORE_SOURCES": "Weitere Quellen hinzufügen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4900,7 +4901,10 @@
 			"OR": "Oder",
 			"RELEASE_DATE": "Erscheinungsdatum",
 			"CHANGELOG": "Änderungsprotokoll",
-			"CHANGELOG_PLACEHOLDER": "Geben Sie den Änderungsprotokoll ein"
+			"CHANGELOG_PLACEHOLDER": "Geben Sie den Änderungsprotokoll ein",
+			"CLICK_TO_SELECT_SOURCE": "Klicken, um Quelle auszuwählen",
+			"SELECT_SOURCE_TYPE": "Quellentyp auswählen",
+			"ADD_SOURCE": "Neue Quelle hinzufügen"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Nutzungsstatistiken",

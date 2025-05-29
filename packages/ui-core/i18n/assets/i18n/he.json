@@ -174,7 +174,8 @@
 		"ADD_VERSION": "הוסף גרסה",
 		"READ_MORE": "קרא עוד",
 		"READ_LESS": "קרא פחות",
-		"RECOVER": "שחזר"
+		"RECOVER": "שחזר",
+		"ADD_MORE_SOURCES": "הוסף יותר מקורות"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4893,7 +4894,10 @@
 			"OR": "או",
 			"RELEASE_DATE": "תאריך הרישיון",
 			"CHANGELOG": "יומן השינויים",
-			"CHANGELOG_PLACEHOLDER": "הזן יומן השינויים"
+			"CHANGELOG_PLACEHOLDER": "הזן יומן השינויים",
+			"CLICK_TO_SELECT_SOURCE": "לחץ כדי לבחור מקור",
+			"SELECT_SOURCE_TYPE": "בחר סוג מקור",
+			"ADD_SOURCE": "הוסף מקור חדש"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "סטטיסטיקות שימוש",

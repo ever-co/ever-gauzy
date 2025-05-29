@@ -174,7 +174,8 @@
 		"ADD_VERSION": "Добавить версию",
 		"READ_MORE": "Читать далее",
 		"READ_LESS": "Свернуть",
-		"RECOVER": "Восстановить"
+		"RECOVER": "Восстановить",
+		"ADD_MORE_SOURCES": "Добавить больше источников"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4900,7 +4901,10 @@
 			"OR": "Или",
 			"RELEASE_DATE": "Дата релиза",
 			"CHANGELOG": "Журнал изменений",
-			"CHANGELOG_PLACEHOLDER": "Введите журнал изменений"
+			"CHANGELOG_PLACEHOLDER": "Введите журнал изменений",
+			"CLICK_TO_SELECT_SOURCE": "Нажмите, чтобы выбрать источник",
+			"SELECT_SOURCE_TYPE": "Выберите тип источника",
+			"ADD_SOURCE": "Добавить новый источник"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Статистика использования",

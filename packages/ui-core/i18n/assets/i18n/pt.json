@@ -175,7 +175,8 @@
 		"ADD_VERSION": "Adicionar versão",
 		"READ_MORE": "Ler mais",
 		"READ_LESS": "Ler menos",
-		"RECOVER": "Recuperar"
+		"RECOVER": "Recuperar",
+		"ADD_MORE_SOURCES": "Adicionar mais fontes"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4904,7 +4905,10 @@
 			"OR": "Ou",
 			"RELEASE_DATE": "Data de lançamento",
 			"CHANGELOG": "Historico de alterações",
-			"CHANGELOG_PLACEHOLDER": "Digite o histórico de alterações"
+			"CHANGELOG_PLACEHOLDER": "Digite o histórico de alterações",
+			"CLICK_TO_SELECT_SOURCE": "Clique para selecionar a fonte",
+			"SELECT_SOURCE_TYPE": "Selecione o tipo de fonte",
+			"ADD_SOURCE": "Adicionar nova fonte"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Estatísticas de uso",

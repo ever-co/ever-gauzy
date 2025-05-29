@@ -175,7 +175,8 @@
 		"ADD_VERSION": "Versie toevoegen",
 		"READ_MORE": "Meer lezen",
 		"READ_LESS": "Minder lezen",
-		"RECOVER": "Herstellen"
+		"RECOVER": "Herstellen",
+		"ADD_MORE_SOURCES": "Meer bronnen toevoegen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4846,7 +4847,10 @@
 				"LICENSE_TOO_LONG": "Licentieveld is te lang",
 				"FAILED": "Validatie mislukt",
 				"CHANGELOG_TOO_SHORT": "Changelog is te kort",
-				"CHANGELOG_REQUIRED": "Changelog is vereist"
+				"CHANGELOG_REQUIRED": "Changelog is vereist",
+				"CLICK_TO_SELECT_SOURCE": "Klik om bron te selecteren",
+				"SELECT_SOURCE_TYPE": "Selecteer brontype",
+				"ADD_SOURCE": "Nieuwe bron toevoegen"
 			},
 			"TYPE": "Plugintype",
 			"TYPE_PLACEHOLDER": "Selecteer plugintype",

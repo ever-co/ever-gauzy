@@ -184,7 +184,8 @@
 		"MARKETPLACE": "Marketplace",
 		"READ_MORE": "Read More",
 		"READ_LESS": "Read Less",
-		"RECOVER": "Recover"
+		"RECOVER": "Recover",
+		"ADD_MORE_SOURCES": "Add More Sources"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -5056,7 +5057,10 @@
 			"OR": "Or",
 			"RELEASE_DATE": "Release Date",
 			"CHANGELOG": "Changelog",
-			"CHANGELOG_PLACEHOLDER": "Enter changelog"
+			"CHANGELOG_PLACEHOLDER": "Enter changelog",
+			"CLICK_TO_SELECT_SOURCE": "Click to select source",
+			"SELECT_SOURCE_TYPE": "Select source type",
+			"ADD_SOURCE": "Add new source"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Usage Statistics",

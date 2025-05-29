@@ -175,7 +175,8 @@
 		"ADD_VERSION": "Ajouter une version",
 		"READ_MORE": "Lire plus",
 		"READ_LESS": "Lire moins",
-		"RECOVER": "Récupérer"
+		"RECOVER": "Récupérer",
+		"ADD_MORE_SOURCES": "Ajouter plus de sources"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4895,7 +4896,9 @@
 			"OR": "Ou",
 			"RELEASE_DATE": "Date de sortie",
 			"CHANGELOG": "Journal des modifications",
-			"CHANGELOG_PLACEHOLDER": "Entrez les modifications"
+			"CHANGELOG_PLACEHOLDER": "Entrez les modifications",
+			"CLICK_TO_SELECT_SOURCE": "Cliquez pour sélectionner une source",
+			"SELECT_SOURCE_TYPE": "Sélectionner le type de source"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Statistiques d'utilisation",

@@ -175,7 +175,8 @@
 		"ADD_VERSION": "Dodaj wersje",
 		"READ_MORE": "Czytaj więcej",
 		"READ_LESS": "Czytaj mniej",
-		"RECOVER": "Przywróć"
+		"RECOVER": "Przywróć",
+		"ADD_MORE_SOURCES": "Dodaj więcej źródeł"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4903,7 +4904,10 @@
 			"OR": "Lub",
 			"RELEASE_DATE": "Data wydania",
 			"CHANGELOG": "Przepraszam",
-			"CHANGELOG_PLACEHOLDER": "Wprowadź przepraszam"
+			"CHANGELOG_PLACEHOLDER": "Wprowadź przepraszam",
+			"CLICK_TO_SELECT_SOURCE": "Kliknij, aby wybrać źródło",
+			"SELECT_SOURCE_TYPE": "Wybierz typ źródła",
+			"ADD_SOURCE": "Dodaj nowe źródło"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Statystyki użytkowania",
