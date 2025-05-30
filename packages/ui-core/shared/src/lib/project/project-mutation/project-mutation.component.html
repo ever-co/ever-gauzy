@@ -56,7 +56,9 @@
 						<div class="project-form-container">
 							<div class="row">
 								<div class="form-group col-6">
-									<label for="name" class="label">{{ 'FORM.PLACEHOLDERS.NAME' | translate }}</label>
+									<label for="name" class="label required-asterisk">{{
+										'FORM.PLACEHOLDERS.NAME' | translate
+									}}</label>
 									<input
 										type="text"
 										#name
@@ -117,7 +119,9 @@
 							</div>
 							<div class="row">
 								<div class="form-group col-6">
-									<label for="owner" class="label">{{ 'FORM.PLACEHOLDERS.OWNER' | translate }}</label>
+									<label for="owner" class="label required-asterisk">{{
+										'FORM.PLACEHOLDERS.OWNER' | translate
+									}}</label>
 									<nb-select
 										fullWidth
 										placeholder="{{ 'FORM.PLACEHOLDERS.OWNER' | translate }}"
@@ -137,7 +141,11 @@
 									</p>
 								</div>
 								<div class="form-group col-6">
-									<label for="organizationContacts" class="label">
+									<label
+										for="organizationContacts"
+										class="label"
+										[ngClass]="projectOrganizationContact.invalid ? 'required-asterisk' : ''"
+									>
 										{{ 'FORM.LABELS.CLIENTS' | translate }}
 									</label>
 									<ng-select
@@ -158,6 +166,7 @@
 							<div class="row">
 								<div class="form-group col-6">
 									<ga-employee-multi-select
+										customClass="required-asterisk"
 										formControlName="memberIds"
 										[selectedEmployeeIds]="selectedEmployeeIds"
 										(selectedChange)="onMembersSelected($event)"

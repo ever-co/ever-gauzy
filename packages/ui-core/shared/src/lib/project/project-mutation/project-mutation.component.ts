@@ -207,6 +207,18 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		this.form
+			.get('owner')
+			.valueChanges.pipe(untilDestroyed(this))
+			.subscribe((owner: ProjectOwnerEnum) => {
+				const organizationContactControl = this.form.get('organizationContact');
+
+				organizationContactControl.setValidators(
+					owner === ProjectOwnerEnum.CLIENT ? [Validators.required] : null
+				);
+				organizationContactControl.updateValueAndValidity({ emitEvent: false });
+			});
 	}
 
 	/**
@@ -292,14 +304,11 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 
 	changeProjectOwner(owner: ProjectOwnerEnum) {
 		const clientControl = this.form.get('client');
-		const organizationContactControl = this.form.get('organizationContact');
-		organizationContactControl.setValidators(owner === ProjectOwnerEnum.CLIENT ? [Validators.required] : null);
 
 		if (owner === ProjectOwnerEnum.INTERNAL && clientControl) {
 			clientControl.setValue('');
 		}
 
-		organizationContactControl.updateValueAndValidity();
 		clientControl?.updateValueAndValidity();
 	}
 
