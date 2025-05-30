@@ -9,7 +9,7 @@ import { BasePluginFormComponent } from '../../../base-plugin-form/base-plugin-f
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GauzyFormComponent extends BasePluginFormComponent {
-	public onFileSelected(file: File): void {
+	public onFileSelected(file: File | null): void {
 		this.form.patchValue({
 			file
 		});
