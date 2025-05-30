@@ -1,7 +1,7 @@
 import { PluginOSArch, PluginOSType, PluginSourceType } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsNotEmptyObject } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsNotEmptyObject } from 'class-validator';
 import { PluginSourceDTO } from './plugin-source.dto';
 
 export class CreatePluginSourceDTO {
@@ -29,6 +29,12 @@ export class CreatePluginSourceDTO {
 	})
 	@IsArray({
 		message: 'Sources must be provided as an array'
+	})
+	@ArrayMinSize(1, {
+		message: 'At least one source must be provided'
+	})
+	@ArrayMaxSize(4, {
+		message: 'At most four sources can be provided'
 	})
 	@IsNotEmptyObject(
 		{ nullable: false },
