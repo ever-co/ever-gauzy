@@ -118,7 +118,7 @@ export class PluginSecurityService {
 			}
 
 			if (!version.record.sources.length) {
-				throw new NotFoundException(`Plugin source not found for plugin ID ${version.record.plugin.id}.`);
+				throw new NotFoundException(`Plugin sources not found for plugin ID ${version.record.plugin.id}.`);
 			}
 
 			const plugin = version.record.plugin;
