@@ -79,7 +79,7 @@ class ElectronPluginListener {
 
 			return {
 				platform: platformMap[platform] || PluginOSType.UNIVERSAL,
-				arch: archMap[arch] || arch
+				arch: archMap[arch] || PluginOSArch.X64
 			};
 		});
 
