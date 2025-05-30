@@ -12,7 +12,6 @@ import { ID } from '@gauzy/contracts';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginVersionComponent extends BasePluginFormComponent {
-	@Input() form: FormGroup;
 	@Input() isEdit = false;
 	@Input() pluginId: ID;
 
