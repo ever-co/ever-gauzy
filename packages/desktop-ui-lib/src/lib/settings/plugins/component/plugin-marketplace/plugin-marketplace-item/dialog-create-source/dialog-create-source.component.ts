@@ -21,19 +21,19 @@ import { SourceContext } from '../../plugin-marketplace-upload/plugin-source/cre
 })
 export class DialogCreateSourceComponent implements OnInit {
 	/** The plugin for which the source is being created */
-	public readonly plugin!: IPlugin;
+	public readonly plugin: IPlugin;
 	/** Available source types for the plugin */
 	public readonly sourceTypes = Object.values(PluginSourceType);
 	/** The version of the plugin for which the source is being created */
-	public version!: IPluginVersion;
+	public version: IPluginVersion;
 	/** Form group for managing the source creation */
-	public form!: FormGroup;
+	public form: FormGroup;
 
 	constructor(
 		private readonly dialogRef: NbDialogRef<DialogCreateSourceComponent>,
 		private readonly versionQuery: PluginVersionQuery,
 		private readonly sourceContext: SourceContext
-	) { }
+	) {}
 
 	/**
 	 * Initializes the component and sets up the form
@@ -47,8 +47,9 @@ export class DialogCreateSourceComponent implements OnInit {
 		this.versionQuery.version$
 			.pipe(
 				tap((version) => {
+					if (!version) return;
 					this.version = version;
-					this.form.patchValue({ versionId: version.id });
+					this.form?.patchValue({ versionId: version.id });
 				}),
 				untilDestroyed(this)
 			)
@@ -60,8 +61,8 @@ export class DialogCreateSourceComponent implements OnInit {
 	 */
 	private initializeForm(): void {
 		this.form = new FormGroup({
-			pluginId: new FormControl(this.plugin.id, Validators.required),
-			versionId: new FormControl(this.version.id, Validators.required),
+			pluginId: new FormControl(this.plugin?.id || null, Validators.required),
+			versionId: new FormControl(this.version?.id || null, Validators.required),
 			sources: new FormArray([this.sourceContext.getCreator(PluginSourceType.CDN).createSource()])
 		});
 	}
