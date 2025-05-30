@@ -140,7 +140,7 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 	@MultiORMColumn({ nullable: true })
 	fileKey?: string;
 
-	@ApiProperty({ type: () => [PluginVersion], description: 'Version' })
+	@ApiProperty({ type: () => PluginVersion, description: 'Associated plugin version' })
 	@MultiORMManyToOne(() => PluginVersion, (version) => version.sources, { onDelete: 'SET NULL' })
 	@JoinColumn()
 	version: IPluginVersion;
@@ -158,6 +158,7 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: FileStorageProviderEnum })
 	storageProvider?: FileStorageProviderEnum;
 
-	// Computed version
+	// Computed property populated by PluginSourceSubscriber
+	// Format varies by source type (e.g., "npm:package-name", "cdn:url", etc.)
 	fullName?: string;
 }
