@@ -35,7 +35,6 @@ export function LazyAnyFileInterceptor(localOptions?: MulterOptions): Type<NestI
 				multerHandler(ctx.getRequest(), ctx.getResponse(), (err: any) => {
 					if (err) {
 						const error = transformException(err);
-						console.log('Error while uploading file using multer', err);
 						return reject(error);
 					}
 					resolve();
