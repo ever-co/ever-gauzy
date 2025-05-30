@@ -41,7 +41,7 @@
 		"moment": "^2.30.1",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.22"
+		"typeorm": "^0.3.24"
 	},
 	"devDependencies": {
 		"@types/express": "^5.0.1",

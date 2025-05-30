@@ -44,7 +44,7 @@
 		"class-validator": "^0.14.2",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.22",
+		"typeorm": "^0.3.24",
 		"zapier-platform-core": "16.5.0"
 	},
 	"devDependencies": {

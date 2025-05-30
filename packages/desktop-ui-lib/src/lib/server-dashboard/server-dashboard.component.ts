@@ -82,7 +82,6 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 			}
 			this._cdr.detectChanges();
 			this.scrollToBottom();
-			console.log(arg);
 		});
 
 		this.electronService.ipcRenderer.on('resp_msg', (event, arg) => {
@@ -160,5 +159,9 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 
 	public get isServerApi(): boolean {
 		return this._environment.IS_SERVER_API;
+	}
+
+	public get isAgent(): boolean {
+		return this._environment.IS_AGENT;
 	}
 }

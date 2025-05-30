@@ -20,10 +20,15 @@ import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-u
 export async function createServerWindow(
 	serverWindow: Electron.BrowserWindow | null,
 	filePath: string,
-	preloadPath?: string
+	preloadPath?: string,
+	contextIsolation?: boolean
 ): Promise<Electron.BrowserWindow> {
 	// Retrieve the window settings using the optional preload script
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting(preloadPath);
+	if (contextIsolation) {
+		mainWindowSettings.webPreferences.contextIsolation = true;
+		mainWindowSettings.webPreferences.nodeIntegration = false;
+	}
 
 	// Get the WindowManager instance for managing windows
 	const manager = WindowManager.getInstance();

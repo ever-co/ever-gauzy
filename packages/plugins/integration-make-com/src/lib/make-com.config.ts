@@ -23,5 +23,7 @@ export const MAKE_REDIRECT_URL = process.env.GAUZY_MAKE_REDIRECT_URL ??
         'http://localhost:3000/api/integration/make-com/oauth/callback'
     );
 
-/** Default scopes for Make.com OAuth */
-export const MAKE_DEFAULT_SCOPES = process.env.GAUZY_MAKE_DEFAULT_SCOPES ?? 'offline_access openid';
+/** Default scopes for Make.com OAuth - Updated to match Make.com documentation */
+export const MAKE_DEFAULT_SCOPES = process.env.GAUZY_MAKE_DEFAULT_SCOPES
+    ? process.env.GAUZY_MAKE_DEFAULT_SCOPES.trim().split(/\s+/).filter(Boolean)
+    : ['offline_access'];

@@ -24,8 +24,8 @@ import {
 	NbFormFieldModule,
 	NbBadgeModule
 } from '@nebular/theme';
+import { BaseChartDirective } from 'ng2-charts';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { NgChartsModule } from 'ng2-charts';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	EmployeeMultiSelectModule,
@@ -61,6 +61,7 @@ import { KeyresultTypeSelectModule } from './keyresult-type-select/keyresult-typ
 	],
 	imports: [
 		CommonModule,
+		BaseChartDirective,
 		GoalsRoutingModule,
 		NbSpinnerModule,
 		ReactiveFormsModule,
@@ -78,7 +79,6 @@ import { KeyresultTypeSelectModule } from './keyresult-type-select/keyresult-typ
 		NbProgressBarModule,
 		NbContextMenuModule,
 		NbListModule,
-		NgChartsModule,
 		SharedModule,
 		NbPopoverModule,
 		NbAlertModule,
