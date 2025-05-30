@@ -172,7 +172,7 @@ export class PluginSourceEffects {
 					tap(() => {
 						this.pluginSourceStore.update((state) => ({
 							version:
-								state.source?.id === versionId ? { ...state.source, deletedAt: null } : state.source,
+								state.source?.id === sourceId ? { ...state.source, deletedAt: null } : state.source,
 							sources: state.sources.map((source) =>
 								source.id === sourceId ? { ...source, deletedAt: null } : source
 							)
