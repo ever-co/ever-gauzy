@@ -1,6 +1,6 @@
+@forward '@shared/required-asterisk';
 @import 'gauzy/_gauzy-table';
 @import 'gauzy/_gauzy-dialogs';
-@import '@shared/required-asterisk';
 
 :host ::ng-deep angular2-smart-table .angular2-smart-actions-title a {
   background-color: #00d68f !important;

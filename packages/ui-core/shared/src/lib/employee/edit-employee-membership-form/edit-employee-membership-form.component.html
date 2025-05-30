@@ -3,7 +3,7 @@
 		<button *ngIf="!showAddCard" (click)="showAddCard = !showAddCard" nbButton status="success">
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<div *ngIf="showAddCard" class="container m-0 w-25">
+		<div *ngIf="showAddCard" class="container m-0 w-25 edit-employee-membership-form-container">
 			<div class="row">
 				<form [formGroup]="form" class="col">
 					<ng-select

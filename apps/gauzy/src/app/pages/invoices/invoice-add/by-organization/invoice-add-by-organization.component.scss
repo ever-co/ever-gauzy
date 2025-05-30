@@ -1,5 +1,5 @@
+@forward '@shared/required-asterisk';
 @import '../../invoice-edit/by-organization/invoice-edit-by-organization.component.scss';
-@import '@shared/required-asterisk';
 
 $green: rgba(37, 184, 105, 1);
 $shadow: 0 0 0 nb-theme(button-outline-width)

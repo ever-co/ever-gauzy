@@ -1,5 +1,5 @@
 @use 'var' as *;
-@import '@shared/required-asterisk';
+@forward '@shared/required-asterisk';
 
 :host .input,
 :host input {

@@ -1,5 +1,5 @@
 @use 'gauzy/_gauzy-overrides' as *;
-@import '@shared/required-asterisk';
+@forward '@shared/required-asterisk';
 
 :host {
   @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));

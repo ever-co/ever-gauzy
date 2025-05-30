@@ -22,11 +22,20 @@
   gap: 0.5rem;
 }
 
-:host{
+:host {
   height: 100%;
   @include dialog(var(--gauzy-card-2), var(--gauzy-card-1));
   nb-card-header,
   nb-card-body {
     padding: 1rem;
+  }
+}
+
+:host ::ng-deep .edit-employee-membership-form-container {
+  width: 50% !important;
+  .ng-select {
+    .ng-select-container {
+      height: auto !important;
+    }
   }
 }

@@ -1,6 +1,6 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 @use 'gauzy/_gauzy-table' as *;
-@import '@shared/required-asterisk';
+@forward '@shared/required-asterisk';
 
 :host {
   nb-card {
