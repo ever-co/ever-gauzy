@@ -47,6 +47,7 @@ export enum PluginOSArch {
  */
 export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel {
 	type: PluginSourceType; // Type of the plugin source (CDN, NPM, File Upload)
+	fullName?: string; // Full name of the source
 	operatingSystem: PluginOSType; // Operating system target
 	architecture: PluginOSArch;
 }
