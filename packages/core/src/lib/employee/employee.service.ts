@@ -540,15 +540,12 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							const user = where.user as IUser;
 							if (isNotEmpty(user)) {
 								if (isNotEmpty(user.name)) {
-									const keywords: string[] = user.name.split(' ');
-									keywords.forEach((keyword: string, index: number) => {
-										web.orWhere(p(`LOWER("user"."firstName") like LOWER(:first_name_${index})`), {
-											[`first_name_${index}`]: `%${keyword}%`
-										});
-										web.orWhere(p(`LOWER("user"."lastName") like LOWER(:last_name_${index})`), {
-											[`last_name_${index}`]: `%${keyword}%`
-										});
-									});
+									web.andWhere(
+										p(
+											`LOWER(CONCAT("user"."firstName", ' ', "user"."lastName")) LIKE LOWER(:fullName)`
+										),
+										{ fullName: `%${user.name}%` }
+									);
 								}
 								if (isNotEmpty(user.email)) {
 									const keywords: string[] = user.email.split(' ');
