@@ -237,7 +237,7 @@ export class PluginSourceController {
 	 */
 	@ApiOperation({
 		summary: 'Recover a deleted plugin source',
-		description: 'Soft-recovers a previously deleted plugin source using its UUID and, version UUID the plugin ID.'
+		description: 'Soft-recovers a previously deleted plugin source using its UUID, version UUID the plugin ID.'
 	})
 	@ApiParam({
 		name: 'pluginId',
