@@ -20,15 +20,15 @@ export class PluginSourceService extends TenantAwareCrudService<PluginSource> {
 	}
 
 	/**
-	 * Creates and saves a new plugin source entity.
+	 * Creates and saves multiple plugin source entities.
 	 *
-	 * @param {IPluginSource} sources - The source data.
-	 * @returns {Promise<IPluginSource>} - The created plugin source.
+	 * @param {IPluginSource[]} sources - The source data array.
+	 * @returns {Promise<IPluginSource[]>} - The created plugin sources.
 	 * @throws {BadRequestException} - If source data is missing.
 	 */
 	public async createSources(sources: IPluginSource[]): Promise<IPluginSource[]> {
-		if (!sources) {
-			throw new BadRequestException('Source data is required.');
+		if (!sources || !Array.isArray(sources) || sources.length === 0) {
+			throw new BadRequestException('Source data array is required and must not be empty.');
 		}
 		const data = sources.map((source) => Object.assign(new PluginSource(), source));
 		return this.saveSources(data);
