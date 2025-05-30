@@ -1,7 +1,7 @@
 import { IPluginSource } from '@gauzy/contracts';
 
 // Strategy Pattern for different source types
-export interface ISourceStrategy {
-	appendToFormData(formData: FormData, source: any): void;
-	getSourceData(source: any): Partial<IPluginSource>;
+export interface ISourceStrategy<T = unknown> {
+	appendToFormData(formData?: FormData, source?: T): void;
+	getSourceData(source: T): Partial<IPluginSource>;
 }

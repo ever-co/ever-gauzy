@@ -1,8 +1,8 @@
 import { ICDNSource, IPluginSource } from '@gauzy/contracts';
 import { ISourceStrategy } from '../../shared/plugin.model';
 
-export class CdnSourceStrategy implements ISourceStrategy {
-	public appendToFormData(_: FormData, __: any): void {
+export class CdnSourceStrategy implements ISourceStrategy<ICDNSource> {
+	public appendToFormData(): void {
 		// No-op
 	}
 

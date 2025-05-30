@@ -1,8 +1,8 @@
 import { INPMSource, IPluginSource } from '@gauzy/contracts';
 import { ISourceStrategy } from '../../shared/plugin.model';
 
-export class NpmSourceStrategy implements ISourceStrategy {
-	public appendToFormData(_: FormData, __: any): void {
+export class NpmSourceStrategy implements ISourceStrategy<INPMSource> {
+	public appendToFormData(): void {
 		// No-op
 	}
 
