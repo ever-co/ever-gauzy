@@ -254,7 +254,7 @@ export class PluginSourceController {
 		required: true
 	})
 	@ApiParam({
-		name: 'versionId',
+		name: 'sourceId',
 		type: String,
 		format: 'uuid',
 		description: 'UUID of the plugin source to recover',
