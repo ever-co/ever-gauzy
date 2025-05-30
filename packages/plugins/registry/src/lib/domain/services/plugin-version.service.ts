@@ -29,7 +29,7 @@ export class PluginVersionService extends TenantAwareCrudService<PluginVersion> 
 	 *
 	 * @param {IPluginVersion} versionData - The plugin version data.
 	 * @param {IPlugin} plugin - The associated plugin.
-	 * @param {IPluginSource} sources - The associated plugin source.
+	 * @param {IPluginSource[]} sources - The associated plugin sources.
 	 * @returns {Promise<IPluginVersion>} - The created plugin version.
 	 * @throws {BadRequestException} - If version data is missing.
 	 */
