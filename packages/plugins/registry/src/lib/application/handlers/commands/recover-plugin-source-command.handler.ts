@@ -12,7 +12,7 @@ export class RecoverPluginSourceCommandHandler implements ICommandHandler<Recove
 
 	/**
 	 * Executes the recover plugin source command.
-	 * This method attempts to restore a previously soft-deleted plugin version.
+	 * This method attempts to restore a previously soft-deleted plugin source.
 	 *
 	 * @param command - The command containing the plugin source ID, version ID and associated plugin ID.
 	 * @throws NotFoundException if the specified plugin source is not found.
@@ -29,7 +29,8 @@ export class RecoverPluginSourceCommandHandler implements ICommandHandler<Recove
 
 		if (!result) {
 			throw new NotFoundException(
-				`Soft-deleted plugin version with ID ${versionId} and plugin ID ${pluginId} not found.`
+				`Soft-deleted plugin source with ID ${sourceId}, version ID ${versionId} and plugin ID $:console.warn();
+				{pluginId} not found.`
 			);
 		}
 	}
