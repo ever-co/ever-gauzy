@@ -3,7 +3,6 @@
  */
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployee } from './employee.model';
-import { FileStorageProviderEnum } from './file-provider';
 
 /**
  * Defines the possible states of a plugin
@@ -43,23 +42,11 @@ export enum PluginOSArch {
 }
 
 /**
- * Common interface for all source types
- */
-export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel {
-	type: PluginSourceType; // Type of the plugin source (CDN, NPM, File Upload)
-	fullName?: string; // Full name of the source
-	operatingSystem: PluginOSType; // Operating system target
-	architecture: PluginOSArch;
-}
-
-/**
  * CDN-hosted plugin source configuration
  */
 export interface ICDNSource extends IPluginSource {
 	type: PluginSourceType.CDN;
-	url: string; // URL to the plugin bundle
-	integrity?: string; // SRI hash for security verification
-	crossOrigin?: string; // CORS setting ('anonymous' | 'use-credentials')
+	url: string; // Required URL to the plugin bundle
 }
 
 /**
@@ -67,10 +54,7 @@ export interface ICDNSource extends IPluginSource {
  */
 export interface INPMSource extends IPluginSource {
 	type: PluginSourceType.NPM;
-	name: string; // Package name
-	registry?: string; // Optional custom NPM registry URL
-	private?: boolean; // Optional auth token for private packages
-	scope?: string; // Optional package scope (e.g., '@organization')
+	name: string; // Required package name
 }
 
 /**
@@ -78,8 +62,10 @@ export interface INPMSource extends IPluginSource {
  */
 export interface IGauzySource extends IPluginSource {
 	type: PluginSourceType.GAUZY;
+	// Either url or file must be provided
 	url?: string; // URL to the plugin bundle
 	file?: File; // File to upload
+	fileName?: string; // File name
 }
 
 /**
@@ -138,35 +124,37 @@ export interface IPluginVersion extends IBasePerTenantAndOrganizationEntityModel
 	signature?: string; // Digital signature for verification
 }
 
+/**
+ * Common interface for all plugin source types
+ */
 export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel {
-	type: PluginSourceType; // Type of the plugin source (CDN, NPM, File Upload)
+	type: PluginSourceType; // Type of the plugin source (CDN, NPM, GAUZY)
+	fullName?: string; // Full name of the source
 	operatingSystem: PluginOSType; // Operating system target
 	architecture: PluginOSArch;
 
-	// CDN Source
-	url?: string; // URL of the plugin source
-	integrity?: string; // Integrity hash for the CDN source
-	crossOrigin?: string; // Cross-origin policy for the CDN source
+	// Common for CDN and GAUZY sources
+	url?: string; // URL to the plugin bundle
+	integrity?: string; // SRI hash for security verification
+	crossOrigin?: string; // CORS setting ('anonymous' | 'use-credentials')
 
-	// NPM Source
-	name?: string; // NPM package name
-	registry?: string; // NPM registry URL
-	private?: boolean; // NPM authentication token
-	scope?: string; // NPM scope
+	// Specific to NPM sources
+	name?: string; // Package name (for NPM)
+	registry?: string; // Optional custom NPM registry URL
+	private?: boolean; // Optional flag for private packages
+	scope?: string; // Optional package scope (e.g., '@organization')
 
-	// File Upload (Gauzy source)
+	// Specific to GAUZY/file upload sources
+	file?: File; // File to upload
 	filePath?: string; // Path to the uploaded plugin file
-	fileName?: string; // Name of the uploaded plugin file (must end with `.zip`)
-	fileSize?: number; // File size in bytes (max 1GB)
-	mimeType?: string; // Must be `application/zip`
+	fileName?: string; // Name of the uploaded plugin file
+	fileSize?: number; // File size in bytes
+	mimeType?: string; // File MIME type
 	fileKey?: string; // Unique key for the uploaded file
 
-	// Storage
-	storageProvider?: FileStorageProviderEnum;
-
-	// Associated Plugin
-	version?: IPluginVersion; // Associated plugin entity
-	versionId?: ID; // ID of the associated plugin
+	// Associated Plugin Version
+	version?: IPluginVersion; // Associated plugin version entity
+	versionId?: ID; // ID of the associated plugin version
 }
 
 export enum PluginInstallationStatus {
