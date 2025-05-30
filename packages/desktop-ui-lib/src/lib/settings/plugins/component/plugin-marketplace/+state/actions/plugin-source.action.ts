@@ -20,7 +20,7 @@ export class PluginSourceActions {
 		versionId,
 		sourceId
 	}));
-	public static restore = createAction('[Plugin Source] Restore', (pluginId: ID, versionId: ID, sourceId) => ({
+	public static restore = createAction('[Plugin Source] Restore', (pluginId: ID, versionId: ID, sourceId: ID) => ({
 		pluginId,
 		versionId,
 		sourceId
