@@ -17,7 +17,7 @@ export class CreatePluginSourceCommandHandler implements ICommandHandler<CreateP
 	 * Handles the execution of the CreatePluginVersionCommand.
 	 *
 	 * @param {CreatePluginSourceCommand} command - The command instance containing plugin ID and DTO.
-	 * @returns {Promise<IPluginSource>} - The created plugin source.
+	 * @returns {Promise<IPluginSource[]>} - The created plugin source.
 	 * @throws {NotFoundException} - If the plugin with the given ID does not exist.
 	 */
 	public async execute(command: CreatePluginSourceCommand): Promise<IPluginSource[]> {
