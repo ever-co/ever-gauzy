@@ -46,8 +46,9 @@ export enum PluginOSArch {
  * Common interface for all source types
  */
 export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel {
-	type: PluginSourceType; // Discriminator field for the source type
-	fullName?: string; // Full name of the source
+	type: PluginSourceType; // Type of the plugin source (CDN, NPM, File Upload)
+	operatingSystem: PluginOSType; // Operating system target
+	architecture: PluginOSArch;
 }
 
 /**
@@ -67,7 +68,7 @@ export interface INPMSource extends IPluginSource {
 	type: PluginSourceType.NPM;
 	name: string; // Package name
 	registry?: string; // Optional custom NPM registry URL
-	authToken?: string; // Optional auth token for private packages
+	private?: boolean; // Optional auth token for private packages
 	scope?: string; // Optional package scope (e.g., '@organization')
 }
 
