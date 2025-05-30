@@ -43,7 +43,9 @@ export class DeletePluginSourceCommandHandler implements ICommandHandler<DeleteP
 		});
 
 		if (!result) {
-			throw new NotFoundException(`Plugin version with ID ${versionId} and plugin ID ${pluginId} not found.`);
+			throw new NotFoundException(
+				`Plugin source with ID ${sourceId} not found or doesn't belong to the specified plugin version.`
+			);
 		}
 	}
 }
