@@ -222,6 +222,23 @@ export class TimerService {
 
 		// If the timer is running, ensure that the employee is assigned to the project/task of the running timer
 		if (lastLog?.isRunning) {
+			const projects = await this._organizationProjectService.findByEmployee(employeeId, {
+				tenantId,
+				organizationId,
+				relations: ['members']
+			});
+			const isAssignedToProject = projects.some((project) => project.id === lastLog.projectId);
+
+			if (!isAssignedToProject) {
+				await this.stopTimer({
+					tenantId,
+					organizationId,
+					startedAt: lastLog.startedAt,
+					stoppedAt: now.toDate()
+				});
+				throw new ForbiddenException(TimeErrorsEnum.INVALID_PROJECT_PERMISSIONS);
+			}
+
 			const tasks = await this._taskService.getAllTasksByEmployee(employeeId, {
 				where: {
 					id: lastLog.taskId,
@@ -236,23 +253,9 @@ export class TimerService {
 					createdAt: SortOrderEnum.DESC
 				}
 			});
-			const projects = await this._organizationProjectService.findByEmployee(employeeId, {
-				tenantId,
-				organizationId,
-				relations: ['members']
-			});
-			const isAssignedToProject = projects.some((project) => project.id === lastLog.projectId);
-			if (!isAssignedToProject) {
-				await this.stopTimer({
-					tenantId,
-					organizationId,
-					startedAt: lastLog.startedAt,
-					stoppedAt: now.toDate()
-				});
-				throw new ForbiddenException(TimeErrorsEnum.INVALID_PROJECT_PERMISSIONS);
-			}
-			if (tasks.length === 0) {
-				// If the employee is not assigned to the project/task of the running timer, stop the timer
+			const isAssignedToTask = tasks.some((task) => task.id === lastLog.taskId);
+
+			if (!isAssignedToTask) {
 				await this.stopTimer({
 					tenantId,
 					organizationId,
@@ -383,7 +386,7 @@ export class TimerService {
 		// Get the employee ID
 		const { id: employeeId, organizationId } = employee;
 
-		// ✅ Validate assigned task
+		// Validate assigned task
 		if (taskId && projectId) {
 			const tasks = await this._taskService.getAllTasksByEmployee(employeeId, {
 				where: {
@@ -399,12 +402,13 @@ export class TimerService {
 					createdAt: SortOrderEnum.DESC
 				}
 			});
-			if (tasks.length === 0) {
+			const isAssignedToTask = tasks.some((task) => task.id === taskId);
+			if (!isAssignedToTask) {
 				throw new ForbiddenException(TimeErrorsEnum.INVALID_TASK_PERMISSIONS);
 			}
 		}
 
-		// ✅ Validate assigned project
+		// Validate assigned project
 		if (projectId) {
 			const projects = await this._organizationProjectService.findByEmployee(employeeId, {
 				tenantId,
