@@ -138,7 +138,8 @@ export class PluginVersionEffects {
 								...state.versions.map((version) =>
 									version.id === versionId ? { ...version, deletedAt } : version
 								)
-							]
+							],
+							count: state.count - 1
 						}));
 						this.toastrService.success(
 							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.VERSION.DELETED')
