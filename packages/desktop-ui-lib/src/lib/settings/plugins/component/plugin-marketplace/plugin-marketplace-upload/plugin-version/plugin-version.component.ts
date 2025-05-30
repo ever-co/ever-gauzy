@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { ID } from '@gauzy/contracts';
 import { NbDateService } from '@nebular/theme';
 import { BasePluginFormComponent } from '../base-plugin-form/base-plugin-form.component';
-import { ID } from '@gauzy/contracts';
 
 @Component({
 	selector: 'lib-plugin-version',

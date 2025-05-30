@@ -5,7 +5,7 @@ import { FileProcessingStrategy } from '../../../shared/models/file-processing.i
  * Strategy for processing single file
  */
 export class SingleFileProcessingStrategy implements FileProcessingStrategy {
-	public async process(file: File, provider: any): Promise<UploadedFile> {
+	public async process(file: any, provider: any): Promise<UploadedFile> {
 		return provider.mapUploadedFile(file);
 	}
 }
