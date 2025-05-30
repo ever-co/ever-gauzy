@@ -627,6 +627,8 @@
 			"BUDGET": "Budget",
 			"HOURS": "Hours",
 			"COST": "Cost",
+			"MAKE_COM_CLIENT_ID": "Enter your Make.com Client ID",
+			"MAKE_COM_CLIENT_SECRET": "Enter your Make.com Client Secret",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -868,6 +870,7 @@
 		"POSITIONS": "Positions",
 		"INTEGRATIONS": "Apps & Integrations",
 		"UPWORK": "Upwork",
+		"MAKE_COM": "Make.com",
 		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
@@ -1315,6 +1318,21 @@
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
 			"HOURLY": "Hourly",
 			"DESCRIPTION": "Activate Upwork integration for freelance workforce management."
+		},
+		"MAKE_COM_PAGE": {
+			"CLIENT_ID": "Client ID",
+			"CLIENT_SECRET": "Client Secret",
+			"NEXT_STEP_INFO": "After authorization, you will be redirected to Make.com to complete the integration setup"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Make.com Settings",
+				"ENABLE_INTEGRATION": "Enable Make.com Integration",
+				"WEBHOOK_URL": "Webhook URL",
+				"WEBHOOK_URL_PLACEHOLDER": "Enter webhook URL",
+				"WEBHOOK_URL_INVALID": "Please enter a valid webhook URL",
+				"SAVE": "Save Settings"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"TITLE": "Gauzy AI Integration",

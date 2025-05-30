@@ -86,6 +86,19 @@ export class IntegrationsModule {
 			loadChildren: () => import('@gauzy/plugin-integration-hubstaff-ui').then((m) => m.IntegrationHubstaffModule)
 		});
 
+		// Register the routes for make.com integration
+		this._pageRouteRegistryService.registerPageRoute({
+			// Data to be passed to the component
+			data: { selectors: false },
+			// Register the location 'integrations'
+			location: 'integrations',
+			// Register the path 'makecom'
+			path: 'makecom',
+			// Register the loadChildren function to load the MakeComModule lazy module
+			loadChildren: () =>
+				import('@gauzy/plugin-integration-make-com-ui').then((m) => m.IntegrationMakeComUiModule)
+		});
+
 		// Register the routes for gauzy-ai integration
 		this._pageRouteRegistryService.registerPageRoute({
 			// Data to be passed to the component
