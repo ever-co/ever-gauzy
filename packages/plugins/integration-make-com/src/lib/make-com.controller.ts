@@ -16,7 +16,8 @@ export class MakeComController {
 	constructor(
 		private readonly makeComService: MakeComService,
 		private readonly makeComOAuthService: MakeComOAuthService,
-		private readonly config: ConfigService) {}
+		private readonly config: ConfigService
+	) {}
 
 	/**
 	 * Retrieves the Make.com integration settings for the current tenant.
@@ -53,20 +54,18 @@ export class MakeComController {
 		description: 'Tenant ID not found in request context'
 	})
 	@Post('/')
-    async updateIntegrationSettings(
-        @Body() settings: UpdateMakeComSettingsDTO
-    ): Promise<IMakeComIntegrationSettings> {
-        // Verify tenant context exists
-        if (!RequestContext.currentTenantId()) {
-            throw new NotFoundException('Tenant ID not found in request context');
-        }
+	async updateIntegrationSettings(@Body() settings: UpdateMakeComSettingsDTO): Promise<IMakeComIntegrationSettings> {
+		// Verify tenant context exists
+		if (!RequestContext.currentTenantId()) {
+			throw new NotFoundException('Tenant ID not found in request context');
+		}
 
-        // Update webhook settings
-        return this.makeComService.updateIntegrationSettings({
-            isEnabled: settings.isEnabled,
-            webhookUrl: settings.webhookUrl
-        });
-    }
+		// Update webhook settings
+		return this.makeComService.updateIntegrationSettings({
+			isEnabled: settings.isEnabled,
+			webhookUrl: settings.webhookUrl
+		});
+	}
 
 	/**
 	 * Updates the Make.com OAuth settings for the current tenant.
@@ -110,7 +109,7 @@ export class MakeComController {
 
 		// Generate authorization URL
 		const authorizationUrl = this.makeComOAuthService.getAuthorizationUrl({
-			clientId: input.client_id,
+			clientId: input.client_id
 		});
 
 		return {
@@ -134,7 +133,8 @@ export class MakeComController {
 		const clientId = await this.makeComService.getOAuthClientId();
 
 		// Get redirect URI from config (this is typically an environment variable)
-		const redirectUri = this.config.get('makeCom').redirectUri;
+		const makeComConfig = this.config.get('makeCom');
+		const redirectUri = makeComConfig?.redirectUri;
 
 		if (!clientId || !redirectUri) {
 			throw new BadRequestException('OAuth configuration is missing required values.');
@@ -144,54 +144,59 @@ export class MakeComController {
 	}
 
 	/**
-     * Handle Token requests from Make.com custom apps.
-     * This endpoint is called by your Make.com custom app during the OAuth flow.
-     * It's configured in your custom app's "token" section.
-     */
-    @Post('/token')
-    @ApiOperation({ summary: 'Handle Make.com token requests (For Custom Apps)' })
-    @ApiResponse({
-        status: 200,
-        description: 'Returns OAuth tokens'
-    })
-    @ApiResponse({
-        status: 400,
-        description: 'Invalid request or grant type'
-    })
-    async tokenEndpoint(@Body() body: {
-        grant_type: string;
-        code: string;
-        state: string;
-        client_id: string;
-        client_secret: string;
-        redirect_uri: string;
-    }): Promise<any> {
-        try {
-            // Verify grant_type
-            if (body.grant_type !== 'authorization_code') {
-                throw new BadRequestException('Unsupported grant type');
-            }
+	 * Handle Token requests from Make.com custom apps.
+	 * This endpoint is called by your Make.com custom app during the OAuth flow.
+	 * It's configured in your custom app's "token" section.
+	 */
+	@Post('/token')
+	@ApiOperation({ summary: 'Handle Make.com token requests (For Custom Apps)' })
+	@ApiResponse({
+		status: 200,
+		description: 'Returns OAuth tokens'
+	})
+	@ApiResponse({
+		status: 400,
+		description: 'Invalid request or grant type'
+	})
+	async tokenEndpoint(
+		@Body()
+		body: {
+			grant_type: string;
+			code: string;
+			state: string;
+			client_id: string;
+			client_secret: string;
+			redirect_uri: string;
+		}
+	): Promise<{
+		access_token: string;
+		token_type: string;
+		expires_in: number;
+		refresh_token: string;
+	}> {
+		try {
+			// Verify grant_type
+			if (body.grant_type !== 'authorization_code') {
+				throw new BadRequestException('Unsupported grant type');
+			}
 
-            // Validate required fields
-            if (!body.code || !body.state || !body.client_id || !body.client_secret) {
-                throw new BadRequestException('Missing required parameters');
-            }
+			// Validate required fields
+			if (!body.code || !body.state || !body.client_id || !body.client_secret) {
+				throw new BadRequestException('Missing required parameters');
+			}
 
-            // Exchange code for tokens
-            const tokenResponse = await this.makeComOAuthService.exchangeCodeForToken(
-                body.code,
-                body.state
-            );
+			// Exchange code for tokens
+			const tokenResponse = await this.makeComOAuthService.exchangeCodeForToken(body.code, body.state);
 
-            // Return the token response in the format expected by Make.com
-            return {
-                access_token: tokenResponse.access_token,
-                token_type: tokenResponse.token_type,
-                expires_in: tokenResponse.expires_in,
-                refresh_token: tokenResponse.refresh_token,
-            };
-        } catch (error) {
-            throw new BadRequestException(error.message || 'Invalid request');
-        }
-    }
+			// Return the token response in the format expected by Make.com
+			return {
+				access_token: tokenResponse.access_token,
+				token_type: tokenResponse.token_type,
+				expires_in: tokenResponse.expires_in,
+				refresh_token: tokenResponse.refresh_token
+			};
+		} catch (error) {
+			throw new BadRequestException(error.message || 'Invalid request');
+		}
+	}
 }

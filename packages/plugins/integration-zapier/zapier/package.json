@@ -1,6 +1,6 @@
 {
   "name": "gauzy-zapier",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Zapier integration for Gauzy",
   "main": "index.js",
   "scripts": {

@@ -35,7 +35,7 @@ export const DEFAULT_SYSTEM_INTEGRATIONS = [
 	{
 		name: IntegrationEnum.MakeCom,
 		imgSrc: 'make-com.svg',
-		isComingSoon: true,
+		isComingSoon: false,
 		integrationTypesMap: <string[]>[IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.AUTOMATION_TOOLS],
 		order: 7,
 		redirectUrl: sluggable(IntegrationEnum.MakeCom),

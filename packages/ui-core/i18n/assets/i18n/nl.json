@@ -597,6 +597,8 @@
 			"BUDGET": "Budget",
 			"HOURS": "Uren",
 			"COST": "Kosten",
+			"MAKE_COM_CLIENT_ID": "Voer uw Make.com Client ID in",
+			"MAKE_COM_CLIENT_SECRET": "Voer uw Make.com Client Geheim in",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Schoolnaam",
 				"DEGREE": "Graad/Diploma",
@@ -830,6 +832,7 @@
 		"POSITIONS": "Functies",
 		"INTEGRATIONS": "Apps & Integraties",
 		"UPWORK": "Upwork",
+		"MAKE_COM": "Make.com",
 		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Voorstellen",
 		"TIME_OFF": "Vrije tijd",
@@ -1274,6 +1277,21 @@
 			"CONTRACTS_RELATED_DATA": "Gesynchroniseerde entiteiten met betrekking tot contracten",
 			"DATE_RANGE_PLACEHOLDER": "Kies een datum tussen",
 			"HOURLY": "Per uur"
+		},
+		"MAKE_COM_PAGE": {
+			"CLIENT_ID": "Client ID",
+			"CLIENT_SECRET": "Client Geheim",
+			"NEXT_STEP_INFO": "Na autorisatie word je doorgestuurd naar Make.com om de integratie-instellingen te voltooien"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Make.com Instellingen",
+				"ENABLE_INTEGRATION": "Make.com Integratie inschakelen",
+				"WEBHOOK_URL": "Webhook URL",
+				"WEBHOOK_URL_PLACEHOLDER": "Voer webhook URL in",
+				"WEBHOOK_URL_INVALID": "Voer een geldige webhook URL in",
+				"SAVE": "Instellingen opslaan"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Gauzy AI-sleutel",

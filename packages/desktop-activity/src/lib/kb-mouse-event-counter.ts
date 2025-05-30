@@ -4,16 +4,16 @@ import { UiohookMouseEvent, UiohookWheelEvent } from 'uiohook-napi';
 import { debounce } from 'underscore';
 
 type TMousePosition = {
-	x: number,
-	y: number
-}
+	x: number;
+	y: number;
+};
 
 export class KeyboardMouseEventCounter {
 	private isStarted: boolean;
 	private keyboardMouse: KeyboardMouse;
 	private keyboardMouseActivityStores: KeyboardMouseActivityStores;
 	private currentMousePosition: TMousePosition = { x: 0, y: 0 };
-	private startMousePosition: TMousePosition = { x:0, y: 0 };
+	private startMousePosition: TMousePosition = { x: 0, y: 0 };
 	private readonly mouseMoveThreshold: number = 10;
 	private mouseIsMove: boolean;
 	private debounceMovement: () => void;
@@ -38,15 +38,14 @@ export class KeyboardMouseEventCounter {
 				this.keyboardMouseActivityStores.updateKbSequence(e.keycode);
 				this.keyboardMouseActivityStores.updateCurrentKeyPressCount();
 			} catch (error) {
-				console.log('error', error);
+				console.error('Error handling keyboard event:', error);
 			}
 		});
 
 		this.keyboardMouse.on('click', (e) => {
-			if (e.button === 1) {
+			if (e.button === 0) {
 				this.keyboardMouseActivityStores.updateMouseLeftClick();
 			}
-
 			if (e.button === 2) {
 				this.keyboardMouseActivityStores.updateMouseRightClick();
 			}
@@ -72,7 +71,7 @@ export class KeyboardMouseEventCounter {
 						from: this.startMousePosition,
 						to: this.currentMousePosition
 					}
-				})
+				});
 			}
 		}
 		this.mouseIsMove = false;
@@ -83,12 +82,12 @@ export class KeyboardMouseEventCounter {
 			this.startMousePosition = {
 				x: e.x,
 				y: e.y
-			}
+			};
 		}
 		this.currentMousePosition = {
 			x: e.x,
 			y: e.y
-		}
+		};
 		this.debounceMovement();
 	}
 
