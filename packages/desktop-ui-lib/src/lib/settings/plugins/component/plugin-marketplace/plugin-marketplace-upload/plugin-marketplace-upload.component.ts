@@ -79,7 +79,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 	private initForm(): void {
 		this.pluginForm = new FormGroup({
-			...(this.plugin && this.plugin.id && { id: new FormControl(this.plugin.id) }),
+			...(this.plugin?.id && { id: new FormControl(this.plugin.id) }),
 			name: new FormControl('', [Validators.required, Validators.maxLength(100)]),
 			description: new FormControl('', Validators.maxLength(500)),
 			type: new FormControl(PluginType.DESKTOP, Validators.required),
