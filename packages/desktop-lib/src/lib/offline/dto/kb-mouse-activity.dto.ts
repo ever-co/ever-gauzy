@@ -16,15 +16,15 @@ export interface KbMouseActivityTO {
 	timeStart: Date;
 	timeEnd: Date | null;
 	kbPressCount: number;
-	kbSequence: number[] | any;
+	kbSequence: number[] | string;
 	mouseMovementsCount: number;
 	mouseLeftClickCount: number;
 	mouseRightClickCount: number;
-	mouseEvents: TMouseEvents[];
+	mouseEvents: TMouseEvents[] | string;
 	organizationId: string;
 	tenantId: string;
 	remoteId: string;
-	screenshots: string[] | any;
+	screenshots: string[] | string;
 }
 
 export const TABLE_NAME_KB_MOUSE_ACTIVITY: string = 'kb_mouse_activity';
