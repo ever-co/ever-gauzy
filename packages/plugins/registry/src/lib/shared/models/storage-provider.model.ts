@@ -13,5 +13,4 @@ export interface IStorageProvider {
 	validate(file: FileDTO): Promise<void>;
 	delete(fileKey: string): Promise<void>;
 	extractMetadata(file: FileDTO): IFileMetadata;
-	mapUploadedFile(file: FileDTO): Promise<UploadedFile>;
 }
