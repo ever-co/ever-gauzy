@@ -32,7 +32,7 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 		default: PluginOSType.UNIVERSAL
 	})
 	@ApiProperty({ enum: PluginOSType, description: 'Plugin Os type source' })
-	@IsNotEmpty({ message: 'Plugin os source type is required' })
+	@IsNotEmpty({ message: 'Operating system type is required' })
 	operatingSystem: PluginOSType;
 
 	@MultiORMColumn({
@@ -41,7 +41,7 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 		default: PluginOSArch.X64
 	})
 	@ApiProperty({ enum: PluginOSArch, description: 'Plugin Os type source architecture' })
-	@IsNotEmpty({ message: 'Plugin Os architecture source type is required' })
+	@IsNotEmpty({ message: 'Architecture type is required' })
 	architecture: PluginOSArch;
 
 	// For CDN sources
