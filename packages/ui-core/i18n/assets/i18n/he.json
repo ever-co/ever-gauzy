@@ -4854,7 +4854,8 @@
 				"LICENSE_TOO_LONG": "שדה הרישיון ארוך מדי",
 				"FAILED": "האימות נכשל",
 				"CHANGELOG_TOO_SHORT": "שדה השינויים ארוך מדי",
-				"CHANGELOG_REQUIRED": "שדה השינויים נדרש"
+				"CHANGELOG_REQUIRED": "שדה השינויים נדרש",
+				"REQUIRED": "נדרש"
 			},
 			"TYPE": "סוג התוסף",
 			"TYPE_PLACEHOLDER": "בחר סוג תוסף",

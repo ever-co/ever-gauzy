@@ -601,7 +601,7 @@
 			"HOURS": "Horas.",
 			"COST": "Costo",
 			"MAKE_COM_CLIENT_ID": "Ingrese su ID de cliente Make.com",
-      "MAKE_COM_CLIENT_SECRET": "Ingrese su clave secreta de cliente Make.com",
+			"MAKE_COM_CLIENT_SECRET": "Ingrese su clave secreta de cliente Make.com",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Nombre de la escuela",
 				"DEGREE": "Grado / Diploma",
@@ -1282,20 +1282,20 @@
 			"HOURLY": "Por hora"
 		},
 		"MAKE_COM_PAGE": {
-      "CLIENT_ID": "ID de Cliente",
-      "CLIENT_SECRET": "Clave Secreta del Cliente",
-      "NEXT_STEP_INFO": "Después de la autorización, será redirigido a Make.com para completar la configuración de la integración"
-    },
-    "MAKE_COM": {
-      "SETTINGS": {
-        "TITLE": "Configuración de Make.com",
-        "ENABLE_INTEGRATION": "Activar integración Make.com",
-        "WEBHOOK_URL": "URL del Webhook",
-        "WEBHOOK_URL_PLACEHOLDER": "Ingrese la URL del webhook",
-        "WEBHOOK_URL_INVALID": "Por favor ingrese una URL de webhook válida",
-        "SAVE": "Guardar configuración"
-      }
-    },
+			"CLIENT_ID": "ID de Cliente",
+			"CLIENT_SECRET": "Clave Secreta del Cliente",
+			"NEXT_STEP_INFO": "Después de la autorización, será redirigido a Make.com para completar la configuración de la integración"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Configuración de Make.com",
+				"ENABLE_INTEGRATION": "Activar integración Make.com",
+				"WEBHOOK_URL": "URL del Webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "Ingrese la URL del webhook",
+				"WEBHOOK_URL_INVALID": "Por favor ingrese una URL de webhook válida",
+				"SAVE": "Guardar configuración"
+			}
+		},
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Clave de Gauzy AI",
 			"API_SECRET": "Gauzy AI Secret: Secreto de Inteligencia Artificial de Gauzy."
@@ -4867,7 +4867,8 @@
 				"LICENSE_TOO_LONG": "El campo de la licencia es demasiado largo",
 				"FAILED": "Validación fallida",
 				"CHANGELOG_TOO_SHORT": "El changelog es demasiado corto",
-				"CHANGELOG_REQUIRED": "El changelog es obligatorio"
+				"CHANGELOG_REQUIRED": "El changelog es obligatorio",
+				"REQUIRED": "Obligatorio"
 			},
 			"TYPE": "Tipo de complemento",
 			"TYPE_PLACEHOLDER": "Seleccione el tipo de complemento",

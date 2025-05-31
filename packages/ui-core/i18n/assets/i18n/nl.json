@@ -4866,11 +4866,7 @@
 				"FAILED": "Validatie mislukt",
 				"CHANGELOG_TOO_SHORT": "Changelog is te kort",
 				"CHANGELOG_REQUIRED": "Changelog is vereist",
-				"CLICK_TO_SELECT_SOURCE": "Klik om bron te selecteren",
-				"SELECT_SOURCE_TYPE": "Selecteer brontype",
-				"ADD_SOURCE": "Nieuwe bron toevoegen",
-				"OPERATING_SYSTEM": "Besturingssysteem",
-				"ARCHITECTURE": "Architectuur"
+				"REQUIRED": "Vereist"
 			},
 			"TYPE": "Plugintype",
 			"TYPE_PLACEHOLDER": "Selecteer plugintype",
@@ -4928,7 +4924,12 @@
 			"OR": "Of",
 			"RELEASE_DATE": "Uitgaandatum",
 			"CHANGELOG": "Wijzigingslogboek",
-			"CHANGELOG_PLACEHOLDER": "Voer de wijzigingslogboek in"
+			"CHANGELOG_PLACEHOLDER": "Voer de wijzigingslogboek in",
+			"CLICK_TO_SELECT_SOURCE": "Klik om bron te selecteren",
+			"SELECT_SOURCE_TYPE": "Selecteer brontype",
+			"ADD_SOURCE": "Nieuwe bron toevoegen",
+			"OPERATING_SYSTEM": "Besturingssysteem",
+			"ARCHITECTURE": "Architectuur"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Gebruiksstatistieken",

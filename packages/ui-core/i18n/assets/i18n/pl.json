@@ -4864,7 +4864,8 @@
 				"LICENSE_TOO_LONG": "Pole licencji jest zbyt długie",
 				"FAILED": "Walidacja nie powiodła się",
 				"CHANGELOG_TOO_SHORT": "Log zmian jest zbyt krotki",
-				"CHANGELOG_REQUIRED": "Log zmian jest wymagany"
+				"CHANGELOG_REQUIRED": "Log zmian jest wymagany",
+				"REQUIRED": "Wymagany"
 			},
 			"TYPE": "Typ wtyczki",
 			"TYPE_PLACEHOLDER": "Wybierz typ wtyczki",
