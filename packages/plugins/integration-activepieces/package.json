@@ -1,6 +1,6 @@
 {
 	"name": "@gauzy/plugin-integration-activepieces",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "Ever Gauzy Platform plugin for integration with Activepieces AI automation platform.",
 	"author": {
 		"name": "Ever Co. LTD",
