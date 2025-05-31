@@ -4904,7 +4904,9 @@
 			"CHANGELOG_PLACEHOLDER": "Geben Sie den Änderungsprotokoll ein",
 			"CLICK_TO_SELECT_SOURCE": "Klicken, um Quelle auszuwählen",
 			"SELECT_SOURCE_TYPE": "Quellentyp auswählen",
-			"ADD_SOURCE": "Neue Quelle hinzufügen"
+			"ADD_SOURCE": "Neue Quelle hinzufügen",
+			"OPERATING_SYSTEM": "Betriebssystem",
+			"ARCHITECTURE": "Architektur"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Nutzungsstatistiken",
@@ -4975,7 +4977,10 @@
 			"INSTALLATION": {
 				"TITLE": "Plugin installieren",
 				"DESCRIPTION": "Sind Sie sicher, dass Sie dieses Plugin installieren möchten?",
-				"CONFIRM": "Installieren"
+				"CONFIRM": "Installieren",
+				"VALIDATION": {
+					"REQUIRED": "Authentifizierungstoken ist erforderlich"
+				}
 			}
 		},
 		"TOASTR": {

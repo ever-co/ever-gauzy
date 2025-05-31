@@ -4904,7 +4904,9 @@
 			"CHANGELOG_PLACEHOLDER": "Введите журнал изменений",
 			"CLICK_TO_SELECT_SOURCE": "Нажмите, чтобы выбрать источник",
 			"SELECT_SOURCE_TYPE": "Выберите тип источника",
-			"ADD_SOURCE": "Добавить новый источник"
+			"ADD_SOURCE": "Добавить новый источник",
+			"OPERATING_SYSTEM": "Операционная система",
+			"ARCHITECTURE": "Архитектура"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Статистика использования",
@@ -4975,7 +4977,10 @@
 			"INSTALLATION": {
 				"TITLE": "Установить плагин",
 				"DESCRIPTION": "Вы уверены, что хотите установить этот плагин?",
-				"CONFIRM": "Установить"
+				"CONFIRM": "Установить",
+				"VALIDATION": {
+					"REQUIRED": "Требуется токен аутентификации"
+				}
 			}
 		},
 		"TOASTR": {

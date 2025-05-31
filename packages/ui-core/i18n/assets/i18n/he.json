@@ -4897,7 +4897,9 @@
 			"CHANGELOG_PLACEHOLDER": "הזן יומן השינויים",
 			"CLICK_TO_SELECT_SOURCE": "לחץ כדי לבחור מקור",
 			"SELECT_SOURCE_TYPE": "בחר סוג מקור",
-			"ADD_SOURCE": "הוסף מקור חדש"
+			"ADD_SOURCE": "הוסף מקור חדש",
+			"OPERATING_SYSTEM": "מערכת הפעלה",
+			"ARCHITECTURE": "ארכיטקטורה"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "סטטיסטיקות שימוש",
@@ -4968,7 +4970,10 @@
 			"INSTALLATION": {
 				"TITLE": "התקנת תוסף",
 				"DESCRIPTION": "האם אתה בטוח שברצונך להתקין תוסף זה?",
-				"CONFIRM": "התקן"
+				"CONFIRM": "התקן",
+				"VALIDATION": {
+					"REQUIRED": "נדרש אסימון אימות"
+				}
 			}
 		},
 		"TOASTR": {

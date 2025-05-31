@@ -4850,7 +4850,9 @@
 				"CHANGELOG_REQUIRED": "Changelog is vereist",
 				"CLICK_TO_SELECT_SOURCE": "Klik om bron te selecteren",
 				"SELECT_SOURCE_TYPE": "Selecteer brontype",
-				"ADD_SOURCE": "Nieuwe bron toevoegen"
+				"ADD_SOURCE": "Nieuwe bron toevoegen",
+				"OPERATING_SYSTEM": "Besturingssysteem",
+				"ARCHITECTURE": "Architectuur"
 			},
 			"TYPE": "Plugintype",
 			"TYPE_PLACEHOLDER": "Selecteer plugintype",
@@ -4979,7 +4981,10 @@
 			"INSTALLATION": {
 				"TITLE": "Plugin installeren",
 				"DESCRIPTION": "Weet u zeker dat u deze plugin wilt installeren?",
-				"CONFIRM": "Installeren"
+				"CONFIRM": "Installeren",
+				"VALIDATION": {
+					"REQUIRED": "Authenticatietoken is vereist"
+				}
 			}
 		},
 		"TOASTR": {

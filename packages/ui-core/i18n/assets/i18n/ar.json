@@ -4893,7 +4893,9 @@
 			"CHANGELOG_PLACEHOLDER": "ادخل التغييرات",
 			"CLICK_TO_SELECT_SOURCE": "انقر لتحديد المصدر",
 			"SELECT_SOURCE_TYPE": "اختر نوع المصدر",
-			"ADD_SOURCE": "إضافة مصدر جديد"
+			"ADD_SOURCE": "إضافة مصدر جديد",
+			"OPERATING_SYSTEM": "نظام التشغيل",
+			"ARCHITECTURE": "البنية"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "إحصائيات الاستخدام",
@@ -4964,7 +4966,10 @@
 			"INSTALLATION": {
 				"TITLE": "تثبيت المكون الإضافي",
 				"DESCRIPTION": "هل أنت متأكد أنك تريد تثبيت هذا المكون الإضافي؟",
-				"CONFIRM": "تثبيت"
+				"CONFIRM": "تثبيت",
+				"VALIDATION": {
+					"REQUIRED": "مطلوب رمز المصادقة"
+				}
 			}
 		},
 		"TOASTR": {

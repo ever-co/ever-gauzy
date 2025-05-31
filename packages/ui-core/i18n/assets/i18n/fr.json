@@ -4898,7 +4898,9 @@
 			"CHANGELOG": "Journal des modifications",
 			"CHANGELOG_PLACEHOLDER": "Entrez les modifications",
 			"CLICK_TO_SELECT_SOURCE": "Cliquez pour sélectionner une source",
-			"SELECT_SOURCE_TYPE": "Sélectionner le type de source"
+			"SELECT_SOURCE_TYPE": "Sélectionner le type de source",
+			"OPERATING_SYSTEM": "Système d'exploitation",
+			"ARCHITECTURE": "Architecture"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Statistiques d'utilisation",
@@ -4969,7 +4971,10 @@
 			"INSTALLATION": {
 				"TITLE": "Installer le plugin",
 				"DESCRIPTION": "Êtes-vous sûr de vouloir installer ce plugin ?",
-				"CONFIRM": "Installer"
+				"CONFIRM": "Installer",
+				"VALIDATION": {
+					"REQUIRED": "Le jeton d'authentification est requis"
+				}
 			}
 		},
 		"TOASTR": {

@@ -4908,7 +4908,9 @@
 			"CHANGELOG_PLACEHOLDER": "输入更新日志",
 			"CLICK_TO_SELECT_SOURCE": "点击选择来源",
 			"SELECT_SOURCE_TYPE": "选择来源类型",
-			"ADD_SOURCE": "添加新来源"
+			"ADD_SOURCE": "添加新来源",
+			"OPERATING_SYSTEM": "操作系统",
+			"ARCHITECTURE": "架构"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "使用统计",
@@ -4979,7 +4981,10 @@
 			"INSTALLATION": {
 				"TITLE": "安装插件",
 				"DESCRIPTION": "您确定要安装此插件吗？",
-				"CONFIRM": "安装"
+				"CONFIRM": "安装",
+				"VALIDATION": {
+					"REQUIRED": "需要认证令牌"
+				}
 			}
 		},
 		"TOASTR": {

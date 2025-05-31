@@ -4908,7 +4908,9 @@
 			"CHANGELOG_PLACEHOLDER": "Digite o histórico de alterações",
 			"CLICK_TO_SELECT_SOURCE": "Clique para selecionar a fonte",
 			"SELECT_SOURCE_TYPE": "Selecione o tipo de fonte",
-			"ADD_SOURCE": "Adicionar nova fonte"
+			"ADD_SOURCE": "Adicionar nova fonte",
+			"OPERATING_SYSTEM": "Sistema operacional",
+			"ARCHITECTURE": "Arquitetura"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Estatísticas de uso",
@@ -4979,7 +4981,10 @@
 			"INSTALLATION": {
 				"TITLE": "Instalar Plugin",
 				"DESCRIPTION": "Tem certeza de que deseja instalar este plugin?",
-				"CONFIRM": "Instalar"
+				"CONFIRM": "Instalar",
+				"VALIDATION": {
+					"REQUIRED": "Token de autenticação é obrigatório"
+				}
 			}
 		},
 		"TOASTR": {

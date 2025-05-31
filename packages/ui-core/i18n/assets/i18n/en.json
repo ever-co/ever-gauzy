@@ -5060,7 +5060,9 @@
 			"CHANGELOG_PLACEHOLDER": "Enter changelog",
 			"CLICK_TO_SELECT_SOURCE": "Click to select source",
 			"SELECT_SOURCE_TYPE": "Select source type",
-			"ADD_SOURCE": "Add new source"
+			"ADD_SOURCE": "Add new source",
+			"OPERATING_SYSTEM": "Operating System",
+			"ARCHITECTURE": "Architecture"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Usage Statistics",
@@ -5131,7 +5133,10 @@
 			"INSTALLATION": {
 				"TITLE": "Install Plugin",
 				"DESCRIPTION": "Are you sure you want to install this plugin?",
-				"CONFIRM": "Install"
+				"CONFIRM": "Install",
+				"VALIDATION": {
+					"REQUIRED": "Authentication token is required"
+				}
 			}
 		},
 		"TOASTR": {

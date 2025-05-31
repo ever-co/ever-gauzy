@@ -4907,7 +4907,9 @@
 			"CHANGELOG_PLACEHOLDER": "Wprowadź przepraszam",
 			"CLICK_TO_SELECT_SOURCE": "Kliknij, aby wybrać źródło",
 			"SELECT_SOURCE_TYPE": "Wybierz typ źródła",
-			"ADD_SOURCE": "Dodaj nowe źródło"
+			"ADD_SOURCE": "Dodaj nowe źródło",
+			"OPERATING_SYSTEM": "System operacyjny",
+			"ARCHITECTURE": "Architektura"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Statystyki użytkowania",
@@ -4978,7 +4980,10 @@
 			"INSTALLATION": {
 				"TITLE": "Zainstaluj wtyczkę",
 				"DESCRIPTION": "Czy na pewno chcesz zainstalować tę wtyczkę?",
-				"CONFIRM": "Zainstaluj"
+				"CONFIRM": "Zainstaluj",
+				"VALIDATION": {
+					"REQUIRED": "Wymagany jest token uwierzytelniający"
+				}
 			}
 		},
 		"TOASTR": {

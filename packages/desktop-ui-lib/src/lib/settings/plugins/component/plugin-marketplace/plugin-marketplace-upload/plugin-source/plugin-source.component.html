@@ -1,7 +1,7 @@
 <lib-form-section *ngIf="form" [formGroup]="form" title="{{ 'PLUGIN.FORM.SOURCE' | translate }}">
 	<lib-form-row>
 		<nb-form-field *ngIf="form.get('operatingSystem')" class="form-group">
-			<label class="label" for="source-os">{{ 'Operating System' | translate }} *</label>
+			<label class="label" for="source-os">{{ 'PLUGIN.FORM.OPERATING_SYSTEM' | translate }} *</label>
 			<nb-select
 				fullWidth
 				id="source-os"
@@ -16,7 +16,7 @@
 			</nb-select>
 		</nb-form-field>
 		<nb-form-field *ngIf="form.get('architecture')" class="form-group">
-			<label class="label" for="source-arch">{{ 'Architecture' | translate }} *</label>
+			<label class="label" for="source-arch">{{ 'FORM.FORM.ARCHITECTURE' | translate }} *</label>
 			<nb-select
 				fullWidth
 				id="source-arch"
@@ -53,7 +53,7 @@
 
 			<!-- DEFAULT -->
 			@default {
-			<ngx-no-data-message message="Unknown source"></ngx-no-data-message>
+			<ngx-no-data-message [message]="'PLUGIN.FORM.VALIDATION.INVALID_SOURCE' | translate"></ngx-no-data-message>
 			} }
 		</div>
 	</div>
