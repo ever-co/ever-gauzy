@@ -1,5 +1,4 @@
 import { RequestContext } from '@gauzy/core';
-import { NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginInstallationService } from '../../../domain/services/plugin-installation.service';
 import { PluginInstallationStatus } from '../../../shared/models/plugin-installation.model';

@@ -1,6 +1,14 @@
 <lib-form-section [formGroup]="form" class="version-section" title="{{ 'PLUGIN.FORM.VERSION' | translate }}">
 	<lib-form-row>
-		<nb-form-field class="form-group">
+		@if(isEdit && pluginId){
+		<lib-form-row>
+			<div class="d-flex flex-column">
+				<label class="label" for="version-number">{{ 'PLUGIN.FORM.VERSION' | translate }}</label>
+				<gauzy-version-selector [pluginId]="pluginId"></gauzy-version-selector>
+			</div>
+		</lib-form-row>
+		}@else {
+		<nb-form-field class="form-group" pluginId>
 			<label class="label" for="version-number">{{ 'PLUGIN.FORM.VERSION' | translate }} *</label>
 			<input
 				nbInput
@@ -17,6 +25,7 @@
 				{{ 'PLUGIN.FORM.VALIDATION.VERSION_FORMAT' | translate }}
 			</nb-hint>
 		</nb-form-field>
+		}
 
 		<nb-form-field class="form-group">
 			<label class="label" for="release-date">{{ 'PLUGIN.FORM.RELEASE_DATE' | translate }} *</label>

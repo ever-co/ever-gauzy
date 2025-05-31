@@ -175,7 +175,8 @@
 		"ADD_VERSION": "Versie toevoegen",
 		"READ_MORE": "Meer lezen",
 		"READ_LESS": "Minder lezen",
-		"RECOVER": "Herstellen"
+		"RECOVER": "Herstellen",
+		"ADD_MORE_SOURCES": "Meer bronnen toevoegen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4864,7 +4865,12 @@
 				"LICENSE_TOO_LONG": "Licentieveld is te lang",
 				"FAILED": "Validatie mislukt",
 				"CHANGELOG_TOO_SHORT": "Changelog is te kort",
-				"CHANGELOG_REQUIRED": "Changelog is vereist"
+				"CHANGELOG_REQUIRED": "Changelog is vereist",
+				"CLICK_TO_SELECT_SOURCE": "Klik om bron te selecteren",
+				"SELECT_SOURCE_TYPE": "Selecteer brontype",
+				"ADD_SOURCE": "Nieuwe bron toevoegen",
+				"OPERATING_SYSTEM": "Besturingssysteem",
+				"ARCHITECTURE": "Architectuur"
 			},
 			"TYPE": "Plugintype",
 			"TYPE_PLACEHOLDER": "Selecteer plugintype",
@@ -4982,6 +4988,21 @@
 					"DESCRIPTION": "Weet u zeker dat u deze versie wilt herstellen?",
 					"CONFIRM": "Herstellen"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "Nieuwe bron aanmaken voor versie v{{ number }} van plugin {{ name }}",
+					"DESCRIPTION": "Weet u zeker dat u deze versie wilt aanmaken?",
+					"CONFIRM": "Aanmaken"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "Plugin installeren",
+				"DESCRIPTION": "Weet u zeker dat u deze plugin wilt installeren?",
+				"CONFIRM": "Installeren",
+				"VALIDATION": {
+					"REQUIRED": "Authenticatietoken is vereist"
+				}
 			}
 		},
 		"TOASTR": {
@@ -4991,6 +5012,12 @@
 					"UPDATED": "Pluginversie v{{number}} succesvol bijgewerkt!",
 					"DELETED": "Pluginversie succesvol verwijderd!",
 					"RESTORED": "Pluginversie succesvol hersteld!"
+				},
+				"SOURCE": {
+					"CREATED": "Pluginbron succesvol aangemaakt!",
+					"UPDATED": "Pluginbron succesvol bijgewerkt!",
+					"DELETED": "Pluginbron succesvol verwijderd!",
+					"RESTORED": "Pluginbron succesvol hersteld!"
 				},
 				"UPLOADED": "Plugin succesvol geüpload!",
 				"UPDATED": "Plugin succesvol bijgewerkt!",
@@ -5005,6 +5032,12 @@
 					"DELETING": "Pluginversie wordt verwijderd...",
 					"RESTORING": "Pluginversie wordt hersteld..."
 				},
+				"SOURCE": {
+					"ADDING": "Nieuwe bron toevoegen...",
+					"UPDATING": "Pluginversie bijwerken...",
+					"DELETING": "Pluginversie verwijderen...",
+					"RESTORING": "Pluginversie herstellen..."
+				},
 				"UPLOADING": "Plugin wordt geüpload...",
 				"UPDATING": "Plugin wordt bijgewerkt...",
 				"DELETING": "Plugin wordt verwijderd...",
@@ -5014,6 +5047,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "Herstellen van pluginversie mislukt. Probeer het opnieuw!"
+				},
+				"SOURCE": {
+					"RESTORE": "Kan pluginbron niet herstellen. Probeer het opnieuw!"
 				},
 				"UPLOAD": "Uploaden van plugin mislukt. Probeer het opnieuw!",
 				"NOT_FOUND": "Plugin met ID {{ id }} niet gevonden.",

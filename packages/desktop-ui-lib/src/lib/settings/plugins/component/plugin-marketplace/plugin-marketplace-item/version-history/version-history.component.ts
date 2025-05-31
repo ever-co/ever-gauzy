@@ -56,11 +56,14 @@ export class VersionHistoryComponent implements OnInit, OnDestroy {
 	}
 
 	public load(): void {
+		if (!this.pluginId) {
+			return;
+		}
 		this.action.dispatch(
 			PluginVersionActions.getAll(this.pluginId, {
 				skip: this.skip,
 				take: this.take,
-				relations: ['plugin', 'source'],
+				relations: ['plugin', 'sources'],
 				order: { releaseDate: 'DESC' },
 				withDeleted: true
 			})

@@ -1,4 +1,4 @@
-import { ID, IPluginVersion } from '@gauzy/contracts';
+import { ID } from '@gauzy/contracts';
 import { Logger } from '@nestjs/common';
 import { DataSource, EntitySubscriberInterface, EventSubscriber, InsertEvent } from 'typeorm';
 import { Plugin } from '../../domain/entities/plugin.entity';
@@ -7,6 +7,7 @@ import { PluginSourceService } from '../../domain/services/plugin-source.service
 import { PluginInstallationService } from '../../domain/services/plugin-installation.service';
 import { RequestContext } from '@gauzy/core';
 import { PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
+import { IPluginVersion } from '../../shared/models/plugin-version.model';
 
 @EventSubscriber()
 export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
@@ -39,6 +40,8 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 		if (!event.entity) return;
 
 		const entity = event.entity;
+		// Set uploadedBy and uploadedAt
+		entity.uploadedById = RequestContext.currentEmployeeId();
 		entity.uploadedAt = new Date();
 		// Normalize string fields
 		if (entity.name) entity.name = entity.name.trim();
@@ -64,20 +67,26 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			// Compute latest version
 			const version = await this.computeLatestVersion(entity.id);
 
-			// Compute latest source associated to version
-			const source = version
-				? await this.pluginSourceService.findOneOrFailByWhereOptions({
-						versions: {
-							id: version.id
-						}
-				  })
-				: { success: false, record: null };
 			// compute installation
 			const installation = await this.pluginInstallationService.findOneOrFailByWhereOptions({
 				pluginId: entity.id,
 				installedById: RequestContext.currentEmployeeId(),
 				status: PluginInstallationStatus.INSTALLED
 			});
+
+			// Compute latest source associated to version
+			const source = version
+				? await this.pluginSourceService.findOneOrFailByOptions({
+						where: {
+							version: {
+								id: version.id
+							}
+						},
+						order: {
+							createdAt: 'DESC'
+						}
+				  })
+				: { success: false, record: null };
 
 			// Add the computed property to the entity
 			entity.downloadCount = downloadCount;
@@ -148,7 +157,7 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			// This is needed because SQL doesn't natively support semantic version sorting
 			const allVersions = await this.pluginVersionService.typeOrmPluginVersionRepository
 				.createQueryBuilder('version')
-				.leftJoinAndSelect('version.source', 'source')
+				.leftJoinAndSelect('version.sources', 'sources')
 				.where('version.pluginId = :pluginId', { pluginId })
 				.getMany();
 

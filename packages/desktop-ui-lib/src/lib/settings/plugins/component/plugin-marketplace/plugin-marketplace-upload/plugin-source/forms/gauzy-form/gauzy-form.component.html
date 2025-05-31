@@ -1,0 +1,14 @@
+<lib-form-section *ngIf="form" [formGroup]="form" class="source-inputs">
+	<lib-file-upload
+		*ngIf="form.get('file')"
+		[allowedExtensions]="['.zip']"
+		[maxFileSize]="1024 * 1024 * 1024"
+		[dragDropText]="'PLUGIN.FORM.FILE_UPLOAD.DRAG_DROP' | translate"
+		[orText]="'PLUGIN.FORM.OR' | translate"
+		[browseText]="'PLUGIN.FORM.FILE_UPLOAD.BROWSE' | translate"
+		[restrictionsText]="'PLUGIN.FORM.FILE_UPLOAD.RESTRICTIONS' | translate"
+		[removeText]="'PLUGIN.FORM.FILE_UPLOAD.REMOVE' | translate"
+		(fileSelected)="onFileSelected($event)"
+		(fileRemoved)="removeFile()"
+	></lib-file-upload>
+</lib-form-section>
