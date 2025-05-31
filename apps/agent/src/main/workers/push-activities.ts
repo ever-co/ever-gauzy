@@ -194,7 +194,16 @@ class PushActivities {
 					if (timeSlot?.id) {
 						await this.saveImage(
 							moment(activity.timeStart).toISOString(),
-							typeof activity.screenshots === 'string' ? JSON.parse(activity.screenshots) : [],
+							typeof activity.screenshots === 'string' 
+								? (() => {
+									try {
+										return JSON.parse(activity.screenshots);
+									} catch (error) {
+										console.error('Failed to parse screenshots:', error);
+										return [];
+									}
+								})()
+								: activity.screenshots || [],
 							timeSlot?.id
 						);
 					}
