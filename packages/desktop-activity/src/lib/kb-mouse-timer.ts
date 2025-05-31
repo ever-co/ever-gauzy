@@ -3,12 +3,13 @@ export class KbMouseTimer {
 
 	private flushIntervalSeconds = 60;
 	private intervalId: ReturnType<typeof setInterval> | null = null;
-	private onFlushCallback: ((timeData: { timeStart: Date; timeEnd: Date }, screenShot?: boolean) => void) | null = null;
+	private onFlushCallback: ((timeData: { timeStart: Date; timeEnd: Date }, screenShot?: boolean) => void) | null =
+		null;
 	private screenshotIntervalSeconds = 60;
 	private lastFlushTime: Date = new Date();
 	private lastScreenshotTime: Date = new Date();
 
-	private constructor() { }
+	private constructor() {}
 
 	public static getInstance(): KbMouseTimer {
 		if (!KbMouseTimer.instance) {
@@ -31,7 +32,7 @@ export class KbMouseTimer {
 
 	public start(): void {
 		if (this.intervalId) {
-			console.warn("Timer is already running.");
+			console.warn('Timer is already running.');
 			return;
 		}
 
@@ -44,10 +45,13 @@ export class KbMouseTimer {
 		if (this.intervalId) {
 			clearInterval(this.intervalId);
 			if (this.onFlushCallback) {
-				this.onFlushCallback({
-					timeStart: this.lastFlushTime,
-					timeEnd: new Date()
-				}, true);
+				this.onFlushCallback(
+					{
+						timeStart: this.lastFlushTime,
+						timeEnd: new Date()
+					},
+					true
+				);
 			}
 			this.intervalId = null;
 		}
@@ -60,10 +64,13 @@ export class KbMouseTimer {
 		if (elapsedSeconds >= this.flushIntervalSeconds) {
 			if (this.onFlushCallback) {
 				if (elapsedSecondsScreenshot >= this.screenshotIntervalSeconds) {
-					this.onFlushCallback({
-						timeStart: this.lastFlushTime,
-						timeEnd: now
-					}, true);
+					this.onFlushCallback(
+						{
+							timeStart: this.lastFlushTime,
+							timeEnd: now
+						},
+						true
+					);
 					this.lastFlushTime = now;
 					this.lastScreenshotTime = now;
 				} else {
@@ -73,9 +80,7 @@ export class KbMouseTimer {
 					});
 					this.lastFlushTime = now;
 				}
-
 			}
 		}
 	}
 }
-

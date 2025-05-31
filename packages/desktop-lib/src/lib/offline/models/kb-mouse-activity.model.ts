@@ -1,24 +1,20 @@
 import { Serializable } from '../../interfaces';
-import { KbMouseActivityTO,  TMouseEvents } from '../dto/kb-mouse-activity.dto';
+import { KbMouseActivityTO, TMouseEvents } from '../dto/kb-mouse-activity.dto';
 import { Base } from './base.model';
 
 export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializable<KbMouseActivityTO> {
 	private _timeStart: Date;
 	private _timeEnd: Date | null;
 	private _kbPressCount: number;
-	private _kbSequence: number[];
+	private _kbSequence: number[] | string;
 	private _mouseMovementsCount: number;
 	private _mouseLeftClickCount: number;
 	private _mouseRightClickCount: number;
-	private _mouseEvents: TMouseEvents[];
-	private _screenshots: string[]
+	private _mouseEvents: TMouseEvents[] | string;
+	private _screenshots: string[] | string;
 
 	constructor(kbMouseActivity: KbMouseActivityTO) {
-		super(
-			kbMouseActivity.id,
-			kbMouseActivity.tenantId,
-			kbMouseActivity.organizationId
-		);
+		super(kbMouseActivity.id, kbMouseActivity.tenantId, kbMouseActivity.organizationId);
 		this._timeStart = kbMouseActivity.timeStart;
 		this._timeEnd = kbMouseActivity.timeEnd;
 		this._kbPressCount = kbMouseActivity.kbPressCount;
@@ -48,13 +44,13 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	public set kbPressCount(value: number) {
 		this._kbPressCount = value;
 	}
-	public get kbSequence(): number[] {
+	public get kbSequence(): number[] | string {
 		return this._kbSequence;
 	}
 	public set kbSequence(value: number[]) {
 		this._kbSequence = value;
 	}
-	public get mouseMovementsCount():number {
+	public get mouseMovementsCount(): number {
 		return this._mouseMovementsCount;
 	}
 	public set mouseMovementsCount(value: number) {
@@ -72,13 +68,13 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	public set mouseRightClickCount(value: number) {
 		this._mouseRightClickCount = value;
 	}
-	public get mouseEvents(): TMouseEvents[] {
+	public get mouseEvents(): TMouseEvents[] | string {
 		return this._mouseEvents;
 	}
-	public set mouseEvents(value: TMouseEvents[]) {
+	public set mouseEvents(value: TMouseEvents[] | string) {
 		this._mouseEvents = value;
 	}
-	public get screenshots(): string[] {
+	public get screenshots(): string[] | string {
 		return this._screenshots;
 	}
 	public set screenshots(value: string[]) {
@@ -99,7 +95,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 			organizationId: this.organizationId,
 			tenantId: this.tenantId,
 			remoteId: this.remoteId,
-			screenshots: this.screenshots
+			screenshots: Array.isArray(this.screenshots) ? this.screenshots : []
 		};
 	}
 }

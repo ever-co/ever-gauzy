@@ -2,16 +2,21 @@ import {
 	FileStorageProviderEnum,
 	IBasePerTenantAndOrganizationEntityModel,
 	ID,
+	PluginOSArch,
+	PluginOSType,
 	PluginSourceType
 } from '@gauzy/contracts';
 import { IPluginVersion } from './plugin-version.model';
 
-export interface IPluginSourceUpdate extends Partial<Omit<IPluginSource, 'storageProvider' | 'versions'>> {
+export interface IPluginSourceUpdate extends Partial<Omit<IPluginSource, 'storageProvider' | 'versions' | 'fullName'>> {
 	id: ID;
 }
 
 export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel {
 	type: PluginSourceType; // Type of the plugin source (CDN, NPM, File Upload)
+	operatingSystem: PluginOSType; // Operating system type
+	architecture: PluginOSArch; // CPU architecture
+	fullName?: string; // Full name of the plugin source
 
 	// CDN Source
 	url?: string; // URL of the plugin source
@@ -21,7 +26,7 @@ export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel 
 	// NPM Source
 	name?: string; // NPM package name
 	registry?: string; // NPM registry URL
-	authToken?: string; // NPM authentication token
+	private?: boolean; // NPM authentication token
 	scope?: string; // NPM scope
 
 	// File Upload (Gauzy source)
@@ -34,6 +39,7 @@ export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel 
 	// Storage
 	storageProvider?: FileStorageProviderEnum;
 
-	// Associated versions
-	versions?: IPluginVersion[]; // List of plugin versions
+	// Associated version
+	version: IPluginVersion; // Associated plugin version
+	versionId?: ID; // Associated plugin version ID
 }

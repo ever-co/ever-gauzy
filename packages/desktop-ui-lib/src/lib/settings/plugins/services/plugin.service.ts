@@ -1,9 +1,10 @@
 import { HttpClient, HttpEvent, HttpEventType, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { ID, IPagination, IPlugin, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
+import { ID, IPagination, IPlugin, IPluginSource, IPluginVersion } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { catchError, map, Observable } from 'rxjs';
 import { Store } from '../../../services';
+import { PluginFormDataBuilder } from './builders/form-data.builder';
 
 @Injectable({
 	providedIn: 'root'
@@ -23,109 +24,29 @@ export class PluginService {
 		return this.http.get<IPlugin>(`${this.endPoint}/${id}`, { params: toParams(params) });
 	}
 
-	private createFormData(data: Partial<IPlugin>): FormData {
-		const common = { organizationId: this.store.organizationId, tenantId: this.store.tenantId };
-
-		// Strictly map all properties of ICreatePlugin and IUpdatePlugin
-		const plugin = {
-			...(data.id && { id: data.id }),
-			name: data.name,
-			description: data.description,
-			type: data.type,
-			status: data.status,
-			author: data.author,
-			license: data.license,
-			homepage: data.homepage,
-			repository: data.repository,
-			...common,
-			version: data.version
-				? {
-						...(data.version.id && { id: data.version.id }),
-
-						number: data.version.number,
-						changelog: data.version.changelog,
-						releaseDate: this.toISOString(data.version.releaseDate),
-						...common,
-						source: data.version.source
-							? {
-									...(data.version.source.id && { id: data.version.source.id }),
-									type: data.version.source.type,
-									...(data.version.source.type === PluginSourceType.CDN && {
-										url: data.version.source.url,
-										integrity: data.version.source.integrity,
-										crossOrigin: data.version.source.crossOrigin
-									}),
-									...(data.version.source.type === PluginSourceType.NPM && {
-										name: data.version.source.name,
-										registry: data.version.source.registry,
-										authToken: data.version.source.authToken,
-										scope: data.version.source.scope
-									}),
-									...common
-							  }
-							: undefined // Source details
-				  }
-				: undefined // Current version
-		};
-
-		// Remove undefined values to avoid sending empty fields
-		const filtered = Object.fromEntries(Object.entries(plugin).filter(([_, value]) => value !== undefined));
-
-		// Append plugin data as JSON
-		const formData = this.jsonToFormData(filtered);
-
-		// Extract and append the file from `source.file` (if available)
-		const file = data.version.source && 'file' in data.version.source ? data.version.source.file : undefined;
-		if (file instanceof File) {
-			formData.append('file', file, file.name);
-		}
-
-		return formData;
-	}
-
-	private toISOString(value: Date | string) {
-		return new Date(value).toISOString();
-	}
-
-	public buildFormData<T>(formData: FormData, data: T, parentKey?: string) {
-		if (data && typeof data === 'object' && !(data instanceof Date) && !(data instanceof File)) {
-			Object.keys(data).forEach((key) => {
-				this.buildFormData(formData, data[key], parentKey ? `${parentKey}[${key}]` : key);
-			});
-		} else {
-			const value = data == null ? '' : data;
-			formData.append(parentKey, value as any);
-		}
-	}
-
-	public jsonToFormData<T>(data: T) {
-		const formData = new FormData();
-		this.buildFormData(formData, data);
-		return formData;
-	}
-
 	public upload(plugin: IPlugin): Observable<{ plugin?: IPlugin; progress?: number }> {
+		const formData = new PluginFormDataBuilder(this.store)
+			.appendPlugin(plugin)
+			.appendFiles(plugin?.version?.sources)
+			.build();
+
 		return this.http
-			.post<IPlugin>(this.endPoint, this.createFormData(plugin), {
+			.post<IPlugin>(this.endPoint, formData, {
 				reportProgress: true,
 				observe: 'events'
 			})
 			.pipe(
-				map((event: HttpEvent<IPlugin>) => {
-					if (event.type === HttpEventType.UploadProgress) {
-						return { plugin: null, progress: event.loaded / (event.total ?? event.loaded) };
-					} else if (event instanceof HttpResponse) {
-						return { plugin: event.body, progress: 1 };
-					}
-				}),
-				catchError((error) => {
-					throw error;
-				})
+				this.handleProgressResponse<IPlugin>(),
+				map((res) => ({ ...res, plugin: res?.data }))
 			);
 	}
 
 	public update(pluginId: ID, plugin: Partial<IPlugin>): Observable<IPlugin> {
-		const formData = this.createFormData(plugin);
+		const formData = new PluginFormDataBuilder(this.store)
+			.appendPlugin(plugin)
+			.appendFiles(plugin?.version?.sources)
+			.build();
+
 		return this.http.put<IPlugin>(`${this.endPoint}/${pluginId}`, formData);
 	}
 
@@ -161,71 +82,23 @@ export class PluginService {
 		return this.http.patch<void>(`${this.endPoint}/${pluginId}/deactivate`, null);
 	}
 
-	private createVersionFormData(data: IPluginVersion): FormData {
-		const common = { organizationId: this.store.organizationId, tenantId: this.store.tenantId };
-
-		// Strictly map all properties of ICreatePlugin and IUpdatePlugin
-		const version = {
-			...(data.id && { id: data.id }),
-			number: data.number,
-			changelog: data.changelog,
-			releaseDate: this.toISOString(data.releaseDate),
-			...common,
-			source: data.source
-				? {
-						...(data.source.id && { id: data.source.id }),
-						type: data.source.type,
-						...(data.source.type === PluginSourceType.CDN && {
-							url: data.source.url,
-							integrity: data.source.integrity,
-							crossOrigin: data.source.crossOrigin
-						}),
-						...(data.source.type === PluginSourceType.NPM && {
-							name: data.source.name,
-							registry: data.source.registry,
-							authToken: data.source.authToken,
-							scope: data.source.scope
-						}),
-						...common
-				  }
-				: undefined // Source details
-		};
-
-		// Remove undefined values to avoid sending empty fields
-		const filtered = Object.fromEntries(Object.entries(version).filter(([_, value]) => value !== undefined));
-
-		// Append plugin data as JSON
-		const formData = this.jsonToFormData(filtered);
-
-		// Extract and append the file from `source.file` (if available)
-		const file = data.source && 'file' in data.source ? data.source.file : undefined;
-		if (file instanceof File) {
-			formData.append('file', file, file.name);
-		}
-
-		return formData;
-	}
-
 	public addVersion(
 		pluginId: string,
 		version: IPluginVersion
 	): Observable<{ version?: IPluginVersion; progress?: number }> {
+		const formData = new PluginFormDataBuilder(this.store)
+			.appendVersion(version)
+			.appendFiles(version?.sources)
+			.build();
+
 		return this.http
-			.post<IPluginVersion>(`${this.endPoint}/${pluginId}/versions`, this.createVersionFormData(version), {
+			.post<IPluginVersion>(`${this.endPoint}/${pluginId}/versions`, formData, {
 				reportProgress: true,
 				observe: 'events'
 			})
 			.pipe(
-				map((event: HttpEvent<IPluginVersion>) => {
-					if (event.type === HttpEventType.UploadProgress) {
-						return { version: null, progress: event.loaded / (event.total ?? event.loaded) };
-					} else if (event instanceof HttpResponse) {
-						return { version: event.body, progress: 1 };
-					}
-				}),
-				catchError((error) => {
-					throw error;
-				})
+				this.handleProgressResponse<IPluginVersion>(),
+				map((res) => ({ ...res, version: res?.data }))
 			);
 	}
 
@@ -234,11 +107,14 @@ export class PluginService {
 			params: toParams(params)
 		});
 	}
+
 	public updateVersion(pluginId: string, versionId: string, version: IPluginVersion): Observable<IPluginVersion> {
-		return this.http.put<IPluginVersion>(
-			`${this.endPoint}/${pluginId}/versions/${versionId}`,
-			this.createVersionFormData(version)
-		);
+		const formData = new PluginFormDataBuilder(this.store)
+			.appendVersion(version)
+			.appendFiles(version?.sources)
+			.build();
+
+		return this.http.put<IPluginVersion>(`${this.endPoint}/${pluginId}/versions/${versionId}`, formData);
 	}
 
 	public deleteVersion(pluginId: ID, versionId: ID): Observable<void> {
@@ -247,5 +123,65 @@ export class PluginService {
 
 	public restoreVersion(pluginId: ID, versionId: ID): Observable<void> {
 		return this.http.post<void>(`${this.endPoint}/${pluginId}/versions/${versionId}`, {});
+	}
+
+	public getSources<T>(pluginId: ID, versionId: ID, params: T): Observable<IPagination<IPluginSource>> {
+		return this.http.get<IPagination<IPluginSource>>(`${this.endPoint}/${pluginId}/versions/${versionId}/sources`, {
+			params: toParams(params)
+		});
+	}
+
+	public deleteSource(pluginId: ID, versionId: ID, sourceId: ID): Observable<void> {
+		return this.http.delete<void>(`${this.endPoint}/${pluginId}/versions/${versionId}/sources/${sourceId}`);
+	}
+
+	public restoreSource(pluginId: ID, versionId: ID, sourceId: ID): Observable<void> {
+		return this.http.patch<void>(`${this.endPoint}/${pluginId}/versions/${versionId}/sources/${sourceId}`, {
+			deleted: false
+		});
+	}
+
+	public addSources(
+		pluginId: ID,
+		versionId: ID,
+		sources: IPluginSource[]
+	): Observable<{ sources?: IPluginSource[]; progress?: number }> {
+		const formData = new PluginFormDataBuilder(this.store)
+			.appendSource(sources, 'sources')
+			.appendFiles(sources)
+			.build();
+
+		return this.http
+			.post<IPluginSource[]>(`${this.endPoint}/${pluginId}/versions/${versionId}/sources`, formData, {
+				reportProgress: true,
+				observe: 'events'
+			})
+			.pipe(
+				this.handleProgressResponse<IPluginSource[]>(),
+				map((res) => ({ ...res, sources: res?.data }))
+			);
+	}
+
+	private handleProgressResponse<T>() {
+		return (source: Observable<HttpEvent<T>>) => {
+			return source.pipe(
+				map((event: HttpEvent<T>) => {
+					if (event.type === HttpEventType.UploadProgress) {
+						return {
+							data: null,
+							progress: event.loaded / (event.total ?? event.loaded)
+						};
+					} else if (event instanceof HttpResponse) {
+						return {
+							data: event.body as T,
+							progress: 1
+						};
+					}
+				}),
+				catchError((error) => {
+					throw error;
+				})
+			);
+		};
 	}
 }

@@ -175,7 +175,8 @@
 		"MARKETPLACE": "Marktplatz",
 		"READ_MORE": "Mehr lesen",
 		"READ_LESS": "Weniger lesen",
-		"RECOVER": "Wiederherstellen"
+		"RECOVER": "Wiederherstellen",
+		"ADD_MORE_SOURCES": "Weitere Quellen hinzufügen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -597,6 +598,8 @@
 			"BUDGET": "Haushalt",
 			"HOURS": "Stunden",
 			"COST": "Kosten",
+			"MAKE_COM_CLIENT_ID": "Geben Sie Ihre Make.com Client-ID ein",
+			"MAKE_COM_CLIENT_SECRET": "Geben Sie Ihr Make.com Client-Geheimnis ein",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Schulname",
 				"DEGREE": "Abschluss/Urkunde",
@@ -830,6 +833,7 @@
 		"POSITIONS": "Positionen",
 		"INTEGRATIONS": "Apps und Integrationen",
 		"UPWORK": "Upwork",
+		"MAKE_COM": "Make.com",
 		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Vorschläge",
 		"TIME_OFF": "Freizeit",
@@ -1274,6 +1278,21 @@
 			"CONTRACTS_RELATED_DATA": "Synchronisierte Vertragsbezogene Einheiten",
 			"DATE_RANGE_PLACEHOLDER": "Wählen Sie ein Datum zwischen.",
 			"HOURLY": "Stündlich"
+		},
+		"MAKE_COM_PAGE": {
+			"CLIENT_ID": "Client-ID",
+			"CLIENT_SECRET": "Client-Geheimnis",
+			"NEXT_STEP_INFO": "Nach der Autorisierung werden Sie zu Make.com weitergeleitet, um die Integration abzuschließen"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Make.com Einstellungen",
+				"ENABLE_INTEGRATION": "Make.com Integration aktivieren",
+				"WEBHOOK_URL": "Webhook-URL",
+				"WEBHOOK_URL_PLACEHOLDER": "Webhook-URL eingeben",
+				"WEBHOOK_URL_INVALID": "Bitte geben Sie eine gültige Webhook-URL ein",
+				"SAVE": "Einstellungen speichern"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Gauzy KI",
@@ -4900,7 +4919,12 @@
 			"OR": "Oder",
 			"RELEASE_DATE": "Erscheinungsdatum",
 			"CHANGELOG": "Änderungsprotokoll",
-			"CHANGELOG_PLACEHOLDER": "Geben Sie den Änderungsprotokoll ein"
+			"CHANGELOG_PLACEHOLDER": "Geben Sie den Änderungsprotokoll ein",
+			"CLICK_TO_SELECT_SOURCE": "Klicken, um Quelle auszuwählen",
+			"SELECT_SOURCE_TYPE": "Quellentyp auswählen",
+			"ADD_SOURCE": "Neue Quelle hinzufügen",
+			"OPERATING_SYSTEM": "Betriebssystem",
+			"ARCHITECTURE": "Architektur"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Nutzungsstatistiken",
@@ -4960,6 +4984,21 @@
 					"DESCRIPTION": "Sind Sie sicher, dass Sie diese Version wiederherstellen möchten?",
 					"CONFIRM": "Wiederherstellen"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "Neue Quelle für Version v{{ number }} des Plugins {{ name }} erstellen",
+					"DESCRIPTION": "Sind Sie sicher, dass Sie diese Version erstellen möchten?",
+					"CONFIRM": "Erstellen"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "Plugin installieren",
+				"DESCRIPTION": "Sind Sie sicher, dass Sie dieses Plugin installieren möchten?",
+				"CONFIRM": "Installieren",
+				"VALIDATION": {
+					"REQUIRED": "Authentifizierungstoken ist erforderlich"
+				}
 			}
 		},
 		"TOASTR": {
@@ -4969,6 +5008,12 @@
 					"UPDATED": "Plugin-Version v{{number}} erfolgreich aktualisiert!",
 					"DELETED": "Plugin-Version erfolgreich gelöscht!",
 					"RESTORED": "Plugin-Version erfolgreich wiederhergestellt!"
+				},
+				"SOURCE": {
+					"CREATED": "Plugin-Quelle erfolgreich erstellt!",
+					"UPDATED": "Plugin-Quelle erfolgreich aktualisiert!",
+					"DELETED": "Plugin-Quelle erfolgreich gelöscht!",
+					"RESTORED": "Plugin-Quelle erfolgreich wiederhergestellt!"
 				},
 				"UPLOADED": "Plugin erfolgreich hochgeladen!",
 				"UPDATED": "Plugin erfolgreich aktualisiert!",
@@ -4983,6 +5028,12 @@
 					"DELETING": "Plugin-Version wird gelöscht...",
 					"RESTORING": "Plugin-Version wird wiederhergestellt..."
 				},
+				"SOURCE": {
+					"ADDING": "Neue Quelle wird hinzugefügt...",
+					"UPDATING": "Plugin-Version wird aktualisiert...",
+					"DELETING": "Plugin-Version wird gelöscht...",
+					"RESTORING": "Plugin-Version wird wiederhergestellt..."
+				},
 				"UPLOADING": "Plugin wird hochgeladen...",
 				"UPDATING": "Plugin wird aktualisiert...",
 				"DELETING": "Plugin wird gelöscht...",
@@ -4992,6 +5043,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "Wiederherstellung der Plugin-Version fehlgeschlagen. Bitte versuchen Sie es erneut!"
+				},
+				"SOURCE": {
+					"RESTORE": "Fehler beim Wiederherstellen der Plugin-Quelle. Bitte versuchen Sie es erneut!"
 				},
 				"UPLOAD": "Hochladen des Plugins fehlgeschlagen. Bitte versuchen Sie es erneut!",
 				"NOT_FOUND": "Plugin mit ID {{ id }} nicht gefunden.",

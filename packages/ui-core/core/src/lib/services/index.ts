@@ -35,6 +35,7 @@ export * from './job';
 export * from './key-result';
 export * from './language';
 export * from './layout';
+export * from './make-com';
 export * from './merchant';
 export * from './nav-builder';
 export * from './navigation';

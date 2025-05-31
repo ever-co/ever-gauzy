@@ -1,10 +1,11 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
 import { IPlugin } from './plugin.model';
 import { IPluginSource, IPluginSourceUpdate } from './plugin-source.model';
+import { IPluginInstallation } from './plugin-installation.model';
 
 export interface IPluginVersionUpdate extends Partial<Pick<IPluginVersion, 'number' | 'changelog' | 'releaseDate'>> {
 	id: ID;
-	source?: IPluginSourceUpdate;
+	sources?: IPluginSourceUpdate[];
 }
 
 export interface IPluginVersion extends IBasePerTenantAndOrganizationEntityModel {
@@ -15,9 +16,8 @@ export interface IPluginVersion extends IBasePerTenantAndOrganizationEntityModel
 	plugin?: IPlugin; // Associated plugin entity
 	pluginId?: ID; // Optional ID of the associated plugin
 
-	source?: IPluginSource; // Associated plugin entity
-	sourceId?: ID; // Optional ID of the associated plugin
-
+	sources?: IPluginSource[]; // Associated plugin IBasePerTenantAndOrganizationEntityModel
+	installations?: IPluginInstallation[];
 	// Security and integrity
 	checksum?: string; // Verification hash
 	signature?: string; // Digital signature for verification

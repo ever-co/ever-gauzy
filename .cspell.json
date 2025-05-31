@@ -357,6 +357,7 @@
 		"pdfmake",
 		"pdfmaker",
 		"Pdfmaker",
+		"makecom",
 		"PERFLOG",
 		"PGBIN",
 		"pgcrypto",
@@ -636,6 +637,7 @@
 		"openzipkin",
 		"opensearchproject",
 		"nofile",
+		"nosniff",
 		"ICDN",
 		"INPM",
 		"ɵcmp",
@@ -665,7 +667,8 @@
 		"wrapp",
 		"dyld",
 		"oidc",
-		"Registerables"
+		"Registerables",
+		"Archs"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

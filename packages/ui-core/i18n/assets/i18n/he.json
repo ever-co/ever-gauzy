@@ -174,7 +174,8 @@
 		"ADD_VERSION": "הוסף גרסה",
 		"READ_MORE": "קרא עוד",
 		"READ_LESS": "קרא פחות",
-		"RECOVER": "שחזר"
+		"RECOVER": "שחזר",
+		"ADD_MORE_SOURCES": "הוסף יותר מקורות"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -603,6 +604,8 @@
 			"BUDGET": "Budget",
 			"HOURS": "Hours",
 			"COST": "Cost",
+			"MAKE_COM_CLIENT_ID": "הזן את מזהה הלקוח Make.com שלך",
+			"MAKE_COM_CLIENT_SECRET": "הזן את סיסמת הלקוח Make.com שלך",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -834,6 +837,7 @@
 		"POSITIONS": "עמדות",
 		"INTEGRATIONS": "Apps & Integrations",
 		"UPWORK": "Upwork",
+		"MAKE_COM": "Make.com",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"APPROVALS": "Approvals",
@@ -1277,6 +1281,21 @@
 			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
 			"HOURLY": "Hourly"
+		},
+		"MAKE_COM_PAGE": {
+			"CLIENT_ID": "מזהה לקוח",
+			"CLIENT_SECRET": "סיסמת לקוח",
+			"NEXT_STEP_INFO": "לאחר האישור, תועבר ל-Make.com להשלמת הגדרות האינטגרציה"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "הגדרות Make.com",
+				"ENABLE_INTEGRATION": "הפעל אינטגרציית Make.com",
+				"WEBHOOK_URL": "כתובת Webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "הזן כתובת webhook",
+				"WEBHOOK_URL_INVALID": "אנא הזן כתובת webhook תקינה",
+				"SAVE": "שמור הגדרות"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"TITLE": "Gauzy AI Integration",
@@ -4893,7 +4912,12 @@
 			"OR": "או",
 			"RELEASE_DATE": "תאריך הרישיון",
 			"CHANGELOG": "יומן השינויים",
-			"CHANGELOG_PLACEHOLDER": "הזן יומן השינויים"
+			"CHANGELOG_PLACEHOLDER": "הזן יומן השינויים",
+			"CLICK_TO_SELECT_SOURCE": "לחץ כדי לבחור מקור",
+			"SELECT_SOURCE_TYPE": "בחר סוג מקור",
+			"ADD_SOURCE": "הוסף מקור חדש",
+			"OPERATING_SYSTEM": "מערכת הפעלה",
+			"ARCHITECTURE": "ארכיטקטורה"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "סטטיסטיקות שימוש",
@@ -4953,6 +4977,21 @@
 					"DESCRIPTION": "האם אתה בטוח שברצונך לשחזר גרסה זו?",
 					"CONFIRM": "שחזר"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "צור מקור חדש לגרסה v{{ number }} של התוסף {{ name }}",
+					"DESCRIPTION": "האם אתה בטוח שברצונך ליצור גרסה זו?",
+					"CONFIRM": "צור"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "התקנת תוסף",
+				"DESCRIPTION": "האם אתה בטוח שברצונך להתקין תוסף זה?",
+				"CONFIRM": "התקן",
+				"VALIDATION": {
+					"REQUIRED": "נדרש אסימון אימות"
+				}
 			}
 		},
 		"TOASTR": {
@@ -4962,6 +5001,12 @@
 					"UPDATED": "גרסת התוסף v{{number}} עודכנה בהצלחה!",
 					"DELETED": "גרסת התוסף נמחקה בהצלחה!",
 					"RESTORED": "גרסת התוסף שוחזרה בהצלחה!"
+				},
+				"SOURCE": {
+					"CREATED": "מקור התוסף נוצר בהצלחה!",
+					"UPDATED": "מקור התוסף עודכן בהצלחה!",
+					"DELETED": "מקור התוסף נמחק בהצלחה!",
+					"RESTORED": "מקור התוסף שוחזר בהצלחה!"
 				},
 				"UPLOADED": "התוסף הועלה בהצלחה!",
 				"UPDATED": "התוסף עודכן בהצלחה!",
@@ -4976,6 +5021,12 @@
 					"DELETING": "מוחק גרסת תוסף...",
 					"RESTORING": "משחזר גרסת תוסף..."
 				},
+				"SOURCE": {
+					"ADDING": "מוסיף מקור חדש...",
+					"UPDATING": "מעדכן גרסת תוסף...",
+					"DELETING": "מוחק גרסת תוסף...",
+					"RESTORING": "משחזר גרסת תוסף..."
+				},
 				"UPLOADING": "מעלה תוסף...",
 				"UPDATING": "מעדכן תוסף...",
 				"DELETING": "מוחק תוסף...",
@@ -4985,6 +5036,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "שחזור גרסת התוסף נכשל. נא לנסות שוב!"
+				},
+				"SOURCE": {
+					"RESTORE": "שחזור מקור התוסף נכשל. אנא נסה שוב!"
 				},
 				"UPLOAD": "העלאת התוסף נכשלה. נא לנסות שוב!",
 				"NOT_FOUND": "תוסף עם מזהה {{ id }} לא נמצא.",

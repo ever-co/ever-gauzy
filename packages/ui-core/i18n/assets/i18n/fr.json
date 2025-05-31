@@ -175,7 +175,8 @@
 		"ADD_VERSION": "Ajouter une version",
 		"READ_MORE": "Lire plus",
 		"READ_LESS": "Lire moins",
-		"RECOVER": "Récupérer"
+		"RECOVER": "Récupérer",
+		"ADD_MORE_SOURCES": "Ajouter plus de sources"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -598,6 +599,8 @@
 			"BUDGET": "Budget",
 			"HOURS": "Heures",
 			"COST": "Coût",
+			"MAKE_COM_CLIENT_ID": "Entrez votre identifiant client Make.com",
+			"MAKE_COM_CLIENT_SECRET": "Entrez votre clé secrète client Make.com",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Nom de l'école",
 				"DEGREE": "Degré / Diplôme",
@@ -831,6 +834,7 @@
 		"POSITIONS": "Postes",
 		"INTEGRATIONS": "Applications et intégrations",
 		"UPWORK": "Upwork",
+		"MAKE_COM": "Make.com",
 		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Proposition",
 		"TIME_OFF": "Congé",
@@ -1275,6 +1279,21 @@
 			"CONTRACTS_RELATED_DATA": "Entités liées aux contrats synchronisés",
 			"DATE_RANGE_PLACEHOLDER": "Choisissez une date entre",
 			"HOURLY": "Horaire"
+		},
+		"MAKE_COM_PAGE": {
+			"CLIENT_ID": "Identifiant Client",
+			"CLIENT_SECRET": "Clé Secrète Client",
+			"NEXT_STEP_INFO": "Après l'autorisation, vous serez redirigé vers Make.com pour finaliser la configuration de l'intégration"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Paramètres Make.com",
+				"ENABLE_INTEGRATION": "Activer l'intégration Make.com",
+				"WEBHOOK_URL": "URL du Webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "Entrez l'URL du webhook",
+				"WEBHOOK_URL_INVALID": "Veuillez entrer une URL de webhook valide",
+				"SAVE": "Enregistrer les paramètres"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Clé Gauzy AI",
@@ -4895,7 +4914,11 @@
 			"OR": "Ou",
 			"RELEASE_DATE": "Date de sortie",
 			"CHANGELOG": "Journal des modifications",
-			"CHANGELOG_PLACEHOLDER": "Entrez les modifications"
+			"CHANGELOG_PLACEHOLDER": "Entrez les modifications",
+			"CLICK_TO_SELECT_SOURCE": "Cliquez pour sélectionner une source",
+			"SELECT_SOURCE_TYPE": "Sélectionner le type de source",
+			"OPERATING_SYSTEM": "Système d'exploitation",
+			"ARCHITECTURE": "Architecture"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Statistiques d'utilisation",
@@ -4955,6 +4978,21 @@
 					"DESCRIPTION": "Êtes-vous sûr de vouloir restaurer cette version ?",
 					"CONFIRM": "Restaurer"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "Créer une nouvelle source pour la version v{{ number }} du plugin {{ name }}",
+					"DESCRIPTION": "Êtes-vous sûr de vouloir créer cette version ?",
+					"CONFIRM": "Créer"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "Installer le plugin",
+				"DESCRIPTION": "Êtes-vous sûr de vouloir installer ce plugin ?",
+				"CONFIRM": "Installer",
+				"VALIDATION": {
+					"REQUIRED": "Le jeton d'authentification est requis"
+				}
 			}
 		},
 		"TOASTR": {
@@ -4964,6 +5002,12 @@
 					"UPDATED": "Version du plugin v{{number}} mise à jour avec succès !",
 					"DELETED": "Version du plugin supprimée avec succès !",
 					"RESTORED": "Version du plugin restaurée avec succès !"
+				},
+				"SOURCE": {
+					"CREATED": "Source du plugin créée avec succès !",
+					"UPDATED": "Source du plugin mise à jour avec succès !",
+					"DELETED": "Source du plugin supprimée avec succès !",
+					"RESTORED": "Source du plugin restaurée avec succès !"
 				},
 				"UPLOADED": "Plugin téléchargé avec succès !",
 				"UPDATED": "Plugin mis à jour avec succès !",
@@ -4978,6 +5022,12 @@
 					"DELETING": "Suppression de la version du plugin...",
 					"RESTORING": "Restauration de la version du plugin..."
 				},
+				"SOURCE": {
+					"ADDING": "Ajout d'une nouvelle source...",
+					"UPDATING": "Mise à jour de la version du plugin...",
+					"DELETING": "Suppression de la version du plugin...",
+					"RESTORING": "Restauration de la version du plugin..."
+				},
 				"UPLOADING": "Téléchargement du plugin...",
 				"UPDATING": "Mise à jour du plugin...",
 				"DELETING": "Suppression du plugin...",
@@ -4987,6 +5037,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "Échec de la restauration de la version du plugin. Veuillez réessayer !"
+				},
+				"SOURCE": {
+					"RESTORE": "Échec de la restauration de la source du plugin. Veuillez réessayer !"
 				},
 				"UPLOAD": "Échec du téléchargement du plugin. Veuillez réessayer !",
 				"NOT_FOUND": "Plugin avec l'ID {{ id }} introuvable.",

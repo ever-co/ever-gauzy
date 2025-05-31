@@ -1,4 +1,4 @@
-import { FileStorageProviderEnum, PluginSourceType } from '@gauzy/contracts';
+import { FileStorageProviderEnum, IPluginSource, PluginSourceType } from '@gauzy/contracts';
 import { BaseEntityEventSubscriber, FileStorage } from '@gauzy/core';
 import { Logger } from '@nestjs/common';
 import { DataSource, EventSubscriber, InsertEvent, RemoveEvent } from 'typeorm';
@@ -71,6 +71,68 @@ export class PluginSourceSubscriber extends BaseEntityEventSubscriber<PluginSour
 				`Error deleting file for PluginSource entity with ID ${entity.id}: ${(error as Error).message}`
 			);
 		}
+	}
+
+	public async afterLoad(entity: PluginSource): Promise<void> {
+		if (!entity || !entity.id) {
+			return;
+		}
+		entity.fullName = this.generateFullName(entity);
+	}
+
+	/**
+	 * Generates a full name for a plugin source based on its type and properties
+	 * @param pluginSource The plugin source to generate the full name for
+	 * @returns A descriptive full name for the plugin source
+	 */
+	private generateFullName(source: IPluginSource): string {
+		const { type, operatingSystem, architecture, version } = source;
+
+		// Base parts that are common to all types
+		const baseParts = [`${version ? 'v' + version.number : undefined}`, operatingSystem, architecture];
+
+		// Type-specific parts
+		let typeSpecificPart = '';
+
+		switch (type) {
+			case PluginSourceType.CDN:
+				if (source.url) {
+					try {
+						const url = new URL(source.url);
+						typeSpecificPart = `cdn-${url.hostname}`;
+					} catch {
+						typeSpecificPart = 'cdn-source';
+					}
+				} else {
+					typeSpecificPart = 'cdn-source';
+				}
+				break;
+
+			case PluginSourceType.NPM:
+				typeSpecificPart = source.scope ? `npm-${source.scope}/${source.name}` : `npm-${source.name}`;
+				if (source.registry) {
+					try {
+						const registryUrl = new URL(source.registry);
+						typeSpecificPart += `-${registryUrl.hostname}`;
+					} catch {
+						// Ignore invalid registry URLs
+					}
+				}
+				break;
+
+			case PluginSourceType.GAUZY:
+				typeSpecificPart = source.fileName ? `file-${source.fileName.replace('.zip', '')}` : 'uploaded-file';
+				break;
+
+			default:
+				typeSpecificPart = 'unknown-source';
+		}
+
+		// Combine all parts and clean up any undefined/null values
+		const allParts = [...baseParts, typeSpecificPart].filter((part) => !!part);
+
+		// Join with underscores and convert to lowercase for consistency
+		return allParts.join('_').toLowerCase();
 	}
 
 	private getFileStorageProvider(storageProvider: string) {

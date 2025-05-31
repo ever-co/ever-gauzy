@@ -1,0 +1,16 @@
+@let sources = query.sources$| async; @let isAvailable = (query.count$ | async) > 0; @let isLoading = query.isLoading$ |
+async; @let selected = query.source$| async;
+
+<gauzy-select
+	class="w-100"
+	[selectedItem]="selected?.id"
+	[items]="sources"
+	bindLabel="fullName"
+	bindValue="id"
+	placeholder="PLUGIN.FORM.SOURCE"
+	[canAddTag]="false"
+	(modelChange)="onSourceChange($event)"
+	[isLoading]="isLoading"
+	(scrollToEnd)="loadMore()"
+>
+</gauzy-select>

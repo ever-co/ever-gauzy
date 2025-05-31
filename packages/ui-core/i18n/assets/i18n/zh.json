@@ -175,7 +175,8 @@
 		"ADD_VERSION": "添加版本",
 		"READ_MORE": "阅读更多",
 		"READ_LESS": "收起",
-		"RECOVER": "恢复"
+		"RECOVER": "恢复",
+		"ADD_MORE_SOURCES": "添加更多来源"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -669,6 +670,8 @@
 			"UPWORK_ORGANIZATION_NAME": "Upwork 组织名称",
 			"UPWORK_ID": "Upwork标识",
 			"LINKEDIN_ID": "领英帐号",
+			"MAKE_COM_CLIENT_ID": "输入您的Make.com客户端ID",
+			"MAKE_COM_CLIENT_SECRET": "输入您的Make.com客户端密钥",
 			"STANDARD_WORK_HOURS_PER_DAY": "输入每天的标准工作时间（例如 8 小时）"
 		},
 		"RATES": {
@@ -851,6 +854,7 @@
 		"DANGER_ZONE": "危险区",
 		"FILE_STORAGE": "文件存储",
 		"INVITE_PEOPLE": "邀请人们",
+		"MAKE_COM": "Make.com",
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "进口/出口",
 			"IMPORT_EXPORT_DATA": "导入/导出数据",
@@ -1259,6 +1263,7 @@
 			"GRANT_PERMISSION": "接下来，您将被带到Hubstaff以授予Gauzy权限。",
 			"ENTER_CLIENT_SECRET": "输入客户端秘钥以获取访问令牌。"
 		},
+
 		"UPWORK_PAGE": {
 			"ACTIVITIES": "活动",
 			"REPORTS": "报告",
@@ -1274,6 +1279,21 @@
 			"CONTRACTS_RELATED_DATA": "同步合同相关的实体",
 			"DATE_RANGE_PLACEHOLDER": "在之间选择日期",
 			"HOURLY": "每小时"
+		},
+		"MAKE_COM_PAGE": {
+			"CLIENT_ID": "客户端ID",
+			"CLIENT_SECRET": "客户端密钥",
+			"NEXT_STEP_INFO": "授权后，您将被重定向到Make.com以完成集成设置"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Make.com设置",
+				"ENABLE_INTEGRATION": "启用Make.com集成",
+				"WEBHOOK_URL": "Webhook URL",
+				"WEBHOOK_URL_PLACEHOLDER": "输入webhook URL",
+				"WEBHOOK_URL_INVALID": "请输入有效的webhook URL",
+				"SAVE": "保存设置"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Gauzy AI 密钥",
@@ -4904,7 +4924,12 @@
 			"OR": "或",
 			"RELEASE_DATE": "发布日期",
 			"CHANGELOG": "更新日志",
-			"CHANGELOG_PLACEHOLDER": "输入更新日志"
+			"CHANGELOG_PLACEHOLDER": "输入更新日志",
+			"CLICK_TO_SELECT_SOURCE": "点击选择来源",
+			"SELECT_SOURCE_TYPE": "选择来源类型",
+			"ADD_SOURCE": "添加新来源",
+			"OPERATING_SYSTEM": "操作系统",
+			"ARCHITECTURE": "架构"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "使用统计",
@@ -4964,6 +4989,21 @@
 					"DESCRIPTION": "您确定要恢复此版本吗？",
 					"CONFIRM": "恢复"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "为插件 {{ name }} 的版本 v{{ number }} 创建新源",
+					"DESCRIPTION": "您确定要创建此版本吗？",
+					"CONFIRM": "创建"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "安装插件",
+				"DESCRIPTION": "您确定要安装此插件吗？",
+				"CONFIRM": "安装",
+				"VALIDATION": {
+					"REQUIRED": "需要认证令牌"
+				}
 			}
 		},
 		"TOASTR": {
@@ -4973,6 +5013,12 @@
 					"UPDATED": "插件版本 v{{number}} 更新成功！",
 					"DELETED": "插件版本删除成功！",
 					"RESTORED": "插件版本恢复成功！"
+				},
+				"SOURCE": {
+					"CREATED": "插件源创建成功！",
+					"UPDATED": "插件源更新成功！",
+					"DELETED": "插件源删除成功！",
+					"RESTORED": "插件源恢复成功！"
 				},
 				"UPLOADED": "插件上传成功！",
 				"UPDATED": "插件更新成功！",
@@ -4987,6 +5033,12 @@
 					"DELETING": "正在删除插件版本...",
 					"RESTORING": "正在恢复插件版本..."
 				},
+				"SOURCE": {
+					"ADDING": "正在添加新源...",
+					"UPDATING": "正在更新插件版本...",
+					"DELETING": "正在删除插件版本...",
+					"RESTORING": "正在恢复插件版本..."
+				},
 				"UPLOADING": "正在上传插件...",
 				"UPDATING": "正在更新插件...",
 				"DELETING": "正在删除插件...",
@@ -4996,6 +5048,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "恢复插件版本失败。请重试！"
+				},
+				"SOURCE": {
+					"RESTORE": "恢复插件源失败。请再试一次！"
 				},
 				"UPLOAD": "上传插件失败。请重试！",
 				"NOT_FOUND": "未找到ID为 {{ id }} 的插件。",
