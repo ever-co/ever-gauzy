@@ -71,7 +71,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	public get mouseEvents(): TMouseEvents[] | string {
 		return this._mouseEvents;
 	}
-	public set mouseEvents(value: TMouseEvents[]) {
+	public set mouseEvents(value: TMouseEvents[] | string) {
 		this._mouseEvents = value;
 	}
 	public get screenshots(): string[] | string {
