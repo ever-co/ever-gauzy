@@ -1,5 +1,5 @@
 import { KbMouseActivityService, KbMouseActivityTO, TTimeSlot } from '@gauzy/desktop-lib';
-import { KbMouseActivityPool, TKbMouseActivity } from '@gauzy/desktop-activity';
+import { KbMouseActivityPool, TKbMouseActivity, TMouseEvents } from '@gauzy/desktop-activity';
 import { ApiService, TResponseTimeSlot } from '../api';
 import { getAuthConfig } from '../util';
 import * as moment from 'moment';
@@ -123,12 +123,16 @@ class PushActivities {
 				{ filePath: pathTemp }
 			);
 			if (respScreenshot?.timeSlotId) {
-				this.agentLogger.info(`Screenshot image successfully added to timeSlotId ${respScreenshot?.timeSlotId}`)
+				this.agentLogger.info(
+					`Screenshot image successfully added to timeSlotId ${respScreenshot?.timeSlotId}`
+				);
 				fs.unlinkSync(pathTemp);
 				this.agentLogger.info(`temp image unlink from the temp directory`);
 				return;
 			}
-			this.agentLogger.error(`Failed to save screenshots to the api with response ${JSON.stringify(respScreenshot)}`);
+			this.agentLogger.error(
+				`Failed to save screenshots to the api with response ${JSON.stringify(respScreenshot)}`
+			);
 		} catch (error) {
 			console.log(error);
 			throw error;
@@ -143,14 +147,20 @@ class PushActivities {
 	}
 
 	getActivities(activities: KbMouseActivityTO): TKbMouseActivity[] {
-		return [{
-			kbPressCount: activities.kbPressCount,
-			kbSequence: activities.kbSequence,
-			mouseLeftClickCount: activities.mouseLeftClickCount,
-			mouseRightClickCount: activities.mouseRightClickCount,
-			mouseMovementsCount: activities.mouseMovementsCount,
-			mouseEvents: activities.mouseEvents
-		}];
+		return [
+			{
+				kbPressCount: activities.kbPressCount,
+				kbSequence: (typeof activities.kbSequence === 'string'
+					? JSON.parse(activities.kbSequence)
+					: activities.kbSequence) as number[],
+				mouseLeftClickCount: activities.mouseLeftClickCount,
+				mouseRightClickCount: activities.mouseRightClickCount,
+				mouseMovementsCount: activities.mouseMovementsCount,
+				mouseEvents: (typeof activities.mouseEvents === 'string'
+					? JSON.parse(activities.mouseEvents)
+					: activities.mouseEvents) as TMouseEvents[]
+			}
+		];
 	}
 
 	timeSlotParams(activities: KbMouseActivityTO): TTimeSlot {
@@ -184,7 +194,7 @@ class PushActivities {
 					if (timeSlot?.id) {
 						await this.saveImage(
 							moment(activity.timeStart).toISOString(),
-							activity.screenshots ? JSON.parse(activity.screenshots) : [],
+							typeof activity.screenshots === 'string' ? JSON.parse(activity.screenshots) : [],
 							timeSlot?.id
 						);
 					}
