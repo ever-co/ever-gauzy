@@ -151,13 +151,27 @@ class PushActivities {
 			{
 				kbPressCount: activities.kbPressCount,
 				kbSequence: (typeof activities.kbSequence === 'string'
-					? (() => { try { return JSON.parse(activities.kbSequence); } catch { return []; } })()
+					? (() => {
+						try {
+							return JSON.parse(activities.kbSequence);
+						} catch (error) {
+							console.error('Failed to parse kbSequence:', error);
+							return [];
+						}
+					})()
 					: activities.kbSequence) as number[],
 				mouseLeftClickCount: activities.mouseLeftClickCount,
 				mouseRightClickCount: activities.mouseRightClickCount,
 				mouseMovementsCount: activities.mouseMovementsCount,
 				mouseEvents: (typeof activities.mouseEvents === 'string'
-					? JSON.parse(activities.mouseEvents)
+					? (() => {
+						try {
+							return JSON.parse(activities.mouseEvents);
+						} catch (error) {
+							console.error('Failed to parse mouseEvents:', error);
+							return [];
+						}
+					})()
 					: activities.mouseEvents) as TMouseEvents[]
 			}
 		];
