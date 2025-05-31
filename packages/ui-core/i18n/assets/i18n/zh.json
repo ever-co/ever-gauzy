@@ -1263,7 +1263,6 @@
 			"GRANT_PERMISSION": "接下来，您将被带到Hubstaff以授予Gauzy权限。",
 			"ENTER_CLIENT_SECRET": "输入客户端秘钥以获取访问令牌。"
 		},
-
 		"UPWORK_PAGE": {
 			"ACTIVITIES": "活动",
 			"REPORTS": "报告",
@@ -4866,7 +4865,8 @@
 				"LICENSE_TOO_LONG": "许可证字段过长",
 				"FAILED": "验证失败",
 				"CHANGELOG_TOO_SHORT": "更新日志过短",
-				"CHANGELOG_REQUIRED": "更新日志必填"
+				"CHANGELOG_REQUIRED": "更新日志必填",
+				"REQUIRED": "必填"
 			},
 			"TYPE": "插件类型",
 			"TYPE_PLACEHOLDER": "选择插件类型",

@@ -54,7 +54,7 @@
 	<lib-form-row *ngIf="form.get('private')">
 		<div class="form-group full-width">
 			<label class="label" for="npm-auth-token">{{ 'PLUGIN.FORM.NPM.AUTH_TOKEN' | translate }}</label>
-			<nb-toggle formControlName="private">Required</nb-toggle>
+			<nb-toggle formControlName="private">{{ 'PLUGIN.FORM.VALIDATION.REQUIRED' | translate }} </nb-toggle>
 		</div>
 	</lib-form-row>
 </lib-form-section>
