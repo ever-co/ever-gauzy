@@ -5017,7 +5017,8 @@
 				"LICENSE_TOO_LONG": "License field is too long",
 				"CHANGELOG_TOO_SHORT": "Changelog is too short",
 				"CHANGELOG_REQUIRED": "Changelog is required",
-				"FAILED": "Validation failed"
+				"FAILED": "Validation failed",
+				"REQUIRED": "Required"
 			},
 			"TYPE": "Plugin Type",
 			"TYPE_PLACEHOLDER": "Select plugin type",

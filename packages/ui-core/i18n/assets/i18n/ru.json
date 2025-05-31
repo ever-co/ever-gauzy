@@ -1301,7 +1301,6 @@
 				"SAVE": "Сохранить настройки"
 			}
 		},
-
 		"GAUZY_AI_PAGE": {
 			"TITLE": "Интеграция Gauzy AI",
 			"API_KEY": "Непрозрачный ключ AI",
@@ -4862,7 +4861,8 @@
 				"LICENSE_TOO_LONG": "Поле лицензии слишком длинное",
 				"FAILED": "Проверка не удалась",
 				"CHANGELOG_TOO_SHORT": "Changelog слишком короткий",
-				"CHANGELOG_REQUIRED": "Changelog обязателен"
+				"CHANGELOG_REQUIRED": "Changelog обязателен",
+				"REQUIRED": "Обязателен"
 			},
 			"TYPE": "Тип плагина",
 			"TYPE_PLACEHOLDER": "Выберите тип плагина",

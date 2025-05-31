@@ -4861,7 +4861,8 @@
 				"LICENSE_TOO_LONG": "Lizenzfeld ist zu lang",
 				"FAILED": "Validierung fehlgeschlagen",
 				"CHANGELOG_TOO_SHORT": "Changelog ist zu kurz",
-				"CHANGELOG_REQUIRED": "Changelog ist erforderlich"
+				"CHANGELOG_REQUIRED": "Changelog ist erforderlich",
+				"REQUIRED": "Erforderlich"
 			},
 			"TYPE": "Plugin-Typ",
 			"TYPE_PLACEHOLDER": "Wählen Sie den Plugin-Typ",

@@ -4856,7 +4856,8 @@
 				"LICENSE_TOO_LONG": "Le champ de la licence est trop long",
 				"FAILED": "Échec de la validation",
 				"CHANGELOG_TOO_SHORT": "Le changelog est trop court",
-				"CHANGELOG_REQUIRED": "Le changelog est requis"
+				"CHANGELOG_REQUIRED": "Le changelog est requis",
+				"REQUIRED": "Requis"
 			},
 			"TYPE": "Type de plugin",
 			"TYPE_PLACEHOLDER": "Sélectionnez le type de plugin",

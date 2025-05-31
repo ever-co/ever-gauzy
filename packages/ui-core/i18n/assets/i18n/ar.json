@@ -4850,7 +4850,8 @@
 				"LICENSE_TOO_LONG": "حقل الترخيص طويل جدًا",
 				"FAILED": "فشل التحقق",
 				"CHANGELOG_TOO_SHORT": "سجل التغييرات قصير جدًا",
-				"CHANGELOG_REQUIRED": "سجل التغييرات مطلوب"
+				"CHANGELOG_REQUIRED": "سجل التغييرات مطلوب",
+				"REQUIRED": "مطلوب"
 			},
 			"TYPE": "نوع الإضافة",
 			"TYPE_PLACEHOLDER": "اختر نوع الإضافة",
