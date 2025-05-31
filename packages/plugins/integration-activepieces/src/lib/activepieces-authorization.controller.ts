@@ -29,8 +29,21 @@ export class ActivepiecesAuthorizationController {
 	 */
 	@ApiOperation({ summary: 'Initiate OAuth flow with ActivePieces' })
 	@ApiResponse({
-		status: 302,
-		description: 'Redirects to ActivePieces authorization page'
+		status: 200,
+		description: 'Returns the ActivePieces authorization URL',
+		schema: {
+			type: 'object',
+			properties: {
+				authorizationUrl: {
+					type: 'string',
+					description: 'The URL to redirect the user to for authorization'
+				},
+				state: {
+					type: 'string',
+					description: 'The state parameter for CSRF protection'
+				}
+			}
+		}
 	})
 	@Get('/authorize')
 	async authorize(@Query() query: any, @Res() response: Response) {
@@ -57,8 +70,10 @@ export class ActivepiecesAuthorizationController {
 			// Construct the full authorization URL
 			const authorizationUrl = `${ACTIVEPIECES_OAUTH_AUTHORIZE_URL}?${authParams.toString()}`;
 
-			// Redirect user to ActivePieces authorization page
-			return response.redirect(authorizationUrl);
+			// Return the authorization URL in JSON format instead of redirecting
+			return response.json({
+				authorizationUrl
+			});
 		} catch (error: any) {
 			throw new HttpException(
 				`Failed to initiate ${IntegrationEnum.ACTIVE_PIECES} authorization: ${error.message}`,
