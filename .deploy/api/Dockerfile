@@ -141,6 +141,7 @@ COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
+COPY --chown=node:node packages/plugins/integration-activepieces/package.json ./packages/plugins/integration-activepieces/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
 COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
@@ -201,6 +202,7 @@ COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
+COPY --chown=node:node packages/plugins/integration-activepieces/package.json ./packages/plugins/integration-activepieces/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
 COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
@@ -324,6 +326,7 @@ RUN cp -r ./packages/contracts/node_modules ./node_modules/@gauzy/contracts/
 RUN cp -r ./packages/core/node_modules ./node_modules/@gauzy/core/
 
 RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin-changelog/
+RUN cp -r ./packages/plugins/integration-activepieces/node_modules ./node_modules/@gauzy/plugin-integration-activepieces/
 RUN cp -r ./packages/plugins/integration-ai/node_modules ./node_modules/@gauzy/plugin-integration-ai/
 RUN cp -r ./packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/
 RUN cp -r ./packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/

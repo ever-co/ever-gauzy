@@ -7,6 +7,7 @@ import { IntegrationJiraPlugin } from '@gauzy/plugin-integration-jira';
 import { IntegrationHubstaffPlugin } from '@gauzy/plugin-integration-hubstaff';
 import { IntegrationMakeComPlugin } from '@gauzy/plugin-integration-make-com';
 import { IntegrationZapierPlugin } from '@gauzy/plugin-integration-zapier';
+import { IntegrationActivepiecesPlugin } from '@gauzy/plugin-integration-activepieces';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
 import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
@@ -42,6 +43,8 @@ export const plugins = [
 	}),
 	// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
 	ChangelogPlugin,
+	// Indicates the inclusion or intention to use the IntegrationActivepiecesPlugin in the codebase.
+	IntegrationActivepiecesPlugin,
 	// Indicates the inclusion or intention to use the IntegrationAIPlugin in the codebase.
 	IntegrationAIPlugin,
 	// Indicates the inclusion or intention to use the IntegrationGithubPlugin in the codebase.
