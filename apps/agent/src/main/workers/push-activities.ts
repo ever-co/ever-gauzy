@@ -151,7 +151,7 @@ class PushActivities {
 			{
 				kbPressCount: activities.kbPressCount,
 				kbSequence: (typeof activities.kbSequence === 'string'
-					? JSON.parse(activities.kbSequence)
+					? (() => { try { return JSON.parse(activities.kbSequence); } catch { return []; } })()
 					: activities.kbSequence) as number[],
 				mouseLeftClickCount: activities.mouseLeftClickCount,
 				mouseRightClickCount: activities.mouseRightClickCount,
