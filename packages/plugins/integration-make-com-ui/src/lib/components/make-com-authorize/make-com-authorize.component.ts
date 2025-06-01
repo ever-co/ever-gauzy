@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap, catchError, filter } from 'rxjs/operators';
@@ -7,7 +7,7 @@ import { MakeComService, ToastrService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { IMakeComCreateIntegration, IOrganization, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { IntegrationsService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
