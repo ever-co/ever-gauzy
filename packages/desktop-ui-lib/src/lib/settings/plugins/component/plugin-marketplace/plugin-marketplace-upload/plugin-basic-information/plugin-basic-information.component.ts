@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { BasePluginFormComponent } from '../base-plugin-form/base-plugin-form.component';
 
 @Component({
 	selector: 'lib-plugin-basic-information',
@@ -8,19 +8,7 @@ import { FormGroup } from '@angular/forms';
 	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PluginBasicInformationComponent {
-	@Input() form: FormGroup;
+export class PluginBasicInformationComponent extends BasePluginFormComponent {
 	@Input() pluginTypes: string[];
 	@Input() pluginStatuses: string[];
-
-	public getFieldError(controlName: string, errorType?: string): boolean {
-		const control = this.form.get(controlName);
-		if (!control) return false;
-
-		if (errorType) {
-			return control.touched && control.hasError(errorType);
-		}
-
-		return control.touched && control.invalid;
-	}
 }

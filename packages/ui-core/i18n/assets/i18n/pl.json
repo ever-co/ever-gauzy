@@ -175,7 +175,8 @@
 		"ADD_VERSION": "Dodaj wersje",
 		"READ_MORE": "Czytaj więcej",
 		"READ_LESS": "Czytaj mniej",
-		"RECOVER": "Przywróć"
+		"RECOVER": "Przywróć",
+		"ADD_MORE_SOURCES": "Dodaj więcej źródeł"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4871,7 +4872,8 @@
 				"LICENSE_TOO_LONG": "Pole licencji jest zbyt długie",
 				"FAILED": "Walidacja nie powiodła się",
 				"CHANGELOG_TOO_SHORT": "Log zmian jest zbyt krotki",
-				"CHANGELOG_REQUIRED": "Log zmian jest wymagany"
+				"CHANGELOG_REQUIRED": "Log zmian jest wymagany",
+				"REQUIRED": "Wymagany"
 			},
 			"TYPE": "Typ wtyczki",
 			"TYPE_PLACEHOLDER": "Wybierz typ wtyczki",
@@ -4929,7 +4931,12 @@
 			"OR": "Lub",
 			"RELEASE_DATE": "Data wydania",
 			"CHANGELOG": "Przepraszam",
-			"CHANGELOG_PLACEHOLDER": "Wprowadź przepraszam"
+			"CHANGELOG_PLACEHOLDER": "Wprowadź przepraszam",
+			"CLICK_TO_SELECT_SOURCE": "Kliknij, aby wybrać źródło",
+			"SELECT_SOURCE_TYPE": "Wybierz typ źródła",
+			"ADD_SOURCE": "Dodaj nowe źródło",
+			"OPERATING_SYSTEM": "System operacyjny",
+			"ARCHITECTURE": "Architektura"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Statystyki użytkowania",
@@ -4989,6 +4996,21 @@
 					"DESCRIPTION": "Czy na pewno chcesz przywrócić tę wersję?",
 					"CONFIRM": "Przywróć"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "Utwórz nowe źródło dla wersji v{{ number }} wtyczki {{ name }}",
+					"DESCRIPTION": "Czy na pewno chcesz utworzyć tę wersję?",
+					"CONFIRM": "Utwórz"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "Zainstaluj wtyczkę",
+				"DESCRIPTION": "Czy na pewno chcesz zainstalować tę wtyczkę?",
+				"CONFIRM": "Zainstaluj",
+				"VALIDATION": {
+					"REQUIRED": "Wymagany jest token uwierzytelniający"
+				}
 			}
 		},
 		"TOASTR": {
@@ -4998,6 +5020,12 @@
 					"UPDATED": "Wersja wtyczki v{{number}} została pomyślnie zaktualizowana!",
 					"DELETED": "Wersja wtyczki została pomyślnie usunięta!",
 					"RESTORED": "Wersja wtyczki została pomyślnie przywrócona!"
+				},
+				"SOURCE": {
+					"CREATED": "Pomyślnie utworzono źródło wtyczki!",
+					"UPDATED": "Pomyślnie zaktualizowano źródło wtyczki!",
+					"DELETED": "Pomyślnie usunięto źródło wtyczki!",
+					"RESTORED": "Pomyślnie przywrócono źródło wtyczki!"
 				},
 				"UPLOADED": "Wtyczka została pomyślnie przesłana!",
 				"UPDATED": "Wtyczka została pomyślnie zaktualizowana!",
@@ -5012,6 +5040,12 @@
 					"DELETING": "Usuwanie wersji wtyczki...",
 					"RESTORING": "Przywracanie wersji wtyczki..."
 				},
+				"SOURCE": {
+					"ADDING": "Dodawanie nowego źródła...",
+					"UPDATING": "Aktualizowanie wersji wtyczki...",
+					"DELETING": "Usuwanie wersji wtyczki...",
+					"RESTORING": "Przywracanie wersji wtyczki..."
+				},
 				"UPLOADING": "Przesyłanie wtyczki...",
 				"UPDATING": "Aktualizowanie wtyczki...",
 				"DELETING": "Usuwanie wtyczki...",
@@ -5021,6 +5055,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "Nie udało się przywrócić wersji wtyczki. Spróbuj ponownie!"
+				},
+				"SOURCE": {
+					"RESTORE": "Nie udało się przywrócić źródła wtyczki. Spróbuj ponownie!"
 				},
 				"UPLOAD": "Nie udało się przesłać wtyczki. Spróbuj ponownie!",
 				"NOT_FOUND": "Nie znaleziono wtyczki o ID {{ id }}.",

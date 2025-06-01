@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { tap, catchError, filter, switchMap, debounceTime } from 'rxjs/operators';
+import { tap, catchError, filter } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { MakeComService, ToastrService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -17,7 +17,7 @@ import { IntegrationsService } from '@gauzy/ui-core/core';
 	styleUrls: ['./make-com-authorize.component.scss'],
 	standalone: false
 })
-export class AuthorizationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class AuthorizationComponent extends TranslationBaseComponent implements OnInit {
 	public form: FormGroup;
 	public loading = false;
 	public oauthConfig: { clientId: string; redirectUri: string } = null;
@@ -30,7 +30,6 @@ export class AuthorizationComponent extends TranslationBaseComponent implements 
 		private readonly _toastrService: ToastrService,
 		public readonly translateService: TranslateService,
 		private readonly _router: Router,
-		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _store: Store,
 		private readonly _integrationsService: IntegrationsService
 	) {
@@ -147,6 +146,4 @@ export class AuthorizationComponent extends TranslationBaseComponent implements 
 	private _redirectToMakeDashboard(integrationId: string) {
 		this._router.navigate(['/pages/integrations/makecom', integrationId]);
 	}
-
-	ngOnDestroy(): void {}
 }

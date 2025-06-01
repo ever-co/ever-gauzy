@@ -1,0 +1,62 @@
+<!-- sources-container.component.html -->
+<div class="sources-container">
+	<!-- Sources List with Drag & Drop -->
+	<div cdkDropList (cdkDropListDropped)="drop($event)" class="sources-list">
+		@for(source of sources.controls; track source; let idx = $index){
+		<div class="source-card" cdkDrag>
+			<!-- Glow effect on hover -->
+			<div class="card-glow"></div>
+
+			<div class="source-header">
+				<div class="drag-area" cdkDragHandle>
+					<h5>{{ 'PLUGIN.FORM.SOURCE' | translate }} #{{ idx + 1 }}</h5>
+					<nb-icon icon="grid-view" class="drag-icon"></nb-icon>
+				</div>
+				<div class="header-actions">
+					@if(!!source?.value?.deletedAt && cantAddMore) {
+					<button nbButton ghost status="warning" size="small"
+						(click)="restore.emit(idx); $event.stopPropagation()" class="restore-btn"
+						[nbTooltip]="'BUTTONS.RESTORE' | translate" nbTooltipPlacement="top">
+						<nb-icon icon="refresh-outline"></nb-icon>
+					</button>
+					}
+					<button nbButton ghost status="danger" size="small"
+						(click)="remove.emit(idx); $event.stopPropagation()" class="delete-btn"
+						[nbTooltip]="'BUTTONS.DELETE' | translate" nbTooltipPlacement="top">
+						<nb-icon icon="trash-2-outline"></nb-icon>
+					</button>
+				</div>
+			</div>
+			<lib-plugin-source class="grow" [form]="source"></lib-plugin-source>
+		</div>
+		}
+	</div>
+
+	<!-- Add Source Section -->
+	<div *ngIf="!cantAddMore" class="add-source">
+		<div class="add-source-card" (click)="openSourceTypeSelector(); $event.stopPropagation()">
+			<div class="add-content">
+				<nb-icon icon="plus-circle-outline" class="add-icon"></nb-icon>
+				<h5>{{ 'PLUGIN.FORM.ADD_SOURCE' | translate }}</h5>
+				<p>{{ 'PLUGIN.FORM.CLICK_TO_SELECT_SOURCE' | translate }}</p>
+			</div>
+
+			<div class="source-selector" *ngIf="showSourceSelector">
+				<div class="selector-header">
+					<h5>{{ 'PLUGIN.FORM.SELECT_SOURCE_TYPE' | translate }}</h5>
+					<button nbButton ghost size="small" (click)="closeSourceTypeSelector(); $event.stopPropagation()">
+						<nb-icon icon="close-outline"></nb-icon>
+					</button>
+				</div>
+				<div class="source-options">
+					@for(source of sourceTypes; track source){
+					<div class="source-option" (click)="add.emit(source); $event.stopPropagation()">
+						<nb-icon [icon]="getSourceIcon(source)" class="option-icon"></nb-icon>
+						<span>{{ 'PLUGIN.FORM.SOURCE_TYPES.' + source | translate }}</span>
+					</div>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

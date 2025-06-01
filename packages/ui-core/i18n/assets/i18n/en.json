@@ -184,7 +184,8 @@
 		"MARKETPLACE": "Marketplace",
 		"READ_MORE": "Read More",
 		"READ_LESS": "Read Less",
-		"RECOVER": "Recover"
+		"RECOVER": "Recover",
+		"ADD_MORE_SOURCES": "Add More Sources"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -5024,7 +5025,8 @@
 				"LICENSE_TOO_LONG": "License field is too long",
 				"CHANGELOG_TOO_SHORT": "Changelog is too short",
 				"CHANGELOG_REQUIRED": "Changelog is required",
-				"FAILED": "Validation failed"
+				"FAILED": "Validation failed",
+				"REQUIRED": "Required"
 			},
 			"TYPE": "Plugin Type",
 			"TYPE_PLACEHOLDER": "Select plugin type",
@@ -5082,7 +5084,12 @@
 			"OR": "Or",
 			"RELEASE_DATE": "Release Date",
 			"CHANGELOG": "Changelog",
-			"CHANGELOG_PLACEHOLDER": "Enter changelog"
+			"CHANGELOG_PLACEHOLDER": "Enter changelog",
+			"CLICK_TO_SELECT_SOURCE": "Click to select source",
+			"SELECT_SOURCE_TYPE": "Select source type",
+			"ADD_SOURCE": "Add new source",
+			"OPERATING_SYSTEM": "Operating System",
+			"ARCHITECTURE": "Architecture"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Usage Statistics",
@@ -5142,6 +5149,21 @@
 					"DESCRIPTION": "Are you sure you want to restore this version?",
 					"CONFIRM": "Restore"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "Create new source for version v{{ number }} of plugin {{ name }}",
+					"DESCRIPTION": "Are you sure you want to create this version?",
+					"CONFIRM": "Create"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "Install Plugin",
+				"DESCRIPTION": "Are you sure you want to install this plugin?",
+				"CONFIRM": "Install",
+				"VALIDATION": {
+					"REQUIRED": "Authentication token is required"
+				}
 			}
 		},
 		"TOASTR": {
@@ -5151,6 +5173,12 @@
 					"UPDATED": "Update plugin version v{{number}} successfully!",
 					"DELETED": "Delete plugin version successfully!",
 					"RESTORED": "Restore plugin version successfully!"
+				},
+				"SOURCE": {
+					"CREATED": "Create plugin source successfully!",
+					"UPDATED": "Update plugin source successfully!",
+					"DELETED": "Delete plugin source successfully!",
+					"RESTORED": "Restore plugin source successfully!"
 				},
 				"UPLOADED": "Upload plugin successfully!",
 				"UPDATED": "Update plugin successfully!",
@@ -5165,6 +5193,12 @@
 					"DELETING": "Deleting plugin version...",
 					"RESTORING": "Restoring plugin version..."
 				},
+				"SOURCE": {
+					"ADDING": "Adding new source...",
+					"UPDATING": "Updating plugin version...",
+					"DELETING": "Deleting plugin version...",
+					"RESTORING": "Restoring plugin version..."
+				},
 				"UPLOADING": "Uploading plugin...",
 				"UPDATING": "Updating plugin version...",
 				"DELETING": "Deleting plugin...",
@@ -5174,6 +5208,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "Failed to restore plugin version. Please try again!"
+				},
+				"SOURCE": {
+					"RESTORE": "Failed to restore plugin source. Please try again!"
 				},
 				"UPLOAD": "Failed to upload plugin. Please try again!",
 				"NOT_FOUND": "Plugin with ID {{ id }} not found.",

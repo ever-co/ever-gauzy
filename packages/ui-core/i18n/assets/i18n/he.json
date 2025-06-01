@@ -174,7 +174,8 @@
 		"ADD_VERSION": "הוסף גרסה",
 		"READ_MORE": "קרא עוד",
 		"READ_LESS": "קרא פחות",
-		"RECOVER": "שחזר"
+		"RECOVER": "שחזר",
+		"ADD_MORE_SOURCES": "הוסף יותר מקורות"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4861,7 +4862,8 @@
 				"LICENSE_TOO_LONG": "שדה הרישיון ארוך מדי",
 				"FAILED": "האימות נכשל",
 				"CHANGELOG_TOO_SHORT": "שדה השינויים ארוך מדי",
-				"CHANGELOG_REQUIRED": "שדה השינויים נדרש"
+				"CHANGELOG_REQUIRED": "שדה השינויים נדרש",
+				"REQUIRED": "נדרש"
 			},
 			"TYPE": "סוג התוסף",
 			"TYPE_PLACEHOLDER": "בחר סוג תוסף",
@@ -4919,7 +4921,12 @@
 			"OR": "או",
 			"RELEASE_DATE": "תאריך הרישיון",
 			"CHANGELOG": "יומן השינויים",
-			"CHANGELOG_PLACEHOLDER": "הזן יומן השינויים"
+			"CHANGELOG_PLACEHOLDER": "הזן יומן השינויים",
+			"CLICK_TO_SELECT_SOURCE": "לחץ כדי לבחור מקור",
+			"SELECT_SOURCE_TYPE": "בחר סוג מקור",
+			"ADD_SOURCE": "הוסף מקור חדש",
+			"OPERATING_SYSTEM": "מערכת הפעלה",
+			"ARCHITECTURE": "ארכיטקטורה"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "סטטיסטיקות שימוש",
@@ -4979,6 +4986,21 @@
 					"DESCRIPTION": "האם אתה בטוח שברצונך לשחזר גרסה זו?",
 					"CONFIRM": "שחזר"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "צור מקור חדש לגרסה v{{ number }} של התוסף {{ name }}",
+					"DESCRIPTION": "האם אתה בטוח שברצונך ליצור גרסה זו?",
+					"CONFIRM": "צור"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "התקנת תוסף",
+				"DESCRIPTION": "האם אתה בטוח שברצונך להתקין תוסף זה?",
+				"CONFIRM": "התקן",
+				"VALIDATION": {
+					"REQUIRED": "נדרש אסימון אימות"
+				}
 			}
 		},
 		"TOASTR": {
@@ -4988,6 +5010,12 @@
 					"UPDATED": "גרסת התוסף v{{number}} עודכנה בהצלחה!",
 					"DELETED": "גרסת התוסף נמחקה בהצלחה!",
 					"RESTORED": "גרסת התוסף שוחזרה בהצלחה!"
+				},
+				"SOURCE": {
+					"CREATED": "מקור התוסף נוצר בהצלחה!",
+					"UPDATED": "מקור התוסף עודכן בהצלחה!",
+					"DELETED": "מקור התוסף נמחק בהצלחה!",
+					"RESTORED": "מקור התוסף שוחזר בהצלחה!"
 				},
 				"UPLOADED": "התוסף הועלה בהצלחה!",
 				"UPDATED": "התוסף עודכן בהצלחה!",
@@ -5002,6 +5030,12 @@
 					"DELETING": "מוחק גרסת תוסף...",
 					"RESTORING": "משחזר גרסת תוסף..."
 				},
+				"SOURCE": {
+					"ADDING": "מוסיף מקור חדש...",
+					"UPDATING": "מעדכן גרסת תוסף...",
+					"DELETING": "מוחק גרסת תוסף...",
+					"RESTORING": "משחזר גרסת תוסף..."
+				},
 				"UPLOADING": "מעלה תוסף...",
 				"UPDATING": "מעדכן תוסף...",
 				"DELETING": "מוחק תוסף...",
@@ -5011,6 +5045,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "שחזור גרסת התוסף נכשל. נא לנסות שוב!"
+				},
+				"SOURCE": {
+					"RESTORE": "שחזור מקור התוסף נכשל. אנא נסה שוב!"
 				},
 				"UPLOAD": "העלאת התוסף נכשלה. נא לנסות שוב!",
 				"NOT_FOUND": "תוסף עם מזהה {{ id }} לא נמצא.",

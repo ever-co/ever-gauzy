@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { ID, IPluginVersion } from '@gauzy/contracts';
 import { NbSelectComponent } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
@@ -15,7 +15,7 @@ import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
 	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class VersionSelectorComponent implements OnInit, OnDestroy {
+export class VersionSelectorComponent implements OnInit, OnChanges {
 	@ViewChild(NbSelectComponent) select: NbSelectComponent;
 	private skip = 1;
 	private hasNext = false;
@@ -24,6 +24,13 @@ export class VersionSelectorComponent implements OnInit, OnDestroy {
 	public pluginId: ID = null;
 
 	constructor(private readonly action: Actions, public readonly query: PluginVersionQuery) {}
+
+	ngOnChanges(changes: SimpleChanges): void {
+		if (changes['pluginId']) {
+			this.reset();
+			this.load();
+		}
+	}
 
 	ngOnInit(): void {
 		this.query
@@ -35,15 +42,17 @@ export class VersionSelectorComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.load();
 	}
 
 	public load(): void {
+		if (!this.pluginId) {
+			return;
+		}
 		this.action.dispatch(
 			PluginVersionActions.getAll(this.pluginId, {
 				skip: this.skip,
 				take: this.take,
-				relations: ['plugin', 'source'],
+				relations: ['plugin', 'sources'],
 				order: { releaseDate: 'DESC' },
 				withDeleted: false
 			})
@@ -62,15 +71,11 @@ export class VersionSelectorComponent implements OnInit, OnDestroy {
 		this.action.dispatch(PluginVersionActions.selectVersion(version));
 	}
 
-	public compareVersions(v1: IPluginVersion, v2: IPluginVersion): boolean {
-		return v1 && v2 ? v1.id === v2.id : v1 === v2;
-	}
-
 	public get unlockInfiniteList(): boolean {
 		return this.pluginId && this.query.versions.length > 0;
 	}
 
-	ngOnDestroy(): void {
+	public reset(): void {
 		this.skip = 1;
 		this.hasNext = false;
 		this.action.dispatch(PluginVersionActions.reset());

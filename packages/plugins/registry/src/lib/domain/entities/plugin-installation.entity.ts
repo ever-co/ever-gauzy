@@ -29,7 +29,8 @@ export class PluginInstallation extends TenantOrganizationBaseEntity implements 
 	pluginId?: ID;
 
 	@ApiProperty({ type: () => PluginVersion, description: 'Installed version of the plugin' })
-	@MultiORMManyToOne(() => PluginVersion, { onDelete: 'SET NULL' })
+	@MultiORMManyToOne(() => PluginVersion, (version: PluginVersion) => version.installations, { onDelete: 'SET NULL' })
+	@JoinColumn()
 	version: IPluginVersion;
 
 	@RelationId((installation: PluginInstallation) => installation.version)

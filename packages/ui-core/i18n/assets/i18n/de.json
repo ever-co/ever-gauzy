@@ -175,7 +175,8 @@
 		"MARKETPLACE": "Marktplatz",
 		"READ_MORE": "Mehr lesen",
 		"READ_LESS": "Weniger lesen",
-		"RECOVER": "Wiederherstellen"
+		"RECOVER": "Wiederherstellen",
+		"ADD_MORE_SOURCES": "Weitere Quellen hinzufügen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4868,7 +4869,8 @@
 				"LICENSE_TOO_LONG": "Lizenzfeld ist zu lang",
 				"FAILED": "Validierung fehlgeschlagen",
 				"CHANGELOG_TOO_SHORT": "Changelog ist zu kurz",
-				"CHANGELOG_REQUIRED": "Changelog ist erforderlich"
+				"CHANGELOG_REQUIRED": "Changelog ist erforderlich",
+				"REQUIRED": "Erforderlich"
 			},
 			"TYPE": "Plugin-Typ",
 			"TYPE_PLACEHOLDER": "Wählen Sie den Plugin-Typ",
@@ -4926,7 +4928,12 @@
 			"OR": "Oder",
 			"RELEASE_DATE": "Erscheinungsdatum",
 			"CHANGELOG": "Änderungsprotokoll",
-			"CHANGELOG_PLACEHOLDER": "Geben Sie den Änderungsprotokoll ein"
+			"CHANGELOG_PLACEHOLDER": "Geben Sie den Änderungsprotokoll ein",
+			"CLICK_TO_SELECT_SOURCE": "Klicken, um Quelle auszuwählen",
+			"SELECT_SOURCE_TYPE": "Quellentyp auswählen",
+			"ADD_SOURCE": "Neue Quelle hinzufügen",
+			"OPERATING_SYSTEM": "Betriebssystem",
+			"ARCHITECTURE": "Architektur"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Nutzungsstatistiken",
@@ -4986,6 +4993,21 @@
 					"DESCRIPTION": "Sind Sie sicher, dass Sie diese Version wiederherstellen möchten?",
 					"CONFIRM": "Wiederherstellen"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "Neue Quelle für Version v{{ number }} des Plugins {{ name }} erstellen",
+					"DESCRIPTION": "Sind Sie sicher, dass Sie diese Version erstellen möchten?",
+					"CONFIRM": "Erstellen"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "Plugin installieren",
+				"DESCRIPTION": "Sind Sie sicher, dass Sie dieses Plugin installieren möchten?",
+				"CONFIRM": "Installieren",
+				"VALIDATION": {
+					"REQUIRED": "Authentifizierungstoken ist erforderlich"
+				}
 			}
 		},
 		"TOASTR": {
@@ -4995,6 +5017,12 @@
 					"UPDATED": "Plugin-Version v{{number}} erfolgreich aktualisiert!",
 					"DELETED": "Plugin-Version erfolgreich gelöscht!",
 					"RESTORED": "Plugin-Version erfolgreich wiederhergestellt!"
+				},
+				"SOURCE": {
+					"CREATED": "Plugin-Quelle erfolgreich erstellt!",
+					"UPDATED": "Plugin-Quelle erfolgreich aktualisiert!",
+					"DELETED": "Plugin-Quelle erfolgreich gelöscht!",
+					"RESTORED": "Plugin-Quelle erfolgreich wiederhergestellt!"
 				},
 				"UPLOADED": "Plugin erfolgreich hochgeladen!",
 				"UPDATED": "Plugin erfolgreich aktualisiert!",
@@ -5009,6 +5037,12 @@
 					"DELETING": "Plugin-Version wird gelöscht...",
 					"RESTORING": "Plugin-Version wird wiederhergestellt..."
 				},
+				"SOURCE": {
+					"ADDING": "Neue Quelle wird hinzugefügt...",
+					"UPDATING": "Plugin-Version wird aktualisiert...",
+					"DELETING": "Plugin-Version wird gelöscht...",
+					"RESTORING": "Plugin-Version wird wiederhergestellt..."
+				},
 				"UPLOADING": "Plugin wird hochgeladen...",
 				"UPDATING": "Plugin wird aktualisiert...",
 				"DELETING": "Plugin wird gelöscht...",
@@ -5018,6 +5052,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "Wiederherstellung der Plugin-Version fehlgeschlagen. Bitte versuchen Sie es erneut!"
+				},
+				"SOURCE": {
+					"RESTORE": "Fehler beim Wiederherstellen der Plugin-Quelle. Bitte versuchen Sie es erneut!"
 				},
 				"UPLOAD": "Hochladen des Plugins fehlgeschlagen. Bitte versuchen Sie es erneut!",
 				"NOT_FOUND": "Plugin mit ID {{ id }} nicht gefunden.",

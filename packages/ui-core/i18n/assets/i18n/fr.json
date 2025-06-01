@@ -175,7 +175,8 @@
 		"ADD_VERSION": "Ajouter une version",
 		"READ_MORE": "Lire plus",
 		"READ_LESS": "Lire moins",
-		"RECOVER": "Récupérer"
+		"RECOVER": "Récupérer",
+		"ADD_MORE_SOURCES": "Ajouter plus de sources"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4863,7 +4864,8 @@
 				"LICENSE_TOO_LONG": "Le champ de la licence est trop long",
 				"FAILED": "Échec de la validation",
 				"CHANGELOG_TOO_SHORT": "Le changelog est trop court",
-				"CHANGELOG_REQUIRED": "Le changelog est requis"
+				"CHANGELOG_REQUIRED": "Le changelog est requis",
+				"REQUIRED": "Requis"
 			},
 			"TYPE": "Type de plugin",
 			"TYPE_PLACEHOLDER": "Sélectionnez le type de plugin",
@@ -4921,7 +4923,11 @@
 			"OR": "Ou",
 			"RELEASE_DATE": "Date de sortie",
 			"CHANGELOG": "Journal des modifications",
-			"CHANGELOG_PLACEHOLDER": "Entrez les modifications"
+			"CHANGELOG_PLACEHOLDER": "Entrez les modifications",
+			"CLICK_TO_SELECT_SOURCE": "Cliquez pour sélectionner une source",
+			"SELECT_SOURCE_TYPE": "Sélectionner le type de source",
+			"OPERATING_SYSTEM": "Système d'exploitation",
+			"ARCHITECTURE": "Architecture"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Statistiques d'utilisation",
@@ -4981,6 +4987,21 @@
 					"DESCRIPTION": "Êtes-vous sûr de vouloir restaurer cette version ?",
 					"CONFIRM": "Restaurer"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "Créer une nouvelle source pour la version v{{ number }} du plugin {{ name }}",
+					"DESCRIPTION": "Êtes-vous sûr de vouloir créer cette version ?",
+					"CONFIRM": "Créer"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "Installer le plugin",
+				"DESCRIPTION": "Êtes-vous sûr de vouloir installer ce plugin ?",
+				"CONFIRM": "Installer",
+				"VALIDATION": {
+					"REQUIRED": "Le jeton d'authentification est requis"
+				}
 			}
 		},
 		"TOASTR": {
@@ -4990,6 +5011,12 @@
 					"UPDATED": "Version du plugin v{{number}} mise à jour avec succès !",
 					"DELETED": "Version du plugin supprimée avec succès !",
 					"RESTORED": "Version du plugin restaurée avec succès !"
+				},
+				"SOURCE": {
+					"CREATED": "Source du plugin créée avec succès !",
+					"UPDATED": "Source du plugin mise à jour avec succès !",
+					"DELETED": "Source du plugin supprimée avec succès !",
+					"RESTORED": "Source du plugin restaurée avec succès !"
 				},
 				"UPLOADED": "Plugin téléchargé avec succès !",
 				"UPDATED": "Plugin mis à jour avec succès !",
@@ -5004,6 +5031,12 @@
 					"DELETING": "Suppression de la version du plugin...",
 					"RESTORING": "Restauration de la version du plugin..."
 				},
+				"SOURCE": {
+					"ADDING": "Ajout d'une nouvelle source...",
+					"UPDATING": "Mise à jour de la version du plugin...",
+					"DELETING": "Suppression de la version du plugin...",
+					"RESTORING": "Restauration de la version du plugin..."
+				},
 				"UPLOADING": "Téléchargement du plugin...",
 				"UPDATING": "Mise à jour du plugin...",
 				"DELETING": "Suppression du plugin...",
@@ -5013,6 +5046,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "Échec de la restauration de la version du plugin. Veuillez réessayer !"
+				},
+				"SOURCE": {
+					"RESTORE": "Échec de la restauration de la source du plugin. Veuillez réessayer !"
 				},
 				"UPLOAD": "Échec du téléchargement du plugin. Veuillez réessayer !",
 				"NOT_FOUND": "Plugin avec l'ID {{ id }} introuvable.",
