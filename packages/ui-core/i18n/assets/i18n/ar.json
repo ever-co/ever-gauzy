@@ -1278,6 +1278,14 @@
 			"HOURLY": "بالساعة"
 		},
 		"MAKE_COM_PAGE": {
+			"SCENARIOS": "سيناريوهات",
+			"EXECUTIONS": "تنفيذات",
+			"HISTORY": "السجل",
+			"SETTINGS": "الإعدادات",
+			"ERRORS": {
+				"INVALID_FORM": "يرجى إدخال جميع الحقول المطلوبة",
+				"START_AUTHORIZATION": "يرجى بدء عملية التفويض"
+			},
 			"CLIENT_ID": "معرف العميل",
 			"CLIENT_SECRET": "الرمز السري للعميل",
 			"NEXT_STEP_INFO": "بعد التفويض، سيتم توجيهك إلى Make.com لإكمال إعداد التكامل"

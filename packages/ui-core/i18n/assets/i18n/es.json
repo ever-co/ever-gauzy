@@ -600,7 +600,7 @@
 			"HOURS": "Horas.",
 			"COST": "Costo",
 			"MAKE_COM_CLIENT_ID": "Ingrese su ID de cliente Make.com",
-      "MAKE_COM_CLIENT_SECRET": "Ingrese su clave secreta de cliente Make.com",
+			"MAKE_COM_CLIENT_SECRET": "Ingrese su clave secreta de cliente Make.com",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Nombre de la escuela",
 				"DEGREE": "Grado / Diploma",
@@ -1281,20 +1281,28 @@
 			"HOURLY": "Por hora"
 		},
 		"MAKE_COM_PAGE": {
-      "CLIENT_ID": "ID de Cliente",
-      "CLIENT_SECRET": "Clave Secreta del Cliente",
-      "NEXT_STEP_INFO": "Después de la autorización, será redirigido a Make.com para completar la configuración de la integración"
-    },
-    "MAKE_COM": {
-      "SETTINGS": {
-        "TITLE": "Configuración de Make.com",
-        "ENABLE_INTEGRATION": "Activar integración Make.com",
-        "WEBHOOK_URL": "URL del Webhook",
-        "WEBHOOK_URL_PLACEHOLDER": "Ingrese la URL del webhook",
-        "WEBHOOK_URL_INVALID": "Por favor ingrese una URL de webhook válida",
-        "SAVE": "Guardar configuración"
-      }
-    },
+			"SCENARIOS": "Escenarios",
+			"EXECUTIONS": "Ejecuciones",
+			"HISTORY": "Historia",
+			"SETTINGS": "Configuración",
+			"ERRORS": {
+				"INVALID_FORM": "Por favor, complete todos los campos requeridos",
+				"START_AUTHORIZATION": "Por favor, inicie el proceso de autorización"
+			},
+			"CLIENT_ID": "ID de Cliente",
+			"CLIENT_SECRET": "Clave Secreta del Cliente",
+			"NEXT_STEP_INFO": "Después de la autorización, será redirigido a Make.com para completar la configuración de la integración"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Configuración de Make.com",
+				"ENABLE_INTEGRATION": "Activar integración Make.com",
+				"WEBHOOK_URL": "URL del Webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "Ingrese la URL del webhook",
+				"WEBHOOK_URL_INVALID": "Por favor ingrese una URL de webhook válida",
+				"SAVE": "Guardar configuración"
+			}
+		},
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Clave de Gauzy AI",
 			"API_SECRET": "Gauzy AI Secret: Secreto de Inteligencia Artificial de Gauzy."

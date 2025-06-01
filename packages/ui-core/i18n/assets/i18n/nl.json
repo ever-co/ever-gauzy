@@ -1279,6 +1279,14 @@
 			"HOURLY": "Per uur"
 		},
 		"MAKE_COM_PAGE": {
+			"SCENARIOS": "Scenario's",
+			"EXECUTIONS": "Uitvoeringen",
+			"HISTORY": "Geschiedenis",
+			"SETTINGS": "Instellingen",
+			"ERRORS": {
+				"INVALID_FORM": "Vul alstublieft alle verplichte velden in",
+				"START_AUTHORIZATION": "Start alstublieft de autorisatieproces"
+			},
 			"CLIENT_ID": "Client ID",
 			"CLIENT_SECRET": "Client Geheim",
 			"NEXT_STEP_INFO": "Na autorisatie word je doorgestuurd naar Make.com om de integratie-instellingen te voltooien"

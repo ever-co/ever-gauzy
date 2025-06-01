@@ -1282,6 +1282,14 @@
 			"HOURLY": "Hourly"
 		},
 		"MAKE_COM_PAGE": {
+			"SCENARIOS": "סצנות",
+			"EXECUTIONS": "מימושים",
+			"HISTORY": "היסטוריה",
+			"SETTINGS": "הגדרות",
+			"ERRORS": {
+				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
+				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור"
+			},
 			"CLIENT_ID": "מזהה לקוח",
 			"CLIENT_SECRET": "סיסמת לקוח",
 			"NEXT_STEP_INFO": "לאחר האישור, תועבר ל-Make.com להשלמת הגדרות האינטגרציה"
