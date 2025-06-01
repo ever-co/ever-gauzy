@@ -166,5 +166,7 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 		this._router.navigate(['/pages/integrations']);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._makeComStoreService.clearStore();
+	}
 }
