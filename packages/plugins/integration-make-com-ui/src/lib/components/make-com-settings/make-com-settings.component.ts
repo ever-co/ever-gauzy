@@ -55,7 +55,7 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 				}),
 				catchError((error) => {
 					this._toastrService.error(
-						this.getTranslation('INTEGRATIONS.MAKE_PAGE.ERRORS.LOAD_SETTINGS'),
+						this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETTINGS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					console.error('Error loading Make.com settings:', error);
@@ -74,7 +74,7 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 	saveSettings() {
 		if (this.form.invalid) {
 			this._toastrService.error(
-				this.getTranslation('INTEGRATIONS.MAKE_PAGE.ERRORS.INVALID_FORM'),
+				this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.INVALID_FORM'),
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 			return;
@@ -87,13 +87,13 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 				tap((settings: IMakeComIntegrationSettings) => {
 					this.settings = settings;
 					this._toastrService.success(
-						this.getTranslation('INTEGRATIONS.MAKE_PAGE.SUCCESS.SETTINGS_SAVED'),
+						this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.SETTINGS_SAVED'),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),
 				catchError((error) => {
 					this._toastrService.error(
-						this.getTranslation('INTEGRATIONS.MAKE_PAGE.ERRORS.SAVE_SETTINGS'),
+						this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.SAVE_SETTINGS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					console.error('Error saving Make.com settings:', error);

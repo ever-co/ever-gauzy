@@ -7,7 +7,7 @@ import { MakeComService, ToastrService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { IMakeComCreateIntegration, IOrganization, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { IntegrationsService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
@@ -23,6 +23,7 @@ export class AuthorizationComponent extends TranslationBaseComponent implements 
 	public oauthConfig: { clientId: string; redirectUri: string } = null;
 	public organization: IOrganization;
 	public rememberState: boolean;
+	private static readonly MAKE_DASHBOARD_ROUTE = '/pages/integrations/makecom';
 
 	constructor(
 		private readonly _fb: FormBuilder,
@@ -30,6 +31,7 @@ export class AuthorizationComponent extends TranslationBaseComponent implements 
 		private readonly _toastrService: ToastrService,
 		public readonly translateService: TranslateService,
 		private readonly _router: Router,
+		private readonly _route: ActivatedRoute,
 		private readonly _store: Store,
 		private readonly _integrationsService: IntegrationsService
 	) {
@@ -86,21 +88,34 @@ export class AuthorizationComponent extends TranslationBaseComponent implements 
 		if (!this.organization) {
 			return;
 		}
-		const { id: organizationId, tenantId } = this.organization;
-		const state$ = this._integrationsService.getIntegrationByOptions({
-			name: IntegrationEnum.MakeCom,
-			organizationId,
-			tenantId
+
+		// Get the state from route data
+		this._route.data.subscribe((data) => {
+			this.rememberState = data.state;
+
+			// Only check for existing integration if state is true
+			if (this.rememberState) {
+				const { id: organizationId, tenantId } = this.organization;
+				const state$ = this._integrationsService.getIntegrationByOptions({
+					name: IntegrationEnum.MakeCom,
+					organizationId,
+					tenantId
+				});
+				state$
+					.pipe(
+						filter((integration: IIntegrationTenant) => !!integration.id),
+						tap((integration: IIntegrationTenant) => {
+							this._redirectToMakeDashboard(integration.id);
+						}),
+						catchError((error) => {
+							console.error('Error checking integration state:', error);
+							return EMPTY;
+						}),
+						untilDestroyed(this)
+					)
+					.subscribe();
+			}
 		});
-		state$
-			.pipe(
-				filter((integration: IIntegrationTenant) => !!integration.id),
-				tap((integration: IIntegrationTenant) => {
-					this._redirectToMakeDashboard(integration.id);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
 	}
 
 	/**
@@ -127,7 +142,7 @@ export class AuthorizationComponent extends TranslationBaseComponent implements 
 				}),
 				catchError((error) => {
 					this._toastrService.error(
-						this.getTranslation('INTEGRATIONS.MAKE_PAGE.ERRORS.START_AUTHORIZATION'),
+						this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.START_AUTHORIZATION'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					console.error('Error starting authorization:', error);
@@ -144,6 +159,6 @@ export class AuthorizationComponent extends TranslationBaseComponent implements 
 	 * Redirect to Make.com dashboard
 	 */
 	private _redirectToMakeDashboard(integrationId: string) {
-		this._router.navigate(['/pages/integrations/makecom', integrationId]);
+		this._router.navigate([AuthorizationComponent.MAKE_DASHBOARD_ROUTE, integrationId]);
 	}
 }

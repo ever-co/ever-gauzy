@@ -21,6 +21,7 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 	public integrationId: ID;
 	public organization: IOrganization;
 	public loading: boolean = false;
+	private readonly BASE_MENU_ROUTE = 'pages/integrations/makecom';
 
 	constructor(
 		private readonly _router: Router,
@@ -68,25 +69,25 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 	private _loadTabs() {
 		this.tabs = [
 			{
-				title: this.getTranslation('INTEGRATIONS.MAKE_PAGE.SCENARIOS'),
+				title: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SCENARIOS'),
 				icon: 'flash-outline',
 				responsive: true,
 				route: this.getRoute('scenarios')
 			},
 			{
-				title: this.getTranslation('INTEGRATIONS.MAKE_PAGE.EXECUTIONS'),
+				title: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.EXECUTIONS'),
 				icon: 'activity-outline',
 				responsive: true,
 				route: this.getRoute('executions')
 			},
 			{
-				title: this.getTranslation('INTEGRATIONS.MAKE_PAGE.HISTORY'),
+				title: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.HISTORY'),
 				icon: 'clock-outline',
 				responsive: true,
 				route: this.getRoute('history')
 			},
 			{
-				title: this.getTranslation('INTEGRATIONS.MAKE_PAGE.SETTINGS'),
+				title: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SETTINGS'),
 				icon: 'settings-2-outline',
 				responsive: true,
 				route: this.getRoute('settings')
@@ -102,12 +103,12 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 			{
 				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
 				icon: 'text-outline',
-				link: `pages/integrations/makecom/regenerate`
+				link: `${this.BASE_MENU_ROUTE}/regenerate`
 			},
 			{
 				title: this.getTranslation('INTEGRATIONS.SETTINGS'),
 				icon: 'settings-2-outline',
-				link: `pages/integrations/makecom/${this.integrationId}/settings`
+				link: `${this.BASE_MENU_ROUTE}/${this.integrationId}/settings`
 			}
 		];
 	}
@@ -165,7 +166,5 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 		this._router.navigate(['/pages/integrations']);
 	}
 
-	ngOnDestroy(): void {
-		this._makeComStoreService.clearStore();
-	}
+	ngOnDestroy(): void {}
 }
