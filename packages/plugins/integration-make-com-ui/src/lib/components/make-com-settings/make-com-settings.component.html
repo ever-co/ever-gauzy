@@ -3,7 +3,7 @@
 		<h5>{{ 'INTEGRATIONS.MAKE_COM.SETTINGS.TITLE' | translate }}</h5>
 	</nb-card-header>
 	<nb-card-body>
-		<div *ngIf="loading" class="d-flex justify-content-center">
+		<div class="col-xl-6 col-12" *ngIf="loading" class="d-flex justify-content-center">
 			<nb-spinner></nb-spinner>
 		</div>
 		<form *ngIf="!loading" [formGroup]="form" (ngSubmit)="saveSettings()">

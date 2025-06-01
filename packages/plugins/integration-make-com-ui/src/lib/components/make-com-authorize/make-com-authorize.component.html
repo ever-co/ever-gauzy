@@ -15,7 +15,10 @@
 					nbInput
 					[placeholder]="'FORM.PLACEHOLDERS.MAKE_COM_CLIENT_ID' | translate"
 				/>
-				<div *ngIf="form.get('clientId').touched && form.get('clientId').errors?.required" class="text-danger">
+				<div
+					*ngIf="form.get('clientId')?.touched && form.get('clientId')?.errors?.required"
+					class="text-danger"
+				>
 					{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 				</div>
 			</div>
@@ -32,7 +35,7 @@
 					[placeholder]="'FORM.PLACEHOLDERS.MAKE_COM_CLIENT_SECRET' | translate"
 				/>
 				<div
-					*ngIf="form.get('clientSecret').touched && form.get('clientSecret').errors?.required"
+					*ngIf="form.get('clientSecret')?.touched && form.get('clientSecret')?.errors?.required"
 					class="text-danger"
 				>
 					{{ 'VALIDATION.FIELD_REQUIRED' | translate }}

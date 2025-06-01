@@ -40,7 +40,6 @@ export class AuthorizationComponent extends TranslationBaseComponent implements 
 		this._initializeForm();
 		this._loadOrganization();
 		this._loadOAuthConfig();
-		this._checkRememberState();
 	}
 
 	private _initializeForm() {
@@ -55,6 +54,7 @@ export class AuthorizationComponent extends TranslationBaseComponent implements 
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(() => this._checkRememberState()),
 				untilDestroyed(this)
 			)
 			.subscribe();
