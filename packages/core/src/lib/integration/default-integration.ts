@@ -44,7 +44,7 @@ export const DEFAULT_SYSTEM_INTEGRATIONS = [
 	{
 		name: IntegrationEnum.ZAPIER,
 		imgSrc: 'zapier.svg',
-		isComingSoon: true,
+		isComingSoon: false,
 		integrationTypesMap: <string[]>[IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.AUTOMATION_TOOLS],
 		order: 8,
 		redirectUrl: sluggable(IntegrationEnum.ZAPIER),
