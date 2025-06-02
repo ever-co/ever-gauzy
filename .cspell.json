@@ -669,7 +669,8 @@
 		"wrapp",
 		"dyld",
 		"oidc",
-		"Registerables"
+		"Registerables",
+		"Archs"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

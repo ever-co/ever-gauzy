@@ -342,7 +342,6 @@ RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin
     cp -r ./packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/ && \
     cp -r ./packages/plugins/registry/node_modules ./node_modules/@gauzy/plugin-registry/
 
-
 # We do not copy node_modules for Wakatime plugin here, because it is used in Desktop Apps for now
 # RUN cp -r ./packages/plugins/integration-wakatime/node_modules ./node_modules/@gauzy/plugin-integration-wakatime/
 

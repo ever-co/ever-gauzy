@@ -1,14 +1,14 @@
 import { ID } from '@gauzy/contracts';
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsUUID, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsUUID, ValidateNested } from 'class-validator';
 import { PluginVersionDTO } from './plugin-version.dto';
 import { UpdatePluginSourceDTO } from './update-plugin-source.dto';
 import { IPluginVersionUpdate } from '../models/plugin-version.model';
 import { IPluginSourceUpdate } from '../models/plugin-source.model';
 
 export class UpdatePluginVersionDTO
-	extends PartialType(OmitType(PluginVersionDTO, ['source', 'sourceId', 'pluginId', 'plugin'] as const))
+	extends PartialType(OmitType(PluginVersionDTO, ['sources', 'pluginId', 'plugin'] as const))
 	implements IPluginVersionUpdate
 {
 	@ApiProperty({
@@ -22,9 +22,10 @@ export class UpdatePluginVersionDTO
 	@ApiProperty({
 		description: 'Updated source details for the plugin version',
 		required: false,
-		type: UpdatePluginSourceDTO
+		type: [UpdatePluginSourceDTO]
 	})
-	@ValidateNested()
+	@IsOptional()
+	@ValidateNested({ each: true })
 	@Type(() => UpdatePluginSourceDTO)
-	readonly source?: IPluginSourceUpdate;
+	readonly sources?: IPluginSourceUpdate[];
 }

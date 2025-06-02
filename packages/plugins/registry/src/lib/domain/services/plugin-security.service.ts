@@ -106,7 +106,7 @@ export class PluginSecurityService {
 		try {
 			const version = await this.pluginVersionService.findOneOrFailByOptions({
 				where: { id: versionId },
-				relations: ['plugin', 'source']
+				relations: ['plugin', 'sources']
 			});
 
 			if (!version.success) {
@@ -117,18 +117,18 @@ export class PluginSecurityService {
 				throw new NotFoundException(`Plugin not found for version ID ${versionId}.`);
 			}
 
-			if (!version.record.source) {
-				throw new NotFoundException(`Plugin source not found for plugin ID ${version.record.plugin.id}.`);
+			if (!version.record.sources.length) {
+				throw new NotFoundException(`Plugin sources not found for plugin ID ${version.record.plugin.id}.`);
 			}
 
 			const plugin = version.record.plugin;
-			const source = version.record.source;
+			const sources = version.record.sources;
 
 			const contentObj = {
 				version: version.record.number,
 				name: plugin.name || '',
 				type: plugin.type || '',
-				source: this.getSourceData(source)
+				sources: this.getSourceData(sources[0])
 			};
 
 			// Return a deterministically ordered JSON string

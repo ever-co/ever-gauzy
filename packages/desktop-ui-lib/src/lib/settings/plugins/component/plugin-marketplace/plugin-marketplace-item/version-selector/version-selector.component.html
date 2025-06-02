@@ -10,6 +10,7 @@
 	placeholder="PLUGIN.FORM.VERSION"
 	[canAddTag]="false"
 	(modelChange)="onVersionChange($event)"
-	[isLoading]="isLoading || !isAvailable"
+	[isLoading]="isLoading"
 	(scrollToEnd)="loadMore()"
-></gauzy-select>
+>
+</gauzy-select>

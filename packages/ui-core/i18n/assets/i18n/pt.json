@@ -175,7 +175,8 @@
 		"ADD_VERSION": "Adicionar versão",
 		"READ_MORE": "Ler mais",
 		"READ_LESS": "Ler menos",
-		"RECOVER": "Recuperar"
+		"RECOVER": "Recuperar",
+		"ADD_MORE_SOURCES": "Adicionar mais fontes"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4864,7 +4865,8 @@
 				"LICENSE_TOO_LONG": "O campo da licença é muito longo",
 				"FAILED": "Validação falhou",
 				"CHANGELOG_TOO_SHORT": "O changelog é muito curto",
-				"CHANGELOG_REQUIRED": "O changelog é obrigatório"
+				"CHANGELOG_REQUIRED": "O changelog é obrigatório",
+				"REQUIRED": "Obrigatório"
 			},
 			"TYPE": "Tipo de plugin",
 			"TYPE_PLACEHOLDER": "Selecione o tipo de plugin",
@@ -4922,7 +4924,12 @@
 			"OR": "Ou",
 			"RELEASE_DATE": "Data de lançamento",
 			"CHANGELOG": "Historico de alterações",
-			"CHANGELOG_PLACEHOLDER": "Digite o histórico de alterações"
+			"CHANGELOG_PLACEHOLDER": "Digite o histórico de alterações",
+			"CLICK_TO_SELECT_SOURCE": "Clique para selecionar a fonte",
+			"SELECT_SOURCE_TYPE": "Selecione o tipo de fonte",
+			"ADD_SOURCE": "Adicionar nova fonte",
+			"OPERATING_SYSTEM": "Sistema operacional",
+			"ARCHITECTURE": "Arquitetura"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Estatísticas de uso",
@@ -4982,6 +4989,21 @@
 					"DESCRIPTION": "Tem certeza de que deseja restaurar esta versão?",
 					"CONFIRM": "Restaurar"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "Criar nova fonte para a versão v{{ number }} do plugin {{ name }}",
+					"DESCRIPTION": "Tem certeza de que deseja criar esta versão?",
+					"CONFIRM": "Criar"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "Instalar Plugin",
+				"DESCRIPTION": "Tem certeza de que deseja instalar este plugin?",
+				"CONFIRM": "Instalar",
+				"VALIDATION": {
+					"REQUIRED": "Token de autenticação é obrigatório"
+				}
 			}
 		},
 		"TOASTR": {
@@ -4991,6 +5013,12 @@
 					"UPDATED": "Versão do plugin v{{number}} atualizada com sucesso!",
 					"DELETED": "Versão do plugin excluída com sucesso!",
 					"RESTORED": "Versão do plugin restaurada com sucesso!"
+				},
+				"SOURCE": {
+					"CREATED": "Fonte do plugin criada com sucesso!",
+					"UPDATED": "Fonte do plugin atualizada com sucesso!",
+					"DELETED": "Fonte do plugin excluída com sucesso!",
+					"RESTORED": "Fonte do plugin restaurada com sucesso!"
 				},
 				"UPLOADED": "Plugin enviado com sucesso!",
 				"UPDATED": "Plugin atualizado com sucesso!",
@@ -5005,6 +5033,12 @@
 					"DELETING": "Excluindo versão do plugin...",
 					"RESTORING": "Restaurando versão do plugin..."
 				},
+				"SOURCE": {
+					"ADDING": "Adicionando nova fonte...",
+					"UPDATING": "Atualizando versão do plugin...",
+					"DELETING": "Excluindo versão do plugin...",
+					"RESTORING": "Restaurando versão do plugin..."
+				},
 				"UPLOADING": "Enviando plugin...",
 				"UPDATING": "Atualizando plugin...",
 				"DELETING": "Excluindo plugin...",
@@ -5014,6 +5048,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "Falha ao restaurar versão do plugin. Por favor, tente novamente!"
+				},
+				"SOURCE": {
+					"RESTORE": "Falha ao restaurar a fonte do plugin. Por favor, tente novamente!"
 				},
 				"UPLOAD": "Falha ao enviar plugin. Por favor, tente novamente!",
 				"NOT_FOUND": "Plugin com ID {{ id }} não encontrado.",

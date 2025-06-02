@@ -1,0 +1,38 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+	<nb-card class="dialog-card" status="basic">
+		<nb-card-header class="mb-0">
+			<h5 class="title">
+				{{
+					'PLUGIN.DIALOG.SOURCE.CREATE.TITLE'
+						| translate : { name: plugin?.name, number: plugin?.version?.number }
+				}}
+			</h5>
+			<button nbButton ghost size="small" (click)="dismiss()" class="close-button">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</nb-card-header>
+		<nb-card-body>
+			@if(plugin){
+			<lib-form-row>
+				<div class="d-flex flex-column">
+					<label class="label" for="version-number">{{ 'PLUGIN.FORM.VERSION' | translate }}</label>
+					<gauzy-version-selector [pluginId]="plugin?.id"></gauzy-version-selector>
+				</div>
+			</lib-form-row>
+			}
+			<lib-source-container
+				class="overflow-auto grow"
+				[sources]="sources"
+				[sourceTypes]="sourceTypes"
+				(add)="addSource($event)"
+				(remove)="removeSource($event)"
+			></lib-source-container>
+		</nb-card-body>
+		<nb-card-footer class="d-flex justify-content-end">
+			<button nbButton outline status="basic" (click)="dismiss()">{{ 'BUTTONS.CANCEL' | translate }}</button>
+			<button nbButton status="primary" type="submit" [disabled]="form.invalid">
+				{{ 'BUTTONS.CREATE' | translate }}
+			</button>
+		</nb-card-footer>
+	</nb-card>
+</form>

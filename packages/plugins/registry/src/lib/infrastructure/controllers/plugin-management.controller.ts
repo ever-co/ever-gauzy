@@ -2,7 +2,6 @@ import { HttpStatus, ID, PluginSourceType } from '@gauzy/contracts';
 import {
 	FileStorage,
 	FileStorageFactory,
-	LazyFileInterceptor,
 	PermissionGuard,
 	TenantPermissionGuard,
 	UseValidationPipe,
@@ -34,12 +33,13 @@ import { CreatePluginCommand } from '../../application/commands/create-plugin.co
 import { DeletePluginCommand } from '../../application/commands/delete-plugin.command';
 import { UpdatePluginCommand } from '../../application/commands/update-plugin.command';
 import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
+import { LazyAnyFileInterceptor } from '../../core/interceptors/lazy-any-file.interceptor';
 import { Plugin } from '../../domain/entities/plugin.entity';
 import { CreatePluginDTO } from '../../shared/dto/create-plugin.dto';
 import { FileDTO } from '../../shared/dto/file.dto';
 import { UpdatePluginDTO } from '../../shared/dto/update-plugin.dto';
+import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { IPlugin } from '../../shared/models/plugin.model';
-import { PluginFactory } from '../../shared/utils/plugin-factory.util';
 import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provider';
 import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
 
@@ -82,51 +82,64 @@ export class PluginManagementController {
 		forbidNonWhitelisted: true
 	})
 	@UseInterceptors(
-		LazyFileInterceptor('file', {
+		LazyAnyFileInterceptor({
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
 	@Post()
-	public async create(@Body() input: CreatePluginDTO, @UploadedPluginStorage() file: FileDTO): Promise<IPlugin> {
-		if (input.version.source.type === PluginSourceType.GAUZY && !file?.key) {
-			throw new BadRequestException('Plugin file key is empty');
-		}
-
+	public async create(
+		@Body() input: CreatePluginDTO,
+		@UploadedPluginStorage({ multiple: true }) files: FileDTO[]
+	): Promise<IPlugin> {
 		try {
-			const dto = PluginFactory.create(input);
+			// Validate files against sources
+			this.validateFilesAgainstSources(input.version.sources, files);
+			// Get the appropriate file storage provider
+			const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
+			// Process each source
+			const sources = await Promise.all(
+				input.version.sources.map(async (source) => {
+					if (source.type === PluginSourceType.GAUZY) {
+						// Find matching file for this source
+						const file = this.findFileForSource(files, source);
 
-			if (input.version.source.type === PluginSourceType.GAUZY) {
-				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
-				// Convert the plain object to a class instance
-				await gauzyStorageProvider.validate(file);
-				// Get metadata
-				const metadata = gauzyStorageProvider.extractMetadata(file);
-
-				// Create a new plugin record
-				return this.commandBus.execute(
-					new CreatePluginCommand({
-						...dto,
-						version: {
-							...dto.version,
-							source: {
-								...dto.version.source,
-								...metadata
-							}
+						if (!file?.key) {
+							throw new BadRequestException(`Plugin file key is empty for source: ${source.name}`);
 						}
-					})
-				);
-			} else {
-				return this.commandBus.execute(new CreatePluginCommand(dto));
-			}
+						// Validate and extract metadata
+						await gauzyStorageProvider.validate(file);
+						const metadata = gauzyStorageProvider.extractMetadata(file);
+						return {
+							...source,
+							...metadata
+						};
+					} else {
+						return source;
+					}
+				})
+			);
+			return this.commandBus.execute(
+				new CreatePluginCommand({
+					...input,
+					version: {
+						...input.version,
+						sources
+					}
+				})
+			);
 		} catch (error) {
-			// Ensure cleanup of uploaded file
-			if (file?.key) {
+			// Cleanup any uploaded files if error occurs
+			if (files?.length > 0) {
 				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
-				await gauzyStorageProvider.delete(file.key);
+				await Promise.all(
+					files.map((file) => (file?.key ? gauzyStorageProvider.delete(file.key) : Promise.resolve()))
+				);
 			}
-
-			// Throw a bad request exception with the validation errors
-			throw new BadRequestException(error);
+			// Improved error handling
+			if (error instanceof BadRequestException) {
+				throw error;
+			}
+			throw new BadRequestException(error.response?.message || error.message || 'Failed to create plugin');
 		}
 	}
 
@@ -172,7 +185,7 @@ export class PluginManagementController {
 		forbidNonWhitelisted: true
 	})
 	@UseInterceptors(
-		LazyFileInterceptor('file', {
+		LazyAnyFileInterceptor({
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
@@ -181,42 +194,80 @@ export class PluginManagementController {
 	public async update(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() input: UpdatePluginDTO,
-		@UploadedPluginStorage() file: FileDTO
+		@UploadedPluginStorage({ multiple: true }) files: FileDTO[]
 	): Promise<IPlugin> {
 		try {
-			if (input.version.source.type === PluginSourceType.GAUZY) {
-				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
-				// Convert the plain object to a class instance
-				await gauzyStorageProvider.validate(file);
-				// Get metadata
-				const metadata = gauzyStorageProvider.extractMetadata(file);
-
-				// Create a new plugin record
-				return this.commandBus.execute(
-					new UpdatePluginCommand(id, {
-						...input,
-						version: {
-							...input.version,
-							source: {
-								...input.version.source,
-								...metadata
-							}
+			// Validate files against sources
+			this.validateFilesAgainstSources(input.version.sources as IPluginSource[], files);
+			// Get the appropriate file storage provider
+			const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
+			// Process each source
+			const sources = await Promise.all(
+				input.version.sources.map(async (source) => {
+					if (source.type === PluginSourceType.GAUZY) {
+						// Find matching file for this source
+						const file = this.findFileForSource(files, source as IPluginSource);
+						if (!file?.key) {
+							throw new BadRequestException(`Plugin file key is empty for source: ${source.name}`);
 						}
-					})
-				);
-			} else {
-				return this.commandBus.execute(new UpdatePluginCommand(id, input));
-			}
+						// Validate and extract metadata
+						await gauzyStorageProvider.validate(file);
+						const metadata = gauzyStorageProvider.extractMetadata(file);
+						return {
+							...source,
+							...metadata
+						};
+					} else {
+						return source;
+					}
+				})
+			);
+			return this.commandBus.execute(
+				new UpdatePluginCommand(id, {
+					...input,
+					version: {
+						...input.version,
+						sources
+					}
+				})
+			);
 		} catch (error) {
-			// Ensure cleanup of uploaded file
-			if (file?.key) {
+			// Cleanup any uploaded files if error occurs
+			if (files?.length > 0) {
 				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
-				await gauzyStorageProvider.delete(file.key);
+				await Promise.all(
+					files.map((file) => (file?.key ? gauzyStorageProvider.delete(file.key) : Promise.resolve()))
+				);
 			}
-
-			// Throw a bad request exception with the validation errors
-			throw new BadRequestException(error);
+			// Improved error handling
+			if (error instanceof BadRequestException) {
+				throw error;
+			}
+			throw new BadRequestException(error.response?.message || error.message || 'Failed to create plugin');
 		}
+	}
+
+	/**
+	 * Validate that files match the required sources
+	 */
+	private validateFilesAgainstSources(sources: IPluginSource[], files: FileDTO[]): void {
+		const gauzySources = sources.filter((s) => s.type === PluginSourceType.GAUZY);
+
+		// Check file count matches GAUZY sources count
+		if (gauzySources.length > 0 && (!files || files.length < gauzySources.length)) {
+			throw new BadRequestException(
+				`Expected ${gauzySources.length} files for GAUZY sources, got ${files?.length || 0}`
+			);
+		}
+	}
+
+	/**
+	 * Find the appropriate file for a given source
+	 */
+	private findFileForSource(files: FileDTO[], source: IPluginSource): FileDTO | undefined {
+		// Implement your matching logic here
+		// This could be based on filename, metadata, or other criteria
+		return files.find((file) => file.originalname.includes(source.fileName));
 	}
 
 	/**

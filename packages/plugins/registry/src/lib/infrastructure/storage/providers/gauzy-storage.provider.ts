@@ -1,10 +1,10 @@
-import { FileStorage } from '@gauzy/core';
-import { IFileMetadata, IStorageProvider } from '../../../shared/models/storage-provider.model';
-import { FileDTO } from '../../../shared/dto/file.dto';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
+import { FileStorage } from '@gauzy/core';
 import { BadRequestException } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
+import { FileDTO } from '../../../shared/dto/file.dto';
+import { IFileMetadata, IStorageProvider } from '../../../shared/models/storage-provider.model';
 
 export class GauzyStorageProvider implements IStorageProvider {
 	constructor(private readonly fileStorage: FileStorage) {}
