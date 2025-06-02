@@ -49,19 +49,23 @@ export class ActivepiecesController {
 	@Permissions(PermissionsEnum.INTEGRATION_ADD)
 	async exchangeToken(@Body() body: { code: string; state?: string }): Promise<IActivepiecesOAuthTokens> {
 		try {
-			const { code } = body;
+			const { code, state } = body;
 
 			if (!code) {
 				throw new HttpException('Authorization code is required', HttpStatus.BAD_REQUEST);
+			}
+
+			if (!state) {
+				throw new HttpException('State parameter is required for security', HttpStatus.BAD_REQUEST);
 			}
 
 			// Get ActivePieces OAuth configuration
 			const activepiecesConfig = this.configService.get('activepieces') as IActivepiecesConfig;
 
 			if (
-				!activepiecesConfig?.clientId ||
-				!activepiecesConfig?.clientSecret ||
-				!activepiecesConfig?.callbackUrl
+				!activepiecesConfig?.clientId?.trim() ||
+				!activepiecesConfig?.clientSecret?.trim() ||
+				!activepiecesConfig?.callbackUrl?.trim()
 			) {
 				throw new HttpException(
 					'ActivePieces OAuth configuration is incomplete',
@@ -122,6 +126,9 @@ export class ActivepiecesController {
 		try {
 			return await this.activepiecesService.createConnection(input);
 		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new HttpException(
 				`Failed to create ActivePieces connection: ${error.message}`,
 				HttpStatus.BAD_REQUEST

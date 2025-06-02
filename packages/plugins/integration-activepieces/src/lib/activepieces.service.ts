@@ -201,7 +201,10 @@ export class ActivepiecesService {
 			return true;
 		} catch (error: any) {
 			this.logger.error('Failed to delete ActivePieces connection:', error);
-			return false;
+			throw new HttpException(
+				`Failed to delete Activepieces connection: ${error.message}`,
+				error.status || HttpStatus.INTERNAL_SERVER_ERROR
+			);
 		}
 	}
 
@@ -291,7 +294,7 @@ export class ActivepiecesService {
 				},
 				{
 					settingsName: ActivepiecesSettingName.IS_ENABLED,
-					settingsValue: 'true',
+					settingsValue: JSON.stringify(true),
 					tenantId,
 					organizationId
 				}

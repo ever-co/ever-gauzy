@@ -2,6 +2,8 @@ import { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
 
 /**
  * ActivePieces OAuth token response interface
+ * @property expires_in - Token lifetime in seconds from issuance
+ * @property refresh_token - Optional refresh token for renewing access
  */
 export interface IActivepiecesOAuthTokens {
 	access_token: string;
