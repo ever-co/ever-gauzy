@@ -72,7 +72,8 @@ export class ActivepiecesAuthorizationController {
 
 			// Return the authorization URL in JSON format instead of redirecting
 			return response.json({
-				authorizationUrl
+				authorizationUrl,
+				state
 			});
 		} catch (error: any) {
 			throw new HttpException(

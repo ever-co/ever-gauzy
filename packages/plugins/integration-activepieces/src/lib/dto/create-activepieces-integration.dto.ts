@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ICreateActivepiecesIntegrationInput } from '../activepieces.type';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
 

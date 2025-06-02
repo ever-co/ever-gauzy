@@ -18,7 +18,8 @@ export interface IActivepiecesConfig {
 	readonly clientSecret: string;
 
 	/**
-	 * The redirect URI registered with Activepieces.
+	 * The redirect URI registered with Activepieces for OAuth callback.
+	 * This URL receives he authorization code during the OAuth.
 	 */
 	readonly callbackUrl: string;
 

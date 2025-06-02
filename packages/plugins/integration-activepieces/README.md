@@ -22,7 +22,7 @@ After building your library with `yarn nx build plugin-integration-activepieces`
 
 Install the Integration ActivePieces Plugin using your preferred package manager:
 
-```bash
+```shell
 npm install @gauzy/plugin-integration-activepieces
 # or
   yarn add @gauzy/plugin-integration-activepieces

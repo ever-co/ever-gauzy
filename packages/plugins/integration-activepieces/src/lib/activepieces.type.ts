@@ -30,7 +30,7 @@ export interface IActivepiecesOAuth2ConnectionValue {
 	type: ActivepiecesConnectionType.OAUTH2;
 	client_id: string;
 	client_secret: string;
-	data: Record<string, any>;
+	data: Record<string, string | number>;
 }
 
 /**
@@ -41,7 +41,7 @@ export interface IActivepiecesConnectionRequest {
 	displayName: string;
 	pieceName: string;
 	projectId: string;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, string | number | boolean>;
 	type: ActivepiecesConnectionType;
 	value: IActivepiecesOAuth2ConnectionValue;
 }
@@ -49,6 +49,11 @@ export interface IActivepiecesConnectionRequest {
 /**
  * ActivePieces connection response
  */
+export enum ActivepiecesConnectionStatus {
+	ACTIVE = 'ACTIVE',
+	ERROR = 'ERROR'
+}
+
 export interface IActivepiecesConnection {
 	id: string;
 	externalId: string;
@@ -56,7 +61,7 @@ export interface IActivepiecesConnection {
 	pieceName: string;
 	projectId: string;
 	type: ActivepiecesConnectionType;
-	status: 'ACTIVE' | 'ERROR';
+	status: ActivepiecesConnectionStatus;
 	created: string;
 	updated: string;
 }

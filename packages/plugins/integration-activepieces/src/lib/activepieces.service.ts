@@ -1,7 +1,7 @@
-import { Injectable, BadRequestException, NotFoundException, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, HttpException, HttpStatus, UnauthorizedException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@gauzy/config';
-import { firstValueFrom, catchError } from 'rxjs';
+import { firstValueFrom, catchError, throwError } from 'rxjs';
 import { AxiosError } from 'axios';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { IntegrationSettingService, IntegrationService, IntegrationTenantService, RequestContext } from '@gauzy/core';
@@ -12,7 +12,7 @@ import {
 	ActivepiecesConnectionType,
 	ICreateActivepiecesIntegrationInput
 } from './activepieces.type';
-import { ACTIVEPIECES_CONNECTIONS_URL } from './activepieces.config';
+import { ACTIVEPIECES_CONNECTIONS_URL, ACTIVEPIECES_PIECE_NAME } from './activepieces.config';
 
 @Injectable()
 export class ActivepiecesService {
@@ -56,11 +56,11 @@ export class ActivepiecesService {
 			const connectionRequest: IActivepiecesConnectionRequest = {
 				externalId,
 				displayName,
-				pieceName: 'Ever-gauzy', // Your piece name in ActivePieces
+				pieceName: ACTIVEPIECES_PIECE_NAME, // Your piece name in ActivePieces
 				projectId: input.projectId,
 				metadata: {
 					tenantId,
-					organizationId,
+					organizationId: organizationId || 'default',
 					createdAt: new Date().toISOString()
 				},
 				type: ActivepiecesConnectionType.OAUTH2,
@@ -70,7 +70,7 @@ export class ActivepiecesService {
 					client_secret: clientSecret,
 					data: {
 						tenantId,
-						organizationId
+						organizationId: organizationId || 'default'
 					}
 				}
 			};
@@ -87,10 +87,13 @@ export class ActivepiecesService {
 					.pipe(
 						catchError((error: AxiosError) => {
 							this.logger.error('Error creating ActivePieces connection:', error.response?.data);
-							throw new HttpException(
-								`Failed to create ActivePieces connection: ${error.message}`,
-								error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
-							);
+							const status = error.response?.status;
+							if (status === HttpStatus.UNAUTHORIZED) {
+								throw new UnauthorizedException(
+									`Unauthorized to create ActivePieces connection: ${error.message}`
+								)
+							}
+							return throwError(() => error);
 						})
 					)
 			);
@@ -149,7 +152,10 @@ export class ActivepiecesService {
 			return response.data;
 		} catch (error: any) {
 			this.logger.error('Failed to get ActivePieces connection:', error);
-			return null;
+			throw new HttpException(
+				`Failed to get ActivePieces connection: ${error.message}`,
+				error.status || HttpStatus.INTERNAL_SERVER_ERROR
+			);
 		}
 	}
 
@@ -212,7 +218,7 @@ export class ActivepiecesService {
 			});
 
 			if (!tokenSetting?.settingsValue) {
-				throw new NotFoundException('Access token not found for this integration');
+				throw new BadRequestException('Access token not found for this integration');
 			}
 
 			return tokenSetting.settingsValue;
@@ -234,7 +240,7 @@ export class ActivepiecesService {
 				}
 			});
 
-			return enabledSetting?.settingsValue === 'true';
+			return enabledSetting?.settingsValue ? JSON.parse(enabledSetting.settingsValue) === true: false;
 		} catch (error) {
 			this.logger.error('Error checking if integration is enabled:', error);
 			return false;

@@ -98,6 +98,9 @@ export class ActivepiecesController {
 
 			return response.data;
 		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new HttpException(
 				`Failed to exchange OAuth code: ${error.message}`,
 				HttpStatus.INTERNAL_SERVER_ERROR
