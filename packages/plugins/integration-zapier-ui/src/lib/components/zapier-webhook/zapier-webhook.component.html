@@ -1,0 +1,110 @@
+<nb-card class="card-scroll">
+	<nb-card-header class="d-flex">
+		<ngx-back-navigation></ngx-back-navigation>
+		<h5>{{ 'INTEGRATIONS.ZAPIER.WEBHOOKS.TITLE' | translate }}</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="row">
+			<div class="col-xl-6 col-12">
+				<nb-card>
+					<nb-card-header>
+						<h6>{{ 'INTEGRATIONS.ZAPIER.WEBHOOKS.CREATE_TITLE' | translate }}</h6>
+					</nb-card-header>
+					<nb-card-body>
+						<form [formGroup]="form" (ngSubmit)="createWebhook()">
+							<div class="form-group">
+								<label for="event" class="label">{{
+									'INTEGRATIONS.ZAPIER.WEBHOOKS.EVENT' | translate
+								}}</label>
+								<select id="event" formControlName="event" nbSelect fullWidth>
+									<option value="task.created">
+										{{ 'INTEGRATIONS.ZAPIER.WEBHOOKS.EVENTS.TASK_CREATED' | translate }}
+									</option>
+									<option value="task.updated">
+										{{ 'INTEGRATIONS.ZAPIER.WEBHOOKS.EVENTS.TASK_UPDATED' | translate }}
+									</option>
+									<option value="task.deleted">
+										{{ 'INTEGRATIONS.ZAPIER.WEBHOOKS.EVENTS.TASK_DELETED' | translate }}
+									</option>
+								</select>
+								<div
+									*ngIf="form.get('event').touched && form.get('event').errors?.required"
+									class="error-message"
+								>
+									{{ 'FORM.VALIDATION.REQUIRED' | translate }}
+								</div>
+							</div>
+							<div class="form-group">
+								<label for="targetUrl" class="label">{{
+									'INTEGRATIONS.ZAPIER.WEBHOOKS.TARGET_URL' | translate
+								}}</label>
+								<input
+									fullWidth
+									id="targetUrl"
+									formControlName="targetUrl"
+									type="text"
+									nbInput
+									[placeholder]="'FORM.PLACEHOLDERS.WEBHOOK_URL' | translate"
+								/>
+								<div
+									*ngIf="form.get('targetUrl').touched && form.get('targetUrl').errors?.required"
+									class="error-message"
+								>
+									{{ 'FORM.VALIDATION.REQUIRED' | translate }}
+								</div>
+								<div
+									*ngIf="form.get('targetUrl').touched && form.get('targetUrl').errors?.pattern"
+									class="error-message"
+								>
+									{{ 'FORM.VALIDATION.INVALID_URL' | translate }}
+								</div>
+							</div>
+							<button
+								nbButton
+								status="primary"
+								[disabled]="form.invalid || loading"
+								size="small"
+								outline
+								type="submit"
+							>
+								<nb-icon *ngIf="loading" icon="loader-outline" class="mr-2"></nb-icon>
+								{{ 'BUTTONS.CREATE' | translate }}
+							</button>
+						</form>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-xl-6 col-12">
+				<nb-card>
+					<nb-card-header>
+						<h6>{{ 'INTEGRATIONS.ZAPIER.WEBHOOKS.LIST_TITLE' | translate }}</h6>
+					</nb-card-header>
+					<nb-card-body>
+						<div class="webhooks-list">
+							<div *ngFor="let webhook of webhooks" class="webhook-item">
+								<div class="webhook-info">
+									<h6>{{ webhook.event }}</h6>
+									<p>{{ webhook.targetUrl }}</p>
+								</div>
+								<div class="webhook-actions">
+									<button
+										nbButton
+										status="danger"
+										size="small"
+										outline
+										(click)="deleteWebhook(webhook.id)"
+									>
+										{{ 'BUTTONS.DELETE' | translate }}
+									</button>
+								</div>
+							</div>
+							<div *ngIf="webhooks.length === 0" class="no-webhooks">
+								{{ 'INTEGRATIONS.ZAPIER.WEBHOOKS.NO_WEBHOOKS' | translate }}
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>
