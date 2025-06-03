@@ -1,29 +1,71 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
-import { NbCardModule, NbButtonModule, NbIconModule, NbInputModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
-import { SharedModule } from '@gauzy/ui-core/shared';
+import {
+	NbCardModule,
+	NbButtonModule,
+	NbIconModule,
+	NbInputModule,
+	NbDatepickerModule,
+	NbCheckboxModule,
+	NbActionsModule,
+	NbRouteTabsetModule,
+	NbCalendarKitModule,
+	NbSpinnerModule,
+	NbContextMenuModule,
+	NbTabsetModule,
+	NbTooltipModule,
+	NbToggleModule
+} from '@nebular/theme';
+import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
+import { HttpClient } from '@angular/common/http';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import {
+	getBrowserLanguage,
+	SelectorsModule,
+	SharedModule,
+	SmartDataViewLayoutModule,
+	TableComponentsModule
+} from '@gauzy/ui-core/shared';
 import { ZapierAuthorizeComponent } from './components/zapier-authorize/zapier-authorize.component';
-import { integrationZapierRoutes } from './integration-zapier.routes';
 import { IntegrationZapierLayoutComponent } from './integration-zapier.layout.component';
 import { ZapierSettingsComponent } from './components/zapier-settings/zapier-settings.component';
 import { ZapierWebhookComponent } from './components/zapier-webhook/zapier-webhook.component';
+import { IntegrationZapierRoutes } from './integration-zapier.routes';
+import { ZapierComponent } from './components/zapier/zapier.component';
 
 @NgModule({
 	imports: [
-		CommonModule,
-		ReactiveFormsModule,
-		RouterModule.forChild(integrationZapierRoutes),
-		NbCardModule,
+		NbActionsModule,
 		NbButtonModule,
+		NbSpinnerModule,
+		NbCalendarKitModule,
+		NbCardModule,
+		NbCheckboxModule,
+		NbContextMenuModule,
+		NbDatepickerModule,
 		NbIconModule,
 		NbInputModule,
-		TranslateModule,
-		SharedModule
+		NbRouteTabsetModule,
+		NbTabsetModule,
+		NbToggleModule,
+		NbTooltipModule,
+		TranslateModule.forChild({
+			defaultLanguage: getBrowserLanguage(),
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		}),
+		IntegrationZapierRoutes,
+		SmartDataViewLayoutModule,
+		SelectorsModule,
+		SharedModule,
+		TableComponentsModule,
+		CommonModule
 	],
 	declarations: [
+		ZapierComponent,
 		IntegrationZapierLayoutComponent,
 		ZapierAuthorizeComponent,
 		ZapierSettingsComponent,
