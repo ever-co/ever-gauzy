@@ -1,0 +1,66 @@
+<nb-card class="card-scroll">
+	<nb-card-header class="d-flex">
+		<ngx-back-navigation></ngx-back-navigation>
+		<h5>{{ 'INTEGRATIONS.ZAPIER.TITLE' | translate }}</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="row">
+			<div class="col-xl-6 col-12">
+				<nb-card>
+					<nb-card-header>
+						<h6>{{ 'INTEGRATIONS.ZAPIER.TRIGGERS.TITLE' | translate }}</h6>
+					</nb-card-header>
+					<nb-card-body>
+						<div class="endpoints-list">
+							<div *ngFor="let trigger of _zapierStoreService.triggers$ | async" class="endpoint-item">
+								<div class="endpoint-info">
+									<h6>{{ trigger.name }}</h6>
+									<p>{{ trigger.description }}</p>
+								</div>
+								<div class="endpoint-actions">
+									<button
+										nbButton
+										status="primary"
+										size="small"
+										outline
+										(click)="openEndpointDetails(trigger)"
+									>
+										{{ 'BUTTONS.VIEW' | translate }}
+									</button>
+								</div>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-xl-6 col-12">
+				<nb-card>
+					<nb-card-header>
+						<h6>{{ 'INTEGRATIONS.ZAPIER.ACTIONS.TITLE' | translate }}</h6>
+					</nb-card-header>
+					<nb-card-body>
+						<div class="endpoints-list">
+							<div *ngFor="let action of _zapierStoreService.actions$ | async" class="endpoint-item">
+								<div class="endpoint-info">
+									<h6>{{ action.name }}</h6>
+									<p>{{ action.description }}</p>
+								</div>
+								<div class="endpoint-actions">
+									<button
+										nbButton
+										status="primary"
+										size="small"
+										outline
+										(click)="openEndpointDetails(action)"
+									>
+										{{ 'BUTTONS.VIEW' | translate }}
+									</button>
+								</div>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

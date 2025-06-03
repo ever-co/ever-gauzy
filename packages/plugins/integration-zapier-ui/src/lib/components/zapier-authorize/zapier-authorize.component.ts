@@ -1,0 +1,98 @@
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { tap, catchError } from 'rxjs/operators';
+import { EMPTY } from 'rxjs';
+import { ZapierService, ToastrService } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { TranslateService } from '@ngx-translate/core';
+import { ICreateZapierIntegrationInput } from '@gauzy/contracts';
+
+@Component({
+	selector: 'ngx-zapier-authorize',
+	templateUrl: './zapier-authorize.component.html',
+	styleUrls: ['./zapier-authorize.component.scss']
+})
+export class ZapierAuthorizeComponent extends TranslationBaseComponent implements OnInit {
+	public form: FormGroup;
+	public loading = false;
+	public oauthConfig: { clientId: string; redirectUri: string } = null;
+
+	constructor(
+		private readonly _fb: FormBuilder,
+		private readonly _zapierService: ZapierService,
+		private readonly _toastrService: ToastrService,
+		public readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
+
+	ngOnInit() {
+		this._initializeForm();
+		this._loadOAuthConfig();
+	}
+
+	private _initializeForm() {
+		this.form = this._fb.group({
+			clientId: ['', [Validators.required]],
+			clientSecret: ['', [Validators.required]]
+		});
+	}
+
+	private _loadOAuthConfig() {
+		this.loading = true;
+		this._zapierService
+			.getOAuthConfig()
+			.pipe(
+				tap((config: { clientId: string; redirectUri: string }) => {
+					this.oauthConfig = config;
+				}),
+				catchError((error) => {
+					this._toastrService.error(
+						this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.LOAD_OAUTH_CONFIG'),
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
+					console.error('Error loading OAuth config:', error);
+					return EMPTY;
+				})
+			)
+			.subscribe(() => {
+				this.loading = false;
+			});
+	}
+
+	/**
+	 * Start OAuth authorization flow
+	 */
+	startAuthorization() {
+		if (this.form.invalid) {
+			this._toastrService.error(
+				this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.INVALID_FORM'),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+			return;
+		}
+
+		this.loading = true;
+		const credentials: ICreateZapierIntegrationInput = this.form.value;
+
+		this._zapierService
+			.initializeIntegration(credentials)
+			.pipe(
+				tap((response: { authorizationUrl: string }) => {
+					// Redirect to Zapier authorization page
+					window.location.href = response.authorizationUrl;
+				}),
+				catchError((error) => {
+					this._toastrService.error(
+						this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.START_AUTHORIZATION'),
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
+					console.error('Error starting authorization:', error);
+					return EMPTY;
+				})
+			)
+			.subscribe(() => {
+				this.loading = false;
+			});
+	}
+}
