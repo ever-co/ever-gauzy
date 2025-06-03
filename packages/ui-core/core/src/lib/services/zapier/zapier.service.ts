@@ -2,7 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
-import { IZapierEndpoint, IZapierAccessTokens, ICreateZapierIntegrationInput } from '@gauzy/contracts';
+import {
+	IZapierEndpoint,
+	IZapierAccessTokens,
+	ICreateZapierIntegrationInput,
+	IZapierWebhook,
+	IZapierCreateWebhookInput,
+	IZapierAuthConfig,
+	IZapierIntegrationSettings
+} from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'
@@ -13,10 +21,22 @@ export class ZapierService {
 	/**
 	 * Get OAuth configuration
 	 */
-	getOAuthConfig(): Observable<{ clientId: string; redirectUri: string }> {
-		return this.http.get<{ clientId: string; redirectUri: string }>(
-			`${API_PREFIX}/integration/zapier/oauth/config`
-		);
+	getOAuthConfig(): Observable<IZapierAuthConfig> {
+		return this.http.get<IZapierAuthConfig>(`${API_PREFIX}/integration/zapier/oauth/config`);
+	}
+
+	/**
+	 * Get Zapier integration settings
+	 */
+	getSettings(): Observable<IZapierIntegrationSettings> {
+		return this.http.get<IZapierIntegrationSettings>(`${API_PREFIX}/integration/zapier/settings`);
+	}
+
+	/**
+	 * Update Zapier integration settings
+	 */
+	updateSettings(settings: IZapierIntegrationSettings): Observable<IZapierIntegrationSettings> {
+		return this.http.put<IZapierIntegrationSettings>(`${API_PREFIX}/integration/zapier/settings`, settings);
 	}
 
 	/**
@@ -85,10 +105,21 @@ export class ZapierService {
 	}
 
 	/**
+	 * Get all webhooks
+	 */
+	getWebhooks(token: string): Observable<IZapierWebhook[]> {
+		return this.http.get<IZapierWebhook[]>(`${API_PREFIX}/integration/zapier/webhooks`, {
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
+		});
+	}
+
+	/**
 	 * Create a new Zapier webhook subscription
 	 */
-	createWebhook(body: { target_url: string; event: string }, token: string): Observable<any> {
-		return this.http.post(`${API_PREFIX}/integration/zapier/webhooks`, body, {
+	createWebhook(body: IZapierCreateWebhookInput, token: string): Observable<IZapierWebhook> {
+		return this.http.post<IZapierWebhook>(`${API_PREFIX}/integration/zapier/webhooks`, body, {
 			headers: {
 				Authorization: `Bearer ${token}`
 			}

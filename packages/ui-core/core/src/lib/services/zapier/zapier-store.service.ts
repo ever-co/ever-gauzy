@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { IZapierEndpoint } from '@gauzy/contracts';
+import { IZapierEndpoint, IZapierWebhook } from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'
@@ -10,7 +10,7 @@ export class ZapierStoreService {
 	private _actions$: BehaviorSubject<IZapierEndpoint[]> = new BehaviorSubject([]);
 	private _isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _error$: BehaviorSubject<string> = new BehaviorSubject(null);
-	private _webhooks$: BehaviorSubject<any[]> = new BehaviorSubject([]);
+	private _webhooks$: BehaviorSubject<IZapierWebhook[]> = new BehaviorSubject([]);
 	private _isWebhookLoading$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	private _webhookError$: BehaviorSubject<string> = new BehaviorSubject(null);
 
@@ -45,7 +45,7 @@ export class ZapierStoreService {
 	/**
 	 * Get webhooks state
 	 */
-	get webhooks$(): Observable<any[]> {
+	get webhooks$(): Observable<IZapierWebhook[]> {
 		return this._webhooks$.asObservable();
 	}
 
@@ -94,8 +94,24 @@ export class ZapierStoreService {
 	/**
 	 * Set webhooks
 	 */
-	setWebhooks(webhooks: any[]): void {
+	setWebhooks(webhooks: IZapierWebhook[]): void {
 		this._webhooks$.next(webhooks);
+	}
+
+	/**
+	 * Add a new webhook to the store
+	 */
+	addWebhook(webhook: IZapierWebhook): void {
+		const currentWebhooks = this._webhooks$.getValue();
+		this._webhooks$.next([...currentWebhooks, webhook]);
+	}
+
+	/**
+	 * Remove a webhook from the store
+	 */
+	removeWebhook(webhookId: string): void {
+		const currentWebhooks = this._webhooks$.getValue();
+		this._webhooks$.next(currentWebhooks.filter((webhook) => webhook.id !== webhookId));
 	}
 
 	/**
