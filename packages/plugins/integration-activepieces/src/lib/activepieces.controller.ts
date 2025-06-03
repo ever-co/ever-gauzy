@@ -152,6 +152,9 @@ export class ActivepiecesController {
 		try {
 			return await this.activepiecesService.getConnection(integrationId);
 		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new HttpException(
 				`Failed to get ActivePieces connection: ${error.message}`,
 				HttpStatus.INTERNAL_SERVER_ERROR
@@ -204,6 +207,9 @@ export class ActivepiecesController {
 			const enabled = await this.activepiecesService.isIntegrationEnabled(integrationId);
 			return { enabled };
 		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new HttpException(
 				`Failed to get integration status: ${error.message}`,
 				HttpStatus.INTERNAL_SERVER_ERROR

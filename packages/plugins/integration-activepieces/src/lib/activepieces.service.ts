@@ -227,7 +227,13 @@ export class ActivepiecesService {
 			return tokenSetting.settingsValue;
 		} catch (error: any) {
 			this.logger.error('Failed to get valid access token:', error);
-			throw new BadRequestException(`Failed to get valid access token: ${error.message}`);
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			throw new HttpException(
+				`Failed to get valid access token: ${error.message}`,
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
 		}
 	}
 
