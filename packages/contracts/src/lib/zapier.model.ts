@@ -96,3 +96,15 @@ export interface IZapierAuthState {
 	organizationId?: string;
 	integrationId?: string;
 }
+
+/**
+ * Interface representing a Zapier webhook subscription
+ */
+export interface IZapierWebhook extends IBasePerTenantAndOrganizationEntityModel {
+	id: string;
+	targetUrl: string;
+	event: string;
+	integrationId: string;
+	createdAt: Date;
+	updatedAt: Date;
+}
