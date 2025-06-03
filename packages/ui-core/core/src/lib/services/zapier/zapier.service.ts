@@ -11,6 +11,15 @@ export class ZapierService {
 	constructor(private readonly http: HttpClient) {}
 
 	/**
+	 * Get OAuth configuration
+	 */
+	getOAuthConfig(): Observable<{ clientId: string; redirectUri: string }> {
+		return this.http.get<{ clientId: string; redirectUri: string }>(
+			`${API_PREFIX}/integration/zapier/oauth/config`
+		);
+	}
+
+	/**
 	 * Initialize a new Zapier integration
 	 */
 	initializeIntegration(body: ICreateZapierIntegrationInput): Observable<{
