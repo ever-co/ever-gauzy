@@ -237,6 +237,9 @@ export class ActivepiecesController {
 				callbackUrl: config?.callbackUrl
 			};
 		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new HttpException(
 				`Failed to get ActivePieces configuration: ${error.message}`,
 				HttpStatus.INTERNAL_SERVER_ERROR
