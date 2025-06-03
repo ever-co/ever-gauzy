@@ -60,6 +60,7 @@ import { ProjectModuleMutationComponent } from '../../project-module/project-mod
 export class ProjectMutationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
+	public ProjectOwnerEnum = ProjectOwnerEnum;
 	public TaskListTypeEnum = TaskListTypeEnum;
 	public memberIds: ID[] = [];
 	public managerIds: ID[] = [];

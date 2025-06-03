@@ -144,7 +144,11 @@
 									<label
 										for="organizationContacts"
 										class="label"
-										[ngClass]="projectOrganizationContact.invalid ? 'required-asterisk' : ''"
+										[ngClass]="
+											form.get('owner')?.value === ProjectOwnerEnum.CLIENT
+												? 'required-asterisk'
+												: ''
+										"
 									>
 										{{ 'FORM.LABELS.CLIENTS' | translate }}
 									</label>
