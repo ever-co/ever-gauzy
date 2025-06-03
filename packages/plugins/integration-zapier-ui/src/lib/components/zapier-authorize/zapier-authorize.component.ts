@@ -10,7 +10,8 @@ import { ICreateZapierIntegrationInput } from '@gauzy/contracts';
 @Component({
 	selector: 'ngx-zapier-authorize',
 	templateUrl: './zapier-authorize.component.html',
-	styleUrls: ['./zapier-authorize.component.scss']
+	styleUrls: ['./zapier-authorize.component.scss'],
+	standalone: false
 })
 export class ZapierAuthorizeComponent extends TranslationBaseComponent implements OnInit {
 	public form: FormGroup;

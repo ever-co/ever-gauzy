@@ -10,7 +10,8 @@ import { IZapierIntegrationSettings } from '@gauzy/contracts';
 @Component({
 	selector: 'ngx-zapier-settings',
 	templateUrl: './zapier-settings.component.html',
-	styleUrls: ['./zapier-settings.component.scss']
+	styleUrls: ['./zapier-settings.component.scss'],
+	standalone: false
 })
 export class ZapierSettingsComponent extends TranslationBaseComponent implements OnInit {
 	public form: FormGroup;
