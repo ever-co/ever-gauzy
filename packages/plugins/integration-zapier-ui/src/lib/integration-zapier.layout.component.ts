@@ -17,7 +17,8 @@ import { NbIconLibraries } from '@nebular/theme';
 				<router-outlet></router-outlet>
 			</nb-card-body>
 		</nb-card>
-	`
+	`,
+	standalone: false
 })
 export class IntegrationZapierLayoutComponent {
 	constructor(
