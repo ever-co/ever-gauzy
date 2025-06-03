@@ -9,12 +9,15 @@ import { IZapierEndpoint } from '@gauzy/contracts';
 @Component({
 	selector: 'ngx-zapier',
 	templateUrl: './zapier.component.html',
-	styleUrls: ['./zapier.component.scss']
+	styleUrls: ['./zapier.component.scss'],
+	standalone: false
 })
 export class ZapierComponent extends TranslationBaseComponent implements OnInit {
+	private token: string;
+
 	constructor(
 		private readonly _zapierService: ZapierService,
-		private readonly _zapierStoreService: ZapierStoreService,
+		public readonly zapierStoreService: ZapierStoreService,
 		private readonly _toastrService: ToastrService,
 		public readonly translateService: TranslateService
 	) {
@@ -22,17 +25,42 @@ export class ZapierComponent extends TranslationBaseComponent implements OnInit 
 	}
 
 	ngOnInit() {
-		this._loadTriggers();
-		this._loadActions();
+		this._loadSettings();
+	}
+
+	private _loadSettings() {
+		this._zapierService.getSettings().subscribe(
+			(settings) => {
+				if (settings && settings.access_token) {
+					this.token = settings.access_token;
+					this._loadTriggers();
+					this._loadActions();
+				} else {
+					this._toastrService.error(
+						this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.NO_TOKEN'),
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
+				}
+			},
+			(error) => {
+				this._toastrService.error(
+					this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.LOAD_SETTINGS'),
+					this.getTranslation('TOASTR.TITLE.ERROR')
+				);
+				console.error('Error loading Zapier settings:', error);
+			}
+		);
 	}
 
 	private _loadTriggers() {
-		this._zapierStoreService.setLoading(true);
+		if (!this.token) return;
+
+		this.zapierStoreService.setLoading(true);
 		this._zapierService
-			.getTriggers()
+			.getTriggers(this.token)
 			.pipe(
 				tap((triggers: IZapierEndpoint[]) => {
-					this._zapierStoreService.setTriggers(triggers);
+					this.zapierStoreService.setTriggers(triggers);
 				}),
 				catchError((error) => {
 					this._toastrService.error(
@@ -44,17 +72,19 @@ export class ZapierComponent extends TranslationBaseComponent implements OnInit 
 				})
 			)
 			.subscribe(() => {
-				this._zapierStoreService.setLoading(false);
+				this.zapierStoreService.setLoading(false);
 			});
 	}
 
 	private _loadActions() {
-		this._zapierStoreService.setLoading(true);
+		if (!this.token) return;
+
+		this.zapierStoreService.setLoading(true);
 		this._zapierService
-			.getActions()
+			.getActions(this.token)
 			.pipe(
 				tap((actions: IZapierEndpoint[]) => {
-					this._zapierStoreService.setActions(actions);
+					this.zapierStoreService.setActions(actions);
 				}),
 				catchError((error) => {
 					this._toastrService.error(
@@ -66,7 +96,12 @@ export class ZapierComponent extends TranslationBaseComponent implements OnInit 
 				})
 			)
 			.subscribe(() => {
-				this._zapierStoreService.setLoading(false);
+				this.zapierStoreService.setLoading(false);
 			});
+	}
+
+	openEndpointDetails(endpoint: IZapierEndpoint) {
+		// TODO: Implement endpoint details view
+		console.log('Opening endpoint details:', endpoint);
 	}
 }

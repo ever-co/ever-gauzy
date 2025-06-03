@@ -12,7 +12,7 @@
 					</nb-card-header>
 					<nb-card-body>
 						<div class="endpoints-list">
-							<div *ngFor="let trigger of _zapierStoreService.triggers$ | async" class="endpoint-item">
+							<div *ngFor="let trigger of zapierStoreService.triggers$ | async" class="endpoint-item">
 								<div class="endpoint-info">
 									<h6>{{ trigger.name }}</h6>
 									<p>{{ trigger.description }}</p>
@@ -29,6 +29,9 @@
 									</button>
 								</div>
 							</div>
+							<div *ngIf="(zapierStoreService.triggers$ | async)?.length === 0" class="no-data">
+								{{ 'INTEGRATIONS.ZAPIER.NO_TRIGGERS' | translate }}
+							</div>
 						</div>
 					</nb-card-body>
 				</nb-card>
@@ -40,7 +43,7 @@
 					</nb-card-header>
 					<nb-card-body>
 						<div class="endpoints-list">
-							<div *ngFor="let action of _zapierStoreService.actions$ | async" class="endpoint-item">
+							<div *ngFor="let action of zapierStoreService.actions$ | async" class="endpoint-item">
 								<div class="endpoint-info">
 									<h6>{{ action.name }}</h6>
 									<p>{{ action.description }}</p>
@@ -56,6 +59,9 @@
 										{{ 'BUTTONS.VIEW' | translate }}
 									</button>
 								</div>
+							</div>
+							<div *ngIf="(zapierStoreService.actions$ | async)?.length === 0" class="no-data">
+								{{ 'INTEGRATIONS.ZAPIER.NO_ACTIONS' | translate }}
 							</div>
 						</div>
 					</nb-card-body>
