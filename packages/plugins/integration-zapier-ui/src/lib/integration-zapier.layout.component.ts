@@ -1,35 +1,49 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { NbIconLibraries } from '@nebular/theme';
+import { filter, merge, tap } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { LanguagesEnum } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
+import { I18nService } from '@gauzy/ui-core/i18n';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-integration-zapier-layout',
-	template: `
-		<nb-card>
-			<nb-card-header class="d-flex">
-				<div class="d-flex align-items-center">
-					<nb-icon icon="flash-outline" class="mr-2"></nb-icon>
-					<h4 class="mb-0">{{ 'MENU.ZAPIER' | translate }}</h4>
-				</div>
-			</nb-card-header>
-			<nb-card-body>
-				<router-outlet></router-outlet>
-			</nb-card-body>
-		</nb-card>
-	`,
+	template: ` <router-outlet></router-outlet> `,
 	standalone: false
 })
-export class IntegrationZapierLayoutComponent {
+export class IntegrationZapierLayoutComponent implements OnInit, OnDestroy {
 	constructor(
-		private readonly router: Router,
-		private readonly translate: TranslateService,
-		private readonly iconLibraries: NbIconLibraries
-	) {
-		this.iconLibraries.registerFontPack('ion', { iconClassPrefix: 'ion' });
+		private readonly _translateService: TranslateService,
+		private readonly _store: Store,
+		private readonly _i18nService: I18nService
+	) {}
+
+	ngOnInit() {
+		this.initializeUiLanguagesAndLocale();
 	}
 
-	navigateToZapier() {
-		window.open('https://zapier.com', '_blank');
+	/**
+	 * Initialize UI languages and Update Locale
+	 */
+	private initializeUiLanguagesAndLocale() {
+		// Observable that emits when preferred language changes.
+		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
+			distinctUntilChange(),
+			filter((lang: string | LanguagesEnum) => !!lang),
+			tap((lang: string | LanguagesEnum) => {
+				console.log('integration Zapier ui module plugin lang', lang);
+				this._translateService.use(lang);
+			}),
+			untilDestroyed(this)
+		);
+
+		// Subscribe to initiate the stream
+		preferredLanguage$.subscribe();
+	}
+
+	ngOnDestroy(): void {
+		console.log(`Integration Zapier UI module plugin destroyed`);
 	}
 }

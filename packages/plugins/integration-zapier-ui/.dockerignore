@@ -1,20 +1,16 @@
-docker
-tmp
-README.md
-.env
-
-# git
-
-.git
-.gitignore
-.gitmodules
-
 # dependencies
-
-node_modules
+node_modules/
 
 # misc
-
 npm-debug.log
 dist
-build
+
+# IDE & editor
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+# test coverage
+coverage/
