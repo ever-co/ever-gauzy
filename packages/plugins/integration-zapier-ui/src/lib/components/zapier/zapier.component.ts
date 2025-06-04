@@ -4,7 +4,7 @@ import { EMPTY } from 'rxjs';
 import { ZapierService, ZapierStoreService, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { IZapierEndpoint } from '@gauzy/contracts';
+import { IZapierEndpoint, IZapierAuthConfig } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-zapier',
@@ -31,13 +31,42 @@ export class ZapierComponent extends TranslationBaseComponent implements OnInit 
 	private _loadSettings() {
 		this._zapierService.getSettings().subscribe(
 			(settings) => {
-				if (settings && settings.access_token) {
-					this.token = settings.access_token;
-					this._loadTriggers();
-					this._loadActions();
+				if (settings && settings.isEnabled) {
+					// Get OAuth configuration first
+					this._zapierService.getOAuthConfig().subscribe(
+						(config: IZapierAuthConfig) => {
+							// Initialize the integration with OAuth config
+							this._zapierService
+								.initializeIntegration({
+									client_id: config.clientId,
+									client_secret: config.clientSecret,
+									redirect_uri: config.redirectUri
+								})
+								.subscribe(
+									(response) => {
+										// Redirect to Zapier authorization URL
+										window.location.href = response.authorizationUrl;
+									},
+									(error) => {
+										this._toastrService.error(
+											this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.INITIALIZATION'),
+											this.getTranslation('TOASTR.TITLE.ERROR')
+										);
+										console.error('Error initializing Zapier integration:', error);
+									}
+								);
+						},
+						(error) => {
+							this._toastrService.error(
+								this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.LOAD_CONFIG'),
+								this.getTranslation('TOASTR.TITLE.ERROR')
+							);
+							console.error('Error loading Zapier OAuth config:', error);
+						}
+					);
 				} else {
 					this._toastrService.error(
-						this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.NO_TOKEN'),
+						this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.NOT_ENABLED'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 				}
@@ -48,6 +77,45 @@ export class ZapierComponent extends TranslationBaseComponent implements OnInit 
 					this.getTranslation('TOASTR.TITLE.ERROR')
 				);
 				console.error('Error loading Zapier settings:', error);
+			}
+		);
+	}
+
+	/**
+	 * Handle the OAuth callback with the authorization code
+	 */
+	handleAuthCallback(code: string) {
+		this._zapierService.getOAuthConfig().subscribe(
+			(config: IZapierAuthConfig) => {
+				this._zapierService
+					.exchangeCodeForToken({
+						code: code,
+						client_id: config.clientId,
+						client_secret: config.clientSecret,
+						redirect_uri: config.redirectUri,
+						grant_type: 'authorization_code'
+					})
+					.subscribe(
+						(tokens) => {
+							this.token = tokens.access_token;
+							this._loadTriggers();
+							this._loadActions();
+						},
+						(error) => {
+							this._toastrService.error(
+								this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.TOKEN_EXCHANGE'),
+								this.getTranslation('TOASTR.TITLE.ERROR')
+							);
+							console.error('Error exchanging code for token:', error);
+						}
+					);
+			},
+			(error) => {
+				this._toastrService.error(
+					this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.LOAD_CONFIG'),
+					this.getTranslation('TOASTR.TITLE.ERROR')
+				);
+				console.error('Error loading Zapier OAuth config:', error);
 			}
 		);
 	}
