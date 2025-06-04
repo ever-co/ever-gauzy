@@ -31,37 +31,13 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 
 	ngOnInit() {
 		this._initializeForm();
-		this._loadOAuthConfig();
 	}
 
 	private _initializeForm() {
 		this.form = this._fb.group({
-			clientId: ['', [Validators.required]],
-			clientSecret: ['', [Validators.required]]
+			client_id: ['', [Validators.required]],
+			client_secret: ['', [Validators.required]]
 		});
-	}
-
-	private _loadOAuthConfig() {
-		this.loading = true;
-		this._zapierService
-			.getOAuthConfig()
-			.pipe(
-				tap((config: { clientId: string; redirectUri: string }) => {
-					this.oauthConfig = config;
-				}),
-				catchError((error) => {
-					this._toastrService.error(
-						this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.LOAD_OAUTH_CONFIG'),
-						this.getTranslation('TOASTR.TITLE.ERROR')
-					);
-					console.error('Error loading OAuth config:', error);
-					return EMPTY;
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe(() => {
-				this.loading = false;
-			});
 	}
 
 	/**
