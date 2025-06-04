@@ -6,7 +6,9 @@ import { ZapierService, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { IZapierIntegrationSettings } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-zapier-settings',
 	templateUrl: './zapier-settings.component.html',
@@ -58,7 +60,8 @@ export class ZapierSettingsComponent extends TranslationBaseComponent implements
 					);
 					console.error('Error loading Zapier settings:', error);
 					return EMPTY;
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe(() => {
 				this.loading = false;
@@ -95,7 +98,8 @@ export class ZapierSettingsComponent extends TranslationBaseComponent implements
 					);
 					console.error('Error saving Zapier settings:', error);
 					return EMPTY;
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe(() => {
 				this.loading = false;

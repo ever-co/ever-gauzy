@@ -5,7 +5,9 @@ import { ZapierService, ZapierStoreService, ToastrService } from '@gauzy/ui-core
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { IZapierEndpoint, IZapierAuthConfig } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-zapier',
 	templateUrl: './zapier.component.html',
@@ -77,7 +79,8 @@ export class ZapierComponent extends TranslationBaseComponent implements OnInit 
 					this.getTranslation('TOASTR.TITLE.ERROR')
 				);
 				console.error('Error loading Zapier settings:', error);
-			}
+			},
+			untilDestroyed(this)
 		);
 	}
 
@@ -85,39 +88,43 @@ export class ZapierComponent extends TranslationBaseComponent implements OnInit 
 	 * Handle the OAuth callback with the authorization code
 	 */
 	handleAuthCallback(code: string) {
-		this._zapierService.getOAuthConfig().subscribe(
-			(config: IZapierAuthConfig) => {
-				this._zapierService
-					.exchangeCodeForToken({
-						code: code,
-						client_id: config.clientId,
-						client_secret: config.clientSecret,
-						redirect_uri: config.redirectUri,
-						grant_type: 'authorization_code'
-					})
-					.subscribe(
-						(tokens) => {
-							this.token = tokens.access_token;
-							this._loadTriggers();
-							this._loadActions();
-						},
-						(error) => {
-							this._toastrService.error(
-								this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.TOKEN_EXCHANGE'),
-								this.getTranslation('TOASTR.TITLE.ERROR')
-							);
-							console.error('Error exchanging code for token:', error);
-						}
+		this._zapierService
+			.getOAuthConfig()
+			.pipe(untilDestroyed(this))
+			.subscribe(
+				(config: IZapierAuthConfig) => {
+					this._zapierService
+						.exchangeCodeForToken({
+							code: code,
+							client_id: config.clientId,
+							client_secret: config.clientSecret,
+							redirect_uri: config.redirectUri,
+							grant_type: 'authorization_code'
+						})
+						.pipe(untilDestroyed(this))
+						.subscribe(
+							(tokens) => {
+								this.token = tokens.access_token;
+								this._loadTriggers();
+								this._loadActions();
+							},
+							(error) => {
+								this._toastrService.error(
+									this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.TOKEN_EXCHANGE'),
+									this.getTranslation('TOASTR.TITLE.ERROR')
+								);
+								console.error('Error exchanging code for token:', error);
+							}
+						);
+				},
+				(error) => {
+					this._toastrService.error(
+						this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.LOAD_CONFIG'),
+						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
-			},
-			(error) => {
-				this._toastrService.error(
-					this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.LOAD_CONFIG'),
-					this.getTranslation('TOASTR.TITLE.ERROR')
-				);
-				console.error('Error loading Zapier OAuth config:', error);
-			}
-		);
+					console.error('Error loading Zapier OAuth config:', error);
+				}
+			);
 	}
 
 	private _loadTriggers() {
@@ -137,7 +144,8 @@ export class ZapierComponent extends TranslationBaseComponent implements OnInit 
 					);
 					console.error('Error loading Zapier triggers:', error);
 					return EMPTY;
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe(() => {
 				this.zapierStoreService.setLoading(false);
@@ -161,7 +169,8 @@ export class ZapierComponent extends TranslationBaseComponent implements OnInit 
 					);
 					console.error('Error loading Zapier actions:', error);
 					return EMPTY;
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe(() => {
 				this.zapierStoreService.setLoading(false);

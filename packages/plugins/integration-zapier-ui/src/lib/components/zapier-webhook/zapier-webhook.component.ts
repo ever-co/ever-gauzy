@@ -6,7 +6,9 @@ import { ZapierService, ZapierStoreService, ToastrService } from '@gauzy/ui-core
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { IZapierWebhook, IZapierCreateWebhookInput } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-zapier-webhook',
 	templateUrl: './zapier-webhook.component.html',
@@ -83,7 +85,8 @@ export class ZapierWebhookComponent extends TranslationBaseComponent implements 
 					);
 					console.error('Error loading Zapier webhooks:', error);
 					return EMPTY;
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe(() => {
 				this._zapierStoreService.setWebhookLoading(false);
@@ -134,7 +137,8 @@ export class ZapierWebhookComponent extends TranslationBaseComponent implements 
 					);
 					console.error('Error creating Zapier webhook:', error);
 					return EMPTY;
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe(() => {
 				this._zapierStoreService.setWebhookLoading(false);
@@ -171,7 +175,8 @@ export class ZapierWebhookComponent extends TranslationBaseComponent implements 
 					);
 					console.error('Error deleting Zapier webhook:', error);
 					return EMPTY;
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe(() => {
 				this._zapierStoreService.setWebhookLoading(false);

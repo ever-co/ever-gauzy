@@ -6,7 +6,9 @@ import { ZapierService, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { ICreateZapierIntegrationInput } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-zapier-authorize',
 	templateUrl: './zapier-authorize.component.html',
@@ -54,7 +56,8 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 					);
 					console.error('Error loading OAuth config:', error);
 					return EMPTY;
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe(() => {
 				this.loading = false;
@@ -90,7 +93,8 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 					);
 					console.error('Error starting authorization:', error);
 					return EMPTY;
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe(() => {
 				this.loading = false;
