@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -7,15 +7,15 @@ import { CompareDateValidator, EmployeeStore, Store } from '@gauzy/ui-core/core'
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-edit-employee-hiring',
-    templateUrl: './edit-employee-hiring.component.html',
-    styleUrls: [
-        '../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss',
-        './edit-employee-hiring.component.scss'
-    ],
-    standalone: false
+	selector: 'ga-edit-employee-hiring',
+	templateUrl: './edit-employee-hiring.component.html',
+	styleUrls: [
+		'../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss',
+		'./edit-employee-hiring.component.scss'
+	],
+	standalone: false
 })
-export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
+export class EditEmployeeHiringComponent implements OnInit {
 	selectedEmployee: IEmployee;
 	public form: UntypedFormGroup = this.fb.group(
 		{
@@ -53,7 +53,7 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 	 * and additional information such as organizationId and tenantId.
 	 */
 	public submitForm(): void {
-		if (!this.form.invalid) {
+		if (this.form.invalid) {
 			return;
 		}
 
@@ -84,6 +84,4 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 			rejectDate: toDateOrNull(employee.rejectDate)
 		});
 	}
-
-	ngOnDestroy() {}
 }

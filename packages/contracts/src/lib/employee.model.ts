@@ -161,11 +161,17 @@ export interface IEmployeeFindInput extends ITaggable {
 
 export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	payPeriod?: PayPeriodEnum;
+	organizationPositionId?: string;
+	startedWorkOn?: Date;
+	user?: IUser;
+	userId?: string;
+	contactId?: string;
 	billRateValue?: number;
 	minimumBillingRate?: number;
 	billRateCurrency?: CurrenciesEnum;
 	reWeeklyLimit?: number;
-	organizationDepartment?: IOrganizationDepartment;
+	organizationDepartments?: IOrganizationDepartment[];
+	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 	organizationPosition?: IOrganizationPosition;
 	offerDate?: Date;
 	acceptDate?: Date;

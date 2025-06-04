@@ -1,5 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ICandidate } from './candidate.model';
+import { IEmployee } from './employee.model';
 import { ITag } from './tag.model';
 
 export enum GenericEmploymentTypes {
@@ -11,25 +12,23 @@ export enum GenericEmploymentTypes {
 	CONTRACTOR = 'Contractor'
 }
 
-export interface IOrganizationEmploymentType
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationEmploymentType extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	tags?: ITag[];
 	candidates?: ICandidate[];
+	members?: IEmployee[];
 }
 
-export interface IOrganizationEmploymentTypeFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationEmploymentTypeFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 }
 
-export interface IOrganizationEmploymentTypeCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationEmploymentTypeCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	tags?: ITag[];
 }
 
 export enum EmploymentTypeTabsEnum {
-	BROWSE = "BROWSE",
-	SEARCH = "SEARCH"
+	BROWSE = 'BROWSE',
+	SEARCH = 'SEARCH'
 }
