@@ -1,6 +1,6 @@
 <div class="video-player">
 	@if(src) {
-	<video #video preload="metadata" controlsList="nodownload" [controls]="controls">
+	<video #video controlsList="nodownload" [controls]="controls">
 		<source [src]="src" type="video/mp4" />
 	</video>
 	} @else {
