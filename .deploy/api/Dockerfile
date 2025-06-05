@@ -141,6 +141,7 @@ COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
+COPY --chown=node:node packages/plugins/integration-activepieces/package.json ./packages/plugins/integration-activepieces/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
 COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
@@ -201,6 +202,7 @@ COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
+COPY --chown=node:node packages/plugins/integration-activepieces/package.json ./packages/plugins/integration-activepieces/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
 COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
@@ -323,24 +325,22 @@ RUN cp -r ./packages/config/node_modules ./node_modules/@gauzy/config/
 RUN cp -r ./packages/contracts/node_modules ./node_modules/@gauzy/contracts/
 RUN cp -r ./packages/core/node_modules ./node_modules/@gauzy/core/
 
-RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin-changelog/
-RUN cp -r ./packages/plugins/integration-ai/node_modules ./node_modules/@gauzy/plugin-integration-ai/
-RUN cp -r ./packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/
-RUN cp -r ./packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/
-RUN cp -r ./packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/
-RUN cp -r ./packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/
-RUN cp -r ./packages/plugins/integration-make-com/node_modules ./node_modules/@gauzy/plugin-integration-make-com/
-RUN cp -r ./packages/plugins/integration-zapier/node_modules ./node_modules/@gauzy/plugin-integration-zapier/
-RUN cp -r ./packages/plugins/jitsu-analytics/node_modules ./node_modules/@gauzy/plugin-jitsu-analytics/
-RUN cp -r ./packages/plugins/job-proposal/node_modules ./node_modules/@gauzy/plugin-job-proposal/
-RUN cp -r ./packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugin-job-search/
-RUN cp -r ./packages/plugins/knowledge-base/node_modules ./node_modules/@gauzy/plugin-knowledge-base/
-RUN cp -r ./packages/plugins/product-reviews/node_modules ./node_modules/@gauzy/plugin-product-reviews/
-RUN cp -r ./packages/plugins/sentry-tracing/node_modules ./node_modules/@gauzy/plugin-sentry/
-RUN cp -r ./packages/plugins/posthog/node_modules ./node_modules/@gauzy/plugin-posthog/
-RUN cp -r ./packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/
-RUN cp -r ./packages/plugins/registry/node_modules ./node_modules/@gauzy/plugin-registry/
-
+RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin-changelog/ && \
+    cp -r ./packages/plugins/integration-activepieces/node_modules ./node_modules/@gauzy/plugin-integration-activepieces/ && \
+    cp -r ./packages/plugins/integration-ai/node_modules ./node_modules/@gauzy/plugin-integration-ai/ && \
+    cp -r ./packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/ && \
+    cp -r ./packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/ && \
+    cp -r ./packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/ && \
+    cp -r ./packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/ && \
+    cp -r ./packages/plugins/jitsu-analytics/node_modules ./node_modules/@gauzy/plugin-jitsu-analytics/ && \
+    cp -r ./packages/plugins/job-proposal/node_modules ./node_modules/@gauzy/plugin-job-proposal/ && \
+    cp -r ./packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugin-job-search/ && \
+    cp -r ./packages/plugins/knowledge-base/node_modules ./node_modules/@gauzy/plugin-knowledge-base/ && \
+    cp -r ./packages/plugins/product-reviews/node_modules ./node_modules/@gauzy/plugin-product-reviews/ && \
+    cp -r ./packages/plugins/sentry-tracing/node_modules ./node_modules/@gauzy/plugin-sentry/ && \
+    cp -r ./packages/plugins/posthog/node_modules ./node_modules/@gauzy/plugin-posthog/ && \
+    cp -r ./packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/ && \
+    cp -r ./packages/plugins/registry/node_modules ./node_modules/@gauzy/plugin-registry/
 
 # We do not copy node_modules for Wakatime plugin here, because it is used in Desktop Apps for now
 # RUN cp -r ./packages/plugins/integration-wakatime/node_modules ./node_modules/@gauzy/plugin-integration-wakatime/
