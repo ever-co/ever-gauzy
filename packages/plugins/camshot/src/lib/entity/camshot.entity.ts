@@ -33,7 +33,7 @@ export class Camshot extends TenantOrganizationBaseEntity implements ICamshot {
 	@Matches(PNG_FILE_REGEX, { message: PNG_FILE_MESSAGE })
 	@ApiProperty({ type: () => String, description: 'Camshot file path or identifier' })
 	@MultiORMColumn()
-	file: string;
+	fileKey: string;
 
 	/**
 	 * Camshot file path or identifier.
@@ -44,7 +44,7 @@ export class Camshot extends TenantOrganizationBaseEntity implements ICamshot {
 	@Matches(PNG_FILE_REGEX, { message: PNG_FILE_MESSAGE })
 	@ApiProperty({ type: () => String, description: 'Camshot thumb file path or identifier' })
 	@MultiORMColumn({ nullable: true })
-	thumb?: string;
+	thumbKey?: string;
 
 	/**
 	 * Storage provider used for storing the camshot file.

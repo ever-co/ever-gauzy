@@ -19,8 +19,8 @@ export class CreateCamshotCommandHandler implements ICommandHandler<CreateCamsho
 			new Camshot(),
 			CamshotFactory.create(input),
 			{
-				file: file.key,
-				thumb: thumbnail.key,
+				fileKey: file.key,
+				thumbKey: thumbnail.key,
 				title: file.originalname,
 				storageProvider,
 				size: file.size,

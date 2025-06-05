@@ -10,8 +10,8 @@ import {
 export interface ICamshot extends ICamshotContract,
 	IBasePerTenantAndOrganizationEntityModel,
 	IRelationalUser {
-	file: string;
-	thumb?: string;
+	fileKey?: string;
+	thumbKey?: string;
 	timeSlotId?: ID;
 	timeSlot?: ITimeSlot;
 	storageProvider?: FileStorageProviderEnum;
