@@ -15,19 +15,20 @@ import { MakeComSettingsComponent } from './components/make-com-settings/make-co
 				children: [
 					{
 						path: '',
-						redirectTo: 'authorize',
-						pathMatch: 'full'
+						component: AuthorizationComponent,
+						data: { state: true }
 					},
 					{
-						path: 'authorize',
-						component: AuthorizationComponent
+						path: 'regenerate',
+						component: AuthorizationComponent,
+						data: { state: false }
 					},
 					{
 						path: 'callback',
 						component: MakeComCallbackComponent
 					},
 					{
-						path: 'dashboard',
+						path: ':id',
 						component: MakeComponent,
 						children: [
 							{
