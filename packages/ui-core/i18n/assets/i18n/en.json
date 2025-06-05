@@ -1321,6 +1321,14 @@
 			"DESCRIPTION": "Activate Upwork integration for freelance workforce management."
 		},
 		"MAKE_COM_PAGE": {
+			"SCENARIOS": "Scenarios",
+			"EXECUTIONS": "Executions",
+			"HISTORY": "History",
+			"SETTINGS": "Settings",
+			"ERRORS": {
+				"INVALID_FORM": "Please fill in all required fields",
+				"START_AUTHORIZATION": "Please start the authorization process"
+			},
 			"CLIENT_ID": "Client ID",
 			"CLIENT_SECRET": "Client Secret",
 			"NEXT_STEP_INFO": "After authorization, you will be redirected to Make.com to complete the integration setup"

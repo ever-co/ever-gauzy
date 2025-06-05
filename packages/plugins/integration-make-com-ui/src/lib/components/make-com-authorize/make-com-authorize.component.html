@@ -16,10 +16,10 @@
 					[placeholder]="'FORM.PLACEHOLDERS.MAKE_COM_CLIENT_ID' | translate"
 				/>
 				<div
-					*ngIf="form.get('clientId').touched && form.get('clientId').errors?.required"
-					class="error-message"
+					*ngIf="form.get('clientId')?.touched && form.get('clientId')?.errors?.required"
+					class="text-danger"
 				>
-					{{ 'FORM.VALIDATION.REQUIRED' | translate }}
+					{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 				</div>
 			</div>
 			<div class="form-group">
@@ -35,10 +35,10 @@
 					[placeholder]="'FORM.PLACEHOLDERS.MAKE_COM_CLIENT_SECRET' | translate"
 				/>
 				<div
-					*ngIf="form.get('clientSecret').touched && form.get('clientSecret').errors?.required"
-					class="error-message"
+					*ngIf="form.get('clientSecret')?.touched && form.get('clientSecret')?.errors?.required"
+					class="text-danger"
 				>
-					{{ 'FORM.VALIDATION.REQUIRED' | translate }}
+					{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 				</div>
 			</div>
 			<div class="hint">
