@@ -46,7 +46,7 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 	startAuthorization() {
 		if (this.form.invalid) {
 			this._toastrService.error(
-				this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.INVALID_FORM'),
+				this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.INVALID_FORM'),
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 			return;
@@ -64,7 +64,7 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 				}),
 				catchError((error) => {
 					this._toastrService.error(
-						this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.START_AUTHORIZATION'),
+						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.START_AUTHORIZATION'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					console.error('Error starting authorization:', error);

@@ -672,6 +672,8 @@
 			"LINKEDIN_ID": "领英帐号",
 			"MAKE_COM_CLIENT_ID": "输入您的Make.com客户端ID",
 			"MAKE_COM_CLIENT_SECRET": "输入您的Make.com客户端密钥",
+			"ZAPIER_CLIENT_ID": "输入您的Zapier客户端ID",
+			"ZAPIER_CLIENT_SECRET": "输入您的Zapier客户端密钥",
 			"STANDARD_WORK_HOURS_PER_DAY": "输入每天的标准工作时间（例如 8 小时）"
 		},
 		"RATES": {
@@ -833,6 +835,7 @@
 		"POSITIONS": "职位",
 		"INTEGRATIONS": "应用程序和集成",
 		"UPWORK": "Upwork: 艾普沃克",
+		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI 云知能",
 		"PROPOSALS": "提议",
 		"TIME_OFF": "休假",
@@ -1300,6 +1303,15 @@
 				"WEBHOOK_URL_PLACEHOLDER": "输入webhook URL",
 				"WEBHOOK_URL_INVALID": "请输入有效的webhook URL",
 				"SAVE": "保存设置"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "客户端ID",
+			"CLIENT_SECRET": "客户端密钥",
+			"NEXT_STEP_INFO": "授权后，您将被重定向到Zapier以完成集成设置",
+			"ERRORS": {
+				"INVALID_FORM": "请填写所有必填字段",
+				"START_AUTHORIZATION": "请开始授权过程"
 			}
 		},
 		"GAUZY_AI_PAGE": {
