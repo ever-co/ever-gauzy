@@ -13,7 +13,10 @@
 		"lib": ["es2020", "dom", "es2018", "esnext.array", "ES2022"],
 		"skipLibCheck": true,
 		"skipDefaultLibCheck": true,
-		"baseUrl": "."
+		"baseUrl": ".",
+		"paths": {
+			"@gauzy/camshot": ["packages/plugins/camshot/src/index.ts"]
+		}
 	},
 	"exclude": ["coverage/**/*", "dist/**/*", "node_modules", "tmp"]
 }
