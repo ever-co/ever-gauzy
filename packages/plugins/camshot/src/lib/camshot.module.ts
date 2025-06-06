@@ -10,6 +10,7 @@ import { TypeOrmCamshotRepository } from './repositories/type-orm-camshot.reposi
 import { MikroOrmCamshotRepository } from './repositories/mikro-orm-camshot.repository';
 import { RolePermissionModule } from '@gauzy/core';
 import { CamshotSubscriber } from './subscribers/camshot.subscriber';
+import { queryHandlers } from './queries';
 
 @Module({
 	controllers: [CamshotController],
@@ -24,7 +25,8 @@ import { CamshotSubscriber } from './subscribers/camshot.subscriber';
 		TypeOrmCamshotRepository,
 		MikroOrmCamshotRepository,
 		CamshotSubscriber,
-		...commandHandlers
+		...commandHandlers,
+		...queryHandlers
 	],
 })
 export class CamshotModule { }
