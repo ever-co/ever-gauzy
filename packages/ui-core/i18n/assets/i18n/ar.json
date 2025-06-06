@@ -3599,6 +3599,10 @@
 			"MAX_LIMIT_REACHED": "تم الوصول إلى الحد الأقصى"
 		},
 		"MESSAGE": {
+			"HOUR": "ساعة",
+			"HOURS": "ساعات",
+			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST": "تعذر إضافة سجل الوقت. تم الوصول إلى حد العمل الأسبوعي البالغ ",
+			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": ". اتصل بمسؤول النظام لتعديل الحدود.",
 			"WORKED_THIS_WEEK": "عملت هذا الأسبوع",
 			"WEEKLY_LIMIT": "الحد الأسبوعي",
 			"ERRORS": "يرجى التحقق من النموذج بحثًا عن الأخطاء",

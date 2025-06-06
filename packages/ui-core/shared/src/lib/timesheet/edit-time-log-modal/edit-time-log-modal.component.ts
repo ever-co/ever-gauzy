@@ -14,7 +14,9 @@ import {
 	ISelectedEmployee,
 	TimeLogType,
 	TimeLogSourceEnum,
-	ITimerStatusWithWeeklyLimits
+	ITimerStatusWithWeeklyLimits,
+	TimeErrorsEnum,
+	IEmployee
 } from '@gauzy/contracts';
 import { toUTC, toLocal, distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store, TimeLogEventService, TimesheetService, TimeTrackerService, ToastrService } from '@gauzy/ui-core/core';
@@ -63,6 +65,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	private workedThisWeek: string;
 	private reWeeklyLimit: string;
 	private timerStatusWithWeeklyLimits: ITimerStatusWithWeeklyLimits;
+	private selectedEmployee: IEmployee;
 	@Input() set timeLog(value: ITimeLog | Partial<ITimeLog>) {
 		this._timeLog = { ...value }; // Shallow copy to avoid mutation
 		this.mode = this._timeLog?.id ? 'update' : 'create';
@@ -228,6 +231,10 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 
 	onValidationChange(isValid: boolean) {
 		this.isTimeRangeValid = isValid;
+	}
+
+	onSelectedEmployee(employee: IEmployee) {
+		this.selectedEmployee = employee;
 	}
 
 	/**
@@ -430,7 +437,18 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 			this._toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');
 		} catch (error) {
 			// Handle errors and show error notification
-			this._toastrService.error('Error: Unable to add time');
+			if (error.error?.message === TimeErrorsEnum.WEEKLY_LIMIT_REACHED) {
+				const hoursLabel = this.selectedEmployee?.reWeeklyLimit === 1 ? this._translateService.instant('TOASTR.MESSAGE.HOUR') : this._translateService.instant('TOASTR.MESSAGE.HOURS');
+				this._toastrService.error(
+					`${this._translateService.instant('TOASTR.MESSAGE.UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST')} ${
+						this.selectedEmployee?.reWeeklyLimit
+					} ${hoursLabel}
+			        ${this._translateService.instant('TOASTR.MESSAGE.UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND')}`,
+					'TOASTR.TITLE.MAX_LIMIT_REACHED'
+				);
+			} else {
+				this._toastrService.error(error?.error?.message);
+			}
 		} finally {
 			// Reset the loading state
 			this.loading = false;

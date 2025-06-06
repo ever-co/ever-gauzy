@@ -1,19 +1,14 @@
 import { Injectable, ConflictException, Logger } from '@nestjs/common';
 import * as moment from 'moment';
-import {
-	ITimeLog,
-	IEmployee,
-	IWeeklyLimitStatus
-} from '@gauzy/contracts';
+import { ITimeLog, IEmployee, IWeeklyLimitStatus, TimeErrorsEnum } from '@gauzy/contracts';
 
 import { StatisticService } from '../statistic/statistic.service';
-
 
 @Injectable()
 export class TimerWeeklyLimitService {
 	private readonly logger = new Logger(`GZY - ${TimerWeeklyLimitService.name}`);
 
-	constructor(private readonly _statisticService: StatisticService) { }
+	constructor(private readonly _statisticService: StatisticService) {}
 
 	/**
 	 * Check if the employee has reached the weekly limit
@@ -34,7 +29,7 @@ export class TimerWeeklyLimitService {
 
 		// Check if the employee has reached the weekly limit
 		if (remainWeeklyTime <= 0 && !ignoreException) {
-			throw new ConflictException('weekly-limit-reached');
+			throw new ConflictException(TimeErrorsEnum.WEEKLY_LIMIT_REACHED);
 		}
 		return { remainWeeklyTime, workedThisWeek: statistics.duration };
 	}

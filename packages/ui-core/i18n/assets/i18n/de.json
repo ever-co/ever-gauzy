@@ -3610,6 +3610,10 @@
 			"MAX_LIMIT_REACHED": "Maximales Limit erreicht"
 		},
 		"MESSAGE": {
+			"HOUR": "Stunde",
+			"HOURS": "Stunden",
+			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST": "Zeiteintrag konnte nicht hinzugefügt werden. Das wöchentliche Arbeitszeitlimit von ",
+			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "wurde erreicht. Wenden Sie sich an den Systemadministrator, um das Limit zu ändern.",
 			"WORKED_THIS_WEEK": "Diese Woche gearbeitet",
 			"WEEKLY_LIMIT": "Wochenlimit",
 			"ERRORS": "Bitte überprüfen Sie das Formular auf Fehler",

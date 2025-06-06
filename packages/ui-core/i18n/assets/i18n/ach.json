@@ -3287,6 +3287,10 @@
 			"MAX_LIMIT_REACHED": "crwdns7528:0crwdne7528:0"
 		},
 		"MESSAGE": {
+			"HOUR": "crwdnsXXXXX:0crwdneXXXXX:0",
+			"HOURS": "crwdnsXXXXX:0crwdneXXXXX:0",
+			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST": "crwdnsXXXXX:0crwdneXXXXX:0",
+			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "crwdnsXXXXX:0crwdneXXXXX:0",
 			"WORKED_THIS_WEEK": "crwdnsXXXXX:0crwdneXXXXX:0",
 			"WEEKLY_LIMIT": "crwdnsXXXXX:0crwdneXXXXX:0",
 			"ERRORS": "crwdns7430:0crwdne7430:0",

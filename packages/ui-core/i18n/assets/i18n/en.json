@@ -3612,6 +3612,10 @@
 			"MAX_LIMIT_REACHED": "Max limit reached"
 		},
 		"MESSAGE": {
+			"HOUR": "hour",
+			"HOURS": "hours",
+			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST": "Unable to add time log. The weekly working time limit of ",
+			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "has been reached. Contact system administrator to modify limits.",
 			"WORKED_THIS_WEEK": "Worked this week",
 			"WEEKLY_LIMIT": "Weekly limit",
 			"ERRORS": "Please check the form for errors",

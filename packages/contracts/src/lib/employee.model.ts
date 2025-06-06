@@ -249,6 +249,7 @@ export interface ISelectedEmployee extends ITaggable {
 	skills?: ISkill[];
 	timeZone?: string;
 	timeFormat?: TimeFormatEnum;
+	reWeeklylimit?: number;
 }
 
 export enum DEFAULT_TYPE {

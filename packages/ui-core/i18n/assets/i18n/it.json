@@ -3610,6 +3610,10 @@
 			"MAX_LIMIT_REACHED": "Limite massimo raggiunto"
 		},
 		"MESSAGE": {
+			"HOUR": "ora",
+			"HOURS": "ore",
+			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST": "Impossibile aggiungere il registro orario. Il limite settimanale di tempo lavorativo di ",
+			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "è stato raggiunto. Contatta l'amministratore di sistema per modificare i limiti.",
 			"WORKED_THIS_WEEK": "Ore lavorate questa settimana",
 			"WEEKLY_LIMIT": "Limite settimanale",
 			"ERRORS": "Controlla il modulo per errori",

@@ -8,17 +8,17 @@ import { DateRangePickerBuilderService, EmployeesService, Store } from '@gauzy/u
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-employee-multi-select',
-    templateUrl: './employee-multi-select.component.html',
-    styleUrls: ['./employee-multi-select.component.scss'],
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => EmployeeSelectComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'ga-employee-multi-select',
+	templateUrl: './employee-multi-select.component.html',
+	styleUrls: ['./employee-multi-select.component.scss'],
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => EmployeeSelectComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
 export class EmployeeSelectComponent implements OnInit {
 	loaded: boolean;
@@ -82,12 +82,14 @@ export class EmployeeSelectComponent implements OnInit {
 
 	@Output() selectedChange = new EventEmitter();
 	@Output() onLoadEmployees = new EventEmitter();
+	@Output() selectedEmployee = new EventEmitter<IEmployee>();
 
 	@Input() multiple = true;
 	@Input() label = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
 	@Input() disabled = false;
 	@Input() placeholder = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
 	@Input() customClass?: string = '';
+	@Input() showFullEmployee?: boolean = false;
 	select: FormControl = new FormControl();
 
 	private _allEmployees: IEmployee[];
@@ -144,6 +146,10 @@ export class EmployeeSelectComponent implements OnInit {
 	}
 
 	onMembersSelected(selectEvent: any): void {
+		if (this.showFullEmployee) {
+			const fullEmployees = this.employees.find((emp) => emp.id === selectEvent);
+			this.selectedEmployee.emit(fullEmployees);
+		}
 		this.selectedChange.emit(selectEvent);
 	}
 

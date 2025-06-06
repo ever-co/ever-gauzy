@@ -294,6 +294,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					billRateCurrency: true,
 					billRateValue: true,
 					minimumBillingRate: true,
+					reWeeklyLimit: true,
 					userId: true,
 					isAway: true,
 					isOnline: true,

@@ -1,4 +1,12 @@
-import { Injectable, BadRequestException, NotAcceptableException, Logger, ConflictException } from '@nestjs/common';
+import {
+	Injectable,
+	BadRequestException,
+	NotAcceptableException,
+	Logger,
+	ConflictException,
+	HttpException,
+	HttpStatus
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
 import { chain, pluck } from 'underscore';
@@ -31,7 +39,8 @@ import {
 	IReportWeeklyData,
 	IReportWeeklyDate,
 	IAmountOwedReportChart,
-	IDailyReportChart
+	IDailyReportChart,
+	TimeErrorsEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../../core/crud';
@@ -188,7 +197,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		let invoiceData: IReportDayData;
 		switch (request.groupBy) {
 			case ReportGroupFilterEnum.employee:
-				invoiceData = await this.commandBus.execute(new GetTimeLogGroupByEmployeeCommand(timeLogs, {}, timeZone));
+				invoiceData = await this.commandBus.execute(
+					new GetTimeLogGroupByEmployeeCommand(timeLogs, {}, timeZone)
+				);
 				break;
 			case ReportGroupFilterEnum.project:
 				invoiceData = await this.commandBus.execute(
@@ -1181,7 +1192,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, startedAt, true);
 		const newTimeToAdd = moment(stoppedAt).diff(startedAt, 'seconds') - timeToRemove - previousTime;
 		if (newTimeToAdd > weeklyLimitStatus.remainWeeklyTime) {
-			throw new ConflictException('weekly-limit-reached');
+			throw new ConflictException(TimeErrorsEnum.WEEKLY_LIMIT_REACHED);
 		}
 	}
 
@@ -1266,6 +1277,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		} catch (error) {
 			// Handle exceptions appropriately
 			this.logger.error('Failed to add manual time log', error);
+			if (error instanceof ConflictException && error.message === TimeErrorsEnum.WEEKLY_LIMIT_REACHED) {
+				throw new ConflictException(TimeErrorsEnum.WEEKLY_LIMIT_REACHED);
+			}
 			throw new BadRequestException('Failed to add manual time log');
 		}
 	}

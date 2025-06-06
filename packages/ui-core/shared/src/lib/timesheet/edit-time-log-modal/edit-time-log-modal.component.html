@@ -28,6 +28,8 @@
 							[placeholder]="'TIMESHEET.SELECT_EMPLOYEE' | translate"
 							formControlName="employeeId"
 							[customClass]="'required-asterisk'"
+							(selectedEmployee)="onSelectedEmployee($event)"
+							[showFullEmployee]="true"
 							required
 						>
 						</ga-employee-multi-select>
