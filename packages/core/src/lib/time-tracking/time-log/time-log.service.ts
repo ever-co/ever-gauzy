@@ -1279,8 +1279,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			this.logger.error('Failed to add manual time log', error);
 			if (error instanceof ConflictException && error.message === TimeErrorsEnum.WEEKLY_LIMIT_REACHED) {
 				throw new ConflictException(TimeErrorsEnum.WEEKLY_LIMIT_REACHED);
+			} else {
+				throw new BadRequestException('Failed to add manual time log');
 			}
-			throw new BadRequestException('Failed to add manual time log');
 		}
 	}
 
@@ -1375,7 +1376,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		} catch (error) {
 			this.logger.error('Failed to update manual time log', error);
 			// Handle exceptions appropriately
-			throw new BadRequestException('Failed to update manual time log');
+			if (error instanceof ConflictException && error.message === TimeErrorsEnum.WEEKLY_LIMIT_REACHED) {
+				throw new ConflictException(TimeErrorsEnum.WEEKLY_LIMIT_REACHED);
+			} else {
+				throw new BadRequestException('Failed to update manual time log');
+			}
 		}
 	}
 

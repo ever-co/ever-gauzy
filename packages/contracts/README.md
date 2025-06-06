@@ -1,6 +1,6 @@
 # @gauzy/contracts
 
-This library was generated with [Nx](https://nx.dev). It contains the contracts for the DSpot ERP platform.
+This library was generated with [Nx](https://nx.dev). It contains the contracts for the Gauzy platform.
 
 ## Building
 

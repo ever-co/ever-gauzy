@@ -3612,6 +3612,7 @@
 			"HOUR": "godzina",
 			"HOURS": "godziny",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST": "Nie można dodać wpisu czasu. Tygodniowy limit czasu pracy ",
+			"UNABLE_TO_UPDATE_ERROR_MESSAGE_PART_FIRST": "Nie można zaktualizować rejestru czasu. Tygodniowy limit czasu pracy wynoszący ",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "został osiągnięty. Skontaktuj się z administratorem systemu, aby zmodyfikować limity.",
 			"WORKED_THIS_WEEK": "Przepracowano w tym tygodniu",
 			"WEEKLY_LIMIT": "Limit tygodniowy",

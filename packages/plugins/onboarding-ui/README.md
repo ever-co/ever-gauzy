@@ -1,10 +1,10 @@
 # @gauzy/plugin-onboarding-ui
 
-This library was generated with [Nx](https://nx.dev). It contains the Onboarding UI Plugin for the DSpot ERP platform.
+This library was generated with [Nx](https://nx.dev). It contains the Onboarding UI Plugin for the Gauzy platform.
 
 ## Features
 
-- **Onboarding UI Plugin:** Provides a user-friendly interface for onboarding new users into the DSpot ERP platform.
+-   **Onboarding UI Plugin:** Provides a user-friendly interface for onboarding new users into the Gauzy platform.
 
 ## Building
 

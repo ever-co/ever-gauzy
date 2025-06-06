@@ -3607,6 +3607,7 @@
 			"HOUR": "שעה",
 			"HOURS": "שעות",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST": "לא ניתן להוסיף רישום זמן. מגבלת זמן העבודה השבועית של ",
+			"UNABLE_TO_UPDATE_ERROR_MESSAGE_PART_FIRST": "לא ניתן לעדכן את רישום הזמן. מגבלת זמן העבודה השבועית של ",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "הושגה. פנה למנהל המערכת לשינוי המגבלה.",
 			"WORKED_THIS_WEEK": "עבד השבוע",
 			"WEEKLY_LIMIT": "מגבלה שבועית",

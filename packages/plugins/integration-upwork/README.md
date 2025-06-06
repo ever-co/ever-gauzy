@@ -1,6 +1,6 @@
 # @gauzy/plugin-integration-upwork
 
-This library was generated with [Nx](https://nx.dev). It contains the Upwork Integration plugin for the DSpot ERPplatform.
+This library was generated with [Nx](https://nx.dev). It contains the Upwork Integration plugin for the Gauzy platform.
 
 ## Overview
 

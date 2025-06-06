@@ -1,6 +1,6 @@
 # @gauzy/metrics
 
-This library was generated with [Nx](https://nx.dev). It contains the configuration for the DSpot ERP API platform.
+This library was generated with [Nx](https://nx.dev). It contains the configuration for the Gauzy API platform.
 
 ## Building
 

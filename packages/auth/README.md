@@ -1,10 +1,10 @@
 # @gauzy/auth
 
-This library was generated with [Nx](https://nx.dev). It contains the authentication for the DSpot ERP API platform.
+This library was generated with [Nx](https://nx.dev). It contains the authentication for the Gauzy API platform.
 
 ## Overview
 
-This library provides a set of services and utilities for authentication and authorization in the DSpot ERP API platform.
+This library provides a set of services and utilities for authentication and authorization in the Gauzy API platform.
 
 ## Building
 

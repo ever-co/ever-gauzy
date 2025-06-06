@@ -1,4 +1,4 @@
-# DSpot ERP Platform
+# Ever Gauzy Platform
 
 [uri_gauzy]: https://gauzy.co
 [uri_license]: https://www.gnu.org/licenses/agpl-3.0.html
@@ -16,7 +16,7 @@ It's built with a React (NextJs) / ReactNative (Expo) stack and connects to head
 
 ## 🌟 What is it
 
-[DSpot ERP][uri_gauzy] - **Open Business Management Platform** for Collaborative, On-Demand and Sharing Economies.
+[Ever® Gauzy™][uri_gauzy] - **Open Business Management Platform** for Collaborative, On-Demand and Sharing Economies.
 
 -   **Enterprise Resource Planning** (ERP)
 -   **Customer Relationship Management** (CRM)
@@ -27,7 +27,7 @@ It's built with a React (NextJs) / ReactNative (Expo) stack and connects to head
 
 ![overview](https://docs.gauzy.co/overview.png)
 
-DSpot ERP Platform is a part of our larger Open Platform for **Collaborative, On-Demand and Sharing Economies** - [Ever® Platform™](https://ever.co).
+Ever® Gauzy™ Platform is a part of our larger Open Platform for **Collaborative, On-Demand and Sharing Economies** - [Ever® Platform™](https://ever.co).
 
 ## ✨ Features
 
@@ -77,7 +77,7 @@ A more detailed list of the features available in the platform:
 -   Multi-lingual
 -   Dark / Light / Corporate / Material and other Themes
 
-Read more [about DSpot ERP](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) and [how to use it](https://github.com/ever-co/ever-gauzy/wiki/How-to-use-Gauzy) at your company, on-demand business, freelance business, agency, studio or in-house teams.
+Read more [about Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) and [how to use it](https://github.com/ever-co/ever-gauzy/wiki/How-to-use-Gauzy) at your company, on-demand business, freelance business, agency, studio or in-house teams.
 
 ## 🌼 Screenshots
 
@@ -115,17 +115,17 @@ Read more [about DSpot ERP](https://github.com/ever-co/ever-gauzy/wiki/About-Gau
 
 ### Demo
 
-DSpot ERP Platform Demo at <https://demo.gauzy.co>.
+Ever Gauzy Platform Demo at <https://demo.gauzy.co>.
 
 Notes:
 
--   Default super-admin user login is `admin@dspot.com.pl` and the password is `admin`
+-   Default super-admin user login is `admin@ever.co` and the password is `admin`
 -   Content of demo DB resets on each deployment to the demo environment (usually daily)
 -   Demo environment deployed using CI/CD from the `develop` branch
 
 ### Downloads
 
-You can download DSpot ERP Platform, DSpot ERP Server, or Desktop Apps (Windows/Mac/Linux) from the official [Downloads](https://web.gauzy.co/downloads) page.
+You can download Gauzy Platform, Gauzy Server, or Desktop Apps (Windows/Mac/Linux) from the official [Downloads](https://web.gauzy.co/downloads) page.
 
 In addition, all downloads are also available from the following pages:
 
@@ -136,7 +136,7 @@ In addition, all downloads are also available from the following pages:
 
 ### Production (SaaS)
 
-DSpot ERP Platform SaaS is available at <https://app.gauzy.co>.
+Ever® Gauzy™ Platform SaaS is available at <https://app.gauzy.co>.
 
 Note: it's currently in Alpha version/testing mode, please use it cautiously!
 
@@ -148,7 +148,7 @@ Note: it's currently in Alpha version/testing mode, please use it cautiously!
 
 ### Server & Desktop Apps
 
-We have DSpot ERP Server and two Desktop Apps (for Windows/Mac/Linux):
+We have Gauzy Server and two Desktop Apps (for Windows/Mac/Linux):
 
 -   Ever® Gauzy™ Server - includes Gauzy API, SQLite DB (or connects to external PostgreSQL) and serves Guazy frontend. It allows to quickly run Gauzy Server for multiple clients (browser-based or Desktop-based). It's a recommended option if you want to setup the Ever Gauzy Platform in small to medium organizations.
 
@@ -179,7 +179,7 @@ For Production, we recommend:
 -   [PostgreSQL](https://www.postgresql.org) or [MySQL](https://dev.mysql.com)
 -   [Kubernetes](https://kubernetes.io), [Docker](https://www.docker.com)
 
-Note: thanks to TypeORM / MikroORM, DSpot ERP will support lots of DBs: SQLite (default, for demos), PostgreSQL (development/production), MySql (development/production), MariaDb, CockroachDb, MS SQL, Oracle, MongoDb, and others (with minimal changes).
+Note: thanks to TypeORM / MikroORM, Gauzy will support lots of DBs: SQLite (default, for demos), PostgreSQL (development/production), MySql (development/production), MariaDb, CockroachDb, MS SQL, Oracle, MongoDb, and others (with minimal changes).
 
 #### See also README.md and CREDITS.md files in relevant folders for lists of libraries and software included in the Platform, information about licenses, and other details
 
@@ -303,17 +303,17 @@ Notes:
 
 ## 🔐 Security
 
-DSpot ERP™ follows good security practices, but 100% security cannot be guaranteed in any software!
-DSpot ERP™ is provided AS IS without any warranty. Use at your own risk!
+Ever® Gauzy™ follows good security practices, but 100% security cannot be guaranteed in any software!
+Ever® Gauzy™ is provided AS IS without any warranty. Use at your own risk!
 See more details in the [LICENSE](LICENSE.md).
 
 In a production setup, all client-side to server-side (backend, APIs) communications should be encrypted using HTTPS/WSS/SSL (REST APIs, GraphQL endpoint, Socket.io WebSockets, etc.).
 
-If you discover any issue regarding security, please disclose the information responsibly by sending an email to <mailto:info@dspot.com.pl> or on [![huntr](https://cdn.huntr.dev/huntr_security_badge_mono.svg)](https://huntr.dev) and not by creating a GitHub issue.
+If you discover any issue regarding security, please disclose the information responsibly by sending an email to <mailto:security@ever.co> or on [![huntr](https://cdn.huntr.dev/huntr_security_badge_mono.svg)](https://huntr.dev) and not by creating a GitHub issue.
 
 ## 🛡️ License
 
-We support the open-source community. If you're building awesome non-profit/open-source projects, we're happy to help and will provide (subject to [acceptance criteria](https://github.com/ever-co/ever-gauzy/wiki/Free-license-and-hosting-for-Non-profit-and-Open-Source-projects)) DSpot ERP Enterprise edition license and free hosting option! Feel free to contact us at <mailto:info@dspot.com.pl> to make a request. More details are explained in our [Wiki](https://github.com/ever-co/ever-gauzy/wiki/Free-license-and-hosting-for-Non-profit-and-Open-Source-projects).
+We support the open-source community. If you're building awesome non-profit/open-source projects, we're happy to help and will provide (subject to [acceptance criteria](https://github.com/ever-co/ever-gauzy/wiki/Free-license-and-hosting-for-Non-profit-and-Open-Source-projects)) Ever Gauzy Enterprise edition license and free hosting option! Feel free to contact us at <mailto:ever@ever.co> to make a request. More details are explained in our [Wiki](https://github.com/ever-co/ever-gauzy/wiki/Free-license-and-hosting-for-Non-profit-and-Open-Source-projects).
 
 This software is available under the following licenses:
 
@@ -321,7 +321,7 @@ This software is available under the following licenses:
 -   [Ever® Gauzy™ Platform Small Business](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-small-business-license)
 -   [Ever® Gauzy™ Platform Enterprise](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-enterprise-license)
 
-#### The default DSpot ERP Platform license, without a valid DSpot ERP Platform Enterprise or DSpot ERP Platform Small Business License agreement, is the DSpot ERP Platform Community Edition License
+#### The default Ever® Gauzy™ Platform license, without a valid Ever® Gauzy™ Platform Enterprise or Ever® Gauzy™ Platform Small Business License agreement, is the Ever® Gauzy™ Platform Community Edition License
 
 #### Please see [LICENSE](LICENSE.md) for more information on licenses. You can also [compare our offering](https://ever.co/compare-gauzy/#compare)
 
@@ -329,9 +329,10 @@ This software is available under the following licenses:
 
 ## ™️ Trademarks
 
-**DSpot** and **DSpot ERP™** are all trademarks of [DSpot sp. z o.o.](https://www.dspot.com.pl).
+**Ever**® is a registered trademark of [Ever Co. LTD](https://ever.co).
+**Ever® Demand™**, **Ever® Gauzy™**, **Ever® Teams™**, **Ever® Recu™**, **Ever® Clokr™** and **Ever® OpenSaaS™** are all trademarks of [Ever Co. LTD](https://ever.co).
 
-The trademarks may only be used with the written permission of DSpot and may not be used to promote or otherwise market competitive products or services.
+The trademarks may only be used with the written permission of Ever Co. LTD. and may not be used to promote or otherwise market competitive products or services.
 
 All other brand and product names are trademarks, registered trademarks, or service marks of their respective holders.
 
@@ -362,7 +363,7 @@ You can also view a full list of our [contributors tracked by Github](https://gi
 
 ## ©️ Copyright
 
-#### Copyright © 2025-present, DSpot sp. z o.o. All rights reserved
+#### Copyright © 2019-present, Ever Co. LTD. All rights reserved
 
 [![Circle CI](https://circleci.com/gh/ever-co/ever-gauzy.svg?style=svg)](https://circleci.com/gh/ever-co/ever-gauzy)
 [![codecov](https://codecov.io/gh/ever-co/ever-gauzy/branch/master/graph/badge.svg)](https://codecov.io/gh/ever-co/ever-gauzy)

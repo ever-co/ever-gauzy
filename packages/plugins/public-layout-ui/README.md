@@ -1,10 +1,10 @@
 # @gauzy/plugin-public-layout-ui
 
-This library was generated with [Nx](https://nx.dev). It contains the public-layout UI Plugin for the DSpot ERP platform.
+This library was generated with [Nx](https://nx.dev). It contains the public-layout UI Plugin for the Gauzy platform.
 
 ## Features
 
-- **Public-layout UI Plugin:** Provides a user-friendly interface for public views and interactions in the DSpot ERP platform.
+-   **Public-layout UI Plugin:** Provides a user-friendly interface for public views and interactions in the Gauzy platform.
 
 ## Building
 

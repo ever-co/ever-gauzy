@@ -3510,6 +3510,7 @@
 			"HOUR": "heure",
 			"HOURS": "heures",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST": "Impossible d'ajouter l'enregistrement de temps. La limite hebdomadaire de temps de travail de ",
+			"UNABLE_TO_UPDATE_ERROR_MESSAGE_PART_FIRST": "Impossible de mettre à jour le journal de temps. La limite hebdomadaire de temps de travail de ",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "a été atteinte. Contactez l'administrateur système pour modifier les limites.",
 			"ERRORS": "Veuillez vérifier le formulaire pour les erreurs.",
 			"PROJECT_LOAD": "Impossible de charger les projets.",

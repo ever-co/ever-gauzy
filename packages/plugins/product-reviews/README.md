@@ -1,6 +1,6 @@
 # @gauzy/plugin-product-reviews
 
-This library was generated with [Nx](https://nx.dev). It contains the product reviews plugin for the DSpot ERP platform.
+This library was generated with [Nx](https://nx.dev). It contains the product reviews plugin for the Gauzy platform.
 
 ## Building
 

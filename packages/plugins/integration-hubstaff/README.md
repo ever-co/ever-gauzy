@@ -4,11 +4,11 @@ This library was generated with [Nx](https://nx.dev).
 
 ## Overview
 
-The Integration Hubstaff plugin is a DSpot ERP plugin that provides a user-friendly interface for integrating Hubstaff with the DSpot ERP platform.
+The Integration Hubstaff plugin is a Gauzy plugin that provides a user-friendly interface for integrating Hubstaff with the Gauzy platform.
 
 ## Features
 
--   **Integration Hubstaff**: Provides a user-friendly interface for integrating Hubstaff with the DSpot ERP platform.
+-   **Integration Hubstaff**: Provides a user-friendly interface for integrating Hubstaff with the Gauzy platform.
 
 ## Building
 

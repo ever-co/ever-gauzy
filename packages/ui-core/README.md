@@ -1,13 +1,13 @@
 # @gauzy/ui-core
 
-The `@gauzy/ui-core` library is generated with [Nx](https://nx.dev) and is intended to be used within the DSpot ERP ecosystem. Before installing, make sure you have a DSpot ERP workspace set up and that all necessary dependencies are in place.
+The `@gauzy/ui-core` library is generated with [Nx](https://nx.dev) and is intended to be used within the Gauzy ecosystem. Before installing, make sure you have a Gauzy workspace set up and that all necessary dependencies are in place.
 
 ## Getting Started
 
-- **Core Components:** Offers a collection of essential UI components and utilities for building user interfaces in Angular applications.
-- **Shared Pipes:** Provides reusable pipes for transforming data and formatting strings in Angular applications.
-- **Shared Services:** Offers a collection of shared services for common functionality, such as authentication, localization, and data access.
-- **Shared Directives:** Provides reusable directives for common UI elements, such as tooltips, dropdowns, and modals.
+-   **Core Components:** Offers a collection of essential UI components and utilities for building user interfaces in Angular applications.
+-   **Shared Pipes:** Provides reusable pipes for transforming data and formatting strings in Angular applications.
+-   **Shared Services:** Offers a collection of shared services for common functionality, such as authentication, localization, and data access.
+-   **Shared Directives:** Provides reusable directives for common UI elements, such as tooltips, dropdowns, and modals.
 
 ## Code scaffolding
 
@@ -33,3 +33,4 @@ To install the `@gauzy/ui-core` library, run the following command in your Angul
 npm install @gauzy/ui-core
 # or
 yarn add @gauzy/ui-core
+```

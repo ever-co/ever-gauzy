@@ -1,6 +1,6 @@
 # @gauzy/common
 
-This library was generated with [Nx](https://nx.dev). It contains the common code used internally in different DSpot ERP API packages.
+This library was generated with [Nx](https://nx.dev). It contains the common code used internally in different Gauzy API packages.
 
 ## Building
 

@@ -380,6 +380,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		const newWorkedTime = this.timerStatusWithWeeklyLimits.workedThisWeek - this.originalTimeDiff + this.timeDiff;
 		const isEditing = !!this.timeLog?.id;
 		if (this.loading || this.isButtonDisabled) return;
+		console.log(isEditing);
 		if (
 			isEditing &&
 			this.timeDiff > this.originalTimeDiff &&
@@ -438,14 +439,31 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		} catch (error) {
 			// Handle errors and show error notification
 			if (error.error?.message === TimeErrorsEnum.WEEKLY_LIMIT_REACHED) {
-				const hoursLabel = this.selectedEmployee?.reWeeklyLimit === 1 ? this._translateService.instant('TOASTR.MESSAGE.HOUR') : this._translateService.instant('TOASTR.MESSAGE.HOURS');
-				this._toastrService.error(
-					`${this._translateService.instant('TOASTR.MESSAGE.UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST')} ${
-						this.selectedEmployee?.reWeeklyLimit
-					} ${hoursLabel}
+				if (isEditing) {
+					const hoursLabel =
+						this.selectedEmployee?.reWeeklyLimit === 1
+							? this._translateService.instant('TOASTR.MESSAGE.HOUR')
+							: this._translateService.instant('TOASTR.MESSAGE.HOURS');
+					this._toastrService.error(
+						`${this._translateService.instant(
+							'TOASTR.MESSAGE.UNABLE_TO_UPDATE_ERROR_MESSAGE_PART_FIRST'
+						)} ${this.selectedEmployee?.reWeeklyLimit} ${hoursLabel}
 			        ${this._translateService.instant('TOASTR.MESSAGE.UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND')}`,
-					'TOASTR.TITLE.MAX_LIMIT_REACHED'
-				);
+						'TOASTR.TITLE.MAX_LIMIT_REACHED'
+					);
+				} else {
+					const hoursLabel =
+						this.selectedEmployee?.reWeeklyLimit === 1
+							? this._translateService.instant('TOASTR.MESSAGE.HOUR')
+							: this._translateService.instant('TOASTR.MESSAGE.HOURS');
+					this._toastrService.error(
+						`${this._translateService.instant('TOASTR.MESSAGE.UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST')} ${
+							this.selectedEmployee?.reWeeklyLimit
+						} ${hoursLabel}
+			        ${this._translateService.instant('TOASTR.MESSAGE.UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND')}`,
+						'TOASTR.TITLE.MAX_LIMIT_REACHED'
+					);
+				}
 			} else {
 				this._toastrService.error(error?.error?.message);
 			}

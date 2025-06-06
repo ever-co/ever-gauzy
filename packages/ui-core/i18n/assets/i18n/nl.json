@@ -3613,6 +3613,7 @@
 			"HOUR": "uur",
 			"HOURS": "uren",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST": "Kan tijdlog niet toevoegen. De wekelijkse werktijdlimiet van ",
+			"UNABLE_TO_UPDATE_ERROR_MESSAGE_PART_FIRST": "Kan tijdlog niet bijwerken. De wekelijkse werkurenlimiet van ",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "is bereikt. Neem contact op met de systeembeheerder om limieten aan te passen.",
 			"WORKED_THIS_WEEK": "Deze week gewerkt",
 			"WEEKLY_LIMIT": "Wekelijkse limiet",

@@ -54,8 +54,8 @@
 		],
 		"appId": "pl.com.dspot.erpserver",
 		"artifactName": "${name}-${version}.${ext}",
-		"productName": "DSpot ERP Server",
-		"copyright": "Copyright © 2025-Present. DSpot sp. z o.o.",
+		"productName": "Ever Gauzy Server",
+		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"afterSign": "tools/notarize.js",
 		"dmg": {
 			"sign": false

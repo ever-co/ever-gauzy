@@ -62,8 +62,8 @@
 	"build": {
 		"appId": "pl.com.dspot.erpdesktop",
 		"artifactName": "${name}-${version}.${ext}",
-		"productName": "DSpot ERP Desktop",
-		"copyright": "Copyright © 2025-Present. DSpot sp. z o.o.",
+		"productName": "Ever Gauzy Desktop",
+		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"afterSign": "tools/notarize.js",
 		"dmg": {
 			"sign": false

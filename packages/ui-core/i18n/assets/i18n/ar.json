@@ -3602,6 +3602,7 @@
 			"HOUR": "ساعة",
 			"HOURS": "ساعات",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST": "تعذر إضافة سجل الوقت. تم الوصول إلى حد العمل الأسبوعي البالغ ",
+			"UNABLE_TO_UPDATE_ERROR_MESSAGE_PART_FIRST": "يتعذر تحديث سجل الوقت. تم الوصول إلى الحد الأسبوعي لساعات العمل وهو ",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": ". اتصل بمسؤول النظام لتعديل الحدود.",
 			"WORKED_THIS_WEEK": "عملت هذا الأسبوع",
 			"WEEKLY_LIMIT": "الحد الأسبوعي",

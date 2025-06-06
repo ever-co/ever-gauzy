@@ -3613,6 +3613,7 @@
 			"HOUR": "小时",
 			"HOURS": "小时",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST": "无法添加时间记录。每周工作时间限制 ",
+			"UNABLE_TO_UPDATE_ERROR_MESSAGE_PART_FIRST": "无法更新时间记录。本周工作时间限制为 ",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "已达到。请联系系统管理员修改限制。",
 			"WORKED_THIS_WEEK": "本周已工作",
 			"WEEKLY_LIMIT": "每周上限",

@@ -3613,6 +3613,7 @@
 			"HOUR": "hora",
 			"HOURS": "horas",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST": "No se puede agregar el registro de tiempo. Se ha alcanzado el límite de tiempo de trabajo semanal de ",
+			"UNABLE_TO_UPDATE_ERROR_MESSAGE_PART_FIRST": "No se pudo actualizar el registro de tiempo. El límite semanal de horas laborales de ",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": ". Contacte al administrador del sistema para modificar los límites.",
 			"WORKED_THIS_WEEK": "Trabajado esta semana",
 			"WEEKLY_LIMIT": "Límite semanal",

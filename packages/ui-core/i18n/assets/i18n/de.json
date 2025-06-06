@@ -3613,6 +3613,7 @@
 			"HOUR": "Stunde",
 			"HOURS": "Stunden",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST": "Zeiteintrag konnte nicht hinzugefügt werden. Das wöchentliche Arbeitszeitlimit von ",
+			"UNABLE_TO_UPDATE_ERROR_MESSAGE_PART_FIRST": "Zeitprotokoll konnte nicht aktualisiert werden. Das wöchentliche Arbeitszeitlimit von ",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "wurde erreicht. Wenden Sie sich an den Systemadministrator, um das Limit zu ändern.",
 			"WORKED_THIS_WEEK": "Diese Woche gearbeitet",
 			"WEEKLY_LIMIT": "Wochenlimit",

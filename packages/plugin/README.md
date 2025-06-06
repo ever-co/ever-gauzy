@@ -1,6 +1,6 @@
 # @gauzy/plugin
 
-This library was generated with [Nx](https://nx.dev). It contains the Plugin Module for the DSpot ERP platform.
+This library was generated with [Nx](https://nx.dev). It contains the Plugin Module for the Gauzy platform.
 
 ## Building
 
