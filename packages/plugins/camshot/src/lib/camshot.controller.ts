@@ -55,6 +55,11 @@ export class CamshotController {
 		status: HttpStatus.FORBIDDEN,
 		description: 'User does not have permission to list camshots.'
 	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
 	@Get()
 	public async list(@Query() params: BaseQueryDTO<ICamshot>): Promise<IPagination<ICamshot>> {
 		return this.queryBus.execute(new ListCamshotQuery(params));
@@ -151,10 +156,9 @@ export class CamshotController {
 	/**
 	 * Retrieves a camshot record by its ID.
 	 *
-	 * @param id - The UUID of the camshot to retrieve.2024-12-23T08:00:00.000Z
+	 * @param id - The UUID of the camshot to retrieve.
 	 * @param options - Additional query options for finding the camshot.
 	 * @returns A Promise that resolves with the details of the camshot.
-	 *
 	 */
 	@ApiOperation({ summary: 'Get camshot by ID' })
 	@ApiResponse({
@@ -198,6 +202,6 @@ export class CamshotController {
 	})
 	@Delete(':id')
 	public async delete(@Param('id', UUIDValidationPipe) id: ID, @Query() options?: DeleteCamshotDTO): Promise<void> {
-		return this.commandBus.execute(new DeleteCamshotCommand(id, options));
+		await this.commandBus.execute(new DeleteCamshotCommand(id, options));
 	}
 }
