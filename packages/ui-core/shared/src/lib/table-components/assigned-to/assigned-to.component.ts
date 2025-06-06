@@ -2,24 +2,28 @@ import { Component, Input } from '@angular/core';
 import { ITask } from '@gauzy/contracts';
 
 @Component({
-    selector: 'ngx-assigned-to',
-    templateUrl: './assigned-to.component.html',
-    standalone: false
+	selector: 'ngx-assigned-to',
+	templateUrl: './assigned-to.component.html',
+	standalone: false
 })
 export class AssignedToComponent {
-
 	@Input() rowData: any;
 	@Input() value: any;
-
-	public view: 'members' | 'teams';
+	@Input() view?: 'members' | 'teams';
 
 	ngOnInit() {
-		if (this.rowData) {
-			if (this.rowData.members && this.rowData.members.length > 0) {
+		if (!this.view) {
+			if (this.rowData?.members?.length > 0) {
 				this.view = 'members';
-				this.value = [...this.rowData.members];
-			} else if (this.rowData.teams && this.rowData.teams.length > 0) {
+			} else if (this.rowData?.teams?.length > 0) {
 				this.view = 'teams';
+			}
+		}
+
+		if (this.rowData) {
+			if (this.view === 'members' && this.rowData.members?.length > 0) {
+				this.value = [...this.rowData.members];
+			} else if (this.view === 'teams' && this.rowData.teams?.length > 0) {
 				this.value = this._getTeamNames(this.rowData);
 			}
 		}

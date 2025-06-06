@@ -360,6 +360,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					componentInitFunction: (instance: AssignedToComponent, cell: Cell) => {
 						instance.value = cell.getValue();
 						instance.rowData = cell.getRow().getData();
+						instance.view = 'teams';
 					}
 				}
 			};
