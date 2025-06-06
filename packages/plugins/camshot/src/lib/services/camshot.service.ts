@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { FileStorage, RequestContext, tempFile, TenantAwareCrudService } from '@gauzy/core';
+import { FileStorage, tempFile, TenantAwareCrudService } from '@gauzy/core';
 import { Camshot } from '../entity/camshot.entity';
 import { TypeOrmCamshotRepository } from '../repositories/type-orm-camshot.repository';
 import { MikroOrmCamshotRepository } from '../repositories/mikro-orm-camshot.repository';
