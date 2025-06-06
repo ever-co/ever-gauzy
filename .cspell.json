@@ -670,7 +670,10 @@
 		"dyld",
 		"oidc",
 		"Registerables",
-		"Archs"
+		"Archs",
+		"camshot",
+		"camshots",
+		"dtos"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
