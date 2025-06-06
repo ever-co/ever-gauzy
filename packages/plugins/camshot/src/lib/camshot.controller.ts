@@ -12,6 +12,8 @@ import { CountCamshotDTO } from './dtos/count-camshot.dto';
 import { GetCamshotCountQuery } from './queries/get-camshot-count.query';
 import { DeleteCamshotCommand } from './commands/delete-camshot.command';
 import { DeleteCamshotDTO } from './dtos/delete-camshot.dto';
+import { FindOneOptions } from 'typeorm';
+import { GetCamshotQuery } from './queries/get-camshot.query';
 
 @ApiTags('Camshot Plugin')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -144,6 +146,32 @@ export class CamshotController {
 	})
 	async getCount(@Query() options: CountCamshotDTO): Promise<number> {
 		return this.queryBus.execute(new GetCamshotCountQuery(options));
+	}
+
+	/**
+	 * Retrieves a camshot record by its ID.
+	 *
+	 * @param id - The UUID of the camshot to retrieve.2024-12-23T08:00:00.000Z
+	 * @param options - Additional query options for finding the camshot.
+	 * @returns A Promise that resolves with the details of the camshot.
+	 *
+	 */
+	@ApiOperation({ summary: 'Get camshot by ID' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@Get(':id')
+	public async findById(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() options: FindOneOptions<ICamshot>
+	): Promise<ICamshot> {
+		return this.queryBus.execute(new GetCamshotQuery(id, options));
 	}
 
 	/**
