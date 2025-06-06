@@ -58,41 +58,37 @@ export class CamshotService extends TenantAwareCrudService<Camshot> {
 		// Retrieve file content from the file storage provider
 		const fileContent = await provider.getFile(file.key);
 
-		// Create temporary files for input and output of thumbnail processing
+		// Create a temporary file for input
 		const inputFile = await tempFile('camshot-thumb');
-		const outputFile = await tempFile('camshot-thumb');
-
-		// Write the file content to the input temporary file
-		await fs.promises.writeFile(inputFile, fileContent);
-
-		// Resize the image using Jimp library
-		const image = await Jimp.read(inputFile);
-
-		// we are using Jimp.AUTO for height instead of hardcode (e.g. 150px)
-		image.resize(250, Jimp.AUTO);
-
-		// Write the resized image to the output temporary file
-		await image.writeAsync(outputFile);
-
-		// Read the resized image data from the output temporary file
-		const data = await fs.promises.readFile(outputFile);
 
 		try {
-			// Remove the temporary input and output files
-			await fs.promises.unlink(inputFile);
-			await fs.promises.unlink(outputFile);
+			// Write the file content to the input temporary file
+			await fs.promises.writeFile(inputFile, fileContent);
+
+			// Read and resize the image using Jimp
+			const image = await Jimp.read(inputFile);
+			image.resize(250, Jimp.AUTO);
+
+			// Get the resized image as a buffer (default to PNG)
+			const data = await image.getBufferAsync(Jimp.MIME_PNG);
+
+			// Define thumbnail file name and directory
+			const thumbName = `thumb-${file.filename}`;
+			const thumbDir = path.posix.dirname(file.key); // Use posix for forward slashes
+			const fullPath = path.posix.join(thumbDir, thumbName);
+
+			// Upload the thumbnail data to the file storage provider
+			return provider.putFile(data, fullPath);
 		} catch (error) {
-			console.error('Error while unlinking temp files:', error);
+			console.error('Error creating thumbnail:', error);
+			throw error;
+		} finally {
+			// Always remove the temporary input file
+			try {
+				await fs.promises.unlink(inputFile);
+			} catch (unlinkError) {
+				console.error('Error while unlinking temp file:', unlinkError);
+			}
 		}
-
-		// Define thumbnail file name and directory
-		const thumbName = `thumb-${file.filename}`;
-		const thumbDir = path.dirname(file.key);
-
-		// Replace double backslashes with single forward slashes
-		const fullPath = path.join(thumbDir, thumbName).replace(/\\/g, '/');
-
-		// Upload the thumbnail data to the file storage provider
-		return provider.putFile(data, fullPath);
 	}
 }
