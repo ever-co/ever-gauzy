@@ -15,14 +15,14 @@ export class FileDTO implements UploadedFile {
 	@ApiProperty({
 		description: 'The file path or identifier of the camshot',
 		example: 'project-demo-2024.png',
-		pattern: '/\\.(mp4)$/'
+		pattern: '/\\.(png)$/'
 	})
 	@IsNotEmpty({ message: 'File key must not be empty' })
 	@IsString({ message: 'File key must be a string' })
 	@MaxLength(255, { message: 'File key must not exceed 255 characters' })
-	@Matches(/\.(mp4)$/, {
+	@Matches(/\.(png)$/, {
 		message:
-			'File must be a valid camshot format mp4 and contain only letters, numbers, spaces, hyphens, or underscores'
+			'File must be a valid camshot format png and contain only letters, numbers, spaces, hyphens, or underscores'
 	})
 	key: string;
 
@@ -56,11 +56,14 @@ export class FileDTO implements UploadedFile {
 
 	@ApiProperty({
 		description: 'The MIME type of the file (if available)',
-		example: 'camshot/mp4'
+		example: 'image/png'
 	})
 	@IsOptional()
 	@IsString({ message: 'MIME type must be a string' })
 	@MaxLength(50, { message: 'MIME type must not exceed 50 characters' })
+	@Matches(/^image\/png$/, {
+		message: 'MIME type must be image/png'
+	})
 	mimetype?: string;
 
 	@ApiProperty({
