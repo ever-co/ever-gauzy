@@ -1,0 +1,37 @@
+import { ICommandHandler } from "@nestjs/cqrs";
+import { CommandHandler } from "@nestjs/cqrs";
+import { CamshotService } from "../../services/camshot.service";
+import { DeleteCamshotCommand } from "../delete-camshot.command";
+import { NotFoundException } from "@nestjs/common";
+import { RequestContext } from "@gauzy/core";
+
+@CommandHandler(DeleteCamshotCommand)
+export class DeleteCamshotCommandHandler implements ICommandHandler<DeleteCamshotCommand> {
+	constructor(private readonly camshotService: CamshotService) { }
+
+	/**
+	 * Handles the `DeleteCamshotCommand` to delete a camshot entity from the database.
+	 * Validates the existence of the camshot and performs the deletion based on the provided criteria.
+	 *
+	 * @param command - The `DeleteCamshotCommand` containing the camshot ID and additional options for deletion.
+	 *
+	 * @returns A promise resolving to a `DeleteResult`, which includes metadata about the deletion operation.
+	 *
+	 * @throws {NotFoundException} If the camshot with the specified ID does not exist.
+	 */
+	public async execute(command: DeleteCamshotCommand): Promise<void> {
+		const { id, input } = command;
+		const { forceDelete = false, organizationId, tenantId = RequestContext.currentTenantId() } = input;
+		const camshot = await this.camshotService.findOneByWhereOptions({ id, organizationId, tenantId });
+
+		if (!camshot) {
+			throw new NotFoundException('Camshot not found');
+		}
+
+		if (forceDelete) {
+			await this.camshotService.delete(id);
+		} else {
+			await this.camshotService.softDelete(id);
+		}
+	}
+}

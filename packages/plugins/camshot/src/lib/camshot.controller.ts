@@ -1,15 +1,18 @@
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { BadRequestException, Body, Controller, Get, HttpStatus, Query, UseInterceptors, UseGuards, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpStatus, Query, UseInterceptors, UseGuards, Post, Param, Delete } from '@nestjs/common';
 import { Camshot } from './entity/camshot.entity';
-import { BaseQueryDTO, FileStorage, FileStorageFactory, LazyFileInterceptor, TenantPermissionGuard, PermissionGuard, UploadedFileStorage, UseValidationPipe, Permissions } from '@gauzy/core';
+import { BaseQueryDTO, FileStorage, FileStorageFactory, LazyFileInterceptor, TenantPermissionGuard, PermissionGuard, UploadedFileStorage, UseValidationPipe, Permissions, UUIDValidationPipe } from '@gauzy/core';
 import { CreateCamshotDTO } from './dtos/create-camshot.dto';
 import { FileDTO } from './dtos/file.dto';
-import { ICamshot, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { ICamshot, ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CreateCamshotCommand } from './commands/create-camshot.command';
 import { ListCamshotQuery } from './queries';
 import { CountCamshotDTO } from './dtos/count-camshot.dto';
 import { GetCamshotCountQuery } from './queries/get-camshot-count.query';
+import { DeleteCamshotCommand } from './commands/delete-camshot.command';
+import { DeleteCamshotDTO } from './dtos/delete-camshot.dto';
+
 @ApiTags('Camshot Plugin')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
@@ -141,5 +144,32 @@ export class CamshotController {
 	})
 	async getCount(@Query() options: CountCamshotDTO): Promise<number> {
 		return this.queryBus.execute(new GetCamshotCountQuery(options));
+	}
+
+	/**
+	 * Delete a camshot record.
+	 *
+	 * This endpoint allows authorized users to delete a camshot record by providing the necessary ID.
+	 *
+	 * @param id - The ID of the camshot to be deleted.
+	 * @returns A promise resolving to the result of the deletion operation.
+	 */
+	@ApiOperation({ summary: 'Delete a camshot record' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Camshot successfully deleted.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input provided. Check the response body for error details.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@Delete(':id')
+	public async delete(@Param('id', UUIDValidationPipe) id: ID, @Query() options?: DeleteCamshotDTO): Promise<void> {
+		return this.commandBus.execute(new DeleteCamshotCommand(id, options));
 	}
 }
