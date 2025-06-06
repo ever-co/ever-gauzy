@@ -1,16 +1,18 @@
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiConsumes, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
-import { BadRequestException, Body, Get, HttpStatus, Post, Query, UseInterceptors } from '@nestjs/common';
+import { ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { BadRequestException, Body, Controller, Get, HttpStatus, Query, UseInterceptors, UseGuards, Post } from '@nestjs/common';
 import { Camshot } from './entity/camshot.entity';
-import { BaseQueryDTO, FileStorage, FileStorageFactory, LazyFileInterceptor, RequestContext, UploadedFileStorage, UseValidationPipe } from '@gauzy/core';
+import { BaseQueryDTO, FileStorage, FileStorageFactory, LazyFileInterceptor, TenantPermissionGuard, PermissionGuard, UploadedFileStorage, UseValidationPipe, Permissions } from '@gauzy/core';
 import { CreateCamshotDTO } from './dtos/create-camshot.dto';
 import { FileDTO } from './dtos/file.dto';
-import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
-import { FileStorageProviderEnum, ICamshot, IPagination } from '@gauzy/contracts';
+import { ICamshot, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CreateCamshotCommand } from './commands/create-camshot.command';
 import { ListCamshotQuery } from './queries';
 
+@ApiTags('Camshot Plugin')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.TIME_TRACKER)
+@Controller('/plugins/camshots')
 export class CamshotController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) { }
 
