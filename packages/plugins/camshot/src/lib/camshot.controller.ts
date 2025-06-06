@@ -8,7 +8,8 @@ import { FileDTO } from './dtos/file.dto';
 import { ICamshot, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CreateCamshotCommand } from './commands/create-camshot.command';
 import { ListCamshotQuery } from './queries';
-
+import { CountCamshotDTO } from './dtos/count-camshot.dto';
+import { GetCamshotCountQuery } from './queries/get-camshot-count.query';
 @ApiTags('Camshot Plugin')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
@@ -108,5 +109,37 @@ export class CamshotController {
 			// Throw a bad request exception with the validation errors
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * GET camshot count in the same tenant.
+	 *
+	 * This endpoint retrieves the count of camshots within a specific tenant.
+	 * It takes query parameters to filter the camshot count by certain criteria.
+	 *
+	 * @param options Query parameters to filter the camshot count.
+	 * @returns A promise resolving to the total count of camshots in the tenant.
+	 */
+	@ApiOperation({ summary: 'Get camshot count in the same tenant' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully retrieved the camshot count.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid query parameters. Please check your input.'
+	})
+	@ApiResponse({
+		status: HttpStatus.INTERNAL_SERVER_ERROR,
+		description: 'An error occurred while retrieving the camshot count.'
+	})
+	@Get('count')
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	async getCount(@Query() options: CountCamshotDTO): Promise<number> {
+		return this.queryBus.execute(new GetCamshotCountQuery(options));
 	}
 }
