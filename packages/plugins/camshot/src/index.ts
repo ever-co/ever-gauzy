@@ -1,1 +1,1 @@
-export * from './lib/camshot.module';
+export * from './lib/camshot.plugin';
