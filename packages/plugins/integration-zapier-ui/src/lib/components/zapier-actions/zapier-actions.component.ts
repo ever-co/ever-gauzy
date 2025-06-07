@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { tap, catchError, finalize, switchMap } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService } from '@gauzy/ui-core/core';
@@ -20,7 +19,6 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 	public actions: IZapierEndpoint[] = [];
 
 	constructor(
-		private readonly _route: ActivatedRoute,
 		private readonly _zapierService: ZapierService,
 		private readonly _toastrService: ToastrService,
 		public readonly translateService: TranslateService
@@ -34,7 +32,6 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 
 	private _loadActions() {
 		this.loading = true;
-		const integrationId = this._route.snapshot.params['id'];
 
 		this._zapierService
 			.getOAuthConfig()

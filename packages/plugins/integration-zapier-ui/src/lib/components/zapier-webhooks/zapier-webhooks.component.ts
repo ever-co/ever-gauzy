@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { tap, catchError, finalize, switchMap } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService } from '@gauzy/ui-core/core';
@@ -20,7 +19,6 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 	public webhooks: IZapierWebhook[] = [];
 
 	constructor(
-		private readonly _route: ActivatedRoute,
 		private readonly _zapierService: ZapierService,
 		private readonly _toastrService: ToastrService,
 		public readonly translateService: TranslateService
@@ -34,7 +32,6 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 
 	private _loadWebhooks() {
 		this.loading = true;
-		const integrationId = this._route.snapshot.params['id'];
 
 		this._zapierService
 			.getOAuthConfig()
@@ -76,8 +73,6 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 	}
 
 	deleteWebhook(webhookId: string) {
-		const integrationId = this._route.snapshot.params['id'];
-
 		this._zapierService
 			.getOAuthConfig()
 			.pipe(
@@ -86,7 +81,6 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 						throw new Error('Missing client credentials');
 					}
 					return this._zapierService.exchangeCodeForToken({
-						code: integrationId,
 						client_id: config.clientId,
 						client_secret: config.clientSecret,
 						redirect_uri: config.redirectUri,
