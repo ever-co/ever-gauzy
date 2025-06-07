@@ -599,6 +599,8 @@
 			"COST": "تكلفة",
 			"MAKE_COM_CLIENT_ID": "أدخل معرف عميل Make.com الخاص بك",
 			"MAKE_COM_CLIENT_SECRET": "أدخل الرمز السري لعميل Make.com الخاص بك",
+			"ZAPIER_CLIENT_ID": "أدخل معرف عميل Zapier الخاص بك",
+			"ZAPIER_CLIENT_SECRET": "أدخل الرمز السري لعميل Zapier الخاص بك",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "اسم المدرسة",
 				"DEGREE": "الدرجة/الشهادة",
@@ -833,6 +835,7 @@
 		"INTEGRATIONS": "التطبيقات والتكاملات",
 		"UPWORK": "أبوورك",
 		"MAKE_COM": "Make.com",
+		"ZAPIER": "Zapier",
 		"GAUZY_AI": "جوزي الذكاء الاصطناعي",
 		"PROPOSALS": "مقترحات",
 		"TIME_OFF": "وقت مرتاح",
@@ -1299,6 +1302,15 @@
 				"WEBHOOK_URL_PLACEHOLDER": "أدخل رابط الويب هوك",
 				"WEBHOOK_URL_INVALID": "الرجاء إدخال رابط ويب هوك صالح",
 				"SAVE": "حفظ الإعدادات"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "معرف العميل",
+			"CLIENT_SECRET": "الرمز السري للعميل",
+			"NEXT_STEP_INFO": "بعد التفويض، سيتم توجيهك إلى Zapier لإكمال إعداد التكامل",
+			"ERRORS": {
+				"INVALID_FORM": "يرجى إدخال جميع الحقول المطلوبة",
+				"START_AUTHORIZATION": "يرجى بدء عملية التفويض"
 			}
 		},
 		"GAUZY_AI_PAGE": {

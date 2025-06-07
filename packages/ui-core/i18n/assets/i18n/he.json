@@ -606,6 +606,8 @@
 			"COST": "Cost",
 			"MAKE_COM_CLIENT_ID": "הזן את מזהה הלקוח Make.com שלך",
 			"MAKE_COM_CLIENT_SECRET": "הזן את סיסמת הלקוח Make.com שלך",
+			"ZAPIER_CLIENT_ID": "הזן את מזהה הלקוח Zapier שלך",
+			"ZAPIER_CLIENT_SECRET": "הזן את סיסמת הלקוח Zapier שלך",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -838,6 +840,7 @@
 		"INTEGRATIONS": "Apps & Integrations",
 		"UPWORK": "Upwork",
 		"MAKE_COM": "Make.com",
+		"ZAPIER": "Zapier",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"APPROVALS": "Approvals",
@@ -1303,6 +1306,15 @@
 				"WEBHOOK_URL_PLACEHOLDER": "הזן כתובת webhook",
 				"WEBHOOK_URL_INVALID": "אנא הזן כתובת webhook תקינה",
 				"SAVE": "שמור הגדרות"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "מזהה לקוח",
+			"CLIENT_SECRET": "סיסמת לקוח",
+			"NEXT_STEP_INFO": "לאחר האישור, תועבר ל-Zapier להשלמת הגדרות האינטגרציה",
+			"ERRORS": {
+				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
+				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור"
 			}
 		},
 		"GAUZY_AI_PAGE": {

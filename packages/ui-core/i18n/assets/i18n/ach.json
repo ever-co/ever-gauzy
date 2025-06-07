@@ -526,6 +526,8 @@
 			"COST": "crwdns9024:0crwdne9024:0",
 			"MAKE_COM_CLIENT_ID": "Ket Make.com Client ID ni",
 			"MAKE_COM_CLIENT_SECRET": "Ket Make.com Client Secret ni",
+			"ZAPIER_CLIENT_ID": "Ket Zapier Client ID ni",
+			"ZAPIER_CLIENT_SECRET": "Ket Zapier Client Secret ni",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "crwdns3674:0crwdne3674:0",
 				"DEGREE": "crwdns3676:0crwdne3676:0",
@@ -737,6 +739,7 @@
 		"POSITIONS": "crwdns7712:0crwdne7712:0",
 		"INTEGRATIONS": "crwdns8128:0crwdne8128:0",
 		"UPWORK": "crwdns3200:0crwdne3200:0",
+		"ZAPIER": "Zapier",
 		"MAKE_COM": "Make.com",
 		"PROPOSALS": "crwdns2104:0crwdne2104:0",
 		"TIME_OFF": "crwdns2495:0crwdne2495:0",
@@ -1189,6 +1192,15 @@
 				"WEBHOOK_URL_PLACEHOLDER": "Ket webhook URL",
 				"WEBHOOK_URL_INVALID": "Tim beri webhook URL maber",
 				"SAVE": "Gwok Settings"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "Client ID",
+			"CLIENT_SECRET": "Client Secret",
+			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Zapier me tiyo ki integration",
+			"ERRORS": {
+				"INVALID_FORM": "Please fill in all required fields",
+				"START_AUTHORIZATION": "Please start the authorization process"
 			}
 		},
 		"COMING_SOON": "crwdns4078:0crwdne4078:0",

@@ -606,6 +606,8 @@
 			"COST": "Затраты",
 			"MAKE_COM_CLIENT_ID": "Введите ваш ID клиента Make.com",
 			"MAKE_COM_CLIENT_SECRET": "Введите ваш секрет клиента Make.com",
+			"ZAPIER_CLIENT_ID": "Введите ваш ID клиента Zapier",
+			"ZAPIER_CLIENT_SECRET": "Введите ваш секрет клиента Zapier",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
 				"DEGREE": "Диплом",
@@ -841,6 +843,7 @@
 		"POSITIONS": "Позиции",
 		"INTEGRATIONS": "Приложения и интеграция",
 		"MAKE_COM": "Make.com",
+		"ZAPIER": "Zapier",
 		"UPWORK": "Обновления",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Время выключено",
@@ -1307,6 +1310,15 @@
 				"WEBHOOK_URL_PLACEHOLDER": "Введите URL вебхука",
 				"WEBHOOK_URL_INVALID": "Пожалуйста, введите действительный URL вебхука",
 				"SAVE": "Сохранить настройки"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "ID клиента",
+			"CLIENT_SECRET": "Секрет клиента",
+			"NEXT_STEP_INFO": "После авторизации вы будете перенаправлены на Zapier для завершения настройки интеграции",
+			"ERRORS": {
+				"INVALID_FORM": "Пожалуйста, заполните все обязательные поля",
+				"START_AUTHORIZATION": "Пожалуйста, начните процесс авторизации"
 			}
 		},
 		"GAUZY_AI_PAGE": {

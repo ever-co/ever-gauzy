@@ -599,6 +599,8 @@
 			"COST": "Koszt",
 			"MAKE_COM_CLIENT_ID": "Wprowadź swoje ID klienta Make.com",
 			"MAKE_COM_CLIENT_SECRET": "Wprowadź swój sekret klienta Make.com",
+			"ZAPIER_CLIENT_ID": "Wprowadź swoje ID Klienta Zapier",
+			"ZAPIER_CLIENT_SECRET": "Wprowadź swój Sekret Klienta Zapier",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Nazwa szkoły",
 				"DEGREE": "Stopień/Dyplom",
@@ -833,6 +835,7 @@
 		"INTEGRATIONS": "Aplikacje i integracje",
 		"UPWORK": "Upwork",
 		"MAKE_COM": "Make.com",
+		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Propozycje",
 		"TIME_OFF": "Czas wolny",
@@ -1299,6 +1302,15 @@
 				"WEBHOOK_URL_PLACEHOLDER": "Wprowadź URL webhooka",
 				"WEBHOOK_URL_INVALID": "Wprowadź prawidłowy URL webhooka",
 				"SAVE": "Zapisz ustawienia"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "ID Klienta",
+			"CLIENT_SECRET": "Sekret Klienta",
+			"NEXT_STEP_INFO": "Po autoryzacji zostaniesz przekierowany do Zapier, aby dokończyć konfigurację integracji",
+			"ERRORS": {
+				"INVALID_FORM": "Proszę wypełnić wszystkie wymagane pola",
+				"START_AUTHORIZATION": "Proszę rozpocząć proces autoryzacji"
 			}
 		},
 		"GAUZY_AI_PAGE": {
