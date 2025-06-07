@@ -18,13 +18,13 @@ export class GetCamshotQueryHandler implements IQueryHandler<GetCamshotQuery> {
 	 * @throws {NotFoundException} If the camshot with the specified ID is not found.
 	 */
 	public async execute(query: GetCamshotQuery): Promise<ICamshot> {
-		// Destructure the query to extract the video ID and options
+		// Destructure the query to extract the camshot ID and options
 		const { id, options = {} } = query;
 
-		// Step 1: Fetch the video entity from the database
+		// Step 1: Fetch the camshot entity from the database
 		const camshot = await this.camshotService.findOneByIdString(id, options);
 
-		// Step 2: Throw a NotFoundException if the video does not exist
+		// Step 2: Throw a NotFoundException if the camshot does not exist
 		if (!camshot) {
 			throw new NotFoundException(`Camshot with ID ${id} not found.`);
 		}

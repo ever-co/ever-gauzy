@@ -43,7 +43,13 @@ export class CamshotService extends TenantAwareCrudService<Camshot> {
 			throw new BadRequestException(errors);
 		}
 
-		const storageProvider = provider.name.toUpperCase() as FileStorageProviderEnum;
+		let storageProvider: FileStorageProviderEnum;
+		const providerName = provider.name?.toUpperCase();
+		if (providerName && Object.values(FileStorageProviderEnum).includes(providerName as FileStorageProviderEnum)) {
+			storageProvider = providerName as FileStorageProviderEnum;
+		} else {
+			storageProvider = FileStorageProviderEnum.LOCAL;
+		}
 		// Create the thumbnail
 		const thumbnail = await this.createThumbnail(provider, fileInstance);
 
