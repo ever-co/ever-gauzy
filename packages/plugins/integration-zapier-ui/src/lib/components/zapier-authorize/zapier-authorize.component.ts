@@ -92,7 +92,6 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 			.pipe(
 				tap((integration) => {
 					if (integration) {
-						// Si l'intégration existe, rediriger vers la page de l'intégration
 						this._router.navigate(['/pages/integrations/zapier', integration.id]);
 					}
 				}),
