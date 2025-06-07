@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { tap, catchError } from 'rxjs/operators';
+import { Router, ActivatedRoute } from '@angular/router';
+import { tap, catchError, finalize } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
-import { ZapierService, ToastrService } from '@gauzy/ui-core/core';
+import { ZapierService, ToastrService, IntegrationsService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { ICreateZapierIntegrationInput } from '@gauzy/contracts';
+import { ICreateZapierIntegrationInput, IntegrationEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -19,11 +21,16 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 	public form: FormGroup;
 	public loading = false;
 	public oauthConfig: { clientId: string; redirectUri: string } = null;
+	public organization: any;
 
 	constructor(
 		private readonly _fb: FormBuilder,
 		private readonly _zapierService: ZapierService,
 		private readonly _toastrService: ToastrService,
+		private readonly _router: Router,
+		private readonly _route: ActivatedRoute,
+		private readonly _store: Store,
+		private readonly _integrationsService: IntegrationsService,
 		public readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -31,6 +38,9 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 
 	ngOnInit() {
 		this._initializeForm();
+		this._checkExistingIntegration();
+		this._loadOrganization();
+		this._loadOAuthConfig();
 	}
 
 	private _initializeForm() {
@@ -38,6 +48,64 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 			client_id: ['', [Validators.required]],
 			client_secret: ['', [Validators.required]]
 		});
+	}
+
+	private _loadOrganization() {
+		this._store.selectedOrganization$
+			.pipe(
+				tap((organization) => {
+					this.organization = organization;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	private _loadOAuthConfig() {
+		this._zapierService
+			.getOAuthConfig()
+			.pipe(
+				tap((config) => {
+					this.oauthConfig = config;
+				}),
+				catchError((error) => {
+					console.error('Error loading OAuth config:', error);
+					return EMPTY;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	private _checkExistingIntegration() {
+		if (!this.organization) return;
+
+		this.loading = true;
+		const { id: organizationId, tenantId } = this.organization;
+
+		this._integrationsService
+			.getIntegrationByOptions({
+				name: IntegrationEnum.ZAPIER,
+				organizationId,
+				tenantId
+			})
+			.pipe(
+				tap((integration) => {
+					if (integration) {
+						// Si l'intégration existe, rediriger vers la page de l'intégration
+						this._router.navigate(['/pages/integrations/zapier', integration.id]);
+					}
+				}),
+				catchError((error) => {
+					console.error('Error checking existing integration:', error);
+					return EMPTY;
+				}),
+				finalize(() => {
+					this.loading = false;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -52,8 +120,27 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 			return;
 		}
 
+		if (!this.organization) {
+			this._toastrService.error(
+				this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.NO_ORGANIZATION'),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+			return;
+		}
+
+		if (!this.oauthConfig) {
+			this._toastrService.error(
+				this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.NO_OAUTH_CONFIG'),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+			return;
+		}
+
 		this.loading = true;
-		const credentials: ICreateZapierIntegrationInput = this.form.value;
+		const credentials: ICreateZapierIntegrationInput = {
+			...this.form.value,
+			organizationId: this.organization.id
+		};
 
 		this._zapierService
 			.initializeIntegration(credentials)
@@ -70,10 +157,11 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 					console.error('Error starting authorization:', error);
 					return EMPTY;
 				}),
+				finalize(() => {
+					this.loading = false;
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe(() => {
-				this.loading = false;
-			});
+			.subscribe();
 	}
 }
