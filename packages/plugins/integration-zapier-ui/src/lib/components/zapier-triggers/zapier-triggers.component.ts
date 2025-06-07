@@ -1,22 +1,23 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { tap, catchError, finalize } from 'rxjs/operators';
+import { tap, catchError, finalize, switchMap } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { IZapierEndpoint } from '@gauzy/contracts';
+import { IZapierEndpoint, IZapierAccessTokens, IZapierAuthConfig } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-zapier-triggers',
 	templateUrl: './zapier-triggers.component.html',
+	styleUrls: ['./zapier-triggers.component.scss'],
 	standalone: false
 })
 export class ZapierTriggersComponent extends TranslationBaseComponent implements OnInit {
-	public triggers: IZapierEndpoint[] = [];
 	public loading = false;
+	public triggers: IZapierEndpoint[] = [];
 
 	constructor(
 		private readonly _route: ActivatedRoute,
@@ -36,8 +37,26 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 		const integrationId = this._route.snapshot.params['id'];
 
 		this._zapierService
-			.getTriggers(integrationId)
+			.getOAuthConfig()
 			.pipe(
+				switchMap((config: IZapierAuthConfig) => {
+					if (!config.clientId || !config.clientSecret) {
+						throw new Error('Missing client credentials');
+					}
+					return this._zapierService.exchangeCodeForToken({
+						code: integrationId,
+						client_id: config.clientId,
+						client_secret: config.clientSecret,
+						redirect_uri: config.redirectUri,
+						grant_type: 'authorization_code'
+					});
+				}),
+				switchMap((tokens: IZapierAccessTokens) => {
+					if (tokens && tokens.access_token) {
+						return this._zapierService.getTriggers(tokens.access_token);
+					}
+					throw new Error('No access token available');
+				}),
 				tap((triggers: IZapierEndpoint[]) => {
 					this.triggers = triggers;
 				}),
@@ -46,7 +65,7 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.LOAD_TRIGGERS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
-					console.error('Error loading Zapier triggers:', error);
+					console.error('Error loading triggers:', error);
 					return EMPTY;
 				}),
 				finalize(() => {
