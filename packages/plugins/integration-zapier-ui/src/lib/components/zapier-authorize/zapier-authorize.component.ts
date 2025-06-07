@@ -6,7 +6,7 @@ import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService, IntegrationsService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { ICreateZapierIntegrationInput, IntegrationEnum } from '@gauzy/contracts';
+import { ICreateZapierIntegrationInput, IntegrationEnum, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@gauzy/ui-core/core';
 
@@ -21,7 +21,7 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 	public form: FormGroup;
 	public loading = false;
 	public oauthConfig: { clientId: string; redirectUri: string } = null;
-	public organization: any;
+	public organization: IOrganization;
 
 	constructor(
 		private readonly _fb: FormBuilder,
