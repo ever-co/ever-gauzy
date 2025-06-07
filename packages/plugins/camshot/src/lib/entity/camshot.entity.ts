@@ -8,8 +8,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Transform } from 'class-transformer';
 import { JoinColumn, RelationId } from 'typeorm';
 
-const PNG_FILE_REGEX = /^[\w-]+\.(png)$/i;
-const PNG_FILE_MESSAGE = 'File must be a valid PNG format and contain only letters, numbers, and hyphens';
+const PNG_FILE_REGEX = /\.(png)$/;
+const PNG_FILE_MESSAGE = 'File must be a valid camshot format png';
 
 @MultiORMEntity('camshots', { mikroOrmRepository: () => MikroOrmCamshotRepository })
 export class Camshot extends TenantOrganizationBaseEntity implements ICamshot {
