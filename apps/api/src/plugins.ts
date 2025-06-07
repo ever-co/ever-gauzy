@@ -16,6 +16,7 @@ import { KnowledgeBasePlugin } from '@gauzy/plugin-knowledge-base';
 import { ProductReviewsPlugin } from '@gauzy/plugin-product-reviews';
 import { VideosPlugin } from '@gauzy/plugin-videos';
 import { RegistryPlugin } from '@gauzy/plugin-registry';
+import { CamshotPlugin } from '@gauzy/plugin-camshot';
 
 import { SentryTracing as SentryPlugin } from './sentry';
 import { PosthogAnalytics as PosthogPlugin } from './posthog';
@@ -70,5 +71,7 @@ export const plugins = [
 	// Indicates the inclusion or intention to use the VideosPlugin in the codebase.
 	VideosPlugin,
 	// Indicates the inclusion or intention to use the RegistryPlugin in the codebase.
-	RegistryPlugin
+	RegistryPlugin,
+	// Indicates the inclusion or intention to use the CamshotPlugin in the codebase.
+	CamshotPlugin
 ];
