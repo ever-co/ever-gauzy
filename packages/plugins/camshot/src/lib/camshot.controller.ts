@@ -201,7 +201,7 @@ export class CamshotController {
 		forbidNonWhitelisted: true
 	})
 	@Delete(':id')
-	public async delete(@Param('id', UUIDValidationPipe) id: ID, @Query() options?: DeleteCamshotDTO): Promise<void> {
+	public async delete(@Param('id', UUIDValidationPipe) id: ID, @Query() options: DeleteCamshotDTO): Promise<void> {
 		await this.commandBus.execute(new DeleteCamshotCommand(id, options));
 	}
 }
