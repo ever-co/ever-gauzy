@@ -20,9 +20,9 @@ export class FileDTO implements UploadedFile {
 	@IsNotEmpty({ message: 'File key must not be empty' })
 	@IsString({ message: 'File key must be a string' })
 	@MaxLength(255, { message: 'File key must not exceed 255 characters' })
-	@Matches(/^[\w\s-]+\.png$/, {
+	@Matches(/\.(png)$/, {
 		message:
-			'File must be a valid camshot format png and contain only letters, numbers, spaces, hyphens, or underscores'
+			'File must be a valid camshot format png'
 	})
 	key: string;
 
