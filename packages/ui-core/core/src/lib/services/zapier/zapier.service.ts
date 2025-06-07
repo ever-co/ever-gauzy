@@ -82,7 +82,7 @@ export class ZapierService {
 	 * Exchange authorization code for tokens
 	 */
 	exchangeCodeForToken(body: {
-		code: string;
+		code?: string;
 		client_id: string;
 		client_secret: string;
 		redirect_uri: string;

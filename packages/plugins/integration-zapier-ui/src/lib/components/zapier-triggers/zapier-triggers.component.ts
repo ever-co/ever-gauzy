@@ -44,7 +44,6 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 						throw new Error('Missing client credentials');
 					}
 					return this._zapierService.exchangeCodeForToken({
-						code: integrationId,
 						client_id: config.clientId,
 						client_secret: config.clientSecret,
 						redirect_uri: config.redirectUri,
