@@ -64,7 +64,7 @@ export class Camshot extends TenantOrganizationBaseEntity implements ICamshot {
 	 */
 	@IsOptional()
 	@IsDateString({}, { message: 'Recorded date must be a valid ISO 8601 date string' })
-	@ValidateIf((o) => o.recordedAt && o.recordedAt <= new Date())
+	@ValidateIf((o) => o.recordedAt && new Date(o.recordedAt).getTime() > Date.now())
 	@ApiPropertyOptional({ type: () => 'timestamptz', description: 'Date when the camshot was recorded' })
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
