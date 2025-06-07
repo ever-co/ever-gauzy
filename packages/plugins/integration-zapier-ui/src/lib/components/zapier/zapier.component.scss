@@ -1,5 +1,5 @@
 .card-scroll {
-  height: calc(100vh - 13.5rem);
+  height: calc(100vh - 20rem);
   overflow-y: auto;
 }
 
@@ -35,4 +35,15 @@
 
 .endpoint-actions {
   margin-left: 1rem;
+}
+
+:host {
+  ::ng-deep {
+    .nb-route-tabset {
+      .tab-content {
+        height: calc(100vh - 25rem);
+        overflow-y: auto;
+      }
+    }
+  }
 }

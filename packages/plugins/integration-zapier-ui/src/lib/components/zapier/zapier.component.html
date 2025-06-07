@@ -1,72 +1,19 @@
 <nb-card class="card-scroll">
-	<nb-card-header class="d-flex">
-		<ngx-back-navigation></ngx-back-navigation>
-		<h5>{{ 'INTEGRATIONS.ZAPIER.TITLE' | translate }}</h5>
+	<nb-card-header>
+		<ngx-back-navigation class="float-left" (click)="navigateToIntegrations()"></ngx-back-navigation>
+		<nb-actions class="float-left pt-2" size="small">
+			<nb-action class="toggle-layout p-0">
+				<h5>{{ 'MENU.ZAPIER' | translate }}</h5>
+				<nb-icon icon="settings-2-outline" [nbContextMenu]="menus"></nb-icon>
+			</nb-action>
+		</nb-actions>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="row">
-			<div class="col-xl-6 col-12">
-				<nb-card>
-					<nb-card-header>
-						<h6>{{ 'INTEGRATIONS.ZAPIER.TRIGGERS.TITLE' | translate }}</h6>
-					</nb-card-header>
-					<nb-card-body>
-						<div class="endpoints-list">
-							<div *ngFor="let trigger of zapierStoreService.triggers$ | async" class="endpoint-item">
-								<div class="endpoint-info">
-									<h6>{{ trigger.name }}</h6>
-									<p>{{ trigger.description }}</p>
-								</div>
-								<div class="endpoint-actions">
-									<button
-										nbButton
-										status="primary"
-										size="small"
-										outline
-										(click)="openEndpointDetails(trigger)"
-									>
-										{{ 'BUTTONS.VIEW' | translate }}
-									</button>
-								</div>
-							</div>
-							<div *ngIf="(zapierStoreService.triggers$ | async)?.length === 0" class="no-data">
-								{{ 'INTEGRATIONS.ZAPIER.NO_TRIGGERS' | translate }}
-							</div>
-						</div>
-					</nb-card-body>
-				</nb-card>
-			</div>
-			<div class="col-xl-6 col-12">
-				<nb-card>
-					<nb-card-header>
-						<h6>{{ 'INTEGRATIONS.ZAPIER.ACTIONS.TITLE' | translate }}</h6>
-					</nb-card-header>
-					<nb-card-body>
-						<div class="endpoints-list">
-							<div *ngFor="let action of zapierStoreService.actions$ | async" class="endpoint-item">
-								<div class="endpoint-info">
-									<h6>{{ action.name }}</h6>
-									<p>{{ action.description }}</p>
-								</div>
-								<div class="endpoint-actions">
-									<button
-										nbButton
-										status="primary"
-										size="small"
-										outline
-										(click)="openEndpointDetails(action)"
-									>
-										{{ 'BUTTONS.VIEW' | translate }}
-									</button>
-								</div>
-							</div>
-							<div *ngIf="(zapierStoreService.actions$ | async)?.length === 0" class="no-data">
-								{{ 'INTEGRATIONS.ZAPIER.NO_ACTIONS' | translate }}
-							</div>
-						</div>
-					</nb-card-body>
-				</nb-card>
-			</div>
+		<div *ngIf="loading" class="d-flex justify-content-center">
+			<nb-spinner></nb-spinner>
+		</div>
+		<div *ngIf="!loading">
+			<nb-route-tabset [tabs]="tabs" fullWidth></nb-route-tabset>
 		</div>
 	</nb-card-body>
 </nb-card>
