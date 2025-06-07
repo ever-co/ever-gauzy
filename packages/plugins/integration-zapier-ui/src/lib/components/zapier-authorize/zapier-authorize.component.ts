@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { tap, catchError, finalize } from 'rxjs/operators';
+import { tap, catchError, finalize, switchMap } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService, IntegrationsService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -38,8 +38,12 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 
 	ngOnInit() {
 		this._initializeForm();
-		this._checkExistingIntegration();
-		this._loadOrganization();
+		this._loadOrganization()
+			.pipe(
+				switchMap(() => this._checkExistingIntegration()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._loadOAuthConfig();
 	}
 
@@ -51,14 +55,11 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 	}
 
 	private _loadOrganization() {
-		this._store.selectedOrganization$
-			.pipe(
-				tap((organization) => {
-					this.organization = organization;
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		return this._store.selectedOrganization$.pipe(
+			tap((organization) => {
+				this.organization = organization;
+			})
+		);
 	}
 
 	private _loadOAuthConfig() {
@@ -78,12 +79,12 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 	}
 
 	private _checkExistingIntegration() {
-		if (!this.organization) return;
+		if (!this.organization) return EMPTY;
 
 		this.loading = true;
 		const { id: organizationId, tenantId } = this.organization;
 
-		this._integrationsService
+		return this._integrationsService
 			.getIntegrationByOptions({
 				name: IntegrationEnum.ZAPIER,
 				organizationId,
@@ -101,10 +102,8 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 				}),
 				finalize(() => {
 					this.loading = false;
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+				})
+			);
 	}
 
 	/**
@@ -145,7 +144,6 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 			.initializeIntegration(credentials)
 			.pipe(
 				tap((response: { authorizationUrl: string }) => {
-					// Redirect to Zapier authorization page
 					window.location.href = response.authorizationUrl;
 				}),
 				catchError((error) => {
