@@ -16,10 +16,10 @@ import * as Jimp from 'jimp';
 @Injectable()
 export class CamshotService extends TenantAwareCrudService<Camshot> {
 	constructor(
-		public readonly typeOrmVideoRepository: TypeOrmCamshotRepository,
-		public readonly mikroOrmVideoRepository: MikroOrmCamshotRepository
+		public readonly typeOrmCamshotRepository: TypeOrmCamshotRepository,
+		public readonly mikroOrmCamshotRepository: MikroOrmCamshotRepository
 	) {
-		super(typeOrmVideoRepository, mikroOrmVideoRepository);
+		super(typeOrmCamshotRepository, mikroOrmCamshotRepository);
 	}
 
 	/**
