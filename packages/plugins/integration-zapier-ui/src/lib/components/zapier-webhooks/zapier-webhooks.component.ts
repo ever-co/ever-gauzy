@@ -1,22 +1,23 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { tap, catchError, finalize } from 'rxjs/operators';
+import { tap, catchError, finalize, switchMap } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { IZapierWebhook } from '@gauzy/contracts';
+import { IZapierWebhook, IZapierAccessTokens, IZapierAuthConfig } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-zapier-webhooks',
 	templateUrl: './zapier-webhooks.component.html',
+	styleUrls: ['./zapier-webhooks.component.scss'],
 	standalone: false
 })
 export class ZapierWebhooksComponent extends TranslationBaseComponent implements OnInit {
-	public webhooks: IZapierWebhook[] = [];
 	public loading = false;
+	public webhooks: IZapierWebhook[] = [];
 
 	constructor(
 		private readonly _route: ActivatedRoute,
@@ -36,8 +37,26 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 		const integrationId = this._route.snapshot.params['id'];
 
 		this._zapierService
-			.getWebhooks(integrationId)
+			.getOAuthConfig()
 			.pipe(
+				switchMap((config: IZapierAuthConfig) => {
+					if (!config.clientId || !config.clientSecret) {
+						throw new Error('Missing client credentials');
+					}
+					return this._zapierService.exchangeCodeForToken({
+						code: integrationId,
+						client_id: config.clientId,
+						client_secret: config.clientSecret,
+						redirect_uri: config.redirectUri,
+						grant_type: 'authorization_code'
+					});
+				}),
+				switchMap((tokens: IZapierAccessTokens) => {
+					if (tokens && tokens.access_token) {
+						return this._zapierService.getWebhooks(tokens.access_token);
+					}
+					throw new Error('No access token available');
+				}),
 				tap((webhooks: IZapierWebhook[]) => {
 					this.webhooks = webhooks;
 				}),
@@ -46,7 +65,7 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.LOAD_WEBHOOKS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
-					console.error('Error loading Zapier webhooks:', error);
+					console.error('Error loading webhooks:', error);
 					return EMPTY;
 				}),
 				finalize(() => {
@@ -57,18 +76,33 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 			.subscribe();
 	}
 
-	/**
-	 * Delete webhook
-	 */
-	deleteWebhook(webhook: IZapierWebhook) {
+	deleteWebhook(webhookId: string) {
 		const integrationId = this._route.snapshot.params['id'];
 
 		this._zapierService
-			.deleteWebhook(webhook.id, integrationId)
+			.getOAuthConfig()
 			.pipe(
+				switchMap((config: IZapierAuthConfig) => {
+					if (!config.clientId || !config.clientSecret) {
+						throw new Error('Missing client credentials');
+					}
+					return this._zapierService.exchangeCodeForToken({
+						code: integrationId,
+						client_id: config.clientId,
+						client_secret: config.clientSecret,
+						redirect_uri: config.redirectUri,
+						grant_type: 'authorization_code'
+					});
+				}),
+				switchMap((tokens: IZapierAccessTokens) => {
+					if (tokens && tokens.access_token) {
+						return this._zapierService.deleteWebhook(webhookId, tokens.access_token);
+					}
+					throw new Error('No access token available');
+				}),
 				tap(() => {
 					this._toastrService.success(
-						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.SUCCESS.WEBHOOK_DELETED'),
+						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.SUCCESS.DELETE_WEBHOOK'),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 					this._loadWebhooks();
@@ -78,7 +112,7 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.DELETE_WEBHOOK'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
-					console.error('Error deleting Zapier webhook:', error);
+					console.error('Error deleting webhook:', error);
 					return EMPTY;
 				}),
 				untilDestroyed(this)
