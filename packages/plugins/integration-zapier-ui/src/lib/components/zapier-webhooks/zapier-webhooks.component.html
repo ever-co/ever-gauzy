@@ -14,7 +14,7 @@
 						<p>{{ webhook.targetUrl }}</p>
 					</div>
 					<div class="webhook-actions">
-						<button nbButton status="danger" size="small" outline (click)="deleteWebhook(webhook)">
+						<button nbButton status="danger" size="small" outline (click)="deleteWebhook(webhook.id)">
 							{{ 'BUTTONS.DELETE' | translate }}
 						</button>
 					</div>

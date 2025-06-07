@@ -78,4 +78,4 @@ import { ZapierWebhooksComponent } from './components/zapier-webhooks/zapier-web
 		ZapierWebhooksComponent
 	]
 })
-export class IntegrationZapierUIModule {}
+export class IntegrationZapierUiModule {}
