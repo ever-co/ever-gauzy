@@ -50,6 +50,7 @@
 			"../../../dist/packages/plugins/videos",
 			"../../../dist/packages/plugins/registry",
 			"../../../dist/packages/plugins/posthog",
+			"../../../dist/packages/plugins/camshot",
 			"../../../dist/packages/ui-config",
 			"../../../dist/packages/utils"
 		]
@@ -181,6 +182,7 @@
 		"@gauzy/plugin-videos": "file:../../../dist/packages/plugins/videos",
 		"@gauzy/plugin-registry": "file:../../../dist/packages/plugins/registry",
 		"@gauzy/plugin-posthog": "file:../../../dist/packages/plugins/posthog",
+		"@gauzy/plugin-camshot": "file:../../../dist/packages/plugins/camshot",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@gauzy/utils": "file:../../../dist/packages/utils",
 		"@nestjs/platform-express": "^11.1.0",
