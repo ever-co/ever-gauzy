@@ -14,5 +14,5 @@ export interface ICamshot extends ICamshotContract,
 	thumbKey?: string;
 	timeSlotId?: ID;
 	timeSlot?: ITimeSlot;
-	storageProvider?: FileStorageProviderEnum;
+	storageProvider: FileStorageProviderEnum;
 }
