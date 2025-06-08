@@ -1,3 +1,17 @@
 ::ng-deep .nb-theme-default nb-card-header {
   	display: none !important;
 }
+
+:host(.login-small-height) {
+  ::ng-deep .login-wrapper {
+    padding-top: 20px;
+  }
+
+  ::ng-deep .login-container {
+	 top: -30px;
+  }
+
+  ::ng-deep nb-card-body {
+	overflow: hidden;
+  }
+}

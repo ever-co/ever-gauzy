@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, NgZone, OnInit, Renderer2 } from '@angular/core';
+import { AfterViewInit, Component, NgZone, OnInit, Renderer2, HostBinding } from '@angular/core';
 import { NbToastrService } from '@nebular/theme';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,6 +21,8 @@ import { AppService } from './app.service';
 	standalone: false
 })
 export class AppComponent implements OnInit, AfterViewInit {
+	@HostBinding('class.login-small-height') isLoginPage = false;
+
 	constructor(
 		private electronService: ElectronService,
 		private appService: AppService,
@@ -37,6 +39,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 	}
 
 	ngOnInit(): void {
+		this.loginStyleOverride();
+		this.checkAuthValidation();
 		const nebularLinkMedia = document.querySelector('link[media="print"]');
 		if (nebularLinkMedia) this._renderer.setAttribute(nebularLinkMedia, 'media', 'all');
 
@@ -140,6 +144,21 @@ export class AppComponent implements OnInit, AfterViewInit {
 			return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
 		} catch (e) {
 			return null;
+		}
+	}
+
+	loginStyleOverride() {
+		const hashPage = location.hash;
+		this.isLoginPage = hashPage.includes('auth');
+	}
+
+	async checkAuthValidation() {
+		const hashPage = location.hash;
+		if (hashPage.includes('auth')) {
+			const mainAuth = await this.electronService.ipcRenderer.invoke('CHECK_MAIN_AUTH');
+			if (!mainAuth?.token) {
+				await firstValueFrom(this.authStrategy.logout());
+			}
 		}
 	}
 }

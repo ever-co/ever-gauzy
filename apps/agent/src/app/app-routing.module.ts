@@ -41,7 +41,7 @@ const routes: Routes = [
 	},
 	{
 		path: '',
-		component: SetupComponent
+		component: ServerDashboardComponent
 	},
 	{
 		path: 'about',

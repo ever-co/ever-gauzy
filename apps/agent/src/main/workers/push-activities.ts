@@ -1,11 +1,13 @@
 import { KbMouseActivityService, KbMouseActivityTO, TTimeSlot } from '@gauzy/desktop-lib';
 import { KbMouseActivityPool, TKbMouseActivity, TMouseEvents } from '@gauzy/desktop-activity';
 import { ApiService, TResponseTimeSlot } from '../api';
-import { getAuthConfig } from '../util';
+import { getAuthConfig, TAuthConfig, getInitialConfig, TInitialConfig } from '../util';
 import * as moment from 'moment';
 import { AgentLogger } from '../agent-logger';
 import { environment } from '../../environments/environment';
 import * as fs from 'node:fs';
+import MainEvent from '../events/events';
+import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
 
 class PushActivities {
 	static instance: PushActivities;
@@ -13,10 +15,13 @@ class PushActivities {
 	private kbMouseActivityService: KbMouseActivityService;
 	private apiService = ApiService.getInstance();
 	private agentLogger: AgentLogger;
+	private mainEvent: MainEvent;
+
 	constructor() {
 		this.kbMouseActivityService = new KbMouseActivityService();
 		this.getKbMousePoolModule();
 		this.agentLogger = AgentLogger.getInstance();
+		this.mainEvent = MainEvent.getInstance();
 	}
 
 	static getInstance(): PushActivities {
@@ -72,6 +77,9 @@ class PushActivities {
 	async saveTimeSlot(activities: KbMouseActivityTO): Promise<Partial<TResponseTimeSlot>> {
 		try {
 			const params = this.timeSlotParams(activities);
+			if (!params) {
+				return;
+			}
 			this.agentLogger.info(`Preparing send activity recordedAt ${params.recordedAt} to service`);
 			const resp = await this.apiService.saveTimeSlot(params);
 			console.log(`Time slot saved for activity ${activities.id}:`, resp?.id);
@@ -95,6 +103,10 @@ class PushActivities {
 	async saveImage(recordedAt: string, image: string[], timeSlotId?: string) {
 		try {
 			const auth = getAuthConfig();
+			const isAuthenticated = this.handleUserAuth(auth);
+			if (!isAuthenticated) {
+				return;
+			}
 			const pathTemp = image && Array.isArray(image) && image.length && image[0];
 			this.agentLogger.info(`image temporary path ${pathTemp}`);
 			if (!pathTemp) {
@@ -177,8 +189,37 @@ class PushActivities {
 		];
 	}
 
+	checkApplicationState(): boolean {
+		const initialConfig = getInitialConfig();
+		if (!initialConfig?.isSetup) {
+			return false;
+		}
+		return true;
+	}
+
+	handleUserAuth(auth: TAuthConfig): boolean {
+		if (!this.checkApplicationState()) {
+			this.mainEvent.emit(MAIN_EVENT, {
+				type: MAIN_EVENT_TYPE.SETUP_EVENT
+			});
+			return false;
+		}
+		if (!auth) {
+			this.mainEvent.emit(MAIN_EVENT, {
+				type: MAIN_EVENT_TYPE.LOGOUT_EVENT
+			});
+
+			return false;
+		}
+		return true;
+	}
+
 	timeSlotParams(activities: KbMouseActivityTO): TTimeSlot {
 		const auth = getAuthConfig();
+		const isAuthenticated = this.handleUserAuth(auth);
+		if (!isAuthenticated) {
+			return;
+		}
 		return {
 			tenantId: auth.user.employee.tenantId,
 			organizationId: auth.user.employee.organizationId,
@@ -208,7 +249,7 @@ class PushActivities {
 					if (timeSlot?.id) {
 						await this.saveImage(
 							moment(activity.timeStart).toISOString(),
-							typeof activity.screenshots === 'string' 
+							typeof activity.screenshots === 'string'
 								? (() => {
 									try {
 										return JSON.parse(activity.screenshots);
@@ -220,8 +261,8 @@ class PushActivities {
 								: activity.screenshots || [],
 							timeSlot?.id
 						);
+						await this.removeCurrentActivity(activity.id);
 					}
-					await this.removeCurrentActivity(activity.id);
 					return true;
 				} catch (error) {
 					console.error(`Failed to upload activity ${activity.id}`, error);
