@@ -21,7 +21,6 @@ export class CamshotSubscriber extends BaseEntityEventSubscriber<Camshot> {
 		const missingFields = [];
 		if (!entity.storageProvider) missingFields.push('storageProvider');
 		if (!entity.fileKey) missingFields.push('fileKey');
-		if (!entity.thumbKey) missingFields.push('thumbKey');
 		return { valid: missingFields.length === 0, missingFields };
 	}
 
