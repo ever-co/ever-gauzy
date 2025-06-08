@@ -1,5 +1,4 @@
-import { ICommandHandler } from "@nestjs/cqrs";
-import { CommandHandler } from "@nestjs/cqrs";
+import { ICommandHandler, CommandHandler } from "@nestjs/cqrs";
 import { CamshotService } from "../../services/camshot.service";
 import { DeleteCamshotCommand } from "../delete-camshot.command";
 import { NotFoundException } from "@nestjs/common";
