@@ -1,7 +1,7 @@
 import { KbMouseActivityService, KbMouseActivityTO, TTimeSlot } from '@gauzy/desktop-lib';
 import { KbMouseActivityPool, TKbMouseActivity, TMouseEvents } from '@gauzy/desktop-activity';
 import { ApiService, TResponseTimeSlot } from '../api';
-import { getAuthConfig, TAuthConfig, getInitialConfig, TInitialConfig } from '../util';
+import { getAuthConfig, TAuthConfig, getInitialConfig } from '../util';
 import * as moment from 'moment';
 import { AgentLogger } from '../agent-logger';
 import { environment } from '../../environments/environment';
