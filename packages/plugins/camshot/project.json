@@ -1,5 +1,5 @@
 {
-	"name": "camshot",
+	"name": "plugin-camshot",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/plugins/camshot/src",
 	"projectType": "library",
@@ -16,13 +16,17 @@
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": ["{options.outputPath}"],
+			"outputs": [
+				"{options.outputPath}"
+			],
 			"options": {
 				"outputPath": "dist/packages/plugins/camshot",
 				"tsConfig": "packages/plugins/camshot/tsconfig.lib.json",
 				"packageJson": "packages/plugins/camshot/package.json",
 				"main": "packages/plugins/camshot/src/index.ts",
-				"assets": ["packages/plugins/camshot/*.md"]
+				"assets": [
+					"packages/plugins/camshot/*.md"
+				]
 			}
 		},
 		"nx-release-publish": {
