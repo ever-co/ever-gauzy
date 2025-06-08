@@ -91,8 +91,8 @@ export class Camshot extends TenantOrganizationBaseEntity implements ICamshot {
 	thumbUrl?: string;
 
 	/**
-	 * Size of the video file in bytes.
-	 * Optional with a maximum size limit of 10GB (10737418240 bytes).
+	 * Size of the camshot file in bytes.
+	 * Optional with a maximum size limit of 5MB (5242880 bytes).
 	 */
 	@IsOptional()
 	@IsNumber({}, { message: 'Size must be a number' })
