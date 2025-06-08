@@ -80,7 +80,7 @@ export class CamshotController {
 		description: 'This API Endpoint allows uploading the camshot file along with related metadata.'
 	})
 	@ApiResponse({
-		status: HttpStatus.OK,
+		status: HttpStatus.CREATED,
 		description: 'camshot successfully.',
 		type: Camshot
 	})
