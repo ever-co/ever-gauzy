@@ -81,7 +81,7 @@ export class CamshotController {
 	})
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'camshot successfully.',
+		description: 'Camshot created successfully.',
 		type: Camshot
 	})
 	@ApiResponse({
