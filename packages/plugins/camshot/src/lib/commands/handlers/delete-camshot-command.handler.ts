@@ -15,7 +15,7 @@ export class DeleteCamshotCommandHandler implements ICommandHandler<DeleteCamsho
 	 *
 	 * @param command - The `DeleteCamshotCommand` containing the camshot ID and additional options for deletion.
 	 *
-	 * @returns A promise resolving to a `DeleteResult`, which includes metadata about the deletion operation.
+	 * @returns A promise that resolves when the camshot is successfully deleted.
 	 *
 	 * @throws {NotFoundException} If the camshot with the specified ID does not exist.
 	 */
