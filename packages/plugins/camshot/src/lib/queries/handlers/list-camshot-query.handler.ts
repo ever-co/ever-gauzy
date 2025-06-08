@@ -17,7 +17,7 @@ export class ListCamshotQueryHandler implements IQueryHandler<ListCamshotQuery> 
 	 * @returns Promise<IPagination<ICamshot>> A paginated list of camshots
 	 */
 	public async execute(query: ListCamshotQuery): Promise<IPagination<ICamshot>> {
-		const { params = {} } = query || {};
+		const { params = {} } = query;
 		return this.camshotService.findAll(params);
 	}
 }

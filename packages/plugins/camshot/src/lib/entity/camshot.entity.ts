@@ -56,7 +56,7 @@ export class Camshot extends TenantOrganizationBaseEntity implements ICamshot {
 	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: FileStorageProviderEnum })
-	storageProvider?: FileStorageProviderEnum;
+	storageProvider: FileStorageProviderEnum;
 
 	/**
 	 * Date when the camshot was recorded.
