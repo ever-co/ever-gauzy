@@ -17,7 +17,7 @@ export class GetCamshotCountQueryHandler implements IQueryHandler<GetCamshotCoun
 	/**
 	 * Handles the `GetCamshotCountQuery` to retrieve the count of camshot entities.
 	 *
-	 * @param query - The `GetCamshotCountQuery` containing the ID of the camshot to be fetched and optional query options.
+	 * @param query - The `GetCamshotCountQuery` containing the filter options for counting camshot entities.
 	 *
 	 * @returns A promise resolving to the count of camshot entities (`number`).
 	 *
