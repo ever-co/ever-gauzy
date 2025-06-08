@@ -9,7 +9,7 @@ import { Camshot } from './entity/camshot.entity';
 	entities: [Camshot],
 })
 export class CamshotPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
-	// We disable by default additional logging for each event to avoid cluttering the logs
+	// We enable by default additional logging for each event
 	private logEnabled = true;
 
 	/**
