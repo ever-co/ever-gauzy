@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { FileStorage, tempFile, TenantAwareCrudService } from '@gauzy/core';
 import { Camshot } from '../entity/camshot.entity';
 import { TypeOrmCamshotRepository } from '../repositories/type-orm-camshot.repository';
@@ -15,6 +15,7 @@ import * as Jimp from 'jimp';
 
 @Injectable()
 export class CamshotService extends TenantAwareCrudService<Camshot> {
+	private readonly logger = new Logger(CamshotService.name);
 	constructor(
 		public readonly typeOrmCamshotRepository: TypeOrmCamshotRepository,
 		public readonly mikroOrmCamshotRepository: MikroOrmCamshotRepository
@@ -86,14 +87,14 @@ export class CamshotService extends TenantAwareCrudService<Camshot> {
 			// Upload the thumbnail data to the file storage provider
 			return provider.putFile(data, fullPath);
 		} catch (error) {
-			console.error('Error creating thumbnail:', error);
+			this.logger.error('Error creating thumbnail:', error);
 			throw error;
 		} finally {
 			// Always remove the temporary input file
 			try {
 				await fs.promises.unlink(inputFile);
 			} catch (unlinkError) {
-				console.error('Error while unlinking temp file:', unlinkError);
+				this.logger.error('Error while unlinking temp file:', unlinkError);
 			}
 		}
 	}
