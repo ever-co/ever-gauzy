@@ -11,10 +11,10 @@ export class CamshotFactory {
 	}
 
 	private static common(input: CreateCamshotDTO) {
-		const tenantId = input.tenantId || RequestContext.currentTenantId() || undefined;
-		const organizationId = input.organizationId || undefined;
-		const uploadedById = input.uploadedById || RequestContext.currentEmployeeId() || null;
-		const userId = RequestContext.currentUserId() || undefined;
+		const tenantId = input.tenantId || RequestContext.currentTenantId();
+		const organizationId = input.organizationId;
+		const uploadedById = input.uploadedById || RequestContext.currentEmployeeId();
+		const userId = RequestContext.currentUserId();
 
 		return {
 			tenantId,
