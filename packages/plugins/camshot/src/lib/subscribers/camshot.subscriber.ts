@@ -49,8 +49,8 @@ export class CamshotSubscriber extends BaseEntityEventSubscriber<Camshot> {
 				provider.url(entity.fileKey as string),
 				provider.url(entity.thumbKey as string)
 			]);
-			entity.fullUrl = fullUrl ?? undefined;
-			entity.thumbUrl = thumbUrl ?? undefined;
+			entity.fullUrl = fullUrl;
+			entity.thumbUrl = thumbUrl;
 			this.logger.log(`Generated URL for Camshot entity with ID ${entity.id ?? 'N/A'}`);
 		} catch (error) {
 			this.logError(entity, 'beforeInsert', error);
