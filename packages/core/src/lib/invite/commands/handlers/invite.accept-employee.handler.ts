@@ -165,7 +165,9 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 			tenantId,
 			startedWorkOn: actionDate || null,
 			isActive: true,
-			isArchived: false
+			isArchived: false,
+			// By default, the weekly limit is set to 40 hours to avoid additional manual tracking.
+			reWeeklyLimit: 40
 		});
 
 		return await this.typeOrmEmployeeRepository.save(employee);
