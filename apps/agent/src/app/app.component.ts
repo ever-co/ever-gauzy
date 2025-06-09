@@ -155,9 +155,13 @@ export class AppComponent implements OnInit, AfterViewInit {
 	async checkAuthValidation() {
 		const hashPage = location.hash;
 		if (hashPage.includes('auth')) {
-			const mainAuth = await this.electronService.ipcRenderer.invoke('CHECK_MAIN_AUTH');
-			if (!mainAuth?.token) {
-				await firstValueFrom(this.authStrategy.logout());
+			try {
+				const mainAuth = await this.electronService.ipcRenderer.invoke('CHECK_MAIN_AUTH');
+				if (!mainAuth?.token) {
+					await firstValueFrom(this.authStrategy.logout());
+				}
+			} catch(error) {
+				console.error('Failed to check main auth:', error);
 			}
 		}
 	}

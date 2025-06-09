@@ -74,7 +74,7 @@ class PushActivities {
 		}
 	}
 
-	async saveTimeSlot(activities: KbMouseActivityTO): Promise<Partial<TResponseTimeSlot>> {
+	async saveTimeSlot(activities: KbMouseActivityTO): Promise<Partial<TResponseTimeSlot> | undefined> {
 		try {
 			const params = this.timeSlotParams(activities);
 			if (!params) {
@@ -214,7 +214,7 @@ class PushActivities {
 		return true;
 	}
 
-	timeSlotParams(activities: KbMouseActivityTO): TTimeSlot {
+	timeSlotParams(activities: KbMouseActivityTO): TTimeSlot | undefined {
 		const auth = getAuthConfig();
 		const isAuthenticated = this.handleUserAuth(auth);
 		if (!isAuthenticated) {
