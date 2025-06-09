@@ -31,7 +31,7 @@ export class Camshot extends TenantOrganizationBaseEntity implements ICamshot {
 	@IsNotEmpty({ message: 'File is required' })
 	@IsString({ message: 'File must be a string' })
 	@Matches(PNG_FILE_REGEX, { message: PNG_FILE_MESSAGE })
-	@ApiProperty({ type: () => String, description: 'Camshot file path or identifier' })
+	@ApiPropertyOptional({ type: () => String, description: 'Camshot file path or identifier' })
 	@MultiORMColumn()
 	fileKey: string;
 
@@ -42,7 +42,7 @@ export class Camshot extends TenantOrganizationBaseEntity implements ICamshot {
 	@IsOptional()
 	@IsString({ message: 'File must be a string' })
 	@Matches(PNG_FILE_REGEX, { message: PNG_FILE_MESSAGE })
-	@ApiProperty({ type: () => String, description: 'Camshot thumb file path or identifier' })
+	@ApiPropertyOptional({ type: () => String, description: 'Camshot thumb file path or identifier' })
 	@MultiORMColumn({ nullable: true })
 	thumbKey?: string;
 
@@ -53,7 +53,7 @@ export class Camshot extends TenantOrganizationBaseEntity implements ICamshot {
 	@IsOptional()
 	@IsEnum(FileStorageProviderEnum)
 	@Exclude({ toPlainOnly: true })
-	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
+	@ApiProperty({ type: () => String, enum: FileStorageProviderEnum })
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: FileStorageProviderEnum })
 	storageProvider: FileStorageProviderEnum;
@@ -82,7 +82,7 @@ export class Camshot extends TenantOrganizationBaseEntity implements ICamshot {
 	 */
 	@IsOptional()
 	@IsUrl({ protocols: ['http', 'https'], require_protocol: true }, { message: 'Full URL must be a valid HTTPS or HTTP URL' })
-	@ApiProperty({ type: () => String, description: 'Full URL to access the camshot' })
+	@ApiPropertyOptional({ type: () => String, description: 'Full URL to access the camshot' })
 	@MultiORMColumn({ nullable: true })
 	fullUrl?: string;
 
@@ -92,7 +92,7 @@ export class Camshot extends TenantOrganizationBaseEntity implements ICamshot {
 	 */
 	@IsOptional()
 	@IsUrl({ protocols: ['http', 'https'], require_protocol: true }, { message: 'Thumb URL must be a valid HTTPS or HTTP URL' })
-	@ApiProperty({ type: () => String, description: 'Thumb URL to access the camshot' })
+	@ApiPropertyOptional({ type: () => String, description: 'Thumb URL to access the camshot' })
 	@MultiORMColumn({ nullable: true })
 	thumbUrl?: string;
 
@@ -105,7 +105,7 @@ export class Camshot extends TenantOrganizationBaseEntity implements ICamshot {
 	@Min(0, { message: 'Size must be greater than or equal to 0' })
 	@Max(5242880, { message: 'Size cannot exceed 5MB.' })
 	@Transform(({ value }) => Number.parseFloat(value), { toClassOnly: true })
-	@ApiProperty({ type: () => Number, description: 'Size of the camshot file in bytes' })
+	@ApiPropertyOptional({ type: () => Number, description: 'Size of the camshot file in bytes' })
 	@MultiORMColumn({ nullable: true })
 	size?: number;
 
