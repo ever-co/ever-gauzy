@@ -1,18 +1,41 @@
+import { ICamshot, ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import {
+	BaseQueryDTO,
+	FileStorage,
+	FileStorageFactory,
+	LazyFileInterceptor,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	UploadedFileStorage,
+	UseValidationPipe,
+	UUIDValidationPipe
+} from '@gauzy/core';
+import {
+	BadRequestException,
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpStatus,
+	Param,
+	Post,
+	Query,
+	UseGuards,
+	UseInterceptors
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { BadRequestException, Body, Controller, Get, HttpStatus, Query, UseInterceptors, UseGuards, Post, Param, Delete } from '@nestjs/common';
-import { Camshot } from './entity/camshot.entity';
-import { BaseQueryDTO, FileStorage, FileStorageFactory, LazyFileInterceptor, TenantPermissionGuard, PermissionGuard, UploadedFileStorage, UseValidationPipe, Permissions, UUIDValidationPipe } from '@gauzy/core';
-import { CreateCamshotDTO } from './dtos/create-camshot.dto';
-import { FileDTO } from './dtos/file.dto';
-import { ICamshot, ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CreateCamshotCommand } from './commands/create-camshot.command';
-import { ListCamshotQuery } from './queries';
-import { CountCamshotDTO } from './dtos/count-camshot.dto';
-import { GetCamshotCountQuery } from './queries/get-camshot-count.query';
-import { DeleteCamshotCommand } from './commands/delete-camshot.command';
-import { DeleteCamshotDTO } from './dtos/delete-camshot.dto';
 import { FindOneOptions } from 'typeorm';
+import { CreateCamshotCommand } from './commands/create-camshot.command';
+import { DeleteCamshotCommand } from './commands/delete-camshot.command';
+import { CountCamshotDTO } from './dtos/count-camshot.dto';
+import { CreateCamshotDTO } from './dtos/create-camshot.dto';
+import { DeleteCamshotDTO } from './dtos/delete-camshot.dto';
+import { FileDTO } from './dtos/file.dto';
+import { Camshot } from './entity/camshot.entity';
+import { ListCamshotQuery } from './queries';
+import { GetCamshotCountQuery } from './queries/get-camshot-count.query';
 import { GetCamshotQuery } from './queries/get-camshot.query';
 
 @ApiTags('Camshot Plugin')
@@ -20,7 +43,7 @@ import { GetCamshotQuery } from './queries/get-camshot.query';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller('/plugins/camshots')
 export class CamshotController {
-	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) { }
+	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
 	/**
 	 * Get a paginated list of camshots.
@@ -41,11 +64,12 @@ export class CamshotController {
 		name: 'params',
 		type: BaseQueryDTO<ICamshot>,
 		required: false,
-		description: 'Pagination and filtering parameters for camshots. Supports filtering by tenant, organization, and other camshot properties.'
+		description:
+			'Pagination and filtering parameters for camshots. Supports filtering by tenant, organization, and other camshot properties.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Camshots successfully fetched.',
+		description: 'Camshots successfully fetched.'
 	})
 	@ApiResponse({
 		status: HttpStatus.UNAUTHORIZED,
@@ -54,11 +78,6 @@ export class CamshotController {
 	@ApiResponse({
 		status: HttpStatus.FORBIDDEN,
 		description: 'User does not have permission to list camshots.'
-	})
-	@UseValidationPipe({
-		whitelist: true,
-		transform: true,
-		forbidNonWhitelisted: true
 	})
 	@Get()
 	public async list(@Query() params: BaseQueryDTO<ICamshot>): Promise<IPagination<ICamshot>> {

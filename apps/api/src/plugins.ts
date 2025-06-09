@@ -70,8 +70,8 @@ export const plugins = [
 	ProductReviewsPlugin,
 	// Indicates the inclusion or intention to use the VideosPlugin in the codebase.
 	VideosPlugin,
-	// Indicates the inclusion or intention to use the RegistryPlugin in the codebase.
-	RegistryPlugin,
 	// Indicates the inclusion or intention to use the CamshotPlugin in the codebase.
-	CamshotPlugin
+	CamshotPlugin,
+	// Indicates the inclusion or intention to use the RegistryPlugin in the codebase.
+	RegistryPlugin
 ];
