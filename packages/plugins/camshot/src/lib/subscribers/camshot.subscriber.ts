@@ -21,6 +21,7 @@ export class CamshotSubscriber extends BaseEntityEventSubscriber<Camshot> {
 		const missingFields = [];
 		if (!entity.storageProvider) missingFields.push('storageProvider');
 		if (!entity.fileKey) missingFields.push('fileKey');
+		if (!entity.thumbKey) missingFields.push('thumbKey');
 		return { valid: missingFields.length === 0, missingFields };
 	}
 
@@ -38,6 +39,10 @@ export class CamshotSubscriber extends BaseEntityEventSubscriber<Camshot> {
 
 	public override async beforeInsert(event: InsertEvent<Camshot>): Promise<void> {
 		const entity = event.entity;
+		if (!entity) {
+			this.logger.warn(`Attempted to insert a null/undefined Camshot entity in beforeInsert.`);
+			return;
+		}
 		const { valid, missingFields } = this.validateEntityFields(entity);
 		if (!valid) {
 			this.logWarnMissingFields(entity, 'beforeInsert', missingFields);
@@ -60,6 +65,7 @@ export class CamshotSubscriber extends BaseEntityEventSubscriber<Camshot> {
 	public override async afterRemove(event: RemoveEvent<Camshot>): Promise<void> {
 		const entity = event.entity;
 		if (!entity || !(entity instanceof Camshot)) {
+			this.logger.warn(`Attempted to remove a null/undefined or invalid Camshot entity in afterRemove.`);
 			return;
 		}
 		const { valid, missingFields } = this.validateEntityFields(entity);
