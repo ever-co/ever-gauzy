@@ -55,7 +55,7 @@ export class ZapierSettingsComponent extends TranslationBaseComponent implements
 				}),
 				catchError((error) => {
 					this._toastrService.error(
-						this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.LOAD_SETTINGS'),
+						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.LOAD_SETTINGS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					console.error('Error loading Zapier settings:', error);
@@ -74,7 +74,7 @@ export class ZapierSettingsComponent extends TranslationBaseComponent implements
 	saveSettings() {
 		if (this.form.invalid) {
 			this._toastrService.error(
-				this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.INVALID_FORM'),
+				this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.INVALID_FORM'),
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 			return;
@@ -87,13 +87,13 @@ export class ZapierSettingsComponent extends TranslationBaseComponent implements
 				tap((settings: IZapierIntegrationSettings) => {
 					this.settings = settings;
 					this._toastrService.success(
-						this.getTranslation('INTEGRATIONS.ZAPIER.SUCCESS.SETTINGS_SAVED'),
+						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.SUCCESS.SETTINGS_SAVED'),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),
 				catchError((error) => {
 					this._toastrService.error(
-						this.getTranslation('INTEGRATIONS.ZAPIER.ERRORS.SAVE_SETTINGS'),
+						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.SAVE_SETTINGS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					console.error('Error saving Zapier settings:', error);

@@ -1310,8 +1310,62 @@
 			"CLIENT_SECRET": "Segredo do Cliente",
 			"NEXT_STEP_INFO": "Após a autorização, você será redirecionado para o Zapier para completar a configuração da integração",
 			"ERRORS": {
-				"INVALID_FORM": "Por favor, preencha todos os campos obrigatórios",
+				"LOAD_SETTINGS": "Falha ao carregar configurações do Zapier",
+				"SAVE_SETTINGS": "Falha ao salvar configurações do Zapier",
+				"INVALID_FORM": "Por favor, preencha todos os campos obrigatórios corretamente",
+				"MISSING_CREDENTIALS": "Credenciais do cliente ausentes",
+				"NO_ACCESS_TOKEN": "Nenhum token de acesso disponível",
+				"LOAD_WEBHOOKS": "Falha ao carregar webhooks",
+				"DELETE_WEBHOOK": "Falha ao excluir webhook",
+				"LOAD_ACTIONS": "Falha ao carregar ações",
+				"LOAD_TRIGGERS": "Falha ao carregar gatilhos",
 				"START_AUTHORIZATION": "Por favor, inicie o processo de autorização"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Configurações do Zapier salvas com sucesso",
+				"DELETE_WEBHOOK": "Webhook excluído com sucesso"
+			},
+
+			"TAB": {
+				"TRIGGERS": "Gatilhos",
+				"ACTIONS": "Ações",
+				"WEBHOOKS": "Webhooks",
+				"SETTINGS": "Configurações"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "Gatilhos são eventos que ocorrem no Gauzy e podem ser usados para acionar ações no Zapier.",
+				"ACTIONS": "Ações são eventos que ocorrem no Zapier e podem ser usados para acionar ações no Gauzy.",
+				"WEBHOOKS": "Webhooks são eventos que ocorrem no Zapier e podem ser usados para acionar ações no Gauzy.",
+				"SETTINGS": "Configurações são as definições para a integração com o Zapier."
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "Gatilhos ativados com sucesso.",
+				"TRIGGERS_DISABLED": "Gatilhos desativados com sucesso.",
+				"ACTIONS_ENABLED": "Ações ativadas com sucesso.",
+				"ACTIONS_DISABLED": "Ações desativadas com sucesso.",
+				"WEBHOOKS_ENABLED": "Webhooks ativados com sucesso.",
+				"WEBHOOKS_DISABLED": "Webhooks desativados com sucesso."
+			},
+			"SETTINGS": {
+				"TITLE": "Configurações do Zapier",
+				"ENABLE_INTEGRATION": "Ativar integração com Zapier",
+				"WEBHOOK_URL": "URL do Webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "Insira a URL do webhook",
+				"WEBHOOK_URL_INVALID": "Por favor, insira uma URL de webhook válida",
+				"WEBHOOK_INFO": "Webhook é um URL que é usado para atualizar dados no Gauzy com base em um evento específico no Zapier.",
+				"SAVE": "Salvar configurações"
+			},
+			"ACTIONS": {
+				"TITLE": "Ações",
+				"NO_ACTIONS": "Nenhuma ação disponível"
+			},
+			"TRIGGERS": {
+				"TITLE": "Gatilhos",
+				"NO_TRIGGERS": "Nenhum gatilho disponível"
+			},
+			"WEBHOOKS": {
+				"TITLE": "Webhooks",
+				"NO_WEBHOOKS": "Nenhum webhook configurado"
 			}
 		},
 		"GAUZY_AI_PAGE": {

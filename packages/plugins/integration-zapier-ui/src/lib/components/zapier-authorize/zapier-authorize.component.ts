@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { tap, catchError, finalize, switchMap } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService, IntegrationsService } from '@gauzy/ui-core/core';
@@ -28,7 +28,6 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 		private readonly _zapierService: ZapierService,
 		private readonly _toastrService: ToastrService,
 		private readonly _router: Router,
-		private readonly _route: ActivatedRoute,
 		private readonly _store: Store,
 		private readonly _integrationsService: IntegrationsService,
 		public readonly translateService: TranslateService
@@ -119,22 +118,10 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 		}
 
 		if (!this.organization) {
-			this._toastrService.error(
-				this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.NO_ORGANIZATION'),
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.loading = false;
 			return;
 		}
 
-		if (!this.oauthConfig) {
-			this._toastrService.error(
-				this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.NO_OAUTH_CONFIG'),
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
-			return;
-		}
-
-		this.loading = true;
 		const credentials: ICreateZapierIntegrationInput = {
 			...this.form.value,
 			organizationId: this.organization.id

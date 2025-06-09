@@ -70,25 +70,25 @@ export class ZapierComponent extends TranslationBaseComponent implements OnInit,
 	private _loadTabs() {
 		this.tabs = [
 			{
-				title: this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.TRIGGERS'),
+				title: this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.TAB.TRIGGERS'),
 				icon: 'flash-outline',
 				responsive: true,
 				route: this.getRoute('triggers')
 			},
 			{
-				title: this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ACTIONS'),
+				title: this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.TAB.ACTIONS'),
 				icon: 'activity-outline',
 				responsive: true,
 				route: this.getRoute('actions')
 			},
 			{
-				title: this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.WEBHOOKS'),
+				title: this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.TAB.WEBHOOKS'),
 				icon: 'link-outline',
 				responsive: true,
 				route: this.getRoute('webhooks')
 			},
 			{
-				title: this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.SETTINGS'),
+				title: this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.TAB.SETTINGS'),
 				icon: 'settings-2-outline',
 				responsive: true,
 				route: this.getRoute('settings')

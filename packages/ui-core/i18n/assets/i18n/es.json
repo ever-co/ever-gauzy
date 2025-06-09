@@ -1308,12 +1308,65 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "Client ID",
-			"CLIENT_SECRET": "Client Secret",
-			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Zapier me tiyo ki integration",
+			"CLIENT_ID": "ID de Cliente",
+			"CLIENT_SECRET": "Clave Secreta del Cliente",
+			"NEXT_STEP_INFO": "Después de la autorización, será redirigido a Zapier para completar la configuración de la integración",
 			"ERRORS": {
-				"INVALID_FORM": "Please fill in all required fields",
-				"START_AUTHORIZATION": "Please start the authorization process"
+				"LOAD_SETTINGS": "Error al cargar la configuración de Zapier",
+				"SAVE_SETTINGS": "Error al guardar la configuración de Zapier",
+				"INVALID_FORM": "Por favor complete todos los campos requeridos correctamente",
+				"MISSING_CREDENTIALS": "Faltan credenciales del cliente",
+				"NO_ACCESS_TOKEN": "No hay token de acceso disponible",
+				"LOAD_WEBHOOKS": "Error al cargar webhooks",
+				"DELETE_WEBHOOK": "Error al eliminar webhook",
+				"LOAD_ACTIONS": "Error al cargar acciones",
+				"LOAD_TRIGGERS": "Error al cargar disparadores",
+				"START_AUTHORIZATION": "Por favor, inicie el proceso de autorización"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Configuración de Zapier guardada correctamente",
+				"DELETE_WEBHOOK": "Webhook eliminado correctamente"
+			},
+			"TAB": {
+				"TRIGGERS": "Disparadores",
+				"ACTIONS": "Acciones",
+				"WEBHOOKS": "Webhooks",
+				"SETTINGS": "Configuración"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "Los disparadores son eventos que ocurren en Gauzy y se pueden usar para activar acciones en Zapier.",
+				"ACTIONS": "Las acciones son eventos que ocurren en Zapier y se pueden usar para activar acciones en Gauzy.",
+				"WEBHOOKS": "Los webhooks son eventos que ocurren en Zapier y se pueden usar para activar acciones en Gauzy.",
+				"SETTINGS": "La configuración son los ajustes para la integración de Zapier."
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "Los disparadores se han habilitado correctamente.",
+				"TRIGGERS_DISABLED": "Los disparadores se han deshabilitado correctamente.",
+				"ACTIONS_ENABLED": "Las acciones se han habilitado correctamente.",
+				"ACTIONS_DISABLED": "Las acciones se han deshabilitado correctamente.",
+				"WEBHOOKS_ENABLED": "Los webhooks se han habilitado correctamente.",
+				"WEBHOOKS_DISABLED": "Los webhooks se han deshabilitado correctamente."
+			},
+			"SETTINGS": {
+				"TITLE": "Configuración de Zapier",
+				"ENABLE_INTEGRATION": "Habilitar integración de Zapier",
+				"WEBHOOK_URL": "URL del webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "Ingrese la URL del webhook",
+				"WEBHOOK_URL_INVALID": "Por favor, ingrese una URL de webhook válida",
+				"WEBHOOK_INFO": "Webhook es una URL que se utiliza para actualizar datos en Gauzy basado en un evento específico en Zapier.",
+				"SAVE": "Guardar configuración"
+			},
+			"ACTIONS": {
+				"TITLE": "Acciones",
+				"NO_ACTIONS": "No hay acciones disponibles"
+			},
+			"TRIGGERS": {
+				"TITLE": "Disparadores",
+				"NO_TRIGGERS": "No hay disparadores disponibles"
+			},
+			"WEBHOOKS": {
+				"TITLE": "Webhooks",
+				"NO_WEBHOOKS": "No hay webhooks configurados"
 			}
 		},
 		"GAUZY_AI_PAGE": {

@@ -1,7 +1,7 @@
 <nb-card class="card-scroll">
 	<nb-card-header class="d-flex">
 		<ngx-back-navigation></ngx-back-navigation>
-		<h5>{{ 'INTEGRATIONS.ZAPIER.SETTINGS.TITLE' | translate }}</h5>
+		<h5>{{ 'INTEGRATIONS.ZAPIER_PAGE.SETTINGS.TITLE' | translate }}</h5>
 	</nb-card-header>
 	<nb-card-body>
 		<form class="col-xl-6 col-12" [formGroup]="form" (ngSubmit)="saveSettings()">
@@ -12,7 +12,7 @@
 			</div>
 			<div class="form-group">
 				<label for="webhookUrl" class="label">{{
-					'INTEGRATIONS.ZAPIER.SETTINGS.WEBHOOK_URL' | translate
+					'INTEGRATIONS.ZAPIER_PAGE.SETTINGS.WEBHOOK_URL' | translate
 				}}</label>
 				<input
 					fullWidth
@@ -37,7 +37,7 @@
 			</div>
 			<div class="hint">
 				<nb-icon icon="info-outline"></nb-icon>
-				{{ 'INTEGRATIONS.ZAPIER.SETTINGS.WEBHOOK_INFO' | translate }}
+				{{ 'INTEGRATIONS.ZAPIER_PAGE.SETTINGS.WEBHOOK_INFO' | translate }}
 			</div>
 			<button nbButton status="primary" [disabled]="form.invalid || loading" size="small" outline type="submit">
 				<nb-icon *ngIf="loading" icon="loader-outline" class="mr-2"></nb-icon>

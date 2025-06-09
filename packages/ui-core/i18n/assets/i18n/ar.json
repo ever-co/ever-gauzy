@@ -1309,8 +1309,61 @@
 			"CLIENT_SECRET": "الرمز السري للعميل",
 			"NEXT_STEP_INFO": "بعد التفويض، سيتم توجيهك إلى Zapier لإكمال إعداد التكامل",
 			"ERRORS": {
-				"INVALID_FORM": "يرجى إدخال جميع الحقول المطلوبة",
+				"LOAD_SETTINGS": "فشل تحميل إعدادات Zapier",
+				"SAVE_SETTINGS": "فشل حفظ إعدادات Zapier",
+				"INVALID_FORM": "يرجى ملء جميع الحقول المطلوبة بشكل صحيح",
+				"MISSING_CREDENTIALS": "بيانات الاعتماد للعميل مفقودة",
+				"NO_ACCESS_TOKEN": "لا يوجد رمز وصول متاح",
+				"LOAD_WEBHOOKS": "فشل تحميل ويب هوكس",
+				"DELETE_WEBHOOK": "فشل حذف ويب هوك",
+				"LOAD_ACTIONS": "فشل تحميل الإجراءات",
+				"LOAD_TRIGGERS": "فشل تحميل المحفزات",
 				"START_AUTHORIZATION": "يرجى بدء عملية التفويض"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "تم حفظ إعدادات Zapier بنجاح",
+				"DELETE_WEBHOOK": "تم حذف ويب هوك بنجاح"
+			},
+			"TAB": {
+				"TRIGGERS": "المحفزات",
+				"ACTIONS": "الإجراءات",
+				"WEBHOOKS": "الويب هوكس",
+				"SETTINGS": "الإعدادات"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "المحفزات هي أحداث تحدث في Gauzy ويمكن استخدامها لتحفيز الإجراءات في Zapier.",
+				"ACTIONS": "الإجراءات هي أحداث تحدث في Zapier ويمكن استخدامها لتحفيز الإجراءات في Gauzy.",
+				"WEBHOOKS": "الويب هوكس هي أحداث تحدث في Zapier ويمكن استخدامها لتحفيز الإجراءات في Gauzy.",
+				"SETTINGS": "الإعدادات هي إعدادات تكامل Zapier."
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "تم تمكين المحفزات بنجاح.",
+				"TRIGGERS_DISABLED": "تم تعطيل المحفزات بنجاح.",
+				"ACTIONS_ENABLED": "تم تمكين الإجراءات بنجاح.",
+				"ACTIONS_DISABLED": "تم تعطيل الإجراءات بنجاح.",
+				"WEBHOOKS_ENABLED": "تم تمكين الويب هوكس بنجاح.",
+				"WEBHOOKS_DISABLED": "تم تعطيل الويب هوكس بنجاح."
+			},
+			"SETTINGS": {
+				"TITLE": "إعدادات Zapier",
+				"ENABLE_INTEGRATION": "تمكين تكامل Zapier",
+				"WEBHOOK_URL": "رابط الويب هوك",
+				"WEBHOOK_URL_PLACEHOLDER": "أدخل رابط الويب هوك",
+				"WEBHOOK_URL_INVALID": "الرجاء إدخال رابط ويب هوك صالح",
+				"WEBHOOK_INFO": "الويب هوك هو رابط يتم استخدامه لتحديث البيانات في Gauzy بناءً على حدث معين في Zapier.",
+				"SAVE": "حفظ الإعدادات"
+			},
+			"ACTIONS": {
+				"TITLE": "الإجراءات",
+				"NO_ACTIONS": "لا توجد إجراءات متاحة"
+			},
+			"TRIGGERS": {
+				"TITLE": "المحفزات",
+				"NO_TRIGGERS": "لا توجد محفزات متاحة"
+			},
+			"WEBHOOKS": {
+				"TITLE": "ويب هوكس",
+				"NO_WEBHOOKS": "لا يوجد ويب هوكس مضبوط"
 			}
 		},
 		"GAUZY_AI_PAGE": {
