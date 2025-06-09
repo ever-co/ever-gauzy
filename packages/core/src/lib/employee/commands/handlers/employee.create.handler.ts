@@ -1,5 +1,5 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Logger } from '@nestjs/common'
+import { Logger } from '@nestjs/common';
 import { ComponentLayoutStyleEnum, IEmployee, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { isEmpty } from '@gauzy/utils';
@@ -60,12 +60,16 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 			);
 
 			// 4. Create employee for specific user
-			const employee = await this._employeeService.create({
+			const employeeInput = {
 				...input,
+				// By default, the weekly limit is set to 40 hours to avoid additional manual tracking.
+				reWeeklyLimit: input.reWeeklyLimit ?? 40,
 				user,
 				organizationId,
 				organization: { id: organizationId }
-			});
+			};
+
+			const employee = await this._employeeService.create(employeeInput);
 
 			// 5. Assign organizations to the employee user
 			if (employee.organizationId) {
@@ -80,12 +84,16 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 				const user = await this._userService.findOneByIdString(input.userId);
 
 				//1. Create employee for specific user
-				return await this._employeeService.create({
+				const employeeInput = {
 					...input,
+					// By default, the weekly limit is set to 40 hours to avoid additional manual tracking.
+					reWeeklyLimit: input.reWeeklyLimit ?? 40,
 					user,
 					organizationId,
 					organization: { id: organizationId }
-				});
+				};
+
+				return await this._employeeService.create(employeeInput);
 			} catch (error) {
 				this.logger.error('Error while creating employee for existing user', error);
 			}

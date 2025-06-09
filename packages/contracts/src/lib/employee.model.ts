@@ -222,6 +222,7 @@ export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntit
 	description?: string;
 	originalUrl?: string;
 	isActive?: boolean;
+	reWeeklyLimit?: number;
 	/** Upwork ID For DSpot ERP AI*/
 	upworkId?: string;
 	/** LinkedIn ID For DSpot ERP AI*/

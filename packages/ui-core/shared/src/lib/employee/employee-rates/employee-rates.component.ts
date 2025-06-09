@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IEmployee, PayPeriodEnum, ICandidate, ICurrency } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -7,12 +7,12 @@ import { CandidateStore, EmployeeStore, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-employee-rates',
-    templateUrl: 'employee-rates.component.html',
-    styleUrls: ['employee-rates.component.scss'],
-    standalone: false
+	selector: 'ga-employee-rates',
+	templateUrl: 'employee-rates.component.html',
+	styleUrls: ['employee-rates.component.scss'],
+	standalone: false
 })
-export class EmployeeRatesComponent implements OnInit, OnDestroy {
+export class EmployeeRatesComponent implements OnInit {
 	@Input() public isEmployee: boolean;
 	@Input() public isCandidate: boolean;
 
@@ -42,11 +42,15 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
+		this.form.disable();
 		this.employeeStore.selectedEmployee$
 			.pipe(
 				filter((employee: IEmployee) => !!employee),
-				tap((employee: IEmployee) => (this.selectedEmployee = employee)),
-				tap((employee: IEmployee) => this._syncRates(employee)),
+				tap((employee: IEmployee) => {
+					this.selectedEmployee = employee;
+					this._syncRates(employee);
+					this.form.enable();
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -117,6 +121,4 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 			(event.target as HTMLInputElement).value = value.slice(0, -1);
 		}
 	}
-
-	ngOnDestroy() {}
 }
