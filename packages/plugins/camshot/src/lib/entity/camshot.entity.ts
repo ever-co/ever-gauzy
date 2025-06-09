@@ -98,7 +98,7 @@ export class Camshot extends TenantOrganizationBaseEntity implements ICamshot {
 	@IsNumber({}, { message: 'Size must be a number' })
 	@Min(0, { message: 'Size must be greater than or equal to 0' })
 	@Max(5242880, { message: 'Size cannot exceed 5MB.' })
-	@Transform(({ value }) => parseFloat(value), { toClassOnly: true })
+	@Transform(({ value }) => Number.parseFloat(value), { toClassOnly: true })
 	@ApiProperty({ type: () => Number, description: 'Size of the camshot file in bytes' })
 	@MultiORMColumn({ nullable: true })
 	size?: number;
