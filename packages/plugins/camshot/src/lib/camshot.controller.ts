@@ -121,7 +121,7 @@ export class CamshotController {
 		})
 	)
 	@Post()
-	public async create(@Body() input: CreateCamshotDTO, @UploadedFileStorage() file: FileDTO) {
+	public async create(@Body() input: CreateCamshotDTO, @UploadedFileStorage() file: FileDTO): Promise<ICamshot> {
 		// Check if the file key is empty
 		if (!file.key) {
 			throw new BadRequestException('Camshot file key is empty');

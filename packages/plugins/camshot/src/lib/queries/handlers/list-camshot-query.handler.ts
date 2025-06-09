@@ -38,9 +38,9 @@ export class ListCamshotQueryHandler implements IQueryHandler<ListCamshotQuery> 
 			organizationId
 		};
 
-		const permission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		// If the current user doesn't have the permission to select employee, filter by uploadedById
-		if (!permission) {
+		if (!hasPermission) {
 			where.uploadedById = RequestContext.currentEmployeeId();
 		}
 
@@ -54,7 +54,7 @@ export class ListCamshotQueryHandler implements IQueryHandler<ListCamshotQuery> 
 		}
 
 		// Add employee filter only if employeeIds is provided and non-empty
-		if (employeeIds.length > 0) {
+		if (employeeIds.length > 0 && hasPermission) {
 			where.uploadedById = In(employeeIds);
 		}
 
