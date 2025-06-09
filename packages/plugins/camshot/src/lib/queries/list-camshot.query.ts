@@ -3,7 +3,7 @@ import { BaseQueryDTO } from "@gauzy/core";
 import { ICamshot } from "../models/camshot.model";
 
 export class ListCamshotQuery implements IQuery {
-	public readonly type = '[Camshot] List';
+	public static readonly type = '[Camshot] List';
 	/**
 	 * Query to fetch paginated list of camshots
 	 *
