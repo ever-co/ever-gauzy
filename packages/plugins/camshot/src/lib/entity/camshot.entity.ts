@@ -65,8 +65,8 @@ export class Camshot extends TenantOrganizationBaseEntity implements ICamshot {
 	@IsOptional()
 	@ValidateIf((o) => !!o.recordedAt)
 	@Transform(({ value }) => {
-		if (value && new Date(value).getUTCDate() < Date.now()) {
-			throw new Error('Recorded date must be in the past');
+		if (value && new Date(value).getTime() > Date.now()) {
+			throw new Error('Recorded date cannot be in the future');
 		}
 		return new Date(value).toISOString();
 	}, { toClassOnly: true })
