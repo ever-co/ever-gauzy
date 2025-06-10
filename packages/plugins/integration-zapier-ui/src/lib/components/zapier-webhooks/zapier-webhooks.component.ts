@@ -92,8 +92,6 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 				}),
 				// Handle specific error cases
 				catchError((error) => {
-					console.error('Error loading Zapier webhooks:', error);
-
 					// Handle different types of errors with specific messages
 					if (error?.status === 404 || error.message?.includes('not found')) {
 						this._toastrService.error(
