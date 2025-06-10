@@ -21,7 +21,7 @@ export class ZapierComponent extends TranslationBaseComponent implements OnInit,
 	public menus: NbMenuItem[] = [];
 	public integrationId: ID;
 	public organization: IOrganization;
-	public loading: boolean = false;
+	public loading = false;
 	private readonly BASE_MENU_ROUTE = 'pages/integrations/zapier';
 
 	constructor(

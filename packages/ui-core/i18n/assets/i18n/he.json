@@ -1315,7 +1315,7 @@
 			"ERRORS": {
 				"LOAD_SETTINGS": "נכשל בטעינת הגדרות Zapier",
 				"SAVE_SETTINGS": "נכשל בשמירת הגדרות Zapier",
-				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים כהלכה",
+				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
 				"MISSING_CREDENTIALS": "חסרים פרטי גישה של הלקוח",
 				"NO_ACCESS_TOKEN": "אין אסימון גישה זמין",
 				"LOAD_WEBHOOKS": "נכשל בטעינת וובחוקים",

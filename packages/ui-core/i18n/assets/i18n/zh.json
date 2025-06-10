@@ -1312,7 +1312,7 @@
 			"ERRORS": {
 				"LOAD_SETTINGS": "加载Zapier设置失败",
 				"SAVE_SETTINGS": "保存Zapier设置失败",
-				"INVALID_FORM": "请正确填写所有必填字段",
+				"INVALID_FORM": "请填写所有必填字段",
 				"MISSING_CREDENTIALS": "缺少客户端凭据",
 				"NO_ACCESS_TOKEN": "没有可用的访问令牌",
 				"LOAD_WEBHOOKS": "加载Webhooks失败",

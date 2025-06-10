@@ -1353,7 +1353,7 @@
 			"ERRORS": {
 				"LOAD_SETTINGS": "Failed to load Zapier settings",
 				"SAVE_SETTINGS": "Failed to save Zapier settings",
-				"INVALID_FORM": "Please fill all required fields correctly",
+				"INVALID_FORM": "Please fill in all required fields",
 				"MISSING_CREDENTIALS": "Missing client credentials",
 				"NO_ACCESS_TOKEN": "No access token available",
 				"LOAD_WEBHOOKS": "Failed to load webhooks",

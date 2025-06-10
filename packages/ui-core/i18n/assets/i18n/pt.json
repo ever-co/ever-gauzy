@@ -1312,7 +1312,7 @@
 			"ERRORS": {
 				"LOAD_SETTINGS": "Falha ao carregar configurações do Zapier",
 				"SAVE_SETTINGS": "Falha ao salvar configurações do Zapier",
-				"INVALID_FORM": "Por favor, preencha todos os campos obrigatórios corretamente",
+				"INVALID_FORM": "Por favor, preencha todos os campos obrigatórios",
 				"MISSING_CREDENTIALS": "Credenciais do cliente ausentes",
 				"NO_ACCESS_TOKEN": "Nenhum token de acesso disponível",
 				"LOAD_WEBHOOKS": "Falha ao carregar webhooks",
@@ -1325,7 +1325,6 @@
 				"SETTINGS_SAVED": "Configurações do Zapier salvas com sucesso",
 				"DELETE_WEBHOOK": "Webhook excluído com sucesso"
 			},
-
 			"TAB": {
 				"TRIGGERS": "Gatilhos",
 				"ACTIONS": "Ações",

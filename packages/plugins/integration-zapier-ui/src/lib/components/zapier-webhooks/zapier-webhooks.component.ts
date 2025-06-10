@@ -48,7 +48,7 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 					});
 				}),
 				switchMap((tokens: IZapierOAuthTokenDTO) => {
-					if (tokens && tokens.access_token) {
+					if (tokens?.access_token) {
 						return this._zapierService.getWebhooks(tokens.access_token);
 					}
 					throw new Error('No access token available');
@@ -56,7 +56,7 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 				tap((webhooks: IZapierWebhook[]) => {
 					this.webhooks = webhooks;
 				}),
-				catchError((error) => {
+				catchError(() => {
 					this._toastrService.error(
 						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.LOAD_WEBHOOKS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
@@ -87,7 +87,7 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 					});
 				}),
 				switchMap((tokens: IZapierOAuthTokenDTO) => {
-					if (tokens && tokens.access_token) {
+					if (tokens?.access_token) {
 						return this._zapierService.deleteWebhook(webhookId, tokens.access_token);
 					}
 					throw new Error('No access token available');

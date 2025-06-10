@@ -1314,7 +1314,7 @@
 			"ERRORS": {
 				"LOAD_SETTINGS": "Error al cargar la configuración de Zapier",
 				"SAVE_SETTINGS": "Error al guardar la configuración de Zapier",
-				"INVALID_FORM": "Por favor complete todos los campos requeridos correctamente",
+				"INVALID_FORM": "Por favor, complete todos los campos requeridos",
 				"MISSING_CREDENTIALS": "Faltan credenciales del cliente",
 				"NO_ACCESS_TOKEN": "No hay token de acceso disponible",
 				"LOAD_WEBHOOKS": "Error al cargar webhooks",

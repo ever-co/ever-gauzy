@@ -1308,18 +1308,18 @@
 		"ZAPIER_PAGE": {
 			"CLIENT_ID": "Client ID",
 			"CLIENT_SECRET": "Client Secret",
-			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Zapier me tiyo ki integration",
+			"NEXT_STEP_INFO": "Nach der Autorisierung werden Sie zu Zapier weitergeleitet, um die Integration abzuschließen",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Fehler beim Laden der Zapier-Einstellungen",
 				"SAVE_SETTINGS": "Fehler beim Speichern der Zapier-Einstellungen",
-				"INVALID_FORM": "Bitte füllen Sie alle erforderlichen Felder korrekt aus",
+				"INVALID_FORM": "Bitte füllen Sie alle erforderlichen Felder aus",
 				"MISSING_CREDENTIALS": "Fehlende Client-Anmeldedaten",
 				"NO_ACCESS_TOKEN": "Kein Zugriffstoken verfügbar",
 				"LOAD_WEBHOOKS": "Fehler beim Laden der Webhooks",
 				"DELETE_WEBHOOK": "Fehler beim Löschen des Webhooks",
 				"LOAD_ACTIONS": "Fehler beim Laden der Aktionen",
 				"LOAD_TRIGGERS": "Fehler beim Laden der Trigger",
-				"START_AUTHORIZATION": "Please start the authorization process"
+				"START_AUTHORIZATION": "Bitte starten Sie den Autorisierungsprozess"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier-Einstellungen erfolgreich gespeichert",

@@ -1296,7 +1296,6 @@
 			"CLIENT_SECRET": "Clé Secrète Client",
 			"NEXT_STEP_INFO": "Après l'autorisation, vous serez redirigé vers Make.com pour finaliser la configuration de l'intégration"
 		},
-
 		"MAKE_COM": {
 			"SETTINGS": {
 				"TITLE": "Paramètres Make.com",
@@ -1314,7 +1313,7 @@
 			"ERRORS": {
 				"LOAD_SETTINGS": "Échec du chargement des paramètres Zapier",
 				"SAVE_SETTINGS": "Échec de l'enregistrement des paramètres Zapier",
-				"INVALID_FORM": "Veuillez remplir correctement tous les champs obligatoires",
+				"INVALID_FORM": "Veuillez remplir tous les champs requis",
 				"MISSING_CREDENTIALS": "Identifiants client manquants",
 				"NO_ACCESS_TOKEN": "Aucun jeton d'accès disponible",
 				"LOAD_WEBHOOKS": "Échec du chargement des webhooks",

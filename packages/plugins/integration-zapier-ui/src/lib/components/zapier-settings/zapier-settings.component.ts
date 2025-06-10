@@ -37,7 +37,19 @@ export class ZapierSettingsComponent extends TranslationBaseComponent implements
 	private _initializeForm() {
 		this.form = this._fb.group({
 			isEnabled: [false],
-			webhookUrl: ['', [Validators.required, Validators.pattern('https?://.+')]]
+			webhookUrl: ['']
+		});
+		this.form.get('isEnabled').valueChanges.subscribe((isEnabled) => {
+			const webhookUrlControl = this.form.get('webhookUrl');
+			if (isEnabled) {
+				webhookUrlControl.setValidators([
+					Validators.required,
+					Validators.pattern(/^https?:\/\/([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/)
+				]);
+			} else {
+				webhookUrlControl.clearValidators();
+			}
+			webhookUrlControl.updateValueAndValidity();
 		});
 	}
 

@@ -1312,7 +1312,7 @@
 			"ERRORS": {
 				"LOAD_SETTINGS": "Fout bij het laden van Zapier-instellingen",
 				"SAVE_SETTINGS": "Fout bij het opslaan van Zapier-instellingen",
-				"INVALID_FORM": "Vul alle vereiste velden correct in",
+				"INVALID_FORM": "Vul alstublieft alle verplichte velden in",
 				"MISSING_CREDENTIALS": "Ontbrekende clientreferenties",
 				"NO_ACCESS_TOKEN": "Geen toegangstoken beschikbaar",
 				"LOAD_WEBHOOKS": "Fout bij het laden van webhooks",

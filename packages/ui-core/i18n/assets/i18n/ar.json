@@ -1311,7 +1311,7 @@
 			"ERRORS": {
 				"LOAD_SETTINGS": "فشل تحميل إعدادات Zapier",
 				"SAVE_SETTINGS": "فشل حفظ إعدادات Zapier",
-				"INVALID_FORM": "يرجى ملء جميع الحقول المطلوبة بشكل صحيح",
+				"INVALID_FORM": "يرجى إدخال جميع الحقول المطلوبة",
 				"MISSING_CREDENTIALS": "بيانات الاعتماد للعميل مفقودة",
 				"NO_ACCESS_TOKEN": "لا يوجد رمز وصول متاح",
 				"LOAD_WEBHOOKS": "فشل تحميل ويب هوكس",

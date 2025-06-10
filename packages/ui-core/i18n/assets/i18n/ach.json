@@ -962,7 +962,6 @@
 			"EXPORT_DATA": "crwdns11197:0crwdne11197:0",
 			"IMPORT_DATA": "crwdns11199:0crwdne11199:0",
 			"ALL_ENTITIES": "crwdns11203:0crwdne11203:0",
-
 			"ACTIVITY_LOG": "Kit ma gityeko",
 			"DAILY_PLAN": "Cik me nino",
 			"ENTITY_SUBSCRIPTION": "Keto nying i jami",
@@ -1177,10 +1176,10 @@
 			"HISTORY": "History",
 			"SETTINGS": "Settings",
 			"ERRORS": {
-				"INVALID_FORM": "Please fill in all required fields",
+				"INVALID_FORM": "Tim ber iyie pot buk ma mito ni ber",
 				"START_AUTHORIZATION": "Please start the authorization process"
 			},
-			"CLIENT_ID": "Client ID",
+			"CLIENT_ID": "Client Id",
 			"CLIENT_SECRET": "Client Secret",
 			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Make.com me tiyo ki integration"
 		},
@@ -1195,7 +1194,7 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "Client ID",
+			"CLIENT_ID": "Client Id",
 			"CLIENT_SECRET": "Client Secret",
 			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Zapier me tiyo ki integration",
 			"ERRORS": {

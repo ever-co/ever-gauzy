@@ -1312,7 +1312,7 @@
 			"ERRORS": {
 				"LOAD_SETTINGS": "Impossibile caricare le impostazioni di Zapier",
 				"SAVE_SETTINGS": "Impossibile salvare le impostazioni di Zapier",
-				"INVALID_FORM": "Si prega di compilare correttamente tutti i campi obbligatori",
+				"INVALID_FORM": "Per favore, compila tutti i campi obbligatori",
 				"MISSING_CREDENTIALS": "Credenziali client mancanti",
 				"NO_ACCESS_TOKEN": "Nessun token di accesso disponibile",
 				"LOAD_WEBHOOKS": "Impossibile caricare i webhook",

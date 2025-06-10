@@ -1311,7 +1311,7 @@
 			"ERRORS": {
 				"LOAD_SETTINGS": "Nie udało się załadować ustawień Zapier",
 				"SAVE_SETTINGS": "Nie udało się zapisać ustawień Zapier",
-				"INVALID_FORM": "Proszę poprawnie wypełnić wszystkie wymagane pola",
+				"INVALID_FORM": "Proszę wypełnić wszystkie wymagane pola",
 				"MISSING_CREDENTIALS": "Brakujące dane uwierzytelniające klienta",
 				"NO_ACCESS_TOKEN": "Brak dostępnego tokenu dostępu",
 				"LOAD_WEBHOOKS": "Nie udało się załadować webhooków",
