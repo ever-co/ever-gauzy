@@ -41,7 +41,7 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 						throw new Error('Missing client credentials');
 					}
 					return this._zapierService.exchangeCodeForToken({
-						code:'code'
+						code: 'code',
 						client_id: config.clientId,
 						client_secret: config.clientSecret,
 						redirect_uri: config.redirectUri,
@@ -49,7 +49,7 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 					});
 				}),
 				switchMap((tokens: IZapierOAuthTokenDTO) => {
-					if (tokens && tokens.access_token) {
+					if (tokens?.access_token) {
 						return this._zapierService.getTriggers(tokens.access_token);
 					}
 					throw new Error('No access token available');

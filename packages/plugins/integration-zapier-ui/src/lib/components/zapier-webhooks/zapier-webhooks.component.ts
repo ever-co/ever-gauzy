@@ -41,7 +41,7 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 						throw new Error('Missing client credentials');
 					}
 					return this._zapierService.exchangeCodeForToken({
-						code:'code'
+						code: 'code',
 						client_id: config.clientId,
 						client_secret: config.clientSecret,
 						redirect_uri: config.redirectUri,
@@ -81,7 +81,7 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 						throw new Error('Missing client credentials');
 					}
 					return this._zapierService.exchangeCodeForToken({
-						code:'code'
+						code: 'code',
 						client_id: config.clientId,
 						client_secret: config.clientSecret,
 						redirect_uri: config.redirectUri,

@@ -1319,7 +1319,7 @@
 			"ERRORS": {
 				"LOAD_SETTINGS": "Не удалось загрузить настройки Zapier",
 				"SAVE_SETTINGS": "Не удалось сохранить настройки Zapier",
-				"INVALID_FORM": "Por favor, preencha todos os campos obrigatórios",
+				"INVALID_FORM": "Пожалуйста, заполните все обязательные поля",
 				"MISSING_CREDENTIALS": "Отсутствуют учетные данные клиента",
 				"NO_ACCESS_TOKEN": "Нет доступного токена доступа",
 				"LOAD_WEBHOOKS": "Не удалось загрузить вебхуки",
