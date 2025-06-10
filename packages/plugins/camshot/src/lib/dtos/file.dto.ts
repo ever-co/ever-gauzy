@@ -1,11 +1,11 @@
 import { UploadedFile } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, IsUrl, Matches, MaxLength, Min } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Matches, MaxLength, Min } from 'class-validator';
 
 export class FileDTO implements UploadedFile {
 	@ApiProperty({
 		description: 'The field name associated with the file',
-		example: 'pluginFile'
+		example: 'camshotFile'
 	})
 	@IsNotEmpty({ message: 'Field name must not be empty' })
 	@IsString({ message: 'Field name must be a string' })
@@ -13,21 +13,22 @@ export class FileDTO implements UploadedFile {
 	fieldname: string;
 
 	@ApiProperty({
-		description: 'The file path or identifier of the plugin',
-		example: 'plugin-demo-2024.zip',
-		pattern: '/\\.(zip)$/'
+		description: 'The file path or identifier of the camshot',
+		example: 'project-demo-2024.png',
+		pattern: '/\\.(png)$/'
 	})
 	@IsNotEmpty({ message: 'File key must not be empty' })
 	@IsString({ message: 'File key must be a string' })
 	@MaxLength(255, { message: 'File key must not exceed 255 characters' })
-	@Matches(/\.(zip)$/, {
-		message: 'File must be a valid ZIP format and contain only letters, numbers, spaces, hyphens, or underscores'
+	@Matches(/\.(png)$/, {
+		message:
+			'File must be a valid camshot format png'
 	})
 	key: string;
 
 	@ApiProperty({
 		description: 'The original file name',
-		example: 'plugin-demo-original.zip'
+		example: 'project-demo-original.png'
 	})
 	@IsNotEmpty({ message: 'Original name must not be empty' })
 	@IsString({ message: 'Original name must be a string' })
@@ -55,19 +56,19 @@ export class FileDTO implements UploadedFile {
 
 	@ApiProperty({
 		description: 'The MIME type of the file (if available)',
-		example: 'application/zip'
+		example: 'image/png'
 	})
 	@IsOptional()
 	@IsString({ message: 'MIME type must be a string' })
 	@MaxLength(50, { message: 'MIME type must not exceed 50 characters' })
-	@Matches(/^application\/(zip)$/, {
-		message: 'MIME type must be application/zip'
+	@Matches(/^image\/png$/, {
+		message: 'MIME type must be image/png'
 	})
 	mimetype?: string;
 
 	@ApiProperty({
 		description: 'The file name',
-		example: 'plugin-demo-2024.zip'
+		example: 'project-demo-2024.png'
 	})
 	@IsNotEmpty({ message: 'File name must not be empty' })
 	@IsString({ message: 'File name must be a string' })
@@ -76,16 +77,15 @@ export class FileDTO implements UploadedFile {
 
 	@ApiProperty({
 		description: 'The public URL of the file',
-		example: 'https://example.com/plugin-demo-2024.zip'
+		example: 'https://example.com/camshot-demo-2024.png'
 	})
 	@IsNotEmpty({ message: 'File URL must not be empty' })
-	@IsUrl({ protocols: ['http', 'https'] }, { message: 'File URL must be a valid URL' })
 	@MaxLength(2083, { message: 'File URL must not exceed 2083 characters' }) // 2083 is the maximum URL length in browsers
 	url: string;
 
 	@ApiProperty({
 		description: 'The full path of the file',
-		example: '/plugins/plugin-demo-2024.zip'
+		example: '/uploads/project-demo-2024.png'
 	})
 	@IsNotEmpty({ message: 'File path must not be empty' })
 	@IsString({ message: 'File path must be a string' })
