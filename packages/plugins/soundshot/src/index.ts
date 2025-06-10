@@ -1,1 +1,1 @@
-export * from './lib/plugin-soundshot.module';
+export * from './lib/soundshot.plugin';
