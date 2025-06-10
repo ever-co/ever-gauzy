@@ -1,4 +1,3 @@
-import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { BaseEntityEventSubscriber } from '@gauzy/core';
 import { Logger } from '@nestjs/common';
 import { DataSource, EventSubscriber, InsertEvent, RemoveEvent } from 'typeorm';
@@ -38,10 +37,7 @@ export class SoundshotSubscriber extends BaseEntityEventSubscriber<Soundshot> {
 	}
 
 	private logError(entity: Soundshot, context: string, error: unknown) {
-		this.logger.error(
-			`Error in ${context} for Soundshot entity with ID ${entity.id ?? 'N/A'}.`,
-			error
-		);
+		this.logger.error(`Error in ${context} for Soundshot entity with ID ${entity.id ?? 'N/A'}.`, error);
 	}
 
 	public override async beforeInsert(event: InsertEvent<Soundshot>): Promise<void> {
@@ -73,9 +69,5 @@ export class SoundshotSubscriber extends BaseEntityEventSubscriber<Soundshot> {
 		} catch (error) {
 			this.logError(entity, 'afterRemove', error);
 		}
-	}
-
-	private getFileStorageProvider(storageProvider: FileStorageProviderEnum) {
-		throw new Error('This method should not be called directly. Use SoundshotService.getFileStorageProviderInstance instead.');
 	}
 }

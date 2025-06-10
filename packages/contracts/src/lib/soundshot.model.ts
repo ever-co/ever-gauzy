@@ -1,7 +1,9 @@
 export interface ISoundshot {
-	title: string;
+	name: string;
 	recordedAt?: Date;
+	channels?: number;
 	fullUrl?: string;
 	size?: number;
+	rate?: number;
 	duration?: number;
 }

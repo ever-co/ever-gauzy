@@ -1,6 +1,16 @@
 import { UploadedFile } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Matches, MaxLength, Min, IsEnum } from 'class-validator';
+import {
+	IsNotEmpty,
+	IsNumber,
+	IsOptional,
+	IsPositive,
+	IsString,
+	Matches,
+	MaxLength,
+	Min,
+	IsEnum
+} from 'class-validator';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 
 export class FileDTO implements UploadedFile {
@@ -22,8 +32,7 @@ export class FileDTO implements UploadedFile {
 	@IsString({ message: 'File key must be a string' })
 	@MaxLength(255, { message: 'File key must not exceed 255 characters' })
 	@Matches(/\.(webm)$/, {
-		message:
-			'File must be a valid soundshot format webm'
+		message: 'File must be a valid soundshot format webm'
 	})
 	key: string;
 
@@ -62,7 +71,7 @@ export class FileDTO implements UploadedFile {
 	@IsOptional()
 	@IsString({ message: 'MIME type must be a string' })
 	@MaxLength(50, { message: 'MIME type must not exceed 50 characters' })
-	@Matches(/^audio\/webm$/, {
+	@Matches(/\/webm$/, {
 		message: 'MIME type must be audio/webm'
 	})
 	mimetype?: string;
@@ -70,7 +79,7 @@ export class FileDTO implements UploadedFile {
 	@ApiProperty({
 		description: 'The storage provider used for the file',
 		example: FileStorageProviderEnum.LOCAL,
-		enum: FileStorageProviderEnum,
+		enum: FileStorageProviderEnum
 	})
 	@IsOptional()
 	@IsEnum(FileStorageProviderEnum, { message: 'Invalid file storage provider' })

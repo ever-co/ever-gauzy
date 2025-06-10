@@ -1,12 +1,34 @@
-import { ColumnIndex, Employee, MultiORMColumn, MultiORMManyToOne, TenantOrganizationBaseEntity, TimeSlot, User } from '@gauzy/core';
-import { MultiORMEntity } from '@gauzy/core';
-import { ISoundshot } from '../models/soundshot.model';
-import { ITimeSlot, FileStorageProviderEnum, IUser, ID, IEmployee } from '@gauzy/contracts';
-import { MikroOrmSoundshotRepository } from '../repositories/mikro-orm-soundshot.repository';
-import { IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl, IsUUID, Length, Matches, Max, Min, ValidateIf } from 'class-validator';
+import { FileStorageProviderEnum, ID, IEmployee, ITimeSlot, IUser } from '@gauzy/contracts';
+import {
+	ColumnIndex,
+	Employee,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	TenantOrganizationBaseEntity,
+	TimeSlot,
+	User
+} from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Transform } from 'class-transformer';
+import {
+	IsDateString,
+	IsEnum,
+	IsNotEmpty,
+	IsNumber,
+	IsOptional,
+	IsString,
+	IsUrl,
+	IsUUID,
+	Length,
+	Matches,
+	Max,
+	Min,
+	ValidateIf
+} from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
+import { ISoundshot } from '../models/soundshot.model';
+import { MikroOrmSoundshotRepository } from '../repositories/mikro-orm-soundshot.repository';
 
 const WEBM_FILE_REGEX = /\.(webm)$/;
 const WEBM_FILE_MESSAGE = 'File must be a valid soundshot format webm';
@@ -14,15 +36,15 @@ const WEBM_FILE_MESSAGE = 'File must be a valid soundshot format webm';
 @MultiORMEntity('soundshots', { mikroOrmRepository: () => MikroOrmSoundshotRepository })
 export class Soundshot extends TenantOrganizationBaseEntity implements ISoundshot {
 	/**
-	 * Title of the soundshot.
+	 * Name of the soundshot.
 	 * This is a required field with a maximum length of 255 characters.
 	 */
-	@IsNotEmpty({ message: 'Title is required' })
-	@IsString({ message: 'Title must be a string' })
-	@Length(3, 255, { message: 'Title must be between 3 and 255 characters' })
-	@ApiProperty({ type: () => String, description: 'Title of the soundshot' })
+	@IsNotEmpty({ message: 'Name is required' })
+	@IsString({ message: 'Name must be a string' })
+	@Length(3, 255, { message: 'Name must be between 3 and 255 characters' })
+	@ApiProperty({ type: () => String, description: 'Name of the soundshot' })
 	@MultiORMColumn()
-	title: string;
+	name: string;
 
 	/**
 	 * Soundshot file path or identifier.
@@ -53,16 +75,19 @@ export class Soundshot extends TenantOrganizationBaseEntity implements ISoundsho
 	 */
 	@IsOptional()
 	@ValidateIf((o) => !!o.recordedAt)
-	@Transform(({ value }) => {
-		const date = new Date(value);
-		if (isNaN(date.getTime())) {
-			throw new Error('Recorded date is invalid');
-		}
-		if (date.getTime() > Date.now()) {
-			throw new Error('Recorded date cannot be in the future');
-		}
-		return date.toISOString();
-	}, { toClassOnly: true })
+	@Transform(
+		({ value }) => {
+			const date = new Date(value);
+			if (isNaN(date.getTime())) {
+				throw new Error('Recorded date is invalid');
+			}
+			if (date.getTime() > Date.now()) {
+				throw new Error('Recorded date cannot be in the future');
+			}
+			return date.toISOString();
+		},
+		{ toClassOnly: true }
+	)
 	@IsDateString({}, { message: 'Recorded date must be a valid ISO 8601 date string' })
 	@ApiPropertyOptional({ type: () => 'timestamptz', description: 'Date when the soundshot was recorded' })
 	@ColumnIndex()
@@ -74,7 +99,10 @@ export class Soundshot extends TenantOrganizationBaseEntity implements ISoundsho
 	 * Optional and must be a valid HTTP or HTTPS URL.
 	 */
 	@IsOptional()
-	@IsUrl({ protocols: ['http', 'https'], require_protocol: true }, { message: 'Full URL must be a valid HTTPS or HTTP URL' })
+	@IsUrl(
+		{ protocols: ['http', 'https'], require_protocol: true },
+		{ message: 'Full URL must be a valid HTTPS or HTTP URL' }
+	)
 	@ApiPropertyOptional({ type: () => String, description: 'Full URL to access the soundshot' })
 	@MultiORMColumn({ nullable: true })
 	fullUrl?: string;
@@ -91,6 +119,26 @@ export class Soundshot extends TenantOrganizationBaseEntity implements ISoundsho
 	@ApiPropertyOptional({ type: () => Number, description: 'Size of the soundshot file in bytes' })
 	@MultiORMColumn({ nullable: true })
 	size?: number;
+
+	/**
+	 * Channels of the soundshot file in bytes.
+	 */
+	@IsOptional()
+	@IsNumber({}, { message: 'Channels must be a number' })
+	@Transform(({ value }) => Number.parseInt(value), { toClassOnly: true })
+	@ApiPropertyOptional({ type: () => Number, description: 'Sound channels of the soundshot file' })
+	@MultiORMColumn({ nullable: true })
+	channels?: number;
+
+	/**
+	 * Rate of the soundshot file in bytes.
+	 */
+	@IsOptional()
+	@IsNumber({}, { message: 'Rate must be a number' })
+	@Transform(({ value }) => Number.parseInt(value), { toClassOnly: true })
+	@ApiPropertyOptional({ type: () => Number, description: 'Sound rate of the soundshot file' })
+	@MultiORMColumn({ nullable: true })
+	rate?: number;
 
 	/**
 	 * Duration of the soundshot file in seconds.

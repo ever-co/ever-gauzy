@@ -1,15 +1,13 @@
 import {
 	FileStorageProviderEnum,
 	IBasePerTenantAndOrganizationEntityModel,
-	ISoundshot as ISoundshotContract,
 	ID,
 	IRelationalUser,
+	ISoundshot as ISoundshotContract,
 	ITimeSlot
-} from "@gauzy/contracts";
+} from '@gauzy/contracts';
 
-export interface ISoundshot extends ISoundshotContract,
-	IBasePerTenantAndOrganizationEntityModel,
-	IRelationalUser {
+export interface ISoundshot extends ISoundshotContract, IBasePerTenantAndOrganizationEntityModel, IRelationalUser {
 	fileKey?: string;
 	timeSlotId?: ID;
 	timeSlot?: ITimeSlot;
