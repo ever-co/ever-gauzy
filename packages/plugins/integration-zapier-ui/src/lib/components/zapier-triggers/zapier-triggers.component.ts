@@ -22,10 +22,10 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 	public triggers: IZapierEndpoint[] = [];
 
 	/** Current organization data */
-	public organization: IOrganization;
+	public organization: IOrganization | null = null;
 
 	/** Zapier integration ID from route parameters */
-	public integrationId: ID;
+	public integrationId: ID | null = null;
 
 	constructor(
 		private readonly _zapierService: ZapierService,

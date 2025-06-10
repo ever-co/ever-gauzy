@@ -22,10 +22,10 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 	public actions: IZapierEndpoint[] = [];
 
 	/** Current organization data */
-	public organization: IOrganization;
+	public organization: IOrganization | null = null;
 
 	/** Zapier integration ID from route parameters */
-	public integrationId: ID;
+	public integrationId: ID | null = null;
 
 	constructor(
 		private readonly _zapierService: ZapierService,
@@ -95,12 +95,12 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 					console.error('Error loading Zapier actions:', error);
 
 					// Handle different types of errors with specific messages
-					if (error.status === 404 || error.message?.includes('not found')) {
+					if (error?.status === 404 || error.message?.includes('not found')) {
 						this._toastrService.error(
 							this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.TOKEN_NOT_FOUND'),
 							this.getTranslation('TOASTR.TITLE.ERROR')
 						);
-					} else if (error.status === 401 || error.message?.includes('access token')) {
+					} else if (error?.status === 401 || error.message?.includes('access token')) {
 						this._toastrService.error(
 							this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.INVALID_TOKEN'),
 							this.getTranslation('TOASTR.TITLE.ERROR')
