@@ -154,6 +154,7 @@ COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/p
 COPY --chown=node:node packages/plugins/posthog/package.json ./packages/plugins/posthog/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
+COPY --chown=node:node packages/plugins/camshot/package.json ./packages/plugins/camshot/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
@@ -215,6 +216,7 @@ COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/p
 COPY --chown=node:node packages/plugins/posthog/package.json ./packages/plugins/posthog/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
+COPY --chown=node:node packages/plugins/camshot/package.json ./packages/plugins/camshot/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
@@ -336,6 +338,7 @@ RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin
     cp -r ./packages/plugins/job-proposal/node_modules ./node_modules/@gauzy/plugin-job-proposal/ && \
     cp -r ./packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugin-job-search/ && \
     cp -r ./packages/plugins/knowledge-base/node_modules ./node_modules/@gauzy/plugin-knowledge-base/ && \
+    cp -r ./packages/plugins/camshot/node_modules ./node_modules/@gauzy/plugin-camshot/ && \
     cp -r ./packages/plugins/product-reviews/node_modules ./node_modules/@gauzy/plugin-product-reviews/ && \
     cp -r ./packages/plugins/sentry-tracing/node_modules ./node_modules/@gauzy/plugin-sentry/ && \
     cp -r ./packages/plugins/posthog/node_modules ./node_modules/@gauzy/plugin-posthog/ && \

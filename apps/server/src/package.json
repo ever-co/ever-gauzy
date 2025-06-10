@@ -39,6 +39,7 @@
 			"../../../dist/packages/plugins/registry",
 			"../../../dist/packages/plugins/integration-zapier",
 			"../../../dist/packages/plugins/posthog",
+			"../../../dist/packages/plugins/camshot",
 			"../../../dist/packages/ui-config",
 			"../../../dist/packages/utils"
 		]
@@ -173,6 +174,7 @@
 		"@gauzy/plugin-registry": "file:../../../dist/packages/plugins/registry",
 		"@gauzy/plugin-integration-zapier": "file:../../../dist/packages/plugins/integration-zapier",
 		"@gauzy/plugin-posthog": "file:../../../dist/packages/plugins/posthog",
+		"@gauzy/plugin-camshot": "file:../../../dist/packages/plugins/camshot",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@gauzy/utils": "file:../../../dist/packages/utils",
 		"@sentry/electron": "^4.18.0",
