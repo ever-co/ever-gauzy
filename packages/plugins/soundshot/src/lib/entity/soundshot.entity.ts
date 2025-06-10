@@ -81,12 +81,12 @@ export class Soundshot extends TenantOrganizationBaseEntity implements ISoundsho
 
 	/**
 	 * Size of the soundshot file in bytes.
-	 * Optional with a maximum size limit of 5MB (5242880 bytes).
+	 * Optional with a maximum size limit of 100MB (104857600 bytes).
 	 */
 	@IsOptional()
 	@IsNumber({}, { message: 'Size must be a number' })
 	@Min(0, { message: 'Size must be greater than or equal to 0' })
-	@Max(5242880, { message: 'Size cannot exceed 5MB.' })
+	@Max(104857600, { message: 'Size cannot exceed 100MB.' })
 	@Transform(({ value }) => Number.parseFloat(value), { toClassOnly: true })
 	@ApiPropertyOptional({ type: () => Number, description: 'Size of the soundshot file in bytes' })
 	@MultiORMColumn({ nullable: true })
