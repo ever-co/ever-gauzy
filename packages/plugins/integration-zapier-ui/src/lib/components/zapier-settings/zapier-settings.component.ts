@@ -42,10 +42,7 @@ export class ZapierSettingsComponent extends TranslationBaseComponent implements
 		this.form.get('isEnabled').valueChanges.subscribe((isEnabled) => {
 			const webhookUrlControl = this.form.get('webhookUrl');
 			if (isEnabled) {
-				webhookUrlControl.setValidators([
-					Validators.required,
-					Validators.pattern(/^https?:\/\/([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/)
-				]);
+				webhookUrlControl.setValidators([Validators.required]);
 			} else {
 				webhookUrlControl.clearValidators();
 			}
