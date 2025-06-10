@@ -36,7 +36,7 @@ export interface IZapierOAuthTokenDTO {
 /**
  * Persistence model combining token data with organizational metadata
  */
-export interface IZapierOAuthTokens extends IBasePerTenantAndOrganizationEntityModel, IZapierOAuthTokenDTO {}
+export interface PIZapierOAuthTokens extends IBasePerTenantAndOrganizationEntityModel, IZapierOAuthTokenDTO {}
 
 export interface IZapierAuthConfig {
 	clientId: string;

@@ -59,7 +59,7 @@ export class ZapierCallbackComponent extends TranslationBaseComponent implements
 					);
 					this._redirectToIntegrations();
 				}),
-				catchError((error) => {
+				catchError(() => {
 					this._toastrService.error(
 						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.AUTHORIZATION'),
 						this.getTranslation('TOASTR.TITLE.ERROR')

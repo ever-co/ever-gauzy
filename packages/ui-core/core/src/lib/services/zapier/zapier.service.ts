@@ -10,7 +10,7 @@ import {
 	IZapierCreateWebhookInput,
 	IZapierAuthConfig,
 	IZapierIntegrationSettings,
-	IIntegrationSetting
+	IZapierOAuthTokens
 } from '@gauzy/contracts';
 
 @Injectable({
@@ -36,8 +36,8 @@ export class ZapierService {
 	/**
 	 * Get Zapier access token for a given integration
 	 */
-	getZapierToken(integrationId: string): Observable<IIntegrationSetting> {
-		return this.http.get<IIntegrationSetting>(`${API_PREFIX}/integration/zapier/token/${integrationId}`);
+	getZapierToken(integrationId: string): Observable<IZapierOAuthTokens> {
+		return this.http.get<IZapierOAuthTokens>(`${API_PREFIX}/integration/zapier/token/${integrationId}`);
 	}
 
 	/**
