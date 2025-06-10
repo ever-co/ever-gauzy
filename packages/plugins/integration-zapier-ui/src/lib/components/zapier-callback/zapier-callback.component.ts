@@ -31,9 +31,7 @@ export class ZapierCallbackComponent extends TranslationBaseComponent implements
 	}
 
 	private _handleCallback() {
-		this.loading = true;
 		const { code } = this._route.snapshot.queryParams;
-
 		if (!code) {
 			this._toastrService.error(
 				this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.INVALID_CALLBACK'),
@@ -42,6 +40,8 @@ export class ZapierCallbackComponent extends TranslationBaseComponent implements
 			this._redirectToIntegrations();
 			return;
 		}
+
+		this.loading = true;
 
 		this._zapierService
 			.exchangeCodeForToken({
@@ -64,7 +64,6 @@ export class ZapierCallbackComponent extends TranslationBaseComponent implements
 						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.AUTHORIZATION'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
-					console.error('Error during authorization:', error);
 					this._redirectToIntegrations();
 					return EMPTY;
 				}),

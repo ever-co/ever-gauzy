@@ -4,7 +4,7 @@ import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { IZapierEndpoint, IZapierAccessTokens, IZapierAuthConfig } from '@gauzy/contracts';
+import { IZapierEndpoint, IZapierOAuthTokenDTO, IZapierAuthConfig } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
@@ -33,7 +33,6 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 	private _loadTriggers() {
 		this.loading = true;
 
-
 		this._zapierService
 			.getOAuthConfig()
 			.pipe(
@@ -48,7 +47,7 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 						grant_type: 'authorization_code'
 					});
 				}),
-				switchMap((tokens: IZapierAccessTokens) => {
+				switchMap((tokens: IZapierOAuthTokenDTO) => {
 					if (tokens && tokens.access_token) {
 						return this._zapierService.getTriggers(tokens.access_token);
 					}
@@ -57,12 +56,11 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 				tap((triggers: IZapierEndpoint[]) => {
 					this.triggers = triggers;
 				}),
-				catchError((error) => {
+				catchError(() => {
 					this._toastrService.error(
 						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.LOAD_TRIGGERS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
-					console.error('Error loading triggers:', error);
 					return EMPTY;
 				}),
 				finalize(() => {
@@ -78,6 +76,5 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 	 */
 	openTriggerDetails(trigger: IZapierEndpoint) {
 		// TODO: Implement trigger details view
-		console.log('Opening trigger details:', trigger);
 	}
 }

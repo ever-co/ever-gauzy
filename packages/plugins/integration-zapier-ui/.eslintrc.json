@@ -10,7 +10,7 @@
 					"error",
 					{
 						"type": "attribute",
-						"prefix": "lib",
+						"prefix": "ngx",
 						"style": "camelCase"
 					}
 				],
@@ -18,7 +18,7 @@
 					"error",
 					{
 						"type": "element",
-						"prefix": "lib",
+						"prefix": "ngx",
 						"style": "kebab-case"
 					}
 				]

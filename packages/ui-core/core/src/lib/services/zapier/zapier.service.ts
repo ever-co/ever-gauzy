@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 import {
 	IZapierEndpoint,
-	IZapierAccessTokens,
+	IZapierOAuthTokenDTO,
 	ICreateZapierIntegrationInput,
 	IZapierWebhook,
 	IZapierCreateWebhookInput,
@@ -87,8 +87,8 @@ export class ZapierService {
 		client_secret: string;
 		redirect_uri: string;
 		grant_type: string;
-	}): Observable<IZapierAccessTokens> {
-		return this.http.post<IZapierAccessTokens>(`${API_PREFIX}/integration/zapier/token`, body);
+	}): Observable<IZapierOAuthTokenDTO> {
+		return this.http.post<IZapierOAuthTokenDTO>(`${API_PREFIX}/integration/zapier/token`, body);
 	}
 
 	/**
@@ -99,8 +99,8 @@ export class ZapierService {
 		client_id: string;
 		client_secret: string;
 		grant_type: string;
-	}): Observable<IZapierAccessTokens> {
-		return this.http.post<IZapierAccessTokens>(`${API_PREFIX}/integration/zapier/refresh-token`, body);
+	}): Observable<IZapierOAuthTokenDTO> {
+		return this.http.post<IZapierOAuthTokenDTO>(`${API_PREFIX}/integration/zapier/refresh-token`, body);
 	}
 
 	/**

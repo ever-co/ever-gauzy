@@ -54,6 +54,7 @@ export class ZapierSettingsComponent extends TranslationBaseComponent implements
 					});
 				}),
 				catchError((error) => {
+					this.loading = false;
 					this._toastrService.error(
 						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.LOAD_SETTINGS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')

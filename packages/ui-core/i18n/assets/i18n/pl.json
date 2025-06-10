@@ -599,8 +599,8 @@
 			"COST": "Koszt",
 			"MAKE_COM_CLIENT_ID": "Wprowadź swoje ID klienta Make.com",
 			"MAKE_COM_CLIENT_SECRET": "Wprowadź swój sekret klienta Make.com",
-			"ZAPIER_CLIENT_ID": "Wprowadź swoje ID Klienta Zapier",
-			"ZAPIER_CLIENT_SECRET": "Wprowadź swój Sekret Klienta Zapier",
+			"ZAPIER_CLIENT_ID": "Wprowadź swoje ID klienta Zapier",
+			"ZAPIER_CLIENT_SECRET": "Wprowadź swój sekret klienta Zapier",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Nazwa szkoły",
 				"DEGREE": "Stopień/Dyplom",

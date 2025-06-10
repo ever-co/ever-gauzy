@@ -4,7 +4,7 @@ import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { IZapierEndpoint, IZapierAccessTokens, IZapierAuthConfig } from '@gauzy/contracts';
+import { IZapierEndpoint, IZapierOAuthTokenDTO, IZapierAuthConfig } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
@@ -47,7 +47,7 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 						grant_type: 'authorization_code'
 					});
 				}),
-				switchMap((tokens: IZapierAccessTokens) => {
+				switchMap((tokens: IZapierOAuthTokenDTO) => {
 					if (tokens && tokens.access_token) {
 						return this._zapierService.getActions(tokens.access_token);
 					}
@@ -61,7 +61,7 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.LOAD_ACTIONS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
-					console.error('Error loading actions:', error);
+
 					return EMPTY;
 				}),
 				finalize(() => {
@@ -77,6 +77,5 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 	 */
 	openActionDetails(action: IZapierEndpoint) {
 		// TODO: Implement action details view
-		console.log('Opening action details:', action);
 	}
 }

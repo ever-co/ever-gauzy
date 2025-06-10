@@ -33,7 +33,6 @@ export class IntegrationZapierLayoutComponent implements OnInit, OnDestroy {
 			distinctUntilChange(),
 			filter((lang: string | LanguagesEnum) => !!lang),
 			tap((lang: string | LanguagesEnum) => {
-				console.log('integration Zapier ui module plugin lang', lang);
 				this._translateService.use(lang);
 			}),
 			untilDestroyed(this)
@@ -43,7 +42,5 @@ export class IntegrationZapierLayoutComponent implements OnInit, OnDestroy {
 		preferredLanguage$.subscribe();
 	}
 
-	ngOnDestroy(): void {
-		console.log(`Integration Zapier UI module plugin destroyed`);
-	}
+	ngOnDestroy(): void {}
 }

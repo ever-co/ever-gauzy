@@ -135,8 +135,7 @@ export class ZapierComponent extends TranslationBaseComponent implements OnInit,
 						this._zapierStoreService.reset();
 					}
 				}),
-				catchError((error) => {
-					console.error('Error loading Zapier integration settings:', error);
+				catchError(() => {
 					return EMPTY;
 				}),
 				untilDestroyed(this)

@@ -69,7 +69,6 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 					this.oauthConfig = config;
 				}),
 				catchError((error) => {
-					console.error('Error loading OAuth config:', error);
 					return EMPTY;
 				}),
 				untilDestroyed(this)
@@ -80,7 +79,6 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 	private _checkExistingIntegration() {
 		if (!this.organization) return EMPTY;
 
-		this.loading = true;
 		const { id: organizationId, tenantId } = this.organization;
 
 		return this._integrationsService

@@ -16,7 +16,7 @@
 					[placeholder]="'FORM.PLACEHOLDERS.ZAPIER_CLIENT_ID' | translate"
 				/>
 				<div
-					*ngIf="form.get('client_id').touched && form.get('client_id').errors?.required"
+					*ngIf="form.controls.client_id.touched && form.controls.client_id.errors?.required"
 					class="error-message"
 				>
 					{{ 'FORM.VALIDATION.REQUIRED' | translate }}
@@ -35,7 +35,7 @@
 					[placeholder]="'FORM.PLACEHOLDERS.ZAPIER_CLIENT_SECRET' | translate"
 				/>
 				<div
-					*ngIf="form.get('client_secret').touched && form.get('client_secret').errors?.required"
+					*ngIf="form.controls.client_secret.touched && form.controls.client_secret.errors?.required"
 					class="error-message"
 				>
 					{{ 'FORM.VALIDATION.REQUIRED' | translate }}

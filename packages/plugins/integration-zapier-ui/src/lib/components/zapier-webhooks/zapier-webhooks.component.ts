@@ -4,7 +4,7 @@ import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { IZapierWebhook, IZapierAccessTokens, IZapierAuthConfig } from '@gauzy/contracts';
+import { IZapierWebhook, IZapierOAuthTokenDTO, IZapierAuthConfig } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
@@ -47,7 +47,7 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 						grant_type: 'authorization_code'
 					});
 				}),
-				switchMap((tokens: IZapierAccessTokens) => {
+				switchMap((tokens: IZapierOAuthTokenDTO) => {
 					if (tokens && tokens.access_token) {
 						return this._zapierService.getWebhooks(tokens.access_token);
 					}
@@ -61,7 +61,6 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.LOAD_WEBHOOKS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
-					console.error('Error loading webhooks:', error);
 					return EMPTY;
 				}),
 				finalize(() => {
@@ -87,7 +86,7 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 						grant_type: 'authorization_code'
 					});
 				}),
-				switchMap((tokens: IZapierAccessTokens) => {
+				switchMap((tokens: IZapierOAuthTokenDTO) => {
 					if (tokens && tokens.access_token) {
 						return this._zapierService.deleteWebhook(webhookId, tokens.access_token);
 					}
