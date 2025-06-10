@@ -4,10 +4,10 @@ This library was generated with [Nx](https://nx.dev). This plugin provides funct
 
 ## Overview
 
-This plugin enables camera shot management capabilities including:
+This plugin enables camera shot management capabilities, including:
 
-- Camera shot upload and storage
-- Camera shot metadata management
+-   Camera shot upload and storage
+-   Camera shot metadata management
 
 ## Building
 
