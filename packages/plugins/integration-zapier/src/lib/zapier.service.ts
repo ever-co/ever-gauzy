@@ -22,7 +22,7 @@ import {
 	RequestContext
 } from '@gauzy/core';
 import { ZAPIER_API_URL, ZAPIER_BASE_URL, ZAPIER_TOKEN_EXPIRATION_TIME, ZAPIER_OAUTH_SCOPES } from './zapier.config';
-import { ICreateZapierIntegrationInput, IZapierOAuthTokenDTO, IZapierEndpoint, IZapierAuthState } from './zapier.types';
+import { ICreateZapierIntegrationInput, IZapierAccessTokens, IZapierEndpoint, IZapierAuthState } from './zapier.types';
 import { randomBytes } from 'node:crypto';
 
 @Injectable()
@@ -70,7 +70,7 @@ export class ZapierService {
  	 * @throws {BadRequestException} - When required settings (client_id, client_secret, refresh_token) are missing
 
 	 */
-	async refreshToken(integrationId: ID): Promise<IZapierOAuthTokenDTO> {
+	async refreshToken(integrationId: ID): Promise<IZapierAccessTokens> {
 		try {
 			// Fetch integration settings
 			const settings = await this._integrationSettingService.find({
@@ -96,12 +96,15 @@ export class ZapierService {
 
 			const result = await this.generateAndStoreNewTokens(integrationId);
 
-			this.logger.log(`Successfully refreshed tokens for integration ID ${integrationId}`, {
-				integrationId,
-				client_id,
-				tenantId: settings[0]?.tenantId,
-				organizationId: settings[0]?.organizationId
-			});
+			this.logger.log(
+				`Successfully refreshed tokens for integration ID ${integrationId}`,
+				{
+					integrationId,
+					client_id,
+					tenantId: settings[0]?.tenantId,
+					organizationId: settings[0]?.organizationId
+				}
+			);
 			return result;
 		} catch (error: any) {
 			this.logger.error(`Failed to refresh token for integration ID ${integrationId}`, {
@@ -648,7 +651,7 @@ export class ZapierService {
 		await this._integrationSettingService.save(allSettings);
 	}
 
-	private async generateAndStoreNewTokens(integration: ID): Promise<IZapierOAuthTokenDTO> {
+	private async generateAndStoreNewTokens(integration: ID): Promise<IZapierAccessTokens> {
 		const access_token = randomBytes(32).toString('hex');
 		const new_refresh_token = randomBytes(32).toString('hex');
 
@@ -669,7 +672,7 @@ export class ZapierService {
 	 * @returns New access and refresh tokens
 	 * @throws NotFoundException if integration or refresh token is invalid
 	 */
-	async refreshTokenByRefreshToken(integrationId: ID, refreshToken: string): Promise<IZapierOAuthTokenDTO> {
+	async refreshTokenByRefreshToken(integrationId: ID, refreshToken: string): Promise<IZapierAccessTokens> {
 		try {
 			// Fetch integration settings
 			const settings = await this._integrationSettingService.find({
