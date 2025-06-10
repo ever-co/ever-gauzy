@@ -82,35 +82,10 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 
 		// Step 1: Get stored OAuth token using integration ID from route
 		this._zapierService
-			.getZapierToken(this.integrationId)
+			.getAccessToken(this.integrationId)
 			.pipe(
-				// Step 2: Extract access token from integration setting
-				switchMap((integrationSetting: IIntegrationSetting) => {
-					if (!integrationSetting || !integrationSetting.settingsValue) {
-						throw new Error('Integration setting found but access token value is missing');
-					}
+				switchMap((accessToken: string) => this._zapierService.getTriggers(accessToken)),
 
-					// Parse the access token from the settings value
-					let accessToken: string;
-					try {
-						// If settingsValue is a JSON string, parse it
-						const tokenData =
-							typeof integrationSetting.settingsValue === 'string'
-								? JSON.parse(integrationSetting.settingsValue)
-								: integrationSetting.settingsValue;
-
-						accessToken = tokenData.access_token || tokenData;
-					} catch (parseError) {
-						// If parsing fails, treat as direct token string
-						accessToken = integrationSetting.settingsValue as string;
-					}
-
-					if (!accessToken) {
-						throw new Error('Access token is empty or invalid');
-					}
-
-					return this._zapierService.getTriggers(accessToken);
-				}),
 				// Store the retrieved triggers
 				tap((triggers: IZapierEndpoint[]) => {
 					this.triggers = triggers;

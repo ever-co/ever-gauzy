@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of, switchMap } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 import {
 	IZapierEndpoint,
@@ -10,7 +10,8 @@ import {
 	IZapierCreateWebhookInput,
 	IZapierAuthConfig,
 	IZapierIntegrationSettings,
-	IZapierOAuthTokens
+	IIntegrationSetting,
+	ID
 } from '@gauzy/contracts';
 
 @Injectable({
@@ -36,8 +37,39 @@ export class ZapierService {
 	/**
 	 * Get Zapier access token for a given integration
 	 */
-	getZapierToken(integrationId: string): Observable<IZapierOAuthTokens> {
-		return this.http.get<IZapierOAuthTokens>(`${API_PREFIX}/integration/zapier/token/${integrationId}`);
+	getZapierToken(integrationId: string): Observable<IIntegrationSetting> {
+		return this.http.get<IIntegrationSetting>(`${API_PREFIX}/integration/zapier/token/${integrationId}`);
+	}
+
+	/**
+	 * Extract and return the OAuth access token from integration settings
+	 * Handles different token storage formats (JSON string, object, or direct string)
+	 */
+	getAccessToken(integrationId: ID): Observable<string> {
+		return this.getZapierToken(integrationId).pipe(
+			switchMap((integrationSetting: IIntegrationSetting) => {
+				if (!integrationSetting || !integrationSetting.settingsValue) {
+					throw new Error('Integration setting found but access token value is missing');
+				}
+
+				let accessToken: string;
+				try {
+					const tokenData =
+						typeof integrationSetting.settingsValue === 'string'
+							? JSON.parse(integrationSetting.settingsValue)
+							: integrationSetting.settingsValue;
+					accessToken = tokenData.access_token || tokenData;
+				} catch (parseError) {
+					accessToken = integrationSetting.settingsValue as string;
+				}
+
+				if (!accessToken) {
+					throw new Error('Access token is empty or invalid');
+				}
+
+				return of(accessToken);
+			})
+		);
 	}
 
 	/**
