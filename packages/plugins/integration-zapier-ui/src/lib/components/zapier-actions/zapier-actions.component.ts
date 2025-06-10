@@ -41,10 +41,11 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 						throw new Error('Missing client credentials');
 					}
 					return this._zapierService.exchangeCodeForToken({
+						code:'code',
 						client_id: config.clientId,
 						client_secret: config.clientSecret,
 						redirect_uri: config.redirectUri,
-						grant_type: 'authorization_code'
+						grant_type: 'refresh_token'
 					});
 				}),
 				switchMap((tokens: IZapierOAuthTokenDTO) => {
