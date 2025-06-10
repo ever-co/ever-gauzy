@@ -4,6 +4,7 @@ import { ConfigService } from '@gauzy/config';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError } from 'axios';
 import { firstValueFrom, catchError } from 'rxjs';
+import { createHash, randomBytes } from 'crypto';
 import {
 	IntegrationEnum,
 	IIntegrationEntitySetting,
@@ -25,7 +26,7 @@ import { MakeComService } from './make-com.service';
 @Injectable()
 export class MakeComOAuthService {
 	private readonly logger = new Logger(MakeComOAuthService.name);
-	private pendingStates = new Map<string, { timestamp: number }>();
+	private pendingStates = new Map<string, { timestamp: number; codeVerifier?: string }>();
 
 	constructor(
 		private readonly httpService: HttpService,
@@ -38,7 +39,21 @@ export class MakeComOAuthService {
 	) {}
 
 	/**
-	 * Generate the authorization URL for the Make.com OAuth flow.
+	 * Generate a cryptographically secure random code verifier for PKCE
+	 */
+	private generateCodeVerifier(): string {
+		return randomBytes(32).toString('base64url');
+	}
+
+	/**
+	 * Generate code challenge from code verifier using SHA256
+	 */
+	private generateCodeChallenge(codeVerifier: string): string {
+		return createHash('sha256').update(codeVerifier).digest('base64url');
+	}
+
+	/**
+	 * Generate the authorization URL for the Make.com OAuth flow with PKCE support.
 	 *
 	 */
 	getAuthorizationUrl(options?: { state?: string; clientId?: string; organizationId?: string }): string {
@@ -56,21 +71,27 @@ export class MakeComOAuthService {
 		// Use provided state or generate a new one
 		const state = options?.state ?? Buffer.from(JSON.stringify({ tenantId, organizationId })).toString('base64');
 
+		// Generate PKCE parameters
+		const codeVerifier = this.generateCodeVerifier();
+		const codeChallenge = this.generateCodeChallenge(codeVerifier);
+
 		// only store generated states to avoid duplicates
 		if (!options?.state) {
-			this.storeStateForVerification(state);
+			this.storeStateForVerification(state, codeVerifier);
 		}
 
 		// Prepare scopes according to Make.com documentation
 		const scopes = MAKE_DEFAULT_SCOPES.join(' ');
 
-		// Build authorization URL according to Make.com documentation
+		// Build authorization URL according to Make.com documentation with PKCE
 		const params = new URLSearchParams({
 			client_id: clientId,
 			redirect_uri: redirectUri,
 			response_type: 'code',
 			state,
-			scope: scopes
+			scope: scopes,
+			code_challenge: codeChallenge,
+			code_challenge_method: 'S256'
 		});
 
 		return `${MAKE_BASE_URL}/oauth/authorize?${params.toString()}`;
@@ -82,7 +103,8 @@ export class MakeComOAuthService {
 
 	async exchangeCodeForToken(code: string, state: string): Promise<IMakeComOAuthTokens> {
 		try {
-			if (!this.verifyState(state)) {
+			const stateVerification = this.verifyState(state);
+			if (!stateVerification.isValid) {
 				throw new BadRequestException('Invalid state parameter');
 			}
 
@@ -107,7 +129,7 @@ export class MakeComOAuthService {
 
 			const redirectUri = this.config.get('makeCom').redirectUri;
 
-			// Prepare the request body for Make.com token endpoint
+			// Prepare the request body for Make.com token endpoint with PKCE
 			const tokenRequestParams = new URLSearchParams({
 				grant_type: 'authorization_code',
 				code,
@@ -115,6 +137,11 @@ export class MakeComOAuthService {
 				client_id: clientId,
 				client_secret: clientSecret
 			});
+
+			// Add code verifier for PKCE if available
+			if (stateVerification.codeVerifier) {
+				tokenRequestParams.append('code_verifier', stateVerification.codeVerifier);
+			}
 
 			const headers = {
 				'Content-Type': 'application/x-www-form-urlencoded',
@@ -272,31 +299,32 @@ export class MakeComOAuthService {
 	}
 
 	/**
-	 * Verify the state parameter to prevent CSRF attacks.
+	 * Verify the state parameter to prevent CSRF attacks and return code verifier for PKCE.
 	 */
-	verifyState(state: string): boolean {
+	verifyState(state: string): { isValid: boolean; codeVerifier?: string } {
 		const pendingState = this.pendingStates.get(state);
 
 		if (!pendingState) {
 			this.logger.warn(`State ${state} not found in pending states`);
-			return false;
+			return { isValid: false };
 		}
 		const now = Date.now();
 		const expirationTime = 10 * 60 * 1000; // 10 minutes in milliseconds
 		if (now - pendingState.timestamp > expirationTime) {
 			this.logger.warn(`State ${state} has expired`);
 			this.pendingStates.delete(state);
-			return false;
+			return { isValid: false };
 		}
-		// Valid and used - remove it to free memory
+		// Valid and used - remove it to free memory and return the code verifier
 		this.pendingStates.delete(state);
-		return true;
+		return { isValid: true, codeVerifier: pendingState.codeVerifier };
 	}
 
 	/**
-	 * Store the state parameter for later verification.
+	 * Store the state parameter and code verifier for later verification.
 	 *
 	 * @param {string} state - The state parameter to store.
+	 * @param {string} codeVerifier - The PKCE code verifier to store.
 	 */
 
 	/**
@@ -304,8 +332,8 @@ export class MakeComOAuthService {
 	 * This is a simple in-memory storage for small scale applications.
 	 * For scalability, we'll consider using cache, Redis for our case as it already exists in the project.
 	 */
-	private storeStateForVerification(state: string): void {
-		this.pendingStates.set(state, { timestamp: Date.now() });
+	private storeStateForVerification(state: string, codeVerifier?: string): void {
+		this.pendingStates.set(state, { timestamp: Date.now(), codeVerifier });
 		this.cleanupExpiredStates();
 	}
 

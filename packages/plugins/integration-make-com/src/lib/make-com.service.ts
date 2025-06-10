@@ -1,5 +1,13 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { IntegrationSettingService, IntegrationService, IntegrationTenantService, RequestContext, DEFAULT_ENTITY_SETTINGS, PROJECT_TIED_ENTITIES, IntegrationTenantUpdateOrCreateCommand } from '@gauzy/core';
+import {
+	IntegrationSettingService,
+	IntegrationService,
+	IntegrationTenantService,
+	RequestContext,
+	DEFAULT_ENTITY_SETTINGS,
+	PROJECT_TIED_ENTITIES,
+	IntegrationTenantUpdateOrCreateCommand
+} from '@gauzy/core';
 import { In } from 'typeorm';
 import { IIntegrationEntitySetting, IIntegrationTenant, IntegrationEntity, IntegrationEnum } from '@gauzy/contracts';
 import { IMakeComIntegrationSettings, MakeSettingName, IMakeComCreateIntegration } from './interfaces/make-com.model';
@@ -13,27 +21,36 @@ export class MakeComService {
 		private readonly _commandBus: CommandBus,
 		private readonly integrationSettingService: IntegrationSettingService,
 		private readonly integrationTenantService: IntegrationTenantService,
-		private readonly integrationService: IntegrationService,
+		private readonly integrationService: IntegrationService
 	) {}
 
 	/**
-	 * Retrieves Make.com integration settings for the current tenant.
+	 * Retrieves Make.com integration settings for the current tenant and organization.
 	 *
+	 * @param {string} [organizationId] - Optional organization ID to filter by organization level
 	 * @returns {Promise<IMakeComIntegrationSettings>} A promise that resolves to the Make.com integration settings.
 	 */
-	async getIntegrationSettings(): Promise<IMakeComIntegrationSettings> {
+	async getIntegrationSettings(organizationId?: string): Promise<IMakeComIntegrationSettings> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			if (!tenantId) {
 				throw new NotFoundException('Tenant ID not found in request context');
 			}
 
-			// Find the integration for the current tenant
+			// Build the where clause with tenant and optional organization filter
+			const whereClause: any = {
+				name: IntegrationEnum.MakeCom,
+				tenantId
+			};
+
+			// If organizationId is provided, filter by organization level
+			if (organizationId) {
+				whereClause.organizationId = organizationId;
+			}
+
+			// Find the integration for the current tenant and organization
 			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: {
-					name: IntegrationEnum.MakeCom,
-					tenantId
-				},
+				where: whereClause,
 				relations: ['settings']
 			});
 
@@ -63,34 +80,50 @@ export class MakeComService {
 	}
 
 	/**
-	 * Updates Make.com integration settings for the current tenant.
+	 * Updates Make.com integration settings for the current tenant and organization.
 	 *
 	 * @param {Object} input - The settings to update.
 	 * @param {boolean} input.isEnabled - Whether the integration is enabled.
 	 * @param {string} input.webhookUrl - The webhook URL for Make.com.
+	 * @param {string} [organizationId] - Optional organization ID to filter by organization level
 	 * @returns {Promise<IMakeComIntegrationSettings>} A promise that resolves to the updated settings.
 	 */
-	async updateIntegrationSettings(input: {
-		isEnabled?: boolean;
-		webhookUrl?: string;
-	}): Promise<IMakeComIntegrationSettings> {
+	async updateIntegrationSettings(
+		input: {
+			isEnabled?: boolean;
+			webhookUrl?: string;
+		},
+		organizationId?: string
+	): Promise<IMakeComIntegrationSettings> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			if (!tenantId) {
 				throw new NotFoundException('Tenant ID not found in request context');
 			}
 
-			// Find the integration for the current tenant
+			// Build the where clause with tenant and optional organization filter
+			const whereClause: any = {
+				name: IntegrationEnum.MakeCom,
+				tenantId
+			};
+
+			// If organizationId is provided, filter by organization level
+			if (organizationId) {
+				whereClause.organizationId = organizationId;
+			}
+
+			// Find the integration for the current tenant and organization
 			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: {
-					name: IntegrationEnum.MakeCom,
-					tenantId
-				},
+				where: whereClause,
 				relations: ['settings']
 			});
 
 			if (!integrationTenant) {
-				throw new NotFoundException(`${IntegrationEnum.MakeCom} integration not found for this tenant`);
+				throw new NotFoundException(
+					`${IntegrationEnum.MakeCom} integration not found for this tenant${
+						organizationId ? ' and organization' : ''
+					}`
+				);
 			}
 
 			const updates = [];
@@ -132,8 +165,8 @@ export class MakeComService {
 			// Wait for all updates to complete
 			await Promise.all(updates);
 
-			// Return the updated settings
-			return this.getIntegrationSettings();
+			// Return the updated settings with organization context
+			return this.getIntegrationSettings(organizationId);
 		} catch (error) {
 			this.logger.error('Error updating Make.com integration settings:', error);
 			throw error;
@@ -141,13 +174,18 @@ export class MakeComService {
 	}
 
 	/**
-	 * Add Make.com integration settings for the current tenant.
+	 * Add Make.com integration settings for the current tenant and organization.
 	 * This method is used to add settings like client ID and client secret.
 	 * It is called when the integration is first set up.
+	 * The integration is automatically enabled (isEnabled = true) when created.
 	 * @param {Object} settings - The settings to add.
+	 * @param {string} [organizationId] - Optional organization ID for organization-level integration
 	 * @returns The created settings.
 	 */
-	async addIntegrationSettings(settings: IMakeComCreateIntegration, organizationId?: string): Promise<IIntegrationTenant> {
+	async addIntegrationSettings(
+		settings: IMakeComCreateIntegration,
+		organizationId?: string
+	): Promise<IIntegrationTenant> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { client_id, client_secret } = settings;
@@ -167,61 +205,62 @@ export class MakeComService {
 				});
 			}
 
-		// Map project-tied entities with organization and tenant IDs.
-		const tiedEntities = PROJECT_TIED_ENTITIES.map((entity) => ({
-			...entity,
-			organizationId,
-			tenantId
-		}));
-
-		const entitySettings = DEFAULT_ENTITY_SETTINGS.map((settingEntity) => {
-			if (settingEntity.entity === IntegrationEntity.PROJECT) {
-				return {
-					...settingEntity,
-					tiedEntities
-				};
-			}
-			return {
-				...settingEntity,
+			// Map project-tied entities with organization and tenant IDs.
+			const tiedEntities = PROJECT_TIED_ENTITIES.map((entity) => ({
+				...entity,
 				organizationId,
 				tenantId
-			};
-		}) as IIntegrationEntitySetting[];
+			}));
 
-		return await this._commandBus.execute(
-			new IntegrationTenantUpdateOrCreateCommand(
-				{
-					name: IntegrationEnum.MakeCom,
-					integration: { provider: IntegrationEnum.MakeCom },
-					tenantId,
-					organizationId
-				},
-				{
-					name: IntegrationEnum.MakeCom,
-					integration,
+			const entitySettings = DEFAULT_ENTITY_SETTINGS.map((settingEntity) => {
+				if (settingEntity.entity === IntegrationEntity.PROJECT) {
+					return {
+						...settingEntity,
+						tiedEntities
+					};
+				}
+				return {
+					...settingEntity,
 					organizationId,
-					tenantId,
-					entitySettings: entitySettings,
-					settings: [
-						{
-							settingsName: MakeSettingName.CLIENT_ID,
-							settingsValue: client_id
-						},
-						{
-							settingsName: MakeSettingName.CLIENT_SECRET,
-							settingsValue: client_secret
-						},
-						{
-							settingsName: MakeSettingName.IS_ENABLED,
-							settingsValue: 'true'
-						}
-					].map((setting) => ({
-						...setting,
+					tenantId
+				};
+			}) as IIntegrationEntitySetting[];
+
+			return await this._commandBus.execute(
+				new IntegrationTenantUpdateOrCreateCommand(
+					{
+						name: IntegrationEnum.MakeCom,
+						integration: { provider: IntegrationEnum.MakeCom },
 						tenantId,
 						organizationId
-					}))
-				}
-			)
+					},
+					{
+						name: IntegrationEnum.MakeCom,
+						integration,
+						organizationId,
+						tenantId,
+						entitySettings: entitySettings,
+						settings: [
+							{
+								settingsName: MakeSettingName.CLIENT_ID,
+								settingsValue: client_id
+							},
+							{
+								settingsName: MakeSettingName.CLIENT_SECRET,
+								settingsValue: client_secret
+							},
+							{
+								// Automatically enable the integration when it's created
+								settingsName: MakeSettingName.IS_ENABLED,
+								settingsValue: 'true'
+							}
+						].map((setting) => ({
+							...setting,
+							tenantId,
+							organizationId
+						}))
+					}
+				)
 			);
 		} catch (error) {
 			this.logger.error('Error adding Make.com integration settings:', error);
@@ -247,7 +286,7 @@ export class MakeComService {
 			// Find the integration for the current tenant
 			const integrationTenant = await this.integrationTenantService.findOneByWhereOptions({
 				name: IntegrationEnum.MakeCom,
-				tenantId,
+				tenantId
 			});
 
 			if (!integrationTenant) {
@@ -269,10 +308,7 @@ export class MakeComService {
 			];
 
 			// Use the bulkUpdateOrCreate method to save the settings
-			await this.integrationSettingService.bulkUpdateOrCreate(
-				integrationTenant.id,
-				settingsToSave,
-			);
+			await this.integrationSettingService.bulkUpdateOrCreate(integrationTenant.id, settingsToSave);
 
 			this.logger.log(`OAuth credentials updated for tenant: ${tenantId}`);
 		} catch (error) {
@@ -287,7 +323,10 @@ export class MakeComService {
 	 * @param {string} integrationId - The ID of the integration to get credentials for.
 	 * @returns {Promise<{clientId: string, clientSecret: string}>} A promise that resolves to the OAuth credentials.
 	 */
-	async getOAuthCredentials(integrationId: string, organizationId?: string): Promise<{ clientId: string; clientSecret: string }> {
+	async getOAuthCredentials(
+		integrationId: string,
+		organizationId?: string
+	): Promise<{ clientId: string; clientSecret: string }> {
 		try {
 			// Find the integration settings
 			const where: any = {
@@ -300,12 +339,16 @@ export class MakeComService {
 			const settings = await this.integrationSettingService.find({ where });
 
 			if (!settings || settings.length < 2) {
-				throw new NotFoundException('OAuth credentials not found for this integration missing client_id or client_secret');
+				throw new NotFoundException(
+					'OAuth credentials not found for this integration missing client_id or client_secret'
+				);
 			}
 
 			// Extract client ID and client secret
-			const clientIdSetting = settings.find(setting => setting.settingsName === MakeSettingName.CLIENT_ID);
-			const clientSecretSetting = settings.find(setting => setting.settingsName === MakeSettingName.CLIENT_SECRET);
+			const clientIdSetting = settings.find((setting) => setting.settingsName === MakeSettingName.CLIENT_ID);
+			const clientSecretSetting = settings.find(
+				(setting) => setting.settingsName === MakeSettingName.CLIENT_SECRET
+			);
 
 			if (!clientIdSetting || !clientSecretSetting) {
 				throw new NotFoundException('OAuth credentials are incomplete for this integration');
@@ -324,21 +367,30 @@ export class MakeComService {
 	/**
 	 * Retrieves the OAuth client ID for the Make.com integration.
 	 *
+	 * @param {string} [organizationId] - Optional organization ID to filter by organization level
 	 * @returns {Promise<string>} A promise that resolves to the OAuth client ID or null if not found.
 	 */
-	async getOAuthClientId(): Promise<string | null> {
+	async getOAuthClientId(organizationId?: string): Promise<string | null> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			if (!tenantId) {
 				throw new NotFoundException('Tenant ID not found in request context');
 			}
 
-			// Find the integration for the current tenant
+			// Build the where clause with tenant and optional organization filter
+			const whereClause: any = {
+				name: IntegrationEnum.MakeCom,
+				tenantId
+			};
+
+			// If organizationId is provided, filter by organization level
+			if (organizationId) {
+				whereClause.organizationId = organizationId;
+			}
+
+			// Find the integration for the current tenant and organization
 			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: {
-					name: IntegrationEnum.MakeCom,
-					tenantId
-				},
+				where: whereClause,
 				relations: ['settings']
 			});
 

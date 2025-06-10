@@ -96,15 +96,12 @@ export class ZapierService {
 
 			const result = await this.generateAndStoreNewTokens(integrationId);
 
-			this.logger.log(
-				`Successfully refreshed tokens for integration ID ${integrationId}`,
-				{
-					integrationId,
-					client_id,
-					tenantId: settings[0]?.tenantId,
-					organizationId: settings[0]?.organizationId
-				}
-			);
+			this.logger.log(`Successfully refreshed tokens for integration ID ${integrationId}`, {
+				integrationId,
+				client_id,
+				tenantId: settings[0]?.tenantId,
+				organizationId: settings[0]?.organizationId
+			});
 			return result;
 		} catch (error: any) {
 			this.logger.error(`Failed to refresh token for integration ID ${integrationId}`, {
@@ -138,13 +135,18 @@ export class ZapierService {
 	}
 
 	/**
+	 * Generate a random state string for OAuth flow
+	 */
+	private generateState(): string {
+		return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+	}
+
+	/**
 	 * Generate the authorization URL for the Zapier OAuth flow.
 	 */
 	getAuthorizationUrl(options?: {
 		state?: string;
 		clientId?: string;
-		organizationId?: string;
-		integrationId?: string;
 	}): string {
 		try {
 			const redirect_uri = this.config.get('zapier')?.redirectUri;
@@ -155,33 +157,14 @@ export class ZapierService {
 			// Validate redirect URI against allowed domains
 			this.validateRedirectUri(redirect_uri);
 
-			const organizationId = options?.organizationId;
-			const integrationId = options?.integrationId;
-			const tenantId = RequestContext.currentTenantId();
-
-			if (!tenantId) {
-				throw new BadRequestException('Tenant ID is required');
-			}
-
 			// Use provided clientId or fallback to config
 			const clientId = options?.clientId || this.config.get('zapier')?.clientId;
 			if (!clientId) {
 				throw new Error('Zapier client ID is not configured');
 			}
 
-			// Use provided state or generate a new one with all needed information
-			const state =
-				options?.state ??
-				Buffer.from(
-					JSON.stringify({
-						tenantId,
-						organizationId,
-						integrationId,
-						// Add cryptographically secure random component to prevent state prediction
-						nonce: randomBytes(16).toString('hex'),
-						timestamp: Date.now()
-					})
-				).toString('base64');
+			// Use provided state or generate a new one using simple random generation
+			const state = options?.state ?? this.generateState();
 
 			if (!state || !state?.trim()) {
 				throw new BadRequestException('State parameter is required');
@@ -264,30 +247,17 @@ export class ZapierService {
 
 	/**
 	 * Parse the state parameter from the OAuth callback
+	 * With the new simple state format, we just validate it's a valid string
 	 */
-	parseAuthState(state: string): IZapierAuthState {
+	parseAuthState(state: string): string {
 		try {
-			const decodedState = JSON.parse(Buffer.from(state, 'base64').toString());
-
-			// Validate timestamp to prevent replay attacks (5 minutes max)
-			if (decodedState.timestamp) {
-				const maxAge = 5 * 60 * 1000; // 5 minutes in milliseconds
-				const age = Date.now() - decodedState.timestamp;
-				if (age > maxAge) {
-					throw new BadRequestException('State parameter has expired');
-				}
+			// Basic validation - state should be a non-empty string
+			if (!state || typeof state !== 'string' || state.trim().length === 0) {
+				throw new BadRequestException('Invalid state parameter');
 			}
 
-			// Validate required fields
-			if (!decodedState.tenantId) {
-				throw new BadRequestException('Invalid state parameter: missing tenant ID');
-			}
-
-			return {
-				tenantId: decodedState.tenantId,
-				organizationId: decodedState.organizationId,
-				integrationId: decodedState.integrationId
-			};
+			// Since we're using simple random strings now, just return the state
+			return state;
 		} catch (error) {
 			this.logger.error('Error parsing OAuth state:', error);
 			throw new BadRequestException('Invalid state parameter');
@@ -365,39 +335,31 @@ export class ZapierService {
 	/**
 	 * Complete the OAuth flow by exchanging the authorization code for tokens
 	 */
-	async completeOAuthFlow(code: string, stateData: IZapierAuthState): Promise<IIntegrationTenant> {
+	async completeOAuthFlow(code: string, state: string): Promise<IIntegrationTenant> {
 		try {
-			// Find the integration with stored credentials
-			let integrationTenant: IIntegrationTenant | null = null;
-
-			if (stateData.integrationId) {
-				const integration = await this._integrationService.findOneByIdString(stateData.integrationId);
-				if (integration) {
-					integrationTenant = {
-						...integration,
-						name: IntegrationEnum.ZAPIER
-					};
-				}
-			} else {
-				// Fallback to find by tenant and name
-				const integration = await this._integrationService.findOneByOptions({
-					where: {
-						tenantId: stateData.tenantId,
-						name: IntegrationEnum.ZAPIER
-					} as any, // Cast to any to bypass type checking limitations
-					relations: ['settings']
-				});
-				if (integration) {
-					integrationTenant = {
-						...integration,
-						name: IntegrationEnum.ZAPIER
-					};
-				}
+			// Get current tenant ID from request context
+			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID is required');
 			}
 
-			if (!integrationTenant) {
-				throw new NotFoundException('Integration not found');
+			// Find the integration by current tenant and Zapier provider
+			const integration = await this._integrationService.findOneByOptions({
+				where: {
+					tenantId,
+					name: IntegrationEnum.ZAPIER
+				} as any, // Cast to any to bypass type checking limitations
+				relations: ['settings']
+			});
+
+			if (!integration) {
+				throw new NotFoundException('Zapier integration not found for current tenant');
 			}
+
+			const integrationTenant: IIntegrationTenant = {
+				...integration,
+				name: IntegrationEnum.ZAPIER
+			};
 
 			// Get settings to retrieve client_id and client_secret
 			const settings = await this._integrationSettingService.find({
@@ -448,21 +410,22 @@ export class ZapierService {
 					)
 			);
 
-			// Store the tokens
+			// Store the tokens using the existing settings' tenant and organization info
+			const existingSetting = settings[0];
 			const updatedSettings = [
 				...settings,
 				{
 					settingsName: 'access_token',
 					settingsValue: response.access_token,
-					tenantId: stateData.tenantId,
-					organizationId: stateData.organizationId,
+					tenantId: existingSetting?.tenantId || tenantId,
+					organizationId: existingSetting?.organizationId,
 					integrationId: integrationTenant.id
 				},
 				{
 					settingsName: 'refresh_token',
 					settingsValue: response.refresh_token,
-					tenantId: stateData.tenantId,
-					organizationId: stateData.organizationId,
+					tenantId: existingSetting?.tenantId || tenantId,
+					organizationId: existingSetting?.organizationId,
 					integrationId: integrationTenant.id
 				}
 			].filter((setting, index, self) => {

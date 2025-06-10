@@ -67,9 +67,7 @@ export class ZapierController {
 
 		// Generate authorization URL for user to complete OAuth flow
 		const authorizationUrl = this.zapierService.getAuthorizationUrl({
-			clientId: body.client_id,
-			organizationId: body.organizationId,
-			integrationId: integration.id
+			clientId: body.client_id
 		});
 
 		return {
