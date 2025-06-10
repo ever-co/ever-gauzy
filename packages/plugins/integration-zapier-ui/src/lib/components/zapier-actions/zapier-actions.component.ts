@@ -41,7 +41,7 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 						throw new Error('Missing client credentials');
 					}
 					return this._zapierService.exchangeCodeForToken({
-						code:'code',
+						code: 'code',
 						client_id: config.clientId,
 						client_secret: config.clientSecret,
 						redirect_uri: config.redirectUri,
@@ -57,7 +57,7 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 				tap((actions: IZapierEndpoint[]) => {
 					this.actions = actions;
 				}),
-				catchError((error) => {
+				catchError(() => {
 					this._toastrService.error(
 						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.LOAD_ACTIONS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
@@ -76,7 +76,7 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 	/**
 	 * Open action details
 	 */
-	openActionDetails(action: IZapierEndpoint) {
+	openActionDetails() {
 		// TODO: Implement action details view
 	}
 }

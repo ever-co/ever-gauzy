@@ -75,7 +75,7 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 	/**
 	 * Open trigger details
 	 */
-	openTriggerDetails(trigger: IZapierEndpoint) {
+	openTriggerDetails() {
 		// TODO: Implement trigger details view
 	}
 }

@@ -101,12 +101,12 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 					);
 					this._loadWebhooks();
 				}),
-				catchError((error) => {
+				catchError(() => {
 					this._toastrService.error(
 						this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.DELETE_WEBHOOK'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
-					console.error('Error deleting webhook:', error);
+
 					return EMPTY;
 				}),
 				untilDestroyed(this)
