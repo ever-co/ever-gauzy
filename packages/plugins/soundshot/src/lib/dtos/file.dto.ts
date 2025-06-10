@@ -15,8 +15,8 @@ export class FileDTO implements UploadedFile {
 
 	@ApiProperty({
 		description: 'The file path or identifier of the soundshot',
-		example: 'project-demo-2024.png',
-		pattern: '/\\.(png)$/'
+		example: 'project-demo-2024.webm',
+		pattern: '/\\.(webm)$/'
 	})
 	@IsNotEmpty({ message: 'File key must not be empty' })
 	@IsString({ message: 'File key must be a string' })
@@ -29,7 +29,7 @@ export class FileDTO implements UploadedFile {
 
 	@ApiProperty({
 		description: 'The original file name',
-		example: 'project-demo-original.png'
+		example: 'project-demo-original.webm'
 	})
 	@IsNotEmpty({ message: 'Original name must not be empty' })
 	@IsString({ message: 'Original name must be a string' })
@@ -57,7 +57,7 @@ export class FileDTO implements UploadedFile {
 
 	@ApiProperty({
 		description: 'The MIME type of the file (if available)',
-		example: 'image/png'
+		example: 'audio/webm'
 	})
 	@IsOptional()
 	@IsString({ message: 'MIME type must be a string' })
@@ -78,7 +78,7 @@ export class FileDTO implements UploadedFile {
 
 	@ApiProperty({
 		description: 'The file name',
-		example: 'project-demo-2024.png'
+		example: 'project-demo-2024.webm'
 	})
 	@IsNotEmpty({ message: 'File name must not be empty' })
 	@IsString({ message: 'File name must be a string' })
@@ -87,7 +87,7 @@ export class FileDTO implements UploadedFile {
 
 	@ApiProperty({
 		description: 'The public URL of the file',
-		example: 'https://example.com/soundshot-demo-2024.png'
+		example: 'https://example.com/soundshot-demo-2024.webm'
 	})
 	@IsNotEmpty({ message: 'File URL must not be empty' })
 	@MaxLength(2083, { message: 'File URL must not exceed 2083 characters' }) // 2083 is the maximum URL length in browsers
@@ -95,7 +95,7 @@ export class FileDTO implements UploadedFile {
 
 	@ApiProperty({
 		description: 'The full path of the file',
-		example: '/uploads/project-demo-2024.png'
+		example: '/uploads/project-demo-2024.webm'
 	})
 	@IsNotEmpty({ message: 'File path must not be empty' })
 	@IsString({ message: 'File path must be a string' })
