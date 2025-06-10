@@ -1,9 +1,5 @@
-import { GetSoundshotQueryHandler } from "./get-soundshot-query.handler";
-import { ListSoundshotQueryHandler } from "./list-soundshot-query.handler";
-import { GetSoundshotCountQueryHandler } from "./get-soundshot-count-query.handler";
+import { GetSoundshotCountQueryHandler } from './get-soundshot-count-query.handler';
+import { GetSoundshotQueryHandler } from './get-soundshot-query.handler';
+import { GetSoundshotsQueryHandler } from './get-soundshots-query.handler';
 
-export const queryHandlers = [
-	ListSoundshotQueryHandler,
-	GetSoundshotQueryHandler,
-	GetSoundshotCountQueryHandler
-];
+export const queryHandlers = [GetSoundshotQueryHandler, GetSoundshotsQueryHandler, GetSoundshotCountQueryHandler];
