@@ -96,12 +96,12 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 					console.error('Error loading Zapier triggers:', error);
 
 					// Handle different types of errors with specific messages
-					if (error.status === 404 || error.message?.includes('not found')) {
+					if (error?.status === 404 || error.message?.includes('not found')) {
 						this._toastrService.error(
 							this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.TOKEN_NOT_FOUND'),
 							this.getTranslation('TOASTR.TITLE.ERROR')
 						);
-					} else if (error.status === 401 || error.message?.includes('access token')) {
+					} else if (error?.status === 401 || error.message?.includes('access token')) {
 						this._toastrService.error(
 							this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.INVALID_TOKEN'),
 							this.getTranslation('TOASTR.TITLE.ERROR')
