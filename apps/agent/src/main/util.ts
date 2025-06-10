@@ -27,6 +27,10 @@ export type TAppSetting = {
 	kbMouseTracking: boolean
 }
 
+export type TInitialConfig = {
+	isSetup: boolean
+}
+
 export function resolveHtmlPath(htmlFileName: string, hash: string) {
 	if (process.env.NODE_ENV === 'development') {
 		const port = process.env.PORT || 4200;
@@ -89,6 +93,11 @@ export function getScreen() {
 export function getAppSetting(): Partial<TAppSetting> {
 	const appConfig = (LocalStore.getStore('appSetting') ?? {}) as Partial<TAppSetting>;
 	return appConfig;
+}
+
+export function getInitialConfig(): Partial<TInitialConfig> {
+	const initialConfig = (LocalStore.getStore('configs') ?? {}) as Partial<TInitialConfig>;
+	return initialConfig;
 }
 
 
