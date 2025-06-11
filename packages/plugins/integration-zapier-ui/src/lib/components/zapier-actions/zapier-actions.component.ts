@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { tap, catchError, finalize, switchMap, map } from 'rxjs/operators';
+import { tap, catchError, finalize, switchMap, distinctUntilChanged, map } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -39,10 +39,10 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 
 	ngOnInit(): void {
 		// Subscribe to route parameters to get integration ID
-		this._activatedRoute.params
-			.pipe(
+		this._activatedRoute
+			.parent!.params.pipe(
 				map((p: Params) => p['id']),
-
+				distinctUntilChanged(),
 				tap((id: ID) => {
 					this.integrationId = id;
 					this._loadActions();
