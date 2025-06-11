@@ -23,13 +23,13 @@ export class DeleteSoundshotCommandHandler implements ICommandHandler<DeleteSoun
 		const { forceDelete = false, organizationId, tenantId = RequestContext.currentTenantId() } = input;
 
 		if (!tenantId) {
-			throw new BadRequestException('Tenant ID is required for deleting soundshot.');
+			throw new BadRequestException(`Tenant ID ${tenantId} is required for deleting soundshot.`);
 		}
 
 		const soundshot = await this.soundshotService.findOneByWhereOptions({ id, organizationId, tenantId });
 
 		if (!soundshot) {
-			throw new NotFoundException('Soundshot not found');
+			throw new NotFoundException(`Soundshot with ID ${id} not found`);
 		}
 
 		if (forceDelete) {
