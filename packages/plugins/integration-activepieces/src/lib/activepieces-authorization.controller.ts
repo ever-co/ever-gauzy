@@ -1,4 +1,4 @@
-import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Query, Res, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { ConfigService } from '@gauzy/config';
@@ -6,6 +6,7 @@ import { Public, IActivepiecesConfig } from '@gauzy/common';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { buildQueryString } from '@gauzy/utils';
 import { ACTIVEPIECES_OAUTH_AUTHORIZE_URL, ACTIVEPIECES_SCOPES, OAUTH_RESPONSE_TYPE } from './activepieces.config';
+import { ActivepiecesQueryDTO } from './dto/activepieces-query.dto';
 
 @ApiTags('ActivePieces Integration')
 @Public()
@@ -46,7 +47,8 @@ export class ActivepiecesAuthorizationController {
 		}
 	})
 	@Get('/authorize')
-	async authorize(@Query() query: any, @Res() response: Response) {
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+	async authorize(@Query() query: ActivepiecesQueryDTO, @Res() response: Response) {
 		try {
 			// Get ActivePieces configuration
 			const activepiecesConfig = this.configService.get('activepieces') as IActivepiecesConfig;
@@ -95,7 +97,7 @@ export class ActivepiecesAuthorizationController {
 		description: 'Redirects to the application with authorization code'
 	})
 	@Get('/callback')
-	async callback(@Query() query: any, @Res() response: Response) {
+	async callback(@Query() query: ActivepiecesQueryDTO, @Res() response: Response) {
 		try {
 			// Validate the input data
 			if (!query || !query.code || !query.state) {

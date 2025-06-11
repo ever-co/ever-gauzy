@@ -1,4 +1,12 @@
-import { Injectable, BadRequestException, Logger, HttpException, HttpStatus, UnauthorizedException } from '@nestjs/common';
+import {
+	Injectable,
+	BadRequestException,
+	Logger,
+	HttpException,
+	HttpStatus,
+	UnauthorizedException,
+	InternalServerErrorException
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@gauzy/config';
 import { firstValueFrom, catchError, throwError } from 'rxjs';
@@ -10,7 +18,8 @@ import {
 	IActivepiecesConnectionRequest,
 	ActivepiecesSettingName,
 	ActivepiecesConnectionType,
-	ICreateActivepiecesIntegrationInput
+	ICreateActivepiecesIntegrationInput,
+	IActivepiecesErrorResponse
 } from './activepieces.type';
 import { ACTIVEPIECES_CONNECTIONS_URL, ACTIVEPIECES_PIECE_NAME } from './activepieces.config';
 
@@ -24,7 +33,7 @@ export class ActivepiecesService {
 		private readonly integrationSettingService: IntegrationSettingService,
 		private readonly integrationService: IntegrationService,
 		private readonly integrationTenantService: IntegrationTenantService
-	) {}
+	) { }
 
 	/**
 	 * Create a new ActivePieces connection for the tenant
@@ -85,15 +94,29 @@ export class ActivepiecesService {
 						}
 					})
 					.pipe(
-						catchError((error: AxiosError) => {
-							this.logger.error('Error creating ActivePieces connection:', error.response?.data);
-							const status = error.response?.status;
+						catchError((error) => {
+							const status = error?.response?.status;
+							const data = error?.response?.data as IActivepiecesErrorResponse;
+							const errorMessage = data?.error?.message || error.message;
+
+							this.logger.error('Error creating ActivePieces connection:', data);
+
 							if (status === HttpStatus.UNAUTHORIZED) {
-								throw new UnauthorizedException(
-									`Unauthorized to create ActivePieces connection: ${error.message}`
-								)
+								return throwError(
+									() =>
+										new UnauthorizedException(
+											data?.error?.message ?? `Unauthorized to create ActivePieces connection: ${error.message}`
+										)
+								);
 							}
-							return throwError(() => error);
+
+							// Optionally wrap and throw a more descriptive internal server error
+							return throwError(
+								() =>
+									new InternalServerErrorException(
+										`Failed to create ActivePieces connection: ${errorMessage}`
+									)
+							);
 						})
 					)
 			);
@@ -104,6 +127,9 @@ export class ActivepiecesService {
 			this.logger.log(`Successfully created ActivePieces connection: ${response.data.id}`);
 			return response.data;
 		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			this.logger.error('Failed to create ActivePieces connection:', error);
 			throw new BadRequestException(`Failed to create connection: ${error.message}`);
 		}
@@ -249,7 +275,12 @@ export class ActivepiecesService {
 				}
 			});
 
-			return enabledSetting?.settingsValue ? JSON.parse(enabledSetting.settingsValue) === true: false;
+			if (typeof enabledSetting?.settingsValue === 'boolean') {
+				return enabledSetting.settingsValue;
+			}
+			return !!(typeof enabledSetting?.settingsValue === 'string'
+				? JSON.parse(enabledSetting.settingsValue)
+				: enabledSetting?.settingsValue);
 		} catch (error) {
 			this.logger.error('Error checking if integration is enabled:', error);
 			return false;

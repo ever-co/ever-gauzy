@@ -3,6 +3,7 @@ import {
 	BaseQueryDTO,
 	FileStorage,
 	FileStorageFactory,
+	FindOptionsQueryDTO,
 	LazyFileInterceptor,
 	PermissionGuard,
 	Permissions,
@@ -26,7 +27,6 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FindOneOptions } from 'typeorm';
 import { CreateCamshotCommand } from './commands/create-camshot.command';
 import { DeleteCamshotCommand } from './commands/delete-camshot.command';
 import { CountCamshotDTO } from './dtos/count-camshot.dto';
@@ -43,7 +43,7 @@ import { GetCamshotQuery } from './queries/get-camshot.query';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller('/plugins/camshots')
 export class CamshotController {
-	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
+	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) { }
 
 	/**
 	 * Get a paginated list of camshots.
@@ -184,6 +184,19 @@ export class CamshotController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Camshot successfully fetched by ID.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Camshot with the given ID not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.INTERNAL_SERVER_ERROR,
+		description: 'An error occurred while retrieving the camshot.'
+	})
+	@ApiQuery({ name: 'options', type: FindOptionsQueryDTO, required: false })
 	@UseValidationPipe({
 		whitelist: true,
 		transform: true,
@@ -192,7 +205,7 @@ export class CamshotController {
 	@Get(':id')
 	public async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() options: FindOneOptions<ICamshot>
+		@Query() options: FindOptionsQueryDTO<ICamshot>
 	): Promise<ICamshot> {
 		return this.queryBus.execute(new GetCamshotQuery(id, options));
 	}
