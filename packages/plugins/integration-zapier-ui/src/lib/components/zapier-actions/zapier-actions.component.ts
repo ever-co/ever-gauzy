@@ -28,19 +28,25 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 	public integrationId: ID | null = null;
 
 	constructor(
-		private readonly _zapierService: ZapierService,
-		private readonly _toastrService: ToastrService,
-		private readonly _store: Store,
 		private readonly _activatedRoute: ActivatedRoute,
-		public readonly translateService: TranslateService
+		private readonly _store: Store,
+		public readonly translateService: TranslateService,
+		private readonly _zapierService: ZapierService,
+		private readonly _toastrService: ToastrService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
 		// Subscribe to route parameters to get integration ID
-		this._activatedRoute
-			.parent!.params.pipe(
+		const parentRoute = this._activatedRoute.parent;
+		if (!parentRoute) {
+			this._showNoIntegrationError();
+			return;
+		}
+
+		parentRoute.params
+			.pipe(
 				map((p: Params) => p['id']),
 				distinctUntilChanged(),
 				tap((id: ID) => {
