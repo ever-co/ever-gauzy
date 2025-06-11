@@ -1,4 +1,12 @@
-import { Injectable, BadRequestException, Logger, HttpException, HttpStatus, UnauthorizedException } from '@nestjs/common';
+import {
+	Injectable,
+	BadRequestException,
+	Logger,
+	HttpException,
+	HttpStatus,
+	UnauthorizedException,
+	InternalServerErrorException
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@gauzy/config';
 import { firstValueFrom, catchError, throwError } from 'rxjs';
@@ -85,15 +93,28 @@ export class ActivepiecesService {
 						}
 					})
 					.pipe(
-						catchError((error: AxiosError) => {
-							this.logger.error('Error creating ActivePieces connection:', error.response?.data);
-							const status = error.response?.status;
+						catchError((error) => {
+							const status = error?.response?.status;
+							const data = error?.response?.data;
+
+							this.logger.error('Error creating ActivePieces connection:', data);
+
 							if (status === HttpStatus.UNAUTHORIZED) {
-								throw new UnauthorizedException(
-									`Unauthorized to create ActivePieces connection: ${error.message}`
-								)
+								return throwError(
+									() =>
+										new UnauthorizedException(
+											`Unauthorized to create ActivePieces connection: ${error.message}`
+										)
+								);
 							}
-							return throwError(() => error);
+
+							// Optionally wrap and throw a more descriptive internal server error
+							return throwError(
+								() =>
+									new InternalServerErrorException(
+										`Failed to create ActivePieces connection: ${error.message}`
+									)
+							);
 						})
 					)
 			);
@@ -249,7 +270,7 @@ export class ActivepiecesService {
 				}
 			});
 
-			return enabledSetting?.settingsValue ? JSON.parse(enabledSetting.settingsValue) === true: false;
+			return enabledSetting?.settingsValue ? JSON.parse(enabledSetting.settingsValue) === true : false;
 		} catch (error) {
 			this.logger.error('Error checking if integration is enabled:', error);
 			return false;
