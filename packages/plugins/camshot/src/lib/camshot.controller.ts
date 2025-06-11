@@ -3,6 +3,7 @@ import {
 	BaseQueryDTO,
 	FileStorage,
 	FileStorageFactory,
+	FindOptionsQueryDTO,
 	LazyFileInterceptor,
 	PermissionGuard,
 	Permissions,
@@ -26,7 +27,6 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FindOneOptions } from 'typeorm';
 import { CreateCamshotCommand } from './commands/create-camshot.command';
 import { DeleteCamshotCommand } from './commands/delete-camshot.command';
 import { CountCamshotDTO } from './dtos/count-camshot.dto';
@@ -192,7 +192,7 @@ export class CamshotController {
 	@Get(':id')
 	public async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() options: FindOneOptions<ICamshot>
+		@Query() options: FindOptionsQueryDTO<ICamshot>
 	): Promise<ICamshot> {
 		return this.queryBus.execute(new GetCamshotQuery(id, options));
 	}
