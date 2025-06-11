@@ -6,7 +6,7 @@ import { RequestContext } from '@gauzy/core';
 
 @CommandHandler(DeleteCamshotCommand)
 export class DeleteCamshotCommandHandler implements ICommandHandler<DeleteCamshotCommand> {
-	constructor(private readonly camshotService: CamshotService) {}
+	constructor(private readonly camshotService: CamshotService) { }
 
 	/**
 	 * Handles the `DeleteCamshotCommand` to delete a camshot entity from the database.
@@ -24,7 +24,7 @@ export class DeleteCamshotCommandHandler implements ICommandHandler<DeleteCamsho
 		const camshot = await this.camshotService.findOneByWhereOptions({ id, organizationId, tenantId });
 
 		if (!camshot) {
-			throw new NotFoundException(`Camshot with ${id} not found`);
+			throw new NotFoundException(`Camshot with id ${id} not found`);
 		}
 
 		if (forceDelete) {
