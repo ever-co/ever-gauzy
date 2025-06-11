@@ -42,7 +42,7 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 		this._activatedRoute.params
 			.pipe(
 				map((p: Params) => p['id']),
-				distinctUntilChanged(),
+
 				tap((id: ID) => {
 					this.integrationId = id;
 					this._loadActions();

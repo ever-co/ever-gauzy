@@ -7,7 +7,7 @@
 		<form class="col-xl-6 col-12" [formGroup]="form" (ngSubmit)="saveSettings()">
 			<div class="form-group">
 				<nb-checkbox formControlName="isEnabled">
-					{{ 'INTEGRATIONS.ZAPIER.SETTINGS.ENABLE_INTEGRATION' | translate }}
+					{{ 'INTEGRATIONS.ZAPIER_PAGE.SETTINGS.ENABLE_INTEGRATION' | translate }}
 				</nb-checkbox>
 			</div>
 			<div class="form-group">
@@ -20,7 +20,7 @@
 					formControlName="webhookUrl"
 					type="url"
 					nbInput
-					[placeholder]="'FORM.PLACEHOLDERS.ZAPIER_WEBHOOK_URL' | translate"
+					[placeholder]="'INTEGRATIONS.ZAPIER_PAGE.SETTINGS.WEBHOOK_URL_PLACEHOLDER' | translate"
 				/>
 				<div
 					*ngIf="form.get('webhookUrl').touched && form.get('webhookUrl').errors?.required"
