@@ -13,7 +13,8 @@ Run `yarn nx test plugin-integration-zapier-ui` to execute the unit tests via [J
 ## Publishing
 
 After building your library with `yarn nx build plugin-integration-zapier-ui`,
-go to the dist folder `dist/packages/plugins/integration-zapier-ui` and run `npm publish`.
+go to the dist folder `dist/packages/plugins/integration-zapier-ui`
+and run `npm publish`.
 
 ## Installation
 
