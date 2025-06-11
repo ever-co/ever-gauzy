@@ -663,6 +663,8 @@
 		"gauzyagent",
 		"PostHog",
 		"posthog",
+		"PKCE",
+		"udts",
 		"autocapture",
 		"pageview",
 		"signup",

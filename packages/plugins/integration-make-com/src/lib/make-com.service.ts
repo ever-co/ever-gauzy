@@ -10,7 +10,7 @@ import {
 } from '@gauzy/core';
 import { In } from 'typeorm';
 import { IIntegrationEntitySetting, IIntegrationTenant, IntegrationEntity, IntegrationEnum } from '@gauzy/contracts';
-import { IMakeComIntegrationSettings, MakeSettingName, IMakeComCreateIntegration } from './interfaces/make-com.model';
+import { IMakeComIntegrationSettings, MakeSettingName, IMakeComCreateIntegration, IIntegrationFilter } from './interfaces/make-com.model';
 import { CommandBus } from '@nestjs/cqrs';
 
 @Injectable()
@@ -38,7 +38,7 @@ export class MakeComService {
 			}
 
 			// Build the where clause with tenant and optional organization filter
-			const whereClause: any = {
+			const whereClause: IIntegrationFilter = {
 				name: IntegrationEnum.MakeCom,
 				tenantId
 			};

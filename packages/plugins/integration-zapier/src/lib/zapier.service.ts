@@ -22,7 +22,7 @@ import {
 	RequestContext
 } from '@gauzy/core';
 import { ZAPIER_API_URL, ZAPIER_BASE_URL, ZAPIER_TOKEN_EXPIRATION_TIME, ZAPIER_OAUTH_SCOPES } from './zapier.config';
-import { ICreateZapierIntegrationInput, IZapierAccessTokens, IZapierEndpoint, IZapierAuthState } from './zapier.types';
+import { ICreateZapierIntegrationInput, IZapierAccessTokens, IZapierEndpoint } from './zapier.types';
 import { randomBytes } from 'node:crypto';
 
 @Injectable()
@@ -138,7 +138,7 @@ export class ZapierService {
 	 * Generate a random state string for OAuth flow
 	 */
 	private generateState(): string {
-		return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+		return randomBytes(32).toString('hex');
 	}
 
 	/**

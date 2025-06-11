@@ -7,7 +7,6 @@ import {
 	Logger,
 	Query,
 	Res,
-	UseGuards
 } from '@nestjs/common';
 import { ConfigService } from '@gauzy/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -81,7 +80,7 @@ export class ZapierAuthorizationController {
 			const validatedState = this.zapierService.parseAuthState(query.state);
 
 			// Complete the OAuth flow by exchanging the code for tokens
-			const integration = await this.zapierService.completeOAuthFlow(query.code, validatedState);
+			await this.zapierService.completeOAuthFlow(query.code, validatedState);
 
 			// convert query params object to string
 			const queryParamsString = buildQueryString({

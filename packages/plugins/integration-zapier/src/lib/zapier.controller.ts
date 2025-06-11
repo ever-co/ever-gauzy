@@ -9,7 +9,8 @@ import {
 	UnauthorizedException,
 	BadRequestException,
 	Body,
-	Post
+	Post,
+	Param
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -277,7 +278,7 @@ export class ZapierController {
 		description: 'Access token not found for the given integration'
 	})
 	@Get('/token/:integrationId')
-	async getZapierToken(@Query('integrationId') integrationId: string) {
+	async getZapierToken(@Param('integrationId') integrationId: string) {
 		try {
 			return await this.zapierService.getZapierToken(integrationId);
 		} catch (error) {
