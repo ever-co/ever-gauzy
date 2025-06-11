@@ -6,12 +6,13 @@ import { Public, IActivepiecesConfig } from '@gauzy/common';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { buildQueryString } from '@gauzy/utils';
 import { ACTIVEPIECES_OAUTH_AUTHORIZE_URL, ACTIVEPIECES_SCOPES, OAUTH_RESPONSE_TYPE } from './activepieces.config';
+import { ActivepiecesQueryDto } from './dto/activepieces-query.dto';
 
 @ApiTags('ActivePieces Integration')
 @Public()
 @Controller('/integration/activepieces')
 export class ActivepiecesAuthorizationController {
-	constructor(private readonly configService: ConfigService) {}
+	constructor(private readonly configService: ConfigService) { }
 
 	/**
 	 * Generate a random state parameter for CSRF protection
@@ -46,7 +47,7 @@ export class ActivepiecesAuthorizationController {
 		}
 	})
 	@Get('/authorize')
-	async authorize(@Query() query: any, @Res() response: Response) {
+	async authorize(@Query() query: ActivepiecesQueryDto, @Res() response: Response) {
 		try {
 			// Get ActivePieces configuration
 			const activepiecesConfig = this.configService.get('activepieces') as IActivepiecesConfig;
@@ -95,7 +96,7 @@ export class ActivepiecesAuthorizationController {
 		description: 'Redirects to the application with authorization code'
 	})
 	@Get('/callback')
-	async callback(@Query() query: any, @Res() response: Response) {
+	async callback(@Query() query: ActivepiecesQueryDto, @Res() response: Response) {
 		try {
 			// Validate the input data
 			if (!query || !query.code || !query.state) {
