@@ -32,7 +32,7 @@ export class ActivepiecesService {
 		private readonly integrationSettingService: IntegrationSettingService,
 		private readonly integrationService: IntegrationService,
 		private readonly integrationTenantService: IntegrationTenantService
-	) {}
+	) { }
 
 	/**
 	 * Create a new ActivePieces connection for the tenant
@@ -270,7 +270,12 @@ export class ActivepiecesService {
 				}
 			});
 
-			return enabledSetting?.settingsValue ? JSON.parse(enabledSetting.settingsValue) === true : false;
+			if (typeof enabledSetting?.settingsValue === 'boolean') {
+				return enabledSetting.settingsValue;
+			}
+			return !!(typeof enabledSetting?.settingsValue === 'string'
+				? JSON.parse(enabledSetting.settingsValue)
+				: enabledSetting?.settingsValue);
 		} catch (error) {
 			this.logger.error('Error checking if integration is enabled:', error);
 			return false;
