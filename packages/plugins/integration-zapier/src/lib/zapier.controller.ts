@@ -263,4 +263,29 @@ export class ZapierController {
 			throw new InternalServerErrorException('Failed to refresh token');
 		}
 	}
+
+	/**
+	 * Get Zapier access token for a given integration
+	 */
+	@ApiOperation({ summary: 'Get Zapier access token for integration' })
+	@ApiResponse({
+		status: 200,
+		description: 'Successfully retrieved Zapier access token'
+	})
+	@ApiResponse({
+		status: 404,
+		description: 'Access token not found for the given integration'
+	})
+	@Get('/token/:integrationId')
+	async getZapierToken(@Query('integrationId') integrationId: string) {
+		try {
+			return await this.zapierService.getZapierToken(integrationId);
+		} catch (error) {
+			this.logger.error(`Failed to get Zapier token for integration ID ${integrationId}`, error);
+			if (error instanceof NotFoundException) {
+				throw error;
+			}
+			throw new InternalServerErrorException('Failed to get Zapier token');
+		}
+	}
 }
