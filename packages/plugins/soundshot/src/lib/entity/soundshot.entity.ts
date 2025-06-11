@@ -48,7 +48,7 @@ export class Soundshot extends TenantOrganizationBaseEntity implements ISoundsho
 
 	/**
 	 * Soundshot file path or identifier.
-	 * Must be a valid image file with a valid name format.
+	 * Must be a valid audio file with a valid name format.
 	 */
 	@IsNotEmpty({ message: 'File is required' })
 	@IsString({ message: 'File must be a string' })
