@@ -18,7 +18,8 @@ import {
 	IActivepiecesConnectionRequest,
 	ActivepiecesSettingName,
 	ActivepiecesConnectionType,
-	ICreateActivepiecesIntegrationInput
+	ICreateActivepiecesIntegrationInput,
+	IActivepiecesErrorResponse
 } from './activepieces.type';
 import { ACTIVEPIECES_CONNECTIONS_URL, ACTIVEPIECES_PIECE_NAME } from './activepieces.config';
 
@@ -95,7 +96,8 @@ export class ActivepiecesService {
 					.pipe(
 						catchError((error) => {
 							const status = error?.response?.status;
-							const data = error?.response?.data;
+							const data = error?.response?.data as IActivepiecesErrorResponse;
+							const errorMessage = data?.error?.message || error.message;
 
 							this.logger.error('Error creating ActivePieces connection:', data);
 
@@ -103,7 +105,7 @@ export class ActivepiecesService {
 								return throwError(
 									() =>
 										new UnauthorizedException(
-											`Unauthorized to create ActivePieces connection: ${error.message}`
+											data?.error?.message ?? `Unauthorized to create ActivePieces connection: ${error.message}`
 										)
 								);
 							}
@@ -112,7 +114,7 @@ export class ActivepiecesService {
 							return throwError(
 								() =>
 									new InternalServerErrorException(
-										`Failed to create ActivePieces connection: ${error.message}`
+										`Failed to create ActivePieces connection: ${errorMessage}`
 									)
 							);
 						})
@@ -125,6 +127,9 @@ export class ActivepiecesService {
 			this.logger.log(`Successfully created ActivePieces connection: ${response.data.id}`);
 			return response.data;
 		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			this.logger.error('Failed to create ActivePieces connection:', error);
 			throw new BadRequestException(`Failed to create connection: ${error.message}`);
 		}
