@@ -23,14 +23,7 @@ export class GetSoundshotsQueryHandler implements IQueryHandler<GetSoundshotsQue
 		// Extract pagination and filter parameters from the query
 		const { params } = query;
 
-		const {
-			startDate,
-			endDate,
-			tenantId,
-			organizationId,
-			employeeIds = [],
-			timeZone = 'UTC'
-		} = (params || {}) as any;
+		const { startDate, endDate, tenantId, organizationId, employeeIds = [], timeZone = 'UTC' } = params;
 
 		// Build the dynamic WHERE clause for the query
 		const where: Record<string, any> = {
@@ -65,7 +58,7 @@ export class GetSoundshotsQueryHandler implements IQueryHandler<GetSoundshotsQue
 		// Fetch paginated soundshots from the service
 		return this.soundshotService.paginate({
 			...params,
-			where
+			where: Object.assign(where, params.where)
 		});
 	}
 }

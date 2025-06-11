@@ -1,6 +1,5 @@
-import { IQuery } from "@nestjs/cqrs";
-import { BaseQueryDTO } from "@gauzy/core";
-import { ISoundshot } from "../models/soundshot.model";
+import { IQuery } from '@nestjs/cqrs';
+import { GetSoundshotsQueryDTO } from '../dtos/get-soundshots-query.dto';
 
 export class GetSoundshotsQuery implements IQuery {
 	public static readonly type = '[Soundshot] Get Many';
@@ -10,5 +9,5 @@ export class GetSoundshotsQuery implements IQuery {
 	 * @description This query is used to retrieve a paginated list of soundshots with optional filtering and sorting
 	 * @param params - Pagination and filtering parameters for soundshots
 	 */
-	constructor(public readonly params: BaseQueryDTO<ISoundshot>) { }
+	constructor(public readonly params: GetSoundshotsQueryDTO) {}
 }

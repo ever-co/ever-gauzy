@@ -1,7 +1,8 @@
-import { ISoundshot, ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IPagination, ISoundshot, PermissionsEnum } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	FileStorageFactory,
+	FindOptionsQueryDTO,
 	LazyFileInterceptor,
 	PermissionGuard,
 	Permissions,
@@ -25,17 +26,17 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FindOneOptions } from 'typeorm';
 import { CreateSoundshotCommand } from './commands/create-soundshot.command';
 import { DeleteSoundshotCommand } from './commands/delete-soundshot.command';
 import { CountSoundshotDTO } from './dtos/count-soundshot.dto';
 import { CreateSoundshotDTO } from './dtos/create-soundshot.dto';
 import { DeleteSoundshotDTO } from './dtos/delete-soundshot.dto';
 import { FileDTO } from './dtos/file.dto';
+import { GetSoundshotsQueryDTO } from './dtos/get-soundshots-query.dto';
 import { Soundshot } from './entity/soundshot.entity';
-import { GetSoundshotsQuery } from './queries/get-soundshots.query';
 import { GetSoundshotCountQuery } from './queries/get-soundshot-count.query';
 import { GetSoundshotQuery } from './queries/get-soundshot.query';
+import { GetSoundshotsQuery } from './queries/get-soundshots.query';
 import { SoundshotService } from './services/soundshot.service';
 
 @ApiTags('Soundshot Plugin')
@@ -47,7 +48,7 @@ export class SoundshotController {
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus,
 		private readonly soundshotService: SoundshotService
-	) { }
+	) {}
 
 	/**
 	 * Get a paginated list of soundshots.
@@ -83,8 +84,13 @@ export class SoundshotController {
 		status: HttpStatus.FORBIDDEN,
 		description: 'User does not have permission to list soundshots.'
 	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
 	@Get()
-	public async list(@Query() params: BaseQueryDTO<ISoundshot>): Promise<IPagination<ISoundshot>> {
+	public async list(@Query() params: GetSoundshotsQueryDTO): Promise<IPagination<ISoundshot>> {
 		return this.queryBus.execute(new GetSoundshotsQuery(params));
 	}
 
@@ -196,7 +202,7 @@ export class SoundshotController {
 	@Get(':id')
 	public async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() options: FindOneOptions<ISoundshot>
+		@Query() options: FindOptionsQueryDTO<ISoundshot>
 	): Promise<ISoundshot> {
 		return this.queryBus.execute(new GetSoundshotQuery(id, options));
 	}
