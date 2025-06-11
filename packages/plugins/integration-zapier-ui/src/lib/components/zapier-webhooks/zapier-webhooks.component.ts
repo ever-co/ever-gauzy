@@ -73,7 +73,6 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 	private _loadWebhooks() {
 		// Ensure we have an integration ID before proceeding
 		if (!this.integrationId) {
-			console.warn('No integration ID available from route parameters');
 			this._showNoIntegrationError();
 			return;
 		}
@@ -88,17 +87,16 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 				// Store the retrieved webhooks
 				tap((webhooks: IZapierWebhook[]) => {
 					this.webhooks = webhooks;
-					console.log(`Successfully loaded ${webhooks.length} Zapier webhooks`);
 				}),
 				// Handle specific error cases
 				catchError((error) => {
 					// Handle different types of errors with specific messages
-					if (error?.status === 404 || error.message?.includes('not found')) {
+					if (error.status === 404 || error.message?.includes('not found')) {
 						this._toastrService.error(
 							this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.TOKEN_NOT_FOUND'),
 							this.getTranslation('TOASTR.TITLE.ERROR')
 						);
-					} else if (error?.status === 401 || error.message?.includes('access token')) {
+					} else if (error.status === 401 || error.message?.includes('access token')) {
 						this._toastrService.error(
 							this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.INVALID_TOKEN'),
 							this.getTranslation('TOASTR.TITLE.ERROR')
@@ -127,7 +125,6 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 	deleteWebhook(webhookId: string) {
 		// Ensure we have an integration ID before proceeding
 		if (!this.integrationId) {
-			console.warn('No integration ID available for webhook deletion');
 			this._showNoIntegrationError();
 			return;
 		}
@@ -147,8 +144,6 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 					this._loadWebhooks();
 				}),
 				catchError((error) => {
-					console.error('Error deleting Zapier webhook:', error);
-
 					// Handle different types of errors with specific messages
 					if (error.status === 404 || error.message?.includes('not found')) {
 						this._toastrService.error(

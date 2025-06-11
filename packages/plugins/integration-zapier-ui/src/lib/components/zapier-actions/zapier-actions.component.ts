@@ -73,7 +73,6 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 	private _loadActions() {
 		// Ensure we have an integration ID before proceeding
 		if (!this.integrationId) {
-			console.warn('No integration ID available from route parameters');
 			this._showNoIntegrationError();
 			return;
 		}
@@ -88,17 +87,16 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 				// Store the retrieved actions
 				tap((actions: IZapierEndpoint[]) => {
 					this.actions = actions;
-					console.log(`Successfully loaded ${actions.length} Zapier actions`);
 				}),
 				// Handle specific error cases
 				catchError((error) => {
 					// Handle different types of errors with specific messages
-					if (error?.status === 404 || error.message?.includes('not found')) {
+					if (error.status === 404 || error.message?.includes('not found')) {
 						this._toastrService.error(
 							this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.TOKEN_NOT_FOUND'),
 							this.getTranslation('TOASTR.TITLE.ERROR')
 						);
-					} else if (error?.status === 401 || error.message?.includes('access token')) {
+					} else if (error.status === 401 || error.message?.includes('access token')) {
 						this._toastrService.error(
 							this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.INVALID_TOKEN'),
 							this.getTranslation('TOASTR.TITLE.ERROR')
