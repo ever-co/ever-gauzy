@@ -132,6 +132,7 @@ export class Soundshot extends TenantOrganizationBaseEntity implements ISoundsho
 
 	/**
 	 * Rate of the soundshot file.
+	 * Sample rate of the soundshot file in Hz (e.g., 44100, 48000).
 	 */
 	@IsOptional()
 	@IsNumber({}, { message: 'Rate must be a number' })
