@@ -49,7 +49,7 @@ export class CountSoundshotDTO {
 	})
 	@IsOptional()
 	@IsISO8601({ strict: true }, { message: 'startDate must be a valid ISO 8601 date string' })
-	startDate?: Date | string;
+	startDate?: string;
 
 	/**
 	 * The end date for filtering soundshot records.
@@ -66,5 +66,5 @@ export class CountSoundshotDTO {
 	})
 	@IsOptional()
 	@IsISO8601({ strict: true }, { message: 'endDate must be a valid ISO 8601 date string' })
-	endDate?: Date | string;
+	endDate?: string;
 }
