@@ -126,6 +126,7 @@ COPY --chown=node:node packages/plugins/public-layout-ui/package.json ./packages
 COPY --chown=node:node packages/plugins/videos-ui/package.json ./packages/plugins/videos-ui/
 COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
 COPY --chown=node:node packages/plugins/camshot/package.json ./packages/plugins/camshot/
+COPY --chown=node:node packages/plugins/soundshot/package.json ./packages/plugins/soundshot/
 COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins/registry/
 COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
 COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
