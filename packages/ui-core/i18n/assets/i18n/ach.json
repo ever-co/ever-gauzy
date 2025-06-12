@@ -1169,6 +1169,14 @@
 			"HOURLY": "crwdns10004:0crwdne10004:0"
 		},
 		"MAKE_COM_PAGE": {
+			"SCENARIOS": "Scenarios",
+			"EXECUTIONS": "Executions",
+			"HISTORY": "History",
+			"SETTINGS": "Settings",
+			"ERRORS": {
+				"INVALID_FORM": "Please fill in all required fields",
+				"START_AUTHORIZATION": "Please start the authorization process"
+			},
 			"CLIENT_ID": "Client ID",
 			"CLIENT_SECRET": "Client Secret",
 			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Make.com me tiyo ki integration"

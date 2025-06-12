@@ -1279,6 +1279,14 @@
 			"HOURLY": "Godzinowo"
 		},
 		"MAKE_COM_PAGE": {
+			"SCENARIOS": "Scenariusze",
+			"EXECUTIONS": "Wykonania",
+			"HISTORY": "Historia",
+			"SETTINGS": "Ustawienia",
+			"ERRORS": {
+				"INVALID_FORM": "Proszę wypełnić wszystkie wymagane pola",
+				"START_AUTHORIZATION": "Proszę rozpocząć proces autoryzacji"
+			},
 			"CLIENT_ID": "ID Klienta",
 			"CLIENT_SECRET": "Sekret Klienta",
 			"NEXT_STEP_INFO": "Po autoryzacji zostaniesz przekierowany do Make.com, aby dokończyć konfigurację integracji"

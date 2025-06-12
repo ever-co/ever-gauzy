@@ -1280,6 +1280,14 @@
 			"HOURLY": "每小时"
 		},
 		"MAKE_COM_PAGE": {
+			"SCENARIOS": "场景",
+			"EXECUTIONS": "执行",
+			"HISTORY": "历史",
+			"SETTINGS": "设置",
+			"ERRORS": {
+				"INVALID_FORM": "请填写所有必填字段",
+				"START_AUTHORIZATION": "请开始授权过程"
+			},
 			"CLIENT_ID": "客户端ID",
 			"CLIENT_SECRET": "客户端密钥",
 			"NEXT_STEP_INFO": "授权后，您将被重定向到Make.com以完成集成设置"

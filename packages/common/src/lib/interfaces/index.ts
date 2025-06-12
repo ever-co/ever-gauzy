@@ -1,4 +1,5 @@
 export * from './IAbstractLogger';
+export * from './IActivepiecesConfig';
 export * from './IAppIntegrationConfig';
 export * from './IApplicationPluginConfig';
 export * from './IAuth0Config';

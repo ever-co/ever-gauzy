@@ -44,9 +44,9 @@ function getGlobalVariable(configs?: {
 function listenIO(stop: boolean) {
 	const auth = getAuthConfig();
 	const pullActivities = PullActivities.getInstance({
-		tenantId: auth.user.employee.tenantId,
-		organizationId: auth.user.employee.organizationId,
-		remoteId: auth.user.id
+		tenantId: auth?.user?.employee?.tenantId,
+		organizationId: auth?.user?.employee?.organizationId,
+		remoteId: auth?.user?.id
 	});
 	const pushActivities = PushActivities.getInstance();
 	if (stop) {
@@ -61,9 +61,9 @@ function listenIO(stop: boolean) {
 function kbMouseListener(activate: boolean) {
 	const auth = getAuthConfig();
 	const pullActivities = PullActivities.getInstance({
-		tenantId: auth.user.employee.tenantId,
-		organizationId: auth.user.employee.organizationId,
-		remoteId: auth.user.id
+		tenantId: auth?.user?.employee?.tenantId,
+		organizationId: auth?.user?.employee?.organizationId,
+		remoteId: auth?.user?.id
 	});
 	if (activate) {
 		pullActivities.startListener();
@@ -167,9 +167,11 @@ export default function AppIpcMain(){
 			store.set({
 				auth: null
 			});
+
 			const appWindow = AppWindow.getInstance(rootPath)
 			await appWindow.initSettingWindow();
 			appWindow.settingWindow.reload();
+
 			await checkUserAuthentication(rootPath);
 			listenIO(true);
 
@@ -184,5 +186,15 @@ export default function AppIpcMain(){
 		return true;
 	})
 
+	ipcMain.handle('CHECK_MAIN_AUTH', () => {
+		return getAuthConfig();
+	});
+
+	ipcMain.handle('FINAL_LOGOUT', async () => {
+		await userService.remove();
+		LocalStore.updateAuthSetting({ isLogout: true });
+	});
+
 	pluginListeners();
 }
+
