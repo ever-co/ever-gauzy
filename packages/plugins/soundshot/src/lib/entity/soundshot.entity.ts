@@ -121,7 +121,7 @@ export class Soundshot extends TenantOrganizationBaseEntity implements ISoundsho
 	size?: number;
 
 	/**
-	 * Channels of the soundshot file in bytes.
+	 * Channels of the soundshot file.
 	 */
 	@IsOptional()
 	@IsNumber({}, { message: 'Channels must be a number' })
@@ -131,7 +131,7 @@ export class Soundshot extends TenantOrganizationBaseEntity implements ISoundsho
 	channels?: number;
 
 	/**
-	 * Rate of the soundshot file in bytes.
+	 * Rate of the soundshot file.
 	 */
 	@IsOptional()
 	@IsNumber({}, { message: 'Rate must be a number' })
@@ -142,7 +142,6 @@ export class Soundshot extends TenantOrganizationBaseEntity implements ISoundsho
 
 	/**
 	 * Duration of the soundshot file in seconds.
-	 * Optional with a maximum duration limit of 10 minutes (600 seconds).
 	 */
 	@IsOptional()
 	@IsNumber({}, { message: 'Duration must be a number' })
