@@ -124,7 +124,7 @@ export class Soundshot extends TenantOrganizationBaseEntity implements ISoundsho
 	 * Channels of the soundshot file.
 	 */
 	@IsOptional()
-	@IsNumber({}, { message: 'Channels must be a number' })
+	@IsNumber({}, { message: 'Number of audio channels in the soundshot file (e.g., 1 for mono, 2 for stereo).' })
 	@Transform(({ value }) => Number.parseInt(value), { toClassOnly: true })
 	@ApiPropertyOptional({ type: () => Number, description: 'Sound channels of the soundshot file' })
 	@MultiORMColumn({ nullable: true })
