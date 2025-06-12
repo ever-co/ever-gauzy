@@ -20,6 +20,7 @@ import { CamshotPlugin } from '@gauzy/plugin-camshot';
 
 import { SentryTracing as SentryPlugin } from './sentry';
 import { PosthogAnalytics as PosthogPlugin } from './posthog';
+import { SoundshotPlugin } from '@gauzy/plugin-soundshot';
 
 const { jitsu, sentry, posthog } = environment;
 
@@ -72,6 +73,8 @@ export const plugins = [
 	VideosPlugin,
 	// Indicates the inclusion or intention to use the CamshotPlugin in the codebase.
 	CamshotPlugin,
+	// Indicates the inclusion or intention to use the SoundshotPlugin in the codebase.
+	SoundshotPlugin,
 	// Indicates the inclusion or intention to use the RegistryPlugin in the codebase.
 	RegistryPlugin
 ];

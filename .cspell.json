@@ -672,7 +672,10 @@
 		"Archs",
 		"camshot",
 		"camshots",
-		"dtos"
+		"dtos",
+		"soundshot",
+		"soundshots",
+		"runtimes"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

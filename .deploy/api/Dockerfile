@@ -159,6 +159,7 @@ COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/p
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
+COPY --chown=node:node packages/plugins/soundshot/package.json ./packages/plugins/soundshot/
 COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins/registry/
 
 # We do not build Wakatime plugin here, because it is used in Desktop Apps for now
@@ -221,6 +222,7 @@ COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/p
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
+COPY --chown=node:node packages/plugins/soundshot/package.json ./packages/plugins/soundshot/
 COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins/registry/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
@@ -343,6 +345,7 @@ RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin
     cp -r ./packages/plugins/sentry-tracing/node_modules ./node_modules/@gauzy/plugin-sentry/ && \
     cp -r ./packages/plugins/posthog/node_modules ./node_modules/@gauzy/plugin-posthog/ && \
     cp -r ./packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/ && \
+    cp -r ./packages/plugins/soundshot/node_modules ./node_modules/@gauzy/plugin-soundshot/ && \
     cp -r ./packages/plugins/registry/node_modules ./node_modules/@gauzy/plugin-registry/
 
 # We do not copy node_modules for Wakatime plugin here, because it is used in Desktop Apps for now

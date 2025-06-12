@@ -1,0 +1,34 @@
+{
+	"name": "plugin-soundshot",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/soundshot/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"generatorOptions": {
+				"packageRoot": "dist/{projectRoot}",
+				"currentVersionResolver": "git-tag",
+				"fallbackCurrentVersionResolver": "disk"
+			}
+		}
+	},
+	"tags": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/plugins/soundshot",
+				"tsConfig": "packages/plugins/soundshot/tsconfig.lib.json",
+				"packageJson": "packages/plugins/soundshot/package.json",
+				"main": "packages/plugins/soundshot/src/index.ts",
+				"assets": ["packages/plugins/soundshot/*.md"]
+			}
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		}
+	}
+}
