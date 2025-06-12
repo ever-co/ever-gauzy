@@ -1,10 +1,9 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { CreateSoundshotCommand } from '../create-soundshot.command';
-import { SoundshotService } from '../../services/soundshot.service';
 import { Soundshot } from '../../entity/soundshot.entity';
-import { SoundshotFactory } from '../../shared/soundshot.factory';
 import { ISoundshot } from '../../models/soundshot.model';
-import { FileStorage } from '@gauzy/core';
+import { SoundshotService } from '../../services/soundshot.service';
+import { SoundshotFactory } from '../../shared/soundshot.factory';
+import { CreateSoundshotCommand } from '../create-soundshot.command';
 
 @CommandHandler(CreateSoundshotCommand)
 export class CreateSoundshotCommandHandler implements ICommandHandler<CreateSoundshotCommand> {
@@ -27,7 +26,8 @@ export class CreateSoundshotCommandHandler implements ICommandHandler<CreateSoun
 		} catch (error) {
 			// Ensure cleanup of uploaded file if preparation failed
 			if (file?.key) {
-				await new FileStorage().getProvider().deleteFile(file.key);
+				const provider = this.soundshotService.getFileStorageProviderInstance();
+				await provider.deleteFile(file.key);
 			}
 			throw error;
 		}

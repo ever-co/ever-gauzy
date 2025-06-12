@@ -9,7 +9,6 @@ import { plainToInstance } from 'class-transformer';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { IPreparedFile } from '../models/prepare.model';
 
-
 @Injectable()
 export class SoundshotService extends TenantAwareCrudService<Soundshot> {
 	private readonly fileStorage: FileStorage;
@@ -57,7 +56,11 @@ export class SoundshotService extends TenantAwareCrudService<Soundshot> {
 		};
 	}
 
-	public getFileStorageProviderInstance(storageProviderEnum: FileStorageProviderEnum) {
-		return this.fileStorage.setProvider(storageProviderEnum).getProviderInstance();
+	public getFileStorageProviderInstance(storageProviderEnum?: FileStorageProviderEnum) {
+		if (storageProviderEnum) {
+			return this.fileStorage.setProvider(storageProviderEnum).getProviderInstance();
+		} else {
+			return this.fileStorage.getProvider();
+		}
 	}
 }
