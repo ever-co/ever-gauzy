@@ -1319,7 +1319,8 @@
 				"DELETE_WEBHOOK": "Fout bij het verwijderen van webhook",
 				"LOAD_ACTIONS": "Fout bij het laden van acties",
 				"LOAD_TRIGGERS": "Fout bij het laden van triggers",
-				"START_AUTHORIZATION": "Start alstublieft de autorisatieproces"
+				"START_AUTHORIZATION": "Start alstublieft de autorisatieproces",
+				"INVALID_TOKEN": "Ongeldig token verstrekt"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier-instellingen succesvol opgeslagen",

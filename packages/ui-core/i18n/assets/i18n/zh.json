@@ -1319,7 +1319,8 @@
 				"DELETE_WEBHOOK": "删除Webhook失败",
 				"LOAD_ACTIONS": "加载动作失败",
 				"LOAD_TRIGGERS": "加载触发器失败",
-				"START_AUTHORIZATION": "请开始授权过程"
+				"START_AUTHORIZATION": "请开始授权过程",
+				"INVALID_TOKEN": "提供的令牌无效"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier设置保存成功",

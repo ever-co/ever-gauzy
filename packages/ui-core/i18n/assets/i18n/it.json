@@ -1319,7 +1319,8 @@
 				"DELETE_WEBHOOK": "Impossibile eliminare il webhook",
 				"LOAD_ACTIONS": "Impossibile caricare le azioni",
 				"LOAD_TRIGGERS": "Impossibile caricare i trigger",
-				"START_AUTHORIZATION": "Per favore, inizia il processo di autorizzazione"
+				"START_AUTHORIZATION": "Per favore, inizia il processo di autorizzazione",
+				"INVALID_TOKEN": "Token non valido fornito"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Impostazioni di Zapier salvate con successo",

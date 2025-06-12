@@ -1320,7 +1320,8 @@
 				"DELETE_WEBHOOK": "Échec de la suppression du webhook",
 				"LOAD_ACTIONS": "Échec du chargement des actions",
 				"LOAD_TRIGGERS": "Échec du chargement des déclencheurs",
-				"START_AUTHORIZATION": "Veuillez démarrer le processus d'autorisation"
+				"START_AUTHORIZATION": "Veuillez démarrer le processus d'autorisation",
+				"INVALID_TOKEN": "Jeton invalide fourni"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Paramètres Zapier enregistrés avec succès",

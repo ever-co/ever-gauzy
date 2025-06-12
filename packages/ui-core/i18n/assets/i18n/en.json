@@ -1360,7 +1360,8 @@
 				"DELETE_WEBHOOK": "Failed to delete webhook",
 				"LOAD_ACTIONS": "Failed to load actions",
 				"LOAD_TRIGGERS": "Failed to load triggers",
-				"START_AUTHORIZATION": "Please start the authorization process"
+				"START_AUTHORIZATION": "Please start the authorization process",
+				"INVALID_TOKEN": "Invalid token provided"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier settings saved successfully",

@@ -1321,7 +1321,8 @@
 				"DELETE_WEBHOOK": "Error al eliminar webhook",
 				"LOAD_ACTIONS": "Error al cargar acciones",
 				"LOAD_TRIGGERS": "Error al cargar disparadores",
-				"START_AUTHORIZATION": "Por favor, inicie el proceso de autorización"
+				"START_AUTHORIZATION": "Por favor, inicie el proceso de autorización",
+				"INVALID_TOKEN": "Token inválido proporcionado"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Configuración de Zapier guardada correctamente",

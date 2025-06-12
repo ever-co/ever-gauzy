@@ -1322,7 +1322,8 @@
 				"DELETE_WEBHOOK": "נכשל במחיקת וובחוק",
 				"LOAD_ACTIONS": "נכשל בטעינת פעולות",
 				"LOAD_TRIGGERS": "נכשל בטעינת טריגרים",
-				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור"
+				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור",
+				"INVALID_TOKEN": "אסימון לא תקין סופק"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "הגדרות Zapier נשמרו בהצלחה",

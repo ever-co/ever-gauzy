@@ -1193,72 +1193,73 @@
 				"SAVE": "Gwok Settings"
 			}
 		},
-        "ZAPIER_PAGE": {
-            "CLIENT_ID": "Ket Zapier Client ID ni",
-            "CLIENT_SECRET": "Ket Zapier Client Secret ni",
-            "NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Zapier me tiyo ki integration",
-            "ERRORS": {
-                "LOAD_SETTINGS": "Peko oo pe gonyo ter pa Zapier",
-                "SAVE_SETTINGS": "Peko oo pe gam ter pa Zapier",
-                "INVALID_FORM": "Tim ber iyie pot buk ma mito ni ber",
-                "MISSING_CREDENTIALS": "Peko pe tye lok ma loyo client",
-                "NO_ACCESS_TOKEN": "Peke pe tye token ma loyo",
-                "LOAD_WEBHOOKS": "Peko oo pe gonyo webhooks",
-                "DELETE_WEBHOOK": "Peko oo pe junk webhook",
-                "LOAD_ACTIONS": "Peko oo pe gonyo tic",
-                "LOAD_TRIGGERS": "Peko oo pe gonyo lok ma gonyo",
-                "START_AUTHORIZATION": "Ket cwoki pa authorization ni",
-                "INVALID_CALLBACK": "Peko tye callback ma tye maber",
-                "AUTHORIZATION": "Peko tye authorization ma tye maber"
-            },
-            "SUCCESS": {
-                "SETTINGS_SAVED": "Ter pa Zapier ogam ki ber",
-                "DELETE_WEBHOOK": "Webhook ojunk ki ber",
-                "AUTHORIZATION": "Authorization puched ki ber"
-            },
-            "TAB": {
-                "TRIGGERS": "Lok ma gonyo",
-                "ACTIONS": "Tic",
-                "WEBHOOKS": "Webhooks",
-                "SETTINGS": "Ter"
-            },
-            "TOOLTIP": {
-                "TRIGGERS": "Lok ma gonyo eno ni tic ma tye i Gauzy ki gitye ki twero tiyo kwede tic i Zapier.",
-                "ACTIONS": "Tic eno ni tic ma tye i Zapier ki gitye ki twero tiyo kwede tic i Gauzy.",
-                "WEBHOOKS": "Webhooks eno ni tic ma tye i Zapier ki gitye ki twero tiyo kwede tic i Gauzy.",
-                "SETTINGS": "Ter eno ni ter ma kigoyo i tic kwede Zapier."
-            },
-            "MESSAGE": {
-                "TRIGGERS_ENABLED": "Lok ma gonyo oloko ki ber.",
-                "TRIGGERS_DISABLED": "Lok ma gonyo pe oloko ki ber.",
-                "ACTIONS_ENABLED": "Tic oloko ki ber.",
-                "ACTIONS_DISABLED": "Tic pe oloko ki ber.",
-                "WEBHOOKS_ENABLED": "Webhooks oloko ki ber.",
-                "WEBHOOKS_DISABLED": "Webhooks pe oloko ki ber."
-            },
-            "SETTINGS": {
-                "TITLE": "Ter pa Zapier",
-                "ENABLE_INTEGRATION": "Cak tic kwede Zapier",
-                "WEBHOOK_URL": "URL pa Webhook",
-                "WEBHOOK_URL_PLACEHOLDER": "Ket URL pa webhook",
-                "WEBHOOK_URL_INVALID": "Tim ber ket URL pa webhook ma tye",
-                "WEBHOOK_INFO": "Webhook eno ni tic ma tye i Zapier ki gitye ki twero tiyo kwede tic i Gauzy.",
-                "SAVE": "Gam ter"
-            },
-            "ACTIONS": {
-                "TITLE": "Tic",
-                "NO_ACTIONS": "Pe tye tic ma kelo"
-            },
-            "TRIGGERS": {
-                "TITLE": "Lok ma gonyo",
-                "NO_TRIGGERS": "Pe tye lok ma gonyo"
-            },
-            "WEBHOOKS": {
-                "TITLE": "Webhooks",
-                "NO_WEBHOOKS": "Pe tye webhook ma kigoyo"
-            }
-        },
-        "COMING_SOON": "crwdns4078:0crwdne4078:0",
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "Ket Zapier Client ID ni",
+			"CLIENT_SECRET": "Ket Zapier Client Secret ni",
+			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Zapier me tiyo ki integration",
+			"ERRORS": {
+				"LOAD_SETTINGS": "Peko oo pe gonyo ter pa Zapier",
+				"SAVE_SETTINGS": "Peko oo pe gam ter pa Zapier",
+				"INVALID_FORM": "Tim ber iyie pot buk ma mito ni ber",
+				"MISSING_CREDENTIALS": "Peko pe tye lok ma loyo client",
+				"NO_ACCESS_TOKEN": "Peke pe tye token ma loyo",
+				"LOAD_WEBHOOKS": "Peko oo pe gonyo webhooks",
+				"DELETE_WEBHOOK": "Peko oo pe junk webhook",
+				"LOAD_ACTIONS": "Peko oo pe gonyo tic",
+				"LOAD_TRIGGERS": "Peko oo pe gonyo lok ma gonyo",
+				"START_AUTHORIZATION": "Ket cwoki pa authorization ni",
+				"INVALID_CALLBACK": "Peko tye callback ma tye maber",
+				"AUTHORIZATION": "Peko tye authorization ma tye maber",
+				"INVALID_TOKEN": "Token ma pe tye maber omiyo"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Ter pa Zapier ogam ki ber",
+				"DELETE_WEBHOOK": "Webhook ojunk ki ber",
+				"AUTHORIZATION": "Authorization puched ki ber"
+			},
+			"TAB": {
+				"TRIGGERS": "Lok ma gonyo",
+				"ACTIONS": "Tic",
+				"WEBHOOKS": "Webhooks",
+				"SETTINGS": "Ter"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "Lok ma gonyo eno ni tic ma tye i Gauzy ki gitye ki twero tiyo kwede tic i Zapier.",
+				"ACTIONS": "Tic eno ni tic ma tye i Zapier ki gitye ki twero tiyo kwede tic i Gauzy.",
+				"WEBHOOKS": "Webhooks eno ni tic ma tye i Zapier ki gitye ki twero tiyo kwede tic i Gauzy.",
+				"SETTINGS": "Ter eno ni ter ma kigoyo i tic kwede Zapier."
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "Lok ma gonyo oloko ki ber.",
+				"TRIGGERS_DISABLED": "Lok ma gonyo pe oloko ki ber.",
+				"ACTIONS_ENABLED": "Tic oloko ki ber.",
+				"ACTIONS_DISABLED": "Tic pe oloko ki ber.",
+				"WEBHOOKS_ENABLED": "Webhooks oloko ki ber.",
+				"WEBHOOKS_DISABLED": "Webhooks pe oloko ki ber."
+			},
+			"SETTINGS": {
+				"TITLE": "Ter pa Zapier",
+				"ENABLE_INTEGRATION": "Cak tic kwede Zapier",
+				"WEBHOOK_URL": "URL pa Webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "Ket URL pa webhook",
+				"WEBHOOK_URL_INVALID": "Tim ber ket URL pa webhook ma tye",
+				"WEBHOOK_INFO": "Webhook eno ni tic ma tye i Zapier ki gitye ki twero tiyo kwede tic i Gauzy.",
+				"SAVE": "Gam ter"
+			},
+			"ACTIONS": {
+				"TITLE": "Tic",
+				"NO_ACTIONS": "Pe tye tic ma kelo"
+			},
+			"TRIGGERS": {
+				"TITLE": "Lok ma gonyo",
+				"NO_TRIGGERS": "Pe tye lok ma gonyo"
+			},
+			"WEBHOOKS": {
+				"TITLE": "Webhooks",
+				"NO_WEBHOOKS": "Pe tye webhook ma kigoyo"
+			}
+		},
+		"COMING_SOON": "crwdns4078:0crwdne4078:0",
 		"RE_INTEGRATE": "crwdns8132:0crwdne8132:0",
 		"SETTINGS": "crwdns8134:0crwdne8134:0",
 		"SELECT_GROUPS": "crwdns8268:0crwdne8268:0",

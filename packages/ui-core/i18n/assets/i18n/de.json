@@ -1319,7 +1319,8 @@
 				"DELETE_WEBHOOK": "Fehler beim Löschen des Webhooks",
 				"LOAD_ACTIONS": "Fehler beim Laden der Aktionen",
 				"LOAD_TRIGGERS": "Fehler beim Laden der Trigger",
-				"START_AUTHORIZATION": "Bitte starten Sie den Autorisierungsprozess"
+				"START_AUTHORIZATION": "Bitte starten Sie den Autorisierungsprozess",
+				"INVALID_TOKEN": "Ungültiges Token bereitgestellt"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier-Einstellungen erfolgreich gespeichert",

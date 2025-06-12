@@ -1318,7 +1318,8 @@
 				"DELETE_WEBHOOK": "فشل حذف ويب هوك",
 				"LOAD_ACTIONS": "فشل تحميل الإجراءات",
 				"LOAD_TRIGGERS": "فشل تحميل المحفزات",
-				"START_AUTHORIZATION": "يرجى بدء عملية التفويض"
+				"START_AUTHORIZATION": "يرجى بدء عملية التفويض",
+				"INVALID_TOKEN": "تم توفير رمز غير صالح"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "تم حفظ إعدادات Zapier بنجاح",

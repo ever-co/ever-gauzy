@@ -1319,7 +1319,8 @@
 				"DELETE_WEBHOOK": "Falha ao excluir webhook",
 				"LOAD_ACTIONS": "Falha ao carregar ações",
 				"LOAD_TRIGGERS": "Falha ao carregar gatilhos",
-				"START_AUTHORIZATION": "Por favor, inicie o processo de autorização"
+				"START_AUTHORIZATION": "Por favor, inicie o processo de autorização",
+				"INVALID_TOKEN": "Token inválido fornecido"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Configurações do Zapier salvas com sucesso",
