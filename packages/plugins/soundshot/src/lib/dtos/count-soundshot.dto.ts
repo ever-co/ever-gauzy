@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsISO8601, IsOptional, IsUUID } from 'class-validator';
 
 /**
@@ -40,7 +40,7 @@ export class CountSoundshotDTO {
 	 *
 	 * @example '2023-01-01T00:00:00.000Z'
 	 */
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: 'The start date for filtering soundshot records. Can be provided as a string or a Date object.',
 		example: '2023-01-01T00:00:00.000Z',
 		type: 'string',
@@ -49,7 +49,7 @@ export class CountSoundshotDTO {
 	})
 	@IsOptional()
 	@IsISO8601({ strict: true }, { message: 'startDate must be a valid ISO 8601 date string' })
-	startDate: Date | string;
+	startDate?: Date | string;
 
 	/**
 	 * The end date for filtering soundshot records.
@@ -57,7 +57,7 @@ export class CountSoundshotDTO {
 	 *
 	 * @example '2023-12-31T23:59:59.999Z'
 	 */
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: 'The end date for filtering soundshot records. Can be provided as a string or a Date object.',
 		example: '2023-12-31T23:59:59.999Z',
 		type: 'string',
@@ -66,5 +66,5 @@ export class CountSoundshotDTO {
 	})
 	@IsOptional()
 	@IsISO8601({ strict: true }, { message: 'endDate must be a valid ISO 8601 date string' })
-	endDate: Date | string;
+	endDate?: Date | string;
 }
