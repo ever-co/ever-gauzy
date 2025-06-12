@@ -29,7 +29,7 @@ export class SoundshotService extends TenantAwareCrudService<Soundshot> {
 	 */
 	public async prepare(file: FileDTO): Promise<IPreparedFile> {
 		// Get the file storage provider
-		const provider = new FileStorage().getProvider();
+		const provider = this.fileStorage.getProvider();
 		// Convert the plain object to a class instance
 		const fileInstance = plainToInstance(FileDTO, file);
 		// Validate the file DTO
