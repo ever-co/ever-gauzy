@@ -1320,7 +1320,8 @@
 				"LOAD_ACTIONS": "Falha ao carregar ações",
 				"LOAD_TRIGGERS": "Falha ao carregar gatilhos",
 				"START_AUTHORIZATION": "Por favor, inicie o processo de autorização",
-				"INVALID_TOKEN": "Token inválido fornecido"
+				"INVALID_TOKEN": "Token inválido fornecido",
+				"TOKEN_NOT_FOUND": "Token não encontrado"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Configurações do Zapier salvas com sucesso",

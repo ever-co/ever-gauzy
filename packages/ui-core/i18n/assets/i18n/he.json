@@ -1323,7 +1323,8 @@
 				"LOAD_ACTIONS": "נכשל בטעינת פעולות",
 				"LOAD_TRIGGERS": "נכשל בטעינת טריגרים",
 				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור",
-				"INVALID_TOKEN": "אסימון לא תקין סופק"
+				"INVALID_TOKEN": "אסימון לא תקין סופק",
+				"TOKEN_NOT_FOUND": "אסימון לא נמצא"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "הגדרות Zapier נשמרו בהצלחה",

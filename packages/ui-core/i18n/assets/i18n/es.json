@@ -1322,7 +1322,8 @@
 				"LOAD_ACTIONS": "Error al cargar acciones",
 				"LOAD_TRIGGERS": "Error al cargar disparadores",
 				"START_AUTHORIZATION": "Por favor, inicie el proceso de autorización",
-				"INVALID_TOKEN": "Token inválido proporcionado"
+				"INVALID_TOKEN": "Token inválido proporcionado",
+				"TOKEN_NOT_FOUND": "Token no encontrado"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Configuración de Zapier guardada correctamente",

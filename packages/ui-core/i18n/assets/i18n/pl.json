@@ -1319,7 +1319,8 @@
 				"LOAD_ACTIONS": "Nie udało się załadować akcji",
 				"LOAD_TRIGGERS": "Nie udało się załadować triggerów",
 				"START_AUTHORIZATION": "Proszę rozpocząć proces autoryzacji",
-				"INVALID_TOKEN": "Podano nieprawidłowy token"
+				"INVALID_TOKEN": "Podano nieprawidłowy token",
+				"TOKEN_NOT_FOUND": "Token nie został znaleziony"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Ustawienia Zapier zostały pomyślnie zapisane",

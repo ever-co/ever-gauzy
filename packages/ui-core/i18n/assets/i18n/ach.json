@@ -1210,7 +1210,8 @@
 				"START_AUTHORIZATION": "Ket cwoki pa authorization ni",
 				"INVALID_CALLBACK": "Peko tye callback ma tye maber",
 				"AUTHORIZATION": "Peko tye authorization ma tye maber",
-				"INVALID_TOKEN": "Token ma pe tye maber omiyo"
+				"INVALID_TOKEN": "Token ma pe tye maber omiyo",
+				"TOKEN_NOT_FOUND": "Token pe ononge"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Ter pa Zapier ogam ki ber",

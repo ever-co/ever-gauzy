@@ -1319,7 +1319,8 @@
 				"LOAD_ACTIONS": "فشل تحميل الإجراءات",
 				"LOAD_TRIGGERS": "فشل تحميل المحفزات",
 				"START_AUTHORIZATION": "يرجى بدء عملية التفويض",
-				"INVALID_TOKEN": "تم توفير رمز غير صالح"
+				"INVALID_TOKEN": "تم توفير رمز غير صالح",
+				"TOKEN_NOT_FOUND": "لم يتم العثور على الرمز"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "تم حفظ إعدادات Zapier بنجاح",

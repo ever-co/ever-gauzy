@@ -1321,7 +1321,8 @@
 				"LOAD_ACTIONS": "Échec du chargement des actions",
 				"LOAD_TRIGGERS": "Échec du chargement des déclencheurs",
 				"START_AUTHORIZATION": "Veuillez démarrer le processus d'autorisation",
-				"INVALID_TOKEN": "Jeton invalide fourni"
+				"INVALID_TOKEN": "Jeton invalide fourni",
+				"TOKEN_NOT_FOUND": "Jeton non trouvé"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Paramètres Zapier enregistrés avec succès",

@@ -1320,7 +1320,8 @@
 				"LOAD_ACTIONS": "Fout bij het laden van acties",
 				"LOAD_TRIGGERS": "Fout bij het laden van triggers",
 				"START_AUTHORIZATION": "Start alstublieft de autorisatieproces",
-				"INVALID_TOKEN": "Ongeldig token verstrekt"
+				"INVALID_TOKEN": "Ongeldig token verstrekt",
+				"TOKEN_NOT_FOUND": "Token niet gevonden"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier-instellingen succesvol opgeslagen",
