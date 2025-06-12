@@ -1,0 +1,41 @@
+.endpoints-list {
+  .endpoint-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-basic-color-3);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .endpoint-info {
+      flex: 1;
+
+      h6 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-basic-color);
+      }
+
+      p {
+        margin: 0.5rem 0 0;
+        font-size: 0.875rem;
+        color: var(--text-hint-color);
+      }
+    }
+
+    .endpoint-actions {
+      margin-left: 1rem;
+    }
+  }
+
+  .no-data {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-hint-color);
+    font-size: 0.875rem;
+  }
+}

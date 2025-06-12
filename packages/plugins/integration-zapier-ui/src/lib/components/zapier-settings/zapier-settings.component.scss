@@ -1,0 +1,36 @@
+.card-scroll {
+  height: calc(100vh - 13.5rem);
+  overflow-y: auto;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.error-message {
+  color: var(--gauzy-color-danger-500);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  margin: 1rem 0;
+  color: var(--gauzy-color-primary-500);
+  font-size: 0.875rem;
+
+  nb-icon {
+    margin-right: 0.5rem;
+  }
+}
+
+button {
+  margin-top: 1rem;
+}

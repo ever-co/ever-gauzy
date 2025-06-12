@@ -606,6 +606,8 @@
 			"COST": "Затраты",
 			"MAKE_COM_CLIENT_ID": "Введите ваш ID клиента Make.com",
 			"MAKE_COM_CLIENT_SECRET": "Введите ваш секрет клиента Make.com",
+			"ZAPIER_CLIENT_ID": "Введите ваш ID клиента Zapier",
+			"ZAPIER_CLIENT_SECRET": "Введите ваш секрет клиента Zapier",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
 				"DEGREE": "Диплом",
@@ -841,6 +843,7 @@
 		"POSITIONS": "Позиции",
 		"INTEGRATIONS": "Приложения и интеграция",
 		"MAKE_COM": "Make.com",
+		"ZAPIER": "Zapier",
 		"UPWORK": "Обновления",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Время выключено",
@@ -1307,6 +1310,70 @@
 				"WEBHOOK_URL_PLACEHOLDER": "Введите URL вебхука",
 				"WEBHOOK_URL_INVALID": "Пожалуйста, введите действительный URL вебхука",
 				"SAVE": "Сохранить настройки"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "ID клиента",
+			"CLIENT_SECRET": "Секрет клиента",
+			"NEXT_STEP_INFO": "После авторизации вы будете перенаправлены на Zapier для завершения настройки интеграции",
+			"ERRORS": {
+				"LOAD_SETTINGS": "Не удалось загрузить настройки Zapier",
+				"SAVE_SETTINGS": "Не удалось сохранить настройки Zapier",
+				"INVALID_FORM": "Пожалуйста, заполните все обязательные поля",
+				"MISSING_CREDENTIALS": "Отсутствуют учетные данные клиента",
+				"NO_ACCESS_TOKEN": "Нет доступного токена доступа",
+				"LOAD_WEBHOOKS": "Не удалось загрузить вебхуки",
+				"DELETE_WEBHOOK": "Не удалось удалить вебхук",
+				"LOAD_ACTIONS": "Не удалось загрузить действия",
+				"LOAD_TRIGGERS": "Не удалось загрузить триггеры",
+				"START_AUTHORIZATION": "Пожалуйста, начните процесс авторизации",
+				"INVALID_TOKEN": "Предоставлен недействительный токен",
+				"TOKEN_NOT_FOUND": "Токен не найден"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Настройки Zapier успешно сохранены",
+				"DELETE_WEBHOOK": "Вебхук успешно удален"
+			},
+			"TAB": {
+				"TRIGGERS": "Триггеры",
+				"ACTIONS": "Действия",
+				"WEBHOOKS": "Вебхуки",
+				"SETTINGS": "Настройки"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "Триггеры — это события, которые происходят в Gauzy и могут использоваться для запуска действий в Zapier.",
+				"ACTIONS": "Действия — это события, которые происходят в Zapier и могут использоваться для запуска действий в Gauzy.",
+				"WEBHOOKS": "Вебхуки — это события, которые происходят в Zapier и могут использоваться для запуска действий в Gauzy.",
+				"SETTINGS": "Настройки — это параметры интеграции Zapier."
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "Триггеры успешно включены.",
+				"TRIGGERS_DISABLED": "Триггеры успешно отключены.",
+				"ACTIONS_ENABLED": "Действия успешно включены.",
+				"ACTIONS_DISABLED": "Действия успешно отключены.",
+				"WEBHOOKS_ENABLED": "Вебхуки успешно включены.",
+				"WEBHOOKS_DISABLED": "Вебхуки успешно отключены."
+			},
+			"SETTINGS": {
+				"TITLE": "Настройки Zapier",
+				"ENABLE_INTEGRATION": "Включить интеграцию Zapier",
+				"WEBHOOK_URL": "URL вебхука",
+				"WEBHOOK_URL_PLACEHOLDER": "Введите URL вебхука",
+				"WEBHOOK_URL_INVALID": "Пожалуйста, введите действительный URL вебхука",
+				"WEBHOOK_INFO": "Вебхук — это URL, который используется для обновления данных в Gauzy на основе определенного события в Zapier.",
+				"SAVE": "Сохранить настройки"
+			},
+			"ACTIONS": {
+				"TITLE": "Действия",
+				"NO_ACTIONS": "Нет доступных действий"
+			},
+			"TRIGGERS": {
+				"TITLE": "Триггеры",
+				"NO_TRIGGERS": "Нет доступных триггеров"
+			},
+			"WEBHOOKS": {
+				"TITLE": "Вебхуки",
+				"NO_WEBHOOKS": "Нет настроенных вебхуков"
 			}
 		},
 		"GAUZY_AI_PAGE": {

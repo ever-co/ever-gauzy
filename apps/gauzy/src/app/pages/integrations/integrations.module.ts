@@ -99,6 +99,18 @@ export class IntegrationsModule {
 				import('@gauzy/plugin-integration-make-com-ui').then((m) => m.IntegrationMakeComUiModule)
 		});
 
+		// Register the routes for zapier integration
+		this._pageRouteRegistryService.registerPageRoute({
+			// Data to be passed to the component
+			data: { selectors: false },
+			// Register the location 'integrations'
+			location: 'integrations',
+			// Register the path 'zapier'
+			path: 'zapier',
+			// Register the loadChildren function to load the IntegrationZapierUiModule lazy module
+			loadChildren: () => import('@gauzy/plugin-integration-zapier-ui').then((m) => m.IntegrationZapierUiModule)
+		});
+
 		// Register the routes for gauzy-ai integration
 		this._pageRouteRegistryService.registerPageRoute({
 			// Data to be passed to the component

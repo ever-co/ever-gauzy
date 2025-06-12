@@ -1,0 +1,19 @@
+<nb-card class="card-scroll">
+	<nb-card-header>
+		<ngx-back-navigation class="float-left" (click)="navigateToIntegrations()"></ngx-back-navigation>
+		<nb-actions class="float-left pt-2" size="small">
+			<nb-action class="toggle-layout p-0">
+				<h5>{{ 'MENU.ZAPIER' | translate }}</h5>
+				<nb-icon icon="settings-2-outline" [nbContextMenu]="menus"></nb-icon>
+			</nb-action>
+		</nb-actions>
+	</nb-card-header>
+	<nb-card-body>
+		<div *ngIf="loading" class="d-flex justify-content-center">
+			<nb-spinner></nb-spinner>
+		</div>
+		<div *ngIf="!loading">
+			<nb-route-tabset [tabs]="tabs" fullWidth></nb-route-tabset>
+		</div>
+	</nb-card-body>
+</nb-card>

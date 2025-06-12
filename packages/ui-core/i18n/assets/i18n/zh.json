@@ -672,6 +672,8 @@
 			"LINKEDIN_ID": "领英帐号",
 			"MAKE_COM_CLIENT_ID": "输入您的Make.com客户端ID",
 			"MAKE_COM_CLIENT_SECRET": "输入您的Make.com客户端密钥",
+			"ZAPIER_CLIENT_ID": "输入您的Zapier客户端ID",
+			"ZAPIER_CLIENT_SECRET": "输入您的Zapier客户端密钥",
 			"STANDARD_WORK_HOURS_PER_DAY": "输入每天的标准工作时间（例如 8 小时）"
 		},
 		"RATES": {
@@ -833,6 +835,7 @@
 		"POSITIONS": "职位",
 		"INTEGRATIONS": "应用程序和集成",
 		"UPWORK": "Upwork: 艾普沃克",
+		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI 云知能",
 		"PROPOSALS": "提议",
 		"TIME_OFF": "休假",
@@ -1300,6 +1303,70 @@
 				"WEBHOOK_URL_PLACEHOLDER": "输入webhook URL",
 				"WEBHOOK_URL_INVALID": "请输入有效的webhook URL",
 				"SAVE": "保存设置"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "客户端ID",
+			"CLIENT_SECRET": "客户端密钥",
+			"NEXT_STEP_INFO": "授权后，您将被重定向到Zapier以完成集成设置",
+			"ERRORS": {
+				"LOAD_SETTINGS": "加载Zapier设置失败",
+				"SAVE_SETTINGS": "保存Zapier设置失败",
+				"INVALID_FORM": "请填写所有必填字段",
+				"MISSING_CREDENTIALS": "缺少客户端凭据",
+				"NO_ACCESS_TOKEN": "没有可用的访问令牌",
+				"LOAD_WEBHOOKS": "加载Webhooks失败",
+				"DELETE_WEBHOOK": "删除Webhook失败",
+				"LOAD_ACTIONS": "加载动作失败",
+				"LOAD_TRIGGERS": "加载触发器失败",
+				"START_AUTHORIZATION": "请开始授权过程",
+				"INVALID_TOKEN": "提供的令牌无效",
+				"TOKEN_NOT_FOUND": "未找到令牌"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Zapier设置保存成功",
+				"DELETE_WEBHOOK": "Webhook删除成功"
+			},
+			"TAB": {
+				"TRIGGERS": "触发器",
+				"ACTIONS": "动作",
+				"WEBHOOKS": "Webhooks",
+				"SETTINGS": "设置"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "触发器是发生在Gauzy中的事件，可用于触发Zapier中的动作。",
+				"ACTIONS": "动作是发生在Zapier中的事件，可用于触发Gauzy中的动作。",
+				"WEBHOOKS": "Webhooks是发生在Zapier中的事件，可用于触发Gauzy中的动作。",
+				"SETTINGS": "设置是Zapier集成的配置。"
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "触发器已成功启用。",
+				"TRIGGERS_DISABLED": "触发器已成功禁用。",
+				"ACTIONS_ENABLED": "动作已成功启用。",
+				"ACTIONS_DISABLED": "动作已成功禁用。",
+				"WEBHOOKS_ENABLED": "Webhooks已成功启用。",
+				"WEBHOOKS_DISABLED": "Webhooks已成功禁用。"
+			},
+			"SETTINGS": {
+				"TITLE": "Zapier设置",
+				"ENABLE_INTEGRATION": "启用Zapier集成",
+				"WEBHOOK_URL": "Webhook URL",
+				"WEBHOOK_URL_PLACEHOLDER": "输入webhook URL",
+				"WEBHOOK_URL_INVALID": "请输入有效的webhook URL",
+				"WEBHOOK_INFO": "Webhook是Zapier中的事件，可用于触发Gauzy中的动作。",
+				"SAVE": "保存设置"
+			},
+			"ACTIONS": {
+				"TITLE": "动作",
+				"NO_ACTIONS": "没有可用的动作"
+			},
+			"TRIGGERS": {
+				"TITLE": "触发器",
+				"NO_TRIGGERS": "没有可用的触发器"
+			},
+			"WEBHOOKS": {
+				"TITLE": "Webhooks",
+				"NO_WEBHOOKS": "未配置Webhooks"
 			}
 		},
 		"GAUZY_AI_PAGE": {

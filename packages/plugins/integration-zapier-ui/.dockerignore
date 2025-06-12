@@ -1,0 +1,16 @@
+# dependencies
+node_modules/
+
+# misc
+npm-debug.log
+dist
+
+# IDE & editor
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+# test coverage
+coverage/
