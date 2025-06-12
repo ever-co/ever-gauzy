@@ -19,10 +19,17 @@ import {
 	IntegrationTenantUpdateOrCreateCommand,
 	DEFAULT_ENTITY_SETTINGS,
 	PROJECT_TIED_ENTITIES,
-	RequestContext
+	RequestContext,
+	IntegrationTenantService
 } from '@gauzy/core';
 import { ZAPIER_API_URL, ZAPIER_BASE_URL, ZAPIER_TOKEN_EXPIRATION_TIME, ZAPIER_OAUTH_SCOPES } from './zapier.config';
-import { ICreateZapierIntegrationInput, IZapierAccessTokens, IZapierEndpoint } from './zapier.types';
+import {
+	ICreateZapierIntegrationInput,
+	IIntegrationFilter,
+	IZapierAccessTokens,
+	IZapierEndpoint,
+	IZapierIntegrationSettings
+} from './zapier.types';
 import { randomBytes } from 'node:crypto';
 
 @Injectable()
@@ -33,6 +40,7 @@ export class ZapierService {
 		private readonly _commandBus: CommandBus,
 		private readonly _integrationSettingService: IntegrationSettingService,
 		private readonly _integrationService: IntegrationService,
+		private readonly _integrationTenantService: IntegrationTenantService,
 		private readonly config: ConfigService
 	) {}
 
@@ -135,19 +143,13 @@ export class ZapierService {
 	}
 
 	/**
-	 * Generate a random state string for OAuth flow
-	 */
-	private generateState(): string {
-		return randomBytes(32).toString('hex');
-	}
-
-	/**
 	 * Generate the authorization URL for the Zapier OAuth flow.
+	 * @param options.clientId - The OAuth client ID
+	 * @param options.state - The state parameter for CSRF protection (required)
+	 * @returns The authorization URL
+	 * @throws BadRequestException if state is missing or invalid
 	 */
-	getAuthorizationUrl(options?: {
-		state?: string;
-		clientId?: string;
-	}): string {
+	getAuthorizationUrl(options?: { clientId?: string; state?: string }): string {
 		try {
 			const redirect_uri = this.config.get('zapier')?.redirectUri;
 			if (!redirect_uri) {
@@ -164,7 +166,7 @@ export class ZapierService {
 			}
 
 			// Use provided state or generate a new one using simple random generation
-			const state = options?.state ?? this.generateState();
+			const state = options?.state || randomBytes(32).toString('hex');
 
 			if (!state || !state?.trim()) {
 				throw new BadRequestException('State parameter is required');
@@ -182,7 +184,7 @@ export class ZapierService {
 			return `${ZAPIER_API_URL}/v2/authorize?${params.toString()}`;
 		} catch (error) {
 			this.logger.error('Error generating Zapier authorization URL:', error);
-			throw new BadRequestException('Invalid state parameter');
+			throw new BadRequestException('Failed to generate authorization URL');
 		}
 	}
 
@@ -269,7 +271,11 @@ export class ZapierService {
 	 */
 	async storeIntegrationCredentials(input: ICreateZapierIntegrationInput): Promise<IIntegrationTenant> {
 		const tenantId = RequestContext.currentTenantId() || undefined;
-		const { client_id, client_secret, organizationId } = input;
+		const { client_id, client_secret, state, organizationId } = input;
+
+		if (!state) {
+			throw new BadRequestException('State parameter is required');
+		}
 
 		// Find or create the base integration
 		const baseIntegration =
@@ -298,7 +304,7 @@ export class ZapierService {
 			};
 		}) as IIntegrationEntitySetting[];
 
-		// Store only the credentials at this point (not tokens yet)
+		// Store the credentials and state at this point (not tokens yet)
 		return await this._commandBus.execute(
 			new IntegrationTenantUpdateOrCreateCommand(
 				{
@@ -315,6 +321,12 @@ export class ZapierService {
 					entitySettings: entitySettings,
 					settings: [
 						{
+							settingsName: 'is_enabled',
+							settingsValue: 'true',
+							tenantId,
+							organizationId
+						},
+						{
 							settingsName: 'client_id',
 							settingsValue: client_id,
 							tenantId,
@@ -323,6 +335,12 @@ export class ZapierService {
 						{
 							settingsName: 'client_secret',
 							settingsValue: client_secret,
+							tenantId,
+							organizationId
+						},
+						{
+							settingsName: 'state',
+							settingsValue: state,
 							tenantId,
 							organizationId
 						}
@@ -348,7 +366,7 @@ export class ZapierService {
 				where: {
 					tenantId,
 					name: IntegrationEnum.ZAPIER
-				} as any, // Cast to any to bypass type checking limitations
+				} as IIntegrationFilter,
 				relations: ['settings']
 			});
 
@@ -361,7 +379,7 @@ export class ZapierService {
 				name: IntegrationEnum.ZAPIER
 			};
 
-			// Get settings to retrieve client_id and client_secret
+			// Get settings to retrieve client_id, client_secret and state
 			const settings = await this._integrationSettingService.find({
 				where: {
 					integration: { id: integrationTenant.id }
@@ -370,9 +388,15 @@ export class ZapierService {
 
 			const client_id = settings.find((s) => s.settingsName === 'client_id')?.settingsValue;
 			const client_secret = settings.find((s) => s.settingsName === 'client_secret')?.settingsValue;
+			const storedState = settings.find((s) => s.settingsName === 'state')?.settingsValue;
 
 			if (!client_id || !client_secret) {
 				throw new BadRequestException('Missing required Zapier integration settings');
+			}
+
+			// Validate state parameter to prevent CSRF attacks
+			if (!storedState || storedState !== state) {
+				throw new BadRequestException('Invalid state parameter');
 			}
 
 			const redirect_uri = this.config.get('zapier')?.redirectUri;
@@ -672,6 +696,76 @@ export class ZapierService {
 				throw error;
 			}
 			throw new HttpException('Unexpected error refreshing token', HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	/**
+	 * Retrieves the Zapier integration settings for the current tenant.
+	 *
+	 * @param {string} [organizationId] - Optional organization ID to filter settings
+	 * @returns {Promise<IZapierIntegrationSettings>} A promise that resolves with the tenant's Zapier integration settings
+	 */
+	async getIntegrationSettings(organizationId?: string): Promise<IZapierIntegrationSettings> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				throw new NotFoundException('Tenant ID not found in request context');
+			}
+
+			// Build the where clause with tenant and optional organization filter
+			const whereClause: IIntegrationFilter = {
+				name: IntegrationEnum.ZAPIER,
+				tenantId
+			};
+
+			// If organizationId is provided, filter by organization level
+			if (organizationId) {
+				whereClause.organizationId = organizationId;
+			}
+
+			// Find the integration for the current tenant and organization
+			const integrationTenant = await this._integrationTenantService.findOneByOptions({
+				where: whereClause,
+				relations: ['settings']
+			});
+
+			if (!integrationTenant) {
+				return {
+					isEnabled: false,
+					clientId: null,
+					clientSecret: null,
+					accessToken: null,
+					refreshToken: null
+				};
+			}
+
+			// Extract settings from integration settings
+			const enabledSetting = integrationTenant.settings?.find(
+				(setting: IIntegrationSetting) => setting.settingsName === 'is_enabled'
+			);
+			const clientIdSetting = integrationTenant.settings?.find(
+				(setting: IIntegrationSetting) => setting.settingsName === 'client_id'
+			);
+			const clientSecretSetting = integrationTenant.settings?.find(
+				(setting: IIntegrationSetting) => setting.settingsName === 'client_secret'
+			);
+			const accessTokenSetting = integrationTenant.settings?.find(
+				(setting: IIntegrationSetting) => setting.settingsName === 'access_token'
+			);
+			const refreshTokenSetting = integrationTenant.settings?.find(
+				(setting: IIntegrationSetting) => setting.settingsName === 'refresh_token'
+			);
+
+			return {
+				isEnabled: enabledSetting ? enabledSetting.settingsValue === 'true' : false,
+				clientId: clientIdSetting ? clientIdSetting.settingsValue : null,
+				clientSecret: clientSecretSetting ? clientSecretSetting.settingsValue : null,
+				accessToken: accessTokenSetting ? accessTokenSetting.settingsValue : null,
+				refreshToken: refreshTokenSetting ? refreshTokenSetting.settingsValue : null
+			};
+		} catch (error) {
+			this.logger.error('Error retrieving Zapier integration settings:', error);
+			throw error;
 		}
 	}
 }

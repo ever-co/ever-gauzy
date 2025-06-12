@@ -12,12 +12,11 @@ import {
 	Post,
 	Param
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import { ZapierService } from './zapier.service';
-import { ICreateZapierIntegrationInput, IZapierEndpoint } from './zapier.types';
+import { ICreateZapierIntegrationInput, IZapierEndpoint, IZapierIntegrationSettings } from './zapier.types';
 import { randomBytes } from 'node:crypto';
 import { ZAPIER_TOKEN_EXPIRATION_TIME } from './zapier.config';
 
@@ -34,7 +33,7 @@ export class ZapierController {
 	 * Ensures that the necessary configuration values are properly set in the environment variables.
 	 * These are essential for enabling secure and functional Zapier integrations.
 	 */
-	constructor(private readonly zapierService: ZapierService, private readonly _config: ConfigService) {}
+	constructor(private readonly zapierService: ZapierService) {}
 
 	/**
 	 * Creates a new Zapier integration.
@@ -61,14 +60,19 @@ export class ZapierController {
 			throw new BadRequestException('Missing required fields');
 		}
 
-		// Store the client credentials for later use in the callback
+		// Generate state parameter for CSRF protection
+		const state = randomBytes(32).toString('hex');
+
+		// Store the client credentials and state for later use in the callback
 		const integration = await this.zapierService.storeIntegrationCredentials({
-			...body
+			...body,
+			state
 		});
 
 		// Generate authorization URL for user to complete OAuth flow
 		const authorizationUrl = this.zapierService.getAuthorizationUrl({
-			clientId: body.client_id
+			clientId: body.client_id,
+			state
 		});
 
 		return {
@@ -288,5 +292,24 @@ export class ZapierController {
 			}
 			throw new InternalServerErrorException('Failed to get Zapier token');
 		}
+	}
+
+	/**
+	 * Retrieves the Zapier integration settings for the current tenant.
+	 *
+	 * @returns {Promise<IZapierIntegrationSettings>} A promise that resolves with the tenant's Zapier integration settings.
+	 */
+	@ApiOperation({ summary: 'Get Zapier integration settings for tenant' })
+	@ApiResponse({
+		status: 200,
+		description: 'Retrieved tenant Zapier settings'
+	})
+	@ApiResponse({
+		status: 404,
+		description: 'Tenant not found in request context'
+	})
+	@Get('/settings')
+	async getSettings(): Promise<IZapierIntegrationSettings> {
+		return this.zapierService.getIntegrationSettings();
 	}
 }
