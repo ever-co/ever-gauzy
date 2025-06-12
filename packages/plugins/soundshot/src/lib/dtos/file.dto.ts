@@ -1,17 +1,17 @@
-import { UploadedFile } from '@gauzy/contracts';
+import { FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import {
+	IsEnum,
 	IsNotEmpty,
 	IsNumber,
 	IsOptional,
 	IsPositive,
 	IsString,
+	IsUrl,
 	Matches,
 	MaxLength,
-	Min,
-	IsEnum
+	Min
 } from 'class-validator';
-import { FileStorageProviderEnum } from '@gauzy/contracts';
 
 export class FileDTO implements UploadedFile {
 	@ApiProperty({
@@ -99,6 +99,7 @@ export class FileDTO implements UploadedFile {
 		example: 'https://example.com/soundshot-demo-2024.webm'
 	})
 	@IsNotEmpty({ message: 'File URL must not be empty' })
+	@IsUrl({ protocols: ['https', 'http'] }, { message: 'File URL must be a valid URL' })
 	@MaxLength(2083, { message: 'File URL must not exceed 2083 characters' }) // 2083 is the maximum URL length in browsers
 	url: string;
 
