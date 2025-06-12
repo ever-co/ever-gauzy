@@ -24,7 +24,7 @@ export interface IMakeComIntegrationSettings {
 
 // Integration filter interface
 export interface IIntegrationFilter {
-	name: IntegrationEnum;
+	name: IntegrationEnum.MakeCom;
 	tenantId: string;
 	organizationId?: string;
 }

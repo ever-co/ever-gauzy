@@ -4,7 +4,7 @@ import { ConfigService } from '@gauzy/config';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError } from 'axios';
 import { firstValueFrom, catchError } from 'rxjs';
-import { createHash, randomBytes } from 'crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import {
 	IntegrationEnum,
 	IIntegrationEntitySetting,
