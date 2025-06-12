@@ -1,6 +1,6 @@
 import { ID } from '@gauzy/contracts';
 import { BaseQueryDTO, escapeQueryWithParameters, TenantOrganizationBaseDTO } from '@gauzy/core';
-import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
+import { ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Transform, TransformFnParams, Type } from 'class-transformer';
 import { IsArray, IsISO8601, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { FindOptionsWhere } from 'typeorm';
@@ -62,7 +62,7 @@ export class GetSoundshotsQueryDTO extends OmitType(BaseQueryDTO<ISoundshot>, ['
 	@IsString({ message: 'timeZone must be a string' })
 	timeZone?: string;
 
-	@ApiProperty({ type: Object })
+	@ApiPropertyOptional({ type: Object })
 	@IsOptional()
 	@ValidateNested({ each: true })
 	@Type(() => TenantOrganizationBaseDTO)
