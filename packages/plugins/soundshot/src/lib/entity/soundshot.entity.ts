@@ -121,7 +121,7 @@ export class Soundshot extends TenantOrganizationBaseEntity implements ISoundsho
 	size?: number;
 
 	/**
-	 * Channels of the soundshot file.
+	 * Number of audio channels in the soundshot file.
 	 */
 	@IsOptional()
 	@IsNumber({}, { message: 'Number of audio channels in the soundshot file (e.g., 1 for mono, 2 for stereo).' })
