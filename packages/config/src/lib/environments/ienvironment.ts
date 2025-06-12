@@ -124,8 +124,8 @@ export interface IEnvironment {
 	hubstaff?: IHubstaffConfig;
 	zapier?: IZapierConfig;
 	makeCom?: IMakeComConfig;
-	activepieces?: IActivepiecesConfig; // ActivePieces Configuration
-
+	/** ActivePieces Configuration */
+	activepieces?: IActivepiecesConfig;
 	isElectron?: boolean;
 	gauzyUserPath?: string;
 	allowSuperAdminRole?: boolean;

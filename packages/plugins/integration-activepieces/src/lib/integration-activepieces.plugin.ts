@@ -8,11 +8,6 @@ import { ActivepiecesModule } from './activepieces.module';
 	 */
 	imports: [ActivepiecesModule],
 	/**
-	 * Entity needed for ActivePieces integration that extends the existing
-	 * IntegrationSetting entity to store connection data
-	 */
-	entities: [],
-	/**
 	 * A callback that receives the main plugin configuration object and allows
 	 * custom modifications before returning the final configuration.
 	 *

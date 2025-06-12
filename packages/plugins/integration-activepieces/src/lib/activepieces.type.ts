@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
+import { IBasePerTenantAndOrganizationEntityModel } from '@gauzy/contracts';
 
 /**
  * ActivePieces OAuth token response interface
