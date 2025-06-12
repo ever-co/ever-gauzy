@@ -11,7 +11,7 @@ import { GetSoundshotsQuery } from '../get-soundshots.query';
 @Injectable()
 @QueryHandler(GetSoundshotsQuery)
 export class GetSoundshotsQueryHandler implements IQueryHandler<GetSoundshotsQuery> {
-	constructor(private readonly soundshotService: SoundshotService) { }
+	constructor(private readonly soundshotService: SoundshotService) {}
 
 	/**
 	 * Handles the GetSoundshotsQuery and returns a paginated list of soundshots.
@@ -46,7 +46,7 @@ export class GetSoundshotsQueryHandler implements IQueryHandler<GetSoundshotsQue
 			// Convert startDate and endDate to UTC based on the provided timeZone
 			const startDateUtc = moment.tz(startDate, timeZone).utc().toDate();
 			const endDateUtc = moment.tz(endDate, timeZone).utc().toDate();
-			// Update the 'valueDate' property to filter records between the specified dates
+			// Update the 'recordedAt' property to filter records between the specified dates
 			where.recordedAt = Between(startDateUtc, endDateUtc);
 		}
 
