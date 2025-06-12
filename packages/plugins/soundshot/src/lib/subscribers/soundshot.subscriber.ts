@@ -53,6 +53,7 @@ export class SoundshotSubscriber extends BaseEntityEventSubscriber<Soundshot> {
 			this.logger.log(`Generated URL for Soundshot entity with ID ${entity.id ?? 'N/A'}`);
 		} catch (error) {
 			this.logError(entity, 'beforeInsert', error);
+			throw error;
 		}
 	}
 
