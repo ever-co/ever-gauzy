@@ -2,6 +2,7 @@ import {
 	FileStorageProviderEnum,
 	IBasePerTenantAndOrganizationEntityModel,
 	ID,
+	IEmployee,
 	IRelationalUser,
 	ISoundshot as ISoundshotContract,
 	ITimeSlot
@@ -11,5 +12,7 @@ export interface ISoundshot extends ISoundshotContract, IBasePerTenantAndOrganiz
 	fileKey?: string;
 	timeSlotId?: ID;
 	timeSlot?: ITimeSlot;
+	uploadedById?: ID;
+	uploadedBy?: IEmployee;
 	storageProvider: FileStorageProviderEnum;
 }
