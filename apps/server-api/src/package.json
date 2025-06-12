@@ -41,7 +41,6 @@
 			"../../../dist/packages/plugins/registry",
 			"../../../dist/packages/plugins/camshot",
 			"../../../dist/packages/plugins/soundshot",
-			"../../../dist/packages/plugins/posthog",
 			"../../../dist/packages/plugins/registry",
 			"../../../dist/packages/ui-config",
 			"../../../dist/packages/utils"
