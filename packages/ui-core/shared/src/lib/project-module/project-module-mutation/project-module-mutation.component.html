@@ -201,8 +201,8 @@
 			<div class="row">
 				<div class="col-sm-12">
 					<div class="form-group">
-						<label class="label">{{ 'TASKS_PAGE.TASKS_DESCRIPTION' | translate }}</label>
-						<ckeditor class="description" formControlName="description" [config]="ckConfig"></ckeditor>
+						<label for="description" class="label">{{ 'TASKS_PAGE.TASKS_DESCRIPTION' | translate }}</label>
+						<rich-text-editor formControlName="description"></rich-text-editor>
 					</div>
 				</div>
 			</div>

@@ -75,3 +75,4 @@ export * from './lib/goal';
 export * from './lib/miscellaneous';
 export * from './lib/utils';
 export * from './lib/generate-csv-pdf';
+export * from './lib/rich-text-editor';

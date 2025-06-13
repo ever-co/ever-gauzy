@@ -14,7 +14,6 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { ColorPickerComponent, ColorPickerDirective } from 'ngx-color-picker';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
@@ -27,6 +26,7 @@ import { ProjectModuleTableModule } from '../../project-module/project-module-ta
 import { ProjectMutationComponent } from './project-mutation.component';
 import { RepositorySelectorModule } from '../../integrations/github/repository-selector/repository-selector.module';
 import { SmartDataViewLayoutModule } from '../../smart-data-layout';
+import { RichTextEditorModule } from '../../rich-text-editor';
 
 @NgModule({
 	declarations: [ProjectMutationComponent],
@@ -46,7 +46,6 @@ import { SmartDataViewLayoutModule } from '../../smart-data-layout';
 		NbToggleModule,
 		NbIconModule,
 		NgSelectModule,
-		CKEditorModule,
 		ColorPickerComponent,
 		ColorPickerDirective,
 		SharedModule,
@@ -58,7 +57,8 @@ import { SmartDataViewLayoutModule } from '../../smart-data-layout';
 		TeamSelectModule,
 		RepositorySelectorModule,
 		SmartDataViewLayoutModule,
-		ProjectModuleTableModule
+		ProjectModuleTableModule,
+		RichTextEditorModule
 	]
 })
 export class ProjectMutationModule {}

@@ -2,7 +2,6 @@ import { Component, Input, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -30,7 +29,6 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { richTextCKEditorConfig } from '../../ckeditor.config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -53,7 +51,6 @@ export class ProjectModuleMutationComponent extends TranslationBaseComponent imp
 	organization: IOrganization;
 	taskParticipantEnum = TaskParticipantEnum;
 	participants = TaskParticipantEnum.EMPLOYEES;
-	ckConfig: CKEditor4.Config = richTextCKEditorConfig;
 	projectModuleStatuses = Object.values(ProjectModuleStatusEnum);
 	form: UntypedFormGroup = this.fb.group({
 		name: ['', Validators.required],
@@ -110,7 +107,6 @@ export class ProjectModuleMutationComponent extends TranslationBaseComponent imp
 	 * Initializes component and loads necessary data.
 	 */
 	ngOnInit() {
-		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		this.loadOrganizationData();
 		this.loadAvailableParentModules();
 		this.loadTasks();

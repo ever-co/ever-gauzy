@@ -43,6 +43,7 @@
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.4",
 		"ckeditor4-angular": "4.0.1",
+		"ngx-editor": "^19.0.0-beta.1",
 		"moment": "^2.30.1",
 		"ng2-file-upload": "^8.0.0",
 		"ngx-permissions": "^19.0.0",

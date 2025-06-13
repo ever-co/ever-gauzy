@@ -13,7 +13,6 @@ import {
 	NbToastrModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { TaskSelectModule, TaskStatusSelectModule } from '../../tasks';
@@ -21,13 +20,13 @@ import { ProjectSelectModule, SelectorsModule } from '../../selectors';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { ProjectModuleMutationComponent } from './project-module-mutation.component';
+import { RichTextEditorModule } from '../../rich-text-editor';
 
 @NgModule({
 	imports: [
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		CKEditorModule,
 		NbButtonModule,
 		NbCardModule,
 		NbDatepickerModule,
@@ -45,7 +44,8 @@ import { ProjectModuleMutationComponent } from './project-module-mutation.compon
 		TagsColorInputModule,
 		ProjectSelectModule,
 		TaskSelectModule,
-		TaskStatusSelectModule
+		TaskStatusSelectModule,
+		RichTextEditorModule
 	],
 	declarations: [ProjectModuleMutationComponent],
 	exports: [ProjectModuleMutationComponent]

@@ -10,8 +10,8 @@ import { NavMenuBuilderService, NavMenuSectionItem, SidebarMenuService, Store } 
 
 @UntilDestroy()
 @Directive({
-    selector: '[gaBaseNavMenu]',
-    standalone: false
+	selector: '[gaBaseNavMenu]',
+	standalone: false
 })
 export class BaseNavMenuComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	constructor(
@@ -851,7 +851,8 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				title: 'Goals',
 				icon: 'fab fa-font-awesome-flag',
 				data: {
-					translationKey: 'MENU.GOALS'
+					translationKey: 'MENU.GOALS',
+					featureKey: FeatureEnum.FEATURE_GOAL
 				},
 				items: [
 					{

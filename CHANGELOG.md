@@ -73,7 +73,7 @@ This project consists of several apps, each with its own changelog:
 
 ## Changed in general
 
--   Updated CKEditor integration for enhanced security and compatibility.
+-   CKEditor was partially replaced with ngx-editor to improve security and Angular compatibility.
 -   Refactored several key components for improved reusability.
 -   Additional UI/UX enhancements.
 -   Fixed various bugs and improved overall application stability.
