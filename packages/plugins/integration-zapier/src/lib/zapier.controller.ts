@@ -180,6 +180,7 @@ export class ZapierController {
 			client_secret: string;
 			redirect_uri: string;
 			grant_type: string;
+			state: string;
 		}
 	) {
 		try {
@@ -190,12 +191,18 @@ export class ZapierController {
 			}
 
 			// Validate required parameters
-			if (!body.code || !body.client_id || !body.client_secret || !body.redirect_uri) {
+			if (!body.code || !body.client_id || !body.client_secret || !body.redirect_uri || !body.state) {
 				throw new BadRequestException('Missing required parameters');
 			}
 
 			if (body.grant_type !== 'authorization_code') {
 				throw new BadRequestException('Invalid grant_type. Must be "authorization_code"');
+			}
+
+			// Validate and delete the state parameter
+			const isValidState = await this.zapierService.validateAndDeleteState(body.state, tenantId);
+			if (!isValidState) {
+				throw new BadRequestException('Invalid or expired state parameter');
 			}
 
 			// Generate new tokens (simplified approach)

@@ -32,7 +32,7 @@ export interface IZapierEndpoint {
 }
 
 export interface IIntegrationFilter {
-	name: IntegrationEnum.ZAPIER;
+	readonly name: IntegrationEnum.ZAPIER;
 	tenantId: string;
 	organizationId?: string;
 }
@@ -44,8 +44,7 @@ export interface IZapierCreateWebhookInput {
 
 export interface IZapierIntegrationSettings {
 	isEnabled: boolean;
-	clientId: string | null;
-	clientSecret: string | null;
-	accessToken: string | null;
-	refreshToken: string | null;
+	hasClientCredentials: boolean;
+	hasAccessToken: boolean;
+	hasRefreshToken: boolean;
 }

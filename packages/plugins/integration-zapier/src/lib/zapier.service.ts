@@ -248,21 +248,99 @@ export class ZapierService {
 	}
 
 	/**
-	 * Parse the state parameter from the OAuth callback
-	 * With the new simple state format, we just validate it's a valid string
+	 * Parse and validate the state parameter from the OAuth callback
+	 * This method validates the state exists in storage, is not expired, and invalidates it after use
+	 * to prevent replay attacks.
+	 *
+	 * @param state The state parameter to validate
+	 * @returns {Promise<boolean>} True if state is valid and was successfully invalidated
+	 * @throws {BadRequestException} If state is invalid, expired, or already used
 	 */
-	parseAuthState(state: string): string {
+	async parseAuthState(state: string): Promise<boolean> {
 		try {
 			// Basic validation - state should be a non-empty string
 			if (!state || typeof state !== 'string' || state.trim().length === 0) {
 				throw new BadRequestException('Invalid state parameter');
 			}
 
-			// Since we're using simple random strings now, just return the state
-			return state;
+			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID is required');
+			}
+
+			// Validate and delete the state to prevent reuse
+			const isValidState = await this.validateAndDeleteState(state, tenantId);
+			if (!isValidState) {
+				throw new BadRequestException('Invalid or expired state parameter');
+			}
+
+			return true;
 		} catch (error) {
-			this.logger.error('Error parsing OAuth state:', error);
-			throw new BadRequestException('Invalid state parameter');
+			this.logger.error('Error validating state parameter:', error);
+			if (error instanceof BadRequestException) {
+				throw error;
+			}
+			throw new BadRequestException('Failed to validate state parameter');
+		}
+	}
+
+	/**
+	 * Stores the state parameter with an expiration timestamp
+	 * @param state The state parameter to store
+	 * @param tenantId The tenant ID
+	 * @param organizationId Optional organization ID
+	 */
+	private async storeStateWithExpiration(state: string, tenantId: string, organizationId?: string): Promise<void> {
+		const expirationTime = new Date();
+		expirationTime.setMinutes(expirationTime.getMinutes() + 10); // State expires in 10 minutes
+
+		await this._integrationSettingService.create({
+			settingsName: 'state',
+			tenantId,
+			organizationId,
+			settingsValue: JSON.stringify({
+				state,
+				expiresAt: expirationTime.toISOString()
+			})
+		});
+	}
+
+	/**
+	 * Validates and deletes the state parameter after successful OAuth completion
+	 * @param state The state parameter to validate and delete
+	 * @param tenantId The tenant ID
+	 * @param organizationId Optional organization ID
+	 */
+	async validateAndDeleteState(state: string, tenantId: string, organizationId?: string): Promise<boolean> {
+		try {
+			const stateSetting = await this._integrationSettingService.findOneByWhereOptions({
+				settingsName: 'state',
+				settingsValue: state,
+				tenantId,
+				organizationId
+			});
+
+			if (!stateSetting) {
+				return false;
+			}
+
+			// Check if state has expired
+			const metadata = JSON.parse(stateSetting.settingsValue) as { expiresAt: string };
+			if (metadata?.expiresAt && new Date(metadata.expiresAt) < new Date()) {
+				if (stateSetting.id) {
+					await this._integrationSettingService.delete(stateSetting.id);
+				}
+				return false;
+			}
+
+			// Delete the state after successful validation
+			if (stateSetting.id) {
+				await this._integrationSettingService.delete(stateSetting.id);
+			}
+			return true;
+		} catch (error) {
+			this.logger.error('Error validating state:', error);
+			return false;
 		}
 	}
 
@@ -270,12 +348,18 @@ export class ZapierService {
 	 * Store client credentials for later use in OAuth flow
 	 */
 	async storeIntegrationCredentials(input: ICreateZapierIntegrationInput): Promise<IIntegrationTenant> {
-		const tenantId = RequestContext.currentTenantId() || undefined;
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new BadRequestException('Tenant ID is required');
+		}
 		const { client_id, client_secret, state, organizationId } = input;
 
 		if (!state) {
 			throw new BadRequestException('State parameter is required');
 		}
+
+		// Store state with expiration
+		await this.storeStateWithExpiration(state, tenantId, organizationId);
 
 		// Find or create the base integration
 		const baseIntegration =
@@ -304,7 +388,7 @@ export class ZapierService {
 			};
 		}) as IIntegrationEntitySetting[];
 
-		// Store the credentials and state at this point (not tokens yet)
+		// Store the credentials (without state) at this point
 		return await this._commandBus.execute(
 			new IntegrationTenantUpdateOrCreateCommand(
 				{
@@ -335,12 +419,6 @@ export class ZapierService {
 						{
 							settingsName: 'client_secret',
 							settingsValue: client_secret,
-							tenantId,
-							organizationId
-						},
-						{
-							settingsName: 'state',
-							settingsValue: state,
 							tenantId,
 							organizationId
 						}
@@ -732,10 +810,9 @@ export class ZapierService {
 			if (!integrationTenant) {
 				return {
 					isEnabled: false,
-					clientId: null,
-					clientSecret: null,
-					accessToken: null,
-					refreshToken: null
+					hasClientCredentials: false,
+					hasAccessToken: false,
+					hasRefreshToken: false
 				};
 			}
 
@@ -756,12 +833,12 @@ export class ZapierService {
 				(setting: IIntegrationSetting) => setting.settingsName === 'refresh_token'
 			);
 
+			// Map to sanitized DTO
 			return {
 				isEnabled: enabledSetting ? enabledSetting.settingsValue === 'true' : false,
-				clientId: clientIdSetting ? clientIdSetting.settingsValue : null,
-				clientSecret: clientSecretSetting ? clientSecretSetting.settingsValue : null,
-				accessToken: accessTokenSetting ? accessTokenSetting.settingsValue : null,
-				refreshToken: refreshTokenSetting ? refreshTokenSetting.settingsValue : null
+				hasClientCredentials: !!(clientIdSetting?.settingsValue && clientSecretSetting?.settingsValue),
+				hasAccessToken: !!accessTokenSetting?.settingsValue,
+				hasRefreshToken: !!refreshTokenSetting?.settingsValue
 			};
 		} catch (error) {
 			this.logger.error('Error retrieving Zapier integration settings:', error);

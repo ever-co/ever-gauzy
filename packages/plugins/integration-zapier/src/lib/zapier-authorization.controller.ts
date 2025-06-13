@@ -1,13 +1,4 @@
-import {
-	BadRequestException,
-	Controller,
-	Get,
-	HttpException,
-	HttpStatus,
-	Logger,
-	Query,
-	Res,
-} from '@nestjs/common';
+import { BadRequestException, Controller, Get, HttpException, HttpStatus, Logger, Query, Res } from '@nestjs/common';
 import { ConfigService } from '@gauzy/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -77,12 +68,15 @@ export class ZapierAuthorizationController {
 			}
 
 			// Validate state parameter
-			const validatedState = this.zapierService.parseAuthState(query.state);
+			const isValidState = await this.zapierService.parseAuthState(query.state);
+			if (!isValidState) {
+				throw new BadRequestException('Invalid or expired state parameter');
+			}
 
 			// Complete the OAuth flow by exchanging the code for tokens
-			await this.zapierService.completeOAuthFlow(query.code, validatedState);
+			await this.zapierService.completeOAuthFlow(query.code, query.state);
 
-			// convert query params object to string
+			// Build query parameters for redirect
 			const queryParamsString = buildQueryString({
 				code: query.code,
 				state: query.state

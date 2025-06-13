@@ -27,6 +27,7 @@ import { MakeComService } from './make-com.service';
 export class MakeComOAuthService {
 	private readonly logger = new Logger(MakeComOAuthService.name);
 	private pendingStates = new Map<string, { timestamp: number; codeVerifier?: string }>();
+	private static readonly STATE_TTL_MS = 10 * 60 * 1000; // 10 min
 
 	constructor(
 		private readonly httpService: HttpService,
@@ -309,7 +310,7 @@ export class MakeComOAuthService {
 			return { isValid: false };
 		}
 		const now = Date.now();
-		const expirationTime = 10 * 60 * 1000; // 10 minutes in milliseconds
+		const expirationTime = MakeComOAuthService.STATE_TTL_MS;
 		if (now - pendingState.timestamp > expirationTime) {
 			this.logger.warn(`State ${state} has expired`);
 			this.pendingStates.delete(state);
@@ -342,7 +343,7 @@ export class MakeComOAuthService {
 	 */
 	private cleanupExpiredStates(): void {
 		const now = Date.now();
-		const expirationTime = 10 * 60 * 1000; // 10 minutes in milliseconds
+		const expirationTime = MakeComOAuthService.STATE_TTL_MS;
 
 		for (const [state, { timestamp }] of this.pendingStates.entries()) {
 			if (now - timestamp > expirationTime) {
