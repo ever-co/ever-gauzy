@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel, ITimeLog } from '@gauzy/contracts';
+import { IBasePerTenantAndOrganizationEntityModel, IntegrationEnum, ITimeLog } from '@gauzy/contracts';
 
 export type ZapierGrantType = 'authorization_code' | 'refresh_token';
 export type ActionType = 'start' | 'stop';
@@ -15,6 +15,7 @@ export interface ICreateZapierIntegrationInput extends IBasePerTenantAndOrganiza
 	client_secret: string;
 	code?: string;
 	redirect_uri?: string;
+	state?: string;
 }
 
 export interface ITimerZapierWebhookData extends IBasePerTenantAndOrganizationEntityModel {
@@ -30,17 +31,20 @@ export interface IZapierEndpoint {
 	slug: string;
 }
 
+export interface IIntegrationFilter {
+	readonly name: IntegrationEnum.ZAPIER;
+	tenantId: string;
+	organizationId?: string;
+}
+
 export interface IZapierCreateWebhookInput {
 	target_url: string;
 	event: string;
 }
 
-/**
- * Interface for OAuth state data structure used in Zapier OAuth flow
- * Contains tenant and organization context for maintaining state during OAuth
- */
-export interface IZapierAuthState {
-	tenantId: string;
-	organizationId?: string;
-	integrationId?: string;
+export interface IZapierIntegrationSettings {
+	isEnabled: boolean;
+	hasClientCredentials: boolean;
+	hasAccessToken: boolean;
+	hasRefreshToken: boolean;
 }
