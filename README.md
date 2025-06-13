@@ -8,6 +8,21 @@
 [![License: AGPL v3][uri_license_image]][uri_license]
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ever-co/ever-gauzy)
 
+## 📌 Fork Notice
+
+This project is a fork of **[Ever Gauzy](https://github.com/ever-co/ever-gauzy)** by **Ever Co. Ltd.** and is licensed under the **AGPL v3.0** license.
+Modifications have been made by **[DSpot sp. z o.o.](https://www.dspot.com.pl)** and are released under the same AGPL v3.0 license.
+
+### 📝 Notable changes:
+
+-   Refactored several key components for improved reusability.
+-   Additional UI/UX enhancements.
+-   Fixed various bugs and improved overall application stability.
+-   Extended invoicing functionality — invoices can now be issued per user to the company.
+-   Introduced new metrics for better tracking and performance analysis.
+
+For a full list of changes, see our [CHANGELOG](/CHANGELOG.md) or compare with upstream.
+
 ## 💡 What's New
 
 We released [Ever Teams](https://github.com/ever-co/ever-teams) platform for Work & Project Management.

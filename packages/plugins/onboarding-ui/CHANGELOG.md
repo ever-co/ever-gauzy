@@ -1,3 +1,3 @@
-# Changelog for @gauzy/plugin-maintenance-ui
+# Changelog for @gauzy/plugin-onboarding-ui
 
 ## [Unreleased]

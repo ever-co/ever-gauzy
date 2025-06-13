@@ -10240,7 +10240,7 @@
     "@sentry/types" "7.120.3"
     "@sentry/utils" "7.120.3"
 
-"@sentry/electron@^4.18.0":
+"@sentry/electron@4.24.0", "@sentry/electron@^4.18.0":
   version "4.24.0"
   resolved "https://registry.yarnpkg.com/@sentry/electron/-/electron-4.24.0.tgz#910abff760f1e2a564a944a7a9b83f4adfed56e8"
   integrity sha512-UF+9v5jhVCryEMwQ54/4t8Hec1SfamkdswqlDezwJQkoWVpZ4hhPMziULYTBqSFdXCQGShuNuKjcdowhdTVI3Q==
@@ -17398,7 +17398,7 @@ currency.js@^2.0.3:
   resolved "https://registry.yarnpkg.com/currency.js/-/currency.js-2.0.4.tgz#a8a4d69be3b2e509bf67a560c78220bc04809cf1"
   integrity sha512-6/OplJYgJ0RUlli74d93HJ/OsKVBi8lB1+Z6eJYS1YZzBuIp4qKKHpJ7ad+GvTlWmLR/hLJOWTykN5Nm8NJ7+w==
 
-custom-electron-titlebar@^4.2.8:
+custom-electron-titlebar@4.2.8, custom-electron-titlebar@^4.2.8:
   version "4.2.8"
   resolved "https://registry.yarnpkg.com/custom-electron-titlebar/-/custom-electron-titlebar-4.2.8.tgz#8b0d024cf372b10c9758cc512ca55498b69616da"
   integrity sha512-JEFiOKJdSZtMh90FO90FeEqCc463ZZhuh78JxILvO9Nc0H8I9MfKekgCf6jZH6xccd3/tm1OcYOoUJi3JbXR/w==
@@ -18885,7 +18885,7 @@ electron-publish@24.13.1:
     lazy-val "^1.0.5"
     mime "^2.5.2"
 
-electron-reload@~1.5.0:
+electron-reload@1.5.0, electron-reload@~1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/electron-reload/-/electron-reload-1.5.0.tgz#179ab1f6941fcf0ed261c37b16dc465e201348f5"
   integrity sha512-L9X6LzsL3Bt2j0eJ4/MBrI9Vt902KvVUtBB7J4qrL1A9sXqC2fE0lpvUAlOThpJYh6zWO1l86U/YiEN9bDURHw==
@@ -18905,7 +18905,7 @@ electron-to-chromium@^1.5.73:
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.148.tgz#afed6a5771ec18d41e26541f71ba2ccc65f102ac"
   integrity sha512-8uc1QXwwqayD4mblcsQYZqoi+cOc97A2XmKSBOIRbEAvbp6vrqmSYs4dHD2qVygUgn7Mi0qdKgPaJ9WC8cv63A==
 
-electron-updater@^6.1.7:
+electron-updater@6.6.2, electron-updater@^6.1.7:
   version "6.6.2"
   resolved "https://registry.yarnpkg.com/electron-updater/-/electron-updater-6.6.2.tgz#3e65e044f1a99b00d61e200e24de8e709c69ce99"
   integrity sha512-Cr4GDOkbAUqRHP5/oeOmH/L2Bn6+FQPxVLZtPbcmKZC63a1F3uu5EefYOssgZXG3u/zBlubbJ5PJdITdMVggbw==
