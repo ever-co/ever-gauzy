@@ -1,0 +1,26 @@
+<!-- camshot-item.component.html -->
+<div class="camshot-item" [class.deleted]="camshot.isDeleted">
+	@if (camshot.thumbUrl) {
+	<div class="thumbnail">
+		<img [src]="camshot.thumbUrl" [alt]="camshot.title" />
+	</div>
+	}
+	<div class="details">
+		<h4>{{ camshot.title }}</h4>
+		<div class="meta">
+			<span class="date">
+				<nb-icon icon="clock-outline"></nb-icon>
+				{{ camshot.recordedAt | date: 'medium' }}
+			</span>
+			@if (camshot.size) {
+			<span class="size">
+				<nb-icon icon="hard-drive-outline"></nb-icon>
+				{{ camshot.size | fileSize }}
+			</span>
+			}
+		</div>
+	</div>
+	<div class="actions">
+		<plug-action-button-group [buttons]="buttons" [data]="camshot"></plug-action-button-group>
+	</div>
+</div>
