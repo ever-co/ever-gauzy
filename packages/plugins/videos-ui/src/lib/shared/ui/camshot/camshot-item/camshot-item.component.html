@@ -10,7 +10,7 @@
 		<div class="meta">
 			<span class="date">
 				<nb-icon icon="clock-outline"></nb-icon>
-				{{ camshot.recordedAt | date: 'medium' }}
+				{{ camshot.recordedAt | date : 'medium' }}
 			</span>
 			@if (camshot.size) {
 			<span class="size">
@@ -21,6 +21,6 @@
 		</div>
 	</div>
 	<div class="actions">
-		<plug-action-button-group [buttons]="buttons" [data]="camshot"></plug-action-button-group>
+		<plug-action-button-group [buttons]="actions" [data]="camshot"></plug-action-button-group>
 	</div>
 </div>

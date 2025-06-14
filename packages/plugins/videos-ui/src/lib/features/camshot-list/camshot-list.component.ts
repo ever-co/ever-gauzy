@@ -1,29 +1,29 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { combineLatest, map, Observable } from 'rxjs';
+import { CamshotQuery } from 'src/lib/+state/camshot/camshot.query';
 import { ICamshot } from 'src/lib/shared/models/camshot.model';
-import { IActionButton } from 'src/lib/shared/models/action-button.model';
 
 @Component({
 	selector: 'plug-camshot-list',
-	imports: [CommonModule],
 	templateUrl: './camshot-list.component.html',
 	styleUrl: './camshot-list.component.scss',
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CamshotListComponent {
-	@Input() camshots: ICamshot[] = [];
-	public actions: IActionButton[] = [
-		{
-			icon: 'download-outline',
-			label: 'Download'
-		},
-		{
-			icon: 'restore-outline',
-			label: 'Restore'
-		},
-		{
-			icon: 'trash-outline',
-			label: 'Delete'
-		}
-	];
+	constructor(private readonly camshotQuery: CamshotQuery) {}
+
+	public get camshots$(): Observable<ICamshot[]> {
+		return this.camshotQuery.camshots$;
+	}
+
+	public get isAvailable$(): Observable<boolean> {
+		return combineLatest([this.camshotQuery.isAvailable$, this.isLoading$]).pipe(
+			map(([isAvailable, isLoading]) => isAvailable && !isLoading)
+		);
+	}
+
+	public get isLoading$(): Observable<boolean> {
+		return this.camshotQuery.isLoading$;
+	}
 }

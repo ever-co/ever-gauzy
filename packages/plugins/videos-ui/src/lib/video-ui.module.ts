@@ -40,6 +40,9 @@ import { VideoMetadataComponent } from './shared/ui/video-metadata/video-metadat
 import { VideoPlayerComponent } from './shared/ui/video-player/video-player.component';
 import { VideoSkeletonComponent } from './shared/ui/video-skeleton/video-skeleton.component';
 import { VideoUiRoutingModule } from './video-ui-routing.module';
+import { CamshotItemComponent } from './shared/ui/camshot/camshot-item/camshot-item.component';
+import { CamshotItemSkeletonComponent } from './shared/ui/camshot/camshot-item-skeleton/camshot-item-skeleton.component';
+import { CamshotListComponent } from './features/camshot-list/camshot-list.component';
 
 @NgModule({
 	declarations: [
@@ -55,7 +58,10 @@ import { VideoUiRoutingModule } from './video-ui-routing.module';
 		VideoMetadataComponent,
 		VideoDownloadManagerComponent,
 		VideoItemSkeletonComponent,
-		VideoSkeletonComponent
+		VideoSkeletonComponent,
+		CamshotItemComponent,
+		CamshotItemSkeletonComponent,
+		CamshotListComponent
 	],
 	imports: [
 		CommonModule,
