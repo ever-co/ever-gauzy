@@ -2,7 +2,8 @@
 import { CustomTitlebar, TitlebarColor } from "custom-electron-titlebar";
 import { nativeImage, ipcRenderer } from 'electron';
 import * as path from 'path';
-const isNotificationWindow = location.hash === '#/screen-capture';
+
+const isNotificationWindow = location.hash.startsWith('#/screen-capture');
 
 if (!isNotificationWindow) {
 	/**
