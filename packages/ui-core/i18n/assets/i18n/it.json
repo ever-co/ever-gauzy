@@ -600,6 +600,8 @@
 			"COST": "Costo",
 			"MAKE_COM_CLIENT_ID": "Inserisci il tuo ID cliente Make.com",
 			"MAKE_COM_CLIENT_SECRET": "Inserisci il tuo segreto cliente Make.com",
+			"ZAPIER_CLIENT_ID": "Inserisci il tuo ID cliente Zapier",
+			"ZAPIER_CLIENT_SECRET": "Inserisci il tuo segreto cliente Zapier",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Nome della scuola",
 				"DEGREE": "Laurea/Diploma",
@@ -834,6 +836,7 @@
 		"INTEGRATIONS": "Applicazioni e integrazioni",
 		"UPWORK": "Upwork",
 		"MAKE_COM": "Make.com",
+		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Proposte",
 		"TIME_OFF": "Tempo libero",
@@ -1300,6 +1303,70 @@
 				"WEBHOOK_URL_PLACEHOLDER": "Inserisci URL webhook",
 				"WEBHOOK_URL_INVALID": "Inserisci un URL webhook valido",
 				"SAVE": "Salva impostazioni"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "ID Cliente",
+			"CLIENT_SECRET": "Segreto Cliente",
+			"NEXT_STEP_INFO": "Dopo l'autorizzazione, sarai reindirizzato a Zapier per completare la configurazione dell'integrazione",
+			"ERRORS": {
+				"LOAD_SETTINGS": "Impossibile caricare le impostazioni di Zapier",
+				"SAVE_SETTINGS": "Impossibile salvare le impostazioni di Zapier",
+				"INVALID_FORM": "Per favore, compila tutti i campi obbligatori",
+				"MISSING_CREDENTIALS": "Credenziali client mancanti",
+				"NO_ACCESS_TOKEN": "Nessun token di accesso disponibile",
+				"LOAD_WEBHOOKS": "Impossibile caricare i webhook",
+				"DELETE_WEBHOOK": "Impossibile eliminare il webhook",
+				"LOAD_ACTIONS": "Impossibile caricare le azioni",
+				"LOAD_TRIGGERS": "Impossibile caricare i trigger",
+				"START_AUTHORIZATION": "Per favore, inizia il processo di autorizzazione",
+				"INVALID_TOKEN": "Token non valido fornito",
+				"TOKEN_NOT_FOUND": "Token non trovato"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Impostazioni di Zapier salvate con successo",
+				"DELETE_WEBHOOK": "Webhook eliminato con successo"
+			},
+			"TAB": {
+				"TRIGGERS": "Trigger",
+				"ACTIONS": "Azioni",
+				"WEBHOOKS": "Webhook",
+				"SETTINGS": "Impostazioni"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "I trigger sono eventi che si verificano in Gauzy e possono essere utilizzati per attivare azioni in Zapier.",
+				"ACTIONS": "Le azioni sono eventi che si verificano in Zapier e possono essere utilizzati per attivare azioni in Gauzy.",
+				"WEBHOOKS": "I webhook sono eventi che si verificano in Zapier e possono essere utilizzati per attivare azioni in Gauzy.",
+				"SETTINGS": "Le impostazioni sono le impostazioni per l'integrazione di Zapier."
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "I trigger sono stati abilitati con successo.",
+				"TRIGGERS_DISABLED": "I trigger sono stati disabilitati con successo.",
+				"ACTIONS_ENABLED": "Le azioni sono state abilitate con successo.",
+				"ACTIONS_DISABLED": "Le azioni sono state disabilitate con successo.",
+				"WEBHOOKS_ENABLED": "I webhook sono stati abilitati con successo.",
+				"WEBHOOKS_DISABLED": "I webhook sono stati disabilitati con successo."
+			},
+			"SETTINGS": {
+				"TITLE": "Impostazioni Zapier",
+				"ENABLE_INTEGRATION": "Abilita integrazione Zapier",
+				"WEBHOOK_URL": "URL webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "Inserisci l'URL del webhook",
+				"WEBHOOK_URL_INVALID": "Inserisci un URL webhook valido",
+				"WEBHOOK_INFO": "Webhook è un URL che viene utilizzato per aggiornare i dati in Gauzy in base a un evento specifico in Zapier.",
+				"SAVE": "Salva impostazioni"
+			},
+			"ACTIONS": {
+				"TITLE": "Azioni",
+				"NO_ACTIONS": "Nessuna azione disponibile"
+			},
+			"TRIGGERS": {
+				"TITLE": "Trigger",
+				"NO_TRIGGERS": "Nessun trigger disponibile"
+			},
+			"WEBHOOKS": {
+				"TITLE": "Webhook",
+				"NO_WEBHOOKS": "Nessun webhook configurato"
 			}
 		},
 		"GAUZY_AI_PAGE": {

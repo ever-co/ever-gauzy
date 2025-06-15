@@ -31,6 +31,7 @@
 			"@gauzy/plugin-integration-make-com": ["./packages/plugins/integration-make-com/src/index.ts"],
 			"@gauzy/plugin-integration-make-com-ui": ["./packages/plugins/integration-make-com-ui/src/index.ts"],
 			"@gauzy/plugin-integration-zapier": ["./packages/plugins/integration-zapier/src/index.ts"],
+			"@gauzy/plugin-integration-zapier-ui": ["./packages/plugins/integration-zapier-ui/src/index.ts"],
 			"@gauzy/plugin-integration-upwork": ["./packages/plugins/integration-upwork/src/index.ts"],
 			"@gauzy/plugin-integration-upwork-ui": ["./packages/plugins/integration-upwork-ui/src/index.ts"],
 			"@gauzy/plugin-integration-wakatime": ["./packages/plugins/integration-wakatime/src/index.ts"],
