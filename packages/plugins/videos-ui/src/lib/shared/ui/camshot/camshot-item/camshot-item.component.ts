@@ -29,7 +29,7 @@ export class CamshotItemComponent {
 	@Output() delete = new EventEmitter<ID>();
 	@Output() hardDelete = new EventEmitter<ID>();
 
-	public actions: IActionButton[] = [];
+	public buttons: IActionButton[] = [];
 
 	private updateActions(): void {
 		const commonActions: IActionButton[] = [
@@ -71,6 +71,6 @@ export class CamshotItemComponent {
 					}
 			  ];
 
-		this.actions = [...commonActions, ...statusSpecificActions];
+		this.buttons = [...commonActions, ...statusSpecificActions];
 	}
 }

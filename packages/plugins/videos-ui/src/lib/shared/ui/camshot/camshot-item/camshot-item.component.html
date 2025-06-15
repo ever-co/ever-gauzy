@@ -6,21 +6,29 @@
 	</div>
 	}
 	<div class="details">
-		<h4>{{ camshot.title }}</h4>
+		<div class="title">{{ camshot.title }}</div>
 		<div class="meta">
-			<span class="date">
+			<div class="date">
 				<nb-icon icon="clock-outline"></nb-icon>
 				{{ camshot.recordedAt | date : 'medium' }}
-			</span>
+			</div>
 			@if (camshot.size) {
-			<span class="size">
+			<div class="size">
 				<nb-icon icon="hard-drive-outline"></nb-icon>
 				{{ camshot.size | fileSize }}
-			</span>
+			</div>
 			}
 		</div>
 	</div>
 	<div class="actions">
-		<plug-action-button-group [buttons]="actions" [data]="camshot"></plug-action-button-group>
+		<nb-icon
+			nbPopoverPlacement="bottom"
+			[nbPopover]="actions"
+			icon="more-vertical-outline"
+			[options]="{ animation: { type: 'zoom' } }"
+		></nb-icon>
 	</div>
 </div>
+<ng-template #actions>
+	<plug-action-button-group [buttons]="buttons" [data]="camshot"></plug-action-button-group>
+</ng-template>

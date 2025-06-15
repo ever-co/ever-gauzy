@@ -8,6 +8,7 @@
 		<nb-tabset>
 			@if(showList$ | async) {
 			<nb-tab tabTitle="Videos">
+				@defer(on viewport) {
 				<div
 					nbInfiniteList
 					[threshold]="500"
@@ -17,12 +18,19 @@
 				>
 					<plug-video-list [vertical]="true"></plug-video-list>
 				</div>
+				}@placeholder{
+				<p>Loading videos...</p>
+				}
 			</nb-tab>
 			} @if(timeSlotId) {
 			<nb-tab tabTitle="Camshots">
+				@defer(on viewport) {
 				<div class="list">
 					<plug-camshot-list [timeSlotId]="timeSlotId"></plug-camshot-list>
 				</div>
+				}@placeholder {
+				<p>Loading camshots...</p>
+				}
 			</nb-tab>
 			}
 		</nb-tabset>

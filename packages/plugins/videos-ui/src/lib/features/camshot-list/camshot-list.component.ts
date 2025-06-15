@@ -19,7 +19,7 @@ import { ICamshot } from '../../shared/models/camshot.model';
 export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 	@Input()
 	public timeSlotId: ID;
-	private skip = 0;
+	private skip = 1;
 	private hasNext = false;
 	private readonly take = 10;
 
@@ -70,7 +70,7 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 	}
 
 	public reset(): void {
-		this.skip = 0;
+		this.skip = 1;
 		this.hasNext = false;
 		this.camshotStore.update({ camshots: [] });
 	}
