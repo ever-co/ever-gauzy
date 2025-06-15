@@ -1,10 +1,30 @@
+@let timeSlotId = (video$ | async)?.timeSlotId;
+
+<!-- Structure -->
+
 <div class="custom-card">
 	<div #detail class="custom-card-body">
 		<plug-video class="w-100"></plug-video>
-		@if(showList$ | async) {
-		<div nbInfiniteList [threshold]="500" [throttleTime]="300" (bottomThreshold)="fetchMoreVideos()" class="list">
-			<plug-video-list [vertical]="true"></plug-video-list>
-		</div>
-		}
+		<nb-tabset>
+			@if(showList$ | async) {
+			<nb-tab tabTitle="Videos">
+				<div
+					nbInfiniteList
+					[threshold]="500"
+					[throttleTime]="300"
+					(bottomThreshold)="fetchMoreVideos()"
+					class="list"
+				>
+					<plug-video-list [vertical]="true"></plug-video-list>
+				</div>
+			</nb-tab>
+			} @if(timeSlotId) {
+			<nb-tab tabTitle="Camshots">
+				<div class="list">
+					<plug-camshot-list [timeSlotId]="timeSlotId"></plug-camshot-list>
+				</div>
+			</nb-tab>
+			}
+		</nb-tabset>
 	</div>
 </div>

@@ -1,4 +1,4 @@
-<div class="camshot-list">
+<div nbInfiniteList [threshold]="500" [throttleTime]="300" (bottomThreshold)="fetchMoreCamshots()" class="camshot-list">
 	@for (camshot of camshots$ | async; track camshot.id){ @defer (on viewport) {
 	<plug-camshot-item [camshot]="camshot"></plug-camshot-item>
 	}@placeholder (minimum 500ms) {
