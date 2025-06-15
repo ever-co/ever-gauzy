@@ -151,9 +151,16 @@ class PushActivities {
 		}
 	}
 
-	getDurationSeconds(timeStart: Date, timeEnd: Date) {
+	getDurationOverAllSeconds(timeStart: Date, timeEnd: Date) {
 		if (timeStart && timeEnd) {
 			return Math.floor((timeEnd.getTime() - timeStart.getTime()) / 1000);
+		}
+		return 0;
+	}
+
+	getDurationSeconds(timeStart: Date, timeEnd: Date, afkDuration: number) {
+		if (timeStart && timeEnd) {
+			return (Math.floor((timeEnd.getTime() - timeStart.getTime()) / 1000)) - afkDuration;
 		}
 		return 0;
 	}
@@ -223,10 +230,10 @@ class PushActivities {
 		return {
 			tenantId: auth.user.employee.tenantId,
 			organizationId: auth.user.employee.organizationId,
-			duration: this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd)),
+			duration: this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration),
 			keyboard: activities.kbPressCount,
 			mouse: activities.mouseLeftClickCount + activities.mouseRightClickCount,
-			overall: activities.kbPressCount + activities.mouseRightClickCount + activities.mouseLeftClickCount,
+			overall: this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd)),
 			startedAt: moment(activities.timeStart).toISOString(),
 			recordedAt: moment(activities.timeStart).toISOString(),
 			activities: this.getActivities(activities),
@@ -237,12 +244,9 @@ class PushActivities {
 	async saveActivities() {
 		try {
 			const activity = await this.getOldestActivity();
-			if (!activity?.id) {
-				this.agentLogger.info('Got 0 activity from temp');
-			}
 			if (activity?.id) {
 				// remove activity from temp local database
-				this.agentLogger.info('Got 1 activity from temp');
+				this.agentLogger.info('Got activity from temporary');
 				try {
 					const timeSlot = await this.saveTimeSlot(activity);
 					this.agentLogger.info(`Activity successfully recorded to api with timeSlotId ${timeSlot?.id}`);

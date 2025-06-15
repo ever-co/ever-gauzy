@@ -106,7 +106,7 @@
 					</p>
 				</ng-container>
 			</div>
-			<div class="form-control-group accept-group">
+			<div class="form-control-group accept-group" *ngIf="!isAgent">
 				<nb-checkbox name="rememberMe" [(ngModel)]="user.rememberMe" class="remember-me" *ngIf="rememberMe">{{
 					'LOGIN_PAGE.REMEMBER_ME_TITLE' | translate }}</nb-checkbox>
 			</div>
@@ -132,13 +132,13 @@
 		<div class="hr-div-soft"></div>
 		<ngx-social-links *ngIf="!isAgent"></ngx-social-links>
 		<div class="hr-div-soft"></div>
-		<section class="another-action" aria-label="Sign In Workspace">
+		<section *ngIf="!isAgent" class="another-action" aria-label="Sign In Workspace">
 			{{ 'WORKSPACES.UNKNOWN_WORKSPACE' | translate }}
 			<a class="text-link" routerLink="/auth/login-workspace">
 				{{ 'WORKSPACES.FIND_WORKSPACE' | translate }}
 			</a>
 		</section>
-		<section class="another-action" aria-label="Register">
+		<section *ngIf="!isAgent" class="another-action" aria-label="Register">
 			{{ 'LOGIN_PAGE.DO_NOT_HAVE_ACCOUNT_TITLE' | translate }}
 			<a class="text-link" (click)="register()">
 				{{ 'BUTTONS.REGISTER' | translate }}
