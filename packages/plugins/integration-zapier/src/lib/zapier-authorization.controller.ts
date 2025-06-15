@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get, HttpException, HttpStatus, Logger, Query, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Controller, Get, HttpException, HttpStatus, Logger, Query, Res } from '@nestjs/common';
 import { ConfigService } from '@gauzy/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -17,6 +17,7 @@ export class ZapierAuthorizationController {
 	 * Handles the OAuth2 authorization request
 	 * This is the entry point of the OAuth flow
 	 */
+	@Public()
 	@Get('/oauth/authorize')
 	@ApiOperation({
 		summary: 'Initiate OAuth2 authorization with Zapier'
@@ -66,13 +67,16 @@ export class ZapierAuthorizationController {
 				throw new BadRequestException('Zapier post-install URL is not configured');
 			}
 
-			// Parse state to get stored information (tenant, org, integration IDs)
-			const stateData = this.zapierService.parseAuthState(query.state);
+			// Validate state parameter
+			const isValidState = await this.zapierService.parseAuthState(query.state);
+			if (!isValidState) {
+				throw new BadRequestException('Invalid or expired state parameter');
+			}
 
 			// Complete the OAuth flow by exchanging the code for tokens
-			const integration = await this.zapierService.completeOAuthFlow(query.code, stateData);
+			await this.zapierService.completeOAuthFlow(query.code, query.state);
 
-			// convert query params object to string
+			// Build query parameters for redirect
 			const queryParamsString = buildQueryString({
 				code: query.code,
 				state: query.state
