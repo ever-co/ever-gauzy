@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { IActionButton } from '../../../models/action-button.model';
 import { Camshot, ICamshot } from '../../../models/camshot.model';
-import { ID } from '@gauzy/contracts';
 
 @Component({
 	selector: 'plug-camshot-item',
@@ -23,27 +22,31 @@ export class CamshotItemComponent {
 		return this._camshot;
 	}
 
-	@Output() view = new EventEmitter<ID>();
-	@Output() download = new EventEmitter<ID>();
-	@Output() recover = new EventEmitter<ID>();
-	@Output() delete = new EventEmitter<ID>();
-	@Output() hardDelete = new EventEmitter<ID>();
+	@Output() view = new EventEmitter<ICamshot>();
+	@Output() download = new EventEmitter<ICamshot>();
+	@Output() recover = new EventEmitter<ICamshot>();
+	@Output() delete = new EventEmitter<ICamshot>();
+	@Output() hardDelete = new EventEmitter<ICamshot>();
 
 	public buttons: IActionButton[] = [];
 
 	private updateActions(): void {
 		const commonActions: IActionButton[] = [
 			{
+				label: 'BUTTONS.VIEW',
 				icon: 'eye-outline',
-				label: 'View',
-				status: 'primary',
-				action: () => this.view.emit(this.camshot.id)
+				status: 'basic',
+				hidden: false,
+				disabled: false,
+				action: this.download.emit.bind(this)
 			},
 			{
 				icon: 'download-outline',
 				label: 'Download',
 				status: 'info',
-				action: () => this.download.emit(this.camshot.id)
+				hidden: false,
+				disabled: false,
+				action: this.download.emit.bind(this)
 			}
 		];
 
@@ -53,13 +56,17 @@ export class CamshotItemComponent {
 						icon: 'undo-outline',
 						label: 'Recover',
 						status: 'success',
-						action: () => this.recover.emit(this.camshot.id)
+						hidden: false,
+						disabled: false,
+						action: this.recover.emit.bind(this)
 					},
 					{
 						icon: 'trash-2-outline',
 						label: 'Hard Delete',
 						status: 'danger',
-						action: () => this.hardDelete.emit(this.camshot.id)
+						hidden: false,
+						disabled: false,
+						action: this.hardDelete.emit.bind(this)
 					}
 			  ]
 			: [
@@ -67,7 +74,9 @@ export class CamshotItemComponent {
 						icon: 'trash-outline',
 						label: 'Delete',
 						status: 'warning',
-						action: () => this.delete.emit(this.camshot.id)
+						hidden: false,
+						disabled: false,
+						action: this.delete.emit.bind(this)
 					}
 			  ];
 
