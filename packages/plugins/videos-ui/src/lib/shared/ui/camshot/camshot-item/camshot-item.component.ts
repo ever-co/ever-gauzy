@@ -42,7 +42,7 @@ export class CamshotItemComponent {
 			},
 			{
 				icon: 'download-outline',
-				label: 'Download',
+				label: 'BUTTONS.DOWNLOAD',
 				status: 'info',
 				hidden: false,
 				disabled: false,
@@ -54,7 +54,7 @@ export class CamshotItemComponent {
 			? [
 					{
 						icon: 'undo-outline',
-						label: 'Recover',
+						label: 'BUTTONS.RECOVER',
 						status: 'success',
 						hidden: false,
 						disabled: false,
@@ -72,7 +72,7 @@ export class CamshotItemComponent {
 			: [
 					{
 						icon: 'trash-outline',
-						label: 'Delete',
+						label: 'BUTTONS.DELETE',
 						status: 'warning',
 						hidden: false,
 						disabled: false,
