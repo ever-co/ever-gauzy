@@ -22,6 +22,10 @@
   }
 }
 
+::ng-deep nb-route-tabset .tab-link {
+  text-transform: unset;
+}
+
 @media (max-width: 1435px) {
   .custom-card-body {
     flex-direction: column;

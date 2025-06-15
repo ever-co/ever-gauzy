@@ -31,7 +31,6 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes?.timeSlotId) {
-			console.log(changes);
 			this.reset();
 			this.fetchCamshots();
 		}
@@ -50,6 +49,9 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 	}
 
 	public fetchCamshots(): void {
+		if (!this.timeSlotId) {
+			return;
+		}
 		this.actions.dispatch(
 			CamshotAction.fetchCamshots({
 				where: {
@@ -63,7 +65,7 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 	}
 
 	public fetchMoreCamshots(): void {
-		if (this.hasNext) {
+		if (this.hasNext && this.unlockInfiniteList) {
 			this.skip++;
 			this.fetchCamshots();
 		}
@@ -83,6 +85,10 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 		return combineLatest([this.camshotQuery.isAvailable$, this.isLoading$]).pipe(
 			map(([isAvailable, isLoading]) => isAvailable && !isLoading)
 		);
+	}
+
+	public get unlockInfiniteList(): boolean {
+		return this.timeSlotId && this.camshotQuery.camshots.length > 0;
 	}
 
 	public get isLoading$(): Observable<boolean> {

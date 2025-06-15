@@ -7,7 +7,7 @@
 		<plug-video class="w-100"></plug-video>
 		<nb-tabset>
 			@if(showList$ | async) {
-			<nb-tab tabTitle="Videos">
+			<nb-tab tabTitle="Similars">
 				@defer(on viewport) {
 				<div
 					nbInfiniteList
@@ -19,7 +19,7 @@
 					<plug-video-list [vertical]="true"></plug-video-list>
 				</div>
 				}@placeholder{
-				<p>Loading videos...</p>
+				<ngx-no-data-message status="danger" message="Loading camshots..."></ngx-no-data-message>
 				}
 			</nb-tab>
 			} @if(timeSlotId) {
@@ -29,7 +29,7 @@
 					<plug-camshot-list [timeSlotId]="timeSlotId"></plug-camshot-list>
 				</div>
 				}@placeholder {
-				<p>Loading camshots...</p>
+				<ngx-no-data-message status="danger" message="Loading camshots..."></ngx-no-data-message>
 				}
 			</nb-tab>
 			}
