@@ -102,6 +102,17 @@ const windowSetting = (preloadPath?: string, contextIsolation?: boolean): Electr
 		mainWindowSettings.webPreferences.preload = preloadPath;
 	}
 
+	/** implement custom titleBarStyle */
+	if (preloadPath) {
+		mainWindowSettings.titleBarStyle = 'hidden';
+		mainWindowSettings.titleBarOverlay = true;
+
+		// Platform-specific adjustments for Linux
+		if (process.platform === 'linux') {
+			mainWindowSettings.frame = false;
+		}
+	}
+
 	// Fetch the icon path from the application's store
 	const filesPath = store.get('filePath');
 	if (filesPath?.iconPath) {

@@ -29,9 +29,10 @@
   }
 }
 
-.error-message {
-  color: var(--gauzy-danger-color);
-  margin-top: 1rem;
+.text-danger {
+  max-width: 100%;
+  font-size: 12px;
+  margin-top: 5px;
 }
 
 .hint {

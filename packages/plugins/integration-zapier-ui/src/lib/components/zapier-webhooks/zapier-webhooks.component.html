@@ -1,0 +1,30 @@
+<nb-card>
+	<nb-card-header>
+		<h6>{{ 'INTEGRATIONS.ZAPIER_PAGE.WEBHOOKS.TITLE' | translate }}</h6>
+	</nb-card-header>
+	<nb-card-body>
+		<div *ngIf="loading" class="d-flex justify-content-center">
+			<nb-spinner></nb-spinner>
+		</div>
+		<div *ngIf="!loading">
+			<div class="webhooks-list">
+				<div *ngFor="let webhook of webhooks" class="webhook-item">
+					<div class="webhook-info">
+						<h6>{{ webhook.event }}</h6>
+						<p [nbTooltip]="webhook.targetUrl" class="url-display">
+							{{ webhook.targetUrl | slice : 0 : 50 }}{{ webhook.targetUrl.length > 50 ? '...' : '' }}
+						</p>
+					</div>
+					<div class="webhook-actions">
+						<button nbButton status="danger" size="small" outline (click)="deleteWebhook(webhook.id)">
+							{{ 'BUTTONS.DELETE' | translate }}
+						</button>
+					</div>
+				</div>
+				<div *ngIf="webhooks.length === 0" class="no-data">
+					{{ 'INTEGRATIONS.ZAPIER_PAGE.WEBHOOKS.NO_WEBHOOKS' | translate }}
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

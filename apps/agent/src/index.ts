@@ -50,9 +50,9 @@ app.on('before-quit', async (e) => {
 		updater.cancel();
 		const auth = getAuthConfig();
 		const pullActivities = PullActivities.getInstance({
-			tenantId: auth.user.employee.tenantId,
-			organizationId: auth.user.employee.organizationId,
-			remoteId: auth.user.id
+			tenantId: auth?.user?.employee?.tenantId,
+			organizationId: auth?.user?.employee?.organizationId,
+			remoteId: auth?.user?.id
 		});
 		pullActivities.stopTracking();
 		const pushActivities = PushActivities.getInstance();

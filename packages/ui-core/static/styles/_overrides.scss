@@ -129,6 +129,13 @@ body {
     }
   }
 
+  // Override scrollable-container overflow-y for dashboard layout
+  nb-layout:has(ga-dashboard-layout) {
+    .scrollable-container {
+      overflow-y: hidden !important;
+    }
+  }
+
   nb-layout .layout .layout-container nb-sidebar {
     &,
     .main-container-fixed {

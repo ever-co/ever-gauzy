@@ -759,15 +759,16 @@ export function ipcTimer(
 
 	ipcMain.on('return_time_slot', async (event, arg) => {
 		try {
-			log.info(`Return To Timeslot Last Timeslot ID: ${arg.timeSlotId} and Timer ID: ${arg.timerId}`);
-
+			const { timeSlotId, timerId } = arg;
+			log.info(`Return To Timeslot Last Timeslot ID: ${timeSlotId} and Timer ID: ${timerId}`);
+			LocalStore.updateAdditionalSetting({ timeSlotId });
 			await timerHandler.processWithQueue(
 				`gauzy-queue`,
 				{
 					type: 'update-timer-time-slot',
 					data: {
-						id: arg.timerId,
-						timeSlotId: arg.timeSlotId
+						id: timerId,
+						timeSlotId
 					}
 				},
 				knex

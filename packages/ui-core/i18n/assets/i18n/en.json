@@ -630,6 +630,8 @@
 			"COST": "Cost",
 			"MAKE_COM_CLIENT_ID": "Enter your Make.com Client ID",
 			"MAKE_COM_CLIENT_SECRET": "Enter your Make.com Client Secret",
+			"ZAPIER_CLIENT_ID": "Enter your Zapier Client ID",
+			"ZAPIER_CLIENT_SECRET": "Enter your Zapier Client Secret",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -872,6 +874,7 @@
 		"INTEGRATIONS": "Apps & Integrations",
 		"UPWORK": "Upwork",
 		"MAKE_COM": "Make.com",
+		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
@@ -1321,6 +1324,14 @@
 			"DESCRIPTION": "Activate Upwork integration for freelance workforce management."
 		},
 		"MAKE_COM_PAGE": {
+			"SCENARIOS": "Scenarios",
+			"EXECUTIONS": "Executions",
+			"HISTORY": "History",
+			"SETTINGS": "Settings",
+			"ERRORS": {
+				"INVALID_FORM": "Please fill in all required fields",
+				"START_AUTHORIZATION": "Please start the authorization process"
+			},
 			"CLIENT_ID": "Client ID",
 			"CLIENT_SECRET": "Client Secret",
 			"NEXT_STEP_INFO": "After authorization, you will be redirected to Make.com to complete the integration setup"
@@ -1333,6 +1344,70 @@
 				"WEBHOOK_URL_PLACEHOLDER": "Enter webhook URL",
 				"WEBHOOK_URL_INVALID": "Please enter a valid webhook URL",
 				"SAVE": "Save Settings"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "Client ID",
+			"CLIENT_SECRET": "Client Secret",
+			"NEXT_STEP_INFO": "After authorization, you will be redirected to Zapier to complete the integration setup",
+			"ERRORS": {
+				"LOAD_SETTINGS": "Failed to load Zapier settings",
+				"SAVE_SETTINGS": "Failed to save Zapier settings",
+				"INVALID_FORM": "Please fill in all required fields",
+				"MISSING_CREDENTIALS": "Missing client credentials",
+				"NO_ACCESS_TOKEN": "No access token available",
+				"LOAD_WEBHOOKS": "Failed to load webhooks",
+				"DELETE_WEBHOOK": "Failed to delete webhook",
+				"LOAD_ACTIONS": "Failed to load actions",
+				"LOAD_TRIGGERS": "Failed to load triggers",
+				"START_AUTHORIZATION": "Please start the authorization process",
+				"INVALID_TOKEN": "Invalid token provided",
+				"TOKEN_NOT_FOUND": "Token not found"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Zapier settings saved successfully",
+				"DELETE_WEBHOOK": "Webhook deleted successfully"
+			},
+			"TAB": {
+				"TRIGGERS": "Triggers",
+				"ACTIONS": "Actions",
+				"WEBHOOKS": "Webhooks",
+				"SETTINGS": "Settings"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "Triggers are events that occur in Gauzy and can be used to trigger actions in Zapier.",
+				"ACTIONS": "Actions are events that occur in Zapier and can be used to trigger actions in Gauzy.",
+				"WEBHOOKS": "Webhooks are events that occur in Zapier and can be used to trigger actions in Gauzy.",
+				"SETTINGS": "Settings are the settings for the Zapier integration."
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "Triggers have been successfully enabled.",
+				"TRIGGERS_DISABLED": "Triggers have been successfully disabled.",
+				"ACTIONS_ENABLED": "Actions have been successfully enabled.",
+				"ACTIONS_DISABLED": "Actions have been successfully disabled.",
+				"WEBHOOKS_ENABLED": "Webhooks have been successfully enabled.",
+				"WEBHOOKS_DISABLED": "Webhooks have been successfully disabled."
+			},
+			"SETTINGS": {
+				"TITLE": "Zapier Settings",
+				"ENABLE_INTEGRATION": "Enable Zapier Integration",
+				"WEBHOOK_URL": "Webhook URL",
+				"WEBHOOK_URL_PLACEHOLDER": "Enter webhook URL",
+				"WEBHOOK_URL_INVALID": "Please enter a valid webhook URL",
+				"WEBHOOK_INFO": "Webhook is a URL that is used to update data in Gauzy based on a specific event in Zapier.",
+				"SAVE": "Save Settings"
+			},
+			"ACTIONS": {
+				"TITLE": "Actions",
+				"NO_ACTIONS": "No actions available"
+			},
+			"TRIGGERS": {
+				"TITLE": "Triggers",
+				"NO_TRIGGERS": "No triggers available"
+			},
+			"WEBHOOKS": {
+				"TITLE": "Webhooks",
+				"NO_WEBHOOKS": "No webhooks configured"
 			}
 		},
 		"GAUZY_AI_PAGE": {

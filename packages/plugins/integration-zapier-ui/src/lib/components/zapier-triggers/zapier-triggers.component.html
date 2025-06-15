@@ -1,0 +1,28 @@
+<nb-card>
+	<nb-card-header>
+		<h6>{{ 'INTEGRATIONS.ZAPIER_PAGE.TRIGGERS.TITLE' | translate }}</h6>
+	</nb-card-header>
+	<nb-card-body>
+		<div *ngIf="loading" class="d-flex justify-content-center">
+			<nb-spinner></nb-spinner>
+		</div>
+		<div *ngIf="!loading">
+			<div class="endpoints-list">
+				<div *ngFor="let trigger of triggers" class="endpoint-item">
+					<div class="endpoint-info">
+						<h6>{{ trigger.name }}</h6>
+						<p>{{ trigger.description }}</p>
+					</div>
+					<div class="endpoint-actions">
+						<button nbButton status="primary" size="small" outline (click)="openTriggerDetails()">
+							{{ 'BUTTONS.VIEW' | translate }}
+						</button>
+					</div>
+				</div>
+				<div *ngIf="triggers.length === 0" class="no-data">
+					{{ 'INTEGRATIONS.ZAPIER_PAGE.TRIGGERS.NO_TRIGGERS' | translate }}
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

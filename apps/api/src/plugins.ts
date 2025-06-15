@@ -7,6 +7,7 @@ import { IntegrationJiraPlugin } from '@gauzy/plugin-integration-jira';
 import { IntegrationHubstaffPlugin } from '@gauzy/plugin-integration-hubstaff';
 import { IntegrationMakeComPlugin } from '@gauzy/plugin-integration-make-com';
 import { IntegrationZapierPlugin } from '@gauzy/plugin-integration-zapier';
+import { IntegrationActivepiecesPlugin } from '@gauzy/plugin-integration-activepieces';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
 import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
@@ -15,9 +16,11 @@ import { KnowledgeBasePlugin } from '@gauzy/plugin-knowledge-base';
 import { ProductReviewsPlugin } from '@gauzy/plugin-product-reviews';
 import { VideosPlugin } from '@gauzy/plugin-videos';
 import { RegistryPlugin } from '@gauzy/plugin-registry';
+import { CamshotPlugin } from '@gauzy/plugin-camshot';
 
 import { SentryTracing as SentryPlugin } from './sentry';
 import { PosthogAnalytics as PosthogPlugin } from './posthog';
+import { SoundshotPlugin } from '@gauzy/plugin-soundshot';
 
 const { jitsu, sentry, posthog } = environment;
 
@@ -42,6 +45,8 @@ export const plugins = [
 	}),
 	// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
 	ChangelogPlugin,
+	// Indicates the inclusion or intention to use the IntegrationActivepiecesPlugin in the codebase.
+	IntegrationActivepiecesPlugin,
 	// Indicates the inclusion or intention to use the IntegrationAIPlugin in the codebase.
 	IntegrationAIPlugin,
 	// Indicates the inclusion or intention to use the IntegrationGithubPlugin in the codebase.
@@ -66,6 +71,10 @@ export const plugins = [
 	ProductReviewsPlugin,
 	// Indicates the inclusion or intention to use the VideosPlugin in the codebase.
 	VideosPlugin,
+	// Indicates the inclusion or intention to use the CamshotPlugin in the codebase.
+	CamshotPlugin,
+	// Indicates the inclusion or intention to use the SoundshotPlugin in the codebase.
+	SoundshotPlugin,
 	// Indicates the inclusion or intention to use the RegistryPlugin in the codebase.
 	RegistryPlugin
 ];

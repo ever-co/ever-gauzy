@@ -154,6 +154,10 @@ export * from './lib/user-organization.model';
 export * from './lib/user.model';
 export * from './lib/wakatime.model';
 export * from './lib/plugin.model';
+export * from './lib/camshot.model';
+export * from './lib/clone.model';
+export * from './lib/soundshot.model';
+export * from './lib/zapier.model';
 
 export {
 	ActorTypeEnum,
