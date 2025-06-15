@@ -25,6 +25,7 @@ export interface KbMouseActivityTO {
 	tenantId: string;
 	remoteId: string;
 	screenshots: string[] | string;
+	afkDuration: number
 }
 
 export const TABLE_NAME_KB_MOUSE_ACTIVITY: string = 'kb_mouse_activity';

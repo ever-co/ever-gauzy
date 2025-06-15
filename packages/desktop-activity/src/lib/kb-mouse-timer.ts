@@ -3,13 +3,20 @@ export class KbMouseTimer {
 
 	private flushIntervalSeconds = 60;
 	private intervalId: ReturnType<typeof setInterval> | null = null;
-	private onFlushCallback: ((timeData: { timeStart: Date; timeEnd: Date }, screenShot?: boolean) => void) | null =
+	private onFlushCallback: ((timeData: { timeStart: Date; timeEnd: Date }, screenShot?: boolean, afkDuration?: number) => void) | null =
 		null;
 	private screenshotIntervalSeconds = 60;
 	private lastFlushTime: Date = new Date();
 	private lastScreenshotTime: Date = new Date();
+	private afkThreshold = 30;  // in seconds
+	private afkDuration = 0;
+	private elapsedSecondsAfk: number;
+	private isAfk = false;
+	private onAfkCallback: (() => void) | null = null;
 
-	private constructor() {}
+	private constructor() {
+		this.elapsedSecondsAfk = this.afkThreshold;
+	}
 
 	public static getInstance(): KbMouseTimer {
 		if (!KbMouseTimer.instance) {
@@ -26,8 +33,12 @@ export class KbMouseTimer {
 		this.screenshotIntervalSeconds = seconds;
 	}
 
-	public onFlush(callback: (timeData: { timeStart: Date; timeEnd: Date }, screenshot?: boolean) => void): void {
+	public onFlush(callback: (timeData: { timeStart: Date; timeEnd: Date }, screenshot?: boolean, afkDuration?: number) => void): void {
 		this.onFlushCallback = callback;
+	}
+
+	public afkEvent(callback: () => void): void {
+		this.onAfkCallback = callback;
 	}
 
 	public start(): void {
@@ -38,7 +49,7 @@ export class KbMouseTimer {
 
 		this.lastFlushTime = new Date();
 		this.lastScreenshotTime = new Date();
-		this.intervalId = setInterval(() => this.checkFlushTime(), 1000);
+		this.intervalId = setInterval(() => this.tickHandler(), 1000);
 	}
 
 	public stop(): void {
@@ -57,6 +68,39 @@ export class KbMouseTimer {
 		}
 	}
 
+	private afkHandler(): void {
+		if (this.elapsedSecondsAfk > 0) {
+			this.elapsedSecondsAfk -= 1;
+		}
+		if (this.elapsedSecondsAfk <= 0) {
+			this.isAfk = true;
+			if (this.onAfkCallback) {
+				this.onAfkCallback();
+			}
+		}
+	}
+
+	public setAfkState(): void {
+		this.elapsedSecondsAfk = this.afkThreshold;
+		this.isAfk = false;
+	}
+
+	private afkCounter() {
+		if (this.isAfk) {
+			this.afkDuration += 1;
+		}
+	}
+
+	private tickHandler(): void {
+		this.checkFlushTime();
+		this.afkHandler();
+		this.afkCounter();
+	}
+
+	private resetAfkCount() {
+		this.afkDuration = 0;
+	}
+
 	private checkFlushTime(): void {
 		const now = new Date();
 		const elapsedSeconds = Math.floor((now.getTime() - this.lastFlushTime.getTime()) / 1000);
@@ -69,15 +113,18 @@ export class KbMouseTimer {
 							timeStart: this.lastFlushTime,
 							timeEnd: now
 						},
-						true
+						true,
+						this.afkDuration
 					);
 					this.lastFlushTime = now;
 					this.lastScreenshotTime = now;
+					this.resetAfkCount();
 				} else {
 					this.onFlushCallback({
 						timeStart: this.lastFlushTime,
 						timeEnd: now
 					});
+					this.resetAfkCount();
 					this.lastFlushTime = now;
 				}
 			}

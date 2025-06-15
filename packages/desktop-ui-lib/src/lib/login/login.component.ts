@@ -41,6 +41,9 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 
 	ngOnInit() {
 		this.languageElectronService.initialize<void>();
+		if (this.isAgent) {
+			this.user.rememberMe = true
+		}
 	}
 
 	public override login(): void {
