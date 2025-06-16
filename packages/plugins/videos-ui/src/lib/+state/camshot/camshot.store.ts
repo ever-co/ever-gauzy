@@ -8,6 +8,7 @@ export interface ICamshotState {
 	camshot: ICamshot | null;
 	deleting: boolean;
 	restoring: boolean;
+	downloading: boolean;
 }
 
 export function createInitialState(): ICamshotState {
@@ -16,7 +17,8 @@ export function createInitialState(): ICamshotState {
 		camshot: null,
 		count: 0,
 		deleting: false,
-		restoring: false
+		restoring: false,
+		downloading: false
 	};
 }
 

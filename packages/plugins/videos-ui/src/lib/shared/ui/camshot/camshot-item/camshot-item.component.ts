@@ -44,6 +44,7 @@ export class CamshotItemComponent {
 			new ActionButton({
 				icon: 'download-outline',
 				label: 'BUTTONS.DOWNLOAD',
+				loading: this.query.downloading$,
 				status: 'info',
 				action: (camshot: ICamshot) => this.download.emit(camshot)
 			})

@@ -13,6 +13,7 @@ export class CamshotQuery extends Query<ICamshotState> {
 	public readonly isAvailable$: Observable<boolean> = this.select((state) => state.count > 0);
 	public readonly deleting$: Observable<boolean> = this.select((state) => state.deleting);
 	public readonly restoring$: Observable<boolean> = this.select((state) => state.restoring);
+	public readonly downloading$: Observable<boolean> = this.select((state) => state.downloading);
 
 	constructor(readonly camshotStore: CamshotStore) {
 		super(camshotStore);
