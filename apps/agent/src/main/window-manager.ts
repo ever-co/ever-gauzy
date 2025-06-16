@@ -172,7 +172,7 @@ class AppWindow {
 	async initScreenShotNotification() {
 		try {
 			if (!this.notificationWindow) {
-				this.notificationWindow = new ScreenCaptureNotification(this.getUiPath('screen-capture'));
+				this.notificationWindow = new ScreenCaptureNotification(this.getUiPath('screen-capture'), this.getPreloadPath());
 				this.notificationWindow.loadURL();
 				return;
 			}
