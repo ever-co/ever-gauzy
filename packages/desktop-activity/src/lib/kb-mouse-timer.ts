@@ -10,12 +10,12 @@ export class KbMouseTimer {
 	private lastScreenshotTime: Date = new Date();
 	private afkThreshold = 30;  // in seconds
 	private afkDuration = 0;
-	private elapsedSecondsAfk: number;
+	private afkCountdown: number;
 	private isAfk = false;
 	private onAfkCallback: (() => void) | null = null;
 
 	private constructor() {
-		this.elapsedSecondsAfk = this.afkThreshold;
+		this.afkCountdown = this.afkThreshold;
 	}
 
 	public static getInstance(): KbMouseTimer {
@@ -69,10 +69,10 @@ export class KbMouseTimer {
 	}
 
 	private afkHandler(): void {
-		if (this.elapsedSecondsAfk > 0) {
-			this.elapsedSecondsAfk -= 1;
+		if (this.afkCountdown > 0) {
+			this.afkCountdown -= 1;
 		}
-		if (this.elapsedSecondsAfk <= 0 && !this.isAfk) {
+		if (this.afkCountdown <= 0 && !this.isAfk) {
 			this.isAfk = true;
 			if (this.onAfkCallback) {
 				this.onAfkCallback();
@@ -80,8 +80,8 @@ export class KbMouseTimer {
 		}
 	}
 
-	public setAfkState(): void {
-		this.elapsedSecondsAfk = this.afkThreshold;
+	public resetAfkTimer(): void {
+		this.afkCountdown = this.afkThreshold;
 		this.isAfk = false;
 	}
 

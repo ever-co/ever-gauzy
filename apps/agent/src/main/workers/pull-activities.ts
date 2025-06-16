@@ -99,8 +99,8 @@ class PullActivities {
 		}
 	}
 
-	afkEVentHandler() {
-		// TODO: handle when afk
+	private afkEVentHandler() {
+		this.agentLogger.info(`AFK detected`);
 	}
 
 	getTimerModule() {
@@ -151,7 +151,7 @@ class PullActivities {
 							this.appWindow.notificationWindow.browserWindow
 						);
 					} catch (error) {
-
+						this.agentLogger.error(`Failed to show screenshot notification ${JSON.stringify(error)}`);
 					}
 				}
 			}

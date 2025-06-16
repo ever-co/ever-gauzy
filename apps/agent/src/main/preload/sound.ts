@@ -32,14 +32,14 @@ async function loadSound(pathUrl: string) {
 
 export async function playSound(_: unknown, arg: { soundFile: string }) {
 	try {
-    const buffer = await loadSound(arg.soundFile);
-    if (!buffer) {
-        return; // nothing to play
-    }
-    const source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    source.connect(audioContext.destination);
-    source.start();
+		const buffer = await loadSound(arg.soundFile);
+		if (!buffer) {
+			return; // nothing to play
+		}
+		const source = audioContext.createBufferSource();
+		source.buffer = buffer;
+		source.connect(audioContext.destination);
+		source.start();
 	} catch (error) {
 		console.log('error sound', error);
 		// use silent error to prevent application breaking
