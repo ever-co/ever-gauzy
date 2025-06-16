@@ -1,4 +1,13 @@
-<button nbButton class="action" [status]="button.status" [disabled]="button.disabled" (click)="triggerAction()">
+<button
+	nbButton
+	[nbSpinner]="button.loading | async"
+	nbSpinnerStatus="success"
+	nbButton
+	class="action"
+	[status]="button.status"
+	[disabled]="button.disabled"
+	(click)="triggerAction()"
+>
 	@if(button.icon) {
 	<nb-icon [icon]="button.icon"></nb-icon>
 	} @if(button.label) {

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { IActionButton } from '../../../models/action-button.model';
+import { CamshotQuery } from '../../../../+state/camshot/camshot.query';
+import { ActionButton, IActionButton } from '../../../models/action-button.model';
 import { Camshot, ICamshot } from '../../../models/camshot.model';
 
 @Component({
@@ -11,6 +12,8 @@ import { Camshot, ICamshot } from '../../../models/camshot.model';
 })
 export class CamshotItemComponent {
 	private _camshot: Camshot;
+
+	constructor(private readonly query: CamshotQuery) {}
 
 	@Input()
 	public set camshot(value: ICamshot) {
@@ -32,52 +35,45 @@ export class CamshotItemComponent {
 
 	private updateActions(): void {
 		const commonActions: IActionButton[] = [
-			{
+			new ActionButton({
 				label: 'BUTTONS.VIEW',
 				icon: 'eye-outline',
 				status: 'basic',
-				hidden: false,
-				disabled: false,
 				action: (camshot: ICamshot) => this.view.emit(camshot)
-			},
-			{
+			}),
+			new ActionButton({
 				icon: 'download-outline',
 				label: 'BUTTONS.DOWNLOAD',
 				status: 'info',
-				hidden: false,
-				disabled: false,
 				action: (camshot: ICamshot) => this.download.emit(camshot)
-			}
+			})
 		];
 
 		const statusSpecificActions: IActionButton[] = this.camshot.isDeleted
 			? [
-					{
-						icon: 'undo-outline',
+					new ActionButton({
+						icon: 'refresh-outline',
 						label: 'BUTTONS.RECOVER',
 						status: 'success',
-						hidden: false,
-						disabled: false,
+						loading: this.query.restoring$,
 						action: (camshot: ICamshot) => this.recover.emit(camshot)
-					},
-					{
+					}),
+					new ActionButton({
 						icon: 'trash-2-outline',
 						label: 'Hard Delete',
 						status: 'danger',
-						hidden: false,
-						disabled: false,
+						loading: this.query.deleting$,
 						action: (camshot: ICamshot) => this.hardDelete.emit(camshot)
-					}
+					})
 			  ]
 			: [
-					{
+					new ActionButton({
 						icon: 'trash-outline',
 						label: 'BUTTONS.DELETE',
-						status: 'warning',
-						hidden: false,
-						disabled: false,
+						loading: this.query.deleting$,
+						status: 'danger',
 						action: (camshot: ICamshot) => this.delete.emit(camshot)
-					}
+					})
 			  ];
 
 		this.buttons = [...commonActions, ...statusSpecificActions];

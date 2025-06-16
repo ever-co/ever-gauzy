@@ -40,7 +40,9 @@ export class ListCamshotQueryHandler implements IQueryHandler<ListCamshotQuery> 
 
 		const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		// If the current user doesn't have the permission to select employee, filter by uploadedById
-		if (!hasPermission) {
+		const isOwner = !hasPermission && !!RequestContext.currentEmployeeId();
+
+		if (isOwner) {
 			where.uploadedById = RequestContext.currentEmployeeId();
 		}
 
@@ -61,6 +63,7 @@ export class ListCamshotQueryHandler implements IQueryHandler<ListCamshotQuery> 
 		// Fetch paginated camshots from the service
 		return this.camshotService.paginate({
 			...params,
+			withDeleted: true,
 			where
 		});
 	}
