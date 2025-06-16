@@ -55,6 +55,29 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 		console.log(camshot);
 	}
 
+	public onRecover(camshot: ICamshot) {
+		this.actions.dispatch(CamshotAction.restoreCamshot(camshot.id));
+	}
+
+	public onHardDelete(camshot: ICamshot) {
+		this.dialogService
+			.open(AlertModalComponent, {
+				context: {
+					data: {
+						message: 'Are you sure you want to delete this camshot definitely?',
+						title: 'Delete camshot forever'
+					}
+				},
+				hasBackdrop: true
+			})
+			.onClose.pipe(
+				take(1),
+				filter((confirm: 'yes' | 'no') => confirm === 'yes'),
+				tap(() => this.actions.dispatch(CamshotAction.hardDeleteCamshot(camshot.id, { forceDelete: true })))
+			)
+			.subscribe();
+	}
+
 	public onDelete({ id }: ICamshot) {
 		this.dialogService
 			.open(AlertModalComponent, {

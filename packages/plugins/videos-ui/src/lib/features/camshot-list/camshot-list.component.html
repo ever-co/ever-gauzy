@@ -2,7 +2,13 @@
 <!-- Structure -->
 <div nbInfiniteList [threshold]="500" [throttleTime]="300" (bottomThreshold)="fetchMoreCamshots()" class="camshot-list">
 	@for (camshot of camshots$ | async; track camshot.id){ @defer (on viewport) {
-	<plug-camshot-item [camshot]="camshot" (view)="onView($event)" (delete)="onDelete($event)"></plug-camshot-item>
+	<plug-camshot-item
+		[camshot]="camshot"
+		(recover)="onRecover($event)"
+		(view)="onView($event)"
+		(delete)="onDelete($event)"
+		(hardDelete)="onHardDelete($event)"
+	></plug-camshot-item>
 	}@placeholder (minimum 500ms) {
 	<plug-camshot-item-skeleton></plug-camshot-item-skeleton>
 	} }@empty {

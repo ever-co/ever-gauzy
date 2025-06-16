@@ -20,13 +20,14 @@ import {
 	Get,
 	HttpStatus,
 	Param,
+	Patch,
 	Post,
 	Query,
 	UseGuards,
 	UseInterceptors
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateCamshotCommand } from './commands/create-camshot.command';
 import { DeleteCamshotCommand } from './commands/delete-camshot.command';
 import { CountCamshotDTO } from './dtos/count-camshot.dto';
@@ -37,13 +38,14 @@ import { Camshot } from './entity/camshot.entity';
 import { ListCamshotQuery } from './queries';
 import { GetCamshotCountQuery } from './queries/get-camshot-count.query';
 import { GetCamshotQuery } from './queries/get-camshot.query';
+import { RecoverCamshotCommand } from './commands';
 
 @ApiTags('Camshot Plugin')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller('/plugins/camshots')
 export class CamshotController {
-	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) { }
+	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
 	/**
 	 * Get a paginated list of camshots.
@@ -208,6 +210,46 @@ export class CamshotController {
 		@Query() options: FindOptionsQueryDTO<ICamshot>
 	): Promise<ICamshot> {
 		return this.queryBus.execute(new GetCamshotQuery(id, options));
+	}
+
+	/**
+	 * Recover a soft-deleted plugin source.
+	 */
+	@ApiOperation({
+		summary: 'Recover a deleted camshot',
+		description: 'Soft-recovers a previously deleted camshot using its UUID, version UUID the plugin ID.'
+	})
+	@ApiParam({
+		name: 'id',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the camshot to recover',
+		required: true
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Camshot recovered successfully.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Camshot record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'User does not have permission to recover this camshot.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@Patch(':id')
+	public async recover(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
+		return this.commandBus.execute(new RecoverCamshotCommand(id));
 	}
 
 	/**
