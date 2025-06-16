@@ -12,23 +12,16 @@
 								[nbDatepicker]="datepicker"
 								nbInput
 								fullWidth
-								placeholder="{{
-									'FORM.PLACEHOLDERS.START_DATE' | translate
-								}}"
+								placeholder="{{ 'FORM.PLACEHOLDERS.START_DATE' | translate }}"
 								formControlName="startedWorkOn"
 							/>
 							<nb-datepicker #datepicker></nb-datepicker>
 						</div>
 					</div>
-					<div
-						class="col-md-6"
-						*ngIf="form.get('startedWorkOn').value === null"
-					>
+					<div class="col-md-6" *ngIf="form.get('startedWorkOn').value === null">
 						<div class="notes">
 							<p>
-								{{
-									'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate
-								}}
+								{{ 'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate }}
 							</p>
 						</div>
 					</div>
@@ -45,10 +38,7 @@
 								type="text"
 								nbInput
 								formControlName="short_description"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.EG_FULL_STACK_WEB_DEVELOPER'
-										| translate
-								}}"
+								placeholder="{{ 'FORM.PLACEHOLDERS.EG_FULL_STACK_WEB_DEVELOPER' | translate }}"
 							/>
 						</div>
 					</div>
@@ -60,11 +50,7 @@
 								{{ 'FORM.LABELS.DESCRIPTION' | translate }}
 							</p>
 							<div class="ck-editor">
-								<ckeditor
-									[formControl]="form.get('description')"
-									class="description"
-									[config]="ckConfig"
-								></ckeditor>
+								<rich-text-editor [height]="'200px'" formControlName="description"></rich-text-editor>
 							</div>
 						</div>
 					</div>
@@ -73,8 +59,7 @@
 					<div class="col-md-6">
 						<div class="form-group">
 							<label for="employmentType" class="label">{{
-								'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE'
-									| translate
+								'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE' | translate
 							}}</label>
 							<ng-select
 								id="employmentType"
@@ -82,10 +67,7 @@
 								formControlName="organizationEmploymentTypes"
 								bindLabel="name"
 								[searchable]="false"
-								placeholder="{{
-									'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE'
-										| translate
-								}}"
+								placeholder="{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE' | translate }}"
 								appendTo="body"
 								multiple="true"
 							>
@@ -95,20 +77,16 @@
 					<div class="col-md-6">
 						<div class="form-group">
 							<label class="label" for="empLevelInput">
-								{{
-									'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYEE_LEVEL'
-										| translate
-								}}
+								{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYEE_LEVEL' | translate }}
 							</label>
 							<ng-select
 								appendTo="body"
 								formControlName="employeeLevel"
-								placeholder="{{ 'FORM.LABELS.EMPLOYEE_LEVEL' | translate}} ">
-								<ng-option
-									*ngFor="let empL of employeeLevels"
-									[value]="empL.level"
-									>{{ empL.level }}</ng-option
-								>
+								placeholder="{{ 'FORM.LABELS.EMPLOYEE_LEVEL' | translate }} "
+							>
+								<ng-option *ngFor="let empL of employeeLevels" [value]="empL.level">{{
+									empL.level
+								}}</ng-option>
 							</ng-select>
 						</div>
 					</div>
@@ -116,11 +94,8 @@
 				<div class="row">
 					<div class="col">
 						<div class="form-group">
-							<label class="label">
-								{{
-									'EMPLOYEES_PAGE.EDIT_EMPLOYEE.DEPARTMENT'
-										| translate
-								}}
+							<label for="organizationDepartments" class="label">
+								{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.DEPARTMENT' | translate }}
 							</label>
 							<ng-select
 								id="departmentInput"
@@ -128,9 +103,7 @@
 								formControlName="organizationDepartments"
 								bindLabel="name"
 								[searchable]="false"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.ALL_DEPARTMENTS' | translate
-								}}"
+								placeholder="{{ 'FORM.PLACEHOLDERS.ALL_DEPARTMENTS' | translate }}"
 								multiple="true"
 								appendTo="body"
 							>
@@ -148,9 +121,7 @@
 								formControlName="organizationPosition"
 								bindLabel="name"
 								[searchable]="false"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.ALL_POSITIONS' | translate
-								}}"
+								placeholder="{{ 'FORM.PLACEHOLDERS.ALL_POSITIONS' | translate }}"
 								appendTo="body"
 							>
 							</ng-select>
@@ -172,9 +143,7 @@
 						<div class="form-group">
 							<ngx-skills-input
 								[selectedSkills]="form.get('skills').value"
-								(selectedSkillsEvent)="
-									selectedSkillsHandler($event)
-								"
+								(selectedSkillsEvent)="selectedSkillsHandler($event)"
 							>
 							</ngx-skills-input>
 						</div>
@@ -184,21 +153,13 @@
 					<div class="col">
 						<div class="form-group">
 							<nb-checkbox formControlName="anonymousBonus">
-								{{
-									'EMPLOYEES_PAGE.EDIT_EMPLOYEE.DISPLAY_BONUS_ANONYMOUSLY'
-										| translate
-								}}
+								{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.DISPLAY_BONUS_ANONYMOUSLY' | translate }}
 							</nb-checkbox>
 						</div>
 					</div>
 				</div>
 				<div class="actions">
-					<button
-						[disabled]="form.invalid"
-						(click)="submitForm()"
-						nbButton
-						status="success"
-					>
+					<button [disabled]="form.invalid" (click)="submitForm()" nbButton status="success">
 						{{ 'BUTTONS.SAVE' | translate }}
 					</button>
 				</div>

@@ -17,7 +17,6 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
@@ -49,7 +48,8 @@ import {
 	TableComponentsModule,
 	TagsColorInputModule,
 	TimeZoneSelectorModule,
-	DynamicTabsModule
+	DynamicTabsModule,
+	RichTextEditorModule
 } from '@gauzy/ui-core/shared';
 import {
 	EditEmployeeContactComponent,
@@ -100,7 +100,6 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
-		CKEditorModule,
 		NbAccordionModule,
 		NbActionsModule,
 		NbBadgeModule,
@@ -141,7 +140,8 @@ const COMPONENTS = [
 		SmartDataViewLayoutModule,
 		CardGridModule,
 		TimeZoneSelectorModule,
-		DynamicTabsModule
+		DynamicTabsModule,
+		RichTextEditorModule
 	],
 	declarations: [...COMPONENTS],
 	providers: [OrganizationsService, InviteGuard, CandidatesService, OrganizationEmploymentTypesService, SkillsService]

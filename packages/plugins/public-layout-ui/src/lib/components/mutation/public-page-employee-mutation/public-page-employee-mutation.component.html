@@ -144,11 +144,10 @@
 									{{ 'FORM.LABELS.DESCRIPTION' | translate }}
 								</p>
 								<div class="ck-editor">
-									<ckeditor
+									<rich-text-editor
+										[height]="'200px'"
 										formControlName="description"
-										class="description"
-										[config]="ckConfig"
-									></ckeditor>
+									></rich-text-editor>
 								</div>
 							</div>
 						</div>

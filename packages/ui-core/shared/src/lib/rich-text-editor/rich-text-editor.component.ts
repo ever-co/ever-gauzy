@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, OnDestroy, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Editor, Toolbar } from 'ngx-editor';
+import { Editor, schema, toDoc, toHTML, Toolbar } from 'ngx-editor';
 
 @Component({
 	selector: 'rich-text-editor',
@@ -34,7 +34,7 @@ export class RichTextEditorComponent implements OnInit, OnDestroy, ControlValueA
 	@Input() control: any = null;
 
 	editor: Editor;
-	value = '';
+	value = null;
 
 	onChange = (_: any) => {};
 	onTouched = () => {};
@@ -48,11 +48,17 @@ export class RichTextEditorComponent implements OnInit, OnDestroy, ControlValueA
 	}
 
 	writeValue(obj: any): void {
-		this.value = obj;
+		if (typeof obj === 'string') {
+			const doc = toDoc(obj, schema);
+			this.value = doc;
+		}
 	}
 
 	registerOnChange(fn: any): void {
-		this.onChange = fn;
+		this.onChange = (val: any) => {
+			const html = toHTML(val, schema);
+			fn(html);
+		};
 	}
 
 	registerOnTouched(fn: any): void {
