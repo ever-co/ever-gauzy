@@ -101,7 +101,6 @@ export function getInitialConfig(): Partial<TInitialConfig> {
 }
 
 export function getScreenshotSoundPath():string {
-	console.log('__dirname', __dirname);
 	if (process.env.NODE_ENV === 'development') {
 		return path.join(__dirname, '..', 'data', 'sound', 'snapshot-sound.wav');
 	}

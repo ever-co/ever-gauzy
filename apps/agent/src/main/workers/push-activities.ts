@@ -151,14 +151,14 @@ class PushActivities {
 		}
 	}
 
-	getDurationOverAllSeconds(timeStart: Date, timeEnd: Date) {
+	private getDurationOverAllSeconds(timeStart: Date, timeEnd: Date) {
 		if (timeStart && timeEnd) {
 			return Math.floor((timeEnd.getTime() - timeStart.getTime()) / 1000);
 		}
 		return 0;
 	}
 
-	getDurationSeconds(timeStart: Date, timeEnd: Date, afkDuration?: number) {
+	private getDurationSeconds(timeStart: Date, timeEnd: Date, afkDuration?: number) {
 		if (!(timeStart && timeEnd)) {
 			return 0;
 		}

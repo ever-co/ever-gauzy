@@ -1,9 +1,9 @@
 import { ipcRenderer } from 'electron';
 import * as fs from 'node:fs';
-const isNotificationWindow = location.hash === '#/screen-capture';
+const isNotificationWindow = location.hash.startsWith('#/screen-capture');
 
 
-const soundCache = {};
+const soundCache: Record<string, AudioBuffer> = {};
 let audioContext: AudioContext;
 async function loadSound(pathUrl: string) {
 	if (soundCache[pathUrl]) {
