@@ -38,7 +38,7 @@ export class CamshotItemComponent {
 				status: 'basic',
 				hidden: false,
 				disabled: false,
-				action: this.download.emit.bind(this)
+				action: (camshot: ICamshot) => this.view.emit(camshot)
 			},
 			{
 				icon: 'download-outline',
@@ -46,7 +46,7 @@ export class CamshotItemComponent {
 				status: 'info',
 				hidden: false,
 				disabled: false,
-				action: this.download.emit.bind(this)
+				action: (camshot: ICamshot) => this.download.emit(camshot)
 			}
 		];
 
@@ -58,7 +58,7 @@ export class CamshotItemComponent {
 						status: 'success',
 						hidden: false,
 						disabled: false,
-						action: this.recover.emit.bind(this)
+						action: (camshot: ICamshot) => this.recover.emit(camshot)
 					},
 					{
 						icon: 'trash-2-outline',
@@ -66,7 +66,7 @@ export class CamshotItemComponent {
 						status: 'danger',
 						hidden: false,
 						disabled: false,
-						action: this.hardDelete.emit.bind(this)
+						action: (camshot: ICamshot) => this.hardDelete.emit(camshot)
 					}
 			  ]
 			: [
@@ -76,7 +76,7 @@ export class CamshotItemComponent {
 						status: 'warning',
 						hidden: false,
 						disabled: false,
-						action: this.delete.emit.bind(this)
+						action: (camshot: ICamshot) => this.delete.emit(camshot)
 					}
 			  ];
 

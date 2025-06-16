@@ -6,13 +6,17 @@ export interface ICamshotState {
 	count: number;
 	camshots: ICamshot[];
 	camshot: ICamshot | null;
+	deleting: boolean;
+	restoring: boolean;
 }
 
 export function createInitialState(): ICamshotState {
 	return {
 		camshots: [],
 		camshot: null,
-		count: 0
+		count: 0,
+		deleting: false,
+		restoring: false
 	};
 }
 

@@ -2,11 +2,13 @@ import { ChangeDetectionStrategy, Component, Input, OnChanges, OnDestroy, OnInit
 import { ID } from '@gauzy/contracts';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, distinctUntilChanged, map, Observable, tap } from 'rxjs';
+import { combineLatest, distinctUntilChanged, filter, map, Observable, take, tap } from 'rxjs';
 import { CamshotAction } from '../../+state/camshot/camshot.action';
 import { CamshotQuery } from '../../+state/camshot/camshot.query';
 import { CamshotStore } from '../../+state/camshot/camshot.store';
 import { ICamshot } from '../../shared/models/camshot.model';
+import { NbDialogService } from '@nebular/theme';
+import { AlertModalComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,6 +28,7 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 	constructor(
 		private readonly camshotQuery: CamshotQuery,
 		private readonly camshotStore: CamshotStore,
+		private readonly dialogService: NbDialogService,
 		private readonly actions: Actions
 	) {}
 
@@ -44,6 +47,29 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 				distinctUntilChanged(),
 				tap((hasNext) => (this.hasNext = hasNext)),
 				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	public onView(camshot: ICamshot) {
+		console.log(camshot);
+	}
+
+	public onDelete({ id }: ICamshot) {
+		this.dialogService
+			.open(AlertModalComponent, {
+				context: {
+					data: {
+						message: 'Are you sure you want to delete this camshot?',
+						title: 'Delete camshot'
+					}
+				},
+				hasBackdrop: true
+			})
+			.onClose.pipe(
+				take(1),
+				filter((confirm: 'yes' | 'no') => confirm === 'yes'),
+				tap(() => this.actions.dispatch(CamshotAction.deleteCamshot(id)))
 			)
 			.subscribe();
 	}
