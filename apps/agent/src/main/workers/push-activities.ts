@@ -158,11 +158,13 @@ class PushActivities {
 		return 0;
 	}
 
-	getDurationSeconds(timeStart: Date, timeEnd: Date, afkDuration: number) {
-		if (timeStart && timeEnd) {
-			return (Math.floor((timeEnd.getTime() - timeStart.getTime()) / 1000)) - afkDuration;
+	getDurationSeconds(timeStart: Date, timeEnd: Date, afkDuration?: number) {
+		if (!(timeStart && timeEnd)) {
+			return 0;
 		}
-		return 0;
+		const total = Math.floor((timeEnd.getTime() - timeStart.getTime()) / 1000);
+		const afk = afkDuration ?? 0;
+		return Math.max(0, total - afk);
 	}
 
 	getActivities(activities: KbMouseActivityTO): TKbMouseActivity[] {

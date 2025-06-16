@@ -12,7 +12,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	private _mouseRightClickCount: number;
 	private _mouseEvents: TMouseEvents[] | string;
 	private _screenshots: string[] | string;
-	private _afkDuration: number;
+	private _afkDuration: number = 0;
 
 	constructor(kbMouseActivity: KbMouseActivityTO) {
 		super(kbMouseActivity.id, kbMouseActivity.tenantId, kbMouseActivity.organizationId);

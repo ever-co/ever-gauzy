@@ -72,7 +72,7 @@ export class KbMouseTimer {
 		if (this.elapsedSecondsAfk > 0) {
 			this.elapsedSecondsAfk -= 1;
 		}
-		if (this.elapsedSecondsAfk <= 0) {
+		if (this.elapsedSecondsAfk <= 0 && !this.isAfk) {
 			this.isAfk = true;
 			if (this.onAfkCallback) {
 				this.onAfkCallback();
@@ -120,10 +120,14 @@ export class KbMouseTimer {
 					this.lastScreenshotTime = now;
 					this.resetAfkCount();
 				} else {
-					this.onFlushCallback({
-						timeStart: this.lastFlushTime,
-						timeEnd: now
-					});
+					this.onFlushCallback(
+						{
+							timeStart: this.lastFlushTime,
+							timeEnd: now
+						},
+						false,
+						this.afkDuration
+					);
 					this.resetAfkCount();
 					this.lastFlushTime = now;
 				}
