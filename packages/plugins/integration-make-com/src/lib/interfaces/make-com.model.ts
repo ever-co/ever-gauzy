@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel } from '@gauzy/contracts';
+import { IBasePerTenantAndOrganizationEntityModel, IntegrationEnum } from '@gauzy/contracts';
 
 export type GrantType = 'authorization_code' | 'refresh_token';
 
@@ -20,6 +20,13 @@ export enum MakeSettingName {
 export interface IMakeComIntegrationSettings {
 	isEnabled: boolean;
 	webhookUrl: string | null;
+}
+
+// Integration filter interface
+export interface IIntegrationFilter {
+	name: IntegrationEnum.MakeCom;
+	tenantId: string;
+	organizationId?: string;
 }
 
 /**

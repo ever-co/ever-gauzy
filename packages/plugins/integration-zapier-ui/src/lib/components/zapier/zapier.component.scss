@@ -1,0 +1,49 @@
+.card-scroll {
+  height: calc(100vh - 20rem);
+  overflow-y: auto;
+}
+
+.endpoints-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.endpoint-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: var(--gauzy-card-2);
+  border-radius: var(--border-radius);
+}
+
+.endpoint-info {
+  flex: 1;
+
+  h6 {
+    margin: 0 0 0.5rem;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    color: var(--gauzy-text-color-2);
+    font-size: 0.875rem;
+  }
+}
+
+.endpoint-actions {
+  margin-left: 1rem;
+}
+
+:host {
+  ::ng-deep {
+    .nb-route-tabset {
+      .tab-content {
+        height: calc(100vh - 25rem);
+        overflow-y: auto;
+      }
+    }
+  }
+}

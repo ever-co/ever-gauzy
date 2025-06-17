@@ -1,0 +1,44 @@
+{
+	"name": "plugin-integration-activepieces",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/integration-activepieces/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"generatorOptions": {
+				"packageRoot": "dist/{projectRoot}",
+				"currentVersionResolver": "git-tag",
+				"fallbackCurrentVersionResolver": "disk"
+			}
+		}
+	},
+	"tags": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/plugins/integration-activepieces",
+				"tsConfig": "packages/plugins/integration-activepieces/tsconfig.lib.json",
+				"packageJson": "packages/plugins/integration-activepieces/package.json",
+				"main": "packages/plugins/integration-activepieces/src/index.ts",
+				"assets": ["packages/plugins/integration-activepieces/*.md"]
+			}
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/integration-activepieces/jest.config.ts"
+			}
+		}
+	}
+}

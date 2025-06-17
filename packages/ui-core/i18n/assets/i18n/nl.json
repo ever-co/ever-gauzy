@@ -600,6 +600,8 @@
 			"COST": "Kosten",
 			"MAKE_COM_CLIENT_ID": "Voer uw Make.com Client ID in",
 			"MAKE_COM_CLIENT_SECRET": "Voer uw Make.com Client Geheim in",
+			"ZAPIER_CLIENT_ID": "Voer uw Zapier Client ID in",
+			"ZAPIER_CLIENT_SECRET": "Voer uw Zapier Client Geheim in",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Schoolnaam",
 				"DEGREE": "Graad/Diploma",
@@ -834,6 +836,7 @@
 		"INTEGRATIONS": "Apps & Integraties",
 		"UPWORK": "Upwork",
 		"MAKE_COM": "Make.com",
+		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Voorstellen",
 		"TIME_OFF": "Vrije tijd",
@@ -1280,6 +1283,14 @@
 			"HOURLY": "Per uur"
 		},
 		"MAKE_COM_PAGE": {
+			"SCENARIOS": "Scenario's",
+			"EXECUTIONS": "Uitvoeringen",
+			"HISTORY": "Geschiedenis",
+			"SETTINGS": "Instellingen",
+			"ERRORS": {
+				"INVALID_FORM": "Vul alstublieft alle verplichte velden in",
+				"START_AUTHORIZATION": "Start alstublieft de autorisatieproces"
+			},
 			"CLIENT_ID": "Client ID",
 			"CLIENT_SECRET": "Client Geheim",
 			"NEXT_STEP_INFO": "Na autorisatie word je doorgestuurd naar Make.com om de integratie-instellingen te voltooien"
@@ -1292,6 +1303,70 @@
 				"WEBHOOK_URL_PLACEHOLDER": "Voer webhook URL in",
 				"WEBHOOK_URL_INVALID": "Voer een geldige webhook URL in",
 				"SAVE": "Instellingen opslaan"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "Client ID",
+			"CLIENT_SECRET": "Client Geheim",
+			"NEXT_STEP_INFO": "Na autorisatie word je doorgestuurd naar Zapier om de integratie-instellingen te voltooien",
+			"ERRORS": {
+				"LOAD_SETTINGS": "Fout bij het laden van Zapier-instellingen",
+				"SAVE_SETTINGS": "Fout bij het opslaan van Zapier-instellingen",
+				"INVALID_FORM": "Vul alstublieft alle verplichte velden in",
+				"MISSING_CREDENTIALS": "Ontbrekende clientreferenties",
+				"NO_ACCESS_TOKEN": "Geen toegangstoken beschikbaar",
+				"LOAD_WEBHOOKS": "Fout bij het laden van webhooks",
+				"DELETE_WEBHOOK": "Fout bij het verwijderen van webhook",
+				"LOAD_ACTIONS": "Fout bij het laden van acties",
+				"LOAD_TRIGGERS": "Fout bij het laden van triggers",
+				"START_AUTHORIZATION": "Start alstublieft de autorisatieproces",
+				"INVALID_TOKEN": "Ongeldig token verstrekt",
+				"TOKEN_NOT_FOUND": "Token niet gevonden"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Zapier-instellingen succesvol opgeslagen",
+				"DELETE_WEBHOOK": "Webhook succesvol verwijderd"
+			},
+			"TAB": {
+				"TRIGGERS": "Triggers",
+				"ACTIONS": "Acties",
+				"WEBHOOKS": "Webhooks",
+				"SETTINGS": "Instellingen"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "Triggers zijn gebeurtenissen die plaatsvinden in Gauzy en kunnen worden gebruikt om acties in Zapier te activeren.",
+				"ACTIONS": "Acties zijn gebeurtenissen die plaatsvinden in Zapier en kunnen worden gebruikt om acties in Gauzy te activeren.",
+				"WEBHOOKS": "Webhooks zijn gebeurtenissen die plaatsvinden in Zapier en kunnen worden gebruikt om acties in Gauzy te activeren.",
+				"SETTINGS": "Instellingen zijn de instellingen voor de Zapier-integratie."
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "Triggers zijn succesvol ingeschakeld.",
+				"TRIGGERS_DISABLED": "Triggers zijn succesvol uitgeschakeld.",
+				"ACTIONS_ENABLED": "Acties zijn succesvol ingeschakeld.",
+				"ACTIONS_DISABLED": "Acties zijn succesvol uitgeschakeld.",
+				"WEBHOOKS_ENABLED": "Webhooks zijn succesvol ingeschakeld.",
+				"WEBHOOKS_DISABLED": "Webhooks zijn succesvol uitgeschakeld."
+			},
+			"SETTINGS": {
+				"TITLE": "Zapier-instellingen",
+				"ENABLE_INTEGRATION": "Zapier-integratie inschakelen",
+				"WEBHOOK_URL": "Webhook-URL",
+				"WEBHOOK_URL_PLACEHOLDER": "Voer webhook-URL in",
+				"WEBHOOK_URL_INVALID": "Voer een geldige webhook-URL in",
+				"WEBHOOK_INFO": "Webhook is een URL die wordt gebruikt om gegevens in Gauzy bij te werken op basis van een specifiek gebeurtenis in Zapier.",
+				"SAVE": "Instellingen opslaan"
+			},
+			"ACTIONS": {
+				"TITLE": "Acties",
+				"NO_ACTIONS": "Geen acties beschikbaar"
+			},
+			"TRIGGERS": {
+				"TITLE": "Triggers",
+				"NO_TRIGGERS": "Geen triggers beschikbaar"
+			},
+			"WEBHOOKS": {
+				"TITLE": "Webhooks",
+				"NO_WEBHOOKS": "Geen webhooks geconfigureerd"
 			}
 		},
 		"GAUZY_AI_PAGE": {

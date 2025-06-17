@@ -2,6 +2,7 @@ import KeyboardMouse from './kb-mouse';
 import { KeyboardMouseActivityStores } from './kb-mouse-activity-stores';
 import { UiohookMouseEvent, UiohookWheelEvent } from 'uiohook-napi';
 import { debounce } from 'underscore';
+import { KbMouseTimer } from './kb-mouse-timer';
 
 type TMousePosition = {
 	x: number;
@@ -18,11 +19,15 @@ export class KeyboardMouseEventCounter {
 	private mouseIsMove: boolean;
 	private debounceMovement: () => void;
 	private static instance: KeyboardMouseEventCounter;
+	private kbMouseTimer: KbMouseTimer;
+	private resetAfkTimer: () => void;
 	private constructor() {
 		this.isStarted = false;
 		this.keyboardMouse = new KeyboardMouse();
 		this.debounceMovement = debounce(this.mouseMeasureMovement.bind(this), 300);
 		this.keyboardMouseActivityStores = KeyboardMouseActivityStores.getInstance();
+		this.kbMouseTimer = KbMouseTimer.getInstance();
+		this.resetAfkTimer = debounce(this.sendEvent.bind(this), 100);
 	}
 
 	static getInstance(): KeyboardMouseEventCounter {
@@ -32,9 +37,15 @@ export class KeyboardMouseEventCounter {
 		return KeyboardMouseEventCounter.instance;
 	}
 
+	/** Reset AFK timer – debounced from user input events. */
+	private sendEvent() {
+		this.kbMouseTimer.resetAfkTimer();
+	}
+
 	registerEvent() {
 		this.keyboardMouse.on('keydown', (e) => {
 			try {
+				this.resetAfkTimer();
 				this.keyboardMouseActivityStores.updateKbSequence(e.keycode);
 				this.keyboardMouseActivityStores.updateCurrentKeyPressCount();
 			} catch (error) {
@@ -43,6 +54,7 @@ export class KeyboardMouseEventCounter {
 		});
 
 		this.keyboardMouse.on('click', (e) => {
+			this.resetAfkTimer();
 			if (e.button === 0) {
 				this.keyboardMouseActivityStores.updateMouseLeftClick();
 			}
@@ -52,10 +64,12 @@ export class KeyboardMouseEventCounter {
 		});
 
 		this.keyboardMouse.on('mousemove', (e) => {
+			this.resetAfkTimer();
 			this.mouseMoveEventHandler(e);
 		});
 
 		this.keyboardMouse.on('wheel', (e) => {
+			this.resetAfkTimer();
 			this.mouseMoveEventHandler(e);
 		});
 	}

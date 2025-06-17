@@ -3,9 +3,10 @@
 	"language": "en",
 	"$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
 	"words": [
-		"accesibility",
 		"activitywatch",
 		"adminer",
+		"activepieces",
+		"ActivePieces",
 		"AGPL",
 		"airbyte",
 		"Akveo",
@@ -661,6 +662,8 @@
 		"gauzyagent",
 		"PostHog",
 		"posthog",
+		"PKCE",
+		"udts",
 		"autocapture",
 		"pageview",
 		"signup",
@@ -668,7 +671,13 @@
 		"dyld",
 		"oidc",
 		"Registerables",
-		"Archs"
+		"Archs",
+		"camshot",
+		"camshots",
+		"dtos",
+		"soundshot",
+		"soundshots",
+		"runtimes"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

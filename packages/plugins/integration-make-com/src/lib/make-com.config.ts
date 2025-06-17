@@ -24,6 +24,42 @@ export const MAKE_REDIRECT_URL = process.env.GAUZY_MAKE_REDIRECT_URL ??
     );
 
 /** Default scopes for Make.com OAuth - Updated to match Make.com documentation */
-export const MAKE_DEFAULT_SCOPES = process.env.GAUZY_MAKE_DEFAULT_SCOPES
-    ? process.env.GAUZY_MAKE_DEFAULT_SCOPES.trim().split(/\s+/).filter(Boolean)
-    : ['offline_access'];
+export const MAKE_DEFAULT_SCOPES =
+    [
+        'organizations:read',
+        'organizations:write',
+        'udts:read',
+        'udts:write',
+        'scenarios:read',
+        'scenarios:write',
+        'templates:read',
+        'templates:write',
+        'connections:read',
+        'connections:write',
+        'datastores:read',
+        'datastores:write',
+        'teams:read',
+        'teams:write',
+        'keys:read',
+        'keys:write',
+        'notifications:read',
+        'notifications:write',
+        'sdk-apps:read',
+        'sdk-apps:write',
+        'user:read',
+        'user:write',
+        'hooks:read',
+        'hooks:write',
+        'devices:read',
+        'devices:write',
+        'organization-variables:read',
+        'organization-variables:write',
+        'team-variables:read',
+        'team-variables:write',
+        'scenarios:run',
+        'functions:read',
+        'functions:write',
+        'custom-property-structures:read',
+        'custom-property-structures:write',
+        'openid'
+    ];

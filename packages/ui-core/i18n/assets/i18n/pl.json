@@ -599,6 +599,8 @@
 			"COST": "Koszt",
 			"MAKE_COM_CLIENT_ID": "Wprowadź swoje ID klienta Make.com",
 			"MAKE_COM_CLIENT_SECRET": "Wprowadź swój sekret klienta Make.com",
+			"ZAPIER_CLIENT_ID": "Wprowadź swoje ID klienta Zapier",
+			"ZAPIER_CLIENT_SECRET": "Wprowadź swój sekret klienta Zapier",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Nazwa szkoły",
 				"DEGREE": "Stopień/Dyplom",
@@ -833,6 +835,7 @@
 		"INTEGRATIONS": "Aplikacje i integracje",
 		"UPWORK": "Upwork",
 		"MAKE_COM": "Make.com",
+		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Propozycje",
 		"TIME_OFF": "Czas wolny",
@@ -1279,6 +1282,14 @@
 			"HOURLY": "Godzinowo"
 		},
 		"MAKE_COM_PAGE": {
+			"SCENARIOS": "Scenariusze",
+			"EXECUTIONS": "Wykonania",
+			"HISTORY": "Historia",
+			"SETTINGS": "Ustawienia",
+			"ERRORS": {
+				"INVALID_FORM": "Proszę wypełnić wszystkie wymagane pola",
+				"START_AUTHORIZATION": "Proszę rozpocząć proces autoryzacji"
+			},
 			"CLIENT_ID": "ID Klienta",
 			"CLIENT_SECRET": "Sekret Klienta",
 			"NEXT_STEP_INFO": "Po autoryzacji zostaniesz przekierowany do Make.com, aby dokończyć konfigurację integracji"
@@ -1291,6 +1302,70 @@
 				"WEBHOOK_URL_PLACEHOLDER": "Wprowadź URL webhooka",
 				"WEBHOOK_URL_INVALID": "Wprowadź prawidłowy URL webhooka",
 				"SAVE": "Zapisz ustawienia"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "ID Klienta",
+			"CLIENT_SECRET": "Sekret Klienta",
+			"NEXT_STEP_INFO": "Po autoryzacji zostaniesz przekierowany do Zapier, aby dokończyć konfigurację integracji",
+			"ERRORS": {
+				"LOAD_SETTINGS": "Nie udało się załadować ustawień Zapier",
+				"SAVE_SETTINGS": "Nie udało się zapisać ustawień Zapier",
+				"INVALID_FORM": "Proszę wypełnić wszystkie wymagane pola",
+				"MISSING_CREDENTIALS": "Brakujące dane uwierzytelniające klienta",
+				"NO_ACCESS_TOKEN": "Brak dostępnego tokenu dostępu",
+				"LOAD_WEBHOOKS": "Nie udało się załadować webhooków",
+				"DELETE_WEBHOOK": "Nie udało się usunąć webhooka",
+				"LOAD_ACTIONS": "Nie udało się załadować akcji",
+				"LOAD_TRIGGERS": "Nie udało się załadować triggerów",
+				"START_AUTHORIZATION": "Proszę rozpocząć proces autoryzacji",
+				"INVALID_TOKEN": "Podano nieprawidłowy token",
+				"TOKEN_NOT_FOUND": "Token nie został znaleziony"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Ustawienia Zapier zostały pomyślnie zapisane",
+				"DELETE_WEBHOOK": "Webhook został pomyślnie usunięty"
+			},
+			"TAB": {
+				"TRIGGERS": "Wyzwalacze",
+				"ACTIONS": "Akcje",
+				"WEBHOOKS": "Webhooki",
+				"SETTINGS": "Ustawienia"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "Wyzwalacze to zdarzenia, które występują w Gauzy i mogą być używane do wyzwalania akcji w Zapier.",
+				"ACTIONS": "Akcje to zdarzenia, które występują w Zapier i mogą być używane do wyzwalania akcji w Gauzy.",
+				"WEBHOOKS": "Webhooki to zdarzenia, które występują w Zapier i mogą być używane do wyzwalania akcji w Gauzy.",
+				"SETTINGS": "Ustawienia to ustawienia integracji Zapier."
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "Wyzwalacze zostały pomyślnie włączone.",
+				"TRIGGERS_DISABLED": "Wyzwalacze zostały pomyślnie wyłączone.",
+				"ACTIONS_ENABLED": "Akcje zostały pomyślnie włączone.",
+				"ACTIONS_DISABLED": "Akcje zostały pomyślnie wyłączone.",
+				"WEBHOOKS_ENABLED": "Webhooki zostały pomyślnie włączone.",
+				"WEBHOOKS_DISABLED": "Webhooki zostały pomyślnie wyłączone."
+			},
+			"SETTINGS": {
+				"TITLE": "Ustawienia Zapier",
+				"ENABLE_INTEGRATION": "Włącz integrację Zapier",
+				"WEBHOOK_URL": "URL Webhooka",
+				"WEBHOOK_URL_PLACEHOLDER": "Wprowadź URL Webhooka",
+				"WEBHOOK_URL_INVALID": "Wprowadź prawidłowy URL Webhooka",
+				"WEBHOOK_INFO": "Webhook to adres URL, który jest używany do aktualizacji danych w Gauzy na podstawie określonego zdarzenia w Zapier.",
+				"SAVE": "Zapisz ustawienia"
+			},
+			"ACTIONS": {
+				"TITLE": "Akcje",
+				"NO_ACTIONS": "Brak dostępnych akcji"
+			},
+			"TRIGGERS": {
+				"TITLE": "Wyzwalacze",
+				"NO_TRIGGERS": "Brak dostępnych wyzwalaczy"
+			},
+			"WEBHOOKS": {
+				"TITLE": "Webhooki",
+				"NO_WEBHOOKS": "Brak skonfigurowanych webhooków"
 			}
 		},
 		"GAUZY_AI_PAGE": {
