@@ -46,6 +46,7 @@ import { VideoSkeletonComponent } from './shared/ui/video-skeleton/video-skeleto
 import { VideoUiRoutingModule } from './video-ui-routing.module';
 import { CamshotEffects } from './+state/camshot/camshot.effect';
 import { CamshotViewerComponent } from './shared/ui/camshot/camshot-viewer/camshot-viewer.component';
+import { SoundshotEffects } from './+state/soundshot/soundshot.effect';
 
 @NgModule({
 	declarations: [
@@ -92,7 +93,7 @@ import { CamshotViewerComponent } from './shared/ui/camshot/camshot-viewer/camsh
 	],
 	providers: [
 		provideEffectsManager(),
-		provideEffects(VideoEffects, CamshotEffects),
+		provideEffects(VideoEffects, CamshotEffects, SoundshotEffects),
 		VideoQuery,
 		VideoStore,
 		VideoService,
