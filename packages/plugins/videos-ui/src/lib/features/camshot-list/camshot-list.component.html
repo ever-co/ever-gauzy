@@ -4,6 +4,7 @@
 	@for (camshot of camshots$ | async; track camshot.id){ @defer (on viewport) {
 	<plug-camshot-item
 		[camshot]="camshot"
+		(download)="onDownload($event)"
 		(recover)="onRecover($event)"
 		(view)="onView($event)"
 		(delete)="onDelete($event)"

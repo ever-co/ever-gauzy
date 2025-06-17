@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
-import { ErrorHandlingService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { EMPTY, catchError, finalize, switchMap, tap } from 'rxjs';
 import { CamshotStore } from './camshot.store';
 import { CamshotService } from '../../shared/services/camshot.service';
 import { CamshotAction } from './camshot.action';
+import { DownloadQueueService } from '../../shared/services/download/download-queue.service';
 
 @Injectable({ providedIn: 'root' })
 export class CamshotEffects {
@@ -13,6 +14,8 @@ export class CamshotEffects {
 		private readonly action$: Actions,
 		private readonly camshotStore: CamshotStore,
 		private readonly camshotService: CamshotService,
+		private readonly downloadQueueService: DownloadQueueService,
+		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService
 	) {}
 
@@ -87,6 +90,18 @@ export class CamshotEffects {
 						return EMPTY; // Return a fallback observable
 					})
 				);
+			})
+		)
+	);
+
+	addToQueue$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(CamshotAction.downloadCamshot),
+			tap(({ url }) => {
+				const isAdded = this.downloadQueueService.add([url]);
+				if (isAdded) {
+					this.toastrService.info('Camshot added to queue', 'Download Camshot');
+				}
 			})
 		)
 	);

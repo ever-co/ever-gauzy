@@ -9,6 +9,10 @@
     min-width: 416px;
     height: 100%;
   }
+
+  .no-data {
+    margin: 416px;
+  }
 }
 
 ::ng-deep nb-tab.content-active {

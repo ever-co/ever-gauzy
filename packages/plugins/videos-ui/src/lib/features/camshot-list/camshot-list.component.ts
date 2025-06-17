@@ -55,6 +55,10 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 		console.log(camshot);
 	}
 
+	public onDownload(camshot: ICamshot) {
+		this.actions.dispatch(CamshotAction.downloadCamshot(camshot.fullUrl));
+	}
+
 	public onRecover(camshot: ICamshot) {
 		this.actions.dispatch(CamshotAction.restoreCamshot(camshot.id));
 	}
@@ -65,7 +69,7 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 				context: {
 					data: {
 						message: 'Are you sure you want to delete this camshot definitely?',
-						title: 'Delete camshot forever'
+						title: 'Delete Camshot Forever'
 					}
 				},
 				hasBackdrop: true
@@ -84,7 +88,7 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 				context: {
 					data: {
 						message: 'Are you sure you want to delete this camshot?',
-						title: 'Delete camshot'
+						title: 'Delete Camshot'
 					}
 				},
 				hasBackdrop: true

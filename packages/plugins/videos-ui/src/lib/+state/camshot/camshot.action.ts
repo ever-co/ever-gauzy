@@ -13,4 +13,5 @@ export class CamshotAction {
 		params
 	}));
 	public static restoreCamshot = createAction('[Camshots] Restore Camshot', (id: ID) => ({ id }));
+	public static downloadCamshot = createAction('[Camshots] Download Camshot', (url: string) => ({ url }));
 }
