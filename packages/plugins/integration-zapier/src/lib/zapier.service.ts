@@ -288,9 +288,15 @@ export class ZapierService {
 	 * Stores the state parameter with an expiration timestamp
 	 * @param state The state parameter to store
 	 * @param tenantId The tenant ID
+	 * @param integrationId The integration ID
 	 * @param organizationId Optional organization ID
 	 */
-	private async storeStateWithExpiration(state: string, tenantId: string, organizationId?: string): Promise<void> {
+	private async storeStateWithExpiration(
+		state: string,
+		tenantId: string,
+		integrationId: string,
+		organizationId?: string
+	): Promise<void> {
 		const expirationTime = new Date();
 		expirationTime.setMinutes(expirationTime.getMinutes() + 10); // State expires in 10 minutes
 
@@ -298,6 +304,7 @@ export class ZapierService {
 			settingsName: 'state',
 			tenantId,
 			organizationId,
+			integrationId,
 			settingsValue: JSON.stringify({
 				state,
 				expiresAt: expirationTime.toISOString()
@@ -358,9 +365,6 @@ export class ZapierService {
 			throw new BadRequestException('State parameter is required');
 		}
 
-		// Store state with expiration
-		await this.storeStateWithExpiration(state, tenantId, organizationId);
-
 		// Find or create the base integration
 		const baseIntegration =
 			(await this._integrationService.findOneByOptions({
@@ -388,8 +392,8 @@ export class ZapierService {
 			};
 		}) as IIntegrationEntitySetting[];
 
-		// Store the credentials (without state) at this point
-		return await this._commandBus.execute(
+		// Create the integration first
+		const integration = await this._commandBus.execute(
 			new IntegrationTenantUpdateOrCreateCommand(
 				{
 					name: IntegrationEnum.ZAPIER,
@@ -426,6 +430,11 @@ export class ZapierService {
 				}
 			)
 		);
+
+		// Now store state with the integration ID
+		await this.storeStateWithExpiration(state, tenantId, integration.id, organizationId);
+
+		return integration;
 	}
 
 	/**
