@@ -20,6 +20,8 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
 	PermissionsEnum = PermissionsEnum;
 	limitReached = false;
+	hasPermission = false;
+
 	@Input() timeLogs: ITimeLog[] = [];
 	@Input() callback: CallableFunction;
 	@Output() close: CallableFunction;
@@ -36,6 +38,7 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit(): void {
+		this.hasPermission = this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
@@ -52,7 +55,7 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	}
 
 	openAddByDateProject($event: MouseEvent) {
-		if (this.limitReached) return;
+		if (this.limitReached && !this.hasPermission) return;
 		const [timeLog] = this.timeLogs;
 		const startedAt = moment().set({ hour: 8, minute: 0, second: 0 }).toDate();
 		const stoppedAt = moment().set({ hour: 9, minute: 0, second: 0 }).toDate();

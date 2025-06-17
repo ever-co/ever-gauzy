@@ -82,7 +82,7 @@
 					class="mx-auto mt-3"
 					status="primary"
 					(click)="openAddByDateProject($event)"
-					[disabled]="limitReached"
+					[disabled]="limitReached && !hasPermission"
 				>
 					<nb-icon icon="plus-outline"></nb-icon>
 					{{ 'TIMESHEET.ADD_TIME' | translate }}

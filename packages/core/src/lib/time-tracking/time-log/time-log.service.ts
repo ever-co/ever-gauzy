@@ -156,6 +156,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					id: true,
 					isAway: true,
 					isOnline: true,
+					reWeeklyLimit: true,
 					user: {
 						id: true,
 						firstName: true,
@@ -1189,7 +1190,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 
 		// Check if the time log will fit the weekly limit taking into account the items that will be removed by conflicts
-		const weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, startedAt, true);
+		const weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, startedAt, {
+			ignoreException: true
+		});
 		const newTimeToAdd = moment(stoppedAt).diff(startedAt, 'seconds') - timeToRemove - previousTime;
 		if (newTimeToAdd > weeklyLimitStatus.remainWeeklyTime) {
 			throw new ConflictException(TimeErrorsEnum.WEEKLY_LIMIT_REACHED);

@@ -42,10 +42,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-calendar-timesheet',
-    templateUrl: './calendar.component.html',
-    styleUrls: ['./calendar.component.scss'],
-    standalone: false
+	selector: 'ngx-calendar-timesheet',
+	templateUrl: './calendar.component.html',
+	styleUrls: ['./calendar.component.scss'],
+	standalone: false
 })
 export class CalendarComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
@@ -64,6 +64,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	loading = false;
 	futureDateAllowed: boolean;
 	limitReached = false;
+	hasPermission = false;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -106,6 +107,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	}
 
 	ngOnInit() {
+		this.hasPermission = this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		this.subject$
 			.pipe(
 				filter(() => !!this.calendar.getApi() && !!this.organization),
@@ -389,9 +391,18 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	 * @param timeLog An optional parameter representing the time log to be edited.  It can be a complete ITimeLog object or a partial one.
 	 */
 	openDialog(timeLog?: ITimeLog | Partial<ITimeLog>) {
-		if (this.limitReached) return;
+		if (this.limitReached && !this.hasPermission) return;
 
-		const dialog$ = this.nbDialogService.open(EditTimeLogModalComponent, { context: { timeLog } });
+		const defaultTimeLog = {
+			startedAt: moment().set({ hour: 8, minute: 0, second: 0 }).toDate(),
+			stoppedAt: moment().set({ hour: 9, minute: 0, second: 0 }).toDate(),
+			employeeId: this.request.employeeIds?.[0] || null,
+			projectId: this.request.projectIds?.[0] || null
+		};
+
+		const dialog$ = this.nbDialogService.open(EditTimeLogModalComponent, {
+			context: { timeLog: timeLog ?? defaultTimeLog }
+		});
 		dialog$.onClose
 			.pipe(
 				filter((timeLog: ITimeLog) => !!timeLog),

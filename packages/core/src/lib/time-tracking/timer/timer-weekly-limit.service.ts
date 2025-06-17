@@ -16,21 +16,33 @@ export class TimerWeeklyLimitService {
 	 * @param refDate
 	 * @returns
 	 */
-	async checkWeeklyLimit(employee: IEmployee, refDate?: Date, ignoreException = false): Promise<IWeeklyLimitStatus> {
+	async checkWeeklyLimit(
+		employee: IEmployee,
+		refDate?: Date,
+		options: { onlyMe?: boolean; ignoreException?: boolean } = {}
+	): Promise<IWeeklyLimitStatus> {
+		const { onlyMe = false, ignoreException = false } = options;
+
 		const statistics = await this._statisticService.getWeeklyStatisticsActivities({
 			organizationId: employee.organizationId,
 			tenantId: employee.tenantId,
-			employeeId: employee.id,
+			employeeId: onlyMe ? undefined : employee.id,
+			onlyMe,
 			startDate: moment(refDate).startOf('week').toDate(),
 			endDate: moment(refDate).endOf('week').toDate()
 		});
+
 		const remainWeeklyTime = Math.trunc(employee.reWeeklyLimit * 3600) - statistics.duration;
 
 		// Check if the employee has reached the weekly limit
 		if (remainWeeklyTime <= 0 && !ignoreException) {
 			throw new ConflictException(TimeErrorsEnum.WEEKLY_LIMIT_REACHED);
 		}
-		return { remainWeeklyTime, workedThisWeek: statistics.duration };
+
+		return {
+			remainWeeklyTime,
+			workedThisWeek: statistics.duration
+		};
 	}
 
 	/**

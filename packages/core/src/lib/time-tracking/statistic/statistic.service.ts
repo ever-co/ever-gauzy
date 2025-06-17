@@ -20,7 +20,7 @@ import {
 	TimeLogType,
 	ITimeLog,
 	IWeeklyStatisticsActivities,
-	ITodayStatisticsActivities,
+	ITodayStatisticsActivities
 } from '@gauzy/contracts';
 import { ArraySum, isNotEmpty } from '@gauzy/utils';
 import {

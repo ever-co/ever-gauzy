@@ -267,7 +267,10 @@ export class TimerService {
 		}
 
 		// Get weekly statistics
-		let weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, start as Date, true);
+		let weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, start as Date, {
+			onlyMe: true,
+			ignoreException: true
+		});
 
 		// If the user reached the weekly limit, then stop the current timer
 		let lastLogStopped = false;
@@ -283,7 +286,10 @@ export class TimerService {
 					stoppedAt: now.toDate()
 				});
 				// Recalculate the weekly limit status
-				weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, start as Date, true);
+				weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, start as Date, {
+					onlyMe: true,
+					ignoreException: true
+				});
 			}
 		}
 
@@ -425,7 +431,7 @@ export class TimerService {
 		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
 
 		// Check if the employee has reached the weekly limit
-		await this._timerWeeklyLimitService.checkWeeklyLimit(employee, startedAt);
+		await this._timerWeeklyLimitService.checkWeeklyLimit(employee, startedAt, { onlyMe: true });
 
 		// Create a new time log entry using the command bus
 		const timeLog = await this._commandBus.execute(
@@ -497,11 +503,10 @@ export class TimerService {
 		}
 
 		// Check if the employee has reached the weekly limit
-		const weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(
-			employee,
-			lastLog.startedAt,
-			true
-		);
+		const weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, lastLog.startedAt, {
+			onlyMe: true,
+			ignoreException: true
+		});
 		this.logger.verbose(`Remaining weekly limit: ${weeklyLimitStatus.remainWeeklyTime}`);
 
 		// Calculate stoppedAt date or use current date if not provided

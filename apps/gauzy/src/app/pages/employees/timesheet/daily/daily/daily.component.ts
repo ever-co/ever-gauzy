@@ -43,10 +43,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-daily-timesheet',
-    templateUrl: './daily.component.html',
-    styleUrls: ['./daily.component.scss'],
-    standalone: false
+	selector: 'ngx-daily-timesheet',
+	templateUrl: './daily.component.html',
+	styleUrls: ['./daily.component.scss'],
+	standalone: false
 })
 export class DailyComponent extends BaseSelectorFilterComponent implements AfterViewInit, OnInit, OnDestroy {
 	public PermissionsEnum = PermissionsEnum; // Enum for permissions.
@@ -58,6 +58,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	public filters: ITimeLogFilters = this.request; // Time log filters. Assuming request is defined somewhere.
 	public contextMenus: NbMenuItem[] = [];
 	public limitReached = false;
+	public hasPermission = false;
 
 	//Reference to the GauzyFiltersComponent using @ViewChild.
 	@ViewChild(GauzyFiltersComponent) private readonly gauzyFiltersComponent: GauzyFiltersComponent;
@@ -101,6 +102,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	 *
 	 */
 	ngOnInit() {
+		this.hasPermission = this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		this._handleSubjectOperationsSubscriber();
 		this._handleUpdateLogSubscriber();
 		this._handleRefreshDailyLogs();
@@ -310,7 +312,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	 * Opens the Add Time Log modal and handles the result.
 	 */
 	openAdd(): void {
-		if (this.limitReached) return;
+		if (this.limitReached && !this.hasPermission) return;
 		const defaultTimeLog = {
 			startedAt: moment().set({ hour: 8, minute: 0, second: 0 }).toDate(),
 			stoppedAt: moment().set({ hour: 9, minute: 0, second: 0 }).toDate(),

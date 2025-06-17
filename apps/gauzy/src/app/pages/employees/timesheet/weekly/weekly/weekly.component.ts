@@ -47,6 +47,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	loading: boolean;
 	limitReached = false;
 	futureDateAllowed: boolean;
+	hasPermission = false;
 
 	datePickerConfig$: Observable<IDatePickerConfig> = this.dateRangePickerBuilderService.datePickerConfig$;
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
@@ -74,6 +75,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	}
 
 	ngOnInit() {
+		this.hasPermission = this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		this.subject$
 			.pipe(
 				filter(() => !!this.organization),
@@ -229,7 +231,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	 * @param timeLog
 	 */
 	openAddEdit(timeLog?: ITimeLog) {
-		if (this.limitReached) return;
+		if (this.limitReached && !this.hasPermission) return;
 
 		const defaultTimeLog = {
 			startedAt: moment().set({ hour: 8, minute: 0, second: 0 }).toDate(),
@@ -263,8 +265,8 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	 * @param date
 	 * @param project
 	 */
-	openAddByDateProject(date: string, project: IOrganizationProject): void {
-		if (this.limitReached) return;
+	openAddByDateProject(project: IOrganizationProject): void {
+		if (this.limitReached && !this.hasPermission) return;
 		const startedAt = moment().set({ hour: 8, minute: 0, second: 0 }).toDate();
 		const stoppedAt = moment().set({ hour: 9, minute: 0, second: 0 }).toDate();
 

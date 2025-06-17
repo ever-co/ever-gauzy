@@ -59,6 +59,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	selectedRangeSubscription: Subscription;
 	isTimeRangeValid = true;
 	limitReached = false;
+	hasPermission = false;
 
 	// Time log state management
 	private _timeLog: ITimeLog | Partial<ITimeLog> = {};
@@ -111,6 +112,8 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 			start: moment(startedAt).toDate(),
 			end: moment(stoppedAt).toDate()
 		};
+
+		this.hasPermission = this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 
 		// Subscribe to subject for overlap checks
 		this.subject$
@@ -380,9 +383,10 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		const newWorkedTime = this.timerStatusWithWeeklyLimits.workedThisWeek - this.originalTimeDiff + this.timeDiff;
 		const isEditing = !!this.timeLog?.id;
 		if (this.loading || this.isButtonDisabled) return;
-		console.log(isEditing);
+
 		if (
 			isEditing &&
+			!this.hasPermission &&
 			this.timeDiff > this.originalTimeDiff &&
 			newWorkedTime > Math.trunc(this.timerStatusWithWeeklyLimits.reWeeklyLimit * 3600)
 		) {
@@ -392,6 +396,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 
 		if (
 			!isEditing &&
+			!this.hasPermission &&
 			this.timeDiff + this.timerStatusWithWeeklyLimits.workedThisWeek >
 				Math.trunc(this.timerStatusWithWeeklyLimits.reWeeklyLimit * 3600)
 		) {
@@ -422,6 +427,31 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 				employeeId: this.form.value.employeeId || employee?.id // Fallback to current employee ID
 			};
 
+			const selectedEmployeeId = this.form.value.employeeId || employee?.id;
+			const isCurrentUser = employee.id === selectedEmployeeId;
+
+			if (
+				isCurrentUser &&
+				isEditing &&
+				this.hasPermission &&
+				this.timeDiff > this.originalTimeDiff &&
+				newWorkedTime > Math.trunc(this.timerStatusWithWeeklyLimits.reWeeklyLimit * 3600)
+			) {
+				this.showMaxLimitReachedToast();
+				return;
+			}
+
+			if (
+				isCurrentUser &&
+				!isEditing &&
+				this.hasPermission &&
+				this.timeDiff + this.timerStatusWithWeeklyLimits.workedThisWeek >
+					Math.trunc(this.timerStatusWithWeeklyLimits.reWeeklyLimit * 3600)
+			) {
+				this.showMaxLimitReachedToast();
+				return;
+			}
+
 			// Create or update the time log based on the mode
 			const timeLog =
 				this.mode === 'create'
@@ -439,28 +469,31 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		} catch (error) {
 			// Handle errors and show error notification
 			if (error.error?.message === TimeErrorsEnum.WEEKLY_LIMIT_REACHED) {
+				const selectedEmployee = this.selectedEmployee ?? this.timeLog?.employee;
+				const hoursLabel =
+					selectedEmployee?.reWeeklyLimit === 1
+						? this._translateService.instant('TOASTR.MESSAGE.HOUR')
+						: this._translateService.instant('TOASTR.MESSAGE.HOURS');
+				const limit = selectedEmployee?.reWeeklyLimit ?? 0;
+				const limitText = `${limit} ${hoursLabel}`;
+				const partSecond = this._translateService.instant(
+					'TOASTR.MESSAGE.UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND'
+				);
+
 				if (isEditing) {
-					const hoursLabel =
-						this.selectedEmployee?.reWeeklyLimit === 1
-							? this._translateService.instant('TOASTR.MESSAGE.HOUR')
-							: this._translateService.instant('TOASTR.MESSAGE.HOURS');
+					const partFirst = this._translateService.instant(
+						'TOASTR.MESSAGE.UNABLE_TO_UPDATE_ERROR_MESSAGE_PART_FIRST'
+					);
 					this._toastrService.error(
-						`${this._translateService.instant(
-							'TOASTR.MESSAGE.UNABLE_TO_UPDATE_ERROR_MESSAGE_PART_FIRST'
-						)} ${this.selectedEmployee?.reWeeklyLimit} ${hoursLabel}
-			        ${this._translateService.instant('TOASTR.MESSAGE.UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND')}`,
+						`${partFirst} ${limitText} ${partSecond}`,
 						'TOASTR.TITLE.MAX_LIMIT_REACHED'
 					);
 				} else {
-					const hoursLabel =
-						this.selectedEmployee?.reWeeklyLimit === 1
-							? this._translateService.instant('TOASTR.MESSAGE.HOUR')
-							: this._translateService.instant('TOASTR.MESSAGE.HOURS');
+					const partFirst = this._translateService.instant(
+						'TOASTR.MESSAGE.UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST'
+					);
 					this._toastrService.error(
-						`${this._translateService.instant('TOASTR.MESSAGE.UNABLE_TO_ADD_ERROR_MESSAGE_PART_FIRST')} ${
-							this.selectedEmployee?.reWeeklyLimit
-						} ${hoursLabel}
-			        ${this._translateService.instant('TOASTR.MESSAGE.UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND')}`,
+						`${partFirst} ${limitText} ${partSecond}`,
 						'TOASTR.TITLE.MAX_LIMIT_REACHED'
 					);
 				}

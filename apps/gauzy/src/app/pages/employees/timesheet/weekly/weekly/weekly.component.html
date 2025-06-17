@@ -9,7 +9,7 @@
 							status="success"
 							size="small"
 							(click)="openAddEdit()"
-							[disabled]="limitReached"
+							[disabled]="limitReached && !hasPermission"
 						>
 							<nb-icon icon="plus-outline"></nb-icon>
 							{{ 'TIMESHEET.ADD_TIME' | translate }}
@@ -86,8 +86,8 @@
 											outline
 											size="small"
 											status="primary"
-											[disabled]="limitReached"
-											(click)="openAddByDateProject(date, day?.project)"
+											[disabled]="limitReached && !hasPermission"
+											(click)="openAddByDateProject(day?.project)"
 											*ngIf="allowAdd(date); else notAllowAddTimeBlock"
 										>
 											<nb-icon icon="plus-outline"></nb-icon>
