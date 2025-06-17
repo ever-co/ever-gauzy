@@ -10,26 +10,20 @@ export class TimerWeeklyLimitService {
 	constructor(private readonly _statisticService: StatisticService) {}
 
 	/**
-	 * Check if the employee has reached the weekly limit
+	 * Check if the user has reached the weekly limit
 	 *
 	 * @param employee
 	 * @param refDate
 	 * @returns
 	 */
-	async checkWeeklyLimit(
-		employee: IEmployee,
-		refDate?: Date,
-		options: { onlyMe?: boolean; ignoreException?: boolean } = {}
-	): Promise<IWeeklyLimitStatus> {
-		const { onlyMe = false, ignoreException = false } = options;
-
+	async checkWeeklyLimit(employee: IEmployee, refDate?: Date, ignoreException = false): Promise<IWeeklyLimitStatus> {
 		const statistics = await this._statisticService.getWeeklyStatisticsActivities({
 			organizationId: employee.organizationId,
 			tenantId: employee.tenantId,
-			employeeId: onlyMe ? undefined : employee.id,
-			onlyMe,
+			employeeId: employee.id,
 			startDate: moment(refDate).startOf('week').toDate(),
-			endDate: moment(refDate).endOf('week').toDate()
+			endDate: moment(refDate).endOf('week').toDate(),
+			onlyMe: true
 		});
 
 		const remainWeeklyTime = Math.trunc(employee.reWeeklyLimit * 3600) - statistics.duration;
@@ -38,11 +32,7 @@ export class TimerWeeklyLimitService {
 		if (remainWeeklyTime <= 0 && !ignoreException) {
 			throw new ConflictException(TimeErrorsEnum.WEEKLY_LIMIT_REACHED);
 		}
-
-		return {
-			remainWeeklyTime,
-			workedThisWeek: statistics.duration
-		};
+		return { remainWeeklyTime, workedThisWeek: statistics.duration };
 	}
 
 	/**

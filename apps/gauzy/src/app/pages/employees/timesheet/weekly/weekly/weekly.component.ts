@@ -265,10 +265,11 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	 * @param date
 	 * @param project
 	 */
-	openAddByDateProject(project: IOrganizationProject): void {
+	openAddByDateProject(date: string, project: IOrganizationProject): void {
 		if (this.limitReached && !this.hasPermission) return;
-		const startedAt = moment().set({ hour: 8, minute: 0, second: 0 }).toDate();
-		const stoppedAt = moment().set({ hour: 9, minute: 0, second: 0 }).toDate();
+		const baseDate = moment(date);
+		const startedAt = baseDate.clone().set({ hour: 8, minute: 0, second: 0 }).toDate();
+		const stoppedAt = baseDate.clone().set({ hour: 9, minute: 0, second: 0 }).toDate();
 
 		if (!this.nbDialogService) {
 			throw new Error('NbDialogService is not available.');

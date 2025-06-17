@@ -87,7 +87,7 @@
 											size="small"
 											status="primary"
 											[disabled]="limitReached && !hasPermission"
-											(click)="openAddByDateProject(day?.project)"
+											(click)="openAddByDateProject(date, day?.project)"
 											*ngIf="allowAdd(date); else notAllowAddTimeBlock"
 										>
 											<nb-icon icon="plus-outline"></nb-icon>
