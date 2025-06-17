@@ -76,10 +76,7 @@ export class MakeComOAuthService {
 		const codeVerifier = this.generateCodeVerifier();
 		const codeChallenge = this.generateCodeChallenge(codeVerifier);
 
-		// only store generated states to avoid duplicates
-		if (!options?.state) {
-			this.storeStateForVerification(state, codeVerifier);
-		}
+		this.storeStateForVerification(state, codeVerifier);
 
 		// Prepare scopes according to Make.com documentation
 		const scopes = MAKE_DEFAULT_SCOPES.join(' ');

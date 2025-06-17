@@ -320,26 +320,38 @@ export class ZapierService {
 	 */
 	async validateAndDeleteState(state: string, tenantId: string, organizationId?: string): Promise<boolean> {
 		try {
-			const stateSetting = await this._integrationSettingService.findOneByWhereOptions({
-				settingsName: 'state',
-				settingsValue: state,
-				tenantId,
-				organizationId
+			const stateSettings = await this._integrationSettingService.find({
+				where: {
+					settingsName: 'state',
+					tenantId,
+					...(organizationId && { organizationId })
+				}
 			});
-
+			// Then locate the entry whose JSON payload matches the incoming state
+			const stateSetting = stateSettings.find(setting => {
+				try {
+					const parsed = JSON.parse(setting.settingsValue) as {
+						state: string;
+						expiresAt: string;
+					};
+					return parsed.state === state;
+				} catch {
+					return false;
+				}
+			});
 			if (!stateSetting) {
 				return false;
 			}
-
 			// Check if state has expired
-			const metadata = JSON.parse(stateSetting.settingsValue) as { expiresAt: string };
-			if (metadata?.expiresAt && new Date(metadata.expiresAt) < new Date()) {
+			const metadata = JSON.parse(
+				stateSetting.settingsValue
+			) as { expiresAt: string };
+			if (metadata.expiresAt && new Date(metadata.expiresAt) < new Date()) {
 				if (stateSetting.id) {
 					await this._integrationSettingService.delete(stateSetting.id);
 				}
 				return false;
 			}
-
 			// Delete the state after successful validation
 			if (stateSetting.id) {
 				await this._integrationSettingService.delete(stateSetting.id);
@@ -482,8 +494,21 @@ export class ZapierService {
 			}
 
 			// Validate state parameter to prevent CSRF attacks
-			if (!storedState || storedState !== state) {
-				throw new BadRequestException('Invalid state parameter');
+			if (!storedState) {
+				throw new BadRequestException('State not found');
+			}
+
+			try {
+				const parsedState = JSON.parse(storedState);
+				if (parsedState.state !== state) {
+					throw new BadRequestException('Invalid state parameter');
+				}
+				// Check expiration
+				if (parsedState.expiresAt && new Date(parsedState.expiresAt) < new Date()) {
+					throw new BadRequestException('State has expired');
+				}
+			} catch (error) {
+				throw new BadRequestException('Invalid state format');
 			}
 
 			const redirect_uri = this.config.get('zapier')?.redirectUri;
