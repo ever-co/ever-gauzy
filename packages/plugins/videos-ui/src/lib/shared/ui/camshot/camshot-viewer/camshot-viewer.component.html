@@ -1,0 +1,47 @@
+<div class="image-dialog-container">
+	<!-- Close button -->
+	<button nbButton ghost status="basic" class="close-button" (click)="dismiss()">
+		<nb-icon icon="close-outline"></nb-icon>
+	</button>
+
+	<!-- Main image with loading state -->
+	<div class="image-wrapper" (click)="toggleZoom()">
+		<img
+			[ngSrc]="imageUrl"
+			[alt]="imageTitle"
+			[ngClass]="{ zoomed: isZoomed }"
+			(load)="onImageLoad()"
+			(error)="onImageError()"
+			priority
+			fill
+		/>
+
+		<!-- Loading spinner -->
+		<nb-spinner *ngIf="isLoading" size="giant" class="loading-spinner"></nb-spinner>
+
+		<!-- Image error fallback -->
+		<div *ngIf="showError" class="error-fallback">
+			<nb-icon icon="image-outline" status="basic"></nb-icon>
+			<p>Failed to load image</p>
+		</div>
+	</div>
+
+	<!-- Zoom controls -->
+	<div class="zoom-controls" *ngIf="!isLoading && !showError">
+		<button nbButton ghost status="basic" (click)="zoomIn()">
+			<nb-icon icon="plus-outline"></nb-icon>
+		</button>
+		<button nbButton ghost status="basic" (click)="zoomOut()">
+			<nb-icon icon="minus-outline"></nb-icon>
+		</button>
+		<button nbButton ghost status="basic" (click)="resetZoom()">
+			<nb-icon icon="collapse-outline"></nb-icon>
+		</button>
+	</div>
+
+	<!-- Image metadata -->
+	<div class="image-meta" *ngIf="imageTitle || imageDescription">
+		<h4 *ngIf="imageTitle">{{ imageTitle }}</h4>
+		<p *ngIf="imageDescription">{{ imageDescription }}</p>
+	</div>
+</div>

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GauzyFiltersModule, NoDataMessageModule, SharedModule } from '@gauzy/ui-core/shared';
@@ -45,6 +45,7 @@ import { VideoPlayerComponent } from './shared/ui/video-player/video-player.comp
 import { VideoSkeletonComponent } from './shared/ui/video-skeleton/video-skeleton.component';
 import { VideoUiRoutingModule } from './video-ui-routing.module';
 import { CamshotEffects } from './+state/camshot/camshot.effect';
+import { CamshotViewerComponent } from './shared/ui/camshot/camshot-viewer/camshot-viewer.component';
 
 @NgModule({
 	declarations: [
@@ -63,7 +64,8 @@ import { CamshotEffects } from './+state/camshot/camshot.effect';
 		VideoSkeletonComponent,
 		CamshotItemComponent,
 		CamshotItemSkeletonComponent,
-		CamshotListComponent
+		CamshotListComponent,
+		CamshotViewerComponent
 	],
 	imports: [
 		CommonModule,
@@ -85,7 +87,8 @@ import { CamshotEffects } from './+state/camshot/camshot.effect';
 		MomentModule,
 		TranslateModule.forChild(),
 		NbSpinnerModule,
-		NbTabsetModule
+		NbTabsetModule,
+		NgOptimizedImage
 	],
 	providers: [
 		provideEffectsManager(),

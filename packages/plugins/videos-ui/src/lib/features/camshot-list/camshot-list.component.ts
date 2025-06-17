@@ -9,6 +9,7 @@ import { CamshotStore } from '../../+state/camshot/camshot.store';
 import { ICamshot } from '../../shared/models/camshot.model';
 import { NbDialogService } from '@nebular/theme';
 import { AlertModalComponent } from '@gauzy/ui-core/shared';
+import { CamshotViewerComponent } from '../../shared/ui/camshot/camshot-viewer/camshot-viewer.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -52,7 +53,14 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 	}
 
 	public onView(camshot: ICamshot) {
-		console.log(camshot);
+		this.dialogService.open(CamshotViewerComponent, {
+			context: {
+				imageUrl: camshot.fullUrl,
+				imageTitle: camshot.title,
+				imageDescription: camshot?.uploadedBy?.fullName || 'N/A'
+			},
+			hasBackdrop: true
+		});
 	}
 
 	public onDownload(camshot: ICamshot) {
@@ -110,6 +118,7 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 				where: {
 					timeSlotId: this.timeSlotId
 				},
+				relations: ['uploadedBy', 'uploadedBy.user'],
 				skip: this.skip,
 				take: this.take,
 				order: { recordedAt: 'DESC' }
