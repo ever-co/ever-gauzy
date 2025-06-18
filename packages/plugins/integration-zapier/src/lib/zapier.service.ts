@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, HttpException, HttpStatus, NotFoundExc
 import { HttpService } from '@nestjs/axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError, AxiosResponse } from 'axios';
-import { DeepPartial } from 'typeorm';
+import { DeepPartial, Like } from 'typeorm';
 import { catchError, firstValueFrom, map } from 'rxjs';
 import { ConfigService } from '@gauzy/config';
 import {
@@ -277,7 +277,8 @@ export class ZapierService {
 				where: {
 					integration: { id: integration.id },
 					settingsName: 'state',
-					tenantId
+					tenantId,
+					settingsValue: Like(`%"state":"${state}"%`)
 				}
 			});
 
