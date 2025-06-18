@@ -70,7 +70,7 @@ export class MakeComOAuthService {
 		}
 
 		// Always generate state internally to ensure consistent format
-		const state = Buffer.from(JSON.stringify({ tenantId, organizationId })).toString('base64');
+		const state = Buffer.from(JSON.stringify({ tenantId, organizationId })).toString('base64url');
 
 		// Generate PKCE parameters
 		const codeVerifier = this.generateCodeVerifier();
@@ -107,7 +107,7 @@ export class MakeComOAuthService {
 			}
 
 			// Decode the state parameter
-			const decodedState = JSON.parse(Buffer.from(state, 'base64').toString());
+			const decodedState = JSON.parse(Buffer.from(state, 'base64url').toString());
 			const { tenantId, organizationId } = decodedState;
 
 			// Set the tenant context for subsequent operations

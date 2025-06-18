@@ -18,7 +18,6 @@ import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } f
 import { ZapierService } from './zapier.service';
 import { ICreateZapierIntegrationInput, IZapierEndpoint, IZapierIntegrationSettings } from './zapier.types';
 import { randomBytes } from 'node:crypto';
-import { ZAPIER_TOKEN_EXPIRATION_TIME } from './zapier.config';
 
 @ApiTags('Zapier Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)

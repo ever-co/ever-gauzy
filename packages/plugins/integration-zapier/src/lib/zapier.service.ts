@@ -410,7 +410,7 @@ export class ZapierService {
 		organizationId?: string
 	): Promise<void> {
 		const expirationTime = new Date();
-		expirationTime.setMinutes(expirationTime.getMinutes(), 10); // State expires in 10 minutes
+		expirationTime.setMinutes(expirationTime.getMinutes() + 10); // State expires in 10 minutes
 
 		await this._integrationSettingService.create({
 			settingsName: 'state',
@@ -800,11 +800,11 @@ export class ZapierService {
 	 * @param integrationId The integration ID
 	 * @returns The generated tokens
 	 */
-	async generateAndStoreNewTokens(integration: ID): Promise<IZapierAccessTokens> {
+	async generateAndStoreNewTokens(integrationId: ID): Promise<IZapierAccessTokens> {
 		const access_token = randomBytes(32).toString('hex');
 		const new_refresh_token = randomBytes(32).toString('hex');
 
-		await this.storeTokens(integration, access_token, new_refresh_token);
+		await this.storeTokens(integrationId, access_token, new_refresh_token);
 
 		return {
 			access_token,
