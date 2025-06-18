@@ -47,6 +47,9 @@ import { VideoUiRoutingModule } from './video-ui-routing.module';
 import { CamshotEffects } from './+state/camshot/camshot.effect';
 import { CamshotViewerComponent } from './shared/ui/camshot/camshot-viewer/camshot-viewer.component';
 import { SoundshotEffects } from './+state/soundshot/soundshot.effect';
+import { SounshotPlayerComponent } from './shared/ui/soundshot/sounshot-player/sounshot-player.component';
+import { SounshotListComponent } from './features/sounshot-list/sounshot-list.component';
+import { SounshotPlayerSkeletonComponent } from './shared/ui/soundshot/sounshot-player-skeleton/sounshot-player-skeleton.component';
 
 @NgModule({
 	declarations: [
@@ -66,7 +69,10 @@ import { SoundshotEffects } from './+state/soundshot/soundshot.effect';
 		CamshotItemComponent,
 		CamshotItemSkeletonComponent,
 		CamshotListComponent,
-		CamshotViewerComponent
+		CamshotViewerComponent,
+		SounshotPlayerComponent,
+		SounshotListComponent,
+		SounshotPlayerSkeletonComponent
 	],
 	imports: [
 		CommonModule,

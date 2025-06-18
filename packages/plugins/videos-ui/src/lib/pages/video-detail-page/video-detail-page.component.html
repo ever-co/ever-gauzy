@@ -26,7 +26,7 @@
 				></ngx-no-data-message>
 				}
 			</nb-tab>
-			} @if(timeSlotId) {
+			}
 			<nb-tab tabTitle="Camshots">
 				@defer(on viewport) {
 				<div class="list">
@@ -40,7 +40,19 @@
 				></ngx-no-data-message>
 				}
 			</nb-tab>
-			}
+			<nb-tab tabTitle="Soundshots">
+				@defer(on viewport) {
+				<div class="list">
+					<plug-soundshot-list [timeSlotId]="timeSlotId"></plug-soundshot-list>
+				</div>
+				}@placeholder {
+				<ngx-no-data-message
+					class="no-data"
+					status="danger"
+					message="Loading soundshots..."
+				></ngx-no-data-message>
+				}
+			</nb-tab>
 		</nb-tabset>
 	</div>
 </div>
