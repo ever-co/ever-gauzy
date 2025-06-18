@@ -56,7 +56,7 @@ import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.co
 	standalone: false
 })
 export class TaskComponent extends PaginationFilterBaseComponent implements OnInit {
-	private _refresh$: Subject<boolean> = new Subject();
+	private readonly _refresh$: Subject<boolean> = new Subject();
 	private _tasks: ITask[] = [];
 	settingsSmartTable: Settings;
 	loading = false;
@@ -498,7 +498,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 							projectId: this.selectedProject.id
 					  }
 					: {}),
-				...(this.selectedEmployeeId
+				...(this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) && this.selectedEmployeeId
 					? {
 							members: {
 								id: this.selectedEmployeeId

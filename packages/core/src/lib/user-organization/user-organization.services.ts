@@ -31,7 +31,7 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 		includeEmployee: boolean
 	): Promise<IPagination<UserOrganization>> {
 		// Call the base class method to find all user organizations
-		let { items, total } = await super.findAll(filter);
+		const { items, total } = await super.findAll(filter);
 
 		// If 'includeEmployee' is set to true, fetch employee details associated with each user organization
 		if (includeEmployee) {

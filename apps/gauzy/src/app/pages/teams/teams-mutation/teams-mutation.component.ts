@@ -16,10 +16,10 @@ import { Store, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-teams-mutation',
-    templateUrl: './teams-mutation.component.html',
-    styleUrls: ['./teams-mutation.component.scss'],
-    standalone: false
+	selector: 'ga-teams-mutation',
+	templateUrl: './teams-mutation.component.html',
+	styleUrls: ['./teams-mutation.component.scss'],
+	standalone: false
 })
 export class TeamsMutationComponent implements OnInit {
 	@Input() employees: IEmployee[] = [];
@@ -157,7 +157,7 @@ export class TeamsMutationComponent implements OnInit {
 		// Prepare team information and emit the event
 		this.addOrEditTeam.emit({
 			...this.form.value, // Include form values
-			projects: projects.map((id: string) => this.projects.find((p) => p.id === id)).filter((p) => !!p), // Map project IDs to projects and filter out null values
+			projects: projects?.map((id: string) => this.projects?.find((p) => p.id === id))?.filter((p) => !!p), // Map project IDs to projects and filter out null values
 			organizationId,
 			tenantId
 		});

@@ -366,7 +366,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 			\n ${this._translateService.instant('TOASTR.MESSAGE.WEEKLY_LIMIT')}: ${this.reWeeklyLimit}`,
 			'TOASTR.TITLE.MAX_LIMIT_REACHED',
 			null,
-			{ duration: 2500, preventDuplicates: true, toastClass: 'custom-toast' }
+			{ duration: 3000, preventDuplicates: true, toastClass: 'custom-toast' }
 		);
 	}
 
@@ -486,7 +486,8 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 					);
 					this._toastrService.error(
 						`${partFirst} ${limitText} ${partSecond}`,
-						'TOASTR.TITLE.MAX_LIMIT_REACHED'
+						'TOASTR.TITLE.MAX_LIMIT_REACHED',
+						{ duration: 3000, preventDuplicates: true, toastClass: 'custom-toast' }
 					);
 				} else {
 					const partFirst = this._translateService.instant(
@@ -494,7 +495,8 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 					);
 					this._toastrService.error(
 						`${partFirst} ${limitText} ${partSecond}`,
-						'TOASTR.TITLE.MAX_LIMIT_REACHED'
+						'TOASTR.TITLE.MAX_LIMIT_REACHED',
+						{ duration: 3000, preventDuplicates: true, toastClass: 'custom-toast' }
 					);
 				}
 			} else {

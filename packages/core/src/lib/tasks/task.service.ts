@@ -35,7 +35,7 @@ import {
 	EmployeeNotificationTypeEnum,
 	NotificationActionTypeEnum
 } from '@gauzy/contracts';
-import { isEmpty, isNotEmpty } from '@gauzy/utils';
+import { isNotEmpty } from '@gauzy/utils';
 import { isSqlite } from '@gauzy/config';
 import { TenantAwareCrudService, PaginationParams } from './../core/crud';
 import { addBetween, LIKE_OPERATOR } from './../core/util';
@@ -48,11 +48,12 @@ import { EmployeeNotificationService } from '../employee-notification/employee-n
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
-import { GetTaskByIdDTO, TaskQueryDTO } from './dto';
+import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 import { TaskProjectSequenceService } from './project-sequence/project-sequence.service';
+import { OrganizationProjectService } from '../organization-project/organization-project.service';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
@@ -68,7 +69,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		private readonly taskProjectSequenceService: TaskProjectSequenceService,
 		private readonly _mentionService: MentionService,
 		private readonly _activityLogService: ActivityLogService,
-		private readonly _employeeNotificationService: EmployeeNotificationService
+		private readonly _employeeNotificationService: EmployeeNotificationService,
+		private readonly _organizationProjectService: OrganizationProjectService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -394,7 +396,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				// Filter by due date
 				if (dueDate) {
 					const startDate = moment(dueDate as Date);
-					const endDate = moment(dueDate as Date).add(23, 'hours').add(59, 'minutes').add(59, 'seconds');
+					const endDate = moment(dueDate as Date)
+						.add(23, 'hours')
+						.add(59, 'minutes')
+						.add(59, 'seconds');
 					qb.andWhere(p(`"${query.alias}"."dueDate" BETWEEN :start AND :end`), {
 						start: startDate.toDate(),
 						end: endDate.toDate()
@@ -457,15 +462,42 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { where } = options;
 			const { members } = where;
 
+			const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.innerJoin(`${query.alias}.members`, 'members');
 
+			if (!hasPermission) {
+				// Employee without permission: get their projects first
+				const employeeId = RequestContext.currentEmployeeId();
+				if (isNotEmpty(employeeId)) {
+					const tenantId = RequestContext.currentTenantId();
+					const organizationId = where?.organizationId as string;
+
+					const projects = await this._organizationProjectService.findByEmployee(employeeId, {
+						tenantId,
+						organizationId,
+						relations: ['members']
+					});
+
+					const projectIds = projects.map((p) => p.id);
+
+					if (projectIds.length === 0) {
+						// No projects -> return empty
+						return { items: [], total: 0 };
+					}
+
+					query.innerJoin(`${query.alias}.project`, 'project');
+					query.andWhere('project.id IN (:...projectIds)', { projectIds });
+				}
+			}
+
+			// Now add the task_employee filter (sync)
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
 				const subQuery = qb.subQuery();
 				subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
 
-				// If user have permission to change employee
-				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+				if (hasPermission) {
 					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
 						const employeeId = members['id'];
 						subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
@@ -477,6 +509,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
 					}
 				}
+
 				return p('"task_members"."taskId" IN ') + subQuery.distinct(true).getQuery();
 			});
 
@@ -519,12 +552,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.where) && {
-					where: options.where
-				}),
+						where: options.where
+					}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
-					relations: options.relations
-				})
+						relations: options.relations
+					})
 			});
 
 			query.andWhere(
@@ -580,8 +613,36 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { teams = [] } = where;
 			const { members } = where;
 
+			const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.teams`, 'teams');
+
+			let projectIds: string[] = [];
+
+			if (!hasPermission) {
+				const employeeId = RequestContext.currentEmployeeId();
+				if (isNotEmpty(employeeId)) {
+					const tenantId = RequestContext.currentTenantId();
+					const organizationId = where?.organizationId as string;
+
+					const projects = await this._organizationProjectService.findByEmployee(employeeId, {
+						tenantId,
+						organizationId,
+						relations: ['members']
+					});
+
+					projectIds = projects.map((p) => p.id);
+
+					if (projectIds.length === 0) {
+						// No projects - return empty result early
+						return { items: [], total: 0 };
+					}
+
+					// Join project relation and filter by allowed project IDs
+					query.innerJoin(`${query.alias}.project`, 'project');
+					query.andWhere('project.id IN (:...projectIds)', { projectIds });
+				}
+			}
 
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
 				const subQuery = qb.subQuery();
@@ -591,8 +652,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					'organization_team_employee',
 					p('"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"')
 				);
-				// If user have permission to change employee
-				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+
+				if (hasPermission) {
 					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
 						const employeeId = members['id'];
 						subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), { employeeId });
@@ -604,11 +665,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), { employeeId });
 					}
 				}
+
 				if (isNotEmpty(teams)) {
 					subQuery.andWhere(p(`"${subQuery.alias}"."organizationTeamId" IN (:...teams)`), {
 						teams
 					});
 				}
+
 				return p(`"task_teams"."taskId" IN `) + subQuery.distinct(true).getQuery();
 			});
 
@@ -660,18 +723,19 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Filter by due date
 			if (dueDate) {
 				const startDate = moment(dueDate as Date);
-				const endDate = moment(dueDate as Date).add(23, 'hours').add(59, 'minutes').add(59, 'seconds');
-				options.where.dueDate = Between(
-					startDate.toDate(),
-					endDate.toDate()
-				);
+				const endDate = moment(dueDate as Date)
+					.add(23, 'hours')
+					.add(59, 'minutes')
+					.add(59, 'seconds');
+				options.where.dueDate = Between(startDate.toDate(), endDate.toDate());
 			}
 
 			// Filter by creator name
 			if (isNotEmpty((createdByUser as IUser)?.firstName)) {
 				const name = (createdByUser as IUser).firstName;
 				(options.where.createdByUser as any).firstName = Raw(
-					(alias) => `CONCAT(${alias}, ' ', "task__task_createdByUser"."lastName") ${LIKE_OPERATOR} '%${name}%'`
+					(alias) =>
+						`CONCAT(${alias}, ' ', "task__task_createdByUser"."lastName") ${LIKE_OPERATOR} '%${name}%'`
 				);
 			}
 
@@ -690,6 +754,24 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				options.where.teams = {
 					id: In(where.teams as ID[])
 				};
+			}
+
+			const employeeId = RequestContext.currentEmployeeId();
+			const tenantId = RequestContext.currentTenantId();
+			const organizationId = where.organizationId as string;
+			const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+			const userProvidedProjectId = !!options.where?.projectId;
+
+			if (!userProvidedProjectId && !hasPermission) {
+				const projects = await this._organizationProjectService.findByEmployee(employeeId, {
+					tenantId,
+					organizationId,
+					relations: ['members']
+				});
+
+				const projectIds = projects.map((p) => p.id);
+
+				options.where.projectId = In(projectIds);
 			}
 
 			// Apply filter for isScreeningTask
@@ -931,21 +1013,21 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const getMinMaxDates = (dates: Date[]) =>
 				dates.length
 					? [
-						new Date(
-							Math.min(
-								...dates
-									.filter((date) => !Number.isNaN(new Date(date).getTime()))
-									.map((date) => new Date(date).getTime())
+							new Date(
+								Math.min(
+									...dates
+										.filter((date) => !Number.isNaN(new Date(date).getTime()))
+										.map((date) => new Date(date).getTime())
+								)
+							),
+							new Date(
+								Math.max(
+									...dates
+										.filter((date) => !Number.isNaN(new Date(date).getTime()))
+										.map((date) => new Date(date).getTime())
+								)
 							)
-						),
-						new Date(
-							Math.max(
-								...dates
-									.filter((date) => !Number.isNaN(new Date(date).getTime()))
-									.map((date) => new Date(date).getTime())
-							)
-						)
-					]
+					  ]
 					: [undefined, undefined];
 
 			const [minStartDate, maxStartDate] = getMinMaxDates(startDates);
