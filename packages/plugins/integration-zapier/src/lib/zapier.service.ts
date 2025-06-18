@@ -281,7 +281,16 @@ export class ZapierService {
 				}
 			});
 
-			const stateSetting = stateSettings[0];
+			// Search through all state settings to find the matching state
+			const stateSetting = stateSettings.find((s) => {
+				try {
+					const parsed = JSON.parse(s.settingsValue ?? '{}');
+					return parsed.state === state;
+				} catch {
+					return false;
+				}
+			});
+
 			if (!stateSetting || !stateSetting.id) {
 				throw new BadRequestException('State not found');
 			}
@@ -289,7 +298,7 @@ export class ZapierService {
 			try {
 				const parsedState = JSON.parse(stateSetting.settingsValue);
 
-				// Validate state match
+				// Validate state match (redundant check but kept for clarity)
 				if (parsedState.state !== state) {
 					throw new BadRequestException('Invalid state parameter');
 				}
@@ -401,7 +410,7 @@ export class ZapierService {
 		organizationId?: string
 	): Promise<void> {
 		const expirationTime = new Date();
-		expirationTime.setMinutes(expirationTime.getMinutes() + 10); // State expires in 10 minutes
+		expirationTime.setMinutes(expirationTime.getMinutes(), 10); // State expires in 10 minutes
 
 		await this._integrationSettingService.create({
 			settingsName: 'state',

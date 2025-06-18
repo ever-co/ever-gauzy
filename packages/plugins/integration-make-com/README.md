@@ -55,7 +55,7 @@ The plugin supports the following integration settings:
 
 4. **Environment Variables**
    The following environment variables can be configured:
-    - `GAUZY_MAKE_BASE_URL`: Make.com API base URL (default: <https://www.make.com>)
+    - `GAUZY_MAKE_BASE_URL`: Make.com API base URL (default: https://www.make.com)
     - `GAUZY_MAKE_POST_INSTALL_URL`: URL to redirect after installation
     - `GAUZY_MAKE_REDIRECT_URL`: OAuth redirect URL
 

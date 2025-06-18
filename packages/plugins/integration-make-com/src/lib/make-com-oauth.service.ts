@@ -137,7 +137,10 @@ export class MakeComOAuthService {
 			});
 
 			// Add code verifier for PKCE if available
-			tokenRequestParams.append('code_verifier', stateVerification.codeVerifier!);
+			if (!stateVerification.codeVerifier) {
+				throw new BadRequestException('Missing PKCE code verifier');
+			}
+			tokenRequestParams.append('code_verifier', stateVerification.codeVerifier);
 
 			const headers = {
 				'Content-Type': 'application/x-www-form-urlencoded',

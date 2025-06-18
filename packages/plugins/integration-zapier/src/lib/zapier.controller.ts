@@ -214,12 +214,7 @@ export class ZapierController {
 			// Generate new tokens
 			const tokens = await this.zapierService.generateAndStoreNewTokens(integration.id);
 
-			return {
-				access_token: tokens.access_token,
-				refresh_token: tokens.refresh_token,
-				token_type: 'Bearer',
-				expires_in: ZAPIER_TOKEN_EXPIRATION_TIME
-			};
+			return tokens;
 		} catch (error) {
 			this.logger.error('Failed to exchange code for token', error);
 			if (error instanceof BadRequestException || error instanceof NotFoundException) {
