@@ -61,7 +61,7 @@ export class ZapierController {
 		}
 
 		// Generate state parameter for CSRF protection
-		const state = randomBytes(32).toString('hex');
+		const state = Buffer.from(randomBytes(32)).toString('base64url');
 
 		// Store the client credentials and state for later use in the callback
 		const integration = await this.zapierService.storeIntegrationCredentials({
@@ -205,21 +205,18 @@ export class ZapierController {
 				throw new BadRequestException('Invalid or expired state parameter');
 			}
 
-			// Generate new tokens (simplified approach)
-			const access_token = randomBytes(32).toString('hex');
-			const refresh_token = randomBytes(32).toString('hex');
-
 			// Find the integration record using the client_id from the request
 			const integration = await this.zapierService.findIntegrationByClientId(body.client_id);
 			if (!integration.id) {
 				throw new BadRequestException('Invalid integration ID');
 			}
-			// Store the generated access and refresh tokens for this integration
-			await this.zapierService.storeTokens(integration.id, access_token, refresh_token);
+
+			// Generate new tokens
+			const tokens = await this.zapierService.generateAndStoreNewTokens(integration.id);
 
 			return {
-				access_token,
-				refresh_token,
+				access_token: tokens.access_token,
+				refresh_token: tokens.refresh_token,
 				token_type: 'Bearer',
 				expires_in: ZAPIER_TOKEN_EXPIRATION_TIME
 			};
