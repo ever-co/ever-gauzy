@@ -19,13 +19,14 @@ import {
 	Get,
 	HttpStatus,
 	Param,
+	Patch,
 	Post,
 	Query,
 	UseGuards,
 	UseInterceptors
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateSoundshotCommand } from './commands/create-soundshot.command';
 import { DeleteSoundshotCommand } from './commands/delete-soundshot.command';
 import { CountSoundshotDTO } from './dtos/count-soundshot.dto';
@@ -38,6 +39,7 @@ import { GetSoundshotCountQuery } from './queries/get-soundshot-count.query';
 import { GetSoundshotQuery } from './queries/get-soundshot.query';
 import { GetSoundshotsQuery } from './queries/get-soundshots.query';
 import { SoundshotService } from './services/soundshot.service';
+import { RecoverSoundshotCommand } from './commands';
 
 @ApiTags('Soundshot Plugin')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -205,6 +207,46 @@ export class SoundshotController {
 		@Query() options: FindOptionsQueryDTO<ISoundshot>
 	): Promise<ISoundshot> {
 		return this.queryBus.execute(new GetSoundshotQuery(id, options));
+	}
+
+	/**
+	 * Recover a soft-deleted soundshot.
+	 */
+	@ApiOperation({
+		summary: 'Recover a deleted soundshot',
+		description: 'Soft-recovers a previously deleted soundshot using its UUID, version UUID the plugin ID.'
+	})
+	@ApiParam({
+		name: 'id',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the soundshot to recover',
+		required: true
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Soundshot recovered successfully.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Soundshot record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'User does not have permission to recover this soundshot.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@Patch(':id')
+	public async recover(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
+		return this.commandBus.execute(new RecoverSoundshotCommand(id));
 	}
 
 	/**
