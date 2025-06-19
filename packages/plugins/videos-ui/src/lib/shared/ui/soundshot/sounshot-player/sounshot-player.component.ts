@@ -1,5 +1,6 @@
 import { Component, ElementRef, ViewChild, computed, input, signal } from '@angular/core';
 import { ISoundshot } from '../../../models/soundshot.model';
+import { IActionButton, ActionButton } from '../../../models/action-button.model';
 
 @Component({
 	selector: 'plug-soundshot-player',
@@ -10,6 +11,41 @@ import { ISoundshot } from '../../../models/soundshot.model';
 export class SounshotPlayerComponent {
 	@ViewChild('player') playerRef: ElementRef<HTMLAudioElement>;
 	soundshot = input<ISoundshot>();
+
+	public buttons = computed(() => {
+		const commons = [
+			new ActionButton({
+				icon: 'download-outline',
+				label: 'BUTTONS.DOWNLOAD',
+				status: 'info',
+				action: (soundshot: ISoundshot) => console.log(soundshot)
+			})
+		];
+		const statusSpecificButtons: IActionButton[] = !!this.soundshot()?.deletedAt
+			? [
+					new ActionButton({
+						icon: 'refresh-outline',
+						label: 'BUTTONS.RECOVER',
+						status: 'success',
+						action: (soundshot: ISoundshot) => console.log(soundshot)
+					}),
+					new ActionButton({
+						icon: 'trash-2-outline',
+						label: 'Hard Delete',
+						status: 'danger',
+						action: (soundshot: ISoundshot) => console.log(soundshot)
+					})
+			  ]
+			: [
+					new ActionButton({
+						icon: 'trash-outline',
+						label: 'BUTTONS.DELETE',
+						status: 'danger',
+						action: (soundshot: ISoundshot) => console.log(soundshot)
+					})
+			  ];
+		return [...commons, ...statusSpecificButtons];
+	});
 
 	isPlaying = signal(false);
 	progress = signal(0);

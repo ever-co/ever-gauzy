@@ -10,19 +10,25 @@
 			<div class="soundshot-meta">
 				@if (soundshot()?.duration) {
 				<span>{{ soundshot()?.duration | durationFormat }}s</span>
-				}
-				@if (soundshot()?.size) {
+				} @if (soundshot()?.size) {
 				<span>&bull; {{ soundshot()?.size | fileSize }}</span>
 				}
 			</div>
+		</div>
+		<div class="actions">
+			<nb-icon
+				nbPopoverPlacement="bottom"
+				[nbPopover]="actions"
+				icon="more-vertical-outline"
+				[options]="{ animation: { type: 'zoom' } }"
+			></nb-icon>
 		</div>
 	</div>
 	<div class="player-controls">
 		<button class="player-btn" (click)="togglePlay()">
 			@if (!isPlaying()) {
 			<span>&#9654;</span>
-			}
-			@if (isPlaying()) {
+			} @if (isPlaying()) {
 			<span>&#10073;&#10073;</span>
 			}
 		</button>
@@ -35,9 +41,24 @@
 				<span>{{ duration() | durationFormat }}</span>
 			</div>
 		</div>
-		<input type="range" min="0" max="1" step="0.01" [value]="volume()" (input)="setVolume($event)"
-			class="volume-slider" />
+		<input
+			type="range"
+			min="0"
+			max="1"
+			step="0.01"
+			[value]="volume()"
+			(input)="setVolume($event)"
+			class="volume-slider"
+		/>
 	</div>
-	<audio #player [src]="soundshot()?.fullUrl" (timeupdate)="onTimeUpdate()" (loadedmetadata)="onLoadedMetadata()"
-		(ended)="onEnded()"></audio>
+	<audio
+		#player
+		[src]="soundshot()?.fullUrl"
+		(timeupdate)="onTimeUpdate()"
+		(loadedmetadata)="onLoadedMetadata()"
+		(ended)="onEnded()"
+	></audio>
 </div>
+<ng-template #actions>
+	<plug-action-button-group [buttons]="buttons()" [data]="soundshot()"></plug-action-button-group>
+</ng-template>
