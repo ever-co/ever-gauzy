@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, HttpException, HttpStatus, NotFoundExc
 import { HttpService } from '@nestjs/axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError, AxiosResponse } from 'axios';
-import { DeepPartial } from 'typeorm';
+import { DeepPartial, Like } from 'typeorm';
 import { catchError, firstValueFrom, map } from 'rxjs';
 import { ConfigService } from '@gauzy/config';
 import {
@@ -166,7 +166,7 @@ export class ZapierService {
 			}
 
 			// Use provided state or generate a new one using simple random generation
-			const state = options?.state || randomBytes(32).toString('hex');
+			const state = options?.state || Buffer.from(randomBytes(32)).toString('base64url');
 
 			if (!state || !state?.trim()) {
 				throw new BadRequestException('State parameter is required');
@@ -248,15 +248,95 @@ export class ZapierService {
 	}
 
 	/**
-	 * Parse and validate the state parameter from the OAuth callback
-	 * This method validates the state exists in storage, is not expired, and invalidates it after use
-	 * to prevent replay attacks.
+	 * Validates and atomically deletes the state parameter
+	 * @param state The state parameter to validate
+	 * @param tenantId The tenant ID
+	 * @returns The parsed state if valid, null otherwise
+	 */
+	async validateAndDeleteState(state: string, tenantId: string): Promise<{ state: string; expiresAt?: string }> {
+		try {
+			// Basic validation - state should be a non-empty string
+			if (!state || typeof state !== 'string' || state.trim().length === 0) {
+				throw new BadRequestException('Invalid state parameter');
+			}
+
+			// Find the integration by tenant and Zapier provider
+			const integration = await this._integrationService.findOneByOptions({
+				where: {
+					tenantId,
+					name: IntegrationEnum.ZAPIER
+				} as IIntegrationFilter
+			});
+
+			if (!integration) {
+				throw new NotFoundException('Zapier integration not found for current tenant');
+			}
+
+			// Find the state setting
+			const stateSettings = await this._integrationSettingService.find({
+				where: {
+					integration: { id: integration.id },
+					settingsName: 'state',
+					tenantId,
+					settingsValue: Like(`%"state":"${state}"%`)
+				}
+			});
+
+			// Search through all state settings to find the matching state
+			const stateSetting = stateSettings.find((s) => {
+				try {
+					const parsed = JSON.parse(s.settingsValue ?? '{}');
+					return parsed.state === state;
+				} catch {
+					return false;
+				}
+			});
+
+			if (!stateSetting || !stateSetting.id) {
+				throw new BadRequestException('State not found');
+			}
+
+			try {
+				const parsedState = JSON.parse(stateSetting.settingsValue);
+
+				// Validate state match (redundant check but kept for clarity)
+				if (parsedState.state !== state) {
+					throw new BadRequestException('Invalid state parameter');
+				}
+
+				// Check expiration
+				if (parsedState.expiresAt && new Date(parsedState.expiresAt) < new Date()) {
+					throw new BadRequestException('State has expired');
+				}
+
+				// Delete the state
+				await this._integrationSettingService.delete(stateSetting.id);
+
+				return parsedState;
+			} catch (error) {
+				if (error instanceof BadRequestException) {
+					throw error;
+				}
+				throw new BadRequestException('Invalid state format');
+			}
+		} catch (error) {
+			this.logger.error('Error validating and deleting state:', error);
+			if (error instanceof BadRequestException || error instanceof NotFoundException) {
+				throw error;
+			}
+			throw new BadRequestException('Failed to validate state parameter');
+		}
+	}
+
+	/**
+	 * Validates the state parameter without deleting it.
+	 * This is used for initial validation before the OAuth flow.
 	 *
 	 * @param state The state parameter to validate
-	 * @returns {Promise<boolean>} True if state is valid and was successfully invalidated
-	 * @throws {BadRequestException} If state is invalid, expired, or already used
+	 * @returns The parsed state data if valid
+	 * @throws {BadRequestException} If state is invalid or expired
 	 */
-	async parseAuthState(state: string): Promise<boolean> {
+	async parseAuthState(state: string): Promise<{ state: string; expiresAt?: string }> {
 		try {
 			// Basic validation - state should be a non-empty string
 			if (!state || typeof state !== 'string' || state.trim().length === 0) {
@@ -268,16 +348,49 @@ export class ZapierService {
 				throw new BadRequestException('Tenant ID is required');
 			}
 
-			// Validate and delete the state to prevent reuse
-			const isValidState = await this.validateAndDeleteState(state, tenantId);
-			if (!isValidState) {
-				throw new BadRequestException('Invalid or expired state parameter');
+			// Find the integration by current tenant and Zapier provider
+			const integration = await this._integrationService.findOneByOptions({
+				where: {
+					tenantId,
+					name: IntegrationEnum.ZAPIER
+				} as IIntegrationFilter,
+				relations: ['settings']
+			});
+
+			if (!integration) {
+				throw new NotFoundException('Zapier integration not found for current tenant');
 			}
 
-			return true;
+			// Get settings to retrieve state
+			const settings = await this._integrationSettingService.find({
+				where: {
+					integration: { id: integration.id }
+				}
+			});
+
+			const storedState = settings.find((s) => s.settingsName === 'state')?.settingsValue;
+
+			if (!storedState) {
+				throw new BadRequestException('State not found');
+			}
+
+			try {
+				const parsedState = JSON.parse(storedState);
+				if (parsedState.state !== state) {
+					throw new BadRequestException('Invalid state parameter');
+				}
+				// Check expiration
+				if (parsedState.expiresAt && new Date(parsedState.expiresAt) < new Date()) {
+					throw new BadRequestException('State has expired');
+				}
+
+				return parsedState;
+			} catch (error) {
+				throw new BadRequestException('Invalid state format');
+			}
 		} catch (error) {
 			this.logger.error('Error validating state parameter:', error);
-			if (error instanceof BadRequestException) {
+			if (error instanceof BadRequestException || error instanceof NotFoundException) {
 				throw error;
 			}
 			throw new BadRequestException('Failed to validate state parameter');
@@ -310,57 +423,6 @@ export class ZapierService {
 				expiresAt: expirationTime.toISOString()
 			})
 		});
-	}
-
-	/**
-	 * Validates and deletes the state parameter after successful OAuth completion
-	 * @param state The state parameter to validate and delete
-	 * @param tenantId The tenant ID
-	 * @param organizationId Optional organization ID
-	 */
-	async validateAndDeleteState(state: string, tenantId: string, organizationId?: string): Promise<boolean> {
-		try {
-			const stateSettings = await this._integrationSettingService.find({
-				where: {
-					settingsName: 'state',
-					tenantId,
-					...(organizationId && { organizationId })
-				}
-			});
-			// Then locate the entry whose JSON payload matches the incoming state
-			const stateSetting = stateSettings.find(setting => {
-				try {
-					const parsed = JSON.parse(setting.settingsValue) as {
-						state: string;
-						expiresAt: string;
-					};
-					return parsed.state === state;
-				} catch {
-					return false;
-				}
-			});
-			if (!stateSetting) {
-				return false;
-			}
-			// Check if state has expired
-			const metadata = JSON.parse(
-				stateSetting.settingsValue
-			) as { expiresAt: string };
-			if (metadata.expiresAt && new Date(metadata.expiresAt) < new Date()) {
-				if (stateSetting.id) {
-					await this._integrationSettingService.delete(stateSetting.id);
-				}
-				return false;
-			}
-			// Delete the state after successful validation
-			if (stateSetting.id) {
-				await this._integrationSettingService.delete(stateSetting.id);
-			}
-			return true;
-		} catch (error) {
-			this.logger.error('Error validating state:', error);
-			return false;
-		}
 	}
 
 	/**
@@ -460,6 +522,9 @@ export class ZapierService {
 				throw new BadRequestException('Tenant ID is required');
 			}
 
+			// Validate and atomically delete the state
+			await this.validateAndDeleteState(state, tenantId);
+
 			// Find the integration by current tenant and Zapier provider
 			const integration = await this._integrationService.findOneByOptions({
 				where: {
@@ -478,7 +543,7 @@ export class ZapierService {
 				name: IntegrationEnum.ZAPIER
 			};
 
-			// Get settings to retrieve client_id, client_secret and state
+			// Get settings to retrieve client_id and client_secret
 			const settings = await this._integrationSettingService.find({
 				where: {
 					integration: { id: integrationTenant.id }
@@ -487,28 +552,9 @@ export class ZapierService {
 
 			const client_id = settings.find((s) => s.settingsName === 'client_id')?.settingsValue;
 			const client_secret = settings.find((s) => s.settingsName === 'client_secret')?.settingsValue;
-			const storedState = settings.find((s) => s.settingsName === 'state')?.settingsValue;
 
 			if (!client_id || !client_secret) {
 				throw new BadRequestException('Missing required Zapier integration settings');
-			}
-
-			// Validate state parameter to prevent CSRF attacks
-			if (!storedState) {
-				throw new BadRequestException('State not found');
-			}
-
-			try {
-				const parsedState = JSON.parse(storedState);
-				if (parsedState.state !== state) {
-					throw new BadRequestException('Invalid state parameter');
-				}
-				// Check expiration
-				if (parsedState.expiresAt && new Date(parsedState.expiresAt) < new Date()) {
-					throw new BadRequestException('State has expired');
-				}
-			} catch (error) {
-				throw new BadRequestException('Invalid state format');
 			}
 
 			const redirect_uri = this.config.get('zapier')?.redirectUri;
@@ -750,11 +796,16 @@ export class ZapierService {
 		await this._integrationSettingService.save(allSettings);
 	}
 
-	private async generateAndStoreNewTokens(integration: ID): Promise<IZapierAccessTokens> {
+	/**
+	 * Generates and stores new access and refresh tokens for an integration
+	 * @param integrationId The integration ID
+	 * @returns The generated tokens
+	 */
+	async generateAndStoreNewTokens(integrationId: ID): Promise<IZapierAccessTokens> {
 		const access_token = randomBytes(32).toString('hex');
 		const new_refresh_token = randomBytes(32).toString('hex');
 
-		await this.storeTokens(integration, access_token, new_refresh_token);
+		await this.storeTokens(integrationId, access_token, new_refresh_token);
 
 		return {
 			access_token,
