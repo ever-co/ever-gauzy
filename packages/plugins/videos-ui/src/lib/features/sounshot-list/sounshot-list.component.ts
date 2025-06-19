@@ -103,9 +103,9 @@ export class SounshotListComponent implements OnInit, OnChanges, OnDestroy {
 		}
 		this.actions.dispatch(
 			SoundshotAction.fetchAll({
-				// where: {
-				// 	timeSlotId: this.timeSlotId
-				// },
+				where: {
+					timeSlotId: this.timeSlotId
+				},
 				relations: ['uploadedBy', 'uploadedBy.user'],
 				skip: this.skip,
 				take: this.take,
