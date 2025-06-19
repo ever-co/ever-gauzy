@@ -1,11 +1,11 @@
 import { Component, ElementRef, ViewChild, computed, input, signal } from '@angular/core';
-import { ISoundshot, Soundshot } from '../../../models/soundshot.model';
+import { ISoundshot } from '../../../models/soundshot.model';
 
 @Component({
 	selector: 'plug-soundshot-player',
 	standalone: false,
 	templateUrl: './sounshot-player.component.html',
-	styleUrl: './sounshot-player.component.scss',
+	styleUrl: './sounshot-player.component.scss'
 })
 export class SounshotPlayerComponent {
 	@ViewChild('player') playerRef: ElementRef<HTMLAudioElement>;

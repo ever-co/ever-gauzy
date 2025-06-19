@@ -1,34 +1,22 @@
 <div class="skeleton-container" [class.animate]="animate">
-	<div class="skeleton-player">
-		<div class="skeleton-cover">
-			<div class="skeleton-avatar"></div>
-		</div>
-
-		<div class="skeleton-controls">
-			<div class="skeleton-control-row">
-				<div class="skeleton-play-button"></div>
-
-				<div class="skeleton-track-info">
-					<div class="skeleton-track-name"></div>
-					<div class="skeleton-artist-name"></div>
-				</div>
-			</div>
-
-			<div class="skeleton-progress-container">
-				<div class="skeleton-progress-bar"></div>
-				<div class="skeleton-time-display">
-					<div class="skeleton-time"></div>
-					<div class="skeleton-time"></div>
-				</div>
-			</div>
+	<div class="skeleton-info">
+		<div class="skeleton-title"></div>
+		<div class="skeleton-meta">
+			<div class="skeleton-meta-item"></div>
+			<div class="skeleton-meta-item"></div>
 		</div>
 	</div>
-
-	@if (showVolumeControl) {
-	<div class="skeleton-volume-control">
-		<div class="skeleton-volume-icon"></div>
-		<div class="skeleton-volume-bar"></div>
-		<div class="skeleton-volume-percentage"></div>
+	<div class="skeleton-player-controls">
+		<div class="skeleton-btn"></div>
+		<div class="skeleton-progress-container">
+			<div class="skeleton-progress-bar"></div>
+			<div class="skeleton-time-info">
+				<div class="skeleton-time"></div>
+				<div class="skeleton-time"></div>
+			</div>
+		</div>
+		@if (showVolumeControl) {
+		<div class="skeleton-volume-slider"></div>
+		}
 	</div>
-	}
 </div>
