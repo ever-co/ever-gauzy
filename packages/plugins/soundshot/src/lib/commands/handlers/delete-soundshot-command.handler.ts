@@ -1,12 +1,12 @@
-import { ICommandHandler, CommandHandler } from "@nestjs/cqrs";
-import { SoundshotService } from "../../services/soundshot.service";
-import { DeleteSoundshotCommand } from "../delete-soundshot.command";
-import { NotFoundException, BadRequestException } from "@nestjs/common";
-import { RequestContext } from "@gauzy/core";
+import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
+import { SoundshotService } from '../../services/soundshot.service';
+import { DeleteSoundshotCommand } from '../delete-soundshot.command';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { RequestContext } from '@gauzy/core';
 
 @CommandHandler(DeleteSoundshotCommand)
 export class DeleteSoundshotCommandHandler implements ICommandHandler<DeleteSoundshotCommand> {
-	constructor(private readonly soundshotService: SoundshotService) { }
+	constructor(private readonly soundshotService: SoundshotService) {}
 
 	/**
 	 * Handles the `DeleteSoundshotCommand` to delete a soundshot entity from the database.
@@ -26,7 +26,10 @@ export class DeleteSoundshotCommandHandler implements ICommandHandler<DeleteSoun
 			throw new BadRequestException(`Tenant ID ${tenantId} is required for deleting soundshot.`);
 		}
 
-		const soundshot = await this.soundshotService.findOneByWhereOptions({ id, organizationId, tenantId });
+		const soundshot = await this.soundshotService.findOneByOptions({
+			where: { id, organizationId, tenantId },
+			withDeleted: true
+		});
 
 		if (!soundshot) {
 			throw new NotFoundException(`Soundshot with ID ${id} not found`);
