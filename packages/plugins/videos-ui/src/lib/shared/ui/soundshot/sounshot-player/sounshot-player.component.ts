@@ -1,6 +1,7 @@
-import { Component, ElementRef, ViewChild, computed, input, signal } from '@angular/core';
-import { ISoundshot } from '../../../models/soundshot.model';
-import { IActionButton, ActionButton } from '../../../models/action-button.model';
+import { Component, ElementRef, EventEmitter, Output, ViewChild, computed, input, signal } from '@angular/core';
+import { SoundshotQuery } from '../../../../+state/soundshot/soundshot.query';
+import { ActionButton, IActionButton } from '../../../models/action-button.model';
+import { ISoundshot, Soundshot } from '../../../models/soundshot.model';
 
 @Component({
 	selector: 'plug-soundshot-player',
@@ -11,29 +12,45 @@ import { IActionButton, ActionButton } from '../../../models/action-button.model
 export class SounshotPlayerComponent {
 	@ViewChild('player') playerRef: ElementRef<HTMLAudioElement>;
 	soundshot = input<ISoundshot>();
+	isPlaying = signal(false);
+	progress = signal(0);
+	currentTime = signal(0);
+	duration = signal(0);
+	volume = signal(1);
+
+	@Output() download = new EventEmitter<ISoundshot>();
+	@Output() recover = new EventEmitter<ISoundshot>();
+	@Output() delete = new EventEmitter<ISoundshot>();
+	@Output() hardDelete = new EventEmitter<ISoundshot>();
+
+	constructor(private readonly soundshotQuery: SoundshotQuery) {}
 
 	public buttons = computed(() => {
+		const soundshot = new Soundshot(this.soundshot());
 		const commons = [
 			new ActionButton({
 				icon: 'download-outline',
 				label: 'BUTTONS.DOWNLOAD',
 				status: 'info',
-				action: (soundshot: ISoundshot) => console.log(soundshot)
+				loading: this.soundshotQuery.downloading$,
+				action: (soundshot: ISoundshot) => this.download.emit(soundshot)
 			})
 		];
-		const statusSpecificButtons: IActionButton[] = !!this.soundshot()?.deletedAt
+		const statusSpecificButtons: IActionButton[] = soundshot.isDeleted
 			? [
 					new ActionButton({
 						icon: 'refresh-outline',
 						label: 'BUTTONS.RECOVER',
 						status: 'success',
-						action: (soundshot: ISoundshot) => console.log(soundshot)
+						loading: this.soundshotQuery.restoring$,
+						action: (soundshot: ISoundshot) => this.recover.emit(soundshot)
 					}),
 					new ActionButton({
 						icon: 'trash-2-outline',
 						label: 'Hard Delete',
 						status: 'danger',
-						action: (soundshot: ISoundshot) => console.log(soundshot)
+						loading: this.soundshotQuery.deleting$,
+						action: (soundshot: ISoundshot) => this.hardDelete.emit(soundshot)
 					})
 			  ]
 			: [
@@ -41,17 +58,12 @@ export class SounshotPlayerComponent {
 						icon: 'trash-outline',
 						label: 'BUTTONS.DELETE',
 						status: 'danger',
-						action: (soundshot: ISoundshot) => console.log(soundshot)
+						loading: this.soundshotQuery.deleting$,
+						action: (soundshot: ISoundshot) => this.delete.emit(soundshot)
 					})
 			  ];
 		return [...commons, ...statusSpecificButtons];
 	});
-
-	isPlaying = signal(false);
-	progress = signal(0);
-	currentTime = signal(0);
-	duration = signal(0);
-	volume = signal(1);
 
 	// Computed for duration from soundshot
 	readonly displayDuration = computed(() => this.soundshot()?.duration || this.duration());
