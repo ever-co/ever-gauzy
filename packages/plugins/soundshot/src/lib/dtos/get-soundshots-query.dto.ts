@@ -2,7 +2,7 @@ import { ID } from '@gauzy/contracts';
 import { BaseQueryDTO } from '@gauzy/core';
 import { ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsISO8601, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import { IsArray, IsISO8601, IsOptional, IsString, IsUUID } from 'class-validator';
 import { FindOptionsWhere } from 'typeorm';
 import { ISoundshot } from '../models/soundshot.model';
 
