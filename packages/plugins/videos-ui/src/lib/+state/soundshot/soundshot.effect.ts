@@ -17,7 +17,7 @@ export class SoundshotEffects {
 		private readonly downloadQueueService: DownloadQueueService,
 		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService
-	) {}
+	) { }
 
 	public fetchAll$ = createEffect(() =>
 		this.action$.pipe(
@@ -63,13 +63,20 @@ export class SoundshotEffects {
 	public restore$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(SoundshotAction.restore),
-			tap(() => this.soundshotStore.update({ restoring: true })),
+			tap(() => {
+				this.soundshotStore.update({ restoring: true });
+				this.toastrService.info('Restoring soundshot...', 'Restore');
+			}),
 			switchMap(({ id }) => {
 				return this.soundshotService.restore(id).pipe(
-					tap(() => this.updateStoreAfterRestore(id)),
+					tap(() => {
+						this.updateStoreAfterRestore(id);
+						this.toastrService.success('Soundshot restored successfully', 'Restore');
+					}),
 					finalize(() => this.soundshotStore.update({ restoring: false })),
 					catchError((error) => {
 						this.errorHandler.handleError(error); // Handle error properly
+						this.toastrService.error('Failed to restore soundshot', 'Restore Error');
 						return EMPTY; // Return a fallback observable
 					})
 				);
@@ -80,13 +87,20 @@ export class SoundshotEffects {
 	public delete$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(SoundshotAction.delete, SoundshotAction.hardDelete),
-			tap(() => this.soundshotStore.update({ deleting: true })),
+			tap(() => {
+				this.soundshotStore.update({ deleting: true });
+				this.toastrService.info('Deleting soundshot...', 'Delete');
+			}),
 			switchMap(({ id, params = {} }) => {
 				return this.soundshotService.delete(id, params).pipe(
-					tap(() => this.updateStoreAfterDelete(id, params)),
+					tap(() => {
+						this.updateStoreAfterDelete(id, params);
+						this.toastrService.success('Soundshot deleted successfully', 'Delete');
+					}),
 					finalize(() => this.soundshotStore.update({ deleting: false })),
 					catchError((error) => {
 						this.errorHandler.handleError(error); // Handle error properly
+						this.toastrService.error('Failed to delete soundshot', 'Delete Error');
 						return EMPTY; // Return a fallback observable
 					})
 				);

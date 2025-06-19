@@ -17,7 +17,7 @@ export class CamshotEffects {
 		private readonly downloadQueueService: DownloadQueueService,
 		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService
-	) {}
+	) { }
 
 	public fetchCamshots$ = createEffect(() =>
 		this.action$.pipe(
@@ -63,13 +63,20 @@ export class CamshotEffects {
 	public restore$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(CamshotAction.restoreCamshot),
-			tap(() => this.camshotStore.update({ restoring: true })),
+			tap(() => {
+				this.camshotStore.update({ restoring: true });
+				this.toastrService.info('Restoring camshot...', 'Restore');
+			}),
 			switchMap(({ id }) => {
 				return this.camshotService.restore(id).pipe(
-					tap(() => this.updateStoreAfterRestore(id)),
+					tap(() => {
+						this.updateStoreAfterRestore(id);
+						this.toastrService.success('Camshot restored successfully', 'Restore');
+					}),
 					finalize(() => this.camshotStore.update({ restoring: false })),
 					catchError((error) => {
 						this.errorHandler.handleError(error); // Handle error properly
+						this.toastrService.error('Failed to restore camshot', 'Restore Error');
 						return EMPTY; // Return a fallback observable
 					})
 				);
@@ -80,13 +87,20 @@ export class CamshotEffects {
 	public delete$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(CamshotAction.deleteCamshot, CamshotAction.hardDeleteCamshot),
-			tap(() => this.camshotStore.update({ deleting: true })),
+			tap(() => {
+				this.camshotStore.update({ deleting: true });
+				this.toastrService.info('Deleting camshot...', 'Delete');
+			}),
 			switchMap(({ id, params = {} }) => {
 				return this.camshotService.delete(id, params).pipe(
-					tap(() => this.updateStoreAfterDelete(id, params)),
+					tap(() => {
+						this.updateStoreAfterDelete(id, params);
+						this.toastrService.success('Camshot deleted successfully', 'Delete');
+					}),
 					finalize(() => this.camshotStore.update({ deleting: false })),
 					catchError((error) => {
 						this.errorHandler.handleError(error); // Handle error properly
+						this.toastrService.error('Failed to delete camshot', 'Delete Error');
 						return EMPTY; // Return a fallback observable
 					})
 				);
