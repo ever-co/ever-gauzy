@@ -2,11 +2,13 @@ import { ChangeDetectionStrategy, Component, Input, OnChanges, OnDestroy, OnInit
 import { ID } from '@gauzy/contracts';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, distinctUntilChanged, map, Observable, tap } from 'rxjs';
+import { combineLatest, distinctUntilChanged, filter, map, Observable, take, tap } from 'rxjs';
 import { SoundshotAction } from '../../+state/soundshot/soundshot.action';
 import { SoundshotQuery } from '../../+state/soundshot/soundshot.query';
 import { SoundshotStore } from '../../+state/soundshot/soundshot.store';
 import { ISoundshot } from '../../shared/models/soundshot.model';
+import { AlertModalComponent } from '@gauzy/ui-core/shared';
+import { NbDialogService } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,6 +28,7 @@ export class SounshotListComponent implements OnInit, OnChanges, OnDestroy {
 	constructor(
 		private readonly soundshotQuery: SoundshotQuery,
 		private readonly soundshotStore: SoundshotStore,
+		private readonly dialogService: NbDialogService,
 		private readonly actions: Actions
 	) {}
 
@@ -46,6 +49,52 @@ export class SounshotListComponent implements OnInit, OnChanges, OnDestroy {
 			this.reset();
 			this.fetchSoundshots();
 		}
+	}
+
+	public onDownload(soundshot: ISoundshot) {
+		this.actions.dispatch(SoundshotAction.download(soundshot.fullUrl));
+	}
+
+	public onRecover(soundshot: ISoundshot) {
+		this.actions.dispatch(SoundshotAction.restore(soundshot.id));
+	}
+
+	public onHardDelete(soundshot: ISoundshot) {
+		this.dialogService
+			.open(AlertModalComponent, {
+				context: {
+					data: {
+						message: 'Are you sure you want to delete this soundshot definitely?',
+						title: 'Delete Soundshot Forever'
+					}
+				},
+				hasBackdrop: true
+			})
+			.onClose.pipe(
+				take(1),
+				filter((confirm: 'yes' | 'no') => confirm === 'yes'),
+				tap(() => this.actions.dispatch(SoundshotAction.hardDelete(soundshot.id, { forceDelete: true })))
+			)
+			.subscribe();
+	}
+
+	public onDelete({ id }: ISoundshot) {
+		this.dialogService
+			.open(AlertModalComponent, {
+				context: {
+					data: {
+						message: 'Are you sure you want to delete this soundshot?',
+						title: 'Delete Soundshot'
+					}
+				},
+				hasBackdrop: true
+			})
+			.onClose.pipe(
+				take(1),
+				filter((confirm: 'yes' | 'no') => confirm === 'yes'),
+				tap(() => this.actions.dispatch(SoundshotAction.delete(id)))
+			)
+			.subscribe();
 	}
 
 	public fetchSoundshots(): void {

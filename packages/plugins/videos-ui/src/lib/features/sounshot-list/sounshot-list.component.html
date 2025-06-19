@@ -8,7 +8,13 @@
 	class="soundshot-list"
 >
 	@for (soundshot of soundshots$ | async; track soundshot.id){ @defer (on viewport) {
-	<plug-soundshot-player [soundshot]="soundshot"></plug-soundshot-player>
+	<plug-soundshot-player
+		[soundshot]="soundshot"
+		(download)="onDownload($event)"
+		(recover)="onRecover($event)"
+		(delete)="onDelete($event)"
+		(hardDelete)="onHardDelete($event)"
+	></plug-soundshot-player>
 	}@placeholder (minimum 500ms) {
 	<plug-sounshot-player-skeleton></plug-sounshot-player-skeleton>
 	} }@empty {

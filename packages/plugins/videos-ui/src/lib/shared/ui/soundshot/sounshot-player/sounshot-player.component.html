@@ -1,4 +1,4 @@
-<div class="soundshot-player">
+<div class="soundshot-player" [class.deleted]="!!soundshot()?.deletedAt">
 	<div class="soundshot-info">
 		@if (soundshot()?.uploadedBy?.user?.imageUrl) {
 		<div class="soundshot-cover">
