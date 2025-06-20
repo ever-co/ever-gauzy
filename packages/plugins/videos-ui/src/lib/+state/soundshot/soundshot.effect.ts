@@ -115,6 +115,8 @@ export class SoundshotEffects {
 				const isAdded = this.downloadQueueService.add(urls);
 				if (isAdded) {
 					this.toastrService.info('soundshot added to queue', 'Download Soundshot');
+				} else {
+					this.toastrService.error('Failed to add soundshot to queue', 'Download Error');
 				}
 			})
 		)
