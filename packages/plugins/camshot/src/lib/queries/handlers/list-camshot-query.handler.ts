@@ -40,9 +40,11 @@ export class ListCamshotQueryHandler implements IQueryHandler<ListCamshotQuery> 
 
 		const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		// If the current user doesn't have the permission to select employee, filter by uploadedById
-		const isOwner = !hasPermission && !!RequestContext.currentEmployeeId();
-
-		if (isOwner) {
+		if (!hasPermission) {
+			// If current employee ID is missing, return empty pagination result
+			if (!RequestContext.currentEmployeeId()) {
+				return { items: [], total: 0 };
+			}
 			where.uploadedById = RequestContext.currentEmployeeId();
 		}
 
@@ -51,7 +53,7 @@ export class ListCamshotQueryHandler implements IQueryHandler<ListCamshotQuery> 
 			// Convert startDate and endDate to UTC based on the provided timeZone
 			const startDateUtc = moment.tz(startDate, timeZone).utc().toDate();
 			const endDateUtc = moment.tz(endDate, timeZone).utc().toDate();
-			// Update the 'valueDate' property to filter records between the specified dates
+			// Update the 'recordedAt' property to filter records between the specified dates
 			where.recordedAt = Between(startDateUtc, endDateUtc);
 		}
 
@@ -60,11 +62,11 @@ export class ListCamshotQueryHandler implements IQueryHandler<ListCamshotQuery> 
 			where.uploadedById = In(employeeIds);
 		}
 
-		// Fetch paginated camshots from the service
+		// Fetch paginated soundshots from the service
 		return this.camshotService.paginate({
 			...params,
-			withDeleted: true,
-			where
+			where: { ...where, ...params.where },
+			withDeleted: true
 		});
 	}
 }
