@@ -772,7 +772,8 @@
 			"INVALID_IMAGE_URL": "Ongeldige afbeelding-URL.",
 			"PROJECT_EMPLOYEE": "Dit veld is verplicht. Selecteer ten minste één werknemer.",
 			"PROJECT_ORGANIZATION_CONTACT": "Dit veld is verplicht. Selecteer een klant.",
-			"PROJECT_OWNER": "Projecteigenaar is verplicht."
+			"PROJECT_OWNER": "Projecteigenaar is verplicht.",
+			"TASK_TITLE": "Taaktitel is verplicht en mag niet leeg zijn."
 		}
 	},
 	"POP_UPS": {

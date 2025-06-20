@@ -772,7 +772,8 @@
 			"INVALID_IMAGE_URL": "כתובת URL של התמונה אינה תקינה.",
 			"PROJECT_EMPLOYEE": "שדה זה נדרש. אנא בחר לפחות עובד אחד.",
 			"PROJECT_ORGANIZATION_CONTACT": "שדה זה נדרש. אנא בחר לקוח.",
-			"PROJECT_OWNER": "נדרש בעל פרויקט."
+			"PROJECT_OWNER": "נדרש בעל פרויקט.",
+			"TASK_TITLE": "כותרת המשימה נדרשת ואינה יכולה להיות ריקה."
 		}
 	},
 	"POP_UPS": {

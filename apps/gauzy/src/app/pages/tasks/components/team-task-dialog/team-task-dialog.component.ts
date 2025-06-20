@@ -17,6 +17,7 @@ import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FormHelpers, richTextCKEditorConfig } from '@gauzy/ui-core/shared';
 import {
+	emptyStringValidator,
 	ErrorHandlingService,
 	OrganizationProjectModuleService,
 	OrganizationProjectsService,
@@ -70,7 +71,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			number: [{ value: '', disabled: true }],
-			title: [null, Validators.required],
+			title: [null, [Validators.required, emptyStringValidator]],
 			project: [],
 			projectId: [null, Validators.required],
 			modules: [],

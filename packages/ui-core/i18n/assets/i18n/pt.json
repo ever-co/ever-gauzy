@@ -772,7 +772,8 @@
 			"INVALID_IMAGE_URL": "URL de imagem inválido.",
 			"PROJECT_EMPLOYEE": "Este campo é obrigatório. Por favor, selecione pelo menos um funcionário.",
 			"PROJECT_ORGANIZATION_CONTACT": "Este campo é obrigatório. Por favor, selecione um cliente.",
-			"PROJECT_OWNER": "O proprietário do projeto é obrigatório."
+			"PROJECT_OWNER": "O proprietário do projeto é obrigatório.",
+			"TASK_TITLE": "O título da tarefa é obrigatório e não pode estar vazio."
 		}
 	},
 	"POP_UPS": {

@@ -771,7 +771,8 @@
 			"INVALID_IMAGE_URL": "Nieprawidłowy adres URL obrazu.",
 			"PROJECT_EMPLOYEE": "To pole jest wymagane. Wybierz co najmniej jednego pracownika.",
 			"PROJECT_ORGANIZATION_CONTACT": "To pole jest wymagane. Wybierz klienta.",
-			"PROJECT_OWNER": "Właściciel projektu jest wymagany."
+			"PROJECT_OWNER": "Właściciel projektu jest wymagany.",
+			"TASK_TITLE": "Tytuł zadania jest wymagany i nie może być pusty."
 		}
 	},
 	"POP_UPS": {

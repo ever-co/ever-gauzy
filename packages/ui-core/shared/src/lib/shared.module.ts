@@ -6,6 +6,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { ComponentsModule } from './components/components.module';
 import { DirectivesModule } from './directives/directives.module';
 import { PipesModule } from './pipes/pipes.module';
+import { RichTextEditorModule } from './rich-text-editor/rich-text-editor.module';
 
 const IMPORTS_EXPORTS = [
 	CommonModule,
@@ -15,7 +16,8 @@ const IMPORTS_EXPORTS = [
 	NgxPermissionsModule,
 	ComponentsModule,
 	DirectivesModule,
-	PipesModule
+	PipesModule,
+	RichTextEditorModule
 ];
 
 @NgModule({

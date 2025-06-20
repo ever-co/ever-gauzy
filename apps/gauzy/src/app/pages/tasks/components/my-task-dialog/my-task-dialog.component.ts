@@ -12,6 +12,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FormHelpers, richTextCKEditorConfig } from '@gauzy/ui-core/shared';
 import {
 	EmployeesService,
+	emptyStringValidator,
 	ErrorHandlingService,
 	OrganizationProjectsService,
 	Store,
@@ -57,7 +58,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent implements O
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			number: [{ value: '', disabled: true }],
-			title: [null, Validators.required],
+			title: [null, [Validators.required, emptyStringValidator]],
 			project: [],
 			projectId: [null, Validators.required],
 			status: [TaskStatusEnum.OPEN],

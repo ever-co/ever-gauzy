@@ -42,8 +42,7 @@ import {
 	TableComponentsModule,
 	TagsColorInputModule,
 	WorkInProgressModule,
-	getBrowserLanguage,
-	RichTextEditorModule
+	getBrowserLanguage
 } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { COMPONENTS } from './components';
@@ -77,7 +76,6 @@ const NB_MODULES = [
  */
 const THIRD_PARTY_MODULES = [
 	CKEditorModule,
-	RichTextEditorModule,
 	NgSelectModule,
 	NgxPermissionsModule.forRoot(),
 	TranslateModule.forRoot({

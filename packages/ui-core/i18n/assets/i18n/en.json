@@ -772,7 +772,8 @@
 			"INVALID_IMAGE_URL": "Invalid image URL.",
 			"PROJECT_EMPLOYEE": "This field is required. Please select at least one employee.",
 			"PROJECT_ORGANIZATION_CONTACT": "This field is required. Please select a client.",
-			"PROJECT_OWNER": "Project owner is required."
+			"PROJECT_OWNER": "Project owner is required.",
+			"TASK_TITLE": "Task title is required and cannot be empty."
 		}
 	},
 	"POP_UPS": {

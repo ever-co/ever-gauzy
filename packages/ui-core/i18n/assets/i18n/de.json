@@ -772,7 +772,8 @@
 			"INVALID_IMAGE_URL": "Ungültige Bild-URL.",
 			"PROJECT_EMPLOYEE": "Dieses Feld ist erforderlich. Bitte wählen Sie mindestens einen Mitarbeiter aus.",
 			"PROJECT_ORGANIZATION_CONTACT": "Dieses Feld ist erforderlich. Bitte wählen Sie einen Kunden aus.",
-			"PROJECT_OWNER": "Projektinhaber ist erforderlich."
+			"PROJECT_OWNER": "Projektinhaber ist erforderlich.",
+			"TASK_TITLE": "Der Aufgaben-Titel ist erforderlich und darf nicht leer sein."
 		}
 	},
 	"POP_UPS": {

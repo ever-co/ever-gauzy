@@ -23,6 +23,7 @@ import {
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	EmployeesService,
+	emptyStringValidator,
 	OrganizationProjectModuleService,
 	OrganizationTeamsService,
 	Store,
@@ -73,7 +74,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			number: [{ value: '', disabled: true }],
-			title: [null, Validators.required],
+			title: [null, [Validators.required, emptyStringValidator]],
 			project: [],
 			projectId: [null, Validators.required],
 			parentId: [],

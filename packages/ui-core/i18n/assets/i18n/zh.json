@@ -772,7 +772,8 @@
 			"INVALID_IMAGE_URL": "无效的图片 URL。",
 			"PROJECT_EMPLOYEE": "此字段为必填项。请选择至少一名员工。",
 			"PROJECT_ORGANIZATION_CONTACT": "此字段为必填项。请选择一个客户。",
-			"PROJECT_OWNER": "项目所有者为必填项。"
+			"PROJECT_OWNER": "项目所有者为必填项。",
+			"TASK_TITLE": "任务标题是必填项，不能为空。"
 		}
 	},
 	"POP_UPS": {
