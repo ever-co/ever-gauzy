@@ -31,7 +31,7 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 		private readonly camshotStore: CamshotStore,
 		private readonly dialogService: NbDialogService,
 		private readonly actions: Actions
-	) {}
+	) { }
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes?.timeSlotId) {
@@ -57,7 +57,7 @@ export class CamshotListComponent implements OnInit, OnChanges, OnDestroy {
 			context: {
 				imageUrl: camshot.fullUrl,
 				imageTitle: camshot.title,
-				imageDescription: camshot?.uploadedBy?.fullName || 'N/A'
+				imageDescription: camshot.uploadedBy?.fullName || 'N/A'
 			},
 			hasBackdrop: true
 		});
