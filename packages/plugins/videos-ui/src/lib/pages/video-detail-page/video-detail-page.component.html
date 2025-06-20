@@ -7,23 +7,15 @@
 		<plug-video class="w-100"></plug-video>
 		<nb-tabset>
 			@if(showList$ | async) {
-			<nb-tab tabTitle="Similars">
+			<nb-tab tabTitle="Similar">
 				@defer(on viewport) {
-				<div
-					nbInfiniteList
-					[threshold]="500"
-					[throttleTime]="300"
-					(bottomThreshold)="fetchMoreVideos()"
-					class="list"
-				>
+				<div nbInfiniteList [threshold]="500" [throttleTime]="300" (bottomThreshold)="fetchMoreVideos()"
+					class="list">
 					<plug-video-list [vertical]="true"></plug-video-list>
 				</div>
 				}@placeholder{
-				<ngx-no-data-message
-					class="no-data"
-					status="danger"
-					message="Loading camshots..."
-				></ngx-no-data-message>
+				<ngx-no-data-message class="no-data" status="danger"
+					message="Loading camshots..."></ngx-no-data-message>
 				}
 			</nb-tab>
 			}
@@ -33,11 +25,8 @@
 					<plug-camshot-list [timeSlotId]="timeSlotId"></plug-camshot-list>
 				</div>
 				}@placeholder {
-				<ngx-no-data-message
-					class="no-data"
-					status="danger"
-					message="Loading camshots..."
-				></ngx-no-data-message>
+				<ngx-no-data-message class="no-data" status="danger"
+					message="Loading camshots..."></ngx-no-data-message>
 				}
 			</nb-tab>
 			<nb-tab tabTitle="Soundshots">
@@ -46,11 +35,8 @@
 					<plug-soundshot-list [timeSlotId]="timeSlotId"></plug-soundshot-list>
 				</div>
 				}@placeholder {
-				<ngx-no-data-message
-					class="no-data"
-					status="danger"
-					message="Loading soundshots..."
-				></ngx-no-data-message>
+				<ngx-no-data-message class="no-data" status="danger"
+					message="Loading soundshots..."></ngx-no-data-message>
 				}
 			</nb-tab>
 		</nb-tabset>
