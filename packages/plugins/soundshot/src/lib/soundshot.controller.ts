@@ -50,7 +50,7 @@ export class SoundshotController {
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus,
 		private readonly soundshotService: SoundshotService
-	) {}
+	) { }
 
 	/**
 	 * Get a paginated list of soundshots.
@@ -245,7 +245,7 @@ export class SoundshotController {
 		forbidNonWhitelisted: true
 	})
 	@Patch(':id')
-	public async recover(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
+	public async recover(@Param('id', UUIDValidationPipe) id: ID): Promise<ISoundshot> {
 		return this.commandBus.execute(new RecoverSoundshotCommand(id));
 	}
 
