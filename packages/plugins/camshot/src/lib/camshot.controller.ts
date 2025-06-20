@@ -218,7 +218,7 @@ export class CamshotController {
 	@ApiOperation({
 		summary: 'Recover a deleted camshot',
 		description: 'Soft-recovers a previously deleted camshot using its UUID, version UUID the plugin ID.'
-	})
+	description: 'Soft-recovers a previously deleted camshot using its UUID, version UUID, and the plugin ID.'
 	@ApiParam({
 		name: 'id',
 		type: String,
