@@ -715,6 +715,7 @@
 		"**/agent/src/assets/icons/**",
 		"**/agent/src/assets/images/**",
 		"./qodo/**",
-		"**/rules"
+		"**/rules",
+		".codacy"
 	]
 }
