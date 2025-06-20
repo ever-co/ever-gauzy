@@ -62,7 +62,7 @@ export class ListCamshotQueryHandler implements IQueryHandler<ListCamshotQuery> 
 			where.uploadedById = In(employeeIds);
 		}
 
-		// Fetch paginated soundshots from the service
+		// Fetch paginated camshots from the service
 		return this.camshotService.paginate({
 			...params,
 			where: { ...where, ...params.where },
