@@ -14,11 +14,11 @@ import { NbDialogService } from '@nebular/theme';
 @Component({
 	selector: 'plug-soundshot-list',
 	standalone: false,
-	templateUrl: './sounshot-list.component.html',
-	styleUrl: './sounshot-list.component.scss',
+	templateUrl: './soundshot-list.component.html',
+	styleUrl: './soundshot-list.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SounshotListComponent implements OnInit, OnChanges, OnDestroy {
+export class SoundshotListComponent implements OnInit, OnChanges, OnDestroy {
 	@Input()
 	public timeSlotId: ID;
 	private skip = 1;
@@ -30,7 +30,7 @@ export class SounshotListComponent implements OnInit, OnChanges, OnDestroy {
 		private readonly soundshotStore: SoundshotStore,
 		private readonly dialogService: NbDialogService,
 		private readonly actions: Actions
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.soundshotQuery

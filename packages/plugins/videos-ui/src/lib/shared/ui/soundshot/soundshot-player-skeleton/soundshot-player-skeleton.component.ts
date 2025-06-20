@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 @Component({
-	selector: 'plug-sounshot-player-skeleton',
+	selector: 'plug-soundshot-player-skeleton',
 	standalone: false,
-	templateUrl: './sounshot-player-skeleton.component.html',
-	styleUrl: './sounshot-player-skeleton.component.scss',
+	templateUrl: './soundshot-player-skeleton.component.html',
+	styleUrl: './soundshot-player-skeleton.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SounshotPlayerSkeletonComponent {
+export class SoundshotPlayerSkeletonComponent {
 	@Input() showVolumeControl = true;
 	@Input() animate = true;
 }

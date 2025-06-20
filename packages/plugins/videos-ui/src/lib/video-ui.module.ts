@@ -47,9 +47,9 @@ import { VideoUiRoutingModule } from './video-ui-routing.module';
 import { CamshotEffects } from './+state/camshot/camshot.effect';
 import { CamshotViewerComponent } from './shared/ui/camshot/camshot-viewer/camshot-viewer.component';
 import { SoundshotEffects } from './+state/soundshot/soundshot.effect';
-import { SounshotPlayerComponent } from './shared/ui/soundshot/sounshot-player/sounshot-player.component';
-import { SounshotListComponent } from './features/sounshot-list/sounshot-list.component';
-import { SounshotPlayerSkeletonComponent } from './shared/ui/soundshot/sounshot-player-skeleton/sounshot-player-skeleton.component';
+import { SoundshotPlayerComponent } from './shared/ui/soundshot/soundshot-player/soundshot-player.component';
+import { SoundshotListComponent } from './features/soundshot-list/soundshot-list.component';
+import { SoundshotPlayerSkeletonComponent } from './shared/ui/soundshot/soundshot-player-skeleton/soundshot-player-skeleton.component';
 
 @NgModule({
 	declarations: [
@@ -70,9 +70,9 @@ import { SounshotPlayerSkeletonComponent } from './shared/ui/soundshot/sounshot-
 		CamshotItemSkeletonComponent,
 		CamshotListComponent,
 		CamshotViewerComponent,
-		SounshotPlayerComponent,
-		SounshotListComponent,
-		SounshotPlayerSkeletonComponent
+		SoundshotPlayerComponent,
+		SoundshotListComponent,
+		SoundshotPlayerSkeletonComponent
 	],
 	imports: [
 		CommonModule,
@@ -110,4 +110,4 @@ import { SounshotPlayerSkeletonComponent } from './shared/ui/soundshot/sounshot-
 		NbInfiniteListDirective
 	]
 })
-export class VideoUiModule {}
+export class VideoUiModule { }

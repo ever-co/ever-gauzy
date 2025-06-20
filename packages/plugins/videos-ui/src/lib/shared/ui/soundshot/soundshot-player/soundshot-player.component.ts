@@ -6,10 +6,10 @@ import { ISoundshot, Soundshot } from '../../../models/soundshot.model';
 @Component({
 	selector: 'plug-soundshot-player',
 	standalone: false,
-	templateUrl: './sounshot-player.component.html',
-	styleUrl: './sounshot-player.component.scss'
+	templateUrl: './soundshot-player.component.html',
+	styleUrl: './soundshot-player.component.scss'
 })
-export class SounshotPlayerComponent {
+export class SoundshotPlayerComponent {
 	@ViewChild('player') playerRef: ElementRef<HTMLAudioElement>;
 	soundshot = input<ISoundshot>();
 	isPlaying = signal(false);
@@ -23,7 +23,7 @@ export class SounshotPlayerComponent {
 	@Output() delete = new EventEmitter<ISoundshot>();
 	@Output() hardDelete = new EventEmitter<ISoundshot>();
 
-	constructor(private readonly soundshotQuery: SoundshotQuery) {}
+	constructor(private readonly soundshotQuery: SoundshotQuery) { }
 
 	public buttons = computed(() => {
 		const soundshot = new Soundshot(this.soundshot());
@@ -38,30 +38,30 @@ export class SounshotPlayerComponent {
 		];
 		const statusSpecificButtons: IActionButton[] = soundshot.isDeleted
 			? [
-					new ActionButton({
-						icon: 'refresh-outline',
-						label: 'BUTTONS.RECOVER',
-						status: 'success',
-						loading: this.soundshotQuery.restoring$,
-						action: (soundshot: ISoundshot) => this.recover.emit(soundshot)
-					}),
-					new ActionButton({
-						icon: 'trash-2-outline',
-						label: 'Hard Delete',
-						status: 'danger',
-						loading: this.soundshotQuery.deleting$,
-						action: (soundshot: ISoundshot) => this.hardDelete.emit(soundshot)
-					})
-			  ]
+				new ActionButton({
+					icon: 'refresh-outline',
+					label: 'BUTTONS.RECOVER',
+					status: 'success',
+					loading: this.soundshotQuery.restoring$,
+					action: (soundshot: ISoundshot) => this.recover.emit(soundshot)
+				}),
+				new ActionButton({
+					icon: 'trash-2-outline',
+					label: 'Hard Delete',
+					status: 'danger',
+					loading: this.soundshotQuery.deleting$,
+					action: (soundshot: ISoundshot) => this.hardDelete.emit(soundshot)
+				})
+			]
 			: [
-					new ActionButton({
-						icon: 'trash-outline',
-						label: 'BUTTONS.DELETE',
-						status: 'danger',
-						loading: this.soundshotQuery.deleting$,
-						action: (soundshot: ISoundshot) => this.delete.emit(soundshot)
-					})
-			  ];
+				new ActionButton({
+					icon: 'trash-outline',
+					label: 'BUTTONS.DELETE',
+					status: 'danger',
+					loading: this.soundshotQuery.deleting$,
+					action: (soundshot: ISoundshot) => this.delete.emit(soundshot)
+				})
+			];
 		return [...commons, ...statusSpecificButtons];
 	});
 
