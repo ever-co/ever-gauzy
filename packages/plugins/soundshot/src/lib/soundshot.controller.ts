@@ -214,7 +214,7 @@ export class SoundshotController {
 	 */
 	@ApiOperation({
 		summary: 'Recover a deleted soundshot',
-		description: 'Soft-recovers a previously deleted soundshot using its UUID, version UUID the plugin ID.'
+		description: 'Soft-recovers a previously deleted soundshot using its UUID and the plugin ID.'
 	})
 	@ApiParam({
 		name: 'id',
