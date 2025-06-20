@@ -104,17 +104,32 @@ export class SoundshotPlayerComponent {
 
 	seek(event: MouseEvent): void {
 		const player = this.playerRef?.nativeElement;
-		const progressBar = (event.currentTarget as HTMLElement).querySelector('.progress-bar');
-		if (!player || !progressBar) return;
+		const progressBar = (event.currentTarget as HTMLElement)?.querySelector?.('.progress-bar');
+		if (!player) {
+			console.warn('Audio player element not found.');
+			return;
+		}
+		if (!progressBar) {
+			console.warn('Progress bar element not found.');
+			return;
+		}
 		const rect = progressBar.getBoundingClientRect();
 		const clickX = event.clientX - rect.left;
 		const width = rect.width;
+		if (width === 0) {
+			console.warn('Progress bar width is zero.');
+			return;
+		}
 		const percent = clickX / width;
 		const duration = this.duration();
 		const seekTime = percent * (duration || 0);
-		player.currentTime = seekTime;
-		this.currentTime.set(seekTime);
-		this.progress.set(percent * 100);
+		try {
+			player.currentTime = seekTime;
+			this.currentTime.set(seekTime);
+			this.progress.set(percent * 100);
+		} catch (error) {
+			console.error('Failed to seek audio:', error);
+		}
 	}
 
 	setVolume(event: Event): void {
