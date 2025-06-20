@@ -12,7 +12,9 @@
 			"{workspaceRoot}/tsconfig.json",
 			"{workspaceRoot}/.eslintrc.json"
 		],
-		"production": ["default"]
+		"production": [
+			"default"
+		]
 	},
 	"cli": {
 		"warnings": {
@@ -83,12 +85,14 @@
 	},
 	"defaultProject": "gauzy",
 	"$schema": "./node_modules/nx/schemas/nx-schema.json",
-	"nxCloudAccessToken": "NWJlMDFmMTMtYzUyZS00ZGE4LTk0NzctNWIzZTkxMzNhMTFlfHJlYWQtd3JpdGU=",
 	"parallel": 1,
 	"targetDefaults": {
 		"build": {
 			"cache": false,
-			"inputs": ["production", "^production"]
+			"inputs": [
+				"production",
+				"^production"
+			]
 		},
 		"lint": {
 			"cache": false
@@ -101,11 +105,19 @@
 		},
 		"@nx/eslint:lint": {
 			"cache": false,
-			"inputs": ["default", "{workspaceRoot}/.eslintrc.json", "{workspaceRoot}/tools/eslint-rules/**/*"]
+			"inputs": [
+				"default",
+				"{workspaceRoot}/.eslintrc.json",
+				"{workspaceRoot}/tools/eslint-rules/**/*"
+			]
 		},
 		"@nx/jest:jest": {
 			"cache": false,
-			"inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
+			"inputs": [
+				"default",
+				"^production",
+				"{workspaceRoot}/jest.preset.js"
+			],
 			"options": {
 				"passWithNoTests": true
 			},
@@ -118,23 +130,43 @@
 		},
 		"@nx/angular:package": {
 			"cache": false,
-			"dependsOn": ["^build"],
-			"inputs": ["production", "^production"]
+			"dependsOn": [
+				"^build"
+			],
+			"inputs": [
+				"production",
+				"^production"
+			]
 		},
 		"@nx/webpack:webpack": {
 			"cache": false,
-			"dependsOn": ["^build"],
-			"inputs": ["production", "^production"]
+			"dependsOn": [
+				"^build"
+			],
+			"inputs": [
+				"production",
+				"^production"
+			]
 		},
 		"@nx/js:tsc": {
 			"cache": true,
-			"dependsOn": ["^build"],
-			"inputs": ["production", "^production"]
+			"dependsOn": [
+				"^build"
+			],
+			"inputs": [
+				"production",
+				"^production"
+			]
 		},
 		"@angular-devkit/build-angular:application": {
 			"cache": false,
-			"dependsOn": ["^build"],
-			"inputs": ["production", "^production"]
+			"dependsOn": [
+				"^build"
+			],
+			"inputs": [
+				"production",
+				"^production"
+			]
 		}
 	},
 	"useInferencePlugins": false,
