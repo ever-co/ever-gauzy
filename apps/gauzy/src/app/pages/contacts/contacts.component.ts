@@ -41,10 +41,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-contacts-list',
-    templateUrl: './contacts.component.html',
-    styleUrls: ['./contacts.component.scss'],
-    standalone: false
+	selector: 'ngx-contacts-list',
+	templateUrl: './contacts.component.html',
+	styleUrls: ['./contacts.component.scss'],
+	standalone: false
 })
 export class ContactsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	showAddCard: boolean;
@@ -206,6 +206,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			pager: {
 				display: false,

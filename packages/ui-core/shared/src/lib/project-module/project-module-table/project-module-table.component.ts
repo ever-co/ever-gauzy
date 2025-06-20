@@ -29,8 +29,8 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 	public selectedItem: IOrganizationProjectModule;
 	public settingsSmartTable: object;
 	public smartTableSource = new LocalDataSource();
-	public loading: boolean = true;
-	public disableButton: boolean = true;
+	public loading = true;
+	public disableButton = true;
 
 	/**
 	 * Project ID to fetch modules for.
@@ -107,6 +107,7 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 	_loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),

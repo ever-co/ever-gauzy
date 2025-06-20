@@ -22,16 +22,16 @@ export interface SelectedRowEvent {
 
 @UntilDestroy()
 @Component({
-    selector: 'ngx-select-product',
-    templateUrl: './select-product-form.component.html',
-    styleUrls: ['./select-product-form.component.scss'],
-    standalone: false
+	selector: 'ngx-select-product',
+	templateUrl: './select-product-form.component.html',
+	styleUrls: ['./select-product-form.component.scss'],
+	standalone: false
 })
 export class SelectProductComponent extends PaginationFilterBaseComponent implements OnInit {
 	products: IProductTranslated[] = [];
 	settingsSmartTable: object;
 	organization: IOrganization;
-	loading: boolean = true;
+	loading = true;
 	smartTableSource: ServerDataSource;
 	selectedLanguage: string = LanguagesEnum.ENGLISH;
 
@@ -74,7 +74,7 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 	}
 
 	translateProp(elem, prop) {
-		let translations = elem.translations;
+		const translations = elem.translations;
 
 		if (!translations) return '-';
 
@@ -111,6 +111,7 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 		this.settingsSmartTable = {
 			actions: false,
 			selectedRowIndex: -1,
+			sortMode: 'single',
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage

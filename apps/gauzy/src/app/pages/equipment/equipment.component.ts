@@ -24,14 +24,14 @@ import { ImageRowComponent } from '../inventory/components/inventory-table-compo
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    templateUrl: './equipment.component.html',
-    styleUrls: ['./equipment.component.scss'],
-    standalone: false
+	templateUrl: './equipment.component.html',
+	styleUrls: ['./equipment.component.scss'],
+	standalone: false
 })
 export class EquipmentComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	settingsSmartTable: object;
-	loading: boolean = true;
-	disableButton: boolean = true;
+	loading = true;
+	disableButton = true;
 	selectedEquipment: IEquipment;
 	smartTableSource: ServerDataSource;
 	equipments: IEquipment[] = [];
@@ -125,6 +125,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			pager: {
 				display: false,

@@ -49,7 +49,7 @@ export class VariantTableComponent extends TranslationBaseComponent implements O
 
 		this.inventoryStore.activeProduct$.pipe(untilDestroyed(this)).subscribe(async (activeProduct) => {
 			if (activeProduct.id) {
-				let res = await this.productVariantService.getVariantsByProductId(activeProduct.id);
+				const res = await this.productVariantService.getVariantsByProductId(activeProduct.id);
 
 				this.variants = res.items;
 			}
@@ -65,6 +65,7 @@ export class VariantTableComponent extends TranslationBaseComponent implements O
 		this.settingsSmartTable = {
 			actions: false,
 			selectedRowIndex: -1,
+			sortMode: 'single',
 			columns: {
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),

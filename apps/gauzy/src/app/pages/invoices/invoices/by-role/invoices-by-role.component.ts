@@ -564,6 +564,7 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 			},
 			hideSubHeader: true,
 			mode: 'external',
+			sortMode: 'single',
 			actions: false,
 			noDataMessage: this.getTranslation(
 				this.isEstimate ? 'SM_TABLE.NO_DATA.ESTIMATE' : 'SM_TABLE.NO_DATA.INVOICE'

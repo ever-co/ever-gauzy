@@ -50,10 +50,10 @@ export enum SyncTabsEnum {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    styleUrls: ['./view.component.scss'],
-    templateUrl: './view.component.html',
-    providers: [TitleCasePipe],
-    standalone: false
+	styleUrls: ['./view.component.scss'],
+	templateUrl: './view.component.html',
+	providers: [TitleCasePipe],
+	standalone: false
 })
 export class GithubViewComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 	public syncTabsEnum: typeof SyncTabsEnum = SyncTabsEnum;
@@ -300,6 +300,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 
 		// Define settings for the Smart Table
 		this.settingsSmartTableIssues = {
+			sortMode: 'single',
 			selectedRowIndex: -1, // Initialize the selected row index
 			selectMode: 'multi', // Set select mode to 'multi' for multiple row selection
 			actions: {

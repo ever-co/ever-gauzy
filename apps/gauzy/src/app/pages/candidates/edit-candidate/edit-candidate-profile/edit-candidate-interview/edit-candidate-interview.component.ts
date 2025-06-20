@@ -39,10 +39,10 @@ import { InterviewCriterionsTableComponent } from '../../../manage-candidate-int
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-edit-candidate-interview',
-    templateUrl: './edit-candidate-interview.component.html',
-    styleUrls: ['./edit-candidate-interview.component.scss'],
-    standalone: false
+	selector: 'ga-edit-candidate-interview',
+	templateUrl: './edit-candidate-interview.component.html',
+	styleUrls: ['./edit-candidate-interview.component.scss'],
+	standalone: false
 })
 export class EditCandidateInterviewComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	interviewList: ICandidateInterview[];
@@ -64,7 +64,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 	candidates: ICandidate[];
 	allInterviews: ICandidateInterview[];
 	allFeedbacks: ICandidateFeedback[];
-	disabled: boolean = true;
+	disabled = true;
 	selectedInterview = {
 		data: null,
 		isSelected: false
@@ -129,6 +129,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			columns: {
 				title: {

@@ -204,6 +204,7 @@ export class InvoiceAddByOrganizationComponent extends PaginationFilterBaseCompo
 	loadSmartTable() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			sortMode: 'single',
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10

@@ -21,18 +21,18 @@ import { DescriptionComponent } from '../../inventory-table-components/descripti
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-warehouses',
-    templateUrl: './warehouses-table.component.html',
-    styleUrls: ['./warehouses-table.component.scss'],
-    standalone: false
+	selector: 'ga-warehouses',
+	templateUrl: './warehouses-table.component.html',
+	styleUrls: ['./warehouses-table.component.scss'],
+	standalone: false
 })
 export class WarehousesTableComponent
 	extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy
 {
 	settingsSmartTable: object;
-	loading: boolean = false;
-	disableButton: boolean = true;
+	loading = false;
+	disableButton = true;
 	selectedWarehouse: IWarehouse;
 	smartTableSource: ServerDataSource;
 	warehouses: IWarehouse[] = [];
@@ -127,6 +127,7 @@ export class WarehousesTableComponent
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			pager: {
 				display: false,

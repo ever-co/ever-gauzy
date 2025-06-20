@@ -19,10 +19,10 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-tags',
-    templateUrl: './tags.component.html',
-    styleUrls: ['./tags.component.scss'],
-    standalone: false
+	selector: 'ngx-tags',
+	templateUrl: './tags.component.html',
+	styleUrls: ['./tags.component.scss'],
+	standalone: false
 })
 export class TagsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	settingsSmartTable: object;
@@ -41,7 +41,7 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 	private organization: IOrganization;
 	tags$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
-	private _isFiltered: boolean = false;
+	private _isFiltered = false;
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -218,6 +218,7 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TAGS'),
 			pager: {

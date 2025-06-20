@@ -32,10 +32,10 @@ import { ApprovalPolicyComponent } from './table-components/approval-policy/appr
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-approvals',
-    templateUrl: './approvals.component.html',
-    styleUrls: ['./approvals.component.scss'],
-    standalone: false
+	selector: 'ngx-approvals',
+	templateUrl: './approvals.component.html',
+	styleUrls: ['./approvals.component.scss'],
+	standalone: false
 })
 export class ApprovalsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public settingsSmartTable: object;
@@ -209,6 +209,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage

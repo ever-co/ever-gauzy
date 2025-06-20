@@ -46,9 +46,9 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    templateUrl: './income.component.html',
-    styleUrls: ['./income.component.scss'],
-    standalone: false
+	templateUrl: './income.component.html',
+	styleUrls: ['./income.component.scss'],
+	standalone: false
 })
 export class IncomeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public smartTableSettings: object;
@@ -210,6 +210,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 		this.smartTableSettings = {
 			actions: false,
 			mode: 'external',
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			editable: true,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.INCOME'),

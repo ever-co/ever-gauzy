@@ -10,10 +10,10 @@ import { LocalDataSource } from 'angular2-smart-table';
 import { CandidateSkillsService, CandidateStore, Store, ToastrService } from '@gauzy/ui-core/core';
 
 @Component({
-    selector: 'ga-edit-candidate-skills',
-    templateUrl: './edit-candidate-skills.component.html',
-    styleUrls: ['edit-candidate-skills.component.scss'],
-    standalone: false
+	selector: 'ga-edit-candidate-skills',
+	templateUrl: './edit-candidate-skills.component.html',
+	styleUrls: ['edit-candidate-skills.component.scss'],
+	standalone: false
 })
 export class EditCandidateSkillsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
@@ -139,6 +139,7 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent imple
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			columns: {
 				name: {
 					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.NAME'),

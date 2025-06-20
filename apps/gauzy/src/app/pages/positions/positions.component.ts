@@ -16,10 +16,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-positions',
-    templateUrl: './positions.component.html',
-    styleUrls: ['positions.component.scss'],
-    standalone: false
+	selector: 'ga-positions',
+	templateUrl: './positions.component.html',
+	styleUrls: ['positions.component.scss'],
+	standalone: false
 })
 export class PositionsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	showAddCard: boolean;
@@ -39,8 +39,8 @@ export class PositionsComponent extends PaginationFilterBaseComponent implements
 		position: null,
 		state: false
 	};
-	disabled: boolean = true;
-	loading: boolean = false;
+	disabled = true;
+	loading = false;
 	private _refresh$: Subject<any> = new Subject();
 
 	constructor(
@@ -97,6 +97,7 @@ export class PositionsComponent extends PaginationFilterBaseComponent implements
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			sortMode: 'single',
 			pager: {
 				perPage: pagination ? pagination : 10
 			},

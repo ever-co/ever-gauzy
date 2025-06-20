@@ -153,6 +153,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10

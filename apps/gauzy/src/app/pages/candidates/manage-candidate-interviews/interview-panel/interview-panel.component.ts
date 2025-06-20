@@ -46,10 +46,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-interview-panel',
-    templateUrl: './interview-panel.component.html',
-    styleUrls: ['./interview-panel.component.scss'],
-    standalone: false
+	selector: 'ga-interview-panel',
+	templateUrl: './interview-panel.component.html',
+	styleUrls: ['./interview-panel.component.scss'],
+	standalone: false
 })
 export class InterviewPanelComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	interviewList: ICandidateInterview[];
@@ -73,7 +73,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	@ViewChild('interviewsTable') interviewsTable;
 	organization: IOrganization;
-	disabled: boolean = true;
+	disabled = true;
 	selectedInterview: ICandidateInterview;
 	private _refresh$: Subject<boolean> = new Subject();
 
@@ -318,6 +318,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 	_loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			sortMode: 'single',
 			actions: false,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.INTERVIEW'),
 			pager: {

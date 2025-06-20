@@ -20,16 +20,16 @@ import { IconRowComponent } from '../inventory-table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-product-types',
-    templateUrl: './product-types.component.html',
-    styleUrls: ['./product-types.component.scss'],
-    standalone: false
+	selector: 'ngx-product-types',
+	templateUrl: './product-types.component.html',
+	styleUrls: ['./product-types.component.scss'],
+	standalone: false
 })
 export class ProductTypesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
-	loading: boolean = false;
-	disableButton: boolean = true;
+	loading = false;
+	disableButton = true;
 	selectedProductType: IProductTypeTranslated;
 	productTypes: IProductTypeTranslated[] = [];
 	viewComponentName: ComponentEnum;
@@ -122,6 +122,7 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PRODUCT_TYPE_NO_DATA'),
 			pager: {
@@ -213,7 +214,7 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 
 			const productType = await firstValueFrom(dialog.onClose);
 			if (productType) {
-				let translation = productType.translations[0];
+				const translation = productType.translations[0];
 				this.toastrService.success('INVENTORY_PAGE.PRODUCT_TYPE_SAVED', {
 					name: translation.name
 				});

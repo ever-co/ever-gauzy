@@ -11,11 +11,11 @@ import { CurrencyPositionPipe } from '../../../pipes/currency-position.pipe';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-invoice-view-inner',
-    templateUrl: './invoice-view-inner.component.html',
-    styleUrls: ['./invoice-view-inner.component.scss'],
-    providers: [TranslatableService, CurrencyPipe, CurrencyPositionPipe],
-    standalone: false
+	selector: 'ga-invoice-view-inner',
+	templateUrl: './invoice-view-inner.component.html',
+	styleUrls: ['./invoice-view-inner.component.scss'],
+	providers: [TranslatableService, CurrencyPipe, CurrencyPositionPipe],
+	standalone: false
 })
 export class InvoiceViewInnerComponent extends TranslationBaseComponent implements OnInit {
 	public settingsSmartTable: object;
@@ -49,6 +49,7 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			hideSubHeader: true,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			actions: false,
 			pager: {

@@ -18,16 +18,16 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-approval-policy',
-    templateUrl: './approval-policy.component.html',
-    styleUrls: ['./approval-policy.component.scss'],
-    standalone: false
+	selector: 'ngx-approval-policy',
+	templateUrl: './approval-policy.component.html',
+	styleUrls: ['./approval-policy.component.scss'],
+	standalone: false
 })
 export class ApprovalPolicyComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public settingsSmartTable: object;
 
-	public loading: boolean = false;
-	public disableButton: boolean = true;
+	public loading = false;
+	public disableButton = true;
 
 	public selectedApprovalPolicy: IApprovalPolicy;
 	public smartTableSource: ServerDataSource;
@@ -165,6 +165,7 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent imple
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			pager: {
 				display: false,

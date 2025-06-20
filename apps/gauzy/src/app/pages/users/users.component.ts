@@ -45,9 +45,9 @@ import { EmployeeWorkStatusComponent } from '../employees/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    templateUrl: './users.component.html',
-    styleUrls: ['./users.component.scss'],
-    standalone: false
+	templateUrl: './users.component.html',
+	styleUrls: ['./users.component.scss'],
+	standalone: false
 })
 export class UsersComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public PermissionsEnum = PermissionsEnum;
@@ -57,8 +57,8 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	public selectedUser: IUserViewModel;
 	public userName = 'User';
 	public loading: boolean;
-	public hasSuperAdminPermission: boolean = false;
-	public organizationInvitesAllowed: boolean = false;
+	public hasSuperAdminPermission = false;
+	public organizationInvitesAllowed = false;
 	public showAddCard: boolean;
 	public disableButton = true;
 	public viewComponentName: ComponentEnum;
@@ -239,7 +239,6 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		}
 	}
 
-
 	/**
 	 * Adds or edits a user in the organization based on the input data.
 	 * If the user is active, creates the user and triggers updates for related components.
@@ -368,7 +367,8 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		 *	User belongs multiple organizations -> remove user from Organization
 		 */
 		const count = await this.userOrganizationsService.getUserOrganizationCount(userOrganizationId);
-		const confirmationMessage = count === 1 ? 'FORM.DELETE_CONFIRMATION.DELETE_USER' : 'FORM.DELETE_CONFIRMATION.REMOVE_USER';
+		const confirmationMessage =
+			count === 1 ? 'FORM.DELETE_CONFIRMATION.DELETE_USER' : 'FORM.DELETE_CONFIRMATION.REMOVE_USER';
 
 		// Open a confirmation dialog for the hiring action.
 		const dialogRef = this.dialogService.open(DeleteConfirmationComponent, {
@@ -520,6 +520,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			pager: {
 				display: false,

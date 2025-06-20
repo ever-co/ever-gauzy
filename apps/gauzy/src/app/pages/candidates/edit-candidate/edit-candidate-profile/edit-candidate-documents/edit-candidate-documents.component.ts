@@ -16,10 +16,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-edit-candidate-documents',
-    templateUrl: './edit-candidate-documents.component.html',
-    styleUrls: ['./edit-candidate-documents.component.scss'],
-    standalone: false
+	selector: 'ga-edit-candidate-documents',
+	templateUrl: './edit-candidate-documents.component.html',
+	styleUrls: ['./edit-candidate-documents.component.scss'],
+	standalone: false
 })
 export class EditCandidateDocumentsComponent
 	extends PaginationFilterBaseComponent
@@ -101,6 +101,7 @@ export class EditCandidateDocumentsComponent
 	loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),

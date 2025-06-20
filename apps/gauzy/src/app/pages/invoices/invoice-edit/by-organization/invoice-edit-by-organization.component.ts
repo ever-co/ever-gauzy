@@ -238,6 +238,7 @@ export class InvoiceEditByOrganizationComponent extends PaginationFilterBaseComp
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			selectedRowIndex: -1,
+			sortMode: 'single',
 			mode: 'external',
 			pager: {
 				display: false,

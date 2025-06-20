@@ -16,13 +16,13 @@ import { ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-warehouse-products-table',
-    templateUrl: './warehouse-products-table.component.html',
-    styleUrls: ['./warehouse-products-table.component.scss'],
-    standalone: false
+	selector: 'ga-warehouse-products-table',
+	templateUrl: './warehouse-products-table.component.html',
+	styleUrls: ['./warehouse-products-table.component.scss'],
+	standalone: false
 })
 export class WarehouseProductsTableComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
-	loading: boolean = true;
+	loading = true;
 	smartTableSource = new LocalDataSource();
 	settingsSmartTable: object;
 
@@ -90,6 +90,7 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			mode: 'external',
 			selectedRowIndex: -1,
 			editable: true,
@@ -137,7 +138,7 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 		this.loading = true;
 		try {
 			const items = await this.warehouseService.getWarehouseProducts(this.warehouse.id);
-			let mappedItems = items
+			const mappedItems = items
 				? items.map((item) => {
 						return {
 							...item,
@@ -170,7 +171,7 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 		const dialog = this.dialogService.open(SelectProductComponent, {});
 		const selectedProducts = await firstValueFrom(dialog.onClose);
 
-		let createWarehouseProductsInput = selectedProducts
+		const createWarehouseProductsInput = selectedProducts
 			? selectedProducts.map((pr) => {
 					return {
 						productId: pr.id,
@@ -181,7 +182,10 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 			  })
 			: [];
 
-		let result = await this.warehouseService.addWarehouseProducts(createWarehouseProductsInput, this.warehouse.id);
+		const result = await this.warehouseService.addWarehouseProducts(
+			createWarehouseProductsInput,
+			this.warehouse.id
+		);
 
 		if (createWarehouseProductsInput.length && result) {
 			this.toastrService.success('INVENTORY_PAGE.SUCCESSFULLY_ADDED_PRODUCTS');

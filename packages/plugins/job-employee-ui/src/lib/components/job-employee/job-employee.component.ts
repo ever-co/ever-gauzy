@@ -45,17 +45,17 @@ export enum JobSearchTabsEnum {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-job-employees',
-    templateUrl: './job-employee.component.html',
-    styleUrls: ['./job-employee.component.scss'],
-    providers: [CurrencyPipe],
-    standalone: false
+	selector: 'ga-job-employees',
+	templateUrl: './job-employee.component.html',
+	styleUrls: ['./job-employee.component.scss'],
+	providers: [CurrencyPipe],
+	standalone: false
 })
 export class JobEmployeeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
 	public dataTableId: PageDataTableRegistryId = this._route.snapshot.data.dataTableId; // The identifier for the data table
 	public jobSearchTabsEnum = JobSearchTabsEnum;
-	public loading: boolean = false;
+	public loading = false;
 	public settingsSmartTable: any;
 	public employees$: Subject<any> = new Subject();
 	public nbTab$: Subject<string> = new BehaviorSubject(JobSearchTabsEnum.BROWSE);
@@ -63,7 +63,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	public organization: IOrganization;
 	public selectedEmployeeId: ID;
 	public selectedEmployee: IEmployee;
-	public disableButton: boolean = true;
+	public disableButton = true;
 
 	// Template References
 	@ViewChild('tableLayout', { static: true }) tableLayout: TemplateRef<any>; // Template reference for the table layout tab
@@ -459,6 +459,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Configure smart table settings
 		this.settingsSmartTable = {
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			hideSubHeader: true,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EMPLOYEE'),

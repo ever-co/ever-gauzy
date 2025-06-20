@@ -19,16 +19,16 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-product-categories',
-    templateUrl: './product-categories.component.html',
-    styleUrls: ['./product-categories.component.scss'],
-    standalone: false
+	selector: 'ngx-product-categories',
+	templateUrl: './product-categories.component.html',
+	styleUrls: ['./product-categories.component.scss'],
+	standalone: false
 })
 export class ProductCategoriesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
-	loading: boolean = false;
-	disableButton: boolean = true;
+	loading = false;
+	disableButton = true;
 	selectedProductCategory: IProductCategoryTranslated;
 	productCategories: IProductCategoryTranslated[] = [];
 	selectedOrganization: IOrganization;
@@ -118,6 +118,7 @@ export class ProductCategoriesComponent extends PaginationFilterBaseComponent im
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PRODUCT_CATEGORY'),
 			pager: {
@@ -203,7 +204,7 @@ export class ProductCategoriesComponent extends PaginationFilterBaseComponent im
 			const productCategory = await firstValueFrom(dialog.onClose);
 
 			if (productCategory) {
-				let productCategoryTranslation = productCategory.translations[0];
+				const productCategoryTranslation = productCategory.translations[0];
 				this.toastrService.success('INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED', {
 					name: productCategoryTranslation?.name
 				});

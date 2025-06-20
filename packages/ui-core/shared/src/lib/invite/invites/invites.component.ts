@@ -37,10 +37,10 @@ import { DepartmentNamesComponent } from './department-names/department-names.co
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-invites',
-    templateUrl: './invites.component.html',
-    styleUrls: ['invites.component.scss'],
-    standalone: false
+	selector: 'ga-invites',
+	templateUrl: './invites.component.html',
+	styleUrls: ['invites.component.scss'],
+	standalone: false
 })
 export class InvitesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public InviteStatusEnum: typeof InviteStatusEnum = InviteStatusEnum;
@@ -56,8 +56,8 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 		this._invitationType = value;
 	}
 
-	public loading: boolean = false;
-	public disableButton: boolean = true;
+	public loading = false;
+	public disableButton = true;
 	public settingsSmartTable: object;
 	public smartTableSource: ServerDataSource;
 	public selectedInvite: IInviteViewModel;
@@ -338,6 +338,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 		const pagination: IPaginationBase = this.getPagination();
 		const settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10

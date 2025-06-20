@@ -54,10 +54,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-employees-list',
-    templateUrl: './employees.component.html',
-    styleUrls: ['./employees.component.scss'],
-    standalone: false
+	selector: 'ga-employees-list',
+	templateUrl: './employees.component.html',
+	styleUrls: ['./employees.component.scss'],
+	standalone: false
 })
 export class EmployeesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public dataTableId: PageDataTableRegistryId = this._route.snapshot.data.dataTableId; // The identifier for the data table
@@ -70,9 +70,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	public bonusForSelectedMonth = 0;
-	public disableButton: boolean = true;
-	public includeDeleted: boolean = false;
-	public loading: boolean = false;
+	public disableButton = true;
+	public includeDeleted = false;
+	public loading = false;
 	public organization: IOrganization;
 	public refresh$: Subject<any> = new Subject();
 	public employees$: Subject<any> = this.subject$;
@@ -863,6 +863,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		// Configure Smart Table settings
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EMPLOYEE'),
 			pager: {
 				display: false,

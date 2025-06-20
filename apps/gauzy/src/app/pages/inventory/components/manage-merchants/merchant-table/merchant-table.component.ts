@@ -20,18 +20,18 @@ import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } fro
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-merchant-table',
-    templateUrl: './merchant-table.component.html',
-    styleUrls: ['./merchant-table.component.scss'],
-    standalone: false
+	selector: 'ga-merchant-table',
+	templateUrl: './merchant-table.component.html',
+	styleUrls: ['./merchant-table.component.scss'],
+	standalone: false
 })
 export class MerchantTableComponent extends PaginationFilterBaseComponent implements OnInit {
 	settingsSmartTable: object;
-	loading: boolean = false;
+	loading = false;
 	selectedMerchant: IMerchant;
 	smartTableSource: ServerDataSource;
 	merchants: IMerchant[] = [];
-	disableButton: boolean = true;
+	disableButton = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -124,6 +124,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent implem
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			pager: {
 				display: false,

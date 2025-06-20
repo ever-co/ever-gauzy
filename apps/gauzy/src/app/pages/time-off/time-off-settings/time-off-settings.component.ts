@@ -20,10 +20,10 @@ import { PaidIcon, RequestApprovalIcon } from '../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-time-off-policy-list',
-    templateUrl: './time-off-settings.component.html',
-    styleUrls: ['./time-off-settings.component.scss'],
-    standalone: false
+	selector: 'ga-time-off-policy-list',
+	templateUrl: './time-off-settings.component.html',
+	styleUrls: ['./time-off-settings.component.scss'],
+	standalone: false
 })
 export class TimeOffSettingsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public smartTableSettings: object;
@@ -31,8 +31,8 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 	public smartTableSource: ServerDataSource;
 	public organization: IOrganization;
 	public timeOffPolicies: ITimeOffPolicy[] = [];
-	public loading: boolean = false;
-	public disableButton: boolean = true;
+	public loading = false;
+	public disableButton = true;
 	public PermissionsEnum = PermissionsEnum;
 	public viewComponentName: ComponentEnum;
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -124,6 +124,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 
 		// Set up smart table settings
 		this.smartTableSettings = {
+			sortMode: 'single',
 			actions: false,
 			editable: true,
 			selectedRowIndex: -1,

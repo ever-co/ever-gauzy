@@ -24,10 +24,10 @@ import { SearchTermStore } from '../search/+state/search-term.store';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-task-table',
-    templateUrl: './task-table.component.html',
-    styleUrls: ['./task-table.component.scss'],
-    standalone: false
+	selector: 'ngx-task-table',
+	templateUrl: './task-table.component.html',
+	styleUrls: ['./task-table.component.scss'],
+	standalone: false
 })
 export class TaskTableComponent implements OnInit, AfterViewInit {
 	private _smartTable: Angular2SmartTableComponent;
@@ -123,6 +123,7 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 
 	private loadSmartTableSettings(): void {
 		this.smartTableSettings = {
+			sortMode: 'single',
 			columns: {
 				title: {
 					title: this.translateService.instant('TIMER_TRACKER.TASK'),

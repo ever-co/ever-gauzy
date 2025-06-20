@@ -49,10 +49,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-proposal-list',
-    templateUrl: './proposal.component.html',
-    styleUrls: ['./proposal.component.scss'],
-    standalone: false
+	selector: 'ga-proposal-list',
+	templateUrl: './proposal.component.html',
+	styleUrls: ['./proposal.component.scss'],
+	standalone: false
 })
 export class ProposalComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public smartTableSettings: any;
@@ -67,9 +67,9 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 	public proposalStatusEnum = ProposalStatusEnum;
 	public successRate: string;
 	public totalProposals: number;
-	public countAccepted: number = 0;
-	public loading: boolean = false;
-	public disableButton: boolean = true;
+	public countAccepted = 0;
+	public loading = false;
+	public disableButton = true;
 	public organization: IOrganization;
 	public proposals$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
@@ -408,6 +408,7 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
+			sortMode: 'single',
 			actions: false,
 			editable: true,
 			selectedRowIndex: -1,

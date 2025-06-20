@@ -901,6 +901,7 @@ export class InvoicesByOrganizationComponent extends PaginationFilterBaseCompone
 			},
 			hideSubHeader: true,
 			mode: 'external',
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			actions: false,
 			editable: true,

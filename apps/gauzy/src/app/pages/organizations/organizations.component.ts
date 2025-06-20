@@ -31,9 +31,9 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    templateUrl: './organizations.component.html',
-    styleUrls: ['./organizations.component.scss'],
-    standalone: false
+	templateUrl: './organizations.component.html',
+	styleUrls: ['./organizations.component.scss'],
+	standalone: false
 })
 export class OrganizationsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	settingsSmartTable: object;
@@ -41,10 +41,10 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 	smartTableSource = new LocalDataSource();
 	organizations: IOrganization[] = [];
 	viewComponentName: ComponentEnum;
-	disableButton: boolean = true;
+	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	loading: boolean = true;
+	loading = true;
 	user: IUser;
 	private _refresh$: Subject<any> = new Subject();
 
@@ -137,6 +137,7 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 		this.settingsSmartTable = {
 			actions: false,
 			selectedRowIndex: -1,
+			sortMode: 'single',
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage

@@ -25,14 +25,14 @@ import { ExpenseCategoryMutationComponent } from './expense-category-mutation/ex
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-expense-categories',
-    templateUrl: './expense-categories.component.html',
-    styleUrls: ['expense-categories.component.scss'],
-    standalone: false
+	selector: 'ga-expense-categories',
+	templateUrl: './expense-categories.component.html',
+	styleUrls: ['expense-categories.component.scss'],
+	standalone: false
 })
 export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-	loading: boolean = false;
-	disableButton: boolean = true;
+	loading = false;
+	disableButton = true;
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
 	expenseCategories: IOrganizationExpenseCategory[] = [];
@@ -114,6 +114,7 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent im
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage

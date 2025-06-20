@@ -36,10 +36,10 @@ import { StageComponent } from './stage/stage.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-pipelines',
-    templateUrl: './pipelines.component.html',
-    styleUrls: ['./pipelines.component.scss'],
-    standalone: false
+	selector: 'ga-pipelines',
+	templateUrl: './pipelines.component.html',
+	styleUrls: ['./pipelines.component.scss'],
+	standalone: false
 })
 export class PipelinesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public smartTableSettings: object;
@@ -50,8 +50,8 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 	public viewComponentName: ComponentEnum;
 	public pipeline: IPipeline;
 	public organization: IOrganization;
-	public disableButton: boolean = true;
-	public loading: boolean = false;
+	public disableButton = true;
+	public loading = false;
 	public pipelineTabsEnum = PipelineTabsEnum;
 	public pipelines$: Subject<any> = this.subject$;
 	public nbTab$: Subject<string> = new BehaviorSubject(PipelineTabsEnum.ACTIONS);
@@ -221,6 +221,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 
 		// Configure Smart Table settings
 		this.smartTableSettings = {
+			sortMode: 'single',
 			actions: false,
 			selectedRowIndex: -1,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PIPELINE'),

@@ -15,11 +15,11 @@ import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-sel
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-contracts',
-    templateUrl: './contracts.component.html',
-    styleUrls: ['./contracts.component.scss'],
-    providers: [TitleCasePipe],
-    standalone: false
+	selector: 'ngx-contracts',
+	templateUrl: './contracts.component.html',
+	styleUrls: ['./contracts.component.scss'],
+	providers: [TitleCasePipe],
+	standalone: false
 })
 export class ContractsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public smartTableSettings: any;
@@ -84,6 +84,7 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 	private _loadSmartTableSettings(): void {
 		// Configure Smart Table settings
 		this.smartTableSettings = {
+			sortMode: 'single',
 			selectedRowIndex: -1, // Initialize the selected row index
 			selectMode: 'multi',
 			actions: {

@@ -8,9 +8,9 @@ import { ImageRowComponent } from '../../inventory-table-components/image-row.co
 import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
 
 @Component({
-    templateUrl: './manage-variants-quantity-form.component.html',
-    styleUrls: ['./manage-variants-quantity-form.component.scss'],
-    standalone: false
+	templateUrl: './manage-variants-quantity-form.component.html',
+	styleUrls: ['./manage-variants-quantity-form.component.scss'],
+	standalone: false
 })
 export class ManageVariantsQuantityFormComponent extends TranslationBaseComponent implements OnInit {
 	variants: IWarehouseProductVariant[] = [];
@@ -56,6 +56,7 @@ export class ManageVariantsQuantityFormComponent extends TranslationBaseComponen
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			columns: {
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),

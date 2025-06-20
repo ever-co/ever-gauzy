@@ -14,14 +14,14 @@ import { EnabledStatusComponent, ImageRowComponent } from '../inventory-table-co
 
 @UntilDestroy()
 @Component({
-    selector: 'ngx-view-inventory-item',
-    templateUrl: './view-inventory-item.component.html',
-    styleUrls: ['./view-inventory-item.component.scss'],
-    standalone: false
+	selector: 'ngx-view-inventory-item',
+	templateUrl: './view-inventory-item.component.html',
+	styleUrls: ['./view-inventory-item.component.scss'],
+	standalone: false
 })
 export class InventoryItemViewComponent extends TranslationBaseComponent implements OnInit {
 	inventoryItem: IProductTranslatable;
-	loading: boolean = true;
+	loading = true;
 	options: IProductOptionTranslatable[] = [];
 
 	@ViewChild('variantTable') variantTable;
@@ -74,7 +74,7 @@ export class InventoryItemViewComponent extends TranslationBaseComponent impleme
 				}
 
 				this.options.map((option) => {
-					let currentTranslation = option.translations.find((translation) => {
+					const currentTranslation = option.translations.find((translation) => {
 						return (
 							translation.languageCode == languageCode ||
 							translation.languageCode == LanguagesEnum.ENGLISH
@@ -124,6 +124,7 @@ export class InventoryItemViewComponent extends TranslationBaseComponent impleme
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			hideSubHeader: true,
 			columns: {
 				image: {

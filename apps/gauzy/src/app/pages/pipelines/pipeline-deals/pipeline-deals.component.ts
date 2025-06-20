@@ -21,10 +21,10 @@ import { PipelineDealProbabilityComponent } from '../table-components/pipeline-d
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-pipeline-deals',
-    templateUrl: './pipeline-deals.component.html',
-    styleUrls: ['./pipeline-deals.component.scss'],
-    standalone: false
+	selector: 'ga-pipeline-deals',
+	templateUrl: './pipeline-deals.component.html',
+	styleUrls: ['./pipeline-deals.component.scss'],
+	standalone: false
 })
 export class PipelineDealsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public viewComponentName: ComponentEnum = ComponentEnum.PIPELINE_DEALS;
@@ -36,8 +36,8 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 	public smartTableSettings: object;
 	public deals: IDeal[] = [];
 	public selectedDeal: IDeal;
-	public loading: boolean = false;
-	public disableButton: boolean = true;
+	public loading = false;
+	public disableButton = true;
 	public organization: IOrganization;
 	public pipeline: IPipeline;
 	public pipeline$: Observable<IPipeline>;
@@ -225,6 +225,7 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 		// Set up smart table settings
 		this.smartTableSettings = {
 			actions: false,
+			sortMode: 'single',
 			noDataMessage: this.getTranslation('SM_TABLE.NO_RESULT'),
 			selectedRowIndex: -1,
 			pager: {

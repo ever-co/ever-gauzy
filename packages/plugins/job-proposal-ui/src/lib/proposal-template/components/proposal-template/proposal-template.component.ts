@@ -43,15 +43,15 @@ export enum ProposalTemplateTabsEnum {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-proposal-template',
-    templateUrl: './proposal-template.component.html',
-    styleUrls: ['./proposal-template.component.scss'],
-    standalone: false
+	selector: 'ga-proposal-template',
+	templateUrl: './proposal-template.component.html',
+	styleUrls: ['./proposal-template.component.scss'],
+	standalone: false
 })
 export class ProposalTemplateComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public smartTableSettings: any;
-	public disableButton: boolean = true;
-	public loading: boolean = false;
+	public disableButton = true;
+	public loading = false;
 	public smartTableSource: ServerDataSource;
 	public selectedEmployee: ISelectedEmployee;
 	public selectedItem: any;
@@ -298,6 +298,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 
 		// Configure Smart Table settings
 		this.smartTableSettings = {
+			sortMode: 'single',
 			actions: false,
 			editable: true,
 			hideSubHeader: true,

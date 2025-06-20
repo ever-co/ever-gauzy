@@ -29,10 +29,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-vendors',
-    templateUrl: './vendors.component.html',
-    styleUrls: ['vendors.component.scss'],
-    standalone: false
+	selector: 'ga-vendors',
+	templateUrl: './vendors.component.html',
+	styleUrls: ['vendors.component.scss'],
+	standalone: false
 })
 export class VendorsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public addEditDialogRef: NbDialogRef<any>;
@@ -49,9 +49,9 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 		vendor: null,
 		state: false
 	};
-	public disabled: boolean = true;
-	public saveDisabled: boolean = false;
-	public loading: boolean = false;
+	public disabled = true;
+	public saveDisabled = false;
+	public loading = false;
 	private _refresh$: Subject<any> = new Subject();
 
 	/*
@@ -178,6 +178,7 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			pager: {
 				perPage: pagination ? pagination : this.minItemPerPage

@@ -32,15 +32,15 @@ import { ImageRowComponent, NameWithDescriptionComponent } from '../inventory-ta
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-table-inventory',
-    templateUrl: './table-inventory.component.html',
-    styleUrls: ['./table-inventory.component.scss'],
-    standalone: false
+	selector: 'ngx-table-inventory',
+	templateUrl: './table-inventory.component.html',
+	styleUrls: ['./table-inventory.component.scss'],
+	standalone: false
 })
 export class TableInventoryComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	settingsSmartTable: object;
-	loading: boolean = false;
-	disableButton: boolean = true;
+	loading = false;
+	disableButton = true;
 	selectedProduct: IProduct;
 	smartTableSource: ServerDataSource;
 	products: IProductTranslated[] = [];
@@ -139,6 +139,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent imple
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			pager: {
 				display: false,

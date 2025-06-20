@@ -225,6 +225,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 	loadSmartTable() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			sortMode: 'single',
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10

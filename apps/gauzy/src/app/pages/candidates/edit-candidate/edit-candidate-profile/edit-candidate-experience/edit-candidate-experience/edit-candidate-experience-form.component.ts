@@ -10,10 +10,10 @@ import { PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
 import { CandidateExperienceService, CandidateStore, Store, ToastrService } from '@gauzy/ui-core/core';
 
 @Component({
-    selector: 'ga-edit-candidate-experience-form',
-    templateUrl: './edit-candidate-experience-form.component.html',
-    styleUrls: ['./edit-candidate-experience-form.component.scss'],
-    standalone: false
+	selector: 'ga-edit-candidate-experience-form',
+	templateUrl: './edit-candidate-experience-form.component.html',
+	styleUrls: ['./edit-candidate-experience-form.component.scss'],
+	standalone: false
 })
 export class EditCandidateExperienceFormComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	selectedOrganization: IOrganization;
@@ -191,6 +191,7 @@ export class EditCandidateExperienceFormComponent extends PaginationFilterBaseCo
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			columns: {
 				occupation: {
 					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.OCCUPATION'),

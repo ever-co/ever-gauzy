@@ -27,9 +27,9 @@ import { DEFAULT_EVENT_TYPE } from './default-event-type';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    templateUrl: './event-type.component.html',
-    styleUrls: ['event-type.component.scss'],
-    standalone: false
+	templateUrl: './event-type.component.html',
+	styleUrls: ['event-type.component.scss'],
+	standalone: false
 })
 export class EventTypeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	smartTableSource: ServerDataSource;
@@ -39,7 +39,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent implements
 	eventTypes: IEventTypeViewModel[] = [];
 	selectedEmployeeId: string;
 	viewComponentName: ComponentEnum;
-	disableButton: boolean = true;
+	disableButton = true;
 	loading: boolean;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -282,6 +282,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent implements
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EVENT_TYPE'),
 			columns: {

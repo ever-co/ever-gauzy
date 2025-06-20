@@ -51,22 +51,22 @@ import { JobTitleDescriptionDetailsComponent } from '../job-title-description-de
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-job-search',
-    templateUrl: './job-search.component.html',
-    styleUrls: ['./job-search.component.scss'],
-    standalone: false
+	selector: 'ga-job-search',
+	templateUrl: './job-search.component.html',
+	styleUrls: ['./job-search.component.scss'],
+	standalone: false
 })
 export class JobSearchComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
-	loading: boolean = false;
-	isRefresh: boolean = false;
-	autoRefresh: boolean = false;
+	loading = false;
+	isRefresh = false;
+	autoRefresh = false;
 	settingsSmartTable: any = {
 		selectedRowIndex: -1,
 		editable: false,
 		hideSubHeader: true,
 		actions: false
 	};
-	isOpenAdvancedFilter: boolean = false;
+	isOpenAdvancedFilter = false;
 	jobs: IEmployeeJobPost[] = [];
 	JobPostSourceEnum = JobPostSourceEnum;
 	JobPostTypeEnum = JobPostTypeEnum;
@@ -76,7 +76,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 	jobs$: Subject<any> = this.subject$;
 	smartTableSource: ServerDataSource;
 	autoRefreshTimer: Subscription;
-	disableButton: boolean = true;
+	disableButton = true;
 	selectedJob: IEmployeeJobPost;
 	nbTab$: Subject<string> = new BehaviorSubject(JobSearchTabsEnum.ACTIONS);
 	public organization: IOrganization;
@@ -639,6 +639,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			...this.settingsSmartTable,
+			sortMode: 'single',
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10

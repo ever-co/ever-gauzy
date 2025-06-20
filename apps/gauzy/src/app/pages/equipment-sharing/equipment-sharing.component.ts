@@ -36,13 +36,13 @@ import { EquipmentSharingPolicyTableComponent } from './table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    templateUrl: './equipment-sharing.component.html',
-    styleUrls: ['./equipment-sharing.component.scss'],
-    standalone: false
+	templateUrl: './equipment-sharing.component.html',
+	styleUrls: ['./equipment-sharing.component.scss'],
+	standalone: false
 })
 export class EquipmentSharingComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-	loading: boolean = false;
-	disableButton: boolean = true;
+	loading = false;
+	disableButton = true;
 
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
@@ -145,6 +145,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			pager: {
 				display: false,

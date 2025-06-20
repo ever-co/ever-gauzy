@@ -383,6 +383,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		const pagination = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROJECT'),
 			pager: {
 				display: false,

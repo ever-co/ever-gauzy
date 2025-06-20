@@ -33,15 +33,15 @@ import { CandidateStatusComponent, CandidateSourceComponent } from './table-comp
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    templateUrl: './candidates.component.html',
-    styleUrls: ['./candidates.component.scss'],
-    standalone: false
+	templateUrl: './candidates.component.html',
+	styleUrls: ['./candidates.component.scss'],
+	standalone: false
 })
 export class CandidatesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-	includeArchived: boolean = false;
-	loading: boolean = false;
-	organizationInvitesAllowed: boolean = false;
-	disableButton: boolean = true;
+	includeArchived = false;
+	loading = false;
+	organizationInvitesAllowed = false;
+	disableButton = true;
 	settingsSmartTable: object;
 	sourceSmartTable: ServerDataSource;
 	selectedCandidate: ICandidateViewModel;
@@ -328,6 +328,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			pager: {
 				display: false,

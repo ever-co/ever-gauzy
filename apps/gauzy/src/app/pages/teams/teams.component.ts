@@ -40,17 +40,17 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-teams',
-    templateUrl: './teams.component.html',
-    styleUrls: ['./teams.component.scss'],
-    standalone: false
+	selector: 'ga-teams',
+	templateUrl: './teams.component.html',
+	styleUrls: ['./teams.component.scss'],
+	standalone: false
 })
 export class TeamsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	@ViewChild('addEditTemplate')
 	addEditTemplate: TemplateRef<any>;
 	addEditDialogRef: NbDialogRef<any>;
 	selectedTeam: IOrganizationTeam;
-	disableButton: boolean = true;
+	disableButton = true;
 	loading: boolean;
 
 	teams: IOrganizationTeam[] = [];
@@ -417,6 +417,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TEAM'),
 			pager: {

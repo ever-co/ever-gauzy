@@ -19,9 +19,9 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    templateUrl: './equipment-sharing-policy.component.html',
-    styleUrls: ['./equipment-sharing-policy.component.scss'],
-    standalone: false
+	templateUrl: './equipment-sharing-policy.component.html',
+	styleUrls: ['./equipment-sharing-policy.component.scss'],
+	standalone: false
 })
 export class EquipmentSharingPolicyComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	settingsSmartTable: object;
@@ -111,6 +111,7 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
+			sortMode: 'single',
 			selectedRowIndex: -1,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EQUIPMENT_SHARING_POLICY'),
 			pager: {
