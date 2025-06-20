@@ -21,7 +21,7 @@
   background: var(--gauzy-card-2);
   border-radius: var(--border-radius);
   &:first-child {
-    border-radius-top-left: 0;
+    border-top-left-radius: 0;
     border: 1px solid red;
   }
 }
