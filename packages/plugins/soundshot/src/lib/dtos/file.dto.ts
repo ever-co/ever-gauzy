@@ -7,7 +7,6 @@ import {
 	IsOptional,
 	IsPositive,
 	IsString,
-	IsUrl,
 	Matches,
 	MaxLength,
 	Min
@@ -99,7 +98,6 @@ export class FileDTO implements UploadedFile {
 		example: 'https://example.com/soundshot-demo-2024.webm'
 	})
 	@IsNotEmpty({ message: 'File URL must not be empty' })
-	@IsUrl({ protocols: ['https', 'http'] }, { message: 'File URL must be a valid URL' })
 	@MaxLength(2083, { message: 'File URL must not exceed 2083 characters' }) // 2083 is the maximum URL length in browsers
 	url: string;
 

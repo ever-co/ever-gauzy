@@ -1,0 +1,14 @@
+@let isLoading = isLoading$ | async;
+<!-- Structure -->
+<div nbInfiniteList [threshold]="500" [throttleTime]="300" (bottomThreshold)="fetchMoreSoundshots()"
+	class="soundshot-list">
+	@for (soundshot of soundshots$ | async; track soundshot.id){ @defer (on viewport) {
+	<plug-soundshot-player [soundshot]="soundshot" (download)="onDownload($event)" (recover)="onRecover($event)"
+		(delete)="onDelete($event)" (hardDelete)="onHardDelete($event)"></plug-soundshot-player>
+	}@placeholder (minimum 500ms) {
+	<plug-soundshot-player-skeleton></plug-soundshot-player-skeleton>
+	} }@empty {
+	<ngx-no-data-message status="danger"
+		[message]="isLoading ? 'Loading soundshots...' : 'No soundshots found'"></ngx-no-data-message>
+	}
+</div>

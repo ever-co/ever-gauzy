@@ -69,8 +69,8 @@ export class MakeComOAuthService {
 			throw new Error('Make.com client ID is not configured');
 		}
 
-		// Use provided state or generate a new one
-		const state = options?.state ?? Buffer.from(JSON.stringify({ tenantId, organizationId })).toString('base64');
+		// Always generate state internally to ensure consistent format
+		const state = Buffer.from(JSON.stringify({ tenantId, organizationId })).toString('base64url');
 
 		// Generate PKCE parameters
 		const codeVerifier = this.generateCodeVerifier();
@@ -107,7 +107,7 @@ export class MakeComOAuthService {
 			}
 
 			// Decode the state parameter
-			const decodedState = JSON.parse(Buffer.from(state, 'base64').toString());
+			const decodedState = JSON.parse(Buffer.from(state, 'base64url').toString());
 			const { tenantId, organizationId } = decodedState;
 
 			// Set the tenant context for subsequent operations
@@ -137,9 +137,10 @@ export class MakeComOAuthService {
 			});
 
 			// Add code verifier for PKCE if available
-			if (stateVerification.codeVerifier) {
-				tokenRequestParams.append('code_verifier', stateVerification.codeVerifier);
+			if (!stateVerification.codeVerifier) {
+				throw new BadRequestException('Missing PKCE code verifier');
 			}
+			tokenRequestParams.append('code_verifier', stateVerification.codeVerifier);
 
 			const headers = {
 				'Content-Type': 'application/x-www-form-urlencoded',

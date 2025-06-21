@@ -58,7 +58,8 @@ export class GetSoundshotsQueryHandler implements IQueryHandler<GetSoundshotsQue
 		// Fetch paginated soundshots from the service
 		return this.soundshotService.paginate({
 			...params,
-			where: { ...where, ...params.where }
+			where: { ...where, ...params.where },
+			withDeleted: true
 		});
 	}
 }
