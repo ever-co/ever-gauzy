@@ -58,7 +58,7 @@
 		"nestjs"
 	],
 	"engines": {
-		"node": ">=20.11.1",
+		"node": ">=20.18.1",
 		"yarn": ">=1.22.19"
 	},
 	"sideEffects": false

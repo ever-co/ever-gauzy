@@ -57,7 +57,7 @@ ARG DESKTOP_APP_DOWNLOAD_LINK_LINUX
 ARG MOBILE_APP_DOWNLOAD_LINK
 ARG EXTENSION_DOWNLOAD_LINK
 
-FROM node:20.11.1-alpine3.19 AS dependencies
+FROM node:20.18.1-alpine3.19 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -145,7 +145,7 @@ RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
 RUN yarn postinstall.manual
 RUN yarn cache clean
 
-FROM node:20.11.1-alpine3.19 AS development
+FROM node:20.18.1-alpine3.19 AS development
 
 USER node:node
 
@@ -155,7 +155,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.compose.sh /entrypo
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:20.11.1-alpine3.19 AS build
+FROM node:20.18.1-alpine3.19 AS build
 
 WORKDIR /srv/gauzy
 
