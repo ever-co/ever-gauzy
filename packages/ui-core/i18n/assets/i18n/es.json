@@ -175,7 +175,8 @@
 		"ADD_VERSION": "Añadir Versión",
 		"READ_MORE": "Leer más",
 		"READ_LESS": "Leer menos",
-		"RECOVER": "Recuperar"
+		"RECOVER": "Recuperar",
+		"ADD_MORE_SOURCES": "Añadir más fuentes"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -599,6 +600,10 @@
 			"BUDGET": "Presupuesto",
 			"HOURS": "Horas.",
 			"COST": "Costo",
+			"MAKE_COM_CLIENT_ID": "Ingrese su ID de cliente Make.com",
+			"MAKE_COM_CLIENT_SECRET": "Ingrese su clave secreta de cliente Make.com",
+			"ZAPIER_CLIENT_ID": "Ingrese su ID de cliente Zapier",
+			"ZAPIER_CLIENT_SECRET": "Ingrese su clave secreta de cliente Zapier",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Nombre de la escuela",
 				"DEGREE": "Grado / Diploma",
@@ -832,6 +837,8 @@
 		"POSITIONS": "Posiciones",
 		"INTEGRATIONS": "Aplicaciones e integraciones",
 		"UPWORK": "Upwork",
+		"MAKE_COM": "Make.com",
+		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Propuestas",
 		"TIME_OFF": "Tiempo libre",
@@ -1276,6 +1283,93 @@
 			"CONTRACTS_RELATED_DATA": "Entidades relacionadas con contratos sincronizados",
 			"DATE_RANGE_PLACEHOLDER": "Elija una fecha entre.",
 			"HOURLY": "Por hora"
+		},
+		"MAKE_COM_PAGE": {
+			"SCENARIOS": "Escenarios",
+			"EXECUTIONS": "Ejecuciones",
+			"HISTORY": "Historial",
+			"SETTINGS": "Configuración",
+			"ERRORS": {
+				"INVALID_FORM": "Por favor, complete todos los campos requeridos",
+				"START_AUTHORIZATION": "Por favor, inicie el proceso de autorización"
+			},
+			"CLIENT_ID": "ID de Cliente",
+			"CLIENT_SECRET": "Clave Secreta del Cliente",
+			"NEXT_STEP_INFO": "Después de la autorización, será redirigido a Make.com para completar la configuración de la integración"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Configuración de Make.com",
+				"ENABLE_INTEGRATION": "Activar integración Make.com",
+				"WEBHOOK_URL": "URL del Webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "Ingrese la URL del webhook",
+				"WEBHOOK_URL_INVALID": "Por favor ingrese una URL de webhook válida",
+				"SAVE": "Guardar configuración"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "ID de Cliente",
+			"CLIENT_SECRET": "Clave Secreta del Cliente",
+			"NEXT_STEP_INFO": "Después de la autorización, será redirigido a Zapier para completar la configuración de la integración",
+			"ERRORS": {
+				"LOAD_SETTINGS": "Error al cargar la configuración de Zapier",
+				"SAVE_SETTINGS": "Error al guardar la configuración de Zapier",
+				"INVALID_FORM": "Por favor, complete todos los campos requeridos",
+				"MISSING_CREDENTIALS": "Faltan credenciales del cliente",
+				"NO_ACCESS_TOKEN": "No hay token de acceso disponible",
+				"LOAD_WEBHOOKS": "Error al cargar webhooks",
+				"DELETE_WEBHOOK": "Error al eliminar webhook",
+				"LOAD_ACTIONS": "Error al cargar acciones",
+				"LOAD_TRIGGERS": "Error al cargar disparadores",
+				"START_AUTHORIZATION": "Por favor, inicie el proceso de autorización",
+				"INVALID_TOKEN": "Token inválido proporcionado",
+				"TOKEN_NOT_FOUND": "Token no encontrado"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Configuración de Zapier guardada correctamente",
+				"DELETE_WEBHOOK": "Webhook eliminado correctamente"
+			},
+			"TAB": {
+				"TRIGGERS": "Disparadores",
+				"ACTIONS": "Acciones",
+				"WEBHOOKS": "Webhooks",
+				"SETTINGS": "Configuración"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "Los disparadores son eventos que ocurren en Gauzy y se pueden usar para activar acciones en Zapier.",
+				"ACTIONS": "Las acciones son eventos que ocurren en Zapier y se pueden usar para activar acciones en Gauzy.",
+				"WEBHOOKS": "Los webhooks son eventos que ocurren en Zapier y se pueden usar para activar acciones en Gauzy.",
+				"SETTINGS": "La configuración son los ajustes para la integración de Zapier."
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "Los disparadores se han habilitado correctamente.",
+				"TRIGGERS_DISABLED": "Los disparadores se han deshabilitado correctamente.",
+				"ACTIONS_ENABLED": "Las acciones se han habilitado correctamente.",
+				"ACTIONS_DISABLED": "Las acciones se han deshabilitado correctamente.",
+				"WEBHOOKS_ENABLED": "Los webhooks se han habilitado correctamente.",
+				"WEBHOOKS_DISABLED": "Los webhooks se han deshabilitado correctamente."
+			},
+			"SETTINGS": {
+				"TITLE": "Configuración de Zapier",
+				"ENABLE_INTEGRATION": "Habilitar integración de Zapier",
+				"WEBHOOK_URL": "URL del webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "Ingrese la URL del webhook",
+				"WEBHOOK_URL_INVALID": "Por favor, ingrese una URL de webhook válida",
+				"WEBHOOK_INFO": "Webhook es una URL que se utiliza para actualizar datos en Gauzy basado en un evento específico en Zapier.",
+				"SAVE": "Guardar configuración"
+			},
+			"ACTIONS": {
+				"TITLE": "Acciones",
+				"NO_ACTIONS": "No hay acciones disponibles"
+			},
+			"TRIGGERS": {
+				"TITLE": "Disparadores",
+				"NO_TRIGGERS": "No hay disparadores disponibles"
+			},
+			"WEBHOOKS": {
+				"TITLE": "Webhooks",
+				"NO_WEBHOOKS": "No hay webhooks configurados"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Clave de Gauzy AI",
@@ -4848,7 +4942,8 @@
 				"LICENSE_TOO_LONG": "El campo de la licencia es demasiado largo",
 				"FAILED": "Validación fallida",
 				"CHANGELOG_TOO_SHORT": "El changelog es demasiado corto",
-				"CHANGELOG_REQUIRED": "El changelog es obligatorio"
+				"CHANGELOG_REQUIRED": "El changelog es obligatorio",
+				"REQUIRED": "Obligatorio"
 			},
 			"TYPE": "Tipo de complemento",
 			"TYPE_PLACEHOLDER": "Seleccione el tipo de complemento",
@@ -4906,7 +5001,12 @@
 			"OR": "O",
 			"RELEASE_DATE": "Fecha de lanzamiento",
 			"CHANGELOG": "Changelog",
-			"CHANGELOG_PLACEHOLDER": "Ingrese el changelog"
+			"CHANGELOG_PLACEHOLDER": "Ingrese el changelog",
+			"CLICK_TO_SELECT_SOURCE": "Haz clic para seleccionar fuente",
+			"SELECT_SOURCE_TYPE": "Seleccionar tipo de fuente",
+			"ADD_SOURCE": "Agregar nueva fuente",
+			"OPERATING_SYSTEM": "Sistema operativo",
+			"ARCHITECTURE": "Arquitectura"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Estadísticas de uso",
@@ -4966,6 +5066,21 @@
 					"DESCRIPTION": "¿Estás seguro de que quieres restaurar esta versión?",
 					"CONFIRM": "Restaurar"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "Crear nueva fuente para la versión v{{ number }} del plugin {{ name }}",
+					"DESCRIPTION": "¿Está seguro de que desea crear esta versión?",
+					"CONFIRM": "Crear"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "Instalar plugin",
+				"DESCRIPTION": "¿Está seguro de que desea instalar este plugin?",
+				"CONFIRM": "Instalar",
+				"VALIDATION": {
+					"REQUIRED": "Se requiere token de autenticación"
+				}
 			}
 		},
 		"TOASTR": {
@@ -4975,6 +5090,12 @@
 					"UPDATED": "¡Versión del complemento v{{number}} actualizada con éxito!",
 					"DELETED": "¡Versión del complemento eliminada con éxito!",
 					"RESTORED": "¡Versión del complemento restaurada con éxito!"
+				},
+				"SOURCE": {
+					"CREATED": "¡Fuente del plugin creada con éxito!",
+					"UPDATED": "¡Fuente del plugin actualizada con éxito!",
+					"DELETED": "¡Fuente del plugin eliminada con éxito!",
+					"RESTORED": "¡Fuente del plugin restaurada con éxito!"
 				},
 				"UPLOADED": "¡Complemento subido con éxito!",
 				"UPDATED": "¡Complemento actualizado con éxito!",
@@ -4989,6 +5110,12 @@
 					"DELETING": "Eliminando versión del complemento...",
 					"RESTORING": "Restaurando versión del complemento..."
 				},
+				"SOURCE": {
+					"ADDING": "Agregando nueva fuente...",
+					"UPDATING": "Actualizando versión del plugin...",
+					"DELETING": "Eliminando versión del plugin...",
+					"RESTORING": "Restaurando versión del plugin..."
+				},
 				"UPLOADING": "Subiendo complemento...",
 				"UPDATING": "Actualizando complemento...",
 				"DELETING": "Eliminando complemento...",
@@ -4998,6 +5125,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "Error al restaurar la versión del complemento. ¡Por favor, inténtelo de nuevo!"
+				},
+				"SOURCE": {
+					"RESTORE": "Error al restaurar la fuente del plugin. ¡Por favor, inténtelo de nuevo!"
 				},
 				"UPLOAD": "Error al subir el complemento. ¡Por favor, inténtelo de nuevo!",
 				"NOT_FOUND": "Complemento con ID {{ id }} no encontrado.",

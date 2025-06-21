@@ -27,6 +27,10 @@ export type TAppSetting = {
 	kbMouseTracking: boolean
 }
 
+export type TInitialConfig = {
+	isSetup: boolean
+}
+
 export function resolveHtmlPath(htmlFileName: string, hash: string) {
 	if (process.env.NODE_ENV === 'development') {
 		const port = process.env.PORT || 4200;
@@ -91,4 +95,14 @@ export function getAppSetting(): Partial<TAppSetting> {
 	return appConfig;
 }
 
+export function getInitialConfig(): Partial<TInitialConfig> {
+	const initialConfig = (LocalStore.getStore('configs') ?? {}) as Partial<TInitialConfig>;
+	return initialConfig;
+}
 
+export function getScreenshotSoundPath():string {
+	if (process.env.NODE_ENV === 'development') {
+		return path.join(__dirname, '..', 'data', 'sound', 'snapshot-sound.wav');
+	}
+	return path.join(process.resourcesPath, 'data', 'sound', 'snapshot-sound.wav');
+}

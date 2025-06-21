@@ -85,6 +85,7 @@ export * from './lib/job-search-category.model';
 export * from './lib/job-search-occupation.model';
 export * from './lib/language.model';
 export * from './lib/mention.model';
+export * from './lib/make-com.model';
 export * from './lib/organization-award.model';
 export * from './lib/organization-contact.model';
 export * from './lib/organization-department.model';
@@ -153,6 +154,10 @@ export * from './lib/user-organization.model';
 export * from './lib/user.model';
 export * from './lib/wakatime.model';
 export * from './lib/plugin.model';
+export * from './lib/camshot.model';
+export * from './lib/clone.model';
+export * from './lib/soundshot.model';
+export * from './lib/zapier.model';
 
 export {
 	ActorTypeEnum,

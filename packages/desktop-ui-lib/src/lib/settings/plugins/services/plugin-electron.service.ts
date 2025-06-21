@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { ID } from '@gauzy/contracts';
+import { ID, PluginOSArch, PluginOSType } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { IPlugin } from './plugin-loader.service';
@@ -95,5 +95,9 @@ export class PluginElectronService {
 				this.electronService.ipcRenderer.removeListener(channel, listener);
 			};
 		});
+	}
+
+	public getOS(): Promise<{ platform: PluginOSType; arch: PluginOSArch }> {
+		return this.electronService.ipcRenderer.invoke('plugins::get-os');
 	}
 }

@@ -42,6 +42,7 @@
 	"dependencies": {
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin-changelog": "^0.1.0",
+		"@gauzy/plugin-integration-activepieces": "^0.1.0",
 		"@gauzy/plugin-integration-ai": "^0.1.0",
 		"@gauzy/plugin-integration-github": "^0.1.0",
 		"@gauzy/plugin-integration-hubstaff": "^0.1.0",
@@ -57,6 +58,8 @@
 		"@gauzy/plugin-sentry": "^0.1.0",
 		"@gauzy/plugin-posthog": "^0.1.0",
 		"@gauzy/plugin-videos": "^0.1.0",
+		"@gauzy/plugin-camshot": "^0.1.0",
+		"@gauzy/plugin-soundshot": "^0.1.0",
 		"@gauzy/plugin-registry": "^0.1.0",
 		"dotenv": "^16.0.3",
 		"yargs": "^17.5.0"

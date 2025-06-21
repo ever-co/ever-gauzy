@@ -1,6 +1,7 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { GauzyFiltersModule, NoDataMessageModule, SharedModule } from '@gauzy/ui-core/shared';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -12,15 +13,16 @@ import {
 	NbListModule,
 	NbPopoverModule,
 	NbProgressBarModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbTabsetModule
 } from '@nebular/theme';
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
 import { MomentModule } from 'ngx-moment';
-import { GauzyFiltersModule, NoDataMessageModule, SharedModule } from '@gauzy/ui-core/shared';
 import { VideoEffects } from './+state/video.effect';
 import { VideoQuery } from './+state/video.query';
 import { VideoStore } from './+state/video.store';
+import { CamshotListComponent } from './features/camshot-list/camshot-list.component';
 import { VideoDownloadManagerComponent } from './features/video-download-manager/video-download-manager.component';
 import { VideoListComponent } from './features/video-list/video-list.component';
 import { VideoComponent } from './features/video/video.component';
@@ -31,6 +33,8 @@ import { FileDownloadService } from './shared/services/download/file-download.se
 import { FileSaveStrategy } from './shared/services/download/strategies/file-save.strategy';
 import { VideoService } from './shared/services/video.service';
 import { WebShareService } from './shared/services/web-share.service';
+import { CamshotItemSkeletonComponent } from './shared/ui/camshot/camshot-item-skeleton/camshot-item-skeleton.component';
+import { CamshotItemComponent } from './shared/ui/camshot/camshot-item/camshot-item.component';
 import { ActionButtonGroupComponent } from './shared/ui/video-actions/buttons/action-button-group/action-button-group.component';
 import { ActionButtonComponent } from './shared/ui/video-actions/buttons/action-button/action-button.component';
 import { VideoEditComponent } from './shared/ui/video-edit/video-edit.component';
@@ -40,6 +44,12 @@ import { VideoMetadataComponent } from './shared/ui/video-metadata/video-metadat
 import { VideoPlayerComponent } from './shared/ui/video-player/video-player.component';
 import { VideoSkeletonComponent } from './shared/ui/video-skeleton/video-skeleton.component';
 import { VideoUiRoutingModule } from './video-ui-routing.module';
+import { CamshotEffects } from './+state/camshot/camshot.effect';
+import { CamshotViewerComponent } from './shared/ui/camshot/camshot-viewer/camshot-viewer.component';
+import { SoundshotEffects } from './+state/soundshot/soundshot.effect';
+import { SoundshotPlayerComponent } from './shared/ui/soundshot/soundshot-player/soundshot-player.component';
+import { SoundshotListComponent } from './features/soundshot-list/soundshot-list.component';
+import { SoundshotPlayerSkeletonComponent } from './shared/ui/soundshot/soundshot-player-skeleton/soundshot-player-skeleton.component';
 
 @NgModule({
 	declarations: [
@@ -55,7 +65,14 @@ import { VideoUiRoutingModule } from './video-ui-routing.module';
 		VideoMetadataComponent,
 		VideoDownloadManagerComponent,
 		VideoItemSkeletonComponent,
-		VideoSkeletonComponent
+		VideoSkeletonComponent,
+		CamshotItemComponent,
+		CamshotItemSkeletonComponent,
+		CamshotListComponent,
+		CamshotViewerComponent,
+		SoundshotPlayerComponent,
+		SoundshotListComponent,
+		SoundshotPlayerSkeletonComponent
 	],
 	imports: [
 		CommonModule,
@@ -76,11 +93,13 @@ import { VideoUiRoutingModule } from './video-ui-routing.module';
 		NbListModule,
 		MomentModule,
 		TranslateModule.forChild(),
-		NbSpinnerModule
+		NbSpinnerModule,
+		NbTabsetModule,
+		NgOptimizedImage
 	],
 	providers: [
 		provideEffectsManager(),
-		provideEffects(VideoEffects),
+		provideEffects(VideoEffects, CamshotEffects, SoundshotEffects),
 		VideoQuery,
 		VideoStore,
 		VideoService,
@@ -91,4 +110,4 @@ import { VideoUiRoutingModule } from './video-ui-routing.module';
 		NbInfiniteListDirective
 	]
 })
-export class VideoUiModule {}
+export class VideoUiModule { }

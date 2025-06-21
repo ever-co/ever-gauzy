@@ -7,8 +7,27 @@
   .list {
     overflow-y: auto;
     min-width: 416px;
-    padding-inline-end: 1rem;
+    height: 100%;
   }
+
+  .no-data {
+    margin: 416px;
+  }
+}
+
+::ng-deep nb-tab.content-active {
+  padding: 1rem;
+  height: calc(100vh - 22.5rem);
+  background: var(--gauzy-card-2);
+  border-radius: var(--border-radius);
+  &:first-child {
+    border-top-left-radius: 0;
+    border: 1px solid red;
+  }
+}
+
+::ng-deep nb-route-tabset .tab-link {
+  text-transform: unset;
 }
 
 @media (max-width: 1435px) {

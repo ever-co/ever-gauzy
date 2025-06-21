@@ -1,0 +1,48 @@
+<nb-card class="card-scroll">
+	<nb-card-header class="d-flex">
+		<ngx-back-navigation></ngx-back-navigation>
+		<h5>{{ 'INTEGRATIONS.ZAPIER_PAGE.SETTINGS.TITLE' | translate }}</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<form class="col-xl-6 col-12" [formGroup]="form" (ngSubmit)="saveSettings()">
+			<div class="form-group">
+				<nb-checkbox formControlName="isEnabled">
+					{{ 'INTEGRATIONS.ZAPIER_PAGE.SETTINGS.ENABLE_INTEGRATION' | translate }}
+				</nb-checkbox>
+			</div>
+			<div class="form-group">
+				<label for="webhookUrl" class="label">{{
+					'INTEGRATIONS.ZAPIER_PAGE.SETTINGS.WEBHOOK_URL' | translate
+				}}</label>
+				<input
+					fullWidth
+					id="webhookUrl"
+					formControlName="webhookUrl"
+					type="url"
+					nbInput
+					[placeholder]="'INTEGRATIONS.ZAPIER_PAGE.SETTINGS.WEBHOOK_URL_PLACEHOLDER' | translate"
+				/>
+				<div
+					*ngIf="form.get('webhookUrl').touched && form.get('webhookUrl').errors?.required"
+					class="error-message"
+				>
+					{{ 'FORM.VALIDATION.REQUIRED' | translate }}
+				</div>
+				<div
+					*ngIf="form.get('webhookUrl').touched && form.get('webhookUrl').errors?.pattern"
+					class="error-message"
+				>
+					{{ 'FORM.VALIDATION.INVALID_URL' | translate }}
+				</div>
+			</div>
+			<div class="hint">
+				<nb-icon icon="info-outline"></nb-icon>
+				{{ 'INTEGRATIONS.ZAPIER_PAGE.SETTINGS.WEBHOOK_INFO' | translate }}
+			</div>
+			<button nbButton status="primary" [disabled]="form.invalid || loading" size="small" outline type="submit">
+				<nb-icon *ngIf="loading" icon="loader-outline" class="mr-2"></nb-icon>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</form>
+	</nb-card-body>
+</nb-card>

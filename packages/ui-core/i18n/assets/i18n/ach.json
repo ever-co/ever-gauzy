@@ -524,6 +524,10 @@
 			"BUDGET": "crwdns9020:0crwdne9020:0",
 			"HOURS": "crwdns9022:0crwdne9022:0",
 			"COST": "crwdns9024:0crwdne9024:0",
+			"MAKE_COM_CLIENT_ID": "Ket Make.com Client ID ni",
+			"MAKE_COM_CLIENT_SECRET": "Ket Make.com Client Secret ni",
+			"ZAPIER_CLIENT_ID": "Ket Zapier Client ID ni",
+			"ZAPIER_CLIENT_SECRET": "Ket Zapier Client Secret ni",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "crwdns3674:0crwdne3674:0",
 				"DEGREE": "crwdns3676:0crwdne3676:0",
@@ -735,6 +739,8 @@
 		"POSITIONS": "crwdns7712:0crwdne7712:0",
 		"INTEGRATIONS": "crwdns8128:0crwdne8128:0",
 		"UPWORK": "crwdns3200:0crwdne3200:0",
+		"ZAPIER": "Zapier",
+		"MAKE_COM": "Make.com",
 		"PROPOSALS": "crwdns2104:0crwdne2104:0",
 		"TIME_OFF": "crwdns2495:0crwdne2495:0",
 		"APPROVALS": "crwdns4390:0crwdne4390:0",
@@ -956,7 +962,6 @@
 			"EXPORT_DATA": "crwdns11197:0crwdne11197:0",
 			"IMPORT_DATA": "crwdns11199:0crwdne11199:0",
 			"ALL_ENTITIES": "crwdns11203:0crwdne11203:0",
-
 			"ACTIVITY_LOG": "Kit ma gityeko",
 			"DAILY_PLAN": "Cik me nino",
 			"ENTITY_SUBSCRIPTION": "Keto nying i jami",
@@ -1164,6 +1169,96 @@
 			"CONTRACTS_RELATED_DATA": "crwdns4414:0crwdne4414:0",
 			"DATE_RANGE_PLACEHOLDER": "crwdns7782:0crwdne7782:0",
 			"HOURLY": "crwdns10004:0crwdne10004:0"
+		},
+		"MAKE_COM_PAGE": {
+			"SCENARIOS": "Scenarios",
+			"EXECUTIONS": "Executions",
+			"HISTORY": "History",
+			"SETTINGS": "Settings",
+			"ERRORS": {
+				"INVALID_FORM": "Tim ber iyie pot buk ma mito ni ber",
+				"START_AUTHORIZATION": "Please start the authorization process"
+			},
+			"CLIENT_ID": "Client Id",
+			"CLIENT_SECRET": "Client Secret",
+			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Make.com me tiyo ki integration"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Make.com Settings",
+				"ENABLE_INTEGRATION": "Cakki Make.com Integration",
+				"WEBHOOK_URL": "Webhook URL",
+				"WEBHOOK_URL_PLACEHOLDER": "Ket webhook URL",
+				"WEBHOOK_URL_INVALID": "Tim beri webhook URL maber",
+				"SAVE": "Gwok Settings"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "Ket Zapier Client ID ni",
+			"CLIENT_SECRET": "Ket Zapier Client Secret ni",
+			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Zapier me tiyo ki integration",
+			"ERRORS": {
+				"LOAD_SETTINGS": "Peko oo pe gonyo ter pa Zapier",
+				"SAVE_SETTINGS": "Peko oo pe gam ter pa Zapier",
+				"INVALID_FORM": "Tim ber iyie pot buk ma mito ni ber",
+				"MISSING_CREDENTIALS": "Peko pe tye lok ma loyo client",
+				"NO_ACCESS_TOKEN": "Peke pe tye token ma loyo",
+				"LOAD_WEBHOOKS": "Peko oo pe gonyo webhooks",
+				"DELETE_WEBHOOK": "Peko oo pe junk webhook",
+				"LOAD_ACTIONS": "Peko oo pe gonyo tic",
+				"LOAD_TRIGGERS": "Peko oo pe gonyo lok ma gonyo",
+				"START_AUTHORIZATION": "Ket cwoki pa authorization ni",
+				"INVALID_CALLBACK": "Peko tye callback ma tye maber",
+				"AUTHORIZATION": "Peko tye authorization ma tye maber",
+				"INVALID_TOKEN": "Token ma pe tye maber omiyo",
+				"TOKEN_NOT_FOUND": "Token pe ononge"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Ter pa Zapier ogam ki ber",
+				"DELETE_WEBHOOK": "Webhook ojunk ki ber",
+				"AUTHORIZATION": "Authorization puched ki ber"
+			},
+			"TAB": {
+				"TRIGGERS": "Lok ma gonyo",
+				"ACTIONS": "Tic",
+				"WEBHOOKS": "Webhooks",
+				"SETTINGS": "Ter"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "Lok ma gonyo eno ni tic ma tye i Gauzy ki gitye ki twero tiyo kwede tic i Zapier.",
+				"ACTIONS": "Tic eno ni tic ma tye i Zapier ki gitye ki twero tiyo kwede tic i Gauzy.",
+				"WEBHOOKS": "Webhooks eno ni tic ma tye i Zapier ki gitye ki twero tiyo kwede tic i Gauzy.",
+				"SETTINGS": "Ter eno ni ter ma kigoyo i tic kwede Zapier."
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "Lok ma gonyo oloko ki ber.",
+				"TRIGGERS_DISABLED": "Lok ma gonyo pe oloko ki ber.",
+				"ACTIONS_ENABLED": "Tic oloko ki ber.",
+				"ACTIONS_DISABLED": "Tic pe oloko ki ber.",
+				"WEBHOOKS_ENABLED": "Webhooks oloko ki ber.",
+				"WEBHOOKS_DISABLED": "Webhooks pe oloko ki ber."
+			},
+			"SETTINGS": {
+				"TITLE": "Ter pa Zapier",
+				"ENABLE_INTEGRATION": "Cak tic kwede Zapier",
+				"WEBHOOK_URL": "URL pa Webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "Ket URL pa webhook",
+				"WEBHOOK_URL_INVALID": "Tim ber ket URL pa webhook ma tye",
+				"WEBHOOK_INFO": "Webhook eno ni tic ma tye i Zapier ki gitye ki twero tiyo kwede tic i Gauzy.",
+				"SAVE": "Gam ter"
+			},
+			"ACTIONS": {
+				"TITLE": "Tic",
+				"NO_ACTIONS": "Pe tye tic ma kelo"
+			},
+			"TRIGGERS": {
+				"TITLE": "Lok ma gonyo",
+				"NO_TRIGGERS": "Pe tye lok ma gonyo"
+			},
+			"WEBHOOKS": {
+				"TITLE": "Webhooks",
+				"NO_WEBHOOKS": "Pe tye webhook ma kigoyo"
+			}
 		},
 		"COMING_SOON": "crwdns4078:0crwdne4078:0",
 		"RE_INTEGRATE": "crwdns8132:0crwdne8132:0",

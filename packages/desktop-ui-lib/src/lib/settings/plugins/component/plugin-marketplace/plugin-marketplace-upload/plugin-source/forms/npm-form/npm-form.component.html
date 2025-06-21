@@ -1,0 +1,60 @@
+<lib-form-section *ngIf="form" [formGroup]="form" class="source-content">
+	<!-- NPM fields here -->
+	<lib-form-row *ngIf="form.get('name')">
+		<nb-form-field class="form-group full-width">
+			<label class="label" for="npm-name">{{ 'PLUGIN.FORM.NPM.PACKAGE_NAME' | translate }} *</label>
+			<input
+				nbInput
+				fullWidth
+				id="npm-name"
+				formControlName="name"
+				placeholder="@scope/package-name"
+				[status]="getFieldError('name') ? 'danger' : 'basic'"
+			/>
+			<nb-hint *ngIf="getFieldError('name', 'required')" status="danger">
+				{{ 'PLUGIN.FORM.VALIDATION.PACKAGE_NAME_REQUIRED' | translate }}
+			</nb-hint>
+			<nb-hint *ngIf="getFieldError('name', 'pattern')" status="danger">
+				{{ 'PLUGIN.FORM.VALIDATION.INVALID_PACKAGE_NAME' | translate }}
+			</nb-hint>
+		</nb-form-field>
+	</lib-form-row>
+
+	<lib-form-row>
+		<nb-form-field *ngIf="form.get('registry')" class="form-group">
+			<label class="label" for="npm-registry">{{ 'PLUGIN.FORM.NPM.REGISTRY' | translate }}</label>
+			<input
+				nbInput
+				fullWidth
+				id="npm-registry"
+				formControlName="registry"
+				placeholder="https://registry.npmjs.org"
+				[status]="getFieldError('registry') ? 'danger' : 'basic'"
+			/>
+			<nb-hint *ngIf="getFieldError('registry', 'pattern')" status="danger">
+				{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
+			</nb-hint>
+		</nb-form-field>
+
+		<nb-form-field *ngIf="form.get('scope')" class="form-group">
+			<label class="label" for="npm-scope">{{ 'PLUGIN.FORM.NPM.SCOPE' | translate }}</label>
+			<input
+				nbInput
+				fullWidth
+				id="npm-scope"
+				formControlName="scope"
+				placeholder="@organization"
+				[status]="getFieldError('scope') ? 'danger' : 'basic'"
+			/>
+			<nb-hint *ngIf="getFieldError('scope', 'pattern')" status="danger">
+				{{ 'PLUGIN.FORM.VALIDATION.INVALID_SCOPE' | translate }}
+			</nb-hint>
+		</nb-form-field>
+	</lib-form-row>
+	<lib-form-row *ngIf="form.get('private')">
+		<div class="form-group full-width">
+			<label class="label" for="npm-auth-token">{{ 'PLUGIN.FORM.NPM.AUTH_TOKEN' | translate }}</label>
+			<nb-toggle formControlName="private">{{ 'PLUGIN.FORM.VALIDATION.REQUIRED' | translate }} </nb-toggle>
+		</div>
+	</lib-form-row>
+</lib-form-section>

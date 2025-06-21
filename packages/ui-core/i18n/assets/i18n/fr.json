@@ -175,7 +175,8 @@
 		"ADD_VERSION": "Ajouter une version",
 		"READ_MORE": "Lire plus",
 		"READ_LESS": "Lire moins",
-		"RECOVER": "Récupérer"
+		"RECOVER": "Récupérer",
+		"ADD_MORE_SOURCES": "Ajouter plus de sources"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -598,6 +599,10 @@
 			"BUDGET": "Budget",
 			"HOURS": "Heures",
 			"COST": "Coût",
+			"MAKE_COM_CLIENT_ID": "Entrez votre identifiant client Make.com",
+			"MAKE_COM_CLIENT_SECRET": "Entrez votre clé secrète client Make.com",
+			"ZAPIER_CLIENT_ID": "Entrez votre identifiant client Zapier",
+			"ZAPIER_CLIENT_SECRET": "Entrez votre clé secrète client Zapier",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Nom de l'école",
 				"DEGREE": "Degré / Diplôme",
@@ -831,6 +836,8 @@
 		"POSITIONS": "Postes",
 		"INTEGRATIONS": "Applications et intégrations",
 		"UPWORK": "Upwork",
+		"MAKE_COM": "Make.com",
+		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Proposition",
 		"TIME_OFF": "Congé",
@@ -1275,6 +1282,93 @@
 			"CONTRACTS_RELATED_DATA": "Entités liées aux contrats synchronisés",
 			"DATE_RANGE_PLACEHOLDER": "Choisissez une date entre",
 			"HOURLY": "Horaire"
+		},
+		"MAKE_COM_PAGE": {
+			"SCENARIOS": "Scénarios",
+			"EXECUTIONS": "Exécutions",
+			"HISTORY": "Historique",
+			"SETTINGS": "Paramètres",
+			"ERRORS": {
+				"INVALID_FORM": "Veuillez remplir tous les champs requis",
+				"START_AUTHORIZATION": "Veuillez démarrer le processus d'autorisation"
+			},
+			"CLIENT_ID": "Identifiant Client",
+			"CLIENT_SECRET": "Clé Secrète Client",
+			"NEXT_STEP_INFO": "Après l'autorisation, vous serez redirigé vers Make.com pour finaliser la configuration de l'intégration"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Paramètres Make.com",
+				"ENABLE_INTEGRATION": "Activer l'intégration Make.com",
+				"WEBHOOK_URL": "URL du Webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "Entrez l'URL du webhook",
+				"WEBHOOK_URL_INVALID": "Veuillez entrer une URL de webhook valide",
+				"SAVE": "Enregistrer les paramètres"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "Identifiant Client",
+			"CLIENT_SECRET": "Clé Secrète Client",
+			"NEXT_STEP_INFO": "Après l'autorisation, vous serez redirigé vers Zapier pour finaliser la configuration de l'intégration",
+			"ERRORS": {
+				"LOAD_SETTINGS": "Échec du chargement des paramètres Zapier",
+				"SAVE_SETTINGS": "Échec de l'enregistrement des paramètres Zapier",
+				"INVALID_FORM": "Veuillez remplir tous les champs requis",
+				"MISSING_CREDENTIALS": "Identifiants client manquants",
+				"NO_ACCESS_TOKEN": "Aucun jeton d'accès disponible",
+				"LOAD_WEBHOOKS": "Échec du chargement des webhooks",
+				"DELETE_WEBHOOK": "Échec de la suppression du webhook",
+				"LOAD_ACTIONS": "Échec du chargement des actions",
+				"LOAD_TRIGGERS": "Échec du chargement des déclencheurs",
+				"START_AUTHORIZATION": "Veuillez démarrer le processus d'autorisation",
+				"INVALID_TOKEN": "Jeton invalide fourni",
+				"TOKEN_NOT_FOUND": "Jeton non trouvé"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Paramètres Zapier enregistrés avec succès",
+				"DELETE_WEBHOOK": "Webhook supprimé avec succès"
+			},
+			"TAB": {
+				"TRIGGERS": "Déclencheurs",
+				"ACTIONS": "Actions",
+				"WEBHOOKS": "Webhooks",
+				"SETTINGS": "Paramètres"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "Les déclencheurs sont des événements qui se produisent dans Gauzy et peuvent être utilisés pour déclencher des actions dans Zapier.",
+				"ACTIONS": "Les actions sont des événements qui se produisent dans Zapier et peuvent être utilisés pour déclencher des actions dans Gauzy.",
+				"WEBHOOKS": "Les webhooks sont des événements qui se produisent dans Zapier et peuvent être utilisés pour déclencher des actions dans Gauzy.",
+				"SETTINGS": "Les paramètres sont les paramètres pour l'intégration Zapier."
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "Les déclencheurs ont été activés avec succès.",
+				"TRIGGERS_DISABLED": "Les déclencheurs ont été désactivés avec succès.",
+				"ACTIONS_ENABLED": "Les actions ont été activées avec succès.",
+				"ACTIONS_DISABLED": "Les actions ont été désactivées avec succès.",
+				"WEBHOOKS_ENABLED": "Les webhooks ont été activés avec succès.",
+				"WEBHOOKS_DISABLED": "Les webhooks ont été désactivés avec succès."
+			},
+			"SETTINGS": {
+				"TITLE": "Paramètres Zapier",
+				"ENABLE_INTEGRATION": "Activer l'intégration Zapier",
+				"WEBHOOK_URL": "URL du webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "Entrez l'URL du webhook",
+				"WEBHOOK_URL_INVALID": "Veuillez entrer une URL de webhook valide",
+				"WEBHOOK_INFO": "Webhook est une URL qui est utilisée pour mettre à jour les données dans Gauzy en fonction d'un événement spécifique dans Zapier.",
+				"SAVE": "Enregistrer les paramètres"
+			},
+			"ACTIONS": {
+				"TITLE": "Actions",
+				"NO_ACTIONS": "Aucune action disponible"
+			},
+			"TRIGGERS": {
+				"TITLE": "Déclencheurs",
+				"NO_TRIGGERS": "Aucun déclencheur disponible"
+			},
+			"WEBHOOKS": {
+				"TITLE": "Webhooks",
+				"NO_WEBHOOKS": "Aucun webhook configuré"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Clé Gauzy AI",
@@ -4837,7 +4931,8 @@
 				"LICENSE_TOO_LONG": "Le champ de la licence est trop long",
 				"FAILED": "Échec de la validation",
 				"CHANGELOG_TOO_SHORT": "Le changelog est trop court",
-				"CHANGELOG_REQUIRED": "Le changelog est requis"
+				"CHANGELOG_REQUIRED": "Le changelog est requis",
+				"REQUIRED": "Requis"
 			},
 			"TYPE": "Type de plugin",
 			"TYPE_PLACEHOLDER": "Sélectionnez le type de plugin",
@@ -4895,7 +4990,11 @@
 			"OR": "Ou",
 			"RELEASE_DATE": "Date de sortie",
 			"CHANGELOG": "Journal des modifications",
-			"CHANGELOG_PLACEHOLDER": "Entrez les modifications"
+			"CHANGELOG_PLACEHOLDER": "Entrez les modifications",
+			"CLICK_TO_SELECT_SOURCE": "Cliquez pour sélectionner une source",
+			"SELECT_SOURCE_TYPE": "Sélectionner le type de source",
+			"OPERATING_SYSTEM": "Système d'exploitation",
+			"ARCHITECTURE": "Architecture"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Statistiques d'utilisation",
@@ -4955,6 +5054,21 @@
 					"DESCRIPTION": "Êtes-vous sûr de vouloir restaurer cette version ?",
 					"CONFIRM": "Restaurer"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "Créer une nouvelle source pour la version v{{ number }} du plugin {{ name }}",
+					"DESCRIPTION": "Êtes-vous sûr de vouloir créer cette version ?",
+					"CONFIRM": "Créer"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "Installer le plugin",
+				"DESCRIPTION": "Êtes-vous sûr de vouloir installer ce plugin ?",
+				"CONFIRM": "Installer",
+				"VALIDATION": {
+					"REQUIRED": "Le jeton d'authentification est requis"
+				}
 			}
 		},
 		"TOASTR": {
@@ -4964,6 +5078,12 @@
 					"UPDATED": "Version du plugin v{{number}} mise à jour avec succès !",
 					"DELETED": "Version du plugin supprimée avec succès !",
 					"RESTORED": "Version du plugin restaurée avec succès !"
+				},
+				"SOURCE": {
+					"CREATED": "Source du plugin créée avec succès !",
+					"UPDATED": "Source du plugin mise à jour avec succès !",
+					"DELETED": "Source du plugin supprimée avec succès !",
+					"RESTORED": "Source du plugin restaurée avec succès !"
 				},
 				"UPLOADED": "Plugin téléchargé avec succès !",
 				"UPDATED": "Plugin mis à jour avec succès !",
@@ -4978,6 +5098,12 @@
 					"DELETING": "Suppression de la version du plugin...",
 					"RESTORING": "Restauration de la version du plugin..."
 				},
+				"SOURCE": {
+					"ADDING": "Ajout d'une nouvelle source...",
+					"UPDATING": "Mise à jour de la version du plugin...",
+					"DELETING": "Suppression de la version du plugin...",
+					"RESTORING": "Restauration de la version du plugin..."
+				},
 				"UPLOADING": "Téléchargement du plugin...",
 				"UPDATING": "Mise à jour du plugin...",
 				"DELETING": "Suppression du plugin...",
@@ -4987,6 +5113,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "Échec de la restauration de la version du plugin. Veuillez réessayer !"
+				},
+				"SOURCE": {
+					"RESTORE": "Échec de la restauration de la source du plugin. Veuillez réessayer !"
 				},
 				"UPLOAD": "Échec du téléchargement du plugin. Veuillez réessayer !",
 				"NOT_FOUND": "Plugin avec l'ID {{ id }} introuvable.",

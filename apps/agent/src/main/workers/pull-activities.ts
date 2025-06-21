@@ -2,7 +2,7 @@ import { KeyboardMouseEventCounter, KbMouseTimer, KeyboardMouseActivityStores } 
 import { KbMouseActivityService, TranslateService, notifyScreenshot } from '@gauzy/desktop-lib';
 import AppWindow from '../window-manager';
 import * as path from 'node:path';
-import { getScreen, getAppSetting, delaySync, TAppSetting } from '../util';
+import { getScreen, getAppSetting, delaySync, TAppSetting, getScreenshotSoundPath } from '../util';
 import { getScreenshot, TScreenShot } from '../screenshot';
 import { Notification } from 'electron';
 import { AgentLogger } from '../agent-logger';
@@ -99,11 +99,16 @@ class PullActivities {
 		}
 	}
 
+	private afkEVentHandler() {
+		this.agentLogger.info(`AFK detected`);
+	}
+
 	getTimerModule() {
 		if (!this.timerModule) {
 			this.timerModule = KbMouseTimer.getInstance();
 			this.timerModule.onFlush(this.activityProcess.bind(this));
 			this.timerModule.setFlushInterval(60);
+			this.timerModule.afkEvent(this.afkEVentHandler.bind(this));
 		}
 		const appSetting = getAppSetting();
 		const screenshotInterval = (appSetting?.timer?.updatePeriod || 5) * 60; // value is in seconds and default to 5 minutes
@@ -138,9 +143,15 @@ class PullActivities {
 					try {
 						await this.appWindow.initScreenShotNotification();
 						await delaySync(100);
-						await notifyScreenshot(this.appWindow.notificationWindow, img, null, '', null);
+						await notifyScreenshot(
+							this.appWindow.notificationWindow,
+							img,
+							null,
+							getScreenshotSoundPath(),
+							this.appWindow.notificationWindow.browserWindow
+						);
 					} catch (error) {
-
+						this.agentLogger.error(`Failed to show screenshot notification ${JSON.stringify(error)}`);
 					}
 				}
 			}
@@ -183,7 +194,7 @@ class PullActivities {
 		return imgs;
 	}
 
-	async activityProcess(timeData: { timeStart: Date; timeEnd: Date }, isScreenshot?: boolean) {
+	async activityProcess(timeData: { timeStart: Date; timeEnd: Date }, isScreenshot?: boolean, afkDuration?: number) {
 		try {
 			let imgs = [];
 			if (isScreenshot) {
@@ -203,7 +214,8 @@ class PullActivities {
 				mouseMovementsCount: activities.mouseMovementsCount,
 				mouseEvents: JSON.stringify(activities.mouseEvents),
 				remoteId: this.remoteId,
-				screenshots: JSON.stringify(imgs.map((img) => img.filePath))
+				screenshots: JSON.stringify(imgs.map((img) => img.filePath)),
+				afkDuration: afkDuration || 0
 			});
 			this.agentLogger.info('Keyboard and mouse activities saved');
 		} catch (error: unknown) {

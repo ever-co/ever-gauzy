@@ -3,9 +3,10 @@
 	"language": "en",
 	"$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
 	"words": [
-		"accesibility",
 		"activitywatch",
 		"adminer",
+		"activepieces",
+		"ActivePieces",
 		"AGPL",
 		"airbyte",
 		"Akveo",
@@ -357,6 +358,7 @@
 		"pdfmake",
 		"pdfmaker",
 		"Pdfmaker",
+		"makecom",
 		"PERFLOG",
 		"PGBIN",
 		"pgcrypto",
@@ -636,6 +638,7 @@
 		"openzipkin",
 		"opensearchproject",
 		"nofile",
+		"nosniff",
 		"ICDN",
 		"INPM",
 		"ɵcmp",
@@ -659,13 +662,22 @@
 		"gauzyagent",
 		"PostHog",
 		"posthog",
+		"PKCE",
+		"udts",
 		"autocapture",
 		"pageview",
 		"signup",
 		"wrapp",
 		"dyld",
 		"oidc",
-		"Registerables"
+		"Registerables",
+		"Archs",
+		"camshot",
+		"camshots",
+		"dtos",
+		"soundshot",
+		"soundshots",
+		"runtimes"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
@@ -702,6 +714,8 @@
 		"docker-compose.yml",
 		"**/agent/src/assets/icons/**",
 		"**/agent/src/assets/images/**",
-		"./qodo/**"
+		"./qodo/**",
+		"**/rules",
+		".codacy"
 	]
 }

@@ -1,0 +1,271 @@
+/* Container */
+.sources-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  overflow: auto;
+  align-items: center;
+}
+
+/* Header actions*/
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Source Cards with Futuristic Design */
+.source-card {
+  position: relative;
+  padding: 1.5rem;
+  border-radius: 16px;
+  background: var(--card-background-color);
+  border: 1px solid var(--border-basic-color-4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  margin-bottom: 1rem;
+  min-width: 482px;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border-color: var(--color-primary-default);
+
+    .hover-actions {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .card-glow {
+      opacity: 0.1;
+    }
+  }
+
+  &.cdk-drag-preview {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02) rotate(1deg);
+  }
+}
+
+.card-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--color-primary-default);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+/* Drag Handle Area */
+.drag-area {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.drag-icon {
+  opacity: 0.3;
+  transition: opacity 0.2s;
+
+  .source-card:hover & {
+    opacity: 0.8;
+  }
+}
+
+/* Header Styles */
+.source-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+
+  h5 {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-primary-color);
+    font-size: 1.1rem;
+  }
+}
+
+/* Hover Actions */
+.hover-actions {
+  position: absolute;
+  top: 1rem;
+  right: 4rem;
+  display: flex;
+  gap: 0.5rem;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  border: 2px dashed var(--border-basic-color-3);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: var(--color-primary-default);
+    background: var(--background-basic-color-2);
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+    color: var(--text-hint-color);
+    margin-bottom: 1rem;
+  }
+
+  h5 {
+    margin: 0.5rem 0;
+    color: var(--text-primary-color);
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-hint-color);
+  }
+}
+
+/* Add Source Card - Futuristic Design */
+.add-source-card {
+  position: relative;
+  padding: 2rem;
+  border-radius: 16px;
+  background: var(--background-basic-color-2);
+  border: 2px dashed var(--border-basic-color-3);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  width: 482px;
+
+  &:hover {
+    background: var(--background-basic-color-3);
+    border-color: var(--color-primary-default);
+    transform: translateY(-2px);
+
+    .add-icon {
+      transform: scale(1.1);
+      color: var(--color-primary-default);
+    }
+  }
+
+  .add-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .add-icon {
+    font-size: 2.5rem;
+    color: var(--text-hint-color);
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  h5 {
+    margin: 0.5rem 0;
+    color: var(--text-primary-color);
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-hint-color);
+  }
+}
+
+/* Source Selector Popup */
+.source-selector {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--background-basic-color-1);
+  z-index: 10;
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.3s ease;
+}
+
+.selector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+
+  h5 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}
+
+.source-options {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.source-option {
+  padding: 1.5rem 1rem;
+  border-radius: 12px;
+  background: var(--background-basic-color-2);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-grow: 2;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+
+  &:hover {
+    background: var(--color-primary-default);
+    color: white;
+
+    .option-icon {
+      color: white;
+    }
+  }
+
+  .option-icon {
+    font-size: 1.8rem;
+    color: var(--color-primary-default);
+    display: block;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Drag & Drop Styles */
+.cdk-drag-placeholder {
+  opacity: 0.5;
+  background: var(--background-basic-color-3);
+  border: 2px dashed var(--color-primary-default);
+}
+
+.sources-list.cdk-drop-list-dragging .source-card:not(.cdk-drag-placeholder) {
+  transition: transform 300ms cubic-bezier(0, 0, 0.2, 1);
+}

@@ -1,4 +1,3 @@
-
 import { AppError } from '../../error-handler';
 import { IKbMouseActivityService } from '../../interfaces';
 import { KbMouseActivityDAO } from '../dao';

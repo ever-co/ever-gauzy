@@ -14,6 +14,7 @@ import { distinctUntilChanged, map, Observable, tap } from 'rxjs';
 import { VideoActions } from '../../+state/video.action';
 import { VideoQuery } from '../../+state/video.query';
 import { VideoStore } from '../../+state/video.store';
+import { IVideo } from '../../shared/models/video.model';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -120,6 +121,10 @@ export class VideoDetailPageComponent implements OnInit, AfterViewInit, OnDestro
 			map((count) => count > 1),
 			untilDestroyed(this)
 		);
+	}
+
+	public get video$(): Observable<IVideo> {
+		return this.videoQuery.video$;
 	}
 
 	ngOnDestroy() {

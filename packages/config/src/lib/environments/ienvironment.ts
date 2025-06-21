@@ -3,6 +3,7 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import {
+	IActivepiecesConfig,
 	IAppIntegrationConfig,
 	IAuth0Config,
 	IAwsConfig,
@@ -123,7 +124,8 @@ export interface IEnvironment {
 	hubstaff?: IHubstaffConfig;
 	zapier?: IZapierConfig;
 	makeCom?: IMakeComConfig;
-
+	/** ActivePieces Configuration */
+	activepieces?: IActivepiecesConfig;
 	isElectron?: boolean;
 	gauzyUserPath?: string;
 	allowSuperAdminRole?: boolean;

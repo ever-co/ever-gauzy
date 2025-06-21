@@ -1,0 +1,27 @@
+@use '../dialog-create-version/dialog-create-version.component' as *;
+
+.dialog-card {
+  width: 360px;
+  height: 100%;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .header-icon {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+  }
+
+  .title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-basic-color);
+  }
+}
+
+nb-card-footer {
+  gap: 1rem;
+}

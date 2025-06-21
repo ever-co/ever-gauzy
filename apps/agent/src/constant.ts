@@ -2,6 +2,15 @@ const CONSTANT =  {
 	TRAY_ICON_PATH: 'assets/icons/tray/icon.png'
 }
 
+const MAIN_EVENT = 'MAIN_EVENT';
+
+const MAIN_EVENT_TYPE = {
+	LOGOUT_EVENT: 'LOGOUT_EVENT',
+	SETUP_EVENT: 'SETUP_EVENT'
+}
+
 export {
-	CONSTANT
+	CONSTANT,
+	MAIN_EVENT,
+	MAIN_EVENT_TYPE
 }

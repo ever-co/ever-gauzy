@@ -174,7 +174,8 @@
 		"ADD_VERSION": "הוסף גרסה",
 		"READ_MORE": "קרא עוד",
 		"READ_LESS": "קרא פחות",
-		"RECOVER": "שחזר"
+		"RECOVER": "שחזר",
+		"ADD_MORE_SOURCES": "הוסף יותר מקורות"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -603,6 +604,10 @@
 			"BUDGET": "Budget",
 			"HOURS": "Hours",
 			"COST": "Cost",
+			"MAKE_COM_CLIENT_ID": "הזן את מזהה הלקוח Make.com שלך",
+			"MAKE_COM_CLIENT_SECRET": "הזן את סיסמת הלקוח Make.com שלך",
+			"ZAPIER_CLIENT_ID": "הזן את מזהה הלקוח Zapier שלך",
+			"ZAPIER_CLIENT_SECRET": "הזן את סיסמת הלקוח Zapier שלך",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -834,6 +839,8 @@
 		"POSITIONS": "עמדות",
 		"INTEGRATIONS": "Apps & Integrations",
 		"UPWORK": "Upwork",
+		"MAKE_COM": "Make.com",
+		"ZAPIER": "Zapier",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"APPROVALS": "Approvals",
@@ -1277,6 +1284,93 @@
 			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
 			"HOURLY": "Hourly"
+		},
+		"MAKE_COM_PAGE": {
+			"SCENARIOS": "סצנות",
+			"EXECUTIONS": "מימושים",
+			"HISTORY": "היסטוריה",
+			"SETTINGS": "הגדרות",
+			"ERRORS": {
+				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
+				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור"
+			},
+			"CLIENT_ID": "מזהה לקוח",
+			"CLIENT_SECRET": "סיסמת לקוח",
+			"NEXT_STEP_INFO": "לאחר האישור, תועבר ל-Make.com להשלמת הגדרות האינטגרציה"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "הגדרות Make.com",
+				"ENABLE_INTEGRATION": "הפעל אינטגרציית Make.com",
+				"WEBHOOK_URL": "כתובת Webhook",
+				"WEBHOOK_URL_PLACEHOLDER": "הזן כתובת webhook",
+				"WEBHOOK_URL_INVALID": "אנא הזן כתובת webhook תקינה",
+				"SAVE": "שמור הגדרות"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "מזהה לקוח",
+			"CLIENT_SECRET": "סיסמת לקוח",
+			"NEXT_STEP_INFO": "לאחר האישור, תועבר ל-Zapier להשלמת הגדרות האינטגרציה",
+			"ERRORS": {
+				"LOAD_SETTINGS": "נכשל בטעינת הגדרות Zapier",
+				"SAVE_SETTINGS": "נכשל בשמירת הגדרות Zapier",
+				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
+				"MISSING_CREDENTIALS": "חסרים פרטי גישה של הלקוח",
+				"NO_ACCESS_TOKEN": "אין אסימון גישה זמין",
+				"LOAD_WEBHOOKS": "נכשל בטעינת וובחוקים",
+				"DELETE_WEBHOOK": "נכשל במחיקת וובחוק",
+				"LOAD_ACTIONS": "נכשל בטעינת פעולות",
+				"LOAD_TRIGGERS": "נכשל בטעינת טריגרים",
+				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור",
+				"INVALID_TOKEN": "אסימון לא תקין סופק",
+				"TOKEN_NOT_FOUND": "אסימון לא נמצא"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "הגדרות Zapier נשמרו בהצלחה",
+				"DELETE_WEBHOOK": "וובחוק נמחק בהצלחה"
+			},
+			"TAB": {
+				"TRIGGERS": "טריגרים",
+				"ACTIONS": "פעולות",
+				"WEBHOOKS": "וובחוקים",
+				"SETTINGS": "הגדרות"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "טריגרים הם אירועים שמתרחשים ב-Gauzy וניתן להשתמש בהם כדי להפעיל פעולות ב-Zapier.",
+				"ACTIONS": "פעולות הן אירועים שמתרחשים ב-Zapier וניתן להשתמש בהם כדי להפעיל פעולות ב-Gauzy.",
+				"WEBHOOKS": "וובחוקים הם אירועים שמתרחשים ב-Zapier וניתן להשתמש בהם כדי להפעיל פעולות ב-Gauzy.",
+				"SETTINGS": "הגדרות הן ההגדרות לשילוב Zapier."
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "טריגרים הופעלו בהצלחה.",
+				"TRIGGERS_DISABLED": "טריגרים הושבתו בהצלחה.",
+				"ACTIONS_ENABLED": "פעולות הופעלו בהצלחה.",
+				"ACTIONS_DISABLED": "פעולות הושבתו בהצלחה.",
+				"WEBHOOKS_ENABLED": "וובחוקים הופעלו בהצלחה.",
+				"WEBHOOKS_DISABLED": "וובחוקים הושבתו בהצלחה."
+			},
+			"SETTINGS": {
+				"TITLE": "הגדרות Zapier",
+				"ENABLE_INTEGRATION": "הפעל שילוב Zapier",
+				"WEBHOOK_URL": "כתובת אתר של וובחוק",
+				"WEBHOOK_URL_PLACEHOLDER": "הזן כתובת אתר של וובחוק",
+				"WEBHOOK_URL_INVALID": "אנא הזן כתובת אתר חוקית של וובחוק",
+				"WEBHOOK_INFO": "וובחוק הוא כתובת אתר שמשמשת לעדכון נתונים ב-Gauzy בהתאם לאירוע מסוים ב-Zapier.",
+				"SAVE": "שמור הגדרות"
+			},
+			"ACTIONS": {
+				"TITLE": "פעולות",
+				"NO_ACTIONS": "אין פעולות זמינות"
+			},
+			"TRIGGERS": {
+				"TITLE": "טריגרים",
+				"NO_TRIGGERS": "אין טריגרים זמינים"
+			},
+			"WEBHOOKS": {
+				"TITLE": "וובחוקים",
+				"NO_WEBHOOKS": "אין וובחוקים מוגדרים"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"TITLE": "Gauzy AI Integration",
@@ -4835,7 +4929,8 @@
 				"LICENSE_TOO_LONG": "שדה הרישיון ארוך מדי",
 				"FAILED": "האימות נכשל",
 				"CHANGELOG_TOO_SHORT": "שדה השינויים ארוך מדי",
-				"CHANGELOG_REQUIRED": "שדה השינויים נדרש"
+				"CHANGELOG_REQUIRED": "שדה השינויים נדרש",
+				"REQUIRED": "נדרש"
 			},
 			"TYPE": "סוג התוסף",
 			"TYPE_PLACEHOLDER": "בחר סוג תוסף",
@@ -4893,7 +4988,12 @@
 			"OR": "או",
 			"RELEASE_DATE": "תאריך הרישיון",
 			"CHANGELOG": "יומן השינויים",
-			"CHANGELOG_PLACEHOLDER": "הזן יומן השינויים"
+			"CHANGELOG_PLACEHOLDER": "הזן יומן השינויים",
+			"CLICK_TO_SELECT_SOURCE": "לחץ כדי לבחור מקור",
+			"SELECT_SOURCE_TYPE": "בחר סוג מקור",
+			"ADD_SOURCE": "הוסף מקור חדש",
+			"OPERATING_SYSTEM": "מערכת הפעלה",
+			"ARCHITECTURE": "ארכיטקטורה"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "סטטיסטיקות שימוש",
@@ -4953,6 +5053,21 @@
 					"DESCRIPTION": "האם אתה בטוח שברצונך לשחזר גרסה זו?",
 					"CONFIRM": "שחזר"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "צור מקור חדש לגרסה v{{ number }} של התוסף {{ name }}",
+					"DESCRIPTION": "האם אתה בטוח שברצונך ליצור גרסה זו?",
+					"CONFIRM": "צור"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "התקנת תוסף",
+				"DESCRIPTION": "האם אתה בטוח שברצונך להתקין תוסף זה?",
+				"CONFIRM": "התקן",
+				"VALIDATION": {
+					"REQUIRED": "נדרש אסימון אימות"
+				}
 			}
 		},
 		"TOASTR": {
@@ -4962,6 +5077,12 @@
 					"UPDATED": "גרסת התוסף v{{number}} עודכנה בהצלחה!",
 					"DELETED": "גרסת התוסף נמחקה בהצלחה!",
 					"RESTORED": "גרסת התוסף שוחזרה בהצלחה!"
+				},
+				"SOURCE": {
+					"CREATED": "מקור התוסף נוצר בהצלחה!",
+					"UPDATED": "מקור התוסף עודכן בהצלחה!",
+					"DELETED": "מקור התוסף נמחק בהצלחה!",
+					"RESTORED": "מקור התוסף שוחזר בהצלחה!"
 				},
 				"UPLOADED": "התוסף הועלה בהצלחה!",
 				"UPDATED": "התוסף עודכן בהצלחה!",
@@ -4976,6 +5097,12 @@
 					"DELETING": "מוחק גרסת תוסף...",
 					"RESTORING": "משחזר גרסת תוסף..."
 				},
+				"SOURCE": {
+					"ADDING": "מוסיף מקור חדש...",
+					"UPDATING": "מעדכן גרסת תוסף...",
+					"DELETING": "מוחק גרסת תוסף...",
+					"RESTORING": "משחזר גרסת תוסף..."
+				},
 				"UPLOADING": "מעלה תוסף...",
 				"UPDATING": "מעדכן תוסף...",
 				"DELETING": "מוחק תוסף...",
@@ -4985,6 +5112,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "שחזור גרסת התוסף נכשל. נא לנסות שוב!"
+				},
+				"SOURCE": {
+					"RESTORE": "שחזור מקור התוסף נכשל. אנא נסה שוב!"
 				},
 				"UPLOAD": "העלאת התוסף נכשלה. נא לנסות שוב!",
 				"NOT_FOUND": "תוסף עם מזהה {{ id }} לא נמצא.",

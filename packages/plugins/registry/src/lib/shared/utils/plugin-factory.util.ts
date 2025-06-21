@@ -19,15 +19,15 @@ export class PluginFactory {
 		return {
 			...input,
 			...this.common(input),
-			source: this.createSource(input.source)
+			sources: this.createSource(input.sources)
 		};
 	}
 
-	public static createSource(input: PluginSourceDTO): PluginSourceDTO {
-		return {
+	public static createSource(inputs: PluginSourceDTO[]): PluginSourceDTO[] {
+		return inputs.map((input) => ({
 			...input,
 			...this.common(input)
-		};
+		}));
 	}
 
 	private static common<T extends { tenantId?: string; organizationId?: string }>(input: T) {

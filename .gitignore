@@ -136,3 +136,10 @@ apps/server/src/assets/icons/menu
 apps/server-api/src/assets/icons/menu
 
 .angular
+
+
+#Ignore cursor AI rules
+.cursor/rules/codacy.mdc
+
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md

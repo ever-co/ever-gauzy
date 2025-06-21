@@ -184,7 +184,8 @@
 		"MARKETPLACE": "Marketplace",
 		"READ_MORE": "Read More",
 		"READ_LESS": "Read Less",
-		"RECOVER": "Recover"
+		"RECOVER": "Recover",
+		"ADD_MORE_SOURCES": "Add More Sources"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -627,6 +628,10 @@
 			"BUDGET": "Budget",
 			"HOURS": "Hours",
 			"COST": "Cost",
+			"MAKE_COM_CLIENT_ID": "Enter your Make.com Client ID",
+			"MAKE_COM_CLIENT_SECRET": "Enter your Make.com Client Secret",
+			"ZAPIER_CLIENT_ID": "Enter your Zapier Client ID",
+			"ZAPIER_CLIENT_SECRET": "Enter your Zapier Client Secret",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -868,6 +873,8 @@
 		"POSITIONS": "Positions",
 		"INTEGRATIONS": "Apps & Integrations",
 		"UPWORK": "Upwork",
+		"MAKE_COM": "Make.com",
+		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
@@ -1315,6 +1322,93 @@
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
 			"HOURLY": "Hourly",
 			"DESCRIPTION": "Activate Upwork integration for freelance workforce management."
+		},
+		"MAKE_COM_PAGE": {
+			"SCENARIOS": "Scenarios",
+			"EXECUTIONS": "Executions",
+			"HISTORY": "History",
+			"SETTINGS": "Settings",
+			"ERRORS": {
+				"INVALID_FORM": "Please fill in all required fields",
+				"START_AUTHORIZATION": "Please start the authorization process"
+			},
+			"CLIENT_ID": "Client ID",
+			"CLIENT_SECRET": "Client Secret",
+			"NEXT_STEP_INFO": "After authorization, you will be redirected to Make.com to complete the integration setup"
+		},
+		"MAKE_COM": {
+			"SETTINGS": {
+				"TITLE": "Make.com Settings",
+				"ENABLE_INTEGRATION": "Enable Make.com Integration",
+				"WEBHOOK_URL": "Webhook URL",
+				"WEBHOOK_URL_PLACEHOLDER": "Enter webhook URL",
+				"WEBHOOK_URL_INVALID": "Please enter a valid webhook URL",
+				"SAVE": "Save Settings"
+			}
+		},
+		"ZAPIER_PAGE": {
+			"CLIENT_ID": "Client ID",
+			"CLIENT_SECRET": "Client Secret",
+			"NEXT_STEP_INFO": "After authorization, you will be redirected to Zapier to complete the integration setup",
+			"ERRORS": {
+				"LOAD_SETTINGS": "Failed to load Zapier settings",
+				"SAVE_SETTINGS": "Failed to save Zapier settings",
+				"INVALID_FORM": "Please fill in all required fields",
+				"MISSING_CREDENTIALS": "Missing client credentials",
+				"NO_ACCESS_TOKEN": "No access token available",
+				"LOAD_WEBHOOKS": "Failed to load webhooks",
+				"DELETE_WEBHOOK": "Failed to delete webhook",
+				"LOAD_ACTIONS": "Failed to load actions",
+				"LOAD_TRIGGERS": "Failed to load triggers",
+				"START_AUTHORIZATION": "Please start the authorization process",
+				"INVALID_TOKEN": "Invalid token provided",
+				"TOKEN_NOT_FOUND": "Token not found"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Zapier settings saved successfully",
+				"DELETE_WEBHOOK": "Webhook deleted successfully"
+			},
+			"TAB": {
+				"TRIGGERS": "Triggers",
+				"ACTIONS": "Actions",
+				"WEBHOOKS": "Webhooks",
+				"SETTINGS": "Settings"
+			},
+			"TOOLTIP": {
+				"TRIGGERS": "Triggers are events that occur in Gauzy and can be used to trigger actions in Zapier.",
+				"ACTIONS": "Actions are events that occur in Zapier and can be used to trigger actions in Gauzy.",
+				"WEBHOOKS": "Webhooks are events that occur in Zapier and can be used to trigger actions in Gauzy.",
+				"SETTINGS": "Settings are the settings for the Zapier integration."
+			},
+			"MESSAGE": {
+				"TRIGGERS_ENABLED": "Triggers have been successfully enabled.",
+				"TRIGGERS_DISABLED": "Triggers have been successfully disabled.",
+				"ACTIONS_ENABLED": "Actions have been successfully enabled.",
+				"ACTIONS_DISABLED": "Actions have been successfully disabled.",
+				"WEBHOOKS_ENABLED": "Webhooks have been successfully enabled.",
+				"WEBHOOKS_DISABLED": "Webhooks have been successfully disabled."
+			},
+			"SETTINGS": {
+				"TITLE": "Zapier Settings",
+				"ENABLE_INTEGRATION": "Enable Zapier Integration",
+				"WEBHOOK_URL": "Webhook URL",
+				"WEBHOOK_URL_PLACEHOLDER": "Enter webhook URL",
+				"WEBHOOK_URL_INVALID": "Please enter a valid webhook URL",
+				"WEBHOOK_INFO": "Webhook is a URL that is used to update data in Gauzy based on a specific event in Zapier.",
+				"SAVE": "Save Settings"
+			},
+			"ACTIONS": {
+				"TITLE": "Actions",
+				"NO_ACTIONS": "No actions available"
+			},
+			"TRIGGERS": {
+				"TITLE": "Triggers",
+				"NO_TRIGGERS": "No triggers available"
+			},
+			"WEBHOOKS": {
+				"TITLE": "Webhooks",
+				"NO_WEBHOOKS": "No webhooks configured"
+			}
 		},
 		"GAUZY_AI_PAGE": {
 			"TITLE": "Gauzy AI Integration",
@@ -4998,7 +5092,8 @@
 				"LICENSE_TOO_LONG": "License field is too long",
 				"CHANGELOG_TOO_SHORT": "Changelog is too short",
 				"CHANGELOG_REQUIRED": "Changelog is required",
-				"FAILED": "Validation failed"
+				"FAILED": "Validation failed",
+				"REQUIRED": "Required"
 			},
 			"TYPE": "Plugin Type",
 			"TYPE_PLACEHOLDER": "Select plugin type",
@@ -5056,7 +5151,12 @@
 			"OR": "Or",
 			"RELEASE_DATE": "Release Date",
 			"CHANGELOG": "Changelog",
-			"CHANGELOG_PLACEHOLDER": "Enter changelog"
+			"CHANGELOG_PLACEHOLDER": "Enter changelog",
+			"CLICK_TO_SELECT_SOURCE": "Click to select source",
+			"SELECT_SOURCE_TYPE": "Select source type",
+			"ADD_SOURCE": "Add new source",
+			"OPERATING_SYSTEM": "Operating System",
+			"ARCHITECTURE": "Architecture"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Usage Statistics",
@@ -5116,6 +5216,21 @@
 					"DESCRIPTION": "Are you sure you want to restore this version?",
 					"CONFIRM": "Restore"
 				}
+			},
+			"SOURCE": {
+				"CREATE": {
+					"TITLE": "Create new source for version v{{ number }} of plugin {{ name }}",
+					"DESCRIPTION": "Are you sure you want to create this version?",
+					"CONFIRM": "Create"
+				}
+			},
+			"INSTALLATION": {
+				"TITLE": "Install Plugin",
+				"DESCRIPTION": "Are you sure you want to install this plugin?",
+				"CONFIRM": "Install",
+				"VALIDATION": {
+					"REQUIRED": "Authentication token is required"
+				}
 			}
 		},
 		"TOASTR": {
@@ -5125,6 +5240,12 @@
 					"UPDATED": "Update plugin version v{{number}} successfully!",
 					"DELETED": "Delete plugin version successfully!",
 					"RESTORED": "Restore plugin version successfully!"
+				},
+				"SOURCE": {
+					"CREATED": "Create plugin source successfully!",
+					"UPDATED": "Update plugin source successfully!",
+					"DELETED": "Delete plugin source successfully!",
+					"RESTORED": "Restore plugin source successfully!"
 				},
 				"UPLOADED": "Upload plugin successfully!",
 				"UPDATED": "Update plugin successfully!",
@@ -5139,6 +5260,12 @@
 					"DELETING": "Deleting plugin version...",
 					"RESTORING": "Restoring plugin version..."
 				},
+				"SOURCE": {
+					"ADDING": "Adding new source...",
+					"UPDATING": "Updating plugin version...",
+					"DELETING": "Deleting plugin version...",
+					"RESTORING": "Restoring plugin version..."
+				},
 				"UPLOADING": "Uploading plugin...",
 				"UPDATING": "Updating plugin version...",
 				"DELETING": "Deleting plugin...",
@@ -5148,6 +5275,9 @@
 			"ERROR": {
 				"VERSION": {
 					"RESTORE": "Failed to restore plugin version. Please try again!"
+				},
+				"SOURCE": {
+					"RESTORE": "Failed to restore plugin source. Please try again!"
 				},
 				"UPLOAD": "Failed to upload plugin. Please try again!",
 				"NOT_FOUND": "Plugin with ID {{ id }} not found.",
