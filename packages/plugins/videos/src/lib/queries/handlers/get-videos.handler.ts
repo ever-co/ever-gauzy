@@ -37,9 +37,13 @@ export class GetVideosQueryHandler implements IQueryHandler<GetVideosQuery> {
 			organizationId
 		};
 
-		const permission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		// If the current user doesn't have the permission to select employee, filter by uploadedById
-		if (!permission) {
+		if (!hasPermission) {
+			// If current employee ID is missing, return empty pagination result
+			if (!RequestContext.currentEmployeeId()) {
+				return { items: [], total: 0 };
+			}
 			where.uploadedById = RequestContext.currentEmployeeId();
 		}
 
@@ -48,19 +52,20 @@ export class GetVideosQueryHandler implements IQueryHandler<GetVideosQuery> {
 			// Convert startDate and endDate to UTC based on the provided timeZone
 			const startDateUtc = moment.tz(startDate, timeZone).utc().toDate();
 			const endDateUtc = moment.tz(endDate, timeZone).utc().toDate();
-			// Update the 'valueDate' property to filter records between the specified dates
+			// Update the 'recordedAt' property to filter records between the specified dates
 			where.recordedAt = Between(startDateUtc, endDateUtc);
 		}
 
 		// Add employee filter only if employeeIds is provided and non-empty
-		if (employeeIds.length > 0) {
+		if (employeeIds.length > 0 && hasPermission) {
 			where.uploadedById = In(employeeIds);
 		}
 
 		// Fetch paginated videos from the service
 		return this.videosService.paginate({
 			...params,
-			where
+			where: { ...where, ...params.where },
+			withDeleted: true
 		});
 	}
 }

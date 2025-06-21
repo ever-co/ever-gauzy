@@ -1,0 +1,25 @@
+<div class="skeleton-container" [class.animate]="animate">
+	<div class="skeleton-info">
+		<div class="skeleton-cover"></div>
+		<div class="skeleton-details">
+			<div class="skeleton-title"></div>
+			<div class="skeleton-meta">
+				<div class="skeleton-meta-item"></div>
+				<div class="skeleton-meta-item"></div>
+			</div>
+		</div>
+	</div>
+	<div class="skeleton-player-controls">
+		<div class="skeleton-btn"></div>
+		<div class="skeleton-progress-container">
+			<div class="skeleton-progress-bar"></div>
+			<div class="skeleton-time-info">
+				<div class="skeleton-time"></div>
+				<div class="skeleton-time"></div>
+			</div>
+		</div>
+		@if (showVolumeControl) {
+		<div class="skeleton-volume-slider"></div>
+		}
+	</div>
+</div>
