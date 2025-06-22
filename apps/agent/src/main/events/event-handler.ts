@@ -64,7 +64,7 @@ export default class EventHandler {
 			case MAIN_EVENT_TYPE.SETUP_EVENT:
 				return this.handleApplicationSetup();
 			case MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT:
-				return this.trayNotify.handlerTrayNotify(args);
+				return this.trayNotify.handleTrayNotify(args);
 			default:
 				break;
 		}

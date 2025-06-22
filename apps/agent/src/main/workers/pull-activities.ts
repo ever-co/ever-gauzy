@@ -49,7 +49,7 @@ class PullActivities {
 	getListenerModule() {
 		try {
 			this.listenerModule = KeyboardMouseEventCounter.getInstance();
-			this.listenerModule.setKeyboarMouseStatusCallback(this.kbMouseTrackedHandler.bind(this));
+			this.listenerModule.setKeyboardMouseStatusCallback(this.kbMouseTrackedHandler.bind(this));
 		} catch (error) {
 			console.error('error on get listener module', error);
 		}

@@ -82,9 +82,6 @@ class TrayMenu {
 				type: 'separator'
 			},
 			{
-				type: 'separator'
-			},
-			{
 				id: 'keyboard_mouse',
 				label: 'Keyboard and mouse tracker',
 				type: 'checkbox',
@@ -104,6 +101,9 @@ class TrayMenu {
 				type: 'checkbox',
 				checked: false,
 				enabled: false
+			},
+			{
+				type: 'separator'
 			},
 			{
 				id: 'tray_help',

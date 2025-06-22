@@ -24,12 +24,12 @@ export class TrayNotify {
 
 
 
-	public handlerTrayNotify(args: TEventArgs) {
+	public handleTrayNotify(args: TEventArgs) {
 		switch (args?.data?.trayUpdateType) {
 			case 'title':
 				return this.trayMenu.updateTitle(args?.data?.trayStatus);
 			case 'menu':
-				return this.trayMenu.updateStatus(args?.data?.trayMenuId, args?.data?.trayMenuChecked)
+				return this.trayMenu.updateStatus(args?.data?.trayMenuId, args?.data?.trayMenuChecked);
 			default:
 				break;
 		}

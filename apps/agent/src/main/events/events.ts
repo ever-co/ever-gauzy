@@ -16,7 +16,7 @@ export default class MainEvent {
 	}
 
 	on(eventName: string, callBack: (args: TEventArgs) => void) {
-		this.events.on(eventName, callBack)
+		this.events.on(eventName, callBack);
 	}
 
 	emit(eventName: string, args: TEventArgs) {

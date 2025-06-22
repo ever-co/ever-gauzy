@@ -88,7 +88,9 @@ export class KbMouseTimer {
 		}
 		if(this.isAfk) {
 			this.isAfk = false;
-			this.onAfkCallback(this.isAfk);
+			if (this.onAfkCallback) {
+				this.onAfkCallback(this.isAfk);
+			}
 		}
 	}
 

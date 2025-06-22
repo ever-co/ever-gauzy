@@ -124,7 +124,7 @@ export class KeyboardMouseEventCounter {
 		}
 	}
 
-	setKeyboarMouseStatusCallback(callback: (isActive?: boolean) => void) {
+	setKeyboardMouseStatusCallback(callback: (isActive?: boolean) => void) {
 		this.isKbMouseTrackedCallback = callback;
 	}
 }

@@ -16,7 +16,7 @@ class PushActivities {
 	private apiService = ApiService.getInstance();
 	private agentLogger: AgentLogger;
 	private mainEvent: MainEvent;
-	private isNetworkError: boolean = false;
+	private isNetworkError = false;
 
 
 	constructor() {

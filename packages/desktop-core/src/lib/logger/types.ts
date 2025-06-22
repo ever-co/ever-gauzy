@@ -9,8 +9,3 @@ export interface ILogger {
 	warn(...message: any[]): void;
 	error(...message: any[]): void;
 }
-
-export interface ILoggerOpts {
-	maxSize?: number;
-	archiveLog?:boolean;
-}
