@@ -25,7 +25,7 @@ export class TrayNotify {
 
 
 	public handlerTrayNotify(args: TEventArgs) {
-		switch (args.data.trayUpdateType) {
+		switch (args?.data?.trayUpdateType) {
 			case 'title':
 				return this.trayMenu.updateTitle(args?.data?.trayStatus);
 			case 'menu':

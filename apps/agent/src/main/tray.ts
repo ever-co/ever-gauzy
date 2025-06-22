@@ -86,7 +86,7 @@ class TrayMenu {
 			},
 			{
 				id: 'keyboard_mouse',
-				label: 'Keboard and mouse tracker',
+				label: 'Keyboard and mouse tracker',
 				type: 'checkbox',
 				checked: false,
 				enabled: false
@@ -143,7 +143,7 @@ class TrayMenu {
 		this.tray.setTitle('State: Startup', {
 			fontType: 'monospacedDigit'
 		});
-		this.tray.setToolTip('Agent is staring up');
+		this.tray.setToolTip('Agent is starting up');
 	}
 
 	public updateStatus(
@@ -151,25 +151,18 @@ class TrayMenu {
 		checked: boolean = false
 	) {
 		const menuIdx = this.TrayMenuList.findIndex((menu) => menu.id === menuId);
-		switch (menuId) {
-			case 'keyboard_mouse':
-				this.TrayMenuList[menuIdx].checked = checked;
-				break;
-			case 'network':
-				this.TrayMenuList[menuIdx].checked = checked;
-				break;
-			case 'afk':
-				this.TrayMenuList[menuIdx].checked = checked;
-				break;
-			default:
-				break;
+		if (menuIdx !== -1) {
+			this.TrayMenuList[menuIdx].checked = checked;
 		}
 		this.tray?.setContextMenu(Menu.buildFromTemplate(this.TrayMenuList));
 	}
 
 	public updateTitle(status: 'Working' | 'Error' | 'Startup' | 'Network error' | 'Afk' | 'Idle') {
-		this.tray.setTitle(`Status: ${status}`);
-		this.tray.setToolTip(`Agent is ${status}`);
+		if (this.tray) {
+			this.tray.setTitle(`Status: ${status}`);
+			this.tray.setToolTip(`Agent is ${status}`);
+		}
+
 	}
 
 	public updateTryMenu() {

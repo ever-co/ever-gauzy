@@ -14,7 +14,7 @@ export class KbMouseTimer {
 	private isAfk = false;
 	private onAfkCallback: ((afk?: boolean) => void) | null = null;
 	private isStarted:boolean = false;
-	private timerStartedCallback: (staus: 'Working' | 'Error') => void;
+	private timerStartedCallback: (status: 'Working' | 'Error') => void;
 
 	private constructor() {
 		this.afkCountdown = this.afkThreshold;
@@ -151,7 +151,7 @@ export class KbMouseTimer {
 			if (this.timerStartedCallback) {
 				this.timerStartedCallback('Error');
 			}
-			throw new Error(error);
+			console.error('checkFlushTime error:', error);
 		}
 	}
 

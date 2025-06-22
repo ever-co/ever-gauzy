@@ -111,7 +111,7 @@ export class KeyboardMouseEventCounter {
 			this.registerEvent();
 			this.keyboardMouse.start();
 			this.isStarted = true;
-			this.isKbMouseTrackedCallback(this.isStarted);
+			this.isKbMouseTrackedCallback?.(this.isStarted);
 		}
 	}
 
@@ -120,7 +120,7 @@ export class KeyboardMouseEventCounter {
 			this.keyboardMouse.stop();
 			this.keyboardMouse.removeAllListeners();
 			this.isStarted = false;
-			this.isKbMouseTrackedCallback(this.isStarted);
+			this.isKbMouseTrackedCallback?.(this.isStarted);
 		}
 	}
 
