@@ -6,6 +6,8 @@ import { getScreen, getAppSetting, delaySync, TAppSetting, getScreenshotSoundPat
 import { getScreenshot, TScreenShot } from '../screenshot';
 import { Notification } from 'electron';
 import { AgentLogger } from '../agent-logger';
+import MainEvent from '../events/events';
+import { MAIN_EVENT_TYPE, MAIN_EVENT } from '../../constant';
 
 type UserLogin = {
 	tenantId: string;
@@ -24,6 +26,7 @@ class PullActivities {
 	private readonly remoteId: string;
 	private agentLogger: AgentLogger;
 	private appWindow: AppWindow;
+	private mainEvent: MainEvent;
 	constructor(user: UserLogin) {
 		this.listenerModule = null;
 		this.isStarted = false;
@@ -33,6 +36,7 @@ class PullActivities {
 		this.agentLogger = AgentLogger.getInstance();
 		this.appWindow = AppWindow.getInstance(path.join(__dirname, '../..'));
 		this.appWindow.initScreenShotNotification();
+		this.mainEvent = MainEvent.getInstance();
 	}
 
 	static getInstance(user: UserLogin): PullActivities {
@@ -45,6 +49,7 @@ class PullActivities {
 	getListenerModule() {
 		try {
 			this.listenerModule = KeyboardMouseEventCounter.getInstance();
+			this.listenerModule.setKeyboarMouseStatusCallback(this.kbMouseTrackedHandler.bind(this));
 		} catch (error) {
 			console.error('error on get listener module', error);
 		}
@@ -99,8 +104,32 @@ class PullActivities {
 		}
 	}
 
-	private afkEVentHandler() {
+	private afkEVentHandler(isAfk?: boolean) {
 		this.agentLogger.info(`AFK detected`);
+		this.mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT,
+			data: {
+				trayUpdateType: 'menu',
+				trayMenuChecked: isAfk || false,
+				trayMenuId: 'afk'
+			}
+		});
+		if (isAfk) {
+			this.timerStatusHandler('Afk');
+		} else {
+			this.timerStatusHandler('Working');
+		}
+	}
+
+	private kbMouseTrackedHandler(isActive?: boolean) {
+		this.mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT,
+			data: {
+				trayUpdateType: 'menu',
+				trayMenuChecked: isActive || false,
+				trayMenuId: 'keyboard_mouse'
+			}
+		})
 	}
 
 	getTimerModule() {
@@ -109,6 +138,7 @@ class PullActivities {
 			this.timerModule.onFlush(this.activityProcess.bind(this));
 			this.timerModule.setFlushInterval(60);
 			this.timerModule.afkEvent(this.afkEVentHandler.bind(this));
+			this.timerModule.setTimerStartedCallback(this.timerStatusHandler.bind(this));
 		}
 		const appSetting = getAppSetting();
 		const screenshotInterval = (appSetting?.timer?.updatePeriod || 5) * 60; // value is in seconds and default to 5 minutes
@@ -220,8 +250,19 @@ class PullActivities {
 			this.agentLogger.info('Keyboard and mouse activities saved');
 		} catch (error: unknown) {
 			console.error('KB/M activity persist failed', error);
-			this.agentLogger.error(`KB/M activity persist failed ${JSON.stringify(error)}`)
+			this.agentLogger.error(`KB/M activity persist failed ${JSON.stringify(error)}`);
+			this.timerStatusHandler('Error');
 		}
+	}
+
+	private timerStatusHandler(status: 'Working' | 'Error' | 'Afk' | 'Network error') {
+		this.mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT,
+			data: {
+				trayUpdateType: 'title',
+				trayStatus: status
+			}
+		});
 	}
 }
 

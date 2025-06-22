@@ -12,7 +12,9 @@ export class KbMouseTimer {
 	private afkDuration = 0;
 	private afkCountdown: number;
 	private isAfk = false;
-	private onAfkCallback: (() => void) | null = null;
+	private onAfkCallback: ((afk?: boolean) => void) | null = null;
+	private isStarted:boolean = false;
+	private timerStartedCallback: (staus: 'Working' | 'Error') => void;
 
 	private constructor() {
 		this.afkCountdown = this.afkThreshold;
@@ -37,7 +39,7 @@ export class KbMouseTimer {
 		this.onFlushCallback = callback;
 	}
 
-	public afkEvent(callback: () => void): void {
+	public afkEvent(callback: (afk?: boolean) => void): void {
 		this.onAfkCallback = callback;
 	}
 
@@ -75,14 +77,19 @@ export class KbMouseTimer {
 		if (this.afkCountdown <= 0 && !this.isAfk) {
 			this.isAfk = true;
 			if (this.onAfkCallback) {
-				this.onAfkCallback();
+				this.onAfkCallback(this.isAfk);
 			}
 		}
 	}
 
 	public resetAfkTimer(): void {
-		this.afkCountdown = this.afkThreshold;
-		this.isAfk = false;
+		if (this.afkCountdown < this.afkThreshold) {
+			this.afkCountdown = this.afkThreshold;
+		}
+		if(this.isAfk) {
+			this.isAfk = false;
+			this.onAfkCallback(this.isAfk);
+		}
 	}
 
 	private afkCounter() {
@@ -102,36 +109,53 @@ export class KbMouseTimer {
 	}
 
 	private checkFlushTime(): void {
-		const now = new Date();
-		const elapsedSeconds = Math.floor((now.getTime() - this.lastFlushTime.getTime()) / 1000);
-		const elapsedSecondsScreenshot = Math.floor((now.getTime() - this.lastScreenshotTime.getTime()) / 1000);
-		if (elapsedSeconds >= this.flushIntervalSeconds) {
-			if (this.onFlushCallback) {
-				if (elapsedSecondsScreenshot >= this.screenshotIntervalSeconds) {
-					this.onFlushCallback(
-						{
-							timeStart: this.lastFlushTime,
-							timeEnd: now
-						},
-						true,
-						this.afkDuration
-					);
-					this.lastFlushTime = now;
-					this.lastScreenshotTime = now;
-					this.resetAfkCount();
-				} else {
-					this.onFlushCallback(
-						{
-							timeStart: this.lastFlushTime,
-							timeEnd: now
-						},
-						false,
-						this.afkDuration
-					);
-					this.resetAfkCount();
-					this.lastFlushTime = now;
+		try {
+			if (!this.isStarted) {
+				this.isStarted = true;
+				if (this.timerStartedCallback) {
+					this.timerStartedCallback('Working');
 				}
 			}
+			const now = new Date();
+			const elapsedSeconds = Math.floor((now.getTime() - this.lastFlushTime.getTime()) / 1000);
+			const elapsedSecondsScreenshot = Math.floor((now.getTime() - this.lastScreenshotTime.getTime()) / 1000);
+			if (elapsedSeconds >= this.flushIntervalSeconds) {
+				if (this.onFlushCallback) {
+					if (elapsedSecondsScreenshot >= this.screenshotIntervalSeconds) {
+						this.onFlushCallback(
+							{
+								timeStart: this.lastFlushTime,
+								timeEnd: now
+							},
+							true,
+							this.afkDuration
+						);
+						this.lastFlushTime = now;
+						this.lastScreenshotTime = now;
+						this.resetAfkCount();
+					} else {
+						this.onFlushCallback(
+							{
+								timeStart: this.lastFlushTime,
+								timeEnd: now
+							},
+							false,
+							this.afkDuration
+						);
+						this.resetAfkCount();
+						this.lastFlushTime = now;
+					}
+				}
+			}
+		} catch (error) {
+			if (this.timerStartedCallback) {
+				this.timerStartedCallback('Error');
+			}
+			throw new Error(error);
 		}
+	}
+
+	public setTimerStartedCallback(callback: (status: 'Working' | 'Error') => void) {
+		this.timerStartedCallback = callback;
 	}
 }

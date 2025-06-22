@@ -21,6 +21,7 @@ export class KeyboardMouseEventCounter {
 	private static instance: KeyboardMouseEventCounter;
 	private kbMouseTimer: KbMouseTimer;
 	private resetAfkTimer: () => void;
+	private isKbMouseTrackedCallback: (isActive?: boolean) => void;
 	private constructor() {
 		this.isStarted = false;
 		this.keyboardMouse = new KeyboardMouse();
@@ -110,6 +111,7 @@ export class KeyboardMouseEventCounter {
 			this.registerEvent();
 			this.keyboardMouse.start();
 			this.isStarted = true;
+			this.isKbMouseTrackedCallback(this.isStarted);
 		}
 	}
 
@@ -118,6 +120,11 @@ export class KeyboardMouseEventCounter {
 			this.keyboardMouse.stop();
 			this.keyboardMouse.removeAllListeners();
 			this.isStarted = false;
+			this.isKbMouseTrackedCallback(this.isStarted);
 		}
+	}
+
+	setKeyboarMouseStatusCallback(callback: (isActive?: boolean) => void) {
+		this.isKbMouseTrackedCallback = callback;
 	}
 }

@@ -16,12 +16,15 @@ class PushActivities {
 	private apiService = ApiService.getInstance();
 	private agentLogger: AgentLogger;
 	private mainEvent: MainEvent;
+	private isNetworkError: boolean = false;
+
 
 	constructor() {
 		this.kbMouseActivityService = new KbMouseActivityService();
 		this.getKbMousePoolModule();
 		this.agentLogger = AgentLogger.getInstance();
 		this.mainEvent = MainEvent.getInstance();
+		this.trayUpdateMenuStatus('network', true);
 	}
 
 	static getInstance(): PushActivities {
@@ -82,10 +85,18 @@ class PushActivities {
 			}
 			this.agentLogger.info(`Preparing send activity recordedAt ${params.recordedAt} to service`);
 			const resp = await this.apiService.saveTimeSlot(params);
+			if (this.isNetworkError) {
+				this.isNetworkError = false;
+				this.trayUpdateMenuStatus('network', !this.isNetworkError);
+				this.trayStatusHandler('Working');
+			}
 			console.log(`Time slot saved for activity ${activities.id}:`, resp?.id);
 			return resp;
 		} catch (error) {
 			console.error('error on save timeslot', error);
+			this.isNetworkError = true;
+			this.trayUpdateMenuStatus('network', !this.isNetworkError);
+			this.trayStatusHandler('Network error');
 			throw error;
 		}
 	}
@@ -286,6 +297,27 @@ class PushActivities {
 	poolErrorHandler(error: Error) {
 		console.error(error);
 		this.agentLogger.error(`Activity polling scheduler error ${JSON.stringify(error)}`);
+	}
+
+	private trayStatusHandler(status: 'Working' | 'Error' | 'Network error') {
+		this.mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT,
+			data: {
+				trayStatus: status,
+				trayUpdateType: 'title'
+			}
+		});
+	}
+
+	private trayUpdateMenuStatus(menuId: 'keyboard_mouse' | 'network' | 'afk', checked: boolean) {
+		this.mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT,
+			data: {
+				trayUpdateType: 'menu',
+				trayMenuId: menuId,
+				trayMenuChecked: checked
+			}
+		});
 	}
 }
 
