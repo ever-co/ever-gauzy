@@ -2,6 +2,7 @@ import { CallHandler, ExecutionContext, ForbiddenException, Injectable, NestInte
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { SENSITIVE_RELATIONS_KEY, SensitiveRelationConfig } from '../decorators/sensitive-relations.decorator';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../context';
 
 /**
@@ -10,26 +11,27 @@ import { RequestContext } from '../context';
  *
  * @param config - The sensitive relations config object (nested structure)
  * @param relationPath - The relation path requested (dot notation)
- * @returns The required permission as a string, or null if none is required
+ * @returns The required permission as a PermissionsEnum, or null if none is required
  */
-function getRequiredPermissionForRelation(config: SensitiveRelationConfig, relationPath: string): string | null {
+function getRequiredPermissionForRelation(
+	config: SensitiveRelationConfig,
+	relationPath: string
+): PermissionsEnum | null {
 	const pathParts = relationPath.split('.');
-	let current = config;
-	let requiredPermission: string | null = null;
+	let current: SensitiveRelationConfig | PermissionsEnum | null = config;
+	let requiredPermission: PermissionsEnum | null = null;
 
 	for (const part of pathParts) {
 		if (!current || typeof current !== 'object') break;
-		if (current[part]) {
-			const value = current[part];
-			if (typeof value === 'object' && value !== null) {
-				if (value._self) {
-					requiredPermission = value._self as string;
-				}
-				current = value as SensitiveRelationConfig;
-			} else {
-				requiredPermission = value as string;
-				break;
+		const value = current[part];
+		if (typeof value === 'object' && value !== null) {
+			if ('_self' in value && value._self) {
+				requiredPermission = value._self as PermissionsEnum;
 			}
+			current = value as SensitiveRelationConfig;
+		} else if (typeof value === 'string') {
+			requiredPermission = value as PermissionsEnum;
+			break;
 		} else {
 			break;
 		}
