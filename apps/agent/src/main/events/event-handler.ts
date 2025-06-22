@@ -4,6 +4,8 @@ import PushActivities from '../workers/push-activities';
 import AppWindow from '../window-manager';
 import MainEvent from './events';
 import * as path from 'node:path';
+import { TrayNotify } from './tray-notify';
+import { TEventArgs } from './event-types';
 
 const appRootPath: string = path.join(__dirname, '../..');
 
@@ -11,10 +13,12 @@ export default class EventHandler {
 	private static instance: EventHandler;
 	private AppWindow: AppWindow;
 	private mainEvent: MainEvent;
+	private trayNotify: TrayNotify;
 
 	constructor() {
 		this.mainEvent = MainEvent.getInstance();
 		this.AppWindow = AppWindow.getInstance(appRootPath);
+		this.trayNotify = TrayNotify.getInstance();
 	}
 
 	static getInstance() {
@@ -53,12 +57,14 @@ export default class EventHandler {
 		this.AppWindow.setupWindow.show();
 	}
 
-	async handleEvent(args: any) {
+	async handleEvent(args: TEventArgs) {
 		switch (args.type) {
 			case MAIN_EVENT_TYPE.LOGOUT_EVENT:
 				return this.handleLogout();
 			case MAIN_EVENT_TYPE.SETUP_EVENT:
 				return this.handleApplicationSetup();
+			case MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT:
+				return this.trayNotify.handleTrayNotify(args);
 			default:
 				break;
 		}

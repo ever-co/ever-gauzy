@@ -82,6 +82,30 @@ class TrayMenu {
 				type: 'separator'
 			},
 			{
+				id: 'keyboard_mouse',
+				label: 'Keyboard and mouse tracker',
+				type: 'checkbox',
+				checked: false,
+				enabled: false
+			},
+			{
+				id: 'network',
+				label: 'Network',
+				type: 'checkbox',
+				checked: false,
+				enabled: false
+			},
+			{
+				id: 'afk',
+				label: 'AFK',
+				type: 'checkbox',
+				checked: false,
+				enabled: false
+			},
+			{
+				type: 'separator'
+			},
+			{
 				id: 'tray_help',
 				label: TranslateService.instant('TIMER_TRACKER.MENU.HELP'),
 				click() {
@@ -116,6 +140,29 @@ class TrayMenu {
 
 	private initTray() {
 		this.tray = new Tray(this.nativeIconPath());
+		this.tray.setTitle('State: Startup', {
+			fontType: 'monospacedDigit'
+		});
+		this.tray.setToolTip('Agent is starting up');
+	}
+
+	public updateStatus(
+		menuId: 'keyboard_mouse' | 'network' | 'afk',
+		checked: boolean = false
+	) {
+		const menuIdx = this.TrayMenuList.findIndex((menu) => menu.id === menuId);
+		if (menuIdx !== -1) {
+			this.TrayMenuList[menuIdx].checked = checked;
+		}
+		this.tray?.setContextMenu(Menu.buildFromTemplate(this.TrayMenuList));
+	}
+
+	public updateTitle(status: 'Working' | 'Error' | 'Startup' | 'Network error' | 'Afk' | 'Idle') {
+		if (this.tray) {
+			this.tray.setTitle(`Status: ${status}`);
+			this.tray.setToolTip(`Agent is ${status}`);
+		}
+
 	}
 
 	public updateTryMenu() {
