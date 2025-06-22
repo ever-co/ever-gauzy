@@ -2,6 +2,7 @@ import * as path from 'path';
 import { environment } from '../environments/environment';
 import { LocalStore } from '@gauzy/desktop-lib';
 import { screen } from 'electron';
+import { CONSTANT } from '../constant';
 
 export type TAuthConfig = {
 	user: {
@@ -106,3 +107,8 @@ export function getScreenshotSoundPath():string {
 	}
 	return path.join(process.resourcesPath, 'data', 'sound', 'snapshot-sound.wav');
 }
+
+export function getTrayIcon(): string {
+	return path.join(__dirname, '..', CONSTANT.TRAY_ICON_PATH)
+}
+
