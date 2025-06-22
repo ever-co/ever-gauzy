@@ -129,7 +129,7 @@ class PullActivities {
 				trayMenuChecked: isActive || false,
 				trayMenuId: 'keyboard_mouse'
 			}
-		})
+		});
 	}
 
 	getTimerModule() {
