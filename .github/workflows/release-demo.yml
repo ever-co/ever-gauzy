@@ -20,9 +20,7 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.1
         id: tag_version
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          custom_release_rules: "" # Disable commit analysis completely
-          default_bump: patch # temporary, so we always only update "Patch" part of the version          
+          github_token: ${{ secrets.GITHUB_TOKEN }}          
           release_branches: master,main,develop,stage
           pre_release_branches: something_to_possible_use_later
 
