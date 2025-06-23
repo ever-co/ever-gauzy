@@ -22,8 +22,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           custom_release_rules: "fix:patch,feat:patch,.*:patch"
-          default_bump: patch
-          bump_broken_commit: patch
+          default_bump: patch # temporary, so we always only update "Patch" part of the version          
           release_branches: master,main,develop,stage
           pre_release_branches: something_to_possible_use_later
 
