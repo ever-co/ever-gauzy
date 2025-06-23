@@ -49,10 +49,10 @@ import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-re
 import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
 
 @ApiTags('OrganizationProject')
-@UseInterceptors(SensitiveRelationsInterceptor)
-@SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS)
 @UseGuards(TenantPermissionGuard, ProjectManagerOrPermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
+@UseInterceptors(SensitiveRelationsInterceptor)
+@SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS, 'organization')
 @Controller('/organization-projects')
 export class OrganizationProjectController extends CrudController<OrganizationProject> {
 	constructor(

@@ -1,7 +1,11 @@
 import { CallHandler, ExecutionContext, ForbiddenException, Injectable, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
-import { SENSITIVE_RELATIONS_KEY, SensitiveRelationConfig } from '../decorators/sensitive-relations.decorator';
+import {
+	SENSITIVE_RELATIONS_KEY,
+	SENSITIVE_RELATIONS_ROOT_KEY,
+	SensitiveRelationConfig
+} from '../decorators/sensitive-relations.decorator';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../context';
 
@@ -19,24 +23,23 @@ function getRequiredPermissionForRelation(
 ): PermissionsEnum | null {
 	const pathParts = relationPath.split('.');
 	let current: SensitiveRelationConfig | PermissionsEnum | null = config;
-	let requiredPermission: PermissionsEnum | null = null;
 
 	for (const part of pathParts) {
-		if (!current || typeof current !== 'object') break;
+		if (!current || typeof current !== 'object') return null;
 		const value = current[part];
+
 		if (typeof value === 'object' && value !== null) {
 			if ('_self' in value && value._self) {
-				requiredPermission = value._self as PermissionsEnum;
+				return value._self as PermissionsEnum;
 			}
 			current = value as SensitiveRelationConfig;
-		} else if (typeof value === 'string') {
-			requiredPermission = value as PermissionsEnum;
-			break;
+		} else if (Object.values(PermissionsEnum).includes(value as PermissionsEnum)) {
+			return value as PermissionsEnum;
 		} else {
-			break;
+			return null;
 		}
 	}
-	return requiredPermission;
+	return null;
 }
 
 /**
@@ -58,20 +61,37 @@ export class SensitiveRelationsInterceptor implements NestInterceptor {
 	constructor(private readonly reflector: Reflector) {}
 
 	intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-		// Retrieve the sensitive relations config from the handler or controller
 		const handler = context.getHandler();
 		const controller = context.getClass();
 		const config: SensitiveRelationConfig =
 			this.reflector.get(SENSITIVE_RELATIONS_KEY, handler) ||
 			this.reflector.get(SENSITIVE_RELATIONS_KEY, controller);
 
+		const rootKey: string | undefined =
+			this.reflector.get(SENSITIVE_RELATIONS_ROOT_KEY, handler) ||
+			this.reflector.get(SENSITIVE_RELATIONS_ROOT_KEY, controller);
+
 		if (!config) {
 			return next.handle();
 		}
 
+		// Use the root if provided
+		let configToUse: SensitiveRelationConfig = config;
+		if (rootKey) {
+			const maybeSubConfig = config[rootKey];
+			if (maybeSubConfig && typeof maybeSubConfig === 'object') {
+				configToUse = maybeSubConfig as SensitiveRelationConfig;
+			} // otherwise, keep the full config (no early return)
+		}
+
 		// Extract requested relations from the query or body
 		const request = context.switchToHttp().getRequest();
-		const relations = request.query?.relations || request.body?.relations || [];
+		let relations = request.query?.relations || request.body?.relations || [];
+
+		// Sanitize relations input
+		if (typeof relations === 'string') {
+			relations = relations.trim();
+		}
 		// Support both array and comma-separated string
 		const relationsArray = Array.isArray(relations)
 			? relations
@@ -79,9 +99,22 @@ export class SensitiveRelationsInterceptor implements NestInterceptor {
 			? relations.split(',')
 			: [];
 
-		// For each requested relation, check if a permission is required and if the user has it
 		for (const rel of relationsArray) {
-			const requiredPermission = getRequiredPermissionForRelation(config, rel);
+			let requiredPermission: PermissionsEnum | null = null;
+			if (rootKey) {
+				// With rootKey, allow dot notation traversal
+				requiredPermission = getRequiredPermissionForRelation(configToUse, rel);
+			} else {
+				// Without rootKey, only allow direct lookup (no dot notation)
+				if (Object.prototype.hasOwnProperty.call(configToUse, rel)) {
+					const value = configToUse[rel];
+					if (typeof value === 'object' && value !== null && '_self' in value && value._self) {
+						requiredPermission = value._self as PermissionsEnum;
+					} else if (Object.values(PermissionsEnum).includes(value as PermissionsEnum)) {
+						requiredPermission = value as PermissionsEnum;
+					}
+				}
+			}
 			if (requiredPermission) {
 				if (!RequestContext.hasPermission(requiredPermission)) {
 					throw new ForbiddenException(

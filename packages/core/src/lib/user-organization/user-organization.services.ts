@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ID, IOrganization, IPagination, IUser, IUserOrganization, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { ID, IOrganization, IPagination, IUser, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { Employee } from '../core/entities/internal';
@@ -30,7 +30,7 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 		filter: BaseQueryDTO<UserOrganization>,
 		includeEmployee: boolean
 	): Promise<IPagination<UserOrganization>> {
-		// Utiliser le filtre tel quel, la gestion des permissions est maintenant assurée par l'interceptor
+		// Use the filter as-is, permission handling is now handled by the interceptor
 		let { items, total } = await super.findAll(filter ?? ({} as BaseQueryDTO<UserOrganization>));
 
 		// If 'includeEmployee' is set to true, fetch employee details associated with each user organization

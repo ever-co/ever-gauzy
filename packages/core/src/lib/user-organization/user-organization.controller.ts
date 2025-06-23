@@ -27,7 +27,7 @@ import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sens
 @ApiTags('UserOrganization')
 @UseGuards(TenantPermissionGuard)
 @UseInterceptors(SensitiveRelationsInterceptor)
-@SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS)
+@SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS, 'organization')
 @Controller('/user-organization')
 export class UserOrganizationController extends CrudController<UserOrganization> {
 	constructor(
