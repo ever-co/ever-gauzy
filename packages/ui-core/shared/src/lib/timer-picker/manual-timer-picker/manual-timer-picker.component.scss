@@ -1,8 +1,11 @@
+@use 'var' as *;
+
 :host {
   display: block;
   width: 100%;
 
   input {
+    color: nb-theme(text-basic-color);
     width: 100%;
   }
 }
