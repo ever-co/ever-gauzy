@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, forwardRef } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { Subject, firstValueFrom, Observable } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganization, ITask, PermissionsEnum, TaskStatusEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
@@ -9,16 +9,16 @@ import { AuthService, Store, TasksService, ToastrService } from '@gauzy/ui-core/
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-task-selector',
-    templateUrl: './task.component.html',
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => TaskSelectorComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'ga-task-selector',
+	templateUrl: './task.component.html',
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TaskSelectorComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
 export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
 	private _requiresEmployee = false;
@@ -125,6 +125,7 @@ export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
 		);
 		this.subject$
 			.pipe(
+				debounceTime(50),
 				tap(() => this.getTasks()),
 				untilDestroyed(this)
 			)

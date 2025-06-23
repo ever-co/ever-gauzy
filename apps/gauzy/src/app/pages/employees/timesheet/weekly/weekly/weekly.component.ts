@@ -196,7 +196,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 		const payloads = this.payloads$.getValue();
 		this.loading = true;
 		try {
-			const logs = await this.timesheetService.getTimeLogs(payloads, ['project', 'employee.user']);
+			const logs = await this.timesheetService.getTimeLogs(payloads, ['project', 'employee.user', 'task']);
 			this.weekData = chain(logs)
 				.groupBy('projectId')
 				.map((innerLogs, _projectId) => {
