@@ -392,25 +392,40 @@
 	},
 	"lint-staged": {},
 	"release": {
-		"verifyConditions": [
-			"@semantic-release/changelog",
-			"@semantic-release/npm",
-			"@semantic-release/git",
-			"@semantic-release/github"
-		],
-		"prepare": [
-			"@semantic-release/changelog",
-			"@semantic-release/npm",
-			"@semantic-release/git"
-		],
-		"publish": [
-			"@semantic-release/github"
-		],
-		"generateNotes": {
-			"preset": "angular"
-		},
-		"npmPublish": false
-	},
+       "branches": ["develop", "main"],
+       "verifyConditions": [
+          "@semantic-release/changelog",
+          "@semantic-release/npm",
+          "@semantic-release/git",
+          "@semantic-release/github"
+       ],
+       "prepare": [
+          "@semantic-release/changelog",
+          "@semantic-release/npm",
+          "@semantic-release/git"
+       ],
+       "publish": [
+          "@semantic-release/github"
+       ],
+       "generateNotes": {
+          "preset": "angular"
+       },
+       "plugins": [
+       [
+          "@semantic-release/commit-analyzer",
+          {
+             "preset": "conventionalcommits",
+             "releaseRules": [
+               { "type": "*", "release": "minor" }
+             ],
+             "parserOpts": {
+               "noteKeywords": ["BREAKING CHANGE", "BREAKING CHANGES"]
+             }
+          }
+       ]
+      ],
+     "npmPublish": false
+    },
 	"workspaces": {
 		"packages": [
 			"apps/*",
