@@ -102,13 +102,13 @@ export class SensitiveRelationsInterceptor implements NestInterceptor {
 		for (const rel of relationsArray) {
 			let requiredPermission: PermissionsEnum | null = null;
 			if (rootKey) {
-				// If relation starts with rootKey, remove it for lookup in the sub-config
+				// If relation starts with rootKey followed by a dot, remove the prefix for sub-config lookup
 				let relationToCheck = rel;
-				if (rel.startsWith(rootKey + '.')) {
-					relationToCheck = rel.slice(rootKey.length + 1);
-					if (relationToCheck.startsWith('.')) {
-						relationToCheck = relationToCheck.slice(1);
-					}
+				const rootKeyPrefix = rootKey + '.';
+				if (rel.startsWith(rootKeyPrefix)) {
+					relationToCheck = rel.slice(rootKeyPrefix.length);
+					// Trim any remaining leading dots from malformed input
+					relationToCheck = relationToCheck.replace(/^\.+/, '');
 				}
 				requiredPermission = getRequiredPermissionForRelation(configToUse, relationToCheck);
 			} else {
