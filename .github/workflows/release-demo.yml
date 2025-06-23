@@ -21,7 +21,7 @@ jobs:
         id: tag_version
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          custom_release_rules: ".*:patch"
+          custom_release_rules: "fix:patch,feat:patch,breaking:patch,.*:patch"
           default_bump: patch
           release_branches: master,main,develop,stage
           pre_release_branches: something_to_possible_use_later
