@@ -102,8 +102,15 @@ export class SensitiveRelationsInterceptor implements NestInterceptor {
 		for (const rel of relationsArray) {
 			let requiredPermission: PermissionsEnum | null = null;
 			if (rootKey) {
-				// With rootKey, allow dot notation traversal
-				requiredPermission = getRequiredPermissionForRelation(configToUse, rel);
+				// If relation starts with rootKey, remove it for lookup in the sub-config
+				let relationToCheck = rel;
+				if (rel.startsWith(rootKey + '.')) {
+					relationToCheck = rel.slice(rootKey.length + 1);
+					if (relationToCheck.startsWith('.')) {
+						relationToCheck = relationToCheck.slice(1);
+					}
+				}
+				requiredPermission = getRequiredPermissionForRelation(configToUse, relationToCheck);
 			} else {
 				// Without rootKey, only allow direct lookup (no dot notation)
 				if (Object.prototype.hasOwnProperty.call(configToUse, rel)) {
