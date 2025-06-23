@@ -467,7 +467,8 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 						componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
 							instance.rowData = cell.getRow().getData();
 							instance.value = cell.getRawValue();
-						}
+						},
+						isSortable: false
 					},
 					startDate: {
 						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.START_DATE'),
@@ -497,7 +498,8 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 						componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
 							instance.rowData = cell.getRow().getData();
 							instance.value = cell.getRawValue();
-						}
+						},
+						isSortable: false
 					},
 
 					employeesMergedTeams: {
@@ -518,7 +520,8 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 						componentInitFunction: (instance: EmployeesMergedTeamsComponent, cell: Cell) => {
 							instance.rowData = cell.getRow().getData();
 							instance.value = cell.getRawValue();
-						}
+						},
+						isSortable: false
 					},
 					tags: {
 						title: this.getTranslation('SM_TABLE.TAGS'),
