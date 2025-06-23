@@ -33,13 +33,17 @@ function getRequiredPermissionForRelation(
 				return value._self as PermissionsEnum;
 			}
 			current = value as SensitiveRelationConfig;
-		} else if (Object.values(PermissionsEnum).includes(value as PermissionsEnum)) {
+		} else if (isValidPermission(value)) {
 			return value as PermissionsEnum;
 		} else {
 			return null;
 		}
 	}
 	return null;
+}
+
+function isValidPermission(value: any): value is PermissionsEnum {
+	return typeof value === 'string' && Object.values(PermissionsEnum).includes(value as PermissionsEnum);
 }
 
 /**
@@ -99,12 +103,17 @@ export class SensitiveRelationsInterceptor implements NestInterceptor {
 			? relations.split(',')
 			: [];
 
-		for (const rel of relationsArray) {
+		// Filter out invalid relations
+		const validRelations = relationsArray
+			.map((rel) => (typeof rel === 'string' ? rel.trim() : ''))
+			.filter((rel) => rel.length > 0);
+
+		for (const rel of validRelations) {
 			let requiredPermission: PermissionsEnum | null = null;
 			if (rootKey) {
 				// If relation starts with rootKey followed by a dot, remove the prefix for sub-config lookup
 				let relationToCheck = rel;
-				const rootKeyPrefix = rootKey + '.';
+				const rootKeyPrefix = `${rootKey}.`;
 				if (rel.startsWith(rootKeyPrefix)) {
 					relationToCheck = rel.slice(rootKeyPrefix.length);
 					// Trim any remaining leading dots from malformed input
@@ -112,15 +121,7 @@ export class SensitiveRelationsInterceptor implements NestInterceptor {
 				}
 				requiredPermission = getRequiredPermissionForRelation(configToUse, relationToCheck);
 			} else {
-				// Without rootKey, only allow direct lookup (no dot notation)
-				if (Object.prototype.hasOwnProperty.call(configToUse, rel)) {
-					const value = configToUse[rel];
-					if (typeof value === 'object' && value !== null && '_self' in value && value._self) {
-						requiredPermission = value._self as PermissionsEnum;
-					} else if (Object.values(PermissionsEnum).includes(value as PermissionsEnum)) {
-						requiredPermission = value as PermissionsEnum;
-					}
-				}
+				requiredPermission = getRequiredPermissionForRelation(configToUse, rel);
 			}
 			if (requiredPermission) {
 				if (!RequestContext.hasPermission(requiredPermission)) {
