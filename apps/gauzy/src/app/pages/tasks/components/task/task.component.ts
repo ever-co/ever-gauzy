@@ -196,7 +196,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					},
 					valuePrepareFunction: (value: ITask, cell: any) => {
 						return cell?.getRow?.()?.getData?.()?.parent?.taskNumber ?? cell?.parent?.taskNumber ?? '-';
-					}
+					},
+					isSortable: false
 				},
 				description: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
@@ -217,7 +218,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					filterFunction: (value) => {
 						this.setFilter({ field: 'title', search: value });
 						return false;
-					}
+					},
+					isSortable: false
 				},
 				project: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
@@ -227,7 +229,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					componentInitFunction: (instance: ProjectComponent, cell: Cell) => {
 						instance.value = cell.getValue();
 						instance.rowData = cell.getRow().getData();
-					}
+					},
+					isSortable: false
 				},
 				createdAt: {
 					title: this.getTranslation('SM_TABLE.CREATED_AT'),
@@ -259,7 +262,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 							search: value
 						});
 						return false;
-					}
+					},
+					isSortable: false
 				},
 				...this.getColumnsByPage(),
 				dueDate: {
@@ -321,7 +325,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					componentInitFunction: (instance: EmployeesMergedTeamsComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
 						instance.rowData = cell.getRow().getData();
-					}
+					},
+					isSortable: false
 				}
 			};
 		} else if (this.isMyTasksPage()) {
@@ -334,7 +339,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					componentInitFunction: (instance: AssignedToComponent, cell: Cell) => {
 						instance.value = cell.getValue();
 						instance.rowData = cell.getRow().getData();
-					}
+					},
+					isSortable: false
 				}
 			};
 		} else if (this.isTeamTaskPage()) {
@@ -362,7 +368,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						instance.value = cell.getValue();
 						instance.rowData = cell.getRow().getData();
 						instance.view = 'teams';
-					}
+					},
+					isSortable: false
 				}
 			};
 		} else {
