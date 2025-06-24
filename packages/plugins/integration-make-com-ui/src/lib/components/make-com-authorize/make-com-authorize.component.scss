@@ -1,0 +1,52 @@
+.authorization-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  padding: 2rem;
+}
+
+.authorization-content {
+  max-width: 600px;
+  text-align: center;
+
+  h2 {
+    margin-bottom: 1rem;
+    color: var(--gauzy-text-color-1);
+  }
+
+  p {
+    margin-bottom: 2rem;
+    color: var(--gauzy-text-color-2);
+  }
+}
+
+.authorization-actions {
+  margin-bottom: 1rem;
+
+  button {
+    min-width: 200px;
+  }
+}
+
+.text-danger {
+  max-width: 100%;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.hint {
+  margin-bottom: 2rem;
+}
+
+button {
+  box-shadow: var(--gauzy-shadow) (0, 0, 0, 0.15);
+  border: none !important;
+}
+
+:host {
+  nb-card,
+  nb-card-body {
+    background-color: var(--gauzy-card-2);
+  }
+}

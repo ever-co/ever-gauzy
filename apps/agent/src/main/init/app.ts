@@ -8,13 +8,19 @@ import {
 	ProviderFactory,
 	TranslateService
 } from '@gauzy/desktop-lib';
-import { delaySync, getApiBaseUrl, getAuthConfig } from '../util';
+import {
+	delaySync,
+	getApiBaseUrl,
+	getAuthConfig,
+	getTrayIcon
+} from '../util';
 import AppWindow from '../window-manager';
 import TrayMenu from '../tray';
-import { CONSTANT } from '../../constant';
 import { checkUserAuthentication } from '../auth';
 import PullActivities from '../workers/pull-activities';
 import PushActivities from '../workers/push-activities';
+import EventHandler from '../events/event-handler';
+import { environment } from '../../environments/environment';
 
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
@@ -26,7 +32,12 @@ LocalStore.setFilePath({
 });
 const appRootPath: string = path.join(__dirname, '../..');
 const appWindow = AppWindow.getInstance(appRootPath);
+
+const eventHandler = EventHandler.getInstance();
+eventHandler.mainListener();
+
 let trayMenu: TrayMenu;
+
 
 function launchAtStartup(autoLaunch: boolean, hidden: boolean) {
 	switch (process.platform) {
@@ -92,9 +103,9 @@ export async function startServer(value: any) {
 		// timeTrackerWindow.webContents.toggleDevTools();
 	}
 	trayMenu = TrayMenu.getInstance(
-		path.join(__dirname, '../..', CONSTANT.TRAY_ICON_PATH),
+		getTrayIcon(),
 		true,
-		{ helpSiteUrl: 'https://gauzy.co' },
+		{ helpSiteUrl: environment.COMPANY_SITE_LINK },
 	);
 	trayMenu.build();
 

@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel, ITimeLog } from '@gauzy/contracts';
+import { IBasePerTenantAndOrganizationEntityModel, IntegrationEnum, ITimeLog } from '@gauzy/contracts';
 
 export type ZapierGrantType = 'authorization_code' | 'refresh_token';
 export type ActionType = 'start' | 'stop';
@@ -12,10 +12,10 @@ export interface IZapierAccessTokens {
 
 export interface ICreateZapierIntegrationInput extends IBasePerTenantAndOrganizationEntityModel {
 	client_id: string;
-	code: string;
-	grant_type: ZapierGrantType;
-	redirect_uri: string;
 	client_secret: string;
+	code?: string;
+	redirect_uri?: string;
+	state?: string;
 }
 
 export interface ITimerZapierWebhookData extends IBasePerTenantAndOrganizationEntityModel {
@@ -27,10 +27,24 @@ export interface ITimerZapierWebhookData extends IBasePerTenantAndOrganizationEn
 export interface IZapierEndpoint {
 	id: string;
 	name: string;
-	description: string;
+	description?: string;
+	slug: string;
+}
+
+export interface IIntegrationFilter {
+	readonly name: IntegrationEnum.ZAPIER;
+	tenantId: string;
+	organizationId?: string;
 }
 
 export interface IZapierCreateWebhookInput {
 	target_url: string;
 	event: string;
+}
+
+export interface IZapierIntegrationSettings {
+	isEnabled: boolean;
+	hasClientCredentials: boolean;
+	hasAccessToken: boolean;
+	hasRefreshToken: boolean;
 }

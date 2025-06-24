@@ -1,0 +1,21 @@
+@let isLoading = isLoading$ | async;
+<!-- Structure -->
+<div nbInfiniteList [threshold]="500" [throttleTime]="300" (bottomThreshold)="fetchMoreCamshots()" class="camshot-list">
+	@for (camshot of camshots$ | async; track camshot.id){ @defer (on viewport) {
+	<plug-camshot-item
+		[camshot]="camshot"
+		(download)="onDownload($event)"
+		(recover)="onRecover($event)"
+		(view)="onView($event)"
+		(delete)="onDelete($event)"
+		(hardDelete)="onHardDelete($event)"
+	></plug-camshot-item>
+	}@placeholder (minimum 500ms) {
+	<plug-camshot-item-skeleton></plug-camshot-item-skeleton>
+	} }@empty {
+	<ngx-no-data-message
+		status="danger"
+		[message]="isLoading ? 'Loading camshots...' : 'No camshots found'"
+	></ngx-no-data-message>
+	}
+</div>

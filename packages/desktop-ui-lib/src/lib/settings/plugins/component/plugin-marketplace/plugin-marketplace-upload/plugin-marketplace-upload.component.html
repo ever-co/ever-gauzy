@@ -1,6 +1,8 @@
+@let isEdit = !!plugin;
+<!-- form -->
 <nb-card class="dialog-card" status="basic">
 	<nb-card-header class="mb-0">
-		<h5 class="title">{{ (!!plugin ? 'POP_UPS.EDIT' : 'PLUGIN.FORM.TITLE') | translate }}</h5>
+		<h5 class="title">{{ (isEdit ? 'POP_UPS.EDIT' : 'PLUGIN.FORM.TITLE') | translate }}</h5>
 		<span class="cancel"><i (click)="dismiss()" class="fas fa-times"></i></span>
 	</nb-card-header>
 
@@ -21,12 +23,24 @@
 				</nb-step>
 
 				<!-- Step 2: Source -->
-				<nb-step [stepControl]="pluginForm?.get('version.source')" [label]="'PLUGIN.FORM.SOURCE' | translate">
-					<lib-plugin-source
-						class="grow"
-						[form]="pluginForm?.get('version.source')"
+				<nb-step [stepControl]="pluginForm?.get('version.sources')" [label]="'PLUGIN.FORM.SOURCE' | translate">
+					@if(isEdit && plugin){
+					<lib-form-row>
+						<div class="d-flex flex-column">
+							<label class="label" for="version-number">{{ 'PLUGIN.FORM.VERSION' | translate }}</label>
+							<gauzy-version-selector [pluginId]="plugin?.id"></gauzy-version-selector>
+						</div>
+					</lib-form-row>
+					}
+					<lib-source-container
+						class="overflow-auto grow"
+						[sources]="sources"
 						[sourceTypes]="sourceTypes"
-					></lib-plugin-source>
+						[cantAddMore]="!!plugin"
+						(add)="addSource($event)"
+						(remove)="removeSource($event)"
+						(restore)="restoreSource($event)"
+					></lib-source-container>
 					<div class="stepper-buttons">
 						<button nbButton outline status="basic" nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
@@ -37,7 +51,12 @@
 
 				<!-- Step 3: Version -->
 				<nb-step [stepControl]="pluginForm?.get('version')" [label]="'PLUGIN.FORM.VERSION' | translate">
-					<lib-plugin-version class="grow" [form]="pluginForm?.get('version')"></lib-plugin-version>
+					<lib-plugin-version
+						class="grow"
+						[isEdit]="isEdit"
+						[pluginId]="plugin?.id"
+						[form]="pluginForm?.get('version')"
+					></lib-plugin-version>
 					<div class="stepper-buttons">
 						<button nbButton outline status="basic" nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}

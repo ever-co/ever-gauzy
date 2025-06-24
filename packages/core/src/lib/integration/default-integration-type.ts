@@ -56,5 +56,12 @@ export const DEFAULT_INTEGRATION_TYPES = [
         order: 2,
         description: null,
         icon: null
+    },
+    {
+        name: IntegrationTypeEnum.AUTOMATION_TOOLS,
+        groupName: IntegrationTypeGroupEnum.CATEGORIES,
+        order: 2,
+        description: null,
+        icon: null
     }
 ];

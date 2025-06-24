@@ -1,0 +1,34 @@
+<!-- camshot-item.component.html -->
+<div class="camshot-item" [class.deleted]="camshot.isDeleted">
+	@if (camshot.thumbUrl) {
+	<div class="thumbnail">
+		<img [src]="camshot.thumbUrl" [alt]="camshot.title" />
+	</div>
+	}
+	<div class="details">
+		<div class="title">{{ camshot.title }}</div>
+		<div class="meta">
+			<div class="date">
+				<nb-icon icon="clock-outline"></nb-icon>
+				{{ camshot.recordedAt | date : 'medium' }}
+			</div>
+			@if (camshot.size) {
+			<div class="size">
+				<nb-icon icon="hard-drive-outline"></nb-icon>
+				{{ camshot.size | fileSize }}
+			</div>
+			}
+		</div>
+	</div>
+	<div class="actions">
+		<nb-icon
+			nbPopoverPlacement="bottom"
+			[nbPopover]="actions"
+			icon="more-vertical-outline"
+			[options]="{ animation: { type: 'zoom' } }"
+		></nb-icon>
+	</div>
+</div>
+<ng-template #actions>
+	<plug-action-button-group [buttons]="buttons" [data]="camshot"></plug-action-button-group>
+</ng-template>

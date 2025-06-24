@@ -1,0 +1,73 @@
+{
+	"name": "@gauzy/plugin-integration-activepieces",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Platform plugin for integration with Activepieces AI automation platform.",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/integration-activepieces"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-integration-activepieces",
+		"lib:build:prod": "yarn nx build plugin-integration-activepieces",
+		"lib:watch": "yarn nx build plugin-integration-activepieces --watch"
+	},
+	"dependencies": {
+		"@gauzy/config": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/utils": "^0.1.0",
+		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
+		"@nestjs/common": "^11.1.0",
+		"@nestjs/cqrs": "^11.0.3",
+		"@nestjs/swagger": "^11.1.5",
+		"axios": "^1.9.0",
+		"express": "^5.1.0",
+		"moment": "^2.30.1",
+		"rxjs": "^7.8.2",
+		"tslib": "^2.6.2",
+		"typeorm": "^0.3.22"
+	},
+	"devDependencies": {
+		"@types/express": "^5.0.1",
+		"@types/jest": "29.5.14",
+		"@types/node": "^20.14.9",
+		"typescript": "^5.8.3"
+	},
+	"keywords": [
+		"ActivePieces",
+		"activepieces",
+		"integration",
+		"ai agents",
+		"productivity",
+		"API",
+		"plugin",
+		"NestJS",
+		"Gauzy",
+		"Ever Gauzy",
+		"platform",
+		"automation",
+		"webhooks",
+		"development"
+	],
+	"engines": {
+		"node": ">=20.18.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
+}

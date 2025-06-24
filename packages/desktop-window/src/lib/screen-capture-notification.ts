@@ -24,7 +24,7 @@ export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow
 	 *
 	 * @param {string} [path] - An optional file path used to initialize the window content.
 	 */
-	constructor(path?: string) {
+	constructor(path?: string, preloadPath?: string) {
 		// Call the parent class constructor with a DefaultWindow instance
 		super(
 			new DefaultWindow(
@@ -39,7 +39,16 @@ export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow
 					focusable: false, // Makes the window non-focusable
 					skipTaskbar: true, // Excludes the window from the taskbar
 					x: screen.getPrimaryDisplay().size.width - (ScreenCaptureNotification.WIDTH + 16), // Sets the X position
-					y: 16 // Sets the Y position
+					y: 16, // Sets the Y position
+					...(preloadPath ? {
+						webPreferences: {
+							nodeIntegration: false,
+							contextIsolation: true,
+							webSecurity: false,
+							sandbox: false,
+							preload: preloadPath
+						}
+					} : {})
 				})
 			)
 		);

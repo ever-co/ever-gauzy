@@ -10,18 +10,18 @@ aliases:
     command: |
       echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
       echo ' [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> $BASH_ENV
-      nvm install v20.11.1
-      nvm alias default v20.11.1
+      nvm install v20.18.1
+      nvm alias default v20.18.1
       echo 'export NODE_OPTIONS=--max-old-space-size=12288' >> $BASH_ENV
       echo 'export NG_CLI_ANALYTICS=false' >> $BASH_ENV
       source $BASH_ENV
-      nvm use v20.11.1
+      nvm use v20.18.1
       node --version
 
   - &install-chrome
     name: Install Chrome
     command: |
-      nvm use v20.11.1
+      nvm use v20.18.1
       sudo apt install -y libappindicator3-1
       curl -L -o google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
       sudo dpkg -i google-chrome.deb
@@ -31,7 +31,7 @@ aliases:
   - &install-deps
     name: Install Global Dependencies
     command: |
-      nvm use v20.11.1
+      nvm use v20.18.1
       sudo rm -rf /etc/apt/sources.list.d/heroku.list
       sudo apt-get update
       sudo apt install npm
@@ -45,7 +45,7 @@ aliases:
   - &install-yarn
     name: Install Latest Yarn
     command: |
-      nvm use v20.11.1
+      nvm use v20.18.1
       # remove default yarn
       sudo rm -rf $(dirname $(which yarn))/yarn*
       # download latest
@@ -77,10 +77,10 @@ jobs:
             - yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
       - run:
           name: verify Node version
-          command: nvm use v20.11.1 && node --version
+          command: nvm use v20.18.1 && node --version
       - run:
           name: Install Dependencies
-          command: nvm use v20.11.1 && yarn bootstrap
+          command: nvm use v20.18.1 && yarn bootstrap
           no_output_timeout: 60m
       - run:
           name: Install Sonarqube scanner
@@ -118,10 +118,10 @@ jobs:
             - yarn-packages-monorepo-root-{{ checksum "yarn.lock" }}
       - run:
           name: verify Node version
-          command: nvm use v20.11.1 && node --version
+          command: nvm use v20.18.1 && node --version
       - run:
           name: Run Bootstrap
-          command: nvm use v20.11.1 && yarn bootstrap
+          command: nvm use v20.18.1 && yarn bootstrap
           no_output_timeout: 60m
       - save_cache:
           name: Save Yarn Package Cache
@@ -145,14 +145,14 @@ jobs:
             - yarn-packages-desktop-{{ checksum "yarn.lock" }}
       - run:
           name: verify Node version
-          command: nvm use v20.11.1 && node --version
+          command: nvm use v20.18.1 && node --version
       - run:
           name: Run Bootstrap
-          command: nvm use v20.11.1 && yarn bootstrap
+          command: nvm use v20.18.1 && yarn bootstrap
           no_output_timeout: 60m
       - run:
           name: Run Build
-          command: nvm use v20.11.1 && yarn build:desktop
+          command: nvm use v20.18.1 && yarn build:desktop
           no_output_timeout: 60m
       - save_cache:
           name: Save Yarn Package Cache
@@ -176,18 +176,18 @@ jobs:
             - yarn-packages-api-{{ checksum "yarn.lock" }}
       - run:
           name: verify Node version
-          command: nvm use v20.11.1 && node --version
+          command: nvm use v20.18.1 && node --version
       - run:
           name: Run Bootstrap
-          command: nvm use v20.11.1 && yarn bootstrap
+          command: nvm use v20.18.1 && yarn bootstrap
           no_output_timeout: 60m
       - run:
           name: Run Packages Build
-          command: nvm use v20.11.1 && yarn build:package:all
+          command: nvm use v20.18.1 && yarn build:package:all
           no_output_timeout: 60m
       - run:
           name: Run Build
-          command: nvm use v20.11.1 && yarn build:api:prod:ci
+          command: nvm use v20.18.1 && yarn build:api:prod:ci
           no_output_timeout: 60m
       - save_cache:
           name: Save Yarn Package Cache
@@ -211,18 +211,18 @@ jobs:
             - yarn-packages-web-{{ checksum "yarn.lock" }}
       - run:
           name: verify Node version
-          command: nvm use v20.11.1 && node --version
+          command: nvm use v20.18.1 && node --version
       - run:
           name: Run Bootstrap
-          command: nvm use v20.11.1 && yarn bootstrap
+          command: nvm use v20.18.1 && yarn bootstrap
           no_output_timeout: 60m
       - run:
           name: Run Packages Build
-          command: nvm use v20.11.1 && yarn build:package:all
+          command: nvm use v20.18.1 && yarn build:package:all
           no_output_timeout: 60m
       - run:
           name: Run Build
-          command: nvm use v20.11.1 && yarn build:gauzy:prod:ci
+          command: nvm use v20.18.1 && yarn build:gauzy:prod:ci
           no_output_timeout: 60m
       - save_cache:
           name: Save Yarn Package Cache
@@ -247,15 +247,15 @@ jobs:
             - yarn-packages-test-e2e-{{ checksum "yarn.lock" }}
       - run:
           name: verify Node version
-          command: nvm use v20.11.1 && node --version
+          command: nvm use v20.18.1 && node --version
       - run:
           name: Run Bootstrap
-          command: nvm use v20.11.1 && yarn bootstrap
+          command: nvm use v20.18.1 && yarn bootstrap
           no_output_timeout: 60m
 
       - run:
           name: Run API in background
-          command: nvm use v20.11.1 && yarn start:api:ci
+          command: nvm use v20.18.1 && yarn start:api:ci
           background: true
 
       # - run:
@@ -292,14 +292,14 @@ jobs:
 
       - run:
           name: verify Node version
-          command: nvm use v20.11.1 && node --version
+          command: nvm use v20.18.1 && node --version
 
       - pulumi/login
 
       - run:
           name: 'Installing NPM Packages'
           command: |
-            nvm use v20.11.1
+            nvm use v20.18.1
             yarn install --ignore-scripts && yarn postinstall.manual
           no_output_timeout: 60m
 

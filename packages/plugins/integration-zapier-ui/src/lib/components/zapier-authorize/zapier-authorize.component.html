@@ -1,0 +1,53 @@
+<nb-card class="card-scroll">
+	<nb-card-header class="d-flex">
+		<ngx-back-navigation></ngx-back-navigation>
+		<h5>{{ 'MENU.ZAPIER' | translate }}</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<form class="col-xl-6 col-12" [formGroup]="form" (ngSubmit)="startAuthorization()">
+			<div class="form-group">
+				<label for="client_id" class="label">{{ 'INTEGRATIONS.ZAPIER_PAGE.CLIENT_ID' | translate }}</label>
+				<input
+					fullWidth
+					id="client_id"
+					formControlName="client_id"
+					type="text"
+					nbInput
+					[placeholder]="'FORM.PLACEHOLDERS.ZAPIER_CLIENT_ID' | translate"
+				/>
+				<div
+					*ngIf="form.controls.client_id.touched && form.controls.client_id.errors?.required"
+					class="error-message"
+				>
+					{{ 'FORM.VALIDATION.REQUIRED' | translate }}
+				</div>
+			</div>
+			<div class="form-group">
+				<label for="client_secret" class="label">{{
+					'INTEGRATIONS.ZAPIER_PAGE.CLIENT_SECRET' | translate
+				}}</label>
+				<input
+					fullWidth
+					id="client_secret"
+					formControlName="client_secret"
+					type="password"
+					nbInput
+					[placeholder]="'FORM.PLACEHOLDERS.ZAPIER_CLIENT_SECRET' | translate"
+				/>
+				<div
+					*ngIf="form.controls.client_secret.touched && form.controls.client_secret.errors?.required"
+					class="error-message"
+				>
+					{{ 'FORM.VALIDATION.REQUIRED' | translate }}
+				</div>
+			</div>
+			<div class="hint">
+				<nb-icon icon="info-outline"></nb-icon>
+				{{ 'INTEGRATIONS.ZAPIER_PAGE.NEXT_STEP_INFO' | translate }}
+			</div>
+			<button nbButton status="primary" [disabled]="form.invalid" size="small" outline type="submit">
+				{{ 'BUTTONS.NEXT' | translate }}
+			</button>
+		</form>
+	</nb-card-body>
+</nb-card>

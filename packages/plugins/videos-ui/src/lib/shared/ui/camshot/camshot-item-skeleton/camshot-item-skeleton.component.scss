@@ -1,0 +1,74 @@
+@keyframes pulse {
+  0% {
+    background-color: var(--gauzy-card-2);
+  }
+
+  50% {
+    background-color: var(--gauzy-card-1);
+  }
+
+  100% {
+    background-color: var(--gauzy-card-2);
+  }
+}
+
+.details {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.camshot-item.skeleton {
+  display: flex;
+  align-items: flex-start;
+  transition: all 0.3s ease;
+  gap: 1rem;
+
+  &:hover {
+    box-shadow: var(--gauzy-shadow);
+    transform: translateY(-2px);
+  }
+
+  .thumbnail.skeleton-box {
+    width: 100%;
+    height: 150px;
+    max-width: 50%;
+    border-radius: var(--border-radius);
+    flex-shrink: 0;
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+
+  .skeleton-line {
+    height: 1rem;
+    width: 80%;
+    animation: pulse 1.5s infinite ease-in-out;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+
+    &.title {
+      width: 100%;
+    }
+
+    &:last-child {
+      width: 60%;
+    }
+  }
+
+  .skeleton-icon {
+    height: 1.5rem;
+    /* Typical icon size */
+    width: 4px;
+    /* Make it round like an icon */
+    margin-right: 0.5rem;
+    /* Typical icon size */
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+}
+
+@media (max-width: 1435px) {
+  .thumbnail.skeleton-box {
+    max-width: 300px !important;
+    max-height: 150px;
+  }
+}

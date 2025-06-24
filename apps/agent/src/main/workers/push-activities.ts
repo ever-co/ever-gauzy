@@ -1,11 +1,13 @@
 import { KbMouseActivityService, KbMouseActivityTO, TTimeSlot } from '@gauzy/desktop-lib';
-import { KbMouseActivityPool, TKbMouseActivity } from '@gauzy/desktop-activity';
+import { KbMouseActivityPool, TKbMouseActivity, TMouseEvents } from '@gauzy/desktop-activity';
 import { ApiService, TResponseTimeSlot } from '../api';
-import { getAuthConfig } from '../util';
+import { getAuthConfig, TAuthConfig, getInitialConfig } from '../util';
 import * as moment from 'moment';
 import { AgentLogger } from '../agent-logger';
 import { environment } from '../../environments/environment';
 import * as fs from 'node:fs';
+import MainEvent from '../events/events';
+import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
 
 class PushActivities {
 	static instance: PushActivities;
@@ -13,10 +15,16 @@ class PushActivities {
 	private kbMouseActivityService: KbMouseActivityService;
 	private apiService = ApiService.getInstance();
 	private agentLogger: AgentLogger;
+	private mainEvent: MainEvent;
+	private isNetworkError = false;
+
+
 	constructor() {
 		this.kbMouseActivityService = new KbMouseActivityService();
 		this.getKbMousePoolModule();
 		this.agentLogger = AgentLogger.getInstance();
+		this.mainEvent = MainEvent.getInstance();
+		this.trayUpdateMenuStatus('network', true);
 	}
 
 	static getInstance(): PushActivities {
@@ -69,15 +77,26 @@ class PushActivities {
 		}
 	}
 
-	async saveTimeSlot(activities: KbMouseActivityTO): Promise<Partial<TResponseTimeSlot>> {
+	async saveTimeSlot(activities: KbMouseActivityTO): Promise<Partial<TResponseTimeSlot> | undefined> {
 		try {
 			const params = this.timeSlotParams(activities);
+			if (!params) {
+				return;
+			}
 			this.agentLogger.info(`Preparing send activity recordedAt ${params.recordedAt} to service`);
 			const resp = await this.apiService.saveTimeSlot(params);
+			if (this.isNetworkError) {
+				this.isNetworkError = false;
+				this.trayUpdateMenuStatus('network', !this.isNetworkError);
+				this.trayStatusHandler('Working');
+			}
 			console.log(`Time slot saved for activity ${activities.id}:`, resp?.id);
 			return resp;
 		} catch (error) {
 			console.error('error on save timeslot', error);
+			this.isNetworkError = true;
+			this.trayUpdateMenuStatus('network', !this.isNetworkError);
+			this.trayStatusHandler('Network error');
 			throw error;
 		}
 	}
@@ -95,6 +114,10 @@ class PushActivities {
 	async saveImage(recordedAt: string, image: string[], timeSlotId?: string) {
 		try {
 			const auth = getAuthConfig();
+			const isAuthenticated = this.handleUserAuth(auth);
+			if (!isAuthenticated) {
+				return;
+			}
 			const pathTemp = image && Array.isArray(image) && image.length && image[0];
 			this.agentLogger.info(`image temporary path ${pathTemp}`);
 			if (!pathTemp) {
@@ -123,45 +146,107 @@ class PushActivities {
 				{ filePath: pathTemp }
 			);
 			if (respScreenshot?.timeSlotId) {
-				this.agentLogger.info(`Screenshot image successfully added to timeSlotId ${respScreenshot?.timeSlotId}`)
+				this.agentLogger.info(
+					`Screenshot image successfully added to timeSlotId ${respScreenshot?.timeSlotId}`
+				);
 				fs.unlinkSync(pathTemp);
 				this.agentLogger.info(`temp image unlink from the temp directory`);
 				return;
 			}
-			this.agentLogger.error(`Failed to save screenshots to the api with response ${JSON.stringify(respScreenshot)}`);
+			this.agentLogger.error(
+				`Failed to save screenshots to the api with response ${JSON.stringify(respScreenshot)}`
+			);
 		} catch (error) {
 			console.log(error);
 			throw error;
 		}
 	}
 
-	getDurationSeconds(timeStart: Date, timeEnd: Date) {
+	private getDurationOverAllSeconds(timeStart: Date, timeEnd: Date) {
 		if (timeStart && timeEnd) {
 			return Math.floor((timeEnd.getTime() - timeStart.getTime()) / 1000);
 		}
 		return 0;
 	}
 
-	getActivities(activities: KbMouseActivityTO): TKbMouseActivity[] {
-		return [{
-			kbPressCount: activities.kbPressCount,
-			kbSequence: activities.kbSequence,
-			mouseLeftClickCount: activities.mouseLeftClickCount,
-			mouseRightClickCount: activities.mouseRightClickCount,
-			mouseMovementsCount: activities.mouseMovementsCount,
-			mouseEvents: activities.mouseEvents
-		}];
+	private getDurationSeconds(timeStart: Date, timeEnd: Date, afkDuration?: number) {
+		if (!(timeStart && timeEnd)) {
+			return 0;
+		}
+		const total = Math.floor((timeEnd.getTime() - timeStart.getTime()) / 1000);
+		const afk = afkDuration ?? 0;
+		return Math.max(0, total - afk);
 	}
 
-	timeSlotParams(activities: KbMouseActivityTO): TTimeSlot {
+	getActivities(activities: KbMouseActivityTO): TKbMouseActivity[] {
+		return [
+			{
+				kbPressCount: activities.kbPressCount,
+				kbSequence: (typeof activities.kbSequence === 'string'
+					? (() => {
+						try {
+							return JSON.parse(activities.kbSequence);
+						} catch (error) {
+							console.error('Failed to parse kbSequence:', error);
+							return [];
+						}
+					})()
+					: activities.kbSequence) as number[],
+				mouseLeftClickCount: activities.mouseLeftClickCount,
+				mouseRightClickCount: activities.mouseRightClickCount,
+				mouseMovementsCount: activities.mouseMovementsCount,
+				mouseEvents: (typeof activities.mouseEvents === 'string'
+					? (() => {
+						try {
+							return JSON.parse(activities.mouseEvents);
+						} catch (error) {
+							console.error('Failed to parse mouseEvents:', error);
+							return [];
+						}
+					})()
+					: activities.mouseEvents) as TMouseEvents[]
+			}
+		];
+	}
+
+	checkApplicationState(): boolean {
+		const initialConfig = getInitialConfig();
+		if (!initialConfig?.isSetup) {
+			return false;
+		}
+		return true;
+	}
+
+	handleUserAuth(auth: TAuthConfig): boolean {
+		if (!this.checkApplicationState()) {
+			this.mainEvent.emit(MAIN_EVENT, {
+				type: MAIN_EVENT_TYPE.SETUP_EVENT
+			});
+			return false;
+		}
+		if (!auth) {
+			this.mainEvent.emit(MAIN_EVENT, {
+				type: MAIN_EVENT_TYPE.LOGOUT_EVENT
+			});
+
+			return false;
+		}
+		return true;
+	}
+
+	timeSlotParams(activities: KbMouseActivityTO): TTimeSlot | undefined {
 		const auth = getAuthConfig();
+		const isAuthenticated = this.handleUserAuth(auth);
+		if (!isAuthenticated) {
+			return;
+		}
 		return {
 			tenantId: auth.user.employee.tenantId,
 			organizationId: auth.user.employee.organizationId,
-			duration: this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd)),
+			duration: this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration),
 			keyboard: activities.kbPressCount,
 			mouse: activities.mouseLeftClickCount + activities.mouseRightClickCount,
-			overall: activities.kbPressCount + activities.mouseRightClickCount + activities.mouseLeftClickCount,
+			overall: this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd)),
 			startedAt: moment(activities.timeStart).toISOString(),
 			recordedAt: moment(activities.timeStart).toISOString(),
 			activities: this.getActivities(activities),
@@ -172,23 +257,29 @@ class PushActivities {
 	async saveActivities() {
 		try {
 			const activity = await this.getOldestActivity();
-			if (!activity?.id) {
-				this.agentLogger.info('Got 0 activity from temp');
-			}
 			if (activity?.id) {
 				// remove activity from temp local database
-				this.agentLogger.info('Got 1 activity from temp');
+				this.agentLogger.info('Got activity from temporary');
 				try {
 					const timeSlot = await this.saveTimeSlot(activity);
 					this.agentLogger.info(`Activity successfully recorded to api with timeSlotId ${timeSlot?.id}`);
 					if (timeSlot?.id) {
 						await this.saveImage(
 							moment(activity.timeStart).toISOString(),
-							activity.screenshots ? JSON.parse(activity.screenshots) : [],
+							typeof activity.screenshots === 'string'
+								? (() => {
+									try {
+										return JSON.parse(activity.screenshots);
+									} catch (error) {
+										console.error('Failed to parse screenshots:', error);
+										return [];
+									}
+								})()
+								: activity.screenshots || [],
 							timeSlot?.id
 						);
+						await this.removeCurrentActivity(activity.id);
 					}
-					await this.removeCurrentActivity(activity.id);
 					return true;
 				} catch (error) {
 					console.error(`Failed to upload activity ${activity.id}`, error);
@@ -206,6 +297,27 @@ class PushActivities {
 	poolErrorHandler(error: Error) {
 		console.error(error);
 		this.agentLogger.error(`Activity polling scheduler error ${JSON.stringify(error)}`);
+	}
+
+	private trayStatusHandler(status: 'Working' | 'Error' | 'Network error') {
+		this.mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT,
+			data: {
+				trayStatus: status,
+				trayUpdateType: 'title'
+			}
+		});
+	}
+
+	private trayUpdateMenuStatus(menuId: 'keyboard_mouse' | 'network' | 'afk', checked: boolean) {
+		this.mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT,
+			data: {
+				trayUpdateType: 'menu',
+				trayMenuId: menuId,
+				trayMenuChecked: checked
+			}
+		});
 	}
 }
 

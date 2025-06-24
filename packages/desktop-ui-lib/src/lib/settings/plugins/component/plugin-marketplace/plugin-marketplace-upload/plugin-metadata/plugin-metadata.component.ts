@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { BasePluginFormComponent } from '../base-plugin-form/base-plugin-form.component';
 
 @Component({
 	selector: 'lib-plugin-metadata',
@@ -8,17 +8,4 @@ import { FormGroup } from '@angular/forms';
 	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PluginMetadataComponent {
-	@Input() form: FormGroup;
-
-	public getFieldError(controlName: string, errorType?: string): boolean {
-		const control = this.form.get(controlName);
-		if (!control) return false;
-
-		if (errorType) {
-			return control.touched && control.hasError(errorType);
-		}
-
-		return control.touched && control.invalid;
-	}
-}
+export class PluginMetadataComponent extends BasePluginFormComponent {}

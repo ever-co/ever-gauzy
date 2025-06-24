@@ -1,14 +1,15 @@
-import { FileStorageProviderEnum, PluginSourceType } from '@gauzy/contracts';
+import { FileStorageProviderEnum, ID, PluginOSArch, PluginOSType, PluginSourceType } from '@gauzy/contracts';
 import {
 	ColumnIndex,
 	MultiORMColumn,
 	MultiORMEntity,
-	MultiORMOneToMany,
+	MultiORMManyToOne,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Transform } from 'class-transformer';
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
+import { JoinColumn, RelationId } from 'typeorm';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { MikroOrmPluginSourceRepository } from '../repositories/mikro-orm-plugin-source.repository';
@@ -24,6 +25,24 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 	@ApiProperty({ enum: PluginSourceType, description: 'Type of the plugin source' })
 	@IsNotEmpty({ message: 'Plugin source type is required' })
 	type: PluginSourceType;
+
+	@MultiORMColumn({
+		type: 'simple-enum',
+		enum: PluginOSType,
+		default: PluginOSType.UNIVERSAL
+	})
+	@ApiProperty({ enum: PluginOSType, description: 'Plugin Os type source' })
+	@IsNotEmpty({ message: 'Operating system type is required' })
+	operatingSystem: PluginOSType;
+
+	@MultiORMColumn({
+		type: 'simple-enum',
+		enum: PluginOSArch,
+		default: PluginOSArch.X64
+	})
+	@ApiProperty({ enum: PluginOSArch, description: 'Plugin Os type source architecture' })
+	@IsNotEmpty({ message: 'Architecture type is required' })
+	architecture: PluginOSArch;
 
 	// For CDN sources
 	@ApiProperty({ type: String, description: 'URL of the plugin source (CDN)' })
@@ -57,11 +76,24 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 	@MultiORMColumn({ nullable: true })
 	registry?: string;
 
-	@ApiProperty({ type: String, description: 'NPM authentication token (if required)' })
+	@ApiProperty({
+		type: Boolean,
+		description: 'Indicates if the package is private (requires NPM authentication token for access).',
+		required: false,
+		default: false
+	})
 	@IsOptional()
-	@IsString({ message: 'Authentication token must be a string' })
-	@MultiORMColumn({ nullable: true })
-	authToken?: string;
+	@IsBoolean({ message: 'private must be a boolean value' })
+	@Transform(
+		({ value }) => {
+			if (value === 'true') return true;
+			if (value === 'false') return false;
+			return value;
+		},
+		{ toClassOnly: true }
+	)
+	@MultiORMColumn({ nullable: true, default: false })
+	private?: boolean;
 
 	@ApiProperty({ type: String, description: 'NPM scope (if applicable)' })
 	@IsOptional()
@@ -108,9 +140,15 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 	@MultiORMColumn({ nullable: true })
 	fileKey?: string;
 
-	@ApiProperty({ type: () => [PluginVersion], description: 'Versions' })
-	@MultiORMOneToMany(() => PluginVersion, (version) => version.source, { onDelete: 'SET NULL' })
-	versions: IPluginVersion[];
+	@ApiProperty({ type: () => PluginVersion, description: 'Associated plugin version' })
+	@MultiORMManyToOne(() => PluginVersion, (version) => version.sources, { onDelete: 'SET NULL' })
+	@JoinColumn()
+	version: IPluginVersion;
+
+	@RelationId((source: PluginSource) => source.version)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	versionId?: ID;
 
 	@ApiPropertyOptional({ enum: FileStorageProviderEnum })
 	@IsOptional()
@@ -119,4 +157,8 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: FileStorageProviderEnum })
 	storageProvider?: FileStorageProviderEnum;
+
+	// Computed property populated by PluginSourceSubscriber
+	// Format varies by source type (e.g., "npm:package-name", "cdn:url", etc.)
+	fullName?: string;
 }

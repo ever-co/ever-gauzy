@@ -53,8 +53,8 @@ export class UpdatePluginVersionCommandHandler implements ICommandHandler<Update
 			if (input) {
 				await this.updateVersion(input, pluginId);
 
-				if (input.source) {
-					await this.updateSource(input.source, versionId);
+				if (input.sources.length) {
+					await Promise.all(input.sources.map((source) => this.updateSource(source, versionId)));
 				}
 			}
 
@@ -62,7 +62,7 @@ export class UpdatePluginVersionCommandHandler implements ICommandHandler<Update
 
 			// Return the updated plugin with relations
 			return this.versionService.findOneByIdString(versionId, {
-				relations: ['source', 'plugin']
+				relations: ['sources', 'plugin']
 			});
 		} catch (error) {
 			// Roll back transaction on error
@@ -92,9 +92,7 @@ export class UpdatePluginVersionCommandHandler implements ICommandHandler<Update
 		}
 
 		const found = await this.sourceService.findOneOrFailByWhereOptions({
-			versions: {
-				id: versionId
-			},
+			versionId,
 			id: data.id
 		});
 
@@ -104,6 +102,8 @@ export class UpdatePluginVersionCommandHandler implements ICommandHandler<Update
 
 		const source: Partial<IPluginSource> = {
 			type: data.type,
+			architecture: data.architecture,
+			operatingSystem: data.operatingSystem,
 			...(data.type === PluginSourceType.CDN && {
 				url: data.url,
 				integrity: data.integrity,
@@ -113,7 +113,7 @@ export class UpdatePluginVersionCommandHandler implements ICommandHandler<Update
 				registry: data.registry,
 				name: data.name,
 				scope: data.scope,
-				authToken: data.authToken
+				private: data.private
 			}),
 			...(data.type === PluginSourceType.GAUZY && data)
 		};

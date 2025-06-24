@@ -1,0 +1,46 @@
+<nb-card class="card-scroll">
+	<nb-card-header>
+		<h5>{{ 'INTEGRATIONS.MAKE_COM.SETTINGS.TITLE' | translate }}</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<div *ngIf="loading" class="d-flex justify-content-center">
+			<nb-spinner></nb-spinner>
+		</div>
+		<form *ngIf="!loading" class="col-xl-6 col-12" [formGroup]="form" (ngSubmit)="saveSettings()">
+			<div class="form-group">
+				<nb-checkbox formControlName="isEnabled">
+					{{ 'INTEGRATIONS.MAKE_COM.SETTINGS.ENABLE_INTEGRATION' | translate }}
+				</nb-checkbox>
+			</div>
+
+			<div class="form-group">
+				<label for="webhookUrl" class="label">
+					{{ 'INTEGRATIONS.MAKE_COM.SETTINGS.WEBHOOK_URL' | translate }}
+				</label>
+				<input
+					nbInput
+					fullWidth
+					type="url"
+					id="webhookUrl"
+					formControlName="webhookUrl"
+					[placeholder]="'INTEGRATIONS.MAKE_COM.SETTINGS.WEBHOOK_URL_PLACEHOLDER' | translate"
+				/>
+				<div *ngIf="form.get('webhookUrl').invalid && form.get('webhookUrl').touched" class="text-danger">
+					<span *ngIf="form.get('webhookUrl').errors?.required">
+						{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+					</span>
+					<span *ngIf="form.get('webhookUrl').errors?.pattern">
+						{{ 'INTEGRATIONS.MAKE_COM.SETTINGS.WEBHOOK_URL_INVALID' | translate }}
+					</span>
+				</div>
+			</div>
+
+			<div class="actions">
+				<button nbButton status="primary" type="submit" [disabled]="form.invalid || loading">
+					<nb-icon *ngIf="loading" icon="loader-outline" pack="eva"></nb-icon>
+					{{ 'INTEGRATIONS.MAKE_COM.SETTINGS.SAVE' | translate }}
+				</button>
+			</div>
+		</form>
+	</nb-card-body>
+</nb-card>

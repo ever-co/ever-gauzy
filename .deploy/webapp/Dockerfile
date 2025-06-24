@@ -57,7 +57,7 @@ ARG DESKTOP_APP_DOWNLOAD_LINK_LINUX
 ARG MOBILE_APP_DOWNLOAD_LINK
 ARG EXTENSION_DOWNLOAD_LINK
 
-FROM node:20.11.1-alpine3.19 AS dependencies
+FROM node:20.18.1-alpine3.19 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -104,6 +104,10 @@ COPY --chown=node:node packages/plugins/integration-upwork-ui/package.json ./pac
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
 COPY --chown=node:node packages/plugins/integration-github-ui/package.json ./packages/plugins/integration-github-ui/
+COPY --chown=node:node packages/plugins/integration-make-com/package.json ./packages/plugins/integration-make-com/
+COPY --chown=node:node packages/plugins/integration-make-com-ui/package.json ./packages/plugins/integration-make-com-ui/
+COPY --chown=node:node packages/plugins/integration-zapier-ui/package.json ./packages/plugins/integration-zapier-ui/
+COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
@@ -123,6 +127,8 @@ COPY --chown=node:node packages/plugins/posthog-ui/package.json ./packages/plugi
 COPY --chown=node:node packages/plugins/public-layout-ui/package.json ./packages/plugins/public-layout-ui/
 COPY --chown=node:node packages/plugins/videos-ui/package.json ./packages/plugins/videos-ui/
 COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
+COPY --chown=node:node packages/plugins/camshot/package.json ./packages/plugins/camshot/
+COPY --chown=node:node packages/plugins/soundshot/package.json ./packages/plugins/soundshot/
 COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins/registry/
 COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
 COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
@@ -139,7 +145,7 @@ RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
 RUN yarn postinstall.manual
 RUN yarn cache clean
 
-FROM node:20.11.1-alpine3.19 AS development
+FROM node:20.18.1-alpine3.19 AS development
 
 USER node:node
 
@@ -149,7 +155,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.compose.sh /entrypo
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:20.11.1-alpine3.19 AS build
+FROM node:20.18.1-alpine3.19 AS build
 
 WORKDIR /srv/gauzy
 
