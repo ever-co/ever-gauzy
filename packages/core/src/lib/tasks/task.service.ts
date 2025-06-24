@@ -784,6 +784,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			advancedFilters = this.buildAdvancedWhereCondition(filters, where);
 		}
 
+		if (options.order?.taskNumber) {
+			options.order.prefix = options.order.taskNumber;
+			options.order.number = options.order.taskNumber;
+			delete options.order.taskNumber;
+		}
+
 		// Call the base paginate method
 		return await super.paginate({ ...options, where: { ...advancedFilters, ...where } });
 	}
