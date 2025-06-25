@@ -31,4 +31,13 @@ export abstract class BasePowerManagerDecorator implements IPowerManager {
 	public get suspendDetected(): boolean {
 		return this._decorator.suspendDetected;
 	}
+
+	/**
+	 * Dispose and cleanup resources/event handlers
+	 */
+	public dispose(): void {
+		if (typeof this._decorator.dispose === 'function') {
+			this._decorator.dispose();
+		}
+	}
 }

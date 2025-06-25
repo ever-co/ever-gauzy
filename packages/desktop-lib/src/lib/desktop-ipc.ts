@@ -375,9 +375,17 @@ export function ipcTimer(
 	soundPath,
 	alwaysOn
 ) {
-	let powerManager: IPowerManager;
-	let powerManagerPreventSleep: PowerManagerPreventDisplaySleep;
-	let powerManagerDetectInactivity: PowerManagerDetectInactivity;
+	let powerManager: IPowerManager | null = null;
+	let powerManagerPreventSleep: PowerManagerPreventDisplaySleep | null = null;
+	let powerManagerDetectInactivity: PowerManagerDetectInactivity | null = null;
+	let osInactivityHandler: DesktopOsInactivityHandler | null = null;
+
+	function cleanupPowerManagers() {
+		if (osInactivityHandler) { osInactivityHandler.dispose(); osInactivityHandler = null; }
+		if (powerManagerDetectInactivity) { powerManagerDetectInactivity.dispose(); powerManagerDetectInactivity = null; }
+		if (powerManagerPreventSleep) { powerManagerPreventSleep.stop(); powerManagerPreventSleep = null; }
+		if (powerManager) { powerManager.dispose(); powerManager = null; }
+	}
 
 	app.whenReady().then(async () => {
 		if (!notificationWindow) {
@@ -445,13 +453,11 @@ export function ipcTimer(
 		log.info(`Authenticated User: ${isAuth}`);
 
 		try {
+			cleanupPowerManagers();
 			powerManager = new DesktopPowerManager(timeTrackerWindow);
-
 			powerManagerPreventSleep = new PowerManagerPreventDisplaySleep(powerManager);
-
 			powerManagerDetectInactivity = new PowerManagerDetectInactivity(powerManager);
-
-			new DesktopOsInactivityHandler(powerManagerDetectInactivity);
+			osInactivityHandler = new DesktopOsInactivityHandler(powerManagerDetectInactivity);
 
 			const setting = LocalStore.getStore('appSetting');
 
@@ -500,6 +506,7 @@ export function ipcTimer(
 		} catch (error) {
 			log.error('Error on start timer', error);
 			timeTrackerWindow.webContents.send('emergency_stop');
+			cleanupPowerManagers();
 			throw new UIError('400', error, 'IPCSTARTMR');
 		}
 	});
@@ -739,20 +746,13 @@ export function ipcTimer(
 				}
 			});
 
-			if (powerManagerPreventSleep) {
-				console.log('Stop Prevent Display Sleep');
-				powerManagerPreventSleep.stop();
-			}
-
-			if (powerManagerDetectInactivity) {
-				console.log('Stop Inactivity Detection');
-				powerManagerDetectInactivity.stopInactivityDetection();
-			}
+			cleanupPowerManagers();
 
 			return timerResponse;
 		} catch (error) {
 			log.info('Error on stop timer', error);
 			timeTrackerWindow.webContents.send('emergency_stop');
+			cleanupPowerManagers();
 			throw new UIError('500', error, 'IPCSTOPTMR');
 		}
 	});

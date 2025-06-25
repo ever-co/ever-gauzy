@@ -17,4 +17,9 @@ export interface IPowerManager {
 	get window(): BrowserWindow;
 
 	get suspendDetected(): boolean;
+
+	/**
+	 * Dispose and cleanup resources/event handlers
+	 */
+	dispose(): void;
 }

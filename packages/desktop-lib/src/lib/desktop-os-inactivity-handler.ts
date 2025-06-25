@@ -18,6 +18,11 @@ export class DesktopOsInactivityHandler {
 	private _stoppedAt: Date;
 	private _intervalService: IntervalService;
 	private _timerService: TimerService;
+	private _activityProofRequestHandler: () => Promise<void>;
+	private _activityProofResultHandler: () => Promise<void>;
+	private _activityProofNotAcceptedHandler: () => Promise<void>;
+	private _activityProofResultNotAcceptedHandler: () => Promise<void>;
+	private _activityProofResultAcceptedHandler: () => Promise<void>;
 
 	constructor(powerManager: PowerManagerDetectInactivity) {
 		this._notify = new NotificationDesktop();
@@ -28,7 +33,7 @@ export class DesktopOsInactivityHandler {
 		this._intervalService = new IntervalService();
 		this._timerService = new TimerService();
 
-		this._powerManager.detectInactivity.on('activity-proof-request', async () => {
+		this._activityProofRequestHandler = async () => {
 			if (!this._isAllowTrackInactivity) return;
 			this._inactivityResultAccepted = false;
 			this._windowFocus();
@@ -50,18 +55,16 @@ export class DesktopOsInactivityHandler {
 					proof: true
 				});
 			}
-		});
-
-		this._powerManager.detectInactivity.on('activity-proof-result', async () => {
+		};
+		this._activityProofResultHandler = async () => {
 			this._inactivityResultAccepted = true;
 
 			if (!this._dialog) return;
 
 			this._dialog.close();
 			delete this._dialog;
-		});
-
-		this._powerManager.detectInactivity.on('activity-proof-not-accepted', async () => {
+		};
+		this._activityProofNotAcceptedHandler = async () => {
 			const dialog = new DialogAcknowledgeInactivity(
 				new DesktopDialog(
 					process.env.DESCRIPTION,
@@ -76,9 +79,8 @@ export class DesktopOsInactivityHandler {
 				TranslateService.instant('TIMER_TRACKER.NATIVE_NOTIFICATION.STOPPED_DU_INACTIVITY'),
 				process.env.DESCRIPTION
 			);
-		});
-
-		this._powerManager.detectInactivity.on('activity-proof-result-not-accepted', async () => {
+		};
+		this._activityProofResultNotAcceptedHandler = async () => {
 			const { suspendDetected, isOnBattery, window } = this._powerManager;
 
 			this._powerManager.sleepTracking = new SleepInactivityTracking(
@@ -90,15 +92,20 @@ export class DesktopOsInactivityHandler {
 			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Not Accepted');
 
 			await this._removeIdleTime(false);
-		});
-
-		this._powerManager.detectInactivity.on('activity-proof-result-accepted', async () => {
+		};
+		this._activityProofResultAcceptedHandler = async () => {
 			this._powerManager.sleepTracking = new SleepTracking(this._powerManager.window);
 			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Accepted');
 			await this._removeIdleTime(true);
 			this._powerManager.clearIntervals();
 			this._powerManager.startInactivityDetection();
-		});
+		};
+
+		this._powerManager.detectInactivity.on('activity-proof-request', this._activityProofRequestHandler);
+		this._powerManager.detectInactivity.on('activity-proof-result', this._activityProofResultHandler);
+		this._powerManager.detectInactivity.on('activity-proof-not-accepted', this._activityProofNotAcceptedHandler);
+		this._powerManager.detectInactivity.on('activity-proof-result-not-accepted', this._activityProofResultNotAcceptedHandler);
+		this._powerManager.detectInactivity.on('activity-proof-result-accepted', this._activityProofResultAcceptedHandler);
 	}
 
 	/**
@@ -172,5 +179,16 @@ export class DesktopOsInactivityHandler {
 		if (offlineMode.enabled) {
 			this._powerManager.window.webContents.send('update_view', params);
 		}
+	}
+
+	/**
+	 * Dispose and cleanup event listeners
+	 */
+	public dispose(): void {
+		this._powerManager.detectInactivity.removeListener('activity-proof-request', this._activityProofRequestHandler);
+		this._powerManager.detectInactivity.removeListener('activity-proof-result', this._activityProofResultHandler);
+		this._powerManager.detectInactivity.removeListener('activity-proof-not-accepted', this._activityProofNotAcceptedHandler);
+		this._powerManager.detectInactivity.removeListener('activity-proof-result-not-accepted', this._activityProofResultNotAcceptedHandler);
+		this._powerManager.detectInactivity.removeListener('activity-proof-result-accepted', this._activityProofResultAcceptedHandler);
 	}
 }

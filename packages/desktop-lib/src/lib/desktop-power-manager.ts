@@ -8,6 +8,10 @@ export class DesktopPowerManager implements IPowerManager {
 	private _sleepTracking: ISleepTracking;
 	private _window: BrowserWindow;
 	private _isLockedScreen: boolean;
+	private _suspendHandler: () => void;
+	private _resumeHandler: () => void;
+	private _lockScreenHandler: () => void;
+	private _unlockScreenHandler: () => void;
 
 	constructor(window: BrowserWindow) {
 		this._sleepTracking = new SleepTracking(window);
@@ -15,29 +19,32 @@ export class DesktopPowerManager implements IPowerManager {
 		this._isLockedScreen = false;
 		this._window = window;
 
-		powerMonitor.on('suspend', () => {
+		// Store handlers for later removal
+		this._suspendHandler = () => {
 			console.log('System going to sleep.');
 			this.pauseTracking();
-		});
-
-		powerMonitor.on('resume', () => {
+		};
+		this._resumeHandler = () => {
 			console.log('System resumed from sleep state.');
 			if (!this._isLockedScreen) {
 				this.resumeTracking();
 			}
-		});
-
-		powerMonitor.on('lock-screen', () => {
+		};
+		this._lockScreenHandler = () => {
 			console.log('System locked');
 			this._isLockedScreen = true;
 			this.pauseTracking();
-		});
-
-		powerMonitor.on('unlock-screen', () => {
+		};
+		this._unlockScreenHandler = () => {
 			console.log('System unlocked');
 			this._isLockedScreen = false;
 			this.resumeTracking();
-		});
+		};
+
+		powerMonitor.on('suspend', this._suspendHandler);
+		powerMonitor.on('resume', this._resumeHandler);
+		powerMonitor.on('lock-screen', this._lockScreenHandler);
+		powerMonitor.on('unlock-screen', this._unlockScreenHandler);
 	}
 
 	public get sleepTracking(): ISleepTracking {
@@ -83,5 +90,15 @@ export class DesktopPowerManager implements IPowerManager {
 
 	public get isOnBattery(): boolean {
 		return powerMonitor.isOnBatteryPower();
+	}
+
+	/**
+	 * Remove all event listeners registered by this instance
+	 */
+	public dispose(): void {
+		powerMonitor.removeListener('suspend', this._suspendHandler);
+		powerMonitor.removeListener('resume', this._resumeHandler);
+		powerMonitor.removeListener('lock-screen', this._lockScreenHandler);
+		powerMonitor.removeListener('unlock-screen', this._unlockScreenHandler);
 	}
 }
