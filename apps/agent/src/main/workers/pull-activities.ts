@@ -2,12 +2,13 @@ import { KeyboardMouseEventCounter, KbMouseTimer, KeyboardMouseActivityStores } 
 import { KbMouseActivityService, TranslateService, notifyScreenshot } from '@gauzy/desktop-lib';
 import AppWindow from '../window-manager';
 import * as path from 'node:path';
-import { getScreen, getAppSetting, delaySync, TAppSetting, getScreenshotSoundPath } from '../util';
+import { getScreen, getAppSetting, delaySync, TAppSetting, getScreenshotSoundPath, getAuthConfig } from '../util';
 import { getScreenshot, TScreenShot } from '../screenshot';
 import { Notification } from 'electron';
 import { AgentLogger } from '../agent-logger';
 import MainEvent from '../events/events';
 import { MAIN_EVENT_TYPE, MAIN_EVENT } from '../../constant';
+import { ApiService, TResponseTimeSlot } from '../api';
 
 type UserLogin = {
 	tenantId: string;
@@ -27,6 +28,7 @@ class PullActivities {
 	private agentLogger: AgentLogger;
 	private appWindow: AppWindow;
 	private mainEvent: MainEvent;
+	private apiService: ApiService;
 	constructor(user: UserLogin) {
 		this.listenerModule = null;
 		this.isStarted = false;
@@ -37,6 +39,7 @@ class PullActivities {
 		this.appWindow = AppWindow.getInstance(path.join(__dirname, '../..'));
 		this.appWindow.initScreenShotNotification();
 		this.mainEvent = MainEvent.getInstance();
+		this.apiService = ApiService.getInstance();
 	}
 
 	static getInstance(user: UserLogin): PullActivities {
@@ -55,13 +58,21 @@ class PullActivities {
 		}
 	}
 
-	startTracking() {
+	async startTracking() {
 		if (!this.listenerModule) {
 			this.getListenerModule();
 		}
 		try {
 			const appSetting = getAppSetting();
 			if (!this.isStarted) {
+				const authConfig = getAuthConfig();
+				await this.apiService.startTimer({
+					organizationId: authConfig?.user?.employee?.organizationId,
+					tenantId: authConfig?.user?.employee?.tenantId,
+					startedAt: new Date(),
+					organizationTeamId: null,
+					organizationContactId: null
+				});
 				this.agentLogger.info('Listener keyboard and mouse starting');
 				if (appSetting?.kbMouseTracking) {
 					this.startListener();
@@ -90,11 +101,19 @@ class PullActivities {
 		this.agentLogger.info('Keyboard and mouse activity listener stopped');
 	}
 
-	stopTracking() {
+	async stopTracking() {
 		if (!this.listenerModule) {
 			this.getListenerModule();
 		}
 		try {
+			const authConfig = getAuthConfig();
+			await this.apiService.stopTimer({
+				organizationId: authConfig?.user?.employee?.organizationId,
+				tenantId: authConfig?.user?.employee?.tenantId,
+				startedAt: new Date(),
+				organizationTeamId: null,
+				organizationContactId: null
+			});
 			this.agentLogger.info('Listener keyboard and mouse stopping');
 			this.listenerModule.stopListener();
 			this.isStarted = false;

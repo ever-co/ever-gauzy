@@ -24,6 +24,14 @@ export type TResponseScreenshot = {
 	timeSlotId?: string
 }
 
+export type TToggleParams = {
+	organizationId: string,
+	tenantId: string,
+	startedAt: Date,
+	organizationContactId: string,
+	organizationTeamId: string
+}
+
 export class ApiService {
 	static instance: ApiService;
 	get auth(): Partial<TAuthConfig> {
@@ -75,6 +83,37 @@ export class ApiService {
 		return this.post(path, payload);
 	}
 
+	getTimeToggleParams(payload: TToggleParams) {
+		return {
+			description: '',
+			isBillable: true,
+			logType: 'TRACKED',
+			projectId: null,
+			taskId: null,
+			source: 'DESKTOP',
+			manualTimeSlot: null,
+			organizationId: payload.organizationId,
+			tenantId: payload.tenantId,
+			organizationContactId: payload.organizationContactId,
+			isRunning: true,
+			version: null,
+			startedAt: moment(payload.startedAt).utc().toISOString(),
+			organizationTeamId: payload.organizationTeamId
+		};
+	}
+
+	startTimer(payload: TToggleParams) {
+		const path: string = '/api/timesheet/timer/start';
+		const payloadTimer = this.getTimeToggleParams(payload);
+		return this.post(path, payloadTimer);
+	}
+
+	stopTimer(payload: TToggleParams) {
+		const path: string = '/api/timesheet/timer/stop';
+		const payloadTimer = this.getTimeToggleParams(payload);
+		return this.post(path, payloadTimer);
+	}
+
 	uploadImages(params: UploadParams, img: any): Promise<Partial<TResponseScreenshot>> {
 		const formData = new FormData();
 		formData.append('file', fs.createReadStream(img.filePath));
@@ -107,6 +146,8 @@ export class ApiService {
 			: { ...options, headers };
 
 		try {
+			console.log('url', url);
+			console.log('options data', JSON.stringify(requestOptions));
 			const response = await fetch(url, requestOptions);
 			console.log(`API ${options.method} ${path}: ${response.status} ${response.statusText}`);
 			if (!response.ok) {

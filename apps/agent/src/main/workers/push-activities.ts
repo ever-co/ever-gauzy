@@ -13,7 +13,7 @@ class PushActivities {
 	static instance: PushActivities;
 	private kbMousePool: KbMouseActivityPool;
 	private kbMouseActivityService: KbMouseActivityService;
-	private apiService = ApiService.getInstance();
+	private apiService: ApiService;
 	private agentLogger: AgentLogger;
 	private mainEvent: MainEvent;
 	private isNetworkError = false;
@@ -24,6 +24,7 @@ class PushActivities {
 		this.getKbMousePoolModule();
 		this.agentLogger = AgentLogger.getInstance();
 		this.mainEvent = MainEvent.getInstance();
+		this.apiService = ApiService.getInstance();
 		this.trayUpdateMenuStatus('network', true);
 	}
 
@@ -162,14 +163,14 @@ class PushActivities {
 		}
 	}
 
-	private getDurationOverAllSeconds(timeStart: Date, timeEnd: Date) {
+	private getDurationSeconds(timeStart: Date, timeEnd: Date) {
 		if (timeStart && timeEnd) {
 			return Math.floor((timeEnd.getTime() - timeStart.getTime()) / 1000);
 		}
 		return 0;
 	}
 
-	private getDurationSeconds(timeStart: Date, timeEnd: Date, afkDuration?: number) {
+	private getDurationOverAllSeconds(timeStart: Date, timeEnd: Date, afkDuration?: number) {
 		if (!(timeStart && timeEnd)) {
 			return 0;
 		}
@@ -243,14 +244,14 @@ class PushActivities {
 		return {
 			tenantId: auth.user.employee.tenantId,
 			organizationId: auth.user.employee.organizationId,
-			duration: this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration),
+			duration: this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd)),
 			keyboard: activities.kbPressCount,
 			mouse: activities.mouseLeftClickCount + activities.mouseRightClickCount,
-			overall: this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd)),
+			overall: this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration),
 			startedAt: moment(activities.timeStart).toISOString(),
 			recordedAt: moment(activities.timeStart).toISOString(),
 			activities: this.getActivities(activities),
-			employeeId: auth.user.employee.employeeId
+			employeeId: auth?.user?.employee?.id
 		};
 	}
 
