@@ -42,7 +42,9 @@ import {
 	Subject,
 	Subscription,
 	tap,
-	timer
+	timer,
+	exhaustMap,
+	mergeMap
 } from 'rxjs';
 import { AlwaysOnService, AlwaysOnStateEnum } from '../always-on/always-on.service';
 import { AuthStrategy } from '../auth';
@@ -90,17 +92,17 @@ enum TimerStartMode {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-desktop-time-tracker',
-    templateUrl: './time-tracker.component.html',
-    styleUrls: ['./time-tracker.component.scss'],
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => TimeTrackerComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'ngx-desktop-time-tracker',
+	templateUrl: './time-tracker.component.html',
+	styleUrls: ['./time-tracker.component.scss'],
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TimeTrackerComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
 export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _lastTotalWorkedToday$: BehaviorSubject<number> = new BehaviorSubject(0);
@@ -165,6 +167,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	tableData = [];
 	isTrackingEnabled = true;
 	sound: any = null;
+	private dialogRequest$ = new Subject<{ dialog: TemplateRef<any>; option: any }>();
 
 	constructor(
 		private electronService: ElectronService,
@@ -483,8 +486,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						timelog = isRemote
 							? this._timeTrackerStatus.remoteTimer.lastLog
 							: await this.preventDuplicateApiRequest({ ...lastTimer, ...params }, (payload) =>
-									this.timeTrackerService.toggleApiStart(payload)
-							  );
+								this.timeTrackerService.toggleApiStart(payload)
+							);
 					} catch (error) {
 						lastTimer.isStartedOffline = true;
 						this._loggerService.error(error);
@@ -562,8 +565,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			organizationId,
 			...(this.projectSelectorService.selectedId
 				? {
-						projectId: this.projectSelectorService.selectedId
-				  }
+					projectId: this.projectSelectorService.selectedId
+				}
 				: {})
 		});
 	}
@@ -764,6 +767,41 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				),
 				filter(Boolean),
 				tap((value) => this.timeTrackerFormService.setState(value)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		// Dialog handling with exhaustMap
+		this.dialogRequest$
+			.pipe(
+				exhaustMap(({ dialog, option }) => {
+					this.selectedTimeSlot = this.lastTimeSlot;
+					this._dialog = this.dialogService.open(dialog, {
+						context: this.dialogType[option.type].message,
+						backdropClass: 'backdrop-blur'
+					});
+					return this._dialog.onClose.pipe(
+						mergeMap((selectedOption) => {
+							if (selectedOption) {
+								switch (option.type) {
+									case this.dialogType.deleteLog.name:
+										return from(this.deleteTimeSlot());
+									case this.dialogType.timeTrackingOption.name:
+										this._isOpenDialog = false;
+										return from(this.toggleStart(true));
+									default:
+										return of(null);
+								}
+							} else if (this.start && option.type === this.dialogType.timeTrackingOption.name) {
+								this._isOpenDialog = false;
+								if (this.start) {
+									return from(this.toggleStart(false));
+								}
+							}
+							return of(null);
+						})
+					);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -1768,8 +1806,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				typeof img === 'object' && img.thumbUrl
 					? await this._imageViewerService.getBase64ImageFromUrl(img.thumbUrl)
 					: typeof img === 'string'
-					? img
-					: undefined;
+						? img
+						: undefined;
 
 			// Set timestamp, preferring recordedAt if available
 			const timestamp = typeof img === 'object' && img.recordedAt ? new Date(img.recordedAt) : new Date();
@@ -1868,35 +1906,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public open(dialog: TemplateRef<any>, option): void {
-		try {
-			this.selectedTimeSlot = this.lastTimeSlot;
-			this._dialog = this.dialogService.open(dialog, {
-				context: this.dialogType[option.type].message,
-				backdropClass: 'backdrop-blur'
-			});
-			this._dialog.onClose.subscribe(async (selectedOption) => {
-				if (selectedOption) {
-					switch (option.type) {
-						case this.dialogType.deleteLog.name:
-							await this.deleteTimeSlot();
-							break;
-						case this.dialogType.timeTrackingOption.name:
-							this._isOpenDialog = false;
-							await this.toggleStart(true);
-							break;
-						default:
-							break;
-					}
-				} else if (this.start && option.type === this.dialogType.timeTrackingOption.name) {
-					this._isOpenDialog = false;
-					if (this.start) {
-						await this.toggleStart(false);
-					}
-				}
-			});
-		} catch (error) {
-			console.log('ERROR', error);
-		}
+		this.dialogRequest$.next({ dialog, option });
 	}
 
 	async deleteTimeSlot(): Promise<void> {
