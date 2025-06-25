@@ -4,7 +4,7 @@ import * as _ from 'underscore';
 import { IActivityWatchEventResult } from '@gauzy/contracts';
 import { RegisteredWindow, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
-import { SleepInactivityTracking } from './contexts';
+import { TrackingSleepInactivity } from './contexts';
 import {
 	DialogStopTimerLogoutConfirmation,
 	PowerManagerDetectInactivity,
@@ -36,7 +36,7 @@ import {
 	UserService
 } from './offline';
 import { pluginListeners } from './plugin-system';
-import { RemoteSleepTracking } from './strategies';
+import { RemoteTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
 
 const timerHandler = new TimerHandler();
@@ -496,7 +496,7 @@ export function ipcTimer(
 
 			if (arg?.isRemoteTimer) {
 				log.info(`SleepInactivityTracking: ${moment().format()}`);
-				powerManager.sleepTracking = new SleepInactivityTracking(new RemoteSleepTracking(timeTrackerWindow));
+				powerManager.trackingSleep = new TrackingSleepInactivity(new RemoteTrackingSleep(timeTrackerWindow));
 			} else {
 				log.info(`StartInactivityDetection: ${moment().format()}`);
 				powerManagerDetectInactivity.startInactivityDetection();

@@ -1,7 +1,7 @@
-import {ISleepTrackingStrategy} from "../../interfaces";
+import {ITrackingSleepStrategy} from "../../interfaces";
 import {BrowserWindow} from "electron";
 
-export abstract class SleepTrackingStrategy implements ISleepTrackingStrategy {
+export abstract class TrackingSleepStrategy implements ITrackingSleepStrategy {
 	protected _window: BrowserWindow;
 
 	protected constructor(window: BrowserWindow) {

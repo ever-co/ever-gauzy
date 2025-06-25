@@ -1,12 +1,12 @@
 import { BrowserWindow } from 'electron';
 import * as moment from 'moment';
-import { SleepInactivityTracking, SleepTracking } from './contexts';
+import { TrackingSleepInactivity, TrackingSleep } from './contexts';
 import { DialogAcknowledgeInactivity, PowerManagerDetectInactivity } from './decorators';
 import { DesktopDialog } from './desktop-dialog';
 import NotificationDesktop from './desktop-notifier';
 import { LocalStore } from './desktop-store';
 import { DesktopOfflineModeHandler, IntervalService, Timer, TimerService, TimerTO } from './offline';
-import { AlwaysSleepTracking, NeverSleepTracking } from './strategies';
+import { AlwaysTrackingSleep, NeverTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
 
 // Default values
@@ -117,6 +117,10 @@ export class DesktopOsInactivityHandler {
 				)
 			);
 			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Not Accepted');
+			const { suspendDetected, isOnBattery, window } = this._powerManager;
+			if (!suspendDetected || !this.isTrackingSleep || isOnBattery) {
+				this._powerManager.trackingSleep = new TrackingSleepInactivity(new NeverTrackingSleep(window));
+			}
 			await this._removeIdleTime(false);
 			await dialog.show();
 			this._notify.customNotification(
@@ -134,10 +138,10 @@ export class DesktopOsInactivityHandler {
 	private async _onActivityProofResultNotAccepted() {
 		try {
 			const { suspendDetected, isOnBattery, window } = this._powerManager;
-			this._powerManager.sleepTracking = new SleepInactivityTracking(
-				suspendDetected && this.isTrackingOnSleep && !isOnBattery
-					? new AlwaysSleepTracking(window)
-					: new NeverSleepTracking(window)
+			this._powerManager.trackingSleep = new TrackingSleepInactivity(
+				suspendDetected && this.isTrackingSleep && !isOnBattery
+					? new AlwaysTrackingSleep(window)
+					: new NeverTrackingSleep(window)
 			);
 			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Not Accepted');
 			await this._removeIdleTime(false);
@@ -151,7 +155,7 @@ export class DesktopOsInactivityHandler {
 	 */
 	private async _onActivityProofResultAccepted() {
 		try {
-			this._powerManager.sleepTracking = new SleepTracking(this._powerManager.window);
+			this._powerManager.trackingSleep = new TrackingSleep(this._powerManager.window);
 			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Accepted');
 			await this._removeIdleTime(true);
 			this._powerManager.clearIntervals();
@@ -230,7 +234,7 @@ export class DesktopOsInactivityHandler {
 		}
 	}
 
-	public get isTrackingOnSleep(): boolean {
+	public get isTrackingSleep(): boolean {
 		const setting = LocalStore.getStore('appSetting');
 		return setting ? setting.trackOnPcSleep : false;
 	}

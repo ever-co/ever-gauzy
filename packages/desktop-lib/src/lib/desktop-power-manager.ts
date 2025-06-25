@@ -1,11 +1,11 @@
 import { BrowserWindow, powerMonitor } from 'electron';
-import { SleepTracking } from './contexts';
+import { TrackingSleep } from './contexts';
 import { LocalStore } from './desktop-store';
-import { IPowerManager, ISleepTracking } from './interfaces';
+import { IPowerManager, ITrackingSleep } from './interfaces';
 
 export class DesktopPowerManager implements IPowerManager {
 	private _suspendDetected: boolean;
-	private _sleepTracking: ISleepTracking;
+	private _sleepTracking: ITrackingSleep;
 	private _window: BrowserWindow;
 	private _isLockedScreen: boolean;
 	private _suspendHandler: () => void;
@@ -14,7 +14,7 @@ export class DesktopPowerManager implements IPowerManager {
 	private _unlockScreenHandler: () => void;
 
 	constructor(window: BrowserWindow) {
-		this._sleepTracking = new SleepTracking(window);
+		this._sleepTracking = new TrackingSleep(window);
 		this._suspendDetected = false;
 		this._isLockedScreen = false;
 		this._window = window;
@@ -47,11 +47,11 @@ export class DesktopPowerManager implements IPowerManager {
 		powerMonitor.on('unlock-screen', this._unlockScreenHandler);
 	}
 
-	public get sleepTracking(): ISleepTracking {
+	public get trackingSleep(): ITrackingSleep {
 		return this._sleepTracking;
 	}
 
-	public set sleepTracking(value: ISleepTracking) {
+	public set trackingSleep(value: ITrackingSleep) {
 		this._sleepTracking = value;
 	}
 

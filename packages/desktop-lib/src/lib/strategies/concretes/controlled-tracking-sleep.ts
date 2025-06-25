@@ -1,7 +1,7 @@
-import {SleepTrackingStrategy} from "../abstracts/sleep-tracking-strategy";
+import {TrackingSleepStrategy} from "../abstracts/tracking-sleep.strategy";
 import {BrowserWindow} from "electron";
 
-export class ControlledSleepTracking extends SleepTrackingStrategy {
+export class ControlledTrackingSleep extends TrackingSleepStrategy {
 
 	constructor(window: BrowserWindow) {
 		super(window);

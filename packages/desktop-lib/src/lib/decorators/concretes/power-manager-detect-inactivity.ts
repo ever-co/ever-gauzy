@@ -1,6 +1,6 @@
 import { powerMonitor } from 'electron';
 import * as EventEmitter from 'events';
-import { SleepTracking } from '../../contexts';
+import { TrackingSleep } from '../../contexts';
 import { LocalStore } from '../../desktop-store';
 import { IPowerManager } from '../../interfaces';
 import { BasePowerManagerDecorator } from '../abstracts/base-power-manager-decorator';
@@ -45,7 +45,7 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 	public startInactivityDetection(): void {
 		if (this._inactivityDetectionIntervalId || !this._isAllowTrackInactivity) return;
 		this.resumeTracking();
-		this.sleepTracking = new SleepTracking(this.window);
+		this.trackingSleep = new TrackingSleep(this.window);
 		this._inactivityDetectionIntervalId = setInterval(() => {
 			const currentIdleTime = powerMonitor.getSystemIdleTime();
 			if (currentIdleTime > this._inactivityTimeLimit) {
