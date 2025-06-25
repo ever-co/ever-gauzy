@@ -1,5 +1,5 @@
 export interface ITrackingSleepStrategy {
 	resume(): void;
 
-	pause(): void
+	pause(): void;
 }
