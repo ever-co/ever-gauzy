@@ -100,7 +100,7 @@ ARG OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
 ARG REDIS_ENABLED
 ARG REDIS_URL
 
-FROM node:20.11.1-alpine3.19 AS dependencies
+FROM node:20.18.1-alpine3.19 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -170,7 +170,7 @@ COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn postinstall.manual && yarn cache clean
 
-FROM node:20.11.1-alpine3.19 AS prodDependencies
+FROM node:20.18.1-alpine3.19 AS prodDependencies
 
 ENV CI=true
 
@@ -240,7 +240,7 @@ RUN rm -r node_modules/@angular
 # those within custom webpack in apps/api/config/custom-webpack.config.js
 # RUN rm -r node_modules/@gauzy
 
-FROM node:20.11.1-alpine3.19 AS development
+FROM node:20.18.1-alpine3.19 AS development
 
 USER node:node
 
@@ -250,7 +250,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:20.11.1-alpine3.19 AS build
+FROM node:20.18.1-alpine3.19 AS build
 
 WORKDIR /srv/gauzy
 
@@ -290,7 +290,7 @@ RUN yarn build:api:prod:docker
 # those within custom webpack in apps/api/config/custom-webpack.config.js
 # RUN rm -r dist/apps/api/node_modules/@gauzy
 
-FROM node:20.11.1-alpine3.19 AS production
+FROM node:20.18.1-alpine3.19 AS production
 
 WORKDIR /srv/gauzy
 

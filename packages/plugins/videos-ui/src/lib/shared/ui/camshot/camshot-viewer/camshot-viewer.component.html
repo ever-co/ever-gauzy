@@ -1,0 +1,65 @@
+<div class="image-dialog-container">
+	<!-- Floating header with close button -->
+	<div class="dialog-header">
+		<h3 *ngIf="imageTitle">{{ imageTitle }}</h3>
+		<button nbButton ghost status="basic" class="close-button" (click)="dismiss()">
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</div>
+
+	<!-- Main image container -->
+	<div class="image-wrapper" (click)="toggleZoom()" [class.grabbing]="isDragging">
+		<div
+			class="image-container"
+			[style.transform]="'scale(' + zoomLevel + ') translate(' + dragX + 'px, ' + dragY + 'px)'"
+		>
+			<img [ngSrc]="imageUrl" [alt]="imageTitle" (load)="onImageLoad()" (error)="onImageError()" priority fill />
+		</div>
+
+		<!-- Loading state -->
+		<div class="loading-overlay" *ngIf="isLoading">
+			<div class="loading-content">
+				<div class="spinner-container">
+					<div class="spinner-circle"></div>
+					<div class="spinner-circle"></div>
+					<div class="spinner-circle"></div>
+				</div>
+				<p>Loading image...</p>
+			</div>
+		</div>
+
+		<!-- Error state -->
+		<div class="error-overlay" *ngIf="showError">
+			<div class="error-content">
+				<nb-icon icon="image-off-outline" status="danger"></nb-icon>
+				<h4>Image failed to load</h4>
+				<p>We couldn't load the requested image</p>
+				<button nbButton status="basic" size="small" (click)="dismiss()">Close</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Floating zoom controls -->
+	<div class="floating-controls">
+		<div class="control-group zoom-controls">
+			<button nbButton ghost status="control" (click)="zoomIn()" [disabled]="zoomLevel >= 3">
+				<nb-icon icon="plus-outline"></nb-icon>
+			</button>
+			<div class="zoom-level">{{ zoomLevel.toFixed(1) }}x</div>
+			<button nbButton ghost status="control" (click)="zoomOut()" [disabled]="zoomLevel <= 0.5">
+				<nb-icon icon="minus-outline"></nb-icon>
+			</button>
+			<button nbButton ghost status="control" (click)="resetZoom()" [disabled]="zoomLevel === 1">
+				<nb-icon icon="collapse-outline"></nb-icon>
+			</button>
+		</div>
+	</div>
+
+	<!-- Image metadata (appears on hover) -->
+	<div class="image-meta" *ngIf="imageDescription">
+		<div class="meta-content">
+			<nb-icon icon="info-circle-outline"></nb-icon>
+			<p>{{ imageDescription }}</p>
+		</div>
+	</div>
+</div>

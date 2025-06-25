@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import { TEventArgs } from './event-types';
 
 export default class MainEvent {
 	private static instance: MainEvent;
@@ -14,11 +15,11 @@ export default class MainEvent {
 		return MainEvent.instance;
 	}
 
-	on(eventName: string, callBack: (...args: any) => void) {
-		this.events.on(eventName, callBack)
+	on(eventName: string, callBack: (args: TEventArgs) => void) {
+		this.events.on(eventName, callBack);
 	}
 
-	emit(eventName: string, args: any) {
+	emit(eventName: string, args: TEventArgs) {
 		this.events.emit(eventName, args);
 	}
 }

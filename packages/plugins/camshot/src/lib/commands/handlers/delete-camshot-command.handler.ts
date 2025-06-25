@@ -6,7 +6,7 @@ import { RequestContext } from '@gauzy/core';
 
 @CommandHandler(DeleteCamshotCommand)
 export class DeleteCamshotCommandHandler implements ICommandHandler<DeleteCamshotCommand> {
-	constructor(private readonly camshotService: CamshotService) { }
+	constructor(private readonly camshotService: CamshotService) {}
 
 	/**
 	 * Handles the `DeleteCamshotCommand` to delete a camshot entity from the database.
@@ -21,14 +21,17 @@ export class DeleteCamshotCommandHandler implements ICommandHandler<DeleteCamsho
 	public async execute(command: DeleteCamshotCommand): Promise<void> {
 		const { id, input } = command;
 		const { forceDelete = false, organizationId, tenantId = RequestContext.currentTenantId() } = input;
-		const camshot = await this.camshotService.findOneByWhereOptions({ id, organizationId, tenantId });
+		const camshot = await this.camshotService.findOneByOptions({
+			where: { id, organizationId, tenantId },
+			withDeleted: true
+		});
 
 		if (!camshot) {
-			throw new NotFoundException(`Camshot with id ${id} not found`);
+			throw new NotFoundException(`Cannot delete because camshot with id ${id} not found`);
 		}
 
 		if (forceDelete) {
-			await this.camshotService.delete(id);
+			await this.camshotService.delete(id, { withDeleted: true });
 		} else {
 			await this.camshotService.softDelete(id);
 		}
