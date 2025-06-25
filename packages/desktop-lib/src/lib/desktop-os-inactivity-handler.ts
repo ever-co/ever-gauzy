@@ -76,6 +76,8 @@ export class DesktopOsInactivityHandler {
 			);
 			this._session.dialog = dialog;
 			const button = await dialog.show();
+
+			// Guard: Only handle the result if not already accepted
 			if (!this._session.accepted) {
 				const { response } = button || {};
 				const accepted = response === 0;
@@ -85,6 +87,10 @@ export class DesktopOsInactivityHandler {
 				});
 			}
 		} catch (error) {
+			if (this._session.dialog) {
+				this._session.dialog.close();
+				delete this._session.dialog;
+			}
 			console.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofRequest:', error);
 		}
 	}
@@ -95,10 +101,7 @@ export class DesktopOsInactivityHandler {
 	private async _onActivityProofResult() {
 		try {
 			this._session.accepted = true;
-			if (this._session.dialog) {
-				this._session.dialog.close();
-				delete this._session.dialog;
-			}
+			this.cleanUpDialog();
 		} catch (error) {
 			console.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofResult:', error);
 		}
@@ -243,6 +246,7 @@ export class DesktopOsInactivityHandler {
 	 * Dispose and cleanup event listeners
 	 */
 	public dispose(): void {
+		this.cleanUpDialog();
 		this._powerManager.detectInactivity.removeListener('activity-proof-request', this._activityProofRequestHandler);
 		this._powerManager.detectInactivity.removeListener('activity-proof-result', this._activityProofResultHandler);
 		this._powerManager.detectInactivity.removeListener(
@@ -257,5 +261,12 @@ export class DesktopOsInactivityHandler {
 			'activity-proof-result-accepted',
 			this._activityProofResultAcceptedHandler
 		);
+	}
+
+	private cleanUpDialog(): void {
+		if (this._session.dialog) {
+			this._session.dialog.close();
+			delete this._session.dialog;
+		}
 	}
 }
