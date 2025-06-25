@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, In } from 'typeorm';
-import { BaseEntityEnum, ID, IFavorite, IFavoriteCreateInput, IPagination } from '@gauzy/contracts';
+import { BaseEntityEnum, ID, IFavorite, IFavoriteCreateInput, IPagination, RolesEnum } from '@gauzy/contracts';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Favorite } from './favorite.entity';
@@ -52,15 +52,20 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 	async create(entity: IFavoriteCreateInput): Promise<IFavorite> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const { employeeId, entity: entityName, entityId, organizationId } = entity;
+			const { entity: entityName, entityId, organizationId } = entity;
 
-			// Employee existence validation
-			const employee = await this.employeeService.findOneByIdString(employeeId);
-			if (!employee) {
-				throw new NotFoundException('Employee not found');
+			// Always prioritize employeeId from RequestContext, fallback to the value from the body if not present in context
+			const employeeId = RequestContext.currentEmployeeId() || entity.employeeId;
+
+			// Validate employee existence only if employeeId is present
+			if (employeeId) {
+				const employee = await this.employeeService.findOneByIdString(employeeId);
+				if (!employee) {
+					throw new NotFoundException('Employee not found');
+				}
 			}
 
-			// Check for exiting favorite element
+			// Check for existing favorite with the same parameters
 			const findOptions: FindOptionsWhere<Favorite> = {
 				tenantId,
 				organizationId,
@@ -71,14 +76,14 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 
 			let favorite = await this.typeOrmRepository.findOneBy(findOptions);
 			if (!favorite) {
-				favorite = new Favorite(entity);
+				favorite = new Favorite({ ...entity, employeeId });
 			}
 
-			// If favorite element not exists, create and return new one
+			// Create or return the existing favorite
 			return await this.save(favorite);
 		} catch (error) {
-			console.log(error);
-			throw new BadRequestException('Favorite creation failed', error);
+			console.error('Error while creating favorite:', error);
+			throw new BadRequestException('Favorite creation failed: ' + (error?.message || error));
 		}
 	}
 
@@ -90,10 +95,13 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 	 */
 	async delete(id: ID): Promise<DeleteResult> {
 		try {
-			const employeeId = RequestContext.currentEmployeeId();
-			return await super.delete(id, {
-				where: { employeeId }
-			});
+			if (!RequestContext.hasRoles([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN])) {
+				const employeeId = RequestContext.currentEmployeeId();
+				return await super.delete(id, {
+					where: { employeeId }
+				});
+			}
+			return await super.delete(id);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -132,10 +140,10 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 				where: whereCondition
 			});
 
-			// return founded records for specific service
+			// return found records for specific service
 			return items;
 		} catch (error) {
-			console.log(error); // Debug Logging
+			console.error('Error while retrieving favorite details:', error);
 			throw new BadRequestException(error);
 		}
 	}
