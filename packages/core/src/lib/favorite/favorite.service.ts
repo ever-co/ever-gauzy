@@ -83,7 +83,7 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 			return await this.save(favorite);
 		} catch (error) {
 			console.error('Error while creating favorite:', error);
-			throw new BadRequestException('Favorite creation failed: ' + (error?.message || error));
+			throw new BadRequestException(`Favorite creation failed: ${error?.message || error}`);
 		}
 	}
 
