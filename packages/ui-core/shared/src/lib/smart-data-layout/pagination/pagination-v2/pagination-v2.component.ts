@@ -6,10 +6,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-pagination',
-    templateUrl: './pagination-v2.component.html',
-    styleUrls: ['./pagination-v2.component.scss'],
-    standalone: false
+	selector: 'ngx-pagination',
+	templateUrl: './pagination-v2.component.html',
+	styleUrls: ['./pagination-v2.component.scss'],
+	standalone: false
 })
 export class PaginationV2Component implements OnChanges {
 	private _source: LocalDataSource;
@@ -20,11 +20,13 @@ export class PaginationV2Component implements OnChanges {
 	private _count = 0;
 	private _perPage: number;
 	private _dataChangedSub: Subscription;
+	private _isShouldShow = false;
+	private _defaultValues = [5, 10, 25, 50, 100];
 	private readonly _changePage: EventEmitter<{ page: number }>;
 
 	constructor() {
 		this._changePage = new EventEmitter<{ page: number }>();
-		this._perPageSelect = [5, 10, 25, 50, 100];
+		this._perPageSelect = this._defaultValues;
 	}
 
 	/**
@@ -97,7 +99,14 @@ export class PaginationV2Component implements OnChanges {
 	}
 
 	public get isShouldShow(): boolean {
-		return this._source.count() > this._perPageSelect?.[1] && this._perPageSelect?.length > 1;
+		return this._isShouldShow
+			? this._isShouldShow
+			: this._source.count() > this._perPageSelect?.[1] && this._perPageSelect?.length > 1;
+	}
+
+	@Input()
+	public set isShouldShow(value: boolean) {
+		this._isShouldShow = value;
 	}
 
 	public paginate(page: number): boolean {
@@ -161,7 +170,7 @@ export class PaginationV2Component implements OnChanges {
 
 	@Input()
 	public set perPageSelect(values: number[]) {
-		this._perPageSelect = values;
+		this._perPageSelect = Array.from(new Set([...this._defaultValues, ...(values || [])])).sort((a, b) => a - b);
 	}
 
 	public get perPageSelect(): number[] {

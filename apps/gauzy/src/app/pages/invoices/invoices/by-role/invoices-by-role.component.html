@@ -377,8 +377,12 @@
 				></angular2-smart-table>
 			</div>
 			<div *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE" class="pagination-container">
-				<ng-container *ngIf="smartTableSource">
-					<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+				<ng-container *ngIf="smartTableSource && perPage && isShouldShowPagination">
+					<ngx-pagination
+						[source]="smartTableSource"
+						[isShouldShow]="isShouldShowPagination"
+						[perPageSelect]="[perPage]"
+					></ngx-pagination>
 				</ng-container>
 			</div>
 		</ng-template>
@@ -499,14 +503,23 @@
 				<span class="label per-page-label" *ngIf="isEstimate">
 					{{ 'INVOICES_PAGE.ESTIMATES_PER_PAGE' | translate }}
 				</span>
-				<input class="per-page-input" [(ngModel)]="perPage" type="number" nbInput />
+				<input class="per-page-input" [(ngModel)]="perPage" type="number" nbInput min="1" step="1" max="100" />
+				<div *ngIf="!isPerPageValid()" class="invalid-feedback d-block">
+					{{ 'FORM.ERROR.INVALID_WHOLE_NUMBER' | translate }}
+				</div>
 			</div>
 		</div>
 		<div class="w-100 d-flex justify-content-between align-items-center mr-3">
 			<nb-checkbox (checkedChange)="toggleIncludeArchived($event)" status="warning">
 				{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
 			</nb-checkbox>
-			<button class="per-page-button" status="success" nbButton (click)="showPerPage()">
+			<button
+				class="per-page-button"
+				status="success"
+				nbButton
+				(click)="showPerPage()"
+				[disabled]="!isPerPageValid()"
+			>
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 		</div>

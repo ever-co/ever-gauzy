@@ -37,10 +37,12 @@
 			</a>
 		</li>
 	</ul>
-	<div *ngIf="perPageSelect && perPageSelect.length > 0" class="d-flex justify-between align-items-center">
+	<div *ngIf="perPageSelect?.length > 0" class="d-flex justify-between align-items-center">
 		<nb-select size="small" (selectedChange)="onChangePerPage($event)" [(selected)]="currentPerPage">
 			<nb-option *ngFor="let item of perPageSelect" [value]="item">{{ item }}</nb-option>
 		</nb-select>
-		<span> {{ startCount }} - {{ endCount }} of {{ count }} {{ 'PAGINATION.ITEMS' | translate }} </span>
+		<span *ngIf="startCount && endCount && count">
+			{{ startCount }} - {{ endCount }} of {{ count }} {{ 'PAGINATION.ITEMS' | translate }}
+		</span>
 	</div>
 </nav>

@@ -730,7 +730,8 @@
 			"PROJECT_URL": "L'URL du projet est invalide.",
 			"OPEN_SOURCE_PROJECT_URL": "L'URL du projet open source est invalide.",
 			"INVALID_IMAGE_URL": "URL de l'image invalide.",
-			"TASK_TITLE": "Le titre de la tâche est requis et ne peut pas être vide."
+			"TASK_TITLE": "Le titre de la tâche est requis et ne peut pas être vide.",
+			"INVALID_WHOLE_NUMBER": "Veuillez entrer un nombre entier valide entre 1 et 100."
 		}
 	},
 	"POP_UPS": {

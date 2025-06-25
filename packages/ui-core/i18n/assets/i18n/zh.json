@@ -773,7 +773,8 @@
 			"PROJECT_EMPLOYEE": "此字段为必填项。请选择至少一名员工。",
 			"PROJECT_ORGANIZATION_CONTACT": "此字段为必填项。请选择一个客户。",
 			"PROJECT_OWNER": "项目所有者为必填项。",
-			"TASK_TITLE": "任务标题是必填项，不能为空。"
+			"TASK_TITLE": "任务标题是必填项，不能为空。",
+			"INVALID_WHOLE_NUMBER": "请输入 1 到 100 之间的整数。"
 		}
 	},
 	"POP_UPS": {

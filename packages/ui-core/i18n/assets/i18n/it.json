@@ -773,7 +773,8 @@
 			"PROJECT_EMPLOYEE": "Questo campo è obbligatorio. Seleziona almeno un dipendente.",
 			"PROJECT_ORGANIZATION_CONTACT": "Questo campo è obbligatorio. Seleziona un cliente.",
 			"PROJECT_OWNER": "Il proprietario del progetto è obbligatorio.",
-			"TASK_TITLE": "Il titolo del compito è obbligatorio e non può essere vuoto."
+			"TASK_TITLE": "Il titolo del compito è obbligatorio e non può essere vuoto.",
+			"INVALID_WHOLE_NUMBER": "Inserisci un numero intero valido compreso tra 1 e 100."
 		}
 	},
 	"POP_UPS": {

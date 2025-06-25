@@ -773,7 +773,8 @@
 			"PROJECT_EMPLOYEE": "This field is required. Please select at least one employee.",
 			"PROJECT_ORGANIZATION_CONTACT": "This field is required. Please select a client.",
 			"PROJECT_OWNER": "Project owner is required.",
-			"TASK_TITLE": "Task title is required and cannot be empty."
+			"TASK_TITLE": "Task title is required and cannot be empty.",
+			"INVALID_WHOLE_NUMBER": "Please enter a valid whole number between 1 and 100."
 		}
 	},
 	"POP_UPS": {

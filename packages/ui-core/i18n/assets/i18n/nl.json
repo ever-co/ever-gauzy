@@ -773,7 +773,8 @@
 			"PROJECT_EMPLOYEE": "Dit veld is verplicht. Selecteer ten minste één werknemer.",
 			"PROJECT_ORGANIZATION_CONTACT": "Dit veld is verplicht. Selecteer een klant.",
 			"PROJECT_OWNER": "Projecteigenaar is verplicht.",
-			"TASK_TITLE": "Taaktitel is verplicht en mag niet leeg zijn."
+			"TASK_TITLE": "Taaktitel is verplicht en mag niet leeg zijn.",
+			"INVALID_WHOLE_NUMBER": "Voer een geheel getal in tussen 1 en 100."
 		}
 	},
 	"POP_UPS": {
