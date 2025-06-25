@@ -8,6 +8,7 @@ import { LocalStore } from './desktop-store';
 import { DesktopOfflineModeHandler, IntervalService, Timer, TimerService, TimerTO } from './offline';
 import { AlwaysTrackingSleep, NeverTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
+import { logger } from '@gauzy/desktop-core';
 
 // Default values
 const DEFAULT_INACTIVITY_TIME_LIMIT = 10; // minutes
@@ -87,8 +88,9 @@ export class DesktopOsInactivityHandler {
 				});
 			}
 		} catch (error) {
+			logger.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofRequest:', error);
+		} finally {
 			this.cleanUpDialog();
-			console.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofRequest:', error);
 		}
 	}
 
@@ -100,7 +102,7 @@ export class DesktopOsInactivityHandler {
 			this._session.accepted = true;
 			this.cleanUpDialog();
 		} catch (error) {
-			console.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofResult:', error);
+			logger.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofResult:', error);
 		}
 	}
 
@@ -116,7 +118,7 @@ export class DesktopOsInactivityHandler {
 					this._powerManager.window
 				)
 			);
-			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Not Accepted');
+			logger.info('[OS_INACTIVITY_HANDLER] Activity Proof Result Not Accepted');
 			const { suspendDetected, isOnBattery, window } = this._powerManager;
 			if (!suspendDetected || !this.isTrackingSleep || isOnBattery) {
 				this._powerManager.trackingSleep = new TrackingSleepInactivity(new NeverTrackingSleep(window));
@@ -128,7 +130,7 @@ export class DesktopOsInactivityHandler {
 				process.env.DESCRIPTION
 			);
 		} catch (error) {
-			console.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofNotAccepted:', error);
+			logger.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofNotAccepted:', error);
 		}
 	}
 
@@ -143,10 +145,10 @@ export class DesktopOsInactivityHandler {
 					? new AlwaysTrackingSleep(window)
 					: new NeverTrackingSleep(window)
 			);
-			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Not Accepted');
+			logger.info('[OS_INACTIVITY_HANDLER] Activity Proof Result Not Accepted');
 			await this._removeIdleTime(false);
 		} catch (error) {
-			console.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofResultNotAccepted:', error);
+			logger.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofResultNotAccepted:', error);
 		}
 	}
 
@@ -156,12 +158,12 @@ export class DesktopOsInactivityHandler {
 	private async _onActivityProofResultAccepted() {
 		try {
 			this._powerManager.trackingSleep = new TrackingSleep(this._powerManager.window);
-			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Accepted');
+			logger.info('[OS_INACTIVITY_HANDLER] Activity Proof Result Accepted');
 			await this._removeIdleTime(true);
 			this._powerManager.clearIntervals();
 			this._powerManager.startInactivityDetection();
 		} catch (error) {
-			console.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofResultAccepted:', error);
+			logger.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofResultAccepted:', error);
 		}
 	}
 
@@ -205,7 +207,7 @@ export class DesktopOsInactivityHandler {
 			await this._updateViewOffline({ startedAt, stoppedAt: startedAt, idleDuration: idleDuration * 60, timer });
 			this._powerManager.window.webContents.send('remove_idle_time', { timeslotIds, isWorking, timer });
 		} catch (error) {
-			console.error('[OS_INACTIVITY_HANDLER] Error in _removeIdleTime:', error);
+			logger.error('[OS_INACTIVITY_HANDLER] Error in _removeIdleTime:', error);
 		}
 	}
 
@@ -268,7 +270,7 @@ export class DesktopOsInactivityHandler {
 	private cleanUpDialog(): void {
 		if (this._session.dialog) {
 			this._session.dialog.close();
-			delete this._session.dialog;
+			this._session.dialog = null;
 		}
 	}
 }
