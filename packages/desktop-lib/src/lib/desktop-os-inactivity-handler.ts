@@ -226,7 +226,12 @@ export class DesktopOsInactivityHandler {
 	/**
 	 * Update the offline view if in offline mode
 	 */
-	private async _updateViewOffline(params: any): Promise<void> {
+	private async _updateViewOffline(params: {
+		startedAt: Date;
+		stoppedAt: Date;
+		idleDuration: number;
+		timer: TimerTO;
+	}): Promise<void> {
 		const offlineMode = DesktopOfflineModeHandler.instance;
 		await offlineMode.connectivity();
 		if (offlineMode.enabled) {
