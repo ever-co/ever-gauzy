@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron';
-import * as moment from 'moment';
+import dayjs from 'dayjs';
 import { SleepInactivityTracking, SleepTracking } from './contexts';
 import { DialogAcknowledgeInactivity, PowerManagerDetectInactivity } from './decorators';
 import { DesktopDialog } from './desktop-dialog';
@@ -9,15 +9,26 @@ import { DesktopOfflineModeHandler, IntervalService, Timer, TimerService, TimerT
 import { AlwaysSleepTracking, NeverSleepTracking } from './strategies';
 import { TranslateService } from './translation';
 
+// Default values
+const DEFAULT_INACTIVITY_TIME_LIMIT = 10; // minutes
+
+
+/**
+ * State object for inactivity session
+ */
+interface InactivitySessionState {
+	startedAt: Date | null;
+	stoppedAt: Date | null;
+	accepted: boolean;
+	dialog?: DesktopDialog;
+}
+
 export class DesktopOsInactivityHandler {
-	private _inactivityResultAccepted: boolean;
 	private _powerManager: PowerManagerDetectInactivity;
 	private _notify: NotificationDesktop;
-	private _dialog: DesktopDialog;
-	private _startedAt: Date;
-	private _stoppedAt: Date;
 	private _intervalService: IntervalService;
 	private _timerService: TimerService;
+	private _session: InactivitySessionState;
 	private _activityProofRequestHandler: () => Promise<void>;
 	private _activityProofResultHandler: () => Promise<void>;
 	private _activityProofNotAcceptedHandler: () => Promise<void>;
@@ -27,79 +38,16 @@ export class DesktopOsInactivityHandler {
 	constructor(powerManager: PowerManagerDetectInactivity) {
 		this._notify = new NotificationDesktop();
 		this._powerManager = powerManager;
-		this._inactivityResultAccepted = false;
-		this._startedAt = null;
-		this._stoppedAt = null;
 		this._intervalService = new IntervalService();
 		this._timerService = new TimerService();
+		this._session = { startedAt: null, stoppedAt: null, accepted: false };
 
-		this._activityProofRequestHandler = async () => {
-			if (!this._isAllowTrackInactivity) return;
-			this._inactivityResultAccepted = false;
-			this._windowFocus();
-			this._startedAt = new Date();
-			this._dialog = new DesktopDialog(
-				process.env.DESCRIPTION,
-				TranslateService.instant('TIMER_TRACKER.DIALOG.STILL_WORKING'),
-				powerManager.window
-			);
-
-			const button = await this._dialog.show();
-
-			if (!this._inactivityResultAccepted) {
-				const { response } = button || {};
-				const accepted = response === 0;
-
-				this._powerManager.detectInactivity.emit('activity-proof-result', {
-					accepted,
-					proof: true
-				});
-			}
-		};
-		this._activityProofResultHandler = async () => {
-			this._inactivityResultAccepted = true;
-
-			if (!this._dialog) return;
-
-			this._dialog.close();
-			delete this._dialog;
-		};
-		this._activityProofNotAcceptedHandler = async () => {
-			const dialog = new DialogAcknowledgeInactivity(
-				new DesktopDialog(
-					process.env.DESCRIPTION,
-					TranslateService.instant('TIMER_TRACKER.DIALOG.INACTIVITY_HANDLER'),
-					powerManager.window
-				)
-			);
-			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Not Accepted');
-			await this._removeIdleTime(false);
-			await dialog.show();
-			this._notify.customNotification(
-				TranslateService.instant('TIMER_TRACKER.NATIVE_NOTIFICATION.STOPPED_DU_INACTIVITY'),
-				process.env.DESCRIPTION
-			);
-		};
-		this._activityProofResultNotAcceptedHandler = async () => {
-			const { suspendDetected, isOnBattery, window } = this._powerManager;
-
-			this._powerManager.sleepTracking = new SleepInactivityTracking(
-				suspendDetected && this.isTrackingOnSleep && !isOnBattery
-					? new AlwaysSleepTracking(window)
-					: new NeverSleepTracking(window)
-			);
-
-			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Not Accepted');
-
-			await this._removeIdleTime(false);
-		};
-		this._activityProofResultAcceptedHandler = async () => {
-			this._powerManager.sleepTracking = new SleepTracking(this._powerManager.window);
-			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Accepted');
-			await this._removeIdleTime(true);
-			this._powerManager.clearIntervals();
-			this._powerManager.startInactivityDetection();
-		};
+		// Bind event handlers
+		this._activityProofRequestHandler = this._onActivityProofRequest.bind(this);
+		this._activityProofResultHandler = this._onActivityProofResult.bind(this);
+		this._activityProofNotAcceptedHandler = this._onActivityProofNotAccepted.bind(this);
+		this._activityProofResultNotAcceptedHandler = this._onActivityProofResultNotAccepted.bind(this);
+		this._activityProofResultAcceptedHandler = this._onActivityProofResultAccepted.bind(this);
 
 		this._powerManager.detectInactivity.on('activity-proof-request', this._activityProofRequestHandler);
 		this._powerManager.detectInactivity.on('activity-proof-result', this._activityProofResultHandler);
@@ -109,16 +57,112 @@ export class DesktopOsInactivityHandler {
 	}
 
 	/**
-	 * Handle window focus request
+	 * Handles the activity proof request event
+	 */
+	private async _onActivityProofRequest() {
+		try {
+			if (!this._isAllowTrackInactivity) return;
+			this._session = { startedAt: new Date(), stoppedAt: null, accepted: false };
+			this._windowFocus();
+			const dialog = new DesktopDialog(
+				process.env.DESCRIPTION,
+				TranslateService.instant('TIMER_TRACKER.DIALOG.STILL_WORKING'),
+				this._powerManager.window
+			);
+			this._session.dialog = dialog;
+			const button = await dialog.show();
+			if (!this._session.accepted) {
+				const { response } = button || {};
+				const accepted = response === 0;
+				this._powerManager.detectInactivity.emit('activity-proof-result', {
+					accepted,
+					proof: true
+				});
+			}
+		} catch (error) {
+			console.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofRequest:', error);
+		}
+	}
+
+	/**
+	 * Handles the activity proof result event
+	 */
+	private async _onActivityProofResult() {
+		try {
+			this._session.accepted = true;
+			if (this._session.dialog) {
+				this._session.dialog.close();
+				delete this._session.dialog;
+			}
+		} catch (error) {
+			console.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofResult:', error);
+		}
+	}
+
+	/**
+	 * Handles the activity proof not accepted event
+	 */
+	private async _onActivityProofNotAccepted() {
+		try {
+			const dialog = new DialogAcknowledgeInactivity(
+				new DesktopDialog(
+					process.env.DESCRIPTION,
+					TranslateService.instant('TIMER_TRACKER.DIALOG.INACTIVITY_HANDLER'),
+					this._powerManager.window
+				)
+			);
+			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Not Accepted');
+			await this._removeIdleTime(false);
+			await dialog.show();
+			this._notify.customNotification(
+				TranslateService.instant('TIMER_TRACKER.NATIVE_NOTIFICATION.STOPPED_DU_INACTIVITY'),
+				process.env.DESCRIPTION
+			);
+		} catch (error) {
+			console.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofNotAccepted:', error);
+		}
+	}
+
+	/**
+	 * Handles the activity proof result not accepted event
+	 */
+	private async _onActivityProofResultNotAccepted() {
+		try {
+			const { suspendDetected, isOnBattery, window } = this._powerManager;
+			this._powerManager.sleepTracking = new SleepInactivityTracking(
+				suspendDetected && this.isTrackingOnSleep && !isOnBattery
+					? new AlwaysSleepTracking(window)
+					: new NeverSleepTracking(window)
+			);
+			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Not Accepted');
+			await this._removeIdleTime(false);
+		} catch (error) {
+			console.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofResultNotAccepted:', error);
+		}
+	}
+
+	/**
+	 * Handles the activity proof result accepted event
+	 */
+	private async _onActivityProofResultAccepted() {
+		try {
+			this._powerManager.sleepTracking = new SleepTracking(this._powerManager.window);
+			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Accepted');
+			await this._removeIdleTime(true);
+			this._powerManager.clearIntervals();
+			this._powerManager.startInactivityDetection();
+		} catch (error) {
+			console.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofResultAccepted:', error);
+		}
+	}
+
+	/**
+	 * Focuses the main window
 	 */
 	private _windowFocus(): void {
-		// get window from decorator
 		const window: BrowserWindow = this._powerManager.window;
-		// show window if it hides
 		window.show();
-		// restore window if it's minified
 		window.restore();
-		// focus on the main window
 		window.focus();
 	}
 
@@ -132,6 +176,9 @@ export class DesktopOsInactivityHandler {
 		return auth && auth.isRemoveIdleTime;
 	}
 
+	/**
+	 * Remove idle time and update timer/session state
+	 */
 	private async _removeIdleTime(isWorking: boolean): Promise<void> {
 		if (!this._isRemoveIdleTime) {
 			if (!isWorking) {
@@ -139,46 +186,48 @@ export class DesktopOsInactivityHandler {
 			}
 			return;
 		}
+		try {
+			const { startedAt, stoppedAt, idleDuration } = this._calculateIdleTime(isWorking);
+			const timeslotIds = await this._intervalService.removeIdlesTime(startedAt, stoppedAt);
+			const lastTimer = await this._timerService.findLastOne();
+			const lastInterval = await this._intervalService.findLastInterval(timeslotIds);
+			const timer: TimerTO = { ...lastTimer, timeslotId: lastInterval?.remoteId, stoppedAt: startedAt };
+			await this._timerService.update(new Timer(timer));
+			await this._updateViewOffline({ startedAt, stoppedAt: startedAt, idleDuration: idleDuration * 60, timer });
+			this._powerManager.window.webContents.send('remove_idle_time', { timeslotIds, isWorking, timer });
+		} catch (error) {
+			console.error('[OS_INACTIVITY_HANDLER] Error in _removeIdleTime:', error);
+		}
+	}
+
+	/**
+	 * Calculate idle time based on session and settings
+	 */
+	private _calculateIdleTime(isWorking: boolean): { startedAt: Date; stoppedAt: Date; idleDuration: number } {
 		const auth = LocalStore.getStore('auth');
-		const inactivityTimeLimit = auth ? auth.inactivityTimeLimit : 10;
-		const now = moment().clone();
-		const proofResultDuration = now.diff(this._startedAt, 'minutes');
+		const inactivityTimeLimit = auth ? auth.inactivityTimeLimit : DEFAULT_INACTIVITY_TIME_LIMIT;
+		const now = dayjs();
+		const proofResultDuration = this._session.startedAt ? now.diff(dayjs(this._session.startedAt), 'minute') : 0;
 		const idleDuration = proofResultDuration + inactivityTimeLimit;
-		this._stoppedAt = now.toDate();
-		this._startedAt = now.subtract(idleDuration - inactivityTimeLimit / 2, 'minutes').toDate();
-		const timeslotIds = await this._intervalService.removeIdlesTime(this._startedAt, this._stoppedAt);
-		const lastTimer = await this._timerService.findLastOne();
-		const lastInterval = await this._intervalService.findLastInterval(timeslotIds);
-		const timer: TimerTO = { ...lastTimer, timeslotId: lastInterval?.remoteId, stoppedAt: this._startedAt };
-		await this._timerService.update(new Timer(timer));
+		const stoppedAt = now.toDate();
+		const startedAt = now.subtract(idleDuration - inactivityTimeLimit / 2, 'minute').toDate();
+		return { startedAt, stoppedAt, idleDuration };
+	}
 
-		await this.updateViewOffline({
-			startedAt: this._startedAt,
-			stoppedAt: this._startedAt,
-			idleDuration: idleDuration * 60,
-			timer
-		});
-
-		this._powerManager.window.webContents.send('remove_idle_time', {
-			timeslotIds,
-			isWorking,
-			timer
-		});
+	/**
+	 * Update the offline view if in offline mode
+	 */
+	private async _updateViewOffline(params: any): Promise<void> {
+		const offlineMode = DesktopOfflineModeHandler.instance;
+		await offlineMode.connectivity();
+		if (offlineMode.enabled) {
+			this._powerManager.window.webContents.send('update_view', params);
+		}
 	}
 
 	public get isTrackingOnSleep(): boolean {
 		const setting = LocalStore.getStore('appSetting');
 		return setting ? setting.trackOnPcSleep : false;
-	}
-
-	public async updateViewOffline(params: any): Promise<void> {
-		const offlineMode = DesktopOfflineModeHandler.instance;
-
-		await offlineMode.connectivity();
-
-		if (offlineMode.enabled) {
-			this._powerManager.window.webContents.send('update_view', params);
-		}
 	}
 
 	/**
