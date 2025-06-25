@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron';
-import dayjs from 'dayjs';
+import * as moment from 'moment';
 import { SleepInactivityTracking, SleepTracking } from './contexts';
 import { DialogAcknowledgeInactivity, PowerManagerDetectInactivity } from './decorators';
 import { DesktopDialog } from './desktop-dialog';
@@ -11,7 +11,6 @@ import { TranslateService } from './translation';
 
 // Default values
 const DEFAULT_INACTIVITY_TIME_LIMIT = 10; // minutes
-
 
 /**
  * State object for inactivity session
@@ -52,8 +51,14 @@ export class DesktopOsInactivityHandler {
 		this._powerManager.detectInactivity.on('activity-proof-request', this._activityProofRequestHandler);
 		this._powerManager.detectInactivity.on('activity-proof-result', this._activityProofResultHandler);
 		this._powerManager.detectInactivity.on('activity-proof-not-accepted', this._activityProofNotAcceptedHandler);
-		this._powerManager.detectInactivity.on('activity-proof-result-not-accepted', this._activityProofResultNotAcceptedHandler);
-		this._powerManager.detectInactivity.on('activity-proof-result-accepted', this._activityProofResultAcceptedHandler);
+		this._powerManager.detectInactivity.on(
+			'activity-proof-result-not-accepted',
+			this._activityProofResultNotAcceptedHandler
+		);
+		this._powerManager.detectInactivity.on(
+			'activity-proof-result-accepted',
+			this._activityProofResultAcceptedHandler
+		);
 	}
 
 	/**
@@ -187,7 +192,7 @@ export class DesktopOsInactivityHandler {
 			return;
 		}
 		try {
-			const { startedAt, stoppedAt, idleDuration } = this._calculateIdleTime(isWorking);
+			const { startedAt, stoppedAt, idleDuration } = this._calculateIdleTime();
 			const timeslotIds = await this._intervalService.removeIdlesTime(startedAt, stoppedAt);
 			const lastTimer = await this._timerService.findLastOne();
 			const lastInterval = await this._intervalService.findLastInterval(timeslotIds);
@@ -203,11 +208,11 @@ export class DesktopOsInactivityHandler {
 	/**
 	 * Calculate idle time based on session and settings
 	 */
-	private _calculateIdleTime(isWorking: boolean): { startedAt: Date; stoppedAt: Date; idleDuration: number } {
+	private _calculateIdleTime(): { startedAt: Date; stoppedAt: Date; idleDuration: number } {
 		const auth = LocalStore.getStore('auth');
 		const inactivityTimeLimit = auth ? auth.inactivityTimeLimit : DEFAULT_INACTIVITY_TIME_LIMIT;
-		const now = dayjs();
-		const proofResultDuration = this._session.startedAt ? now.diff(dayjs(this._session.startedAt), 'minute') : 0;
+		const now = moment().clone();
+		const proofResultDuration = this._session.startedAt ? now.diff(moment(this._session.startedAt), 'minute') : 0;
 		const idleDuration = proofResultDuration + inactivityTimeLimit;
 		const stoppedAt = now.toDate();
 		const startedAt = now.subtract(idleDuration - inactivityTimeLimit / 2, 'minute').toDate();
@@ -236,8 +241,17 @@ export class DesktopOsInactivityHandler {
 	public dispose(): void {
 		this._powerManager.detectInactivity.removeListener('activity-proof-request', this._activityProofRequestHandler);
 		this._powerManager.detectInactivity.removeListener('activity-proof-result', this._activityProofResultHandler);
-		this._powerManager.detectInactivity.removeListener('activity-proof-not-accepted', this._activityProofNotAcceptedHandler);
-		this._powerManager.detectInactivity.removeListener('activity-proof-result-not-accepted', this._activityProofResultNotAcceptedHandler);
-		this._powerManager.detectInactivity.removeListener('activity-proof-result-accepted', this._activityProofResultAcceptedHandler);
+		this._powerManager.detectInactivity.removeListener(
+			'activity-proof-not-accepted',
+			this._activityProofNotAcceptedHandler
+		);
+		this._powerManager.detectInactivity.removeListener(
+			'activity-proof-result-not-accepted',
+			this._activityProofResultNotAcceptedHandler
+		);
+		this._powerManager.detectInactivity.removeListener(
+			'activity-proof-result-accepted',
+			this._activityProofResultAcceptedHandler
+		);
 	}
 }
