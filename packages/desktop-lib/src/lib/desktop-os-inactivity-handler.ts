@@ -87,10 +87,7 @@ export class DesktopOsInactivityHandler {
 				});
 			}
 		} catch (error) {
-			if (this._session.dialog) {
-				this._session.dialog.close();
-				delete this._session.dialog;
-			}
+			this.cleanUpDialog();
 			console.error('[OS_INACTIVITY_HANDLER] Error in _onActivityProofRequest:', error);
 		}
 	}
