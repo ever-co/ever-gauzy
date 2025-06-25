@@ -1,3 +1,4 @@
+import { logger } from '@gauzy/desktop-core';
 import { BrowserWindow, powerMonitor } from 'electron';
 import { TrackingSleep } from './contexts';
 import { LocalStore } from './desktop-store';
@@ -21,22 +22,22 @@ export class DesktopPowerManager implements IPowerManager {
 
 		// Store handlers for later removal
 		this._suspendHandler = () => {
-			console.log('System going to sleep.');
+			logger.info('System going to sleep.');
 			this.pauseTracking();
 		};
 		this._resumeHandler = () => {
-			console.log('System resumed from sleep state.');
+			logger.info('System resumed from sleep state.');
 			if (!this._isLockedScreen) {
 				this.resumeTracking();
 			}
 		};
 		this._lockScreenHandler = () => {
-			console.log('System locked');
+			logger.info('System locked');
 			this._isLockedScreen = true;
 			this.pauseTracking();
 		};
 		this._unlockScreenHandler = () => {
-			console.log('System unlocked');
+			logger.info('System unlocked');
 			this._isLockedScreen = false;
 			this.resumeTracking();
 		};
@@ -76,7 +77,7 @@ export class DesktopPowerManager implements IPowerManager {
 		if (this.trackerStatusActive && !this._suspendDetected) {
 			this._suspendDetected = true;
 			this._sleepTracking.strategy.pause();
-			console.log('Tracker paused');
+			logger.info('Tracker paused');
 		}
 	}
 
@@ -84,7 +85,7 @@ export class DesktopPowerManager implements IPowerManager {
 		if (this._suspendDetected) {
 			this._suspendDetected = false;
 			this._sleepTracking.strategy.resume();
-			console.log('Tracker resumed.');
+			logger.info('Tracker resumed.');
 		}
 	}
 
