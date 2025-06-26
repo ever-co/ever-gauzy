@@ -2,7 +2,7 @@ import { BrowserWindow } from 'electron';
 import { ITrackingSleepStrategy } from '../../interfaces';
 
 export abstract class TrackingSleepStrategy implements ITrackingSleepStrategy {
-	constructor(public readonly _window: BrowserWindow) {}
+	constructor(protected readonly _window: BrowserWindow) {}
 
 	public abstract resume(): void;
 
