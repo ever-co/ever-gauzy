@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IFavorite, IFavoriteCreateInput } from '@gauzy/contracts';
-import { API_PREFIX } from '@gauzy/ui-core/common';
+import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
@@ -18,13 +18,25 @@ export class FavoriteService {
 
 	findByEmployee(params?: any): Promise<{ items: IFavorite[]; total: number }> {
 		return firstValueFrom(
-			this.http.get<{ items: IFavorite[]; total: number }>(`${this.FAVORITE_URL}/employee`, { params })
+			this.http.get<{ items: IFavorite[]; total: number }>(`${this.FAVORITE_URL}/employee`, {
+				params: toParams(params)
+			})
 		);
 	}
 
 	getFavoriteDetails(params?: any): Promise<{ items: IFavorite[]; total: number }> {
 		return firstValueFrom(
-			this.http.get<{ items: IFavorite[]; total: number }>(`${this.FAVORITE_URL}/type`, { params })
+			this.http.get<{ items: IFavorite[]; total: number }>(`${this.FAVORITE_URL}/type`, {
+				params: toParams(params)
+			})
+		);
+	}
+
+	findAll(params?: any): Promise<{ items: IFavorite[]; total: number }> {
+		return firstValueFrom(
+			this.http.get<{ items: IFavorite[]; total: number }>(`${this.FAVORITE_URL}`, {
+				params: toParams(params)
+			})
 		);
 	}
 
