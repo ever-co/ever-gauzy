@@ -265,6 +265,7 @@ export class DesktopOsInactivityHandler {
 			'activity-proof-result-accepted',
 			this._activityProofResultAcceptedHandler
 		);
+		this._powerManager.dispose();
 	}
 
 	private cleanUpDialog(): void {

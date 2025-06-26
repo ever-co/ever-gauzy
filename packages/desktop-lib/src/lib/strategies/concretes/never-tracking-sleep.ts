@@ -1,5 +1,5 @@
-import {BrowserWindow} from "electron";
-import {TrackingSleepStrategy} from "../abstracts/tracking-sleep.strategy";
+import { BrowserWindow } from 'electron';
+import { TrackingSleepStrategy } from '../abstracts/tracking-sleep.strategy';
 
 export class NeverTrackingSleep extends TrackingSleepStrategy {
 	constructor(window: BrowserWindow) {
@@ -18,5 +18,12 @@ export class NeverTrackingSleep extends TrackingSleepStrategy {
 	 */
 	pause(): void {
 		this._window.webContents.send('device_sleep');
+	}
+
+	/**
+	 * @override
+	 */
+	public override dispose(): void {
+		this._window.webContents.removeAllListeners('device_sleep');
 	}
 }

@@ -9,14 +9,21 @@ export class RemoteTrackingSleep extends TrackingSleepStrategy {
 	/**
 	 * @override
 	 */
-	public resume(): void {
+	public override resume(): void {
 		this._window.webContents.send('sleep_remote_lock', false);
 	}
 
 	/**
 	 * @override
 	 */
-	public pause(): void {
+	public override pause(): void {
 		this._window.webContents.send('sleep_remote_lock', true);
+	}
+
+	/**
+	 * @override
+	 */
+	public override dispose(): void {
+		this._window.webContents.removeAllListeners('sleep_remote_lock');
 	}
 }

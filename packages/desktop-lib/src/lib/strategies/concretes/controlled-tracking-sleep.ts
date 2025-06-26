@@ -1,8 +1,7 @@
-import {TrackingSleepStrategy} from "../abstracts/tracking-sleep.strategy";
-import {BrowserWindow} from "electron";
+import { TrackingSleepStrategy } from '../abstracts/tracking-sleep.strategy';
+import { BrowserWindow } from 'electron';
 
 export class ControlledTrackingSleep extends TrackingSleepStrategy {
-
 	constructor(window: BrowserWindow) {
 		super(window);
 	}
@@ -19,5 +18,13 @@ export class ControlledTrackingSleep extends TrackingSleepStrategy {
 	 */
 	pause(): void {
 		this._window.webContents.send('stop_from_inactivity_handler');
+	}
+
+	/**
+	 * @override
+	 */
+	public override dispose(): void {
+		this._window.webContents.removeAllListeners('start_from_inactivity_handler');
+		this._window.webContents.removeAllListeners('stop_from_inactivity_handler');
 	}
 }

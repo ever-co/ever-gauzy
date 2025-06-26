@@ -6,7 +6,7 @@ import { IPowerManager, ITrackingSleep } from './interfaces';
 
 export class DesktopPowerManager implements IPowerManager {
 	private _suspendDetected: boolean;
-	private _sleepTracking: ITrackingSleep;
+	private _trackingSleep: ITrackingSleep;
 	private _window: BrowserWindow;
 	private _isLockedScreen: boolean;
 	private _suspendHandler: () => void;
@@ -15,7 +15,7 @@ export class DesktopPowerManager implements IPowerManager {
 	private _unlockScreenHandler: () => void;
 
 	constructor(window: BrowserWindow) {
-		this._sleepTracking = new TrackingSleep(window);
+		this._trackingSleep = new TrackingSleep(window);
 		this._suspendDetected = false;
 		this._isLockedScreen = false;
 		this._window = window;
@@ -49,11 +49,11 @@ export class DesktopPowerManager implements IPowerManager {
 	}
 
 	public get trackingSleep(): ITrackingSleep {
-		return this._sleepTracking;
+		return this._trackingSleep;
 	}
 
 	public set trackingSleep(value: ITrackingSleep) {
-		this._sleepTracking = value;
+		this._trackingSleep = value;
 	}
 
 	public get trackerStatusActive(): boolean {
@@ -76,7 +76,7 @@ export class DesktopPowerManager implements IPowerManager {
 	public pauseTracking(): void {
 		if (this.trackerStatusActive && !this._suspendDetected) {
 			this._suspendDetected = true;
-			this._sleepTracking.strategy.pause();
+			this._trackingSleep.strategy.pause();
 			logger.info('Tracker paused');
 		}
 	}
@@ -84,7 +84,7 @@ export class DesktopPowerManager implements IPowerManager {
 	public resumeTracking(): void {
 		if (this._suspendDetected) {
 			this._suspendDetected = false;
-			this._sleepTracking.strategy.resume();
+			this._trackingSleep.strategy.resume();
 			logger.info('Tracker resumed.');
 		}
 	}
@@ -101,5 +101,6 @@ export class DesktopPowerManager implements IPowerManager {
 		powerMonitor.removeListener('resume', this._resumeHandler);
 		powerMonitor.removeListener('lock-screen', this._lockScreenHandler);
 		powerMonitor.removeListener('unlock-screen', this._unlockScreenHandler);
+		this._trackingSleep.strategy.dispose();
 	}
 }

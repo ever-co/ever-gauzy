@@ -19,4 +19,11 @@ export class AlwaysTrackingSleep extends TrackingSleepStrategy {
 	public pause(): void {
 		// Do nothing
 	}
+
+	/**
+	 * @override
+	 */
+	public override dispose(): void {
+		this._window.webContents.removeAllListeners('device_wake_up');
+	}
 }
