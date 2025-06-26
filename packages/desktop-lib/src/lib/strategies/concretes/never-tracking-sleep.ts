@@ -1,22 +1,17 @@
-import { BrowserWindow } from 'electron';
 import { TrackingSleepStrategy } from '../abstracts/tracking-sleep.strategy';
 
 export class NeverTrackingSleep extends TrackingSleepStrategy {
-	constructor(window: BrowserWindow) {
-		super(window);
-	}
-
 	/**
 	 * @override
 	 */
-	public resume(): void {
+	public override resume(): void {
 		// Do nothing
 	}
 
 	/**
 	 * @override
 	 */
-	pause(): void {
+	public override pause(): void {
 		this._window.webContents.send('device_sleep');
 	}
 

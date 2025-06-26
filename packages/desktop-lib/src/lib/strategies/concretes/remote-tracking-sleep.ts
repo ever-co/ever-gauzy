@@ -1,11 +1,6 @@
-import { BrowserWindow } from 'electron';
 import { TrackingSleepStrategy } from '../abstracts/tracking-sleep.strategy';
 
 export class RemoteTrackingSleep extends TrackingSleepStrategy {
-	constructor(window: BrowserWindow) {
-		super(window);
-	}
-
 	/**
 	 * @override
 	 */
