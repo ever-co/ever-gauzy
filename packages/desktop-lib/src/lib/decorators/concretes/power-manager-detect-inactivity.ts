@@ -71,6 +71,7 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 	public stopInactivityDetection(): void {
 		this.clearIntervals();
 		this.removeListeners();
+		this.dispose();
 	}
 
 	public removeListeners() {
