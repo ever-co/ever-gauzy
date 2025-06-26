@@ -49,7 +49,9 @@ import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
+import { FavoriteService } from '../core/decorators';
 
+@FavoriteService(BaseEntityEnum.Task)
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
