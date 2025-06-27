@@ -8,7 +8,8 @@ import {
 	IEmployee,
 	IFindMembersInput,
 	IPagination,
-	PermissionsEnum
+	PermissionsEnum,
+	BaseEntityEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
@@ -18,7 +19,9 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
 import { Employee } from './employee.entity';
+import { FavoriteService } from '../core/decorators';
 
+@FavoriteService(BaseEntityEnum.Employee)
 @Injectable()
 export class EmployeeService extends TenantAwareCrudService<Employee> {
 	constructor(
