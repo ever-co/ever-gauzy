@@ -16,10 +16,7 @@
 			>
 			</ngx-gauzy-button-action>
 		</div>
-		<div
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			class="columns-header row align-items-center"
-		>
+		<div *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE" class="columns-header row align-items-center">
 			<div class="col-md-2 pl-3 float-left text-truncate">
 				{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}
 			</div>
@@ -37,20 +34,9 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body
-		[nbSpinner]="loading"
-		nbSpinnerStatus="primary"
-		nbSpinnerSize="large"
-	>
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-		>
-			<div
-				class="table-scroll-container"
-				infinite-scroll
-				[scrollWindow]="false"
-				(scrolled)="onScroll()"
-			>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
+			<div class="table-scroll-container" infinite-scroll [scrollWindow]="false" (scrolled)="onScroll()">
 				<nb-card class="p-0" *ngFor="let vendor of vendors">
 					<nb-card-body
 						class="custom-table"
@@ -69,9 +55,7 @@
 								<gauzy-email [rowData]="vendor"></gauzy-email>
 							</div>
 							<div class="col-md-3 p-0 float-left text-truncate">
-								<gauzy-external-link
-									[rowData]="vendor"
-								></gauzy-external-link>
+								<gauzy-external-link [rowData]="vendor"></gauzy-external-link>
 							</div>
 							<div class="col-md-3 float-left p-0 text-truncate">
 								<ga-only-tags [rowData]="vendor"></ga-only-tags>
@@ -81,7 +65,7 @@
 				</nb-card>
 			</div>
 		</ng-template>
-		<ng-template [ngIf]=" dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
+		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
 			<ng-template [ngIf]="vendors?.length > 0" [ngIfElse]="noVendorTemplate">
 				<ga-card-grid
 					[totalItems]="pagination?.totalItems"
@@ -101,13 +85,27 @@
 		</ng-template>
 	</nb-card-body>
 </nb-card>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
 		<div class="actions">
+			<button
+				nbButton
+				status="basic"
+				class="action"
+				size="small"
+				(click)="toggleFavoriteVendor(selectedVendor)"
+				[disabled]="disabled"
+				[nbTooltip]="
+					isFavoriteVendor(selectedVendor)
+						? ('BUTTONS.REMOVE_FROM_FAVORITES' | translate)
+						: ('BUTTONS.ADD_TO_FAVORITES' | translate)
+				"
+			>
+				<nb-icon
+					[icon]="isFavoriteVendor(selectedVendor) ? 'star' : 'star-outline'"
+					[status]="isFavoriteVendor(selectedVendor) ? 'warning' : 'basic'"
+				></nb-icon>
+			</button>
 			<button
 				(click)="openDialog(addEditTemplate, true)"
 				nbButton
@@ -135,12 +133,7 @@
 </ng-template>
 <ng-template #visibleButton>
 	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
-		<button
-			nbButton
-			status="success"
-			size="small"
-			(click)="openDialog(addEditTemplate, false)"
-		>
+		<button nbButton status="success" size="small" (click)="openDialog(addEditTemplate, false)">
 			<nb-icon icon="plus-outline"> </nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>
@@ -151,10 +144,7 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-sm-12 d-flex justify-content-end">
-					<i
-						class="fas fa-times"
-						(click)="ref.close(); disabled = true"
-					></i>
+					<i class="fas fa-times" (click)="ref.close(); disabled = true"></i>
 				</div>
 			</div>
 			<div class="row mb-3">
@@ -169,36 +159,26 @@
 			<form [formGroup]="form" *ngIf="form" class="form">
 				<div class="row mb-3">
 					<div class="col-sm-12 d-flex flex-column">
-						<label class="label" for="name">{{
-							'ORGANIZATIONS_PAGE.NAME' | translate
-						}}</label>
+						<label class="label" for="name">{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}</label>
 						<input
 							nbInput
 							type="text"
 							fullWidth
-							placeholder="{{
-								'ORGANIZATIONS_PAGE.NAME' | translate
-							}}"
+							placeholder="{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}"
 							id="name"
 							formControlName="name"
-							[status]="
-								isInvalidControl('name') ? 'danger' : 'basic'
-							"
+							[status]="isInvalidControl('name') ? 'danger' : 'basic'"
 						/>
 					</div>
 				</div>
 				<div class="row mb-3">
 					<div class="col-sm-12 d-flex flex-column">
-						<label class="label" for="phone">{{
-							'ORGANIZATIONS_PAGE.PHONE' | translate
-						}}</label>
+						<label class="label" for="phone">{{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}</label>
 						<input
 							nbInput
 							type="text"
 							fullWidth
-							placeholder="{{
-								'ORGANIZATIONS_PAGE.PHONE' | translate
-							}}"
+							placeholder="{{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}"
 							id="phone"
 							formControlName="phone"
 						/>
@@ -206,36 +186,26 @@
 				</div>
 				<div class="row mb-3">
 					<div class="col-sm-12 d-flex flex-column">
-						<label class="label" for="email">{{
-							'ORGANIZATIONS_PAGE.EMAIL' | translate
-						}}</label>
+						<label class="label" for="email">{{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}</label>
 						<input
 							nbInput
 							type="text"
 							fullWidth
-							placeholder="{{
-								'ORGANIZATIONS_PAGE.EMAIL' | translate
-							}}"
+							placeholder="{{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}"
 							id="email"
 							formControlName="email"
-							[status]="
-								isInvalidControl('email') ? 'danger' : 'basic'
-							"
+							[status]="isInvalidControl('email') ? 'danger' : 'basic'"
 						/>
 					</div>
 				</div>
 				<div class="row mb-3">
 					<div class="col-sm-12 d-flex flex-column">
-						<label class="label" for="website">{{
-							'ORGANIZATIONS_PAGE.WEBSITE' | translate
-						}}</label>
+						<label class="label" for="website">{{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}</label>
 						<input
 							nbInput
 							type="text"
 							fullWidth
-							placeholder="{{
-								'ORGANIZATIONS_PAGE.WEBSITE' | translate
-							}}"
+							placeholder="{{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}"
 							id="website"
 							formControlName="website"
 						/>
@@ -264,12 +234,7 @@
 					>
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
-					<button
-						(click)="save()"
-						nbButton
-						status="success"
-						[disabled]="form.invalid || saveDisabled"
-					>
+					<button (click)="save()" nbButton status="success" [disabled]="form.invalid || saveDisabled">
 						{{ 'BUTTONS.SAVE' | translate }}
 					</button>
 				</div>

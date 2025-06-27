@@ -13,9 +13,17 @@ import {
 	OrganizationVendorsService,
 	ServerDataSource,
 	Store,
-	ToastrService
+	ToastrService,
+	GenericFavoriteService
 } from '@gauzy/ui-core/core';
-import { IOrganizationVendor, ITag, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
+import {
+	IOrganizationVendor,
+	ITag,
+	ComponentLayoutStyleEnum,
+	IOrganization,
+	IFavorite,
+	BaseEntityEnum
+} from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	CompanyLogoComponent,
@@ -29,10 +37,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-vendors',
-    templateUrl: './vendors.component.html',
-    styleUrls: ['vendors.component.scss'],
-    standalone: false
+	selector: 'ga-vendors',
+	templateUrl: './vendors.component.html',
+	styleUrls: ['vendors.component.scss'],
+	standalone: false
 })
 export class VendorsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public addEditDialogRef: NbDialogRef<any>;
@@ -53,6 +61,7 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 	public saveDisabled: boolean = false;
 	public loading: boolean = false;
 	private _refresh$: Subject<any> = new Subject();
+	public favoriteVendors: IFavorite[] = [];
 
 	/*
 	 * Vendor Mutation Form
@@ -79,7 +88,8 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 		private readonly errorHandlingService: ErrorHandlingService,
 		private readonly store: Store,
 		private readonly route: ActivatedRoute,
-		private readonly httpClient: HttpClient
+		private readonly httpClient: HttpClient,
+		private readonly genericFavoriteService: GenericFavoriteService
 	) {
 		super(translateService);
 		this.setView();
@@ -119,6 +129,7 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 				tap(() => this._refresh$.next(true)),
 				// Trigger the subject$ observable with a new value
 				tap(() => this.subject$.next(true)),
+				tap(() => this.loadFavoriteVendors()), // Load favorite vendors on org change
 				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
@@ -486,6 +497,62 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 		this.selected.state = res.state;
 		this.selected.vendor = vendor;
 		this.selectedVendor = this.selected.vendor;
+	}
+
+	/**
+	 * Loads the list of favorite vendors for the current user or all for admin using the generic service.
+	 */
+	async loadFavoriteVendors() {
+		this.favoriteVendors = await this.genericFavoriteService.loadFavorites(
+			BaseEntityEnum.OrganizationVendor,
+			this.organization
+		);
+	}
+
+	/**
+	 * Checks if a vendor is a favorite in the local list using the generic service.
+	 * @param vendor The vendor to check.
+	 */
+	isFavoriteVendor(vendor: IOrganizationVendor): boolean {
+		if (!vendor) return false;
+		return this.genericFavoriteService.isFavorite(
+			vendor.id,
+			BaseEntityEnum.OrganizationVendor,
+			this.favoriteVendors
+		);
+	}
+
+	/**
+	 * Finds the favorite object for a given vendor in the local list using the generic service.
+	 * @param vendor The vendor to check.
+	 */
+	getFavoriteForVendor(vendor: IOrganizationVendor): IFavorite | undefined {
+		if (!vendor) return;
+		return this.genericFavoriteService.getFavoriteForEntity(
+			vendor.id,
+			BaseEntityEnum.OrganizationVendor,
+			this.favoriteVendors
+		);
+	}
+
+	/**
+	 * Adds or removes a vendor from favorites using the generic service.
+	 * @param vendor The vendor to add or remove.
+	 */
+	async toggleFavoriteVendor(vendor: IOrganizationVendor) {
+		if (!vendor) return;
+		await this.genericFavoriteService.toggleFavorite(
+			BaseEntityEnum.OrganizationVendor,
+			vendor.id,
+			this.organization,
+			this.store.user?.employee?.id,
+			this.favoriteVendors
+		);
+		// Refresh the local list after modification
+		this.favoriteVendors = await this.genericFavoriteService.loadFavorites(
+			BaseEntityEnum.OrganizationVendor,
+			this.organization
+		);
 	}
 
 	ngOnDestroy(): void {}
