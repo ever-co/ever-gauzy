@@ -123,6 +123,7 @@ export interface ITimeLog
 	isBillable?: boolean;
 	isRunning?: boolean;
 	isEdited?: boolean;
+	partialStatus: TimeLogPartialStatus;
 }
 
 export interface ITimeLogCreateInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -369,6 +370,8 @@ export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityMod
 	editedAt?: Date;
 	tags?: string[];
 	isBillable?: boolean;
+	partialStatus?: TimeLogPartialStatus;
+	referenceDate?: Date;
 }
 
 export interface IGetTimeLogInput extends ITimeLogFilters, IBaseRelationsEntityModel {
@@ -559,12 +562,18 @@ export interface IDeleteTimeSlot extends IDeleteEntity {
 	ids: ID[];
 }
 
+export interface IDeleteTimeLogData {
+	id: ID;
+	partialStatus: TimeLogPartialStatus;
+	referenceDate: Date;
+}
+
 /**
  * Interface for deleting time logs.
  * Includes an array of log IDs to be deleted.
  */
 export interface IDeleteTimeLog extends IDeleteEntity {
-	logIds: ID[];
+	logs: IDeleteTimeLogData[];
 }
 
 /**
@@ -595,6 +604,13 @@ export interface IGetInvoiceTimeLogs {
 	employeeIds?: string[];
 	groupBy?: string;
 	relations?: string[];
+}
+
+export enum TimeLogPartialStatus {
+	TO_RIGHT = 1,
+	COMPLETE = 0,
+	TO_LEFT = -1,
+	BOTH_SIDES = -2
 }
 
 export enum TimeErrorsEnum {

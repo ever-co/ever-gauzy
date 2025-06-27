@@ -11,7 +11,8 @@ import {
 	ITimeLog,
 	ITimeSlot,
 	PermissionsEnum,
-	TimeFormatEnum
+	TimeFormatEnum,
+	TimeLogPartialStatus
 } from '@gauzy/contracts';
 import { TimeLogsLabel, isNotEmpty, progressStatus } from '@gauzy/ui-core/common';
 import { Store, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
@@ -20,10 +21,10 @@ import { TimeZoneService } from '../../gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-view-screenshots-modal',
-    templateUrl: './view-screenshots-modal.component.html',
-    styleUrls: ['./view-screenshots-modal.component.scss'],
-    standalone: false
+	selector: 'ngx-view-screenshots-modal',
+	templateUrl: './view-screenshots-modal.component.html',
+	styleUrls: ['./view-screenshots-modal.component.scss'],
+	standalone: false
 })
 export class ViewScreenshotsModalComponent implements OnInit {
 	progressStatus = progressStatus;
@@ -221,7 +222,16 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		try {
 			const { id: organizationId, name: organizationName } = this.organization;
 			const request = {
-				logIds: [timeLog.id],
+				logs: [
+					{
+						id: timeLog.id,
+						partialStatus: timeLog.partialStatus,
+						referenceDate:
+							timeLog.partialStatus === TimeLogPartialStatus.TO_LEFT
+								? timeLog.stoppedAt
+								: timeLog.startedAt
+					}
+				],
 				organizationId
 			};
 

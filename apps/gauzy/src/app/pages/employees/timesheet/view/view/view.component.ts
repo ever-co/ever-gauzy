@@ -1,8 +1,8 @@
 // tslint:disable: nx-enforce-module-boundaries
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IGetTimeLogInput, ITimeLog, ITimesheet, TimesheetStatus, PermissionsEnum } from '@gauzy/contracts';
+import { IGetTimeLogInput, ITimeLog, ITimesheet, TimesheetStatus, PermissionsEnum, TimeLogPartialStatus } from '@gauzy/contracts';
 import { chain } from 'underscore';
 import moment from 'moment';
 import { filter, Subject } from 'rxjs';
@@ -15,12 +15,12 @@ import { EditTimeLogModalComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-timesheet-view',
-    templateUrl: './view.component.html',
-    styleUrls: ['../../daily/daily/daily.component.scss', './view.component.scss'],
-    standalone: false
+	selector: 'ngx-timesheet-view',
+	templateUrl: './view.component.html',
+	styleUrls: ['../../daily/daily/daily.component.scss', './view.component.scss'],
+	standalone: false
 })
-export class TimesheetViewComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class TimesheetViewComponent extends TranslationBaseComponent implements OnInit {
 	PermissionsEnum = PermissionsEnum;
 	TimesheetStatus = TimesheetStatus;
 	timeLogs: any;
@@ -103,7 +103,11 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 		}
 		try {
 			const request = {
-				logIds: [timeLog.id],
+				logs: [{
+					id: timeLog.id,
+					partialStatus: timeLog.partialStatus,
+					referenceDate: timeLog.partialStatus === TimeLogPartialStatus.TO_LEFT ? timeLog.stoppedAt : timeLog.startedAt,
+				}],
 				organizationId: timeLog.organizationId
 			};
 			await this.timesheetService.deleteLogs(request);
@@ -131,6 +135,4 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 		};
 		this.disable = true;
 	}
-
-	ngOnDestroy() {}
 }

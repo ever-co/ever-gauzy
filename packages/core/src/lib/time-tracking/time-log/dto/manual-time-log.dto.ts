@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsUUID } from "class-validator";
-import { IEmployee, IManualTimeInput } from "@gauzy/contracts";
+import { IsDateString, IsEnum, IsNotEmpty, IsUUID } from "class-validator";
+import { IEmployee, IManualTimeInput, TimeLogPartialStatus } from "@gauzy/contracts";
 import { IsBeforeDate } from "./../../../shared/validators";
 import { TenantOrganizationBaseDTO } from "./../../../core/dto";
 
@@ -33,4 +33,14 @@ export class ManualTimeLogDTO extends TenantOrganizationBaseDTO implements IManu
     @IsNotEmpty()
     @IsUUID()
     employeeId: IEmployee['id'];
+
+    @ApiProperty({ type: () => Number })
+    @IsEnum(TimeLogPartialStatus)
+    @IsNotEmpty()
+    readonly partialStatus: TimeLogPartialStatus;
+
+    @ApiProperty({ type: () => Date })
+    @IsDateString()
+    @IsNotEmpty()
+    readonly referenceDate: Date;
 }

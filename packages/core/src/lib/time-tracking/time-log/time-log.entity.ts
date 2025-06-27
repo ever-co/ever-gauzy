@@ -14,7 +14,8 @@ import {
 	IOrganizationContact,
 	ITimeSlot,
 	IOrganizationTeam,
-	ID
+	ID,
+	TimeLogPartialStatus
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import {
@@ -122,6 +123,9 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 */
 	@VirtualMultiOrmColumn()
 	isEdited?: boolean;
+
+	@VirtualMultiOrmColumn()
+	partialStatus: TimeLogPartialStatus;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -286,6 +290,8 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		const startedAt = moment(this.startedAt, 'YYYY-MM-DD HH:mm:ss');
 		const stoppedAt = moment(this.stoppedAt || new Date(), 'YYYY-MM-DD HH:mm:ss');
 		this.duration = stoppedAt.diff(startedAt, 'seconds');
+
+		this.partialStatus = TimeLogPartialStatus.COMPLETE;
 
 		/**
 		 * Sets the 'isEdited' property based on the presence of 'editedAt'.

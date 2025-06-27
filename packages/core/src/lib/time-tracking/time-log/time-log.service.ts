@@ -1,12 +1,4 @@
-import {
-	Injectable,
-	BadRequestException,
-	NotAcceptableException,
-	Logger,
-	ConflictException,
-	HttpException,
-	HttpStatus
-} from '@nestjs/common';
+import { Injectable, BadRequestException, NotAcceptableException, Logger, ConflictException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
 import { chain, pluck } from 'underscore';
@@ -40,6 +32,8 @@ import {
 	IReportWeeklyDate,
 	IAmountOwedReportChart,
 	IDailyReportChart,
+	TimeLogPartialStatus,
+	IDeleteTimeLogData,
 	TimeErrorsEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
@@ -58,7 +52,7 @@ import {
 import { getDateRangeFormat, getDaysBetweenDates } from './../../core/utils';
 import { RequestContext } from '../../core/context';
 import { moment } from './../../core/moment-extend';
-import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
+import { calculateAverage, calculateAverageActivity, calculateDuration, fixTimeLogsBoundary } from './time-log.utils';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
@@ -177,7 +171,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			this.getFilterTimeLogQuery(qb, request, true);
 		});
 
-		const timeLogs = await query.getMany();
+		let timeLogs = await query.getMany();
+
+		/**
+		 * Adjust the time logs to adjust the startedAt and stoppedAt to the date range and recalculate the duration.
+		 */
+		timeLogs = fixTimeLogsBoundary(timeLogs, request.startDate, request.endDate, request.timeZone);
 
 		// Set up the where clause using the provided filter function
 		return timeLogs;
@@ -1055,9 +1054,20 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				moment.utc(request.endDate || moment().endOf('day'))
 			);
 			query.andWhere(
+				/**
+				 * Allow to get time logs that are partially in the date range.
+				 * The first element in the results can be started before the date range but it will be ended in the date range.
+				 * The last element in the results can be started in the date range but it will be ended after the date range.
+				 *
+				 * For this cases we should adjust the results to adjust the startedAt and stoppedAt to the date range
+				 * and recalculate the duration. Check fixTimeLogsBoundary function for more details.
+				 */
 				new Brackets((qb) => {
-					qb.where(p(`"${query.alias}"."startedAt" >= :startDate`), { startDate });
-					qb.andWhere(p(`"${query.alias}"."startedAt" < :endDate`), { endDate });
+					qb.where(p(`"${query.alias}"."startedAt" BETWEEN :startDate AND :endDate`), { startDate, endDate });
+					qb.orWhere(p(`"${query.alias}"."stoppedAt" BETWEEN :startDate AND :endDate`), {
+						startDate,
+						endDate
+					});
 				})
 			);
 		}
@@ -1296,7 +1306,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	async updateManualTime(id: ID, request: IManualTimeInput): Promise<ITimeLog> {
 		try {
 			const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
-			const { startedAt, stoppedAt, employeeId, organizationId } = request;
+			const { startedAt, stoppedAt, employeeId, organizationId, partialStatus, referenceDate } = request;
 
 			// Validate input
 			if (!startedAt || !stoppedAt) {
@@ -1334,10 +1344,21 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			);
 
 			// Check if the time log will fit the weekly limit
-			await this.checkWeeklyLimitWithConflicts(employee, startedAt, stoppedAt, conflicts, timeLog.duration);
+			await this.checkWeeklyLimitWithConflicts(
+				employee,
+				startedAt,
+				stoppedAt,
+				conflicts,
+				partialStatus == TimeLogPartialStatus.COMPLETE
+					? timeLog.duration
+					: moment(partialStatus == TimeLogPartialStatus.TO_LEFT ? referenceDate : timeLog.stoppedAt).diff(
+							partialStatus == TimeLogPartialStatus.TO_LEFT ? timeLog.startedAt : referenceDate,
+							'seconds'
+					  )
+			);
 
-			// Resolve conflicts by deleting conflicting time slots
-			if (conflicts?.length) {
+			// Resolve conflicts by deleting conflicting time slots if the time log is complete
+			if (partialStatus == TimeLogPartialStatus.COMPLETE && conflicts?.length) {
 				const times: IDateRange = { start: new Date(startedAt), end: new Date(stoppedAt) };
 
 				// Loop through each conflicting time log
@@ -1353,11 +1374,37 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Update the last edited date for the manual time log
 			request.editedAt = new Date();
 
+			// Remove non valid fields from the request
+			delete request.partialStatus;
+			delete request.referenceDate;
+
+			// Adjust the time log for the remaining time
+			const newObject = {
+				...timeLog,
+				...request
+			};
+			const remainingTimeUpdate = {};
+			if (partialStatus == TimeLogPartialStatus.TO_LEFT) {
+				remainingTimeUpdate['startedAt'] = moment(referenceDate).add(1, 'seconds').toDate();
+				newObject.stoppedAt = referenceDate;
+			} else if (partialStatus == TimeLogPartialStatus.TO_RIGHT) {
+				remainingTimeUpdate['stoppedAt'] = moment(referenceDate).subtract(1, 'seconds').toDate();
+				newObject.startedAt = referenceDate;
+			}
+
+			if (partialStatus != TimeLogPartialStatus.COMPLETE) {
+				// If the time log is not complete, we need to update the startedAt or stoppedAt
+				// based on the partialStatus, so, request data is overwritten with the remaining time update
+				request = { ...remainingTimeUpdate, editedAt: request.editedAt };
+			}
+
+			console.error('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', request);
+
 			// Execute the command to update the time log
 			await this.commandBus.execute(new TimeLogUpdateCommand(request, timeLog));
 
 			// Retrieve the updated time log entry
-			const newTimeLog = await this.typeOrmRepository.findOneBy({ id });
+			let newTimeLog = await this.typeOrmRepository.findOneBy({ id });
 
 			// Generate the activity log
 			this.activityLogService.logActivity<TimeLog>(
@@ -1372,6 +1419,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				timeLog,
 				request
 			);
+
+			if (partialStatus != TimeLogPartialStatus.COMPLETE) {
+				// If the time log is not complete, we need to create new time log entry
+				newTimeLog = await this.addManualTime(newObject);
+			}
 
 			return newTimeLog;
 		} catch (error) {
@@ -1394,12 +1446,16 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async deleteTimeLogs(params: IDeleteTimeLog): Promise<DeleteResult | UpdateResult> {
 		// Early return if no logIds are provided
-		if (isEmpty(params.logIds)) {
+		if (isEmpty(params.logs)) {
 			throw new NotAcceptableException('You cannot delete time logs without IDs');
 		}
 
-		// Ensure logIds is an array
-		const logIds: ID[] = Array.isArray(params.logIds) ? params.logIds : [params.logIds];
+		// Extract the log ids to an array
+		const logIds: ID[] = params.logs.map((value) => value.id);
+		const timeLogMap: Record<ID, IDeleteTimeLogData> = {};
+		for (const log of params.logs) {
+			timeLogMap[log.id] = log;
+		}
 
 		// Get the tenant ID from the request context or the provided tenant ID
 		const tenantId = RequestContext.currentTenantId() ?? params.tenantId;
@@ -1428,7 +1484,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const timeLogs = await query.getMany();
 
 		// Invoke the command bus to delete the time logs
-		const deleted = await this.commandBus.execute(new TimeLogDeleteCommand(timeLogs, forceDelete));
+		const deleted = await this.commandBus.execute(new TimeLogDeleteCommand(timeLogs, timeLogMap, forceDelete));
 
 		// Generate the activity log
 		for (const timeLog of timeLogs) {

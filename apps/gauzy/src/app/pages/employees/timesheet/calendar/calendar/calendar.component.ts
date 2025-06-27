@@ -30,7 +30,14 @@ import {
 	TimeTrackerService
 } from '@gauzy/ui-core/core';
 import { isEmpty, toTimezone } from '@gauzy/ui-core/common';
-import { IGetTimeLogInput, ITimeLog, ITimeLogFilters, PermissionsEnum, TimeFormatEnum } from '@gauzy/contracts';
+import {
+	IGetTimeLogInput,
+	ITimeLog,
+	ITimeLogFilters,
+	PermissionsEnum,
+	TimeFormatEnum,
+	TimeLogPartialStatus
+} from '@gauzy/contracts';
 import {
 	BaseSelectorFilterComponent,
 	EditTimeLogModalComponent,
@@ -223,6 +230,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	 * @param {Function} callback - The callback function to be called with the fetched events.
 	 * @returns {Promise<void>}
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 	getEvents(arg: any, callback: Function): Promise<void> {
 		if (!this.organization || isEmpty(this.request)) {
 			return;
@@ -281,7 +289,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	 */
 	handleEventClick({ event }: EventClickArg) {
 		this.nbDialogService.open(ViewTimeLogModalComponent, {
-			context: { timeLog: event.extendedProps.log },
+			context: { timeLog: event.extendedProps.log, timeZone: this.filters?.timeZone },
 			dialogClass: 'view-log-dialog'
 		});
 	}
@@ -343,7 +351,12 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	async handleEventDrop({ event }: EventDropArg) {
 		await this.updateTimeLog(event.id, {
 			startedAt: event.start,
-			stoppedAt: event.end
+			stoppedAt: event.end,
+			partialStatus: event._def.extendedProps.log.partialStatus,
+			referenceDate:
+				event._def.extendedProps.log.partialStatus == TimeLogPartialStatus.TO_LEFT
+					? event._def.extendedProps.log.stoppedAt
+					: event._def.extendedProps.log.startedAt
 		});
 	}
 
@@ -355,7 +368,12 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	async handleEventResize({ event }: EventResizeDoneArg) {
 		await this.updateTimeLog(event.id, {
 			startedAt: event.start,
-			stoppedAt: event.end
+			stoppedAt: event.end,
+			partialStatus: event._def.extendedProps.log.partialStatus,
+			referenceDate:
+				event._def.extendedProps.log.partialStatus == TimeLogPartialStatus.TO_LEFT
+					? event._def.extendedProps.log.stoppedAt
+					: event._def.extendedProps.log.startedAt
 		});
 	}
 
@@ -392,7 +410,6 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	 */
 	openDialog(timeLog?: ITimeLog | Partial<ITimeLog>) {
 		if (this.limitReached && !this.hasPermission) return;
-
 		const defaultTimeLog = {
 			startedAt: moment().set({ hour: 8, minute: 0, second: 0 }).toDate(),
 			stoppedAt: moment().set({ hour: 9, minute: 0, second: 0 }).toDate(),
@@ -422,7 +439,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	 * @param timeLog The time log data to update. It can be a complete ITimeLog object or a partial one.
 	 * @returns A promise that resolves when the update operation completes.
 	 */
-	async updateTimeLog(id: string, timeLog: ITimeLog | Partial<ITimeLog>): Promise<void> {
+	async updateTimeLog(id: string, timeLog: (ITimeLog | Partial<ITimeLog>) & { referenceDate: Date }): Promise<void> {
 		try {
 			this.loading = true; // Set loading indicator
 			await this.timesheetService.updateTime(id, timeLog); // Call service to update time log

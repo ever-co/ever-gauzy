@@ -15,6 +15,7 @@ import {
 	TimeLogType,
 	TimeLogSourceEnum,
 	ITimerStatusWithWeeklyLimits,
+	TimeLogPartialStatus,
 	TimeErrorsEnum,
 	IEmployee
 } from '@gauzy/contracts';
@@ -74,6 +75,8 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	get timeLog(): ITimeLog | Partial<ITimeLog> {
 		return this._timeLog;
 	}
+
+	@Input() timeZone: string;
 
 	/*
 	 * TimeLog Mutation Form
@@ -424,7 +427,12 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 				tenantId,
 				logType: TimeLogType.MANUAL,
 				source: TimeLogSourceEnum.WEB_TIMER,
-				employeeId: this.form.value.employeeId || employee?.id // Fallback to current employee ID
+				employeeId: this.form.value.employeeId || employee?.id, // Fallback to current employee ID,
+				partialStatus: this._timeLog?.partialStatus ?? TimeLogPartialStatus.COMPLETE,
+				referenceDate:
+					this._timeLog?.partialStatus == TimeLogPartialStatus.TO_LEFT
+						? this._timeLog?.stoppedAt
+						: this._timeLog.startedAt
 			};
 
 			const selectedEmployeeId = this.form.value.employeeId || employee?.id;
@@ -526,7 +534,14 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 
 		// Prepare the request object for deleting logs.
 		const request = {
-			logIds: [timeLog.id],
+			logs: [
+				{
+					id: timeLog.id,
+					partialStatus: timeLog.partialStatus,
+					referenceDate:
+						timeLog.partialStatus === TimeLogPartialStatus.TO_LEFT ? timeLog.stoppedAt : timeLog.startedAt
+				}
+			],
 			organizationId
 		};
 

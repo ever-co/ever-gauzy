@@ -15,10 +15,10 @@
 			</div>
 			<div class="time-log-text col-3 pl-0">
 				{{
-					(timeLog?.startedAt | utcToLocal | timeFormat : true) +
-						'  ' +
+					(timeLog?.startedAt | utcToTimezone : timeZone | timeFormat : true) +
+						' ' +
 						(!timeLog?.isRunning
-							? (timeLog?.stoppedAt | utcToLocal | timeFormat : true)
+							? (timeLog?.stoppedAt | utcToTimezone : timeZone | timeFormat : true)
 							: ('TIMESHEET.TILL_NOW' | translate)) +
 						' (' +
 						(timeLog?.duration | durationFormat) +
@@ -42,7 +42,7 @@
 							<button
 								nbButton
 								status="basic"
-								(click)="openEdit($event, timeLog)"
+								(click)="openEdit($event, timeLog, true)"
 								[disabled]="timeLog.isRunning"
 								class="action primary"
 								size="small"

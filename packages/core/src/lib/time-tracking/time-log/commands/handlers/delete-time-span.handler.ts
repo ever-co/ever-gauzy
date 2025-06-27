@@ -21,7 +21,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 		private readonly _commandBus: CommandBus,
 		private readonly _timeSlotService: TimeSlotService
-	) {}
+	) { }
 
 	/**
 	 * Execute delete time span logic
@@ -146,7 +146,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		timeSlot: ITimeSlot,
 		employeeId: ID,
 		organizationId: ID,
-		forceDelete: boolean = false
+		forceDelete = false
 	): Promise<void> {
 		// Delete the associated time slots
 		const timeSlotsIds = [timeSlot.id];
@@ -186,7 +186,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		employeeId: ID,
 		end: Date,
 		stoppedAt: Date,
-		forceDelete: boolean = false
+		forceDelete = false
 	): Promise<void> {
 		const stoppedAtMoment = moment(stoppedAt); // Get the stopped at moment
 		const endMoment = moment(end); // Get the end moment
@@ -259,7 +259,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		start: Date,
 		startedAt: Date,
 		end: Date,
-		forceDelete: boolean = false
+		forceDelete = false
 	): Promise<void> {
 		const startedAtMoment = moment(startedAt); // Get the started at moment
 		const endMoment = moment(end); // Get the end moment
@@ -331,7 +331,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		start: Date,
 		end: Date,
 		startedAt: Date,
-		forceDelete: boolean = false
+		forceDelete = false
 	): Promise<void> {
 		const startedAtMoment = moment(startedAt); // Get the started at moment
 		const startMoment = moment(start); // Get the start moment
@@ -425,10 +425,10 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * @returns Promise<void> - Resolves when deletion is complete.
 	 */
 
-	private async deleteTimeLog(timeLog: ITimeLog, forceDelete: boolean = false): Promise<void> {
+	private async deleteTimeLog(timeLog: ITimeLog, forceDelete = false): Promise<void> {
 		try {
 			// Execute the TimeLogDeleteCommand to delete the time log
-			await this._commandBus.execute(new TimeLogDeleteCommand(timeLog, forceDelete));
+			await this._commandBus.execute(new TimeLogDeleteCommand(timeLog, {}, forceDelete));
 		} catch (error) {
 			// Log any errors that occur during deletion
 			console.log(`Error while, delete time log because overlap entire time for ID: ${timeLog.id}`, error);

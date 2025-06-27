@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import * as chalk from 'chalk';
-import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
+import { ID, ITimeLog, ITimeSlot, TimeLogPartialStatus } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { TimeSlotBulkDeleteCommand } from '../time-slot-bulk-delete.command';
 import { RequestContext } from '../../../../core/context';
@@ -9,7 +9,7 @@ import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.r
 
 @CommandHandler(TimeSlotBulkDeleteCommand)
 export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDeleteCommand> {
-	constructor(private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository) {}
+	constructor(private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository) { }
 
 	/**
 	 * Execute bulk deletion of time slots
@@ -20,12 +20,14 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 	public async execute(command: TimeSlotBulkDeleteCommand): Promise<ITimeSlot | ITimeSlot[]> {
 		const { input, forceDelete, entireSlots } = command;
 		// Extract organizationId, employeeId, timeLog, and timeSlotsIds from the input
-		const { organizationId, employeeId, timeLog, timeSlotsIds = [] } = input;
+		const { organizationId, employeeId, timeLog, timeSlotsIds = [], startedAt, partialStatus } = input;
 		// Retrieve the tenant ID from the current request context or the provided input
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
 		// Step 1: Fetch time slots based on input parameters
-		const timeSlots = await this.fetchTimeSlots({ organizationId, employeeId, tenantId, timeSlotsIds });
+		const timeSlots = await this.fetchTimeSlots({
+			organizationId, employeeId, tenantId, timeSlotsIds, startedAt, partialStatus
+		});
 		console.log(`fetched time slots for soft delete or hard delete:`, timeSlots);
 
 		// If timeSlots is empty, return an empty array
@@ -51,12 +53,16 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 		organizationId,
 		employeeId,
 		tenantId,
-		timeSlotsIds = []
+		timeSlotsIds = [],
+		startedAt,
+		partialStatus = TimeLogPartialStatus.COMPLETE
 	}: {
 		organizationId: ID;
 		employeeId: ID;
 		tenantId: ID;
 		timeSlotsIds: ID[];
+		startedAt?: Date;
+		partialStatus?: TimeLogPartialStatus;
 	}): Promise<ITimeSlot[]> {
 		// Create a query builder for the TimeSlot entity
 		const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
@@ -74,6 +80,14 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 		// If timeSlotsIds is not empty, add a WHERE clause to the query
 		if (isNotEmpty(timeSlotsIds)) {
 			query.andWhere(p(`"${query.alias}"."id" IN (:...timeSlotsIds)`), { timeSlotsIds });
+		}
+
+		if (partialStatus == TimeLogPartialStatus.TO_LEFT) {
+			query.andWhere(p(`"${query.alias}"."startedAt" < :startedAt`), { startedAt });
+		}
+
+		if (partialStatus == TimeLogPartialStatus.TO_RIGHT) {
+			query.andWhere(p(`"${query.alias}"."startedAt" > :startedAt`), { startedAt });
 		}
 
 		console.log('fetched time slots by parameters:', query.getParameters());

@@ -3,9 +3,7 @@
 		<span class="cancel">
 			<i class="fas fa-times" (click)="close()"></i>
 		</span>
-		<h5 class="title">
-			{{ 'TIMESHEET.VIEW_LOG' | translate }}
-		</h5>
+		<h5 class="title">{{ 'TIMESHEET.VIEW_LOG' | translate }}</h5>
 		<div class="row mt-5 avatar-log">
 			<div class="col-6">
 				<ngx-avatar
@@ -28,10 +26,10 @@
 			<div class="d-flex flex-column col-12">
 				<small>{{ timeLog?.startedAt | dateFormat }}</small>
 				<small class="duration">{{
-					(timeLog?.startedAt | utcToLocal | timeFormat : true) +
+					(timeLog?.startedAt | utcToTimezone : timeZone | timeFormat : timeFormat) +
 						' - ' +
 						(!timeLog?.isRunning
-							? (timeLog?.stoppedAt | utcToLocal | timeFormat : true)
+							? (timeLog?.stoppedAt | utcToTimezone : timeZone | timeFormat : timeFormat)
 							: ('TIMESHEET.TILL_NOW' | translate)) +
 						' (' +
 						(timeLog?.duration | durationFormat) +

@@ -1,7 +1,8 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { In, DeleteResult, UpdateResult } from 'typeorm';
+import * as moment from 'moment';
 import { pluck } from 'underscore';
-import { ID } from '@gauzy/contracts';
+import { ID, IDeleteTimeLogData, TimeLogPartialStatus } from '@gauzy/contracts';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands/timesheet-recalculate.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { TimeSlotBulkDeleteCommand } from './../../../time-slot/commands';
@@ -9,6 +10,7 @@ import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { TimeLog } from './../../time-log.entity';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../..//repository/mikro-orm-time-log.repository';
+import { calculateTimeLogDuration } from '../../time-log.utils';
 
 @CommandHandler(TimeLogDeleteCommand)
 export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteCommand> {
@@ -16,7 +18,7 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 		private readonly _commandBus: CommandBus
-	) {}
+	) { }
 
 	/**
 	 * Executes the TimeLogDeleteCommand to handle both soft and hard deletions of time logs,
@@ -33,16 +35,16 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	 * @returns A promise that resolves to a DeleteResult (for hard delete) or UpdateResult (for soft delete).
 	 */
 	public async execute(command: TimeLogDeleteCommand): Promise<DeleteResult | UpdateResult> {
-		const { ids, forceDelete = false } = command;
+		const { ids, timeLogMap, forceDelete = false } = command;
 
 		// Step 1: Fetch time logs based on the provided IDs
 		const timeLogs = await this.fetchTimeLogs(ids);
 
 		// Step 2: Delete associated time slots for each time log sequentially
-		await this.deleteTimeSlotsForLogs(timeLogs, forceDelete);
+		await this.deleteTimeSlotsForLogs(timeLogs, timeLogMap, forceDelete);
 
 		// Step 3: Perform soft delete or hard delete based on the `forceDelete` flag
-		const updateResult = await this.deleteTimeLogs(timeLogs, forceDelete);
+		const updateResult = await this.deleteTimeLogs(timeLogs, timeLogMap, forceDelete);
 
 		// Step 4: Recalculate timesheet and employee worked hours after deletion
 		await this.recalculateTimesheetAndEmployeeHours(timeLogs);
@@ -78,24 +80,31 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	 *
 	 * @param timeLogs - An array of time logs whose associated time slots will be deleted.
 	 */
-	private async deleteTimeSlotsForLogs(timeLogs: TimeLog[], forceDelete = false): Promise<void> {
+	private async deleteTimeSlotsForLogs(
+		timeLogs: TimeLog[],
+		timeLogMap: Record<ID, IDeleteTimeLogData>,
+		forceDelete = false
+	): Promise<void> {
 		// Loop through each time log and delete its associated time slots
 		for await (const timeLog of timeLogs) {
 			const { employeeId, organizationId, timeSlots } = timeLog;
 			const timeSlotsIds = pluck(timeSlots, 'id');
-
+			const params = {
+				organizationId,
+				employeeId,
+				timeLog,
+				timeSlotsIds,
+				partialStatus: TimeLogPartialStatus.COMPLETE
+			};
+			if (timeLogMap[timeLog.id] && timeLogMap[timeLog.id].partialStatus != TimeLogPartialStatus.COMPLETE) {
+				// Adjust the startedAt value increasing or decreasing 1 second based on the partialStatus
+				params['startedAt'] = moment(timeLogMap[timeLog.id].referenceDate).add(
+					timeLogMap[timeLog.id].partialStatus == TimeLogPartialStatus.TO_LEFT ? 1 : -1, 'seconds'
+				).toDate();
+				params.partialStatus = timeLogMap[timeLog.id].partialStatus;
+			}
 			// Delete time slots sequentially
-			await this._commandBus.execute(
-				new TimeSlotBulkDeleteCommand(
-					{
-						organizationId,
-						employeeId,
-						timeLog,
-						timeSlotsIds
-					},
-					forceDelete
-				)
-			);
+			await this._commandBus.execute(new TimeSlotBulkDeleteCommand(params, forceDelete));
 		}
 	}
 
@@ -110,17 +119,47 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	 *                      Defaults to `false`, meaning soft delete is performed by default.
 	 * @returns A promise that resolves to a DeleteResult (for hard delete) or UpdateResult (for soft delete).
 	 */
-	private async deleteTimeLogs(timeLogs: TimeLog[], forceDelete = false): Promise<DeleteResult | UpdateResult> {
-		const logIds = timeLogs.map((log) => log.id); // Extract ids using map for simplicity
-		console.log('deleting time logs', logIds, forceDelete);
-
+	private async deleteTimeLogs(
+		timeLogs: TimeLog[],
+		timeLogMap: Record<ID, IDeleteTimeLogData>,
+		forceDelete = false
+	): Promise<DeleteResult | UpdateResult> {
+		const logsToDelete = []
+		for (const log of timeLogs) {
+			if (!timeLogMap[log.id] || timeLogMap[log.id].partialStatus == TimeLogPartialStatus.COMPLETE) {
+				logsToDelete.push(log.id);
+			} else {
+				// Update the log startedAt or stoppedAt to the referenceDate
+				const update = {};
+				if (timeLogMap[log.id].partialStatus == TimeLogPartialStatus.TO_LEFT) {
+					// If the partialStatus is TO_LEFT (deleting from the left)
+					// set the startedAt to the referenceDate + 1 second
+					const startedAt = moment(timeLogMap[log.id].referenceDate).add(1, 'seconds').toDate();
+					update['startedAt'] = startedAt;
+					log.startedAt = startedAt;
+				} else {
+					// If the partialStatus is TO_RIGHT (deleting from the right)
+					// set the stoppedAt to the referenceDate - 1 second
+					const stoppedAt = moment(timeLogMap[log.id].referenceDate).add(-1, 'seconds').toDate();
+					update['stoppedAt'] = stoppedAt;
+					log.stoppedAt = stoppedAt;
+				}
+				if (calculateTimeLogDuration(log) <= 0) {
+					// If new time log duration is less than or equal to 0, delete it
+					logsToDelete.push(log.id);
+				} else {
+					// Update the time log
+					await this.typeOrmTimeLogRepository.update({ id: log.id }, update);
+				}
+			}
+		}
 		if (forceDelete) {
 			// Hard delete (permanent deletion)
-			return await this.typeOrmTimeLogRepository.delete({ id: In(logIds) });
+			return await this.typeOrmTimeLogRepository.delete({ id: In(logsToDelete) });
 		}
 
 		// Soft delete (mark records as deleted)
-		return await this.typeOrmTimeLogRepository.softDelete({ id: In(logIds) });
+		return await this.typeOrmTimeLogRepository.softDelete({ id: In(logsToDelete) });
 	}
 
 	/**

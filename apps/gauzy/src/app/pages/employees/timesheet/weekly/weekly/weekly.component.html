@@ -57,19 +57,21 @@
 						</div>
 						<div class="col text-center day-col" *ngFor="let date of weekDayList">
 							<button
-								*ngIf="day.dates[date]?.sum > 0; else noLogsCol"
+								*ngIf="day.dates[getGroupDate(date)]?.sum > 0; else noLogsCol"
 								nbButton
 								ghost
 								status="basic"
 								[nbPopover]="viewTimeLogComponent"
 								[nbPopoverContext]="{
-									timeLogs: day.dates[date]?.logs,
+									timeLogs: day?.dates[getGroupDate(date)]?.logs,
+									timeZone: filters?.timeZone,
 									callback: addTimeCallback,
+									date: date,
 									close: onClose
 								}"
 								#popover
 							>
-								{{ day.dates[date]?.sum | durationFormat }}
+								{{ day?.dates[getGroupDate(date)]?.sum | durationFormat }}
 							</button>
 							<ng-template #noLogsCol>
 								<ng-template
@@ -87,8 +89,8 @@
 											size="small"
 											status="primary"
 											[disabled]="limitReached && !hasPermission"
-											(click)="openAddByDateProject(date, day?.project)"
-											*ngIf="allowAdd(date); else notAllowAddTimeBlock"
+											(click)="openAddByDateProject(getGroupDate(date), day?.project)"
+											*ngIf="allowAdd(getGroupDate(date)); else notAllowAddTimeBlock"
 										>
 											<nb-icon icon="plus-outline"></nb-icon>
 										</button>

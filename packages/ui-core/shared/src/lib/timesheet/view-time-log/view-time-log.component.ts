@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, OnDestroy, Output } from '@angular/core';
-import { IOrganization, ITimeLog, PermissionsEnum, TimeLogSourceEnum } from '@gauzy/contracts';
+import { IOrganization, ITimeLog, PermissionsEnum, TimeLogPartialStatus, TimeLogSourceEnum } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -23,7 +23,9 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	hasPermission = false;
 
 	@Input() timeLogs: ITimeLog[] = [];
+	@Input() timeZone: string;
 	@Input() callback: CallableFunction;
+	@Input() date?: string;
 	@Output() close: CallableFunction;
 
 	private readonly workedThisWeek$: Observable<number> = this.timeTrackerService.workedThisWeek$;
@@ -57,8 +59,9 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	openAddByDateProject($event: MouseEvent) {
 		if (this.limitReached && !this.hasPermission) return;
 		const [timeLog] = this.timeLogs;
-		const startedAt = moment().set({ hour: 8, minute: 0, second: 0 }).toDate();
-		const stoppedAt = moment().set({ hour: 9, minute: 0, second: 0 }).toDate();
+		const baseDate = moment(this.date);
+		const startedAt = baseDate.clone().set({ hour: 8, minute: 0, second: 0 }).toDate();
+		const stoppedAt = baseDate.clone().set({ hour: 9, minute: 0, second: 0 }).toDate();
 
 		this.openEdit($event, {
 			startedAt,
@@ -75,14 +78,15 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 			stoppedAt: Date;
 			projectId: string;
 			isRunning: boolean;
-		}
+		},
+		isEdit?: boolean
 	) {
 		if (timeLog.isRunning) {
 			return;
 		}
 		$event.stopPropagation();
 		this.nbDialogService
-			.open(EditTimeLogModalComponent, { context: { timeLog: timeLog } })
+			.open(EditTimeLogModalComponent, { context: { timeLog: timeLog, timeZone: isEdit ? this.timeZone : null } })
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				this.callback(data);
@@ -93,7 +97,8 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 		this.nbDialogService
 			.open(ViewTimeLogModalComponent, {
 				context: {
-					timeLog: timeLog
+					timeLog: timeLog,
+					timeZone: this.timeZone
 				},
 				dialogClass: 'view-log-dialog'
 			})
@@ -109,7 +114,14 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 		}
 		const { id: organizationId } = this.organization;
 		const request = {
-			logIds: [timeLog.id],
+			logs: [
+				{
+					id: timeLog.id,
+					partialStatus: timeLog.partialStatus,
+					referenceDate:
+						timeLog.partialStatus === TimeLogPartialStatus.TO_LEFT ? timeLog.stoppedAt : timeLog.startedAt
+				}
+			],
 			organizationId
 		};
 		this.timesheetService.deleteLogs(request).then((res) => {

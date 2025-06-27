@@ -3,7 +3,14 @@ import { Router } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ITimeLog, PermissionsEnum, IOrganization, TimeLogSourceEnum } from '@gauzy/contracts';
+import {
+	ITimeLog,
+	PermissionsEnum,
+	IOrganization,
+	TimeLogSourceEnum,
+	TimeLogPartialStatus,
+	TimeFormatEnum
+} from '@gauzy/contracts';
 import { TimeLogsLabel } from '@gauzy/ui-core/common';
 import { Store, TimeLogEventService, TimeTrackerService, TimesheetService } from '@gauzy/ui-core/core';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
@@ -21,6 +28,8 @@ export class ViewTimeLogModalComponent implements OnInit {
 	TimeLogsLabel = TimeLogsLabel;
 
 	@Input() timeLog: ITimeLog;
+	@Input() timeZone: string;
+	@Input() timeFormat: TimeFormatEnum = TimeFormatEnum.FORMAT_24_HOURS;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -46,10 +55,9 @@ export class ViewTimeLogModalComponent implements OnInit {
 		if (this.timeLog.isRunning) {
 			return;
 		}
-
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, {
-				context: { timeLog: this.timeLog }
+				context: { timeLog: this.timeLog, timeZone: this.timeZone }
 			})
 			.onClose.pipe(
 				tap((type) => this.dialogRef.close(type)),
@@ -65,7 +73,16 @@ export class ViewTimeLogModalComponent implements OnInit {
 	onDeleteConfirm() {
 		const { id: organizationId } = this.organization;
 		const request = {
-			logIds: [this.timeLog.id],
+			logs: [
+				{
+					id: this.timeLog.id,
+					partialStatus: this.timeLog.partialStatus,
+					referenceDate:
+						this.timeLog.partialStatus === TimeLogPartialStatus.TO_LEFT
+							? this.timeLog.stoppedAt
+							: this.timeLog.startedAt
+				}
+			],
 			organizationId
 		};
 		this.timesheetService.deleteLogs(request).then((res) => {

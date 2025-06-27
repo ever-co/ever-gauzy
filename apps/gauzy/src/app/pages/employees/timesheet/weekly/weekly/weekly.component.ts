@@ -137,12 +137,24 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 
 		while (!current.isAfter(end)) {
 			// Include end date in the range
-			dayRange.push(current.format('YYYY-MM-DD')); // Add formatted date to the list
+			dayRange.push(current.toDate()); // Add formatted date to the list
 			current.add(1, 'day'); // Move to the next day
 		}
 
 		// Assign the list of weekdays to weekDayList
 		this.weekDayList = dayRange;
+	}
+
+	getGroupDate(date: string | Date): string | null {
+		const timeZone = this.filters?.timeZone || moment.tz.guess();
+		const parsed = moment(date);
+
+		if (!parsed.isValid()) {
+			console.warn('Invalid date passed to getGroupDate:', date);
+			return null;
+		}
+
+		return parsed.tz(timeZone).format('YYYY-MM-DD');
 	}
 
 	/**
@@ -194,16 +206,22 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 		}
 
 		const payloads = this.payloads$.getValue();
+		const timeZone = this.filters?.timeZone || moment.tz.guess();
+
 		this.loading = true;
 		try {
 			const logs = await this.timesheetService.getTimeLogs(payloads, ['project', 'employee.user', 'task']);
+
 			this.weekData = chain(logs)
 				.groupBy('projectId')
 				.map((innerLogs, _projectId) => {
 					const byDate = chain(innerLogs)
-						.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
+						.groupBy((log) => {
+							const started = moment(log.startedAt);
+							return started.isValid() ? started.tz(timeZone).format('YYYY-MM-DD') : 'invalid-date';
+						})
 						.mapObject((res) => {
-							const sum = res.reduce((iteratee, log) => iteratee + log.duration, 0);
+							const sum = res.reduce((total, log) => total + log.duration, 0);
 							return { sum, logs: res };
 						})
 						.value();
@@ -212,7 +230,11 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 					const dates = {};
 
 					this.weekDayList.forEach((date) => {
-						dates[date] = byDate[date] || 0;
+						const dateMoment = moment(date);
+						const tzDate = dateMoment.isValid() ? dateMoment.tz(timeZone).format('YYYY-MM-DD') : null;
+						if (tzDate) {
+							dates[tzDate] = byDate[tzDate] || 0;
+						}
 					});
 
 					return { project, dates };
@@ -232,7 +254,6 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	 */
 	openAddEdit(timeLog?: ITimeLog) {
 		if (this.limitReached && !this.hasPermission) return;
-
 		const defaultTimeLog = {
 			startedAt: moment().set({ hour: 8, minute: 0, second: 0 }).toDate(),
 			stoppedAt: moment().set({ hour: 9, minute: 0, second: 0 }).toDate(),
@@ -270,7 +291,6 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 		const baseDate = moment(date);
 		const startedAt = baseDate.clone().set({ hour: 8, minute: 0, second: 0 }).toDate();
 		const stoppedAt = baseDate.clone().set({ hour: 9, minute: 0, second: 0 }).toDate();
-
 		if (!this.nbDialogService) {
 			throw new Error('NbDialogService is not available.');
 		}

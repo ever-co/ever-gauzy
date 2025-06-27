@@ -21,7 +21,15 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
 import moment from 'moment';
-import { IGetTimeLogInput, ITimeLog, PermissionsEnum, ITimeLogFilters, TimeLogSourceEnum } from '@gauzy/contracts';
+import {
+	IGetTimeLogInput,
+	ITimeLog,
+	PermissionsEnum,
+	ITimeLogFilters,
+	TimeLogSourceEnum,
+	TimeLogPartialStatus,
+	IDeleteTimeLogData
+} from '@gauzy/contracts';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
@@ -348,7 +356,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 		}
 
 		this._dialogService
-			.open(EditTimeLogModalComponent, { context: { timeLog } })
+			.open(EditTimeLogModalComponent, { context: { timeLog, timeZone: this.filters?.timeZone } })
 			.onClose.pipe(
 				// Filter out falsy results
 				filter((editedTimeLog: ITimeLog) => !!editedTimeLog),
@@ -372,7 +380,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	openView(timeLog: ITimeLog): void {
 		this._dialogService
 			.open(ViewTimeLogModalComponent, {
-				context: { timeLog },
+				context: { timeLog, timeZone: this.filters?.timeZone, timeFormat: this.filters?.timeFormat },
 				dialogClass: 'view-log-dialog'
 			})
 			.onClose.pipe(
@@ -399,7 +407,16 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 			const employee = timeLog.employee;
 			const { id: organizationId } = this.organization;
 			const request = {
-				logIds: [timeLog.id],
+				logs: [
+					{
+						id: timeLog.id,
+						partialStatus: timeLog.partialStatus,
+						referenceDate:
+							timeLog.partialStatus === TimeLogPartialStatus.TO_LEFT
+								? timeLog.stoppedAt
+								: timeLog.startedAt
+					}
+				],
 				organizationId
 			};
 			// Use await to wait for the promise to resolve
@@ -437,13 +454,20 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	}
 
 	/**
-	 * Get the IDs of selected and non-running time logs.
-	 * @returns An array of string IDs.
+	 * Get the time log info of selected and non-running time logs.
+	 * @returns An array of time log info to delete.
 	 */
-	private getSelectedLogIds(): string[] {
+	private getSelectedLogs(): IDeleteTimeLogData[] {
 		return this.logs
 			.filter((timeLog: ITimeLog) => timeLog['checked'] && !timeLog.isRunning)
-			.map((timeLog: ITimeLog) => timeLog.id);
+			.map((timeLog: ITimeLog) => {
+				return {
+					id: timeLog.id,
+					partialStatus: timeLog.partialStatus,
+					referenceDate:
+						timeLog.partialStatus === TimeLogPartialStatus.TO_LEFT ? timeLog.stoppedAt : timeLog.startedAt
+				};
+			});
 	}
 
 	/**
@@ -454,11 +478,11 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 		//
 		if (confirmed) {
 			try {
-				const logIds = this.getSelectedLogIds();
+				const logs = this.getSelectedLogs();
 				const { id: organizationId, tenantId } = this.organization;
 
 				// Use await to wait for the promise to resolve
-				await this._timesheetService.deleteLogs({ logIds, organizationId, tenantId });
+				await this._timesheetService.deleteLogs({ logs, organizationId, tenantId });
 
 				// Move the checkTimerStatus call outside the try block for consistency
 				this.checkTimerStatus();
