@@ -81,7 +81,7 @@ export class FavoriteStoreService {
 				})
 				.then(({ items: details }) => {
 					return details.map((detail: any) => {
-						const rawTitle = detail.name || detail.title || 'Untitled';
+						const rawTitle = detail.name || detail.title || detail.profile_link || 'Untitled';
 						const title = this._truncateTitle(rawTitle);
 						return {
 							id: `favorite-${entityType}-${detail.id}`,
@@ -216,7 +216,7 @@ export class FavoriteStoreService {
 			case BaseEntityEnum.Tenant:
 				return `/pages/tenants/edit/${entityId}`;
 			case BaseEntityEnum.OrganizationContact:
-				return `/pages/organization/contacts/edit/${entityId}`;
+				return `/pages/organization/contacts/view/${entityId}`;
 			case BaseEntityEnum.Comment:
 				return `/pages/comments/edit/${entityId}`;
 			case BaseEntityEnum.Currency:
