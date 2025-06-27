@@ -15,7 +15,8 @@ import {
 	PageDataTableRegistryService,
 	ServerDataSource,
 	Store,
-	ToastrService
+	ToastrService,
+	GenericFavoriteService
 } from '@gauzy/ui-core/core';
 import {
 	InvitationTypeEnum,
@@ -25,7 +26,10 @@ import {
 	CrudActionEnum,
 	IEmployee,
 	ITag,
-	PermissionsEnum
+	PermissionsEnum,
+	IFavorite,
+	IFavoriteCreateInput,
+	BaseEntityEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -54,10 +58,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-employees-list',
-    templateUrl: './employees.component.html',
-    styleUrls: ['./employees.component.scss'],
-    standalone: false
+	selector: 'ga-employees-list',
+	templateUrl: './employees.component.html',
+	styleUrls: ['./employees.component.scss'],
+	standalone: false
 })
 export class EmployeesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public dataTableId: PageDataTableRegistryId = this._route.snapshot.data.dataTableId; // The identifier for the data table
@@ -76,6 +80,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	public organization: IOrganization;
 	public refresh$: Subject<any> = new Subject();
 	public employees$: Subject<any> = this.subject$;
+	public favoriteEmployees: IFavorite[] = [];
 
 	private _grid: CardGridComponent;
 	@ViewChild('grid') set grid(content: CardGridComponent) {
@@ -101,7 +106,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		private readonly _employeeStore: EmployeeStore,
 		private readonly _httpClient: HttpClient,
 		private readonly _dateFormatPipe: DateFormatPipe,
-		private readonly _pageDataTableRegistryService: PageDataTableRegistryService
+		private readonly _pageDataTableRegistryService: PageDataTableRegistryService,
+		private readonly genericFavoriteService: GenericFavoriteService
 	) {
 		super(translateService);
 		this.setView();
@@ -136,6 +142,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				tap(() => this._additionalColumns()),
 				tap(() => this.refresh$.next(true)),
 				tap(() => this.employees$.next(true)),
+				tap(() => this.loadFavoriteEmployees()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -1029,6 +1036,58 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			this.refresh$.next(true);
 			this.employees$.next(true);
 		}
+	}
+
+	/**
+	 * Loads the list of favorite employees for the current user or all for admin using the generic service.
+	 */
+	async loadFavoriteEmployees() {
+		this.favoriteEmployees = await this.genericFavoriteService.loadFavorites(
+			BaseEntityEnum.Employee,
+			this.organization
+		);
+	}
+
+	/**
+	 * Checks if an employee is a favorite in the local list using the generic service.
+	 * @param employee The employee to check.
+	 */
+	isFavoriteEmployee(employee: EmployeeViewModel): boolean {
+		if (!employee) return false;
+		return this.genericFavoriteService.isFavorite(employee.id, BaseEntityEnum.Employee, this.favoriteEmployees);
+	}
+
+	/**
+	 * Finds the favorite object for a given employee in the local list using the generic service.
+	 * @param employee The employee to check.
+	 */
+	getFavoriteForEmployee(employee: EmployeeViewModel): IFavorite | undefined {
+		if (!employee) return;
+		return this.genericFavoriteService.getFavoriteForEntity(
+			employee.id,
+			BaseEntityEnum.Employee,
+			this.favoriteEmployees
+		);
+	}
+
+	/**
+	 * Adds or removes an employee from favorites using the generic service.
+	 * @param employee The employee to add or remove.
+	 */
+	async toggleFavoriteEmployee(employee: EmployeeViewModel) {
+		if (!employee) return;
+		await this.genericFavoriteService.toggleFavorite(
+			BaseEntityEnum.Employee,
+			employee.id,
+			this.organization,
+			this._store.user?.employee?.id,
+			this.favoriteEmployees
+		);
+		// Refresh the local list after modification
+		this.favoriteEmployees = await this.genericFavoriteService.loadFavorites(
+			BaseEntityEnum.Employee,
+			this.organization
+		);
 	}
 
 	ngOnDestroy(): void {}
