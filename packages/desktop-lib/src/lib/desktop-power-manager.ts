@@ -1,51 +1,59 @@
+import { logger } from '@gauzy/desktop-core';
 import { BrowserWindow, powerMonitor } from 'electron';
-import { SleepTracking } from './contexts';
+import { TrackingSleep } from './contexts';
 import { LocalStore } from './desktop-store';
-import { IPowerManager, ISleepTracking } from './interfaces';
+import { IPowerManager, ITrackingSleep } from './interfaces';
 
 export class DesktopPowerManager implements IPowerManager {
 	private _suspendDetected: boolean;
-	private _sleepTracking: ISleepTracking;
+	private _trackingSleep: ITrackingSleep;
 	private _window: BrowserWindow;
 	private _isLockedScreen: boolean;
+	private _suspendHandler: () => void;
+	private _resumeHandler: () => void;
+	private _lockScreenHandler: () => void;
+	private _unlockScreenHandler: () => void;
 
 	constructor(window: BrowserWindow) {
-		this._sleepTracking = new SleepTracking(window);
+		this._trackingSleep = new TrackingSleep(window);
 		this._suspendDetected = false;
 		this._isLockedScreen = false;
 		this._window = window;
 
-		powerMonitor.on('suspend', () => {
-			console.log('System going to sleep.');
+		// Store handlers for later removal
+		this._suspendHandler = () => {
+			logger.info('System going to sleep.');
 			this.pauseTracking();
-		});
-
-		powerMonitor.on('resume', () => {
-			console.log('System resumed from sleep state.');
+		};
+		this._resumeHandler = () => {
+			logger.info('System resumed from sleep state.');
 			if (!this._isLockedScreen) {
 				this.resumeTracking();
 			}
-		});
-
-		powerMonitor.on('lock-screen', () => {
-			console.log('System locked');
+		};
+		this._lockScreenHandler = () => {
+			logger.info('System locked');
 			this._isLockedScreen = true;
 			this.pauseTracking();
-		});
-
-		powerMonitor.on('unlock-screen', () => {
-			console.log('System unlocked');
+		};
+		this._unlockScreenHandler = () => {
+			logger.info('System unlocked');
 			this._isLockedScreen = false;
 			this.resumeTracking();
-		});
+		};
+
+		powerMonitor.on('suspend', this._suspendHandler);
+		powerMonitor.on('resume', this._resumeHandler);
+		powerMonitor.on('lock-screen', this._lockScreenHandler);
+		powerMonitor.on('unlock-screen', this._unlockScreenHandler);
 	}
 
-	public get sleepTracking(): ISleepTracking {
-		return this._sleepTracking;
+	public get trackingSleep(): ITrackingSleep {
+		return this._trackingSleep;
 	}
 
-	public set sleepTracking(value: ISleepTracking) {
-		this._sleepTracking = value;
+	public set trackingSleep(value: ITrackingSleep) {
+		this._trackingSleep = value;
 	}
 
 	public get trackerStatusActive(): boolean {
@@ -68,20 +76,31 @@ export class DesktopPowerManager implements IPowerManager {
 	public pauseTracking(): void {
 		if (this.trackerStatusActive && !this._suspendDetected) {
 			this._suspendDetected = true;
-			this._sleepTracking.strategy.pause();
-			console.log('Tracker paused');
+			this._trackingSleep.strategy.pause();
+			logger.info('Tracker paused');
 		}
 	}
 
 	public resumeTracking(): void {
 		if (this._suspendDetected) {
 			this._suspendDetected = false;
-			this._sleepTracking.strategy.resume();
-			console.log('Tracker resumed.');
+			this._trackingSleep.strategy.resume();
+			logger.info('Tracker resumed.');
 		}
 	}
 
 	public get isOnBattery(): boolean {
 		return powerMonitor.isOnBatteryPower();
+	}
+
+	/**
+	 * Remove all event listeners registered by this instance
+	 */
+	public dispose(): void {
+		powerMonitor.removeListener('suspend', this._suspendHandler);
+		powerMonitor.removeListener('resume', this._resumeHandler);
+		powerMonitor.removeListener('lock-screen', this._lockScreenHandler);
+		powerMonitor.removeListener('unlock-screen', this._unlockScreenHandler);
+		this._trackingSleep.strategy.dispose();
 	}
 }

@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron';
-import { ISleepTracking } from './i-sleep-tracking';
+import { ITrackingSleep } from './i-tracking-sleep';
 
 export interface IPowerManager {
 	pauseTracking(): void;
@@ -10,11 +10,16 @@ export interface IPowerManager {
 
 	get trackerStatusActive(): boolean;
 
-	get sleepTracking(): ISleepTracking;
+	get trackingSleep(): ITrackingSleep;
 
-	set sleepTracking(value: ISleepTracking);
+	set trackingSleep(value: ITrackingSleep);
 
 	get window(): BrowserWindow;
 
 	get suspendDetected(): boolean;
+
+	/**
+	 * Dispose and cleanup resources/event handlers
+	 */
+	dispose(): void;
 }
