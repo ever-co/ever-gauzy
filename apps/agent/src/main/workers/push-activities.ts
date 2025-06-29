@@ -249,8 +249,8 @@ class PushActivities {
 			return;
 		}
 		return {
-			tenantId: auth.user.employee.tenantId,
-			organizationId: auth.user.employee.organizationId,
+			tenantId: auth?.user?.employee?.tenantId,
+			organizationId: auth?.user?.employee?.organizationId,
 			duration: this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd)),
 			keyboard: activities.kbPressCount,
 			mouse: activities.mouseLeftClickCount + activities.mouseRightClickCount,
