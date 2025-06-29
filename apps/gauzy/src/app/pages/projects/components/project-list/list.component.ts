@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, debounceTime, filter, firstValueFrom, Subject, tap } from 'rxjs';
+import { combineLatest, debounceTime, filter, firstValueFrom, Subject, tap, Subscription, Observable } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
@@ -16,7 +16,10 @@ import {
 	IOrganizationProject,
 	ID,
 	IOrganizationProjectEmployee,
-	IEmployee
+	IEmployee,
+	BaseEntityEnum,
+	IFavorite,
+	IFavoriteCreateInput
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -25,7 +28,10 @@ import {
 	OrganizationProjectStore,
 	ServerDataSource,
 	Store,
-	ToastrService
+	ToastrService,
+	FavoriteService,
+	FavoriteStoreService,
+	GenericFavoriteService
 } from '@gauzy/ui-core/core';
 import {
 	CardGridComponent,
@@ -44,13 +50,14 @@ import {
 	TagsOnlyComponent,
 	VisibilityComponent
 } from '@gauzy/ui-core/shared';
+import { map } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-project-list',
-    templateUrl: './list.component.html',
-    styleUrls: ['./list.component.scss'],
-    standalone: false
+	selector: 'ga-project-list',
+	templateUrl: './list.component.html',
+	styleUrls: ['./list.component.scss'],
+	standalone: false
 })
 export class ProjectListComponent extends PaginationFilterBaseComponent implements OnInit {
 	public loading: boolean = false;
@@ -67,6 +74,8 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	public projects: IOrganizationProject[] = [];
 	public project$: Subject<boolean> = this.subject$;
 	private _refresh$: Subject<boolean> = new Subject();
+	public favoriteProjects: IFavorite[] = [];
+	private favoriteSubscription: Subscription;
 
 	/**
 	 * Represents a component property for handling the project view.
@@ -88,7 +97,8 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		private readonly _store: Store,
 		private readonly _dialogService: NbDialogService,
 		private readonly _organizationProjectStore: OrganizationProjectStore,
-		private readonly _permissionsService: NgxPermissionsService
+		private readonly _permissionsService: NgxPermissionsService,
+		private readonly genericFavoriteService: GenericFavoriteService
 	) {
 		super(translateService);
 		this.setView();
@@ -137,10 +147,15 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
 
-	setView() {
-		this.viewComponentName = ComponentEnum.PROJECTS;
+		// Refresh the local list of favorites only when organization or employee changes
+		combineLatest([this._store.selectedOrganization$, this._store.selectedEmployee$])
+			.pipe(
+				filter(([organization]) => !!organization),
+				tap(() => this.loadFavoriteProjects()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 
 		// Subscribe to changes in component layout style
 		this._store
@@ -161,6 +176,16 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 					this.project$.next(true);
 				}
 			});
+	}
+
+	ngOnDestroy(): void {
+		if (this.favoriteSubscription) {
+			this.favoriteSubscription.unsubscribe();
+		}
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.PROJECTS;
 	}
 
 	/**
@@ -687,5 +712,63 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			console.error('Error while creating project module', error?.message);
 			this._errorHandlingService.handleError(error);
 		}
+	}
+
+	/**
+	 * Loads the list of favorite projects for the current user or all for admin using the generic service.
+	 */
+	async loadFavoriteProjects() {
+		this.favoriteProjects = await this.genericFavoriteService.loadFavorites(
+			BaseEntityEnum.OrganizationProject,
+			this.organization,
+			this.selectedEmployeeId || this._store.user?.employee?.id
+		);
+	}
+
+	/**
+	 * Checks if a project is a favorite in the local list using the generic service.
+	 * @param project The project to check.
+	 */
+	isFavorite(project: IOrganizationProject): boolean {
+		if (!project) return false;
+		return this.genericFavoriteService.isFavorite(
+			project.id,
+			BaseEntityEnum.OrganizationProject,
+			this.favoriteProjects
+		);
+	}
+
+	/**
+	 * Finds the favorite object for a given project in the local list using the generic service.
+	 * @param project The project to check.
+	 */
+	getFavoriteForProject(project: IOrganizationProject): IFavorite | undefined {
+		if (!project) return;
+		return this.genericFavoriteService.getFavoriteForEntity(
+			project.id,
+			BaseEntityEnum.OrganizationProject,
+			this.favoriteProjects
+		);
+	}
+
+	/**
+	 * Adds or removes a project from favorites using the generic service.
+	 * @param project The project to add or remove.
+	 */
+	async toggleFavorite(project: IOrganizationProject) {
+		if (!project) return;
+		await this.genericFavoriteService.toggleFavorite(
+			BaseEntityEnum.OrganizationProject,
+			project.id,
+			this.organization,
+			this.selectedEmployeeId || this._store.user?.employee?.id,
+			this.favoriteProjects
+		);
+		// Refresh the local list after modification
+		this.favoriteProjects = await this.genericFavoriteService.loadFavorites(
+			BaseEntityEnum.OrganizationProject,
+			this.organization,
+			this.selectedEmployeeId || this._store.user?.employee?.id
+		);
 	}
 }

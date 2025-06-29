@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Brackets, In, Raw } from 'typeorm';
-import { ID, IOrganizationContact, IOrganizationContactFindInput, IPagination } from '@gauzy/contracts';
+import { ID, IOrganizationContact, IOrganizationContactFindInput, IPagination, BaseEntityEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { isNotEmpty } from '@gauzy/utils';
@@ -9,7 +9,9 @@ import { OrganizationContact } from './organization-contact.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmOrganizationContactRepository } from './repository/type-orm-organization-contact.repository';
 import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-organization-contact.repository';
+import { FavoriteService } from '../core/decorators';
 
+@FavoriteService(BaseEntityEnum.OrganizationContact)
 @Injectable()
 export class OrganizationContactService extends TenantAwareCrudService<OrganizationContact> {
 	constructor(

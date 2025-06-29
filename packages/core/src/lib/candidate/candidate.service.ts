@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
-import { ICandidateCreateInput } from '@gauzy/contracts';
+import { ICandidateCreateInput, BaseEntityEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { Candidate } from './candidate.entity';
 import { TenantAwareCrudService } from './../core/crud';
@@ -8,7 +8,9 @@ import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmCandidateRepository } from './repository/type-orm-candidate.repository';
 import { MikroOrmCandidateRepository } from './repository/mikro-orm-candidate.repository';
+import { FavoriteService } from '../core/decorators';
 
+@FavoriteService(BaseEntityEnum.Candidate)
 @Injectable()
 export class CandidateService extends TenantAwareCrudService<Candidate> {
 	constructor(

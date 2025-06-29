@@ -22,16 +22,13 @@
 				class="w-100"
 				[contactType]="contactType"
 				[organizationContact]="selectedOrganizationContact"
-				[projectsWithoutOrganizationContacts]=" projectsWithoutOrganizationContacts "
+				[projectsWithoutOrganizationContacts]="projectsWithoutOrganizationContacts"
 				(canceled)="cancel()"
 				(addOrEditOrganizationContact)="addOrEditOrganizationContact($event)"
 			></ga-contact-mutation>
 		</ng-container>
 		<ng-template #layout>
-			<ng-template
-				[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-				[ngIfElse]="gridLayout"
-			>
+			<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
 				<div class="table-scroll-container">
 					<angular2-smart-table
 						style="cursor: pointer"
@@ -42,9 +39,7 @@
 				</div>
 				<div class="pagination-container align-self-end">
 					<ng-container *ngIf="smartTableSource">
-						<ngx-pagination
-							[source]="smartTableSource"
-						></ngx-pagination>
+						<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 					</ng-container>
 				</div>
 			</ng-template>
@@ -68,6 +63,24 @@
 				[rowData]="selectedOrganizationContact"
 				(updateResult)="onUpdateResult($event)"
 			></ngx-contact-action>
+			<button
+				nbButton
+				class="action"
+				status="basic"
+				size="small"
+				[disabled]="!selectedOrganizationContact && disableButton"
+				(click)="toggleFavoriteContact(selectedOrganizationContact)"
+				[nbTooltip]="
+					isFavoriteContact(selectedOrganizationContact)
+						? ('BUTTONS.REMOVE_FROM_FAVORITES' | translate)
+						: ('BUTTONS.ADD_TO_FAVORITES' | translate)
+				"
+			>
+				<nb-icon
+					[icon]="isFavoriteContact(selectedOrganizationContact) ? 'star' : 'star-outline'"
+					[status]="isFavoriteContact(selectedOrganizationContact) ? 'warning' : 'basic'"
+				></nb-icon>
+			</button>
 			<button
 				nbButton
 				class="action secondary"
@@ -96,12 +109,7 @@
 				status="basic"
 				size="small"
 				[disabled]="!selectedOrganizationContact && disableButton"
-				(click)="
-					removeOrganizationContact(
-						selectedOrganizationContact?.id,
-						selectedOrganizationContact?.name
-					)
-				"
+				(click)="removeOrganizationContact(selectedOrganizationContact?.id, selectedOrganizationContact?.name)"
 				size="small"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
@@ -112,23 +120,11 @@
 </ng-template>
 <ng-template #visible>
 	<ng-template ngxPermissionsOnly="ORG_CONTACT_EDIT">
-		<button
-			(click)="invite()"
-			nbButton
-			class="action info"
-			size="small"
-			status="basic"
-			>
-		<nb-icon class="mr-1" icon="email-outline"></nb-icon>
-		{{ 'BUTTONS.INVITE' | translate }}
+		<button (click)="invite()" nbButton class="action info" size="small" status="basic">
+			<nb-icon class="mr-1" icon="email-outline"></nb-icon>
+			{{ 'BUTTONS.INVITE' | translate }}
 		</button>
-		<button
-			(click)="add()"
-			nbButton
-			class="action"
-			size="small"
-			status="success"
-		>
+		<button (click)="add()" nbButton class="action" size="small" status="success">
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>

@@ -11,7 +11,8 @@ import {
 	ICountry,
 	ContactType,
 	ContactOrganizationInviteStatus,
-	IContactCreateInput
+	IContactCreateInput,
+	IFavorite
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,7 +26,8 @@ import {
 	OrganizationProjectsService,
 	ServerDataSource,
 	Store,
-	ToastrService
+	ToastrService,
+	GenericFavoriteService
 } from '@gauzy/ui-core/core';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
@@ -38,13 +40,14 @@ import {
 	PaginationFilterBaseComponent,
 	ProjectComponent
 } from '@gauzy/ui-core/shared';
+import { BaseEntityEnum } from '@gauzy/contracts';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-contacts-list',
-    templateUrl: './contacts.component.html',
-    styleUrls: ['./contacts.component.scss'],
-    standalone: false
+	selector: 'ngx-contacts-list',
+	templateUrl: './contacts.component.html',
+	styleUrls: ['./contacts.component.scss'],
+	standalone: false
 })
 export class ContactsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	showAddCard: boolean;
@@ -60,6 +63,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 	disableButton = true;
 	loading = false;
 	smartTableSource: ServerDataSource;
+	public favoriteContacts: IFavorite[] = [];
 
 	public contacts$: Subject<any> = this.subject$;
 	public organization: IOrganization;
@@ -94,7 +98,8 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		private readonly countryService: CountryService,
 		private readonly cd: ChangeDetectorRef,
 		private readonly _router: Router,
-		private readonly http: HttpClient
+		private readonly http: HttpClient,
+		private readonly genericFavoriteService: GenericFavoriteService
 	) {
 		super(translateService);
 		this.countryService.find$.next(true);
@@ -142,6 +147,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				}),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.contacts$.next(true)),
+				tap(() => this.loadFavoriteContacts()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -619,6 +625,64 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 
 		// Return the country name if found, otherwise return null
 		return country?.country ?? null;
+	}
+
+	/**
+	 * Loads the list of favorite contacts for the current user or all for admin using the generic service.
+	 */
+	async loadFavoriteContacts() {
+		this.favoriteContacts = await this.genericFavoriteService.loadFavorites(
+			BaseEntityEnum.OrganizationContact,
+			this.organization,
+			this.selectedEmployeeId || this.store.user?.employee?.id
+		);
+	}
+
+	/**
+	 * Checks if a contact is a favorite in the local list using the generic service.
+	 * @param contact The contact to check.
+	 */
+	isFavoriteContact(contact: IOrganizationContact): boolean {
+		if (!contact) return false;
+		return this.genericFavoriteService.isFavorite(
+			contact.id,
+			BaseEntityEnum.OrganizationContact,
+			this.favoriteContacts
+		);
+	}
+
+	/**
+	 * Finds the favorite object for a given contact in the local list using the generic service.
+	 * @param contact The contact to check.
+	 */
+	getFavoriteForContact(contact: IOrganizationContact): IFavorite | undefined {
+		if (!contact) return;
+		return this.genericFavoriteService.getFavoriteForEntity(
+			contact.id,
+			BaseEntityEnum.OrganizationContact,
+			this.favoriteContacts
+		);
+	}
+
+	/**
+	 * Adds or removes a contact from favorites using the generic service.
+	 * @param contact The contact to add or remove.
+	 */
+	async toggleFavoriteContact(contact: IOrganizationContact) {
+		if (!contact) return;
+		await this.genericFavoriteService.toggleFavorite(
+			BaseEntityEnum.OrganizationContact,
+			contact.id,
+			this.organization,
+			this.selectedEmployeeId || this.store.user?.employee?.id,
+			this.favoriteContacts
+		);
+		// Refresh the local list after modification
+		this.favoriteContacts = await this.genericFavoriteService.loadFavorites(
+			BaseEntityEnum.OrganizationContact,
+			this.organization,
+			this.selectedEmployeeId || this.store.user?.employee?.id
+		);
 	}
 
 	ngOnDestroy(): void {}
