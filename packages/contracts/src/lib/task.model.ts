@@ -108,6 +108,7 @@ export interface ITaskDateFilterInput
 }
 
 export interface ITaskAdvancedFilter extends IBaseRelationsEntityModel {
+	ids?: ID[];
 	projects?: ID[];
 	teams?: ID[];
 	modules?: ID[];

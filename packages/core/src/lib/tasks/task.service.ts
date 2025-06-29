@@ -205,7 +205,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 								},
 								NotificationActionTypeEnum.Assigned,
 								task.title,
-								user.name
+								user?.name
 							);
 						})
 					);
@@ -1133,6 +1133,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	): FindOptionsWhere<Task> {
 		// Destructuring filter params
 		const {
+			ids = [],
 			projects = [],
 			teams = [],
 			modules = [],
@@ -1149,6 +1150,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 		// Build the 'where' condition
 		return {
+			...(ids.length && !where.id ? { id: In(ids) } : {}),
 			...(projects.length && !where.projectId ? { projectId: In(projects) } : {}),
 			...(teams.length && !where.teams ? { teams: { id: In(teams) } } : {}),
 			...(modules.length && !where.modules ? { modules: { id: In(modules) } } : {}),

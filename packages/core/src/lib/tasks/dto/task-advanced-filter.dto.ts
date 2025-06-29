@@ -8,6 +8,13 @@ export class TaskAdvancedFilterDTO implements ITaskAdvancedFilter {
 	@IsArray()
 	@ArrayMaxSize(25)
 	@IsUUID('all', { each: true })
+	ids?: ID[] = [];
+
+	@ApiPropertyOptional({ type: Array })
+	@IsOptional()
+	@IsArray()
+	@ArrayMaxSize(25)
+	@IsUUID('all', { each: true })
 	projects?: ID[] = [];
 
 	@ApiPropertyOptional({ type: Array })
