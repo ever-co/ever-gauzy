@@ -9,7 +9,7 @@ export type TAuthConfig = {
 		employee: {
 			tenantId: string;
 			organizationId: string;
-			employeeId: string
+			id: string;
 		}
 		id: string
 	};

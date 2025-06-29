@@ -6,6 +6,7 @@ import MainEvent from './events';
 import * as path from 'node:path';
 import { TrayNotify } from './tray-notify';
 import { TEventArgs } from './event-types';
+import { getAuthConfig, delaySync } from '../util';
 
 const appRootPath: string = path.join(__dirname, '../..');
 
@@ -28,20 +29,37 @@ export default class EventHandler {
 		return EventHandler.instance;
 	}
 
-	private stopAppTracking() {
+	getPullActivities(authConfig) {
 		const pullActivities = PullActivities.getInstance({
-			tenantId: null,
-			organizationId: null,
-			remoteId: null
+			tenantId: authConfig?.user?.employee?.tenantId,
+			organizationId: authConfig?.user?.employee?.organizationId,
+			remoteId: authConfig?.user?.id
 		});
+		return pullActivities;
+	}
+
+	private stopAppTracking(logout?: boolean) {
+		const authConfig = getAuthConfig();
+		const pullActivities = this.getPullActivities(authConfig);
 		const pushActivities = PushActivities.getInstance();
 		pullActivities.stopListener();
 		pullActivities.stopTracking();
-		pushActivities.stopPooling();
+		if (logout) {
+			pushActivities.stopPooling();
+		}
+	}
+
+	private startAppTracking() {
+		const authConfig = getAuthConfig();
+		if (authConfig?.token) {
+			const pullActivities = this.getPullActivities(authConfig);
+			pullActivities.startListener();
+			pullActivities.startTracking();
+		}
 	}
 
 	private async handleLogout() {
-		this.stopAppTracking();
+		this.stopAppTracking(true);
 		this.AppWindow.settingWindow?.close();
 		this.AppWindow.logWindow?.close();
 		await this.AppWindow.initAuthWindow();
@@ -65,6 +83,13 @@ export default class EventHandler {
 				return this.handleApplicationSetup();
 			case MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT:
 				return this.trayNotify.handleTrayNotify(args);
+			case MAIN_EVENT_TYPE.START_TIMER: {
+				// Delay to ensure system state stabilization network before starting tracking
+				await delaySync(500);
+				return this.startAppTracking();
+			}
+			case MAIN_EVENT_TYPE.STOP_TIMER:
+				return this.stopAppTracking();
 			default:
 				break;
 		}

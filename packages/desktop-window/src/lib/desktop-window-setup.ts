@@ -2,6 +2,7 @@ import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow, Menu, app } from 'electron';
 import { WindowManager, RegisteredWindow, store } from '@gauzy/desktop-core';
 import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-utils';
+import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 
 /**
  * Creates and configures the Setup window in the Electron application.
@@ -57,6 +58,10 @@ export async function createSetupWindow(
 
 	// Attach the close event handler
 	handleCloseEvent(setupWindow);
+
+	if (preloadPath) {
+		attachTitlebarToWindow(setupWindow);
+	}
 
 	// Register the Setup window with the WindowManager
 	manager.register(RegisteredWindow.SETUP, setupWindow);
