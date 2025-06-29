@@ -467,6 +467,7 @@
 		"@ngx-translate/http-loader": "^16.0.1",
 		"angular2-smart-table": "^3.6.2",
 		"autoprefixer": "^10.4.20",
+		"axios": "^1.6.0",
 		"bcrypt": "^5.1.1",
 		"camelcase": "^6.3.0",
 		"dotenv": "^16.0.3",

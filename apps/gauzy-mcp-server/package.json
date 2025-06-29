@@ -1,0 +1,39 @@
+{
+	"name": "gauzy-mcp-server",
+	"version": "0.1.0",
+	"description": "The Gauzy MCP Server is a Model Context Protocol(MCP) that enables developers to build secure, two-way connections between their data source and AI-powered tools",
+	"bin": {
+		"gauzy-mcp-server": "./build/index.js"
+	},
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"homepage": "https://gauzy.co",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"license": "AGPL-3.0",
+	"private": true,
+	"scripts": {
+		"build": "rimraf build && tsc && chmod 755 build/index.js",
+		"start": "node build/index.js"
+	},
+	"files": ["build"],
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.13.1",
+		"axios": "^1.8.4",
+		"dotenv": "^16.4.5",
+		"zod-to-json-schema": "^3.24.6",
+		"zod": "^3.25.67"
+	},
+	"devDependencies": {
+		"typescript": "^5.8.3",
+		"@types/node": "^22.14.0"
+	}
+}

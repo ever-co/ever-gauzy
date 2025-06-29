@@ -1,0 +1,50 @@
+{
+	"name": "gauzy-mcp-server",
+	"$schema": "../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "apps/gauzy-mcp-server/src",
+	"projectType": "application",
+	"tags": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/webpack:webpack",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
+			"options": {
+				"target": "node",
+				"compiler": "tsc",
+				"outputPath": "dist/apps/gauzy-mcp-server",
+				"main": "apps/gauzy-mcp-server/src/index.ts",
+				"tsConfig": "apps/gauzy-mcp-server/tsconfig.app.json",
+				"assets": ["apps/gauzy-mcp-server/src/assets"],
+				"webpackConfig": "apps/gauzy-mcp-server/webpack.config.js",
+				"generatePackageJson": true
+			},
+			"configurations": {
+				"development": {},
+				"production": {}
+			}
+		},
+		"serve": {
+			"executor": "@nx/js:node",
+			"defaultConfiguration": "development",
+			"dependsOn": ["build"],
+			"options": {
+				"buildTarget": "gauzy-mcp-server:build",
+				"runBuildTargetDependencies": false
+			},
+			"configurations": {
+				"development": {
+					"buildTarget": "gauzy-mcp-server:build:development"
+				},
+				"production": {
+					"buildTarget": "gauzy-mcp-server:build:production"
+				}
+			}
+		},
+		"test": {
+			"options": {
+				"passWithNoTests": true
+			}
+		}
+	}
+}
