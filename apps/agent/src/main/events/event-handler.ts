@@ -29,13 +29,18 @@ export default class EventHandler {
 		return EventHandler.instance;
 	}
 
-	private stopAppTracking(logout?: boolean) {
+	getPullActivities() {
 		const authConfig = getAuthConfig();
 		const pullActivities = PullActivities.getInstance({
 			tenantId: authConfig?.user?.employee?.tenantId,
 			organizationId: authConfig?.user?.employee?.organizationId,
 			remoteId: authConfig?.user?.id
 		});
+		return pullActivities;
+	}
+
+	private stopAppTracking(logout?: boolean) {
+		const pullActivities = this.getPullActivities();
 		const pushActivities = PushActivities.getInstance();
 		pullActivities.stopListener();
 		pullActivities.stopTracking();
@@ -47,11 +52,7 @@ export default class EventHandler {
 	private startAppTracking() {
 		const authConfig = getAuthConfig();
 		if (authConfig?.token) {
-			const pullActivities = PullActivities.getInstance({
-				tenantId: authConfig?.user?.employee?.tenantId,
-				organizationId: authConfig?.user?.employee?.organizationId,
-				remoteId: authConfig?.user?.id
-			});
+			const pullActivities = this.getPullActivities();
 			pullActivities.startListener();
 			pullActivities.startTracking();
 		}
@@ -83,6 +84,7 @@ export default class EventHandler {
 			case MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT:
 				return this.trayNotify.handleTrayNotify(args);
 			case MAIN_EVENT_TYPE.START_TIMER: {
+				// Delay to ensure system state stabilization network before starting tracking
 				await delaySync(500);
 				return this.startAppTracking();
 			}

@@ -53,6 +53,26 @@ class PullActivities {
 		return PullActivities.instance;
 	}
 
+	private createOfflineTimer(startedAt: Date, employeeId: string): Timer {
+		return new Timer({
+			projectId: null,
+			timesheetId: null,
+			timelogId: null,
+			organizationTeamId: null,
+			taskId: null,
+			description: null,
+			day: null,
+			duration: null,
+			synced: false,
+			isStartedOffline: true,
+			isStoppedOffline: false,
+			version: null,
+			startedAt,
+			employeeId
+		});
+
+	}
+
 	getListenerModule() {
 		try {
 			this.listenerModule = KeyboardMouseEventCounter.getInstance();
@@ -86,22 +106,8 @@ class PullActivities {
 	async startTimerApi() {
 		const authConfig = getAuthConfig();
 		try {
-			await this.timerService.save(new Timer({
-				projectId: null,
-				timesheetId: null,
-				timelogId: null,
-				organizationTeamId: null,
-				taskId: null,
-				description: null,
-				day: null,
-				duration: null,
-				synced: false,
-				isStartedOffline: true,
-				isStoppedOffline: false,
-				version: null,
-				startedAt: this.startedDate,
-				employeeId: authConfig?.user?.employee?.id
-			}));
+			const timer = this.createOfflineTimer(this.startedDate, authConfig?.user?.employee?.id);
+			await this.timerService.save(timer);
 		} catch (error) {
 			this.agentLogger.error(`Start timer error ${error.message}`);
 		}
@@ -114,7 +120,7 @@ class PullActivities {
 			await this.apiService.stopTimer({
 				organizationId: authConfig?.user?.employee?.organizationId,
 				tenantId: authConfig?.user?.employee?.tenantId,
-				startedAt: this.startedDate || new Date(),
+				startedAt: this.startedDate,
 				organizationTeamId: null,
 				organizationContactId: null,
 				stoppedAt: this.stoppedDate

@@ -318,7 +318,6 @@ class PushActivities {
 						organizationContactId: null
 					});
 					await this.timerService.remove({ id: timerOffline?.id });
-					continue;
 				}
 			}
 		}
