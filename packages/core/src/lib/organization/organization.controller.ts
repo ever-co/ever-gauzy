@@ -1,4 +1,16 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards, Put, Query } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	UseGuards,
+	Put,
+	Query,
+	UseInterceptors
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FindOptionsWhere } from 'typeorm';
@@ -12,10 +24,15 @@ import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDTO, UpdateOrganizationDTO } from './dto';
 import { OrganizationFindOptionsQueryDTO } from './dto/organization-find-options.dto';
+import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
+import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
+import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
 
 @ApiTags('Organization')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
+@UseInterceptors(SensitiveRelationsInterceptor)
+@SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS)
 @Controller('/organization')
 export class OrganizationController extends CrudController<Organization> {
 	constructor(private readonly organizationService: OrganizationService, private readonly commandBus: CommandBus) {

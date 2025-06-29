@@ -1,4 +1,14 @@
-import { Controller, HttpStatus, Get, Query, UseGuards, HttpCode, Delete, Param } from '@nestjs/common';
+import {
+	Controller,
+	HttpStatus,
+	Get,
+	Query,
+	UseGuards,
+	HttpCode,
+	Delete,
+	Param,
+	UseInterceptors
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { parseToBoolean } from '@gauzy/utils';
@@ -10,9 +20,14 @@ import { UserOrganizationService } from './user-organization.services';
 import { UserOrganization } from './user-organization.entity';
 import { UserOrganizationDeleteCommand } from './commands';
 import { FindMeUserOrganizationDTO } from './dto/find-me-user-organization.dto';
+import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
+import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
+import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
 
 @ApiTags('UserOrganization')
 @UseGuards(TenantPermissionGuard)
+@UseInterceptors(SensitiveRelationsInterceptor)
+@SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS, 'organization')
 @Controller('/user-organization')
 export class UserOrganizationController extends CrudController<UserOrganization> {
 	constructor(

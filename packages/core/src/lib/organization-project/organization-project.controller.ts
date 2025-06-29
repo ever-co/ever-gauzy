@@ -9,7 +9,8 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UseInterceptors
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -43,10 +44,15 @@ import {
 	UpdateProjectSettingDTO,
 	UpdateTaskModeDTO
 } from './dto';
+import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
+import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
+import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
 
 @ApiTags('OrganizationProject')
 @UseGuards(TenantPermissionGuard, ProjectManagerOrPermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
+@UseInterceptors(SensitiveRelationsInterceptor)
+@SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS, 'organization')
 @Controller('/organization-projects')
 export class OrganizationProjectController extends CrudController<OrganizationProject> {
 	constructor(
