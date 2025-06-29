@@ -29,8 +29,7 @@ export default class EventHandler {
 		return EventHandler.instance;
 	}
 
-	getPullActivities() {
-		const authConfig = getAuthConfig();
+	getPullActivities(authConfig) {
 		const pullActivities = PullActivities.getInstance({
 			tenantId: authConfig?.user?.employee?.tenantId,
 			organizationId: authConfig?.user?.employee?.organizationId,
@@ -40,7 +39,8 @@ export default class EventHandler {
 	}
 
 	private stopAppTracking(logout?: boolean) {
-		const pullActivities = this.getPullActivities();
+		const authConfig = getAuthConfig();
+		const pullActivities = this.getPullActivities(authConfig);
 		const pushActivities = PushActivities.getInstance();
 		pullActivities.stopListener();
 		pullActivities.stopTracking();
@@ -52,7 +52,7 @@ export default class EventHandler {
 	private startAppTracking() {
 		const authConfig = getAuthConfig();
 		if (authConfig?.token) {
-			const pullActivities = this.getPullActivities();
+			const pullActivities = this.getPullActivities(authConfig);
 			pullActivities.startListener();
 			pullActivities.startTracking();
 		}
