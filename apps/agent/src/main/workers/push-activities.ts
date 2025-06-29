@@ -1,4 +1,9 @@
-import { KbMouseActivityService, KbMouseActivityTO, TTimeSlot } from '@gauzy/desktop-lib';
+import {
+	KbMouseActivityService,
+	KbMouseActivityTO,
+	TTimeSlot,
+	TimerService
+} from '@gauzy/desktop-lib';
 import { KbMouseActivityPool, TKbMouseActivity, TMouseEvents } from '@gauzy/desktop-activity';
 import { ApiService, TResponseTimeSlot } from '../api';
 import { getAuthConfig, TAuthConfig, getInitialConfig } from '../util';
@@ -17,6 +22,7 @@ class PushActivities {
 	private agentLogger: AgentLogger;
 	private mainEvent: MainEvent;
 	private isNetworkError = false;
+	private timerService: TimerService;
 
 
 	constructor() {
@@ -26,6 +32,7 @@ class PushActivities {
 		this.mainEvent = MainEvent.getInstance();
 		this.apiService = ApiService.getInstance();
 		this.trayUpdateMenuStatus('network', true);
+		this.timerService = new TimerService();
 	}
 
 	static getInstance(): PushActivities {
@@ -257,6 +264,7 @@ class PushActivities {
 
 	async saveActivities() {
 		try {
+			await this.saveOfflineTimer();
 			const activity = await this.getOldestActivity();
 			if (activity?.id) {
 				// remove activity from temp local database
@@ -294,6 +302,29 @@ class PushActivities {
 			return false;
 		}
 	}
+
+	async saveOfflineTimer() {
+		const notSyncTimer = await this.timerService.findToSynced();
+		const authConfig = getAuthConfig();
+		if (notSyncTimer.length) {
+			for (let i = 0; i < notSyncTimer.length; i++) {
+				const timerOffline = notSyncTimer[i].timer;
+				if (timerOffline?.isStartedOffline) {
+					await this.apiService.startTimer({
+						organizationId: authConfig?.user?.employee?.organizationId,
+						startedAt: timerOffline.startedAt,
+						tenantId: authConfig?.user?.employee?.tenantId,
+						organizationTeamId: null,
+						organizationContactId: null
+					});
+					await this.timerService.remove({ id: timerOffline?.id });
+					continue;
+				}
+			}
+		}
+	}
+
+
 
 	poolErrorHandler(error: Error) {
 		console.error(error);

@@ -1,5 +1,5 @@
 import { KeyboardMouseEventCounter, KbMouseTimer, KeyboardMouseActivityStores } from '@gauzy/desktop-activity';
-import { KbMouseActivityService, TranslateService, notifyScreenshot } from '@gauzy/desktop-lib';
+import { KbMouseActivityService, TranslateService, notifyScreenshot, TimerService, Timer } from '@gauzy/desktop-lib';
 import AppWindow from '../window-manager';
 import * as path from 'node:path';
 import { getScreen, getAppSetting, delaySync, TAppSetting, getScreenshotSoundPath, getAuthConfig } from '../util';
@@ -8,7 +8,7 @@ import { Notification } from 'electron';
 import { AgentLogger } from '../agent-logger';
 import MainEvent from '../events/events';
 import { MAIN_EVENT_TYPE, MAIN_EVENT } from '../../constant';
-import { ApiService, TResponseTimeSlot } from '../api';
+import { ApiService } from '../api';
 
 type UserLogin = {
 	tenantId: string;
@@ -22,6 +22,7 @@ class PullActivities {
 	private timerModule: KbMouseTimer;
 	private isStarted: boolean;
 	private activityService: KbMouseActivityService = new KbMouseActivityService();
+	private timerService: TimerService;
 	private readonly tenantId: string;
 	private readonly organizationId: string;
 	private readonly remoteId: string;
@@ -29,6 +30,8 @@ class PullActivities {
 	private appWindow: AppWindow;
 	private mainEvent: MainEvent;
 	private apiService: ApiService;
+	private startedDate: Date;
+	private stoppedDate: Date;
 	constructor(user: UserLogin) {
 		this.listenerModule = null;
 		this.isStarted = false;
@@ -40,6 +43,7 @@ class PullActivities {
 		this.appWindow.initScreenShotNotification();
 		this.mainEvent = MainEvent.getInstance();
 		this.apiService = ApiService.getInstance();
+		this.timerService = new TimerService();
 	}
 
 	static getInstance(user: UserLogin): PullActivities {
@@ -65,14 +69,8 @@ class PullActivities {
 		try {
 			const appSetting = getAppSetting();
 			if (!this.isStarted) {
-				const authConfig = getAuthConfig();
-				await this.apiService.startTimer({
-					organizationId: authConfig?.user?.employee?.organizationId,
-					tenantId: authConfig?.user?.employee?.tenantId,
-					startedAt: new Date(),
-					organizationTeamId: null,
-					organizationContactId: null
-				});
+				this.startedDate = new Date();
+				await this.startTimerApi();
 				this.agentLogger.info('Listener keyboard and mouse starting');
 				if (appSetting?.kbMouseTracking) {
 					this.startListener();
@@ -82,6 +80,47 @@ class PullActivities {
 			}
 		} catch (error) {
 			console.error('error start tracking', error);
+		}
+	}
+
+	async startTimerApi() {
+		const authConfig = getAuthConfig();
+		try {
+			await this.timerService.save(new Timer({
+				projectId: null,
+				timesheetId: null,
+				timelogId: null,
+				organizationTeamId: null,
+				taskId: null,
+				description: null,
+				day: null,
+				duration: null,
+				synced: false,
+				isStartedOffline: true,
+				isStoppedOffline: false,
+				version: null,
+				startedAt: this.startedDate,
+				employeeId: authConfig?.user?.employee?.id
+			}));
+		} catch (error) {
+			this.agentLogger.error(`Start timer error ${error.message}`);
+		}
+	}
+
+	async stopTimerApi() {
+		this.stoppedDate = new Date();
+		const authConfig = getAuthConfig();
+		try {
+			await this.apiService.stopTimer({
+				organizationId: authConfig?.user?.employee?.organizationId,
+				tenantId: authConfig?.user?.employee?.tenantId,
+				startedAt: this.startedDate || new Date(),
+				organizationTeamId: null,
+				organizationContactId: null,
+				stoppedAt: this.stoppedDate
+			});
+		} catch (error) {
+			this.agentLogger.error(`Stop timer error ${error.message}`);
 		}
 	}
 
@@ -106,14 +145,7 @@ class PullActivities {
 			this.getListenerModule();
 		}
 		try {
-			const authConfig = getAuthConfig();
-			await this.apiService.stopTimer({
-				organizationId: authConfig?.user?.employee?.organizationId,
-				tenantId: authConfig?.user?.employee?.tenantId,
-				startedAt: new Date(),
-				organizationTeamId: null,
-				organizationContactId: null
-			});
+			await this.stopTimerApi();
 			this.agentLogger.info('Listener keyboard and mouse stopping');
 			this.listenerModule.stopListener();
 			this.isStarted = false;

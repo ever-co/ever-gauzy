@@ -87,7 +87,6 @@ class AppWindow {
 					this.getPreloadPath(),
 					true
 				);
-
 				this.setupWindow.on('close', () => {
 					console.log('on change setup window');
 					this.setupWindow.destroy();
@@ -147,7 +146,7 @@ class AppWindow {
 
 	async initLogWindow(): Promise<void> {
 		try {
-			if (!this.logWindow) {
+			if (!this.logWindow || this.logWindow?.isDestroyed()) {
 				console.log('this log window', this.logWindow);
 				this.logWindow = await createServerWindow(
 					null,
