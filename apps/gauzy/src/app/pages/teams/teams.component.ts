@@ -13,7 +13,6 @@ import {
 	IOrganizationProject,
 	PermissionsEnum,
 	IFavorite,
-	IFavoriteCreateInput,
 	BaseEntityEnum
 } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';

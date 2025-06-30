@@ -1,9 +1,9 @@
 import { Directive, OnDestroy, OnInit } from '@angular/core';
-import { from, merge } from 'rxjs';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { merge } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BaseEntityEnum, FeatureEnum, IFavorite, IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {

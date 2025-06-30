@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, debounceTime, filter, firstValueFrom, Subject, tap, Subscription, Observable } from 'rxjs';
+import { combineLatest, debounceTime, filter, firstValueFrom, Subject, tap, Subscription } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
@@ -18,8 +18,7 @@ import {
 	IOrganizationProjectEmployee,
 	IEmployee,
 	BaseEntityEnum,
-	IFavorite,
-	IFavoriteCreateInput
+	IFavorite
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -29,8 +28,6 @@ import {
 	ServerDataSource,
 	Store,
 	ToastrService,
-	FavoriteService,
-	FavoriteStoreService,
 	GenericFavoriteService
 } from '@gauzy/ui-core/core';
 import {
@@ -50,7 +47,6 @@ import {
 	TagsOnlyComponent,
 	VisibilityComponent
 } from '@gauzy/ui-core/shared';
-import { map } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

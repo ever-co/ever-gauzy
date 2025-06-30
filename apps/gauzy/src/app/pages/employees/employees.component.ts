@@ -28,7 +28,6 @@ import {
 	ITag,
 	PermissionsEnum,
 	IFavorite,
-	IFavoriteCreateInput,
 	BaseEntityEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
