@@ -27,10 +27,7 @@ export class FavoriteStoreService {
 	}
 
 	private _listenToChangesAndLoadFavorites(): void {
-		this._favoriteSubscription = combineLatest([
-			this._store.selectedOrganization$.pipe(filter((org) => !!org)),
-			this._store.selectedEmployee$
-		])
+		this._favoriteSubscription = combineLatest([this._store.selectedOrganization$.pipe(filter((org) => !!org))])
 			.pipe(
 				switchMap(() => from(this._loadFavorites())),
 				catchError((error) => {
@@ -56,7 +53,9 @@ export class FavoriteStoreService {
 		let favoriteStubsPromise: Promise<{ items: IFavorite[]; total: number }>;
 
 		if (isAdmin && !employeeId) {
-			favoriteStubsPromise = this._favoriteService.findAll({ where: { organizationId, tenantId } });
+			favoriteStubsPromise = this._favoriteService.findAll({
+				where: { organizationId, tenantId }
+			});
 		} else {
 			const targetEmployeeId = employeeId || this._store.user.employee?.id;
 			if (!targetEmployeeId) {
