@@ -614,7 +614,6 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 				this.store.user?.employee?.id
 			);
 		} catch (error) {
-			console.error('Error loading favorite candidates:', error);
 			this.errorHandler.handleError(error);
 		}
 	}
