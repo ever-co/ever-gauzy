@@ -73,7 +73,12 @@ export class GenericFavoriteService {
 		employeeId: string | undefined,
 		currentFavorites: IFavorite[]
 	): Promise<void> {
-		if (!entityId || !organization) return;
+		if (!entityType || !entityId || !organization?.id || !organization?.tenantId) {
+			throw new Error('Invalid parameters: entityType, entityId, and organization with id/tenantId are required');
+		}
+		if (!Array.isArray(currentFavorites)) {
+			throw new Error('currentFavorites must be an array');
+		}
 		try {
 			const isFav = this.isFavorite(entityId, entityType, currentFavorites);
 			if (isFav) {
