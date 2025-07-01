@@ -607,10 +607,16 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 	 * Loads the list of favorite candidates for the current user or all for admin using the generic service.
 	 */
 	async loadFavoriteCandidates() {
-		this.favoriteCandidates = await this.genericFavoriteService.loadFavorites(
-			BaseEntityEnum.Candidate,
-			this.organization
-		);
+		try {
+			this.favoriteCandidates = await this.genericFavoriteService.loadFavorites(
+				BaseEntityEnum.Candidate,
+				this.organization,
+				this.store.user?.employee?.id
+			);
+		} catch (error) {
+			console.error('Error loading favorite candidates:', error);
+			this.errorHandler.handleError(error);
+		}
 	}
 
 	/**

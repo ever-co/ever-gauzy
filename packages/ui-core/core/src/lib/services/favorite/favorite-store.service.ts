@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, combineLatest, from, of } from 'rxjs';
+import { BehaviorSubject, combineLatest, from, of, Subscription } from 'rxjs';
 import { catchError, filter, switchMap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BaseEntityEnum, IFavorite, PermissionsEnum } from '@gauzy/contracts';
@@ -15,17 +15,22 @@ import { ENTITY_ICONS, ENTITY_LINKS } from './entities-mapping';
 export class FavoriteStoreService {
 	private readonly _favoriteItems$ = new BehaviorSubject<NavMenuSectionItem[]>([]);
 	public readonly favoriteItems$ = this._favoriteItems$.asObservable();
+	private _favoriteSubscription?: Subscription;
 
 	constructor(private readonly _favoriteService: FavoriteService, private readonly _store: Store) {
 		this._listenToChangesAndLoadFavorites();
 	}
 
 	public refreshFavorites(): void {
+		this._favoriteSubscription?.unsubscribe();
 		this._listenToChangesAndLoadFavorites();
 	}
 
 	private _listenToChangesAndLoadFavorites(): void {
-		combineLatest([this._store.selectedOrganization$.pipe(filter((org) => !!org)), this._store.selectedEmployee$])
+		this._favoriteSubscription = combineLatest([
+			this._store.selectedOrganization$.pipe(filter((org) => !!org)),
+			this._store.selectedEmployee$
+		])
 			.pipe(
 				switchMap(() => from(this._loadFavorites())),
 				catchError((error) => {

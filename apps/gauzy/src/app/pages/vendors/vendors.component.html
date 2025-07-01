@@ -93,17 +93,17 @@
 				status="basic"
 				class="action"
 				size="small"
-				(click)="toggleFavoriteVendor(selectedVendor)"
+				(click)="toggleFavoriteVendor(selectedItem)"
 				[disabled]="disabled"
 				[nbTooltip]="
-					isFavoriteVendor(selectedVendor)
+					isFavoriteVendor(selectedItem)
 						? ('BUTTONS.REMOVE_FROM_FAVORITES' | translate)
 						: ('BUTTONS.ADD_TO_FAVORITES' | translate)
 				"
 			>
 				<nb-icon
-					[icon]="isFavoriteVendor(selectedVendor) ? 'star' : 'star-outline'"
-					[status]="isFavoriteVendor(selectedVendor) ? 'warning' : 'basic'"
+					[icon]="isFavoriteVendor(selectedItem) ? 'star' : 'star-outline'"
+					[status]="isFavoriteVendor(selectedItem) ? 'warning' : 'basic'"
 				></nb-icon>
 			</button>
 			<button

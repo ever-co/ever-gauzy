@@ -1,5 +1,9 @@
 import { BaseEntityEnum } from '@gauzy/contracts';
 
+/**
+ * Maps entity types to their corresponding FontAwesome icon classes
+ * Used for consistent icon representation across the favorites system
+ */
 export const ENTITY_ICONS: Record<BaseEntityEnum, string> = {
 	[BaseEntityEnum.OrganizationProject]: 'fas fa-book',
 	[BaseEntityEnum.Task]: 'fas fa-tasks',

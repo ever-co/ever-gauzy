@@ -127,7 +127,7 @@
 			class="action"
 			size="small"
 			(click)="toggleFavoriteEmployee(selectedEmployee)"
-			[disabled]="selectedEmployee || desabledButton"
+			[disabled]="!selectedEmployee || desabledButton"
 			[nbTooltip]="
 				isFavoriteEmployee(selectedEmployee)
 					? ('BUTTONS.REMOVE_FROM_FAVORITES' | translate)
