@@ -1080,6 +1080,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 */
 	async toggleFavoriteEmployee(employee: EmployeeViewModel) {
 		if (!employee) return;
+		if (!this.organization) return;
 		try {
 			await this.genericFavoriteService.toggleFavorite(
 				BaseEntityEnum.Employee,
