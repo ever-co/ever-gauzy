@@ -116,10 +116,10 @@ export class FavoriteStoreService {
 		return allFavoriteItems.flat();
 	}
 
-	private _truncateTitle(title: string, maxLength = 24): string {
-		if (!title) return '';
-		return title.length > maxLength ? title.slice(0, maxLength - 3) + '...' : title;
-	}
+private _truncateTitle(title: string, maxLength = 24): string {
+    if (!title) return '';
+    return title.length > maxLength ? `${title.slice(0, maxLength - 3)}...` : title;
+}
 
 	private _getFavoriteIcon(entityType: BaseEntityEnum): string {
 		return ENTITY_ICONS[entityType] || 'far fa-star';
