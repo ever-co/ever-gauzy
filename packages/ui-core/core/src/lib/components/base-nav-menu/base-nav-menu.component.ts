@@ -21,7 +21,6 @@ import {
 })
 export class BaseNavMenuComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	private _favoriteItems: NavMenuSectionItem[] = [];
-	private _menuInitialized = false;
 
 	constructor(
 		protected readonly _navMenuBuilderService: NavMenuBuilderService,
@@ -34,21 +33,9 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	}
 
 	ngOnInit(): void {
-		// Watch for menu initialization
-		this._navMenuBuilderService.menuConfig$.pipe(untilDestroyed(this)).subscribe((sections) => {
-			if (sections && sections.length > 0) {
-				this._menuInitialized = true;
-			}
-		});
-
 		this._favoriteStoreService.favoriteItems$.pipe(untilDestroyed(this)).subscribe((items) => {
 			this._favoriteItems = items;
-			if (this._menuInitialized) {
-				this._updateFavoritesSection(items);
-			} else {
-				this.defineBaseNavMenus();
-				this._menuInitialized = true;
-			}
+			this.defineBaseNavMenus();
 		});
 	}
 
@@ -1191,14 +1178,6 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 
 		// If none of the above conditions are met, the section should not be hidden
 		return isHidden;
-	}
-
-	/**
-	 * Updates only the favorites section in the navigation menu.
-	 * Uses addNavMenuItems to efficiently update the section.
-	 */
-	private _updateFavoritesSection(items: NavMenuSectionItem[]): void {
-		this._navMenuBuilderService.addNavMenuItems(items, 'favorites');
 	}
 
 	ngOnDestroy(): void {}
