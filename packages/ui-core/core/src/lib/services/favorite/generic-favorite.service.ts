@@ -103,10 +103,10 @@ export class GenericFavoriteService {
 			// Refresh the sidebar menu
 			// Refresh the sidebar menu
 			this.favoriteStoreService.refreshFavorites();
-		} catch (error) {
-			console.error('Error toggling favorite:', error);
-			throw new Error('Failed to update favorite status');
-		}
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            throw new Error(`Failed to ${isFav ? 'remove' : 'add'} favorite for ${entityType}: ${error.message}`);
+        }
 	}
 
 	/**
