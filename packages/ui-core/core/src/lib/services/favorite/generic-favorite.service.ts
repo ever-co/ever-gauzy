@@ -96,9 +96,8 @@ export class GenericFavoriteService {
 				await this.favoriteService.create(input);
 			}
 			// Refresh the sidebar menu
-			if (typeof this.favoriteStoreService.refreshFavorites === 'function') {
-				this.favoriteStoreService.refreshFavorites();
-			}
+			// Refresh the sidebar menu
+			this.favoriteStoreService.refreshFavorites();
 		} catch (error) {
 			console.error('Error toggling favorite:', error);
 			throw new Error('Failed to update favorite status');
