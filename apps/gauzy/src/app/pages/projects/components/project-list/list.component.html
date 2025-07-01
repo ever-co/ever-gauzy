@@ -78,17 +78,17 @@
 				status="basic"
 				class="action"
 				size="small"
-				(click)="toggleFavorite(selectedProject)"
+				(click)="toggleFavoriteProject(selectedProject)"
 				[disabled]="disableButton"
 				[nbTooltip]="
-					isFavorite(selectedProject)
+					isFavoriteProject(selectedProject)
 						? ('BUTTONS.REMOVE_FROM_FAVORITES' | translate)
 						: ('BUTTONS.ADD_TO_FAVORITES' | translate)
 				"
 			>
 				<nb-icon
-					[icon]="isFavorite(selectedProject) ? 'star' : 'star-outline'"
-					[status]="isFavorite(selectedProject) ? 'warning' : 'basic'"
+					[icon]="isFavoriteProject(selectedProject) ? 'star' : 'star-outline'"
+					[status]="isFavoriteProject(selectedProject) ? 'warning' : 'basic'"
 				></nb-icon>
 			</button>
 			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
