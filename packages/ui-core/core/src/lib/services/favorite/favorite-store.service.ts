@@ -89,14 +89,20 @@ export class FavoriteStoreService {
 					}
 				})
 				.then(({ items: details }) => {
-					return details.map((detail: any) => {
-						const rawTitle = detail.name || detail.title || detail.profile_link || 'Untitled';
+					return details.map((detail: unknown) => {
+						const item = detail as {
+							name?: string;
+							title?: string;
+							profile_link?: string;
+							id: string;
+						};
+						const rawTitle = item.name || item.title || item.profile_link || 'Untitled';
 						const title = this._truncateTitle(rawTitle);
 						return {
-							id: `favorite-${entityType}-${detail.id}`,
+							id: `favorite-${entityType}-${item.id}`,
 							title,
 							icon: this._getFavoriteIcon(entityType as BaseEntityEnum),
-							link: this._getFavoriteLink(entityType as BaseEntityEnum, detail.id),
+							link: this._getFavoriteLink(entityType as BaseEntityEnum, item.id),
 							data: {
 								translationKey: title
 							}
