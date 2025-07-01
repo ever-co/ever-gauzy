@@ -631,11 +631,15 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 	 * Loads the list of favorite contacts for the current user or all for admin using the generic service.
 	 */
 	async loadFavoriteContacts() {
-		this.favoriteContacts = await this.genericFavoriteService.loadFavorites(
-			BaseEntityEnum.OrganizationContact,
-			this.organization,
-			this.selectedEmployeeId || this.store.user?.employee?.id
-		);
+		try {
+			this.favoriteContacts = await this.genericFavoriteService.loadFavorites(
+				BaseEntityEnum.OrganizationContact,
+				this.organization,
+				this.selectedEmployeeId || this.store.user?.employee?.id
+			);
+		} catch (error) {
+			this.toastrService.danger('Failed to load favorite contacts');
+		}
 	}
 
 	/**
@@ -670,19 +674,19 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 	 */
 	async toggleFavoriteContact(contact: IOrganizationContact) {
 		if (!contact) return;
-		await this.genericFavoriteService.toggleFavorite(
-			BaseEntityEnum.OrganizationContact,
-			contact.id,
-			this.organization,
-			this.selectedEmployeeId || this.store.user?.employee?.id,
-			this.favoriteContacts
-		);
-		// Refresh the local list after modification
-		this.favoriteContacts = await this.genericFavoriteService.loadFavorites(
-			BaseEntityEnum.OrganizationContact,
-			this.organization,
-			this.selectedEmployeeId || this.store.user?.employee?.id
-		);
+		try {
+			await this.genericFavoriteService.toggleFavorite(
+				BaseEntityEnum.OrganizationContact,
+				contact.id,
+				this.organization,
+				this.selectedEmployeeId || this.store.user?.employee?.id,
+				this.favoriteContacts
+			);
+			// Only reload if the service doesn't handle state internally
+			await this.loadFavoriteContacts();
+		} catch (error) {
+			this.toastrService.danger('Failed to update favorite status');
+		}
 	}
 
 	ngOnDestroy(): void {}

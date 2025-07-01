@@ -503,10 +503,15 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 	 * Loads the list of favorite vendors for the current user or all for admin using the generic service.
 	 */
 	async loadFavoriteVendors() {
-		this.favoriteVendors = await this.genericFavoriteService.loadFavorites(
-			BaseEntityEnum.OrganizationVendor,
-			this.organization
-		);
+		try {
+			this.favoriteVendors = await this.genericFavoriteService.loadFavorites(
+				BaseEntityEnum.OrganizationVendor,
+				this.organization
+			);
+		} catch (error) {
+			console.error('Error loading favorite vendors:', error);
+			this.errorHandlingService.handleError(error);
+		}
 	}
 
 	/**
@@ -541,18 +546,20 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 	 */
 	async toggleFavoriteVendor(vendor: IOrganizationVendor) {
 		if (!vendor) return;
-		await this.genericFavoriteService.toggleFavorite(
-			BaseEntityEnum.OrganizationVendor,
-			vendor.id,
-			this.organization,
-			this.store.user?.employee?.id,
-			this.favoriteVendors
-		);
-		// Refresh the local list after modification
-		this.favoriteVendors = await this.genericFavoriteService.loadFavorites(
-			BaseEntityEnum.OrganizationVendor,
-			this.organization
-		);
+		try {
+			await this.genericFavoriteService.toggleFavorite(
+				BaseEntityEnum.OrganizationVendor,
+				vendor.id,
+				this.organization,
+				this.store.user?.employee?.id,
+				this.favoriteVendors
+			);
+			// Refresh the local list after modification
+			await this.loadFavoriteVendors();
+		} catch (error) {
+			console.error('Error toggling favorite vendor:', error);
+			this.errorHandlingService.handleError(error);
+		}
 	}
 
 	ngOnDestroy(): void {}

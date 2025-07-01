@@ -62,7 +62,7 @@
 				class="action"
 				size="small"
 				(click)="toggleFavoriteTeam(selectedTeam)"
-				[disabled]="disableButton"
+				[disabled]="disableButton || !selectedTeam"
 				[nbTooltip]="
 					isFavoriteTeam(selectedTeam)
 						? ('BUTTONS.REMOVE_FROM_FAVORITES' | translate)

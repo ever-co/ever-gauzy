@@ -174,12 +174,6 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			});
 	}
 
-	ngOnDestroy(): void {
-		if (this.favoriteSubscription) {
-			this.favoriteSubscription.unsubscribe();
-		}
-	}
-
 	setView() {
 		this.viewComponentName = ComponentEnum.PROJECTS;
 	}
@@ -711,21 +705,10 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/**
-	 * Loads the list of favorite projects for the current user or all for admin using the generic service.
-	 */
-	async loadFavoriteProjects() {
-		this.favoriteProjects = await this.genericFavoriteService.loadFavorites(
-			BaseEntityEnum.OrganizationProject,
-			this.organization,
-			this.selectedEmployeeId || this._store.user?.employee?.id
-		);
-	}
-
-	/**
 	 * Checks if a project is a favorite in the local list using the generic service.
 	 * @param project The project to check.
 	 */
-	isFavorite(project: IOrganizationProject): boolean {
+	isFavoriteProject(project: IOrganizationProject): boolean {
 		if (!project) return false;
 		return this.genericFavoriteService.isFavorite(
 			project.id,
@@ -735,36 +718,40 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/**
-	 * Finds the favorite object for a given project in the local list using the generic service.
-	 * @param project The project to check.
+	 * Loads the list of favorite projects for the current user or all for admin using the generic service.
 	 */
-	getFavoriteForProject(project: IOrganizationProject): IFavorite | undefined {
-		if (!project) return;
-		return this.genericFavoriteService.getFavoriteForEntity(
-			project.id,
-			BaseEntityEnum.OrganizationProject,
-			this.favoriteProjects
-		);
+	async loadFavoriteProjects() {
+		try {
+			this.favoriteProjects = await this.genericFavoriteService.loadFavorites(
+				BaseEntityEnum.OrganizationProject,
+				this.organization,
+				this.selectedEmployeeId || this._store.user?.employee?.id
+			);
+		} catch (error) {
+			console.error('Error loading favorite projects:', error);
+			this._errorHandlingService.handleError(error);
+		}
 	}
 
 	/**
 	 * Adds or removes a project from favorites using the generic service.
 	 * @param project The project to add or remove.
 	 */
-	async toggleFavorite(project: IOrganizationProject) {
+	async toggleFavoriteProject(project: IOrganizationProject) {
 		if (!project) return;
-		await this.genericFavoriteService.toggleFavorite(
-			BaseEntityEnum.OrganizationProject,
-			project.id,
-			this.organization,
-			this.selectedEmployeeId || this._store.user?.employee?.id,
-			this.favoriteProjects
-		);
-		// Refresh the local list after modification
-		this.favoriteProjects = await this.genericFavoriteService.loadFavorites(
-			BaseEntityEnum.OrganizationProject,
-			this.organization,
-			this.selectedEmployeeId || this._store.user?.employee?.id
-		);
+		try {
+			await this.genericFavoriteService.toggleFavorite(
+				BaseEntityEnum.OrganizationProject,
+				project.id,
+				this.organization,
+				this.selectedEmployeeId || this._store.user?.employee?.id,
+				this.favoriteProjects
+			);
+			// Refresh the local list after modification
+			await this.loadFavoriteProjects();
+		} catch (error) {
+			console.error('Error toggling favorite project:', error);
+			this._errorHandlingService.handleError(error);
+		}
 	}
 }

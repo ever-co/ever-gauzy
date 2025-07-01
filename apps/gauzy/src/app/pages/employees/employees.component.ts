@@ -1041,10 +1041,15 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * Loads the list of favorite employees for the current user or all for admin using the generic service.
 	 */
 	async loadFavoriteEmployees() {
-		this.favoriteEmployees = await this.genericFavoriteService.loadFavorites(
-			BaseEntityEnum.Employee,
-			this.organization
-		);
+		try {
+			this.favoriteEmployees = await this.genericFavoriteService.loadFavorites(
+				BaseEntityEnum.Employee,
+				this.organization
+			);
+		} catch (error) {
+			console.error('Error loading favorite employees:', error);
+			this._errorHandlingService.handleError(error);
+		}
 	}
 
 	/**
@@ -1075,18 +1080,20 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 */
 	async toggleFavoriteEmployee(employee: EmployeeViewModel) {
 		if (!employee) return;
-		await this.genericFavoriteService.toggleFavorite(
-			BaseEntityEnum.Employee,
-			employee.id,
-			this.organization,
-			this._store.user?.employee?.id,
-			this.favoriteEmployees
-		);
-		// Refresh the local list after modification
-		this.favoriteEmployees = await this.genericFavoriteService.loadFavorites(
-			BaseEntityEnum.Employee,
-			this.organization
-		);
+		try {
+			await this.genericFavoriteService.toggleFavorite(
+				BaseEntityEnum.Employee,
+				employee.id,
+				this.organization,
+				this._store.user?.employee?.id,
+				this.favoriteEmployees
+			);
+			// Refresh the local list after modification
+			await this.loadFavoriteEmployees();
+		} catch (error) {
+			console.error('Error toggling favorite employee:', error);
+			this._errorHandlingService.handleError(error);
+		}
 	}
 
 	ngOnDestroy(): void {}

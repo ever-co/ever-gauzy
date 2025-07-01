@@ -93,7 +93,7 @@
 		<ng-template ngxPermissionsOnly="ORG_CANDIDATES_EDIT">
 			<button
 				nbButton
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="!selectedItem || disableButton"
 				(click)="toggleFavoriteCandidate(selectedItem)"
 				size="small"
 				class="action"

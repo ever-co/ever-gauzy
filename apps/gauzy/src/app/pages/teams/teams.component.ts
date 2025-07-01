@@ -522,11 +522,15 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 	 * Loads the list of favorite teams for the current user or all for admin using the generic service.
 	 */
 	async loadFavoriteTeams() {
-		this.favoriteTeams = await this.genericFavoriteService.loadFavorites(
-			BaseEntityEnum.OrganizationTeam,
-			this.organization,
-			this.selectedEmployeeId || this.store.user?.employee?.id
-		);
+		try {
+			this.favoriteTeams = await this.genericFavoriteService.loadFavorites(
+				BaseEntityEnum.OrganizationTeam,
+				this.organization,
+				this.selectedEmployeeId || this.store.user?.employee?.id
+			);
+		} catch (error) {
+			this.toastrService.danger('Failed to load favorite teams');
+		}
 	}
 
 	/**
@@ -557,18 +561,18 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 	 */
 	async toggleFavoriteTeam(team: IOrganizationTeam) {
 		if (!team) return;
-		await this.genericFavoriteService.toggleFavorite(
-			BaseEntityEnum.OrganizationTeam,
-			team.id,
-			this.organization,
-			this.selectedEmployeeId || this.store.user?.employee?.id,
-			this.favoriteTeams
-		);
-		// Refresh the local list after modification
-		this.favoriteTeams = await this.genericFavoriteService.loadFavorites(
-			BaseEntityEnum.OrganizationTeam,
-			this.organization,
-			this.selectedEmployeeId || this.store.user?.employee?.id
-		);
+		try {
+			await this.genericFavoriteService.toggleFavorite(
+				BaseEntityEnum.OrganizationTeam,
+				team.id,
+				this.organization,
+				this.selectedEmployeeId || this.store.user?.employee?.id,
+				this.favoriteTeams
+			);
+			// Refresh the local list after modification
+			await this.loadFavoriteTeams();
+		} catch (error) {
+			this.toastrService.danger('Failed to update favorite status');
+		}
 	}
 }

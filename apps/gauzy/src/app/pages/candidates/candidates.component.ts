@@ -641,18 +641,22 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 	 */
 	async toggleFavoriteCandidate(candidate: ICandidateViewModel) {
 		if (!candidate) return;
-		await this.genericFavoriteService.toggleFavorite(
-			BaseEntityEnum.Candidate,
-			candidate.id,
-			this.organization,
-			undefined,
-			this.favoriteCandidates
-		);
-		// Refresh the local list after modification
-		this.favoriteCandidates = await this.genericFavoriteService.loadFavorites(
-			BaseEntityEnum.Candidate,
-			this.organization
-		);
+		try {
+			await this.genericFavoriteService.toggleFavorite(
+				BaseEntityEnum.Candidate,
+				candidate.id,
+				this.organization,
+				undefined,
+				this.favoriteCandidates
+			);
+			// Only reload if the service doesn't handle state internally
+			this.favoriteCandidates = await this.genericFavoriteService.loadFavorites(
+				BaseEntityEnum.Candidate,
+				this.organization
+			);
+		} catch (error) {
+			this.toastrService.danger('Failed to update favorite status');
+		}
 	}
 
 	ngOnDestroy() {}

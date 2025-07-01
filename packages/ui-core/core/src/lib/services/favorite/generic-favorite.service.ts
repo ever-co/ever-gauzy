@@ -74,29 +74,34 @@ export class GenericFavoriteService {
 		currentFavorites: IFavorite[]
 	): Promise<void> {
 		if (!entityId || !organization) return;
-		const isFav = this.isFavorite(entityId, entityType, currentFavorites);
-		if (isFav) {
-			// Remove from favorites
-			const fav = this.getFavoriteForEntity(entityId, entityType, currentFavorites);
-			if (fav) {
-				await this.favoriteService.delete(fav.id);
+		try {
+			const isFav = this.isFavorite(entityId, entityType, currentFavorites);
+			if (isFav) {
+				// Remove from favorites
+				const fav = this.getFavoriteForEntity(entityId, entityType, currentFavorites);
+				if (fav) {
+					await this.favoriteService.delete(fav.id);
+				}
+			} else {
+				// Add to favorites
+				const { id: organizationId, tenantId } = organization;
+				const effectiveEmployeeId = employeeId || this.store.user?.employee?.id;
+				const input: IFavoriteCreateInput = {
+					entity: entityType,
+					entityId,
+					organizationId,
+					tenantId,
+					employeeId: effectiveEmployeeId
+				};
+				await this.favoriteService.create(input);
 			}
-		} else {
-			// Add to favorites
-			const { id: organizationId, tenantId } = organization;
-			const effectiveEmployeeId = employeeId || this.store.user?.employee?.id;
-			const input: IFavoriteCreateInput = {
-				entity: entityType,
-				entityId,
-				organizationId,
-				tenantId,
-				employeeId: effectiveEmployeeId
-			};
-			await this.favoriteService.create(input);
-		}
-		// Optionally, refresh the sidebar menu if the method exists
-		if (typeof this.favoriteStoreService['_listenToChangesAndLoadFavorites'] === 'function') {
-			this.favoriteStoreService['_listenToChangesAndLoadFavorites']();
+			// Refresh the sidebar menu
+			if (typeof this.favoriteStoreService.refreshFavorites === 'function') {
+				this.favoriteStoreService.refreshFavorites();
+			}
+		} catch (error) {
+			console.error('Error toggling favorite:', error);
+			throw new Error('Failed to update favorite status');
 		}
 	}
 

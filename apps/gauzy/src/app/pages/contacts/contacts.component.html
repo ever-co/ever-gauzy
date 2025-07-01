@@ -68,7 +68,7 @@
 				class="action"
 				status="basic"
 				size="small"
-				[disabled]="!selectedOrganizationContact && disableButton"
+				[disabled]="!selectedOrganizationContact || disableButton"
 				(click)="toggleFavoriteContact(selectedOrganizationContact)"
 				[nbTooltip]="
 					isFavoriteContact(selectedOrganizationContact)
