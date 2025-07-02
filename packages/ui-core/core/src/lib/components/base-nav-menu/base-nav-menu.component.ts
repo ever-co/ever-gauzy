@@ -1,6 +1,6 @@
 import { Directive, OnDestroy, OnInit } from '@angular/core';
-import { merge } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
+import { filter, startWith, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
@@ -33,15 +33,13 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	}
 
 	ngOnInit(): void {
-		this._favoriteStoreService.favoriteItems$.pipe(untilDestroyed(this)).subscribe((items) => {
-			this._favoriteItems = items;
-			this.defineBaseNavMenus();
-		});
+		this.defineBaseNavMenus();
 	}
 
 	ngAfterViewInit() {
-		const merge$ = merge(
-			this._translateService.onLangChange,
+		const merge$ = combineLatest([
+			this._favoriteStoreService.favoriteItems$,
+			this._translateService.onLangChange.pipe(startWith(null)),
 			this._store.selectedOrganization$.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange()
@@ -49,8 +47,14 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 			this._store.featureOrganizations$,
 			this._store.featureTenant$,
 			this._store.userRolePermissions$
-		).pipe(tap(() => this.defineBaseNavMenus()));
-		merge$.pipe(untilDestroyed(this)).subscribe();
+		]).pipe(
+			tap(([favorites]) => {
+				this._favoriteItems = favorites;
+				this.defineBaseNavMenus();
+			}),
+			untilDestroyed(this)
+		);
+		merge$.subscribe();
 	}
 
 	/**

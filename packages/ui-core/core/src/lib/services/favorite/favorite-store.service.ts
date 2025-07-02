@@ -92,26 +92,39 @@ export class FavoriteStoreService {
 						tenantId
 					}
 				})
-				.then(({ items: details }) => {
-.then(({ items: details }: { items: Array<{
-    name?: string;
-    title?: string;
-    profile_link?: string;
-    id: string;
-}> }) => {
-    return details.map((item) => {
-        const rawTitle = item.name || item.title || item.profile_link || 'Untitled';
-						const title = this._truncateTitle(rawTitle);
-						return {
-							id: `favorite-${entityType}-${item.id}`,
-							title,
-							icon: this._getFavoriteIcon(entityType as BaseEntityEnum),
-							link: this._getFavoriteLink(entityType as BaseEntityEnum, item.id),
-							data: {
-								translationKey: title
+				.then(({ items: details }: { items: IFavorite[]; total: number }) => {
+					if (!details || !Array.isArray(details)) {
+						return [];
+					}
+
+					return details
+						.map((item) => {
+							if (!item) {
+								return null;
 							}
-						};
-					});
+
+							const rawTitle =
+								(item as unknown as { name?: string; title?: string; profile_link?: string }).name ||
+								(item as unknown as { name?: string; title?: string; profile_link?: string }).title ||
+								(item as unknown as { name?: string; title?: string; profile_link?: string })
+									.profile_link ||
+								'Sans titre';
+							const title = this._truncateTitle(rawTitle);
+							return {
+								id: `favorite-${entityType}-${item.id}`,
+								title,
+								icon: this._getFavoriteIcon(entityType as BaseEntityEnum),
+								link: this._getFavoriteLink(entityType as BaseEntityEnum, item.id),
+								data: {
+									translationKey: title
+								}
+							};
+						})
+						.filter(Boolean);
+				})
+				.catch((error) => {
+					console.error(`Error loading favorites for ${entityType}:`, error);
+					return [];
 				});
 			favoritePromises.push(promise);
 		}

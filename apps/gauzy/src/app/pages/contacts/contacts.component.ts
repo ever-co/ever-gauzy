@@ -638,7 +638,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				this.selectedEmployeeId || this.store.user?.employee?.id
 			);
 		} catch (error) {
-			this.toastrService.danger('Failed to load favorite contacts');
+			this.toastrService.danger(this.getTranslation('TOASTR.TITLE.ERROR'));
 		}
 	}
 
@@ -685,7 +685,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 			// Only reload if the service doesn't handle state internally
 			await this.loadFavoriteContacts();
 		} catch (error) {
-			this.toastrService.danger('Failed to update favorite status');
+			this.toastrService.danger(this.getTranslation('TOASTR.TITLE.ERROR'));
 		}
 	}
 
