@@ -175,7 +175,9 @@
 		"READ_MORE": "קרא עוד",
 		"READ_LESS": "קרא פחות",
 		"RECOVER": "שחזר",
-		"ADD_MORE_SOURCES": "הוסף יותר מקורות"
+		"ADD_MORE_SOURCES": "הוסף יותר מקורות",
+		"REMOVE_FROM_FAVORITES": "הסר מהמועדפים",
+		"ADD_TO_FAVORITES": "הוסף למועדפים"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

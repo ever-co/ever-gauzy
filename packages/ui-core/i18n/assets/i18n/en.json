@@ -185,7 +185,9 @@
 		"READ_MORE": "Read More",
 		"READ_LESS": "Read Less",
 		"RECOVER": "Recover",
-		"ADD_MORE_SOURCES": "Add More Sources"
+		"ADD_MORE_SOURCES": "Add More Sources",
+		"REMOVE_FROM_FAVORITES": "Remove from favorites",
+		"ADD_TO_FAVORITES": "Add to favorites"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

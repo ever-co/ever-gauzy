@@ -175,7 +175,9 @@
 		"READ_MORE": "Читать далее",
 		"READ_LESS": "Свернуть",
 		"RECOVER": "Восстановить",
-		"ADD_MORE_SOURCES": "Добавить больше источников"
+		"ADD_MORE_SOURCES": "Добавить больше источников",
+		"REMOVE_FROM_FAVORITES": "Удалить из избранного",
+		"ADD_TO_FAVORITES": "Добавить в избранное"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

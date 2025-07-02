@@ -176,7 +176,9 @@
 		"READ_MORE": "Leer más",
 		"READ_LESS": "Leer menos",
 		"RECOVER": "Recuperar",
-		"ADD_MORE_SOURCES": "Añadir más fuentes"
+		"ADD_MORE_SOURCES": "Añadir más fuentes",
+		"REMOVE_FROM_FAVORITES": "Quitar de favoritos",
+		"ADD_TO_FAVORITES": "Agregar a favoritos"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

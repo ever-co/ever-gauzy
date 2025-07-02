@@ -130,7 +130,9 @@
 		"EXPAND": "crwdns11463:0crwdne11463:0",
 		"SHOW_MORE": "crwdns11483:0crwdne11483:0",
 		"START_WORK": "crwdns11525:0crwdne11525:0",
-		"ADD_MODULE": "Yamo Module"
+		"ADD_MODULE": "Yamo Module",
+		"REMOVE_FROM_FAVORITES": "Kwanyo ki i jami me ayera",
+		"ADD_TO_FAVORITES": "Med i jami me ayera"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
