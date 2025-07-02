@@ -674,6 +674,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 	 */
 	async toggleFavoriteContact(contact: IOrganizationContact) {
 		if (!contact) return;
+		if (!this.organization) return;
 		try {
 			await this.genericFavoriteService.toggleFavorite(
 				BaseEntityEnum.OrganizationContact,
