@@ -185,9 +185,9 @@
 		"READ_MORE": "Прочети още",
 		"READ_LESS": "Прочети по-малко",
 		"RECOVER": "Възстанови",
-		"ADD_MORE_SOURCES": "Добавяне на повече източници",
-		"REMOVE_FROM_FAVORITES": "Премахни от любими",
-		"ADD_TO_FAVORITES": "Добави към любими"
+        "ADD_MORE_SOURCES": "Добавете още източници",
+        "REMOVE_FROM_FAVORITES": "Премахни от любими",
+        "ADD_TO_FAVORITES": "Добави към любими"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
