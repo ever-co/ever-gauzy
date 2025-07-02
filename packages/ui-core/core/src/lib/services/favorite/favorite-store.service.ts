@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, combineLatest, from, of, Subscription } from 'rxjs';
-import { catchError, filter, switchMap } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, from, of, Subject, Subscription } from 'rxjs';
+import { catchError, filter, startWith, switchMap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BaseEntityEnum, IFavorite, PermissionsEnum } from '@gauzy/contracts';
 import { FavoriteService } from './favorite.service';
@@ -15,6 +15,7 @@ import { ENTITY_ICONS, ENTITY_LINKS } from './entities-mapping';
 export class FavoriteStoreService {
 	private readonly _favoriteItems$ = new BehaviorSubject<NavMenuSectionItem[]>([]);
 	public readonly favoriteItems$ = this._favoriteItems$.asObservable();
+	private readonly _refresh$ = new Subject<void>();
 	private _favoriteSubscription?: Subscription;
 
 	constructor(private readonly _favoriteService: FavoriteService, private readonly _store: Store) {
@@ -22,16 +23,19 @@ export class FavoriteStoreService {
 	}
 
 	public refreshFavorites(): void {
-		this._favoriteSubscription?.unsubscribe();
-		this._listenToChangesAndLoadFavorites();
+		this._refresh$.next();
 	}
 
 	private _listenToChangesAndLoadFavorites(): void {
-		this._favoriteSubscription = combineLatest([this._store.selectedOrganization$.pipe(filter((org) => !!org))])
+		this._favoriteSubscription = combineLatest([
+			this._store.selectedOrganization$.pipe(filter((org) => !!org)),
+			this._refresh$.pipe(startWith(null))
+		])
 			.pipe(
-				switchMap(() => from(this._loadFavorites())),
+				switchMap(([org]) => from(this._loadFavorites())),
 				catchError((error) => {
 					console.error('Error loading favorites in store', error);
+					this._favoriteItems$.next([]);
 					return of([]);
 				}),
 				untilDestroyed(this)
@@ -116,10 +120,10 @@ export class FavoriteStoreService {
 		return allFavoriteItems.flat();
 	}
 
-private _truncateTitle(title: string, maxLength = 24): string {
-    if (!title) return '';
-    return title.length > maxLength ? `${title.slice(0, maxLength - 3)}...` : title;
-}
+	private _truncateTitle(title: string, maxLength = 24): string {
+		if (!title) return '';
+		return title.length > maxLength ? `${title.slice(0, maxLength - 3)}...` : title;
+	}
 
 	private _getFavoriteIcon(entityType: BaseEntityEnum): string {
 		return ENTITY_ICONS[entityType] || 'far fa-star';

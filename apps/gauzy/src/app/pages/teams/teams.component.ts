@@ -569,8 +569,14 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				this.selectedEmployeeId || this.store.user?.employee?.id,
 				this.favoriteTeams
 			);
-			// Refresh the local list after modification
-			await this.loadFavoriteTeams();
+			// Optimistically update local state
+			const existingFavorite = this.getFavoriteForTeam(team);
+			if (existingFavorite) {
+				this.favoriteTeams = this.favoriteTeams.filter((f) => f.id !== existingFavorite.id);
+			} else {
+				// If adding, we need the new favorite object
+				await this.loadFavoriteTeams();
+			}
 		} catch (error) {
 			this.toastrService.danger('Failed to update favorite status');
 		}

@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, debounceTime, filter, firstValueFrom, Subject, tap, Subscription } from 'rxjs';
+import { combineLatest, debounceTime, filter, firstValueFrom, Subject, tap } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
@@ -71,7 +71,6 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	public project$: Subject<boolean> = this.subject$;
 	private _refresh$: Subject<boolean> = new Subject();
 	public favoriteProjects: IFavorite[] = [];
-	private favoriteSubscription: Subscription;
 
 	/**
 	 * Represents a component property for handling the project view.
