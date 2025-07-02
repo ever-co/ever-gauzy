@@ -32,7 +32,7 @@ export class FavoriteStoreService {
 			this._refresh$.pipe(startWith(null))
 		])
 			.pipe(
-				switchMap(([org]) => from(this._loadFavorites())),
+				switchMap(() => from(this._loadFavorites())),
 				catchError((error) => {
 					console.error('Error loading favorites in store', error);
 					this._favoriteItems$.next([]);
