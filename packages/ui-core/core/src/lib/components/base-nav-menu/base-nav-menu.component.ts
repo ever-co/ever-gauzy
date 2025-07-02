@@ -116,6 +116,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				id: 'favorites',
 				title: 'Favorites',
 				icon: 'far fa-star',
+				hidden: this._favoriteItems.length === 0,
 				data: {
 					translationKey: 'MENU.FAVORITES'
 				},

@@ -108,7 +108,7 @@ export class FavoriteStoreService {
 								(item as unknown as { name?: string; title?: string; profile_link?: string }).title ||
 								(item as unknown as { name?: string; title?: string; profile_link?: string })
 									.profile_link ||
-								'Sans titre';
+								'Untitled';
 							const title = this._truncateTitle(rawTitle);
 							return {
 								id: `favorite-${entityType}-${item.id}`,

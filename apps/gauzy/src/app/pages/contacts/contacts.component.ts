@@ -638,7 +638,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				this.selectedEmployeeId || this.store.user?.employee?.id
 			);
 		} catch (error) {
-			this.toastrService.danger(this.getTranslation('TOASTR.TITLE.ERROR'));
+			this.toastrService.danger(this.getTranslation('FAVORITES.ERROR.LOAD_FAILED'));
 		}
 	}
 
@@ -683,10 +683,18 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				this.selectedEmployeeId || this.store.user?.employee?.id,
 				this.favoriteContacts
 			);
-			// Only reload if the service doesn't handle state internally
-			await this.loadFavoriteContacts();
+			// Optimistically update local state
+			const existingFavorite = this.favoriteContacts.find(
+				(f) => f.entityId === contact.id && f.entity === BaseEntityEnum.OrganizationContact
+			);
+			if (existingFavorite) {
+				this.favoriteContacts = this.favoriteContacts.filter((f) => f.id !== existingFavorite.id);
+			} else {
+				// If adding, we need the new favorite object
+				await this.loadFavoriteContacts();
+			}
 		} catch (error) {
-			this.toastrService.danger(this.getTranslation('TOASTR.TITLE.ERROR'));
+			this.toastrService.danger(this.getTranslation('FAVORITES.ERROR.TOGGLE_FAILED'));
 		}
 	}
 
