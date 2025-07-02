@@ -93,14 +93,14 @@ export class FavoriteStoreService {
 					}
 				})
 				.then(({ items: details }) => {
-					return details.map((detail: unknown) => {
-						const item = detail as {
-							name?: string;
-							title?: string;
-							profile_link?: string;
-							id: string;
-						};
-						const rawTitle = item.name || item.title || item.profile_link || 'Untitled';
+.then(({ items: details }: { items: Array<{
+    name?: string;
+    title?: string;
+    profile_link?: string;
+    id: string;
+}> }) => {
+    return details.map((item) => {
+        const rawTitle = item.name || item.title || item.profile_link || 'Untitled';
 						const title = this._truncateTitle(rawTitle);
 						return {
 							id: `favorite-${entityType}-${item.id}`,
