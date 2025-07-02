@@ -746,8 +746,16 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 				this.selectedEmployeeId || this._store.user?.employee?.id,
 				this.favoriteProjects
 			);
-			// Refresh the local list after modification
-			await this.loadFavoriteProjects();
+			// Optimistically update local state
+			const existingFavorite = this.favoriteProjects.find(
+				f => f.entityId === project.id && f.entity === BaseEntityEnum.OrganizationProject
+			);
+			if (existingFavorite) {
+				this.favoriteProjects = this.favoriteProjects.filter(f => f.id !== existingFavorite.id);
+			} else {
+				// If adding, we need the new favorite object
+				await this.loadFavoriteProjects();
+			}
 		} catch (error) {
 			console.error('Error toggling favorite project:', error);
 			this._errorHandlingService.handleError(error);
