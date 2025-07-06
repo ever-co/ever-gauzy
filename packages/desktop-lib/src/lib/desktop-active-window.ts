@@ -3,8 +3,7 @@ import { ICurrentApplication } from './interfaces';
 import { CurrentApplication, DataApplication } from './contexts';
 import * as moment from 'moment';
 import { LocalStore } from './desktop-store';
-
-const activeWindow = require('active-win');
+import { ActivityWindow } from '@gauzy/desktop-activity';
 
 export class DesktopActiveWindow extends EventEmitter {
 	/**
@@ -25,6 +24,7 @@ export class DesktopActiveWindow extends EventEmitter {
 	 * @private
 	 */
 	private _ACTIVE_WINDOW_POLLING_INTERVAL: number = 1000 * 10;
+	private activityWindow: ActivityWindow;
 
 	constructor() {
 		super();
@@ -32,6 +32,7 @@ export class DesktopActiveWindow extends EventEmitter {
 		const t = moment(new Date()).utc().toISOString();
 		console.log('DesktopActiveWindow -> constructor -> timestamp', t);
 		this._currentApplication = new CurrentApplication(t, 0, new DataApplication(null, null, null, null));
+		this.activityWindow = ActivityWindow.getInstance();
 	}
 
 	/**
@@ -97,14 +98,18 @@ export class DesktopActiveWindow extends EventEmitter {
 	 */
 	private async getWindow(anyway: boolean = false) {
 		try {
-			const window = await activeWindow();
+			const window = await this.activityWindow.getActiveWindow();
 
 			// Detect changes
+			let url = null;
+			if (window.platform === 'macos') {
+				url = window.url;
+			}
 			if (
 				window &&
 				((window.owner && window.owner.path !== this._currentApplication.data.executable) ||
 					window.title !== this._currentApplication.data.title ||
-					window.url !== this._currentApplication.data.url ||
+					url !== this._currentApplication.data.url ||
 					anyway)
 			) {
 				console.log('DesktopActiveWindow -> getWindow -> applyNewWindow');

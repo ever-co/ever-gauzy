@@ -15,9 +15,11 @@ export class KbMouseTimer {
 	private onAfkCallback: ((afk?: boolean) => void) | null = null;
 	private isStarted:boolean = false;
 	private timerStartedCallback: (status: 'Working' | 'Error') => void;
+	private activeWindowCallback: () => void;
 
 	private constructor() {
 		this.afkCountdown = this.afkThreshold;
+		this.activeWindowCallback = () => {};
 	}
 
 	public static getInstance(): KbMouseTimer {
@@ -29,6 +31,10 @@ export class KbMouseTimer {
 
 	public setFlushInterval(seconds: number): void {
 		this.flushIntervalSeconds = seconds;
+	}
+
+	public setActiveWindowCallback(callback: () => void) {
+		this.activeWindowCallback = callback;
 	}
 
 	public setScreenshotInterval(seconds: number): void {
@@ -101,6 +107,7 @@ export class KbMouseTimer {
 	}
 
 	private tickHandler(): void {
+		this.activeWindowCallback();
 		this.checkFlushTime();
 		this.afkHandler();
 		this.afkCounter();

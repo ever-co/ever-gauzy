@@ -1,10 +1,19 @@
 import {
 	KbMouseActivityService,
 	KbMouseActivityTO,
+	TActiveWindows,
 	TTimeSlot,
 	TimerService
 } from '@gauzy/desktop-lib';
-import { KbMouseActivityPool, TKbMouseActivity, TMouseEvents } from '@gauzy/desktop-activity';
+import {
+	KbMouseActivityPool,
+	TKbMouseActivity,
+	TMouseEvents,
+	TimeSlotActivities,
+	ActivityType,
+	TimeLogSourceEnum,
+	TWindowActivities
+} from '@gauzy/desktop-activity';
 import { ApiService, TResponseTimeSlot } from '../api';
 import { getAuthConfig, TAuthConfig, getInitialConfig } from '../util';
 import * as moment from 'moment';
@@ -186,34 +195,77 @@ class PushActivities {
 		return Math.max(0, total - afk);
 	}
 
-	getActivities(activities: KbMouseActivityTO): TKbMouseActivity[] {
-		return [
-			{
+	getKeyboardActivities(activities: KbMouseActivityTO, duration: number, auth: TAuthConfig): TimeSlotActivities[] {
+		return [{
+			title: 'Keyboar and Mouse',
+			duration: activities.afkDuration,
+			projectId: null,
+			taskId: null,
+			date: moment(activities.timeStart).utc().format('YYY-MM-DD'),
+			time: moment(activities.timeStart).utc().format('HH:mm:ss'),
+			type: ActivityType.APP,
+			organizationContactId: null,
+			organizationId: auth?.user?.employee?.organizationId,
+			source: TimeLogSourceEnum.DESKTOP,
+			recordedAt: activities.timeStart,
+			employeeId: auth?.user?.employee?.id,
+			metaData: [{
 				kbPressCount: activities.kbPressCount,
 				kbSequence: (typeof activities.kbSequence === 'string'
-					? (() => {
-						try {
-							return JSON.parse(activities.kbSequence);
-						} catch (error) {
-							console.error('Failed to parse kbSequence:', error);
-							return [];
-						}
-					})()
-					: activities.kbSequence) as number[],
+				? (() => {
+					try {
+						return JSON.parse(activities.kbSequence);
+					} catch (error) {
+						console.error('Failed to parse kbSequence:', error);
+						return [];
+					}
+				})()
+				: activities.kbSequence) as number[],
 				mouseLeftClickCount: activities.mouseLeftClickCount,
 				mouseRightClickCount: activities.mouseRightClickCount,
 				mouseMovementsCount: activities.mouseMovementsCount,
 				mouseEvents: (typeof activities.mouseEvents === 'string'
-					? (() => {
-						try {
-							return JSON.parse(activities.mouseEvents);
-						} catch (error) {
-							console.error('Failed to parse mouseEvents:', error);
-							return [];
-						}
-					})()
-					: activities.mouseEvents) as TMouseEvents[]
-			}
+				? (() => {
+					try {
+						return JSON.parse(activities.mouseEvents);
+					} catch (error) {
+						console.error('Failed to parse mouseEvents:', error);
+						return [];
+					}
+				})()
+				: activities.mouseEvents) as TMouseEvents[]
+			}]
+		}];
+	}
+
+	getActiveWindows(activities: KbMouseActivityTO, auth: TAuthConfig): TimeSlotActivities[] {
+		if (typeof activities.activeWindows === 'string') {
+			activities.activeWindows = JSON.parse(activities.activeWindows);
+		}
+		if (!Array.isArray(activities.activeWindows)) {
+			return []
+		}
+		return activities.activeWindows.map((windowActivity) => ({
+			title: windowActivity.name,
+			duration: windowActivity.duration,
+			projectId: null,
+			taskId: null,
+			date: moment(activities.timeStart).utc().format('YYY-MM-DD'),
+			time: moment(activities.timeStart).utc().format('HH:mm:ss'),
+			type: ActivityType.APP,
+			organizationContactId: null,
+			organizationId: auth?.user?.employee?.organizationId,
+			source: TimeLogSourceEnum.DESKTOP,
+			recordedAt: activities.timeStart,
+			employeeId: auth?.user?.employee?.id,
+			metaData: windowActivity.meta
+		}));
+	}
+
+	getActivities(activities: KbMouseActivityTO, duration: number, auth: TAuthConfig): TimeSlotActivities[] {
+		return [
+			...this.getKeyboardActivities(activities, duration, auth),
+			...this.getActiveWindows(activities, auth)
 		];
 	}
 
@@ -248,16 +300,18 @@ class PushActivities {
 		if (!isAuthenticated) {
 			return;
 		}
+		const overall = this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration);
+		const duration = this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd));
 		return {
 			tenantId: auth?.user?.employee?.tenantId,
 			organizationId: auth?.user?.employee?.organizationId,
-			duration: this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd)),
+			duration,
 			keyboard: activities.kbPressCount,
 			mouse: activities.mouseLeftClickCount + activities.mouseRightClickCount,
-			overall: this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration),
+			overall,
 			startedAt: moment(activities.timeStart).toISOString(),
 			recordedAt: moment(activities.timeStart).toISOString(),
-			activities: this.getActivities(activities),
+			activities: this.getActivities(activities, duration, auth),
 			employeeId: auth?.user?.employee?.id
 		};
 	}

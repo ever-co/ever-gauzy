@@ -1,5 +1,5 @@
 import { Serializable } from '../../interfaces';
-import { KbMouseActivityTO, TMouseEvents } from '../dto/kb-mouse-activity.dto';
+import { KbMouseActivityTO, TMouseEvents, TActiveWindows } from '../dto/kb-mouse-activity.dto';
 import { Base } from './base.model';
 
 export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializable<KbMouseActivityTO> {
@@ -13,6 +13,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	private _mouseEvents: TMouseEvents[] | string;
 	private _screenshots: string[] | string;
 	private _afkDuration: number = 0;
+	private _activeWindows: TActiveWindows[] | string;
 
 	constructor(kbMouseActivity: KbMouseActivityTO) {
 		super(kbMouseActivity.id, kbMouseActivity.tenantId, kbMouseActivity.organizationId);
@@ -26,6 +27,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 		this._mouseEvents = kbMouseActivity.mouseEvents;
 		this._screenshots = kbMouseActivity.screenshots;
 		this._afkDuration = kbMouseActivity.afkDuration;
+		this._activeWindows = kbMouseActivity.activeWindows;
 	}
 
 	public get timeStart(): Date {
@@ -88,6 +90,12 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	public get afkDuration(): number {
 		return this._afkDuration;
 	}
+	public set activeWindows(value: TActiveWindows[] | string) {
+		this._activeWindows = value;
+	}
+	public get activeWindows(): TActiveWindows[] | string {
+		return this._activeWindows;
+	}
 
 	public toObject(): KbMouseActivityTO {
 		return {
@@ -104,7 +112,8 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 			tenantId: this.tenantId,
 			remoteId: this.remoteId,
 			screenshots: Array.isArray(this.screenshots) ? this.screenshots : [],
-			afkDuration: this.afkDuration
+			afkDuration: this.afkDuration,
+			activeWindows: this.activeWindows
 		};
 	}
 }
