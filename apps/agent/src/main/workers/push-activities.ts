@@ -1,18 +1,15 @@
 import {
 	KbMouseActivityService,
 	KbMouseActivityTO,
-	TActiveWindows,
 	TTimeSlot,
 	TimerService
 } from '@gauzy/desktop-lib';
 import {
 	KbMouseActivityPool,
-	TKbMouseActivity,
 	TMouseEvents,
 	TimeSlotActivities,
 	ActivityType,
 	TimeLogSourceEnum,
-	TWindowActivities
 } from '@gauzy/desktop-activity';
 import { ApiService, TResponseTimeSlot } from '../api';
 import { getAuthConfig, TAuthConfig, getInitialConfig } from '../util';
@@ -22,6 +19,8 @@ import { environment } from '../../environments/environment';
 import * as fs from 'node:fs';
 import MainEvent from '../events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
+
+type TParamsActivities = Omit<TimeSlotActivities, 'recordedAt'> & { recordedAt: string };
 
 class PushActivities {
 	static instance: PushActivities;
@@ -195,19 +194,19 @@ class PushActivities {
 		return Math.max(0, total - afk);
 	}
 
-	getKeyboardActivities(activities: KbMouseActivityTO, duration: number, auth: TAuthConfig): TimeSlotActivities[] {
+	getKeyboardActivities(activities: KbMouseActivityTO, duration: number, auth: TAuthConfig): TParamsActivities[] {
 		return [{
 			title: 'Keyboar and Mouse',
-			duration: activities.afkDuration,
+			duration: duration,
 			projectId: null,
 			taskId: null,
-			date: moment(activities.timeStart).utc().format('YYY-MM-DD'),
+			date: moment(activities.timeStart).utc().format('YYYY-MM-DD'),
 			time: moment(activities.timeStart).utc().format('HH:mm:ss'),
 			type: ActivityType.APP,
 			organizationContactId: null,
 			organizationId: auth?.user?.employee?.organizationId,
 			source: TimeLogSourceEnum.DESKTOP,
-			recordedAt: activities.timeStart,
+			recordedAt: moment(activities.timeStart).toISOString(),
 			employeeId: auth?.user?.employee?.id,
 			metaData: [{
 				kbPressCount: activities.kbPressCount,
@@ -238,7 +237,7 @@ class PushActivities {
 		}];
 	}
 
-	getActiveWindows(activities: KbMouseActivityTO, auth: TAuthConfig): TimeSlotActivities[] {
+	getActiveWindows(activities: KbMouseActivityTO, auth: TAuthConfig): TParamsActivities[] {
 		if (typeof activities.activeWindows === 'string') {
 			activities.activeWindows = JSON.parse(activities.activeWindows);
 		}
@@ -250,19 +249,19 @@ class PushActivities {
 			duration: windowActivity.duration,
 			projectId: null,
 			taskId: null,
-			date: moment(activities.timeStart).utc().format('YYY-MM-DD'),
+			date: moment(activities.timeStart).utc().format('YYYY-MM-DD'),
 			time: moment(activities.timeStart).utc().format('HH:mm:ss'),
 			type: ActivityType.APP,
 			organizationContactId: null,
 			organizationId: auth?.user?.employee?.organizationId,
 			source: TimeLogSourceEnum.DESKTOP,
-			recordedAt: activities.timeStart,
+			recordedAt: moment(activities.timeStart).toISOString(),
 			employeeId: auth?.user?.employee?.id,
 			metaData: windowActivity.meta
 		}));
 	}
 
-	getActivities(activities: KbMouseActivityTO, duration: number, auth: TAuthConfig): TimeSlotActivities[] {
+	getActivities(activities: KbMouseActivityTO, duration: number, auth: TAuthConfig): TParamsActivities[] {
 		return [
 			...this.getKeyboardActivities(activities, duration, auth),
 			...this.getActiveWindows(activities, auth)

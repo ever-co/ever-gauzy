@@ -64,20 +64,22 @@ export class ActivityWindow {
 
 	public async getActiveWindowAndSetDuration() {
 		const currentActiveWidow = await this.getActiveWindow();
-		this.updateWindowActivities({
-			name: currentActiveWidow.owner.name,
-			duration: 1,
-			dateEnd: new Date(),
-			dateStart: new Date(),
-			meta: [
-				{
-					title: currentActiveWidow.title,
-					url: currentActiveWidow.platform === 'macos' ? currentActiveWidow.url : '',
-					platform: currentActiveWidow.platform
+		if (currentActiveWidow) {
+			this.updateWindowActivities({
+				name: currentActiveWidow.owner.name,
+				duration: 1, // value 1, method run every second
+				dateEnd: new Date(),
+				dateStart: new Date(),
+				meta: [
+					{
+						title: currentActiveWidow.title,
+						url: currentActiveWidow.platform === 'macos' ? currentActiveWidow.url : '',
+						platform: currentActiveWidow.platform
 
-				}
-			]
-		});
+					}
+				]
+			});
+		}
 	}
 
 	retrieveAndflushActivities(): TWindowActivities[] {

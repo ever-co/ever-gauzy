@@ -52,7 +52,6 @@ class PullActivities {
 		this.apiService = ApiService.getInstance();
 		this.timerService = new TimerService();
 		this.activityStores = KeyboardMouseActivityStores.getInstance();
-		console.log('activityWindow', ActivityWindow);
 		this.activityWindow = ActivityWindow.getInstance();
 	}
 
