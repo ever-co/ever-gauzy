@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
+import { BaseEntityEnum, IFavorite, IFavoriteCreateInput, PermissionsEnum, IOrganization } from '@gauzy/contracts';
 import { Store } from '../store/store.service';
 import { FavoriteService } from './favorite.service';
 import { FavoriteStoreService } from './favorite-store.service';
-import { BaseEntityEnum, IFavorite, IFavoriteCreateInput, PermissionsEnum, IOrganization } from '@gauzy/contracts';
 
 @Injectable({ providedIn: 'root' })
 export class GenericFavoriteService {
