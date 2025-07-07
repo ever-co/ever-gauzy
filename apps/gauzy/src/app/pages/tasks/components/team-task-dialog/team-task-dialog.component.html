@@ -34,6 +34,7 @@
 							[showAllOption]="false"
 							[skipGlobalChange]="true"
 							formControlName="projectId"
+							[employeeId]="employeeId"
 						></ga-project-selector>
 						<ng-container
 							*ngIf="FormHelpers.isInvalidControl(form, 'projectId') && form.get('projectId').touched"
@@ -115,7 +116,7 @@
 						/>
 						<ng-container *ngIf="FormHelpers.isInvalidControl(form, 'title')">
 							<p class="caption status-danger mt-1">
-								{{ 'FORM.ERROR.TASK_TITLE'  | translate }}
+								{{ 'FORM.ERROR.TASK_TITLE' | translate }}
 							</p>
 						</ng-container>
 					</div>

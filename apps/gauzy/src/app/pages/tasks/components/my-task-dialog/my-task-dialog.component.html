@@ -32,6 +32,7 @@
 							[showAllOption]="false"
 							[skipGlobalChange]="true"
 							formControlName="projectId"
+							[employeeId]="employeeId"
 						></ga-project-selector>
 						<ng-container
 							*ngIf="FormHelpers.isInvalidControl(form, 'projectId') && form.get('projectId').touched"

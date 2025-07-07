@@ -67,8 +67,13 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 					const employee = await this._employeeService.findOneByIdString(employeeId);
 
 					// Automatically add the current employee to members if not already included
-					if (employee && !members.find((member) => member.id === employeeId)) {
-						members.push(employee);
+					if (
+						employee &&
+						!(Array.isArray(members) ? members.find((member) => member.id === employeeId) : false)
+					) {
+						if (Array.isArray(members)) {
+							members.push(employee);
+						}
 					}
 				} catch (error) {
 					this.logger.error(

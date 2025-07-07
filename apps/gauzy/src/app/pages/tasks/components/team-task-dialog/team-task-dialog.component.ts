@@ -4,13 +4,14 @@ import {
 	IOrganizationProject,
 	IOrganizationProjectModule,
 	IOrganizationTeam,
+	ISelectedEmployee,
 	ITag,
 	ITask,
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { firstValueFrom } from 'rxjs';
+import { filter, firstValueFrom, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import moment from 'moment';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
@@ -26,6 +27,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -47,6 +49,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 	availableModules: IOrganizationProjectModule[] = [];
 	organizationId: string;
 	tenantId: string;
+	employeeId: string;
 	tags: ITag[] = [];
 	public ckConfig: CKEditor4.Config = richTextCKEditorConfig;
 	@Input() task: Partial<ITask> = {};
@@ -106,6 +109,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		this.tenantId = this.store.user.tenantId;
 		this.organizationId = this._organizationsStore.selectedOrganization.id;
+		const storeEmployee$ = this.store.selectedEmployee$;
 
 		await this.loadProjects();
 		await this.loadTeams();
@@ -117,6 +121,17 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 			.subscribe(() => this.loadAvailableModules());
 
 		this.initializeForm();
+
+		storeEmployee$
+			.pipe(
+				distinctUntilChange(),
+				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
+				tap((employee: ISelectedEmployee) => {
+					this.employeeId = employee.id;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	initializeForm() {

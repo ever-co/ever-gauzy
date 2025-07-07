@@ -51,7 +51,8 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	organization: IOrganization;
 	taskParticipantEnum = TaskParticipantEnum;
 	participants = TaskParticipantEnum.EMPLOYEES;
-	public ckConfig: CKEditor4.Config = richTextCKEditorConfig;
+	employeeId: string;
+	ckConfig: CKEditor4.Config = richTextCKEditorConfig;
 	@Input() createTask = false;
 	/*
 	 * Payment Mutation Form
@@ -136,6 +137,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 					if (!this.selectedTask) {
 						this.selectedMembers.push(employee.id);
 					}
+					this.employeeId = employee.id;
 				}),
 				untilDestroyed(this)
 			)

@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { IEmployee, IOrganizationProject, ITag, ITask, TaskStatusEnum } from '@gauzy/contracts';
+import { IEmployee, IOrganizationProject, ISelectedEmployee, ITag, ITask, TaskStatusEnum } from '@gauzy/contracts';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { NbDialogRef } from '@nebular/theme';
@@ -18,6 +18,7 @@ import {
 	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -107,6 +108,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent implements O
 	}
 
 	async ngOnInit() {
+		const storeEmployee$ = this.store.selectedEmployee$;
 		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		this.store.user$
 			.pipe(
@@ -122,6 +124,16 @@ export class MyTaskDialogComponent extends TranslationBaseComponent implements O
 		await this.loadProjects();
 		await this.loadEmployees();
 		this.initializeForm();
+		storeEmployee$
+			.pipe(
+				distinctUntilChange(),
+				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
+				tap((employee: ISelectedEmployee) => {
+					this.employeeId = employee.id;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	initializeForm() {
