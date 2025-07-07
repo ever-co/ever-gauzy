@@ -16,7 +16,9 @@ import {
 	IOrganizationProject,
 	ID,
 	IOrganizationProjectEmployee,
-	IEmployee
+	IEmployee,
+	BaseEntityEnum,
+	IFavorite
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -25,7 +27,8 @@ import {
 	OrganizationProjectStore,
 	ServerDataSource,
 	Store,
-	ToastrService
+	ToastrService,
+	GenericFavoriteService
 } from '@gauzy/ui-core/core';
 import {
 	CardGridComponent,
@@ -47,10 +50,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-project-list',
-    templateUrl: './list.component.html',
-    styleUrls: ['./list.component.scss'],
-    standalone: false
+	selector: 'ga-project-list',
+	templateUrl: './list.component.html',
+	styleUrls: ['./list.component.scss'],
+	standalone: false
 })
 export class ProjectListComponent extends PaginationFilterBaseComponent implements OnInit {
 	public loading: boolean = false;
@@ -67,6 +70,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	public projects: IOrganizationProject[] = [];
 	public project$: Subject<boolean> = this.subject$;
 	private _refresh$: Subject<boolean> = new Subject();
+	public favoriteProjects: IFavorite[] = [];
 
 	/**
 	 * Represents a component property for handling the project view.
@@ -88,7 +92,8 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		private readonly _store: Store,
 		private readonly _dialogService: NbDialogService,
 		private readonly _organizationProjectStore: OrganizationProjectStore,
-		private readonly _permissionsService: NgxPermissionsService
+		private readonly _permissionsService: NgxPermissionsService,
+		private readonly genericFavoriteService: GenericFavoriteService
 	) {
 		super(translateService);
 		this.setView();
@@ -137,10 +142,15 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
 
-	setView() {
-		this.viewComponentName = ComponentEnum.PROJECTS;
+		// Refresh the local list of favorites only when organization or employee changes
+		combineLatest([this._store.selectedOrganization$, this._store.selectedEmployee$])
+			.pipe(
+				filter(([organization]) => !!organization),
+				tap(() => this.loadFavoriteProjects()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 
 		// Subscribe to changes in component layout style
 		this._store
@@ -161,6 +171,10 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 					this.project$.next(true);
 				}
 			});
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.PROJECTS;
 	}
 
 	/**
@@ -685,6 +699,65 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			}
 		} catch (error) {
 			console.error('Error while creating project module', error?.message);
+			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	/**
+	 * Checks if a project is a favorite in the local list using the generic service.
+	 * @param project The project to check.
+	 */
+	isFavoriteProject(project: IOrganizationProject): boolean {
+		if (!project) return false;
+		return this.genericFavoriteService.isFavorite(
+			project.id,
+			BaseEntityEnum.OrganizationProject,
+			this.favoriteProjects
+		);
+	}
+
+	/**
+	 * Loads the list of favorite projects for the current user or all for admin using the generic service.
+	 */
+	async loadFavoriteProjects() {
+		try {
+			this.favoriteProjects = await this.genericFavoriteService.loadFavorites(
+				BaseEntityEnum.OrganizationProject,
+				this.organization,
+				this.selectedEmployeeId || this._store.user?.employee?.id
+			);
+		} catch (error) {
+			console.error('Error loading favorite projects:', error);
+			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	/**
+	 * Adds or removes a project from favorites using the generic service.
+	 * @param project The project to add or remove.
+	 */
+	async toggleFavoriteProject(project: IOrganizationProject) {
+		if (!project) return;
+		try {
+			await this.genericFavoriteService.toggleFavorite(
+				BaseEntityEnum.OrganizationProject,
+				project.id,
+				this.organization,
+				this.selectedEmployeeId || this._store.user?.employee?.id,
+				this.favoriteProjects
+			);
+			// Optimistically update local state
+			const existingFavorite = this.favoriteProjects.find(
+				f => f.entityId === project.id && f.entity === BaseEntityEnum.OrganizationProject
+			);
+			if (existingFavorite) {
+				this.favoriteProjects = this.favoriteProjects.filter(f => f.id !== existingFavorite.id);
+			} else {
+				// If adding, we need the new favorite object
+				await this.loadFavoriteProjects();
+			}
+		} catch (error) {
+			console.error('Error toggling favorite project:', error);
 			this._errorHandlingService.handleError(error);
 		}
 	}

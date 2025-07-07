@@ -24,6 +24,42 @@ export type TResponseScreenshot = {
 	timeSlotId?: string
 }
 
+export type TToggleParams = {
+	organizationId: string,
+	tenantId: string,
+	startedAt: Date,
+	organizationContactId: string,
+	organizationTeamId: string,
+	stoppedAt?: Date
+}
+
+export type TTimerParams = {
+	description: string,
+	isBillable: boolean,
+	logType: 'TRACKED',
+	projectId: string | null,
+	taskId: string | null,
+	source: 'DESKTOP',
+	manualTimeSlot: string | null,
+	organizationId: string | null,
+	tenantId: string | null,
+	organizationContactId: string | null,
+	isRunning: boolean,
+	version: string | null,
+	startedAt: string,
+	organizationTeamId: string | null,
+	stoppedAt?: string
+}
+
+export type TTimerStatusParams = {
+	tenantId: string,
+	organizationId: string
+}
+
+export type TTimerStatusResponse = {
+	running?: boolean
+}
+
 export class ApiService {
 	static instance: ApiService;
 	get auth(): Partial<TAuthConfig> {
@@ -70,9 +106,55 @@ export class ApiService {
 		return this.request(uriPath, { method: 'POST', body: payload, headers: {} }, true)
 	}
 
+	get(uriPath: string, params: Record<string, unknown>): Promise<Record<string, unknown>> {
+		return this.request(uriPath, { method: 'GET', headers: {}, params }, false);
+	}
+
 	saveTimeSlot(payload: TTimeSlot): Promise<TResponseTimeSlot> {
 		const path: string = '/api/timesheet/time-slot';
 		return this.post(path, payload);
+	}
+
+	getTimeToggleParams(payload: TToggleParams): TTimerParams {
+		return {
+			description: '',
+			isBillable: true,
+			logType: 'TRACKED',
+			projectId: null,
+			taskId: null,
+			source: 'DESKTOP',
+			manualTimeSlot: null,
+			organizationId: payload.organizationId,
+			tenantId: payload.tenantId,
+			organizationContactId: payload.organizationContactId,
+			isRunning: true,
+			version: null,
+			startedAt: moment(payload.startedAt).utc().toISOString(),
+			organizationTeamId: payload.organizationTeamId
+		};
+	}
+
+	startTimer(payload: TToggleParams) {
+		const path: string = '/api/timesheet/timer/start';
+		const payloadTimer = this.getTimeToggleParams(payload);
+		return this.post(path, payloadTimer);
+	}
+
+	stopTimer(payload: TToggleParams) {
+		const path: string = '/api/timesheet/timer/stop';
+		const payloadTimer = this.getTimeToggleParams(payload);
+		payloadTimer.isRunning = false;
+		payloadTimer.stoppedAt = moment(payload.stoppedAt).utc().toISOString();
+		return this.post(path, payloadTimer);
+	}
+
+	timerStatus(params: TTimerStatusParams): Promise<TTimerStatusResponse> {
+		const path = '/api/timesheet/timer/status';
+		const reqParams = {
+			tenantId: params.tenantId,
+			organizationId: params.organizationId
+		};
+		return this.get(path, reqParams);
 	}
 
 	uploadImages(params: UploadParams, img: any): Promise<Partial<TResponseScreenshot>> {
@@ -93,10 +175,16 @@ export class ApiService {
 			headers?: HeadersInit;
 			method: 'POST' | 'GET';
 			body?: string;
+			params?: any
 		} = { method: 'GET' },
 		isFile?: boolean
 	): Promise<Record<string, unknown>> {
-		const url = this.baseURL + path;
+		let url = this.baseURL + path;
+		if (options.method === 'GET' && options.params) {
+			const uri = new URL(url);
+			uri.search = new URLSearchParams(options.params).toString();
+			url = uri.toString();
+		}
 		const headers = {
 			...(isFile ? this.defaultHeadersForm : this.defaultHeaders),
 			...options.headers
@@ -107,6 +195,8 @@ export class ApiService {
 			: { ...options, headers };
 
 		try {
+			console.log('url', url);
+			console.log('options data', JSON.stringify(requestOptions));
 			const response = await fetch(url, requestOptions);
 			console.log(`API ${options.method} ${path}: ${response.status} ${response.statusText}`);
 			if (!response.ok) {

@@ -102,6 +102,24 @@
 		[ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ALL_ORG_VIEW', 'ORG_TASK_VIEW', 'ORG_TASK_EDIT', 'ORG_TASK_DELETE']"
 	>
 		<div class="btn-group actions">
+			<button
+				nbButton
+				status="basic"
+				class="action"
+				size="small"
+				(click)="toggleFavoriteTask(selectedTask)"
+				[disabled]="disableButton"
+				[nbTooltip]="
+					isFavoriteTask(selectedTask)
+						? ('BUTTONS.REMOVE_FROM_FAVORITES' | translate)
+						: ('BUTTONS.ADD_TO_FAVORITES' | translate)
+				"
+			>
+				<nb-icon
+					[icon]="isFavoriteTask(selectedTask) ? 'star' : 'star-outline'"
+					[status]="isFavoriteTask(selectedTask) ? 'warning' : 'basic'"
+				></nb-icon>
+			</button>
 			<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'ORG_TASK_VIEW']">
 				<button
 					nbButton

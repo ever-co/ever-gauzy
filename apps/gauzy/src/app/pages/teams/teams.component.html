@@ -1,8 +1,4 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="card-custom-header">
 		<div class="card-header-title">
 			<h4>
@@ -21,9 +17,7 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-container
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-		>
+		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 			<div class="table-scroll-container">
 				<angular2-smart-table
 					style="cursor: pointer"
@@ -34,15 +28,11 @@
 			</div>
 			<div class="pagination-container">
 				<ng-container *ngIf="smartTableSource">
-					<ngx-pagination
-						[source]="smartTableSource"
-					></ngx-pagination>
+					<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 				</ng-container>
 			</div>
 		</ng-container>
-		<ng-container
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
-		>
+		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
 			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="smartTableSettings"
@@ -56,24 +46,32 @@
 <ng-template #visibleButton>
 	<ng-template [ngxPermissionsOnly]="['ORG_TEAM_ADD', 'ALL_ORG_EDIT']">
 		<ng-container>
-			<button
-				(click)="openDialog(addEditTemplate, false)"
-				nbButton
-				status="success"
-				class="action"
-				size="small"
-			>
+			<button (click)="openDialog(addEditTemplate, false)" nbButton status="success" class="action" size="small">
 				<nb-icon icon="plus-outline"></nb-icon>
 				{{ 'BUTTONS.ADD' | translate }}
 			</button>
 		</ng-container>
 	</ng-template>
 </ng-template>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
+	<button
+		nbButton
+		status="basic"
+		class="action"
+		size="small"
+		(click)="toggleFavoriteTeam(selectedTeam)"
+		[disabled]="disableButton || !selectedTeam"
+		[nbTooltip]="
+			isFavoriteTeam(selectedTeam)
+				? ('BUTTONS.REMOVE_FROM_FAVORITES' | translate)
+				: ('BUTTONS.ADD_TO_FAVORITES' | translate)
+		"
+	>
+		<nb-icon
+			[icon]="isFavoriteTeam(selectedTeam) ? 'star' : 'star-outline'"
+			[status]="isFavoriteTeam(selectedTeam) ? 'warning' : 'basic'"
+		></nb-icon>
+	</button>
 	<ng-template [ngxPermissionsOnly]="['ORG_TEAM_EDIT', 'ORG_TEAM_DELETE', 'ALL_ORG_EDIT']">
 		<div class="btn-group actions">
 			<ng-template [ngxPermissionsOnly]="['ORG_TEAM_EDIT', 'ALL_ORG_EDIT']">

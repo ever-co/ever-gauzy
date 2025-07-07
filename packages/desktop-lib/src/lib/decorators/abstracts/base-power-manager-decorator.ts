@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron';
-import { IPowerManager, ISleepTracking } from '../../interfaces';
+import { IPowerManager, ITrackingSleep } from '../../interfaces';
 
 export abstract class BasePowerManagerDecorator implements IPowerManager {
 	private readonly _decorator: IPowerManager;
@@ -19,16 +19,25 @@ export abstract class BasePowerManagerDecorator implements IPowerManager {
 	public get trackerStatusActive(): boolean {
 		return this._decorator.trackerStatusActive;
 	}
-	public get sleepTracking(): ISleepTracking {
-		return this._decorator.sleepTracking;
+	public get trackingSleep(): ITrackingSleep {
+		return this._decorator.trackingSleep;
 	}
-	public set sleepTracking(value: ISleepTracking) {
-		this._decorator.sleepTracking = value;
+	public set trackingSleep(value: ITrackingSleep) {
+		this._decorator.trackingSleep = value;
 	}
 	public get window(): BrowserWindow {
 		return this._decorator.window;
 	}
 	public get suspendDetected(): boolean {
 		return this._decorator.suspendDetected;
+	}
+
+	/**
+	 * Dispose and cleanup resources/event handlers
+	 */
+	public dispose(): void {
+		if (typeof this._decorator.dispose === 'function') {
+			this._decorator.dispose();
+		}
 	}
 }

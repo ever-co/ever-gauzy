@@ -176,7 +176,9 @@
 		"READ_MORE": "Mehr lesen",
 		"READ_LESS": "Weniger lesen",
 		"RECOVER": "Wiederherstellen",
-		"ADD_MORE_SOURCES": "Weitere Quellen hinzufügen"
+		"ADD_MORE_SOURCES": "Weitere Quellen hinzufügen",
+		"REMOVE_FROM_FAVORITES": "Aus Favoriten entfernen",
+		"ADD_TO_FAVORITES": "Zu Favoriten hinzufügen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -828,6 +830,7 @@
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Dashboards",
 		"APPOINTMENTS": "Termine",
+		"FAVORITES": "Favoriten",
 		"ACCOUNTING": "Buchhaltung",
 		"INCOME": "Einkommen",
 		"EXPENSES": "Ausgaben",
