@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, combineLatest, from, of, Subject } from 'rxjs';
+import { BehaviorSubject, combineLatest, from, of, Subject, Subscription } from 'rxjs';
 import { catchError, filter, startWith, switchMap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BaseEntityEnum, IFavorite, PermissionsEnum } from '@gauzy/contracts';
@@ -16,6 +16,7 @@ export class FavoriteStoreService {
 	private readonly _favoriteItems$ = new BehaviorSubject<NavMenuSectionItem[]>([]);
 	public readonly favoriteItems$ = this._favoriteItems$.asObservable();
 	private readonly _refresh$ = new Subject<void>();
+	protected _favoriteSubscription?: Subscription;
 
 	constructor(private readonly _favoriteService: FavoriteService, private readonly _store: Store) {
 		this._listenToChangesAndLoadFavorites();
