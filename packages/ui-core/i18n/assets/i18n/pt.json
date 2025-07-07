@@ -176,7 +176,9 @@
 		"READ_MORE": "Ler mais",
 		"READ_LESS": "Ler menos",
 		"RECOVER": "Recuperar",
-		"ADD_MORE_SOURCES": "Adicionar mais fontes"
+		"ADD_MORE_SOURCES": "Adicionar mais fontes",
+		"REMOVE_FROM_FAVORITES": "Remover dos favoritos",
+		"ADD_TO_FAVORITES": "Adicionar aos favoritos"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -828,6 +830,7 @@
 		"DASHBOARD": "Painel de Controle",
 		"DASHBOARDS": "Painéis de controle",
 		"APPOINTMENTS": "Consultas",
+		"FAVORITES": "Favoritos",
 		"ACCOUNTING": "Contabilidade",
 		"INCOME": "Rendimento",
 		"EXPENSES": "Despesas",

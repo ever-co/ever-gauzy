@@ -175,7 +175,9 @@
 		"READ_MORE": "קרא עוד",
 		"READ_LESS": "קרא פחות",
 		"RECOVER": "שחזר",
-		"ADD_MORE_SOURCES": "הוסף יותר מקורות"
+		"ADD_MORE_SOURCES": "הוסף מקורות נוספים",
+		"REMOVE_FROM_FAVORITES": "הסר מהמועדפים",
+		"ADD_TO_FAVORITES": "הוסף למועדפים"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -832,6 +834,7 @@
 		"DASHBOARD": "לוח מחוונים",
 		"DASHBOARDS": "Dashboards",
 		"APPOINTMENTS": "Appointments",
+		"FAVORITES": "מועדפים",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "הכנסה",
 		"EXPENSES": "הוצאות",
