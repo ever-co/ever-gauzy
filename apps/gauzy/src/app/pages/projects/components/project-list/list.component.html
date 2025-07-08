@@ -64,6 +64,26 @@
 
 <!-- Actions Button -->
 <ng-template #actionButtons>
+	<!-- Favorite Button: Add or remove project from favorites -->
+	<button
+		type="button"
+		nbButton
+		status="basic"
+		size="small"
+		(click)="toggleFavoriteProject(selectedProject)"
+		[disabled]="!selectedProject || disableButton"
+		[nbTooltip]="
+			isFavoriteProject(selectedProject)
+				? ('BUTTONS.REMOVE_FROM_FAVORITES' | translate)
+				: ('BUTTONS.ADD_TO_FAVORITES' | translate)
+		"
+	>
+		<nb-icon
+			[icon]="isFavoriteProject(selectedProject) ? 'star' : 'star-outline'"
+			[status]="isFavoriteProject(selectedProject) ? 'warning' : 'basic'"
+		></nb-icon>
+	</button>
+
 	<ng-template
 		[ngxPermissionsOnly]="[
 			PermissionsEnum.ALL_ORG_EDIT,

@@ -120,6 +120,25 @@
 <!-- Action Buttons -->
 <ng-template #actionButtons let-selectedItem>
 	<div class="btn-group actions">
+		<!-- Favorite Button: Add or remove employee from favorites -->
+		<button
+			nbButton
+			status="basic"
+			class="action"
+			size="small"
+			(click)="toggleFavoriteEmployee(selectedItem)"
+			[disabled]="!selectedEmployee || disabledButton"
+			[nbTooltip]="
+				isFavoriteEmployee(selectedEmployee)
+					? ('BUTTONS.REMOVE_FROM_FAVORITES' | translate)
+					: ('BUTTONS.ADD_TO_FAVORITES' | translate)
+			"
+		>
+			<nb-icon
+				[icon]="isFavoriteEmployee(selectedEmployee) ? 'star' : 'star-outline'"
+				[status]="isFavoriteEmployee(selectedEmployee) ? 'warning' : 'basic'"
+			></nb-icon>
+		</button>
 		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ORG_EMPLOYEES_VIEW]">
 			<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_VIEW">
 				<button status="basic" class="action secondary" size="small" nbButton underConstruction>
