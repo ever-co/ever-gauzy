@@ -26,6 +26,13 @@ export type TKbMouseActivity = {
 	mouseEvents: TMouseEvents[]
 }
 
+export enum TimeLogType {
+    TRACKED = "TRACKED",
+    MANUAL = "MANUAL",
+    IDLE = "IDLE",
+    RESUMED = "RESUMED"
+}
+
 export enum ActivityType {
 	URL = 'URL',
 	APP = 'APP'

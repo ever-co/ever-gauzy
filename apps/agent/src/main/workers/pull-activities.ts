@@ -199,7 +199,11 @@ class PullActivities {
 	}
 
 	async collectActivityWindow() {
-		await this.activityWindow.getActiveWindowAndSetDuration();
+		try {
+			await this.activityWindow.getActiveWindowAndSetDuration();
+		} catch (error) {
+			this.agentLogger.error(`Active window collection failed: ${error.message}`);
+		}
 	}
 
 	getTimerModule() {

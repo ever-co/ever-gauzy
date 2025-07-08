@@ -9,7 +9,6 @@ import {
 	TranslateService
 } from '@gauzy/desktop-lib';
 import {
-	delaySync,
 	getApiBaseUrl,
 	getAuthConfig,
 	getTrayIcon
@@ -23,6 +22,7 @@ import EventHandler from '../events/event-handler';
 import { environment } from '../../environments/environment';
 import MainEvent from '../events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
+import { handleSplashScreen } from './splash';
 
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
@@ -68,18 +68,6 @@ function launchAtStartup(autoLaunch: boolean, hidden: boolean) {
 			break;
 		default:
 			break;
-	}
-}
-
-async function handleSplashScreen() {
-	try {
-		await appWindow.initSplashScreenWindow();
-		await appWindow.splashScreenWindow.loadURL();
-		appWindow.splashScreenWindow.show();
-		await delaySync(2000);
-	} catch (error) {
-		console.log('error splashScreenWindow', error);
-		// ignore error splashScreen
 	}
 }
 

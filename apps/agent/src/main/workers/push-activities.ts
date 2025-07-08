@@ -196,7 +196,7 @@ class PushActivities {
 
 	getKeyboardActivities(activities: KbMouseActivityTO, duration: number, auth: TAuthConfig): TParamsActivities[] {
 		return [{
-			title: 'Keyboar and Mouse',
+			title: 'Keyboard and Mouse',
 			duration: duration,
 			projectId: null,
 			taskId: null,
@@ -211,28 +211,28 @@ class PushActivities {
 			metaData: [{
 				kbPressCount: activities.kbPressCount,
 				kbSequence: (typeof activities.kbSequence === 'string'
-				? (() => {
-					try {
-						return JSON.parse(activities.kbSequence);
-					} catch (error) {
-						console.error('Failed to parse kbSequence:', error);
-						return [];
-					}
-				})()
-				: activities.kbSequence) as number[],
+					? (() => {
+						try {
+							return JSON.parse(activities.kbSequence);
+						} catch (error) {
+							console.error('Failed to parse kbSequence:', error);
+							return [];
+						}
+					})()
+					: activities.kbSequence) as number[],
 				mouseLeftClickCount: activities.mouseLeftClickCount,
 				mouseRightClickCount: activities.mouseRightClickCount,
 				mouseMovementsCount: activities.mouseMovementsCount,
 				mouseEvents: (typeof activities.mouseEvents === 'string'
-				? (() => {
-					try {
-						return JSON.parse(activities.mouseEvents);
-					} catch (error) {
-						console.error('Failed to parse mouseEvents:', error);
-						return [];
-					}
-				})()
-				: activities.mouseEvents) as TMouseEvents[]
+					? (() => {
+						try {
+							return JSON.parse(activities.mouseEvents);
+						} catch (error) {
+							console.error('Failed to parse mouseEvents:', error);
+							return [];
+						}
+					})()
+					: activities.mouseEvents) as TMouseEvents[]
 			}]
 		}];
 	}
@@ -310,7 +310,7 @@ class PushActivities {
 			overall,
 			startedAt: moment(activities.timeStart).toISOString(),
 			recordedAt: moment(activities.timeStart).toISOString(),
-			activities: this.getActivities(activities, duration, auth),
+			activities: this.getActivities(activities, overall, auth),
 			employeeId: auth?.user?.employee?.id
 		};
 	}

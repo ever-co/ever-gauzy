@@ -63,19 +63,18 @@ export class ActivityWindow {
 	}
 
 	public async getActiveWindowAndSetDuration() {
-		const currentActiveWidow = await this.getActiveWindow();
-		if (currentActiveWidow) {
+		const currentActiveWindow = await this.getActiveWindow();
+		if (currentActiveWindow) {
 			this.updateWindowActivities({
-				name: currentActiveWidow.owner.name,
+				name: currentActiveWindow.owner.name,
 				duration: 1, // value 1, method run every second
 				dateEnd: new Date(),
 				dateStart: new Date(),
 				meta: [
 					{
-						title: currentActiveWidow.title,
-						url: currentActiveWidow.platform === 'macos' ? currentActiveWidow.url : '',
-						platform: currentActiveWidow.platform
-
+						title: currentActiveWindow.title,
+						url: currentActiveWindow.platform === 'macos' ? currentActiveWindow.url : '',
+						platform: currentActiveWindow.platform
 					}
 				]
 			});
