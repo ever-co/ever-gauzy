@@ -8,35 +8,55 @@ import {
 	OnInit,
 	Output
 } from '@angular/core';
-import { Subject } from 'rxjs';
-import { debounceTime, take, tap } from 'rxjs/operators';
+import * as moment from 'moment';
+import { BehaviorSubject, combineLatest, of, Subject, Subscription, timer } from 'rxjs';
+import { debounceTime, filter, switchMap, take, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
 import { Options, ChangeContext } from '@angular-slider/ngx-slider';
-import { ITimeLogFilters, PermissionsEnum, TimeFormatEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import {
+	ICountsStatistics,
+	IDateRangePicker,
+	IGetCountsStatistics,
+	IOrganization,
+	ITimeLogFilters,
+	ITimeLogTodayFilters,
+	PermissionsEnum,
+	TimeFormatEnum,
+	TimeLogSourceEnum,
+	TimeLogType
+} from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ActivityLevel, TimesheetFilterService } from '@gauzy/ui-core/core';
+import {
+	ActivityLevel,
+	DateRangePickerBuilderService,
+	Store,
+	TimesheetFilterService,
+	TimesheetStatisticsService,
+	ToastrService
+} from '@gauzy/ui-core/core';
+import { distinctUntilChange, isNotEmpty, toUtcOffset } from '@gauzy/ui-core/common';
+import { TimeZoneService } from './timezone-filter';
+import { getAdjustDateRangeFutureAllowed } from '../../selectors';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-gauzy-filters',
-    templateUrl: './gauzy-filters.component.html',
-    styleUrls: ['./gauzy-filters.component.scss'],
-    standalone: false
+	selector: 'ngx-gauzy-filters',
+	templateUrl: './gauzy-filters.component.html',
+	styleUrls: ['./gauzy-filters.component.scss'],
+	standalone: false
 })
 export class GauzyFiltersComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	// declaration of variables
 	public PermissionsEnum = PermissionsEnum;
 	public TimeLogType = TimeLogType;
 	public TimeLogSourceEnum = TimeLogSourceEnum;
-
-	@Input() saveFilters = true;
-	@Input() hasLogTypeFilter = true;
-	@Input() hasSourceFilter = true;
-	@Input() hasActivityLevelFilter = true;
-	@Input() hasTimeZoneFilter = true;
-
+	public counts: ICountsStatistics;
+	public organization: IOrganization;
+	public employeeIds: string[] = [];
+	public projectIds: string[] = [];
+	public teamIds: string[] = [];
 	public hasFilterApplies: boolean;
 	public activityLevel = ActivityLevel;
 	public sliderOptions: Partial<Options> = {
@@ -45,6 +65,30 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 		step: 5
 	};
 	public readonly timeLogSourceSelectors = this.getTimeLogSourceSelectors();
+
+	public payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+	public logs$: Subject<any> = new Subject();
+
+	private autoRefresh$: Subscription;
+
+	private _selectedDateRange: IDateRangePicker;
+	get selectedDateRange(): IDateRangePicker {
+		return this._selectedDateRange;
+	}
+	set selectedDateRange(range: IDateRangePicker) {
+		if (isNotEmpty(range)) {
+			this._selectedDateRange = range;
+		}
+	}
+
+	@Input() saveFilters = true;
+	@Input() hasLogTypeFilter = true;
+	@Input() hasSourceFilter = true;
+	@Input() hasActivityLevelFilter = true;
+	@Input() hasTimeZoneFilter = true;
+	@Input() hasWorkedPerDay = false;
+	@Input() hasWorkedPerWeek = false;
+	@Input() isTimeFormat = false;
 
 	/*
 	 * Getter & Setter for dynamic enabled/disabled element
@@ -69,7 +113,6 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 		}
 		this.cd.detectChanges();
 	}
-	@Input() isTimeFormat: boolean = false;
 
 	@Output() filtersChange: EventEmitter<ITimeLogFilters> = new EventEmitter();
 
@@ -79,7 +122,12 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	constructor(
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly cd: ChangeDetectorRef,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
+		private readonly store: Store,
+		private readonly timesheetStatisticsService: TimesheetStatisticsService,
+		private readonly toastrService: ToastrService,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly timeZoneService: TimeZoneService
 	) {
 		super(translateService);
 	}
@@ -104,11 +152,138 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.logs$
+			.pipe(
+				debounceTime(200),
+				tap(async () => await this.getStatistics()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.payloads$
+			.pipe(
+				debounceTime(200),
+				distinctUntilChange(),
+				filter((payloads: ITimeLogFilters) => !!payloads),
+				tap(() => this.logs$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
+		const timeZone$ = this.timeZoneService.timeZone$.pipe(filter((timeZone: string) => !!timeZone));
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeTeam$ = this.store.selectedTeam$;
+		const storeProject$ = this.store.selectedProject$;
+		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
+
+		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$, storeProject$, storeTeam$, timeZone$])
+			.pipe(
+				distinctUntilChange(),
+				debounceTime(500),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				switchMap(([organization, dateRange, employee, project, team]) => {
+					this.organization = organization;
+					this.selectedDateRange = dateRange;
+					return combineLatest([of(employee), of(project), of(team)]);
+				}),
+				filter(([employee]) => !!employee),
+				tap(([employee, project, team]) => {
+					this.employeeIds = employee ? [employee.id] : [];
+					this.projectIds = project ? [project.id] : [];
+					this.teamIds = team ? [team.id] : [];
+				}),
+				tap(() => this.preparePayloads()),
+				tap(() => this.setAutoRefresh(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 		this.triggerFilterChange();
 		this.cd.detectChanges();
+	}
+
+	/**
+	 * Fetches statistics for the current organization
+	 */
+	async getStatistics() {
+		if (!this.organization) {
+			return;
+		}
+		await this.getCounts();
+	}
+
+	/**
+	 * Fetches the counts statistics.
+	 *
+	 * @returns Promise<void>
+	 */
+	async getCounts(): Promise<void> {
+		try {
+			const request: IGetCountsStatistics = this.payloads$.getValue();
+			this.counts = await this.timesheetStatisticsService.getCounts(request);
+		} catch (error) {
+			this.toastrService.error(error.message || 'An error occurred while fetching counts.');
+		}
+	}
+
+	/**
+	 * Prepare Unique Payloads
+	 *
+	 * @returns
+	 */
+	preparePayloads() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { employeeIds, projectIds, teamIds, selectedDateRange } = this;
+		const { id: organizationId, tenantId } = this.organization;
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
+		const timeZone = this.timeZoneService.currentTimeZone;
+
+		const request: ITimeLogFilters & ITimeLogTodayFilters = {
+			tenantId,
+			organizationId,
+			todayStart: toUtcOffset(moment().startOf('day'), timeZone).format('YYYY-MM-DD HH:mm:ss'),
+			todayEnd: toUtcOffset(moment().endOf('day'), timeZone).format('YYYY-MM-DD HH:mm:ss'),
+			startDate: toUtcOffset(startDate, timeZone).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUtcOffset(endDate, timeZone).format('YYYY-MM-DD HH:mm:ss'),
+			timeZone
+		};
+
+		if (isNotEmpty(employeeIds)) {
+			request['employeeIds'] = employeeIds;
+		}
+		if (isNotEmpty(projectIds)) {
+			request['projectIds'] = projectIds;
+		}
+		if (isNotEmpty(teamIds)) {
+			request['teamIds'] = teamIds;
+		}
+
+		this.payloads$.next(request);
+	}
+
+	/**
+	 * Sets the auto refresh functionality.
+	 *
+	 * @param value - Determines if auto refresh should be enabled.
+	 */
+	setAutoRefresh(value: boolean) {
+		if (this.autoRefresh$) {
+			this.autoRefresh$.unsubscribe();
+		}
+		if (value) {
+			this.autoRefresh$ = timer(0, 60000 * 5)
+				.pipe(
+					filter((timer) => !!timer),
+					tap(() => this.logs$.next(true)),
+					untilDestroyed(this)
+				)
+				.subscribe();
+		}
 	}
 
 	/**

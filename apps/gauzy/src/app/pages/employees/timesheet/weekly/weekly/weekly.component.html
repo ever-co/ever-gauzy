@@ -19,6 +19,7 @@
 			</div>
 			<ngx-gauzy-filters
 				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+				[hasWorkedPerWeek]="true"
 				(filtersChange)="filtersChange($event)"
 			></ngx-gauzy-filters>
 		</div>

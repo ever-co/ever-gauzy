@@ -1,6 +1,20 @@
 <div class="row col-auto main-wrapper">
 	<div class="col-auto ml-auto">
 		<div class="row filter-item-list align-items-end">
+			<ng-container *ngIf="hasWorkedPerDay || hasWorkedPerWeek">
+				<div class="worked-per-period-counter-wrapper">
+					<div class="worked-per-period-title">
+						{{
+							hasWorkedPerDay
+								? ('TIMESHEET.WORKED_FOR_DAY' | translate)
+								: ('TIMESHEET.WORKED_FOR_WEEK' | translate)
+						}}:
+					</div>
+					<div class="worked-per-period-counter">
+						{{ counts?.weekDuration || 0 | durationFormat }}
+					</div>
+				</div>
+			</ng-container>
 			<ng-container *ngIf="hasTimeZoneFilter">
 				<div class="col-auto single-filter-wrapper">
 					<ga-timezone-filter
