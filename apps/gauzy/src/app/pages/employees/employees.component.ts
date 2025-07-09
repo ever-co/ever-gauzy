@@ -1053,48 +1053,12 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	/**
-	 * Checks if an employee is a favorite in the local list using the generic service.
-	 * @param employee The employee to check.
+	 * Handle employee favorite toggle event from the new component
 	 */
-	isFavoriteEmployee(employee: EmployeeViewModel): boolean {
-		if (!employee) return false;
-		return this.genericFavoriteService.isFavorite(employee.id, BaseEntityEnum.Employee, this.favoriteEmployees);
-	}
-
-	/**
-	 * Finds the favorite object for a given employee in the local list using the generic service.
-	 * @param employee The employee to check.
-	 */
-	getFavoriteForEmployee(employee: EmployeeViewModel): IFavorite | undefined {
-		if (!employee) return;
-		return this.genericFavoriteService.getFavoriteForEntity(
-			employee.id,
-			BaseEntityEnum.Employee,
-			this.favoriteEmployees
-		);
-	}
-
-	/**
-	 * Adds or removes an employee from favorites using the generic service.
-	 * @param employee The employee to add or remove.
-	 */
-	async toggleFavoriteEmployee(employee: EmployeeViewModel) {
-		if (!employee) return;
-		if (!this.organization) return;
-		try {
-			await this.genericFavoriteService.toggleFavorite(
-				BaseEntityEnum.Employee,
-				employee.id,
-				this.organization,
-				this._store.user?.employee?.id,
-				this.favoriteEmployees
-			);
-			// Refresh the local list after modification
-			await this.loadFavoriteEmployees();
-		} catch (error) {
-			console.error('Error toggling favorite employee:', error);
-			this._errorHandlingService.handleError(error);
-		}
+	onEmployeeFavoriteToggled(event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		console.log('Employee favorite toggled:', event);
+		// Reload favorites to keep the list in sync
+		this.loadFavoriteEmployees();
 	}
 
 	ngOnDestroy(): void {}

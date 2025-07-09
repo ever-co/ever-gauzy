@@ -90,23 +90,18 @@
 </nb-card>
 <ng-template #actionButtons let-selectedItem="selectedItem">
 	<div class="btn-group actions">
-		<button
-			nbButton
-			[disabled]="!selectedItem || disableButton"
-			(click)="toggleFavoriteCandidate(selectedItem)"
+		<ngx-favorite-toggle
+			*ngIf="selectedItem"
+			[entityType]="'Candidate'"
+			[entityId]="selectedItem.id"
+			[entityName]="selectedItem.user?.name || selectedItem.user?.firstName + ' ' + selectedItem.user?.lastName"
 			size="small"
-			class="action"
-			[nbTooltip]="
-				isFavoriteCandidate(selectedItem)
-					? ('BUTTONS.REMOVE_FROM_FAVORITES' | translate)
-					: ('BUTTONS.ADD_TO_FAVORITES' | translate)
-			"
-		>
-			<nb-icon
-				[icon]="isFavoriteCandidate(selectedItem) ? 'star' : 'star-outline'"
-				[status]="isFavoriteCandidate(selectedItem) ? 'warning' : 'basic'"
-			></nb-icon>
-		</button>
+			status="basic"
+			spacing="list"
+			[disabled]="disableButton"
+			[showLabel]="false"
+			(favoriteToggled)="onCandidateFavoriteToggled($event)"
+		></ngx-favorite-toggle>
 		<ng-template ngxPermissionsOnly="ORG_CANDIDATES_EDIT">
 			<button
 				nbButton
