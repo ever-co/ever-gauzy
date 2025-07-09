@@ -1,7 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
-	BaseEntityEnum,
 	IEmployee,
 	IFavorite,
 	IOrganization,

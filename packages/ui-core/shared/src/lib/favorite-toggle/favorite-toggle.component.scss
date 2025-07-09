@@ -1,6 +1,6 @@
 .favorite-toggle-button {
   transition: all 0.2s ease-in-out;
-  margin: 0 0.25rem; // Ajoute un espacement horizontal
+  margin: 0 0.25rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -30,13 +30,11 @@
   }
 }
 
-// Classe spécifique pour les pages de détails avec plus d'espacement
 .favorite-toggle-detail {
   margin-left: 1rem;
   margin-right: 0.5rem;
 }
 
-// Classe spécifique pour les listes avec espacement réduit
 .favorite-toggle-list {
   margin: 0 0.125rem;
 }

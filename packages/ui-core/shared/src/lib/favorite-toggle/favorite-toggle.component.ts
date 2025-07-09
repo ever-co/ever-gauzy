@@ -20,15 +20,15 @@ export class FavoriteToggleComponent extends TranslationBaseComponent implements
 	@Input() entityName?: string;
 	@Input() size: 'tiny' | 'small' | 'medium' | 'large' | 'giant' = 'small';
 	@Input() status: 'basic' | 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'control' = 'basic';
-	@Input() disabled: boolean = false;
-	@Input() showLabel: boolean = false;
+	@Input() disabled = false;
+	@Input() showLabel = false;
 	@Input() spacing: 'default' | 'detail' | 'list' = 'default';
 
 	@Output() favoriteToggled = new EventEmitter<{ isFavorite: boolean; favorite?: IFavorite }>();
 
 	public organization: IOrganization;
 	public favorites: IFavorite[] = [];
-	public loading: boolean = false;
+	public loading = false;
 
 	constructor(
 		public readonly translateService: TranslateService,
