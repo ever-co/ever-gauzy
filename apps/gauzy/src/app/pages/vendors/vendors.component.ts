@@ -515,51 +515,12 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 	}
 
 	/**
-	 * Checks if a vendor is a favorite in the local list using the generic service.
-	 * @param vendor The vendor to check.
+	 * Handle vendor favorite toggle event from the new component
 	 */
-	isFavoriteVendor(vendor: IOrganizationVendor): boolean {
-		if (!vendor) return false;
-		return this.genericFavoriteService.isFavorite(
-			vendor.id,
-			BaseEntityEnum.OrganizationVendor,
-			this.favoriteVendors
-		);
-	}
-
-	/**
-	 * Finds the favorite object for a given vendor in the local list using the generic service.
-	 * @param vendor The vendor to check.
-	 */
-	getFavoriteForVendor(vendor: IOrganizationVendor): IFavorite | undefined {
-		if (!vendor) return;
-		return this.genericFavoriteService.getFavoriteForEntity(
-			vendor.id,
-			BaseEntityEnum.OrganizationVendor,
-			this.favoriteVendors
-		);
-	}
-
-	/**
-	 * Adds or removes a vendor from favorites using the generic service.
-	 * @param vendor The vendor to add or remove.
-	 */
-	async toggleFavoriteVendor(vendor: IOrganizationVendor) {
-		if (!vendor) return;
-		try {
-			await this.genericFavoriteService.toggleFavorite(
-				BaseEntityEnum.OrganizationVendor,
-				vendor.id,
-				this.organization,
-				this.store.user?.employee?.id,
-				this.favoriteVendors
-			);
-			// Refresh the local list after modification
-			await this.loadFavoriteVendors();
-		} catch (error) {
-			console.error('Error toggling favorite vendor:', error);
-			this.errorHandlingService.handleError(error);
-		}
+	onVendorFavoriteToggled(event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		console.log('Vendor favorite toggled:', event);
+		// Reload favorites to keep the list in sync
+		this.loadFavoriteVendors();
 	}
 
 	ngOnDestroy(): void {}
