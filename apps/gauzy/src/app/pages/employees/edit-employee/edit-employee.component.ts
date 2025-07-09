@@ -17,7 +17,7 @@ import {
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ALL_EMPLOYEES_SELECTED } from '@gauzy/ui-core/shared';
-import { ErrorHandlingService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,7 +38,6 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 		public readonly translateService: TranslateService,
 		private readonly cdr: ChangeDetectorRef,
 		private readonly _urlSerializer: UrlSerializer,
-		private readonly toastrService: ToastrService,
 		private readonly _location: Location,
 		private readonly _errorHandlingService: ErrorHandlingService
 	) {
@@ -159,20 +158,8 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 	/**
 	 * Handle favorite toggle event
 	 */
-	onFavoriteToggled(event: { isFavorite: boolean; favorite?: IFavorite }): void {
-		if (event.isFavorite) {
-			this.toastrService.success(
-				this.getTranslation('TOASTR.MESSAGE.FAVORITE_ADDED', {
-					name: this.selectedEmployee?.user?.name || 'Employee'
-				})
-			);
-		} else {
-			this.toastrService.success(
-				this.getTranslation('TOASTR.MESSAGE.FAVORITE_REMOVED', {
-					name: this.selectedEmployee?.user?.name || 'Employee'
-				})
-			);
-		}
+	onFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// The FavoriteToggleComponent already shows success/error messages
 	}
 
 	ngOnDestroy() {
