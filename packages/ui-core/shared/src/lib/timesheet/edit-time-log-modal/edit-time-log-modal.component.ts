@@ -20,7 +20,14 @@ import {
 	IEmployee
 } from '@gauzy/contracts';
 import { toUTC, toLocal, distinctUntilChange } from '@gauzy/ui-core/common';
-import { Store, TimeLogEventService, TimesheetService, TimeTrackerService, ToastrService } from '@gauzy/ui-core/core';
+import {
+	DateRangePickerBuilderService,
+	Store,
+	TimeLogEventService,
+	TimesheetService,
+	TimeTrackerService,
+	ToastrService
+} from '@gauzy/ui-core/core';
 import { DurationFormatPipe } from '../../pipes';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -59,7 +66,6 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	selectedReason = '';
 	selectedRangeSubscription: Subscription;
 	isTimeRangeValid = true;
-	limitReached = false;
 	hasPermission = false;
 
 	// Time log state management
@@ -106,7 +112,8 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		private readonly _timeTrackerService: TimeTrackerService,
 		private readonly _durationFormatPipe: DurationFormatPipe,
 		public readonly _translateService: TranslateService,
-		public readonly _timeLogEventService: TimeLogEventService
+		public readonly _timeLogEventService: TimeLogEventService,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {}
 
 	ngOnInit() {
@@ -174,7 +181,6 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		combineLatest([this.workedThisWeek$, this.reWeeklyLimit$])
 			.pipe(takeUntil(this.destroy$))
 			.subscribe(([workedThisWeek, reWeeklyLimit]) => {
-				this.limitReached = this._timeTrackerService.hasReachedWeeklyLimit();
 				this.workedThisWeek = this._durationFormatPipe.transform(workedThisWeek);
 				this.reWeeklyLimit = this._durationFormatPipe.transform(Math.trunc(reWeeklyLimit * 3600));
 				this.timerStatusWithWeeklyLimits = { workedThisWeek, reWeeklyLimit };
@@ -385,11 +391,13 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	async addTime(): Promise<void> {
 		const newWorkedTime = this.timerStatusWithWeeklyLimits.workedThisWeek - this.originalTimeDiff + this.timeDiff;
 		const isEditing = !!this.timeLog?.id;
+		const isCurrentWeekSelected = this._timeTrackerService.isCurrentWeekSelected(this.selectedRange);
 		if (this.loading || this.isButtonDisabled) return;
 
 		if (
 			isEditing &&
 			!this.hasPermission &&
+			isCurrentWeekSelected &&
 			this.timeDiff > this.originalTimeDiff &&
 			newWorkedTime > Math.trunc(this.timerStatusWithWeeklyLimits.reWeeklyLimit * 3600)
 		) {
@@ -400,6 +408,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		if (
 			!isEditing &&
 			!this.hasPermission &&
+			isCurrentWeekSelected &&
 			this.timeDiff + this.timerStatusWithWeeklyLimits.workedThisWeek >
 				Math.trunc(this.timerStatusWithWeeklyLimits.reWeeklyLimit * 3600)
 		) {
@@ -407,13 +416,13 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 			return;
 		}
 
+		// Extract necessary data from the store and the form
+		const { employee } = this._store.user;
+		const { id: organizationId, tenantId } = this.organization;
+		const { start, end } = this.selectedRange;
+
 		try {
 			this.loading = true;
-
-			// Extract necessary data from the store and the form
-			const { employee } = this._store.user;
-			const { id: organizationId, tenantId } = this.organization;
-			const { start, end } = this.selectedRange;
 
 			const startedAt = toUTC(start).toDate();
 			const stoppedAt = toUTC(end).toDate();
@@ -441,6 +450,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 			if (
 				isCurrentUser &&
 				isEditing &&
+				isCurrentWeekSelected &&
 				this.hasPermission &&
 				this.timeDiff > this.originalTimeDiff &&
 				newWorkedTime > Math.trunc(this.timerStatusWithWeeklyLimits.reWeeklyLimit * 3600)
@@ -452,6 +462,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 			if (
 				isCurrentUser &&
 				!isEditing &&
+				isCurrentWeekSelected &&
 				this.hasPermission &&
 				this.timeDiff + this.timerStatusWithWeeklyLimits.workedThisWeek >
 					Math.trunc(this.timerStatusWithWeeklyLimits.reWeeklyLimit * 3600)
@@ -477,7 +488,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		} catch (error) {
 			// Handle errors and show error notification
 			if (error.error?.message === TimeErrorsEnum.WEEKLY_LIMIT_REACHED) {
-				const selectedEmployee = this.selectedEmployee ?? this.timeLog?.employee;
+				const selectedEmployee = (this.selectedEmployee ?? this.timeLog?.employee) || employee;
 				const hoursLabel =
 					selectedEmployee?.reWeeklyLimit === 1
 						? this._translateService.instant('TOASTR.MESSAGE.HOUR')

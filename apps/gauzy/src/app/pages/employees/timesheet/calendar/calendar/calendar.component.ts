@@ -31,6 +31,7 @@ import {
 } from '@gauzy/ui-core/core';
 import { isEmpty, toTimezone } from '@gauzy/ui-core/common';
 import {
+	IDateRangePicker,
 	IGetTimeLogInput,
 	ITimeLog,
 	ITimeLogFilters,
@@ -63,6 +64,8 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	private readonly workedThisWeek$: Observable<number> = this.timeTrackerService.workedThisWeek$;
 	private readonly reWeeklyLimit$: Observable<number> = this.timeTrackerService.reWeeklyLimit$;
 	private readonly destroy$ = new Subject<void>();
+	private readonly selectedDateRange$: Observable<IDateRangePicker | null> =
+		this.dateRangePickerBuilderService.selectedDateRange$;
 
 	PermissionsEnum = PermissionsEnum;
 	calendarComponent: FullCalendarComponent; // the #calendar in the template
@@ -124,10 +127,14 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 			)
 			.subscribe();
 
-		combineLatest([this.workedThisWeek$, this.reWeeklyLimit$])
+		combineLatest([this.selectedDateRange$, this.workedThisWeek$, this.reWeeklyLimit$])
 			.pipe(takeUntil(this.destroy$))
-			.subscribe(() => {
-				this.limitReached = this.timeTrackerService.hasReachedWeeklyLimit();
+			.subscribe(([selectedDateRange]) => {
+				if (this.timeTrackerService.isCurrentWeekSelected(selectedDateRange)) {
+					this.limitReached = this.timeTrackerService.hasReachedWeeklyLimit();
+				} else {
+					this.limitReached = false;
+				}
 			});
 	}
 

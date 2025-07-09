@@ -1,10 +1,17 @@
 import { Component, OnInit, Input, OnDestroy, Output } from '@angular/core';
-import { IOrganization, ITimeLog, PermissionsEnum, TimeLogPartialStatus, TimeLogSourceEnum } from '@gauzy/contracts';
+import {
+	IDateRangePicker,
+	IOrganization,
+	ITimeLog,
+	PermissionsEnum,
+	TimeLogPartialStatus,
+	TimeLogSourceEnum
+} from '@gauzy/contracts';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
-import { Store, TimeTrackerService, TimesheetService } from '@gauzy/ui-core/core';
+import { DateRangePickerBuilderService, Store, TimeTrackerService, TimesheetService } from '@gauzy/ui-core/core';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
 import { ViewTimeLogModalComponent } from './../view-time-log-modal';
 import { combineLatest, Observable, Subject, takeUntil } from 'rxjs';
@@ -31,12 +38,15 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	private readonly workedThisWeek$: Observable<number> = this.timeTrackerService.workedThisWeek$;
 	private readonly reWeeklyLimit$: Observable<number> = this.timeTrackerService.reWeeklyLimit$;
 	private readonly destroy$ = new Subject<void>();
+	private readonly selectedDateRange$: Observable<IDateRangePicker | null> =
+		this.dateRangePickerBuilderService.selectedDateRange$;
 
 	constructor(
 		private readonly nbDialogService: NbDialogService,
 		private readonly timesheetService: TimesheetService,
 		private readonly store: Store,
-		private readonly timeTrackerService: TimeTrackerService
+		private readonly timeTrackerService: TimeTrackerService,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {}
 
 	ngOnInit(): void {
@@ -49,10 +59,14 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 			)
 			.subscribe();
 
-		combineLatest([this.workedThisWeek$, this.reWeeklyLimit$])
+		combineLatest([this.selectedDateRange$, this.workedThisWeek$, this.reWeeklyLimit$])
 			.pipe(takeUntil(this.destroy$))
-			.subscribe(() => {
-				this.limitReached = this.timeTrackerService.hasReachedWeeklyLimit();
+			.subscribe(([selectedDateRange]) => {
+				if (this.timeTrackerService.isCurrentWeekSelected(selectedDateRange)) {
+					this.limitReached = this.timeTrackerService.hasReachedWeeklyLimit();
+				} else {
+					this.limitReached = false;
+				}
 			});
 	}
 

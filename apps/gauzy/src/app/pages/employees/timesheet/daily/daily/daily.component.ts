@@ -28,7 +28,8 @@ import {
 	ITimeLogFilters,
 	TimeLogSourceEnum,
 	TimeLogPartialStatus,
-	IDeleteTimeLogData
+	IDeleteTimeLogData,
+	IDateRangePicker
 } from '@gauzy/contracts';
 import {
 	DateRangePickerBuilderService,
@@ -76,6 +77,8 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 
 	// BehaviorSubject holding the time log filters as payloads.
 	private readonly payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+	private readonly selectedDateRange$: Observable<IDateRangePicker | null> =
+		this.dateRangePickerBuilderService.selectedDateRange$;
 
 	// Declare a subject to trigger refresh
 	private readonly refreshTrigger$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
@@ -115,10 +118,14 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 		this._handleUpdateLogSubscriber();
 		this._handleRefreshDailyLogs();
 		this._getDailyTimesheetLogs();
-		combineLatest([this.workedThisWeek$, this.reWeeklyLimit$])
+		combineLatest([this.selectedDateRange$, this.workedThisWeek$, this.reWeeklyLimit$])
 			.pipe(takeUntil(this.destroy$))
-			.subscribe(() => {
-				this.limitReached = this._timeTrackerService.hasReachedWeeklyLimit();
+			.subscribe(([selectedDateRange]) => {
+				if (this._timeTrackerService.isCurrentWeekSelected(selectedDateRange)) {
+					this.limitReached = this._timeTrackerService.hasReachedWeeklyLimit();
+				} else {
+					this.limitReached = false;
+				}
 			});
 	}
 
@@ -339,6 +346,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 				}),
 				// Tap to notify subscribers
 				tap(() => this.refreshTrigger$.next(true)),
+				tap(() => this.gauzyFiltersComponent.getStatistics()),
 				// Ensure lifecycle management to avoid memory leaks
 				untilDestroyed(this)
 			)
@@ -366,6 +374,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 				}),
 				// Tap to notify subscribers
 				tap(() => this.refreshTrigger$.next(true)),
+				tap(() => this.gauzyFiltersComponent.getStatistics()),
 				// Ensure lifecycle management to avoid memory leaks
 				untilDestroyed(this)
 			)
@@ -391,6 +400,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 			)
 			.subscribe(() => {
 				this.refreshTrigger$.next(true);
+				this.gauzyFiltersComponent.getStatistics();
 			});
 	}
 
@@ -435,6 +445,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 			this._toastrService.danger(error);
 		} finally {
 			this.refreshTrigger$.next(true);
+			this.gauzyFiltersComponent.getStatistics();
 		}
 	}
 
@@ -496,6 +507,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 				this._toastrService.danger(error);
 			} finally {
 				this.refreshTrigger$.next(true);
+				this.gauzyFiltersComponent.getStatistics();
 			}
 		}
 	}

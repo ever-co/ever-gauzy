@@ -15,7 +15,14 @@ import {
 	TimesheetService,
 	TimeTrackerService
 } from '@gauzy/ui-core/core';
-import { IGetTimeLogInput, ITimeLog, IOrganizationProject, ITimeLogFilters, PermissionsEnum } from '@gauzy/contracts';
+import {
+	IGetTimeLogInput,
+	ITimeLog,
+	IOrganizationProject,
+	ITimeLogFilters,
+	PermissionsEnum,
+	IDateRangePicker
+} from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-core/common';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -59,6 +66,8 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	private readonly workedThisWeek$: Observable<number> = this.timeTrackerService.workedThisWeek$;
 	private readonly reWeeklyLimit$: Observable<number> = this.timeTrackerService.reWeeklyLimit$;
 	private readonly destroy$ = new Subject<void>();
+	private readonly selectedDateRange$: Observable<IDateRangePicker | null> =
+		this.dateRangePickerBuilderService.selectedDateRange$;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -94,20 +103,26 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 		this.timeLogEventService.changes$.pipe(untilDestroyed(this)).subscribe((action) => {
 			if (action === 'added' || action === 'deleted') {
 				this.subject$.next(true);
+				this.gauzyFiltersComponent.getStatistics();
 			}
 		});
 		this.timesheetService.updateLog$
 			.pipe(
 				filter((val) => val === true),
 				tap(() => this.subject$.next(true)),
+				tap(() => this.gauzyFiltersComponent.getStatistics()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 
-		combineLatest([this.workedThisWeek$, this.reWeeklyLimit$])
+		combineLatest([this.selectedDateRange$, this.workedThisWeek$, this.reWeeklyLimit$])
 			.pipe(takeUntil(this.destroy$))
-			.subscribe(() => {
-				this.limitReached = this.timeTrackerService.hasReachedWeeklyLimit();
+			.subscribe(([selectedDateRange]) => {
+				if (this.timeTrackerService.isCurrentWeekSelected(selectedDateRange)) {
+					this.limitReached = this.timeTrackerService.hasReachedWeeklyLimit();
+				} else {
+					this.limitReached = false;
+				}
 			});
 	}
 
@@ -276,6 +291,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 					this.dateRangePickerBuilderService.refreshDateRangePicker(moment(log.startedAt))
 				),
 				tap(() => this.subject$.next(true)),
+				tap(() => this.gauzyFiltersComponent.getStatistics()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -315,6 +331,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 				filter((timeLog) => !!timeLog), // Ensure valid timeLog
 				tap((timeLog) => this.dateRangePickerBuilderService.refreshDateRangePicker(moment(timeLog.startedAt))), // Refresh the date range picker
 				tap(() => this.subject$.next(true)), // Notify observers of changes
+				tap(() => this.gauzyFiltersComponent.getStatistics()),
 				untilDestroyed(this) // Cleanup when the component is destroyed
 			)
 			.subscribe(); // Activate the observable pipeline
@@ -328,6 +345,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	addTimeCallback = (data: ITimeLog) => {
 		if (data) {
 			this.subject$.next(true);
+			this.gauzyFiltersComponent.getStatistics();
 		}
 	};
 

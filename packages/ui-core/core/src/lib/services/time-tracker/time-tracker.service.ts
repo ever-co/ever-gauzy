@@ -17,7 +17,9 @@ import {
 	ITimerStatusInput,
 	ITimerPosition,
 	ITimerStatusWithWeeklyLimits,
-	TimeErrorsEnum
+	TimeErrorsEnum,
+	IDateRangePicker,
+	IDateRange
 } from '@gauzy/contracts';
 import { API_PREFIX, BACKGROUND_SYNC_INTERVAL, toLocal, toParams, toUTC } from '@gauzy/ui-core/common';
 import { Store as AppStore } from '../store/store.service';
@@ -354,6 +356,23 @@ export class TimeTrackerService implements OnDestroy {
 		const { workedThisWeek, reWeeklyLimit } = this.timerStore.getValue();
 		const reWeeklyLimitInSeconds = Math.trunc(reWeeklyLimit * 3600);
 		return workedThisWeek >= reWeeklyLimitInSeconds || reWeeklyLimit === 0;
+	}
+
+	isCurrentWeekSelected(date: IDateRangePicker | IDateRange): boolean {
+		if (!date) {
+			return false;
+		}
+
+		const start = 'startDate' in date ? date.startDate : date.start;
+
+		if (!start) {
+			return false;
+		}
+
+		const selected = moment(start);
+		const now = moment();
+
+		return selected.isoWeek() === now.isoWeek() && selected.isoWeekYear() === now.isoWeekYear();
 	}
 
 	async toggle(): Promise<ITimeLog> {
