@@ -1,29 +1,34 @@
 <nb-card class="employee-edit card-scroll">
 	<nb-card-header class="header">
 		<div class="header-container">
-			<div style="display: flex;">
-				<ngx-back-navigation></ngx-back-navigation>
-				<div class="employee-info">
-					<img
-						class="employee-image"
-						[src]="selectedCandidate?.user.imageUrl"
-						alt="Candidate Avatar"
-					/>
+			<div class="d-flex justify-content-between align-items-start w-100">
+				<div style="display: flex">
+					<ngx-back-navigation></ngx-back-navigation>
+					<div class="employee-info">
+						<img class="employee-image" [src]="selectedCandidate?.user.imageUrl" alt="Candidate Avatar" />
 
-					<div class="employee-details">
-						<span class="employee-name"
-							>{{ selectedCandidate?.user.firstName }}
-							{{ selectedCandidate?.user.lastName }}</span
-						>
+						<div class="employee-details">
+							<span class="employee-name"
+								>{{ selectedCandidate?.user.firstName }} {{ selectedCandidate?.user.lastName }}</span
+							>
+						</div>
 					</div>
 				</div>
+				<ngx-favorite-toggle
+					*ngIf="selectedCandidate"
+					[entityType]="'Candidate'"
+					[entityId]="selectedCandidate.id"
+					[entityName]="selectedCandidate.user?.firstName + ' ' + selectedCandidate.user?.lastName"
+					size="small"
+					status="basic"
+					spacing="detail"
+					[showLabel]="false"
+					(favoriteToggled)="onFavoriteToggled($event)"
+				></ngx-favorite-toggle>
 			</div>
 			<div class="employee-info">
 				<div class="employee-details">
-					<div
-						*ngIf="selectedCandidate?.user.username"
-						class="transparent"
-					>
+					<div *ngIf="selectedCandidate?.user.username" class="transparent">
 						{{ 'FORM.USERNAME' | translate }}:
 						<strong>{{ selectedCandidate?.user.username }}</strong>
 					</div>
@@ -36,23 +41,9 @@
 					<nb-icon class="bell" icon="bell-outline"></nb-icon>
 					<div *ngIf="interviewList?.length > 0" class="exist"></div>
 				</div>
-				<div
-					*ngIf="hasEditPermission"
-					class="employee-details edit-icon"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="36"
-						height="36"
-						viewBox="0 0 36 36"
-					>
-						<circle
-							cx="18"
-							cy="18"
-							r="18"
-							fill="#0091FF"
-							fill-rule="evenodd"
-						/>
+				<div *ngIf="hasEditPermission" class="employee-details edit-icon">
+					<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+						<circle cx="18" cy="18" r="18" fill="#0091FF" fill-rule="evenodd" />
 					</svg>
 					<nb-icon
 						class="ml-2 open"

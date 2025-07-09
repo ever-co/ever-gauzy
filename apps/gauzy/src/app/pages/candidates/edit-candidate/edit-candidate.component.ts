@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { PermissionsEnum, ICandidate, ICandidateInterview } from '@gauzy/contracts';
+import { PermissionsEnum, ICandidate, ICandidateInterview, IFavorite } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, firstValueFrom } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
@@ -11,10 +11,10 @@ import { NbDialogService } from '@nebular/theme';
 import { CandidateInterviewInfoComponent } from '@gauzy/ui-core/shared';
 
 @Component({
-    selector: 'ga-edit-candidate',
-    templateUrl: './edit-candidate.component.html',
-    styleUrls: ['../../dashboard/dashboard.component.scss', './edit-candidate.component.scss'],
-    standalone: false
+	selector: 'ga-edit-candidate',
+	templateUrl: './edit-candidate.component.html',
+	styleUrls: ['../../dashboard/dashboard.component.scss', './edit-candidate.component.scss'],
+	standalone: false
 })
 export class EditCandidateComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
@@ -78,6 +78,15 @@ export class EditCandidateComponent extends TranslationBaseComponent implements 
 	editCandidate() {
 		this.router.navigate(['/pages/employees/candidates/edit/' + this.selectedCandidate.id + '/profile']);
 	}
+
+	/**
+	 * Handle favorite toggle event
+	 */
+	onFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// The FavoriteToggleComponent already shows success/error messages
+		// We can add any additional logic here if needed
+	}
+
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
