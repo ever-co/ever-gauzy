@@ -185,9 +185,9 @@
 		"READ_MORE": "Прочети още",
 		"READ_LESS": "Прочети по-малко",
 		"RECOVER": "Възстанови",
-        "ADD_MORE_SOURCES": "Добавете още източници",
-        "REMOVE_FROM_FAVORITES": "Премахни от любими",
-        "ADD_TO_FAVORITES": "Добави към любими"
+		"ADD_MORE_SOURCES": "Добавете още източници",
+		"REMOVE_FROM_FAVORITES": "Премахни от любими",
+		"ADD_TO_FAVORITES": "Добави към любими"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3703,6 +3703,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Нивото на служителя е задължително",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Името на видът на заетостта е задължително",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Името на отдела е задължително",
+			"FAVORITE_ADDED": "{{ name }} е добавен в любими",
+			"FAVORITE_REMOVED": "{{ name }} е премахнат от любими",
+			"FAVORITE_ERROR": "Грешка при актуализиране на статуса на любими",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Доход добавен за",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Името на доставчика и годината са задължителни",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Името на езика и нивото са задължителни",
