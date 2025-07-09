@@ -24,7 +24,7 @@
 		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
 			<ga-project-mutation
 				[integration]="integration$ | async"
-				[project]="project"
+				[project]="project$ | async"
 				(onSubmitted)="onSubmit($event)"
 			></ga-project-mutation>
 		</ng-template>
