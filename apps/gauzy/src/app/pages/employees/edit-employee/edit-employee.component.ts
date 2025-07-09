@@ -1,22 +1,30 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { Location } from '@angular/common';
-import { debounceTime } from 'rxjs';
+import { combineLatest, debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { IEmployee, IImageAsset, IOrganization, ISelectedEmployee, IUser, PermissionsEnum } from '@gauzy/contracts';
+import {
+	IEmployee,
+	IFavorite,
+	IImageAsset,
+	IOrganization,
+	ISelectedEmployee,
+	IUser,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ALL_EMPLOYEES_SELECTED } from '@gauzy/ui-core/shared';
-import { ErrorHandlingService, Store } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, Store, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-edit-employee',
-    templateUrl: './edit-employee.component.html',
-    styleUrls: ['./edit-employee.component.scss', '../../dashboard/dashboard.component.scss'],
-    standalone: false
+	selector: 'ngx-edit-employee',
+	templateUrl: './edit-employee.component.html',
+	styleUrls: ['./edit-employee.component.scss', '../../dashboard/dashboard.component.scss'],
+	standalone: false
 })
 export class EditEmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	organization: IOrganization;
@@ -30,6 +38,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 		public readonly translateService: TranslateService,
 		private readonly cdr: ChangeDetectorRef,
 		private readonly _urlSerializer: UrlSerializer,
+		private readonly toastrService: ToastrService,
 		private readonly _location: Location,
 		private readonly _errorHandlingService: ErrorHandlingService
 	) {
@@ -65,13 +74,20 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 	}
 
 	ngAfterViewInit() {
-		this.route.data
+		// Watch for both route data and parameter changes to handle navigation between different employees
+		combineLatest([this.route.data, this.route.params])
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				filter((data) => !!data && !!data.employee),
-				tap(({ employee }) => (this.selectedEmployee = employee)),
-				tap(({ employee }) => {
+				filter(([data, params]) => !!data && !!data.employee && !!params && !!params.id),
+				tap(([data, params]) => {
+					// Clear previous employee data when navigating to a different employee
+					if (this.selectedEmployee && this.selectedEmployee.id !== params.id) {
+						this.selectedEmployee = null;
+					}
+				}),
+				tap(([{ employee }, params]) => (this.selectedEmployee = employee)),
+				tap(([{ employee }, params]) => {
 					try {
 						if (employee.startedWorkOn) {
 							setTimeout(() => {
@@ -138,6 +154,25 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 		// As far as I can tell you don't really need the UrlSerializer.
 		const externalUrl = this._location.prepareExternalUrl(this._urlSerializer.serialize(tree));
 		window.open(externalUrl, '_blank');
+	}
+
+	/**
+	 * Handle favorite toggle event
+	 */
+	onFavoriteToggled(event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		if (event.isFavorite) {
+			this.toastrService.success(
+				this.getTranslation('TOASTR.MESSAGE.FAVORITE_ADDED', {
+					name: this.selectedEmployee?.user?.name || 'Employee'
+				})
+			);
+		} else {
+			this.toastrService.success(
+				this.getTranslation('TOASTR.MESSAGE.FAVORITE_REMOVED', {
+					name: this.selectedEmployee?.user?.name || 'Employee'
+				})
+			);
+		}
 	}
 
 	ngOnDestroy() {
