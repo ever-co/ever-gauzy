@@ -2,8 +2,9 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, map, Observable, tap } from 'rxjs';
+import { combineLatest, filter, Observable } from 'rxjs';
 import {
+	IFavorite,
 	IIntegrationTenant,
 	IOrganization,
 	IOrganizationProject,
@@ -15,10 +16,10 @@ import { ProjectMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-project-edit-mutation',
-    templateUrl: './edit.component.html',
-    styleUrls: ['./edit.component.scss'],
-    standalone: false
+	selector: 'ngx-project-edit-mutation',
+	templateUrl: './edit.component.html',
+	styleUrls: ['./edit.component.scss'],
+	standalone: false
 })
 export class ProjectEditMutationComponent extends TranslationBaseComponent implements OnInit {
 	/** Project Mutation Component*/
@@ -43,31 +44,57 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 	}
 
 	ngOnInit(): void {
-		// Call the following methods to initialize component properties
-		this._getEditProject();
-		this._getGithubIntegrationTenant();
+		// Watch for both route data changes and parameter changes to handle navigation between different projects
+		this._watchRouteChanges();
+	}
+
+	/**
+	 * Watches for route changes (both data and parameters) to handle navigation between different projects
+	 */
+	private _watchRouteChanges() {
+		// Watch for both route data and parameter changes
+		combineLatest([this._activatedRoute.data, this._activatedRoute.params])
+			.pipe(
+				filter(([data, params]) => !!data && !!data.project && !!params && !!params.id),
+				untilDestroyed(this)
+			)
+			.subscribe(([data, params]) => {
+				// Clear previous project data when navigating to a different project
+				if (this.project && this.project.id !== params.id) {
+					this.project = null;
+				}
+
+				// Load the new project data
+				this._getEditProject(data);
+				this._getGithubIntegrationTenant(data);
+			});
 	}
 
 	/**
 	 * Fetches and sets the project data from the route's data property.
 	 */
-	private _getEditProject() {
-		this.project$ = this._activatedRoute.data.pipe(
-			filter((data: Data) => !!data && !!data.project),
-			map(({ project }) => project),
-			tap((project) => (this.project = project)), // Assuming 'project' is a component property
-			untilDestroyed(this) // Automatically unsubscribes when the component is destroyed
-		);
+	private _getEditProject(data?: Data) {
+		const routeData = data || this._activatedRoute.snapshot.data;
+
+		if (routeData && routeData.project) {
+			this.project = routeData.project;
+		}
 	}
 
 	/**
 	 * Fetches and sets the GitHub integration data from the route's data property.
 	 */
-	private _getGithubIntegrationTenant() {
-		this.integration$ = this._activatedRoute.data.pipe(
-			map(({ integration }) => integration),
-			untilDestroyed(this) // Automatically unsubscribes when the component is destroyed
-		);
+	private _getGithubIntegrationTenant(data?: Data) {
+		const routeData = data || this._activatedRoute.snapshot.data;
+		this.integration$ = new Observable((observer) => {
+			if (routeData && routeData.integration) {
+				observer.next(routeData.integration);
+				observer.complete();
+			} else {
+				observer.next(null);
+				observer.complete();
+			}
+		});
 	}
 
 	/**
@@ -113,5 +140,16 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 	 */
 	navigateToProjects() {
 		this._router.navigate(['/pages/organization/projects']);
+	}
+
+	/**
+	 * Handle favorite toggle event
+	 */
+	onFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// The FavoriteToggleComponent already shows success/error messages
+		// We can add any additional logic here if needed, such as:
+		// - Updating local state
+		// - Triggering analytics events
+		// - Refreshing related data
 	}
 }
