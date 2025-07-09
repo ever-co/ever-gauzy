@@ -44,7 +44,7 @@ const routes: Routes = [
 			},
 			{
 				path: ':id',
-				runGuardsAndResolvers: 'always',
+				runGuardsAndResolvers: 'paramsOrQueryParamsChange',
 				data: {
 					allowMissingIntegration: true,
 					integration: IntegrationEnum.GITHUB, // Custom data associated with this route

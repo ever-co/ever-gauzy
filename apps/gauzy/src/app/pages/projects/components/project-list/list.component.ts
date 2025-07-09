@@ -722,8 +722,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	/**
 	 * Handle project favorite toggle event from the new component
 	 */
-	onProjectFavoriteToggled(event: { isFavorite: boolean; favorite?: IFavorite }): void {
-		console.log('Project favorite toggled:', event);
+	onProjectFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// Reload favorites to keep the list in sync
 		this.loadFavoriteProjects();
 	}

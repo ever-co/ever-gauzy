@@ -125,9 +125,7 @@
 			*ngIf="selectedEmployee"
 			[entityType]="'Employee'"
 			[entityId]="selectedEmployee.id"
-			[entityName]="
-				selectedEmployee.user?.name || selectedEmployee.user?.firstName + ' ' + selectedEmployee.user?.lastName
-			"
+			[entityName]="getEmployeeDisplayName(selectedEmployee)"
 			size="small"
 			status="basic"
 			spacing="list"

@@ -17,7 +17,7 @@ import { firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, getEntityDisplayName } from '@gauzy/ui-core/common';
 import {
 	CandidatesService,
 	ErrorHandlingService,
@@ -621,10 +621,13 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 	/**
 	 * Handle candidate favorite toggle event from the new component
 	 */
-	onCandidateFavoriteToggled(event: { isFavorite: boolean; favorite?: IFavorite }): void {
-		console.log('Candidate favorite toggled:', event);
+	onCandidateFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// Reload favorites to keep the list in sync
 		this.loadFavoriteCandidates();
+	}
+
+	getCandidateDisplayName(candidate: ICandidate): string {
+		return getEntityDisplayName(candidate);
 	}
 
 	ngOnDestroy() {}

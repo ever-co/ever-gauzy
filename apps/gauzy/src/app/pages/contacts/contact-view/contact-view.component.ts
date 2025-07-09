@@ -140,9 +140,6 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 	 */
 	onFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// The FavoriteToggleComponent already shows success/error messages
-		// We can add any additional logic here if needed, such as:
-		// - Updating local state
-		// - Triggering analytics events
-		// - Refreshing related data
+		// Additional logic can be added here if needed (analytics, state updates, etc.)
 	}
 }

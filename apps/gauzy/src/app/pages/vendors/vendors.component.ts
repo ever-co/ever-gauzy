@@ -517,8 +517,7 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 	/**
 	 * Handle vendor favorite toggle event from the new component
 	 */
-	onVendorFavoriteToggled(event: { isFavorite: boolean; favorite?: IFavorite }): void {
-		console.log('Vendor favorite toggled:', event);
+	onVendorFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// Reload favorites to keep the list in sync
 		this.loadFavoriteVendors();
 	}

@@ -768,8 +768,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	/**
 	 * Handle task favorite toggle event from the new component
 	 */
-	onTaskFavoriteToggled(event: { isFavorite: boolean; favorite?: IFavorite }): void {
-		console.log('Task favorite toggled:', event);
+	onTaskFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// Reload favorites to keep the list in sync
 		this.loadFavoriteTasks();
 	}

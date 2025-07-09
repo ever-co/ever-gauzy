@@ -160,6 +160,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 	 */
 	onFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// The FavoriteToggleComponent already shows success/error messages
+		// Additional logic can be added here if needed (analytics, state updates, etc.)
 	}
 
 	ngOnDestroy() {

@@ -645,8 +645,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 	/**
 	 * Handle contact favorite toggle event from the new component
 	 */
-	onContactFavoriteToggled(event: { isFavorite: boolean; favorite?: IFavorite }): void {
-		console.log('Contact favorite toggled:', event);
+	onContactFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// Reload favorites to keep the list in sync
 		this.loadFavoriteContacts();
 	}

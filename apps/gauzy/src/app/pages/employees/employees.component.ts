@@ -30,7 +30,7 @@ import {
 	IFavorite,
 	BaseEntityEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, getEntityDisplayName } from '@gauzy/ui-core/common';
 import {
 	AllowScreenshotCaptureComponent,
 	CardGridComponent,
@@ -1055,10 +1055,13 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	/**
 	 * Handle employee favorite toggle event from the new component
 	 */
-	onEmployeeFavoriteToggled(event: { isFavorite: boolean; favorite?: IFavorite }): void {
-		console.log('Employee favorite toggled:', event);
+	onEmployeeFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// Reload favorites to keep the list in sync
 		this.loadFavoriteEmployees();
+	}
+
+	getEmployeeDisplayName(employee: IEmployee): string {
+		return getEntityDisplayName(employee);
 	}
 
 	ngOnDestroy(): void {}

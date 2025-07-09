@@ -1,6 +1,9 @@
 <button
 	type="button"
 	nbButton
+	role="switch"
+	[attr.aria-label]="tooltipText || (entityName ? 'Toggle ' + entityName : 'Toggle favorite')"
+	[attr.aria-pressed]="isFavorite"
 	[status]="status"
 	[size]="size"
 	[disabled]="disabled || loading"

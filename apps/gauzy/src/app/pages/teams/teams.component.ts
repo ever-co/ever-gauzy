@@ -536,8 +536,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 	/**
 	 * Handle team favorite toggle event from the new component
 	 */
-	onTeamFavoriteToggled(event: { isFavorite: boolean; favorite?: IFavorite }): void {
-		console.log('Team favorite toggled:', event);
+	onTeamFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// Reload favorites to keep the list in sync
 		this.loadFavoriteTeams();
 	}

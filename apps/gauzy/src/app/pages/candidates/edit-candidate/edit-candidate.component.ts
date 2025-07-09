@@ -4,6 +4,7 @@ import { PermissionsEnum, ICandidate, ICandidateInterview, IFavorite } from '@ga
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, firstValueFrom } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
+import { getEntityDisplayName } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { takeUntil } from 'rxjs/operators';
 import { CandidateInterviewService, CandidatesService } from '@gauzy/ui-core/core';
@@ -84,9 +85,12 @@ export class EditCandidateComponent extends TranslationBaseComponent implements 
 	 */
 	onFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// The FavoriteToggleComponent already shows success/error messages
-		// We can add any additional logic here if needed
+		// Additional logic can be added here if needed (analytics, state updates, etc.)
 	}
 
+	get candidateFullName(): string {
+		return getEntityDisplayName(this.selectedCandidate);
+	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();

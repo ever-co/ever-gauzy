@@ -76,7 +76,7 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 	private _getEditProject(data?: Data) {
 		const routeData = data || this._activatedRoute.snapshot.data;
 
-		if (routeData && routeData.project) {
+		if (routeData?.project) {
 			this.project = routeData.project;
 		}
 	}
@@ -87,7 +87,7 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 	private _getGithubIntegrationTenant(data?: Data) {
 		const routeData = data || this._activatedRoute.snapshot.data;
 		this.integration$ = new Observable((observer) => {
-			if (routeData && routeData.integration) {
+			if (routeData?.integration) {
 				observer.next(routeData.integration);
 				observer.complete();
 			} else {
@@ -147,9 +147,6 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 	 */
 	onFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// The FavoriteToggleComponent already shows success/error messages
-		// We can add any additional logic here if needed, such as:
-		// - Updating local state
-		// - Triggering analytics events
-		// - Refreshing related data
+		// Additional logic can be added here if needed (analytics, state updates, etc.)
 	}
 }

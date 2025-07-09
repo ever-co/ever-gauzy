@@ -94,7 +94,7 @@
 			*ngIf="selectedItem"
 			[entityType]="'Candidate'"
 			[entityId]="selectedItem.id"
-			[entityName]="selectedItem.user?.name || selectedItem.user?.firstName + ' ' + selectedItem.user?.lastName"
+			[entityName]="getCandidateDisplayName(selectedItem)"
 			size="small"
 			status="basic"
 			spacing="list"

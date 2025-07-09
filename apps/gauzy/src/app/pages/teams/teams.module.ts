@@ -50,7 +50,6 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		EmployeeMultiSelectModule,
-		FavoriteToggleModule,
 		ProjectSelectModule,
 		SmartDataViewLayoutModule,
 		ImageUploaderModule
