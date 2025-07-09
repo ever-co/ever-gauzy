@@ -16,6 +16,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
+	FavoriteToggleModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -42,6 +43,7 @@ import { VendorsRoutingModule } from './vendors-routing.module';
 		TableComponentsModule,
 		VendorsRoutingModule,
 		SmartDataViewLayoutModule,
+		FavoriteToggleModule,
 		CardGridModule
 	],
 	declarations: [VendorsComponent]
