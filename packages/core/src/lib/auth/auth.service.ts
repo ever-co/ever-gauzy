@@ -1333,4 +1333,125 @@ export class AuthService extends SocialAuthService {
 				: null // Sets tenant to null if user.tenant is undefined
 		});
 	}
+
+	/**
+	 * Get all workspaces (tenants) that the current authenticated user has access to.
+	 *
+	 * @param includeTeams Flag indicating whether to include team information in the response.
+	 * @returns A promise that resolves to the user signin workspace response.
+	 */
+	async getUserWorkspaces(includeTeams = false): Promise<IUserSigninWorkspaceResponse> {
+		try {
+			// Get the current authenticated user
+			const currentUser = RequestContext.currentUser();
+			if (!currentUser || !currentUser.email) {
+				throw new UnauthorizedException('User not authenticated');
+			}
+
+			const email = currentUser.email;
+
+			// Find all users with the same email across different tenants
+			const users = await this.userService.find({
+				where: {
+					email,
+					isActive: true,
+					isArchived: false
+				},
+				relations: { tenant: true },
+				order: { createdAt: 'DESC' }
+			});
+
+			if (users.length === 0) {
+				throw new UnauthorizedException('No workspaces found for user');
+			}
+
+			// Create workspace response using existing logic
+			const response: IUserSigninWorkspaceResponse = await this.createUserSigninWorkspaceResponse({
+				users,
+				code: '', // Empty code - not needed for authenticated workspace retrieval
+				email,
+				includeTeams
+			});
+
+			return response;
+		} catch (error) {
+			console.error('Error while getting user workspaces:', error?.message);
+			throw new UnauthorizedException('Failed to retrieve user workspaces');
+		}
+	}
+
+	/**
+	 * Switch the current user to a different workspace (tenant).
+	 *
+	 * @param tenantId The ID of the tenant to switch to.
+	 * @returns A promise that resolves to the authentication response with new tokens or null if switching fails.
+	 * @throws UnauthorizedException when user is not authenticated or doesn't have access to the workspace.
+	 * @throws NotFoundException when the target workspace doesn't exist.
+	 */
+	async switchWorkspace(tenantId: ID): Promise<IAuthResponse | null> {
+		try {
+			// Get the current authenticated user
+			const currentUser = RequestContext.currentUser();
+			if (!currentUser || !currentUser.email) {
+				throw new UnauthorizedException('User not authenticated');
+			}
+
+			const email = currentUser.email;
+
+			// Find the user in the target tenant
+			const targetUser = await this.userService.findOneByOptions({
+				where: {
+					email,
+					tenantId,
+					isActive: true,
+					isArchived: false
+				},
+				relations: { role: true, tenant: true }
+			});
+
+			if (!targetUser) {
+				throw new UnauthorizedException('User does not have access to this workspace');
+			}
+
+			// Retrieve the employee details associated with the user
+			const employee = await this.employeeService.findOneByUserId(targetUser.id);
+
+			// Check if the employee is active and not archived
+			if (employee && (!employee.isActive || employee.isArchived)) {
+				throw new UnauthorizedException('Employee account is not active');
+			}
+
+			// Generate new access and refresh tokens for the target workspace
+			const [access_token, refresh_token] = await Promise.all([
+				this.getJwtAccessToken(targetUser),
+				this.getJwtRefreshToken(targetUser)
+			]);
+
+			// Store the current refresh token with the user
+			await this.userService.setCurrentRefreshToken(refresh_token, targetUser.id);
+
+			// Update the last login timestamp
+			await this.userService.setUserLastLoginTimestamp(targetUser.id);
+
+			// Return the authentication response
+			return {
+				user: new User({
+					...targetUser,
+					...(employee && { employee })
+				}),
+				token: access_token,
+				refresh_token: refresh_token
+			};
+		} catch (error) {
+			console.error('Error while switching workspace:', error?.message);
+
+			// Re-throw known exceptions for better error handling in the frontend
+			if (error instanceof UnauthorizedException) {
+				throw error;
+			}
+
+			// For unexpected errors, return null to maintain backward compatibility
+			return null;
+		}
+	}
 }

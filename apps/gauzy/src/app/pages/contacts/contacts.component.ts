@@ -643,59 +643,11 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 	}
 
 	/**
-	 * Checks if a contact is a favorite in the local list using the generic service.
-	 * @param contact The contact to check.
+	 * Handle contact favorite toggle event from the new component
 	 */
-	isFavoriteContact(contact: IOrganizationContact): boolean {
-		if (!contact) return false;
-		return this.genericFavoriteService.isFavorite(
-			contact.id,
-			BaseEntityEnum.OrganizationContact,
-			this.favoriteContacts
-		);
-	}
-
-	/**
-	 * Finds the favorite object for a given contact in the local list using the generic service.
-	 * @param contact The contact to check.
-	 */
-	getFavoriteForContact(contact: IOrganizationContact): IFavorite | undefined {
-		if (!contact) return;
-		return this.genericFavoriteService.getFavoriteForEntity(
-			contact.id,
-			BaseEntityEnum.OrganizationContact,
-			this.favoriteContacts
-		);
-	}
-
-	/**
-	 * Adds or removes a contact from favorites using the generic service.
-	 * @param contact The contact to add or remove.
-	 */
-	async toggleFavoriteContact(contact: IOrganizationContact) {
-		if (!contact) return;
-		if (!this.organization) return;
-		try {
-			await this.genericFavoriteService.toggleFavorite(
-				BaseEntityEnum.OrganizationContact,
-				contact.id,
-				this.organization,
-				this.selectedEmployeeId || this.store.user?.employee?.id,
-				this.favoriteContacts
-			);
-			// Optimistically update local state
-			const existingFavorite = this.favoriteContacts.find(
-				(f) => f.entityId === contact.id && f.entity === BaseEntityEnum.OrganizationContact
-			);
-			if (existingFavorite) {
-				this.favoriteContacts = this.favoriteContacts.filter((f) => f.id !== existingFavorite.id);
-			} else {
-				// If adding, we need the new favorite object
-				await this.loadFavoriteContacts();
-			}
-		} catch (error) {
-			this.toastrService.danger(this.getTranslation('FAVORITES.ERROR.TOGGLE_FAILED'));
-		}
+	onContactFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// Reload favorites to keep the list in sync
+		this.loadFavoriteContacts();
 	}
 
 	ngOnDestroy(): void {}

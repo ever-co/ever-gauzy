@@ -86,24 +86,18 @@
 	</nb-card-body>
 </nb-card>
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
-	<button
-		nbButton
-		status="basic"
-		class="action"
+	<ngx-favorite-toggle
+		*ngIf="selectedItem"
+		[entityType]="'OrganizationVendor'"
+		[entityId]="selectedItem.id"
+		[entityName]="selectedItem.name"
 		size="small"
-		(click)="toggleFavoriteVendor(selectedItem)"
+		status="basic"
+		spacing="list"
 		[disabled]="disabled"
-		[nbTooltip]="
-			isFavoriteVendor(selectedItem)
-				? ('BUTTONS.REMOVE_FROM_FAVORITES' | translate)
-				: ('BUTTONS.ADD_TO_FAVORITES' | translate)
-		"
-	>
-		<nb-icon
-			[icon]="isFavoriteVendor(selectedItem) ? 'star' : 'star-outline'"
-			[status]="isFavoriteVendor(selectedItem) ? 'warning' : 'basic'"
-		></nb-icon>
-	</button>
+		[showLabel]="false"
+		(favoriteToggled)="onVendorFavoriteToggled($event)"
+	></ngx-favorite-toggle>
 	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
 		<div class="actions">
 			<button

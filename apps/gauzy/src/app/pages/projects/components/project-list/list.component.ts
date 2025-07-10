@@ -704,19 +704,6 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/**
-	 * Checks if a project is a favorite in the local list using the generic service.
-	 * @param project The project to check.
-	 */
-	isFavoriteProject(project: IOrganizationProject): boolean {
-		if (!project) return false;
-		return this.genericFavoriteService.isFavorite(
-			project.id,
-			BaseEntityEnum.OrganizationProject,
-			this.favoriteProjects
-		);
-	}
-
-	/**
 	 * Loads the list of favorite projects for the current user or all for admin using the generic service.
 	 */
 	async loadFavoriteProjects() {
@@ -733,32 +720,10 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/**
-	 * Adds or removes a project from favorites using the generic service.
-	 * @param project The project to add or remove.
+	 * Handle project favorite toggle event from the new component
 	 */
-	async toggleFavoriteProject(project: IOrganizationProject) {
-		if (!project) return;
-		try {
-			await this.genericFavoriteService.toggleFavorite(
-				BaseEntityEnum.OrganizationProject,
-				project.id,
-				this.organization,
-				this.selectedEmployeeId || this._store.user?.employee?.id,
-				this.favoriteProjects
-			);
-			// Optimistically update local state
-			const existingFavorite = this.favoriteProjects.find(
-				f => f.entityId === project.id && f.entity === BaseEntityEnum.OrganizationProject
-			);
-			if (existingFavorite) {
-				this.favoriteProjects = this.favoriteProjects.filter(f => f.id !== existingFavorite.id);
-			} else {
-				// If adding, we need the new favorite object
-				await this.loadFavoriteProjects();
-			}
-		} catch (error) {
-			console.error('Error toggling favorite project:', error);
-			this._errorHandlingService.handleError(error);
-		}
+	onProjectFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// Reload favorites to keep the list in sync
+		this.loadFavoriteProjects();
 	}
 }

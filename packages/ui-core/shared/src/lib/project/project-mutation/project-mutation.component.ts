@@ -51,10 +51,10 @@ import { ProjectModuleMutationComponent } from '../../project-module/project-mod
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-project-mutation',
-    templateUrl: './project-mutation.component.html',
-    styleUrls: ['./project-mutation.component.scss'],
-    standalone: false
+	selector: 'ga-project-mutation',
+	templateUrl: './project-mutation.component.html',
+	styleUrls: ['./project-mutation.component.scss'],
+	standalone: false
 })
 export class ProjectMutationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public FormHelpers: typeof FormHelpers = FormHelpers;
@@ -150,6 +150,8 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 	@Input() set project(project: IOrganizationProject) {
 		// Set the organization project.
 		this._project = project;
+		// Sync the form with the new project data
+		this._syncProject();
 	}
 
 	@Input() teams: IOrganizationTeam[] = [];

@@ -49,6 +49,7 @@ import {
 	EmployeeLocationModule,
 	EmployeeMultiSelectModule,
 	EmployeeRatesModule,
+	FavoriteToggleModule,
 	FileUploaderModule,
 	ImageUploaderModule,
 	InviteMutationModule,
@@ -188,6 +189,7 @@ const COMPONENTS = [
 		CandidateInterviewFeedbackModule,
 		DeleteInterviewModule,
 		DeleteFeedbackModule,
+		FavoriteToggleModule,
 		SmartDataViewLayoutModule,
 		WorkInProgressModule
 	],
