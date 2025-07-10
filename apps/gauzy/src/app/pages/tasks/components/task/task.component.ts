@@ -766,41 +766,10 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	}
 
 	/**
-	 * Checks if a task is a favorite in the local list using the generic service.
-	 * @param task The task to check.
+	 * Handle task favorite toggle event from the new component
 	 */
-	isFavoriteTask(task: ITask): boolean {
-		if (!task) return false;
-		return this.genericFavoriteService.isFavorite(task.id, BaseEntityEnum.Task, this.favoriteTasks);
-	}
-
-	/**
-	 * Finds the favorite object for a given task in the local list using the generic service.
-	 * @param task The task to check.
-	 */
-	getFavoriteForTask(task: ITask): IFavorite | undefined {
-		if (!task) return;
-		return this.genericFavoriteService.getFavoriteForEntity(task.id, BaseEntityEnum.Task, this.favoriteTasks);
-	}
-
-	/**
-	 * Adds or removes a task from favorites using the generic service.
-	 * @param task The task to add or remove.
-	 */
-	async toggleFavoriteTask(task: ITask) {
-		if (!task) return;
-		await this.genericFavoriteService.toggleFavorite(
-			BaseEntityEnum.Task,
-			task.id,
-			this.organization,
-			this.selectedEmployeeId || this._store.user?.employee?.id,
-			this.favoriteTasks
-		);
-		// Refresh the local list after modification
-		this.favoriteTasks = await this.genericFavoriteService.loadFavorites(
-			BaseEntityEnum.Task,
-			this.organization,
-			this.selectedEmployeeId || this._store.user?.employee?.id
-		);
+	onTaskFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// Reload favorites to keep the list in sync
+		this.loadFavoriteTasks();
 	}
 }

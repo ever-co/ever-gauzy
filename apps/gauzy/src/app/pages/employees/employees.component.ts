@@ -30,7 +30,7 @@ import {
 	IFavorite,
 	BaseEntityEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, getEntityDisplayName } from '@gauzy/ui-core/common';
 import {
 	AllowScreenshotCaptureComponent,
 	CardGridComponent,
@@ -1053,48 +1053,15 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	/**
-	 * Checks if an employee is a favorite in the local list using the generic service.
-	 * @param employee The employee to check.
+	 * Handle employee favorite toggle event from the new component
 	 */
-	isFavoriteEmployee(employee: EmployeeViewModel): boolean {
-		if (!employee) return false;
-		return this.genericFavoriteService.isFavorite(employee.id, BaseEntityEnum.Employee, this.favoriteEmployees);
+	onEmployeeFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// Reload favorites to keep the list in sync
+		this.loadFavoriteEmployees();
 	}
 
-	/**
-	 * Finds the favorite object for a given employee in the local list using the generic service.
-	 * @param employee The employee to check.
-	 */
-	getFavoriteForEmployee(employee: EmployeeViewModel): IFavorite | undefined {
-		if (!employee) return;
-		return this.genericFavoriteService.getFavoriteForEntity(
-			employee.id,
-			BaseEntityEnum.Employee,
-			this.favoriteEmployees
-		);
-	}
-
-	/**
-	 * Adds or removes an employee from favorites using the generic service.
-	 * @param employee The employee to add or remove.
-	 */
-	async toggleFavoriteEmployee(employee: EmployeeViewModel) {
-		if (!employee) return;
-		if (!this.organization) return;
-		try {
-			await this.genericFavoriteService.toggleFavorite(
-				BaseEntityEnum.Employee,
-				employee.id,
-				this.organization,
-				this._store.user?.employee?.id,
-				this.favoriteEmployees
-			);
-			// Refresh the local list after modification
-			await this.loadFavoriteEmployees();
-		} catch (error) {
-			console.error('Error toggling favorite employee:', error);
-			this._errorHandlingService.handleError(error);
-		}
+	getEmployeeDisplayName(employee: IEmployee): string {
+		return getEntityDisplayName(employee);
 	}
 
 	ngOnDestroy(): void {}

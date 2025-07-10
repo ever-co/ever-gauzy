@@ -534,51 +534,10 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 	}
 
 	/**
-	 * Checks if a team is a favorite in the local list using the generic service.
-	 * @param team The team to check.
+	 * Handle team favorite toggle event from the new component
 	 */
-	isFavoriteTeam(team: IOrganizationTeam): boolean {
-		if (!team) return false;
-		return this.genericFavoriteService.isFavorite(team.id, BaseEntityEnum.OrganizationTeam, this.favoriteTeams);
-	}
-
-	/**
-	 * Finds the favorite object for a given team in the local list using the generic service.
-	 * @param team The team to check.
-	 */
-	getFavoriteForTeam(team: IOrganizationTeam): IFavorite | undefined {
-		if (!team) return;
-		return this.genericFavoriteService.getFavoriteForEntity(
-			team.id,
-			BaseEntityEnum.OrganizationTeam,
-			this.favoriteTeams
-		);
-	}
-
-	/**
-	 * Adds or removes a team from favorites using the generic service.
-	 * @param team The team to add or remove.
-	 */
-	async toggleFavoriteTeam(team: IOrganizationTeam) {
-		if (!team) return;
-		try {
-			await this.genericFavoriteService.toggleFavorite(
-				BaseEntityEnum.OrganizationTeam,
-				team.id,
-				this.organization,
-				this.selectedEmployeeId || this.store.user?.employee?.id,
-				this.favoriteTeams
-			);
-			// Optimistically update local state
-			const existingFavorite = this.getFavoriteForTeam(team);
-			if (existingFavorite) {
-				this.favoriteTeams = this.favoriteTeams.filter((f) => f.id !== existingFavorite.id);
-			} else {
-				// If adding, we need the new favorite object
-				await this.loadFavoriteTeams();
-			}
-		} catch (error) {
-			this.toastrService.danger('Failed to update favorite status');
-		}
+	onTeamFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// Reload favorites to keep the list in sync
+		this.loadFavoriteTeams();
 	}
 }

@@ -17,7 +17,7 @@ import { firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, getEntityDisplayName } from '@gauzy/ui-core/common';
 import {
 	CandidatesService,
 	ErrorHandlingService,
@@ -619,49 +619,15 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 	}
 
 	/**
-	 * Checks if a candidate is a favorite in the local list using the generic service.
-	 * @param candidate The candidate to check.
+	 * Handle candidate favorite toggle event from the new component
 	 */
-	isFavoriteCandidate(candidate: ICandidateViewModel): boolean {
-		if (!candidate) return false;
-		return this.genericFavoriteService.isFavorite(candidate.id, BaseEntityEnum.Candidate, this.favoriteCandidates);
+	onCandidateFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// Reload favorites to keep the list in sync
+		this.loadFavoriteCandidates();
 	}
 
-	/**
-	 * Finds the favorite object for a given candidate in the local list using the generic service.
-	 * @param candidate The candidate to check.
-	 */
-	getFavoriteForCandidate(candidate: ICandidateViewModel): IFavorite | undefined {
-		if (!candidate) return;
-		return this.genericFavoriteService.getFavoriteForEntity(
-			candidate.id,
-			BaseEntityEnum.Candidate,
-			this.favoriteCandidates
-		);
-	}
-
-	/**
-	 * Adds or removes a candidate from favorites using the generic service.
-	 * @param candidate The candidate to add or remove.
-	 */
-	async toggleFavoriteCandidate(candidate: ICandidateViewModel) {
-		if (!candidate) return;
-		try {
-			await this.genericFavoriteService.toggleFavorite(
-				BaseEntityEnum.Candidate,
-				candidate.id,
-				this.organization,
-				undefined,
-				this.favoriteCandidates
-			);
-			// Only reload if the service doesn't handle state internally
-			this.favoriteCandidates = await this.genericFavoriteService.loadFavorites(
-				BaseEntityEnum.Candidate,
-				this.organization
-			);
-		} catch (error) {
-			this.toastrService.danger('Failed to update favorite status');
-		}
+	getCandidateDisplayName(candidate: ICandidate): string {
+		return getEntityDisplayName(candidate);
 	}
 
 	ngOnDestroy() {}

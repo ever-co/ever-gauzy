@@ -57,24 +57,18 @@
 </nb-card>
 
 <ng-template #actionButtons>
-	<button
-		nbButton
-		class="action"
-		status="basic"
+	<ngx-favorite-toggle
+		*ngIf="selectedOrganizationContact"
+		[entityType]="'OrganizationContact'"
+		[entityId]="selectedOrganizationContact.id"
+		[entityName]="selectedOrganizationContact.name"
 		size="small"
-		[disabled]="!selectedOrganizationContact || disableButton"
-		(click)="toggleFavoriteContact(selectedOrganizationContact)"
-		[nbTooltip]="
-			isFavoriteContact(selectedOrganizationContact)
-				? ('BUTTONS.REMOVE_FROM_FAVORITES' | translate)
-				: ('BUTTONS.ADD_TO_FAVORITES' | translate)
-		"
-	>
-		<nb-icon
-			[icon]="isFavoriteContact(selectedOrganizationContact) ? 'star' : 'star-outline'"
-			[status]="isFavoriteContact(selectedOrganizationContact) ? 'warning' : 'basic'"
-		></nb-icon>
-	</button>
+		status="basic"
+		spacing="list"
+		[disabled]="disableButton"
+		[showLabel]="false"
+		(favoriteToggled)="onContactFavoriteToggled($event)"
+	></ngx-favorite-toggle>
 	<ng-template ngxPermissionsOnly="ORG_CONTACT_EDIT">
 		<div class="btn-group actions">
 			<ngx-contact-action
