@@ -175,7 +175,9 @@
 		"READ_MORE": "קרא עוד",
 		"READ_LESS": "קרא פחות",
 		"RECOVER": "שחזר",
-		"ADD_MORE_SOURCES": "הוסף יותר מקורות"
+		"ADD_MORE_SOURCES": "הוסף מקורות נוספים",
+		"REMOVE_FROM_FAVORITES": "הסר מהמועדפים",
+		"ADD_TO_FAVORITES": "הוסף למועדפים"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -832,6 +834,7 @@
 		"DASHBOARD": "לוח מחוונים",
 		"DASHBOARDS": "Dashboards",
 		"APPOINTMENTS": "Appointments",
+		"FAVORITES": "מועדפים",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "הכנסה",
 		"EXPENSES": "הוצאות",
@@ -3665,6 +3668,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Employee Level is required",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
+			"FAVORITE_ADDED": "{{ name }} נוסף למועדפים",
+			"FAVORITE_REMOVED": "{{ name }} הוסר מהמועדפים",
+			"FAVORITE_ERROR": "שגיאה בעדכון סטטוס המועדפים",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Vendor name and year are required",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Language name and level are required",

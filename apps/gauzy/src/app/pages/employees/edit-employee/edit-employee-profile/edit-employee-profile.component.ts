@@ -19,15 +19,15 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-edit-employee-profile',
-    templateUrl: './edit-employee-profile.component.html',
-    styleUrls: ['./edit-employee-profile.component.scss'],
-    providers: [EmployeeStore],
-    standalone: false
+	selector: 'ngx-edit-employee-profile',
+	templateUrl: './edit-employee-profile.component.html',
+	styleUrls: ['./edit-employee-profile.component.scss'],
+	providers: [EmployeeStore],
+	standalone: false
 })
 export class EditEmployeeProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
-	public employeeId: ID = this._route.snapshot.params.id;
+	public employeeId: ID;
 
 	selectedEmployee: IEmployee;
 	employeeName: string;
@@ -59,9 +59,13 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 			.subscribe();
 		this._route.params
 			.pipe(
-				filter((params) => !!params),
-				tap(() => this._registerPageTabs()),
-				tap(() => this.subject$.next(true)),
+				filter((params) => !!params && !!params.id),
+				tap((params) => {
+					// Update employeeId when route parameters change
+					this.employeeId = params.id;
+					this._registerPageTabs();
+					this.subject$.next(true);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();

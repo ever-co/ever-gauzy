@@ -130,7 +130,9 @@
 		"EXPAND": "crwdns11463:0crwdne11463:0",
 		"SHOW_MORE": "crwdns11483:0crwdne11483:0",
 		"START_WORK": "crwdns11525:0crwdne11525:0",
-		"ADD_MODULE": "Yamo Module"
+		"ADD_MODULE": "Yamo Module",
+		"REMOVE_FROM_FAVORITES": "Kwanyo ki i jami me ayera",
+		"ADD_TO_FAVORITES": "Med i jami me ayera"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -732,6 +734,7 @@
 		"DASHBOARD": "crwdns174:0crwdne174:0",
 		"DASHBOARDS": "crwdns11523:0crwdne11523:0",
 		"APPOINTMENTS": "crwdns3956:0crwdne3956:0",
+		"FAVORITES": "Gin ma itamo",
 		"ACCOUNTING": "crwdns3390:0crwdne3390:0",
 		"INCOME": "crwdns176:0crwdne176:0",
 		"EXPENSES": "crwdns178:0crwdne178:0",
@@ -3368,6 +3371,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "crwdns3484:0crwdne3484:0",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "crwdns3061:0crwdne3061:0",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "crwdns2779:0crwdne2779:0",
+			"FAVORITE_ADDED": "{{ name }} added to favorites",
+			"FAVORITE_REMOVED": "{{ name }} removed from favorites",
+			"FAVORITE_ERROR": "Error updating favorite status",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "crwdns2781:0crwdne2781:0",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "crwdns4654:0crwdne4654:0",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "crwdns4656:0crwdne4656:0",

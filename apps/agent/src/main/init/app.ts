@@ -1,4 +1,4 @@
-import { app, ipcMain, systemPreferences } from 'electron';
+import { app, ipcMain, systemPreferences, powerMonitor } from 'electron';
 import * as path from 'path';
 import { logger as log, store } from '@gauzy/desktop-core';
 import {
@@ -21,6 +21,8 @@ import PullActivities from '../workers/pull-activities';
 import PushActivities from '../workers/push-activities';
 import EventHandler from '../events/event-handler';
 import { environment } from '../../environments/environment';
+import MainEvent from '../events/events';
+import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
 
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
@@ -32,9 +34,10 @@ LocalStore.setFilePath({
 });
 const appRootPath: string = path.join(__dirname, '../..');
 const appWindow = AppWindow.getInstance(appRootPath);
-
+const mainEvent = MainEvent.getInstance();
 const eventHandler = EventHandler.getInstance();
 eventHandler.mainListener();
+
 
 let trayMenu: TrayMenu;
 
@@ -287,4 +290,32 @@ export async function InitApp() {
 	await app.whenReady();
 	await initiationLocalDatabase();
 	await appReady();
+
+	powerMonitor.on('shutdown', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.STOP_TIMER
+		});
+	});
+	powerMonitor.on('suspend', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.STOP_TIMER
+		});
+	});
+	powerMonitor.on('lock-screen', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.STOP_TIMER
+		});
+	});
+	powerMonitor.on('unlock-screen', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.START_TIMER
+		});
+	});
+	powerMonitor.on('resume', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.START_TIMER
+		});
+	});
 }
+
+

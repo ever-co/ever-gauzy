@@ -175,7 +175,9 @@
 		"READ_MORE": "Читать далее",
 		"READ_LESS": "Свернуть",
 		"RECOVER": "Восстановить",
-		"ADD_MORE_SOURCES": "Добавить больше источников"
+		"ADD_MORE_SOURCES": "Добавить больше источников",
+		"REMOVE_FROM_FAVORITES": "Удалить из избранного",
+		"ADD_TO_FAVORITES": "Добавить в избранное"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -836,6 +838,7 @@
 		"DASHBOARD": "Приборная доска",
 		"DASHBOARDS": "Рабочие столы",
 		"APPOINTMENTS": "Назначения",
+		"FAVORITES": "Избранное",
 		"ACCOUNTING": "Бухгалтер",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
@@ -3671,6 +3674,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Требуется уровень сотрудника",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
+			"FAVORITE_ADDED": "{{ name }} добавлено в избранное",
+			"FAVORITE_REMOVED": "{{ name }} удалено из избранного",
+			"FAVORITE_ERROR": "Ошибка обновления статуса избранного",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Требуется название и год поставщика",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Требуется название языка и уровень",

@@ -64,6 +64,20 @@
 
 <!-- Actions Button -->
 <ng-template #actionButtons>
+	<!-- Favorite Button: Add or remove project from favorites -->
+	<ngx-favorite-toggle
+		*ngIf="selectedProject"
+		[entityType]="'OrganizationProject'"
+		[entityId]="selectedProject.id"
+		[entityName]="selectedProject.name"
+		size="small"
+		status="basic"
+		spacing="list"
+		[disabled]="disableButton"
+		[showLabel]="false"
+		(favoriteToggled)="onProjectFavoriteToggled($event)"
+	></ngx-favorite-toggle>
+
 	<ng-template
 		[ngxPermissionsOnly]="[
 			PermissionsEnum.ALL_ORG_EDIT,

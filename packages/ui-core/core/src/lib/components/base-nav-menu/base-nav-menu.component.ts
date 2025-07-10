@@ -1,24 +1,33 @@
 import { Directive, OnDestroy, OnInit } from '@angular/core';
-import { merge } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
+import { filter, startWith, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { NavMenuBuilderService, NavMenuSectionItem, SidebarMenuService, Store } from '../../services';
+import {
+	FavoriteStoreService,
+	NavMenuBuilderService,
+	NavMenuSectionItem,
+	SidebarMenuService,
+	Store
+} from '../../services';
 
 @UntilDestroy()
 @Directive({
-    selector: '[gaBaseNavMenu]',
-    standalone: false
+	selector: '[gaBaseNavMenu]',
+	standalone: false
 })
 export class BaseNavMenuComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+	private _favoriteItems: NavMenuSectionItem[] = [];
+
 	constructor(
 		protected readonly _navMenuBuilderService: NavMenuBuilderService,
 		protected readonly _store: Store,
 		protected readonly _sidebarMenuService: SidebarMenuService,
-		protected readonly _translateService: TranslateService
+		protected readonly _translateService: TranslateService,
+		protected readonly _favoriteStoreService: FavoriteStoreService
 	) {
 		super(_translateService);
 	}
@@ -28,18 +37,24 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	}
 
 	ngAfterViewInit() {
-		const merge$ = merge(
-			this._translateService.onLangChange.pipe(tap(() => this.defineBaseNavMenus())),
+		const merge$ = combineLatest([
+			this._favoriteStoreService.favoriteItems$,
+			this._translateService.onLangChange.pipe(startWith(null)),
 			this._store.selectedOrganization$.pipe(
 				filter((organization: IOrganization) => !!organization),
-				distinctUntilChange(),
-				tap(() => this.defineBaseNavMenus())
+				distinctUntilChange()
 			),
-			this._store.featureOrganizations$.pipe(tap(() => this.defineBaseNavMenus())),
-			this._store.featureTenant$.pipe(tap(() => this.defineBaseNavMenus())),
-			this._store.userRolePermissions$.pipe(tap(() => this.defineBaseNavMenus()))
+			this._store.featureOrganizations$,
+			this._store.featureTenant$,
+			this._store.userRolePermissions$
+		]).pipe(
+			tap(([favorites]) => {
+				this._favoriteItems = favorites;
+				this.defineBaseNavMenus();
+			}),
+			untilDestroyed(this)
 		);
-		merge$.pipe(untilDestroyed(this)).subscribe();
+		merge$.subscribe();
 	}
 
 	/**
@@ -96,6 +111,16 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 					translationKey: 'MENU.APPLICATIONS',
 					featureKey: FeatureEnum.FEATURE_DASHBOARD
 				}
+			},
+			{
+				id: 'favorites',
+				title: 'Favorites',
+				icon: 'far fa-star',
+				hidden: this._favoriteItems.length === 0,
+				data: {
+					translationKey: 'MENU.FAVORITES'
+				},
+				items: this._favoriteItems
 			},
 			{
 				id: 'accounting',

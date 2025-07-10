@@ -176,7 +176,9 @@
 		"READ_MORE": "Leer más",
 		"READ_LESS": "Leer menos",
 		"RECOVER": "Recuperar",
-		"ADD_MORE_SOURCES": "Añadir más fuentes"
+		"ADD_MORE_SOURCES": "Añadir más fuentes",
+		"REMOVE_FROM_FAVORITES": "Quitar de favoritos",
+		"ADD_TO_FAVORITES": "Agregar a favoritos"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -830,6 +832,7 @@
 		"DASHBOARD": "Tablero de control",
 		"DASHBOARDS": "Paneles de control",
 		"APPOINTMENTS": "Citas",
+		"FAVORITES": "Favoritos",
 		"ACCOUNTING": "Contabilidad",
 		"INCOME": "Ingresos",
 		"EXPENSES": "Gastos",
@@ -3651,6 +3654,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Se requiere nivel de empleado.",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Se requiere el nombre del tipo de empleo.",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Se requiere el nombre del departamento",
+			"FAVORITE_ADDED": "{{ name }} agregado a favoritos",
+			"FAVORITE_REMOVED": "{{ name }} eliminado de favoritos",
+			"FAVORITE_ERROR": "Error al actualizar el estado de favorito",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Entrada inválida",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Es necesario el nombre del proveedor y el año.",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Se requiere el nombre del idioma y el nivel.",

@@ -176,7 +176,9 @@
 		"READ_MORE": "Czytaj więcej",
 		"READ_LESS": "Czytaj mniej",
 		"RECOVER": "Przywróć",
-		"ADD_MORE_SOURCES": "Dodaj więcej źródeł"
+		"ADD_MORE_SOURCES": "Dodaj więcej źródeł",
+		"REMOVE_FROM_FAVORITES": "Usuń z ulubionych",
+		"ADD_TO_FAVORITES": "Dodaj do ulubionych"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -827,6 +829,7 @@
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Nawigacje",
 		"APPOINTMENTS": "Umówienia",
+		"FAVORITES": "Ulubione",
 		"ACCOUNTING": "Księgowość",
 		"INCOME": "Dochód",
 		"EXPENSES": "Wydatki",
@@ -3648,6 +3651,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Wymagany jest poziom pracownika",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Nazwa rodzaju zatrudnienia jest wymagana",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Nazwa działu jest wymagana",
+			"FAVORITE_ADDED": "'{{ name }}' dodano do ulubionych",
+			"FAVORITE_REMOVED": "'{{ name }}' usunięto z ulubionych",
+			"FAVORITE_ERROR": "Błąd podczas aktualizacji statusu ulubionych",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Nieprawidłowe dane wejściowe",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Nazwa dostawcy i rok są wymagane",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Nazwa języka oraz poziom są wymagane",

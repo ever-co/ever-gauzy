@@ -49,7 +49,9 @@ import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
+import { FavoriteService } from '../core/decorators';
 
+@FavoriteService(BaseEntityEnum.Task)
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
@@ -205,7 +207,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 								},
 								NotificationActionTypeEnum.Assigned,
 								task.title,
-								user.name
+								user?.name
 							);
 						})
 					);
@@ -1133,6 +1135,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	): FindOptionsWhere<Task> {
 		// Destructuring filter params
 		const {
+			ids = [],
 			projects = [],
 			teams = [],
 			modules = [],
@@ -1149,6 +1152,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 		// Build the 'where' condition
 		return {
+			...(ids.length && !where.id ? { id: In(ids) } : {}),
 			...(projects.length && !where.projectId ? { projectId: In(projects) } : {}),
 			...(teams.length && !where.teams ? { teams: { id: In(teams) } } : {}),
 			...(modules.length && !where.modules ? { modules: { id: In(modules) } } : {}),

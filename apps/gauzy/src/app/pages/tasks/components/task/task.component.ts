@@ -13,7 +13,8 @@ import {
 	ServerDataSource,
 	Store,
 	TasksStoreService,
-	TeamTasksStoreService
+	TeamTasksStoreService,
+	GenericFavoriteService
 } from '@gauzy/ui-core/core';
 import {
 	AddTaskDialogComponent,
@@ -42,7 +43,9 @@ import {
 	ISelectedEmployee,
 	ITask,
 	PermissionsEnum,
-	TaskListTypeEnum
+	TaskListTypeEnum,
+	IFavorite,
+	BaseEntityEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
@@ -50,10 +53,10 @@ import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.co
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-tasks',
-    templateUrl: './task.component.html',
-    styleUrls: ['task.component.scss'],
-    standalone: false
+	selector: 'ngx-tasks',
+	templateUrl: './task.component.html',
+	styleUrls: ['task.component.scss'],
+	standalone: false
 })
 export class TaskComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	private _refresh$: Subject<boolean> = new Subject();
@@ -79,6 +82,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	selectedEmployeeId: ID;
 	selectedProject: IOrganizationProject;
 	selectedTeamIds: string[] = [];
+	public favoriteTasks: IFavorite[] = [];
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -92,7 +96,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		private readonly route: ActivatedRoute,
 		private readonly httpClient: HttpClient,
 		private readonly _errorHandlingService: ErrorHandlingService,
-		private readonly _hashNumberPipe: HashNumberPipe
+		private readonly _hashNumberPipe: HashNumberPipe,
+		private readonly genericFavoriteService: GenericFavoriteService
 	) {
 		super(translateService);
 		this.initTasks();
@@ -380,6 +385,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				}),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.taskSubject$.next(true)),
+				tap(() => this.loadFavoriteTasks()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -747,4 +753,23 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	}
 
 	ngOnDestroy(): void {}
+
+	/**
+	 * Loads the list of favorite tasks for the current user or all for admin using the generic service.
+	 */
+	async loadFavoriteTasks() {
+		this.favoriteTasks = await this.genericFavoriteService.loadFavorites(
+			BaseEntityEnum.Task,
+			this.organization,
+			this.selectedEmployeeId || this._store.user?.employee?.id
+		);
+	}
+
+	/**
+	 * Handle task favorite toggle event from the new component
+	 */
+	onTaskFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// Reload favorites to keep the list in sync
+		this.loadFavoriteTasks();
+	}
 }

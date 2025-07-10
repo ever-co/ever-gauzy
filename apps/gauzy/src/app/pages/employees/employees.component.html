@@ -120,6 +120,19 @@
 <!-- Action Buttons -->
 <ng-template #actionButtons let-selectedItem>
 	<div class="btn-group actions">
+		<!-- Favorite Button: Add or remove employee from favorites -->
+		<ngx-favorite-toggle
+			*ngIf="selectedEmployee"
+			[entityType]="'Employee'"
+			[entityId]="selectedEmployee.id"
+			[entityName]="getEmployeeDisplayName(selectedEmployee)"
+			size="small"
+			status="basic"
+			spacing="list"
+			[disabled]="disabledButton"
+			[showLabel]="false"
+			(favoriteToggled)="onEmployeeFavoriteToggled($event)"
+		></ngx-favorite-toggle>
 		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ORG_EMPLOYEES_VIEW]">
 			<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_VIEW">
 				<button status="basic" class="action secondary" size="small" nbButton underConstruction>

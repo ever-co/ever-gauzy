@@ -176,7 +176,9 @@
 		"READ_MORE": "قراءة المزيد",
 		"READ_LESS": "قراءة أقل",
 		"RECOVER": "استعادة",
-		"ADD_MORE_SOURCES": "إضافة مصدر آخر"
+		"ADD_MORE_SOURCES": "إضافة مصدر آخر",
+		"REMOVE_FROM_FAVORITES": "إزالة من المفضلة",
+		"ADD_TO_FAVORITES": "إضافة إلى المفضلة"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -827,6 +829,7 @@
 		"DASHBOARD": "لوحة القيادة",
 		"DASHBOARDS": "لوحات القيادة",
 		"APPOINTMENTS": "المواعيد",
+		"FAVORITES": "المفضلة",
 		"ACCOUNTING": "المحاسبة",
 		"INCOME": "الدخل",
 		"EXPENSES": "المصاريف",
@@ -3634,6 +3637,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "مستوى الموظف مطلوب",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "اسم نوع التوظيف مطلوب",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "اسم القسم مطلوب",
+			"FAVORITE_ADDED": "تم إضافة {{ name }} إلى المفضلة",
+			"FAVORITE_REMOVED": "تم إزالة {{ name }} من المفضلة",
+			"FAVORITE_ERROR": "خطأ في تحديث حالة المفضلة",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "إدخال غير صالح",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "اسم البائع والسنة مطلوبان",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "اسم اللغة والمستوى مطلوبان",

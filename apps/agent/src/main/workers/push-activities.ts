@@ -1,4 +1,9 @@
-import { KbMouseActivityService, KbMouseActivityTO, TTimeSlot } from '@gauzy/desktop-lib';
+import {
+	KbMouseActivityService,
+	KbMouseActivityTO,
+	TTimeSlot,
+	TimerService
+} from '@gauzy/desktop-lib';
 import { KbMouseActivityPool, TKbMouseActivity, TMouseEvents } from '@gauzy/desktop-activity';
 import { ApiService, TResponseTimeSlot } from '../api';
 import { getAuthConfig, TAuthConfig, getInitialConfig } from '../util';
@@ -13,10 +18,11 @@ class PushActivities {
 	static instance: PushActivities;
 	private kbMousePool: KbMouseActivityPool;
 	private kbMouseActivityService: KbMouseActivityService;
-	private apiService = ApiService.getInstance();
+	private apiService: ApiService;
 	private agentLogger: AgentLogger;
 	private mainEvent: MainEvent;
 	private isNetworkError = false;
+	private timerService: TimerService;
 
 
 	constructor() {
@@ -24,7 +30,9 @@ class PushActivities {
 		this.getKbMousePoolModule();
 		this.agentLogger = AgentLogger.getInstance();
 		this.mainEvent = MainEvent.getInstance();
+		this.apiService = ApiService.getInstance();
 		this.trayUpdateMenuStatus('network', true);
+		this.timerService = new TimerService();
 	}
 
 	static getInstance(): PushActivities {
@@ -162,14 +170,14 @@ class PushActivities {
 		}
 	}
 
-	private getDurationOverAllSeconds(timeStart: Date, timeEnd: Date) {
+	private getDurationSeconds(timeStart: Date, timeEnd: Date) {
 		if (timeStart && timeEnd) {
 			return Math.floor((timeEnd.getTime() - timeStart.getTime()) / 1000);
 		}
 		return 0;
 	}
 
-	private getDurationSeconds(timeStart: Date, timeEnd: Date, afkDuration?: number) {
+	private getDurationOverAllSeconds(timeStart: Date, timeEnd: Date, afkDuration?: number) {
 		if (!(timeStart && timeEnd)) {
 			return 0;
 		}
@@ -241,21 +249,22 @@ class PushActivities {
 			return;
 		}
 		return {
-			tenantId: auth.user.employee.tenantId,
-			organizationId: auth.user.employee.organizationId,
-			duration: this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration),
+			tenantId: auth?.user?.employee?.tenantId,
+			organizationId: auth?.user?.employee?.organizationId,
+			duration: this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd)),
 			keyboard: activities.kbPressCount,
 			mouse: activities.mouseLeftClickCount + activities.mouseRightClickCount,
-			overall: this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd)),
+			overall: this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration),
 			startedAt: moment(activities.timeStart).toISOString(),
 			recordedAt: moment(activities.timeStart).toISOString(),
 			activities: this.getActivities(activities),
-			employeeId: auth.user.employee.employeeId
+			employeeId: auth?.user?.employee?.id
 		};
 	}
 
 	async saveActivities() {
 		try {
+			await this.saveOfflineTimer();
 			const activity = await this.getOldestActivity();
 			if (activity?.id) {
 				// remove activity from temp local database
@@ -293,6 +302,28 @@ class PushActivities {
 			return false;
 		}
 	}
+
+	async saveOfflineTimer() {
+		const notSyncTimer = await this.timerService.findToSynced();
+		const authConfig = getAuthConfig();
+		if (notSyncTimer.length) {
+			for (let i = 0; i < notSyncTimer.length; i++) {
+				const timerOffline = notSyncTimer[i].timer;
+				if (timerOffline?.isStartedOffline) {
+					await this.apiService.startTimer({
+						organizationId: authConfig?.user?.employee?.organizationId,
+						startedAt: timerOffline.startedAt,
+						tenantId: authConfig?.user?.employee?.tenantId,
+						organizationTeamId: null,
+						organizationContactId: null
+					});
+					await this.timerService.remove({ id: timerOffline?.id });
+				}
+			}
+		}
+	}
+
+
 
 	poolErrorHandler(error: Error) {
 		console.error(error);

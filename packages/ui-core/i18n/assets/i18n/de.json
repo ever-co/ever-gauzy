@@ -176,7 +176,9 @@
 		"READ_MORE": "Mehr lesen",
 		"READ_LESS": "Weniger lesen",
 		"RECOVER": "Wiederherstellen",
-		"ADD_MORE_SOURCES": "Weitere Quellen hinzufügen"
+		"ADD_MORE_SOURCES": "Weitere Quellen hinzufügen",
+		"REMOVE_FROM_FAVORITES": "Aus Favoriten entfernen",
+		"ADD_TO_FAVORITES": "Zu Favoriten hinzufügen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -828,6 +830,7 @@
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Dashboards",
 		"APPOINTMENTS": "Termine",
+		"FAVORITES": "Favoriten",
 		"ACCOUNTING": "Buchhaltung",
 		"INCOME": "Einkommen",
 		"EXPENSES": "Ausgaben",
@@ -3645,6 +3648,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Mitarbeiterebene ist erforderlich",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Der Name der Beschäftigungsart ist erforderlich.",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Der Name der Abteilung ist erforderlich.",
+			"FAVORITE_ADDED": "{{ name }} zu Favoriten hinzugefügt",
+			"FAVORITE_REMOVED": "{{ name }} aus Favoriten entfernt",
+			"FAVORITE_ERROR": "Fehler beim Aktualisieren des Favoritenstatus",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Ungültige Eingabe",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Vendorname und Jahr sind erforderlich",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Sprachname und Niveau sind erforderlich.",

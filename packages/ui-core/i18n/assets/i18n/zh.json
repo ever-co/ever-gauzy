@@ -176,7 +176,9 @@
 		"READ_MORE": "阅读更多",
 		"READ_LESS": "收起",
 		"RECOVER": "恢复",
-		"ADD_MORE_SOURCES": "添加更多来源"
+		"ADD_MORE_SOURCES": "添加更多来源",
+		"REMOVE_FROM_FAVORITES": "从收藏夹中移除",
+		"ADD_TO_FAVORITES": "添加到收藏夹"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -828,6 +830,7 @@
 		"DASHBOARD": "仪表盘",
 		"DASHBOARDS": "仪表板",
 		"APPOINTMENTS": "约会",
+		"FAVORITES": "收藏夹",
 		"ACCOUNTING": "会计",
 		"INCOME": "收入",
 		"EXPENSES": "费用",
@@ -3649,6 +3652,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "员工级别是必需的",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "就业类型名称是必填项",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "部门名称是必需的",
+			"FAVORITE_ADDED": "{{ name }} 已添加到收藏夹",
+			"FAVORITE_REMOVED": "{{ name }} 已从收藏夹中移除",
+			"FAVORITE_ERROR": "更新收藏状态时出错",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "无效的输入",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "供应商名称和年份是必需的",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "需要填写语言名称和水平。",
