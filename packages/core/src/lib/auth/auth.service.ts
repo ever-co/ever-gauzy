@@ -1340,7 +1340,7 @@ export class AuthService extends SocialAuthService {
 	 * @param includeTeams Flag indicating whether to include team information in the response.
 	 * @returns A promise that resolves to the user signin workspace response.
 	 */
-	async getUserWorkspaces(includeTeams: boolean = false): Promise<IUserSigninWorkspaceResponse> {
+	async getUserWorkspaces(includeTeams = false): Promise<IUserSigninWorkspaceResponse> {
 		try {
 			// Get the current authenticated user
 			const currentUser = RequestContext.currentUser();
@@ -1368,7 +1368,7 @@ export class AuthService extends SocialAuthService {
 			// Create workspace response using existing logic
 			const response: IUserSigninWorkspaceResponse = await this.createUserSigninWorkspaceResponse({
 				users,
-				code: '', // No code needed for authenticated requests
+				code: '', // Empty code - not needed for authenticated workspace retrieval
 				email,
 				includeTeams
 			});
