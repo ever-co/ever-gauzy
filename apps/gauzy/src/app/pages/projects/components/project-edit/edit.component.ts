@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, filter, map, tap, Observable } from 'rxjs';
+import { filter, map, tap, Observable } from 'rxjs';
 import {
 	IFavorite,
 	IIntegrationTenant,
