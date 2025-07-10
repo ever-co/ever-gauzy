@@ -308,10 +308,14 @@ export class AuthController {
 	/**
 	 * Get all workspaces (tenants) that the current authenticated user has access to.
 	 *
-	 * @param includeTeams - Whether to include teams in the response.
+	 * @param includeTeams - Whether to include teams in the response (default: false).
 	 * @returns A promise that resolves to the user signin workspace response.
 	 */
-	@ApiOperation({ summary: 'Get user workspaces' })
+	@ApiOperation({
+		summary: 'Get user workspaces',
+		description:
+			'Retrieve all workspaces (tenants) that the authenticated user has access to. Optionally include team information for each workspace.'
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Successfully retrieved user workspaces.'
@@ -331,12 +335,16 @@ export class AuthController {
 	 * Switch the current user to a different workspace (tenant).
 	 *
 	 * @param input - Switch workspace data containing tenant ID.
-	 * @returns A promise that resolves to the authentication response with new tokens.
+	 * @returns A promise that resolves to the authentication response with new tokens or null if switching fails.
 	 */
-	@ApiOperation({ summary: 'Switch user workspace' })
+	@ApiOperation({
+		summary: 'Switch user workspace',
+		description:
+			'Switch the authenticated user to a different workspace (tenant). Returns new authentication tokens for the target workspace.'
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Successfully switched workspace.'
+		description: 'Successfully switched workspace. Returns new authentication tokens.'
 	})
 	@ApiResponse({
 		status: HttpStatus.UNAUTHORIZED,
@@ -344,7 +352,7 @@ export class AuthController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid workspace switch request.'
+		description: 'Invalid workspace switch request. Check that tenantId is a valid UUID.'
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post('/switch-workspace')

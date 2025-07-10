@@ -1384,7 +1384,9 @@ export class AuthService extends SocialAuthService {
 	 * Switch the current user to a different workspace (tenant).
 	 *
 	 * @param tenantId The ID of the tenant to switch to.
-	 * @returns A promise that resolves to the authentication response with new tokens.
+	 * @returns A promise that resolves to the authentication response with new tokens or null if switching fails.
+	 * @throws UnauthorizedException when user is not authenticated or doesn't have access to the workspace.
+	 * @throws NotFoundException when the target workspace doesn't exist.
 	 */
 	async switchWorkspace(tenantId: ID): Promise<IAuthResponse | null> {
 		try {
@@ -1442,6 +1444,13 @@ export class AuthService extends SocialAuthService {
 			};
 		} catch (error) {
 			console.error('Error while switching workspace:', error?.message);
+
+			// Re-throw known exceptions for better error handling in the frontend
+			if (error instanceof UnauthorizedException) {
+				throw error;
+			}
+
+			// For unexpected errors, return null to maintain backward compatibility
 			return null;
 		}
 	}
