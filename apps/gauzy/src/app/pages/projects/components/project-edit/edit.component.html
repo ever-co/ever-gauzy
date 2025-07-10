@@ -8,7 +8,7 @@
 				</h4>
 			</div>
 			<ngx-favorite-toggle
-				*ngIf="project"
+				*ngIf="project$ | async as project"
 				[entityType]="'OrganizationProject'"
 				[entityId]="project.id"
 				[entityName]="project.name"

@@ -1,8 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, filter, Observable } from 'rxjs';
+import { combineLatest, filter, map, tap, Observable } from 'rxjs';
 import {
 	IFavorite,
 	IIntegrationTenant,
@@ -38,63 +38,40 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 		private readonly _store: Store,
 		private readonly _organizationProjectsService: OrganizationProjectsService,
 		private readonly _toastrService: ToastrService,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _cdr: ChangeDetectorRef
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		// Watch for both route data changes and parameter changes to handle navigation between different projects
-		this._watchRouteChanges();
-	}
-
-	/**
-	 * Watches for route changes (both data and parameters) to handle navigation between different projects
-	 */
-	private _watchRouteChanges() {
-		// Watch for both route data and parameter changes
-		combineLatest([this._activatedRoute.data, this._activatedRoute.params])
-			.pipe(
-				filter(([data, params]) => !!data && !!data.project && !!params && !!params.id),
-				untilDestroyed(this)
-			)
-			.subscribe(([data, params]) => {
-				// Clear previous project data when navigating to a different project
-				if (this.project && this.project.id !== params.id) {
-					this.project = null;
-				}
-
-				// Load the new project data
-				this._getEditProject(data);
-				this._getGithubIntegrationTenant(data);
-			});
+		// Call the following methods to initialize component properties
+		this._getEditProject();
+		this._getGithubIntegrationTenant();
 	}
 
 	/**
 	 * Fetches and sets the project data from the route's data property.
 	 */
-	private _getEditProject(data?: Data) {
-		const routeData = data || this._activatedRoute.snapshot.data;
-
-		if (routeData?.project) {
-			this.project = routeData.project;
-		}
+	private _getEditProject() {
+		this.project$ = this._activatedRoute.data.pipe(
+			filter((data: Data) => !!data && !!data.project),
+			map(({ project }) => project),
+			tap((project) => {
+				this.project = project;
+				this._cdr.detectChanges(); // Trigger change detection to avoid ExpressionChangedAfterItHasBeenCheckedError
+			}),
+			untilDestroyed(this) // Automatically unsubscribes when the component is destroyed
+		);
 	}
-
 	/**
 	 * Fetches and sets the GitHub integration data from the route's data property.
 	 */
-	private _getGithubIntegrationTenant(data?: Data) {
-		const routeData = data || this._activatedRoute.snapshot.data;
-		this.integration$ = new Observable((observer) => {
-			if (routeData?.integration) {
-				observer.next(routeData.integration);
-				observer.complete();
-			} else {
-				observer.next(null);
-				observer.complete();
-			}
-		});
+	private _getGithubIntegrationTenant() {
+		this.integration$ = this._activatedRoute.data.pipe(
+			map(({ integration }) => integration),
+			untilDestroyed(this) // Automatically unsubscribes when the component is destroyed
+		);
 	}
 
 	/**
