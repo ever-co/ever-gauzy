@@ -242,7 +242,7 @@ class PushActivities {
 			try {
 				activities.activeWindows = JSON.parse(activities.activeWindows);
 			} catch (error) {
-				this.agentLogger.error(`Error parsing acitivities data to json ${error.message}`);
+				this.agentLogger.error(`Error parsing activities data to json ${error.message}`);
 				return [];
 			}
 

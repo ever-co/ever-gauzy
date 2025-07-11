@@ -109,7 +109,7 @@ export class DesktopActiveWindow extends EventEmitter {
 
 			// Detect changes
 			let url = null;
-			if (window.platform === 'macos') {
+			if (window && window.platform === 'macos') {
 				url = window.url;
 			}
 			if (
