@@ -52,35 +52,15 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
-          config: |
-            paths:
-              - apps
-              - packages
-            paths-ignore:
-              - "**/*.test.ts"
-              - "**/*.spec.ts"
-              - "**/node_modules"
-              - "**/dist"
-              - "**/coverage"
           queries: security-and-quality
 
-      - name: Install dependencies
+      - name: Install dependencies (minimal)
         run: |
           yarn install --frozen-lockfile --ignore-scripts
-          yarn postinstall.manual
-
-      - name: Build packages
-        run: |
-          yarn build:package:all
         env:
           NODE_OPTIONS: --max-old-space-size=8192
 
-      - name: Build applications (partial)
-        run: |
-          yarn build:api --configuration=development
-        env:
-          NODE_OPTIONS: --max-old-space-size=8192
-        continue-on-error: true
+      # No build step - let CodeQL analyze source code directly
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
