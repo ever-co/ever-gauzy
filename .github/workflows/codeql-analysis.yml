@@ -14,7 +14,7 @@ concurrency:
 jobs:
   analyze:
     name: Analyze
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
@@ -28,33 +28,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.18.1'
-          cache: 'yarn'
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
-          tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.15.3/codeql-bundle-linux64.tar.gz
+          ram: 16384
+          threads: 0
           config: |
-            paths:
-              - "apps/api/src"
-              - "apps/gauzy/src"
-              - "packages/*/src"
             paths-ignore:
               - "**/*.test.ts"
               - "**/*.spec.ts"
-              - "**/node_modules"
-              - "**/dist"
+              - "**/node_modules/**"
+              - "**/dist/**"
+              - "**/coverage/**"
+              - "**/*.d.ts"
+              - "**/migrations/**"
+              - "**/seeds/**"
+              - "**/e2e/**"
+              - "**/*.config.js"
+              - "**/*.config.ts"
+              - "**/webpack.config.js"
+              - "**/jest.config.ts"
+              - "**/*.stories.ts"
+              - "**/storybook/**"
 
-      - name: Install dependencies (minimal)
-        run: |
-          yarn install --frozen-lockfile --ignore-scripts
-        env:
-          NODE_OPTIONS: --max-old-space-size=8192
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
