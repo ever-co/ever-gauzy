@@ -307,7 +307,6 @@ class PullActivities {
 			}
 			const activities = this.activityStores.getAndResetCurrentActivities();
 			const activityWindow = this.activityWindow.retrieveAndFlushActivities();
-			console.log('activityWindow', JSON.stringify(activityWindow, null, 2));
 			await this.activityService.save({
 				timeStart: timeData.timeStart,
 				timeEnd: timeData.timeEnd,
