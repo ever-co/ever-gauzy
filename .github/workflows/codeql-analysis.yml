@@ -38,11 +38,21 @@ jobs:
         uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
+          tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.15.3/codeql-bundle-linux64.tar.gz
+          config: |
+            paths:
+              - "apps/api/src"
+              - "apps/gauzy/src"
+              - "packages/*/src"
+            paths-ignore:
+              - "**/*.test.ts"
+              - "**/*.spec.ts"
+              - "**/node_modules"
+              - "**/dist"
 
-      - name: Install dependencies
+      - name: Install dependencies (minimal)
         run: |
-          yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-          yarn postinstall.manual
+          yarn install --frozen-lockfile --ignore-scripts
         env:
           NODE_OPTIONS: --max-old-space-size=8192
 
