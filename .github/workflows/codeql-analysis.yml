@@ -28,13 +28,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.18.1'
+          cache: 'yarn'
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v2
+      - name: Install dependencies
+        run: |
+          yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+          yarn postinstall.manual
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
