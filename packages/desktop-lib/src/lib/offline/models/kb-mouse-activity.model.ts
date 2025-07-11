@@ -113,7 +113,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 			remoteId: this.remoteId,
 			screenshots: Array.isArray(this.screenshots) ? this.screenshots : [],
 			afkDuration: this.afkDuration,
-			activeWindows: this.activeWindows
+			activeWindows: Array.isArray(this.activeWindows) ? this.activeWindows : [],
 		};
 	}
 }
