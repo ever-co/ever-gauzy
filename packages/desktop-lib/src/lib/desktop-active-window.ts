@@ -98,7 +98,14 @@ export class DesktopActiveWindow extends EventEmitter {
 	 */
 	private async getWindow(anyway: boolean = false) {
 		try {
-			const window = await this.activityWindow.getActiveWindow();
+			/**
+			 * Setting these to true would prompt a system dialog on macOS every time the function is called.
+			 * Therefore, they are kept false to avoid interrupting the user experience.
+			 * */
+			const window = await this.activityWindow.getActiveWindow({
+				accessibilityPermission: false,
+				screenRecordingPermission: false
+			});
 
 			// Detect changes
 			let url = null;

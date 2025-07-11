@@ -27,6 +27,11 @@ export type TActiveWindowResult = {
   memoryUsage: number;
 };
 
+export type TActiveWindowOption = {
+	accessibilityPermission: boolean,
+	screenRecordingPermission: boolean
+}
+
 export class ActivityWindow {
 	private static instance: ActivityWindow;
 	private windowActivities: Map<string, TWindowActivities>;
@@ -43,9 +48,12 @@ export class ActivityWindow {
 		return ActivityWindow.instance;
 	}
 
-	public async getActiveWindow(): Promise<TActiveWindowResult> {
+	public async getActiveWindow(options: TActiveWindowOption): Promise<TActiveWindowResult> {
 		const moduleActiveWindow = await this._loadGetWindows();
-		return moduleActiveWindow();
+		return moduleActiveWindow({
+			accessibilityPermission: options.accessibilityPermission,
+			screenRecordingPermission: options.screenRecordingPermission
+		});
 	}
 
 	private updateWindowActivities(windowActivity: TWindowActivities) {
@@ -63,7 +71,14 @@ export class ActivityWindow {
 	}
 
 	public async getActiveWindowAndSetDuration() {
-		const currentActiveWindow = await this.getActiveWindow();
+		/**
+		* Setting these to true would prompt a system dialog on macOS every time the function is called.
+		* Therefore, they are kept false to avoid interrupting the user experience.
+		* */
+		const currentActiveWindow = await this.getActiveWindow({
+			accessibilityPermission: false,
+			screenRecordingPermission: false
+		});
 		if (currentActiveWindow) {
 			this.updateWindowActivities({
 				name: currentActiveWindow.owner.name,
@@ -81,7 +96,7 @@ export class ActivityWindow {
 		}
 	}
 
-	retrieveAndflushActivities(): TWindowActivities[] {
+	retrieveAndFlushActivities(): TWindowActivities[] {
 		const activities = Array.from(this.windowActivities.values());
 		this.windowActivities.clear();
 		return activities;
@@ -95,7 +110,7 @@ export class ActivityWindow {
 	 *
 	 * @returns A function that can be called to retrieve the active window information.
 	 */
-	async _loadGetWindows(): Promise<() => Promise<TActiveWindowResult>> {
+	async _loadGetWindows(): Promise<(options: TActiveWindowOption) => Promise<TActiveWindowResult | undefined>> {
 		if (!this._getWindows) {
 			const importFn = new Function('specifier', 'return import(specifier)');
 			const mod = await importFn('get-windows');
