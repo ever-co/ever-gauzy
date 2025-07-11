@@ -35,22 +35,17 @@ jobs:
           ram: 16384
           threads: 0
           config: |
+            paths:
+              - "apps/api/src/app/**/*.ts"
+              - "apps/api/src/core/**/*.ts"
+              - "packages/core/src/**/*.ts"
+              - "packages/contracts/src/**/*.ts"
             paths-ignore:
               - "**/*.test.ts"
               - "**/*.spec.ts"
               - "**/node_modules/**"
               - "**/dist/**"
-              - "**/coverage/**"
               - "**/*.d.ts"
-              - "**/migrations/**"
-              - "**/seeds/**"
-              - "**/e2e/**"
-              - "**/*.config.js"
-              - "**/*.config.ts"
-              - "**/webpack.config.js"
-              - "**/jest.config.ts"
-              - "**/*.stories.ts"
-              - "**/storybook/**"
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v2
