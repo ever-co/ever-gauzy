@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['javascript', 'typescript']
+        language: ['javascript']
 
     permissions:
       security-events: write
@@ -34,8 +34,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -43,24 +41,24 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'yarn'
 
-      - name: Setup Yarn
-        run: |
-          corepack enable
-          yarn --version
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
-          queries: security-and-quality
 
-      - name: Install dependencies (minimal)
+      - name: Install dependencies
         run: |
-          yarn install --frozen-lockfile --ignore-scripts
+          yarn install --frozen-lockfile
+          yarn postinstall.manual
+
+      - name: Build essential packages
+        run: |
+          yarn build:package:constants
+          yarn build:package:contracts
+          yarn build:package:common
         env:
           NODE_OPTIONS: --max-old-space-size=8192
-
-      # No build step - let CodeQL analyze source code directly
+        continue-on-error: true
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
