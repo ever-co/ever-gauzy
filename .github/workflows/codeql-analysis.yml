@@ -11,34 +11,79 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
+env:
+  NODE_VERSION: '20.18.1'
+  CODEQL_THREADS: 4
+  CODEQL_RAM: 8192
+
 jobs:
   analyze:
     name: Analyze
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: buildjet-8vcpu-ubuntu-2204
 
     strategy:
       fail-fast: false
       matrix:
-        language: ['javascript']
+        language: ['javascript', 'typescript']
 
     permissions:
       security-events: write
+      contents: read
+      actions: read
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+
+      - name: Setup Yarn
+        run: |
+          corepack enable
+          yarn --version
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
+          config: |
+            paths:
+              - apps
+              - packages
+            paths-ignore:
+              - "**/*.test.ts"
+              - "**/*.spec.ts"
+              - "**/node_modules"
+              - "**/dist"
+              - "**/coverage"
+          queries: security-and-quality
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v2
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile --ignore-scripts
+          yarn postinstall.manual
 
-      #- run: |
-      #   make bootstrap
-      #   make release
+      - name: Build packages
+        run: |
+          yarn build:package:all
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+
+      - name: Build applications (partial)
+        run: |
+          yarn build:api --configuration=development
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+        continue-on-error: true
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'
+          upload: true

@@ -1,0 +1,31 @@
+name: "CodeQL Config for Ever-Gauzy"
+
+queries:
+  - uses: security-and-quality
+  - uses: security-extended
+
+paths:
+  - "apps/**"
+  - "packages/**"
+
+paths-ignore:
+  - "**/*.test.ts"
+  - "**/*.test.js"
+  - "**/*.spec.ts"
+  - "**/*.spec.js"
+  - "**/node_modules/**"
+  - "**/dist/**"
+  - "**/coverage/**"
+  - "**/*.d.ts"
+  - "**/migrations/**"
+  - "**/seeds/**"
+  - "**/e2e/**"
+  - "**/*.config.js"
+  - "**/*.config.ts"
+
+# Configuration spécifique pour JavaScript/TypeScript
+packs:
+  javascript:
+    - codeql/javascript-queries:AlertSuppression.ql
+    - codeql/javascript-queries:Security
+    - codeql/javascript-queries:Maintainability
