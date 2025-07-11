@@ -48,17 +48,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          yarn install --frozen-lockfile
-          yarn postinstall.manual
-
-      - name: Build essential packages
-        run: |
-          yarn build:package:constants
-          yarn build:package:contracts
-          yarn build:package:common
+          yarn install --frozen-lockfile --ignore-scripts
         env:
           NODE_OPTIONS: --max-old-space-size=8192
-        continue-on-error: true
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
