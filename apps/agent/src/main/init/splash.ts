@@ -27,6 +27,5 @@ export async function handleSplashScreen() {
 	} catch (error) {
 		console.log('error splashScreenWindow', error);
 		throw new AppError('INIT_APP_SPLASH', error);
-		// ignore error splashScreen
 	}
 }

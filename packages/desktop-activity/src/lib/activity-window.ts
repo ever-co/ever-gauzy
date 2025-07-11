@@ -35,7 +35,7 @@ export type TActiveWindowOption = {
 export class ActivityWindow {
 	private static instance: ActivityWindow;
 	private windowActivities: Map<string, TWindowActivities>;
-	private _getWindows: (() => Promise<TActiveWindowResult>) | null = null;
+	private _getWindows: (() => Promise<TActiveWindowResult>) | null;
 	private constructor() {
 		this.windowActivities = new Map();
 		this._getWindows = null;
@@ -59,7 +59,7 @@ export class ActivityWindow {
 	private updateWindowActivities(windowActivity: TWindowActivities) {
 		if (this.windowActivities.has(windowActivity.name)) {
 			const currentApp = this.windowActivities.get(windowActivity.name);
-			currentApp.duration = currentApp.duration + windowActivity.duration;
+			currentApp.duration += windowActivity.duration;
 			currentApp.dateEnd = windowActivity.dateEnd;
 			if (!currentApp.meta.some((mt) => mt.title === windowActivity.meta[0].title)) {
 				currentApp.meta.push(...windowActivity.meta);

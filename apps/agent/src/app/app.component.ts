@@ -31,6 +31,7 @@ import { AppService } from './app.service';
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 	@HostBinding('class.login-small-height') isLoginPage = false;
 	@HostBinding('class.setup-max-height') isSetupPage = false;
+	private pingHostInterval: NodeJS.Timeout
 
 	constructor(
 		private electronService: ElectronService,
@@ -63,21 +64,26 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.electronService.ipcRenderer.removeListener('server_ping_restart', this.handleRestart.bind(this));
 		this.electronService.ipcRenderer.removeListener('social_auth_success', this.handleSocialAuthSuccess.bind(this));
 		this.electronService.ipcRenderer.removeListener('__logout__', this.handleLogout.bind(this));
+		if (this.pingHostInterval) {
+			clearInterval(this.pingHostInterval);
+		}
 	}
 
 	handleServerPing(event: any, arg: any) {
 		this._ngZone.run(() => {
-			const pingHost = setInterval(async () => {
+			this.pingHostInterval = setInterval(async () => {
 				try {
 					await this.appService.pingServer(arg);
 					console.log('Server Found');
 					event.sender.send('server_is_ready');
-					clearInterval(pingHost);
+					clearInterval(this.pingHostInterval);
+					this.pingHostInterval = null;
 				} catch (error) {
 					console.log('ping status result', error.status);
 					if (this.store.userId) {
 						event.sender.send('server_is_ready');
-						clearInterval(pingHost);
+						clearInterval(this.pingHostInterval);
+						this.pingHostInterval = null;
 					}
 				}
 			}, 1000);
@@ -86,17 +92,19 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	handleRestart(event: any, arg: any) {
 		this._ngZone.run(() => {
-			const pingHost = setInterval(async () => {
+			this.pingHostInterval = setInterval(async () => {
 				try {
 					await this.appService.pingServer(arg);
 					console.log('Server Found');
 					event.sender.send('server_already_start');
-					clearInterval(pingHost);
+					clearInterval(this.pingHostInterval);
+					this.pingHostInterval = null;
 				} catch (error) {
 					console.log('ping status result', error.status);
 					if (this.store.userId) {
 						event.sender.send('server_already_start');
-						clearInterval(pingHost);
+						clearInterval(this.pingHostInterval);
+						this.pingHostInterval = null;
 					}
 				}
 			}, 3000);

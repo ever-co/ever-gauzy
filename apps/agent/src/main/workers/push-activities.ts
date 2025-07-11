@@ -239,7 +239,13 @@ class PushActivities {
 
 	getActiveWindows(activities: KbMouseActivityTO, auth: TAuthConfig): TParamsActivities[] {
 		if (typeof activities.activeWindows === 'string') {
-			activities.activeWindows = JSON.parse(activities.activeWindows);
+			try {
+				activities.activeWindows = JSON.parse(activities.activeWindows);
+			} catch (error) {
+				this.agentLogger.error(`Error parsing acitivities data to json ${error.message}`);
+				return [];
+			}
+
 		}
 		if (!Array.isArray(activities.activeWindows)) {
 			return []

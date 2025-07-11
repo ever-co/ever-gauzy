@@ -60,9 +60,9 @@ export type TimeSlotActivities = {
 	organizationContactId: string | null,
 	organizationId: string,
 	employeeId: string,
-	source: TimeLogSourceEnum.DESKTOP,
+	source: TimeLogSourceEnum,
 	recordedAt: Date,
-	metaData: any
+	metaData: Record<string, unknown>[] | unknown[]
 
 }
 
