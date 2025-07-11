@@ -11,15 +11,10 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
-env:
-  NODE_VERSION: '20.18.1'
-  CODEQL_THREADS: 4
-  CODEQL_RAM: 8192
-
 jobs:
   analyze:
     name: Analyze
-    runs-on: buildjet-8vcpu-ubuntu-2204
+    runs-on: buildjet-4vcpu-ubuntu-2204
 
     strategy:
       fail-fast: false
@@ -28,32 +23,18 @@ jobs:
 
     permissions:
       security-events: write
-      contents: read
-      actions: read
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'yarn'
-
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
 
-      - name: Install dependencies
-        run: |
-          yarn install --frozen-lockfile --ignore-scripts
-        env:
-          NODE_OPTIONS: --max-old-space-size=8192
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: '/language:${{ matrix.language }}'
-          upload: true
+        uses: github/codeql-action/analyze@v2
