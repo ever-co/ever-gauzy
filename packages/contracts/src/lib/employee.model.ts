@@ -121,6 +121,10 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	allowManualTime?: boolean;
 	allowModifyTime?: boolean;
 	allowDeleteTime?: boolean;
+	allowAgentAppExit?: boolean;
+	allowLogoutFromAgentApp?: boolean;
+	trackKeyboardMouseActivity?: boolean;
+	trackAllDisplays?: boolean;
 
 	/** Upwork ID For Gauzy AI*/
 	upworkId?: string;
@@ -188,6 +192,10 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	allowManualTime?: boolean;
 	allowModifyTime?: boolean;
 	allowDeleteTime?: boolean;
+	allowAgentAppExit?: boolean;
+	allowLogoutFromAgentApp?: boolean;
+	trackKeyboardMouseActivity?: boolean;
+	trackAllDisplays?: boolean;
 	/** Upwork ID For Gauzy AI*/
 	upworkId?: string;
 	/** LinkedIn ID For Gauzy AI*/
