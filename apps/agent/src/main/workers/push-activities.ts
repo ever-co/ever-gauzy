@@ -4,7 +4,13 @@ import {
 	TTimeSlot,
 	TimerService
 } from '@gauzy/desktop-lib';
-import { KbMouseActivityPool, TKbMouseActivity, TMouseEvents } from '@gauzy/desktop-activity';
+import {
+	KbMouseActivityPool,
+	TMouseEvents,
+	TimeSlotActivities,
+	ActivityType,
+	TimeLogSourceEnum,
+} from '@gauzy/desktop-activity';
 import { ApiService, TResponseTimeSlot } from '../api';
 import { getAuthConfig, TAuthConfig, getInitialConfig } from '../util';
 import * as moment from 'moment';
@@ -13,6 +19,8 @@ import { environment } from '../../environments/environment';
 import * as fs from 'node:fs';
 import MainEvent from '../events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
+
+type TParamsActivities = Omit<TimeSlotActivities, 'recordedAt'> & { recordedAt: string };
 
 class PushActivities {
 	static instance: PushActivities;
@@ -186,9 +194,21 @@ class PushActivities {
 		return Math.max(0, total - afk);
 	}
 
-	getActivities(activities: KbMouseActivityTO): TKbMouseActivity[] {
-		return [
-			{
+	getKeyboardActivities(activities: KbMouseActivityTO, duration: number, auth: TAuthConfig): TParamsActivities[] {
+		return [{
+			title: 'Keyboard and Mouse',
+			duration: duration,
+			projectId: null,
+			taskId: null,
+			date: moment(activities.timeStart).utc().format('YYYY-MM-DD'),
+			time: moment(activities.timeStart).utc().format('HH:mm:ss'),
+			type: ActivityType.APP,
+			organizationContactId: null,
+			organizationId: auth?.user?.employee?.organizationId,
+			source: TimeLogSourceEnum.DESKTOP,
+			recordedAt: moment(activities.timeStart).toISOString(),
+			employeeId: auth?.user?.employee?.id,
+			metaData: [{
 				kbPressCount: activities.kbPressCount,
 				kbSequence: (typeof activities.kbSequence === 'string'
 					? (() => {
@@ -213,7 +233,44 @@ class PushActivities {
 						}
 					})()
 					: activities.mouseEvents) as TMouseEvents[]
+			}]
+		}];
+	}
+
+	getActiveWindows(activities: KbMouseActivityTO, auth: TAuthConfig): TParamsActivities[] {
+		if (typeof activities.activeWindows === 'string') {
+			try {
+				activities.activeWindows = JSON.parse(activities.activeWindows);
+			} catch (error) {
+				this.agentLogger.error(`Error parsing activities data to json ${error.message}`);
+				return [];
 			}
+
+		}
+		if (!Array.isArray(activities.activeWindows)) {
+			return []
+		}
+		return activities.activeWindows.map((windowActivity) => ({
+			title: windowActivity.name,
+			duration: windowActivity.duration,
+			projectId: null,
+			taskId: null,
+			date: moment(activities.timeStart).utc().format('YYYY-MM-DD'),
+			time: moment(activities.timeStart).utc().format('HH:mm:ss'),
+			type: ActivityType.APP,
+			organizationContactId: null,
+			organizationId: auth?.user?.employee?.organizationId,
+			source: TimeLogSourceEnum.DESKTOP,
+			recordedAt: moment(activities.timeStart).toISOString(),
+			employeeId: auth?.user?.employee?.id,
+			metaData: windowActivity.meta
+		}));
+	}
+
+	getActivities(activities: KbMouseActivityTO, duration: number, auth: TAuthConfig): TParamsActivities[] {
+		return [
+			...this.getKeyboardActivities(activities, duration, auth),
+			...this.getActiveWindows(activities, auth)
 		];
 	}
 
@@ -248,16 +305,18 @@ class PushActivities {
 		if (!isAuthenticated) {
 			return;
 		}
+		const overall = this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration);
+		const duration = this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd));
 		return {
 			tenantId: auth?.user?.employee?.tenantId,
 			organizationId: auth?.user?.employee?.organizationId,
-			duration: this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd)),
+			duration,
 			keyboard: activities.kbPressCount,
 			mouse: activities.mouseLeftClickCount + activities.mouseRightClickCount,
-			overall: this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration),
+			overall,
 			startedAt: moment(activities.timeStart).toISOString(),
 			recordedAt: moment(activities.timeStart).toISOString(),
-			activities: this.getActivities(activities),
+			activities: this.getActivities(activities, overall, auth),
 			employeeId: auth?.user?.employee?.id
 		};
 	}

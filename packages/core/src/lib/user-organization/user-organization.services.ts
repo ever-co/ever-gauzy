@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ID, IOrganization, IPagination, IUser, IUserOrganization, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { ID, IOrganization, IPagination, IUser, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { Employee } from '../core/entities/internal';
@@ -30,12 +30,8 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 		filter: BaseQueryDTO<UserOrganization>,
 		includeEmployee: boolean
 	): Promise<IPagination<UserOrganization>> {
-		// Prepare filter with appropriate permissions
-		// Ensure we never pass an undefined filter to the helper
-		const modifiedFilter = this.applySensitiveRelationsFilter(filter ?? ({} as BaseQueryDTO<UserOrganization>));
-
-		// Execute the query with the potentially modified relations
-		let { items, total } = await super.findAll(modifiedFilter);
+		// Use the filter as-is, permission handling is now handled by the interceptor
+		let { items, total } = await super.findAll(filter ?? ({} as BaseQueryDTO<UserOrganization>));
 
 		// If 'includeEmployee' is set to true, fetch employee details associated with each user organization
 		if (includeEmployee) {
@@ -129,80 +125,5 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 		});
 
 		return await this.typeOrmUserOrganizationRepository.save(entities);
-	}
-
-	/**
-	 * Applies permission-based filtering to relations with fine-grained control over sub-paths.
-	 *
-	 * @param filter The original filter object from the request
-	 * @returns A modified filter with restricted relations based on permissions
-	 */
-	private applySensitiveRelationsFilter(filter: BaseQueryDTO<UserOrganization>): BaseQueryDTO<UserOrganization> {
-		// Deep clone the filter to avoid modifying the original
-		const modifiedFilter = JSON.parse(JSON.stringify(filter));
-
-		// Early return if no relations
-		if (!modifiedFilter.relations) {
-			return modifiedFilter;
-		}
-
-		const PERMISSION_CONFIG = {
-			organization: {
-				_self: null,
-				payments: PermissionsEnum.ORG_PAYMENT_VIEW,
-				invoices: PermissionsEnum.INVOICES_VIEW,
-				invoiceEstimateHistories: PermissionsEnum.INVOICES_VIEW,
-				accountingTemplates: PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES,
-				employees: {
-					_self: PermissionsEnum.ORG_EMPLOYEES_VIEW,
-					user: PermissionsEnum.ORG_USERS_VIEW
-				},
-				featureOrganizations: PermissionsEnum.ALL_ORG_VIEW,
-				contact: PermissionsEnum.ORG_CONTACT_VIEW,
-				organizationSprints: PermissionsEnum.ORG_SPRINT_VIEW
-			}
-		};
-		// Filter relations based on complex permission hierarchy
-		modifiedFilter.relations = modifiedFilter.relations.filter((relation) => {
-			const pathParts = relation.split('.');
-
-			// Start navigation from the root of our permission tree
-			let currentPermissionNode = PERMISSION_CONFIG;
-			let requiredPermission = null;
-
-			// Navigate through relation path and permission tree together
-			for (let i = 0; i < pathParts.length; i++) {
-				const pathPart = pathParts[i];
-
-				// If we've reached the end of our defined permission tree, allow access to deeper paths
-				if (!currentPermissionNode || typeof currentPermissionNode !== 'object') {
-					break;
-				}
-
-				// Check if this part of the path is in our permission config
-				if (currentPermissionNode[pathPart]) {
-					if (typeof currentPermissionNode[pathPart] === 'object') {
-						if (currentPermissionNode[pathPart]['_self']) {
-							requiredPermission = currentPermissionNode[pathPart]['_self'];
-						}
-						// Continue navigating deeper
-						currentPermissionNode = currentPermissionNode[pathPart];
-					} else {
-						requiredPermission = currentPermissionNode[pathPart];
-						break;
-					}
-				} else {
-					break;
-				}
-			}
-
-			if (requiredPermission) {
-				return RequestContext.hasPermission(requiredPermission);
-			}
-
-			return true;
-		});
-
-		return modifiedFilter;
 	}
 }

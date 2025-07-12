@@ -68,12 +68,10 @@ if (!isNotificationWindow) {
 		 */
 		const overStyle = document.createElement('style');
 		overStyle.innerHTML = `
-			${!isSetupWindow ? `
-				.cet-container {
-					top:0px !important;
-					overflow: unset !important;
-				}
-			` : ''}
+			.cet-container {
+				${ !isSetupWindow ? 'top:0px !important;' : '' }
+				overflow: unset !important;
+			}
 			.cet-menubar-menu-container {
 				position: absolute;
 				display: block;
