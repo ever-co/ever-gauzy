@@ -1,4 +1,9 @@
-import { KeyboardMouseEventCounter, KbMouseTimer, KeyboardMouseActivityStores } from '@gauzy/desktop-activity';
+import {
+	KeyboardMouseEventCounter,
+	KbMouseTimer,
+	KeyboardMouseActivityStores,
+	ActivityWindow
+} from '@gauzy/desktop-activity';
 import { KbMouseActivityService, TranslateService, notifyScreenshot, TimerService, Timer } from '@gauzy/desktop-lib';
 import AppWindow from '../window-manager';
 import * as path from 'node:path';
@@ -31,7 +36,9 @@ class PullActivities {
 	private mainEvent: MainEvent;
 	private apiService: ApiService;
 	private startedDate: Date;
-	private stoppedDate: Date;
+	private stoppedDate: Date ;
+	private activityStores: KeyboardMouseActivityStores;
+	private activityWindow: ActivityWindow;
 	constructor(user: UserLogin) {
 		this.listenerModule = null;
 		this.isStarted = false;
@@ -44,6 +51,8 @@ class PullActivities {
 		this.mainEvent = MainEvent.getInstance();
 		this.apiService = ApiService.getInstance();
 		this.timerService = new TimerService();
+		this.activityStores = KeyboardMouseActivityStores.getInstance();
+		this.activityWindow = ActivityWindow.getInstance();
 	}
 
 	static getInstance(user: UserLogin): PullActivities {
@@ -189,6 +198,14 @@ class PullActivities {
 		});
 	}
 
+	async collectActivityWindow() {
+		try {
+			await this.activityWindow.getActiveWindowAndSetDuration();
+		} catch (error) {
+			this.agentLogger.error(`Active window collection failed: ${error.message}`);
+		}
+	}
+
 	getTimerModule() {
 		if (!this.timerModule) {
 			this.timerModule = KbMouseTimer.getInstance();
@@ -196,6 +213,7 @@ class PullActivities {
 			this.timerModule.setFlushInterval(60);
 			this.timerModule.afkEvent(this.afkEVentHandler.bind(this));
 			this.timerModule.setTimerStartedCallback(this.timerStatusHandler.bind(this));
+			this.timerModule.setActiveWindowCallback(this.collectActivityWindow.bind(this));
 		}
 		const appSetting = getAppSetting();
 		const screenshotInterval = (appSetting?.timer?.updatePeriod || 5) * 60; // value is in seconds and default to 5 minutes
@@ -287,8 +305,8 @@ class PullActivities {
 			if (isScreenshot) {
 				imgs = await this.getScreenShot();
 			}
-			const activityStores = KeyboardMouseActivityStores.getInstance();
-			const activities = activityStores.getAndResetCurrentActivities();
+			const activities = this.activityStores.getAndResetCurrentActivities();
+			const activityWindow = this.activityWindow.retrieveAndFlushActivities();
 			await this.activityService.save({
 				timeStart: timeData.timeStart,
 				timeEnd: timeData.timeEnd,
@@ -302,7 +320,8 @@ class PullActivities {
 				mouseEvents: JSON.stringify(activities.mouseEvents),
 				remoteId: this.remoteId,
 				screenshots: JSON.stringify(imgs.map((img) => img.filePath)),
-				afkDuration: afkDuration || 0
+				afkDuration: afkDuration || 0,
+				activeWindows: JSON.stringify(activityWindow)
 			});
 			this.agentLogger.info('Keyboard and mouse activities saved');
 		} catch (error: unknown) {

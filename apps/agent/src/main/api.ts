@@ -4,6 +4,7 @@ import fetch, { HeadersInit } from 'node-fetch';
 import * as moment from 'moment';
 import * as fs from 'node:fs';
 import * as FormData from 'form-data';
+import { TimeLogSourceEnum, TimeLogType } from '@gauzy/desktop-activity';
 
 type UploadParams = {
 	timeSlotId?: string;
@@ -36,10 +37,10 @@ export type TToggleParams = {
 export type TTimerParams = {
 	description: string,
 	isBillable: boolean,
-	logType: 'TRACKED',
+	logType: TimeLogType,
 	projectId: string | null,
 	taskId: string | null,
-	source: 'DESKTOP',
+	source: TimeLogSourceEnum,
 	manualTimeSlot: string | null,
 	organizationId: string | null,
 	tenantId: string | null,
@@ -119,10 +120,10 @@ export class ApiService {
 		return {
 			description: '',
 			isBillable: true,
-			logType: 'TRACKED',
+			logType: TimeLogType.TRACKED,
 			projectId: null,
 			taskId: null,
-			source: 'DESKTOP',
+			source: TimeLogSourceEnum.DESKTOP,
 			manualTimeSlot: null,
 			organizationId: payload.organizationId,
 			tenantId: payload.tenantId,

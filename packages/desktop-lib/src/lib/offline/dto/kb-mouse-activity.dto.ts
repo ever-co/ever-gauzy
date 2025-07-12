@@ -11,6 +11,18 @@ export type TMouseEvents = {
 	};
 };
 
+export type TActiveWindows = {
+	name: string;
+	duration: number;
+	dateStart: Date;
+	dateEnd: Date;
+	meta: {
+		url?: string;
+		title: string;
+		platform?: string;
+	}[]
+}
+
 export interface KbMouseActivityTO {
 	id?: number;
 	timeStart: Date;
@@ -26,6 +38,8 @@ export interface KbMouseActivityTO {
 	remoteId: string;
 	screenshots: string[] | string;
 	afkDuration: number;
+	activeWindows: TActiveWindows[] | string;
+
 }
 
 export const TABLE_NAME_KB_MOUSE_ACTIVITY: string = 'kb_mouse_activity';
