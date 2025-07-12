@@ -2071,7 +2071,7 @@
 				"ALLOW_DELETE_TIME_INFO": "Mitarbeiter dürfen Zeit löschen.",
 				"ALLOW_AGENT_APP_EXIT": "Agent-App Beenden Erlauben",
 				"ALLOW_AGENT_APP_EXIT_INFO": "Mitarbeiter dürfen die Agent-Anwendung beenden. Wenn deaktiviert, wird die Beenden-Option in der Agent-App blockiert.",
-				"ALLOW_LOGOUT_FROM_AGENT_APP": "Abmeldung von Agent-App Erlauben",
+				"ALLOW_LOGOUT_FROM_AGENT_APP": "Abmeldung von der Agent-App erlauben",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Mitarbeiter dürfen sich von der Agent-Anwendung abmelden. Wenn deaktiviert, wird die Abmelde-Option in der Agent-App blockiert.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Tastatur- und Mausaktivität Verfolgen",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Vollständige Verfolgung der Tastatur- und Mausaktivität aktivieren, einschließlich Tastenanschläge und exakte Mausbewegungen in allen Desktop-Apps und Agent.",
