@@ -10,10 +10,10 @@ import { EmployeeStore } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-edit-employee-settings',
-    templateUrl: './edit-employee-other-settings.component.html',
-    styleUrls: ['./edit-employee-other-settings.component.scss'],
-    standalone: false
+	selector: 'ga-edit-employee-settings',
+	templateUrl: './edit-employee-other-settings.component.html',
+	styleUrls: ['./edit-employee-other-settings.component.scss'],
+	standalone: false
 })
 export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	listOfTimeFormats = DEFAULT_TIME_FORMATS;
@@ -35,6 +35,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	@ViewChild('general') general: NbAccordionItemComponent;
 	@ViewChild('integrations') integrations: NbAccordionItemComponent;
 	@ViewChild('timer') timer: NbAccordionItemComponent;
+	@ViewChild('agent') agent: NbAccordionItemComponent;
 
 	/**
 	 * Employee other settings settings
@@ -49,7 +50,11 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			allowManualTime: [false],
 			allowModifyTime: [false],
 			allowDeleteTime: [false],
-			allowScreenshotCapture: [true]
+			allowScreenshotCapture: [true],
+			allowAgentAppExit: [true],
+			allowLogoutFromAgentApp: [true],
+			trackKeyboardMouseActivity: [false],
+			trackAllDisplays: [false]
 		});
 	}
 
@@ -91,7 +96,11 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			allowManualTime,
 			allowDeleteTime,
 			allowModifyTime,
-			allowScreenshotCapture
+			allowScreenshotCapture,
+			allowAgentAppExit,
+			allowLogoutFromAgentApp,
+			trackKeyboardMouseActivity,
+			trackAllDisplays
 		} = employee;
 		this.form.patchValue({
 			timeZone: user?.timeZone ?? moment.tz.guess(),
@@ -101,7 +110,11 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			allowManualTime,
 			allowDeleteTime,
 			allowModifyTime,
-			allowScreenshotCapture
+			allowScreenshotCapture,
+			allowAgentAppExit: allowAgentAppExit ?? true,
+			allowLogoutFromAgentApp: allowLogoutFromAgentApp ?? true,
+			trackKeyboardMouseActivity: trackKeyboardMouseActivity ?? false,
+			trackAllDisplays: trackAllDisplays ?? false
 		});
 		this.form.updateValueAndValidity();
 	}
@@ -124,7 +137,11 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			allowManualTime,
 			allowDeleteTime,
 			allowModifyTime,
-			allowScreenshotCapture
+			allowScreenshotCapture,
+			allowAgentAppExit,
+			allowLogoutFromAgentApp,
+			trackKeyboardMouseActivity,
+			trackAllDisplays
 		} = this.form.value;
 
 		this.employeeStore.updateUserForm({ timeZone, timeFormat });
@@ -136,7 +153,11 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			allowManualTime,
 			allowDeleteTime,
 			allowModifyTime,
-			allowScreenshotCapture
+			allowScreenshotCapture,
+			allowAgentAppExit,
+			allowLogoutFromAgentApp,
+			trackKeyboardMouseActivity,
+			trackAllDisplays
 		});
 	}
 
