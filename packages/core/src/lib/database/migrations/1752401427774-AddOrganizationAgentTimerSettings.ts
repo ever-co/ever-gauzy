@@ -66,7 +66,7 @@ export class AddOrganizationAgentTimerSettings1752401427774 implements Migration
 		await queryRunner.query(
 			`ALTER TABLE "organization" ADD "trackKeyboardMouseActivity" boolean NOT NULL DEFAULT false`
 		);
-		await queryRunner.query(`ALTER TABLE "organization" ADD "trackAllDisplays" boolean NOT NULL DEFAULT false`);
+		await queryRunner.query(`ALTER TABLE "organization" ADD "trackAllDisplays" boolean NOT NULL DEFAULT true`);
 	}
 
 	/**
@@ -206,7 +206,7 @@ export class AddOrganizationAgentTimerSettings1752401427774 implements Migration
 		await queryRunner.query(
 			`ALTER TABLE \`organization\` ADD \`trackKeyboardMouseActivity\` tinyint NOT NULL DEFAULT 0`
 		);
-		await queryRunner.query(`ALTER TABLE \`organization\` ADD \`trackAllDisplays\` tinyint NOT NULL DEFAULT 0`);
+		await queryRunner.query(`ALTER TABLE \`organization\` ADD \`trackAllDisplays\` tinyint NOT NULL DEFAULT 1`);
 	}
 
 	/**
