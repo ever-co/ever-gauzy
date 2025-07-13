@@ -2065,7 +2065,7 @@
 			"INTEGRATIONS": "Intégrations",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Paramètres du minuteur",
-				"AGENT_SETTINGS": "Paramètres de l'agent",
+				"AGENT_SETTINGS": "Paramètres de l’agent",
 				"ALLOW_MODIFY_TIME": "Autoriser à modifier l'heure",
 				"ALLOW_MODIFY_TIME_INFO": "Autoriser l'employé à modifier le temps manuel.",
 				"ALLOW_DELETE_TIME": "Autoriser la suppression de l'horaire.",
