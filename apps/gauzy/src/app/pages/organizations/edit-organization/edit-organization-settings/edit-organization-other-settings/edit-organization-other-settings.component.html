@@ -39,6 +39,11 @@
 					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' | translate }}
 				</li>
 			</span>
+			<span (click)="agent.toggle()">
+				<li [ngClass]="{ active: agent?.expanded }">
+					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' | translate }}
+				</li>
+			</span>
 			<span (click)="taskSetting.toggle()">
 				<li [ngClass]="{ active: taskSetting?.expanded }">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TASK_SETTING' | translate }}
