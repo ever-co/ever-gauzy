@@ -468,6 +468,84 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ nullable: true, default: DEFAULT_STANDARD_WORK_HOURS_PER_DAY })
 	standardWorkHoursPerDay?: number;
 
+	/**
+	 * Agent Settings
+	 */
+
+	/**
+	 * Indicates whether employees can exit the Agent app.
+	 *
+	 * @column
+	 * @default true
+	 * @type boolean
+	 */
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description:
+			'Allow employees to exit the Agent app. When disabled, the exit option will be blocked in the Agent app.',
+		example: true
+	})
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: true })
+	allowAgentAppExit?: boolean;
+
+	/**
+	 * Indicates whether employees can logout from the Agent app.
+	 *
+	 * @column
+	 * @default true
+	 * @type boolean
+	 */
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description:
+			'Allow employees to logout from the Agent app. When disabled, the logout option will be blocked in the Agent app.',
+		example: true
+	})
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: true })
+	allowLogoutFromAgentApp?: boolean;
+
+	/**
+	 * Timer Settings
+	 */
+
+	/**
+	 * Indicates whether keyboard and mouse activity tracking is enabled.
+	 *
+	 * @column
+	 * @default false
+	 * @type boolean
+	 */
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description: 'Enable comprehensive keyboard and mouse activity tracking for detailed productivity insights.',
+		example: false
+	})
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	trackKeyboardMouseActivity?: boolean;
+
+	/**
+	 * Indicates whether tracking should include all displays or just the primary one.
+	 *
+	 * @column
+	 * @default false
+	 * @type boolean
+	 */
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description: 'Track all displays instead of just the primary display. Useful for multi-monitor setups.',
+		example: false
+	})
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: true })
+	trackAllDisplays?: boolean;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne

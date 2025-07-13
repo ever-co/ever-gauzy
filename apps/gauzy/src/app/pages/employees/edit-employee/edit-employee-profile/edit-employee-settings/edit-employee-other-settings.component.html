@@ -14,6 +14,11 @@
 					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' | translate }}
 				</li>
 			</span>
+			<span (click)="agent.toggle()">
+				<li [ngClass]="{ active: agent?.expanded }">
+					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' | translate }}
+				</li>
+			</span>
 			<span (click)="integrations.toggle()">
 				<li [ngClass]="{ active: integrations?.expanded }">
 					{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.INTEGRATIONS' | translate }}
@@ -155,6 +160,119 @@
 											<nb-icon icon="info"></nb-icon>
 										</button>
 									</nb-toggle>
+								</div>
+								<div class="col-xl-6 col-12 pt-2">
+									<div class="form-group invite-toggle">
+										<nb-toggle
+											class="d-block"
+											formControlName="trackKeyboardMouseActivity"
+											status="primary"
+											labelPosition="start"
+										>
+											{{
+												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_KEYBOARD_MOUSE_ACTIVITY'
+													| translate
+											}}
+											<button
+												[nbTooltip]="
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO'
+														| translate
+												"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
+										</nb-toggle>
+									</div>
+								</div>
+								<div class="col-xl-6 col-12 pt-2">
+									<div class="form-group invite-toggle">
+										<nb-toggle
+											class="d-block"
+											formControlName="trackAllDisplays"
+											status="primary"
+											labelPosition="start"
+										>
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ALL_DISPLAYS' | translate }}
+											<button
+												[nbTooltip]="
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ALL_DISPLAYS_INFO'
+														| translate
+												"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
+										</nb-toggle>
+									</div>
+								</div>
+							</div>
+						</div>
+					</nb-accordion-item-body>
+				</nb-accordion-item>
+				<nb-accordion-item #agent>
+					<nb-accordion-item-header>
+						{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' | translate }}
+					</nb-accordion-item-header>
+					<nb-accordion-item-body>
+						<div class="fields time-tracker">
+							<div class="row">
+								<div class="col-xl-6 col-12 pt-2">
+									<div class="form-group invite-toggle">
+										<nb-toggle
+											class="d-block"
+											formControlName="allowAgentAppExit"
+											status="primary"
+											labelPosition="start"
+										>
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_AGENT_APP_EXIT' | translate }}
+											<button
+												[nbTooltip]="
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_AGENT_APP_EXIT_INFO'
+														| translate
+												"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
+										</nb-toggle>
+									</div>
+								</div>
+								<div class="col-xl-6 col-12 pt-2">
+									<div class="form-group invite-toggle">
+										<nb-toggle
+											class="d-block"
+											formControlName="allowLogoutFromAgentApp"
+											status="primary"
+											labelPosition="start"
+										>
+											{{
+												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_LOGOUT_FROM_AGENT_APP'
+													| translate
+											}}
+											<button
+												[nbTooltip]="
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_LOGOUT_FROM_AGENT_APP_INFO'
+														| translate
+												"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
+										</nb-toggle>
+									</div>
 								</div>
 							</div>
 						</div>

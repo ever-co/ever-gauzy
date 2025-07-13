@@ -117,11 +117,16 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	profile_link?: string;
 	isTrackingEnabled: boolean;
 	isDeleted?: boolean;
+	/**	Agent Settings */
+	allowAgentAppExit?: boolean;
+	allowLogoutFromAgentApp?: boolean;
+	/**	Timer Settings */
 	allowScreenshotCapture?: boolean;
 	allowManualTime?: boolean;
 	allowModifyTime?: boolean;
 	allowDeleteTime?: boolean;
-
+	trackKeyboardMouseActivity?: boolean;
+	trackAllDisplays?: boolean;
 	/** Upwork ID For Gauzy AI*/
 	upworkId?: string;
 	/** LinkedIn ID For Gauzy AI*/
@@ -184,10 +189,16 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	gitlabUrl?: string;
 	upworkUrl?: string;
 	profile_link?: string;
+	/**	Agent Settings */
+	allowAgentAppExit?: boolean;
+	allowLogoutFromAgentApp?: boolean;
+	/**	Timer Settings */
 	allowScreenshotCapture?: boolean;
 	allowManualTime?: boolean;
 	allowModifyTime?: boolean;
 	allowDeleteTime?: boolean;
+	trackKeyboardMouseActivity?: boolean;
+	trackAllDisplays?: boolean;
 	/** Upwork ID For Gauzy AI*/
 	upworkId?: string;
 	/** LinkedIn ID For Gauzy AI*/
