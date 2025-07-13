@@ -543,7 +543,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	})
 	@IsOptional()
 	@IsBoolean()
-	@MultiORMColumn({ default: false })
+	@MultiORMColumn({ default: true })
 	trackAllDisplays?: boolean;
 
 	/*
