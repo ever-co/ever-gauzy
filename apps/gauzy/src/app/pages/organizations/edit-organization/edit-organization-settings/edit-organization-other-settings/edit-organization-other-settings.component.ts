@@ -51,10 +51,10 @@ import { NotesWithTagsComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-edit-org-other-settings',
-    templateUrl: './edit-organization-other-settings.component.html',
-    styleUrls: ['./edit-organization-other-settings.component.scss'],
-    standalone: false
+	selector: 'ga-edit-org-other-settings',
+	templateUrl: './edit-organization-other-settings.component.html',
+	styleUrls: ['./edit-organization-other-settings.component.scss'],
+	standalone: false
 })
 export class EditOrganizationOtherSettingsComponent
 	extends NotesWithTagsComponent
@@ -155,7 +155,11 @@ export class EditOrganizationOtherSettingsComponent
 			trackOnSleep: [false],
 			screenshotFrequency: [10],
 			enforced: [false],
-			standardWorkHoursPerDay: [DEFAULT_STANDARD_WORK_HOURS_PER_DAY]
+			standardWorkHoursPerDay: [DEFAULT_STANDARD_WORK_HOURS_PER_DAY],
+			allowAgentAppExit: [true],
+			allowLogoutFromAgentApp: [true],
+			trackKeyboardMouseActivity: [false],
+			trackAllDisplays: [false]
 		});
 	}
 
@@ -173,6 +177,7 @@ export class EditOrganizationOtherSettingsComponent
 	@ViewChild('bonus') bonus: NbAccordionItemComponent;
 	@ViewChild('invites') invites: NbAccordionItemComponent;
 	@ViewChild('dateLimit') dateLimit: NbAccordionItemComponent;
+	@ViewChild('agent') agent: NbAccordionItemComponent;
 	@ViewChild('timer') timer: NbAccordionItemComponent;
 	@ViewChild('integrations') integrations: NbAccordionItemComponent;
 	@ViewChild('taskSetting') taskSetting: NbAccordionItemComponent;
