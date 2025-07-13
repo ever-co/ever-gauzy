@@ -34,6 +34,7 @@ export enum ListsInputTypeEnum {
 export interface IOrganization
 	extends IBasePerTenantEntityModel,
 		IRelationalImageAsset,
+		IOrganizationAgentSetting,
 		IOrganizationTimerSetting,
 		ITaggable {
 	name: string;
@@ -305,6 +306,11 @@ export interface IKeyValuePair {
 	value: boolean | string;
 }
 
+export interface IOrganizationAgentSetting {
+	allowAgentAppExit?: boolean;
+	allowLogoutFromAgentApp?: boolean;
+}
+
 export interface IOrganizationTimerSetting {
 	allowTrackInactivity?: boolean;
 	inactivityTimeLimit?: number;
@@ -316,4 +322,6 @@ export interface IOrganizationTimerSetting {
 	screenshotFrequency?: number;
 	enforced?: boolean;
 	standardWorkHoursPerDay?: number;
+	trackKeyboardMouseActivity?: boolean;
+	trackAllDisplays?: boolean;
 }
