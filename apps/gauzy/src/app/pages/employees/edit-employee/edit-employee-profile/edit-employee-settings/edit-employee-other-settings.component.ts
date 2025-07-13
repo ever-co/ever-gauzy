@@ -114,7 +114,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			allowAgentAppExit: allowAgentAppExit ?? true,
 			allowLogoutFromAgentApp: allowLogoutFromAgentApp ?? true,
 			trackKeyboardMouseActivity: trackKeyboardMouseActivity ?? false,
-			trackAllDisplays: trackAllDisplays ?? false
+			trackAllDisplays: trackAllDisplays ?? true
 		});
 		this.form.updateValueAndValidity();
 	}
