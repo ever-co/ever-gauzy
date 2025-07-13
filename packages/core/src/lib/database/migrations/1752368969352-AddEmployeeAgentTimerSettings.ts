@@ -64,7 +64,7 @@ export class AddEmployeeAgentTimerSettings1752368969352 implements MigrationInte
 		await queryRunner.query(
 			`ALTER TABLE "employee" ADD "trackKeyboardMouseActivity" boolean NOT NULL DEFAULT false`
 		);
-		await queryRunner.query(`ALTER TABLE "employee" ADD "trackAllDisplays" boolean NOT NULL DEFAULT false`);
+		await queryRunner.query(`ALTER TABLE "employee" ADD "trackAllDisplays" boolean NOT NULL DEFAULT true`);
 	}
 
 	/**
@@ -170,7 +170,7 @@ export class AddEmployeeAgentTimerSettings1752368969352 implements MigrationInte
 		await queryRunner.query(
 			`ALTER TABLE \`employee\` ADD \`trackKeyboardMouseActivity\` tinyint NOT NULL DEFAULT 0`
 		);
-		await queryRunner.query(`ALTER TABLE \`employee\` ADD \`trackAllDisplays\` tinyint NOT NULL DEFAULT 0`);
+		await queryRunner.query(`ALTER TABLE \`employee\` ADD \`trackAllDisplays\` tinyint NOT NULL DEFAULT 1`);
 	}
 
 	/**
