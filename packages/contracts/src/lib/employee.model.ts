@@ -188,12 +188,14 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	gitlabUrl?: string;
 	upworkUrl?: string;
 	profile_link?: string;
+	/**	Agent Settings */
+	allowAgentAppExit?: boolean;
+	allowLogoutFromAgentApp?: boolean;
+	/**	Timer Settings */
 	allowScreenshotCapture?: boolean;
 	allowManualTime?: boolean;
 	allowModifyTime?: boolean;
 	allowDeleteTime?: boolean;
-	allowAgentAppExit?: boolean;
-	allowLogoutFromAgentApp?: boolean;
 	trackKeyboardMouseActivity?: boolean;
 	trackAllDisplays?: boolean;
 	/** Upwork ID For Gauzy AI*/
