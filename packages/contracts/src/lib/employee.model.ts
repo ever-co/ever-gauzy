@@ -117,15 +117,16 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	profile_link?: string;
 	isTrackingEnabled: boolean;
 	isDeleted?: boolean;
+	/**	Agent Settings */
+	allowAgentAppExit?: boolean;
+	allowLogoutFromAgentApp?: boolean;
+	/**	Timer Settings */
 	allowScreenshotCapture?: boolean;
 	allowManualTime?: boolean;
 	allowModifyTime?: boolean;
 	allowDeleteTime?: boolean;
-	allowAgentAppExit?: boolean;
-	allowLogoutFromAgentApp?: boolean;
 	trackKeyboardMouseActivity?: boolean;
 	trackAllDisplays?: boolean;
-
 	/** Upwork ID For Gauzy AI*/
 	upworkId?: string;
 	/** LinkedIn ID For Gauzy AI*/

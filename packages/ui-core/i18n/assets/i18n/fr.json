@@ -2075,7 +2075,7 @@
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Autoriser la déconnexion de l’application Agent",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Permettre à l’employé de se déconnecter de l’application Agent. Lorsqu’il est désactivé, le bouton de déconnexion est bloqué dans l’application.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Suivre l’activité clavier et souris",
-				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Activer le suivi complet de l'activité du clavier et de la souris, y compris les frappes de touches et les mouvements exacts de la souris dans toutes les applications de bureau et l'agent.",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Activer le suivi complet de l’activité du clavier et de la souris, incluant les frappes clavier et les mouvements précis de la souris, dans toutes les applications de bureau ainsi que dans l’application Agent.",
 				"TRACK_ALL_DISPLAYS": "Suivre tous les écrans",
 				"TRACK_ALL_DISPLAYS_INFO": "Activer le suivi sur l’ensemble des écrans ou le limiter uniquement à l’écran principal.",
 				"ALLOW_MANUAL_TIME": "Autoriser le temps manuel",
