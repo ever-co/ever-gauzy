@@ -447,7 +447,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@MultiORMColumn({ default: false })
+	@MultiORMColumn({ default: true })
 	trackAllDisplays?: boolean;
 
 	/** Upwork ID */
