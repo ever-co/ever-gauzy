@@ -4,6 +4,7 @@ import { nativeImage, ipcRenderer } from 'electron';
 import * as path from 'path';
 
 const isNotificationWindow = location.hash.startsWith('#/screen-capture');
+const isSetupWindow = location.hash.startsWith('#/setup');
 
 if (!isNotificationWindow) {
 	/**
@@ -68,7 +69,7 @@ if (!isNotificationWindow) {
 		const overStyle = document.createElement('style');
 		overStyle.innerHTML = `
 			.cet-container {
-				top:0px !important;
+				${ !isSetupWindow ? 'top:0px !important;' : '' }
 				overflow: unset !important;
 			}
 			.cet-menubar-menu-container {

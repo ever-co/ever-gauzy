@@ -20,6 +20,7 @@ import { EmailVerificationController } from './email-verification.controller';
 import { FeatureModule } from '../feature/feature.module';
 import { SocialAccountModule } from './social-account/social-account.module';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 // Core service providers for handling authentication and related functionalities
 const providers = [AuthService, EmailConfirmationService, UserOrganizationService];
@@ -43,7 +44,8 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 				PasswordResetModule,
 				CqrsModule,
 				SocialAccountModule,
-				EventBusModule
+				EventBusModule,
+				RolePermissionModule
 			],
 			useClass: AuthService
 		}),
@@ -58,7 +60,8 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 		FeatureModule,
 		CqrsModule,
 		SocialAccountModule,
-		EventBusModule
+		EventBusModule,
+		RolePermissionModule
 	],
 	controllers: [AuthController, EmailVerificationController],
 	providers: [...providers, ...CommandHandlers, ...strategies],

@@ -9,7 +9,8 @@ import {
 	Put,
 	Param,
 	UseGuards,
-	Delete
+	Delete,
+	UseInterceptors
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -25,10 +26,15 @@ import { CreateOrganizationTeamDTO, OrganizationTeamStatisticDTO, UpdateOrganiza
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamService } from './organization-team.service';
 import { OrganizationTeamCreateCommand } from './commands';
+import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
+import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
+import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
 
 @ApiTags('OrganizationTeam')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
+@UseInterceptors(SensitiveRelationsInterceptor)
+@SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS, 'organization')
 @Controller('/organization-team')
 export class OrganizationTeamController extends CrudController<OrganizationTeam> {
 	constructor(

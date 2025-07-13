@@ -540,3 +540,53 @@ export function validateUniqueString(existingStrings: string[], value: string): 
 	const normalizedStrings = existingStrings.map((str) => str.toLowerCase());
 	return normalizedStrings.includes(value.toLowerCase());
 }
+
+/**
+ * Calculates the display name for an entity with user information.
+ * Handles various user name formats consistently across the application.
+ *
+ * @param entity The entity object that may contain user information
+ * @returns A formatted display name string
+ */
+export function getEntityDisplayName(entity: any): string {
+	if (!entity) {
+		return '';
+	}
+
+	// For entities with direct name property (vendors, teams, projects, tasks, etc.)
+	if (entity.name) {
+		return entity.name;
+	}
+
+	// For entities with title property (tasks)
+	if (entity.title) {
+		return entity.title;
+	}
+
+	// For entities with user information (employees, candidates)
+	if (entity.user) {
+		const { user } = entity;
+
+		// Prefer user.name if available
+		if (user.name) {
+			return user.name;
+		}
+
+		// Fallback to firstName + lastName combination
+		const nameParts = [user.firstName, user.lastName].filter(Boolean);
+		if (nameParts.length > 0) {
+			return nameParts.join(' ');
+		}
+	}
+
+	// For entities that might have firstName/lastName directly
+	if (entity.firstName || entity.lastName) {
+		const nameParts = [entity.firstName, entity.lastName].filter(Boolean);
+		if (nameParts.length > 0) {
+			return nameParts.join(' ');
+		}
+	}
+
+	// Fallback to empty string
+	return '';
+}

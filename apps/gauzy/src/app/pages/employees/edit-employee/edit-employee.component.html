@@ -1,31 +1,44 @@
 <nb-card class="employee-edit">
 	<nb-card-header class="header">
 		<div class="header-container" *ngIf="selectedEmployeeFromHeader && selectedEmployeeFromHeader.id; else noName">
-			<div class="d-flex align-items-start">
-				<ngx-back-navigation></ngx-back-navigation>
-				<div class="employee-info">
-					<img
-						class="employee-image"
-						[src]="selectedEmployee?.user?.image?.fullUrl || selectedEmployee?.user?.imageUrl"
-						alt="Employee Avatar"
-					/>
+			<div class="d-flex align-items-start justify-content-between w-100">
+				<div class="d-flex align-items-start">
+					<ngx-back-navigation></ngx-back-navigation>
+					<div class="employee-info">
+						<img
+							class="employee-image"
+							[src]="selectedEmployee?.user?.image?.fullUrl || selectedEmployee?.user?.imageUrl"
+							alt="Employee Avatar"
+						/>
 
-					<div class="employee-details flex-column align-items-start">
-						<nb-icon
-							*ngIf="selectedEmployee?.isVerified"
-							class="icon-verified"
-							icon="checkmark-circle-2"
-							status="primary"
-						>
-						</nb-icon>
-						<span class="employee-name">
-							{{ selectedEmployee?.user?.name }}
-						</span>
-						<div class="employee-position">
-							{{ selectedEmployee?.organizationPosition?.name }}
+						<div class="employee-details flex-column align-items-start">
+							<nb-icon
+								*ngIf="selectedEmployee?.isVerified"
+								class="icon-verified"
+								icon="checkmark-circle-2"
+								status="primary"
+							>
+							</nb-icon>
+							<span class="employee-name">
+								{{ selectedEmployee?.user?.name }}
+							</span>
+							<div class="employee-position">
+								{{ selectedEmployee?.organizationPosition?.name }}
+							</div>
 						</div>
 					</div>
 				</div>
+				<ngx-favorite-toggle
+					*ngIf="selectedEmployee"
+					[entityType]="'Employee'"
+					[entityId]="selectedEmployee.id"
+					[entityName]="selectedEmployee.user?.name"
+					size="small"
+					status="basic"
+					spacing="detail"
+					[showLabel]="false"
+					(favoriteToggled)="onFavoriteToggled($event)"
+				></ngx-favorite-toggle>
 			</div>
 			<div class="employee-info">
 				<div class="employee-details">

@@ -15,7 +15,8 @@ import {
 	PageDataTableRegistryService,
 	ServerDataSource,
 	Store,
-	ToastrService
+	ToastrService,
+	GenericFavoriteService
 } from '@gauzy/ui-core/core';
 import {
 	InvitationTypeEnum,
@@ -25,9 +26,11 @@ import {
 	CrudActionEnum,
 	IEmployee,
 	ITag,
-	PermissionsEnum
+	PermissionsEnum,
+	IFavorite,
+	BaseEntityEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, getEntityDisplayName } from '@gauzy/ui-core/common';
 import {
 	AllowScreenshotCaptureComponent,
 	CardGridComponent,
@@ -54,10 +57,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-employees-list',
-    templateUrl: './employees.component.html',
-    styleUrls: ['./employees.component.scss'],
-    standalone: false
+	selector: 'ga-employees-list',
+	templateUrl: './employees.component.html',
+	styleUrls: ['./employees.component.scss'],
+	standalone: false
 })
 export class EmployeesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public dataTableId: PageDataTableRegistryId = this._route.snapshot.data.dataTableId; // The identifier for the data table
@@ -76,6 +79,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	public organization: IOrganization;
 	public refresh$: Subject<any> = new Subject();
 	public employees$: Subject<any> = this.subject$;
+	public favoriteEmployees: IFavorite[] = [];
 
 	private _grid: CardGridComponent;
 	@ViewChild('grid') set grid(content: CardGridComponent) {
@@ -101,7 +105,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		private readonly _employeeStore: EmployeeStore,
 		private readonly _httpClient: HttpClient,
 		private readonly _dateFormatPipe: DateFormatPipe,
-		private readonly _pageDataTableRegistryService: PageDataTableRegistryService
+		private readonly _pageDataTableRegistryService: PageDataTableRegistryService,
+		private readonly genericFavoriteService: GenericFavoriteService
 	) {
 		super(translateService);
 		this.setView();
@@ -136,6 +141,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				tap(() => this._additionalColumns()),
 				tap(() => this.refresh$.next(true)),
 				tap(() => this.employees$.next(true)),
+				tap(() => this.loadFavoriteEmployees()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -1029,6 +1035,33 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			this.refresh$.next(true);
 			this.employees$.next(true);
 		}
+	}
+
+	/**
+	 * Loads the list of favorite employees for the current user or all for admin using the generic service.
+	 */
+	async loadFavoriteEmployees() {
+		try {
+			this.favoriteEmployees = await this.genericFavoriteService.loadFavorites(
+				BaseEntityEnum.Employee,
+				this.organization
+			);
+		} catch (error) {
+			console.error('Error loading favorite employees:', error);
+			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	/**
+	 * Handle employee favorite toggle event from the new component
+	 */
+	onEmployeeFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// Reload favorites to keep the list in sync
+		this.loadFavoriteEmployees();
+	}
+
+	getEmployeeDisplayName(employee: IEmployee): string {
+		return getEntityDisplayName(employee);
 	}
 
 	ngOnDestroy(): void {}

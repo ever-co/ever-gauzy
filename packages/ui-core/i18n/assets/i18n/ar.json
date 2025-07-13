@@ -176,7 +176,9 @@
 		"READ_MORE": "قراءة المزيد",
 		"READ_LESS": "قراءة أقل",
 		"RECOVER": "استعادة",
-		"ADD_MORE_SOURCES": "إضافة مصدر آخر"
+		"ADD_MORE_SOURCES": "إضافة مصدر آخر",
+		"REMOVE_FROM_FAVORITES": "إزالة من المفضلة",
+		"ADD_TO_FAVORITES": "إضافة إلى المفضلة"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -827,6 +829,7 @@
 		"DASHBOARD": "لوحة القيادة",
 		"DASHBOARDS": "لوحات القيادة",
 		"APPOINTMENTS": "المواعيد",
+		"FAVORITES": "المفضلة",
 		"ACCOUNTING": "المحاسبة",
 		"INCOME": "الدخل",
 		"EXPENSES": "المصاريف",
@@ -2060,10 +2063,19 @@
 			"INTEGRATIONS": "التكاملات",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "إعدادات العداد الزمني",
+				"AGENT_SETTINGS": "إعدادات العميل",
 				"ALLOW_MODIFY_TIME": "السماح بتعديل الوقت",
 				"ALLOW_MODIFY_TIME_INFO": "السماح للموظف بتعديل الوقت اليدوي.",
 				"ALLOW_DELETE_TIME": "السماح بحذف الوقت",
 				"ALLOW_DELETE_TIME_INFO": "السماح للموظف بحذف الوقت.",
+				"ALLOW_AGENT_APP_EXIT": "السماح بالخروج من تطبيق العميل",
+				"ALLOW_AGENT_APP_EXIT_INFO": "السماح للموظف بالخروج من تطبيق العميل. عند التعطيل، سيتم حظر خيار الخروج في تطبيق العميل.",
+				"ALLOW_LOGOUT_FROM_AGENT_APP": "السماح بتسجيل الخروج من تطبيق العميل",
+				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "السماح للموظف بتسجيل الخروج من تطبيق العميل. عند التعطيل، سيتم حظر خيار تسجيل الخروج في تطبيق العميل.",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "تتبع نشاط لوحة المفاتيح والماوس",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "تمكين تتبع كامل لنشاط لوحة المفاتيح والماوس، بما في ذلك ضغطات المفاتيح وحركات الماوس الدقيقة في جميع تطبيقات سطح المكتب والوكيل.",
+				"TRACK_ALL_DISPLAYS": "تتبع جميع الشاشات",
+				"TRACK_ALL_DISPLAYS_INFO": "تمكين التتبع على جميع الشاشات أو الحد من الشاشة الأساسية فقط.",
 				"ALLOW_MANUAL_TIME": "السماح بالوقت اليدوي",
 				"ALLOW_MANUAL_TIME_INFO": "السماح للموظف بإضافة وقت يدوي",
 				"REQUIRE_REASON": "طلب السبب",
@@ -3634,6 +3646,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "مستوى الموظف مطلوب",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "اسم نوع التوظيف مطلوب",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "اسم القسم مطلوب",
+			"FAVORITE_ADDED": "تم إضافة {{ name }} إلى المفضلة",
+			"FAVORITE_REMOVED": "تم إزالة {{ name }} من المفضلة",
+			"FAVORITE_ERROR": "خطأ في تحديث حالة المفضلة",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "إدخال غير صالح",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "اسم البائع والسنة مطلوبان",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "اسم اللغة والمستوى مطلوبان",
