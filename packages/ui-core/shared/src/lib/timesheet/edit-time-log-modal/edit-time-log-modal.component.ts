@@ -445,7 +445,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 			};
 
 			const selectedEmployeeId = this.form.value.employeeId || employee?.id;
-			const isCurrentUser = employee.id === selectedEmployeeId;
+			const isCurrentUser = employee?.id === selectedEmployeeId;
 
 			if (
 				isCurrentUser &&

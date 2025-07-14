@@ -8,13 +8,14 @@ import {
 	TimeLogSourceEnum
 } from '@gauzy/contracts';
 import * as moment from 'moment';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import { DateRangePickerBuilderService, Store, TimeTrackerService, TimesheetService } from '@gauzy/ui-core/core';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
 import { ViewTimeLogModalComponent } from './../view-time-log-modal';
 import { combineLatest, Observable, Subject, takeUntil } from 'rxjs';
+import { TimeZoneService } from '../gauzy-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,7 +34,7 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	@Input() timeZone: string;
 	@Input() callback: CallableFunction;
 	@Input() date?: string;
-	@Output() close: CallableFunction;
+	@Input() popover: NbPopoverDirective;
 
 	private readonly workedThisWeek$: Observable<number> = this.timeTrackerService.workedThisWeek$;
 	private readonly reWeeklyLimit$: Observable<number> = this.timeTrackerService.reWeeklyLimit$;
@@ -46,7 +47,8 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 		private readonly timesheetService: TimesheetService,
 		private readonly store: Store,
 		private readonly timeTrackerService: TimeTrackerService,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {}
 
 	ngOnInit(): void {
@@ -74,8 +76,17 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 		if (this.limitReached && !this.hasPermission) return;
 		const [timeLog] = this.timeLogs;
 		const baseDate = moment(this.date);
-		const startedAt = baseDate.clone().set({ hour: 8, minute: 0, second: 0 }).toDate();
-		const stoppedAt = baseDate.clone().set({ hour: 9, minute: 0, second: 0 }).toDate();
+		const startedAt = baseDate
+			.clone()
+			.tz(this.timeZone)
+			.set({ hour: 8, minute: 0, second: 0, millisecond: 0 })
+			.toDate();
+
+		const stoppedAt = baseDate
+			.clone()
+			.tz(this.timeZone)
+			.set({ hour: 9, minute: 0, second: 0, millisecond: 0 })
+			.toDate();
 
 		this.openEdit($event, {
 			startedAt,
@@ -92,15 +103,14 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 			stoppedAt: Date;
 			projectId: string;
 			isRunning: boolean;
-		},
-		isEdit?: boolean
+		}
 	) {
 		if (timeLog.isRunning) {
 			return;
 		}
 		$event.stopPropagation();
 		this.nbDialogService
-			.open(EditTimeLogModalComponent, { context: { timeLog: timeLog, timeZone: isEdit ? this.timeZone : null } })
+			.open(EditTimeLogModalComponent, { context: { timeLog: timeLog, timeZone: this.timeZone } })
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				this.callback(data);
@@ -161,7 +171,9 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	}
 
 	onClose() {
-		this.close(true);
+		if (this.popover) {
+			this.popover.hide();
+		}
 	}
 
 	ngOnDestroy(): void {

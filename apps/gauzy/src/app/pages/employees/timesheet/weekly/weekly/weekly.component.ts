@@ -270,8 +270,14 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	openAddEdit(timeLog?: ITimeLog) {
 		if (this.limitReached && !this.hasPermission) return;
 		const defaultTimeLog = {
-			startedAt: moment().set({ hour: 8, minute: 0, second: 0 }).toDate(),
-			stoppedAt: moment().set({ hour: 9, minute: 0, second: 0 }).toDate(),
+			startedAt: moment
+				.tz(this.filters?.timeZone)
+				.set({ hour: 8, minute: 0, second: 0, millisecond: 0 })
+				.toDate(),
+			stoppedAt: moment
+				.tz(this.filters?.timeZone)
+				.set({ hour: 9, minute: 0, second: 0, millisecond: 0 })
+				.toDate(),
 			employeeId: this.request.employeeIds?.[0] || null,
 			projectId: this.request.projectIds?.[0] || null
 		};
@@ -281,7 +287,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 		}
 
 		const dialogRef = this.nbDialogService.open(EditTimeLogModalComponent, {
-			context: { timeLog: timeLog ?? defaultTimeLog }
+			context: { timeLog: timeLog ?? defaultTimeLog, timeZone: this.filters?.timeZone }
 		});
 
 		dialogRef.onClose
@@ -305,8 +311,17 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	openAddByDateProject(date: string, project: IOrganizationProject): void {
 		if (this.limitReached && !this.hasPermission) return;
 		const baseDate = moment(date);
-		const startedAt = baseDate.clone().set({ hour: 8, minute: 0, second: 0 }).toDate();
-		const stoppedAt = baseDate.clone().set({ hour: 9, minute: 0, second: 0 }).toDate();
+		const startedAt = baseDate
+			.clone()
+			.tz(this.filters?.timeZone)
+			.set({ hour: 8, minute: 0, second: 0, millisecond: 0 })
+			.toDate();
+
+		const stoppedAt = baseDate
+			.clone()
+			.tz(this.filters?.timeZone)
+			.set({ hour: 9, minute: 0, second: 0, millisecond: 0 })
+			.toDate();
 		if (!this.nbDialogService) {
 			throw new Error('NbDialogService is not available.');
 		}
@@ -321,7 +336,8 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 					projectId: project?.id ?? null,
 					// Adding an employeeId if available
 					employeeId: this.request.employeeIds?.[0] ?? null
-				}
+				},
+				timeZone: this.filters?.timeZone
 			}
 		});
 
@@ -347,15 +363,6 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 			this.subject$.next(true);
 			this.gauzyFiltersComponent.getStatistics();
 		}
-	};
-
-	/**
-	 * Handle the 'close' event based on a boolean trigger
-	 *
-	 * @param event
-	 */
-	onClose = (event: boolean) => {
-		if (event) this.popover.hide();
 	};
 
 	/**

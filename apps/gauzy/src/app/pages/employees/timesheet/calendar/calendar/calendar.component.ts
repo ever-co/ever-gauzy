@@ -25,6 +25,7 @@ import {
 	DateRangePickerBuilderService,
 	IDatePickerConfig,
 	Store,
+	TimeLogEventService,
 	TimesheetFilterService,
 	TimesheetService,
 	TimeTrackerService
@@ -84,11 +85,15 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly timeTrackerService: TimeTrackerService,
+		private readonly timeLogEventService: TimeLogEventService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		protected readonly timeZoneService: TimeZoneService
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
+	}
+
+	ngOnInit() {
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
 			headerToolbar: {
@@ -114,9 +119,6 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 			eventMouseEnter: this.handleEventMouseEnter.bind(this),
 			eventMouseLeave: this.handleEventMouseLeave.bind(this)
 		};
-	}
-
-	ngOnInit() {
 		this.hasPermission = this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		this.subject$
 			.pipe(
@@ -136,6 +138,12 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 					this.limitReached = false;
 				}
 			});
+
+		this.timeLogEventService.changes$.pipe(untilDestroyed(this)).subscribe((action) => {
+			if (action === 'added' || action === 'deleted') {
+				this.subject$.next(true);
+			}
+		});
 	}
 
 	ngAfterViewInit() {
@@ -320,11 +328,32 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	 * @param event - The event object representing the selected time slot.
 	 */
 	handleEventSelect(event: DateSelectArg): void {
+		const timeZone = this.filters?.timeZone;
+		const startMoment = moment
+			.tz(timeZone)
+			.year(event.start.getFullYear())
+			.month(event.start.getMonth())
+			.date(event.start.getDate())
+			.hour(event.start.getHours())
+			.minute(event.start.getMinutes())
+			.second(event.start.getSeconds())
+			.millisecond(0);
+
+		const endMoment = moment
+			.tz(timeZone)
+			.year(event.end.getFullYear())
+			.month(event.end.getMonth())
+			.date(event.end.getDate())
+			.hour(event.end.getHours())
+			.minute(event.end.getMinutes())
+			.second(event.end.getSeconds())
+			.millisecond(0);
+
 		this.openDialog({
-			startedAt: event.start,
-			stoppedAt: event.end,
-			employeeId: this.request.employeeIds ? this.request.employeeIds[0] : null,
-			projectId: this.request.projectIds ? this.request.projectIds[0] : null
+			startedAt: startMoment.toDate(),
+			stoppedAt: endMoment.toDate(),
+			employeeId: this.request.employeeIds?.[0] || null,
+			projectId: this.request.projectIds?.[0] || null
 		});
 	}
 
@@ -418,14 +447,20 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	openDialog(timeLog?: ITimeLog | Partial<ITimeLog>) {
 		if (this.limitReached && !this.hasPermission) return;
 		const defaultTimeLog = {
-			startedAt: moment().set({ hour: 8, minute: 0, second: 0 }).toDate(),
-			stoppedAt: moment().set({ hour: 9, minute: 0, second: 0 }).toDate(),
+			startedAt: moment
+				.tz(this.filters?.timeZone)
+				.set({ hour: 8, minute: 0, second: 0, millisecond: 0 })
+				.toDate(),
+			stoppedAt: moment
+				.tz(this.filters?.timeZone)
+				.set({ hour: 9, minute: 0, second: 0, millisecond: 0 })
+				.toDate(),
 			employeeId: this.request.employeeIds?.[0] || null,
 			projectId: this.request.projectIds?.[0] || null
 		};
 
 		const dialog$ = this.nbDialogService.open(EditTimeLogModalComponent, {
-			context: { timeLog: timeLog ?? defaultTimeLog }
+			context: { timeLog: timeLog ?? defaultTimeLog, timeZone: this.filters?.timeZone }
 		});
 		dialog$.onClose
 			.pipe(

@@ -68,9 +68,9 @@
 									timeZone: filters?.timeZone,
 									callback: addTimeCallback,
 									date: date,
-									close: onClose
+									popover: popover
 								}"
-								#popover
+								#popover="nbPopover"
 							>
 								{{ day?.dates[getGroupDate(date)]?.sum | durationFormat }}
 							</button>

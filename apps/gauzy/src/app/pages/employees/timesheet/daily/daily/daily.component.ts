@@ -329,14 +329,20 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	openAdd(): void {
 		if (this.limitReached && !this.hasPermission) return;
 		const defaultTimeLog = {
-			startedAt: moment().set({ hour: 8, minute: 0, second: 0 }).toDate(),
-			stoppedAt: moment().set({ hour: 9, minute: 0, second: 0 }).toDate(),
+			startedAt: moment
+				.tz(this.filters?.timeZone)
+				.set({ hour: 8, minute: 0, second: 0, millisecond: 0 })
+				.toDate(),
+			stoppedAt: moment
+				.tz(this.filters?.timeZone)
+				.set({ hour: 9, minute: 0, second: 0, millisecond: 0 })
+				.toDate(),
 			employeeId: this.request.employeeIds?.[0] || null,
 			projectId: this.request.projectIds?.[0] || null
 		};
 
 		this._dialogService
-			.open(EditTimeLogModalComponent, { context: { timeLog: defaultTimeLog } })
+			.open(EditTimeLogModalComponent, { context: { timeLog: defaultTimeLog, timeZone: this.filters?.timeZone } })
 			.onClose.pipe(
 				// Filter out falsy results
 				filter((timeLog: ITimeLog) => !!timeLog),
