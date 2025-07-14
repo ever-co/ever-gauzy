@@ -81,7 +81,7 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 					const mappedWorkspaces: IWorkSpace[] = workspaces.map((workspace) => ({
 						id: workspace.user.tenant.id,
 						name: workspace.user.tenant.name,
-						imgUrl: workspace.user.tenant.logo || '/assets/images/default-workspace.svg',
+						imgUrl: workspace.user.tenant.logo || '/assets/images/default.svg',
 						isOnline: true,
 						isSelected: workspace.user.tenant.id === this.user.tenantId
 					}));

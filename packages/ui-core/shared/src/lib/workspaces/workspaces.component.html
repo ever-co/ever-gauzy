@@ -17,7 +17,7 @@
 			<img
 				[src]="workspace.imgUrl"
 				[alt]="workspace.name"
-				(error)="$event.target.src = '/assets/images/default-workspace.svg'"
+				(error)="$event.target.src = '/assets/images/default.svg'"
 			/>
 			<div *ngIf="workspace.isOnline" class="online-indicator"></div>
 			<div *ngIf="loading && selected?.id === workspace.id" class="loading-overlay">
