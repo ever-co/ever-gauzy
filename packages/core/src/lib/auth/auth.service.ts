@@ -797,6 +797,7 @@ export class AuthService extends SocialAuthService {
 	 * @throws Throws an UnauthorizedException if the user is not found or if there is an issue in token generation.
 	 */
 	public async getJwtAccessToken(request: Partial<IUser>) {
+		const tenantId = request.tenantId || RequestContext.currentTenantId();
 		try {
 			// Validate that the request contains a user ID
 			if (!request.id) {
@@ -809,7 +810,13 @@ export class AuthService extends SocialAuthService {
 			const userId = request.id;
 
 			// Retrieve the user's data, including role and permissions
-			const user = await this.userService.findOneByIdString(userId, {
+			const user = await this.typeOrmUserRepository.findOne({
+				where: {
+					id: userId,
+					tenantId,
+					isActive: true,
+					isArchived: false
+				},
 				relations: { role: { rolePermissions: true } },
 				order: { createdAt: 'DESC' }
 			});
@@ -1351,7 +1358,7 @@ export class AuthService extends SocialAuthService {
 			const email = currentUser.email;
 
 			// Find all users with the same email across different tenants
-			const users = await this.userService.find({
+			const users = await this.typeOrmUserRepository.find({
 				where: {
 					email,
 					isActive: true,
@@ -1399,7 +1406,7 @@ export class AuthService extends SocialAuthService {
 			const email = currentUser.email;
 
 			// Find the user in the target tenant
-			const targetUser = await this.userService.findOneByOptions({
+			const targetUser = await this.typeOrmUserRepository.findOne({
 				where: {
 					email,
 					tenantId,
