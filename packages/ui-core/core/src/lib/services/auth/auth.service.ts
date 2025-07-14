@@ -147,4 +147,36 @@ export class AuthService {
 	refreshToken(refresh_token: string): Promise<{ token: string } | null> {
 		return firstValueFrom(this.http.post<any>(`${API_PREFIX}/auth/refresh-token`, { refresh_token }));
 	}
+
+	/**
+	 * Get all workspaces (tenants) that the current authenticated user has access to.
+	 *
+	 * @param includeTeams - Whether to include teams in the response (default: false).
+	 * @returns An observable of the user signin workspace response.
+	 */
+	getUserWorkspaces(includeTeams: boolean = false): Observable<IUserSigninWorkspaceResponse> {
+		try {
+			return this.http.get<IUserSigninWorkspaceResponse>(`${API_PREFIX}/auth/workspaces`, {
+				params: toParams({ includeTeams })
+			});
+		} catch (error) {
+			console.log('Error while fetching user workspaces: %s', error?.message);
+			throw error;
+		}
+	}
+
+	/**
+	 * Switch the current user to a different workspace (tenant).
+	 *
+	 * @param tenantId - The ID of the tenant to switch to.
+	 * @returns An observable of the authentication response with new tokens or null if switching fails.
+	 */
+	switchWorkspace(tenantId: string): Observable<IAuthResponse | null> {
+		try {
+			return this.http.post<IAuthResponse | null>(`${API_PREFIX}/auth/switch-workspace`, { tenantId });
+		} catch (error) {
+			console.log('Error while switching workspace: %s', error?.message);
+			throw error;
+		}
+	}
 }

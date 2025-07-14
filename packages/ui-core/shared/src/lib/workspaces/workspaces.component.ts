@@ -1,27 +1,28 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { Observable } from 'rxjs/internal/Observable';
+import { debounceTime, filter, tap, catchError, finalize } from 'rxjs/operators';
+import { BehaviorSubject, Observable, EMPTY, of } from 'rxjs';
 import { NbMenuItem } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { IUser } from '@gauzy/contracts';
+import { IUser, IAuthResponse, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { Store } from '@gauzy/ui-core/core';
+import { Store, AuthService, ToastrService } from '@gauzy/ui-core/core';
 
 interface IWorkSpace {
 	id: string;
+	name: string;
 	imgUrl: string;
 	isOnline: boolean;
+	isSelected?: boolean;
 }
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-gauzy-workspaces',
-    templateUrl: './workspaces.component.html',
-    styleUrls: ['./workspaces.component.scss'],
-    standalone: false
+	selector: 'ngx-gauzy-workspaces',
+	templateUrl: './workspaces.component.html',
+	styleUrls: ['./workspaces.component.scss'],
+	standalone: false
 })
 export class WorkspacesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public _workspaces$: BehaviorSubject<IWorkSpace[]> = new BehaviorSubject([]);
@@ -30,8 +31,15 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	public selected: IWorkSpace;
 	public contextMenus: NbMenuItem[];
 	public user: IUser;
+	public loading = false;
+	public error: string | null = null;
 
-	constructor(public readonly translateService: TranslateService, private readonly store: Store) {
+	constructor(
+		public readonly translateService: TranslateService,
+		private readonly store: Store,
+		private readonly authService: AuthService,
+		private readonly toastrService: ToastrService
+	) {
 		super(translateService);
 	}
 
@@ -54,27 +62,45 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
-	 * Retrieves the workspaces associated with the user's tenant.
+	 * Retrieves all workspaces that the current authenticated user has access to.
 	 *
 	 * @return {void} This function does not return a value.
 	 */
 	getWorkspaces(): void {
-		if (!this.user.tenantId) {
+		if (!this.user?.id) {
 			return;
 		}
-		const { tenant } = this.user;
-		const workspace = {
-			id: tenant.id,
-			imgUrl: tenant.logo,
-			isOnline: true
-		};
-		const workspaces = this._workspaces$.getValue();
-		const index = workspaces.find((workspace: IWorkSpace) => workspace.id === tenant.id);
 
-		if (!index) {
-			this._workspaces$.next([...workspaces, workspace]);
-			this.selected = workspace;
-		}
+		this.loading = true;
+		this.error = null;
+
+		this.authService
+			.getUserWorkspaces(false)
+			.pipe(
+				tap(({ workspaces }: IUserSigninWorkspaceResponse) => {
+					const mappedWorkspaces: IWorkSpace[] = workspaces.map((workspace) => ({
+						id: workspace.user.tenant.id,
+						name: workspace.user.tenant.name,
+						imgUrl: workspace.user.tenant.logo || '/assets/images/default-workspace.svg',
+						isOnline: true,
+						isSelected: workspace.user.tenant.id === this.user.tenantId
+					}));
+
+					this._workspaces$.next(mappedWorkspaces);
+
+					// Set the selected workspace
+					this.selected = mappedWorkspaces.find((w) => w.isSelected) || mappedWorkspaces[0];
+				}),
+				catchError((error) => {
+					console.error('Error fetching workspaces:', error);
+					this.error = 'Failed to load workspaces';
+					this.toastrService.danger('Failed to load workspaces', 'Error');
+					return of({ workspaces: [], total_workspaces: 0 } as IUserSigninWorkspaceResponse);
+				}),
+				finalize(() => (this.loading = false)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -93,14 +119,43 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
-	 * Updates the selected workspace and sets its `isOnline` property to `true`.
+	 * Switches to the selected workspace and updates the application state.
 	 *
-	 * @param {IWorkSpace} workspace - The workspace to be selected.
+	 * @param {IWorkSpace} workspace - The workspace to switch to.
 	 * @return {void} This function does not return a value.
 	 */
 	onChangeWorkspace(workspace: IWorkSpace): void {
-		this.selected = workspace;
-		this.selected.isOnline = true;
+		if (workspace.id === this.selected?.id || this.loading) {
+			return; // Already selected or loading
+		}
+
+		this.loading = true;
+		this.error = null;
+
+		this.authService
+			.switchWorkspace(workspace.id)
+			.pipe(
+				filter((response: IAuthResponse | null) => !!response),
+				tap((response: IAuthResponse) => {
+					// Update store with new information
+					this.updateStoreAfterWorkspaceSwitch(response);
+
+					// Update local workspace state
+					this.updateLocalWorkspaceState(workspace);
+
+					// Success notification
+					this.toastrService.success(`Switched to ${workspace.name}`, 'Workspace Changed');
+				}),
+				catchError((error) => {
+					console.error('Error switching workspace:', error);
+					this.error = 'Failed to switch workspace';
+					this.toastrService.danger('Failed to switch workspace. Please try again.', 'Error');
+					return EMPTY;
+				}),
+				finalize(() => (this.loading = false)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -126,5 +181,43 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	 */
 	add() {
 		// TODO
+	}
+
+	/**
+	 * Updates the store after a successful workspace switch.
+	 *
+	 * @param {IAuthResponse} response - The authentication response containing new user and token data.
+	 * @return {void} This function does not return a value.
+	 */
+	private updateStoreAfterWorkspaceSwitch(response: IAuthResponse): void {
+		const { user, token, refresh_token } = response;
+
+		// Update all store elements
+		this.store.user = user;
+		this.store.token = token;
+		if (refresh_token) {
+			this.store.refresh_token = refresh_token;
+		}
+		this.store.tenantId = user.tenantId;
+		this.store.organizationId = user.employee?.organizationId || null;
+	}
+
+	/**
+	 * Updates the local workspace state after a successful switch.
+	 *
+	 * @param {IWorkSpace} newWorkspace - The workspace that was switched to.
+	 * @return {void} This function does not return a value.
+	 */
+	private updateLocalWorkspaceState(newWorkspace: IWorkSpace): void {
+		// Update workspace states
+		const currentWorkspaces = this._workspaces$.getValue();
+		const updatedWorkspaces = currentWorkspaces.map((w) => ({
+			...w,
+			isSelected: w.id === newWorkspace.id,
+			isOnline: w.id === newWorkspace.id ? true : w.isOnline
+		}));
+
+		this._workspaces$.next(updatedWorkspaces);
+		this.selected = { ...newWorkspace, isSelected: true };
 	}
 }
