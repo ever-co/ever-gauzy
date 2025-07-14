@@ -84,10 +84,10 @@ enum Windows {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-time-tracking-dashboard',
-    templateUrl: './time-tracking.component.html',
-    styleUrls: ['./time-tracking.component.scss'],
-    standalone: false
+	selector: 'ga-time-tracking-dashboard',
+	templateUrl: './time-tracking.component.html',
+	styleUrls: ['./time-tracking.component.scss'],
+	standalone: false
 })
 export class TimeTrackingComponent
 	extends TranslationBaseComponent
@@ -576,8 +576,8 @@ export class TimeTrackingComponent
 		}
 		const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
 		return (
-			moment(startDate).format('YYYY-MM-DD') === moment().startOf('week').format('YYYY-MM-DD') &&
-			moment(endDate).format('YYYY-MM-DD') === moment().endOf('week').format('YYYY-MM-DD')
+			moment(startDate).format('YYYY-MM-DD') === moment().startOf('isoWeek').format('YYYY-MM-DD') &&
+			moment(endDate).format('YYYY-MM-DD') === moment().endOf('isoWeek').format('YYYY-MM-DD')
 		);
 	}
 

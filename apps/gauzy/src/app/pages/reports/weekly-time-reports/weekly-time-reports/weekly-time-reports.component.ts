@@ -27,10 +27,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-weekly-time-reports',
-    templateUrl: './weekly-time-reports.component.html',
-    styleUrls: ['./weekly-time-reports.component.scss'],
-    standalone: false
+	selector: 'ga-weekly-time-reports',
+	templateUrl: './weekly-time-reports.component.html',
+	styleUrls: ['./weekly-time-reports.component.scss'],
+	standalone: false
 })
 export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public filters: ITimeLogFilters;
@@ -137,7 +137,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 	 * If no dates are provided in the request, it defaults to the current week.
 	 */
 	updateWeekDays() {
-		const { startDate = moment().startOf('week'), endDate = moment().endOf('week') } = this.request;
+		const { startDate = moment().startOf('isoWeek'), endDate = moment().endOf('isoWeek') } = this.request;
 
 		const start = moment(moment(startDate).format('YYYY-MM-DD'));
 		const end = moment(moment(endDate).format('YYYY-MM-DD'));

@@ -38,7 +38,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				? await this.findAll({
 						where: {
 							valueDate: Between<Date>(startOfMonth, endOfMonth),
-							...(filter.where as Object)
+							...(filter.where as object)
 						},
 						relations: filter.relations
 				  })
@@ -143,8 +143,8 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 
 		// Calculate start and end dates using a utility function
 		const { start, end } = getDateRangeFormat(
-			moment.utc(startDate || moment().startOf('week')),
-			moment.utc(endDate || moment().endOf('week'))
+			moment.utc(startDate || moment().startOf('isoWeek')),
+			moment.utc(endDate || moment().endOf('isoWeek'))
 		);
 
 		// Check if the current user has the permission to change the selected employee

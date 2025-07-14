@@ -23,8 +23,8 @@ export class TimesheetFirstOrCreateHandler implements ICommandHandler<TimesheetF
 		let { organizationId } = command;
 		const tenantId = RequestContext.currentTenantId();
 
-		const startedAt = moment.utc(date).startOf('week');
-		const stoppedAt = moment.utc(date).endOf('week');
+		const startedAt = moment.utc(date).startOf('isoWeek');
+		const stoppedAt = moment.utc(date).endOf('isoWeek');
 
 		/**
 		 * If organization not found,use employee organization

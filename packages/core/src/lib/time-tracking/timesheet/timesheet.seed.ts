@@ -20,9 +20,9 @@ export const createDefaultTimeSheet = async (
 	try {
 		const timesheets: ITimesheet[] = [];
 		for (let index = 0; index < 5; index++) {
-			const date = moment().subtract(index, 'week').toDate();
-			const startedAt = moment(date).startOf('week').toDate();
-			const stoppedAt = moment(date).endOf('week').toDate();
+			const date = moment.utc().subtract(index, 'week');
+			const startedAt = date.clone().startOf('isoWeek').toDate();
+			const stoppedAt = date.clone().endOf('isoWeek').toDate();
 
 			for await (const employee of employees) {
 				const status = faker.helpers.arrayElement(Object.keys(TimesheetStatus));
@@ -102,9 +102,9 @@ export const createRandomTimesheet = async (
 				}
 			});
 			for (let index = 0; index < randomSeedConfig.noOfTimesheetPerEmployee; index++) {
-				const date = moment().subtract(index, 'week').toDate();
-				const startedAt = moment(date).startOf('week').toDate();
-				const stoppedAt = moment(date).endOf('week').toDate();
+				const date = moment.utc().subtract(index, 'week');
+				const startedAt = date.clone().startOf('isoWeek').toDate();
+				const stoppedAt = date.clone().endOf('isoWeek').toDate();
 
 				_.chain(employees)
 					.shuffle()

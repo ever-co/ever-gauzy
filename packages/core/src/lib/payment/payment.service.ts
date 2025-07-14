@@ -171,12 +171,12 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	private getFilterQuery(query: SelectQueryBuilder<Payment>, request: IGetPaymentInput) {
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId, startDate, endDate } = request;
-		let { projectIds = [], contactIds = [] } = request;
+		const { projectIds = [], contactIds = [] } = request;
 
 		// Calculate start and end dates using a utility function
 		const { start, end } = getDateRangeFormat(
-			moment.utc(startDate || moment().startOf('week')),
-			moment.utc(endDate || moment().endOf('week'))
+			moment.utc(startDate || moment().startOf('isoWeek')),
+			moment.utc(endDate || moment().endOf('isoWeek'))
 		);
 
 		query.andWhere(

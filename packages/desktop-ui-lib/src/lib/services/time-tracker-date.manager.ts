@@ -26,11 +26,11 @@ export class TimeTrackerDateManager {
 	}
 
 	public static get startWeek(): string {
-		return moment().startOf('week').subtract(this.utcOffset, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+		return moment().startOf('isoWeek').subtract(this.utcOffset, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 	}
 
 	public static get endWeek(): string {
-		return moment().endOf('week').subtract(this.utcOffset, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+		return moment().endOf('isoWeek').subtract(this.utcOffset, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 	}
 
 	public static get startToday(): string {
@@ -91,11 +91,11 @@ export class TimeTrackerDateManager {
 	}
 
 	public static get startCurrentWeek(): string {
-		return moment().startOf('week').format('YYYY-MM-DD HH:mm:ss');
+		return moment().startOf('isoWeek').format('YYYY-MM-DD HH:mm:ss');
 	}
 
 	public static get endCurrentWeek(): string {
-		return moment().endOf('week').format('YYYY-MM-DD HH:mm:ss');
+		return moment().endOf('isoWeek').format('YYYY-MM-DD HH:mm:ss');
 	}
 
 	public static get startCurrentMonth(): string {

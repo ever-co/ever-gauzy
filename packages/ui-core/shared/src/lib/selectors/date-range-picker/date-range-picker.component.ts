@@ -30,10 +30,10 @@ import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-date-range-picker',
-    templateUrl: './date-range-picker.component.html',
-    styleUrls: ['./date-range-picker.component.scss'],
-    standalone: false
+	selector: 'ngx-date-range-picker',
+	templateUrl: './date-range-picker.component.html',
+	styleUrls: ['./date-range-picker.component.scss'],
+	standalone: false
 })
 export class DateRangePickerComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public picker: NgxDateRangePickerComponent;
@@ -70,27 +70,27 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 * Determines whether to show or hide the arrows button.
 	 * Defaults to showing the arrows.
 	 */
-	@Input() arrows: boolean = true;
+	@Input() arrows = true;
 
 	/**
 	 * Indicates whether the date picker is locked.
 	 */
-	@Input() isLockDatePicker: boolean = false;
+	@Input() isLockDatePicker = false;
 
 	/**
 	 * Indicates whether the date picker is in single date selection mode.
 	 */
-	@Input() isSingleDatePicker: boolean = false;
+	@Input() isSingleDatePicker = false;
 
 	/**
 	 * Indicates whether future dates are disabled in the date picker.
 	 */
-	@Input() isDisableFutureDatePicker: boolean = false;
+	@Input() isDisableFutureDatePicker = false;
 
 	/**
 	 * Indicates whether past dates are disabled in the date picker.
 	 */
-	@Input() isDisablePastDatePicker: boolean = false;
+	@Input() isDisablePastDatePicker = false;
 
 	/**
 	 * The first day of the week.
@@ -318,11 +318,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 					addRange(DateRangeKeyEnum.YESTERDAY, moment().subtract(1, 'days'), moment().subtract(1, 'days'));
 					break;
 				case 'week':
-					addRange(DateRangeKeyEnum.CURRENT_WEEK, moment().startOf('week'), moment().endOf('week'));
+					addRange(DateRangeKeyEnum.CURRENT_WEEK, moment().startOf('isoWeek'), moment().endOf('isoWeek'));
 					addRange(
 						DateRangeKeyEnum.LAST_WEEK,
-						moment().subtract(1, 'week').startOf('week'),
-						moment().subtract(1, 'week').endOf('week')
+						moment().subtract(1, 'week').startOf('isoWeek'),
+						moment().subtract(1, 'week').endOf('isoWeek')
 					);
 					break;
 				case 'month':

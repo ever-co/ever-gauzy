@@ -175,8 +175,8 @@ export class StatisticService {
 
 		// Define the start and end dates
 		const { start, end } = getDateRangeFormat(
-			moment.utc(startDate || moment().startOf('week')),
-			moment.utc(endDate || moment().endOf('week'))
+			moment.utc(startDate || moment().startOf('isoWeek')),
+			moment.utc(endDate || moment().endOf('isoWeek'))
 		);
 
 		// Create a query builder for the TimeSlot entity
@@ -437,8 +437,8 @@ export class StatisticService {
 
 		// Get the start and end date for the weekly statistics
 		const { start: weeklyStart, end: weeklyEnd } = getDateRangeFormat(
-			moment.utc(startDate || moment().startOf('week')),
-			moment.utc(endDate || moment().endOf('week'))
+			moment.utc(startDate || moment().startOf('isoWeek')),
+			moment.utc(endDate || moment().endOf('isoWeek'))
 		);
 
 		// Check if the current user has the permission to change the selected employee
@@ -774,8 +774,8 @@ export class StatisticService {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start, end } = getDateRangeFormat(
-			moment.utc(startDate || moment().startOf('week')),
-			moment.utc(endDate || moment().endOf('week'))
+			moment.utc(startDate || moment().startOf('isoWeek')),
+			moment.utc(endDate || moment().endOf('isoWeek'))
 		);
 
 		// Check if the current user has the permission to change the selected employee
@@ -1529,8 +1529,8 @@ export class StatisticService {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start, end } = getDateRangeFormat(
-			moment.utc(startDate || moment().startOf('week')),
-			moment.utc(endDate || moment().endOf('week'))
+			moment.utc(startDate || moment().startOf('isoWeek')),
+			moment.utc(endDate || moment().endOf('isoWeek'))
 		);
 
 		// Check if the current user has the permission to change the selected employee
@@ -1641,8 +1641,8 @@ export class StatisticService {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start, end } = getDateRangeFormat(
-			moment.utc(startDate || moment().startOf('week')),
-			moment.utc(endDate || moment().endOf('week'))
+			moment.utc(startDate || moment().startOf('isoWeek')),
+			moment.utc(endDate || moment().endOf('isoWeek'))
 		);
 
 		// Check if the current user has the permission to change the selected employee
@@ -1792,8 +1792,8 @@ export class StatisticService {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start, end } = getDateRangeFormat(
-			moment.utc(startDate || moment().startOf('week')),
-			moment.utc(endDate || moment().endOf('week'))
+			moment.utc(startDate || moment().startOf('isoWeek')),
+			moment.utc(endDate || moment().endOf('isoWeek'))
 		);
 
 		// Check if the current user has the permission to change the selected employee
@@ -1994,8 +1994,8 @@ export class StatisticService {
 
 		// Use consistent date range formatting
 		const { start, end } = getDateRangeFormat(
-			moment.utc(startDate || moment().startOf('week')),
-			moment.utc(endDate || moment().endOf('week'))
+			moment.utc(startDate || moment().startOf('isoWeek')),
+			moment.utc(endDate || moment().endOf('isoWeek'))
 		);
 
 		qb.andWhere(`${query.alias}.tenantId = :tenantId`, { tenantId });

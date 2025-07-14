@@ -74,7 +74,7 @@ export function dayOfWeekAsString(weekDay: WeekDaysEnum): number {
  * If no dates are provided in the request, it defaults to the current week.
  */
 export function updateWeekDays(input: IDateRangePicker) {
-	const { startDate = moment().startOf('week'), endDate = moment().endOf('week') } = input;
+	const { startDate = moment().startOf('isoWeek'), endDate = moment().endOf('isoWeek') } = input;
 
 	const start = moment(moment(startDate).format('YYYY-MM-DD'));
 	const end = moment(moment(endDate).format('YYYY-MM-DD'));
@@ -108,8 +108,8 @@ export function updateMonthWeeks(input: IDateRangePicker) {
 }
 
 export function weekDateRange(weekNumber: number): string {
-	const startOfWeek = moment().week(weekNumber).startOf('week');
-	const endOfWeek = moment().week(weekNumber).endOf('week');
+	const startOfWeek = moment().week(weekNumber).startOf('isoWeek');
+	const endOfWeek = moment().week(weekNumber).endOf('isoWeek');
 
 	return `${startOfWeek.format('MMM Do')} - ${endOfWeek.format('MMM Do')}`;
 }
