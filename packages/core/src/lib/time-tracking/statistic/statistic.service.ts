@@ -163,8 +163,6 @@ export class StatisticService {
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
-		const timeZone = user?.timeZone || 'UTC';
-
 		// Set employeeIds based on user conditions and permissions
 		if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
 			employeeIds = [user.employeeId];
@@ -177,8 +175,8 @@ export class StatisticService {
 
 		// Define the start and end dates
 		const { start, end } = getDateRangeFormat(
-			moment.tz(startDate || undefined, timeZone).startOf('isoWeek'),
-			moment.tz(endDate || undefined, timeZone).endOf('isoWeek')
+			moment.utc(startDate || moment().startOf('isoWeek')),
+			moment.utc(endDate || moment().endOf('isoWeek'))
 		);
 
 		// Create a query builder for the TimeSlot entity
