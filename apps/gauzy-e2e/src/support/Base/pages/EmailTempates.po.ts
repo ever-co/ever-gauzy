@@ -5,7 +5,9 @@ import {
 	compareTwoTexts,
 	clickButtonByIndex
 } from '../utils/util';
-import { EmailTemplatesPage } from '../pageobjects/EmailTemplatesPageObject';
+
+//TODO: fix typo, updated to make the test functional
+import { EmailTemplatesPage } from '../pageobjects/EmailTempatesPageObject';
 
 export const selectLanguageButtonVisible = () => {
 	verifyElementIsVisible(EmailTemplatesPage.selectLanguageButtonCss);

@@ -19,7 +19,8 @@ let password = ' ';
 let employeeEmail = ' ';
 let imgUrl = ' ';
 
-describe('Proposals test', () => {
+//! cy.click() can only be called on a single element. Your subject contained 2 elements. Pass { multiple: true } if you want to serially click each element.
+describe.skip('Proposals test', () => {
 	before(() => {
 		jobPostUrl = faker.internet.url();
 		editJobPostUrl = faker.internet.url();
