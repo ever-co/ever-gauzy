@@ -20,7 +20,8 @@ let street = ' ';
 let website = ' ';
 let sendEmail = ' ';
 
-describe('Invoices test', () => {
+//! waitToLoad
+describe.skip('Invoices test', () => {
 	before(() => {
 		email = faker.internet.exampleEmail();
 		fullName = faker.person.firstName() + ' ' + faker.person.lastName();

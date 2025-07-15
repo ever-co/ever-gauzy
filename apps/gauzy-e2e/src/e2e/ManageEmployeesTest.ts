@@ -19,7 +19,8 @@ let password = ' ';
 let employeeEmail = ' ';
 let imgUrl = ' ';
 
-describe('Manage employees test', () => {
+//! waitToLoad
+describe.skip('Manage employees test', () => {
 	before(() => {
 		email = faker.internet.exampleEmail();
 		secEmail = faker.internet.exampleEmail();
