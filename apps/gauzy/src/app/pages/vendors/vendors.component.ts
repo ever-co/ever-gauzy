@@ -13,9 +13,17 @@ import {
 	OrganizationVendorsService,
 	ServerDataSource,
 	Store,
-	ToastrService
+	ToastrService,
+	GenericFavoriteService
 } from '@gauzy/ui-core/core';
-import { IOrganizationVendor, ITag, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
+import {
+	IOrganizationVendor,
+	ITag,
+	ComponentLayoutStyleEnum,
+	IOrganization,
+	IFavorite,
+	BaseEntityEnum
+} from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	CompanyLogoComponent,
@@ -29,10 +37,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-vendors',
-    templateUrl: './vendors.component.html',
-    styleUrls: ['vendors.component.scss'],
-    standalone: false
+	selector: 'ga-vendors',
+	templateUrl: './vendors.component.html',
+	styleUrls: ['vendors.component.scss'],
+	standalone: false
 })
 export class VendorsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public addEditDialogRef: NbDialogRef<any>;
@@ -53,6 +61,7 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 	public saveDisabled: boolean = false;
 	public loading: boolean = false;
 	private _refresh$: Subject<any> = new Subject();
+	public favoriteVendors: IFavorite[] = [];
 
 	/*
 	 * Vendor Mutation Form
@@ -79,7 +88,8 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 		private readonly errorHandlingService: ErrorHandlingService,
 		private readonly store: Store,
 		private readonly route: ActivatedRoute,
-		private readonly httpClient: HttpClient
+		private readonly httpClient: HttpClient,
+		private readonly genericFavoriteService: GenericFavoriteService
 	) {
 		super(translateService);
 		this.setView();
@@ -119,6 +129,7 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 				tap(() => this._refresh$.next(true)),
 				// Trigger the subject$ observable with a new value
 				tap(() => this.subject$.next(true)),
+				tap(() => this.loadFavoriteVendors()), // Load favorite vendors on org change
 				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
@@ -486,6 +497,29 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 		this.selected.state = res.state;
 		this.selected.vendor = vendor;
 		this.selectedVendor = this.selected.vendor;
+	}
+
+	/**
+	 * Loads the list of favorite vendors for the current user or all for admin using the generic service.
+	 */
+	async loadFavoriteVendors() {
+		try {
+			this.favoriteVendors = await this.genericFavoriteService.loadFavorites(
+				BaseEntityEnum.OrganizationVendor,
+				this.organization
+			);
+		} catch (error) {
+			console.error('Error loading favorite vendors:', error);
+			this.errorHandlingService.handleError(error);
+		}
+	}
+
+	/**
+	 * Handle vendor favorite toggle event from the new component
+	 */
+	onVendorFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// Reload favorites to keep the list in sync
+		this.loadFavoriteVendors();
 	}
 
 	ngOnDestroy(): void {}

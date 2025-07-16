@@ -5,7 +5,9 @@ import {
 	IOrganization,
 	ICandidateViewModel,
 	ICandidate,
-	CandidateStatusEnum
+	CandidateStatusEnum,
+	BaseEntityEnum,
+	IFavorite
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -15,8 +17,15 @@ import { firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
-import { CandidatesService, ErrorHandlingService, ServerDataSource, Store, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, getEntityDisplayName } from '@gauzy/ui-core/common';
+import {
+	CandidatesService,
+	ErrorHandlingService,
+	ServerDataSource,
+	Store,
+	ToastrService,
+	GenericFavoriteService
+} from '@gauzy/ui-core/core';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
@@ -33,9 +42,9 @@ import { CandidateStatusComponent, CandidateSourceComponent } from './table-comp
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    templateUrl: './candidates.component.html',
-    styleUrls: ['./candidates.component.scss'],
-    standalone: false
+	templateUrl: './candidates.component.html',
+	styleUrls: ['./candidates.component.scss'],
+	standalone: false
 })
 export class CandidatesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	includeArchived: boolean = false;
@@ -53,6 +62,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 	public organization: IOrganization;
 	public candidates$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
+	public favoriteCandidates: IFavorite[] = [];
 
 	constructor(
 		private readonly candidatesService: CandidatesService,
@@ -63,7 +73,8 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 		private readonly route: ActivatedRoute,
 		public readonly translateService: TranslateService,
 		private readonly errorHandler: ErrorHandlingService,
-		private readonly http: HttpClient
+		private readonly http: HttpClient,
+		private readonly genericFavoriteService: GenericFavoriteService
 	) {
 		super(translateService);
 		this.setView();
@@ -95,6 +106,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 				tap(({ invitesAllowed }: IOrganization) => (this.organizationInvitesAllowed = invitesAllowed)),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.candidates$.next(true)),
+				tap(() => this.loadFavoriteCandidates()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -589,6 +601,33 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 			isSelected: false,
 			data: null
 		});
+	}
+
+	/**
+	 * Loads the list of favorite candidates for the current user or all for admin using the generic service.
+	 */
+	async loadFavoriteCandidates() {
+		try {
+			this.favoriteCandidates = await this.genericFavoriteService.loadFavorites(
+				BaseEntityEnum.Candidate,
+				this.organization,
+				this.store.user?.employee?.id
+			);
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	}
+
+	/**
+	 * Handle candidate favorite toggle event from the new component
+	 */
+	onCandidateFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// Reload favorites to keep the list in sync
+		this.loadFavoriteCandidates();
+	}
+
+	getCandidateDisplayName(candidate: ICandidate): string {
+		return getEntityDisplayName(candidate);
 	}
 
 	ngOnDestroy() {}

@@ -185,7 +185,9 @@
 		"READ_MORE": "Read More",
 		"READ_LESS": "Read Less",
 		"RECOVER": "Recover",
-		"ADD_MORE_SOURCES": "Add More Sources"
+		"ADD_MORE_SOURCES": "Add More Sources",
+		"REMOVE_FROM_FAVORITES": "Remove from favorites",
+		"ADD_TO_FAVORITES": "Add to favorites"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -866,6 +868,7 @@
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Dashboards",
 		"APPOINTMENTS": "Appointments",
+		"FAVORITES": "Favorites",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "Income",
 		"EXPENSES": "Expenses",
@@ -2152,10 +2155,19 @@
 			"INTEGRATIONS": "Integrations",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
+				"AGENT_SETTINGS": "Agent Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
 				"ALLOW_MODIFY_TIME_INFO": "Allow employee to modify manual time.",
 				"ALLOW_DELETE_TIME": "Allow Delete Time",
 				"ALLOW_DELETE_TIME_INFO": "Allow employee to delete time.",
+				"ALLOW_AGENT_APP_EXIT": "Allow Agent App Exit",
+				"ALLOW_AGENT_APP_EXIT_INFO": "Allow employee to exit from the Agent application. When disabled, the exit option will be blocked in the Agent app.",
+				"ALLOW_LOGOUT_FROM_AGENT_APP": "Allow Logout from Agent App",
+				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Allow employee to logout from the Agent application. When disabled, the logout option will be blocked in the Agent app.",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Track Keyboard & Mouse Activity",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Enable full keyboard and mouse activity tracking, including keystrokes and exact mouse movements in all desktop apps and agent.",
+				"TRACK_ALL_DISPLAYS": "Track All Displays",
+				"TRACK_ALL_DISPLAYS_INFO": "Enable tracking on all displays or limit to primary display only.",
 				"ALLOW_MANUAL_TIME": "Allow Manual Time",
 				"ALLOW_MANUAL_TIME_INFO": "Allow employee to add manual time.",
 				"REQUIRE_REASON": "Require Reason",
@@ -3775,6 +3787,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Employee Level is required",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
+			"FAVORITE_ADDED": "{{ name }} added to favorites",
+			"FAVORITE_REMOVED": "{{ name }} removed from favorites",
+			"FAVORITE_ERROR": "Error updating favorite status",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Vendor name and year are required",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Language name and level are required",

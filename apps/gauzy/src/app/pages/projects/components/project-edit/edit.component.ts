@@ -1,9 +1,10 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, map, Observable, tap } from 'rxjs';
+import { filter, map, tap, Observable } from 'rxjs';
 import {
+	IFavorite,
 	IIntegrationTenant,
 	IOrganization,
 	IOrganizationProject,
@@ -15,10 +16,10 @@ import { ProjectMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-project-edit-mutation',
-    templateUrl: './edit.component.html',
-    styleUrls: ['./edit.component.scss'],
-    standalone: false
+	selector: 'ngx-project-edit-mutation',
+	templateUrl: './edit.component.html',
+	styleUrls: ['./edit.component.scss'],
+	standalone: false
 })
 export class ProjectEditMutationComponent extends TranslationBaseComponent implements OnInit {
 	/** Project Mutation Component*/
@@ -37,7 +38,8 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 		private readonly _store: Store,
 		private readonly _organizationProjectsService: OrganizationProjectsService,
 		private readonly _toastrService: ToastrService,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _cdr: ChangeDetectorRef
 	) {
 		super(translateService);
 	}
@@ -55,11 +57,13 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 		this.project$ = this._activatedRoute.data.pipe(
 			filter((data: Data) => !!data && !!data.project),
 			map(({ project }) => project),
-			tap((project) => (this.project = project)), // Assuming 'project' is a component property
+			tap((project) => {
+				this.project = project;
+				this._cdr.detectChanges(); // Trigger change detection to avoid ExpressionChangedAfterItHasBeenCheckedError
+			}),
 			untilDestroyed(this) // Automatically unsubscribes when the component is destroyed
 		);
 	}
-
 	/**
 	 * Fetches and sets the GitHub integration data from the route's data property.
 	 */
@@ -113,5 +117,13 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 	 */
 	navigateToProjects() {
 		this._router.navigate(['/pages/organization/projects']);
+	}
+
+	/**
+	 * Handle favorite toggle event
+	 */
+	onFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// The FavoriteToggleComponent already shows success/error messages
+		// Additional logic can be added here if needed (analytics, state updates, etc.)
 	}
 }

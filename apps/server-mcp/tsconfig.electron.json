@@ -1,0 +1,34 @@
+{
+    "compilerOptions": {
+        "outDir": "../../dist/apps/server-mcp",
+        "sourceMap": true,
+        "declaration": false,
+        "moduleResolution": "node",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "downlevelIteration": true,
+        "module": "ES2022",
+        "target": "ES2022",
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "types": ["node", "electron"]
+    },
+    "files": [],
+    "include": [
+        "src/electron-main.ts",
+        "src/preload/*.ts",
+        "src/instance/*.ts",
+        "src/common/*.ts",
+        "src/tools/*.ts",
+        "src/environments/*.ts"
+    ],
+    "exclude": [
+        "src/index.ts",
+        "src/schema.ts",
+        "jest.config.ts",
+        "src/**/*.test.ts",
+        "src/**/*.spec.ts"
+    ]
+}

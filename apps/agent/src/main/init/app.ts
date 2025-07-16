@@ -1,4 +1,4 @@
-import { app, ipcMain, systemPreferences } from 'electron';
+import { app, ipcMain, systemPreferences, powerMonitor } from 'electron';
 import * as path from 'path';
 import { logger as log, store } from '@gauzy/desktop-core';
 import {
@@ -8,14 +8,21 @@ import {
 	ProviderFactory,
 	TranslateService
 } from '@gauzy/desktop-lib';
-import { delaySync, getApiBaseUrl, getAuthConfig } from '../util';
+import {
+	getApiBaseUrl,
+	getAuthConfig,
+	getTrayIcon
+} from '../util';
 import AppWindow from '../window-manager';
 import TrayMenu from '../tray';
-import { CONSTANT } from '../../constant';
 import { checkUserAuthentication } from '../auth';
 import PullActivities from '../workers/pull-activities';
 import PushActivities from '../workers/push-activities';
 import EventHandler from '../events/event-handler';
+import { environment } from '../../environments/environment';
+import MainEvent from '../events/events';
+import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
+import { handleSplashScreen } from './splash';
 
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
@@ -27,9 +34,10 @@ LocalStore.setFilePath({
 });
 const appRootPath: string = path.join(__dirname, '../..');
 const appWindow = AppWindow.getInstance(appRootPath);
-
+const mainEvent = MainEvent.getInstance();
 const eventHandler = EventHandler.getInstance();
 eventHandler.mainListener();
+
 
 let trayMenu: TrayMenu;
 
@@ -63,18 +71,6 @@ function launchAtStartup(autoLaunch: boolean, hidden: boolean) {
 	}
 }
 
-async function handleSplashScreen() {
-	try {
-		await appWindow.initSplashScreenWindow();
-		await appWindow.splashScreenWindow.loadURL();
-		appWindow.splashScreenWindow.show();
-		await delaySync(2000);
-	} catch (error) {
-		console.log('error splashScreenWindow', error);
-		// ignore error splashScreen
-	}
-}
-
 async function handleSetupWindow() {
 	await appWindow.initSetupWindow()
 	appWindow.setupWindow.show();
@@ -98,9 +94,9 @@ export async function startServer(value: any) {
 		// timeTrackerWindow.webContents.toggleDevTools();
 	}
 	trayMenu = TrayMenu.getInstance(
-		path.join(__dirname, '../..', CONSTANT.TRAY_ICON_PATH),
+		getTrayIcon(),
 		true,
-		{ helpSiteUrl: 'https://gauzy.co' },
+		{ helpSiteUrl: environment.COMPANY_SITE_LINK },
 	);
 	trayMenu.build();
 
@@ -282,4 +278,32 @@ export async function InitApp() {
 	await app.whenReady();
 	await initiationLocalDatabase();
 	await appReady();
+
+	powerMonitor.on('shutdown', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.STOP_TIMER
+		});
+	});
+	powerMonitor.on('suspend', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.STOP_TIMER
+		});
+	});
+	powerMonitor.on('lock-screen', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.STOP_TIMER
+		});
+	});
+	powerMonitor.on('unlock-screen', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.START_TIMER
+		});
+	});
+	powerMonitor.on('resume', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.START_TIMER
+		});
+	});
 }
+
+

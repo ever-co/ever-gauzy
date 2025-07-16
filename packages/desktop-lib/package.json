@@ -33,7 +33,7 @@
 		"@gauzy/desktop-core": "^0.1.0",
 		"@gauzy/desktop-window": "^0.1.0",
 		"@gauzy/desktop-activity": "^0.1.0",
-		"active-win": "^8.1.0",
+		"get-windows": "^9.2.0",
 		"better-sqlite3": "9.6.0",
 		"electron-log": "^4.4.8",
 		"electron-store": "^8.1.0",
@@ -84,7 +84,7 @@
 		"agpl"
 	],
 	"engines": {
-		"node": ">=20.11.1",
+		"node": ">=20.18.1",
 		"yarn": ">=1.22.19"
 	},
 	"sideEffects": false

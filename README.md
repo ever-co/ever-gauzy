@@ -109,6 +109,8 @@ Read more [about Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) 
 
 ## 📊 Activity
 
+<a href="https://trendshift.io/repositories/1775" target="_blank"><img src="https://trendshift.io/api/badge/repositories/1775" alt="ever-co%2Fever-gauzy | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+
 ![Alt](https://repobeats.axiom.co/api/embed/7c6f6c3bf56fd91647549cf4ae70af49ed5ee106.svg 'Repobeats analytics image')
 
 ## 💻 Demo, Downloads, Testing and Production

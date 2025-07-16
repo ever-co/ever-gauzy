@@ -1,7 +1,18 @@
 <ng-container>
 	<nb-card>
-		<nb-card-header>
+		<nb-card-header class="d-flex justify-content-between align-items-center">
 			<ngx-back-navigation></ngx-back-navigation>
+			<ngx-favorite-toggle
+				*ngIf="selectedContact"
+				[entityType]="'OrganizationContact'"
+				[entityId]="selectedContact.id"
+				[entityName]="selectedContact.name"
+				size="small"
+				status="basic"
+				spacing="detail"
+				[showLabel]="false"
+				(favoriteToggled)="onFavoriteToggled($event)"
+			></ngx-favorite-toggle>
 		</nb-card-header>
 		<nb-card-body>
 			<div class="row">

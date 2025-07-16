@@ -15,6 +15,7 @@ import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
 	EntityWithMembersModule,
+	FavoriteToggleModule,
 	ProjectMutationModule,
 	ProjectModuleMutationModule
 } from '@gauzy/ui-core/shared';
@@ -44,6 +45,7 @@ import { ProjectListComponent } from './components/project-list/list.component';
 		SharedModule,
 		SmartDataViewLayoutModule,
 		CardGridModule,
+		FavoriteToggleModule,
 		ProjectMutationModule,
 		ProjectModuleMutationModule
 	],

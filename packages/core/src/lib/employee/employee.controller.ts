@@ -11,7 +11,8 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	ValidationPipe
+	ValidationPipe,
+	UseInterceptors
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -41,10 +42,15 @@ import {
 	UpdateProfileDTO,
 	FindMembersInputDTO
 } from './dto';
+import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
+import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
+import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
 
 @ApiTags('Employee')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+@UseInterceptors(SensitiveRelationsInterceptor)
+@SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS, 'organization')
 @Controller('/employee')
 export class EmployeeController extends CrudController<Employee> {
 	constructor(private readonly _employeeService: EmployeeService, private readonly _commandBus: CommandBus) {

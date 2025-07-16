@@ -15,3 +15,9 @@
 	overflow: hidden;
   }
 }
+
+:host(.setup-max-height) {
+	::ng-deep nb-stepper .step-content {
+		height: calc(100vh - 5.5rem);
+	}
+}

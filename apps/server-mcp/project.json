@@ -1,0 +1,160 @@
+{
+	"name": "server-mcp",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "apps/server-mcp/src",
+	"projectType": "application",
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"main": "apps/server-mcp/src/index.ts",
+				"outputPath": "apps/server-mcp/build",
+				"tsConfig": "apps/server-mcp/tsconfig.mcp.json",
+				"generatePackageJson": false,
+				"assets": [
+					{
+						"glob": "package.json",
+						"input": "apps/server-mcp",
+						"output": "."
+					}
+				]
+			},
+			"configurations": {
+				"production": {
+					"fileReplacements": [
+						{
+							"replace": "apps/server-mcp/src/environments/environment.ts",
+							"with": "apps/server-mcp/src/environments/environment.prod.ts"
+						}
+					],
+					"optimization": true,
+					"sourceMap": false
+				},
+				"development": {
+					"optimization": false,
+					"sourceMap": true
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"build-electron": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"main": "apps/server-mcp/src/electron-main.ts",
+				"outputPath": "dist/apps/server-mcp",
+				"tsConfig": "apps/server-mcp/tsconfig.electron.json",
+				"assets": [
+					"apps/server-mcp/src/favicon.ico",
+					"apps/server-mcp/package.json",
+					{
+						"glob": "**/*",
+						"input": "apps/server-mcp/src/preload",
+						"output": "preload"
+					}
+				],
+				"generatePackageJson": false
+			},
+			"configurations": {
+				"production": {
+					"fileReplacements": [
+						{
+							"replace": "apps/server-mcp/src/environments/environment.ts",
+							"with": "apps/server-mcp/src/environments/environment.prod.ts"
+						}
+					],
+					"optimization": true,
+					"sourceMap": false
+				},
+				"development": {
+					"optimization": false,
+					"sourceMap": true
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"serve": {
+			"executor": "@nx/js:node",
+			"dependsOn": ["build"],
+			"configurations": {
+				"production": {
+					"buildTarget": "server-mcp:build:production"
+				},
+				"development": {
+					"buildTarget": "server-mcp:build:development"
+				}
+			},
+			"defaultConfiguration": "development"
+		},
+		"serve-mcp": {
+			"executor": "@nx/js:node",
+			"dependsOn": ["build"],
+			"configurations": {
+				"production": {
+					"buildTarget": "server-mcp:build:production",
+					"args": ["--test"]
+				},
+				"development": {
+					"buildTarget": "server-mcp:build:development",
+					"args": ["--test"]
+				}
+			},
+			"defaultConfiguration": "development"
+		},
+		"electron": {
+			"executor": "@nx/js:node",
+			"dependsOn": ["build-electron"],
+			"options": {
+				"buildTarget": "server-mcp:build-electron",
+				"runtimeArgs": [],
+				"args": [],
+				"inspect": false
+			},
+			"configurations": {
+				"production": {
+					"buildTarget": "server-mcp:build-electron:production"
+				},
+				"development": {
+					"buildTarget": "server-mcp:build-electron:development"
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"electron-dev": {
+			"executor": "@nx/js:node",
+			"dependsOn": ["build-electron"],
+			"options": {
+				"buildTarget": "server-mcp:build-electron",
+				"watch": true,
+				"inspect": false
+			},
+			"configurations": {
+				"production": {
+					"buildTarget": "server-mcp:build-electron:production"
+				},
+				"development": {
+					"buildTarget": "server-mcp:build-electron:development"
+				}
+			},
+			"defaultConfiguration": "development"
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint",
+			"outputs": ["{options.outputFile}"],
+			"options": {
+				"lintFilePatterns": [
+					"apps/server-mcp/**/*.ts"
+				]
+			}
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "apps/server-mcp/jest.config.ts"
+			}
+		}
+	},
+	"tags": ["mcp", "server", "electron"]
+}

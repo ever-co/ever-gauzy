@@ -409,6 +409,47 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@MultiORMColumn({ default: false })
 	allowDeleteTime?: boolean;
 
+	/**
+	 * Indicates whether the agent app exit is allowed for a specific employee.
+	 * Used ONLY in Agent app to block the user from exiting the application.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: true })
+	allowAgentAppExit?: boolean;
+
+	/**
+	 * Indicates whether logout from agent app is allowed for a specific employee.
+	 * Used ONLY in Agent app to block user from logging out.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: true })
+	allowLogoutFromAgentApp?: boolean;
+
+	/**
+	 * Indicates whether keyboard and mouse activity tracking is enabled.
+	 * Used in all desktop apps/agent to allow keyboard/mouse full activity tracking,
+	 * including keystrokes and exact mouse movements.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	trackKeyboardMouseActivity?: boolean;
+
+	/**
+	 * Indicates whether to track all displays or only the primary display.
+	 * Allows tracking all displays or only primary display.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: true })
+	trackAllDisplays?: boolean;
+
 	/** Upwork ID */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

@@ -176,7 +176,9 @@
 		"READ_MORE": "Czytaj więcej",
 		"READ_LESS": "Czytaj mniej",
 		"RECOVER": "Przywróć",
-		"ADD_MORE_SOURCES": "Dodaj więcej źródeł"
+		"ADD_MORE_SOURCES": "Dodaj więcej źródeł",
+		"REMOVE_FROM_FAVORITES": "Usuń z ulubionych",
+		"ADD_TO_FAVORITES": "Dodaj do ulubionych"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -827,6 +829,7 @@
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Nawigacje",
 		"APPOINTMENTS": "Umówienia",
+		"FAVORITES": "Ulubione",
 		"ACCOUNTING": "Księgowość",
 		"INCOME": "Dochód",
 		"EXPENSES": "Wydatki",
@@ -2060,10 +2063,19 @@
 			"INTEGRATIONS": "Integracje",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Ustawienia licznika czasu",
+				"AGENT_SETTINGS": "Ustawienia agenta",
 				"ALLOW_MODIFY_TIME": "Zezwól na modyfikację czasu",
 				"ALLOW_MODIFY_TIME_INFO": "Zezwól pracownikowi na modyfikowanie ręcznego czasu",
 				"ALLOW_DELETE_TIME": "Zezwól na usuwanie czasu",
 				"ALLOW_DELETE_TIME_INFO": "Zezwól pracownikowi na usunięcie czasu",
+				"ALLOW_AGENT_APP_EXIT": "Zezwól na wyjście z aplikacji agenta",
+				"ALLOW_AGENT_APP_EXIT_INFO": "Zezwól pracownikowi na wyjście z aplikacji agenta. Gdy wyłączone, opcja wyjścia zostanie zablokowana w aplikacji Agenta.",
+				"ALLOW_LOGOUT_FROM_AGENT_APP": "Zezwól na wylogowanie z aplikacji agenta",
+				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Zezwól pracownikowi na wylogowanie z aplikacji agenta. Gdy wyłączone, opcja wylogowania zostanie zablokowana w aplikacji Agenta.",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Śledź aktywność klawiatury i myszy",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Włącz pełne śledzenie aktywności klawiatury i myszy, w tym naciśnięcia klawiszy i dokładne ruchy myszy we wszystkich aplikacjach desktopowych i agencie.",
+				"TRACK_ALL_DISPLAYS": "Śledź wszystkie ekrany",
+				"TRACK_ALL_DISPLAYS_INFO": "Włącz śledzenie na wszystkich ekranach lub ogranicz tylko do głównego ekranu.",
 				"ALLOW_MANUAL_TIME": "Zezwól na ręczne wprowadzanie czasu",
 				"ALLOW_MANUAL_TIME_INFO": "Zezwól pracownikowi na dodawanie czasu manualnie",
 				"REQUIRE_REASON": "Wymagaj powodu",
@@ -3648,6 +3660,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Wymagany jest poziom pracownika",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Nazwa rodzaju zatrudnienia jest wymagana",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Nazwa działu jest wymagana",
+			"FAVORITE_ADDED": "'{{ name }}' dodano do ulubionych",
+			"FAVORITE_REMOVED": "'{{ name }}' usunięto z ulubionych",
+			"FAVORITE_ERROR": "Błąd podczas aktualizacji statusu ulubionych",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Nieprawidłowe dane wejściowe",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Nazwa dostawcy i rok są wymagane",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Nazwa języka oraz poziom są wymagane",

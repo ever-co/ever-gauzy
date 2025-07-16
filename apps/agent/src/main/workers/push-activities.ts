@@ -1,5 +1,16 @@
-import { KbMouseActivityService, KbMouseActivityTO, TTimeSlot } from '@gauzy/desktop-lib';
-import { KbMouseActivityPool, TKbMouseActivity, TMouseEvents } from '@gauzy/desktop-activity';
+import {
+	KbMouseActivityService,
+	KbMouseActivityTO,
+	TTimeSlot,
+	TimerService
+} from '@gauzy/desktop-lib';
+import {
+	KbMouseActivityPool,
+	TMouseEvents,
+	TimeSlotActivities,
+	ActivityType,
+	TimeLogSourceEnum,
+} from '@gauzy/desktop-activity';
 import { ApiService, TResponseTimeSlot } from '../api';
 import { getAuthConfig, TAuthConfig, getInitialConfig } from '../util';
 import * as moment from 'moment';
@@ -9,19 +20,27 @@ import * as fs from 'node:fs';
 import MainEvent from '../events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
 
+type TParamsActivities = Omit<TimeSlotActivities, 'recordedAt'> & { recordedAt: string };
+
 class PushActivities {
 	static instance: PushActivities;
 	private kbMousePool: KbMouseActivityPool;
 	private kbMouseActivityService: KbMouseActivityService;
-	private apiService = ApiService.getInstance();
+	private apiService: ApiService;
 	private agentLogger: AgentLogger;
 	private mainEvent: MainEvent;
+	private isNetworkError = false;
+	private timerService: TimerService;
+
 
 	constructor() {
 		this.kbMouseActivityService = new KbMouseActivityService();
 		this.getKbMousePoolModule();
 		this.agentLogger = AgentLogger.getInstance();
 		this.mainEvent = MainEvent.getInstance();
+		this.apiService = ApiService.getInstance();
+		this.trayUpdateMenuStatus('network', true);
+		this.timerService = new TimerService();
 	}
 
 	static getInstance(): PushActivities {
@@ -82,10 +101,18 @@ class PushActivities {
 			}
 			this.agentLogger.info(`Preparing send activity recordedAt ${params.recordedAt} to service`);
 			const resp = await this.apiService.saveTimeSlot(params);
+			if (this.isNetworkError) {
+				this.isNetworkError = false;
+				this.trayUpdateMenuStatus('network', !this.isNetworkError);
+				this.trayStatusHandler('Working');
+			}
 			console.log(`Time slot saved for activity ${activities.id}:`, resp?.id);
 			return resp;
 		} catch (error) {
 			console.error('error on save timeslot', error);
+			this.isNetworkError = true;
+			this.trayUpdateMenuStatus('network', !this.isNetworkError);
+			this.trayStatusHandler('Network error');
 			throw error;
 		}
 	}
@@ -151,14 +178,14 @@ class PushActivities {
 		}
 	}
 
-	private getDurationOverAllSeconds(timeStart: Date, timeEnd: Date) {
+	private getDurationSeconds(timeStart: Date, timeEnd: Date) {
 		if (timeStart && timeEnd) {
 			return Math.floor((timeEnd.getTime() - timeStart.getTime()) / 1000);
 		}
 		return 0;
 	}
 
-	private getDurationSeconds(timeStart: Date, timeEnd: Date, afkDuration?: number) {
+	private getDurationOverAllSeconds(timeStart: Date, timeEnd: Date, afkDuration?: number) {
 		if (!(timeStart && timeEnd)) {
 			return 0;
 		}
@@ -167,9 +194,21 @@ class PushActivities {
 		return Math.max(0, total - afk);
 	}
 
-	getActivities(activities: KbMouseActivityTO): TKbMouseActivity[] {
-		return [
-			{
+	getKeyboardActivities(activities: KbMouseActivityTO, duration: number, auth: TAuthConfig): TParamsActivities[] {
+		return [{
+			title: 'Keyboard and Mouse',
+			duration: duration,
+			projectId: null,
+			taskId: null,
+			date: moment(activities.timeStart).utc().format('YYYY-MM-DD'),
+			time: moment(activities.timeStart).utc().format('HH:mm:ss'),
+			type: ActivityType.APP,
+			organizationContactId: null,
+			organizationId: auth?.user?.employee?.organizationId,
+			source: TimeLogSourceEnum.DESKTOP,
+			recordedAt: moment(activities.timeStart).toISOString(),
+			employeeId: auth?.user?.employee?.id,
+			metaData: [{
 				kbPressCount: activities.kbPressCount,
 				kbSequence: (typeof activities.kbSequence === 'string'
 					? (() => {
@@ -194,7 +233,44 @@ class PushActivities {
 						}
 					})()
 					: activities.mouseEvents) as TMouseEvents[]
+			}]
+		}];
+	}
+
+	getActiveWindows(activities: KbMouseActivityTO, auth: TAuthConfig): TParamsActivities[] {
+		if (typeof activities.activeWindows === 'string') {
+			try {
+				activities.activeWindows = JSON.parse(activities.activeWindows);
+			} catch (error) {
+				this.agentLogger.error(`Error parsing activities data to json ${error.message}`);
+				return [];
 			}
+
+		}
+		if (!Array.isArray(activities.activeWindows)) {
+			return []
+		}
+		return activities.activeWindows.map((windowActivity) => ({
+			title: windowActivity.name,
+			duration: windowActivity.duration,
+			projectId: null,
+			taskId: null,
+			date: moment(activities.timeStart).utc().format('YYYY-MM-DD'),
+			time: moment(activities.timeStart).utc().format('HH:mm:ss'),
+			type: ActivityType.APP,
+			organizationContactId: null,
+			organizationId: auth?.user?.employee?.organizationId,
+			source: TimeLogSourceEnum.DESKTOP,
+			recordedAt: moment(activities.timeStart).toISOString(),
+			employeeId: auth?.user?.employee?.id,
+			metaData: windowActivity.meta
+		}));
+	}
+
+	getActivities(activities: KbMouseActivityTO, duration: number, auth: TAuthConfig): TParamsActivities[] {
+		return [
+			...this.getKeyboardActivities(activities, duration, auth),
+			...this.getActiveWindows(activities, auth)
 		];
 	}
 
@@ -229,22 +305,25 @@ class PushActivities {
 		if (!isAuthenticated) {
 			return;
 		}
+		const overall = this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration);
+		const duration = this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd));
 		return {
-			tenantId: auth.user.employee.tenantId,
-			organizationId: auth.user.employee.organizationId,
-			duration: this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration),
+			tenantId: auth?.user?.employee?.tenantId,
+			organizationId: auth?.user?.employee?.organizationId,
+			duration,
 			keyboard: activities.kbPressCount,
 			mouse: activities.mouseLeftClickCount + activities.mouseRightClickCount,
-			overall: this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd)),
+			overall,
 			startedAt: moment(activities.timeStart).toISOString(),
 			recordedAt: moment(activities.timeStart).toISOString(),
-			activities: this.getActivities(activities),
-			employeeId: auth.user.employee.employeeId
+			activities: this.getActivities(activities, overall, auth),
+			employeeId: auth?.user?.employee?.id
 		};
 	}
 
 	async saveActivities() {
 		try {
+			await this.saveOfflineTimer();
 			const activity = await this.getOldestActivity();
 			if (activity?.id) {
 				// remove activity from temp local database
@@ -283,9 +362,52 @@ class PushActivities {
 		}
 	}
 
+	async saveOfflineTimer() {
+		const notSyncTimer = await this.timerService.findToSynced();
+		const authConfig = getAuthConfig();
+		if (notSyncTimer.length) {
+			for (let i = 0; i < notSyncTimer.length; i++) {
+				const timerOffline = notSyncTimer[i].timer;
+				if (timerOffline?.isStartedOffline) {
+					await this.apiService.startTimer({
+						organizationId: authConfig?.user?.employee?.organizationId,
+						startedAt: timerOffline.startedAt,
+						tenantId: authConfig?.user?.employee?.tenantId,
+						organizationTeamId: null,
+						organizationContactId: null
+					});
+					await this.timerService.remove({ id: timerOffline?.id });
+				}
+			}
+		}
+	}
+
+
+
 	poolErrorHandler(error: Error) {
 		console.error(error);
 		this.agentLogger.error(`Activity polling scheduler error ${JSON.stringify(error)}`);
+	}
+
+	private trayStatusHandler(status: 'Working' | 'Error' | 'Network error') {
+		this.mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT,
+			data: {
+				trayStatus: status,
+				trayUpdateType: 'title'
+			}
+		});
+	}
+
+	private trayUpdateMenuStatus(menuId: 'keyboard_mouse' | 'network' | 'afk', checked: boolean) {
+		this.mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT,
+			data: {
+				trayUpdateType: 'menu',
+				trayMenuId: menuId,
+				trayMenuChecked: checked
+			}
+		});
 	}
 }
 
