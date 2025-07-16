@@ -4,10 +4,11 @@ import { BehaviorSubject, Observable, EMPTY, of } from 'rxjs';
 import { NbMenuItem } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { IUser, IAuthResponse, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
+import { IUser, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store, AuthService, ToastrService } from '@gauzy/ui-core/core';
+import { WorkspaceResetService } from './workspace-reset.service';
 
 interface IWorkSpace {
 	id: string;
@@ -38,7 +39,8 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
 		private readonly authService: AuthService,
-		private readonly toastrService: ToastrService
+		private readonly toastrService: ToastrService,
+		private readonly workspaceResetService: WorkspaceResetService
 	) {
 		super(translateService);
 	}
@@ -119,7 +121,7 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
-	 * Switches to the selected workspace and updates the application state.
+	 * Switches to the selected workspace with complete reset (logout/login approach).
 	 *
 	 * @param {IWorkSpace} workspace - The workspace to switch to.
 	 * @return {void} This function does not return a value.
@@ -132,19 +134,14 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 		this.loading = true;
 		this.error = null;
 
-		this.authService
+		// Use the workspace reset service (complete reset approach)
+		this.workspaceResetService
 			.switchWorkspace(workspace.id)
 			.pipe(
-				filter((response: IAuthResponse | null) => !!response),
-				tap((response: IAuthResponse) => {
-					// Update store with new information
-					this.updateStoreAfterWorkspaceSwitch(response);
-
+				tap(() => {
 					// Update local workspace state
 					this.updateLocalWorkspaceState(workspace);
-
-					// Success notification
-					this.toastrService.success(`Switched to ${workspace.name}`, 'Workspace Changed');
+					// Note: Success notification is handled by the service
 				}),
 				catchError((error) => {
 					console.error('Error switching workspace:', error);
@@ -181,25 +178,6 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	 */
 	add() {
 		// TODO
-	}
-
-	/**
-	 * Updates the store after a successful workspace switch.
-	 *
-	 * @param {IAuthResponse} response - The authentication response containing new user and token data.
-	 * @return {void} This function does not return a value.
-	 */
-	private updateStoreAfterWorkspaceSwitch(response: IAuthResponse): void {
-		const { user, token, refresh_token } = response;
-
-		// Update all store elements
-		this.store.user = user;
-		this.store.token = token;
-		if (refresh_token) {
-			this.store.refresh_token = refresh_token;
-		}
-		this.store.tenantId = user.tenantId;
-		this.store.organizationId = user.employee?.organizationId || null;
 	}
 
 	/**
