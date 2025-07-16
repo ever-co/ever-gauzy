@@ -54,11 +54,13 @@ import { UserOrganizationService } from '../user-organization/user-organization.
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
 import { RequestContext } from './../core/context';
-import { freshTimestamp } from './../core/utils';
+import { freshTimestamp, MultiORM, MultiORMEnum, getORMType, parseTypeORMFindToMikroOrm } from './../core/utils';
+import { wrap } from '@mikro-orm/core';
 import { OrganizationTeam, Tenant, User } from './../core/entities/internal';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationTeamRepository } from './../organization-team/repository/type-orm-organization-team.repository';
 import {
@@ -71,8 +73,12 @@ import { SocialAccountService } from './social-account/social-account.service';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
+	// Get the type of the Object-Relational Mapping (ORM) used in the application.
+	private readonly ormType: MultiORM = getORMType();
+
 	constructor(
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
+		private readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
 		private readonly emailConfirmationService: EmailConfirmationService,
@@ -87,6 +93,20 @@ export class AuthService extends SocialAuthService {
 		private readonly eventBus: EventBus
 	) {
 		super();
+	}
+
+	/**
+	 * Serializes the provided entity based on the ORM type.
+	 * @param entity The entity to be serialized.
+	 * @returns The serialized entity.
+	 */
+	private serialize<T extends object>(entity: T): T {
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			// If using MikroORM, use wrap(entity).toJSON() for serialization
+			return wrap(entity).toJSON() as T;
+		}
+		// If using other ORM types, return the entity as is
+		return entity;
 	}
 
 	/**
@@ -797,6 +817,7 @@ export class AuthService extends SocialAuthService {
 	 * @throws Throws an UnauthorizedException if the user is not found or if there is an issue in token generation.
 	 */
 	public async getJwtAccessToken(request: Partial<IUser>) {
+		const tenantId = request.tenantId || RequestContext.currentTenantId();
 		try {
 			// Validate that the request contains a user ID
 			if (!request.id) {
@@ -808,11 +829,40 @@ export class AuthService extends SocialAuthService {
 			// Extract the user ID from the request
 			const userId = request.id;
 
-			// Retrieve the user's data, including role and permissions
-			const user = await this.userService.findOneByIdString(userId, {
-				relations: { role: { rolePermissions: true } },
-				order: { createdAt: 'DESC' }
-			});
+			// Retrieve the user's data using Multi-ORM pattern to bypass tenant filtering
+			let user: User;
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
+						where: {
+							id: userId,
+							tenantId,
+							isActive: true,
+							isArchived: false
+						},
+						relations: { role: { rolePermissions: true } },
+						order: { createdAt: 'DESC' }
+					});
+					user = (await this.mikroOrmUserRepository.findOne(where, mikroOptions)) as User;
+					break;
+
+				case MultiORMEnum.TypeORM:
+					user = await this.typeOrmUserRepository.findOne({
+						where: {
+							id: userId,
+							tenantId,
+							isActive: true,
+							isArchived: false
+						},
+						relations: { role: { rolePermissions: true } },
+						order: { createdAt: 'DESC' }
+					});
+					break;
+
+				default:
+					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+			}
 
 			// Throw an error if the user is not found
 			if (!user) {
@@ -1350,16 +1400,38 @@ export class AuthService extends SocialAuthService {
 
 			const email = currentUser.email;
 
-			// Find all users with the same email across different tenants
-			const users = await this.userService.find({
-				where: {
-					email,
-					isActive: true,
-					isArchived: false
-				},
-				relations: { tenant: true },
-				order: { createdAt: 'DESC' }
-			});
+			// Find all users with the same email across different tenants using Multi-ORM pattern
+			let users: User[];
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
+						where: {
+							email,
+							isActive: true,
+							isArchived: false
+						},
+						relations: { tenant: true },
+						order: { createdAt: 'DESC' }
+					});
+					users = (await this.mikroOrmUserRepository.find(where, mikroOptions)) as User[];
+					break;
+
+				case MultiORMEnum.TypeORM:
+					users = await this.typeOrmUserRepository.find({
+						where: {
+							email,
+							isActive: true,
+							isArchived: false
+						},
+						relations: { tenant: true },
+						order: { createdAt: 'DESC' }
+					});
+					break;
+
+				default:
+					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+			}
 
 			if (users.length === 0) {
 				throw new UnauthorizedException('No workspaces found for user');
@@ -1367,7 +1439,7 @@ export class AuthService extends SocialAuthService {
 
 			// Create workspace response using existing logic
 			const response: IUserSigninWorkspaceResponse = await this.createUserSigninWorkspaceResponse({
-				users,
+				users: users.map((user) => this.serialize(user)),
 				code: '', // Empty code - not needed for authenticated workspace retrieval
 				email,
 				includeTeams
@@ -1398,16 +1470,38 @@ export class AuthService extends SocialAuthService {
 
 			const email = currentUser.email;
 
-			// Find the user in the target tenant
-			const targetUser = await this.userService.findOneByOptions({
-				where: {
-					email,
-					tenantId,
-					isActive: true,
-					isArchived: false
-				},
-				relations: { role: true, tenant: true }
-			});
+			// Find the user in the target tenant using Multi-ORM pattern
+			let targetUser: User;
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
+						where: {
+							email,
+							tenantId,
+							isActive: true,
+							isArchived: false
+						},
+						relations: { role: true, tenant: true }
+					});
+					targetUser = (await this.mikroOrmUserRepository.findOne(where, mikroOptions)) as User;
+					break;
+
+				case MultiORMEnum.TypeORM:
+					targetUser = await this.typeOrmUserRepository.findOne({
+						where: {
+							email,
+							tenantId,
+							isActive: true,
+							isArchived: false
+						},
+						relations: { role: true, tenant: true }
+					});
+					break;
+
+				default:
+					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+			}
 
 			if (!targetUser) {
 				throw new UnauthorizedException('User does not have access to this workspace');
@@ -1436,7 +1530,7 @@ export class AuthService extends SocialAuthService {
 			// Return the authentication response
 			return {
 				user: new User({
-					...targetUser,
+					...this.serialize(targetUser),
 					...(employee && { employee })
 				}),
 				token: access_token,
