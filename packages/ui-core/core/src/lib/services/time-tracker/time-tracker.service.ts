@@ -329,8 +329,13 @@ export class TimeTrackerService implements OnDestroy {
 	 * @returns A promise that resolves to the timer status.
 	 */
 	getTimerStatus(params: ITimerStatusInput): Promise<ITimerStatusWithWeeklyLimits> {
-		const todayStart = toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss');
-		const todayEnd = toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss');
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		const localStart = moment.tz(timeZone).startOf('day');
+		const offsetMinutes = localStart.utcOffset();
+		const todayStart = localStart.clone().utc().add(offsetMinutes, 'minutes').toISOString();
+		const localEnd = moment.tz(timeZone).endOf('day');
+		const offsetMinutesEnd = localEnd.utcOffset();
+		const todayEnd = localEnd.clone().utc().add(offsetMinutesEnd, 'minutes').toISOString();
 		return firstValueFrom(
 			this.http.get<ITimerStatusWithWeeklyLimits>(`${API_PREFIX}/timesheet/timer/status`, {
 				params: toParams({
