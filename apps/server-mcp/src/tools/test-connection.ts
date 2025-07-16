@@ -3,6 +3,7 @@ import { version } from '../common/version.js';
 import { apiClient } from '../common/api-client.js';
 import { authManager } from '../common/auth-manager.js';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils.js';
+import { TOOLS_REGISTRY, getToolCounts, getTotalToolCount } from '../config/tools-registry.js';
 import log from 'electron-log';
 
 /**
@@ -113,111 +114,10 @@ Connection Details:
 	// Test MCP capabilities
 	server.tool('test_mcp_capabilities', 'Test all MCP server tools and list available functionality', {}, async () => {
 		try {
-			// Since server.getTools() is not available, we'll maintain the list in a central location
-			// TODO: Consider moving this to a central configuration file
-			const tools = {
-				authentication: ['login', 'logout', 'get_auth_status', 'refresh_auth_token', 'auto_login'],
-				employees: [
-					'get_employees',
-					'get_employee_count',
-					'get_employees_pagination',
-					'get_working_employees',
-					'get_working_employees_count',
-					'get_organization_members',
-					'get_employee',
-					'get_employee_statistics',
-					'get_current_employee',
-					'create_employee',
-					'update_employee',
-					'update_employee_profile',
-					'soft_delete_employee',
-					'restore_employee',
-					'bulk_create_employees'
-				],
-				tasks: [
-					'get_tasks',
-					'get_task_count',
-					'get_tasks_pagination',
-					'get_tasks_by_employee',
-					'get_my_tasks',
-					'get_team_tasks',
-					'create_task',
-					'get_task',
-					'update_task',
-					'delete_task',
-					'bulk_create_tasks',
-					'bulk_update_tasks',
-					'bulk_delete_tasks',
-					'get_task_statistics',
-					'assign_task_to_employee',
-					'unassign_task_from_employee'
-				],
-				projects: [
-					'get_projects',
-					'get_project_count',
-					'get_projects_pagination',
-					'get_projects_by_employee',
-					'get_my_projects',
-					'get_project',
-					'create_project',
-					'update_project',
-					'delete_project',
-					'bulk_create_projects',
-					'bulk_update_projects',
-					'bulk_delete_projects',
-					'get_project_statistics',
-					'assign_project_to_employee',
-					'unassign_project_from_employee'
-				],
-				dailyPlans: [
-					'get_daily_plans',
-					'get_my_daily_plans',
-					'get_team_daily_plans',
-					'get_employee_daily_plans',
-					'get_daily_plans_for_task',
-					'get_daily_plan',
-					'create_daily_plan',
-					'update_daily_plan',
-					'delete_daily_plan',
-					'add_task_to_daily_plan',
-					'remove_task_from_daily_plan',
-					'remove_task_from_many_daily_plans',
-					'get_daily_plan_count',
-					'get_daily_plan_statistics',
-					'bulk_create_daily_plans',
-					'bulk_update_daily_plans',
-					'bulk_delete_daily_plans'
-				],
-				organizationContacts: [
-					'get_organization_contacts',
-					'get_organization_contact_count',
-					'get_organization_contacts_pagination',
-					'get_organization_contacts_by_employee',
-					'get_organization_contact',
-					'create_organization_contact',
-					'update_organization_contact',
-					'update_organization_contact_by_employee',
-					'delete_organization_contact',
-					'bulk_create_organization_contacts',
-					'bulk_update_organization_contacts',
-					'bulk_delete_organization_contacts',
-					'get_organization_contact_statistics',
-					'assign_contact_to_employee',
-					'unassign_contact_from_employee',
-					'get_contact_projects',
-					'invite_organization_contact'
-				],
-				timer: ['timer_status', 'start_timer', 'stop_timer'],
-				test: ['test_api_connection', 'get_server_info', 'test_mcp_capabilities']
-			};
-
-			// Calculate tool counts
-			const toolCounts = Object.keys(tools).reduce((counts, category) => {
-				counts[category] = tools[category].length;
-				return counts;
-			}, {});
-
-			const totalTools = Object.values(tools).reduce((sum, categoryTools) => sum + categoryTools.length, 0);
+			// Use the centralized tools registry
+			const tools = TOOLS_REGISTRY;
+			const toolCounts = getToolCounts();
+			const totalTools = getTotalToolCount();
 
 			const results = {
 				tools,
@@ -248,7 +148,7 @@ Connection Details:
 					tokenManagement: '✅ Automatic token refresh and management',
 					autoLogin: '✅ Configurable auto-login support',
 					parameterInjection: '✅ Automatic tenant/organization ID injection from authenticated user',
-					userContextAware: '✅ All tools work within authenticated user\'s context automatically'
+					userContextAware: "✅ All tools work within authenticated user's context automatically"
 				},
 				authentication: authManager.getAuthStatus(),
 				status: 'All tools registered and working with enhanced authentication functionality'

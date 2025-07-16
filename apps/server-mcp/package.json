@@ -21,7 +21,7 @@
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
-		"build": "rm -rf build && npx tsc --project tsconfig.mcp.json && chmod 755 build/index.js",
+		"build": "npx rimraf build && npx tsc --project tsconfig.mcp.json && chmod 755 build/index.js",
 		"build:prod": "yarn nx build server-mcp --configuration=production",
 		"build:dev": "yarn nx build server-mcp --configuration=development",
 		"build:electron": "yarn nx build-electron server-mcp",
