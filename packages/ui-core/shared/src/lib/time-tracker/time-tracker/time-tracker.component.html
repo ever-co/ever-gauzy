@@ -63,6 +63,13 @@
 											<span *ngIf="limitReached" class="today-time mt-2 invalid-feedback d-block">
 												{{ 'TOASTR.TITLE.MAX_LIMIT_REACHED' | translate }}
 											</span>
+											<span
+												*ngIf="taskTitle && !isExpanded"
+												class="today-time mt-2 task-title"
+												[nbTooltip]="taskTitle"
+											>
+												{{ taskTitle }}
+											</span>
 											<ga-time-tracker-status class="status"></ga-time-tracker-status>
 										</div>
 										<div class="actions">
@@ -92,7 +99,7 @@
 						</div>
 					</ng-template>
 				</div>
-				<div *ngIf="isExpanded && !running">
+				<div *ngIf="isExpanded">
 					<div class="form-group">
 						<label
 							for="projectId"
@@ -133,6 +140,7 @@
 							[(ngModel)]="taskId"
 							#taskInput="ngModel"
 							[required]="organization?.requireTask"
+							(taskSelected)="onTaskSelected($event)"
 							requiresProject="true"
 							requiresEmployee="true"
 						></ga-task-selector>

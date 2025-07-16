@@ -264,3 +264,17 @@ nb-card-footer {
     }
   }
 }
+
+.task-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  padding-bottom: 0.1rem;
+
+  /* For Firefox */
+  display: -moz-box;
+  box-orient: vertical;
+  line-clamp: 2;
+}

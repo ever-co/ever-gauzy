@@ -345,6 +345,7 @@ export interface ITimerToggleInput
 		Pick<IRelationalOrganizationTeam, 'organizationTeamId'> {
 	projectId?: ID;
 	taskId?: ID;
+	taskTitle?: string;
 	organizationContactId?: ID;
 	description?: string;
 	logType?: TimeLogType;

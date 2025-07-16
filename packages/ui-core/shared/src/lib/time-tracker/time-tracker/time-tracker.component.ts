@@ -8,17 +8,17 @@ import { combineLatest, Observable, Subject, Subscription } from 'rxjs';
 import { filter, takeUntil, tap } from 'rxjs/operators';
 import { faStopwatch, faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
 import { Environment, environment } from '@gauzy/ui-config';
-import { IOrganization, IUser, TimeLogType, IEmployee, ITimerToggleInput } from '@gauzy/contracts';
+import { IOrganization, IUser, TimeLogType, IEmployee, ITimerToggleInput, ITask } from '@gauzy/contracts';
 import { distinctUntilChange, toLocal } from '@gauzy/ui-core/common';
 import { ErrorHandlingService, ITimerSynced, Store, TimeTrackerService } from '@gauzy/ui-core/core';
 import { TimeTrackerStatusService } from '../components/time-tracker-status/time-tracker-status.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-web-time-tracker',
-    templateUrl: './time-tracker.component.html',
-    styleUrls: ['./time-tracker.component.scss'],
-    standalone: false
+	selector: 'ngx-web-time-tracker',
+	templateUrl: './time-tracker.component.html',
+	styleUrls: ['./time-tracker.component.scss'],
+	standalone: false
 })
 export class TimeTrackerComponent implements OnInit, OnDestroy {
 	// This constant holds the URL for downloading content from the platform's website.
@@ -106,6 +106,25 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	 */
 	public set taskId(value: string) {
 		this.updateTimerConfig({ taskId: value });
+	}
+
+	/**
+	 * Gets the current task title associated with the timer configuration.
+	 *
+	 * @returns The task title if it exists and is a string; otherwise, null.
+	 */
+	public get taskTitle(): string | null {
+		return this.getStringConfigValue('taskTitle');
+	}
+
+	/**
+	 * Sets the task title for the timer configuration.
+	 *
+	 * @param value - The task title to set.
+	 */
+
+	public set taskTitle(value: string | null) {
+		this.updateTimerConfig({ taskTitle: value });
 	}
 
 	/**
@@ -302,6 +321,10 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 
 	setTimeType(type: string) {
 		this.timeTrackerService.setTimeLogType(type);
+	}
+
+	onTaskSelected(task: ITask) {
+		this.taskTitle = task?.title ?? null;
 	}
 
 	/**

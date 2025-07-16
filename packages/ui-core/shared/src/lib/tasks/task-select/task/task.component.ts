@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, forwardRef } from '@angular/core';
+import { Component, OnInit, Input, forwardRef, Output, EventEmitter } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { Subject, firstValueFrom, Observable } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -22,6 +22,7 @@ import { AuthService, Store, TasksService, ToastrService } from '@gauzy/ui-core/
 })
 export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
 	private _requiresEmployee = false;
+	private _selectedTask: ITask;
 	public get requiresEmployee(): boolean {
 		return this._requiresEmployee;
 	}
@@ -91,6 +92,8 @@ export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
 		this.subject$.next(true);
 	}
 
+	@Output() taskSelected = new EventEmitter<ITask>();
+
 	/*
 	 * Getter & Setter for internal taskId
 	 */
@@ -101,6 +104,15 @@ export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
 	public set taskId(value: string) {
 		this._taskId = value;
 		this.onChange(value);
+
+		if (value) {
+			const task = this.tasks.find((t) => t.id === value);
+			this._selectedTask = task;
+			this.taskSelected.emit(task);
+		} else {
+			this._selectedTask = null;
+			this.taskSelected.emit(null);
+		}
 	}
 
 	public organization: IOrganization;
@@ -242,6 +254,15 @@ export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
 			// If taskId is provided and not found in tasks, set taskId to null
 			if (this.taskId && !this.tasks.find((task) => task.id === this.taskId)) {
 				this.taskId = null;
+			}
+
+			if (this.taskId) {
+				this._selectedTask = this.tasks.find((task) => task.id === this.taskId);
+				if (this._selectedTask) {
+					this.taskSelected.emit(this._selectedTask);
+				} else {
+					this.taskId = null;
+				}
 			}
 		} catch (error) {
 			// Log error if task retrieval fails
