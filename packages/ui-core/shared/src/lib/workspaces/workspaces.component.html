@@ -1,40 +1,14 @@
-<div class="workspaces-container">
-	<!-- Loading indicator -->
-	<div *ngIf="loading" class="loading-container">
-		<nb-spinner size="small"></nb-spinner>
-	</div>
-
-	<!-- Workspaces list -->
-	<div
-		*ngFor="let workspace of workspaces$ | async; index as i"
-		class="workspace-item"
-		[ngClass]="{
-			selected: selected?.id === workspace.id,
-			loading: loading
-		}"
-	>
-		<div class="img-container" [title]="workspace.name" (click)="onChangeWorkspace(workspace)">
-			<img
-				[src]="workspace.imgUrl"
-				[alt]="workspace.name"
-				(error)="$event.target.src = '/assets/images/default.svg'"
-			/>
-			<div *ngIf="workspace.isOnline" class="online-indicator"></div>
-			<div *ngIf="loading && selected?.id === workspace.id" class="loading-overlay">
-				<nb-spinner size="tiny"></nb-spinner>
-			</div>
+<div *ngFor="let workspace of workspaces$ | async; index as i">
+	<div [ngClass]="selected?.id === workspace.id ? 'selected' : ''">
+		<div class="img-container">
+			<img [src]="workspace.imgUrl" alt="" (click)="onChangeWorkspace(workspace)" />
+			<div *ngIf="workspace.isOnline"></div>
 		</div>
 	</div>
-
-	<!-- Add workspace button -->
-	<div class="add-workspace">
-		<button nbButton [nbContextMenu]="contextMenus" nbContextMenuPlacement="right" outline [disabled]="loading">
-			<nb-icon icon="plus-outline"></nb-icon>
-		</button>
-	</div>
-
-	<!-- Error message -->
-	<div *ngIf="error" class="error-message">
-		<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
-	</div>
+</div>
+<div>
+	<!-- TODO: Make button visible when workspace features are implemented -->
+	<button *ngIf="false" nbButton [nbContextMenu]="contextMenus" nbContextMenuPlacement="right" outline>
+		<i class="fas fa-plus"></i>
+	</button>
 </div>

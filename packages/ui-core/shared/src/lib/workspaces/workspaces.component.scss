@@ -1,89 +1,43 @@
 @use 'themes' as *;
 
-.workspaces-container {
+div {
+  margin-bottom: 0.375rem;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.375rem;
-
-  .loading-container {
-    display: flex;
-    justify-content: center;
-    padding: 0.5rem;
+  justify-content: center;
+  z-index: 1050;
+  cursor: pointer;
+  button {
+    width: 34px;
+    height: 34px;
   }
-
-  .workspace-item {
+  .img-container {
+    object-fit: cover;
     position: relative;
-
-    &.loading {
-      pointer-events: none;
-      opacity: 0.7;
-    }
-
-    .img-container {
-      position: relative;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      &:hover {
-        transform: scale(1.05);
-      }
-
-      img {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid transparent;
-        transition: border-color 0.2s ease;
-        margin: 0;
-      }
-
-      .online-indicator {
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        background-color: #00d060;
-        border-radius: 50%;
-        border: 2px solid #ebebeb;
-        right: 0;
-        top: 0;
-      }
-
-      .loading-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(255, 255, 255, 0.8);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-    }
-
-    &.selected .img-container {
-      img {
-        border-color: nb-theme(color-primary-default);
-        box-shadow: 0 0 0 2px rgba(nb-theme(color-primary-default), 0.3);
-      }
-    }
-  }
-
-  .add-workspace {
-    button {
+    img {
       width: 34px;
       height: 34px;
-      border-radius: 50%;
+      border-radius: 34px;
+      margin: 0;
+    }
+    > div {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: #00d060;
+      border-radius: 8px;
+      border: 2px solid #ebebeb;
+      right: 0;
+      top: 0;
     }
   }
-
-  .error-message {
-    color: nb-theme(color-danger-default);
-    font-size: 12px;
-    text-align: center;
+  &.selected .img-container {
+    border: 6px solid rgba(126, 126, 143, 0.5);
+    mix-blend-mode: multiply;
+    border-radius: 34px;
+    img {
+      box-shadow: 0px 0px 6px 3px rgba(50, 50, 50, 0.5);
+    }
   }
 }
 
