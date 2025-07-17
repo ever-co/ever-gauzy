@@ -6,7 +6,7 @@ import MainEvent from './events';
 import * as path from 'node:path';
 import { TrayNotify } from './tray-notify';
 import { TEventArgs } from './event-types';
-import { getAuthConfig, delaySync } from '../util';
+import { getAuthConfig, delaySync, TAuthConfig } from '../util';
 
 const appRootPath: string = path.join(__dirname, '../..');
 
@@ -29,7 +29,7 @@ export default class EventHandler {
 		return EventHandler.instance;
 	}
 
-	getPullActivities(authConfig) {
+	getPullActivities(authConfig: TAuthConfig) {
 		const pullActivities = PullActivities.getInstance({
 			tenantId: authConfig?.user?.employee?.tenantId,
 			organizationId: authConfig?.user?.employee?.organizationId,
@@ -59,12 +59,14 @@ export default class EventHandler {
 	}
 
 	private async handleLogout() {
-		this.stopAppTracking(true);
-		this.AppWindow.settingWindow?.close();
-		this.AppWindow.logWindow?.close();
-		await this.AppWindow.initAuthWindow();
-		await this.AppWindow.authWindow.loadURL();
-		this.AppWindow.authWindow.show();
+		if (!this.AppWindow.authWindow || this.AppWindow?.authWindow?.browserWindow?.isDestroyed) {
+			this.stopAppTracking(true);
+			this.AppWindow.closeSettingWindow();
+			this.AppWindow.closeLogWindow();
+			await this.AppWindow.initAuthWindow();
+			await this.AppWindow.authWindow.loadURL();
+			this.AppWindow.authWindow.show();
+		}
 	}
 
 	private async handleApplicationSetup() {

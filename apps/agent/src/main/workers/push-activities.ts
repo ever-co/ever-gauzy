@@ -77,7 +77,12 @@ class PushActivities {
 
 	async getOldestActivity(): Promise<KbMouseActivityTO | null> {
 		try {
-			const activity = await this.kbMouseActivityService.retrieve();
+			const authConfig = getAuthConfig();
+			const activity = await this.kbMouseActivityService.retrieve(
+				authConfig?.user?.id,
+				authConfig?.user?.employee?.organizationId,
+				authConfig?.user?.employee?.tenantId
+			);
 			return activity;
 		} catch (error) {
 			console.error('error on get one activity', error);

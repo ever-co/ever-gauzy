@@ -37,9 +37,12 @@ export class KbMouseActivityDAO implements DAO<KbMouseActivityTO> {
 			.del();
 	}
 
-	public async current(): Promise<KbMouseActivityTO | undefined> {
+	public async current(remoteId: string, organizationId: string, tenantId: string): Promise<KbMouseActivityTO | undefined> {
 		const [activities] = await this._provider
 			.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
+			.where('tenantId', tenantId)
+			.andWhere('organizationId', organizationId)
+			.andWhere('remoteId', remoteId)
 			.orderBy('timeStart', 'desc')
 			.limit(1);
 		return activities;

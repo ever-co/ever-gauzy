@@ -3,10 +3,12 @@ export class KbMouseActivityPool {
 
 	private processCallback: (() => Promise<void>) | null = null;
 	private errorHandler: ((error: unknown) => void) | null = null;
-	private isRunning = false;
+	private isRunning: boolean;
 	private pollingInterval: number = 5000;
 
-	private constructor() { }
+	private constructor() {
+		this.isRunning = false;
+	}
 
 	public static getInstance(): KbMouseActivityPool {
 		if (!KbMouseActivityPool.instance) {
