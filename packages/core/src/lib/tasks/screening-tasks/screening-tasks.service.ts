@@ -86,8 +86,9 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 			});
 
 			// Create the screening task
+			const { task: _, ...screeningTaskData } = data;
 			const screeningTask = await super.create({
-				...data,
+				...screeningTaskData,
 				status: ScreeningTaskStatusEnum.PENDING,
 				taskId: task.id,
 				organizationId,
