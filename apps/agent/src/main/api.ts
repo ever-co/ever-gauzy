@@ -182,10 +182,6 @@ export class ApiService {
 		return this.postFile('/api/timesheet/screenshot', formData);
 	}
 
-	getUserSetting(employeeId: string) {
-		const path = `/api/employee/${employeeId}`;
-	}
-
 	handleUnAuthorize() {
 		this.isLogout = true;
 		this.mainEvent.emit(MAIN_EVENT, {
