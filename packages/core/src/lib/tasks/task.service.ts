@@ -697,7 +697,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		try {
 			// Extract tenantId from context or options
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
-			const { organizationId, projectId, isScreeningTask = false } = options;
+			const { organizationId, projectId } = options;
 
 			// Create a query builder for the Task entity
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
@@ -719,11 +719,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			} else {
 				query.andWhere(p(`"${query.alias}"."projectId" IS NULL`));
 			}
-
-			// Apply screening tasks filter
-			query.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), {
-				isScreeningTask
-			});
 
 			// Execute the query and parse the result to a number
 			const result = await query.getRawOne();
