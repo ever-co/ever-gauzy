@@ -79,7 +79,7 @@ export class WorkspaceResetService {
 		this.store.user = user;
 
 		// STEP 3: Set organization
-		if (user?.employee?.organization) {
+		if (user.employee?.organization) {
 			this.store.selectedOrganization = user.employee.organization;
 		}
 
@@ -117,21 +117,19 @@ export class WorkspaceResetService {
 	/**
 	 * Pre-reset cleanup actions
 	 */
+
 	private async _preReset(): Promise<void> {
 		// Clean up time tracking and timesheet filters
-private async _preReset(): Promise<void> {
-    // Clean up time tracking and timesheet filters
-    if (this.store.user?.employee) {
-        if (this.timeTrackerService.running) {
-            if (this.timeTrackerService.timerSynced.isExternalSource) {
-                this.timeTrackerService.remoteToggle();
-            } else {
-                await this.timeTrackerService.toggle();
-            }
-        }
-        this.timeTrackerService.clearTimeTracker();
-        this.timesheetFilterService.clear();
-    }
-}
+		if (this.store.user?.employee) {
+			if (this.timeTrackerService.running) {
+				if (this.timeTrackerService.timerSynced.isExternalSource) {
+					this.timeTrackerService.remoteToggle();
+				} else {
+					await this.timeTrackerService.toggle();
+				}
+			}
+			this.timeTrackerService.clearTimeTracker();
+			this.timesheetFilterService.clear();
+		}
 	}
 }
