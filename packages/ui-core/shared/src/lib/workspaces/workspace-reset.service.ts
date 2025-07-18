@@ -93,6 +93,11 @@ export class WorkspaceResetService {
 		this.toastrService.success('Workspace switched successfully!', 'Success');
 
 		// STEP 6: Reload page to ensure everything is refreshed
+		// A full page reload is necessary to:
+		// - Clear all in-memory state and caches
+		// - Re-initialize all services with new workspace context
+		// - Ensure all lazy-loaded modules are reloaded
+		// - Reset any third-party libraries that maintain internal state
 		window.location.reload();
 	}
 
