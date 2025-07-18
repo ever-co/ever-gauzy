@@ -172,11 +172,6 @@ export class AuthService {
 	 * @returns An observable of the authentication response with new tokens or null if switching fails.
 	 */
 	switchWorkspace(tenantId: string): Observable<IAuthResponse | null> {
-		try {
-			return this.http.post<IAuthResponse | null>(`${API_PREFIX}/auth/switch-workspace`, { tenantId });
-		} catch (error) {
-			console.log('Error while switching workspace: %s', error?.message);
-			throw error;
-		}
+		return this.http.post<IAuthResponse | null>(`${API_PREFIX}/auth/switch-workspace`, { tenantId });
 	}
 }
