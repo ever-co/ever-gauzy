@@ -154,16 +154,11 @@ export class AuthService {
 	 * @param includeTeams - Whether to include teams in the response (default: false).
 	 * @returns An observable of the user signin workspace response.
 	 */
-	getUserWorkspaces(includeTeams: boolean = false): Observable<IUserSigninWorkspaceResponse> {
-		try {
-			return this.http.get<IUserSigninWorkspaceResponse>(`${API_PREFIX}/auth/workspaces`, {
-				params: toParams({ includeTeams })
-			});
-		} catch (error) {
-			console.log('Error while fetching user workspaces: %s', error?.message);
-			throw error;
-		}
-	}
+getUserWorkspaces(includeTeams = false): Observable<IUserSigninWorkspaceResponse> {
+    return this.http.get<IUserSigninWorkspaceResponse>(`${API_PREFIX}/auth/workspaces`, {
+        params: toParams({ includeTeams })
+    });
+}
 
 	/**
 	 * Switch the current user to a different workspace (tenant).
