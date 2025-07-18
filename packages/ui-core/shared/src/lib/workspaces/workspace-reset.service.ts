@@ -47,7 +47,6 @@ export class WorkspaceResetService {
 				await this.applyWorkspaceData(response, preferredLanguage, themeName);
 			}),
 			catchError((error) => {
-				console.error('Error switching workspace:', error);
 				this.toastrService.danger('Failed to switch workspace', 'Error');
 				throw error;
 			})
