@@ -114,16 +114,19 @@ export class WorkspaceResetService {
 	 */
 	private async _preReset(): Promise<void> {
 		// Clean up time tracking and timesheet filters
-		if (this.store.user && this.store.user.employee) {
-			if (this.timeTrackerService.running) {
-				if (this.timeTrackerService.timerSynced.isExternalSource) {
-					this.timeTrackerService.remoteToggle();
-				} else {
-					await this.timeTrackerService.toggle();
-				}
-			}
-			this.timeTrackerService.clearTimeTracker();
-			this.timesheetFilterService.clear();
-		}
+private async _preReset(): Promise<void> {
+    // Clean up time tracking and timesheet filters
+    if (this.store.user?.employee) {
+        if (this.timeTrackerService.running) {
+            if (this.timeTrackerService.timerSynced.isExternalSource) {
+                this.timeTrackerService.remoteToggle();
+            } else {
+                await this.timeTrackerService.toggle();
+            }
+        }
+        this.timeTrackerService.clearTimeTracker();
+        this.timesheetFilterService.clear();
+    }
+}
 	}
 }
