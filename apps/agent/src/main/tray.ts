@@ -157,6 +157,14 @@ class TrayMenu {
 		this.tray?.setContextMenu(Menu.buildFromTemplate(this.TrayMenuList));
 	}
 
+	public updateExitVisibility(visible = true) {
+		const menuIdx = this.TrayMenuList.findIndex((menu) => menu.id === 'tray_exit');
+		if (menuIdx !== -1) {
+			this.TrayMenuList[menuIdx].visible = visible;
+		}
+		this.tray?.setContextMenu(Menu.buildFromTemplate(this.TrayMenuList));
+	}
+
 	public updateTitle(status: 'Working' | 'Error' | 'Startup' | 'Network error' | 'Afk' | 'Idle') {
 		if (this.tray) {
 			this.tray.setTitle(`Status: ${status}`);

@@ -1,5 +1,5 @@
 import TrayMenu from "../tray";
-import { getTrayIcon } from '../util';
+import { getTrayIcon, getAppSetting } from '../util';
 import { environment } from '../../environments/environment';
 import { TEventArgs } from './event-types';
 
@@ -33,5 +33,11 @@ export class TrayNotify {
 			default:
 				break;
 		}
+	}
+
+	public updateTrayExitMenu() {
+		const appSetting = getAppSetting();
+		const canExit: boolean = !!appSetting?.allowAgentAppExit;
+		this.trayMenu.updateExitVisibility(canExit);
 	}
 }

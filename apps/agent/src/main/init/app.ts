@@ -177,7 +177,8 @@ function listenGrantAccess(pullActivities: PullActivities) {
 
 function listenIO() {
 	const auth = getAuthConfig();
-	const pullActivities = PullActivities.getInstance({
+	const pullActivities = PullActivities.getInstance();
+	pullActivities.updateAppUserAuth({
 		tenantId: auth.user.employee.tenantId,
 		organizationId: auth.user.employee.organizationId,
 		remoteId: auth.user.id
@@ -272,6 +273,14 @@ export async function InitApp() {
 		event.preventDefault();
 		if (process.platform === 'darwin') {
 			app.dock.hide();
+		}
+	});
+
+	app.on('browser-window-focus', () => {
+		if (process.platform === 'darwin') {
+			if (!app.dock.isVisible) {
+				app.dock.show();
+			}
 		}
 	});
 

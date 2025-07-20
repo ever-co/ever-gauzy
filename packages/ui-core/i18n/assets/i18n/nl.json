@@ -4178,7 +4178,7 @@
 			"AUTH_TOKEN": "Authenticatietoken",
 			"PRIVATE_REGISTRY_URL": "URL van privéregister",
 			"PLUGIN_INSTALL_CDN_ERROR": "De server-URL mag niet leeg zijn.",
-			"TRACK_KEYBOARD_MOUSE": "Exacte invoerregistratie"
+			"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Toetsenbord- en muisactiviteit volgen"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weeklimiet overschreden",
 		"OF_HRS": "Van {{ limit }} uur",

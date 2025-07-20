@@ -44,14 +44,15 @@ app.commandLine.appendSwitch('disable-http2');
 
 ipcMain.on('quit', quit);
 
-function stopAppActivity() {
+async function stopAppActivity() {
 	const auth = getAuthConfig();
-	const pullActivities = PullActivities.getInstance({
+	const pullActivities = PullActivities.getInstance();
+	pullActivities.updateAppUserAuth({
 		tenantId: auth?.user?.employee?.tenantId,
 		organizationId: auth?.user?.employee?.organizationId,
 		remoteId: auth?.user?.id
 	});
-	pullActivities.stopTracking();
+	await pullActivities.stopTracking();
 	const pushActivities = PushActivities.getInstance();
 	pushActivities.stopPooling();
 }
@@ -59,7 +60,7 @@ function stopAppActivity() {
 app.on('before-quit', async (e) => {
 	e.preventDefault();
 	try {
-		stopAppActivity();
+		await stopAppActivity();
 		updater.cancel();
 	} catch (e) {
 		console.error('ERROR: Occurred while cancel update:' + e);

@@ -4225,7 +4225,7 @@
 			"AUTH_TOKEN": "Удостоверителен токен",
 			"PRIVATE_REGISTRY_URL": "URL на частен регистър",
 			"PLUGIN_INSTALL_CDN_ERROR": "URL адресът на сървъра не трябва да е празен.",
-			"TRACK_KEYBOARD_MOUSE": "Прецизно проследяване на въвеждането"
+			"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Проследяване на активността на клавиатурата и мишката"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Седмичната лимита е превишена",
 		"OF_HRS": "От {{ limit }} часа",

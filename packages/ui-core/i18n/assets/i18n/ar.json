@@ -4163,7 +4163,7 @@
 			"AUTH_TOKEN": "رمز المصادقة",
 			"PRIVATE_REGISTRY_URL": "رابط السجل الخاص",
 			"PLUGIN_INSTALL_CDN_ERROR": "يجب ألا يكون عنوان URL للخادم فارغًا.",
-			"TRACK_KEYBOARD_MOUSE": "تتبع الإدخال الدقيق"
+			"TRACK_KEYBOARD_MOUSE_ACTIVITY": "تتبع نشاط لوحة المفاتيح والماوس"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "تجاوز الحد الأسبوعي",
 		"OF_HRS": "من {{ limit }} ساعة",

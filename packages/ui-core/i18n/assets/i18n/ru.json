@@ -4195,7 +4195,7 @@
 			"AUTH_TOKEN": "Токен аутентификации",
 			"PRIVATE_REGISTRY_URL": "URL частного реестра",
 			"PLUGIN_INSTALL_CDN_ERROR": "URL сервера не должен быть пустым.",
-			"TRACK_KEYBOARD_MOUSE": "Точное отслеживание ввода"
+			"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Отслеживать активность клавиатуры и мыши"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Еженедельный лимит превышен",
 		"OF_HRS": "Из {{ limit }} часов",

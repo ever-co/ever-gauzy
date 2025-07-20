@@ -39,7 +39,7 @@
 			<div class="row">
 				<div class="col-12">
 					<div [ngClass]="{
-							'disabled-monitors': appSetting?.timerStarted
+							'disabled-monitors': appSetting?.timerStarted || isAgent
 						}" class="row monitors mb-3">
 						<div class="col-5" *ngFor="let item of monitorsOption$ | async">
 							<nb-card accent="{{ item?.accent }}" status="primary">
@@ -119,7 +119,7 @@
 											<nb-toggle [(ngModel)]="
 													screenshotNotification
 												" [disabled]="
-													appSetting?.timerStarted
+													appSetting?.timerStarted || isAgent
 												" (ngModelChange)="
 													toggleNotificationChange(
 														$event
@@ -149,7 +149,7 @@
 													simpleScreenshotNotification$
 														| async
 												" [disabled]="
-													appSetting?.timerStarted
+													appSetting?.timerStarted || isAgent
 												" (checkedChange)="
 													toggleSimpleNotificationChange(
 														$event
@@ -195,7 +195,7 @@
 				<div class="col-10">
 					<nb-card>
 						<nb-card-body>
-							<nb-toggle [checked]="!muted" [disabled]="appSetting?.timerStarted" (checkedChange)="
+							<nb-toggle [checked]="!muted" [disabled]="appSetting?.timerStarted || isAgent" (checkedChange)="
 									toggleNotificationSoundChange($event)
 								" status="basic">
 								{{
@@ -232,29 +232,29 @@
 						<nb-card-body>
 							<nb-select class="mb-3" placeholder="Select Period" [(ngModel)]="selectedPeriod"
 								(ngModelChange)="selectPeriod($event)"
-								[disabled]="appSetting?.timerStarted || appSetting?.enforced">
+								[disabled]="appSetting?.timerStarted || appSetting?.enforced || isAgent">
 								<nb-option *ngFor="let item of periodOption" [value]="item">{{ humanize(item / 60) |
 									titlecase }}
 								</nb-option>
 							</nb-select>
 							<nb-toggle [(ngModel)]="appSetting.randomScreenshotTime"
 								(ngModelChange)="toggleRandomScreenshot($event)" status="basic"
-								[disabled]="appSetting?.timerStarted || appSetting?.enforced">{{
+								[disabled]="appSetting?.timerStarted || appSetting?.enforced || isAgent">{{
 								'TIMER_TRACKER.SETTINGS.RANDOM_SCREENSHOT_TIME'
 								| translate
 								}}
 							</nb-toggle>
 							<nb-toggle [(ngModel)]="appSetting.trackOnPcSleep"
 								(ngModelChange)="toggleTrackOnPcSleep($event)"
-								[disabled]="appSetting?.timerStarted || appSetting?.enforced" status="basic">{{
+								[disabled]="appSetting?.timerStarted || appSetting?.enforced || isAgent" status="basic">{{
 								'TIMER_TRACKER.SETTINGS.TRACK_TIME_PC_LOCKED'
 								| translate
 								}}
 							</nb-toggle>
-							<nb-toggle *ngIf="isAgent" [(ngModel)]="appSetting.trackKbMouse"
+							<nb-toggle *ngIf="isAgent" [(ngModel)]="appSetting.kbMouseTracking"
 								(ngModelChange)="toggleTrackKbMouse($event)"
-								[disabled]="appSetting?.timerStarted" status="basic">{{
-								'TIMER_TRACKER.SETTINGS.TRACK_KEYBOARD_MOUSE'
+								[disabled]="appSetting?.timerStarted || isAgent" status="basic">{{
+								'TIMER_TRACKER.SETTINGS.TRACK_KEYBOARD_MOUSE_ACTIVITY'
 								| translate
 								}}
 							</nb-toggle>
@@ -288,7 +288,7 @@
 						<nb-card-body>
 							<nb-toggle [(ngModel)]="appSetting.preventDisplaySleep" (ngModelChange)="
 									togglePreventDisplaySleep($event)
-								" status="basic" [disabled]="appSetting?.timerStarted">{{
+								" status="basic" [disabled]="appSetting?.timerStarted || isAgent">{{
 								'TIMER_TRACKER.SETTINGS.PREVENT_DISPLAY_SLEEP'
 								| translate
 								}}
@@ -323,7 +323,7 @@
 						<nb-card-body>
 							<nb-select [placeholder]="'TIMER_TRACKER.SETTINGS.TIMEZONE_PLACEHOLDER'| translate"
 								[(ngModel)]="selectedZone" (ngModelChange)="selectZone($event)"
-								[disabled]="appSetting?.timerStarted">
+								[disabled]="appSetting?.timerStarted || isAgent">
 								<nb-option *ngFor="let zone of zones" [value]="zone.name"> {{ zone.translation |
 									translate }}
 								</nb-option>
@@ -358,7 +358,7 @@
 						<nb-card-body>
 							<nb-toggle [(ngModel)]="appSetting.alwaysOn" (ngModelChange)="
 									toggleAlwaysOn($event)
-								" status="basic" [disabled]="appSetting?.timerStarted">{{
+								" status="basic" [disabled]="appSetting?.timerStarted || isAgent">{{
 								'TIMER_TRACKER.SETTINGS.WIDGET'
 								| translate
 								}}
@@ -702,7 +702,7 @@
 																	$event
 																)
 															" [disabled]="
-																appSetting?.timerStarted
+																appSetting?.timerStarted || isAgent
 															">
 															<nb-option *ngFor="
 																	let item of serverOptions
@@ -723,7 +723,7 @@
 														<input [(ngModel)]="
 																config.host
 															" type="text" nbInput fullWidth [disabled]="
-																appSetting?.timerStarted
+																appSetting?.timerStarted || isAgent
 															" status="basic" />
 													</div>
 													<div class="col-5 centered-text" *ngIf="
@@ -785,9 +785,9 @@
 																	$event
 																)
 															" type="text" nbInput fullWidth [disabled]="
-																appSetting?.timerStarted ||
+																appsetting?.timerstarted ||
 																config?.serverType ===
-																	serverTypes?.live
+																	serverTypes?.live || isAgent
 															" status="basic" />
 													</div>
 													<div *ngIf="
@@ -797,7 +797,7 @@
 														<button nbButton status="basic" class="check-db" (click)="
 																checkHostConnectivity()
 															" [disabled]="
-																appSetting?.timerStarted
+																appSetting?.timerStarted || isAgent
 															">
 															<nb-icon *gauzySpinnerButton="
 																	(
@@ -881,7 +881,7 @@
 																	$event
 																)
 															" [disabled]="
-																appSetting?.timerStarted
+																appSetting?.timerStarted || isAgent
 															">
 															<nb-option *ngFor="
 																	let item of driverOptions
@@ -904,7 +904,7 @@
 														<button nbButton status="basic" class="check-db" (click)="
 																checkDatabaseConnectivity()
 															" [disabled]="
-																appSetting?.timerStarted
+																appSetting?.timerStarted || isAgent
 															">
 															<nb-icon *gauzySpinnerButton="
 																	isCheckDatabase$
@@ -1179,7 +1179,7 @@
 				}
 				}}
 				-
-				<a href="javascript:void(0);" (click)="logout()">{{
+				<a href="javascript:void(0);" (click)="logout()" *ngIf="!isAgent || (isAgent && appSetting?.allowLogoutFromAgentApp)">{{
 					'TIMER_TRACKER.SETTINGS.SIGN_OUT' | translate
 					}}</a>
 			</p>
