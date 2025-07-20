@@ -311,7 +311,6 @@ class PullActivities {
 			this.checkEmployeeSetting();
 			if (isScreenshot) {
 				imgs = await this.getScreenShot();
-				console.log('imgs list images', imgs);
 			}
 			const activities = this.activityStores.getAndResetCurrentActivities();
 			const activityWindow = this.activityWindow.retrieveAndFlushActivities();

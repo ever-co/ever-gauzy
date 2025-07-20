@@ -37,7 +37,9 @@ export class TrayNotify {
 
 	public updateTrayExitMenu() {
 		const appSetting = getAppSetting();
-		const canExit: boolean = !!appSetting?.allowAgentAppExit;
-		this.trayMenu.updateExitVisibility(canExit);
+		if (typeof appSetting?.allowAgentAppExit !== 'undefined') {
+			const canExit: boolean = !!appSetting?.allowAgentAppExit;
+			this.trayMenu.updateExitVisibility(canExit);
+		}
 	}
 }

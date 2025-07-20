@@ -120,7 +120,7 @@ class TrayMenu {
 				}
 			},
 			{
-				id: 'server_exit',
+				id: 'tray_exit',
 				label: `${TranslateService.instant('BUTTONS.EXIT')}`,
 				click() {
 					app.quit();

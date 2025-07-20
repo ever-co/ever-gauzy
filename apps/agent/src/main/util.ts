@@ -133,8 +133,7 @@ export function updateAgentSetting(employee: Partial<TEmployeeResponse>) {
 			captured: employee.trackAllDisplays ? 'all' : 'active-only'
 		},
 		kbMouseTracking: employee.trackKeyboardMouseActivity,
-		allowScreenshotCapture: employee.allowScreenshotCapture || true
+		allowScreenshotCapture: employee.allowScreenshotCapture ?? true
 	}
 	LocalStore.updateApplicationSetting(appSetting);
 }
-
