@@ -108,7 +108,6 @@ class AppWindow {
 				this.authWindow.browserWindow.on('close', () => {
 					this.destroyAuthWindow();
 				});
-				// this.authWindow.browserWindow.webContents.toggleDevTools();
 			}
 		} catch (error) {
 			console.error('Failed to initialize auth window', error);
@@ -178,6 +177,20 @@ class AppWindow {
 			this.notificationWindow.show();
 		} catch (error) {
 
+		}
+	}
+
+	closeSettingWindow() {
+		if (this.settingWindow && !this.settingWindow?.isDestroyed) {
+			this.settingWindow.close();
+			this.settingWindow = null;
+		}
+	}
+
+	closeLogWindow() {
+		if (this.logWindow && !this.logWindow.isDestroyed) {
+			this.logWindow.close();
+			this.logWindow = null;
 		}
 	}
 }

@@ -4,7 +4,7 @@
 */
 export interface IKbMouseActivityService<T> {
 	save(activities: T): Promise<void>;
-	retrieve(): Promise<T>;
+	retrieve(remoteId: string, organizationId: string, tenantId: string): Promise<T>;
 	remove(activity: T): Promise<void>;
 	update(activities: Partial<T>): Promise<void>;
 }
