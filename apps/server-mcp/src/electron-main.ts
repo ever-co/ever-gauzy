@@ -12,17 +12,16 @@ import pkg from 'electron-updater';
 const { autoUpdater } = pkg;
 import titlebarPkg from 'custom-electron-titlebar/main';
 const { setupTitlebar } = titlebarPkg;
-// Remote module not needed for this simple MCP server app
 
 // Import environment
-import { environment } from './environments/environment.js';
+import { environment } from '@gauzy/mcp-server';
 
 // Import electron-store (CommonJS module)
 import Store from 'electron-store';
 
-// Import MCP Server Manager
-import { McpServerManager } from './instance/mcp-server-manager.js';
-import { securityConfig } from './common/security-config.js';
+// Import MCP Server Manager from shared package
+import { McpServerManager } from '@gauzy/mcp-server';
+import { securityConfig } from '@gauzy/mcp-server';
 
 // ES Module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -44,7 +43,6 @@ const store = new Store();
 if (environment.baseUrl) process.env.API_BASE_URL = environment.baseUrl;
 if (environment.apiTimeout) process.env.API_TIMEOUT = String(environment.apiTimeout);
 if (environment.debug !== undefined) process.env.GAUZY_MCP_DEBUG = String(environment.debug);
-// Add other specific variables as needed
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 process.env.GAUZY_USER_PATH = app.getPath('userData');
@@ -72,7 +70,7 @@ app.whenReady().then(async () => {
 
 		// Initialize MCP Server
 		try {
-			mcpServerManager = new McpServerManager();
+			mcpServerManager = new McpServerManager(environment);
 			await mcpServerManager.start();
 			log.info('MCP Server started successfully');
 		} catch (error) {
@@ -113,8 +111,6 @@ app.on('before-quit', async () => {
 	}
 });
 
-// Remote module not needed - removed for simplicity
-
 // Set security settings
 app.commandLine.appendSwitch('disable-http2');
 app.commandLine.appendSwitch('in-process-gpu');
@@ -126,14 +122,14 @@ app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 
 async function createMainWindow(): Promise<void> {
-	// Create a simple status window for the MCP server
+	// Create an enhanced status window for the MCP server
 	mainWindow = new BrowserWindow({
-		width: 600,
-		height: 400,
-		minWidth: 500,
-		minHeight: 300,
+		width: 800,
+		height: 600,
+		minWidth: 600,
+		minHeight: 400,
 		show: false,
-		title: 'Gauzy MCP Server',
+		title: 'Gauzy MCP Server Desktop',
 		icon: path.join(__dirname, 'favicon.ico'),
 		center: true,
 		alwaysOnTop: false,
@@ -152,7 +148,7 @@ async function createMainWindow(): Promise<void> {
 		}
 	});
 
-	// Load the HTML file
+	// Load the enhanced HTML file
 	const htmlPath = path.join(__dirname, 'static', 'index.html');
 	await mainWindow.loadFile(htmlPath);
 
@@ -201,15 +197,68 @@ async function createMainWindow(): Promise<void> {
 		}
 	});
 
+	// Handle window closed
+	mainWindow.on('closed', () => {
+		mainWindow = null;
+	});
+
 	// Handle external links
 	mainWindow.webContents.setWindowOpenHandler(({ url }) => {
 		shell.openExternal(url);
 		return { action: 'deny' };
 	});
 
-	// Handle window closed
-	mainWindow.on('closed', () => {
-		mainWindow = null;
+	// IPC handlers for MCP server status
+	ipcMain.handle('get-mcp-status', async () => {
+		if (mcpServerManager) {
+			return {
+				isRunning: mcpServerManager.isRunning(),
+				status: mcpServerManager.getStatus(),
+				version: mcpServerManager.getVersion()
+			};
+		}
+		return { isRunning: false, status: 'Not initialized', version: 'Unknown' };
+	});
+
+	ipcMain.handle('restart-mcp-server', async () => {
+		if (mcpServerManager) {
+			try {
+				await mcpServerManager.restart();
+				return { success: true, message: 'MCP Server restarted successfully' };
+			} catch (error) {
+				return { success: false, message: `Failed to restart: ${error}` };
+			}
+		}
+		return { success: false, message: 'MCP Server not initialized' };
+	});
+
+	// Additional IPC handlers for app functionality
+	ipcMain.handle('get-app-version', () => {
+		try {
+			return app.getVersion();
+		} catch (error) {
+			log.error('Error getting app version:', error);
+			return 'Unknown';
+		}
+	});
+
+	ipcMain.handle('get-saved-theme', () => {
+		try {
+			return store.get('theme', 'default');
+		} catch (error) {
+			log.error('Error getting saved theme:', error);
+			return 'default';
+		}
+	});
+
+	ipcMain.handle('save-theme', (_, theme: string) => {
+		try {
+			store.set('theme', theme);
+			return true;
+		} catch (error) {
+			log.error('Error saving theme:', error);
+			return false;
+		}
 	});
 }
 
@@ -219,12 +268,10 @@ function setupApplicationMenu(): void {
 			label: 'File',
 			submenu: [
 				{
-					label: 'Show Server Status',
-					click: () => {
-						if (mainWindow) {
-							mainWindow.show();
-							mainWindow.focus();
-						}
+					label: 'New Window',
+					accelerator: 'CmdOrCtrl+N',
+					click: async () => {
+						await createMainWindow();
 					}
 				},
 				{ type: 'separator' },
@@ -238,49 +285,15 @@ function setupApplicationMenu(): void {
 			]
 		},
 		{
-			label: 'Server',
+			label: 'Edit',
 			submenu: [
-				{
-					label: 'Start MCP Server',
-					click: async () => {
-						try {
-							if (!mcpServerManager) {
-								mcpServerManager = new McpServerManager();
-							}
-							await mcpServerManager.start();
-							log.info('MCP Server started from menu');
-						} catch (error) {
-							log.error('Failed to start MCP Server from menu:', error);
-						}
-					}
-				},
-				{
-					label: 'Stop MCP Server',
-					click: async () => {
-						try {
-							if (mcpServerManager) {
-								await mcpServerManager.stop();
-								log.info('MCP Server stopped from menu');
-							}
-						} catch (error) {
-							log.error('Failed to stop MCP Server from menu:', error);
-						}
-					}
-				},
-				{
-					label: 'Restart MCP Server',
-					click: async () => {
-						try {
-							if (mcpServerManager) {
-								await mcpServerManager.stop();
-								await mcpServerManager.start();
-								log.info('MCP Server restarted from menu');
-							}
-						} catch (error) {
-							log.error('Failed to restart MCP Server from menu:', error);
-						}
-					}
-				}
+				{ role: 'undo' },
+				{ role: 'redo' },
+				{ type: 'separator' },
+				{ role: 'cut' },
+				{ role: 'copy' },
+				{ role: 'paste' },
+				{ role: 'selectAll' }
 			]
 		},
 		{
@@ -288,21 +301,66 @@ function setupApplicationMenu(): void {
 			submenu: [
 				{ role: 'reload' },
 				{ role: 'forceReload' },
-				{
-					label: 'Toggle Developer Tools',
-					accelerator: process.platform === 'darwin' ? 'Cmd+Alt+I' : 'Ctrl+Shift+I',
-					click: () => {
-						if (mainWindow) {
-							mainWindow.webContents.toggleDevTools();
-						}
-					}
-				},
+				{ role: 'toggleDevTools' },
 				{ type: 'separator' },
 				{ role: 'resetZoom' },
 				{ role: 'zoomIn' },
 				{ role: 'zoomOut' },
 				{ type: 'separator' },
 				{ role: 'togglefullscreen' }
+			]
+		},
+		{
+			label: 'MCP Server',
+			submenu: [
+				{
+					label: 'Restart Server',
+					accelerator: 'CmdOrCtrl+R',
+					click: async () => {
+						if (mcpServerManager) {
+							try {
+								await mcpServerManager.restart();
+								log.info('MCP Server restarted successfully');
+							} catch (error) {
+								log.error('Failed to restart MCP Server:', error);
+							}
+						}
+					}
+				},
+				{
+					label: 'Server Status',
+					click: async () => {
+						if (mcpServerManager) {
+							const status = mcpServerManager.getStatus();
+							dialog.showMessageBox(mainWindow!, {
+								type: 'info',
+								title: 'MCP Server Status',
+								message: `Server Status: ${status}`,
+								detail: `Version: ${mcpServerManager.getVersion()}\nRunning: ${mcpServerManager.isRunning()}`
+							});
+						}
+					}
+				}
+			]
+		},
+		{
+			label: 'Window',
+			submenu: [{ role: 'minimize' }, { role: 'close' }]
+		},
+		{
+			role: 'help',
+			submenu: [
+				{
+					label: 'About Gauzy MCP Server',
+					click: () => {
+						dialog.showMessageBox(mainWindow!, {
+							type: 'info',
+							title: 'About Gauzy MCP Server',
+							message: 'Gauzy MCP Server Desktop',
+							detail: `Version: ${app.getVersion()}\n\nA Model Context Protocol server providing AI assistants with access to Gauzy's time tracking, project, and employee management features.`
+						});
+					}
+				}
 			]
 		}
 	];
@@ -312,76 +370,64 @@ function setupApplicationMenu(): void {
 }
 
 function setupTray(): void {
-	try {
-		// Try to create a simple tray icon
-		const icon = nativeImage.createEmpty();
-		tray = new Tray(icon);
+	// Create tray icon
+	const iconPath = path.join(__dirname, 'favicon.ico');
+	const icon = nativeImage.createFromPath(iconPath);
 
-		const contextMenu = Menu.buildFromTemplate([
-			{
-				label: 'Gauzy MCP Server',
-				enabled: false
-			},
-			{ type: 'separator' },
-			{
-				label: 'Show Status',
-				click: () => {
-					if (mainWindow) {
-						mainWindow.show();
-						mainWindow.focus();
-					}
-				}
-			},
-			{
-				label: 'Server Status',
-				click: async () => {
-					try {
-						const status = mcpServerManager?.getStatus();
-						const message = status?.running
-							? `✅ Server is running\nVersion: ${status.version || 'Unknown'}`
-							: '❌ Server is stopped';
+	// Resize icon for tray (16x16 or 32x32 depending on platform)
+	const trayIcon = icon.resize({ width: 16, height: 16 });
+	trayIcon.setTemplateImage(process.platform === 'darwin');
 
-						await dialog.showMessageBox({
-							type: 'info',
-							title: 'MCP Server Status',
-							message: message
-						});
-					} catch (error) {
-						log.error('Error showing server status:', error);
-						await dialog.showMessageBox({
-							type: 'error',
-							title: 'Error',
-							message: 'Failed to get server status'
-						});
-					}
-				}
-			},
-			{ type: 'separator' },
-			{
-				label: 'Quit',
-				click: () => {
-					app.quit();
-				}
-			}
-		]);
+	tray = new Tray(trayIcon);
+	tray.setToolTip('Gauzy MCP Server');
 
-		tray.setContextMenu(contextMenu);
-		tray.setToolTip('Gauzy MCP Server');
-
-		// Add click handler to show/hide window
-		tray.on('click', () => {
-			if (mainWindow) {
-				if (mainWindow.isVisible()) {
-					mainWindow.hide();
-				} else {
+	// Create tray menu
+	const trayMenu = Menu.buildFromTemplate([
+		{
+			label: 'Show App',
+			click: () => {
+				if (mainWindow) {
 					mainWindow.show();
 					mainWindow.focus();
 				}
 			}
-		});
-	} catch (error) {
-		log.error('Failed to setup system tray:', error);
-	}
+		},
+		{
+			label: 'MCP Server Status',
+			click: async () => {
+				if (mcpServerManager) {
+					const status = mcpServerManager.getStatus();
+					dialog.showMessageBox(mainWindow!, {
+						type: 'info',
+						title: 'MCP Server Status',
+						message: `Server Status: ${status}`,
+						detail: `Version: ${mcpServerManager.getVersion()}\nRunning: ${mcpServerManager.isRunning()}`
+					});
+				}
+			}
+		},
+		{ type: 'separator' },
+		{
+			label: 'Quit',
+			click: () => {
+				app.quit();
+			}
+		}
+	]);
+
+	tray.setContextMenu(trayMenu);
+
+	// Handle tray click
+	tray.on('click', () => {
+		if (mainWindow) {
+			if (mainWindow.isVisible()) {
+				mainWindow.hide();
+			} else {
+				mainWindow.show();
+				mainWindow.focus();
+			}
+		}
+	});
 }
 
 function setupAutoUpdater(): void {
@@ -389,176 +435,24 @@ function setupAutoUpdater(): void {
 		log.info('Checking for update...');
 	});
 
-	autoUpdater.on('update-available', () => {
-		log.info('Update available.');
+	autoUpdater.on('update-available', (info) => {
+		log.info('Update available:', info);
 	});
 
-	autoUpdater.on('update-not-available', () => {
-		log.info('Update not available.');
+	autoUpdater.on('update-not-available', (info) => {
+		log.info('Update not available:', info);
 	});
 
 	autoUpdater.on('error', (err) => {
-		log.error('Error in auto-updater:', err);
+		log.error('AutoUpdater error:', err);
 	});
 
 	autoUpdater.on('download-progress', (progressObj) => {
-		let logMessage = `Download speed: ${progressObj.bytesPerSecond}`;
-		logMessage += ` - Downloaded ${progressObj.percent}%`;
-		logMessage += ` (${progressObj.transferred}/${progressObj.total})`;
-		log.info(logMessage);
+		log.info('Download progress:', progressObj);
 	});
 
-	autoUpdater.on('update-downloaded', () => {
-		log.info('Update downloaded');
+	autoUpdater.on('update-downloaded', (info) => {
+		log.info('Update downloaded:', info);
 		autoUpdater.quitAndInstall();
 	});
 }
-
-// IPC handlers using ES module patterns
-ipcMain.handle('get-app-version', () => {
-	try {
-		return app.getVersion();
-	} catch (error) {
-		log.error('Error getting app version:', error);
-		return 'Unknown';
-	}
-});
-
-ipcMain.handle('get-saved-theme', () => {
-	try {
-		return store.get('theme', 'default');
-	} catch (error) {
-		log.error('Error getting saved theme:', error);
-		return 'default';
-	}
-});
-
-ipcMain.handle('save-theme', (_, theme: string) => {
-	try {
-		store.set('theme', theme);
-		return true;
-	} catch (error) {
-		log.error('Error saving theme:', error);
-		return false;
-	}
-});
-
-ipcMain.handle('get-mcp-server-status', () => {
-	try {
-		return mcpServerManager?.getStatus() || { running: false, port: null, version: null };
-	} catch (error) {
-		log.error('Error getting MCP server status:', error);
-		return { running: false, port: null, version: null };
-	}
-});
-
-ipcMain.handle('start-mcp-server', async () => {
-	try {
-		if (!mcpServerManager) {
-			mcpServerManager = new McpServerManager();
-		}
-		const result = await mcpServerManager.start();
-		log.info('MCP Server started via IPC');
-		return result;
-	} catch (error) {
-		log.error('Error starting MCP server via IPC:', error);
-		return false;
-	}
-});
-
-ipcMain.handle('stop-mcp-server', async () => {
-	try {
-		if (mcpServerManager) {
-			const result = await mcpServerManager.stop();
-			log.info('MCP Server stopped via IPC');
-			return result;
-		}
-		return true;
-	} catch (error) {
-		log.error('Error stopping MCP server via IPC:', error);
-		return false;
-	}
-});
-
-ipcMain.handle('restart-mcp-server', async () => {
-	try {
-		if (mcpServerManager) {
-			await mcpServerManager.stop();
-			const result = await mcpServerManager.start();
-			log.info('MCP Server restarted via IPC');
-			return result;
-		}
-		return false;
-	} catch (error) {
-		log.error('Error restarting MCP server via IPC:', error);
-		return false;
-	}
-});
-
-ipcMain.handle('PREFERRED_THEME', () => {
-	const setting = store.get('appSetting') as any;
-	return !setting ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : setting.theme;
-});
-
-// Handle expand window functionality
-ipcMain.on('expand_window', (event, arg) => {
-	log.info('expand_window');
-
-	try {
-		const display = screen.getPrimaryDisplay();
-		const { height, width } = display.workAreaSize;
-
-		log.info('workAreaSize', { height, width });
-
-		// Set the max height and width for default window
-		const maxHeight = 480;
-		const maxWidth = 640;
-
-		if (!mainWindow) return;
-
-		switch (process.platform) {
-			case 'linux':
-				{
-					mainWindow.setMinimumSize(maxWidth, maxHeight);
-					mainWindow.setSize(maxWidth, maxHeight, true);
-					mainWindow.setResizable(false);
-				}
-				break;
-
-			case 'darwin':
-				{
-					mainWindow.setSize(maxWidth, maxHeight, true);
-					mainWindow.center();
-				}
-				break;
-
-			default:
-				{
-					let calculatedX = (width - maxWidth) * 0.5;
-					let calculatedY = (height - maxHeight) * 0.5;
-
-					// Ensure x and y are not negative
-					calculatedX = Math.max(0, calculatedX);
-					calculatedY = Math.max(0, calculatedY);
-
-					// Ensure window does not exceed screen bounds
-					calculatedX = Math.min(calculatedX, width - maxWidth);
-					calculatedY = Math.min(calculatedY, height - maxHeight);
-
-					const bounds = {
-						width: maxWidth,
-						height: maxHeight,
-						x: Math.round(calculatedX),
-						y: Math.round(calculatedY)
-					};
-
-					log.info('Bounds', JSON.stringify(bounds));
-
-					mainWindow.setBounds(bounds, true);
-				}
-				break;
-		}
-	} catch (err) {
-		log.error('Error in expand_window', err);
-	}
-});

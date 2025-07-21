@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/server-mcp",
 	"version": "0.1.0",
-	"description": "Ever Gauzy MCP Server - A Model Context Protocol server, providing AI assistants with access to Gauzy's time tracking, project, and employee management features",
+	"description": "Ever Gauzy MCP Server - Electron Desktop App with MCP Server integration",
 
 	"author": {
 		"name": "Ever Co. LTD",
@@ -19,18 +19,19 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"type": "module",
-	"main": "build/index.js",
+	"main": "build/electron-main.js",
 	"scripts": {
-		"build": "npx rimraf build && npx tsc --project tsconfig.mcp.json && chmod 755 build/index.js",
+		"build": "npx rimraf build && npx tsc --project tsconfig.electron.json",
 		"build:prod": "yarn nx build server-mcp --configuration=production",
 		"build:dev": "yarn nx build server-mcp --configuration=development",
 		"build:electron": "yarn nx build-electron server-mcp",
 		"build:electron:prod": "yarn nx build-electron server-mcp --configuration=production",
 		"build:electron:dev": "yarn nx build-electron server-mcp --configuration=development",
 		"start:electron": "yarn build:electron && node electron-start.js",
-		"start:mcp": "yarn nx serve server-mcp"
+		"start": "yarn nx serve server-mcp"
 	},
 	"dependencies": {
+		"@gauzy/mcp-server": "^0.1.0",
 		"@modelcontextprotocol/sdk": "^1.13.1",
 		"axios": "^1.7.0",
 		"custom-electron-titlebar": "^4.2.8",

@@ -3,44 +3,31 @@ import { contextBridge, ipcRenderer } from 'electron';
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('electronAPI', {
-	// App methods
+	// MCP Server management
+	getMcpStatus: () => ipcRenderer.invoke('get-mcp-status'),
+	restartMcpServer: () => ipcRenderer.invoke('restart-mcp-server'),
+
+	// App information
 	getAppVersion: () => ipcRenderer.invoke('get-app-version'),
 
-	// Theme methods
+	// Theme management
 	getSavedTheme: () => ipcRenderer.invoke('get-saved-theme'),
 	saveTheme: (theme: string) => ipcRenderer.invoke('save-theme', theme),
 
-	// MCP Server methods
-	getMcpServerStatus: () => ipcRenderer.invoke('get-mcp-server-status'),
-	startMcpServer: () => ipcRenderer.invoke('start-mcp-server'),
-	stopMcpServer: () => ipcRenderer.invoke('stop-mcp-server'),
-	restartMcpServer: () => ipcRenderer.invoke('restart-mcp-server'),
-
-	// Event listeners
-	onShowMcpStatus: (callback: () => void) => {
-		ipcRenderer.on('show-mcp-status', callback);
-		return () => ipcRenderer.removeListener('show-mcp-status', callback);
-	}
+	// Window management
+	expandWindow: () => ipcRenderer.send('expand_window')
 });
 
-// Types for the exposed API
+// Type definitions for TypeScript
 declare global {
 	interface Window {
 		electronAPI: {
+			getMcpStatus: () => Promise<any>;
+			restartMcpServer: () => Promise<any>;
 			getAppVersion: () => Promise<string>;
 			getSavedTheme: () => Promise<string>;
 			saveTheme: (theme: string) => Promise<boolean>;
-			getMcpServerStatus: () => Promise<{
-				running: boolean;
-				port: number | null;
-				version: string | null;
-				uptime?: number;
-				lastError?: string;
-			}>;
-			startMcpServer: () => Promise<boolean>;
-			stopMcpServer: () => Promise<boolean>;
-			restartMcpServer: () => Promise<boolean>;
-			onShowMcpStatus: (callback: () => void) => () => void;
+			expandWindow: () => void;
 		};
 	}
 }
