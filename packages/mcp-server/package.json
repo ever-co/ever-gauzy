@@ -1,0 +1,49 @@
+{
+	"name": "@gauzy/mcp-server",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Platform MCP Server module",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/mcp-server"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"private": true,
+	"type": "module",
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
+	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"types": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build mcp-server",
+		"lib:build:prod": "cross-env NODE_ENV=production yarn ts-node scripts/replace-env-files.ts --environment=prod && yarn nx build mcp-server",
+		"lib:watch": "yarn nx build mcp-server --watch"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.13.1",
+		"axios": "^1.7.0",
+		"electron-log": "^4.4.8",
+		"zod": "^3.25.67",
+		"tslib": "^2.3.0"
+	},
+	"keywords": [
+		"api",
+		"mcp",
+		"server",
+		"gauzy",
+		"mcp-server"
+	],
+	"engines": {
+		"node": ">=20.18.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
+}
