@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, takeUntil, tap } from 'rxjs/operators';
 import { IAuthResponse } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store, AuthService, ToastrService, TimeTrackerService, TimesheetFilterService } from '@gauzy/ui-core/core';
@@ -12,8 +12,9 @@ import { Store, AuthService, ToastrService, TimeTrackerService, TimesheetFilterS
 @Injectable({
 	providedIn: 'root'
 })
-export class WorkspaceResetService {
+export class WorkspaceResetService implements OnDestroy {
 	reset$: Subject<boolean> = new Subject();
+	private destroy$ = new Subject<void>();
 
 	constructor(
 		private readonly store: Store,
@@ -25,7 +26,8 @@ export class WorkspaceResetService {
 		this.reset$
 			.pipe(
 				distinctUntilChange(),
-				tap(() => this._preReset())
+				tap(() => this._preReset()),
+				takeUntil(this.destroy$)
 			)
 			.subscribe();
 	}
@@ -130,5 +132,11 @@ export class WorkspaceResetService {
 			this.timeTrackerService.clearTimeTracker();
 			this.timesheetFilterService.clear();
 		}
+	}
+
+	ngOnDestroy(): void {
+		this.destroy$.next();
+		this.destroy$.complete();
+		this.reset$.complete();
 	}
 }
