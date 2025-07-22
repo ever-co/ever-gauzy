@@ -345,7 +345,7 @@ export function isTrustedSource(userAgent?: string, origin?: string): boolean {
 	// In production, implement proper origin validation
 	if (environment.production) {
 		// Add your trusted origins here
-		const trustedOrigins = [environment.baseUrl, 'https://apidemo.gauzy.co', 'https://app.gauzy.co'];
+		const trustedOrigins = [environment.baseUrl, 'https://apidemo.gauzy.co', 'https://apistage.gauzy.co', 'https://api.gauzy.co', 'https://app.gauzy.co', 'https://stage.gauzy.co', 'https://demo.gauzy.co'];
 
 		if (origin && !trustedOrigins.includes(origin)) {
 			return false;
