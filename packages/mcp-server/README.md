@@ -4,10 +4,10 @@ This document describes the architecture for the Gauzy MCP (Model Context Protoc
 
 ## Architecture Overview
 
-### 📦 Shared Package: `packages/plugins/mcp-server`
+### 📦 Shared Package: `packages/mcp-server`
 
 -   **Purpose**: Contains all shared MCP server functionality, tools, and utilities
--   **Location**: `packages/plugins/mcp-server/`
+-   **Location**: `packages/mcp-server/`
 -   **Exports**: Core MCP server, tools, common utilities, and server manager
 
 ### 🚀 Standalone App: `apps/mcp`
@@ -126,7 +126,7 @@ yarn start:electron
 
 ```
 ever-gauzy/
-├── packages/plugins/mcp-server/     # Shared MCP server package
+├── packages/mcp-server/             # Shared MCP server package
 │   ├── src/lib/
 │   │   ├── mcp-server.ts           # Core server implementation
 │   │   ├── mcp-server-manager.ts   # Server lifecycle management
@@ -146,9 +146,9 @@ ever-gauzy/
 
 ### Adding New Tools
 
-1. Add the tool implementation to `packages/plugins/mcp-server/src/lib/tools/`
-2. Export it from `packages/plugins/mcp-server/src/lib/tools/index.ts`
-3. Register it in `packages/plugins/mcp-server/src/lib/mcp-server.ts`
+1. Add the tool implementation to `packages/mcp-server/src/lib/tools/`
+2. Export it from `packages/mcp-server/src/lib/tools/index.ts`
+3. Register it in `packages/mcp-server/src/lib/mcp-server.ts`
 4. Both apps will automatically have access to the new tool
 
 ### Environment Configuration
@@ -227,7 +227,7 @@ This will provide detailed logging for troubleshooting.
 
 When contributing to the MCP server:
 
-1. **For shared functionality**: Add to `packages/plugins/mcp-server/`
+1. **For shared functionality**: Add to `packages/mcp-server/`
 2. **For standalone app**: Modify `apps/mcp/`
 3. **For desktop app**: Modify `apps/server-mcp/`
 4. **For new tools**: Add to shared package and register in core server

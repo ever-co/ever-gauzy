@@ -3,7 +3,7 @@ import { version } from '../common/version.js';
 import { apiClient } from '../common/api-client.js';
 import { authManager } from '../common/auth-manager.js';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils.js';
-import { TOOLS_REGISTRY, getToolCounts, getTotalToolCount } from '../config';
+import { TOOLS_REGISTRY, getToolCounts, getTotalToolCount } from '../config/index.js';
 import log from 'electron-log';
 
 /**

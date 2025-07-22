@@ -28,10 +28,10 @@ function getVersion(): string {
 
 		// Try multiple possible paths for package.json
 		const possiblePaths = [
-			// When running from dist/apps/server-mcp/src/common/version.js
-			join(__dirname, '../../package.json'),
-			// When running from apps/server-mcp/build/src/common/version.js
+			// When running from dist/packages/mcp-server/src/lib/common/version.js
 			join(__dirname, '../../../package.json'),
+			// When running from packages/mcp-server/src/lib/common/version.js
+			join(__dirname, '../../../../package.json'),
 			// Fallback to workspace root
 			join(__dirname, '../../../../../package.json')
 		];

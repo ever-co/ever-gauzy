@@ -1,8 +1,6 @@
 {
 	"compilerOptions": {
-		"target": "ES2022",
-		"module": "ES2022",
-		"moduleResolution": "bundler",
+		"target": "es2022",
 		"useDefineForClassFields": false,
 		"forceConsistentCasingInFileNames": true,
 		"strict": false,
@@ -10,11 +8,7 @@
 		"noPropertyAccessFromIndexSignature": false,
 		"noImplicitReturns": false,
 		"noFallthroughCasesInSwitch": false,
-		"allowImportingTsExtensions": false,
-		"types": ["node"],
-		"paths": {
-			"@gauzy/mcp-server": ["../../packages/mcp-server/src/index.ts"]
-		}
+		"types": ["node"]
 	},
 	"files": [],
 	"include": [],

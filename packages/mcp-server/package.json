@@ -18,11 +18,11 @@
 	"private": true,
 	"type": "module",
 	"main": "./src/index.js",
-	"typings": "./src/index.d.ts",
+	"types": "./src/index.d.ts",
 	"homepage": "https://ever.co",
 	"license": "AGPL-3.0",
-	"types": "./src/index.d.ts",
 	"scripts": {
+		"start": "nx serve mcp",
 		"lib:build": "yarn nx build mcp-server",
 		"lib:build:prod": "cross-env NODE_ENV=production yarn ts-node scripts/replace-env-files.ts --environment=prod && yarn nx build mcp-server",
 		"lib:watch": "yarn nx build mcp-server --watch"

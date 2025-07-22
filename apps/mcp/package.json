@@ -18,7 +18,6 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"type": "module",
-	"main": "build/index.js",
 	"scripts": {
 		"build": "npx rimraf build && npx tsc --project tsconfig.json && chmod 755 build/index.js",
 		"build:prod": "yarn nx build mcp --configuration=production",
