@@ -231,7 +231,3 @@ When contributing to the MCP server:
 2. **For standalone app**: Modify `apps/mcp/`
 3. **For desktop app**: Modify `apps/server-mcp/`
 4. **For new tools**: Add to shared package and register in core server
-
-## License
-
-This project is licensed under AGPL-3.0 - see the LICENSE file for details.
