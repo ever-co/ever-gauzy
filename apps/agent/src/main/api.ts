@@ -6,7 +6,8 @@ import * as fs from 'node:fs';
 import * as FormData from 'form-data';
 import { TimeLogSourceEnum, TimeLogType } from '@gauzy/desktop-activity';
 import MainEvent from './events/events';
-import { MAIN_EVENT_TYPE, MAIN_EVENT } from  '../constant';
+import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../constant';
+
 
 type UploadParams = {
 	timeSlotId?: string;
@@ -63,16 +64,20 @@ export type TTimerStatusResponse = {
 	running?: boolean
 }
 
+
+
 export class ApiService {
 	static instance: ApiService;
 	private mainEvent: MainEvent;
-	get auth(): Partial<TAuthConfig> {
-		const auth = getAuthConfig();
-		return auth;
-	}
+	private isLogout: boolean;
 
 	constructor() {
 		this.mainEvent = MainEvent.getInstance();
+	}
+
+	get auth(): Partial<TAuthConfig> {
+		const auth = getAuthConfig();
+		return auth;
 	}
 
 	static getInstance(): ApiService {
@@ -176,6 +181,13 @@ export class ApiService {
 		return this.postFile('/api/timesheet/screenshot', formData);
 	}
 
+	handleUnAuthorize() {
+		this.isLogout = true;
+		this.mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.LOGOUT_EVENT
+		});
+	}
+
 	async getEmployeeSetting(employeeId: string): Promise<Partial<TEmployeeResponse>> {
 		const authConfig = getAuthConfig();
 		const path = `/api/employee/${employeeId}`;
@@ -225,6 +237,9 @@ export class ApiService {
 			if (!response.ok) {
 				const respText = await response.text();
 				console.warn('[Response Error]', response.status, respText);
+				if (response.status === 401 && !this.isLogout) {
+					this.handleUnAuthorize();
+				}
 				const error = new Error(`API error: ${response.status} ${respText}`);
 				error['status'] = response.status;
 				throw error;

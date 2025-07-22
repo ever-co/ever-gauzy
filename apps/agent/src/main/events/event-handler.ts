@@ -62,12 +62,14 @@ export default class EventHandler {
 	}
 
 	private async handleLogout() {
-		this.stopAppTracking(true);
-		this.AppWindow.settingWindow?.close();
-		this.AppWindow.logWindow?.close();
-		await this.AppWindow.initAuthWindow();
-		await this.AppWindow.authWindow.loadURL();
-		this.AppWindow.authWindow.show();
+		if (!this.AppWindow.authWindow || this.AppWindow?.authWindow?.browserWindow?.isDestroyed) {
+			this.stopAppTracking(true);
+			this.AppWindow.closeSettingWindow();
+			this.AppWindow.closeLogWindow();
+			await this.AppWindow.initAuthWindow();
+			await this.AppWindow.authWindow.loadURL();
+			this.AppWindow.authWindow.show();
+		}
 	}
 
 	private async handleApplicationSetup() {
