@@ -294,11 +294,7 @@ export class TimerService {
 					stoppedAt: now.toDate()
 				});
 				// Recalculate the weekly limit status
-				weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(
-					employee,
-					additional as Date,
-					true
-				);
+				weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, start as Date, true);
 			}
 		}
 
