@@ -743,14 +743,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const tenantId = RequestContext.currentTenantId();
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-			query.leftJoinAndSelect(`${query.alias}.members`, 'members');
+			query.leftJoin(`${query.alias}.members`, 'members');
 
 			if (organizationTeamId) {
-				query.leftJoinAndSelect(`${query.alias}.teams`, 'teams', 'teams.id = :organizationTeamId', {
+				query.leftJoin(`${query.alias}.teams`, 'teams', 'teams.id = :organizationTeamId', {
 					organizationTeamId
 				});
 			} else {
-				query.leftJoinAndSelect(`${query.alias}.teams`, 'teams');
+				query.leftJoin(`${query.alias}.teams`, 'teams');
 			}
 
 			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
@@ -761,8 +761,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						const subQuery = qb.subQuery();
 						subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
 						subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
-
-						return p('"task_members"."taskId" IN ') + subQuery.distinct(true).getQuery();
+						return p('"members"."taskId" IN ') + subQuery.distinct(true).getQuery();
 					});
 					web.orWhere((qb: SelectQueryBuilder<Task>) => {
 						const subQuery = qb.subQuery();
@@ -774,8 +773,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						);
 						subQuery.andWhere(p('"ote"."employeeId" = :employeeId'), { employeeId });
 						subQuery.andWhere(p(`"ote"."tenantId" = :tenantId`), { tenantId });
-
-						return p('"task_teams"."taskId" IN ') + subQuery.distinct(true).getQuery();
+						return p('"teams"."taskId" IN ') + subQuery.distinct(true).getQuery();
 					});
 				})
 			);
@@ -787,11 +785,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						web.andWhere((qb: SelectQueryBuilder<Task>) => {
 							const subQuery = qb.subQuery();
 							subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
-							subQuery.andWhere(p('"task_teams"."organizationTeamId" = :organizationTeamId'), {
+							subQuery.andWhere(p('"teams"."organizationTeamId" = :organizationTeamId'), {
 								organizationTeamId
 							});
-							subQuery.andWhere(p('"task_teams"."tenantId" = :tenantId'), { tenantId });
-							return p('"task_teams"."taskId" IN ') + subQuery.distinct(true).getQuery();
+							subQuery.andWhere(p('"teams"."tenantId" = :tenantId'), { tenantId });
+							return p('"teams"."taskId" IN ') + subQuery.distinct(true).getQuery();
 						});
 					})
 				);
