@@ -199,8 +199,6 @@ export interface ITimeLogFilters extends IBasePerTenantAndOrganizationEntityMode
 export interface ITimeLogTodayFilters extends IBasePerTenantAndOrganizationEntityModel {
 	todayStart?: Date | string;
 	todayEnd?: Date | string;
-	//To cover the difference between different time zones
-	additionalDate?: Date | string;
 }
 
 export interface ITimeSlot extends IBasePerTenantAndOrganizationEntityModel {
