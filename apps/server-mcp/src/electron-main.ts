@@ -332,7 +332,8 @@ function setupApplicationMenu(): void {
 					click: async () => {
 						if (mcpServerManager) {
 							const status = mcpServerManager.getStatus();
-							dialog.showMessageBox(mainWindow!, {
+							const parentWindow = mainWindow || undefined;
+							dialog.showMessageBox(parentWindow, {
 								type: 'info',
 								title: 'MCP Server Status',
 								message: `Server Status: ${status}`,
@@ -353,7 +354,8 @@ function setupApplicationMenu(): void {
 				{
 					label: 'About Gauzy MCP Server',
 					click: () => {
-						dialog.showMessageBox(mainWindow!, {
+						const parentWindow = mainWindow || undefined;
+						dialog.showMessageBox(parentWindow, {
 							type: 'info',
 							title: 'About Gauzy MCP Server',
 							message: 'Gauzy MCP Server Desktop',
@@ -397,7 +399,8 @@ function setupTray(): void {
 			click: async () => {
 				if (mcpServerManager) {
 					const status = mcpServerManager.getStatus();
-					dialog.showMessageBox(mainWindow!, {
+					const parentWindow = mainWindow || undefined;
+					dialog.showMessageBox(parentWindow, {
 						type: 'info',
 						title: 'MCP Server Status',
 						message: `Server Status: ${status}`,
@@ -453,6 +456,15 @@ function setupAutoUpdater(): void {
 
 	autoUpdater.on('update-downloaded', (info) => {
 		log.info('Update downloaded:', info);
-		autoUpdater.quitAndInstall();
+		dialog.showMessageBox(mainWindow || undefined, {
+			type: 'info',
+			title: 'Update Available',
+			message: 'A new version has been downloaded. Restart now to apply the update?',
+			buttons: ['Restart', 'Later']
+		}).then((result) => {
+			if (result.response === 0) {
+				autoUpdater.quitAndInstall();
+			}
+		});
 	});
 }

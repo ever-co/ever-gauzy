@@ -308,7 +308,7 @@
         <div class="logs fade-in">
             <div class="logs-header">
                 <h3>📋 Server Logs</h3>
-                <button class="clear-logs" onclick="clearLogs()">Clear Logs</button>
+                <button id="clearLogsBtn" class="clear-logs">Clear Logs</button>
             </div>
             <div id="logsContent" class="logs-content">
                 <div class="log-entry info">🚀 Gauzy MCP Server Desktop starting...</div>
@@ -372,6 +372,11 @@
             logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
             logsContent.appendChild(logEntry);
             logsContent.scrollTop = logsContent.scrollHeight;
+            // Keep only the most recent 1000 entries
+            const MAX_LOG_ENTRIES = 1000;
+            while (logsContent.children.length > MAX_LOG_ENTRIES) {
+                logsContent.removeChild(logsContent.firstChild);
+            }
         }
 
         // Clear logs
@@ -424,6 +429,12 @@
 
         // Periodic status updates
         setInterval(refreshStatus, 10000); // Check every 10 seconds
+        const statusInterval = setInterval(refreshStatus, 1000);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            clearInterval(statusInterval);
+        });
 
         // Add some initial logs
         setTimeout(() => {

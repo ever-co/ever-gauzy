@@ -4,10 +4,9 @@ import fs from 'node:fs';
 
 // Path to the built electron-main.js file
 import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(__filename);
 const electronMainPath = path.join(__dirname, '../../dist/apps/server-mcp/src/electron-main.js');
 
 // Check if the electron main file exists
@@ -44,10 +43,14 @@ electronProcess.on('error', (err) => {
 // Handle process termination
 process.on('SIGINT', () => {
   console.log('🛑 Received SIGINT, shutting down gracefully...');
-  electronProcess.kill('SIGINT');
+  if (!electronProcess.killed) {
+    electronProcess.kill('SIGINT');
+  }
 });
 
 process.on('SIGTERM', () => {
   console.log('🛑 Received SIGTERM, shutting down gracefully...');
-  electronProcess.kill('SIGTERM');
+  if (!electronProcess.killed) {
+    electronProcess.kill('SIGTERM');
+  }
 });

@@ -10,6 +10,14 @@ module.exports = composePlugins(withNx(), (config) => {
     outputModule: true,
   };
 
+  config.output = {
+    ...config.output,
+    library: {
+      ...config.output?.library,
+      type: 'module'
+    }
+  };
+
   // Handle node modules
   config.target = 'electron-main';
 

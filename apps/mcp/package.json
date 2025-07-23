@@ -19,7 +19,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"build": "npx rimraf build && npx tsc --project tsconfig.json && chmod 755 build/index.js",
+		"build": "npx rimraf build && npx tsc --project tsconfig.json",
 		"build:prod": "yarn nx build mcp --configuration=production",
 		"build:dev": "yarn nx build mcp --configuration=development",
 		"start": "yarn nx serve mcp",

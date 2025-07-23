@@ -22,8 +22,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
 declare global {
 	interface Window {
 		electronAPI: {
-			getMcpStatus: () => Promise<any>;
-			restartMcpServer: () => Promise<any>;
+			getMcpStatus: () => Promise<{
+				isRunning: boolean;
+				message: string;
+			}>;
+			restartMcpServer: () => Promise<{
+				success: boolean;
+				message: string;
+			}>;
 			getAppVersion: () => Promise<string>;
 			getSavedTheme: () => Promise<string>;
 			saveTheme: (theme: string) => Promise<boolean>;
