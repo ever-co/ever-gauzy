@@ -566,7 +566,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				if (this.isDesktopTimer || this.isAgent) {
 					await this.getUserDetails();
 				}
-				const allowScreenshotCapture = (auth && auth.allowScreenshotCapture) || (auth && auth.user && auth.user.employee && auth.user.employee.allowScreenshotCapture);
+				const allowScreenshotCapture = (auth?.allowScreenshotCapture) || (auth?.user?.employee?.allowScreenshotCapture);
 				this.menus = this.isServer
 					? [
 							'TIMER_TRACKER.SETTINGS.UPDATE',

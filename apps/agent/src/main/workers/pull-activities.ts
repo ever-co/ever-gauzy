@@ -345,7 +345,7 @@ class PullActivities {
 			try {
 				await this.apiService.getEmployeeSetting(authConfig?.user?.employee?.id);
 			} catch (error) {
-				console.error(`Error get latest employee setting ${error.message}`);
+				this.agentLogger.error(`Error get latest employee setting ${error.message}`);
 			}
 		}
 	}

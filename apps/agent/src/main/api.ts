@@ -192,7 +192,7 @@ export class ApiService {
 		const authConfig = getAuthConfig();
 		const path = `/api/employee/${employeeId}`;
 		const employee: Partial<TEmployeeResponse> = await this.get(path, {});
-		if (employee && employee.id) {
+		if (employee?.id) {
 			authConfig.user.employee = employee;
 			this.mainEvent.emit(MAIN_EVENT, {
 				type: MAIN_EVENT_TYPE.UPDATE_APP_SETTING,
@@ -243,6 +243,9 @@ export class ApiService {
 				const error = new Error(`API error: ${response.status} ${respText}`);
 				error['status'] = response.status;
 				throw error;
+			}
+			if (this.isLogout) {
+				this.isLogout = false;
 			}
 			const respJson = await response.json();
 			return respJson;

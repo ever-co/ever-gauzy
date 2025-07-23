@@ -63,7 +63,7 @@ app.on('before-quit', async (e) => {
 		await stopAppActivity();
 		updater.cancel();
 	} catch (e) {
-		console.error('ERROR: Occurred while cancel update:' + e);
+		log.error(`ERROR: Occurred while cancel update: ${e}`);
 		throw new AppError('MAINUPDTABORT', e);
 	}
 	app.exit(0);

@@ -277,10 +277,14 @@ export async function InitApp() {
 	});
 
 	app.on('browser-window-focus', () => {
-		if (process.platform === 'darwin') {
-			if (!app.dock.isVisible) {
-				app.dock.show();
+		try {
+			if (process.platform === 'darwin') {
+				if (!app.dock.isVisible) {
+					app.dock.show();
+				}
 			}
+		} catch (error) {
+			console.error('Error to show back icon to dock', error);
 		}
 	});
 

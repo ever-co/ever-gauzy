@@ -88,9 +88,11 @@ export default class EventHandler {
 				const appSetting = getAppSetting();
 				this.AppWindow.settingWindow.webContents.send('setting_page_ipc', {
 					type: 'app_setting_update',
-					data: appSetting
+					data: {
+						setting: appSetting
+					}
 				});
-			};
+			}
 			if (this.pullActivities) {
 				if (args?.data?.employee?.trackKeyboardMouseActivity) {
 					this.pullActivities.startListener();
