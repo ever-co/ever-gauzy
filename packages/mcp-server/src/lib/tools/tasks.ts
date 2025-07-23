@@ -10,10 +10,16 @@ import {
 	TaskTypeEnum,
 } from '../schema.js';
 
-const convertDateFields = (data: any) => ({
+interface TaskDateFields {
+	dueDate?: string | Date;
+	startDate?: string | Date;
+	[key: string]: any; // For other fields that may be spread
+}
+
+const convertDateFields = (data: TaskDateFields) => ({
 	...data,
-	dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
-	startDate: data.startDate ? new Date(data.startDate) : undefined
+	dueDate: data.dueDate ? (isNaN(Date.parse(data.dueDate.toString())) ? undefined : new Date(data.dueDate)) : undefined,
+	startDate: data.startDate ? (isNaN(Date.parse(data.startDate.toString())) ? undefined : new Date(data.startDate)) : undefined
 });
 
 export const registerTaskTools = (server: McpServer) => {

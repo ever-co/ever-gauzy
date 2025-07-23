@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import log from 'electron-log';
 
 /**
  * @description
@@ -47,14 +48,14 @@ function getVersion(): string {
 				}
 			} catch (error) {
 				// try next path
-				console.error(`Failed to read version from ${packageJsonPath}:`, error);
+				// Silently continue to next path
 			}
 		}
 
 		// If no package.json found, return fallback
 		return '0.1.0';
 	} catch (error) {
-		console.error('Failed to read version from package.json:', error);
+		log.error('Failed to read version from package.json:', error);
 		return '0.1.0'; // fallback version
 	}
 }

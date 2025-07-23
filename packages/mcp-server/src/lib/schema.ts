@@ -126,7 +126,7 @@ const TenantOrganizationBaseSchema = TenantBaseSchema.extend({
 });
 
 // Organization Schema (simplified for references)
-const OrganizationRefSchema: any = TenantBaseSchema.extend({
+const OrganizationRefSchema = TenantBaseSchema.extend({
 	name: z.string(),
 	isDefault: z.boolean().optional().default(false),
 	profile_link: z.string().optional(),

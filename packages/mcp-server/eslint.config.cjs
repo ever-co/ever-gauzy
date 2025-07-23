@@ -1,7 +1,7 @@
 const baseConfig = require('../../../.eslintrc.json');
 
 module.exports = [
-	...baseConfig,
+	baseConfig,
 	{
 		files: ['**/*.json'],
 		rules: {

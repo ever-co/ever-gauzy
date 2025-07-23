@@ -4,10 +4,6 @@
  * and can be imported wherever tool information is needed.
  */
 
-export interface ToolCategory {
-	[toolName: string]: string[];
-}
-
 export interface ToolRegistry {
 	[category: string]: string[];
 }

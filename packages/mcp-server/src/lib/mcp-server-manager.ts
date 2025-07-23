@@ -39,7 +39,11 @@ export class McpServerManager {
 
 	async restart(): Promise<boolean> {
 		log.info('Restarting MCP Server...');
-		await this.stop();
+		const stopSuccess = await this.stop();
+		if (!stopSuccess) {
+			log.error('Failed to stop MCP Server during restart');
+			return false;
+		}
 		// Small delay to ensure clean shutdown
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 		return await this.start();
@@ -51,7 +55,7 @@ export class McpServerManager {
 			port: null, // MCP servers typically use stdio, not ports
 			version: this._version,
 			uptime: this._startTime ? Date.now() - this._startTime.getTime() : undefined,
-			lastError: this._lastError || undefined	
+			lastError: this._lastError || undefined
 		};
 	}
 

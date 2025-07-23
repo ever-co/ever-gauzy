@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import log from 'electron-log';
 import { apiClient } from '../common/api-client.js';
 import { OrganizationContactSchema, ContactTypeEnum } from '../schema.js';
 
@@ -60,7 +61,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching organization contacts:', error);
+				log.error('Error fetching organization contacts:', error);
 				throw new Error('Failed to fetch organization contacts');
 			}
 		}
@@ -96,7 +97,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching organization contact count:', error);
+				log.error('Error fetching organization contact count:', error);
 				throw new Error('Failed to fetch organization contact count');
 			}
 		}
@@ -155,7 +156,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching organization contacts pagination:', error);
+				log.error('Error fetching organization contacts pagination:', error);
 				throw new Error('Failed to fetch organization contacts pagination');
 			}
 		}
@@ -190,7 +191,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching organization contacts by employee:', error);
+				log.error('Error fetching organization contacts by employee:', error);
 				throw new Error('Failed to fetch organization contacts by employee');
 			}
 		}
@@ -224,7 +225,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching organization contact:', error);
+				log.error('Error fetching organization contact:', error);
 				throw new Error('Failed to fetch organization contact');
 			}
 		}
@@ -255,7 +256,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error creating organization contact:', error);
+				log.error('Error creating organization contact:', error);
 				throw new Error('Failed to create organization contact');
 			}
 		}
@@ -284,7 +285,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error updating organization contact:', error);
+				log.error('Error updating organization contact:', error);
 				throw new Error('Failed to update organization contact');
 			}
 		}
@@ -321,7 +322,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error updating organization contact by employee:', error);
+				log.error('Error updating organization contact by employee:', error);
 				throw new Error('Failed to update organization contact by employee');
 			}
 		}
@@ -351,7 +352,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error deleting organization contact:', error);
+				log.error('Error deleting organization contact:', error);
 				throw new Error('Failed to delete organization contact');
 			}
 		}
@@ -384,7 +385,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error bulk creating organization contacts:', error);
+				log.error('Error bulk creating organization contacts:', error);
 				throw new Error('Failed to bulk create organization contacts');
 			}
 		}
@@ -419,7 +420,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error bulk updating organization contacts:', error);
+				log.error('Error bulk updating organization contacts:', error);
 				throw new Error('Failed to bulk update organization contacts');
 			}
 		}
@@ -453,7 +454,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error bulk deleting organization contacts:', error);
+				log.error('Error bulk deleting organization contacts:', error);
 				throw new Error('Failed to bulk delete organization contacts');
 			}
 		}
@@ -493,7 +494,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching organization contact statistics:', error);
+				log.error('Error fetching organization contact statistics:', error);
 				throw new Error('Failed to fetch organization contact statistics');
 			}
 		}
@@ -526,7 +527,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error assigning contact to employee:', error);
+				log.error('Error assigning contact to employee:', error);
 				throw new Error('Failed to assign contact to employee');
 			}
 		}
@@ -561,7 +562,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error unassigning contact from employee:', error);
+				log.error('Error unassigning contact from employee:', error);
 				throw new Error('Failed to unassign contact from employee');
 			}
 		}
@@ -598,7 +599,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching contact projects:', error);
+				log.error('Error fetching contact projects:', error);
 				throw new Error('Failed to fetch contact projects');
 			}
 		}
@@ -633,7 +634,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error inviting organization contact:', error);
+				log.error('Error inviting organization contact:', error);
 				throw new Error('Failed to invite organization contact');
 			}
 		}

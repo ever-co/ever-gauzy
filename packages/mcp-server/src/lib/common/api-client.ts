@@ -49,13 +49,14 @@ export class GauzyApiClient {
 			(response) => response,
 			async (error: AxiosError) => {
 				if (this.isDebug()) {
-					console.error('🔴 API Client Error Details:');
-					console.error(`   URL: ${error.config?.url}`);
-					console.error(`   Method: ${error.config?.method?.toUpperCase()}`);
-					console.error(`   Status: ${error.response?.status}`);
-					console.error(`   Message: ${error.message}`);
+					log.error('🔴 API Client Error Details:');
+					log.error(`   URL: ${error.config?.url}`);
+					log.error(`   Method: ${error.config?.method?.toUpperCase()}`);
+					log.error(`   Status: ${error.response?.status}`);
+					log.error(`   Message: ${error.message}`);
 					if (error.response?.data) {
-						console.error(`   Response: ${JSON.stringify(error.response.data, null, 2)}`);
+						const sanitizedData = sanitizeErrorMessage(error.response.data);
+						log.error(`   Response: ${JSON.stringify(sanitizedData, null, 2)}`);
 					}
 				}
 
@@ -229,7 +230,7 @@ export class GauzyApiClient {
 
 	private logError(method: string, path: string, error: any): void {
 		if (this.isDebug()) {
-			console.error(`🔴 ${method} ${path} failed:`, sanitizeErrorMessage(error));
+			log.error(`🔴 ${method} ${path} failed:`, sanitizeErrorMessage(error));
 		}
 	}
 
@@ -292,6 +293,9 @@ export class GauzyApiClient {
 					await this.get('/api/user/me');
 				} catch (error) {
 					// Authenticated endpoint test failed, but basic connectivity works
+					if (this.isDebug()) {
+						log.warn('Authenticated endpoint test failed:', error instanceof Error ? error.message : 'Unknown error');
+					}
 				}
 			}
 

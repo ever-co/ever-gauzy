@@ -55,8 +55,9 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching daily plans:', error);
-				throw new Error('Failed to fetch daily plans');
+				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
+				console.error('Error fetching daily plans:', errorMsg);
+				throw new Error(`Failed to fetch daily plans: ${errorMsg}`);
 			}
 		}
 	);
@@ -106,8 +107,9 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching my daily plans:', error);
-				throw new Error('Failed to fetch my daily plans');
+				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
+				console.error('Error fetching my daily plans:', errorMsg);
+				throw new Error(`Failed to fetch my daily plans: ${errorMsg}`);
 			}
 		}
 	);
@@ -154,8 +156,9 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching team daily plans:', error);
-				throw new Error('Failed to fetch team daily plans');
+				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
+				console.error('Error fetching team daily plans:', errorMsg);
+				throw new Error(`Failed to fetch team daily plans: ${errorMsg}`);
 			}
 		}
 	);
@@ -201,8 +204,9 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching employee daily plans:', error);
-				throw new Error('Failed to fetch employee daily plans');
+				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
+				console.error('Error fetching employee daily plans:', errorMsg);
+				throw new Error(`Failed to fetch employee daily plans: ${errorMsg}`);
 			}
 		}
 	);
@@ -248,8 +252,9 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching daily plans for task:', error);
-				throw new Error('Failed to fetch daily plans for task');
+				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
+				console.error('Error fetching daily plans for task:', errorMsg);
+				throw new Error(`Failed to fetch daily plans for task: ${errorMsg}`);
 			}
 		}
 	);
@@ -290,8 +295,9 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching daily plan:', error);
-				throw new Error('Failed to fetch daily plan');
+				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
+				console.error('Error fetching daily plan:', errorMsg);
+				throw new Error(`Failed to fetch daily plan: ${errorMsg}`);
 			}
 		}
 	);
@@ -575,8 +581,9 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching daily plan count:', error);
-				throw new Error('Failed to fetch daily plan count');
+				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
+				console.error('Error fetching daily plan count:', errorMsg);
+				throw new Error(`Failed to fetch daily plan count: ${errorMsg}`);
 			}
 		}
 	);
@@ -620,8 +627,9 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching daily plan statistics:', error);
-				throw new Error('Failed to fetch daily plan statistics');
+				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
+				console.error('Error fetching daily plan statistics:', errorMsg);
+				throw new Error(`Failed to fetch daily plan statistics: ${errorMsg}`);
 			}
 		}
 	);

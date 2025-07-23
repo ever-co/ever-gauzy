@@ -14,7 +14,11 @@ try {
 		environment = devEnvironment;
 	}
 } catch (error) {
-	console.error('Failed to load environment configuration:', error);
+	if (process.env.NODE_ENV === 'development') {
+		console.error('Failed to load environment configuration:', error);
+	} else {
+		console.error('Failed to load environment configuration');
+	}
 	throw new Error('Could not initialize environment configuration');
 }
 

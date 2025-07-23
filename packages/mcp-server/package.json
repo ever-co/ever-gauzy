@@ -34,6 +34,12 @@
 		"zod": "^3.25.67",
 		"tslib": "^2.3.0"
 	},
+	"devDependencies": {
+		"@types/jest": "29.5.14",
+		"@types/node": "^20.14.9",
+		"cross-env": "^7.0.3",
+		"typescript": "^5.8.3"
+	},
 	"keywords": [
 		"api",
 		"mcp",
@@ -42,8 +48,8 @@
 		"mcp-server"
 	],
 	"engines": {
-		"node": ">=20.18.1",
-		"yarn": ">=1.22.19"
+		"node": ">=20",
+		"yarn": ">=1.22"
 	},
 	"sideEffects": false
 }

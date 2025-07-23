@@ -124,7 +124,7 @@ yarn start:electron
 
 ### Project Structure
 
-```
+```text
 ever-gauzy/
 ├── packages/mcp-server/             # Shared MCP server package
 │   ├── src/lib/

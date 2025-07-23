@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import log from 'electron-log';
 import { apiClient } from '../common/api-client.js';
 import { authManager } from '../common/auth-manager.js';
 
@@ -36,8 +37,8 @@ export const registerTimerTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error fetching timer status:', error);
-				throw new Error('Failed to fetch timer status');
+				log.error('Error fetching timer status:', error);
+				throw new Error(`Failed to fetch timer status: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
 		}
 	);
@@ -53,7 +54,7 @@ export const registerTimerTools = (server: McpServer) => {
 			organizationTeamId: z.string().uuid().optional().describe('The team associated with this timer'),
 			description: z.string().optional().describe('Description for the time entry'),
 			logType: z
-				.enum(['TRACKED', 'MANUAL', 'RESUMED', 'IDEAL', 'VISITED'])
+				.enum(['TRACKED', 'MANUAL', 'RESUMED', 'IDLE', 'VISITED'])
 				.optional()
 				.describe('Type of time log'),
 			source: z
@@ -112,7 +113,7 @@ export const registerTimerTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error starting timer:', error);
+				log.error('Error starting timer:', error);
 				throw new Error(`Failed to start timer: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
 		}
@@ -160,7 +161,7 @@ export const registerTimerTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				console.error('Error stopping timer:', error);
+				log.error('Error stopping timer:', error);
 				throw new Error(`Failed to stop timer: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
 		}
