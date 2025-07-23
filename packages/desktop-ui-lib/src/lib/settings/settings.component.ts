@@ -566,6 +566,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				if (this.isDesktopTimer || this.isAgent) {
 					await this.getUserDetails();
 				}
+				const allowScreenshotCapture = (auth?.allowScreenshotCapture) || (auth?.user?.employee?.allowScreenshotCapture);
 				this.menus = this.isServer
 					? [
 							'TIMER_TRACKER.SETTINGS.UPDATE',
@@ -574,7 +575,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 							'MENU.ABOUT'
 					  ]
 					: [
-							...(auth && auth.allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
+							...(allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
 							'TIMER_TRACKER.TIMER',
 							'TIMER_TRACKER.SETTINGS.UPDATE',
 							'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',

@@ -4178,7 +4178,7 @@
 			"AUTH_TOKEN": "认证令牌",
 			"PRIVATE_REGISTRY_URL": "私有注册表URL",
 			"PLUGIN_INSTALL_CDN_ERROR": "服务器URL不能为空。",
-			"TRACK_KEYBOARD_MOUSE": "精确输入跟踪"
+			"TRACK_KEYBOARD_MOUSE_ACTIVITY": "跟踪键盘和鼠标活动"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "每周限制已超过。",
 		"OF_HRS": "的{{ limit }}小时",
