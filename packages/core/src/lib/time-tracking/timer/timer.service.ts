@@ -94,7 +94,7 @@ export class TimerService {
 	 */
 	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatusWithWeeklyLimits> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
-		const { organizationId, source, todayStart, todayEnd } = request;
+		const { organizationId, source, todayStart, todayEnd, additionalDate } = request;
 
 		let employee: IEmployee;
 
@@ -116,9 +116,11 @@ export class TimerService {
 		const { id: employeeId } = employee;
 
 		/** */
-		const { start, end } = getDateRangeFormat(
+		const { start, end, additional } = getDateRangeFormat(
 			moment.utc(todayStart || moment().startOf('day')),
-			moment.utc(todayEnd || moment().endOf('day'))
+			moment.utc(todayEnd || moment().endOf('day')),
+			//To cover the difference between different time zones
+			moment.utc(additionalDate || moment().endOf('day'))
 		);
 
 		let logs: TimeLog[] = [];
@@ -192,15 +194,20 @@ export class TimerService {
 				const newTimerStartedAt = moment.utc(todayStart || moment().startOf('day'));
 
 				// Ensure that the new timer won't be started in the past
-				if (moment(runningLog.startedAt).isBefore(newTimerStartedAt)) {
+				if (moment(runningLog.startedAt).isBefore(moment(newTimerStartedAt))) {
 					// Stop the current running log and save the time at end of day
+					const stoppedAt = moment(runningLog.startedAt).endOf('day').subtract(1, 'second').toDate();
 					await this.stopTimer({
 						tenantId,
 						organizationId,
 						startedAt: runningLog.startedAt,
-						stoppedAt: moment(runningLog.startedAt).endOf('day').toDate()
+						stoppedAt
 					});
 
+					// Add small delta to avoid overlap
+					const safeStart = moment
+						.max(moment(newTimerStartedAt), moment(stoppedAt).add(1, 'second'))
+						.toDate();
 					// Start new timer for the current day
 					lastLog = await this.startTimer({
 						tenantId,
@@ -212,7 +219,7 @@ export class TimerService {
 						source: runningLog.source,
 						tags: (runningLog.tags ?? []).map((tag) => tag.id),
 						isBillable: runningLog.isBillable,
-						startedAt: newTimerStartedAt.toDate()
+						startedAt: safeStart
 					});
 				}
 			}
@@ -267,7 +274,11 @@ export class TimerService {
 		}
 
 		// Get weekly statistics
-		let weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, start as Date, true);
+		let weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(
+			employee,
+			additional as Date,
+			true
+		);
 
 		// If the user reached the weekly limit, then stop the current timer
 		let lastLogStopped = false;
@@ -296,7 +307,8 @@ export class TimerService {
 		};
 
 		// Calculate completed timelogs duration
-		status.duration += logs.filter(Boolean).reduce((sum, log) => sum + log.duration, 0);
+		logs = logs.filter((log) => !!log && log.duration >= 1);
+		status.duration += logs.reduce((sum, log) => sum + log.duration, 0);
 
 		// Calculate last TimeLog duration
 		if (lastLog) {
@@ -518,6 +530,13 @@ export class TimerService {
 			this.logger.warn(
 				`stoppedAt (${stoppedAt}) is less than startedAt (${lastLog.startedAt}), skipping stoppedAt update.`
 			);
+		}
+
+		const durationInSeconds = moment.utc(stoppedAt).diff(moment.utc(lastLog.startedAt), 'seconds');
+
+		if (durationInSeconds < 1) {
+			this.logger.warn(`Pominięto zapis time loga: różnica czasu < 1s`);
+			return null;
 		}
 
 		// Construct the update payload, conditionally excluding stoppedAt if it shouldn't be updated

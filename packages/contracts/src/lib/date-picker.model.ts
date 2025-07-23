@@ -9,4 +9,6 @@ export interface IDateRangePicker {
 export type DateRange = {
 	start: string | Date;
 	end: string | Date;
+	//To cover the difference between different time zones
+	additional?: string | Date;
 };

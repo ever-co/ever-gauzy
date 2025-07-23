@@ -332,16 +332,18 @@ export class TimeTrackerService implements OnDestroy {
 		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 		const localStart = moment.tz(timeZone).startOf('day');
 		const offsetMinutes = localStart.utcOffset();
-		const todayStart = localStart.clone().utc().add(offsetMinutes, 'minutes').toISOString();
-		const localEnd = moment.tz(timeZone).endOf('day');
-		const offsetMinutesEnd = localEnd.utcOffset();
-		const todayEnd = localEnd.clone().utc().add(offsetMinutesEnd, 'minutes').toISOString();
+		//To cover the difference between different time zones
+		const additionalDate = localStart.clone().utc().add(offsetMinutes, 'minutes').toISOString();
+
+		const todayStart = moment.tz(timeZone).startOf('day').utc().toISOString();
+		const todayEnd = moment.tz(timeZone).endOf('day').utc().toISOString();
 		return firstValueFrom(
 			this.http.get<ITimerStatusWithWeeklyLimits>(`${API_PREFIX}/timesheet/timer/status`, {
 				params: toParams({
 					...params,
 					todayStart,
-					todayEnd
+					todayEnd,
+					additionalDate
 				})
 			})
 		);

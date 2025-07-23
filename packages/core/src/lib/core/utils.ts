@@ -95,7 +95,7 @@ export function getDateRange(
 	startDate?: string | Date,
 	endDate?: string | Date,
 	type: 'day' | 'week' = 'day',
-	isFormat: boolean = false
+	isFormat = false
 ) {
 	if (endDate === 'day' || endDate === 'week') {
 		type = endDate;
@@ -205,9 +205,14 @@ export function mergeOverlappingDateRanges(ranges: IDateRange[]): IDateRange[] {
  * @param endDate
  * @returns
  */
-export function getDateRangeFormat(startDate: moment.Moment, endDate: moment.Moment): DateRange {
-	let start = moment(startDate);
-	let end = moment(endDate);
+export function getDateRangeFormat(
+	startDate: moment.Moment,
+	endDate: moment.Moment,
+	additionalDate?: moment.Moment
+): DateRange {
+	const start = moment(startDate);
+	const end = moment(endDate);
+	const additional = additionalDate ? moment(additionalDate) : null;
 
 	if (!start.isValid() || !end.isValid()) {
 		return;
@@ -221,13 +226,15 @@ export function getDateRangeFormat(startDate: moment.Moment, endDate: moment.Mom
 		case DatabaseTypeEnum.betterSqlite3:
 			return {
 				start: start.format('YYYY-MM-DD HH:mm:ss'),
-				end: end.format('YYYY-MM-DD HH:mm:ss')
+				end: end.format('YYYY-MM-DD HH:mm:ss'),
+				...(additional?.isValid() && { additional: additional.format('YYYY-MM-DD HH:mm:ss') })
 			};
 		case DatabaseTypeEnum.postgres:
 		case DatabaseTypeEnum.mysql:
 			return {
 				start: start.toDate(),
-				end: end.toDate()
+				end: end.toDate(),
+				...(additional?.isValid() && { additional: additional.toDate() })
 			};
 		default:
 			throw Error(
@@ -397,7 +404,7 @@ export function isDatabaseType(
 	}
 
 	// Get the database type from the connection options
-	let dbType = getDBType(dbConnection);
+	const dbType = getDBType(dbConnection);
 
 	// Check if the provided types match the database type
 	if (types instanceof Array) {
