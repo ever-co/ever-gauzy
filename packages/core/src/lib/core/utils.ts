@@ -95,7 +95,7 @@ export function getDateRange(
 	startDate?: string | Date,
 	endDate?: string | Date,
 	type: 'day' | 'week' = 'day',
-	isFormat: boolean = false
+	isFormat = false
 ) {
 	if (endDate === 'day' || endDate === 'week') {
 		type = endDate;
@@ -206,8 +206,8 @@ export function mergeOverlappingDateRanges(ranges: IDateRange[]): IDateRange[] {
  * @returns
  */
 export function getDateRangeFormat(startDate: moment.Moment, endDate: moment.Moment): DateRange {
-	let start = moment(startDate);
-	let end = moment(endDate);
+	const start = moment(startDate);
+	const end = moment(endDate);
 
 	if (!start.isValid() || !end.isValid()) {
 		return;
@@ -397,7 +397,7 @@ export function isDatabaseType(
 	}
 
 	// Get the database type from the connection options
-	let dbType = getDBType(dbConnection);
+	const dbType = getDBType(dbConnection);
 
 	// Check if the provided types match the database type
 	if (types instanceof Array) {
