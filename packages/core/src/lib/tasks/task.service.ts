@@ -802,8 +802,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				.leftJoinAndSelect(`${query.alias}.teams`, 'taskTeams')
 				.getMany();
 
-			console.log('Raw tasks data:', JSON.stringify(tasks, null, 2));
-
 			// Unassign member from All the Team Tasks
 			tasks.forEach((task) => {
 				if (task.teams?.length) {
