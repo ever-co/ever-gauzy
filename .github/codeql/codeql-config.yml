@@ -1,0 +1,25 @@
+name: "CodeQL Configuration for Ever Gauzy"
+
+# Specify paths to include in analysis
+paths:
+  - "apps/"
+  - "packages/"
+  - "libs/"
+
+# Exclude paths that shouldn't be analyzed
+paths-ignore:
+  - "**/node_modules/"
+  - "**/dist/"
+  - "**/coverage/"
+  - "**/*.test.ts"
+  - "**/*.test.js"
+  - "**/*.spec.ts"
+  - "**/*.spec.js"
+  - "**/e2e/"
+  - "**/*.d.ts"
+  - "**/migrations/"
+  - "**/seeds/"
+
+# Use default security queries plus extended ones
+queries:
+  - uses: security-and-quality
