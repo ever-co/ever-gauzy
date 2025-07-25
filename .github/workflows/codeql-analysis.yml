@@ -14,7 +14,7 @@ concurrency:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-latest
+    runs-on: buildjet-4vcpu-ubuntu-2204
 
     strategy:
       fail-fast: false
@@ -32,23 +32,13 @@ jobs:
         uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
-          ram: 16384
-          threads: 0
-          config: |
-            paths:
-              - "apps/api/src/app/**/*.ts"
-              - "apps/api/src/core/**/*.ts"
-              - "packages/core/src/**/*.ts"
-              - "packages/contracts/src/**/*.ts"
-            paths-ignore:
-              - "**/*.test.ts"
-              - "**/*.spec.ts"
-              - "**/node_modules/**"
-              - "**/dist/**"
-              - "**/*.d.ts"
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v2
+
+      #- run: |
+      #   make bootstrap
+      #   make release
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
