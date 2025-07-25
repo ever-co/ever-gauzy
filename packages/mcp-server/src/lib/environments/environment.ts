@@ -10,9 +10,13 @@ const __dirname = path.dirname(__filename);
 
 // Load environment variables from multiple possible locations
 const envPaths = [
+	// Project root .env file
 	path.resolve(process.cwd(), '.env'),
+	// MCP server app-specific .env file
 	path.resolve(process.cwd(), 'apps/server-mcp/.env'),
+	// Package root .env file (when running from nested location)
 	path.resolve(__dirname, '../../../.env'),
+	// Local .env file relative to environments directory
 	path.resolve(__dirname, '../.env')
 ];
 
@@ -29,15 +33,43 @@ envPaths.forEach((envPath) => {
 function validateEnvironment(): void {
 	const errors: string[] = [];
 
+	// URL validation helper function
+	const isValidUrl = (urlString: string): boolean => {
+		try {
+			new URL(urlString);
+			return true;
+		} catch {
+			return false;
+		}
+	};
+
+	// Email validation using regex
+	const isValidEmail = (email: string): boolean => {
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		return emailRegex.test(email);
+	};
+
+	// Check for required URL variables and validate format
 	if (!process.env.API_BASE_URL && !process.env.GAUZY_API_BASE_URL) {
 		errors.push('API_BASE_URL or GAUZY_API_BASE_URL is required');
+	} else {
+		// Validate URL format if present
+		if (process.env.API_BASE_URL && !isValidUrl(process.env.API_BASE_URL)) {
+			errors.push('API_BASE_URL must be a valid URL format');
+		}
+		if (process.env.GAUZY_API_BASE_URL && !isValidUrl(process.env.GAUZY_API_BASE_URL)) {
+			errors.push('GAUZY_API_BASE_URL must be a valid URL format');
+		}
 	}
 
 	// Check for authentication credentials
 	if (process.env.GAUZY_AUTO_LOGIN === 'true') {
 		if (!process.env.GAUZY_AUTH_EMAIL) {
 			errors.push('GAUZY_AUTH_EMAIL is required when GAUZY_AUTO_LOGIN is enabled');
+		} else if (!isValidEmail(process.env.GAUZY_AUTH_EMAIL)) {
+			errors.push('GAUZY_AUTH_EMAIL must be a valid email address format');
 		}
+
 		if (!process.env.GAUZY_AUTH_PASSWORD) {
 			errors.push('GAUZY_AUTH_PASSWORD is required when GAUZY_AUTO_LOGIN is enabled');
 		}
@@ -77,7 +109,7 @@ function getTimeout(): number {
 }
 
 export const environment: IEnvironment = {
-	production: false,
+	production: process.env.NODE_ENV === 'production',
 	envName: process.env.NODE_ENV || 'development',
 	mcpAppName: process.env.MCP_APP_NAME || 'Gauzy MCP Server',
 	appId: process.env.MCP_APP_ID || 'co.gauzy.mcp-server',

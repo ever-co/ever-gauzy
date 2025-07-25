@@ -54,12 +54,12 @@ async function main() {
 
 // Handle graceful shutdown
 process.on('SIGINT', () => {
-	log.error('\n🛑 Received SIGINT, shutting down gracefully...');
+	log.info('\n🛑 Received SIGINT, shutting down gracefully...');
 	process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-	log.error('\n🛑 Received SIGTERM, shutting down gracefully...');
+	log.info('\n🛑 Received SIGTERM, shutting down gracefully...');
 	process.exit(0);
 });
 
