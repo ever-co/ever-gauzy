@@ -4188,7 +4188,7 @@
 			"AUTH_TOKEN": "אסימון אימות",
 			"PRIVATE_REGISTRY_URL": "כתובת URL של מרשם פרטי",
 			"PLUGIN_INSTALL_CDN_ERROR": "כתובת ה-URL של השרת לא יכולה להיות ריקה.",
-			"TRACK_KEYBOARD_MOUSE": "מעקב קלט מדויק"
+			"TRACK_KEYBOARD_MOUSE_ACTIVITY": "עקוב אחר פעילות המקלדת והעכבר"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "הגעת למגבלת השבוע",
 		"OF_HRS": "מתוך {{ limit }} שעות",

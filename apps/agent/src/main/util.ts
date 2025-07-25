@@ -6,26 +6,39 @@ import { CONSTANT } from '../constant';
 
 export type TAuthConfig = {
 	user: {
-		employee: {
-			tenantId: string;
-			organizationId: string;
-			id: string;
+		employee: Record<string, unknown> & {
+			tenantId?: string;
+			organizationId?: string;
+			id?: string;
 		}
 		id: string
 	};
 	token: string;
 }
 
+export type TEmployeeResponse = {
+	id: string,
+	allowScreenshotCapture: boolean,
+	allowAgentAppExit: boolean,
+	allowLogoutFromAgentApp: boolean,
+	trackKeyboardMouseActivity: boolean,
+	trackAllDisplays: boolean
+}
+
+
 export type TAppSetting = {
-	monitor?: {
-		captured?: string
+	monitor: {
+		captured: 'all' | 'active-only';
 	},
 	timer: {
-		updatePeriod: number
+		updatePeriod: 1 | 5 | 10
 	},
 	screenshotNotification: boolean,
 	simpleScreenshotNotification: boolean,
-	kbMouseTracking: boolean
+	kbMouseTracking: boolean,
+	allowAgentAppExit: boolean,
+	allowLogoutFromAgentApp: boolean,
+	allowScreenshotCapture: boolean
 }
 
 export type TInitialConfig = {
@@ -112,3 +125,15 @@ export function getTrayIcon(): string {
 	return path.join(__dirname, '..', CONSTANT.TRAY_ICON_PATH)
 }
 
+export function updateAgentSetting(employee: Partial<TEmployeeResponse>) {
+	const appSetting: Partial<TAppSetting> = {
+		allowAgentAppExit: employee.allowAgentAppExit,
+		allowLogoutFromAgentApp: employee.allowLogoutFromAgentApp,
+		monitor: {
+			captured: employee.trackAllDisplays ? 'all' : 'active-only'
+		},
+		kbMouseTracking: employee.trackKeyboardMouseActivity,
+		allowScreenshotCapture: employee.allowScreenshotCapture ?? false
+	}
+	LocalStore.updateApplicationSetting(appSetting);
+}

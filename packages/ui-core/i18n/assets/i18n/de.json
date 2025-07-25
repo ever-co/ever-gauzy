@@ -4174,7 +4174,7 @@
 			"AUTH_TOKEN": "Authentifizierungs-Token",
 			"PRIVATE_REGISTRY_URL": "Private Registry-URL",
 			"PLUGIN_INSTALL_CDN_ERROR": "Die Server-URL darf nicht leer sein.",
-			"TRACK_KEYBOARD_MOUSE": "Genaue Eingabeverfolgung"
+			"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Tastatur- und Mausaktivität verfolgen"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Wöchentliches Limit überschritten",
 		"OF_HRS": "Von {{ limit }} Stunden",

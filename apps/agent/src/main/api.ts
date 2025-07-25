@@ -1,5 +1,5 @@
 import { LocalStore, TTimeSlot } from '@gauzy/desktop-lib';
-import { getAuthConfig, getApiBaseUrl, TAuthConfig } from './util';
+import { getAuthConfig, getApiBaseUrl, TAuthConfig, TEmployeeResponse } from './util';
 import fetch, { HeadersInit } from 'node-fetch';
 import * as moment from 'moment';
 import * as fs from 'node:fs';
@@ -83,7 +83,6 @@ export class ApiService {
 	static getInstance(): ApiService {
 		if (!ApiService.instance) {
 			ApiService.instance = new ApiService();
-			return ApiService.instance;
 		}
 		return ApiService.instance;
 	}
@@ -189,6 +188,22 @@ export class ApiService {
 		});
 	}
 
+	async getEmployeeSetting(employeeId: string): Promise<Partial<TEmployeeResponse>> {
+		const authConfig = getAuthConfig();
+		const path = `/api/employee/${employeeId}`;
+		const employee: Partial<TEmployeeResponse> = await this.get(path, {});
+		if (employee?.id) {
+			authConfig.user.employee = employee;
+			this.mainEvent.emit(MAIN_EVENT, {
+				type: MAIN_EVENT_TYPE.UPDATE_APP_SETTING,
+				data: {
+					employee
+				}
+			});
+		}
+		return employee;
+	}
+
 	async request(
 		path: string,
 		options: {
@@ -228,6 +243,9 @@ export class ApiService {
 				const error = new Error(`API error: ${response.status} ${respText}`);
 				error['status'] = response.status;
 				throw error;
+			}
+			if (this.isLogout) {
+				this.isLogout = false;
 			}
 			const respJson = await response.json();
 			return respJson;

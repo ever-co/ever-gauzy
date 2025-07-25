@@ -43,7 +43,8 @@ function getGlobalVariable(configs?: {
 
 function listenIO(stop: boolean) {
 	const auth = getAuthConfig();
-	const pullActivities = PullActivities.getInstance({
+	const pullActivities = PullActivities.getInstance();
+	pullActivities.updateAppUserAuth({
 		tenantId: auth?.user?.employee?.tenantId,
 		organizationId: auth?.user?.employee?.organizationId,
 		remoteId: auth?.user?.id
@@ -60,7 +61,8 @@ function listenIO(stop: boolean) {
 
 function kbMouseListener(activate: boolean) {
 	const auth = getAuthConfig();
-	const pullActivities = PullActivities.getInstance({
+	const pullActivities = PullActivities.getInstance();
+	pullActivities.updateAppUserAuth({
 		tenantId: auth?.user?.employee?.tenantId,
 		organizationId: auth?.user?.employee?.organizationId,
 		remoteId: auth?.user?.id
@@ -181,7 +183,7 @@ export default function AppIpcMain(){
 	});
 
 	ipcMain.handle('mouse_kb_tracking', (_, arg: boolean) => {
-		LocalStore.updateApplicationSetting({ trackKbMouse: arg });
+		LocalStore.updateApplicationSetting({ kbMouseTracking: arg });
 		kbMouseListener(arg);
 		return true;
 	})
