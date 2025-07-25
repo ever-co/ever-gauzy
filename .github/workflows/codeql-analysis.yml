@@ -34,19 +34,8 @@ jobs:
           languages: ${{ matrix.language }}
           config-file: ./.github/codeql/codeql-config.yml
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.18.1'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Build project (observed by CodeQL)
-        run: yarn build
-        env:
-          NODE_OPTIONS: --max-old-space-size=8192
+      # For JavaScript/TypeScript, CodeQL can analyze without building
+      # We only need to install dependencies for proper module resolution
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
