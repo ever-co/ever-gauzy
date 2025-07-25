@@ -1,0 +1,31 @@
+{
+	"name": "@gauzy/server-mcp",
+	"version": "0.1.0",
+	"description": "Ever Gauzy MCP Server - A Model Context Protocol server, providing AI assistants with access to Gauzy's time tracking, project, and employee management features",
+	"type": "module",
+	"main": "index.js",
+	"bin": {
+		"gauzy-mcp": "./index.js"
+	},
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"homepage": "https://gauzy.co",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"license": "AGPL-3.0",
+	"private": true,
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.13.1",
+		"axios": "^1.7.0",
+		"dotenv": "^16.4.5",
+		"zod": "^3.25.67"
+	}
+}

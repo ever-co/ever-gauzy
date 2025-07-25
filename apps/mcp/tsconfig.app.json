@@ -1,0 +1,24 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+        "outDir": "../../dist/out-tsc",
+        "module": "ESNext",
+        "target": "ES2022",
+        "moduleResolution": "node",
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "types": ["node"]
+    },
+	"files": [
+        "src/index.ts"
+    ],
+	"include": [
+        "src/**/*",
+        "src/**/*.d.ts"
+    ],
+    "exclude": [
+        "jest.config.ts",
+        "src/**/*.test.ts",
+        "src/**/*.spec.ts"
+    ]
+}

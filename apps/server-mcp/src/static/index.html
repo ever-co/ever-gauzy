@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gauzy MCP Server Desktop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .status-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .status-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 24px;
+        }
+
+        .status-icon.running {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .status-icon.stopped {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+        }
+
+        .status-icon.unknown {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+        }
+
+        .status-info h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .status-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .status-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .detail-item h3 {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-item p {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e9ecef;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .logs {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .logs-header h3 {
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .logs-content {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .log-entry.info {
+            color: #4CAF50;
+        }
+
+        .log-entry.error {
+            color: #f44336;
+        }
+
+        .log-entry.warning {
+            color: #ff9800;
+        }
+
+        .clear-logs {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: underline;
+        }
+
+        .clear-logs:hover {
+            color: #764ba2;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: white;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header fade-in">
+            <h1>🚀 Gauzy MCP Server</h1>
+            <p>Model Context Protocol Server for AI Assistants</p>
+        </div>
+
+        <div class="status-card fade-in">
+            <div class="status-header">
+                <div id="statusIcon" class="status-icon unknown">
+                    ❓
+                </div>
+                <div class="status-info">
+                    <h2 id="statusTitle">Checking Status...</h2>
+                    <p id="statusDescription">Connecting to MCP server...</p>
+                </div>
+            </div>
+
+            <div class="status-details">
+                <div class="detail-item">
+                    <h3>Server Status</h3>
+                    <p id="serverStatus">Unknown</p>
+                </div>
+                <div class="detail-item">
+                    <h3>Version</h3>
+                    <p id="serverVersion">Unknown</p>
+                </div>
+                <div class="detail-item">
+                    <h3>Connection</h3>
+                    <p id="connectionStatus">Checking...</p>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="restartBtn" class="btn btn-primary" disabled>
+                    🔄 Restart Server
+                </button>
+                <button id="refreshBtn" class="btn btn-secondary">
+                    🔍 Refresh Status
+                </button>
+            </div>
+        </div>
+
+        <div class="logs fade-in">
+            <div class="logs-header">
+                <h3>📋 Server Logs</h3>
+                <button id="clearLogsBtn" class="clear-logs">Clear Logs</button>
+            </div>
+            <div id="logsContent" class="logs-content">
+                <div class="log-entry info">🚀 Gauzy MCP Server Desktop starting...</div>
+                <div class="log-entry info">📡 Connecting to MCP server...</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Powered by Ever Gauzy • Model Context Protocol Server</p>
+        </div>
+    </div>
+
+    <script>
+        // IPC communication with main process via preload script
+        const { electronAPI } = window;
+
+        let serverStatus = {
+            isRunning: false,
+            status: 'Unknown',
+            version: 'Unknown'
+        };
+
+        // DOM elements
+        const statusIcon = document.getElementById('statusIcon');
+        const statusTitle = document.getElementById('statusTitle');
+        const statusDescription = document.getElementById('statusDescription');
+        const serverStatusEl = document.getElementById('serverStatus');
+        const serverVersionEl = document.getElementById('serverVersion');
+        const connectionStatusEl = document.getElementById('connectionStatus');
+        const restartBtn = document.getElementById('restartBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const logsContent = document.getElementById('logsContent');
+
+        // Update UI based on server status
+        function updateStatusUI() {
+            if (serverStatus.isRunning) {
+                statusIcon.className = 'status-icon running pulse';
+                statusIcon.textContent = '✅';
+                statusTitle.textContent = 'Server Running';
+                statusDescription.textContent = 'MCP server is active and ready';
+                serverStatusEl.textContent = 'Active';
+                connectionStatusEl.textContent = 'Connected';
+                restartBtn.disabled = false;
+            } else {
+                statusIcon.className = 'status-icon stopped';
+                statusIcon.textContent = '❌';
+                statusTitle.textContent = 'Server Stopped';
+                statusDescription.textContent = 'MCP server is not running';
+                serverStatusEl.textContent = 'Inactive';
+                connectionStatusEl.textContent = 'Disconnected';
+                restartBtn.disabled = true;
+            }
+
+            serverVersionEl.textContent = serverStatus.version;
+        }
+
+        // Add log entry
+        function addLogEntry(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsContent.appendChild(logEntry);
+            logsContent.scrollTop = logsContent.scrollHeight;
+            // Keep only the most recent 1000 entries
+            const MAX_LOG_ENTRIES = 1000;
+            while (logsContent.children.length > MAX_LOG_ENTRIES) {
+                logsContent.removeChild(logsContent.firstChild);
+            }
+        }
+
+        // Clear logs
+        function clearLogs() {
+            logsContent.innerHTML = '';
+            addLogEntry('Logs cleared', 'info');
+        }
+
+        // Refresh server status
+        async function refreshStatus() {
+            try {
+                addLogEntry('Refreshing server status...', 'info');
+                const status = await electronAPI.getMcpStatus();
+                serverStatus = status;
+                updateStatusUI();
+                addLogEntry(`Status updated: ${status.status}`, 'info');
+            } catch (error) {
+                addLogEntry(`Error refreshing status: ${error.message}`, 'error');
+            }
+        }
+
+        // Restart server
+        async function restartServer() {
+            try {
+                restartBtn.disabled = true;
+                addLogEntry('Restarting MCP server...', 'info');
+                const result = await electronAPI.restartMcpServer();
+
+                if (result.success) {
+                    addLogEntry('Server restarted successfully', 'info');
+                } else {
+                    addLogEntry(`Restart failed: ${result.message}`, 'error');
+                }
+
+                // Refresh status after restart
+                setTimeout(refreshStatus, 1000);
+            } catch (error) {
+                addLogEntry(`Error restarting server: ${error.message}`, 'error');
+            } finally {
+                restartBtn.disabled = false;
+            }
+        }
+
+        // Event listeners
+        restartBtn.addEventListener('click', restartServer);
+        refreshBtn.addEventListener('click', refreshStatus);
+
+        // Initial status check
+        refreshStatus();
+
+        // Periodic status updates
+        const tenSecondInterval = setInterval(refreshStatus, 10000); // Check every 10 seconds
+        const statusInterval = setInterval(refreshStatus, 1000);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            clearInterval(tenSecondInterval);
+            clearInterval(statusInterval);
+        });
+
+        // Add some initial logs
+        setTimeout(() => {
+            addLogEntry('MCP Server Desktop interface loaded', 'info');
+            addLogEntry('Ready to manage MCP server', 'info');
+        }, 1000);
+    </script>
+</body>
+</html>
