@@ -4,14 +4,14 @@ import { createMcpServer } from '@gauzy/mcp-server';
 import log from 'electron-log';
 
 async function testMcpServer() {
-	console.log('🧪 Testing Gauzy MCP Server...\n');
+	log.info('🧪 Testing Gauzy MCP Server...\n');
 
 	try {
-		const { server, version } = createMcpServer();
+		const { version } = createMcpServer();
 
-		console.log('✅ MCP Server created successfully');
-		console.log(`📋 Server: gauzy-mcp-server v${version}`);
-		console.log('🛠️  Server capabilities: tools');
+		log.info('✅ MCP Server created successfully');
+		log.info(`📋 Server: gauzy-mcp-server v${version}`);
+		log.info('🛠️  Server capabilities: tools');
 
 		// Show the capabilities that we configured
 		const capabilities = {
@@ -21,13 +21,14 @@ async function testMcpServer() {
 			server_name: 'gauzy-mcp-server',
 			server_version: version
 		};
-		console.log('📊 Capabilities:', JSON.stringify(capabilities, null, 2));
+		log.info('📊 Capabilities:', JSON.stringify(capabilities, null, 2));
 
-		console.log('\n🎉 All tests passed! MCP server is ready for use.');
-		console.log('\n💡 To use with Claude Desktop:');
-		console.log('   1. Build the server: yarn build:prod');
-		console.log('   2. Configure Claude Desktop with the build/index.js path');
-		console.log('   3. Start asking Claude about your Gauzy data!');
+		log.info('\n🎉 All tests passed! MCP server is ready for use.');
+		log.info('\n💡 To use with Claude Desktop:');
+		log.info('   1. Build the server: yarn build:prod');
+		log.info('   2. Configure Claude Desktop with the build/index.js path');
+		log.info('   3. Start asking Claude about your Gauzy data!');
+
 	} catch (error) {
 		log.error('❌ MCP Server test failed:', error);
 		process.exit(1);
