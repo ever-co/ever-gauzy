@@ -1,8 +1,10 @@
 import { IEnvironment } from './ienvironment.js';
+import { Logger } from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import log from 'electron-log';
+
+const logger = new Logger('Environment');
 
 // Get the directory name in ES module context
 const __filename = fileURLToPath(import.meta.url);
@@ -25,7 +27,7 @@ envPaths.forEach((envPath) => {
 		const result = dotenv.config({ path: envPath });
 		// Only log in debug mode and only to stderr to avoid interfering with MCP responses
 		if (!result.error && process.env.GAUZY_MCP_DEBUG === 'true') {
-			log.info(`✓ Loaded environment from: ${envPath}`);
+			logger.log(`✓ Loaded environment from: ${envPath}`);
 		}
 });
 
@@ -76,14 +78,14 @@ function validateEnvironment(): void {
 	}
 
 	if (errors.length > 0) {
-		log.error('❌ Environment Configuration Errors:');
-		errors.forEach((error) => log.error(`   ${error}`));
-		log.error('\nPlease create a .env file in apps/server-mcp/ with the required variables.');
-		log.error('Example:');
-		log.error('API_BASE_URL=http://localhost:3000');
-		log.error('GAUZY_AUTO_LOGIN=true');
-		log.error('GAUZY_AUTH_EMAIL=your-email@example.com');
-		log.error('GAUZY_AUTH_PASSWORD=***');
+		logger.error('❌ Environment Configuration Errors:');
+		errors.forEach((error) => logger.error(`   ${error}`));
+		logger.error('\nPlease create a .env file in apps/server-mcp/ with the required variables.');
+		logger.error('Example:');
+		logger.error('API_BASE_URL=http://localhost:3000');
+		logger.error('GAUZY_AUTO_LOGIN=true');
+		logger.error('GAUZY_AUTH_EMAIL=your-email@example.com');
+		logger.error('GAUZY_AUTH_PASSWORD=***');
 		process.exit(1);
 	}
 }
@@ -101,7 +103,7 @@ function getTimeout(): number {
 	const timeout = Number.parseInt(process.env.API_TIMEOUT || '30000', 10);
 	if (isNaN(timeout) || timeout <= 0) {
 		if (process.env.GAUZY_MCP_DEBUG === 'true') {
-			log.warn('⚠️  Invalid API_TIMEOUT, using default 30000ms');
+			logger.warn('⚠️  Invalid API_TIMEOUT, using default 30000ms');
 		}
 		return 30000;
 	}

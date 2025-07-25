@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { Logger } from '@nestjs/common';
 import { version } from './common/version.js';
 import { registerTimerTools } from './tools/timer.js';
 import { registerProjectTools } from './tools/projects.js';
@@ -9,7 +10,8 @@ import { registerTestTools } from './tools/test-connection.js';
 import { registerDailyPlanTools } from './tools/daily-plan.js';
 import { registerOrganizationContactTools } from './tools/organization-contact.js';
 import { registerAuthTools } from './tools/auth.js';
-import log from 'electron-log';
+
+const logger = new Logger('McpServer');
 
 /**
  * Creates and configures the Gauzy MCP Server
@@ -34,9 +36,9 @@ export function createMcpServer() {
 		registerOrganizationContactTools(server);
 		registerTestTools(server);
 
-		log.info('Gauzy MCP Server: All tools registered successfully');
+		logger.log('Gauzy MCP Server: All tools registered successfully');
 	} catch (error) {
-		log.error('Error configuring Gauzy MCP Server:', error);
+		logger.error('Error configuring Gauzy MCP Server:', error);
 		throw error;
 	}
 
@@ -49,7 +51,7 @@ export function createMcpServer() {
 export function createStandaloneMcpServer() {
 	const { server } = createMcpServer();
 
-	log.info('Standalone MCP Server created for external clients');
+	logger.log('Standalone MCP Server created for external clients');
 	return server;
 }
 
@@ -70,7 +72,7 @@ function isMainModule() {
 if (isMainModule()) {
 	async function main() {
 		try {
-			log.info('Starting Gauzy MCP Server for external clients...');
+			logger.log('Starting Gauzy MCP Server for external clients...');
 
 			const server = createStandaloneMcpServer();
 			const transport = new StdioServerTransport();
@@ -78,22 +80,22 @@ if (isMainModule()) {
 			await server.connect(transport);
 
 			// Use stderr for logging (stdout is used for MCP communication)
-			log.info(`Gauzy MCP Server running on stdio transport - version: ${version}`);
-			log.info('Server is ready to accept MCP requests from clients like Claude Desktop');
+			logger.log(`Gauzy MCP Server running on stdio transport - version: ${version}`);
+			logger.log('Server is ready to accept MCP requests from clients like Claude Desktop');
 		} catch (error) {
-			log.error('Fatal error starting Gauzy MCP Server:', error);
+			logger.error('Fatal error starting Gauzy MCP Server:', error);
 			process.exit(1);
 		}
 	}
 
 	// Handle graceful shutdown
 	process.on('SIGINT', () => {
-		log.info('Received SIGINT, shutting down gracefully...');
+		logger.log('Received SIGINT, shutting down gracefully...');
 		process.exit(0);
 	});
 
 	process.on('SIGTERM', () => {
-		log.info('Received SIGTERM, shutting down gracefully...');
+		logger.log('Received SIGTERM, shutting down gracefully...');
 		process.exit(0);
 	});
 

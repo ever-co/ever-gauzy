@@ -1,6 +1,8 @@
 import { environment } from '../environments/environment.js';
 import { sanitizeForLogging } from './security-utils.js';
-import log from 'electron-log';
+import { Logger } from '@nestjs/common';
+
+const logger = new Logger('AuthManager');
 
 interface IAuthResponse {
 	user: any;
@@ -121,7 +123,7 @@ export class AuthManager {
 		// Prevent concurrent login attempts
 		if (this.isLoginInProgress) {
 			if (environment.debug) {
-				log.warn('🔑 Login already in progress, skipping duplicate attempt');
+				logger.warn('🔑 Login already in progress, skipping duplicate attempt');
 			}
 			return false;
 		}
@@ -136,13 +138,13 @@ export class AuthManager {
 
 			if (!credentials.email || !credentials.password) {
 				if (environment.debug) {
-					log.warn('🔑 No authentication credentials provided');
+					logger.warn('🔑 No authentication credentials provided');
 				}
 				return false;
 			}
 
 			if (environment.debug) {
-				log.info(`🔑 Attempting login for: ${credentials.email}`);
+				logger.log(`🔑 Attempting login for: ${credentials.email}`);
 			}
 
 			// Use the correct Gauzy API endpoint
@@ -179,7 +181,7 @@ export class AuthManager {
 					}
 				} catch (error) {
 					if (environment.debug) {
-						log.warn(
+						logger.warn(
 							'⚠️  Could not fetch user info for organization/tenant extraction:',
 							error instanceof Error ? error.message : 'Unknown error'
 						);
@@ -197,22 +199,22 @@ export class AuthManager {
 				});
 
 				if (environment.debug) {
-					log.info(`✅ Login successful for user: ${response.user?.email || 'Unknown'}`);
-					log.info(`   User ID: ${response.user?.id || 'Not available'}`);
-					log.info(`   Tenant ID: ${tenantId || 'Not available'}`);
-					log.info(`   Organization ID: ${organizationId || 'Not available'}`);
+					logger.log(`✅ Login successful for user: ${response.user?.email || 'Unknown'}`);
+					logger.log(`   User ID: ${response.user?.id || 'Not available'}`);
+					logger.log(`   Tenant ID: ${tenantId || 'Not available'}`);
+					logger.log(`   Organization ID: ${organizationId || 'Not available'}`);
 				}
 
 				return true;
 			}
 
 			if (environment.debug) {
-				log.warn('❌ Login failed - invalid response format');
+				logger.warn('❌ Login failed - invalid response format');
 			}
 			return false;
 		} catch (error) {
 			if (environment.debug) {
-				log.error('❌ Login failed:', sanitizeForLogging(error));
+				logger.error('❌ Login failed:', sanitizeForLogging(error));
 			}
 			return false;
 		} finally {
@@ -227,7 +229,7 @@ export class AuthManager {
 		// Prevent concurrent refresh attempts
 		if (this.isRefreshInProgress) {
 			if (environment.debug) {
-				log.warn('🔄 Token refresh already in progress, skipping duplicate attempt');
+				logger.warn('🔄 Token refresh already in progress, skipping duplicate attempt');
 			}
 			return false;
 		}
@@ -237,13 +239,13 @@ export class AuthManager {
 		try {
 			if (!this.tokenData?.refreshToken) {
 				if (environment.debug) {
-					log.warn('🔄 No refresh token available');
+					logger.warn('🔄 No refresh token available');
 				}
 				return false;
 			}
 
 			if (environment.debug) {
-				log.info('🔄 Refreshing access token...');
+				logger.log('🔄 Refreshing access token...');
 			}
 
 			// Use the correct Gauzy API endpoint
@@ -257,19 +259,19 @@ export class AuthManager {
 				this.tokenData.expiresAt = this.calculateTokenExpiry(response.token);
 
 				if (environment.debug) {
-					log.info('✅ Token refreshed successfully');
+					logger.log('✅ Token refreshed successfully');
 				}
 
 				return true;
 			}
 
 			if (environment.debug) {
-				log.warn('❌ Token refresh failed - invalid response');
+				logger.warn('❌ Token refresh failed - invalid response');
 			}
 			return false;
 		} catch (error) {
 			if (environment.debug) {
-				log.error('❌ Token refresh failed:', sanitizeForLogging(error));
+				logger.error('❌ Token refresh failed:', sanitizeForLogging(error));
 			}
 			return false;
 		} finally {
@@ -287,7 +289,7 @@ export class AuthManager {
 
 		if (this.isAuthenticated()) {
 			if (environment.debug) {
-				log.info('✅ Already authenticated');
+				logger.log('✅ Already authenticated');
 			}
 			return true;
 		}
@@ -346,13 +348,13 @@ export class AuthManager {
 		} catch (error) {
 			// Ignore logout errors, we're clearing local data anyway
 			if (environment.debug) {
-				log.warn('⚠️  Logout endpoint failed, clearing local data anyway');
+				logger.warn('⚠️  Logout endpoint failed, clearing local data anyway');
 			}
 		} finally {
 			this.clearTokenData();
 			this.hasInitialized = false; // Allow re-initialization after logout
 			if (environment.debug) {
-				log.info('🔑 Logged out successfully');
+				logger.log('🔑 Logged out successfully');
 			}
 		}
 	}
@@ -392,7 +394,7 @@ export class AuthManager {
 			}
 		} catch (error) {
 			if (environment.debug) {
-				log.warn('⚠️  Could not decode JWT token expiry, using default');
+				logger.warn('⚠️  Could not decode JWT token expiry, using default');
 			}
 		}
 

@@ -1,8 +1,10 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
+import { Logger } from '@nestjs/common';
 import { environment } from '../environments/environment.js';
 import { authManager } from './auth-manager.js';
 import { sanitizeErrorMessage } from './security-utils.js';
-import log from 'electron-log';
+
+const logger = new Logger('ApiClient');
 
 export class GauzyApiClient {
 	private static instance: GauzyApiClient;
@@ -49,14 +51,14 @@ export class GauzyApiClient {
 			(response) => response,
 			async (error: AxiosError) => {
 				if (this.isDebug()) {
-					log.error('🔴 API Client Error Details:');
-					log.error(`   URL: ${error.config?.url}`);
-					log.error(`   Method: ${error.config?.method?.toUpperCase()}`);
-					log.error(`   Status: ${error.response?.status}`);
-					log.error(`   Message: ${error.message}`);
+					logger.error('🔴 API Client Error Details:');
+					logger.error(`   URL: ${error.config?.url}`);
+					logger.error(`   Method: ${error.config?.method?.toUpperCase()}`);
+					logger.error(`   Status: ${error.response?.status}`);
+					logger.error(`   Message: ${error.message}`);
 					if (error.response?.data) {
 						const sanitizedData = sanitizeErrorMessage(error.response.data);
-						log.error(`   Response: ${JSON.stringify(sanitizedData, null, 2)}`);
+						logger.error(`   Response: ${JSON.stringify(sanitizedData, null, 2)}`);
 					}
 				}
 
@@ -67,7 +69,7 @@ export class GauzyApiClient {
 					!error.config?.url?.includes('/auth/')
 				) {
 					if (environment.debug) {
-						log.warn('🔄 Received 401, attempting token refresh...');
+						logger.warn('🔄 Received 401, attempting token refresh...');
 					}
 
 					const refreshed = await authManager.refreshToken();
@@ -92,10 +94,10 @@ export class GauzyApiClient {
 
 		// Only log initialization in debug mode and to stderr
 		if (this.isDebug()) {
-			log.info('🔧 API Client initialized');
-			log.info(`   Base URL: ${baseUrl}`);
-			log.info(`   Timeout: ${timeout}ms`);
-			log.info(`   Auto Login: ${environment.auth.autoLogin ? '✓ Enabled' : '❌ Disabled'}`);
+			logger.log('🔧 API Client initialized');
+			logger.log(`   Base URL: ${baseUrl}`);
+			logger.log(`   Timeout: ${timeout}ms`);
+			logger.log(`   Auto Login: ${environment.auth.autoLogin ? '✓ Enabled' : '❌ Disabled'}`);
 		}
 	}
 
@@ -107,7 +109,7 @@ export class GauzyApiClient {
 			await authManager.initialize();
 		} catch (error) {
 			if (this.isDebug()) {
-				log.error('❌ Auto-login failed:', error instanceof Error ? error.message : 'Unknown error');
+				logger.error('❌ Auto-login failed:', error instanceof Error ? error.message : 'Unknown error');
 			}
 		}
 	}
@@ -167,13 +169,13 @@ export class GauzyApiClient {
 		if (config.baseUrl) {
 			this.client.defaults.baseURL = config.baseUrl;
 			if (this.isDebug()) {
-				log.info(`🔧 Base URL updated to: ${config.baseUrl}`);
+				logger.log(`🔧 Base URL updated to: ${config.baseUrl}`);
 			}
 		}
 		if (config.timeout) {
 			this.client.defaults.timeout = config.timeout;
 			if (this.isDebug()) {
-				log.info(`🔧 Timeout updated to: ${config.timeout}ms`);
+				logger.log(`🔧 Timeout updated to: ${config.timeout}ms`);
 			}
 		}
 	}
@@ -230,7 +232,7 @@ export class GauzyApiClient {
 
 	private logError(method: string, path: string, error: any): void {
 		if (this.isDebug()) {
-			log.error(`🔴 ${method} ${path} failed:`, sanitizeErrorMessage(error));
+			logger.error(`🔴 ${method} ${path} failed:`, sanitizeErrorMessage(error));
 		}
 	}
 
@@ -294,7 +296,7 @@ export class GauzyApiClient {
 				} catch (error) {
 					// Authenticated endpoint test failed, but basic connectivity works
 					if (this.isDebug()) {
-						log.warn('Authenticated endpoint test failed:', error instanceof Error ? error.message : 'Unknown error');
+						logger.warn('Authenticated endpoint test failed:', error instanceof Error ? error.message : 'Unknown error');
 					}
 				}
 			}

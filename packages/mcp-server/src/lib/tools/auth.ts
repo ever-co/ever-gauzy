@@ -1,9 +1,11 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client.js';
 import { authManager } from '../common/auth-manager.js';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils.js';
-import log from 'electron-log';
+
+const logger = new Logger('AuthTools');
 
 /**
  * Register authentication tools with the MCP server
@@ -47,7 +49,7 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 					};
 				}
 			} catch (error) {
-				log.error('Login tool error:', sanitizeForLogging(error));
+				logger.error('Login tool error:', sanitizeForLogging(error));
 				return {
 					content: [
 						{
@@ -73,7 +75,7 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 				]
 			};
 		} catch (error) {
-			log.error('Logout tool error:', sanitizeForLogging(error));
+			logger.error('Logout tool error:', sanitizeForLogging(error));
 			return {
 				content: [
 					{
@@ -114,7 +116,7 @@ ${
 				]
 			};
 		} catch (error) {
-			log.error('Auth status tool error:', sanitizeForLogging(error));
+			logger.error('Auth status tool error:', sanitizeForLogging(error));
 			return {
 				content: [
 					{
@@ -155,7 +157,7 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 				};
 			}
 		} catch (error) {
-			log.error('Token refresh tool error:', sanitizeForLogging(error));
+			logger.error('Token refresh tool error:', sanitizeForLogging(error));
 			return {
 				content: [
 					{
@@ -197,7 +199,7 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 				};
 			}
 		} catch (error) {
-			log.error('Auto-login tool error:', sanitizeForLogging(error));
+			logger.error('Auto-login tool error:', sanitizeForLogging(error));
 			return {
 				content: [
 					{
@@ -209,5 +211,5 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 		}
 	});
 
-	log.info('Authentication tools registered successfully');
+	logger.log('Authentication tools registered successfully');
 };
