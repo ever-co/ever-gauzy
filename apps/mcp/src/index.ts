@@ -42,14 +42,14 @@ async function main() {
 	}
 
 	// Normal MCP server startup for stdio communication
-	log.error('🚀 Starting Gauzy MCP Server...');
+	log.info('🚀 Starting Gauzy MCP Server...');
 
 	const { server, version } = createMcpServer();
 	const transport = new StdioServerTransport();
 	await server.connect(transport);
 
-	log.error(`✅ Gauzy MCP Server running on stdio - version: ${version}`);
-	log.error('🔗 Ready to accept MCP requests from clients like Claude Desktop');
+	log.info(`✅ Gauzy MCP Server running on stdio - version: ${version}`);
+	log.info('🔗 Ready to accept MCP requests from clients like Claude Desktop');
 }
 
 // Handle graceful shutdown

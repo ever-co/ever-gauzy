@@ -43,14 +43,14 @@ electronProcess.on('error', (err) => {
 // Handle process termination
 process.on('SIGINT', () => {
   console.log('🛑 Received SIGINT, shutting down gracefully...');
-  if (!electronProcess.killed) {
+  if (electronProcess && !electronProcess.killed) {
     electronProcess.kill('SIGINT');
   }
 });
 
 process.on('SIGTERM', () => {
   console.log('🛑 Received SIGTERM, shutting down gracefully...');
-  if (!electronProcess.killed) {
+  if (electronProcess && !electronProcess.killed) {
     electronProcess.kill('SIGTERM');
   }
 });

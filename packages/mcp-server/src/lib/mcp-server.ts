@@ -78,22 +78,22 @@ if (isMainModule()) {
 			await server.connect(transport);
 
 			// Use stderr for logging (stdout is used for MCP communication)
-			console.error(`Gauzy MCP Server running on stdio transport - version: ${version}`);
-			console.error('Server is ready to accept MCP requests from clients like Claude Desktop');
+			log.info(`Gauzy MCP Server running on stdio transport - version: ${version}`);
+			log.info('Server is ready to accept MCP requests from clients like Claude Desktop');
 		} catch (error) {
-			console.error('Fatal error starting Gauzy MCP Server:', error);
+			log.error('Fatal error starting Gauzy MCP Server:', error);
 			process.exit(1);
 		}
 	}
 
 	// Handle graceful shutdown
 	process.on('SIGINT', () => {
-		console.error('Received SIGINT, shutting down gracefully...');
+		log.info('Received SIGINT, shutting down gracefully...');
 		process.exit(0);
 	});
 
 	process.on('SIGTERM', () => {
-		console.error('Received SIGTERM, shutting down gracefully...');
+		log.info('Received SIGTERM, shutting down gracefully...');
 		process.exit(0);
 	});
 

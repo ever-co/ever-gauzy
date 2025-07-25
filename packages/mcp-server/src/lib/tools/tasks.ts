@@ -137,7 +137,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error fetching task count:', error);
-				throw new Error('Failed to fetch task count');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to fetch task count: ${errorMsg}`);
 			}
 		}
 	);
@@ -188,7 +189,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error fetching tasks pagination:', error);
-				throw new Error('Failed to fetch tasks pagination');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to fetch tasks pagination: ${errorMsg}`);
 			}
 		}
 	);
@@ -236,7 +238,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error fetching tasks by employee:', error);
-				throw new Error('Failed to fetch tasks by employee');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to fetch tasks by employee: ${errorMsg}`);
 			}
 		}
 	);
@@ -283,7 +286,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error fetching my tasks:', error);
-				throw new Error('Failed to fetch my tasks');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to fetch my tasks: ${errorMsg}`);
 			}
 		}
 	);
@@ -329,7 +333,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error fetching team tasks:', error);
-				throw new Error('Failed to fetch team tasks');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to fetch team tasks: ${errorMsg}`);
 			}
 		}
 	);
@@ -356,7 +361,7 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const createData = convertDateFields ({
+				const createData = convertDateFields({
 					...task_data,
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
@@ -374,7 +379,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error creating task:', error);
-				throw new Error('Failed to create task');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to create task: ${errorMsg}`);
 			}
 		}
 	);
@@ -408,7 +414,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error fetching task:', error);
-				throw new Error('Failed to fetch task');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to fetch task: ${errorMsg}`);
 			}
 		}
 	);
@@ -437,7 +444,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error updating task:', error);
-				throw new Error('Failed to update task');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to update task: ${errorMsg}`);
 			}
 		}
 	);
@@ -463,7 +471,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error deleting task:', error);
-				throw new Error('Failed to delete task');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to delete task: ${errorMsg}`);
 			}
 		}
 	);
@@ -513,7 +522,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error bulk creating tasks:', error);
-				throw new Error('Failed to bulk create tasks');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to bulk create tasks: ${errorMsg}`);
 			}
 		}
 	);
@@ -552,7 +562,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error bulk updating tasks:', error);
-				throw new Error('Failed to bulk update tasks');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to bulk update tasks: ${errorMsg}`);
 			}
 		}
 	);
@@ -582,7 +593,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error bulk deleting tasks:', error);
-				throw new Error('Failed to bulk delete tasks');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to bulk delete tasks: ${errorMsg}`);
 			}
 		}
 	);
@@ -629,7 +641,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error fetching task statistics:', error);
-				throw new Error('Failed to fetch task statistics');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to fetch task statistics: ${errorMsg}`);
 			}
 		}
 	);
@@ -669,7 +682,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error assigning task to employee:', error);
-				throw new Error('Failed to assign task to employee');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to assign task to employee: ${errorMsg}`);
 			}
 		}
 	);
@@ -711,7 +725,8 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				console.error('Error unassigning task from employee:', error);
-				throw new Error('Failed to unassign task from employee');
+				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				throw new Error(`Failed to unassign task from employee: ${errorMsg}`);
 			}
 		}
 	);

@@ -428,11 +428,12 @@
         refreshStatus();
 
         // Periodic status updates
-        setInterval(refreshStatus, 10000); // Check every 10 seconds
+        const tenSecondInterval = setInterval(refreshStatus, 10000); // Check every 10 seconds
         const statusInterval = setInterval(refreshStatus, 1000);
 
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
+            clearInterval(tenSecondInterval);
             clearInterval(statusInterval);
         });
 

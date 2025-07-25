@@ -163,8 +163,8 @@ Required environment variables:
 ```bash
 API_BASE_URL=http://localhost:3000
 GAUZY_AUTO_LOGIN=true
-GAUZY_AUTH_EMAIL=your-email@example.com
-GAUZY_AUTH_PASSWORD=your-password
+GAUZY_AUTH_EMAIL=<your-email>
+GAUZY_AUTH_PASSWORD=<your-password>
 ```
 
 ## Benefits of the New Architecture
