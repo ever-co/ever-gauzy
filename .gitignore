@@ -14,6 +14,9 @@ node_modules/
 *.sqlite3-shm
 *.sqlite3-wal
 
+# CodeQL databases
+codeql-db/
+
 # IDEs and editors
 /.idea
 .project

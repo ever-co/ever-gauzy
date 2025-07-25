@@ -2,10 +2,10 @@ name: 'CodeQL Analysis'
 
 on:
   push:
-    branches: [test]
+    branches: [develop, main, master]
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [test]
+    branches: [develop, main, master]
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -33,12 +33,19 @@ jobs:
         with:
           languages: ${{ matrix.language }}
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
 
-      #- run: |
-      #   make bootstrap
-      #   make release
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build project
+        run: yarn build
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
