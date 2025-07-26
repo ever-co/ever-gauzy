@@ -183,10 +183,10 @@ jobs:
             console.log(script.servermcp(true))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_API_SERVER_APP_NAME: 'ever-gauzy-mcp-server'
+          DESKTOP_MCP_SERVER_APP_NAME: 'ever-gauzy-mcp-server'
           COMPANY_SITE_LINK: 'https://gauzy.co'
           DESKTOP_MCP_SERVER_APP_DESCRIPTION: 'Ever Gauzy MCP Server'
-          DESKTOP_API_SERVER_APP_ID: 'com.ever.gauzymcpserver'
+          DESKTOP_MCP_SERVER_APP_ID: 'com.ever.gauzymcpserver'
 
       - name: Build Server
         run: |
