@@ -1,0 +1,52 @@
+{
+	"name": "@gauzy/server-mcp",
+	"version": "0.1.0",
+	"description": "Ever Gauzy MCP Server - Electron Desktop App with MCP Server integration",
+
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"homepage": "https://gauzy.co",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "module",
+	"main": "build/electron-main.js",
+	"scripts": {
+		"build": "npx rimraf build && npx tsc --project tsconfig.electron.json",
+		"build:prod": "yarn nx build server-mcp --configuration=production",
+		"build:dev": "yarn nx build server-mcp --configuration=development",
+		"build:electron": "yarn nx build-electron server-mcp",
+		"build:electron:prod": "yarn nx build-electron server-mcp --configuration=production",
+		"build:electron:dev": "yarn nx build-electron server-mcp --configuration=development",
+		"start:electron": "yarn build:electron && node electron-start.js",
+		"start": "yarn nx serve server-mcp"
+	},
+	"dependencies": {
+		"@gauzy/mcp-server": "^0.1.0",
+		"@modelcontextprotocol/sdk": "^1.13.1",
+		"axios": "^1.7.0",
+		"custom-electron-titlebar": "^4.2.8",
+		"dotenv": "^16.4.5",
+		"electron-log": "^4.4.8",
+		"electron-store": "^8.1.0",
+		"electron-updater": "^6.1.7",
+		"zod": "^3.25.67"
+	},
+	"devDependencies": {
+		"@electron/rebuild": "^3.2.10",
+		"@types/node": "^22.14.0",
+		"electron": "^30.0.1",
+		"electron-builder": "^24.13.3",
+		"rimraf": "^3.0.2",
+		"typescript": "^5.8.3"
+	}
+}

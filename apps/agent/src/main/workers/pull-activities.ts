@@ -28,9 +28,9 @@ class PullActivities {
 	private isStarted: boolean;
 	private activityService: KbMouseActivityService = new KbMouseActivityService();
 	private timerService: TimerService;
-	private readonly tenantId: string;
-	private readonly organizationId: string;
-	private readonly remoteId: string;
+	private tenantId: string;
+	private organizationId: string;
+	private remoteId: string;
 	private agentLogger: AgentLogger;
 	private appWindow: AppWindow;
 	private mainEvent: MainEvent;
@@ -39,12 +39,9 @@ class PullActivities {
 	private stoppedDate: Date ;
 	private activityStores: KeyboardMouseActivityStores;
 	private activityWindow: ActivityWindow;
-	constructor(user: UserLogin) {
+	constructor() {
 		this.listenerModule = null;
 		this.isStarted = false;
-		this.tenantId = user.tenantId;
-		this.organizationId = user.organizationId;
-		this.remoteId = user.remoteId;
 		this.agentLogger = AgentLogger.getInstance();
 		this.appWindow = AppWindow.getInstance(path.join(__dirname, '../..'));
 		this.appWindow.initScreenShotNotification();
@@ -55,11 +52,17 @@ class PullActivities {
 		this.activityWindow = ActivityWindow.getInstance();
 	}
 
-	static getInstance(user: UserLogin): PullActivities {
+	static getInstance(): PullActivities {
 		if (!PullActivities.instance) {
-			PullActivities.instance = new PullActivities(user);
+			PullActivities.instance = new PullActivities();
 		}
 		return PullActivities.instance;
+	}
+
+	public updateAppUserAuth(user: UserLogin) {
+		this.tenantId = user.tenantId;
+		this.organizationId = user.organizationId;
+		this.remoteId = user.remoteId;
 	}
 
 	private createOfflineTimer(startedAt: Date, employeeId: string): Timer {
@@ -285,23 +288,27 @@ class PullActivities {
 
 	async getScreenShot() {
 		this.agentLogger.info('Taking screenshot');
-		const screenData = getScreen();
 		const appSetting = getAppSetting();
-		const imgs = await getScreenshot({
-			monitor: {
-				captured: appSetting?.monitor?.captured
-			},
-			screenSize: screenData.screenSize,
-			activeWindow: screenData.activeWindow
-		});
-		this.agentLogger.info(`screenshot taken ${imgs.length ? imgs[0].filePath : imgs}`)
-		await this.showScreenshot(imgs, appSetting);
+		let imgs = [];
+		if (appSetting?.allowScreenshotCapture) {
+			const screenData = getScreen();
+			imgs = await getScreenshot({
+				monitor: {
+					captured: appSetting?.monitor?.captured
+				},
+				screenSize: screenData.screenSize,
+				activeWindow: screenData.activeWindow
+			});
+			this.agentLogger.info(`screenshot taken ${imgs.length ? imgs[0].filePath : imgs}`);
+			await this.showScreenshot(imgs, appSetting);
+		}
 		return imgs;
 	}
 
 	async activityProcess(timeData: { timeStart: Date; timeEnd: Date }, isScreenshot?: boolean, afkDuration?: number) {
 		try {
 			let imgs = [];
+			this.checkEmployeeSetting();
 			if (isScreenshot) {
 				imgs = await this.getScreenShot();
 			}
@@ -328,6 +335,18 @@ class PullActivities {
 			console.error('KB/M activity persist failed', error);
 			this.agentLogger.error(`KB/M activity persist failed ${JSON.stringify(error)}`);
 			this.timerStatusHandler('Error');
+		}
+	}
+
+	/** check employee setting periodically to keep agent setting up to date */
+	async checkEmployeeSetting() {
+		const authConfig = getAuthConfig();
+		if (authConfig?.token && authConfig?.user?.employee?.id) {
+			try {
+				await this.apiService.getEmployeeSetting(authConfig?.user?.employee?.id);
+			} catch (error) {
+				this.agentLogger.error(`Error get latest employee setting ${error.message}`);
+			}
 		}
 	}
 

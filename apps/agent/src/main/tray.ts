@@ -120,7 +120,7 @@ class TrayMenu {
 				}
 			},
 			{
-				id: 'server_exit',
+				id: 'tray_exit',
 				label: `${TranslateService.instant('BUTTONS.EXIT')}`,
 				click() {
 					app.quit();
@@ -153,6 +153,14 @@ class TrayMenu {
 		const menuIdx = this.TrayMenuList.findIndex((menu) => menu.id === menuId);
 		if (menuIdx !== -1) {
 			this.TrayMenuList[menuIdx].checked = checked;
+		}
+		this.tray?.setContextMenu(Menu.buildFromTemplate(this.TrayMenuList));
+	}
+
+	public updateExitVisibility(visible = true) {
+		const menuIdx = this.TrayMenuList.findIndex((menu) => menu.id === 'tray_exit');
+		if (menuIdx !== -1) {
+			this.TrayMenuList[menuIdx].visible = visible;
 		}
 		this.tray?.setContextMenu(Menu.buildFromTemplate(this.TrayMenuList));
 	}

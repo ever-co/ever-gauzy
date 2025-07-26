@@ -1,10 +1,13 @@
 import { LocalStore, TTimeSlot } from '@gauzy/desktop-lib';
-import { getAuthConfig, getApiBaseUrl, TAuthConfig } from './util';
+import { getAuthConfig, getApiBaseUrl, TAuthConfig, TEmployeeResponse } from './util';
 import fetch, { HeadersInit } from 'node-fetch';
 import * as moment from 'moment';
 import * as fs from 'node:fs';
 import * as FormData from 'form-data';
 import { TimeLogSourceEnum, TimeLogType } from '@gauzy/desktop-activity';
+import MainEvent from './events/events';
+import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../constant';
+
 
 type UploadParams = {
 	timeSlotId?: string;
@@ -61,8 +64,17 @@ export type TTimerStatusResponse = {
 	running?: boolean
 }
 
+
+
 export class ApiService {
 	static instance: ApiService;
+	private mainEvent: MainEvent;
+	private isLogout: boolean;
+
+	constructor() {
+		this.mainEvent = MainEvent.getInstance();
+	}
+
 	get auth(): Partial<TAuthConfig> {
 		const auth = getAuthConfig();
 		return auth;
@@ -71,7 +83,6 @@ export class ApiService {
 	static getInstance(): ApiService {
 		if (!ApiService.instance) {
 			ApiService.instance = new ApiService();
-			return ApiService.instance;
 		}
 		return ApiService.instance;
 	}
@@ -170,6 +181,29 @@ export class ApiService {
 		return this.postFile('/api/timesheet/screenshot', formData);
 	}
 
+	handleUnAuthorize() {
+		this.isLogout = true;
+		this.mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.LOGOUT_EVENT
+		});
+	}
+
+	async getEmployeeSetting(employeeId: string): Promise<Partial<TEmployeeResponse>> {
+		const authConfig = getAuthConfig();
+		const path = `/api/employee/${employeeId}`;
+		const employee: Partial<TEmployeeResponse> = await this.get(path, {});
+		if (employee?.id) {
+			authConfig.user.employee = employee;
+			this.mainEvent.emit(MAIN_EVENT, {
+				type: MAIN_EVENT_TYPE.UPDATE_APP_SETTING,
+				data: {
+					employee
+				}
+			});
+		}
+		return employee;
+	}
+
 	async request(
 		path: string,
 		options: {
@@ -203,9 +237,15 @@ export class ApiService {
 			if (!response.ok) {
 				const respText = await response.text();
 				console.warn('[Response Error]', response.status, respText);
+				if (response.status === 401 && !this.isLogout) {
+					this.handleUnAuthorize();
+				}
 				const error = new Error(`API error: ${response.status} ${respText}`);
 				error['status'] = response.status;
 				throw error;
+			}
+			if (this.isLogout) {
+				this.isLogout = false;
 			}
 			const respJson = await response.json();
 			return respJson;

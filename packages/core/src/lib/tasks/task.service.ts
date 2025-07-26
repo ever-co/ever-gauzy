@@ -697,7 +697,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		try {
 			// Extract tenantId from context or options
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
-			const { organizationId, projectId, isScreeningTask = false } = options;
+			const { organizationId, projectId } = options;
 
 			// Create a query builder for the Task entity
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
@@ -719,11 +719,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			} else {
 				query.andWhere(p(`"${query.alias}"."projectId" IS NULL`));
 			}
-
-			// Apply screening tasks filter
-			query.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), {
-				isScreeningTask
-			});
 
 			// Execute the query and parse the result to a number
 			const result = await query.getRawOne();
@@ -748,17 +743,21 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const tenantId = RequestContext.currentTenantId();
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-			query.leftJoinAndSelect(`${query.alias}.members`, 'members');
 
+			// Use unique alias to avoid conflict with 'teams' used later
 			if (organizationTeamId) {
-				query.leftJoinAndSelect(`${query.alias}.teams`, 'teams', 'teams.id = :organizationTeamId', {
+				query.leftJoinAndSelect(`${query.alias}.teams`, 'teamFilter', 'teamFilter.id = :organizationTeamId', {
 					organizationTeamId
 				});
 			} else {
-				query.leftJoinAndSelect(`${query.alias}.teams`, 'teams');
+				query.leftJoinAndSelect(`${query.alias}.teams`, 'teamFilter');
 			}
 
-			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+				})
+			);
 
 			query.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
@@ -766,48 +765,46 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						const subQuery = qb.subQuery();
 						subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
 						subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
-
-						return p('"task_members"."taskId" IN ') + subQuery.distinct(true).getQuery();
+						return p(`"${query.alias}"."id" IN (${subQuery.distinct(true).getQuery()})`);
 					});
 					web.orWhere((qb: SelectQueryBuilder<Task>) => {
 						const subQuery = qb.subQuery();
 						subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
 						subQuery.leftJoin(
 							'organization_team_employee',
-							'ote',
-							p('"ote"."organizationTeamId" = "task_team"."organizationTeamId"')
+							'organization_team_employee',
+							p(
+								'"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId" AND "organization_team_employee"."deletedAt" IS NULL'
+							)
 						);
-						subQuery.andWhere(p('"ote"."employeeId" = :employeeId'), { employeeId });
-						subQuery.andWhere(p(`"ote"."tenantId" = :tenantId`), { tenantId });
-
-						return p('"task_teams"."taskId" IN ') + subQuery.distinct(true).getQuery();
+						subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), { employeeId });
+						return p(`"${query.alias}"."id" IN (${subQuery.distinct(true).getQuery()})`);
 					});
 				})
 			);
 
 			// If unassigned for specific team
 			if (organizationTeamId) {
-				query.andWhere(
-					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere((qb: SelectQueryBuilder<Task>) => {
-							const subQuery = qb.subQuery();
-							subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
-							subQuery.andWhere(p('"task_teams"."organizationTeamId" = :organizationTeamId'), {
-								organizationTeamId
-							});
-							subQuery.andWhere(p('"task_teams"."tenantId" = :tenantId'), { tenantId });
-							return p('"task_teams"."taskId" IN ') + subQuery.distinct(true).getQuery();
-						});
-					})
-				);
+				query.andWhere((qb: SelectQueryBuilder<Task>) => {
+					const subQuery = qb.subQuery();
+					subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
+					subQuery.andWhere(p('"task_team"."organizationTeamId" = :organizationTeamId'), {
+						organizationTeamId
+					});
+					return p(`"${query.alias}"."id" IN (${subQuery.distinct(true).getQuery()})`);
+				});
 			}
 
-			// Find all assigned tasks of employee
-			const tasks = await query.getMany();
+			// Find all assigned tasks of employee with relations
+			// Use different aliases to avoid conflicts
+			const tasks = await query
+				.leftJoinAndSelect(`${query.alias}.members`, 'taskMembers')
+				.leftJoinAndSelect(`${query.alias}.teams`, 'taskTeams')
+				.getMany();
 
 			// Unassign member from All the Team Tasks
 			tasks.forEach((task) => {
-				if (task.teams.length) {
+				if (task.teams?.length) {
 					task.members = task.members.filter((member) => member.id !== employeeId);
 				}
 			});

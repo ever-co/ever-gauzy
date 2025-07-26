@@ -4177,7 +4177,7 @@
 			"AUTH_TOKEN": "Token uwierzytelniający",
 			"PRIVATE_REGISTRY_URL": "Prywatny adres URL rejestru",
 			"PLUGIN_INSTALL_CDN_ERROR": "Adres URL serwera nie może być pusty.",
-			"TRACK_KEYBOARD_MOUSE": "Dokładne śledzenie danych wejściowych"
+			"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Śledź aktywność klawiatury i myszy"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Przekroczono limit tygodniowy",
 		"OF_HRS": "Z {{ limit }} godz",
