@@ -1,3 +1,9 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .favorite-toggle-button {
   transition: all 0.2s ease-in-out;
   margin: 0 0.25rem;
@@ -5,6 +11,8 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  vertical-align: middle;
+  line-height: 1;
 
   &:hover {
     transform: scale(1.05);

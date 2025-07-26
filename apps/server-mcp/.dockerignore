@@ -1,0 +1,23 @@
+docker
+tmp
+README.md
+.env
+.env.*
+
+# git
+
+.git
+.gitignore
+.gitmodules
+
+# dependencies
+
+node_modules
+
+# misc
+
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+dist
+build

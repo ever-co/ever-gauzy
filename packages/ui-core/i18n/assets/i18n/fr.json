@@ -4169,7 +4169,7 @@
 			"AUTH_TOKEN": "Jeton d'authentification",
 			"PRIVATE_REGISTRY_URL": "URL du registre privé",
 			"PLUGIN_INSTALL_CDN_ERROR": "L'URL du serveur ne doit pas être null.",
-			"TRACK_KEYBOARD_MOUSE": "Suivi précis des saisies"
+			"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Suivre l’activité du clavier et de la souris"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "La limite hebdomadaire est dépassée.",
 		"OF_HRS": "De {{ limit }} heures",

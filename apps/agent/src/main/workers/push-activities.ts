@@ -77,7 +77,12 @@ class PushActivities {
 
 	async getOldestActivity(): Promise<KbMouseActivityTO | null> {
 		try {
-			const activity = await this.kbMouseActivityService.retrieve();
+			const authConfig = getAuthConfig();
+			const activity = await this.kbMouseActivityService.retrieve(
+				authConfig?.user?.id,
+				authConfig?.user?.employee?.organizationId,
+				authConfig?.user?.employee?.tenantId
+			);
 			return activity;
 		} catch (error) {
 			console.error('error on get one activity', error);
@@ -127,51 +132,53 @@ class PushActivities {
 		}
 	}
 
-	async saveImage(recordedAt: string, image: string[], timeSlotId?: string) {
+	async uploadCapturedImage(authConfig: TAuthConfig, recordedAt: string, imageTemp: string, timeSlotId?: string) {
+		this.agentLogger.info(`image temporary path ${imageTemp}`);
+		const isAccessed = await this.imageAccessed(imageTemp);
+		if (!isAccessed) {
+			return;
+		}
+
+		if (!fs.existsSync(imageTemp)) {
+			this.agentLogger.info(`temporary image doesn't exists ${imageTemp}`);
+			return;
+		}
+
+		this.agentLogger.info(`Preparing to save screenshots recordedAt ${recordedAt} in timeSlotId ${timeSlotId}`);
+		const respScreenshot = await this.apiService.uploadImages(
+			{
+				tenantId: authConfig.user.employee.tenantId,
+				organizationId: authConfig.user.employee.organizationId,
+				recordedAt,
+				timeSlotId
+			},
+			{ filePath: imageTemp }
+		);
+		if (respScreenshot?.timeSlotId) {
+			this.agentLogger.info(
+				`Screenshot image successfully added to timeSlotId ${respScreenshot?.timeSlotId}`
+			);
+			fs.unlinkSync(imageTemp);
+			this.agentLogger.info(`temp image unlink from the temp directory`);
+			return;
+		}
+		this.agentLogger.error(
+			`Failed to save screenshots to the api with response ${JSON.stringify(respScreenshot)}`
+		);
+	}
+
+	async saveImage(recordedAt: string, images: string[], timeSlotId?: string) {
 		try {
 			const auth = getAuthConfig();
 			const isAuthenticated = this.handleUserAuth(auth);
 			if (!isAuthenticated) {
 				return;
 			}
-			const pathTemp = image && Array.isArray(image) && image.length && image[0];
-			this.agentLogger.info(`image temporary path ${pathTemp}`);
-			if (!pathTemp) {
+			const imagesExists = images && Array.isArray(images) && images.length;
+			if (!imagesExists) {
 				return;
 			}
-
-			const isAccessed = await this.imageAccessed(pathTemp);
-			if (!isAccessed) {
-				return;
-			}
-
-			if (!fs.existsSync(pathTemp)) {
-				this.agentLogger.info(`temporary image doesn't exists ${pathTemp}`);
-				return;
-			}
-
-			this.agentLogger.info(`Preparing to save screenshots recordedAt ${recordedAt} in timeSlotId ${timeSlotId}`);
-
-			const respScreenshot = await this.apiService.uploadImages(
-				{
-					tenantId: auth.user.employee.tenantId,
-					organizationId: auth.user.employee.organizationId,
-					recordedAt,
-					timeSlotId
-				},
-				{ filePath: pathTemp }
-			);
-			if (respScreenshot?.timeSlotId) {
-				this.agentLogger.info(
-					`Screenshot image successfully added to timeSlotId ${respScreenshot?.timeSlotId}`
-				);
-				fs.unlinkSync(pathTemp);
-				this.agentLogger.info(`temp image unlink from the temp directory`);
-				return;
-			}
-			this.agentLogger.error(
-				`Failed to save screenshots to the api with response ${JSON.stringify(respScreenshot)}`
-			);
+			await Promise.all(images.map((imageTemp) => this.uploadCapturedImage(auth, recordedAt, imageTemp, timeSlotId)));
 		} catch (error) {
 			console.log(error);
 			throw error;

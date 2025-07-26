@@ -6,7 +6,7 @@ import MainEvent from './events';
 import * as path from 'node:path';
 import { TrayNotify } from './tray-notify';
 import { TEventArgs } from './event-types';
-import { getAuthConfig, delaySync } from '../util';
+import { getAuthConfig, delaySync, TAuthConfig, updateAgentSetting, getAppSetting } from '../util';
 
 const appRootPath: string = path.join(__dirname, '../..');
 
@@ -15,6 +15,7 @@ export default class EventHandler {
 	private AppWindow: AppWindow;
 	private mainEvent: MainEvent;
 	private trayNotify: TrayNotify;
+	private pullActivities: PullActivities;
 
 	constructor() {
 		this.mainEvent = MainEvent.getInstance();
@@ -29,21 +30,23 @@ export default class EventHandler {
 		return EventHandler.instance;
 	}
 
-	getPullActivities(authConfig) {
-		const pullActivities = PullActivities.getInstance({
+	getPullActivities(authConfig: TAuthConfig) {
+		if (!this.pullActivities) {
+			this.pullActivities = PullActivities.getInstance();
+		}
+		this.pullActivities.updateAppUserAuth({
 			tenantId: authConfig?.user?.employee?.tenantId,
 			organizationId: authConfig?.user?.employee?.organizationId,
 			remoteId: authConfig?.user?.id
 		});
-		return pullActivities;
 	}
 
 	private stopAppTracking(logout?: boolean) {
 		const authConfig = getAuthConfig();
-		const pullActivities = this.getPullActivities(authConfig);
+		this.getPullActivities(authConfig);
 		const pushActivities = PushActivities.getInstance();
-		pullActivities.stopListener();
-		pullActivities.stopTracking();
+		this.pullActivities.stopListener();
+		this.pullActivities.stopTracking();
 		if (logout) {
 			pushActivities.stopPooling();
 		}
@@ -52,19 +55,21 @@ export default class EventHandler {
 	private startAppTracking() {
 		const authConfig = getAuthConfig();
 		if (authConfig?.token) {
-			const pullActivities = this.getPullActivities(authConfig);
-			pullActivities.startListener();
-			pullActivities.startTracking();
+			this.getPullActivities(authConfig);
+			this.pullActivities.startListener();
+			this.pullActivities.startTracking();
 		}
 	}
 
 	private async handleLogout() {
-		this.stopAppTracking(true);
-		this.AppWindow.settingWindow?.close();
-		this.AppWindow.logWindow?.close();
-		await this.AppWindow.initAuthWindow();
-		await this.AppWindow.authWindow.loadURL();
-		this.AppWindow.authWindow.show();
+		if (!this.AppWindow.authWindow || this.AppWindow?.authWindow?.browserWindow?.isDestroyed) {
+			this.stopAppTracking(true);
+			this.AppWindow.closeSettingWindow();
+			this.AppWindow.closeLogWindow();
+			await this.AppWindow.initAuthWindow();
+			await this.AppWindow.authWindow.loadURL();
+			this.AppWindow.authWindow.show();
+		}
 	}
 
 	private async handleApplicationSetup() {
@@ -73,6 +78,29 @@ export default class EventHandler {
 		this.AppWindow.logWindow?.close();
 		await this.AppWindow.initSetupWindow();
 		this.AppWindow.setupWindow.show();
+	}
+
+	private updateAppSetting(args: TEventArgs) {
+		if (args?.data?.employee) {
+			updateAgentSetting(args.data.employee);
+			this.trayNotify.updateTrayExitMenu();
+			if (this.AppWindow?.settingWindow) {
+				const appSetting = getAppSetting();
+				this.AppWindow.settingWindow.webContents.send('setting_page_ipc', {
+					type: 'app_setting_update',
+					data: {
+						setting: appSetting
+					}
+				});
+			}
+			if (this.pullActivities) {
+				if (args?.data?.employee?.trackKeyboardMouseActivity) {
+					this.pullActivities.startListener();
+				} else {
+					this.pullActivities.stopListener();
+				}
+			}
+		}
 	}
 
 	async handleEvent(args: TEventArgs) {
@@ -90,8 +118,9 @@ export default class EventHandler {
 			}
 			case MAIN_EVENT_TYPE.STOP_TIMER:
 				return this.stopAppTracking();
-			default:
-				break;
+			case MAIN_EVENT_TYPE.UPDATE_APP_SETTING:
+				return this.updateAppSetting(args);
+			default: break;
 		}
 	}
 

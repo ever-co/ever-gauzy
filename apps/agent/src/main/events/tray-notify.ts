@@ -1,5 +1,5 @@
 import TrayMenu from "../tray";
-import { getTrayIcon } from '../util';
+import { getTrayIcon, getAppSetting } from '../util';
 import { environment } from '../../environments/environment';
 import { TEventArgs } from './event-types';
 
@@ -32,6 +32,14 @@ export class TrayNotify {
 				return this.trayMenu.updateStatus(args?.data?.trayMenuId, args?.data?.trayMenuChecked);
 			default:
 				break;
+		}
+	}
+
+	public updateTrayExitMenu() {
+		const appSetting = getAppSetting();
+		if (typeof appSetting?.allowAgentAppExit !== 'undefined') {
+			const canExit: boolean = !!appSetting?.allowAgentAppExit;
+			this.trayMenu.updateExitVisibility(canExit);
 		}
 	}
 }

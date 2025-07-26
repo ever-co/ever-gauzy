@@ -1,0 +1,110 @@
+{
+	"name": "server-mcp",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "apps/server-mcp/src",
+	"projectType": "application",
+	"targets": {
+		"build": {
+			"executor": "@nx/webpack:webpack",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
+			"options": {
+				"target": "node",
+				"compiler": "tsc",
+				"outputPath": "dist/apps/server-mcp",
+				"main": "apps/server-mcp/src/electron-main.ts",
+				"tsConfig": "apps/server-mcp/tsconfig.electron.json",
+				"assets": [
+					"apps/server-mcp/src/static",
+					"apps/server-mcp/src/favicon.ico",
+					"apps/server-mcp/src/preload"
+				],
+				"isolatedConfig": true,
+				"webpackConfig": "apps/server-mcp/webpack.config.js"
+			},
+			"configurations": {
+				"development": {},
+				"production": {
+					"optimization": true,
+					"extractLicenses": true,
+					"inspect": false,
+					"fileReplacements": [
+						{
+							"replace": "apps/server-mcp/src/environments/environment.ts",
+							"with": "apps/server-mcp/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"build-electron": {
+			"executor": "@nx/webpack:webpack",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
+			"options": {
+				"target": "node",
+				"compiler": "tsc",
+				"outputPath": "build",
+				"main": "apps/server-mcp/src/electron-main.ts",
+				"tsConfig": "apps/server-mcp/tsconfig.electron.json",
+				"assets": [
+					"apps/server-mcp/src/static",
+					"apps/server-mcp/src/favicon.ico",
+					"apps/server-mcp/src/preload"
+				],
+				"isolatedConfig": true,
+				"webpackConfig": "apps/server-mcp/webpack.config.js"
+			},
+			"configurations": {
+				"development": {},
+				"production": {
+					"optimization": true,
+					"extractLicenses": true,
+					"inspect": false,
+					"fileReplacements": [
+						{
+							"replace": "apps/server-mcp/src/environments/environment.ts",
+							"with": "apps/server-mcp/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"serve": {
+			"executor": "@nx/js:node",
+			"defaultConfiguration": "development",
+			"options": {
+				"buildTarget": "server-mcp:build"
+			},
+			"configurations": {
+				"development": {
+					"buildTarget": "server-mcp:build:development"
+				},
+				"production": {
+					"buildTarget": "server-mcp:build:production"
+				}
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint",
+			"outputs": ["{options.outputFile}"]
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "apps/server-mcp/jest.config.ts",
+				"passWithNoTests": true
+			},
+			"configurations": {
+				"unit": {
+					"passWithNoTests": true
+				},
+				"integration": {
+					"passWithNoTests": true
+				}
+			}
+		}
+	},
+	"tags": ["electron", "desktop", "mcp"]
+}
