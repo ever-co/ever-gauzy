@@ -38,7 +38,6 @@
 		"npmRebuild": true,
 		"asarUnpack": [
 			"node_modules/@sentry/electron",
-			"node_modules/better-sqlite3",
 			"node_modules/@sentry/profiling-node/lib"
 		],
 		"directories": {
@@ -72,11 +71,7 @@
 			"gatekeeperAssess": false,
 			"entitlements": "tools/build/entitlements.mas.plist",
 			"entitlementsInherit": "tools/build/entitlements.mas.plist",
-			"extendInfo": {
-				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup.",
-				"NSMicrophoneUsageDescription": "This app requires microphone access when recording sounds or detecting loudness.",
-				"NSCameraUsageDescription": "This app requires camera access when using the video sensing blocks."
-			}
+			"extendInfo": {}
 		},
 		"win": {
 			"publisherName": "Ever",
@@ -125,6 +120,12 @@
 		"axios": "^1.7.0",
 		"dotenv": "^16.4.5",
 		"zod": "^3.25.67",
+		"@sentry/electron": "^4.18.0",
+		"@sentry/node": "^7.101.1",
+		"@sentry/profiling-node": "^7.101.1",
+		"@sentry/replay": "^7.101.1",
+		"@sentry/tracing": "^7.101.1",
+		"@sentry/types": "^7.101.1",
 		"electron-log": "^4.4.8",
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
@@ -132,8 +133,7 @@
 		"custom-electron-titlebar": "^4.2.8"
 	},
 	"pkg": {
-		"assets": [
-		],
+		"assets": [],
 		"targets": [
 			"node20-linux-x64",
 			"node20-mac-x64",
