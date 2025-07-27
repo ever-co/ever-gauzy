@@ -23,6 +23,7 @@ export * from './lib/entity-with-members-card';
 export * from './lib/expenses';
 export * from './lib/editable-grid';
 export * from './lib/faq';
+export * from './lib/favorite-toggle';
 export * from './lib/feature-toggle';
 export * from './lib/file-uploader-input';
 export * from './lib/forms';

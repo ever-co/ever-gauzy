@@ -1,5 +1,16 @@
-import { KbMouseActivityService, KbMouseActivityTO, TTimeSlot } from '@gauzy/desktop-lib';
-import { KbMouseActivityPool, TKbMouseActivity, TMouseEvents } from '@gauzy/desktop-activity';
+import {
+	KbMouseActivityService,
+	KbMouseActivityTO,
+	TTimeSlot,
+	TimerService
+} from '@gauzy/desktop-lib';
+import {
+	KbMouseActivityPool,
+	TMouseEvents,
+	TimeSlotActivities,
+	ActivityType,
+	TimeLogSourceEnum,
+} from '@gauzy/desktop-activity';
 import { ApiService, TResponseTimeSlot } from '../api';
 import { getAuthConfig, TAuthConfig, getInitialConfig } from '../util';
 import * as moment from 'moment';
@@ -9,14 +20,17 @@ import * as fs from 'node:fs';
 import MainEvent from '../events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
 
+type TParamsActivities = Omit<TimeSlotActivities, 'recordedAt'> & { recordedAt: string };
+
 class PushActivities {
 	static instance: PushActivities;
 	private kbMousePool: KbMouseActivityPool;
 	private kbMouseActivityService: KbMouseActivityService;
-	private apiService = ApiService.getInstance();
+	private apiService: ApiService;
 	private agentLogger: AgentLogger;
 	private mainEvent: MainEvent;
 	private isNetworkError = false;
+	private timerService: TimerService;
 
 
 	constructor() {
@@ -24,7 +38,9 @@ class PushActivities {
 		this.getKbMousePoolModule();
 		this.agentLogger = AgentLogger.getInstance();
 		this.mainEvent = MainEvent.getInstance();
+		this.apiService = ApiService.getInstance();
 		this.trayUpdateMenuStatus('network', true);
+		this.timerService = new TimerService();
 	}
 
 	static getInstance(): PushActivities {
@@ -61,7 +77,12 @@ class PushActivities {
 
 	async getOldestActivity(): Promise<KbMouseActivityTO | null> {
 		try {
-			const activity = await this.kbMouseActivityService.retrieve();
+			const authConfig = getAuthConfig();
+			const activity = await this.kbMouseActivityService.retrieve(
+				authConfig?.user?.id,
+				authConfig?.user?.employee?.organizationId,
+				authConfig?.user?.employee?.tenantId
+			);
 			return activity;
 		} catch (error) {
 			console.error('error on get one activity', error);
@@ -111,65 +132,67 @@ class PushActivities {
 		}
 	}
 
-	async saveImage(recordedAt: string, image: string[], timeSlotId?: string) {
+	async uploadCapturedImage(authConfig: TAuthConfig, recordedAt: string, imageTemp: string, timeSlotId?: string) {
+		this.agentLogger.info(`image temporary path ${imageTemp}`);
+		const isAccessed = await this.imageAccessed(imageTemp);
+		if (!isAccessed) {
+			return;
+		}
+
+		if (!fs.existsSync(imageTemp)) {
+			this.agentLogger.info(`temporary image doesn't exists ${imageTemp}`);
+			return;
+		}
+
+		this.agentLogger.info(`Preparing to save screenshots recordedAt ${recordedAt} in timeSlotId ${timeSlotId}`);
+		const respScreenshot = await this.apiService.uploadImages(
+			{
+				tenantId: authConfig.user.employee.tenantId,
+				organizationId: authConfig.user.employee.organizationId,
+				recordedAt,
+				timeSlotId
+			},
+			{ filePath: imageTemp }
+		);
+		if (respScreenshot?.timeSlotId) {
+			this.agentLogger.info(
+				`Screenshot image successfully added to timeSlotId ${respScreenshot?.timeSlotId}`
+			);
+			fs.unlinkSync(imageTemp);
+			this.agentLogger.info(`temp image unlink from the temp directory`);
+			return;
+		}
+		this.agentLogger.error(
+			`Failed to save screenshots to the api with response ${JSON.stringify(respScreenshot)}`
+		);
+	}
+
+	async saveImage(recordedAt: string, images: string[], timeSlotId?: string) {
 		try {
 			const auth = getAuthConfig();
 			const isAuthenticated = this.handleUserAuth(auth);
 			if (!isAuthenticated) {
 				return;
 			}
-			const pathTemp = image && Array.isArray(image) && image.length && image[0];
-			this.agentLogger.info(`image temporary path ${pathTemp}`);
-			if (!pathTemp) {
+			const imagesExists = images && Array.isArray(images) && images.length;
+			if (!imagesExists) {
 				return;
 			}
-
-			const isAccessed = await this.imageAccessed(pathTemp);
-			if (!isAccessed) {
-				return;
-			}
-
-			if (!fs.existsSync(pathTemp)) {
-				this.agentLogger.info(`temporary image doesn't exists ${pathTemp}`);
-				return;
-			}
-
-			this.agentLogger.info(`Preparing to save screenshots recordedAt ${recordedAt} in timeSlotId ${timeSlotId}`);
-
-			const respScreenshot = await this.apiService.uploadImages(
-				{
-					tenantId: auth.user.employee.tenantId,
-					organizationId: auth.user.employee.organizationId,
-					recordedAt,
-					timeSlotId
-				},
-				{ filePath: pathTemp }
-			);
-			if (respScreenshot?.timeSlotId) {
-				this.agentLogger.info(
-					`Screenshot image successfully added to timeSlotId ${respScreenshot?.timeSlotId}`
-				);
-				fs.unlinkSync(pathTemp);
-				this.agentLogger.info(`temp image unlink from the temp directory`);
-				return;
-			}
-			this.agentLogger.error(
-				`Failed to save screenshots to the api with response ${JSON.stringify(respScreenshot)}`
-			);
+			await Promise.all(images.map((imageTemp) => this.uploadCapturedImage(auth, recordedAt, imageTemp, timeSlotId)));
 		} catch (error) {
 			console.log(error);
 			throw error;
 		}
 	}
 
-	private getDurationOverAllSeconds(timeStart: Date, timeEnd: Date) {
+	private getDurationSeconds(timeStart: Date, timeEnd: Date) {
 		if (timeStart && timeEnd) {
 			return Math.floor((timeEnd.getTime() - timeStart.getTime()) / 1000);
 		}
 		return 0;
 	}
 
-	private getDurationSeconds(timeStart: Date, timeEnd: Date, afkDuration?: number) {
+	private getDurationOverAllSeconds(timeStart: Date, timeEnd: Date, afkDuration?: number) {
 		if (!(timeStart && timeEnd)) {
 			return 0;
 		}
@@ -178,9 +201,21 @@ class PushActivities {
 		return Math.max(0, total - afk);
 	}
 
-	getActivities(activities: KbMouseActivityTO): TKbMouseActivity[] {
-		return [
-			{
+	getKeyboardActivities(activities: KbMouseActivityTO, duration: number, auth: TAuthConfig): TParamsActivities[] {
+		return [{
+			title: 'Keyboard and Mouse',
+			duration: duration,
+			projectId: null,
+			taskId: null,
+			date: moment(activities.timeStart).utc().format('YYYY-MM-DD'),
+			time: moment(activities.timeStart).utc().format('HH:mm:ss'),
+			type: ActivityType.APP,
+			organizationContactId: null,
+			organizationId: auth?.user?.employee?.organizationId,
+			source: TimeLogSourceEnum.DESKTOP,
+			recordedAt: moment(activities.timeStart).toISOString(),
+			employeeId: auth?.user?.employee?.id,
+			metaData: [{
 				kbPressCount: activities.kbPressCount,
 				kbSequence: (typeof activities.kbSequence === 'string'
 					? (() => {
@@ -205,7 +240,44 @@ class PushActivities {
 						}
 					})()
 					: activities.mouseEvents) as TMouseEvents[]
+			}]
+		}];
+	}
+
+	getActiveWindows(activities: KbMouseActivityTO, auth: TAuthConfig): TParamsActivities[] {
+		if (typeof activities.activeWindows === 'string') {
+			try {
+				activities.activeWindows = JSON.parse(activities.activeWindows);
+			} catch (error) {
+				this.agentLogger.error(`Error parsing activities data to json ${error.message}`);
+				return [];
 			}
+
+		}
+		if (!Array.isArray(activities.activeWindows)) {
+			return []
+		}
+		return activities.activeWindows.map((windowActivity) => ({
+			title: windowActivity.name,
+			duration: windowActivity.duration,
+			projectId: null,
+			taskId: null,
+			date: moment(activities.timeStart).utc().format('YYYY-MM-DD'),
+			time: moment(activities.timeStart).utc().format('HH:mm:ss'),
+			type: ActivityType.APP,
+			organizationContactId: null,
+			organizationId: auth?.user?.employee?.organizationId,
+			source: TimeLogSourceEnum.DESKTOP,
+			recordedAt: moment(activities.timeStart).toISOString(),
+			employeeId: auth?.user?.employee?.id,
+			metaData: windowActivity.meta
+		}));
+	}
+
+	getActivities(activities: KbMouseActivityTO, duration: number, auth: TAuthConfig): TParamsActivities[] {
+		return [
+			...this.getKeyboardActivities(activities, duration, auth),
+			...this.getActiveWindows(activities, auth)
 		];
 	}
 
@@ -240,22 +312,25 @@ class PushActivities {
 		if (!isAuthenticated) {
 			return;
 		}
+		const overall = this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration);
+		const duration = this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd));
 		return {
-			tenantId: auth.user.employee.tenantId,
-			organizationId: auth.user.employee.organizationId,
-			duration: this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration),
+			tenantId: auth?.user?.employee?.tenantId,
+			organizationId: auth?.user?.employee?.organizationId,
+			duration,
 			keyboard: activities.kbPressCount,
 			mouse: activities.mouseLeftClickCount + activities.mouseRightClickCount,
-			overall: this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd)),
+			overall,
 			startedAt: moment(activities.timeStart).toISOString(),
 			recordedAt: moment(activities.timeStart).toISOString(),
-			activities: this.getActivities(activities),
-			employeeId: auth.user.employee.employeeId
+			activities: this.getActivities(activities, overall, auth),
+			employeeId: auth?.user?.employee?.id
 		};
 	}
 
 	async saveActivities() {
 		try {
+			await this.saveOfflineTimer();
 			const activity = await this.getOldestActivity();
 			if (activity?.id) {
 				// remove activity from temp local database
@@ -293,6 +368,28 @@ class PushActivities {
 			return false;
 		}
 	}
+
+	async saveOfflineTimer() {
+		const notSyncTimer = await this.timerService.findToSynced();
+		const authConfig = getAuthConfig();
+		if (notSyncTimer.length) {
+			for (let i = 0; i < notSyncTimer.length; i++) {
+				const timerOffline = notSyncTimer[i].timer;
+				if (timerOffline?.isStartedOffline) {
+					await this.apiService.startTimer({
+						organizationId: authConfig?.user?.employee?.organizationId,
+						startedAt: timerOffline.startedAt,
+						tenantId: authConfig?.user?.employee?.tenantId,
+						organizationTeamId: null,
+						organizationContactId: null
+					});
+					await this.timerService.remove({ id: timerOffline?.id });
+				}
+			}
+		}
+	}
+
+
 
 	poolErrorHandler(error: Error) {
 		console.error(error);

@@ -176,7 +176,9 @@
 		"READ_MORE": "Meer lezen",
 		"READ_LESS": "Minder lezen",
 		"RECOVER": "Herstellen",
-		"ADD_MORE_SOURCES": "Meer bronnen toevoegen"
+		"ADD_MORE_SOURCES": "Meer bronnen toevoegen",
+		"REMOVE_FROM_FAVORITES": "Uit favorieten verwijderen",
+		"ADD_TO_FAVORITES": "Aan favorieten toevoegen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -828,6 +830,7 @@
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Dashboards",
 		"APPOINTMENTS": "Afspraken",
+		"FAVORITES": "Favorieten",
 		"ACCOUNTING": "Boekhouding",
 		"INCOME": "Inkomen",
 		"EXPENSES": "Uitgaven",
@@ -2061,10 +2064,19 @@
 			"INTEGRATIONS": "Integraties",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timerinstellingen",
+				"AGENT_SETTINGS": "Agent-instellingen",
 				"ALLOW_MODIFY_TIME": "Toestaan wijzigen tijd",
 				"ALLOW_MODIFY_TIME_INFO": "Toestaan dat de werknemer handmatige tijd kan aanpassen.",
 				"ALLOW_DELETE_TIME": "Toestaan Verwijderen van tijd",
 				"ALLOW_DELETE_TIME_INFO": "Medewerker toestaan tijd te verwijderen.",
+				"ALLOW_AGENT_APP_EXIT": "Afsluiten van de Agent-app toestaan",
+				"ALLOW_AGENT_APP_EXIT_INFO": "Werknemer toestaan de Agent applicatie af te sluiten. Wanneer uitgeschakeld, wordt de afsluitoptie geblokkeerd in de Agent app.",
+				"ALLOW_LOGOUT_FROM_AGENT_APP": "Uitloggen uit de Agent-app toestaan",
+				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Werknemer toestaan uit te loggen van de Agent applicatie. Wanneer uitgeschakeld, wordt de uitlogoptie geblokkeerd in de Agent app.",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Toetsenbord- en muisactiviteit volgen",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Volledige tracking van toetsenbord- en muisactiviteit inschakelen, inclusief toetsaanslagen en exacte muisbewegingen in alle desktop apps en agent.",
+				"TRACK_ALL_DISPLAYS": "Alle schermen volgen",
+				"TRACK_ALL_DISPLAYS_INFO": "Tracking op alle schermen inschakelen of beperken tot alleen het hoofdscherm.",
 				"ALLOW_MANUAL_TIME": "Toestaan van handmatige tijd",
 				"ALLOW_MANUAL_TIME_INFO": "Toestaan dat werknemer handmatige tijd toevoegt.",
 				"REQUIRE_REASON": "Vereis reden",
@@ -3649,6 +3661,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Functieniveau is vereist",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "De naam voor het type dienstverband is verplicht",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Afdelingsnaam is verplicht.",
+			"FAVORITE_ADDED": "{{ name }} toegevoegd aan favorieten",
+			"FAVORITE_REMOVED": "{{ name }} verwijderd uit favorieten",
+			"FAVORITE_ERROR": "Fout bij bijwerken van favorietenstatus",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Ongeldige invoer",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Vendor naam en jaar zijn verplicht",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Naam van de taal en niveau zijn vereist",
@@ -4163,7 +4178,7 @@
 			"AUTH_TOKEN": "Authenticatietoken",
 			"PRIVATE_REGISTRY_URL": "URL van privéregister",
 			"PLUGIN_INSTALL_CDN_ERROR": "De server-URL mag niet leeg zijn.",
-			"TRACK_KEYBOARD_MOUSE": "Exacte invoerregistratie"
+			"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Toetsenbord- en muisactiviteit volgen"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weeklimiet overschreden",
 		"OF_HRS": "Van {{ limit }} uur",

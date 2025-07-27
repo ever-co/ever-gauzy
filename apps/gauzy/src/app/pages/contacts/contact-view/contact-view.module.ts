@@ -11,6 +11,7 @@ import {
 } from '@nebular/theme';
 import {
 	EmployeeMultiSelectModule,
+	FavoriteToggleModule,
 	LeafletMapModule,
 	SharedModule,
 	TableComponentsModule
@@ -34,6 +35,7 @@ import { ContactViewRoutingModule } from './contact-view-routing.module';
 		NbListModule,
 		SharedModule,
 		EmployeeMultiSelectModule,
+		FavoriteToggleModule,
 		TableComponentsModule
 	],
 	declarations: [ContactViewComponent]

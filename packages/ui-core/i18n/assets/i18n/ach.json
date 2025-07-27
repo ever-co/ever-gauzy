@@ -130,7 +130,9 @@
 		"EXPAND": "crwdns11463:0crwdne11463:0",
 		"SHOW_MORE": "crwdns11483:0crwdne11483:0",
 		"START_WORK": "crwdns11525:0crwdne11525:0",
-		"ADD_MODULE": "Yamo Module"
+		"ADD_MODULE": "Yamo Module",
+		"REMOVE_FROM_FAVORITES": "Kwanyo ki i jami me ayera",
+		"ADD_TO_FAVORITES": "Med i jami me ayera"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -732,6 +734,7 @@
 		"DASHBOARD": "crwdns174:0crwdne174:0",
 		"DASHBOARDS": "crwdns11523:0crwdne11523:0",
 		"APPOINTMENTS": "crwdns3956:0crwdne3956:0",
+		"FAVORITES": "Gin ma itamo",
 		"ACCOUNTING": "crwdns3390:0crwdne3390:0",
 		"INCOME": "crwdns176:0crwdne176:0",
 		"EXPENSES": "crwdns178:0crwdne178:0",
@@ -1943,10 +1946,19 @@
 			"MEMBERS": "crwdns11223:0crwdne11223:0",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "crwdns3254:0crwdne3254:0",
+				"AGENT_SETTINGS": "Tero me Agent",
 				"ALLOW_MODIFY_TIME": "crwdns3256:0crwdne3256:0",
 				"ALLOW_MODIFY_TIME_INFO": "crwdns7538:0crwdne7538:0",
 				"ALLOW_DELETE_TIME": "crwdns3548:0crwdne3548:0",
 				"ALLOW_DELETE_TIME_INFO": "crwdns7540:0crwdne7540:0",
+				"ALLOW_AGENT_APP_EXIT": "Yub cako woko ki Agent App",
+				"ALLOW_AGENT_APP_EXIT_INFO": "Yub jami me tic odoko cako woko ki Agent App. Ka pe, jami me cako woko bi gengo i Agent App.",
+				"ALLOW_LOGOUT_FROM_AGENT_APP": "Yub golo pwail ki Agent App",
+				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Yub jami me golo pwail ki Agent App. Ka pe, jami me golo pwail bi gengo i Agent App.",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Tii lok me Keyboard kede Mouse",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Yub tici me neno lok weng ki tye i Keyboard kede Mouse, kany kany ki jami me tic i kompiuta weng kede Agent.",
+				"TRACK_ALL_DISPLAYS": "Tii neno jami weng",
+				"TRACK_ALL_DISPLAYS_INFO": "Yub tici me neno jami i wang kompiuta weng onyo jami me cing acel keken.",
 				"ALLOW_MANUAL_TIME": "crwdns3550:0crwdne3550:0",
 				"ALLOW_MANUAL_TIME_INFO": "crwdns7542:0crwdne7542:0",
 				"REQUIRE_REASON": "crwdns3258:0crwdne3258:0",
@@ -3368,6 +3380,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "crwdns3484:0crwdne3484:0",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "crwdns3061:0crwdne3061:0",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "crwdns2779:0crwdne2779:0",
+			"FAVORITE_ADDED": "{{ name }} added to favorites",
+			"FAVORITE_REMOVED": "{{ name }} removed from favorites",
+			"FAVORITE_ERROR": "Error updating favorite status",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "crwdns2781:0crwdne2781:0",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "crwdns4654:0crwdne4654:0",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "crwdns4656:0crwdne4656:0",

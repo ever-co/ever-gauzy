@@ -175,7 +175,9 @@
 		"READ_MORE": "Читать далее",
 		"READ_LESS": "Свернуть",
 		"RECOVER": "Восстановить",
-		"ADD_MORE_SOURCES": "Добавить больше источников"
+		"ADD_MORE_SOURCES": "Добавить больше источников",
+		"REMOVE_FROM_FAVORITES": "Удалить из избранного",
+		"ADD_TO_FAVORITES": "Добавить в избранное"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -836,6 +838,7 @@
 		"DASHBOARD": "Приборная доска",
 		"DASHBOARDS": "Рабочие столы",
 		"APPOINTMENTS": "Назначения",
+		"FAVORITES": "Избранное",
 		"ACCOUNTING": "Бухгалтер",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
@@ -2107,10 +2110,19 @@
 			"MEMBERS": "Сотрудник/Команды",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Настройки таймера",
+				"AGENT_SETTINGS": "Настройки агента",
 				"ALLOW_MODIFY_TIME": "Разрешить изменять время",
 				"ALLOW_MODIFY_TIME_INFO": "Разрешить сотруднику изменять время вручную.",
 				"ALLOW_DELETE_TIME": "Разрешить удаление времени",
 				"ALLOW_DELETE_TIME_INFO": "Разрешить сотруднику удалять время.",
+				"ALLOW_AGENT_APP_EXIT": "Разрешить выход из приложения агента",
+				"ALLOW_AGENT_APP_EXIT_INFO": "Разрешить сотруднику выходить из приложения агента. При отключении опция выхода будет заблокирована.",
+				"ALLOW_LOGOUT_FROM_AGENT_APP": "Разрешить выход из учётной записи в приложении агента",
+				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Разрешить сотруднику выходить из своей учётной записи в приложении агента. При отключении эта возможность будет заблокирована.",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Отслеживать активность клавиатуры и мыши",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Включить полное отслеживание активности клавиатуры и мыши, включая нажатия клавиш и точные движения мыши во всех настольных приложениях и агенте.",
+				"TRACK_ALL_DISPLAYS": "Отслеживать все дисплеи",
+				"TRACK_ALL_DISPLAYS_INFO": "Включить отслеживание на всех дисплеях или ограничить только основным дисплеем.",
 				"ALLOW_MANUAL_TIME": "Разрешить ручное время",
 				"ALLOW_MANUAL_TIME_INFO": "Разрешить сотруднику добавлять время вручную.",
 				"REQUIRE_REASON": "Требуется причина",
@@ -3671,6 +3683,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Требуется уровень сотрудника",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
+			"FAVORITE_ADDED": "{{ name }} добавлено в избранное",
+			"FAVORITE_REMOVED": "{{ name }} удалено из избранного",
+			"FAVORITE_ERROR": "Ошибка обновления статуса избранного",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Требуется название и год поставщика",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Требуется название языка и уровень",
@@ -4180,7 +4195,7 @@
 			"AUTH_TOKEN": "Токен аутентификации",
 			"PRIVATE_REGISTRY_URL": "URL частного реестра",
 			"PLUGIN_INSTALL_CDN_ERROR": "URL сервера не должен быть пустым.",
-			"TRACK_KEYBOARD_MOUSE": "Точное отслеживание ввода"
+			"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Отслеживать активность клавиатуры и мыши"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Еженедельный лимит превышен",
 		"OF_HRS": "Из {{ limit }} часов",

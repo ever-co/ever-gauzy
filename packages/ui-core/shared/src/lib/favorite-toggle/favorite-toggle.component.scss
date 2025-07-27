@@ -1,0 +1,58 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.favorite-toggle-button {
+  transition: all 0.2s ease-in-out;
+  margin: 0 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  vertical-align: middle;
+  line-height: 1;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &.favorite-active {
+    nb-icon {
+      color: var(--warning-color, #ffaa00);
+    }
+  }
+
+  .button-label {
+    margin-left: 0.5rem;
+  }
+
+  nb-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.spin {
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+.favorite-toggle-detail {
+  margin-left: 1rem;
+  margin-right: 0.5rem;
+}
+
+.favorite-toggle-list {
+  margin: 0 0.125rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

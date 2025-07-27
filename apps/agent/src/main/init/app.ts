@@ -1,4 +1,4 @@
-import { app, ipcMain, systemPreferences } from 'electron';
+import { app, ipcMain, systemPreferences, powerMonitor } from 'electron';
 import * as path from 'path';
 import { logger as log, store } from '@gauzy/desktop-core';
 import {
@@ -9,7 +9,6 @@ import {
 	TranslateService
 } from '@gauzy/desktop-lib';
 import {
-	delaySync,
 	getApiBaseUrl,
 	getAuthConfig,
 	getTrayIcon
@@ -21,6 +20,9 @@ import PullActivities from '../workers/pull-activities';
 import PushActivities from '../workers/push-activities';
 import EventHandler from '../events/event-handler';
 import { environment } from '../../environments/environment';
+import MainEvent from '../events/events';
+import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
+import { handleSplashScreen } from './splash';
 
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
@@ -32,9 +34,10 @@ LocalStore.setFilePath({
 });
 const appRootPath: string = path.join(__dirname, '../..');
 const appWindow = AppWindow.getInstance(appRootPath);
-
+const mainEvent = MainEvent.getInstance();
 const eventHandler = EventHandler.getInstance();
 eventHandler.mainListener();
+
 
 let trayMenu: TrayMenu;
 
@@ -65,18 +68,6 @@ function launchAtStartup(autoLaunch: boolean, hidden: boolean) {
 			break;
 		default:
 			break;
-	}
-}
-
-async function handleSplashScreen() {
-	try {
-		await appWindow.initSplashScreenWindow();
-		await appWindow.splashScreenWindow.loadURL();
-		appWindow.splashScreenWindow.show();
-		await delaySync(2000);
-	} catch (error) {
-		console.log('error splashScreenWindow', error);
-		// ignore error splashScreen
 	}
 }
 
@@ -186,7 +177,8 @@ function listenGrantAccess(pullActivities: PullActivities) {
 
 function listenIO() {
 	const auth = getAuthConfig();
-	const pullActivities = PullActivities.getInstance({
+	const pullActivities = PullActivities.getInstance();
+	pullActivities.updateAppUserAuth({
 		tenantId: auth.user.employee.tenantId,
 		organizationId: auth.user.employee.organizationId,
 		remoteId: auth.user.id
@@ -284,7 +276,47 @@ export async function InitApp() {
 		}
 	});
 
+	app.on('browser-window-focus', () => {
+		try {
+			if (process.platform === 'darwin') {
+				if (!app.dock.isVisible) {
+					app.dock.show();
+				}
+			}
+		} catch (error) {
+			console.error('Error to show back icon to dock', error);
+		}
+	});
+
 	await app.whenReady();
 	await initiationLocalDatabase();
 	await appReady();
+
+	powerMonitor.on('shutdown', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.STOP_TIMER
+		});
+	});
+	powerMonitor.on('suspend', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.STOP_TIMER
+		});
+	});
+	powerMonitor.on('lock-screen', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.STOP_TIMER
+		});
+	});
+	powerMonitor.on('unlock-screen', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.START_TIMER
+		});
+	});
+	powerMonitor.on('resume', () => {
+		mainEvent.emit(MAIN_EVENT, {
+			type: MAIN_EVENT_TYPE.START_TIMER
+		});
+	});
 }
+
+

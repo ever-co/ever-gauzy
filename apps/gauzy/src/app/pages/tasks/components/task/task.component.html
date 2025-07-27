@@ -102,6 +102,18 @@
 		[ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ALL_ORG_VIEW', 'ORG_TASK_VIEW', 'ORG_TASK_EDIT', 'ORG_TASK_DELETE']"
 	>
 		<div class="btn-group actions">
+			<ngx-favorite-toggle
+				*ngIf="selectedTask"
+				[entityType]="'Task'"
+				[entityId]="selectedTask.id"
+				[entityName]="selectedTask.title"
+				size="small"
+				status="basic"
+				spacing="list"
+				[disabled]="disableButton"
+				[showLabel]="false"
+				(favoriteToggled)="onTaskFavoriteToggled($event)"
+			></ngx-favorite-toggle>
 			<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'ORG_TASK_VIEW']">
 				<button
 					nbButton

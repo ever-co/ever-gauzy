@@ -31,7 +31,7 @@ import {
 	WorkspaceSigninVerifyTokenCommand
 } from './commands';
 import { RequestContext } from '../core/context';
-import { AuthRefreshGuard } from './../shared/guards';
+import { AuthRefreshGuard, TenantPermissionGuard } from './../shared/guards';
 import { UseValidationPipe } from '../shared/pipes';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
@@ -41,7 +41,8 @@ import {
 	HasRoleQueryDTO,
 	RefreshTokenDto,
 	WorkspaceSigninEmailVerifyDTO,
-	WorkspaceSigninDTO
+	WorkspaceSigninDTO,
+	SwitchWorkspaceDTO
 } from './dto';
 import { FindUserBySocialLoginDTO, SocialLoginBodyRequestDTO } from './social-account/dto';
 
@@ -302,5 +303,62 @@ export class AuthController {
 	@UseValidationPipe()
 	async refreshToken(@Body() input: RefreshTokenDto): Promise<{ token: string } | null> {
 		return await this.authService.getAccessTokenFromRefreshToken();
+	}
+
+	/**
+	 * Get all workspaces (tenants) that the current authenticated user has access to.
+	 *
+	 * @param includeTeams - Whether to include teams in the response (default: false).
+	 * @returns A promise that resolves to the user signin workspace response.
+	 */
+	@ApiOperation({
+		summary: 'Get user workspaces',
+		description:
+			'Retrieve all workspaces (tenants) that the authenticated user has access to. Optionally include team information for each workspace.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully retrieved user workspaces.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'User not authenticated or no workspaces found.'
+	})
+	@HttpCode(HttpStatus.OK)
+	@Get('/workspaces')
+	@UseGuards(TenantPermissionGuard)
+	async getUserWorkspaces(@Query('includeTeams') includeTeams?: string): Promise<IUserSigninWorkspaceResponse> {
+		return await this.authService.getUserWorkspaces(parseToBoolean(includeTeams));
+	}
+
+	/**
+	 * Switch the current user to a different workspace (tenant).
+	 *
+	 * @param input - Switch workspace data containing tenant ID.
+	 * @returns A promise that resolves to the authentication response with new tokens or null if switching fails.
+	 */
+	@ApiOperation({
+		summary: 'Switch user workspace',
+		description:
+			'Switch the authenticated user to a different workspace (tenant). Returns new authentication tokens for the target workspace.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully switched workspace. Returns new authentication tokens.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'User not authenticated or does not have access to the workspace.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid workspace switch request. Check that tenantId is a valid UUID.'
+	})
+	@HttpCode(HttpStatus.OK)
+	@Post('/switch-workspace')
+	@UseGuards(TenantPermissionGuard)
+	@UseValidationPipe({ whitelist: true })
+	async switchWorkspace(@Body() input: SwitchWorkspaceDTO): Promise<IAuthResponse | null> {
+		return await this.authService.switchWorkspace(input.tenantId);
 	}
 }

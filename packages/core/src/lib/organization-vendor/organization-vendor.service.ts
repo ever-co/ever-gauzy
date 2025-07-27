@@ -1,11 +1,14 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { In } from 'typeorm';
+import { BaseEntityEnum } from '@gauzy/contracts';
 import { OrganizationVendor } from './organization-vendor.entity';
 import { Expense } from '../expense/expense.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { TypeOrmOrganizationVendorRepository } from './repository/type-orm-organization-vendor.repository';
 import { MikroOrmOrganizationVendorRepository } from './repository/mikro-orm-organization-vendor.repository';
+import { FavoriteService } from '../core/decorators';
 
+@FavoriteService(BaseEntityEnum.OrganizationVendor)
 @Injectable()
 export class OrganizationVendorService extends TenantAwareCrudService<OrganizationVendor> {
 	constructor(

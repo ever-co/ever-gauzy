@@ -34,7 +34,11 @@ export class UpdateEmployeeDTO
 			'allowScreenshotCapture',
 			'allowManualTime',
 			'allowModifyTime',
-			'allowDeleteTime'
+			'allowDeleteTime',
+			'allowAgentAppExit',
+			'allowLogoutFromAgentApp',
+			'trackKeyboardMouseActivity',
+			'trackAllDisplays'
 		] as const)
 	)
 	implements IEmployeeUpdateInput {}

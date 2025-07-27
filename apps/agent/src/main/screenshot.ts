@@ -51,7 +51,7 @@ export async function getScreenshot(args: TArgScreen): Promise<TScreenShot[]> {
 		const sourcesFull = await electron.desktopCapturer.getSources({
 			types: ['screen'],
 			thumbnailSize: args.screenSize
-		})
+		});
 
 		const screens = [];
 
@@ -69,16 +69,14 @@ export async function getScreenshot(args: TArgScreen): Promise<TScreenShot[]> {
 					}
 				}
 			} else {
-				if (args.activeWindow) {
-					const fullScreen = sourcesFull.find((src) => src.id === source.id);
-					if (fullScreen) {
-						screens.push({
-							img: source.thumbnail.toPNG(),
-							name: source.name,
-							id: source.display_id,
-							fullScreen: fullScreen.thumbnail.toPNG()
-						});
-					}
+				const fullScreen = sourcesFull.find((src) => src.id === source.id);
+				if (fullScreen) {
+					screens.push({
+						img: source.thumbnail.toPNG(),
+						name: source.name,
+						id: source.display_id,
+						fullScreen: fullScreen.thumbnail.toPNG()
+					});
 				}
 			}
 		});

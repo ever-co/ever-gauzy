@@ -87,7 +87,6 @@ class AppWindow {
 					this.getPreloadPath(),
 					true
 				);
-
 				this.setupWindow.on('close', () => {
 					console.log('on change setup window');
 					this.setupWindow.destroy();
@@ -109,7 +108,6 @@ class AppWindow {
 				this.authWindow.browserWindow.on('close', () => {
 					this.destroyAuthWindow();
 				});
-				// this.authWindow.browserWindow.webContents.toggleDevTools();
 			}
 		} catch (error) {
 			console.error('Failed to initialize auth window', error);
@@ -147,7 +145,7 @@ class AppWindow {
 
 	async initLogWindow(): Promise<void> {
 		try {
-			if (!this.logWindow) {
+			if (!this.logWindow || this.logWindow?.isDestroyed()) {
 				console.log('this log window', this.logWindow);
 				this.logWindow = await createServerWindow(
 					null,
@@ -179,6 +177,20 @@ class AppWindow {
 			this.notificationWindow.show();
 		} catch (error) {
 
+		}
+	}
+
+	closeSettingWindow() {
+		if (this.settingWindow && !this.settingWindow?.isDestroyed) {
+			this.settingWindow.close();
+			this.settingWindow = null;
+		}
+	}
+
+	closeLogWindow() {
+		if (this.logWindow && !this.logWindow.isDestroyed) {
+			this.logWindow.close();
+			this.logWindow = null;
 		}
 	}
 }

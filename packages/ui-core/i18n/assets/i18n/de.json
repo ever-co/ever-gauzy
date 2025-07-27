@@ -176,7 +176,9 @@
 		"READ_MORE": "Mehr lesen",
 		"READ_LESS": "Weniger lesen",
 		"RECOVER": "Wiederherstellen",
-		"ADD_MORE_SOURCES": "Weitere Quellen hinzufügen"
+		"ADD_MORE_SOURCES": "Weitere Quellen hinzufügen",
+		"REMOVE_FROM_FAVORITES": "Aus Favoriten entfernen",
+		"ADD_TO_FAVORITES": "Zu Favoriten hinzufügen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -828,6 +830,7 @@
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Dashboards",
 		"APPOINTMENTS": "Termine",
+		"FAVORITES": "Favoriten",
 		"ACCOUNTING": "Buchhaltung",
 		"INCOME": "Einkommen",
 		"EXPENSES": "Ausgaben",
@@ -2061,10 +2064,19 @@
 			"INTEGRATIONS": "Integrationen",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer-Einstellungen",
+				"AGENT_SETTINGS": "Agent-Einstellungen",
 				"ALLOW_MODIFY_TIME": "Erlaube Änderungszeit.",
 				"ALLOW_MODIFY_TIME_INFO": "Erlaube dem Mitarbeiter, die manuelle Zeit zu ändern.",
 				"ALLOW_DELETE_TIME": "Erlaube das Löschen der Zeit",
 				"ALLOW_DELETE_TIME_INFO": "Mitarbeiter dürfen Zeit löschen.",
+				"ALLOW_AGENT_APP_EXIT": "Beenden der Agent-App erlauben",
+				"ALLOW_AGENT_APP_EXIT_INFO": "Mitarbeiter dürfen die Agent-Anwendung beenden. Wenn deaktiviert, wird die Beenden-Option in der Agent-App blockiert.",
+				"ALLOW_LOGOUT_FROM_AGENT_APP": "Abmeldung von der Agent-App erlauben",
+				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Mitarbeiter dürfen sich von der Agent-Anwendung abmelden. Wenn deaktiviert, wird die Abmelde-Option in der Agent-App blockiert.",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Tastatur- und Mausaktivität verfolgen",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Vollständige Verfolgung der Tastatur- und Mausaktivität aktivieren, einschließlich Tastenanschläge und exakte Mausbewegungen in allen Desktop-Apps und Agent.",
+				"TRACK_ALL_DISPLAYS": "Alle Bildschirme verfolgen",
+				"TRACK_ALL_DISPLAYS_INFO": "Verfolgung auf allen Bildschirmen aktivieren oder nur auf den Hauptbildschirm beschränken.",
 				"ALLOW_MANUAL_TIME": "Erlaube manuelle Zeit",
 				"ALLOW_MANUAL_TIME_INFO": "Ermöglichen Sie Mitarbeitern, manuelle Zeit hinzuzufügen.",
 				"REQUIRE_REASON": "Benötigen Sie einen Grund",
@@ -3645,6 +3657,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Mitarbeiterebene ist erforderlich",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Der Name der Beschäftigungsart ist erforderlich.",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Der Name der Abteilung ist erforderlich.",
+			"FAVORITE_ADDED": "{{ name }} zu Favoriten hinzugefügt",
+			"FAVORITE_REMOVED": "{{ name }} aus Favoriten entfernt",
+			"FAVORITE_ERROR": "Fehler beim Aktualisieren des Favoritenstatus",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Ungültige Eingabe",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Vendorname und Jahr sind erforderlich",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Sprachname und Niveau sind erforderlich.",
@@ -4159,7 +4174,7 @@
 			"AUTH_TOKEN": "Authentifizierungs-Token",
 			"PRIVATE_REGISTRY_URL": "Private Registry-URL",
 			"PLUGIN_INSTALL_CDN_ERROR": "Die Server-URL darf nicht leer sein.",
-			"TRACK_KEYBOARD_MOUSE": "Genaue Eingabeverfolgung"
+			"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Tastatur- und Mausaktivität verfolgen"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Wöchentliches Limit überschritten",
 		"OF_HRS": "Von {{ limit }} Stunden",

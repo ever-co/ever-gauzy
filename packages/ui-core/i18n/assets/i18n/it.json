@@ -176,7 +176,9 @@
 		"READ_MORE": "Leggi di più",
 		"READ_LESS": "Leggi meno",
 		"RECOVER": "Recupera",
-		"ADD_MORE_SOURCES": "Aggiungi più fonti"
+		"ADD_MORE_SOURCES": "Aggiungi più fonti",
+		"REMOVE_FROM_FAVORITES": "Rimuovi dai preferiti",
+		"ADD_TO_FAVORITES": "Aggiungi ai preferiti"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -828,6 +830,7 @@
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Dashboard",
 		"APPOINTMENTS": "Appuntamenti",
+		"FAVORITES": "Preferiti",
 		"ACCOUNTING": "Contabilità",
 		"INCOME": "Reddito",
 		"EXPENSES": "Spese",
@@ -2061,10 +2064,19 @@
 			"INTEGRATIONS": "Integrazioni",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Impostazioni del timer",
+				"AGENT_SETTINGS": "Impostazioni dell'agente",
 				"ALLOW_MODIFY_TIME": "Consenti la modifica dell'orario",
 				"ALLOW_MODIFY_TIME_INFO": "Consentire all'impiegato di modificare il tempo manuale",
 				"ALLOW_DELETE_TIME": "Consentire l'eliminazione del tempo",
 				"ALLOW_DELETE_TIME_INFO": "Consenti all'impiegato di eliminare il tempo",
+				"ALLOW_AGENT_APP_EXIT": "Consenti uscita dall'app Agent",
+				"ALLOW_AGENT_APP_EXIT_INFO": "Consenti al dipendente di uscire dall'applicazione Agente. Quando disabilitato, l'opzione di uscita sarà bloccata nell'app Agente.",
+				"ALLOW_LOGOUT_FROM_AGENT_APP": "Consenti logout dall'app Agent",
+				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Consenti al dipendente di disconnettersi dall'applicazione Agente. Quando disabilitato, l'opzione di logout sarà bloccata nell'app Agente.",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Traccia Attività Tastiera e Mouse",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Abilita il tracciamento completo dell'attività di tastiera e mouse, inclusi i tasti premuti e i movimenti esatti del mouse in tutte le app desktop e agente.",
+				"TRACK_ALL_DISPLAYS": "Traccia tutti i display",
+				"TRACK_ALL_DISPLAYS_INFO": "Abilita il tracciamento su tutti i display o limita solo al display primario.",
 				"ALLOW_MANUAL_TIME": "Consenti Tempo Manuale",
 				"ALLOW_MANUAL_TIME_INFO": "Consentire all'impiegato di aggiungere il tempo manualmente",
 				"REQUIRE_REASON": "Richiedi una ragione",
@@ -3649,6 +3661,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Livello dell'impiegato è richiesto",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Il nome del tipo di impiego è obbligatorio",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Il nome del dipartimento è obbligatorio",
+			"FAVORITE_ADDED": "{{ name }} è stato aggiunto ai preferiti",
+			"FAVORITE_REMOVED": "{{ name }} è stato rimosso dai preferiti",
+			"FAVORITE_ERROR": "Errore nell'aggiornamento dello stato dei preferiti",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Input non valido",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Il nome del venditore e l'anno sono obbligatori",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "È necessario inserire il nome della lingua e il livello",
@@ -4163,7 +4178,7 @@
 			"AUTH_TOKEN": "Token di autenticazione",
 			"PRIVATE_REGISTRY_URL": "URL del registro privato",
 			"PLUGIN_INSTALL_CDN_ERROR": "L'URL del server non deve essere vuoto.",
-			"TRACK_KEYBOARD_MOUSE": "Tracciamento Input Preciso"
+			"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Traccia Attività Tastiera e Mouse"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Limite settimanale superato",
 		"OF_HRS": "Di {{ limit }} ore",

@@ -1,0 +1,18 @@
+<button
+	type="button"
+	nbButton
+	role="switch"
+	[attr.aria-label]="tooltipText || (entityName ? 'Toggle ' + entityName : 'Toggle favorite')"
+	[attr.aria-pressed]="isFavorite"
+	[status]="status"
+	[size]="size"
+	[disabled]="disabled || loading"
+	[nbTooltip]="tooltipText"
+	(click)="toggleFavorite()"
+	[class]="buttonClasses"
+>
+	<nb-icon [icon]="loading ? 'loader-outline' : icon" [status]="iconStatus" [class.spin]="loading"></nb-icon>
+	<span *ngIf="showLabel" class="button-label">
+		{{ buttonLabel }}
+	</span>
+</button>

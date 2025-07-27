@@ -176,7 +176,9 @@
 		"READ_MORE": "Ler mais",
 		"READ_LESS": "Ler menos",
 		"RECOVER": "Recuperar",
-		"ADD_MORE_SOURCES": "Adicionar mais fontes"
+		"ADD_MORE_SOURCES": "Adicionar mais fontes",
+		"REMOVE_FROM_FAVORITES": "Remover dos favoritos",
+		"ADD_TO_FAVORITES": "Adicionar aos favoritos"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -828,6 +830,7 @@
 		"DASHBOARD": "Painel de Controle",
 		"DASHBOARDS": "Painéis de controle",
 		"APPOINTMENTS": "Consultas",
+		"FAVORITES": "Favoritos",
 		"ACCOUNTING": "Contabilidade",
 		"INCOME": "Rendimento",
 		"EXPENSES": "Despesas",
@@ -2061,10 +2064,19 @@
 			"INTEGRATIONS": "Integrações",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Configurações do temporizador",
+				"AGENT_SETTINGS": "Configurações do Agente",
 				"ALLOW_MODIFY_TIME": "Permitir Modificar Tempo",
 				"ALLOW_MODIFY_TIME_INFO": "Permitir que o funcionário modifique o tempo manualmente.",
 				"ALLOW_DELETE_TIME": "Permitir excluir tempo.",
 				"ALLOW_DELETE_TIME_INFO": "Permitir ao funcionário apagar o tempo.",
+				"ALLOW_AGENT_APP_EXIT": "Permitir sair do aplicativo do agente",
+				"ALLOW_AGENT_APP_EXIT_INFO": "Permitir que o funcionário saia do Aplicativo Agente. Quando desabilitado, a opção de saída será bloqueada no Aplicativo Agente.",
+				"ALLOW_LOGOUT_FROM_AGENT_APP": "Permitir logout no aplicativo do agente",
+				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Permitir que o funcionário faça logout do Aplicativo Agente. Quando desabilitado, a opção de logout será bloqueada no Aplicativo Agente.",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Rastrear atividade de teclado e mouse",
+				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Habilitar o rastreamento completo da atividade de teclado e mouse, incluindo teclas pressionadas e movimentos exatos do mouse em todos os aplicativos desktop e do agente.",
+				"TRACK_ALL_DISPLAYS": "Rastrear todas as telas",
+				"TRACK_ALL_DISPLAYS_INFO": "Habilitar o rastreamento em todas as telas ou limitar apenas à tela principal.",
 				"ALLOW_MANUAL_TIME": "Permitir tempo manual",
 				"ALLOW_MANUAL_TIME_INFO": "Permita que o funcionário adicione tempo manualmente.",
 				"REQUIRE_REASON": "Requerer Razão",
@@ -3649,6 +3661,9 @@
 			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "É necessário o nível de funcionário.",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "É necessário fornecer o nome do tipo de emprego.",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Nome do departamento é necessário.",
+			"FAVORITE_ADDED": "{{ name }} adicionado(a) aos favoritos",
+			"FAVORITE_REMOVED": "{{ name }} removido(a) dos favoritos",
+			"FAVORITE_ERROR": "Erro ao atualizar o status de favorito",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Entrada inválida",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Nome do vendedor e ano são necessários.",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Nome da linguagem e nível são obrigatórios",
@@ -4163,7 +4178,7 @@
 			"AUTH_TOKEN": "Token de autenticação",
 			"PRIVATE_REGISTRY_URL": "URL do registro privado",
 			"PLUGIN_INSTALL_CDN_ERROR": "O URL do servidor não deve estar vazio.",
-			"TRACK_KEYBOARD_MOUSE": "Rastreamento Preciso de Entrada"
+			"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Rastrear atividade de teclado e mouse"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Limite semanal excedido",
 		"OF_HRS": "De {{ limit }} horas.",

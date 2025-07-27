@@ -22,9 +22,15 @@ export class AgentLogger {
 	}
 
 	showMessage(message: string) {
-		this.appWindow.logWindow?.webContents?.send('log_state', {
-			msg: message
-		});
+        if (this.appWindow?.logWindow && !this.appWindow.logWindow.isDestroyed()) {
+			try {
+				this.appWindow.logWindow.webContents.send('log_state', {
+					msg: message
+				});
+			} catch (error) {
+				console.error('Log window error', error);
+			}
+        }
 	}
 
 	info(message: string) {

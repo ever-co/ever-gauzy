@@ -33,9 +33,9 @@ export class KbMouseActivityService implements IKbMouseActivityService<KbMouseAc
 		}
 	}
 
-	public async retrieve(): Promise<KbMouseActivityTO> {
+	public async retrieve(remoteId: string, organizationId: string, tenantId: string): Promise<KbMouseActivityTO> {
 		try {
-			const activitiesDao = await this._kbMouseDAO.current();
+			const activitiesDao = await this._kbMouseDAO.current(remoteId, organizationId, tenantId);
 			if (activitiesDao) {
 				const activities = new KbMouseActivity(activitiesDao);
 				return activities;

@@ -1,10 +1,17 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { IEmployee, IOrganization, IOrganizationContact, IOrganizationContactCreateInput } from '@gauzy/contracts';
-import { UntilDestroy } from '@ngneat/until-destroy';
+import {
+	IEmployee,
+	IFavorite,
+	IOrganization,
+	IOrganizationContact,
+	IOrganizationContactCreateInput
+} from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { LatLng } from 'leaflet';
 import { firstValueFrom } from 'rxjs';
+import { filter, switchMap, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FilterArrayPipe, LeafletMapComponent } from '@gauzy/ui-core/shared';
 import { Store } from '@gauzy/ui-core/core';
@@ -12,10 +19,10 @@ import { EmployeesService, OrganizationContactService } from '@gauzy/ui-core/cor
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-contact-view',
-    templateUrl: './contact-view.component.html',
-    styleUrls: ['./contact-view.component.scss'],
-    standalone: false
+	selector: 'ngx-contact-view',
+	templateUrl: './contact-view.component.html',
+	styleUrls: ['./contact-view.component.scss'],
+	standalone: false
 })
 export class ContactViewComponent extends TranslationBaseComponent implements OnInit {
 	tabs: any[];
@@ -41,8 +48,22 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 	}
 
 	ngOnInit(): void {
-		const contactId = this.activatedRoute.snapshot.params.id;
-		this._init(contactId);
+		// Watch for route parameter changes to handle navigation between different contacts
+		this.activatedRoute.params
+			.pipe(
+				filter((params) => !!params && !!params.id),
+				tap((params) => {
+					this.loading = true;
+					this.selectedContact = null; // Clear previous contact data
+				}),
+				switchMap((params) => {
+					// Return the contact ID for the next operator
+					return Promise.resolve(params.id);
+				}),
+				tap((contactId: string) => this._init(contactId)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	private _init(id: string) {
@@ -55,15 +76,22 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 						this.selectedContact = items;
 						if (this.selectedContact.contact.latitude && this.selectedContact.contact.longitude) {
 							setTimeout(() => {
-								this.leafletTemplate.addMarker(
-									new LatLng(
-										this.selectedContact.contact.latitude,
-										this.selectedContact.contact.longitude
-									)
-								);
+								// Check if leafletTemplate exists before adding marker
+								if (this.leafletTemplate) {
+									this.leafletTemplate.addMarker(
+										new LatLng(
+											this.selectedContact.contact.latitude,
+											this.selectedContact.contact.longitude
+										)
+									);
+								}
 							}, 200);
 						}
 					}
+				})
+				.catch((error) => {
+					console.error('Error loading contact:', error);
+					this.selectedContact = null;
 				})
 				.finally(() => {
 					this.loading = false;
@@ -105,5 +133,13 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 		};
 
 		await this.organizationContactService.update(this.selectedContact.id, organizationContactData);
+	}
+
+	/**
+	 * Handle favorite toggle event
+	 */
+	onFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// The FavoriteToggleComponent already shows success/error messages
+		// Additional logic can be added here if needed (analytics, state updates, etc.)
 	}
 }

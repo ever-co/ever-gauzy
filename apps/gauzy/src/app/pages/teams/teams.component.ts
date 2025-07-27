@@ -11,7 +11,9 @@ import {
 	ComponentLayoutStyleEnum,
 	ISelectedEmployee,
 	IOrganizationProject,
-	PermissionsEnum
+	PermissionsEnum,
+	IFavorite,
+	BaseEntityEnum
 } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,7 +27,8 @@ import {
 	OrganizationTeamsService,
 	ServerDataSource,
 	Store,
-	ToastrService
+	ToastrService,
+	GenericFavoriteService
 } from '@gauzy/ui-core/core';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -40,10 +43,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-teams',
-    templateUrl: './teams.component.html',
-    styleUrls: ['./teams.component.scss'],
-    standalone: false
+	selector: 'ga-teams',
+	templateUrl: './teams.component.html',
+	styleUrls: ['./teams.component.scss'],
+	standalone: false
 })
 export class TeamsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	@ViewChild('addEditTemplate')
@@ -77,6 +80,8 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 	};
 	private _refresh$: Subject<any> = new Subject();
 
+	public favoriteTeams: IFavorite[] = [];
+
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		private readonly employeesService: EmployeesService,
@@ -87,7 +92,8 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 		public readonly translateService: TranslateService,
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
-		private readonly httpClient: HttpClient
+		private readonly httpClient: HttpClient,
+		private readonly genericFavoriteService: GenericFavoriteService
 	) {
 		super(translateService);
 		this.setView();
@@ -144,6 +150,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				tap(() => this.teams$.next(true)),
 				tap(() => this.employees$.next(true)),
 				tap(() => this.projects$.next(true)),
+				tap(() => this.loadFavoriteTeams()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -509,5 +516,28 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 		} catch (error) {
 			console.log('An error occurred on open dialog');
 		}
+	}
+
+	/**
+	 * Loads the list of favorite teams for the current user or all for admin using the generic service.
+	 */
+	async loadFavoriteTeams() {
+		try {
+			this.favoriteTeams = await this.genericFavoriteService.loadFavorites(
+				BaseEntityEnum.OrganizationTeam,
+				this.organization,
+				this.selectedEmployeeId || this.store.user?.employee?.id
+			);
+		} catch (error) {
+			this.toastrService.danger('Failed to load favorite teams');
+		}
+	}
+
+	/**
+	 * Handle team favorite toggle event from the new component
+	 */
+	onTeamFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		// Reload favorites to keep the list in sync
+		this.loadFavoriteTeams();
 	}
 }

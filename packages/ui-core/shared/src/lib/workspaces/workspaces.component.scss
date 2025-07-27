@@ -6,6 +6,7 @@ div {
   align-items: center;
   justify-content: center;
   z-index: 1050;
+  cursor: pointer;
   button {
     width: 34px;
     height: 34px;
@@ -55,8 +56,7 @@ div {
   }
   nb-context-menu,
   .context-menu {
-    border-radius: 0 nb-theme(border-radius) nb-theme(border-radius)
-      nb-theme(border-radius);
+    border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius);
     padding: 0.3125rem;
   }
 }

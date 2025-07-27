@@ -1,0 +1,23 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./build",
+        "module": "ES2022",
+        "moduleResolution": "bundler",
+        "allowImportingTsExtensions": false,
+        "types": ["node"]
+    },
+    "files": [
+        "src/index.ts",
+        "src/electron-main.ts"
+    ],
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.d.ts"
+    ],
+    "exclude": [
+        "jest.config.ts",
+        "src/**/*.test.ts",
+        "src/**/*.spec.ts"
+    ]
+}
