@@ -3613,6 +3613,8 @@
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "הושגה. פנה למנהל המערכת לשינוי המגבלה.",
 			"WORKED_THIS_WEEK": "עבד השבוע",
 			"WEEKLY_LIMIT": "מגבלה שבועית",
+			"WARNING_RELOAD_TIMER_SOON": "אזהרה: הטיימר יטען מחדש בקרוב ליום החדש...",
+			"WARNING_TIMER_RELOADING": "אזהרה: הטיימר טוען מחדש את היום החדש. אנא המתן מספר שניות...",
 			"ERRORS": "אנא בדוק את הטופס לשגיאות",
 			"PROJECT_LOAD": "לא ניתן לטעון פרויקטים",
 			"COPIED": "קישור הועתק ללוח",

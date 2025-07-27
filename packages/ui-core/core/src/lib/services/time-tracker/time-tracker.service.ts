@@ -105,10 +105,29 @@ export class TimeTrackerService implements OnDestroy {
 	private readonly _trackType$: BehaviorSubject<string> = new BehaviorSubject(this.timeType);
 	private _worker: Worker;
 	private _timerSynced: ITimerSynced;
+	// Indicates whether the timer was started automatically after midnight
+	private startedAfterMidnight = false;
 	private readonly channel: BroadcastChannel;
 	private readonly timerStoreSubject = new BehaviorSubject(this.timerStore.getValue());
 	public timer$: Observable<number> = timer(BACKGROUND_SYNC_INTERVAL);
 	public trackType$: Observable<string> = this._trackType$.asObservable();
+	// Observable to allow components to react when the rollover occurs
+	public hasRolledOverToday$ = new BehaviorSubject<boolean>(false);
+	// Observable to notify components that rollover is about to happen (e.g., within 5 seconds)
+	public willRollOverSoon$ = new BehaviorSubject<boolean>(false);
+
+	// Internal flag indicating if the rollover has already occurred today
+	private _hasRolledOverToday = false;
+
+	// Getter and setter for the rollover flag, ensures the observable is updated on change
+	public get hasRolledOverToday() {
+		return this._hasRolledOverToday;
+	}
+
+	private set hasRolledOverToday(value: boolean) {
+		this._hasRolledOverToday = value;
+		this.hasRolledOverToday$.next(value); // emit the change to subscribers
+	}
 
 	constructor(
 		protected readonly timerStore: TimerStore,
@@ -212,6 +231,91 @@ export class TimeTrackerService implements OnDestroy {
 				}
 				throw error;
 			});
+	}
+
+	/**
+	 * Checks whether the current time is near or past midnight and,
+	 * if necessary, stops the timer before midnight and starts a new session just after.
+	 * This prevents a timer from running across two calendar days.
+	 */
+	public async isMidnight(): Promise<void> {
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		const now = moment.tz();
+		const endOfDay = moment.tz(timeZone).endOf('day');
+		const secondsToMidnight = endOfDay.diff(now, 'seconds');
+
+		// Notify that the timer is about to roll over (within 5 seconds before midnight)
+		if (secondsToMidnight <= 10 && !this.hasRolledOverToday) {
+			this.willRollOverSoon$.next(true);
+		} else {
+			this.willRollOverSoon$.next(false);
+		}
+
+		// Perform timer stop + restart 1 second before midnight (if not done already)
+		if (secondsToMidnight <= 5 && !this.hasRolledOverToday) {
+			this.hasRolledOverToday = true;
+			this.willRollOverSoon$.next(false);
+
+			try {
+				// Stop the current timer just before midnight
+				this.turnOffTimer();
+				delete this.timerConfig.source;
+
+				this.timerConfig = {
+					...this.timerConfig,
+					stoppedAt: toUTC(moment(this.timerConfig.startedAt).endOf('day')).toDate()
+				};
+
+				this.currentSessionDuration = 0;
+
+				const stopResult = await firstValueFrom(
+					this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/stop`, this.timerConfig)
+				);
+
+				if (!stopResult || !stopResult.id) {
+					throw new Error('Stop timer failed, response empty.');
+				}
+
+				this._broadcastState('STOP_TIMER');
+				this._saveStateToLocalStorage();
+
+				// Start a new timer session just after midnight
+				if (!this.running && stopResult) {
+					await this.sleep(5000); // wait 1s to ensure new day begins
+					this.turnOnTimer();
+					this.timerConfig = {
+						...this.timerConfig,
+						startedAt: toUTC(moment().startOf('day')).toDate(),
+						source: TimeLogSourceEnum.WEB_TIMER
+					};
+
+					const startResult = await firstValueFrom(
+						this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/start`, this.timerConfig)
+					);
+
+					if (!startResult || !startResult.id) {
+						throw new Error('Start timer failed, response empty.');
+					}
+
+					this._broadcastState('START_TIMER');
+					this._saveStateToLocalStorage();
+					this.startedAfterMidnight = true;
+				}
+				// Reset the rollover flags shortly after midnight (e.g., at 00:00:15)
+				await this.sleep(10000);
+				this.hasRolledOverToday = false;
+				this.startedAfterMidnight = false;
+			} catch (error) {
+				console.error('[isMidnight] Timer rollover error:', error);
+				this.hasRolledOverToday = false;
+				this.startedAfterMidnight = false;
+			}
+		}
+	}
+
+	// Utility function to pause execution for the given time (in milliseconds)
+	private sleep(ms: number): Promise<void> {
+		return new Promise((resolve) => setTimeout(resolve, ms));
 	}
 
 	/**

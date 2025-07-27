@@ -45,6 +45,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	@ViewChild(NgForm) form: NgForm;
 
 	trackType$: Observable<string> = this.timeTrackerService.trackType$;
+	hasRolledOverToday$ = this.timeTrackerService.hasRolledOverToday$;
+	willRollOverSoon$ = this.timeTrackerService.willRollOverSoon$;
 	private runningSubscription: Subscription;
 	private readonly workedThisWeek$: Observable<number> = this.timeTrackerService.workedThisWeek$;
 	private readonly reWeeklyLimit$: Observable<number> = this.timeTrackerService.reWeeklyLimit$;
@@ -241,7 +243,14 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 				tap((time) => (this.currentSessionTime = moment.utc(time * 1000).format('HH:mm:ss'))),
 				untilDestroyed(this)
 			)
-			.subscribe();
+			// Periodically check if it's midnight (when the timer is running).
+			// If so, attempt a safe rollover: stop the current timer before midnight
+			// and start a new session just after midnight to avoid crossing date boundaries.
+			.subscribe(() => {
+				if (this.running) {
+					this.timeTrackerService.isMidnight();
+				}
+			});
 		this.runningSubscription = this.timeTrackerService.running$
 			.pipe(
 				tap((isRunning) => (this.running = isRunning)),

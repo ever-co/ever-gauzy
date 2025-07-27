@@ -129,7 +129,7 @@ export class TimerService {
 			...(source ? { source } : {}),
 			startedAt: LessThanOrEqual(end as Date), // Include logs that started before or during the selected day
 			stoppedAt: And(MoreThanOrEqual(start as Date), Not(IsNull())), // Include logs that ended on or after the selected day and are completed
-
+			employeeId,
 			tenantId,
 			organizationId
 		};

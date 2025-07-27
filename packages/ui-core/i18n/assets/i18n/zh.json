@@ -3619,6 +3619,8 @@
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "已达到。请联系系统管理员修改限制。",
 			"WORKED_THIS_WEEK": "本周已工作",
 			"WEEKLY_LIMIT": "每周上限",
+			"WARNING_RELOAD_TIMER_SOON": "警告：计时器即将重新加载新的一天...",
+			"WARNING_TIMER_RELOADING": "警告：计时器正在为新的一天重新加载。请稍候几秒钟...",
 			"ERRORS": "请检查表单是否有错误",
 			"PROJECT_LOAD": "无法加载项目",
 			"COPIED": "链接已复制到剪贴板",

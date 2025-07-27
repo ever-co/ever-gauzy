@@ -3515,6 +3515,8 @@
 			"UNABLE_TO_UPDATE_ERROR_MESSAGE_PART_FIRST": "Impossible de mettre à jour le journal de temps. La limite hebdomadaire de temps de travail de ",
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "a été atteinte. Contactez l'administrateur système pour modifier les limites.",
 			"ERRORS": "Veuillez vérifier le formulaire pour les erreurs.",
+			"WARNING_RELOAD_TIMER_SOON": "Attention : Le minuteur va bientôt se recharger pour le nouveau jour...",
+			"WARNING_TIMER_RELOADING": "Attention : Le minuteur se recharge pour le nouveau jour. Veuillez patienter quelques secondes...",
 			"PROJECT_LOAD": "Impossible de charger les projets.",
 			"COPIED": "Lien copié dans le presse-papiers",
 			"INVITES_LOAD": "Impossible de charger les invitations.",

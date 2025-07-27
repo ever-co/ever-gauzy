@@ -3621,6 +3621,8 @@
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "has been reached. Contact system administrator to modify limits.",
 			"WORKED_THIS_WEEK": "Worked this week",
 			"WEEKLY_LIMIT": "Weekly limit",
+			"WARNING_RELOAD_TIMER_SOON": "Warning: Timer is reloading for the new day soon...",
+			"WARNING_TIMER_RELOADING": "Warning: The timer is reloading for the new day. Please wait a few seconds...",
 			"ERRORS": "Please check the form for errors",
 			"PROJECT_LOAD": "Could Not Load Projects",
 			"COPIED": "Link copied to clipboard",

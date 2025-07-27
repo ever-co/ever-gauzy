@@ -9,6 +9,6 @@ export class TimeLogUpdateCommand implements ICommand {
 		public readonly input: Partial<TimeLog>,
 		public readonly id: ID | TimeLog,
 		public readonly manualTimeSlot?: boolean | null,
-		public readonly forceDelete: boolean = false
+		public readonly forceDelete = false
 	) {}
 }

@@ -47,21 +47,35 @@
 												size="small"
 												[status]="isBillable ? 'primary' : 'basic'"
 												[nbTooltip]="'TIMER_TRACKER.IS_BILLABLE' | translate"
-												[disabled]="running"
+												[disabled]="running || (hasRolledOverToday$ | async)"
 											>
 												$
 											</button>
 										</div>
 										<div class="time-count">
-											<span class="current-session">
-												{{ currentSessionTime }}
-											</span>
-											<span class="today-time mt-2">
-												{{ 'TIMER_TRACKER.TODAY' | translate }}
-												{{ todaySessionTime }}
-											</span>
+											<div
+												class="timer-tracker-counter warning today-time mt-2 invalid-feedback d-block"
+												*ngIf="hasRolledOverToday$ | async"
+											>
+												{{ 'TOASTR.MESSAGE.WARNING_TIMER_RELOADING' | translate }}
+											</div>
+											<div class="timer-tracker-counter" *ngIf="!(hasRolledOverToday$ | async)">
+												<span class="current-session">
+													{{ currentSessionTime }}
+												</span>
+												<span class="today-time mt-2">
+													{{ 'TIMER_TRACKER.TODAY' | translate }}
+													{{ todaySessionTime }}
+												</span>
+											</div>
 											<span *ngIf="limitReached" class="today-time mt-2 invalid-feedback d-block">
 												{{ 'TOASTR.TITLE.MAX_LIMIT_REACHED' | translate }}
+											</span>
+											<span
+												*ngIf="willRollOverSoon$ | async"
+												class="today-time mt-2 invalid-feedback d-block"
+											>
+												{{ 'TOASTR.MESSAGE.WARNING_RELOAD_TIMER_SOON' | translate }}
 											</span>
 											<span
 												*ngIf="taskTitle && !isExpanded"
@@ -87,7 +101,12 @@
 														) | translate
 													"
 													(click)="toggleTimer(true)"
-													[disabled]="isDisable || limitReached || form.invalid"
+													[disabled]="
+														isDisable ||
+														limitReached ||
+														form.invalid ||
+														(hasRolledOverToday$ | async)
+													"
 												>
 													<fa-icon [icon]="!running ? play : pause"></fa-icon>
 												</button>
@@ -114,7 +133,7 @@
 							[defaultSelected]="false"
 							[organizationContactId]="organizationContactId"
 							[employeeId]="employee?.id"
-							[disabled]="running"
+							[disabled]="running || (hasRolledOverToday$ | async)"
 							[(ngModel)]="projectId"
 							#projectInput="ngModel"
 							[required]="organization?.requireProject"
@@ -136,7 +155,7 @@
 							name="taskId"
 							[projectId]="projectId"
 							[employeeId]="employee?.id"
-							[disabled]="running"
+							[disabled]="running || (hasRolledOverToday$ | async)"
 							[(ngModel)]="taskId"
 							#taskInput="ngModel"
 							[required]="organization?.requireTask"
@@ -161,7 +180,7 @@
 							fullWidth
 							[placeholder]="'TIMER_TRACKER.DESCRIPTION' | translate"
 							name="description"
-							[disabled]="running"
+							[disabled]="running || (hasRolledOverToday$ | async)"
 							[(ngModel)]="description"
 							#descriptionInput="ngModel"
 							[required]="organization?.requireDescription"
@@ -180,7 +199,13 @@
 								status="success"
 								[ngClass]="running ? 'button disabled' : 'button success start'"
 								size="medium"
-								[disabled]="running || isDisable || limitReached || form.invalid"
+								[disabled]="
+									running ||
+									isDisable ||
+									limitReached ||
+									form.invalid ||
+									(hasRolledOverToday$ | async)
+								"
 								(click)="toggleTimer(true)"
 							>
 								{{ 'TIMER_TRACKER.START_TIMER' | translate }}
