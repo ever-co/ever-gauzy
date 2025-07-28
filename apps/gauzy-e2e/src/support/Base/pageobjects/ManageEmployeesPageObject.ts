@@ -19,7 +19,7 @@ export const ManageEmployeesPage = {
 	usernameInputCss: '#username',
 	emailInputCss: '#email',
 	passwordInputCss: '#password',
-	addTagsDropdownCss: 'ng-select#addTags>div>span',
+	addTagsDropdownCss: 'nb-dialog-container ng-select#addTags>div>span',
 	tagsDropdownOption: 'div.ng-option',
 	imgInputCss: '#inputImageUrl',
 	nextButtonCss: 'button[type="submit"]',

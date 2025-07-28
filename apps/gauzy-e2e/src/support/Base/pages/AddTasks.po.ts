@@ -138,7 +138,6 @@ export const taskDescriptionTextareaVisible = () => {
 };
 
 export const enterTaskDescriptionTextareaData = (data) => {
-	clearField(AddTaskPage.descriptionTextareaCss);
 	enterInput(AddTaskPage.descriptionTextareaCss, data);
 };
 

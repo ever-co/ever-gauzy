@@ -48,8 +48,8 @@ export const verifyTextByIndex = (loc, data, index) => {
 		});
 };
 
-export const clickButton = (loc) => {
-	cy.get(loc, { timeout: taskTimeout }).click({ multiple: true, force: true });
+export const clickButton = (loc, options = {}) => {
+	cy.get(loc, { timeout: taskTimeout }).click({ force: true, ...options });
 };
 
 export const clickElementByText = (loc, data) => {

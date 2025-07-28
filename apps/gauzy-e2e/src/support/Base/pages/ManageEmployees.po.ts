@@ -15,6 +15,11 @@ import {
 } from '../utils/util';
 import { ManageEmployeesPage } from '../pageobjects/ManageEmployeesPageObject';
 
+export const visit = (options = {}) => {
+	cy.intercept('api/**/employee/**').as('employees');
+	cy.visit('/#/pages/employees', options);
+	cy.wait('@employees');
+};
 
 // INVITE EMPLOYEE BY EMAIL
 export const gridBtnExists = () => {

@@ -19,7 +19,7 @@ let employeeEmail = ' ';
 let imgUrl = ' ';
 
 //! waitToLoad. No request ever occurred.
-describe.skip('Add tasks test', () => {
+describe('Add tasks test', () => {
 	before(() => {
 		firstName = faker.person.firstName();
 		lastName = faker.person.lastName();
@@ -30,11 +30,11 @@ describe.skip('Add tasks test', () => {
 
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
-	it('Should be able to add new task', () => {
+	it.only('Should be able to add new task', () => {
 		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
 		CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
-		cy.visit('/#/pages/tasks/dashboard');
+		cy.visitAndWait('/#/pages/tasks/dashboard');
 		addTaskPage.gridBtnExists();
 		addTaskPage.gridBtnClick(1);
 		addTaskPage.addTaskButtonVisible();

@@ -12,10 +12,14 @@ import {
 } from '../utils/util';
 import { OrganizationProjectsPage } from '../pageobjects/OrganizationProjectsPageObject';
 
+export const visit = (options = {}) => {
+	cy.intercept('api/**/organization-projects/**').as('organizationProjects');
+	cy.visit('/#/pages/organization/projects', options);
+	cy.wait('@organizationProjects');
+};
+
 export const gridBtnExists = () => {
-	cy.intercept('/api/organization-contact*').as('waitToLoad');
 	verifyElementIsVisible(OrganizationProjectsPage.gridButtonCss);
-	cy.wait('@waitToLoad');
 };
 
 export const gridBtnClick = (index) => {
@@ -40,9 +44,7 @@ export const enterNameInputData = (data) => {
 };
 
 export const selectEmployeeDropdownVisible = () => {
-	verifyElementIsVisible(
-		OrganizationProjectsPage.selectEmployeeMultiSelectCss
-	);
+	verifyElementIsVisible(OrganizationProjectsPage.selectEmployeeMultiSelectCss);
 };
 
 export const clickSelectEmployeeDropdown = () => {
@@ -50,17 +52,11 @@ export const clickSelectEmployeeDropdown = () => {
 };
 
 export const selectEmployeeDropdownOption = (index) => {
-	clickButtonByIndex(
-		OrganizationProjectsPage.selectEmployeeDropdownOptionCss,
-		index
-	);
+	clickButtonByIndex(OrganizationProjectsPage.selectEmployeeDropdownOptionCss, index);
 };
 
 export const selectEmployeeFromDropdownByName = (name) => {
-	clickElementByText(
-		OrganizationProjectsPage.selectEmployeeDropdownOptionCss,
-		name
-	);
+	clickElementByText(OrganizationProjectsPage.selectEmployeeDropdownOptionCss, name);
 };
 
 export const tagsMultiSelectVisible = () => {

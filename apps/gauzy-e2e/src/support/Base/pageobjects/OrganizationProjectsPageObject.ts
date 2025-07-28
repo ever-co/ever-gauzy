@@ -4,7 +4,7 @@ export const OrganizationProjectsPage = {
 	tagsSelectCss: '#addTags',
 	tagsSelectOptionCss: '[type="checkbox"]',
 	closeTagsMultiSelectDropdownCss: '.ng-select-container > .ng-arrow-wrapper',
-	selectEmployeeMultiSelectCss: 'button[class="select-button placeholder"]',
+	selectEmployeeMultiSelectCss: 'nb-select[ng-reflect-placeholder="Add or Remove Employees"] button',
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
 	requestNewProjectButtonCss: 'button[status="success"]',
 	projectNameInputCss: '#name',
