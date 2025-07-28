@@ -1,28 +1,16 @@
 @use 'var' as *;
 
-.logo-header {
+.accordion.workspace {
   width: 100%;
   max-width: nb-theme(sidebar-width);
   max-height: 2.625rem;
   box-shadow: unset;
-  padding: 0.75rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-radius: nb-theme(border-radius);
-  box-shadow: var(--gauzy-shadow);
-
-  &:hover {
-    background: nb-theme(background-basic-color-2);
-  }
 
   .organization {
     display: flex;
     flex-direction: row;
     align-items: center;
-    flex: 1;
-    margin-left: 0.5rem;
+    width: 100%;
 
     img {
       width: 2.25rem;
@@ -32,12 +20,12 @@
     }
 
     .description {
-      > div {
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        width: fit-content;
-        max-width: 150px;
+      >div {
+		  overflow: hidden;
+		  white-space: nowrap;
+		  text-overflow: ellipsis;
+		  width: fit-content;
+		  max-width: 150px;
 
         &:first-child {
           font-size: 0.75rem;
@@ -51,21 +39,97 @@
     }
   }
 
-  nb-icon {
-    margin-left: 0.5rem;
+  .item.footer {
+    box-shadow: var(--gauzy-shadow);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    ::ng-deep{
+      .item-body {
+        padding: 5px;
+      }
+    }
   }
+}
+
+nb-accordion-item-header ::ng-deep nb-icon {
+  border: 1px solid nb-theme(border-basic-color-4);
+  border-radius: nb-theme(button-rectangle-border-radius);
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+nb-accordion-item-body ::ng-deep {
+  background-color: rgba(255, 255, 255, .05);
+}
+
+nb-accordion-item-body.setting ::ng-deep {
+  .item-body {
+    padding-top: 0;
+    padding-bottom: 0;
+
+    .border-bottom {
+      border: unset !important;
+    }
+
+    .item-body {
+      padding: 6px;
+    }
+  }
+}
+
+.setting.action ::ng-deep {
+	ga-main-nav-menu {
+		ga-sidebar-menu {
+			nb-accordion-item  {
+				nb-accordion-item-header {
+					box-shadow: unset;
+					border-width: 0;
+					nb-icon {
+						display: none;
+					}
+				}
+			}
+		}
+	}
+}
+
+nb-accordion-item:first-child.collapsed nb-accordion-item-header.principal {
+  border-bottom: none;
+  max-height: 42px;
+  background-color: unset;
+  border-radius: nb-theme(border-radius);
+  box-shadow: var(--gauzy-shadow);
 }
 
 .white-svg {
   filter: brightness(0) invert(1);
 }
 
+.link {
+  cursor: pointer;
+  margin: 0 10px;
+  padding: 10px;
+
+  &:hover {
+    background-color: rgba(126, 126, 143, 0.1);
+    border-radius: nb-theme(border-radius);
+  }
+}
+
+.text {
+  margin: 0 10px;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0em;
+}
+
 .logo {
-  img {
-    height: 22px;
-  }
-  object {
-    max-width: 128px;
-    max-height: 22px;
-  }
+	img {
+		height: 22px;
+	}
+	object {
+		max-width: 128px;
+		max-height: 22px;
+	}
 }
