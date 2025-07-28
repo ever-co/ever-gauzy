@@ -47,10 +47,10 @@ import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED, QuickActionsComponent } f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-header',
-    styleUrls: ['./header.component.scss'],
-    templateUrl: './header.component.html',
-    standalone: false
+	selector: 'ngx-header',
+	styleUrls: ['./header.component.scss'],
+	templateUrl: './header.component.html',
+	standalone: false
 })
 export class HeaderComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	isEmployee = false;
@@ -1288,7 +1288,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		if (!this.organization || !this.isEnabledTimeTracking()) {
 			return;
 		}
-
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 		const { id: organizationId, tenantId } = this.organization;
 		const { id: employeeId } = this.employee;
 
@@ -1297,7 +1297,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			organizationId,
 			tenantId,
 			employeeId,
-			source: TimeLogSourceEnum.WEB_TIMER
+			source: TimeLogSourceEnum.WEB_TIMER,
+			timeZone
 		});
 	}
 

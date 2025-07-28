@@ -106,10 +106,12 @@ export class TimeTrackerStatusService {
 
 	public status(): Promise<ITimerStatusWithWeeklyLimits> {
 		const { tenantId, organizationId } = this._timeTrackerService.timerConfig;
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 		return this._timeTrackerService.checkTimerStatus({
 			tenantId,
 			organizationId,
-			relations: ['employee']
+			relations: ['employee'],
+			timeZone
 		});
 	}
 }

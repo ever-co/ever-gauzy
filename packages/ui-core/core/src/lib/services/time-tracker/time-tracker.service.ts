@@ -263,7 +263,8 @@ export class TimeTrackerService implements OnDestroy {
 
 				this.timerConfig = {
 					...this.timerConfig,
-					stoppedAt: toUTC(moment(this.timerConfig.startedAt).endOf('day')).toDate()
+					timeZone,
+					stoppedAt: toUTC(moment()).toDate()
 				};
 
 				this.currentSessionDuration = 0;
@@ -285,7 +286,8 @@ export class TimeTrackerService implements OnDestroy {
 					this.turnOnTimer();
 					this.timerConfig = {
 						...this.timerConfig,
-						startedAt: toUTC(moment().startOf('day')).toDate(),
+						timeZone,
+						startedAt: toUTC(moment()).toDate(),
 						source: TimeLogSourceEnum.WEB_TIMER
 					};
 
@@ -434,18 +436,15 @@ export class TimeTrackerService implements OnDestroy {
 	 */
 	getTimerStatus(params: ITimerStatusInput): Promise<ITimerStatusWithWeeklyLimits> {
 		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-		const localStart = moment.tz(timeZone).startOf('day');
-		const offsetMinutes = localStart.utcOffset();
-		const todayStart = localStart.clone().utc().add(offsetMinutes, 'minutes').toISOString();
-		const localEnd = moment.tz(timeZone).endOf('day');
-		const offsetMinutesEnd = localEnd.utcOffset();
-		const todayEnd = localEnd.clone().utc().add(offsetMinutesEnd, 'minutes').toISOString();
+		const todayStart = moment.tz(timeZone).startOf('day').utc().toISOString(); // np. '2025-07-01T22:00:00Z'
+		const todayEnd = moment.tz(timeZone).endOf('day').utc().toISOString();
 		return firstValueFrom(
 			this.http.get<ITimerStatusWithWeeklyLimits>(`${API_PREFIX}/timesheet/timer/status`, {
 				params: toParams({
 					...params,
 					todayStart,
-					todayEnd
+					todayEnd,
+					timeZone
 				})
 			})
 		);
@@ -486,12 +485,14 @@ export class TimeTrackerService implements OnDestroy {
 
 	async toggle(): Promise<ITimeLog> {
 		if (this.hasReachedWeeklyLimit()) return;
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 		if (this.running) {
 			this.turnOffTimer();
 			delete this.timerConfig.source;
 			this.timerConfig = {
 				...this.timerConfig,
+				timeZone,
 				stoppedAt: toUTC(moment()).toDate()
 			};
 			this.currentSessionDuration = 0;
@@ -506,6 +507,7 @@ export class TimeTrackerService implements OnDestroy {
 			this.turnOnTimer();
 			this.timerConfig = {
 				...this.timerConfig,
+				timeZone,
 				startedAt: toUTC(moment()).toDate(),
 				source: TimeLogSourceEnum.WEB_TIMER
 			};

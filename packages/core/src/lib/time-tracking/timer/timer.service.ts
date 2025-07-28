@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { IsNull, Not, In, MoreThanOrEqual, LessThanOrEqual, And } from 'typeorm';
+import { IsNull, Not, In, Between } from 'typeorm';
 import * as moment from 'moment';
 import {
 	TimeLogType,
@@ -124,60 +124,53 @@ export class TimerService {
 		let logs: TimeLog[] = [];
 		let lastLog: TimeLog;
 
-		// Define time range filters for logs that overlap with the selected day
-		const completedLogsQueryParams = {
+		// Define common parameters for querying
+		const queryParams = {
 			...(source ? { source } : {}),
-			startedAt: LessThanOrEqual(end as Date), // Include logs that started before or during the selected day
-			stoppedAt: And(MoreThanOrEqual(start as Date), Not(IsNull())), // Include logs that ended on or after the selected day and are completed
+			startedAt: Between<Date>(start as Date, end as Date),
+			stoppedAt: Not(IsNull()),
 			employeeId,
 			tenantId,
-			organizationId
-		};
-
-		// Define filters for fetching the last log (either running or completed) within the selected range
-		const lastLogQueryParams = {
-			...(source ? { source } : {}),
-			startedAt: LessThanOrEqual(end as Date), // Include logs that started before or during the selected day
-			stoppedAt: Not(IsNull()), // Only consider completed logs (i.e., stoppedAt is not null)
-			employeeId,
-			tenantId,
-			organizationId
+			organizationId,
+			timeZone: request?.timeZone
 		};
 
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM: {
-				// Fetch completed time logs (not running) that overlap with the selected day
-				const completedParsedParams = parseTypeORMFindToMikroOrm<TimeLog>(
-					buildLogQueryParameters(completedLogsQueryParams)
-				);
-				const items = await this.mikroOrmTimeLogRepository.findAll(completedParsedParams);
+			case MultiORMEnum.MikroORM:
+				{
+					/**
+					 * Get today's completed timelogs
+					 */
+					const parseQueryParams = parseTypeORMFindToMikroOrm<TimeLog>(buildLogQueryParameters(queryParams));
+					const items = await this.mikroOrmTimeLogRepository.findAll(parseQueryParams);
+					// Optionally wrapSerialize is a function that serializes the entity
+					logs = items.map((entity: TimeLog) => wrapSerialize(entity));
+					/**
+					 * Get today's last log (running or completed)
+					 */
+					// Common query parameters for time log operations.
+					const lastLogQueryParamsMikroOrm = buildCommonQueryParameters(queryParams);
+					// Adds relations from the request to the query parameters.
+					addRelationsToQuery(lastLogQueryParamsMikroOrm, request);
+					// Converts TypeORM-style query parameters to a format compatible with MikroORM.
+					const parseMikroOrmOptions = parseTypeORMFindToMikroOrm<TimeLog>(lastLogQueryParamsMikroOrm);
 
-				// Deserialize and normalize log entities
-				logs = items.map((entity: TimeLog) => wrapSerialize(entity));
-
-				// Prepare query to get the last log of the day (running or completed)
-				const lastLogParams = buildCommonQueryParameters(lastLogQueryParams);
-				addRelationsToQuery(lastLogParams, request);
-				const parsedLastLogParams = parseTypeORMFindToMikroOrm<TimeLog>(lastLogParams);
-
-				// Fetch the last log of the day
-				lastLog = (await this.mikroOrmTimeLogRepository.findOne(
-					parsedLastLogParams.where,
-					parsedLastLogParams.mikroOptions
-				)) as TimeLog;
+					// Get today's last log (running or completed)
+					lastLog = (await this.mikroOrmTimeLogRepository.findOne(
+						parseMikroOrmOptions.where,
+						parseMikroOrmOptions.mikroOptions
+					)) as TimeLog;
+				}
 				break;
-			}
-
 			case MultiORMEnum.TypeORM: {
-				// Fetch completed time logs (isRunning = false) overlapping with the selected day
-				const completedParams = buildLogQueryParameters(completedLogsQueryParams);
-				completedParams.where.isRunning = false;
-				logs = await this.typeOrmTimeLogRepository.find(completedParams);
-
-				// Prepare and execute query to get the last log (running or completed)
-				const lastLogParams = buildCommonQueryParameters(lastLogQueryParams);
-				addRelationsToQuery(lastLogParams, request);
-				lastLog = await this.typeOrmTimeLogRepository.findOne(lastLogParams);
+				// Get today's completed timelogs (not running timers)
+				const previousLogsParams = buildLogQueryParameters(queryParams);
+				previousLogsParams.where.isRunning = false;
+				logs = await this.typeOrmTimeLogRepository.find(previousLogsParams);
+				const lastLogQueryParamsTypeOrm = buildCommonQueryParameters(queryParams); // Common query parameters for time log operations.
+				addRelationsToQuery(lastLogQueryParamsTypeOrm, request); // Adds relations from the request to the query parameters.
+				// Get today's last log (running or completed)
+				lastLog = await this.typeOrmTimeLogRepository.findOne(lastLogQueryParamsTypeOrm);
 				break;
 			}
 
@@ -203,7 +196,8 @@ export class TimerService {
 						tenantId,
 						organizationId,
 						startedAt: runningLog.startedAt,
-						stoppedAt
+						stoppedAt,
+						timeZone: request?.timeZone
 					});
 
 					// Add small delta to avoid overlap
@@ -222,7 +216,8 @@ export class TimerService {
 						source: runningLog.source,
 						tags: (runningLog.tags ?? []).map((tag) => tag.id),
 						isBillable: runningLog.isBillable,
-						startedAt: safeStart
+						startedAt: safeStart,
+						timeZone: request?.timeZone
 					});
 				}
 			}
@@ -244,7 +239,8 @@ export class TimerService {
 					tenantId,
 					organizationId,
 					startedAt: lastLog.startedAt,
-					stoppedAt: now.toDate()
+					stoppedAt: now.toDate(),
+					timeZone: request?.timeZone
 				});
 				throw new ForbiddenException(TimeErrorsEnum.INVALID_PROJECT_PERMISSIONS);
 			}
@@ -270,14 +266,20 @@ export class TimerService {
 					tenantId,
 					organizationId,
 					startedAt: lastLog.startedAt,
-					stoppedAt: now.toDate()
+					stoppedAt: now.toDate(),
+					timeZone: request?.timeZone
 				});
 				throw new ForbiddenException(TimeErrorsEnum.INVALID_TASK_PERMISSIONS);
 			}
 		}
 
 		// Get weekly statistics
-		let weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, start as Date, true);
+		let weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(
+			employee,
+			start as Date,
+			request?.timeZone,
+			true
+		);
 
 		// If the user reached the weekly limit, then stop the current timer
 		let lastLogStopped = false;
@@ -290,10 +292,16 @@ export class TimerService {
 					tenantId,
 					organizationId,
 					startedAt: lastLog.startedAt,
-					stoppedAt: now.toDate()
+					stoppedAt: now.toDate(),
+					timeZone: request?.timeZone
 				});
 				// Recalculate the weekly limit status
-				weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, start as Date, true);
+				weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(
+					employee,
+					start as Date,
+					request?.timeZone,
+					true
+				);
 			}
 		}
 
@@ -433,10 +441,9 @@ export class TimerService {
 
 		// Stop any previous running timers
 		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
-		const stoppedAt = moment.utc(startedAt).add(1, 'second').toDate();
 
 		// Check if the employee has reached the weekly limit
-		await this._timerWeeklyLimitService.checkWeeklyLimit(employee, startedAt);
+		await this._timerWeeklyLimitService.checkWeeklyLimit(employee, startedAt, request?.timeZone);
 
 		// Create a new time log entry using the command bus
 		const timeLog = await this._commandBus.execute(
@@ -445,7 +452,7 @@ export class TimerService {
 				tenantId,
 				employeeId,
 				startedAt,
-				stoppedAt,
+				stoppedAt: startedAt,
 				duration: 0,
 				source: source || TimeLogSourceEnum.WEB_TIMER,
 				logType: logType || TimeLogType.TRACKED,
@@ -511,6 +518,7 @@ export class TimerService {
 		const weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(
 			employee,
 			lastLog.startedAt,
+			request?.timeZone,
 			true
 		);
 		this.logger.verbose(`Remaining weekly limit: ${weeklyLimitStatus.remainWeeklyTime}`);
@@ -529,13 +537,6 @@ export class TimerService {
 			this.logger.warn(
 				`stoppedAt (${stoppedAt}) is less than startedAt (${lastLog.startedAt}), skipping stoppedAt update.`
 			);
-		}
-
-		const durationInSeconds = moment.utc(stoppedAt).diff(moment.utc(lastLog.startedAt), 'seconds');
-
-		if (durationInSeconds < 1) {
-			this.logger.warn(`Skipped saving time log: time difference < 1s`);
-			return null;
 		}
 
 		// Construct the update payload, conditionally excluding stoppedAt if it shouldn't be updated
