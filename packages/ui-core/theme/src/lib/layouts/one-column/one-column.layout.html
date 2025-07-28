@@ -3,10 +3,10 @@
 		<ngx-header [expanded]="isExpanded"></ngx-header>
 	</nb-layout-header>
 
-	<nb-sidebar class="user-workspace" state="compacted" tag="user-workspace">
+	<!-- <nb-sidebar class="user-workspace" state="compacted" tag="user-workspace">
 		<div><ngx-gauzy-workspaces></ngx-gauzy-workspaces></div>
 		<gauzy-user [user$]="user$" (click)="isOpen = !isOpen"></gauzy-user>
-	</nb-sidebar>
+	</nb-sidebar> -->
 
 	<nb-sidebar
 		class="menu-sidebar sidebar_class"
@@ -19,7 +19,11 @@
 				<div
 					[ngClass]="isExpanded? isCollapse? 'logo-container':'logo-container not-collapsed' : 'logo-container compacted'"
 				>
-					<ngx-gauzy-logo [controlled]="trigger" (onCollapsed)="onCollapse($event)"></ngx-gauzy-logo>
+					<ngx-gauzy-logo
+						[controlled]="trigger"
+						(onCollapsed)="onCollapse($event)"
+						(onWorkspaceToggle)="onWorkspaceToggle($event)"
+					></ngx-gauzy-logo>
 					<button *ngIf="isCollapse && isExpanded" class="hidden-menu" outline nbButton underConstruction>
 						<i class="fas fa-ellipsis-h"></i>
 					</button>
@@ -28,11 +32,17 @@
 			<div class="custom-row menu">
 				<ng-content select="ga-main-nav-menu"></ng-content>
 			</div>
-			<div class="custom-row button">
-				<div [ngClass]="isExpanded ? 'chevron': 'chevron collapsed'">
-					<button (click)="toggle()" nbButton outline size="small">
-						<i [ngClass]="isExpanded? 'fas fa-angle-double-left':'fas fa-angle-double-right'"></i>
-					</button>
+			<div [ngClass]="isExpanded ? 'toggle-layout row' : 'toggle-layout column'">
+				<div class="custom-row user">
+					<gauzy-user [user$]="user$" (click)="isOpen = !isOpen"></gauzy-user>
+				</div>
+
+				<div class="custom-row button">
+					<div [ngClass]="isExpanded ? 'chevron' : 'chevron collapsed'">
+						<button (click)="toggle()" nbButton outline size="small">
+							<i [ngClass]="isExpanded ? 'fas fa-angle-double-left' : 'fas fa-angle-double-right'"></i>
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -58,3 +68,4 @@
 	</nb-sidebar>
 </nb-layout>
 <gauzy-user-menu [user$]="user$" (close)="isOpen=false" *ngIf="isOpen"></gauzy-user-menu>
+<gauzy-workspace-menu (close)="isWorkspaceOpen=false" *ngIf="isWorkspaceOpen"></gauzy-workspace-menu>

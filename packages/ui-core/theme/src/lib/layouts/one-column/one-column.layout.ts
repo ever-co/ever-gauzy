@@ -11,10 +11,10 @@ import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/the
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-one-column-layout',
-    styleUrls: ['./one-column.layout.scss'],
-    templateUrl: './one-column.layout.html',
-    standalone: false
+	selector: 'ngx-one-column-layout',
+	styleUrls: ['./one-column.layout.scss'],
+	templateUrl: './one-column.layout.html',
+	standalone: false
 })
 export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestroy {
 	userMenu = [
@@ -23,6 +23,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestro
 	];
 	loading: boolean;
 	isOpen: boolean = false;
+	isWorkspaceOpen: boolean = false;
 	isExpanded: boolean = true;
 	isCollapse: boolean = true;
 	trigger: boolean = true;
@@ -103,7 +104,16 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestro
 	 */
 	onStateChange(event: string): void {
 		this.isExpanded = event === 'expanded' ? true : false;
-		this.trigger = event === 'compacted' ? true : this.isCollapse;
+		this.trigger = event === 'compacted' ? true : false;
+	}
+
+	/**
+	 * Handles the workspace toggle event.
+	 *
+	 * @param {boolean} isOpen - Whether the workspace menu should be open.
+	 */
+	onWorkspaceToggle(isOpen: boolean): void {
+		this.isWorkspaceOpen = isOpen;
 	}
 
 	/**
