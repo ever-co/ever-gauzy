@@ -252,7 +252,7 @@ export class TimeTrackerService implements OnDestroy {
 		}
 
 		// Perform timer stop + restart 1 second before midnight (if not done already)
-		if (secondsToMidnight <= 5 && !this.hasRolledOverToday) {
+		if (this.running && secondsToMidnight <= 5 && !this.hasRolledOverToday) {
 			this.hasRolledOverToday = true;
 			this.willRollOverSoon$.next(false);
 
