@@ -124,6 +124,13 @@ export type Env = Readonly<{
 	DESKTOP_API_SERVER_APP_REPO_OWNER: string;
 	DESKTOP_API_SERVER_APP_WELCOME_TITLE: string;
 	DESKTOP_API_SERVER_APP_WELCOME_CONTENT: string;
+	DESKTOP_MCP_SERVER_APP_NAME: string;
+	DESKTOP_MCP_SERVER_APP_DESCRIPTION: string;
+	DESKTOP_MCP_SERVER_APP_ID: string;
+	DESKTOP_MCP_SERVER_APP_REPO_NAME: string;
+	DESKTOP_MCP_SERVER_APP_REPO_OWNER: string;
+	DESKTOP_MCP_SERVER_APP_WELCOME_TITLE: string;
+	DESKTOP_MCP_SERVER_APP_WELCOME_CONTENT: string;
 
 	AWHost: string;
 	API_DEFAULT_PORT: number;
@@ -338,6 +345,21 @@ export const env: Env = cleanEnv(
 		DESKTOP_API_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
 		DESKTOP_API_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_API_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
+		DESKTOP_MCP_SERVER_APP_NAME: str({
+			default: 'gauzy-mcp-server'
+		}),
+		DESKTOP_MCP_SERVER_APP_DESCRIPTION: str({
+			default: 'Ever Gauzy MCP Server'
+		}),
+		DESKTOP_MCP_SERVER_APP_ID: str({
+			default: 'com.ever.gauzymcpserver'
+		}),
+		DESKTOP_MCP_SERVER_APP_REPO_NAME: str({
+			default: 'ever-gauzy-mcp-server'
+		}),
+		DESKTOP_MCP_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_MCP_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
+		DESKTOP_MCP_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
 
 		REGISTER_URL: str({ default: 'https://app.gauzy.co/#/auth/register' }),
 		FORGOT_PASSWORD_URL: str({ default: 'https://app.gauzy.co/#/auth/request-password' }),
