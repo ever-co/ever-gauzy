@@ -18,8 +18,7 @@ let password = ' ';
 let employeeEmail = ' ';
 let imgUrl = ' ';
 
-//! waitToLoad. No request ever occurred.
-describe('Add tasks test', () => {
+describe('Add tasks test', { testIsolation: false }, () => {
 	before(() => {
 		firstName = faker.person.firstName();
 		lastName = faker.person.lastName();
@@ -29,12 +28,13 @@ describe('Add tasks test', () => {
 		imgUrl = faker.image.avatar();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	});
-	it.only('Should be able to add new task', () => {
 		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
 		CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 		cy.visitAndWait('/#/pages/tasks/dashboard');
+	});
+
+	it('Should be able to add new task', () => {
 		addTaskPage.gridBtnExists();
 		addTaskPage.gridBtnClick(1);
 		addTaskPage.addTaskButtonVisible();
@@ -64,6 +64,7 @@ describe('Add tasks test', () => {
 		addTaskPage.waitMessageToHide();
 		addTaskPage.verifyTaskExists(AddTasksPageData.defaultTaskTitle);
 	});
+
 	it('Should be able to duplicate task', () => {
 		addTaskPage.tasksTableVisible();
 		addTaskPage.selectTasksTableRow(0);
@@ -72,15 +73,7 @@ describe('Add tasks test', () => {
 		addTaskPage.confirmDuplicateTaskButtonVisible();
 		addTaskPage.clickConfirmDuplicateTaskButton();
 	});
-	// it('Should be able to delete task', () => {
-	// 	addTaskPage.waitMessageToHide();
-	// 	addTaskPage.tasksTableVisible();
-	// 	addTaskPage.selectTasksTableRow(0);
-	// 	addTaskPage.deleteTaskButtonVisible();
-	// 	addTaskPage.clickDeleteTaskButton();
-	// 	addTaskPage.confirmDeleteTaskButtonVisible();
-	// 	addTaskPage.clickConfirmDeleteTaskButton();
-	// });
+
 	it('Should be able to edit task', () => {
 		addTaskPage.waitMessageToHide();
 		addTaskPage.tasksTableVisible();
@@ -108,6 +101,7 @@ describe('Add tasks test', () => {
 		addTaskPage.waitMessageToHide();
 		addTaskPage.verifyTaskExists(AddTasksPageData.editTaskTitle);
 	});
+
 	it('Should be able to delete task', () => {
 		cy.on('uncaught:exception', (err, runnable) => {
 			return false;

@@ -182,14 +182,18 @@ export const duplicateTaskButtonVisible = () => {
 };
 
 export const clickDuplicateTaskButton = (index) => {
-	clickButtonByIndex(AddTaskPage.duplicateTaskButtonCss, index);
+	cy.intercept('/api/**/organization-projects*').as('longestRefresh');
+	clickButton(AddTaskPage.duplicateTaskButtonCss, index);
+	cy.wait('@longestRefresh');
 };
 
 export const confirmDuplicateTaskButtonVisible = () => {
+	closeCkeNotification();
 	verifyElementIsVisible(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
 
 export const clickConfirmDuplicateTaskButton = () => {
+	closeCkeNotification();
 	clickButton(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
 
@@ -203,10 +207,12 @@ export const clickEditTaskButton = (index) => {
 };
 
 export const confirmEditTaskButtonVisible = () => {
+	closeCkeNotification();
 	verifyElementIsVisible(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
 
 export const clickConfirmEditTaskButton = () => {
+	closeCkeNotification();
 	clickButton(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
 
@@ -237,4 +243,14 @@ export const clearSearchInput = () => {
 
 export const verifySearchResult = (length: number) => {
 	verifyByLength(AddTaskPage.selectTableRowCss, length);
+};
+
+// Workaround for cke editor outdated notification, it might be covering the button in some cases
+export const closeCkeNotification = () => {
+	cy.document().then((doc) => {
+		const closeBtn = doc.querySelector('a.cke_notification_close');
+		if (closeBtn) {
+			cy.wrap(closeBtn).click();
+		}
+	});
 };
