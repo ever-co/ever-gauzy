@@ -1,4 +1,4 @@
-declare module NodeJS {
+declare namespace NodeJS {
 	interface Global {
 		variableGlobal: any;
 	}
