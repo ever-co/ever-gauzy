@@ -15,7 +15,7 @@ This package is designed to be consumed by:
 - Stdio-based transport for AI assistant communication
 - Lightweight command-line interface
 
-### 🖥️ Desktop App: `apps/server-mcp`  
+### 🖥️ Desktop App: `apps/server-mcp`
 - Electron desktop application with modern UI
 - Server management and monitoring interface
 - System tray integration and auto-updater support
@@ -113,7 +113,7 @@ const status = manager.getStatus();
 - Profile management and updates
 - Assignment and unassignment operations
 
-#### Task Management (16 tools)  
+#### Task Management (16 tools)
 - Complete task lifecycle management
 - Bulk operations for efficiency
 - Task assignment to employees
@@ -200,10 +200,10 @@ packages/mcp-server/
    // src/lib/tools/my-new-tool.ts
    import { Tool } from '@modelcontextprotocol/sdk/types.js';
    import { ApiClient } from '../common/api-client.js';
-   
+
    export class MyNewTool {
      constructor(private apiClient: ApiClient) {}
-     
+
      getTools(): Tool[] {
        return [
          {
@@ -236,7 +236,7 @@ packages/mcp-server/
 
 4. **Export from package**: Add to main index if needed
    ```typescript
-   // src/index.ts  
+   // src/index.ts
    export * from './lib/tools/my-new-tool.js';
    ```
 
@@ -287,7 +287,7 @@ class McpServer {
 }
 ```
 
-#### McpServerManager  
+#### McpServerManager
 Manages server lifecycle and provides higher-level operations.
 
 ```typescript
@@ -338,7 +338,7 @@ API_BASE_URL=https://api.gauzy.co    # Gauzy API endpoint
 
 ```bash
 GAUZY_AUTH_EMAIL=user@example.com    # Auto-login email
-GAUZY_AUTH_PASSWORD=password         # Auto-login password  
+GAUZY_AUTH_PASSWORD=password         # Auto-login password
 GAUZY_AUTO_LOGIN=true               # Enable auto-login
 GAUZY_MCP_DEBUG=true                # Enable debug logging
 NODE_ENV=development                # Environment mode

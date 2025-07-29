@@ -15,18 +15,14 @@
         "forceConsistentCasingInFileNames": true,
         "types": ["node", "electron"]
     },
-    "files": [],
+    "files": [
+        "global.d.ts"
+    ],
     "include": [
         "src/electron-main.ts",
-        "src/preload/*.ts",
-        "src/instance/*.ts",
-        "src/common/*.ts",
-        "src/tools/*.ts",
-        "src/environments/*.ts"
+        "src/preload/*.ts"
     ],
     "exclude": [
-        "src/index.ts",
-        "src/schema.ts",
         "jest.config.ts",
         "src/**/*.test.ts",
         "src/**/*.spec.ts"
