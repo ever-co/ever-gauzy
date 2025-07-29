@@ -375,6 +375,7 @@
 		"copy-assets-agent": "copyfiles -f apps/agent/src/assets/snapshot-sound.wav dist/apps/agent/data/sound/",
 		"build:mcp-server": "yarn nx build mcp-server",
 		"build:mcp-server:prod": "yarn nx build mcp-server --configuration=production",
+		"build:mcp-server:docker": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=60000 yarn nx build mcp-server",
 		"test:mcp-server": "yarn nx test mcp-server",
 		"build:mcp": "yarn nx build mcp --configuration=development",
 		"build:mcp:prod": "yarn nx build mcp --configuration=production",
