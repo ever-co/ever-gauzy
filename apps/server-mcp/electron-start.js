@@ -12,7 +12,7 @@ const electronMainPath = path.join(__dirname, '../../dist/apps/server-mcp/src/el
 // Check if the electron main file exists
 if (!fs.existsSync(electronMainPath)) {
   console.error('❌ Electron main file not found at:', electronMainPath);
-  console.error('Please build the project first with: yarn nx build-electron server-mcp');
+  console.error('Please build the project first with: yarn nx build server-mcp');
   process.exit(1);
 }
 

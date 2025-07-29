@@ -18,13 +18,9 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {
-		"build": "npx rimraf build && npx tsc --project tsconfig.electron.json",
-		"build:prod": "yarn nx build server-mcp --configuration=production",
-		"build:dev": "yarn nx build server-mcp --configuration=development",
-		"build:electron": "yarn nx build-electron server-mcp",
-		"build:electron:prod": "yarn nx build-electron server-mcp --configuration=production",
-		"build:electron:dev": "yarn nx build-electron server-mcp --configuration=development",
-		"start:electron": "yarn build:electron && node electron-start.js",
+		"build:electron": "yarn nx build server-mcp",
+		"build:electron:prod": "yarn nx build server-mcp --configuration=production",
+		"build:electron:dev": "yarn nx build server-mcp --configuration=development",
 		"start": "yarn nx serve server-mcp"
 	},
 	"devDependencies": {

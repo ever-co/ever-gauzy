@@ -3,6 +3,7 @@ import { DesktopTimerPackager } from './concrete-packager/desktop-timer-packager
 import { DesktopPackager } from './concrete-packager/desktop-packager';
 import { ServerPackager } from './concrete-packager/server-packager';
 import { ServerApiPackager } from './concrete-packager/server-api-packager';
+import { ServerMcpPackager } from './concrete-packager/server-mcp-packager';
 import { AgentPackager } from './concrete-packager/agent-packer';
 
 export class PackagerFactory {
@@ -16,6 +17,8 @@ export class PackagerFactory {
 				return new ServerPackager();
 			case 'server-api':
 				return new ServerApiPackager();
+			case 'server-mcp':
+				return new ServerMcpPackager();
 			case 'agent':
 				return new AgentPackager();
 			default:
