@@ -1,4 +1,5 @@
 {
+    "extends": "./tsconfig.json",
     "compilerOptions": {
         "outDir": "../../dist/apps/server-mcp",
         "sourceMap": true,
@@ -13,7 +14,7 @@
         "allowSyntheticDefaultImports": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "types": ["node", "electron"]
+        "types": ["node"]
     },
     "files": [
         "global.d.ts"
