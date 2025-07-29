@@ -18,13 +18,12 @@
         "email": "ever@ever.co",
         "url": "https://ever.co"
     },
-    "main": "index.js",
+    "main": "main.js",
     "bin": {
-        "gauzy-mcp": "./index.js"
+        "gauzy-mcp": "./main.js"
     },
     "workspaces": {
         "packages": [
-            "../../../dist/packages/config",
             "../../../dist/packages/mcp-server"
         ]
     },
@@ -122,7 +121,6 @@
         ]
     },
     "dependencies": {
-        "@gauzy/config": "file:../../../dist/packages/config",
         "@gauzy/mcp-server": "file:../../../dist/packages/mcp-server",
         "@modelcontextprotocol/sdk": "^1.13.1",
         "axios": "^1.7.0",
