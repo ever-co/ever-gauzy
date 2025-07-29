@@ -12,9 +12,9 @@ import {
 	verifyTextNotExisting,
 	verifyByLength,
 	wait
-
 } from '../utils/util';
 import { AddTaskPage } from '../pageobjects/AddTasksPageObject';
+import { interceptAllApiRequests, waitForAllApiRequests } from '../utils';
 
 export const gridBtnExists = () => {
 	verifyElementIsVisible(AddTaskPage.gridButtonCss);
@@ -57,10 +57,7 @@ export const selectEmployeeDropdownOption = (index) => {
 };
 
 export const selectEmployeeFromDropdownByName = (name) => {
-	clickElementByText(
-		AddTaskPage.selectEmployeeDropdownOptionCss,
-		name
-	);
+	clickElementByText(AddTaskPage.selectEmployeeDropdownOptionCss, name);
 };
 
 export const addTitleInputVisible = () => {
@@ -142,11 +139,21 @@ export const enterTaskDescriptionTextareaData = (data) => {
 };
 
 export const saveTaskButtonVisible = () => {
+	closeCkeNotification();
 	verifyElementIsVisible(AddTaskPage.saveNewTaskButtonCss);
 };
 
 export const clickSaveTaskButton = () => {
+	closeCkeNotification();
 	clickButton(AddTaskPage.saveNewTaskButtonCss);
+};
+
+export const countTasksWithText = (text) => {
+	cy.get(AddTaskPage.selectTableRowCss)
+		.filter(`:contains(${text})`)
+		.then((rows) => {
+			cy.wrap({ [text]: rows.length }).as('tasksCount');
+		});
 };
 
 export const tasksTableVisible = () => {
@@ -155,6 +162,10 @@ export const tasksTableVisible = () => {
 
 export const selectTasksTableRow = (index) => {
 	clickButtonByIndex(AddTaskPage.selectTableRowCss, index);
+};
+
+export const selectTaskTableRowByText = (text) => {
+	clickElementByText(AddTaskPage.selectTableRowCss, text);
 };
 
 export const selectFirstTaskTableRow = (index) => {
@@ -182,9 +193,9 @@ export const duplicateTaskButtonVisible = () => {
 };
 
 export const clickDuplicateTaskButton = (index) => {
-	cy.intercept('/api/**/organization-projects*').as('longestRefresh');
+	interceptAllApiRequests();
 	clickButton(AddTaskPage.duplicateTaskButtonCss, index);
-	cy.wait('@longestRefresh');
+	waitForAllApiRequests();
 };
 
 export const confirmDuplicateTaskButtonVisible = () => {
@@ -226,6 +237,16 @@ export const verifyTaskExists = (text) => {
 
 export const verifyElementIsDeleted = (text) => {
 	verifyTextNotExisting(AddTaskPage.verifyTextCss, text);
+};
+
+export const verifyOneTaskWasDeleted = (text) => {
+	cy.get('@tasksCount').then((count) => {
+		cy.document().then((doc) => {
+			const rows = doc.querySelectorAll(AddTaskPage.selectTableRowCss);
+			const filteredRows = Array.from(rows).filter((row) => row.textContent?.includes(text));
+			expect(filteredRows.length).to.equal((count as any)[text] - 1);
+		});
+	});
 };
 
 export const verifyTitleInput = () => {

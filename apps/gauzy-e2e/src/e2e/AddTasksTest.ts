@@ -20,6 +20,11 @@ let imgUrl = ' ';
 
 describe('Add tasks test', { testIsolation: false }, () => {
 	before(() => {
+		cy.clearCookies();
+		cy.clearLocalStorage();
+		cy.window().then((win) => {
+			win.sessionStorage.clear();
+		});
 		firstName = faker.person.firstName();
 		lastName = faker.person.lastName();
 		username = faker.internet.userName();
@@ -106,22 +111,14 @@ describe('Add tasks test', { testIsolation: false }, () => {
 		cy.on('uncaught:exception', (err, runnable) => {
 			return false;
 		});
-		addTaskPage.selectTasksTableRow(0);
-		addTaskPage.duplicateTaskButtonVisible();
-		addTaskPage.clickDuplicateTaskButton(1);
-		addTaskPage.confirmDuplicateTaskButtonVisible();
-		addTaskPage.clickConfirmDuplicateTaskButton();
-		addTaskPage.selectTasksTableRow(0);
+		// Assumes the task exists since test cases are not isolated
+		addTaskPage.countTasksWithText(AddTasksPageData.editTaskTitle);
+		addTaskPage.selectTaskTableRowByText(AddTasksPageData.editTaskTitle);
 		addTaskPage.deleteTaskButtonVisible();
 		addTaskPage.clickDeleteTaskButton();
 		addTaskPage.confirmDeleteTaskButtonVisible();
 		addTaskPage.clickConfirmDeleteTaskButton();
 		addTaskPage.waitMessageToHide();
-		addTaskPage.verifyElementIsDeleted(AddTasksPageData.editTaskTitle);
-		addTaskPage.selectTasksTableRow(0);
-		addTaskPage.deleteTaskButtonVisible();
-		addTaskPage.clickDeleteTaskButton();
-		addTaskPage.confirmDeleteTaskButtonVisible();
-		addTaskPage.clickConfirmDeleteTaskButton();
+		addTaskPage.verifyOneTaskWasDeleted(AddTasksPageData.editTaskTitle);
 	});
 });
