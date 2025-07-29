@@ -17,40 +17,8 @@
 				"assets": [
 					"apps/server-mcp/src/static",
 					"apps/server-mcp/src/favicon.ico",
-					"apps/server-mcp/src/preload"
-				],
-				"isolatedConfig": true,
-				"webpackConfig": "apps/server-mcp/webpack.config.js"
-			},
-			"configurations": {
-				"development": {},
-				"production": {
-					"optimization": true,
-					"extractLicenses": true,
-					"inspect": false,
-					"fileReplacements": [
-						{
-							"replace": "apps/server-mcp/src/environments/environment.ts",
-							"with": "apps/server-mcp/src/environments/environment.prod.ts"
-						}
-					]
-				}
-			}
-		},
-		"build-electron": {
-			"executor": "@nx/webpack:webpack",
-			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
-			"options": {
-				"target": "node",
-				"compiler": "tsc",
-				"outputPath": "build",
-				"main": "apps/server-mcp/src/electron-main.ts",
-				"tsConfig": "apps/server-mcp/tsconfig.electron.json",
-				"assets": [
-					"apps/server-mcp/src/static",
-					"apps/server-mcp/src/favicon.ico",
-					"apps/server-mcp/src/preload"
+					"apps/server-mcp/src/preload",
+					"apps/server-mcp/src/package.json"
 				],
 				"isolatedConfig": true,
 				"webpackConfig": "apps/server-mcp/webpack.config.js"

@@ -1,143 +1,151 @@
 {
-	"name": "gauzy-mcp-server",
-	"productName": "Ever Gauzy MCP Server",
-	"version": "0.1.0",
-	"description": "Ever Gauzy MCP Server - A Model Context Protocol Server",
-	"license": "AGPL-3.0",
-	"homepage": "https://gauzy.co",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy.git"
-	},
-	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
-	},
-	"private": true,
-	"author": {
-		"name": "Ever Co. LTD",
-		"email": "ever@ever.co",
-		"url": "https://ever.co"
-	},
-	"main": "index.js",
-	"bin": {
-		"gauzy-mcp": "./index.js"
-	},
-	"build": {
-		"npmArgs": [
-			"--production"
-		],
-		"appId": "com.ever.gauzymcpserver",
-		"artifactName": "${name}-${version}.${ext}",
-		"productName": "Ever Gauzy MCP Server",
-		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
-		"afterSign": "tools/notarize.js",
-		"dmg": {
-			"sign": false
-		},
-		"asar": true,
-		"npmRebuild": true,
-		"asarUnpack": [
-			"node_modules/@sentry/electron",
-			"node_modules/@sentry/profiling-node/lib"
-		],
-		"directories": {
-			"buildResources": "icons",
-			"output": "../desktop-packages"
-		},
-		"publish": [
-			{
-				"provider": "github",
-				"repo": "ever-gauzy-mcp-server",
-				"releaseType": "release"
-			},
-			{
-				"provider": "spaces",
-				"name": "ever",
-				"region": "sfo3",
-				"path": "/ever-gauzy-mcp-server",
-				"acl": "public-read"
-			}
-		],
-		"mac": {
-			"category": "public.app-category.developer-tools",
-			"icon": "icon.icns",
-			"target": [
-				"zip",
-				"dmg"
-			],
-			"asarUnpack": "**/*.node",
-			"artifactName": "${name}-${version}.${ext}",
-			"hardenedRuntime": true,
-			"gatekeeperAssess": false,
-			"entitlements": "tools/build/entitlements.mas.plist",
-			"entitlementsInherit": "tools/build/entitlements.mas.plist",
-			"extendInfo": {}
-		},
-		"win": {
-			"publisherName": "Ever",
-			"target": [
-				{
-					"target": "nsis",
-					"arch": [
-						"x64"
-					]
-				}
-			],
-			"icon": "icon.ico",
-			"verifyUpdateCodeSignature": false,
-			"requestedExecutionLevel": "requireAdministrator"
-		},
-		"linux": {
-			"icon": "linux",
-			"target": [
-				"AppImage",
-				"deb",
-				"tar.gz"
-			],
-			"executableName": "gauzy-mcp-server",
-			"artifactName": "${name}-${version}.${ext}",
-			"synopsis": "Server",
-			"category": "Development"
-		},
-		"nsis": {
-			"oneClick": false,
-			"perMachine": true,
-			"createDesktopShortcut": true,
-			"createStartMenuShortcut": true,
-			"allowToChangeInstallationDirectory": true,
-			"allowElevation": true,
-			"installerIcon": "icon.ico",
-			"artifactName": "${name}-${version}.${ext}",
-			"deleteAppDataOnUninstall": true,
-			"menuCategory": true
-		},
-		"extraResources": [
-			"./data/**/*"
-		]
-	},
-	"dependencies": {
-		"@modelcontextprotocol/sdk": "^1.13.1",
-		"axios": "^1.7.0",
-		"dotenv": "^16.4.5",
-		"zod": "^3.25.67",
-		"@sentry/electron": "^4.18.0",
-		"@sentry/node": "^7.101.1",
-		"@sentry/profiling-node": "^7.101.1",
-		"@sentry/replay": "^7.101.1",
-		"@sentry/tracing": "^7.101.1",
-		"@sentry/types": "^7.101.1",
-		"electron-log": "^4.4.8",
-		"electron-store": "^8.1.0",
-		"electron-updater": "^6.1.7",
-		"electron-util": "^0.18.1",
-		"custom-electron-titlebar": "^4.2.8"
-	},
-	"pkg": {
-		"assets": [],
-		"targets": [
-			"node20-linux-x64",
-			"node20-mac-x64",
-			"node20-win-x64"
-		]
-	}
+    "name": "gauzy-mcp-server",
+    "productName": "Ever Gauzy MCP Server",
+    "version": "0.1.0",
+    "description": "Ever Gauzy MCP Server",
+    "license": "AGPL-3.0",
+    "homepage": "https://gauzy.co",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ever-co/ever-gauzy.git"
+    },
+    "bugs": {
+        "url": "https://github.com/ever-co/ever-gauzy/issues"
+    },
+    "private": true,
+    "author": {
+        "name": "Ever Co. LTD",
+        "email": "ever@ever.co",
+        "url": "https://ever.co"
+    },
+    "main": "index.js",
+    "bin": {
+        "gauzy-mcp": "./index.js"
+    },
+    "workspaces": {
+        "packages": [
+            "../../../dist/packages/config",
+            "../../../dist/packages/mcp-server"
+        ]
+    },
+    "build": {
+        "npmArgs": [
+            "--production"
+        ],
+        "appId": "com.ever.gauzymcpserver",
+        "artifactName": "${name}-${version}.${ext}",
+        "productName": "Ever Gauzy MCP Server",
+        "copyright": "Copyright © 2019-Present. Ever Co. LTD",
+        "afterSign": "tools/notarize.js",
+        "dmg": {
+            "sign": false
+        },
+        "asar": true,
+        "npmRebuild": true,
+        "asarUnpack": [
+            "node_modules/@sentry/electron",
+            "node_modules/@sentry/profiling-node/lib"
+        ],
+        "directories": {
+            "buildResources": "icons",
+            "output": "../desktop-packages"
+        },
+        "publish": [
+            {
+                "provider": "github",
+                "repo": "ever-gauzy-mcp-server",
+                "releaseType": "release"
+            },
+            {
+                "provider": "spaces",
+                "name": "ever",
+                "region": "sfo3",
+                "path": "/ever-gauzy-mcp-server",
+                "acl": "public-read"
+            }
+        ],
+        "mac": {
+            "category": "public.app-category.developer-tools",
+            "icon": "icon.icns",
+            "target": [
+                "zip",
+                "dmg"
+            ],
+            "asarUnpack": "**/*.node",
+            "artifactName": "${name}-${version}.${ext}",
+            "hardenedRuntime": true,
+            "gatekeeperAssess": false,
+            "entitlements": "tools/build/entitlements.mas.plist",
+            "entitlementsInherit": "tools/build/entitlements.mas.plist",
+            "extendInfo": {}
+        },
+        "win": {
+            "publisherName": "Ever",
+            "target": [
+                {
+                    "target": "nsis",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ],
+            "icon": "icon.ico",
+            "verifyUpdateCodeSignature": false,
+            "requestedExecutionLevel": "requireAdministrator"
+        },
+        "linux": {
+            "icon": "linux",
+            "target": [
+                "AppImage",
+                "deb",
+                "tar.gz"
+            ],
+            "executableName": "gauzy-mcp-server",
+            "artifactName": "${name}-${version}.${ext}",
+            "synopsis": "Server",
+            "category": "Development"
+        },
+        "nsis": {
+            "oneClick": false,
+            "perMachine": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true,
+            "allowToChangeInstallationDirectory": true,
+            "allowElevation": true,
+            "installerIcon": "icon.ico",
+            "artifactName": "${name}-${version}.${ext}",
+            "deleteAppDataOnUninstall": true,
+            "menuCategory": true
+        },
+        "extraResources": [
+            "./data/**/*"
+        ]
+    },
+    "dependencies": {
+        "@gauzy/config": "file:../../../dist/packages/config",
+        "@gauzy/mcp-server": "file:../../../dist/packages/mcp-server",
+        "@modelcontextprotocol/sdk": "^1.13.1",
+        "axios": "^1.7.0",
+        "dotenv": "^16.4.5",
+        "zod": "^3.25.67",
+        "@sentry/electron": "^4.18.0",
+        "@sentry/node": "^7.101.1",
+        "@sentry/profiling-node": "^7.101.1",
+        "@sentry/replay": "^7.101.1",
+        "@sentry/tracing": "^7.101.1",
+        "@sentry/types": "^7.101.1",
+        "electron-log": "^4.4.8",
+        "electron-store": "^8.1.0",
+        "electron-updater": "^6.1.7",
+        "electron-util": "^0.18.1",
+        "custom-electron-titlebar": "^4.2.8"
+    },
+    "pkg": {
+        "assets": [],
+        "targets": [
+            "node20-linux-x64",
+            "node20-mac-x64",
+            "node20-win-x64"
+        ]
+    }
 }
