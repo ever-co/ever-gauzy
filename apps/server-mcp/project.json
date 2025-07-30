@@ -18,7 +18,8 @@
 					"apps/server-mcp/src/static",
 					"apps/server-mcp/src/favicon.ico",
 					"apps/server-mcp/src/preload",
-					"apps/server-mcp/src/package.json"
+					"apps/server-mcp/src/package.json",
+					"apps/server-mcp/src/icons"
 				],
 				"isolatedConfig": true,
 				"webpackConfig": "apps/server-mcp/webpack.config.js"
