@@ -16,7 +16,7 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"private": true,
-	"type": "module",
+	"type": "commonjs",
 	"main": "./src/index.js",
 	"types": "./src/index.d.ts",
 	"homepage": "https://ever.co",

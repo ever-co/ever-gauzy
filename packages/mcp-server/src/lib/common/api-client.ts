@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
-import { environment } from '../environments/environment.js';
-import { authManager } from './auth-manager.js';
-import { sanitizeErrorMessage } from './security-utils.js';
+import { environment } from '../environments/environment';
+import { authManager } from './auth-manager';
+import { sanitizeErrorMessage } from './security-utils';
 import log from 'electron-log';
 
 export class GauzyApiClient {

@@ -1,5 +1,5 @@
-import { environment } from '../environments/environment.js';
-import { sanitizeForLogging } from './security-utils.js';
+import { environment } from '../environments/environment';
+import { sanitizeForLogging } from './security-utils';
 import log from 'electron-log';
 
 interface IAuthResponse {

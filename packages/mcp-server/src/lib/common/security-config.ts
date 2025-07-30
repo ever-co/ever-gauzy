@@ -1,4 +1,4 @@
-import { environment } from '../environments/environment.js';
+import { environment } from '../environments/environment';
 import { randomBytes, createHash } from 'node:crypto';
 
 /**

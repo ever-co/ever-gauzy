@@ -1,9 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import log from 'electron-log';
-import { apiClient } from '../common/api-client.js';
-import { authManager } from '../common/auth-manager.js';
-import { DailyPlanSchema, DailyPlanStatusEnum } from '../schema.js';
+import { apiClient } from '../common/api-client';
+import { authManager } from '../common/auth-manager';
+import { DailyPlanSchema, DailyPlanStatusEnum } from '../schema';
 
 export const registerDailyPlanTools = (server: McpServer) => {
 	// Get all daily plans tool
