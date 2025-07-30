@@ -1,6 +1,5 @@
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import log from 'electron-log';
 
 /**
@@ -19,13 +18,12 @@ import log from 'electron-log';
 
 /**
  * Reads the version from package.json using fs.readFileSync
- * This approach works in ES modules without using import assertions
+ * Note: This approach requires proper __dirname setup to work correctly.
+ * The module configuration must be set up to provide __dirname.
  */
 function getVersion(): string {
 	try {
-		// In ES modules, we need to get __dirname equivalent
-		const __filename = fileURLToPath(import.meta.url);
-		const __dirname = dirname(__filename);
+		// __dirname is available in CommonJS by default
 
 		// Try multiple possible paths for package.json
 		const possiblePaths = [

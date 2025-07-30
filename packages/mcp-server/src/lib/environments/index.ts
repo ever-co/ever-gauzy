@@ -1,4 +1,4 @@
-import { IEnvironment } from './ienvironment.js';
+import { IEnvironment } from './ienvironment';
 
 // Determine environment based on NODE_ENV
 const isProduction = process.env.NODE_ENV === 'production';
@@ -7,10 +7,10 @@ let environment: IEnvironment;
 
 try {
 	if (isProduction) {
-		const { environment: prodEnvironment } = await import('./environment.prod.js');
+		const { environment: prodEnvironment } = require('./environment.prod');
 		environment = prodEnvironment;
 	} else {
-		const { environment: devEnvironment } = await import('./environment.js');
+		const { environment: devEnvironment } = require('./environment');
 		environment = devEnvironment;
 	}
 } catch (error) {

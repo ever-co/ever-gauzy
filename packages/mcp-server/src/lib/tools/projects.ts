@@ -1,8 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { apiClient } from '../common/api-client.js';
-import { authManager } from '../common/auth-manager.js';
-import { ProjectSchema, CurrenciesEnum } from '../schema.js';
+import { apiClient } from '../common/api-client';
+import { authManager } from '../common/auth-manager';
+import { ProjectSchema, CurrenciesEnum } from '../schema';
 import log from 'electron-log';
 
 /**

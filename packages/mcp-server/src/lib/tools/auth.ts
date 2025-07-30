@@ -1,8 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { apiClient } from '../common/api-client.js';
-import { authManager } from '../common/auth-manager.js';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils.js';
+import { apiClient } from '../common/api-client';
+import { authManager } from '../common/auth-manager';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 import log from 'electron-log';
 
 /**
