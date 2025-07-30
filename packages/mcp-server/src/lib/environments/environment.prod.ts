@@ -1,11 +1,8 @@
-import { IEnvironment } from './ienvironment.js';
+import { IEnvironment } from './ienvironment';
 import * as dotenv from 'dotenv';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-// Get the directory name in ES module context
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// __dirname is available in CommonJS by default
 
 // Load environment variables from multiple possible locations
 const envPaths = [

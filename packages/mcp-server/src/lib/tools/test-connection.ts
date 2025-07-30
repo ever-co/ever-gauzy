@@ -1,10 +1,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { version } from '../common/version.js';
-import { apiClient } from '../common/api-client.js';
-import { authManager } from '../common/auth-manager.js';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils.js';
-import { TOOLS_REGISTRY, getToolCounts, getTotalToolCount } from '../config/index.js';
-import { SERVER_INFO } from '../config/server-info.js';
+import { version } from '../common/version';
+import { apiClient } from '../common/api-client';
+import { authManager } from '../common/auth-manager';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { TOOLS_REGISTRY, getToolCounts, getTotalToolCount } from '../config/index';
+import { SERVER_INFO } from '../config/server-info';
 import log from 'electron-log';
 
 /**

@@ -1,8 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import log from 'electron-log';
-import { apiClient } from '../common/api-client.js';
-import { OrganizationContactSchema, ContactTypeEnum } from '../schema.js';
+import { apiClient } from '../common/api-client';
+import { OrganizationContactSchema, ContactTypeEnum } from '../schema';
 
 export const registerOrganizationContactTools = (server: McpServer) => {
 	// Get organization contacts tool

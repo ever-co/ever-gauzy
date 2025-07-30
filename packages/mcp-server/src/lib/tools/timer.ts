@@ -1,8 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import log from 'electron-log';
-import { apiClient } from '../common/api-client.js';
-import { authManager } from '../common/auth-manager.js';
+import { apiClient } from '../common/api-client';
+import { authManager } from '../common/auth-manager';
 
 export const registerTimerTools = (server: McpServer) => {
 	// Timer status tool
