@@ -5,7 +5,7 @@ Object.assign(process.env, environment);
 // Import logging for electron and override default console logging
 import * as remoteMain from '@electron/remote/main';
 import { logger as log, store } from '@gauzy/desktop-core';
-import * as Sentry from '@sentry/electron';
+import * as Sentry from '@sentry/electron/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
 import * as path from 'path';

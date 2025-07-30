@@ -1,6 +1,6 @@
 import { app } from 'electron';
 import { logger as log } from '@gauzy/desktop-core';
-import * as Sentry from '@sentry/electron';
+import * as Sentry from '@sentry/electron/main';
 import { initSentry } from '../../sentry';
 import * as path from 'path';
 import { DialogErrorHandler } from '@gauzy/desktop-lib';

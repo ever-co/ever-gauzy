@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/electron';
+import * as Sentry from '@sentry/electron/main';
 import { BaseError } from './base.error';
 import { ErrorEventManager } from './error-event-manager';
 

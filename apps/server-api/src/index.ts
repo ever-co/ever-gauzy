@@ -60,7 +60,7 @@ import {
 	createSetupWindow,
 	SplashScreen
 } from '@gauzy/desktop-window';
-import * as Sentry from '@sentry/electron';
+import * as Sentry from '@sentry/electron/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
@@ -547,7 +547,7 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			type: 'database_status',
 			data: {
 				message: error.message,
-				status: false,
+				status: false
 			}
 		});
 	}
