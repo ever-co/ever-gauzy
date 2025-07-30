@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { version } from './common/version';
 import { registerTimerTools } from './tools/timer';
@@ -56,7 +56,7 @@ export function createStandaloneMcpServer() {
 // Check if this file is being run directly
 function isMainModule() {
 	try {
-		// In ES modules, we need to use __filename to check if this is the main module
+		// Use __filename to check if this is the main module
 		const url = new URL(__filename);
 		const mainModuleUrl = new URL(process.argv[1], 'file://');
 		return url.pathname === mainModuleUrl.pathname;

@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import { version } from '../common/version';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';

@@ -18,7 +18,8 @@ import log from 'electron-log';
 
 /**
  * Reads the version from package.json using fs.readFileSync
- * This approach works in CommonJS modules
+ * Note: This approach requires proper __dirname setup to work correctly.
+ * The module configuration must be set up to provide __dirname.
  */
 function getVersion(): string {
 	try {
