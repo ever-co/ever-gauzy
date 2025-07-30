@@ -141,10 +141,7 @@
         "@electron/remote": "^2.0.8",
         "@sentry/electron": "^6.8.0",
         "@sentry/profiling-node": "^9.43.0",
-        "@sentry/replay": "^7.116.0",
         "@sentry/node": "^9.43.0",
-        "@sentry/tracing": "^7.120.4",
-        "@sentry/types": "^9.43.0",
         "auto-launch": "5.0.5",
         "custom-electron-titlebar": "^4.2.8",
         "form-data": "^4.0.1"

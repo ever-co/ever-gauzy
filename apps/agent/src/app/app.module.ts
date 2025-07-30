@@ -17,7 +17,9 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import * as Sentry from '@sentry/angular-ivy';
+// V9 Migration: @sentry/angular-ivy was removed, use @sentry/angular instead
+// Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/
+import * as Sentry from '@sentry/angular';
 import {
 	APIInterceptor,
 	AboutModule,
@@ -115,7 +117,8 @@ if (environment.SENTRY_DSN) {
 		LanguageModule.forRoot(),
 		NbDatepickerModule.forRoot(),
 		AboutModule
-	], providers: [
+	],
+	providers: [
 		AppService,
 		NbDialogService,
 		NbSidebarService,
@@ -190,7 +193,7 @@ if (environment.SENTRY_DSN) {
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => { },
+			useFactory: () => () => {},
 			deps: [Sentry.TraceService],
 			multi: true
 		},
@@ -205,4 +208,4 @@ if (environment.SENTRY_DSN) {
 		provideHttpClient(withInterceptorsFromDi())
 	]
 })
-export class AppModule { }
+export class AppModule {}

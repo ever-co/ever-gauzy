@@ -5,8 +5,8 @@ import { ContextType, HttpArgumentsHost, RpcArgumentsHost, WsArgumentsHost } fro
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 // Sentry imports
-import { Handlers } from '@sentry/node';
-import { Scope } from '@sentry/types';
+import * as Sentry from '@sentry/node';
+import { Scope } from '@sentry/node';
 
 import { SentryInterceptorOptions, SentryInterceptorOptionsFilter } from './sentry.interfaces';
 import { SentryService } from './sentry.service';
@@ -55,18 +55,36 @@ export class SentryInterceptor implements NestInterceptor {
 	}
 
 	/**
+	 * Captures HTTP exception with request context
+	 * V9 Migration: Handlers.parseRequest was removed, manually extract request data
+	 * Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/#removals-in-sentrycore
 	 *
 	 * @param scope
 	 * @param http
 	 * @param exception
 	 */
 	private captureHttpException(scope: Scope, http: HttpArgumentsHost, exception: HttpException): void {
-		const data = Handlers.parseRequest(<any>{}, http.getRequest(), this.options);
+		const request = http.getRequest();
 
-		scope.setExtra('req', data.request);
+		// V9 Migration: Manual request data extraction since Handlers.parseRequest was removed
+		// The addRequestDataToEvent method has been removed. Manually extract relevant data of request objects instead.
+		const requestData = {
+			url: request.url,
+			method: request.method,
+			headers: request.headers,
+			query_string: request.query,
+			data: request.body
+		};
 
-		if (data.extra) scope.setExtras(data.extra);
-		if (data.user) scope.setUser(data.user);
+		scope.setExtra('req', requestData);
+		scope.setTag('url', request.url);
+		scope.setTag('method', request.method);
+
+		// V9 Migration: Manual user context setting since requestDataIntegration no longer automatically sets user from request.user
+		// Reference: https://docs.sentry.io/platforms/javascript/guides/node/migration/v8-to-v9/#behavior-changes
+		if (request.user) {
+			scope.setUser(request.user);
+		}
 
 		this.client.instance().captureException(exception);
 	}

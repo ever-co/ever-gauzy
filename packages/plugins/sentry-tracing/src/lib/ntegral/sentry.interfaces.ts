@@ -1,7 +1,10 @@
 import { ModuleMetadata, Type } from '@nestjs/common/interfaces';
-import { Integration, Options } from '@sentry/types';
-import { ConsoleLoggerOptions } from '@nestjs/common';
 import { SeverityLevel } from '@sentry/node';
+import { ConsoleLoggerOptions } from '@nestjs/common';
+
+// Define types locally since they're no longer exported from @sentry/node in v9
+type Integration = any;
+type Options = any;
 
 /**
  * Interface for Sentry close options.

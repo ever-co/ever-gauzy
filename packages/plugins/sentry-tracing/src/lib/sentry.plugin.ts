@@ -1,7 +1,9 @@
 import { APP_INTERCEPTOR, HttpAdapterHost } from '@nestjs/core';
 import { MiddlewareConsumer, NestModule } from '@nestjs/common';
-import { Integration } from '@sentry/types';
 import * as chalk from 'chalk';
+
+// Define Integration type locally since it's no longer exported from @sentry/types in v9
+type Integration = any;
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap } from '@gauzy/plugin';
 import { SentryRequestMiddleware } from './sentry-request.middleware';
 import { SentryTraceMiddleware } from './sentry-trace.middleware';
