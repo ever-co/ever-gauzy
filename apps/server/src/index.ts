@@ -30,7 +30,7 @@ app.setName(process.env.NAME);
 console.log('Server Node Modules Path', path.join(__dirname, 'node_modules'));
 
 import * as remoteMain from '@electron/remote/main';
-import * as Sentry from '@sentry/electron';
+import * as Sentry from '@sentry/electron/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { autoUpdater } from 'electron-updater';
 import {
