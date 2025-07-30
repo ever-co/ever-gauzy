@@ -54,7 +54,7 @@ import {
 	createTimeTrackerWindow,
 	createUpdaterWindow
 } from '@gauzy/desktop-window';
-import * as Sentry from '@sentry/electron';
+import * as Sentry from '@sentry/electron/main';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';

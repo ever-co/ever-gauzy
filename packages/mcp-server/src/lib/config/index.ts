@@ -1,2 +1,2 @@
-export * from './tools-registry.js';
-export * from './server-info.js';
+export * from './tools-registry';
+export * from './server-info';
