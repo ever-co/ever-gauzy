@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/mcp",
 	"version": "0.1.0",
-	"description": "Ever Gauzy MCP Server - Standalone Model Context Protocol server for AI assistants",
+	"description": "Ever Gauzy MCP Server - Standalone Model Context Protocol Server",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",

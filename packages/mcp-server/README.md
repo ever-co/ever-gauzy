@@ -80,8 +80,7 @@ yarn nx build server-mcp --configuration=production
 yarn nx serve server-mcp
 
 # Or use the electron-specific build
-yarn nx build-electron server-mcp
-yarn start:electron
+yarn nx build server-mcp
 ```
 
 ## Features

@@ -1,4 +1,5 @@
 {
+    "extends": "./tsconfig.json",
     "compilerOptions": {
         "outDir": "../../dist/apps/server-mcp",
         "sourceMap": true,
@@ -13,20 +14,16 @@
         "allowSyntheticDefaultImports": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "types": ["node", "electron"]
+        "types": ["node"]
     },
-    "files": [],
+    "files": [
+        "global.d.ts"
+    ],
     "include": [
         "src/electron-main.ts",
-        "src/preload/*.ts",
-        "src/instance/*.ts",
-        "src/common/*.ts",
-        "src/tools/*.ts",
-        "src/environments/*.ts"
+        "src/preload/*.ts"
     ],
     "exclude": [
-        "src/index.ts",
-        "src/schema.ts",
         "jest.config.ts",
         "src/**/*.test.ts",
         "src/**/*.spec.ts"
