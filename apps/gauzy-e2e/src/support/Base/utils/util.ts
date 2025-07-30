@@ -72,8 +72,8 @@ export const waitUntil = (time: number) => {
 	cy.wait(time);
 };
 
-export const clearField = (loc) => {
-	cy.get(loc).clear();
+export const clearField = (loc, options = {}) => {
+	cy.get(loc).clear(options);
 };
 
 export const urlChanged = () => {

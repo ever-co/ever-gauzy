@@ -5,14 +5,13 @@ import { PipelinesPageData } from '../support/Base/pagedata/PipelinesPageData';
 import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
-//! Expected to find element: div.mb-3 > button[status="success"], but never found it.
-describe.skip('Pipelines test', () => {
+describe('Pipelines test', { testIsolation: false }, () => {
 	before(() => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+		cy.visitAndWait('/#/pages/sales/pipelines');
 	});
 
 	it('Should be able to add new pipeline', () => {
-		cy.visit('/#/pages/sales/pipelines');
 		pipelinesPage.gridBtnExists();
 		pipelinesPage.gridBtnClick(1);
 		pipelinesPage.addPipelineButtonVisible();
@@ -20,9 +19,7 @@ describe.skip('Pipelines test', () => {
 		pipelinesPage.nameInputVisible();
 		pipelinesPage.enterNameInputData(PipelinesPageData.pipelineName);
 		pipelinesPage.descriptionInputVisible();
-		pipelinesPage.enterDescriptionInputData(
-			PipelinesPageData.pipelineDescription
-		);
+		pipelinesPage.enterDescriptionInputData(PipelinesPageData.pipelineDescription);
 		pipelinesPage.createPipelineButtonVisible();
 		pipelinesPage.clickCreatePipelineButton();
 		pipelinesPage.waitMessageToHide();
@@ -37,23 +34,20 @@ describe.skip('Pipelines test', () => {
 		pipelinesPage.nameInputVisible();
 		pipelinesPage.enterNameInputData(PipelinesPageData.editPipelineName);
 		pipelinesPage.descriptionInputVisible();
-		pipelinesPage.enterDescriptionInputData(
-			PipelinesPageData.pipelineDescription
-		);
+		pipelinesPage.enterDescriptionInputData(PipelinesPageData.pipelineDescription);
 		pipelinesPage.updateButtonVisible();
 		pipelinesPage.clickUpdateButton();
 		pipelinesPage.waitMessageToHide();
 		pipelinesPage.verifyPipelineExists(PipelinesPageData.editPipelineName);
 	});
 	it('Should be able to delete pipeline', () => {
-		pipelinesPage.selectTableRow(0);
+		pipelinesPage.countTableRowsWithText(PipelinesPageData.editPipelineName);
+		pipelinesPage.selectFirstTableRowByText(PipelinesPageData.editPipelineName);
 		pipelinesPage.deleteButtonVisible();
 		pipelinesPage.clickDeleteButton();
 		pipelinesPage.confirmDeleteButtonVisible();
 		pipelinesPage.clickConfirmDeleteButton();
 		pipelinesPage.waitMessageToHide();
-		pipelinesPage.verifyPipelineIsDeleted(
-			PipelinesPageData.editPipelineName
-		);
+		pipelinesPage.verifyOnePipelineIsDeleted(PipelinesPageData.editPipelineName);
 	});
 });

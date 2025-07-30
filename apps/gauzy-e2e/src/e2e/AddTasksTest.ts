@@ -20,11 +20,6 @@ let imgUrl = ' ';
 
 describe('Add tasks test', { testIsolation: false }, () => {
 	before(() => {
-		cy.clearCookies();
-		cy.clearLocalStorage();
-		cy.window().then((win) => {
-			win.sessionStorage.clear();
-		});
 		firstName = faker.person.firstName();
 		lastName = faker.person.lastName();
 		username = faker.internet.userName();

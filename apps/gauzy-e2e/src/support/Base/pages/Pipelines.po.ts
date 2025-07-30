@@ -36,7 +36,7 @@ export const nameInputVisible = () => {
 };
 
 export const enterNameInputData = (data) => {
-	clearField(PipelinesPage.pipelineNameInputCss);
+	clearField(PipelinesPage.pipelineNameInputCss, { force: true });
 	enterInput(PipelinesPage.pipelineNameInputCss, data);
 };
 
@@ -61,8 +61,20 @@ export const tableRowVisible = () => {
 	verifyElementIsVisible(PipelinesPage.selectTableRowCss);
 };
 
+export const countTableRowsWithText = (text) => {
+	cy.get(PipelinesPage.selectTableRowCss)
+		.filter(`:contains(${text})`)
+		.then((rows) => {
+			cy.wrap({ [text]: rows.length }).as('pipelinesCount');
+		});
+};
+
 export const selectTableRow = (index) => {
 	clickButtonByIndex(PipelinesPage.selectTableRowCss, index);
+};
+
+export const selectFirstTableRowByText = (text) => {
+	cy.get(PipelinesPage.selectTableRowCss).filter(`:contains(${text})`).first().click();
 };
 
 export const editPipelineButtonVisible = () => {
@@ -103,6 +115,16 @@ export const waitMessageToHide = () => {
 
 export const verifyPipelineIsDeleted = (text) => {
 	verifyTextNotExisting(PipelinesPage.verifyPipelineCss, text);
+};
+
+export const verifyOnePipelineIsDeleted = (text) => {
+	cy.get('@pipelinesCount').then((count) => {
+		cy.document().then((doc) => {
+			const rows = doc.querySelectorAll(PipelinesPage.selectTableRowCss);
+			const filteredRows = Array.from(rows).filter((row) => row.textContent?.includes(text));
+			expect(filteredRows.length).to.equal((count as any)[text] - 1);
+		});
+	});
 };
 
 export const verifyPipelineExists = (text) => {

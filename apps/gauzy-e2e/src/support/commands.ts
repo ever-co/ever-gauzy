@@ -30,6 +30,11 @@ const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
 export const CustomCommands = {
 	login: (loginPage: any, LoginPageData: any, dashboardPage: any) => {
+		cy.clearCookies();
+		cy.clearLocalStorage();
+		cy.window().then((win) => {
+			win.sessionStorage.clear();
+		});
 		cy.visit('/', { timeout: pageLoadTimeout });
 		loginPage.verifyTitle();
 		loginPage.verifyLoginText();
