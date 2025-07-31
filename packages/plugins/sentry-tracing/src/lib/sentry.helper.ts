@@ -1,9 +1,7 @@
 import * as Sentry from '@sentry/node';
+import { Integration } from '@sentry/core';
 import { environment } from '@gauzy/config';
 import { SentryPluginOptions } from './sentry.types';
-
-// Define Integration type locally since it's no longer exported from @sentry/types in v9
-type Integration = any;
 
 /**
  * Parses and formats Sentry plugin options for configuration.

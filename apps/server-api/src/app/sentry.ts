@@ -1,6 +1,7 @@
 // V9 Migration: @sentry/angular-ivy was removed, use @sentry/angular instead
 // Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/
 import * as Sentry from '@sentry/angular';
+import { Client, ClientOptions, BaseTransportOptions } from '@sentry/core';
 import { environment } from '../environments/environment';
 import { version } from '../../version';
 
@@ -8,7 +9,7 @@ import { version } from '../../version';
  * Initializes and configures the Sentry module.
  * @returns The configured Sentry instance.
  */
-export function initializeSentry(): void {
+export function initializeSentry(): Client<ClientOptions<BaseTransportOptions>> {
 	return Sentry.init({
 		dsn: environment.SENTRY_DSN,
 		environment: environment.production ? 'production' : 'development',
