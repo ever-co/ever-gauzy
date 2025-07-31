@@ -1,14 +1,11 @@
-import { IEnvironment } from './ienvironment.js';
+import { IEnvironment } from './ienvironment';
 import { Logger } from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 const logger = new Logger('Environment');
 
-// Get the directory name in ES module context
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// __dirname is available in CommonJS by default
 
 // Load environment variables from multiple possible locations
 const envPaths = [

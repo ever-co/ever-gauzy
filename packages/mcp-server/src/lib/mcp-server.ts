@@ -1,15 +1,15 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { Logger } from '@nestjs/common';
-import { version } from './common/version.js';
-import { registerTimerTools } from './tools/timer.js';
-import { registerProjectTools } from './tools/projects.js';
-import { registerTaskTools } from './tools/tasks.js';
-import { registerEmployeeTools } from './tools/employees.js';
-import { registerTestTools } from './tools/test-connection.js';
-import { registerDailyPlanTools } from './tools/daily-plan.js';
-import { registerOrganizationContactTools } from './tools/organization-contact.js';
-import { registerAuthTools } from './tools/auth.js';
+import { version } from './common/version';
+import { registerTimerTools } from './tools/timer';
+import { registerProjectTools } from './tools/projects';
+import { registerTaskTools } from './tools/tasks';
+import { registerEmployeeTools } from './tools/employees';
+import { registerTestTools } from './tools/test-connection';
+import { registerDailyPlanTools } from './tools/daily-plan';
+import { registerOrganizationContactTools } from './tools/organization-contact';
+import { registerAuthTools } from './tools/auth';
 
 const logger = new Logger('McpServer');
 
@@ -58,13 +58,13 @@ export function createStandaloneMcpServer() {
 // Check if this file is being run directly
 function isMainModule() {
 	try {
-		// In ES modules, we need to use import.meta.url to check if this is the main module
-		const url = new URL(import.meta.url);
+		// Use __filename to check if this is the main module
+		const url = new URL(__filename);
 		const mainModuleUrl = new URL(process.argv[1], 'file://');
 		return url.pathname === mainModuleUrl.pathname;
 	} catch (error) {
 		// Fallback: check if process.argv[1] ends with this filename
-		return process.argv[1]?.endsWith('mcp-server.js') || process.argv[1]?.endsWith('mcp-server.ts');
+		return process.argv[1]?.endsWith('mcp-server') || process.argv[1]?.endsWith('mcp-server.ts');
 	}
 }
 

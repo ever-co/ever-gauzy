@@ -18,13 +18,12 @@
         "email": "ever@ever.co",
         "url": "https://ever.co"
     },
-    "main": "index.js",
+    "main": "main.js",
     "bin": {
-        "gauzy-mcp": "./index.js"
+        "gauzy-mcp": "./main.js"
     },
     "workspaces": {
         "packages": [
-            "../../../dist/packages/config",
             "../../../dist/packages/mcp-server"
         ]
     },
@@ -122,18 +121,17 @@
         ]
     },
     "dependencies": {
-        "@gauzy/config": "file:../../../dist/packages/config",
         "@gauzy/mcp-server": "file:../../../dist/packages/mcp-server",
         "@modelcontextprotocol/sdk": "^1.13.1",
         "axios": "^1.7.0",
         "dotenv": "^16.4.5",
         "zod": "^3.25.67",
-        "@sentry/electron": "^4.18.0",
-        "@sentry/node": "^7.101.1",
-        "@sentry/profiling-node": "^7.101.1",
-        "@sentry/replay": "^7.101.1",
-        "@sentry/tracing": "^7.101.1",
-        "@sentry/types": "^7.101.1",
+        "@sentry/electron": "^6.8.0",
+        "@sentry/node": "^9.43.0",
+        "@sentry/profiling-node": "^9.43.0",
+        "@sentry/replay": "^7.116.0",
+        "@sentry/tracing": "^7.120.4",
+        "@sentry/types": "^9.43.0",
         "electron-log": "^4.4.8",
         "electron-store": "^8.1.0",
         "electron-updater": "^6.1.7",

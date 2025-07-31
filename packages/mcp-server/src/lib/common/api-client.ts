@@ -1,8 +1,8 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 import { Logger } from '@nestjs/common';
-import { environment } from '../environments/environment.js';
-import { authManager } from './auth-manager.js';
-import { sanitizeErrorMessage } from './security-utils.js';
+import { environment } from '../environments/environment';
+import { authManager } from './auth-manager';
+import { sanitizeErrorMessage } from './security-utils';
 
 const logger = new Logger('ApiClient');
 

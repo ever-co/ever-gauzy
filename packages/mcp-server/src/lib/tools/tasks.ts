@@ -1,15 +1,15 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
-import { apiClient } from '../common/api-client.js';
-import { authManager } from '../common/auth-manager.js';
+import { apiClient } from '../common/api-client';
+import { authManager } from '../common/auth-manager';
 import {
 	TaskSchema,
 	TaskStatusEnum,
 	TaskPriorityEnum,
 	TaskSizeEnum,
 	TaskTypeEnum,
-} from '../schema.js';
+} from '../schema';
 
 const logger = new Logger('TaskTools');
 

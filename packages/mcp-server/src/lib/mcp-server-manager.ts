@@ -1,11 +1,11 @@
-import { createMcpServer } from './mcp-server.js';
+import { createMcpServer } from './mcp-server';
 import { Logger } from '@nestjs/common';
 import { spawn, ChildProcess } from 'node:child_process';
 import * as path from 'node:path';
 
 const logger = new Logger('McpServerManager');
 // Environment will be provided by the consuming app
-// import { environment } from '../environments/environment.js';
+// import { environment } from '../environments/environment';
 
 export interface McpServerStatus {
 	running: boolean;
@@ -148,7 +148,7 @@ export class McpServerManager {
 
 		try {
 			// Create and start the MCP server in a separate process
-			const serverScript = path.join(__dirname, 'mcp-server.js');
+			const serverScript = path.join(__dirname, 'mcp-server');
 
 			// Validate that the server script exists and is within our application directory
 			if (!serverScript.includes(__dirname)) {

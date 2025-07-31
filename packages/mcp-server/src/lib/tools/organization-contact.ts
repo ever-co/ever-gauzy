@@ -1,8 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
-import { apiClient } from '../common/api-client.js';
-import { OrganizationContactSchema, ContactTypeEnum } from '../schema.js';
+import { apiClient } from '../common/api-client';
+import { OrganizationContactSchema, ContactTypeEnum } from '../schema';
 
 const logger = new Logger('OrganizationContactTools');
 

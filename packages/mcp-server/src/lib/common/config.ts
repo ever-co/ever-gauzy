@@ -1,4 +1,4 @@
-import { environment } from '../environments/environment.js';
+import { environment } from '../environments/environment';
 
 export interface GauzyConfig {
 	baseUrl: string;
