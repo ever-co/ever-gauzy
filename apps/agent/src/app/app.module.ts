@@ -17,8 +17,6 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-// V9 Migration: @sentry/angular-ivy was removed, use @sentry/angular instead
-// Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/
 import * as Sentry from '@sentry/angular';
 import {
 	APIInterceptor,
