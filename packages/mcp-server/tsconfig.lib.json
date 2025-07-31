@@ -5,7 +5,7 @@
 		"declaration": true,
 		"types": ["node"],
 		"target": "es2021",
-		"module": "ESNext",
+		"module": "CommonJS",
 		"moduleResolution": "node",
 		"allowSyntheticDefaultImports": true,
 		"esModuleInterop": true,

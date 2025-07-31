@@ -1,9 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import log from 'electron-log';
-import { apiClient } from '../common/api-client.js';
-import { authManager } from '../common/auth-manager.js';
-import { EmployeeSchema } from '../schema.js';
+import { apiClient } from '../common/api-client';
+import { authManager } from '../common/auth-manager';
+import { EmployeeSchema } from '../schema';
 
 /**
  * Helper function to validate organization context and return default parameters
