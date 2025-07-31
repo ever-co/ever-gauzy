@@ -8,7 +8,7 @@ import { version } from '../../version';
  * Initializes and configures the Sentry module.
  * @returns The configured Sentry instance.
  */
-export function initializeSentry(): void {
+export function initializeSentry() {
 	return Sentry.init({
 		dsn: environment.SENTRY_DSN,
 		environment: environment.production ? 'production' : 'development',
