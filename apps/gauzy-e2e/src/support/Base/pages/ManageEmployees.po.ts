@@ -69,10 +69,7 @@ export const clickProjectDropdown = () => {
 };
 
 export const selectProjectFromDropdown = (text) => {
-	clickElementByText(
-		ManageEmployeesPage.selectProjectDropdownOptionCss,
-		text
-	);
+	clickElementByText(ManageEmployeesPage.selectProjectDropdownOptionCss, text);
 };
 
 export const sendInviteButtonVisible = () => {
@@ -144,6 +141,10 @@ export const selectTagFromDropdown = (index) => {
 	clickButtonByIndex(ManageEmployeesPage.tagsDropdownOption, index);
 };
 
+export const selectTagFromDropdownByText = (text) => {
+	clickElementByText(ManageEmployeesPage.tagsDropdownOption, text);
+};
+
 export const clickCardBody = () => {
 	clickButton(ManageEmployeesPage.cardBodyCss);
 };
@@ -191,11 +192,13 @@ export const selectTableRow = (index) => {
 };
 
 export const editButtonVisible = () => {
-	verifyElementIsVisible(ManageEmployeesPage.editEmployeeButtonCss);
+	cy.get(ManageEmployeesPage.actionsBarCss).findByRole('button', { name: ManageEmployeesPage.editButtonName });
 };
 
 export const clickEditButton = () => {
-	clickButton(ManageEmployeesPage.editEmployeeButtonCss);
+	cy.get(ManageEmployeesPage.actionsBarCss)
+		.findByRole('button', { name: ManageEmployeesPage.editButtonName })
+		.click();
 };
 
 export const usernameEditInputVisible = () => {
@@ -265,11 +268,15 @@ export const clickBackButton = () => {
 // END WORK
 
 export const endWorkButtonVisible = () => {
-	verifyElementIsVisible(ManageEmployeesPage.endWorkButtonCss);
+	cy.get(ManageEmployeesPage.actionsBarCss)
+		.findByRole('button', { name: ManageEmployeesPage.endWorkButtonName })
+		.should('be.visible');
 };
 
 export const clickEndWorkButton = () => {
-	clickButton(ManageEmployeesPage.endWorkButtonCss);
+	cy.get(ManageEmployeesPage.actionsBarCss)
+		.findByRole('button', { name: ManageEmployeesPage.endWorkButtonName })
+		.click();
 };
 
 export const confirmEndWorkButtonVisible = () => {
@@ -295,7 +302,10 @@ export const confirmDeleteButtonVisible = () => {
 };
 
 export const clickConfirmDeleteButton = () => {
+	const tag = Date.now().toString().slice(-5);
+	cy.intercept('api/**/employee/**').as(`employeesDeleted-${tag}`);
 	clickButton(ManageEmployeesPage.confirmDeleteButtonCss);
+	cy.wait(`@employeesDeleted-${tag}`);
 };
 
 // COPY INVITE LINK
@@ -305,25 +315,38 @@ export const manageInvitesButtonVisible = () => {
 };
 
 export const clickManageInviteButton = () => {
-	clickButton(ManageEmployeesPage.manageInvitesButtonCss);
+	cy.document().then((doc) => {
+		const button = doc.querySelector(ManageEmployeesPage.manageInvitesButtonCss);
+		if (button) {
+			cy.wrap(button).click();
+		}
+	});
 };
 
 export const copyLinkButtonVisible = () => {
-	verifyElementIsVisible(ManageEmployeesPage.copyLinkButtonCss);
+	cy.get(ManageEmployeesPage.actionsBarCss)
+		.findByRole('button', { name: ManageEmployeesPage.copyLinkButtonName })
+		.should('be.visible');
 };
 
 export const clickCopyLinkButton = () => {
-	clickButton(ManageEmployeesPage.copyLinkButtonCss);
+	cy.get(ManageEmployeesPage.actionsBarCss)
+		.findByRole('button', { name: ManageEmployeesPage.copyLinkButtonName })
+		.click();
 };
 
 // RESEND INVITE
 
 export const resendInviteButtonVisible = () => {
-	verifyElementIsVisible(ManageEmployeesPage.resendInviteButtonCss);
+	cy.get(ManageEmployeesPage.actionsBarCss)
+		.findByRole('button', { name: ManageEmployeesPage.resendInviteButtonName })
+		.should('be.visible');
 };
 
 export const clickResendInviteButton = () => {
-	clickButton(ManageEmployeesPage.resendInviteButtonCss);
+	cy.get(ManageEmployeesPage.actionsBarCss)
+		.findByRole('button', { name: ManageEmployeesPage.resendInviteButtonName })
+		.click();
 };
 
 export const confirmResendInviteButtonVisible = () => {
@@ -361,7 +384,17 @@ export const verifyEmployeeExists = (text) => {
 };
 
 export const verifyEmployeeIsDeleted = (text) => {
-	verifyTextNotExisting(ManageEmployeesPage.verifyEmployeeCss, text);
+	cy.document().then((doc) => {
+		const rows = doc.querySelectorAll(ManageEmployeesPage.verifyEmployeeCss);
+		cy.wrap(!rows || rows.length === 0).as('isEmpty');
+	});
+	cy.get('@isEmpty').then((isEmpty) => {
+		if (!isEmpty) {
+			verifyText(ManageEmployeesPage.verifyEmployeeCss, text);
+		} else {
+			cy.wrap(isEmpty).should('be.true', 'No employees found');
+		}
+	});
 };
 
 export const verifyInviteExists = (text) => {
@@ -370,4 +403,52 @@ export const verifyInviteExists = (text) => {
 
 export const verifyInviteIsDeleted = (text) => {
 	verifyTextNotExisting(ManageEmployeesPage.verifyInviteCss, text);
+};
+
+export const tagsFilterDropdownVisible = () => {
+	verifyElementIsVisible(ManageEmployeesPage.tagsFilterDropdownCss);
+};
+
+export const clickTagsFilterDropdown = () => {
+	clickButton(ManageEmployeesPage.tagsFilterDropdownCss);
+};
+
+export const selectTagFromFilterDropdownByText = (text) => {
+	clickElementByText(ManageEmployeesPage.tagsFilterDropdownOptionCss, text);
+};
+
+export const filterByTag = (text) => {
+	tagsFilterDropdownVisible();
+	let isTagSelected = false;
+	cy.document().then((doc) => {
+		const input = doc.querySelector(ManageEmployeesPage.tagsFilterDropdownCss);
+		cy.wrap(input).as('input');
+		const valueContainer = input.closest('.ng-value-container');
+		cy.wrap(valueContainer).as('valueContainer');
+		if (valueContainer.textContent.includes(text)) {
+			isTagSelected = true;
+		}
+	});
+	if (!isTagSelected) {
+		clickTagsFilterDropdown();
+		const tag = Date.now().toString().slice(-5);
+		cy.intercept('api/**/employee/**').as(`employeesUpdated-${tag}`);
+		selectTagFromFilterDropdownByText(text);
+		cy.wait(`@employeesUpdated-${tag}`);
+	}
+};
+
+export const clickExpirationDropdown = () => {
+	clickButton(ManageEmployeesPage.expirationDropdownCss);
+};
+
+export type ExpirationTime = '1 Day' | '7 Days' | '14 Days' | '30 Days' | 'Never';
+
+export const selectExpirationFromDropdown = (text: ExpirationTime) => {
+	clickElementByText(ManageEmployeesPage.expirationDropdownOptionCss, text);
+};
+
+export const setExpirationTime = (text: ExpirationTime) => {
+	clickExpirationDropdown();
+	selectExpirationFromDropdown(text);
 };

@@ -530,6 +530,7 @@
 		"@swc-node/register": "~1.9.1",
 		"@swc/core": "~1.5.7",
 		"@swc/helpers": "~0.5.11",
+		"@testing-library/cypress": "9.0.0",
 		"@types/bcrypt": "^5.0.2",
 		"@types/google.maps": "^3.58.1",
 		"@types/jest": "^29.5.14",

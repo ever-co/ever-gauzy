@@ -7,7 +7,7 @@
 		"outDir": "../../dist/out-tsc/apps/gauzy-e2e",
 		"sourceMap": false,
 		"target": "es5",
-		"types": ["node", "cypress"]
+		"types": ["node", "cypress", "@testing-library/cypress"]
 	},
 	"extends": "../../tsconfig.json",
 	"include": ["src/**/*.ts"]
