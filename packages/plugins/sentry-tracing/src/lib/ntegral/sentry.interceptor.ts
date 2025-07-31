@@ -4,8 +4,6 @@ import { ContextType, HttpArgumentsHost, RpcArgumentsHost, WsArgumentsHost } fro
 // Rxjs imports
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-// Sentry imports
-import * as Sentry from '@sentry/node';
 import { Scope } from '@sentry/node';
 
 import { SentryInterceptorOptions, SentryInterceptorOptionsFilter } from './sentry.interfaces';
