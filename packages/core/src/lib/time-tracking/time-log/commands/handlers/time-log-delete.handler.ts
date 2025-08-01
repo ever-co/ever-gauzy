@@ -18,7 +18,7 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 		private readonly _commandBus: CommandBus
-	) { }
+	) {}
 
 	/**
 	 * Executes the TimeLogDeleteCommand to handle both soft and hard deletions of time logs,
@@ -87,6 +87,11 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	): Promise<void> {
 		// Loop through each time log and delete its associated time slots
 		for await (const timeLog of timeLogs) {
+			if (!timeLog.timeSlots || timeLog.timeSlots.length === 0) {
+				console.warn(`Time log ${timeLog?.id} has no timeSlots — skipping slot deletion`);
+				continue;
+			}
+
 			const { employeeId, organizationId, timeSlots } = timeLog;
 			const timeSlotsIds = pluck(timeSlots, 'id');
 			const params = {
@@ -98,9 +103,9 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 			};
 			if (timeLogMap[timeLog.id] && timeLogMap[timeLog.id].partialStatus != TimeLogPartialStatus.COMPLETE) {
 				// Adjust the startedAt value increasing or decreasing 1 second based on the partialStatus
-				params['startedAt'] = moment(timeLogMap[timeLog.id].referenceDate).add(
-					timeLogMap[timeLog.id].partialStatus == TimeLogPartialStatus.TO_LEFT ? 1 : -1, 'seconds'
-				).toDate();
+				params['startedAt'] = moment(timeLogMap[timeLog.id].referenceDate)
+					.add(timeLogMap[timeLog.id].partialStatus == TimeLogPartialStatus.TO_LEFT ? 1 : -1, 'seconds')
+					.toDate();
 				params.partialStatus = timeLogMap[timeLog.id].partialStatus;
 			}
 			// Delete time slots sequentially
@@ -124,7 +129,7 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 		timeLogMap: Record<ID, IDeleteTimeLogData>,
 		forceDelete = false
 	): Promise<DeleteResult | UpdateResult> {
-		const logsToDelete = []
+		const logsToDelete = [];
 		for (const log of timeLogs) {
 			if (!timeLogMap[log.id] || timeLogMap[log.id].partialStatus == TimeLogPartialStatus.COMPLETE) {
 				logsToDelete.push(log.id);

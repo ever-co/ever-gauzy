@@ -1495,6 +1495,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Get the time logs from the database
 		const timeLogs = await query.getMany();
 
+		for (const log of timeLogs) {
+			if (!log.timeSlots || log.timeSlots.length === 0) {
+				throw new BadRequestException(`Time log ${log.id} has no time slots — data may be corrupted`);
+			}
+		}
+
 		// Invoke the command bus to delete the time logs
 		const deleted = await this.commandBus.execute(new TimeLogDeleteCommand(timeLogs, timeLogMap, forceDelete));
 

@@ -223,7 +223,7 @@ export class TimerService {
 			}
 		}
 
-		const now = moment.utc();
+		const now = moment();
 
 		// If the timer is running, ensure that the employee is assigned to the project/task of the running timer
 		if (lastLog?.isRunning) {

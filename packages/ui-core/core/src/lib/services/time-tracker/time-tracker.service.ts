@@ -105,8 +105,6 @@ export class TimeTrackerService implements OnDestroy {
 	private readonly _trackType$: BehaviorSubject<string> = new BehaviorSubject(this.timeType);
 	private _worker: Worker;
 	private _timerSynced: ITimerSynced;
-	// Indicates whether the timer was started automatically after midnight
-	private startedAfterMidnight = false;
 	private readonly channel: BroadcastChannel;
 	private readonly timerStoreSubject = new BehaviorSubject(this.timerStore.getValue());
 	public timer$: Observable<number> = timer(BACKGROUND_SYNC_INTERVAL);
@@ -244,7 +242,7 @@ export class TimeTrackerService implements OnDestroy {
 		const endOfDay = moment.tz(timeZone).endOf('day');
 		const secondsToMidnight = endOfDay.diff(now, 'seconds');
 
-		// Notify that the timer is about to roll over (within 5 seconds before midnight)
+		// Notify that the timer is about to roll over (within 10 seconds before midnight)
 		if (secondsToMidnight <= 10 && !this.hasRolledOverToday) {
 			this.willRollOverSoon$.next(true);
 		} else {
@@ -252,7 +250,7 @@ export class TimeTrackerService implements OnDestroy {
 		}
 
 		// Perform timer stop + restart 1 second before midnight (if not done already)
-		if (this.running && secondsToMidnight <= 5 && !this.hasRolledOverToday) {
+		if (this.running && secondsToMidnight <= 4 && !this.hasRolledOverToday) {
 			this.hasRolledOverToday = true;
 			this.willRollOverSoon$.next(false);
 
@@ -282,7 +280,7 @@ export class TimeTrackerService implements OnDestroy {
 
 				// Start a new timer session just after midnight
 				if (!this.running && stopResult) {
-					await this.sleep(5000); // wait 1s to ensure new day begins
+					await this.sleep(5000); // wait 5s to ensure new day begins
 					this.turnOnTimer();
 					this.timerConfig = {
 						...this.timerConfig,
@@ -301,16 +299,13 @@ export class TimeTrackerService implements OnDestroy {
 
 					this._broadcastState('START_TIMER');
 					this._saveStateToLocalStorage();
-					this.startedAfterMidnight = true;
 				}
 				// Reset the rollover flags shortly after midnight (e.g., at 00:00:15)
 				await this.sleep(10000);
 				this.hasRolledOverToday = false;
-				this.startedAfterMidnight = false;
 			} catch (error) {
 				console.error('[isMidnight] Timer rollover error:', error);
 				this.hasRolledOverToday = false;
-				this.startedAfterMidnight = false;
 			}
 		}
 	}
@@ -436,7 +431,7 @@ export class TimeTrackerService implements OnDestroy {
 	 */
 	getTimerStatus(params: ITimerStatusInput): Promise<ITimerStatusWithWeeklyLimits> {
 		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-		const todayStart = moment.tz(timeZone).startOf('day').utc().toISOString(); // np. '2025-07-01T22:00:00Z'
+		const todayStart = moment.tz(timeZone).startOf('day').utc().toISOString();
 		const todayEnd = moment.tz(timeZone).endOf('day').utc().toISOString();
 		return firstValueFrom(
 			this.http.get<ITimerStatusWithWeeklyLimits>(`${API_PREFIX}/timesheet/timer/status`, {
