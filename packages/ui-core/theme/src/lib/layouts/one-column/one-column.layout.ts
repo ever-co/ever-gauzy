@@ -22,11 +22,11 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestro
 		{ title: 'Log out', link: '/auth/logout' }
 	];
 	loading: boolean;
-	isOpen: boolean = false;
-	isWorkspaceOpen: boolean = false;
-	isExpanded: boolean = true;
-	isCollapse: boolean = true;
-	trigger: boolean = true;
+	isOpen = false;
+	isWorkspaceOpen = false;
+	isExpanded = true;
+	isCollapse = true;
+	trigger = true;
 
 	/**
 	 * User observable

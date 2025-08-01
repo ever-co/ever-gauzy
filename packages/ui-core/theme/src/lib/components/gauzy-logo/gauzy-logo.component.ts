@@ -45,7 +45,6 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	}
 
 	@Input() isAccordion = true;
-
 	@Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(this.isCollapse);
 	@Output() onWorkspaceToggle: EventEmitter<boolean> = new EventEmitter<boolean>();
 
