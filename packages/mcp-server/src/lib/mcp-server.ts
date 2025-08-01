@@ -10,6 +10,26 @@ import { registerTestTools } from './tools/test-connection';
 import { registerDailyPlanTools } from './tools/daily-plan';
 import { registerOrganizationContactTools } from './tools/organization-contact';
 import { registerAuthTools } from './tools/auth';
+import { registerProductTools } from './tools/products';
+import { registerProductCategoryTools } from './tools/product-categories';
+import { registerInvoiceTools } from './tools/invoices';
+import { registerExpenseTools } from './tools/expenses';
+import { registerGoalTools } from './tools/goals';
+import { registerKeyResultTools } from './tools/key-results';
+import { registerDealTools } from './tools/deals';
+import { registerCandidateTools } from './tools/candidates';
+import { registerPaymentTools } from './tools/payments';
+import { registerMerchantTools } from './tools/merchants';
+import { registerIncomeTools } from './tools/incomes';
+import { registerEquipmentTools } from './tools/equipment';
+import { registerCommentTools } from './tools/comments';
+import { registerReportTools } from './tools/reports';
+import { registerTimeOffTools } from './tools/time-off';
+import { registerEmployeeAwardTools } from './tools/employee-awards';
+import { registerActivityLogTools } from './tools/activity-logs';
+import { registerWarehouseTools } from './tools/warehouses';
+import { registerPipelineTools } from './tools/pipelines';
+import { registerSkillTools } from './tools/skills';
 
 const logger = new Logger('McpServer');
 
@@ -35,6 +55,28 @@ export function createMcpServer() {
 		registerDailyPlanTools(server);
 		registerOrganizationContactTools(server);
 		registerTestTools(server);
+
+		registerProductTools(server);
+		registerProductCategoryTools(server);
+		registerInvoiceTools(server);
+		registerExpenseTools(server);
+		registerGoalTools(server);
+		registerKeyResultTools(server);
+		registerDealTools(server);
+		registerCandidateTools(server);
+
+		registerPaymentTools(server);
+		registerMerchantTools(server);
+		registerIncomeTools(server);
+		registerEquipmentTools(server);
+		registerCommentTools(server);
+		registerReportTools(server);
+		registerTimeOffTools(server);
+		registerEmployeeAwardTools(server);
+		registerActivityLogTools(server);
+		registerWarehouseTools(server);
+		registerPipelineTools(server);
+		registerSkillTools(server);
 
 		logger.log('Gauzy MCP Server: All tools registered successfully');
 	} catch (error) {
