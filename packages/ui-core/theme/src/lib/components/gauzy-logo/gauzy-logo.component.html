@@ -1,6 +1,6 @@
-<nb-accordion *ngIf="isAccordion" class="accordion workspace" (click)="toggleWorkspace()">
+<nb-accordion *ngIf="isAccordion" class="accordion workspace">
 	<nb-accordion-item [collapsed]="controlled" (collapsedChange)="onCollapse($event)">
-		<nb-accordion-item-header class="principal">
+		<nb-accordion-item-header class="principal" (click)="toggleWorkspace()">
 			<ng-container *ngTemplateOutlet="logoTemplate"></ng-container>
 			<div class="organization" *ngIf="!isCollapse">
 				<img [src]="organization?.imageUrl" [alt]="organization?.name" />

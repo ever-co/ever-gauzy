@@ -10,14 +10,18 @@ export class WorkspaceMenuComponent {
 	@Output()
 	public close: EventEmitter<void> = new EventEmitter<void>();
 
-	public clicks: boolean[] = [];
+	private hasInteracted = false;
 
 	public onClick() {
 		this.close.emit();
 	}
 
 	public onClickOutside(event: boolean) {
-		this.clicks.push(event);
-		if (!event && this.clicks.length > 1) this.onClick();
+		if (!event && this.hasInteracted) {
+			this.onClick();
+		}
+		if (event) {
+			this.hasInteracted = true;
+		}
 	}
 }

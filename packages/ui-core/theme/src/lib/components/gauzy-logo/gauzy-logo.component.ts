@@ -40,13 +40,14 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	}
 	set controlled(value: boolean) {
 		this._controlled = value;
-		this.isCollapse = value;
+		// Defer update to avoid change detection issues
+		setTimeout(() => (this.isCollapse = value), 0);
 	}
 
-	@Input() isAccordion = true;
+	@Input() readonly isAccordion = true;
 
-	@Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(this.isCollapse);
-	@Output() onWorkspaceToggle: EventEmitter<boolean> = new EventEmitter<boolean>();
+	@Output() readonly onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(this.isCollapse);
+	@Output() readonly onWorkspaceToggle: EventEmitter<boolean> = new EventEmitter<boolean>();
 
 	/**
 	 * Checks if the logo file is in SVG format.
@@ -68,9 +69,6 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
-		// Synchronize controlled input with isCollapse
-		this.isCollapse = this.controlled;
-
 		this._store.selectedOrganization$
 			.pipe(
 				debounceTime(100),
