@@ -44,10 +44,10 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 		setTimeout(() => (this.isCollapse = value), 0);
 	}
 
-	@Input() readonly isAccordion = true;
+	@Input() isAccordion = true;
 
-	@Output() readonly onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(this.isCollapse);
-	@Output() readonly onWorkspaceToggle: EventEmitter<boolean> = new EventEmitter<boolean>();
+	@Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(this.isCollapse);
+	@Output() onWorkspaceToggle: EventEmitter<boolean> = new EventEmitter<boolean>();
 
 	/**
 	 * Checks if the logo file is in SVG format.
