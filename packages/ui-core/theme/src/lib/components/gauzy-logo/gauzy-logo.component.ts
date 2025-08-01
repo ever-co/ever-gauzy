@@ -28,12 +28,12 @@ import { COSMIC_THEME, DARK_THEME, GAUZY_DARK, MATERIAL_DARK_THEME } from '../..
 })
 export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	public theme: string;
-	public isCollapse: boolean = true;
+	public isCollapse = true;
 	public organization: IOrganization;
 	public logoUrl: SafeResourceUrl;
-	public isWorkspaceOpen: boolean = false;
+	public isWorkspaceOpen = false;
 
-	private _controlled: boolean = true;
+	private _controlled = true;
 	@Input()
 	get controlled(): boolean {
 		return this._controlled;
@@ -43,7 +43,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 		this.isCollapse = value;
 	}
 
-	@Input() isAccordion: boolean = true;
+	@Input() isAccordion = true;
 
 	@Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(this.isCollapse);
 	@Output() onWorkspaceToggle: EventEmitter<boolean> = new EventEmitter<boolean>();
