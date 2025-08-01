@@ -105,6 +105,8 @@ export class TimeTrackerService implements OnDestroy {
 	private readonly _trackType$: BehaviorSubject<string> = new BehaviorSubject(this.timeType);
 	private _worker: Worker;
 	private _timerSynced: ITimerSynced;
+	// Indicates whether the timer was started automatically after midnight
+	private startedAfterMidnight = false;
 	private readonly channel: BroadcastChannel;
 	private readonly timerStoreSubject = new BehaviorSubject(this.timerStore.getValue());
 	public timer$: Observable<number> = timer(BACKGROUND_SYNC_INTERVAL);
@@ -299,13 +301,16 @@ export class TimeTrackerService implements OnDestroy {
 
 					this._broadcastState('START_TIMER');
 					this._saveStateToLocalStorage();
+					this.startedAfterMidnight = true;
 				}
 				// Reset the rollover flags shortly after midnight (e.g., at 00:00:15)
 				await this.sleep(10000);
 				this.hasRolledOverToday = false;
+				this.startedAfterMidnight = false;
 			} catch (error) {
 				console.error('[isMidnight] Timer rollover error:', error);
 				this.hasRolledOverToday = false;
+				this.startedAfterMidnight = false;
 			}
 		}
 	}
