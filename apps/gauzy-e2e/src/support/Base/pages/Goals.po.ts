@@ -8,16 +8,31 @@ import {
 	clickElementByText,
 	verifyText,
 	verifyElementNotExist,
-	waitUntil
+	waitUntil,
+	ngClearField
 } from '../utils/util';
 import { GoalsPage } from '../pageobjects/GoalsPageObject';
 
-export const addButtonVisible = () => {
-	verifyElementIsVisible(GoalsPage.addButtonCss);
+export const visit = () => {
+	cy.intercept('GET', '/api/**/goals*').as('getGoals');
+	cy.visit('/#/pages/goals');
+	cy.wait('@getGoals');
 };
 
-export const clickAddButton = (index) => {
-	clickButtonByIndex(GoalsPage.addButtonCss, index);
+export const addButtonVisible = () => {
+	cy.get(GoalsPage.actionsBarCss).findByRole('button', { name: GoalsPage.addButtonName }).should('be.visible');
+};
+
+export const clickAddButton = () => {
+	cy.get(GoalsPage.actionsBarCss).findByRole('button', { name: GoalsPage.addButtonName }).click();
+};
+
+export const addNewKeyResultButtonVisible = () => {
+	cy.findByRole('button', { name: GoalsPage.addNewKeyResultButtonName }).should('be.visible');
+};
+
+export const clickAddNewKeyResultButton = () => {
+	cy.findByRole('button', { name: GoalsPage.addNewKeyResultButtonName }).click();
 };
 
 export const selectOptionFromDropdown = (index) => {
@@ -29,7 +44,7 @@ export const nameInputVisible = () => {
 };
 
 export const enterNameInputData = (data) => {
-	clearField(GoalsPage.nameInputCss);
+	ngClearField(GoalsPage.nameInputCss);
 	enterInput(GoalsPage.nameInputCss, data);
 };
 
@@ -57,32 +72,44 @@ export const selectLeadFromDropdown = (index) => {
 	clickButtonByIndex(GoalsPage.dropdownOptionCss, index);
 };
 
+export const deadlineDropdownVisible = () => {
+	verifyElementIsVisible(GoalsPage.deadlineDropdownCss);
+};
+
+export const clickDeadlineDropdown = () => {
+	clickButton(GoalsPage.deadlineDropdownCss);
+};
+
+export const selectDeadlineFromDropdown = (index = 0) => {
+	clickButtonByIndex(GoalsPage.deadlineOptionCss, index);
+};
+
 export const confirmButtonVisible = () => {
 	verifyElementIsVisible(GoalsPage.confirmButtonCss);
 };
 
 export const editButtonVisible = () => {
-	verifyElementIsVisible(GoalsPage.editButtonCss);
+	cy.get(GoalsPage.actionsBarCss).findByRole('button', { name: GoalsPage.editButtonName }).should('be.visible');
 };
 
-export const clickEditButton = (index) => {
-	clickButtonByIndex(GoalsPage.editButtonCss, index);
+export const clickEditButton = () => {
+	cy.get(GoalsPage.actionsBarCss).findByRole('button', { name: GoalsPage.editButtonName }).click();
 };
 
 export const viewButtonVisible = () => {
-	verifyElementIsVisible(GoalsPage.viewButtonCss);
+	cy.get(GoalsPage.actionsBarCss).findByRole('button', { name: GoalsPage.viewButtonName }).should('be.visible');
 };
 
-export const clickViewButton = (index) => {
-	clickButtonByIndex(GoalsPage.viewButtonCss, index);
+export const clickViewButton = () => {
+	cy.get(GoalsPage.actionsBarCss).findByRole('button', { name: GoalsPage.viewButtonName }).click();
 };
 
-export const deleteButtonVisible = () => {
-	verifyElementIsVisible(GoalsPage.deleteButtonCss);
+export const viewModalDeleteButtonVisible = () => {
+	verifyElementIsVisible(GoalsPage.viewModalDeleteButtonCss);
 };
 
-export const clickDeleteButton = () => {
-	clickButton(GoalsPage.deleteButtonCss);
+export const clickViewModalDeleteButton = () => {
+	clickButton(GoalsPage.viewModalDeleteButtonCss);
 };
 
 export const clickConfirmButton = () => {

@@ -76,6 +76,10 @@ export const clearField = (loc, options = {}) => {
 	cy.get(loc).clear(options);
 };
 
+export const ngClearField = (loc) => {
+	cy.get(loc).invoke('val', '').trigger('change').wait(500);
+};
+
 export const urlChanged = () => {
 	cy.url();
 };

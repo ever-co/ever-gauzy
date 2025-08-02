@@ -23,6 +23,7 @@ declare global {
 		interface Chainable {
 			// Add custom commands here
 			visitAndWait(url: string, options?: Partial<VisitOptions>): Chainable<JQuery<HTMLElement>>;
+			reloadAndWait(): Chainable<JQuery<HTMLElement>>;
 		}
 	}
 }

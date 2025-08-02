@@ -3,10 +3,12 @@ const API_WAIT_TIMEOUT = 30000;
 const UI_SETTLE_DELAY = 1000;
 
 const NON_CRITICAL_REQUESTS = [/\/api\/timesheet\/statistics/, /\/api\/timesheet\/time-log/];
+let lastTag = '';
 
 export const interceptAllApiRequests = () => {
 	pendingXHRs = 0;
-
+	const tag = Date.now().toString().slice(0, 5);
+	lastTag = tag;
 	cy.intercept('/api/**', (req) => {
 		// Skip non-critical requests
 		if (NON_CRITICAL_REQUESTS.some((pattern: RegExp) => pattern.test(req.url))) {
@@ -16,11 +18,11 @@ export const interceptAllApiRequests = () => {
 		req.on('response', () => {
 			pendingXHRs--;
 		});
-	}).as('anyApiRequest');
+	}).as(`anyApiRequest-${tag}`);
 };
 
 export const waitForAllApiRequests = () => {
-	cy.wait('@anyApiRequest');
+	cy.wait(`@anyApiRequest-${lastTag}`);
 
 	// Function to check pending XHRs
 	const checkPendingXHRs = () => {
