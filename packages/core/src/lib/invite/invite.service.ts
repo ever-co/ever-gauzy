@@ -151,7 +151,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			appliedDate,
 			invitationExpirationPeriod,
 			fullName,
-			callbackUrl
+			callbackUrl,
+			queryParams
 		} = input;
 
 		/**
@@ -298,6 +299,22 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					code: item.code
 				});
 				inviteLink = [callbackUrl, queryParamsString].filter(Boolean).join('?'); // Combine current URL with updated query params
+			} else if (callbackUrl && queryParams) {
+				// Build custom query params from invite properties
+				const queryParamsObject = Object.entries(queryParams).reduce(
+    				(acc, [key, value]) => {
+						const propertyValue = item[value];
+      					if (typeof item[key] !== 'undefined') {
+							if (typeof propertyValue === 'string' || typeof propertyValue === 'number' || typeof propertyValue === 'boolean') {
+								acc[key] = String(propertyValue);
+							}
+      					}
+      					return acc;
+    				},
+    				{} as Record<string, string>
+  				);
+				const queryParamsString = this.buildQueryString(queryParamsObject);
+				inviteLink = [callbackUrl, queryParamsString].filter(Boolean).join('?');
 			}
 
 			switch (input.inviteType) {
