@@ -46,9 +46,7 @@ export function createDefaultSentryIntegrations(): Integration[] {
 
 /**
  * Add HTTP Tracing integration if enabled.
- * V9 Migration: Updated from Integrations.Http to httpIntegration
- * Reference: https://docs.sentry.io/platforms/javascript/guides/node/configuration/integrations/http/
- * @param integrations The array of Sentry integrations.
+  * @param integrations The array of Sentry integrations.
  */
 function addHttpTracingIntegration(integrations: Integration[]): void {
 	if (process.env.SENTRY_DSN && process.env.SENTRY_HTTP_TRACING_ENABLED === 'true') {
@@ -59,8 +57,6 @@ function addHttpTracingIntegration(integrations: Integration[]): void {
 
 /**
  * Add Postgres Tracking integration if enabled.
- * V9 Migration: Updated from Integrations.Postgres to postgresIntegration
- * Reference: https://docs.sentry.io/platforms/javascript/guides/node/configuration/integrations/postgres/
  * @param integrations The array of Sentry integrations.
  */
 function addPostgresTrackingIntegration(integrations: Integration[]): void {
@@ -76,8 +72,6 @@ function addPostgresTrackingIntegration(integrations: Integration[]): void {
 
 /**
  * Add Console integration.
- * V9 Migration: Updated from Integrations.Console to captureConsoleIntegration
- * Reference: https://docs.sentry.io/platforms/javascript/guides/node/configuration/integrations/captureconsole/
  * @param integrations The array of Sentry integrations.
  */
 function addConsoleIntegration(integrations: Integration[]): void {
@@ -87,8 +81,6 @@ function addConsoleIntegration(integrations: Integration[]): void {
 
 /**
  * Add GraphQL integration.
- * V9 Migration: Updated from Integrations.GraphQL to graphqlIntegration
- * Reference: https://docs.sentry.io/platforms/javascript/guides/node/configuration/integrations/graphql/
  * @param integrations The array of Sentry integrations.
  */
 function addGraphQLIntegration(integrations: Integration[]): void {
@@ -98,8 +90,6 @@ function addGraphQLIntegration(integrations: Integration[]): void {
 
 /**
  * Add Apollo integration.
- * V9 Migration: Apollo integration was removed in v8/v9, but GraphQL integration provides similar functionality
- * Reference: https://github.com/getsentry/sentry-javascript/issues/12887
  * @param integrations The array of Sentry integrations.
  */
 function addApolloIntegration(integrations: Integration[]): void {
@@ -111,8 +101,6 @@ function addApolloIntegration(integrations: Integration[]): void {
 
 /**
  * Add Local Variables integration.
- * V9 Migration: Updated from Integrations.LocalVariables to localVariablesIntegration
- * Reference: https://docs.sentry.io/platforms/javascript/guides/node/configuration/integrations/localvariables/
  * @param integrations The array of Sentry integrations.
  */
 function addLocalVariablesIntegration(integrations: Integration[]): void {
@@ -122,8 +110,6 @@ function addLocalVariablesIntegration(integrations: Integration[]): void {
 
 /**
  * Add Request Data integration.
- * V9 Migration: Updated from Integrations.RequestData to requestDataIntegration
- * Reference: https://docs.sentry.io/platforms/javascript/guides/node/configuration/integrations/requestdata/
  * @param integrations The array of Sentry integrations.
  */
 function addRequestDataIntegration(integrations: Integration[]): void {
