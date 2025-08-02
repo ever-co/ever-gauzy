@@ -1,5 +1,3 @@
-// V9 Migration: @sentry/angular-ivy was removed, use @sentry/angular instead
-// Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/
 import * as Sentry from '@sentry/angular';
 import { Client, ClientOptions, BaseTransportOptions } from '@sentry/core';
 import { environment } from '../environments/environment';
