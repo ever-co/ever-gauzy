@@ -21,21 +21,32 @@ import { COSMIC_THEME, DARK_THEME, GAUZY_DARK, MATERIAL_DARK_THEME } from '../..
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-gauzy-logo',
-    templateUrl: './gauzy-logo.component.html',
-    styleUrls: ['./gauzy-logo.component.scss'],
-    standalone: false
+	selector: 'ngx-gauzy-logo',
+	templateUrl: './gauzy-logo.component.html',
+	styleUrls: ['./gauzy-logo.component.scss'],
+	standalone: false
 })
 export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	public theme: string;
-	public isCollapse: boolean = true;
+	public isCollapse = true;
 	public organization: IOrganization;
 	public logoUrl: SafeResourceUrl;
+	public isWorkspaceOpen = false;
 
-	@Input() controlled: boolean = true;
-	@Input() isAccordion: boolean = true;
+	private _controlled = true;
+	@Input()
+	get controlled(): boolean {
+		return this._controlled;
+	}
+	set controlled(value: boolean) {
+		this._controlled = value;
+		// Defer update to avoid change detection issues
+		setTimeout(() => (this.isCollapse = value), 0);
+	}
 
+	@Input() isAccordion = true;
 	@Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(this.isCollapse);
+	@Output() onWorkspaceToggle: EventEmitter<boolean> = new EventEmitter<boolean>();
 
 	/**
 	 * Checks if the logo file is in SVG format.
@@ -84,6 +95,14 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	onCollapse(isCollapsed: boolean): void {
 		this.isCollapse = isCollapsed; // Update the collapse state
 		this.onCollapsed.emit(this.isCollapse); // Emit the new state
+	}
+
+	/**
+	 * Toggles the workspace dropdown.
+	 */
+	toggleWorkspace(): void {
+		this.isWorkspaceOpen = !this.isWorkspaceOpen;
+		this.onWorkspaceToggle.emit(this.isWorkspaceOpen);
 	}
 
 	/**
