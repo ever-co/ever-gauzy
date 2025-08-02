@@ -1,6 +1,6 @@
 import { ModuleMetadata, Type } from '@nestjs/common/interfaces';
 import { SeverityLevel } from '@sentry/node';
-import { Integration, Options } from '@sentry/core';
+import type { Integration, Options } from '@sentry/core';
 import { ConsoleLoggerOptions } from '@nestjs/common';
 
 /**
