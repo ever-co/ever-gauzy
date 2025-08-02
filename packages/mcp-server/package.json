@@ -29,8 +29,8 @@
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.13.1",
+		"@nestjs/common": "^10.0.0",
 		"axios": "^1.7.0",
-		"electron-log": "^4.4.8",
 		"zod": "^3.25.67",
 		"tslib": "^2.3.0"
 	},
