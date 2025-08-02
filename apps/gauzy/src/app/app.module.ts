@@ -28,7 +28,9 @@ import { CookieService } from 'ngx-cookie-service';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
-import * as Sentry from '@sentry/angular-ivy';
+// V9 Migration: @sentry/angular-ivy was removed, use @sentry/angular instead
+// Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/
+import * as Sentry from '@sentry/angular';
 import * as moment from 'moment';
 import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
 import { UiCoreModule } from '@gauzy/ui-core';

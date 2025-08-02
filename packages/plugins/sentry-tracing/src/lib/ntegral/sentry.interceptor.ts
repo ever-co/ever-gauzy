@@ -4,9 +4,8 @@ import { ContextType, HttpArgumentsHost, RpcArgumentsHost, WsArgumentsHost } fro
 // Rxjs imports
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-// Sentry imports
-import { Handlers } from '@sentry/node';
-import { Scope } from '@sentry/types';
+import { Scope } from '@sentry/node';
+import { httpRequestToRequestData } from '@sentry/core';
 
 import { SentryInterceptorOptions, SentryInterceptorOptionsFilter } from './sentry.interfaces';
 import { SentryService } from './sentry.service';
@@ -55,18 +54,31 @@ export class SentryInterceptor implements NestInterceptor {
 	}
 
 	/**
+	 * Captures HTTP exception with request context
+	 * V9 Migration: Handlers.parseRequest was removed, manually extract request data
+	 * Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/#removals-in-sentrycore
 	 *
 	 * @param scope
 	 * @param http
 	 * @param exception
 	 */
 	private captureHttpException(scope: Scope, http: HttpArgumentsHost, exception: HttpException): void {
-		const data = Handlers.parseRequest(<any>{}, http.getRequest(), this.options);
+		const request = http.getRequest();
 
-		scope.setExtra('req', data.request);
+		// V9 Migration: Use httpRequestToRequestData instead of manual extraction
+		// Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/#removals-in-sentrycore
+		// The addRequestDataToEvent method has been removed. Use httpRequestToRequestData instead and put the resulting object directly on event.request.
+		const requestData = httpRequestToRequestData(request);
 
-		if (data.extra) scope.setExtras(data.extra);
-		if (data.user) scope.setUser(data.user);
+		scope.setExtra('req', requestData);
+		scope.setTag('url', request.url);
+		scope.setTag('method', request.method);
+
+		// V9 Migration: Manual user context setting since requestDataIntegration no longer automatically sets user from request.user
+		// Reference: https://docs.sentry.io/platforms/javascript/guides/node/migration/v8-to-v9/#behavior-changes
+		if (request.user) {
+			scope.setUser(request.user);
+		}
 
 		this.client.instance().captureException(exception);
 	}

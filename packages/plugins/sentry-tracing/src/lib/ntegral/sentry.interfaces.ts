@@ -1,7 +1,7 @@
 import { ModuleMetadata, Type } from '@nestjs/common/interfaces';
-import { Integration, Options } from '@sentry/types';
-import { ConsoleLoggerOptions } from '@nestjs/common';
 import { SeverityLevel } from '@sentry/node';
+import { Integration, Options } from '@sentry/core';
+import { ConsoleLoggerOptions } from '@nestjs/common';
 
 /**
  * Interface for Sentry close options.

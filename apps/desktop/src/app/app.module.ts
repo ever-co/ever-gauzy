@@ -13,7 +13,7 @@ import {
 	NbThemeModule,
 	NbToastrModule
 } from '@nebular/theme';
-import * as Sentry from '@sentry/angular-ivy';
+import * as Sentry from '@sentry/angular';
 import {
 	AboutModule,
 	ActivityWatchInterceptor,
@@ -91,7 +91,7 @@ if (environment.SENTRY_DSN) {
 		LanguageModule.forRoot(),
 		AboutModule,
 		AlwaysOnModule,
-		RecapModule,
+		RecapModule
 	],
 	providers: [
 		AppService,
@@ -129,9 +129,9 @@ if (environment.SENTRY_DSN) {
 			deps: [Router]
 		},
 		provideAppInitializer(() => {
-            const initializerFn = ((trace: Sentry.TraceService) => () => { })(inject(Sentry.TraceService));
-            return initializerFn();
-        }),
+			const initializerFn = ((trace: Sentry.TraceService) => () => {})(inject(Sentry.TraceService));
+			return initializerFn();
+		}),
 		{
 			provide: ErrorHandler,
 			useClass: ErrorHandlerService
