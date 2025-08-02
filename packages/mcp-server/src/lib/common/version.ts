@@ -55,7 +55,7 @@ function getVersion(): string {
 		// If no package.json found, return fallback
 		return '0.1.0';
 	} catch (error) {
-		logger.error('Failed to read version from package.json:', error);
+		logger.error('Failed to read version from package.json:', error instanceof Error ? error.stack : undefined);
 		return '0.1.0'; // fallback version
 	}
 }

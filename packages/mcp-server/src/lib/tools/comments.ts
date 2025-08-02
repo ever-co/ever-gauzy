@@ -2,23 +2,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { authManager } from '../common/auth-manager';
 import { CommentSchema, CommentableTypeEnum } from '../schema';
+import { validateOrganizationContext } from './utils';
 
 const logger = new Logger('CommentTools');
 
-/**
- * Helper function to validate organization context and return default parameters
- */
-const validateOrganizationContext = () => {
-	const defaultParams = authManager.getDefaultParams();
-
-	if (!defaultParams.organizationId) {
-		throw new Error('Organization ID not available. Please ensure you are logged in and have an organization.');
-	}
-
-	return defaultParams;
-};
 
 export const registerCommentTools = (server: McpServer) => {
 	// Get comments tool
@@ -425,7 +413,7 @@ export const registerCommentTools = (server: McpServer) => {
 
 				const createData = {
 					comment,
-					entity: 'TASK',
+					entity: CommentableTypeEnum.enum.TASK,
 					entityId: taskId,
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
@@ -463,7 +451,7 @@ export const registerCommentTools = (server: McpServer) => {
 
 				const createData = {
 					comment,
-					entity: 'PROJECT',
+					entity: CommentableTypeEnum.enum.PROJECT,
 					entityId: projectId,
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
@@ -501,7 +489,7 @@ export const registerCommentTools = (server: McpServer) => {
 
 				const createData = {
 					comment,
-					entity: 'GOAL',
+					entity: CommentableTypeEnum.enum.GOAL,
 					entityId: goalId,
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })

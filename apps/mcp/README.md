@@ -72,9 +72,9 @@ Set these environment variables either in your system or in the Claude Desktop c
 
 ```bash
 # Required
-API_BASE_URL=http://localhost:3000        # Your Gauzy API URL
-GAUZY_AUTH_EMAIL=your-email@example.com   # Your Gauzy login email
-GAUZY_AUTH_PASSWORD=your-password         # Your Gauzy password
+API_BASE_URL=http://localhost:3000        # Gauzy API URL
+GAUZY_AUTH_EMAIL=<your-email>             # Gauzy login email
+GAUZY_AUTH_PASSWORD=<your-password>       # Gauzy password
 
 # Optional
 GAUZY_AUTO_LOGIN=true                     # Enable automatic login
@@ -86,32 +86,39 @@ GAUZY_MCP_DEBUG=true                      # Enable debug logging
 The standalone server provides access to all Gauzy MCP tools:
 
 ### Authentication
+
 - **test_connection**: Test API connectivity and authentication
 
 ### Time Management
+
 - **start_timer**: Start time tracking for projects/tasks
 - **stop_timer**: Stop active time tracking
 - **get_active_timer**: Get current timer status
 
 ### Project Management
+
 - **get_projects**: List all projects
 - **create_project**: Create new projects
 - **update_project**: Update project details
 
 ### Task Management
+
 - **get_tasks**: List tasks with filtering
 - **create_task**: Create new tasks
 - **update_task**: Update task details
 
 ### Employee Management
+
 - **get_employees**: Access employee information
 - **create_employee**: Add new employees
 
-### Daily Planning  
+### Daily Planning
+
 - **get_daily_plan**: Get daily plans for employees
 - **create_daily_plan**: Create daily plans
 
 ### Organization Contacts
+
 - **get_organization_contacts**: Manage organization contacts
 
 ## Command Line Options
@@ -131,7 +138,7 @@ API_BASE_URL=https://api.gauzy.co node dist/apps/mcp/index.js
 
 ### Project Structure
 
-```
+```text
 apps/mcp/
 ├── src/
 │   └── index.ts              # Main entry point
@@ -180,7 +187,7 @@ GAUZY_MCP_DEBUG=true yarn nx serve mcp
 ```
 
 This will provide detailed information about:
-- API requests and responses  
+- API requests and responses
 - Authentication status
 - Tool execution details
 - Error messages and stack traces

@@ -2,28 +2,22 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { authManager } from '../common/auth-manager';
+import { validateOrganizationContext } from './utils';
 import { EquipmentSchema, EquipmentTypeEnum, EquipmentStatusEnum, CurrenciesEnum } from '../schema';
 
 const logger = new Logger('EquipmentTools');
 
-/**
- * Helper function to validate organization context and return default parameters
- */
-const validateOrganizationContext = () => {
-	const defaultParams = authManager.getDefaultParams();
-
-	if (!defaultParams.organizationId) {
-		throw new Error('Organization ID not available. Please ensure you are logged in and have an organization.');
-	}
-
-	return defaultParams;
-};
 
 /**
  * Helper function to convert date fields in equipment data to Date objects
  */
-const convertEquipmentDateFields = (equipmentData: any) => {
+interface EquipmentDateFields {
+	purchaseDate?: string | Date;
+	warrantyEndDate?: string | Date;
+	[key: string]: any; // Allow other fields to pass through
+}
+
+const convertEquipmentDateFields = (equipmentData: EquipmentDateFields) => {
 	return {
 		...equipmentData,
 		purchaseDate: equipmentData.purchaseDate ? new Date(equipmentData.purchaseDate) : undefined,
@@ -263,7 +257,7 @@ export const registerEquipmentTools = (server: McpServer) => {
 		},
 		async ({ id, employeeId }) => {
 			try {
-				const response = await apiClient.put(`/api/equipment/${id}/assign`, { 
+				const response = await apiClient.put(`/api/equipment/${id}/assign`, {
 					assignedToEmployeeId: employeeId,
 					status: 'ASSIGNED'
 				});
@@ -293,7 +287,7 @@ export const registerEquipmentTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
-				const response = await apiClient.put(`/api/equipment/${id}/unassign`, { 
+				const response = await apiClient.put(`/api/equipment/${id}/unassign`, {
 					assignedToEmployeeId: null,
 					status: 'AVAILABLE'
 				});

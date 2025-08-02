@@ -39,7 +39,7 @@ export const registerTimerTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching timer status:', error);
+				logger.error('Error fetching timer status:', error instanceof Error ? error.stack : undefined);
 				throw new Error(`Failed to fetch timer status: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
 		}

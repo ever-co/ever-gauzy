@@ -83,7 +83,7 @@ function validateEnvironment(): void {
 		logger.error('GAUZY_AUTO_LOGIN=true');
 		logger.error('GAUZY_AUTH_EMAIL=your-email@example.com');
 		logger.error('GAUZY_AUTH_PASSWORD=***');
-		process.exit(1);
+		throw new Error('Invalid environment configuration – see logs above.');
 	}
 }
 

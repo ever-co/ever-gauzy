@@ -40,6 +40,62 @@ const DefaultValueDateTypeEnum = z.enum(['TODAY', 'END_OF_MONTH', 'START_OF_MONT
 
 const WeekDaysEnum = z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']);
 
+// Product related enums
+const ProductTypeEnum = z.enum(['DIGITAL', 'PHYSICAL', 'SERVICE']);
+
+// Invoice related enums
+const InvoiceStatusEnum = z.enum(['DRAFT', 'SENT', 'VIEWED', 'ACCEPTED', 'ACTIVE', 'FULLY_PAID', 'CANCELLED']);
+
+const InvoiceTypeEnum = z.enum(['BY_EMPLOYEE_HOURS', 'BY_PROJECT_HOURS', 'BY_TASK_HOURS', 'BY_PRODUCTS', 'BY_FLAT_FEE', 'DETAILS_INVOICE_ITEMS']);
+
+// Expense related enums
+const ExpenseCategoriesEnum = z.enum([
+	'MARKETING', 'SALES', 'ADMINISTRATION', 'OPERATIONS', 'RESEARCH_AND_DEVELOPMENT', 'HUMAN_RESOURCES',
+	'TRAVEL', 'OFFICE_SUPPLIES', 'TRAINING', 'LEGAL', 'ACCOUNTING', 'CONSULTING', 'UTILITIES', 'RENT', 'OTHER'
+]);
+
+// Goal related enums
+const GoalTimeFrameEnum = z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'ANNUAL']);
+
+const GoalLevelEnum = z.enum(['ORGANIZATION', 'TEAM', 'EMPLOYEE']);
+
+// Candidate related enums
+const CandidateStatusEnum = z.enum(['APPLIED', 'REJECTED', 'HIRED', 'INTERVIEW', 'ON_HOLD']);
+
+// Deal related enums
+const DealStatusEnum = z.enum([
+	'LEAD', 'QUALIFIED_LEAD', 'PROPOSAL_MADE', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST'
+]);
+
+// Income related enums
+const IncomeTypeEnum = z.enum(['SALARY', 'BONUS', 'OVERTIME', 'COMMISSION', 'OTHER']);
+
+// Payment related enums
+const PaymentStatusEnum = z.enum(['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'CANCELLED', 'REFUNDED']);
+
+const PaymentMethodEnum = z.enum(['CREDIT_CARD', 'DEBIT_CARD', 'BANK_TRANSFER', 'PAYPAL', 'STRIPE', 'CASH', 'CHECK', 'OTHER']);
+
+// Equipment related enums
+const EquipmentTypeEnum = z.enum(['LAPTOP', 'DESKTOP', 'MONITOR', 'MOBILE', 'PRINTER', 'FURNITURE', 'SOFTWARE_LICENSE', 'OTHER']);
+
+const EquipmentStatusEnum = z.enum(['AVAILABLE', 'ASSIGNED', 'IN_REPAIR', 'RETIRED', 'LOST', 'DAMAGED']);
+
+// Time-off related enums
+const TimeOffStatusEnum = z.enum(['REQUESTED', 'APPROVED', 'DENIED', 'CANCELLED']);
+
+const TimeOffTypeEnum = z.enum(['VACATION', 'SICK_LEAVE', 'PERSONAL', 'MATERNITY', 'PATERNITY', 'BEREAVEMENT', 'OTHER']);
+
+// Report related enums
+const ReportCategoryEnum = z.enum(['FINANCIAL', 'HR', 'PROJECT', 'TIME_TRACKING', 'SALES', 'CUSTOM']);
+
+// Comment related enums
+const CommentableTypeEnum = z.enum(['TASK', 'PROJECT', 'GOAL', 'CANDIDATE', 'DEAL', 'INVOICE', 'OTHER']);
+
+// Activity log enums
+const ActivityLogActionEnum = z.enum(['CREATED', 'UPDATED', 'DELETED', 'VIEWED', 'ASSIGNED', 'COMPLETED', 'APPROVED', 'REJECTED']);
+
+const ActivityLogEntityEnum = z.enum(['USER', 'EMPLOYEE', 'TASK', 'PROJECT', 'GOAL', 'INVOICE', 'EXPENSE', 'DEAL', 'CANDIDATE']);
+
 // ===== BASE SCHEMAS =====
 
 // Base entity schema with common fields
@@ -752,68 +808,12 @@ const TagSchema = TenantOrganizationBaseSchema.extend({
 	teams: z.array(OrganizationTeamRefSchema).optional()
 });
 
-// Product related enums
-const ProductTypeEnum = z.enum(['DIGITAL', 'PHYSICAL', 'SERVICE']);
-
-// Invoice related enums
-const InvoiceStatusEnum = z.enum(['DRAFT', 'SENT', 'VIEWED', 'ACCEPTED', 'ACTIVE', 'FULLY_PAID', 'CANCELLED']);
-
-const InvoiceTypeEnum = z.enum(['BY_EMPLOYEE_HOURS', 'BY_PROJECT_HOURS', 'BY_TASK_HOURS', 'BY_PRODUCTS', 'BY_FLAT_FEE', 'DETAILS_INVOICE_ITEMS']);
-
-// Expense related enums
-const ExpenseCategoriesEnum = z.enum([
-	'MARKETING', 'SALES', 'ADMINISTRATION', 'OPERATIONS', 'RESEARCH_AND_DEVELOPMENT', 'HUMAN_RESOURCES', 
-	'TRAVEL', 'OFFICE_SUPPLIES', 'TRAINING', 'LEGAL', 'ACCOUNTING', 'CONSULTING', 'UTILITIES', 'RENT', 'OTHER'
-]);
-
-// Goal related enums
-const GoalTimeFrameEnum = z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'ANNUAL']);
-
-const GoalLevelEnum = z.enum(['ORGANIZATION', 'TEAM', 'EMPLOYEE']);
-
-// Candidate related enums
-const CandidateStatusEnum = z.enum(['APPLIED', 'REJECTED', 'HIRED', 'INTERVIEW', 'ON_HOLD']);
-
-// Deal related enums
-const DealStatusEnum = z.enum([
-	'LEAD', 'QUALIFIED_LEAD', 'PROPOSAL_MADE', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST'
-]);
-
-// Income related enums
-const IncomeTypeEnum = z.enum(['SALARY', 'BONUS', 'OVERTIME', 'COMMISSION', 'OTHER']);
-
-// Payment related enums
-const PaymentStatusEnum = z.enum(['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'CANCELLED', 'REFUNDED']);
-
-const PaymentMethodEnum = z.enum(['CREDIT_CARD', 'DEBIT_CARD', 'BANK_TRANSFER', 'PAYPAL', 'STRIPE', 'CASH', 'CHECK', 'OTHER']);
-
-// Equipment related enums
-const EquipmentTypeEnum = z.enum(['LAPTOP', 'DESKTOP', 'MONITOR', 'MOBILE', 'PRINTER', 'FURNITURE', 'SOFTWARE_LICENSE', 'OTHER']);
-
-const EquipmentStatusEnum = z.enum(['AVAILABLE', 'ASSIGNED', 'IN_REPAIR', 'RETIRED', 'LOST', 'DAMAGED']);
-
-// Time-off related enums
-const TimeOffStatusEnum = z.enum(['REQUESTED', 'APPROVED', 'DENIED', 'CANCELLED']);
-
-const TimeOffTypeEnum = z.enum(['VACATION', 'SICK_LEAVE', 'PERSONAL', 'MATERNITY', 'PATERNITY', 'BEREAVEMENT', 'OTHER']);
-
-// Report related enums
-const ReportCategoryEnum = z.enum(['FINANCIAL', 'HR', 'PROJECT', 'TIME_TRACKING', 'SALES', 'CUSTOM']);
-
-// Comment related enums
-const CommentableTypeEnum = z.enum(['TASK', 'PROJECT', 'GOAL', 'CANDIDATE', 'DEAL', 'INVOICE', 'OTHER']);
-
-// Activity log enums
-const ActivityLogActionEnum = z.enum(['CREATED', 'UPDATED', 'DELETED', 'VIEWED', 'ASSIGNED', 'COMPLETED', 'APPROVED', 'REJECTED']);
-
-const ActivityLogEntityEnum = z.enum(['USER', 'EMPLOYEE', 'TASK', 'PROJECT', 'GOAL', 'INVOICE', 'EXPENSE', 'DEAL', 'CANDIDATE']);
-
 // Product Schema
 const ProductSchema = TenantOrganizationBaseSchema.extend({
 	code: z.string(),
 	enabled: z.boolean().optional().default(true),
 	imageUrl: z.string().optional(),
-	
+
 	// Relations
 	featuredImageId: z.string().uuid().optional(),
 	featuredImage: ImageAssetRefSchema.optional(),
@@ -828,7 +828,7 @@ const ProductSchema = TenantOrganizationBaseSchema.extend({
 		description: z.string().optional(),
 		imageUrl: z.string().optional()
 	}).optional(),
-	
+
 	// Collections
 	translations: z.array(z.object({
 		languageCode: z.string(),
@@ -850,11 +850,11 @@ const ProductCategorySchema = TenantOrganizationBaseSchema.extend({
 	name: z.string(),
 	description: z.string().optional(),
 	imageUrl: z.string().optional(),
-	
+
 	// Relations
 	imageId: z.string().uuid().optional(),
 	image: ImageAssetRefSchema.optional(),
-	
+
 	// Collections
 	products: z.array(z.lazy(() => ProductSchema)).optional(),
 	translations: z.array(z.object({
@@ -864,27 +864,6 @@ const ProductCategorySchema = TenantOrganizationBaseSchema.extend({
 	})).optional()
 });
 
-// Warehouse Schema
-const WarehouseSchema = TenantOrganizationBaseSchema.extend({
-	name: z.string(),
-	code: z.string(),
-	email: z.string().email().optional(),
-	description: z.string().optional(),
-	active: z.boolean().optional().default(true),
-	
-	// Location details
-	contactId: z.string().uuid().optional(),
-	contact: ContactRefSchema.optional(),
-	
-	// Collections
-	products: z.array(z.object({
-		productId: z.string().uuid(),
-		product: z.lazy(() => ProductSchema).optional(),
-		quantity: z.number().optional().default(0),
-		reserved: z.number().optional().default(0)
-	})).optional(),
-	tags: z.array(TagRefSchema).optional()
-});
 
 // Invoice Schema
 const InvoiceSchema = TenantOrganizationBaseSchema.extend({
@@ -901,11 +880,11 @@ const InvoiceSchema = TenantOrganizationBaseSchema.extend({
 	status: InvoiceStatusEnum.optional().default('DRAFT'),
 	invoiceType: InvoiceTypeEnum.optional(),
 	sentTo: z.string().email().optional(),
-	
+
 	// Relations
 	organizationContactId: z.string().uuid().optional(),
 	organizationContact: z.lazy(() => OrganizationContactSchema).optional(),
-	
+
 	// Collections
 	invoiceItems: z.array(z.object({
 		name: z.string(),
@@ -936,7 +915,7 @@ const ExpenseSchema = TenantOrganizationBaseSchema.extend({
 	splitExpense: z.boolean().optional().default(false),
 	reference: z.string().optional(),
 	status: z.string().optional(),
-	
+
 	// Relations
 	employeeId: z.string().uuid().optional(),
 	employee: z.lazy(() => EmployeeSchema).optional(),
@@ -949,7 +928,7 @@ const ExpenseSchema = TenantOrganizationBaseSchema.extend({
 	project: ProjectRefSchema.optional(),
 	organizationContactId: z.string().uuid().optional(),
 	organizationContact: z.lazy(() => OrganizationContactSchema).optional(),
-	
+
 	// Collections
 	tags: z.array(TagRefSchema).optional()
 });
@@ -962,13 +941,13 @@ const IncomeSchema = TenantOrganizationBaseSchema.extend({
 	notes: z.string().optional(),
 	isBonus: z.boolean().optional().default(false),
 	reference: z.string().optional(),
-	
+
 	// Relations
 	employeeId: z.string().uuid().optional(),
 	employee: z.lazy(() => EmployeeSchema).optional(),
 	organizationContactId: z.string().uuid().optional(),
 	organizationContact: z.lazy(() => OrganizationContactSchema).optional(),
-	
+
 	// Collections
 	tags: z.array(TagRefSchema).optional()
 });
@@ -980,7 +959,7 @@ const GoalSchema = TenantOrganizationBaseSchema.extend({
 	deadline: z.date(),
 	level: GoalLevelEnum,
 	progress: z.number().min(0).max(100).optional().default(0),
-	
+
 	// Relations
 	ownerTeamId: z.string().uuid().optional(),
 	ownerTeam: OrganizationTeamRefSchema.optional(),
@@ -988,7 +967,7 @@ const GoalSchema = TenantOrganizationBaseSchema.extend({
 	ownerEmployee: z.lazy(() => EmployeeSchema).optional(),
 	leadId: z.string().uuid().optional(),
 	lead: z.lazy(() => EmployeeSchema).optional(),
-	
+
 	// Collections
 	keyResults: z.array(z.object({
 		id: z.string().uuid(),
@@ -1016,7 +995,7 @@ const KeyResultSchema = TenantOrganizationBaseSchema.extend({
 	progress: z.number().min(0).max(100).optional().default(0),
 	deadline: z.date(),
 	status: z.string().optional(),
-	
+
 	// Relations
 	goalId: z.string().uuid(),
 	goal: z.lazy(() => GoalSchema).optional(),
@@ -1030,12 +1009,12 @@ const KeyResultSchema = TenantOrganizationBaseSchema.extend({
 const DealSchema = TenantOrganizationBaseSchema.extend({
 	title: z.string(),
 	stage: DealStatusEnum.optional().default('LEAD'),
-	
+
 	// Relations
 	clientId: z.string().uuid().optional(),
 	client: z.lazy(() => OrganizationContactSchema).optional(),
 	createdByUserId: z.string().uuid().optional(),
-	
+
 	// Collections
 	properties: z.array(z.object({
 		name: z.string(),
@@ -1059,7 +1038,7 @@ const ContactSchema = TenantOrganizationBaseSchema.extend({
 	longitude: z.number().optional(),
 	regionCode: z.string().optional(),
 	fax: z.string().optional(),
-	fiscalInformation: z.string().optional(),  
+	fiscalInformation: z.string().optional(),
 	website: z.string().optional()
 });
 
@@ -1074,17 +1053,17 @@ const CandidateSchema = TenantOrganizationBaseSchema.extend({
 	billRateCurrency: CurrenciesEnum.optional(),
 	billRateValue: z.number().optional(),
 	minimumBillingRate: z.number().optional(),
-	
+
 	// Ratings and feedback
 	rating: z.number().min(0).max(5).optional(),
 	valueDate: z.date().optional(),
-	
+
 	// Contact information
 	userId: z.string().uuid(),
 	user: UserSchema.optional(),
 	contactId: z.string().uuid().optional(),
 	contact: ContactRefSchema.optional(),
-	
+
 	// Relations
 	organizationPositionId: z.string().uuid().optional(),
 	organizationPosition: OrganizationPositionRefSchema.optional(),
@@ -1092,7 +1071,7 @@ const CandidateSchema = TenantOrganizationBaseSchema.extend({
 	source: z.object({
 		name: z.string()
 	}).optional(),
-	
+
 	// Collections
 	skills: z.array(z.object({
 		name: z.string(),
@@ -1127,17 +1106,17 @@ const PaymentSchema = TenantOrganizationBaseSchema.extend({
 	paymentMethod: PaymentMethodEnum.optional(),
 	status: PaymentStatusEnum.optional().default('PENDING'),
 	overdue: z.boolean().optional().default(false),
-	
+
 	// Relations
 	invoiceId: z.string().uuid().optional(),
 	invoice: z.lazy(() => InvoiceSchema).optional(),
 	recordedByUserId: z.string().uuid().optional(),
 	recordedBy: UserSchema.optional(),
-	
+
 	// Contact/Client
 	organizationContactId: z.string().uuid().optional(),
 	organizationContact: z.lazy(() => OrganizationContactSchema).optional(),
-	
+
 	// Project association
 	projectId: z.string().uuid().optional(),
 	project: ProjectRefSchema.optional()
@@ -1152,11 +1131,11 @@ const MerchantSchema = TenantOrganizationBaseSchema.extend({
 	description: z.string().optional(),
 	logo: z.string().optional(),
 	website: z.string().optional(),
-	
+
 	// Contact details
 	contactId: z.string().uuid().optional(),
 	contact: ContactRefSchema.optional(),
-	
+
 	// Collections
 	tags: z.array(TagRefSchema).optional()
 });
@@ -1169,13 +1148,13 @@ const IncomeSchemaFull = TenantOrganizationBaseSchema.extend({
 	notes: z.string().optional(),
 	isBonus: z.boolean().optional().default(false),
 	reference: z.string().optional(),
-	
+
 	// Relations
 	employeeId: z.string().uuid().optional(),
 	employee: z.lazy(() => EmployeeSchema).optional(),
 	organizationContactId: z.string().uuid().optional(),
 	organizationContact: z.lazy(() => OrganizationContactSchema).optional(),
-	
+
 	// Collections
 	tags: z.array(TagRefSchema).optional()
 });
@@ -1193,23 +1172,23 @@ const EquipmentSchema = TenantOrganizationBaseSchema.extend({
 	currency: CurrenciesEnum.optional(),
 	maxSharePeriod: z.number().optional(),
 	autoApproveShare: z.boolean().optional().default(false),
-	
+
 	// Tracking
 	purchaseDate: z.date().optional(),
 	purchaseOrderNumber: z.string().optional(),
 	warrantyEndDate: z.date().optional(),
-	
+
 	// Status
 	status: EquipmentStatusEnum.optional().default('AVAILABLE'),
-	
+
 	// Assignment
 	assignedToEmployeeId: z.string().uuid().optional(),
 	assignedTo: z.lazy(() => EmployeeSchema).optional(),
-	
+
 	// Image
 	imageId: z.string().uuid().optional(),
 	image: ImageAssetRefSchema.optional(),
-	
+
 	// Collections
 	tags: z.array(TagRefSchema).optional(),
 	equipmentSharings: z.array(z.object({
@@ -1228,13 +1207,13 @@ const CommentSchema = TenantOrganizationBaseSchema.extend({
 	comment: z.string(),
 	entity: CommentableTypeEnum,
 	entityId: z.string().uuid(),
-	
+
 	// Relations
 	createdByUserId: z.string().uuid().optional(),
 	createdBy: UserSchema.optional(),
 	employeeId: z.string().uuid().optional(),
 	employee: z.lazy(() => EmployeeSchema).optional(),
-	
+
 	// Reply functionality
 	parentId: z.string().uuid().optional(),
 	parent: z.lazy(() => CommentSchema).optional(),
@@ -1247,13 +1226,13 @@ const TimeOffPolicySchema = TenantOrganizationBaseSchema.extend({
 	type: TimeOffTypeEnum,
 	requiresApproval: z.boolean().optional().default(true),
 	paid: z.boolean().optional().default(true),
-	
+
 	// Days configuration
 	daysPerYear: z.number().optional(),
 	daysPerMonth: z.number().optional(),
 	carryForwardExpiryDate: z.date().optional(),
 	shouldCarryForward: z.boolean().optional().default(false),
-	
+
 	// Employee assignment
 	employees: z.array(z.lazy(() => EmployeeSchema)).optional()
 });
@@ -1266,13 +1245,13 @@ const TimeOffRequestSchema = TenantOrganizationBaseSchema.extend({
 	endDate: z.date(),
 	requestDate: z.date().optional(),
 	documentUrl: z.string().optional(),
-	
+
 	// Relations
 	employeeId: z.string().uuid(),
 	employee: z.lazy(() => EmployeeSchema).optional(),
 	policyId: z.string().uuid(),
 	policy: TimeOffPolicySchema.optional(),
-	
+
 	// Approval
 	approvedBy: z.lazy(() => EmployeeSchema).optional(),
 	approvedDate: z.date().optional()
@@ -1287,7 +1266,7 @@ const ReportSchema = TenantOrganizationBaseSchema.extend({
 	iconClass: z.string().optional(),
 	showInMenu: z.boolean().optional().default(true),
 	category: ReportCategoryEnum.optional(),
-	
+
 	// Report configuration
 	reportOrganizations: z.array(z.object({
 		reportId: z.string().uuid(),
@@ -1300,7 +1279,7 @@ const ReportSchema = TenantOrganizationBaseSchema.extend({
 const EmployeeAwardSchema = TenantOrganizationBaseSchema.extend({
 	name: z.string(),
 	year: z.string(),
-	
+
 	// Relations
 	employeeId: z.string().uuid(),
 	employee: z.lazy(() => EmployeeSchema).optional()
@@ -1311,19 +1290,19 @@ const ActivityLogSchema = TenantOrganizationBaseSchema.extend({
 	entity: ActivityLogEntityEnum,
 	entityId: z.string().uuid(),
 	action: ActivityLogActionEnum,
-	
+
 	// Metadata
 	data: z.record(z.string(), z.any()).optional(),
 	previousValues: z.record(z.string(), z.any()).optional(),
 	updatedFields: z.array(z.string()).optional(),
-	
+
 	// Relations
 	actorType: z.string().optional(),
-	
+
 	// User who performed the action
 	createdByUserId: z.string().uuid().optional(),
 	createdBy: UserSchema.optional(),
-	
+
 	// Employee context
 	employeeId: z.string().uuid().optional(),
 	employee: z.lazy(() => EmployeeSchema).optional()
@@ -1333,7 +1312,7 @@ const ActivityLogSchema = TenantOrganizationBaseSchema.extend({
 const PipelineSchema = TenantOrganizationBaseSchema.extend({
 	name: z.string(),
 	description: z.string().optional(),
-	
+
 	// Stage configuration
 	stages: z.array(z.object({
 		id: z.string().uuid(),
@@ -1348,27 +1327,27 @@ const SkillSchema = TenantOrganizationBaseSchema.extend({
 	name: z.string(),
 	description: z.string().optional(),
 	color: z.string().optional(),
-	
+
 	// Collections
 	employees: z.array(z.lazy(() => EmployeeSchema)).optional()
 });
 
-// Warehouse Schema (enhanced from previous)
-const WarehouseSchemaFull = TenantOrganizationBaseSchema.extend({
+// Warehouse Schema
+const WarehouseSchema = TenantOrganizationBaseSchema.extend({
 	name: z.string(),
 	code: z.string(),
 	email: z.string().email().optional(),
 	description: z.string().optional(),
 	active: z.boolean().optional().default(true),
-	
+
 	// Logo
 	logoId: z.string().uuid().optional(),
 	logo: ImageAssetRefSchema.optional(),
-	
+
 	// Location details
 	contactId: z.string().uuid().optional(),
 	contact: ContactRefSchema.optional(),
-	
+
 	// Collections
 	products: z.array(z.object({
 		productId: z.string().uuid(),
@@ -1463,6 +1442,5 @@ export {
 	EmployeeAwardSchema,
 	ActivityLogSchema,
 	PipelineSchema,
-	SkillSchema,
-	WarehouseSchemaFull
+	SkillSchema
 };

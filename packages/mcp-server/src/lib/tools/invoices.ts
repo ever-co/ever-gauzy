@@ -2,23 +2,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { authManager } from '../common/auth-manager';
+import { validateOrganizationContext } from './utils';
 import { InvoiceSchema, InvoiceStatusEnum, InvoiceTypeEnum, CurrenciesEnum } from '../schema';
 
 const logger = new Logger('InvoiceTools');
 
-/**
- * Helper function to validate organization context and return default parameters
- */
-const validateOrganizationContext = () => {
-	const defaultParams = authManager.getDefaultParams();
-
-	if (!defaultParams.organizationId) {
-		throw new Error('Organization ID not available. Please ensure you are logged in and have an organization.');
-	}
-
-	return defaultParams;
-};
 
 /**
  * Helper function to convert date fields in invoice data to Date objects
@@ -387,13 +375,18 @@ export const registerInvoiceTools = (server: McpServer) => {
 	// Generate invoice PDF tool
 	server.tool(
 		'generate_invoice_pdf',
-		'Generate PDF for an invoice',
+		'Generate PDF for an invoice and return the PDF content as Base64',
 		{
 			id: z.string().uuid().describe('The invoice ID')
 		},
 		async ({ id }) => {
 			try {
 				const response = await apiClient.get<Blob>(`/api/invoices/${id}/pdf`, { responseType: 'blob' });
+
+				// Convert Blob to Base64 string
+				const arrayBuffer = await response.arrayBuffer();
+				const buffer = Buffer.from(arrayBuffer);
+				const base64Content = buffer.toString('base64');
 
 				return {
 					content: [
@@ -404,7 +397,10 @@ export const registerInvoiceTools = (server: McpServer) => {
 									success: true,
 									message: 'Invoice PDF generated successfully',
 									id,
-									pdfSize: response.size || 'Unknown'
+									pdfSize: response.size || buffer.length,
+									mimeType: 'application/pdf',
+									filename: `invoice-${id}.pdf`,
+									pdfContent: base64Content
 								},
 								null,
 								2

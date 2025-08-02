@@ -74,7 +74,7 @@ export class McpServerManager {
 			return true;
 		} catch (error) {
 			this._lastError = error instanceof Error ? error.message : String(error);
-			logger.error('Failed to start MCP Server:', error);
+			logger.error('Failed to start MCP Server:', error as Error);
 			return false;
 		}
 	}
@@ -132,7 +132,7 @@ export class McpServerManager {
 			this._lastError = null;
 		} catch (error) {
 			this._lastError = error instanceof Error ? error.message : String(error);
-			logger.error('Failed to start MCP Server in process:', error);
+			logger.error('Failed to start MCP Server in process:', error as Error);
 			throw error;
 		}
 	}

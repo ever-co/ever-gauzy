@@ -51,15 +51,14 @@ export class GauzyApiClient {
 			(response) => response,
 			async (error: AxiosError) => {
 				if (this.isDebug()) {
-					logger.error('🔴 API Client Error Details:');
-					logger.error(`   URL: ${error.config?.url}`);
-					logger.error(`   Method: ${error.config?.method?.toUpperCase()}`);
-					logger.error(`   Status: ${error.response?.status}`);
-					logger.error(`   Message: ${error.message}`);
-					if (error.response?.data) {
-						const sanitizedData = sanitizeErrorMessage(error.response.data);
-						logger.error(`   Response: ${JSON.stringify(sanitizedData, null, 2)}`);
-					}
+					const errorDetails = {
+						url: error.config?.url,
+						method: error.config?.method?.toUpperCase(),
+						status: error.response?.status,
+						message: error.message,
+						response: error.response?.data ? sanitizeErrorMessage(error.response.data) : undefined
+					};
+					logger.debug('🔴 API Client Error Details:\n' + JSON.stringify(errorDetails, null, 2));
 				}
 
 				// Handle 401 Unauthorized errors by attempting token refresh
@@ -232,7 +231,7 @@ export class GauzyApiClient {
 
 	private logError(method: string, path: string, error: any): void {
 		if (this.isDebug()) {
-			logger.error(`🔴 ${method} ${path} failed:`, sanitizeErrorMessage(error));
+			logger.error(`🔴 ${method} ${path} failed`, error instanceof Error ? error.stack : sanitizeErrorMessage(error));
 		}
 	}
 

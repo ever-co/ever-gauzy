@@ -32,9 +32,9 @@ export const registerAuthTools = (server: McpServer) => {
 								type: 'text',
 								text: `✅ Login successful!
 
-User ID: ${authStatus.userId || 'Unknown'}
-Token expires: ${authStatus.tokenExpiresAt?.toISOString() || 'Unknown'}
-Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not authenticated'}`
+								User ID: ${authStatus.userId || 'Unknown'}
+								Token expires: ${authStatus.tokenExpiresAt?.toISOString() || 'Unknown'}
+								Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not authenticated'}`
 							}
 						]
 					};

@@ -2,23 +2,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { authManager } from '../common/auth-manager';
-import { WarehouseSchemaFull } from '../schema';
+import { validateOrganizationContext } from './utils';
+import { WarehouseSchema } from '../schema';
 
 const logger = new Logger('WarehouseTools');
 
-/**
- * Helper function to validate organization context and return default parameters
- */
-const validateOrganizationContext = () => {
-	const defaultParams = authManager.getDefaultParams();
-
-	if (!defaultParams.organizationId) {
-		throw new Error('Organization ID not available. Please ensure you are logged in and have an organization.');
-	}
-
-	return defaultParams;
-};
 
 export const registerWarehouseTools = (server: McpServer) => {
 	// Get warehouses tool
@@ -101,7 +89,7 @@ export const registerWarehouseTools = (server: McpServer) => {
 		'create_warehouse',
 		"Create a new warehouse in the authenticated user's organization",
 		{
-			warehouse_data: WarehouseSchemaFull.partial()
+			warehouse_data: WarehouseSchema.partial()
 				.required({
 					name: true,
 					code: true
@@ -142,7 +130,7 @@ export const registerWarehouseTools = (server: McpServer) => {
 		'Update an existing warehouse',
 		{
 			id: z.string().uuid().describe('The warehouse ID'),
-			warehouse_data: WarehouseSchemaFull.partial().describe('The data for updating the warehouse')
+			warehouse_data: WarehouseSchema.partial().describe('The data for updating the warehouse')
 		},
 		async ({ id, warehouse_data }) => {
 			try {
@@ -191,43 +179,4 @@ export const registerWarehouseTools = (server: McpServer) => {
 		}
 	);
 
-	// Get active warehouses tool
-	server.tool(
-		'get_active_warehouses',
-		"Get only active warehouses for the authenticated user's organization",
-		{
-			page: z.number().optional().default(1).describe('Page number for pagination'),
-			limit: z.number().optional().default(10).describe('Number of items per page'),
-			relations: z.array(z.string()).optional().describe('Relations to include')
-		},
-		async ({ page = 1, limit = 10, relations }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					active: true,
-					...(relations && { relations })
-				};
-
-				const response = await apiClient.get('/api/warehouses', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching active warehouses:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch active warehouses: ${message}`);
-			}
-		}
-	);
 };

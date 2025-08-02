@@ -2,23 +2,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { authManager } from '../common/auth-manager';
+import { validateOrganizationContext } from './utils';
 import { EmployeeAwardSchema } from '../schema';
 
 const logger = new Logger('EmployeeAwardTools');
 
-/**
- * Helper function to validate organization context and return default parameters
- */
-const validateOrganizationContext = () => {
-	const defaultParams = authManager.getDefaultParams();
-
-	if (!defaultParams.organizationId) {
-		throw new Error('Organization ID not available. Please ensure you are logged in and have an organization.');
-	}
-
-	return defaultParams;
-};
 
 export const registerEmployeeAwardTools = (server: McpServer) => {
 	// Get employee awards tool
@@ -52,7 +40,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					sortOrder
 				};
 
-				const response = await apiClient.get('/api/employee-awards', { params });
+				const response = await apiClient.get('/api/employee-award', { params });
 
 				return {
 					content: [
@@ -70,42 +58,6 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		}
 	);
 
-	// Get employee award count tool
-	server.tool(
-		'get_employee_award_count',
-		"Get employee award count in the authenticated user's organization",
-		{
-			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
-			year: z.string().optional().describe('Filter by award year')
-		},
-		async ({ employeeId, year }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(employeeId && { employeeId }),
-					...(year && { year })
-				};
-
-				const response = await apiClient.get('/api/employee-awards/count', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify({ count: response }, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching employee award count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch employee award count: ${message}`);
-			}
-		}
-	);
 
 	// Get employee award by ID tool
 	server.tool(
@@ -121,7 +73,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					...(relations && { relations })
 				};
 
-				const response = await apiClient.get(`/api/employee-awards/${id}`, { params });
+				const response = await apiClient.get(`/api/employee-award/${id}`, { params });
 
 				return {
 					content: [
@@ -162,7 +114,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
 
-				const response = await apiClient.post('/api/employee-awards', createData);
+				const response = await apiClient.post('/api/employee-award', createData);
 
 				return {
 					content: [
@@ -190,7 +142,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		},
 		async ({ id, award_data }) => {
 			try {
-				const response = await apiClient.put(`/api/employee-awards/${id}`, award_data);
+				const response = await apiClient.put(`/api/employee-award/${id}`, award_data);
 
 				return {
 					content: [
@@ -217,7 +169,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
-				await apiClient.delete(`/api/employee-awards/${id}`);
+				await apiClient.delete(`/api/employee-award/${id}`);
 
 				return {
 					content: [
@@ -262,7 +214,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					sortOrder
 				};
 
-				const response = await apiClient.get('/api/employee-awards', { params });
+				const response = await apiClient.get('/api/employee-award', { params });
 
 				return {
 					content: [
@@ -280,48 +232,6 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		}
 	);
 
-	// Get my employee awards tool
-	server.tool(
-		'get_my_employee_awards',
-		'Get awards for the current authenticated user',
-		{
-			page: z.number().optional().default(1).describe('Page number for pagination'),
-			limit: z.number().optional().default(10).describe('Number of items per page'),
-			year: z.string().optional().describe('Filter by award year'),
-			sortBy: z.enum(['name', 'year', 'createdAt']).optional().default('year').describe('Sort awards by field'),
-			sortOrder: z.enum(['ASC', 'DESC']).optional().default('DESC').describe('Sort order')
-		},
-		async ({ page = 1, limit = 10, year, sortBy = 'year', sortOrder = 'DESC' }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(year && { year }),
-					sortBy,
-					sortOrder
-				};
-
-				const response = await apiClient.get('/api/employee-awards/me', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching my employee awards:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch my employee awards: ${message}`);
-			}
-		}
-	);
 
 	// Get awards by year tool
 	server.tool(
@@ -352,7 +262,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					sortOrder
 				};
 
-				const response = await apiClient.get('/api/employee-awards', { params });
+				const response = await apiClient.get('/api/employee-award', { params });
 
 				return {
 					content: [
@@ -370,205 +280,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		}
 	);
 
-	// Search employee awards tool
-	server.tool(
-		'search_employee_awards',
-		'Search employee awards by name or employee name',
-		{
-			query: z.string().describe('Search query'),
-			limit: z.number().optional().default(20).describe('Maximum number of results'),
-			year: z.string().optional().describe('Filter by award year'),
-			employeeId: z.string().uuid().optional().describe('Filter by employee ID')
-		},
-		async ({ query, limit = 20, year, employeeId }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					query,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					limit,
-					...(year && { year }),
-					...(employeeId && { employeeId })
-				};
 
-				const response = await apiClient.get('/api/employee-awards/search', { params });
 
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error searching employee awards:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to search employee awards: ${message}`);
-			}
-		}
-	);
 
-	// Get employee award statistics tool
-	server.tool(
-		'get_employee_award_statistics',
-		"Get employee award statistics for the authenticated user's organization",
-		{
-			startYear: z.string().optional().describe('Start year for statistics'),
-			endYear: z.string().optional().describe('End year for statistics'),
-			employeeId: z.string().uuid().optional().describe('Filter by specific employee ID'),
-			groupBy: z.enum(['employee', 'year', 'month']).optional().default('year').describe('Group statistics by')
-		},
-		async ({ startYear, endYear, employeeId, groupBy = 'year' }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(startYear && { startYear }),
-					...(endYear && { endYear }),
-					...(employeeId && { employeeId }),
-					groupBy
-				};
-
-				const response = await apiClient.get('/api/employee-awards/statistics', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching employee award statistics:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch employee award statistics: ${message}`);
-			}
-		}
-	);
-
-	// Bulk create employee awards tool
-	server.tool(
-		'bulk_create_employee_awards',
-		"Create multiple employee awards in bulk for the authenticated user's organization",
-		{
-			awards: z.array(
-				EmployeeAwardSchema.partial()
-					.required({
-						name: true,
-						year: true,
-						employeeId: true
-					})
-					.describe('Employee award data')
-			).describe('Array of employee award data to create')
-		},
-		async ({ awards }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				// Add organization and tenant ID to each award
-				const awardsWithDefaults = awards.map((award) => ({
-					...award,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				}));
-
-				const response = await apiClient.post('/api/employee-awards/bulk', { awards: awardsWithDefaults });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error bulk creating employee awards:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to bulk create employee awards: ${message}`);
-			}
-		}
-	);
-
-	// Get top awarded employees tool
-	server.tool(
-		'get_top_awarded_employees',
-		'Get employees with the most awards',
-		{
-			limit: z.number().optional().default(10).describe('Maximum number of employees to return'),
-			year: z.string().optional().describe('Filter by specific year'),
-			startYear: z.string().optional().describe('Start year for filtering'),
-			endYear: z.string().optional().describe('End year for filtering')
-		},
-		async ({ limit = 10, year, startYear, endYear }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					limit,
-					...(year && { year }),
-					...(startYear && { startYear }),
-					...(endYear && { endYear })
-				};
-
-				const response = await apiClient.get('/api/employee-awards/top-employees', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching top awarded employees:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch top awarded employees: ${message}`);
-			}
-		}
-	);
-
-	// Get award years tool
-	server.tool(
-		'get_award_years',
-		'Get available award years in the organization',
-		{
-			employeeId: z.string().uuid().optional().describe('Filter by employee ID')
-		},
-		async ({ employeeId }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(employeeId && { employeeId })
-				};
-
-				const response = await apiClient.get('/api/employee-awards/years', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching award years:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch award years: ${message}`);
-			}
-		}
-	);
 };

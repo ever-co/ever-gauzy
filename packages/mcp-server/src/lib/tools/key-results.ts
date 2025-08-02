@@ -2,28 +2,25 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { authManager } from '../common/auth-manager';
+import { validateOrganizationContext } from './utils';
 import { KeyResultSchema } from '../schema';
 
 const logger = new Logger('KeyResultTools');
 
-/**
- * Helper function to validate organization context and return default parameters
- */
-const validateOrganizationContext = () => {
-	const defaultParams = authManager.getDefaultParams();
-
-	if (!defaultParams.organizationId) {
-		throw new Error('Organization ID not available. Please ensure you are logged in and have an organization.');
-	}
-
-	return defaultParams;
-};
 
 /**
  * Helper function to convert date fields in key result data to Date objects
  */
-const convertKeyResultDateFields = (keyResultData: any) => {
+interface KeyResultData {
+	deadline?: string | Date;
+	[key: string]: any; // Allow other properties since we spread them
+}
+
+interface ConvertedKeyResultData extends Omit<KeyResultData, 'deadline'> {
+	deadline?: Date;
+}
+
+const convertKeyResultDateFields = (keyResultData: KeyResultData): ConvertedKeyResultData => {
 	return {
 		...keyResultData,
 		deadline: keyResultData.deadline ? new Date(keyResultData.deadline) : undefined

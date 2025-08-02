@@ -2,23 +2,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { authManager } from '../common/auth-manager';
+import { validateOrganizationContext } from './utils';
 import { ExpenseSchema, ExpenseCategoriesEnum, CurrenciesEnum } from '../schema';
 
 const logger = new Logger('ExpenseTools');
 
-/**
- * Helper function to validate organization context and return default parameters
- */
-const validateOrganizationContext = () => {
-	const defaultParams = authManager.getDefaultParams();
-
-	if (!defaultParams.organizationId) {
-		throw new Error('Organization ID not available. Please ensure you are logged in and have an organization.');
-	}
-
-	return defaultParams;
-};
 
 /**
  * Helper function to convert date fields in expense data to Date objects
@@ -68,7 +56,7 @@ export const registerExpenseTools = (server: McpServer) => {
 					...(currency && { currency })
 				};
 
-				const response = await apiClient.get('/api/expenses', { params });
+				const response = await apiClient.get('/api/expense', { params });
 
 				return {
 					content: [
@@ -111,7 +99,7 @@ export const registerExpenseTools = (server: McpServer) => {
 					...(endDate && { endDate })
 				};
 
-				const response = await apiClient.get('/api/expenses/count', { params });
+				const response = await apiClient.get('/api/expense/count', { params });
 
 				return {
 					content: [
@@ -143,7 +131,7 @@ export const registerExpenseTools = (server: McpServer) => {
 					...(relations && { relations })
 				};
 
-				const response = await apiClient.get(`/api/expenses/${id}`, { params });
+				const response = await apiClient.get(`/api/expense/${id}`, { params });
 
 				return {
 					content: [
@@ -183,7 +171,7 @@ export const registerExpenseTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				});
 
-				const response = await apiClient.post('/api/expenses', createData);
+				const response = await apiClient.post('/api/expense', createData);
 
 				return {
 					content: [
@@ -213,7 +201,7 @@ export const registerExpenseTools = (server: McpServer) => {
 			try {
 				const updateData = convertExpenseDateFields(expense_data);
 
-				const response = await apiClient.put(`/api/expenses/${id}`, updateData);
+				const response = await apiClient.put(`/api/expense/${id}`, updateData);
 
 				return {
 					content: [
@@ -240,7 +228,7 @@ export const registerExpenseTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
-				await apiClient.delete(`/api/expenses/${id}`);
+				await apiClient.delete(`/api/expense/${id}`);
 
 				return {
 					content: [
@@ -324,7 +312,7 @@ export const registerExpenseTools = (server: McpServer) => {
 					...(endDate && { endDate })
 				};
 
-				const response = await apiClient.get('/api/expenses', { params });
+				const response = await apiClient.get('/api/expense', { params });
 
 				return {
 					content: [
@@ -369,7 +357,7 @@ export const registerExpenseTools = (server: McpServer) => {
 					...(endDate && { endDate })
 				};
 
-				const response = await apiClient.get('/api/expenses/me', { params });
+				const response = await apiClient.get('/api/expense/me', { params });
 
 				return {
 					content: [
@@ -387,172 +375,8 @@ export const registerExpenseTools = (server: McpServer) => {
 		}
 	);
 
-	// Get expense statistics tool
-	server.tool(
-		'get_expense_statistics',
-		"Get expense statistics for the authenticated user's organization",
-		{
-			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
-			endDate: z.string().optional().describe('End date for statistics (ISO format)'),
-			employeeId: z.string().uuid().optional().describe('Filter by specific employee ID'),
-			categoryId: z.string().uuid().optional().describe('Filter by specific category ID')
-		},
-		async ({ startDate, endDate, employeeId, categoryId }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					...(employeeId && { employeeId }),
-					...(categoryId && { categoryId })
-				};
 
-				const response = await apiClient.get('/api/expenses/statistics', { params });
 
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching expense statistics:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch expense statistics: ${message}`);
-			}
-		}
-	);
 
-	// Bulk create expenses tool
-	server.tool(
-		'bulk_create_expenses',
-		"Create multiple expenses in bulk for the authenticated user's organization",
-		{
-			expenses: z.array(
-				ExpenseSchema.partial()
-					.required({
-						amount: true,
-						currency: true
-					})
-					.describe('Expense data')
-			).describe('Array of expense data to create')
-		},
-		async ({ expenses }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				// Add organization and tenant ID to each expense
-				const expensesWithDefaults = expenses.map((expense) => convertExpenseDateFields({
-					...expense,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				}));
-
-				const response = await apiClient.post('/api/expenses/bulk', { expenses: expensesWithDefaults });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error bulk creating expenses:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to bulk create expenses: ${message}`);
-			}
-		}
-	);
-
-	// Submit expense for approval tool
-	server.tool(
-		'submit_expense_for_approval',
-		'Submit an expense for approval',
-		{
-			id: z.string().uuid().describe('The expense ID')
-		},
-		async ({ id }) => {
-			try {
-				const response = await apiClient.put(`/api/expenses/${id}/submit`, { status: 'PENDING_APPROVAL' });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error submitting expense for approval:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to submit expense for approval: ${message}`);
-			}
-		}
-	);
-
-	// Approve expense tool
-	server.tool(
-		'approve_expense',
-		'Approve a submitted expense',
-		{
-			id: z.string().uuid().describe('The expense ID')
-		},
-		async ({ id }) => {
-			try {
-				const response = await apiClient.put(`/api/expenses/${id}/approve`, { status: 'APPROVED' });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error approving expense:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to approve expense: ${message}`);
-			}
-		}
-	);
-
-	// Reject expense tool
-	server.tool(
-		'reject_expense',
-		'Reject a submitted expense',
-		{
-			id: z.string().uuid().describe('The expense ID'),
-			reason: z.string().optional().describe('Reason for rejection')
-		},
-		async ({ id, reason }) => {
-			try {
-				const response = await apiClient.put(`/api/expenses/${id}/reject`, {
-					status: 'REJECTED',
-					...(reason && { rejectionReason: reason })
-				});
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error rejecting expense:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to reject expense: ${message}`);
-			}
-		}
-	);
 };

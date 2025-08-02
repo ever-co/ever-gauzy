@@ -80,7 +80,7 @@ export function createMcpServer() {
 
 		logger.log('Gauzy MCP Server: All tools registered successfully');
 	} catch (error) {
-		logger.error('Error configuring Gauzy MCP Server:', error);
+		logger.error('Error configuring Gauzy MCP Server', error instanceof Error ? error.stack : String(error));
 		throw error;
 	}
 
@@ -125,7 +125,7 @@ if (isMainModule()) {
 			logger.log(`Gauzy MCP Server running on stdio transport - version: ${version}`);
 			logger.log('Server is ready to accept MCP requests from clients like Claude Desktop');
 		} catch (error) {
-			logger.error('Fatal error starting Gauzy MCP Server:', error);
+			logger.error('Fatal error starting Gauzy MCP Server', error instanceof Error ? error.stack : String(error));
 			process.exit(1);
 		}
 	}

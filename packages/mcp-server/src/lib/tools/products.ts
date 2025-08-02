@@ -2,28 +2,27 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { authManager } from '../common/auth-manager';
+import { validateOrganizationContext } from './utils';
 import { ProductSchema, ProductTypeEnum } from '../schema';
 
 const logger = new Logger('ProductTools');
 
+
 /**
- * Helper function to validate organization context and return default parameters
+ * Interface for product data with date fields that need conversion
  */
-const validateOrganizationContext = () => {
-	const defaultParams = authManager.getDefaultParams();
-
-	if (!defaultParams.organizationId) {
-		throw new Error('Organization ID not available. Please ensure you are logged in and have an organization.');
-	}
-
-	return defaultParams;
-};
+interface ProductDataWithDates {
+	[key: string]: any;
+	createdAt?: string | Date | null;
+	updatedAt?: string | Date | null;
+}
 
 /**
  * Helper function to convert date fields in product data to Date objects
+ * @param productData - Product data that may contain date fields as strings
+ * @returns Product data with date fields converted to Date objects
  */
-const convertProductDateFields = (productData: any) => {
+const convertProductDateFields = <T extends ProductDataWithDates>(productData: T): T => {
 	return {
 		...productData,
 		createdAt: productData.createdAt ? new Date(productData.createdAt) : undefined,

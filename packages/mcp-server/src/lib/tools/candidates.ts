@@ -2,23 +2,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { authManager } from '../common/auth-manager';
 import { CandidateSchema, CandidateStatusEnum, CurrenciesEnum } from '../schema';
+import { validateOrganizationContext } from './utils';
 
 const logger = new Logger('CandidateTools');
 
-/**
- * Helper function to validate organization context and return default parameters
- */
-const validateOrganizationContext = () => {
-	const defaultParams = authManager.getDefaultParams();
-
-	if (!defaultParams.organizationId) {
-		throw new Error('Organization ID not available. Please ensure you are logged in and have an organization.');
-	}
-
-	return defaultParams;
-};
 
 /**
  * Helper function to convert date fields in candidate data to Date objects
@@ -65,7 +53,7 @@ export const registerCandidateTools = (server: McpServer) => {
 					...(rating !== undefined && { rating })
 				};
 
-				const response = await apiClient.get('/api/candidates', { params });
+				const response = await apiClient.get('/api/candidate', { params });
 
 				return {
 					content: [
@@ -104,7 +92,7 @@ export const registerCandidateTools = (server: McpServer) => {
 					...(sourceId && { sourceId })
 				};
 
-				const response = await apiClient.get('/api/candidates/count', { params });
+				const response = await apiClient.get('/api/candidate/count', { params });
 
 				return {
 					content: [
@@ -136,7 +124,7 @@ export const registerCandidateTools = (server: McpServer) => {
 					...(relations && { relations })
 				};
 
-				const response = await apiClient.get(`/api/candidates/${id}`, { params });
+				const response = await apiClient.get(`/api/candidate/${id}`, { params });
 
 				return {
 					content: [
@@ -175,7 +163,7 @@ export const registerCandidateTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				});
 
-				const response = await apiClient.post('/api/candidates', createData);
+				const response = await apiClient.post('/api/candidate', createData);
 
 				return {
 					content: [
@@ -205,7 +193,7 @@ export const registerCandidateTools = (server: McpServer) => {
 			try {
 				const updateData = convertCandidateDateFields(candidate_data);
 
-				const response = await apiClient.put(`/api/candidates/${id}`, updateData);
+				const response = await apiClient.put(`/api/candidate/${id}`, updateData);
 
 				return {
 					content: [
@@ -233,7 +221,7 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ id, status }) => {
 			try {
-				const response = await apiClient.put(`/api/candidates/${id}/status`, { status });
+				const response = await apiClient.put(`/api/candidate/${id}/status`, { status });
 
 				return {
 					content: [
@@ -261,7 +249,7 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ id, rating }) => {
 			try {
-				const response = await apiClient.put(`/api/candidates/${id}/rating`, { rating });
+				const response = await apiClient.put(`/api/candidate/${id}/rating`, { rating });
 
 				return {
 					content: [
@@ -288,7 +276,7 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
-				await apiClient.delete(`/api/candidates/${id}`);
+				await apiClient.delete(`/api/candidate/${id}`);
 
 				return {
 					content: [
@@ -331,7 +319,7 @@ export const registerCandidateTools = (server: McpServer) => {
 					...(relations && { relations })
 				};
 
-				const response = await apiClient.get('/api/candidates', { params });
+				const response = await apiClient.get('/api/candidate', { params });
 
 				return {
 					content: [
@@ -358,8 +346,8 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ candidateId }) => {
 			try {
-				const response = await apiClient.get(`/api/candidate-skills`, { 
-					params: { candidateId } 
+				const response = await apiClient.get(`/api/candidate-skills`, {
+					params: { candidateId }
 				});
 
 				return {
@@ -421,8 +409,8 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ candidateId }) => {
 			try {
-				const response = await apiClient.get(`/api/candidate-experience`, { 
-					params: { candidateId } 
+				const response = await apiClient.get(`/api/candidate-experience`, {
+					params: { candidateId }
 				});
 
 				return {
@@ -486,8 +474,8 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ candidateId }) => {
 			try {
-				const response = await apiClient.get(`/api/candidate-education`, { 
-					params: { candidateId } 
+				const response = await apiClient.get(`/api/candidate-educations`, {
+					params: { candidateId }
 				});
 
 				return {
@@ -528,7 +516,7 @@ export const registerCandidateTools = (server: McpServer) => {
 					...(education.completionDate && { completionDate: new Date(education.completionDate) })
 				};
 
-				const response = await apiClient.post('/api/candidate-education', educationData);
+				const response = await apiClient.post('/api/candidate-educations', educationData);
 
 				return {
 					content: [
@@ -542,88 +530,6 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error adding candidate education:', error);
 				const message = error instanceof Error ? error.message : 'Unknown error';
 				throw new Error(`Failed to add candidate education: ${message}`);
-			}
-		}
-	);
-
-	// Get candidate statistics tool
-	server.tool(
-		'get_candidate_statistics',
-		"Get candidate statistics for the authenticated user's organization",
-		{
-			organizationPositionId: z.string().uuid().optional().describe('Filter by organization position ID'),
-			sourceId: z.string().uuid().optional().describe('Filter by candidate source ID'),
-			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
-			endDate: z.string().optional().describe('End date for statistics (ISO format)')
-		},
-		async ({ organizationPositionId, sourceId, startDate, endDate }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(organizationPositionId && { organizationPositionId }),
-					...(sourceId && { sourceId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
-				};
-
-				const response = await apiClient.get('/api/candidates/statistics', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching candidate statistics:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch candidate statistics: ${message}`);
-			}
-		}
-	);
-
-	// Search candidates tool
-	server.tool(
-		'search_candidates',
-		'Search candidates by name, email, or skills',
-		{
-			query: z.string().describe('Search query'),
-			limit: z.number().optional().default(20).describe('Maximum number of results'),
-			status: CandidateStatusEnum.optional().describe('Filter by candidate status'),
-			organizationPositionId: z.string().uuid().optional().describe('Filter by organization position ID')
-		},
-		async ({ query, limit = 20, status, organizationPositionId }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					query,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					limit,
-					...(status && { status }),
-					...(organizationPositionId && { organizationPositionId })
-				};
-
-				const response = await apiClient.get('/api/candidates/search', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error searching candidates:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to search candidates: ${message}`);
 			}
 		}
 	);

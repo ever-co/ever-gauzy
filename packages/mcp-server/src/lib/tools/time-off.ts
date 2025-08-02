@@ -2,23 +2,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { authManager } from '../common/auth-manager';
+import { validateOrganizationContext } from './utils';
 import { TimeOffRequestSchema, TimeOffPolicySchema, TimeOffStatusEnum, TimeOffTypeEnum } from '../schema';
 
 const logger = new Logger('TimeOffTools');
 
-/**
- * Helper function to validate organization context and return default parameters
- */
-const validateOrganizationContext = () => {
-	const defaultParams = authManager.getDefaultParams();
-
-	if (!defaultParams.organizationId) {
-		throw new Error('Organization ID not available. Please ensure you are logged in and have an organization.');
-	}
-
-	return defaultParams;
-};
 
 /**
  * Helper function to convert date fields in time-off data to Date objects
@@ -271,7 +259,7 @@ export const registerTimeOffTools = (server: McpServer) => {
 		async ({ id }) => {
 			try {
 				const response = await apiClient.put(`/api/time-off-requests/${id}/approve`, {
-					status: 'APPROVED',
+					status: TimeOffStatusEnum.enum.APPROVED,
 					approvedDate: new Date()
 				});
 
@@ -302,7 +290,7 @@ export const registerTimeOffTools = (server: McpServer) => {
 		async ({ id, reason }) => {
 			try {
 				const response = await apiClient.put(`/api/time-off-requests/${id}/deny`, {
-					status: 'DENIED',
+					status: TimeOffStatusEnum.enum.DENIED,
 					...(reason && { denialReason: reason })
 				});
 
@@ -332,7 +320,7 @@ export const registerTimeOffTools = (server: McpServer) => {
 		async ({ id }) => {
 			try {
 				const response = await apiClient.put(`/api/time-off-requests/${id}/cancel`, {
-					status: 'CANCELLED'
+					status: TimeOffStatusEnum.enum.CANCELLED
 				});
 
 				return {
