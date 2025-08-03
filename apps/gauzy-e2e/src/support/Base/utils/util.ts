@@ -98,6 +98,10 @@ export const clickButtonByIndex = (loc, index) => {
 	cy.get(loc, { timeout: taskTimeout }).eq(index).click({ force: true });
 };
 
+export const clickLastButton = (loc) => {
+	cy.get(loc, { timeout: taskTimeout }).last().click({ force: true });
+};
+
 export const clickOrganizationByIndex = (loc, index) => {
 	cy.get(loc, { timeout: taskTimeout }).eq(index).click({ force: true });
 };

@@ -8,7 +8,8 @@ import {
 	verifyText,
 	verifyTextNotExisting,
 	waitElementToHide,
-	clickElementByText
+	clickElementByText,
+	clickLastButton
 } from '../utils/util';
 import { OrganizationProjectsPage } from '../pageobjects/OrganizationProjectsPageObject';
 
@@ -71,6 +72,30 @@ export const selectTagsFromDropdown = (index) => {
 	clickButtonByIndex(OrganizationProjectsPage.tagsSelectOptionCss, index);
 };
 
+export const ownerDropdownVisible = () => {
+	verifyElementIsVisible(OrganizationProjectsPage.ownerDropdownCss);
+};
+
+export const clickOwnerDropdown = () => {
+	clickButton(OrganizationProjectsPage.ownerDropdownCss);
+};
+
+export const selectOwnerDropdownOption = (index) => {
+	clickButtonByIndex(OrganizationProjectsPage.ownerDropdownOptionCss, index);
+};
+
+export const clientsDropdownVisible = () => {
+	verifyElementIsVisible(OrganizationProjectsPage.clientsDropdownCss);
+};
+
+export const clickClientsDropdown = () => {
+	clickButton(OrganizationProjectsPage.clientsDropdownCss);
+};
+
+export const selectClientsDropdownOption = (index) => {
+	clickButtonByIndex(OrganizationProjectsPage.clientsDropdownOptionCss, index);
+};
+
 export const clickKeyboardButtonByKeyCode = (keycode) => {
 	clickKeyboardBtnByKeycode(keycode);
 };
@@ -92,11 +117,25 @@ export const clickTabButton = (index) => {
 	clickButtonByIndex(OrganizationProjectsPage.tabButtonCss, index);
 };
 
+export type TabButtonName =
+	| 'Main'
+	| 'Description'
+	| 'Billing'
+	| 'Budget'
+	| 'Open-Source'
+	| 'Sprints'
+	| 'Settings'
+	| 'Module';
+export const clickTabButtonByName = (name: TabButtonName) => {
+	cy.get(OrganizationProjectsPage.tabSetCss).contains(name).click();
+};
+
 export const budgetHoursInputVisible = () => {
 	verifyElementIsVisible(OrganizationProjectsPage.budgetInputCss);
 };
 
 export const enterBudgetHoursInputData = (data) => {
+	clearField(OrganizationProjectsPage.budgetInputCss);
 	enterInput(OrganizationProjectsPage.budgetInputCss, data);
 };
 
@@ -106,11 +145,15 @@ export const enterDescriptionInputData = (data) => {
 };
 
 export const saveProjectButtonVisible = () => {
-	verifyElementIsVisible(OrganizationProjectsPage.saveProjectButtonCss);
+	cy.get(OrganizationProjectsPage.footerCss)
+		.findByRole('button', { name: OrganizationProjectsPage.saveButtonName })
+		.should('be.visible');
 };
 
 export const clickSaveProjectButton = () => {
-	clickButton(OrganizationProjectsPage.saveProjectButtonCss);
+	cy.get(OrganizationProjectsPage.footerCss)
+		.findByRole('button', { name: OrganizationProjectsPage.saveButtonName })
+		.click();
 };
 
 export const tableRowVisible = () => {
@@ -121,12 +164,24 @@ export const selectTableRow = (index) => {
 	clickButtonByIndex(OrganizationProjectsPage.selectTableRowCss, index);
 };
 
+export const selectLastTableRow = () => {
+	clickLastButton(OrganizationProjectsPage.selectTableRowCss);
+};
+
+export const selectTableRowByName = (name) => {
+	clickElementByText(OrganizationProjectsPage.selectTableRowCss, name);
+};
+
 export const editButtonVisible = () => {
-	verifyElementIsVisible(OrganizationProjectsPage.editProjectButtonCss);
+	cy.get(OrganizationProjectsPage.actionsBarCss)
+		.findByRole('button', { name: OrganizationProjectsPage.editButtonName })
+		.should('be.visible');
 };
 
 export const clickEditButton = () => {
-	clickButton(OrganizationProjectsPage.editProjectButtonCss);
+	cy.get(OrganizationProjectsPage.actionsBarCss)
+		.findByRole('button', { name: OrganizationProjectsPage.editButtonName })
+		.click();
 };
 
 export const deleteButtonVisible = () => {
@@ -150,6 +205,7 @@ export const clickCardBody = () => {
 };
 
 export const verifyProjectExists = (text) => {
+	cy.log('text', text);
 	verifyText(OrganizationProjectsPage.verifyProjectCss, text);
 };
 

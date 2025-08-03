@@ -1,9 +1,14 @@
+const ACTIONS_BAR_CSS = 'ngx-gauzy-button-action';
 export const OrganizationProjectsPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
-	tagsSelectCss: '#addTags',
-	tagsSelectOptionCss: '[type="checkbox"]',
+	tagsSelectCss: '#addTags .ng-input input',
+	tagsSelectOptionCss: '.ng-dropdown-panel [type="checkbox"]',
 	closeTagsMultiSelectDropdownCss: '.ng-select-container > .ng-arrow-wrapper',
+	ownerDropdownCss: '[formControlName="owner"] button',
+	ownerDropdownOptionCss: '.option-list nb-option',
+	clientsDropdownCss: '[formControlName="organizationContact"] .ng-input input',
+	clientsDropdownOptionCss: 'ng-dropdown-panel .ng-option',
 	selectEmployeeMultiSelectCss: 'nb-select[ng-reflect-placeholder="Add or Remove Employees"] button',
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
 	requestNewProjectButtonCss: 'button[status="success"]',
@@ -14,10 +19,15 @@ export const OrganizationProjectsPage = {
 	tabButtonCss: 'span.tab-text',
 	saveProjectButtonCss: 'div.form-group > button[status="success"]',
 	editProjectButtonCss: 'button[status="info"]',
-	deleteProjectButtonCss: 'button[status="danger"]',
+	deleteProjectButtonCss: `${ACTIONS_BAR_CSS} .actions.ng-star-inserted button:last-of-type`,
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	colorInputCss: '[formcontrolname="color"]',
-	footerCss: 'nb-card-body > div.form-group',
+	footerCss: 'ga-project-mutation nb-card-body div.form-group.action-buttons',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyProjectCss: 'ga-picture-name-tags > div > div.d-block'
+	verifyProjectCss: 'ga-project-list tr td:first-of-type',
+	// testing library
+	tabSetCss: 'nb-card nb-tabset',
+	actionsBarCss: ACTIONS_BAR_CSS,
+	editButtonName: 'Edit',
+	saveButtonName: 'Save'
 };

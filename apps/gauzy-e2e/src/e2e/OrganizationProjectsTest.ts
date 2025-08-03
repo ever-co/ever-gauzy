@@ -5,21 +5,28 @@ import { OrganizationProjectsPageData } from '../support/Base/pagedata/Organizat
 import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
+const nameTag = Date.now().toString().slice(0, 5);
+const editName = `${OrganizationProjectsPageData.editName}-${nameTag}`;
+
 //! waitToLoad. No request ever occurred.
-describe.skip('Organization projects test', () => {
+describe('Organization projects test', { testIsolation: false }, () => {
 	before(() => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+		cy.visitAndWait('/#/pages/organization/projects');
 	});
-	it('Should be able to add new project', () => {
-		cy.visit('/#/pages/organization/projects');
+	it.only('Should be able to add new project', () => {
 		organizationProjectsPage.gridBtnExists();
 		organizationProjectsPage.gridBtnClick(1);
 		organizationProjectsPage.requestProjectButtonVisible();
 		organizationProjectsPage.clickRequestProjectButton();
 		organizationProjectsPage.nameInputVisible();
-		organizationProjectsPage.enterNameInputData(
-			OrganizationProjectsPageData.name
-		);
+		organizationProjectsPage.enterNameInputData(OrganizationProjectsPageData.name);
+		organizationProjectsPage.ownerDropdownVisible();
+		organizationProjectsPage.clickOwnerDropdown();
+		organizationProjectsPage.selectOwnerDropdownOption(0);
+		organizationProjectsPage.clientsDropdownVisible();
+		organizationProjectsPage.clickClientsDropdown();
+		organizationProjectsPage.selectClientsDropdownOption(0);
 		organizationProjectsPage.selectEmployeeDropdownVisible();
 		organizationProjectsPage.clickSelectEmployeeDropdown();
 		organizationProjectsPage.selectEmployeeDropdownOption(0);
@@ -31,53 +38,39 @@ describe.skip('Organization projects test', () => {
 		organizationProjectsPage.clickCardBody();
 		organizationProjectsPage.clickTabButton(3);
 		organizationProjectsPage.budgetHoursInputVisible();
-		organizationProjectsPage.enterBudgetHoursInputData(
-			OrganizationProjectsPageData.hours
-		);
+		organizationProjectsPage.enterBudgetHoursInputData(OrganizationProjectsPageData.hours);
 		organizationProjectsPage.clickTabButton(5);
 		organizationProjectsPage.colorInputVisible();
-		organizationProjectsPage.enterColorInputData(
-			OrganizationProjectsPageData.color
-		);
+		organizationProjectsPage.enterColorInputData(OrganizationProjectsPageData.color);
 		organizationProjectsPage.saveProjectButtonVisible();
 		organizationProjectsPage.clickSaveProjectButton();
 		organizationProjectsPage.waitMessageToHide();
-		organizationProjectsPage.verifyProjectExists(
-			OrganizationProjectsPageData.name
-		);
+		organizationProjectsPage.verifyProjectExists(OrganizationProjectsPageData.name);
 	});
-	it('Should be able to edit project', () => {
+	it.only('Should be able to edit project', () => {
 		organizationProjectsPage.tableRowVisible();
 		organizationProjectsPage.selectTableRow(0);
 		organizationProjectsPage.editButtonVisible();
 		organizationProjectsPage.clickEditButton();
 		organizationProjectsPage.nameInputVisible();
-		organizationProjectsPage.enterNameInputData(
-			OrganizationProjectsPageData.editName
-		);
-		organizationProjectsPage.clickTabButton(3);
+		organizationProjectsPage.enterNameInputData(editName);
+		organizationProjectsPage.clickTabButtonByName('Budget');
 		organizationProjectsPage.budgetHoursInputVisible();
-		organizationProjectsPage.enterBudgetHoursInputData(
-			OrganizationProjectsPageData.hours
-		);
-		organizationProjectsPage.clickTabButton(5);
+		organizationProjectsPage.enterBudgetHoursInputData(OrganizationProjectsPageData.hours);
+		organizationProjectsPage.clickTabButtonByName('Settings');
 		organizationProjectsPage.colorInputVisible();
-		organizationProjectsPage.enterColorInputData(
-			OrganizationProjectsPageData.color
-		);
+		organizationProjectsPage.enterColorInputData(OrganizationProjectsPageData.editColor);
 		organizationProjectsPage.saveProjectButtonVisible();
 		organizationProjectsPage.clickSaveProjectButton();
-	});
-	it('Should be able to delete project', () => {
 		organizationProjectsPage.waitMessageToHide();
-		organizationProjectsPage.selectTableRow(0);
+	});
+	it.only('Should be able to delete project', () => {
+		organizationProjectsPage.selectTableRowByName(editName);
 		organizationProjectsPage.deleteButtonVisible();
 		organizationProjectsPage.clickDeleteButton();
 		organizationProjectsPage.confirmDeleteButtonVisible();
 		organizationProjectsPage.clickConfirmDeleteButton();
 		organizationProjectsPage.waitMessageToHide();
-		organizationProjectsPage.verifyProjectIsDeleted(
-			OrganizationProjectsPageData.editName
-		);
+		organizationProjectsPage.verifyProjectIsDeleted(editName);
 	});
 });
