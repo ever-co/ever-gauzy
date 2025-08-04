@@ -129,6 +129,7 @@
         "@sentry/electron": "^6.8.0",
         "@sentry/node": "^9.43.0",
         "@sentry/profiling-node": "^9.43.0",
+        "@sentry/core": "^9.43.0",
         "electron-log": "^4.4.8",
         "electron-store": "^8.1.0",
         "electron-updater": "^6.1.7",
