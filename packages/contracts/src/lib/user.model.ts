@@ -156,6 +156,14 @@ export interface IWorkspaceResponse extends IUserTokenInput {
 	user: IUser;
 }
 
+export interface IWorkSpace {
+	id: string;
+	name: string;
+	imgUrl: string;
+	isOnline: boolean;
+	isSelected?: boolean;
+}
+
 export interface IUserSigninWorkspaceResponse {
 	workspaces: IWorkspaceResponse[];
 	confirmed_email: string;
