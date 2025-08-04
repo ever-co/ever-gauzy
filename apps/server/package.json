@@ -55,7 +55,7 @@
 		"@sentry/electron": "^6.8.0",
 		"@sentry/node": "^9.43.0",
 		"@sentry/profiling-node": "^9.43.0",
-		"@sentry/core": "^9.43.0",
+		"@sentry/core": "9.43.0",
 		"app-root-path": "^3.0.0",
 		"auto-launch": "5.0.5",
 		"consolidate": "^0.16.0",
