@@ -10441,7 +10441,7 @@
     "@sentry-internal/browser-utils" "9.43.0"
     "@sentry/core" "9.43.0"
 
-"@sentry/angular@^9.43.0":
+"@sentry/angular@9.43.0", "@sentry/angular@^9.43.0":
   version "9.43.0"
   resolved "https://registry.yarnpkg.com/@sentry/angular/-/angular-9.43.0.tgz#b853720ce2e090389f1a628ca8270a59f60d6e3a"
   integrity sha512-sr+MsW0Y4x/hxtEncb8Rfh79tccYjgAfMrnVl6sB1jjusvg57gGt9PP7zveXkF1p4IVq07lukRuSjirY8SFjqg==
@@ -10461,7 +10461,7 @@
     "@sentry-internal/replay-canvas" "9.26.0"
     "@sentry/core" "9.26.0"
 
-"@sentry/browser@9.43.0", "@sentry/browser@^9.43.0":
+"@sentry/browser@9.43.0":
   version "9.43.0"
   resolved "https://registry.yarnpkg.com/@sentry/browser/-/browser-9.43.0.tgz#607c5397f5d2bdab879c973b7147b509ee5f7dc0"
   integrity sha512-F+zMc+ratJ1MqV9YQqkrHqC+rED3meWHgO7+C6bYG5HPynCYqIGapJFNmFFC57pbU8lT191CiMgBWYT6DuMduw==
@@ -10477,7 +10477,7 @@
   resolved "https://registry.yarnpkg.com/@sentry/core/-/core-9.43.0.tgz#884b489007fa90897d690e3d95b317e324287ed9"
   integrity sha512-xuvERSUkSNBAldIlgihX3fz+JkcaAPvg0HulPtv3BH9qrKqvataeQ8TiTnqiRC7kWzF7EcxhQJ6WJRl/r3aH3w==
 
-"@sentry/electron@^6.8.0":
+"@sentry/electron@6.8.0", "@sentry/electron@^6.8.0":
   version "6.8.0"
   resolved "https://registry.yarnpkg.com/@sentry/electron/-/electron-6.8.0.tgz#4d8f85a3c192b904dcc852ed11e71dc2f60d6a05"
   integrity sha512-oRsix8g2TY1eokWU0LMnXMMUfQjfGEDE9h4Gx2yNu3RASsjxgCuMbgQQlMCU+Eolr7Y5VKZ10CwbmdYiu3T/eg==
@@ -10536,7 +10536,7 @@
     import-in-the-middle "^1.13.1"
     minimatch "^9.0.0"
 
-"@sentry/node@9.43.0", "@sentry/node@^9.43.0":
+"@sentry/node@9.43.0":
   version "9.43.0"
   resolved "https://registry.yarnpkg.com/@sentry/node/-/node-9.43.0.tgz#da029b36316abd897322c9d8d4b5cff79fe07257"
   integrity sha512-cARRKL8QIeO8Rt80sXkpdYCD1wiV52iVk3pQp7fYMg7+T6xjmUArrYtORrgYFqNOc5jNfm9jo9ZZTjjKD8fP1A==
@@ -10591,7 +10591,7 @@
   dependencies:
     "@sentry/core" "9.43.0"
 
-"@sentry/profiling-node@^9.43.0":
+"@sentry/profiling-node@9.43.0":
   version "9.43.0"
   resolved "https://registry.yarnpkg.com/@sentry/profiling-node/-/profiling-node-9.43.0.tgz#332c9657b57af060c700e715ccdf3ffe6825d557"
   integrity sha512-dEvxdfW+yObeJtb3mQ/NSfBYi81XlWoS0AL0WLzbW1pu5JW6w/YFAlmjzAMuUl4jI2qBL9LgRkAcb2rI9ayz6A==
