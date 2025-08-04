@@ -4,7 +4,7 @@ export const TeamsTasksPageData = {
 	editTaskTitle: 'Feature: Invite users with emails',
 	defaultTaskEstimateDays: 1,
 	defaultTaskEstimateHours: 8,
-	defaultStatus: 'Todo',
+	defaultStatus: 'Open',
 	defaultTaskEstimateMinutes: 59,
 	defaultTaskDescription: 'Very important task'
 };

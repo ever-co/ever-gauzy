@@ -115,7 +115,11 @@ export const CustomCommands = {
 		contactsLeadsPage.clickFinishButton();
 	},
 	addTeam: (organizationTeamsPage: any, OrganizationTeamsPageData: any) => {
-		cy.visit('/#/pages/organization/teams', { timeout: pageLoadTimeout });
+		organizationTeamsPage.visit({
+			timeout: pageLoadTimeout
+		});
+		// if the team is already added, remove it
+		organizationTeamsPage.removeTeamIfExists(OrganizationTeamsPageData.name);
 		organizationTeamsPage.gridBtnExists();
 		organizationTeamsPage.gridBtnClick(1);
 		organizationTeamsPage.addTeamButtonVisible();
@@ -134,6 +138,7 @@ export const CustomCommands = {
 		organizationTeamsPage.clickCardBody(0);
 		organizationTeamsPage.saveButtonVisible();
 		organizationTeamsPage.clickSaveButton();
+		organizationTeamsPage.waitMessageToHide();
 	},
 	addProject: (organizationProjectsPage: any, OrganizationProjectsPageData: any, employeeFullName?: string) => {
 		cy.on('uncaught:exception', (err, runnable) => {

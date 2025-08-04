@@ -12,38 +12,25 @@ import * as organizationTeamsPage from '../support/Base/pages/OrganizationTeams.
 import { OrganizationTeamsPageData } from '../support/Base/pagedata/OrganizationTeamsPageData';
 
 //! waitToLoad. No request ever occurred.
-describe.skip('Add teams tasks test', () => {
+describe('Add teams tasks test', { testIsolation: false }, () => {
 	before(() => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
+		CustomCommands.addTeam(organizationTeamsPage, OrganizationTeamsPageData);
+		cy.visitAndWait('/#/pages/tasks/team');
 	});
 	it('Should be able to add new task', () => {
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
-		CustomCommands.addTeam(
-			organizationTeamsPage,
-			OrganizationTeamsPageData
-		);
-		cy.visit('/#/pages/tasks/team');
 		teamsTasksPage.gridBtnExists();
 		teamsTasksPage.gridBtnClick(1);
 		teamsTasksPage.addTaskButtonVisible();
 		teamsTasksPage.clickAddTaskButton();
 		teamsTasksPage.selectProjectDropdownVisible();
 		teamsTasksPage.clickSelectProjectDropdown();
-		teamsTasksPage.selectProjectOptionDropdown(
-			TeamsTasksPageData.defaultTaskProject
-		);
+		teamsTasksPage.selectProjectOptionDropdown(TeamsTasksPageData.defaultTaskProject);
 		teamsTasksPage.selectStatusDropdownVisible();
 		teamsTasksPage.clickStatusDropdown();
-		teamsTasksPage.selectStatusFromDropdown(
-			TeamsTasksPageData.defaultStatus
-		);
+		teamsTasksPage.selectStatusFromDropdown(TeamsTasksPageData.defaultStatus);
 		teamsTasksPage.selectTeamDropdownVisible();
 		teamsTasksPage.clickSelectTeamDropdown();
 		teamsTasksPage.selectTeamDropdownOption(0);
@@ -53,26 +40,18 @@ describe.skip('Add teams tasks test', () => {
 		teamsTasksPage.tagsMultiSelectVisible();
 		teamsTasksPage.clickTagsMultiSelect();
 		teamsTasksPage.selectTagsFromDropdown(0);
-		teamsTasksPage.clickCardBody();
+		teamsTasksPage.closeTagsMultiSelect();
 		teamsTasksPage.dueDateInputVisible();
 		teamsTasksPage.enterDueDateData();
 		teamsTasksPage.clickKeyboardButtonByKeyCode(9);
 		teamsTasksPage.estimateDaysInputVisible();
-		teamsTasksPage.enterEstimateDaysInputData(
-			TeamsTasksPageData.defaultTaskEstimateDays
-		);
+		teamsTasksPage.enterEstimateDaysInputData(TeamsTasksPageData.defaultTaskEstimateDays);
 		teamsTasksPage.estimateHoursInputVisible();
-		teamsTasksPage.enterEstimateHoursInputData(
-			TeamsTasksPageData.defaultTaskEstimateHours
-		);
+		teamsTasksPage.enterEstimateHoursInputData(TeamsTasksPageData.defaultTaskEstimateHours);
 		teamsTasksPage.estimateMinutesInputVisible();
-		teamsTasksPage.enterEstimateMinutesInputData(
-			TeamsTasksPageData.defaultTaskEstimateMinutes
-		);
+		teamsTasksPage.enterEstimateMinutesInputData(TeamsTasksPageData.defaultTaskEstimateMinutes);
 		teamsTasksPage.taskDescriptionTextareaVisible();
-		teamsTasksPage.enterTaskDescriptionTextareaData(
-			TeamsTasksPageData.defaultTaskDescription
-		);
+		teamsTasksPage.enterTaskDescriptionTextareaData(TeamsTasksPageData.defaultTaskDescription);
 		teamsTasksPage.saveTaskButtonVisible();
 		teamsTasksPage.clickSaveTaskButton();
 		teamsTasksPage.waitMessageToHide();
@@ -85,6 +64,7 @@ describe.skip('Add teams tasks test', () => {
 		teamsTasksPage.clickDuplicateOrEditTaskButton(0);
 		teamsTasksPage.confirmDuplicateOrEditTaskButtonVisible();
 		teamsTasksPage.clickConfirmDuplicateOrEditTaskButton();
+		teamsTasksPage.waitMessageToHide();
 	});
 	it('Should be able to delete task', () => {
 		teamsTasksPage.waitMessageToHide();
@@ -103,44 +83,34 @@ describe.skip('Add teams tasks test', () => {
 		teamsTasksPage.clickDuplicateOrEditTaskButton(1);
 		teamsTasksPage.selectProjectDropdownVisible();
 		teamsTasksPage.clickSelectProjectDropdown();
-		teamsTasksPage.selectProjectOptionDropdown(
-			TeamsTasksPageData.defaultTaskProject
-		);
+		teamsTasksPage.selectProjectOptionDropdown(TeamsTasksPageData.defaultTaskProject);
 		teamsTasksPage.addTitleInputVisible();
 		teamsTasksPage.enterTitleInputData(TeamsTasksPageData.editTaskTitle);
 		teamsTasksPage.dueDateInputVisible();
 		teamsTasksPage.enterDueDateData();
 		teamsTasksPage.clickKeyboardButtonByKeyCode(9);
 		teamsTasksPage.estimateDaysInputVisible();
-		teamsTasksPage.enterEstimateDaysInputData(
-			TeamsTasksPageData.defaultTaskEstimateDays
-		);
+		teamsTasksPage.enterEstimateDaysInputData(TeamsTasksPageData.defaultTaskEstimateDays);
 		teamsTasksPage.estimateHoursInputVisible();
-		teamsTasksPage.enterEstimateHoursInputData(
-			TeamsTasksPageData.defaultTaskEstimateHours
-		);
+		teamsTasksPage.enterEstimateHoursInputData(TeamsTasksPageData.defaultTaskEstimateHours);
 		teamsTasksPage.estimateMinutesInputVisible();
-		teamsTasksPage.enterEstimateMinutesInputData(
-			TeamsTasksPageData.defaultTaskEstimateMinutes
-		);
+		teamsTasksPage.enterEstimateMinutesInputData(TeamsTasksPageData.defaultTaskEstimateMinutes);
 		teamsTasksPage.taskDescriptionTextareaVisible();
-		teamsTasksPage.enterTaskDescriptionTextareaData(
-			TeamsTasksPageData.defaultTaskDescription
-		);
+		teamsTasksPage.enterTaskDescriptionTextareaData(TeamsTasksPageData.defaultTaskDescription);
 		teamsTasksPage.saveTaskButtonVisible();
 		teamsTasksPage.clickSaveTaskButton();
 		teamsTasksPage.waitMessageToHide();
 		teamsTasksPage.verifyTaskExists(TeamsTasksPageData.editTaskTitle);
 	});
 	it('Should be able to delete task', () => {
-		teamsTasksPage.waitMessageToHide();
-		teamsTasksPage.tasksTableVisible();
-		teamsTasksPage.selectTasksTableRow(0);
+		// Assumes the task exists since test cases are not isolated
+		teamsTasksPage.countTasksWithText(TeamsTasksPageData.editTaskTitle);
+		teamsTasksPage.selectTaskTableRowByText(TeamsTasksPageData.editTaskTitle);
 		teamsTasksPage.deleteTaskButtonVisible();
 		teamsTasksPage.clickDeleteTaskButton();
 		teamsTasksPage.confirmDeleteTaskButtonVisible();
 		teamsTasksPage.clickConfirmDeleteTaskButton();
 		teamsTasksPage.waitMessageToHide();
-		teamsTasksPage.verifyTaskIsDeleted();
+		teamsTasksPage.verifyOneTaskWasDeleted(TeamsTasksPageData.editTaskTitle);
 	});
 });
