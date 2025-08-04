@@ -467,6 +467,7 @@
 		"@typescript-eslint/scope-manager": "^8.31.0",
 		"@typescript-eslint/utils": "^8.31.0",
 		"@typescript-eslint/visitor-keys": "^8.31.0",
+		"@sentry/core": "^9.43.0",
 		"camelcase": "^6.3.0",
 		"rxjs": "^7.8.2",
 		"autoprefixer": "^10.4.20",

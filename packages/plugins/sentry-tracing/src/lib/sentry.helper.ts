@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node';
-import { Integration } from '@sentry/core';
+import type { Integration } from '@sentry/core';
 import { environment } from '@gauzy/config';
 import { SentryPluginOptions } from './sentry.types';
 
@@ -46,7 +46,7 @@ export function createDefaultSentryIntegrations(): Integration[] {
 
 /**
  * Add HTTP Tracing integration if enabled.
-  * @param integrations The array of Sentry integrations.
+ * @param integrations The array of Sentry integrations.
  */
 function addHttpTracingIntegration(integrations: Integration[]): void {
 	if (process.env.SENTRY_DSN && process.env.SENTRY_HTTP_TRACING_ENABLED === 'true') {
