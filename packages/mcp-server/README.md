@@ -60,7 +60,7 @@ server.start();
 
 ```typescript
 import { AuthTool, TimerTool, ProjectTool } from '@gauzy/mcp-server/tools';
-import { ApiClient } from '@gauzy/mcp-server/common';
+import { ApiClient } from '@gauzy/mcp-server';
 
 // Initialize API client
 const apiClient = new ApiClient({

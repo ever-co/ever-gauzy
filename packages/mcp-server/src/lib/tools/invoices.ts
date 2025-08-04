@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { InvoiceSchema, InvoiceStatusEnum, InvoiceTypeEnum, CurrenciesEnum } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('InvoiceTools');
 
@@ -67,9 +68,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching invoices:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch invoices: ${message}`);
+				logger.error('Error fetching invoices:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch invoices: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -108,9 +108,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching invoice count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch invoice count: ${message}`);
+				logger.error('Error fetching invoice count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch invoice count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -143,9 +142,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching invoice:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch invoice: ${message}`);
+				logger.error('Error fetching invoice:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch invoice: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -185,9 +183,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating invoice:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create invoice: ${message}`);
+				logger.error('Error creating invoice:', sanitizeForLogging(error));
+				throw new Error(`Failed to create invoice: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -215,9 +212,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating invoice:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update invoice: ${message}`);
+				logger.error('Error updating invoice:', sanitizeForLogging(error));
+				throw new Error(`Failed to update invoice: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -243,9 +239,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating invoice status:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update invoice status: ${message}`);
+				logger.error('Error updating invoice status:', sanitizeForLogging(error));
+				throw new Error(`Failed to update invoice status: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -270,9 +265,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error marking invoice as paid:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to mark invoice as paid: ${message}`);
+				logger.error('Error marking invoice as paid:', sanitizeForLogging(error));
+				throw new Error(`Failed to mark invoice as paid: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -301,9 +295,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting invoice:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete invoice: ${message}`);
+				logger.error('Error deleting invoice:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete invoice: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -337,9 +330,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching invoice items:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch invoice items: ${message}`);
+				logger.error('Error fetching invoice items:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch invoice items: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -365,9 +357,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error sending invoice:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to send invoice: ${message}`);
+				logger.error('Error sending invoice:', sanitizeForLogging(error));
+				throw new Error(`Failed to send invoice: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -409,9 +400,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error generating invoice PDF:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to generate invoice PDF: ${message}`);
+				logger.error('Error generating invoice PDF:', sanitizeForLogging(error));
+				throw new Error(`Failed to generate invoice PDF: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -448,9 +438,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching invoice statistics:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch invoice statistics: ${message}`);
+				logger.error('Error fetching invoice statistics:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch invoice statistics: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -489,9 +478,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error searching invoices:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to search invoices: ${message}`);
+				logger.error('Error searching invoices:', sanitizeForLogging(error));
+				throw new Error(`Failed to search invoices: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -528,9 +516,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching overdue invoices:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch overdue invoices: ${message}`);
+				logger.error('Error fetching overdue invoices:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch overdue invoices: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

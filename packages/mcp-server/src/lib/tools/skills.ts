@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { SkillSchema } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('SkillTools');
 
@@ -43,9 +44,8 @@ export const registerSkillTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching skills:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch skills: ${message}`);
+				logger.error('Error fetching skills:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch skills: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -75,9 +75,8 @@ export const registerSkillTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching skill:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch skill: ${message}`);
+				logger.error('Error fetching skill:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch skill: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -114,9 +113,8 @@ export const registerSkillTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating skill:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create skill: ${message}`);
+				logger.error('Error creating skill:', sanitizeForLogging(error));
+				throw new Error(`Failed to create skill: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -142,9 +140,8 @@ export const registerSkillTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating skill:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update skill: ${message}`);
+				logger.error('Error updating skill:', sanitizeForLogging(error));
+				throw new Error(`Failed to update skill: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -169,9 +166,8 @@ export const registerSkillTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting skill:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete skill: ${message}`);
+				logger.error('Error deleting skill:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete skill: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -199,9 +195,8 @@ export const registerSkillTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error assigning skill to employee:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to assign skill to employee: ${message}`);
+				logger.error('Error assigning skill to employee:', sanitizeForLogging(error));
+				throw new Error(`Failed to assign skill to employee: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -227,9 +222,8 @@ export const registerSkillTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error removing skill from employee:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to remove skill from employee: ${message}`);
+				logger.error('Error removing skill from employee:', sanitizeForLogging(error));
+				throw new Error(`Failed to remove skill from employee: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -266,9 +260,8 @@ export const registerSkillTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching skills by employee:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch skills by employee: ${message}`);
+				logger.error('Error fetching skills by employee:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch skills by employee: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -303,9 +296,8 @@ export const registerSkillTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error searching skills:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to search skills: ${message}`);
+				logger.error('Error searching skills:', sanitizeForLogging(error));
+				throw new Error(`Failed to search skills: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -345,9 +337,8 @@ export const registerSkillTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error bulk creating skills:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to bulk create skills: ${message}`);
+				logger.error('Error bulk creating skills:', sanitizeForLogging(error));
+				throw new Error(`Failed to bulk create skills: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

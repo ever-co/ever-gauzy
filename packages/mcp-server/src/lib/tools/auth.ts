@@ -94,12 +94,12 @@ export const registerAuthTools = (server: McpServer) => {
 
 			const statusText = `🔐 Authentication Status:
 
-Authenticated: ${authStatus.isAuthenticated ? '✅ Yes' : '❌ No'}
-Has Access Token: ${authStatus.hasToken ? '✅ Yes' : '❌ No'}
-Has Refresh Token: ${authStatus.hasRefreshToken ? '✅ Yes' : '❌ No'}
-User ID: ${authStatus.userId || '❌ Not available'}
-Token Expires: ${authStatus.tokenExpiresAt?.toISOString() || '❌ Not available'}
-Auto Login Enabled: ${authStatus.autoLoginEnabled ? '✅ Yes' : '❌ No'}
+			Authenticated: ${authStatus.isAuthenticated ? '✅ Yes' : '❌ No'}
+			Has Access Token: ${authStatus.hasToken ? '✅ Yes' : '❌ No'}
+			Has Refresh Token: ${authStatus.hasRefreshToken ? '✅ Yes' : '❌ No'}
+			User ID: ${authStatus.userId || '❌ Not available'}
+			Token Expires: ${authStatus.tokenExpiresAt?.toISOString() || '❌ Not available'}
+			Auto Login Enabled: ${authStatus.autoLoginEnabled ? '✅ Yes' : '❌ No'}
 
 ${
 	authStatus.isAuthenticated

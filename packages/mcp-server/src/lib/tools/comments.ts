@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { CommentSchema, CommentableTypeEnum } from '../schema';
 import { validateOrganizationContext } from './utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('CommentTools');
 
@@ -51,9 +52,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching comments:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch comments: ${message}`);
+				logger.error('Error fetching comments:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch comments: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -92,9 +92,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching comment count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch comment count: ${message}`);
+				logger.error('Error fetching comment count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch comment count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -124,9 +123,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching comment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch comment: ${message}`);
+				logger.error('Error fetching comment:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch comment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -165,9 +163,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating comment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create comment: ${message}`);
+				logger.error('Error creating comment:', sanitizeForLogging(error));
+				throw new Error(`Failed to create comment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -195,9 +192,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating comment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update comment: ${message}`);
+				logger.error('Error updating comment:', sanitizeForLogging(error));
+				throw new Error(`Failed to update comment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -222,9 +218,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting comment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete comment: ${message}`);
+				logger.error('Error deleting comment:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete comment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -267,9 +262,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching comments by entity:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch comments by entity: ${message}`);
+				logger.error('Error fetching comments by entity:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch comments by entity: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -308,9 +302,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error replying to comment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to reply to comment: ${message}`);
+				logger.error('Error replying to comment:', sanitizeForLogging(error));
+				throw new Error(`Failed to reply to comment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -349,9 +342,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching comment replies:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch comment replies: ${message}`);
+				logger.error('Error fetching comment replies:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch comment replies: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -392,9 +384,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching my comments:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch my comments: ${message}`);
+				logger.error('Error fetching my comments:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch my comments: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -430,9 +421,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error adding comment to task:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to add comment to task: ${message}`);
+				logger.error('Error adding comment to task:', sanitizeForLogging(error));
+				throw new Error(`Failed to add comment to task: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -468,9 +458,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error adding comment to project:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to add comment to project: ${message}`);
+				logger.error('Error adding comment to project:', sanitizeForLogging(error));
+				throw new Error(`Failed to add comment to project: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -506,9 +495,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error adding comment to goal:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to add comment to goal: ${message}`);
+				logger.error('Error adding comment to goal:', sanitizeForLogging(error));
+				throw new Error(`Failed to add comment to goal: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -547,9 +535,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error searching comments:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to search comments: ${message}`);
+				logger.error('Error searching comments:', sanitizeForLogging(error));
+				throw new Error(`Failed to search comments: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -590,9 +577,8 @@ export const registerCommentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching recent comments:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch recent comments: ${message}`);
+				logger.error('Error fetching recent comments:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch recent comments: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

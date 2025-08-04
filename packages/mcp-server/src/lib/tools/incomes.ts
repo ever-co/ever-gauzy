@@ -3,7 +3,8 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { IncomeSchemaFull, IncomeTypeEnum, CurrenciesEnum } from '../schema';
+import { IncomeSchemaFull, CurrenciesEnum } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('IncomeTools');
 
@@ -11,7 +12,16 @@ const logger = new Logger('IncomeTools');
 /**
  * Helper function to convert date fields in income data to Date objects
  */
-const convertIncomeDateFields = (incomeData: any) => {
+interface IncomeData {
+	valueDate?: string | Date;
+	[key: string]: any; // Allow other properties since we spread them
+}
+
+interface ConvertedIncomeData extends Omit<IncomeData, 'valueDate'> {
+	valueDate?: Date;
+}
+
+const convertIncomeDateFields = (incomeData: IncomeData): ConvertedIncomeData => {
 	return {
 		...incomeData,
 		valueDate: incomeData.valueDate ? new Date(incomeData.valueDate) : undefined
@@ -65,9 +75,8 @@ export const registerIncomeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching incomes:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch incomes: ${message}`);
+				logger.error('Error fetching incomes:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch incomes: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -110,9 +119,8 @@ export const registerIncomeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching income count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch income count: ${message}`);
+				logger.error('Error fetching income count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch income count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -142,9 +150,8 @@ export const registerIncomeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching income:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch income: ${message}`);
+				logger.error('Error fetching income:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch income: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -182,9 +189,8 @@ export const registerIncomeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating income:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create income: ${message}`);
+				logger.error('Error creating income:', sanitizeForLogging(error));
+				throw new Error(`Failed to create income: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -212,9 +218,8 @@ export const registerIncomeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating income:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update income: ${message}`);
+				logger.error('Error updating income:', sanitizeForLogging(error));
+				throw new Error(`Failed to update income: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -239,9 +244,8 @@ export const registerIncomeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting income:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete income: ${message}`);
+				logger.error('Error deleting income:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete income: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -286,9 +290,8 @@ export const registerIncomeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching incomes by employee:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch incomes by employee: ${message}`);
+				logger.error('Error fetching incomes by employee:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch incomes by employee: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -331,9 +334,8 @@ export const registerIncomeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching my incomes:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch my incomes: ${message}`);
+				logger.error('Error fetching my incomes:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch my incomes: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -379,9 +381,8 @@ export const registerIncomeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching bonus incomes:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch bonus incomes: ${message}`);
+				logger.error('Error fetching bonus incomes:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch bonus incomes: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -424,9 +425,8 @@ export const registerIncomeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching income statistics:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch income statistics: ${message}`);
+				logger.error('Error fetching income statistics:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch income statistics: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -467,9 +467,8 @@ export const registerIncomeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error bulk creating incomes:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to bulk create incomes: ${message}`);
+				logger.error('Error bulk creating incomes:', sanitizeForLogging(error));
+				throw new Error(`Failed to bulk create incomes: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -510,9 +509,8 @@ export const registerIncomeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error searching incomes:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to search incomes: ${message}`);
+				logger.error('Error searching incomes:', sanitizeForLogging(error));
+				throw new Error(`Failed to search incomes: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -555,9 +553,8 @@ export const registerIncomeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching income summary:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch income summary: ${message}`);
+				logger.error('Error fetching income summary:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch income summary: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { ProductCategorySchema } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('ProductCategoryTools');
 
@@ -45,9 +46,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching product categories:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch product categories: ${message}`);
+				logger.error('Error fetching product categories:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch product categories: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -78,9 +78,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching product category count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch product category count: ${message}`);
+				logger.error('Error fetching product category count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch product category count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -125,9 +124,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating product category:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create product category: ${message}`);
+				logger.error('Error creating product category:', sanitizeForLogging(error));
+				throw new Error(`Failed to create product category: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -161,9 +159,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating product category:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update product category: ${message}`);
+				logger.error('Error updating product category:', sanitizeForLogging(error));
+				throw new Error(`Failed to update product category: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -208,9 +205,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching products by category:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch products by category: ${message}`);
+				logger.error('Error fetching products by category:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch products by category: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

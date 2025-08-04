@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { TimeOffRequestSchema, TimeOffPolicySchema, TimeOffStatusEnum, TimeOffTypeEnum } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('TimeOffTools');
 
@@ -11,7 +12,24 @@ const logger = new Logger('TimeOffTools');
 /**
  * Helper function to convert date fields in time-off data to Date objects
  */
-const convertTimeOffDateFields = (timeOffData: any) => {
+interface TimeOffData {
+	startDate?: string | Date;
+	endDate?: string | Date;
+	requestDate?: string | Date;
+	approvedDate?: string | Date;
+	carryForwardExpiryDate?: string | Date;
+	[key: string]: any; // Allow other properties since we spread them
+}
+
+interface ConvertedTimeOffData extends Omit<TimeOffData, 'startDate' | 'endDate' | 'requestDate' | 'approvedDate' | 'carryForwardExpiryDate'> {
+	startDate?: Date;
+	endDate?: Date;
+	requestDate?: Date;
+	approvedDate?: Date;
+	carryForwardExpiryDate?: Date;
+}
+
+const convertTimeOffDateFields = (timeOffData: TimeOffData): ConvertedTimeOffData => {
 	return {
 		...timeOffData,
 		startDate: timeOffData.startDate ? new Date(timeOffData.startDate) : undefined,
@@ -67,9 +85,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching time-off requests:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch time-off requests: ${message}`);
+				logger.error('Error fetching time-off requests:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch time-off requests: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -110,9 +127,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching time-off request count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch time-off request count: ${message}`);
+				logger.error('Error fetching time-off request count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch time-off request count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -142,9 +158,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching time-off request:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch time-off request: ${message}`);
+				logger.error('Error fetching time-off request:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch time-off request: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -185,9 +200,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating time-off request:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create time-off request: ${message}`);
+				logger.error('Error creating time-off request:', sanitizeForLogging(error));
+				throw new Error(`Failed to create time-off request: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -215,9 +229,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating time-off request:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update time-off request: ${message}`);
+				logger.error('Error updating time-off request:', sanitizeForLogging(error));
+				throw new Error(`Failed to update time-off request: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -242,9 +255,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting time-off request:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete time-off request: ${message}`);
+				logger.error('Error deleting time-off request:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete time-off request: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -272,9 +284,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error approving time-off request:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to approve time-off request: ${message}`);
+				logger.error('Error approving time-off request:', sanitizeForLogging(error));
+				throw new Error(`Failed to approve time-off request: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -303,9 +314,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error denying time-off request:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to deny time-off request: ${message}`);
+				logger.error('Error denying time-off request:', sanitizeForLogging(error));
+				throw new Error(`Failed to deny time-off request: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -332,9 +342,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error cancelling time-off request:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to cancel time-off request: ${message}`);
+				logger.error('Error cancelling time-off request:', sanitizeForLogging(error));
+				throw new Error(`Failed to cancel time-off request: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -379,9 +388,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching my time-off requests:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch my time-off requests: ${message}`);
+				logger.error('Error fetching my time-off requests:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch my time-off requests: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -423,9 +431,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching pending time-off requests:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch pending time-off requests: ${message}`);
+				logger.error('Error fetching pending time-off requests:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch pending time-off requests: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -472,9 +479,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching time-off policies:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch time-off policies: ${message}`);
+				logger.error('Error fetching time-off policies:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch time-off policies: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -504,9 +510,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching time-off policy:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch time-off policy: ${message}`);
+				logger.error('Error fetching time-off policy:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch time-off policy: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -544,9 +549,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating time-off policy:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create time-off policy: ${message}`);
+				logger.error('Error creating time-off policy:', sanitizeForLogging(error));
+				throw new Error(`Failed to create time-off policy: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -574,9 +578,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating time-off policy:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update time-off policy: ${message}`);
+				logger.error('Error updating time-off policy:', sanitizeForLogging(error));
+				throw new Error(`Failed to update time-off policy: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -601,9 +604,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting time-off policy:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete time-off policy: ${message}`);
+				logger.error('Error deleting time-off policy:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete time-off policy: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -631,9 +633,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error assigning employees to time-off policy:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to assign employees to time-off policy: ${message}`);
+				logger.error('Error assigning employees to time-off policy:', sanitizeForLogging(error));
+				throw new Error(`Failed to assign employees to time-off policy: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -670,9 +671,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching time-off balance:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch time-off balance: ${message}`);
+				logger.error('Error fetching time-off balance:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch time-off balance: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -707,9 +707,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching my time-off balance:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch my time-off balance: ${message}`);
+				logger.error('Error fetching my time-off balance:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch my time-off balance: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -752,9 +751,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching time-off statistics:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch time-off statistics: ${message}`);
+				logger.error('Error fetching time-off statistics:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch time-off statistics: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

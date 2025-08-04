@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { KeyResultSchema } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('KeyResultTools');
 
@@ -68,9 +69,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching key results:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch key results: ${message}`);
+				logger.error('Error fetching key results:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch key results: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -107,9 +107,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching key result count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch key result count: ${message}`);
+				logger.error('Error fetching key result count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch key result count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -139,9 +138,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching key result:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch key result: ${message}`);
+				logger.error('Error fetching key result:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch key result: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -180,9 +178,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating key result:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create key result: ${message}`);
+				logger.error('Error creating key result:', sanitizeForLogging(error));
+				throw new Error(`Failed to create key result: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -210,9 +207,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating key result:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update key result: ${message}`);
+				logger.error('Error updating key result:', sanitizeForLogging(error));
+				throw new Error(`Failed to update key result: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -244,9 +240,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating key result progress:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update key result progress: ${message}`);
+				logger.error('Error updating key result progress:', sanitizeForLogging(error));
+				throw new Error(`Failed to update key result progress: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -271,9 +266,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting key result:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete key result: ${message}`);
+				logger.error('Error deleting key result:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete key result: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -314,9 +308,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching key results by goal:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch key results by goal: ${message}`);
+				logger.error('Error fetching key results by goal:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch key results by goal: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -355,9 +348,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching my key results:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch my key results: ${message}`);
+				logger.error('Error fetching my key results:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch my key results: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -397,9 +389,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating key result update:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create key result update: ${message}`);
+				logger.error('Error creating key result update:', sanitizeForLogging(error));
+				throw new Error(`Failed to create key result update: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -432,9 +423,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching key result updates:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch key result updates: ${message}`);
+				logger.error('Error fetching key result updates:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch key result updates: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -473,9 +463,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching key result statistics:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch key result statistics: ${message}`);
+				logger.error('Error fetching key result statistics:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch key result statistics: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

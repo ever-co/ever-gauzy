@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { ExpenseSchema, ExpenseCategoriesEnum, CurrenciesEnum } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('ExpenseTools');
 
@@ -67,9 +68,8 @@ export const registerExpenseTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching expenses:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch expenses: ${message}`);
+				logger.error('Error fetching expenses:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch expenses: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -110,9 +110,8 @@ export const registerExpenseTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching expense count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch expense count: ${message}`);
+				logger.error('Error fetching expense count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch expense count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -142,9 +141,8 @@ export const registerExpenseTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching expense:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch expense: ${message}`);
+				logger.error('Error fetching expense:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch expense: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -182,9 +180,8 @@ export const registerExpenseTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating expense:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create expense: ${message}`);
+				logger.error('Error creating expense:', sanitizeForLogging(error));
+				throw new Error(`Failed to create expense: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -212,9 +209,8 @@ export const registerExpenseTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating expense:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update expense: ${message}`);
+				logger.error('Error updating expense:', sanitizeForLogging(error));
+				throw new Error(`Failed to update expense: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -239,9 +235,8 @@ export const registerExpenseTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting expense:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete expense: ${message}`);
+				logger.error('Error deleting expense:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete expense: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -278,9 +273,8 @@ export const registerExpenseTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching expense categories:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch expense categories: ${message}`);
+				logger.error('Error fetching expense categories:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch expense categories: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -323,9 +317,8 @@ export const registerExpenseTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching expenses by employee:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch expenses by employee: ${message}`);
+				logger.error('Error fetching expenses by employee:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch expenses by employee: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -368,9 +361,8 @@ export const registerExpenseTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching my expenses:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch my expenses: ${message}`);
+				logger.error('Error fetching my expenses:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch my expenses: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

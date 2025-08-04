@@ -3,7 +3,8 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { ProductSchema, ProductTypeEnum } from '../schema';
+import { ProductSchema } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('ProductTools');
 
@@ -36,30 +37,23 @@ export const registerProductTools = (server: McpServer) => {
 		'get_products',
 		"Get list of products for the authenticated user's organization",
 		{
-			page: z.number().optional().default(1).describe('Page number for pagination'),
-			limit: z.number().optional().default(10).describe('Number of items per page'),
-			search: z.string().optional().describe('Search term for product name or code'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["productType", "productCategory", "tags"])'),
-			enabled: z.boolean().optional().describe('Filter by enabled status'),
-			productCategoryId: z.string().uuid().optional().describe('Filter by product category ID'),
-			productTypeId: z.string().uuid().optional().describe('Filter by product type ID'),
-			langCode: z.string().optional().describe('Language code for translations')
+			data: z.object({
+				relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["productType", "productCategory", "tags"])'),
+				findInput: z.object({
+					enabled: z.boolean().optional(),
+					productCategoryId: z.string().uuid().optional(),
+					productTypeId: z.string().uuid().optional()
+				}).optional().describe('Find input filters')
+			}).optional().describe('Query data object'),
+			page: z.number().optional().describe('Page number for pagination'),
+			limit: z.number().optional().describe('Number of items per page')
 		},
-		async ({ page = 1, limit = 10, search, relations, enabled, productCategoryId, productTypeId, langCode }) => {
+		async ({ data = {}, page, limit }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(enabled !== undefined && { enabled }),
-					...(productCategoryId && { productCategoryId }),
-					...(productTypeId && { productTypeId }),
-					...(langCode && { langCode })
+					data: JSON.stringify(data),
+					...(page && { page }),
+					...(limit && { _limit: limit })
 				};
 
 				const response = await apiClient.get('/api/products', { params });
@@ -73,9 +67,8 @@ export const registerProductTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching products:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch products: ${message}`);
+				logger.error('Error fetching products:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch products: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -83,31 +76,28 @@ export const registerProductTools = (server: McpServer) => {
 	// Get products with translations tool
 	server.tool(
 		'get_products_translated',
-		"Get list of products with translations for the authenticated user's organization",
+		"Get list of products with translations for a specific language",
 		{
 			langCode: z.string().describe('Language code for translations (e.g., "en", "fr", "es")'),
-			page: z.number().optional().default(1).describe('Page number for pagination'),
-			limit: z.number().optional().default(10).describe('Number of items per page'),
-			search: z.string().optional().describe('Search term for product name or description'),
-			enabled: z.boolean().optional().describe('Filter by enabled status'),
-			productCategoryId: z.string().uuid().optional().describe('Filter by product category ID')
+			data: z.object({
+				relations: z.array(z.string()).optional().describe('Relations to include'),
+				findInput: z.object({
+					enabled: z.boolean().optional(),
+					productCategoryId: z.string().uuid().optional()
+				}).optional().describe('Find input filters')
+			}).optional().describe('Query data object'),
+			page: z.number().optional().describe('Page number for pagination'),
+			limit: z.number().optional().describe('Number of items per page')
 		},
-		async ({ langCode, page = 1, limit = 10, search, enabled, productCategoryId }) => {
+		async ({ langCode, data = {}, page, limit }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
 				const params = {
-					langCode,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(enabled !== undefined && { enabled }),
-					...(productCategoryId && { productCategoryId })
+					data: JSON.stringify(data),
+					...(page && { page }),
+					...(limit && { _limit: limit })
 				};
 
-				const response = await apiClient.get('/api/products/translated', { params });
+				const response = await apiClient.get(`/api/products/local/${langCode}`, { params });
 
 				return {
 					content: [
@@ -118,9 +108,8 @@ export const registerProductTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching translated products:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch translated products: ${message}`);
+				logger.error('Error fetching translated products:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch translated products: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -130,20 +119,18 @@ export const registerProductTools = (server: McpServer) => {
 		'get_product_count',
 		"Get product count in the authenticated user's organization",
 		{
-			enabled: z.boolean().optional().describe('Filter by enabled status'),
-			productCategoryId: z.string().uuid().optional().describe('Filter by product category ID'),
-			productTypeId: z.string().uuid().optional().describe('Filter by product type ID')
+			data: z.object({
+				findInput: z.object({
+					enabled: z.boolean().optional(),
+					productCategoryId: z.string().uuid().optional(),
+					productTypeId: z.string().uuid().optional()
+				}).optional().describe('Find input filters')
+			}).optional().describe('Query data object')
 		},
-		async ({ enabled, productCategoryId, productTypeId }) => {
+		async ({ data = {} }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(enabled !== undefined && { enabled }),
-					...(productCategoryId && { productCategoryId }),
-					...(productTypeId && { productTypeId })
+					data: JSON.stringify(data)
 				};
 
 				const response = await apiClient.get('/api/products/count', { params });
@@ -157,9 +144,50 @@ export const registerProductTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching product count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch product count: ${message}`);
+				logger.error('Error fetching product count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch product count: ${sanitizeErrorMessage(error)}`);
+			}
+		}
+	);
+
+	// Get products by pagination tool
+	server.tool(
+		'get_products_pagination',
+		"Get products with pagination support",
+		{
+			page: z.number().optional().default(1).describe('Page number'),
+			limit: z.number().optional().default(10).describe('Items per page'),
+			search: z.string().optional().describe('Search term'),
+			relations: z.array(z.string()).optional().describe('Relations to include'),
+			where: z.object({
+				enabled: z.boolean().optional(),
+				productCategoryId: z.string().uuid().optional(),
+				productTypeId: z.string().uuid().optional()
+			}).optional().describe('Where conditions')
+		},
+		async ({ page = 1, limit = 10, search, relations, where }) => {
+			try {
+				const params = {
+					page,
+					limit,
+					...(search && { search }),
+					...(relations && { relations }),
+					...(where && { where })
+				};
+
+				const response = await apiClient.get('/api/products/pagination', { params });
+
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(response, null, 2)
+						}
+					]
+				};
+			} catch (error) {
+				logger.error('Error fetching products pagination:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch products pagination: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -170,14 +198,15 @@ export const registerProductTools = (server: McpServer) => {
 		'Get a specific product by ID',
 		{
 			id: z.string().uuid().describe('The product ID'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["productType", "productCategory", "tags", "variants"])'),
-			langCode: z.string().optional().describe('Language code for translations')
+			data: z.object({
+				relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["productType", "productCategory", "tags"])'),
+				findInput: z.object({}).optional().describe('Additional find input')
+			}).optional().describe('Query data object')
 		},
-		async ({ id, relations, langCode }) => {
+		async ({ id, data = {} }) => {
 			try {
 				const params = {
-					...(relations && { relations }),
-					...(langCode && { langCode })
+					data: JSON.stringify(data)
 				};
 
 				const response = await apiClient.get(`/api/products/${id}`, { params });
@@ -191,9 +220,42 @@ export const registerProductTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching product:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch product: ${message}`);
+				logger.error('Error fetching product:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch product: ${sanitizeErrorMessage(error)}`);
+			}
+		}
+	);
+
+	// Get product translated by ID tool
+	server.tool(
+		'get_product_translated',
+		'Get a specific product by ID with translations',
+		{
+			id: z.string().uuid().describe('The product ID'),
+			langCode: z.string().describe('Language code for translations'),
+			data: z.object({
+				relations: z.array(z.string()).optional().describe('Relations to include')
+			}).optional().describe('Query data object')
+		},
+		async ({ id, langCode, data = {} }) => {
+			try {
+				const params = {
+					data: JSON.stringify(data)
+				};
+
+				const response = await apiClient.get(`/api/products/local/${langCode}/${id}`, { params });
+
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(response, null, 2)
+						}
+					]
+				};
+			} catch (error) {
+				logger.error('Error fetching translated product:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch translated product: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -204,27 +266,11 @@ export const registerProductTools = (server: McpServer) => {
 		"Create a new product in the authenticated user's organization",
 		{
 			product_data: ProductSchema.partial()
-				.required({
-					code: true
-				})
-				.extend({
-					translations: z.array(z.object({
-						languageCode: z.string(),
-						name: z.string(),
-						description: z.string().optional()
-					})).optional().describe('Product translations for different languages')
-				})
 				.describe('The data for creating the product')
 		},
 		async ({ product_data }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const createData = convertProductDateFields({
-					...product_data,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				});
+				const createData = convertProductDateFields(product_data);
 
 				const response = await apiClient.post('/api/products', createData);
 
@@ -237,9 +283,8 @@ export const registerProductTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating product:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create product: ${message}`);
+				logger.error('Error creating product:', sanitizeForLogging(error));
+				throw new Error(`Failed to create product: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -250,15 +295,7 @@ export const registerProductTools = (server: McpServer) => {
 		'Update an existing product',
 		{
 			id: z.string().uuid().describe('The product ID'),
-			product_data: ProductSchema.partial()
-				.extend({
-					translations: z.array(z.object({
-						languageCode: z.string(),
-						name: z.string(),
-						description: z.string().optional()
-					})).optional().describe('Product translations for different languages')
-				})
-				.describe('The data for updating the product')
+			product_data: ProductSchema.partial().describe('The data for updating the product')
 		},
 		async ({ id, product_data }) => {
 			try {
@@ -275,9 +312,8 @@ export const registerProductTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating product:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update product: ${message}`);
+				logger.error('Error updating product:', sanitizeForLogging(error));
+				throw new Error(`Failed to update product: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -302,165 +338,28 @@ export const registerProductTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting product:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete product: ${message}`);
+				logger.error('Error deleting product:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete product: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
 
-	// Create product with translations tool
+	// Add gallery images tool
 	server.tool(
-		'create_product_with_translations',
-		"Create a new product with multiple language translations",
-		{
-			product_data: z.object({
-				code: z.string().describe('Product code (required)'),
-				enabled: z.boolean().optional().default(true).describe('Whether the product is enabled'),
-				imageUrl: z.string().optional().describe('Product image URL'),
-				productTypeId: z.string().uuid().optional().describe('Product type ID'),
-				productCategoryId: z.string().uuid().optional().describe('Product category ID'),
-				translations: z.array(z.object({
-					languageCode: z.string().describe('Language code (e.g., "en", "fr", "es")'),
-					name: z.string().describe('Product name in this language'),
-					description: z.string().optional().describe('Product description in this language')
-				})).min(1).describe('Product translations (at least one required)')
-			}).describe('Product data with translations')
-		},
-		async ({ product_data }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const createData = {
-					...product_data,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				};
-
-				const response = await apiClient.post('/api/products/create-with-translations', createData);
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error creating product with translations:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create product with translations: ${message}`);
-			}
-		}
-	);
-
-	// Update product with translations tool
-	server.tool(
-		'update_product_with_translations',
-		'Update a product with multiple language translations',
-		{
-			id: z.string().uuid().describe('The product ID'),
-			product_data: z.object({
-				code: z.string().optional().describe('Product code'),
-				enabled: z.boolean().optional().describe('Whether the product is enabled'),
-				imageUrl: z.string().optional().describe('Product image URL'),
-				productTypeId: z.string().uuid().optional().describe('Product type ID'),
-				productCategoryId: z.string().uuid().optional().describe('Product category ID'),
-				translations: z.array(z.object({
-					languageCode: z.string().describe('Language code (e.g., "en", "fr", "es")'),
-					name: z.string().describe('Product name in this language'),
-					description: z.string().optional().describe('Product description in this language')
-				})).optional().describe('Product translations to update')
-			}).describe('Product data with translations to update')
-		},
-		async ({ id, product_data }) => {
-			try {
-				const response = await apiClient.put(`/api/products/${id}/update-with-translations`, product_data);
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error updating product with translations:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update product with translations: ${message}`);
-			}
-		}
-	);
-
-	// Bulk create products tool
-	server.tool(
-		'bulk_create_products',
-		"Create multiple products in bulk for the authenticated user's organization",
-		{
-			products: z.array(
-				ProductSchema.partial()
-					.required({
-						code: true
-					})
-					.extend({
-						translations: z.array(z.object({
-							languageCode: z.string(),
-							name: z.string(),
-							description: z.string().optional()
-						})).optional()
-					})
-					.describe('Product data')
-			).describe('Array of product data to create')
-		},
-		async ({ products }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				// Add organization and tenant ID to each product
-				const productsWithDefaults = products.map((product) => convertProductDateFields({
-					...product,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				}));
-
-				const response = await apiClient.post('/api/products/bulk', { products: productsWithDefaults });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error bulk creating products:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to bulk create products: ${message}`);
-			}
-		}
-	);
-
-	// Get product variants tool
-	server.tool(
-		'get_product_variants',
-		'Get variants for a specific product',
+		'add_product_gallery_images',
+		'Add images to product gallery',
 		{
 			productId: z.string().uuid().describe('The product ID'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["options"])'),
-			langCode: z.string().optional().describe('Language code for translations')
+			images: z.array(z.object({
+				id: z.string().optional(),
+				url: z.string(),
+				alt: z.string().optional(),
+				title: z.string().optional()
+			})).describe('Array of image objects to add to gallery')
 		},
-		async ({ productId, relations, langCode }) => {
+		async ({ productId, images }) => {
 			try {
-				const params = {
-					productId,
-					...(relations && { relations }),
-					...(langCode && { langCode })
-				};
-
-				const response = await apiClient.get('/api/product-variants', { params });
+				const response = await apiClient.post(`/api/products/add-images/${productId}`, images);
 
 				return {
 					content: [
@@ -471,39 +370,28 @@ export const registerProductTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching product variants:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch product variants: ${message}`);
+				logger.error('Error adding gallery images:', sanitizeForLogging(error));
+				throw new Error(`Failed to add gallery images: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
 
-	// Search products tool
+	// Set featured image tool
 	server.tool(
-		'search_products',
-		'Search products by name, code, or description',
+		'set_product_featured_image',
+		'Set an image as featured for a product',
 		{
-			query: z.string().describe('Search query'),
-			langCode: z.string().optional().describe('Language code for translations'),
-			limit: z.number().optional().default(20).describe('Maximum number of results'),
-			enabled: z.boolean().optional().describe('Filter by enabled status'),
-			productCategoryId: z.string().uuid().optional().describe('Filter by product category ID')
+			productId: z.string().uuid().describe('The product ID'),
+			image: z.object({
+				id: z.string().optional(),
+				url: z.string(),
+				alt: z.string().optional(),
+				title: z.string().optional()
+			}).describe('Image object to set as featured')
 		},
-		async ({ query, langCode, limit = 20, enabled, productCategoryId }) => {
+		async ({ productId, image }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					query,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(langCode && { langCode }),
-					limit,
-					...(enabled !== undefined && { enabled }),
-					...(productCategoryId && { productCategoryId })
-				};
-
-				const response = await apiClient.get('/api/products/search', { params });
+				const response = await apiClient.post(`/api/products/set-as-featured/${productId}`, image);
 
 				return {
 					content: [
@@ -514,9 +402,61 @@ export const registerProductTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error searching products:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to search products: ${message}`);
+				logger.error('Error setting featured image:', sanitizeForLogging(error));
+				throw new Error(`Failed to set featured image: ${sanitizeErrorMessage(error)}`);
+			}
+		}
+	);
+
+	// Delete gallery image tool
+	server.tool(
+		'delete_product_gallery_image',
+		'Delete an image from product gallery',
+		{
+			productId: z.string().uuid().describe('The product ID'),
+			imageId: z.string().uuid().describe('The image ID to delete')
+		},
+		async ({ productId, imageId }) => {
+			try {
+				const response = await apiClient.delete(`/api/products/${productId}/gallery-image/${imageId}`);
+
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(response, null, 2)
+						}
+					]
+				};
+			} catch (error) {
+				logger.error('Error deleting gallery image:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete gallery image: ${sanitizeErrorMessage(error)}`);
+			}
+		}
+	);
+
+	// Delete featured image tool
+	server.tool(
+		'delete_product_featured_image',
+		'Delete the featured image of a product',
+		{
+			productId: z.string().uuid().describe('The product ID')
+		},
+		async ({ productId }) => {
+			try {
+				const response = await apiClient.delete(`/api/products/featured-image/${productId}`);
+
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(response, null, 2)
+						}
+					]
+				};
+			} catch (error) {
+				logger.error('Error deleting featured image:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete featured image: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

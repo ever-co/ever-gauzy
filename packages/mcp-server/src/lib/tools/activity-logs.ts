@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { ActivityLogSchema, ActivityLogActionEnum, ActivityLogEntityEnum } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('ActivityLogTools');
 
@@ -61,9 +62,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching activity logs:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch activity logs: ${message}`);
+				logger.error('Error fetching activity logs:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch activity logs: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -110,9 +110,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching activity log count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch activity log count: ${message}`);
+				logger.error('Error fetching activity log count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch activity log count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -142,9 +141,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching activity log:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch activity log: ${message}`);
+				logger.error('Error fetching activity log:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch activity log: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -183,9 +181,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating activity log:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create activity log: ${message}`);
+				logger.error('Error creating activity log:', sanitizeForLogging(error));
+				throw new Error(`Failed to create activity log: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -235,9 +232,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching activity logs by entity:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch activity logs by entity: ${message}`);
+				logger.error('Error fetching activity logs by entity:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch activity logs by entity: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -286,9 +282,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching activity logs by user:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch activity logs by user: ${message}`);
+				logger.error('Error fetching activity logs by user:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch activity logs by user: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -333,9 +328,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching my activity logs:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch my activity logs: ${message}`);
+				logger.error('Error fetching my activity logs:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch my activity logs: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -381,9 +375,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching recent activity logs:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch recent activity logs: ${message}`);
+				logger.error('Error fetching recent activity logs:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch recent activity logs: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -426,9 +419,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching activity log statistics:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch activity log statistics: ${message}`);
+				logger.error('Error fetching activity log statistics:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch activity log statistics: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -472,9 +464,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting activity logs:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete activity logs: ${message}`);
+				logger.error('Error deleting activity logs:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete activity logs: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -517,9 +508,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error searching activity logs:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to search activity logs: ${message}`);
+				logger.error('Error searching activity logs:', sanitizeForLogging(error));
+				throw new Error(`Failed to search activity logs: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -565,9 +555,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching activity timeline:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch activity timeline: ${message}`);
+				logger.error('Error fetching activity timeline:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch activity timeline: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

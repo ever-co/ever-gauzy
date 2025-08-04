@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { MerchantSchema } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('MerchantTools');
 
@@ -48,9 +49,8 @@ export const registerMerchantTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching merchants:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch merchants: ${message}`);
+				logger.error('Error fetching merchants:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch merchants: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -86,9 +86,8 @@ export const registerMerchantTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching merchant count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch merchant count: ${message}`);
+				logger.error('Error fetching merchant count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch merchant count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -118,9 +117,8 @@ export const registerMerchantTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching merchant:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch merchant: ${message}`);
+				logger.error('Error fetching merchant:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch merchant: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -157,9 +155,8 @@ export const registerMerchantTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating merchant:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create merchant: ${message}`);
+				logger.error('Error creating merchant:', sanitizeForLogging(error));
+				throw new Error(`Failed to create merchant: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -185,9 +182,8 @@ export const registerMerchantTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating merchant:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update merchant: ${message}`);
+				logger.error('Error updating merchant:', sanitizeForLogging(error));
+				throw new Error(`Failed to update merchant: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -212,9 +208,8 @@ export const registerMerchantTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting merchant:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete merchant: ${message}`);
+				logger.error('Error deleting merchant:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete merchant: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -239,9 +234,8 @@ export const registerMerchantTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error archiving merchant:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to archive merchant: ${message}`);
+				logger.error('Error archiving merchant:', sanitizeForLogging(error));
+				throw new Error(`Failed to archive merchant: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -266,9 +260,8 @@ export const registerMerchantTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error restoring merchant:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to restore merchant: ${message}`);
+				logger.error('Error restoring merchant:', sanitizeForLogging(error));
+				throw new Error(`Failed to restore merchant: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -303,9 +296,8 @@ export const registerMerchantTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching merchant by code:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch merchant by code: ${message}`);
+				logger.error('Error fetching merchant by code:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch merchant by code: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -342,9 +334,8 @@ export const registerMerchantTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error searching merchants:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to search merchants: ${message}`);
+				logger.error('Error searching merchants:', sanitizeForLogging(error));
+				throw new Error(`Failed to search merchants: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -379,9 +370,8 @@ export const registerMerchantTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching merchant statistics:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch merchant statistics: ${message}`);
+				logger.error('Error fetching merchant statistics:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch merchant statistics: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -421,9 +411,8 @@ export const registerMerchantTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error bulk creating merchants:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to bulk create merchants: ${message}`);
+				logger.error('Error bulk creating merchants:', sanitizeForLogging(error));
+				throw new Error(`Failed to bulk create merchants: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -463,9 +452,8 @@ export const registerMerchantTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching active merchants:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch active merchants: ${message}`);
+				logger.error('Error fetching active merchants:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch active merchants: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -505,9 +493,8 @@ export const registerMerchantTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching archived merchants:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch archived merchants: ${message}`);
+				logger.error('Error fetching archived merchants:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch archived merchants: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

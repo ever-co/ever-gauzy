@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { CandidateSchema, CandidateStatusEnum, CurrenciesEnum } from '../schema';
+import { CandidateSchema, CandidateStatusEnum } from '../schema';
 import { validateOrganizationContext } from './utils';
 
 const logger = new Logger('CandidateTools');

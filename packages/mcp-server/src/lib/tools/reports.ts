@@ -3,7 +3,8 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { ReportSchema, ReportCategoryEnum } from '../schema';
+import { ReportCategoryEnum } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('ReportTools');
 
@@ -48,9 +49,8 @@ export const registerReportTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching reports:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch reports: ${message}`);
+				logger.error('Error fetching reports:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch reports: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -73,9 +73,8 @@ export const registerReportTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching report categories:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch report categories: ${message}`);
+				logger.error('Error fetching report categories:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch report categories: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -112,9 +111,8 @@ export const registerReportTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching report menu items:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch report menu items: ${message}`);
+				logger.error('Error fetching report menu items:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch report menu items: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -149,9 +147,8 @@ export const registerReportTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating report menu:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update report menu: ${message}`);
+				logger.error('Error updating report menu:', sanitizeForLogging(error));
+				throw new Error(`Failed to update report menu: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

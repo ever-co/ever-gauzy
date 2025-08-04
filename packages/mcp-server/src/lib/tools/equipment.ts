@@ -3,7 +3,8 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { EquipmentSchema, EquipmentTypeEnum, EquipmentStatusEnum, CurrenciesEnum } from '../schema';
+import { EquipmentSchema, EquipmentTypeEnum, EquipmentStatusEnum } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('EquipmentTools');
 
@@ -70,9 +71,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching equipment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch equipment: ${message}`);
+				logger.error('Error fetching equipment:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch equipment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -111,9 +111,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching equipment count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch equipment count: ${message}`);
+				logger.error('Error fetching equipment count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch equipment count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -143,9 +142,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching equipment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch equipment: ${message}`);
+				logger.error('Error fetching equipment by ID:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch equipment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -182,9 +180,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating equipment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create equipment: ${message}`);
+				logger.error('Error creating equipment:', sanitizeForLogging(error));
+				throw new Error(`Failed to create equipment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -212,9 +209,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating equipment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update equipment: ${message}`);
+				logger.error('Error updating equipment:', sanitizeForLogging(error));
+				throw new Error(`Failed to update equipment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -240,9 +236,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating equipment status:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update equipment status: ${message}`);
+				logger.error('Error updating equipment status:', sanitizeForLogging(error));
+				throw new Error(`Failed to update equipment status: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -271,9 +266,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error assigning equipment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to assign equipment: ${message}`);
+				logger.error('Error assigning equipment:', sanitizeForLogging(error));
+				throw new Error(`Failed to assign equipment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -301,9 +295,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error unassigning equipment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to unassign equipment: ${message}`);
+				logger.error('Error unassigning equipment:', sanitizeForLogging(error));
+				throw new Error(`Failed to unassign equipment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -328,9 +321,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting equipment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete equipment: ${message}`);
+				logger.error('Error deleting equipment:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete equipment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -373,9 +365,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching equipment by employee:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch equipment by employee: ${message}`);
+				logger.error('Error fetching equipment by employee:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch equipment by employee: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -416,9 +407,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching my equipment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch my equipment: ${message}`);
+				logger.error('Error fetching my equipment:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch my equipment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -460,9 +450,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching available equipment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch available equipment: ${message}`);
+				logger.error('Error fetching available equipment:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch available equipment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -499,9 +488,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching equipment statistics:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch equipment statistics: ${message}`);
+				logger.error('Error fetching equipment statistics:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch equipment statistics: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -544,9 +532,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error requesting equipment sharing:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to request equipment sharing: ${message}`);
+				logger.error('Error requesting equipment sharing:', sanitizeForLogging(error));
+				throw new Error(`Failed to request equipment sharing: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -587,9 +574,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching equipment sharing requests:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch equipment sharing requests: ${message}`);
+				logger.error('Error fetching equipment sharing requests:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch equipment sharing requests: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -630,9 +616,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error searching equipment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to search equipment: ${message}`);
+				logger.error('Error searching equipment:', sanitizeForLogging(error));
+				throw new Error(`Failed to search equipment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

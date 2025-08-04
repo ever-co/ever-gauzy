@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { WarehouseSchema } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('WarehouseTools');
 
@@ -45,9 +46,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching warehouses:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch warehouses: ${message}`);
+				logger.error('Error fetching warehouses:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch warehouses: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -77,9 +77,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching warehouse:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch warehouse: ${message}`);
+				logger.error('Error fetching warehouse:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch warehouse: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -117,9 +116,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating warehouse:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create warehouse: ${message}`);
+				logger.error('Error creating warehouse:', sanitizeForLogging(error));
+				throw new Error(`Failed to create warehouse: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -145,9 +143,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating warehouse:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update warehouse: ${message}`);
+				logger.error('Error updating warehouse:', sanitizeForLogging(error));
+				throw new Error(`Failed to update warehouse: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -172,9 +169,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting warehouse:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete warehouse: ${message}`);
+				logger.error('Error deleting warehouse:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete warehouse: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

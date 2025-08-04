@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { PaymentSchema, PaymentStatusEnum, PaymentMethodEnum, CurrenciesEnum } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('PaymentTools');
 
@@ -80,9 +81,8 @@ export const registerPaymentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching payments:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch payments: ${message}`);
+				logger.error('Error fetching payments:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch payments: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -125,9 +125,8 @@ export const registerPaymentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching payment count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch payment count: ${message}`);
+				logger.error('Error fetching payment count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch payment count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -157,9 +156,8 @@ export const registerPaymentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching payment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch payment: ${message}`);
+				logger.error('Error fetching payment:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch payment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -197,9 +195,8 @@ export const registerPaymentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating payment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create payment: ${message}`);
+				logger.error('Error creating payment:', sanitizeForLogging(error));
+				throw new Error(`Failed to create payment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -227,9 +224,8 @@ export const registerPaymentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating payment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update payment: ${message}`);
+				logger.error('Error updating payment:', sanitizeForLogging(error));
+				throw new Error(`Failed to update payment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -255,9 +251,8 @@ export const registerPaymentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating payment status:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update payment status: ${message}`);
+				logger.error('Error updating payment status:', sanitizeForLogging(error));
+				throw new Error(`Failed to update payment status: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -282,9 +277,8 @@ export const registerPaymentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting payment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete payment: ${message}`);
+				logger.error('Error deleting payment:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete payment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -325,9 +319,8 @@ export const registerPaymentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching payments by invoice:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch payments by invoice: ${message}`);
+				logger.error('Error fetching payments by invoice:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch payments by invoice: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -370,9 +363,8 @@ export const registerPaymentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching payments by client:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch payments by client: ${message}`);
+				logger.error('Error fetching payments by client:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch payments by client: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -413,9 +405,8 @@ export const registerPaymentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching payment statistics:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch payment statistics: ${message}`);
+				logger.error('Error fetching payment statistics:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch payment statistics: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -446,9 +437,8 @@ export const registerPaymentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error processing payment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to process payment: ${message}`);
+				logger.error('Error processing payment:', sanitizeForLogging(error));
+				throw new Error(`Failed to process payment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -481,9 +471,8 @@ export const registerPaymentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error refunding payment:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to refund payment: ${message}`);
+				logger.error('Error refunding payment:', sanitizeForLogging(error));
+				throw new Error(`Failed to refund payment: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -523,9 +512,8 @@ export const registerPaymentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching overdue payments:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch overdue payments: ${message}`);
+				logger.error('Error fetching overdue payments:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch overdue payments: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -566,9 +554,8 @@ export const registerPaymentTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error searching payments:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to search payments: ${message}`);
+				logger.error('Error searching payments:', sanitizeForLogging(error));
+				throw new Error(`Failed to search payments: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { DealSchema, DealStatusEnum } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('DealTools');
 
@@ -49,9 +50,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching deals:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch deals: ${message}`);
+				logger.error('Error fetching deals:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch deals: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -88,9 +88,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching deal count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch deal count: ${message}`);
+				logger.error('Error fetching deal count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch deal count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -120,9 +119,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching deal:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch deal: ${message}`);
+				logger.error('Error fetching deal:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch deal: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -159,9 +157,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating deal:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create deal: ${message}`);
+				logger.error('Error creating deal:', sanitizeForLogging(error));
+				throw new Error(`Failed to create deal: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -187,9 +184,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating deal:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update deal: ${message}`);
+				logger.error('Error updating deal:', sanitizeForLogging(error));
+				throw new Error(`Failed to update deal: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -215,9 +211,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating deal stage:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update deal stage: ${message}`);
+				logger.error('Error updating deal stage:', sanitizeForLogging(error));
+				throw new Error(`Failed to update deal stage: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -242,9 +237,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting deal:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete deal: ${message}`);
+				logger.error('Error deleting deal:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete deal: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -285,9 +279,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching deals by client:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch deals by client: ${message}`);
+				logger.error('Error fetching deals by client:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch deals by client: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -326,9 +319,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching my deals:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch my deals: ${message}`);
+				logger.error('Error fetching my deals:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch my deals: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -367,9 +359,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching deal statistics:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch deal statistics: ${message}`);
+				logger.error('Error fetching deal statistics:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch deal statistics: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -398,9 +389,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error adding deal property:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to add deal property: ${message}`);
+				logger.error('Error adding deal property:', sanitizeForLogging(error));
+				throw new Error(`Failed to add deal property: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -427,9 +417,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating deal property:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update deal property: ${message}`);
+				logger.error('Error updating deal property:', sanitizeForLogging(error));
+				throw new Error(`Failed to update deal property: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -455,9 +444,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error removing deal property:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to remove deal property: ${message}`);
+				logger.error('Error removing deal property:', sanitizeForLogging(error));
+				throw new Error(`Failed to remove deal property: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -492,9 +480,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching deals pipeline:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch deals pipeline: ${message}`);
+				logger.error('Error fetching deals pipeline:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch deals pipeline: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -533,9 +520,8 @@ export const registerDealTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error searching deals:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to search deals: ${message}`);
+				logger.error('Error searching deals:', sanitizeForLogging(error));
+				throw new Error(`Failed to search deals: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

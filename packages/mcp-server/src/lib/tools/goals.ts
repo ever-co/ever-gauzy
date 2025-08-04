@@ -3,7 +3,8 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { GoalSchema, GoalLevelEnum, GoalTimeFrameEnum } from '../schema';
+import { GoalSchema, GoalLevelEnum } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('GoalTools');
 
@@ -11,7 +12,16 @@ const logger = new Logger('GoalTools');
 /**
  * Helper function to convert date fields in goal data to Date objects
  */
-const convertGoalDateFields = (goalData: any) => {
+interface GoalData {
+	deadline?: string | Date;
+	[key: string]: any; // Allow other properties since we spread them
+}
+
+interface ConvertedGoalData extends Omit<GoalData, 'deadline'> {
+	deadline?: Date;
+}
+
+const convertGoalDateFields = (goalData: GoalData): ConvertedGoalData => {
 	return {
 		...goalData,
 		deadline: goalData.deadline ? new Date(goalData.deadline) : undefined
@@ -61,9 +71,8 @@ export const registerGoalTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching goals:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch goals: ${message}`);
+				logger.error('Error fetching goals:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch goals: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -102,9 +111,8 @@ export const registerGoalTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching goal count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch goal count: ${message}`);
+				logger.error('Error fetching goal count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch goal count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -134,9 +142,8 @@ export const registerGoalTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching goal:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch goal: ${message}`);
+				logger.error('Error fetching goal:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch goal: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -175,9 +182,8 @@ export const registerGoalTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating goal:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create goal: ${message}`);
+				logger.error('Error creating goal:', sanitizeForLogging(error));
+				throw new Error(`Failed to create goal: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -205,9 +211,8 @@ export const registerGoalTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating goal:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update goal: ${message}`);
+				logger.error('Error updating goal:', sanitizeForLogging(error));
+				throw new Error(`Failed to update goal: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -233,9 +238,8 @@ export const registerGoalTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating goal progress:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update goal progress: ${message}`);
+				logger.error('Error updating goal progress:', sanitizeForLogging(error));
+				throw new Error(`Failed to update goal progress: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -260,9 +264,8 @@ export const registerGoalTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting goal:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete goal: ${message}`);
+				logger.error('Error deleting goal:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete goal: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -301,9 +304,8 @@ export const registerGoalTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching my goals:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch my goals: ${message}`);
+				logger.error('Error fetching my goals:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch my goals: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -342,9 +344,8 @@ export const registerGoalTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching team goals:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch team goals: ${message}`);
+				logger.error('Error fetching team goals:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch team goals: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -385,9 +386,8 @@ export const registerGoalTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching goal statistics:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch goal statistics: ${message}`);
+				logger.error('Error fetching goal statistics:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch goal statistics: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -413,9 +413,8 @@ export const registerGoalTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error aligning goals:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to align goals: ${message}`);
+				logger.error('Error aligning goals:', sanitizeForLogging(error));
+				throw new Error(`Failed to align goals: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -454,9 +453,8 @@ export const registerGoalTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching goal templates:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch goal templates: ${message}`);
+				logger.error('Error fetching goal templates:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch goal templates: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
