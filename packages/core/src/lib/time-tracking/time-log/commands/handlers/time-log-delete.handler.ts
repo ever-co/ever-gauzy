@@ -149,7 +149,7 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 					update['stoppedAt'] = stoppedAt;
 					log.stoppedAt = stoppedAt;
 				}
-				if (calculateTimeLogDuration(log) <= 0) {
+				if (!log.timeSlots || log.timeSlots.length === 0 || calculateTimeLogDuration(log) <= 0) {
 					// If new time log duration is less than or equal to 0, delete it
 					logsToDelete.push(log.id);
 				} else {

@@ -1497,7 +1497,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		for (const log of timeLogs) {
 			if (!log.timeSlots || log.timeSlots.length === 0) {
-				throw new BadRequestException(`Time log ${log.id} has no time slots — data may be corrupted`);
+				this.logger.warn(`Time log ${log?.id} has no timeSlots — skipping slot deletion`);
+				continue;
 			}
 		}
 
