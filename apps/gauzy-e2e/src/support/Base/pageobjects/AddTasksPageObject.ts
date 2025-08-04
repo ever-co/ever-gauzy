@@ -26,5 +26,6 @@ export const AddTaskPage = {
 	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]',
 	verifyTextCss: '[ng-reflect-settings] tr td:nth-of-type(3)',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	searchTitleInputCss: 'ng-component > input[placeholder="Title"]'
+	searchTitleInputCss: 'ng-component > input[placeholder="Title"]',
+	loadingSpinnerCss: '.nb-spinner-container'
 };

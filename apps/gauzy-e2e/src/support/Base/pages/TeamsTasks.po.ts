@@ -12,6 +12,7 @@ import {
 	verifyElementNotExist
 } from '../utils/util';
 import { TeamsTasksPage } from '../pageobjects/TeamsTasksPageObject';
+import { interceptAllApiRequests, waitForAllApiRequests } from '../utils/api-utils';
 
 export const gridBtnExists = () => {
 	verifyElementIsVisible(TeamsTasksPage.gridButtonCss);
@@ -22,11 +23,15 @@ export const gridBtnClick = (index) => {
 };
 
 export const addTaskButtonVisible = () => {
-	verifyElementIsVisible(TeamsTasksPage.addTaskButtonCss);
+	cy.get(TeamsTasksPage.actionsBarCss)
+		.findByRole('button', { name: TeamsTasksPage.addButtonName })
+		.should('be.visible');
 };
 
 export const clickAddTaskButton = () => {
-	clickButton(TeamsTasksPage.addTaskButtonCss);
+	cy.get(TeamsTasksPage.actionsBarCss)
+		.findByRole('button', { name: TeamsTasksPage.addButtonName })
+		.click({ force: true });
 };
 
 export const selectProjectDropdownVisible = () => {
@@ -86,12 +91,8 @@ export const selectTagsFromDropdown = (index) => {
 	clickButtonByIndex(TeamsTasksPage.tagsSelectOptionCss, index);
 };
 
-export const closeTagsMultiSelectDropdownButtonVisible = () => {
-	verifyElementIsVisible(TeamsTasksPage.closeTagsMultiSelectDropdownCss);
-};
-
-export const clickCloseTagsMultiSelectDropdownButton = () => {
-	clickButton(TeamsTasksPage.closeTagsMultiSelectDropdownCss);
+export const closeTagsMultiSelect = () => {
+	clickButton(TeamsTasksPage.tagsSelectArrowCss);
 };
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {
@@ -140,7 +141,6 @@ export const taskDescriptionTextareaVisible = () => {
 };
 
 export const enterTaskDescriptionTextareaData = (data) => {
-	clearField(TeamsTasksPage.descriptionTextareaCss);
 	enterInput(TeamsTasksPage.descriptionTextareaCss, data);
 };
 
@@ -152,12 +152,24 @@ export const clickSaveTaskButton = () => {
 	clickButton(TeamsTasksPage.saveNewTaskButtonCss);
 };
 
+export const countTasksWithText = (text) => {
+	cy.get(TeamsTasksPage.selectTableRowCss)
+		.filter(`:contains(${text})`)
+		.then((rows) => {
+			cy.wrap({ [text]: rows.length }).as('tasksCount');
+		});
+};
+
 export const tasksTableVisible = () => {
 	verifyElementIsVisible(TeamsTasksPage.selectTableRowCss);
 };
 
 export const selectTasksTableRow = (index) => {
 	clickButtonByIndex(TeamsTasksPage.selectTableRowCss, index);
+};
+
+export const selectTaskTableRowByText = (text) => {
+	clickElementByText(TeamsTasksPage.selectTableRowCss, text);
 };
 
 export const deleteTaskButtonVisible = () => {
@@ -177,11 +189,17 @@ export const clickConfirmDeleteTaskButton = () => {
 };
 
 export const duplicateOrEditTaskButtonVisible = () => {
-	verifyElementIsVisible(TeamsTasksPage.duplicateOrEditTaskButtonCss);
+	cy.get(TeamsTasksPage.actionsBarCss)
+		.findByRole('button', { name: TeamsTasksPage.duplicateButtonName })
+		.should('be.visible');
 };
 
 export const clickDuplicateOrEditTaskButton = (index) => {
-	clickButtonByIndex(TeamsTasksPage.duplicateOrEditTaskButtonCss, index);
+	interceptAllApiRequests();
+	cy.get(TeamsTasksPage.actionsBarCss)
+		.findByRole('button', { name: TeamsTasksPage.duplicateButtonName })
+		.click({ force: true });
+	waitForAllApiRequests();
 };
 
 export const confirmDuplicateOrEditTaskButtonVisible = () => {
@@ -206,4 +224,14 @@ export const verifyTaskExists = (text) => {
 
 export const verifyTaskIsDeleted = () => {
 	verifyElementNotExist(TeamsTasksPage.verifyTextCss);
+};
+
+export const verifyOneTaskWasDeleted = (text) => {
+	cy.get('@tasksCount').then((count) => {
+		cy.document().then((doc) => {
+			const rows = doc.querySelectorAll(TeamsTasksPage.selectTableRowCss);
+			const filteredRows = Array.from(rows).filter((row) => row.textContent?.includes(text));
+			expect(filteredRows.length).to.equal((count as any)[text] - 1);
+		});
+	});
 };

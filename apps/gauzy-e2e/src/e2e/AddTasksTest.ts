@@ -32,6 +32,7 @@ describe('Add tasks test', { testIsolation: false }, () => {
 		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
 		CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
 		cy.visitAndWait('/#/pages/tasks/dashboard');
+		addTaskPage.clearTasksTable();
 	});
 
 	it('Should be able to add new task', () => {
@@ -62,6 +63,7 @@ describe('Add tasks test', { testIsolation: false }, () => {
 		addTaskPage.saveTaskButtonVisible();
 		addTaskPage.clickSaveTaskButton();
 		addTaskPage.waitMessageToHide();
+		addTaskPage.waitToLoad();
 		addTaskPage.verifyTaskExists(AddTasksPageData.defaultTaskTitle);
 	});
 
@@ -72,10 +74,11 @@ describe('Add tasks test', { testIsolation: false }, () => {
 		addTaskPage.clickDuplicateTaskButton(0);
 		addTaskPage.confirmDuplicateTaskButtonVisible();
 		addTaskPage.clickConfirmDuplicateTaskButton();
+		addTaskPage.waitMessageToHide();
 	});
 
 	it('Should be able to edit task', () => {
-		addTaskPage.waitMessageToHide();
+		addTaskPage.waitToLoad();
 		addTaskPage.tasksTableVisible();
 		addTaskPage.selectTasksTableRow(0);
 		addTaskPage.duplicateTaskButtonVisible();
@@ -99,6 +102,7 @@ describe('Add tasks test', { testIsolation: false }, () => {
 		addTaskPage.saveTaskButtonVisible();
 		addTaskPage.clickSaveTaskButton();
 		addTaskPage.waitMessageToHide();
+		addTaskPage.waitToLoad();
 		addTaskPage.verifyTaskExists(AddTasksPageData.editTaskTitle);
 	});
 
@@ -114,6 +118,7 @@ describe('Add tasks test', { testIsolation: false }, () => {
 		addTaskPage.confirmDeleteTaskButtonVisible();
 		addTaskPage.clickConfirmDeleteTaskButton();
 		addTaskPage.waitMessageToHide();
+		addTaskPage.waitToLoad();
 		addTaskPage.verifyOneTaskWasDeleted(AddTasksPageData.editTaskTitle);
 	});
 });

@@ -7,9 +7,16 @@ import {
 	clickKeyboardBtnByKeycode,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	closeCkeNotification
 } from '../utils/util';
 import { OrganizationTeamsPage } from '../pageobjects/OrganizationTeamsPageObject';
+
+export const visit = (options = {}) => {
+	cy.intercept('GET', '/api/organization-team/**').as('getTeams');
+	cy.visit('/#/pages/organization/teams', options);
+	cy.wait('@getTeams');
+};
 
 export const gridBtnExists = () => {
 	verifyElementIsVisible(OrganizationTeamsPage.gridButtonCss);
@@ -20,11 +27,15 @@ export const gridBtnClick = (index) => {
 };
 
 export const addTeamButtonVisible = () => {
-	verifyElementIsVisible(OrganizationTeamsPage.addTeamButtonCss);
+	cy.get(OrganizationTeamsPage.actionsBarCss)
+		.findByRole('button', { name: OrganizationTeamsPage.addButtonName })
+		.should('be.visible');
 };
 
 export const clickAddTeamButton = () => {
-	clickButton(OrganizationTeamsPage.addTeamButtonCss);
+	cy.get(OrganizationTeamsPage.actionsBarCss)
+		.findByRole('button', { name: OrganizationTeamsPage.addButtonName })
+		.click({ force: true });
 };
 
 export const nameInputVisible = () => {
@@ -81,11 +92,17 @@ export const clickCardBody = (index) => {
 };
 
 export const saveButtonVisible = () => {
-	verifyElementIsVisible(OrganizationTeamsPage.saveButtonCss);
+	closeCkeNotification();
+	cy.get(OrganizationTeamsPage.addModalCss)
+		.findByRole('button', { name: OrganizationTeamsPage.saveButtonName })
+		.should('be.visible');
 };
 
 export const clickSaveButton = () => {
-	clickButton(OrganizationTeamsPage.saveButtonCss);
+	closeCkeNotification();
+	cy.get(OrganizationTeamsPage.addModalCss)
+		.findByRole('button', { name: OrganizationTeamsPage.saveButtonName })
+		.click({ force: true });
 };
 
 export const tableRowVisible = () => {
@@ -130,4 +147,24 @@ export const verifyTeamExists = (text) => {
 
 export const verifyTeamIsDeleted = (text) => {
 	verifyTextNotExisting(OrganizationTeamsPage.verifyTeamCss, text);
+};
+
+export const removeTeamIfExists = (text) => {
+	cy.document().then((doc) => {
+		const teamName = text;
+		const teams = doc.querySelectorAll(`${OrganizationTeamsPage.selectTableRowCss}`);
+		cy.log(OrganizationTeamsPage.selectTableRowCss);
+		cy.wrap(teams).as('teams');
+		if (teams) {
+			teams.forEach((team, index) => {
+				if (team.textContent.includes(teamName)) {
+					selectTableRow(index);
+					clickDeleteButton();
+					confirmDeleteButtonVisible();
+					clickConfirmDeleteButton();
+					waitMessageToHide();
+				}
+			});
+		}
+	});
 };

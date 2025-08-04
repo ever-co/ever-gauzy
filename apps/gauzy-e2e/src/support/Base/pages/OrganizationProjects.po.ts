@@ -153,7 +153,7 @@ export const saveProjectButtonVisible = () => {
 export const clickSaveProjectButton = () => {
 	cy.get(OrganizationProjectsPage.footerCss)
 		.findByRole('button', { name: OrganizationProjectsPage.saveButtonName })
-		.click();
+		.click({ force: true });
 };
 
 export const tableRowVisible = () => {

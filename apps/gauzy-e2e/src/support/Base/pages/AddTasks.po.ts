@@ -11,7 +11,9 @@ import {
 	verifyText,
 	verifyTextNotExisting,
 	verifyByLength,
-	wait
+	wait,
+	waitElementToShowAndHide,
+	closeCkeNotification
 } from '../utils/util';
 import { AddTaskPage } from '../pageobjects/AddTasksPageObject';
 import { interceptAllApiRequests, waitForAllApiRequests } from '../utils';
@@ -228,7 +230,7 @@ export const clickConfirmEditTaskButton = () => {
 };
 
 export const waitMessageToHide = () => {
-	waitElementToHide(AddTaskPage.toastrMessageCss);
+	waitElementToShowAndHide(AddTaskPage.toastrMessageCss);
 };
 
 export const verifyTaskExists = (text) => {
@@ -266,12 +268,28 @@ export const verifySearchResult = (length: number) => {
 	verifyByLength(AddTaskPage.selectTableRowCss, length);
 };
 
-// Workaround for cke editor outdated notification, it might be covering the button in some cases
-export const closeCkeNotification = () => {
-	cy.document().then((doc) => {
-		const closeBtn = doc.querySelector('a.cke_notification_close');
-		if (closeBtn) {
-			cy.wrap(closeBtn).click();
-		}
-	});
+export const waitToLoad = () => {
+	waitElementToHide(AddTaskPage.loadingSpinnerCss, 3000);
+};
+
+export const clearTasksTable = () => {
+	const deleteAllRows = () => {
+		waitToLoad();
+		cy.document().then((doc) => {
+			const rowCount = doc.querySelectorAll(AddTaskPage.selectTableRowCss).length;
+			cy.log('rowCount', rowCount);
+
+			if (rowCount > 0) {
+				selectTasksTableRow(0);
+				clickDeleteTaskButton();
+				clickConfirmDeleteTaskButton();
+				waitMessageToHide();
+
+				// Recursively call the function to continue deleting
+				deleteAllRows();
+			}
+		});
+	};
+
+	deleteAllRows();
 };

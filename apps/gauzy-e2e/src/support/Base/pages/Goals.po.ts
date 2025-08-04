@@ -12,6 +12,7 @@ import {
 	ngClearField
 } from '../utils/util';
 import { GoalsPage } from '../pageobjects/GoalsPageObject';
+import { waitToLoad } from './AddTasks.po';
 
 export const visit = () => {
 	cy.intercept('GET', '/api/**/goals*').as('getGoals');
@@ -247,4 +248,25 @@ export const verifyElementIsDeleted = () => {
 
 export const verifyGoalExists = (text) => {
 	verifyText(GoalsPage.verifyGoalCss, text);
+};
+
+export const clearGoalsTable = () => {
+	const deleteAllRows = () => {
+		cy.document().then((doc) => {
+			const rowCount = doc.querySelectorAll(GoalsPage.tableRowCss).length;
+			cy.log('rowCount', rowCount);
+			if (rowCount > 0) {
+				clickTableRow(0);
+				clickViewButton();
+				clickViewModalDeleteButton();
+				clickConfirmButton();
+				waitMessageToHide();
+
+				deleteAllRows();
+			}
+		});
+	};
+
+	deleteAllRows();
+	cy.log('clearGoalsTable');
 };

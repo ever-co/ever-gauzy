@@ -10,6 +10,7 @@ describe('Goals test', { testIsolation: false }, () => {
 	before(() => {
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 		goalsPage.visit();
+		goalsPage.clearGoalsTable();
 	});
 	it('Should be able to add new goal', () => {
 		goalsPage.addButtonVisible();
