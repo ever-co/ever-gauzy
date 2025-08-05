@@ -1,5 +1,5 @@
-import { Integrations } from '@sentry/node';
-import { Integration } from '@sentry/types';
+import * as Sentry from '@sentry/node';
+import type { Integration } from '@sentry/core';
 import { environment } from '@gauzy/config';
 import { SentryPluginOptions } from './sentry.types';
 
@@ -50,7 +50,7 @@ export function createDefaultSentryIntegrations(): Integration[] {
  */
 function addHttpTracingIntegration(integrations: Integration[]): void {
 	if (process.env.SENTRY_DSN && process.env.SENTRY_HTTP_TRACING_ENABLED === 'true') {
-		integrations.push(new Integrations.Http({ tracing: true, breadcrumbs: true }));
+		integrations.push(Sentry.httpIntegration({ breadcrumbs: true }));
 		console.log('Sentry HTTP Tracing Enabled');
 	}
 }
@@ -65,7 +65,7 @@ function addPostgresTrackingIntegration(integrations: Integration[]): void {
 		process.env.SENTRY_POSTGRES_TRACKING_ENABLED === 'true' &&
 		process.env.DB_TYPE === 'postgres'
 	) {
-		integrations.push(new Integrations.Postgres());
+		integrations.push(Sentry.postgresIntegration());
 		console.log('Sentry Postgres Tracing Enabled');
 	}
 }
@@ -75,7 +75,7 @@ function addPostgresTrackingIntegration(integrations: Integration[]): void {
  * @param integrations The array of Sentry integrations.
  */
 function addConsoleIntegration(integrations: Integration[]): void {
-	integrations.push(new Integrations.Console());
+	integrations.push(Sentry.captureConsoleIntegration());
 	console.log('Sentry Console Enabled');
 }
 
@@ -84,7 +84,7 @@ function addConsoleIntegration(integrations: Integration[]): void {
  * @param integrations The array of Sentry integrations.
  */
 function addGraphQLIntegration(integrations: Integration[]): void {
-	integrations.push(new Integrations.GraphQL());
+	integrations.push(Sentry.graphqlIntegration());
 	console.log('Sentry GraphQL Enabled');
 }
 
@@ -93,8 +93,10 @@ function addGraphQLIntegration(integrations: Integration[]): void {
  * @param integrations The array of Sentry integrations.
  */
 function addApolloIntegration(integrations: Integration[]): void {
-	integrations.push(new Integrations.Apollo({ useNestjs: true }));
-	console.log('Sentry Apollo Enabled');
+	// V9 Migration: Apollo integration was removed, using GraphQL integration instead
+	// GraphQL integration provides similar functionality for GraphQL tracing
+	integrations.push(Sentry.graphqlIntegration());
+	console.log('Sentry Apollo integration replaced with GraphQL integration for v9');
 }
 
 /**
@@ -102,7 +104,7 @@ function addApolloIntegration(integrations: Integration[]): void {
  * @param integrations The array of Sentry integrations.
  */
 function addLocalVariablesIntegration(integrations: Integration[]): void {
-	integrations.push(new Integrations.LocalVariables({ captureAllExceptions: true }));
+	integrations.push(Sentry.localVariablesIntegration({ captureAllExceptions: true }));
 	console.log('Sentry Local Variables Enabled');
 }
 
@@ -111,7 +113,7 @@ function addLocalVariablesIntegration(integrations: Integration[]): void {
  * @param integrations The array of Sentry integrations.
  */
 function addRequestDataIntegration(integrations: Integration[]): void {
-	integrations.push(new Integrations.RequestData({ include: { ip: true } }));
+	integrations.push(Sentry.requestDataIntegration({ include: { ip: true } }));
 	console.log('Sentry Request Data Enabled');
 }
 
