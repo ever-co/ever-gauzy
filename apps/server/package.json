@@ -52,7 +52,7 @@
 		"@ngx-translate/core": "^16.0.4",
 		"@ngx-translate/http-loader": "^16.0.1",
 		"@sentry/angular": "9.43.0",
-		"@sentry/electron": "^6.8.0",
+		"@sentry/electron": "6.9.0",
 		"@sentry/node": "9.43.0",
 		"@sentry/profiling-node": "9.43.0",
 		"@sentry/core": "9.43.0",
