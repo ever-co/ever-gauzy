@@ -88,7 +88,7 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 		// Loop through each time log and delete its associated time slots
 		for await (const timeLog of timeLogs) {
 			if (!timeLog.timeSlots || timeLog.timeSlots.length === 0) {
-				console.warn(`Time log ${timeLog?.id} has no timeSlots — skipping slot deletion`);
+				console.warn(`Time log ${timeLog?.id} has no timeSlots — continue slot deletion`);
 				continue;
 			}
 
