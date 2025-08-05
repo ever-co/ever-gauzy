@@ -126,7 +126,7 @@
         "axios": "^1.7.0",
         "dotenv": "^16.4.5",
         "zod": "^3.25.67",
-        "@sentry/electron": "^6.8.0",
+        "@sentry/electron": "6.9.0",
         "@sentry/node": "9.43.0",
         "@sentry/profiling-node": "9.43.0",
         "@sentry/core": "9.43.0",
