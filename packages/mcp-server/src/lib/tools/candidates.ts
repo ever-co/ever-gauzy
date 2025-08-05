@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { CandidateSchema, CandidateStatusEnum } from '../schema';
 import { validateOrganizationContext } from './utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('CandidateTools');
 
@@ -64,9 +65,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching candidates:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch candidates: ${message}`);
+				logger.error('Error fetching candidates:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -103,9 +103,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching candidate count:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch candidate count: ${message}`);
+				logger.error('Error fetching candidate count:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -120,11 +119,19 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ id, relations }) => {
 			try {
+				// Validate organization context and get authenticated user's organization ID
+				const defaultParams = validateOrganizationContext();
+
 				const params = {
 					...(relations && { relations })
 				};
 
 				const response = await apiClient.get(`/api/candidate/${id}`, { params });
+
+				// Verify that the candidate belongs to the authenticated user's organization
+				if ((response as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Access denied: Candidate does not belong to your organization');
+				}
 
 				return {
 					content: [
@@ -135,9 +142,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching candidate:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch candidate: ${message}`);
+				logger.error('Error fetching candidate:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -174,9 +180,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating candidate:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create candidate: ${message}`);
+				logger.error('Error creating candidate:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -204,9 +209,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating candidate:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update candidate: ${message}`);
+				logger.error('Error updating candidate:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -232,9 +236,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating candidate status:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update candidate status: ${message}`);
+				logger.error('Error updating candidate status:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -260,9 +263,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error rating candidate:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to rate candidate: ${message}`);
+				logger.error('Error rating candidate:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -287,9 +289,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting candidate:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete candidate: ${message}`);
+				logger.error('Error deleting candidate:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -330,9 +331,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching candidates by position:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch candidates by position: ${message}`);
+				logger.error('Error fetching candidates by position:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -359,9 +359,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching candidate skills:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch candidate skills: ${message}`);
+				logger.error('Error fetching candidate skills:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -393,9 +392,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error adding candidate skill:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to add candidate skill: ${message}`);
+				logger.error('Error adding candidate skill:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -422,9 +420,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching candidate experience:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch candidate experience: ${message}`);
+				logger.error('Error fetching candidate experience:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -458,9 +455,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error adding candidate experience:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to add candidate experience: ${message}`);
+				logger.error('Error adding candidate experience:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -487,9 +483,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching candidate education:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch candidate education: ${message}`);
+				logger.error('Error fetching candidate education:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -527,9 +522,8 @@ export const registerCandidateTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error adding candidate education:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to add candidate education: ${message}`);
+				logger.error('Error adding candidate education:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);

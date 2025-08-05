@@ -62,11 +62,19 @@ export const registerWarehouseTools = (server: McpServer) => {
 		},
 		async ({ id, relations }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
 				const params = {
 					...(relations && { relations })
 				};
 
 				const response = await apiClient.get(`/api/warehouses/${id}`, { params });
+
+				// Type assertion since we know the response shape
+				const warehouse = response as { organizationId: string };
+				if (warehouse.organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot access warehouses from other organizations');
+				}
 
 				return {
 					content: [

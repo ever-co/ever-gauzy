@@ -141,11 +141,19 @@ export const registerPaymentTools = (server: McpServer) => {
 		},
 		async ({ id, relations }) => {
 			try {
+				// Validate organization context and get authenticated user's organization ID
+				const defaultParams = validateOrganizationContext();
+
 				const params = {
 					...(relations && { relations })
 				};
 
 				const response = await apiClient.get(`/api/payments/${id}`, { params });
+
+				// Verify that the payment belongs to the authenticated user's organization
+				if ((response as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Access denied: Payment does not belong to your organization');
+				}
 
 				return {
 					content: [
@@ -211,6 +219,17 @@ export const registerPaymentTools = (server: McpServer) => {
 		},
 		async ({ id, payment_data }) => {
 			try {
+				// Validate organization context and get authenticated user's organization ID
+				const defaultParams = validateOrganizationContext();
+
+				// First, fetch the payment to verify ownership
+				const existingPayment = await apiClient.get(`/api/payments/${id}`);
+
+				// Verify that the payment belongs to the authenticated user's organization
+				if ((existingPayment as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Access denied: Payment does not belong to your organization');
+				}
+
 				const updateData = convertPaymentDateFields(payment_data);
 
 				const response = await apiClient.put(`/api/payments/${id}`, updateData);
@@ -240,6 +259,17 @@ export const registerPaymentTools = (server: McpServer) => {
 		},
 		async ({ id, status }) => {
 			try {
+				// Validate organization context and get authenticated user's organization ID
+				const defaultParams = validateOrganizationContext();
+
+				// First, fetch the payment to verify ownership
+				const existingPayment = await apiClient.get(`/api/payments/${id}`);
+
+				// Verify that the payment belongs to the authenticated user's organization
+				if ((existingPayment as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Access denied: Payment does not belong to your organization');
+				}
+
 				const response = await apiClient.put(`/api/payments/${id}/status`, { status });
 
 				return {

@@ -29,42 +29,26 @@ const convertIncomeDateFields = (incomeData: IncomeData): ConvertedIncomeData =>
 };
 
 export const registerIncomeTools = (server: McpServer) => {
-	// Get incomes tool
+	// Get my incomes tool (only implemented endpoint)
 	server.tool(
-		'get_incomes',
-		"Get list of incomes for the authenticated user's organization",
+		'get_my_incomes',
+		'Get income records for the current authenticated user',
 		{
-			page: z.number().optional().default(1).describe('Page number for pagination'),
-			limit: z.number().optional().default(10).describe('Number of items per page'),
-			search: z.string().optional().describe('Search term for income notes or reference'),
 			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["employee", "organizationContact", "tags"])'),
-			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
-			organizationContactId: z.string().uuid().optional().describe('Filter by organization contact ID'),
-			currency: CurrenciesEnum.optional().describe('Filter by currency'),
-			isBonus: z.boolean().optional().describe('Filter by bonus status'),
-			startDate: z.string().optional().describe('Filter incomes from this date (ISO format)'),
-			endDate: z.string().optional().describe('Filter incomes until this date (ISO format)')
+			findInput: z.object({}).optional().describe('Find input parameters'),
+			filterDate: z.object({}).optional().describe('Date filter parameters')
 		},
-		async ({ page = 1, limit = 10, search, relations, employeeId, organizationContactId, currency, isBonus, startDate, endDate }) => {
+		async ({ relations, findInput, filterDate }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
+				const data = {
 					...(relations && { relations }),
-					...(employeeId && { employeeId }),
-					...(organizationContactId && { organizationContactId }),
-					...(currency && { currency }),
-					...(isBonus !== undefined && { isBonus }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
+					...(findInput && { findInput }),
+					...(filterDate && { filterDate })
 				};
 
-				const response = await apiClient.get('/api/incomes', { params });
+				const response = await apiClient.get('/api/income/me', { 
+					params: { data: JSON.stringify(data) }
+				});
 
 				return {
 					content: [
@@ -75,8 +59,8 @@ export const registerIncomeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching incomes:', sanitizeForLogging(error));
-				throw new Error(`Failed to fetch incomes: ${sanitizeErrorMessage(error)}`);
+				logger.error('Error fetching my incomes:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch my incomes: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -84,31 +68,27 @@ export const registerIncomeTools = (server: McpServer) => {
 	// Get income count tool
 	server.tool(
 		'get_income_count',
-		"Get income count in the authenticated user's organization",
+		"Get income count using available filters",
 		{
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
-			organizationContactId: z.string().uuid().optional().describe('Filter by organization contact ID'),
+			organizationId: z.string().uuid().optional().describe('Filter by organization ID'),
+			tenantId: z.string().uuid().optional().describe('Filter by tenant ID'),
 			currency: CurrenciesEnum.optional().describe('Filter by currency'),
-			isBonus: z.boolean().optional().describe('Filter by bonus status'),
-			startDate: z.string().optional().describe('Filter incomes from this date (ISO format)'),
-			endDate: z.string().optional().describe('Filter incomes until this date (ISO format)')
+			amount: z.number().optional().describe('Filter by amount'),
+			valueDate: z.string().optional().describe('Filter by value date (ISO format)')
 		},
-		async ({ employeeId, organizationContactId, currency, isBonus, startDate, endDate }) => {
+		async ({ employeeId, organizationId, tenantId, currency, amount, valueDate }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
 					...(employeeId && { employeeId }),
-					...(organizationContactId && { organizationContactId }),
+					...(organizationId && { organizationId }),
+					...(tenantId && { tenantId }),
 					...(currency && { currency }),
-					...(isBonus !== undefined && { isBonus }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
+					...(amount && { amount }),
+					...(valueDate && { valueDate })
 				};
 
-				const response = await apiClient.get('/api/incomes/count', { params });
+				const response = await apiClient.get('/api/income/count', { params });
 
 				return {
 					content: [
@@ -125,21 +105,88 @@ export const registerIncomeTools = (server: McpServer) => {
 		}
 	);
 
+	// Get paginated incomes tool
+	server.tool(
+		'get_incomes_pagination',
+		"Get paginated list of incomes",
+		{
+			page: z.number().optional().default(1).describe('Page number for pagination'),
+			limit: z.number().optional().default(10).describe('Number of items per page'),
+			relations: z.array(z.string()).optional().describe('Relations to include'),
+			where: z.object({}).optional().describe('Where conditions')
+		},
+		async ({ page = 1, limit = 10, relations, where }) => {
+			try {
+				const params = {
+					page,
+					limit,
+					...(relations && { relations }),
+					...(where && { where })
+				};
+
+				const response = await apiClient.get('/api/income/pagination', { params });
+
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(response, null, 2)
+						}
+					]
+				};
+			} catch (error) {
+				logger.error('Error fetching paginated incomes:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch paginated incomes: ${sanitizeErrorMessage(error)}`);
+			}
+		}
+	);
+
+	// Get all incomes tool
+	server.tool(
+		'get_incomes',
+		"Get list of incomes with filtering options",
+		{
+			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["employee", "organizationContact", "tags"])'),
+			findInput: z.object({}).optional().describe('Find input parameters'),
+			filterDate: z.object({}).optional().describe('Date filter parameters')
+		},
+		async ({ relations, findInput, filterDate }) => {
+			try {
+				const data = {
+					...(relations && { relations }),
+					...(findInput && { findInput }),
+					...(filterDate && { filterDate })
+				};
+
+				const response = await apiClient.get('/api/income', { 
+					params: { data: JSON.stringify(data) }
+				});
+
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(response, null, 2)
+						}
+					]
+				};
+			} catch (error) {
+				logger.error('Error fetching incomes:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch incomes: ${sanitizeErrorMessage(error)}`);
+			}
+		}
+	);
+
 	// Get income by ID tool
 	server.tool(
 		'get_income',
 		'Get a specific income by ID',
 		{
-			id: z.string().uuid().describe('The income ID'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["employee", "organizationContact", "tags"])')
+			id: z.string().uuid().describe('The income ID')
 		},
-		async ({ id, relations }) => {
+		async ({ id }) => {
 			try {
-				const params = {
-					...(relations && { relations })
-				};
-
-				const response = await apiClient.get(`/api/incomes/${id}`, { params });
+				const response = await apiClient.get(`/api/income/${id}`);
 
 				return {
 					content: [
@@ -159,7 +206,7 @@ export const registerIncomeTools = (server: McpServer) => {
 	// Create income tool
 	server.tool(
 		'create_income',
-		"Create a new income record in the authenticated user's organization",
+		"Create a new income record",
 		{
 			income_data: IncomeSchemaFull.partial()
 				.required({
@@ -170,15 +217,9 @@ export const registerIncomeTools = (server: McpServer) => {
 		},
 		async ({ income_data }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
+				const createData = convertIncomeDateFields(income_data);
 
-				const createData = convertIncomeDateFields({
-					...income_data,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				});
-
-				const response = await apiClient.post('/api/incomes', createData);
+				const response = await apiClient.post('/api/income', createData);
 
 				return {
 					content: [
@@ -207,7 +248,7 @@ export const registerIncomeTools = (server: McpServer) => {
 			try {
 				const updateData = convertIncomeDateFields(income_data);
 
-				const response = await apiClient.put(`/api/incomes/${id}`, updateData);
+				const response = await apiClient.put(`/api/income/${id}`, updateData);
 
 				return {
 					content: [
@@ -229,11 +270,13 @@ export const registerIncomeTools = (server: McpServer) => {
 		'delete_income',
 		'Delete an income record',
 		{
-			id: z.string().uuid().describe('The income ID')
+			id: z.string().uuid().describe('The income ID'),
+			employeeId: z.string().uuid().optional().describe('Employee ID (required by controller)')
 		},
-		async ({ id }) => {
+		async ({ id, employeeId }) => {
 			try {
-				await apiClient.delete(`/api/incomes/${id}`);
+				const params = employeeId ? { employeeId } : {};
+				await apiClient.delete(`/api/income/${id}`, { params });
 
 				return {
 					content: [
@@ -246,315 +289,6 @@ export const registerIncomeTools = (server: McpServer) => {
 			} catch (error) {
 				logger.error('Error deleting income:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete income: ${sanitizeErrorMessage(error)}`);
-			}
-		}
-	);
-
-	// Get incomes by employee tool
-	server.tool(
-		'get_incomes_by_employee',
-		'Get income records for a specific employee',
-		{
-			employeeId: z.string().uuid().describe('The employee ID'),
-			page: z.number().optional().default(1).describe('Page number for pagination'),
-			limit: z.number().optional().default(10).describe('Number of items per page'),
-			currency: CurrenciesEnum.optional().describe('Filter by currency'),
-			isBonus: z.boolean().optional().describe('Filter by bonus status'),
-			startDate: z.string().optional().describe('Filter incomes from this date (ISO format)'),
-			endDate: z.string().optional().describe('Filter incomes until this date (ISO format)')
-		},
-		async ({ employeeId, page = 1, limit = 10, currency, isBonus, startDate, endDate }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					employeeId,
-					page,
-					limit,
-					...(currency && { currency }),
-					...(isBonus !== undefined && { isBonus }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
-				};
-
-				const response = await apiClient.get('/api/incomes', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching incomes by employee:', sanitizeForLogging(error));
-				throw new Error(`Failed to fetch incomes by employee: ${sanitizeErrorMessage(error)}`);
-			}
-		}
-	);
-
-	// Get my incomes tool
-	server.tool(
-		'get_my_incomes',
-		'Get income records for the current authenticated user',
-		{
-			page: z.number().optional().default(1).describe('Page number for pagination'),
-			limit: z.number().optional().default(10).describe('Number of items per page'),
-			currency: CurrenciesEnum.optional().describe('Filter by currency'),
-			isBonus: z.boolean().optional().describe('Filter by bonus status'),
-			startDate: z.string().optional().describe('Filter incomes from this date (ISO format)'),
-			endDate: z.string().optional().describe('Filter incomes until this date (ISO format)')
-		},
-		async ({ page = 1, limit = 10, currency, isBonus, startDate, endDate }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(currency && { currency }),
-					...(isBonus !== undefined && { isBonus }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
-				};
-
-				const response = await apiClient.get('/api/incomes/me', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching my incomes:', sanitizeForLogging(error));
-				throw new Error(`Failed to fetch my incomes: ${sanitizeErrorMessage(error)}`);
-			}
-		}
-	);
-
-	// Get bonus incomes tool
-	server.tool(
-		'get_bonus_incomes',
-		"Get bonus income records for the authenticated user's organization",
-		{
-			page: z.number().optional().default(1).describe('Page number for pagination'),
-			limit: z.number().optional().default(10).describe('Number of items per page'),
-			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
-			currency: CurrenciesEnum.optional().describe('Filter by currency'),
-			startDate: z.string().optional().describe('Filter incomes from this date (ISO format)'),
-			endDate: z.string().optional().describe('Filter incomes until this date (ISO format)'),
-			relations: z.array(z.string()).optional().describe('Relations to include')
-		},
-		async ({ page = 1, limit = 10, employeeId, currency, startDate, endDate, relations }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					isBonus: true,
-					...(employeeId && { employeeId }),
-					...(currency && { currency }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					...(relations && { relations })
-				};
-
-				const response = await apiClient.get('/api/incomes', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching bonus incomes:', sanitizeForLogging(error));
-				throw new Error(`Failed to fetch bonus incomes: ${sanitizeErrorMessage(error)}`);
-			}
-		}
-	);
-
-	// Get income statistics tool
-	server.tool(
-		'get_income_statistics',
-		"Get income statistics for the authenticated user's organization",
-		{
-			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
-			endDate: z.string().optional().describe('End date for statistics (ISO format)'),
-			employeeId: z.string().uuid().optional().describe('Filter by specific employee ID'),
-			organizationContactId: z.string().uuid().optional().describe('Filter by specific contact ID'),
-			currency: CurrenciesEnum.optional().describe('Filter by currency'),
-			includeBonus: z.boolean().optional().default(true).describe('Include bonus incomes in statistics')
-		},
-		async ({ startDate, endDate, employeeId, organizationContactId, currency, includeBonus = true }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					...(employeeId && { employeeId }),
-					...(organizationContactId && { organizationContactId }),
-					...(currency && { currency }),
-					includeBonus
-				};
-
-				const response = await apiClient.get('/api/incomes/statistics', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching income statistics:', sanitizeForLogging(error));
-				throw new Error(`Failed to fetch income statistics: ${sanitizeErrorMessage(error)}`);
-			}
-		}
-	);
-
-	// Bulk create incomes tool
-	server.tool(
-		'bulk_create_incomes',
-		"Create multiple income records in bulk for the authenticated user's organization",
-		{
-			incomes: z.array(
-				IncomeSchemaFull.partial()
-					.required({
-						amount: true,
-						currency: true
-					})
-					.describe('Income data')
-			).describe('Array of income data to create')
-		},
-		async ({ incomes }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				// Add organization and tenant ID to each income
-				const incomesWithDefaults = incomes.map((income) => convertIncomeDateFields({
-					...income,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				}));
-
-				const response = await apiClient.post('/api/incomes/bulk', { incomes: incomesWithDefaults });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error bulk creating incomes:', sanitizeForLogging(error));
-				throw new Error(`Failed to bulk create incomes: ${sanitizeErrorMessage(error)}`);
-			}
-		}
-	);
-
-	// Search incomes tool
-	server.tool(
-		'search_incomes',
-		'Search income records by notes, reference, or employee name',
-		{
-			query: z.string().describe('Search query'),
-			limit: z.number().optional().default(20).describe('Maximum number of results'),
-			currency: CurrenciesEnum.optional().describe('Filter by currency'),
-			isBonus: z.boolean().optional().describe('Filter by bonus status'),
-			employeeId: z.string().uuid().optional().describe('Filter by employee ID')
-		},
-		async ({ query, limit = 20, currency, isBonus, employeeId }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					query,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					limit,
-					...(currency && { currency }),
-					...(isBonus !== undefined && { isBonus }),
-					...(employeeId && { employeeId })
-				};
-
-				const response = await apiClient.get('/api/incomes/search', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error searching incomes:', sanitizeForLogging(error));
-				throw new Error(`Failed to search incomes: ${sanitizeErrorMessage(error)}`);
-			}
-		}
-	);
-
-	// Get income summary tool
-	server.tool(
-		'get_income_summary',
-		"Get income summary grouped by employee, currency, or time period",
-		{
-			groupBy: z.enum(['employee', 'currency', 'month', 'year']).describe('Group income summary by'),
-			startDate: z.string().optional().describe('Start date for summary (ISO format)'),
-			endDate: z.string().optional().describe('End date for summary (ISO format)'),
-			employeeId: z.string().uuid().optional().describe('Filter by specific employee ID'),
-			currency: CurrenciesEnum.optional().describe('Filter by currency'),
-			includeBonus: z.boolean().optional().default(true).describe('Include bonus incomes in summary')
-		},
-		async ({ groupBy, startDate, endDate, employeeId, currency, includeBonus = true }) => {
-			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					groupBy,
-					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					...(employeeId && { employeeId }),
-					...(currency && { currency }),
-					includeBonus
-				};
-
-				const response = await apiClient.get('/api/incomes/summary', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching income summary:', sanitizeForLogging(error));
-				throw new Error(`Failed to fetch income summary: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

@@ -12,7 +12,18 @@ const logger = new Logger('InvoiceTools');
 /**
  * Helper function to convert date fields in invoice data to Date objects
  */
-const convertInvoiceDateFields = (invoiceData: any) => {
+interface InvoiceData {
+	invoiceDate?: string | Date;
+	dueDate?: string | Date;
+	[key: string]: any; // Allow other properties since we spread them
+}
+
+interface ConvertedInvoiceData extends Omit<InvoiceData, 'invoiceDate' | 'dueDate'> {
+	invoiceDate?: Date;
+	dueDate?: Date;
+}
+
+const convertInvoiceDateFields = (invoiceData: InvoiceData): ConvertedInvoiceData => {
 	return {
 		...invoiceData,
 		invoiceDate: invoiceData.invoiceDate ? new Date(invoiceData.invoiceDate) : undefined,
@@ -21,7 +32,7 @@ const convertInvoiceDateFields = (invoiceData: any) => {
 };
 
 export const registerInvoiceTools = (server: McpServer) => {
-	// Get invoices tool
+	// Get invoices tool - uses pagination endpoint
 	server.tool(
 		'get_invoices',
 		"Get list of invoices for the authenticated user's organization",
@@ -57,7 +68,7 @@ export const registerInvoiceTools = (server: McpServer) => {
 					...(endDate && { endDate })
 				};
 
-				const response = await apiClient.get('/api/invoices', { params });
+				const response = await apiClient.get('/api/invoices/pagination', { params });
 
 				return {
 					content: [
@@ -128,7 +139,10 @@ export const registerInvoiceTools = (server: McpServer) => {
 		async ({ id, relations }) => {
 			try {
 				const params = {
-					...(relations && { relations })
+					data: JSON.stringify({
+						relations: relations || [],
+						findInput: null
+					})
 				};
 
 				const response = await apiClient.get(`/api/invoices/${id}`, { params });
@@ -218,17 +232,23 @@ export const registerInvoiceTools = (server: McpServer) => {
 		}
 	);
 
-	// Update invoice status tool
+	// Update invoice action (status/estimate) tool
 	server.tool(
-		'update_invoice_status',
-		'Update the status of an invoice',
+		'update_invoice_action',
+		'Update the action/status of an invoice',
 		{
 			id: z.string().uuid().describe('The invoice ID'),
-			status: InvoiceStatusEnum.describe('The new status for the invoice')
+			status: InvoiceStatusEnum.optional().describe('The new status for the invoice'),
+			isEstimate: z.boolean().optional().describe('Whether this is an estimate')
 		},
-		async ({ id, status }) => {
+		async ({ id, status, isEstimate }) => {
 			try {
-				const response = await apiClient.put(`/api/invoices/${id}/status`, { status });
+				const updateData = {
+					...(status && { status }),
+					...(isEstimate !== undefined && { isEstimate })
+				};
+
+				const response = await apiClient.put(`/api/invoices/${id}/action`, updateData);
 
 				return {
 					content: [
@@ -239,22 +259,27 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating invoice status:', sanitizeForLogging(error));
-				throw new Error(`Failed to update invoice status: ${sanitizeErrorMessage(error)}`);
+				logger.error('Error updating invoice action:', sanitizeForLogging(error));
+				throw new Error(`Failed to update invoice action: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
 
-	// Mark invoice as paid tool
+	// Update estimate status tool
 	server.tool(
-		'mark_invoice_paid',
-		'Mark an invoice as paid',
+		'update_estimate_status',
+		'Update estimate status of an invoice',
 		{
-			id: z.string().uuid().describe('The invoice ID')
+			id: z.string().uuid().describe('The invoice ID'),
+			data: z.object({
+				isEstimate: z.boolean().optional(),
+				status: InvoiceStatusEnum.optional(),
+				paid: z.boolean().optional()
+			}).describe('Data to update for the estimate')
 		},
-		async ({ id }) => {
+		async ({ id, data }) => {
 			try {
-				const response = await apiClient.put(`/api/invoices/${id}/paid`, { paid: true });
+				const response = await apiClient.put(`/api/invoices/${id}/estimate`, data);
 
 				return {
 					content: [
@@ -265,8 +290,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error marking invoice as paid:', sanitizeForLogging(error));
-				throw new Error(`Failed to mark invoice as paid: ${sanitizeErrorMessage(error)}`);
+				logger.error('Error updating estimate status:', sanitizeForLogging(error));
+				throw new Error(`Failed to update estimate status: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -314,12 +339,14 @@ export const registerInvoiceTools = (server: McpServer) => {
 		},
 		async ({ invoiceId, relations }) => {
 			try {
-				const params = {
-					invoiceId,
-					...(relations && { relations })
+				const queryParams = {
+					data: JSON.stringify({
+						relations: relations || [],
+						findInput: { invoiceId }
+					})
 				};
 
-				const response = await apiClient.get('/api/invoice-items', { params });
+				const response = await apiClient.get('/api/invoice-item', { params: queryParams });
 
 				return {
 					content: [
@@ -336,17 +363,31 @@ export const registerInvoiceTools = (server: McpServer) => {
 		}
 	);
 
-	// Send invoice tool
+	// Send invoice via email tool
 	server.tool(
-		'send_invoice',
+		'send_invoice_email',
 		'Send an invoice via email',
 		{
-			id: z.string().uuid().describe('The invoice ID'),
-			email: z.string().email().describe('Email address to send the invoice to')
+			email: z.string().email().describe('Email address to send the invoice to'),
+			params: z.object({
+				invoiceId: z.string().uuid(),
+				organizationId: z.string().uuid().optional(),
+				tenantId: z.string().uuid().optional()
+			}).describe('Email parameters including invoice ID')
 		},
-		async ({ id, email }) => {
+		async ({ email, params }) => {
 			try {
-				const response = await apiClient.post(`/api/invoices/${id}/send`, { email });
+				const defaultParams = validateOrganizationContext();
+
+				const emailData = {
+					params: {
+						...params,
+						organizationId: params.organizationId || defaultParams.organizationId,
+						...(defaultParams.tenantId && { tenantId: params.tenantId || defaultParams.tenantId })
+					}
+				};
+
+				const response = await apiClient.put(`/api/invoices/email/${email}`, emailData);
 
 				return {
 					content: [
@@ -357,26 +398,25 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error sending invoice:', sanitizeForLogging(error));
-				throw new Error(`Failed to send invoice: ${sanitizeErrorMessage(error)}`);
+				logger.error('Error sending invoice email:', sanitizeForLogging(error));
+				throw new Error(`Failed to send invoice email: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
 
 	// Generate invoice PDF tool
 	server.tool(
-		'generate_invoice_pdf',
-		'Generate PDF for an invoice and return the PDF content as Base64',
+		'download_invoice_pdf',
+		'Download PDF for an invoice as binary data',
 		{
 			id: z.string().uuid().describe('The invoice ID')
 		},
 		async ({ id }) => {
 			try {
-				const response = await apiClient.get<Blob>(`/api/invoices/${id}/pdf`, { responseType: 'blob' });
+				const response = await apiClient.get(`/api/invoices/download/${id}`, { responseType: 'arraybuffer' });
 
-				// Convert Blob to Base64 string
-				const arrayBuffer = await response.arrayBuffer();
-				const buffer = Buffer.from(arrayBuffer);
+				// Convert to Base64 for transport
+				const buffer = Buffer.from(response as unknown as string);
 				const base64Content = buffer.toString('base64');
 
 				return {
@@ -386,9 +426,9 @@ export const registerInvoiceTools = (server: McpServer) => {
 							text: JSON.stringify(
 								{
 									success: true,
-									message: 'Invoice PDF generated successfully',
+									message: 'Invoice PDF downloaded successfully',
 									id,
-									pdfSize: response.size || buffer.length,
+									pdfSize: buffer.length,
 									mimeType: 'application/pdf',
 									filename: `invoice-${id}.pdf`,
 									pdfContent: base64Content
@@ -400,34 +440,20 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error generating invoice PDF:', sanitizeForLogging(error));
-				throw new Error(`Failed to generate invoice PDF: ${sanitizeErrorMessage(error)}`);
+				logger.error('Error downloading invoice PDF:', sanitizeForLogging(error));
+				throw new Error(`Failed to download invoice PDF: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
 
-	// Get invoice statistics tool
+	// Get highest invoice number tool
 	server.tool(
-		'get_invoice_statistics',
-		"Get invoice statistics for the authenticated user's organization",
-		{
-			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
-			endDate: z.string().optional().describe('End date for statistics (ISO format)'),
-			organizationContactId: z.string().uuid().optional().describe('Filter by specific client ID')
-		},
-		async ({ startDate, endDate, organizationContactId }) => {
+		'get_highest_invoice_number',
+		'Get the highest invoice number in the organization',
+		{},
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					...(organizationContactId && { organizationContactId })
-				};
-
-				const response = await apiClient.get('/api/invoices/statistics', { params });
+				const response = await apiClient.get('/api/invoices/highest');
 
 				return {
 					content: [
@@ -438,36 +464,22 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching invoice statistics:', sanitizeForLogging(error));
-				throw new Error(`Failed to fetch invoice statistics: ${sanitizeErrorMessage(error)}`);
+				logger.error('Error fetching highest invoice number:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch highest invoice number: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
 
-	// Search invoices tool
+	// Generate public link for invoice tool
 	server.tool(
-		'search_invoices',
-		'Search invoices by invoice number, client name, or items',
+		'generate_invoice_link',
+		'Generate a public link for an invoice',
 		{
-			query: z.string().describe('Search query'),
-			limit: z.number().optional().default(20).describe('Maximum number of results'),
-			status: InvoiceStatusEnum.optional().describe('Filter by invoice status'),
-			paid: z.boolean().optional().describe('Filter by payment status')
+			id: z.string().uuid().describe('The invoice ID')
 		},
-		async ({ query, limit = 20, status, paid }) => {
+		async ({ id }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					query,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					limit,
-					...(status && { status }),
-					...(paid !== undefined && { paid })
-				};
-
-				const response = await apiClient.get('/api/invoices/search', { params });
+				const response = await apiClient.put(`/api/invoices/generate/${id}`);
 
 				return {
 					content: [
@@ -478,46 +490,50 @@ export const registerInvoiceTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error searching invoices:', sanitizeForLogging(error));
-				throw new Error(`Failed to search invoices: ${sanitizeErrorMessage(error)}`);
+				logger.error('Error generating invoice link:', sanitizeForLogging(error));
+				throw new Error(`Failed to generate invoice link: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
 
-	// Get overdue invoices tool
+	// Download invoice payment PDF tool
 	server.tool(
-		'get_overdue_invoices',
-		"Get overdue invoices for the authenticated user's organization",
+		'download_invoice_payment_pdf',
+		'Download payment PDF for an invoice',
 		{
-			page: z.number().optional().default(1).describe('Page number for pagination'),
-			limit: z.number().optional().default(10).describe('Number of items per page'),
-			relations: z.array(z.string()).optional().describe('Relations to include')
+			id: z.string().uuid().describe('The invoice ID')
 		},
-		async ({ page = 1, limit = 10, relations }) => {
+		async ({ id }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
+				const response = await apiClient.get(`/api/invoices/payment/download/${id}`, { responseType: 'arraybuffer' });
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(relations && { relations })
-				};
-
-				const response = await apiClient.get('/api/invoices/overdue', { params });
+				// Convert to Base64 for transport
+				const buffer = Buffer.from(response as unknown as string);
+				const base64Content = buffer.toString('base64');
 
 				return {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify(response, null, 2)
+							text: JSON.stringify(
+								{
+									success: true,
+									message: 'Invoice payment PDF downloaded successfully',
+									id,
+									pdfSize: buffer.length,
+									mimeType: 'application/pdf',
+									filename: `invoice-payment-${id}.pdf`,
+									pdfContent: base64Content
+								},
+								null,
+								2
+							)
 						}
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching overdue invoices:', sanitizeForLogging(error));
-				throw new Error(`Failed to fetch overdue invoices: ${sanitizeErrorMessage(error)}`);
+				logger.error('Error downloading invoice payment PDF:', sanitizeForLogging(error));
+				throw new Error(`Failed to download invoice payment PDF: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

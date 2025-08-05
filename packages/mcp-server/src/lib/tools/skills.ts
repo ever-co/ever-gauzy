@@ -60,7 +60,10 @@ export const registerSkillTools = (server: McpServer) => {
 		},
 		async ({ id, relations }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
 				const params = {
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
 					...(relations && { relations })
 				};
 
@@ -129,6 +132,17 @@ export const registerSkillTools = (server: McpServer) => {
 		},
 		async ({ id, skill_data }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// First verify the skill belongs to the organization
+				const existing = await apiClient.get(`/api/skills/${id}`, {
+					params: { organizationId: defaultParams.organizationId }
+				});
+
+				if (!existing) {
+					throw new Error('Skill not found');
+				}
+
 				const response = await apiClient.put(`/api/skills/${id}`, skill_data);
 
 				return {
@@ -155,6 +169,23 @@ export const registerSkillTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// First verify the skill belongs to the organization
+				const existing = await apiClient.get(`/api/skills/${id}`, {
+					params: { organizationId: defaultParams.organizationId }
+				});
+
+				if (!existing) {
+					throw new Error('Skill not found');
+				}
+
+				// Type assertion since we know the response shape
+				const existingSkill = existing as { organizationId: string };
+				if (existingSkill.organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot delete skills from other organizations');
+				}
+
 				await apiClient.delete(`/api/skills/${id}`);
 
 				return {

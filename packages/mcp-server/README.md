@@ -11,11 +11,13 @@ The `@gauzy/mcp-server` package contains all the shared functionality needed to 
 This package is designed to be consumed by:
 
 ### 🚀 Standalone App: `apps/mcp`
+
 - Direct integration with AI assistants (Claude Desktop, ChatGPT, etc.)
 - Stdio-based transport for AI assistant communication
 - Lightweight command-line interface
 
 ### 🖥️ Desktop App: `apps/server-mcp`
+
 - Electron desktop application with modern UI
 - Server management and monitoring interface
 - System tray integration and auto-updater support
@@ -100,53 +102,146 @@ const status = manager.getStatus();
 ## Core Features
 
 ### 🔐 Authentication Management
+
 - **Smart Authentication**: Automatic user context detection
 - **Token Management**: Handles access and refresh tokens automatically
 - **Session Persistence**: Maintains authentication state across sessions
 - **Auto-login**: Configurable automatic login on server start
 
-### 🛠️ Comprehensive Tool Suite (91 tools across 8 categories)
+### 🛠️ Comprehensive Tool Suite (323 tools across 22 categories)
+
+<!-- TODO: Consider automating this section generation from source code to keep tool counts in sync -->
+<!-- Tool counts last updated: 2025-08-05 -->
+
+#### Authentication (5 tools)
+
+- User login and logout functionality
+- Authentication status monitoring
+- Token refresh and management
+- Auto-login capabilities
 
 #### Employee Management (15 tools)
+
 - Employee CRUD operations with bulk support
 - Employee statistics and analytics
 - Profile management and updates
-- Assignment and unassignment operations
+- Organization member management
 
 #### Task Management (16 tools)
+
 - Complete task lifecycle management
 - Bulk operations for efficiency
 - Task assignment to employees
 - Personal and team task views
 - Task statistics and reporting
 
-#### Project Management (15 tools)
+#### Project Management (14 tools)
+
 - Full project CRUD with bulk operations
 - Project assignment management
 - Project analytics and reporting
 - Team project collaboration
 
 #### Daily Planning (17 tools)
+
 - Personal and team daily plans
 - Task integration with daily plans
 - Bulk planning operations
 - Planning analytics and statistics
 
 #### Organization Contacts (17 tools)
+
 - Contact management with full CRUD
 - Bulk contact operations
 - Employee contact assignments
 - Contact categorization and filtering
 
 #### Timer & Time Tracking (3 tools)
+
 - Start/stop time tracking
 - Real-time timer status
 - Integration with projects and tasks
 
 #### Testing & Diagnostics (3 tools)
+
 - API connectivity testing
 - Server capability enumeration
 - Health check and monitoring
+
+#### Financial Management (37 tools)
+
+- **Payments (14 tools)**: Payment processing and management
+- **Expenses (9 tools)**: Expense tracking and reporting
+- **Invoices (14 tools)**: Invoice creation and management
+
+#### Activity & Logging (12 tools)
+
+- Activity tracking and audit logging
+- User action monitoring
+- System event recording
+
+#### Candidate Management (15 tools)
+
+- Recruitment process management
+- Candidate tracking and evaluation
+- Interview scheduling and feedback
+
+#### Content & Communication (15 tools)
+
+- Comment and discussion management
+- Team communication tools
+- Content collaboration features
+
+#### Sales & CRM (23 tools)
+
+- **Deals (15 tools)**: Sales opportunity tracking
+- **Pipelines (8 tools)**: Sales pipeline management
+
+#### Goal Management (24 tools)
+
+- **Goals (12 tools)**: Objective setting and tracking
+- **Key Results (12 tools)**: OKR management system
+
+#### Inventory & Equipment (21 tools)
+
+- **Equipment (16 tools)**: Asset and equipment tracking
+- **Warehouses (5 tools)**: Inventory location management
+
+#### Product Management (18 tools)
+
+- **Products (13 tools)**: Product catalog management
+- **Product Categories (5 tools)**: Product organization
+
+#### Income Management (13 tools)
+
+- Revenue tracking and reporting
+- Income categorization and analysis
+
+#### Merchant Management (14 tools)
+
+- Vendor and supplier management
+- Merchant relationship tracking
+
+#### Skills Management (10 tools)
+
+- Employee skill tracking
+- Competency assessment and development
+
+#### Time Off Management (20 tools)
+
+- Leave request and approval system
+- PTO tracking and management
+- Holiday and absence planning
+
+#### Reporting (4 tools)
+
+- Data analytics and insights
+- Custom report generation
+
+#### HR & Awards (7 tools)
+
+- Employee recognition programs
+- Achievement tracking and rewards
 
 ### 🏗️ Technical Features
 
@@ -196,10 +291,11 @@ packages/mcp-server/
 ### Adding New Tools
 
 1. **Create the tool**: Add your tool implementation to `src/lib/tools/`
+
    ```typescript
    // src/lib/tools/my-new-tool.ts
    import { Tool } from '@modelcontextprotocol/sdk/types.js';
-   import { ApiClient } from '../common/api-client.js';
+   import { ApiClient } from '../common/api-client';
 
    export class MyNewTool {
      constructor(private apiClient: ApiClient) {}
@@ -222,12 +318,14 @@ packages/mcp-server/
    ```
 
 2. **Export the tool**: Add it to the tools index file
+
    ```typescript
    // src/lib/tools/index.ts
    export * from './my-new-tool.js';
    ```
 
 3. **Register the tool**: Include it in the main server
+
    ```typescript
    // src/lib/mcp-server.ts
    import { MyNewTool } from './tools/my-new-tool.js';
@@ -235,6 +333,7 @@ packages/mcp-server/
    ```
 
 4. **Export from package**: Add to main index if needed
+
    ```typescript
    // src/index.ts
    export * from './lib/tools/my-new-tool.js';
@@ -276,6 +375,7 @@ yarn nx type-check mcp-server
 ### Core Classes
 
 #### McpServer
+
 Main server class that implements the MCP protocol.
 
 ```typescript
@@ -288,6 +388,7 @@ class McpServer {
 ```
 
 #### McpServerManager
+
 Manages server lifecycle and provides higher-level operations.
 
 ```typescript
@@ -300,6 +401,7 @@ class McpServerManager {
 ```
 
 #### ApiClient
+
 HTTP client for communicating with Gauzy API.
 
 ```typescript
@@ -314,6 +416,7 @@ class ApiClient {
 ```
 
 #### AuthManager
+
 Handles authentication and token management.
 
 ```typescript
@@ -349,6 +452,7 @@ NODE_ENV=development                # Environment mode
 ### Package Build Issues
 
 1. **TypeScript compilation errors**
+
    ```bash
    # Check TypeScript configuration
    yarn nx lint mcp-server
@@ -357,6 +461,7 @@ NODE_ENV=development                # Environment mode
    ```
 
 2. **Missing dependencies**
+
    ```bash
    # Install all dependencies
    yarn install
@@ -368,11 +473,13 @@ NODE_ENV=development                # Environment mode
 ### Runtime Issues
 
 1. **Authentication failures**
+
    - Verify API_BASE_URL is correct
    - Check email/password credentials
    - Ensure API server is accessible
 
 2. **Tool registration errors**
+
    - Verify tool exports in index files
    - Check tool implementation follows MCP spec
    - Review server logs for specific errors
@@ -386,6 +493,7 @@ GAUZY_MCP_DEBUG=true yarn nx build mcp-server
 ```
 
 This provides:
+
 - Detailed API request/response logging
 - Tool execution tracing
 - Authentication flow debugging
@@ -413,6 +521,7 @@ This provides:
 ### Adding New Tools
 
 New tools should:
+
 - Extend the base tool pattern
 - Include proper TypeScript types
 - Provide comprehensive input validation

@@ -57,6 +57,7 @@ export const registerEquipmentTools = (server: McpServer) => {
 					...(status && { status }),
 					...(assignedToEmployeeId && { assignedToEmployeeId }),
 					...(manufacturer && { manufacturer }),
+					...(!available && status && { status }),
 					...(available && { status: 'AVAILABLE' })
 				};
 
@@ -127,11 +128,19 @@ export const registerEquipmentTools = (server: McpServer) => {
 		},
 		async ({ id, relations }) => {
 			try {
+				// Validate organization context and get authenticated user's organization ID
+				const defaultParams = validateOrganizationContext();
+
 				const params = {
 					...(relations && { relations })
 				};
 
 				const response = await apiClient.get(`/api/equipment/${id}`, { params });
+
+				// Verify that the equipment belongs to the authenticated user's organization
+				if ((response as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Access denied: Equipment does not belong to your organization');
+				}
 
 				return {
 					content: [

@@ -13,7 +13,7 @@ const logger = new Logger('ProductTools');
  * Interface for product data with date fields that need conversion
  */
 interface ProductDataWithDates {
-	[key: string]: any;
+	[key: string]: unknown;
 	createdAt?: string | Date | null;
 	updatedAt?: string | Date | null;
 }

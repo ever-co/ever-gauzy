@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { PipelineSchema } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('PipelineTools');
 
@@ -43,9 +44,8 @@ export const registerPipelineTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching pipelines:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch pipelines: ${message}`);
+				logger.error('Error fetching pipelines:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch pipelines: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -75,9 +75,8 @@ export const registerPipelineTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching pipeline:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch pipeline: ${message}`);
+				logger.error('Error fetching pipeline:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch pipeline: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -114,9 +113,8 @@ export const registerPipelineTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating pipeline:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create pipeline: ${message}`);
+				logger.error('Error creating pipeline:', sanitizeForLogging(error));
+				throw new Error(`Failed to create pipeline: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -142,9 +140,8 @@ export const registerPipelineTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating pipeline:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update pipeline: ${message}`);
+				logger.error('Error updating pipeline:', sanitizeForLogging(error));
+				throw new Error(`Failed to update pipeline: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -169,9 +166,8 @@ export const registerPipelineTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting pipeline:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete pipeline: ${message}`);
+				logger.error('Error deleting pipeline:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete pipeline: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -201,9 +197,8 @@ export const registerPipelineTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error adding pipeline stage:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to add pipeline stage: ${message}`);
+				logger.error('Error adding pipeline stage:', sanitizeForLogging(error));
+				throw new Error(`Failed to add pipeline stage: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -234,9 +229,8 @@ export const registerPipelineTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating pipeline stage:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update pipeline stage: ${message}`);
+				logger.error('Error updating pipeline stage:', sanitizeForLogging(error));
+				throw new Error(`Failed to update pipeline stage: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -262,9 +256,8 @@ export const registerPipelineTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error removing pipeline stage:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to remove pipeline stage: ${message}`);
+				logger.error('Error removing pipeline stage:', sanitizeForLogging(error));
+				throw new Error(`Failed to remove pipeline stage: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

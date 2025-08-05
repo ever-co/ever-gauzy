@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { EmployeeAwardSchema } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
 const logger = new Logger('EmployeeAwardTools');
 
@@ -51,9 +52,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching employee awards:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch employee awards: ${message}`);
+				logger.error('Error fetching employee awards:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -84,9 +84,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching employee award:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch employee award: ${message}`);
+				logger.error('Error fetching employee award:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -125,9 +124,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating employee award:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to create employee award: ${message}`);
+				logger.error('Error creating employee award:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -153,9 +151,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating employee award:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to update employee award: ${message}`);
+				logger.error('Error updating employee award:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -180,9 +177,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting employee award:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to delete employee award: ${message}`);
+				logger.error('Error deleting employee award:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -225,9 +221,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching employee awards by employee:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch employee awards by employee: ${message}`);
+				logger.error('Error fetching employee awards by employee:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -273,15 +268,203 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching employee awards by year:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to fetch employee awards by year: ${message}`);
+				logger.error('Error fetching employee awards by year:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
 
+	// Get employee awards count tool
+	server.tool(
+		'get_employee_awards_count',
+		"Get employee awards count in the authenticated user's organization",
+		{
+			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
+			year: z.string().optional().describe('Filter by award year'),
+			search: z.string().optional().describe('Search term for award name')
+		},
+		async ({ employeeId, year, search }) => {
+			try {
+				const defaultParams = validateOrganizationContext();
 
+				const params = {
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
+					...(employeeId && { employeeId }),
+					...(year && { year }),
+					...(search && { search })
+				};
 
+				const response = await apiClient.get('/api/employee-award/count', { params });
 
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(response, null, 2)
+						}
+					]
+				};
+			} catch (error) {
+				logger.error('Error fetching employee awards count:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
+			}
+		}
+	);
 
+	// Get employee awards statistics tool
+	server.tool(
+		'get_employee_awards_statistics',
+		"Get employee awards statistics for the authenticated user's organization",
+		{
+			employeeId: z.string().uuid().optional().describe('Filter by specific employee ID'),
+			year: z.string().optional().describe('Filter by award year'),
+			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
+			endDate: z.string().optional().describe('End date for statistics (ISO format)'),
+			groupBy: z.enum(['employee', 'year', 'month']).optional().describe('Group statistics by field')
+		},
+		async ({ employeeId, year, startDate, endDate, groupBy }) => {
+			try {
+				const defaultParams = validateOrganizationContext();
+
+				const params = {
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
+					...(employeeId && { employeeId }),
+					...(year && { year }),
+					...(startDate && { startDate }),
+					...(endDate && { endDate }),
+					...(groupBy && { groupBy })
+				};
+
+				const response = await apiClient.get('/api/employee-award/statistics', { params });
+
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(response, null, 2)
+						}
+					]
+				};
+			} catch (error) {
+				logger.error('Error fetching employee awards statistics:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
+			}
+		}
+	);
+
+	// Bulk create employee awards tool
+	server.tool(
+		'bulk_create_employee_awards',
+		"Create multiple employee awards in bulk for the authenticated user's organization",
+		{
+			awards: z
+				.array(
+					EmployeeAwardSchema.partial()
+						.required({
+							name: true,
+							year: true,
+							employeeId: true
+						})
+						.describe('Employee award data')
+				)
+				.describe('Array of employee award data to create')
+		},
+		async ({ awards }) => {
+			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Add organization and tenant ID to each award
+				const awardsWithDefaults = awards.map((award) => ({
+					...award,
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+				}));
+
+				const response = await apiClient.post('/api/employee-award/bulk', {
+					awards: awardsWithDefaults
+				});
+
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(response, null, 2)
+						}
+					]
+				};
+			} catch (error) {
+				logger.error('Error bulk creating employee awards:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
+			}
+		}
+	);
+
+	// Bulk update employee awards tool
+	server.tool(
+		'bulk_update_employee_awards',
+		'Update multiple employee awards in bulk',
+		{
+			awards: z
+				.array(
+					z.object({
+						id: z.string().uuid().describe('The employee award ID'),
+						data: EmployeeAwardSchema.partial().describe('The data to update')
+					})
+				)
+				.describe('Array of employee award updates')
+		},
+		async ({ awards }) => {
+			try {
+				const response = await apiClient.put('/api/employee-award/bulk', {
+					awards
+				});
+
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(response, null, 2)
+						}
+					]
+				};
+			} catch (error) {
+				logger.error('Error bulk updating employee awards:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
+			}
+		}
+	);
+
+	// Bulk delete employee awards tool
+	server.tool(
+		'bulk_delete_employee_awards',
+		'Delete multiple employee awards in bulk',
+		{
+			ids: z.array(z.string().uuid()).describe('Array of employee award IDs to delete')
+		},
+		async ({ ids }) => {
+			try {
+				await apiClient.delete('/api/employee-award/bulk', {
+					data: { ids }
+				});
+
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify({ 
+								success: true, 
+								message: `Successfully deleted ${ids.length} employee awards`,
+								deletedIds: ids 
+							}, null, 2)
+						}
+					]
+				};
+			} catch (error) {
+				logger.error('Error bulk deleting employee awards:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
+			}
+		}
+	);
 };

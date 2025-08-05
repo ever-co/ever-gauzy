@@ -530,8 +530,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error assigning contact to employee:', error);
-				throw new Error('Failed to assign contact to employee');
+				logger.error('Error assigning contact to employee:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -565,8 +565,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error unassigning contact from employee:', error);
-				throw new Error('Failed to unassign contact from employee');
+				logger.error('Error unassigning contact from employee:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -602,8 +602,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching contact projects:', error);
-				throw new Error('Failed to fetch contact projects');
+				logger.error('Error fetching contact projects:', sanitizeForLogging(error));
+				throw new Error(sanitizeErrorMessage(error));
 			}
 		}
 	);
