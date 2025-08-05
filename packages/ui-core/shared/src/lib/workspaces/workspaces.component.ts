@@ -95,8 +95,7 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 					// Set the selected workspace locally for immediate UI update
 					this.selected = mappedWorkspaces.find((w) => w.isSelected) || mappedWorkspaces[0];
 				}),
-				catchError((error) => {
-					console.error('Error fetching workspaces:', error);
+				catchError(() => {
 					this.store.setWorkspacesLoading(false, 'Failed to load workspaces');
 					this.toastrService.danger('Failed to load workspaces', 'Error');
 					return of({ workspaces: [], total_workspaces: 0 } as IUserSigninWorkspaceResponse);
