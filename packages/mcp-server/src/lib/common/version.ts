@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import log from 'electron-log';
+import { join } from 'node:path';
+import { Logger } from '@nestjs/common';
+
+const logger = new Logger('Version');
 
 /**
  * @description
@@ -53,7 +55,7 @@ function getVersion(): string {
 		// If no package.json found, return fallback
 		return '0.1.0';
 	} catch (error) {
-		log.error('Failed to read version from package.json:', error);
+		logger.error('Failed to read version from package.json:', error instanceof Error ? error.stack : undefined);
 		return '0.1.0'; // fallback version
 	}
 }

@@ -1,9 +1,11 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
-import log from 'electron-log';
+
+const logger = new Logger('AuthTools');
 
 /**
  * Register authentication tools with the MCP server
@@ -30,9 +32,9 @@ export const registerAuthTools = (server: McpServer) => {
 								type: 'text',
 								text: `✅ Login successful!
 
-User ID: ${authStatus.userId || 'Unknown'}
-Token expires: ${authStatus.tokenExpiresAt?.toISOString() || 'Unknown'}
-Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not authenticated'}`
+								User ID: ${authStatus.userId || 'Unknown'}
+								Token expires: ${authStatus.tokenExpiresAt?.toISOString() || 'Unknown'}
+								Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not authenticated'}`
 							}
 						]
 					};
@@ -47,7 +49,7 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 					};
 				}
 			} catch (error) {
-				log.error('Login tool error:', sanitizeForLogging(error));
+				logger.error('Login tool error:', sanitizeForLogging(error));
 				return {
 					content: [
 						{
@@ -73,7 +75,7 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 				]
 			};
 		} catch (error) {
-			log.error('Logout tool error:', sanitizeForLogging(error));
+			logger.error('Logout tool error:', sanitizeForLogging(error));
 			return {
 				content: [
 					{
@@ -92,12 +94,12 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 
 			const statusText = `🔐 Authentication Status:
 
-Authenticated: ${authStatus.isAuthenticated ? '✅ Yes' : '❌ No'}
-Has Access Token: ${authStatus.hasToken ? '✅ Yes' : '❌ No'}
-Has Refresh Token: ${authStatus.hasRefreshToken ? '✅ Yes' : '❌ No'}
-User ID: ${authStatus.userId || '❌ Not available'}
-Token Expires: ${authStatus.tokenExpiresAt?.toISOString() || '❌ Not available'}
-Auto Login Enabled: ${authStatus.autoLoginEnabled ? '✅ Yes' : '❌ No'}
+			Authenticated: ${authStatus.isAuthenticated ? '✅ Yes' : '❌ No'}
+			Has Access Token: ${authStatus.hasToken ? '✅ Yes' : '❌ No'}
+			Has Refresh Token: ${authStatus.hasRefreshToken ? '✅ Yes' : '❌ No'}
+			User ID: ${authStatus.userId || '❌ Not available'}
+			Token Expires: ${authStatus.tokenExpiresAt?.toISOString() || '❌ Not available'}
+			Auto Login Enabled: ${authStatus.autoLoginEnabled ? '✅ Yes' : '❌ No'}
 
 ${
 	authStatus.isAuthenticated
@@ -114,7 +116,7 @@ ${
 				]
 			};
 		} catch (error) {
-			log.error('Auth status tool error:', sanitizeForLogging(error));
+			logger.error('Auth status tool error:', sanitizeForLogging(error));
 			return {
 				content: [
 					{
@@ -155,7 +157,7 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 				};
 			}
 		} catch (error) {
-			log.error('Token refresh tool error:', sanitizeForLogging(error));
+			logger.error('Token refresh tool error:', sanitizeForLogging(error));
 			return {
 				content: [
 					{
@@ -197,7 +199,7 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 				};
 			}
 		} catch (error) {
-			log.error('Auto-login tool error:', sanitizeForLogging(error));
+			logger.error('Auto-login tool error:', sanitizeForLogging(error));
 			return {
 				content: [
 					{
@@ -209,5 +211,5 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 		}
 	});
 
-	log.info('Authentication tools registered successfully');
+	logger.log('Authentication tools registered successfully');
 };
