@@ -42,7 +42,6 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	ngOnInit() {
 		this._createContextMenus();
 		this._applyTranslationOnChange();
-		this._subscribeToStoreChanges();
 	}
 
 	ngAfterViewInit() {
@@ -103,33 +102,6 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	/**
-	 * Subscribe to store changes for workspaces and loading states
-	 *
-	 * @return {void} This function does not return a value.
-	 */
-	private _subscribeToStoreChanges(): void {
-		// Subscribe to loading state changes
-		this.loading$.pipe(untilDestroyed(this)).subscribe((loading) => {
-			this.loading = loading;
-		});
-
-		// Subscribe to error state changes
-		this.error$.pipe(untilDestroyed(this)).subscribe((error) => {
-			this.error = error;
-		});
-
-		// Subscribe to selected workspace changes
-		this.selectedWorkspace$
-			.pipe(
-				filter((workspace) => !!workspace),
-				untilDestroyed(this)
-			)
-			.subscribe((workspace) => {
-				this.selected = workspace;
-			});
 	}
 
 	/**
