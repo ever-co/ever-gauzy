@@ -217,6 +217,17 @@ export const registerSkillTools = (server: McpServer) => {
 		},
 		async ({ skillId, employeeId }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify skill belongs to organization
+				const skill = await apiClient.get(`/api/skills/${skillId}`, {
+					params: { organizationId: defaultParams.organizationId }
+				});
+
+				if (!skill || (skill as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Skill not found or does not belong to your organization');
+				}
+
 				const response = await apiClient.post(`/api/skills/${skillId}/employees`, {
 					employeeId
 				});
@@ -246,6 +257,17 @@ export const registerSkillTools = (server: McpServer) => {
 		},
 		async ({ skillId, employeeId }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify skill belongs to organization
+				const skill = await apiClient.get(`/api/skills/${skillId}`, {
+					params: { organizationId: defaultParams.organizationId }
+				});
+
+				if (!skill || (skill as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Skill not found or does not belong to your organization');
+				}
+
 				await apiClient.delete(`/api/skills/${skillId}/employees/${employeeId}`);
 
 				return {

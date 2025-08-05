@@ -233,6 +233,14 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ id, status }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify candidate ownership
+				const existing = await apiClient.get(`/api/candidate/${id}`);
+				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot update status of candidates from other organizations');
+				}
+
 				const response = await apiClient.put(`/api/candidate/${id}/status`, { status });
 
 				return {
@@ -260,6 +268,14 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ id, rating }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify candidate ownership
+				const existing = await apiClient.get(`/api/candidate/${id}`);
+				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot rate candidates from other organizations');
+				}
+
 				const response = await apiClient.put(`/api/candidate/${id}/rating`, { rating });
 
 				return {
