@@ -140,6 +140,14 @@ export const registerWarehouseTools = (server: McpServer) => {
 		},
 		async ({ id, warehouse_data }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify warehouse ownership
+				const existing = await apiClient.get(`/api/warehouses/${id}`);
+				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot update warehouses from other organizations');
+				}
+
 				const response = await apiClient.put(`/api/warehouses/${id}`, warehouse_data);
 
 				return {
@@ -166,6 +174,14 @@ export const registerWarehouseTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify warehouse ownership
+				const existing = await apiClient.get(`/api/warehouses/${id}`);
+				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot delete warehouses from other organizations');
+				}
+
 				await apiClient.delete(`/api/warehouses/${id}`);
 
 				return {

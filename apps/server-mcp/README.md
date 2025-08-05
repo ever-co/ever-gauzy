@@ -114,17 +114,17 @@ The desktop app runs the same MCP server as the standalone version, making it co
 
 ```json
 {
-	"mcpServers": {
-		"gauzy": {
-			"command": "node",
-			"args": ["/path/shown/in/desktop/app"],
-			"env": {
-				"API_BASE_URL": "http://localhost:3000",
-				"GAUZY_AUTH_EMAIL": "<your-email>",
-				"GAUZY_AUTH_PASSWORD": "<your-password>"
-			}
-		}
-	}
+"mcpServers": {
+        "gauzy": {
+            "command": "node",
+            "args": ["/path/shown/in/desktop/app"],
+            "env": {
+                "API_BASE_URL": "http://localhost:3000",
+                "GAUZY_AUTH_EMAIL": "<your-email>",
+                "GAUZY_AUTH_PASSWORD": "<your-password>"
+            }
+        }
+    }
 }
 ```
 

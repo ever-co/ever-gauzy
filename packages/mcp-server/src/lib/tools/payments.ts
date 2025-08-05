@@ -296,6 +296,14 @@ export const registerPaymentTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify payment ownership
+				const existing = await apiClient.get(`/api/payments/${id}`);
+				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot delete payments from other organizations');
+				}
+
 				await apiClient.delete(`/api/payments/${id}`);
 
 				return {
@@ -451,6 +459,14 @@ export const registerPaymentTools = (server: McpServer) => {
 		},
 		async ({ id, paymentDate }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify payment ownership
+				const existing = await apiClient.get(`/api/payments/${id}`);
+				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot process payments from other organizations');
+				}
+
 				const processData = {
 					status: 'COMPLETED',
 					...(paymentDate && { paymentDate: new Date(paymentDate) })
@@ -484,6 +500,14 @@ export const registerPaymentTools = (server: McpServer) => {
 		},
 		async ({ id, refundAmount, reason }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify payment ownership
+				const existing = await apiClient.get(`/api/payments/${id}`);
+				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot refund payments from other organizations');
+				}
+
 				const refundData = {
 					status: 'REFUNDED',
 					...(refundAmount && { refundAmount }),

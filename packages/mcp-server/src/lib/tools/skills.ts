@@ -142,6 +142,10 @@ export const registerSkillTools = (server: McpServer) => {
 				if (!existing) {
 					throw new Error('Skill not found');
 				}
+				// Verify organization ownership
+				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot update skills from other organizations');
+				}
 
 				const response = await apiClient.put(`/api/skills/${id}`, skill_data);
 

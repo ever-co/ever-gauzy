@@ -66,7 +66,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching candidates:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to fetch candidates: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -104,7 +104,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching candidate count:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to fetch candidate count: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -143,7 +143,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching candidate:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to fetch candidate by ID: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -181,7 +181,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error creating candidate:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to create candidate: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -196,6 +196,14 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ id, candidate_data }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify candidate ownership
+				const existing = await apiClient.get(`/api/candidate/${id}`);
+				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot update candidates from other organizations');
+				}
+
 				const updateData = convertCandidateDateFields(candidate_data);
 
 				const response = await apiClient.put(`/api/candidate/${id}`, updateData);
@@ -210,7 +218,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error updating candidate:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to update candidate: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -237,7 +245,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error updating candidate status:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to update candidate status: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -264,7 +272,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error rating candidate:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to rate candidate: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -278,6 +286,14 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify candidate ownership
+				const existing = await apiClient.get(`/api/candidate/${id}`);
+				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot delete candidates from other organizations');
+				}
+
 				await apiClient.delete(`/api/candidate/${id}`);
 
 				return {
@@ -290,7 +306,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error deleting candidate:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to delete candidate: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -332,7 +348,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching candidates by position:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to fetch candidates by position: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -360,7 +376,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching candidate skills:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to fetch candidate skills: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -393,7 +409,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error adding candidate skill:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to add candidate skill: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -421,7 +437,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching candidate experience:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to fetch candidate experience: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -456,7 +472,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error adding candidate experience:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to add candidate experience: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -484,7 +500,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching candidate education:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to fetch candidate education: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
@@ -523,7 +539,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error adding candidate education:', sanitizeForLogging(error));
-				throw new Error(sanitizeErrorMessage(error));
+				throw new Error('Failed to add candidate education: ' + sanitizeErrorMessage(error));
 			}
 		}
 	);
