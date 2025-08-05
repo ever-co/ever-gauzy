@@ -160,7 +160,7 @@ The server uses a streamlined authentication approach:
 
 ### Project Structure
 
-```
+```text
 apps/server-mcp/
 ├── src/
 │   ├── electron-main.ts         # Electron main process
