@@ -100,9 +100,6 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 					this.toastrService.danger('Failed to load workspaces', 'Error');
 					return of({ workspaces: [], total_workspaces: 0 } as IUserSigninWorkspaceResponse);
 				}),
-				finalize(() => {
-					// Loading state is managed by store.setWorkspaces() or error handling
-				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
