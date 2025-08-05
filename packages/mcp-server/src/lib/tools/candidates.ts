@@ -378,6 +378,14 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ candidateId }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify candidate ownership
+				const candidate = await apiClient.get(`/api/candidate/${candidateId}`);
+				if ((candidate as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot access skills for candidates from other organizations');
+				}
+
 				const response = await apiClient.get(`/api/candidate-skills`, {
 					params: { candidateId }
 				});
@@ -410,6 +418,14 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ candidateId, skill }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify candidate ownership
+				const candidate = await apiClient.get(`/api/candidate/${candidateId}`);
+				if ((candidate as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot add skills to candidates from other organizations');
+				}
+
 				const response = await apiClient.post('/api/candidate-skills', {
 					candidateId,
 					...skill
@@ -439,6 +455,14 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ candidateId }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify candidate ownership
+				const candidate = await apiClient.get(`/api/candidate/${candidateId}`);
+				if ((candidate as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot access experience for candidates from other organizations');
+				}
+
 				const response = await apiClient.get(`/api/candidate-experience`, {
 					params: { candidateId }
 				});
@@ -473,6 +497,14 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ candidateId, experience }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify candidate ownership
+				const candidate = await apiClient.get(`/api/candidate/${candidateId}`);
+				if ((candidate as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot add experience to candidates from other organizations');
+				}
+
 				const response = await apiClient.post('/api/candidate-experience', {
 					candidateId,
 					...experience
@@ -502,6 +534,14 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ candidateId }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify candidate ownership
+				const candidate = await apiClient.get(`/api/candidate/${candidateId}`);
+				if ((candidate as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot access education for candidates from other organizations');
+				}
+
 				const response = await apiClient.get(`/api/candidate-educations`, {
 					params: { candidateId }
 				});
@@ -537,6 +577,14 @@ export const registerCandidateTools = (server: McpServer) => {
 		},
 		async ({ candidateId, education }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
+
+				// Verify candidate ownership
+				const candidate = await apiClient.get(`/api/candidate/${candidateId}`);
+				if ((candidate as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Cannot add education to candidates from other organizations');
+				}
+
 				const educationData = {
 					...education,
 					candidateId,

@@ -68,6 +68,10 @@ export const registerSkillTools = (server: McpServer) => {
 				};
 
 				const response = await apiClient.get(`/api/skills/${id}`, { params });
+				// Verify the returned skill belongs to the user's organization
+				if (response && (response as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Skill not found or does not belong to your organization');
+				}
 
 				return {
 					content: [
@@ -228,6 +232,15 @@ export const registerSkillTools = (server: McpServer) => {
 					throw new Error('Unauthorized: Skill not found or does not belong to your organization');
 				}
 
+				// Verify employee belongs to the same organization
+				const employee = await apiClient.get(`/api/employees/${employeeId}`, {
+					params: { organizationId: defaultParams.organizationId }
+				});
+
+				if (!employee || (employee as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Employee not found or does not belong to your organization');
+				}
+
 				const response = await apiClient.post(`/api/skills/${skillId}/employees`, {
 					employeeId
 				});
@@ -267,6 +280,14 @@ export const registerSkillTools = (server: McpServer) => {
 				if (!skill || (skill as { organizationId: string }).organizationId !== defaultParams.organizationId) {
 					throw new Error('Unauthorized: Skill not found or does not belong to your organization');
 				}
+				// Verify employee belongs to the same organization
+				const employee = await apiClient.get(`/api/employees/${employeeId}`, {
+					params: { organizationId: defaultParams.organizationId }
+				});
+
+				if (!employee || (employee as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Employee not found or does not belong to your organization');
+				}
 
 				await apiClient.delete(`/api/skills/${skillId}/employees/${employeeId}`);
 
@@ -297,6 +318,15 @@ export const registerSkillTools = (server: McpServer) => {
 		async ({ employeeId, page = 1, limit = 10 }) => {
 			try {
 				const defaultParams = validateOrganizationContext();
+
+				// Verify employee belongs to the organization
+				const employee = await apiClient.get(`/api/employees/${employeeId}`, {
+					params: { organizationId: defaultParams.organizationId }
+				});
+
+				if (!employee || (employee as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+					throw new Error('Unauthorized: Employee not found or does not belong to your organization');
+				}
 
 				const params = {
 					organizationId: defaultParams.organizationId,
