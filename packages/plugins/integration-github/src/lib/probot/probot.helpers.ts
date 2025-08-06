@@ -49,7 +49,7 @@ export const parseConfig = async (config: ProbotConfig): Promise<Record<string, 
 /**
  * Create and configure a Probot instance.
  * @param config - Probot configuration.
- * @returns Promise<any> - A configured Probot instance.
+ * @returns Promise<Probot> - A configured Probot instance.
  */
 export const createProbot = async (config: ProbotConfig): Promise<Probot> => {
 	try {
@@ -83,7 +83,7 @@ export const createSmee = async (config: ProbotConfig): Promise<SmeeClient> => {
 /**
  * Create and configure an Octokit instance for GitHub API requests.
  * @param config - Configuration options for Octokit.
- * @returns Promise<any> - An Octokit instance.
+ * @returns Promise<Octokit> - An Octokit instance.
  */
 export const createOctokit = async (config: OctokitConfig): Promise<Octokit> => {
 	try {
