@@ -1,5 +1,7 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as chalk from 'chalk';
+import { App } from 'octokit';
+import type { ResponseHeaders } from '@octokit/types';
 import { parseConfig } from './probot.helpers';
 import { ModuleProviders, ProbotConfig } from './probot.types';
 
@@ -8,14 +10,14 @@ const GITHUB_API_VERSION = process.env.GAUZY_GITHUB_API_VERSION || '2022-11-28';
 export interface OctokitResponse<T> {
 	data: T; // The response data received from the GitHub API.
 	status: number; // The HTTP status code of the response (e.g., 200, 404, etc.).
-	headers: any; // The headers included in the response.
+	headers: ResponseHeaders; // The headers included in the response.
 	[key: string]: any; // Additional properties may be present depending on the specific response.
 }
 
 @Injectable()
 export class OctokitService implements OnModuleInit {
 	private readonly logger = new Logger('OctokitService');
-	private app: any; // Octokit App instance (dynamically imported)
+	private app: InstanceType<typeof App> | undefined; // Octokit App instance (dynamically imported)
 
 	constructor(
 		@Inject(ModuleProviders.ProbotConfig)
@@ -54,7 +56,7 @@ export class OctokitService implements OnModuleInit {
 	 *
 	 * @returns
 	 */
-	getApp(): any {
+	getApp(): InstanceType<typeof App> | undefined {
 		return this.app;
 	}
 

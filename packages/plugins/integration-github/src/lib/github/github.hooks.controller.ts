@@ -1,10 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { Public } from '@gauzy/common';
+import type { Context as ProbotContext } from 'probot';
 import { Hook } from '../probot/hook.decorator';
 import { GithubHooksService } from './github.hooks.service';
-
-// Type alias for Probot Context (to avoid ESM import issues)
-type ProbotContext = any;
 
 @Public()
 @Controller('/integration/github/webhook')

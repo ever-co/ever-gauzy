@@ -11,6 +11,7 @@ import {
 import SmeeClient from 'smee-client';
 import { isEmpty } from 'underscore';
 import * as chalk from 'chalk';
+import type { Probot } from 'probot';
 import { v4 } from 'uuid';
 import { ModuleProviders, ProbotConfig } from './probot.types';
 import { createProbot, createSmee } from './probot.helpers';
@@ -20,7 +21,7 @@ import { HookMetadataAccessor } from './hook-metadata.accessor';
 export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, OnApplicationShutdown {
 	private readonly logger = new Logger('ProbotDiscovery');
 	private readonly hooks: Map<string, any>;
-	private probot: any; // Probot instance (dynamically imported)
+	private probot: Probot | null = null; // Probot instance (dynamically imported)
 	private smee: SmeeClient;
 
 	constructor(

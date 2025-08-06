@@ -1,5 +1,7 @@
 import SmeeClient from 'smee-client';
 import * as chalk from 'chalk';
+import type { Probot } from 'probot';
+import type { Octokit } from '@octokit/rest';
 import { OctokitConfig, ProbotConfig } from './probot.types';
 
 // GITHUB API URL
@@ -49,17 +51,11 @@ export const parseConfig = async (config: ProbotConfig): Promise<Record<string, 
  * @param config - Probot configuration.
  * @returns Promise<any> - A configured Probot instance.
  */
-export const createProbot = async (config: ProbotConfig): Promise<any> => {
+export const createProbot = async (config: ProbotConfig): Promise<Probot> => {
 	try {
 		// Dynamic import for ESM module compatibility
 		const { Probot } = await import('probot');
 		const parsedConfig = await parseConfig(config);
-
-		const logging = false;
-
-		if (logging) {
-			console.log(chalk.magenta(`Probot Configuration ${JSON.stringify(parsedConfig)}`));
-		}
 
 		return new Probot({
 			...parsedConfig // Spread the parsed configuration properties
@@ -89,7 +85,7 @@ export const createSmee = async (config: ProbotConfig): Promise<SmeeClient> => {
  * @param config - Configuration options for Octokit.
  * @returns Promise<any> - An Octokit instance.
  */
-export const createOctokit = async (config: OctokitConfig): Promise<any> => {
+export const createOctokit = async (config: OctokitConfig): Promise<Octokit> => {
 	try {
 		// Dynamic imports for ESM modules
 		const { Octokit } = await import('@octokit/rest');
