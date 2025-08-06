@@ -17,7 +17,7 @@ export interface OctokitResponse<T> {
 @Injectable()
 export class OctokitService implements OnModuleInit {
 	private readonly logger = new Logger('OctokitService');
-	private app: InstanceType<typeof App> | undefined; // Octokit App instance (dynamically imported)
+	private app?: InstanceType<typeof App>; // Octokit App instance (dynamically imported)
 
 	constructor(
 		@Inject(ModuleProviders.ProbotConfig)
