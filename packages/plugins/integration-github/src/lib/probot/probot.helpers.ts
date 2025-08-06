@@ -1,5 +1,4 @@
 import SmeeClient from 'smee-client';
-import * as chalk from 'chalk';
 import type { Probot } from 'probot';
 import type { Octokit } from '@octokit/rest';
 import { OctokitConfig, ProbotConfig } from './probot.types';

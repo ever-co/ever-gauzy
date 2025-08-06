@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as chalk from 'chalk';
-import { App } from 'octokit';
+import type { App } from 'octokit';
 import type { ResponseHeaders } from '@octokit/types';
 import { parseConfig } from './probot.helpers';
 import { ModuleProviders, ProbotConfig } from './probot.types';
