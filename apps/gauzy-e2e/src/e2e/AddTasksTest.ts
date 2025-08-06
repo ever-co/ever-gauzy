@@ -18,8 +18,7 @@ let password = ' ';
 let employeeEmail = ' ';
 let imgUrl = ' ';
 
-//! waitToLoad. No request ever occurred.
-describe.skip('Add tasks test', () => {
+describe('Add tasks test', { testIsolation: false }, () => {
 	before(() => {
 		firstName = faker.person.firstName();
 		lastName = faker.person.lastName();
@@ -29,12 +28,14 @@ describe.skip('Add tasks test', () => {
 		imgUrl = faker.image.avatar();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-	});
-	it('Should be able to add new task', () => {
 		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
 		CustomCommands.addEmployee(manageEmployeesPage, firstName, lastName, username, employeeEmail, password, imgUrl);
-		cy.visit('/#/pages/tasks/dashboard');
+		cy.visitAndWait('/#/pages/tasks/dashboard');
+		addTaskPage.clearTasksTable();
+	});
+
+	it('Should be able to add new task', () => {
 		addTaskPage.gridBtnExists();
 		addTaskPage.gridBtnClick(1);
 		addTaskPage.addTaskButtonVisible();
@@ -62,8 +63,10 @@ describe.skip('Add tasks test', () => {
 		addTaskPage.saveTaskButtonVisible();
 		addTaskPage.clickSaveTaskButton();
 		addTaskPage.waitMessageToHide();
+		addTaskPage.waitToLoad();
 		addTaskPage.verifyTaskExists(AddTasksPageData.defaultTaskTitle);
 	});
+
 	it('Should be able to duplicate task', () => {
 		addTaskPage.tasksTableVisible();
 		addTaskPage.selectTasksTableRow(0);
@@ -71,18 +74,11 @@ describe.skip('Add tasks test', () => {
 		addTaskPage.clickDuplicateTaskButton(0);
 		addTaskPage.confirmDuplicateTaskButtonVisible();
 		addTaskPage.clickConfirmDuplicateTaskButton();
-	});
-	// it('Should be able to delete task', () => {
-	// 	addTaskPage.waitMessageToHide();
-	// 	addTaskPage.tasksTableVisible();
-	// 	addTaskPage.selectTasksTableRow(0);
-	// 	addTaskPage.deleteTaskButtonVisible();
-	// 	addTaskPage.clickDeleteTaskButton();
-	// 	addTaskPage.confirmDeleteTaskButtonVisible();
-	// 	addTaskPage.clickConfirmDeleteTaskButton();
-	// });
-	it('Should be able to edit task', () => {
 		addTaskPage.waitMessageToHide();
+	});
+
+	it('Should be able to edit task', () => {
+		addTaskPage.waitToLoad();
 		addTaskPage.tasksTableVisible();
 		addTaskPage.selectTasksTableRow(0);
 		addTaskPage.duplicateTaskButtonVisible();
@@ -106,28 +102,23 @@ describe.skip('Add tasks test', () => {
 		addTaskPage.saveTaskButtonVisible();
 		addTaskPage.clickSaveTaskButton();
 		addTaskPage.waitMessageToHide();
+		addTaskPage.waitToLoad();
 		addTaskPage.verifyTaskExists(AddTasksPageData.editTaskTitle);
 	});
+
 	it('Should be able to delete task', () => {
 		cy.on('uncaught:exception', (err, runnable) => {
 			return false;
 		});
-		addTaskPage.selectTasksTableRow(0);
-		addTaskPage.duplicateTaskButtonVisible();
-		addTaskPage.clickDuplicateTaskButton(1);
-		addTaskPage.confirmDuplicateTaskButtonVisible();
-		addTaskPage.clickConfirmDuplicateTaskButton();
-		addTaskPage.selectTasksTableRow(0);
+		// Assumes the task exists since test cases are not isolated
+		addTaskPage.countTasksWithText(AddTasksPageData.editTaskTitle);
+		addTaskPage.selectTaskTableRowByText(AddTasksPageData.editTaskTitle);
 		addTaskPage.deleteTaskButtonVisible();
 		addTaskPage.clickDeleteTaskButton();
 		addTaskPage.confirmDeleteTaskButtonVisible();
 		addTaskPage.clickConfirmDeleteTaskButton();
 		addTaskPage.waitMessageToHide();
-		addTaskPage.verifyElementIsDeleted(AddTasksPageData.editTaskTitle);
-		addTaskPage.selectTasksTableRow(0);
-		addTaskPage.deleteTaskButtonVisible();
-		addTaskPage.clickDeleteTaskButton();
-		addTaskPage.confirmDeleteTaskButtonVisible();
-		addTaskPage.clickConfirmDeleteTaskButton();
+		addTaskPage.waitToLoad();
+		addTaskPage.verifyOneTaskWasDeleted(AddTasksPageData.editTaskTitle);
 	});
 });

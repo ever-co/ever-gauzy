@@ -49,15 +49,19 @@ export const enterNewLevelData = (data) => {
 };
 
 export const tagsMultiSelectVisible = () => {
-	verifyElementIsVisible(AddEmployeeLevelPage.tagsSelectCss);
+	verifyElementIsVisible(AddEmployeeLevelPage.tagsSelectInputCss);
 };
 
 export const clickTagsMultiSelect = () => {
-	clickButton(AddEmployeeLevelPage.tagsSelectCss);
+	clickButton(AddEmployeeLevelPage.tagsSelectInputCss);
 };
 
 export const selectTagsFromDropdown = (index) => {
 	clickButtonByIndex(AddEmployeeLevelPage.tagsSelectOptionCss, index);
+};
+
+export const closeTagsMultiSelect = () => {
+	clickButton(AddEmployeeLevelPage.tagsSelectArrowCss);
 };
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {

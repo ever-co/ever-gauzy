@@ -18,9 +18,9 @@ let username = ' ';
 let password = ' ';
 let employeeEmail = ' ';
 let imgUrl = ' ';
+const tagName = `Test-${Date.now().toString().slice(-5)}`;
 
-//! waitToLoad
-describe.skip('Manage employees test', () => {
+describe('Manage employees test', { testIsolation: false }, () => {
 	before(() => {
 		email = faker.internet.exampleEmail();
 		secEmail = faker.internet.exampleEmail();
@@ -33,18 +33,12 @@ describe.skip('Manage employees test', () => {
 		imgUrl = faker.image.avatar();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+		CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
+		CustomCommands.addTag(organizationTagsUserPage, { ...OrganizationTagsPageData, tagName });
+		manageEmployeesPage.visit();
 	});
 
 	it('Should be able to invite employees', () => {
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
-		cy.visit('/#/pages/employees');
 		manageEmployeesPage.gridBtnExists();
 		manageEmployeesPage.gridBtnClick(1);
 		manageEmployeesPage.inviteButtonVisible();
@@ -54,14 +48,14 @@ describe.skip('Manage employees test', () => {
 		manageEmployeesPage.enterEmailData(secEmail);
 		manageEmployeesPage.dateInputVisible();
 		manageEmployeesPage.enterDateData();
+		manageEmployeesPage.setExpirationTime('1 Day');
 		manageEmployeesPage.clickKeyboardButtonByKeyCode(9);
 		manageEmployeesPage.selectProjectDropdownVisible();
 		manageEmployeesPage.clickProjectDropdown();
-		manageEmployeesPage.selectProjectFromDropdown(
-			ManageEmployeesPageData.defaultProject
-		);
+		manageEmployeesPage.selectProjectFromDropdown(ManageEmployeesPageData.defaultProject);
 		manageEmployeesPage.sendInviteButtonVisible();
 		manageEmployeesPage.clickSendInviteButton();
+		manageEmployeesPage.waitMessageToHide();
 	});
 	it('Should be able to add new employee', () => {
 		manageEmployeesPage.addEmployeeButtonVisible();
@@ -81,7 +75,7 @@ describe.skip('Manage employees test', () => {
 		manageEmployeesPage.enterPasswordInputData(password);
 		manageEmployeesPage.tagsDropdownVisible();
 		manageEmployeesPage.clickTagsDropdown();
-		manageEmployeesPage.selectTagFromDropdown(0);
+		manageEmployeesPage.selectTagFromDropdownByText(tagName);
 		manageEmployeesPage.clickCardBody();
 		manageEmployeesPage.imageInputVisible();
 		manageEmployeesPage.enterImageDataUrl(imgUrl);
@@ -92,9 +86,11 @@ describe.skip('Manage employees test', () => {
 		manageEmployeesPage.lastStepButtonVisible();
 		manageEmployeesPage.clickLastStepButton();
 		manageEmployeesPage.waitMessageToHide();
+		manageEmployeesPage.filterByTag(tagName);
 		manageEmployeesPage.verifyEmployeeExists(`${firstName} ${lastName}`);
 	});
 	it('Should be able to edit employee', () => {
+		manageEmployeesPage.filterByTag(tagName);
 		manageEmployeesPage.tableRowVisible();
 		manageEmployeesPage.selectTableRow(0);
 		manageEmployeesPage.editButtonVisible();
@@ -109,9 +105,7 @@ describe.skip('Manage employees test', () => {
 		manageEmployeesPage.enterLastNameEditInputData(lastName);
 		manageEmployeesPage.preferredLanguageDropdownVisible();
 		manageEmployeesPage.clickPreferredLanguageDropdown();
-		manageEmployeesPage.selectLanguageFromDropdown(
-			ManageEmployeesPageData.preferredLanguage
-		);
+		manageEmployeesPage.selectLanguageFromDropdown(ManageEmployeesPageData.preferredLanguage);
 		manageEmployeesPage.saveEditButtonVisible();
 		manageEmployeesPage.clickSaveEditButton();
 		manageEmployeesPage.backButtonVisible();
@@ -119,39 +113,44 @@ describe.skip('Manage employees test', () => {
 	});
 	it('Should be able to end work', () => {
 		manageEmployeesPage.waitMessageToHide();
+		manageEmployeesPage.filterByTag(tagName);
 		manageEmployeesPage.selectTableRow(0);
 		manageEmployeesPage.endWorkButtonVisible();
 		manageEmployeesPage.clickEndWorkButton();
 		manageEmployeesPage.confirmEndWorkButtonVisible();
 		manageEmployeesPage.clickConfirmEndWorkButton();
+		manageEmployeesPage.waitMessageToHide();
 	});
 	it('Should be able to delete employee', () => {
-		manageEmployeesPage.waitMessageToHide();
+		manageEmployeesPage.filterByTag(tagName);
 		manageEmployeesPage.selectTableRow(0);
 		manageEmployeesPage.deleteButtonVisible();
 		manageEmployeesPage.clickDeleteButton();
 		manageEmployeesPage.confirmDeleteButtonVisible();
 		manageEmployeesPage.clickConfirmDeleteButton();
 		manageEmployeesPage.waitMessageToHide();
+		manageEmployeesPage.filterByTag(tagName);
 		manageEmployeesPage.verifyEmployeeIsDeleted(`${firstName} ${lastName}`);
 	});
 	it('Should be able to copy invite link', () => {
-		manageEmployeesPage.manageInvitesButtonVisible();
 		manageEmployeesPage.clickManageInviteButton();
 		manageEmployeesPage.selectTableRow(0);
 		manageEmployeesPage.copyLinkButtonVisible();
 		manageEmployeesPage.clickCopyLinkButton();
+		manageEmployeesPage.waitMessageToHide();
+		manageEmployeesPage.selectTableRow(0); //unselect
 	});
 	it('Should be able to resend invite', () => {
-		manageEmployeesPage.waitMessageToHide();
+		manageEmployeesPage.clickManageInviteButton();
 		manageEmployeesPage.selectTableRow(0);
 		manageEmployeesPage.resendInviteButtonVisible();
 		manageEmployeesPage.clickResendInviteButton();
 		manageEmployeesPage.confirmResendInviteButtonVisible();
 		manageEmployeesPage.clickConfirmResendInviteButton();
+		manageEmployeesPage.waitMessageToHide();
 	});
 	it('Should be able to delete invite', () => {
-		manageEmployeesPage.waitMessageToHide();
+		manageEmployeesPage.clickManageInviteButton();
 		manageEmployeesPage.selectTableRow(0);
 		manageEmployeesPage.deleteInviteButtonVisible();
 		manageEmployeesPage.clickDeleteInviteButton();

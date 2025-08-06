@@ -11,10 +11,12 @@ import {
 	verifyText,
 	verifyTextNotExisting,
 	verifyByLength,
-	wait
-
+	wait,
+	waitElementToShowAndHide,
+	closeCkeNotification
 } from '../utils/util';
 import { AddTaskPage } from '../pageobjects/AddTasksPageObject';
+import { interceptAllApiRequests, waitForAllApiRequests } from '../utils';
 
 export const gridBtnExists = () => {
 	verifyElementIsVisible(AddTaskPage.gridButtonCss);
@@ -57,10 +59,7 @@ export const selectEmployeeDropdownOption = (index) => {
 };
 
 export const selectEmployeeFromDropdownByName = (name) => {
-	clickElementByText(
-		AddTaskPage.selectEmployeeDropdownOptionCss,
-		name
-	);
+	clickElementByText(AddTaskPage.selectEmployeeDropdownOptionCss, name);
 };
 
 export const addTitleInputVisible = () => {
@@ -138,16 +137,25 @@ export const taskDescriptionTextareaVisible = () => {
 };
 
 export const enterTaskDescriptionTextareaData = (data) => {
-	clearField(AddTaskPage.descriptionTextareaCss);
 	enterInput(AddTaskPage.descriptionTextareaCss, data);
 };
 
 export const saveTaskButtonVisible = () => {
+	closeCkeNotification();
 	verifyElementIsVisible(AddTaskPage.saveNewTaskButtonCss);
 };
 
 export const clickSaveTaskButton = () => {
+	closeCkeNotification();
 	clickButton(AddTaskPage.saveNewTaskButtonCss);
+};
+
+export const countTasksWithText = (text) => {
+	cy.get(AddTaskPage.selectTableRowCss)
+		.filter(`:contains(${text})`)
+		.then((rows) => {
+			cy.wrap({ [text]: rows.length }).as('tasksCount');
+		});
 };
 
 export const tasksTableVisible = () => {
@@ -156,6 +164,10 @@ export const tasksTableVisible = () => {
 
 export const selectTasksTableRow = (index) => {
 	clickButtonByIndex(AddTaskPage.selectTableRowCss, index);
+};
+
+export const selectTaskTableRowByText = (text) => {
+	clickElementByText(AddTaskPage.selectTableRowCss, text);
 };
 
 export const selectFirstTaskTableRow = (index) => {
@@ -183,14 +195,18 @@ export const duplicateTaskButtonVisible = () => {
 };
 
 export const clickDuplicateTaskButton = (index) => {
-	clickButtonByIndex(AddTaskPage.duplicateTaskButtonCss, index);
+	interceptAllApiRequests();
+	clickButton(AddTaskPage.duplicateTaskButtonCss, index);
+	waitForAllApiRequests();
 };
 
 export const confirmDuplicateTaskButtonVisible = () => {
+	closeCkeNotification();
 	verifyElementIsVisible(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
 
 export const clickConfirmDuplicateTaskButton = () => {
+	closeCkeNotification();
 	clickButton(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
 
@@ -204,15 +220,17 @@ export const clickEditTaskButton = (index) => {
 };
 
 export const confirmEditTaskButtonVisible = () => {
+	closeCkeNotification();
 	verifyElementIsVisible(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
 
 export const clickConfirmEditTaskButton = () => {
+	closeCkeNotification();
 	clickButton(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
 
 export const waitMessageToHide = () => {
-	waitElementToHide(AddTaskPage.toastrMessageCss);
+	waitElementToShowAndHide(AddTaskPage.toastrMessageCss);
 };
 
 export const verifyTaskExists = (text) => {
@@ -221,6 +239,16 @@ export const verifyTaskExists = (text) => {
 
 export const verifyElementIsDeleted = (text) => {
 	verifyTextNotExisting(AddTaskPage.verifyTextCss, text);
+};
+
+export const verifyOneTaskWasDeleted = (text) => {
+	cy.get('@tasksCount').then((count) => {
+		cy.document().then((doc) => {
+			const rows = doc.querySelectorAll(AddTaskPage.selectTableRowCss);
+			const filteredRows = Array.from(rows).filter((row) => row.textContent?.includes(text));
+			expect(filteredRows.length).to.equal((count as any)[text] - 1);
+		});
+	});
 };
 
 export const verifyTitleInput = () => {
@@ -238,4 +266,30 @@ export const clearSearchInput = () => {
 
 export const verifySearchResult = (length: number) => {
 	verifyByLength(AddTaskPage.selectTableRowCss, length);
+};
+
+export const waitToLoad = () => {
+	waitElementToHide(AddTaskPage.loadingSpinnerCss, 3000);
+};
+
+export const clearTasksTable = () => {
+	const deleteAllRows = () => {
+		waitToLoad();
+		cy.document().then((doc) => {
+			const rowCount = doc.querySelectorAll(AddTaskPage.selectTableRowCss).length;
+			cy.log('rowCount', rowCount);
+
+			if (rowCount > 0) {
+				selectTasksTableRow(0);
+				clickDeleteTaskButton();
+				clickConfirmDeleteTaskButton();
+				waitMessageToHide();
+
+				// Recursively call the function to continue deleting
+				deleteAllRows();
+			}
+		});
+	};
+
+	deleteAllRows();
 };

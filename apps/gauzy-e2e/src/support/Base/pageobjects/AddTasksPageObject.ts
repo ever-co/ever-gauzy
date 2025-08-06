@@ -1,7 +1,8 @@
 export const AddTaskPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addTaskButtonCss: 'button[status="success"]',
-	selectProjectDropdownCss: 'ga-project-selector.ng-untouched > .ng-select-taggable > .ng-select-container > .ng-value-container > .ng-input > input',
+	selectProjectDropdownCss:
+		'ga-project-selector.ng-untouched > .ng-select-taggable > .ng-select-container > .ng-value-container > .ng-input > input',
 	selectProjectDropdownOptionCss: 'div.ng-dropdown-panel-items.scroll-host',
 	editTaskButtonCss: '.ng-star-inserted .appearance-filled.ng-star-inserted.nb-transition:nth-of-type(2)',
 	duplicateTaskButtonCss: '.ng-star-inserted .nb-transition:nth-of-type(3)',
@@ -15,7 +16,7 @@ export const AddTaskPage = {
 	confirmEditTaskButtonCss: '',
 	confirmDeleteTaskButtonCss: 'button.mr-3.ml-3',
 	addTitleInputCss: '[formControlName="title"]',
-	selectEmployeeMultiSelectCss: 'button[class="select-button placeholder"]',
+	selectEmployeeMultiSelectCss: 'nb-select[ng-reflect-placeholder="Add or Remove Employees"] button',
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
 	dueDateInputCss: '[formControlName="dueDate"]',
 	estimateDaysInputCss: '[formControlName="estimateDays"]',
@@ -23,8 +24,8 @@ export const AddTaskPage = {
 	estimateMinsInputCss: '[formControlName="estimateMinutes"]',
 	descriptionTextareaCss: '[formControlName="description"]',
 	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]',
-	verifyTextCss:
-		'[ng-reflect-settings] [ng-reflect-ng-class="[object Object]"]:nth-of-type(1) .ng-star-inserted:nth-of-type(2) div:nth-of-type(1) > .ng-star-inserted:nth-of-type(2)',
+	verifyTextCss: '[ng-reflect-settings] tr td:nth-of-type(3)',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	searchTitleInputCss: 'ng-component > input[placeholder="Title"]'
+	searchTitleInputCss: 'ng-component > input[placeholder="Title"]',
+	loadingSpinnerCss: '.nb-spinner-container'
 };

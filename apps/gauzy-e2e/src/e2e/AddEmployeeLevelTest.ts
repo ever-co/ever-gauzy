@@ -16,10 +16,7 @@ describe('Add employee level test', () => {
 	});
 
 	it('Should be able to add new employee level', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
+		CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
 		cy.visit('/#/pages/employees/employee-level');
 		addEmployeeLevelPage.gridBtnExists();
 		addEmployeeLevelPage.gridBtnClick(1);
@@ -30,6 +27,7 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.tagsMultiSelectVisible();
 		addEmployeeLevelPage.clickTagsMultiSelect();
 		addEmployeeLevelPage.selectTagsFromDropdown(0);
+		addEmployeeLevelPage.closeTagsMultiSelect();
 		addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeeLevelPage.saveNewLevelButtonVisible();
 		addEmployeeLevelPage.clickSaveNewLevelButton();
@@ -47,12 +45,11 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.editEmployeeLevelButtonVisible();
 		addEmployeeLevelPage.clickEditEmployeeLevelButton();
 		addEmployeeLevelPage.editEmployeeLevelInpuVisible();
-		addEmployeeLevelPage.enterEditLevelData(
-			AddEmployeeLevelPageData.levelF
-		);
+		addEmployeeLevelPage.enterEditLevelData(AddEmployeeLevelPageData.levelF);
 		addEmployeeLevelPage.tagsMultiSelectVisible();
 		addEmployeeLevelPage.clickTagsMultiSelect();
 		addEmployeeLevelPage.selectTagsFromDropdown(0);
+		addEmployeeLevelPage.closeTagsMultiSelect();
 		addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeeLevelPage.saveNewLevelButtonVisible();
 		addEmployeeLevelPage.clickSaveNewLevelButton();
@@ -73,6 +70,7 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.tagsMultiSelectVisible();
 		addEmployeeLevelPage.clickTagsMultiSelect();
 		addEmployeeLevelPage.selectTagsFromDropdown(0);
+		addEmployeeLevelPage.closeTagsMultiSelect();
 		addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeeLevelPage.saveNewLevelButtonVisible();
 		addEmployeeLevelPage.clickSaveNewLevelButton();
@@ -82,9 +80,7 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.clickDeleteLevelButton();
 		addEmployeeLevelPage.confirmDeleteButtonVisible();
 		addEmployeeLevelPage.clickConfirmDeleteLevelButton();
-		addEmployeeLevelPage.verifyElementIsDeleted(
-			AddEmployeeLevelPageData.levelE
-		);
+		addEmployeeLevelPage.verifyElementIsDeleted(AddEmployeeLevelPageData.levelE);
 		addEmployeeLevelPage.waitMessageToHide();
 		addEmployeeLevelPage.clickRowEmployeeLevel();
 		addEmployeeLevelPage.deleteLevelButtonVisible();

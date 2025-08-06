@@ -13,18 +13,24 @@
 // https://on.cypress.io/configuration
 // ***********************************************************
 
+//testing library
+import '@testing-library/cypress/add-commands';
+/// <reference types="@testing-library/cypress" />
+
 declare global {
-    // eslint-disable-next-line @typescript-eslint/no-namespace
-    namespace Cypress {
-        // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
-        interface Chainable {
-            // Add custom commands here
-        }
-    }
+	// eslint-disable-next-line @typescript-eslint/no-namespace
+	namespace Cypress {
+		interface Chainable {
+			// Add custom commands here
+			visitAndWait(url: string, options?: Partial<VisitOptions>): Chainable<JQuery<HTMLElement>>;
+			reloadAndWait(): Chainable<JQuery<HTMLElement>>;
+		}
+	}
 }
 
 // Import commands.js using ES2015 syntax:
 import './commands';
+import './cyCommands';
 
 Cypress.on('uncaught:exception', (err, runnable) => {
     // returning false here prevents Cypress from

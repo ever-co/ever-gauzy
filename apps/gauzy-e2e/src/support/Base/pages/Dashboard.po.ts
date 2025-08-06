@@ -11,8 +11,8 @@ export const clickUserName = () => {
 
 export const verifyAccountingDashboard = () => {
 	verifyElementIsVisible(DashboardPage.settingBlockCss);
-}
+};
 
 export const verifyAccountingDashboardIfVisible = () => {
-	verifyElementIfVisible(DashboardPage.childerElementCss, DashboardPage.settingBlockCssTwo)
-}
+	verifyElementIfVisible(DashboardPage.childerElementCss, DashboardPage.settingBlockCssTwo);
+};
