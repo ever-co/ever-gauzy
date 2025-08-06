@@ -96,6 +96,7 @@ export class ViewTimeLogModalComponent implements OnInit {
 		if (!this.organization) {
 			return;
 		}
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 		const { employeeId, tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -103,7 +104,8 @@ export class ViewTimeLogModalComponent implements OnInit {
 			await this.timeTrackerService.checkTimerStatus({
 				organizationId,
 				tenantId,
-				source: TimeLogSourceEnum.WEB_TIMER
+				source: TimeLogSourceEnum.WEB_TIMER,
+				timeZone
 			});
 		}
 	}

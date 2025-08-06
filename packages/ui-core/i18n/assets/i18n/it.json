@@ -3619,6 +3619,8 @@
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "è stato raggiunto. Contatta l'amministratore di sistema per modificare i limiti.",
 			"WORKED_THIS_WEEK": "Ore lavorate questa settimana",
 			"WEEKLY_LIMIT": "Limite settimanale",
+			"WARNING_RELOAD_TIMER_SOON": "Avviso: Il timer si sta per ricaricare per il nuovo giorno...",
+			"WARNING_TIMER_RELOADING": "Avviso: Il timer si sta ricaricando per il nuovo giorno. Attendere qualche secondo...",
 			"ERRORS": "Controlla il modulo per errori",
 			"PROJECT_LOAD": "Impossibile caricare progetti",
 			"COPIED": "Link copiato negli appunti",

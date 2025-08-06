@@ -526,6 +526,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 			return;
 		}
 
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 		const { employeeId, tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -534,7 +535,8 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 				await this._timeTrackerService.checkTimerStatus({
 					organizationId,
 					tenantId,
-					source: TimeLogSourceEnum.WEB_TIMER
+					source: TimeLogSourceEnum.WEB_TIMER,
+					timeZone
 				});
 			} catch (error) {
 				// Handle the error or display a message if needed

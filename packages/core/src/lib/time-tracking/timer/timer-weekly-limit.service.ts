@@ -1,5 +1,5 @@
 import { Injectable, ConflictException, Logger } from '@nestjs/common';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 import { ITimeLog, IEmployee, IWeeklyLimitStatus, TimeErrorsEnum } from '@gauzy/contracts';
 import { StatisticService } from '../statistic/statistic.service';
 
@@ -16,13 +16,29 @@ export class TimerWeeklyLimitService {
 	 * @param refDate
 	 * @returns
 	 */
-	async checkWeeklyLimit(employee: IEmployee, refDate?: Date, ignoreException = false): Promise<IWeeklyLimitStatus> {
+	async checkWeeklyLimit(
+		employee: IEmployee,
+		refDate?: Date,
+		timeZone?: string,
+		ignoreException = false
+	): Promise<IWeeklyLimitStatus> {
+		if (!timeZone) {
+			timeZone = 'UTC';
+			throw new Error(`TimeZone is undefined`);
+		}
+		const refMomentLocal = moment.utc(refDate).tz(timeZone);
+
+		const weekStartLocal = refMomentLocal.clone().startOf('isoWeek');
+		const weekEndLocal = refMomentLocal.clone().endOf('isoWeek');
+
+		const weekStartUTC = weekStartLocal.clone().utc().toDate();
+		const weekEndUTC = weekEndLocal.clone().utc().toDate();
 		const statistics = await this._statisticService.getWeeklyStatisticsActivities({
 			organizationId: employee.organizationId,
 			tenantId: employee.tenantId,
 			employeeId: employee.id,
-			startDate: moment.utc(refDate).startOf('isoWeek').toDate(),
-			endDate: moment.utc(refDate).endOf('isoWeek').toDate(),
+			startDate: weekStartUTC,
+			endDate: weekEndUTC,
 			onlyMe: true
 		});
 

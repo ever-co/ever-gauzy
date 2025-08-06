@@ -3619,6 +3619,8 @@
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "is bereikt. Neem contact op met de systeembeheerder om limieten aan te passen.",
 			"WORKED_THIS_WEEK": "Deze week gewerkt",
 			"WEEKLY_LIMIT": "Wekelijkse limiet",
+			"WARNING_RELOAD_TIMER_SOON": "Waarschuwing: Timer wordt binnenkort opnieuw geladen voor de nieuwe dag...",
+			"WARNING_TIMER_RELOADING": "Waarschuwing: De timer wordt opnieuw geladen voor de nieuwe dag. Wacht alstublieft een paar seconden...",
 			"ERRORS": "Controleer het formulier op fouten",
 			"PROJECT_LOAD": "Kan projecten niet laden",
 			"COPIED": "Link gekopieerd naar klembord",

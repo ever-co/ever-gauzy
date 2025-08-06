@@ -152,7 +152,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 
 		while (!current.isAfter(end)) {
 			// Include end date in the range
-			dayRange.push(current.toDate()); // Add formatted date to the list
+			dayRange.push(current.format('YYYY-MM-DD')); // Add formatted date to the list
 			current.add(1, 'day'); // Move to the next day
 		}
 
@@ -161,15 +161,15 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	}
 
 	getGroupDate(date: string | Date): string | null {
-		const timeZone = this.filters?.timeZone || moment.tz.guess();
-		const parsed = moment(date);
+		const timeZone = this.filters?.timeZone || this.timeZoneService.currentTimeZone;
+		const parsed = moment.tz(date, timeZone);
 
 		if (!parsed.isValid()) {
 			console.warn('Invalid date passed to getGroupDate:', date);
 			return null;
 		}
 
-		return parsed.tz(timeZone).format('YYYY-MM-DD');
+		return parsed.format('YYYY-MM-DD');
 	}
 
 	/**
@@ -221,7 +221,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 		}
 
 		const payloads = this.payloads$.getValue();
-		const timeZone = this.filters?.timeZone || moment.tz.guess();
+		const timeZone = this.filters?.timeZone || this.timeZoneService.currentTimeZone;
 
 		this.loading = true;
 		try {
@@ -232,8 +232,8 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 				.map((innerLogs, _projectId) => {
 					const byDate = chain(innerLogs)
 						.groupBy((log) => {
-							const started = moment(log.startedAt);
-							return started.isValid() ? started.tz(timeZone).format('YYYY-MM-DD') : 'invalid-date';
+							const started = moment.tz(log.startedAt, timeZone);
+							return started.isValid() ? started.format('YYYY-MM-DD') : 'invalid-date';
 						})
 						.mapObject((res) => {
 							const sum = res.reduce((total, log) => total + log.duration, 0);
@@ -245,7 +245,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 					const dates = {};
 
 					this.weekDayList.forEach((date) => {
-						const dateMoment = moment(date);
+						const dateMoment = moment.tz(date, timeZone);
 						const tzDate = dateMoment.isValid() ? dateMoment.tz(timeZone).format('YYYY-MM-DD') : null;
 						if (tzDate) {
 							dates[tzDate] = byDate[tzDate] || 0;

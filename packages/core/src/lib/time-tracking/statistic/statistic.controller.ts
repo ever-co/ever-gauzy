@@ -4,7 +4,6 @@ import {
 	ICountsStatistics,
 	IMembersStatistics,
 	IProjectsStatistics,
-	ITask,
 	IActivitiesStatistics,
 	ITimeSlotStatistics,
 	IManualTimesStatistics,

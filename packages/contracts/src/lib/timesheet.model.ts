@@ -115,6 +115,7 @@ export interface ITimeLog
 	source?: TimeLogSourceEnum;
 	startedAt?: Date;
 	stoppedAt?: Date;
+	timeZone?: string;
 	editedAt?: Date;
 	logType?: TimeLogType;
 	description?: string;
@@ -309,6 +310,7 @@ export interface ITimerStatusInput
 		IRelationalOrganizationTeam {
 	source?: TimeLogSourceEnum;
 	employeeIds?: ID[];
+	timeZone?: string;
 }
 
 export interface ITimerStatus {
@@ -356,6 +358,7 @@ export interface ITimerToggleInput
 	version?: string;
 	startedAt?: Date;
 	stoppedAt?: Date;
+	timeZone?: string;
 }
 
 export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -373,6 +376,7 @@ export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityMod
 	isBillable?: boolean;
 	partialStatus?: TimeLogPartialStatus;
 	referenceDate?: Date;
+	timeZone?: string;
 }
 
 export interface IGetTimeLogInput extends ITimeLogFilters, IBaseRelationsEntityModel {

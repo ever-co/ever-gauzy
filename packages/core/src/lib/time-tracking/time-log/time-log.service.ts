@@ -1164,6 +1164,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		employee: IEmployee,
 		startedAt: Date,
 		stoppedAt: Date,
+		timeZone: string,
 		conflicts: ITimeLog[],
 		previousTime = 0
 	) {
@@ -1200,7 +1201,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 
 		// Check if the time log will fit the weekly limit taking into account the items that will be removed by conflicts
-		const weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, startedAt, true);
+		const weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(
+			employee,
+			startedAt,
+			timeZone,
+			true
+		);
 		const newTimeToAdd = moment(stoppedAt).diff(startedAt, 'seconds') - timeToRemove - previousTime;
 		if (newTimeToAdd > weeklyLimitStatus.remainWeeklyTime) {
 			throw new ConflictException(TimeErrorsEnum.WEEKLY_LIMIT_REACHED);
@@ -1251,7 +1257,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			);
 
 			// Check if the time log will fit the weekly limit
-			await this.checkWeeklyLimitWithConflicts(employee, startedAt, stoppedAt, conflicts);
+			await this.checkWeeklyLimitWithConflicts(employee, startedAt, stoppedAt, request?.timeZone, conflicts);
 
 			// Resolve conflicts by deleting conflicting time slots
 			if (conflicts?.length) {
@@ -1348,6 +1354,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				employee,
 				startedAt,
 				stoppedAt,
+				request?.timeZone,
 				conflicts,
 				partialStatus == TimeLogPartialStatus.COMPLETE
 					? timeLog.duration
@@ -1377,6 +1384,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Remove non valid fields from the request
 			delete request.partialStatus;
 			delete request.referenceDate;
+			delete request.timeZone;
 
 			// Adjust the time log for the remaining time
 			const newObject = {
@@ -1427,12 +1435,16 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			return newTimeLog;
 		} catch (error) {
-			this.logger.error('Failed to update manual time log', error);
+			this.logger.error('Failed to update manual time log', {
+				message: error?.message,
+				stack: error?.stack,
+				error
+			});
 			// Handle exceptions appropriately
 			if (error instanceof ConflictException && error.message === TimeErrorsEnum.WEEKLY_LIMIT_REACHED) {
 				throw new ConflictException(TimeErrorsEnum.WEEKLY_LIMIT_REACHED);
 			} else {
-				throw new BadRequestException('Failed to update manual time log');
+				throw new BadRequestException(error.message || 'Failed to update manual time log');
 			}
 		}
 	}
@@ -1482,6 +1494,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// Get the time logs from the database
 		const timeLogs = await query.getMany();
+
+		for (const log of timeLogs) {
+			if (!log.timeSlots || log.timeSlots.length === 0) {
+				this.logger.warn(`Time log ${log?.id} has no timeSlots — continue slot deletion`);
+				continue;
+			}
+		}
 
 		// Invoke the command bus to delete the time logs
 		const deleted = await this.commandBus.execute(new TimeLogDeleteCommand(timeLogs, timeLogMap, forceDelete));

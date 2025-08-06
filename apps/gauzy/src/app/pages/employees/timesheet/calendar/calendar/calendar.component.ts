@@ -482,9 +482,14 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	 * @returns A promise that resolves when the update operation completes.
 	 */
 	async updateTimeLog(id: string, timeLog: (ITimeLog | Partial<ITimeLog>) & { referenceDate: Date }): Promise<void> {
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 		try {
 			this.loading = true; // Set loading indicator
-			await this.timesheetService.updateTime(id, timeLog); // Call service to update time log
+			const payload = {
+				...timeLog,
+				timeZone
+			};
+			await this.timesheetService.updateTime(id, payload); // Call service to update time log
 		} finally {
 			this.loading = false; // Reset loading indicator
 		}

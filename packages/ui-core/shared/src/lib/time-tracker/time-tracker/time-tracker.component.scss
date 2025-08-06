@@ -16,6 +16,9 @@
   nb-card {
     border: none;
   }
+  .warning {
+    margin: 0 !important;
+  }
   .timer-card {
     display: block;
     padding: 20px;
@@ -277,4 +280,9 @@ nb-card-footer {
   display: -moz-box;
   box-orient: vertical;
   line-clamp: 2;
+}
+
+.timer-tracker-counter {
+  display: flex;
+  flex-direction: column;
 }

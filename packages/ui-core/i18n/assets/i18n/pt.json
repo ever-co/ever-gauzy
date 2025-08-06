@@ -3619,6 +3619,8 @@
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "foi atingido. Contate o administrador do sistema para modificar os limites.",
 			"WORKED_THIS_WEEK": "Trabalhou esta semana",
 			"WEEKLY_LIMIT": "Limite semanal",
+			"WARNING_RELOAD_TIMER_SOON": "Aviso: O temporizador será recarregado em breve para o novo dia...",
+			"WARNING_TIMER_RELOADING": "Aviso: O temporizador está sendo recarregado para o novo dia. Por favor, aguarde alguns segundos...",
 			"ERRORS": "Por favor, verifique o formulário para erros",
 			"PROJECT_LOAD": "Não foi possível carregar projetos",
 			"COPIED": "Link copiado para a área de transferência",

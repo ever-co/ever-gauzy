@@ -3618,6 +3618,8 @@
 			"UNABLE_TO_ADD_ERROR_MESSAGE_PART_SECOND": "został osiągnięty. Skontaktuj się z administratorem systemu, aby zmodyfikować limity.",
 			"WORKED_THIS_WEEK": "Przepracowano w tym tygodniu",
 			"WEEKLY_LIMIT": "Limit tygodniowy",
+			"WARNING_RELOAD_TIMER_SOON": "Ostrzeżenie: Timer wkrótce zostanie przeładowany na nowy dzień...",
+			"WARNING_TIMER_RELOADING": "Ostrzeżenie: Timer jest przeładowywany na nowy dzień. Proszę czekać kilka sekund...",
 			"ERRORS": "Sprawdź formularz pod kątem błędów",
 			"PROJECT_LOAD": "Nie można załadować projektów",
 			"COPIED": "Link skopiowany do schowka",

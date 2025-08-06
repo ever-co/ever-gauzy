@@ -392,6 +392,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		const newWorkedTime = this.timerStatusWithWeeklyLimits.workedThisWeek - this.originalTimeDiff + this.timeDiff;
 		const isEditing = !!this.timeLog?.id;
 		const isCurrentWeekSelected = this._timeTrackerService.isCurrentWeekSelected(this.selectedRange);
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 		if (this.loading || this.isButtonDisabled) return;
 
 		if (
@@ -434,6 +435,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 				stoppedAt,
 				organizationId,
 				tenantId,
+				timeZone,
 				logType: TimeLogType.MANUAL,
 				source: TimeLogSourceEnum.WEB_TIMER,
 				employeeId: this.form.value.employeeId || employee?.id, // Fallback to current employee ID,
