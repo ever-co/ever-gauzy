@@ -1,8 +1,10 @@
 import { Controller } from '@nestjs/common';
-import { Context } from 'probot';
 import { Public } from '@gauzy/common';
 import { Hook } from '../probot/hook.decorator';
 import { GithubHooksService } from './github.hooks.service';
+
+// Type alias for Probot Context (to avoid ESM import issues)
+type ProbotContext = any;
 
 @Public()
 @Controller('/integration/github/webhook')
@@ -15,7 +17,7 @@ export class GitHubHooksController {
 	 * @param context - The context object containing information about the event.
 	 */
 	@Hook(['installation.deleted'])
-	async installationDeleted(context: Context) {
+	async installationDeleted(context: ProbotContext) {
 		if (!context.isBot) {
 			await this._githubHooksService.installationDeleted(context);
 		}
@@ -27,7 +29,7 @@ export class GitHubHooksController {
 	 * @param context - The context object containing information about the event.
 	 */
 	@Hook(['issues.opened'])
-	async issuesOpened(context: Context) {
+	async issuesOpened(context: ProbotContext) {
 		if (!context.isBot) {
 			await this._githubHooksService.issuesOpened(context);
 		}
@@ -39,7 +41,7 @@ export class GitHubHooksController {
 	 * @param context - The context object containing information about the event.
 	 */
 	@Hook(['issues.edited'])
-	async issuesEdited(context: Context) {
+	async issuesEdited(context: ProbotContext) {
 		if (!context.isBot) {
 			await this._githubHooksService.issuesEdited(context);
 		}
@@ -51,7 +53,7 @@ export class GitHubHooksController {
 	 * @param context - The context object containing information about the event.
 	 */
 	@Hook(['issues.labeled'])
-	async issuesLabeled(context: Context) {
+	async issuesLabeled(context: ProbotContext) {
 		if (!context.isBot) {
 			await this._githubHooksService.issuesLabeled(context);
 		}
@@ -63,7 +65,7 @@ export class GitHubHooksController {
 	 * @param context - The context object containing information about the event.
 	 */
 	@Hook(['issues.unlabeled'])
-	async issuesUnlabeled(context: Context) {
+	async issuesUnlabeled(context: ProbotContext) {
 		if (!context.isBot) {
 			await this._githubHooksService.issuesUnlabeled(context);
 		}
