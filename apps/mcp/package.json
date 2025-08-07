@@ -28,10 +28,17 @@
 	"dependencies": {
 		"@gauzy/mcp-server": "^0.1.0",
 		"@modelcontextprotocol/sdk": "^1.13.1",
+		"@nestjs/common": "^11.1.0",
+		"@nestjs/core": "^11.1.0",
+		"@nestjs/platform-express": "^11.1.0",
+		"express": "^5.1.0",
+		"cors": "^2.8.5",
 		"electron-log": "^4.4.8"
 	},
 	"devDependencies": {
 		"@types/node": "^22.14.0",
+		"@types/express": "^5.0.3",
+		"@types/cors": "^2.8.19",
 		"rimraf": "^3.0.2",
 		"typescript": "^5.8.3"
 	}
