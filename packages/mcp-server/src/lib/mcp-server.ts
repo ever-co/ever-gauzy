@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { Logger } from '@nestjs/common';
 import { version } from './common/version';
+import { TransportFactory, TransportResult } from './transports';
 import { registerTimerTools } from './tools/timer';
 import { registerProjectTools } from './tools/projects';
 import { registerTaskTools } from './tools/tasks';
@@ -97,6 +98,21 @@ export function createStandaloneMcpServer() {
 	return server;
 }
 
+/**
+ * Creates and starts an MCP server with the appropriate transport
+ */
+export async function createAndStartMcpServer(): Promise<{ server: McpServer; transport: TransportResult }> {
+	const { server } = createMcpServer();
+	
+	// Create transport based on configuration
+	const transport = await TransportFactory.createTransport(server);
+	
+	// Connect server to transport
+	await TransportFactory.connectServer(server, transport);
+	
+	return { server, transport };
+}
+
 // Check if this file is being run directly
 function isMainModule() {
 	try {
@@ -112,18 +128,28 @@ function isMainModule() {
 
 // If this file is run directly, start the server for external MCP clients
 if (isMainModule()) {
+	let currentTransport: TransportResult | null = null;
+
 	async function main() {
 		try {
 			logger.log('Starting Gauzy MCP Server for external clients...');
 
-			const server = createStandaloneMcpServer();
-			const transport = new StdioServerTransport();
+			const { server, transport } = await createAndStartMcpServer();
+			currentTransport = transport;
 
-			await server.connect(transport);
+			logger.log(`✅ Gauzy MCP Server running on ${transport.type} transport - version: ${version}`);
+			
+			if (transport.type === 'http' && transport.url) {
+				logger.log(`🌐 HTTP transport available at: ${transport.url}`);
+				logger.log(`📡 API endpoints:`);
+				logger.log(`   - GET  ${transport.url}/health`);
+				logger.log(`   - POST ${transport.url}/mcp`);
+				logger.log(`   - GET  ${transport.url}/mcp/events`);
+			} else {
+				logger.log('📟 Server is ready to accept MCP requests via stdio');
+			}
 
-			// Use stderr for logging (stdout is used for MCP communication)
-			logger.log(`Gauzy MCP Server running on stdio transport - version: ${version}`);
-			logger.log('Server is ready to accept MCP requests from clients like Claude Desktop');
+			logger.log('🎯 Server is ready to accept MCP requests from clients like Claude Desktop');
 		} catch (error) {
 			logger.error('Fatal error starting Gauzy MCP Server', error instanceof Error ? error.stack : String(error));
 			process.exit(1);
@@ -131,15 +157,22 @@ if (isMainModule()) {
 	}
 
 	// Handle graceful shutdown
-	process.on('SIGINT', () => {
-		logger.log('Received SIGINT, shutting down gracefully...');
+	async function shutdown(signal: string) {
+		logger.log(`Received ${signal}, shutting down gracefully...`);
+		
+		if (currentTransport) {
+			try {
+				await TransportFactory.shutdownTransport(currentTransport);
+			} catch (error) {
+				logger.error('Error during shutdown:', error);
+			}
+		}
+		
 		process.exit(0);
-	});
+	}
 
-	process.on('SIGTERM', () => {
-		logger.log('Received SIGTERM, shutting down gracefully...');
-		process.exit(0);
-	});
+	process.on('SIGINT', () => shutdown('SIGINT'));
+	process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 	main();
 }
