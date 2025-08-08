@@ -114,7 +114,7 @@ export class HttpTransport {
 							logger.debug(`Session ${sessionId} expired and removed`);
 						} else {
 							session.lastAccessed = new Date();
-							(req as any).sessionId = sessionId;
+							req.sessionId = sessionId;
 						}
 					}
 				}
@@ -230,7 +230,7 @@ export class HttpTransport {
 		if (!method || jsonrpc !== '2.0' || (id !== null && typeof id !== 'string' && typeof id !== 'number')) {
 			res.status(400).json({
 				jsonrpc: '2.0',
-				id: id || null,
+				id: id ?? null,
 				error: {
 					code: -32600,
 					message: 'Invalid Request'
@@ -280,6 +280,7 @@ export class HttpTransport {
 			'Content-Type': 'text/event-stream',
 			'Cache-Control': 'no-cache',
 			'Connection': 'keep-alive',
+			'X-Accel-Buffering': 'no'
 		});
 
 		// Send initial connection event
