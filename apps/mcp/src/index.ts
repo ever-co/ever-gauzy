@@ -1,4 +1,3 @@
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createMcpServer, createAndStartMcpServer } from '@gauzy/mcp-server';
 import log from 'electron-log';
 
@@ -47,7 +46,7 @@ async function main() {
 	const { server, transport } = await createAndStartMcpServer();
 
 	log.info(`✅ Gauzy MCP Server running on ${transport.type} transport`);
-	
+
 	if (transport.type === 'http' && transport.url) {
 		log.info(`🌐 HTTP transport available at: ${transport.url}`);
 		log.info(`📡 API endpoints:`);
@@ -57,7 +56,7 @@ async function main() {
 	} else {
 		log.info('📟 Server ready for stdio communication');
 	}
-	
+
 	log.info('🔗 Ready to accept MCP requests from clients like Claude Desktop');
 }
 

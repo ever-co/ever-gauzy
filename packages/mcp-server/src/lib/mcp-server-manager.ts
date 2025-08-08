@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { spawn, ChildProcess } from 'node:child_process';
 import * as path from 'node:path';
 import { TransportResult } from './transports';
+import { version } from './common/version';
 
 const logger = new Logger('McpServerManager');
 // Environment will be provided by the consuming app
@@ -59,7 +60,7 @@ export class McpServerManager {
 		return {
 			running: this._isRunning,
 			port: this._transport?.type === 'http' ? this.getHttpPort() : null,
-			version: this._version,
+			version,
 			transport: this._transport?.type as 'stdio' | 'http',
 			url: this._transport?.url,
 			uptime: this._startTime ? Date.now() - this._startTime.getTime() : undefined,
@@ -138,8 +139,8 @@ export class McpServerManager {
 	 */
 	async startInProcess(): Promise<void> {
 		try {
-			const { server, transport } = await createAndStartMcpServer();
-			this._version = 'gauzy-mcp-server';
+			const { transport } = await createAndStartMcpServer();
+			this._version = version;
 			this._transport = transport;
 
 			logger.log(`Gauzy MCP Server initialized with ${transport.type} transport`);

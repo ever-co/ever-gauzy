@@ -1,5 +1,4 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { Logger } from '@nestjs/common';
 import { version } from './common/version';
 import { TransportFactory, TransportResult } from './transports';
@@ -103,13 +102,13 @@ export function createStandaloneMcpServer() {
  */
 export async function createAndStartMcpServer(): Promise<{ server: McpServer; transport: TransportResult }> {
 	const { server } = createMcpServer();
-	
+
 	// Create transport based on configuration
 	const transport = await TransportFactory.createTransport(server);
-	
+
 	// Connect server to transport
 	await TransportFactory.connectServer(server, transport);
-	
+
 	return { server, transport };
 }
 
@@ -134,11 +133,11 @@ if (isMainModule()) {
 		try {
 			logger.log('Starting Gauzy MCP Server for external clients...');
 
-			const { server, transport } = await createAndStartMcpServer();
+			const { transport } = await createAndStartMcpServer();
 			currentTransport = transport;
 
 			logger.log(`✅ Gauzy MCP Server running on ${transport.type} transport - version: ${version}`);
-			
+
 			if (transport.type === 'http' && transport.url) {
 				logger.log(`🌐 HTTP transport available at: ${transport.url}`);
 				logger.log(`📡 API endpoints:`);
@@ -159,16 +158,21 @@ if (isMainModule()) {
 	// Handle graceful shutdown
 	async function shutdown(signal: string) {
 		logger.log(`Received ${signal}, shutting down gracefully...`);
-		
+		let hasShutdownErrors = false;
+
 		if (currentTransport) {
 			try {
 				await TransportFactory.shutdownTransport(currentTransport);
+				logger.log('Transport shutdown completed successfully');
 			} catch (error) {
 				logger.error('Error during shutdown:', error);
+				hasShutdownErrors = true;
 			}
 		}
-		
-		process.exit(0);
+
+		const exitCode = hasShutdownErrors ? 1 : 0;
+		logger.log(`Shutdown ${hasShutdownErrors ? 'completed with errors' : 'completed successfully'}, exiting with code ${exitCode}`);
+		process.exit(exitCode);
 	}
 
 	process.on('SIGINT', () => shutdown('SIGINT'));

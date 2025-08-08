@@ -18,19 +18,19 @@ export class TransportFactory {
 	 */
 	static async createTransport(server: McpServer): Promise<TransportResult> {
 		const transportType = TransportFactory.detectTransportType();
-		
+
 		logger.log(`🚌 Creating ${transportType} transport...`);
 
 		switch (transportType) {
 			case 'stdio':
 				return TransportFactory.createStdioTransport(server);
-			
+
 			case 'http':
 				return await TransportFactory.createHttpTransport(server);
-			
+
 			case 'auto':
 				return await TransportFactory.createAutoTransport(server);
-			
+
 			default:
 				throw new Error(`Unsupported transport type: ${transportType}`);
 		}
@@ -46,24 +46,20 @@ export class TransportFactory {
 			return configuredType;
 		}
 
-		// Auto-detection logic
-		// If running in CI/test environment, prefer stdio
-		if (process.env.CI === 'true' || process.env.NODE_ENV === 'test') {
+		// Auto-detection logic using helper methods
+		if (TransportFactory.isRunningInCI()) {
 			return 'stdio';
 		}
 
-		// If we have a parent process with stdio pipes, use stdio
-		if (process.stdin.isTTY === false && process.stdout.isTTY === false) {
+		if (TransportFactory.hasStdioPipes()) {
 			return 'stdio';
 		}
 
-		// If MCP_HTTP_PORT is set, prefer HTTP
-		if (process.env.MCP_HTTP_PORT) {
+		if (TransportFactory.isHttpConfigured()) {
 			return 'http';
 		}
 
-		// If running in production or server environment, prefer HTTP
-		if (process.env.NODE_ENV === 'production' || process.env.MCP_SERVER_MODE === 'http') {
+		if (TransportFactory.isProductionOrServerMode()) {
 			return 'http';
 		}
 
@@ -72,13 +68,41 @@ export class TransportFactory {
 	}
 
 	/**
+	 * Checks if running in CI environment
+	 */
+	private static isRunningInCI(): boolean {
+		return process.env.CI === 'true';
+	}
+
+	/**
+	 * Checks if we have a parent process with stdio pipes
+	 */
+	private static hasStdioPipes(): boolean {
+		return !process.stdin.isTTY || !process.stdout.isTTY || !process.stderr.isTTY;
+	}
+
+	/**
+	 * Checks if HTTP transport is explicitly configured
+	 */
+	private static isHttpConfigured(): boolean {
+		return !!process.env.MCP_HTTP_PORT;
+	}
+
+	/**
+	 * Checks if running in production or server mode
+	 */
+	private static isProductionOrServerMode(): boolean {
+		return process.env.NODE_ENV === 'production' || process.env.MCP_SERVER_MODE === 'http';
+	}
+
+	/**
 	 * Creates a stdio transport
 	 */
 	private static createStdioTransport(server: McpServer): TransportResult {
 		logger.log('📟 Setting up stdio transport for MCP communication');
-		
+
 		const transport = new StdioServerTransport();
-		
+
 		return {
 			type: 'stdio',
 			transport
@@ -90,10 +114,15 @@ export class TransportFactory {
 	 */
 	private static async createHttpTransport(server: McpServer): Promise<TransportResult> {
 		logger.log('🌐 Setting up HTTP transport for MCP communication');
-		
+
 		const httpTransport = new HttpTransport({
 			server,
-			transportConfig: config.mcp.transport.http
+			transportConfig: config.mcp.transport.http || {
+				port: 3001,
+				host: 'localhost',
+				cors: { origin: ['http://localhost:3000'], credentials: true },
+				session: { enabled: true, cookieName: 'mcp-session-id' }
+			}
 		});
 
 		// Start the HTTP server
@@ -178,7 +207,7 @@ export class TransportFactory {
 				await transport.stop();
 			}
 			// Stdio transport doesn't need explicit shutdown
-			
+
 			logger.log(`🛑 ${type} transport shut down successfully`);
 		} catch (error) {
 			logger.error(`Error shutting down ${type} transport:`, error);

@@ -2,10 +2,54 @@ import { Logger } from '@nestjs/common';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import express from 'express';
 import cors from 'cors';
-import { Server } from 'http';
-import { config, McpTransportConfig } from '../common/config';
+import { Server } from 'node:http';
+import { McpTransportConfig } from '../common/config';
+import crypto from 'node:crypto';
 
 const logger = new Logger('HttpTransport');
+
+// JSON-RPC 2.0 interfaces
+interface JsonRpcRequest {
+	jsonrpc: '2.0';
+	id?: string | number | null;
+	method: string;
+	params?: Record<string, unknown> | unknown[];
+}
+
+interface JsonRpcResponse {
+	jsonrpc: '2.0';
+	id?: string | number | null;
+	result?: unknown;
+}
+
+interface JsonRpcError {
+	code: number;
+	message: string;
+	data?: unknown;
+}
+
+interface JsonRpcErrorResponse {
+	jsonrpc: '2.0';
+	id?: string | number | null;
+	error: JsonRpcError;
+}
+
+// MCP Response types
+type McpResponse = JsonRpcResponse | JsonRpcErrorResponse;
+
+// MCP Transport interface
+interface McpTransport {
+	start(): Promise<void>;
+	close(): Promise<void>;
+	send(response: JsonRpcResponse | JsonRpcErrorResponse): void;
+}
+
+// Mock Transport interface for HTTP implementation
+interface MockTransport extends McpTransport {
+	start(): Promise<void>;
+	close(): Promise<void>;
+	send(response: McpResponse): void;
+}
 
 export interface HttpTransportOptions {
 	server: McpServer;
@@ -21,7 +65,7 @@ export class HttpTransport {
 
 	constructor(options: HttpTransportOptions) {
 		this.mcpServer = options.server;
-		this.transportConfig = options.transportConfig!;
+		this.transportConfig = options.transportConfig;
 		this.app = express();
 		this.setupMiddleware();
 		this.setupRoutes();
@@ -150,10 +194,10 @@ export class HttpTransport {
 			}
 
 			// Create a mock transport interface for the MCP server
-			const mockTransport = {
+			const mockTransport: MockTransport = {
 				start: async () => {},
 				close: async () => {},
-				send: (response: any) => {
+				send: (response: McpResponse) => {
 					// Send response back to HTTP client
 					if (id) {
 						res.json({
@@ -188,9 +232,9 @@ export class HttpTransport {
 	private handleMcpEventStream(req: express.Request, res: express.Response) {
 		// Set SSE headers
 		const origin = this.transportConfig.cors.origin;
-		const originHeader = typeof origin === 'string' ? origin : 
+		const originHeader = typeof origin === 'string' ? origin :
 			Array.isArray(origin) ? origin[0] || '*' : '*';
-		
+
 		res.writeHead(200, {
 			'Content-Type': 'text/event-stream',
 			'Cache-Control': 'no-cache',
@@ -220,10 +264,10 @@ export class HttpTransport {
 		});
 	}
 
-	private async routeMcpRequest(method: string, params: any, id: any, transport: any) {
+	private async routeMcpRequest(method: string, params: Record<string, unknown> | unknown[] | undefined, id: string | number | null | undefined, transport: MockTransport) {
 		try {
 			// Create a JSON-RPC request message
-			const request = {
+			const request: JsonRpcRequest = {
 				jsonrpc: '2.0',
 				id,
 				method,
@@ -231,13 +275,15 @@ export class HttpTransport {
 			};
 
 			// Convert the HTTP request into a format the MCP server can handle
-			// This is a placeholder - the actual implementation would need to 
+			// This is a placeholder - the actual implementation would need to
 			// properly integrate with the MCP server's request handling
-			
+
 			// For now, handle basic MCP protocol methods
 			switch (method) {
 				case 'initialize':
 					transport.send({
+						jsonrpc: '2.0',
+						id,
 						result: {
 							protocolVersion: '2025-03-26',
 							capabilities: { tools: {} },
@@ -251,11 +297,15 @@ export class HttpTransport {
 
 				case 'tools/list':
 					// This would need to integrate with your tools registry
-					const tools: any[] = [];
-					transport.send({
-						result: { tools }
-					});
-					break;
+					{
+						const tools: unknown[] = [];
+						transport.send({
+							jsonrpc: '2.0',
+							id,
+							result: { tools }
+						});
+						break;
+					}
 
 				case 'tools/call':
 					// This would need to integrate with your tool execution system
@@ -263,6 +313,8 @@ export class HttpTransport {
 
 				default:
 					transport.send({
+						jsonrpc: '2.0',
+						id,
 						error: {
 							code: -32601,
 							message: `Method not found: ${method}`
@@ -271,6 +323,8 @@ export class HttpTransport {
 			}
 		} catch (error) {
 			transport.send({
+				jsonrpc: '2.0',
+				id,
 				error: {
 					code: -32603,
 					message: 'Internal error',
@@ -280,13 +334,13 @@ export class HttpTransport {
 		}
 	}
 
-	private async getTools(): Promise<any[]> {
+	private async getTools(): Promise<unknown[]> {
 		// This would integrate with your existing tools registry
 		// For now, return empty array - you'll need to implement tool listing
 		return [];
 	}
 
-	private async callTool(params: any): Promise<any> {
+	private async callTool(params: Record<string, unknown>): Promise<unknown> {
 		// This would integrate with your existing tool execution
 		// For now, throw not implemented error
 		throw new Error('Tool execution not yet implemented for HTTP transport');
@@ -294,19 +348,20 @@ export class HttpTransport {
 
 	private isValidOrigin(origin: string): boolean {
 		const allowedOrigins = this.transportConfig.cors.origin;
-		
+
 		if (allowedOrigins === true) return true;
 		if (allowedOrigins === false) return false;
-		
+
 		if (Array.isArray(allowedOrigins)) {
 			return allowedOrigins.includes(origin);
 		}
-		
+
 		return allowedOrigins === origin;
 	}
 
 	private generateSessionId(): string {
-		return `mcp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		const randomPart = crypto.randomBytes(16).toString('hex');
+		return `mcp_${Date.now()}_${randomPart}`;
 	}
 
 	async start(): Promise<void> {
@@ -323,12 +378,12 @@ export class HttpTransport {
 						logger.log(`   - GET  /health - Health check`);
 						logger.log(`   - POST /mcp - MCP protocol requests`);
 						logger.log(`   - GET  /mcp/events - Server-sent events`);
-						
+
 						if (this.transportConfig.session.enabled) {
 							logger.log(`   - POST /mcp/session - Create session`);
 							logger.log(`   - DELETE /mcp/session/:id - Delete session`);
 						}
-						
+
 						resolve();
 					}
 				);
