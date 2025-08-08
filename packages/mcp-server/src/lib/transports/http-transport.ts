@@ -74,7 +74,8 @@ export class HttpTransport {
 		this.setupRoutes();
 
 		// Configure session TTL from environment or use default
-		this.sessionTTL = parseInt(process.env.MCP_SESSION_TTL || '1800000', 10); // Default 30 minutes
+		const ttl = Number.parseInt(process.env.MCP_SESSION_TTL ?? '1800000', 10);
+		this.sessionTTL = Number.isFinite(ttl) ? ttl : 1_800_000;
 
 		// Start session cleanup if sessions are enabled
 		if (this.transportConfig.session.enabled) {
@@ -182,7 +183,7 @@ export class HttpTransport {
 					// Skip rate limiting for localhost in development
 					if (process.env.NODE_ENV !== 'production') {
 						const ip = req.ip || req.connection.remoteAddress;
-						return ip === '127.0.0.1' || ip === '::1' || ip === 'localhost';
+						return ip === '127.0.0.1' || ip === '::1';
 					}
 					return false;
 				}
@@ -302,13 +303,6 @@ export class HttpTransport {
 
 	private async routeMcpRequest(method: string, params: Record<string, unknown> | unknown[] | undefined, id: string | number | null | undefined, transport: MockTransport) {
 		try {
-			// Create a JSON-RPC request message
-			const request: JsonRpcRequest = {
-				jsonrpc: '2.0',
-				id,
-				method,
-				params: params || {}
-			};
 
 			// Convert the HTTP request into a format the MCP server can handle
 			// This is a placeholder - the actual implementation would need to

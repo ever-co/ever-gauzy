@@ -40,13 +40,13 @@ export const config: GauzyConfig = {
 			type: (process.env.MCP_TRANSPORT as McpTransportType) || 'stdio',
 			http: {
 				port: parseInt(process.env.MCP_HTTP_PORT || '3001', 10) || 3001,
-				host: process.env.MCP_HTTP_HOST || 'localhost',
+				host: process.env.MCP_HTTP_HOST || '127.0.0.1',
 				cors: {
 					origin: (() => {
 						if (process.env.MCP_CORS_ORIGIN) {
 							return process.env.MCP_CORS_ORIGIN.split(',').map(o => o.trim()).filter(o => o.length > 0);
 						}
-						
+
 						// Only allow localhost defaults in development
 						if (process.env.NODE_ENV === 'production') {
 							throw new Error(
@@ -54,7 +54,7 @@ export const config: GauzyConfig = {
 								'Please set it to explicitly define allowed origins (e.g., MCP_CORS_ORIGIN=https://your-domain.com)'
 							);
 						}
-						
+
 						// Development fallback
 						return ['http://localhost:3000', 'http://localhost:4200', 'http://127.0.0.1:3000', 'http://127.0.0.1:4200'];
 					})(),
