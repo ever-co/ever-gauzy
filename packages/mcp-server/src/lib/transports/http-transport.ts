@@ -182,7 +182,7 @@ export class HttpTransport {
 				skip: (req) => {
 					// Skip rate limiting for localhost in development
 					if (process.env.NODE_ENV !== 'production') {
-						const ip = req.ip || req.connection.remoteAddress;
+						const ip = req.ip || req.socket?.remoteAddress;
 						return ip === '127.0.0.1' || ip === '::1';
 					}
 					return false;
@@ -220,12 +220,17 @@ export class HttpTransport {
 	}
 
 	private async handleMcpRequest(req: express.Request, res: express.Response) {
-		const { method, params, id } = req.body;
+		const { jsonrpc, method, params, id } = req.body;
 
-		if (!method) {
+		// Validate JSON-RPC 2.0 format
+		if (!method || jsonrpc !== '2.0' || (id !== null && typeof id !== 'string' && typeof id !== 'number')) {
 			res.status(400).json({
-				error: 'Bad Request',
-				message: 'Missing method in request body'
+				jsonrpc: '2.0',
+				id: id || null,
+				error: {
+					code: -32600,
+					message: 'Invalid Request'
+				}
 			});
 			return;
 		}
@@ -265,17 +270,12 @@ export class HttpTransport {
 	}
 
 	private handleMcpEventStream(req: express.Request, res: express.Response) {
-		// Set SSE headers
-		const origin = this.transportConfig.cors.origin;
-		const originHeader = typeof origin === 'string' ? origin :
-			Array.isArray(origin) ? origin[0] || '*' : '*';
 
+		// Set SSE headers (CORS is handled by the global cors() middleware)
 		res.writeHead(200, {
 			'Content-Type': 'text/event-stream',
 			'Cache-Control': 'no-cache',
 			'Connection': 'keep-alive',
-			'Access-Control-Allow-Origin': originHeader,
-			'Access-Control-Allow-Credentials': 'true'
 		});
 
 		// Send initial connection event
@@ -392,9 +392,11 @@ export class HttpTransport {
 		// Run cleanup every 5 minutes
 		const cleanupIntervalMs = 5 * 60 * 1000;
 
-		this.cleanupInterval = setInterval(() => {
+		const timer = setInterval(() => {
 			this.cleanupExpiredSessions();
 		}, cleanupIntervalMs);
+		timer.unref?.();
+		this.cleanupInterval = timer;
 
 		logger.debug(`Session cleanup started - TTL: ${this.sessionTTL}ms, Cleanup interval: ${cleanupIntervalMs}ms`);
 	}

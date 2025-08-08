@@ -37,9 +37,15 @@ export const config: GauzyConfig = {
 	auth: environment.auth,
 	mcp: {
 		transport: {
-			type: (process.env.MCP_TRANSPORT as McpTransportType) || 'stdio',
+			type: (() => {
+				const t = (process.env.MCP_TRANSPORT || '').toLowerCase();
+				return t === 'stdio' || t === 'http' || t === 'auto' ? (t as McpTransportType) : 'stdio';
+			})(),
 			http: {
-				port: parseInt(process.env.MCP_HTTP_PORT || '3001', 10) || 3001,
+				port: (() => {
+					const p = Number.parseInt(process.env.MCP_HTTP_PORT ?? '3001', 10);
+					return Number.isInteger(p) && p >= 0 && p <= 65535 ? p : 3001;
+				})(),
 				host: process.env.MCP_HTTP_HOST || '127.0.0.1',
 				cors: {
 					origin: (() => {
