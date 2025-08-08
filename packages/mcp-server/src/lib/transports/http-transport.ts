@@ -169,9 +169,13 @@ export class HttpTransport {
 		// Session management endpoints with rate limiting
 		if (this.transportConfig.session.enabled) {
 			// Rate limiting for session endpoints
+			const maxRequests = (() => {
+				const v = Number.parseInt(process.env.MCP_SESSION_RATE_LIMIT ?? '', 10);
+				return Number.isInteger(v) && v > 0 ? v : 50;
+			})();
 			const sessionRateLimit = rateLimit({
 				windowMs: 15 * 60 * 1000, // 15 minutes
-				max: parseInt(process.env.MCP_SESSION_RATE_LIMIT || '50', 10), // Limit each IP to 50 requests per windowMs
+				max: maxRequests, // Limit each IP per window
 				message: {
 					error: 'Too many session requests',
 					message: 'Rate limit exceeded for session endpoints',
@@ -183,7 +187,7 @@ export class HttpTransport {
 					// Skip rate limiting for localhost in development
 					if (process.env.NODE_ENV !== 'production') {
 						const ip = req.ip || req.socket?.remoteAddress;
-						return ip === '127.0.0.1' || ip === '::1';
+						return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
 					}
 					return false;
 				}
@@ -326,9 +330,9 @@ export class HttpTransport {
 					break;
 
 				case 'tools/list':
-					// This would need to integrate with your tools registry
 					{
-						const tools: unknown[] = [];
+						const tools = await this.getTools();
+						logger.debug(`Tools list: ${JSON.stringify(tools)}`);
 						transport.send({
 							jsonrpc: '2.0',
 							id,
