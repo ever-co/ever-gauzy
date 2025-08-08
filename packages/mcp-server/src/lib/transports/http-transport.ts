@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import express from 'express';
 import cors from 'cors';
+import { rateLimit } from 'express-rate-limit';
 import { Server } from 'node:http';
 import { McpTransportConfig } from '../common/config';
 import crypto from 'node:crypto';
@@ -62,6 +63,8 @@ export class HttpTransport {
 	private mcpServer: McpServer;
 	private transportConfig: McpTransportConfig['http'];
 	private sessions = new Map<string, { id: string; created: Date; lastAccessed: Date }>();
+	private sessionTTL = 30 * 60 * 1000; // 30 minutes in milliseconds
+	private cleanupInterval: NodeJS.Timeout | null = null;
 
 	constructor(options: HttpTransportOptions) {
 		this.mcpServer = options.server;
@@ -69,6 +72,14 @@ export class HttpTransport {
 		this.app = express();
 		this.setupMiddleware();
 		this.setupRoutes();
+
+		// Configure session TTL from environment or use default
+		this.sessionTTL = parseInt(process.env.MCP_SESSION_TTL || '1800000', 10); // Default 30 minutes
+
+		// Start session cleanup if sessions are enabled
+		if (this.transportConfig.session.enabled) {
+			this.startSessionCleanup();
+		}
 	}
 
 	private setupMiddleware() {
@@ -96,8 +107,14 @@ export class HttpTransport {
 				if (sessionId) {
 					const session = this.sessions.get(sessionId);
 					if (session) {
-						session.lastAccessed = new Date();
-						(req as any).sessionId = sessionId;
+						// Check if session is still valid
+						if (this.isSessionExpired(session)) {
+							this.sessions.delete(sessionId);
+							logger.debug(`Session ${sessionId} expired and removed`);
+						} else {
+							session.lastAccessed = new Date();
+							(req as any).sessionId = sessionId;
+						}
 					}
 				}
 				next();
@@ -108,11 +125,17 @@ export class HttpTransport {
 	private setupRoutes() {
 		// Health check endpoint
 		this.app.get('/health', (req, res) => {
+			const sessionStats = this.transportConfig.session.enabled ? {
+				activeSessions: this.sessions.size,
+				sessionTTL: this.sessionTTL
+			} : null;
+
 			res.json({
 				status: 'healthy',
 				timestamp: new Date().toISOString(),
 				transport: 'http',
-				server: 'gauzy-mcp-server'
+				server: 'gauzy-mcp-server',
+				...(sessionStats && { sessions: sessionStats })
 			});
 		});
 
@@ -142,9 +165,30 @@ export class HttpTransport {
 			}
 		});
 
-		// Session management endpoints
+		// Session management endpoints with rate limiting
 		if (this.transportConfig.session.enabled) {
-			this.app.post('/mcp/session', (req, res) => {
+			// Rate limiting for session endpoints
+			const sessionRateLimit = rateLimit({
+				windowMs: 15 * 60 * 1000, // 15 minutes
+				max: parseInt(process.env.MCP_SESSION_RATE_LIMIT || '50', 10), // Limit each IP to 50 requests per windowMs
+				message: {
+					error: 'Too many session requests',
+					message: 'Rate limit exceeded for session endpoints',
+					retryAfter: '15 minutes'
+				},
+				standardHeaders: true,
+				legacyHeaders: false,
+				skip: (req) => {
+					// Skip rate limiting for localhost in development
+					if (process.env.NODE_ENV !== 'production') {
+						const ip = req.ip || req.connection.remoteAddress;
+						return ip === '127.0.0.1' || ip === '::1' || ip === 'localhost';
+					}
+					return false;
+				}
+			});
+
+			this.app.post('/mcp/session', sessionRateLimit, (req, res) => {
 				const sessionId = this.generateSessionId();
 				const session = {
 					id: sessionId,
@@ -153,6 +197,8 @@ export class HttpTransport {
 				};
 				this.sessions.set(sessionId, session);
 
+				logger.debug(`Session created: ${sessionId} from ${req.ip}`);
+
 				res.json({
 					sessionId,
 					created: session.created,
@@ -160,10 +206,11 @@ export class HttpTransport {
 				});
 			});
 
-			this.app.delete('/mcp/session/:sessionId', (req, res) => {
+			this.app.delete('/mcp/session/:sessionId', sessionRateLimit, (req, res) => {
 				const sessionId = req.params.sessionId;
 				if (this.sessions.delete(sessionId)) {
-					res.json({ message: 'Session deleted' });
+					logger.debug(`Session deleted: ${sessionId} from ${req.ip}`);
+					res.status(204).send(); // 204 No Content for successful deletion
 				} else {
 					res.status(404).json({ error: 'Session not found' });
 				}
@@ -183,31 +230,18 @@ export class HttpTransport {
 		}
 
 		try {
-			// Validate Origin header for security
-			const origin = req.headers.origin;
-			if (origin && !this.isValidOrigin(origin)) {
-				res.status(403).json({
-					error: 'Forbidden',
-					message: 'Invalid origin'
-				});
-				return;
-			}
-
 			// Create a mock transport interface for the MCP server
 			const mockTransport: MockTransport = {
 				start: async () => {},
 				close: async () => {},
 				send: (response: McpResponse) => {
 					// Send response back to HTTP client
-					if (id) {
-						res.json({
-							jsonrpc: '2.0',
-							id,
-							...response
-						});
+					const isNotification = id === undefined || id === null;
+					if (isNotification) {
+						// spec: no content for notifications
+						res.status(204).end();
 					} else {
-						// Handle notifications (no response expected)
-						res.status(200).end();
+						res.json(response);
 					}
 				}
 			};
@@ -255,7 +289,9 @@ export class HttpTransport {
 				type: 'ping',
 				timestamp: new Date().toISOString()
 			})}\n\n`);
-		}, 30000);
+			// Force flush to prevent proxy buffering
+			(res as any).flush?.();
+		}, 15000);
 
 		// Clean up on client disconnect
 		req.on('close', () => {
@@ -346,22 +382,51 @@ export class HttpTransport {
 		throw new Error('Tool execution not yet implemented for HTTP transport');
 	}
 
-	private isValidOrigin(origin: string): boolean {
-		const allowedOrigins = this.transportConfig.cors.origin;
-
-		if (allowedOrigins === true) return true;
-		if (allowedOrigins === false) return false;
-
-		if (Array.isArray(allowedOrigins)) {
-			return allowedOrigins.includes(origin);
-		}
-
-		return allowedOrigins === origin;
-	}
 
 	private generateSessionId(): string {
 		const randomPart = crypto.randomBytes(16).toString('hex');
 		return `mcp_${Date.now()}_${randomPart}`;
+	}
+
+	private isSessionExpired(session: { created: Date; lastAccessed: Date }): boolean {
+		const now = new Date();
+		const timeSinceLastAccess = now.getTime() - session.lastAccessed.getTime();
+		return timeSinceLastAccess > this.sessionTTL;
+	}
+
+	private startSessionCleanup(): void {
+		// Run cleanup every 5 minutes
+		const cleanupIntervalMs = 5 * 60 * 1000;
+
+		this.cleanupInterval = setInterval(() => {
+			this.cleanupExpiredSessions();
+		}, cleanupIntervalMs);
+
+		logger.debug(`Session cleanup started - TTL: ${this.sessionTTL}ms, Cleanup interval: ${cleanupIntervalMs}ms`);
+	}
+
+	private cleanupExpiredSessions(): void {
+		let expiredCount = 0;
+		const sessionIds = Array.from(this.sessions.keys());
+
+		for (const sessionId of sessionIds) {
+			const session = this.sessions.get(sessionId);
+			if (session && this.isSessionExpired(session)) {
+				this.sessions.delete(sessionId);
+				expiredCount++;
+			}
+		}
+
+		if (expiredCount > 0) {
+			logger.debug(`Cleaned up ${expiredCount} expired sessions. Active sessions: ${this.sessions.size}`);
+		}
+	}
+
+	private stopSessionCleanup(): void {
+		if (this.cleanupInterval) {
+			clearInterval(this.cleanupInterval);
+			this.cleanupInterval = null;
+		}
 	}
 
 	async start(): Promise<void> {
@@ -401,6 +466,12 @@ export class HttpTransport {
 
 	async stop(): Promise<void> {
 		return new Promise((resolve) => {
+			// Stop session cleanup
+			this.stopSessionCleanup();
+
+			// Clear all sessions
+			this.sessions.clear();
+
 			if (this.httpServer) {
 				this.httpServer.close(() => {
 					logger.log('🛑 MCP HTTP Transport stopped');

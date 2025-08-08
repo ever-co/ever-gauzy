@@ -43,7 +43,7 @@ async function main() {
 	// Normal MCP server startup with automatic transport detection
 	log.info('🚀 Starting Gauzy MCP Server...');
 
-	const { server, transport } = await createAndStartMcpServer();
+	const { transport } = await createAndStartMcpServer();
 
 	log.info(`✅ Gauzy MCP Server running on ${transport.type} transport`);
 

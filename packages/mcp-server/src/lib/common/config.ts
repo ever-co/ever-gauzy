@@ -42,9 +42,22 @@ export const config: GauzyConfig = {
 				port: parseInt(process.env.MCP_HTTP_PORT || '3001', 10) || 3001,
 				host: process.env.MCP_HTTP_HOST || 'localhost',
 				cors: {
-					origin: process.env.MCP_CORS_ORIGIN 
-						? process.env.MCP_CORS_ORIGIN.split(',').map(o => o.trim()).filter(o => o.length > 0)
-						: ['http://localhost:3000', 'http://localhost:4200', 'http://127.0.0.1:3000', 'http://127.0.0.1:4200'],
+					origin: (() => {
+						if (process.env.MCP_CORS_ORIGIN) {
+							return process.env.MCP_CORS_ORIGIN.split(',').map(o => o.trim()).filter(o => o.length > 0);
+						}
+						
+						// Only allow localhost defaults in development
+						if (process.env.NODE_ENV === 'production') {
+							throw new Error(
+								'MCP_CORS_ORIGIN environment variable is required in production. ' +
+								'Please set it to explicitly define allowed origins (e.g., MCP_CORS_ORIGIN=https://your-domain.com)'
+							);
+						}
+						
+						// Development fallback
+						return ['http://localhost:3000', 'http://localhost:4200', 'http://127.0.0.1:3000', 'http://127.0.0.1:4200'];
+					})(),
 					credentials: process.env.MCP_CORS_CREDENTIALS !== 'false'
 				},
 				session: {
