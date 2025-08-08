@@ -46,11 +46,7 @@ interface McpTransport {
 }
 
 // Mock Transport interface for HTTP implementation
-interface MockTransport extends McpTransport {
-	start(): Promise<void>;
-	close(): Promise<void>;
-	send(response: McpResponse): void;
-}
+type MockTransport = McpTransport;
 
 export interface HttpTransportOptions {
 	server: McpServer;
@@ -89,7 +85,7 @@ export class HttpTransport {
 			origin: this.transportConfig.cors.origin,
 			credentials: this.transportConfig.cors.credentials,
 			methods: ['GET', 'POST', 'OPTIONS'],
-			allowedHeaders: ['Content-Type', 'Authorization', 'Mcp-Session-Id']
+			allowedHeaders: ['Content-Type', 'Authorization', 'mcp-session-id']
 		}));
 
 		// JSON parsing
@@ -211,7 +207,7 @@ export class HttpTransport {
 				});
 			});
 
-			this.app.delete('/mcp/session/:sessionId', sessionRateLimit, (req, res) => {
+			this.app.delete('/mcp/session/:sessionId',  sessionRateLimit, (req, res) => {
 				const sessionId = req.params.sessionId;
 				if (this.sessions.delete(sessionId)) {
 					logger.debug(`Session deleted: ${sessionId} from ${req.ip}`);
