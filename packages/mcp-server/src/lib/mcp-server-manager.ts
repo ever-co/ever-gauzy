@@ -1,7 +1,9 @@
-import { createMcpServer } from './mcp-server';
+import { createAndStartMcpServer } from './mcp-server';
 import { Logger } from '@nestjs/common';
 import { spawn, ChildProcess } from 'node:child_process';
 import * as path from 'node:path';
+import { TransportResult } from './transports';
+import { version } from './common/version';
 
 const logger = new Logger('McpServerManager');
 // Environment will be provided by the consuming app
@@ -11,6 +13,8 @@ export interface McpServerStatus {
 	running: boolean;
 	port: number | null;
 	version: string | null;
+	transport?: 'stdio' | 'http';
+	url?: string;
 	uptime?: number;
 	lastError?: string;
 }
@@ -21,6 +25,7 @@ export class McpServerManager {
 	private _startTime: Date | null = null;
 	private _lastError: string | null = null;
 	private _version: string | null = null;
+	private _transport: TransportResult | null = null;
 	private killTimeout: NodeJS.Timeout | null = null;
 	private environment: any;
 
@@ -54,11 +59,25 @@ export class McpServerManager {
 	getStatus(): McpServerStatus {
 		return {
 			running: this._isRunning,
-			port: null, // MCP servers typically use stdio, not ports
-			version: this._version,
+			port: this._transport?.type === 'http' ? this.getHttpPort() : null,
+			version,
+			transport: this._transport?.type as 'stdio' | 'http',
+			url: this._transport?.url,
 			uptime: this._startTime ? Date.now() - this._startTime.getTime() : undefined,
 			lastError: this._lastError || undefined
 		};
+	}
+
+	private getHttpPort(): number | null {
+		if (this._transport?.type === 'http' && this._transport.url) {
+			try {
+				const url = new URL(this._transport.url);
+				return parseInt(url.port) || (url.protocol === 'https:' ? 443 : 80);
+			} catch {
+				return null;
+			}
+		}
+		return null;
 	}
 
 	async start(): Promise<boolean> {
@@ -116,16 +135,19 @@ export class McpServerManager {
 	}
 
 	/**
-	 * Start MCP server in the same process (recommended for Electron apps)
+	 * Start MCP server in the same process with appropriate transport
 	 */
 	async startInProcess(): Promise<void> {
 		try {
-			const { version } = createMcpServer();
+			const { transport } = await createAndStartMcpServer();
 			this._version = version;
+			this._transport = transport;
 
-			// For Electron apps, we don't connect to stdio directly
-			// Instead, we keep the server instance ready for IPC communication
-			logger.log(`Gauzy MCP Server initialized: ${version}`);
+			logger.log(`Gauzy MCP Server initialized with ${transport.type} transport`);
+
+			if (transport.type === 'http' && transport.url) {
+				logger.log(`🌐 HTTP transport available at: ${transport.url}`);
+			}
 
 			this._isRunning = true;
 			this._startTime = new Date();
