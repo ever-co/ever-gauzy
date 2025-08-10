@@ -37,6 +37,7 @@
 		"cors": "^2.8.5",
 		"axios": "^1.7.0",
 		"zod": "^3.25.67",
+		"ws": "^8.18.3",
 		"tslib": "^2.3.0"
 	},
 	"devDependencies": {
@@ -44,6 +45,7 @@
 		"@types/node": "^20.14.9",
 		"@types/express": "^5.0.3",
 		"@types/cors": "^2.8.19",
+		"@types/ws": "^8.18.1",
 		"cross-env": "^7.0.3",
 		"typescript": "^5.8.3"
 	},
