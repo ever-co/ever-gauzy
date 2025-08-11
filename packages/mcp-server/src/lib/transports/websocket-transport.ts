@@ -328,7 +328,7 @@ export class WebSocketTransport {
 						jsonrpc: '2.0',
 						id,
 						result: {
-							protocolVersion: '2025-03-26',
+							protocolVersion: '2025-08-10',
 							capabilities: { tools: {} },
 							serverInfo: {
 								name: 'gauzy-mcp-server',
