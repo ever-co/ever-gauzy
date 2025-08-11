@@ -70,9 +70,6 @@ interface McpTransport {
 	send(response: JsonRpcResponse | JsonRpcErrorResponse): void;
 }
 
-// Mock Transport interface for WebSocket implementation
-type MockTransport = McpTransport;
-
 // WebSocket connection interface
 interface WebSocketConnection {
 	id: string;
@@ -107,7 +104,7 @@ export class WebSocketTransport {
 
 		// Configure session TTL from environment or use default
 		const ttl = Number.parseInt(process.env.MCP_SESSION_TTL ?? '1800000', 10);
-		this.sessionTTL = Number.isFinite(ttl) ? ttl : 1_800_000;
+		this.sessionTTL = Number.isFinite(ttl) ? ttl : 30 * 60 * 1000;
 	}
 
 	async start(): Promise<void> {
@@ -315,7 +312,7 @@ export class WebSocketTransport {
 
 		try {
 			// Create a mock transport interface for the MCP server
-			const mockTransport: MockTransport = {
+			const mockTransport: McpTransport = {
 				start: async () => {},
 				close: async () => {},
 				send: (response: McpResponse) => {
@@ -332,7 +329,7 @@ export class WebSocketTransport {
 		}
 	}
 
-	private async routeMcpRequest(method: string, params: Record<string, unknown> | unknown[] | undefined, id: string | number | null | undefined, transport: MockTransport) {
+	private async routeMcpRequest(method: string, params: Record<string, unknown> | unknown[] | undefined, id: string | number | null | undefined, transport: McpTransport) {
 		try {
 			// Handle basic MCP protocol methods
 			switch (method) {
@@ -362,7 +359,9 @@ export class WebSocketTransport {
 						});
 						break;
 					}
-
+				/**
+				 *  TODO: implementing the actual tools/call functionality once the tool execution system is ready
+				 */
 				case 'tools/call':
 					{
 						transport.send({
@@ -399,13 +398,13 @@ export class WebSocketTransport {
 	private async getTools(): Promise<unknown[]> {
 		try {
 			const now = Date.now();
-			
+
 			// Return cached tools if cache is still valid
 			if (this.cachedTools && (now - this.cacheTimestamp) < this.CACHE_TTL) {
 				logger.debug('Returning cached tools list');
 				return this.cachedTools;
 			}
-			
+
 			// Fetch and cache tools
 			const tools = getAllTools();
 			this.cachedTools = tools.map(toolName => {
@@ -420,7 +419,7 @@ export class WebSocketTransport {
 					}
 				};
 			});
-			
+
 			this.cacheTimestamp = now;
 			logger.debug(`Cached ${this.cachedTools.length} tools from registry`);
 			return this.cachedTools;
