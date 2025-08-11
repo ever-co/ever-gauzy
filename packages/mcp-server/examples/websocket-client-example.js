@@ -1,18 +1,21 @@
 /**
  * WebSocket Client Example for MCP Server
- * 
- * This example demonstrates how to connect to and interact with 
+ *
+ * This example demonstrates how to connect to and interact with
  * the MCP WebSocket transport.
- * 
+ *
  * Usage:
  * 1. Start the MCP server with WebSocket transport:
  *    MCP_TRANSPORT=websocket MCP_WS_PORT=3002 npm start
- * 
+ *
  * 2. Run this client:
  *    node examples/websocket-client-example.js
  */
 
 const WebSocket = require('ws');
+
+// Global reference for clean shutdown
+let globalClient = null;
 
 class McpWebSocketClient {
 	constructor(url) {
@@ -80,6 +83,7 @@ class McpWebSocketClient {
 			const pending = this.pendingRequests.get(message.id);
 			if (pending) {
 				this.pendingRequests.delete(message.id);
+				clearTimeout(pending.timeoutId);
 				if (message.error) {
 					pending.reject(new Error(message.error.message));
 				} else {
@@ -91,6 +95,11 @@ class McpWebSocketClient {
 
 	async sendRequest(method, params = {}) {
 		return new Promise((resolve, reject) => {
+			if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+				reject(new Error('WebSocket is not open'));
+				return;
+			}
+
 			const id = ++this.requestId;
 			const request = {
 				jsonrpc: '2.0',
@@ -99,20 +108,25 @@ class McpWebSocketClient {
 				params
 			};
 
-			this.pendingRequests.set(id, { resolve, reject });
-			this.ws.send(JSON.stringify(request));
-
 			// Set timeout
-			setTimeout(() => {
+			const timeoutId = setTimeout(() => {
 				if (this.pendingRequests.has(id)) {
 					this.pendingRequests.delete(id);
 					reject(new Error(`Request timeout for method: ${method}`));
 				}
 			}, 10000);
+
+			this.pendingRequests.set(id, { resolve, reject, timeoutId });
+			this.ws.send(JSON.stringify(request));
 		});
 	}
 
 	sendPing() {
+		if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+			console.error('❌ Cannot send ping: WebSocket is not open');
+			return;
+		}
+
 		const pingMessage = {
 			type: 'ping'
 		};
@@ -128,7 +142,8 @@ class McpWebSocketClient {
 }
 
 async function runExample() {
-	const client = new McpWebSocketClient('ws://127.0.0.1:3002');
+	const client = new McpWebSocketClient(process.env.MCP_WS_URL || 'ws://127.0.0.1:3002');
+	globalClient = client;
 
 	try {
 		// Connect to server
@@ -179,6 +194,9 @@ async function runExample() {
 // Handle process termination
 process.on('SIGINT', () => {
 	console.log('\n👋 Shutting down...');
+	if (globalClient) {
+		globalClient.disconnect();
+	}
 	process.exit(0);
 });
 

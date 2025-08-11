@@ -93,7 +93,7 @@ export class TransportFactory {
 	 * Checks if WebSocket transport is explicitly configured
 	 */
 	private static isWebSocketConfigured(): boolean {
-		return !!process.env.MCP_WS_PORT;
+		return !!process.env.MCP_WS_PORT || !!config.mcp.transport.websocket;
 	}
 
 	/**

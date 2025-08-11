@@ -19,8 +19,11 @@ export interface McpTransportConfig {
 	websocket?: {
 		port: number;
 		host: string;
+		path?: string;
 		compression?: boolean;
+		perMessageDeflate?: boolean;
 		maxPayload?: number;
+		allowedOrigins?: string[] | boolean;
 		session?: {
 			enabled: boolean;
 			cookieName: string;
@@ -86,11 +89,30 @@ export const config: GauzyConfig = {
 					const p = Number.parseInt(process.env.MCP_WS_PORT ?? '3002', 10);
 					return Number.isInteger(p) && p >= 0 && p <= 65535 ? p : 3002;
 				})(),
-				host: process.env.MCP_WS_HOST || '127.0.0.1',
+				host: process.env.MCP_WS_HOST || '127.0.0.1', // Default to localhost, prefer TLS termination at reverse proxy
+				path: process.env.MCP_WS_PATH || '/',
 				compression: process.env.MCP_WS_COMPRESSION !== 'false',
+				perMessageDeflate: process.env.MCP_WS_COMPRESSION !== 'false', // Maps to compression for backward compatibility
 				maxPayload: (() => {
 					const size = Number.parseInt(process.env.MCP_WS_MAX_PAYLOAD ?? '16777216', 10); // 16MB default
 					return Number.isInteger(size) && size > 0 ? size : 16777216;
+				})(),
+				allowedOrigins: (() => {
+					if (process.env.MCP_WS_ALLOWED_ORIGINS) {
+						return process.env.MCP_WS_ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(o => o.length > 0);
+					}
+
+					// Enforce origin validation in production
+					if (process.env.NODE_ENV === 'production') {
+						throw new Error(
+							'MCP_WS_ALLOWED_ORIGINS environment variable is required in production. ' +
+							'Please set it to explicitly define allowed origins (e.g., MCP_WS_ALLOWED_ORIGINS=https://your-domain.com,wss://your-domain.com)'
+						);
+					}
+
+					// Development fallback - allow common development origins
+					return ['http://localhost:3000', 'http://localhost:4200', 'http://127.0.0.1:3000', 'http://127.0.0.1:4200', 
+							'ws://localhost:3000', 'ws://localhost:4200', 'ws://127.0.0.1:3000', 'ws://127.0.0.1:4200'];
 				})(),
 				session: {
 					enabled: process.env.MCP_WS_SESSION_ENABLED !== 'false',

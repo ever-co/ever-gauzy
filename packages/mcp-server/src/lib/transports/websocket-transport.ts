@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import WebSocket, { WebSocketServer } from 'ws';
-import { Server } from 'node:http';
+import { IncomingMessage } from 'http';
 import { McpTransportConfig } from '../common/config';
 import crypto from 'node:crypto';
 
@@ -36,6 +36,32 @@ interface JsonRpcErrorResponse {
 // MCP Response types
 type McpResponse = JsonRpcResponse | JsonRpcErrorResponse;
 
+// WebSocket message types
+interface WebSocketPingMessage {
+	type: 'ping';
+}
+
+interface WebSocketPongMessage {
+	type: 'pong';
+	timestamp: string;
+}
+
+interface WebSocketWelcomeMessage {
+	jsonrpc: '2.0';
+	method: 'transport/welcome';
+	params: {
+		connectionId: string;
+		timestamp: string;
+		features: {
+			heartbeat: boolean;
+			sessions: boolean;
+			compression: boolean;
+		};
+	};
+}
+
+type WebSocketMessage = JsonRpcRequest | JsonRpcResponse | JsonRpcErrorResponse | WebSocketPingMessage | WebSocketPongMessage | WebSocketWelcomeMessage;
+
 // MCP Transport interface
 interface McpTransport {
 	start(): Promise<void>;
@@ -63,7 +89,6 @@ export interface WebSocketTransportOptions {
 
 export class WebSocketTransport {
 	private wss: WebSocketServer | null = null;
-	private httpServer: Server | null = null;
 	private mcpServer: McpServer;
 	private transportConfig: McpTransportConfig['websocket'];
 	private connections = new Map<string, WebSocketConnection>();
@@ -110,7 +135,7 @@ export class WebSocketTransport {
 					logger.log(`   - Heartbeat/ping-pong mechanism`);
 					logger.log(`   - Connection lifecycle management`);
 					logger.log(`   - Auto-reconnection support`);
-					
+
 					if (this.transportConfig.session?.enabled) {
 						logger.log(`   - Session management enabled`);
 					}
@@ -158,7 +183,7 @@ export class WebSocketTransport {
 		});
 	}
 
-	private handleConnection(ws: WebSocket, request: any): void {
+	private handleConnection(ws: WebSocket, request: IncomingMessage): void {
 		const connectionId = this.generateConnectionId();
 		const connection: WebSocketConnection = {
 			id: connectionId,
@@ -170,12 +195,17 @@ export class WebSocketTransport {
 
 		// Extract session ID from query parameters if sessions are enabled
 		if (this.transportConfig.session?.enabled) {
-			const url = new URL(request.url || '', `ws://${request.headers.host}`);
-			const sessionId = url.searchParams.get('sessionId');
-			if (sessionId && this.sessions.has(sessionId)) {
-				connection.sessionId = sessionId;
-				const session = this.sessions.get(sessionId)!;
-				session.lastAccessed = new Date();
+			const host = request.headers.host;
+			if (host) {
+				const url = new URL(request.url || '', `ws://${host}`);
+				const sessionId = url.searchParams.get('sessionId');
+				if (sessionId && this.sessions.has(sessionId)) {
+					connection.sessionId = sessionId;
+					const session = this.sessions.get(sessionId)!;
+					session.lastAccessed = new Date();
+				}
+			} else {
+				logger.warn('Host header missing in WebSocket upgrade request - session extraction skipped');
 			}
 		}
 
@@ -185,7 +215,7 @@ export class WebSocketTransport {
 
 		// Set up message handling
 		ws.on('message', async (data) => {
-			await this.handleMessage(connection, data as unknown as string);
+			await this.handleMessage(connection, data);
 		});
 
 		// Set up pong handling for heartbeat
@@ -208,20 +238,37 @@ export class WebSocketTransport {
 
 		// Send welcome message
 		this.sendToConnection(connection, {
-			type: 'welcome',
-			connectionId,
-			timestamp: new Date().toISOString(),
-			features: {
-				heartbeat: true,
-				sessions: this.transportConfig.session?.enabled || false,
-				compression: this.transportConfig.compression || false
+			jsonrpc: '2.0',
+			method: 'transport/welcome',
+			params: {
+				connectionId,
+				timestamp: new Date().toISOString(),
+				features: {
+					heartbeat: true,
+					sessions: !!this.transportConfig.session?.enabled,
+					compression: !!this.transportConfig.compression
+				}
 			}
 		});
 	}
 
-	private async handleMessage(connection: WebSocketConnection, data: Buffer | string): Promise<void> {
+	private async handleMessage(connection: WebSocketConnection, data: WebSocket.RawData): Promise<void> {
 		try {
-			const message = JSON.parse(data.toString());
+			// Normalize incoming data to string
+			let messageString: string;
+			if (Buffer.isBuffer(data)) {
+				messageString = data.toString('utf8');
+			} else if (Array.isArray(data)) {
+				// Handle Buffer[] by concatenating
+				messageString = Buffer.concat(data).toString('utf8');
+			} else if (data instanceof ArrayBuffer) {
+				messageString = Buffer.from(data).toString('utf8');
+			} else {
+				// Assume string
+				messageString = String(data);
+			}
+
+			const message = JSON.parse(messageString);
 			connection.lastSeen = new Date();
 
 			// Handle special WebSocket messages
@@ -304,8 +351,14 @@ export class WebSocketTransport {
 					}
 
 				case 'tools/call':
-					// This would need to integrate with your tool execution system
-					throw new Error('Tool execution requires proper MCP server integration');
+					{
+						transport.send({
+						jsonrpc: '2.0',
+						id,
+						error: { code: -32004, message: 'tools/call not implemented' }
+						});
+						break;
+					}
 
 				default:
 					transport.send({
@@ -336,10 +389,16 @@ export class WebSocketTransport {
 		return [];
 	}
 
-	private sendToConnection(connection: WebSocketConnection, message: any): void {
+	private sendToConnection(connection: WebSocketConnection, message: WebSocketMessage): void {
 		if (connection.socket.readyState === WebSocket.OPEN) {
 			try {
-				connection.socket.send(JSON.stringify(message));
+				const payload = JSON.stringify(message);
+				// Drop or log when buffering too much (5MB threshold example)
+				if (connection.socket.bufferedAmount > 5 * 1024 * 1024) {
+					logger.warn(`Backpressure: dropping message to ${connection.id} (buffered=${connection.socket.bufferedAmount})`);
+					return;
+				}
+				connection.socket.send(payload);
 			} catch (error) {
 				logger.error(`Error sending message to connection ${connection.id}:`, error);
 			}
@@ -371,6 +430,7 @@ export class WebSocketTransport {
 				}
 			});
 		}, 30000);
+		this.heartbeatInterval.unref?.();
 
 		logger.debug('WebSocket heartbeat mechanism started');
 	}
@@ -390,7 +450,7 @@ export class WebSocketTransport {
 		const timer = setInterval(() => {
 			this.cleanupExpiredSessions();
 		}, cleanupIntervalMs);
-		timer.unref?.();
+		timer.unref();
 		this.cleanupInterval = timer;
 
 		logger.debug(`Session cleanup started - TTL: ${this.sessionTTL}ms, Cleanup interval: ${cleanupIntervalMs}ms`);
@@ -490,14 +550,14 @@ export class WebSocketTransport {
 	}
 
 	// Broadcast message to all connections
-	broadcast(message: any): void {
+	broadcast(message: WebSocketMessage): void {
 		this.connections.forEach((connection) => {
 			this.sendToConnection(connection, message);
 		});
 	}
 
 	// Send message to specific session
-	sendToSession(sessionId: string, message: any): boolean {
+	sendToSession(sessionId: string, message: WebSocketMessage): boolean {
 		const connectionsInSession = Array.from(this.connections.values())
 			.filter(connection => connection.sessionId === sessionId);
 
