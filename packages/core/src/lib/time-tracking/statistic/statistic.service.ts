@@ -47,6 +47,7 @@ import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-em
 import { TypeOrmActivityRepository } from '../activity/repository/type-orm-activity.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
+import { fixTimeLogsBoundary } from '../time-log/time-log.utils';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -118,7 +119,7 @@ export class StatisticService {
 		const [employeesCount, projectsCount, weekActivities, todayActivities] = await Promise.all([
 			this.getEmployeeWorkedCounts(request),
 			this.getProjectWorkedCounts(request),
-			this.getWeeklyStatisticsActivities(request),
+			this.getPeriodStatisticsActivities(request),
 			this.getTodayStatisticsActivities(request)
 		]);
 
@@ -264,6 +265,99 @@ export class StatisticService {
 		// Assign the calculated values to weekActivities
 		weekActivities['duration'] = totalWeekDuration;
 		weekActivities['overall'] = weekPercentage;
+
+		return weekActivities;
+	}
+
+	/**
+	 * Get average activity and total work duration for a given period (week),
+	 * adjusted for timezone and split across midnight boundaries.
+	 *
+	 * @param request - object containing filters like organization, dates, projects, teams, employees, etc.
+	 * @returns an object with total duration and average activity percentage for the period
+	 */
+	async getPeriodStatisticsActivities(request: IGetCountsStatistics): Promise<IWeeklyStatisticsActivities> {
+		const {
+			organizationId,
+			startDate,
+			endDate,
+			projectIds = [],
+			teamIds = [],
+			logType,
+			source,
+			onlyMe: isOnlyMeSelected
+		} = request;
+
+		// Initialize employeeIds filter (use passed list or empty)
+		let employeeIds = request.employeeIds || [];
+
+		// Get current user and tenant info from context
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
+
+		// Check if user has permission to change selected employee filter
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// If user restricted to "only me" or no permission to change employees, filter to current employee only
+		if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
+			employeeIds = [user.employeeId];
+		}
+
+		// Get start and end of date range formatted as UTC moments
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('isoWeek')),
+			moment.utc(endDate || moment().endOf('isoWeek'))
+		);
+
+		// Query time logs with related time slots applying all filters
+		const timeLogs = await this.typeOrmTimeLogRepository
+			.createQueryBuilder('time_log')
+			.leftJoinAndSelect('time_log.timeSlots', 'time_slot')
+			.where('time_log.tenantId = :tenantId', { tenantId })
+			.andWhere('time_log.organizationId = :organizationId', { organizationId })
+			.andWhere(
+				new Brackets((qb) => {
+					qb.where('time_log.startedAt BETWEEN :startDate AND :endDate', { startDate: start, endDate: end });
+					qb.orWhere('time_log.stoppedAt BETWEEN :startDate AND :endDate', {
+						startDate: start,
+						endDate: end
+					});
+				})
+			)
+			.andWhere('time_log.stoppedAt >= time_log.startedAt')
+			.andWhere(isNotEmpty(employeeIds) ? 'time_log.employeeId IN (:...employeeIds)' : '1=1', { employeeIds })
+			.andWhere(isNotEmpty(projectIds) ? 'time_log.projectId IN (:...projectIds)' : '1=1', { projectIds })
+			.andWhere(isNotEmpty(teamIds) ? 'time_log.organizationTeamId IN (:...teamIds)' : '1=1', { teamIds })
+			.andWhere(isNotEmpty(logType) ? 'time_log.logType IN (:...logType)' : '1=1', { logType })
+			.andWhere(isNotEmpty(source) ? 'time_log.source IN (:...source)' : '1=1', { source })
+			.getMany();
+
+		// Adjust logs that cross midnight boundaries according to timezone
+		const fixedTimeLogs = fixTimeLogsBoundary(timeLogs, start, end, request?.timeZone);
+
+		let totalDuration = 0;
+		let totalOverall = 0;
+
+		// Sum total duration and overall activity from the fixed logs and their time slots
+		for (const log of fixedTimeLogs) {
+			totalDuration += log.duration ?? 0;
+
+			if (Array.isArray(log.timeSlots)) {
+				for (const slot of log.timeSlots) {
+					totalOverall += slot.overall ?? 0;
+				}
+			}
+		}
+
+		// Calculate average activity as percentage of overall time vs total duration
+		const weekPercentage = totalDuration > 0 ? (totalOverall * 100) / totalDuration : 0;
+
+		const weekActivities = {
+			duration: totalDuration,
+			overall: weekPercentage
+		};
 
 		return weekActivities;
 	}

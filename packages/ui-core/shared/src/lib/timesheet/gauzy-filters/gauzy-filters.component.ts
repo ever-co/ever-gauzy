@@ -278,7 +278,7 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 			this.autoRefresh$.unsubscribe();
 		}
 		if (value) {
-			this.autoRefresh$ = timer(0, 60000 * 5)
+			this.autoRefresh$ = timer(0, 60000 * 10)
 				.pipe(
 					filter((timer) => !!timer),
 					tap(() => this.logs$.next(true)),
