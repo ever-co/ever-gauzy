@@ -3,6 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import WebSocket, { WebSocketServer } from 'ws';
 import { IncomingMessage } from 'http';
 import { McpTransportConfig } from '../common/config';
+import { getAllTools, getToolCategory } from '../config/tools-registry';
 import crypto from 'node:crypto';
 
 const logger = new Logger('WebSocketTransport');
@@ -96,6 +97,9 @@ export class WebSocketTransport {
 	private sessionTTL = 30 * 60 * 1000; // 30 minutes in milliseconds
 	private heartbeatInterval: NodeJS.Timeout | null = null;
 	private cleanupInterval: NodeJS.Timeout | null = null;
+	private cachedTools: unknown[] | null = null;
+	private cacheTimestamp: number = 0;
+	private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 	constructor(options: WebSocketTransportOptions) {
 		this.mcpServer = options.server;
@@ -184,6 +188,15 @@ export class WebSocketTransport {
 	}
 
 	private handleConnection(ws: WebSocket, request: IncomingMessage): void {
+		// Validate origin if configured
+		if (this.transportConfig.allowedOrigins && Array.isArray(this.transportConfig.allowedOrigins)) {
+				const origin = request.headers.origin;
+				if (!origin || !this.transportConfig.allowedOrigins.includes(origin)) {
+					logger.warn(`Rejected WebSocket connection from unauthorized origin: ${origin}`);
+					ws.close(1008, 'Unauthorized origin');
+					return;
+				}
+			}
 		const connectionId = this.generateConnectionId();
 		const connection: WebSocketConnection = {
 			id: connectionId,
@@ -384,9 +397,37 @@ export class WebSocketTransport {
 	}
 
 	private async getTools(): Promise<unknown[]> {
-		// This would integrate with your existing tools registry
-		// For now, return empty array - you'll need to implement tool listing
-		return [];
+		try {
+			const now = Date.now();
+			
+			// Return cached tools if cache is still valid
+			if (this.cachedTools && (now - this.cacheTimestamp) < this.CACHE_TTL) {
+				logger.debug('Returning cached tools list');
+				return this.cachedTools;
+			}
+			
+			// Fetch and cache tools
+			const tools = getAllTools();
+			this.cachedTools = tools.map(toolName => {
+				const category = getToolCategory(toolName);
+				return {
+					name: toolName,
+					description: `${toolName} - Gauzy ${category || 'general'} tool`,
+					inputSchema: {
+						type: 'object',
+						properties: {},
+						additionalProperties: true
+					}
+				};
+			});
+			
+			this.cacheTimestamp = now;
+			logger.debug(`Cached ${this.cachedTools.length} tools from registry`);
+			return this.cachedTools;
+		} catch (error) {
+			logger.error(`Failed to get tools: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			return [];
+		}
 	}
 
 	private sendToConnection(connection: WebSocketConnection, message: WebSocketMessage): void {
