@@ -1,0 +1,332 @@
+@use 'themes' as *;
+@use '@shared/reusable' as *;
+
+.login-container {
+  width: 100%;
+  max-width: 900px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 2rem;
+
+  & .login-wrapper {
+    background: nb-theme(gauzy-card-2);
+    border-radius: nb-theme(border-radius);
+    box-sizing: border-box;
+    padding: 30px;
+    width: 100%;
+    max-width: 800px;
+    min-height: auto;
+    overflow-x: hidden;
+    & > * {
+      padding-left: 15px;
+      padding-right: 15px;
+    }
+    & .svg-wrapper {
+      display: flex;
+      justify-content: space-between;
+
+      & .ever-logo-svg {
+        margin-bottom: 57px;
+      }
+
+      & .close-button {
+        border: none;
+        background: transparent;
+        color: nb-theme(text-hint-color);
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 4px;
+
+        &:hover {
+          background: nb-theme(background-basic-color-3);
+          color: nb-theme(text-basic-color);
+        }
+      }
+    }
+    & .headings {
+      display: flex;
+      justify-content: space-between;
+      flex-direction: column;
+      position: relative;
+      & .headings-inner {
+        & .title {
+          font-family: Inter;
+          font-size: 24px;
+          font-style: normal;
+          font-weight: 700;
+          line-height: 30px;
+          letter-spacing: 0em;
+          margin-bottom: 18px;
+          text-align: start;
+        }
+        & .sub-title {
+          font-family: Inter;
+          font-size: 14px;
+          font-style: normal;
+          font-weight: 400;
+          line-height: 11px;
+          letter-spacing: 0em;
+          margin-bottom: 26px;
+          text-align: start;
+        }
+      }
+      & .sent-code-container {
+        margin-bottom: 1rem;
+        margin-right: -20px;
+        & .normal-text {
+          font-size: 0.8rem;
+        }
+        & .minimum-text {
+          font-size: 0.75rem;
+        }
+        & p {
+          margin-bottom: 0;
+        }
+        & b {
+          font-size: 0.8rem;
+        }
+        & span {
+          font-size: 0.7rem;
+          color: var(--text-hint-color);
+        }
+      }
+    }
+    & .hr-div-strong {
+      @include hr-div-strong;
+    }
+  }
+  & form {
+    margin-top: 29px;
+    margin-bottom: 42px;
+    & .form-control-group {
+      .not-allowed {
+        cursor: not-allowed;
+      }
+
+      .edit-email {
+        transition: all;
+        &:hover {
+          color: var(--text-basic-color);
+        }
+      }
+    }
+
+    & .new-code-wrapper {
+      font-size: 0.75rem;
+      text-align: right;
+      margin-top: 0.4rem;
+      margin-right: 0.4rem;
+      & .resend-code {
+        margin-bottom: 0.4rem;
+        &:hover {
+          cursor: pointer;
+        }
+      }
+      & .request-new-code {
+        color: var(--text-hint-color);
+      }
+    }
+    & .submit-btn-wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      & .forgot-email {
+        text-decoration-line: underline;
+        margin-bottom: 0;
+        font-family: Inter;
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 17px;
+        letter-spacing: -0.01em;
+        text-align: left;
+      }
+      & .forgot-email:hover {
+        color: $button-color;
+      }
+      & .forgot-email-big {
+        display: block;
+      }
+
+      & .submit-inner-wrapper {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      & .submit-btn {
+        @include submit-btn;
+        padding: 13px 20px;
+        font-size: 14px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 25px;
+        margin-top: 15px;
+        & nb-icon {
+          position: relative;
+          background: transparent;
+        }
+
+        & .spinner {
+          animation: spin 1s linear infinite;
+        }
+      }
+    }
+    & .magic-description {
+      & p {
+        text-align: left;
+        font-size: 0.85rem;
+        & a {
+          color: var(--link-text-color);
+        }
+      }
+    }
+  }
+}
+
+// Workspace Selection Styles
+.workspace-selection-content {
+  .workspace-list {
+    h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+
+      .email {
+        color: nb-theme(color-primary-500);
+        font-weight: 600;
+      }
+    }
+
+    .workspace-items {
+      margin-bottom: 2rem;
+
+      .workspace-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid nb-theme(border-basic-color-3);
+        border-radius: nb-theme(border-radius);
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: nb-theme(background-basic-color-2);
+          border-color: nb-theme(color-primary-500);
+        }
+
+        .workspace-image {
+          width: 48px;
+          height: 48px;
+          margin-right: 1rem;
+
+          img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+          }
+        }
+
+        .workspace-info {
+          flex: 1;
+
+          .workspace-name {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+          }
+
+          .workspace-email {
+            font-size: 0.875rem;
+            color: nb-theme(text-hint-color);
+          }
+        }
+
+        nb-icon {
+          color: nb-theme(text-hint-color);
+        }
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    width: 100%;
+    padding: 1rem;
+
+    & .login-wrapper {
+      width: 100%;
+      padding: 1rem;
+
+      & .headings {
+        & .headings-inner {
+          width: 100%;
+          & .title,
+          .sub-title {
+            width: 100%;
+            text-align: center;
+          }
+        }
+      }
+
+      .workspace-selection-content {
+        .workspace-list {
+          .workspace-items {
+            .workspace-item {
+              padding: 0.75rem;
+
+              .workspace-image {
+                width: 40px;
+                height: 40px;
+                margin-right: 0.75rem;
+              }
+
+              .workspace-info {
+                .workspace-name {
+                  font-size: 0.9rem;
+                }
+
+                .workspace-email {
+                  font-size: 0.8rem;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    & form {
+      margin-bottom: 35px;
+      & .submit-btn-wrapper {
+        justify-content: center;
+        & .submit-inner-wrapper {
+          justify-content: center;
+        }
+        & .submit-btn {
+          margin-bottom: 0;
+        }
+      }
+      & .form-control-group {
+        margin-bottom: 13px;
+      }
+    }
+  }
+}
