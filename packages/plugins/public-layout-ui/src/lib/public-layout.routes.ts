@@ -90,6 +90,32 @@ export const createPublicLayoutRoutes = (_pageRouteRegistryService: PageRouteReg
 				]
 			},
 			{
+				path: 'workspace',
+				children: [
+					{
+						path: 'create',
+						loadChildren: () =>
+							import('./components/workspace-actions/workspace-create/workspace-create.module').then(
+								(m) => m.WorkspaceCreateModule
+							)
+					},
+					{
+						path: 'signin',
+						loadChildren: () =>
+							import('./components/workspace-actions/workspace-signin/workspace-signin.module').then(
+								(m) => m.WorkspaceSigninModule
+							)
+					},
+					{
+						path: 'find',
+						loadChildren: () =>
+							import('./components/workspace-actions/workspace-find/workspace-find.module').then(
+								(m) => m.WorkspaceFindModule
+							)
+					}
+				]
+			},
+			{
 				path: ':type/:id/:token',
 				component: InvoiceEstimateViewComponent,
 				children: []
