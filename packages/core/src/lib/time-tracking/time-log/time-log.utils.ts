@@ -110,9 +110,9 @@ export function fixTimeLogsBoundary(
 			const newLog = {
 				...log,
 				startedAt: nextDayStart.toDate(),
-				partialStatus: TimeLogPartialStatus.TO_RIGHT,
-				duration: calculateTimeLogDuration(log)
+				partialStatus: TimeLogPartialStatus.TO_RIGHT
 			};
+			newLog.duration = calculateTimeLogDuration(newLog);
 
 			// Update the original log to the current day boundary
 			log.stoppedAt = currentDayEnd.toDate();
