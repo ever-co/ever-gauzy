@@ -1,4 +1,4 @@
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 import { reduce } from 'underscore';
 import { ArraySum } from '@gauzy/utils';
 import { ITimeLog, TimeLogPartialStatus, TimeLogType } from '@gauzy/contracts';
@@ -42,7 +42,12 @@ export const calculateDuration = (logs: ITimeLog[], logType: TimeLogType): numbe
  * @returns The duration of the time log in seconds.
  */
 export const calculateTimeLogDuration = (log: ITimeLog): number => {
-	return Math.trunc(moment(log.stoppedAt).diff(moment(log.startedAt), 'seconds'));
+	if (!log.startedAt || !log.stoppedAt) {
+		return 0;
+	}
+
+	const duration = moment(log.stoppedAt).diff(moment(log.startedAt), 'seconds');
+	return Math.max(0, Math.trunc(duration));
 };
 
 /**

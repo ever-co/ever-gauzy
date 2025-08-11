@@ -1310,6 +1310,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns The updated time log entry.
 	 */
 	async updateManualTime(id: ID, request: IManualTimeInput): Promise<ITimeLog> {
+		const originalTimeZone = request.timeZone;
 		try {
 			const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 			const { startedAt, stoppedAt, employeeId, organizationId, partialStatus, referenceDate } = request;
@@ -1391,12 +1392,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				...timeLog,
 				...request
 			};
-			const remainingTimeUpdate = {};
+
+			const remainingTimeUpdate: Partial<IManualTimeInput> = {};
 			if (partialStatus == TimeLogPartialStatus.TO_LEFT) {
-				remainingTimeUpdate['startedAt'] = moment(referenceDate).add(1, 'seconds').toDate();
+				remainingTimeUpdate.startedAt = moment(referenceDate).add(1, 'seconds').toDate();
 				newObject.stoppedAt = referenceDate;
 			} else if (partialStatus == TimeLogPartialStatus.TO_RIGHT) {
-				remainingTimeUpdate['stoppedAt'] = moment(referenceDate).subtract(1, 'seconds').toDate();
+				remainingTimeUpdate.stoppedAt = moment(referenceDate).subtract(1, 'seconds').toDate();
 				newObject.startedAt = referenceDate;
 			}
 
@@ -1430,7 +1432,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			if (partialStatus != TimeLogPartialStatus.COMPLETE) {
 				// If the time log is not complete, we need to create new time log entry
-				newTimeLog = await this.addManualTime(newObject);
+				newTimeLog = await this.addManualTime({ ...newObject, timeZone: originalTimeZone });
 			}
 
 			return newTimeLog;

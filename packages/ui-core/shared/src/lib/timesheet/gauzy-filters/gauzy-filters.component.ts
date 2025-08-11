@@ -211,7 +211,9 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 		if (!this.organization) {
 			return;
 		}
-		await this.getCounts();
+		if (this.hasWorkedPerDay || this.hasWorkedPerWeek) {
+			await this.getCounts();
+		}
 	}
 
 	/**
