@@ -338,7 +338,7 @@ export class WebSocketTransport {
 						jsonrpc: '2.0',
 						id,
 						result: {
-							protocolVersion: '2025-08-10',
+							protocolVersion: '2025-06-18',
 							capabilities: { tools: {} },
 							serverInfo: {
 								name: 'gauzy-mcp-server',
@@ -613,7 +613,8 @@ export class WebSocketTransport {
 	}
 
 	getUrl(): string {
-		return `ws://${this.transportConfig.host}:${this.transportConfig.port}`;
+		const scheme = this.transportConfig.tls ? 'wss' : 'ws';
+		return `${scheme}://${this.transportConfig.host}:${this.transportConfig.port}`;
 	}
 
 	getStats(): {

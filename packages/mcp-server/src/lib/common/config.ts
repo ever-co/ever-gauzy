@@ -24,6 +24,10 @@ export interface McpTransportConfig {
 		perMessageDeflate?: boolean;
 		maxPayload?: number;
 		allowedOrigins?: string[] | boolean;
+		tls?: boolean;
+		secure?: boolean;
+		cert?: string;
+		key?: string;
 		session?: {
 			enabled: boolean;
 			cookieName: string;
@@ -123,6 +127,10 @@ export const config: GauzyConfig = {
 					];
 					return developmentOrigins;
 				})(),
+				tls: process.env.MCP_WS_TLS === 'true',
+				secure: process.env.MCP_WS_SECURE === 'true',
+				cert: process.env.MCP_WS_CERT_PATH,
+				key: process.env.MCP_WS_KEY_PATH,
 				session: {
 					enabled: process.env.MCP_WS_SESSION_ENABLED !== 'false',
 					cookieName: process.env.MCP_WS_SESSION_COOKIE_NAME || 'mcp-ws-session-id'
