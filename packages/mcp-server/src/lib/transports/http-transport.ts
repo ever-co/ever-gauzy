@@ -6,6 +6,7 @@ import { rateLimit } from 'express-rate-limit';
 import { Server } from 'node:http';
 import { McpTransportConfig } from '../common/config';
 import crypto from 'node:crypto';
+import { sessionManager, sessionMiddleware, UserContext } from '../session';
 
 const logger = new Logger('HttpTransport');
 
@@ -58,9 +59,7 @@ export class HttpTransport {
 	private httpServer: Server | null = null;
 	private mcpServer: McpServer;
 	private transportConfig: McpTransportConfig['http'];
-	private sessions = new Map<string, { id: string; created: Date; lastAccessed: Date }>();
-	private sessionTTL = 30 * 60 * 1000; // 30 minutes in milliseconds
-	private cleanupInterval: NodeJS.Timeout | null = null;
+	private isInitialized = false;
 
 	constructor(options: HttpTransportOptions) {
 		this.mcpServer = options.server;
@@ -68,15 +67,6 @@ export class HttpTransport {
 		this.app = express();
 		this.setupMiddleware();
 		this.setupRoutes();
-
-		// Configure session TTL from environment or use default
-		const ttl = Number.parseInt(process.env.MCP_SESSION_TTL ?? '1800000', 10);
-		this.sessionTTL = Number.isFinite(ttl) ? ttl : 1_800_000;
-
-		// Start session cleanup if sessions are enabled
-		if (this.transportConfig.session.enabled) {
-			this.startSessionCleanup();
-		}
 	}
 
 	private setupMiddleware() {
@@ -84,12 +74,15 @@ export class HttpTransport {
 		this.app.use(cors({
 			origin: this.transportConfig.cors.origin,
 			credentials: this.transportConfig.cors.credentials,
-			methods: ['GET', 'POST', 'OPTIONS'],
-			allowedHeaders: ['Content-Type', 'Authorization', 'mcp-session-id']
+			methods: ['GET', 'POST', 'OPTIONS', 'DELETE'],
+			allowedHeaders: ['Content-Type', 'Authorization', 'mcp-session-id', 'mcp-csrf-token']
 		}));
 
 		// JSON parsing
 		this.app.use(express.json({ limit: '10mb' }));
+
+		// Cookie parsing for session management
+		this.app.use(express.urlencoded({ extended: true }));
 
 		// Request logging
 		this.app.use((req, res, next) => {
@@ -97,42 +90,53 @@ export class HttpTransport {
 			next();
 		});
 
-		// Session management
+		// Session management middleware (applied to protected routes)
 		if (this.transportConfig.session.enabled) {
-			this.app.use((req, res, next) => {
-				const sessionId = req.headers['mcp-session-id'] as string;
-				if (sessionId) {
-					const session = this.sessions.get(sessionId);
-					if (session) {
-						// Check if session is still valid
-						if (this.isSessionExpired(session)) {
-							this.sessions.delete(sessionId);
-							logger.debug(`Session ${sessionId} expired and removed`);
-						} else {
-							session.lastAccessed = new Date();
-							req.sessionId = sessionId;
-						}
-					}
-				}
-				next();
-			});
+			this.setupSessionMiddleware();
 		}
 	}
 
+	private setupSessionMiddleware() {
+		// Create session middleware for protected MCP routes
+		const mcpSessionMiddleware = sessionMiddleware.createSessionMiddleware({
+			requireAuth: false, // MCP endpoints handle their own auth validation
+			validateIP: false,
+			validateUserAgent: false,
+			enableCSRF: true,
+			enableRateLimit: false,
+			excludedPaths: ['/health', '/mcp/session*'],
+		});
+
+		// Rate limiting middleware
+		const rateLimitMiddleware = sessionMiddleware.createRateLimitMiddleware({
+			windowMs: 15 * 60 * 1000, // 15 minutes
+			max: 100, // 100 requests per windowMs per session/IP
+		});
+
+		// Apply middleware to MCP routes
+		this.app.use('/mcp', rateLimitMiddleware);
+		this.app.use('/mcp', mcpSessionMiddleware);
+	}
+
 	private setupRoutes() {
-		// Health check endpoint
+		// Health check endpoint (no session required)
 		this.app.get('/health', (req, res) => {
-			const sessionStats = this.transportConfig.session.enabled ? {
-				activeSessions: this.sessions.size,
-				sessionTTL: this.sessionTTL
-			} : null;
+			const sessionStats = this.transportConfig.session.enabled
+				? sessionManager.getStats()
+				: null;
 
 			res.json({
 				status: 'healthy',
 				timestamp: new Date().toISOString(),
 				transport: 'http',
 				server: 'gauzy-mcp-server',
-				...(sessionStats && { sessions: sessionStats })
+				...(sessionStats && {
+					sessions: {
+						total: sessionStats.totalSessions,
+						active: sessionStats.activeSessions,
+						connections: sessionStats.totalConnections,
+					}
+				})
 			});
 		});
 
@@ -162,61 +166,176 @@ export class HttpTransport {
 			}
 		});
 
-		// Session management endpoints with rate limiting
+		// Session management endpoints
 		if (this.transportConfig.session.enabled) {
-			// Rate limiting for session endpoints
-			const maxRequests = (() => {
-				const v = Number.parseInt(process.env.MCP_SESSION_RATE_LIMIT ?? '', 10);
-				return Number.isInteger(v) && v > 0 ? v : 50;
-			})();
-			const sessionRateLimit = rateLimit({
-				windowMs: 15 * 60 * 1000, // 15 minutes
-				max: maxRequests, // Limit each IP per window
-				message: {
-					error: 'Too many session requests',
-					message: 'Rate limit exceeded for session endpoints',
-					retryAfter: '15 minutes'
-				},
-				standardHeaders: true,
-				legacyHeaders: false,
-				skip: (req) => {
-					// Skip rate limiting for localhost in development
-					if (process.env.NODE_ENV !== 'production') {
-						const ip = req.ip || req.socket?.remoteAddress;
-						return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
-					}
-					return false;
+			this.setupSessionRoutes();
+		}
+	}
+
+	private setupSessionRoutes() {
+		// Rate limiting for session endpoints
+		const maxRequests = (() => {
+			const v = Number.parseInt(process.env.MCP_SESSION_RATE_LIMIT ?? '', 10);
+			return Number.isInteger(v) && v > 0 ? v : 50;
+		})();
+		const sessionRateLimit = rateLimit({
+			windowMs: 15 * 60 * 1000, // 15 minutes
+			max: maxRequests,
+			message: {
+				error: 'Too many session requests',
+				message: 'Rate limit exceeded for session endpoints',
+				retryAfter: '15 minutes'
+			},
+			standardHeaders: true,
+			legacyHeaders: false,
+			skip: (req) => {
+				// Skip rate limiting for localhost in development
+				if (process.env.NODE_ENV !== 'production') {
+					const ip = req.ip || req.socket?.remoteAddress;
+					return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
 				}
-			});
+				return false;
+			}
+		});
 
-			this.app.post('/mcp/session', sessionRateLimit, (req, res) => {
-				const sessionId = this.generateSessionId();
-				const session = {
-					id: sessionId,
-					created: new Date(),
-					lastAccessed: new Date()
-				};
-				this.sessions.set(sessionId, session);
+		// Create session endpoint
+		this.app.post('/mcp/session', sessionRateLimit, async (req, res) => {
+			try {
+				const { userId, userEmail, organizationId, tenantId, autoAuthenticate = true } = req.body;
 
-				logger.debug(`Session created: ${sessionId} from ${req.ip}`);
+				const session = await sessionManager.createSession({
+					userId,
+					userEmail,
+					organizationId,
+					tenantId,
+					ipAddress: this.getClientIP(req),
+					userAgent: req.get('User-Agent'),
+					loginSource: 'http',
+					autoAuthenticate,
+					metadata: {
+						createdVia: 'http-endpoint',
+						userAgent: req.get('User-Agent'),
+						origin: req.get('Origin'),
+					},
+				});
+
+				// Generate CSRF token for the session
+				const csrfToken = sessionMiddleware.generateCSRFToken(session.id);
+
+				logger.log(`Session created: ${session.id} for user ${session.userId} from ${req.ip}`);
 
 				res.json({
-					sessionId,
+					sessionId: session.id,
 					created: session.created,
-					cookieName: this.transportConfig.session.cookieName
+					expiresAt: session.expiresAt,
+					csrfToken,
+					cookieName: this.transportConfig.session.cookieName,
+					user: {
+						id: session.userId,
+						email: session.userEmail,
+						organizationId: session.organizationId,
+						tenantId: session.tenantId,
+					},
 				});
-			});
+			} catch (error) {
+				logger.error('Error creating session:', error);
+				res.status(400).json({
+					error: 'Session creation failed',
+					message: error instanceof Error ? error.message : 'Unknown error'
+				});
+			}
+		});
 
-			this.app.delete('/mcp/session/:sessionId',  sessionRateLimit, (req, res) => {
-				const sessionId = req.params.sessionId;
-				if (this.sessions.delete(sessionId)) {
-					logger.debug(`Session deleted: ${sessionId} from ${req.ip}`);
-					res.status(204).send(); // 204 No Content for successful deletion
-				} else {
-					res.status(404).json({ error: 'Session not found' });
+		// Delete session endpoint
+		this.app.delete('/mcp/session/:sessionId', sessionRateLimit, (req, res) => {
+			const sessionId = req.params.sessionId;
+
+			if (sessionManager.destroySession(sessionId)) {
+				logger.log(`Session deleted: ${sessionId} from ${req.ip}`);
+				res.status(204).send();
+			} else {
+				res.status(404).json({ error: 'Session not found' });
+			}
+		});
+
+		// Get session info endpoint
+		this.app.get('/mcp/session/:sessionId', sessionRateLimit, async (req, res) => {
+			const sessionId = req.params.sessionId;
+
+			try {
+				const validation = await sessionManager.validateSession(
+					sessionId,
+					this.getClientIP(req),
+					req.get('User-Agent')
+				);
+
+				if (!validation.valid || !validation.session) {
+					res.status(404).json({
+						error: 'Session not found or invalid',
+						reason: validation.reason,
+					});
+					return;
 				}
-			});
-		}
+
+				const connections = sessionManager.getSessionConnections(sessionId);
+
+				res.json({
+					session: {
+						id: validation.session.id,
+						userId: validation.session.userId,
+						userEmail: validation.session.userEmail,
+						organizationId: validation.session.organizationId,
+						tenantId: validation.session.tenantId,
+						created: validation.session.created,
+						lastAccessed: validation.session.lastAccessed,
+						lastActivity: validation.session.lastActivity,
+						expiresAt: validation.session.expiresAt,
+						isActive: validation.session.isActive,
+						loginSource: validation.session.loginSource,
+						connectionCount: connections.length,
+					},
+					connections: connections.map(conn => ({
+						id: conn.id,
+						type: conn.type,
+						created: conn.created,
+						lastSeen: conn.lastSeen,
+						isActive: conn.isActive,
+					})),
+				});
+			} catch (error) {
+				logger.error('Error getting session info:', error);
+				res.status(500).json({
+					error: 'Internal server error',
+					message: 'Failed to retrieve session information'
+				});
+			}
+		});
+
+		// Session stats endpoint (admin only)
+		this.app.get('/mcp/sessions/stats', sessionRateLimit, (req, res) => {
+			try {
+				const stats = sessionManager.getStats();
+				const metrics = sessionManager.getMetrics();
+
+				res.json({
+					stats,
+					metrics: {
+						sessionsCreated: metrics.sessionsCreated,
+						sessionsDestroyed: metrics.sessionsDestroyed,
+						connectionsCreated: metrics.connectionsCreated,
+						connectionsDestroyed: metrics.connectionsDestroyed,
+						cleanupRuns: metrics.cleanupRuns,
+						lastCleanup: metrics.lastCleanup,
+					},
+				});
+			} catch (error) {
+				logger.error('Error getting session stats:', error);
+				res.status(500).json({
+					error: 'Internal server error',
+					message: 'Failed to retrieve session statistics'
+				});
+			}
+		});
 	}
 
 	private async handleMcpRequest(req: express.Request, res: express.Response) {
@@ -236,11 +355,33 @@ export class HttpTransport {
 		}
 
 		try {
+			// Add user context to request metadata if session is available
+			const userContext = req.userContext;
+			const enrichedParams = userContext ? {
+				...params,
+				_context: {
+					userId: userContext.userId,
+					organizationId: userContext.organizationId,
+					tenantId: userContext.tenantId,
+					sessionId: userContext.sessionId,
+					connectionId: req.connectionId,
+				}
+			} : params;
+
 			// Create a mock transport interface for the MCP server
 			const mockTransport: MockTransport = {
 				start: async () => {},
 				close: async () => {},
 				send: (response: McpResponse) => {
+					// Update session activity on response
+					if (req.sessionId) {
+						sessionManager.updateSessionActivity(req.sessionId, {
+							lastMcpMethod: method,
+							lastMcpId: id,
+							lastMcpTimestamp: new Date().toISOString(),
+						});
+					}
+
 					// Send response back to HTTP client
 					const isNotification = id === undefined || id === null;
 					if (isNotification) {
@@ -253,7 +394,7 @@ export class HttpTransport {
 			};
 
 			// Route the request to appropriate MCP server handler
-			await this.routeMcpRequest(method, params, id, mockTransport);
+			await this.routeMcpRequest(method, enrichedParams, id, mockTransport, userContext);
 
 		} catch (error) {
 			logger.error(`Error processing MCP method ${method}:`, error);
@@ -302,7 +443,7 @@ export class HttpTransport {
 		});
 	}
 
-	private async routeMcpRequest(method: string, params: Record<string, unknown> | unknown[] | undefined, id: string | number | null | undefined, transport: MockTransport) {
+	private async routeMcpRequest(method: string, params: Record<string, unknown> | unknown[] | undefined, id: string | number | null | undefined, transport: MockTransport, userContext?: UserContext) {
 		try {
 
 			// Convert the HTTP request into a format the MCP server can handle
@@ -378,57 +519,30 @@ export class HttpTransport {
 	}
 
 
-	private generateSessionId(): string {
-		const randomPart = crypto.randomBytes(16).toString('hex');
-		return `mcp_${Date.now()}_${randomPart}`;
-	}
+	private getClientIP(req: express.Request): string {
+		const forwarded = req.get('X-Forwarded-For');
+		const realIP = req.get('X-Real-IP');
 
-	private isSessionExpired(session: { created: Date; lastAccessed: Date }): boolean {
-		const now = new Date();
-		const timeSinceLastAccess = now.getTime() - session.lastAccessed.getTime();
-		return timeSinceLastAccess > this.sessionTTL;
-	}
-
-	private startSessionCleanup(): void {
-		// Run cleanup every 5 minutes
-		const cleanupIntervalMs = 5 * 60 * 1000;
-
-		const timer = setInterval(() => {
-			this.cleanupExpiredSessions();
-		}, cleanupIntervalMs);
-		timer.unref?.();
-		this.cleanupInterval = timer;
-
-		logger.debug(`Session cleanup started - TTL: ${this.sessionTTL}ms, Cleanup interval: ${cleanupIntervalMs}ms`);
-	}
-
-	private cleanupExpiredSessions(): void {
-		let expiredCount = 0;
-		const sessionIds = Array.from(this.sessions.keys());
-
-		for (const sessionId of sessionIds) {
-			const session = this.sessions.get(sessionId);
-			if (session && this.isSessionExpired(session)) {
-				this.sessions.delete(sessionId);
-				expiredCount++;
-			}
+		if (forwarded) {
+			return forwarded.split(',')[0].trim();
 		}
 
-		if (expiredCount > 0) {
-			logger.debug(`Cleaned up ${expiredCount} expired sessions. Active sessions: ${this.sessions.size}`);
+		if (realIP) {
+			return realIP.trim();
 		}
-	}
 
-	private stopSessionCleanup(): void {
-		if (this.cleanupInterval) {
-			clearInterval(this.cleanupInterval);
-			this.cleanupInterval = null;
-		}
+		return req.socket.remoteAddress || 'unknown';
 	}
 
 	async start(): Promise<void> {
-		return new Promise((resolve, reject) => {
+		return new Promise(async (resolve, reject) => {
 			try {
+				// Initialize session manager if sessions are enabled
+				if (this.transportConfig.session.enabled && !this.isInitialized) {
+					await sessionManager.initialize();
+					this.isInitialized = true;
+				}
+
 				this.httpServer = this.app.listen(
 					this.transportConfig.port,
 					this.transportConfig.host,
@@ -443,7 +557,14 @@ export class HttpTransport {
 
 						if (this.transportConfig.session.enabled) {
 							logger.log(`   - POST /mcp/session - Create session`);
+							logger.log(`   - GET  /mcp/session/:id - Get session info`);
 							logger.log(`   - DELETE /mcp/session/:id - Delete session`);
+							logger.log(`   - GET  /mcp/sessions/stats - Session statistics`);
+							logger.log(`📡 Session management features:`);
+							logger.log(`   - Multi-user session isolation`);
+							logger.log(`   - Automatic session cleanup`);
+							logger.log(`   - CSRF protection`);
+							logger.log(`   - Rate limiting`);
 						}
 
 						resolve();
@@ -463,11 +584,10 @@ export class HttpTransport {
 
 	async stop(): Promise<void> {
 		return new Promise((resolve) => {
-			// Stop session cleanup
-			this.stopSessionCleanup();
-
-			// Clear all sessions
-			this.sessions.clear();
+			// Shutdown session middleware if initialized
+			if (this.isInitialized && this.transportConfig.session.enabled) {
+				sessionMiddleware.shutdown();
+			}
 
 			if (this.httpServer) {
 				this.httpServer.close(() => {

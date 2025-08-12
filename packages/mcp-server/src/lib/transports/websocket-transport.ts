@@ -5,6 +5,7 @@ import { IncomingMessage } from 'http';
 import { McpTransportConfig } from '../common/config';
 import { getAllTools, getToolCategory } from '../config/tools-registry';
 import crypto from 'node:crypto';
+import { sessionManager, sessionMiddleware, UserContext } from '../session';
 
 const logger = new Logger('WebSocketTransport');
 
@@ -76,8 +77,10 @@ interface WebSocketConnection {
 	socket: WebSocket;
 	isAlive: boolean;
 	sessionId?: string;
+	userContext?: UserContext;
 	created: Date;
 	lastSeen: Date;
+	metadata: Record<string, any>;
 }
 
 export interface WebSocketTransportOptions {
@@ -90,26 +93,32 @@ export class WebSocketTransport {
 	private mcpServer: McpServer;
 	private transportConfig: McpTransportConfig['websocket'];
 	private connections = new Map<string, WebSocketConnection>();
-	private sessions = new Map<string, { id: string; created: Date; lastAccessed: Date }>();
-	private sessionTTL = 30 * 60 * 1000; // 30 minutes in milliseconds
 	private heartbeatInterval: NodeJS.Timeout | null = null;
-	private cleanupInterval: NodeJS.Timeout | null = null;
 	private cachedTools: unknown[] | null = null;
 	private cacheTimestamp: number = 0;
 	private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+	private sessionMiddlewareInstance: any = null;
+	private isInitialized = false;
 
 	constructor(options: WebSocketTransportOptions) {
 		this.mcpServer = options.server;
 		this.transportConfig = options.transportConfig;
-
-		// Configure session TTL from environment or use default
-		const ttl = Number.parseInt(process.env.MCP_SESSION_TTL ?? '1800000', 10);
-		this.sessionTTL = Number.isFinite(ttl) ? ttl : 30 * 60 * 1000;
 	}
 
 	async start(): Promise<void> {
-		return new Promise((resolve, reject) => {
+		return new Promise(async (resolve, reject) => {
 			try {
+				// Initialize session manager if sessions are enabled
+				if (this.transportConfig.session?.enabled && !this.isInitialized) {
+					await sessionManager.initialize();
+					this.sessionMiddlewareInstance = sessionMiddleware.createWebSocketSessionMiddleware({
+						requireAuth: false, // WebSocket handles its own auth validation
+						validateIP: false,
+						validateUserAgent: false,
+					});
+					this.isInitialized = true;
+				}
+
 				// Create WebSocket server
 				this.wss = new WebSocketServer({
 					port: this.transportConfig.port,
@@ -138,16 +147,15 @@ export class WebSocketTransport {
 					logger.log(`   - Auto-reconnection support`);
 
 					if (this.transportConfig.session?.enabled) {
-						logger.log(`   - Session management enabled`);
+						logger.log(`📡 Session management features:`);
+						logger.log(`   - Multi-user session isolation`);
+						logger.log(`   - Automatic session cleanup`);
+						logger.log(`   - Connection-session binding`);
+						logger.log(`   - Session activity tracking`);
 					}
 
 					// Start heartbeat mechanism
 					this.startHeartbeat();
-
-					// Start session cleanup if sessions are enabled
-					if (this.transportConfig.session?.enabled) {
-						this.startSessionCleanup();
-					}
 
 					resolve();
 				});
@@ -160,18 +168,20 @@ export class WebSocketTransport {
 
 	async stop(): Promise<void> {
 		return new Promise((resolve) => {
-			// Stop heartbeat and cleanup
+			// Stop heartbeat
 			this.stopHeartbeat();
-			this.stopSessionCleanup();
 
 			// Close all connections
 			this.connections.forEach((connection) => {
+				// Remove connection from session manager if it exists
+				if (connection.sessionId) {
+					sessionManager.removeConnection(connection.id);
+				}
 				if (connection.socket.readyState === WebSocket.OPEN) {
 					connection.socket.close(1001, 'Server shutting down');
 				}
 			});
 			this.connections.clear();
-			this.sessions.clear();
 
 			if (this.wss) {
 				this.wss.close(() => {
@@ -184,44 +194,71 @@ export class WebSocketTransport {
 		});
 	}
 
-	private handleConnection(ws: WebSocket, request: IncomingMessage): void {
+	private async handleConnection(ws: WebSocket, request: IncomingMessage): Promise<void> {
 		// Validate origin if configured
 		if (this.transportConfig.allowedOrigins && Array.isArray(this.transportConfig.allowedOrigins)) {
-				const origin = request.headers.origin;
-				if (!origin || !this.transportConfig.allowedOrigins.includes(origin)) {
-					logger.warn(`Rejected WebSocket connection from unauthorized origin: ${origin}`);
-					ws.close(1008, 'Unauthorized origin');
-					return;
-				}
+			const origin = request.headers.origin;
+			if (!origin || !this.transportConfig.allowedOrigins.includes(origin)) {
+				logger.warn(`Rejected WebSocket connection from unauthorized origin: ${origin}`);
+				ws.close(1008, 'Unauthorized origin');
+				return;
 			}
+		}
+
 		const connectionId = this.generateConnectionId();
+		const clientIP = this.getClientIP(request);
+		const userAgent = request.headers['user-agent'];
+
 		const connection: WebSocketConnection = {
 			id: connectionId,
 			socket: ws,
 			isAlive: true,
 			created: new Date(),
-			lastSeen: new Date()
+			lastSeen: new Date(),
+			metadata: {
+				origin: request.headers.origin,
+				userAgent,
+				remoteAddress: clientIP,
+				url: request.url,
+			}
 		};
 
-		// Extract session ID from query parameters if sessions are enabled
-		if (this.transportConfig.session?.enabled) {
-			const host = request.headers.host;
-			if (host) {
-				const url = new URL(request.url || '', `ws://${host}`);
-				const sessionId = url.searchParams.get('sessionId');
-				if (sessionId && this.sessions.has(sessionId)) {
-					connection.sessionId = sessionId;
-					const session = this.sessions.get(sessionId)!;
-					session.lastAccessed = new Date();
+		// Handle session validation if sessions are enabled
+		if (this.transportConfig.session?.enabled && this.sessionMiddlewareInstance) {
+			const sessionId = this.extractSessionIdFromRequest(request);
+			
+			if (sessionId) {
+				try {
+					const validation = await this.sessionMiddlewareInstance(
+						sessionId,
+						connectionId,
+						{
+							ipAddress: clientIP,
+							userAgent,
+							origin: request.headers.origin,
+						}
+					);
+
+					if (validation.valid) {
+						connection.sessionId = sessionId;
+						connection.userContext = validation.userContext;
+						logger.debug(`WebSocket connection ${connectionId} associated with session ${sessionId}`);
+					} else {
+						logger.warn(`WebSocket connection rejected: ${validation.reason}`);
+						ws.close(1008, `Session validation failed: ${validation.reason}`);
+						return;
+					}
+				} catch (error) {
+					logger.error(`Session validation error for connection ${connectionId}:`, error);
+					ws.close(1011, 'Session validation error');
+					return;
 				}
-			} else {
-				logger.warn('Host header missing in WebSocket upgrade request - session extraction skipped');
 			}
 		}
 
 		this.connections.set(connectionId, connection);
 
-		logger.debug(`WebSocket connection established: ${connectionId} from ${request.socket.remoteAddress}`);
+		logger.debug(`WebSocket connection established: ${connectionId} from ${clientIP}`);
 
 		// Set up message handling
 		ws.on('message', async (data) => {
@@ -237,12 +274,20 @@ export class WebSocketTransport {
 		// Set up connection close handling
 		ws.on('close', (code, reason) => {
 			logger.debug(`WebSocket connection closed: ${connectionId} (code: ${code}, reason: ${reason})`);
+			// Remove connection from session manager
+			if (connection.sessionId) {
+				sessionManager.removeConnection(connectionId);
+			}
 			this.connections.delete(connectionId);
 		});
 
 		// Set up error handling
 		ws.on('error', (error) => {
 			logger.error(`WebSocket connection error for ${connectionId}:`, error);
+			// Remove connection from session manager
+			if (connection.sessionId) {
+				sessionManager.removeConnection(connectionId);
+			}
 			this.connections.delete(connectionId);
 		});
 
@@ -253,10 +298,12 @@ export class WebSocketTransport {
 			params: {
 				connectionId,
 				timestamp: new Date().toISOString(),
+				sessionId: connection.sessionId,
 				features: {
 					heartbeat: true,
 					sessions: !!this.transportConfig.session?.enabled,
-					compression: !!this.transportConfig.compression
+					compression: !!this.transportConfig.compression,
+					userContext: !!connection.userContext
 				}
 			}
 		});
@@ -311,17 +358,39 @@ export class WebSocketTransport {
 		}
 
 		try {
+			// Add user context to request metadata if session is available
+			const userContext = connection.userContext;
+			const enrichedParams = userContext ? {
+				...params,
+				_context: {
+					userId: userContext.userId,
+					organizationId: userContext.organizationId,
+					tenantId: userContext.tenantId,
+					sessionId: userContext.sessionId,
+					connectionId: connection.id,
+				}
+			} : params;
+
 			// Create a mock transport interface for the MCP server
 			const mockTransport: McpTransport = {
 				start: async () => {},
 				close: async () => {},
 				send: (response: McpResponse) => {
+					// Update session activity on response
+					if (connection.sessionId) {
+						sessionManager.updateSessionActivity(connection.sessionId, {
+							lastMcpMethod: method,
+							lastMcpId: id,
+							lastMcpTimestamp: new Date().toISOString(),
+							connectionType: 'websocket',
+						});
+					}
 					this.sendToConnection(connection, response);
 				}
 			};
 
 			// Route the request to appropriate MCP server handler
-			await this.routeMcpRequest(method, params, id, mockTransport);
+			await this.routeMcpRequest(method, enrichedParams, id, mockTransport, userContext);
 
 		} catch (error) {
 			logger.error(`Error processing MCP method ${method} for ${connection.id}:`, error);
@@ -329,7 +398,7 @@ export class WebSocketTransport {
 		}
 	}
 
-	private async routeMcpRequest(method: string, params: Record<string, unknown> | unknown[] | undefined, id: string | number | null | undefined, transport: McpTransport) {
+	private async routeMcpRequest(method: string, params: Record<string, unknown> | unknown[] | undefined, id: string | number | null | undefined, transport: McpTransport, userContext?: UserContext) {
 		try {
 			// Handle basic MCP protocol methods
 			switch (method) {
@@ -483,86 +552,67 @@ export class WebSocketTransport {
 		}
 	}
 
-	private startSessionCleanup(): void {
-		// Run cleanup every 5 minutes
-		const cleanupIntervalMs = 5 * 60 * 1000;
-
-		const timer = setInterval(() => {
-			this.cleanupExpiredSessions();
-		}, cleanupIntervalMs);
-		timer.unref();
-		this.cleanupInterval = timer;
-
-		logger.debug(`Session cleanup started - TTL: ${this.sessionTTL}ms, Cleanup interval: ${cleanupIntervalMs}ms`);
-	}
-
-	private stopSessionCleanup(): void {
-		if (this.cleanupInterval) {
-			clearInterval(this.cleanupInterval);
-			this.cleanupInterval = null;
-			logger.debug('Session cleanup stopped');
-		}
-	}
-
-	private cleanupExpiredSessions(): void {
-		let expiredCount = 0;
-		const sessionIds = Array.from(this.sessions.keys());
-
-		for (const sessionId of sessionIds) {
-			const session = this.sessions.get(sessionId);
-			if (session && this.isSessionExpired(session)) {
-				this.sessions.delete(sessionId);
-				expiredCount++;
-
-				// Also close connections using this session
-				this.connections.forEach((connection) => {
-					if (connection.sessionId === sessionId) {
-						connection.socket.close(1000, 'Session expired');
-						this.connections.delete(connection.id);
-					}
-				});
-			}
-		}
-
-		if (expiredCount > 0) {
-			logger.debug(`Cleaned up ${expiredCount} expired sessions. Active sessions: ${this.sessions.size}`);
-		}
-	}
-
-	private isSessionExpired(session: { created: Date; lastAccessed: Date }): boolean {
-		const now = new Date();
-		const timeSinceLastAccess = now.getTime() - session.lastAccessed.getTime();
-		return timeSinceLastAccess > this.sessionTTL;
-	}
 
 	private generateConnectionId(): string {
 		const randomPart = crypto.randomBytes(16).toString('hex');
 		return `ws_${Date.now()}_${randomPart}`;
 	}
 
-	private generateSessionId(): string {
-		const randomPart = crypto.randomBytes(16).toString('hex');
-		return `mcp_ws_${Date.now()}_${randomPart}`;
+	private extractSessionIdFromRequest(request: IncomingMessage): string | null {
+		const host = request.headers.host;
+		if (!host) {
+			logger.warn('Host header missing in WebSocket upgrade request - session extraction skipped');
+			return null;
+		}
+
+		try {
+			const url = new URL(request.url || '', `ws://${host}`);
+			return url.searchParams.get('sessionId') || null;
+		} catch (error) {
+			logger.warn('Failed to parse WebSocket URL for session extraction:', error);
+			return null;
+		}
 	}
 
-	// Session management methods
-	createSession(): { sessionId: string; created: Date; cookieName?: string } {
+	private getClientIP(request: IncomingMessage): string {
+		const forwarded = request.headers['x-forwarded-for'];
+		const realIP = request.headers['x-real-ip'];
+		
+		if (forwarded) {
+			const forwardedIPs = Array.isArray(forwarded) ? forwarded : [forwarded];
+			return forwardedIPs[0].split(',')[0].trim();
+		}
+		
+		if (realIP) {
+			const realIPs = Array.isArray(realIP) ? realIP : [realIP];
+			return realIPs[0].trim();
+		}
+
+		return request.socket.remoteAddress || 'unknown';
+	}
+
+	// Session management methods (now delegated to centralized session manager)
+	async createSession(options: {
+		userId?: string;
+		userEmail?: string;
+		organizationId?: string;
+		tenantId?: string;
+		metadata?: Record<string, any>;
+		autoAuthenticate?: boolean;
+	} = {}): Promise<{ sessionId: string; created: Date; cookieName?: string }> {
 		if (!this.transportConfig.session?.enabled) {
 			throw new Error('Sessions are not enabled for WebSocket transport');
 		}
 
-		const sessionId = this.generateSessionId();
-		const session = {
-			id: sessionId,
-			created: new Date(),
-			lastAccessed: new Date()
-		};
-		this.sessions.set(sessionId, session);
+		const session = await sessionManager.createSession({
+			...options,
+			loginSource: 'websocket',
+		});
 
-		logger.debug(`WebSocket session created: ${sessionId}`);
+		logger.debug(`WebSocket session created: ${session.id}`);
 
 		return {
-			sessionId,
+			sessionId: session.id,
 			created: session.created,
 			cookieName: this.transportConfig.session.cookieName
 		};
@@ -573,7 +623,7 @@ export class WebSocketTransport {
 			return false;
 		}
 
-		const deleted = this.sessions.delete(sessionId);
+		const deleted = sessionManager.destroySession(sessionId);
 		if (deleted) {
 			logger.debug(`WebSocket session deleted: ${sessionId}`);
 
@@ -619,13 +669,24 @@ export class WebSocketTransport {
 
 	getStats(): {
 		connections: number;
-		sessions: number;
+		sessions?: number;
 		uptime: number;
 	} {
-		return {
+		const stats: {
+			connections: number;
+			sessions?: number;
+			uptime: number;
+		} = {
 			connections: this.connections.size,
-			sessions: this.sessions.size,
 			uptime: process.uptime()
 		};
+
+		// Add session stats if session management is enabled
+		if (this.transportConfig.session?.enabled) {
+			const sessionStats = sessionManager.getStats();
+			stats.sessions = sessionStats.totalSessions;
+		}
+
+		return stats;
 	}
 }
