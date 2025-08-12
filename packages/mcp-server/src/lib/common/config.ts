@@ -25,7 +25,6 @@ export interface McpTransportConfig {
 		maxPayload?: number;
 		allowedOrigins?: string[] | boolean;
 		tls?: boolean;
-		secure?: boolean;
 		cert?: string;
 		key?: string;
 		session?: {
@@ -128,7 +127,6 @@ export const config: GauzyConfig = {
 					return developmentOrigins;
 				})(),
 				tls: process.env.MCP_WS_TLS === 'true',
-				secure: process.env.MCP_WS_SECURE === 'true',
 				cert: process.env.MCP_WS_CERT_PATH,
 				key: process.env.MCP_WS_KEY_PATH,
 				session: {
