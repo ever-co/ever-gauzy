@@ -115,7 +115,7 @@ class McpWebSocketClient {
 				if (this.pendingRequests.has(id)) {
 					this.pendingRequests.delete(id);
 					if (retryCount < this.maxRetries) {
-						// Exponential backoff
+						// Exponential back off
 						setTimeout(() => {
 							this.sendRequest(method, params, retryCount + 1)
 								.then(resolve)
