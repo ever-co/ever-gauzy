@@ -67,7 +67,7 @@ export class SessionManager {
 
 		// Initialize auth manager if not already done
 		await authManager.initialize();
-		
+
 		this.isInitialized = true;
 		logger.log('SessionManager initialized successfully');
 	}
@@ -101,12 +101,17 @@ export class SessionManager {
 				finalOrganizationId = authManager.getOrganizationId() || undefined;
 				finalTenantId = authManager.getTenantId() || undefined;
 			} else {
-				// Attempt to authenticate
-				const loginSuccessful = await authManager.ensureValidToken();
-				if (loginSuccessful) {
-					finalUserId = authManager.getUserId() || undefined;
-					finalOrganizationId = authManager.getOrganizationId() || undefined;
-					finalTenantId = authManager.getTenantId() || undefined;
+				try {
+					// Attempt to authenticate
+					const loginSuccessful = await authManager.ensureValidToken();
+					if (loginSuccessful) {
+						finalUserId = authManager.getUserId() || undefined;
+						finalOrganizationId = authManager.getOrganizationId() || undefined;
+						finalTenantId = authManager.getTenantId() || undefined;
+					}
+				} catch (error) {
+					logger.warn('Auto-authentication failed:', error);
+					// Continue without authentication rather than failing the session creation
 				}
 			}
 		}
@@ -147,7 +152,7 @@ export class SessionManager {
 		requireActiveAuth = true
 	): Promise<SessionValidationResult> {
 		const validation = this.sessionStore.validateSession(sessionId, ipAddress, userAgent);
-		
+
 		if (!validation.valid || !validation.session) {
 			return validation;
 		}
@@ -158,12 +163,20 @@ export class SessionManager {
 		if (requireActiveAuth) {
 			const isAuthValid = await this.validateAuthentication(session);
 			if (!isAuthValid) {
-				// Try to refresh token if possible
-				const refreshed = await authManager.ensureValidToken();
-				if (!refreshed) {
+				try {
+					// Try to refresh token if possible
+					const refreshed = await authManager.ensureValidToken();
+					if (!refreshed) {
+						return {
+							valid: false,
+							reason: 'Authentication expired and refresh failed',
+						};
+					}
+				} catch (error) {
+					logger.error('Token refresh error during session validation:', error);
 					return {
 						valid: false,
-						reason: 'Authentication expired and refresh failed',
+						reason: 'Authentication validation error',
 					};
 				}
 			}
@@ -222,11 +235,11 @@ export class SessionManager {
 		};
 
 		const success = this.sessionStore.addConnection(sessionId, connectionId, type, enrichedMetadata);
-		
+
 		if (success) {
 			logger.debug(`Connection ${connectionId} (${type}) added to session ${sessionId}`);
 		}
-		
+
 		return success;
 	}
 
@@ -235,11 +248,11 @@ export class SessionManager {
 	 */
 	public removeConnection(connectionId: string): boolean {
 		const success = this.sessionStore.removeConnection(connectionId);
-		
+
 		if (success) {
 			logger.debug(`Connection ${connectionId} removed`);
 		}
-		
+
 		return success;
 	}
 
@@ -252,11 +265,11 @@ export class SessionManager {
 		extendTTL?: number
 	): boolean {
 		const updated = this.sessionStore.updateSessionActivity(sessionId, metadata);
-		
+
 		if (updated && extendTTL) {
 			this.sessionStore.extendSession(sessionId, extendTTL);
 		}
-		
+
 		return updated;
 	}
 
@@ -326,7 +339,7 @@ export class SessionManager {
 		tenantId?: string
 	): Promise<{ authorized: boolean; reason?: string }> {
 		const session = this.sessionStore.getSession(sessionId);
-		
+
 		if (!session) {
 			return { authorized: false, reason: 'Session not found' };
 		}
@@ -343,14 +356,14 @@ export class SessionManager {
 
 		// Check permissions if specified
 		if (requiredPermissions.length > 0 && session.permissions) {
+			const sessionPermSet = new Set(session.permissions);
 			const hasPermissions = requiredPermissions.every(permission =>
-				session.permissions!.includes(permission)
+				sessionPermSet.has(permission)
 			);
-			
 			if (!hasPermissions) {
-				return { 
-					authorized: false, 
-					reason: `Missing required permissions: ${requiredPermissions.join(', ')}` 
+				return {
+					authorized: false,
+					reason: `Missing required permissions: ${requiredPermissions.join(', ')}`
 				};
 			}
 		}

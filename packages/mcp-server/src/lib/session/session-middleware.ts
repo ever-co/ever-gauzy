@@ -312,7 +312,11 @@ class SessionMiddleware {
 		}
 
 		// Check if token belongs to the session
-		if (tokenData.sessionId !== sessionId) {
+		// Use constant-time comparison to prevent timing attacks
+		if (!crypto.timingSafeEqual(
+			Buffer.from(tokenData.sessionId),
+			Buffer.from(sessionId)
+		)) {
 			return false;
 		}
 
@@ -381,14 +385,25 @@ class SessionMiddleware {
 		return sessionId || null;
 	}
 
-	private getClientIP(req: Request): string {
+	private getClientIP(req: Request, trustedProxies: string[] = []): string {
+		// If no trusted proxies configured, use socket address
+		if (trustedProxies.length === 0) {
+			return req.socket.remoteAddress || 'unknown';
+		}
+
+		// Only trust headers if request comes from a trusted proxy
+		const remoteAddress = req.socket.remoteAddress || '';
+		if (!trustedProxies.includes(remoteAddress)) {
+			return remoteAddress;
+		}
+
 		const forwarded = req.get('X-Forwarded-For');
 		const realIP = req.get('X-Real-IP');
-		
+
 		if (forwarded) {
 			return forwarded.split(',')[0].trim();
 		}
-		
+
 		if (realIP) {
 			return realIP.trim();
 		}
@@ -402,8 +417,16 @@ class SessionMiddleware {
 		return excludedPaths.some(excludedPath => {
 			if (excludedPath.includes('*')) {
 				// Simple glob pattern matching
-				const regexPattern = excludedPath.replace(/\*/g, '.*');
-				const regex = new RegExp(`^${regexPattern}$`);
+				// Escape special regex characters except *
+				const escaped = excludedPath
+					.replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+					.replace(/\*/g, '.*');
+				// Limit pattern complexity to prevent ReDoS
+				if (escaped.length > 100 || (escaped.match(/\.\*/g) || []).length > 5) {
+					logger.warn(`Skipping complex path pattern: ${excludedPath}`);
+					return false;
+				}
+				const regex = new RegExp(`^${escaped}$`);
 				return regex.test(path);
 			}
 			return path === excludedPath;
@@ -414,8 +437,16 @@ class SessionMiddleware {
 		return allowedPaths.some(allowedPath => {
 			if (allowedPath.includes('*')) {
 				// Simple glob pattern matching
-				const regexPattern = allowedPath.replace(/\*/g, '.*');
-				const regex = new RegExp(`^${regexPattern}$`);
+				// Escape special regex characters except *
+				const escaped = allowedPath
+					.replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+					.replace(/\*/g, '.*');
+				// Limit pattern complexity to prevent ReDoS
+				if (escaped.length > 100 || (escaped.match(/\.\*/g) || []).length > 5) {
+					logger.warn(`Skipping complex path pattern: ${allowedPath}`);
+					return false;
+				}
+				const regex = new RegExp(`^${escaped}$`);
 				return regex.test(path);
 			}
 			return path === allowedPath || path.startsWith(allowedPath);

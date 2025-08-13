@@ -174,10 +174,11 @@ export class HttpTransport {
 
 	private setupSessionRoutes() {
 		// Rate limiting for session endpoints
-		const maxRequests = (() => {
-			const v = Number.parseInt(process.env.MCP_SESSION_RATE_LIMIT ?? '', 10);
-			return Number.isInteger(v) && v > 0 ? v : 50;
-		})();
+		const DEFAULT_SESSION_RATE_LIMIT = 50;
+		const maxRequests = Math.max(
+			Number.parseInt(process.env.MCP_SESSION_RATE_LIMIT || '', 10) || DEFAULT_SESSION_RATE_LIMIT,
+			1
+		);
 		const sessionRateLimit = rateLimit({
 			windowMs: 15 * 60 * 1000, // 15 minutes
 			max: maxRequests,
@@ -201,6 +202,17 @@ export class HttpTransport {
 		// Create session endpoint
 		this.app.post('/mcp/session', sessionRateLimit, async (req, res) => {
 			try {
+				// For authenticated session creation, validate CSRF token
+				const requestCsrfToken = req.get('mcp-csrf-token');
+				if (req.sessionId && requestCsrfToken) {
+					if (!sessionMiddleware.validateCSRFToken(req, req.sessionId, 'mcp-csrf-token')) {
+						res.status(403).json({
+							error: 'Invalid CSRF token',
+							message: 'CSRF validation failed'
+						});
+						return;
+					}
+				}
 				const { userId, userEmail, organizationId, tenantId, autoAuthenticate = true } = req.body;
 
 				const session = await sessionManager.createSession({
@@ -250,6 +262,15 @@ export class HttpTransport {
 		this.app.delete('/mcp/session/:sessionId', sessionRateLimit, (req, res) => {
 			const sessionId = req.params.sessionId;
 
+			// Verify the requester owns the session
+			const requestingSessionId = req.sessionId;
+			if (requestingSessionId !== sessionId && !req.userContext?.userId) {
+				res.status(403).json({
+					error: 'Forbidden',
+					message: 'Cannot delete another user\'s session'
+				});
+				return;
+			}
 			if (sessionManager.destroySession(sessionId)) {
 				logger.log(`Session deleted: ${sessionId} from ${req.ip}`);
 				res.status(204).send();
@@ -535,14 +556,15 @@ export class HttpTransport {
 	}
 
 	async start(): Promise<void> {
-		return new Promise(async (resolve, reject) => {
-			try {
-				// Initialize session manager if sessions are enabled
-				if (this.transportConfig.session.enabled && !this.isInitialized) {
-					await sessionManager.initialize();
-					this.isInitialized = true;
-				}
+		try {
+			// Initialize session manager if sessions are enabled
+			if (this.transportConfig.session.enabled && !this.isInitialized) {
+				await sessionManager.initialize();
+				this.isInitialized = true;
+			}
 
+			// Start HTTP server and wait for it to be listening
+			await new Promise<void>((resolve, reject) => {
 				this.httpServer = this.app.listen(
 					this.transportConfig.port,
 					this.transportConfig.host,
@@ -575,11 +597,11 @@ export class HttpTransport {
 					logger.error('HTTP server error:', error);
 					reject(error);
 				});
+			});
 
-			} catch (error) {
-				reject(error);
-			}
-		});
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	async stop(): Promise<void> {

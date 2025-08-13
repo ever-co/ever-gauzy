@@ -18,11 +18,13 @@ const WebSocket = require('ws');
 let globalClient = null;
 
 class McpWebSocketClient {
-	constructor(url) {
+	constructor(url, options = {}) {
 		this.url = url;
 		this.ws = null;
 		this.requestId = 0;
 		this.pendingRequests = new Map();
+		this.requestTimeout = options.requestTimeout || 10000;
+		this.maxRetries = options.maxRetries || 3;
 	}
 
 	async connect() {
@@ -93,7 +95,7 @@ class McpWebSocketClient {
 		}
 	}
 
-	async sendRequest(method, params = {}) {
+	async sendRequest(method, params = {}, retryCount = 0) {
 		return new Promise((resolve, reject) => {
 			if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
 				reject(new Error('WebSocket is not open'));
@@ -112,9 +114,18 @@ class McpWebSocketClient {
 			const timeoutId = setTimeout(() => {
 				if (this.pendingRequests.has(id)) {
 					this.pendingRequests.delete(id);
-					reject(new Error(`Request timeout for method: ${method}`));
+					if (retryCount < this.maxRetries) {
+						// Exponential backoff
+						setTimeout(() => {
+							this.sendRequest(method, params, retryCount + 1)
+								.then(resolve)
+								.catch(reject);
+						}, Math.pow(2, retryCount) * 1000);
+					} else {
+						reject(new Error(`Request timeout after ${retryCount} retries for method: ${method}`));
+					}
 				}
-			}, 10000);
+			}, this.requestTimeout);
 
 			this.pendingRequests.set(id, { resolve, reject, timeoutId });
 			this.ws.send(JSON.stringify(request));
@@ -196,8 +207,13 @@ process.on('SIGINT', () => {
 	console.log('\n👋 Shutting down...');
 	if (globalClient) {
 		globalClient.disconnect();
+		// Give time for disconnect to complete
+		setTimeout(() => {
+			process.exit(0);
+		}, 100);
+	} else {
+		process.exit(0);
 	}
-	process.exit(0);
 });
 
 // Run the example

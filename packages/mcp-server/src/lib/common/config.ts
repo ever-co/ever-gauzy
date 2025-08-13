@@ -95,7 +95,7 @@ export const config: GauzyConfig = {
 				host: process.env.MCP_WS_HOST || '127.0.0.1', // Default to localhost, prefer TLS termination at reverse proxy
 				path: process.env.MCP_WS_PATH || '/',
 				compression: process.env.MCP_WS_COMPRESSION !== 'false',
-				perMessageDeflate: process.env.MCP_WS_COMPRESSION !== 'false', // Maps to compression for backward compatibility
+				perMessageDeflate: process.env.MCP_WS_PER_MESSAGE_DEFLATE !== 'false', // Separate env var for per-message deflate
 				maxPayload: (() => {
 					const size = Number.parseInt(process.env.MCP_WS_MAX_PAYLOAD ?? '16777216', 10); // 16MB default
 					return Number.isInteger(size) && size > 0 ? size : 16777216;

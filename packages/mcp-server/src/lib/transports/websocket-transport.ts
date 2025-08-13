@@ -71,6 +71,23 @@ interface McpTransport {
 	send(response: JsonRpcResponse | JsonRpcErrorResponse): void;
 }
 
+// WebSocket session middleware interface
+interface WebSocketSessionMiddleware {
+	(
+		sessionId: string,
+		connectionId: string,
+		context: {
+			ipAddress?: string;
+			userAgent?: string;
+			origin?: string;
+		}
+	): Promise<{
+		valid: boolean;
+		reason?: string;
+		userContext?: UserContext;
+	}>;
+}
+
 // WebSocket connection interface
 interface WebSocketConnection {
 	id: string;
@@ -97,7 +114,7 @@ export class WebSocketTransport {
 	private cachedTools: unknown[] | null = null;
 	private cacheTimestamp: number = 0;
 	private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
-	private sessionMiddlewareInstance: any = null;
+	private sessionMiddlewareInstance: WebSocketSessionMiddleware | null = null;
 	private isInitialized = false;
 
 	constructor(options: WebSocketTransportOptions) {
@@ -106,37 +123,34 @@ export class WebSocketTransport {
 	}
 
 	async start(): Promise<void> {
-		return new Promise(async (resolve, reject) => {
-			try {
-				// Initialize session manager if sessions are enabled
-				if (this.transportConfig.session?.enabled && !this.isInitialized) {
-					await sessionManager.initialize();
-					this.sessionMiddlewareInstance = sessionMiddleware.createWebSocketSessionMiddleware({
-						requireAuth: false, // WebSocket handles its own auth validation
-						validateIP: false,
-						validateUserAgent: false,
-					});
-					this.isInitialized = true;
-				}
-
-				// Create WebSocket server
-				this.wss = new WebSocketServer({
-					port: this.transportConfig.port,
-					host: this.transportConfig.host,
-					perMessageDeflate: this.transportConfig.compression,
-					maxPayload: this.transportConfig.maxPayload || 16 * 1024 * 1024, // 16MB default
+		try {
+			// Initialize session manager if sessions are enabled
+			if (this.transportConfig.session?.enabled && !this.isInitialized) {
+				await sessionManager.initialize();
+				this.sessionMiddlewareInstance = sessionMiddleware.createWebSocketSessionMiddleware({
+					requireAuth: false, // WebSocket handles its own auth validation
+					validateIP: false,
+					validateUserAgent: false,
 				});
+				this.isInitialized = true;
+			}
 
-				this.wss.on('connection', (ws, request) => {
-					this.handleConnection(ws, request);
-				});
+			// Create WebSocket server
+			this.wss = new WebSocketServer({
+				port: this.transportConfig.port,
+				host: this.transportConfig.host,
+				perMessageDeflate: this.transportConfig.compression,
+				maxPayload: this.transportConfig.maxPayload || 16 * 1024 * 1024, // 16MB default
+			});
 
-				this.wss.on('error', (error) => {
+			// Wait for server to be ready
+			await new Promise<void>((resolve, reject) => {
+				this.wss!.on('error', (error) => {
 					logger.error('WebSocket server error:', error);
 					reject(error);
 				});
 
-				this.wss.on('listening', () => {
+				this.wss!.on('listening', () => {
 					logger.log(
 						`🚀 MCP WebSocket Transport listening on ws://${this.transportConfig.host}:${this.transportConfig.port}`
 					);
@@ -159,11 +173,16 @@ export class WebSocketTransport {
 
 					resolve();
 				});
+			});
 
-			} catch (error) {
-				reject(error);
-			}
-		});
+			// Set up connection handling after server is ready
+			this.wss.on('connection', (ws, request) => {
+				this.handleConnection(ws, request);
+			});
+
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	async stop(): Promise<void> {
@@ -196,12 +215,23 @@ export class WebSocketTransport {
 
 	private async handleConnection(ws: WebSocket, request: IncomingMessage): Promise<void> {
 		// Validate origin if configured
-		if (this.transportConfig.allowedOrigins && Array.isArray(this.transportConfig.allowedOrigins)) {
+		if (this.transportConfig.allowedOrigins !== undefined) {
 			const origin = request.headers.origin;
-			if (!origin || !this.transportConfig.allowedOrigins.includes(origin)) {
-				logger.warn(`Rejected WebSocket connection from unauthorized origin: ${origin}`);
-				ws.close(1008, 'Unauthorized origin');
+			// Handle boolean values
+		if (typeof this.transportConfig.allowedOrigins === 'boolean') {
+			if (!this.transportConfig.allowedOrigins) {
+				logger.warn(`Rejected WebSocket connection: origins not allowed`);
+					ws.close(1008, 'Origins not allowed');
 				return;
+			}
+				// If true, allow all origins
+			} else if (Array.isArray(this.transportConfig.allowedOrigins)) {
+	        // Handle array of allowed origins
+				if (!origin || !this.transportConfig.allowedOrigins.includes(origin)) {
+					logger.warn(`Rejected WebSocket connection from unauthorized origin: ${origin}`);
+					ws.close(1008, 'Unauthorized origin');
+					return;
+				}
 			}
 		}
 
@@ -226,7 +256,7 @@ export class WebSocketTransport {
 		// Handle session validation if sessions are enabled
 		if (this.transportConfig.session?.enabled && this.sessionMiddlewareInstance) {
 			const sessionId = this.extractSessionIdFromRequest(request);
-			
+
 			if (sessionId) {
 				try {
 					const validation = await this.sessionMiddlewareInstance(
@@ -436,7 +466,11 @@ export class WebSocketTransport {
 						transport.send({
 						jsonrpc: '2.0',
 						id,
-						error: { code: -32004, message: 'tools/call not implemented' }
+						error: {
+							code: -32601,  // Method not found
+							message: 'Method not implemented: tools/call',
+							data: 'Tool execution system is not yet integrated'
+						}
 						});
 						break;
 					}
@@ -525,11 +559,13 @@ export class WebSocketTransport {
 	private startHeartbeat(): void {
 		// Send ping every 30 seconds
 		this.heartbeatInterval = setInterval(() => {
+			const deadConnections: string[] = [];
 			this.connections.forEach((connection) => {
 				if (!connection.isAlive) {
 					logger.debug(`Terminating dead connection: ${connection.id}`);
 					connection.socket.terminate();
 					this.connections.delete(connection.id);
+					deadConnections.push(connection.id);
 					return;
 				}
 
@@ -538,6 +574,8 @@ export class WebSocketTransport {
 					connection.socket.ping();
 				}
 			});
+			// Delete dead connections after iteration
+        	deadConnections.forEach(id => this.connections.delete(id));
 		}, 30000);
 		this.heartbeatInterval.unref?.();
 
@@ -566,10 +604,13 @@ export class WebSocketTransport {
 		}
 
 		try {
-			const url = new URL(request.url || '', `ws://${host}`);
+			// Sanitize host to prevent URL parsing issues
+			const sanitizedHost = host.replace(/[^a-zA-Z0-9\-.:[\]]/g, '');
+			const baseUrl = `ws://${sanitizedHost}`;
+			const url = new URL(request.url || '/', baseUrl);
 			return url.searchParams.get('sessionId') || null;
 		} catch (error) {
-			logger.warn('Failed to parse WebSocket URL for session extraction:', error);
+			logger.warn(`Failed to parse WebSocket URL for session extraction (host: ${host}, url: ${request.url}):`, error);
 			return null;
 		}
 	}
@@ -577,12 +618,12 @@ export class WebSocketTransport {
 	private getClientIP(request: IncomingMessage): string {
 		const forwarded = request.headers['x-forwarded-for'];
 		const realIP = request.headers['x-real-ip'];
-		
+
 		if (forwarded) {
 			const forwardedIPs = Array.isArray(forwarded) ? forwarded : [forwarded];
 			return forwardedIPs[0].split(',')[0].trim();
 		}
-		
+
 		if (realIP) {
 			const realIPs = Array.isArray(realIP) ? realIP : [realIP];
 			return realIPs[0].trim();
@@ -623,17 +664,27 @@ export class WebSocketTransport {
 			return false;
 		}
 
+		// First, close and remove all connections for this session
+		const connectionsToClose: string[] = [];
+		this.connections.forEach((connection, connectionId) => {
+			if (connection.sessionId === sessionId) {
+				connectionsToClose.push(connectionId);
+			}
+		});
+
+		// Remove connections from session manager before destroying session
+		connectionsToClose.forEach(connectionId => {
+			sessionManager.removeConnection(connectionId);
+			const connection = this.connections.get(connectionId);
+			if (connection) {
+				connection.socket.close(1000, 'Session deleted');
+				this.connections.delete(connectionId);
+			}
+		});
+
 		const deleted = sessionManager.destroySession(sessionId);
 		if (deleted) {
 			logger.debug(`WebSocket session deleted: ${sessionId}`);
-
-			// Close connections using this session
-			this.connections.forEach((connection) => {
-				if (connection.sessionId === sessionId) {
-					connection.socket.close(1000, 'Session deleted');
-					this.connections.delete(connection.id);
-				}
-			});
 		}
 
 		return deleted;

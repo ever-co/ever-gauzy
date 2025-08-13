@@ -98,7 +98,7 @@ export class SessionStore {
 		};
 
 		this.startCleanupTimer();
-		
+
 		if (this.config.enableLogging) {
 			logger.log(`SessionStore initialized with TTL: ${this.config.defaultTTL}ms`);
 		}
@@ -169,7 +169,7 @@ export class SessionStore {
 	 */
 	getSession(sessionId: string): SessionData | null {
 		const session = this.sessions.get(sessionId);
-		
+
 		if (!session) {
 			return null;
 		}
@@ -190,7 +190,7 @@ export class SessionStore {
 	 */
 	updateSessionActivity(sessionId: string, metadata?: Record<string, any>): boolean {
 		const session = this.sessions.get(sessionId);
-		
+
 		if (!session || this.isSessionExpired(session)) {
 			return false;
 		}
@@ -210,7 +210,7 @@ export class SessionStore {
 	 */
 	extendSession(sessionId: string, additionalTime: number): boolean {
 		const session = this.sessions.get(sessionId);
-		
+
 		if (!session || this.isSessionExpired(session)) {
 			return false;
 		}
@@ -234,7 +234,7 @@ export class SessionStore {
 		userAgent?: string
 	): { valid: boolean; session?: SessionData; reason?: string } {
 		const session = this.sessions.get(sessionId);
-		
+
 		if (!session) {
 			return { valid: false, reason: 'Session not found' };
 		}
@@ -261,7 +261,9 @@ export class SessionStore {
 		if (this.config.securityOptions.sessionRotation) {
 			const sessionAge = Date.now() - session.created.getTime();
 			if (sessionAge > this.config.securityOptions.sessionRotationThreshold) {
-				return { valid: false, reason: 'Session rotation required' };
+				// Mark session for rotation but allow current request
+				session.metadata._rotationRequired = true;
+				return { valid: true, session, reason: 'Session rotation recommended' };
 			}
 		}
 
@@ -280,7 +282,7 @@ export class SessionStore {
 		metadata: Record<string, any> = {}
 	): boolean {
 		const session = this.sessions.get(sessionId);
-		
+
 		if (!session || this.isSessionExpired(session)) {
 			return false;
 		}
@@ -321,7 +323,7 @@ export class SessionStore {
 	 */
 	removeConnection(connectionId: string): boolean {
 		const connection = this.connections.get(connectionId);
-		
+
 		if (!connection) {
 			return false;
 		}
@@ -346,7 +348,7 @@ export class SessionStore {
 	 */
 	getConnection(connectionId: string): ConnectionData | null {
 		const connection = this.connections.get(connectionId);
-		
+
 		if (!connection) {
 			return null;
 		}
@@ -400,7 +402,7 @@ export class SessionStore {
 	 */
 	destroySession(sessionId: string): boolean {
 		const session = this.sessions.get(sessionId);
-		
+
 		if (!session) {
 			return false;
 		}
@@ -516,9 +518,12 @@ export class SessionStore {
 			connectionsByType[connection.type] = (connectionsByType[connection.type] || 0) + 1;
 		}
 
-		// Calculate memory usage (rough estimation)
-		const sessionMemory = this.sessions.size * 500; // Rough estimate per session
-		const connectionMemory = this.connections.size * 200; // Rough estimate per connection
+		// Calculate memory usage (simplified estimation for monitoring purposes)
+		// Note: These are rough estimates. Actual memory usage varies based on metadata and connection counts
+		const AVG_SESSION_SIZE = 500; // Base estimate in bytes
+		const AVG_CONNECTION_SIZE = 200; // Base estimate in bytes
+		const sessionMemory = this.sessions.size * AVG_SESSION_SIZE;
+		const connectionMemory = this.connections.size * AVG_CONNECTION_SIZE;
 
 		return {
 			totalSessions: this.sessions.size,

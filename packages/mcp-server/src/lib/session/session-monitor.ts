@@ -43,6 +43,8 @@ class SessionMonitor extends EventEmitter {
 	private eventHistory: SessionEvent[] = [];
 	private alertHistory: SessionAlert[] = [];
 	private metricsTimer: NodeJS.Timeout | null = null;
+	private eventTrackingTimer: NodeJS.Timeout | null = null;
+	private sessionTimeouts = new Map<string, NodeJS.Timeout>();
 	private performanceMetrics = {
 		sessionCreationRate: 0,
 		sessionDestructionRate: 0,
@@ -121,6 +123,17 @@ class SessionMonitor extends EventEmitter {
 			clearInterval(this.metricsTimer);
 			this.metricsTimer = null;
 		}
+
+		if (this.eventTrackingTimer) {
+			clearInterval(this.eventTrackingTimer);
+			this.eventTrackingTimer = null;
+		}
+
+		// Clear all session timeout timers
+		for (const timeout of this.sessionTimeouts.values()) {
+			clearTimeout(timeout);
+		}
+		this.sessionTimeouts.clear();
 
 		this.removeAllListeners();
 
@@ -343,10 +356,13 @@ class SessionMonitor extends EventEmitter {
 	private setupEventListeners(): void {
 		// Note: In a real implementation, you would set up listeners on the session manager
 		// For now, we'll create a polling mechanism to check for changes
-		if (this.config.enableEventTracking) {
-			setInterval(() => {
+		if (this.config.enableEventTracking && !this.eventTrackingTimer) {
+			this.eventTrackingTimer = setInterval(() => {
 				this.checkForSessionChanges();
 			}, 5000); // Check every 5 seconds
+
+			// Prevent timer from keeping process alive
+			this.eventTrackingTimer.unref?.();
 		}
 	}
 
@@ -405,7 +421,13 @@ class SessionMonitor extends EventEmitter {
 	private checkForAlerts(event: SessionEvent): void {
 		// Check for session duration warnings
 		if (event.type === 'session_created') {
-			setTimeout(() => {
+			// Clear any existing timeout for this session first
+			const existingTimeout = this.sessionTimeouts.get(event.sessionId);
+			if (existingTimeout) {
+				clearTimeout(existingTimeout);
+			}
+
+			const timeout = setTimeout(() => {
 				this.logAlert({
 					level: 'info',
 					message: `Long-running session detected: ${event.sessionId} (${this.config.alertThresholds.sessionDurationWarning / 1000 / 60} minutes)`,
@@ -413,7 +435,19 @@ class SessionMonitor extends EventEmitter {
 					sessionId: event.sessionId,
 					userId: event.userId,
 				});
+				// Clean up the timeout reference after it fires
+				this.sessionTimeouts.delete(event.sessionId);
 			}, this.config.alertThresholds.sessionDurationWarning);
+
+			// Store the timeout reference for cleanup
+			this.sessionTimeouts.set(event.sessionId, timeout);
+		} else if (event.type === 'session_destroyed') {
+			// Clear the timeout for this session if it exists
+			const timeout = this.sessionTimeouts.get(event.sessionId);
+			if (timeout) {
+				clearTimeout(timeout);
+				this.sessionTimeouts.delete(event.sessionId);
+			}
 		}
 
 		// Increment rate counters
