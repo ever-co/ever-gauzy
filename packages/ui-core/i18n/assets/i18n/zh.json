@@ -4867,6 +4867,22 @@
 			"PASSWORD": "密码"
 		},
 		"SIGN_IN_TITLE": "登录工作区",
+		"SIGN_IN_SUBTITLE": "输入您的邮箱以登录您的工作区",
+		"CREATE": {
+			"TITLE": "创建新工作区",
+			"SUBTITLE": "输入您的邮箱开始",
+			"SUCCESS_SENT_CODE_TITLE": "我们已发送验证码至",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "请检查您的邮箱并在下方输入验证码",
+			"CREATE_NEW_WORKSPACE": "创建新工作区"
+		},
+		"FIND": {
+			"TITLE": "查找您的工作区",
+			"SUBTITLE": "输入您的邮箱以查找您的工作区",
+			"DESCRIPTION_TITLE": "我们将发送魔法代码来验证您的身份",
+			"RESULTS_STEP": {
+				"DESCRIPTION": "您的邮箱关联了{{count}}个工作区"
+			}
+		},
 		"BACK_TO": "返回",
 		"SUCCESS_SIGNIN_TITLE": "恭喜！您已成功登录到您的工作区。",
 		"SUCCESS_SIGNIN_SUB_TITLE": "请耐心等待，我们正在准备工作区...",
@@ -4881,6 +4897,19 @@
 			"EMAIL_MULTIPLE_WORKSPACE": "此电子邮件与多个工作区关联，请选择一个继续",
 			"SELECT_WORKSPACE_FOR": "选择工作区",
 			"OPEN": "打开"
+		}
+	},
+	"WORKSPACE_CREATE": {
+		"ACCOUNT_CREATION": {
+			"TITLE": "创建您的账户",
+			"SUBTITLE": "完善您的资料以创建新工作区"
+		},
+		"WORKSPACE_SETUP": {
+			"TITLE": "设置您的工作区",
+			"SUBTITLE": "创建您的组织并开始"
+		},
+		"BUTTONS": {
+			"CONTINUE_TO_WORKSPACE_SETUP": "继续工作区设置"
 		}
 	},
 	"NO_IMAGE": {

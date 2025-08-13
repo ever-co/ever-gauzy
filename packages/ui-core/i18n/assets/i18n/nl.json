@@ -4867,6 +4867,7 @@
 			"PASSWORD": "Wachtwoord"
 		},
 		"SIGN_IN_TITLE": "Aanmelden bij Workspace",
+		"SIGN_IN_SUBTITLE": "Voer uw e-mail in om aan te melden bij uw werkruimte",
 		"BACK_TO": "Terug naar",
 		"SUCCESS_SIGNIN_TITLE": "Gefeliciteerd! Je bent succesvol ingelogd op je werkruimte.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Wees geduldig terwijl we de werkruimte voorbereiden...",
@@ -4875,12 +4876,40 @@
 		"THANKING_TEXT": "Bedankt dat je voor ons hebt gekozen.",
 		"UNKNOWN_WORKSPACE": "Weet je niet waar je werkruimte is?",
 		"FIND_WORKSPACE": "Vind je werkruimtes",
+		"CREATE": {
+			"TITLE": "Nieuwe werkruimte maken",
+			"SUBTITLE": "Voer uw e-mail in om te beginnen",
+			"SUCCESS_SENT_CODE_TITLE": "We hebben een verificatiecode gestuurd naar",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Controleer uw e-mail en voer de code hieronder in",
+			"CREATE_NEW_WORKSPACE": "Nieuwe werkruimte maken"
+		},
+		"FIND": {
+			"TITLE": "Vind uw werkruimte",
+			"SUBTITLE": "Voer uw e-mail in om uw werkruimtes te vinden",
+			"DESCRIPTION_TITLE": "We sturen u een magische code om uw identiteit te verifiëren",
+			"RESULTS_STEP": {
+				"DESCRIPTION": "Uw e-mail is gekoppeld aan {{count}} werkruimte(s)"
+			}
+		},
 		"SELECTION": {
 			"WELCOME_BACK": "Welkom terug!",
 			"YOU_LOOK_NICE_TODAY": "Je ziet er vandaag goed uit!",
 			"EMAIL_MULTIPLE_WORKSPACE": "De e-mail is gekoppeld aan meerdere werkruimtes, selecteer er een om verder te gaan",
 			"SELECT_WORKSPACE_FOR": "Selecteer werkruimte voor",
 			"OPEN": "Openen"
+		}
+	},
+	"WORKSPACE_CREATE": {
+		"ACCOUNT_CREATION": {
+			"TITLE": "Maak uw account aan",
+			"SUBTITLE": "Voltooi uw profiel om een nieuwe werkruimte te maken"
+		},
+		"WORKSPACE_SETUP": {
+			"TITLE": "Stel uw werkruimte in",
+			"SUBTITLE": "Maak uw organisatie aan en begin"
+		},
+		"BUTTONS": {
+			"CONTINUE_TO_WORKSPACE_SETUP": "Ga door naar werkruimte-instellingen"
 		}
 	},
 	"NO_IMAGE": {

@@ -4863,6 +4863,7 @@
 			"PASSWORD": "Passwort"
 		},
 		"SIGN_IN_TITLE": "Anmeldung im Arbeitsbereich",
+		"SIGN_IN_SUBTITLE": "Geben Sie Ihre E-Mail ein, um sich in Ihren Arbeitsbereich anzumelden",
 		"BACK_TO": "Zurück zu",
 		"SUCCESS_SIGNIN_TITLE": "Herzlichen Glückwunsch! Sie haben sich erfolgreich in Ihren Arbeitsbereich eingeloggt.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Bitte haben Sie Geduld, während wir den Arbeitsbereich vorbereiten...",
@@ -4871,12 +4872,40 @@
 		"THANKING_TEXT": "Vielen Dank, dass Sie uns gewählt haben.",
 		"UNKNOWN_WORKSPACE": "Kennen Sie Ihren Arbeitsbereich nicht?",
 		"FIND_WORKSPACE": "Finden Sie Ihren Arbeitsbereich",
+		"CREATE": {
+			"TITLE": "Neuen Arbeitsbereich erstellen",
+			"SUBTITLE": "Geben Sie Ihre E-Mail ein, um zu beginnen",
+			"SUCCESS_SENT_CODE_TITLE": "Wir haben einen Bestätigungscode gesendet an",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Bitte überprüfen Sie Ihre E-Mail und geben Sie den Code unten ein",
+			"CREATE_NEW_WORKSPACE": "Neuen Arbeitsbereich erstellen"
+		},
+		"FIND": {
+			"TITLE": "Finden Sie Ihren Arbeitsbereich",
+			"SUBTITLE": "Geben Sie Ihre E-Mail ein, um Ihre Arbeitsbereiche zu finden",
+			"DESCRIPTION_TITLE": "Wir senden Ihnen einen magischen Code zur Identitätsverifikation",
+			"RESULTS_STEP": {
+				"DESCRIPTION": "Ihre E-Mail ist mit {{count}} Arbeitsbereich(en) verknüpft"
+			}
+		},
 		"SELECTION": {
 			"WELCOME_BACK": "Willkommen zurück!",
 			"YOU_LOOK_NICE_TODAY": "Du siehst heute gut aus!",
 			"EMAIL_MULTIPLE_WORKSPACE": "Die E-Mail ist mit mehreren Arbeitsbereichen verknüpft, bitte wählen Sie einen aus, um fortzufahren",
 			"SELECT_WORKSPACE_FOR": "Wähle Arbeitsbereich für",
 			"OPEN": "Öffnen"
+		}
+	},
+	"WORKSPACE_CREATE": {
+		"ACCOUNT_CREATION": {
+			"TITLE": "Erstellen Sie Ihr Konto",
+			"SUBTITLE": "Vervollständigen Sie Ihr Profil, um einen neuen Arbeitsbereich zu erstellen"
+		},
+		"WORKSPACE_SETUP": {
+			"TITLE": "Richten Sie Ihren Arbeitsbereich ein",
+			"SUBTITLE": "Erstellen Sie Ihre Organisation und legen Sie los"
+		},
+		"BUTTONS": {
+			"CONTINUE_TO_WORKSPACE_SETUP": "Weiter zur Arbeitsbereich-Einrichtung"
 		}
 	},
 	"NO_IMAGE": {
