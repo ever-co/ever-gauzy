@@ -204,7 +204,6 @@
   }
 }
 
-// Workspace Selection Styles
 .workspace-selection-content {
   .workspace-list {
     h3 {
@@ -322,7 +321,6 @@
         }
       }
 
-      // Assure que les formulaires prennent toute la largeur
       .form-group,
       nb-form-field,
       input,
@@ -332,7 +330,6 @@
         max-width: none;
       }
 
-      // Évite le scroll horizontal sur les steppers
       nb-stepper {
         width: 100%;
         overflow-x: hidden;
