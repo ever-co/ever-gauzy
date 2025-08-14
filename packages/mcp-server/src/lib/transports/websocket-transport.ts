@@ -7,6 +7,8 @@ import { getAllTools, getToolCategory } from '../config/tools-registry';
 import crypto from 'node:crypto';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
+import https from 'node:https';
+import fs from 'node:fs';
 
 const logger = new Logger('WebSocketTransport');
 
@@ -91,6 +93,18 @@ interface WebSocketSessionMiddleware {
 	}>;
 }
 
+// Minimal tool descriptor type for tools/list
+interface ToolDescriptor {
+	name: string;
+	description?: string;
+	inputSchema?: {
+		type: 'object';
+		properties: Record<string, unknown>;
+		required?: string[];
+		additionalProperties?: boolean;
+	};
+}
+
 // WebSocket connection interface
 interface WebSocketConnection {
 	id: string;
@@ -110,11 +124,11 @@ export interface WebSocketTransportOptions {
 
 export class WebSocketTransport {
 	private wss: WebSocketServer | null = null;
-	private mcpServer: McpServer;
+	private readonly mcpServer: McpServer;
 	private transportConfig: McpTransportConfig['websocket'];
 	private connections = new Map<string, WebSocketConnection>();
 	private heartbeatInterval: NodeJS.Timeout | null = null;
-	private cachedTools: unknown[] | null = null;
+	private cachedTools: ToolDescriptor[] | null = null;
 	private cacheTimestamp: number = 0;
 	private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 	private sessionMiddlewareInstance: WebSocketSessionMiddleware | null = null;
@@ -138,22 +152,44 @@ export class WebSocketTransport {
 				this.isInitialized = true;
 			}
 
-			// Create WebSocket server
-			this.wss = new WebSocketServer({
-				port: this.transportConfig.port,
-				host: this.transportConfig.host,
-				perMessageDeflate: this.transportConfig.compression,
-				maxPayload: this.transportConfig.maxPayload || 16 * 1024 * 1024, // 16MB default
-			});
+			// Create WebSocket server (supports TLS, path, and proper compression flags)
+			let httpsServer: import('node:https').Server | undefined;
+			const perMessageDeflate =
+				!!(this.transportConfig.compression && (this.transportConfig.perMessageDeflate ?? true));
+
+			if (this.transportConfig.tls) {
+				if (!this.transportConfig.cert || !this.transportConfig.key) {
+					throw new Error('TLS enabled but cert/key not provided in websocket config');
+				}
+				const cert = fs.readFileSync(this.transportConfig.cert);
+				const key = fs.readFileSync(this.transportConfig.key);
+				httpsServer = https.createServer({ cert, key });
+				httpsServer.listen(this.transportConfig.port, this.transportConfig.host);
+				this.wss = new WebSocketServer({
+					server: httpsServer,
+					perMessageDeflate,
+					maxPayload: this.transportConfig.maxPayload || 16 * 1024 * 1024, // 16MB default
+					path: this.transportConfig.path,
+				});
+			} else {
+				this.wss = new WebSocketServer({
+					port: this.transportConfig.port,
+					host: this.transportConfig.host,
+					perMessageDeflate,
+					maxPayload: this.transportConfig.maxPayload || 16 * 1024 * 1024, // 16MB default
+					path: this.transportConfig.path,
+				});
+			}
 
 			// Wait for server to be ready
 			await new Promise<void>((resolve, reject) => {
-				this.wss!.on('error', (error) => {
+				const listeningTarget = this.transportConfig.tls ? httpsServer! : this.wss!;
+				listeningTarget.on('error', (error: unknown) => {
 					logger.error('WebSocket server error:', error);
 					reject(error);
 				});
 
-				this.wss!.on('listening', () => {
+				listeningTarget.on('listening', () => {
 					logger.log(
 						`🚀 MCP WebSocket Transport listening on ws://${this.transportConfig.host}:${this.transportConfig.port}`
 					);
@@ -239,7 +275,7 @@ export class WebSocketTransport {
 		}
 
 		const connectionId = this.generateConnectionId();
-		const clientIP = this.getClientIP(request);
+		const clientIP = this.getClientIP(request, this.transportConfig.trustedProxies || []);
 		const userAgent = request.headers['user-agent'];
 
 		const connection: WebSocketConnection = {
@@ -335,7 +371,7 @@ export class WebSocketTransport {
 				features: {
 					heartbeat: true,
 					sessions: !!this.transportConfig.session?.enabled,
-					compression: !!this.transportConfig.compression,
+					compression: !!(this.transportConfig.compression && this.transportConfig.perMessageDeflate),
 					userContext: !!connection.userContext
 				}
 			}
@@ -504,7 +540,7 @@ export class WebSocketTransport {
 		}
 	}
 
-	private async getTools(): Promise<unknown[]> {
+	private async getTools(): Promise<ToolDescriptor[]> {
 		try {
 			const now = Date.now();
 
@@ -570,7 +606,6 @@ export class WebSocketTransport {
 				if (!connection.isAlive) {
 					logger.debug(`Terminating dead connection: ${connection.id}`);
 					connection.socket.terminate();
-					this.connections.delete(connection.id);
 					deadConnections.push(connection.id);
 					return;
 				}
@@ -621,23 +656,32 @@ export class WebSocketTransport {
 		}
 	}
 
-	private getClientIP(request: IncomingMessage): string {
-		const peer = request.socket.remoteAddress || 'unknown';
-		const isLocal =
-			peer === '127.0.0.1' || peer === '::1' || peer === '::ffff:127.0.0.1';
-		if (isLocal) {
-			const forwarded = request.headers['x-forwarded-for'];
-			const realIP = request.headers['x-real-ip'];
-			if (forwarded) {
-				const forwardedIPs = Array.isArray(forwarded) ? forwarded : [forwarded];
-				return forwardedIPs[0].split(',')[0].trim();
-			}
-			if (realIP) {
-				const realIPs = Array.isArray(realIP) ? realIP : [realIP];
-				return realIPs[0].trim();
-			}
+	private getClientIP(request: IncomingMessage, trustedProxies: string[] = []): string {
+		// If no trusted proxies configured, use socket address
+		if (trustedProxies.length === 0) {
+			return request.socket.remoteAddress || 'unknown';
 		}
-		return peer;
+
+		// Only trust headers if request comes from a trusted proxy
+		const remoteAddress = request.socket.remoteAddress || '';
+		if (!trustedProxies.includes(remoteAddress)) {
+			return remoteAddress;
+		}
+
+		const forwarded = request.headers['x-forwarded-for'];
+		const realIP = request.headers['x-real-ip'];
+
+		if (forwarded) {
+			const forwardedIPs = Array.isArray(forwarded) ? forwarded : [forwarded];
+			return forwardedIPs[0].split(',')[0].trim();
+		}
+
+		if (realIP) {
+			const realIPs = Array.isArray(realIP) ? realIP : [realIP];
+			return realIPs[0].trim();
+		}
+
+		return request.socket.remoteAddress || 'unknown';
 	}
 
 	// Session management methods (now delegated to centralized session manager)
@@ -723,7 +767,8 @@ export class WebSocketTransport {
 
 	getUrl(): string {
 		const scheme = this.transportConfig.tls ? 'wss' : 'ws';
-		return `${scheme}://${this.transportConfig.host}:${this.transportConfig.port}`;
+		const path = this.transportConfig.path ? this.transportConfig.path.replace(/^\/*/, '/') : '';
+		return `${scheme}://${this.transportConfig.host}:${this.transportConfig.port}${path}`;
 	}
 
 	getStats(): {

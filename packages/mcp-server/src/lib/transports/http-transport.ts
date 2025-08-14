@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import { Server } from 'node:http';
 import { McpTransportConfig } from '../common/config';
@@ -82,6 +83,9 @@ export class HttpTransport {
 		this.app.use(express.json({ limit: '10mb' }));
 
 		// Cookie parsing for session management
+		this.app.use(cookieParser());
+
+		// URL-encoded body parsing (e.g., form submissions)
 		this.app.use(express.urlencoded({ extended: true }));
 
 		// Request logging
@@ -105,12 +109,14 @@ export class HttpTransport {
 			enableCSRF: true,
 			enableRateLimit: false,
 			excludedPaths: ['/health', '/mcp/session*'],
+			trustedProxies: this.transportConfig.trustedProxies || [],
 		});
 
 		// Rate limiting middleware
 		const rateLimitMiddleware = sessionMiddleware.createRateLimitMiddleware({
 			windowMs: 15 * 60 * 1000, // 15 minutes
 			max: 100, // 100 requests per windowMs per session/IP
+			trustedProxies: this.transportConfig.trustedProxies || [],
 		});
 
 		// Apply middleware to MCP routes
@@ -234,6 +240,23 @@ export class HttpTransport {
 				// Generate CSRF token for the session
 				const csrfToken = sessionMiddleware.generateCSRFToken(session.id);
 
+				// Set session cookie if cookie name is configured
+				const cookieName = this.transportConfig.session.cookieName;
+				if (cookieName) {
+					try {
+						const maxAge = session.expiresAt ? new Date(session.expiresAt).getTime() - Date.now() : 24 * 60 * 60 * 1000; // 24 hours default
+						res.cookie(cookieName, session.id, {
+							httpOnly: true,
+							secure: req.secure || process.env.NODE_ENV === 'production',
+							sameSite: 'lax',
+							path: '/',
+							maxAge: Math.max(0, maxAge) // Ensure non-negative
+						});
+					} catch (err) {
+						logger.warn('Failed to set session cookie:', err);
+					}
+				}
+
 				logger.log(`Session created: ${session.id} for user ${session.userId} from ${req.ip}`);
 
 				res.json({
@@ -241,7 +264,7 @@ export class HttpTransport {
 					created: session.created,
 					expiresAt: session.expiresAt,
 					csrfToken,
-					cookieName: this.transportConfig.session.cookieName,
+					cookieName: cookieName,
 					user: {
 						id: session.userId,
 						email: session.userEmail,
@@ -259,31 +282,83 @@ export class HttpTransport {
 		});
 
 		// Delete session endpoint
-		this.app.delete('/mcp/session/:sessionId', sessionRateLimit, (req, res) => {
+		this.app.delete('/mcp/session/:sessionId', sessionRateLimit, async (req, res) => {
 			const sessionId = req.params.sessionId;
 
-			// Verify the requester owns the session
-			const requestingSessionId = req.sessionId;
-			if (requestingSessionId !== sessionId && !req.userContext?.userId) {
-				res.status(403).json({
-					error: 'Forbidden',
-					message: 'Cannot delete another user\'s session'
+			try {
+				// Require authenticated user
+				const requesterUserId = req.userContext?.userId;
+				if (!requesterUserId) {
+					res.status(401).json({
+						error: 'Unauthorized',
+						message: 'Authentication required to delete session'
+					});
+					return;
+				}
+
+				// Validate the session to be deleted exists and get its details
+				const validation = await sessionManager.validateSession(sessionId);
+				if (!validation.valid || !validation.session) {
+					res.status(404).json({
+						error: 'Session not found',
+						message: 'The specified session does not exist or is invalid'
+					});
+					return;
+				}
+
+				// Verify ownership: only the session owner can delete it
+				if (validation.session.userId !== requesterUserId) {
+					res.status(403).json({
+						error: 'Forbidden',
+						message: 'You can only delete your own sessions'
+					});
+					return;
+				}
+
+				// Delete the session
+				if (sessionManager.destroySession(sessionId)) {
+					// Clear session cookie if it exists
+					const cookieName = this.transportConfig.session.cookieName;
+					if (cookieName) {
+						try {
+							res.clearCookie(cookieName, {
+								path: '/',
+								httpOnly: true,
+								secure: req.secure || process.env.NODE_ENV === 'production',
+								sameSite: 'lax'
+							});
+						} catch (err) {
+							logger.warn('Failed to clear session cookie:', err);
+						}
+					}
+					logger.log(`Session deleted: ${sessionId} by user ${requesterUserId} from ${req.ip}`);
+					res.status(204).send();
+				} else {
+					res.status(404).json({ error: 'Session not found' });
+				}
+
+			} catch (error) {
+				logger.error('Error deleting session:', error);
+				res.status(500).json({
+					error: 'Internal server error',
+					message: 'Failed to delete session due to internal error'
 				});
-				return;
-			}
-			if (sessionManager.destroySession(sessionId)) {
-				logger.log(`Session deleted: ${sessionId} from ${req.ip}`);
-				res.status(204).send();
-			} else {
-				res.status(404).json({ error: 'Session not found' });
 			}
 		});
 
 		// Get session info endpoint
-		this.app.get('/mcp/session/:sessionId', sessionRateLimit, async (req, res) => {
+		this.app.get('/mcp/session/:sessionId', sessionRateLimit, sessionMiddleware.createAuthorizationMiddleware(), async (req, res): Promise<void> => {
 			const sessionId = req.params.sessionId;
 
 			try {
+				// Only allow accessing own session
+				if (req.sessionId !== sessionId) {
+					res.status(403).json({
+						error: 'Forbidden',
+						message: 'Cannot access another user\'s session'
+					});
+					return;
+				}
 				const validation = await sessionManager.validateSession(
 					sessionId,
 					this.getClientIP(req),
@@ -332,7 +407,7 @@ export class HttpTransport {
 			}
 		});
 
-		// Session stats endpoint (admin only)
+		// Session stats endpoint
 		this.app.get('/mcp/sessions/stats', sessionRateLimit, (req, res) => {
 			try {
 				const stats = sessionManager.getStats();
@@ -543,23 +618,30 @@ export class HttpTransport {
 	}
 
 
-	private getClientIP(req: express.Request): string {
-		const peer = req.socket.remoteAddress || '';
-		const isLocal =
-		peer === '127.0.0.1' || peer === '::1' || peer === '::ffff:127.0.0.1';
+	private getClientIP(req: express.Request, trustedProxies: string[] = []): string {
+		// If no trusted proxies configured, use socket address
+		if (trustedProxies.length === 0) {
+			return req.socket.remoteAddress || 'unknown';
+		}
 
-		// Only trust headers if request is from a local peer (or behind trusted proxy)
-		if (isLocal) {
-			const forwarded = req.get('X-Forwarded-For');
-			const realIP = req.get('X-Real-IP');
+		// Only trust headers if request comes from a trusted proxy
+		const remoteAddress = req.socket.remoteAddress || '';
+		if (!trustedProxies.includes(remoteAddress)) {
+			return remoteAddress;
+		}
+
+		const forwarded = req.get('X-Forwarded-For');
+		const realIP = req.get('X-Real-IP');
+
 		if (forwarded) {
 			return forwarded.split(',')[0].trim();
 		}
+
 		if (realIP) {
 			return realIP.trim();
 		}
-		}
-		return peer || 'unknown';
+
+		return req.socket.remoteAddress || 'unknown';
 	}
 
 	async start(): Promise<void> {

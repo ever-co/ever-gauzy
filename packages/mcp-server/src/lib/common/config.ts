@@ -15,6 +15,7 @@ export interface McpTransportConfig {
 			enabled: boolean;
 			cookieName: string;
 		};
+		trustedProxies?: string[];
 	};
 	websocket?: {
 		port: number;
@@ -33,6 +34,7 @@ export interface McpTransportConfig {
 			enabled: boolean;
 			cookieName: string;
 		};
+		trustedProxies?: string[];
 	};
 }
 
@@ -87,7 +89,8 @@ export const config: GauzyConfig = {
 				session: {
 					enabled: process.env.MCP_SESSION_ENABLED !== 'false',
 					cookieName: process.env.MCP_SESSION_COOKIE_NAME || 'mcp-session-id'
-				}
+				},
+				trustedProxies: process.env.MCP_TRUSTED_PROXIES ? process.env.MCP_TRUSTED_PROXIES.split(',').map(p => p.trim()).filter(p => p.length > 0) : []
 			},
 			websocket: {
 				port: (() => {
@@ -120,11 +123,7 @@ export const config: GauzyConfig = {
 						'http://localhost:3000',
 						'http://localhost:4200',
 						'http://127.0.0.1:3000',
-						'http://127.0.0.1:4200',
-						'ws://localhost:3000',
-						'ws://localhost:4200',
-						'ws://127.0.0.1:3000',
-						'ws://127.0.0.1:4200'
+						'http://127.0.0.1:4200'
 					];
 					return developmentOrigins;
 				})(),
@@ -134,7 +133,8 @@ export const config: GauzyConfig = {
 				session: {
 					enabled: process.env.MCP_WS_SESSION_ENABLED !== 'false',
 					cookieName: process.env.MCP_WS_SESSION_COOKIE_NAME || 'mcp-ws-session-id'
-				}
+				},
+				trustedProxies: process.env.MCP_WS_TRUSTED_PROXIES ? process.env.MCP_WS_TRUSTED_PROXIES.split(',').map(p => p.trim()).filter(p => p.length > 0) : []
 			}
 		}
 	}

@@ -34,6 +34,7 @@ export interface SessionMiddlewareConfig {
 	csrfHeader: string;
 	allowedPaths?: string[];
 	excludedPaths?: string[];
+	trustedProxies?: string[];
 }
 
 export interface CSRFTokenData {
@@ -65,6 +66,7 @@ class SessionMiddleware {
 			enableRateLimit: false,
 			sessionHeader: 'mcp-session-id',
 			csrfHeader: 'mcp-csrf-token',
+			trustedProxies: [],
 			...config,
 		};
 
@@ -91,7 +93,7 @@ class SessionMiddleware {
 				}
 
 				// Validate session
-				const ipAddress = finalConfig.validateIP ? this.getClientIP(req) : undefined;
+				const ipAddress = finalConfig.validateIP ? this.getClientIP(req, finalConfig.trustedProxies) : undefined;
 				const userAgent = finalConfig.validateUserAgent ? req.get('User-Agent') : undefined;
 
 				const validation = await sessionManager.validateSession(
@@ -123,7 +125,7 @@ class SessionMiddleware {
 						req.connectionId,
 						'http',
 						{
-							ipAddress: this.getClientIP(req),
+							ipAddress: this.getClientIP(req, finalConfig.trustedProxies),
 							userAgent: req.get('User-Agent'),
 							path: req.path,
 							method: req.method,
@@ -135,7 +137,7 @@ class SessionMiddleware {
 				sessionManager.updateSessionActivity(sessionId, {
 					lastPath: req.path,
 					lastMethod: req.method,
-					lastIP: this.getClientIP(req),
+					lastIP: this.getClientIP(req, finalConfig.trustedProxies),
 					lastUserAgent: req.get('User-Agent'),
 				});
 
@@ -244,11 +246,13 @@ class SessionMiddleware {
 		max?: number;
 		skipSuccessfulRequests?: boolean;
 		keyGenerator?: (req: Request) => string;
+		trustedProxies?: string[];
 	} = {}) {
 		const finalConfig = {
 			windowMs: 15 * 60 * 1000, // 15 minutes
 			max: 100, // Limit each session to 100 requests per windowMs
 			skipSuccessfulRequests: false,
+			trustedProxies: [],
 			...config,
 		};
 
@@ -256,10 +260,10 @@ class SessionMiddleware {
 			...finalConfig,
 			keyGenerator: (req: Request) => {
 				// Use session ID if available, otherwise fall back to IP
-				return req.sessionId || this.getClientIP(req);
+				return req.sessionId || this.getClientIP(req, finalConfig.trustedProxies);
 			},
 			handler: (req: Request, res: Response) => {
-				logger.warn(`Rate limit exceeded for session: ${req.sessionId || 'unknown'} from IP: ${this.getClientIP(req)}`);
+				logger.warn(`Rate limit exceeded for session: ${req.sessionId || 'unknown'} from IP: ${this.getClientIP(req, finalConfig.trustedProxies)}`);
 				res.status(429).json({
 					error: 'Too Many Requests',
 					message: 'Rate limit exceeded. Please try again later.',
@@ -417,16 +421,8 @@ class SessionMiddleware {
 			if (excludedPath.includes('*')) {
 				// Simple glob pattern matching
 				// Escape special regex characters except *
-				const escaped = excludedPath
-					.replace(/[.+?^${}()|[\]\\]/g, '\\$&')
-					.replace(/\*/g, '.*');
-				// Limit pattern complexity to prevent ReDoS
-				if (escaped.length > 100 || (escaped.match(/\.\*/g) || []).length > 5) {
-					logger.warn(`Skipping complex path pattern: ${excludedPath}`);
-					return false;
-				}
-				const regex = new RegExp(`^${escaped}$`);
-				return regex.test(path);
+				// Use a safe glob matcher instead of dynamic RegExp
+            	return require('minimatch')(path, excludedPath, { nocase: false, dot: true });
 			}
 			return path === excludedPath;
 		});
