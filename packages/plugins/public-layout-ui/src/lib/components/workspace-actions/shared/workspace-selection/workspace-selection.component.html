@@ -1,0 +1,45 @@
+<div class="workspace-selection-content">
+	<div class="headings">
+		<div class="headings-inner">
+			<h2 class="title">{{ welcomeTitle | translate }}</h2>
+			<p class="sub-title">
+				{{ descriptionText | translate : { count: totalWorkspaces } }}
+			</p>
+		</div>
+	</div>
+
+	<div class="workspace-list">
+		<h3>
+			{{ selectWorkspaceText | translate }}
+			<span class="email">{{ confirmedEmail }}</span>
+		</h3>
+
+		<div class="workspace-items">
+			<div
+				*ngFor="let workspace of workspaces; trackBy: trackByWorkspaceId"
+				class="workspace-item"
+				(click)="onWorkspaceSelect(workspace)"
+				[attr.aria-label]="'Open workspace ' + (workspace.user?.tenant?.name || '')"
+			>
+				<div class="workspace-image">
+					<img
+						[src]="workspace.user?.tenant?.logo || '/assets/images/logos/logo_Gauzy.png'"
+						alt="Workspace Logo"
+					/>
+				</div>
+				<div class="workspace-info">
+					<div class="workspace-name">{{ workspace.user?.tenant?.name }}</div>
+					<div class="workspace-email">{{ workspace.user?.email }}</div>
+				</div>
+				<nb-icon icon="arrow-forward-outline"></nb-icon>
+			</div>
+		</div>
+
+		<div *ngIf="showCreateButton" class="create-new-workspace">
+			<button nbButton outline status="primary" (click)="onCreateWorkspace()">
+				<nb-icon icon="plus-outline"></nb-icon>
+				{{ createButtonText | translate }}
+			</button>
+		</div>
+	</div>
+</div>

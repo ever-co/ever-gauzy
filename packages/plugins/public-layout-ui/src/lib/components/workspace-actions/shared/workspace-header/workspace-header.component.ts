@@ -1,0 +1,26 @@
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+
+/**
+ * Shared header component for workspace action pages.
+ * Contains the logo and close button that appears in all workspace action templates.
+ */
+@Component({
+	selector: 'ga-workspace-header',
+	templateUrl: './workspace-header.component.html',
+	styleUrls: ['./workspace-header.component.scss'],
+	standalone: false
+})
+export class WorkspaceHeaderComponent {
+	@Input() title: string;
+	@Input() subtitle: string;
+	@Input() showCloseButton: boolean = true;
+
+	@Output() close = new EventEmitter<void>();
+
+	/**
+	 * Handle close button click
+	 */
+	onClose(): void {
+		this.close.emit();
+	}
+}
