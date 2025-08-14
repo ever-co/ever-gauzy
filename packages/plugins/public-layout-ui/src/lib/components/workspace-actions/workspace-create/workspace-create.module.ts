@@ -15,8 +15,9 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule, OrganizationsStepFormModule, PasswordFormFieldModule } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { TenantService, OrganizationsService, UsersService } from '@gauzy/ui-core/core';
-
 import { WorkspaceCreateComponent } from './workspace-create.component';
+import { WorkspaceAuthService, CountdownTimerService } from '../shared';
+import { WorkspaceSharedModule } from '../shared/workspace-shared.module';
 
 const routes: Routes = [
 	{
@@ -42,8 +43,9 @@ const routes: Routes = [
 		SharedModule,
 		OrganizationsStepFormModule,
 		PasswordFormFieldModule,
-		ThemeModule
+		ThemeModule,
+		WorkspaceSharedModule
 	],
-	providers: [TenantService, OrganizationsService, UsersService]
+	providers: [TenantService, OrganizationsService, UsersService, WorkspaceAuthService, CountdownTimerService]
 })
 export class WorkspaceCreateModule {}
