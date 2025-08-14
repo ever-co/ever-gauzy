@@ -199,30 +199,6 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
-	 * Handle context menu item click
-	 * @deprecated Use _setupMenuClickListener instead
-	 */
-	onContextMenuClick(event: { item: { data: { action: string } } }): void {
-		console.log('Context menu clicked:', event);
-		const action = event.item.data?.action;
-		console.log('Action:', action);
-
-		switch (action) {
-			case 'create':
-				this.openWorkspaceAction('create');
-				break;
-			case 'signin':
-				this.openWorkspaceAction('signin');
-				break;
-			case 'find':
-				this.openWorkspaceAction('find');
-				break;
-			default:
-				console.warn('Unknown action:', action);
-		}
-	}
-
-	/**
 	 * Open workspace action in new tab
 	 * @param action The action to perform (create, signin, find)
 	 */

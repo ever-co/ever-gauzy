@@ -93,6 +93,11 @@ export const createPublicLayoutRoutes = (_pageRouteRegistryService: PageRouteReg
 				path: 'workspace',
 				children: [
 					{
+						path: '',
+						pathMatch: 'full',
+						redirectTo: 'signin'
+					},
+					{
 						path: 'create',
 						loadChildren: () =>
 							import('./components/workspace-actions/workspace-create/workspace-create.module').then(
