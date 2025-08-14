@@ -20,7 +20,9 @@ export interface McpTransportConfig {
 		port: number;
 		host: string;
 		path?: string;
+		/** Global compression enable/disable - controls overall compression capability */
 		compression?: boolean;
+		/** Per-message deflate extension - enables compression on individual messages when compression is enabled */
 		perMessageDeflate?: boolean;
 		maxPayload?: number;
 		allowedOrigins?: string[] | boolean;

@@ -5,8 +5,8 @@ import cors from 'cors';
 import { rateLimit } from 'express-rate-limit';
 import { Server } from 'node:http';
 import { McpTransportConfig } from '../common/config';
-import crypto from 'node:crypto';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
+import { PROOCOL_VERSION } from '../config';
 
 const logger = new Logger('HttpTransport');
 
@@ -378,16 +378,19 @@ export class HttpTransport {
 		try {
 			// Add user context to request metadata if session is available
 			const userContext = req.userContext;
-			const enrichedParams = userContext ? {
-				...params,
-				_context: {
-					userId: userContext.userId,
-					organizationId: userContext.organizationId,
-					tenantId: userContext.tenantId,
-					sessionId: userContext.sessionId,
-					connectionId: req.connectionId,
-				}
-			} : params;
+			const enrichedParams =
+				userContext && params && !Array.isArray(params)
+				? {
+					...(params as Record<string, unknown>),
+					_context: {
+						userId: userContext.userId,
+						organizationId: userContext.organizationId,
+						tenantId: userContext.tenantId,
+						sessionId: userContext.sessionId,
+						connectionId: req.connectionId,
+					}
+					}
+				: params;
 
 			// Create a mock transport interface for the MCP server
 			const mockTransport: MockTransport = {
@@ -478,7 +481,7 @@ export class HttpTransport {
 						jsonrpc: '2.0',
 						id,
 						result: {
-							protocolVersion: '2025-03-26',
+							protocolVersion: PROOCOL_VERSION,
 							capabilities: { tools: {} },
 							serverInfo: {
 								name: 'gauzy-mcp-server',
@@ -541,18 +544,22 @@ export class HttpTransport {
 
 
 	private getClientIP(req: express.Request): string {
-		const forwarded = req.get('X-Forwarded-For');
-		const realIP = req.get('X-Real-IP');
+		const peer = req.socket.remoteAddress || '';
+		const isLocal =
+		peer === '127.0.0.1' || peer === '::1' || peer === '::ffff:127.0.0.1';
 
+		// Only trust headers if request is from a local peer (or behind trusted proxy)
+		if (isLocal) {
+			const forwarded = req.get('X-Forwarded-For');
+			const realIP = req.get('X-Real-IP');
 		if (forwarded) {
 			return forwarded.split(',')[0].trim();
 		}
-
 		if (realIP) {
 			return realIP.trim();
 		}
-
-		return req.socket.remoteAddress || 'unknown';
+		}
+		return peer || 'unknown';
 	}
 
 	async start(): Promise<void> {
@@ -579,9 +586,11 @@ export class HttpTransport {
 
 						if (this.transportConfig.session.enabled) {
 							logger.log(`   - POST /mcp/session - Create session`);
-							logger.log(`   - GET  /mcp/session/:id - Get session info`);
+							logger.log(`   - GET  /mcp/session/:sessionId - Get session info`);
 							logger.log(`   - DELETE /mcp/session/:id - Delete session`);
 							logger.log(`   - GET  /mcp/sessions/stats - Session statistics`);
+							// NOTE: Leave DELETE log aligned or update it too for consistency:
+          					logger.log(`   - DELETE /mcp/session/:sessionId - Delete session`);
 							logger.log(`📡 Session management features:`);
 							logger.log(`   - Multi-user session isolation`);
 							logger.log(`   - Automatic session cleanup`);

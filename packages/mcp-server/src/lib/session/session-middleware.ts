@@ -313,10 +313,9 @@ class SessionMiddleware {
 
 		// Check if token belongs to the session
 		// Use constant-time comparison to prevent timing attacks
-		if (!crypto.timingSafeEqual(
-			Buffer.from(tokenData.sessionId),
-			Buffer.from(sessionId)
-		)) {
+		const a = Buffer.from(tokenData.sessionId);
+    	const b = Buffer.from(sessionId);
+    	if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
 			return false;
 		}
 

@@ -6,6 +6,7 @@ import { McpTransportConfig } from '../common/config';
 import { getAllTools, getToolCategory } from '../config/tools-registry';
 import crypto from 'node:crypto';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
+import { PROOCOL_VERSION } from '../config';
 
 const logger = new Logger('WebSocketTransport');
 
@@ -54,10 +55,12 @@ interface WebSocketWelcomeMessage {
 	params: {
 		connectionId: string;
 		timestamp: string;
+		sessionId?: string;
 		features: {
 			heartbeat: boolean;
 			sessions: boolean;
 			compression: boolean;
+			userContext: boolean;
 		};
 	};
 }
@@ -390,16 +393,19 @@ export class WebSocketTransport {
 		try {
 			// Add user context to request metadata if session is available
 			const userContext = connection.userContext;
-			const enrichedParams = userContext ? {
-				...params,
-				_context: {
-					userId: userContext.userId,
-					organizationId: userContext.organizationId,
-					tenantId: userContext.tenantId,
-					sessionId: userContext.sessionId,
-					connectionId: connection.id,
-				}
-			} : params;
+			const enrichedParams =
+				userContext && params && !Array.isArray(params)
+				? {
+					...(params as Record<string, unknown>),
+					_context: {
+						userId: userContext.userId,
+						organizationId: userContext.organizationId,
+						tenantId: userContext.tenantId,
+						sessionId: userContext.sessionId,
+						connectionId: connection.id,
+					}
+					}
+				: params;
 
 			// Create a mock transport interface for the MCP server
 			const mockTransport: McpTransport = {
@@ -437,7 +443,7 @@ export class WebSocketTransport {
 						jsonrpc: '2.0',
 						id,
 						result: {
-							protocolVersion: '2025-06-18',
+							protocolVersion: PROOCOL_VERSION,
 							capabilities: { tools: {} },
 							serverInfo: {
 								name: 'gauzy-mcp-server',
@@ -616,20 +622,22 @@ export class WebSocketTransport {
 	}
 
 	private getClientIP(request: IncomingMessage): string {
-		const forwarded = request.headers['x-forwarded-for'];
-		const realIP = request.headers['x-real-ip'];
-
-		if (forwarded) {
-			const forwardedIPs = Array.isArray(forwarded) ? forwarded : [forwarded];
-			return forwardedIPs[0].split(',')[0].trim();
+		const peer = request.socket.remoteAddress || 'unknown';
+		const isLocal =
+			peer === '127.0.0.1' || peer === '::1' || peer === '::ffff:127.0.0.1';
+		if (isLocal) {
+			const forwarded = request.headers['x-forwarded-for'];
+			const realIP = request.headers['x-real-ip'];
+			if (forwarded) {
+				const forwardedIPs = Array.isArray(forwarded) ? forwarded : [forwarded];
+				return forwardedIPs[0].split(',')[0].trim();
+			}
+			if (realIP) {
+				const realIPs = Array.isArray(realIP) ? realIP : [realIP];
+				return realIPs[0].trim();
+			}
 		}
-
-		if (realIP) {
-			const realIPs = Array.isArray(realIP) ? realIP : [realIP];
-			return realIPs[0].trim();
-		}
-
-		return request.socket.remoteAddress || 'unknown';
+		return peer;
 	}
 
 	// Session management methods (now delegated to centralized session manager)
