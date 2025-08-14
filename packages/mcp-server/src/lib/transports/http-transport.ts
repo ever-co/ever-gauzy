@@ -6,7 +6,7 @@ import { rateLimit } from 'express-rate-limit';
 import { Server } from 'node:http';
 import { McpTransportConfig } from '../common/config';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
-import { PROOCOL_VERSION } from '../config';
+import { PROTOCOL_VERSION } from '../config';
 
 const logger = new Logger('HttpTransport');
 
@@ -481,7 +481,7 @@ export class HttpTransport {
 						jsonrpc: '2.0',
 						id,
 						result: {
-							protocolVersion: PROOCOL_VERSION,
+							protocolVersion: PROTOCOL_VERSION,
 							capabilities: { tools: {} },
 							serverInfo: {
 								name: 'gauzy-mcp-server',

@@ -6,7 +6,7 @@ import { McpTransportConfig } from '../common/config';
 import { getAllTools, getToolCategory } from '../config/tools-registry';
 import crypto from 'node:crypto';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
-import { PROOCOL_VERSION } from '../config';
+import { PROTOCOL_VERSION } from '../config';
 
 const logger = new Logger('WebSocketTransport');
 
@@ -443,7 +443,7 @@ export class WebSocketTransport {
 						jsonrpc: '2.0',
 						id,
 						result: {
-							protocolVersion: PROOCOL_VERSION,
+							protocolVersion: PROTOCOL_VERSION,
 							capabilities: { tools: {} },
 							serverInfo: {
 								name: 'gauzy-mcp-server',
