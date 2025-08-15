@@ -23,9 +23,9 @@ export class EmailCodeFormComponent implements OnInit {
 	@Input() showForgotEmailLink = false;
 	@Input() forgotEmailLink = 'mailto:support@gauzy.co';
 	@Input() showEditEmailButton = true;
-	@Input() descriptionText: string = 'LOGIN_PAGE.LOGIN_MAGIC.DESCRIPTION_TITLE';
-	@Input() successSentCodeTitle: string = 'LOGIN_PAGE.LOGIN_MAGIC.SUCCESS_SENT_CODE_TITLE';
-	@Input() successSentCodeSubTitle: string = 'LOGIN_PAGE.LOGIN_MAGIC.SUCCESS_SENT_CODE_SUB_TITLE';
+	@Input() descriptionText = 'LOGIN_PAGE.LOGIN_MAGIC.DESCRIPTION_TITLE';
+	@Input() successSentCodeTitle = 'LOGIN_PAGE.LOGIN_MAGIC.SUCCESS_SENT_CODE_TITLE';
+	@Input() successSentCodeSubTitle = 'LOGIN_PAGE.LOGIN_MAGIC.SUCCESS_SENT_CODE_SUB_TITLE';
 
 	@Output() readonly sendCode = new EventEmitter<void>();
 	@Output() readonly resendCode = new EventEmitter<void>();

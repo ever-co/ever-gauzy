@@ -15,12 +15,12 @@ import { IWorkspaceResponse } from '@gauzy/contracts';
 export class WorkspaceSelectionComponent {
 	@Input() workspaces: IWorkspaceResponse[] = [];
 	@Input() confirmedEmail: string;
-	@Input() totalWorkspaces: number = 0;
-	@Input() showCreateButton: boolean = false;
-	@Input() welcomeTitle: string = 'WORKSPACES.SELECTION.WELCOME_BACK';
-	@Input() descriptionText: string = 'WORKSPACES.FIND.RESULTS_STEP.DESCRIPTION';
-	@Input() selectWorkspaceText: string = 'WORKSPACES.SELECTION.SELECT_WORKSPACE_FOR';
-	@Input() createButtonText: string = 'WORKSPACES.CREATE.CREATE_NEW_WORKSPACE';
+	@Input() totalWorkspaces = 0;
+	@Input() showCreateButton = false;
+	@Input() welcomeTitle = 'WORKSPACES.SELECTION.WELCOME_BACK';
+	@Input() descriptionText = 'WORKSPACES.FIND.RESULTS_STEP.DESCRIPTION';
+	@Input() selectWorkspaceText = 'WORKSPACES.SELECTION.SELECT_WORKSPACE_FOR';
+	@Input() createButtonText = 'WORKSPACES.CREATE.CREATE_NEW_WORKSPACE';
 
 	@Output() readonly workspaceSelected = new EventEmitter<IWorkspaceResponse>();
 	@Output() readonly createWorkspace = new EventEmitter<void>();
@@ -42,5 +42,5 @@ export class WorkspaceSelectionComponent {
 	/**
 	 * Track by function for workspace lists
 	 */
-	trackByWorkspaceId = (_: number, w: any) => w?.user?.tenant?.id || w?.user?.id || w?.id;
+	trackByWorkspaceId = (_: number, w: IWorkspaceResponse) => w?.user?.tenant?.id || w?.user?.id || w?.id;
 }

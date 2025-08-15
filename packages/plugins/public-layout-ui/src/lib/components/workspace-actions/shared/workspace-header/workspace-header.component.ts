@@ -14,7 +14,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
 export class WorkspaceHeaderComponent {
 	@Input() title: string;
 	@Input() subtitle: string;
-	@Input() showCloseButton: boolean = true;
+	@Input() showCloseButton = true;
 
 	@Output() close = new EventEmitter<void>();
 

@@ -39,11 +39,6 @@ export class WorkspaceSigninComponent extends BaseWorkspaceAuthComponent impleme
 	 * For workspace signin: always show workspace selection if user has workspaces.
 	 */
 	protected handleConfirmationResponse(response: IUserSigninWorkspaceResponse): void {
-		const { total_workspaces } = response;
-
-		// Always show workspace selection for signin
-		if (total_workspaces > 0) {
-			this.showWorkspaceSelection = true;
-		}
+		// No-op: BaseWorkspaceAuthComponent will toggle workspace selection when workspaces exist.
 	}
 }
