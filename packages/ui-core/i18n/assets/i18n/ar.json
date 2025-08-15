@@ -4856,7 +4856,7 @@
 		"CREATE": {
 			"TITLE": "إنشاء مساحة عمل جديدة",
 			"SUBTITLE": "أدخل بريدك الإلكتروني للبدء",
-			"SUCCESS_SENT_CODE_TITLE": "لقد أرسلنا رمز التحقق إلى",
+			"SUCCESS_SENT_CODE_TITLE": "لقد أرسلنا رمز التحقق إلى:",
 			"SUCCESS_SENT_CODE_SUB_TITLE": "يرجى التحقق من بريدك الإلكتروني وإدخال الرمز أدناه",
 			"CREATE_NEW_WORKSPACE": "إنشاء مساحة عمل جديدة"
 		},
