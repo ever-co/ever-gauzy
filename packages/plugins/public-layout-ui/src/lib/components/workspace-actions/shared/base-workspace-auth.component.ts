@@ -120,14 +120,15 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 			return;
 		}
 
-		// Start the timer
-		this._timerService.startTimer();
-
 		// Get the email value from the form
-		const email = (this.form.get('email').value || '').trim();
+		const email = (this.form.get('email')?.value || '').trim();
 
 		// Check if email is present
 		if (!email) {
+			return;
+		}
+		// Optional guard: do not resend while cooldown is active
+		if (this.countdown > 0) {
 			return;
 		}
 
@@ -135,9 +136,13 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 			this.isLoading = true;
 			await this._workspaceAuthService.sendSigninCode(email);
 			this.isCodeResent = true;
+			// Start cooldown only after successful resend
+			this._timerService.startTimer();
 			this.cdr.markForCheck();
 		} catch {
 			this.isCodeResent = false;
+			// Optionally ensure timer is not running after failure
+			this._timerService.stopTimer();
 			this.cdr.markForCheck();
 		} finally {
 			this.isLoading = false;
