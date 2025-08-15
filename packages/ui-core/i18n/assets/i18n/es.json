@@ -4886,7 +4886,7 @@
 			"CREATE_NEW_WORKSPACE": "Crear nuevo espacio de trabajo"
 		},
 		"FIND": {
-			"TITLE": "Encuentra tu espacio de trabajo",
+			"TITLE": "Encuentre su espacio de trabajo",
 			"SUBTITLE": "Ingrese su correo electrónico para encontrar sus espacios de trabajo",
 			"DESCRIPTION_TITLE": "Le enviaremos un código mágico para verificar su identidad",
 			"RESULTS_STEP": {
