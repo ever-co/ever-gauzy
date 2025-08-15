@@ -304,7 +304,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				const queryParamsObject = Object.entries(queryParams).reduce(
     				(acc, [key, value]) => {
 						const propertyValue = item[value];
-      					if (typeof item[key] !== 'undefined') {
+      					if (typeof propertyValue !== 'undefined') {
 							if (typeof propertyValue === 'string' || typeof propertyValue === 'number' || typeof propertyValue === 'boolean') {
 								acc[key] = String(propertyValue);
 							}
