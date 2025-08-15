@@ -23,6 +23,13 @@
       color: var(--text-basic-color);
     }
 
+    &:focus-visible {
+      outline: 2px solid var(--text-basic-color);
+      outline-offset: 2px;
+      background-color: var(--background-basic-color-2);
+      color: var(--text-basic-color);
+    }
+
     nb-icon {
       font-size: 1.25rem;
     }
