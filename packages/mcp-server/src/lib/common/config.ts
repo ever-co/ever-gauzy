@@ -15,23 +15,26 @@ export interface McpTransportConfig {
 			enabled: boolean;
 			cookieName: string;
 		};
+		trustedProxies?: string[];
 	};
 	websocket?: {
 		port: number;
 		host: string;
 		path?: string;
+		/** Global compression enable/disable - controls overall compression capability */
 		compression?: boolean;
+		/** Per-message deflate extension - enables compression on individual messages when compression is enabled */
 		perMessageDeflate?: boolean;
 		maxPayload?: number;
 		allowedOrigins?: string[] | boolean;
 		tls?: boolean;
-		secure?: boolean;
 		cert?: string;
 		key?: string;
 		session?: {
 			enabled: boolean;
 			cookieName: string;
 		};
+		trustedProxies?: string[];
 	};
 }
 
@@ -86,7 +89,8 @@ export const config: GauzyConfig = {
 				session: {
 					enabled: process.env.MCP_SESSION_ENABLED !== 'false',
 					cookieName: process.env.MCP_SESSION_COOKIE_NAME || 'mcp-session-id'
-				}
+				},
+				trustedProxies: process.env.MCP_TRUSTED_PROXIES ? process.env.MCP_TRUSTED_PROXIES.split(',').map(p => p.trim()).filter(p => p.length > 0) : []
 			},
 			websocket: {
 				port: (() => {
@@ -96,7 +100,7 @@ export const config: GauzyConfig = {
 				host: process.env.MCP_WS_HOST || '127.0.0.1', // Default to localhost, prefer TLS termination at reverse proxy
 				path: process.env.MCP_WS_PATH || '/',
 				compression: process.env.MCP_WS_COMPRESSION !== 'false',
-				perMessageDeflate: process.env.MCP_WS_COMPRESSION !== 'false', // Maps to compression for backward compatibility
+				perMessageDeflate: process.env.MCP_WS_PER_MESSAGE_DEFLATE !== 'false', // Separate env var for per-message deflate
 				maxPayload: (() => {
 					const size = Number.parseInt(process.env.MCP_WS_MAX_PAYLOAD ?? '16777216', 10); // 16MB default
 					return Number.isInteger(size) && size > 0 ? size : 16777216;
@@ -119,22 +123,18 @@ export const config: GauzyConfig = {
 						'http://localhost:3000',
 						'http://localhost:4200',
 						'http://127.0.0.1:3000',
-						'http://127.0.0.1:4200',
-						'ws://localhost:3000',
-						'ws://localhost:4200',
-						'ws://127.0.0.1:3000',
-						'ws://127.0.0.1:4200'
+						'http://127.0.0.1:4200'
 					];
 					return developmentOrigins;
 				})(),
 				tls: process.env.MCP_WS_TLS === 'true',
-				secure: process.env.MCP_WS_SECURE === 'true',
 				cert: process.env.MCP_WS_CERT_PATH,
 				key: process.env.MCP_WS_KEY_PATH,
 				session: {
 					enabled: process.env.MCP_WS_SESSION_ENABLED !== 'false',
 					cookieName: process.env.MCP_WS_SESSION_COOKIE_NAME || 'mcp-ws-session-id'
-				}
+				},
+				trustedProxies: process.env.MCP_WS_TRUSTED_PROXIES ? process.env.MCP_WS_TRUSTED_PROXIES.split(',').map(p => p.trim()).filter(p => p.length > 0) : []
 			}
 		}
 	}

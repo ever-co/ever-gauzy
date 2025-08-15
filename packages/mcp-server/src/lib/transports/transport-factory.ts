@@ -160,7 +160,7 @@ export class TransportFactory {
 			server,
 			transportConfig: config.mcp.transport.websocket || {
 				port: 3002,
-				host: '127.0.0.1',
+				host: 'localhost',
 				compression: true,
 				maxPayload: 16777216,
 				session: { enabled: true, cookieName: 'mcp-ws-session-id' }
