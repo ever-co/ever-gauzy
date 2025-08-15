@@ -13,7 +13,7 @@
 				[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.EMAIL' | translate"
 				[status]="email.dirty ? (email.invalid ? 'danger' : 'success') : 'basic'"
 				[attr.aria-invalid]="email.invalid && email.touched ? true : null"
-				autofocus
+				[attr.autofocus]="isCodeSent ? true : null"
 				autocomplete="email"
 				[readonly]="isCodeSent"
 				[ngClass]="isCodeSent ? 'not-allowed' : ''"
@@ -87,7 +87,7 @@
 			<!-- Resend Code Button & Text -->
 			<p class="new-code-wrapper">
 				<ng-template [ngIf]="isCodeResent" [ngIfElse]="resendButton">
-					<span class="request-new-code">
+					<span class="request-new-code" role="status" aria-live="polite">
 						{{ 'LOGIN_PAGE.LOGIN_MAGIC.REQUEST_NEW_CODE_TITLE' | translate : { countdown: countdown } }}
 					</span>
 				</ng-template>
@@ -114,7 +114,15 @@
 		</a>
 		<div class="submit-inner-wrapper">
 			<ng-template [ngIf]="isCodeSent" [ngIfElse]="sendCodeButtonTemplate">
-				<button type="submit" nbButton size="tiny" class="submit-btn" [disabled]="form.invalid || isLoading">
+				<button
+					type="submit"
+					nbButton
+					size="tiny"
+					class="submit-btn"
+					[disabled]="form.invalid || isLoading"
+					[attr.aria-busy]="isLoading ? true : null"
+					[attr.aria-disabled]="form.invalid || isLoading ? true : null"
+				>
 					<span class="btn-text">
 						{{ submitButtonText | translate }}
 					</span>
@@ -135,6 +143,8 @@
 					class="submit-btn"
 					[disabled]="email.invalid || isLoading"
 					(click)="onSendCode()"
+					[attr.aria-busy]="isLoading ? true : null"
+					[attr.aria-disabled]="email.invalid || isLoading ? true : null"
 				>
 					<span class="btn-text">
 						{{ sendCodeButtonText | translate }}

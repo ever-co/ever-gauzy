@@ -81,6 +81,8 @@ export class WorkspaceCreateComponent extends BaseWorkspaceAuthComponent {
 		this.isCodeSent = false;
 		this.form.get('email').enable();
 		this.form.get('code').reset();
+		this.isCodeResent = false;
+		this._timerService.stopTimer();
 	}
 
 	/**
@@ -113,8 +115,11 @@ export class WorkspaceCreateComponent extends BaseWorkspaceAuthComponent {
 		// If user has workspaces, show selection
 		if (total_workspaces > 0) {
 			this.showWorkspaceSelection = true;
+			this.showAccountCreation = false;
+			this.showCreationStep = false;
 		} else {
-			// No workspaces, go directly to creation
+			this.showWorkspaceSelection = false;
+			this.showAccountCreation = false;
 			this.showCreationStep = true;
 		}
 	}
