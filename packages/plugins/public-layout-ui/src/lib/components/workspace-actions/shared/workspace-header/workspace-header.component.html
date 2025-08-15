@@ -1,6 +1,15 @@
 <div class="svg-wrapper">
 	<ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
-	<button *ngIf="showCloseButton" nbButton ghost size="small" (click)="onClose()" class="close-button">
+	<button
+		*ngIf="showCloseButton"
+		nbButton
+		ghost
+		size="small"
+		type="button"
+		(click)="onClose()"
+		class="close-button"
+		aria-label="Close"
+	>
 		<nb-icon icon="close-outline"></nb-icon>
 	</button>
 </div>

@@ -1,6 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subscription, interval } from 'rxjs';
-import { tap } from 'rxjs/operators';
 
 /**
  * Interface for timer state
@@ -18,14 +17,14 @@ export interface ITimerState {
 @Injectable({
 	providedIn: 'root'
 })
-export class CountdownTimerService {
+export class CountdownTimerService implements OnDestroy {
 	private readonly _timerState = new BehaviorSubject<ITimerState>({
 		countdown: 0,
 		isActive: false,
 		isResent: false
 	});
 
-	private timer: Subscription;
+	private timer?: Subscription;
 	private readonly DEFAULT_COUNTDOWN = 30;
 
 	/**
@@ -63,12 +62,15 @@ export class CountdownTimerService {
 
 	/**
 	 * Starts a countdown timer with the specified duration.
-	 * 
+	 *
 	 * @param duration The countdown duration in seconds (default: 30)
 	 */
 	startTimer(duration: number = this.DEFAULT_COUNTDOWN): void {
-		// Stop any existing timer
-		this.stopTimer();
+		// Stop any existing interval without resetting state to avoid flicker
+		if (this.timer) {
+			this.timer.unsubscribe();
+			this.timer = undefined;
+		}
 
 		// Update state to show timer is active and code was resent
 		this._timerState.next({
@@ -78,24 +80,17 @@ export class CountdownTimerService {
 		});
 
 		// Start the interval timer
-		this.timer = interval(1000)
-			.pipe(
-				tap(() => {
-					const currentState = this._timerState.value;
-					
-					if (currentState.countdown > 0) {
-						// Decrement countdown
-						this._timerState.next({
-							...currentState,
-							countdown: currentState.countdown - 1
-						});
-					} else {
-						// Timer finished, stop it
-						this.stopTimer();
-					}
-				})
-			)
-			.subscribe();
+		this.timer = interval(1000).subscribe(() => {
+			const currentState = this._timerState.value;
+			if (currentState.countdown > 0) {
+				this._timerState.next({
+					...currentState,
+					countdown: currentState.countdown - 1
+				});
+			} else {
+				this.stopTimer();
+			}
+		});
 	}
 
 	/**
@@ -105,7 +100,7 @@ export class CountdownTimerService {
 		// Unsubscribe from the timer if it exists
 		if (this.timer) {
 			this.timer.unsubscribe();
-			this.timer = null;
+			this.timer = undefined;
 		}
 
 		// Reset timer state

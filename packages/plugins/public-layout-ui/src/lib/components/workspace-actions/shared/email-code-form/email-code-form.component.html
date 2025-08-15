@@ -103,7 +103,13 @@
 
 	<!-- Submit Button -->
 	<div class="submit-btn-wrapper">
-		<a *ngIf="showForgotEmailLink" class="forgot-email caption-2 forgot-email-big" [href]="forgotEmailLink">
+		<a
+			*ngIf="showForgotEmailLink"
+			class="forgot-email caption-2 forgot-email-big"
+			[href]="forgotEmailLink"
+			target="_blank"
+			rel="noopener noreferrer"
+		>
 			{{ 'LOGIN_PAGE.FORGOT_EMAIL_TITLE' | translate }}
 		</a>
 		<div class="submit-inner-wrapper">

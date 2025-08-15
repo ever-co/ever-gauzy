@@ -83,16 +83,22 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 	 * This method is shared across all workspace auth components.
 	 */
 	async sendSigninCode(): Promise<void> {
+		if (this.isLoading) {
+			return;
+		}
 		// Get the email value from the form
-		const email = this.form.get('email').value;
+		const email = (this.form.get('email').value || '').trim();
 		if (!email) {
 			return;
 		}
 		try {
+			this.isLoading = true;
 			await this._workspaceAuthService.sendSigninCode(email);
 			this.isCodeSent = true;
 		} catch {
 			this.isCodeSent = false;
+		} finally {
+			this.isLoading = false;
 		}
 	}
 
@@ -101,21 +107,28 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 	 * This method is shared across all workspace auth components.
 	 */
 	async onResendCode(): Promise<void> {
+		if (this.isLoading) {
+			return;
+		}
+
 		// Start the timer
 		this._timerService.startTimer();
 
 		// Get the email value from the form
-		const email = this.form.get('email').value;
+		const email = (this.form.get('email').value || '').trim();
 
 		// Check if email is present
 		if (!email) {
 			return;
 		}
 		try {
+			this.isLoading = true;
 			await this._workspaceAuthService.sendSigninCode(email);
 			this.isCodeResent = true;
 		} catch {
 			this.isCodeResent = false;
+		} finally {
+			this.isLoading = false;
 		}
 	}
 
@@ -130,7 +143,9 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 		}
 
 		// Get the email and code values from the form
-		const { email, code } = this.form.getRawValue();
+		const raw = this.form.getRawValue();
+		const email = (raw.email || '').trim();
+		const code = (raw.code || '').trim();
 
 		// Check if both email and code are present
 		if (!email || !code) {
@@ -146,7 +161,7 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 
 			// Store workspace data
 			this.workspaces = response.workspaces || [];
-			this.totalWorkspaces = this.workspaces.length;
+			this.totalWorkspaces = response?.total_workspaces ?? this.workspaces.length;
 
 			// Call the abstract method to handle component-specific logic
 			this.handleConfirmationResponse(response);
@@ -199,8 +214,8 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 	 * Updates the store with workspace authentication data.
 	 * This method is shared across all workspace auth components.
 	 */
-	protected updateStoreWithWorkspaceData(response: IAuthResponse): void {
-		this._workspaceAuthService.updateStoreWithWorkspaceData(response);
+	protected async updateStoreWithWorkspaceData(response: IAuthResponse): Promise<void> {
+		await this._workspaceAuthService.updateStoreWithWorkspaceData(response);
 	}
 
 	/**
@@ -215,5 +230,5 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 	 * Track by function for workspace lists.
 	 * This method is shared across all workspace auth components.
 	 */
-	trackByWorkspaceId = (_: number, w: any) => w?.user?.tenant?.id || w?.user?.id || w?.id;
+	trackByWorkspaceId = (_: number, w: IWorkspaceResponse) => w?.user?.tenant?.id || w?.user?.id || w?.id;
 }

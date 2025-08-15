@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { EMPTY, firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, of, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { UntilDestroy } from '@ngneat/until-destroy';
 import { IAuthResponse, IOrganizationCreateInput, IUserSigninWorkspaceResponse, IWorkSpace } from '@gauzy/contracts';
 import {
 	AuthService,
@@ -90,9 +90,8 @@ export class WorkspaceAuthService {
 				.pipe(
 					catchError((error) => {
 						this._errorHandlingService.handleError(error);
-						return EMPTY;
-					}),
-					untilDestroyed(this)
+						return throwError(() => error);
+					})
 				)
 		);
 
@@ -110,9 +109,8 @@ export class WorkspaceAuthService {
 				.pipe(
 					catchError((error) => {
 						this._errorHandlingService.handleError(error);
-						return EMPTY;
-					}),
-					untilDestroyed(this)
+						return throwError(() => error);
+					})
 				)
 		);
 
@@ -184,8 +182,7 @@ export class WorkspaceAuthService {
 				catchError(() => {
 					this._store.setWorkspacesLoading(false, 'Failed to load workspaces');
 					return of({ workspaces: [], total_workspaces: 0 } as IUserSigninWorkspaceResponse);
-				}),
-				untilDestroyed(this)
+				})
 			)
 		);
 	}
@@ -227,9 +224,8 @@ export class WorkspaceAuthService {
 			this._authService.signinWorkspaceByToken({ email, token }).pipe(
 				catchError((error) => {
 					this._errorHandlingService.handleError(error);
-					throw error; // Re-throw the error instead of returning EMPTY
-				}),
-				untilDestroyed(this)
+					return throwError(() => error);
+				})
 			)
 		);
 
@@ -254,9 +250,8 @@ export class WorkspaceAuthService {
 			this._authService.sendSigninCode({ email }).pipe(
 				catchError((error) => {
 					this._errorHandlingService.handleError(error);
-					return EMPTY;
-				}),
-				untilDestroyed(this)
+					return throwError(() => error);
+				})
 			)
 		);
 	}
@@ -274,9 +269,8 @@ export class WorkspaceAuthService {
 			this._authService.confirmSignInByCode({ email, code }).pipe(
 				catchError((error) => {
 					this._errorHandlingService.handleError(error);
-					return EMPTY;
-				}),
-				untilDestroyed(this)
+					return throwError(() => error);
+				})
 			)
 		);
 	}

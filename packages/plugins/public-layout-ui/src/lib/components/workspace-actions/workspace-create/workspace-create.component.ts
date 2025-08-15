@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,7 +11,8 @@ import { BaseWorkspaceAuthComponent, WorkspaceAuthService, CountdownTimerService
 	selector: 'ga-workspace-create',
 	templateUrl: './workspace-create.component.html',
 	styleUrls: ['./workspace-create.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkspaceCreateComponent extends BaseWorkspaceAuthComponent implements OnInit {
 	// Creation step state

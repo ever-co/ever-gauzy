@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, AbstractControl } from '@angular/forms';
 
 /**
@@ -9,10 +9,11 @@ import { UntypedFormGroup, AbstractControl } from '@angular/forms';
 	selector: 'ga-email-code-form',
 	templateUrl: './email-code-form.component.html',
 	styleUrls: ['./email-code-form.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmailCodeFormComponent implements OnInit {
-	@Input() form: UntypedFormGroup;
+	@Input({ required: true }) form!: UntypedFormGroup;
 	@Input() isLoading: boolean = false;
 	@Input() isCodeSent: boolean = false;
 	@Input() isCodeResent: boolean = false;
@@ -26,10 +27,10 @@ export class EmailCodeFormComponent implements OnInit {
 	@Input() successSentCodeTitle: string = 'LOGIN_PAGE.LOGIN_MAGIC.SUCCESS_SENT_CODE_TITLE';
 	@Input() successSentCodeSubTitle: string = 'LOGIN_PAGE.LOGIN_MAGIC.SUCCESS_SENT_CODE_SUB_TITLE';
 
-	@Output() sendCode = new EventEmitter<void>();
-	@Output() resendCode = new EventEmitter<void>();
-	@Output() submitForm = new EventEmitter<void>();
-	@Output() editEmail = new EventEmitter<void>();
+	@Output() readonly sendCode = new EventEmitter<void>();
+	@Output() readonly resendCode = new EventEmitter<void>();
+	@Output() readonly submitForm = new EventEmitter<void>();
+	@Output() readonly editEmail = new EventEmitter<void>();
 
 	ngOnInit(): void {
 		if (!this.form) {
@@ -40,14 +41,14 @@ export class EmailCodeFormComponent implements OnInit {
 	/**
 	 * Getter for the email form control.
 	 */
-	get email(): AbstractControl {
+	get email(): AbstractControl | null {
 		return this.form.get('email');
 	}
 
 	/**
 	 * Getter for the code form control.
 	 */
-	get code(): AbstractControl {
+	get code(): AbstractControl | null {
 		return this.form.get('code');
 	}
 

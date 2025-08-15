@@ -44,6 +44,6 @@ const routes: Routes = [
 		ThemeModule,
 		WorkspaceSharedModule
 	],
-	providers: [TenantService, CountdownTimerService, WorkspaceAuthService]
+	providers: [TenantService]
 })
 export class WorkspaceFindModule {}

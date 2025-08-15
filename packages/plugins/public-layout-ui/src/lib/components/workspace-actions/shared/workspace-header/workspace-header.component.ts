@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 
 /**
  * Shared header component for workspace action pages.
@@ -8,7 +8,8 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 	selector: 'ga-workspace-header',
 	templateUrl: './workspace-header.component.html',
 	styleUrls: ['./workspace-header.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkspaceHeaderComponent {
 	@Input() title: string;

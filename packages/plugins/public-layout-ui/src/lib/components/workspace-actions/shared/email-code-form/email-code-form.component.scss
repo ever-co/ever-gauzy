@@ -77,10 +77,6 @@
   .resend-code {
     margin-bottom: 0.4rem;
     cursor: pointer;
-
-    &:hover {
-      cursor: pointer;
-    }
   }
 
   .request-new-code {
@@ -160,5 +156,10 @@
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .submit-btn .btn-icon.spinner {
+    animation: none !important;
   }
 }
