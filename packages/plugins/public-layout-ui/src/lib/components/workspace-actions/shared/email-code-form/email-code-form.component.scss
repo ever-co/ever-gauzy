@@ -1,0 +1,165 @@
+@use 'themes' as *;
+@use '@shared/reusable' as *;
+
+.form-control-group {
+  margin-bottom: 16px;
+
+  .label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: nb-theme(text-basic-color);
+  }
+
+  nb-form-field {
+    width: 100%;
+  }
+
+  input {
+    &.not-allowed {
+      cursor: not-allowed;
+      background-color: nb-theme(background-basic-color-2);
+    }
+  }
+
+  .edit-email {
+    cursor: pointer;
+    color: nb-theme(text-hint-color);
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: nb-theme(text-basic-color);
+    }
+  }
+
+  .caption {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+
+    &.status-danger {
+      color: nb-theme(status-danger);
+    }
+  }
+}
+
+.sent-code-container {
+  margin-bottom: 1rem;
+  margin-right: -20px;
+
+  p {
+    margin-bottom: 0;
+
+    &.normal-text {
+      font-size: 0.8rem;
+    }
+
+    &.minimum-text {
+      font-size: 0.75rem;
+    }
+
+    b {
+      font-size: 0.8rem;
+    }
+
+    span {
+      font-size: 0.7rem;
+      color: nb-theme(text-hint-color);
+    }
+  }
+}
+
+.new-code-wrapper {
+  font-size: 0.75rem;
+  text-align: right;
+  margin-top: 0.4rem;
+  margin-right: 0.4rem;
+
+  .resend-code {
+    margin-bottom: 0.4rem;
+    cursor: pointer;
+  }
+
+  .request-new-code {
+    color: nb-theme(text-hint-color);
+  }
+}
+
+.submit-btn-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .forgot-email {
+    text-decoration-line: underline;
+    margin-bottom: 0;
+    font-family: Inter;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 17px;
+    letter-spacing: -0.01em;
+    text-align: left;
+
+    &:hover {
+      color: $button-color;
+    }
+
+    &.forgot-email-big {
+      display: block;
+    }
+  }
+
+  .submit-inner-wrapper {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .submit-btn {
+    @include submit-btn;
+    padding: 13px 59px;
+    position: relative;
+
+    .btn-text {
+      display: inline-block;
+    }
+
+    .btn-icon {
+      margin-left: 0.5rem;
+
+      &.spinner {
+        animation: spin 1s linear infinite;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.magic-description {
+  p {
+    text-align: left;
+    font-size: 0.85rem;
+
+    a {
+      color: nb-theme(link-text-color);
+    }
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .submit-btn .btn-icon.spinner {
+    animation: none !important;
+  }
+}

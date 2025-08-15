@@ -5019,6 +5019,7 @@
 			"PASSWORD": "Password"
 		},
 		"SIGN_IN_TITLE": "Sign in to Workspace",
+		"SIGN_IN_SUBTITLE": "Enter your email to sign in to your workspace",
 		"BACK_TO": "Back to ",
 		"SUCCESS_SIGNIN_TITLE": "Congrats! you’ve successfully signed in to your workspace.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Please be patient while we are preparing the workspace...",
@@ -5027,12 +5028,40 @@
 		"THANKING_TEXT": "Thank you for choosing us.",
 		"UNKNOWN_WORKSPACE": "Don't know your workspace?",
 		"FIND_WORKSPACE": "Find your workspaces",
+		"CREATE": {
+			"TITLE": "Create New Workspace",
+			"SUBTITLE": "Enter your email to get started",
+			"SUCCESS_SENT_CODE_TITLE": "We've sent a verification code to",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Please check your email and enter the code below",
+			"CREATE_NEW_WORKSPACE": "Create New Workspace"
+		},
+		"FIND": {
+			"TITLE": "Find Your Workspace",
+			"SUBTITLE": "Enter your email to find your workspaces",
+			"DESCRIPTION_TITLE": "We'll send you a magic code to verify your identity",
+			"RESULTS_STEP": {
+				"DESCRIPTION": "Your email is associated with {{count}} workspace(s)"
+			}
+		},
 		"SELECTION": {
 			"WELCOME_BACK": "Welcome Back!",
 			"YOU_LOOK_NICE_TODAY": "You look nice today!",
 			"EMAIL_MULTIPLE_WORKSPACE": "The email associated with multiple workspaces, please select one to continue",
 			"SELECT_WORKSPACE_FOR": "Select Workspace for",
 			"OPEN": "Open"
+		}
+	},
+	"WORKSPACE_CREATE": {
+		"ACCOUNT_CREATION": {
+			"TITLE": "Create Your Account",
+			"SUBTITLE": "Complete your profile to create a new workspace"
+		},
+		"WORKSPACE_SETUP": {
+			"TITLE": "Setup your workspace",
+			"SUBTITLE": "Create your organization and get started"
+		},
+		"BUTTONS": {
+			"CONTINUE_TO_WORKSPACE_SETUP": "Continue to Workspace Setup"
 		}
 	},
 	"NO_IMAGE": {

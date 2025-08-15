@@ -4866,6 +4866,22 @@
 			"PASSWORD": "Hasło"
 		},
 		"SIGN_IN_TITLE": "Zaloguj się do Przestrzeni Roboczej",
+		"SIGN_IN_SUBTITLE": "Wprowadź swój email, aby zalogować się do przestrzeni roboczej",
+		"CREATE": {
+			"TITLE": "Utwórz nową przestrzeń roboczą",
+			"SUBTITLE": "Wprowadź swój email, aby rozpocząć",
+			"SUCCESS_SENT_CODE_TITLE": "Wysłaliśmy kod weryfikacyjny na",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Sprawdź swoją pocztę i wprowadź kod poniżej",
+			"CREATE_NEW_WORKSPACE": "Utwórz nową przestrzeń roboczą"
+		},
+		"FIND": {
+			"TITLE": "Znajdź swoją przestrzeń roboczą",
+			"SUBTITLE": "Wprowadź swój email, aby znaleźć swoje przestrzenie robocze",
+			"DESCRIPTION_TITLE": "Wyślemy Ci magiczny kod do weryfikacji tożsamości",
+			"RESULTS_STEP": {
+				"DESCRIPTION": "Twój email jest powiązany z {{count}} przestrzenią/ami roboczą/ymi"
+			}
+		},
 		"BACK_TO": "Powrót do",
 		"SUCCESS_SIGNIN_TITLE": "Gratulacje! Pomyślnie zalogowałeś się do swojej przestrzeni roboczej.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Proszę o cierpliwość podczas przygotowywania przestrzeni roboczej...",
@@ -4880,6 +4896,19 @@
 			"EMAIL_MULTIPLE_WORKSPACE": "E-mail jest powiązany z wieloma przestrzeniami roboczymi, wybierz jedną, aby kontynuować",
 			"SELECT_WORKSPACE_FOR": "Wybierz przestrzeń roboczą dla",
 			"OPEN": "Otwórz"
+		}
+	},
+	"WORKSPACE_CREATE": {
+		"ACCOUNT_CREATION": {
+			"TITLE": "Utwórz swoje konto",
+			"SUBTITLE": "Uzupełnij swój profil, aby utworzyć nową przestrzeń roboczą"
+		},
+		"WORKSPACE_SETUP": {
+			"TITLE": "Skonfiguruj swoją przestrzeń roboczą",
+			"SUBTITLE": "Utwórz swoją organizację i zacznij"
+		},
+		"BUTTONS": {
+			"CONTINUE_TO_WORKSPACE_SETUP": "Przejdź do konfiguracji przestrzeni roboczej"
 		}
 	},
 	"NO_IMAGE": {

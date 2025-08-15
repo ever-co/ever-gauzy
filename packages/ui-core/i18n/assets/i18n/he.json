@@ -4856,6 +4856,22 @@
 			"PASSWORD": "סיסמה"
 		},
 		"SIGN_IN_TITLE": "התחבר למרחב העבודה",
+		"SIGN_IN_SUBTITLE": "הזן את האימייל שלך כדי להתחבר למרחב העבודה",
+		"CREATE": {
+			"TITLE": "צור מרחב עבודה חדש",
+			"SUBTITLE": "הזן את האימייל שלך כדי להתחיל",
+			"SUCCESS_SENT_CODE_TITLE": "שלחנו קוד אימות אל",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "בדוק את האימייל שלך והזן את הקוד למטה",
+			"CREATE_NEW_WORKSPACE": "צור מרחב עבודה חדש"
+		},
+		"FIND": {
+			"TITLE": "מצא את מרחב העבודה שלך",
+			"SUBTITLE": "הזן את האימייל שלך כדי למצוא את מרחבי העבודה שלך",
+			"DESCRIPTION_TITLE": "נשלח לך קוד קסם כדי לאמת את זהותך",
+			"RESULTS_STEP": {
+				"DESCRIPTION": "האימייל שלך קשור ל-{{count}} מרחב/י עבודה"
+			}
+		},
 		"BACK_TO": "חזרה אל",
 		"SUCCESS_SIGNIN_TITLE": ".מזל טוב! נכנסת למערכת בהצלחה",
 		"SUCCESS_SIGNIN_SUB_TITLE": "...אנא התאזרי בסבלנות בזמן שאנו מכינים את המערכת",
@@ -4870,6 +4886,19 @@
 			"EMAIL_MULTIPLE_WORKSPACE": "האימייל מקושר למספר סביבת עבודה, אנא בחר אחת להמשך",
 			"SELECT_WORKSPACE_FOR": "בחר סביבת עבודה עבור",
 			"OPEN": "פתח"
+		}
+	},
+	"WORKSPACE_CREATE": {
+		"ACCOUNT_CREATION": {
+			"TITLE": "צור את החשבון שלך",
+			"SUBTITLE": "השלם את הפרופיל שלך כדי ליצור מרחב עבודה חדש"
+		},
+		"WORKSPACE_SETUP": {
+			"TITLE": "הגדר את מרחב העבודה שלך",
+			"SUBTITLE": "צור את הארגון שלך והתחל"
+		},
+		"BUTTONS": {
+			"CONTINUE_TO_WORKSPACE_SETUP": "המשך להגדרת מרחב העבודה"
 		}
 	},
 	"NO_IMAGE": {

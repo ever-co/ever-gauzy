@@ -1,0 +1,54 @@
+@use 'themes' as *;
+@use '@shared/reusable' as *;
+@use '../shared/workspace-common.scss';
+
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  position: relative;
+}
+.creation-content {
+  width: 100%;
+  max-width: none;
+
+  .form {
+    margin-top: 21px;
+    margin-bottom: 42px;
+
+    .form-group {
+      margin-bottom: 16px;
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: nb-theme(text-basic-color);
+      }
+
+      .error-message {
+        margin-top: 0.25rem;
+        font-size: 0.75rem;
+        color: nb-theme(status-danger);
+      }
+    }
+
+    .submit-btn-wrapper {
+      text-align: end;
+
+      @include mobile-screen {
+        text-align: center;
+      }
+
+      .submit-btn {
+        @include submit-btn;
+        padding: 13px 65px;
+      }
+    }
+  }
+}
+
+.workspace-creation-container {
+  min-width: 60%;
+}

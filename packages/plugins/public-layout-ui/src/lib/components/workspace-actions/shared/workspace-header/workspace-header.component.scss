@@ -1,0 +1,60 @@
+.svg-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+
+  .ever-logo-svg {
+    height: 40px;
+    width: auto;
+  }
+
+  .close-button {
+    border: none;
+    background: transparent;
+    color: var(--text-hint-color);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: var(--background-basic-color-2);
+      color: var(--text-basic-color);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--text-basic-color);
+      outline-offset: 2px;
+      background-color: var(--background-basic-color-2);
+      color: var(--text-basic-color);
+    }
+
+    nb-icon {
+      font-size: 1.25rem;
+    }
+  }
+}
+
+.headings {
+  margin-bottom: 1.5rem;
+
+  .headings-inner {
+    text-align: center;
+
+    .title {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--text-basic-color);
+      line-height: 1.2;
+    }
+
+    .sub-title {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--text-hint-color);
+      line-height: 1.4;
+    }
+  }
+}

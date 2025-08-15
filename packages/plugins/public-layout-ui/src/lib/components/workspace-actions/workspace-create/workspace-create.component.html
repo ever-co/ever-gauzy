@@ -1,0 +1,175 @@
+<section class="login-container" *ngIf="!showCreationStep">
+	<div class="login-wrapper">
+		<!-- Step 1: Email and Code Input -->
+		<ng-container *ngIf="!showWorkspaceSelection && !showCreationStep && !showAccountCreation">
+			<ga-workspace-header
+				title="WORKSPACES.CREATE.TITLE"
+				subtitle="WORKSPACES.CREATE.SUBTITLE"
+				(close)="closeWindow()"
+			></ga-workspace-header>
+
+			<ga-email-code-form
+				[form]="form"
+				[isLoading]="isLoading"
+				[isCodeSent]="isCodeSent"
+				[isCodeResent]="isCodeResent"
+				[countdown]="countdown"
+				[showForgotEmailLink]="false"
+				successSentCodeTitle="WORKSPACES.CREATE.SUCCESS_SENT_CODE_TITLE"
+				successSentCodeSubTitle="WORKSPACES.CREATE.SUCCESS_SENT_CODE_SUB_TITLE"
+				(sendCode)="sendSigninCode()"
+				(resendCode)="onResendCode()"
+				(submitForm)="confirmSignInCode()"
+				(editEmail)="onEditEmail()"
+			></ga-email-code-form>
+		</ng-container>
+
+		<!-- Step 2: Workspace Selection -->
+		<ng-container *ngIf="showWorkspaceSelection">
+			<ga-workspace-header (close)="closeWindow()"></ga-workspace-header>
+
+			<ga-workspace-selection
+				[workspaces]="workspaces"
+				[confirmedEmail]="confirmedEmail"
+				[totalWorkspaces]="totalWorkspaces"
+				[showCreateButton]="true"
+				(workspaceSelected)="signInWorkspace($event)"
+				(createWorkspace)="continueToCreation()"
+			></ga-workspace-selection>
+		</ng-container>
+
+		<!-- Step 3: Account Creation -->
+		<ng-container *ngIf="showAccountCreation">
+			<ga-workspace-header
+				title="WORKSPACE_CREATE.ACCOUNT_CREATION.TITLE"
+				subtitle="WORKSPACE_CREATE.ACCOUNT_CREATION.SUBTITLE"
+				(close)="closeWindow()"
+			></ga-workspace-header>
+
+			<div class="creation-content">
+				<form [formGroup]="accountForm" (ngSubmit)="continueToWorkspaceCreation()">
+					<!-- Full Name -->
+					<div class="form-group">
+						<label for="fullName">{{ 'REGISTER_PAGE.PLACEHOLDERS.FULL_NAME' | translate }}</label>
+						<input
+							id="fullName"
+							type="text"
+							nbInput
+							fullWidth
+							formControlName="fullName"
+							[placeholder]="'REGISTER_PAGE.PLACEHOLDERS.FULL_NAME' | translate"
+							[status]="fullName.dirty ? (fullName.invalid ? 'danger' : 'success') : 'basic'"
+							autocomplete="name"
+							[attr.aria-invalid]="fullName.invalid && fullName.touched ? true : null"
+						/>
+						<div *ngIf="fullName.invalid && fullName.touched" class="error-message">
+							<span *ngIf="fullName.errors?.required">
+								{{ 'REGISTER_PAGE.VALIDATION.FULL_NAME_REQUIRED' | translate }}
+							</span>
+						</div>
+					</div>
+
+					<!-- Password -->
+					<div class="form-group">
+						<label for="password">{{ 'REGISTER_PAGE.LABELS.PASSWORD' | translate }}</label>
+						<nb-form-field>
+							<input
+								id="password"
+								[type]="showPassword ? 'text' : 'password'"
+								nbInput
+								fullWidth
+								formControlName="password"
+								[placeholder]="'REGISTER_PAGE.PLACEHOLDERS.PASSWORD' | translate"
+								[status]="password.dirty ? (password.invalid ? 'danger' : 'success') : 'basic'"
+								autocomplete="new-password"
+							/>
+							<a nbSuffix nbButton size="small" ghost (click)="showPassword = !showPassword">
+								<nb-icon
+									pack="eva"
+									[icon]="showPassword ? 'eye-outline' : 'eye-off-outline'"
+									[attr.aria-label]="showPassword ? 'hide password' : 'show password'"
+								></nb-icon>
+							</a>
+						</nb-form-field>
+						<div *ngIf="password.invalid && password.touched" class="error-message">
+							<span *ngIf="password.errors?.required">
+								{{ 'REGISTER_PAGE.VALIDATION.PASSWORD_REQUIRED' | translate }}
+							</span>
+							<span *ngIf="password.errors?.minlength">
+								{{ 'REGISTER_PAGE.VALIDATION.PASSWORD_MIN_LENGTH' | translate }}
+							</span>
+						</div>
+					</div>
+
+					<!-- Confirm Password -->
+					<div class="form-group">
+						<label for="confirmPassword">{{ 'REGISTER_PAGE.LABELS.CONFIRM_PASSWORD' | translate }}</label>
+						<nb-form-field>
+							<input
+								id="confirmPassword"
+								[type]="showConfirmPassword ? 'text' : 'password'"
+								nbInput
+								fullWidth
+								formControlName="confirmPassword"
+								[placeholder]="'REGISTER_PAGE.PLACEHOLDERS.CONFIRM_PASSWORD' | translate"
+								[status]="confirmPassword.dirty ? (confirmPassword.invalid || accountForm.errors?.['mustMatch'] ? 'danger' : 'success') : 'basic'"
+								autocomplete="confirm-password"
+							/>
+							<a
+								nbSuffix
+								nbButton
+								size="small"
+								ghost
+								(click)="showConfirmPassword = !showConfirmPassword"
+							>
+								<nb-icon
+									pack="eva"
+									[icon]="showConfirmPassword ? 'eye-outline' : 'eye-off-outline'"
+									[attr.aria-label]="showConfirmPassword ? 'hide password' : 'show password'"
+								></nb-icon>
+							</a>
+						</nb-form-field>
+						<div *ngIf="confirmPassword.invalid && confirmPassword.touched" class="error-message">
+							<span *ngIf="confirmPassword.errors?.required">
+								{{ 'REGISTER_PAGE.VALIDATION.CONFIRM_PASSWORD_REQUIRED' | translate }}
+							</span>
+						</div>
+						<div *ngIf="accountForm.errors?.['mustMatch'] && confirmPassword.touched" class="error-message">
+							{{ 'REGISTER_PAGE.VALIDATION.PASSWORDS_NOT_MATCH' | translate }}
+						</div>
+					</div>
+
+					<!-- Submit Button -->
+					<div class="submit-btn-wrapper">
+						<button
+							type="submit"
+							nbButton
+							status="primary"
+							size="medium"
+							class="submit-btn"
+							[disabled]="accountForm.invalid || isLoading"
+						>
+							{{ 'BUTTONS.CONTINUE' | translate }}
+						</button>
+					</div>
+				</form>
+			</div>
+		</ng-container>
+	</div>
+</section>
+
+<section class="workspace-creation-container" *ngIf="showCreationStep">
+	<ga-workspace-header
+		title="WORKSPACE_CREATE.WORKSPACE_SETUP.TITLE"
+		subtitle="WORKSPACE_CREATE.WORKSPACE_SETUP.SUBTITLE"
+		(close)="closeWindow()"
+	></ga-workspace-header>
+
+	<div class="creation-content">
+		<ga-organizations-step-form
+			[loading]="isLoading"
+			[isOnboarding]="true"
+			(createOrganization)="onboardUser($event)"
+		></ga-organizations-step-form>
+	</div>
+</section>
