@@ -16,10 +16,10 @@ import { BaseWorkspaceAuthComponent, WorkspaceAuthService, CountdownTimerService
 })
 export class WorkspaceCreateComponent extends BaseWorkspaceAuthComponent implements OnInit {
 	// Creation step state
-	public showCreationStep: boolean = false;
-	public showAccountCreation: boolean = false;
-	public showPassword: boolean = false;
-	public showConfirmPassword: boolean = false;
+	public showCreationStep = false;
+	public showAccountCreation = false;
+	public showPassword = false;
+	public showConfirmPassword = false;
 
 	/**
 	 * FormGroup instance representing the account creation form (profile + password).
