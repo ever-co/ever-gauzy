@@ -136,10 +136,9 @@ export class WorkspaceCreateComponent extends BaseWorkspaceAuthComponent impleme
 			const { fullName, password, confirmPassword } = this.accountForm.getRawValue();
 
 			// Split fullName into firstName and lastName for the service
-			const nameParts = fullName.trim().split(' ');
-			const firstName = nameParts[0] || '';
-			const lastName = nameParts.slice(1).join(' ') || '';
-
+			const parts = fullName.trim().split(/\s+/);
+			const [firstName = '', ...rest] = parts;
+			const lastName = rest.join(' ');
 			const userRegistrationData = {
 				firstName,
 				lastName,
