@@ -18,19 +18,24 @@ export class InviteRejectHandler implements ICommandHandler<InviteRejectCommand>
 	 * @returns The rejected invite.
 	 */
 	async execute(command: InviteRejectCommand): Promise<IInvite | UpdateResult> {
-		try {
-			const { input } = command;
-			const { email, token, code } = input;
+		const { input } = command;
+		const { email, token, code } = input;
 
+		if (!email) {
+			throw new BadRequestException('Email is required');
+		}
+		if (!token && !code) {
+			throw new BadRequestException('Either token or code must be provided');
+		}
+
+		try {
 			let invite: IInvite;
 
 			// Validate invite by token or code
-			if (typeof input === 'object' && 'email' in input && 'token' in input) {
+			if (token) {
 				invite = await this.inviteService.validateByToken({ email, token });
-			} else if (typeof input === 'object' && 'email' in input && 'code' in input) {
+			} else if (code) {
 				invite = await this.inviteService.validateByCode({ email, code });
-			} else {
-				throw new BadRequestException('Invalid input: must provide either token or code with email');
 			}
 
 			if (!invite) {
