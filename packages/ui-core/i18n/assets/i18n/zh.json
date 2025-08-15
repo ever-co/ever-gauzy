@@ -4899,19 +4899,19 @@
 			"OPEN": "打开"
 		}
 	},
-	"WORKSPACE_CREATE": {
-		"ACCOUNT_CREATION": {
-			"TITLE": "创建您的账户",
-			"SUBTITLE": "完善您的资料以创建新工作区"
-		},
-		"WORKSPACE_SETUP": {
-			"TITLE": "设置您的工作区",
-			"SUBTITLE": "创建您的组织并开始"
-		},
-		"BUTTONS": {
-			"CONTINUE_TO_WORKSPACE_SETUP": "继续工作区设置"
-		}
-	},
+    "WORKSPACE_CREATE": {
+        "ACCOUNT_CREATION": {
+            "TITLE": "创建您的账户",
+            "SUBTITLE": "完善您的资料以创建新工作区"
+        },
+        "WORKSPACE_SETUP": {
+            "TITLE": "设置您的工作区",
+            "SUBTITLE": "创建您的组织并开始使用"
+        },
+        "BUTTONS": {
+            "CONTINUE_TO_WORKSPACE_SETUP": "继续进行工作区设置"
+        }
+    },
 	"NO_IMAGE": {
 		"ADD_DROP": "添加或删除图像",
 		"AVAILABLE": "图像不可用"
