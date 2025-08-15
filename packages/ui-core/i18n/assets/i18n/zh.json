@@ -4877,10 +4877,10 @@
 		},
 		"FIND": {
 			"TITLE": "查找您的工作区",
-			"SUBTITLE": "输入您的邮箱以查找您的工作区",
+			"SUBTITLE": "请输入您的电子邮件地址以查找您的工作区",
 			"DESCRIPTION_TITLE": "我们将发送魔法代码来验证您的身份",
 			"RESULTS_STEP": {
-				"DESCRIPTION": "您的邮箱关联了{{count}}个工作区"
+				"DESCRIPTION": "您的电子邮件地址关联了 {{count}} 个工作区"
 			}
 		},
 		"BACK_TO": "返回",
