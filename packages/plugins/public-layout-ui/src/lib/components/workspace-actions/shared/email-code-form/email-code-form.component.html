@@ -73,7 +73,7 @@
 				autocomplete="one-time-code"
 				inputmode="numeric"
 			/>
-			<ng-container *ngIf="code.invalid && code.touched">
+			<div *ngIf="code.invalid && code.touched" role="alert" aria-live="polite">
 				<p class="caption status-danger" *ngIf="code.errors?.required">
 					{{ 'LOGIN_PAGE.VALIDATION.CODE_REQUIRED' | translate }}
 				</p>
@@ -83,8 +83,7 @@
 							| translate : { requiredLength: code.errors?.minlength?.requiredLength }
 					}}
 				</p>
-			</ng-container>
-
+			</div>
 			<!-- Resend Code Button & Text -->
 			<p class="new-code-wrapper">
 				<ng-template [ngIf]="isCodeResent" [ngIfElse]="resendButton">
