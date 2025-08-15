@@ -8,8 +8,7 @@ import {
 	IPagination,
 	IInvite,
 	InviteActionEnum,
-	ID,
-	IInviteRejectInput
+	ID
 } from '@gauzy/contracts';
 import {
 	Body,
@@ -46,7 +45,13 @@ import {
 	InviteRejectCommand,
 	InviteResendCommand
 } from './commands';
-import { CreateInviteDTO, ResendInviteDTO, ValidateInviteByCodeQueryDTO, ValidateInviteQueryDTO } from './dto';
+import {
+	CreateInviteDTO,
+	RejectInviteDTO,
+	ResendInviteDTO,
+	ValidateInviteByCodeQueryDTO,
+	ValidateInviteQueryDTO
+} from './dto';
 import { FindInviteByEmailCodeQuery, FindInviteByEmailTokenQuery } from './queries';
 
 @ApiTags('Invite')
@@ -219,8 +224,9 @@ export class InviteController {
 	})
 	@Public()
 	@Post('/reject')
-	async rejectInvitation(@Body() entity: IInviteRejectInput) {
-		return await this.commandBus.execute(new InviteRejectCommand(entity));
+	@UseValidationPipe()
+	async rejectInvitation(@Body() input: RejectInviteDTO) {
+		return await this.commandBus.execute(new InviteRejectCommand(input));
 	}
 
 	/**

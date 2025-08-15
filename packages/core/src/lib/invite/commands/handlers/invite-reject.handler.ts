@@ -29,7 +29,10 @@ export class InviteRejectHandler implements ICommandHandler<InviteRejectCommand>
 				invite = await this.inviteService.validateByToken({ email, token });
 			} else if (typeof input === 'object' && 'email' in input && 'code' in input) {
 				invite = await this.inviteService.validateByCode({ email, code });
+			} else {
+				throw new BadRequestException('Invalid input: must provide either token or code with email');
 			}
+
 			if (!invite) {
 				throw new NotFoundException('Invite does not exist');
 			}
