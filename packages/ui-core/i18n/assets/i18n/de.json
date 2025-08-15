@@ -4863,7 +4863,7 @@
 			"PASSWORD": "Passwort"
 		},
 		"SIGN_IN_TITLE": "Anmeldung im Arbeitsbereich",
-		"SIGN_IN_SUBTITLE": "Geben Sie Ihre E-Mail ein, um sich in Ihren Arbeitsbereich anzumelden",
+        "SIGN_IN_SUBTITLE": "Geben Sie Ihre E-Mail-Adresse ein, um sich in Ihren Arbeitsbereich anzumelden",
 		"BACK_TO": "Zurück zu",
 		"SUCCESS_SIGNIN_TITLE": "Herzlichen Glückwunsch! Sie haben sich erfolgreich in Ihren Arbeitsbereich eingeloggt.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Bitte haben Sie Geduld, während wir den Arbeitsbereich vorbereiten...",
