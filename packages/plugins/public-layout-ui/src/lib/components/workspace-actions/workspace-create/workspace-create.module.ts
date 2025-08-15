@@ -16,7 +16,6 @@ import { SharedModule, OrganizationsStepFormModule, PasswordFormFieldModule } fr
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { TenantService, OrganizationsService, UsersService } from '@gauzy/ui-core/core';
 import { WorkspaceCreateComponent } from './workspace-create.component';
-import { WorkspaceAuthService, CountdownTimerService } from '../shared';
 import { WorkspaceSharedModule } from '../shared/workspace-shared.module';
 
 const routes: Routes = [

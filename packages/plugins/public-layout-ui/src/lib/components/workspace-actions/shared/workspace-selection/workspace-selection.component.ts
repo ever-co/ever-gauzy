@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { IWorkspaceResponse } from '@gauzy/contracts';
 
 /**
@@ -9,7 +9,8 @@ import { IWorkspaceResponse } from '@gauzy/contracts';
 	selector: 'ga-workspace-selection',
 	templateUrl: './workspace-selection.component.html',
 	styleUrls: ['./workspace-selection.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkspaceSelectionComponent {
 	@Input() workspaces: IWorkspaceResponse[] = [];
@@ -21,8 +22,8 @@ export class WorkspaceSelectionComponent {
 	@Input() selectWorkspaceText: string = 'WORKSPACES.SELECTION.SELECT_WORKSPACE_FOR';
 	@Input() createButtonText: string = 'WORKSPACES.CREATE.CREATE_NEW_WORKSPACE';
 
-	@Output() workspaceSelected = new EventEmitter<IWorkspaceResponse>();
-	@Output() createWorkspace = new EventEmitter<void>();
+	@Output() readonly workspaceSelected = new EventEmitter<IWorkspaceResponse>();
+	@Output() readonly createWorkspace = new EventEmitter<void>();
 
 	/**
 	 * Handle workspace selection

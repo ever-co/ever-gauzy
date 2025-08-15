@@ -182,22 +182,24 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	/**
 	 * Setup menu click listener
 	 */
-this.nbMenuService
-     .onItemClick()
-     .pipe(
-       // Filter to only events from this component's context menu
-       filter(({ tag }) => tag === 'workspaces-menu'),
-       map(({ item }) => item),
-       untilDestroyed(this)
-     )
-     .subscribe((item: NbMenuItem) => {
-       const action = item.data?.action;
 
-       if (action) {
-         this.openWorkspaceAction(action);
-       }
-     });
+	private _setupMenuClickListener() {
+		this.nbMenuService
+			.onItemClick()
+			.pipe(
+				// Filter to only events from this component's context menu
+				filter(({ tag }) => tag === 'workspaces-menu'),
+				map(({ item }) => item),
+				untilDestroyed(this)
+			)
+			.subscribe((item: NbMenuItem) => {
+				const action = item.data?.action;
 
+				if (action) {
+					this.openWorkspaceAction(action);
+				}
+			});
+	}
 	/**
 	 * Open workspace action in new tab
 	 * @param action The action to perform (create, signin, find)

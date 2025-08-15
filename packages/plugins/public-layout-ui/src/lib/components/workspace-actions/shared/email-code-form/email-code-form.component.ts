@@ -14,15 +14,15 @@ import { UntypedFormGroup, AbstractControl } from '@angular/forms';
 })
 export class EmailCodeFormComponent implements OnInit {
 	@Input({ required: true }) form!: UntypedFormGroup;
-	@Input() isLoading: boolean = false;
-	@Input() isCodeSent: boolean = false;
-	@Input() isCodeResent: boolean = false;
-	@Input() countdown: number = 0;
-	@Input() submitButtonText: string = 'BUTTONS.CONTINUE';
-	@Input() sendCodeButtonText: string = 'BUTTONS.SEND_CODE';
-	@Input() showForgotEmailLink: boolean = false;
-	@Input() forgotEmailLink: string = 'mailto:support@gauzy.co';
-	@Input() showEditEmailButton: boolean = true;
+	@Input() isLoading = false;
+	@Input() isCodeSent = false;
+	@Input() isCodeResent = false;
+	@Input() countdown = 0;
+	@Input() submitButtonText = 'BUTTONS.CONTINUE';
+	@Input() sendCodeButtonText = 'BUTTONS.SEND_CODE';
+	@Input() showForgotEmailLink = false;
+	@Input() forgotEmailLink = 'mailto:support@gauzy.co';
+	@Input() showEditEmailButton = true;
 	@Input() descriptionText: string = 'LOGIN_PAGE.LOGIN_MAGIC.DESCRIPTION_TITLE';
 	@Input() successSentCodeTitle: string = 'LOGIN_PAGE.LOGIN_MAGIC.SUCCESS_SENT_CODE_TITLE';
 	@Input() successSentCodeSubTitle: string = 'LOGIN_PAGE.LOGIN_MAGIC.SUCCESS_SENT_CODE_SUB_TITLE';

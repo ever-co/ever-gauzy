@@ -15,7 +15,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { WorkspaceFindComponent } from './workspace-find.component';
-import { CountdownTimerService, WorkspaceAuthService } from '../shared';
 import { WorkspaceSharedModule } from '../shared/workspace-shared.module';
 import { TenantService } from '@gauzy/ui-core/core';
 

@@ -160,7 +160,7 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 			this.confirmedEmail = email;
 
 			// Store workspace data
-			this.workspaces = response.workspaces || [];
+			this.workspaces = response?.workspaces || [];
 			this.totalWorkspaces = response?.total_workspaces ?? this.workspaces.length;
 
 			// Call the abstract method to handle component-specific logic

@@ -43,7 +43,7 @@ export class WorkspaceAuthService {
 				}
 			}
 		} catch (error) {
-			console.error('Error while retrieving refresh token', error);
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
@@ -243,9 +243,9 @@ export class WorkspaceAuthService {
 	 * Centralizes the code sending logic that was duplicated across components.
 	 *
 	 * @param email The email to send the code to
-	 * @returns Promise<any>
+	 * @returns Promise<unknown>
 	 */
-	async sendSigninCode(email: string): Promise<any> {
+	async sendSigninCode(email: string): Promise<unknown> {
 		return firstValueFrom(
 			this._authService.sendSigninCode({ email }).pipe(
 				catchError((error) => {
