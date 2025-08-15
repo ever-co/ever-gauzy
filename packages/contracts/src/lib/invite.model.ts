@@ -66,6 +66,8 @@ export interface IInviteAcceptInput extends IUserRegistrationInput {
 	originalUrl?: string;
 }
 
+export interface IInviteRejectInput extends Pick<IInviteAcceptInput, 'email' | 'token' | 'code'> {}
+
 export interface IInviteResendInput extends IBasePerTenantAndOrganizationEntityModel {
 	inviteId: ID;
 	inviteType: InvitationTypeEnum;
@@ -168,5 +170,5 @@ export interface ICreateInviteSeedParams extends IBasePerTenantAndOrganizationEn
 }
 
 export interface IInviteQueryParamMap {
-  [key: string]: keyof IInvite;
+	[key: string]: keyof IInvite;
 }
