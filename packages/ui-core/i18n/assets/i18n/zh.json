@@ -4870,8 +4870,8 @@
 		"SIGN_IN_SUBTITLE": "输入您的邮箱以登录您的工作区",
 		"CREATE": {
 			"TITLE": "创建新工作区",
-			"SUBTITLE": "输入您的邮箱开始",
-			"SUCCESS_SENT_CODE_TITLE": "我们已发送验证码至",
+			"SUBTITLE": "请输入您的电子邮件地址以开始",
+			"SUCCESS_SENT_CODE_TITLE": "我们已将验证码发送至",
 			"SUCCESS_SENT_CODE_SUB_TITLE": "请检查您的邮箱并在下方输入验证码",
 			"CREATE_NEW_WORKSPACE": "创建新工作区"
 		},
