@@ -14,7 +14,7 @@ import { BaseWorkspaceAuthComponent, WorkspaceAuthService, CountdownTimerService
 	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WorkspaceCreateComponent extends BaseWorkspaceAuthComponent implements OnInit {
+export class WorkspaceCreateComponent extends BaseWorkspaceAuthComponent {
 	// Creation step state
 	public showCreationStep = false;
 	public showAccountCreation = false;
@@ -45,21 +45,21 @@ export class WorkspaceCreateComponent extends BaseWorkspaceAuthComponent impleme
 	 * Getter for the fullName form control.
 	 */
 	get fullName(): AbstractControl {
-		return this.accountForm.get('fullName');
+		return this.accountForm.controls['fullName'];
 	}
 
 	/**
 	 * Getter for the password form control.
 	 */
 	get password(): AbstractControl {
-		return this.accountForm.get('password');
+		return this.accountForm.controls['password'];
 	}
 
 	/**
 	 * Getter for the confirmPassword form control.
 	 */
 	get confirmPassword(): AbstractControl {
-		return this.accountForm.get('confirmPassword');
+		return this.accountForm.controls['confirmPassword'];
 	}
 
 	constructor(
@@ -72,14 +72,6 @@ export class WorkspaceCreateComponent extends BaseWorkspaceAuthComponent impleme
 		protected readonly _timerService: CountdownTimerService
 	) {
 		super(translateService, _fb, cdr, _errorHandlingService, _store, _workspaceAuthService, _timerService);
-	}
-
-	ngOnInit(): void {
-		// Subscribe to timer state for UI updates
-		this._timerService.timerState$.pipe(untilDestroyed(this)).subscribe((state) => {
-			this.countdown = state.countdown;
-			this.isCodeResent = state.isResent;
-		});
 	}
 
 	/**
@@ -134,6 +126,11 @@ export class WorkspaceCreateComponent extends BaseWorkspaceAuthComponent impleme
 		this.isLoading = true;
 
 		try {
+			// Ensure account form is valid before using its values
+			if (this.accountForm.invalid) {
+				this.accountForm.markAllAsTouched();
+				return;
+			}
 			// Get user registration data from account form
 			const { fullName, password, confirmPassword } = this.accountForm.getRawValue();
 

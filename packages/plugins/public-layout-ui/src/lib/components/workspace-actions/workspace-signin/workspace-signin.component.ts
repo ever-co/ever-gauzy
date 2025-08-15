@@ -1,6 +1,6 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IUserSigninWorkspaceResponse } from '@gauzy/contracts';
 import { ErrorHandlingService, Store } from '@gauzy/ui-core/core';
@@ -11,9 +11,10 @@ import { BaseWorkspaceAuthComponent, CountdownTimerService, WorkspaceAuthService
 	selector: 'ga-workspace-signin',
 	templateUrl: './workspace-signin.component.html',
 	styleUrls: ['./workspace-signin.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WorkspaceSigninComponent extends BaseWorkspaceAuthComponent implements OnInit {
+export class WorkspaceSigninComponent extends BaseWorkspaceAuthComponent {
 	constructor(
 		public readonly translateService: TranslateService,
 		protected readonly _fb: UntypedFormBuilder,
@@ -24,14 +25,6 @@ export class WorkspaceSigninComponent extends BaseWorkspaceAuthComponent impleme
 		protected readonly _timerService: CountdownTimerService
 	) {
 		super(translateService, _fb, cdr, _errorHandlingService, _store, _workspaceAuthService, _timerService);
-	}
-
-	ngOnInit(): void {
-		// Subscribe to timer state for UI updates
-		this._timerService.timerState$.pipe(untilDestroyed(this)).subscribe((state) => {
-			this.countdown = state.countdown;
-			this.isCodeResent = state.isResent;
-		});
 	}
 
 	/**

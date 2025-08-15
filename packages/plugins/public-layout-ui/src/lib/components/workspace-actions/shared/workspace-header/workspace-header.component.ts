@@ -16,7 +16,7 @@ export class WorkspaceHeaderComponent {
 	@Input() subtitle: string;
 	@Input() showCloseButton = true;
 
-	@Output() close = new EventEmitter<void>();
+	@Output() readonly close = new EventEmitter<void>();
 
 	/**
 	 * Handle close button click

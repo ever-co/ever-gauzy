@@ -46,8 +46,8 @@
 		<div class="sent-code-container">
 			<p
 				[ngClass]="{
-					'normal-text': email?.value.length < 30,
-					'minimum-text': email?.value.length >= 30
+					'normal-text': (email?.value?.length || 0) < 30,
+					'minimum-text': (email?.value?.length || 0) >= 30
 				}"
 			>
 				{{ successSentCodeTitle | translate }}

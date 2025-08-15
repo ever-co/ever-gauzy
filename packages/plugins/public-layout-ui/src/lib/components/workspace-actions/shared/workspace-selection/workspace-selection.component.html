@@ -18,13 +18,24 @@
 			<div
 				*ngFor="let workspace of workspaces; trackBy: trackByWorkspaceId"
 				class="workspace-item"
+				role="button"
+				tabindex="0"
 				(click)="onWorkspaceSelect(workspace)"
+				(keydown.enter)="onWorkspaceSelect(workspace)"
+				(keydown.space)="onWorkspaceSelect(workspace); $event.preventDefault()"
 				[attr.aria-label]="'Open workspace ' + (workspace.user?.tenant?.name || '')"
 			>
 				<div class="workspace-image">
 					<img
 						[src]="workspace.user?.tenant?.logo || '/assets/images/logos/logo_Gauzy.png'"
-						alt="Workspace Logo"
+						[attr.alt]="
+							workspace.user?.tenant?.name
+								? ('workspaces.workspaceLogoAlt' | translate : { name: workspace.user?.tenant?.name })
+								: ''
+						"
+						loading="lazy"
+						decoding="async"
+						(error)="setDefaultLogo($event)"
 					/>
 				</div>
 				<div class="workspace-info">

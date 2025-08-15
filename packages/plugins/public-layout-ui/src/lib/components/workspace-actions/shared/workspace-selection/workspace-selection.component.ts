@@ -39,8 +39,14 @@ export class WorkspaceSelectionComponent {
 		this.createWorkspace.emit();
 	}
 
+	setDefaultLogo(event: Event) {
+		const el = event.target as HTMLImageElement;
+		if (el && el.src !== '/assets/images/logos/logo_Gauzy.png') {
+			el.src = '/assets/images/logos/logo_Gauzy.png';
+		}
+	}
 	/**
 	 * Track by function for workspace lists
 	 */
-	trackByWorkspaceId = (_: number, w: IWorkspaceResponse) => w?.user?.tenant?.id || w?.user?.id || w?.id;
+	trackByWorkspaceId = (_: number, w: IWorkspaceResponse) => w?.user?.tenant?.id || w?.user?.id;
 }

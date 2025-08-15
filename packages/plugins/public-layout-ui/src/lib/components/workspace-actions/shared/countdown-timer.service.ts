@@ -66,6 +66,10 @@ export class CountdownTimerService implements OnDestroy {
 	 * @param duration The countdown duration in seconds (default: 30)
 	 */
 	startTimer(duration: number = this.DEFAULT_COUNTDOWN): void {
+		if (duration <= 0) {
+			this.stopTimer();
+			return;
+		}
 		// Stop any existing interval without resetting state to avoid flicker
 		if (this.timer) {
 			this.timer.unsubscribe();

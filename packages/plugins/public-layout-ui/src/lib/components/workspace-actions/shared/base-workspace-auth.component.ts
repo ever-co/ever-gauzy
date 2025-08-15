@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Directive, OnDestroy } from '@angular/core';
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { UntilDestroy } from '@ngneat/until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IAuthResponse, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
 import { ErrorHandlingService, Store } from '@gauzy/ui-core/core';
@@ -18,7 +18,7 @@ import { CountdownTimerService } from './countdown-timer.service';
 @Directive()
 export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponent implements OnDestroy {
 	// Timer properties
-	public countdown: number;
+	public countdown = 0;
 
 	// Loading and state properties
 	public isLoading = false;
@@ -28,7 +28,7 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 	// Workspace selection state
 	public workspaces: IWorkspaceResponse[] = [];
 	public showWorkspaceSelection = false;
-	public confirmedEmail: string;
+	public confirmedEmail: string | null = null;
 	public totalWorkspaces = 0;
 
 	/**
@@ -50,14 +50,14 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 	/**
 	 * Getter for the email form control.
 	 */
-	get email(): AbstractControl {
+	get email(): AbstractControl | null {
 		return this.form.get('email');
 	}
 
 	/**
 	 * Getter for the code form control.
 	 */
-	get code(): AbstractControl {
+	get code(): AbstractControl | null {
 		return this.form.get('code');
 	}
 
@@ -72,6 +72,11 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 	) {
 		super(translateService);
 		this.form = BaseWorkspaceAuthComponent.buildEmailCodeForm(this._fb);
+		this._timerService.timerState$.pipe(untilDestroyed(this)).subscribe((state) => {
+			this.countdown = state.countdown;
+			this.isCodeResent = state.isResent;
+			this.cdr.markForCheck();
+		});
 	}
 
 	ngOnDestroy(): void {
@@ -230,5 +235,5 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 	 * Track by function for workspace lists.
 	 * This method is shared across all workspace auth components.
 	 */
-	trackByWorkspaceId = (_: number, w: IWorkspaceResponse) => w?.user?.tenant?.id || w?.user?.id || w?.id;
+	trackByWorkspaceId = (_: number, w: IWorkspaceResponse) => w?.user?.tenant?.id || w?.user?.id;
 }
