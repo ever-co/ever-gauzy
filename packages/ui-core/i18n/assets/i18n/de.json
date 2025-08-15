@@ -4872,13 +4872,13 @@
 		"THANKING_TEXT": "Vielen Dank, dass Sie uns gewählt haben.",
 		"UNKNOWN_WORKSPACE": "Kennen Sie Ihren Arbeitsbereich nicht?",
 		"FIND_WORKSPACE": "Finden Sie Ihren Arbeitsbereich",
-		"CREATE": {
-			"TITLE": "Neuen Arbeitsbereich erstellen",
-			"SUBTITLE": "Geben Sie Ihre E-Mail ein, um zu beginnen",
-			"SUCCESS_SENT_CODE_TITLE": "Wir haben einen Bestätigungscode gesendet an",
-			"SUCCESS_SENT_CODE_SUB_TITLE": "Bitte überprüfen Sie Ihre E-Mail und geben Sie den Code unten ein",
-			"CREATE_NEW_WORKSPACE": "Neuen Arbeitsbereich erstellen"
-		},
+        "CREATE": {
+            "TITLE": "Neuen Arbeitsbereich erstellen",
+            "SUBTITLE": "Geben Sie Ihre E-Mail-Adresse ein, um zu beginnen",
+            "SUCCESS_SENT_CODE_TITLE": "Wir haben einen Bestätigungscode gesendet an: ",
+            "SUCCESS_SENT_CODE_SUB_TITLE": "Bitte überprüfen Sie Ihre E-Mail und geben Sie den Code unten ein",
+            "CREATE_NEW_WORKSPACE": "Neuen Arbeitsbereich erstellen"
+        },
 		"FIND": {
 			"TITLE": "Finden Sie Ihren Arbeitsbereich",
 			"SUBTITLE": "Geben Sie Ihre E-Mail ein, um Ihre Arbeitsbereiche zu finden",
