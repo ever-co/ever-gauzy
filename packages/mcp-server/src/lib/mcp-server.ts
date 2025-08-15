@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { version } from './common/version';
 import { TransportFactory, TransportResult } from './transports';
+import { sessionManager } from './session/session-manager';
 import { registerTimerTools } from './tools/timer';
 import { registerProjectTools } from './tools/projects';
 import { registerTaskTools } from './tools/tasks';
@@ -36,7 +37,7 @@ const logger = new Logger('McpServer');
 /**
  * Creates and configures the Gauzy MCP Server
  */
-export function createMcpServer() {
+export function createMcpServer(sessionId?: string) {
 	const server = new McpServer({
 		name: 'gauzy-mcp-server',
 		version,
@@ -46,8 +47,13 @@ export function createMcpServer() {
 	});
 
 	try {
+		// Initialize session manager
+		sessionManager.initialize().catch(error => {
+			logger.warn('Failed to initialize session manager:', error);
+		});
+
 		// Register all available tools (functions that can be called by the LLM)
-		registerAuthTools(server); // Register authentication tools first
+		registerAuthTools(server, sessionId); // Register session-aware authentication tools first
 		registerTimerTools(server);
 		registerProjectTools(server);
 		registerTaskTools(server);

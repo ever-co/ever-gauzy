@@ -13,7 +13,7 @@ export interface McpServerStatus {
 	running: boolean;
 	port: number | null;
 	version: string | null;
-	transport?: 'stdio' | 'http';
+	transport?: 'stdio' | 'http' | 'websocket';
 	url?: string;
 	uptime?: number;
 	lastError?: string;
@@ -59,9 +59,9 @@ export class McpServerManager {
 	getStatus(): McpServerStatus {
 		return {
 			running: this._isRunning,
-			port: this._transport?.type === 'http' ? this.getHttpPort() : null,
+			port: this._transport?.type === 'http' || this._transport?.type === 'websocket' ? this.getHttpPort() : null,
 			version,
-			transport: this._transport?.type as 'stdio' | 'http',
+			transport: this._transport?.type as 'stdio' | 'http' | 'websocket',
 			url: this._transport?.url,
 			uptime: this._startTime ? Date.now() - this._startTime.getTime() : undefined,
 			lastError: this._lastError || undefined
@@ -69,10 +69,10 @@ export class McpServerManager {
 	}
 
 	private getHttpPort(): number | null {
-		if (this._transport?.type === 'http' && this._transport.url) {
+		if ((this._transport?.type === 'http' || this._transport?.type === 'websocket') && this._transport.url) {
 			try {
 				const url = new URL(this._transport.url);
-				return parseInt(url.port) || (url.protocol === 'https:' ? 443 : 80);
+				return parseInt(url.port) || (url.protocol === 'https:' || url.protocol === 'wss:' ? 443 : 80);
 			} catch {
 				return null;
 			}
@@ -147,6 +147,8 @@ export class McpServerManager {
 
 			if (transport.type === 'http' && transport.url) {
 				logger.log(`🌐 HTTP transport available at: ${transport.url}`);
+			} else if (transport.type === 'websocket' && transport.url) {
+				logger.log(`🔌 WebSocket transport available at: ${transport.url}`);
 			}
 
 			this._isRunning = true;

@@ -288,6 +288,13 @@ export class SessionManager {
 	}
 
 	/**
+	 * Get session by ID
+	 */
+	public getSession(sessionId: string): SessionData | null {
+		return this.sessionStore.getSession(sessionId);
+	}
+
+	/**
 	 * Get all active sessions for a user
 	 */
 	public getUserSessions(userId: string): SessionData[] {
