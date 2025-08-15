@@ -2,13 +2,14 @@ import { Logger } from '@nestjs/common';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { HttpTransport } from './http-transport';
+import { WebSocketTransport } from './websocket-transport';
 import { config, McpTransportType } from '../common/config';
 
 const logger = new Logger('TransportFactory');
 
 export interface TransportResult {
 	type: McpTransportType;
-	transport?: StdioServerTransport | HttpTransport;
+	transport?: StdioServerTransport | HttpTransport | WebSocketTransport;
 	url?: string;
 }
 
@@ -27,6 +28,9 @@ export class TransportFactory {
 
 			case 'http':
 				return await TransportFactory.createHttpTransport(server);
+
+			case 'websocket':
+				return await TransportFactory.createWebSocketTransport(server);
 
 			case 'auto':
 				return await TransportFactory.createAutoTransport(server);
@@ -55,6 +59,10 @@ export class TransportFactory {
 			return 'stdio';
 		}
 
+		if (TransportFactory.isWebSocketConfigured()) {
+			return 'websocket';
+		}
+
 		if (TransportFactory.isHttpConfigured()) {
 			return 'http';
 		}
@@ -79,6 +87,13 @@ export class TransportFactory {
 	 */
 	private static hasStdioPipes(): boolean {
 		return !process.stdin.isTTY || !process.stdout.isTTY || !process.stderr.isTTY;
+	}
+
+	/**
+	 * Checks if WebSocket transport is explicitly configured
+	 */
+	private static isWebSocketConfigured(): boolean {
+		return !!process.env.MCP_WS_PORT || !!config.mcp.transport.websocket;
 	}
 
 	/**
@@ -136,13 +151,49 @@ export class TransportFactory {
 	}
 
 	/**
+	 * Creates a WebSocket transport
+	 */
+	private static async createWebSocketTransport(server: McpServer): Promise<TransportResult> {
+		logger.log('⚡ Setting up WebSocket transport for MCP communication');
+
+		const wsTransport = new WebSocketTransport({
+			server,
+			transportConfig: config.mcp.transport.websocket || {
+				port: 3002,
+				host: 'localhost',
+				compression: true,
+				maxPayload: 16777216,
+				session: { enabled: true, cookieName: 'mcp-ws-session-id' }
+			}
+		});
+
+		// Start the WebSocket server
+		await wsTransport.start();
+
+		return {
+			type: 'websocket',
+			transport: wsTransport,
+			url: wsTransport.getUrl()
+		};
+	}
+
+	/**
 	 * Creates transport with automatic fallback
 	 */
 	private static async createAutoTransport(server: McpServer): Promise<TransportResult> {
 		logger.log('🔄 Auto-detecting best transport method...');
 
 		try {
-			// Try HTTP first if we're in server mode
+			// Try WebSocket first if we're in server mode and WebSocket is preferred
+			if (TransportFactory.shouldPreferWebSocket()) {
+				try {
+					return await TransportFactory.createWebSocketTransport(server);
+				} catch (wsError) {
+					logger.warn('Failed to start WebSocket transport, trying HTTP:', wsError);
+				}
+			}
+
+			// Try HTTP if we're in server mode
 			if (TransportFactory.shouldPreferHttp()) {
 				try {
 					return await TransportFactory.createHttpTransport(server);
@@ -158,6 +209,18 @@ export class TransportFactory {
 			logger.error('Failed to create any transport:', error);
 			throw new Error(`Failed to create MCP transport: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
+	}
+
+	/**
+	 * Determines if WebSocket transport should be preferred in auto mode
+	 */
+	private static shouldPreferWebSocket(): boolean {
+		return (
+			process.env.MCP_SERVER_MODE === 'websocket' ||
+			process.env.MCP_WS_PORT !== undefined ||
+			process.argv.includes('--websocket') ||
+			process.argv.includes('--ws')
+		);
 	}
 
 	/**
@@ -189,6 +252,9 @@ export class TransportFactory {
 		} else if (type === 'http') {
 			// HTTP transport is already started, just log success
 			logger.log(`✅ MCP Server connected via HTTP transport at ${transportResult.url}`);
+		} else if (type === 'websocket') {
+			// WebSocket transport is already started, just log success
+			logger.log(`✅ MCP Server connected via WebSocket transport at ${transportResult.url}`);
 		}
 	}
 
@@ -204,6 +270,8 @@ export class TransportFactory {
 
 		try {
 			if (type === 'http' && transport instanceof HttpTransport) {
+				await transport.stop();
+			} else if (type === 'websocket' && transport instanceof WebSocketTransport) {
 				await transport.stop();
 			}
 			// Stdio transport doesn't need explicit shutdown
