@@ -96,14 +96,18 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 		if (!email) {
 			return;
 		}
+
 		try {
 			this.isLoading = true;
 			await this._workspaceAuthService.sendSigninCode(email);
 			this.isCodeSent = true;
+			this.cdr.markForCheck();
 		} catch {
 			this.isCodeSent = false;
+			this.cdr.markForCheck();
 		} finally {
 			this.isLoading = false;
+			this.cdr.markForCheck();
 		}
 	}
 
@@ -126,14 +130,18 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 		if (!email) {
 			return;
 		}
+
 		try {
 			this.isLoading = true;
 			await this._workspaceAuthService.sendSigninCode(email);
 			this.isCodeResent = true;
+			this.cdr.markForCheck();
 		} catch {
 			this.isCodeResent = false;
+			this.cdr.markForCheck();
 		} finally {
 			this.isLoading = false;
+			this.cdr.markForCheck();
 		}
 	}
 
@@ -157,8 +165,8 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 			return;
 		}
 
-		this.isLoading = true;
 		try {
+			this.isLoading = true;
 			const response = await this._workspaceAuthService.confirmSignInByCode(email, code);
 
 			// Store the confirmed email for later use
@@ -175,11 +183,14 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 			if (this.workspaces.length > 0) {
 				this.showWorkspaceSelection = true;
 			}
+			this.cdr.markForCheck();
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 			this.showWorkspaceSelection = false;
+			this.cdr.markForCheck();
 		} finally {
 			this.isLoading = false;
+			this.cdr.markForCheck();
 		}
 	}
 
@@ -198,8 +209,8 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 			return;
 		}
 
-		this.isLoading = true;
 		try {
+			this.isLoading = true;
 			const email = this.confirmedEmail;
 			const token = workspace.token;
 
@@ -208,10 +219,13 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 
 			// Close the window after successful signin
 			this.closeWindow();
+			this.cdr.markForCheck();
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
+			this.cdr.markForCheck();
 		} finally {
 			this.isLoading = false;
+			this.cdr.markForCheck();
 		}
 	}
 

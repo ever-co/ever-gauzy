@@ -17,6 +17,7 @@ import { ThemeModule } from '@gauzy/ui-core/theme';
 import { TenantService, OrganizationsService, UsersService } from '@gauzy/ui-core/core';
 import { WorkspaceCreateComponent } from './workspace-create.component';
 import { WorkspaceSharedModule } from '../shared/workspace-shared.module';
+import { CountdownTimerService, WorkspaceAuthService } from '../shared';
 
 const routes: Routes = [
 	{
@@ -45,6 +46,6 @@ const routes: Routes = [
 		ThemeModule,
 		WorkspaceSharedModule
 	],
-	providers: [TenantService, OrganizationsService, UsersService]
+	providers: [TenantService, OrganizationsService, UsersService, WorkspaceAuthService, CountdownTimerService]
 })
 export class WorkspaceCreateModule {}
