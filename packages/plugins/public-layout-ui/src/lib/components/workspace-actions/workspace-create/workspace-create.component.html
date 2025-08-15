@@ -59,6 +59,8 @@
 							formControlName="fullName"
 							[placeholder]="'REGISTER_PAGE.PLACEHOLDERS.FULL_NAME' | translate"
 							[status]="fullName.dirty ? (fullName.invalid ? 'danger' : 'success') : 'basic'"
+							autocomplete="name"
+							[attr.aria-invalid]="fullName.invalid && fullName.touched ? true : null"
 						/>
 						<div *ngIf="fullName.invalid && fullName.touched" class="error-message">
 							<span *ngIf="fullName.errors?.required">
