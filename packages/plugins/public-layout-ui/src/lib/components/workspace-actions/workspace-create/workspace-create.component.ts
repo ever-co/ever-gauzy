@@ -103,6 +103,7 @@ export class WorkspaceCreateComponent extends BaseWorkspaceAuthComponent impleme
 	 */
 	continueToWorkspaceCreation(): void {
 		if (this.accountForm.invalid) {
+			this.accountForm.markAllAsTouched();
 			return;
 		}
 		this.showAccountCreation = false;
