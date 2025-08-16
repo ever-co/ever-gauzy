@@ -35,10 +35,8 @@ export const registerAuthTools = (server: McpServer, sessionId?: string) => {
 					// Create or update session if requested
 					if (createSession && authStatus.isAuthenticated) {
 						try {
-							// Initialize session manager if not already done
-							await sessionManager.initialize();
-
 							// Create session from authenticated user
+							// Note: Session manager is initialized at application startup for better performance
 							session = await sessionManager.createSessionFromAuth({
 								metadata: {
 									loginMethod: 'manual',
@@ -49,6 +47,10 @@ export const registerAuthTools = (server: McpServer, sessionId?: string) => {
 								loginSource: 'api'
 							});
 						} catch (sessionError) {
+							const errorMessage = sessionError instanceof Error ? sessionError.message : 'Unknown error';
+							if (errorMessage.includes('not initialized')) {
+								logger.error('Session manager not initialized at startup. This is a configuration issue.');
+							}
 							logger.warn('Failed to create session after login:', sanitizeForLogging(sessionError));
 						}
 					}
@@ -150,7 +152,7 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 					content: [
 						{
 							type: 'text',
-							text: `⚠️  Logout completed with warning: ${sanitizeErrorMessage(error)}`
+							text: `❌ Logout failed: ${sanitizeErrorMessage(error)}`
 						}
 					]
 				};

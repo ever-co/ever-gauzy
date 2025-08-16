@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { version } from './common/version';
+import { sanitizeErrorMessage } from './common/security-utils';
 import { TransportFactory, TransportResult } from './transports';
 import { sessionManager } from './session/session-manager';
 import { registerTimerTools } from './tools/timer';
@@ -37,9 +38,8 @@ const logger = new Logger('McpServer');
 /**
  * Creates and configures the Gauzy MCP Server
  * @param sessionId - Optional session ID for session-aware operations
- * @param initializeSession - Whether to initialize session manager (default: false for sync compatibility)
  */
-export function createMcpServer(sessionId?: string, initializeSession = false) {
+export function createMcpServer(sessionId?: string) {
 	const server = new McpServer({
 		name: 'gauzy-mcp-server',
 		version,
@@ -99,12 +99,12 @@ export async function createMcpServerAsync(sessionId?: string) {
 		// Initialize session manager first
 		await sessionManager.initialize();
 		logger.log('Session manager initialized successfully');
-		
+
 		// Create server with session support
-		return createMcpServer(sessionId, true);
+		return createMcpServer(sessionId);
 	} catch (error) {
-		logger.error('Failed to initialize session manager:', error);
-		throw new Error(`Session manager initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		logger.error(`Failed to initialize session manager: ${sanitizeErrorMessage(error)}`);
+    	throw new Error(`Session manager initialization failed: ${sanitizeErrorMessage(error)}`);
 	}
 }
 
