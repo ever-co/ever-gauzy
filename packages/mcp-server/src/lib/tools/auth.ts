@@ -47,11 +47,13 @@ export const registerAuthTools = (server: McpServer, sessionId?: string) => {
 								loginSource: 'api'
 							});
 						} catch (sessionError) {
-							const errorMessage = sessionError instanceof Error ? sessionError.message : 'Unknown error';
-							if (errorMessage.includes('not initialized')) {
+							// Check if session manager is properly initialized
+							if (!sessionManager.isInitialized()) {
 								logger.error('Session manager not initialized at startup. This is a configuration issue.');
+							} else {
+								// Log other session creation errors
+								logger.warn('Failed to create session after login:', sanitizeForLogging(sessionError));
 							}
-							logger.warn('Failed to create session after login:', sanitizeForLogging(sessionError));
 						}
 					}
 
@@ -175,23 +177,27 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 
 				// Get session information if requested and user is authenticated
 				if (includeSessionInfo && authStatus.userId) {
-					try {
-						const userSessions = sessionManager.getUserSessions(authStatus.userId);
-						const activeSessions = userSessions.filter(s => s.isActive);
+					if (!sessionManager.isInitialized()) {
+						sessionInfo = '\n\n⚠️  Session manager not initialized - session information unavailable';
+					} else {
+						try {
+							const userSessions = sessionManager.getUserSessions(authStatus.userId);
+							const activeSessions = userSessions.filter(s => s.isActive);
 
-						// Find current session if sessionId is provided
-						if (sessionId) {
-							currentSession = sessionManager.getSession(sessionId);
-						}
+							// Find current session if sessionId is provided
+							if (sessionId) {
+								currentSession = sessionManager.getSession(sessionId);
+							}
 
-						sessionInfo = `
+							sessionInfo = `
 
 📊 Session Information:
 Active Sessions: ${activeSessions.length}
 Total Sessions: ${userSessions.length}${currentSession ? `\nCurrent Session: ${currentSession.id}\nSession Expires: ${currentSession.expiresAt.toISOString()}\nSession Status: ${currentSession.isActive ? 'Active' : 'Inactive'}` : sessionId ? `\nCurrent Session: ${sessionId} (Not found or expired)` : ''}`;
-					} catch (sessionError) {
-						logger.warn('Failed to get session information:', sanitizeForLogging(sessionError));
-						sessionInfo = '\n\n⚠️  Session information unavailable';
+						} catch (sessionError) {
+							logger.warn('Failed to get session information:', sanitizeForLogging(sessionError));
+							sessionInfo = '\n\n⚠️  Session information unavailable';
+						}
 					}
 				}
 
@@ -326,7 +332,7 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 
 				if (querySessionId) {
 					const session = sessionManager.getSession(querySessionId);
-					if (session) {
+					if (session && session.userId === authStatus.userId) {
 						sessionDetails = `
 🎯 Session Details:
 Session ID: ${session.id}
@@ -351,7 +357,7 @@ Connections: ${session.connectionIds.size}`;
 							}
 						}
 					} else {
-						sessionDetails = `\n❌ Session ${querySessionId} not found or expired`;
+						sessionDetails = `\n❌ Session ${querySessionId} not found, expired, or not accessible`;
 					}
 				}
 
