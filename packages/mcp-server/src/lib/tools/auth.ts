@@ -17,7 +17,7 @@ export const registerAuthTools = (server: McpServer, sessionId?: string) => {
 	// Login with email and password
 	server.tool(
 		'login',
-		'Login to Gauzy with email and password and create/update session',
+		'Login to Gauzy with email and password and create a session',
 		{
 			email: z.string().email().describe('Email address for authentication'),
 			password: z.string().min(1).describe('Password for authentication'),
@@ -114,6 +114,15 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 						sessionsDestroyed = sessionManager.invalidateUserSessions(userId);
 					} catch (sessionError) {
 						logger.warn('Failed to cleanup sessions during logout:', sanitizeForLogging(sessionError));
+					}
+					// Fallback: try to destroy current session if none were invalidated
+					if (sessionsDestroyed === 0 && sessionId) {
+						try {
+							const destroyed = sessionManager.destroySession(sessionId);
+							if (destroyed) sessionsDestroyed = 1;
+						} catch (sessionError) {
+							logger.warn('Failed to cleanup current session during logout (fallback):', sanitizeForLogging(sessionError));
+						}
 					}
 				} else if (sessionId) {
 					try {

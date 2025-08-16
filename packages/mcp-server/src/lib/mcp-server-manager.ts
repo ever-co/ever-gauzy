@@ -72,7 +72,7 @@ export class McpServerManager {
 		if ((this._transport?.type === 'http' || this._transport?.type === 'websocket') && this._transport.url) {
 			try {
 				const url = new URL(this._transport.url);
-				return parseInt(url.port) || (url.protocol === 'https:' || url.protocol === 'wss:' ? 443 : 80);
+				return parseInt(url.port, 10) || (url.protocol === 'https:' || url.protocol === 'wss:' ? 443 : 80);
 			} catch {
 				return null;
 			}

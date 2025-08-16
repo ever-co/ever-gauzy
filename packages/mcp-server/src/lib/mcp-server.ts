@@ -36,8 +36,10 @@ const logger = new Logger('McpServer');
 
 /**
  * Creates and configures the Gauzy MCP Server
+ * @param sessionId - Optional session ID for session-aware operations
+ * @param initializeSession - Whether to initialize session manager (default: false for sync compatibility)
  */
-export function createMcpServer(sessionId?: string) {
+export function createMcpServer(sessionId?: string, initializeSession = false) {
 	const server = new McpServer({
 		name: 'gauzy-mcp-server',
 		version,
@@ -47,11 +49,6 @@ export function createMcpServer(sessionId?: string) {
 	});
 
 	try {
-		// Initialize session manager
-		sessionManager.initialize().catch(error => {
-			logger.warn('Failed to initialize session manager:', error);
-		});
-
 		// Register all available tools (functions that can be called by the LLM)
 		registerAuthTools(server, sessionId); // Register session-aware authentication tools first
 		registerTimerTools(server);
@@ -94,7 +91,26 @@ export function createMcpServer(sessionId?: string) {
 }
 
 /**
+ * Creates and configures the Gauzy MCP Server with session manager initialization
+ * This is the recommended way to create the server for production use
+ */
+export async function createMcpServerAsync(sessionId?: string) {
+	try {
+		// Initialize session manager first
+		await sessionManager.initialize();
+		logger.log('Session manager initialized successfully');
+		
+		// Create server with session support
+		return createMcpServer(sessionId, true);
+	} catch (error) {
+		logger.error('Failed to initialize session manager:', error);
+		throw new Error(`Session manager initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+	}
+}
+
+/**
  * Creates a standalone MCP server that can be used by external clients like Claude Desktop
+ * @deprecated Use createStandaloneMcpServerAsync for proper session support
  */
 export function createStandaloneMcpServer() {
 	const { server } = createMcpServer();
@@ -104,10 +120,21 @@ export function createStandaloneMcpServer() {
 }
 
 /**
+ * Creates a standalone MCP server with proper session initialization
+ */
+export async function createStandaloneMcpServerAsync() {
+	const { server } = await createMcpServerAsync();
+
+	logger.log('Standalone MCP Server created for external clients with session support');
+	return server;
+}
+
+/**
  * Creates and starts an MCP server with the appropriate transport
  */
 export async function createAndStartMcpServer(): Promise<{ server: McpServer; transport: TransportResult }> {
-	const { server } = createMcpServer();
+	// Use async version for proper session initialization
+	const { server } = await createMcpServerAsync();
 
 	// Create transport based on configuration
 	const transport = await TransportFactory.createTransport(server);
