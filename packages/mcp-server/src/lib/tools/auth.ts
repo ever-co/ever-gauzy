@@ -5,6 +5,7 @@ import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
 import { sessionManager } from '../session/session-manager';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import type { SessionData } from '../session/session-store';
 
 const logger = new Logger('AuthTools');
 
@@ -30,7 +31,7 @@ export const registerAuthTools = (server: McpServer, sessionId?: string) => {
 
 				if (result.success) {
 					const authStatus = authManager.getAuthStatus();
-					let session = null;
+					let session: SessionData | null = null;
 
 					// Create or update session if requested
 					if (createSession && authStatus.isAuthenticated) {
@@ -193,7 +194,7 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 
 📊 Session Information:
 Active Sessions: ${activeSessions.length}
-Total Sessions: ${userSessions.length}${currentSession ? `\nCurrent Session: ${currentSession.id}\nSession Expires: ${currentSession.expiresAt.toISOString()}\nSession Status: ${currentSession.isActive ? 'Active' : 'Inactive'}` : sessionId ? `\nCurrent Session: ${sessionId} (Not found or expired)` : ''}`;
+Total Sessions: ${userSessions.length}${currentSession ? `\nCurrent Session: ${currentSession.id}\nSession Expires: ${currentSession.expiresAt.toISOString()}\nSession Status: ${currentSession.isActive ? 'Active' : 'Inactive'}` : sessionId ? `\nCurrent Session: ${sessionId} (Not found, expired, or not accessible)` : ''}`;
 						} catch (sessionError) {
 							logger.warn('Failed to get session information:', sanitizeForLogging(sessionError));
 							sessionInfo = '\n\n⚠️  Session information unavailable';
