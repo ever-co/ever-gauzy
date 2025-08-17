@@ -33,7 +33,7 @@ export const registerAuthTools = (server: McpServer, sessionId?: string) => {
 					const authStatus = authManager.getAuthStatus();
 					let session: SessionData | null = null;
 
-					// Create or update session if requested
+					// Create a new session if requested
 					if (createSession && authStatus.isAuthenticated) {
 						try {
 							// Create session from authenticated user
@@ -174,7 +174,7 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 			try {
 				const authStatus = authManager.getAuthStatus();
 				let sessionInfo = '';
-				let currentSession = null;
+				let currentSession: SessionData | null = null;
 
 				// Get session information if requested and user is authenticated
 				if (includeSessionInfo && authStatus.userId) {
@@ -351,7 +351,7 @@ Connections: ${session.connectionIds.size}`;
 						if (includeConnections && session.connectionIds.size > 0) {
 							const connections = sessionManager.getSessionConnections(querySessionId);
 							connectionDetails = connections.map(conn =>
-								`  - ${conn.id} (${conn.type}) - ${conn.isActive ? 'Active' : 'Inactive'} - Last seen: ${conn.lastSeen.toISOString()}`
+								`  - ${conn.id} (${conn.type}) - ${conn.isActive ? 'Active' : 'Inactive'} - Last seen: ${conn.lastSeen?.toISOString?.() || 'Unknown'}`
 							).join('\n');
 							if (connectionDetails) {
 								connectionDetails = `\n\n🔗 Connections:\n${connectionDetails}`;
