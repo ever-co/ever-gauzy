@@ -369,7 +369,7 @@ Connections: ${session.connectionIds.size}`;
 				const summaryText = `📊 Session Summary:
 Total Sessions: ${userSessions.length}
 Active Sessions: ${activeSessions.length}
-Current Session: ${sessionId || 'Not in session context'}`;
+Current Session: ${sessionId ? 'Present' : 'Not in session context'}`;
 
 				return {
 					content: [
