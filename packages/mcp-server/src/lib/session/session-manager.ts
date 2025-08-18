@@ -44,7 +44,7 @@ export interface UserContext {
 export class SessionManager {
 	private static instance: SessionManager;
 	private sessionStore: SessionStore;
-	private isInitialized = false;
+	private _isInitialized = false;
 
 	private constructor(config?: Partial<SessionStoreConfig>) {
 		this.sessionStore = new SessionStore(config);
@@ -61,15 +61,22 @@ export class SessionManager {
 	 * Initialize the session manager
 	 */
 	public async initialize(): Promise<void> {
-		if (this.isInitialized) {
+		if (this._isInitialized) {
 			return;
 		}
 
 		// Initialize auth manager if not already done
 		await authManager.initialize();
 
-		this.isInitialized = true;
+		this._isInitialized = true;
 		logger.log('SessionManager initialized successfully');
+	}
+
+	/**
+	 * Check if the session manager has been initialized
+	 */
+	public isInitialized(): boolean {
+		return this._isInitialized;
 	}
 
 	/**
@@ -288,6 +295,13 @@ export class SessionManager {
 	}
 
 	/**
+	 * Get session by ID
+	 */
+	public getSession(sessionId: string): SessionData | null {
+		return this.sessionStore.getSession(sessionId);
+	}
+
+	/**
 	 * Get all active sessions for a user
 	 */
 	public getUserSessions(userId: string): SessionData[] {
@@ -395,7 +409,7 @@ export class SessionManager {
 	 */
 	public shutdown(): void {
 		this.sessionStore.shutdown();
-		this.isInitialized = false;
+		this._isInitialized = false;
 		logger.log('SessionManager shutdown completed');
 	}
 
