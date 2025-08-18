@@ -1409,7 +1409,8 @@ export class AuthService extends SocialAuthService {
 						where: {
 							email,
 							isActive: true,
-							isArchived: false
+							isArchived: false,
+							tenantId: { $ne: null }
 						},
 						relations: { tenant: true },
 						order: { createdAt: 'DESC' }
@@ -1422,7 +1423,8 @@ export class AuthService extends SocialAuthService {
 						where: {
 							email,
 							isActive: true,
-							isArchived: false
+							isArchived: false,
+							tenantId: Not(IsNull())
 						},
 						relations: { tenant: true },
 						order: { createdAt: 'DESC' }

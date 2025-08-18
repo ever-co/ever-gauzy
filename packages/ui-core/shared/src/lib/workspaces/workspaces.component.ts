@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { debounceTime, filter, tap, catchError, finalize } from 'rxjs/operators';
+import { debounceTime, filter, tap, catchError, finalize, map } from 'rxjs/operators';
 import { Observable, EMPTY, of } from 'rxjs';
-import { NbMenuItem } from '@nebular/theme';
+import { NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IUser, IWorkSpace, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
@@ -34,7 +34,8 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 		private readonly store: Store,
 		private readonly authService: AuthService,
 		private readonly toastrService: ToastrService,
-		private readonly workspaceResetService: WorkspaceResetService
+		private readonly workspaceResetService: WorkspaceResetService,
+		private readonly nbMenuService: NbMenuService
 	) {
 		super(translateService);
 	}
@@ -42,6 +43,7 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	ngOnInit() {
 		this._createContextMenus();
 		this._applyTranslationOnChange();
+		this._setupMenuClickListener();
 	}
 
 	ngAfterViewInit() {
@@ -161,25 +163,66 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 		this.contextMenus = [
 			{
 				title: this.getTranslation('WORKSPACES.MENUS.SING_ANOTHER_WORKSPACE'),
-				icon: 'person-add-outline'
+				icon: 'person-add-outline',
+				data: { action: 'signin' }
 			},
 			{
 				title: this.getTranslation('WORKSPACES.MENUS.FIND_WORKSPACE'),
-				icon: 'search-outline'
+				icon: 'search-outline',
+				data: { action: 'find' }
 			},
 			{
 				title: this.getTranslation('WORKSPACES.MENUS.CREATE_NEW_WORKSPACE'),
-				icon: 'plus-outline'
+				icon: 'plus-outline',
+				data: { action: 'create' }
 			}
 		];
 	}
 
 	/**
-	 * Create new workspace
-	 *
+	 * Setup menu click listener
+	 */
+
+	private _setupMenuClickListener() {
+		this.nbMenuService
+			.onItemClick()
+			.pipe(
+				// Filter to only events from this component's context menu
+				filter(({ tag }) => tag === 'workspaces-menu'),
+				map(({ item }) => item),
+				untilDestroyed(this)
+			)
+			.subscribe((item: NbMenuItem) => {
+				const action = item.data?.action;
+
+				if (action) {
+					this.openWorkspaceAction(action);
+				}
+			});
+	}
+	/**
+	 * Open workspace action in new tab
+	 * @param action The action to perform (create, signin, find)
+	 */
+	private openWorkspaceAction(action: string): void {
+		const baseUrl = window.location.origin;
+		const url = `${baseUrl}/#/share/workspace/${action}`;
+
+		// Open in new tab (not window)
+		const newTab = window.open(url, '_blank');
+
+		if (!newTab) {
+			// Fallback: open in same tab
+			window.location.href = url;
+		}
+	}
+
+	/**
+	 * Create new workspace (legacy method - kept for compatibility)
+	 * @deprecated Use openWorkspaceAction('create') instead
 	 */
 	add() {
-		// TODO
+		this.openWorkspaceAction('create');
 	}
 
 	/**

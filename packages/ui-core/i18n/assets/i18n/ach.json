@@ -4184,6 +4184,35 @@
 			"SING_ANOTHER_WORKSPACE": "crwdns11058:0crwdne11058:0",
 			"CREATE_NEW_WORKSPACE": "crwdns11060:0crwdne11060:0",
 			"FIND_WORKSPACE": "crwdns11062:0crwdne11062:0"
+		},
+		"SIGN_IN_SUBTITLE": "Ket email ni me donyo i kabedo tic",
+		"CREATE": {
+			"TITLE": "Cwal kabedo tic manyen",
+			"SUBTITLE": "Ket email ni me chakre",
+			"SUCCESS_SENT_CODE_TITLE": "Waoro kod me moko i",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Nen email ni ki ket kod i piny",
+			"CREATE_NEW_WORKSPACE": "Cwal kabedo tic manyen"
+		},
+		"FIND": {
+			"TITLE": "Nong kabedo tic ni",
+			"SUBTITLE": "Ket email ni me nongo kabedo tic ni",
+			"DESCRIPTION_TITLE": "Wabino kod me moko me moko keken ni",
+			"RESULTS_STEP": {
+				"DESCRIPTION": "Email ni orwako ki kabedo tic {{count}}"
+			}
+		}
+	},
+	"WORKSPACE_CREATE": {
+		"ACCOUNT_CREATION": {
+			"TITLE": "Cwal akaunt ni",
+			"SUBTITLE": "Tyek profail ni me cwal kabedo tic manyen"
+		},
+		"WORKSPACE_SETUP": {
+			"TITLE": "Ter kabedo tic ni",
+			"SUBTITLE": "Cwal lwak ni ki chakre"
+		},
+		"BUTTONS": {
+			"CONTINUE_TO_WORKSPACE_SETUP": "Mede i ter kabedo tic"
 		}
 	},
 	"NO_IMAGE": {
