@@ -4867,6 +4867,7 @@
 			"PASSWORD": "Password"
 		},
 		"SIGN_IN_TITLE": "Accedi a Workspace",
+		"SIGN_IN_SUBTITLE": "Inserisci la tua email per accedere al tuo spazio di lavoro",
 		"BACK_TO": "Torna a",
 		"SUCCESS_SIGNIN_TITLE": "Congratulazioni! Hai effettuato l'accesso con successo al tuo spazio di lavoro.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Per favore, sii paziente mentre prepariamo lo spazio di lavoro...",
@@ -4875,12 +4876,40 @@
 		"THANKING_TEXT": "Grazie per averci scelto.",
 		"UNKNOWN_WORKSPACE": "Non conosci il tuo spazio di lavoro?",
 		"FIND_WORKSPACE": "Trova i tuoi spazi di lavoro",
+		"CREATE": {
+			"TITLE": "Crea nuovo spazio di lavoro",
+			"SUBTITLE": "Inserisci la tua email per iniziare",
+			"SUCCESS_SENT_CODE_TITLE": "Abbiamo inviato un codice di verifica a",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Controlla la tua email e inserisci il codice qui sotto",
+			"CREATE_NEW_WORKSPACE": "Crea nuovo spazio di lavoro"
+		},
+		"FIND": {
+			"TITLE": "Trova il tuo spazio di lavoro",
+			"SUBTITLE": "Inserisci la tua email per trovare i tuoi spazi di lavoro",
+			"DESCRIPTION_TITLE": "Ti invieremo un codice magico per verificare la tua identità",
+			"RESULTS_STEP": {
+				"DESCRIPTION": "La tua email è associata a {{count}} spazio/i di lavoro"
+			}
+		},
 		"SELECTION": {
 			"WELCOME_BACK": "Bentornato!",
 			"YOU_LOOK_NICE_TODAY": "Oggi sembri in forma!",
 			"EMAIL_MULTIPLE_WORKSPACE": "L'email è associata a più spazi di lavoro, selezionane uno per continuare",
 			"SELECT_WORKSPACE_FOR": "Seleziona lo spazio di lavoro per",
 			"OPEN": "Apri"
+		}
+	},
+	"WORKSPACE_CREATE": {
+		"ACCOUNT_CREATION": {
+			"TITLE": "Crea il tuo account",
+			"SUBTITLE": "Completa il tuo profilo per creare un nuovo spazio di lavoro"
+		},
+		"WORKSPACE_SETUP": {
+			"TITLE": "Configura il tuo spazio di lavoro",
+			"SUBTITLE": "Crea la tua organizzazione e inizia"
+		},
+		"BUTTONS": {
+			"CONTINUE_TO_WORKSPACE_SETUP": "Continua alla configurazione dello spazio di lavoro"
 		}
 	},
 	"NO_IMAGE": {

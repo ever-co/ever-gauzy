@@ -1,0 +1,39 @@
+<section class="login-container">
+	<div class="login-wrapper">
+		<!-- Step 1: Email and Code Input -->
+		<ng-container *ngIf="!showWorkspaceSelection">
+			<ga-workspace-header
+				title="WORKSPACES.FIND.TITLE"
+				subtitle="WORKSPACES.FIND.SUBTITLE"
+				(close)="closeWindow()"
+			></ga-workspace-header>
+
+			<ga-email-code-form
+				[form]="form"
+				[isLoading]="isLoading"
+				[isCodeSent]="isCodeSent"
+				[isCodeResent]="isCodeResent"
+				[countdown]="countdown"
+				[showEditEmailButton]="false"
+				[showForgotEmailLink]="false"
+				descriptionText="WORKSPACES.FIND.DESCRIPTION_TITLE"
+				(sendCode)="sendSigninCode()"
+				(resendCode)="onResendCode()"
+				(submitForm)="confirmSignInCode()"
+			></ga-email-code-form>
+		</ng-container>
+
+		<!-- Step 2: Workspace Selection (without create button) -->
+		<ng-container *ngIf="showWorkspaceSelection">
+			<ga-workspace-header (close)="closeWindow()"></ga-workspace-header>
+
+			<ga-workspace-selection
+				[workspaces]="workspaces"
+				[confirmedEmail]="confirmedEmail"
+				[totalWorkspaces]="totalWorkspaces"
+				[showCreateButton]="false"
+				(workspaceSelected)="signInWorkspace($event)"
+			></ga-workspace-selection>
+		</ng-container>
+	</div>
+</section>
