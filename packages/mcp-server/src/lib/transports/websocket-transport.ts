@@ -266,7 +266,11 @@ export class WebSocketTransport {
 				// If true, allow all origins
 			} else if (Array.isArray(this.transportConfig.allowedOrigins)) {
 	        // Handle array of allowed origins
-				if (!origin || !this.transportConfig.allowedOrigins.includes(origin)) {
+				// Check for wildcard first
+				if (this.transportConfig.allowedOrigins.includes('*')) {
+					// Allow all origins when * is present
+					logger.debug(`Allowing WebSocket connection from origin: ${origin || 'undefined'} (wildcard enabled)`);
+				} else if (!origin || !this.transportConfig.allowedOrigins.includes(origin)) {
 					logger.warn(`Rejected WebSocket connection from unauthorized origin: ${origin}`);
 					ws.close(1008, 'Unauthorized origin');
 					return;
@@ -500,19 +504,13 @@ export class WebSocketTransport {
 						});
 						break;
 					}
-				/**
-				 *  TODO: implementing the actual tools/call functionality once the tool execution system is ready
-				 */
 				case 'tools/call':
 					{
+						const result = await this.callTool(params as Record<string, unknown>);
 						transport.send({
-						jsonrpc: '2.0',
-						id,
-						error: {
-							code: -32601,  // Method not found
-							message: 'Method not implemented: tools/call',
-							data: 'Tool execution system is not yet integrated'
-						}
+							jsonrpc: '2.0',
+							id,
+							result
 						});
 						break;
 					}
@@ -571,6 +569,44 @@ export class WebSocketTransport {
 		} catch (error) {
 			logger.error(`Failed to get tools: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			return [];
+		}
+	}
+
+	private async callTool(params: Record<string, unknown>): Promise<unknown> {
+		try {
+			const { name, arguments: args } = params;
+			
+			if (!name || typeof name !== 'string') {
+				throw new Error('Tool name is required');
+			}
+
+			logger.debug(`Calling tool: ${name} with args:`, args);
+
+			// Access the MCP server's internal tool execution
+			const serverInternal = this.mcpServer as any;
+			if (!serverInternal._registeredTools) {
+				throw new Error('No registered tools found');
+			}
+
+			// Tools are stored as a plain object
+			if (!(name in serverInternal._registeredTools)) {
+				throw new Error(`Tool '${name}' not found`);
+			}
+
+			const tool = serverInternal._registeredTools[name];
+			if (!tool || typeof tool.callback !== 'function') {
+				throw new Error(`Tool '${name}' has no valid callback`);
+			}
+
+			// Execute the tool with the provided arguments
+			const result = await tool.callback(args || {});
+			logger.debug(`Tool ${name} executed successfully`);
+			
+			return result;
+
+		} catch (error) {
+			logger.error('Error calling tool:', error);
+			throw error;
 		}
 	}
 

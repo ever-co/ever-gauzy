@@ -544,12 +544,7 @@ export class HttpTransport {
 
 	private async routeMcpRequest(method: string, params: Record<string, unknown> | unknown[] | undefined, id: string | number | null | undefined, transport: MockTransport, userContext?: UserContext) {
 		try {
-
-			// Convert the HTTP request into a format the MCP server can handle
-			// This is a placeholder - the actual implementation would need to
-			// properly integrate with the MCP server's request handling
-
-			// For now, handle basic MCP protocol methods
+			// Handle MCP protocol methods by delegating to the actual MCP server
 			switch (method) {
 				case 'initialize':
 					transport.send({
@@ -579,8 +574,15 @@ export class HttpTransport {
 					}
 
 				case 'tools/call':
-					// This would need to integrate with your tool execution system
-					throw new Error('Tool execution requires proper MCP server integration');
+					{
+						const result = await this.callTool(params as Record<string, unknown>);
+						transport.send({
+							jsonrpc: '2.0',
+							id,
+							result
+						});
+						break;
+					}
 
 				default:
 					transport.send({
@@ -593,6 +595,7 @@ export class HttpTransport {
 					});
 			}
 		} catch (error) {
+			logger.error(`Error in routeMcpRequest for method ${method}:`, error);
 			transport.send({
 				jsonrpc: '2.0',
 				id,
@@ -606,15 +609,97 @@ export class HttpTransport {
 	}
 
 	private async getTools(): Promise<unknown[]> {
-		// This would integrate with your existing tools registry
-		// For now, return empty array - you'll need to implement tool listing
-		return [];
+		// Get tools from the MCP server instance
+		try {
+			const toolsList: unknown[] = [];
+			
+			// Access the tools from the server's internal state
+			const serverInternal = this.mcpServer as any;
+			
+			if (serverInternal._registeredTools && typeof serverInternal._registeredTools === 'object') {
+				// Tools are stored as a plain object
+				for (const [name, tool] of Object.entries(serverInternal._registeredTools)) {
+					const toolData = tool as any;
+					
+					// Convert Zod schema to JSON schema if needed
+					let inputSchema = {
+						type: 'object',
+						properties: {},
+						required: []
+					};
+
+					if (toolData.inputSchema) {
+						try {
+							// If it's a Zod schema, try to convert it
+							if (toolData.inputSchema._def) {
+								// Simple conversion for basic Zod schemas
+								inputSchema = {
+									type: 'object',
+									properties: {},
+									required: []
+								};
+							} else {
+								// Use as-is if it's already JSON schema
+								inputSchema = toolData.inputSchema;
+							}
+						} catch (schemaError) {
+							// Use default if conversion fails
+							logger.debug(`Could not convert schema for tool ${name}:`, schemaError);
+						}
+					}
+
+					toolsList.push({
+						name,
+						description: toolData.description || `Tool: ${name}`,
+						inputSchema
+					});
+				}
+			}
+			
+			logger.debug(`Found ${toolsList.length} tools from _registeredTools`);
+			return toolsList;
+		} catch (error) {
+			logger.error('Error getting tools list:', error);
+			return [];
+		}
 	}
 
 	private async callTool(params: Record<string, unknown>): Promise<unknown> {
-		// This would integrate with your existing tool execution
-		// For now, throw not implemented error
-		throw new Error('Tool execution not yet implemented for HTTP transport');
+		try {
+			const { name, arguments: args } = params;
+			
+			if (!name || typeof name !== 'string') {
+				throw new Error('Tool name is required');
+			}
+
+			logger.debug(`Calling tool: ${name} with args:`, args);
+
+			// Access the MCP server's internal tool execution
+			const serverInternal = this.mcpServer as any;
+			if (!serverInternal._registeredTools) {
+				throw new Error('No registered tools found');
+			}
+
+			// Tools are stored as a plain object
+			if (!(name in serverInternal._registeredTools)) {
+				throw new Error(`Tool '${name}' not found`);
+			}
+
+			const tool = serverInternal._registeredTools[name];
+			if (!tool || typeof tool.callback !== 'function') {
+				throw new Error(`Tool '${name}' has no valid callback`);
+			}
+
+			// Execute the tool with the provided arguments
+			const result = await tool.callback(args || {});
+			logger.debug(`Tool ${name} executed successfully`);
+			
+			return result;
+
+		} catch (error) {
+			logger.error('Error calling tool:', error);
+			throw error;
+		}
 	}
 
 
