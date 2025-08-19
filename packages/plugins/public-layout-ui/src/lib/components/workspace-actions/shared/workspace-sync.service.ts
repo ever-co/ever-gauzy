@@ -196,10 +196,11 @@ export class WorkspaceSyncService implements OnDestroy {
 	/**
 	 * Cleanup resources when service is destroyed
 	 */
-	ngOnDestroy(): void {
-		if (this.broadcastChannel) {
-			this.broadcastChannel.close();
-			this.broadcastChannel = null;
-		}
-	}
+    ngOnDestroy(): void {
+        clearTimeout(this.reloadTimer);
+        if (this.broadcastChannel) {
+            this.broadcastChannel.close();
+            this.broadcastChannel = null;
+        }
+    }
 }
