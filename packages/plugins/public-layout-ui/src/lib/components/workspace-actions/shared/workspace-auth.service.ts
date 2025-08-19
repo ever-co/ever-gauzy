@@ -247,11 +247,13 @@ export class WorkspaceAuthService {
 		await this.updateStoreWithWorkspaceData(response);
 
 		// Broadcast workspace signin to other tabs
-		this._workspaceSyncService.broadcastWorkspaceSignin({
-			userId: response.user.id,
-			tenantId: response.user.tenantId,
-			organizationId: response.user.employee?.organizationId
-		});
+		if (this._workspaceSyncService.isSupported()) {
+			this._workspaceSyncService.broadcastWorkspaceSignin({
+				userId: response.user.id,
+				tenantId: response.user.tenantId,
+				organizationId: response.user.employee?.organizationId
+			});
+		}
 	}
 
 	/**

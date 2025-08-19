@@ -1,5 +1,20 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Subject } from 'rxjs';
+
+type WorkspaceOperation =
+	| 'workspace-created'
+	| 'workspace-switched'
+	| 'workspace-signin'
+	| 'workspace-updated'
+	| 'workspace-deleted';
+
+type WorkspaceSyncPayload = Record<string, unknown>;
+
+interface WorkspaceSyncMessage {
+	type: WorkspaceOperation;
+	payload: WorkspaceSyncPayload;
+	timestamp: number;
+	tabId: string;
+}
 
 /**
  * Service for synchronizing workspace operations across multiple browser tabs.
@@ -11,7 +26,6 @@ import { Subject } from 'rxjs';
 export class WorkspaceSyncService implements OnDestroy {
 	private readonly CHANNEL_NAME = 'gauzy-workspace-sync';
 	private broadcastChannel: BroadcastChannel | null = null;
-	private destroy$ = new Subject<void>();
 
 	/**
 	 * Types of workspace operations that trigger cross-tab synchronization
@@ -51,7 +65,7 @@ export class WorkspaceSyncService implements OnDestroy {
 	private setupMessageListener(): void {
 		if (!this.broadcastChannel) return;
 
-		this.broadcastChannel.addEventListener('message', (event) => {
+		this.broadcastChannel.addEventListener('message', (event: MessageEvent<WorkspaceSyncMessage>) => {
 			this.handleIncomingMessage(event.data);
 		});
 	}
@@ -87,12 +101,12 @@ export class WorkspaceSyncService implements OnDestroy {
 	/**
 	 * Broadcast a workspace operation to other tabs
 	 */
-	public broadcastWorkspaceOperation(operation: string, payload?: any): void {
+	public broadcastWorkspaceOperation(operation: WorkspaceOperation, payload?: WorkspaceSyncPayload): void {
 		if (!this.broadcastChannel) return;
 
-		const message = {
+		const message: WorkspaceSyncMessage = {
 			type: operation,
-			payload: payload || {},
+			payload: (payload ?? {}) as WorkspaceSyncPayload,
 			timestamp: Date.now(),
 			tabId: this.getTabId()
 		};
@@ -142,25 +156,30 @@ export class WorkspaceSyncService implements OnDestroy {
 	/**
 	 * Reload the current tab to reflect workspace changes
 	 */
+	private reloadTimer: any;
 	private reloadCurrentTab(_operation: string, _payload?: any): void {
-		// Add a small delay to ensure any ongoing operations complete
-		setTimeout(() => {
-			// Force a complete page reload to refresh the workspace state
-			window.location.reload();
-		}, 100);
+		clearTimeout(this.reloadTimer);
+		this.reloadTimer = setTimeout(() => window.location.reload(), 150);
 	}
 
 	/**
 	 * Generate a unique tab identifier
 	 */
 	private getTabId(): string {
-		// Use sessionStorage to create a unique ID per tab
-		let tabId = sessionStorage.getItem('gauzy-tab-id');
-		if (!tabId) {
-			tabId = `tab-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-			sessionStorage.setItem('gauzy-tab-id', tabId);
+		// Use sessionStorage to create a unique ID per tab (with safe fallback)
+		try {
+			if (typeof sessionStorage !== 'undefined') {
+				let tabId = sessionStorage.getItem('gauzy-tab-id');
+				if (!tabId) {
+					tabId = this.generateTabId();
+					sessionStorage.setItem('gauzy-tab-id', tabId);
+				}
+				return tabId;
+			}
+		} catch {
+			// ignore and fallback
 		}
-		return tabId;
+		return this.generateTabId();
 	}
 
 	/**
@@ -169,13 +188,16 @@ export class WorkspaceSyncService implements OnDestroy {
 	public isSupported(): boolean {
 		return typeof BroadcastChannel !== 'undefined';
 	}
+
+	private generateTabId(): string {
+		return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+			? `tab-${crypto.randomUUID()}`
+			: `tab-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+	}
 	/**
 	 * Cleanup resources when service is destroyed
 	 */
 	ngOnDestroy(): void {
-		this.destroy$.next();
-		this.destroy$.complete();
-
 		if (this.broadcastChannel) {
 			this.broadcastChannel.close();
 			this.broadcastChannel = null;
