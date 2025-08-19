@@ -68,14 +68,14 @@ export class WorkspaceSyncService implements OnDestroy {
 	/**
 	 * Broadcast a workspace operation to other tabs
 	 */
-	public broadcastWorkspaceOperation(operation: WorkspaceOperation, payload?: WorkspaceSyncPayload): void {
+	public broadcastWorkspaceOperation(operation: WorkspaceOperation, payload: WorkspaceSyncPayload = {}): void {
 		if (!this.broadcastChannel) {
 			return;
 		}
 
 		const message: WorkspaceSyncMessage = {
 			type: operation,
-			payload: (payload ?? {}) as WorkspaceSyncPayload,
+			payload,
 			timestamp: Date.now(),
 			tabId: this.getTabId()
 		};
