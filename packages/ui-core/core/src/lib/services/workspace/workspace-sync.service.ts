@@ -45,7 +45,7 @@ export class WorkspaceSyncService implements OnDestroy {
 	private setupMessageListener(): void {
 		if (!this.broadcastChannel) return;
 
-		this.broadcastChannel.onmessage = (event) => {
+		this.broadcastChannel.onmessage = (event: MessageEvent<WorkspaceSyncMessage>) => {
 			this.handleIncomingMessage(event.data);
 		};
 	}
