@@ -87,8 +87,6 @@ export class WorkspaceSyncService implements OnDestroy {
 
 		try {
 			this.broadcastChannel.postMessage(message);
-			setTimeout(() => this.broadcastChannel?.postMessage(message), 50);
-			setTimeout(() => this.broadcastChannel?.postMessage(message), 150);
 		} catch (error) {
 			console.warn('Failed to broadcast workspace operation:', error);
 		}
