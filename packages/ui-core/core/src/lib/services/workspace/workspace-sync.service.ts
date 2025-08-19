@@ -68,24 +68,30 @@ export class WorkspaceSyncService implements OnDestroy {
 	/**
 	 * Broadcast a workspace operation to other tabs
 	 */
-	public broadcastWorkspaceOperation(operation: WorkspaceOperation, payload: WorkspaceSyncPayload = {}): void {
-		if (!this.broadcastChannel) {
-			return;
-		}
+public broadcastWorkspaceOperation(
+    operation: WorkspaceOperation,
+    payload: WorkspaceSyncPayload = {}
+): void {
+    if (!this.broadcastChannel) {
+        return;
+    }
 
-		const message: WorkspaceSyncMessage = {
-			type: operation,
-			payload,
-			timestamp: Date.now(),
-			tabId: this.getTabId()
-		};
+    const message: WorkspaceSyncMessage = {
+        type: operation,
+        payload,
+        timestamp: Date.now(),
+        tabId: this.getTabId()
+    };
 
-		try {
-			this.broadcastChannel.postMessage(message);
-		} catch (error) {
-			console.warn('Failed to broadcast workspace operation:', error);
-		}
-	}
+    try {
+        this.broadcastChannel.postMessage(message);
+    } catch (error) {
+        console.warn(
+            'Failed to broadcast workspace operation (payload must be structured-cloneable):',
+            error
+        );
+    }
+}
 
 	/**
 	 * Broadcast workspace creation event
