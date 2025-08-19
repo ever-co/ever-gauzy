@@ -15,9 +15,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { WorkspaceSigninComponent } from './workspace-signin.component';
-import { WorkspaceSharedModule } from '../shared/workspace-shared.module';
-import { TenantService } from '@gauzy/ui-core/core';
-import { CountdownTimerService, WorkspaceAuthService } from '../shared';
+import { TenantService, WorkspaceAuthService } from '@gauzy/ui-core/core';
+import { CountdownTimerService, WorkspaceSharedModule } from '../shared';
 
 const routes: Routes = [
 	{

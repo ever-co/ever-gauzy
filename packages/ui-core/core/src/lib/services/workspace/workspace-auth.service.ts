@@ -3,14 +3,12 @@ import { firstValueFrom, of, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { IAuthResponse, IOrganizationCreateInput, IUserSigninWorkspaceResponse, IWorkSpace } from '@gauzy/contracts';
-import {
-	AuthService,
-	ErrorHandlingService,
-	Store,
-	TenantService,
-	OrganizationsService,
-	UsersService
-} from '@gauzy/ui-core/core';
+import { AuthService } from '../auth';
+import { ErrorHandlingService } from '../notification';
+import { Store } from '../store';
+import { TenantService } from '../tenant';
+import { OrganizationsService } from '../organizations';
+import { UsersService } from '../users';
 import { WorkspaceSyncService } from './workspace-sync.service';
 
 /**

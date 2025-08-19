@@ -1,20 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-
-type WorkspaceOperation =
-	| 'workspace-created'
-	| 'workspace-switched'
-	| 'workspace-signin'
-	| 'workspace-updated'
-	| 'workspace-deleted';
-
-type WorkspaceSyncPayload = Record<string, unknown>;
-
-interface WorkspaceSyncMessage {
-	type: WorkspaceOperation;
-	payload: WorkspaceSyncPayload;
-	timestamp: number;
-	tabId: string;
-}
+import { WorkspaceOperation, WorkspaceSyncMessage, WorkspaceSyncPayload } from './types/workspace-sync-type';
 
 /**
  * Service for synchronizing workspace operations across multiple browser tabs.
@@ -65,31 +50,17 @@ export class WorkspaceSyncService implements OnDestroy {
 	private setupMessageListener(): void {
 		if (!this.broadcastChannel) return;
 
-		this.broadcastChannel.addEventListener('message', (event: MessageEvent<WorkspaceSyncMessage>) => {
+		this.broadcastChannel.onmessage = (event) => {
 			this.handleIncomingMessage(event.data);
-		});
+		};
 	}
 
 	/**
 	 * Handle incoming messages from other tabs
 	 */
 	private handleIncomingMessage(data: WorkspaceSyncMessage): void {
-		if (!data || typeof data !== 'object') return;
-		const { type, timestamp, tabId } = data;
-
-		if (typeof type !== 'string') return;
-
-		// Ignore messages from the same tab
-		const myTabId = this.getTabId();
-		if (tabId === myTabId) return;
-
-		// Check if message is recent (within last 5 seconds to avoid stale messages)
-		if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) return;
-		const messageAge = Date.now() - timestamp;
-		if (messageAge > 5000) return;
-
 		// Handle workspace operation messages
-		if (Object.values(this.WORKSPACE_OPERATIONS).includes(type as WorkspaceOperation)) {
+		if (Object.values(this.WORKSPACE_OPERATIONS).includes(data.type as WorkspaceOperation)) {
 			this.reloadCurrentTab();
 		}
 	}
@@ -98,7 +69,9 @@ export class WorkspaceSyncService implements OnDestroy {
 	 * Broadcast a workspace operation to other tabs
 	 */
 	public broadcastWorkspaceOperation(operation: WorkspaceOperation, payload?: WorkspaceSyncPayload): void {
-		if (!this.broadcastChannel) return;
+		if (!this.broadcastChannel) {
+			return;
+		}
 
 		const message: WorkspaceSyncMessage = {
 			type: operation,
@@ -109,6 +82,8 @@ export class WorkspaceSyncService implements OnDestroy {
 
 		try {
 			this.broadcastChannel.postMessage(message);
+			setTimeout(() => this.broadcastChannel?.postMessage(message), 50);
+			setTimeout(() => this.broadcastChannel?.postMessage(message), 150);
 		} catch (error) {
 			console.warn('Failed to broadcast workspace operation:', error);
 		}
@@ -158,7 +133,7 @@ export class WorkspaceSyncService implements OnDestroy {
 		if (this.reloadTimer) {
 			clearTimeout(this.reloadTimer);
 		}
-		this.reloadTimer = setTimeout(() => window.location.reload(), 100);
+		this.reloadTimer = setTimeout(() => window.location.reload(), 150);
 	}
 
 	/**
@@ -185,7 +160,15 @@ export class WorkspaceSyncService implements OnDestroy {
 	 * Check if Broadcast Channel is supported and available
 	 */
 	public isSupported(): boolean {
-		return typeof BroadcastChannel !== 'undefined';
+		const supported = typeof BroadcastChannel !== 'undefined';
+
+		if (supported) {
+			if (!this.broadcastChannel) {
+				this.initializeBroadcastChannel();
+			}
+		}
+
+		return supported;
 	}
 
 	private generateTabId(): string {
@@ -196,11 +179,11 @@ export class WorkspaceSyncService implements OnDestroy {
 	/**
 	 * Cleanup resources when service is destroyed
 	 */
-    ngOnDestroy(): void {
-        clearTimeout(this.reloadTimer);
-        if (this.broadcastChannel) {
-            this.broadcastChannel.close();
-            this.broadcastChannel = null;
-        }
-    }
+	ngOnDestroy(): void {
+		clearTimeout(this.reloadTimer);
+		if (this.broadcastChannel) {
+			this.broadcastChannel.close();
+			this.broadcastChannel = null;
+		}
+	}
 }

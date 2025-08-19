@@ -3,10 +3,9 @@ import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } fro
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IAuthResponse, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
-import { ErrorHandlingService, Store } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, Store, WorkspaceAuthService } from '@gauzy/ui-core/core';
 import { patterns } from '@gauzy/ui-core/shared';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { WorkspaceAuthService } from './workspace-auth.service';
 import { CountdownTimerService } from './countdown-timer.service';
 
 /**
@@ -127,7 +126,7 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 		if (!email) {
 			return;
 		}
-		
+
 		if (this.countdown > 0) {
 			return;
 		}

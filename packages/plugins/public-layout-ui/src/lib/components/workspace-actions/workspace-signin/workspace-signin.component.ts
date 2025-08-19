@@ -3,8 +3,8 @@ import { UntypedFormBuilder } from '@angular/forms';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IUserSigninWorkspaceResponse } from '@gauzy/contracts';
-import { ErrorHandlingService, Store } from '@gauzy/ui-core/core';
-import { BaseWorkspaceAuthComponent, CountdownTimerService, WorkspaceAuthService } from '../shared';
+import { ErrorHandlingService, Store, WorkspaceAuthService } from '@gauzy/ui-core/core';
+import { BaseWorkspaceAuthComponent, CountdownTimerService } from '../shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

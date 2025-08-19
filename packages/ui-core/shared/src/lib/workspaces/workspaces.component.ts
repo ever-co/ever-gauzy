@@ -7,8 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { IUser, IWorkSpace, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { Store, AuthService, ToastrService } from '@gauzy/ui-core/core';
-import { WorkspaceResetService } from './workspace-reset.service';
+import { Store, AuthService, ToastrService, WorkspaceResetService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
