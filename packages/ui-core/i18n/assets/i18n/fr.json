@@ -4858,6 +4858,7 @@
 			"PASSWORD": "Mot de passe"
 		},
 		"SIGN_IN_TITLE": "Se connecter à l'espace de travail",
+		"SIGN_IN_SUBTITLE": "Entrez votre email pour vous connecter à votre espace de travail",
 		"BACK_TO": "Retour à",
 		"SUCCESS_SIGNIN_TITLE": "Félicitations ! Vous avez réussi à vous connecter à votre espace de travail.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Veuillez patienter pendant que nous préparons l'espace de travail...",
@@ -4866,12 +4867,40 @@
 		"THANKING_TEXT": "Merci de nous avoir choisis.",
 		"UNKNOWN_WORKSPACE": "Vous ne connaissez pas votre espace de travail ?",
 		"FIND_WORKSPACE": "Trouver votre espace de travail",
+		"CREATE": {
+			"TITLE": "Créer un nouvel espace de travail",
+			"SUBTITLE": "Entrez votre email pour commencer",
+			"SUCCESS_SENT_CODE_TITLE": "Nous avons envoyé un code de vérification à",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Veuillez vérifier votre email et entrer le code ci-dessous",
+			"CREATE_NEW_WORKSPACE": "Créer un nouvel espace de travail"
+		},
+		"FIND": {
+			"TITLE": "Trouvez votre espace de travail",
+			"SUBTITLE": "Entrez votre email pour trouver vos espaces de travail",
+			"DESCRIPTION_TITLE": "Nous vous enverrons un code magique pour vérifier votre identité",
+			"RESULTS_STEP": {
+				"DESCRIPTION": "Votre email est associé à {{count}} espace(s) de travail"
+			}
+		},
 		"SELECTION": {
 			"WELCOME_BACK": "Bon retour!",
 			"YOU_LOOK_NICE_TODAY": "Tu as bonne mine aujourd'hui!",
 			"EMAIL_MULTIPLE_WORKSPACE": "L'email est associé à plusieurs espaces de travail, veuillez en sélectionner un pour continuer",
 			"SELECT_WORKSPACE_FOR": "Sélectionner l'espace de travail pour",
 			"OPEN": "Ouvrir"
+		}
+	},
+	"WORKSPACE_CREATE": {
+		"ACCOUNT_CREATION": {
+			"TITLE": "Créez votre compte",
+			"SUBTITLE": "Complétez votre profil pour créer un nouvel espace de travail"
+		},
+		"WORKSPACE_SETUP": {
+			"TITLE": "Configurez votre espace de travail",
+			"SUBTITLE": "Créez votre organisation et commencez"
+		},
+		"BUTTONS": {
+			"CONTINUE_TO_WORKSPACE_SETUP": "Continuer vers la configuration de l'espace de travail"
 		}
 	},
 	"NO_IMAGE": {
