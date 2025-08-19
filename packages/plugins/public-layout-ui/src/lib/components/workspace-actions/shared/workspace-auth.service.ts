@@ -11,6 +11,7 @@ import {
 	OrganizationsService,
 	UsersService
 } from '@gauzy/ui-core/core';
+import { WorkspaceSyncService } from './workspace-sync.service';
 
 /**
  * Service to handle workspace authentication flows and user onboarding.
@@ -27,7 +28,8 @@ export class WorkspaceAuthService {
 		private readonly _store: Store,
 		private readonly _tenantService: TenantService,
 		private readonly _organizationsService: OrganizationsService,
-		private readonly _usersService: UsersService
+		private readonly _usersService: UsersService,
+		private readonly _workspaceSyncService: WorkspaceSyncService
 	) {}
 
 	/**
@@ -157,6 +159,13 @@ export class WorkspaceAuthService {
 
 		// Step 8: Update workspace states
 		await this.updateWorkspaceStates(tenant.id);
+
+		// Step 9: Broadcast workspace creation to other tabs
+		this._workspaceSyncService.broadcastWorkspaceCreated({
+			tenantId: tenant.id,
+			organizationId: createdOrganization.id,
+			workspaceName: organization.name
+		});
 	}
 
 	/**
@@ -236,6 +245,13 @@ export class WorkspaceAuthService {
 
 		// Wait for complete store update before resolving
 		await this.updateStoreWithWorkspaceData(response);
+
+		// Broadcast workspace signin to other tabs
+		this._workspaceSyncService.broadcastWorkspaceSignin({
+			userId: response.user.id,
+			tenantId: response.user.tenantId,
+			organizationId: response.user.employee?.organizationId
+		});
 	}
 
 	/**
