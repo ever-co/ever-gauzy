@@ -161,11 +161,13 @@ export class WorkspaceAuthService {
 		await this.updateWorkspaceStates(tenant.id);
 
 		// Step 9: Broadcast workspace creation to other tabs
-		this._workspaceSyncService.broadcastWorkspaceCreated({
-			tenantId: tenant.id,
-			organizationId: createdOrganization.id,
-			workspaceName: organization.name
-		});
+		if (this._workspaceSyncService.isSupported()) {
+			this._workspaceSyncService.broadcastWorkspaceCreated({
+				tenantId: tenant.id,
+				organizationId: createdOrganization.id,
+				workspaceName: createdOrganization.name
+			});
+		}
 	}
 
 	/**
