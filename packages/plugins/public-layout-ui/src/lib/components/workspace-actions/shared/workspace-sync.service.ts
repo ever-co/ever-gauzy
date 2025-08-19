@@ -160,9 +160,8 @@ export class WorkspaceSyncService implements OnDestroy {
 	 * Check if Broadcast Channel is supported and available
 	 */
 	public isSupported(): boolean {
-		return typeof BroadcastChannel !== 'undefined' && this.broadcastChannel !== null;
+		return typeof BroadcastChannel !== 'undefined';
 	}
-
 	/**
 	 * Cleanup resources when service is destroyed
 	 */
