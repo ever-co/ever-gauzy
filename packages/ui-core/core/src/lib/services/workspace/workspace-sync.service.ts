@@ -130,6 +130,7 @@ export class WorkspaceSyncService implements OnDestroy {
 	private reloadCurrentTab(): void {
 		if (this.reloadTimer) {
 			clearTimeout(this.reloadTimer);
+			this.reloadTimer = null;
 		}
 		if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
 			this.reloadTimer = setTimeout(() => window.location.reload(), 150);
