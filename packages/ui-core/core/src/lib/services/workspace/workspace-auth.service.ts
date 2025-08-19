@@ -3,14 +3,13 @@ import { firstValueFrom, of, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { IAuthResponse, IOrganizationCreateInput, IUserSigninWorkspaceResponse, IWorkSpace } from '@gauzy/contracts';
-import {
-	AuthService,
-	ErrorHandlingService,
-	Store,
-	TenantService,
-	OrganizationsService,
-	UsersService
-} from '@gauzy/ui-core/core';
+import { AuthService } from '../auth';
+import { ErrorHandlingService } from '../notification';
+import { Store } from '../store';
+import { TenantService } from '../tenant';
+import { OrganizationsService } from '../organizations';
+import { UsersService } from '../users';
+import { WorkspaceSyncService } from './workspace-sync.service';
 
 /**
  * Service to handle workspace authentication flows and user onboarding.
@@ -27,7 +26,8 @@ export class WorkspaceAuthService {
 		private readonly _store: Store,
 		private readonly _tenantService: TenantService,
 		private readonly _organizationsService: OrganizationsService,
-		private readonly _usersService: UsersService
+		private readonly _usersService: UsersService,
+		private readonly _workspaceSyncService: WorkspaceSyncService
 	) {}
 
 	/**
@@ -157,6 +157,15 @@ export class WorkspaceAuthService {
 
 		// Step 8: Update workspace states
 		await this.updateWorkspaceStates(tenant.id);
+
+		// Step 9: Broadcast workspace creation to other tabs
+		if (this._workspaceSyncService.isSupported()) {
+			this._workspaceSyncService.broadcastWorkspaceCreated({
+				tenantId: tenant.id,
+				organizationId: createdOrganization.id,
+				workspaceName: createdOrganization.name
+			});
+		}
 	}
 
 	/**
@@ -236,6 +245,14 @@ export class WorkspaceAuthService {
 
 		// Wait for complete store update before resolving
 		await this.updateStoreWithWorkspaceData(response);
+
+		// Broadcast workspace signin to other tabs
+		if (this._workspaceSyncService.isSupported()) {
+			this._workspaceSyncService.broadcastWorkspaceSignin({
+				tenantId: response.user.tenantId,
+				organizationId: response.user.employee?.organizationId
+			});
+		}
 	}
 
 	/**

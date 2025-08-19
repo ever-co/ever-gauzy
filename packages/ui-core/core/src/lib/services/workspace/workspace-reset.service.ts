@@ -3,7 +3,11 @@ import { Observable, Subject } from 'rxjs';
 import { catchError, takeUntil, tap } from 'rxjs/operators';
 import { IAuthResponse } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { Store, AuthService, ToastrService, TimeTrackerService, TimesheetFilterService } from '@gauzy/ui-core/core';
+import { Store } from '../store';
+import { AuthService } from '../auth';
+import { ToastrService } from '../notification';
+import { TimeTrackerService } from '../time-tracker';
+import { TimesheetFilterService } from '../timesheet';
 
 /**
  * Service responsible for workspace switching with complete application reset.
