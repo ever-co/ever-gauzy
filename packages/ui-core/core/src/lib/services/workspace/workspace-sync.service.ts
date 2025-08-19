@@ -59,6 +59,11 @@ export class WorkspaceSyncService implements OnDestroy {
 	 * Handle incoming messages from other tabs
 	 */
 	private handleIncomingMessage(data: WorkspaceSyncMessage): void {
+		// Ignore malformed messages and messages from the same tab
+		if (!data || data.tabId === this.getTabId()) {
+			return;
+		}
+
 		// Handle workspace operation messages
 		if (Object.values(this.WORKSPACE_OPERATIONS).includes(data.type as WorkspaceOperation)) {
 			this.reloadCurrentTab();
