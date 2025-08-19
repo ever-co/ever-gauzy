@@ -49,6 +49,7 @@ yarn nx serve mcp --args="--test"
 ```
 
 #### 2. HTTP Transport
+
 REST API with JSON-RPC 2.0 for web applications:
 
 ```bash
@@ -62,6 +63,7 @@ yarn nx serve mcp
 ```
 
 #### 3. WebSocket Transport
+
 Real-time bidirectional communication:
 
 ```bash
@@ -70,7 +72,7 @@ MCP_TRANSPORT=websocket
 MCP_SERVER_MODE=websocket
 yarn nx serve mcp
 
-# Server runs on wss://localhost:3002/sse by default
+# Server runs on ws://localhost:3002/sse by default (use wss:// when MCP_WS_TLS=true)
 ```
 
 ### Integration with AI Assistants
@@ -110,6 +112,7 @@ The server communicates via stdio transport, making it compatible with any AI as
 ### Stdio Transport (Default)
 
 Best for AI assistant integration. Configure via environment variables or `.env.local`:
+
 
 ```bash
 # Basic configuration
@@ -153,8 +156,8 @@ MCP_TRUSTED_PROXIES=192.168.1.1,10.0.0.1
 
 # Required Gauzy API settings
 API_BASE_URL=https://apidemo.gauzy.co
-GAUZY_AUTH_EMAIL=employee@ever.co
-GAUZY_AUTH_PASSWORD=123456
+GAUZY_AUTH_EMAIL=<your-email>
+GAUZY_AUTH_PASSWORD=<your-password>
 GAUZY_AUTO_LOGIN=true
 ```
 
@@ -183,8 +186,8 @@ curl -X POST http://localhost:3001/mcp \
     "params": {
       "name": "login",
       "arguments": {
-        "email": "employee@ever.co",
-        "password": "123456"
+          "email": "<your-email>",
+          "password": "<your-password>"
       }
     }
   }'
@@ -222,8 +225,8 @@ MCP_WS_TRUSTED_PROXIES=192.168.1.1,10.0.0.1
 
 # Required Gauzy API settings
 API_BASE_URL=https://apidemo.gauzy.co
-GAUZY_AUTH_EMAIL=employee@ever.co
-GAUZY_AUTH_PASSWORD=123456
+GAUZY_AUTH_EMAIL=<your-email>
+GAUZY_AUTH_PASSWORD=<your-password>
 GAUZY_AUTO_LOGIN=true
 ```
 
@@ -246,14 +249,14 @@ wscat -c ws://localhost:3002/sse
 {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
 
 # Call a tool
-{"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "login", "arguments": {"email": "employee@ever.co", "password": "123456"}}}
+{"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "login", "arguments": {"email": "<your-email>", "password": "<your-password>"}}}
 ```
 
 #### Browser WebSocket Testing
 
 ```javascript
-// Connect to WebSocket in browser console
-const ws = new WebSocket('wss://localhost:3002/sse');
+// Default (TLS disabled): ws://. Use wss:// when MCP_WS_TLS=true
+const ws = new WebSocket('ws://localhost:3002/sse');
 
 ws.onopen = () => console.log('Connected');
 ws.onmessage = (event) => console.log('Received:', JSON.parse(event.data));

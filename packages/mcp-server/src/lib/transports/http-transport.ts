@@ -8,6 +8,7 @@ import { Server } from 'node:http';
 import { McpTransportConfig } from '../common/config';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
+import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 
 const logger = new Logger('HttpTransport');
 
@@ -51,14 +52,14 @@ interface McpTransport {
 type MockTransport = McpTransport;
 
 export interface HttpTransportOptions {
-	server: McpServer;
+	server: ExtendedMcpServer;
 	transportConfig: McpTransportConfig['http'];
 }
 
 export class HttpTransport {
 	private app: express.Application;
 	private httpServer: Server | null = null;
-	private mcpServer: McpServer;
+	private mcpServer: ExtendedMcpServer;
 	private transportConfig: McpTransportConfig['http'];
 	private isInitialized = false;
 
@@ -608,56 +609,11 @@ export class HttpTransport {
 		}
 	}
 
-	private async getTools(): Promise<unknown[]> {
-		// Get tools from the MCP server instance
+	private async getTools(): Promise<ToolDescriptor[]> {
 		try {
-			const toolsList: unknown[] = [];
-			
-			// Access the tools from the server's internal state
-			const serverInternal = this.mcpServer as any;
-			
-			if (serverInternal._registeredTools && typeof serverInternal._registeredTools === 'object') {
-				// Tools are stored as a plain object
-				for (const [name, tool] of Object.entries(serverInternal._registeredTools)) {
-					const toolData = tool as any;
-					
-					// Convert Zod schema to JSON schema if needed
-					let inputSchema = {
-						type: 'object',
-						properties: {},
-						required: []
-					};
-
-					if (toolData.inputSchema) {
-						try {
-							// If it's a Zod schema, try to convert it
-							if (toolData.inputSchema._def) {
-								// Simple conversion for basic Zod schemas
-								inputSchema = {
-									type: 'object',
-									properties: {},
-									required: []
-								};
-							} else {
-								// Use as-is if it's already JSON schema
-								inputSchema = toolData.inputSchema;
-							}
-						} catch (schemaError) {
-							// Use default if conversion fails
-							logger.debug(`Could not convert schema for tool ${name}:`, schemaError);
-						}
-					}
-
-					toolsList.push({
-						name,
-						description: toolData.description || `Tool: ${name}`,
-						inputSchema
-					});
-				}
-			}
-			
-			logger.debug(`Found ${toolsList.length} tools from _registeredTools`);
-			return toolsList;
+			const tools = await this.mcpServer.listTools();
+			logger.debug(`Retrieved ${tools.length} tools from MCP server`);
+			return tools;
 		} catch (error) {
 			logger.error('Error getting tools list:', error);
 			return [];
@@ -674,24 +630,8 @@ export class HttpTransport {
 
 			logger.debug(`Calling tool: ${name} with args:`, args);
 
-			// Access the MCP server's internal tool execution
-			const serverInternal = this.mcpServer as any;
-			if (!serverInternal._registeredTools) {
-				throw new Error('No registered tools found');
-			}
-
-			// Tools are stored as a plain object
-			if (!(name in serverInternal._registeredTools)) {
-				throw new Error(`Tool '${name}' not found`);
-			}
-
-			const tool = serverInternal._registeredTools[name];
-			if (!tool || typeof tool.callback !== 'function') {
-				throw new Error(`Tool '${name}' has no valid callback`);
-			}
-
-			// Execute the tool with the provided arguments
-			const result = await tool.callback(args || {});
+			// Use the public method for tool invocation
+			const result = await this.mcpServer.invokeTool(name, args as Record<string, unknown> || {});
 			logger.debug(`Tool ${name} executed successfully`);
 			
 			return result;

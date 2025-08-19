@@ -60,7 +60,7 @@ export class McpServerManager {
 		return {
 			running: this._isRunning,
 			port: this._transport?.type === 'http' || this._transport?.type === 'websocket' ? this.getHttpPort() : null,
-			version,
+			version: this.getVersion(),
 			transport: this._transport?.type as 'stdio' | 'http' | 'websocket',
 			url: this._transport?.url,
 			uptime: this._startTime ? Date.now() - this._startTime.getTime() : undefined,

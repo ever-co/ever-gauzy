@@ -4,6 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { HttpTransport } from './http-transport';
 import { WebSocketTransport } from './websocket-transport';
 import { config, McpTransportType } from '../common/config';
+import { ExtendedMcpServer } from '../mcp-server';
 
 const logger = new Logger('TransportFactory');
 
@@ -17,7 +18,7 @@ export class TransportFactory {
 	/**
 	 * Creates the appropriate transport based on configuration and environment
 	 */
-	static async createTransport(server: McpServer): Promise<TransportResult> {
+	static async createTransport(server: ExtendedMcpServer): Promise<TransportResult> {
 		const transportType = TransportFactory.detectTransportType();
 
 		logger.log(`🚌 Creating ${transportType} transport...`);
@@ -113,7 +114,7 @@ export class TransportFactory {
 	/**
 	 * Creates a stdio transport
 	 */
-	private static createStdioTransport(server: McpServer): TransportResult {
+	private static createStdioTransport(server: ExtendedMcpServer): TransportResult {
 		logger.log('📟 Setting up stdio transport for MCP communication');
 
 		const transport = new StdioServerTransport();
@@ -127,7 +128,7 @@ export class TransportFactory {
 	/**
 	 * Creates an HTTP transport
 	 */
-	private static async createHttpTransport(server: McpServer): Promise<TransportResult> {
+	private static async createHttpTransport(server: ExtendedMcpServer): Promise<TransportResult> {
 		logger.log('🌐 Setting up HTTP transport for MCP communication');
 
 		const httpTransport = new HttpTransport({
@@ -153,7 +154,7 @@ export class TransportFactory {
 	/**
 	 * Creates a WebSocket transport
 	 */
-	private static async createWebSocketTransport(server: McpServer): Promise<TransportResult> {
+	private static async createWebSocketTransport(server: ExtendedMcpServer): Promise<TransportResult> {
 		logger.log('⚡ Setting up WebSocket transport for MCP communication');
 
 		const wsTransport = new WebSocketTransport({
@@ -180,7 +181,7 @@ export class TransportFactory {
 	/**
 	 * Creates transport with automatic fallback
 	 */
-	private static async createAutoTransport(server: McpServer): Promise<TransportResult> {
+	private static async createAutoTransport(server: ExtendedMcpServer): Promise<TransportResult> {
 		logger.log('🔄 Auto-detecting best transport method...');
 
 		try {
@@ -238,7 +239,7 @@ export class TransportFactory {
 	/**
 	 * Connects the server to the transport
 	 */
-	static async connectServer(server: McpServer, transportResult: TransportResult): Promise<void> {
+	static async connectServer(server: ExtendedMcpServer, transportResult: TransportResult): Promise<void> {
 		const { type, transport } = transportResult;
 
 		if (!transport) {

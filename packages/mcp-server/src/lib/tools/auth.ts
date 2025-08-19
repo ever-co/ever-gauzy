@@ -185,9 +185,12 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 							const userSessions = sessionManager.getUserSessions(authStatus.userId);
 							const activeSessions = userSessions.filter(s => s.isActive);
 
-							// Find current session if sessionId is provided
+							// Find current session if sessionId is provided and owned by current user
 							if (sessionId) {
-								currentSession = sessionManager.getSession(sessionId);
+								const s = sessionManager.getSession(sessionId);
+								if (s && s.userId === authStatus.userId) {
+									currentSession = s;
+								}
 							}
 
 							sessionInfo = `
@@ -258,10 +261,14 @@ ${
 					// Update session activity if requested and session exists
 					if (updateSessionActivity && sessionId) {
 						try {
-							const updated = sessionManager.updateSessionActivity(sessionId, {
-								tokenRefreshed: new Date().toISOString(),
-								newTokenExpiry: authStatus.tokenExpiresAt?.toISOString()
-							});
+							const updated = sessionManager.updateSessionActivity(
+								sessionId,
+								{
+									tokenRefreshed: new Date().toISOString(),
+									newTokenExpiry: authStatus.tokenExpiresAt?.toISOString()
+								},
+								900 // extend TTL by 15 minutes (optional; consider making configurable)
+							);
 							if (updated) {
 								sessionUpdateInfo = '\n🔄 Session activity updated';
 							}

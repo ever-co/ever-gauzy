@@ -3,12 +3,12 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import WebSocket, { WebSocketServer } from 'ws';
 import { IncomingMessage } from 'http';
 import { McpTransportConfig } from '../common/config';
-import { getAllTools, getToolCategory } from '../config/tools-registry';
 import crypto from 'node:crypto';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
 import https from 'node:https';
 import fs from 'node:fs';
+import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 
 const logger = new Logger('WebSocketTransport');
 
@@ -93,18 +93,6 @@ interface WebSocketSessionMiddleware {
 	}>;
 }
 
-// Minimal tool descriptor type for tools/list
-interface ToolDescriptor {
-	name: string;
-	description?: string;
-	inputSchema?: {
-		type: 'object';
-		properties: Record<string, unknown>;
-		required?: string[];
-		additionalProperties?: boolean;
-	};
-}
-
 // WebSocket connection interface
 interface WebSocketConnection {
 	id: string;
@@ -118,13 +106,13 @@ interface WebSocketConnection {
 }
 
 export interface WebSocketTransportOptions {
-	server: McpServer;
+	server: ExtendedMcpServer;
 	transportConfig: McpTransportConfig['websocket'];
 }
 
 export class WebSocketTransport {
 	private wss: WebSocketServer | null = null;
-	private readonly mcpServer: McpServer;
+	private readonly mcpServer: ExtendedMcpServer;
 	private transportConfig: McpTransportConfig['websocket'];
 	private connections = new Map<string, WebSocketConnection>();
 	private heartbeatInterval: NodeJS.Timeout | null = null;
@@ -256,20 +244,20 @@ export class WebSocketTransport {
 		// Validate origin if configured
 		if (this.transportConfig.allowedOrigins !== undefined) {
 			const origin = request.headers.origin;
-			// Handle boolean values
-		if (typeof this.transportConfig.allowedOrigins === 'boolean') {
-			if (!this.transportConfig.allowedOrigins) {
-				logger.warn(`Rejected WebSocket connection: origins not allowed`);
+			if (typeof this.transportConfig.allowedOrigins === 'boolean') {
+				if (!this.transportConfig.allowedOrigins) {
+					logger.warn(`Rejected WebSocket connection: origins not allowed`);
 					ws.close(1008, 'Origins not allowed');
-				return;
-			}
+					return;
+				}
 				// If true, allow all origins
 			} else if (Array.isArray(this.transportConfig.allowedOrigins)) {
-	        // Handle array of allowed origins
+				// Handle array of allowed origins
 				// Check for wildcard first
 				if (this.transportConfig.allowedOrigins.includes('*')) {
 					// Allow all origins when * is present
-					logger.debug(`Allowing WebSocket connection from origin: ${origin || 'undefined'} (wildcard enabled)`);
+					logger.warn(`Allowing ALL WebSocket origins (wildcard '*'). Do not use in production.`);
+					logger.debug(`Connection origin: ${origin || 'undefined'}`);
 				} else if (!origin || !this.transportConfig.allowedOrigins.includes(origin)) {
 					logger.warn(`Rejected WebSocket connection from unauthorized origin: ${origin}`);
 					ws.close(1008, 'Unauthorized origin');
@@ -548,23 +536,10 @@ export class WebSocketTransport {
 				return this.cachedTools;
 			}
 
-			// Fetch and cache tools
-			const tools = getAllTools();
-			this.cachedTools = tools.map(toolName => {
-				const category = getToolCategory(toolName);
-				return {
-					name: toolName,
-					description: `${toolName} - Gauzy ${category || 'general'} tool`,
-					inputSchema: {
-						type: 'object',
-						properties: {},
-						additionalProperties: true
-					}
-				};
-			});
-
+			// Use the public method to get tools from MCP server
+			this.cachedTools = await this.mcpServer.listTools();
 			this.cacheTimestamp = now;
-			logger.debug(`Cached ${this.cachedTools.length} tools from registry`);
+			logger.debug(`Cached ${this.cachedTools.length} tools from MCP server`);
 			return this.cachedTools;
 		} catch (error) {
 			logger.error(`Failed to get tools: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -575,33 +550,17 @@ export class WebSocketTransport {
 	private async callTool(params: Record<string, unknown>): Promise<unknown> {
 		try {
 			const { name, arguments: args } = params;
-			
+
 			if (!name || typeof name !== 'string') {
 				throw new Error('Tool name is required');
 			}
 
 			logger.debug(`Calling tool: ${name} with args:`, args);
 
-			// Access the MCP server's internal tool execution
-			const serverInternal = this.mcpServer as any;
-			if (!serverInternal._registeredTools) {
-				throw new Error('No registered tools found');
-			}
-
-			// Tools are stored as a plain object
-			if (!(name in serverInternal._registeredTools)) {
-				throw new Error(`Tool '${name}' not found`);
-			}
-
-			const tool = serverInternal._registeredTools[name];
-			if (!tool || typeof tool.callback !== 'function') {
-				throw new Error(`Tool '${name}' has no valid callback`);
-			}
-
-			// Execute the tool with the provided arguments
-			const result = await tool.callback(args || {});
+			// Use the public method for tool invocation
+			const result = await this.mcpServer.invokeTool(name, args as Record<string, unknown> || {});
 			logger.debug(`Tool ${name} executed successfully`);
-			
+
 			return result;
 
 		} catch (error) {

@@ -36,11 +36,127 @@ import { registerSkillTools } from './tools/skills';
 const logger = new Logger('McpServer');
 
 /**
+ * Tool descriptor interface for consistent tool representation
+ */
+export interface ToolDescriptor {
+	name: string;
+	description: string;
+	inputSchema: {
+		type: string;
+		properties: Record<string, unknown>;
+		required?: string[];
+		additionalProperties?: boolean;
+	};
+}
+
+/**
+ * Extended MCP Server with public tool access methods
+ */
+export class ExtendedMcpServer extends McpServer {
+	/**
+	 * Get list of all registered tools in a consistent format
+	 */
+	public async listTools(): Promise<ToolDescriptor[]> {
+		try {
+			const toolsList: ToolDescriptor[] = [];
+			
+			// Access the tools from the server's internal state
+			const serverInternal = this as any;
+			
+			if (serverInternal._registeredTools && typeof serverInternal._registeredTools === 'object') {
+				// Tools are stored as a plain object
+				for (const [name, tool] of Object.entries(serverInternal._registeredTools)) {
+					const toolData = tool as any;
+					
+					// Convert Zod schema to JSON schema if needed
+					let inputSchema = {
+						type: 'object',
+						properties: {},
+						required: []
+					};
+
+					if (toolData.inputSchema) {
+						try {
+							// If it's a Zod schema, try to convert it
+							if (toolData.inputSchema._def) {
+								// Simple conversion for basic Zod schemas
+								inputSchema = {
+									type: 'object',
+									properties: {},
+									required: []
+								};
+							} else {
+								// Use as-is if it's already JSON schema
+								inputSchema = toolData.inputSchema;
+							}
+						} catch (schemaError) {
+							// Use default if conversion fails
+							logger.debug(`Could not convert schema for tool ${name}:`, schemaError);
+						}
+					}
+
+					toolsList.push({
+						name,
+						description: toolData.description || `Tool: ${name}`,
+						inputSchema
+					});
+				}
+			}
+			
+			logger.debug(`Found ${toolsList.length} tools from _registeredTools`);
+			return toolsList;
+		} catch (error) {
+			logger.error('Error getting tools list:', error);
+			return [];
+		}
+	}
+
+	/**
+	 * Invoke a tool with proper validation, lookup, and execution
+	 */
+	public async invokeTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+		try {
+			if (!name || typeof name !== 'string') {
+				throw new Error('Tool name is required');
+			}
+
+			logger.debug(`Invoking tool: ${name} with args:`, args);
+
+			// Access the MCP server's internal tool execution
+			const serverInternal = this as any;
+			if (!serverInternal._registeredTools) {
+				throw new Error('No registered tools found');
+			}
+
+			// Tools are stored as a plain object
+			if (!(name in serverInternal._registeredTools)) {
+				throw new Error(`Tool '${name}' not found`);
+			}
+
+			const tool = serverInternal._registeredTools[name];
+			if (!tool || typeof tool.callback !== 'function') {
+				throw new Error(`Tool '${name}' has no valid callback`);
+			}
+
+			// Execute the tool with the provided arguments
+			const result = await tool.callback(args || {});
+			logger.debug(`Tool ${name} executed successfully`);
+			
+			return result;
+
+		} catch (error) {
+			logger.error('Error invoking tool:', error);
+			throw error;
+		}
+	}
+}
+
+/**
  * Creates and configures the Gauzy MCP Server
  * @param sessionId - Optional session ID for session-aware operations
  */
 export function createMcpServer(sessionId?: string) {
-	const server = new McpServer({
+	const server = new ExtendedMcpServer({
 		name: 'gauzy-mcp-server',
 		version,
 		capabilities: {
@@ -104,7 +220,9 @@ export async function createMcpServerAsync(sessionId?: string) {
 		return createMcpServer(sessionId);
 	} catch (error) {
 		logger.error(`Failed to initialize session manager: ${sanitizeErrorMessage(error)}`);
-    	throw new Error(`Session manager initialization failed: ${sanitizeErrorMessage(error)}`);
+    	const e = new Error(`Session manager initialization failed: ${sanitizeErrorMessage(error)}`);
+    	(e as any).cause = error;
+    	throw e;
 	}
 }
 
