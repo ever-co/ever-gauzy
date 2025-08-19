@@ -60,7 +60,7 @@ export class WorkspaceSyncService implements OnDestroy {
 		}
 
 		// Handle workspace operation messages
-		if (Object.values(WORKSPACE_OPERATIONS).includes(data.type as WorkspaceOperation)) {
+		if (Object.values(WORKSPACE_OPERATIONS).includes(data.type)) {
 			this.reloadCurrentTab();
 		}
 	}
