@@ -165,15 +165,11 @@ export class WorkspaceSyncService implements OnDestroy {
 	 * Check if Broadcast Channel is supported and available
 	 */
 	public isSupported(): boolean {
-		const supported = typeof BroadcastChannel !== 'undefined';
-
-		if (supported) {
-			if (!this.broadcastChannel) {
-				this.initializeBroadcastChannel();
-			}
+		const hasAPI = typeof BroadcastChannel !== 'undefined';
+		if (hasAPI && !this.broadcastChannel) {
+			this.initializeBroadcastChannel();
 		}
-
-		return supported;
+		return hasAPI && !!this.broadcastChannel;
 	}
 
 	private generateTabId(): string {
