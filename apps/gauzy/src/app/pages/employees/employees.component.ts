@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
@@ -44,13 +44,7 @@ import {
 	TagsOnlyComponent,
 	ToggleFilterComponent
 } from '@gauzy/ui-core/shared';
-import {
-	EmployeeAverageBonusComponent,
-	EmployeeAverageExpensesComponent,
-	EmployeeAverageIncomeComponent,
-	EmployeeTimeTrackingStatusComponent,
-	EmployeeWorkStatusComponent
-} from './table-components';
+import { EmployeeTimeTrackingStatusComponent, EmployeeWorkStatusComponent } from './table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -59,7 +53,7 @@ import {
 	styleUrls: ['./employees.component.scss'],
 	standalone: false
 })
-export class EmployeesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+export class EmployeesComponent extends PaginationFilterBaseComponent implements OnInit {
 	public dataTableId: PageDataTableRegistryId = this._route.snapshot.data.dataTableId; // The identifier for the data table
 	public settingsSmartTable: Settings;
 	public smartTableSource: ServerDataSource;
@@ -628,9 +622,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			isActive,
 			endWork,
 			tags,
-			averageIncome = 0,
+			// Hidden from the table according to the task https://trello.com/c/78ttN8d4/409-remove-average-income-expenses-and-bonus-columns-from-table
+			/*averageIncome = 0,
 			averageExpenses = 0,
-			averageBonus = 0,
+			averageBonus = 0,*/
 			startedWorkOn,
 			isTrackingEnabled,
 			isDeleted
@@ -654,9 +649,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			imageUrl: imageUrl || '',
 			tags: tags || [],
 			bonus: this.bonusForSelectedMonth, // TODO: load real bonus and bonusDate
-			averageIncome: Math.floor(averageIncome),
-			averageExpenses: Math.floor(averageExpenses),
-			averageBonus: Math.floor(averageBonus),
+			// Hidden from the table according to the task https://trello.com/c/78ttN8d4/409-remove-average-income-expenses-and-bonus-columns-from-table
+			//averageIncome: Math.floor(averageIncome),
+			//averageExpenses: Math.floor(averageExpenses),
+			//averageBonus: Math.floor(averageBonus),
 			bonusDate: Date.now(), // Placeholder for actual bonus date
 			employeeId: id,
 			employee,
@@ -708,7 +704,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				},
 				filterFunction: this._getFilterFunction('user.email')
 			},
-			{
+			// Hidden from the table according to the task https://trello.com/c/78ttN8d4/409-remove-average-income-expenses-and-bonus-columns-from-table
+			/*{
 				dataTableId: this.dataTableId,
 				columnId: 'averageIncome',
 				order: 2,
@@ -752,11 +749,11 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				componentInitFunction: (instance: EmployeeAverageBonusComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
 				}
-			},
+			},*/
 			{
 				dataTableId: this.dataTableId,
 				columnId: 'isTrackingEnabled',
-				order: 5,
+				order: 2,
 				title: () => this.getTranslation('SM_TABLE.TIME_TRACKING'),
 				type: 'custom',
 				isFilterable: true,
@@ -776,7 +773,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			{
 				dataTableId: this.dataTableId,
 				columnId: 'tags',
-				order: 6,
+				order: 3,
 				title: () => this.getTranslation('SM_TABLE.TAGS'),
 				type: 'custom',
 				width: '20%',
@@ -800,7 +797,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			{
 				dataTableId: this.dataTableId,
 				columnId: 'workStatus',
-				order: 7,
+				order: 4,
 				title: () => this.getTranslation('SM_TABLE.STATUS'),
 				type: 'custom',
 				class: 'text-center',
@@ -1031,6 +1028,4 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			this.employees$.next(true);
 		}
 	}
-
-	ngOnDestroy(): void {}
 }
