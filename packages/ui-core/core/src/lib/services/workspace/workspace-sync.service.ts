@@ -1,5 +1,10 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { WorkspaceOperation, WorkspaceSyncMessage, WorkspaceSyncPayload } from './types/workspace-sync-type';
+import {
+	WORKSPACE_OPERATIONS,
+	WorkspaceOperation,
+	WorkspaceSyncMessage,
+	WorkspaceSyncPayload
+} from './types/workspace-sync-type';
 
 /**
  * Service for synchronizing workspace operations across multiple browser tabs.
@@ -11,17 +16,6 @@ import { WorkspaceOperation, WorkspaceSyncMessage, WorkspaceSyncPayload } from '
 export class WorkspaceSyncService implements OnDestroy {
 	private readonly CHANNEL_NAME = 'gauzy-workspace-sync';
 	private broadcastChannel: BroadcastChannel | null = null;
-
-	/**
-	 * Types of workspace operations that trigger cross-tab synchronization
-	 */
-	public readonly WORKSPACE_OPERATIONS = {
-		CREATED: 'workspace-created',
-		SWITCHED: 'workspace-switched',
-		SIGNIN: 'workspace-signin',
-		UPDATED: 'workspace-updated',
-		DELETED: 'workspace-deleted'
-	} as const;
 
 	constructor() {
 		this.initializeBroadcastChannel();
@@ -65,7 +59,7 @@ export class WorkspaceSyncService implements OnDestroy {
 		}
 
 		// Handle workspace operation messages
-		if (Object.values(this.WORKSPACE_OPERATIONS).includes(data.type as WorkspaceOperation)) {
+		if (Object.values(WORKSPACE_OPERATIONS).includes(data.type as WorkspaceOperation)) {
 			this.reloadCurrentTab();
 		}
 	}
@@ -96,35 +90,35 @@ export class WorkspaceSyncService implements OnDestroy {
 	 * Broadcast workspace creation event
 	 */
 	public broadcastWorkspaceCreated(workspaceData?: WorkspaceSyncPayload): void {
-		this.broadcastWorkspaceOperation(this.WORKSPACE_OPERATIONS.CREATED, workspaceData);
+		this.broadcastWorkspaceOperation(WORKSPACE_OPERATIONS.CREATED, workspaceData);
 	}
 
 	/**
 	 * Broadcast workspace switch event
 	 */
 	public broadcastWorkspaceSwitched(workspaceData?: WorkspaceSyncPayload): void {
-		this.broadcastWorkspaceOperation(this.WORKSPACE_OPERATIONS.SWITCHED, workspaceData);
+		this.broadcastWorkspaceOperation(WORKSPACE_OPERATIONS.SWITCHED, workspaceData);
 	}
 
 	/**
 	 * Broadcast workspace signin event
 	 */
 	public broadcastWorkspaceSignin(workspaceData?: WorkspaceSyncPayload): void {
-		this.broadcastWorkspaceOperation(this.WORKSPACE_OPERATIONS.SIGNIN, workspaceData);
+		this.broadcastWorkspaceOperation(WORKSPACE_OPERATIONS.SIGNIN, workspaceData);
 	}
 
 	/**
 	 * Broadcast workspace update event
 	 */
 	public broadcastWorkspaceUpdated(workspaceData?: WorkspaceSyncPayload): void {
-		this.broadcastWorkspaceOperation(this.WORKSPACE_OPERATIONS.UPDATED, workspaceData);
+		this.broadcastWorkspaceOperation(WORKSPACE_OPERATIONS.UPDATED, workspaceData);
 	}
 
 	/**
 	 * Broadcast workspace deletion event
 	 */
 	public broadcastWorkspaceDeleted(workspaceData?: WorkspaceSyncPayload): void {
-		this.broadcastWorkspaceOperation(this.WORKSPACE_OPERATIONS.DELETED, workspaceData);
+		this.broadcastWorkspaceOperation(WORKSPACE_OPERATIONS.DELETED, workspaceData);
 	}
 
 	/**
