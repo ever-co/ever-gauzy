@@ -13,7 +13,6 @@ export * from './lib/components/organization/organization.component';
 export * from './lib/components/pick-employee/pick-employee.component';
 export * from './lib/components/public-appointment/public-appointment.component';
 export * from './lib/components/public-layout.component';
-export * from './lib/components/workspace-actions/shared/workspace-sync.service';
 export * from './lib/public-layout.module';
 export * from './lib/public-layout.routes';
 export * from './lib/resolvers/public-employee.resolver';
