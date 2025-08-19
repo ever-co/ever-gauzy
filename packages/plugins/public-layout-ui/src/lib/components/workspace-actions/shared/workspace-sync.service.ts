@@ -59,21 +59,28 @@ export class WorkspaceSyncService implements OnDestroy {
 	/**
 	 * Handle incoming messages from other tabs
 	 */
-	private handleIncomingMessage(data: any): void {
-		if (!data || !data.type) return;
-
-		const { type, payload, timestamp, tabId } = data;
+	private handleIncomingMessage(data: unknown): void {
+		if (!data || typeof data !== 'object') return;
+		const { type, payload, timestamp, tabId } = data as {
+			type?: string;
+			payload?: unknown;
+			timestamp?: number;
+			tabId?: string;
+		};
+		if (typeof type !== 'string') return;
 
 		// Ignore messages from the same tab
-		if (tabId === this.getTabId()) return;
+		const myTabId = this.getTabId();
+		if (tabId === myTabId) return;
 
 		// Check if message is recent (within last 5 seconds to avoid stale messages)
+		if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) return;
 		const messageAge = Date.now() - timestamp;
 		if (messageAge > 5000) return;
 
 		// Handle workspace operation messages
-		if (Object.values(this.WORKSPACE_OPERATIONS).includes(type)) {
-			this.reloadCurrentTab(type, payload);
+		if (Object.values(this.WORKSPACE_OPERATIONS).includes(type as any)) {
+			this.reloadCurrentTab(type, payload as any);
 		}
 	}
 
