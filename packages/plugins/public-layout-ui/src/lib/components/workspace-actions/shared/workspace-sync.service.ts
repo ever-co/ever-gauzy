@@ -73,14 +73,10 @@ export class WorkspaceSyncService implements OnDestroy {
 	/**
 	 * Handle incoming messages from other tabs
 	 */
-	private handleIncomingMessage(data: unknown): void {
+	private handleIncomingMessage(data: WorkspaceSyncMessage): void {
 		if (!data || typeof data !== 'object') return;
-		const { type, payload, timestamp, tabId } = data as {
-			type?: string;
-			payload?: unknown;
-			timestamp?: number;
-			tabId?: string;
-		};
+		const { type, timestamp, tabId } = data;
+
 		if (typeof type !== 'string') return;
 
 		// Ignore messages from the same tab
@@ -94,7 +90,7 @@ export class WorkspaceSyncService implements OnDestroy {
 
 		// Handle workspace operation messages
 		if (Object.values(this.WORKSPACE_OPERATIONS).includes(type as any)) {
-			this.reloadCurrentTab(type, payload as any);
+			this.reloadCurrentTab();
 		}
 	}
 
@@ -121,45 +117,48 @@ export class WorkspaceSyncService implements OnDestroy {
 	/**
 	 * Broadcast workspace creation event
 	 */
-	public broadcastWorkspaceCreated(workspaceData?: any): void {
+	public broadcastWorkspaceCreated(workspaceData?: WorkspaceSyncPayload): void {
 		this.broadcastWorkspaceOperation(this.WORKSPACE_OPERATIONS.CREATED, workspaceData);
 	}
 
 	/**
 	 * Broadcast workspace switch event
 	 */
-	public broadcastWorkspaceSwitched(workspaceData?: any): void {
+	public broadcastWorkspaceSwitched(workspaceData?: WorkspaceSyncPayload): void {
 		this.broadcastWorkspaceOperation(this.WORKSPACE_OPERATIONS.SWITCHED, workspaceData);
 	}
 
 	/**
 	 * Broadcast workspace signin event
 	 */
-	public broadcastWorkspaceSignin(workspaceData?: any): void {
+	public broadcastWorkspaceSignin(workspaceData?: WorkspaceSyncPayload): void {
 		this.broadcastWorkspaceOperation(this.WORKSPACE_OPERATIONS.SIGNIN, workspaceData);
 	}
 
 	/**
 	 * Broadcast workspace update event
 	 */
-	public broadcastWorkspaceUpdated(workspaceData?: any): void {
+	public broadcastWorkspaceUpdated(workspaceData?: WorkspaceSyncPayload): void {
 		this.broadcastWorkspaceOperation(this.WORKSPACE_OPERATIONS.UPDATED, workspaceData);
 	}
 
 	/**
 	 * Broadcast workspace deletion event
 	 */
-	public broadcastWorkspaceDeleted(workspaceData?: any): void {
+	public broadcastWorkspaceDeleted(workspaceData?: WorkspaceSyncPayload): void {
 		this.broadcastWorkspaceOperation(this.WORKSPACE_OPERATIONS.DELETED, workspaceData);
 	}
 
 	/**
 	 * Reload the current tab to reflect workspace changes
 	 */
-	private reloadTimer: any;
-	private reloadCurrentTab(_operation: string, _payload?: any): void {
-		clearTimeout(this.reloadTimer);
-		this.reloadTimer = setTimeout(() => window.location.reload(), 150);
+	private reloadTimer: ReturnType<typeof setTimeout> | null = null;
+
+	private reloadCurrentTab(): void {
+		if (this.reloadTimer) {
+			clearTimeout(this.reloadTimer);
+		}
+		this.reloadTimer = setTimeout(() => window.location.reload(), 100);
 	}
 
 	/**
