@@ -1,5 +1,4 @@
 import { Logger } from '@nestjs/common';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -9,6 +8,8 @@ import { McpTransportConfig } from '../common/config';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
 import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
+import { getEnhancedSecurityHeaders, validateMCPToolInput, validateRequestSize } from '../common/security-config';
+import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 
 const logger = new Logger('HttpTransport');
 
@@ -80,8 +81,30 @@ export class HttpTransport {
 			allowedHeaders: ['Content-Type', 'Authorization', 'mcp-session-id', 'mcp-csrf-token']
 		}));
 
-		// JSON parsing
-		this.app.use(express.json({ limit: '10mb' }));
+		// Enhanced security headers
+		this.app.use((req, res, next) => {
+			const securityHeaders = getEnhancedSecurityHeaders();
+			for (const [header, value] of Object.entries(securityHeaders)) {
+				res.setHeader(header, value);
+			}
+			next();
+		});
+
+		// JSON parsing with enhanced validation
+		this.app.use(express.json({
+			limit: process.env.NODE_ENV === 'production' ? '1mb' : '10mb',
+			verify: (req, res, buf) => {
+				const validation = validateRequestSize(buf, process.env.NODE_ENV === 'production' ? 1024 * 1024 : 10 * 1024 * 1024);
+				if (!validation.valid) {
+					SecurityLogger.logSecurityEvent(SecurityEvents.LARGE_REQUEST, 'medium', {
+						size: buf.length,
+						ip: req.socket?.remoteAddress || 'unknown',
+						error: validation.error
+					});
+					throw new Error(validation.error);
+				}
+			}
+		}));
 
 		// Cookie parsing for session management
 		this.app.use(cookieParser());
@@ -623,17 +646,27 @@ export class HttpTransport {
 	private async callTool(params: Record<string, unknown>): Promise<unknown> {
 		try {
 			const { name, arguments: args } = params;
-			
+
 			if (!name || typeof name !== 'string') {
 				throw new Error('Tool name is required');
 			}
 
-			logger.debug(`Calling tool: ${name} with args:`, args);
+			// Enhanced input validation
+			const validation = validateMCPToolInput(name, args || {});
+			if (!validation.valid) {
+				SecurityLogger.logSecurityEvent(SecurityEvents.TOOL_VALIDATION_FAILED, 'medium', {
+					tool: name,
+					errors: validation.errors
+				});
+				throw new Error(`Invalid tool input: ${validation.errors.join(', ')}`);
+			}
 
-			// Use the public method for tool invocation
-			const result = await this.mcpServer.invokeTool(name, args as Record<string, unknown> || {});
+			logger.debug(`Calling tool: ${name} with args:`, validation.sanitized);
+
+			// Use the public method for tool invocation with sanitized args
+			const result = await this.mcpServer.invokeTool(name, validation.sanitized);
 			logger.debug(`Tool ${name} executed successfully`);
-			
+
 			return result;
 
 		} catch (error) {

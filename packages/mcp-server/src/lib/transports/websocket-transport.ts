@@ -1,5 +1,4 @@
 import { Logger } from '@nestjs/common';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import WebSocket, { WebSocketServer } from 'ws';
 import { IncomingMessage } from 'http';
 import { McpTransportConfig } from '../common/config';
@@ -7,8 +6,9 @@ import crypto from 'node:crypto';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
 import https from 'node:https';
-import fs from 'node:fs';
 import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
+import { getEnhancedTLSOptions, validateMCPToolInput, validateRequestSize } from '../common/security-config';
+import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 
 const logger = new Logger('WebSocketTransport');
 
@@ -149,23 +149,25 @@ export class WebSocketTransport {
 				if (!this.transportConfig.cert || !this.transportConfig.key) {
 					throw new Error('TLS enabled but cert/key not provided in websocket config');
 				}
-				const cert = fs.readFileSync(this.transportConfig.cert);
-				const key = fs.readFileSync(this.transportConfig.key);
-				httpsServer = https.createServer({ cert, key });
+				// Use enhanced TLS configuration for production security
+				const tlsOptions = getEnhancedTLSOptions(this.transportConfig.cert, this.transportConfig.key);
+				httpsServer = https.createServer(tlsOptions);
 				httpsServer.listen(this.transportConfig.port, this.transportConfig.host);
 				this.wss = new WebSocketServer({
 					server: httpsServer,
 					perMessageDeflate,
-					maxPayload: this.transportConfig.maxPayload || 16 * 1024 * 1024, // 16MB default
+					maxPayload: this.transportConfig.maxPayload || 1024 * 1024, // 1MB for security
 					path: this.transportConfig.path,
+					verifyClient: (info) => this.verifyClient(info),
 				});
 			} else {
 				this.wss = new WebSocketServer({
 					port: this.transportConfig.port,
 					host: this.transportConfig.host,
 					perMessageDeflate,
-					maxPayload: this.transportConfig.maxPayload || 16 * 1024 * 1024, // 16MB default
+					maxPayload: this.transportConfig.maxPayload || 1024 * 1024, // 1MB for security
 					path: this.transportConfig.path,
+					verifyClient: (info) => this.verifyClient(info),
 				});
 			}
 
@@ -787,5 +789,80 @@ export class WebSocketTransport {
 		}
 
 		return stats;
+	}
+
+	/**
+	 * Enhanced client verification for security
+	 */
+	private verifyClient(info: { req: IncomingMessage; origin: string; secure: boolean }): boolean {
+		const req = info.req;
+		const origin = info.origin;
+		const ip = req.socket.remoteAddress || 'unknown';
+
+		// Rate limiting by IP
+		const recentConnections = SecurityLogger.getEventsByIP(ip, 1); // Last hour
+		if (recentConnections.length > 100) {
+			SecurityLogger.logSecurityEvent(SecurityEvents.RATE_LIMIT_EXCEEDED, 'medium', { ip, origin });
+			return false;
+		}
+
+		// Origin validation in production
+		if (process.env.NODE_ENV === 'production') {
+			const allowedOrigins = this.transportConfig.allowedOrigins || [];
+			if (allowedOrigins.length > 0 && !allowedOrigins.includes(origin)) {
+				SecurityLogger.logSecurityEvent('unauthorized_origin', 'medium', { ip, origin });
+				return false;
+			}
+		}
+
+		// User agent validation
+		const userAgent = req.headers['user-agent'];
+		if (userAgent && /bot|crawler|spider|scraper/i.test(userAgent)) {
+			SecurityLogger.logSecurityEvent('suspicious_user_agent', 'low', { ip, userAgent });
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Enhanced message validation with security checks
+	 */
+	private validateMessage(data: Buffer, connection: WebSocketConnection): { valid: boolean; error?: string } {
+		// Size validation
+		const sizeValidation = validateRequestSize(data, 1024 * 1024); // 1MB limit
+		if (!sizeValidation.valid) {
+			SecurityLogger.logSecurityEvent(SecurityEvents.LARGE_REQUEST, 'medium', {
+				size: data.length,
+				connectionId: connection.id
+			});
+			return sizeValidation;
+		}
+
+		try {
+			const message = JSON.parse(data.toString());
+
+			// Basic structure validation
+			if (!message.jsonrpc || message.jsonrpc !== '2.0') {
+				return { valid: false, error: 'Invalid JSON-RPC format' };
+			}
+
+			// Method validation for tool calls
+			if (message.method === 'tools/call') {
+				const validation = validateMCPToolInput(message.params?.name || '', message.params?.arguments || {});
+				if (!validation.valid) {
+					SecurityLogger.logSecurityEvent(SecurityEvents.TOOL_VALIDATION_FAILED, 'medium', {
+						tool: message.params?.name,
+						errors: validation.errors,
+						connectionId: connection.id
+					});
+					return { valid: false, error: validation.errors.join(', ') };
+				}
+			}
+
+			return { valid: true };
+		} catch (error) {
+			return { valid: false, error: 'Invalid JSON format' };
+		}
 	}
 }

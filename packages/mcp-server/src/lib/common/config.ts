@@ -26,7 +26,7 @@ export interface McpTransportConfig {
 		/** Per-message deflate extension - enables compression on individual messages when compression is enabled */
 		perMessageDeflate?: boolean;
 		maxPayload?: number;
-		allowedOrigins?: string[] | boolean;
+		allowedOrigins?: string[];
 		tls?: boolean;
 		cert?: string;
 		key?: string;

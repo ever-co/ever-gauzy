@@ -1,5 +1,7 @@
 import { environment } from '../environments/environment';
-import { randomBytes, createHash } from 'node:crypto';
+import { randomBytes, createHash, constants } from 'node:crypto';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 /**
  * Generate a cryptographically secure nonce for CSP
@@ -63,6 +65,56 @@ export function getSecurityHeaders(options?: { scriptNonce?: string; styleNonce?
 		// Permissions policy
 		'Permissions-Policy':
 			'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), speaker=(), ambient-light-sensor=(), accelerometer=(), autoplay=()'
+	};
+}
+
+/**
+ * Get enhanced security headers for enterprise production deployment
+ * @param options - Options for customizing security headers
+ */
+export function getEnhancedSecurityHeaders(options?: { scriptNonce?: string; styleNonce?: string }): Record<string, string> {
+	const baseHeaders = getSecurityHeaders(options);
+
+	return {
+		...baseHeaders,
+
+		// Enhanced security headers for enterprise
+		'Cross-Origin-Embedder-Policy': 'require-corp',
+		'Cross-Origin-Opener-Policy': 'same-origin',
+		'Cross-Origin-Resource-Policy': 'same-origin',
+		'X-DNS-Prefetch-Control': 'off',
+		'X-Permitted-Cross-Domain-Policies': 'none',
+		'X-Powered-By': '', // Remove server fingerprinting
+		'Server': '', // Remove server fingerprinting
+
+		// Certificate transparency
+		...(environment.production
+			? {
+					'Expect-CT': 'max-age=86400, enforce, report-uri="https://your-domain.com/ct-report"'
+			  }
+			: {}),
+
+		// Enhanced feature policy
+		'Feature-Policy': [
+			'geolocation \'none\'',
+			'microphone \'none\'',
+			'camera \'none\'',
+			'payment \'none\'',
+			'usb \'none\'',
+			'magnetometer \'none\'',
+			'gyroscope \'none\'',
+			'speaker \'none\'',
+			'ambient-light-sensor \'none\'',
+			'accelerometer \'none\'',
+			'autoplay \'none\'',
+			'encrypted-media \'none\'',
+			'fullscreen \'none\'',
+			'midi \'none\'',
+			'notifications \'none\'',
+			'push \'none\'',
+			'sync-xhr \'none\'',
+			'vibrate \'none\''
+		].join(', ')
 	};
 }
 
@@ -364,9 +416,68 @@ export function isTrustedSource(userAgent?: string, origin?: string): boolean {
 	return true;
 }
 
+/**
+ * Enhanced TLS configuration for production
+ */
+export function getEnhancedTLSOptions(certPath?: string, keyPath?: string) {
+	const certFile = certPath || process.env.TLS_CERT_PATH || path.join(process.cwd(), 'certs', 'cert.pem');
+	const keyFile = keyPath || process.env.TLS_KEY_PATH || path.join(process.cwd(), 'certs', 'key.pem');
+
+	return {
+		key: fs.readFileSync(keyFile),
+		cert: fs.readFileSync(certFile),
+		minVersion: 'TLSv1.2' as const,
+		maxVersion: 'TLSv1.3' as const,
+		honorCipherOrder: true,
+		ciphers: 'ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384',
+		secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_TLSv1 | constants.SSL_OP_NO_TLSv1_1
+	};
+}
+
+/**
+ * Enhanced input validation for MCP tools
+ */
+export function validateMCPToolInput(toolName: string, args: any): { valid: boolean; errors: string[]; sanitized: any } {
+	const errors: string[] = [];
+	
+	const isUUID = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+	const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && v.length <= 254;
+
+	// Validate using original args (before sanitization)
+	const rules: Record<string, (args: any) => void> = {
+		login: (a) => {
+			if (!a.email || !isEmail(a.email)) errors.push('Invalid email');
+			if (!a.password || a.password.length < 4) errors.push('Invalid password');
+		},
+		get_projects: (a) => {
+			if (a.organizationId && !isUUID(a.organizationId)) errors.push('Invalid organizationId');
+			if (a.limit && (typeof a.limit !== 'number' || a.limit > 1000)) errors.push('Invalid limit');
+		}
+	};
+
+	rules[toolName]?.(args);
+	
+	// For sensitive data like login credentials, don't sanitize - return original
+	const sanitized = toolName === 'login' ? { ...args } : sanitizeInput({ ...args });
+	
+	return { valid: errors.length === 0, errors, sanitized };
+}
+
+/**
+ * Request size validation
+ */
+export function validateRequestSize(buffer: Buffer, maxSize: number = 1024 * 1024): { valid: boolean; error?: string } {
+	if (buffer.length > maxSize) return { valid: false, error: 'Request too large' };
+	const content = buffer.toString('utf8');
+	if (/<script|javascript:|eval\(/.test(content)) return { valid: false, error: 'Suspicious content' };
+	return { valid: true };
+}
+
 // Export the security configuration as an object for backward compatibility
 export const securityConfig = {
 	getSecurityHeaders,
+	getEnhancedSecurityHeaders,
+	getEnhancedTLSOptions,
 	getValidationPatterns,
 	getRateLimits,
 	getEnvironmentRules,
@@ -377,5 +488,7 @@ export const securityConfig = {
 	generateCSPNonce,
 	generateCSPHash,
 	getCSPHeaderWithHashes,
-	CSPNonceManager
+	CSPNonceManager,
+	validateMCPToolInput,
+	validateRequestSize
 };
