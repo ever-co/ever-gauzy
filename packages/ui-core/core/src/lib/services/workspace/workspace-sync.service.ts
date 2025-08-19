@@ -136,7 +136,9 @@ export class WorkspaceSyncService implements OnDestroy {
 		if (this.reloadTimer) {
 			clearTimeout(this.reloadTimer);
 		}
-		this.reloadTimer = setTimeout(() => window.location.reload(), 150);
+		if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
+			this.reloadTimer = setTimeout(() => window.location.reload(), 150);
+		}
 	}
 
 	/**
