@@ -455,20 +455,23 @@ export function validateMCPToolInput(toolName: string, args: any): { valid: bool
 	};
 
 	// Validate using original args (before sanitization)
-	const rules: Record<string, (args: any) => void> = {
-		login: (a) => {
+	const rules = new Map<string, (args: any) => void>([
+		['login', (a) => {
 			if (!a.email || !isEmail(a.email)) errors.push('Invalid email');
 			const minPasswordLength = process.env.NODE_ENV === 'production' ? 8 : 4;
 			if (!a.password || a.password.length < minPasswordLength) errors.push(`Invalid password (minimum length: ${minPasswordLength})`);
-		},
-		get_projects: (a) => {
+		}],
+		['get_projects', (a) => {
 			if (a.organizationId && !isUUID(a.organizationId)) errors.push('Invalid organizationId');
 			if (a.limit && (typeof a.limit !== 'number' || a.limit > 1000)) errors.push('Invalid limit');
-		}
-	};
+		}]
+	]);
 
-	if (Object.prototype.hasOwnProperty.call(rules, toolName) && typeof rules[toolName] === 'function') {
-		rules[toolName](args);
+	if (rules.has(toolName)) {
+		const ruleFn = rules.get(toolName);
+		if (typeof ruleFn === 'function') {
+			ruleFn(args);
+		}
 	}
 
 	// For sensitive data like login credentials, don't sanitize - return original
