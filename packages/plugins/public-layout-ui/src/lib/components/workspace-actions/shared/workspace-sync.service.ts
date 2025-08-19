@@ -89,7 +89,7 @@ export class WorkspaceSyncService implements OnDestroy {
 		if (messageAge > 5000) return;
 
 		// Handle workspace operation messages
-		if (Object.values(this.WORKSPACE_OPERATIONS).includes(type as any)) {
+		if (Object.values(this.WORKSPACE_OPERATIONS).includes(type as WorkspaceOperation)) {
 			this.reloadCurrentTab();
 		}
 	}
