@@ -35,6 +35,7 @@ yarn nx build mcp --configuration=production
 The server supports three transport modes configured via environment variables:
 
 #### 1. Stdio Transport (Default)
+
 Best for Claude Desktop and AI assistant integration:
 
 ```bash
@@ -112,7 +113,6 @@ The server communicates via stdio transport, making it compatible with any AI as
 ### Stdio Transport (Default)
 
 Best for AI assistant integration. Configure via environment variables or `.env.local`:
-
 
 ```bash
 # Basic configuration
@@ -441,6 +441,7 @@ GAUZY_MCP_DEBUG=true MCP_TRANSPORT=websocket yarn nx serve mcp
 ```
 
 This provides detailed information about:
+
 - Transport layer connections and messages
 - API requests and responses to Gauzy
 - Authentication status and session management
@@ -490,6 +491,7 @@ yarn nx serve mcp
 ## Support
 
 For issues specific to the standalone MCP server:
+
 1. Check the troubleshooting section above
 2. Review the shared MCP server package documentation
 3. Verify your Gauzy API server is running and accessible

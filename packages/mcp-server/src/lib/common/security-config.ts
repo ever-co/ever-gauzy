@@ -94,27 +94,6 @@ export function getEnhancedSecurityHeaders(options?: { scriptNonce?: string; sty
 			  }
 			: {}),
 
-		// Enhanced feature policy
-		'Feature-Policy': [
-			'geolocation \'none\'',
-			'microphone \'none\'',
-			'camera \'none\'',
-			'payment \'none\'',
-			'usb \'none\'',
-			'magnetometer \'none\'',
-			'gyroscope \'none\'',
-			'speaker \'none\'',
-			'ambient-light-sensor \'none\'',
-			'accelerometer \'none\'',
-			'autoplay \'none\'',
-			'encrypted-media \'none\'',
-			'fullscreen \'none\'',
-			'midi \'none\'',
-			'notifications \'none\'',
-			'push \'none\'',
-			'sync-xhr \'none\'',
-			'vibrate \'none\''
-		].join(', ')
 	};
 }
 
@@ -232,7 +211,7 @@ export function getValidationPatterns() {
 		uuid: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
 
 		// Email pattern (basic)
-		email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+		email: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
 
 		// Safe string (alphanumeric, spaces, basic punctuation)
 		safeString: /^[a-zA-Z0-9\s\-._@]+$/,
@@ -246,8 +225,8 @@ export function getValidationPatterns() {
 		// ISO date pattern
 		isoDate: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/,
 
-		// URL pattern (basic)
-		url: /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/
+		// URL pattern (basic) - simplified to avoid ReDoS
+		url: /^https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?$/
 	};
 }
 
@@ -423,15 +402,36 @@ export function getEnhancedTLSOptions(certPath?: string, keyPath?: string) {
 	const certFile = certPath || process.env.TLS_CERT_PATH || path.join(process.cwd(), 'certs', 'cert.pem');
 	const keyFile = keyPath || process.env.TLS_KEY_PATH || path.join(process.cwd(), 'certs', 'key.pem');
 
-	return {
+	// Allow dev/non-TLS fallback if explicitly enabled
+	if (process.env.ALLOW_NO_TLS === 'true') {
+		if (!fs.existsSync(certFile) || !fs.existsSync(keyFile)) {
+			return undefined;
+		}
+	}
+
+	// Check file existence with clear errors
+	if (!fs.existsSync(certFile)) {
+		throw new Error(`TLS certificate file not found: ${path.resolve(certFile)}`);
+	}
+	if (!fs.existsSync(keyFile)) {
+		throw new Error(`TLS key file not found: ${path.resolve(keyFile)}`);
+	}
+
+	const options: any = {
 		key: fs.readFileSync(keyFile),
 		cert: fs.readFileSync(certFile),
 		minVersion: 'TLSv1.2' as const,
 		maxVersion: 'TLSv1.3' as const,
-		honorCipherOrder: true,
-		ciphers: 'ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384',
 		secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_TLSv1 | constants.SSL_OP_NO_TLSv1_1
 	};
+
+	// Only set custom ciphers if explicitly provided
+	if (process.env.TLS_CIPHERS) {
+		options.ciphers = process.env.TLS_CIPHERS;
+		options.honorCipherOrder = true;
+	}
+
+	return options;
 }
 
 /**
@@ -439,15 +439,27 @@ export function getEnhancedTLSOptions(certPath?: string, keyPath?: string) {
  */
 export function validateMCPToolInput(toolName: string, args: any): { valid: boolean; errors: string[]; sanitized: any } {
 	const errors: string[] = [];
-	
-	const isUUID = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
-	const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && v.length <= 254;
+
+	const isUUID = (v: string) => {
+		if (typeof v !== 'string' || v.length !== 36) return false;
+		return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+	};
+	const isEmail = (v: string) => {
+		if (typeof v !== 'string' || v.length > 254 || v.length < 3) return false;
+		if (v.indexOf('@') === -1 || v.indexOf('.') === -1) return false;
+		const parts = v.split('@');
+		if (parts.length !== 2) return false;
+		const [local, domain] = parts;
+		if (local.length === 0 || domain.length === 0) return false;
+		return /^[a-zA-Z0-9._-]+$/.test(local) && /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain);
+	};
 
 	// Validate using original args (before sanitization)
 	const rules: Record<string, (args: any) => void> = {
 		login: (a) => {
 			if (!a.email || !isEmail(a.email)) errors.push('Invalid email');
-			if (!a.password || a.password.length < 4) errors.push('Invalid password');
+			const minPasswordLength = process.env.NODE_ENV === 'production' ? 8 : 4;
+			if (!a.password || a.password.length < minPasswordLength) errors.push(`Invalid password (minimum length: ${minPasswordLength})`);
 		},
 		get_projects: (a) => {
 			if (a.organizationId && !isUUID(a.organizationId)) errors.push('Invalid organizationId');
@@ -455,11 +467,13 @@ export function validateMCPToolInput(toolName: string, args: any): { valid: bool
 		}
 	};
 
-	rules[toolName]?.(args);
-	
+	if (Object.prototype.hasOwnProperty.call(rules, toolName) && typeof rules[toolName] === 'function') {
+		rules[toolName](args);
+	}
+
 	// For sensitive data like login credentials, don't sanitize - return original
 	const sanitized = toolName === 'login' ? { ...args } : sanitizeInput({ ...args });
-	
+
 	return { valid: errors.length === 0, errors, sanitized };
 }
 
@@ -468,8 +482,13 @@ export function validateMCPToolInput(toolName: string, args: any): { valid: bool
  */
 export function validateRequestSize(buffer: Buffer, maxSize: number = 1024 * 1024): { valid: boolean; error?: string } {
 	if (buffer.length > maxSize) return { valid: false, error: 'Request too large' };
-	const content = buffer.toString('utf8');
-	if (/<script|javascript:|eval\(/.test(content)) return { valid: false, error: 'Suspicious content' };
+
+	// Only check for suspicious content if explicitly enabled
+	if (process.env.MCP_BLOCK_SUSPICIOUS_STRINGS === 'true') {
+		const content = buffer.toString('utf8');
+		if (/<script\b|javascript:|eval\(/.test(content)) return { valid: false, error: 'Suspicious content' };
+	}
+
 	return { valid: true };
 }
 

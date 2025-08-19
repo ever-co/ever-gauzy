@@ -12,7 +12,7 @@ export interface SecurityEvent {
 	userAgent?: string;
 	sessionId?: string;
 	userId?: string;
-	details: any;
+	details: Record<string, unknown>;
 	timestamp: Date;
 }
 
@@ -21,9 +21,9 @@ export class SecurityLogger {
 	private static readonly MAX_EVENTS = 1000;
 
 	static logSecurityEvent(
-		event: string, 
-		severity: SecurityEvent['severity'], 
-		details: any, 
+		event: string,
+		severity: SecurityEvent['severity'],
+		details: Record<string, unknown>,
 		req?: Request
 	): void {
 		const securityEvent: SecurityEvent = {
@@ -31,8 +31,15 @@ export class SecurityLogger {
 			severity,
 			ip: req?.ip || 'unknown',
 			userAgent: req?.get('User-Agent'),
-			sessionId: req?.sessionId,
-			userId: req?.userContext?.userId,
+			sessionId:
+				((req as any)?.sessionID as string) ||
+				((req as any)?.session?.id as string) ||
+				((req as any)?.headers?.['x-session-id'] as string) ||
+				undefined,
+			userId:
+				((req as any)?.user?.id as string) ||
+				((req as any)?.userContext?.userId as string) ||
+				undefined,
 			details: sanitizeForLogging(details),
 			timestamp: new Date()
 		};
@@ -44,20 +51,21 @@ export class SecurityLogger {
 		}
 
 		// Log based on severity
-		const message = `Security Event: ${event} from ${securityEvent.ip}`;
+		const message = `Security Event: ${event} (${severity}) from ${securityEvent.ip}`;
+		const payload = JSON.stringify(securityEvent);
 		switch (severity) {
 			case 'critical':
-				logger.error(message, securityEvent);
+				logger.error(message, payload);
 				break;
 			case 'high':
-				logger.warn(message, securityEvent);
+				logger.warn(message, payload);
 				break;
 			default:
-				logger.log(message, securityEvent);
+				logger.log(message, payload);
 		}
 
 		// In production, send to external monitoring
-		if (environment.production && severity in ['high', 'critical']) {
+		if (environment.production && ['high', 'critical'].includes(severity)) {
 			this.sendToExternalMonitoring(securityEvent);
 		}
 	}

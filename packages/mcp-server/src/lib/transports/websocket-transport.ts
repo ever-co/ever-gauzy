@@ -151,6 +151,9 @@ export class WebSocketTransport {
 				}
 				// Use enhanced TLS configuration for production security
 				const tlsOptions = getEnhancedTLSOptions(this.transportConfig.cert, this.transportConfig.key);
+				if (!tlsOptions) {
+					throw new Error('TLS enabled but cert/key not provided in websocket config');
+				}
 				httpsServer = https.createServer(tlsOptions);
 				httpsServer.listen(this.transportConfig.port, this.transportConfig.host);
 				this.wss = new WebSocketServer({
@@ -246,25 +249,15 @@ export class WebSocketTransport {
 		// Validate origin if configured
 		if (this.transportConfig.allowedOrigins !== undefined) {
 			const origin = request.headers.origin;
-			if (typeof this.transportConfig.allowedOrigins === 'boolean') {
-				if (!this.transportConfig.allowedOrigins) {
-					logger.warn(`Rejected WebSocket connection: origins not allowed`);
-					ws.close(1008, 'Origins not allowed');
-					return;
-				}
-				// If true, allow all origins
-			} else if (Array.isArray(this.transportConfig.allowedOrigins)) {
-				// Handle array of allowed origins
-				// Check for wildcard first
-				if (this.transportConfig.allowedOrigins.includes('*')) {
-					// Allow all origins when * is present
-					logger.warn(`Allowing ALL WebSocket origins (wildcard '*'). Do not use in production.`);
-					logger.debug(`Connection origin: ${origin || 'undefined'}`);
-				} else if (!origin || !this.transportConfig.allowedOrigins.includes(origin)) {
-					logger.warn(`Rejected WebSocket connection from unauthorized origin: ${origin}`);
-					ws.close(1008, 'Unauthorized origin');
-					return;
-				}
+			// Check for wildcard first
+			if (this.transportConfig.allowedOrigins.includes('*')) {
+				// Allow all origins when * is present
+				logger.warn(`Allowing ALL WebSocket origins (wildcard '*'). Do not use in production.`);
+				logger.debug(`Connection origin: ${origin || 'undefined'}`);
+			} else if (!origin || !this.transportConfig.allowedOrigins.includes(origin)) {
+				logger.warn(`Rejected WebSocket connection from unauthorized origin: ${origin}`);
+				ws.close(1008, 'Unauthorized origin');
+				return;
 			}
 		}
 
@@ -557,10 +550,21 @@ export class WebSocketTransport {
 				throw new Error('Tool name is required');
 			}
 
-			logger.debug(`Calling tool: ${name} with args:`, args);
+			// Validate and sanitize tool input
+			const { valid, errors, sanitized } = validateMCPToolInput(String(name), (args as Record<string, unknown>) || {});
+			if (!valid) {
+				throw new Error(`Tool input validation failed: ${errors.join(', ')}`);
+			}
+
+			// Never log sensitive args; for login show only argument keys
+			const safeArgsForLog =
+				name === 'login'
+					? { keys: Object.keys((args as Record<string, unknown>) || {}) }
+					: sanitized;
+			logger.debug(`Calling tool: ${name} with args:`, safeArgsForLog);
 
 			// Use the public method for tool invocation
-			const result = await this.mcpServer.invokeTool(name, args as Record<string, unknown> || {});
+			const result = await this.mcpServer.invokeTool(name, sanitized as Record<string, unknown>);
 			logger.debug(`Tool ${name} executed successfully`);
 
 			return result;
@@ -809,9 +813,13 @@ export class WebSocketTransport {
 		// Origin validation in production
 		if (process.env.NODE_ENV === 'production') {
 			const allowedOrigins = this.transportConfig.allowedOrigins || [];
-			if (allowedOrigins.length > 0 && !allowedOrigins.includes(origin)) {
-				SecurityLogger.logSecurityEvent('unauthorized_origin', 'medium', { ip, origin });
-				return false;
+			if (allowedOrigins.length > 0) {
+				if (allowedOrigins.includes('*')) {
+					logger.warn(`Allowing ALL WebSocket origins in production due to wildcard '*'`);
+				} else if (!allowedOrigins.includes(origin)) {
+					SecurityLogger.logSecurityEvent('unauthorized_origin', 'medium', { ip, origin });
+					return false;
+				}
 			}
 		}
 

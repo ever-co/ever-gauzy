@@ -54,20 +54,42 @@ export interface ToolDescriptor {
  */
 export class ExtendedMcpServer extends McpServer {
 	/**
+	 * Helper to detect Zod schemas more robustly
+	 */
+	private isZodSchema(obj: any): boolean {
+		return obj &&
+			typeof obj === 'object' &&
+			obj._def &&
+			typeof obj._def === 'object' &&
+			typeof obj.parse === 'function' &&
+			typeof obj.safeParse === 'function';
+	}
+
+	/**
 	 * Get list of all registered tools in a consistent format
 	 */
 	public async listTools(): Promise<ToolDescriptor[]> {
 		try {
 			const toolsList: ToolDescriptor[] = [];
-			
+
 			// Access the tools from the server's internal state
-			const serverInternal = this as any;
-			
-			if (serverInternal._registeredTools && typeof serverInternal._registeredTools === 'object') {
-				// Tools are stored as a plain object
-				for (const [name, tool] of Object.entries(serverInternal._registeredTools)) {
+			interface McpServerWithRegisteredTools {
+				_registeredTools: Record<string, unknown>;
+			}
+			const serverInternal = this as unknown as McpServerWithRegisteredTools;
+
+			// Ensure _registeredTools is a plain object before iterating
+			if (serverInternal._registeredTools &&
+				Object.prototype.toString.call(serverInternal._registeredTools) === '[object Object]') {
+				// Tools are stored as a plain object - iterate only own properties
+				for (const name in serverInternal._registeredTools) {
+					if (!Object.prototype.hasOwnProperty.call(serverInternal._registeredTools, name)) {
+						continue;
+					}
+
+					const tool = serverInternal._registeredTools[name];
 					const toolData = tool as any;
-					
+
 					// Convert Zod schema to JSON schema if needed
 					let inputSchema = {
 						type: 'object',
@@ -77,21 +99,44 @@ export class ExtendedMcpServer extends McpServer {
 
 					if (toolData.inputSchema) {
 						try {
-							// If it's a Zod schema, try to convert it
-							if (toolData.inputSchema._def) {
-								// Simple conversion for basic Zod schemas
-								inputSchema = {
-									type: 'object',
-									properties: {},
-									required: []
-								};
+							// If it's a Zod schema, try to convert it to JSON schema using toJSON if available
+							if (this.isZodSchema(toolData.inputSchema)) {
+								let zodSchema = toolData.inputSchema;
+								// Try to use toJSON (Zod >=3.20.0) or zod-to-json-schema if available
+								if (typeof zodSchema.toJSON === 'function') {
+									inputSchema = zodSchema.toJSON();
+									logger.debug(`Converted Zod schema to JSON schema using toJSON for tool: ${name}`);
+								} else {
+									// Try to use zod-to-json-schema if available in the environment
+									try {
+										const zodToJsonSchema = require('zod-to-json-schema');
+										inputSchema = zodToJsonSchema(zodSchema, name);
+										logger.debug(`Converted Zod schema to JSON schema using zod-to-json-schema for tool: ${name}`);
+									} catch (importErr) {
+										logger.warn(
+											`zod-to-json-schema not available or failed for tool: ${name}, falling back to default empty schema.`
+										);
+										inputSchema = {
+											type: 'object',
+											properties: {},
+											required: []
+										};
+									}
+								}
 							} else {
 								// Use as-is if it's already JSON schema
 								inputSchema = toolData.inputSchema;
+								logger.debug(`Using existing JSON schema for tool: ${name}`);
 							}
 						} catch (schemaError) {
 							// Use default if conversion fails
 							logger.debug(`Could not convert schema for tool ${name}:`, schemaError);
+							logger.error(`Schema conversion failed for tool ${name}:`, schemaError instanceof Error ? schemaError.message : 'Unknown error');
+							inputSchema = {
+								type: 'object',
+								properties: {},
+								required: []
+							};
 						}
 					}
 
@@ -100,13 +145,17 @@ export class ExtendedMcpServer extends McpServer {
 						description: toolData.description || `Tool: ${name}`,
 						inputSchema
 					});
+
+					logger.debug(`Added tool to list: ${name}`);
 				}
+			} else {
+				logger.debug('_registeredTools is not a valid plain object or is null');
 			}
-			
+
 			logger.debug(`Found ${toolsList.length} tools from _registeredTools`);
 			return toolsList;
 		} catch (error) {
-			logger.error('Error getting tools list:', error);
+			logger.error('Error getting tools list:', error instanceof Error ? error.message : 'Unknown error');
 			return [];
 		}
 	}
@@ -120,7 +169,11 @@ export class ExtendedMcpServer extends McpServer {
 				throw new Error('Tool name is required');
 			}
 
-			logger.debug(`Invoking tool: ${name} with args:`, args);
+			// Never log sensitive arguments; for login show only keys
+			logger.debug(
+				`Invoking tool: ${name} with args:`,
+				name === 'login' ? { keys: Object.keys((args as Record<string, unknown>) || {}) } : args
+			);
 
 			// Access the MCP server's internal tool execution
 			const serverInternal = this as any;
@@ -140,10 +193,12 @@ export class ExtendedMcpServer extends McpServer {
 
 			// Execute the tool with the provided arguments
 			const result = await tool.callback(args || {});
-			logger.debug(`Tool ${name} executed successfully`);
-			
-			return result;
+			logger.debug(
+				`Tool ${name} executed successfully. Result:`,
+				name === 'login' ? { keys: Object.keys((result as Record<string, unknown>) || {}) } : result
+			);
 
+			return result;
 		} catch (error) {
 			logger.error('Error invoking tool:', error);
 			throw error;
@@ -220,9 +275,9 @@ export async function createMcpServerAsync(sessionId?: string) {
 		return createMcpServer(sessionId);
 	} catch (error) {
 		logger.error(`Failed to initialize session manager: ${sanitizeErrorMessage(error)}`);
-    	const e = new Error(`Session manager initialization failed: ${sanitizeErrorMessage(error)}`);
-    	(e as any).cause = error;
-    	throw e;
+		const e = new Error(`Session manager initialization failed: ${sanitizeErrorMessage(error)}`);
+		(e as any).cause = error;
+		throw e;
 	}
 }
 

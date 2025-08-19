@@ -101,7 +101,17 @@ export class HttpTransport {
 						ip: req.socket?.remoteAddress || 'unknown',
 						error: validation.error
 					});
-					throw new Error(validation.error);
+
+					// Map size errors to proper HTTP status
+					if (validation.error === 'Request too large') {
+						const error = new Error(validation.error) as any;
+						error.status = 413;
+						error.statusCode = 413;
+						throw error;
+					}
+					const err: any = new Error(validation.error);
+					err.status = validation.error === 'Request too large' ? 413 : 400;
+					throw err;
 				}
 			}
 		}));
@@ -114,7 +124,7 @@ export class HttpTransport {
 
 		// Request logging
 		this.app.use((req, res, next) => {
-			logger.debug(`${req.method} ${req.path} from ${req.ip}`);
+			logger.debug(`${req.method} ${req.path} from ${req.socket?.remoteAddress}`);
 			next();
 		});
 
