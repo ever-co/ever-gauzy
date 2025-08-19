@@ -16,6 +16,7 @@ import {
 export class WorkspaceSyncService implements OnDestroy {
 	private readonly CHANNEL_NAME = 'gauzy-workspace-sync';
 	private broadcastChannel: BroadcastChannel | null = null;
+	private tabIdCache: string | null = null;
 
 	constructor() {
 		this.initializeBroadcastChannel();
@@ -139,7 +140,10 @@ export class WorkspaceSyncService implements OnDestroy {
 	 * Generate a unique tab identifier
 	 */
 	private getTabId(): string {
-		// Use sessionStorage to create a unique ID per tab (with safe fallback)
+		// Memoize to ensure stability even if sessionStorage is unavailable
+		if (this.tabIdCache) {
+			return this.tabIdCache;
+		}
 		try {
 			if (typeof sessionStorage !== 'undefined') {
 				let tabId = sessionStorage.getItem('gauzy-tab-id');
@@ -147,12 +151,14 @@ export class WorkspaceSyncService implements OnDestroy {
 					tabId = this.generateTabId();
 					sessionStorage.setItem('gauzy-tab-id', tabId);
 				}
+				this.tabIdCache = tabId;
 				return tabId;
 			}
 		} catch {
 			// ignore and fallback
 		}
-		return this.generateTabId();
+		this.tabIdCache = this.generateTabId();
+		return this.tabIdCache;
 	}
 
 	/**

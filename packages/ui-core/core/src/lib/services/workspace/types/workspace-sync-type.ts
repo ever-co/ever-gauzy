@@ -14,8 +14,8 @@ export type WorkspaceOperation = (typeof WORKSPACE_OPERATIONS)[keyof typeof WORK
 export type WorkspaceSyncPayload = Record<string, unknown>;
 
 export interface WorkspaceSyncMessage {
-	type: WorkspaceOperation;
-	payload: WorkspaceSyncPayload;
-	timestamp: number;
-	tabId: string;
+	readonly type: WorkspaceOperation;
+	readonly payload: WorkspaceSyncPayload;
+	readonly timestamp: number;
+	readonly tabId: string;
 }
