@@ -82,7 +82,7 @@ export class SecurityLogger {
 	private static sendToExternalMonitoring(event: SecurityEvent): void {
 		// Placeholder for external monitoring integration
 		// e.g., Splunk, ELK, Datadog, etc.
-		logger.debug('Would send to external monitoring:', event.event);
+		logger.debug(`Would send to external monitoring: ${event.event}`);
 	}
 }
 

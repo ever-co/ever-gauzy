@@ -43,9 +43,12 @@ export interface ToolDescriptor {
 	description: string;
 	inputSchema: {
 		type: string;
-		properties: Record<string, unknown>;
+		properties?: Record<string, unknown>;
 		required?: string[];
 		additionalProperties?: boolean;
+		$schema?: string;
+		definitions?: Record<string, unknown>;
+		[key: string]: unknown;
 	};
 }
 
@@ -109,8 +112,8 @@ export class ExtendedMcpServer extends McpServer {
 								} else {
 									// Try to use zod-to-json-schema if available in the environment
 									try {
-										const zodToJsonSchema = require('zod-to-json-schema');
-										inputSchema = zodToJsonSchema(zodSchema, name);
+										const { zodToJsonSchema } = await import('zod-to-json-schema');
+										inputSchema = zodToJsonSchema(zodSchema, name) as typeof inputSchema;
 										logger.debug(`Converted Zod schema to JSON schema using zod-to-json-schema for tool: ${name}`);
 									} catch (importErr) {
 										logger.warn(
@@ -124,8 +127,8 @@ export class ExtendedMcpServer extends McpServer {
 									}
 								}
 							} else {
-								// Use as-is if it's already JSON schema
-								inputSchema = toolData.inputSchema;
+								// Use as-is if it's already JSON schema, with type assertion
+								inputSchema = toolData.inputSchema as typeof inputSchema;
 								logger.debug(`Using existing JSON schema for tool: ${name}`);
 							}
 						} catch (schemaError) {

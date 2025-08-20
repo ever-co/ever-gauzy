@@ -2,6 +2,7 @@ import { environment } from '../environments/environment';
 import { randomBytes, createHash, constants } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import type { TlsOptions } from 'node:tls';
 
 /**
  * Generate a cryptographically secure nonce for CSP
@@ -84,15 +85,9 @@ export function getEnhancedSecurityHeaders(options?: { scriptNonce?: string; sty
 		'Cross-Origin-Resource-Policy': 'same-origin',
 		'X-DNS-Prefetch-Control': 'off',
 		'X-Permitted-Cross-Domain-Policies': 'none',
-		'X-Powered-By': '', // Remove server fingerprinting
-		'Server': '', // Remove server fingerprinting
 
 		// Certificate transparency
-		...(environment.production
-			? {
-					'Expect-CT': 'max-age=86400, enforce, report-uri="https://your-domain.com/ct-report"'
-			  }
-			: {}),
+		...(environment.production ? {} : {}),
 
 	};
 }
@@ -211,7 +206,7 @@ export function getValidationPatterns() {
 		uuid: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
 
 		// Email pattern (basic)
-		email: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+		email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
 
 		// Safe string (alphanumeric, spaces, basic punctuation)
 		safeString: /^[a-zA-Z0-9\s\-._@]+$/,
@@ -226,7 +221,8 @@ export function getValidationPatterns() {
 		isoDate: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/,
 
 		// URL pattern (basic) - simplified to avoid ReDoS
-		url: /^https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?$/
+		// Allows domains, localhost, or IPv4 with optional port; remains linear-time
+		url: /^https?:\/\/(?:localhost|\d{1,3}(?:\.\d{1,3}){3}|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?::\d{2,5})?(?:\/[^\s]*)?$/
 	};
 }
 
@@ -417,11 +413,11 @@ export function getEnhancedTLSOptions(certPath?: string, keyPath?: string) {
 		throw new Error(`TLS key file not found: ${path.resolve(keyFile)}`);
 	}
 
-	const options: any = {
+	const options: TlsOptions = {
 		key: fs.readFileSync(keyFile),
 		cert: fs.readFileSync(certFile),
-		minVersion: 'TLSv1.2' as const,
-		maxVersion: 'TLSv1.3' as const,
+		minVersion: 'TLSv1.2',
+		maxVersion: 'TLSv1.3',
 		secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_TLSv1 | constants.SSL_OP_NO_TLSv1_1
 	};
 
@@ -451,24 +447,27 @@ export function validateMCPToolInput(toolName: string, args: any): { valid: bool
 		if (parts.length !== 2) return false;
 		const [local, domain] = parts;
 		if (local.length === 0 || domain.length === 0) return false;
-		return /^[a-zA-Z0-9._-]+$/.test(local) && /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain);
+		return /^[a-zA-Z0-9._%+-]+$/.test(local) && /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain);
 	};
 
 	// Validate using original args (before sanitization)
-	const rules: Record<string, (args: any) => void> = {
-		login: (a) => {
+	const rules = new Map<string, (args: any) => void>([
+		['login', (a) => {
 			if (!a.email || !isEmail(a.email)) errors.push('Invalid email');
 			const minPasswordLength = process.env.NODE_ENV === 'production' ? 8 : 4;
 			if (!a.password || a.password.length < minPasswordLength) errors.push(`Invalid password (minimum length: ${minPasswordLength})`);
-		},
-		get_projects: (a) => {
+		}],
+		['get_projects', (a) => {
 			if (a.organizationId && !isUUID(a.organizationId)) errors.push('Invalid organizationId');
 			if (a.limit && (typeof a.limit !== 'number' || a.limit > 1000)) errors.push('Invalid limit');
-		}
-	};
+		}]
+	]);
 
-	if (Object.prototype.hasOwnProperty.call(rules, toolName) && typeof rules[toolName] === 'function') {
-		rules[toolName](args);
+	if (rules.has(toolName)) {
+		const ruleFn = rules.get(toolName);
+		if (typeof ruleFn === 'function') {
+			ruleFn(args);
+		}
 	}
 
 	// For sensitive data like login credentials, don't sanitize - return original

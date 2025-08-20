@@ -9,6 +9,7 @@ import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
 import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 import { getEnhancedSecurityHeaders, validateMCPToolInput, validateRequestSize } from '../common/security-config';
+import { sanitizeErrorMessage } from '../common/security-utils';
 import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 
 const logger = new Logger('HttpTransport');

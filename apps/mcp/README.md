@@ -73,7 +73,7 @@ MCP_TRANSPORT=websocket
 MCP_SERVER_MODE=websocket
 yarn nx serve mcp
 
-# Server runs on ws://localhost:3002/sse by default (use wss:// when MCP_WS_TLS=true)
+# Server runs on ws://localhost:3002/ws by default (use wss:// when MCP_WS_TLS=true)
 ```
 
 ### Integration with AI Assistants
@@ -205,7 +205,7 @@ MCP_SERVER_MODE=websocket
 # Server configuration
 MCP_WS_PORT=3002
 MCP_WS_HOST=localhost
-MCP_WS_PATH=/sse
+MCP_WS_PATH=/ws
 
 # TLS/SSL settings (recommended for production)
 MCP_WS_TLS=true
@@ -236,10 +236,10 @@ Using wscat (install with `npm install -g wscat`):
 
 ```bash
 # Connect to WebSocket (with TLS)
-wscat -c wss://localhost:3002/sse --no-check
+wscat -c wss://localhost:3002/ws --no-check
 
 # Or without TLS (set MCP_WS_TLS=false)
-wscat -c ws://localhost:3002/sse
+wscat -c ws://localhost:3002/ws
 
 # Send MCP protocol messages:
 # Initialize connection
@@ -256,7 +256,7 @@ wscat -c ws://localhost:3002/sse
 
 ```javascript
 // Default (TLS disabled): ws://. Use wss:// when MCP_WS_TLS=true
-const ws = new WebSocket('ws://localhost:3002/sse');
+const ws = new WebSocket('ws://localhost:3002/ws');
 
 ws.onopen = () => console.log('Connected');
 ws.onmessage = (event) => console.log('Received:', JSON.parse(event.data));
@@ -422,7 +422,7 @@ yarn nx test mcp
 
 9. **WebSocket Disconnects Immediately**
    - Check server logs for specific error messages
-   - Verify WebSocket path includes `/sse`: `wss://localhost:3002/sse`
+   - Verify WebSocket path includes `/ws`: `wss://localhost:3002/ws`
    - Ensure server is fully started before connecting
 
 ### Debug Mode

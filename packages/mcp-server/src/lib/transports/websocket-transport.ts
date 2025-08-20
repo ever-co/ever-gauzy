@@ -12,6 +12,13 @@ import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 
 const logger = new Logger('WebSocketTransport');
 
+// In-memory rate limiter
+interface RateLimitEntry { count: number; resetAt: number; }
+const rateLimiter = new Map<string, RateLimitEntry>();
+const MAX_RATE_LIMIT_ENTRIES = 10000;
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const RATE_LIMIT_MAX_ATTEMPTS = 20;
+
 // JSON-RPC 2.0 interfaces
 interface JsonRpcRequest {
 	jsonrpc: '2.0';
@@ -803,11 +810,30 @@ export class WebSocketTransport {
 		const origin = info.origin;
 		const ip = req.socket.remoteAddress || 'unknown';
 
-		// Rate limiting by IP
-		const recentConnections = SecurityLogger.getEventsByIP(ip, 1); // Last hour
-		if (recentConnections.length > 100) {
-			SecurityLogger.logSecurityEvent(SecurityEvents.RATE_LIMIT_EXCEEDED, 'medium', { ip, origin });
+		// Lightweight in-memory rate limiting by IP
+		const now = Date.now();
+		let entry = rateLimiter.get(ip);
+		
+		if (!entry || now >= entry.resetAt) {
+			entry = { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS };
+		} else {
+			entry.count++;
+		}
+		
+		rateLimiter.set(ip, entry);
+		
+		if (entry.count > RATE_LIMIT_MAX_ATTEMPTS) {
+			SecurityLogger.logSecurityEvent(SecurityEvents.RATE_LIMIT_EXCEEDED, 'medium', { ip, origin, count: entry.count });
 			return false;
+		}
+		
+		// Cleanup map if too large
+		if (rateLimiter.size > MAX_RATE_LIMIT_ENTRIES) {
+			const expiredIps: string[] = [];
+			for (const [cleanupIp, cleanupEntry] of rateLimiter) {
+				if (now >= cleanupEntry.resetAt) expiredIps.push(cleanupIp);
+			}
+			expiredIps.forEach(expiredIp => rateLimiter.delete(expiredIp));
 		}
 
 		// Origin validation in production
