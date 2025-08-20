@@ -808,25 +808,25 @@ export class WebSocketTransport {
 	private verifyClient(info: { req: IncomingMessage; origin: string; secure: boolean }): boolean {
 		const req = info.req;
 		const origin = info.origin;
-		const ip = req.socket.remoteAddress || 'unknown';
+		const ip = this.getClientIP(req, this.transportConfig.trustedProxies || []);
 
 		// Lightweight in-memory rate limiting by IP
 		const now = Date.now();
 		let entry = rateLimiter.get(ip);
-		
+
 		if (!entry || now >= entry.resetAt) {
 			entry = { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS };
 		} else {
 			entry.count++;
 		}
-		
+
 		rateLimiter.set(ip, entry);
-		
+
 		if (entry.count > RATE_LIMIT_MAX_ATTEMPTS) {
 			SecurityLogger.logSecurityEvent(SecurityEvents.RATE_LIMIT_EXCEEDED, 'medium', { ip, origin, count: entry.count });
 			return false;
 		}
-		
+
 		// Cleanup map if too large
 		if (rateLimiter.size > MAX_RATE_LIMIT_ENTRIES) {
 			const expiredIps: string[] = [];
@@ -843,16 +843,16 @@ export class WebSocketTransport {
 				if (allowedOrigins.includes('*')) {
 					logger.warn(`Allowing ALL WebSocket origins in production due to wildcard '*'`);
 				} else if (!allowedOrigins.includes(origin)) {
-					SecurityLogger.logSecurityEvent('unauthorized_origin', 'medium', { ip, origin });
+					SecurityLogger.logSecurityEvent(SecurityEvents.UNAUTHORIZED_ORIGIN, 'medium', { ip, origin });
 					return false;
 				}
 			}
 		}
 
-		// User agent validation
+		// User agent validation (production only)
 		const userAgent = req.headers['user-agent'];
-		if (userAgent && /bot|crawler|spider|scraper/i.test(userAgent)) {
-			SecurityLogger.logSecurityEvent('suspicious_user_agent', 'low', { ip, userAgent });
+		if (process.env.NODE_ENV === 'production' && userAgent && /bot|crawler|spider|scraper/i.test(userAgent)) {
+			SecurityLogger.logSecurityEvent(SecurityEvents.SUSPICIOUS_USER_AGENT, 'low', { ip, userAgent });
 			return false;
 		}
 

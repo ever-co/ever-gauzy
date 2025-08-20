@@ -221,8 +221,8 @@ export function getValidationPatterns() {
 		isoDate: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/,
 
 		// URL pattern (basic) - simplified to avoid ReDoS
-		// Allows domains, localhost, or IPv4 with optional port; remains linear-time
-		url: /^https?:\/\/(?:localhost|\d{1,3}(?:\.\d{1,3}){3}|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?::\d{2,5})?(?:\/[^\s]*)?$/
+		// Stricter IPv4 octets (0–255) while remaining linear-time
+        url: /^https?:\/\/(?:localhost|(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?::\d{2,5})?(?:\/[^\s]*)?$/,
 	};
 }
 
@@ -394,7 +394,7 @@ export function isTrustedSource(userAgent?: string, origin?: string): boolean {
 /**
  * Enhanced TLS configuration for production
  */
-export function getEnhancedTLSOptions(certPath?: string, keyPath?: string) {
+export function getEnhancedTLSOptions(certPath?: string, keyPath?: string): TlsOptions | undefined {
 	const certFile = certPath || process.env.TLS_CERT_PATH || path.join(process.cwd(), 'certs', 'cert.pem');
 	const keyFile = keyPath || process.env.TLS_KEY_PATH || path.join(process.cwd(), 'certs', 'key.pem');
 
@@ -459,7 +459,11 @@ export function validateMCPToolInput(toolName: string, args: any): { valid: bool
 		}],
 		['get_projects', (a) => {
 			if (a.organizationId && !isUUID(a.organizationId)) errors.push('Invalid organizationId');
-			if (a.limit && (typeof a.limit !== 'number' || a.limit > 1000)) errors.push('Invalid limit');
+			if (a.limit != null) {
+				if (typeof a.limit !== 'number' || a.limit < 1 || a.limit > 1000) {
+					errors.push('Invalid limit');
+				}
+			}
 		}]
 	]);
 

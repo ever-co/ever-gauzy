@@ -123,6 +123,38 @@ export class HttpTransport {
 		// URL-encoded body parsing (e.g., form submissions)
 		this.app.use(express.urlencoded({ extended: true }));
 
+		// Error handling middleware for request validation errors
+		this.app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction): void => {
+			// Skip if response already sent
+			if (res.headersSent) {
+				return next(err);
+			}
+
+			const statusCode = Number(err.status || err.statusCode) || 500;
+			const sanitizedMessage = sanitizeErrorMessage(err.message || 'Unknown error');
+
+			if (statusCode === 413) {
+				res.status(413).json({
+					error: 'Payload Too Large',
+					message: sanitizedMessage
+				});
+				return;
+			}
+
+			if (statusCode === 400) {
+				res.status(400).json({
+					error: 'Bad Request',
+					message: sanitizedMessage
+				});
+				return;
+			}
+
+			// For all other errors, return generic 500
+			res.status(500).json({
+				error: 'Internal server error'
+			});
+		});
+
 		// Request logging
 		this.app.use((req, res, next) => {
 			logger.debug(`${req.method} ${req.path} from ${req.socket?.remoteAddress}`);
@@ -672,7 +704,11 @@ export class HttpTransport {
 				throw new Error(`Invalid tool input: ${validation.errors.join(', ')}`);
 			}
 
-			logger.debug(`Calling tool: ${name} with args:`, validation.sanitized);
+			if (name === 'login') {
+                logger.debug(`Calling tool: ${name} with args keys:`, Object.keys((args as Record<string, unknown>) || {}));
+            } else {
+                logger.debug(`Calling tool: ${name} with args:`, validation.sanitized);
+ 			}
 
 			// Use the public method for tool invocation with sanitized args
 			const result = await this.mcpServer.invokeTool(name, validation.sanitized);

@@ -95,5 +95,7 @@ export const SecurityEvents = {
 	INVALID_SESSION: 'invalid_session',
 	CSRF_VIOLATION: 'csrf_violation',
 	TOOL_VALIDATION_FAILED: 'tool_validation_failed',
-	LARGE_REQUEST: 'large_request_blocked'
+	LARGE_REQUEST: 'large_request_blocked',
+	UNAUTHORIZED_ORIGIN: 'unauthorized_origin',
+	SUSPICIOUS_USER_AGENT: 'suspicious_user_agent'
 } as const;

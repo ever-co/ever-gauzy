@@ -133,8 +133,9 @@ export class ExtendedMcpServer extends McpServer {
 							}
 						} catch (schemaError) {
 							// Use default if conversion fails
-							logger.debug(`Could not convert schema for tool ${name}:`, schemaError);
-							logger.error(`Schema conversion failed for tool ${name}:`, schemaError instanceof Error ? schemaError.message : 'Unknown error');
+							logger.error(
+								`Schema conversion failed for tool ${name}: ${sanitizeErrorMessage(schemaError)}`
+							);
 							inputSchema = {
 								type: 'object',
 								properties: {},
@@ -173,10 +174,14 @@ export class ExtendedMcpServer extends McpServer {
 			}
 
 			// Never log sensitive arguments; for login show only keys
-			logger.debug(
-				`Invoking tool: ${name} with args:`,
-				name === 'login' ? { keys: Object.keys((args as Record<string, unknown>) || {}) } : args
-			);
+			const mask = (obj: Record<string, unknown> | undefined) => {
+				if (!obj) return obj;
+				const SENSITIVE = /pass|secret|token|key|auth|credential/i;
+				return Object.fromEntries(
+					Object.entries(obj).map(([k, v]) => [k, SENSITIVE.test(k) ? '***' : v])
+				);
+			};
+			logger.debug(`Invoking tool: ${name} with args:`, mask(args as Record<string, unknown>));
 
 			// Access the MCP server's internal tool execution
 			const serverInternal = this as any;
@@ -196,10 +201,7 @@ export class ExtendedMcpServer extends McpServer {
 
 			// Execute the tool with the provided arguments
 			const result = await tool.callback(args || {});
-			logger.debug(
-				`Tool ${name} executed successfully. Result:`,
-				name === 'login' ? { keys: Object.keys((result as Record<string, unknown>) || {}) } : result
-			);
+			logger.debug(`Tool ${name} executed successfully. Result:`, mask(result as Record<string, unknown>));
 
 			return result;
 		} catch (error) {
