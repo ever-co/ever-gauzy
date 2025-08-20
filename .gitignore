@@ -144,7 +144,6 @@ apps/server-api/src/assets/icons/menu
 
 # MCP Server certificates (contains sensitive data)
 **/certs/**
-/packages/**/certs/
 **/certs/**/*.{pem,key,crt,csr,pfx,p12}
 !**/certs/**/README.md
 !**/certs/**/.gitkeep
