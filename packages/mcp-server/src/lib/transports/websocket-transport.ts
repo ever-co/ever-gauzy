@@ -1,16 +1,23 @@
 import { Logger } from '@nestjs/common';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import WebSocket, { WebSocketServer } from 'ws';
 import { IncomingMessage } from 'http';
 import { McpTransportConfig } from '../common/config';
-import { getAllTools, getToolCategory } from '../config/tools-registry';
 import crypto from 'node:crypto';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
 import https from 'node:https';
-import fs from 'node:fs';
+import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
+import { getEnhancedTLSOptions, validateMCPToolInput, validateRequestSize } from '../common/security-config';
+import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 
 const logger = new Logger('WebSocketTransport');
+
+// In-memory rate limiter
+interface RateLimitEntry { count: number; resetAt: number; }
+const rateLimiter = new Map<string, RateLimitEntry>();
+const MAX_RATE_LIMIT_ENTRIES = 10000;
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const RATE_LIMIT_MAX_ATTEMPTS = 20;
 
 // JSON-RPC 2.0 interfaces
 interface JsonRpcRequest {
@@ -93,18 +100,6 @@ interface WebSocketSessionMiddleware {
 	}>;
 }
 
-// Minimal tool descriptor type for tools/list
-interface ToolDescriptor {
-	name: string;
-	description?: string;
-	inputSchema?: {
-		type: 'object';
-		properties: Record<string, unknown>;
-		required?: string[];
-		additionalProperties?: boolean;
-	};
-}
-
 // WebSocket connection interface
 interface WebSocketConnection {
 	id: string;
@@ -118,13 +113,13 @@ interface WebSocketConnection {
 }
 
 export interface WebSocketTransportOptions {
-	server: McpServer;
+	server: ExtendedMcpServer;
 	transportConfig: McpTransportConfig['websocket'];
 }
 
 export class WebSocketTransport {
 	private wss: WebSocketServer | null = null;
-	private readonly mcpServer: McpServer;
+	private readonly mcpServer: ExtendedMcpServer;
 	private transportConfig: McpTransportConfig['websocket'];
 	private connections = new Map<string, WebSocketConnection>();
 	private heartbeatInterval: NodeJS.Timeout | null = null;
@@ -161,23 +156,28 @@ export class WebSocketTransport {
 				if (!this.transportConfig.cert || !this.transportConfig.key) {
 					throw new Error('TLS enabled but cert/key not provided in websocket config');
 				}
-				const cert = fs.readFileSync(this.transportConfig.cert);
-				const key = fs.readFileSync(this.transportConfig.key);
-				httpsServer = https.createServer({ cert, key });
+				// Use enhanced TLS configuration for production security
+				const tlsOptions = getEnhancedTLSOptions(this.transportConfig.cert, this.transportConfig.key);
+				if (!tlsOptions) {
+					throw new Error('TLS enabled but cert/key not provided in websocket config');
+				}
+				httpsServer = https.createServer(tlsOptions);
 				httpsServer.listen(this.transportConfig.port, this.transportConfig.host);
 				this.wss = new WebSocketServer({
 					server: httpsServer,
 					perMessageDeflate,
-					maxPayload: this.transportConfig.maxPayload || 16 * 1024 * 1024, // 16MB default
+					maxPayload: this.transportConfig.maxPayload || 1024 * 1024, // 1MB for security
 					path: this.transportConfig.path,
+					verifyClient: (info) => this.verifyClient(info),
 				});
 			} else {
 				this.wss = new WebSocketServer({
 					port: this.transportConfig.port,
 					host: this.transportConfig.host,
 					perMessageDeflate,
-					maxPayload: this.transportConfig.maxPayload || 16 * 1024 * 1024, // 16MB default
+					maxPayload: this.transportConfig.maxPayload || 1024 * 1024, // 1MB for security
 					path: this.transportConfig.path,
+					verifyClient: (info) => this.verifyClient(info),
 				});
 			}
 
@@ -256,21 +256,15 @@ export class WebSocketTransport {
 		// Validate origin if configured
 		if (this.transportConfig.allowedOrigins !== undefined) {
 			const origin = request.headers.origin;
-			// Handle boolean values
-		if (typeof this.transportConfig.allowedOrigins === 'boolean') {
-			if (!this.transportConfig.allowedOrigins) {
-				logger.warn(`Rejected WebSocket connection: origins not allowed`);
-					ws.close(1008, 'Origins not allowed');
+			// Check for wildcard first
+			if (this.transportConfig.allowedOrigins.includes('*')) {
+				// Allow all origins when * is present
+				logger.warn(`Allowing ALL WebSocket origins (wildcard '*'). Do not use in production.`);
+				logger.debug(`Connection origin: ${origin || 'undefined'}`);
+			} else if (!origin || !this.transportConfig.allowedOrigins.includes(origin)) {
+				logger.warn(`Rejected WebSocket connection from unauthorized origin: ${origin}`);
+				ws.close(1008, 'Unauthorized origin');
 				return;
-			}
-				// If true, allow all origins
-			} else if (Array.isArray(this.transportConfig.allowedOrigins)) {
-	        // Handle array of allowed origins
-				if (!origin || !this.transportConfig.allowedOrigins.includes(origin)) {
-					logger.warn(`Rejected WebSocket connection from unauthorized origin: ${origin}`);
-					ws.close(1008, 'Unauthorized origin');
-					return;
-				}
 			}
 		}
 
@@ -500,19 +494,13 @@ export class WebSocketTransport {
 						});
 						break;
 					}
-				/**
-				 *  TODO: implementing the actual tools/call functionality once the tool execution system is ready
-				 */
 				case 'tools/call':
 					{
+						const result = await this.callTool(params as Record<string, unknown>);
 						transport.send({
-						jsonrpc: '2.0',
-						id,
-						error: {
-							code: -32601,  // Method not found
-							message: 'Method not implemented: tools/call',
-							data: 'Tool execution system is not yet integrated'
-						}
+							jsonrpc: '2.0',
+							id,
+							result
 						});
 						break;
 					}
@@ -550,27 +538,47 @@ export class WebSocketTransport {
 				return this.cachedTools;
 			}
 
-			// Fetch and cache tools
-			const tools = getAllTools();
-			this.cachedTools = tools.map(toolName => {
-				const category = getToolCategory(toolName);
-				return {
-					name: toolName,
-					description: `${toolName} - Gauzy ${category || 'general'} tool`,
-					inputSchema: {
-						type: 'object',
-						properties: {},
-						additionalProperties: true
-					}
-				};
-			});
-
+			// Use the public method to get tools from MCP server
+			this.cachedTools = await this.mcpServer.listTools();
 			this.cacheTimestamp = now;
-			logger.debug(`Cached ${this.cachedTools.length} tools from registry`);
+			logger.debug(`Cached ${this.cachedTools.length} tools from MCP server`);
 			return this.cachedTools;
 		} catch (error) {
 			logger.error(`Failed to get tools: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			return [];
+		}
+	}
+
+	private async callTool(params: Record<string, unknown>): Promise<unknown> {
+		try {
+			const { name, arguments: args } = params;
+
+			if (!name || typeof name !== 'string') {
+				throw new Error('Tool name is required');
+			}
+
+			// Validate and sanitize tool input
+			const { valid, errors, sanitized } = validateMCPToolInput(String(name), (args as Record<string, unknown>) || {});
+			if (!valid) {
+				throw new Error(`Tool input validation failed: ${errors.join(', ')}`);
+			}
+
+			// Never log sensitive args; for login show only argument keys
+			const safeArgsForLog =
+				name === 'login'
+					? { keys: Object.keys((args as Record<string, unknown>) || {}) }
+					: sanitized;
+			logger.debug(`Calling tool: ${name} with args:`, safeArgsForLog);
+
+			// Use the public method for tool invocation
+			const result = await this.mcpServer.invokeTool(name, sanitized as Record<string, unknown>);
+			logger.debug(`Tool ${name} executed successfully`);
+
+			return result;
+
+		} catch (error) {
+			logger.error('Error calling tool:', error);
+			throw error;
 		}
 	}
 
@@ -792,5 +800,103 @@ export class WebSocketTransport {
 		}
 
 		return stats;
+	}
+
+	/**
+	 * Enhanced client verification for security
+	 */
+	private verifyClient(info: { req: IncomingMessage; origin: string; secure: boolean }): boolean {
+		const req = info.req;
+		const origin = info.origin;
+		const ip = this.getClientIP(req, this.transportConfig.trustedProxies || []);
+
+		// Lightweight in-memory rate limiting by IP
+		const now = Date.now();
+		let entry = rateLimiter.get(ip);
+
+		if (!entry || now >= entry.resetAt) {
+			entry = { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS };
+		} else {
+			entry.count++;
+		}
+
+		rateLimiter.set(ip, entry);
+
+		if (entry.count > RATE_LIMIT_MAX_ATTEMPTS) {
+			SecurityLogger.logSecurityEvent(SecurityEvents.RATE_LIMIT_EXCEEDED, 'medium', { ip, origin, count: entry.count });
+			return false;
+		}
+
+		// Cleanup map if too large
+		if (rateLimiter.size > MAX_RATE_LIMIT_ENTRIES) {
+			const expiredIps: string[] = [];
+			for (const [cleanupIp, cleanupEntry] of rateLimiter) {
+				if (now >= cleanupEntry.resetAt) expiredIps.push(cleanupIp);
+			}
+			expiredIps.forEach(expiredIp => rateLimiter.delete(expiredIp));
+		}
+
+		// Origin validation in production
+		if (process.env.NODE_ENV === 'production') {
+			const allowedOrigins = this.transportConfig.allowedOrigins || [];
+			if (allowedOrigins.length > 0) {
+				if (allowedOrigins.includes('*')) {
+					logger.warn(`Allowing ALL WebSocket origins in production due to wildcard '*'`);
+				} else if (!allowedOrigins.includes(origin)) {
+					SecurityLogger.logSecurityEvent(SecurityEvents.UNAUTHORIZED_ORIGIN, 'medium', { ip, origin });
+					return false;
+				}
+			}
+		}
+
+		// User agent validation (production only)
+		const userAgent = req.headers['user-agent'];
+		if (process.env.NODE_ENV === 'production' && userAgent && /bot|crawler|spider|scraper/i.test(userAgent)) {
+			SecurityLogger.logSecurityEvent(SecurityEvents.SUSPICIOUS_USER_AGENT, 'low', { ip, userAgent });
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Enhanced message validation with security checks
+	 */
+	private validateMessage(data: Buffer, connection: WebSocketConnection): { valid: boolean; error?: string } {
+		// Size validation
+		const sizeValidation = validateRequestSize(data, 1024 * 1024); // 1MB limit
+		if (!sizeValidation.valid) {
+			SecurityLogger.logSecurityEvent(SecurityEvents.LARGE_REQUEST, 'medium', {
+				size: data.length,
+				connectionId: connection.id
+			});
+			return sizeValidation;
+		}
+
+		try {
+			const message = JSON.parse(data.toString());
+
+			// Basic structure validation
+			if (!message.jsonrpc || message.jsonrpc !== '2.0') {
+				return { valid: false, error: 'Invalid JSON-RPC format' };
+			}
+
+			// Method validation for tool calls
+			if (message.method === 'tools/call') {
+				const validation = validateMCPToolInput(message.params?.name || '', message.params?.arguments || {});
+				if (!validation.valid) {
+					SecurityLogger.logSecurityEvent(SecurityEvents.TOOL_VALIDATION_FAILED, 'medium', {
+						tool: message.params?.name,
+						errors: validation.errors,
+						connectionId: connection.id
+					});
+					return { valid: false, error: validation.errors.join(', ') };
+				}
+			}
+
+			return { valid: true };
+		} catch (error) {
+			return { valid: false, error: 'Invalid JSON format' };
+		}
 	}
 }

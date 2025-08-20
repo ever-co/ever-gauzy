@@ -1,5 +1,4 @@
 import { Logger } from '@nestjs/common';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -8,6 +7,10 @@ import { Server } from 'node:http';
 import { McpTransportConfig } from '../common/config';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
+import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
+import { getEnhancedSecurityHeaders, validateMCPToolInput, validateRequestSize } from '../common/security-config';
+import { sanitizeErrorMessage } from '../common/security-utils';
+import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 
 const logger = new Logger('HttpTransport');
 
@@ -51,14 +54,14 @@ interface McpTransport {
 type MockTransport = McpTransport;
 
 export interface HttpTransportOptions {
-	server: McpServer;
+	server: ExtendedMcpServer;
 	transportConfig: McpTransportConfig['http'];
 }
 
 export class HttpTransport {
 	private app: express.Application;
 	private httpServer: Server | null = null;
-	private mcpServer: McpServer;
+	private mcpServer: ExtendedMcpServer;
 	private transportConfig: McpTransportConfig['http'];
 	private isInitialized = false;
 
@@ -79,8 +82,49 @@ export class HttpTransport {
 			allowedHeaders: ['Content-Type', 'Authorization', 'mcp-session-id', 'mcp-csrf-token']
 		}));
 
-		// JSON parsing
-		this.app.use(express.json({ limit: '10mb' }));
+		// Enhanced security headers
+		this.app.use((req, res, next) => {
+			const securityHeaders = getEnhancedSecurityHeaders();
+			for (const [header, value] of Object.entries(securityHeaders)) {
+				res.setHeader(header, value);
+			}
+			next();
+		});
+
+		// JSON parsing with enhanced validation
+		this.app.use(express.json({
+			limit: process.env.NODE_ENV === 'production' ? '1mb' : '10mb',
+			verify: (req, res, buf) => {
+				const validation = validateRequestSize(buf, process.env.NODE_ENV === 'production' ? 1024 * 1024 : 10 * 1024 * 1024);
+				if (!validation.valid) {
+					if (validation.error === 'Request too large') {
+						SecurityLogger.logSecurityEvent(SecurityEvents.LARGE_REQUEST, 'medium', {
+							size: buf.length,
+							ip: req.socket?.remoteAddress || 'unknown',
+							error: validation.error
+						});
+					} else {
+						SecurityLogger.logSecurityEvent(SecurityEvents.SUSPICIOUS_PAYLOAD, 'medium', {
+							size: buf.length,
+							ip: req.socket?.remoteAddress || 'unknown',
+							error: validation.error
+						});
+					}
+
+					// Map size errors to proper HTTP status
+					if (validation.error === 'Request too large') {
+						const error = new Error(validation.error) as any;
+						error.status = 413;
+						error.statusCode = 413;
+						throw error;
+					}
+					const err: any = new Error(validation.error);
+					err.status = 400;
+					err.statusCode = 400;
+					throw err;
+				}
+			}
+		}));
 
 		// Cookie parsing for session management
 		this.app.use(cookieParser());
@@ -88,9 +132,42 @@ export class HttpTransport {
 		// URL-encoded body parsing (e.g., form submissions)
 		this.app.use(express.urlencoded({ extended: true }));
 
+		// Error handling middleware for request validation errors
+		this.app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction): void => {
+			// Skip if response already sent
+			if (res.headersSent) {
+				next(err);
+				return;
+			}
+
+			const statusCode = Number(err.status || err.statusCode) || 500;
+			const sanitizedMessage = sanitizeErrorMessage(err.message || 'Unknown error');
+
+			if (statusCode === 413) {
+				res.status(413).json({
+					error: 'Payload Too Large',
+					message: sanitizedMessage
+				});
+				return;
+			}
+
+			if (statusCode === 400) {
+				res.status(400).json({
+					error: 'Bad Request',
+					message: sanitizedMessage
+				});
+				return;
+			}
+
+			// For all other errors, return generic 500
+			res.status(500).json({
+				error: 'Internal server error'
+			});
+		});
+
 		// Request logging
 		this.app.use((req, res, next) => {
-			logger.debug(`${req.method} ${req.path} from ${req.ip}`);
+			logger.debug(`${req.method} ${req.path} from ${this.getClientIP(req, this.transportConfig.trustedProxies || [])}`);
 			next();
 		});
 
@@ -544,12 +621,7 @@ export class HttpTransport {
 
 	private async routeMcpRequest(method: string, params: Record<string, unknown> | unknown[] | undefined, id: string | number | null | undefined, transport: MockTransport, userContext?: UserContext) {
 		try {
-
-			// Convert the HTTP request into a format the MCP server can handle
-			// This is a placeholder - the actual implementation would need to
-			// properly integrate with the MCP server's request handling
-
-			// For now, handle basic MCP protocol methods
+			// Handle MCP protocol methods by delegating to the actual MCP server
 			switch (method) {
 				case 'initialize':
 					transport.send({
@@ -579,8 +651,15 @@ export class HttpTransport {
 					}
 
 				case 'tools/call':
-					// This would need to integrate with your tool execution system
-					throw new Error('Tool execution requires proper MCP server integration');
+					{
+						const result = await this.callTool(params as Record<string, unknown>);
+						transport.send({
+							jsonrpc: '2.0',
+							id,
+							result
+						});
+						break;
+					}
 
 				default:
 					transport.send({
@@ -593,6 +672,7 @@ export class HttpTransport {
 					});
 			}
 		} catch (error) {
+			logger.error(`Error in routeMcpRequest for method ${method}:`, error);
 			transport.send({
 				jsonrpc: '2.0',
 				id,
@@ -605,16 +685,51 @@ export class HttpTransport {
 		}
 	}
 
-	private async getTools(): Promise<unknown[]> {
-		// This would integrate with your existing tools registry
-		// For now, return empty array - you'll need to implement tool listing
-		return [];
+	private async getTools(): Promise<ToolDescriptor[]> {
+		try {
+			const tools = await this.mcpServer.listTools();
+			logger.debug(`Retrieved ${tools.length} tools from MCP server`);
+			return tools;
+		} catch (error) {
+			logger.error('Error getting tools list:', error);
+			return [];
+		}
 	}
 
 	private async callTool(params: Record<string, unknown>): Promise<unknown> {
-		// This would integrate with your existing tool execution
-		// For now, throw not implemented error
-		throw new Error('Tool execution not yet implemented for HTTP transport');
+		try {
+			const { name, arguments: args } = params;
+
+			if (!name || typeof name !== 'string') {
+				throw new Error('Tool name is required');
+			}
+
+			// Enhanced input validation
+			const validation = validateMCPToolInput(name, args || {});
+			if (!validation.valid) {
+				SecurityLogger.logSecurityEvent(SecurityEvents.TOOL_VALIDATION_FAILED, 'medium', {
+					tool: name,
+					errors: validation.errors
+				});
+				throw new Error(`Invalid tool input: ${validation.errors.join(', ')}`);
+			}
+
+			if (name === 'login') {
+                logger.debug(`Calling tool: ${name} with args keys:`, Object.keys((args as Record<string, unknown>) || {}));
+            } else {
+                logger.debug(`Calling tool: ${name} with args:`, validation.sanitized);
+ 			}
+
+			// Use the public method for tool invocation with sanitized args
+			const result = await this.mcpServer.invokeTool(name, validation.sanitized);
+			logger.debug(`Tool ${name} executed successfully`);
+
+			return result;
+
+		} catch (error) {
+			logger.error('Error calling tool:', error);
+			throw error;
+		}
 	}
 
 
