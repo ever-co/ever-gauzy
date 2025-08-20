@@ -86,9 +86,6 @@ export function getEnhancedSecurityHeaders(options?: { scriptNonce?: string; sty
 		'X-DNS-Prefetch-Control': 'off',
 		'X-Permitted-Cross-Domain-Policies': 'none',
 
-		// Certificate transparency
-		...(environment.production ? {} : {}),
-
 	};
 }
 

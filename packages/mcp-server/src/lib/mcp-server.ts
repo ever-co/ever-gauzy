@@ -94,10 +94,17 @@ export class ExtendedMcpServer extends McpServer {
 					const toolData = tool as any;
 
 					// Convert Zod schema to JSON schema if needed
-					let inputSchema = {
+					let inputSchema: {
+						type: string;
+						properties: Record<string, unknown>;
+						required: string[];
+						additionalProperties?: boolean;
+						[key: string]: unknown;
+					} = {
 						type: 'object',
 						properties: {},
-						required: []
+						required: [],
+						additionalProperties: false
 					};
 
 					if (toolData.inputSchema) {
@@ -122,7 +129,8 @@ export class ExtendedMcpServer extends McpServer {
 										inputSchema = {
 											type: 'object',
 											properties: {},
-											required: []
+											required: [],
+											additionalProperties: false
 										};
 									}
 								}
@@ -139,7 +147,8 @@ export class ExtendedMcpServer extends McpServer {
 							inputSchema = {
 								type: 'object',
 								properties: {},
-								required: []
+								required: [],
+								additionalProperties: false
 							};
 						}
 					}
@@ -159,7 +168,7 @@ export class ExtendedMcpServer extends McpServer {
 			logger.debug(`Found ${toolsList.length} tools from _registeredTools`);
 			return toolsList;
 		} catch (error) {
-			logger.error('Error getting tools list:', error instanceof Error ? error.message : 'Unknown error');
+			logger.error(`Error getting tools list: ${sanitizeErrorMessage(error)}`);
 			return [];
 		}
 	}

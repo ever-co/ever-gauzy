@@ -97,11 +97,19 @@ export class HttpTransport {
 			verify: (req, res, buf) => {
 				const validation = validateRequestSize(buf, process.env.NODE_ENV === 'production' ? 1024 * 1024 : 10 * 1024 * 1024);
 				if (!validation.valid) {
-					SecurityLogger.logSecurityEvent(SecurityEvents.LARGE_REQUEST, 'medium', {
-						size: buf.length,
-						ip: req.socket?.remoteAddress || 'unknown',
-						error: validation.error
-					});
+					if (validation.error === 'Request too large') {
+						SecurityLogger.logSecurityEvent(SecurityEvents.LARGE_REQUEST, 'medium', {
+							size: buf.length,
+							ip: req.socket?.remoteAddress || 'unknown',
+							error: validation.error
+						});
+					} else {
+						SecurityLogger.logSecurityEvent(SecurityEvents.SUSPICIOUS_PAYLOAD, 'medium', {
+							size: buf.length,
+							ip: req.socket?.remoteAddress || 'unknown',
+							error: validation.error
+						});
+					}
 
 					// Map size errors to proper HTTP status
 					if (validation.error === 'Request too large') {
@@ -111,7 +119,8 @@ export class HttpTransport {
 						throw error;
 					}
 					const err: any = new Error(validation.error);
-					err.status = validation.error === 'Request too large' ? 413 : 400;
+					err.status = 400;
+					err.statusCode = 400;
 					throw err;
 				}
 			}
@@ -127,7 +136,8 @@ export class HttpTransport {
 		this.app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction): void => {
 			// Skip if response already sent
 			if (res.headersSent) {
-				return next(err);
+				next(err);
+				return;
 			}
 
 			const statusCode = Number(err.status || err.statusCode) || 500;
@@ -157,7 +167,7 @@ export class HttpTransport {
 
 		// Request logging
 		this.app.use((req, res, next) => {
-			logger.debug(`${req.method} ${req.path} from ${req.socket?.remoteAddress}`);
+			logger.debug(`${req.method} ${req.path} from ${this.getClientIP(req, this.transportConfig.trustedProxies || [])}`);
 			next();
 		});
 
