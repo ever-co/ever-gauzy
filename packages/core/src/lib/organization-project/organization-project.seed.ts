@@ -6,8 +6,8 @@ import {
 	IOrganizationProject,
 	ITenant,
 	OrganizationProjectBudgetTypeEnum,
-	TaskListTypeEnum,
-	TaskStatusEnum
+	ProjectStatusEnum,
+	TaskListTypeEnum
 } from '@gauzy/contracts';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { DEFAULT_ORGANIZATION_PROJECTS } from './default-organization-projects';
@@ -74,7 +74,7 @@ export const createDefaultOrganizationProjects = async (
 			// Create a new OrganizationProject instance
 			const project = new OrganizationProject();
 			project.name = projectName;
-			project.status = faker.helpers.arrayElement(Object.values(TaskStatusEnum));
+			project.status = faker.helpers.arrayElement(Object.values(ProjectStatusEnum));
 			project.tags = tags;
 			project.organizationContact = faker.helpers.arrayElement(organizationContacts);
 			project.organization = organization;
@@ -169,7 +169,7 @@ export const createRandomOrganizationProjects = async (
 				const project = new OrganizationProject();
 				project.tags = [tags[Math.floor(Math.random() * tags.length)]];
 				project.name = faker.company.name();
-				project.status = faker.helpers.arrayElement(Object.values(TaskStatusEnum));
+				project.status = faker.helpers.arrayElement(Object.values(ProjectStatusEnum));
 				project.organization = organization;
 				project.tenant = tenant;
 				project.budgetType = budgetType;

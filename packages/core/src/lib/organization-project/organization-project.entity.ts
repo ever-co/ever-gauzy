@@ -28,8 +28,8 @@ import {
 	OrganizationProjectBudgetTypeEnum,
 	ProjectBillingEnum,
 	ProjectOwnerEnum,
-	TaskListTypeEnum,
-	TaskStatusEnum
+	ProjectStatusEnum,
+	TaskListTypeEnum
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import {
@@ -206,12 +206,12 @@ export class OrganizationProject
 	icon?: string;
 
 	// Specifies the status of the project, if provided.
-	@ApiPropertyOptional({ type: () => String, enum: TaskStatusEnum })
+	@ApiPropertyOptional({ type: () => String, enum: ProjectStatusEnum, default: ProjectStatusEnum.OPEN })
 	@IsOptional()
-	@IsEnum(TaskStatusEnum)
+	@IsEnum(ProjectStatusEnum)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: true })
-	status?: TaskStatusEnum;
+	@MultiORMColumn({ nullable: true, default: ProjectStatusEnum.OPEN })
+	status?: ProjectStatusEnum;
 
 	// Auto-sync tasks property
 	@ApiPropertyOptional({ type: () => Boolean })
