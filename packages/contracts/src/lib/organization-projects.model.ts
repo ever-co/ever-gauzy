@@ -11,10 +11,20 @@ import { IOrganizationTeam } from './organization-team.model';
 import { IOrganizationProjectModule } from './organization-project-module.model';
 import { CrudActionEnum, ProjectBillingEnum, ProjectOwnerEnum } from './organization.model';
 import { CurrenciesEnum } from './currency.model';
-import { TaskStatusEnum } from './task-status.model';
 import { IRelationalRole } from './role.model';
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model'; // Base Entities
 import { CustomFieldsObject } from './shared-types'; // Shared Types
+
+/**
+ * Project status enum
+ */
+export enum ProjectStatusEnum {
+	OPEN = 'open',
+	IN_PROGRESS = 'in-progress',
+	COMPLETED = 'completed',
+	CANCELLED = 'cancelled',
+	CUSTOM = 'custom'
+}
 
 // Base interface with optional properties
 export interface IRelationalOrganizationProject {
@@ -56,7 +66,7 @@ export interface IOrganizationProjectBase
 	budgetType?: OrganizationProjectBudgetTypeEnum;
 	membersCount?: number;
 	imageUrl?: string;
-	status?: TaskStatusEnum;
+	status?: ProjectStatusEnum;
 	icon?: string;
 	archiveTasksIn?: number;
 	closeTasksIn?: number;
