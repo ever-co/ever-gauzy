@@ -171,7 +171,9 @@ export const createRandomOrganizationProjects = async (
 				const project = new OrganizationProject();
 				project.tags = [tags[Math.floor(Math.random() * tags.length)]];
 				project.name = faker.company.name();
-				project.status = faker.helpers.arrayElement(Object.values(ProjectStatusEnum));
+                project.status = faker.helpers.arrayElement(
+                    Object.values(ProjectStatusEnum).filter((s) => s !== ProjectStatusEnum.CUSTOM)
+                );
 				project.organization = organization;
 				project.tenant = tenant;
 				project.budgetType = budgetType;
