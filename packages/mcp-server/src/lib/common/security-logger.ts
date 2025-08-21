@@ -84,6 +84,41 @@ export class SecurityLogger {
 		// e.g., Splunk, ELK, Datadog, etc.
 		logger.debug(`Would send to external monitoring: ${event.event}`);
 	}
+
+	// Instance methods for easier usage in middleware
+	debug(message: string, data?: Record<string, unknown>): void {
+		if (environment.production === false || process.env.GAUZY_MCP_DEBUG === 'true') {
+			logger.debug(message, data ? JSON.stringify(sanitizeForLogging(data)) : '');
+		}
+	}
+
+	log(message: string, data?: Record<string, unknown>): void {
+		logger.log(message, data ? JSON.stringify(sanitizeForLogging(data)) : '');
+	}
+
+	warn(message: string, data?: Record<string, unknown>): void {
+		logger.warn(message, data ? JSON.stringify(sanitizeForLogging(data)) : '');
+	}
+
+	error(message: string, error?: Error | Record<string, unknown>): void {
+		if (error instanceof Error) {
+			logger.error(message, error.stack || error.message);
+		} else if (error) {
+			logger.error(message, JSON.stringify(sanitizeForLogging(error)));
+		} else {
+			logger.error(message);
+		}
+	}
+
+	// Instance method to log security events with request context
+	logSecurityEvent(
+		event: string,
+		severity: SecurityEvent['severity'],
+		details: Record<string, unknown>,
+		req?: any
+	): void {
+		SecurityLogger.logSecurityEvent(event, severity, details, req);
+	}
 }
 
 // Pre-defined security events
