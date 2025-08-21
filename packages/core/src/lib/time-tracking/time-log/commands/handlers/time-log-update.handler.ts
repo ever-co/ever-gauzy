@@ -108,6 +108,13 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			}
 			// Create new time slots if needed for Web Timer
 			if (!manualTimeSlot && timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
+				// Ensure every TimeSlot has an assigned timeLogId
+				updateTimeSlots.forEach((slot) => {
+					// If the timeLogId is missing, assign the current timeLog's id
+					if (!slot.timeLogId) {
+						slot.timeLogId = timeLog.id; // <- assign here if missing
+					}
+				});
 				await this.bulkCreateTimeSlots(updateTimeSlots, timeLog, employeeId, organizationId, tenantId);
 				this.logger.verbose(`Created new TimeSlots for Web Timer: ${JSON.stringify(updateTimeSlots)}`);
 			}

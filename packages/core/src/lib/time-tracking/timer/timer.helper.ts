@@ -1,29 +1,29 @@
-import { FindOperator } from "typeorm";
-import { ITimerStatusInput, TimeLogSourceEnum } from "@gauzy/contracts";
+import { FindOperator } from 'typeorm';
+import { ITimerStatusInput, TimeLogSourceEnum } from '@gauzy/contracts';
 
 //
 interface TimeLogParams extends ITimerStatusInput {
-    startedAt: FindOperator<Date>;
-    stoppedAt: FindOperator<any>;
+	startedAt: FindOperator<Date>;
+	stoppedAt: FindOperator<any>;
 }
 
 //
 interface TimeLogQueryParams extends ITimerStatusInput {
-    where: {
-        startedAt: FindOperator<Date>;
-        stoppedAt: FindOperator<any>;
-        employeeId: string;
-        tenantId: string;
-        organizationId: string;
-        isActive: boolean;
-        isArchived: boolean;
-        isRunning?: boolean;
-        source?: TimeLogSourceEnum;
-    }
-    order: {
-        startedAt: 'ASC' | 'DESC';
-        createdAt: 'ASC' | 'DESC';
-    }
+	where: {
+		startedAt: FindOperator<Date>;
+		stoppedAt: FindOperator<any>;
+		employeeId: string;
+		tenantId: string;
+		organizationId: string;
+		isActive: boolean;
+		isArchived: boolean;
+		isRunning?: boolean;
+		source?: TimeLogSourceEnum;
+	};
+	order: {
+		startedAt: 'ASC' | 'DESC';
+		createdAt: 'ASC' | 'DESC';
+	};
 }
 
 /**
@@ -32,29 +32,29 @@ interface TimeLogQueryParams extends ITimerStatusInput {
  * @param params - Parameters used to construct query conditions.
  * @returns An object containing query parameters for database operations.
  */
-export function buildCommonQueryParameters(params: TimeLogParams, includeJoin: boolean = false): TimeLogQueryParams {
-    const { source, startedAt, stoppedAt, employeeId, tenantId, organizationId } = params;
-    const queryParams: TimeLogQueryParams = {
-        where: {
-            ...(source ? { source } : {}),
-            startedAt,
-            stoppedAt,
-            employeeId,
-            tenantId,
-            organizationId,
-            isActive: true,
-            isArchived: false
-        },
-        order: {
-            startedAt: 'DESC', // Sorting by startedAt in descending order
-            createdAt: 'DESC', // Sorting by createdAt in descending order
-        }
-    };
+export function buildCommonQueryParameters(params: TimeLogParams, includeJoin = false): TimeLogQueryParams {
+	const { source, startedAt, stoppedAt, employeeId, tenantId, organizationId } = params;
+	const queryParams: TimeLogQueryParams = {
+		where: {
+			...(source ? { source } : {}),
+			startedAt,
+			stoppedAt,
+			employeeId,
+			tenantId,
+			organizationId,
+			isActive: true,
+			isArchived: false
+		},
+		order: {
+			startedAt: 'DESC', // Sorting by startedAt in descending order
+			createdAt: 'DESC' // Sorting by createdAt in descending order
+		}
+	};
 
-    // Adds a join clause to the query parameters if includeJoin is true.
-    addJoinToQueryParams(queryParams, includeJoin);
+	// Adds a join clause to the query parameters if includeJoin is true.
+	addJoinToQueryParams(queryParams, includeJoin);
 
-    return queryParams;
+	return queryParams;
 }
 
 /**
@@ -64,16 +64,36 @@ export function buildCommonQueryParameters(params: TimeLogParams, includeJoin: b
  * @param includeJoin - A flag indicating whether to include the join clause.
  */
 export function addJoinToQueryParams(queryParams: TimeLogQueryParams, includeJoin: boolean): TimeLogQueryParams {
-    if (includeJoin) {
-        queryParams['join'] = {
-            alias: 'time_log',
-            innerJoin: {
-                timeSlots: 'time_log.timeSlots',
-            }
-        };
-    }
-    return queryParams;
+	if (includeJoin) {
+		queryParams['join'] = {
+			alias: 'time_log',
+			leftJoin: {
+				timeSlots: 'time_log.timeSlots'
+			}
+		};
+	}
+	return queryParams;
 }
+
+// TODO: Preserved the optional join with timeSlots, as it may be required
+// when handling only timeSlots. This could be necessary for the desktop app.
+/**
+ * Adds a join clause to the query parameters if includeJoin is true.
+ *
+ * @param queryParams - The existing query parameters object to be modified.
+ * @param includeJoin - A flag indicating whether to include the join clause.
+ */
+// export function addJoinToQueryParams(queryParams: TimeLogQueryParams, includeJoin: boolean): TimeLogQueryParams {
+//     if (includeJoin) {
+//         queryParams['join'] = {
+//             alias: 'time_log',
+//             innerJoin: {
+//                 timeSlots: 'time_log.timeSlots',
+//             }
+//         };
+//     }
+//     return queryParams;
+// }
 
 /**
  * Builds log-specific query parameters.
@@ -84,8 +104,8 @@ export function addJoinToQueryParams(queryParams: TimeLogQueryParams, includeJoi
  * @returns Query parameters tailored for log retrieval.
  */
 export function buildLogQueryParameters(params: TimeLogParams): TimeLogQueryParams {
-    const queryParams = buildCommonQueryParameters(params, true);
-    return queryParams;
+	const queryParams = buildCommonQueryParameters(params, true);
+	return queryParams;
 }
 
 /**
@@ -95,7 +115,7 @@ export function buildLogQueryParameters(params: TimeLogParams): TimeLogQueryPara
  * @param request - The request object, potentially containing relations.
  */
 export function addRelationsToQuery(queryParams: TimeLogQueryParams, request: ITimerStatusInput): void {
-    if (request.relations) {
-        queryParams.relations = request.relations;
-    }
+	if (request.relations) {
+		queryParams.relations = request.relations;
+	}
 }

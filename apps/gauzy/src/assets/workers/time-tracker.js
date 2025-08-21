@@ -6,6 +6,10 @@ let interval = null;
 addEventListener('message', ({ data }) => {
 	// if timer running, start counter
 	if (data.isRunning) {
+		if (interval) {
+			clearInterval(interval);
+			interval = null;
+		}
 		interval = setInterval(() => {
 			// Pre-increment session and duration values each 1 sec and send to time tracker service
 			postMessage({
@@ -14,8 +18,11 @@ addEventListener('message', ({ data }) => {
 				workedThisWeek: ++data.workedThisWeek
 			});
 		}, 1000);
-	} else if (interval) {
-		// if timer stopped clear interval
-		clearInterval(interval);
+	} else {
+		if (interval) {
+			// if timer stopped clear interval
+			clearInterval(interval);
+			interval = null;
+		}
 	}
 });

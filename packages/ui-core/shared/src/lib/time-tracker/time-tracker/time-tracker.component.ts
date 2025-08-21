@@ -67,7 +67,6 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 						toLocal(timerSynced.startedAt),
 						'seconds'
 					);
-					if (!this.limitReached) await this.toggleTimer(false);
 				}),
 				untilDestroyed(this)
 			)

@@ -20,9 +20,7 @@ export function generateTimeSlots(start: Date, end: Date, previousTime = 0) {
 			}
 		} else {
 			/* Calculate duration for without round time IE. 10:14-10:20 */
-			const tempStart = mStart
-				.clone()
-				.set('minute', mStart.get('minute') - (mStart.minutes() % 10));
+			const tempStart = mStart.clone().set('minute', mStart.get('minute') - (mStart.minutes() % 10));
 
 			/* Added 10 min for next slot */
 			tempEnd = tempStart.clone().add(10, 'minute');
@@ -49,11 +47,13 @@ export function generateTimeSlots(start: Date, end: Date, previousTime = 0) {
 		mStart.set('second', 0);
 		mEnd.set('millisecond', 0);
 
-		slots.push({
-			startedAt: mStart.toDate(),
-			stoppedAt: tempEnd.toDate(),
-			duration: Math.abs(duration)
-		});
+		if (duration > 0) {
+			slots.push({
+				startedAt: mStart.toDate(),
+				stoppedAt: tempEnd.toDate(),
+				duration: duration
+			});
+		}
 
 		mStart = tempEnd.clone();
 	}
@@ -71,17 +71,13 @@ export function getStartEndIntervals(
 	start: moment.Moment,
 	end: moment.Moment
 ): {
-	start: string | Date,
-	end: string | Date
+	start: string | Date;
+	end: string | Date;
 } {
 	let startMinute = moment(start).utc().get('minute');
 	startMinute = startMinute - (startMinute % 10);
 
-	const startDate = moment(start)
-		.utc()
-		.set('minute', startMinute)
-		.set('second', 0)
-		.set('millisecond', 0);
+	const startDate = moment(start).utc().set('minute', startMinute).set('second', 0).set('millisecond', 0);
 
 	let endMinute = moment(end).utc().get('minute');
 	endMinute = endMinute - (endMinute % 10);
@@ -95,5 +91,5 @@ export function getStartEndIntervals(
 	return {
 		start: startDate.toDate(),
 		end: endDate.toDate()
-	}
+	};
 }

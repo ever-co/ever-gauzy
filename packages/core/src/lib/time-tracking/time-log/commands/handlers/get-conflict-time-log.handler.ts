@@ -25,7 +25,7 @@ export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTi
 
 		let conflictQuery = this.typeOrmTimeLogRepository.createQueryBuilder();
 
-		let query: string = ``;
+		let query = ``;
 		switch (this.configService.dbConnectionOptions.type) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
@@ -45,11 +45,13 @@ export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTi
 				);
 		}
 		conflictQuery = conflictQuery
-			.innerJoinAndSelect(`${conflictQuery.alias}.timeSlots`, 'timeSlots')
+			// Include TimeSlots in the query to check for conflicts.
+			// Using LEFT JOIN instead of INNER JOIN to ensure we also get time logs without any timeSlots.
+			.leftJoinAndSelect(`${conflictQuery.alias}.timeSlots`, 'timeSlots')
 			.where(p(`"${conflictQuery.alias}"."employeeId" = :employeeId`), { employeeId })
 			.andWhere(p(`"${conflictQuery.alias}"."tenantId" = :tenantId`), { tenantId })
 			.andWhere(p(`"${conflictQuery.alias}"."organizationId" = :organizationId`), { organizationId })
-			.andWhere(query);
+			.andWhere(query, { startedAt, stoppedAt });
 		if (input.relations) {
 			input.relations.forEach((relation) => {
 				conflictQuery = conflictQuery.leftJoinAndSelect(`${conflictQuery.alias}.${relation}`, relation);

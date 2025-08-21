@@ -107,6 +107,7 @@ export class TimeTrackerService implements OnDestroy {
 	private _timerSynced: ITimerSynced;
 	// Indicates whether the timer was started automatically after midnight
 	private startedAfterMidnight = false;
+	private isToggleInProgress = false;
 	private readonly channel: BroadcastChannel;
 	private readonly timerStoreSubject = new BehaviorSubject(this.timerStore.getValue());
 	public timer$: Observable<number> = timer(BACKGROUND_SYNC_INTERVAL);
@@ -212,9 +213,10 @@ export class TimeTrackerService implements OnDestroy {
 				}
 
 				// On refresh/delete TimeLog, we need to clear interval to prevent duplicate interval
-				this.turnOffTimer();
-				if (status.running) {
+				if (status.running && this.running && !this.isToggleInProgress) {
 					this.turnOnTimer();
+				} else if (!status.running && this.running) {
+					this.turnOffTimer();
 				}
 
 				return status;
@@ -483,40 +485,79 @@ export class TimeTrackerService implements OnDestroy {
 		return selected.isoWeek() === now.isoWeek() && selected.isoWeekYear() === now.isoWeekYear();
 	}
 
-	async toggle(): Promise<ITimeLog> {
+	async toggle(): Promise<ITimeLog | void> {
+		// Check if a toggle is already in progress (prevents multiple clicks)
+		if (this.isToggleInProgress) return;
+
+		// Check if the weekly tracking limit has been reached
 		if (this.hasReachedWeeklyLimit()) return;
+
+		this.isToggleInProgress = true; // lock to avoid concurrent toggles
 		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-		if (this.running) {
-			this.turnOffTimer();
-			delete this.timerConfig.source;
-			this.timerConfig = {
-				...this.timerConfig,
-				timeZone,
-				stoppedAt: toUTC(moment()).toDate()
-			};
-			this.currentSessionDuration = 0;
-			const log = await firstValueFrom(
-				this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/stop`, this.timerConfig)
-			);
-			this._broadcastState('STOP_TIMER');
-			this._saveStateToLocalStorage();
-			return log;
-		} else {
-			this.currentSessionDuration = 0;
-			this.turnOnTimer();
-			this.timerConfig = {
-				...this.timerConfig,
-				timeZone,
-				startedAt: toUTC(moment()).toDate(),
-				source: TimeLogSourceEnum.WEB_TIMER
-			};
-			const log = await firstValueFrom(
-				this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/start`, this.timerConfig)
-			);
-			this._broadcastState('START_TIMER');
-			this._saveStateToLocalStorage();
-			return log;
+		try {
+			if (this.running) {
+				// --- STOP TIMER ---
+				const stopConfig = {
+					...this.timerConfig,
+					timeZone,
+					stoppedAt: toUTC(moment()).toDate()
+				};
+
+				// Remove the "source" property when stopping the timer
+				delete this.timerConfig.source;
+
+				// Send stop request to backend
+				const log = await firstValueFrom(
+					this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/stop`, stopConfig)
+				);
+
+				// Validate backend response
+				if (!log || !log.id) {
+					throw new Error('Stop timer failed, response invalid.');
+				}
+
+				// Update local state only after successful response
+				this.turnOffTimer();
+				this.currentSessionDuration = 0;
+				this._broadcastState('STOP_TIMER');
+				this._saveStateToLocalStorage();
+
+				return log;
+			} else {
+				// --- START TIMER ---
+				const startConfig = {
+					...this.timerConfig,
+					timeZone,
+					startedAt: toUTC(moment()).toDate(),
+					source: TimeLogSourceEnum.WEB_TIMER
+				};
+
+				// Send start request to backend
+				const log = await firstValueFrom(
+					this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/start`, startConfig)
+				);
+
+				// Validate backend response
+				if (!log || !log.id) {
+					throw new Error('Start timer failed, response invalid.');
+				}
+
+				// Update local state only after successful response
+				this.currentSessionDuration = 0;
+				this.turnOnTimer();
+				this._broadcastState('START_TIMER');
+				this._saveStateToLocalStorage();
+
+				return log;
+			}
+		} catch (error) {
+			// Handle any errors from the toggle request
+			console.error('[toggle] Timer request failed:', error);
+			throw error; // can be shown as a toast/alert in the UI
+		} finally {
+			// Always release the toggle lock
+			this.isToggleInProgress = false;
 		}
 	}
 
