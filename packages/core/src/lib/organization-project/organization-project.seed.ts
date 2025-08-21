@@ -74,7 +74,9 @@ export const createDefaultOrganizationProjects = async (
 			// Create a new OrganizationProject instance
 			const project = new OrganizationProject();
 			project.name = projectName;
-			project.status = faker.helpers.arrayElement(Object.values(ProjectStatusEnum));
+            project.status = faker.helpers.arrayElement(
+                Object.values(ProjectStatusEnum).filter((s) => s !== ProjectStatusEnum.CUSTOM)
+            );
 			project.tags = tags;
 			project.organizationContact = faker.helpers.arrayElement(organizationContacts);
 			project.organization = organization;
