@@ -582,6 +582,20 @@ export class TimeTrackerService implements OnDestroy {
 		this._worker.postMessage({
 			isRunning: this.running
 		});
+
+		// Synchronize state with the backend after stop confirmation
+		const { tenantId, organizationId } = this.timerConfig;
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		this.checkTimerStatus({
+			tenantId,
+			organizationId,
+			relations: ['employee'],
+			timeZone
+		}).then((status) => {
+			this.duration = status.duration;
+			this.currentSessionDuration = 0;
+			this.timerStore.update({ workedThisWeek: status.workedThisWeek });
+		});
 		this._broadcastState('SYNC_TIMER');
 	}
 
