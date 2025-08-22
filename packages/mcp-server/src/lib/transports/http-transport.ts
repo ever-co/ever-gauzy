@@ -11,6 +11,8 @@ import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 import { getEnhancedSecurityHeaders, validateMCPToolInput, validateRequestSize } from '../common/security-config';
 import { sanitizeErrorMessage } from '../common/security-utils';
 import { SecurityLogger, SecurityEvents } from '../common/security-logger';
+import { AuthorizationConfig, loadAuthorizationConfig } from '../common/authorization-config';
+import { AuthorizationMiddleware, AuthorizedRequest } from '../common/authorization-middleware';
 
 const logger = new Logger('HttpTransport');
 
@@ -64,10 +66,20 @@ export class HttpTransport {
 	private mcpServer: ExtendedMcpServer;
 	private transportConfig: McpTransportConfig['http'];
 	private isInitialized = false;
+	private authorizationConfig: AuthorizationConfig;
+	private authorizationMiddleware: AuthorizationMiddleware | null = null;
 
 	constructor(options: HttpTransportOptions) {
 		this.mcpServer = options.server;
 		this.transportConfig = options.transportConfig;
+		this.authorizationConfig = loadAuthorizationConfig();
+
+		// Initialize authorization middleware if enabled
+		if (this.authorizationConfig.enabled) {
+			this.authorizationMiddleware = new AuthorizationMiddleware(this.authorizationConfig);
+			logger.log('OAuth 2.0 authorization enabled for MCP server');
+		}
+
 		this.app = express();
 		this.setupMiddleware();
 		this.setupRoutes();
@@ -185,7 +197,7 @@ export class HttpTransport {
 			validateUserAgent: false,
 			enableCSRF: true,
 			enableRateLimit: false,
-			excludedPaths: ['/health', '/mcp/session*'],
+			excludedPaths: ['/health', '/sse/session*'],
 			trustedProxies: this.transportConfig.trustedProxies || [],
 		});
 
@@ -197,11 +209,18 @@ export class HttpTransport {
 		});
 
 		// Apply middleware to MCP routes
-		this.app.use('/mcp', rateLimitMiddleware);
-		this.app.use('/mcp', mcpSessionMiddleware);
+		this.app.use('/sse', rateLimitMiddleware);
+		this.app.use('/sse', mcpSessionMiddleware);
 	}
 
 	private setupRoutes() {
+		// OAuth 2.0 Protected Resource Metadata endpoint (RFC 9728)
+		if (this.authorizationMiddleware) {
+			this.app.get('/.well-known/oauth-protected-resource',
+				this.authorizationMiddleware.createProtectedResourceMetadataMiddleware()
+			);
+		}
+
 		// Health check endpoint (no session required)
 		this.app.get('/health', (req, res) => {
 			const sessionStats = this.transportConfig.session.enabled
@@ -213,6 +232,10 @@ export class HttpTransport {
 				timestamp: new Date().toISOString(),
 				transport: 'http',
 				server: 'gauzy-mcp-server',
+				authorization: {
+					enabled: this.authorizationConfig.enabled,
+					resourceUri: this.authorizationConfig.resourceUri
+				},
 				...(sessionStats && {
 					sessions: {
 						total: sessionStats.totalSessions,
@@ -223,8 +246,16 @@ export class HttpTransport {
 			});
 		});
 
-		// MCP Protocol endpoint - POST for requests
-		this.app.post('/mcp', async (req, res) => {
+		// Apply authorization middleware to protected endpoints
+		const authMiddleware = this.authorizationMiddleware?.createAuthorizationMiddleware({
+			requiredScopes: this.authorizationConfig.requiredScopes,
+			optional: false
+		});
+
+		// MCP Protocol endpoint - POST for requests (protected)
+		this.app.post('/sse',
+			...(authMiddleware ? [authMiddleware] : []),
+			async (req: AuthorizedRequest, res) => {
 			try {
 				await this.handleMcpRequest(req, res);
 			} catch (error) {
@@ -236,18 +267,21 @@ export class HttpTransport {
 			}
 		});
 
-		// Server-Sent Events endpoint for streaming
-		this.app.get('/mcp/events', (req, res) => {
-			try {
-				this.handleMcpEventStream(req, res);
-			} catch (error) {
-				logger.error('Error setting up event stream:', error);
-				res.status(500).json({
-					error: 'Internal server error',
-					message: error instanceof Error ? error.message : 'Unknown error'
-				});
+		// Server-Sent Events endpoint for streaming (protected)
+		this.app.get('/sse/events',
+			...(authMiddleware ? [authMiddleware] : []),
+			(req: AuthorizedRequest, res) => {
+				try {
+					this.handleMcpEventStream(req, res);
+				} catch (error) {
+					logger.error('Error setting up event stream:', error);
+					res.status(500).json({
+						error: 'Internal server error',
+						message: error instanceof Error ? error.message : 'Unknown error'
+					});
+				}
 			}
-		});
+		);
 
 		// Session management endpoints
 		if (this.transportConfig.session.enabled) {
@@ -283,7 +317,7 @@ export class HttpTransport {
 		});
 
 		// Create session endpoint
-		this.app.post('/mcp/session', sessionRateLimit, async (req, res) => {
+		this.app.post('/sse/session', sessionRateLimit, async (req, res) => {
 			try {
 				// For authenticated session creation, validate CSRF token
 				const requestCsrfToken = req.get('mcp-csrf-token');
@@ -359,7 +393,7 @@ export class HttpTransport {
 		});
 
 		// Delete session endpoint
-		this.app.delete('/mcp/session/:sessionId', sessionRateLimit, async (req, res) => {
+		this.app.delete('/sse/session/:sessionId', sessionRateLimit, async (req, res) => {
 			const sessionId = req.params.sessionId;
 
 			try {
@@ -424,7 +458,7 @@ export class HttpTransport {
 		});
 
 		// Get session info endpoint
-		this.app.get('/mcp/session/:sessionId', sessionRateLimit, sessionMiddleware.createAuthorizationMiddleware(), async (req, res): Promise<void> => {
+		this.app.get('/sse/session/:sessionId', sessionRateLimit, sessionMiddleware.createAuthorizationMiddleware(), async (req, res): Promise<void> => {
 			const sessionId = req.params.sessionId;
 
 			try {
@@ -485,7 +519,7 @@ export class HttpTransport {
 		});
 
 		// Session stats endpoint
-		this.app.get('/mcp/sessions/stats', sessionRateLimit, (req, res) => {
+		this.app.get('/sse/sessions/stats', sessionRateLimit, (req, res) => {
 			try {
 				const stats = sessionManager.getStats();
 				const metrics = sessionManager.getMetrics();
@@ -511,7 +545,7 @@ export class HttpTransport {
 		});
 	}
 
-	private async handleMcpRequest(req: express.Request, res: express.Response) {
+	private async handleMcpRequest(req: AuthorizedRequest, res: express.Response) {
 		const { jsonrpc, method, params, id } = req.body;
 
 		// Validate JSON-RPC 2.0 format
@@ -528,18 +562,29 @@ export class HttpTransport {
 		}
 
 		try {
-			// Add user context to request metadata if session is available
+			// Add user context and authorization info to request metadata
 			const userContext = req.userContext;
+			const tokenInfo = req.tokenInfo;
 			const enrichedParams =
-				userContext && params && !Array.isArray(params)
+				(userContext || tokenInfo) && params && !Array.isArray(params)
 				? {
 					...(params as Record<string, unknown>),
 					_context: {
-						userId: userContext.userId,
-						organizationId: userContext.organizationId,
-						tenantId: userContext.tenantId,
-						sessionId: userContext.sessionId,
-						connectionId: req.connectionId,
+						// Session-based context (if available)
+						...(userContext && {
+							userId: userContext.userId,
+							organizationId: userContext.organizationId,
+							tenantId: userContext.tenantId,
+							sessionId: userContext.sessionId,
+							connectionId: req.connectionId,
+						}),
+						// OAuth 2.0 context (if available)
+						...(tokenInfo && {
+							oauthSubject: tokenInfo.subject,
+							oauthClientId: tokenInfo.clientId,
+							oauthScopes: tokenInfo.scopes,
+							authorized: tokenInfo.valid,
+						}),
 					}
 					}
 				: params;
@@ -778,16 +823,28 @@ export class HttpTransport {
 						);
 						logger.log(`📡 Available endpoints:`);
 						logger.log(`   - GET  /health - Health check`);
-						logger.log(`   - POST /mcp - MCP protocol requests`);
-						logger.log(`   - GET  /mcp/events - Server-sent events`);
+
+						if (this.authorizationConfig.enabled) {
+							logger.log(`   - GET  /.well-known/oauth-protected-resource - OAuth 2.0 metadata`);
+						}
+
+						logger.log(`   - POST /sse - MCP protocol requests${this.authorizationConfig.enabled ? ' (protected)' : ''}`);
+						logger.log(`   - GET  /sse/events - Server-sent events${this.authorizationConfig.enabled ? ' (protected)' : ''}`);
+
+						if (this.authorizationConfig.enabled) {
+							logger.log(`🔐 OAuth 2.0 Authorization:`);
+							logger.log(`   - Resource URI: ${this.authorizationConfig.resourceUri}`);
+							logger.log(`   - Required scopes: ${this.authorizationConfig.requiredScopes?.join(', ') || 'none'}`);
+							logger.log(`   - Authorization servers: ${this.authorizationConfig.authorizationServers.length}`);
+						}
 
 						if (this.transportConfig.session.enabled) {
-							logger.log(`   - POST /mcp/session - Create session`);
-							logger.log(`   - GET  /mcp/session/:sessionId - Get session info`);
-							logger.log(`   - DELETE /mcp/session/:id - Delete session`);
-							logger.log(`   - GET  /mcp/sessions/stats - Session statistics`);
+							logger.log(`   - POST /sse/session - Create session`);
+							logger.log(`   - GET  /sse/session/:sessionId - Get session info`);
+							logger.log(`   - DELETE /sse/session/:id - Delete session`);
+							logger.log(`   - GET  /sse/sessions/stats - Session statistics`);
 							// NOTE: Leave DELETE log aligned or update it too for consistency:
-          					logger.log(`   - DELETE /mcp/session/:sessionId - Delete session`);
+          					logger.log(`   - DELETE /sse/session/:sessionId - Delete session`);
 							logger.log(`📡 Session management features:`);
 							logger.log(`   - Multi-user session isolation`);
 							logger.log(`   - Automatic session cleanup`);
