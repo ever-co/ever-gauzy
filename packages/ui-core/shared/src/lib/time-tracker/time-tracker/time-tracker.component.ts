@@ -317,11 +317,6 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 				await this.timeTrackerService.toggle();
 			}
 		} catch (error) {
-			if (this.timeTrackerService.interval) {
-				this.timeTrackerService.turnOffTimer();
-			} else {
-				this.timeTrackerService.turnOnTimer();
-			}
 			this._errorHandlingService.handleError(error);
 		}
 		this.isDisable = false;

@@ -55,7 +55,6 @@ import { addRelationsToQuery, buildCommonQueryParameters, buildLogQueryParameter
 import { TimerWeeklyLimitService } from './timer-weekly-limit.service';
 import { TaskService } from '../../tasks';
 import { OrganizationProjectService } from '../../organization-project';
-import { calculateTotalDuration } from '../time-log/time-log.utils';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -592,24 +591,24 @@ export class TimerService {
 		status.lastLog = lastLog;
 		status.running = lastLog?.isRunning;
 		// Calculate completed timelogs duration
-		const fixedLogs = calculateTotalDuration(logs, start, end, request?.timeZone);
+		status.duration += logs.filter(Boolean).reduce((sum, log) => sum + log.duration, 0);
 
-		status.duration = fixedLogs;
-		status.workedThisWeek = fixedLogs;
-
-		// Adjust duration for running or recently stopped logs
+		// Calculate last TimeLog duration
 		if (lastLog) {
+			// Include the last log into duration if it's running or was stopped
+			if (status.running || lastLogStopped) {
+				const started = moment(lastLog.startedAt);
+				const until = lastLogStopped ? moment(lastLog.stoppedAt) : now;
+
+				// Ensure that duration is cut at today's midnight (local timezone)
+				const todayMidnight = moment.tz(request?.timeZone).startOf('day');
+				const effectiveStart = started.isBefore(todayMidnight) ? todayMidnight : started;
+				status.duration += Math.abs(until.diff(effectiveStart, 'seconds'));
+			}
+
+			// If timer is running, then add the non saved duration to the workedThisWeek
 			if (lastLog.isRunning) {
-				const runningExtra = now.diff(moment(lastLog.startedAt), 'seconds') - (lastLog?.duration ?? 0);
-				status.duration += Math.max(runningExtra, 0);
-				status.workedThisWeek += Math.max(runningExtra, 0);
-			} else if (lastLogStopped && !logs.find((l) => l.id === lastLog.id)) {
-				const stoppedDuration = moment(lastLog.stoppedAt).diff(moment(lastLog.startedAt), 'seconds');
-				status.duration += stoppedDuration;
-				status.workedThisWeek += stoppedDuration;
-			} else if (!logs.find((l) => l.id === lastLog.id)) {
-				status.duration += lastLog?.duration ?? 0;
-				status.workedThisWeek += lastLog?.duration ?? 0;
+				status.workedThisWeek += now.diff(moment(lastLog.stoppedAt), 'seconds');
 			}
 		}
 
