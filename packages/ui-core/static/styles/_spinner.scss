@@ -17,8 +17,9 @@
 }
 
 .skeleton-main {
-  flex: 1;
-  background: #202023;
+  flex: 1 1 auto;
+  background: var(--skeleton-bg, #202023);
+  min-height: 0;
 }
 
 /* Responsive */
