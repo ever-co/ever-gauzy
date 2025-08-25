@@ -101,12 +101,16 @@ const status = manager.getStatus();
 
 ## Core Features
 
-### 🔐 Authentication Management
+### 🔐 Authentication & Authorization
 
 - **Smart Authentication**: Automatic user context detection
 - **Token Management**: Handles access and refresh tokens automatically
 - **Session Persistence**: Maintains authentication state across sessions
 - **Auto-login**: Configurable automatic login on server start
+- **OAuth 2.0 Authorization**: Full OAuth 2.0 support for MCP clients (RFC 9728)
+- **Protected Resource Metadata**: Automatic discovery endpoints for authorization servers
+- **Token Validation**: JWT and token introspection support with audience validation
+- **Scope Management**: Fine-grained access control with OAuth 2.0 scopes
 
 ### 🛠️ Comprehensive Tool Suite (323 tools across 22 categories)
 
@@ -321,15 +325,15 @@ packages/mcp-server/
 
    ```typescript
    // src/lib/tools/index.ts
-   export * from './my-new-tool.js';
+   export * from './my-new-tool';
    ```
 
 3. **Register the tool**: Include it in the main server
 
    ```typescript
    // src/lib/mcp-server.ts
-   import { MyNewTool } from './tools/my-new-tool.js';
-   // Register in the tools array
+   import { MyNewTool } from './tools/my-new-tool';
+   // Register the tool in the tools array
    ```
 
 4. **Export from package**: Add to main index if needed
