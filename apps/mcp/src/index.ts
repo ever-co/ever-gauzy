@@ -53,6 +53,7 @@ async function main() {
 		log.info(`   - GET  ${transport.url}/health`);
 		log.info(`   - POST ${transport.url}/sse`);
 		log.info(`   - GET  ${transport.url}/sse/events`);
+		log.info(`   - GET  ${transport.url}/.well-known/oauth-protected-resource`);
 	} else {
 		log.info('📟 Server ready for stdio communication');
 	}

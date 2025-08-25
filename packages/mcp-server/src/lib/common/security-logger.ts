@@ -88,16 +88,49 @@ export class SecurityLogger {
 	// Instance methods for easier usage in middleware
 	debug(message: string, data?: Record<string, unknown>): void {
 		if (environment.production === false || process.env.GAUZY_MCP_DEBUG === 'true') {
-			logger.debug(message, data ? JSON.stringify(sanitizeForLogging(data)) : '');
+			const safeStringify = (obj?: Record<string, unknown>) => {
+				if (!obj) return '';
+				const seen = new WeakSet();
+				return JSON.stringify(sanitizeForLogging(obj), (_k, v) => {
+					if (typeof v === 'object' && v !== null) {
+						if (seen.has(v)) return '[Circular]';
+						seen.add(v);
+					}
+					return v;
+				});
+			};
+			logger.debug(message, safeStringify(data));
 		}
 	}
 
 	log(message: string, data?: Record<string, unknown>): void {
-		logger.log(message, data ? JSON.stringify(sanitizeForLogging(data)) : '');
+		const safeStringify = (obj?: Record<string, unknown>) => {
+			if (!obj) return '';
+			const seen = new WeakSet();
+			return JSON.stringify(sanitizeForLogging(obj), (_k, v) => {
+				if (typeof v === 'object' && v !== null) {
+					if (seen.has(v)) return '[Circular]';
+					seen.add(v);
+				}
+				return v;
+			});
+		};
+		logger.log(message, safeStringify(data));
 	}
 
 	warn(message: string, data?: Record<string, unknown>): void {
-		logger.warn(message, data ? JSON.stringify(sanitizeForLogging(data)) : '');
+		const safeStringify = (obj?: Record<string, unknown>) => {
+			if (!obj) return '';
+			const seen = new WeakSet();
+			return JSON.stringify(sanitizeForLogging(obj), (_k, v) => {
+				if (typeof v === 'object' && v !== null) {
+					if (seen.has(v)) return '[Circular]';
+					seen.add(v);
+				}
+				return v;
+			});
+		};
+		logger.warn(message, data ? safeStringify(data) : '');
 	}
 
 	error(message: string, error?: Error | Record<string, unknown>): void {
@@ -115,7 +148,7 @@ export class SecurityLogger {
 		event: string,
 		severity: SecurityEvent['severity'],
 		details: Record<string, unknown>,
-		req?: any
+		req?: Request
 	): void {
 		SecurityLogger.logSecurityEvent(event, severity, details, req);
 	}

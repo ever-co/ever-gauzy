@@ -28,7 +28,7 @@ export class OAuthValidator {
 		}
 
 		// RFC 6750 Section 2.1: Authorization Request Header Field
-		const matches = authorization.match(/^Bearer\s+(.+)$/i);
+		const matches = authorization.match(/^Bearer\s+([^\s]+(?:\s+[^\s]+)*)$/i);
 		if (!matches || !matches[1]) {
 			return null;
 		}
@@ -95,8 +95,8 @@ export class OAuthValidator {
 			this.cacheToken(token, result);
 
 			return result;
-		} catch (error: any) {
-			this.securityLogger.error('Token validation error:', error);
+		} catch (error: unknown) {
+			this.securityLogger.error('Token validation error:', error as Error);
 			return {
 				valid: false,
 				error: error instanceof Error ? error.message : 'Token validation failed'
@@ -195,7 +195,9 @@ export class OAuthValidator {
 				body: new URLSearchParams({
 					token: token,
 					token_type_hint: 'access_token'
-				})
+				}),
+				// Abort after 5 seconds
+				signal: (AbortSignal as any).timeout ? (AbortSignal as any).timeout(5000) : undefined
 			});
 
 			if (!response.ok) {
@@ -260,7 +262,14 @@ export class OAuthValidator {
 			return;
 		}
 
-		const expires = Date.now() + (this.config.cache.tokenTtl * 1000);
+		const nowMs = Date.now();
+		let ttlMs = this.config.cache.tokenTtl * 1000;
+		if (typeof result.expires === 'number') {
+			const tokenMs = Math.max(0, (result.expires * 1000) - nowMs);
+			ttlMs = Math.min(ttlMs, tokenMs);
+		}
+		if (ttlMs <= 0) return;
+		const expires = nowMs + ttlMs;
 		this.tokenCache.set(token, { result, expires });
 
 		// Clean up expired cache entries periodically
@@ -304,12 +313,14 @@ export class OAuthValidator {
 	static createAuthorizationError(
 		error: AuthorizationError['error'],
 		description?: string,
-		scope?: string
+		scope?: string,
+		errorUri?: string
 	): AuthorizationError {
 		return {
 			error,
 			errorDescription: description,
-			scope
+			scope,
+			errorUri
 		};
 	}
 
@@ -320,21 +331,22 @@ export class OAuthValidator {
 		resourceMetadataUrl: string,
 		error?: AuthorizationError
 	): string {
-		let header = `Bearer resource="${resourceMetadataUrl}"`;
+		const esc = (v: string) => v.replace(/["\\]/g, '\\$&').replace(/[\r\n]/g, ' ');
+		let header = `Bearer resource="${esc(resourceMetadataUrl)}"`;
 
 		if (error) {
-			header += `, error="${error.error}"`;
+			header += `, error="${esc(error.error)}"`;
 
 			if (error.errorDescription) {
-				header += `, error_description="${error.errorDescription}"`;
+				header += `, error_description="${esc(error.errorDescription)}"`;
 			}
 
 			if (error.errorUri) {
-				header += `, error_uri="${error.errorUri}"`;
+				header += `, error_uri="${esc(error.errorUri)}"`;
 			}
 
 			if (error.scope) {
-				header += `, scope="${error.scope}"`;
+				header += `, scope="${esc(error.scope)}"`;
 			}
 		}
 

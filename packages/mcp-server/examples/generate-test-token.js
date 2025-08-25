@@ -1,9 +1,9 @@
 /**
  * Generate Test JWT Tokens for Development
- * 
+ *
  * This script generates JWT tokens for testing OAuth 2.0 authorization
  * in development environment.
- * 
+ *
  * Usage: node generate-test-token.js
  */
 
@@ -28,7 +28,7 @@ function generateTestJWT(payload = {}, secret = 'dev-secret-key-for-testing-only
     const now = Math.floor(Date.now() / 1000);
     const defaultPayload = {
         iss: 'gauzy-dev-auth',           // Issuer
-        aud: 'http://localhost:3001',    // Audience (your MCP server)
+        aud: 'http://localhost:3001/sse',    // Audience (your MCP server)
         sub: 'test-user-123',            // Subject (user ID)
         client_id: 'test-client',        // OAuth client ID
         scope: 'mcp:access mcp:tools',   // Granted scopes
@@ -105,6 +105,6 @@ console.log('4. Test different endpoints to see authorization in action');
 
 // Decode and display the valid token payload for reference
 const payloadB64 = validToken.split('.')[1];
-const payload = JSON.parse(Buffer.from(payloadB64, 'base64').toString());
+const payload = JSON.parse(base64UrlDecode(payloadB64));
 console.log('\n📄 Valid Token Payload:');
 console.log(JSON.stringify(payload, null, 2));

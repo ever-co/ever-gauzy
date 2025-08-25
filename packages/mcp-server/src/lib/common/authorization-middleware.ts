@@ -75,7 +75,11 @@ export class AuthorizationMiddleware {
 						error: validationResult.error
 					});
 
-					return this.sendUnauthorizedResponse(res, validationResult.error);
+					// Map scope failures to 403 as per RFC 6750
+					if (validationResult.error === 'Insufficient scope' && requiredScopes?.length) {
+							return this.sendForbiddenResponse(res, requiredScopes);
+						}
+						return this.sendUnauthorizedResponse(res, validationResult.error, requiredScopes);
 				}
 
 				// Attach token info to request
@@ -96,8 +100,8 @@ export class AuthorizationMiddleware {
 				});
 
 				next();
-			} catch (error: any) {
-				this.securityLogger.error('Authorization middleware error:', error);
+			} catch (error: unknown) {
+				this.securityLogger.error('Authorization middleware error:', error as Error);
 				return this.sendServerError(res, 'Authorization processing failed');
 			}
 		};
@@ -148,16 +152,8 @@ export class AuthorizationMiddleware {
 		};
 
 		// Add optional metadata
-		if (process.env.MCP_RESOURCE_DOCUMENTATION) {
-			metadata.resourceDocumentation = process.env.MCP_RESOURCE_DOCUMENTATION;
-		}
-
 		if (process.env.MCP_POLICY_URI) {
 			metadata.policyUri = process.env.MCP_POLICY_URI;
-		}
-
-		if (process.env.MCP_TOS_URI) {
-			metadata.tosUri = process.env.MCP_TOS_URI;
 		}
 
 		return metadata;
@@ -168,7 +164,8 @@ export class AuthorizationMiddleware {
 	 */
 	private buildCanonicalResourceUri(req: Request): string {
 		const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
-		const host = req.get('host') || 'localhost';
+		const xfHost = req.headers['x-forwarded-host'] as string | undefined;
+		const host = (xfHost && xfHost.split(',')[0].trim()) || req.get('host') || 'localhost';
 
 		// Build base URL
 		let resourceUri = `${protocol}://${host.toLowerCase()}`;
@@ -184,13 +181,13 @@ export class AuthorizationMiddleware {
 	/**
 	 * Send 401 Unauthorized response with WWW-Authenticate header
 	 */
-	private sendUnauthorizedResponse(res: Response, errorDescription?: string): void {
+	private sendUnauthorizedResponse(res: Response, errorDescription?: string, requiredScopes?: string[]): void {
 		const resourceMetadataUrl = `${this.getBaseUrl(res.req as Request)}/.well-known/oauth-protected-resource`;
 
 		const authError = OAuthValidator.createAuthorizationError(
 			'invalid_token',
 			errorDescription,
-			this.config.requiredScopes?.join(' ')
+			(requiredScopes || this.config.requiredScopes)?.join(' ')
 		);
 
 		const wwwAuthenticateHeader = OAuthValidator.formatWWWAuthenticateHeader(
@@ -199,6 +196,7 @@ export class AuthorizationMiddleware {
 		);
 
 		res.setHeader('WWW-Authenticate', wwwAuthenticateHeader);
+		res.setHeader('Vary', 'Authorization');
 		res.status(401).json({
 			error: authError.error,
 			error_description: authError.errorDescription,

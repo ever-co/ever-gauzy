@@ -1,6 +1,6 @@
 /**
  * OAuth 2.0 Authorization Configuration for MCP Server
- * 
+ *
  * This module defines the configuration and types needed for OAuth 2.0 authorization
  * following RFC 9728 (OAuth 2.0 Protected Resource Metadata) and MCP specification.
  */
@@ -117,7 +117,7 @@ export interface AuthorizationError {
  */
 export const DEFAULT_AUTHORIZATION_CONFIG: Partial<AuthorizationConfig> = {
 	enabled: false,
-	requiredScopes: ['mcp:access'],
+	requiredScopes: [],
 	jwt: {
 		algorithms: ['RS256', 'ES256', 'HS256'],
 	},

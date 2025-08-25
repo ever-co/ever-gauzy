@@ -2,7 +2,7 @@
 
 A comprehensive MCP (Model Context Protocol) server for integration with AI assistants like Claude Desktop, ChatGPT, and other AI tools. Supports multiple transport layers with enterprise-grade OAuth 2.0 security for different use cases.
 
-🌐 **Live Demo**: [https://mcpdemo.gauzy.co](https://mcpdemo.gauzy.co)  
+🌐 **Live Demo**: [https://mcpdemo.gauzy.co](https://mcpdemo.gauzy.co)
 🔒 **Production**: [https://mcp.gauzy.co](https://mcp.gauzy.co)
 
 ## Overview
@@ -77,6 +77,7 @@ MCP_SERVER_MODE=websocket
 yarn nx serve mcp
 
 # Server runs on ws://localhost:3002/sse by default (use wss:// when MCP_WS_TLS=true)
+# Note: "/sse" here is the WebSocket upgrade route (not an HTTP SSE stream).
 ```
 
 ### Integration with AI Assistants
@@ -147,20 +148,21 @@ MCP_CORS_ORIGIN=http://localhost:3000,http://localhost:4200
 MCP_CORS_CREDENTIALS=true
 
 # OAuth 2.0 Authorization (Optional)
-AUTHORIZATION_ENABLED=false               # Enable OAuth 2.0 authorization
-AUTHORIZATION_RESOURCE_URI=https://mcp.gauzy.co
-AUTHORIZATION_REQUIRED_SCOPES=mcp.read,mcp.write
-AUTHORIZATION_AUTH_SERVERS=https://auth.gauzy.co
-AUTHORIZATION_JWT_AUDIENCE=https://mcp.gauzy.co
-AUTHORIZATION_JWT_ISSUER=https://auth.gauzy.co
-AUTHORIZATION_JWT_PUBLIC_KEY_PATH=/path/to/public-key.pem
-# Or use JWKS endpoint instead:
-# AUTHORIZATION_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
+MCP_AUTH_ENABLED=false               # Enable OAuth 2.0 authorization
+MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
+MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
+MCP_AUTH_SERVERS=https://auth.gauzy.co
+MCP_AUTH_JWT_AUDIENCE=https://mcp.gauzy.co
+MCP_AUTH_JWT_ISSUER=https://auth.gauzy.co
+MCP_AUTH_JWT_PUBLIC_KEY_PATH=/path/to/public-key.pem
+# Or use JWKS endpoint
+MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
+#
 
 # Token Introspection (Alternative to JWT)
-# AUTHORIZATION_INTROSPECTION_ENDPOINT=https://auth.gauzy.co/token/introspect
-# AUTHORIZATION_INTROSPECTION_CLIENT_ID=mcp-client
-# AUTHORIZATION_INTROSPECTION_CLIENT_SECRET=client-secret
+# MCP_AUTH_INTROSPECTION_ENDPOINT=https://auth.gauzy.co/token/introspect
+# MCP_AUTH_INTROSPECTION_CLIENT_ID=mcp-client
+# MCP_AUTH_INTROSPECTION_CLIENT_SECRET=client-secret
 
 # Session management
 MCP_SESSION_ENABLED=true
@@ -216,7 +218,7 @@ curl -X POST http://localhost:3001/sse \
 
 ##### With OAuth 2.0 Authorization
 
-When `AUTHORIZATION_ENABLED=true`, you need to include a Bearer token:
+When `MCP_AUTH_ENABLED=true`, you need to include a Bearer token:
 
 ```bash
 # Get OAuth 2.0 Protected Resource Metadata (RFC 9728)
@@ -263,13 +265,13 @@ MCP_WS_PER_MESSAGE_DEFLATE=true
 MCP_WS_MAX_PAYLOAD=16777216               # 16MB
 
 # OAuth 2.0 Authorization (Optional)
-AUTHORIZATION_ENABLED=false               # Enable OAuth 2.0 authorization
-AUTHORIZATION_RESOURCE_URI=https://mcp.gauzy.co
-AUTHORIZATION_REQUIRED_SCOPES=mcp.read,mcp.write
-AUTHORIZATION_AUTH_SERVERS=https://auth.gauzy.co
-AUTHORIZATION_JWT_AUDIENCE=https://mcp.gauzy.co
-AUTHORIZATION_JWT_ISSUER=https://auth.gauzy.co
-AUTHORIZATION_JWT_PUBLIC_KEY_PATH=/path/to/public-key.pem
+MCP_AUTH_ENABLED=false               # Enable OAuth 2.0 authorization
+MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
+MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
+MCP_AUTH_SERVERS=https://auth.gauzy.co
+MCP_AUTH_JWT_AUDIENCE=https://mcp.gauzy.co
+MCP_AUTH_JWT_ISSUER=https://auth.gauzy.co
+MCP_AUTH_JWT_PUBLIC_KEY_PATH=/path/to/public-key.pem
 
 # Security settings
 MCP_WS_ALLOWED_ORIGINS=*                  # Use specific origins in production
@@ -564,14 +566,14 @@ For testing with the live demo environment:
 
 ```bash
 # .env.local - Demo/Development with JWT validation
-AUTHORIZATION_ENABLED=true
-AUTHORIZATION_RESOURCE_URI=https://mcpdemo.gauzy.co
-AUTHORIZATION_REQUIRED_SCOPES=mcp.read,mcp.write
-AUTHORIZATION_AUTH_SERVERS=https://authdemo.gauzy.co
-AUTHORIZATION_JWT_AUDIENCE=https://mcpdemo.gauzy.co
-AUTHORIZATION_JWT_ISSUER=https://authdemo.gauzy.co
-AUTHORIZATION_JWT_PUBLIC_KEY_PATH=./dev-public-key.pem
-AUTHORIZATION_CACHE_TOKEN_TTL=300        # 5 minutes cache
+MCP_AUTH_ENABLED=true
+MCP_AUTH_RESOURCE_URI=https://mcpdemo.gauzy.co
+MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
+MCP_AUTH_SERVERS=https://authdemo.gauzy.co
+MCP_AUTH_JWT_AUDIENCE=https://mcpdemo.gauzy.co
+MCP_AUTH_JWT_ISSUER=https://authdemo.gauzy.co
+MCP_AUTH_JWT_PUBLIC_KEY_PATH=./dev-public-key.pem
+MCP_AUTH_TOKEN_CACHE_TTL=300        # 5 minutes cache
 ```
 
 #### Production Environment Configuration
@@ -580,17 +582,17 @@ For production deployment at `https://mcp.gauzy.co`:
 
 ```bash
 # .env - Production with JWKS and introspection
-AUTHORIZATION_ENABLED=true
-AUTHORIZATION_RESOURCE_URI=https://mcp.gauzy.co
-AUTHORIZATION_REQUIRED_SCOPES=mcp.read,mcp.write,mcp.admin
-AUTHORIZATION_AUTH_SERVERS=https://auth.gauzy.co
-AUTHORIZATION_JWT_AUDIENCE=https://mcp.gauzy.co
-AUTHORIZATION_JWT_ISSUER=https://auth.gauzy.co
-AUTHORIZATION_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
-AUTHORIZATION_INTROSPECTION_ENDPOINT=https://auth.gauzy.co/token/introspect
-AUTHORIZATION_INTROSPECTION_CLIENT_ID=gauzy-mcp-server
-AUTHORIZATION_INTROSPECTION_CLIENT_SECRET=secure-client-secret
-AUTHORIZATION_CACHE_TOKEN_TTL=600        # 10 minutes cache
+MCP_AUTH_ENABLED=true
+MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
+MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write,mcp.admin
+MCP_AUTH_SERVERS=https://auth.gauzy.co
+MCP_AUTH_JWT_AUDIENCE=https://mcp.gauzy.co
+MCP_AUTH_JWT_ISSUER=https://auth.gauzy.co
+MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
+MCP_AUTH_INTROSPECTION_ENDPOINT=https://auth.gauzy.co/token/introspect
+MCP_AUTH_INTROSPECTION_CLIENT_ID=gauzy-mcp-server
+MCP_AUTH_INTROSPECTION_CLIENT_SECRET=secure-client-secret
+MCP_AUTH_TOKEN_CACHE_TTL=600        # 10 minutes cache
 ```
 
 ### Testing Authorization
@@ -601,10 +603,10 @@ AUTHORIZATION_CACHE_TOKEN_TTL=600        # 10 minutes cache
    ```
    # Demo Environment
    GET https://mcpdemo.gauzy.co/.well-known/oauth-protected-resource
-   
+
    # Production Environment
    GET https://mcp.gauzy.co/.well-known/oauth-protected-resource
-   
+
    # Local Development
    GET http://localhost:3001/.well-known/oauth-protected-resource
    ```
@@ -641,7 +643,7 @@ AUTHORIZATION_CACHE_TOKEN_TTL=600        # 10 minutes cache
      "method": "tools/list",
      "params": {}
    }
-   
+
    # Production Environment
    POST https://mcp.gauzy.co/sse
    Authorization: Bearer <your-jwt-token>
@@ -683,7 +685,7 @@ The Gauzy MCP server is pre-configured to work with the Gauzy OAuth 2.0 authoriz
 The MCP server works with any OAuth 2.0 compliant authorization server:
 
 - **Keycloak** - Open source identity and access management
-- **Auth0** - Cloud-based identity platform  
+- **Auth0** - Cloud-based identity platform
 - **OAuth2 Server** - Custom implementation
 - **AWS Cognito** - AWS managed identity service
 - **Gauzy Auth** - Built-in Gauzy platform authorization (recommended)
@@ -700,7 +702,7 @@ The MCP server works with any OAuth 2.0 compliant authorization server:
 
 ### Disabled Authorization
 
-When `AUTHORIZATION_ENABLED=false` (default), the server operates without authentication, suitable for:
+When `MCP_AUTH_ENABLED=false` (default), the server operates without authentication, suitable for:
 
 - Local development and testing
 - Trusted network environments

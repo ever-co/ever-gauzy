@@ -232,10 +232,12 @@ export class HttpTransport {
 				timestamp: new Date().toISOString(),
 				transport: 'http',
 				server: 'gauzy-mcp-server',
-				authorization: {
-					enabled: this.authorizationConfig.enabled,
-					resourceUri: this.authorizationConfig.resourceUri
-				},
+				...(this.authorizationConfig.enabled && {
+					authorization: {
+						enabled: true,
+						resourceUri: this.authorizationConfig.resourceUri
+					}
+				}),
 				...(sessionStats && {
 					sessions: {
 						total: sessionStats.totalSessions,
@@ -841,10 +843,8 @@ export class HttpTransport {
 						if (this.transportConfig.session.enabled) {
 							logger.log(`   - POST /sse/session - Create session`);
 							logger.log(`   - GET  /sse/session/:sessionId - Get session info`);
-							logger.log(`   - DELETE /sse/session/:id - Delete session`);
+							logger.log(`   - DELETE /sse/session/:sessionId - Delete session`);
 							logger.log(`   - GET  /sse/sessions/stats - Session statistics`);
-							// NOTE: Leave DELETE log aligned or update it too for consistency:
-          					logger.log(`   - DELETE /sse/session/:sessionId - Delete session`);
 							logger.log(`📡 Session management features:`);
 							logger.log(`   - Multi-user session isolation`);
 							logger.log(`   - Automatic session cleanup`);

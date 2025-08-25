@@ -155,8 +155,8 @@ export function validateJWTStructure(token: string): { valid: boolean; header?: 
 		}
 
 		// Decode header and payload
-		const header = JSON.parse(Buffer.from(headerB64, 'base64url').toString());
-		const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
+		const header: { alg: string; typ: string; [key: string]: unknown } = JSON.parse(Buffer.from(headerB64, 'base64url').toString());
+		const payload: { [key: string]: unknown } = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
 
 		// Basic header validation
 		if (!header.alg || !header.typ) {
@@ -274,6 +274,22 @@ export function validateAuthorizationServerUrl(url: string): { valid: boolean; e
 			};
 		}
 
+		// Disallow query parameters
+		if (parsed.search) {
+			return {
+				valid: false,
+				error: 'Authorization server URL must not contain query parameters'
+			};
+		}
+
+		// Enforce lowercase hostname
+		if (parsed.hostname !== parsed.hostname.toLowerCase()) {
+			return {
+				valid: false,
+				error: 'Authorization server hostname must be lowercase'
+			};
+		}
+
 		return { valid: true };
 	} catch (error) {
 		return {
@@ -317,9 +333,23 @@ export function generatePKCEChallenge(): { codeVerifier: string; codeChallenge: 
 export function validateRedirectUri(uri: string, registeredUris: string[]): { valid: boolean; error?: string } {
 	try {
 		const url = new URL(uri);
+		const normalize = (u: string) => {
+			const parsed = new URL(u);
+			parsed.protocol = parsed.protocol.toLowerCase();
+			parsed.hostname = parsed.hostname.toLowerCase();
+			if ((parsed.protocol === 'https:' && parsed.port === '443') || (parsed.protocol === 'http:' && parsed.port === '80')) {
+				parsed.port = '';
+			}
+			if (parsed.pathname.endsWith('/') && parsed.pathname !== '/') {
+				parsed.pathname = parsed.pathname.slice(0, -1);
+			}
+			return parsed.toString();
+		};
 
-		// Must be exactly match one of the registered URIs
-		if (!registeredUris.includes(uri)) {
+		// Must exactly match one of the registered URIs (after normalization)
+		const normalized = normalize(uri);
+		const normalizedRegistered = registeredUris.map(normalize);
+		if (!normalizedRegistered.includes(normalized)) {
 			return {
 				valid: false,
 				error: 'Redirect URI does not match any registered URI'
@@ -361,7 +391,8 @@ export class AuthorizationRateLimiter {
 		this.windowMs = windowMs;
 
 		// Clean up expired entries every hour
-		setInterval(() => this.cleanup(), 60 * 60 * 1000);
+		const t = setInterval(() => this.cleanup(), 60 * 60 * 1000);
+		(t as any).unref?.();
 	}
 
 	isAllowed(identifier: string): boolean {
