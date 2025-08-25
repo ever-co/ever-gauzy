@@ -11,8 +11,8 @@
 }
 
 .skeleton-sidebar {
-  width: 260px;
-  background: #26262e;
+  width: var(--skeleton-sidebar-width, 260px);
+  background: var(--skeleton-sidebar-bg, #26262e);
   flex-shrink: 0;
 }
 
