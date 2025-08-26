@@ -256,6 +256,8 @@
 		"JWKS_URI",
 		"kafkajs",
 		"KEYCLOAK",
+		"keyid",
+		"keyId",
 		"KEYMETRICS",
 		"keyout",
 		"keyresult",
