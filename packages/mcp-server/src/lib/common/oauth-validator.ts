@@ -6,12 +6,15 @@
  */
 
 import { Request } from 'express';
+import { jwtVerify, createRemoteJWKSet, JWTPayload } from 'jose';
+import jwt from 'jsonwebtoken';
 import { AuthorizationConfig, TokenValidationResult, AuthorizationError } from './authorization-config';
 import { SecurityLogger } from './security-logger';
 
 export class OAuthValidator {
 	private tokenCache = new Map<string, { result: TokenValidationResult; expires: number }>();
 	private securityLogger: SecurityLogger;
+	private jwksCache = new Map<string, any>();
 
 	constructor(private config: AuthorizationConfig) {
 		this.securityLogger = new SecurityLogger();
@@ -105,58 +108,104 @@ export class OAuthValidator {
 	}
 
 	/**
-	 * Validate JWT token (RFC 7519)
+	 * Validate JWT token using production libraries (RFC 7519)
 	 */
 	private async validateJWT(token: string): Promise<TokenValidationResult> {
 		try {
-			// This is a simplified implementation
-			// In production, you should use a proper JWT library like 'jsonwebtoken' or 'jose'
-			const [headerB64, payloadB64, signatureB64] = token.split('.');
+			let payload: JWTPayload | any;
+			let decodedToken: any;
 
-			if (!headerB64 || !payloadB64 || !signatureB64) {
+			// Try JWKS URI first (recommended for production)
+			if (this.config.jwt?.jwksUri) {
+				try {
+					const JWKS = createRemoteJWKSet(new URL(this.config.jwt.jwksUri));
+					const { payload: josePayload } = await jwtVerify(token, JWKS, {
+						issuer: this.config.jwt.issuer,
+						audience: this.config.jwt.audience,
+						algorithms: this.config.jwt.algorithms as string[]
+					});
+					payload = josePayload;
+					this.securityLogger.debug('JWT validated using JWKS');
+				} catch (jwksError: any) {
+					this.securityLogger.warn('JWKS validation failed, trying local key:', jwksError.message);
+					
+					// Fall back to local public key validation
+					if (!this.config.jwt?.publicKey) {
+						throw jwksError;
+					}
+				}
+			}
+
+			// Use local public key if JWKS failed or not configured
+			if (!payload && this.config.jwt?.publicKey) {
+				try {
+					decodedToken = jwt.verify(token, this.config.jwt.publicKey, {
+						issuer: this.config.jwt.issuer,
+						audience: this.config.jwt.audience,
+						algorithms: this.config.jwt.algorithms as jwt.Algorithm[]
+					});
+					payload = decodedToken;
+					this.securityLogger.debug('JWT validated using local public key');
+				} catch (keyError: any) {
+					this.securityLogger.error('Local key validation failed:', keyError.message);
+					return {
+						valid: false,
+						error: `JWT validation failed: ${keyError.message}`
+					};
+				}
+			}
+
+			// If no validation method worked
+			if (!payload) {
 				return {
 					valid: false,
-					error: 'Invalid JWT format'
+					error: 'No valid JWT validation method configured'
 				};
 			}
 
-			// Decode payload (without verification for this example)
-			const payload = JSON.parse(Buffer.from(payloadB64, 'base64').toString());
+			// Additional validations
+			const now = Math.floor(Date.now() / 1000);
 
 			// Check expiration
-			if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+			if (payload.exp && payload.exp < now) {
 				return {
 					valid: false,
 					error: 'Token expired'
 				};
 			}
 
-			// Check issuer if configured
-			if (this.config.jwt?.issuer && payload.iss !== this.config.jwt.issuer) {
+			// Check not before
+			if (payload.nbf && payload.nbf > now) {
 				return {
 					valid: false,
-					error: 'Invalid issuer'
+					error: 'Token not yet valid'
 				};
 			}
 
-			// Check audience if configured
+			// Validate audience claim (RFC 8707)
 			if (this.config.jwt?.audience) {
 				const hasValidAudience = this.validateAudience(payload.aud, this.config.jwt.audience);
 				if (!hasValidAudience) {
 					return {
 						valid: false,
-						error: 'Invalid audience'
+						error: 'Invalid audience claim'
 					};
 				}
 			}
+
+			// Parse scopes from scope claim
+			const scopes = payload.scope ? 
+				(typeof payload.scope === 'string' ? payload.scope.split(' ') : payload.scope) : 
+				payload.scp || // Alternative scope claim
+				undefined;
 
 			return {
 				valid: true,
 				payload,
 				expires: payload.exp,
-				scopes: payload.scope ? payload.scope.split(' ') : undefined,
+				scopes,
 				subject: payload.sub,
-				clientId: payload.client_id,
+				clientId: payload.client_id || payload.cid,
 				audience: payload.aud
 			};
 
@@ -164,7 +213,7 @@ export class OAuthValidator {
 			this.securityLogger.error('JWT validation error:', error);
 			return {
 				valid: false,
-				error: 'JWT validation failed'
+				error: error.message || 'JWT validation failed'
 			};
 		}
 	}

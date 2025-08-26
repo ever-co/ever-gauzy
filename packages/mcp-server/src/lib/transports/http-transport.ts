@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import { Server } from 'node:http';
+import crypto from 'node:crypto';
 import { McpTransportConfig } from '../common/config';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
@@ -13,6 +14,7 @@ import { sanitizeErrorMessage } from '../common/security-utils';
 import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 import { AuthorizationConfig, loadAuthorizationConfig } from '../common/authorization-config';
 import { AuthorizationMiddleware, AuthorizedRequest } from '../common/authorization-middleware';
+import { OAuth2AuthorizationServer, OAuth2ServerConfig } from '../common/oauth-authorization-server';
 
 const logger = new Logger('HttpTransport');
 
@@ -68,6 +70,7 @@ export class HttpTransport {
 	private isInitialized = false;
 	private authorizationConfig: AuthorizationConfig;
 	private authorizationMiddleware: AuthorizationMiddleware | null = null;
+	private authorizationServer: OAuth2AuthorizationServer | null = null;
 
 	constructor(options: HttpTransportOptions) {
 		this.mcpServer = options.server;
@@ -76,8 +79,41 @@ export class HttpTransport {
 
 		// Initialize authorization middleware if enabled
 		if (this.authorizationConfig.enabled) {
-			this.authorizationMiddleware = new AuthorizationMiddleware(this.authorizationConfig);
+			// Initialize OAuth 2.0 authorization server first to get token manager configuration
+			const authServerConfig: OAuth2ServerConfig = {
+				issuer: this.authorizationConfig.authorizationServers[0]?.issuer || 'gauzy-dev-auth',
+				baseUrl: `http://${this.transportConfig.host}:${this.transportConfig.port}`,
+				audience: this.authorizationConfig.resourceUri || `http://${this.transportConfig.host}:${this.transportConfig.port}/sse`,
+				enableClientRegistration: true,
+				authorizationEndpoint: '/oauth2/authorize',
+				tokenEndpoint: '/oauth2/token',
+				jwksEndpoint: '/.well-known/jwks.json',
+				registrationEndpoint: '/oauth2/register',
+				introspectionEndpoint: '/oauth2/introspect',
+				userInfoEndpoint: '/oauth2/userinfo',
+				loginEndpoint: '/oauth2/login',
+				sessionSecret: process.env.MCP_AUTH_SESSION_SECRET || crypto.randomBytes(32).toString('hex')
+			};
+
+			this.authorizationServer = new OAuth2AuthorizationServer(authServerConfig);
+
+			// Synchronize authorization config with token manager settings
+			const synchronizedConfig: AuthorizationConfig = {
+				...this.authorizationConfig,
+				jwt: {
+					...this.authorizationConfig.jwt,
+					issuer: authServerConfig.issuer,
+					audience: authServerConfig.audience,
+					algorithms: ['RS256'], // Match token manager algorithm
+					jwksUri: `${authServerConfig.baseUrl}${authServerConfig.jwksEndpoint}`
+				}
+			};
+
+			this.authorizationMiddleware = new AuthorizationMiddleware(synchronizedConfig);
+			
+			logger.log('OAuth 2.0 authorization server initialized');
 			logger.log('OAuth 2.0 authorization enabled for MCP server');
+			logger.log(`JWT validation configured - Issuer: ${authServerConfig.issuer}, Audience: ${authServerConfig.audience}`);
 		}
 
 		this.app = express();
@@ -214,6 +250,34 @@ export class HttpTransport {
 	}
 
 	private setupRoutes() {
+		// Mount OAuth 2.0 authorization server routes
+		if (this.authorizationServer) {
+			logger.log('Mounting OAuth 2.0 authorization server routes');
+			this.app.use('/', this.authorizationServer.getApp());
+			
+			// Add debug route to see what routes are available
+			this.app.get('/debug/routes', (req, res) => {
+				const routes: any[] = [];
+				this.app._router?.stack?.forEach((middleware: any) => {
+					if (middleware.route) {
+						routes.push({
+							path: middleware.route.path,
+							method: Object.keys(middleware.route.methods)[0]?.toUpperCase()
+						});
+					}
+				});
+				res.json({
+					message: 'Available routes',
+					routes: routes,
+					oauth_config: {
+						authorizationEndpoint: '/oauth2/authorize',
+						tokenEndpoint: '/oauth2/token',
+						loginEndpoint: '/oauth2/login'
+					}
+				});
+			});
+		}
+
 		// OAuth 2.0 Protected Resource Metadata endpoint (RFC 9728)
 		if (this.authorizationMiddleware) {
 			this.app.get('/.well-known/oauth-protected-resource',
@@ -235,7 +299,16 @@ export class HttpTransport {
 				...(this.authorizationConfig.enabled && {
 					authorization: {
 						enabled: true,
-						resourceUri: this.authorizationConfig.resourceUri
+						resourceUri: this.authorizationConfig.resourceUri,
+						authorizationServer: this.authorizationServer ? {
+							issuer: this.authorizationServer.getTokenManager().getStats().keyId,
+							endpoints: {
+								authorization: '/oauth2/authorize',
+								token: '/oauth2/token',
+								jwks: '/.well-known/jwks.json',
+								registration: '/oauth2/register'
+							}
+						} : undefined
 					}
 				}),
 				...(sessionStats && {

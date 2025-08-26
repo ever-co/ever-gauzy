@@ -143,6 +143,21 @@ export class SecurityLogger {
 		}
 	}
 
+	info(message: string, data?: Record<string, unknown>): void {
+		const safeStringify = (obj?: Record<string, unknown>) => {
+			if (!obj) return '';
+			const seen = new WeakSet();
+			return JSON.stringify(sanitizeForLogging(obj), (_k, v) => {
+				if (typeof v === 'object' && v !== null) {
+					if (seen.has(v)) return '[Circular]';
+					seen.add(v);
+				}
+				return v;
+			});
+		};
+		logger.log(message, data ? safeStringify(data) : '');
+	}
+
 	// Instance method to log security events with request context
 	logSecurityEvent(
 		event: string,
