@@ -172,13 +172,23 @@ export class OAuth2AuthorizationCodeManager {
 	 */
 	private validatePKCE(codeChallenge: string, method: 'S256' | 'plain', codeVerifier: string): boolean {
 		if (method === 'plain') {
-			return codeChallenge === codeVerifier;
+			const challengeBuffer = Buffer.from(codeChallenge, 'utf8');
+			const verifierBuffer = Buffer.from(codeVerifier, 'utf8');
+			if (challengeBuffer.length !== verifierBuffer.length) {
+				return false;
+			}
+			return crypto.timingSafeEqual(challengeBuffer, verifierBuffer);
 		} else if (method === 'S256') {
 			const hash = crypto
 				.createHash('sha256')
 				.update(codeVerifier, 'ascii')
 				.digest('base64url');
-			return codeChallenge === hash;
+			const challengeBuffer = Buffer.from(codeChallenge, 'utf8');
+			const hashBuffer = Buffer.from(hash, 'utf8');
+			if (challengeBuffer.length !== hashBuffer.length) {
+				return false;
+			}
+			return crypto.timingSafeEqual(challengeBuffer, hashBuffer);
 		}
 		return false;
 	}
