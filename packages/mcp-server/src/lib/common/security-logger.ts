@@ -85,52 +85,31 @@ export class SecurityLogger {
 		logger.debug(`Would send to external monitoring: ${event.event}`);
 	}
 
+	private safeStringify(obj?: Record<string, unknown>): string {
+		if (!obj) return '';
+		const seen = new WeakSet();
+		return JSON.stringify(sanitizeForLogging(obj), (_k, v) => {
+			if (typeof v === 'object' && v !== null) {
+				if (seen.has(v)) return '[Circular]';
+				seen.add(v);
+			}
+			return v;
+		});
+	}
+
 	// Instance methods for easier usage in middleware
 	debug(message: string, data?: Record<string, unknown>): void {
 		if (environment.production === false || process.env.GAUZY_MCP_DEBUG === 'true') {
-			const safeStringify = (obj?: Record<string, unknown>) => {
-				if (!obj) return '';
-				const seen = new WeakSet();
-				return JSON.stringify(sanitizeForLogging(obj), (_k, v) => {
-					if (typeof v === 'object' && v !== null) {
-						if (seen.has(v)) return '[Circular]';
-						seen.add(v);
-					}
-					return v;
-				});
-			};
-			logger.debug(message, safeStringify(data));
+			logger.debug(message, this.safeStringify(data));
 		}
 	}
 
 	log(message: string, data?: Record<string, unknown>): void {
-		const safeStringify = (obj?: Record<string, unknown>) => {
-			if (!obj) return '';
-			const seen = new WeakSet();
-			return JSON.stringify(sanitizeForLogging(obj), (_k, v) => {
-				if (typeof v === 'object' && v !== null) {
-					if (seen.has(v)) return '[Circular]';
-					seen.add(v);
-				}
-				return v;
-			});
-		};
-		logger.log(message, safeStringify(data));
+		logger.log(message, this.safeStringify(data));
 	}
 
 	warn(message: string, data?: Record<string, unknown>): void {
-		const safeStringify = (obj?: Record<string, unknown>) => {
-			if (!obj) return '';
-			const seen = new WeakSet();
-			return JSON.stringify(sanitizeForLogging(obj), (_k, v) => {
-				if (typeof v === 'object' && v !== null) {
-					if (seen.has(v)) return '[Circular]';
-					seen.add(v);
-				}
-				return v;
-			});
-		};
-		logger.warn(message, data ? safeStringify(data) : '');
+		logger.warn(message, data ? this.safeStringify(data) : '');
 	}
 
 	error(message: string, error?: Error | Record<string, unknown>): void {

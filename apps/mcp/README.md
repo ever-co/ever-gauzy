@@ -600,7 +600,7 @@ MCP_AUTH_TOKEN_CACHE_TTL=600        # 10 minutes cache
 #### Using Postman
 
 1. **Get Protected Resource Metadata**:
-   ```
+   ```http
    # Demo Environment
    GET https://mcpdemo.gauzy.co/.well-known/oauth-protected-resource
 
@@ -660,7 +660,7 @@ MCP_AUTH_TOKEN_CACHE_TTL=600        # 10 minutes cache
 #### Error Responses
 
 - **401 Unauthorized** - Missing or invalid token:
-  ```
+  ```http
   WWW-Authenticate: Bearer resource="https://mcp.gauzy.co/.well-known/oauth-protected-resource", error="invalid_token", error_description="Token validation failed"
   ```
 

@@ -97,7 +97,7 @@ export class OAuth2ClientManager {
 		// ChatGPT default client
 		this.registerClient({
 			client_name: 'ChatGPT MCP Integration',
-			client_type: 'confidential',
+			client_type: 'public',
 			redirect_uris: [
 				'https://chatgpt.com/oauth/callback',
 				'https://chat.openai.com/oauth/callback'

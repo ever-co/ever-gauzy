@@ -237,7 +237,8 @@ export class AuthorizationMiddleware {
 	 */
 	private getBaseUrl(req: Request): string {
 		const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
-		const host = req.get('host') || 'localhost';
+		const xfHost = req.headers['x-forwarded-host'] as string | undefined;
+		const host = (xfHost && xfHost.split(',')[0].trim()) || req.get('host') || 'localhost';
 		return `${protocol}://${host}`;
 	}
 

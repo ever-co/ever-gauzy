@@ -129,7 +129,7 @@ export class OAuth2AuthorizationServer {
 	}
 
 	/**
-	 * Initialize demo users for development/testing
+	 * Initialize demo users for local environment (development/testing) only.
 	 */
 	private initializeDemoUsers() {
 		const demoUsers: AuthenticatedUser[] = [
@@ -145,11 +145,11 @@ export class OAuth2AuthorizationServer {
 			},
 			{
 				userId: 'admin-user-456',
-				email: 'admin@example.com',
-				name: 'Admin User',
+				email: 'admin@ever.co',
+				name: 'Default Admin',
 				organizationId: 'org-123',
 				tenantId: 'tenant-123',
-				roles: ['admin', 'user'],
+				roles: ['admin'],
 				emailVerified: true,
 				isAuthenticated: true
 			}
@@ -491,7 +491,7 @@ export class OAuth2AuthorizationServer {
 			} else {
 				// Demo authentication - check against in-memory users
 				const demoUser = this.users.get(email);
-				if (demoUser && (password === 'demo123' || password === 'admin123')) {
+				if (demoUser && (password === '123456' || password === 'admin123')) {
 					user = { ...demoUser, isAuthenticated: true };
 				}
 			}
@@ -1054,7 +1054,7 @@ export class OAuth2AuthorizationServer {
 			<!DOCTYPE html>
 			<html>
 			<head>
-				<title>Sign In - MCP OAuth Server</title>
+				<title>Sign In - Gauzy MCP OAuth Server</title>
 				<meta charset="utf-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1">
 				<style>
@@ -1102,8 +1102,8 @@ export class OAuth2AuthorizationServer {
 
 					<div class="demo-info">
 						<strong>Demo Credentials:</strong><br>
-						Email: demo@example.com / Password: demo123<br>
-						Email: admin@example.com / Password: admin123
+						Email: employee@ever.co / Password: 123456<br>
+						Email: admin@ever.co / Password: admin123
 					</div>
 				</div>
 			</body>
@@ -1142,7 +1142,7 @@ export class OAuth2AuthorizationServer {
 			<!DOCTYPE html>
 			<html>
 			<head>
-				<title>Authorize ${client.clientName}</title>
+				<title>Authorize ${escapeHtml(client.clientName)}</title>
 				<meta charset="utf-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1">
 				<style>
@@ -1174,15 +1174,15 @@ export class OAuth2AuthorizationServer {
 			<body>
 				<div class="card">
 					<div class="header">
-						${client.logoUri ? `<img src="${client.logoUri}" alt="${client.clientName}" class="app-icon">` : ''}
-						<h1>Authorize ${client.clientName}</h1>
-						<p class="subtitle">${client.clientName} wants to access your MCP account</p>
+						${client.logoUri ? `<img src="${escapeHtml(client.logoUri)}" alt="${escapeHtml(client.clientName)}" class="app-icon">` : ''}
+						<h1>Authorize ${escapeHtml(client.clientName)}</h1>
+						<p class="subtitle">${escapeHtml(client.clientName)} wants to access your MCP account</p>
 					</div>
 
 					${user ? `
 						<div class="user-info">
-							<strong>Signed in as:</strong> ${user.name || user.email}<br>
-							<small>${user.email}${user.organizationId ? ` • ${user.organizationId}` : ''}</small>
+							<strong>Signed in as:</strong> ${escapeHtml(user.name || user.email)}<br>
+							<small>${escapeHtml(user.email)}${user.organizationId ? ` • ${escapeHtml(user.organizationId)}` : ''}</small>
 						</div>
 					` : ''}
 
@@ -1191,22 +1191,22 @@ export class OAuth2AuthorizationServer {
 						${scopes.map(scope => `
 							<div class="scope">
 								<div class="scope-name">${escapeHtml(scope)}</div>
-								<div class="scope-desc">${scopeDescriptions[scope as keyof typeof scopeDescriptions] || 'Custom permission for this application'}</div>
+								<div class="scope-desc">${escapeHtml(scopeDescriptions[scope as keyof typeof scopeDescriptions] || 'Custom permission for this application')}</div>
 							</div>
 						`).join('')}
 					</div>
 
 					<div class="warning">
-						<strong>⚠️ Security Notice:</strong> Only authorize applications you trust. This will give ${client.clientName} access to the permissions listed above.
+						<strong>⚠️ Security Notice:</strong> Only authorize applications you trust. This will give ${escapeHtml(client.clientName)} access to the permissions listed above.
 					</div>
 
-					<form method="POST" action="${this.config.authorizationEndpoint}">
-						<input type="hidden" name="client_id" value="${params.client_id}">
-						<input type="hidden" name="redirect_uri" value="${params.redirect_uri}">
-						<input type="hidden" name="scope" value="${params.scope || ''}">
-						<input type="hidden" name="state" value="${params.state || ''}">
-						<input type="hidden" name="code_challenge" value="${params.code_challenge || ''}">
-						<input type="hidden" name="code_challenge_method" value="${params.code_challenge_method || ''}">
+					<form method="POST" action="${escapeHtml(this.config.authorizationEndpoint)}">
+						<input type="hidden" name="client_id" value="${escapeHtml(params.client_id)}">
+						<input type="hidden" name="redirect_uri" value="${escapeHtml(params.redirect_uri)}">
+						<input type="hidden" name="scope" value="${escapeHtml(params.scope || '')}">
+						<input type="hidden" name="state" value="${escapeHtml(params.state || '')}">
+						<input type="hidden" name="code_challenge" value="${escapeHtml(params.code_challenge || '')}">
+						<input type="hidden" name="code_challenge_method" value="${escapeHtml(params.code_challenge_method || '')}">
 
 						<div class="buttons">
 							<button type="submit" name="user_consent" value="approve" class="approve">✓ Authorize</button>
@@ -1215,11 +1215,11 @@ export class OAuth2AuthorizationServer {
 					</form>
 
 					<div class="footer">
-						<p>By clicking "Authorize", you allow ${client.clientName} to access your account using the permissions above.</p>
+						<p>By clicking "Authorize", you allow ${escapeHtml(client.clientName)} to access your account using the permissions above.</p>
 						<div class="security-info">
-							<strong>Client ID:</strong> ${params.client_id}<br>
-							<strong>Redirect URI:</strong> ${params.redirect_uri}<br>
-							${params.state ? `<strong>State:</strong> ${params.state}<br>` : ''}
+							<strong>Client ID:</strong> ${escapeHtml(params.client_id)}<br>
+							<strong>Redirect URI:</strong> ${escapeHtml(params.redirect_uri)}<br>
+							${params.state ? `<strong>State:</strong> ${escapeHtml(params.state)}<br>` : ''}
 							<strong>PKCE:</strong> ${params.code_challenge ? 'Enabled (Enhanced Security)' : 'Not Used'}
 						</div>
 					</div>

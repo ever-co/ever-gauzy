@@ -17,7 +17,7 @@ function base64UrlEncode(str) {
         .replace(/\//g, '_');
 }
 
-function generateTestJWT(payload = {}, secret = 'dev-secret-key-for-testing-only') {
+function generateTestJWT(payload = {}, secret = (process.env.MCP_AUTH_JWT_SECRET || 'dev-secret-key-for-testing-only'))  {
     // JWT Header
     const header = {
         alg: 'HS256',
@@ -31,7 +31,7 @@ function generateTestJWT(payload = {}, secret = 'dev-secret-key-for-testing-only
         aud: 'http://localhost:3001/sse',    // Audience (your MCP server)
         sub: 'test-user-123',            // Subject (user ID)
         client_id: 'test-client',        // OAuth client ID
-        scope: 'mcp:access mcp:tools',   // Granted scopes
+        scope: 'mcp.read mcp.write',     // Granted scopes
         iat: now,                        // Issued at
         exp: now + 3600,                 // Expires in 1 hour
         ...payload
@@ -59,8 +59,9 @@ console.log('🔑 Test JWT Tokens for MCP OAuth 2.0 Development\n');
 
 // Valid token with required scopes
 const validToken = generateTestJWT();
-console.log('✅ Valid Token (mcp:access, mcp:tools):');
+console.log('✅ Valid Token (mcp.read, mcp.write):');
 console.log(validToken);
+console.log('\nAuthorization header:\nBearer ' + validToken + '\n');
 console.log();
 
 // Token with insufficient scopes
@@ -90,7 +91,7 @@ console.log();
 // Admin token with all scopes
 const adminToken = generateTestJWT({
     sub: 'admin-user-456',
-    scope: 'mcp:access mcp:tools mcp:admin',
+    scope: 'mcp.read mcp.write mcp.admin',
     role: 'admin'
 });
 console.log('👑 Admin Token (all scopes):');

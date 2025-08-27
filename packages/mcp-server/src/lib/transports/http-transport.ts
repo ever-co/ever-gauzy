@@ -110,7 +110,7 @@ export class HttpTransport {
 			};
 
 			this.authorizationMiddleware = new AuthorizationMiddleware(synchronizedConfig);
-			
+
 			logger.log('OAuth 2.0 authorization server initialized');
 			logger.log('OAuth 2.0 authorization enabled for MCP server');
 			logger.log(`JWT validation configured - Issuer: ${authServerConfig.issuer}, Audience: ${authServerConfig.audience}`);
@@ -233,7 +233,11 @@ export class HttpTransport {
 			validateUserAgent: false,
 			enableCSRF: true,
 			enableRateLimit: false,
-			excludedPaths: ['/health', '/sse/session*'],
+			excludedPaths: [
+					'/health',
+					'/sse/session*',   // retains exclusion for immediate session routes
+					'/sse/session/**', // adds exclusion for any deeper subpaths
+				],
 			trustedProxies: this.transportConfig.trustedProxies || [],
 		});
 
@@ -254,7 +258,7 @@ export class HttpTransport {
 		if (this.authorizationServer) {
 			logger.log('Mounting OAuth 2.0 authorization server routes');
 			this.app.use('/', this.authorizationServer.getApp());
-			
+
 			// Add debug route to see what routes are available
 			this.app.get('/debug/routes', (req, res) => {
 				const routes: any[] = [];
