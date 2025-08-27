@@ -105,6 +105,6 @@ console.log('4. Test different endpoints to see authorization in action');
 
 // Decode and display the valid token payload for reference
 const payloadB64 = validToken.split('.')[1];
-const payload = JSON.parse(base64UrlDecode(payloadB64));
+const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
 console.log('\n📄 Valid Token Payload:');
 console.log(JSON.stringify(payload, null, 2));
