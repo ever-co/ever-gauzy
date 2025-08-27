@@ -47,7 +47,8 @@
 		"express-session": "^1.18.1",
 		"connect-redis": "^7.1.0",
 		"ioredis": "^5.7.0",
-		"helmet": "^4.1.1"
+		"helmet": "^4.1.1",
+		"escape-html": "^1.0.3"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",

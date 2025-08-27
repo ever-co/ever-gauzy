@@ -11,6 +11,7 @@ import helmet from 'helmet';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import { SecurityLogger } from './security-logger';
+import escapeHtml from 'escape-html';
 import { oAuth2ClientManager, OAuth2Client } from './oauth-client-manager';
 import { oAuth2AuthorizationCodeManager } from './oauth-authorization-code-manager';
 import { OAuth2TokenManager } from './oauth-token-manager';
@@ -1189,7 +1190,7 @@ export class OAuth2AuthorizationServer {
 						<h3>📋 Requested Permissions</h3>
 						${scopes.map(scope => `
 							<div class="scope">
-								<div class="scope-name">${scope}</div>
+								<div class="scope-name">${escapeHtml(scope)}</div>
 								<div class="scope-desc">${scopeDescriptions[scope as keyof typeof scopeDescriptions] || 'Custom permission for this application'}</div>
 							</div>
 						`).join('')}
