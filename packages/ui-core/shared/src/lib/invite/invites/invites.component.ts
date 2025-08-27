@@ -264,7 +264,9 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 					: {}),
 				...(this.invitationType === InvitationTypeEnum.USER
 					? {
-							role: Object.values(RolesEnum).filter((role) => role !== RolesEnum.EMPLOYEE)
+							role: (Object.values(RolesEnum) as RolesEnum[]).filter(
+								(role) => role !== RolesEnum.EMPLOYEE
+							)
 					  }
 					: {})
 			},

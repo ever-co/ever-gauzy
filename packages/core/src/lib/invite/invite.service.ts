@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
-import { FindManyOptions, FindOptionsWhere, In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere, In, IsNull, MoreThanOrEqual, SelectQueryBuilder } from 'typeorm';
 import { addDays } from 'date-fns';
 import { pick } from 'underscore';
 import { ConfigService, environment } from '@gauzy/config';
