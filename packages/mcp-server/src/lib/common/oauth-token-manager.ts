@@ -203,7 +203,7 @@ export class OAuth2TokenManager {
 			return newTokenPair;
 
 		} catch (error: any) {
-			this.securityLogger.error('Refresh token validation failed:', error);
+			this.securityLogger.error('Refresh token validation failed:', error as Error);
 			return null;
 		}
 	}
