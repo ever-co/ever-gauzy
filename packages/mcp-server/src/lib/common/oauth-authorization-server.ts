@@ -376,12 +376,12 @@ export class OAuth2AuthorizationServer {
 						</div>
 
 						<p><strong>Authorization Code:</strong></p>
-						<div class="code" id="authCode">${code}</div>
+						<div class="code" id="authCode">${escapeHtml(code as string)}</div>
 						<button class="copy-btn" onclick="copyToClipboard()">📋 Copy Code</button>
 
 						${state ? `
 							<p style="margin-top: 20px;"><strong>State:</strong></p>
-							<div class="code">${state}</div>
+							<div class="code">${escapeHtml(state as string)}</div>
 						` : ''}
 
 						<div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 14px; color: #666;">
