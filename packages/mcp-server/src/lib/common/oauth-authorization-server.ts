@@ -333,9 +333,9 @@ export class OAuth2AuthorizationServer {
 				<body>
 					<div class="card">
 						<h1 class="error">❌ OAuth Authorization Failed</h1>
-						<p><strong>Error:</strong> ${error}</p>
-						<p><strong>Description:</strong> ${error_description || 'No description provided'}</p>
-						${state ? `<p><strong>State:</strong> ${state}</p>` : ''}
+						<p><strong>Error:</strong> ${escapeHtml(error as string)}</p>
+						<p><strong>Description:</strong> ${escapeHtml(error_description as string || 'No description provided')}</p>
+						${state ? `<p><strong>State:</strong> ${escapeHtml(state as string)}</p>` : ''}
 					</div>
 				</body>
 				</html>
