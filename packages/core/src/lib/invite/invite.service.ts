@@ -725,7 +725,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 										)
 									}
 							  }
-							: {} // No default filter, removed "Not(RolesEnum.EMPLOYEE)"
+							: {} // No default filter
 						: {}),
 					/**
 					 * Organization invites filter by specific projects
