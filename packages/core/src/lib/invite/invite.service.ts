@@ -301,20 +301,19 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				inviteLink = [callbackUrl, queryParamsString].filter(Boolean).join('?'); // Combine current URL with updated query params
 			} else if (callbackUrl && queryParams) {
 				// Build custom query params from invite properties
-				const queryParamsObject = Object.entries(queryParams).reduce(
-    				(acc, [key, value]) => {
-						const propertyValue = item[value];
-      			if (typeof propertyValue !== 'undefined') {
-							if (
-                typeof propertyValue === 'string' ||
-                typeof propertyValue === 'number' ||
-                typeof propertyValue === 'boolean'
-              ) {
-								acc[key] = String(propertyValue);
-							}
-      			}
-      			return acc;
- 				}, {} as Record<string, string>);
+				const queryParamsObject = Object.entries(queryParams).reduce((acc, [key, value]) => {
+					const propertyValue = item[value];
+					if (typeof propertyValue !== 'undefined') {
+						if (
+							typeof propertyValue === 'string' ||
+							typeof propertyValue === 'number' ||
+							typeof propertyValue === 'boolean'
+						) {
+							acc[key] = String(propertyValue);
+						}
+					}
+					return acc;
+				}, {} as Record<string, string>);
 				const queryParamsString = this.buildQueryString(queryParamsObject);
 				inviteLink = [callbackUrl, queryParamsString].filter(Boolean).join('?');
 			}
@@ -714,18 +713,19 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				where: {
 					tenantId: RequestContext.currentTenantId(),
 					...(isNotEmpty(options) && isNotEmpty(options.where) ? options.where : {}),
+					// Role filter with array support (converts single value to array)
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.role)
 							? {
 									role: {
-										...options.where.role
+										name: In(
+											Array.isArray(options.where.role)
+												? options.where.role
+												: [options.where.role]
+										)
 									}
 							  }
-							: {
-									role: {
-										name: Not(RolesEnum.EMPLOYEE)
-									}
-							  }
+							: {} // No default filter, removed "Not(RolesEnum.EMPLOYEE)"
 						: {}),
 					/**
 					 * Organization invites filter by specific projects
