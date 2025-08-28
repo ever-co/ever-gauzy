@@ -130,7 +130,7 @@ export class OAuth2AuthorizationServer {
 
 		// Add the public key to the auth config for JWT validation
 		authConfig.jwt!.publicKey = this.tokenManager.getPublicKeyPEM();
-		
+
 		this.oAuthValidator = new OAuthValidator(authConfig);
 		this.app = express();
 		this.initializeDemoUsers();
@@ -501,7 +501,7 @@ export class OAuth2AuthorizationServer {
 			// Allow only relative paths, and only if in allowlist
 			if (input.startsWith('/')) {
 				const path = input.split('?')[0]; // ignore query string for allowlist check
-				if (OAuthAuthorizationServer.ALLOWED_RETURN_PATHS.includes(path)) {
+				if (OAuth2AuthorizationServer.ALLOWED_RETURN_PATHS.includes(path)) {
 					return input;
 				}
 				return this.config.authorizationEndpoint;
@@ -511,7 +511,7 @@ export class OAuth2AuthorizationServer {
 			const base = new URL(this.config.baseUrl);
 			if (u.origin === base.origin) {
 				const path = u.pathname;
-				if (OAuthAuthorizationServer.ALLOWED_RETURN_PATHS.includes(path)) {
+				if (OAuth2AuthorizationServer.ALLOWED_RETURN_PATHS.includes(path)) {
 					return u.toString();
 				}
 			}
