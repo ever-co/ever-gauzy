@@ -75,11 +75,6 @@ export class OAuth2TokenManager {
 		this.cleanupInterval = setInterval(() => this.cleanupExpiredTokens(), 60 * 60 * 1000);
 		// Do not keep process alive just for cleanup
 		this.cleanupInterval.unref();
-
-		// Cleanup expired refresh tokens every hour
-		this.cleanupInterval = setInterval(() => {
-			this.cleanupExpiredTokens();
-		}, 60 * 60 * 1000);
 	}
 
 	/**
@@ -142,7 +137,8 @@ export class OAuth2TokenManager {
 				iss: this.issuer,
 				iat: now,
 				exp: now + this.REFRESH_TOKEN_EXPIRATION,
-				nbf: now,
+				// Optional: tolerate small skew like access tokens
+				nbf: now -5,
 				jti: refreshTokenId,
 				client_id: clientId,
 				scope: scopeString,

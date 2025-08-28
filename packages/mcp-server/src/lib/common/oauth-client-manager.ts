@@ -261,8 +261,8 @@ export class OAuth2ClientManager {
 		return client.redirectUris.some((uri) => {
 			if (uri === redirectUri) return true;
 			if (uri.includes('localhost:*')) {
-				// Accept any port on localhost for http(s)
-				return target.hostname === 'localhost';
+				const isHttp = target.protocol === 'http:' || target.protocol === 'https:';
+				return isHttp && (target.hostname === 'localhost' || target.hostname === '127.0.0.1' || target.hostname === '::1');
 			}
 			try {
 				const spec = new URL(uri);
@@ -337,7 +337,9 @@ export class OAuth2ClientManager {
 				const url = new URL(uri.includes('localhost:*') ? uri.replace(':*', ':3000') : uri);
 
 				// Public clients should use secure URLs (except localhost for development)
-				if (clientType === 'public' && url.protocol !== 'https:' && url.hostname !== 'localhost') {
+				const isLoopback =
+            url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '::1';
+        	if (clientType === 'public' && url.protocol !== 'https:' && !isLoopback) {
 					throw new Error(`Public clients must use HTTPS redirect URIs: ${uri}`);
 				}
 			} catch (error) {

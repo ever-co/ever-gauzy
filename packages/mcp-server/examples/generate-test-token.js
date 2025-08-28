@@ -10,11 +10,7 @@
 const crypto = require('crypto');
 
 function base64UrlEncode(str) {
-    return Buffer.from(str)
-        .toString('base64')
-        .replace(/=/g, '')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_');
+    return Buffer.from(str).toString('base64url');
 }
 
 function generateTestJWT(payload = {}, secret = (process.env.MCP_AUTH_JWT_SECRET || 'dev-secret-key-for-testing-only'))  {

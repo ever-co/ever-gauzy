@@ -158,7 +158,7 @@ export class OAuth2AuthorizationCodeManager {
 				return null;
 			}
 
-			if (!this.validatePKCE(authCode.codeChallenge, authCode.codeChallengeMethod!, codeVerifier)) {
+			if (!this.validatePKCE(authCode.codeChallenge, authCode.codeChallengeMethod, codeVerifier)) {
 				this.securityLogger.warn(`PKCE validation failed for code ${this.redactAuthorizationCode(code)}`);
 				return null;
 			}
@@ -180,15 +180,20 @@ export class OAuth2AuthorizationCodeManager {
 	/**
 	 * Validate PKCE challenge
 	 */
-	private validatePKCE(codeChallenge: string, method: 'S256' | 'plain', codeVerifier: string): boolean {
-		if (method === 'plain') {
+	private validatePKCE(
+		codeChallenge: string,
+		method: 'S256' | 'plain' | undefined,
+		codeVerifier: string
+	): boolean {
+		const m = method ?? 'S256';
+		if (m === 'plain') {
 			const challengeBuffer = Buffer.from(codeChallenge, 'utf8');
 			const verifierBuffer = Buffer.from(codeVerifier, 'utf8');
 			if (challengeBuffer.length !== verifierBuffer.length) {
 				return false;
 			}
 			return crypto.timingSafeEqual(challengeBuffer, verifierBuffer);
-		} else if (method === 'S256') {
+		} else if (m === 'S256') {
 			const hash = crypto
 				.createHash('sha256')
 				.update(codeVerifier, 'ascii')

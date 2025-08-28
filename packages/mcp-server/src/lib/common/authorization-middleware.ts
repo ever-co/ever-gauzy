@@ -77,7 +77,7 @@ export class AuthorizationMiddleware {
 					});
 
 					// Map scope failures to 403 as per RFC 6750
-					if (validationResult.error === 'Insufficient scope' && requiredScopes?.length) {
+					if (/^insufficient[_\s]?scope$/i.test(validationResult.error || '') && requiredScopes?.length) {
 							return this.sendForbiddenResponse(res, requiredScopes);
 						}
 						return this.sendUnauthorizedResponse(res, validationResult.error, requiredScopes);
@@ -164,7 +164,9 @@ export class AuthorizationMiddleware {
 	 * Build canonical resource URI from request
 	 */
 	private buildCanonicalResourceUri(req: Request): string {
-		const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+		const xfProto = req.headers['x-forwarded-proto'] as string | undefined;
+		const forwardedProto = xfProto && xfProto.split(',')[0].trim();
+		const protocol = req.secure || forwardedProto === 'https' ? 'https' : 'http';
 		const xfHost = req.headers['x-forwarded-host'] as string | undefined;
 		const host = (xfHost && xfHost.split(',')[0].trim()) || req.get('host') || 'localhost';
 
@@ -234,7 +236,8 @@ export class AuthorizationMiddleware {
 	 * Send 500 Internal Server Error response
 	 */
 	private sendServerError(res: Response, message: string): void {
-		res.status(500).json({
+		res.setHeader('Cache-Control', 'no-store');
+        res.status(500).json({
 			error: 'server_error',
 			error_description: message
 		});
@@ -244,7 +247,9 @@ export class AuthorizationMiddleware {
 	 * Get base URL from request
 	 */
 	private getBaseUrl(req: Request): string {
-		const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+		const xfProto = req.headers['x-forwarded-proto'] as string | undefined;
+		const forwardedProto = xfProto && xfProto.split(',')[0].trim();
+		const protocol = req.secure || forwardedProto === 'https' ? 'https' : 'http';
 		const xfHost = req.headers['x-forwarded-host'] as string | undefined;
 		const host = (xfHost && xfHost.split(',')[0].trim()) || req.get('host') || 'localhost';
 		return `${protocol}://${host}`;

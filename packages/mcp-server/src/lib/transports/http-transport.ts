@@ -201,20 +201,22 @@ export class HttpTransport {
 			// Skip CSRF for safe methods and excluded paths
 			const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
 			const excludedPaths = ['/health', '/.well-known/', '/oauth2/'];
-			
-			if (safeMethods.includes(req.method) || 
+
+			if (safeMethods.includes(req.method) ||
 				excludedPaths.some(path => req.path.startsWith(path))) {
 				return next();
 			}
 
 			// For state-changing requests, require either:
-			// 1. Valid session with CSRF token, or 
+			// 1. Valid session with CSRF token, or
 			// 2. Valid OAuth Bearer token (API access)
-			const hasValidBearer = req.headers.authorization?.startsWith('Bearer ');
+			const hasBearerToken = /^Bearer\s+\S+$/.test(req.headers.authorization || '');
+			const oauthProtectedPrefixes = ['/sse', '/sse/events'];
+			const onOauthProtectedRoute = oauthProtectedPrefixes.some(p => req.path.startsWith(p)) && !req.path.startsWith('/sse/session');
 			const sessionId = req.sessionId || req.cookies?.[this.transportConfig.session?.cookieName || 'session'];
 			const csrfToken = req.get('mcp-csrf-token') || req.get('x-csrf-token');
 
-			if (hasValidBearer) {
+			if (hasBearerToken && onOauthProtectedRoute) {
 				// OAuth Bearer tokens are self-authenticating, skip CSRF
 				return next();
 			}

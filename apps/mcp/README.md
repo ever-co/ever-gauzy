@@ -64,6 +64,7 @@ yarn nx serve mcp
 
 # Server runs on http://localhost:3001 by default
 # MCP endpoint: POST http://localhost:3001/sse
+# POST /sse is the HTTP JSON-RPC endpoint (not SSE)
 ```
 
 #### 3. WebSocket Transport
@@ -198,6 +199,7 @@ curl -X POST http://localhost:3001/sse \
     "method": "tools/list",
     "params": {}
   }'
+# POST /sse is the HTTP JSON-RPC endpoint (not SSE)
 
 # Call a tool (e.g., login)
 curl -X POST http://localhost:3001/sse \
@@ -214,6 +216,7 @@ curl -X POST http://localhost:3001/sse \
       }
     }
   }'
+# POST /sse is the HTTP JSON-RPC endpoint (not SSE)
 ```
 
 ##### With OAuth 2.0 Authorization
@@ -235,6 +238,7 @@ curl -X POST http://localhost:3001/sse \
     "method": "tools/list",
     "params": {}
   }'
+# POST /sse is the HTTP JSON-RPC endpoint (not SSE)
 
 # Without valid token, you'll get 401 Unauthorized with WWW-Authenticate header:
 # WWW-Authenticate: Bearer resource="http://localhost:3001/.well-known/oauth-protected-resource", error="invalid_token"

@@ -1357,7 +1357,8 @@ export class OAuth2AuthorizationServer {
 		}
 
 		try {
-			const url = new URL(redirectUri);
+			const safe = this.normalizeReturnUrl(redirectUri);
+			const url = new URL(safe, this.config.baseUrl);
 			url.searchParams.append('error', error);
 			if (errorDescription) {
 				url.searchParams.append('error_description', errorDescription);

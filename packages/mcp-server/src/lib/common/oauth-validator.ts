@@ -6,8 +6,7 @@
  */
 
 import { Request } from 'express';
-import { jwtVerify, createRemoteJWKSet, JWTPayload } from 'jose';
-import jwt from 'jsonwebtoken';
+import { jwtVerify, createRemoteJWKSet, importSPKI, importJWK, JWTPayload } from 'jose';
 import { AuthorizationConfig, TokenValidationResult, AuthorizationError } from './authorization-config';
 import { SecurityLogger } from './security-logger';
 
@@ -31,11 +30,11 @@ export class OAuthValidator {
 
 		// RFC 6750 Section 2.1: Authorization Request Header Field
 		// RFC 6750 Section 2.1: Authorization Request Header Field
-    const [scheme, token] = authorization.split(/\s+/, 2);
-	if (!scheme || !/^Bearer$/i.test(scheme) || !token) {
-	return null;
+		const [scheme, token] = authorization.split(/\s+/, 2);
+		if (!scheme || !/^Bearer$/i.test(scheme) || !token) {
+			return null;
 		}
-	return token.trim();
+		return token.trim();
 	}
 
 	/**
@@ -94,7 +93,9 @@ export class OAuthValidator {
 			}
 
 			// Cache the result
-			this.cacheToken(token, result);
+			if (result.valid) {
+				this.cacheToken(token, result);
+			}
 
 			return result;
 		} catch (error: unknown) {
@@ -111,8 +112,7 @@ export class OAuthValidator {
 	 */
 	private async validateJWT(token: string): Promise<TokenValidationResult> {
 		try {
-			let payload: JWTPayload | any;
-			let decodedToken: any;
+			let payload: JWTPayload | undefined;
 
 			// Try JWKS URI first (recommended for production)
 			if (this.config.jwt?.jwksUri) {
@@ -138,12 +138,32 @@ export class OAuthValidator {
 			// Use local public key if JWKS failed or not configured
 			if (!payload && this.config.jwt?.publicKey) {
 				try {
-					decodedToken = jwt.verify(token, this.config.jwt.publicKey, {
+					// Convert public key to jose KeyLike
+					let publicKey: any;
+					const keyData = this.config.jwt.publicKey;
+
+					// Determine if key is PEM or JWK format
+					if (keyData.startsWith('-----BEGIN')) {
+						// PEM format - use importSPKI
+						publicKey = await importSPKI(keyData, 'RS256');
+					} else {
+						try {
+							// Try to parse as JWK
+							const jwk = JSON.parse(keyData);
+							publicKey = await importJWK(jwk, jwk.alg || 'RS256');
+						} catch {
+							// If not valid JSON, assume it's a raw key string
+							publicKey = await importSPKI(keyData, 'RS256');
+						}
+					}
+
+					// Verify using jose
+					const { payload: josePayload } = await jwtVerify(token, publicKey, {
 						issuer: this.config.jwt.issuer,
 						audience: this.config.jwt.audience,
-						algorithms: this.config.jwt.algorithms as jwt.Algorithm[]
+						algorithms: this.config.jwt.algorithms as string[]
 					});
-					payload = decodedToken;
+					payload = josePayload;
 					this.securityLogger.debug('JWT validated using local public key');
 				} catch (keyError: any) {
 					this.securityLogger.error('Local key validation failed:', keyError.message);
@@ -192,11 +212,18 @@ export class OAuthValidator {
 				}
 			}
 
-			// Parse scopes from scope claim
-			const scopes = payload.scope ?
-				(typeof payload.scope === 'string' ? payload.scope.split(' ') : payload.scope) :
-				payload.scp || // Alternative scope claim
-				undefined;
+			// Parse scopes from scope claim (normalize to string[])
+			const normalizeScopes = (value: any): string[] => {
+				if (!value) return [];
+				if (Array.isArray(value)) return value.map(String);
+				if (typeof value === 'string') return value.split(/\s+/).filter(Boolean);
+				return [];
+			};
+
+			const scopeFromScope = normalizeScopes(payload.scope);
+			const scopeFromScp = normalizeScopes(payload.scp);
+			// Prefer 'scope' claim, but merge both if available
+			const scopes = scopeFromScope.length > 0 ? scopeFromScope : scopeFromScp.length > 0 ? scopeFromScp : [];
 
 			return {
 				valid: true,
@@ -204,10 +231,9 @@ export class OAuthValidator {
 				expires: payload.exp,
 				scopes,
 				subject: payload.sub,
-				clientId: payload.client_id || payload.cid,
+				clientId: (payload.client_id as string) || (payload.cid as string),
 				audience: payload.aud
 			};
-
 		} catch (error: any) {
 			this.securityLogger.error('JWT validation error:', error);
 			return {
@@ -237,8 +263,8 @@ export class OAuthValidator {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded',
-					'Authorization': `Basic ${credentials}`,
-					'Accept': 'application/json'
+					Authorization: `Basic ${credentials}`,
+					Accept: 'application/json'
 				},
 				body: new URLSearchParams({
 					token: token,
@@ -264,16 +290,28 @@ export class OAuthValidator {
 				};
 			}
 
+			// Parse scopes from introspection response (normalize to string[])
+			const normalizeScopes = (value: any): string[] => {
+				if (!value) return [];
+				if (Array.isArray(value)) return value.map(String);
+				if (typeof value === 'string') return value.split(/\s+/).filter(Boolean);
+				return [];
+			};
+
+			const scopeFromScope = normalizeScopes(result.scope);
+			const scopeFromScp = normalizeScopes(result.scp);
+			// Prefer 'scope' claim, but merge both if available
+			const scopes = scopeFromScope.length > 0 ? scopeFromScope : scopeFromScp.length > 0 ? scopeFromScp : [];
+
 			return {
 				valid: true,
 				payload: result,
 				expires: result.exp,
-				scopes: result.scope ? result.scope.split(' ') : undefined,
+				scopes,
 				subject: result.sub,
 				clientId: result.client_id,
 				audience: result.aud
 			};
-
 		} catch (error: any) {
 			this.securityLogger.error('Token introspection error:', error);
 			return {
@@ -287,7 +325,7 @@ export class OAuthValidator {
 	 * Validate that token has required scopes
 	 */
 	private validateScopes(tokenScopes: string[], requiredScopes: string[]): boolean {
-		return requiredScopes.every(scope => tokenScopes.includes(scope));
+		return requiredScopes.every((scope) => tokenScopes.includes(scope));
 	}
 
 	/**
@@ -313,7 +351,7 @@ export class OAuthValidator {
 		const nowMs = Date.now();
 		let ttlMs = this.config.cache.tokenTtl * 1000;
 		if (typeof result.expires === 'number') {
-			const tokenMs = Math.max(0, (result.expires * 1000) - nowMs);
+			const tokenMs = Math.max(0, result.expires * 1000 - nowMs);
 			ttlMs = Math.min(ttlMs, tokenMs);
 		}
 		if (ttlMs <= 0) return;
@@ -375,10 +413,7 @@ export class OAuthValidator {
 	/**
 	 * Format WWW-Authenticate header for 401 responses (RFC 9728 Section 5.1)
 	 */
-	static formatWWWAuthenticateHeader(
-		resourceMetadataUrl: string,
-		error?: AuthorizationError
-	): string {
+	static formatWWWAuthenticateHeader(resourceMetadataUrl: string, error?: AuthorizationError): string {
 		const esc = (v: string) => v.replace(/["\\]/g, '\\$&').replace(/[\r\n]/g, ' ');
 		let header = `Bearer resource="${esc(resourceMetadataUrl)}"`;
 
