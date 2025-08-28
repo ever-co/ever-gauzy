@@ -486,14 +486,36 @@ export class OAuth2AuthorizationServer {
 		res.send(this.generateLoginForm(error, safeReturnUrl));
 	}
 
+	// Allowlist of permitted relative return URLs for redirection (add your app's expected endpoints here)
+	private static readonly ALLOWED_RETURN_PATHS = [
+		'/oauth/authorize',
+		'/oauth/callback',
+		'/dashboard',
+		'/profile',
+		// Add other safe endpoints as appropriate
+	];
+
 	private normalizeReturnUrl(input?: string): string {
 		if (!input) return this.config.authorizationEndpoint;
 		try {
-			// Allow only same-origin absolute URLs or relative paths
-			if (input.startsWith('/')) return input;
+			// Allow only relative paths, and only if in allowlist
+			if (input.startsWith('/')) {
+				const path = input.split('?')[0]; // ignore query string for allowlist check
+				if (OAuthAuthorizationServer.ALLOWED_RETURN_PATHS.includes(path)) {
+					return input;
+				}
+				return this.config.authorizationEndpoint;
+			}
+			// For absolute URLs: must match same origin and be a permitted endpoint
 			const u = new URL(input, this.config.baseUrl);
 			const base = new URL(this.config.baseUrl);
-			return u.origin === base.origin ? u.toString() : this.config.authorizationEndpoint;
+			if (u.origin === base.origin) {
+				const path = u.pathname;
+				if (OAuthAuthorizationServer.ALLOWED_RETURN_PATHS.includes(path)) {
+					return u.toString();
+				}
+			}
+			return this.config.authorizationEndpoint;
 		} catch {
 			return this.config.authorizationEndpoint;
 		}
