@@ -4,10 +4,8 @@
  * Manages JWT access tokens and refresh tokens for OAuth 2.0 flows
  */
 
-import jwt from 'jsonwebtoken';
 import { SignJWT, importPKCS8, importSPKI, jwtVerify } from 'jose';
-import crypto from 'crypto';
-import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 import { SecurityLogger } from './security-logger';
 
 export interface TokenPair {
@@ -61,6 +59,7 @@ export class OAuth2TokenManager {
 	private readonly ACCESS_TOKEN_EXPIRATION = 15 * 60; // 15 minutes
 	private readonly REFRESH_TOKEN_EXPIRATION = 30 * 24 * 60 * 60; // 30 days
 	private readonly MAX_REFRESH_TOKENS = 10000;
+	private readonly CLOCK_SKEW_SECONDS = 30;
 
 	constructor(
 		private issuer: string,
@@ -91,7 +90,7 @@ export class OAuth2TokenManager {
 	): Promise<TokenPair> {
 		const now = Math.floor(Date.now() / 1000);
 		const scopeString = scopes.join(' ');
-		const jti = uuidv4();
+		const jti = crypto.randomUUID();
 
 		// Create access token payload
 		const accessTokenPayload: TokenPayload = {
@@ -100,8 +99,8 @@ export class OAuth2TokenManager {
 			iss: this.issuer,
 			iat: now,
 			exp: now + this.ACCESS_TOKEN_EXPIRATION,
-			// Optional: tolerate small skew
-      		nbf: now - 5,
+			// Tolerate small clock skew
+      		nbf: now - this.CLOCK_SKEW_SECONDS,
 			jti,
 			client_id: clientId,
 			scope: scopeString,
@@ -116,7 +115,7 @@ export class OAuth2TokenManager {
 
 		// Generate refresh token if requested
 		if (options.includeRefreshToken) {
-			const refreshTokenId = uuidv4();
+			const refreshTokenId = crypto.randomUUID();
 			const refreshTokenExpires = new Date(Date.now() + (this.REFRESH_TOKEN_EXPIRATION * 1000));
 
 			// Store refresh token metadata
@@ -137,8 +136,8 @@ export class OAuth2TokenManager {
 				iss: this.issuer,
 				iat: now,
 				exp: now + this.REFRESH_TOKEN_EXPIRATION,
-				// Optional: tolerate small skew like access tokens
-				nbf: now -5,
+				// Tolerate small clock skew like access tokens
+				nbf: now - this.CLOCK_SKEW_SECONDS,
 				jti: refreshTokenId,
 				client_id: clientId,
 				scope: scopeString,
@@ -229,17 +228,16 @@ export class OAuth2TokenManager {
 	private async signToken(payload: TokenPayload): Promise<string> {
 		try {
 			if (this.keyPair.algorithm === 'RS256') {
-				// Use jsonwebtoken for RS256
-				const privateKey = this.keyPair.privateKey;
-				return jwt.sign(payload, privateKey, {
-					algorithm: 'RS256',
-					keyid: this.keyPair.keyId,
-					header: {
-						typ: 'JWT',
+				// Use jose for RS256
+				const privateKey = await importPKCS8(this.keyPair.privateKey, 'RS256');
+				const token = await new SignJWT(payload)
+					.setProtectedHeader({
 						alg: 'RS256',
+						typ: 'JWT',
 						kid: this.keyPair.keyId
-					}
-				});
+					})
+					.sign(privateKey);
+				return token;
 			} else {
 				// Use jose for ES256
 				const privateKey = await importPKCS8(this.keyPair.privateKey, 'ES256');
@@ -264,12 +262,14 @@ export class OAuth2TokenManager {
 	private async verifyToken(token: string): Promise<TokenPayload> {
 		try {
 			if (this.keyPair.algorithm === 'RS256') {
-				const payload = jwt.verify(token, this.keyPair.publicKey, {
+				// RS256 verification using jose library
+				const publicKey = await importSPKI(this.keyPair.publicKey, 'RS256');
+				const { payload } = await jwtVerify(token, publicKey, {
 					algorithms: ['RS256'],
 					issuer: this.issuer,
 					audience: this.audience
-				}) as TokenPayload;
-				return payload;
+				});
+				return payload as TokenPayload;
 			} else if (this.keyPair.algorithm === 'ES256') {
 				// ES256 verification using jose library
 				const publicKey = await importSPKI(this.keyPair.publicKey, 'ES256');

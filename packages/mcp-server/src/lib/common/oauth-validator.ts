@@ -29,7 +29,6 @@ export class OAuthValidator {
 		}
 
 		// RFC 6750 Section 2.1: Authorization Request Header Field
-		// RFC 6750 Section 2.1: Authorization Request Header Field
 		const [scheme, token] = authorization.split(/\s+/, 2);
 		if (!scheme || !/^Bearer$/i.test(scheme) || !token) {
 			return null;
@@ -80,8 +79,8 @@ export class OAuthValidator {
 				}
 			}
 
-			// Validate audience claim (RFC 8707)
-			if (result.valid && this.config.resourceUri) {
+			// Validate audience claim (RFC 8707); skip if already enforced via jwt.audience
+			if (result.valid && this.config.resourceUri && !this.config.jwt?.audience) {
 				const hasValidAudience = this.validateAudience(result.audience, this.config.resourceUri);
 				if (!hasValidAudience) {
 					result = {
@@ -121,7 +120,8 @@ export class OAuthValidator {
 					const { payload: josePayload } = await jwtVerify(token, JWKS, {
 						issuer: this.config.jwt.issuer,
 						audience: this.config.jwt.audience,
-						algorithms: this.config.jwt.algorithms as string[]
+						algorithms: this.config.jwt.algorithms as string[],
+						clockTolerance: 30
 					});
 					payload = josePayload;
 					this.securityLogger.debug('JWT validated using JWKS');
@@ -161,7 +161,8 @@ export class OAuthValidator {
 					const { payload: josePayload } = await jwtVerify(token, publicKey, {
 						issuer: this.config.jwt.issuer,
 						audience: this.config.jwt.audience,
-						algorithms: this.config.jwt.algorithms as string[]
+						algorithms: this.config.jwt.algorithms as string[],
+						clockTolerance: 30
 					});
 					payload = josePayload;
 					this.securityLogger.debug('JWT validated using local public key');

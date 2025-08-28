@@ -560,7 +560,9 @@ export class OAuth2AuthorizationServer {
 			this.securityLogger.info('User authenticated successfully', { userId: user.userId, email: user.email });
 
 			// Validate and redirect back to authorization flow
-			res.redirect(this.normalizeReturnUrl(returnUrl));
+			// normalizeReturnUrl validates against ALLOWED_RETURN_PATHS allowlist to prevent open redirects
+			const safeReturnUrl = this.normalizeReturnUrl(returnUrl);
+			res.redirect(safeReturnUrl);
 
 		} catch (error: any) {
 			this.securityLogger.error('Login error:', error);
@@ -641,8 +643,16 @@ export class OAuth2AuthorizationServer {
 
 			const user = session.user as AuthenticatedUser;
 
-			// Parse scopes
-			const scopes = scope ? scope.split(' ') : ['mcp.read'];
+			// Load client and clamp scopes to what's registered
+			const client = oAuth2ClientManager.getClient(client_id);
+			if (!client) {
+				return this.sendErrorRedirect(res, redirect_uri, 'invalid_client', 'Client not found', state);
+			}
+			const requestedScopes = scope ? scope.split(' ') : ['mcp.read'];
+			const grantedScopes = requestedScopes.filter(s => client.scopes.includes(s));
+			if (grantedScopes.length === 0) {
+				return this.sendErrorRedirect(res, redirect_uri, 'invalid_scope', 'No permitted scopes requested', state);
+			}
 
 			// Re-validate redirect URI (defense-in-depth)
 			if (!oAuth2ClientManager.isValidRedirectUri(client_id, redirect_uri)) {
@@ -654,7 +664,7 @@ export class OAuth2AuthorizationServer {
 				client_id,
 				user.userId,
 				redirect_uri,
-				scopes,
+				grantedScopes,
 				{
 					state,
 					codeChallenge: code_challenge,
@@ -666,7 +676,7 @@ export class OAuth2AuthorizationServer {
 			this.securityLogger.info('Authorization code granted', {
 				userId: user.userId,
 				clientId: client_id,
-				scopes: scopes.join(' '),
+				scopes: grantedScopes.join(' '),
 				codeChallenge: code_challenge ? 'present' : 'absent'
 			});
 

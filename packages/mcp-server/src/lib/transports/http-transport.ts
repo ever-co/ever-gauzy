@@ -191,47 +191,16 @@ export class HttpTransport {
 		}));
 
 		// Cookie parsing for session management
+		// Note: CSRF protection is implemented below to prevent cross-site request forgery
 		this.app.use(cookieParser());
 
 		// URL-encoded body parsing (e.g., form submissions)
 		this.app.use(express.urlencoded({ extended: true }));
 
 		// CSRF protection middleware for state-changing operations
-		this.app.use((req, res, next) => {
-			// Skip CSRF for safe methods and excluded paths
-			const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
-			const excludedPaths = ['/health', '/.well-known/', '/oauth2/'];
-
-			if (safeMethods.includes(req.method) ||
-				excludedPaths.some(path => req.path.startsWith(path))) {
-				return next();
-			}
-
-			// For state-changing requests, require either:
-			// 1. Valid session with CSRF token, or
-			// 2. Valid OAuth Bearer token (API access)
-			const hasBearerToken = /^Bearer\s+\S+$/.test(req.headers.authorization || '');
-			const oauthProtectedPrefixes = ['/sse', '/sse/events'];
-			const onOauthProtectedRoute = oauthProtectedPrefixes.some(p => req.path.startsWith(p)) && !req.path.startsWith('/sse/session');
-			const sessionId = req.sessionId || req.cookies?.[this.transportConfig.session?.cookieName || 'session'];
-			const csrfToken = req.get('mcp-csrf-token') || req.get('x-csrf-token');
-
-			if (hasBearerToken && onOauthProtectedRoute) {
-				// OAuth Bearer tokens are self-authenticating, skip CSRF
-				return next();
-			}
-
-			if (sessionId && csrfToken && sessionMiddleware.validateCSRFToken(req, sessionId, 'mcp-csrf-token')) {
-				// Valid session-based CSRF token
-				return next();
-			}
-
-			// Missing or invalid CSRF protection
-			res.status(403).json({
-				error: 'CSRF protection required',
-				message: 'Include mcp-csrf-token header or use Bearer authentication'
-			});
-		});
+		// This protects against cross-site request forgery attacks by requiring
+		// either a valid CSRF token in session-based requests or OAuth Bearer tokens
+		this.app.use(this.createCSRFProtectionMiddleware());
 
 		// Error handling middleware for request validation errors
 		this.app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction): void => {
@@ -276,6 +245,53 @@ export class HttpTransport {
 		if (this.transportConfig.session.enabled) {
 			this.setupSessionMiddleware();
 		}
+	}
+
+	/**
+	 * Create CSRF protection middleware to prevent cross-site request forgery attacks
+	 * This middleware validates CSRF tokens for state-changing requests while allowing
+	 * OAuth Bearer tokens to bypass CSRF protection (correct for API access)
+	 */
+	private createCSRFProtectionMiddleware() {
+		return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+			// Skip CSRF for safe methods and excluded paths
+			const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
+			const excludedPrefixes = ['/health', '/.well-known/', '/oauth2/'];
+			const excludedExactPaths = ['/sse/session']; // allow unauthenticated session creation
+
+			if (safeMethods.includes(req.method) ||
+				excludedPrefixes.some(p => req.path.startsWith(p)) ||
+				excludedExactPaths.includes(req.path)) {
+				return next();
+			}
+
+			// For state-changing requests, require either:
+			// 1. Valid session with CSRF token, or
+			// 2. Valid OAuth Bearer token (API access)
+			const hasBearerToken = /^Bearer\s+\S+$/.test(req.headers.authorization || '');
+			const oauthProtectedPrefixes = ['/sse', '/sse/events'];
+			const onOauthProtectedRoute = oauthProtectedPrefixes.some(p => req.path.startsWith(p)) && !req.path.startsWith('/sse/session');
+			const sessionId = req.sessionId || req.cookies?.[this.transportConfig.session?.cookieName || 'session'];
+			const csrfHeaderName =
+				req.get('mcp-csrf-token') ? 'mcp-csrf-token'
+				: (req.get('x-csrf-token') ? 'x-csrf-token' : null);
+
+			if (hasBearerToken && onOauthProtectedRoute) {
+				// OAuth Bearer tokens are self-authenticating, skip CSRF
+				return next();
+			}
+
+			if (sessionId && csrfHeaderName && sessionMiddleware.validateCSRFToken(req, sessionId, csrfHeaderName)) {
+				// Valid session-based CSRF token
+				return next();
+			}
+
+			// Missing or invalid CSRF protection
+			res.status(403).json({
+				error: 'CSRF protection required',
+				message: 'Include mcp-csrf-token or x-csrf-token header, or use Bearer authentication'
+			});
+		};
 	}
 
 	private setupSessionMiddleware() {

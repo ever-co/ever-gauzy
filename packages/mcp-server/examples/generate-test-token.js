@@ -16,7 +16,7 @@ function base64UrlEncode(str) {
 function generateTestJWT(payload = {}, secret = (process.env.MCP_AUTH_JWT_SECRET || 'dev-secret-key-for-testing-only'))  {
     // JWT Header
     const header = {
-        alg: 'HS256',
+        alg: 'RS256',
         typ: 'JWT'
     };
 

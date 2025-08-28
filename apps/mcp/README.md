@@ -13,7 +13,7 @@ The Gauzy MCP server provides multiple transport options to interact with your G
 - **HTTP Transport** - REST API with JSON-RPC 2.0 over HTTP for web applications and testing
 - **WebSocket Transport** - Real-time bidirectional communication for live applications
 
-All transports offer access to project management, time tracking, employee management, and other Gauzy features with optional OAuth 2.0 authorization.
+HTTP and WebSocket transports offer access to project management, time tracking, employee management, and other Gauzy features with optional OAuth 2.0 authorization.
 
 ## Quick Start
 

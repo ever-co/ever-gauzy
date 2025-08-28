@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { Request } from 'express';
 import { sanitizeForLogging } from './security-utils';
 import { environment } from '../environments/environment';
+import { inspect } from 'node:util';
 
 const logger = new Logger('SecurityLogger');
 
@@ -52,7 +53,7 @@ export class SecurityLogger {
 
 		// Log based on severity
 		const message = `Security Event: ${event} (${severity}) from ${securityEvent.ip}`;
-		const payload = JSON.stringify(securityEvent);
+		const payload = SecurityLogger.safeStringify(securityEvent as unknown as Record<string, unknown>);
 		switch (severity) {
 			case 'critical':
 				logger.error(message, payload);
@@ -85,7 +86,7 @@ export class SecurityLogger {
 		logger.debug(`Would send to external monitoring: ${event.event}`);
 	}
 
-	private safeStringify(obj?: Record<string, unknown>): string {
+	private static safeStringify(obj?: Record<string, unknown>): string {
 				if (!obj) return '';
 				try {
 				const seen = new WeakSet();
@@ -98,9 +99,6 @@ export class SecurityLogger {
 					});
 				} catch {
 					try {
-						// Fallback if sanitizeForLogging or stringify throws
-						// eslint-disable-next-line @typescript-eslint/no-var-requires
-						const { inspect } = require('util');
 						return inspect(obj, { depth: 3, breakLength: 120 });
 					} catch {
 						return '[Unserializable]';
@@ -111,30 +109,30 @@ export class SecurityLogger {
 	// Instance methods for easier usage in middleware
 	debug(message: string, data?: Record<string, unknown>): void {
 		if (environment.production === false || process.env.GAUZY_MCP_DEBUG === 'true') {
-			logger.debug(message, this.safeStringify(data));
+			logger.debug(message, SecurityLogger.safeStringify(data));
 		}
 	}
 
 	log(message: string, data?: Record<string, unknown>): void {
-		logger.log(message, this.safeStringify(data));
+		logger.log(message, SecurityLogger.safeStringify(data));
 	}
 
 	warn(message: string, data?: Record<string, unknown>): void {
-		logger.warn(message, this.safeStringify(data));
+		logger.warn(message, SecurityLogger.safeStringify(data));
 	}
 
 	error(message: string, error?: Error | Record<string, unknown>): void {
 		if (error instanceof Error) {
 			logger.error(message, error.stack || error.message);
 		} else if (error) {
-			logger.error(message, this.safeStringify(error as Record<string, unknown>));
+			logger.error(message, SecurityLogger.safeStringify(error as Record<string, unknown>));
 		} else {
 			logger.error(message);
 		}
 	}
 
 	info(message: string, data?: Record<string, unknown>): void {
-		logger.log(message, this.safeStringify(data));
+		logger.log(message, SecurityLogger.safeStringify(data));
 	}
 	// Instance method to log security events with request context
 	logSecurityEvent(

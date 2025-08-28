@@ -4,7 +4,7 @@
  * Manages OAuth 2.0 client registration and validation for MCP authorization
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { SecurityLogger } from './security-logger';
 
@@ -300,14 +300,15 @@ export class OAuth2ClientManager {
 	 * Generate client ID
 	 */
 	private generateClientId(): string {
-		return `mcp_${uuidv4().replace(/-/g, '')}`;
+		return `mcp_${crypto.randomUUID().replace(/-/g, '')}`;
 	}
 
 	/**
 	 * Generate client secret
 	 */
 	private generateClientSecret(): string {
-		return `mcs_${uuidv4().replace(/-/g, '')}${uuidv4().replace(/-/g, '')}`;
+		// 64 bytes hex (~128 chars) prefixed for readability
+		return `mcs_${crypto.randomBytes(64).toString('hex')}`;
 	}
 
 	/**
