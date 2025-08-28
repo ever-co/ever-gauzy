@@ -1,5 +1,5 @@
 import { ErrorHandler, Inject, Injectable } from '@angular/core';
-import * as Sentry from '@sentry/angular-ivy';
+import * as Sentry from '@sentry/angular';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 
 @Injectable()
@@ -8,7 +8,6 @@ export class SentryErrorHandler implements ErrorHandler {
 
 	/**
 	 * Handles an error by capturing it with Sentry and optionally showing a report dialog.
-	 *
 	 * @param error - The error to handle.
 	 */
 	handleError(error: any): void {
@@ -17,7 +16,7 @@ export class SentryErrorHandler implements ErrorHandler {
 			// Capture the error with Sentry and get the event ID
 			const eventId = Sentry.captureException(error.originalError || error);
 
-			// Optionally show the Sentry report dialog to the user
+			// Must provide a valid eventId when calling showReportDialog
 			Sentry.showReportDialog({ eventId });
 		}
 

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
-import { FindManyOptions, FindOptionsWhere, In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere, In, IsNull, MoreThanOrEqual, SelectQueryBuilder } from 'typeorm';
 import { addDays } from 'date-fns';
 import { pick } from 'underscore';
 import { ConfigService, environment } from '@gauzy/config';
@@ -151,7 +151,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			appliedDate,
 			invitationExpirationPeriod,
 			fullName,
-			callbackUrl
+			callbackUrl,
+			queryParams
 		} = input;
 
 		/**
@@ -298,6 +299,23 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					code: item.code
 				});
 				inviteLink = [callbackUrl, queryParamsString].filter(Boolean).join('?'); // Combine current URL with updated query params
+			} else if (callbackUrl && queryParams) {
+				// Build custom query params from invite properties
+				const queryParamsObject = Object.entries(queryParams).reduce((acc, [key, value]) => {
+					const propertyValue = item[value];
+					if (typeof propertyValue !== 'undefined') {
+						if (
+							typeof propertyValue === 'string' ||
+							typeof propertyValue === 'number' ||
+							typeof propertyValue === 'boolean'
+						) {
+							acc[key] = String(propertyValue);
+						}
+					}
+					return acc;
+				}, {} as Record<string, string>);
+				const queryParamsString = this.buildQueryString(queryParamsObject);
+				inviteLink = [callbackUrl, queryParamsString].filter(Boolean).join('?');
 			}
 
 			switch (input.inviteType) {
@@ -695,18 +713,19 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				where: {
 					tenantId: RequestContext.currentTenantId(),
 					...(isNotEmpty(options) && isNotEmpty(options.where) ? options.where : {}),
+					// Role filter with array support (converts single value to array)
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.role)
 							? {
 									role: {
-										...options.where.role
+										name: In(
+											Array.isArray(options.where.role)
+												? options.where.role
+												: [options.where.role]
+										)
 									}
 							  }
-							: {
-									role: {
-										name: Not(RolesEnum.EMPLOYEE)
-									}
-							  }
+							: {} // No default filter
 						: {}),
 					/**
 					 * Organization invites filter by specific projects

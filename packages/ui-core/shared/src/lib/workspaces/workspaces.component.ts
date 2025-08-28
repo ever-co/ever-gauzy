@@ -1,22 +1,13 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { debounceTime, filter, tap, catchError, finalize } from 'rxjs/operators';
-import { BehaviorSubject, Observable, EMPTY, of } from 'rxjs';
-import { NbMenuItem } from '@nebular/theme';
+import { debounceTime, filter, tap, catchError, finalize, map } from 'rxjs/operators';
+import { Observable, EMPTY, of } from 'rxjs';
+import { NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { IUser, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
+import { IUser, IWorkSpace, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { Store, AuthService, ToastrService } from '@gauzy/ui-core/core';
-import { WorkspaceResetService } from './workspace-reset.service';
-
-interface IWorkSpace {
-	id: string;
-	name: string;
-	imgUrl: string;
-	isOnline: boolean;
-	isSelected?: boolean;
-}
+import { Store, AuthService, ToastrService, WorkspaceResetService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,8 +17,10 @@ interface IWorkSpace {
 	standalone: false
 })
 export class WorkspacesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
-	public _workspaces$: BehaviorSubject<IWorkSpace[]> = new BehaviorSubject([]);
-	public workspaces$: Observable<IWorkSpace[]> = this._workspaces$.asObservable();
+	public workspaces$: Observable<IWorkSpace[]> = this.store.workspaces$;
+	public selectedWorkspace$: Observable<IWorkSpace> = this.store.selectedWorkspace$;
+	public loading$: Observable<boolean> = this.store.workspacesLoading$;
+	public error$: Observable<string | null> = this.store.workspacesError$;
 
 	public selected: IWorkSpace;
 	public contextMenus: NbMenuItem[];
@@ -40,7 +33,8 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 		private readonly store: Store,
 		private readonly authService: AuthService,
 		private readonly toastrService: ToastrService,
-		private readonly workspaceResetService: WorkspaceResetService
+		private readonly workspaceResetService: WorkspaceResetService,
+		private readonly nbMenuService: NbMenuService
 	) {
 		super(translateService);
 	}
@@ -48,6 +42,7 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	ngOnInit() {
 		this._createContextMenus();
 		this._applyTranslationOnChange();
+		this._setupMenuClickListener();
 	}
 
 	ngAfterViewInit() {
@@ -64,17 +59,23 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
-	 * Retrieves all workspaces that the current authenticated user has access to.
-	 *
-	 * @return {void} This function does not return a value.
+	 * Get workspaces - check store first, then load from API if needed
 	 */
 	getWorkspaces(): void {
 		if (!this.user?.id) {
 			return;
 		}
 
-		this.loading = true;
-		this.error = null;
+		// Check if workspaces are already loaded in the store
+		const currentWorkspaces = this.store.workspaces;
+		if (currentWorkspaces && currentWorkspaces.length > 0) {
+			// Workspaces already loaded, just update selected workspace
+			this.selected = this.store.selectedWorkspace || currentWorkspaces[0];
+			return;
+		}
+
+		// Set loading state
+		this.store.setWorkspacesLoading(true);
 
 		this.authService
 			.getUserWorkspaces(false)
@@ -88,18 +89,17 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 						isSelected: workspace.user.tenant.id === this.user.tenantId
 					}));
 
-					this._workspaces$.next(mappedWorkspaces);
+					// Update store with workspaces
+					this.store.setWorkspaces(mappedWorkspaces, this.user.tenantId);
 
-					// Set the selected workspace
+					// Set the selected workspace locally for immediate UI update
 					this.selected = mappedWorkspaces.find((w) => w.isSelected) || mappedWorkspaces[0];
 				}),
-				catchError((error) => {
-					console.error('Error fetching workspaces:', error);
-					this.error = 'Failed to load workspaces';
+				catchError(() => {
+					this.store.setWorkspacesLoading(false, 'Failed to load workspaces');
 					this.toastrService.danger('Failed to load workspaces', 'Error');
 					return of({ workspaces: [], total_workspaces: 0 } as IUserSigninWorkspaceResponse);
 				}),
-				finalize(() => (this.loading = false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -161,23 +161,67 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	private _createContextMenus() {
 		this.contextMenus = [
 			{
-				title: this.getTranslation('WORKSPACES.MENUS.SING_ANOTHER_WORKSPACE')
+				title: this.getTranslation('WORKSPACES.MENUS.SING_ANOTHER_WORKSPACE'),
+				icon: 'person-add-outline',
+				data: { action: 'signin' }
 			},
 			{
-				title: this.getTranslation('WORKSPACES.MENUS.CREATE_NEW_WORKSPACE')
+				title: this.getTranslation('WORKSPACES.MENUS.FIND_WORKSPACE'),
+				icon: 'search-outline',
+				data: { action: 'find' }
 			},
 			{
-				title: this.getTranslation('WORKSPACES.MENUS.FIND_WORKSPACE')
+				title: this.getTranslation('WORKSPACES.MENUS.CREATE_NEW_WORKSPACE'),
+				icon: 'plus-outline',
+				data: { action: 'create' }
 			}
 		];
 	}
 
 	/**
-	 * Create new workspace
-	 *
+	 * Setup menu click listener
+	 */
+
+	private _setupMenuClickListener() {
+		this.nbMenuService
+			.onItemClick()
+			.pipe(
+				// Filter to only events from this component's context menu
+				filter(({ tag }) => tag === 'workspaces-menu'),
+				map(({ item }) => item),
+				untilDestroyed(this)
+			)
+			.subscribe((item: NbMenuItem) => {
+				const action = item.data?.action;
+
+				if (action) {
+					this.openWorkspaceAction(action);
+				}
+			});
+	}
+	/**
+	 * Open workspace action in new tab
+	 * @param action The action to perform (create, signin, find)
+	 */
+	private openWorkspaceAction(action: string): void {
+		const baseUrl = window.location.origin;
+		const url = `${baseUrl}/#/share/workspace/${action}`;
+
+		// Open in new tab (not window)
+		const newTab = window.open(url, '_blank');
+
+		if (!newTab) {
+			// Fallback: open in same tab
+			window.location.href = url;
+		}
+	}
+
+	/**
+	 * Create new workspace (legacy method - kept for compatibility)
+	 * @deprecated Use openWorkspaceAction('create') instead
 	 */
 	add() {
-		// TODO
+		this.openWorkspaceAction('create');
 	}
 
 	/**
@@ -187,15 +231,16 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	 * @return {void} This function does not return a value.
 	 */
 	private updateLocalWorkspaceState(newWorkspace: IWorkSpace): void {
-		// Update workspace states
-		const currentWorkspaces = this._workspaces$.getValue();
-		const updatedWorkspaces = currentWorkspaces.map((w) => ({
+		// Update workspace states using the store
+		const currentWorkspaces = this.store.workspaces;
+		const updatedWorkspaces = currentWorkspaces.map((w: IWorkSpace) => ({
 			...w,
 			isSelected: w.id === newWorkspace.id,
 			isOnline: w.id === newWorkspace.id ? true : w.isOnline
 		}));
 
-		this._workspaces$.next(updatedWorkspaces);
+		// Update store with new workspace states
+		this.store.setWorkspaces(updatedWorkspaces, newWorkspace.id);
 		this.selected = { ...newWorkspace, isSelected: true };
 	}
 }

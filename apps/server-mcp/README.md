@@ -1,58 +1,142 @@
-# Gauzy MCP Server
+# Gauzy MCP Server - Desktop App
 
-A Model Context Protocol (MCP) server for Gauzy that provides LLMs like Claude with direct access to your Gauzy instance data and operations. This server implements comprehensive CRUD operations, bulk functionality, statistics endpoints, and robust authentication management.
+A modern Electron desktop application that provides an intuitive interface for managing and monitoring your Gauzy MCP (Model Context Protocol) server.
+
+## Overview
+
+This desktop application offers a user-friendly way to run, monitor, and manage your Gauzy MCP server. It features a modern UI with real-time status monitoring, log viewing, and easy server management - perfect for users who prefer a graphical interface over command-line tools.
+
+## Features
+
+-   **🖥️ Modern Desktop Interface**: Clean, intuitive UI built with Electron
+-   **📊 Real-time Monitoring**: Live server status and performance metrics
+-   **📝 Live Log Viewing**: Real-time log streaming with filtering and search
+-   **🔄 Server Management**: Easy start, stop, and restart functionality
+-   **⚙️ Configuration Management**: Built-in settings for API endpoints and credentials
+-   **🔔 System Tray Integration**: Run in background with system tray access
+-   **🔄 Auto-updater Support**: Automatic updates for the latest features
+-   **🎨 Enhanced UI/UX**: Smooth animations and responsive design
+-   **🌐 Cross-platform**: Works on Windows, macOS, and Linux
 
 ## Quick Start
 
-### 1. Environment Setup
+### Prerequisites
 
-Create a `.env` file in `apps/server-mcp/`:
+-   Node.js (version 18 or higher)
+-   Access to a running Gauzy API server
+-   Valid Gauzy credentials
 
-```bash
-# Required: Gauzy API Configuration
-API_BASE_URL=https://apidemo.gauzy.co
-
-# Required: Authentication (for auto-login)
-GAUZY_AUTO_LOGIN=true
-GAUZY_AUTH_EMAIL=your-email@example.com
-GAUZY_AUTH_PASSWORD=your-password
-
-# Optional: Debug and Development
-GAUZY_MCP_DEBUG=true
-NODE_ENV=development
-```
-
-**Note**: Tenant ID and Organization ID are no longer needed in environment variables! They are automatically captured from your authenticated user account.
-
-### 2. Installation & Build
+### Installation & Build
 
 ```bash
-# Install dependencies
-yarn install
+# Build the shared MCP server package (required dependency)
+yarn nx build mcp-server
 
-# Build the server
-npm run build
+# Build the Electron desktop app
+yarn nx build server-mcp --configuration=production
 
-# Run in development mode
-npm run dev
+# Or build specifically for Electron
+yarn nx build-electron server-mcp
 ```
 
-### 3. Usage with Claude Desktop
+### Running the Application
 
-Once authenticated, you can use natural language prompts without specifying tenant or organization IDs:
-
-```text
-// ✅ Simple and natural - context is automatic
-"Get my timer status"
-"Show me all tasks in progress"
-"Create a new project called 'Website Redesign'"
-"Get employee statistics for John Doe"
-
-// ❌ No longer needed - these are injected automatically
-"Get timer status with organizationId abc123 and tenantId def456"
+```bash
+# Development mode
+yarn nx serve server-mcp
 ```
 
-## 🔑 Authentication Flow
+## Application Interface
+
+### Main Dashboard
+
+The main interface provides:
+
+-   **Server Status Panel**: Current server state, uptime, and connection status
+-   **Control Panel**: Start/stop/restart buttons with status indicators
+-   **Configuration Panel**: API settings, credentials, and server options
+-   **Log Viewer**: Real-time log display with filtering capabilities
+
+### System Tray
+
+When minimized, the app runs in the system tray with options to:
+
+-   Show/hide the main window
+-   View server status
+-   Quick start/stop server
+-   Exit application
+
+### Settings Panel
+
+Configure your MCP server through the built-in settings:
+
+-   **API Configuration**: Set your Gauzy API URL
+-   **Authentication**: Manage login credentials securely
+-   **Server Options**: Configure startup behavior and logging
+-   **Auto-launch**: Set the app to start with your system
+
+## Configuration
+
+### Environment Variables
+
+The desktop app uses the same environment configuration as the standalone server:
+
+```bash
+# Required
+API_BASE_URL=http://localhost:3000        # Gauzy API URL
+GAUZY_AUTH_EMAIL=<your-email>             # Gauzy login email
+GAUZY_AUTH_PASSWORD=<your-password>       # Gauzy password
+
+# Optional
+GAUZY_AUTO_LOGIN=true                     # Enable automatic login
+GAUZY_MCP_DEBUG=true                      # Enable debug logging
+GAUZY_MCP_AUTO_START=true                 # Auto-start server on app launch
+```
+
+
+### Configuration File
+
+Settings are automatically saved to:
+
+-   **Windows**: `%APPDATA%/gauzy-mcp-server/config.json`
+-   **macOS**: `~/Library/Application Support/gauzy-mcp-server/config.json`
+-   **Linux**: `~/.config/gauzy-mcp-server/config.json`
+
+## Integration with AI Assistants
+
+The desktop app runs the same MCP server as the standalone version, making it compatible with:
+
+### Claude Desktop
+
+1. Start the desktop app and ensure the server is running
+2. Note the server path shown in the app (typically: `dist/apps/mcp/index.js`)
+3. Add to your Claude Desktop configuration:
+
+```json
+{
+"mcpServers": {
+        "gauzy": {
+            "command": "node",
+            "args": ["/path/shown/in/desktop/app"],
+            "env": {
+                "API_BASE_URL": "http://localhost:3000",
+                "GAUZY_AUTH_EMAIL": "<your-email>",
+                "GAUZY_AUTH_PASSWORD": "<your-password>"
+            }
+        }
+    }
+}
+```
+
+### Other AI Assistants
+
+The underlying MCP server uses stdio transport, making it compatible with any AI assistant supporting the MCP standard.
+
+## Available MCP Tools
+
+The desktop app provides access to all Gauzy MCP tools through its managed server:
+
+### 🔑 Authentication Flow
 
 The server uses a streamlined authentication approach:
 
@@ -61,106 +145,134 @@ The server uses a streamlined authentication approach:
 3. **Parameter Injection**: All tools automatically use your organization/tenant context
 4. **Token Management**: Handles refresh tokens and session management automatically
 
-### Authentication Tools
+### 🛠️ Available Tools (91 tools across 8 categories)
 
--   `login` - Login with email and password
--   `logout` - Clear authentication and tokens
--   `get_auth_status` - Check current authentication status
--   `refresh_auth_token` - Manually refresh access token
--   `auto_login` - Attempt automatic login (if configured)
+-   **🧑‍💼 Employee Tools (15 tools)**: Complete employee management
+-   **📋 Task Tools (16 tools)**: Comprehensive task operations
+-   **🗂️ Project Tools (15 tools)**: Full project lifecycle management
+-   **📅 Daily Plan Tools (17 tools)**: Daily planning and task scheduling
+-   **🏢 Organization Contact Tools (17 tools)**: Contact management
+-   **⏱️ Timer Tools (3 tools)**: Time tracking functionality
+-   **🔧 Test Tools (3 tools)**: Connection and capability testing
+-   **🔐 Authentication Tools (5 tools)**: Login, logout, and session management
 
-## 🛠️ Available Tools
+## Development
 
-The server provides **91 tools** across **8 categories**, all automatically scoped to your authenticated user context:
-
-### 🧑‍💼 Employee Tools (15 tools)
-
--   **Listing**: `get_employees`, `get_employee_count`, `get_employees_pagination`
--   **Individual**: `get_employee`, `get_current_employee`, `get_employee_statistics`
--   **Management**: `create_employee`, `update_employee`, `update_employee_profile`
--   **Advanced**: `bulk_create_employees`, `soft_delete_employee`, `restore_employee`
-
-### 📋 Task Tools (16 tools)
-
--   **Listing**: `get_tasks`, `get_task_count`, `get_tasks_pagination`, `get_my_tasks`, `get_team_tasks`
--   **Individual**: `get_task`, `create_task`, `update_task`, `delete_task`
--   **Bulk Operations**: `bulk_create_tasks`, `bulk_update_tasks`, `bulk_delete_tasks`
--   **Analytics**: `get_task_statistics`
--   **Assignment**: `assign_task_to_employee`, `unassign_task_from_employee`
-
-### 🗂️ Project Tools (15 tools)
-
--   **Listing**: `get_projects`, `get_project_count`, `get_projects_pagination`, `get_my_projects`
--   **Individual**: `get_project`, `create_project`, `update_project`, `delete_project`
--   **Bulk Operations**: `bulk_create_projects`, `bulk_update_projects`, `bulk_delete_projects`
--   **Analytics**: `get_project_statistics`
--   **Assignment**: `assign_project_to_employee`, `unassign_project_from_employee`
-
-### 📅 Daily Plan Tools (17 tools)
-
--   **Listing**: `get_daily_plans`, `get_my_daily_plans`, `get_team_daily_plans`
--   **Individual**: `get_daily_plan`, `create_daily_plan`, `update_daily_plan`, `delete_daily_plan`
--   **Task Management**: `add_task_to_daily_plan`, `remove_task_from_daily_plan`
--   **Bulk Operations**: `bulk_create_daily_plans`, `bulk_update_daily_plans`, `bulk_delete_daily_plans`
--   **Analytics**: `get_daily_plan_statistics`, `get_daily_plan_count`
-
-### 🏢 Organization Contact Tools (17 tools)
-
--   **Listing**: `get_organization_contacts`, `get_organization_contact_count`
--   **Individual**: `get_organization_contact`, `create_organization_contact`
--   **Management**: `update_organization_contact`, `delete_organization_contact`
--   **Bulk Operations**: `bulk_create_organization_contacts`, `bulk_update_organization_contacts`
--   **Assignment**: `assign_contact_to_employee`, `unassign_contact_from_employee`
-
-### ⏱️ Timer Tools (3 tools)
-
--   `timer_status` - Get current timer status
--   `start_timer` - Start time tracking
--   `stop_timer` - Stop time tracking
-
-### 🔧 Test Tools (3 tools)
-
--   `test_api_connection` - Test API connectivity
--   `get_server_info` - Get server information
--   `test_mcp_capabilities` - List all available tools
-
-## ✨ Key Features
-
--   **🔐 Smart Authentication**: Automatic user context detection
--   **📝 Schema Validation**: Comprehensive Zod schemas with enums
--   **🔄 Bulk Operations**: Efficient batch processing for all entities
--   **📊 Statistics & Analytics**: Built-in reporting tools
--   **🔗 Relationship Loading**: Support for entity relations
--   **📄 Pagination**: Efficient data browsing with page/limit
--   **🏷️ Assignment Operations**: Employee assignment/unassignment
--   **🔄 Auto-refresh**: Automatic token management
-
-## 🎯 User Experience
-
-**Before Refactoring**:
+### Project Structure
 
 ```text
-User: "Get timer status with organizationId: abc-123 and tenantId: def-456"
+apps/server-mcp/
+├── src/
+│   ├── electron-main.ts         # Electron main process
+│   ├── static/
+│   │   └── index.html          # Enhanced UI interface
+│   └── preload/
+│       └── preload.ts          # Preload scripts for security
+├── project.json                # Nx configuration
+├── webpack.config.js           # Webpack configuration
+└── README.md                   # This file
 ```
 
-**After Refactoring**:
+### Local Development
 
-```text
-User: "Get my timer status"
-System: ✅ Automatically uses your organization and tenant context
+```bash
+# Development mode with hot reload
+yarn nx serve server-mcp
+
+# Build for testing
+yarn nx build server-mcp
+
+# Build Electron executable
+yarn nx build-electron server-mcp
+
+# Run tests
+yarn nx test server-mcp
 ```
 
-The server automatically:
+### Building Distributables
 
--   Detects your organization and tenant from authenticated user data
--   Injects these parameters into all relevant API calls
--   Provides clear error messages if authentication is required
--   Maintains proper context throughout your session
+```bash
+# Build for current platform
+yarn nx build-electron server-mcp
 
-## 🚀 Benefits
+# Build for all platforms (requires platform-specific setup)
+yarn nx build-electron server-mcp --all-platforms
+```
 
-1. **Simplified Usage**: No more parameter guessing or UUID lookup
-2. **Context Awareness**: All tools work within your authenticated context
-3. **Error Prevention**: Clear messages when authentication is needed
-4. **Session Management**: Automatic token refresh and management
-5. **Natural Language**: Use conversational prompts in Claude Desktop
+## Troubleshooting
+
+### Common Issues
+
+1. **App Won't Start**
+
+    - Check Node.js version (18+ required)
+    - Verify all dependencies are installed: `yarn install`
+    - Try rebuilding: `yarn nx build server-mcp`
+
+2. **MCP Server Connection Issues**
+
+    - Verify API_BASE_URL in settings
+    - Check authentication credentials
+    - Review logs in the app's log viewer
+    - Ensure the Gauzy API server is running
+
+3. **System Tray Not Working**
+
+    - Check if system tray is enabled on your OS
+    - Try restarting the application
+    - Verify app permissions
+
+4. **Auto-updater Issues**
+    - Check internet connection
+    - Verify app permissions for downloads
+    - Check firewall/antivirus settings
+
+### Debug Mode
+
+Enable debug mode through the app settings or environment variable:
+
+```bash
+GAUZY_MCP_DEBUG=true yarn nx serve server-mcp
+```
+
+Debug mode provides:
+
+-   Detailed logging in the app's log viewer
+-   Network request/response details
+-   Server lifecycle events
+-   Error stack traces
+
+### Log Files
+
+Application logs are saved to:
+
+-   **Windows**: `%APPDATA%/gauzy-mcp-server/logs/`
+-   **macOS**: `~/Library/Logs/gauzy-mcp-server/`
+-   **Linux**: `~/.local/share/gauzy-mcp-server/logs/`
+
+## Security & Privacy
+
+-   **Credential Storage**: Login credentials are encrypted when stored locally
+-   **Network Security**: Uses HTTPS for production API connections
+-   **Process Isolation**: Electron security best practices implemented
+-   **Update Security**: Signed updates and certificate verification
+-   **Local Data**: All data remains local; no telemetry sent to external servers
+
+## Performance
+
+The desktop app is optimized for:
+
+-   **Low Memory Usage**: Efficient resource management
+-   **Fast Startup**: Quick application launch
+-   **Responsive UI**: Smooth animations and interactions
+-   **Background Operation**: Minimal CPU usage when minimized
+
+## Support
+
+For desktop app-specific issues:
+
+1. Check the app's built-in log viewer
+2. Review the troubleshooting section above
+3. Verify the underlying MCP server package is working
+4. Check system requirements and permissions
+5. Try restarting the application

@@ -8,10 +8,10 @@ import {
 	OnApplicationShutdown,
 	OnModuleInit
 } from '@nestjs/common';
-import { Probot } from 'probot';
 import SmeeClient from 'smee-client';
 import { isEmpty } from 'underscore';
 import * as chalk from 'chalk';
+import type { Probot } from 'probot';
 import { v4 } from 'uuid';
 import { ModuleProviders, ProbotConfig } from './probot.types';
 import { createProbot, createSmee } from './probot.helpers';
@@ -21,7 +21,7 @@ import { HookMetadataAccessor } from './hook-metadata.accessor';
 export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, OnApplicationShutdown {
 	private readonly logger = new Logger('ProbotDiscovery');
 	private readonly hooks: Map<string, any>;
-	private readonly probot: Probot;
+	private probot: Probot | null = null; // Probot instance (dynamically imported)
 	private smee: SmeeClient;
 
 	constructor(
@@ -32,17 +32,7 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 		private readonly config: ProbotConfig
 	) {
 		this.hooks = new Map<string, any>();
-		/** */
-		try {
-			if (this.config.appId && this.config.privateKey) {
-				this.probot = createProbot(this.config);
-				console.log(chalk.green(`Probot App successfully initialized.`));
-			} else {
-				console.error(chalk.red(`Probot App initialization failed: Missing appId or privateKey.`));
-			}
-		} catch (error) {
-			console.error(chalk.red(`Probot App initialization failed: ${error.message}`));
-		}
+		// Note: Probot initialization moved to onModuleInit to handle async operations
 	}
 
 	/**
@@ -50,6 +40,18 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 	 * It discovers and initializes instance wrappers used within the module.
 	 */
 	public async onModuleInit() {
+		// Initialize Probot asynchronously
+		try {
+			if (this.config.appId && this.config.privateKey) {
+				this.probot = await createProbot(this.config);
+				console.log(chalk.green(`Probot App successfully initialized.`));
+			} else {
+				console.error(chalk.red(`Probot App initialization failed: Missing appId or privateKey.`));
+			}
+		} catch (error) {
+			console.error(chalk.red(`Probot App initialization failed: ${error.message}`));
+		}
+
 		this.discoverInstanceWrappers();
 	}
 
@@ -58,11 +60,11 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 	 * This method is called when the application is fully initialized.
 	 * You can perform setup tasks here.
 	 */
-	onApplicationBootstrap(): any {
+	async onApplicationBootstrap(): Promise<any> {
 		// Check if webhookProxy is configured
 		if (!isEmpty(this.config.webhookProxy)) {
 			// Create and start a SmeeClient if webhookProxy is configured
-			this.smee = createSmee(this.config);
+			this.smee = await createSmee(this.config);
 			this.smee.start();
 		}
 

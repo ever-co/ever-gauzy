@@ -37,10 +37,10 @@ import { DepartmentNamesComponent } from './department-names/department-names.co
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-invites',
-    templateUrl: './invites.component.html',
-    styleUrls: ['invites.component.scss'],
-    standalone: false
+	selector: 'ga-invites',
+	templateUrl: './invites.component.html',
+	styleUrls: ['invites.component.scss'],
+	standalone: false
 })
 export class InvitesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public InviteStatusEnum: typeof InviteStatusEnum = InviteStatusEnum;
@@ -254,16 +254,12 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 				tenantId,
 				...(this.invitationType === InvitationTypeEnum.EMPLOYEE
 					? {
-							role: {
-								name: RolesEnum.EMPLOYEE
-							}
+							role: [RolesEnum.EMPLOYEE]
 					  }
 					: {}),
 				...(this.invitationType === InvitationTypeEnum.CANDIDATE
 					? {
-							role: {
-								name: RolesEnum.CANDIDATE
-							}
+							role: [RolesEnum.CANDIDATE]
 					  }
 					: {})
 			},

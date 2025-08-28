@@ -67,6 +67,7 @@ export * from './translatable';
 export * from './upwork';
 export * from './users';
 export * from './warehouse';
+export * from './workspace';
 export * from './page';
 export * from './store';
 export * from './time-tracker';

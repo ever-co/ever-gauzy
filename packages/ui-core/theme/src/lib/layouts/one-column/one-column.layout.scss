@@ -54,6 +54,14 @@
     z-index: 1041;
   }
 
+  gauzy-workspace-menu {
+    position: absolute;
+    top: 4rem;
+    @include nb-ltr(left, 0.75rem);
+    @include nb-rtl(right, 0.75rem);
+    z-index: 1042;
+  }
+
   div.chevron {
     display: flex;
     flex-direction: row;
@@ -69,6 +77,28 @@
     &.collapsed {
       justify-content: center;
     }
+  }
+  .toggle-layout {
+    width: 100%;
+    display: flex;
+  }
+
+  .toggle-layout.row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .toggle-layout.column {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .custom-row.user {
+    display: flex;
+    align-items: flex-end;
+    padding: 0 1.5rem;
+    margin-bottom: 0.625rem;
   }
 }
 nb-sidebar[tag='user-workspace'] {

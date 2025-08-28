@@ -17,7 +17,8 @@ import {
 	FeatureEnum,
 	ISelectedEmployee,
 	ComponentLayoutStyleEnum,
-	IOrganizationTeam
+	IOrganizationTeam,
+	IWorkSpace
 } from '@gauzy/contracts';
 import { ComponentEnum, GuiDrag, SYSTEM_DEFAULT_LAYOUT } from '@gauzy/ui-core/common';
 
@@ -29,6 +30,10 @@ export interface AppState {
 	selectedProposal: IProposalViewModel;
 	selectedProject: IOrganizationProject;
 	selectedTeam: IOrganizationTeam;
+	workspaces: IWorkSpace[];
+	selectedWorkspace: IWorkSpace;
+	workspacesLoading: boolean;
+	workspacesError: string | null;
 	systemLanguages: ILanguage[];
 	featureToggles: IFeatureToggle[];
 	featureOrganizations: IFeatureOrganization[];
@@ -54,6 +59,9 @@ export interface PersistState {
 export function createInitialAppState(): AppState {
 	return {
 		userRolePermissions: [],
+		workspaces: [],
+		workspacesLoading: false,
+		workspacesError: null,
 		featureToggles: [],
 		featureOrganizations: [],
 		featureTenant: []
@@ -132,6 +140,10 @@ export class Store {
 	selectedEmployee$ = this.appQuery.select((state) => state.selectedEmployee);
 	selectedProject$ = this.appQuery.select((state) => state.selectedProject);
 	selectedTeam$ = this.appQuery.select((state) => state.selectedTeam);
+	workspaces$ = this.appQuery.select((state) => state.workspaces);
+	selectedWorkspace$ = this.appQuery.select((state) => state.selectedWorkspace);
+	workspacesLoading$ = this.appQuery.select((state) => state.workspacesLoading);
+	workspacesError$ = this.appQuery.select((state) => state.workspacesError);
 	userRolePermissions$ = this.appQuery.select((state) => state.userRolePermissions);
 	featureToggles$ = this.appQuery.select((state) => state.featureToggles);
 	featureOrganizations$ = this.appQuery.select((state) => state.featureOrganizations);
@@ -465,6 +477,122 @@ export class Store {
 	set preferredComponentLayout(preferredComponentLayout) {
 		this.persistStore.update({
 			preferredComponentLayout: preferredComponentLayout
+		});
+	}
+
+	// Getter and Setter for workspaces
+	get workspaces(): IWorkSpace[] {
+		/**
+		 * Retrieves the workspaces from the application's state.
+		 *
+		 * @returns {IWorkSpace[]} - The workspaces array.
+		 */
+		const { workspaces } = this.appQuery.getValue();
+		return workspaces || [];
+	}
+
+	set workspaces(workspaces: IWorkSpace[]) {
+		/**
+		 * Updates the workspaces in the application's state.
+		 *
+		 * @param {IWorkSpace[]} workspaces - The workspaces array to be set.
+		 */
+		this.appStore.update({ workspaces });
+	}
+
+	// Getter and Setter for selectedWorkspace
+	get selectedWorkspace(): IWorkSpace {
+		/**
+		 * Retrieves the currently selected workspace from the application's state.
+		 *
+		 * @returns {IWorkSpace} - The selected workspace object.
+		 */
+		const { selectedWorkspace } = this.appQuery.getValue();
+		return selectedWorkspace;
+	}
+
+	set selectedWorkspace(workspace: IWorkSpace) {
+		/**
+		 * Updates the selected workspace in the application's state.
+		 *
+		 * @param {IWorkSpace} workspace - The workspace object to be set as the selected workspace.
+		 */
+		this.appStore.update({ selectedWorkspace: workspace });
+	}
+
+	// Getter and Setter for workspacesLoading
+	get workspacesLoading(): boolean {
+		/**
+		 * Retrieves the workspaces loading state from the application's state.
+		 *
+		 * @returns {boolean} - The workspaces loading state.
+		 */
+		const { workspacesLoading } = this.appQuery.getValue();
+		return workspacesLoading || false;
+	}
+
+	set workspacesLoading(loading: boolean) {
+		/**
+		 * Updates the workspaces loading state in the application's state.
+		 *
+		 * @param {boolean} loading - The loading state to be set.
+		 */
+		this.appStore.update({ workspacesLoading: loading });
+	}
+
+	// Getter and Setter for workspacesError
+	get workspacesError(): string | null {
+		/**
+		 * Retrieves the workspaces error from the application's state.
+		 *
+		 * @returns {string | null} - The workspaces error.
+		 */
+		const { workspacesError } = this.appQuery.getValue();
+		return workspacesError;
+	}
+
+	set workspacesError(error: string | null) {
+		/**
+		 * Updates the workspaces error in the application's state.
+		 *
+		 * @param {string | null} error - The error to be set.
+		 */
+		this.appStore.update({ workspacesError: error });
+	}
+
+	/**
+	 * Load workspaces and update the store
+	 * @param workspaces - Array of workspaces to set
+	 * @param selectedWorkspaceId - ID of the workspace to mark as selected
+	 */
+	setWorkspaces(workspaces: IWorkSpace[], selectedWorkspaceId?: string): void {
+		// Mark the selected workspace
+		const updatedWorkspaces = workspaces.map((workspace) => ({
+			...workspace,
+			isSelected: selectedWorkspaceId ? workspace.id === selectedWorkspaceId : workspace.isSelected
+		}));
+
+		// Find the selected workspace
+		const selectedWorkspace = updatedWorkspaces.find((w) => w.isSelected) || updatedWorkspaces[0];
+
+		// Update the store
+		this.appStore.update({
+			workspaces: updatedWorkspaces,
+			selectedWorkspace,
+			workspacesLoading: false,
+			workspacesError: null
+		});
+	}
+
+	/**
+	 * Set workspaces loading state
+	 * @param loading - Loading state
+	 * @param error - Optional error message
+	 */
+	setWorkspacesLoading(loading: boolean, error: string | null = null): void {
+		this.appStore.update({
+			workspacesLoading: loading,
+			workspacesError: error
 		});
 	}
 

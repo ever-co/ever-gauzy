@@ -1,13 +1,11 @@
 import { Inject, Injectable, ConsoleLogger } from '@nestjs/common';
 import { OnApplicationShutdown } from '@nestjs/common';
-import { ClientOptions, Client } from '@sentry/types';
 import * as Sentry from '@sentry/node';
 import { SENTRY_MODULE_OPTIONS } from './sentry.constants';
 import { SentryModuleOptions } from './sentry.interfaces';
 
 @Injectable()
 export class SentryService extends ConsoleLogger implements OnApplicationShutdown {
-
 	app = '@ntegral/nestjs-sentry: ';
 
 	private static serviceInstance: SentryService;
@@ -25,15 +23,17 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		Sentry.init({
 			...sentryOptions,
 			integrations: [
-				new Sentry.Integrations.OnUncaughtException({
+				// V9 Migration: Updated integration names from Sentry.Integrations.OnUncaughtException to Sentry.onUncaughtExceptionIntegration
+				// Reference: https://docs.sentry.io/platforms/javascript/guides/node/configuration/integrations/onuncaughtexception/
+				Sentry.onUncaughtExceptionIntegration({
 					onFatalError: async (error) => {
 						console.error('Uncaught Exception Handler in Sentry Service', error);
 						if (error.name === 'SentryError') {
 							console.log(error);
 						} else {
-							(
-								Sentry.getCurrentHub().getClient<Client<ClientOptions>>() as Client<ClientOptions>
-							).captureException(error);
+							// V9 Migration: getCurrentHub() was removed, use getClient() instead
+							// Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/#removed-apis
+							Sentry.getClient()?.captureException(error);
 
 							Sentry.flush(3000).then(() => {
 								process.exit(1);
@@ -41,7 +41,9 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 						}
 					}
 				}),
-				new Sentry.Integrations.OnUnhandledRejection({ mode: 'warn' }),
+				// V9 Migration: Updated integration names from Sentry.Integrations.OnUnhandledRejection to Sentry.onUnhandledRejectionIntegration
+				// Reference: https://docs.sentry.io/platforms/javascript/guides/node/configuration/integrations/unhandledrejection/
+				Sentry.onUnhandledRejectionIntegration({ mode: 'warn' }),
 				...integrations
 			]
 		});
@@ -70,14 +72,14 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 			super.log(message, context);
 			asBreadcrumb
 				? Sentry.addBreadcrumb({
-					message,
-					level: 'log',
-					data: {
-						context
-					}
-				})
+						message,
+						level: 'log',
+						data: {
+							context
+						}
+				  })
 				: Sentry.captureMessage(message, 'log');
-		} catch (err) { }
+		} catch (err) {}
 	}
 
 	/**
@@ -91,7 +93,7 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		try {
 			super.error(message, trace, context);
 			Sentry.captureMessage(message, 'error');
-		} catch (err) { }
+		} catch (err) {}
 	}
 
 	/**
@@ -106,14 +108,14 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 			super.warn(message, context);
 			asBreadcrumb
 				? Sentry.addBreadcrumb({
-					message,
-					level: 'warning',
-					data: {
-						context
-					}
-				})
+						message,
+						level: 'warning',
+						data: {
+							context
+						}
+				  })
 				: Sentry.captureMessage(message, 'warning');
-		} catch (err) { }
+		} catch (err) {}
 	}
 
 	/**
@@ -128,14 +130,14 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 			super.debug(message, context);
 			asBreadcrumb
 				? Sentry.addBreadcrumb({
-					message,
-					level: 'debug',
-					data: {
-						context
-					}
-				})
+						message,
+						level: 'debug',
+						data: {
+							context
+						}
+				  })
 				: Sentry.captureMessage(message, 'debug');
-		} catch (err) { }
+		} catch (err) {}
 	}
 
 	/**
@@ -150,14 +152,14 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 			super.verbose(message, context);
 			asBreadcrumb
 				? Sentry.addBreadcrumb({
-					message,
-					level: 'info',
-					data: {
-						context
-					}
-				})
+						message,
+						level: 'info',
+						data: {
+							context
+						}
+				  })
 				: Sentry.captureMessage(message, 'info');
-		} catch (err) { }
+		} catch (err) {}
 	}
 
 	/**

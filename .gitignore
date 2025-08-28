@@ -141,3 +141,9 @@ apps/server-api/src/assets/icons/menu
 .cursor/rules/codacy.mdc
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# MCP Server certificates (contains sensitive data)
+**/certs/**
+**/certs/**/*.{pem,key,crt,csr,pfx,p12}
+!**/certs/**/README.md
+!**/certs/**/.gitkeep

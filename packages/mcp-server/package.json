@@ -29,14 +29,25 @@
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.13.1",
+		"@nestjs/common": "^11.1.0",
+		"@nestjs/core": "^11.1.0",
+		"@nestjs/platform-express": "^11.1.0",
+		"express": "^5.1.0",
+		"express-rate-limit": "^8.0.1",
+		"cookie-parser": "^1.4.7",
+		"cors": "^2.8.5",
 		"axios": "^1.7.0",
-		"electron-log": "^4.4.8",
 		"zod": "^3.25.67",
+		"ws": "^8.18.3",
 		"tslib": "^2.3.0"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
+		"@types/express": "^5.0.3",
+		"@types/cors": "^2.8.19",
+		"@types/cookie-parser": "^1.4.9",
+		"@types/ws": "^8.18.1",
 		"cross-env": "^7.0.3",
 		"typescript": "^5.8.3"
 	},
