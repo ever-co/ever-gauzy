@@ -196,6 +196,41 @@ export class HttpTransport {
 		// URL-encoded body parsing (e.g., form submissions)
 		this.app.use(express.urlencoded({ extended: true }));
 
+		// CSRF protection middleware for state-changing operations
+		this.app.use((req, res, next) => {
+			// Skip CSRF for safe methods and excluded paths
+			const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
+			const excludedPaths = ['/health', '/.well-known/', '/oauth2/'];
+			
+			if (safeMethods.includes(req.method) || 
+				excludedPaths.some(path => req.path.startsWith(path))) {
+				return next();
+			}
+
+			// For state-changing requests, require either:
+			// 1. Valid session with CSRF token, or 
+			// 2. Valid OAuth Bearer token (API access)
+			const hasValidBearer = req.headers.authorization?.startsWith('Bearer ');
+			const sessionId = req.sessionId || req.cookies?.[this.transportConfig.session?.cookieName || 'session'];
+			const csrfToken = req.get('mcp-csrf-token') || req.get('x-csrf-token');
+
+			if (hasValidBearer) {
+				// OAuth Bearer tokens are self-authenticating, skip CSRF
+				return next();
+			}
+
+			if (sessionId && csrfToken && sessionMiddleware.validateCSRFToken(req, sessionId, 'mcp-csrf-token')) {
+				// Valid session-based CSRF token
+				return next();
+			}
+
+			// Missing or invalid CSRF protection
+			res.status(403).json({
+				error: 'CSRF protection required',
+				message: 'Include mcp-csrf-token header or use Bearer authentication'
+			});
+		});
+
 		// Error handling middleware for request validation errors
 		this.app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction): void => {
 			// Skip if response already sent

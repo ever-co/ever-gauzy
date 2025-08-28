@@ -488,8 +488,9 @@ export class OAuth2AuthorizationServer {
 
 	// Allowlist of permitted relative return URLs for redirection (add your app's expected endpoints here)
 	private static readonly ALLOWED_RETURN_PATHS = [
-		'/oauth/authorize',
-		'/oauth/callback',
+		'/oauth2/authorize',  // OAuth authorization endpoint
+		'/oauth2/callback',   // OAuth callback endpoint
+		'/callback',          // Test callback endpoint
 		'/dashboard',
 		'/profile',
 		// Add other safe endpoints as appropriate
