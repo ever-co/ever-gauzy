@@ -58,7 +58,6 @@
 		"@types/cookie-parser": "^1.4.9",
 		"@types/ws": "^8.18.1",
 		"@types/jsonwebtoken": "^9.0.10",
-		"@types/uuid": "^10.0.0",
 		"@types/express-session": "^1.18.2",
 		"cross-env": "^7.0.3",
 		"typescript": "^5.8.3"

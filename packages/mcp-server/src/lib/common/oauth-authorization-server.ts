@@ -16,6 +16,7 @@ import { oAuth2ClientManager, OAuth2Client } from './oauth-client-manager';
 import { oAuth2AuthorizationCodeManager } from './oauth-authorization-code-manager';
 import { OAuth2TokenManager } from './oauth-token-manager';
 import { OAuthValidator } from './oauth-validator';
+import { AuthorizationConfig } from './authorization-config';
 
 export interface OAuth2ServerConfig {
 	issuer: string;
@@ -45,7 +46,6 @@ export interface UserInfo {
 }
 
 export interface AuthenticatedUser extends UserInfo {
-	isAuthenticated: boolean;
 	accessToken?: string;
 	refreshToken?: string;
 }
@@ -108,10 +108,35 @@ export class OAuth2AuthorizationServer {
 	constructor(private config: OAuth2ServerConfig) {
 		this.securityLogger = new SecurityLogger();
 		this.tokenManager = new OAuth2TokenManager(config.issuer, config.audience);
+
+		// Create basic authorization config for the validator
+		const authConfig: AuthorizationConfig = {
+			enabled: true,
+			resourceUri: config.baseUrl,
+			authorizationServers: [{
+				issuer: config.issuer,
+				authorizationEndpoint: config.authorizationEndpoint,
+				tokenEndpoint: config.tokenEndpoint,
+				grantTypesSupported: ['authorization_code', 'refresh_token', 'client_credentials'],
+				responseTypesSupported: ['code']
+			}],
+			jwt: {
+				audience: config.audience,
+				issuer: config.issuer,
+				algorithms: ['RS256'],
+				jwksUri: `${config.baseUrl}/.well-known/jwks.json`
+			}
+		};
+
+		// Add the public key to the auth config for JWT validation
+		authConfig.jwt!.publicKey = this.tokenManager.getPublicKeyPEM();
+		
+		this.oAuthValidator = new OAuthValidator(authConfig);
 		this.app = express();
 		this.initializeDemoUsers();
 		this.setupMiddleware();
 		this.setupRoutes();
+		this.setupErrorHandling();
 	}
 
 	/**
@@ -140,8 +165,7 @@ export class OAuth2AuthorizationServer {
 				organizationId: 'f180cd17-4cfd-4bab-bf14-c3ea94747930',
 				tenantId: 'ccd9e6d7-47c5-4166-8161-de1134c82629',
 				roles: ['employee'],
-				emailVerified: true,
-				isAuthenticated: true
+				emailVerified: true
 			},
 			{
 				userId: 'admin-user-456',
@@ -150,8 +174,7 @@ export class OAuth2AuthorizationServer {
 				organizationId: 'org-123',
 				tenantId: 'tenant-123',
 				roles: ['admin'],
-				emailVerified: true,
-				isAuthenticated: true
+				emailVerified: true
 			}
 		];
 
@@ -205,7 +228,9 @@ export class OAuth2AuthorizationServer {
 					styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
 					fontSrc: ["'self'", "https://fonts.gstatic.com"],
 					imgSrc: ["'self'", "data:", "https:"],
-					scriptSrc: ["'self'"],
+					scriptSrc: process.env.NODE_ENV !== 'production'
+						? ["'self'", "'unsafe-inline'"]
+						: ["'self'"],
 					objectSrc: ["'none'"],
 					baseUri: ["'self'"],
 					formAction: ["'self'"],
@@ -231,16 +256,6 @@ export class OAuth2AuthorizationServer {
 		// Body parsing
 		this.app.use(express.json({ limit: '10mb' }));
 		this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-		// Error handling
-		this.app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-			this.securityLogger.error('OAuth server error:', err);
-			res.status(500).json({
-				error: 'server_error',
-				error_description: 'Internal server error'
-			});
-			return;
-		});
 	}
 
 	/**
@@ -466,9 +481,22 @@ export class OAuth2AuthorizationServer {
 	 */
 	private handleLoginPage(req: Request, res: Response) {
 		const error = req.query.error as string;
-		const returnUrl = req.query.return_url as string || this.config.authorizationEndpoint;
+		const rawReturnUrl = (req.query.return_url as string) || this.config.authorizationEndpoint;
+		const safeReturnUrl = this.normalizeReturnUrl(rawReturnUrl);
+		res.send(this.generateLoginForm(error, safeReturnUrl));
+	}
 
-		res.send(this.generateLoginForm(error, returnUrl));
+	private normalizeReturnUrl(input?: string): string {
+		if (!input) return this.config.authorizationEndpoint;
+		try {
+			// Allow only same-origin absolute URLs or relative paths
+			if (input.startsWith('/')) return input;
+			const u = new URL(input, this.config.baseUrl);
+			const base = new URL(this.config.baseUrl);
+			return u.origin === base.origin ? u.toString() : this.config.authorizationEndpoint;
+		} catch {
+			return this.config.authorizationEndpoint;
+		}
 	}
 
 	/**
@@ -480,7 +508,8 @@ export class OAuth2AuthorizationServer {
 			const returnUrl = return_url || this.config.authorizationEndpoint;
 
 			if (!email || !password) {
-				return res.redirect(`${this.config.loginEndpoint}?error=missing_credentials&return_url=${encodeURIComponent(returnUrl)}`);
+				const normalizedReturnUrl = this.normalizeReturnUrl(returnUrl);
+				return res.redirect(`${this.config.loginEndpoint}?error=missing_credentials&return_url=${encodeURIComponent(normalizedReturnUrl)}`);
 			}
 
 			// Use custom authenticator if provided, otherwise use demo authentication
@@ -492,12 +521,13 @@ export class OAuth2AuthorizationServer {
 				// Demo authentication - check against in-memory users
 				const demoUser = this.users.get(email);
 				if (demoUser && (password === '123456' || password === 'admin123')) {
-					user = { ...demoUser, isAuthenticated: true };
+					user = { ...demoUser };
 				}
 			}
 
 			if (!user) {
-				return res.redirect(`${this.config.loginEndpoint}?error=invalid_credentials&return_url=${encodeURIComponent(returnUrl)}`);
+				const normalizedReturnUrl = this.normalizeReturnUrl(returnUrl);
+				return res.redirect(`${this.config.loginEndpoint}?error=invalid_credentials&return_url=${encodeURIComponent(normalizedReturnUrl)}`);
 			}
 
 			// Set user session
@@ -506,8 +536,8 @@ export class OAuth2AuthorizationServer {
 
 			this.securityLogger.info('User authenticated successfully', { userId: user.userId, email: user.email });
 
-			// Redirect back to authorization flow
-			res.redirect(returnUrl);
+			// Validate and redirect back to authorization flow
+			res.redirect(this.normalizeReturnUrl(returnUrl));
 
 		} catch (error: any) {
 			this.securityLogger.error('Login error:', error);
@@ -590,6 +620,11 @@ export class OAuth2AuthorizationServer {
 
 			// Parse scopes
 			const scopes = scope ? scope.split(' ') : ['mcp.read'];
+
+			// Re-validate redirect URI (defense-in-depth)
+			if (!oAuth2ClientManager.isValidRedirectUri(client_id, redirect_uri)) {
+				return this.sendErrorRedirect(res, redirect_uri, 'invalid_request', 'Invalid redirect URI', state);
+			}
 
 			// Generate authorization code
 			const code = oAuth2AuthorizationCodeManager.generateAuthorizationCode(
@@ -1045,6 +1080,57 @@ export class OAuth2AuthorizationServer {
 	}
 
 	/**
+	 * Validate return URL to prevent open redirect attacks
+	 */
+	private validateReturnUrl(returnUrl: string): string {
+		// Default safe URL
+		const defaultUrl = this.config.authorizationEndpoint;
+
+		try {
+			const url = new URL(returnUrl, this.config.baseUrl);
+
+			// Define allowed URLs/paths for redirects
+			const allowedPaths = [
+				this.config.authorizationEndpoint,
+				this.config.loginEndpoint,
+				'/callback'
+			];
+
+			// Check if the URL is from the same origin (same protocol, host, and port)
+			const baseUrl = new URL(this.config.baseUrl);
+			if (url.origin !== baseUrl.origin) {
+				this.securityLogger.warn('Redirect to external URL blocked', {
+					returnUrl,
+					origin: url.origin,
+					expectedOrigin: baseUrl.origin
+				});
+				return defaultUrl;
+			}
+
+			// Check if the path is in our allowed list
+			if (!allowedPaths.includes(url.pathname)) {
+				// Allow authorization endpoint with query parameters (OAuth flow)
+				if (url.pathname === this.config.authorizationEndpoint) {
+					return returnUrl;
+				}
+
+				this.securityLogger.warn('Redirect to unauthorized path blocked', {
+					returnUrl,
+					path: url.pathname,
+					allowedPaths
+				});
+				return defaultUrl;
+			}
+
+			return returnUrl;
+		} catch (error) {
+			// Invalid URL format
+			this.securityLogger.warn('Invalid return URL format blocked', { returnUrl, error: error });
+			return defaultUrl;
+		}
+	}
+
+	/**
 	 * Generate login form HTML
 	 */
 	private generateLoginForm(error?: string, returnUrl?: string): string {
@@ -1082,10 +1168,10 @@ export class OAuth2AuthorizationServer {
 						<p>Sign in to authorize applications</p>
 					</div>
 
-					${errorMessage ? `<div class="error">${errorMessage}</div>` : ''}
+					${errorMessage ? `<div class="error">${escapeHtml(errorMessage)}</div>` : ''}
 
-					<form method="POST" action="${this.config.loginEndpoint}">
-						<input type="hidden" name="return_url" value="${returnUrl || ''}">
+					<form method="POST" action="${escapeHtml(this.config.loginEndpoint || '')}">
+						<input type="hidden" name="return_url" value="${escapeHtml(returnUrl || '')}">
 
 						<div class="form-group">
 							<label for="email">Email Address</label>
@@ -1285,5 +1371,15 @@ export class OAuth2AuthorizationServer {
 			authorizationCodes: oAuth2AuthorizationCodeManager.getStats(),
 			tokens: this.tokenManager.getStats()
 		};
+	}
+
+	/**
+	 * Register error handling middleware (must be called after all routes are set up)
+	 */
+	private setupErrorHandling() {
+	this.app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+		this.securityLogger.error('OAuth server error:', err as Error);
+		res.status(500).json({ error: 'server_error', error_description: 'Internal server error' });
+	});
 	}
 }

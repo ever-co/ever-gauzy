@@ -45,6 +45,8 @@ export class AuthorizationMiddleware {
 					return next();
 				}
 
+				// Determine required scopes early so we can include them in 401 responses
+				const requiredScopes = options.requiredScopes || this.config.requiredScopes;
 				const token = this.validator.extractBearerToken(req);
 
 				// Handle missing token
@@ -60,11 +62,10 @@ export class AuthorizationMiddleware {
 						ip: req.ip
 					});
 
-					return this.sendUnauthorizedResponse(res, 'Authorization required');
+					return this.sendUnauthorizedResponse(res, 'Authorization required', requiredScopes);
 				}
 
 				// Validate token
-				const requiredScopes = options.requiredScopes || this.config.requiredScopes;
 				const validationResult = await this.validator.validateToken(token, requiredScopes);
 
 				if (!validationResult.valid) {
@@ -197,6 +198,7 @@ export class AuthorizationMiddleware {
 
 		res.setHeader('WWW-Authenticate', wwwAuthenticateHeader);
 		res.setHeader('Vary', 'Authorization');
+		res.setHeader('Cache-Control', 'no-store');
 		res.status(401).json({
 			error: authError.error,
 			error_description: authError.errorDescription,
@@ -215,6 +217,12 @@ export class AuthorizationMiddleware {
 			requiredScopes.join(' ')
 		);
 
+		// Include WWW-Authenticate per RFC 6750 and vary on Authorization
+		const resourceMetadataUrl = `${this.getBaseUrl(res.req as Request)}/.well-known/oauth-protected-resource`;
+		const wwwAuthenticateHeader = OAuthValidator.formatWWWAuthenticateHeader(resourceMetadataUrl, authError);
+		res.setHeader('WWW-Authenticate', wwwAuthenticateHeader);
+		res.setHeader('Vary', 'Authorization');
+		res.setHeader('Cache-Control', 'no-store');
 		res.status(403).json({
 			error: authError.error,
 			error_description: authError.errorDescription,

@@ -252,7 +252,7 @@ MCP_SERVER_MODE=websocket
 # Server configuration
 MCP_WS_PORT=3002
 MCP_WS_HOST=localhost
-MCP_WS_PATH=/sse
+MCP_WS_PATH=/ws
 
 # TLS/SSL settings (recommended for production)
 MCP_WS_TLS=true

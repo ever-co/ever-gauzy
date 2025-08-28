@@ -3,7 +3,7 @@
  */
 
 import 'express-session';
-import { AuthenticatedUser } from '../lib/common/oauth-authorization-server';
+import type { AuthenticatedUser } from '../lib/common/oauth-authorization-server';
 
 declare module 'express-session' {
   interface SessionData {

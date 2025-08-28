@@ -50,6 +50,8 @@ export interface AuthorizationConfig {
 	resourceUri: string;
 	/** Authorization servers configuration */
 	authorizationServers: AuthorizationServerConfig[];
+	/** Whether to allow embedded OAuth server in development */
+	allowEmbeddedServer?: boolean;
 	/** Required scopes for MCP operations */
 	requiredScopes?: string[];
 	/** JWT validation settings */
@@ -119,7 +121,7 @@ export const DEFAULT_AUTHORIZATION_CONFIG: Partial<AuthorizationConfig> = {
 	enabled: false,
 	requiredScopes: [],
 	jwt: {
-		algorithms: ['RS256', 'ES256', 'HS256'],
+		algorithms: ['RS256'],
 	},
 	cache: {
 		tokenTtl: 300, // 5 minutes
@@ -134,6 +136,7 @@ export const AUTH_ENV_KEYS = {
 	ENABLED: 'MCP_AUTH_ENABLED',
 	RESOURCE_URI: 'MCP_AUTH_RESOURCE_URI',
 	AUTHORIZATION_SERVERS: 'MCP_AUTH_SERVERS',
+	ALLOW_EMBEDDED_SERVER: 'MCP_AUTH_ALLOW_EMBEDDED_SERVER',
 	REQUIRED_SCOPES: 'MCP_AUTH_REQUIRED_SCOPES',
 	JWT_AUDIENCE: 'MCP_AUTH_JWT_AUDIENCE',
 	JWT_ISSUER: 'MCP_AUTH_JWT_ISSUER',
@@ -156,6 +159,7 @@ export function loadAuthorizationConfig(): AuthorizationConfig {
 		enabled: process.env[AUTH_ENV_KEYS.ENABLED] === 'true',
 		resourceUri: process.env[AUTH_ENV_KEYS.RESOURCE_URI] || '',
 		authorizationServers: [],
+		allowEmbeddedServer: process.env[AUTH_ENV_KEYS.ALLOW_EMBEDDED_SERVER] === 'true' || process.env.NODE_ENV === 'development',
 	};
 
 	// Parse authorization servers from environment

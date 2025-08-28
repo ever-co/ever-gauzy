@@ -86,16 +86,27 @@ export class SecurityLogger {
 	}
 
 	private safeStringify(obj?: Record<string, unknown>): string {
-		if (!obj) return '';
-		const seen = new WeakSet();
-		return JSON.stringify(sanitizeForLogging(obj), (_k, v) => {
-			if (typeof v === 'object' && v !== null) {
-				if (seen.has(v)) return '[Circular]';
-				seen.add(v);
+				if (!obj) return '';
+				try {
+				const seen = new WeakSet();
+					return JSON.stringify(sanitizeForLogging(obj), (_k, v) => {
+						if (typeof v === 'object' && v !== null) {
+							if (seen.has(v)) return '[Circular]';
+							seen.add(v);
+					}
+						return v;
+					});
+				} catch {
+					try {
+						// Fallback if sanitizeForLogging or stringify throws
+						// eslint-disable-next-line @typescript-eslint/no-var-requires
+						const { inspect } = require('util');
+						return inspect(obj, { depth: 3, breakLength: 120 });
+					} catch {
+						return '[Unserializable]';
+					}
+				}
 			}
-			return v;
-		});
-	}
 
 	// Instance methods for easier usage in middleware
 	debug(message: string, data?: Record<string, unknown>): void {
@@ -109,14 +120,14 @@ export class SecurityLogger {
 	}
 
 	warn(message: string, data?: Record<string, unknown>): void {
-		logger.warn(message, data ? this.safeStringify(data) : '');
+		logger.warn(message, this.safeStringify(data));
 	}
 
 	error(message: string, error?: Error | Record<string, unknown>): void {
 		if (error instanceof Error) {
 			logger.error(message, error.stack || error.message);
 		} else if (error) {
-			logger.error(message, JSON.stringify(sanitizeForLogging(error)));
+			logger.error(message, this.safeStringify(error as Record<string, unknown>));
 		} else {
 			logger.error(message);
 		}

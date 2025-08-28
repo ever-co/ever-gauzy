@@ -61,7 +61,7 @@ console.log('🔑 Test JWT Tokens for MCP OAuth 2.0 Development\n');
 const validToken = generateTestJWT();
 console.log('✅ Valid Token (mcp.read, mcp.write):');
 console.log(validToken);
-console.log('\nAuthorization header:\nBearer ' + validToken + '\n');
+console.log('\nAuthorization header:\nAuthorization: Bearer ' + validToken + '\n');
 console.log();
 
 // Token with insufficient scopes

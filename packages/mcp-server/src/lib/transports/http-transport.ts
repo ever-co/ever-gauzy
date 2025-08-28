@@ -79,41 +79,57 @@ export class HttpTransport {
 
 		// Initialize authorization middleware if enabled
 		if (this.authorizationConfig.enabled) {
-			// Initialize OAuth 2.0 authorization server first to get token manager configuration
-			const authServerConfig: OAuth2ServerConfig = {
-				issuer: this.authorizationConfig.authorizationServers[0]?.issuer || 'gauzy-dev-auth',
-				baseUrl: `http://${this.transportConfig.host}:${this.transportConfig.port}`,
-				audience: this.authorizationConfig.resourceUri || `http://${this.transportConfig.host}:${this.transportConfig.port}/sse`,
-				enableClientRegistration: true,
-				authorizationEndpoint: '/oauth2/authorize',
-				tokenEndpoint: '/oauth2/token',
-				jwksEndpoint: '/.well-known/jwks.json',
-				registrationEndpoint: '/oauth2/register',
-				introspectionEndpoint: '/oauth2/introspect',
-				userInfoEndpoint: '/oauth2/userinfo',
-				loginEndpoint: '/oauth2/login',
-				sessionSecret: process.env.MCP_AUTH_SESSION_SECRET || crypto.randomBytes(32).toString('hex')
-			};
+			let synchronizedConfig: AuthorizationConfig;
 
-			this.authorizationServer = new OAuth2AuthorizationServer(authServerConfig);
+			// Initialize embedded OAuth server only if explicitly allowed
+			if (this.authorizationConfig.allowEmbeddedServer) {
+				// Initialize OAuth 2.0 authorization server first to get token manager configuration
+				const authServerConfig: OAuth2ServerConfig = {
+					issuer: this.authorizationConfig.authorizationServers[0]?.issuer || 'gauzy-dev-auth',
+					baseUrl: `http://${this.transportConfig.host}:${this.transportConfig.port}`,
+					audience: this.authorizationConfig.resourceUri || `http://${this.transportConfig.host}:${this.transportConfig.port}/sse`,
+					enableClientRegistration: true,
+					authorizationEndpoint: '/oauth2/authorize',
+					tokenEndpoint: '/oauth2/token',
+					jwksEndpoint: '/.well-known/jwks.json',
+					registrationEndpoint: '/oauth2/register',
+					introspectionEndpoint: '/oauth2/introspect',
+					userInfoEndpoint: '/oauth2/userinfo',
+					loginEndpoint: '/oauth2/login',
+					sessionSecret: process.env.MCP_AUTH_SESSION_SECRET || crypto.randomBytes(32).toString('hex')
+				};
 
-			// Synchronize authorization config with token manager settings
-			const synchronizedConfig: AuthorizationConfig = {
-				...this.authorizationConfig,
-				jwt: {
-					...this.authorizationConfig.jwt,
-					issuer: authServerConfig.issuer,
-					audience: authServerConfig.audience,
-					algorithms: ['RS256'], // Match token manager algorithm
-					jwksUri: `${authServerConfig.baseUrl}${authServerConfig.jwksEndpoint}`
-				}
-			};
+				this.authorizationServer = new OAuth2AuthorizationServer(authServerConfig);
+
+				// Merge JWT settings, preserving existing user configuration
+				synchronizedConfig = {
+					...this.authorizationConfig,
+					jwt: {
+						// Start with existing JWT config
+						...this.authorizationConfig.jwt,
+						// Only set missing fields from auth server config
+						issuer: this.authorizationConfig.jwt?.issuer || authServerConfig.issuer,
+						audience: this.authorizationConfig.jwt?.audience || authServerConfig.audience,
+						algorithms: ['RS256'], // Must match token manager algorithm
+						jwksUri: this.authorizationConfig.jwt?.jwksUri || `${authServerConfig.baseUrl}${authServerConfig.jwksEndpoint}`,
+						// Provide public key from embedded server for direct validation
+						publicKey: this.authorizationConfig.jwt?.publicKey || this.authorizationServer!.getTokenManager().getPublicKeyPEM()
+					}
+				};
+
+				logger.log('OAuth 2.0 authorization server initialized');
+				logger.log(`JWT validation configured - Issuer: ${synchronizedConfig.jwt?.issuer}, Audience: ${synchronizedConfig.jwt?.audience}`);
+				logger.log(`JWT algorithms: ${synchronizedConfig.jwt?.algorithms?.join(', ')}`);
+				logger.log(`JWKS URI: ${synchronizedConfig.jwt?.jwksUri}`);
+				logger.log(`Public key configured: ${synchronizedConfig.jwt?.publicKey ? 'Yes' : 'No'}`);
+			} else {
+				// Use existing authorization config as-is without embedded server
+				synchronizedConfig = this.authorizationConfig;
+				logger.log('OAuth 2.0 authorization enabled with external server configuration');
+			}
 
 			this.authorizationMiddleware = new AuthorizationMiddleware(synchronizedConfig);
-
-			logger.log('OAuth 2.0 authorization server initialized');
-			logger.log('OAuth 2.0 authorization enabled for MCP server');
-			logger.log(`JWT validation configured - Issuer: ${authServerConfig.issuer}, Audience: ${authServerConfig.audience}`);
+			logger.log('OAuth 2.0 authorization middleware initialized');
 		}
 
 		this.app = express();
@@ -258,28 +274,6 @@ export class HttpTransport {
 		if (this.authorizationServer) {
 			logger.log('Mounting OAuth 2.0 authorization server routes');
 			this.app.use('/', this.authorizationServer.getApp());
-
-			// Add debug route to see what routes are available
-			this.app.get('/debug/routes', (req, res) => {
-				const routes: any[] = [];
-				this.app._router?.stack?.forEach((middleware: any) => {
-					if (middleware.route) {
-						routes.push({
-							path: middleware.route.path,
-							method: Object.keys(middleware.route.methods)[0]?.toUpperCase()
-						});
-					}
-				});
-				res.json({
-					message: 'Available routes',
-					routes: routes,
-					oauth_config: {
-						authorizationEndpoint: '/oauth2/authorize',
-						tokenEndpoint: '/oauth2/token',
-						loginEndpoint: '/oauth2/login'
-					}
-				});
-			});
 		}
 
 		// OAuth 2.0 Protected Resource Metadata endpoint (RFC 9728)
@@ -305,7 +299,7 @@ export class HttpTransport {
 						enabled: true,
 						resourceUri: this.authorizationConfig.resourceUri,
 						authorizationServer: this.authorizationServer ? {
-							issuer: this.authorizationServer.getTokenManager().getStats().keyId,
+					        issuer: this.authorizationConfig.jwt?.issuer,
 							endpoints: {
 								authorization: '/oauth2/authorize',
 								token: '/oauth2/token',

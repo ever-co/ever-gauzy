@@ -5,7 +5,7 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { SignJWT, importPKCS8, importSPKI } from 'jose';
+import { SignJWT, importPKCS8, importSPKI, jwtVerify } from 'jose';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { SecurityLogger } from './security-logger';
@@ -60,6 +60,7 @@ export class OAuth2TokenManager {
 	// Token expiration times
 	private readonly ACCESS_TOKEN_EXPIRATION = 15 * 60; // 15 minutes
 	private readonly REFRESH_TOKEN_EXPIRATION = 30 * 24 * 60 * 60; // 30 days
+	private readonly MAX_REFRESH_TOKENS = 10000;
 
 	constructor(
 		private issuer: string,
@@ -70,6 +71,10 @@ export class OAuth2TokenManager {
 
 		// Use provided key pair or generate new one
 		this.keyPair = keyPair || this.generateKeyPair();
+
+		this.cleanupInterval = setInterval(() => this.cleanupExpiredTokens(), 60 * 60 * 1000);
+		// Do not keep process alive just for cleanup
+		this.cleanupInterval.unref();
 
 		// Cleanup expired refresh tokens every hour
 		this.cleanupInterval = setInterval(() => {
@@ -100,7 +105,8 @@ export class OAuth2TokenManager {
 			iss: this.issuer,
 			iat: now,
 			exp: now + this.ACCESS_TOKEN_EXPIRATION,
-			nbf: now,
+			// Optional: tolerate small skew
+      		nbf: now - 5,
 			jti,
 			client_id: clientId,
 			scope: scopeString,
@@ -268,9 +274,17 @@ export class OAuth2TokenManager {
 					audience: this.audience
 				}) as TokenPayload;
 				return payload;
+			} else if (this.keyPair.algorithm === 'ES256') {
+				// ES256 verification using jose library
+				const publicKey = await importSPKI(this.keyPair.publicKey, 'ES256');
+				const { payload } = await jwtVerify(token, publicKey, {
+					issuer: this.issuer,
+					audience: this.audience,
+					algorithms: ['ES256']
+				});
+				return payload as TokenPayload;
 			} else {
-				// ES256 verification would need jose library
-				throw new Error('ES256 verification not implemented');
+				throw new Error(`Unsupported algorithm: ${this.keyPair.algorithm}`);
 			}
 		} catch (error: any) {
 			throw new Error(`Token verification failed: ${error.message}`);
@@ -294,9 +308,22 @@ export class OAuth2TokenManager {
 				n: jwk.n,
 				e: jwk.e
 			};
+		} else if (this.keyPair.algorithm === 'ES256') {
+			// Convert PEM to JWK format for ECDSA
+			const publicKey = crypto.createPublicKey(this.keyPair.publicKey);
+			const jwk = publicKey.export({ format: 'jwk' }) as any;
+
+			return {
+				kty: 'EC',
+				use: 'sig',
+				alg: 'ES256',
+				kid: this.keyPair.keyId,
+				crv: jwk.crv,
+				x: jwk.x,
+				y: jwk.y
+			};
 		} else {
-			// ES256 JWK conversion would be implemented here
-			throw new Error('ES256 JWK conversion not implemented');
+			throw new Error(`Unsupported algorithm for JWK conversion: ${this.keyPair.algorithm}`);
 		}
 	}
 
@@ -310,31 +337,63 @@ export class OAuth2TokenManager {
 	}
 
 	/**
-	 * Generate RSA key pair for JWT signing
+	 * Get public key in PEM format for JWT validation
 	 */
-	private generateKeyPair(): KeyPair {
-		this.securityLogger.log('Generating new RSA key pair for JWT signing');
+	getPublicKeyPEM(): string {
+		return this.keyPair.publicKey;
+	}
 
-		const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
-			modulusLength: 2048,
-			publicKeyEncoding: {
-				type: 'spki',
-				format: 'pem'
-			},
-			privateKeyEncoding: {
-				type: 'pkcs8',
-				format: 'pem'
-			}
-		});
-
+	/**
+	 * Generate key pair for JWT signing (RSA or ECDSA)
+	 */
+	private generateKeyPair(algorithm: 'RS256' | 'ES256' = 'RS256'): KeyPair {
 		const keyId = crypto.randomUUID();
 
-		return {
-			publicKey,
-			privateKey,
-			keyId,
-			algorithm: 'RS256'
-		};
+		if (algorithm === 'RS256') {
+			this.securityLogger.log('Generating new RSA key pair for JWT signing');
+
+			const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+				modulusLength: 2048,
+				publicKeyEncoding: {
+					type: 'spki',
+					format: 'pem'
+				},
+				privateKeyEncoding: {
+					type: 'pkcs8',
+					format: 'pem'
+				}
+			});
+
+			return {
+				publicKey,
+				privateKey,
+				keyId,
+				algorithm: 'RS256'
+			};
+		} else if (algorithm === 'ES256') {
+			this.securityLogger.log('Generating new ECDSA P-256 key pair for JWT signing');
+
+			const { publicKey, privateKey } = crypto.generateKeyPairSync('ec', {
+				namedCurve: 'prime256v1', // P-256 curve for ES256
+				publicKeyEncoding: {
+					type: 'spki',
+					format: 'pem'
+				},
+				privateKeyEncoding: {
+					type: 'pkcs8',
+					format: 'pem'
+				}
+			});
+
+			return {
+				publicKey,
+				privateKey,
+				keyId,
+				algorithm: 'ES256'
+			};
+		} else {
+			throw new Error(`Unsupported algorithm: ${algorithm}`);
+		}
 	}
 
 	/**
@@ -349,6 +408,14 @@ export class OAuth2TokenManager {
 				this.refreshTokens.delete(tokenId);
 				cleanedCount++;
 			}
+		}
+
+		// Evict oldest if above cap
+		while (this.refreshTokens.size > this.MAX_REFRESH_TOKENS) {
+			const oldest = this.refreshTokens.keys().next().value;
+			if (!oldest) break;
+			this.refreshTokens.delete(oldest);
+			cleanedCount++;
 		}
 
 		if (cleanedCount > 0) {

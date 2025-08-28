@@ -79,7 +79,7 @@ export class OAuth2ClientManager {
 	private initializeDefaultClients() {
 
 		//Test Client
-		this.registerClient({
+		void this.registerClient({
 			client_name: 'Test Client',
 			client_type: 'public',
 			redirect_uris: [
@@ -92,10 +92,10 @@ export class OAuth2ClientManager {
 				integration_type: 'test',
 				auto_created: true
 			}
-		}, 'test-client');
+		}, 'test-client').catch((err) => this.securityLogger.error('Default client init failed:', err as Error));
 
 		// ChatGPT default client
-		this.registerClient({
+		void this.registerClient({
 			client_name: 'ChatGPT MCP Integration',
 			client_type: 'public',
 			redirect_uris: [
@@ -111,10 +111,10 @@ export class OAuth2ClientManager {
 				integration_type: 'chatgpt',
 				auto_created: true
 			}
-		}, 'chatgpt-mcp-client');
+		}, 'chatgpt-mcp-client').catch((err) => this.securityLogger.error('Default client init failed:', err as Error));
 
 		// Claude Desktop default client
-		this.registerClient({
+		void this.registerClient({
 			client_name: 'Claude MCP Integration',
 			client_type: 'public',
 			redirect_uris: [
@@ -130,7 +130,7 @@ export class OAuth2ClientManager {
 				integration_type: 'claude',
 				auto_created: true
 			}
-		}, 'claude-mcp-client');
+		}, 'claude-mcp-client').catch((err) => this.securityLogger.error('Default client init failed:', err as Error));
 
 		this.securityLogger.log('Default OAuth 2.0 clients initialized');
 	}
@@ -147,6 +147,9 @@ export class OAuth2ClientManager {
 			this.validateClientRegistration(request);
 
 			const clientId = customClientId || this.generateClientId();
+			if (this.clients.has(clientId)) {
+				throw new Error(`client_id already exists: ${clientId}`);
+			}
 			const clientType = request.client_type || 'confidential';
 			const grantTypes = request.grant_types || this.DEFAULT_GRANT_TYPES;
 			const responseTypes = request.response_types || this.DEFAULT_RESPONSE_TYPES;
@@ -252,17 +255,21 @@ export class OAuth2ClientManager {
 		const client = this.clients.get(clientId);
 		if (!client) return false;
 
-		return client.redirectUris.some(uri => {
-			// Exact match
+		let target: URL;
+		try { target = new URL(redirectUri); } catch { return false; }
+
+		return client.redirectUris.some((uri) => {
 			if (uri === redirectUri) return true;
-
-			// Wildcard port matching for localhost (development)
 			if (uri.includes('localhost:*')) {
-				const baseUri = uri.replace(':*', '');
-				return redirectUri.startsWith(baseUri);
+				// Accept any port on localhost for http(s)
+				return target.hostname === 'localhost';
 			}
-
-			return false;
+			try {
+				const spec = new URL(uri);
+				return spec.origin === target.origin && spec.pathname === target.pathname;
+			} catch {
+				return false;
+			}
 		});
 	}
 
@@ -330,7 +337,7 @@ export class OAuth2ClientManager {
 				const url = new URL(uri.includes('localhost:*') ? uri.replace(':*', ':3000') : uri);
 
 				// Public clients should use secure URLs (except localhost for development)
-				if (clientType === 'public' && url.protocol !== 'https:' && !url.hostname.includes('localhost')) {
+				if (clientType === 'public' && url.protocol !== 'https:' && url.hostname !== 'localhost') {
 					throw new Error(`Public clients must use HTTPS redirect URIs: ${uri}`);
 				}
 			} catch (error) {

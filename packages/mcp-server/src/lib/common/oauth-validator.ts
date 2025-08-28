@@ -14,7 +14,6 @@ import { SecurityLogger } from './security-logger';
 export class OAuthValidator {
 	private tokenCache = new Map<string, { result: TokenValidationResult; expires: number }>();
 	private securityLogger: SecurityLogger;
-	private jwksCache = new Map<string, any>();
 
 	constructor(private config: AuthorizationConfig) {
 		this.securityLogger = new SecurityLogger();
@@ -31,12 +30,12 @@ export class OAuthValidator {
 		}
 
 		// RFC 6750 Section 2.1: Authorization Request Header Field
-		const matches = authorization.match(/^Bearer\s+([^\s]+(?:\s+[^\s]+)*)$/i);
-		if (!matches || !matches[1]) {
-			return null;
+		// RFC 6750 Section 2.1: Authorization Request Header Field
+    const [scheme, token] = authorization.split(/\s+/, 2);
+	if (!scheme || !/^Bearer$/i.test(scheme) || !token) {
+	return null;
 		}
-
-		return matches[1].trim();
+	return token.trim();
 	}
 
 	/**
@@ -128,7 +127,7 @@ export class OAuthValidator {
 					this.securityLogger.debug('JWT validated using JWKS');
 				} catch (jwksError: any) {
 					this.securityLogger.warn('JWKS validation failed, trying local key:', jwksError.message);
-					
+
 					// Fall back to local public key validation
 					if (!this.config.jwt?.publicKey) {
 						throw jwksError;
@@ -194,8 +193,8 @@ export class OAuthValidator {
 			}
 
 			// Parse scopes from scope claim
-			const scopes = payload.scope ? 
-				(typeof payload.scope === 'string' ? payload.scope.split(' ') : payload.scope) : 
+			const scopes = payload.scope ?
+				(typeof payload.scope === 'string' ? payload.scope.split(' ') : payload.scope) :
 				payload.scp || // Alternative scope claim
 				undefined;
 

@@ -1,11 +1,10 @@
 /**
  * OAuth 2.0 Authorization Code Management
- * 
+ *
  * Manages authorization codes for OAuth 2.0 authorization code flow
  */
 
-import { v4 as uuidv4 } from 'uuid';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { SecurityLogger } from './security-logger';
 
 export interface AuthorizationCode {
@@ -49,14 +48,25 @@ export class OAuth2AuthorizationCodeManager {
 
 	// Authorization code expires in 10 minutes (recommended by RFC 6749)
 	private readonly CODE_EXPIRATION_TIME = 10 * 60 * 1000; // 10 minutes
+	private readonly MAX_CODES = 5000;
+
+	/**
+	 * Redact authorization code for logging (show first 4 + '...' + last 4 characters)
+	 */
+	private redactAuthorizationCode(code: string): string {
+		if (!code) return '[empty]';
+		if (code.length <= 8) return '*'.repeat(code.length);
+		return `${code.substring(0, 4)}...${code.substring(code.length - 4)}`;
+	}
 
 	constructor() {
 		this.securityLogger = new SecurityLogger();
-		
+
 		// Cleanup expired codes every 5 minutes
 		this.cleanupInterval = setInterval(() => {
 			this.cleanupExpiredCodes();
 		}, 5 * 60 * 1000);
+		this.cleanupInterval.unref();
 	}
 
 	/**
@@ -111,60 +121,60 @@ export class OAuth2AuthorizationCodeManager {
 		const authCode = this.codes.get(code);
 
 		if (!authCode) {
-			this.securityLogger.warn(`Authorization code not found: ${code}`);
+			this.securityLogger.warn(`Authorization code not found: ${this.redactAuthorizationCode(code)}`);
 			return null;
 		}
 
 		// Check if code is expired
 		if (new Date() > authCode.expiresAt) {
-			this.securityLogger.warn(`Authorization code expired: ${code}`);
+			this.securityLogger.warn(`Authorization code expired: ${this.redactAuthorizationCode(code)}`);
 			this.codes.delete(code);
 			return null;
 		}
 
 		// Check if code was already used
 		if (authCode.isUsed) {
-			this.securityLogger.warn(`Authorization code already used: ${code}`);
+			this.securityLogger.warn(`Authorization code already used: ${this.redactAuthorizationCode(code)}`);
 			this.codes.delete(code);
 			return null;
 		}
 
 		// Validate client ID
 		if (authCode.clientId !== clientId) {
-			this.securityLogger.warn(`Client ID mismatch for code ${code}: expected ${authCode.clientId}, got ${clientId}`);
+			this.securityLogger.warn(`Client ID mismatch for code ${this.redactAuthorizationCode(code)}: expected ${authCode.clientId}, got ${clientId}`);
 			return null;
 		}
 
 		// Validate redirect URI
 		if (authCode.redirectUri !== redirectUri) {
-			this.securityLogger.warn(`Redirect URI mismatch for code ${code}`);
+			this.securityLogger.warn(`Redirect URI mismatch for code ${this.redactAuthorizationCode(code)}`);
 			return null;
 		}
 
 		// Validate PKCE if present
 		if (authCode.codeChallenge) {
 			if (!codeVerifier) {
-				this.securityLogger.warn(`PKCE code verifier missing for code ${code}`);
+				this.securityLogger.warn(`PKCE code verifier missing for code ${this.redactAuthorizationCode(code)}`);
 				return null;
 			}
 
 			if (!this.validatePKCE(authCode.codeChallenge, authCode.codeChallengeMethod!, codeVerifier)) {
-				this.securityLogger.warn(`PKCE validation failed for code ${code}`);
+				this.securityLogger.warn(`PKCE validation failed for code ${this.redactAuthorizationCode(code)}`);
 				return null;
 			}
 		}
 
 		// Mark code as used
 		authCode.isUsed = true;
-		
+
 		this.securityLogger.log(`Authorization code exchanged successfully for user ${authCode.userId}, client ${clientId}`);
-		
+
 		// Remove code after successful exchange
 		setTimeout(() => {
 			this.codes.delete(code);
 		}, 1000); // Small delay to prevent race conditions
 
-		return authCode;
+		return { ...authCode };
 	}
 
 	/**
@@ -214,6 +224,13 @@ export class OAuth2AuthorizationCodeManager {
 				this.codes.delete(code);
 				cleanedCount++;
 			}
+		}
+
+		while (this.codes.size > this.MAX_CODES) {
+			const oldest = this.codes.keys().next().value;
+			if (!oldest) break;
+			this.codes.delete(oldest);
+			cleanedCount++;
 		}
 
 		if (cleanedCount > 0) {
