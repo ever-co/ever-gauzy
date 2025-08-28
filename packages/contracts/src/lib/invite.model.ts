@@ -66,6 +66,8 @@ export interface IInviteAcceptInput extends IUserRegistrationInput {
 	originalUrl?: string;
 }
 
+export interface IInviteRejectInput extends Pick<IInviteAcceptInput, 'email' | 'token' | 'code'> {}
+
 export interface IInviteResendInput extends IBasePerTenantAndOrganizationEntityModel {
 	inviteId: ID;
 	inviteType: InvitationTypeEnum;
@@ -84,6 +86,7 @@ export interface ICreateEmailInvitesInput extends IBasePerTenantAndOrganizationE
 	appliedDate?: Date;
 	invitationExpirationPeriod?: number | string;
 	fullName?: string;
+	queryParams?: IInviteQueryParamMap;
 	[x: string]: any;
 }
 
@@ -164,4 +167,8 @@ export interface IJoinEmployeeModel extends IBasePerTenantAndOrganizationEntityM
 export interface ICreateInviteSeedParams extends IBasePerTenantAndOrganizationEntityModel {
 	superAdmins: IUser[];
 	roles: IRole[];
+}
+
+export interface IInviteQueryParamMap {
+	[key: string]: keyof IInvite;
 }

@@ -1,7 +1,11 @@
-import { createMcpServer } from './mcp-server';
-import log from 'electron-log';
+import { createAndStartMcpServer } from './mcp-server';
+import { Logger } from '@nestjs/common';
 import { spawn, ChildProcess } from 'node:child_process';
 import * as path from 'node:path';
+import { TransportResult } from './transports';
+import { version } from './common/version';
+
+const logger = new Logger('McpServerManager');
 // Environment will be provided by the consuming app
 // import { environment } from '../environments/environment';
 
@@ -9,6 +13,8 @@ export interface McpServerStatus {
 	running: boolean;
 	port: number | null;
 	version: string | null;
+	transport?: 'stdio' | 'http' | 'websocket';
+	url?: string;
 	uptime?: number;
 	lastError?: string;
 }
@@ -19,6 +25,7 @@ export class McpServerManager {
 	private _startTime: Date | null = null;
 	private _lastError: string | null = null;
 	private _version: string | null = null;
+	private _transport: TransportResult | null = null;
 	private killTimeout: NodeJS.Timeout | null = null;
 	private environment: any;
 
@@ -38,10 +45,10 @@ export class McpServerManager {
 	}
 
 	async restart(): Promise<boolean> {
-		log.info('Restarting MCP Server...');
+		logger.log('Restarting MCP Server...');
 		const stopSuccess = await this.stop();
 		if (!stopSuccess) {
-			log.error('Failed to stop MCP Server during restart');
+			logger.error('Failed to stop MCP Server during restart');
 			return false;
 		}
 		// Small delay to ensure clean shutdown
@@ -52,16 +59,30 @@ export class McpServerManager {
 	getStatus(): McpServerStatus {
 		return {
 			running: this._isRunning,
-			port: null, // MCP servers typically use stdio, not ports
-			version: this._version,
+			port: this._transport?.type === 'http' || this._transport?.type === 'websocket' ? this.getHttpPort() : null,
+			version: this.getVersion(),
+			transport: this._transport?.type as 'stdio' | 'http' | 'websocket',
+			url: this._transport?.url,
 			uptime: this._startTime ? Date.now() - this._startTime.getTime() : undefined,
 			lastError: this._lastError || undefined
 		};
 	}
 
+	private getHttpPort(): number | null {
+		if ((this._transport?.type === 'http' || this._transport?.type === 'websocket') && this._transport.url) {
+			try {
+				const url = new URL(this._transport.url);
+				return parseInt(url.port, 10) || (url.protocol === 'https:' || url.protocol === 'wss:' ? 443 : 80);
+			} catch {
+				return null;
+			}
+		}
+		return null;
+	}
+
 	async start(): Promise<boolean> {
 		if (this._isRunning) {
-			log.warn('MCP Server is already running');
+			logger.warn('MCP Server is already running');
 			return true;
 		}
 
@@ -72,7 +93,7 @@ export class McpServerManager {
 			return true;
 		} catch (error) {
 			this._lastError = error instanceof Error ? error.message : String(error);
-			log.error('Failed to start MCP Server:', error);
+			logger.error('Failed to start MCP Server:', error as Error);
 			return false;
 		}
 	}
@@ -84,13 +105,13 @@ export class McpServerManager {
 			this.killTimeout = null;
 		}
 		if (this.mcpProcess && this._isRunning) {
-			log.info('Stopping MCP Server...');
+			logger.log('Stopping MCP Server...');
 			this.mcpProcess.kill('SIGTERM');
 
 			// Force kill after timeout
 			this.killTimeout = setTimeout(() => {
 				if (this.mcpProcess && !this.mcpProcess.killed) {
-					log.warn('Force killing MCP Server process');
+					logger.warn('Force killing MCP Server process');
 					this.mcpProcess.kill('SIGKILL');
 				}
 				this.mcpProcess = null;
@@ -106,7 +127,7 @@ export class McpServerManager {
 			// If running in-process, just mark as stopped
 			this._isRunning = false;
 			this._startTime = null;
-			log.info('MCP Server stopped');
+			logger.log('MCP Server stopped');
 			return true;
 		}
 
@@ -114,23 +135,28 @@ export class McpServerManager {
 	}
 
 	/**
-	 * Start MCP server in the same process (recommended for Electron apps)
+	 * Start MCP server in the same process with appropriate transport
 	 */
 	async startInProcess(): Promise<void> {
 		try {
-			const { version } = createMcpServer();
+			const { transport } = await createAndStartMcpServer();
 			this._version = version;
+			this._transport = transport;
 
-			// For Electron apps, we don't connect to stdio directly
-			// Instead, we keep the server instance ready for IPC communication
-			log.info(`Gauzy MCP Server initialized: ${version}`);
+			logger.log(`Gauzy MCP Server initialized with ${transport.type} transport`);
+
+			if (transport.type === 'http' && transport.url) {
+				logger.log(`🌐 HTTP transport available at: ${transport.url}`);
+			} else if (transport.type === 'websocket' && transport.url) {
+				logger.log(`🔌 WebSocket transport available at: ${transport.url}`);
+			}
 
 			this._isRunning = true;
 			this._startTime = new Date();
 			this._lastError = null;
 		} catch (error) {
 			this._lastError = error instanceof Error ? error.message : String(error);
-			log.error('Failed to start MCP Server in process:', error);
+			logger.error('Failed to start MCP Server in process:', error as Error);
 			throw error;
 		}
 	}
@@ -140,7 +166,7 @@ export class McpServerManager {
 	 */
 	async startAsStandaloneServer(): Promise<void> {
 		if (this._isRunning) {
-			log.warn('MCP Server is already running');
+			logger.warn('MCP Server is already running');
 			return;
 		}
 
@@ -170,18 +196,18 @@ export class McpServerManager {
 
 			this.mcpProcess.on('error', (error) => {
 				this._lastError = error.message;
-				log.error('MCP Server process error:', error);
+				logger.error('MCP Server process error:', error);
 				this._isRunning = false;
 			});
 
 			this.mcpProcess.on('exit', (code, signal) => {
-				log.info(`MCP Server process exited with code ${code} and signal ${signal}`);
+				logger.log(`MCP Server process exited with code ${code} and signal ${signal}`);
 				this._isRunning = false;
 				this._startTime = null;
 			});
 
 			this.mcpProcess.on('spawn', () => {
-				log.info('MCP Server process spawned successfully');
+				logger.log('MCP Server process spawned successfully');
 				this._isRunning = true;
 				this._startTime = new Date();
 				this._lastError = null;
@@ -189,15 +215,15 @@ export class McpServerManager {
 
 			// Handle server output
 			this.mcpProcess.stdout?.on('data', (data) => {
-				log.info('MCP Server stdout:', data.toString());
+				logger.log('MCP Server stdout:', data.toString());
 			});
 
 			this.mcpProcess.stderr?.on('data', (data) => {
-				log.error('MCP Server stderr:', data.toString());
+				logger.error('MCP Server stderr:', data.toString());
 			});
 		} catch (error) {
 			this._lastError = error instanceof Error ? error.message : String(error);
-			log.error('Failed to start MCP Server:', error);
+			logger.error('Failed to start MCP Server:', error);
 			this._isRunning = false;
 			throw error;
 		}

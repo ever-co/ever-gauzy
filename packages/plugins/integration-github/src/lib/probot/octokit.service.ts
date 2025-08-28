@@ -1,7 +1,7 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as chalk from 'chalk';
-import { App } from 'octokit';
-import { ResponseHeaders as OctokitResponseHeaders } from '@octokit/types';
+import type { App } from 'octokit';
+import type { ResponseHeaders } from '@octokit/types';
 import { parseConfig } from './probot.helpers';
 import { ModuleProviders, ProbotConfig } from './probot.types';
 
@@ -10,23 +10,32 @@ const GITHUB_API_VERSION = process.env.GAUZY_GITHUB_API_VERSION || '2022-11-28';
 export interface OctokitResponse<T> {
 	data: T; // The response data received from the GitHub API.
 	status: number; // The HTTP status code of the response (e.g., 200, 404, etc.).
-	headers: OctokitResponseHeaders; // The headers included in the response.
+	headers: ResponseHeaders; // The headers included in the response.
 	[key: string]: any; // Additional properties may be present depending on the specific response.
 }
 
 @Injectable()
-export class OctokitService {
+export class OctokitService implements OnModuleInit {
 	private readonly logger = new Logger('OctokitService');
-	private readonly app: InstanceType<typeof App> | undefined;
+	private app?: InstanceType<typeof App>; // Octokit App instance (dynamically imported)
 
 	constructor(
 		@Inject(ModuleProviders.ProbotConfig)
 		private readonly config: ProbotConfig
 	) {
-		/** */
+		// Note: App initialization moved to onModuleInit to handle async operations
+	}
+
+	/**
+	 * Called automatically when the module has been initialized.
+	 * Initialize the Octokit App asynchronously.
+	 */
+	async onModuleInit() {
 		try {
 			if (this.config.appId && this.config.privateKey) {
-				const config = parseConfig(this.config);
+				// Dynamic import for ESM module
+				const { App } = await import('octokit');
+				const config = await parseConfig(this.config);
 				this.app = new App({
 					appId: config.appId,
 					privateKey: config.privateKey,

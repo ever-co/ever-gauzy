@@ -42,9 +42,16 @@ import {
 	InviteAcceptOrganizationContactCommand,
 	InviteBulkCreateCommand,
 	InviteOrganizationContactCommand,
+	InviteRejectCommand,
 	InviteResendCommand
 } from './commands';
-import { CreateInviteDTO, ResendInviteDTO, ValidateInviteByCodeQueryDTO, ValidateInviteQueryDTO } from './dto';
+import {
+	CreateInviteDTO,
+	RejectInviteDTO,
+	ResendInviteDTO,
+	ValidateInviteByCodeQueryDTO,
+	ValidateInviteQueryDTO
+} from './dto';
 import { FindInviteByEmailCodeQuery, FindInviteByEmailTokenQuery } from './queries';
 
 @ApiTags('Invite')
@@ -198,6 +205,28 @@ export class InviteController {
 		@I18nLang() languageCode: LanguagesEnum
 	) {
 		return await this.commandBus.execute(new InviteAcceptCommand({ ...entity, originalUrl: origin }, languageCode));
+	}
+
+	/**
+	 * Reject employee/user/candidate invite.
+	 *
+	 * @param entity - The data transfer object containing invite rejection details.
+	 * @returns A promise that resolves to the result of the invite rejection process.
+	 */
+	@ApiOperation({ summary: 'Reject employee/user/candidate invite.' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully executed.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Public()
+	@Post('/reject')
+	@UseValidationPipe()
+	async rejectInvitation(@Body() input: RejectInviteDTO) {
+		return await this.commandBus.execute(new InviteRejectCommand(input));
 	}
 
 	/**

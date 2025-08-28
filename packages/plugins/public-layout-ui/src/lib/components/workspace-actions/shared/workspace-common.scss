@@ -1,0 +1,254 @@
+@use 'themes' as *;
+@use '@shared/reusable' as *;
+
+.login-container {
+  width: 765px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0 auto;
+
+  .login-wrapper {
+    background: nb-theme(gauzy-card-2);
+    border-radius: nb-theme(border-radius);
+    box-sizing: border-box;
+    padding: 30px;
+    width: 476px;
+    height: 100%;
+
+    & > * {
+      padding-left: 15px;
+      padding-right: 15px;
+    }
+
+    & .svg-wrapper {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 57px;
+    }
+
+    & .headings {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+
+      & .headings-inner {
+        & .title {
+          font-family: Inter;
+          font-size: 24px;
+          font-style: normal;
+          font-weight: 700;
+          line-height: 30px;
+          letter-spacing: 0em;
+          margin-bottom: 18px;
+          text-align: start;
+        }
+
+        & .sub-title {
+          font-family: Inter;
+          font-size: 14px;
+          font-style: normal;
+          font-weight: 400;
+          line-height: 1.4;
+          letter-spacing: 0em;
+          margin-bottom: 26px;
+          text-align: start;
+        }
+      }
+    }
+
+    & .hr-div-strong {
+      @include hr-div-strong;
+    }
+
+    & .hr-div-soft {
+      @include hr-div-soft;
+    }
+  }
+
+  & form {
+    margin-top: 29px;
+    margin-bottom: 42px;
+
+    & .form-control-group {
+      margin-bottom: 16px;
+    }
+
+    & .submit-btn-wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      & .forgot-email {
+        text-decoration-line: underline;
+        margin-bottom: 0;
+        font-family: Inter;
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 17px;
+        letter-spacing: -0.01em;
+        text-align: left;
+
+        &:hover {
+          color: $button-color;
+        }
+      }
+
+      & .submit-inner-wrapper {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      & .submit-btn {
+        @include submit-btn;
+        padding: 13px 65px;
+      }
+    }
+  }
+
+  & .another-action {
+    margin-top: 10px;
+    @include another-action;
+  }
+}
+
+@include tablet-screen {
+  .login-container {
+    flex-direction: column;
+    align-items: center;
+
+    & .another-action {
+      margin-top: 0;
+    }
+  }
+}
+
+@include mobile-screen {
+  .login-container {
+    width: 100%;
+
+    & .login-wrapper {
+      width: 100%;
+      padding: 20px 12px;
+
+      & .headings {
+        & .headings-inner {
+          width: 100%;
+
+          & .title,
+          & .sub-title {
+            width: 100%;
+            text-align: center;
+          }
+        }
+      }
+    }
+
+    & form {
+      margin-bottom: 35px;
+
+      & .submit-btn-wrapper {
+        justify-content: center;
+
+        & .submit-inner-wrapper {
+          justify-content: center;
+        }
+
+        & .submit-btn {
+          margin-bottom: 0;
+        }
+      }
+
+      & .form-control-group {
+        margin-bottom: 13px;
+      }
+    }
+  }
+}
+
+@include input-fields-color;
+
+.creation-content {
+  .form-group {
+    margin-bottom: 1.5rem;
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: nb-theme(text-basic-color);
+    }
+
+    input {
+      width: 100%;
+    }
+
+    .error-message {
+      margin-top: 0.25rem;
+      font-size: 0.75rem;
+      color: nb-theme(status-danger);
+    }
+  }
+
+  .submit-btn-wrapper {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+
+    .submit-btn {
+      min-width: 200px;
+      padding: 0.75rem 1.5rem;
+
+      &.btn-pulse {
+        animation: pulse 1.5s infinite;
+      }
+    }
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    padding: 1rem;
+
+    .login-wrapper {
+      padding: 20px;
+      max-width: 100%;
+
+      & > * {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 0.5rem;
+
+    .login-wrapper {
+      padding: 15px;
+
+      & > * {
+        padding-left: 5px;
+        padding-right: 5px;
+      }
+    }
+  }
+}

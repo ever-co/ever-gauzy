@@ -2,8 +2,7 @@ import { ExecutionContext, Injectable } from '@nestjs/common';
 import type { GqlContextType } from '@nestjs/graphql';
 
 // Sentry imports
-import { Scope } from '@sentry/core';
-import { Handlers } from '@sentry/node';
+import { Scope } from '@sentry/node';
 import { SentryInterceptor } from '.';
 
 let GqlExecutionContext: any;
@@ -28,6 +27,9 @@ export class GraphqlInterceptor extends SentryInterceptor {
 	}
 
 	/**
+	 * Captures GraphQL exception with context
+	 * V9 Migration: Handlers.parseRequest was removed, manually extract request data
+	 * Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/#removals-in-sentrycore
 	 *
 	 * @param scope
 	 * @param gqlContext
@@ -40,13 +42,24 @@ export class GraphqlInterceptor extends SentryInterceptor {
 		scope.setExtra('type', info.parentType.name);
 
 		if (context.req) {
-			// req within graphql context needs modification in
-			const data = Handlers.parseRequest(<any>{}, context.req, {});
+			// V9 Migration: Manual request data extraction since Handlers.parseRequest was removed
+			// The addRequestDataToEvent method has been removed. Manually extract relevant data of request objects instead.
+			const req = context.req;
+			const requestData = {
+				url: req.url,
+				method: req.method,
+				headers: req.headers,
+				query: req.query,
+				data: req.body
+			};
 
-			scope.setExtra('req', data.request);
+			scope.setExtra('req', requestData);
 
-			if (data.extra) scope.setExtras(data.extra);
-			if (data.user) scope.setUser(data.user);
+			// V9 Migration: Manual user context setting since requestDataIntegration no longer automatically sets user from request.user
+			// Reference: https://docs.sentry.io/platforms/javascript/guides/node/migration/v8-to-v9/#behavior-changes
+			if (req.user) {
+				scope.setUser(req.user);
+			}
 		}
 
 		this.client.instance().captureException(exception);
