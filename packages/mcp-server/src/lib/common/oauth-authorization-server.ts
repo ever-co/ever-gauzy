@@ -499,11 +499,11 @@ export class OAuth2AuthorizationServer {
 	private normalizeReturnUrl(input?: string): string {
 		if (!input) return this.config.authorizationEndpoint;
 		try {
-			// Allow only relative paths, and only if in allowlist
+			// Allow only relative paths, and only if in allowlist, always strip query/fragment
 			if (input.startsWith('/')) {
-				const path = input.split('?')[0]; // ignore query string for allowlist check
+				const [path] = input.split('?'); // ignore query string for allowlist check
 				if (OAuth2AuthorizationServer.ALLOWED_RETURN_PATHS.includes(path)) {
-					return input;
+					return path; // Only return the clean, allowlisted path
 				}
 				return this.config.authorizationEndpoint;
 			}
@@ -513,7 +513,8 @@ export class OAuth2AuthorizationServer {
 			if (u.origin === base.origin) {
 				const path = u.pathname;
 				if (OAuth2AuthorizationServer.ALLOWED_RETURN_PATHS.includes(path)) {
-					return u.toString();
+					// Only return the canonical absolute URL without user-provided query/fragment
+					return (new URL(path, this.config.baseUrl)).toString();
 				}
 			}
 			return this.config.authorizationEndpoint;
