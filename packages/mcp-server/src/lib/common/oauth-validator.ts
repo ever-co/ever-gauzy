@@ -19,6 +19,16 @@ export class OAuthValidator {
 	}
 
 	/**
+	 * Normalize scopes from various formats to string array
+	 */
+	private normalizeScopes(value: any): string[] {
+		if (!value) return [];
+		if (Array.isArray(value)) return value.map(String);
+		if (typeof value === 'string') return value.split(/\s+/).filter(Boolean);
+		return [];
+	}
+
+	/**
 	 * Extract Bearer token from Authorization header
 	 */
 	extractBearerToken(req: Request): string | null {
@@ -214,16 +224,9 @@ export class OAuthValidator {
 				}
 			}
 
-			// Parse scopes from scope claim (normalize to string[])
-			const normalizeScopes = (value: any): string[] => {
-				if (!value) return [];
-				if (Array.isArray(value)) return value.map(String);
-				if (typeof value === 'string') return value.split(/\s+/).filter(Boolean);
-				return [];
-			};
-
-			const scopeFromScope = normalizeScopes(payload.scope);
-			const scopeFromScp = normalizeScopes(payload.scp);
+			// Parse scopes from scope claim
+			const scopeFromScope = this.normalizeScopes(payload.scope);
+			const scopeFromScp = this.normalizeScopes(payload.scp);
 			// Prefer 'scope' claim, but merge both if available
 			const scopes = scopeFromScope.length > 0 ? scopeFromScope : scopeFromScp.length > 0 ? scopeFromScp : [];
 
@@ -301,16 +304,9 @@ export class OAuthValidator {
 				};
 			}
 
-			// Parse scopes from introspection response (normalize to string[])
-			const normalizeScopes = (value: any): string[] => {
-				if (!value) return [];
-				if (Array.isArray(value)) return value.map(String);
-				if (typeof value === 'string') return value.split(/\s+/).filter(Boolean);
-				return [];
-			};
-
-			const scopeFromScope = normalizeScopes(result.scope);
-			const scopeFromScp = normalizeScopes(result.scp);
+			// Parse scopes from introspection response
+			const scopeFromScope = this.normalizeScopes(result.scope);
+			const scopeFromScp = this.normalizeScopes(result.scp);
 			// Prefer 'scope' claim, but merge both if available
 			const scopes = scopeFromScope.length > 0 ? scopeFromScope : scopeFromScp.length > 0 ? scopeFromScp : [];
 

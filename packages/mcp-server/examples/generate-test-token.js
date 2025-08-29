@@ -16,7 +16,7 @@ function base64UrlEncode(str) {
 
 // Optional dev RSA key for RS256 (place dev-private-key.pem next to this script)
 const devPrivateKeyPath = './dev-private-key.pem';
-const devPrivateKey = fs.existsSync(devPrivateKeyPath) ? fs.readFileSync(devPrivateKeyPath) : null
+const devPrivateKey = fs.existsSync(devPrivateKeyPath) ? fs.readFileSync(devPrivateKeyPath) : null;
 
 function generateTestJWT(payload = {}, secret = (process.env.MCP_AUTH_JWT_SECRET || 'dev-secret-key-for-testing-only'))  {
     // JWT Header

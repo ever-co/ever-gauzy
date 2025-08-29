@@ -108,7 +108,8 @@ const status = manager.getStatus();
 - **Session Persistence**: Maintains authentication state across sessions
 - **Auto-login**: Configurable automatic login on server start
 - **OAuth 2.0 Authorization**: Full OAuth 2.0 support for MCP clients (RFC 9728)
-- **Protected Resource Metadata**: Automatic discovery endpoints for authorization servers
+- **Protected Resource Metadata**: Automatic discovery endpoints for
+authorization servers
 - **Token Validation**: JWT and token introspection support with audience validation
 - **Scope Management**: Fine-grained access control with OAuth 2.0 scopes
 

@@ -130,7 +130,7 @@ export class OAuth2AuthorizationServer {
 			jwt: {
 				audience: config.audience,
 				issuer: config.issuer,
-				algorithms: ['RS256'],
+				algorithms: (this.tokenManager.getJWKS().keys?.map((k: any) => k.alg).filter(Boolean) as string[]) || ['RS256'],
 				jwksUri: `${config.baseUrl}${config.jwksEndpoint}`
 			}
 		};
@@ -646,14 +646,18 @@ export class OAuth2AuthorizationServer {
 			}
 
 			// Set user session
-			(req.session as any).user = user;
-			(req.session as any).isAuthenticated = true;
+			if (!req.session) {
+				return res.status(500).json({ error: 'Session not available' });
+			}
+
+			const session = req.session as any;
+			session.user = user;
+			session.isAuthenticated = true;
 
 			this.securityLogger.info('User authenticated successfully', { userId: user.userId, email: user.email });
 
 			// Check if we have stored OAuth parameters from the original authorization request
-			const session = req.session as any;
-			if (session && session.oauthParams) {
+			if (session.oauthParams) {
 				// Restore the original OAuth authorization URL with all parameters
 				const oauthParams = session.oauthParams;
 				const authUrl = new URL(this.config.authorizationEndpoint, this.config.baseUrl);
@@ -1124,26 +1128,32 @@ export class OAuth2AuthorizationServer {
 	 */
 	private async handleUserInfo(req: Request, res: Response): Promise<void> {
 		try {
-			// Extract access token from Authorization header
-			const authHeader = req.headers.authorization;
-			if (!authHeader || !authHeader.startsWith('Bearer ')) {
-				res.status(401).json({
-					error: 'invalid_token',
-					error_description: 'Bearer token required'
-				});
+			 // Extract access token (robust parsing)
+			const token = this.oAuthValidator.extractBearerToken(req);
+			if (!token) {
+				res.setHeader(
+				'WWW-Authenticate',
+				OAuthValidator.formatWWWAuthenticateHeader(
+					`${this.config.baseUrl}/.well-known/oauth-authorization-server`,
+					OAuthValidator.createAuthorizationError('invalid_token', 'Bearer token required')
+				)
+				);
+				res.status(401).json({ error: 'invalid_token', error_description: 'Bearer token required' });
 				return;
 			}
-
-			const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
 			// Validate the access token
 			const validation = await this.oAuthValidator.validateToken(token);
 
 			if (!validation.valid) {
-				res.status(401).json({
-					error: 'invalid_token',
-					error_description: validation.error || 'Token validation failed'
-				});
+				res.setHeader(
+					'WWW-Authenticate',
+					OAuthValidator.formatWWWAuthenticateHeader(
+					`${this.config.baseUrl}/.well-known/oauth-authorization-server`,
+					OAuthValidator.createAuthorizationError('invalid_token', validation.error || 'Token validation failed')
+					)
+				);
+				res.status(401).json({ error: 'invalid_token', error_description: validation.error || 'Token validation failed' });
 				return;
 			}
 

@@ -5,7 +5,7 @@ AI assistants like Claude Desktop, ChatGPT, and other AI tools. Supports
 multiple transport layers with enterprise-grade OAuth 2.0 security for
 different use cases.
 
-🌐 **Live Demo**: [https://mcpdemo.gauzy.co](https://mcpdemo.gauzy.co)  
+🌐 **Live Demo**: [https://mcpdemo.gauzy.co](https://mcpdemo.gauzy.co)
 🔒 **Production**: [https://mcp.gauzy.co](https://mcp.gauzy.co)
 
 ## Overview
@@ -75,7 +75,7 @@ MCP_SERVER_MODE=http \
 yarn nx serve mcp
 
 # Server runs on http://localhost:3001 by default
-# MCP endpoint: POST http://localhost:3001/sse  
+# MCP endpoint: POST http://localhost:3001/sse
 # NOTE: /sse is the HTTP JSON-RPC endpoint (not SSE)
 ```
 
@@ -103,7 +103,7 @@ yarn nx serve mcp
    yarn nx build mcp --configuration=production
    ```
 
-2. Add to your Claude Desktop configuration 
+2. Add to your Claude Desktop configuration
    (`~/.claude_desktop_config.json`):
 
    ```json
@@ -145,8 +145,8 @@ GAUZY_AUTH_EMAIL=<your-email>
 GAUZY_AUTH_PASSWORD=<your-password>
 
 # Optional
-GAUZY_AUTO_LOGIN=true          # Enable automatic login
-GAUZY_MCP_DEBUG=true           # Enable debug logging
+GAUZY_AUTO_LOGIN=true # Enable automatic login
+GAUZY_MCP_DEBUG=true # Enable debug logging
 ```
 
 ### HTTP Transport Configuration
@@ -167,7 +167,7 @@ MCP_CORS_ORIGIN=http://localhost:3000,http://localhost:4200
 MCP_CORS_CREDENTIALS=true
 
 # OAuth 2.0 Authorization (Optional)
-MCP_AUTH_ENABLED=false         # Enable OAuth 2.0 authorization
+MCP_AUTH_ENABLED=false # Enable OAuth 2.0 authorization
 MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
 MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
 MCP_AUTH_SERVERS=https://auth.gauzy.co
@@ -184,13 +184,13 @@ MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
 # Session management (stored in Redis)
 MCP_SESSION_ENABLED=true
 MCP_SESSION_COOKIE_NAME=mcp-session-id
-MCP_SESSION_TTL=1800000        # 30 minutes
-REDIS_URL=redis://localhost:6379  # Redis connection for sessions
+MCP_SESSION_TTL=1800000 # 30 minutes
+REDIS_URL=redis://localhost:6379 # Redis connection for sessions
 
 # Rate limiting and security
 THROTTLE_ENABLED=true
-THROTTLE_TTL=60000             # 1 minute
-THROTTLE_LIMIT=100             # requests per minute
+THROTTLE_TTL=60000 # 1 minute
+THROTTLE_LIMIT=100 # requests per minute
 MCP_TRUSTED_PROXIES=192.168.1.1,10.0.0.1
 
 # Required Gauzy API settings
@@ -257,7 +257,7 @@ curl -X POST http://localhost:3001/sse \
   }'
 # NOTE: /sse is the HTTP JSON-RPC endpoint (not SSE)
 
-# Without valid token, you'll get 401 Unauthorized with 
+# Without valid token, you'll get 401 Unauthorized with
 # WWW-Authenticate header:
 # WWW-Authenticate: Bearer resource_metadata="http://localhost:3001/
 #   .well-known/oauth-protected-resource", error="invalid_token"
@@ -285,10 +285,10 @@ MCP_WS_CERT_PATH=/path/to/your/certs/cert.pem
 # WebSocket features
 MCP_WS_COMPRESSION=true
 MCP_WS_PER_MESSAGE_DEFLATE=true
-MCP_WS_MAX_PAYLOAD=16777216    # 16MB
+MCP_WS_MAX_PAYLOAD=16777216 # 16MB
 
 # OAuth 2.0 Authorization (Optional)
-MCP_AUTH_ENABLED=false         # Enable OAuth 2.0 authorization
+MCP_AUTH_ENABLED=false # Enable OAuth 2.0 authorization
 MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
 MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
 MCP_AUTH_SERVERS=https://auth.gauzy.co
@@ -297,11 +297,11 @@ MCP_AUTH_JWT_ISSUER=https://auth.gauzy.co
 MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
 
 # Security settings
-MCP_WS_ALLOWED_ORIGINS=*       # Use specific origins in production
+MCP_WS_ALLOWED_ORIGINS=* # Use specific origins in production
 MCP_WS_SESSION_ENABLED=true
 MCP_WS_SESSION_COOKIE_NAME=mcp-ws-session-id
 MCP_WS_TRUSTED_PROXIES=192.168.1.1,10.0.0.1
-REDIS_URL=redis://localhost:6379  # Redis connection for sessions
+REDIS_URL=redis://localhost:6379 # Redis connection for sessions
 
 # Required Gauzy API settings
 API_BASE_URL=https://apidemo.gauzy.co
@@ -535,11 +535,11 @@ yarn nx test mcp
 #### WebSocket Transport Issues
 
 7. **WebSocket Connection Rejected**
-   - **"Unauthorized origin"**: Set `MCP_WS_ALLOWED_ORIGINS=*` for 
+   - **"Unauthorized origin"**: Set `MCP_WS_ALLOWED_ORIGINS=*` for
      development
    - **SSL Certificate errors**: Use `--no-check` flag with wscat
    - **Port already in use**: Kill process: `kill -9 $(lsof -ti:3002)`
-   - **Session errors**: Ensure Redis is running: `redis-server` or 
+   - **Session errors**: Ensure Redis is running: `redis-server` or
      check `redis-cli ping`
 
 8. **SSL/TLS Issues**
@@ -618,7 +618,7 @@ following:
 - RFC 9728 (OAuth 2.0 Protected Resource Metadata)
 - RFC 8707 (Resource Indicators)
 
-This enables secure access control for MCP clients like ChatGPT and 
+This enables secure access control for MCP clients like ChatGPT and
 other AI assistants.
 
 ### Live Environments
@@ -627,24 +627,24 @@ other AI assistants.
   with full OAuth 2.0 authorization
 - **Demo**: `https://mcpdemo.gauzy.co` - Public demo environment for
   testing and evaluation
-- **Authorization Server**: `https://auth.gauzy.co` - Production 
+- **Authorization Server**: `https://auth.gauzy.co` - Production
   OAuth 2.0 authorization server
-- **Demo Auth**: `https://authdemo.gauzy.co` - Demo authorization 
+- **Demo Auth**: `https://authdemo.gauzy.co` - Demo authorization
   server for testing
 
 ### Authorization Features
 
-- **Bearer Token Authentication** - Standard RFC 6750 Bearer token 
+- **Bearer Token Authentication** - Standard RFC 6750 Bearer token
   support
-- **JWT Token Validation** - Local JWT validation with public key or 
+- **JWT Token Validation** - Local JWT validation with public key or
   JWKS endpoint
-- **Token Introspection** - RFC 7662 token introspection for opaque 
+- **Token Introspection** - RFC 7662 token introspection for opaque
   tokens
-- **Protected Resource Metadata** - RFC 9728 metadata endpoint for 
+- **Protected Resource Metadata** - RFC 9728 metadata endpoint for
   clients
-- **Scope-based Access Control** - Fine-grained permissions using 
+- **Scope-based Access Control** - Fine-grained permissions using
   OAuth 2.0 scopes
-- **Audience Validation** - RFC 8707 resource indicators for token 
+- **Audience Validation** - RFC 8707 resource indicators for token
   audience claims
 
 ### Configuration
@@ -662,7 +662,7 @@ MCP_AUTH_SERVERS=https://authdemo.gauzy.co
 MCP_AUTH_JWT_AUDIENCE=https://mcpdemo.gauzy.co
 MCP_AUTH_JWT_ISSUER=https://authdemo.gauzy.co
 MCP_AUTH_JWT_JWKS_URI=https://authdemo.gauzy.co/.well-known/jwks.json
-MCP_AUTH_TOKEN_CACHE_TTL=300   # 5 minutes cache
+MCP_AUTH_TOKEN_CACHE_TTL=300 # 5 minutes cache
 ```
 
 #### Production Environment Configuration
@@ -681,7 +681,7 @@ MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
 MCP_AUTH_INTROSPECTION_ENDPOINT=https://auth.gauzy.co/token/introspect
 MCP_AUTH_INTROSPECTION_CLIENT_ID=gauzy-mcp-server
 MCP_AUTH_INTROSPECTION_CLIENT_SECRET=secure-client-secret
-MCP_AUTH_TOKEN_CACHE_TTL=600   # 10 minutes cache
+MCP_AUTH_TOKEN_CACHE_TTL=600 # 10 minutes cache
 ```
 
 ### Testing Authorization
@@ -702,28 +702,6 @@ MCP_AUTH_TOKEN_CACHE_TTL=600   # 10 minutes cache
    # Local Development
    curl -X GET http://localhost:3001/.well-known/oauth-protected-resource \
      -H "Accept: application/json"
-   ```
-
-2. **Generate Test JWT Token** (for development):
-   ```bash
-   # Generate JWT for testing (development/demo only)
-   node -e "
-   const jwt = require('jsonwebtoken');
-   const fs = require('fs');
-   const privateKey = fs.readFileSync('./dev-private-key.pem');
-   const payload = {
-     sub: 'demo-user@gauzy.co',
-     aud: 'https://mcpdemo.gauzy.co',
-     iss: 'https://authdemo.gauzy.co',
-     scope: 'mcp.read mcp.write',
-     client_id: 'gauzy-mcp-demo-client',
-     exp: Math.floor(Date.now() / 1000) + 3600
-   };
-   const token = jwt.sign(payload, privateKey, {
-     algorithm: 'RS256'
-   });
-   console.log('Bearer', token);
-   "
    ```
 
 3. **Make Authorized Request**:
@@ -759,7 +737,7 @@ MCP_AUTH_TOKEN_CACHE_TTL=600   # 10 minutes cache
   ```http
   HTTP/1.1 401 Unauthorized
   WWW-Authenticate: Bearer resource_metadata="https://mcp.gauzy.co/
-    .well-known/oauth-protected-resource", error="invalid_token", 
+    .well-known/oauth-protected-resource", error="invalid_token",
     error_description="Token validation failed"
   ```
 
@@ -780,7 +758,7 @@ authorization infrastructure:
 
 - **Production**: `https://auth.gauzy.co` - Enterprise-grade OAuth 2.0
   server
-- **Demo**: `https://authdemo.gauzy.co` - Public demo authorization 
+- **Demo**: `https://authdemo.gauzy.co` - Public demo authorization
   server
 
 #### Compatible Authorization Servers
@@ -796,9 +774,9 @@ The MCP server works with any OAuth 2.0 compliant authorization server:
 ### Security Best Practices
 
 - **Use HTTPS in production** - Protect tokens in transit
-- **Implement proper token expiration** - Short-lived access tokens 
+- **Implement proper token expiration** - Short-lived access tokens
   (5-15 minutes)
-- **Use refresh tokens** - For long-term access without storing 
+- **Use refresh tokens** - For long-term access without storing
   credentials
 - **Validate audience claims** - Prevent token misuse across services
 - **Monitor token usage** - Track access patterns and detect anomalies
@@ -831,5 +809,5 @@ For issues specific to the standalone MCP server:
 1. Check the troubleshooting section above
 2. Review the shared MCP server package documentation
 3. Verify your Gauzy API server is running and accessible
-4. Check Claude Desktop or your AI assistant's logs for additional 
+4. Check Claude Desktop or your AI assistant's logs for additional
    error details
