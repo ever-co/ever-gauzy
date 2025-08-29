@@ -101,13 +101,13 @@ const status = manager.getStatus();
 
 ## Core Features
 
-### 🔐 Authentication & Authorization
-
 - **Smart Authentication**: Automatic user context detection
 - **Token Management**: Handles access and refresh tokens automatically
 - **Session Persistence**: Maintains authentication state across sessions
 - **Auto-login**: Configurable automatic login on server start
-- **OAuth 2.0 Authorization**: Full OAuth 2.0 support for MCP clients (RFC 9728)
+- **OAuth 2.0 Authorization**: OAuth 2.0 bearer authorization (RFC 6749, RFC 6750)
+- **Protected Resource Metadata**: RFC 9728 /.well-known/oauth-protected-resource
++  for clients/AS discovery
 - **Protected Resource Metadata**: Automatic discovery endpoints for
 authorization servers
 - **Token Validation**: JWT and token introspection support with audience validation
@@ -341,7 +341,7 @@ packages/mcp-server/
 
    ```typescript
    // src/index.ts
-   export * from './lib/tools/my-new-tool.js';
+   export * from './lib/tools/my-new-tool';
    ```
 
 ### Configuration

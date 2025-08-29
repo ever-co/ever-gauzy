@@ -126,7 +126,9 @@ export class OAuthValidator {
 			// Try JWKS URI first (recommended for production)
 			if (this.config.jwt?.jwksUri) {
 				try {
-					const JWKS = createRemoteJWKSet(new URL(this.config.jwt.jwksUri));
+					const JWKS = createRemoteJWKSet(new URL(this.config.jwt.jwksUri), {
+						timeoutDuration: 5000
+					});
 					const { payload: josePayload } = await jwtVerify(token, JWKS, {
 						issuer: this.config.jwt.issuer,
 						audience: this.config.jwt.audience,
@@ -365,9 +367,18 @@ export class OAuthValidator {
 		const expires = nowMs + ttlMs;
 		this.tokenCache.set(token, { result, expires });
 
-		// Clean up expired cache entries periodically
+		// Clean up expired cache entries and enforce a soft cap
 		if (this.tokenCache.size > 1000) {
 			this.cleanupCache();
+			if (this.tokenCache.size > 5000) {
+				// Evict oldest entries (FIFO)
+				const overshoot = this.tokenCache.size - 5000;
+				let i = 0;
+				for (const key of this.tokenCache.keys()) {
+					this.tokenCache.delete(key);
+					if (++i >= overshoot) break;
+				}
+			}
 		}
 	}
 

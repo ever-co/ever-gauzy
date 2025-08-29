@@ -160,9 +160,9 @@ export class OAuth2AuthorizationServer {
 					return `local-session-${req.ip || '127.0.0.1'}`;
 				}
 				// Use session ID if available, otherwise fall back to IP + User-Agent
-				const session = req.session as any;
-				if (session?.id) {
-					return session.id;
+				const sessionId = (req as any).sessionID;
+				if (sessionId) {
+					return sessionId;
 				}
 				const ip = req.ip || req.connection.remoteAddress || 'unknown-ip';
 				const userAgent = req.get('User-Agent') || 'unknown-agent';
@@ -569,7 +569,7 @@ export class OAuth2AuthorizationServer {
 		// Generate CSRF token for the form
 		const csrfToken = this.generateToken(req, res);
 		const sessionId = !this.config.baseUrl.startsWith('https') ? `local-session-${req.ip || '127.0.0.1'}` : 'session-based';
-		this.securityLogger.debug(`Generated CSRF token for login form - Token: ${csrfToken?.substring(0, 10)}..., Session ID: ${sessionId}`);
+		this.securityLogger.debug(`Generated CSRF token for login form - Session ID: ${sessionId}`);
 
 		res.send(this.generateLoginForm(error, safeReturnUrl, csrfToken));
 	}
@@ -698,7 +698,7 @@ export class OAuth2AuthorizationServer {
 			// Validate required parameters
 			const validation = this.validateAuthorizeRequest(params);
 			if (!validation.valid) {
-				return this.sendErrorRedirect(res, params.redirect_uri, validation.error!, validation.errorDescription, params.state);
+				return this.sendError(res, validation.error!, validation.errorDescription);
 			}
 
 			// Get client information
@@ -932,6 +932,8 @@ export class OAuth2AuthorizationServer {
 			{ includeRefreshToken: true }
 		);
 
+		res.setHeader('Cache-Control', 'no-store');
+		res.setHeader('Pragma', 'no-cache');
 		res.json({
 			access_token: tokenPair.accessToken,
 			token_type: tokenPair.tokenType,
@@ -973,6 +975,8 @@ export class OAuth2AuthorizationServer {
 			return;
 		}
 
+		res.setHeader('Cache-Control', 'no-store');
+		res.setHeader('Pragma', 'no-cache');
 		res.json({
 			access_token: newTokenPair.accessToken,
 			token_type: newTokenPair.tokenType,
@@ -1018,6 +1022,8 @@ export class OAuth2AuthorizationServer {
 			}
 		);
 
+		res.setHeader('Cache-Control', 'no-store');
+		res.setHeader('Pragma', 'no-cache');
 		res.json({
 			access_token: tokenPair.accessToken,
 			token_type: tokenPair.tokenType,
@@ -1163,6 +1169,13 @@ export class OAuth2AuthorizationServer {
 			);
 
 			if (!hasUserInfoScope) {
+				res.setHeader(
+					'WWW-Authenticate',
+					OAuthValidator.formatWWWAuthenticateHeader(
+						`${this.config.baseUrl}/.well-known/oauth-authorization-server`,
+						OAuthValidator.createAuthorizationError('insufficient_scope', 'Token lacks required scope (openid/profile/email)')
+					)
+				);
 				res.status(403).json({
 					error: 'insufficient_scope',
 					error_description: 'Token does not have required scope for user info'

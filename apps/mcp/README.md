@@ -170,26 +170,37 @@ MCP_CORS_CREDENTIALS=true
 MCP_AUTH_ENABLED=false # Enable OAuth 2.0 authorization
 MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
 MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
-MCP_AUTH_SERVERS=https://auth.gauzy.co
+# JSON-encoded array of authorization servers
+MCP_AUTH_SERVERS='[]' # see the file .env.sample on how to configure it
 MCP_AUTH_JWT_AUDIENCE=https://mcp.gauzy.co
 MCP_AUTH_JWT_ISSUER=https://auth.gauzy.co
-# Or use JWKS endpoint
+MCP_AUTH_JWT_ALGORITHMS=RS256,ES256 # Supported JWT algorithms
+# JWT validation options (choose one):
 MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
+# MCP_AUTH_JWT_PUBLIC_KEY=-----BEGIN PUBLIC KEY-----...
 
-# Token Introspection (Alternative to JWT)
-# MCP_AUTH_INTROSPECTION_ENDPOINT=https://auth.gauzy.co/token/introspect
-# MCP_AUTH_INTROSPECTION_CLIENT_ID=mcp-client
-# MCP_AUTH_INTROSPECTION_CLIENT_SECRET=client-secret
+# Token Introspection (Alternative to JWT validation)
+MCP_AUTH_INTROSPECTION_ENDPOINT=https://auth.gauzy.co/token/introspect
+MCP_AUTH_INTROSPECTION_CLIENT_ID=mcp-client
+MCP_AUTH_INTROSPECTION_CLIENT_SECRET=client-secret
+
+# OAuth caching and performance
+MCP_AUTH_TOKEN_CACHE_TTL=300 # Token validation cache TTL (seconds)
+MCP_AUTH_METADATA_CACHE_TTL=3600 # Metadata cache TTL (seconds)
+
+# OAuth server options
+MCP_AUTH_ALLOW_EMBEDDED_SERVER=true # Allow embedded auth server
+MCP_AUTH_SESSION_SECRET=your-session-secret-key # Session secret
 
 # Session management (stored in Redis)
 MCP_SESSION_ENABLED=true
 MCP_SESSION_COOKIE_NAME=mcp-session-id
-MCP_SESSION_TTL=1800000 # 30 minutes
+MCP_SESSION_TTL=1800000 # 30 minutes (milliseconds)
 REDIS_URL=redis://localhost:6379 # Redis connection for sessions
 
 # Rate limiting and security
 THROTTLE_ENABLED=true
-THROTTLE_TTL=60000 # 1 minute
+THROTTLE_TTL=60000 # 1 minute (milliseconds)
 THROTTLE_LIMIT=100 # requests per minute
 MCP_TRUSTED_PROXIES=192.168.1.1,10.0.0.1
 
@@ -291,10 +302,15 @@ MCP_WS_MAX_PAYLOAD=16777216 # 16MB
 MCP_AUTH_ENABLED=false # Enable OAuth 2.0 authorization
 MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
 MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
-MCP_AUTH_SERVERS=https://auth.gauzy.co
+# JSON-encoded array of authorization servers
+MCP_AUTH_SERVERS='[]' # see the file .env.sample on how to configure it
 MCP_AUTH_JWT_AUDIENCE=https://mcp.gauzy.co
 MCP_AUTH_JWT_ISSUER=https://auth.gauzy.co
+MCP_AUTH_JWT_ALGORITHMS=RS256,ES256 # Supported JWT algorithms
 MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
+# OAuth caching and performance
+MCP_AUTH_TOKEN_CACHE_TTL=300 # Token validation cache TTL (seconds)
+MCP_AUTH_METADATA_CACHE_TTL=3600 # Metadata cache TTL (seconds)
 
 # Security settings
 MCP_WS_ALLOWED_ORIGINS=* # Use specific origins in production
@@ -328,7 +344,7 @@ wscat -c ws://localhost:3002/sse
   "id": 1,
   "method": "initialize",
   "params": {
-    "protocolVersion": "2024-11-05",
+    "protocolVersion": "2025-06-18",
     "capabilities": {},
     "clientInfo": {
       "name": "test-client",
@@ -375,7 +391,7 @@ ws.send(JSON.stringify({
   id: 1,
   method: "initialize",
   params: {
-    protocolVersion: "2024-11-05",
+    protocolVersion: "2025-06-18",
     capabilities: {},
     clientInfo: {
       name: "browser-client",
@@ -658,11 +674,14 @@ For testing with the live demo environment:
 MCP_AUTH_ENABLED=true
 MCP_AUTH_RESOURCE_URI=https://mcpdemo.gauzy.co
 MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
-MCP_AUTH_SERVERS=https://authdemo.gauzy.co
+# JSON-encoded array of authorization servers
+MCP_AUTH_SERVERS='[]' # see the file .env.sample on how to configure it
 MCP_AUTH_JWT_AUDIENCE=https://mcpdemo.gauzy.co
 MCP_AUTH_JWT_ISSUER=https://authdemo.gauzy.co
+MCP_AUTH_JWT_ALGORITHMS=RS256,ES256
 MCP_AUTH_JWT_JWKS_URI=https://authdemo.gauzy.co/.well-known/jwks.json
 MCP_AUTH_TOKEN_CACHE_TTL=300 # 5 minutes cache
+MCP_AUTH_METADATA_CACHE_TTL=3600 # 1 hour cache
 ```
 
 #### Production Environment Configuration
@@ -674,14 +693,19 @@ For production deployment at `https://mcp.gauzy.co`:
 MCP_AUTH_ENABLED=true
 MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
 MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write,mcp.admin
-MCP_AUTH_SERVERS=https://auth.gauzy.co
+# JSON-encoded array of authorization servers
+MCP_AUTH_SERVERS='[]' # see the file .env.sample on how to configure it
 MCP_AUTH_JWT_AUDIENCE=https://mcp.gauzy.co
 MCP_AUTH_JWT_ISSUER=https://auth.gauzy.co
+MCP_AUTH_JWT_ALGORITHMS=RS256,ES256,PS256
 MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
 MCP_AUTH_INTROSPECTION_ENDPOINT=https://auth.gauzy.co/token/introspect
 MCP_AUTH_INTROSPECTION_CLIENT_ID=gauzy-mcp-server
 MCP_AUTH_INTROSPECTION_CLIENT_SECRET=secure-client-secret
 MCP_AUTH_TOKEN_CACHE_TTL=600 # 10 minutes cache
+MCP_AUTH_METADATA_CACHE_TTL=7200 # 2 hours cache
+MCP_AUTH_ALLOW_EMBEDDED_SERVER=false # Disable for production
+MCP_AUTH_SESSION_SECRET=production-session-secret-key
 ```
 
 ### Testing Authorization
