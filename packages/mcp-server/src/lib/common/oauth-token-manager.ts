@@ -93,6 +93,10 @@ export class OAuth2TokenManager {
 		const jti = crypto.randomUUID();
 
 		// Create access token payload
+		const reserved: (keyof TokenPayload)[] = ['sub','aud','iss','iat','exp','nbf','jti','client_id','scope','token_type'];
+		const safeCustomClaims = Object.fromEntries(
+			Object.entries(options.customClaims ?? {}).filter(([k]) => !reserved.includes(k as keyof TokenPayload))
+		);
 		const accessTokenPayload: TokenPayload = {
 			sub: userId,
 			aud: this.audience,
@@ -105,7 +109,7 @@ export class OAuth2TokenManager {
 			client_id: clientId,
 			scope: scopeString,
 			token_type: 'access_token',
-			...options.customClaims
+			...safeCustomClaims
 		};
 
 		// Sign access token
@@ -130,6 +134,10 @@ export class OAuth2TokenManager {
 			});
 
 			// Create refresh token payload
+			const reserved: (keyof TokenPayload)[] = ['sub','aud','iss','iat','exp','nbf','jti','client_id','scope','token_type'];
+			const safeCustomClaims = Object.fromEntries(
+				Object.entries(options.customClaims ?? {}).filter(([k]) => !reserved.includes(k as keyof TokenPayload))
+			);
 			const refreshTokenPayload: TokenPayload = {
 				sub: userId,
 				aud: this.audience,
@@ -141,7 +149,8 @@ export class OAuth2TokenManager {
 				jti: refreshTokenId,
 				client_id: clientId,
 				scope: scopeString,
-				token_type: 'refresh_token'
+				token_type: 'refresh_token',
+				...safeCustomClaims
 			};
 
 			refreshToken = await this.signToken(refreshTokenPayload);
@@ -267,7 +276,8 @@ export class OAuth2TokenManager {
 				const { payload } = await jwtVerify(token, publicKey, {
 					algorithms: ['RS256'],
 					issuer: this.issuer,
-					audience: this.audience
+					audience: this.audience,
+					clockTolerance: 30
 				});
 				return payload as TokenPayload;
 			} else if (this.keyPair.algorithm === 'ES256') {
@@ -276,7 +286,8 @@ export class OAuth2TokenManager {
 				const { payload } = await jwtVerify(token, publicKey, {
 					issuer: this.issuer,
 					audience: this.audience,
-					algorithms: ['ES256']
+					algorithms: ['ES256'],
+					clockTolerance: 30
 				});
 				return payload as TokenPayload;
 			} else {

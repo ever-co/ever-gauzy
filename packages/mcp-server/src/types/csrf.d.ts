@@ -3,12 +3,12 @@
  * Resolves conflicts with express-serve-static-core types
  */
 
-import { CsrfTokenGeneratorRequestUtil } from 'csrf-csrf';
+import type { CsrfTokenGeneratorRequestUtil } from 'csrf-csrf';
 
 declare global {
   namespace Express {
     interface Request {
-      csrfToken?: CsrfTokenGeneratorRequestUtil;
+      csrfToken?: string | CsrfTokenGeneratorRequestUtil;
     }
   }
 }
@@ -16,7 +16,7 @@ declare global {
 // Override the conflicting type definition
 declare module 'express-serve-static-core' {
   interface Request {
-    csrfToken?: CsrfTokenGeneratorRequestUtil;
+    csrfToken?: string | CsrfTokenGeneratorRequestUtil;
   }
 }
 

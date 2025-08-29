@@ -22,6 +22,9 @@ function generateTestJWT(payload = {}, secret = (process.env.MCP_AUTH_JWT_SECRET
     // JWT Header
     const useRS256 = !!devPrivateKey;
     const header = { alg: useRS256 ? 'RS256' : 'HS256', typ: 'JWT' };
+    if (process.env.MCP_DEBUG || process.env.GAUZY_MCP_DEBUG === 'true') {
+        console.log(`[generator] Using ${header.alg} (${useRS256 ? 'dev-private-key.pem found' : 'HMAC secret'})`);
+    }
 
     // Default payload
     const now = Math.floor(Date.now() / 1000);

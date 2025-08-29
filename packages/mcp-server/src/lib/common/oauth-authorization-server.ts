@@ -131,7 +131,7 @@ export class OAuth2AuthorizationServer {
 				audience: config.audience,
 				issuer: config.issuer,
 				algorithms: ['RS256'],
-				jwksUri: `${config.baseUrl}/.well-known/jwks.json`
+				jwksUri: `${config.baseUrl}${config.jwksEndpoint}`
 			}
 		};
 
@@ -148,7 +148,7 @@ export class OAuth2AuthorizationServer {
 
 	private initializeCSRFProtection() {
 		const isHttps = this.config.baseUrl.startsWith('https');
-		
+
 		const {
 			generateCsrfToken,
 			doubleCsrfProtection,
@@ -529,7 +529,7 @@ export class OAuth2AuthorizationServer {
 				`${this.config.baseUrl}${this.config.introspectionEndpoint}` : undefined,
 			userinfo_endpoint: this.config.userInfoEndpoint ?
 				`${this.config.baseUrl}${this.config.userInfoEndpoint}` : undefined,
-			scopes_supported: ['mcp.read', 'mcp.write', 'mcp.admin'],
+			scopes_supported: ['openid', 'profile', 'email', 'roles', 'mcp.read', 'mcp.write', 'mcp.admin'],
 			response_types_supported: ['code'],
 			grant_types_supported: ['authorization_code', 'refresh_token', 'client_credentials'],
 			code_challenge_methods_supported: ['S256', 'plain'],
@@ -657,7 +657,7 @@ export class OAuth2AuthorizationServer {
 				// Restore the original OAuth authorization URL with all parameters
 				const oauthParams = session.oauthParams;
 				const authUrl = new URL(this.config.authorizationEndpoint, this.config.baseUrl);
-				
+
 				// Add all OAuth parameters back to the authorization URL
 				authUrl.searchParams.set('response_type', oauthParams.response_type);
 				authUrl.searchParams.set('client_id', oauthParams.client_id);
@@ -666,14 +666,14 @@ export class OAuth2AuthorizationServer {
 				if (oauthParams.state) authUrl.searchParams.set('state', oauthParams.state);
 				if (oauthParams.code_challenge) authUrl.searchParams.set('code_challenge', oauthParams.code_challenge);
 				if (oauthParams.code_challenge_method) authUrl.searchParams.set('code_challenge_method', oauthParams.code_challenge_method);
-				
+
 				// Clear the stored OAuth parameters
 				delete session.oauthParams;
-				
+
 				this.securityLogger.debug(`Redirecting to authorization with restored OAuth params: ${authUrl.toString()}`);
 				return res.redirect(authUrl.toString());
 			}
-			
+
 			// Fallback: use the normalized return URL (without OAuth parameters)
 			const safeReturnUrl = this.normalizeReturnUrl(returnUrl);
 			res.redirect(safeReturnUrl);
@@ -729,7 +729,8 @@ export class OAuth2AuthorizationServer {
 					originalUrl: req.originalUrl
 				};
 				// Redirect to login with return URL
-				const loginUrl = `${this.config.loginEndpoint}?return_url=${encodeURIComponent(req.originalUrl)}`;
+				const safeOriginal = this.normalizeReturnUrl(req.originalUrl);
+				const loginUrl = `${this.config.loginEndpoint}?return_url=${encodeURIComponent(safeOriginal)}`;
 				return res.redirect(loginUrl);
 			}
 
@@ -785,7 +786,7 @@ export class OAuth2AuthorizationServer {
 			const requestedScopes = scope ? scope.split(' ') : ['mcp.read'];
 			const grantedScopes = requestedScopes.filter(s => client.scopes.includes(s));
 			if (grantedScopes.length === 0) {
-				return this.sendErrorRedirect(res, redirect_uri, 'invalid_scope', 'No permitted scopes requested', state);
+				return this.sendErrorRedirect(res, redirect_uri, 'invalid_scope', 'No permitted scopes requested', state, client_id);
 			}
 
 			// Re-validate redirect URI (defense-in-depth)
@@ -1287,7 +1288,7 @@ export class OAuth2AuthorizationServer {
 					${errorMessage ? `<div class="error">${escapeHtml(errorMessage)}</div>` : ''}
 
 					<form method="POST" action="${escapeHtml(this.config.loginEndpoint || '')}">
-            			<input type="hidden" name="_csrf" value="${csrfToken || ''}" />
+            			<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken || '')}" />
 						<input type="hidden" name="return_url" value="${escapeHtml(returnUrl || '')}">
 
 						<div class="form-group">
@@ -1404,7 +1405,7 @@ export class OAuth2AuthorizationServer {
 					</div>
 
 					<form method="POST" action="${escapeHtml(this.config.authorizationEndpoint)}">
-            			<input type="hidden" name="_csrf" value="${csrfToken || ''}" />
+            			<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken || '')}" />
 						<input type="hidden" name="client_id" value="${escapeHtml(params.client_id)}">
 						<input type="hidden" name="redirect_uri" value="${escapeHtml(params.redirect_uri)}">
 						<input type="hidden" name="scope" value="${escapeHtml(params.scope || '')}">
@@ -1446,14 +1447,28 @@ export class OAuth2AuthorizationServer {
 	/**
 	 * Send error redirect
 	 */
-	private sendErrorRedirect(res: Response, redirectUri: string | undefined, error: string, errorDescription?: string, state?: string) {
+	private sendErrorRedirect(
+		res: Response,
+		redirectUri: string | undefined,
+		error: string,
+		errorDescription?: string,
+		state?: string,
+		clientId?: string
+		) {
 		if (!redirectUri) {
 			return this.sendError(res, error, errorDescription);
 		}
 
 		try {
-			const safe = this.normalizeReturnUrl(redirectUri);
-			const url = new URL(safe, this.config.baseUrl);
+			let url: URL;
+			if (clientId && oAuth2ClientManager.isValidRedirectUri(clientId, redirectUri)) {
+				// Safe to redirect to the validated client redirect_uri (can be external)
+				url = new URL(redirectUri);
+			} else {
+				// Fallback to a safe local endpoint
+				const safe = this.normalizeReturnUrl(redirectUri);
+				url = new URL(safe, this.config.baseUrl);
+			}
 			url.searchParams.append('error', error);
 			if (errorDescription) {
 				url.searchParams.append('error_description', errorDescription);

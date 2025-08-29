@@ -257,21 +257,30 @@ export class OAuthValidator {
 		}
 
 		try {
-			const credentials = Buffer.from(
-				`${this.config.introspection.clientId}:${this.config.introspection.clientSecret}`
-			).toString('base64');
+			const hasSecret = !!this.config.introspection.clientSecret;
+			const headers: Record<string, string> = {
+				'Content-Type': 'application/x-www-form-urlencoded',
+				'Accept': 'application/json'
+			};
+			if (hasSecret) {
+				const credentials = Buffer.from(
+					`${this.config.introspection.clientId}:${this.config.introspection.clientSecret}`
+				).toString('base64');
+				headers['Authorization'] = `Basic ${credentials}`;
+			}
+
+			const body = new URLSearchParams({
+				token,
+				token_type_hint: 'access_token',
+			});
+			if (!hasSecret) {
+				body.set('client_id', this.config.introspection.clientId);
+			}
 
 			const response = await fetch(this.config.introspection.endpoint, {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-					Authorization: `Basic ${credentials}`,
-					Accept: 'application/json'
-				},
-				body: new URLSearchParams({
-					token: token,
-					token_type_hint: 'access_token'
-				}),
+				headers,
+				body,
 				// Abort after 5 seconds
 				signal: (AbortSignal as any).timeout ? (AbortSignal as any).timeout(5000) : undefined
 			});
