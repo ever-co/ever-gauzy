@@ -1,19 +1,29 @@
 # Gauzy MCP Server - Standalone App
 
-A comprehensive MCP (Model Context Protocol) server for integration with AI assistants like Claude Desktop, ChatGPT, and other AI tools. Supports multiple transport layers with enterprise-grade OAuth 2.0 security for different use cases.
+A comprehensive MCP (Model Context Protocol) server for integration with
+AI assistants like Claude Desktop, ChatGPT, and other AI tools. Supports
+multiple transport layers with enterprise-grade OAuth 2.0 security for
+different use cases.
 
 🌐 **Live Demo**: [https://mcpdemo.gauzy.co](https://mcpdemo.gauzy.co)  
 🔒 **Production**: [https://mcp.gauzy.co](https://mcp.gauzy.co)
 
 ## Overview
 
-The Gauzy MCP server provides multiple transport options to interact with your Gauzy platform:
+The Gauzy MCP server provides multiple transport options to interact with
+your Gauzy platform:
 
-- **Stdio Transport** - For direct integration with AI assistants like Claude Desktop
-- **HTTP Transport** - REST API with JSON-RPC 2.0 over HTTP for web applications and testing
-- **WebSocket Transport** - Real-time bidirectional communication for live applications
+- **Stdio Transport** - For direct integration with AI assistants like
+  Claude Desktop
+- **HTTP Transport** - REST API with JSON-RPC 2.0 over HTTP for web
+  applications and testing
+- **WebSocket Transport** - Real-time bidirectional communication for
+  live applications
 
-HTTP and WebSocket transports offer access to project management, time tracking, employee management, and other Gauzy features with optional OAuth 2.0 authorization. User sessions are stored in Redis for scalable session management across multiple server instances.
+HTTP and WebSocket transports offer access to project management, time
+tracking, employee management, and other Gauzy features with optional
+OAuth 2.0 authorization. User sessions are stored in Redis for scalable
+session management across multiple server instances.
 
 ## Quick Start
 
@@ -36,7 +46,8 @@ yarn nx build mcp --configuration=production
 
 ### Running the Server
 
-The server supports three transport modes configured via environment variables:
+The server supports three transport modes configured via environment
+variables:
 
 #### 1. Stdio Transport (Default)
 
@@ -92,7 +103,8 @@ yarn nx serve mcp
    yarn nx build mcp --configuration=production
    ```
 
-2. Add to your Claude Desktop configuration (`~/.claude_desktop_config.json`):
+2. Add to your Claude Desktop configuration 
+   (`~/.claude_desktop_config.json`):
 
    ```json
    {
@@ -114,13 +126,16 @@ yarn nx serve mcp
 
 #### Other AI Assistants
 
-The server communicates via stdio transport, making it compatible with any AI assistant that supports the MCP standard. Refer to your AI assistant's documentation for specific integration steps.
+The server communicates via stdio transport, making it compatible with
+any AI assistant that supports the MCP standard. Refer to your AI
+assistant's documentation for specific integration steps.
 
 ## Transport Configuration
 
 ### Stdio Transport (Default)
 
-Best for AI assistant integration. Configure via environment variables or `.env.local`:
+Best for AI assistant integration. Configure via environment variables
+or `.env.local`:
 
 ```bash
 # Basic configuration
@@ -152,7 +167,7 @@ MCP_CORS_ORIGIN=http://localhost:3000,http://localhost:4200
 MCP_CORS_CREDENTIALS=true
 
 # OAuth 2.0 Authorization (Optional)
-MCP_AUTH_ENABLED=false               # Enable OAuth 2.0 authorization
+MCP_AUTH_ENABLED=false         # Enable OAuth 2.0 authorization
 MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
 MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
 MCP_AUTH_SERVERS=https://auth.gauzy.co
@@ -242,9 +257,10 @@ curl -X POST http://localhost:3001/sse \
   }'
 # NOTE: /sse is the HTTP JSON-RPC endpoint (not SSE)
 
-# Without valid token, you'll get 401 Unauthorized with WWW-Authenticate header:
-# WWW-Authenticate: Bearer resource_metadata="http://localhost:3001/.well-known/oauth-protected-resource", 
-#   error="invalid_token"
+# Without valid token, you'll get 401 Unauthorized with 
+# WWW-Authenticate header:
+# WWW-Authenticate: Bearer resource_metadata="http://localhost:3001/
+#   .well-known/oauth-protected-resource", error="invalid_token"
 ```
 
 ### WebSocket Transport Configuration
@@ -272,7 +288,7 @@ MCP_WS_PER_MESSAGE_DEFLATE=true
 MCP_WS_MAX_PAYLOAD=16777216    # 16MB
 
 # OAuth 2.0 Authorization (Optional)
-MCP_AUTH_ENABLED=false               # Enable OAuth 2.0 authorization
+MCP_AUTH_ENABLED=false         # Enable OAuth 2.0 authorization
 MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
 MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
 MCP_AUTH_SERVERS=https://auth.gauzy.co
@@ -519,10 +535,12 @@ yarn nx test mcp
 #### WebSocket Transport Issues
 
 7. **WebSocket Connection Rejected**
-   - **"Unauthorized origin"**: Set `MCP_WS_ALLOWED_ORIGINS=*` for development
+   - **"Unauthorized origin"**: Set `MCP_WS_ALLOWED_ORIGINS=*` for 
+     development
    - **SSL Certificate errors**: Use `--no-check` flag with wscat
    - **Port already in use**: Kill process: `kill -9 $(lsof -ti:3002)`
-   - **Session errors**: Ensure Redis is running: `redis-server` or check `redis-cli ping`
+   - **Session errors**: Ensure Redis is running: `redis-server` or 
+     check `redis-cli ping`
 
 8. **SSL/TLS Issues**
    - For development: Set `MCP_WS_TLS=false` to disable SSL
@@ -593,29 +611,41 @@ yarn nx serve mcp
 
 ## OAuth 2.0 Authorization
 
-The Gauzy MCP server supports enterprise-grade OAuth 2.0 authorization following:
+The Gauzy MCP server supports enterprise-grade OAuth 2.0 authorization
+following:
 
 - RFC 6749 (OAuth 2.0 Authorization Framework)
 - RFC 9728 (OAuth 2.0 Protected Resource Metadata)
 - RFC 8707 (Resource Indicators)
 
-This enables secure access control for MCP clients like ChatGPT and other AI assistants.
+This enables secure access control for MCP clients like ChatGPT and 
+other AI assistants.
 
 ### Live Environments
 
-- **Production**: `https://mcp.gauzy.co` - Secure production MCP server with full OAuth 2.0 authorization
-- **Demo**: `https://mcpdemo.gauzy.co` - Public demo environment for testing and evaluation
-- **Authorization Server**: `https://auth.gauzy.co` - Production OAuth 2.0 authorization server
-- **Demo Auth**: `https://authdemo.gauzy.co` - Demo authorization server for testing
+- **Production**: `https://mcp.gauzy.co` - Secure production MCP server
+  with full OAuth 2.0 authorization
+- **Demo**: `https://mcpdemo.gauzy.co` - Public demo environment for
+  testing and evaluation
+- **Authorization Server**: `https://auth.gauzy.co` - Production 
+  OAuth 2.0 authorization server
+- **Demo Auth**: `https://authdemo.gauzy.co` - Demo authorization 
+  server for testing
 
 ### Authorization Features
 
-- **Bearer Token Authentication** - Standard RFC 6750 Bearer token support
-- **JWT Token Validation** - Local JWT validation with public key or JWKS endpoint
-- **Token Introspection** - RFC 7662 token introspection for opaque tokens
-- **Protected Resource Metadata** - RFC 9728 metadata endpoint for clients
-- **Scope-based Access Control** - Fine-grained permissions using OAuth 2.0 scopes
-- **Audience Validation** - RFC 8707 resource indicators for token audience claims
+- **Bearer Token Authentication** - Standard RFC 6750 Bearer token 
+  support
+- **JWT Token Validation** - Local JWT validation with public key or 
+  JWKS endpoint
+- **Token Introspection** - RFC 7662 token introspection for opaque 
+  tokens
+- **Protected Resource Metadata** - RFC 9728 metadata endpoint for 
+  clients
+- **Scope-based Access Control** - Fine-grained permissions using 
+  OAuth 2.0 scopes
+- **Audience Validation** - RFC 8707 resource indicators for token 
+  audience claims
 
 ### Configuration
 
@@ -728,7 +758,9 @@ MCP_AUTH_TOKEN_CACHE_TTL=600   # 10 minutes cache
 
   ```http
   HTTP/1.1 401 Unauthorized
-  WWW-Authenticate: Bearer resource_metadata="https://mcp.gauzy.co/.well-known/oauth-protected-resource", error="invalid_token", error_description="Token validation failed"
+  WWW-Authenticate: Bearer resource_metadata="https://mcp.gauzy.co/
+    .well-known/oauth-protected-resource", error="invalid_token", 
+    error_description="Token validation failed"
   ```
 
 - **403 Forbidden** - Insufficient scopes:
@@ -743,10 +775,13 @@ MCP_AUTH_TOKEN_CACHE_TTL=600   # 10 minutes cache
 
 ### Authorization Server Setup
 
-The Gauzy MCP server is pre-configured to work with the Gauzy OAuth 2.0 authorization infrastructure:
+The Gauzy MCP server is pre-configured to work with the Gauzy OAuth 2.0
+authorization infrastructure:
 
-- **Production**: `https://auth.gauzy.co` - Enterprise-grade OAuth 2.0 server
-- **Demo**: `https://authdemo.gauzy.co` - Public demo authorization server
+- **Production**: `https://auth.gauzy.co` - Enterprise-grade OAuth 2.0
+  server
+- **Demo**: `https://authdemo.gauzy.co` - Public demo authorization 
+  server
 
 #### Compatible Authorization Servers
 
@@ -761,8 +796,10 @@ The MCP server works with any OAuth 2.0 compliant authorization server:
 ### Security Best Practices
 
 - **Use HTTPS in production** - Protect tokens in transit
-- **Implement proper token expiration** - Short-lived access tokens (5-15 minutes)
-- **Use refresh tokens** - For long-term access without storing credentials
+- **Implement proper token expiration** - Short-lived access tokens 
+  (5-15 minutes)
+- **Use refresh tokens** - For long-term access without storing 
+  credentials
 - **Validate audience claims** - Prevent token misuse across services
 - **Monitor token usage** - Track access patterns and detect anomalies
 - **Secure private keys** - Use HSM or secure key storage in production
@@ -770,7 +807,8 @@ The MCP server works with any OAuth 2.0 compliant authorization server:
 
 ### Disabled Authorization
 
-When `MCP_AUTH_ENABLED=false` (default), the server operates without authentication, suitable for:
+When `MCP_AUTH_ENABLED=false` (default), the server operates without
+authentication, suitable for:
 
 - Local development and testing
 - Trusted network environments
@@ -778,11 +816,13 @@ When `MCP_AUTH_ENABLED=false` (default), the server operates without authenticat
 
 ## Security Notes
 
-- Store credentials securely (consider using environment files that are not committed to version control)
+- Store credentials securely (consider using environment files that are
+  not committed to version control)
 - Use HTTPS for production API URLs
 - Regularly rotate passwords and API keys
 - Monitor access logs for suspicious activity
-- When using OAuth 2.0, follow the security best practices outlined in the Authorization section above
+- When using OAuth 2.0, follow the security best practices outlined in
+  the Authorization section above
 
 ## Support
 
@@ -791,4 +831,5 @@ For issues specific to the standalone MCP server:
 1. Check the troubleshooting section above
 2. Review the shared MCP server package documentation
 3. Verify your Gauzy API server is running and accessible
-4. Check Claude Desktop or your AI assistant's logs for additional error details
+4. Check Claude Desktop or your AI assistant's logs for additional 
+   error details

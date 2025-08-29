@@ -653,7 +653,7 @@ export class OAuth2AuthorizationServer {
 
 			// Check if we have stored OAuth parameters from the original authorization request
 			const session = req.session as any;
-			if (session?.oauthParams) {
+			if (session && session.oauthParams) {
 				// Restore the original OAuth authorization URL with all parameters
 				const oauthParams = session.oauthParams;
 				const authUrl = new URL(this.config.authorizationEndpoint, this.config.baseUrl);
@@ -716,18 +716,21 @@ export class OAuth2AuthorizationServer {
 
 			// Check if user is authenticated
 			const session = req.session as any;
-			if (!session?.isAuthenticated || !session?.user) {
-				// Store OAuth parameters in session before redirecting to login
-				session.oauthParams = {
-					response_type: params.response_type,
-					client_id: params.client_id,
-					redirect_uri: params.redirect_uri,
-					scope: params.scope,
-					state: params.state,
-					code_challenge: params.code_challenge,
-					code_challenge_method: params.code_challenge_method,
-					originalUrl: req.originalUrl
-				};
+			if (!session || !session.isAuthenticated || !session.user) {
+				// Ensure session exists before storing OAuth parameters
+				if (session) {
+					// Store OAuth parameters in session before redirecting to login
+					session.oauthParams = {
+						response_type: params.response_type,
+						client_id: params.client_id,
+						redirect_uri: params.redirect_uri,
+						scope: params.scope,
+						state: params.state,
+						code_challenge: params.code_challenge,
+						code_challenge_method: params.code_challenge_method,
+						originalUrl: req.originalUrl
+					};
+				}
 				// Redirect to login with return URL
 				const safeOriginal = this.normalizeReturnUrl(req.originalUrl);
 				const loginUrl = `${this.config.loginEndpoint}?return_url=${encodeURIComponent(safeOriginal)}`;
@@ -767,7 +770,7 @@ export class OAuth2AuthorizationServer {
 
 			// Check user session
 			const session = req.session as any;
-			if (!session?.isAuthenticated || !session?.user) {
+			if (!session || !session.isAuthenticated || !session.user) {
 				return this.sendErrorRedirect(res, redirect_uri, 'access_denied', 'User not authenticated', state);
 			}
 
@@ -1041,7 +1044,7 @@ export class OAuth2AuthorizationServer {
 	 */
 	private async handleTokenIntrospection(req: Request, res: Response): Promise<void> {
 		try {
-			const { token, token_type_hint } = req.body as IntrospectionRequest;
+			const { token } = req.body as IntrospectionRequest;
 
 			if (!token) {
 				res.status(400).json({

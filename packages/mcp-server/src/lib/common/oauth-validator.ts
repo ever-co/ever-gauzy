@@ -30,7 +30,7 @@ export class OAuthValidator {
 
 		// RFC 6750 Section 2.1: Authorization Request Header Field
 		const [scheme, token] = authorization.split(/\s+/, 2);
-		if (!scheme || !/^Bearer$/i.test(scheme) || !token) {
+		if (!scheme || !/^Bearer$/i.test(scheme) || !token || /\s/.test(token)) {
 			return null;
 		}
 		return token.trim();
@@ -426,7 +426,7 @@ export class OAuthValidator {
 	 */
 	static formatWWWAuthenticateHeader(resourceMetadataUrl: string, error?: AuthorizationError): string {
 		const esc = (v: string) => v.replace(/["\\]/g, '\\$&').replace(/[\r\n]/g, ' ');
-		let header = `Bearer resource="${esc(resourceMetadataUrl)}"`;
+		let header = `Bearer resource_metadata="${esc(resourceMetadataUrl)}"`;
 
 		if (error) {
 			header += `, error="${esc(error.error)}"`;

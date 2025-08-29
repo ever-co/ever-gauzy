@@ -21,7 +21,7 @@ const devPrivateKey = fs.existsSync(devPrivateKeyPath) ? fs.readFileSync(devPriv
 function generateTestJWT(payload = {}, secret = (process.env.MCP_AUTH_JWT_SECRET || 'dev-secret-key-for-testing-only'))  {
     // JWT Header
     const useRS256 = !!devPrivateKey;
-    const header = { alg: useRS256 ? 'RS256' : 'HS256', typ: 'JWT' };
+    const header = { alg: useRS256 ? 'RS256' : 'HS256', typ: 'JWT', ...(useRS256 ? { kid: 'dev-key' } : {}) };
     if (process.env.MCP_DEBUG || process.env.GAUZY_MCP_DEBUG === 'true') {
         console.log(`[generator] Using ${header.alg} (${useRS256 ? 'dev-private-key.pem found' : 'HMAC secret'})`);
     }
