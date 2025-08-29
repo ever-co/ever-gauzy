@@ -36,6 +36,7 @@
 		"express-rate-limit": "^8.0.1",
 		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.5",
+		"csrf-csrf": "4.0.3",
 		"axios": "^1.7.0",
 		"zod": "^3.25.67",
 		"ws": "^8.18.3",

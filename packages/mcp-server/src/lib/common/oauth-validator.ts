@@ -143,17 +143,18 @@ export class OAuthValidator {
 					const keyData = this.config.jwt.publicKey;
 
 					// Determine if key is PEM or JWK format
+					const configuredAlg = this.config.jwt?.algorithms?.[0] || 'RS256';
 					if (keyData.startsWith('-----BEGIN')) {
-						// PEM format - use importSPKI
-						publicKey = await importSPKI(keyData, 'RS256');
+					// PEM format - use importSPKI with configured algorithm
+					publicKey = await importSPKI(keyData, configuredAlg);
 					} else {
 						try {
 							// Try to parse as JWK
 							const jwk = JSON.parse(keyData);
-							publicKey = await importJWK(jwk, jwk.alg || 'RS256');
+							publicKey = await importJWK(jwk, jwk.alg || configuredAlg);
 						} catch {
-							// If not valid JSON, assume it's a raw key string
-							publicKey = await importSPKI(keyData, 'RS256');
+							// If not valid JSON, assume PEM-like SPKI string
+							publicKey = await importSPKI(keyData, configuredAlg);
 						}
 					}
 

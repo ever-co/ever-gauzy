@@ -8,17 +8,20 @@
  */
 
 const crypto = require('crypto');
+const fs = require('fs');
 
 function base64UrlEncode(str) {
     return Buffer.from(str).toString('base64url');
 }
 
+// Optional dev RSA key for RS256 (place dev-private-key.pem next to this script)
+const devPrivateKeyPath = './dev-private-key.pem';
+const devPrivateKey = fs.existsSync(devPrivateKeyPath) ? fs.readFileSync(devPrivateKeyPath) : null
+
 function generateTestJWT(payload = {}, secret = (process.env.MCP_AUTH_JWT_SECRET || 'dev-secret-key-for-testing-only'))  {
     // JWT Header
-    const header = {
-        alg: 'RS256',
-        typ: 'JWT'
-    };
+    const useRS256 = !!devPrivateKey;
+    const header = { alg: useRS256 ? 'RS256' : 'HS256', typ: 'JWT' };
 
     // Default payload
     const now = Math.floor(Date.now() / 1000);
@@ -39,14 +42,20 @@ function generateTestJWT(payload = {}, secret = (process.env.MCP_AUTH_JWT_SECRET
 
     // Create signature
     const data = `${encodedHeader}.${encodedPayload}`;
-    const signature = crypto
-        .createHmac('sha256', secret)
-        .update(data)
-        .digest('base64')
-        .replace(/=/g, '')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_');
-
+    let signature;
+    if (useRS256) {
+        const signer = crypto.createSign('RSA-SHA256');
+        signer.update(data);
+        signer.end();
+        signature = signer.sign(devPrivateKey).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    } else {
+        signature = crypto.createHmac('sha256', secret)
+            .update(data)
+            .digest('base64')
+            .replace(/=/g, '')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_');
+    }
     return `${data}.${signature}`;
 }
 

@@ -12,6 +12,7 @@ import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import { SecurityLogger } from './security-logger';
 import escapeHtml from 'escape-html';
+import { doubleCsrf } from 'csrf-csrf';
 import { oAuth2ClientManager, OAuth2Client } from './oauth-client-manager';
 import { oAuth2AuthorizationCodeManager } from './oauth-authorization-code-manager';
 import { OAuth2TokenManager } from './oauth-token-manager';
@@ -105,14 +106,20 @@ export class OAuth2AuthorizationServer {
 	private authenticateUser?: (credentials: LoginCredentials) => Promise<AuthenticatedUser | null>;
 	private users: Map<string, AuthenticatedUser> = new Map(); // In-memory user store for demo
 
+	// Add CSRF protection properties
+	private csrfProtection: any;
+	private generateToken: any;
+
 	constructor(private config: OAuth2ServerConfig) {
 		this.securityLogger = new SecurityLogger();
 		this.tokenManager = new OAuth2TokenManager(config.issuer, config.audience);
 
+		this.initializeCSRFProtection();
+
 		// Create basic authorization config for the validator
 		const authConfig: AuthorizationConfig = {
 			enabled: true,
-			resourceUri: config.baseUrl,
+			resourceUri: config.audience,
 			authorizationServers: [{
 				issuer: config.issuer,
 				authorizationEndpoint: config.authorizationEndpoint,
@@ -137,6 +144,46 @@ export class OAuth2AuthorizationServer {
 		this.setupMiddleware();
 		this.setupRoutes();
 		this.setupErrorHandling();
+	}
+
+	private initializeCSRFProtection() {
+		const isHttps = this.config.baseUrl.startsWith('https');
+		
+		const {
+			generateCsrfToken,
+			doubleCsrfProtection,
+		} = doubleCsrf({
+			getSecret: () => this.config.sessionSecret,
+			getSessionIdentifier: (req) => {
+				// For local development, use a simple consistent identifier
+				if (!isHttps) {
+					return `local-session-${req.ip || '127.0.0.1'}`;
+				}
+				// Use session ID if available, otherwise fall back to IP + User-Agent
+				const session = req.session as any;
+				if (session?.id) {
+					return session.id;
+				}
+				const ip = req.ip || req.connection.remoteAddress || 'unknown-ip';
+				const userAgent = req.get('User-Agent') || 'unknown-agent';
+				return `${ip}-${userAgent}`;
+			},
+			cookieName: isHttps ? '__Host-mcp.x-csrf-token' : 'mcp-csrf-token',
+			cookieOptions: {
+				httpOnly: true,
+				sameSite: isHttps ? 'strict' : 'lax',
+				secure: isHttps,
+				path: '/',
+			},
+			size: 64,
+			ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
+			getCsrfTokenFromRequest: (req) => {
+				return req.body._csrf || req.headers['x-csrf-token'];
+			},
+		});
+
+		this.csrfProtection = doubleCsrfProtection;
+		this.generateToken = generateCsrfToken;
 	}
 
 	/**
@@ -205,19 +252,52 @@ export class OAuth2AuthorizationServer {
 			rolling: true
 		};
 
-		// Add Redis store if URL is provided
-		if (this.config.redisUrl) {
+		// Add Redis store if URL is provided (prioritize REDIS_URL env var for production durability)
+		const redisUrl = process.env.REDIS_URL || this.config.redisUrl;
+		if (redisUrl) {
 			try {
 				const RedisStore = require('connect-redis').default;
 				const Redis = require('ioredis');
-				const redisClient = new Redis(this.config.redisUrl);
-				sessionConfig.store = new RedisStore({ client: redisClient });
-				this.securityLogger.info('Redis session store configured');
+				const redisClient = new Redis(redisUrl, {
+					// Production-ready Redis configuration
+					retryDelayOnFailover: 100,
+					enableReadyCheck: false,
+					maxRetriesPerRequest: 3,
+					lazyConnect: true,
+					// Log connection events for better monitoring
+					connectionName: 'mcp-oauth-session-store'
+				});
+
+				// Handle Redis connection events
+				redisClient.on('connect', () => {
+					this.securityLogger.info('Redis session store connected');
+				});
+				redisClient.on('error', (error) => {
+					this.securityLogger.error('Redis session store error:', error);
+				});
+				redisClient.on('ready', () => {
+					this.securityLogger.info('Redis session store ready');
+				});
+
+				sessionConfig.store = new RedisStore({
+					client: redisClient,
+					prefix: 'mcp-oauth-sess:',
+					ttl: 60 * 60 * 24 // 24 hours TTL
+				});
+				this.securityLogger.info(`Redis session store configured using ${process.env.REDIS_URL ? 'REDIS_URL' : 'config.redisUrl'}`);
 			} catch (error: any) {
-				this.securityLogger.warn('Failed to configure Redis store, using memory store:', error);
+				this.securityLogger.error('Failed to configure Redis store, falling back to memory store:', error);
+				if (process.env.NODE_ENV === 'production') {
+					this.securityLogger.error('CRITICAL: Production deployment requires persistent session storage!');
+				}
 			}
 		}
 
+		if (!sessionConfig.store && process.env.NODE_ENV === 'production') {
+			this.securityLogger.error('CRITICAL: Using in-memory session store in production. Configure REDIS_URL environment variable for session durability and scalability!');
+		} else if (!sessionConfig.store) {
+			this.securityLogger.info('Using in-memory session store for development');
+		}
 		this.app.use(session(sessionConfig));
 
 		// Security headers
@@ -272,23 +352,25 @@ export class OAuth2AuthorizationServer {
 			this.handleJWKS(req, res);
 		});
 
-		// Login endpoint
+		// Login endpoints with CSRF protection
 		if (this.config.loginEndpoint) {
+			// GET request doesn't need CSRF protection - just generate token
 			this.app.get(this.config.loginEndpoint, (req, res) => {
 				this.handleLoginPage(req, res);
 			});
-			this.app.post(this.config.loginEndpoint, (req, res) => {
+			// POST request needs CSRF protection
+			this.app.post(this.config.loginEndpoint, this.csrfProtection, (req, res) => {
 				this.handleLogin(req, res);
 			});
 		}
 
-		// Authorization endpoint (RFC 6749 Section 3.1)
+		 // Authorization endpoint (GET doesn't need CSRF, POST does)
 		this.app.get(this.config.authorizationEndpoint, (req, res) => {
 			this.handleAuthorize(req, res);
 		});
 
-		// Authorization consent (POST)
-		this.app.post(this.config.authorizationEndpoint, (req, res) => {
+		// Authorization consent (POST) with CSRF protection
+		this.app.post(this.config.authorizationEndpoint, this.csrfProtection, (req, res) => {
 			this.handleAuthorizationConsent(req, res);
 		});
 
@@ -477,13 +559,19 @@ export class OAuth2AuthorizationServer {
 	}
 
 	/**
-	 * Handle login page
+	 * Handle login page with CSRF token
 	 */
 	private handleLoginPage(req: Request, res: Response) {
 		const error = req.query.error as string;
 		const rawReturnUrl = (req.query.return_url as string) || this.config.authorizationEndpoint;
 		const safeReturnUrl = this.normalizeReturnUrl(rawReturnUrl);
-		res.send(this.generateLoginForm(error, safeReturnUrl));
+
+		// Generate CSRF token for the form
+		const csrfToken = this.generateToken(req, res);
+		const sessionId = !this.config.baseUrl.startsWith('https') ? `local-session-${req.ip || '127.0.0.1'}` : 'session-based';
+		this.securityLogger.debug(`Generated CSRF token for login form - Token: ${csrfToken?.substring(0, 10)}..., Session ID: ${sessionId}`);
+
+		res.send(this.generateLoginForm(error, safeReturnUrl, csrfToken));
 	}
 
 	// Allowlist of permitted relative return URLs for redirection (add your app's expected endpoints here)
@@ -528,6 +616,9 @@ export class OAuth2AuthorizationServer {
 	 */
 	private async handleLogin(req: Request, res: Response) {
 		try {
+			const receivedToken = req.body._csrf;
+			const sessionId = !this.config.baseUrl.startsWith('https') ? `local-session-${req.ip || '127.0.0.1'}` : 'session-based';
+			this.securityLogger.debug(`Processing login submission - Received token: ${receivedToken?.substring(0, 10)}..., Session ID: ${sessionId}`);
 			const { email, password, return_url } = req.body;
 			const returnUrl = return_url || this.config.authorizationEndpoint;
 
@@ -560,8 +651,30 @@ export class OAuth2AuthorizationServer {
 
 			this.securityLogger.info('User authenticated successfully', { userId: user.userId, email: user.email });
 
-			// Validate and redirect back to authorization flow
-			// normalizeReturnUrl validates against ALLOWED_RETURN_PATHS allowlist to prevent open redirects
+			// Check if we have stored OAuth parameters from the original authorization request
+			const session = req.session as any;
+			if (session?.oauthParams) {
+				// Restore the original OAuth authorization URL with all parameters
+				const oauthParams = session.oauthParams;
+				const authUrl = new URL(this.config.authorizationEndpoint, this.config.baseUrl);
+				
+				// Add all OAuth parameters back to the authorization URL
+				authUrl.searchParams.set('response_type', oauthParams.response_type);
+				authUrl.searchParams.set('client_id', oauthParams.client_id);
+				authUrl.searchParams.set('redirect_uri', oauthParams.redirect_uri);
+				if (oauthParams.scope) authUrl.searchParams.set('scope', oauthParams.scope);
+				if (oauthParams.state) authUrl.searchParams.set('state', oauthParams.state);
+				if (oauthParams.code_challenge) authUrl.searchParams.set('code_challenge', oauthParams.code_challenge);
+				if (oauthParams.code_challenge_method) authUrl.searchParams.set('code_challenge_method', oauthParams.code_challenge_method);
+				
+				// Clear the stored OAuth parameters
+				delete session.oauthParams;
+				
+				this.securityLogger.debug(`Redirecting to authorization with restored OAuth params: ${authUrl.toString()}`);
+				return res.redirect(authUrl.toString());
+			}
+			
+			// Fallback: use the normalized return URL (without OAuth parameters)
 			const safeReturnUrl = this.normalizeReturnUrl(returnUrl);
 			res.redirect(safeReturnUrl);
 
@@ -572,7 +685,7 @@ export class OAuth2AuthorizationServer {
 	}
 
 	/**
-	 * Handle authorization endpoint (user consent)
+	 * Handle authorization endpoint (user consent) with CSRF token from forms
 	 */
 	private handleAuthorize(req: Request, res: Response) {
 		try {
@@ -594,17 +707,37 @@ export class OAuth2AuthorizationServer {
 			if (!oAuth2ClientManager.isValidRedirectUri(params.client_id, params.redirect_uri)) {
 				return this.sendError(res, 'invalid_request', 'Invalid redirect URI');
 			}
+			// Enforce PKCE for public clients
+			if (client.clientType === 'public') {
+				if (!params.code_challenge || (process.env.NODE_ENV === 'production' && params.code_challenge_method !== 'S256')) {
+					return this.sendErrorRedirect(res, params.redirect_uri, 'invalid_request', 'PKCE (S256) is required for public clients', params.state);
+				}
+			}
 
 			// Check if user is authenticated
 			const session = req.session as any;
 			if (!session?.isAuthenticated || !session?.user) {
+				// Store OAuth parameters in session before redirecting to login
+				session.oauthParams = {
+					response_type: params.response_type,
+					client_id: params.client_id,
+					redirect_uri: params.redirect_uri,
+					scope: params.scope,
+					state: params.state,
+					code_challenge: params.code_challenge,
+					code_challenge_method: params.code_challenge_method,
+					originalUrl: req.originalUrl
+				};
 				// Redirect to login with return URL
 				const loginUrl = `${this.config.loginEndpoint}?return_url=${encodeURIComponent(req.originalUrl)}`;
 				return res.redirect(loginUrl);
 			}
 
+			// Generate CSRF token for consent form
+			const csrfToken = this.generateToken(req, res);
+
 			// Show consent form for authenticated user
-			res.send(this.generateConsentForm(params, client, session.user));
+			res.send(this.generateConsentForm(params, client, session.user, csrfToken));
 
 		} catch (error: any) {
 			this.securityLogger.error('Authorization endpoint error:', error);
@@ -919,10 +1052,10 @@ export class OAuth2AuthorizationServer {
 
 			// Validate the requesting client (simplified - in production, implement proper client auth)
 			const authHeader = req.headers.authorization;
-			if (!authHeader || !authHeader.startsWith('Bearer ')) {
+			if (!authHeader || !authHeader.startsWith('Basic ')) {
 				res.status(401).json({
 					error: 'invalid_client',
-					error_description: 'Client authentication required'
+					error_description: 'Client authentication (Basic) required'
 				});
 				return;
 			}
@@ -1114,60 +1247,9 @@ export class OAuth2AuthorizationServer {
 	}
 
 	/**
-	 * Validate return URL to prevent open redirect attacks
+	 * Generate login form with CSRF token
 	 */
-	private validateReturnUrl(returnUrl: string): string {
-		// Default safe URL
-		const defaultUrl = this.config.authorizationEndpoint;
-
-		try {
-			const url = new URL(returnUrl, this.config.baseUrl);
-
-			// Define allowed URLs/paths for redirects
-			const allowedPaths = [
-				this.config.authorizationEndpoint,
-				this.config.loginEndpoint,
-				'/callback'
-			];
-
-			// Check if the URL is from the same origin (same protocol, host, and port)
-			const baseUrl = new URL(this.config.baseUrl);
-			if (url.origin !== baseUrl.origin) {
-				this.securityLogger.warn('Redirect to external URL blocked', {
-					returnUrl,
-					origin: url.origin,
-					expectedOrigin: baseUrl.origin
-				});
-				return defaultUrl;
-			}
-
-			// Check if the path is in our allowed list
-			if (!allowedPaths.includes(url.pathname)) {
-				// Allow authorization endpoint with query parameters (OAuth flow)
-				if (url.pathname === this.config.authorizationEndpoint) {
-					return returnUrl;
-				}
-
-				this.securityLogger.warn('Redirect to unauthorized path blocked', {
-					returnUrl,
-					path: url.pathname,
-					allowedPaths
-				});
-				return defaultUrl;
-			}
-
-			return returnUrl;
-		} catch (error) {
-			// Invalid URL format
-			this.securityLogger.warn('Invalid return URL format blocked', { returnUrl, error: error });
-			return defaultUrl;
-		}
-	}
-
-	/**
-	 * Generate login form HTML
-	 */
-	private generateLoginForm(error?: string, returnUrl?: string): string {
+	private generateLoginForm(error?: string, returnUrl?: string, csrfToken?: string): string {
 		const errorMessage = error ? this.getErrorMessage(error) : '';
 
 		return `
@@ -1205,6 +1287,7 @@ export class OAuth2AuthorizationServer {
 					${errorMessage ? `<div class="error">${escapeHtml(errorMessage)}</div>` : ''}
 
 					<form method="POST" action="${escapeHtml(this.config.loginEndpoint || '')}">
+            			<input type="hidden" name="_csrf" value="${csrfToken || ''}" />
 						<input type="hidden" name="return_url" value="${escapeHtml(returnUrl || '')}">
 
 						<div class="form-group">
@@ -1244,9 +1327,9 @@ export class OAuth2AuthorizationServer {
 	}
 
 	/**
-	 * Generate user consent form HTML
+	 * Generate user consent form with CSRF token
 	 */
-	private generateConsentForm(params: AuthorizeRequest, client: OAuth2Client, user?: AuthenticatedUser): string {
+	private generateConsentForm(params: AuthorizeRequest, client: OAuth2Client, user?: AuthenticatedUser, csrfToken?: string): string {
 		const scopes = params.scope ? params.scope.split(' ') : ['mcp.read'];
 		const scopeDescriptions = {
 			'mcp.read': 'Read access to your MCP data and tools',
@@ -1321,6 +1404,7 @@ export class OAuth2AuthorizationServer {
 					</div>
 
 					<form method="POST" action="${escapeHtml(this.config.authorizationEndpoint)}">
+            			<input type="hidden" name="_csrf" value="${csrfToken || ''}" />
 						<input type="hidden" name="client_id" value="${escapeHtml(params.client_id)}">
 						<input type="hidden" name="redirect_uri" value="${escapeHtml(params.redirect_uri)}">
 						<input type="hidden" name="scope" value="${escapeHtml(params.scope || '')}">
@@ -1409,12 +1493,36 @@ export class OAuth2AuthorizationServer {
 	}
 
 	/**
-	 * Register error handling middleware (must be called after all routes are set up)
+	 * Register error handling with CSRF error support
 	 */
 	private setupErrorHandling() {
-	this.app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-		this.securityLogger.error('OAuth server error:', err as Error);
-		res.status(500).json({ error: 'server_error', error_description: 'Internal server error' });
-	});
+		this.app.use((error: any, req: Request, res: Response, next: NextFunction): void => {
+			if (error?.code === 'EBADCSRFTOKEN') {
+				this.securityLogger.warn('CSRF token validation failed', {
+					ip: req.ip,
+					userAgent: req.get('User-Agent'),
+					url: req.originalUrl
+				});
+
+				// For OAuth redirects, send error to redirect_uri if available
+				if (req.body.redirect_uri && req.body.state) {
+					this.sendErrorRedirect(res, req.body.redirect_uri, 'invalid_request', 'CSRF protection failed', req.body.state);
+					return;
+				}
+
+				res.status(403).json({
+					error: 'invalid_request',
+					error_description: 'CSRF protection failed. Please try again.'
+				});
+				return;
+			}
+
+			// Handle other errors
+			this.securityLogger.error('Unhandled error:', error);
+			res.status(500).json({
+				error: 'server_error',
+				error_description: 'Internal server error'
+			});
+		});
 	}
 }

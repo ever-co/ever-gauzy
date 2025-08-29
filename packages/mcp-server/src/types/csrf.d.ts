@@ -1,0 +1,23 @@
+/**
+ * Type declarations for csrf-csrf library compatibility
+ * Resolves conflicts with express-serve-static-core types
+ */
+
+import { CsrfTokenGeneratorRequestUtil } from 'csrf-csrf';
+
+declare global {
+  namespace Express {
+    interface Request {
+      csrfToken?: CsrfTokenGeneratorRequestUtil;
+    }
+  }
+}
+
+// Override the conflicting type definition
+declare module 'express-serve-static-core' {
+  interface Request {
+    csrfToken?: CsrfTokenGeneratorRequestUtil;
+  }
+}
+
+export {};

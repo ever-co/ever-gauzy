@@ -5,7 +5,7 @@
  */
 
 import { SignJWT, importPKCS8, importSPKI, jwtVerify } from 'jose';
-import * as crypto from 'crypto';
+import * as crypto from 'node:crypto';
 import { SecurityLogger } from './security-logger';
 
 export interface TokenPair {
@@ -251,7 +251,7 @@ export class OAuth2TokenManager {
 				return token;
 			}
 		} catch (error: any) {
-			this.securityLogger.error('Token signing failed:', error);
+			this.securityLogger.error('Token signing failed', error as Error);
 			throw new Error(`Failed to sign token: ${error.message}`);
 		}
 	}
@@ -283,6 +283,7 @@ export class OAuth2TokenManager {
 				throw new Error(`Unsupported algorithm: ${this.keyPair.algorithm}`);
 			}
 		} catch (error: any) {
+			this.securityLogger.error('Token verification failed', error as Error);
 			throw new Error(`Token verification failed: ${error.message}`);
 		}
 	}

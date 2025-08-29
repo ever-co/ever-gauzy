@@ -155,7 +155,6 @@ MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
 MCP_AUTH_SERVERS=https://auth.gauzy.co
 MCP_AUTH_JWT_AUDIENCE=https://mcp.gauzy.co
 MCP_AUTH_JWT_ISSUER=https://auth.gauzy.co
-MCP_AUTH_JWT_PUBLIC_KEY_PATH=/path/to/public-key.pem
 # Or use JWKS endpoint
 MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
 #
@@ -275,7 +274,7 @@ MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
 MCP_AUTH_SERVERS=https://auth.gauzy.co
 MCP_AUTH_JWT_AUDIENCE=https://mcp.gauzy.co
 MCP_AUTH_JWT_ISSUER=https://auth.gauzy.co
-MCP_AUTH_JWT_PUBLIC_KEY_PATH=/path/to/public-key.pem
+MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
 
 # Security settings
 MCP_WS_ALLOWED_ORIGINS=*                  # Use specific origins in production
@@ -576,7 +575,7 @@ MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
 MCP_AUTH_SERVERS=https://authdemo.gauzy.co
 MCP_AUTH_JWT_AUDIENCE=https://mcpdemo.gauzy.co
 MCP_AUTH_JWT_ISSUER=https://authdemo.gauzy.co
-MCP_AUTH_JWT_PUBLIC_KEY_PATH=./dev-public-key.pem
+MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
 MCP_AUTH_TOKEN_CACHE_TTL=300        # 5 minutes cache
 ```
 
