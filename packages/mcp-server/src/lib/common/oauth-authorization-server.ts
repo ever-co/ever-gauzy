@@ -616,9 +616,8 @@ export class OAuth2AuthorizationServer {
 	 */
 	private async handleLogin(req: Request, res: Response) {
 		try {
-			const receivedToken = req.body._csrf;
 			const sessionId = !this.config.baseUrl.startsWith('https') ? `local-session-${req.ip || '127.0.0.1'}` : 'session-based';
-			this.securityLogger.debug(`Processing login submission - Received token: ${receivedToken?.substring(0, 10)}..., Session ID: ${sessionId}`);
+			this.securityLogger.debug(`Processing login submission - Session ID: ${sessionId}`);
 			const { email, password, return_url } = req.body;
 			const returnUrl = return_url || this.config.authorizationEndpoint;
 
@@ -798,7 +797,7 @@ export class OAuth2AuthorizationServer {
 
 			// Re-validate redirect URI (defense-in-depth)
 			if (!oAuth2ClientManager.isValidRedirectUri(client_id, redirect_uri)) {
-				return this.sendErrorRedirect(res, redirect_uri, 'invalid_request', 'Invalid redirect URI', state);
+				return this.sendErrorRedirect(res, redirect_uri, 'invalid_request', 'Invalid redirect URI', state, client_id);
 			}
 
 			// Generate authorization code

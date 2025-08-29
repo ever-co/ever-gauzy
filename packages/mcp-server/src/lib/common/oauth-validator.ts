@@ -127,7 +127,8 @@ export class OAuthValidator {
 			if (this.config.jwt?.jwksUri) {
 				try {
 					const JWKS = createRemoteJWKSet(new URL(this.config.jwt.jwksUri), {
-						timeoutDuration: 5000
+						timeoutDuration: 5000,
+						cooldownDuration: 30000
 					});
 					const { payload: josePayload } = await jwtVerify(token, JWKS, {
 						issuer: this.config.jwt.issuer,
@@ -230,7 +231,7 @@ export class OAuthValidator {
 			const scopeFromScope = this.normalizeScopes(payload.scope);
 			const scopeFromScp = this.normalizeScopes(payload.scp);
 			// Prefer 'scope' claim, but merge both if available
-			const scopes = scopeFromScope.length > 0 ? scopeFromScope : scopeFromScp.length > 0 ? scopeFromScp : [];
+			const scopes = Array.from(new Set([...scopeFromScope, ...scopeFromScp]));
 
 			return {
 				valid: true,
@@ -345,8 +346,9 @@ export class OAuthValidator {
 			return false;
 		}
 
-		const audiences = Array.isArray(tokenAudience) ? tokenAudience : [tokenAudience];
-		return audiences.includes(expectedAudience);
+		const norm = (v: string) => v.replace(/\/+$/, '');
+		const audiences = (Array.isArray(tokenAudience) ? tokenAudience : [tokenAudience]).map(String).map(norm);
+		return audiences.includes(norm(expectedAudience));
 	}
 
 	/**
@@ -396,6 +398,9 @@ export class OAuthValidator {
 			return null;
 		}
 
+		// LRU touch
+		this.tokenCache.delete(token);
+		this.tokenCache.set(token, cached);
 		return cached.result;
 	}
 
