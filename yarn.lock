@@ -21567,10 +21567,10 @@ get-value@^2.0.3, get-value@^2.0.6:
   resolved "https://registry.yarnpkg.com/get-value/-/get-value-2.0.6.tgz#dc15ca1c672387ca76bd37ac0a395ba2042a2c28"
   integrity sha512-Ln0UQDlxH1BapMu3GPtf7CuYNwRZf2gwCuPqbyG6pB8WfmFpzqcy4xtAaAMUhnNqjMKTiCPZG2oMT3YSx8U2NA==
 
-get-windows@^9.2.0:
-  version "9.2.0"
-  resolved "https://registry.yarnpkg.com/get-windows/-/get-windows-9.2.0.tgz#5fb490bed0f2751f024c873788650d7692cc210c"
-  integrity sha512-Gnz+EV2aZB/9r2JOJsM4rHlzJoR74IV/v05QAaZ5beRJznYcRnmNSnqcY2Ylvm7XA1Ls1N3vSp1fO8WG9P+bYg==
+get-windows@^9.2.3:
+  version "9.2.3"
+  resolved "https://registry.npmjs.org/get-windows/-/get-windows-9.2.3.tgz#8cae1053404ede7d6b9d5f7c0f9d0df4233f9f48"
+  integrity sha512-rTO5ms7Qb5upkNI0UM49W6O1PAcosGlEMitOE2JGeo8yDgBy38xWhxg5GrpV/A+i1p71JogyIM/CZg5RZO0Wjw==
   optionalDependencies:
     "@mapbox/node-pre-gyp" "^1.0.11"
     node-addon-api "^8.1.0"
