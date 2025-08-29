@@ -106,7 +106,8 @@ const status = manager.getStatus();
 - **Session Persistence**: Maintains authentication state across sessions
 - **Auto-login**: Configurable automatic login on server start
 - **OAuth 2.0 Authorization**: OAuth 2.0 bearer authorization (RFC 6749, RFC 6750)
-- **Protected Resource Metadata**: RFC 9728 /.well-known/oauth-protected-resource for clients/AS discovery
+- **Protected Resource Metadata**: RFC 9728 /.well-known/oauth-protected-resource
+  for clients/AS discovery
 - **Token Validation**: JWT and token introspection support with audience validation
 - **Scope Management**: Fine-grained access control with OAuth 2.0 scopes
 
