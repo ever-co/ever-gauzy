@@ -588,7 +588,7 @@ This provides detailed information about:
 | **Session Support** | N/A | Yes (Redis) | Yes (Redis) |
 | **CORS** | N/A | Yes | Yes |
 | **OAuth 2.0** | Not supported | Yes (Bearer tokens) | Yes (Bearer tokens) |
-| **Security** | Process isolation | HTTPS + Sessions + OAuth | WSS + Origin validation + OAuth |
+| **Security** | Process isolation | HTTPS + Sessions | WSS + OAuth |
 | **Rate Limiting** | N/A | Yes | Yes |
 | **Best For** | Claude Desktop | REST clients, Postman | Live dashboards, browsers |
 | **Port** | N/A | 3001 (default) | 3002 (default) |
@@ -704,7 +704,7 @@ MCP_AUTH_TOKEN_CACHE_TTL=600 # 10 minutes cache
      -H "Accept: application/json"
    ```
 
-3. **Make Authorized Request**:
+2. **Make Authorized Request**:
 
    ```bash
    # Demo Environment
@@ -746,7 +746,7 @@ MCP_AUTH_TOKEN_CACHE_TTL=600 # 10 minutes cache
   ```json
   {
     "error": "insufficient_scope",
-    "error_description": "The request requires higher privileges than provided by the access token",
+    "error_description": "Request requires higher privileges than provided",
     "scope": "mcp.read mcp.write"
   }
   ```
