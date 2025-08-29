@@ -51,8 +51,9 @@ async function main() {
 		log.info(`🌐 HTTP transport available at: ${transport.url}`);
 		log.info(`📡 API endpoints:`);
 		log.info(`   - GET  ${transport.url}/health`);
-		log.info(`   - POST ${transport.url}/mcp`);
-		log.info(`   - GET  ${transport.url}/mcp/events`);
+		log.info(`   - POST ${transport.url}/sse`);
+		log.info(`   - GET  ${transport.url}/sse/events`);
+		log.info(`   - GET  ${transport.url}/.well-known/oauth-protected-resource`);
 	} else {
 		log.info('📟 Server ready for stdio communication');
 	}
