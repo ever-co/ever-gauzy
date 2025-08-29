@@ -575,7 +575,7 @@ MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
 MCP_AUTH_SERVERS=https://authdemo.gauzy.co
 MCP_AUTH_JWT_AUDIENCE=https://mcpdemo.gauzy.co
 MCP_AUTH_JWT_ISSUER=https://authdemo.gauzy.co
-MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
+MCP_AUTH_JWT_JWKS_URI=https://authdemo.gauzy.co/.well-known/jwks.json
 MCP_AUTH_TOKEN_CACHE_TTL=300        # 5 minutes cache
 ```
 
