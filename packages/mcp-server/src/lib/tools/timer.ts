@@ -1,8 +1,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Logger } from '@nestjs/common';
 import { z } from 'zod';
-import log from 'electron-log';
-import { apiClient } from '../common/api-client.js';
-import { authManager } from '../common/auth-manager.js';
+import { apiClient } from '../common/api-client';
+import { authManager } from '../common/auth-manager';
+
+const logger = new Logger('TimerTools');
 
 export const registerTimerTools = (server: McpServer) => {
 	// Timer status tool
@@ -37,7 +39,7 @@ export const registerTimerTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching timer status:', error);
+				logger.error('Error fetching timer status:', error instanceof Error ? error.stack : undefined);
 				throw new Error(`Failed to fetch timer status: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
 		}
@@ -113,7 +115,7 @@ export const registerTimerTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error starting timer:', error);
+				logger.error('Error starting timer:', error);
 				throw new Error(`Failed to start timer: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
 		}
@@ -161,7 +163,7 @@ export const registerTimerTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error stopping timer:', error);
+				logger.error('Error stopping timer:', error);
 				throw new Error(`Failed to stop timer: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
 		}

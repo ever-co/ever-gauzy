@@ -6,6 +6,7 @@ import { InviteAcceptUserHandler } from './invite.accept-user.handler';
 import { InviteBulkCreateHandler } from './invite.bulk.create.handler';
 import { InviteOrganizationContactHandler } from './invite.organization-contact.handler';
 import { InviteResendHandler } from './invite.resend.handler';
+import { InviteRejectHandler } from './invite-reject.handler';
 
 export const CommandHandlers = [
 	InviteAcceptCandidateHandler,
@@ -16,4 +17,5 @@ export const CommandHandlers = [
 	InviteBulkCreateHandler,
 	InviteOrganizationContactHandler,
 	InviteResendHandler,
+	InviteRejectHandler
 ];

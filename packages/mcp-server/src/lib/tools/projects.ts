@@ -1,9 +1,11 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Logger } from '@nestjs/common';
 import { z } from 'zod';
-import { apiClient } from '../common/api-client.js';
-import { authManager } from '../common/auth-manager.js';
-import { ProjectSchema, CurrenciesEnum } from '../schema.js';
-import log from 'electron-log';
+import { apiClient } from '../common/api-client';
+import { authManager } from '../common/auth-manager';
+import { ProjectSchema, CurrenciesEnum } from '../schema';
+
+const logger = new Logger('ProjectTools');
 
 /**
  * Helper function to convert startDate and endDate strings to Date objects
@@ -89,7 +91,7 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching projects:', error);
+				logger.error('Error fetching projects:', error);
 				throw new Error('Failed to fetch projects');
 			}
 		}
@@ -132,7 +134,7 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching project count:', error);
+				logger.error('Error fetching project count:', error);
 				throw new Error('Failed to fetch project count');
 			}
 		}
@@ -178,7 +180,7 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching projects by employee:', error);
+				logger.error('Error fetching projects by employee:', error);
 				throw new Error('Failed to fetch projects by employee');
 			}
 		}
@@ -223,7 +225,7 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching my projects:', error);
+				logger.error('Error fetching my projects:', error);
 				throw new Error('Failed to fetch my projects');
 			}
 		}
@@ -267,7 +269,7 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching project:', error);
+				logger.error('Error fetching project:', error);
 				throw new Error('Failed to fetch project');
 			}
 		}
@@ -312,7 +314,7 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error creating project:', error);
+				logger.error('Error creating project:', error);
 				throw new Error('Failed to create project');
 			}
 		}
@@ -356,7 +358,7 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error updating project:', error);
+				logger.error('Error updating project:', error);
 				throw new Error('Failed to update project');
 			}
 		}
@@ -391,7 +393,7 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error deleting project:', error);
+				logger.error('Error deleting project:', error);
 				throw new Error('Failed to delete project');
 			}
 		}
@@ -445,7 +447,7 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error bulk creating projects:', error);
+				logger.error('Error bulk creating projects:', error);
 				throw new Error('Failed to bulk create projects');
 			}
 		}
@@ -494,7 +496,7 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error bulk updating projects:', error);
+				logger.error('Error bulk updating projects:', error);
 				throw new Error('Failed to bulk update projects');
 			}
 		}
@@ -531,7 +533,7 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error bulk deleting projects:', error);
+				logger.error('Error bulk deleting projects:', error);
 				throw new Error('Failed to bulk delete projects');
 			}
 		}
@@ -578,7 +580,7 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching project statistics:', error);
+				logger.error('Error fetching project statistics:', error);
 				throw new Error('Failed to fetch project statistics');
 			}
 		}
@@ -618,7 +620,7 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error assigning project to employee:', error);
+				logger.error('Error assigning project to employee:', error);
 				throw new Error('Failed to assign project to employee');
 			}
 		}
@@ -660,7 +662,7 @@ export const registerProjectTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error unassigning project from employee:', error);
+				logger.error('Error unassigning project from employee:', error);
 				throw new Error('Failed to unassign project from employee');
 			}
 		}

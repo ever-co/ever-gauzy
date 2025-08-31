@@ -4867,6 +4867,22 @@
 			"PASSWORD": "Senha"
 		},
 		"SIGN_IN_TITLE": "Entrar na Área de Trabalho",
+		"SIGN_IN_SUBTITLE": "Digite seu e-mail para entrar em sua área de trabalho",
+		"CREATE": {
+			"TITLE": "Criar nova área de trabalho",
+			"SUBTITLE": "Digite seu e-mail para começar",
+			"SUCCESS_SENT_CODE_TITLE": "Enviamos um código de verificação para",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Verifique seu e-mail e digite o código abaixo",
+			"CREATE_NEW_WORKSPACE": "Criar nova área de trabalho"
+		},
+		"FIND": {
+			"TITLE": "Encontre sua área de trabalho",
+			"SUBTITLE": "Digite seu e-mail para encontrar suas áreas de trabalho",
+			"DESCRIPTION_TITLE": "Enviaremos um código mágico para verificar sua identidade",
+			"RESULTS_STEP": {
+				"DESCRIPTION": "Seu e-mail está associado a {{count}} área(s) de trabalho"
+			}
+		},
 		"BACK_TO": "Voltar para",
 		"SUCCESS_SIGNIN_TITLE": "Parabéns! Você fez login com sucesso em seu espaço de trabalho.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Por favor, seja paciente enquanto preparamos o espaço de trabalho...",
@@ -4881,6 +4897,19 @@
 			"EMAIL_MULTIPLE_WORKSPACE": "O e-mail está associado a vários espaços de trabalho, selecione um para continuar",
 			"SELECT_WORKSPACE_FOR": "Selecione o espaço de trabalho para",
 			"OPEN": "Abrir"
+		}
+	},
+	"WORKSPACE_CREATE": {
+		"ACCOUNT_CREATION": {
+			"TITLE": "Crie sua conta",
+			"SUBTITLE": "Complete seu perfil para criar uma nova área de trabalho"
+		},
+		"WORKSPACE_SETUP": {
+			"TITLE": "Configure sua área de trabalho",
+			"SUBTITLE": "Crie sua organização e comece"
+		},
+		"BUTTONS": {
+			"CONTINUE_TO_WORKSPACE_SETUP": "Continuar para configuração da área de trabalho"
 		}
 	},
 	"NO_IMAGE": {

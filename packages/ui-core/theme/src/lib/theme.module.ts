@@ -63,6 +63,7 @@ import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.mod
 import { GauzyLogoComponent } from './components/gauzy-logo/gauzy-logo.component';
 import { UserMenuComponent } from './components/user-menu/user-menu.component';
 import { UserComponent } from './components/user/user.component';
+import { WorkspaceMenuComponent } from './components/workspace-menu/workspace-menu.component';
 import { ThemeSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.module';
 import { ThemeLanguageSelectorService } from './components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.service';
@@ -110,7 +111,8 @@ const COMPONENTS = [
 	PublicLayoutComponent,
 	GauzyLogoComponent,
 	UserMenuComponent,
-	UserComponent
+	UserComponent,
+	WorkspaceMenuComponent
 ];
 
 const PIPES = [...Pipes];

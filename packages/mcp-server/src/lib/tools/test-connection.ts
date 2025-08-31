@@ -1,11 +1,13 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { version } from '../common/version.js';
-import { apiClient } from '../common/api-client.js';
-import { authManager } from '../common/auth-manager.js';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils.js';
-import { TOOLS_REGISTRY, getToolCounts, getTotalToolCount } from '../config/index.js';
-import { SERVER_INFO } from '../config/server-info.js';
-import log from 'electron-log';
+import { Logger } from '@nestjs/common';
+import { version } from '../common/version';
+import { apiClient } from '../common/api-client';
+import { authManager } from '../common/auth-manager';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { TOOLS_REGISTRY, getToolCounts, getTotalToolCount } from '../config/index';
+import { SERVER_INFO } from '../config/server-info';
+
+const logger = new Logger('TestConnectionTools');
 
 /**
  * Register test connection tools with the MCP server
@@ -47,7 +49,7 @@ Connection Details:
                 };
             }
         } catch (error) {
-            log.error('Error testing API connection:', sanitizeForLogging(error));
+            logger.error('Error testing API connection:', sanitizeForLogging(error));
             return {
                 content: [
                     {
@@ -93,7 +95,7 @@ Connection Details:
                 ]
             };
         } catch (error) {
-            log.error('Error getting server info:', sanitizeForLogging(error));
+            logger.error('Error getting server info:', sanitizeForLogging(error));
             const message = error instanceof Error ? error.message : 'Unknown error';
             throw new Error(`Failed to get server information: ${sanitizeErrorMessage(message)}`);
         }
@@ -151,10 +153,10 @@ Connection Details:
                 ]
             };
         } catch (error) {
-            log.error('Error testing MCP capabilities:', sanitizeForLogging(error));
+            logger.error('Error testing MCP capabilities:', sanitizeForLogging(error));
             const message = error instanceof Error ? error.message : 'Unknown error';
             throw new Error(`Failed to test MCP capabilities: ${sanitizeErrorMessage(message)}`);
         }
     });
-    log.info('Test connection tools registered successfully');
+    logger.log('Test connection tools registered successfully');
 };

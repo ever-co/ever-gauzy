@@ -5,7 +5,7 @@
 		"declaration": true,
 		"types": ["node"],
 		"target": "es2021",
-		"module": "ESNext",
+		"module": "CommonJS",
 		"moduleResolution": "node",
 		"allowSyntheticDefaultImports": true,
 		"esModuleInterop": true,
@@ -15,6 +15,6 @@
 		"forceConsistentCasingInFileNames": true,
 		"noFallthroughCasesInSwitch": false
 	},
-	"include": ["src/**/*.ts"],
+	"include": ["src/**/*.ts", "src/**/*.d.ts"],
 	"exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
 }

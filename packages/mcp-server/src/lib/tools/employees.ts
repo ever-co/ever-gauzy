@@ -1,22 +1,13 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Logger } from '@nestjs/common';
 import { z } from 'zod';
-import log from 'electron-log';
-import { apiClient } from '../common/api-client.js';
-import { authManager } from '../common/auth-manager.js';
-import { EmployeeSchema } from '../schema.js';
+import { apiClient } from '../common/api-client';
+import { validateOrganizationContext } from './utils';
+import { EmployeeSchema } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
 
-/**
- * Helper function to validate organization context and return default parameters
- */
-const validateOrganizationContext = () => {
-	const defaultParams = authManager.getDefaultParams();
+const logger = new Logger('EmployeeTools');
 
-	if (!defaultParams.organizationId) {
-		throw new Error('Organization ID not available. Please ensure you are logged in and have an organization.');
-	}
-
-	return defaultParams;
-};
 
 /**
  * Helper function to convert date fields in employee data to Date objects
@@ -76,8 +67,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching employees:', error);
-				throw new Error('Failed to fetch employees');
+				logger.error('Error fetching employees:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch employees: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -116,8 +107,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching employee count:', error);
-				throw new Error('Failed to fetch employee count');
+				logger.error('Error fetching employee count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch employee count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -164,8 +155,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching employees pagination:', error);
-				throw new Error('Failed to fetch employees pagination');
+				logger.error('Error fetching employees pagination:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch employees pagination: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -208,8 +199,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching working employees:', error);
-				throw new Error('Failed to fetch working employees');
+				logger.error('Error fetching working employees:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch working employees: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -252,8 +243,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching working employees count:', error);
-				throw new Error('Failed to fetch working employees count');
+				logger.error('Error fetching working employees count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch working employees count: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -292,8 +283,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching organization members:', error);
-				throw new Error('Failed to fetch organization members');
+				logger.error('Error fetching organization members:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch organization members: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -326,8 +317,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching employee:', error);
-				throw new Error('Failed to fetch employee');
+				logger.error('Error fetching employee:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch employee: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -364,8 +355,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching employee statistics:', error);
-				throw new Error('Failed to fetch employee statistics');
+				logger.error('Error fetching employee statistics:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch employee statistics: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -397,8 +388,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error fetching current employee:', error);
-				throw new Error('Failed to fetch current employee');
+				logger.error('Error fetching current employee:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch current employee: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -435,8 +426,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error creating employee:', error);
-				throw new Error('Failed to create employee');
+				logger.error('Error creating employee:', sanitizeForLogging(error));
+				throw new Error(`Failed to create employee: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -464,8 +455,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error updating employee:', error);
-				throw new Error('Failed to update employee');
+				logger.error('Error updating employee:', sanitizeForLogging(error));
+				throw new Error(`Failed to update employee: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -492,8 +483,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error updating employee profile:', error);
-				throw new Error('Failed to update employee profile');
+				logger.error('Error updating employee profile:', sanitizeForLogging(error));
+				throw new Error(`Failed to update employee profile: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -522,8 +513,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error soft deleting employee:', error);
-				throw new Error('Failed to soft delete employee');
+				logger.error('Error soft deleting employee:', sanitizeForLogging(error));
+				throw new Error(`Failed to soft delete employee: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -552,8 +543,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error restoring employee:', error);
-				throw new Error('Failed to restore employee');
+				logger.error('Error restoring employee:', sanitizeForLogging(error));
+				throw new Error(`Failed to restore employee: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);
@@ -597,8 +588,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				log.error('Error bulk creating employees:', error);
-				throw new Error('Failed to bulk create employees');
+				logger.error('Error bulk creating employees:', sanitizeForLogging(error));
+				throw new Error(`Failed to bulk create employees: ${sanitizeErrorMessage(error)}`);
 			}
 		}
 	);

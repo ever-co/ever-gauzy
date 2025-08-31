@@ -1,6 +1,4 @@
-#!/usr/bin/env node
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { createMcpServer } from '@gauzy/mcp-server';
+import { createMcpServer, createAndStartMcpServer } from '@gauzy/mcp-server';
 import log from 'electron-log';
 
 async function testMcpServer() {
@@ -42,14 +40,24 @@ async function main() {
 		return;
 	}
 
-	// Normal MCP server startup for stdio communication
+	// Normal MCP server startup with automatic transport detection
 	log.info('🚀 Starting Gauzy MCP Server...');
 
-	const { server, version } = createMcpServer();
-	const transport = new StdioServerTransport();
-	await server.connect(transport);
+	const { transport } = await createAndStartMcpServer();
 
-	log.info(`✅ Gauzy MCP Server running on stdio - version: ${version}`);
+	log.info(`✅ Gauzy MCP Server running on ${transport.type} transport`);
+
+	if (transport.type === 'http' && transport.url) {
+		log.info(`🌐 HTTP transport available at: ${transport.url}`);
+		log.info(`📡 API endpoints:`);
+		log.info(`   - GET  ${transport.url}/health`);
+		log.info(`   - POST ${transport.url}/sse`);
+		log.info(`   - GET  ${transport.url}/sse/events`);
+		log.info(`   - GET  ${transport.url}/.well-known/oauth-protected-resource`);
+	} else {
+		log.info('📟 Server ready for stdio communication');
+	}
+
 	log.info('🔗 Ready to accept MCP requests from clients like Claude Desktop');
 }
 

@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { Context } from 'probot';
+import type { Context as ProbotContext } from 'probot';
 import * as chalk from 'chalk';
+
 import {
 	GithubPropertyMapEnum,
 	IGithubInstallation,
@@ -24,7 +25,7 @@ export class GithubHooksService {
 	 *
 	 * @param context - The context object containing event information.
 	 */
-	async installationDeleted(context: Context) {
+	async installationDeleted(context: ProbotContext) {
 		// Extract necessary data from the context
 		const installation = context.payload['installation'] as IGithubInstallation;
 		const repositories = context.payload['repositories'] as IGithubRepository[];
@@ -82,7 +83,7 @@ export class GithubHooksService {
 	 *
 	 * @param context - The GitHub webhook event context.
 	 */
-	async issuesOpened(context: Context) {
+	async issuesOpened(context: ProbotContext) {
 		try {
 			// Extract necessary data from the context
 			const installation = context.payload['installation'] as IGithubInstallation;
@@ -102,7 +103,7 @@ export class GithubHooksService {
 	 *
 	 * @param context - The GitHub webhook event context.
 	 */
-	async issuesEdited(context: Context) {
+	async issuesEdited(context: ProbotContext) {
 		try {
 			// Extract necessary data from the context
 			const installation = context.payload['installation'] as IGithubInstallation;
@@ -122,7 +123,7 @@ export class GithubHooksService {
 	 *
 	 * @param context - The GitHub webhook event context.
 	 */
-	async issuesLabeled(context: Context) {
+	async issuesLabeled(context: ProbotContext) {
 		try {
 			// Extract necessary data from the context
 			const installation = context.payload['installation'] as IGithubInstallation;
@@ -142,7 +143,7 @@ export class GithubHooksService {
 	 *
 	 * @param context - The GitHub webhook event context.
 	 */
-	async issuesUnlabeled(context: Context) {
+	async issuesUnlabeled(context: ProbotContext) {
 		try {
 			// Extract necessary data from the context
 			const installation = context.payload['installation'] as IGithubInstallation;
