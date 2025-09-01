@@ -15912,6 +15912,18 @@ ckeditor4@4.22.1:
   resolved "https://registry.yarnpkg.com/ckeditor4/-/ckeditor4-4.22.1.tgz#a4e79db1bac2ccb9a672c47e601ba4882afaf455"
   integrity sha512-Yj4vTHX5YxHwc48gNqUqTm+KLkRr9tuyb4O2VIABu4oKHWRNVIdLdy6vUNe/XNx+RiTavMejfA1MVOU/MxLjqQ==
 
+clarity-decode@^0.8.26:
+  version "0.8.26"
+  resolved "https://registry.yarnpkg.com/clarity-decode/-/clarity-decode-0.8.26.tgz#030dfde02f8caa6047b63e488f851a94dd71e683"
+  integrity sha512-vlwN1JvmmxcnmatnI/gWTMwzydn3+br2wA6tT3HnOXmW+ScFiyWaEI9RxDcGgyZ7LmlkaOoa7gIQIDuNJBBBUg==
+  dependencies:
+    clarity-js "^0.8.26"
+
+clarity-js@^0.8.26:
+  version "0.8.26"
+  resolved "https://registry.yarnpkg.com/clarity-js/-/clarity-js-0.8.26.tgz#9d3e6cf1c15fe2d6f3e4a3f587851c8f270d5d21"
+  integrity sha512-EHti4gd93OmgHXcbBiyQa8ePXl47nMEt1Nk+MTd9yUrJ4MZf7lX3jzZQRluC7MdCjF5N0YfFtPa1L6Jf6soeng==
+
 class-transformer@^0.5.1:
   version "0.5.1"
   resolved "https://registry.yarnpkg.com/class-transformer/-/class-transformer-0.5.1.tgz#24147d5dffd2a6cea930a3250a677addf96ab336"
