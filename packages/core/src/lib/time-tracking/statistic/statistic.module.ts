@@ -13,11 +13,11 @@ import { RolePermissionModule } from '../../role-permission/role-permission.modu
 	controllers: [StatisticController],
 	imports: [
 		RolePermissionModule,
-		OrganizationProjectModule,
-		TaskModule,
-		TimeSlotModule,
+		forwardRef(() => OrganizationProjectModule),
+		forwardRef(() => TaskModule),
+		forwardRef(() => TimeSlotModule),
 		EmployeeModule,
-		ActivityModule,
+		forwardRef(() => ActivityModule),
 		forwardRef(() => TimeLogModule)
 	],
 	providers: [StatisticService],

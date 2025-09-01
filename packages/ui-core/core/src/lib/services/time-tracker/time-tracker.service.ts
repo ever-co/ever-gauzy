@@ -214,7 +214,6 @@ export class TimeTrackerService implements OnDestroy {
 					this.currentSessionDuration = 0;
 				}
 
-				console.log(status.running, this.running, this.isToggleInProgress);
 				// On refresh/delete TimeLog, we need to clear interval to prevent duplicate interval
 				if (status.running && this.running && !this.isToggleInProgress) {
 					this.turnOnTimer();
