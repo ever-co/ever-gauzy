@@ -340,7 +340,21 @@ export class AuthStrategy extends NbAuthStrategy {
 				this.store.tenantId = user?.tenantId;
 				this.store.user = user;
 
-				if (token) this.socketService.connect();
+				/**
+				 * Perform the initial status check after user login or service initialization.
+				 * Ensures that the current timer status is loaded immediately,
+				 * before any "timer:changed" events are received from the socket.
+				 */
+				if (token) {
+					this.socketService.connect();
+					const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+					this.timeTrackerService.checkTimerStatus({
+						tenantId: user?.tenantId,
+						organizationId: user?.employee?.organizationId,
+						relations: ['employee'],
+						timeZone
+					});
+				}
 
 				this.electronAuthentication({ user, token });
 

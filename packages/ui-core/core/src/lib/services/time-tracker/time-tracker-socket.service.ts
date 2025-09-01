@@ -24,13 +24,14 @@ export class TimeTrackerSocketService {
 	 * Listen to timer events from the socket connection
 	 */
 	private listenToTimerChanges(): void {
-		console.log(this.socketConnection.socket);
-		fromEvent(this.socketConnection.socket, 'timer:changed')
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.fetchTimerStatus())
-			)
-			.subscribe();
+		console.log(this.socketConnection?.socket);
+		if (this.socketConnection?.socket)
+			fromEvent(this.socketConnection.socket, 'timer:changed')
+				.pipe(
+					untilDestroyed(this),
+					tap(() => this.fetchTimerStatus())
+				)
+				.subscribe();
 	}
 
 	/**

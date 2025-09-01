@@ -280,6 +280,19 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 					this.isDisable = false;
 				}
 			});
+
+		/**
+		 * Perform the initial status check after user login or service initialization.
+		 * Ensures that the current timer status is loaded immediately,
+		 * before any "timer:changed" events are received from the socket.
+		 */
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		this.timeTrackerService.checkTimerStatus({
+			tenantId: this.store.tenantId,
+			organizationId: this.store.organizationId,
+			relations: ['employee'],
+			timeZone
+		});
 		this._socketService.timerSocketStatus$.pipe(untilDestroyed(this)).subscribe();
 	}
 
