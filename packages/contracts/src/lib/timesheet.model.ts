@@ -524,3 +524,14 @@ export interface IDeleteTimeSlot extends IDeleteEntity {
 export interface IDeleteTimeLog extends IDeleteEntity {
 	logIds: ID[];
 }
+
+/**
+ * Interface for processing custom tracking data
+ */
+export interface IProcessTrackingDataInput {
+	payload: string;
+	startTime?: Date;
+	organizationId?: string;
+	tenantId?: string;
+	employeeId?: string;
+}
