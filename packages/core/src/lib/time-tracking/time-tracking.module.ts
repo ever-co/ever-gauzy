@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ActivityModule } from './activity/activity.module';
+import { CustomTrackingModule } from './custom-tracking/custom-tracking.module';
 import { ScreenshotModule } from './screenshot/screenshot.module';
 import { StatisticModule } from './statistic';
 import { TimeLogModule } from './time-log/time-log.module';
@@ -11,6 +12,7 @@ import { TimeSlotModule } from './time-slot/time-slot.module';
 	imports: [
 		TimerModule,
 		ActivityModule,
+		CustomTrackingModule,
 		TimeLogModule,
 		TimeSlotModule,
 		ScreenshotModule,
