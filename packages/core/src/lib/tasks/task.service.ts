@@ -1,5 +1,5 @@
 import { EventBus } from '@nestjs/cqrs';
-import { Injectable, BadRequestException, HttpStatus, HttpException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpStatus, HttpException, Logger, NotFoundException } from '@nestjs/common';
 import {
 	IsNull,
 	SelectQueryBuilder,
@@ -11,7 +11,9 @@ import {
 	Between,
 	FindOptionsRelations,
 	Raw,
-	ILike
+	ILike,
+	Not,
+	DeleteResult
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import * as moment from 'moment';
@@ -33,7 +35,8 @@ import {
 	ITaskAdvancedFilter,
 	IAdvancedTaskFiltering,
 	EmployeeNotificationTypeEnum,
-	NotificationActionTypeEnum
+	NotificationActionTypeEnum,
+	ITimeLog
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { isSqlite } from '@gauzy/config';
@@ -54,6 +57,8 @@ import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 import { TaskProjectSequenceService } from './project-sequence/project-sequence.service';
 import { OrganizationProjectService } from '../organization-project/organization-project.service';
+import { TypeOrmTimeLogRepository } from '../time-tracking/time-log/repository/type-orm-time-log.repository';
+import { SocketService } from '../socket/socket.service';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
@@ -63,6 +68,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		readonly typeOrmTaskRepository: TypeOrmTaskRepository,
 		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
 		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
+		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		private readonly _eventBus: EventBus,
 		private readonly _taskViewService: TaskViewService,
 		private readonly _entitySubscriptionService: EntitySubscriptionService,
@@ -70,7 +76,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		private readonly _mentionService: MentionService,
 		private readonly _activityLogService: ActivityLogService,
 		private readonly _employeeNotificationService: EmployeeNotificationService,
-		private readonly _organizationProjectService: OrganizationProjectService
+		private readonly _organizationProjectService: OrganizationProjectService,
+		private readonly _socketService: SocketService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -165,17 +172,20 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			if (removedMembers.length > 0) {
 				try {
 					await Promise.all(
-						removedMembers.map(
-							async (member) =>
-								await this._entitySubscriptionService.delete({
-									entity: BaseEntityEnum.Task,
-									entityId: updatedTask.id,
-									employeeId: member.id,
-									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
-									organizationId,
-									tenantId
-								})
-						)
+						removedMembers.map(async (member) => {
+							await this._entitySubscriptionService.delete({
+								entity: BaseEntityEnum.Task,
+								entityId: updatedTask.id,
+								employeeId: member.id,
+								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+								organizationId,
+								tenantId
+							});
+
+							// Send a real-time event to the specified user via socket.
+							// No error is thrown if the user is not currently connected.
+							this._socketService.sendTimerChanged(member?.id);
+						})
 					);
 				} catch (error) {
 					this.logger.error(`Error unsubscribing members from the task: ${error}`);
@@ -919,6 +929,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				}
 			});
 
+			// Send a real-time event to the specified user via socket.
+			// No error is thrown if the user is not currently connected.
+			this._socketService.sendTimerChanged(employeeId);
+
 			// TODO : Unsubscribe employee from task
 
 			// Save updated entities to DB
@@ -1204,5 +1218,66 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			...(createdByUserIds.length && !where.createdByUserId ? { createdByUserId: In(createdByUserIds) } : {}),
 			...(dailyPlans.length && !where.dailyPlans ? { dailyPlans: { id: In(dailyPlans) } } : {})
 		};
+	}
+
+	/**
+	 * Deletes a task and notifies all employees
+	 * who were assigned to it or had an active timer on it.
+	 *
+	 * @param taskId - ID of the task to delete
+	 * @returns Promise resolving to the deletion result
+	 */
+	public async delete(taskId: string): Promise<DeleteResult> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+
+			// Fetch the task along with its assigned members
+			const task = await this.typeOrmTaskRepository.findOne({
+				where: { id: taskId, tenantId },
+				relations: ['members']
+			});
+
+			if (!task) {
+				throw new NotFoundException(`Task with ID ${taskId} not found`);
+			}
+
+			// Collect IDs of all assigned employees
+			const affectedEmployeeIds = task.members.map((member) => member.id);
+			const result = await super.delete(taskId);
+
+			for (const employeeId of affectedEmployeeIds) {
+				// Send a real-time event to the specified user via socket.
+				// No error is thrown if the user is not currently connected.
+				this._socketService.sendTimerChanged(employeeId);
+			}
+
+			return result;
+		} catch (err) {
+			this.logger.error(`Error during task delete operation: ${err}`);
+			throw new NotFoundException(`The task was not found`, err);
+		}
+	}
+
+	/**
+	 * Fetch all running timers for a specific task.
+	 *
+	 * @param taskId - ID of the task
+	 * @returns Array of running time logs associated with the task
+	 */
+	private async getRunningLogsByTask(taskId: string): Promise<ITimeLog[]> {
+		const tenantId = RequestContext.currentTenantId();
+
+		const { organizationId } = await this._organizationProjectService.findEmployee();
+
+		return await this.typeOrmTimeLogRepository.find({
+			where: {
+				taskId,
+				tenantId,
+				organizationId,
+				isRunning: true,
+				stoppedAt: Not(IsNull())
+			},
+			relations: ['employee']
+		});
 	}
 }

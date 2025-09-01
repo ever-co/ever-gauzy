@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -17,8 +17,8 @@ import { TypeOrmOrganizationContactRepository } from './repository/type-orm-orga
 		TypeOrmModule.forFeature([OrganizationContact]),
 		MikroOrmModule.forFeature([OrganizationContact]),
 		RolePermissionModule,
-		OrganizationModule,
-		OrganizationProjectModule,
+		forwardRef(() => OrganizationProjectModule),
+		forwardRef(() => OrganizationModule),
 		ContactModule,
 		CqrsModule
 	],

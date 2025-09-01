@@ -55,6 +55,7 @@ import { addRelationsToQuery, buildCommonQueryParameters, buildLogQueryParameter
 import { TimerWeeklyLimitService } from './timer-weekly-limit.service';
 import { TaskService } from '../../tasks';
 import { OrganizationProjectService } from '../../organization-project';
+import { SocketService } from '../../socket/socket.service';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -73,6 +74,7 @@ export class TimerService {
 		private readonly _timerWeeklyLimitService: TimerWeeklyLimitService,
 		private readonly _commandBus: CommandBus,
 		private readonly _taskService: TaskService,
+		private readonly _socketService: SocketService,
 		private readonly _organizationProjectService: OrganizationProjectService
 	) {}
 
@@ -94,7 +96,7 @@ export class TimerService {
 		}
 	}
 
-	// TODO: Check with GZY-407 for save logic with desktop app
+	// TODO: Verify in stage 3 — implement save logic integration with the desktop app
 	/**
 	 * Implementation of timer status logic
 	 * This is intended to be used directly by the command handler
@@ -549,7 +551,7 @@ export class TimerService {
 		}
 
 		// Get weekly statistics
-		let weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(
+		const weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(
 			employee,
 			start as Date,
 			request?.timeZone,
@@ -558,28 +560,72 @@ export class TimerService {
 
 		// If the user reached the weekly limit, then stop the current timer
 		let lastLogStopped = false;
+
+		// Global map to track timers & new week notifications
+		const runningWeeklyLimitTimeouts: Map<string, NodeJS.Timeout> = new Map();
+		const weeklyResetTimeouts: Map<string, NodeJS.Timeout> = new Map();
+
+		// Weekly limit exceeded → stop the current timer immediately
 		if (lastLog?.isRunning) {
 			const remainingWeeklyLimit =
 				weeklyLimitStatus.remainWeeklyTime - now.diff(moment(lastLog.stoppedAt), 'seconds');
-			if (lastLog?.isRunning && remainingWeeklyLimit <= 0) {
+
+			if (remainingWeeklyLimit <= 0) {
 				lastLogStopped = true;
 				lastLog = await this.stopTimer({
 					tenantId,
 					organizationId,
 					startedAt: lastLog.startedAt,
-					stoppedAt: now.toDate(),
+					stoppedAt: now.toDate(), // stop immediately
 					timeZone: request?.timeZone
 				});
-				// Recalculate the weekly limit status
-				weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(
-					employee,
-					start as Date,
-					request?.timeZone,
-					true
-				);
+
+				// Clear any previously scheduled timeout for this employee
+				const existingTimeout = runningWeeklyLimitTimeouts.get(employeeId);
+				if (existingTimeout) {
+					clearTimeout(existingTimeout);
+					runningWeeklyLimitTimeouts.delete(employeeId);
+				}
+			} else if (remainingWeeklyLimit <= 21 * 60) {
+				// Less than 21 minutes remaining → schedule a single socket event
+				const existingTimeout = runningWeeklyLimitTimeouts.get(employeeId);
+
+				if (!existingTimeout) {
+					const timeout = setTimeout(() => {
+						// Attempt to send timer update via socket; do not send event if socket not connected
+						this._socketService.sendTimerChanged(employeeId);
+
+						runningWeeklyLimitTimeouts.delete(employeeId);
+					}, remainingWeeklyLimit * 1000); // convert seconds to milliseconds
+
+					runningWeeklyLimitTimeouts.set(employeeId, timeout);
+				}
+			} else {
+				// More than 21 minutes remaining → clear any old timeout
+				const existingTimeout = runningWeeklyLimitTimeouts.get(employeeId);
+				if (existingTimeout) {
+					clearTimeout(existingTimeout);
+					runningWeeklyLimitTimeouts.delete(employeeId);
+				}
 			}
 		}
 
+		// Weekly reset event (minimal load)
+		if (!weeklyResetTimeouts.has(employeeId)) {
+			const nowLocal = moment.tz(request?.timeZone);
+			const nextMonday = nowLocal.clone().startOf('isoWeek').add(1, 'week');
+			const msUntilNextMondayEvent = nextMonday.diff(nowLocal) - 21 * 60 * 1000; // 20 min before Monday
+
+			if (msUntilNextMondayEvent <= 0 && nextMonday.diff(nowLocal) > 0) {
+				const timeout = setTimeout(() => {
+					this._socketService.sendTimerChanged(employeeId);
+					weeklyResetTimeouts.delete(employeeId);
+				}, msUntilNextMondayEvent);
+				weeklyResetTimeouts.set(employeeId, timeout);
+			}
+		}
+
+		// Prepare the timer status object
 		const status: ITimerStatusWithWeeklyLimits = {
 			duration: 0,
 			running: false,
@@ -604,11 +650,9 @@ export class TimerService {
 				const todayMidnight = moment.tz(request?.timeZone).startOf('day');
 				const effectiveStart = started.isBefore(todayMidnight) ? todayMidnight : started;
 				status.duration += Math.abs(until.diff(effectiveStart, 'seconds'));
-			}
 
-			// If timer is running, then add the non saved duration to the workedThisWeek
-			if (lastLog.isRunning) {
-				status.workedThisWeek += now.diff(moment(lastLog.stoppedAt), 'seconds');
+				// Add the last log duration to workedThisWeek regardless of running/stopped
+				status.workedThisWeek += Math.abs(until.diff(started, 'seconds'));
 			}
 		}
 
@@ -771,6 +815,10 @@ export class TimerService {
 
 		this.logger.verbose(`Last created time log: ${JSON.stringify(timeLog)}`);
 
+		// Send a real-time event to the specified user via socket.
+		// No error is thrown if the user is not currently connected.
+		this._socketService.sendTimerChanged(employeeId);
+
 		// Return the newly created time log entry
 		return timeLog;
 	}
@@ -926,6 +974,10 @@ export class TimerService {
 
 		// Handle conflicting time logs
 		await this.handleConflictingTimeLogs(lastLog, tenantId, organizationId, true);
+
+		// Send a real-time event to the specified user via socket.
+		// No error is thrown if the user is not currently connected.
+		this._socketService.sendTimerChanged(employeeId);
 
 		// Return the last log
 		return lastLog;

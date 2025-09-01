@@ -14,6 +14,7 @@ import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { TimerModule } from '../timer/timer.module';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
+import { SocketModule } from '../../socket/socket.module';
 
 @Module({
 	controllers: [TimeLogController],
@@ -26,7 +27,8 @@ import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repos
 		forwardRef(() => OrganizationContactModule),
 		forwardRef(() => TimeSlotModule),
 		forwardRef(() => TimerModule),
-		CqrsModule
+		CqrsModule,
+		SocketModule
 	],
 	providers: [TimeLogService, TypeOrmTimeLogRepository, MikroOrmTimeLogRepository, ...CommandHandlers],
 	exports: [TimeLogService, TypeOrmTimeLogRepository, MikroOrmTimeLogRepository]

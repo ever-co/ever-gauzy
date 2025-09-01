@@ -14,7 +14,7 @@ import { NgxDraggableDomModule } from 'ngx-draggable-dom';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateModule } from '@ngx-translate/core';
-import { TimeTrackerService } from '@gauzy/ui-core/core';
+import { TimeTrackerService, TimeTrackerSocketService } from '@gauzy/ui-core/core';
 import { TimeTrackerComponent } from './time-tracker/time-tracker.component';
 import { TimeTrackerStatusModule } from './components/time-tracker-status/time-tracker-status.module';
 import { SharedModule } from '../shared.module';
@@ -59,7 +59,7 @@ export class TimeTrackerModule {
 	static forRoot(): ModuleWithProviders<TimeTrackerModule> {
 		return {
 			ngModule: TimeTrackerModule,
-			providers: [TimeTrackerService]
+			providers: [TimeTrackerService, TimeTrackerSocketService]
 		};
 	}
 }

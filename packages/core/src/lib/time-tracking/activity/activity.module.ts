@@ -20,7 +20,7 @@ import { TypeOrmActivityRepository } from './repository/type-orm-activity.reposi
 		MikroOrmModule.forFeature([Activity]),
 		RolePermissionModule,
 		EmployeeModule,
-		OrganizationProjectModule,
+		forwardRef(() => OrganizationProjectModule),
 		forwardRef(() => TimeSlotModule),
 		CqrsModule
 	],

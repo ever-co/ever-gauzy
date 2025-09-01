@@ -18,6 +18,8 @@ import { TaskController } from './task.controller';
 import { TaskProjectSequenceModule } from './project-sequence/project-sequence.module';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
+import { TimeLogModule } from '../time-tracking/time-log/time-log.module';
+import { SocketModule } from '../socket/socket.module';
 
 @Module({
 	imports: [
@@ -25,15 +27,17 @@ import { EmployeeNotificationModule } from '../employee-notification/employee-no
 		MikroOrmModule.forFeature([Task, TaskStatus, IntegrationMap]),
 		RolePermissionModule,
 		forwardRef(() => UserModule),
+		forwardRef(() => OrganizationProjectModule),
+		forwardRef(() => TimeLogModule),
 		RoleModule,
 		EmployeeModule,
-		OrganizationProjectModule,
 		OrganizationSprintModule,
 		TaskViewModule,
 		EmployeeNotificationModule,
 		CqrsModule,
 		EventBusModule,
-		TaskProjectSequenceModule
+		TaskProjectSequenceModule,
+		SocketModule
 	],
 	controllers: [TaskController],
 	providers: [TaskService, TypeOrmTaskRepository, ...CommandHandlers],

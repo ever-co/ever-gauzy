@@ -24,7 +24,9 @@ import {
 	IReportWeeklyData,
 	IAmountOwedReport,
 	IAmountOwedReportChart,
-	IDailyReportChart
+	IDailyReportChart,
+	IGetTimeLogReportInput,
+	IPagination
 } from '@gauzy/contracts';
 import { TimeLogService } from './time-log.service';
 import { Permissions } from './../../shared/decorators';
@@ -34,6 +36,8 @@ import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from
 import { TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
 import { IGetConflictTimeLogCommand } from './commands';
+import { PaginationParams } from '../../core/crud';
+import { TimeLog } from './time-log.entity';
 
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard, PermissionGuard)
@@ -262,6 +266,36 @@ export class TimeLogController {
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getLogs(@Query() options: TimeLogQueryDTO): Promise<ITimeLog[]> {
 		return await this._timeLogService.getTimeLogs(options);
+	}
+
+	/**
+	 * GET time logs with pagination and filtering options.
+	 *
+	 * This endpoint retrieves time logs based on pagination and optional filtering criteria.
+	 * It supports date range, employee filters, and report-specific parameters.
+	 *
+	 * @param params Pagination and filtering parameters for time logs.
+	 * @returns A promise resolving to a paginated list of time logs.
+	 */
+	@ApiOperation({ summary: 'Get paginated time logs with filters' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully retrieved paginated time logs.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid query parameters. Please check your input.'
+	})
+	@ApiResponse({
+		status: HttpStatus.INTERNAL_SERVER_ERROR,
+		description: 'An error occurred while retrieving paginated time logs.'
+	})
+	@Get('/pagination')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async getPaginatedLogs(
+		@Query() params: PaginationParams<TimeLog> & IGetTimeLogReportInput
+	): Promise<IPagination<ITimeLog>> {
+		return await this._timeLogService.getTimeLogsPaginated(params);
 	}
 
 	/**

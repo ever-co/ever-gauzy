@@ -7,11 +7,17 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, Observable, Subject, Subscription } from 'rxjs';
 import { filter, takeUntil, tap } from 'rxjs/operators';
 import { faStopwatch, faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
-import { Environment, environment } from '@gauzy/ui-config';
 import { IOrganization, IUser, TimeLogType, IEmployee, ITimerToggleInput, ITask } from '@gauzy/contracts';
 import { distinctUntilChange, toLocal } from '@gauzy/ui-core/common';
-import { ErrorHandlingService, ITimerSynced, Store, TimeTrackerService } from '@gauzy/ui-core/core';
+import {
+	ErrorHandlingService,
+	ITimerSynced,
+	Store,
+	TimeTrackerService,
+	TimeTrackerSocketService
+} from '@gauzy/ui-core/core';
 import { TimeTrackerStatusService } from '../components/time-tracker-status/time-tracker-status.service';
+import { Environment, environment } from '@gauzy/ui-config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -57,7 +63,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly themeService: NbThemeService,
-		private readonly _timeTrackerStatusService: TimeTrackerStatusService
+		private readonly _timeTrackerStatusService: TimeTrackerStatusService,
+		private readonly _socketService: TimeTrackerSocketService
 	) {
 		this._timeTrackerStatusService.external$
 			.pipe(
@@ -225,28 +232,26 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.timeTrackerService.duration$
-			.pipe(
-				tap((time) => (this.todaySessionTime = moment.utc(time * 1000).format('HH:mm:ss'))),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.timeTrackerService.showTimerWindow$
 			.pipe(
 				tap((isOpen) => (this.isOpen = isOpen)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.timeTrackerService.currentSessionDuration$
+		combineLatest([this.timeTrackerService.currentSessionDuration$, this.timeTrackerService.duration$])
 			.pipe(
-				tap((time) => (this.currentSessionTime = moment.utc(time * 1000).format('HH:mm:ss'))),
+				tap(([currentSessionDuration, duration]) => {
+					this.currentSessionTime = moment.utc(currentSessionDuration * 1000).format('HH:mm:ss');
+
+					this.todaySessionTime = moment.utc(duration * 1000).format('HH:mm:ss');
+				}),
 				untilDestroyed(this)
 			)
-			// Periodically check if it's midnight (when the timer is running).
-			// If so, attempt a safe rollover: stop the current timer before midnight
-			// and start a new session just after midnight to avoid crossing date boundaries.
 			.subscribe(() => {
 				if (this.running) {
+					// Periodically check if it's midnight (when the timer is running).
+					// If so, attempt a safe rollover: stop the current timer before midnight
+					// and start a new session just after midnight to avoid crossing date boundaries.
 					this.timeTrackerService.isMidnight();
 				}
 			});
@@ -269,9 +274,13 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			.subscribe(async () => {
 				this.limitReached = this.timeTrackerService.hasReachedWeeklyLimit();
 				if (this.limitReached) {
-					await this.toggleTimer(true);
+					this.timeTrackerService.turnOffTimer();
+					this.isDisable = true;
+				} else {
+					this.isDisable = false;
 				}
 			});
+		this._socketService.timerSocketStatus$.pipe(untilDestroyed(this)).subscribe();
 	}
 
 	toggleWindow() {

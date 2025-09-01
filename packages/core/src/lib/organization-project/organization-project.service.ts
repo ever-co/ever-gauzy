@@ -1,6 +1,6 @@
 import { EventBus } from '@nestjs/cqrs';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { DeleteResult, ILike, In, IsNull, Not, SelectQueryBuilder } from 'typeorm';
 import {
 	ActionTypeEnum,
 	BaseEntityEnum,
@@ -15,7 +15,8 @@ import {
 	IOrganizationProjectUpdateInput,
 	IPagination,
 	RolesEnum,
-	EntitySubscriptionTypeEnum
+	EntitySubscriptionTypeEnum,
+	ITimeLog
 } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
 import { CustomEmbeddedFieldConfig } from '@gauzy/common';
@@ -35,6 +36,8 @@ import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-emplo
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
 import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
 import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-orm-organization-project-employee.repository';
+import { TypeOrmTimeLogRepository } from '../time-tracking/time-log/repository/type-orm-time-log.repository';
+import { SocketService } from '../socket/socket.service';
 
 @FavoriteService(BaseEntityEnum.OrganizationProject)
 @Injectable()
@@ -44,11 +47,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		readonly mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
 		readonly typeOrmOrganizationProjectEmployeeRepository: TypeOrmOrganizationProjectEmployeeRepository,
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		private readonly _eventBus: EventBus,
 		private readonly _roleService: RoleService,
 		private readonly _employeeService: EmployeeService,
 		private readonly _entitySubscriptionService: EntitySubscriptionService,
-		private readonly _activityLogService: ActivityLogService
+		private readonly _activityLogService: ActivityLogService,
+		private readonly _socketService: SocketService
 	) {
 		super(typeOrmOrganizationProjectRepository, mikroOrmOrganizationProjectRepository);
 	}
@@ -113,6 +118,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					assignedAt,
 					role: isManager ? managerRole : null
 				});
+			});
+
+			// Send a real-time event to the specified user via socket.
+			// No error is thrown if the user is not currently connected.
+			members.forEach((member) => {
+				this._socketService.sendTimerChanged(member.employeeId);
 			});
 
 			// Create the organization project with the prepared members
@@ -250,6 +261,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			this.typeOrmOrganizationProjectEmployeeRepository.delete(memberId)
 		);
 
+		// Send a real-time event to the specified user via socket.
+		// No error is thrown if the user is not currently connected.
+		memberIds.forEach((memberId) => {
+			this._socketService.sendTimerChanged(memberId);
+		});
+
 		// Wait for all deletions to complete
 		await Promise.all(deletePromises);
 	}
@@ -296,6 +313,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		if (removedMembers.length) {
 			await this.deleteMemberByIds(removedMembers.map((member) => member.id));
 
+			// Send a real-time event to the specified user via socket.
+			// No error is thrown if the user is not currently connected.
+			removedMembers.forEach((member) => {
+				this._socketService.sendTimerChanged(member?.employeeId);
+			});
+
 			// Unsubscribe members who were unassigned from project
 			try {
 				await Promise.all(
@@ -328,6 +351,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 						role: newRole,
 						isManager
 					});
+
+					// Send a real-time event to the specified user via socket.
+					// No error is thrown if the user is not currently connected.
+					this._socketService.sendTimerChanged(member.employeeId);
 				}
 			})
 		);
@@ -345,6 +372,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 						roleId: managerIds.includes(employee.id) ? managerRole.id : null
 					})
 			);
+
+			// Send a real-time event to the specified user via socket.
+			// No error is thrown if the user is not currently connected.
+			newMembers.forEach((member) => {
+				this._socketService.sendTimerChanged(member.id);
+			});
 
 			// Subscribe new assignees to the project
 			try {
@@ -677,6 +710,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 							tenantId
 						});
 
+						// Send a real-time event to the specified user via socket.
+						// No error is thrown if the user is not currently connected.
+						this._socketService.sendTimerChanged(member.id);
+
 						// Return the project with the new member added to the members array
 						return {
 							...project,
@@ -694,6 +731,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					organizationProjectId: In(removedProjectIds),
 					employeeId: member.id
 				});
+
+				// Send a real-time event to the specified user via socket.
+				// No error is thrown if the user is not currently connected.
+				this._socketService.sendTimerChanged(member.id);
 			}
 
 			return true;
@@ -722,5 +763,95 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			.getOne();
 
 		return !!project;
+	}
+
+	/**
+	 * Deletes a project and notifies all employees
+	 * who had an active timer on this project.
+	 *
+	 * Steps performed in this method:
+	 * 1. Retrieve all running timers associated with the specified project.
+	 * 2. Collect the IDs of employees who have active timers.
+	 * 3. Delete the project using `super.delete`, which already handles
+	 *    tenant and user context checks.
+	 * 4. Notify each affected employee about the timer change via socket.
+	 *    No error is thrown if the employee is not currently connected.
+	 * 5. Return the result of the delete operation.
+	 *
+	 * @param projectId - The ID of the project to delete
+	 * @returns Result of the delete operation (DeleteResult)
+	 * @throws NotFoundException if the project is not found or deletion fails
+	 */
+	public async delete(projectId: string): Promise<DeleteResult> {
+		try {
+			const runningLogs = await this.getRunningLogsByProject(projectId);
+			const affectedEmployeeIds = (runningLogs as ITimeLog[]).map((log) => log.employeeId);
+			const result = await super.delete(projectId);
+
+			for (const employeeId of affectedEmployeeIds) {
+				// Send a real-time event to the specified user via socket.
+				// No error is thrown if the user is not currently connected.
+				this._socketService.sendTimerChanged(employeeId);
+			}
+
+			return result;
+		} catch (err) {
+			console.error('Error during project delete operation:', err);
+			throw new NotFoundException(`The project was not found`, err);
+		}
+	}
+
+	/**
+	 * Retrieves the current employee record based on the user and tenant context.
+	 *
+	 * @returns The employee record if found.
+	 * @throws NotFoundException if the employee record is not found.
+	 */
+	async findEmployee(): Promise<IEmployee> {
+		const userId = RequestContext.currentUserId(); // Get the current user ID
+		const tenantId = RequestContext.currentTenantId(); // Get the current tenant ID
+
+		// Fetch the employee record using userId and tenantId
+		const employee = await this._employeeService.findOneByUserId(userId, { where: { tenantId } });
+
+		if (!employee) {
+			throw new NotFoundException('Employee record not found. Please verify your details and try again.');
+		}
+
+		return employee;
+	}
+
+	/**
+	 * Retrieves all running timers (time logs) for a specific project.
+	 *
+	 * Method steps:
+	 * 1. Get the current tenant ID from RequestContext.
+	 * 2. Retrieve the current employee record to get the organization ID.
+	 * 3. Query the TimeLog repository to find logs where:
+	 *    - projectId matches the given project,
+	 *    - tenantId and organizationId match the current context,
+	 *    - isRunning is true (timer is active),
+	 *    - stoppedAt is not null (if required by business logic)
+	 * 4. Include the 'employee' relation to have access to the employee data linked to the time log.
+	 *
+	 * @param projectId - The ID of the project for which to retrieve active timers
+	 * @returns Array of active time logs (ITimeLog[]) for the specified project
+	 */
+	private async getRunningLogsByProject(projectId: string): Promise<ITimeLog[]> {
+		const tenantId = RequestContext.currentTenantId();
+
+		// Extract employeeId and organizationId
+		const { organizationId } = await this.findEmployee();
+
+		return await this.typeOrmTimeLogRepository.find({
+			where: {
+				projectId,
+				tenantId,
+				organizationId,
+				isRunning: true,
+				stoppedAt: Not(IsNull())
+			},
+			relations: ['employee']
+		});
 	}
 }

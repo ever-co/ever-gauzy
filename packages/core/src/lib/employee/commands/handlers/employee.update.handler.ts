@@ -4,11 +4,12 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EmployeeUpdateCommand } from './../employee.update.command';
 import { EmployeeService } from './../../employee.service';
 import { RequestContext } from './../../../core/context';
+import { SocketService } from '../../../socket/socket.service';
 
 @CommandHandler(EmployeeUpdateCommand)
 export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateCommand> {
 	private readonly logger = new Logger(`GZY - ${EmployeeUpdateHandler.name}`);
-	constructor(private readonly _employeeService: EmployeeService) {}
+	constructor(private readonly _employeeService: EmployeeService, private readonly _socketService: SocketService) {}
 
 	/**
 	 * Handles the execution of the `EmployeeUpdateCommand`.
@@ -37,12 +38,17 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 
 		try {
 			// Use `create` to save the entity, ensuring ManyToMany relations are persisted
-			return await this._employeeService.create({
+			const employee = await this._employeeService.create({
 				...input,
 				upworkId: input.upworkId || null,
 				linkedInId: input.linkedInId || null,
 				id
 			});
+
+			// Send a real-time event to the specified user via socket.
+			// No error is thrown if the user is not currently connected.
+			this._socketService.sendTimerChanged(user?.employeeId);
+			return employee;
 		} catch (error) {
 			this.logger.error('Error while updating employee', error);
 			// Handle any errors during the update process

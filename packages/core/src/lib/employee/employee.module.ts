@@ -14,6 +14,7 @@ import { EmployeeService } from './employee.service';
 import { Employee } from './employee.entity';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
+import { SocketModule } from '../socket/socket.module';
 
 @Module({
 	imports: [
@@ -24,6 +25,7 @@ import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repo
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => AuthModule),
+		SocketModule,
 		RoleModule,
 		CqrsModule
 	],

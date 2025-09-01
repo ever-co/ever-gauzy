@@ -6,7 +6,6 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import * as moment from 'moment-timezone';
 import { StoreConfig, Store, Query } from '@datorama/akita';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { environment } from '@gauzy/ui-config';
 import {
 	ITimeLog,
 	ITimerToggleInput,
@@ -24,6 +23,8 @@ import {
 import { API_PREFIX, BACKGROUND_SYNC_INTERVAL, toLocal, toParams, toUTC } from '@gauzy/ui-core/common';
 import { Store as AppStore } from '../store/store.service';
 import { ITimerSynced } from './interfaces';
+import { ToastrService } from '../notification';
+import { environment } from '@gauzy/ui-config';
 
 /**
  * Creates and returns the initial state for the timer.
@@ -134,7 +135,8 @@ export class TimeTrackerService implements OnDestroy {
 		protected readonly timerStore: TimerStore,
 		protected readonly timerQuery: TimerQuery,
 		protected readonly store: AppStore,
-		private readonly http: HttpClient
+		private readonly http: HttpClient,
+		private readonly toastrService: ToastrService
 	) {
 		this._runWorker();
 
@@ -212,6 +214,7 @@ export class TimeTrackerService implements OnDestroy {
 					this.currentSessionDuration = 0;
 				}
 
+				console.log(status.running, this.running, this.isToggleInProgress);
 				// On refresh/delete TimeLog, we need to clear interval to prevent duplicate interval
 				if (status.running && this.running && !this.isToggleInProgress) {
 					this.turnOnTimer();
@@ -222,12 +225,12 @@ export class TimeTrackerService implements OnDestroy {
 				return status;
 			})
 			.catch((error) => {
-				if (
-					error.status == 403 &&
-					(error.error?.message === TimeErrorsEnum.INVALID_TASK_PERMISSIONS ||
-						error.error?.message === TimeErrorsEnum.INVALID_PROJECT_PERMISSIONS)
-				) {
+				if (error.status == 403 && error.error?.message === TimeErrorsEnum.INVALID_TASK_PERMISSIONS) {
 					this.turnOffTimer();
+					this.toastrService.danger('TIMER_TRACKER.PROJECT_TASK_PERMISSION_ERROR');
+				} else if (error.status == 403 && error.error?.message === TimeErrorsEnum.INVALID_PROJECT_PERMISSIONS) {
+					this.turnOffTimer();
+					this.toastrService.danger('TIMER_TRACKER.PROJECT_PROJECT_PERMISSION_ERROR');
 				} else {
 					console.error(error);
 				}
@@ -554,7 +557,13 @@ export class TimeTrackerService implements OnDestroy {
 		} catch (error) {
 			// Handle any errors from the toggle request
 			console.error('[toggle] Timer request failed:', error);
-			throw error; // can be shown as a toast/alert in the UI
+			if (error.status == 403 && error.error?.message === TimeErrorsEnum.INVALID_TASK_PERMISSIONS) {
+				this.toastrService.danger('TIMER_TRACKER.PROJECT_TASK_PERMISSION_ERROR');
+			} else if (error.status == 403 && error.error?.message === TimeErrorsEnum.INVALID_PROJECT_PERMISSIONS) {
+				this.toastrService.danger('TIMER_TRACKER.PROJECT_PROJECT_PERMISSION_ERROR');
+			} else {
+				throw error; // can be shown as a toast/alert in the UI
+			}
 		} finally {
 			// Always release the toggle lock
 			this.isToggleInProgress = false;
@@ -581,20 +590,6 @@ export class TimeTrackerService implements OnDestroy {
 		// post running state to worker on turning off
 		this._worker.postMessage({
 			isRunning: this.running
-		});
-
-		// Synchronize state with the backend after stop confirmation
-		const { tenantId, organizationId } = this.timerConfig;
-		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-		this.checkTimerStatus({
-			tenantId,
-			organizationId,
-			relations: ['employee'],
-			timeZone
-		}).then((status) => {
-			this.duration = status.duration;
-			this.currentSessionDuration = 0;
-			this.timerStore.update({ workedThisWeek: status.workedThisWeek });
 		});
 		this._broadcastState('SYNC_TIMER');
 	}

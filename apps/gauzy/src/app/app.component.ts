@@ -24,19 +24,20 @@ import {
 	NavigationService,
 	SelectorBuilderService,
 	SeoService,
+	SocketConnectionService,
 	Store
 } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-app',
-    template: '<router-outlet *ngIf="!loading"></router-outlet>',
-    standalone: false
+	selector: 'ga-app',
+	template: '<router-outlet *ngIf="!loading"></router-outlet>',
+	standalone: false
 })
 export class AppComponent implements OnInit, AfterViewInit {
 	// Loading indicator
-	public loading: boolean = true;
+	public loading = true;
 
 	constructor(
 		private readonly _jitsuService: JitsuService,
@@ -50,7 +51,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _selectorBuilderService: SelectorBuilderService,
 		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly _navigationService: NavigationService
+		private readonly _navigationService: NavigationService,
+		private readonly _socketConnectionService: SocketConnectionService
 	) {
 		this.getActivateRouterDataEvent();
 		this.getPreferredLanguage();
@@ -113,6 +115,26 @@ export class AppComponent implements OnInit, AfterViewInit {
 		if (Number(this._store.serverConnection) === 0) {
 			this.loading = false;
 		}
+
+		this._socketConnectionService.connect();
+
+		// TODO: For testing purpose.
+		// If needed, move this logic into the TimeTracker component for better context handling.
+		document.addEventListener('visibilitychange', () => {
+			if (document.visibilityState === 'visible') {
+				if (!this._socketConnectionService.socket?.connected) {
+					console.log('Reconnecting socket after tab became visible...');
+					this._socketConnectionService.connect();
+				}
+			}
+		});
+
+		window.addEventListener('online', () => {
+			console.log('Network connection restored, reconnecting socket...');
+			if (!this._socketConnectionService.socket?.connected) {
+				this._socketConnectionService.connect();
+			}
+		});
 	}
 
 	/**

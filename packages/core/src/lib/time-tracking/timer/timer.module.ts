@@ -11,19 +11,24 @@ import { TaskModule } from '../../tasks';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 import { OrganizationProjectModule } from '../../organization-project/organization-project.module';
+import { OrganizationProjectService } from '../../organization-project';
+import { RoleModule } from '../../role/role.module';
+import { SocketModule } from '../../socket';
 
 @Module({
 	imports: [
 		RolePermissionModule,
-		OrganizationProjectModule,
+		forwardRef(() => OrganizationProjectModule),
 		EmployeeModule,
+		RoleModule,
 		forwardRef(() => TimeLogModule),
 		forwardRef(() => StatisticModule),
-		TaskModule,
-		CqrsModule
+		forwardRef(() => TaskModule),
+		CqrsModule,
+		SocketModule
 	],
 	controllers: [TimerController],
 	exports: [TimerService, TimerWeeklyLimitService],
-	providers: [TimerService, TimerWeeklyLimitService, ...CommandHandlers, ...QueryHandlers]
+	providers: [OrganizationProjectService, TimerService, TimerWeeklyLimitService, ...CommandHandlers, ...QueryHandlers]
 })
 export class TimerModule {}
