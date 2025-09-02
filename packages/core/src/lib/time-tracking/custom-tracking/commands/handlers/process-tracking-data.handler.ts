@@ -8,7 +8,7 @@ import { RequestContext } from '../../../../core/context';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { ProcessTrackingDataCommand } from '../process-tracking-data.command';
 import { prepareSQLQuery as p } from '../../../../database/database.helper';
-import { ICustomActivity, ITrackingSession, ITrackingPayload } from '@gauzy/contracts';
+import { ICustomActivity, ITrackingSession, ITrackingPayload, JsonData } from '@gauzy/contracts';
 
 @CommandHandler(ProcessTrackingDataCommand)
 export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTrackingDataCommand> {
@@ -39,6 +39,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 
 			if (!organizationId) {
 				this.logger.error('No organizationId found in headers, input, or user context');
+				throw new BadRequestException('Organization context is required for tracking data');
 			}
 
 			// Get user context - could be employee or other user types
@@ -62,14 +63,10 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 			}
 
 			// Decode the payload to extract session information
-			const { sessionId, timestamp, decodedData } = await this.decodeTrackingPayload(payload);
-			this.logger.debug('Session decoded', {
-				sessionId,
-				timestamp,
-				hasDecodedData: !!decodedData
-			});
+			const { sessionId, timestampMs, decodedData } = await this.decodeTrackingPayload(payload);
+
 			// Use provided startTime or extracted timestamp
-			const trackingTime = startTime ? new Date(startTime) : new Date(timestamp);
+			const trackingTime = startTime ? new Date(startTime) : new Date(timestampMs);
 
 			// Find or create appropriate TimeSlot
 			const timeSlot = await this.findOrCreateTimeSlot(employeeId, organizationId, tenantId, trackingTime);
@@ -98,20 +95,20 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 	 */
 	private async decodeTrackingPayload(
 		payload: string
-	): Promise<{ sessionId: string; timestamp: number; decodedData: Data.DecodedPayload | null }> {
+	): Promise<{ sessionId: string; timestampMs: number; decodedData: Data.DecodedPayload | null }> {
 		try {
 			const decodedData: Data.DecodedPayload = decode(payload);
 
 			// Extract session ID and timestamp from decoded data
 			const sessionId = decodedData.envelope.sessionId;
-			const timestamp = decodedData.timestamp;
-
-			return { sessionId, timestamp, decodedData };
+			const ts = (decodedData as any).timestamp;
+			const timestampMs = ts > 1e12 ? ts : ts * 1000;
+			return { sessionId, timestampMs, decodedData };
 		} catch (error) {
 			// Fallback if decoding fails
 			return {
 				sessionId: `fallback-session-${Date.now()}`,
-				timestamp: Date.now(),
+				timestampMs: Date.now(),
 				decodedData: null
 			};
 		}
@@ -127,13 +124,12 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		trackingTime: Date
 	): Promise<TimeSlot> {
 		// Calculate 10-minute slot boundary
-		const slotStart = this.roundToNearestTenMinutes(moment(trackingTime)).toDate();
+		const slotStart = this.floorToTenMinutes(moment(trackingTime)).toDate();
 
 		let timeSlot: TimeSlot;
 		try {
 			// Try to find existing TimeSlot
 			const query = this.timeSlotRepository.createQueryBuilder('time_slot');
-			query.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
 
 			query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
@@ -168,7 +164,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 	/**
 	 * Round a moment date to the nearest 10 minutes
 	 */
-	private roundToNearestTenMinutes(date: moment.Moment): moment.Moment {
+	private floorToTenMinutes(date: moment.Moment): moment.Moment {
 		const minutes = date.minutes();
 		return date
 			.minutes(minutes - (minutes % 10))
@@ -285,7 +281,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 
 		// Update TimeSlot
 		await this.timeSlotRepository.update(timeSlot.id, {
-			customActivity: customActivity as any
+			customActivity: customActivity as JsonData
 		});
 	}
 }

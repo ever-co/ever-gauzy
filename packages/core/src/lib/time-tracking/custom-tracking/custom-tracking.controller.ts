@@ -64,12 +64,6 @@ export class CustomTrackingController {
 		type: String,
 		description: 'TimeSlot ID'
 	})
-	@ApiQuery({
-		name: 'includeDecoded',
-		type: Boolean,
-		required: false,
-		description: 'Whether to include decoded tracking data'
-	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'TimeSlot tracking data retrieved successfully'

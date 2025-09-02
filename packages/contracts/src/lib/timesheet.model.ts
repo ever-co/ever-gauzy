@@ -542,7 +542,7 @@ export interface IProcessTrackingDataInput {
 export interface ITrackingPayload {
 	timestamp: string;
 	encodedData: string;
-	decodedData?: any;
+	decodedData?: unknown;
 }
 
 /**
@@ -570,17 +570,11 @@ export interface ICustomActivity {
 export interface ITrackingSessionResponse {
 	sessionId: string;
 	timeSlotId: string;
-	timeSlot: {
-		startedAt: Date;
-		duration: number;
-	};
+	timeSlot: Pick<ITimeSlot, 'startedAt' | 'duration'>;
 	timeLogs: ITimeLog[];
 	session: ITrackingSession;
 	timeSlots?: Array<{
 		timeSlotId: string;
-		timeSlot: {
-			startedAt: Date;
-			duration: number;
-		};
+		timeSlot: Pick<ITimeSlot, 'startedAt' | 'duration'>;
 	}>;
 }

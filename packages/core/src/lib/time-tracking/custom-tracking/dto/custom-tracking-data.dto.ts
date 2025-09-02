@@ -20,12 +20,12 @@ export class CustomTrackingDataDTO {
 	 * Timestamp when the data was captured
 	 */
 	@ApiProperty({
-		type: () => Date,
+		type: () => String,
 		description: 'Timestamp when the tracking data was captured'
 	})
 	@IsNotEmpty()
 	@IsDateString()
-	readonly timestamp: Date;
+	readonly timestamp: string;
 
 	/**
 	 * Optional metadata about the tracking session

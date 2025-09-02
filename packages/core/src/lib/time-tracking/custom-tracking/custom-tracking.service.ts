@@ -24,13 +24,16 @@ export class CustomTrackingService {
 	 * Submit custom tracking data using command pattern
 	 */
 	async submitTrackingData(dto: CustomTrackingDataDTO): Promise<any> {
-		const { trackingData, timestamp } = dto;
-
+		const { trackingData, timestamp, metadata } = dto;
+		const startTime = new Date(timestamp);
+		if (isNaN(startTime.getTime())) {
+			throw new BadRequestException('Invalid timestamp');
+		}
 		// Use command bus to process tracking data
 		return await this.commandBus.execute(
 			new ProcessTrackingDataCommand({
 				payload: trackingData,
-				startTime: new Date(timestamp)
+				startTime
 				// Context will be extracted in the handler
 			})
 		);
@@ -39,7 +42,10 @@ export class CustomTrackingService {
 	/**
 	 * Get custom tracking sessions with optional filtering and grouping
 	 */
-	async getTrackingSessions(query: CustomTrackingSessionsQueryDTO): Promise<any> {
+	async getTrackingSessions(query: CustomTrackingSessionsQueryDTO): Promise<{
+		sessions: ITrackingSessionResponse[];
+		summary: { totalSessions: number; totalTimeSlots: number; dateRange: { start: Date; end: Date } | null };
+	}> {
 		const tenantId = RequestContext.currentTenantId();
 
 		// Get organizationId from query parameters
@@ -67,7 +73,7 @@ export class CustomTrackingService {
 		const timeSlots = await this.getTimeSlotsWithTracking(query, employeeIds, tenantId, organizationId);
 
 		// 2. Extract tracking sessions with optional decoded data
-		const sessions = await this.extractTrackingSessionsFromTimeSlots(timeSlots, query.includeDecodedData);
+		const sessions = this.extractTrackingSessionsFromTimeSlots(timeSlots, query.includeDecodedData);
 
 		// 3. Group by sessionId if requested
 		let workSessions = [];
@@ -233,10 +239,10 @@ export class CustomTrackingService {
 	/**
 	 * Extract and decode tracking sessions from TimeSlots
 	 */
-	private async extractTrackingSessionsFromTimeSlots(
+	private extractTrackingSessionsFromTimeSlots(
 		timeSlots: TimeSlot[],
 		includeDecodedData: boolean = false
-	): Promise<ITrackingSessionResponse[]> {
+	): ITrackingSessionResponse[] {
 		const sessions: ITrackingSessionResponse[] = [];
 
 		for (const timeSlot of timeSlots) {
@@ -338,7 +344,7 @@ export class CustomTrackingService {
 	} {
 		return {
 			totalSessions: sessions.length,
-			totalTimeSlots: sessions.length,
+			totalTimeSlots: new Set(sessions.map((s) => s.timeSlotId)).size,
 			dateRange:
 				sessions.length > 0
 					? {

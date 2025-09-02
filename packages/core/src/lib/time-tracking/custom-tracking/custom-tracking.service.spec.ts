@@ -1,17 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository } from 'typeorm';
 import { CustomTrackingService } from './custom-tracking.service';
 import { TimeSlot } from '../time-slot/time-slot.entity';
 import { TimeLog } from '../time-log/time-log.entity';
 import { TimeSlotService } from '../time-slot/time-slot.service';
 import { TimeLogService } from '../time-log/time-log.service';
+import { ProcessTrackingDataCommand } from './commands/process-tracking-data.command';
 
 describe('CustomTrackingService', () => {
 	let service: CustomTrackingService;
-	let timeSlotRepository: Repository<TimeSlot>;
-	let timeLogRepository: Repository<TimeLog>;
 	let commandBus: CommandBus;
 
 	beforeEach(async () => {
@@ -55,8 +53,6 @@ describe('CustomTrackingService', () => {
 		}).compile();
 
 		service = module.get<CustomTrackingService>(CustomTrackingService);
-		timeSlotRepository = module.get<Repository<TimeSlot>>(getRepositoryToken(TimeSlot));
-		timeLogRepository = module.get<Repository<TimeLog>>(getRepositoryToken(TimeLog));
 		commandBus = module.get<CommandBus>(CommandBus);
 	});
 
@@ -82,7 +78,7 @@ describe('CustomTrackingService', () => {
 
 			const result = await service.submitTrackingData(dto);
 
-			expect(commandBus.execute).toHaveBeenCalled();
+			expect(commandBus.execute).toHaveBeenCalledWith(expect.any(ProcessTrackingDataCommand));
 			expect(result).toEqual(expectedResult);
 		});
 	});
