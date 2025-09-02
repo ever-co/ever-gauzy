@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsDateString, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsDateString, IsOptional, IsObject } from 'class-validator';
 
 /**
  * DTO for submitting custom tracking data
@@ -35,5 +35,6 @@ export class CustomTrackingDataDTO {
 		description: 'Optional metadata about the tracking session'
 	})
 	@IsOptional()
+	@IsObject()
 	readonly metadata?: Record<string, unknown>;
 }

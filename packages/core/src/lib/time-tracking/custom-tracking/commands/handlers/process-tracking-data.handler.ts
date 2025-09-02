@@ -19,9 +19,19 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		private readonly timeSlotRepository: Repository<TimeSlot>
 	) {}
 
-	async execute(command: ProcessTrackingDataCommand): Promise<any> {
+	async execute(command: ProcessTrackingDataCommand): Promise<{
+		success: boolean;
+		sessionId: string;
+		timeSlotId: string;
+		message: string;
+		session: ITrackingSession | null;
+	}> {
 		const { input } = command;
 		const { payload, startTime } = input;
+
+		if (typeof payload !== 'string' || payload.trim().length === 0) {
+			throw new BadRequestException('Payload must be a non-empty string');
+		}
 
 		try {
 			// Get context information
@@ -37,9 +47,8 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 				organizationId = currentUser?.employee?.organizationId;
 			}
 
-			if (!organizationId) {
-				this.logger.error('No organizationId found in headers, input, or user context');
-				throw new BadRequestException('Organization context is required for tracking data');
+			if (!tenantId || !organizationId) {
+				throw new BadRequestException('Tenant and Organization contexts is required');
 			}
 
 			// Get user context - could be employee or other user types
@@ -49,17 +58,14 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 				const currentUser = RequestContext.currentUser();
 				if (currentUser?.employee?.id) {
 					employeeId = currentUser.employee.id;
-				} else if (RequestContext.currentEmployeeId()) {
-					employeeId = RequestContext.currentEmployeeId();
+				} else {
+					const ctxEmpId = RequestContext.currentEmployeeId();
+					if (ctxEmpId) employeeId = ctxEmpId;
 				}
 			}
 
 			if (!employeeId) {
 				throw new BadRequestException('Employee context is required for tracking data');
-			}
-
-			if (!tenantId || !organizationId) {
-				throw new BadRequestException('Tenant and Organization context is required');
 			}
 
 			// Decode the payload to extract session information

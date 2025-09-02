@@ -23,8 +23,14 @@ export class CustomTrackingService {
 	/**
 	 * Submit custom tracking data using command pattern
 	 */
-	async submitTrackingData(dto: CustomTrackingDataDTO): Promise<any> {
-		const { trackingData, timestamp, metadata } = dto;
+	async submitTrackingData(dto: CustomTrackingDataDTO): Promise<{
+		success: boolean;
+		sessionId: string;
+		timeSlotId: string;
+		message: string;
+		session: ITrackingSession | null;
+	}> {
+		const { trackingData, timestamp } = dto;
 		const startTime = new Date(timestamp);
 		if (isNaN(startTime.getTime())) {
 			throw new BadRequestException('Invalid timestamp');
@@ -34,7 +40,6 @@ export class CustomTrackingService {
 			new ProcessTrackingDataCommand({
 				payload: trackingData,
 				startTime
-				// Context will be extracted in the handler
 			})
 		);
 	}

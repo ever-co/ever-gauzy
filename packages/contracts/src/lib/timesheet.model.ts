@@ -531,9 +531,9 @@ export interface IDeleteTimeLog extends IDeleteEntity {
 export interface IProcessTrackingDataInput {
 	payload: string;
 	startTime?: Date;
-	organizationId?: string;
-	tenantId?: string;
-	employeeId?: string;
+	organizationId?: ID;
+	tenantId?: ID;
+	employeeId?: ID;
 }
 
 /**
@@ -557,6 +557,7 @@ export interface ITrackingSession {
 	payloads: ITrackingPayload[];
 }
 
+type TimeSlotSummary = Pick<ITimeSlot, 'startedAt' | 'duration'>;
 /**
  * Interface for custom activity data stored in TimeSlot
  */
@@ -569,12 +570,12 @@ export interface ICustomActivity {
  */
 export interface ITrackingSessionResponse {
 	sessionId: string;
-	timeSlotId: string;
-	timeSlot: Pick<ITimeSlot, 'startedAt' | 'duration'>;
+	timeSlotId: ID;
+	timeSlot: TimeSlotSummary;
 	timeLogs: ITimeLog[];
 	session: ITrackingSession;
 	timeSlots?: Array<{
-		timeSlotId: string;
-		timeSlot: Pick<ITimeSlot, 'startedAt' | 'duration'>;
+		timeSlotId: ID;
+		timeSlot: TimeSlotSummary;
 	}>;
 }

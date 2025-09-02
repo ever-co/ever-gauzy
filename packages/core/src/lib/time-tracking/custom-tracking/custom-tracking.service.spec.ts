@@ -64,7 +64,7 @@ describe('CustomTrackingService', () => {
 		it('should execute ProcessTrackingDataCommand', async () => {
 			const dto = {
 				trackingData: 'encoded_payload',
-				timestamp: new Date(),
+				timestamp: new Date().toISOString(),
 				metadata: {}
 			};
 

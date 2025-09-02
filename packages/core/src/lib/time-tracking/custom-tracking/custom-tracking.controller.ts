@@ -1,5 +1,5 @@
 import { Controller, Post, Get, Body, Param, Query, HttpStatus, UseGuards, ParseUUIDPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { TenantPermissionGuard, PermissionGuard } from '../../shared/guards';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from '../../shared/decorators';

@@ -1,6 +1,7 @@
 import { ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
 import { IsOptional, IsUUID, IsBoolean } from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
+import { ID } from '@gauzy/contracts';
 import { parseToBoolean } from '@gauzy/utils';
 import { FiltersQueryDTO, SelectorsQueryDTO, RelationsQueryDTO } from '../../../shared/dto';
 
@@ -16,11 +17,14 @@ export class CustomTrackingSessionsQueryDTO extends IntersectionType(
 	 */
 	@ApiPropertyOptional({
 		type: () => Boolean,
-		description: 'Whether to group tracking sessions by sessionId'
+		description: 'Whether to group tracking sessions by sessionId',
+		default: true
 	})
 	@IsOptional()
 	@IsBoolean()
-	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+	@Transform(({ value }: TransformFnParams) =>
+		value === undefined || value === null || value === '' ? undefined : parseToBoolean(value)
+	)
 	readonly groupBySession?: boolean = true;
 
 	/**
@@ -33,7 +37,9 @@ export class CustomTrackingSessionsQueryDTO extends IntersectionType(
 	})
 	@IsOptional()
 	@IsBoolean()
-	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+	@Transform(({ value }: TransformFnParams) =>
+		value === undefined || value === null || value === '' ? undefined : parseToBoolean(value)
+	)
 	readonly includeDecodedData?: boolean = false;
 
 	/**
@@ -45,7 +51,7 @@ export class CustomTrackingSessionsQueryDTO extends IntersectionType(
 	})
 	@IsOptional()
 	@IsUUID()
-	readonly employeeId?: string;
+	readonly employeeId?: ID;
 
 	/**
 	 * Filter by specific project
@@ -56,5 +62,5 @@ export class CustomTrackingSessionsQueryDTO extends IntersectionType(
 	})
 	@IsOptional()
 	@IsUUID()
-	readonly projectId?: string;
+	readonly projectId?: ID;
 }
