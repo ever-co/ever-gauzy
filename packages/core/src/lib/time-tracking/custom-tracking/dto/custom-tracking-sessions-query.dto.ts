@@ -12,18 +12,6 @@ export class CustomTrackingSessionsQueryDTO extends IntersectionType(
 	IntersectionType(SelectorsQueryDTO, RelationsQueryDTO)
 ) {
 	/**
-	 * Whether to include decoded tracking data
-	 */
-	@ApiPropertyOptional({
-		type: () => Boolean,
-		description: 'Whether to include decoded tracking data in the response'
-	})
-	@IsOptional()
-	@IsBoolean()
-	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
-	readonly includeDecoded?: boolean = true;
-
-	/**
 	 * Whether to group by sessionId
 	 */
 	@ApiPropertyOptional({
@@ -34,6 +22,19 @@ export class CustomTrackingSessionsQueryDTO extends IntersectionType(
 	@IsBoolean()
 	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
 	readonly groupBySession?: boolean = true;
+
+	/**
+	 * Whether to include decoded data in the response
+	 */
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		default: false,
+		description: 'Whether to include decoded data in the response. By default, only encoded data is returned.'
+	})
+	@IsOptional()
+	@IsBoolean()
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+	readonly includeDecodedData?: boolean = false;
 
 	/**
 	 * Filter by specific employee

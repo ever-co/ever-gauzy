@@ -535,3 +535,52 @@ export interface IProcessTrackingDataInput {
 	tenantId?: string;
 	employeeId?: string;
 }
+
+/**
+ * Interface for tracking session payload
+ */
+export interface ITrackingPayload {
+	timestamp: string;
+	encodedData: string;
+	decodedData?: Record<string, unknown>;
+}
+
+/**
+ * Interface for tracking session
+ */
+export interface ITrackingSession {
+	sessionId: string;
+	startTime: string;
+	lastActivity: string;
+	createdAt: string;
+	updatedAt: string;
+	payloads: ITrackingPayload[];
+}
+
+/**
+ * Interface for custom activity data stored in TimeSlot
+ */
+export interface ICustomActivity {
+	trackingSessions: ITrackingSession[];
+}
+
+/**
+ * Interface for tracking session response
+ */
+export interface ITrackingSessionResponse {
+	sessionId: string;
+	timeSlotId: string;
+	timeSlot: {
+		startedAt: Date;
+		duration: number;
+	};
+	timeLogs: ITimeLog[];
+	session: ITrackingSession;
+	timeSlots?: Array<{
+		timeSlotId: string;
+		timeSlot: {
+			startedAt: Date;
+			duration: number;
+		};
+	}>;
+}

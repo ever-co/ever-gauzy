@@ -8,6 +8,7 @@ import { RequestContext } from '../../../../core/context';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { ProcessTrackingDataCommand } from '../process-tracking-data.command';
 import { prepareSQLQuery as p } from '../../../../database/database.helper';
+import { IProcessTrackingDataInput, ICustomActivity, ITrackingSession, ITrackingPayload } from '@gauzy/contracts';
 
 @CommandHandler(ProcessTrackingDataCommand)
 export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTrackingDataCommand> {
@@ -35,14 +36,6 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 				const currentUser = RequestContext.currentUser();
 				organizationId = currentUser?.employee?.organizationId;
 			}
-
-			// Debug logging
-			this.logger.debug(
-				`Processing tracking data - tenantId: ${tenantId}, organizationId: ${organizationId}, headers: ${JSON.stringify(
-					req?.headers || {}
-				)}`
-			);
-			this.logger.debug(`Input data: ${JSON.stringify(input)}`);
 
 			if (!organizationId) {
 				this.logger.error('No organizationId found in headers, input, or user context');
@@ -81,8 +74,8 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 			// Find or create appropriate TimeSlot
 			const timeSlot = await this.findOrCreateTimeSlot(employeeId, organizationId, tenantId, trackingTime);
 
-			// Update TimeSlot with tracking data (store decoded data)
-			await this.updateTimeSlotWithTrackingData(timeSlot, sessionId, decodedData, trackingTime);
+			// Update TimeSlot with tracking data (store both encoded and decoded data)
+			await this.updateTimeSlotWithTrackingData(timeSlot, sessionId, trackingData, decodedData, trackingTime);
 
 			// Return the complete session data across all TimeSlots with the same sessionId
 			const allSessionData = await this.getCompleteSessionData(sessionId, employeeId, organizationId, tenantId);
@@ -109,15 +102,13 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		try {
 			const decodedData: Data.DecodedPayload = decode(payload);
 
-			this.logger.debug(`Decoded data envelope: ${JSON.stringify(decodedData.envelope)}`);
 			// Extract session ID and timestamp from decoded data
 			const sessionId = decodedData.envelope.sessionId;
-			const timestamp = decodedData?.timestamp;
+			const timestamp = decodedData.timestamp;
 
 			return { sessionId, timestamp, decodedData };
 		} catch (error) {
 			// Fallback if decoding fails
-			this.logger.warn('Failed to decode tracking payload, using fallback values', error.message);
 			return {
 				sessionId: `fallback-session-${Date.now()}`,
 				timestamp: Date.now(),
@@ -128,7 +119,6 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 
 	/**
 	 * Find existing TimeSlot or create new one for the tracking time
-	 * Follows the exact same pattern as CreateTimeSlotHandler and TimeSlotMergeHandler
 	 */
 	private async findOrCreateTimeSlot(
 		employeeId: string,
@@ -136,16 +126,15 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		tenantId: string,
 		trackingTime: Date
 	): Promise<TimeSlot> {
-		// Calculate 10-minute slot boundary using the same logic as TimeSlotMergeHandler
+		// Calculate 10-minute slot boundary
 		const slotStart = this.roundToNearestTenMinutes(moment(trackingTime)).toDate();
 
 		let timeSlot: TimeSlot;
 		try {
-			// Try to find existing TimeSlot using the same pattern as CreateTimeSlotHandler
+			// Try to find existing TimeSlot
 			const query = this.timeSlotRepository.createQueryBuilder('time_slot');
 			query.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
 
-			// Add where clauses exactly like CreateTimeSlotHandler
 			query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
@@ -157,14 +146,14 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 			timeSlot = null;
 		}
 
-		// Create new TimeSlot if not found, following the exact pattern from TimeSlotCreateHandler
+		// Create new TimeSlot if not found
 		if (!timeSlot) {
 			const entity = this.timeSlotRepository.create({
 				employeeId,
 				organizationId,
 				tenantId,
 				startedAt: slotStart,
-				duration: 0, // Default value as in codebase
+				duration: 0,
 				keyboard: 0,
 				mouse: 0,
 				overall: 0,
@@ -195,7 +184,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		employeeId: string,
 		organizationId: string,
 		tenantId: string
-	): Promise<any> {
+	): Promise<ITrackingSession | null> {
 		// Find all TimeSlots that contain this sessionId
 		const timeSlots = await this.timeSlotRepository
 			.createQueryBuilder('timeSlot')
@@ -206,14 +195,14 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 			.getMany();
 
 		// Extract and merge all payloads for this sessionId
-		let allPayloads = [];
-		let sessionInfo = null;
+		let allPayloads: ITrackingPayload[] = [];
+		let sessionInfo: Omit<ITrackingSession, 'payloads'> | null = null;
 
 		for (const timeSlot of timeSlots) {
-			const customActivity = (timeSlot.customActivity as any) || {};
-			const sessions = customActivity.trackingSessions || [];
+			const customActivity = timeSlot.customActivity as ICustomActivity;
+			if (!customActivity?.trackingSessions) continue;
 
-			const session = sessions.find((s: any) => s.sessionId === sessionId);
+			const session = customActivity.trackingSessions.find((s: ITrackingSession) => s.sessionId === sessionId);
 			if (session) {
 				if (!sessionInfo) {
 					sessionInfo = {
@@ -225,7 +214,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 					};
 				}
 				// Merge payloads from this TimeSlot
-				allPayloads = [...allPayloads, ...(session.payloads || [])];
+				allPayloads = [...allPayloads, ...session.payloads];
 			}
 		}
 
@@ -238,58 +227,56 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 
 		return {
 			...sessionInfo,
-			payloads: allPayloads,
-			totalPayloads: allPayloads.length
+			payloads: allPayloads
 		};
 	}
 
 	/**
-	 * Update TimeSlot with tracking data (store decoded data)
+	 * Update TimeSlot with tracking data (store both encoded and decoded data)
 	 */
 	private async updateTimeSlotWithTrackingData(
 		timeSlot: TimeSlot,
 		sessionId: string,
+		encodedPayload: string,
 		decodedData: Data.DecodedPayload | null,
 		timestamp: Date
 	): Promise<void> {
-		const customActivity = (timeSlot.customActivity as any) || {};
-		const trackingSessions = customActivity.trackingSessions || [];
+		const customActivity: ICustomActivity = (timeSlot.customActivity as ICustomActivity) || {
+			trackingSessions: []
+		};
 
 		// Find existing session or create new one
-		let existingSession = trackingSessions.find((session: any) => session.sessionId === sessionId);
+		let existingSession = customActivity.trackingSessions.find(
+			(session: ITrackingSession) => session.sessionId === sessionId
+		);
+
+		const payload: ITrackingPayload = {
+			timestamp: timestamp.toISOString(),
+			encodedData: encodedPayload,
+			decodedData: decodedData || undefined
+		};
 
 		if (existingSession) {
-			// Update existing session - store decoded data
-			existingSession.payloads.push({
-				timestamp: timestamp.toISOString(),
-				decodedData: decodedData // Store decoded data instead of raw payload
-			});
+			// Update existing session
+			existingSession.payloads.push(payload);
 			existingSession.updatedAt = new Date().toISOString();
 			existingSession.lastActivity = timestamp.toISOString();
 		} else {
-			// Create new session - store decoded data
+			// Create new session
 			existingSession = {
 				sessionId,
 				startTime: timestamp.toISOString(),
 				lastActivity: timestamp.toISOString(),
 				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
-				payloads: [
-					{
-						timestamp: timestamp.toISOString(),
-						decodedData: decodedData // Store decoded data instead of raw payload
-					}
-				]
+				payloads: [payload]
 			};
-			trackingSessions.push(existingSession);
+			customActivity.trackingSessions.push(existingSession);
 		}
 
 		// Update TimeSlot
 		await this.timeSlotRepository.update(timeSlot.id, {
-			customActivity: {
-				...(customActivity as object),
-				trackingSessions
-			}
+			customActivity: customActivity
 		});
 	}
 }

@@ -2,13 +2,21 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Repository, SelectQueryBuilder } from 'typeorm';
+import { encode } from 'clarity-decode';
+import {
+	PermissionsEnum,
+	ICustomActivity,
+	ITrackingSession,
+	ITrackingPayload,
+	ITrackingSessionResponse
+} from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../core/context';
 import { TimeSlot } from '../time-slot/time-slot.entity';
 import { CustomTrackingDataDTO, CustomTrackingSessionsQueryDTO } from './dto';
 import { ProcessTrackingDataCommand } from './commands';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { getDateRangeFormat } from '../../core/utils';
-import { isNotEmpty } from '@gauzy/utils';
 import { moment } from '../../core/moment-extend';
 
 @Injectable()
@@ -41,10 +49,10 @@ export class CustomTrackingService {
 	async getTrackingSessions(query: CustomTrackingSessionsQueryDTO): Promise<any> {
 		const tenantId = RequestContext.currentTenantId();
 
-		// Get organizationId from query parameters - same pattern as TimeSlotService
+		// Get organizationId from query parameters
 		const { organizationId } = query;
 
-		// Get employee IDs from query or context - following TimeSlotService pattern
+		// Get employee IDs from query or context
 		let employeeIds = query.employeeIds || [];
 		if (employeeIds.length === 0) {
 			const employeeId = RequestContext.currentEmployeeId();
@@ -65,8 +73,8 @@ export class CustomTrackingService {
 		// 1. Get TimeSlots with custom tracking data
 		const timeSlots = await this.getTimeSlotsWithTracking(query, employeeIds, tenantId, organizationId);
 
-		// 2. Extract and decode tracking sessions
-		const sessions = await this.extractTrackingSessionsFromTimeSlots(timeSlots);
+		// 2. Extract tracking sessions with optional decoded data
+		const sessions = await this.extractTrackingSessionsFromTimeSlots(timeSlots, query.includeDecodedData);
 
 		// 3. Group by sessionId if requested
 		let workSessions = [];
@@ -87,7 +95,17 @@ export class CustomTrackingService {
 	/**
 	 * Get tracking data for a specific TimeSlot
 	 */
-	async getTimeSlotTrackingData(timeSlotId: string): Promise<any> {
+	async getTimeSlotTrackingData(timeSlotId: string): Promise<{
+		timeSlotId: string;
+		hasTrackingData: boolean;
+		message?: string;
+		timeSlot?: {
+			startedAt: Date;
+			duration: number;
+			timeLogs: any[];
+		};
+		trackingSessions?: ITrackingSession[];
+	}> {
 		const tenantId = RequestContext.currentTenantId();
 
 		// Get organizationId from headers first, then fallback to user context
@@ -116,8 +134,8 @@ export class CustomTrackingService {
 			throw new NotFoundException('TimeSlot not found');
 		}
 
-		const customActivity = (timeSlot.customActivity as any) || {};
-		if (!customActivity.trackingSessions) {
+		const customActivity = timeSlot.customActivity as ICustomActivity;
+		if (!customActivity?.trackingSessions) {
 			return {
 				timeSlotId,
 				hasTrackingData: false,
@@ -147,13 +165,13 @@ export class CustomTrackingService {
 		tenantId: string,
 		organizationId: string
 	): Promise<TimeSlot[]> {
-		// Calculate start and end dates using the same utility as TimeSlotService
+		// Calculate start and end dates
 		const { start, end } = getDateRangeFormat(
 			moment.utc(query.startDate || moment().startOf('day')),
 			moment.utc(query.endDate || moment().endOf('day'))
 		);
 
-		// Create a query builder for the TimeSlot entity - same as TimeSlotService
+		// Create a query builder for the TimeSlot entity
 		const qb = this.timeSlotRepository.createQueryBuilder('time_slot');
 		qb.leftJoin(
 			`${qb.alias}.employee`,
@@ -163,7 +181,7 @@ export class CustomTrackingService {
 		);
 		qb.leftJoinAndSelect(`${qb.alias}.timeLogs`, 'time_log');
 
-		// Set find options for the query - same as TimeSlotService
+		// Set find options for the query
 		qb.setFindOptions({
 			select: {
 				organization: {
@@ -183,7 +201,7 @@ export class CustomTrackingService {
 			relations: query.relations || []
 		});
 
-		// Add where conditions - same pattern as TimeSlotService
+		// Add where conditions
 		qb.where((subQb: SelectQueryBuilder<TimeSlot>) => {
 			// Filter by time range if dates are provided
 			if (query.startDate && query.endDate) {
@@ -203,16 +221,16 @@ export class CustomTrackingService {
 				subQb.andWhere(p(`"time_log"."projectId" IN (:...projectIds)`), { projectIds: query.projectIds });
 			}
 
-			// Filter by tenantId and organizationId - same as TimeSlotService
+			// Filter by tenantId and organizationId
 			subQb.andWhere(
 				`"${subQb.alias}"."tenantId" = :tenantId AND "${subQb.alias}"."organizationId" = :organizationId`,
 				{ tenantId, organizationId }
 			);
 
-			// OUR CUSTOM CONDITION: Filter by customActivity containing trackingSessions
+			// Filter by customActivity containing trackingSessions
 			subQb.andWhere(`"${subQb.alias}"."customActivity" IS NOT NULL`);
 
-			// Sort by createdAt - same as TimeSlotService
+			// Sort by createdAt
 			subQb.addOrderBy(`"${subQb.alias}"."createdAt"`, 'ASC');
 		});
 
@@ -222,41 +240,55 @@ export class CustomTrackingService {
 	/**
 	 * Extract and decode tracking sessions from TimeSlots
 	 */
-	private async extractTrackingSessionsFromTimeSlots(timeSlots: TimeSlot[]): Promise<any[]> {
-		const sessions = [];
+	private async extractTrackingSessionsFromTimeSlots(
+		timeSlots: TimeSlot[],
+		includeDecodedData: boolean = false
+	): Promise<ITrackingSessionResponse[]> {
+		const sessions: ITrackingSessionResponse[] = [];
 
 		for (const timeSlot of timeSlots) {
-			const customActivity = (timeSlot.customActivity as any) || {};
+			const customActivity = timeSlot.customActivity as ICustomActivity;
 
-			if (!customActivity.trackingSessions) {
+			if (!customActivity?.trackingSessions) {
 				continue;
 			}
 
-			const timeSlotSessions = customActivity.trackingSessions;
+			for (const session of customActivity.trackingSessions) {
+				// Process payloads based on includeDecodedData flag
+				const processedPayloads = session.payloads.map((payload: ITrackingPayload) => {
+					if (includeDecodedData) {
+						// Return both encoded and decoded data
+						return {
+							timestamp: payload.timestamp,
+							encodedData: payload.encodedData,
+							decodedData: payload.decodedData
+						};
+					} else {
+						// Return only encoded data (default behavior)
+						return {
+							timestamp: payload.timestamp,
+							encodedData: payload.encodedData
+						};
+					}
+				});
 
-			for (const session of timeSlotSessions) {
-				const sessionData = {
+				const sessionData: ITrackingSessionResponse = {
 					sessionId: session.sessionId,
 					timeSlotId: timeSlot.id,
 					timeSlot: {
 						startedAt: timeSlot.startedAt,
 						duration: timeSlot.duration
 					},
-					timeLogs: timeSlot.timeLogs,
+					timeLogs: timeSlot.timeLogs || [],
 					session: {
+						sessionId: session.sessionId,
 						startTime: session.startTime,
 						lastActivity: session.lastActivity,
 						createdAt: session.createdAt,
 						updatedAt: session.updatedAt,
-						payloadCount: session.payloads?.length || 0
+						payloads: processedPayloads
 					}
 				};
-
-				// Return decoded data directly
-				sessionData.session['payloads'] = session.payloads.map((p: any) => ({
-					timestamp: p.timestamp,
-					decodedData: p.decodedData
-				}));
 
 				sessions.push(sessionData);
 			}
@@ -268,18 +300,20 @@ export class CustomTrackingService {
 	/**
 	 * Group tracking sessions by sessionId across multiple TimeSlots
 	 */
-	private groupSessionsBySessionId(sessions: any[]): any[] {
-		const sessionMap = new Map();
+	private groupSessionsBySessionId(sessions: ITrackingSessionResponse[]): ITrackingSessionResponse[] {
+		const sessionMap = new Map<string, ITrackingSessionResponse>();
 
 		sessions.forEach((session) => {
 			const sessionId = session.sessionId;
 
 			if (sessionMap.has(sessionId)) {
 				// Merge payloads from different TimeSlots
-				const existingSession = sessionMap.get(sessionId);
+				const existingSession = sessionMap.get(sessionId)!;
 				existingSession.session.payloads = [...existingSession.session.payloads, ...session.session.payloads];
 				// Update timeSlots array
-				existingSession.timeSlots = existingSession.timeSlots || [];
+				if (!existingSession.timeSlots) {
+					existingSession.timeSlots = [];
+				}
 				existingSession.timeSlots.push({
 					timeSlotId: session.timeSlotId,
 					timeSlot: session.timeSlot
@@ -304,7 +338,11 @@ export class CustomTrackingService {
 	/**
 	 * Calculate summary statistics for sessions
 	 */
-	private calculateSessionsSummary(sessions: any[]): any {
+	private calculateSessionsSummary(sessions: ITrackingSessionResponse[]): {
+		totalSessions: number;
+		totalTimeSlots: number;
+		dateRange: { start: Date; end: Date } | null;
+	} {
 		return {
 			totalSessions: sessions.length,
 			totalTimeSlots: sessions.length,

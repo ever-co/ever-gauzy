@@ -29,7 +29,7 @@ export class CustomTrackingController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid tracking data or no active TimeSlot found'
 	})
-	@Post('/data')
+	@Post('')
 	@UseValidationPipe({ transform: true })
 	async submitTrackingData(@Body() dto: CustomTrackingDataDTO) {
 		return await this.customTrackingService.submitTrackingData(dto);
