@@ -2,14 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import { encode } from 'clarity-decode';
-import {
-	PermissionsEnum,
-	ICustomActivity,
-	ITrackingSession,
-	ITrackingPayload,
-	ITrackingSessionResponse
-} from '@gauzy/contracts';
+import { ICustomActivity, ITrackingSession, ITrackingPayload, ITrackingSessionResponse } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../core/context';
 import { TimeSlot } from '../time-slot/time-slot.entity';

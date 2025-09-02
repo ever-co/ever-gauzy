@@ -35,5 +35,5 @@ export class CustomTrackingDataDTO {
 		description: 'Optional metadata about the tracking session'
 	})
 	@IsOptional()
-	readonly metadata?: Record<string, unknow>;
+	readonly metadata?: Record<string, unknown>;
 }

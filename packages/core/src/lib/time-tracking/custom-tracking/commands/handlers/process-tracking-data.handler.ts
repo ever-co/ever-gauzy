@@ -8,7 +8,7 @@ import { RequestContext } from '../../../../core/context';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { ProcessTrackingDataCommand } from '../process-tracking-data.command';
 import { prepareSQLQuery as p } from '../../../../database/database.helper';
-import { IProcessTrackingDataInput, ICustomActivity, ITrackingSession, ITrackingPayload } from '@gauzy/contracts';
+import { ICustomActivity, ITrackingSession, ITrackingPayload } from '@gauzy/contracts';
 
 @CommandHandler(ProcessTrackingDataCommand)
 export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTrackingDataCommand> {
