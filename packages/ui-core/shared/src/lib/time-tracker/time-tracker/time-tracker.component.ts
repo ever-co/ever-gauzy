@@ -4,14 +4,15 @@ import { NgxDraggableDomMoveEvent, NgxDraggablePoint } from 'ngx-draggable-dom';
 import { NbThemeService } from '@nebular/theme';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, Observable, Subject, Subscription } from 'rxjs';
-import { filter, takeUntil, tap } from 'rxjs/operators';
+import { combineLatest, fromEvent, Observable, Subject, Subscription } from 'rxjs';
+import { debounceTime, filter, takeUntil, tap } from 'rxjs/operators';
 import { faStopwatch, faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
 import { IOrganization, IUser, TimeLogType, IEmployee, ITimerToggleInput, ITask } from '@gauzy/contracts';
 import { distinctUntilChange, toLocal } from '@gauzy/ui-core/common';
 import {
 	ErrorHandlingService,
 	ITimerSynced,
+	SocketConnectionService,
 	Store,
 	TimeTrackerService,
 	TimeTrackerSocketService
@@ -64,7 +65,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly themeService: NbThemeService,
 		private readonly _timeTrackerStatusService: TimeTrackerStatusService,
-		private readonly _socketService: TimeTrackerSocketService
+		private readonly _socketService: TimeTrackerSocketService,
+		private readonly _socketConnectionService: SocketConnectionService
 	) {
 		this._timeTrackerStatusService.external$
 			.pipe(
@@ -286,14 +288,48 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		 * Ensures that the current timer status is loaded immediately,
 		 * before any "timer:changed" events are received from the socket.
 		 */
-		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-		this.timeTrackerService.checkTimerStatus({
-			tenantId: this.store.tenantId,
-			organizationId: this.store.organizationId,
-			relations: ['employee'],
-			timeZone
-		});
+		this.triggerCheckStatus();
 		this._socketService.timerSocketStatus$.pipe(untilDestroyed(this)).subscribe();
+
+		/**
+		 * Event listeners for browser state changes:
+		 *
+		 * 1. `visibilitychange` (document):
+		 *    - Fires when the user switches tabs, minimizes the browser, or returns to the page.
+		 *    - We only care about the `visible` state, because when the user comes back,
+		 *      we want to ensure the socket connection is alive and the timer status is refreshed.
+		 *
+		 * 2. `online` (window):
+		 *    - Fires when the network connection is restored after being offline.
+		 *    - On reconnect, we re-establish the socket connection and refresh the timer status.
+		 *
+		 * Both event streams use `debounceTime(500)`:
+		 *    - This prevents multiple rapid triggers from causing redundant socket reconnects
+		 *      or excessive `checkTimerStatus` calls.
+		 *    - Ensures that reconnection/status-check logic runs at most once
+		 *      if events fire in quick succession.
+		 */
+		fromEvent(document, 'visibilitychange')
+			.pipe(
+				filter(() => document.visibilityState === 'visible'),
+				debounceTime(500),
+				untilDestroyed(this)
+			)
+			.subscribe(() => {
+				if (!this._socketConnectionService.socket?.connected) {
+					this._socketConnectionService.connect();
+				}
+				this.triggerCheckStatus();
+			});
+
+		fromEvent(window, 'online')
+			.pipe(debounceTime(500), untilDestroyed(this))
+			.subscribe(() => {
+				if (!this._socketConnectionService.socket?.connected) {
+					this._socketConnectionService.connect();
+				}
+				this.triggerCheckStatus();
+			});
 	}
 
 	toggleWindow() {
@@ -334,7 +370,6 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 				this.running = this.timeTrackerService.timerSynced.running;
 				this.timeTrackerService.remoteToggle();
 			} else {
-				await this._timeTrackerStatusService.status();
 				if (this.limitReached) return;
 				await this.timeTrackerService.toggle();
 			}
@@ -361,8 +396,18 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		this.position = event.position;
 	}
 
-	public xor(a: boolean, b: boolean): boolean {
+	xor(a: boolean, b: boolean): boolean {
 		return (!a && b) || (a && !b);
+	}
+
+	private triggerCheckStatus() {
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		this.timeTrackerService.checkTimerStatus({
+			tenantId: this.store.tenantId,
+			organizationId: this.store.organizationId,
+			relations: ['employee'],
+			timeZone
+		});
 	}
 
 	ngOnDestroy() {

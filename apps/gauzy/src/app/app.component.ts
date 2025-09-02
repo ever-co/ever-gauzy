@@ -117,24 +117,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 		}
 
 		this._socketConnectionService.connect();
-
-		// TODO: For testing purpose.
-		// If needed, move this logic into the TimeTracker component for better context handling.
-		document.addEventListener('visibilitychange', () => {
-			if (document.visibilityState === 'visible') {
-				if (!this._socketConnectionService.socket?.connected) {
-					console.log('Reconnecting socket after tab became visible...');
-					this._socketConnectionService.connect();
-				}
-			}
-		});
-
-		window.addEventListener('online', () => {
-			console.log('Network connection restored, reconnecting socket...');
-			if (!this._socketConnectionService.socket?.connected) {
-				this._socketConnectionService.connect();
-			}
-		});
 	}
 
 	/**
