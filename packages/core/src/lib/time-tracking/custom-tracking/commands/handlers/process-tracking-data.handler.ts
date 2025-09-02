@@ -241,9 +241,18 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		decodedData: Data.DecodedPayload | null,
 		timestamp: Date
 	): Promise<void> {
-		const customActivity: ICustomActivity = (timeSlot.customActivity as ICustomActivity) || {
+		// Initialize customActivity if it doesn't exist or ensure trackingSessions exists
+		const customActivity: ICustomActivity = {
 			trackingSessions: []
 		};
+
+		// If timeSlot already has customActivity, preserve existing trackingSessions
+		if (timeSlot.customActivity) {
+			const existingActivity = timeSlot.customActivity as ICustomActivity;
+			if (existingActivity.trackingSessions && Array.isArray(existingActivity.trackingSessions)) {
+				customActivity.trackingSessions = existingActivity.trackingSessions;
+			}
+		}
 
 		// Find existing session or create new one
 		let existingSession = customActivity.trackingSessions.find(
