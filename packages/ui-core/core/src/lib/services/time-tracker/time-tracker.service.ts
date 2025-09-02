@@ -217,7 +217,7 @@ export class TimeTrackerService implements OnDestroy {
 				// On refresh/delete TimeLog, we need to clear interval to prevent duplicate interval
 				if (status.running && !this.isToggleInProgress) {
 					this.turnOnTimer();
-				} else if (!status.running && this.running) {
+				} else if (!status.running) {
 					this.turnOffTimer();
 				}
 
