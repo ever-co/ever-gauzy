@@ -314,7 +314,6 @@ class PullActivities {
 	async activityProcess(timeData: { timeStart: Date; timeEnd: Date }, isScreenshot?: boolean, afkDuration?: number) {
 		try {
 			let imgs = [];
-			// this.checkEmployeeSetting();
 			if (isScreenshot) {
 				imgs = await this.getScreenShot();
 			}
