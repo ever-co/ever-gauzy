@@ -75,7 +75,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 			const timeSlot = await this.findOrCreateTimeSlot(employeeId, organizationId, tenantId, trackingTime);
 
 			// Update TimeSlot with tracking data (store both encoded and decoded data)
-			await this.updateTimeSlotWithTrackingData(timeSlot, sessionId, trackingData, decodedData, trackingTime);
+			await this.updateTimeSlotWithTrackingData(timeSlot, sessionId, payload, decodedData, trackingTime);
 
 			// Return the complete session data across all TimeSlots with the same sessionId
 			const allSessionData = await this.getCompleteSessionData(sessionId, employeeId, organizationId, tenantId);
@@ -276,7 +276,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 
 		// Update TimeSlot
 		await this.timeSlotRepository.update(timeSlot.id, {
-			customActivity: customActivity
+			customActivity: customActivity as any
 		});
 	}
 }

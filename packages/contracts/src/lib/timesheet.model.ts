@@ -542,7 +542,7 @@ export interface IProcessTrackingDataInput {
 export interface ITrackingPayload {
 	timestamp: string;
 	encodedData: string;
-	decodedData?: Record<string, unknown>;
+	decodedData?: any;
 }
 
 /**
