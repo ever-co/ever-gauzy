@@ -7,7 +7,7 @@ import {
 	createServerWindow,
 	ScreenCaptureNotification
 } from '@gauzy/desktop-window';
-import { BrowserWindow } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import { resolveHtmlPath } from './util';
 import * as path from 'path';
 
@@ -34,6 +34,10 @@ class AppWindow {
 			return AppWindow.instance;
 		}
 		return AppWindow.instance;
+	}
+
+	hasActiveWindow() {
+		return BrowserWindow.getAllWindows().some((win) => win.isVisible());
 	}
 
 	getUiPath(hashPath: string) {
@@ -160,6 +164,14 @@ class AppWindow {
 				this.logWindow.on('close', () => {
 					this.logWindow.hide();
 				});
+
+				this.logWindow.on('hide', () => {
+					if (!this.hasActiveWindow()) {
+						if (process.platform === 'darwin') {
+							app.dock.hide();
+						}
+					}
+				})
 			}
 		} catch (error) {
 			console.error('Failed to initialize log window', error);

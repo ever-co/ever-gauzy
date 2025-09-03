@@ -9,9 +9,14 @@ import { TranslateService } from './translation';
 
 export class AppMenu {
 	public menu: MenuItemConstructorOptions[] = [];
+	public applicationMenu: MenuItemConstructorOptions;
+	public windowMenu: MenuItemConstructorOptions;
+	public editMenu: MenuItemConstructorOptions;
+
 	private readonly pluginManager = PluginManager.getInstance();
 	private readonly pluginEventManager = PluginEventManager.getInstance();
 	private readonly windowManager = WindowManager.getInstance();
+
 
 	/**
 	 * Constructs and initializes the application menu.
@@ -23,6 +28,7 @@ export class AppMenu {
 	 * @param {any} windowPath - Paths to the necessary window files.
 	 * @param {BrowserWindow | null} [serverWindow] - The server window instance (optional).
 	 * @param {boolean} [isZoomVisible] - Flag to enable/disable zoom menu options.
+	 * @param {boolean} [isCustomMenu] - Flag to use custome menu list
 	 */
 	constructor(
 		timeTrackerWindow: BrowserWindow | null,
@@ -31,170 +37,171 @@ export class AppMenu {
 		knex: any,
 		windowPath: any,
 		serverWindow?: BrowserWindow | null,
-		isZoomVisible?: boolean
+		isZoomVisible?: boolean,
+		isCustomMenu?: boolean
 	) {
 		const isZoomEnabled = isZoomVisible ?? false;
-
-		this.menu = [
-			{
-				label: 'Gauzy',
-				submenu: [
-					{
-						id: 'gauzy-about',
-						label: TranslateService.instant('MENU.ABOUT'),
-						enabled: true,
-						async click() {
-							const window: BrowserWindow = await createAboutWindow(
+		this.applicationMenu = {
+			label: 'Gauzy',
+			submenu: [
+				{
+					id: 'gauzy-about',
+					label: TranslateService.instant('MENU.ABOUT'),
+					enabled: true,
+					async click() {
+						const window: BrowserWindow = await createAboutWindow(
+							windowPath.timeTrackerUi,
+							windowPath.preloadPath
+						);
+						window.show();
+					}
+				},
+				{
+					label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
+					async click() {
+						if (!settingsWindow) {
+							settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
+						}
+						settingsWindow.show();
+						settingsWindow.webContents.send('goto_update');
+						settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+					}
+				},
+				{
+					type: 'separator'
+				},
+				{
+					label: TranslateService.instant('TIMER_TRACKER.MENU.LEARN_MORE'),
+					click() {
+						shell.openExternal(process.env.COMPANY_SITE_LINK || 'https://gauzy.co/');
+					}
+				},
+				{
+					type: 'separator'
+				},
+				{
+					id: 'devtools-setting',
+					label: TranslateService.instant('TIMER_TRACKER.MENU.SETTING_DEV_MODE'),
+					enabled: true,
+					async click() {
+						if (!settingsWindow) {
+							settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
+						}
+						settingsWindow.webContents.toggleDevTools();
+					}
+				},
+				{
+					id: 'devtools-time-tracker',
+					label: TranslateService.instant('TIMER_TRACKER.MENU.TIMER_DEV_MODE'),
+					enabled: true,
+					visible: timeTrackerWindow ? true : false,
+					click() {
+						if (timeTrackerWindow) timeTrackerWindow.webContents.toggleDevTools();
+					}
+				},
+				{
+					id: 'devtools-server',
+					label: TranslateService.instant('TIMER_TRACKER.MENU.SERVER_DEV_MODE'),
+					enabled: true,
+					visible: serverWindow ? true : false,
+					click() {
+						if (serverWindow) serverWindow.webContents.toggleDevTools();
+					}
+				},
+				{
+					type: 'separator'
+				},
+				{
+					role: 'quit',
+					label: TranslateService.instant('BUTTONS.EXIT')
+				}
+			]
+		};
+		this.windowMenu = {
+			label: TranslateService.instant('TIMER_TRACKER.MENU.WINDOW'),
+			submenu: [
+				{
+					id: 'window-time-track',
+					label: TranslateService.instant('TIMER_TRACKER.TIMER'),
+					enabled: false,
+					visible: LocalStore.getStore('configs') && LocalStore.getStore('configs').timeTrackerWindow,
+					async click() {
+						timeTrackerWindow.show();
+						const timerService = new TimerService();
+						const lastTime = await timerService.findLastCapture();
+						logger.info('Last Capture Time (Desktop Menu):', lastTime);
+						timeTrackerWindow.webContents.send('timer_tracker_show', {
+							...LocalStore.beforeRequestParams(),
+							timeSlotId: lastTime ? lastTime.timeslotId : null
+						});
+					}
+				},
+				{
+					id: 'window-setting',
+					label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
+					enabled: true,
+					async click() {
+						if (!settingsWindow) {
+							settingsWindow = await createSettingsWindow(
+								settingsWindow,
 								windowPath.timeTrackerUi,
 								windowPath.preloadPath
 							);
-							window.show();
 						}
-					},
-					{
-						label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
-						async click() {
-							if (!settingsWindow) {
-								settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-								settingsWindow.show();
-							}
-							settingsWindow.webContents.send('setting_page_ipc', {
-								type: 'goto_update'
-							});
-							settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
-						}
-					},
-					{
-						type: 'separator'
-					},
-					{
-						label: TranslateService.instant('TIMER_TRACKER.MENU.LEARN_MORE'),
-						click() {
-							shell.openExternal(process.env.COMPANY_SITE_LINK || 'https://gauzy.co/');
-						}
-					},
-					{
-						type: 'separator'
-					},
-					{
-						id: 'devtools-setting',
-						label: TranslateService.instant('TIMER_TRACKER.MENU.SETTING_DEV_MODE'),
-						enabled: true,
-						async click() {
-							if (!settingsWindow) {
-								settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-							}
-							settingsWindow.webContents.toggleDevTools();
-						}
-					},
-					{
-						id: 'devtools-time-tracker',
-						label: TranslateService.instant('TIMER_TRACKER.MENU.TIMER_DEV_MODE'),
-						enabled: true,
-						visible: timeTrackerWindow ? true : false,
-						click() {
-							if (timeTrackerWindow) timeTrackerWindow.webContents.toggleDevTools();
-						}
-					},
-					{
-						id: 'devtools-server',
-						label: TranslateService.instant('TIMER_TRACKER.MENU.SERVER_DEV_MODE'),
-						enabled: true,
-						visible: serverWindow ? true : false,
-						click() {
-							if (serverWindow) serverWindow.webContents.toggleDevTools();
-						}
-					},
-					{
-						type: 'separator'
-					},
-					{
-						role: 'quit',
-						label: TranslateService.instant('BUTTONS.EXIT')
+						settingsWindow.show();
+						settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+						settingsWindow.webContents.send(timeTrackerWindow ? 'goto_top_menu' : 'goto_update');
+						settingsWindow.webContents.send('refresh_menu');
 					}
-				]
-			},
-			{
-				label: TranslateService.instant('TIMER_TRACKER.MENU.WINDOW'),
-				submenu: [
-					{
-						id: 'window-time-track',
-						label: TranslateService.instant('TIMER_TRACKER.TIMER'),
-						enabled: false,
-						visible: LocalStore.getStore('configs') && LocalStore.getStore('configs').timeTrackerWindow,
-						async click() {
-							timeTrackerWindow.show();
-							const timerService = new TimerService();
-							const lastTime = await timerService.findLastCapture();
-							logger.info('Last Capture Time (Desktop Menu):', lastTime);
-							timeTrackerWindow.webContents.send('timer_tracker_show', {
-								...LocalStore.beforeRequestParams(),
-								timeSlotId: lastTime ? lastTime.timeslotId : null
-							});
-						}
-					},
-					{
-						id: 'window-setting',
-						label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
-						enabled: true,
-						async click() {
-							if (!settingsWindow) {
-								settingsWindow = await createSettingsWindow(
-									settingsWindow,
-									windowPath.timeTrackerUi,
-									windowPath.preloadPath
-								);
-							}
-							settingsWindow.show();
-							settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
-							settingsWindow.webContents.send('setting_page_ipc', {
-								type: timeTrackerWindow ? 'goto_top_menu' : 'goto_update'
-							});
-							settingsWindow.webContents.send('refresh_menu');
-						}
-					},
-					{
-						label: TranslateService.instant('TIMER_TRACKER.MENU.ZOOM_IN'),
-						role: 'zoomIn',
-						accelerator: 'CmdOrCtrl+Plus',
-						visible: isZoomVisible,
-						enabled: isZoomEnabled
-					},
-					{
-						label: TranslateService.instant('TIMER_TRACKER.MENU.ZOOM_OUT'),
-						role: 'zoomOut',
-						accelerator: 'CmdOrCtrl+-',
-						visible: isZoomVisible,
-						enabled: isZoomEnabled
-					}
-				]
-			},
-			{
-				label: TranslateService.instant('BUTTONS.EDIT'),
-				submenu: [
-					{
-						label: TranslateService.instant('BUTTONS.CUT'),
-						role: 'cut'
-					},
-					{
-						label: TranslateService.instant('BUTTONS.COPY'),
-						role: 'copy'
-					},
-					{
-						label: TranslateService.instant('BUTTONS.PASTE'),
-						role: 'paste'
-					},
-					{
-						label: TranslateService.instant('BUTTONS.SELECT_ALL'),
-						role: 'selectAll'
-					}
-				]
-			},
+				},
+				{
+					label: TranslateService.instant('TIMER_TRACKER.MENU.ZOOM_IN'),
+					role: 'zoomIn',
+					accelerator: 'CmdOrCtrl+Plus',
+					visible: isZoomVisible,
+					enabled: isZoomEnabled
+				},
+				{
+					label: TranslateService.instant('TIMER_TRACKER.MENU.ZOOM_OUT'),
+					role: 'zoomOut',
+					accelerator: 'CmdOrCtrl+-',
+					visible: isZoomVisible,
+					enabled: isZoomEnabled
+				}
+			]
+		};
+		this.editMenu = {
+			label: TranslateService.instant('BUTTONS.EDIT'),
+			submenu: [
+				{
+					label: TranslateService.instant('BUTTONS.CUT'),
+					role: 'cut'
+				},
+				{
+					label: TranslateService.instant('BUTTONS.COPY'),
+					role: 'copy'
+				},
+				{
+					label: TranslateService.instant('BUTTONS.PASTE'),
+					role: 'paste'
+				},
+				{
+					label: TranslateService.instant('BUTTONS.SELECT_ALL'),
+					role: 'selectAll'
+				}
+			]
+		};
+		this.menu = [
+			this.applicationMenu,
+			this.windowMenu,
+			this.editMenu,
 			this.pluginMenu
 		];
 
 		// Build the menu
-		this.build();
+		if (!isCustomMenu) {
+			this.build();
+		}
 
 		// Time Tracker Window Menu
 		if (timeTrackerWindow) {
@@ -286,5 +293,12 @@ export class AppMenu {
 	private deepArrayEqual<T>(arr1: T, arr2: T) {
 		// Implementation for deep array equality check
 		return JSON.stringify(arr1) === JSON.stringify(arr2);
+	}
+
+	/**
+	 * Update default menu list
+	 */
+	public updateMenuList(menuList: MenuItemConstructorOptions[]): void {
+		this.menu = menuList;
 	}
 }
