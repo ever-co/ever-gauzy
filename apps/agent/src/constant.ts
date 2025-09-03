@@ -15,6 +15,8 @@ const MAIN_EVENT_TYPE = {
 	START_TIMER_API: 'START_TIMER_API'
 }
 
+export type TMainEventType = typeof MAIN_EVENT_TYPE[keyof typeof MAIN_EVENT_TYPE];
+
 export {
 	CONSTANT,
 	MAIN_EVENT,
