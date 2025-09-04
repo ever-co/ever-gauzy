@@ -1142,10 +1142,10 @@ export class OAuth2AuthorizationServer {
 				);
 				return;
 			}
-			const creds = Buffer.from(authHeader.slice('Basic '.length), 'base64').toString('utf8');
-			const sep = creds.indexOf(':');
-			const clientId = sep >= 0 ? creds.slice(0, sep) : '';
-			const clientSecret = sep >= 0 ? creds.slice(sep + 1) : '';
+			const credentials = Buffer.from(authHeader.slice('Basic '.length), 'base64').toString('utf8');
+			const sep = credentials.indexOf(':');
+			const clientId = sep >= 0 ? credentials.slice(0, sep) : '';
+			const clientSecret = sep >= 0 ? credentials.slice(sep + 1) : '';
 			const client = await oAuth2ClientManager.validateClient(clientId, clientSecret);
 			if (!client) {
 				return this.errorHandler.handleOAuthError(
