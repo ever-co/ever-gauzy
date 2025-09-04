@@ -1,6 +1,6 @@
 /**
  * Configuration Manager
- * 
+ *
  * Centralized configuration management following DRY principle
  * Provides consistent configuration parsing and validation
  */
@@ -8,6 +8,7 @@
 import { AuthorizationConfig, DEFAULT_AUTHORIZATION_CONFIG, AUTH_ENV_KEYS } from './authorization-config';
 import { OAuth2ServerConfig } from './oauth-authorization-server';
 import { SecurityLogger } from './security-logger';
+const DEFAULT_SESSION_SECRET = 'your-session-secret-key';
 
 export interface ServerConfig {
 	// Server basic settings
@@ -15,20 +16,20 @@ export interface ServerConfig {
 	port: number;
 	baseUrl: string;
 	environment: 'development' | 'production' | 'test';
-	
+
 	// Security settings
 	sessionSecret: string;
 	corsOrigins: string[];
 	trustedProxies: string[];
-	
+
 	// Rate limiting
 	rateLimitEnabled: boolean;
 	rateLimitTtl: number;
 	rateLimitMax: number;
-	
+
 	// Redis settings
 	redisUrl?: string;
-	
+
 	// OAuth 2.0 settings
 	oauth: AuthorizationConfig;
 }
@@ -43,6 +44,27 @@ export class ConfigManager {
 		this.config = this.loadConfiguration();
 	}
 
+	private normalizeBaseUrl(url: string): string {
+		return url.replace(/\/+$/, '');
+	}
+
+	private deepClone<T>(obj: T): T {
+		try {
+			// Node 18+ / modern runtimes
+			return structuredClone(obj);
+		} catch {
+			// Plain data only; safe here
+			return JSON.parse(JSON.stringify(obj));
+		}
+	}
+
+	private getEnvEnvironment(key: string, defaultEnv: ServerConfig['environment']): ServerConfig['environment'] {
+		const v = (process.env[key] || defaultEnv).toLowerCase();
+		if (v === 'production') return 'production';
+		if (v === 'test') return 'test';
+		return 'development';
+	}
+
 	static getInstance(): ConfigManager {
 		if (!ConfigManager.instance) {
 			ConfigManager.instance = new ConfigManager();
@@ -54,21 +76,21 @@ export class ConfigManager {
 	 * Get the current configuration
 	 */
 	getConfig(): ServerConfig {
-		return { ...this.config }; // Return a copy to prevent mutations
+		return this.deepClone(this.config);
 	}
 
 	/**
 	 * Get OAuth configuration
 	 */
 	getOAuthConfig(): AuthorizationConfig {
-		return { ...this.config.oauth };
+		return this.deepClone(this.config.oauth);
 	}
 
 	/**
 	 * Get OAuth server configuration for embedded server
 	 */
 	getOAuthServerConfig(): OAuth2ServerConfig {
-		const baseUrl = this.config.baseUrl;
+		const baseUrl = this.normalizeBaseUrl(this.config.baseUrl);
 		return {
 			issuer: baseUrl,
 			baseUrl,
@@ -82,7 +104,7 @@ export class ConfigManager {
 			userInfoEndpoint: `${baseUrl}/oauth2/userinfo`,
 			loginEndpoint: `${baseUrl}/oauth2/login`,
 			sessionSecret: this.config.sessionSecret,
-			redisUrl: this.config.redisUrl,
+			redisUrl: this.config.redisUrl
 		};
 	}
 
@@ -95,11 +117,11 @@ export class ConfigManager {
 			host: this.getEnvString('MCP_HOST', 'localhost'),
 			port: this.getEnvNumber('MCP_PORT', 3001),
 			baseUrl: this.getEnvString('MCP_BASE_URL', 'http://localhost:3001'),
-			environment: this.getEnvString('NODE_ENV', 'development') as ServerConfig['environment'],
+			environment: this.getEnvEnvironment('NODE_ENV', 'development'),
 
 			// Security settings
-			sessionSecret: this.getRequiredEnvString('MCP_SESSION_SECRET', 'your-session-secret-key'),
-			corsOrigins: this.parseStringArray(this.getEnvString('MCP_CORS_ORIGINS', '*')),
+			sessionSecret: this.getRequiredEnvString('MCP_SESSION_SECRET', DEFAULT_SESSION_SECRET),
+			corsOrigins: this.parseStringArray(this.getEnvString('MCP_CORS_ORIGINS', '')),
 			trustedProxies: this.parseStringArray(this.getEnvString('MCP_TRUSTED_PROXIES', '')),
 
 			// Rate limiting
@@ -111,7 +133,7 @@ export class ConfigManager {
 			redisUrl: this.getEnvString('REDIS_URL'),
 
 			// OAuth 2.0
-			oauth: this.loadOAuthConfiguration(),
+			oauth: this.loadOAuthConfiguration()
 		};
 
 		this.validateConfiguration(config);
@@ -127,16 +149,26 @@ export class ConfigManager {
 			enabled: this.getEnvBoolean(AUTH_ENV_KEYS.ENABLED, false),
 			resourceUri: this.getEnvString(AUTH_ENV_KEYS.RESOURCE_URI, ''),
 			authorizationServers: [],
-			allowEmbeddedServer: this.getEnvBoolean(AUTH_ENV_KEYS.ALLOW_EMBEDDED_SERVER, this.getEnvString('NODE_ENV') === 'development'),
+			allowEmbeddedServer: this.getEnvBoolean(
+				AUTH_ENV_KEYS.ALLOW_EMBEDDED_SERVER,
+				this.getEnvString('NODE_ENV') === 'development'
+			)
 		};
 
 		// Parse authorization servers
 		const serversEnv = this.getEnvString(AUTH_ENV_KEYS.AUTHORIZATION_SERVERS);
 		if (serversEnv) {
 			try {
-				config.authorizationServers = JSON.parse(serversEnv);
+				const parsed = JSON.parse(serversEnv);
+				if (!Array.isArray(parsed)) {
+					throw new Error('MCP_AUTH_SERVERS must be a JSON array');
+				}
+				config.authorizationServers = parsed;
 			} catch (error) {
-				this.securityLogger.warn('Failed to parse authorization servers configuration', { error });
+				this.securityLogger.warn('Failed to parse authorization servers configuration', {
+					error,
+					invalidJson: serversEnv
+				});
 			}
 		}
 
@@ -168,7 +200,7 @@ export class ConfigManager {
 			config.introspection = {
 				endpoint: introspectionEndpoint,
 				clientId: introspectionClientId,
-				clientSecret: introspectionClientSecret,
+				clientSecret: introspectionClientSecret
 			};
 		}
 
@@ -207,18 +239,28 @@ export class ConfigManager {
 				errors.push('MCP_AUTH_RESOURCE_URI is required when OAuth is enabled');
 			}
 
-			if (config.oauth.authorizationServers.length === 0 && !config.oauth.allowEmbeddedServer) {
-				errors.push('At least one authorization server must be configured when OAuth is enabled');
+			const hasIntrospection = !!config.oauth.introspection;
+			const hasJwtKeys = !!(config.oauth.jwt && (config.oauth.jwt.jwksUri || config.oauth.jwt.publicKey));
+
+			if (
+				config.oauth.authorizationServers.length === 0 &&
+				!config.oauth.allowEmbeddedServer &&
+				!hasIntrospection
+			) {
+				errors.push(
+					'At least one authorization server or token introspection must be configured when OAuth is enabled'
+				);
 			}
 
-			// Validate JWT configuration
-			if (config.oauth.jwt && !config.oauth.jwt.jwksUri && !config.oauth.jwt.publicKey) {
-				errors.push('Either MCP_AUTH_JWT_JWKS_URI or MCP_AUTH_JWT_PUBLIC_KEY must be configured for JWT validation');
+			if (!hasJwtKeys && !hasIntrospection && !config.oauth.allowEmbeddedServer) {
+				errors.push(
+					'Either MCP_AUTH_JWT_JWKS_URI or MCP_AUTH_JWT_PUBLIC_KEY must be set for JWT validation, or MCP_AUTH_INTROSPECTION_* must be configured'
+				);
 			}
 		}
 
 		// Validate session secret in production
-		if (config.environment === 'production' && config.sessionSecret === 'your-session-secret-key') {
+		if (config.environment === 'production' && config.sessionSecret === DEFAULT_SESSION_SECRET) {
 			errors.push('MCP_SESSION_SECRET must be set to a secure value in production');
 		}
 
@@ -244,7 +286,11 @@ export class ConfigManager {
 	private getRequiredEnvString(key: string, fallback: string): string {
 		const value = process.env[key];
 		if (!value) {
-			this.securityLogger.warn(`Environment variable ${key} not set, using fallback value`);
+			if (process.env.NODE_ENV === 'production') {
+				this.securityLogger.error(`Environment variable ${key} not set, using fallback value`);
+			} else {
+				this.securityLogger.warn(`Environment variable ${key} not set, using fallback value`);
+			}
 			return fallback;
 		}
 		return value;
@@ -272,6 +318,9 @@ export class ConfigManager {
 
 	private parseStringArray(value: string): string[] {
 		if (!value) return [];
-		return value.split(',').map(s => s.trim()).filter(Boolean);
+		return value
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean);
 	}
 }

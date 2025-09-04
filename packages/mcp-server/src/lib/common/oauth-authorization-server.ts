@@ -295,7 +295,7 @@ export class OAuth2AuthorizationServer {
 					prefix: 'mcp-oauth-sess:',
 					ttl: 60 * 60 * 24 // 24 hours TTL
 				});
-				this.securityLogger.info(`Redis session store configured using ${redisUrl ? 'configured Redis URL' : 'fallback'}`);
+				this.securityLogger.info('Redis session store configured successfully');
 			} catch (error: any) {
 				this.securityLogger.error('Failed to configure Redis store, falling back to memory store:', error);
 				if (serverConfig.environment === 'production') {
@@ -735,7 +735,8 @@ export class OAuth2AuthorizationServer {
 			}
 			// Enforce PKCE for public clients
 			if (client.clientType === 'public') {
-				if (!params.code_challenge || (process.env.NODE_ENV === 'production' && params.code_challenge_method !== 'S256')) {
+				const serverConfig = this.configManager.getConfig();
+				if (!params.code_challenge || (serverConfig.environment === 'production' && params.code_challenge_method !== 'S256')) {
 					return this.errorHandler.handleOAuthRedirectError(
 						res,
 						params.redirect_uri,
@@ -1201,7 +1202,7 @@ export class OAuth2AuthorizationServer {
 			 // Extract access token (robust parsing)
 			const token = this.oAuthValidator.extractBearerToken(req);
 			if (!token) {
-				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-authorization-server`;
+				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-protected-resource`;
 				const authError = BaseErrorHandler.createAuthError('invalid_token', 'Bearer token required');
 				return this.errorHandler.handleAuthError(res, authError, resourceMetadataUrl);
 			}
@@ -1210,7 +1211,7 @@ export class OAuth2AuthorizationServer {
 			const validation = await this.oAuthValidator.validateToken(token);
 
 			if (!validation.valid) {
-				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-authorization-server`;
+				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-protected-resource`;
 				const authError = BaseErrorHandler.createAuthError('invalid_token', validation.error || 'Token validation failed');
 				return this.errorHandler.handleAuthError(res, authError, resourceMetadataUrl);
 			}
@@ -1221,7 +1222,7 @@ export class OAuth2AuthorizationServer {
 			);
 
 			if (!hasUserInfoScope) {
-				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-authorization-server`;
+				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-protected-resource`;
 				const authError = BaseErrorHandler.createAuthError('insufficient_scope', 'Token lacks required scope (openid/profile/email)');
 				return this.errorHandler.handleAuthError(res, authError, resourceMetadataUrl);
 			}

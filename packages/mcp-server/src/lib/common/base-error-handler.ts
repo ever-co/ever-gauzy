@@ -1,6 +1,6 @@
 /**
  * Base Error Handler
- * 
+ *
  * Centralized error handling utility following DRY and KISS principles
  * Provides consistent error formatting and logging across the MCP server
  */
@@ -18,9 +18,8 @@ export interface StandardError {
 
 export class BaseErrorHandler {
 	private securityLogger: SecurityLogger;
-
-	constructor() {
-		this.securityLogger = new SecurityLogger();
+	constructor(logger: SecurityLogger = new SecurityLogger()) {
+		this.securityLogger = logger;
 	}
 
 	/**
@@ -29,9 +28,15 @@ export class BaseErrorHandler {
 	handleOAuthError(
 		res: Response,
 		error: AuthorizationError,
-		statusCode: number = 400
+		statusCode?: number
 	): void {
-		res.status(statusCode).json({
+		const mapped = error.error === 'invalid_token' ? 401
+			: error.error === 'insufficient_scope' ? 403
+			: 400;
+		const status = statusCode ?? mapped;
+		res.setHeader('Cache-Control', 'no-store');
+		res.setHeader('Pragma', 'no-cache');
+		res.status(status).json({
 			error: error.error,
 			error_description: error.errorDescription,
 			...(error.errorUri && { error_uri: error.errorUri }),
@@ -65,11 +70,9 @@ export class BaseErrorHandler {
 
 			res.redirect(url.toString());
 		} catch (urlError) {
-			this.securityLogger.error('Invalid redirect URI in error handling', {
-				error: urlError,
-				redirectUri,
-				clientId
-			});
+			const { logger } = require('logging');
+			logger.error('Invalid redirect URI in error handling', urlError as Error);
+
 			this.handleStandardError(res, {
 				code: 'invalid_redirect_uri',
 				message: 'Invalid redirect URI provided',
@@ -124,9 +127,13 @@ export class BaseErrorHandler {
 			res.setHeader('WWW-Authenticate', wwwAuthenticate);
 		}
 
-		res.status(401).json({
+		const status = error.error === 'insufficient_scope' ? 403 : 401;
+		res.setHeader('Cache-Control', 'no-store');
+		res.setHeader('Pragma', 'no-cache');
+		res.status(status).json({
 			error: error.error,
 			error_description: error.errorDescription,
+			...(error.errorUri && { error_uri: error.errorUri }),
 			...(error.scope && { scope: error.scope }),
 		});
 	}

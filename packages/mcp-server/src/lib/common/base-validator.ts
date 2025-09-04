@@ -1,6 +1,6 @@
 /**
  * Base Validator
- * 
+ *
  * Centralized validation utilities following DRY principle
  * Provides consistent validation patterns across OAuth 2.0 components
  */
@@ -111,6 +111,10 @@ export class BaseValidator {
 				errorDescription: 'Missing client_id parameter'
 			};
 		}
+		const clientIdValidation = this.validateClientCredentials(params.client_id);
+		if (!clientIdValidation.valid) {
+			return clientIdValidation;
+		}
 
 		if (!params.redirect_uri) {
 			return {
@@ -135,6 +139,14 @@ export class BaseValidator {
 			const scopeValidation = this.validateScope(params.scope);
 			if (!scopeValidation.valid) {
 				return scopeValidation;
+			}
+		}
+
+		// Validate state if provided
+		if (params.state) {
+			const stateValidation = this.validateState(params.state);
+			if (!stateValidation.valid) {
+			return stateValidation;
 			}
 		}
 
@@ -224,6 +236,16 @@ export class BaseValidator {
 						errorDescription: 'Missing redirect_uri parameter for authorization_code grant'
 					};
 				}
+				{
+					const redirectUriValidation = this.validateUrl(params.redirect_uri);
+					if (!redirectUriValidation.valid) {
+						return {
+						valid: false,
+						error: 'invalid_request',
+						errorDescription: 'Invalid redirect_uri format'
+						};
+					}
+			    }
 				break;
 
 			case 'refresh_token':
