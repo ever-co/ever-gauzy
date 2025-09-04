@@ -5,7 +5,7 @@
  * Provides consistent validation patterns across OAuth 2.0 components
  */
 
-import { AuthorizeRequest, TokenRequest } from './oauth-authorization-server';
+import type { AuthorizeRequest, TokenRequest } from './oauth-authorization-server';
 
 export interface ValidationResult {
 	valid: boolean;
@@ -88,7 +88,7 @@ export class BaseValidator {
 	 */
 	static validateAuthorizeRequest(params: AuthorizeRequest): ValidationResult {
 		// Required parameters
-		if (!params.response_type) {
+		if (!params.response_type || typeof params.response_type !== 'string') {
 			return {
 				valid: false,
 				error: 'invalid_request',

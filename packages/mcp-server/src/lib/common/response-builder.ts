@@ -7,145 +7,15 @@
 
 import { Response } from 'express';
 import { SecurityLogger } from './security-logger';
-
-export interface TokenResponse {
-	access_token: string;
-	token_type: string;
-	expires_in: number;
-	refresh_token?: string;
-	scope?: string;
-}
-
-export interface IntrospectionResponse {
-	active: boolean;
-	scope?: string;
-	client_id?: string;
-	username?: string;
-	token_type?: string;
-	exp?: number;
-	iat?: number;
-	nbf?: number;
-	sub?: string;
-	aud?: string | string[];
-	iss?: string;
-	jti?: string;
-}
-
-export interface SuccessRedirectResponse {
-	redirectUrl: string;
-	state?: string;
-}
-
-export interface JWKSKey {
-	kty: string; // Key Type
-	use?: string; // Public Key Use
-	key_ops?: string[]; // Key Operations
-	alg?: string; // Algorithm
-	kid?: string; // Key ID
-	x5u?: string; // X.509 URL
-	x5c?: string[]; // X.509 Certificate Chain
-	x5t?: string; // X.509 Certificate SHA-1 Thumbprint
-	'x5t#S256'?: string; // X.509 Certificate SHA-256 Thumbprint
-
-	// RSA Key Parameters
-	n?: string; // Modulus
-	e?: string; // Exponent
-	d?: string; // Private Exponent
-	p?: string; // First Prime Factor
-	q?: string; // Second Prime Factor
-	dp?: string; // First Factor CRT Exponent
-	dq?: string; // Second Factor CRT Exponent
-	qi?: string; // First CRT Coefficient
-	oth?: Array<{
-		r?: string; // Prime Factor
-		d?: string; // Factor CRT Exponent
-		t?: string; // Factor CRT Coefficient
-	}>;
-
-	// Elliptic Curve Key Parameters
-	crv?: string; // Curve
-	x?: string; // X Coordinate
-	y?: string; // Y Coordinate
-
-	// Symmetric Key Parameters
-	k?: string; // Key Value
-}
-
-export interface JWKSResponse {
-	keys: JWKSKey[];
-}
-
-export interface ServerMetadata {
-	issuer: string;
-	authorization_endpoint?: string;
-	token_endpoint?: string;
-	jwks_uri?: string;
-	registration_endpoint?: string;
-	introspection_endpoint?: string;
-	userinfo_endpoint?: string;
-	scopes_supported?: string[];
-	response_types_supported?: string[];
-	grant_types_supported?: string[];
-	code_challenge_methods_supported?: string[];
-	token_endpoint_auth_methods_supported?: string[];
-	revocation_endpoint_auth_methods_supported?: string[];
-}
-
-export interface ResourceMetadata {
-	resource: string;
-	authorization_servers?: string[];
-}
-
-export interface UserInfoResponse {
-	sub: string; // Subject - Identifier for the End-User
-	name?: string;
-	given_name?: string;
-	family_name?: string;
-	middle_name?: string;
-	nickname?: string;
-	preferred_username?: string;
-	profile?: string;
-	picture?: string;
-	website?: string;
-	email?: string;
-	email_verified?: boolean;
-	gender?: string;
-	birthdate?: string;
-	zoneinfo?: string;
-	locale?: string;
-	phone_number?: string;
-	phone_number_verified?: boolean;
-	address?: {
-		formatted?: string;
-		street_address?: string;
-		locality?: string;
-		region?: string;
-		postal_code?: string;
-		country?: string;
-	};
-	updated_at?: number;
-	// Custom claims
-	organization_id?: string;
-	tenant_id?: string;
-	roles?: string[];
-}
-
-export interface ClientRegistrationResponse {
-	client_id: string;
-	client_secret?: string;
-	client_name: string;
-	client_type: 'confidential' | 'public';
-	redirect_uris: string[];
-	grant_types: string[];
-	response_types: string[];
-	scope: string;
-	logo_uri?: string;
-	client_uri?: string;
-	policy_uri?: string;
-	tos_uri?: string;
-	client_id_issued_at: number;
-	client_secret_expires_at?: number;
-}
+import {
+	ClientRegistrationResponse,
+	IntrospectionResponse,
+	JWKSResponse,
+	ResourceMetadata,
+	ServerMetadata,
+	TokenResponse,
+	UserInfoResponse
+} from './interfaces';
 
 export class ResponseBuilder {
 	private securityLogger: SecurityLogger;
@@ -182,6 +52,8 @@ export class ResponseBuilder {
 			scope: introspectionData.scope
 		});
 
+		res.setHeader('Cache-Control', 'no-store');
+		res.setHeader('Pragma', 'no-cache');
 		res.setHeader('Content-Type', 'application/json');
 		res.json(introspectionData);
 	}
@@ -203,6 +75,8 @@ export class ResponseBuilder {
 				code_length: code.length
 			});
 
+			res.setHeader('Cache-Control', 'no-store');
+			res.setHeader('Pragma', 'no-cache');
 			res.redirect(303, url.toString());
 		} catch (error) {
 			this.securityLogger.error('Failed to build authorization redirect URL', { error, redirectUri });
@@ -223,7 +97,17 @@ export class ResponseBuilder {
 
 		res.setHeader('Content-Type', 'application/json');
 		res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-		res.json(jwks);
+		// Sanitize: expose only public JWK members
+		const sanitized = {
+			keys: jwks.keys.map((k) => {
+				const { kty, use, key_ops, alg, kid, x5u, x5c, x5t, n, e, crv, x, y } = k;
+				const out: Record<string, unknown> = { kty, use, key_ops, alg, kid, x5u, x5c, x5t, n, e, crv, x, y };
+				const x5tS256 = (k as any)['x5t#S256'] as string | undefined;
+				if (x5tS256) out['x5t#S256'] = x5tS256;
+				return Object.fromEntries(Object.entries(out).filter(([, v]) => v !== undefined));
+			})
+		};
+		res.json(sanitized);
 	}
 
 	/**
@@ -280,6 +164,8 @@ export class ResponseBuilder {
 			grant_types: clientData.grant_types
 		});
 
+		res.setHeader('Cache-Control', 'no-store');
+		res.setHeader('Pragma', 'no-cache');
 		res.setHeader('Content-Type', 'application/json');
 		res.status(201).json(clientData);
 	}
@@ -287,9 +173,13 @@ export class ResponseBuilder {
 	/**
 	 * Send success response with optional data
 	 */
-	sendSuccess(res: Response, data?: any, statusCode: number = 200): void {
+	sendSuccess<T>(res: Response, data?: T, statusCode = 200): void {
 		res.status(statusCode);
-		if (data) {
+		if ([204, 205, 304].includes(statusCode)) {
+			res.end();
+			return;
+		}
+		if (data !== undefined) {
 			res.setHeader('Content-Type', 'application/json');
 			res.json(data);
 		} else {
@@ -304,6 +194,7 @@ export class ResponseBuilder {
 		res.setHeader('Content-Type', 'text/html; charset=utf-8');
 		res.setHeader('X-Frame-Options', 'DENY');
 		res.setHeader('X-Content-Type-Options', 'nosniff');
+		res.setHeader('Content-Security-Policy', "default-src 'self'; frame-ancestors 'none'");
 		res.send(html);
 	}
 
@@ -313,7 +204,11 @@ export class ResponseBuilder {
 	static setSecurityHeaders(res: Response): void {
 		res.setHeader('X-Content-Type-Options', 'nosniff');
 		res.setHeader('X-Frame-Options', 'DENY');
-		res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+		if (process.env.NODE_ENV === 'production') {
+			res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+		}
 		res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+		res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+		res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 	}
 }

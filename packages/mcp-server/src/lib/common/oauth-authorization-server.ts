@@ -22,6 +22,7 @@ import { BaseErrorHandler } from './base-error-handler';
 import { BaseValidator } from './base-validator';
 import { ResponseBuilder } from './response-builder';
 import { ConfigManager } from './config-manager';
+import { IntrospectionResponse } from './interfaces';
 
 export interface OAuth2ServerConfig {
 	issuer: string;
@@ -63,21 +64,6 @@ export interface LoginCredentials {
 export interface IntrospectionRequest {
 	token: string;
 	token_type_hint?: 'access_token' | 'refresh_token';
-}
-
-export interface IntrospectionResponse {
-	active: boolean;
-	scope?: string;
-	client_id?: string;
-	username?: string;
-	token_type?: string;
-	exp?: number;
-	iat?: number;
-	nbf?: number;
-	sub?: string;
-	aud?: string | string[];
-	iss?: string;
-	jti?: string;
 }
 
 export interface AuthorizeRequest {
@@ -806,6 +792,13 @@ export class OAuth2AuthorizationServer {
 			// Check user session
 			const session = req.session as any;
 			if (!session || !session.isAuthenticated || !session.user) {
+				if (!oAuth2ClientManager.isValidRedirectUri(client_id, redirect_uri)) {
+					return this.errorHandler.handleStandardError(res, {
+						code: 'invalid_request',
+						message: 'Invalid redirect URI',
+						statusCode: 400
+					});
+				}
 				return this.errorHandler.handleOAuthRedirectError(
 					res,
 					redirect_uri,
@@ -817,6 +810,14 @@ export class OAuth2AuthorizationServer {
 
 			// Validate consent
 			if (user_consent !== 'approve') {
+				if (!oAuth2ClientManager.isValidRedirectUri(client_id, redirect_uri)) {
+					return this.errorHandler.handleStandardError(res, {
+						code: 'invalid_request',
+						message: 'Invalid redirect URI',
+						statusCode: 400
+					});
+				}
+
 				return this.errorHandler.handleOAuthRedirectError(
 					res,
 					redirect_uri,
@@ -831,17 +832,22 @@ export class OAuth2AuthorizationServer {
 			// Load client and clamp scopes to what's registered
 			const client = oAuth2ClientManager.getClient(client_id);
 			if (!client) {
-				return this.errorHandler.handleOAuthRedirectError(
-					res,
-					redirect_uri,
-					'invalid_client',
-					'Client not found',
-					state
-				);
+				return this.errorHandler.handleStandardError(res, {
+					code: 'invalid_client',
+					message: 'Client not found',
+					statusCode: 400
+				});
 			}
 			const requestedScopes = scope ? scope.split(' ') : ['mcp.read'];
 			const grantedScopes = requestedScopes.filter(s => client.scopes.includes(s));
 			if (grantedScopes.length === 0) {
+				if (!oAuth2ClientManager.isValidRedirectUri(client_id, redirect_uri)) {
+					return this.errorHandler.handleStandardError(res, {
+						code: 'invalid_scope',
+						message: 'No permitted scopes requested',
+						statusCode: 400
+					});
+				}
 				return this.errorHandler.handleOAuthRedirectError(
 					res,
 					redirect_uri,
@@ -854,14 +860,11 @@ export class OAuth2AuthorizationServer {
 
 			// Re-validate redirect URI (defense-in-depth)
 			if (!oAuth2ClientManager.isValidRedirectUri(client_id, redirect_uri)) {
-				return this.errorHandler.handleOAuthRedirectError(
-					res,
-					redirect_uri,
-					'invalid_request',
-					'Invalid redirect URI',
-					state,
-					client_id
-				);
+				return this.errorHandler.handleStandardError(res, {
+					code: 'invalid_request',
+					message: 'Invalid redirect URI',
+					statusCode: 400
+				});
 			}
 
 			// Generate authorization code
@@ -908,11 +911,11 @@ export class OAuth2AuthorizationServer {
 
 			// Validate grant type
 			if (!params.grant_type) {
-				this.errorHandler.handleStandardError(res, {
-					code: 'invalid_request',
-					message: 'grant_type parameter is required',
-					statusCode: 400
-				});
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_request', 'grant_type parameter is required'),
+					400
+				);
 				return;
 			}
 
@@ -927,11 +930,11 @@ export class OAuth2AuthorizationServer {
 					await this.handleClientCredentialsGrant(req, res, params);
 					break;
 				default:
-					this.errorHandler.handleStandardError(res, {
-						code: 'unsupported_grant_type',
-						message: `Grant type ${params.grant_type} is not supported`,
-						statusCode: 400
-					});
+					this.errorHandler.handleOAuthError(
+						res,
+						BaseErrorHandler.createAuthError('unsupported_grant_type', `Grant type ${params.grant_type} is not supported`),
+						400
+					);
 					break;
 			}
 
@@ -952,21 +955,22 @@ export class OAuth2AuthorizationServer {
 	private async handleAuthorizationCodeGrant(req: Request, res: Response, params: TokenRequest): Promise<void> {
 		// Validate required parameters
 		if (!params.code || !params.redirect_uri || !params.client_id) {
-			this.errorHandler.handleStandardError(res, {
-				code: 'invalid_request',
-				message: 'Missing required parameters',
-				statusCode: 400
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_request', 'Missing required parameters'),
+				400
+			);
 			return;
 		}
 
 		// Validate client
 		const client = await oAuth2ClientManager.validateClient(params.client_id, params.client_secret);
 		if (!client) {
-			res.status(401).json({
-				error: 'invalid_client',
-				error_description: 'Client authentication failed'
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_client', 'Client authentication failed'),
+				401
+			);
 			return;
 		}
 
@@ -979,11 +983,11 @@ export class OAuth2AuthorizationServer {
 		);
 
 		if (!authCode) {
-			this.errorHandler.handleStandardError(res, {
-				code: 'invalid_grant',
-				message: 'Invalid authorization code',
-				statusCode: 400
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_grant', 'Invalid authorization code'),
+				400
+			);
 			return;
 		}
 
@@ -1009,32 +1013,33 @@ export class OAuth2AuthorizationServer {
 	 */
 	private async handleRefreshTokenGrant(req: Request, res: Response, params: TokenRequest): Promise<void> {
 		if (!params.refresh_token || !params.client_id) {
-			this.errorHandler.handleStandardError(res, {
-				code: 'invalid_request',
-				message: 'Missing required parameters',
-				statusCode: 400
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_request', 'Missing required parameters'),
+				400
+			);
 			return;
 		}
 
 		// Validate client
 		const client = await oAuth2ClientManager.validateClient(params.client_id, params.client_secret);
 		if (!client) {
-			res.status(401).json({
-				error: 'invalid_client',
-				error_description: 'Client authentication failed'
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_client', 'Client authentication failed'),
+				401
+			);
 			return;
 		}
 
 		// Refresh tokens
 		const newTokenPair = await this.tokenManager.refreshAccessToken(params.refresh_token, params.client_id);
 		if (!newTokenPair) {
-			this.errorHandler.handleStandardError(res, {
-				code: 'invalid_grant',
-				message: 'Invalid refresh token',
-				statusCode: 400
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_grant', 'Invalid refresh token'),
+				400
+			);
 			return;
 		}
 
@@ -1053,11 +1058,11 @@ export class OAuth2AuthorizationServer {
 		// Validate client credentials
 		const client = await oAuth2ClientManager.validateClient(params.client_id, params.client_secret);
 		if (!client) {
-			this.errorHandler.handleStandardError(res, {
-				code: 'invalid_client',
-				message: 'Client authentication failed',
-				statusCode: 401
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_client', 'Client authentication failed'),
+				401
+			);
 			return;
 		}
 
@@ -1066,11 +1071,11 @@ export class OAuth2AuthorizationServer {
 		const allowedScopes = requestedScopes.filter(scope => client.scopes.includes(scope));
 
 		if (allowedScopes.length === 0) {
-			this.errorHandler.handleStandardError(res, {
-				code: 'invalid_scope',
-				message: 'No valid scopes requested',
-				statusCode: 400
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_scope', 'No valid scopes requested'),
+				400
+			);
 			return;
 		}
 
@@ -1119,23 +1124,35 @@ export class OAuth2AuthorizationServer {
 			const { token } = req.body as IntrospectionRequest;
 
 			if (!token) {
-				this.errorHandler.handleStandardError(res, {
-					code: 'invalid_request',
-					message: 'token parameter is required',
-					statusCode: 400
-				});
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_request', 'token parameter is required'),
+					400
+				);
 				return;
 			}
 
 			// Validate the requesting client (simplified - in production, implement proper client auth)
 			const authHeader = req.headers.authorization;
 			if (!authHeader || !authHeader.startsWith('Basic ')) {
-				this.errorHandler.handleStandardError(res, {
-					code: 'invalid_client',
-					message: 'Client authentication (Basic) required',
-					statusCode: 401
-				});
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_client', 'Client authentication (Basic) required'),
+					401
+				);
 				return;
+			}
+			const creds = Buffer.from(authHeader.slice('Basic '.length), 'base64').toString('utf8');
+			const sep = creds.indexOf(':');
+			const clientId = sep >= 0 ? creds.slice(0, sep) : '';
+			const clientSecret = sep >= 0 ? creds.slice(sep + 1) : '';
+			const client = await oAuth2ClientManager.validateClient(clientId, clientSecret);
+			if (!client) {
+				return this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_request', 'Invalid client credentials'),
+				401
+				);
 			}
 
 			// Validate the token
@@ -1623,17 +1640,24 @@ export class OAuth2AuthorizationServer {
 				});
 
 				// For OAuth redirects, send error to redirect_uri if available
-				if (req.body.redirect_uri && req.body.state) {
-					this.errorHandler.handleOAuthRedirectError(
-						res,
-						req.body.redirect_uri,
-						'invalid_request',
-						'CSRF protection failed',
-						req.body.state
-					);
-					return;
+				if (req.body.client_id && req.body.redirect_uri && req.body.state) {
+					if (oAuth2ClientManager.isValidRedirectUri(req.body.client_id, req.body.redirect_uri)) {
+						this.errorHandler.handleOAuthRedirectError(
+							res,
+							req.body.redirect_uri,
+							'invalid_request',
+							'CSRF protection failed',
+							req.body.state,
+							req.body.client_id
+						);
+						return;
+					}
+					this.securityLogger.warn('Blocked CSRF redirect to unregistered redirect_uri', {
+						clientId: req.body.client_id,
+						redirectUri: req.body.redirect_uri
+					});
 				}
-
+				// Fallback JSON error
 				this.errorHandler.handleStandardError(res, {
 					code: 'invalid_request',
 					message: 'CSRF protection failed. Please try again.',

@@ -121,7 +121,9 @@ export class ConfigManager {
 
 			// Security settings
 			sessionSecret: this.getRequiredEnvString('MCP_SESSION_SECRET', DEFAULT_SESSION_SECRET),
-			corsOrigins: this.parseStringArray(this.getEnvString('MCP_CORS_ORIGINS', '')),
+			corsOrigins: this.parseStringArray(
+				this.getEnvString('MCP_CORS_ORIGINS', this.getEnvString('MCP_CORS_ORIGIN', ''))
+			),
 			trustedProxies: this.parseStringArray(this.getEnvString('MCP_TRUSTED_PROXIES', '')),
 
 			// Rate limiting
@@ -151,7 +153,7 @@ export class ConfigManager {
 			authorizationServers: [],
 			allowEmbeddedServer: this.getEnvBoolean(
 				AUTH_ENV_KEYS.ALLOW_EMBEDDED_SERVER,
-				this.getEnvString('NODE_ENV') === 'development'
+				this.getEnvEnvironment('NODE_ENV', 'development') === 'development'
 			)
 		};
 

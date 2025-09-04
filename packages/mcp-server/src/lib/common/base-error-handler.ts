@@ -68,10 +68,9 @@ export class BaseErrorHandler {
 				redirectUri: redirectUri.split('?')[0] // Log without query params
 			});
 
-			res.redirect(url.toString());
+			res.redirect(303, url.toString());
 		} catch (urlError) {
-			const { logger } = require('logging');
-			logger.error('Invalid redirect URI in error handling', urlError as Error);
+			this.securityLogger.error('Invalid redirect URI in error handling', urlError as Error);
 
 			this.handleStandardError(res, {
 				code: 'invalid_redirect_uri',
@@ -91,6 +90,9 @@ export class BaseErrorHandler {
 			statusCode: error.statusCode
 		});
 
+		res.setHeader('Cache-Control', 'no-store');
+		res.setHeader('Pragma', 'no-cache');
+		res.setHeader('Content-Type', 'application/json');
 		res.status(error.statusCode).json({
 			error: error.code,
 			message: error.message,
@@ -142,7 +144,10 @@ export class BaseErrorHandler {
 	 * Format WWW-Authenticate header according to RFC 9728
 	 */
 	private formatWWWAuthenticateHeader(resourceMetadataUrl: string, error?: AuthorizationError): string {
-		const escapeValue = (value: string) => value.replace(/["\\\r\n]/g, '\\$&');
+		const escapeValue = (value: string) =>
+			value
+				.replace(/[\u0000-\u001F\u007F]/g, '') // drop CTLs
+				.replace(/["\\\r\n]/g, '\\$&');         // quote specials
 		let header = `Bearer resource_metadata="${escapeValue(resourceMetadataUrl)}"`;
 
 		if (error) {
