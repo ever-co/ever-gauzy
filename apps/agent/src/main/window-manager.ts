@@ -55,6 +55,7 @@ class AppWindow {
 				this.aboutWindow.once('close', () => {
 					this.aboutWindow.destroy();
 					this.aboutWindow = null;
+					this.dockHideHandle();
 				});
 				this.aboutWindow.once('ready-to-show', () => {
 					this.aboutWindow.show();
@@ -73,6 +74,7 @@ class AppWindow {
 				this.splashScreenWindow.browserWindow.on('close', () => {
 					this.splashScreenWindow.browserWindow.destroy();
 					this.splashScreenWindow = null;
+					this.dockHideHandle();
 				});
 			}
 		} catch (error) {
@@ -84,7 +86,7 @@ class AppWindow {
 	async initSetupWindow() {
 		try {
 			if (!this.setupWindow) {
-				this.setupWindow =  await createSetupWindow(
+				this.setupWindow = await createSetupWindow(
 					this.setupWindow,
 					true,
 					this.getUiPath('setup'),
@@ -95,6 +97,7 @@ class AppWindow {
 					console.log('on change setup window');
 					this.setupWindow.destroy();
 					this.setupWindow = null;
+					this.dockHideHandle();
 				});
 			}
 		} catch (error) {
@@ -122,6 +125,7 @@ class AppWindow {
 	destroyAuthWindow() {
 		this.authWindow.browserWindow.destroy();
 		this.authWindow = null;
+		this.dockHideHandle()
 	}
 
 	async initSettingWindow(): Promise<void> {
@@ -139,11 +143,20 @@ class AppWindow {
 				this.settingWindow.on('close', () => {
 					this.settingWindow.destroy();
 					this.settingWindow = null;
+					this.dockHideHandle();
 				});
 			}
 		} catch (error) {
 			console.error('Failed to initialize setting window', error);
 			throw new Error(`Setting window initialization failed ${error.message}`);
+		}
+	}
+
+	dockHideHandle(): void {
+		if (!this.hasActiveWindow()) {
+			if (process.platform === 'darwin') {
+				app.dock.hide();
+			}
 		}
 	}
 
@@ -166,11 +179,7 @@ class AppWindow {
 				});
 
 				this.logWindow.on('hide', () => {
-					if (!this.hasActiveWindow()) {
-						if (process.platform === 'darwin') {
-							app.dock.hide();
-						}
-					}
+					this.dockHideHandle();
 				})
 			}
 		} catch (error) {
@@ -196,6 +205,7 @@ class AppWindow {
 		if (this.settingWindow && !this.settingWindow?.isDestroyed) {
 			this.settingWindow.close();
 			this.settingWindow = null;
+			this.dockHideHandle();
 		}
 	}
 

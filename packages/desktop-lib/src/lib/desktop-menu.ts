@@ -28,7 +28,7 @@ export class AppMenu {
 	 * @param {any} windowPath - Paths to the necessary window files.
 	 * @param {BrowserWindow | null} [serverWindow] - The server window instance (optional).
 	 * @param {boolean} [isZoomVisible] - Flag to enable/disable zoom menu options.
-	 * @param {boolean} [isCustomMenu] - Flag to use custome menu list
+	 * @param {boolean} [isCustomMenu] - Flag to use custom menu list
 	 */
 	constructor(
 		timeTrackerWindow: BrowserWindow | null,
