@@ -111,7 +111,7 @@ export class BaseValidator {
 				errorDescription: 'Missing client_id parameter'
 			};
 		}
-		const clientIdValidation = this.validateClientCredentials(params.client_id);
+		const clientIdValidation = BaseValidator.validateClientCredentials(params.client_id);
 		if (!clientIdValidation.valid) {
 			return clientIdValidation;
 		}
