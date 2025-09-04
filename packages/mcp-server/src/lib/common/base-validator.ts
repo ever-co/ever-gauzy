@@ -237,12 +237,12 @@ export class BaseValidator {
 					};
 				}
 				{
-					const redirectUriValidation = this.validateUrl(params.redirect_uri);
+					const redirectUriValidation = BaseValidator.validateUrl(params.redirect_uri);
 					if (!redirectUriValidation.valid) {
 						return {
-						valid: false,
-						error: 'invalid_request',
-						errorDescription: 'Invalid redirect_uri format'
+							valid: false,
+							error: 'invalid_request',
+							errorDescription: 'Invalid redirect_uri format'
 						};
 					}
 			    }
