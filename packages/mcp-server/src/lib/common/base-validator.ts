@@ -125,7 +125,7 @@ export class BaseValidator {
 		}
 
 		// Validate redirect URI format
-		const redirectUriValidation = this.validateUrl(params.redirect_uri);
+		const redirectUriValidation = BaseValidator.validateUrl(params.redirect_uri);
 		if (!redirectUriValidation.valid) {
 			return {
 				valid: false,
