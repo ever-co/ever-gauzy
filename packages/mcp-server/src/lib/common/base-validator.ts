@@ -158,6 +158,13 @@ export class BaseValidator {
 
 			// Validate code challenge format (base64url-encoded)
 			const codeChallenge = params.code_challenge;
+			if (typeof codeChallenge !== 'string') {
+				return {
+					valid: false,
+					error: 'invalid_request',
+					errorDescription: 'Invalid code_challenge parameter type'
+				};
+			}
 			const base64UrlRegex = /^[A-Za-z0-9_-]+$/;
 			if (!base64UrlRegex.test(codeChallenge) || codeChallenge.length < 43 || codeChallenge.length > 128) {
 				return {
