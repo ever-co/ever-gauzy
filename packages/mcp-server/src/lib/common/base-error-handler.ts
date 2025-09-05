@@ -150,6 +150,7 @@ export class BaseErrorHandler {
 	private setNoStoreJsonHeaders(res: Response, varyAuthorization = false): void {
 		res.setHeader('Cache-Control', 'no-store');
 		res.setHeader('Pragma', 'no-cache');
+		res.setHeader('Expires', '0');
 		res.setHeader('Content-Type', 'application/json');
 		if (varyAuthorization) {
 			res.vary('Authorization');
@@ -162,6 +163,7 @@ export class BaseErrorHandler {
 	private setNoStoreHeaders(res: Response): void {
 		res.setHeader('Cache-Control', 'no-store');
 		res.setHeader('Pragma', 'no-cache');
+		res.setHeader('Expires', '0');
 	}
 
 	/**

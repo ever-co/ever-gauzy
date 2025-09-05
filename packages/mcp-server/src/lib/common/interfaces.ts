@@ -1,6 +1,6 @@
 export interface TokenResponse {
 	access_token: string;
-	token_type: string;
+	token_type: 'Bearer' | 'DPoP' | (string & {});
 	expires_in: number;
 	refresh_token?: string;
 	scope?: string;
@@ -23,7 +23,7 @@ export interface IntrospectionResponse {
 }
 
 export interface JWKSKey {
-	kty: 'RSA' | 'EC' | 'oct'; // Key Type (RFC 7517)
+	kty: 'RSA' | 'EC' | 'OKP' | 'oct'; // Key Type (RFC 7517)
 	use?: 'sig' | 'enc'; // Public Key Use
 	key_ops?: Array<'sign' | 'verify' | 'encrypt' | 'decrypt' | 'wrapKey' | 'unwrapKey' | 'deriveKey' | 'deriveBits'>; // Key Operations
 	alg?: string; // Algorithm

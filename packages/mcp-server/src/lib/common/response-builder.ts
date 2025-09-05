@@ -67,15 +67,21 @@ export class ResponseBuilder {
 	sendAuthorizationRedirect(res: Response, redirectUri: string, code: string, state?: string): void {
 		try {
 			const url = new URL(redirectUri);
-			const allowedSchemes = new Set(['https:', 'http:']); // allowlist
-			if (!allowedSchemes.has(url.protocol)) {
-				this.securityLogger.warn('Blocked authorization redirect due to disallowed scheme', {
+			const isLoopback =
+				url.hostname === 'localhost' ||
+				url.hostname === '127.0.0.1' ||
+				url.hostname === '::1' ||
+				url.hostname === '0.0.0.0';
+			const httpsOk = url.protocol === 'https:';
+			const httpOk = url.protocol === 'http:' && isLoopback;
+			if (!httpsOk && !httpOk) {
+				this.securityLogger.warn('Blocked authorization redirect due to disallowed scheme/host', {
 					protocol: url.protocol,
 					host: url.hostname
 				});
 				res.status(400).json({
-					error: 'invalid_request',
-					error_description: 'Redirect URI must use http(s) scheme'
+					error: 'invalid_redirect_uri',
+					error_description: 'Redirect URI must use https, or http on loopback (localhost/127.0.0.1)'
 				});
 				return;
 			}
@@ -115,7 +121,7 @@ export class ResponseBuilder {
 		res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
 		// Sanitize: expose only public JWK members
 		const sanitized = {
-			keys: (jwks.keys || []).map((k) => {
+			keys: jwks.keys.map((k) => {
 				const { kty, use, key_ops, alg, kid, x5u, x5c, x5t, n, e, crv, x, y, ['x5t#S256']: x5tS256 } = k as {
 					kty?: string; use?: string; key_ops?: string[]; alg?: string; kid?: string; x5u?: string; x5c?: string[];
 					x5t?: string; n?: string; e?: string; crv?: string; x?: string; y?: string; ['x5t#S256']?: string;
@@ -246,6 +252,9 @@ export class ResponseBuilder {
 		res.setHeader('X-Content-Type-Options', 'nosniff');
 		res.setHeader('Content-Security-Policy', "default-src 'self'; frame-ancestors 'none'; base-uri 'none'");
 		res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+		res.setHeader('Cache-Control', 'no-store');
+		res.setHeader('Pragma', 'no-cache');
+		res.setHeader('Expires', '0');
 		res.send(html);
 	}
 

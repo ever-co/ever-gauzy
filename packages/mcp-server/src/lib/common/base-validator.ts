@@ -80,7 +80,14 @@ export class BaseValidator {
 	 * Validate OAuth 2.0 scope format
 	 */
 	static validateScope(scope: string): ValidationResult {
-		if (!scope || typeof scope !== 'string') {
+		if (typeof scope !== 'string') {
+			return {
+				valid: false,
+				error: 'invalid_request',
+				errorDescription: 'Invalid scope parameter type'
+			};
+		}
+		if (!scope) {
 			return { valid: true }; // Scope is optional
 		}
 
@@ -250,6 +257,13 @@ export class BaseValidator {
 						errorDescription: 'Missing code parameter for authorization_code grant'
 					};
 				}
+				if (typeof params.code !== 'string') {
+					return {
+						valid: false,
+						error: 'invalid_request',
+						errorDescription: 'Invalid code parameter type'
+					};
+				}
 				if (params.redirect_uri) {
 					const redirectUriValidation = BaseValidator.validateUrl(params.redirect_uri);
 					if (!redirectUriValidation.valid) {
@@ -257,6 +271,27 @@ export class BaseValidator {
 							valid: false,
 							error: 'invalid_request',
 							errorDescription: 'Invalid redirect_uri format'
+						};
+					}
+				}
+				if (params.code_verifier !== undefined) {
+					if (typeof params.code_verifier !== 'string') {
+						return {
+							valid: false,
+							error: 'invalid_request',
+							errorDescription: 'Invalid code_verifier parameter type'
+						};
+					}
+					const base64UrlRegex = /^[A-Za-z0-9_-]+$/;
+					if (
+						!base64UrlRegex.test(params.code_verifier) ||
+						params.code_verifier.length < 43 ||
+						params.code_verifier.length > 128
+					) {
+						return {
+							valid: false,
+							error: 'invalid_request',
+							errorDescription: 'Invalid code_verifier format'
 						};
 					}
 				}
@@ -268,6 +303,13 @@ export class BaseValidator {
 						valid: false,
 						error: 'invalid_request',
 						errorDescription: 'Missing refresh_token parameter for refresh_token grant'
+					};
+				}
+				if (typeof params.refresh_token !== 'string') {
+					return {
+						valid: false,
+						error: 'invalid_request',
+						errorDescription: 'Invalid refresh_token parameter type'
 					};
 				}
 				break;
