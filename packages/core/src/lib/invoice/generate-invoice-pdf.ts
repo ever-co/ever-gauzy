@@ -58,6 +58,69 @@ export async function generateInvoicePdfDefinition(
 		{ text: translatedText.totalValue, bold: true }
 	];
 
+	const tableBody: any[] = [];
+
+	const taxId = invoice.toOrganization?.taxId ?? organization.taxId;
+	if (taxId) {
+		tableBody.push([{ text: `${translatedText.taxId}:`, bold: true }, { text: taxId }]);
+	}
+
+	const address =
+		invoice.toOrganization?.contact?.address ??
+		organizationContact?.contact?.address ??
+		organization?.contact?.address;
+	if (address) {
+		tableBody.push([{ text: `${translatedText.address}:`, bold: true }, { text: address }]);
+	}
+
+	const address2 =
+		invoice.toOrganization?.contact?.address2 ??
+		organizationContact?.contact?.address2 ??
+		organization?.contact?.address2;
+	if (address2) {
+		tableBody.push([{ text: `${translatedText.address2}:`, bold: true }, { text: address2 }]);
+	}
+
+	const postcode =
+		invoice.toOrganization?.contact?.postcode ??
+		organizationContact?.contact?.postcode ??
+		organization?.contact?.postcode;
+	if (postcode) {
+		tableBody.push([{ text: `${translatedText.postcode}:`, bold: true }, { text: postcode }]);
+	}
+
+	const city =
+		invoice.toOrganization?.contact?.city ?? organizationContact?.contact?.city ?? organization?.contact?.city;
+	const country =
+		invoice.toOrganization?.contact?.country ??
+		organizationContact?.contact?.country ??
+		organization?.contact?.country;
+
+	const stack: any[] = [
+		{ bold: true, text: `${translatedText.to}:\n` },
+		{
+			text: `${invoice.toOrganization?.name ?? organizationContact?.name ?? organization.name}`,
+			margin: [0, 0, 0, 5]
+		}
+	];
+
+	if (tableBody.length) {
+		stack.push({
+			table: {
+				widths: ['auto', '*'],
+				body: tableBody
+			},
+			layout: 'noBorders'
+		});
+	}
+
+	if (city || country) {
+		stack.push({
+			text: `${city ?? ''}${city ? ', ' : ''}${country ?? ''}`,
+			margin: [0, 0, 0, 5]
+		});
+	}
+
 	const docDefinition = {
 		watermark: {
 			text: `${invoice.paid ? translatedText.paid.toUpperCase() : ''}`,
@@ -138,97 +201,7 @@ export async function generateInvoicePdfDefinition(
 			},
 			' ',
 			{
-				stack: [
-					{
-						bold: true,
-						text: `${translatedText.to}:\n`
-					},
-					{
-						text: `${invoice.toOrganization?.name ?? organizationContact?.name ?? organization.name}`,
-						margin: [0, 0, 0, 5]
-					},
-					{
-						table: {
-							widths: ['auto', '*'],
-							body: [
-								// Tax ID
-								invoice.toOrganization?.taxId ?? organization.taxId
-									? [
-											{ text: `${translatedText.taxId}:`, bold: true },
-											{ text: `${invoice.toOrganization?.taxId ?? organization.taxId}` }
-									  ]
-									: [],
-								// Address
-								invoice.toOrganization?.contact?.address ??
-								organizationContact?.contact?.address ??
-								organization?.contact?.address
-									? [
-											{ text: `${translatedText.address}:`, bold: true },
-											{
-												text: `${
-													invoice.toOrganization?.contact?.address ??
-													organizationContact?.contact?.address ??
-													organization?.contact?.address
-												}`
-											}
-									  ]
-									: [],
-								// Address 2
-								invoice.toOrganization?.contact?.address2 ??
-								organizationContact?.contact?.address2 ??
-								organization?.contact?.address2
-									? [
-											{ text: `${translatedText.address2}:`, bold: true },
-											{
-												text: `${
-													invoice.toOrganization?.contact?.address2 ??
-													organizationContact?.contact?.address2 ??
-													organization?.contact?.address2
-												}`
-											}
-									  ]
-									: [],
-								// Postcode
-								invoice.toOrganization?.contact?.postcode ??
-								organizationContact?.contact?.postcode ??
-								organization?.contact?.postcode
-									? [
-											{ text: `${translatedText.postcode}:`, bold: true },
-											{
-												text: `${
-													invoice.toOrganization?.contact?.postcode ??
-													organizationContact?.contact?.postcode ??
-													organization?.contact?.postcode
-												}`
-											}
-									  ]
-									: []
-							].filter((r) => r.length)
-						},
-						layout: 'noBorders'
-					},
-					{
-						// City + Country
-						text: `${
-							invoice.toOrganization?.contact?.city ??
-							organizationContact?.contact?.city ??
-							organization?.contact?.city ??
-							''
-						}${
-							invoice.toOrganization?.contact?.city ??
-							organizationContact?.contact?.city ??
-							organization?.contact?.city
-								? ', '
-								: ''
-						}${
-							invoice.toOrganization?.contact?.country ??
-							organizationContact?.contact?.country ??
-							organization?.contact?.country ??
-							''
-						}`,
-						margin: [0, 0, 0, 5]
-					}
-				]
+				stack
 			},
 			' ',
 			' ',
