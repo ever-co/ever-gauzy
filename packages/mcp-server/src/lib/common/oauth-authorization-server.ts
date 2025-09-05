@@ -1313,20 +1313,6 @@ export class OAuth2AuthorizationServer {
 		}
 	}
 
-	/**
-	 * Validate authorize request parameters
-	 */
-	private validateAuthorizeRequest(params: AuthorizeRequest): { valid: boolean; error?: string; errorDescription?: string } {
-		const validation = BaseValidator.validateAuthorizeRequest(params);
-		if (!validation.valid) {
-			return {
-				valid: false,
-				error: validation.error,
-				errorDescription: validation.errorDescription
-			};
-		}
-		return { valid: true };
-	}
 
 	/**
 	 * Generate login form with CSRF token
