@@ -108,7 +108,7 @@ export class ResponseBuilder {
 	 */
 	sendJwksResponse(res: Response, jwks: JWKSResponse): void {
 		this.securityLogger.debug('Sending JWKS response', {
-			key_count: jwks.keys.length
+			key_count: jwks.keys?.length || 0
 		});
 
 		res.setHeader('Content-Type', 'application/json');
@@ -128,7 +128,8 @@ export class ResponseBuilder {
 		const body = JSON.stringify(sanitized);
 		const etag = `W/"${createHash('sha256').update(body).digest('hex')}"`;
 		res.setHeader('ETag', etag);
-		const ifNoneMatch = (res as any)?.req?.headers?.['if-none-match'] as string | undefined;
+		const req = (res as any)?.req;
+		const ifNoneMatch = req?.headers?.['if-none-match'] as string | undefined;
 		if (ifNoneMatch && ifNoneMatch === etag) {
 			res.status(304).end();
 			return;
@@ -149,7 +150,8 @@ export class ResponseBuilder {
 		res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
 		const body = JSON.stringify(metadata);
 		res.setHeader('ETag', `W/"${createHash('sha256').update(body).digest('hex')}"`)
-		const ifNoneMatch = (res as any)?.req?.headers?.['if-none-match'] as string | undefined;
+		const req = (res as any)?.req;
+		const ifNoneMatch = req?.headers?.['if-none-match'] as string | undefined;
 		if (ifNoneMatch && ifNoneMatch === res.getHeader('ETag')) {
 			res.status(304).end();
 			return;
@@ -170,7 +172,8 @@ export class ResponseBuilder {
 		res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
 		const body = JSON.stringify(metadata);
 		res.setHeader('ETag', `W/"${createHash('sha256').update(body).digest('hex')}"`);
-		const ifNoneMatch = (res as any)?.req?.headers?.['if-none-match'] as string | undefined;
+		const req = (res as any)?.req;
+		const ifNoneMatch = req?.headers?.['if-none-match'] as string | undefined;
 		if (ifNoneMatch && ifNoneMatch === res.getHeader('ETag')) {
 			res.status(304).end();
 			return;
