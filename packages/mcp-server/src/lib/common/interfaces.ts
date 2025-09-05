@@ -24,8 +24,8 @@ export interface IntrospectionResponse {
 
 export interface JWKSKey {
 	kty: 'RSA' | 'EC' | 'oct'; // Key Type (RFC 7517)
-	use?: string; // Public Key Use
-	key_ops?: string[]; // Key Operations
+	use?: 'sig' | 'enc'; // Public Key Use
+	key_ops?: Array<'sign' | 'verify' | 'encrypt' | 'decrypt' | 'wrapKey' | 'unwrapKey' | 'deriveKey' | 'deriveBits'>; // Key Operations
 	alg?: string; // Algorithm
 	kid?: string; // Key ID
 	x5u?: string; // X.509 URL

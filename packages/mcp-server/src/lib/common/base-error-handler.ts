@@ -38,9 +38,7 @@ export class BaseErrorHandler {
 			error.error === 'temporarily_unavailable' ? 503 :
 			400;
 		const status = statusCode ?? mapped;
-		res.setHeader('Cache-Control', 'no-store');
-		res.setHeader('Pragma', 'no-cache');
-		res.setHeader('Vary', 'Authorization');
+		this.setNoStoreJsonHeaders(res, true);
 		res.status(status).json({
 			error: error.error,
 			error_description: error.errorDescription,
@@ -73,11 +71,10 @@ export class BaseErrorHandler {
 				error,
 				description,
 				clientId,
-				redirectUri: redirectUri.split('?')[0] // Log without query params
+				redirectUri: `${url.origin}${url.pathname}` // Log without query/fragment
 			});
 
-			res.setHeader('Cache-Control', 'no-store');
-			res.setHeader('Pragma', 'no-cache');
+			this.setNoStoreHeaders(res);
 			res.redirect(303, url.toString());
 		} catch (urlError) {
 			this.securityLogger.error('Invalid redirect URI in error handling', urlError as Error);
@@ -100,9 +97,7 @@ export class BaseErrorHandler {
 			statusCode: error.statusCode
 		});
 
-		res.setHeader('Cache-Control', 'no-store');
-		res.setHeader('Pragma', 'no-cache');
-		res.setHeader('Content-Type', 'application/json');
+		this.setNoStoreJsonHeaders(res);
 		res.status(error.statusCode).json({
 			error: error.code,
 			message: error.message,
@@ -140,15 +135,33 @@ export class BaseErrorHandler {
 		}
 
 		const status = error.error === 'insufficient_scope' ? 403 : 401;
-		res.setHeader('Cache-Control', 'no-store');
-		res.setHeader('Pragma', 'no-cache');
-		res.setHeader('Vary', 'Authorization');
+		this.setNoStoreJsonHeaders(res, true);
 		res.status(status).json({
 			error: error.error,
 			error_description: error.errorDescription,
 			...(error.errorUri && { error_uri: error.errorUri }),
 			...(error.scope && { scope: error.scope }),
 		});
+	}
+
+	/**
+	 * Set no-store cache headers and optionally Content-Type and Vary headers
+	 */
+	private setNoStoreJsonHeaders(res: Response, varyAuthorization = false): void {
+		res.setHeader('Cache-Control', 'no-store');
+		res.setHeader('Pragma', 'no-cache');
+		res.setHeader('Content-Type', 'application/json');
+		if (varyAuthorization) {
+			res.vary('Authorization');
+		}
+	}
+
+	/**
+	 * Set basic no-store cache headers (without Content-Type)
+	 */
+	private setNoStoreHeaders(res: Response): void {
+		res.setHeader('Cache-Control', 'no-store');
+		res.setHeader('Pragma', 'no-cache');
 	}
 
 	/**

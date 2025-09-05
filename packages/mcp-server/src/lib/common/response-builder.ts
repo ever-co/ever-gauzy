@@ -92,6 +92,7 @@ export class ResponseBuilder {
 
 			res.setHeader('Cache-Control', 'no-store');
 			res.setHeader('Pragma', 'no-cache');
+			res.setHeader('Expires', '0');
 			res.redirect(303, url.toString());
 		} catch (error) {
 			this.securityLogger.error('Failed to build authorization redirect URL', { error, redirectUri });
@@ -107,7 +108,7 @@ export class ResponseBuilder {
 	 */
 	sendJwksResponse(res: Response, jwks: JWKSResponse): void {
 		this.securityLogger.debug('Sending JWKS response', {
-			key_count: jwks.keys?.length || 0
+			key_count: jwks.keys.length
 		});
 
 		res.setHeader('Content-Type', 'application/json');
@@ -127,6 +128,11 @@ export class ResponseBuilder {
 		const body = JSON.stringify(sanitized);
 		const etag = `W/"${createHash('sha256').update(body).digest('hex')}"`;
 		res.setHeader('ETag', etag);
+		const ifNoneMatch = (res as any)?.req?.headers?.['if-none-match'] as string | undefined;
+		if (ifNoneMatch && ifNoneMatch === etag) {
+			res.status(304).end();
+			return;
+		}
 		res.send(body);
 	}
 
@@ -142,7 +148,12 @@ export class ResponseBuilder {
 		res.setHeader('Content-Type', 'application/json');
 		res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
 		const body = JSON.stringify(metadata);
-		res.setHeader('ETag', `W/"${require('crypto').createHash('sha256').update(body).digest('hex')}"`);
+		res.setHeader('ETag', `W/"${createHash('sha256').update(body).digest('hex')}"`)
+		const ifNoneMatch = (res as any)?.req?.headers?.['if-none-match'] as string | undefined;
+		if (ifNoneMatch && ifNoneMatch === res.getHeader('ETag')) {
+			res.status(304).end();
+			return;
+		}
 		res.send(body);
 	}
 
@@ -158,7 +169,12 @@ export class ResponseBuilder {
 		res.setHeader('Content-Type', 'application/json');
 		res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
 		const body = JSON.stringify(metadata);
-		res.setHeader('ETag', `W/"${require('crypto').createHash('sha256').update(body).digest('hex')}"`);
+		res.setHeader('ETag', `W/"${createHash('sha256').update(body).digest('hex')}"`);
+		const ifNoneMatch = (res as any)?.req?.headers?.['if-none-match'] as string | undefined;
+		if (ifNoneMatch && ifNoneMatch === res.getHeader('ETag')) {
+			res.status(304).end();
+			return;
+		}
 		res.send(body);
 	}
 
@@ -176,7 +192,11 @@ export class ResponseBuilder {
 		res.setHeader('Cache-Control', 'no-store');
 		res.setHeader('Expires', '0');
 		res.setHeader('Pragma', 'no-cache');
-		res.setHeader('Vary', 'Authorization');
+		const existingVary = res.getHeader('Vary');
+		const vary = existingVary ? String(existingVary) : '';
+		const parts = new Set(vary.split(',').map(v => v.trim()).filter(Boolean));
+		parts.add('Authorization');
+		res.setHeader('Vary', Array.from(parts).join(', '));
 		res.json(userInfo);
 	}
 

@@ -225,12 +225,19 @@ export class BaseValidator {
 			};
 		}
 
-		if (!params.client_id || typeof params.client_id !== 'string') {
-			return {
-				valid: false,
-				error: 'invalid_request',
-				errorDescription: 'Missing client_id parameter'
-			};
+		// client_id may be supplied via Authorization header; treat as optional here
+		if (params.client_id !== undefined) {
+			if (typeof params.client_id !== 'string') {
+				return {
+					valid: false,
+					error: 'invalid_request',
+					errorDescription: 'Invalid client_id parameter type'
+				};
+			}
+			const clientIdValidation = BaseValidator.validateClientCredentials(params.client_id);
+			if (!clientIdValidation.valid) {
+				return clientIdValidation;
+			}
 		}
 
 		// Grant-type specific validation
@@ -243,14 +250,7 @@ export class BaseValidator {
 						errorDescription: 'Missing code parameter for authorization_code grant'
 					};
 				}
-				if (!params.redirect_uri) {
-					return {
-						valid: false,
-						error: 'invalid_request',
-						errorDescription: 'Missing redirect_uri parameter for authorization_code grant'
-					};
-				}
-				{
+				if (params.redirect_uri) {
 					const redirectUriValidation = BaseValidator.validateUrl(params.redirect_uri);
 					if (!redirectUriValidation.valid) {
 						return {
@@ -259,7 +259,7 @@ export class BaseValidator {
 							errorDescription: 'Invalid redirect_uri format'
 						};
 					}
-			    }
+				}
 				break;
 
 			case 'refresh_token':
