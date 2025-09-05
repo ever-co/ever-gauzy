@@ -39,6 +39,9 @@ export class BaseErrorHandler {
 			400;
 		const status = statusCode ?? mapped;
 		this.setNoStoreJsonHeaders(res, true);
+		if (status === 503 && !res.getHeader('Retry-After')) {
+			res.setHeader('Retry-After', '120'); // seconds; tune as needed
+		}
 		res.status(status).json({
 			error: error.error,
 			error_description: error.errorDescription,
@@ -53,8 +56,9 @@ export class BaseErrorHandler {
 	handleOAuthRedirectError(
 		res: Response,
 		redirectUri: string,
-		error: string,
+		error: AuthorizationError['error'],
 		description?: string,
+		errorUri?: string,
 		state?: string,
 		clientId?: string
 	): void {
@@ -64,7 +68,11 @@ export class BaseErrorHandler {
 				throw new Error(`Unsupported redirect protocol: ${url.protocol}`);
 			}
 			url.searchParams.set('error', error);
-			if (description) url.searchParams.set('error_description', description);
+			if (description) {
+				const safeDescription = description.slice(0, 200);
+				url.searchParams.set('error_description', safeDescription);
+			}
+			if (errorUri) url.searchParams.set('error_uri', errorUri);
 			if (state) url.searchParams.set('state', state);
 
 			this.securityLogger.warn('OAuth redirect error', {
@@ -91,11 +99,19 @@ export class BaseErrorHandler {
 	 * Handle standard HTTP errors
 	 */
 	handleStandardError(res: Response, error: StandardError): void {
-		this.securityLogger.error('Standard error occurred', {
-			code: error.code,
-			message: error.message,
-			statusCode: error.statusCode
-		});
+		if (error.statusCode >= 500) {
+			this.securityLogger.error('Standard error occurred', {
+				code: error.code,
+				message: error.message,
+				statusCode: error.statusCode
+			});
+			} else {
+			this.securityLogger.warn('Standard error occurred', {
+				code: error.code,
+				message: error.message,
+				statusCode: error.statusCode
+			});
+		}
 
 		this.setNoStoreJsonHeaders(res);
 		res.status(error.statusCode).json({

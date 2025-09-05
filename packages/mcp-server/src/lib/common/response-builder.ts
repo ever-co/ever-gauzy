@@ -39,7 +39,6 @@ export class ResponseBuilder {
 		res.setHeader('Cache-Control', 'no-store');
 		res.setHeader('Pragma', 'no-cache');
 		res.setHeader('Expires', '0');
-		res.setHeader('Content-Type', 'application/json');
 
 		res.json(tokenData);
 	}
@@ -57,7 +56,6 @@ export class ResponseBuilder {
 		res.setHeader('Cache-Control', 'no-store');
 		res.setHeader('Pragma', 'no-cache');
 		res.setHeader('Expires', '0');
-		res.setHeader('Content-Type', 'application/json');
 		res.json(introspectionData);
 	}
 
@@ -70,8 +68,7 @@ export class ResponseBuilder {
 			const isLoopback =
 				url.hostname === 'localhost' ||
 				url.hostname === '127.0.0.1' ||
-				url.hostname === '::1' ||
-				url.hostname === '0.0.0.0';
+				url.hostname === '::1';
 			const httpsOk = url.protocol === 'https:';
 			const httpOk = url.protocol === 'http:' && isLoopback;
 			if (!httpsOk && !httpOk) {
@@ -102,6 +99,9 @@ export class ResponseBuilder {
 			res.redirect(303, url.toString());
 		} catch (error) {
 			this.securityLogger.error('Failed to build authorization redirect URL', { error, redirectUri });
+			res.setHeader('Cache-Control', 'no-store');
+			res.setHeader('Pragma', 'no-cache');
+			res.setHeader('Expires', '0');
 			res.status(400).json({
 				error: 'invalid_redirect_uri',
 				error_description: 'Invalid redirect URI format'
@@ -121,7 +121,7 @@ export class ResponseBuilder {
 		res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
 		// Sanitize: expose only public JWK members
 		const sanitized = {
-			keys: jwks.keys.map((k) => {
+			keys: (jwks.keys || []).map((k) => {
 				const { kty, use, key_ops, alg, kid, x5u, x5c, x5t, n, e, crv, x, y, ['x5t#S256']: x5tS256 } = k as {
 					kty?: string; use?: string; key_ops?: string[]; alg?: string; kid?: string; x5u?: string; x5c?: string[];
 					x5t?: string; n?: string; e?: string; crv?: string; x?: string; y?: string; ['x5t#S256']?: string;
@@ -134,7 +134,7 @@ export class ResponseBuilder {
 		const body = JSON.stringify(sanitized);
 		const etag = `W/"${createHash('sha256').update(body).digest('hex')}"`;
 		res.setHeader('ETag', etag);
-		const req = (res as any)?.req;
+		const req = (res as any).req;
 		const ifNoneMatch = req?.headers?.['if-none-match'] as string | undefined;
 		if (ifNoneMatch && ifNoneMatch === etag) {
 			res.status(304).end();
@@ -156,7 +156,7 @@ export class ResponseBuilder {
 		res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
 		const body = JSON.stringify(metadata);
 		res.setHeader('ETag', `W/"${createHash('sha256').update(body).digest('hex')}"`)
-		const req = (res as any)?.req;
+		const req = (res as any).req;
 		const ifNoneMatch = req?.headers?.['if-none-match'] as string | undefined;
 		if (ifNoneMatch && ifNoneMatch === res.getHeader('ETag')) {
 			res.status(304).end();
@@ -178,7 +178,7 @@ export class ResponseBuilder {
 		res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
 		const body = JSON.stringify(metadata);
 		res.setHeader('ETag', `W/"${createHash('sha256').update(body).digest('hex')}"`);
-		const req = (res as any)?.req;
+		const req = (res as any).req;
 		const ifNoneMatch = req?.headers?.['if-none-match'] as string | undefined;
 		if (ifNoneMatch && ifNoneMatch === res.getHeader('ETag')) {
 			res.status(304).end();

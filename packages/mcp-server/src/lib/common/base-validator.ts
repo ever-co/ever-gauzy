@@ -17,6 +17,8 @@ export class BaseValidator {
 	/**
 	 * Validate email format
 	 */
+
+	static readonly BASE64URL_RE = /^[A-Za-z0-9_-]+$/;
 	static validateEmail(email: string): ValidationResult {
 		if (!email || typeof email !== 'string') {
 			return {
@@ -66,7 +68,21 @@ export class BaseValidator {
 					errorDescription: 'URL must not contain credentials'
 				};
 			}
-			return { valid: true };
+			if (!parsed.hostname) {
+				return {
+					valid: false,
+					error: 'invalid_request',
+					errorDescription: 'URL must include host'
+				};
+			}
+			if (parsed.hash) {
+				return {
+					valid: false,
+					error: 'invalid_request',
+				errorDescription: 'URL must not contain fragment'
+			};
+		}
+		return { valid: true };
 		} catch {
 			return {
 				valid: false,
@@ -92,7 +108,8 @@ export class BaseValidator {
 		}
 
 		// Scope should be space-separated tokens
-		const scopeRegex = /^[\w\.\-:]+(\s+[\w\.\-:]+)*$/;
+		// Allow URI-style scopes containing '/'
+		const scopeRegex = /^[\w.\-:\/]+(\s+[\w.\-:\/]+)*$/;
 		if (!scopeRegex.test(scope)) {
 			return {
 				valid: false,
@@ -171,6 +188,15 @@ export class BaseValidator {
 			}
 		}
 
+		// Validate PKCE parameters consistency
+		if (params.code_challenge_method && !params.code_challenge) {
+			return {
+				valid: false,
+				error: 'invalid_request',
+				errorDescription: 'code_challenge_method provided without code_challenge'
+			};
+		}
+
 		// Validate PKCE parameters if provided
 		if (params.code_challenge) {
 			if (!params.code_challenge_method) {
@@ -181,11 +207,12 @@ export class BaseValidator {
 				};
 			}
 
-			if (!['S256', 'plain'].includes(params.code_challenge_method)) {
+			// Prefer S256; disallow plain unless explicitly supported
+			if (!['S256'].includes(params.code_challenge_method)) {
 				return {
 					valid: false,
 					error: 'invalid_request',
-					errorDescription: 'Unsupported code_challenge_method'
+					errorDescription: 'Unsupported code_challenge_method (S256 required)'
 				};
 			}
 
@@ -198,8 +225,7 @@ export class BaseValidator {
 					errorDescription: 'Invalid code_challenge parameter type'
 				};
 			}
-			const base64UrlRegex = /^[A-Za-z0-9_-]+$/;
-			if (!base64UrlRegex.test(codeChallenge) || codeChallenge.length < 43 || codeChallenge.length > 128) {
+			if (!BaseValidator.BASE64URL_RE.test(codeChallenge) || codeChallenge.length < 43 || codeChallenge.length > 128) {
 				return {
 					valid: false,
 					error: 'invalid_request',
@@ -282,9 +308,8 @@ export class BaseValidator {
 							errorDescription: 'Invalid code_verifier parameter type'
 						};
 					}
-					const base64UrlRegex = /^[A-Za-z0-9_-]+$/;
 					if (
-						!base64UrlRegex.test(params.code_verifier) ||
+						!BaseValidator.BASE64URL_RE.test(params.code_verifier) ||
 						params.code_verifier.length < 43 ||
 						params.code_verifier.length > 128
 					) {
