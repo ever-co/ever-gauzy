@@ -369,7 +369,7 @@ class PushActivities {
 		}
 	}
 
-	async saveOfflineTimer() {
+	public async saveOfflineTimer() {
 		const notSyncTimer = await this.timerService.findToSynced();
 		const authConfig = getAuthConfig();
 		if (notSyncTimer.length) {

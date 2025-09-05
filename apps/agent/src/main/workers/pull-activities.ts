@@ -120,6 +120,12 @@ class PullActivities {
 		try {
 			const timer = this.createOfflineTimer(this.startedDate, authConfig?.user?.employee?.id);
 			await this.timerService.save(timer);
+			this.mainEvent.emit('MAIN_EVENT', {
+				type: MAIN_EVENT_TYPE.START_TIMER_API
+			});
+			this.mainEvent.emit('MAIN_EVENT', {
+				type: MAIN_EVENT_TYPE.INIT_SCREENSHOT
+			});
 		} catch (error) {
 			this.agentLogger.error(`Start timer error ${error.message}`);
 		}
@@ -308,7 +314,6 @@ class PullActivities {
 	async activityProcess(timeData: { timeStart: Date; timeEnd: Date }, isScreenshot?: boolean, afkDuration?: number) {
 		try {
 			let imgs = [];
-			this.checkEmployeeSetting();
 			if (isScreenshot) {
 				imgs = await this.getScreenShot();
 			}
@@ -336,6 +341,17 @@ class PullActivities {
 			this.agentLogger.error(`KB/M activity persist failed ${JSON.stringify(error)}`);
 			this.timerStatusHandler('Error');
 		}
+	}
+
+	async initActivityAndScreenshot() {
+		if (!this.startedDate) {
+			this.agentLogger.warn('initActivityAndScreenshot skipped: startedDate is not set');
+			return;
+		}
+		return this.activityProcess({
+			timeStart: this.startedDate,
+			timeEnd: new Date()
+		}, true, 0)
 	}
 
 	/** check employee setting periodically to keep agent setting up to date */
