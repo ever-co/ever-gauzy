@@ -57,8 +57,14 @@ export interface JWKSKey {
 	k?: string; // Key Value
 }
 
+// Public JWK shape for outbound JWKS (no private/symmetric secrets)
+export type PublicJWK = Omit<
+	JWKSKey,
+	'd' | 'p' | 'q' | 'dp' | 'dq' | 'qi' | 'oth' | 'k'
+	>;
+
 export interface JWKSResponse {
-	keys?: JWKSKey[];
+	keys: PublicJWK[];
 }
 
 export interface ServerMetadata {

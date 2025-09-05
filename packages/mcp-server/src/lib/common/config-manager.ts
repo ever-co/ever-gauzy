@@ -139,7 +139,7 @@ export class ConfigManager {
 		};
 
 		this.validateConfiguration(config);
-		return config;
+		return Object.freeze(config) as ServerConfig;
 	}
 
 	/**
@@ -224,7 +224,10 @@ export class ConfigManager {
 		// Validate base URL format
 		if (config.baseUrl) {
 			try {
-				new URL(config.baseUrl);
+				const u = new URL(config.baseUrl);
+				if (config.environment === 'production' && u.protocol !== 'https:') {
+					errors.push('MCP_BASE_URL must use https in production');
+				}
 			} catch {
 				errors.push('MCP_BASE_URL must be a valid URL');
 			}

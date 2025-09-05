@@ -139,6 +139,9 @@ export class HttpTransport {
 	}
 
 	private setupMiddleware() {
+		// Hide Express signature
+		this.app.disable('x-powered-by');
+
 		// CORS configuration
 		this.app.use(cors({
 			origin: this.transportConfig.cors.origin,

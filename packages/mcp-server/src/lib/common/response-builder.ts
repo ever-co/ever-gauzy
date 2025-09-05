@@ -16,12 +16,13 @@ import {
 	TokenResponse,
 	UserInfoResponse
 } from './interfaces';
+import { createHash } from 'crypto';
 
 export class ResponseBuilder {
 	private securityLogger: SecurityLogger;
 
-	constructor() {
-		this.securityLogger = new SecurityLogger();
+	constructor(logger: SecurityLogger = new SecurityLogger()) {
+		this.securityLogger = logger;
 	}
 
 	/**
@@ -37,6 +38,7 @@ export class ResponseBuilder {
 
 		res.setHeader('Cache-Control', 'no-store');
 		res.setHeader('Pragma', 'no-cache');
+		res.setHeader('Expires', '0');
 		res.setHeader('Content-Type', 'application/json');
 
 		res.json(tokenData);
@@ -54,6 +56,7 @@ export class ResponseBuilder {
 
 		res.setHeader('Cache-Control', 'no-store');
 		res.setHeader('Pragma', 'no-cache');
+		res.setHeader('Expires', '0');
 		res.setHeader('Content-Type', 'application/json');
 		res.json(introspectionData);
 	}
@@ -121,7 +124,10 @@ export class ResponseBuilder {
 				return Object.fromEntries(Object.entries(out).filter(([, v]) => v !== undefined));
 			})
 		};
-		res.json(sanitized);
+		const body = JSON.stringify(sanitized);
+		const etag = `W/"${createHash('sha256').update(body).digest('hex')}"`;
+		res.setHeader('ETag', etag);
+		res.send(body);
 	}
 
 	/**
@@ -135,7 +141,9 @@ export class ResponseBuilder {
 
 		res.setHeader('Content-Type', 'application/json');
 		res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-		res.json(metadata);
+		const body = JSON.stringify(metadata);
+		res.setHeader('ETag', `W/"${require('crypto').createHash('sha256').update(body).digest('hex')}"`);
+		res.send(body);
 	}
 
 	/**
@@ -149,7 +157,9 @@ export class ResponseBuilder {
 
 		res.setHeader('Content-Type', 'application/json');
 		res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-		res.json(metadata);
+		const body = JSON.stringify(metadata);
+		res.setHeader('ETag', `W/"${require('crypto').createHash('sha256').update(body).digest('hex')}"`);
+		res.send(body);
 	}
 
 	/**
@@ -164,7 +174,9 @@ export class ResponseBuilder {
 
 		res.setHeader('Content-Type', 'application/json');
 		res.setHeader('Cache-Control', 'no-store');
+		res.setHeader('Expires', '0');
 		res.setHeader('Pragma', 'no-cache');
+		res.setHeader('Vary', 'Authorization');
 		res.json(userInfo);
 	}
 
@@ -180,6 +192,7 @@ export class ResponseBuilder {
 
 		res.setHeader('Cache-Control', 'no-store');
 		res.setHeader('Pragma', 'no-cache');
+		res.setHeader('Expires', '0');
 		res.setHeader('Content-Type', 'application/json');
 		res.status(201).json(clientData);
 	}
@@ -208,7 +221,7 @@ export class ResponseBuilder {
 		res.setHeader('Content-Type', 'text/html; charset=utf-8');
 		res.setHeader('X-Frame-Options', 'DENY');
 		res.setHeader('X-Content-Type-Options', 'nosniff');
-		res.setHeader('Content-Security-Policy', "default-src 'self'; frame-ancestors 'none'");
+		res.setHeader('Content-Security-Policy', "default-src 'self'; frame-ancestors 'none'; base-uri 'none'");
 		res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 		res.send(html);
 	}

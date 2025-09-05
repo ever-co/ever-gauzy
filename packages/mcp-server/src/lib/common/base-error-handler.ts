@@ -40,6 +40,7 @@ export class BaseErrorHandler {
 		const status = statusCode ?? mapped;
 		res.setHeader('Cache-Control', 'no-store');
 		res.setHeader('Pragma', 'no-cache');
+		res.setHeader('Vary', 'Authorization');
 		res.status(status).json({
 			error: error.error,
 			error_description: error.errorDescription,
@@ -75,6 +76,8 @@ export class BaseErrorHandler {
 				redirectUri: redirectUri.split('?')[0] // Log without query params
 			});
 
+			res.setHeader('Cache-Control', 'no-store');
+			res.setHeader('Pragma', 'no-cache');
 			res.redirect(303, url.toString());
 		} catch (urlError) {
 			this.securityLogger.error('Invalid redirect URI in error handling', urlError as Error);
@@ -139,6 +142,7 @@ export class BaseErrorHandler {
 		const status = error.error === 'insufficient_scope' ? 403 : 401;
 		res.setHeader('Cache-Control', 'no-store');
 		res.setHeader('Pragma', 'no-cache');
+		res.setHeader('Vary', 'Authorization');
 		res.status(status).json({
 			error: error.error,
 			error_description: error.errorDescription,

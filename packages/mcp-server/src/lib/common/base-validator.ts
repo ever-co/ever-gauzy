@@ -51,7 +51,21 @@ export class BaseValidator {
 		}
 
 		try {
-			new URL(url);
+			const parsed = new URL(url);
+			if (!/^https?:$/.test(parsed.protocol)) {
+				return {
+					valid: false,
+					error: 'invalid_request',
+					errorDescription: 'URL must use http(s)'
+				};
+			}
+			if (parsed.username || parsed.password) {
+				return {
+					valid: false,
+					error: 'invalid_request',
+					errorDescription: 'URL must not contain credentials'
+				};
+			}
 			return { valid: true };
 		} catch {
 			return {
@@ -146,7 +160,7 @@ export class BaseValidator {
 		if (params.state) {
 			const stateValidation = BaseValidator.validateState(params.state);
 			if (!stateValidation.valid) {
-			return stateValidation;
+				return stateValidation;
 			}
 		}
 
@@ -194,7 +208,7 @@ export class BaseValidator {
 	 * Validate OAuth 2.0 token request
 	 */
 	static validateTokenRequest(params: TokenRequest): ValidationResult {
-		if (!params.grant_type) {
+		if (!params.grant_type || typeof params.grant_type !== 'string') {
 			return {
 				valid: false,
 				error: 'invalid_request',
@@ -211,7 +225,7 @@ export class BaseValidator {
 			};
 		}
 
-		if (!params.client_id) {
+		if (!params.client_id || typeof params.client_id !== 'string') {
 			return {
 				valid: false,
 				error: 'invalid_request',
@@ -259,14 +273,6 @@ export class BaseValidator {
 				break;
 
 			case 'client_credentials':
-				// Client credentials grant requires client authentication
-				if (!params.client_secret) {
-					return {
-						valid: false,
-						error: 'invalid_client',
-						errorDescription: 'Client authentication required for client_credentials grant'
-					};
-				}
 				break;
 		}
 
@@ -288,7 +294,7 @@ export class BaseValidator {
 		if (!clientId || typeof clientId !== 'string') {
 			return {
 				valid: false,
-				error: 'invalid_client',
+				error: 'invalid_request',
 				errorDescription: 'Invalid client_id'
 			};
 		}
@@ -298,7 +304,7 @@ export class BaseValidator {
 		if (!clientIdRegex.test(clientId) || clientId.length < 8 || clientId.length > 128) {
 			return {
 				valid: false,
-				error: 'invalid_client',
+				error: 'invalid_request',
 				errorDescription: 'Invalid client_id format'
 			};
 		}
@@ -308,7 +314,7 @@ export class BaseValidator {
 			if (typeof clientSecret !== 'string' || clientSecret.length < 8) {
 				return {
 					valid: false,
-					error: 'invalid_client',
+					error: 'invalid_request',
 					errorDescription: 'Invalid client_secret'
 				};
 			}
