@@ -138,12 +138,96 @@ export async function generateInvoicePdfDefinition(
 			},
 			' ',
 			{
-				text: [
+				stack: [
 					{
 						bold: true,
 						text: `${translatedText.to}:\n`
 					},
-					`${invoice.toOrganization?.name ?? organizationContact?.name ?? organization.name}`
+					{
+						text: `${invoice.toOrganization?.name ?? organizationContact?.name ?? organization.name}`,
+						margin: [0, 0, 0, 5]
+					},
+					{
+						table: {
+							widths: ['auto', '*'],
+							body: [
+								// Tax ID
+								invoice.toOrganization?.taxId ?? organization.taxId
+									? [
+											{ text: `${translatedText.taxId}:`, bold: true },
+											{ text: `${invoice.toOrganization?.taxId ?? organization.taxId}` }
+									  ]
+									: [],
+								// Address
+								invoice.toOrganization?.contact?.address ??
+								organizationContact?.contact?.address ??
+								organization?.contact?.address
+									? [
+											{ text: `${translatedText.address}:`, bold: true },
+											{
+												text: `${
+													invoice.toOrganization?.contact?.address ??
+													organizationContact?.contact?.address ??
+													organization?.contact?.address
+												}`
+											}
+									  ]
+									: [],
+								// Address 2
+								invoice.toOrganization?.contact?.address2 ??
+								organizationContact?.contact?.address2 ??
+								organization?.contact?.address2
+									? [
+											{ text: `${translatedText.address2}:`, bold: true },
+											{
+												text: `${
+													invoice.toOrganization?.contact?.address2 ??
+													organizationContact?.contact?.address2 ??
+													organization?.contact?.address2
+												}`
+											}
+									  ]
+									: [],
+								// Postcode
+								invoice.toOrganization?.contact?.postcode ??
+								organizationContact?.contact?.postcode ??
+								organization?.contact?.postcode
+									? [
+											{ text: `${translatedText.postcode}:`, bold: true },
+											{
+												text: `${
+													invoice.toOrganization?.contact?.postcode ??
+													organizationContact?.contact?.postcode ??
+													organization?.contact?.postcode
+												}`
+											}
+									  ]
+									: []
+							].filter((r) => r.length)
+						},
+						layout: 'noBorders'
+					},
+					{
+						// City + Country
+						text: `${
+							invoice.toOrganization?.contact?.city ??
+							organizationContact?.contact?.city ??
+							organization?.contact?.city ??
+							''
+						}${
+							invoice.toOrganization?.contact?.city ??
+							organizationContact?.contact?.city ??
+							organization?.contact?.city
+								? ', '
+								: ''
+						}${
+							invoice.toOrganization?.contact?.country ??
+							organizationContact?.contact?.country ??
+							organization?.contact?.country ??
+							''
+						}`,
+						margin: [0, 0, 0, 5]
+					}
 				]
 			},
 			' ',

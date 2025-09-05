@@ -20,6 +20,10 @@
 		"TAX_VALUE": "Tax",
 		"TO": "TO",
 		"YES": "Yes",
+		"TAX_ID": "Tax ID",
+		"ADDRESS": "Address",
+		"ADDRESS_2": "Address 2",
+		"POSTCODE": "Postcode",
 		"INVOICE_ITEM": {
 			"DESCRIPTION": "Description",
 			"ITEM": "Item",

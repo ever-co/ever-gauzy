@@ -20,6 +20,10 @@
 		"TAX_VALUE": "Сумма налога",
 		"TO": "К",
 		"YES": "Да",
+		"TAX_ID": "ИНН",
+		"ADDRESS": "Адрес",
+		"ADDRESS_2": "Адрес 2",
+		"POSTCODE": "Почтовый индекс",
 		"INVOICE_ITEM": {
 			"DESCRIPTION": "Описание",
 			"ITEM": "Пункт 1",

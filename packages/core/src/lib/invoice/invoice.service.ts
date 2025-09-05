@@ -262,6 +262,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		const invoice: IInvoice = await this.findOneByIdString(invoiceId, {
 			relations: [
 				'fromOrganization',
+				'fromOrganization.contact',
 				'fromUser',
 				'invoiceItems.employee',
 				'invoiceItems.employee.user',
@@ -310,7 +311,11 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			yes: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.YES', { lang: language }),
 			no: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.NO', { lang: language }),
 			alreadyPaid: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.ALREADY_PAID', { lang: language }),
-			amountDue: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.AMOUNT_DUE', { lang: language })
+			amountDue: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.AMOUNT_DUE', { lang: language }),
+			taxId: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.TAX_ID', { lang: language }),
+			address: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.ADDRESS', { lang: language }),
+			address2: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.ADDRESS_2', { lang: language }),
+			postcode: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.POSTCODE', { lang: language })
 		};
 		const docDefinition = await generateInvoicePdfDefinition(
 			invoice,

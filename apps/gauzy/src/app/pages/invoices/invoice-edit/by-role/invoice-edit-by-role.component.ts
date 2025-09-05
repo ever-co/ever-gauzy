@@ -180,6 +180,12 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 
 				await this._loadOrganizationData().finally(() => this.updateValueAndValidity(invoice));
 			})
+			.catch((error) => {
+				console.error('Error fetching invoice:', error);
+				this.toastrService.danger(
+					'Error fetching invoice. Check if the invoice belongs to the selected organization or to the employee.'
+				);
+			})
 			.finally(() => {
 				this.loading = false;
 			});

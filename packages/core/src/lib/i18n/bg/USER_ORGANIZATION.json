@@ -20,6 +20,10 @@
 		"TAX_VALUE": "Tax",
 		"TO": "TO",
 		"YES": "Yes",
+		"TAX_ID": "Данъчен номер",
+		"ADDRESS": "Адрес",
+		"ADDRESS_2": "Адрес 2",
+		"POSTCODE": "Пощенски код",
 		"INVOICE_ITEM": {
 			"DESCRIPTION": "Description",
 			"ITEM": "Item",

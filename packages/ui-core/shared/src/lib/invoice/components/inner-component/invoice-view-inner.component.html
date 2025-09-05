@@ -69,6 +69,74 @@
 							{{ 'INVOICES_PAGE.VIEW.TO' | translate | uppercase }}:
 						</div>
 						<div>{{ invoice?.toOrganization?.name ?? invoice?.toContact?.name }}</div>
+
+						<div class="d-flex flex-column">
+							<div class="d-flex" *ngIf="invoice?.toOrganization?.taxId ?? invoice?.toContact?.taxId">
+								<div class="font-weight-light-bold mr-2">{{ 'FORM.LABELS.TAX_ID' | translate }}:</div>
+								<div>{{ invoice?.toOrganization?.taxId ?? invoice?.toContact?.taxId }}</div>
+							</div>
+
+							<div
+								class="d-flex"
+								*ngIf="
+									invoice?.toOrganization?.contact?.address ?? invoice?.toContact?.contact?.address
+								"
+							>
+								<div class="font-weight-light-bold mr-2">{{ 'FORM.LABELS.ADDRESS' | translate }}:</div>
+								<div>
+									{{
+										invoice?.toOrganization?.contact?.address ??
+											invoice?.toContact?.contact?.address
+									}}
+								</div>
+							</div>
+
+							<div
+								class="d-flex"
+								*ngIf="
+									invoice?.toOrganization?.contact?.address2 ?? invoice?.toContact?.contact?.address2
+								"
+							>
+								<div class="font-weight-light-bold mr-2">
+									{{ 'FORM.LABELS.ADDRESS_2' | translate }}:
+								</div>
+								<div>
+									{{
+										invoice?.toOrganization?.contact?.address2 ??
+											invoice?.toContact?.contact?.address2
+									}}
+								</div>
+							</div>
+
+							<div
+								class="d-flex"
+								*ngIf="
+									invoice?.toOrganization?.contact?.postcode ?? invoice?.toContact?.contact?.postcode
+								"
+							>
+								<div class="font-weight-light-bold mr-2">{{ 'FORM.LABELS.POSTCODE' | translate }}:</div>
+								<div>
+									{{
+										invoice?.toOrganization?.contact?.postcode ??
+											invoice?.toContact?.contact?.postcode
+									}}
+								</div>
+							</div>
+							<div
+								*ngIf="
+									invoice?.toOrganization?.contact?.city ??
+									invoice?.toContact?.contact?.city ??
+									invoice?.toOrganization?.contact?.country ??
+									invoice?.toContact?.contact?.country
+								"
+							>
+								<span
+									*ngIf="invoice?.toOrganization?.contact?.city ?? invoice?.toContact?.contact?.city"
+									>{{ invoice?.toOrganization?.contact?.city ?? invoice?.toContact?.contact?.city }},
+								</span>
+								{{ invoice?.toOrganization?.contact?.country ?? invoice?.toContact?.contact?.country }}
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>

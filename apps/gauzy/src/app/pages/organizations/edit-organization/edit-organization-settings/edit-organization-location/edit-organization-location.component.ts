@@ -13,10 +13,10 @@ import { LeafletMapComponent, LocationFormComponent } from '@gauzy/ui-core/share
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-edit-org-location',
-    templateUrl: './edit-organization-location.component.html',
-    styleUrls: ['./edit-organization-location.component.scss'],
-    standalone: false
+	selector: 'ga-edit-org-location',
+	templateUrl: './edit-organization-location.component.html',
+	styleUrls: ['./edit-organization-location.component.scss'],
+	standalone: false
 })
 export class EditOrganizationLocationComponent
 	extends TranslationBaseComponent
@@ -70,18 +70,24 @@ export class EditOrganizationLocationComponent
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 
-			const location = this.locationFormDirective.getValue();
-			const { coordinates } = location['loc'];
+			const formValue = this.locationFormDirective.getValue();
+			const coordinates = formValue.loc?.coordinates ?? [null, null];
+			const [latitude, longitude] = coordinates;
+
 			delete location['loc'];
 
-			const [latitude, longitude] = coordinates;
 			const contact = {
 				organizationId,
 				tenantId,
+				country: formValue.country || null,
+				city: formValue.city || null,
+				postcode: formValue.postcode || null,
+				address: formValue.address || null,
+				address2: formValue.address2 || null,
 				latitude,
-				longitude,
-				...location
+				longitude
 			};
+
 			const rawValue = {
 				...this.form.getRawValue(),
 				name: this.organization.name,
@@ -179,8 +185,6 @@ export class EditOrganizationLocationComponent
 		this.form.get('country').setValidators([Validators.required]);
 		this.form.get('city').setValidators([Validators.required]);
 		this.form.get('address').setValidators([Validators.required]);
-		this.form.get('address2').setValidators([Validators.required]);
-		this.form.get('postcode').setValidators([Validators.required]);
 		this.form.updateValueAndValidity();
 	}
 

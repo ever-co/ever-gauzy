@@ -14,10 +14,10 @@ import { NgxPermissionsService } from 'ngx-permissions';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-invoice-view',
-    templateUrl: './invoice-view.component.html',
-    styleUrls: ['./invoice-view.component.scss'],
-    standalone: false
+	selector: 'ga-invoice-view',
+	templateUrl: './invoice-view.component.html',
+	styleUrls: ['./invoice-view.component.scss'],
+	standalone: false
 })
 export class InvoiceViewComponent extends TranslationBaseComponent implements OnInit {
 	public invoice: IInvoice;
@@ -51,6 +51,7 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 			'invoiceItems.expense',
 			'invoiceItems.task',
 			'fromOrganization',
+			'fromOrganization.contact',
 			'toContact',
 			'fromUser'
 		];

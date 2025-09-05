@@ -1,13 +1,14 @@
 import { NotFoundException } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ID, IOrganization, IOrganizationUpdateInput } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { OrganizationService } from '../../organization.service';
 import { OrganizationUpdateCommand } from '../organization.update.command';
+import { ContactCreateCommand } from '../../../contact/commands/contact-create.commant';
 
 @CommandHandler(OrganizationUpdateCommand)
 export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUpdateCommand> {
-	constructor(private readonly organizationService: OrganizationService) {}
+	constructor(private readonly organizationService: OrganizationService, private readonly commandBus: CommandBus) {}
 
 	/**
 	 * Executes the organization update operation.
@@ -57,6 +58,19 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 				standardWorkHoursPerDay: input.standardWorkHoursPerDay
 			})
 		};
+
+		if (input.contact) {
+			const contact = await this.commandBus.execute(
+				new ContactCreateCommand({
+					...organization.contact,
+					...input.contact,
+					organizationId: id,
+					tenantId
+				})
+			);
+
+			updateData.contact = contact;
+		}
 
 		// Creates a new organization or updates an existing one based on the provided data.
 		await this.organizationService.create({ ...updateData, id });
