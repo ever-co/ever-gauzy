@@ -1,4 +1,4 @@
-# Gauzy MCP Server - Standalone App
+# Gauzy MCP Server
 
 A comprehensive MCP (Model Context Protocol) server for integration with
 AI assistants like Claude Desktop, ChatGPT, and other AI tools. Supports
@@ -38,10 +38,10 @@ session management across multiple server instances.
 
 ```bash
 # Build the shared MCP server package (required dependency)
-yarn nx build mcp-server
+yarn build:mcp-server
 
 # Build the standalone MCP server
-yarn nx build mcp --configuration=production
+yarn build:mcp
 ```
 
 ### Running the Server
@@ -55,13 +55,10 @@ Best for Claude Desktop and AI assistant integration:
 
 ```bash
 # Start with stdio transport (default)
-yarn nx serve mcp
+yarn start:mcp
 
 # Or explicitly set stdio mode
-MCP_TRANSPORT=stdio yarn nx serve mcp
-
-# Test the server connection
-yarn nx serve mcp --args="--test"
+MCP_TRANSPORT=stdio yarn start:mcp
 ```
 
 #### 2. HTTP Transport
@@ -72,7 +69,7 @@ REST API with JSON-RPC 2.0 for web applications:
 # Start HTTP transport server
 MCP_TRANSPORT=http \
 MCP_SERVER_MODE=http \
-yarn nx serve mcp
+yarn start:mcp
 
 # Server runs on http://localhost:3001 by default
 # MCP endpoint: POST http://localhost:3001/sse
@@ -87,7 +84,7 @@ Real-time bidirectional communication:
 # Start WebSocket transport server
 MCP_TRANSPORT=websocket \
 MCP_SERVER_MODE=websocket \
-yarn nx serve mcp
+yarn start:mcp
 
 # Server runs on ws://localhost:3002/sse by default
 # Use wss:// when MCP_WS_TLS=true
@@ -101,6 +98,8 @@ yarn nx serve mcp
 1. Build the server for production:
    ```bash
    yarn nx build mcp --configuration=production
+   # or
+   yarn build:mcp:prod
    ```
 
 2. Add to your Claude Desktop configuration
@@ -151,7 +150,7 @@ GAUZY_MCP_DEBUG=true # Enable debug logging
 
 ### HTTP Transport Configuration
 
-Configure HTTP transport in `.env.local`:
+Configure HTTP transport in environment file `.env.local` or `.env`:
 
 ```bash
 # Transport settings
@@ -276,7 +275,7 @@ curl -X POST http://localhost:3001/sse \
 
 ### WebSocket Transport Configuration
 
-Configure WebSocket transport in `.env.local`:
+Configure WebSocket transport in environment file `.env.local` or `.env`:
 
 ```bash
 # Transport settings
@@ -286,7 +285,7 @@ MCP_SERVER_MODE=websocket
 # Server configuration
 MCP_WS_PORT=3002
 MCP_WS_HOST=localhost
-MCP_WS_PATH=/ws
+MCP_WS_PATH=/sse
 
 # TLS/SSL settings (recommended for production)
 MCP_WS_TLS=true
