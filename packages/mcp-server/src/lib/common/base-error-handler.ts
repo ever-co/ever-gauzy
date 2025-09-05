@@ -30,9 +30,13 @@ export class BaseErrorHandler {
 		error: AuthorizationError,
 		statusCode?: number
 	): void {
-		const mapped = error.error === 'invalid_token' ? 401
-			: error.error === 'insufficient_scope' ? 403
-			: 400;
+		const mapped =
+			error.error === 'invalid_token' ? 401 :
+			error.error === 'invalid_client' ? 401 :
+			error.error === 'insufficient_scope' ? 403 :
+			error.error === 'server_error' ? 500 :
+			error.error === 'temporarily_unavailable' ? 503 :
+			400;
 		const status = statusCode ?? mapped;
 		res.setHeader('Cache-Control', 'no-store');
 		res.setHeader('Pragma', 'no-cache');
@@ -57,6 +61,9 @@ export class BaseErrorHandler {
 	): void {
 		try {
 			const url = new URL(redirectUri);
+			if (!/^https?:$/.test(url.protocol)) {
+				throw new Error(`Unsupported redirect protocol: ${url.protocol}`);
+			}
 			url.searchParams.set('error', error);
 			if (description) url.searchParams.set('error_description', description);
 			if (state) url.searchParams.set('state', state);
@@ -146,8 +153,8 @@ export class BaseErrorHandler {
 	private formatWWWAuthenticateHeader(resourceMetadataUrl: string, error?: AuthorizationError): string {
 		const escapeValue = (value: string) =>
 			value
-				.replace(/[\u0000-\u001F\u007F]/g, '') // drop CTLs
-				.replace(/["\\\r\n]/g, '\\$&');         // quote specials
+				.replace(/[\p{Cc}]/gu, '')            // drop control chars
+				.replace(/["\\\r\n]/g, '\\$&');       // quote specials
 		let header = `Bearer resource_metadata="${escapeValue(resourceMetadataUrl)}"`;
 
 		if (error) {

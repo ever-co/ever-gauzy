@@ -15,6 +15,7 @@ import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 import { AuthorizationConfig, loadAuthorizationConfig } from '../common/authorization-config';
 import { AuthorizationMiddleware, AuthorizedRequest } from '../common/authorization-middleware';
 import { OAuth2AuthorizationServer, OAuth2ServerConfig } from '../common/oauth-authorization-server';
+import { ResponseBuilder } from '../common/response-builder';
 
 const logger = new Logger('HttpTransport');
 
@@ -146,12 +147,9 @@ export class HttpTransport {
 			allowedHeaders: ['Content-Type', 'Authorization', 'mcp-session-id', 'mcp-csrf-token']
 		}));
 
-		// Enhanced security headers
+		// Global security headers middleware - applied to ALL routes
 		this.app.use((req, res, next) => {
-			const securityHeaders = getEnhancedSecurityHeaders();
-			for (const [header, value] of Object.entries(securityHeaders)) {
-				res.setHeader(header, value);
-			}
+			ResponseBuilder.setSecurityHeaders(res);
 			next();
 		});
 

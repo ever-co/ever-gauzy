@@ -136,7 +136,7 @@ export class BaseValidator {
 
 		// Validate scope if provided
 		if (params.scope) {
-			const scopeValidation = this.validateScope(params.scope);
+			const scopeValidation = BaseValidator.validateScope(params.scope);
 			if (!scopeValidation.valid) {
 				return scopeValidation;
 			}
@@ -144,7 +144,7 @@ export class BaseValidator {
 
 		// Validate state if provided
 		if (params.state) {
-			const stateValidation = this.validateState(params.state);
+			const stateValidation = BaseValidator.validateState(params.state);
 			if (!stateValidation.valid) {
 			return stateValidation;
 			}
@@ -272,7 +272,7 @@ export class BaseValidator {
 
 		// Validate scope if provided
 		if (params.scope) {
-			const scopeValidation = this.validateScope(params.scope);
+			const scopeValidation = BaseValidator.validateScope(params.scope);
 			if (!scopeValidation.valid) {
 				return scopeValidation;
 			}

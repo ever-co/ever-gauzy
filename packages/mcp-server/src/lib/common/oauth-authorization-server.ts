@@ -692,7 +692,7 @@ export class OAuth2AuthorizationServer {
 			const params = req.query as unknown as AuthorizeRequest;
 
 			// Validate required parameters
-			const validation = this.validateAuthorizeRequest(params);
+			const validation = BaseValidator.validateAuthorizeRequest(params);
 			if (!validation.valid) {
 				return this.errorHandler.handleStandardError(res, {
 					code: validation.error!,

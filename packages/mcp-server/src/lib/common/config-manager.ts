@@ -288,7 +288,7 @@ export class ConfigManager {
 	private getRequiredEnvString(key: string, fallback: string): string {
 		const value = process.env[key];
 		if (!value) {
-			if (process.env.NODE_ENV === 'production') {
+			if (this.getEnvEnvironment('NODE_ENV', 'development') === 'production') {
 				this.securityLogger.error(`Environment variable ${key} not set, using fallback value`);
 			} else {
 				this.securityLogger.warn(`Environment variable ${key} not set, using fallback value`);

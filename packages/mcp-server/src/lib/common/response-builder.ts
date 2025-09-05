@@ -64,6 +64,18 @@ export class ResponseBuilder {
 	sendAuthorizationRedirect(res: Response, redirectUri: string, code: string, state?: string): void {
 		try {
 			const url = new URL(redirectUri);
+			const allowedSchemes = new Set(['https:', 'http:']); // allowlist
+			if (!allowedSchemes.has(url.protocol)) {
+				this.securityLogger.warn('Blocked authorization redirect due to disallowed scheme', {
+					protocol: url.protocol,
+					host: url.hostname
+				});
+				res.status(400).json({
+					error: 'invalid_request',
+					error_description: 'Redirect URI must use http(s) scheme'
+				});
+				return;
+			}
 			url.searchParams.set('code', code);
 			if (state) {
 				url.searchParams.set('state', state);
@@ -99,10 +111,12 @@ export class ResponseBuilder {
 		res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
 		// Sanitize: expose only public JWK members
 		const sanitized = {
-			keys: jwks.keys.map((k) => {
-				const { kty, use, key_ops, alg, kid, x5u, x5c, x5t, n, e, crv, x, y } = k;
+			keys: (jwks.keys || []).map((k) => {
+				const { kty, use, key_ops, alg, kid, x5u, x5c, x5t, n, e, crv, x, y, ['x5t#S256']: x5tS256 } = k as {
+					kty?: string; use?: string; key_ops?: string[]; alg?: string; kid?: string; x5u?: string; x5c?: string[];
+					x5t?: string; n?: string; e?: string; crv?: string; x?: string; y?: string; ['x5t#S256']?: string;
+				};
 				const out: Record<string, unknown> = { kty, use, key_ops, alg, kid, x5u, x5c, x5t, n, e, crv, x, y };
-				const x5tS256 = (k as any)['x5t#S256'] as string | undefined;
 				if (x5tS256) out['x5t#S256'] = x5tS256;
 				return Object.fromEntries(Object.entries(out).filter(([, v]) => v !== undefined));
 			})
@@ -195,6 +209,7 @@ export class ResponseBuilder {
 		res.setHeader('X-Frame-Options', 'DENY');
 		res.setHeader('X-Content-Type-Options', 'nosniff');
 		res.setHeader('Content-Security-Policy', "default-src 'self'; frame-ancestors 'none'");
+		res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 		res.send(html);
 	}
 

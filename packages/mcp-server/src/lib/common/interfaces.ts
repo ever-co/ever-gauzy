@@ -4,6 +4,7 @@ export interface TokenResponse {
 	expires_in: number;
 	refresh_token?: string;
 	scope?: string;
+	id_token?: string;
 }
 
 export interface IntrospectionResponse {
@@ -22,7 +23,7 @@ export interface IntrospectionResponse {
 }
 
 export interface JWKSKey {
-	kty: string; // Key Type
+	kty: 'RSA' | 'EC' | 'oct'; // Key Type (RFC 7517)
 	use?: string; // Public Key Use
 	key_ops?: string[]; // Key Operations
 	alg?: string; // Algorithm
@@ -32,7 +33,7 @@ export interface JWKSKey {
 	x5t?: string; // X.509 Certificate SHA-1 Thumbprint
 	'x5t#S256'?: string; // X.509 Certificate SHA-256 Thumbprint
 
-	// RSA Key Parameters
+	// RSA Key Parameters (NEVER expose private fields in responses)
 	n?: string; // Modulus
 	e?: string; // Exponent
 	d?: string; // Private Exponent
@@ -57,7 +58,7 @@ export interface JWKSKey {
 }
 
 export interface JWKSResponse {
-	keys: JWKSKey[];
+	keys?: JWKSKey[];
 }
 
 export interface ServerMetadata {
@@ -115,20 +116,38 @@ export interface UserInfoResponse {
 	roles?: string[];
 }
 
-export interface ClientRegistrationResponse {
-	client_id: string;
-	client_secret?: string;
-	client_name: string;
-	client_type: 'confidential' | 'public';
-	redirect_uris: string[];
-	grant_types: string[];
-	response_types: string[];
-	scope: string;
-	logo_uri?: string;
-	client_uri?: string;
-	policy_uri?: string;
-	tos_uri?: string;
-	client_id_issued_at: number;
-	client_secret_expires_at?: number;
-}
-
+export type ClientRegistrationResponse =
+	| ({
+		client_type: 'confidential';
+		client_secret: string;
+		client_secret_expires_at?: number;
+	} & {
+		client_id: string;
+		client_name: string;
+		redirect_uris: string[];
+		grant_types: string[];
+		response_types: string[];
+		scope: string;
+		logo_uri?: string;
+		client_uri?: string;
+		policy_uri?: string;
+		tos_uri?: string;
+		client_id_issued_at: number;
+	})
+	| ({
+		client_type: 'public';
+		client_secret?: undefined;
+		client_secret_expires_at?: undefined;
+	} & {
+		client_id: string;
+		client_name: string;
+		redirect_uris: string[];
+		grant_types: string[];
+		response_types: string[];
+		scope: string;
+		logo_uri?: string;
+		client_uri?: string;
+		policy_uri?: string;
+		tos_uri?: string;
+		client_id_issued_at: number;
+	});
