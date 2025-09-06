@@ -209,6 +209,7 @@ export interface ITimeSlot extends IBasePerTenantAndOrganizationEntityModel {
 	screenshots?: IScreenshot[];
 	timeLogs?: ITimeLog[];
 	timeSlotMinutes?: ITimeSlotMinute[];
+	timeSlotSessions?: ITimeSlotSession[];
 	project?: IOrganizationProject;
 	projectId?: ID;
 	duration?: number;
@@ -566,16 +567,27 @@ export interface ICustomActivity {
 }
 
 /**
+ * Interface for TimeSlotSession entity
+ */
+export interface ITimeSlotSession extends IBasePerTenantAndOrganizationEntityModel {
+	sessionId: string;
+	startTime?: Date;
+	lastActivity?: Date;
+	timeSlotId: ID;
+	employeeId: ID;
+}
+
+/**
  * Interface for tracking session response
  */
 export interface ITrackingSessionResponse {
 	sessionId: string;
-	timeSlotId: ID;
-	timeSlot: TimeSlotSummary;
+	timeSlotId?: ID; // Optional - use timeSlots array as primary source
+	timeSlot?: TimeSlotSummary; // Optional - use timeSlots array as primary source
 	timeLogs: ITimeLog[];
 	session: ITrackingSession;
-	timeSlots?: Array<{
+	timeSlots: Array<{
 		timeSlotId: ID;
 		timeSlot: TimeSlotSummary;
-	}>;
+	}>; // Primary source for TimeSlot data
 }
