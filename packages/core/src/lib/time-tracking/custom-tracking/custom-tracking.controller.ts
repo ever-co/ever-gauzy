@@ -1,9 +1,9 @@
-import { Controller, Post, Get, Body, Param, Query, HttpStatus, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Query, HttpStatus, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { TenantPermissionGuard, PermissionGuard } from '../../shared/guards';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { PermissionsEnum, ITrackingSession, ITimeLog, ITrackingSessionResponse } from '@gauzy/contracts';
 import { Permissions } from '../../shared/decorators';
-import { UseValidationPipe } from '../../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
 import { CustomTrackingService } from './custom-tracking.service';
 import { CustomTrackingDataDTO, CustomTrackingSessionsQueryDTO } from './dto';
 
@@ -31,7 +31,13 @@ export class CustomTrackingController {
 	})
 	@Post('')
 	@UseValidationPipe({ transform: true })
-	async submitTrackingData(@Body() dto: CustomTrackingDataDTO) {
+	async submitTrackingData(@Body() dto: CustomTrackingDataDTO): Promise<{
+		success: boolean;
+		sessionId: string;
+		timeSlotId: string;
+		message: string;
+		session: ITrackingSession | null;
+	}> {
 		return await this.customTrackingService.submitTrackingData(dto);
 	}
 
@@ -48,7 +54,15 @@ export class CustomTrackingController {
 	})
 	@Get('/sessions')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async getTrackingSessions(@Query() query: CustomTrackingSessionsQueryDTO) {
+	async getTrackingSessions(@Query() query: CustomTrackingSessionsQueryDTO): Promise<{
+		sessions: ITrackingSessionResponse[];
+		summary: {
+			totalSessions: number;
+			uniqueSessionIds: number;
+			totalTimeSlots: number;
+			dateRange: { start: Date; end: Date } | null;
+		};
+	}> {
 		return await this.customTrackingService.getTrackingSessions(query);
 	}
 
@@ -73,7 +87,91 @@ export class CustomTrackingController {
 		description: 'TimeSlot not found'
 	})
 	@Get('/time-slot/:id')
-	async getTimeSlotTrackingData(@Param('id', ParseUUIDPipe) timeSlotId: string) {
+	async getTimeSlotTrackingData(@Param('id', UUIDValidationPipe) timeSlotId: string): Promise<{
+		timeSlotId: string;
+		hasTrackingData: boolean;
+		message?: string;
+		timeSlot?: {
+			startedAt: Date;
+			duration: number;
+			timeLogs: ITimeLog[];
+		};
+		trackingSessions?: ITrackingSession[];
+	}> {
 		return await this.customTrackingService.getTimeSlotTrackingData(timeSlotId);
+	}
+
+	/**
+	 * Get tracking sessions by sessionId with efficient lookup
+	 */
+	@ApiOperation({
+		summary: 'Get tracking sessions by sessionId',
+		description: 'Retrieve tracking sessions for a specific sessionId'
+	})
+	@ApiParam({
+		name: 'sessionId',
+		type: String,
+		description: 'Session ID to search for'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Tracking sessions retrieved successfully'
+	})
+	@Get('/session/:sessionId')
+	async getSessionsBySessionId(
+		@Param('sessionId') sessionId: string,
+		@Query('startDate') startDate?: string,
+		@Query('endDate') endDate?: string
+	): Promise<ITrackingSessionResponse[]> {
+		const start = startDate ? new Date(startDate) : undefined;
+		const end = endDate ? new Date(endDate) : undefined;
+		return await this.customTrackingService.getSessionsBySessionId(sessionId, undefined, undefined, start, end);
+	}
+
+	/**
+	 * Get active tracking sessions
+	 */
+	@ApiOperation({
+		summary: 'Get active tracking sessions',
+		description: 'Retrieve currently active tracking sessions with recent activity'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Active tracking sessions retrieved successfully'
+	})
+	@Get('/active')
+	async getActiveSessions(
+		@Query('employeeId') employeeId?: string,
+		@Query('activityThresholdMinutes') activityThresholdMinutes?: number
+	): Promise<any[]> {
+		return await this.customTrackingService.getActiveSessions(employeeId, activityThresholdMinutes || 30);
+	}
+
+	/**
+	 * Get session statistics for reporting
+	 */
+	@ApiOperation({
+		summary: 'Get session statistics',
+		description: 'Retrieve statistical data about tracking sessions for reporting purposes'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Session statistics retrieved successfully'
+	})
+	@Get('/statistics')
+	async getSessionStatistics(
+		@Query('employeeId') employeeId?: string,
+		@Query('startDate') startDate?: string,
+		@Query('endDate') endDate?: string
+	): Promise<{
+		totalSessions: number;
+		uniqueSessions: number;
+		totalTimeSlots: number;
+		averageSessionDuration: number;
+		sessionsByDay: { date: string; count: number }[];
+	}> {
+		const start = startDate ? new Date(startDate) : undefined;
+		const end = endDate ? new Date(endDate) : undefined;
+		return await this.customTrackingService.getSessionStatistics(employeeId, start, end);
 	}
 }
