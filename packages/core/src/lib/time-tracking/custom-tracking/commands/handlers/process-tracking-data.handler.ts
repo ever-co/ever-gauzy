@@ -1,22 +1,27 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { BadRequestException, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between } from 'typeorm';
 import { moment } from '../../../../core/moment-extend';
+import { getStartEndIntervals } from '../../../time-slot/utils';
 import { decode, Data } from 'clarity-decode';
 import { RequestContext } from '../../../../core/context';
+import { ICustomActivity, ITrackingSession, ITrackingPayload, ITimeSlot, JsonData } from '@gauzy/contracts';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
+import { TimeSlotService } from '../../../time-slot/time-slot.service';
+import { TimeSlotCreateCommand } from '../../../time-slot/commands';
 import { ProcessTrackingDataCommand } from '../process-tracking-data.command';
-import { prepareSQLQuery as p } from '../../../../database/database.helper';
-import { ICustomActivity, ITrackingSession, ITrackingPayload, JsonData } from '@gauzy/contracts';
+import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
+import { TypeOrmTimeSlotSessionRepository } from '../../../time-slot-session/repository/type-orm-time-slot-session.repository';
 
 @CommandHandler(ProcessTrackingDataCommand)
 export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTrackingDataCommand> {
 	private readonly logger = new Logger(ProcessTrackingDataHandler.name);
 
 	constructor(
-		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+		private readonly typeOrmTimeSlotSessionRepository: TypeOrmTimeSlotSessionRepository,
+		private readonly timeSlotService: TimeSlotService,
+		private readonly commandBus: CommandBus
 	) {}
 
 	async execute(command: ProcessTrackingDataCommand): Promise<{
@@ -34,14 +39,11 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		}
 
 		try {
-			// Get context information
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
-			// Get organizationId from headers first, then fallback to user context
 			const req = RequestContext.currentRequest();
 			let organizationId = (req?.headers?.['organization-id'] as string) || input.organizationId;
 
-			// Fallback to user's organization if not in headers
 			if (!organizationId) {
 				const currentUser = RequestContext.currentUser();
 				organizationId = currentUser?.employee?.organizationId;
@@ -51,10 +53,8 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 				throw new BadRequestException('Tenant and Organization contexts is required');
 			}
 
-			// Get user context - could be employee or other user types
 			let employeeId = input.employeeId;
 			if (!employeeId) {
-				// Try to get from current context
 				const currentUser = RequestContext.currentUser();
 				if (currentUser?.employee?.id) {
 					employeeId = currentUser.employee.id;
@@ -68,27 +68,29 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 				throw new BadRequestException('Employee context is required for tracking data');
 			}
 
-			// Decode the payload to extract session information
 			const { sessionId, timestampMs, decodedData } = await this.decodeTrackingPayload(payload);
 
-			// Use provided startTime or extracted timestamp
 			const trackingTime = startTime ? new Date(startTime) : new Date(timestampMs);
 
-			// Find or create appropriate TimeSlot
 			const timeSlot = await this.findOrCreateTimeSlot(employeeId, organizationId, tenantId, trackingTime);
 
-			// Update TimeSlot with tracking data (store both encoded and decoded data)
-			await this.updateTimeSlotWithTrackingData(timeSlot, sessionId, payload, decodedData, trackingTime);
-
-			// Return the complete session data across all TimeSlots with the same sessionId
-			const allSessionData = await this.getCompleteSessionData(sessionId, employeeId, organizationId, tenantId);
+			const sessionData = await this.updateTimeSlotWithTrackingData(
+				timeSlot,
+				sessionId,
+				payload,
+				decodedData,
+				trackingTime,
+				employeeId,
+				tenantId,
+				organizationId
+			);
 
 			return {
 				success: true,
 				sessionId,
 				timeSlotId: timeSlot.id,
 				message: 'Tracking data processed successfully',
-				session: allSessionData
+				session: sessionData
 			};
 		} catch (error) {
 			this.logger.error('Failed to process tracking data', error.stack);
@@ -105,13 +107,11 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		try {
 			const decodedData: Data.DecodedPayload = decode(payload);
 
-			// Extract session ID and timestamp from decoded data
 			const sessionId = decodedData.envelope.sessionId;
 			const ts = (decodedData as any).timestamp;
 			const timestampMs = ts > 1e12 ? ts : ts * 1000;
 			return { sessionId, timestampMs, decodedData };
 		} catch (error) {
-			// Fallback if decoding fails
 			return {
 				sessionId: `fallback-session-${Date.now()}`,
 				timestampMs: Date.now(),
@@ -129,53 +129,37 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		tenantId: string,
 		trackingTime: Date
 	): Promise<TimeSlot> {
-		// Calculate 10-minute slot boundary
-		const slotStart = this.floorToTenMinutes(moment(trackingTime)).toDate();
+		const { start, end } = getStartEndIntervals(
+			moment.utc(trackingTime),
+			moment.utc(trackingTime).add(10, 'minutes')
+		);
 
-		let timeSlot: TimeSlot;
+		let timeSlot: ITimeSlot;
 		try {
-			// Try to find existing TimeSlot
-			const query = this.timeSlotRepository.createQueryBuilder('time_slot');
-
-			query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
-			query.andWhere(p(`"${query.alias}"."startedAt" = :startedAt`), { startedAt: slotStart });
-
-			timeSlot = await query.getOne();
-		} catch (error) {
-			this.logger.warn(`Error finding TimeSlot: ${error.message}`);
-			timeSlot = null;
-		}
-
-		// Create new TimeSlot if not found
-		if (!timeSlot) {
-			const entity = this.timeSlotRepository.create({
+			timeSlot = await this.timeSlotService.findOneByWhereOptions({
 				employeeId,
 				organizationId,
 				tenantId,
-				startedAt: slotStart,
-				duration: 0,
-				keyboard: 0,
-				mouse: 0,
-				overall: 0,
-				customActivity: {}
+				startedAt: Between<Date>(start as Date, end as Date)
 			});
-			timeSlot = await this.timeSlotRepository.save(entity as TimeSlot);
+		} catch (error) {
+			this.logger.warn(`TimeSlot not found, creating new one: ${error.message}`);
+			timeSlot = await this.commandBus.execute(
+				new TimeSlotCreateCommand({
+					tenantId,
+					organizationId,
+					employeeId,
+					duration: 0,
+					keyboard: 0,
+					mouse: 0,
+					overall: 0,
+					startedAt: start as Date,
+					time_slot: start as Date
+				})
+			);
 		}
 
-		return timeSlot;
-	}
-
-	/**
-	 * Round a moment date to the nearest 10 minutes
-	 */
-	private floorToTenMinutes(date: moment.Moment): moment.Moment {
-		const minutes = date.minutes();
-		return date
-			.minutes(minutes - (minutes % 10))
-			.seconds(0)
-			.milliseconds(0);
+		return timeSlot as TimeSlot;
 	}
 
 	/**
@@ -187,20 +171,32 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		organizationId: string,
 		tenantId: string
 	): Promise<ITrackingSession | null> {
-		// Find all TimeSlots that contain this sessionId
-		const timeSlots = await this.timeSlotRepository
-			.createQueryBuilder('timeSlot')
-			.where('timeSlot.employeeId = :employeeId', { employeeId })
-			.andWhere('timeSlot.organizationId = :organizationId', { organizationId })
-			.andWhere('timeSlot.tenantId = :tenantId', { tenantId })
-			.andWhere('timeSlot.customActivity IS NOT NULL')
+		const defaultStartDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+		const defaultEndDate = new Date();
+
+		const timeSlotSessions = await this.typeOrmTimeSlotSessionRepository
+			.createQueryBuilder('tss')
+			.leftJoinAndSelect('tss.timeSlot', 'timeSlot')
+			.where('tss.sessionId = :sessionId', { sessionId })
+			.andWhere('tss.employeeId = :employeeId', { employeeId })
+			.andWhere('tss.organizationId = :organizationId', { organizationId })
+			.andWhere('tss.tenantId = :tenantId', { tenantId })
+			.andWhere('tss.createdAt BETWEEN :startDate AND :endDate', {
+				startDate: defaultStartDate,
+				endDate: defaultEndDate
+			})
+			.orderBy('tss.createdAt', 'ASC')
 			.getMany();
 
-		// Extract and merge all payloads for this sessionId
+		if (timeSlotSessions.length === 0) {
+			return null;
+		}
+
 		let allPayloads: ITrackingPayload[] = [];
 		let sessionInfo: Omit<ITrackingSession, 'payloads'> | null = null;
 
-		for (const timeSlot of timeSlots) {
+		for (const timeSlotSession of timeSlotSessions) {
+			const timeSlot = timeSlotSession.timeSlot;
 			const customActivity = timeSlot.customActivity as ICustomActivity;
 			if (!customActivity?.trackingSessions) continue;
 
@@ -215,7 +211,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 						updatedAt: session.updatedAt
 					};
 				}
-				// Merge payloads from this TimeSlot
+
 				allPayloads = [...allPayloads, ...session.payloads];
 			}
 		}
@@ -224,7 +220,6 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 			return null;
 		}
 
-		// Sort payloads by timestamp
 		allPayloads.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
 		return {
@@ -241,14 +236,15 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		sessionId: string,
 		encodedPayload: string,
 		decodedData: Data.DecodedPayload | null,
-		timestamp: Date
-	): Promise<void> {
-		// Initialize customActivity if it doesn't exist or ensure trackingSessions exists
+		timestamp: Date,
+		employeeId: string,
+		tenantId: string,
+		organizationId: string
+	): Promise<ITrackingSession | null> {
 		const customActivity: ICustomActivity = {
 			trackingSessions: []
 		};
 
-		// If timeSlot already has customActivity, preserve existing trackingSessions
 		if (timeSlot.customActivity) {
 			const existingActivity = timeSlot.customActivity as ICustomActivity;
 			if (existingActivity.trackingSessions && Array.isArray(existingActivity.trackingSessions)) {
@@ -256,7 +252,6 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 			}
 		}
 
-		// Find existing session or create new one
 		let existingSession = customActivity.trackingSessions.find(
 			(session: ITrackingSession) => session.sessionId === sessionId
 		);
@@ -268,12 +263,10 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		};
 
 		if (existingSession) {
-			// Update existing session
 			existingSession.payloads.push(payload);
 			existingSession.updatedAt = new Date().toISOString();
 			existingSession.lastActivity = timestamp.toISOString();
 		} else {
-			// Create new session
 			existingSession = {
 				sessionId,
 				startTime: timestamp.toISOString(),
@@ -285,9 +278,58 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 			customActivity.trackingSessions.push(existingSession);
 		}
 
-		// Update TimeSlot
-		await this.timeSlotRepository.update(timeSlot.id, {
+		await this.typeOrmTimeSlotRepository.update(timeSlot.id, {
 			customActivity: customActivity as JsonData
 		});
+
+		await this.createOrUpdateTimeSlotSession(
+			sessionId,
+			timeSlot.id,
+			employeeId,
+			tenantId,
+			organizationId,
+			timestamp
+		);
+
+		return await this.getCompleteSessionData(sessionId, employeeId, organizationId, tenantId);
+	}
+
+	/**
+	 * Create or update TimeSlotSession mapping entry
+	 */
+	private async createOrUpdateTimeSlotSession(
+		sessionId: string,
+		timeSlotId: string,
+		employeeId: string,
+		tenantId: string,
+		organizationId: string,
+		timestamp: Date
+	): Promise<void> {
+		const existingMapping = await this.typeOrmTimeSlotSessionRepository.findOne({
+			where: {
+				sessionId,
+				timeSlotId,
+				tenantId,
+				organizationId
+			}
+		});
+
+		if (!existingMapping) {
+			const timeSlotSession = this.typeOrmTimeSlotSessionRepository.create({
+				sessionId,
+				timeSlotId,
+				employeeId,
+				tenantId,
+				organizationId,
+				startTime: timestamp,
+				lastActivity: timestamp
+			});
+
+			await this.typeOrmTimeSlotSessionRepository.save(timeSlotSession);
+		} else {
+			await this.typeOrmTimeSlotSessionRepository.update(existingMapping.id, {
+				lastActivity: timestamp
+			});
+		}
 	}
 }
