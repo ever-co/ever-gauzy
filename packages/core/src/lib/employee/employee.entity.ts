@@ -27,6 +27,7 @@ import {
 	ITimesheet,
 	ITask,
 	ITimeSlot,
+	ITimeSlotSession,
 	IGoal,
 	ICandidate,
 	IEmployeeAward,
@@ -83,6 +84,7 @@ import {
 	TimeOffRequest,
 	Timesheet,
 	TimeSlot,
+	TimeSlotSession,
 	User
 } from '../core/entities/internal';
 import { HasCustomFields } from '../core/entities/custom-entity-fields';
@@ -616,6 +618,12 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	 */
 	@MultiORMOneToMany(() => TimeSlot, (it) => it.employee)
 	timeSlots?: ITimeSlot[];
+
+	/**
+	 * Time Tracking (Time Slot Sessions)
+	 */
+	@MultiORMOneToMany(() => TimeSlotSession, (it) => it.employee)
+	timeSlotSessions?: ITimeSlotSession[];
 
 	/**
 	 *

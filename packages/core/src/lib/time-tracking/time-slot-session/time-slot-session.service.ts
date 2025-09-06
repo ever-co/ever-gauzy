@@ -1,0 +1,179 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Between } from 'typeorm';
+import { ID, ITimeSlotSession } from '@gauzy/contracts';
+import { TimeSlotSession } from './time-slot-session.entity';
+
+@Injectable()
+export class TimeSlotSessionService {
+	constructor(
+		@InjectRepository(TimeSlotSession)
+		private readonly timeSlotSessionRepository: Repository<TimeSlotSession>
+	) {}
+
+	/**
+	 * Create a new TimeSlotSession entry
+	 */
+	async createSession(
+		sessionId: string,
+		timeSlotId: ID,
+		employeeId: ID,
+		tenantId: ID,
+		organizationId: ID,
+		startTime?: Date,
+		lastActivity?: Date
+	): Promise<ITimeSlotSession> {
+		const session = this.timeSlotSessionRepository.create({
+			sessionId,
+			timeSlotId,
+			employeeId,
+			tenantId,
+			organizationId,
+			startTime,
+			lastActivity
+		});
+
+		return await this.timeSlotSessionRepository.save(session);
+	}
+
+	/**
+	 * Find TimeSlots by sessionId with time range filter for performance
+	 */
+	async findTimeSlotsBySessionId(sessionId: string, tenantId: ID, organizationId: ID): Promise<ITimeSlotSession[]> {
+		// Default to last 24 hours to prevent loading millions of records
+		const defaultStartDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+		const defaultEndDate = new Date();
+
+		return await this.timeSlotSessionRepository.find({
+			where: {
+				sessionId,
+				tenantId,
+				organizationId,
+				createdAt: Between(defaultStartDate, defaultEndDate)
+			},
+			relations: ['timeSlot', 'employee'],
+			order: { createdAt: 'ASC' }
+		});
+	}
+
+	/**
+	 * Update session activity time
+	 */
+	async updateSessionActivity(sessionId: string, timeSlotId: ID, lastActivity: Date): Promise<void> {
+		await this.timeSlotSessionRepository.update({ sessionId, timeSlotId }, { lastActivity, updatedAt: new Date() });
+	}
+
+	/**
+	 * Delete sessions for a specific TimeSlot
+	 */
+	async deleteSessionsByTimeSlot(timeSlotId: ID): Promise<void> {
+		await this.timeSlotSessionRepository.delete({ timeSlotId });
+	}
+
+	/**
+	 * Find sessions by TimeSlot ID
+	 */
+	async findSessionsByTimeSlotId(timeSlotId: ID, tenantId: ID, organizationId: ID): Promise<ITimeSlotSession[]> {
+		return await this.timeSlotSessionRepository.find({
+			where: {
+				timeSlotId,
+				tenantId,
+				organizationId
+			},
+			relations: ['timeSlot', 'employee']
+		});
+	}
+
+	/**
+	 * Find sessions by Employee ID with optional date range filter
+	 */
+	async findSessionsByEmployeeId(
+		employeeId: ID,
+		tenantId: ID,
+		organizationId: ID,
+		startDate?: Date,
+		endDate?: Date
+	): Promise<ITimeSlotSession[]> {
+		// Default to last 48 hours if no date range provided
+		const defaultStartDate = startDate || new Date(Date.now() - 48 * 60 * 60 * 1000);
+		const defaultEndDate = endDate || new Date();
+
+		return await this.timeSlotSessionRepository.find({
+			where: {
+				employeeId,
+				tenantId,
+				organizationId,
+				createdAt: Between(defaultStartDate, defaultEndDate)
+			},
+			relations: ['timeSlot', 'employee'],
+			order: { createdAt: 'DESC' }
+		});
+	}
+
+	/**
+	 * Find sessions by sessionId with date range filter for performance
+	 */
+	async findTimeSlotsBySessionIdWithDateRange(
+		sessionId: string,
+		tenantId: ID,
+		organizationId: ID,
+		startDate?: Date,
+		endDate?: Date
+	): Promise<ITimeSlotSession[]> {
+		// Default to last 24 hours if no date range provided
+		const defaultStartDate = startDate || new Date(Date.now() - 24 * 60 * 60 * 1000);
+		const defaultEndDate = endDate || new Date();
+
+		return await this.timeSlotSessionRepository.find({
+			where: {
+				sessionId,
+				tenantId,
+				organizationId,
+				createdAt: Between(defaultStartDate, defaultEndDate)
+			},
+			relations: ['timeSlot', 'employee'],
+			order: { createdAt: 'ASC' }
+		});
+	}
+
+	/**
+	 * Find active sessions (sessions with recent activity)
+	 */
+	async findActiveSessions(
+		tenantId: ID,
+		organizationId: ID,
+		employeeId?: ID,
+		activityThresholdMinutes: number = 30
+	): Promise<ITimeSlotSession[]> {
+		const thresholdDate = new Date(Date.now() - activityThresholdMinutes * 60 * 1000);
+
+		const whereCondition: any = {
+			tenantId,
+			organizationId,
+			lastActivity: Between(thresholdDate, new Date())
+		};
+
+		if (employeeId) {
+			whereCondition.employeeId = employeeId;
+		}
+
+		return await this.timeSlotSessionRepository.find({
+			where: whereCondition,
+			relations: ['timeSlot', 'employee'],
+			order: { lastActivity: 'DESC' }
+		});
+	}
+
+	/**
+	 * Count sessions by sessionId
+	 */
+	async countSessionsBySessionId(sessionId: string, tenantId: ID, organizationId: ID): Promise<number> {
+		return await this.timeSlotSessionRepository.count({
+			where: {
+				sessionId,
+				tenantId,
+				organizationId
+			}
+		});
+	}
+}

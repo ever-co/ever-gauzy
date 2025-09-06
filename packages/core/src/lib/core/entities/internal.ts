@@ -157,6 +157,7 @@ export * from '../../time-tracking/screenshot/screenshot.entity';
 export * from '../../time-tracking/time-log/time-log.entity';
 export * from '../../time-tracking/time-slot/time-slot-minute/time-slot-minute.entity';
 export * from '../../time-tracking/time-slot/time-slot.entity';
+export * from '../../time-tracking/time-slot-session/time-slot-session.entity';
 export * from '../../time-tracking/timesheet/timesheet.entity';
 export * from '../../employee-notification/employee-notification.entity';
 export * from '../../employee-notification-setting/employee-notification-setting.entity';
