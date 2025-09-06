@@ -1,5 +1,5 @@
 import { ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
-import { IsOptional, IsUUID, IsBoolean } from 'class-validator';
+import { IsOptional, IsUUID, IsBoolean, IsString } from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
 import { ID } from '@gauzy/contracts';
 import { parseToBoolean } from '@gauzy/utils';
@@ -63,4 +63,15 @@ export class CustomTrackingSessionsQueryDTO extends IntersectionType(
 	@IsOptional()
 	@IsUUID()
 	readonly projectId?: ID;
+
+	/**
+	 * Filter by specific session ID
+	 */
+	@ApiPropertyOptional({
+		type: () => String,
+		description: 'Filter tracking sessions by session ID'
+	})
+	@IsOptional()
+	@IsString()
+	readonly sessionId?: string;
 }
