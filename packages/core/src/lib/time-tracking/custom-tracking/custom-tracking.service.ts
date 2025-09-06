@@ -1,27 +1,42 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository, SelectQueryBuilder } from 'typeorm';
-import { ICustomActivity, ITrackingSession, ITrackingPayload, ITrackingSessionResponse } from '@gauzy/contracts';
+import { Between } from 'typeorm';
+import {
+	ICustomActivity,
+	ITrackingSession,
+	ITrackingPayload,
+	ITrackingSessionResponse,
+	ITimeLog
+} from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../core/context';
-import { TimeSlot } from '../time-slot/time-slot.entity';
-import { CustomTrackingDataDTO, CustomTrackingSessionsQueryDTO } from './dto';
-import { ProcessTrackingDataCommand } from './commands';
-import { prepareSQLQuery as p } from '../../database/database.helper';
+import { TenantAwareCrudService } from '../../core/crud';
 import { getDateRangeFormat } from '../../core/utils';
 import { moment } from '../../core/moment-extend';
+import { prepareSQLQuery as p } from '../../database/database.helper';
+import { TimeSlot } from '../time-slot/time-slot.entity';
+import { TimeSlotSession } from '../time-slot-session/time-slot-session.entity';
+import { CustomTrackingDataDTO, CustomTrackingSessionsQueryDTO } from './dto';
+import { ProcessTrackingDataCommand } from './commands';
+import { TypeOrmTimeSlotRepository } from '../time-slot/repository/type-orm-time-slot.repository';
+import { MikroOrmTimeSlotRepository } from '../time-slot/repository/mikro-orm-time-slot.repository';
+import { TypeOrmTimeSlotSessionRepository } from '../time-slot-session/repository/type-orm-time-slot-session.repository';
+import { MikroOrmTimeSlotSessionRepository } from '../time-slot-session/repository/mikro-orm-time-slot-session.repository';
 
 @Injectable()
-export class CustomTrackingService {
+export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 	constructor(
-		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
+		readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+		readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
+		readonly typeOrmTimeSlotSessionRepository: TypeOrmTimeSlotSessionRepository,
+		readonly mikroOrmTimeSlotSessionRepository: MikroOrmTimeSlotSessionRepository,
 		private readonly commandBus: CommandBus
-	) {}
+	) {
+		super(typeOrmTimeSlotRepository, mikroOrmTimeSlotRepository);
+	}
 
 	/**
-	 * Submit custom tracking data using command pattern
+	 * Submit custom tracking data
 	 */
 	async submitTrackingData(dto: CustomTrackingDataDTO): Promise<{
 		success: boolean;
@@ -35,7 +50,7 @@ export class CustomTrackingService {
 		if (isNaN(startTime.getTime())) {
 			throw new BadRequestException('Invalid timestamp');
 		}
-		// Use command bus to process tracking data
+
 		return await this.commandBus.execute(
 			new ProcessTrackingDataCommand({
 				payload: trackingData,
@@ -49,14 +64,16 @@ export class CustomTrackingService {
 	 */
 	async getTrackingSessions(query: CustomTrackingSessionsQueryDTO): Promise<{
 		sessions: ITrackingSessionResponse[];
-		summary: { totalSessions: number; totalTimeSlots: number; dateRange: { start: Date; end: Date } | null };
+		summary: {
+			totalSessions: number;
+			uniqueSessionIds: number;
+			totalTimeSlots: number;
+			dateRange: { start: Date; end: Date } | null;
+		};
 	}> {
 		const tenantId = RequestContext.currentTenantId();
-
-		// Get organizationId from query parameters
 		const { organizationId } = query;
 
-		// Get employee IDs from query or context
 		let employeeIds = query.employeeIds || [];
 		if (employeeIds.length === 0) {
 			const employeeId = RequestContext.currentEmployeeId();
@@ -74,19 +91,26 @@ export class CustomTrackingService {
 			throw new BadRequestException('Tenant and Organization context is required');
 		}
 
-		// 1. Get TimeSlots with custom tracking data
-		const timeSlots = await this.getTimeSlotsWithTracking(query, employeeIds, tenantId, organizationId);
+		const { start, end } = this.getDateRangeWithDefaults(query);
 
-		// 2. Extract tracking sessions with optional decoded data
-		const sessions = this.extractTrackingSessionsFromTimeSlots(timeSlots, query.includeDecodedData);
+		const timeSlotSessions = await this.getTimeSlotSessionsWithFilters(
+			query,
+			employeeIds,
+			tenantId,
+			organizationId,
+			start,
+			end
+		);
 
-		// 3. Group by sessionId if requested
+		const sessions = await this.extractTrackingSessionsFromTimeSlotSessions(
+			timeSlotSessions,
+			query.includeDecodedData
+		);
+
 		let workSessions = [];
 		if (query.groupBySession) {
-			// Group by sessionId across multiple TimeSlots
 			workSessions = this.groupSessionsBySessionId(sessions);
 		} else {
-			// Return sessions directly without grouping
 			workSessions = sessions;
 		}
 
@@ -106,13 +130,12 @@ export class CustomTrackingService {
 		timeSlot?: {
 			startedAt: Date;
 			duration: number;
-			timeLogs: any[];
+			timeLogs: ITimeLog[];
 		};
 		trackingSessions?: ITrackingSession[];
 	}> {
 		const tenantId = RequestContext.currentTenantId();
 
-		// Get organizationId from headers first, then fallback to user context
 		const req = RequestContext.currentRequest();
 		let organizationId = req?.headers?.['organization-id'] as string;
 
@@ -125,7 +148,7 @@ export class CustomTrackingService {
 			throw new BadRequestException('Tenant and Organization context is required');
 		}
 
-		const timeSlot = await this.timeSlotRepository.findOne({
+		const timeSlot = await this.typeOrmTimeSlotRepository.findOne({
 			where: {
 				id: timeSlotId,
 				tenantId,
@@ -147,7 +170,6 @@ export class CustomTrackingService {
 			};
 		}
 
-		// Return decoded data directly, no encoding needed
 		return {
 			timeSlotId,
 			hasTrackingData: true,
@@ -161,141 +183,121 @@ export class CustomTrackingService {
 	}
 
 	/**
-	 * Get TimeSlots with custom tracking data based on query filters
+	 * Get date range with defaults to prevent loading millions of records
+	 * Default to last 48 hours if no dates provided
 	 */
-	private async getTimeSlotsWithTracking(
+	private getDateRangeWithDefaults(query: CustomTrackingSessionsQueryDTO): { start: Date; end: Date } {
+		const { start, end } = getDateRangeFormat(
+			moment.utc(query.startDate || moment().subtract(48, 'hours')),
+			moment.utc(query.endDate || moment())
+		);
+
+		return {
+			start: start as Date,
+			end: end as Date
+		};
+	}
+
+	/**
+	 * Get TimeSlotSessions
+	 */
+	private async getTimeSlotSessionsWithFilters(
 		query: CustomTrackingSessionsQueryDTO,
 		employeeIds: string[],
 		tenantId: string,
-		organizationId: string
-	): Promise<TimeSlot[]> {
-		// Calculate start and end dates
-		const { start, end } = getDateRangeFormat(
-			moment.utc(query.startDate || moment().startOf('day')),
-			moment.utc(query.endDate || moment().endOf('day'))
-		);
+		organizationId: string,
+		startDate: Date,
+		endDate: Date
+	): Promise<TimeSlotSession[]> {
+		const qb = this.typeOrmTimeSlotSessionRepository.createQueryBuilder('tss');
 
-		// Create a query builder for the TimeSlot entity
-		const qb = this.timeSlotRepository.createQueryBuilder('time_slot');
-		qb.leftJoin(
-			`${qb.alias}.employee`,
-			'employee',
-			`"employee"."tenantId" = :tenantId AND "employee"."organizationId" = :organizationId`,
-			{ tenantId, organizationId }
-		);
-		qb.leftJoinAndSelect(`${qb.alias}.timeLogs`, 'time_log');
+		qb.leftJoinAndSelect('tss.timeSlot', 'timeSlot');
+		qb.leftJoinAndSelect('timeSlot.timeLogs', 'timeLogs');
 
-		// Set find options for the query
-		qb.setFindOptions({
-			select: {
-				organization: {
-					id: true,
-					name: true
-				},
-				employee: {
-					id: true,
-					user: {
-						id: true,
-						firstName: true,
-						lastName: true,
-						imageUrl: true
-					}
-				}
-			},
-			relations: query.relations || []
-		});
+		qb.where(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+		qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
 
-		// Add where conditions
-		qb.where((subQb: SelectQueryBuilder<TimeSlot>) => {
-			// Filter by time range if dates are provided
-			if (query.startDate && query.endDate) {
-				subQb.andWhere(p(`"${subQb.alias}"."startedAt" BETWEEN :startDate AND :endDate`), {
-					startDate: start,
-					endDate: end
-				});
-			}
+		qb.andWhere(p(`"${qb.alias}"."createdAt" BETWEEN :startDate AND :endDate`), { startDate, endDate });
 
-			// Filter by employeeIds if provided
-			if (isNotEmpty(employeeIds)) {
-				subQb.andWhere(p(`"${subQb.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
-			}
+		if (isNotEmpty(employeeIds)) {
+			qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+		}
 
-			// Filter by projectIds if provided
-			if (isNotEmpty(query.projectIds)) {
-				subQb.andWhere(p(`"time_log"."projectId" IN (:...projectIds)`), { projectIds: query.projectIds });
-			}
+		if (query.sessionId) {
+			qb.andWhere(p(`"${qb.alias}"."sessionId" = :sessionId`), { sessionId: query.sessionId });
+		}
 
-			// Filter by tenantId and organizationId
-			subQb.andWhere(
-				`"${subQb.alias}"."tenantId" = :tenantId AND "${subQb.alias}"."organizationId" = :organizationId`,
-				{ tenantId, organizationId }
-			);
+		if (isNotEmpty(query.projectIds)) {
+			qb.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), { projectIds: query.projectIds });
+		}
 
-			// Filter by customActivity containing trackingSessions
-			subQb.andWhere(`"${subQb.alias}"."customActivity" IS NOT NULL`);
+		qb.andWhere(p(`"timeSlot"."customActivity" IS NOT NULL`));
 
-			// Sort by createdAt
-			subQb.addOrderBy(`"${subQb.alias}"."createdAt"`, 'ASC');
-		});
+		qb.addOrderBy(p(`"${qb.alias}"."createdAt"`), 'ASC');
 
 		return await qb.getMany();
 	}
 
 	/**
-	 * Extract and decode tracking sessions from TimeSlots
+	 * Extract tracking sessions from TimeSlotSessions
 	 */
-	private extractTrackingSessionsFromTimeSlots(
-		timeSlots: TimeSlot[],
+	private async extractTrackingSessionsFromTimeSlotSessions(
+		timeSlotSessions: TimeSlotSession[],
 		includeDecodedData: boolean = false
-	): ITrackingSessionResponse[] {
+	): Promise<ITrackingSessionResponse[]> {
 		const sessions: ITrackingSessionResponse[] = [];
 
-		for (const timeSlot of timeSlots) {
+		for (const timeSlotSession of timeSlotSessions) {
+			const timeSlot = timeSlotSession.timeSlot;
+			if (!timeSlot) continue;
+
 			const customActivity = timeSlot.customActivity as ICustomActivity;
+			if (!customActivity?.trackingSessions) continue;
 
-			if (!customActivity?.trackingSessions) {
-				continue;
-			}
+			const session = customActivity.trackingSessions.find(
+				(s: ITrackingSession) => s.sessionId === timeSlotSession.sessionId
+			);
 
-			for (const session of customActivity.trackingSessions) {
-				// Process payloads based on includeDecodedData flag
-				const processedPayloads = session.payloads.map((payload: ITrackingPayload) => {
-					if (includeDecodedData) {
-						// Return both encoded and decoded data
-						return {
-							timestamp: payload.timestamp,
-							encodedData: payload.encodedData,
-							decodedData: payload.decodedData
-						};
-					} else {
-						// Return only encoded data (default behavior)
-						return {
-							timestamp: payload.timestamp,
-							encodedData: payload.encodedData
-						};
-					}
-				});
+			if (!session) continue;
 
-				const sessionData: ITrackingSessionResponse = {
+			const processedPayloads = session.payloads.map((payload: ITrackingPayload) => {
+				if (includeDecodedData) {
+					return {
+						timestamp: payload.timestamp,
+						encodedData: payload.encodedData,
+						decodedData: payload.decodedData
+					};
+				} else {
+					return {
+						timestamp: payload.timestamp,
+						encodedData: payload.encodedData
+					};
+				}
+			});
+
+			const sessionData: ITrackingSessionResponse = {
+				sessionId: session.sessionId,
+				timeLogs: timeSlot.timeLogs || [],
+				session: {
 					sessionId: session.sessionId,
-					timeSlotId: timeSlot.id,
-					timeSlot: {
-						startedAt: timeSlot.startedAt,
-						duration: timeSlot.duration
-					},
-					timeLogs: timeSlot.timeLogs || [],
-					session: {
-						sessionId: session.sessionId,
-						startTime: session.startTime,
-						lastActivity: session.lastActivity,
-						createdAt: session.createdAt,
-						updatedAt: session.updatedAt,
-						payloads: processedPayloads
+					startTime: session.startTime,
+					lastActivity: session.lastActivity,
+					createdAt: session.createdAt,
+					updatedAt: session.updatedAt,
+					payloads: processedPayloads
+				},
+				timeSlots: [
+					{
+						timeSlotId: timeSlot.id,
+						timeSlot: {
+							startedAt: timeSlot.startedAt,
+							duration: timeSlot.duration
+						}
 					}
-				};
+				]
+			};
 
-				sessions.push(sessionData);
-			}
+			sessions.push(sessionData);
 		}
 
 		return sessions;
@@ -311,28 +313,45 @@ export class CustomTrackingService {
 			const sessionId = session.sessionId;
 
 			if (sessionMap.has(sessionId)) {
-				// Merge payloads from different TimeSlots
 				const existingSession = sessionMap.get(sessionId)!;
+
 				existingSession.session.payloads = [...existingSession.session.payloads, ...session.session.payloads];
-				// Update timeSlots array
+
+				if (session.session.startTime < existingSession.session.startTime) {
+					existingSession.session.startTime = session.session.startTime;
+				}
+				if (session.session.lastActivity > existingSession.session.lastActivity) {
+					existingSession.session.lastActivity = session.session.lastActivity;
+				}
+
 				if (!existingSession.timeSlots) {
 					existingSession.timeSlots = [];
 				}
-				existingSession.timeSlots.push({
-					timeSlotId: session.timeSlotId,
-					timeSlot: session.timeSlot
-				});
+
+				const timeSlotToAdd = session.timeSlots?.[0] || {
+					timeSlotId: session.timeSlotId!,
+					timeSlot: session.timeSlot!
+				};
+
+				const timeSlotExists = existingSession.timeSlots.some(
+					(ts) => ts.timeSlotId === timeSlotToAdd.timeSlotId
+				);
+				if (!timeSlotExists) {
+					existingSession.timeSlots.push(timeSlotToAdd);
+				}
 			} else {
-				// First occurrence of this sessionId
-				sessionMap.set(sessionId, {
-					...session,
-					timeSlots: [
+				const newSession: ITrackingSessionResponse = {
+					sessionId: session.sessionId,
+					timeLogs: session.timeLogs,
+					session: session.session,
+					timeSlots: session.timeSlots || [
 						{
-							timeSlotId: session.timeSlotId,
-							timeSlot: session.timeSlot
+							timeSlotId: session.timeSlotId!,
+							timeSlot: session.timeSlot!
 						}
 					]
-				});
+				};
+				sessionMap.set(sessionId, newSession);
 			}
 		});
 
@@ -344,19 +363,201 @@ export class CustomTrackingService {
 	 */
 	private calculateSessionsSummary(sessions: ITrackingSessionResponse[]): {
 		totalSessions: number;
+		uniqueSessionIds: number;
 		totalTimeSlots: number;
 		dateRange: { start: Date; end: Date } | null;
 	} {
+		const allTimeSlotIds = new Set<string>();
+		sessions.forEach((session) => {
+			if (session.timeSlots) {
+				session.timeSlots.forEach((ts) => allTimeSlotIds.add(ts.timeSlotId));
+			}
+		});
+
 		return {
 			totalSessions: sessions.length,
-			totalTimeSlots: new Set(sessions.map((s) => s.timeSlotId)).size,
+			uniqueSessionIds: new Set(sessions.map((s) => s.sessionId)).size,
+			totalTimeSlots: allTimeSlotIds.size,
 			dateRange:
-				sessions.length > 0
+				sessions.length > 0 && sessions[0]?.timeSlots?.[0]
 					? {
-							start: sessions[0]?.timeSlot?.startedAt,
-							end: sessions[sessions.length - 1]?.timeSlot?.startedAt
+							start: sessions[0].timeSlots[0].timeSlot.startedAt,
+							end:
+								sessions[sessions.length - 1]?.timeSlots?.[0]?.timeSlot.startedAt ||
+								sessions[0].timeSlots[0].timeSlot.startedAt
 					  }
 					: null
 		};
+	}
+
+	/**
+	 * Get tracking sessions by sessionId
+	 */
+	async getSessionsBySessionId(
+		sessionId: string,
+		tenantId?: string,
+		organizationId?: string,
+		startDate?: Date,
+		endDate?: Date
+	): Promise<ITrackingSessionResponse[]> {
+		const contextTenantId = tenantId || RequestContext.currentTenantId();
+		const contextOrgId = organizationId || RequestContext.currentUser()?.employee?.organizationId;
+
+		if (!contextTenantId || !contextOrgId) {
+			throw new BadRequestException('Tenant and Organization context is required');
+		}
+
+		const defaultStart = startDate || new Date(Date.now() - 24 * 60 * 60 * 1000);
+		const defaultEnd = endDate || new Date();
+
+		const timeSlotSessions = await this.typeOrmTimeSlotSessionRepository.find({
+			where: {
+				sessionId,
+				tenantId: contextTenantId,
+				organizationId: contextOrgId,
+				createdAt: Between(defaultStart, defaultEnd)
+			},
+			relations: ['timeSlot', 'timeSlot.timeLogs'],
+			order: { createdAt: 'ASC' }
+		});
+
+		return await this.extractTrackingSessionsFromTimeSlotSessions(timeSlotSessions, false);
+	}
+
+	/**
+	 * Get active sessions for an employee
+	 * Sessions with activity in the last N minutes
+	 */
+	async getActiveSessions(
+		employeeId?: string,
+		activityThresholdMinutes: number = 30,
+		tenantId?: string,
+		organizationId?: string
+	): Promise<ITrackingSessionResponse[]> {
+		const contextTenantId = tenantId || RequestContext.currentTenantId();
+		const contextOrgId = organizationId || RequestContext.currentUser()?.employee?.organizationId;
+		const contextEmployeeId = employeeId || RequestContext.currentEmployeeId();
+
+		if (!contextTenantId || !contextOrgId) {
+			throw new BadRequestException('Tenant and Organization context is required');
+		}
+
+		const thresholdDate = new Date(Date.now() - activityThresholdMinutes * 60 * 1000);
+
+		const whereCondition: {
+			tenantId: string;
+			organizationId: string;
+			lastActivity: any;
+			employeeId?: string;
+		} = {
+			tenantId: contextTenantId,
+			organizationId: contextOrgId,
+			lastActivity: Between(thresholdDate, new Date())
+		};
+
+		if (contextEmployeeId) {
+			whereCondition.employeeId = contextEmployeeId;
+		}
+
+		const timeSlotSessions = await this.typeOrmTimeSlotSessionRepository.find({
+			where: whereCondition,
+			relations: ['timeSlot', 'timeSlot.timeLogs'],
+			order: { lastActivity: 'DESC' }
+		});
+
+		return await this.extractTrackingSessionsFromTimeSlotSessions(timeSlotSessions, false);
+	}
+
+	/**
+	 * Get session statistics for reporting
+	 */
+	async getSessionStatistics(
+		employeeId?: string,
+		startDate?: Date,
+		endDate?: Date,
+		tenantId?: string,
+		organizationId?: string
+	): Promise<{
+		totalSessions: number;
+		uniqueSessions: number;
+		totalTimeSlots: number;
+		averageSessionDuration: number;
+		sessionsByDay: { date: string; count: number }[];
+	}> {
+		const contextTenantId = tenantId || RequestContext.currentTenantId();
+		const contextOrgId = organizationId || RequestContext.currentUser()?.employee?.organizationId;
+		const contextEmployeeId = employeeId || RequestContext.currentEmployeeId();
+
+		if (!contextTenantId || !contextOrgId) {
+			throw new BadRequestException('Tenant and Organization context is required');
+		}
+
+		const defaultStart = startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+		const defaultEnd = endDate || new Date();
+
+		const whereCondition: {
+			tenantId: string;
+			organizationId: string;
+			createdAt: any;
+			employeeId?: string;
+		} = {
+			tenantId: contextTenantId,
+			organizationId: contextOrgId,
+			createdAt: Between(defaultStart, defaultEnd)
+		};
+
+		if (contextEmployeeId) {
+			whereCondition.employeeId = contextEmployeeId;
+		}
+
+		const timeSlotSessions = await this.typeOrmTimeSlotSessionRepository.find({
+			where: whereCondition,
+			order: { createdAt: 'ASC' }
+		});
+
+		const uniqueSessionIds = new Set(timeSlotSessions.map((tss) => tss.sessionId));
+		const sessionsByDay = this.groupSessionsByDay(timeSlotSessions);
+		const averageDuration = this.calculateAverageSessionDuration(timeSlotSessions);
+
+		return {
+			totalSessions: timeSlotSessions.length,
+			uniqueSessions: uniqueSessionIds.size,
+			totalTimeSlots: new Set(timeSlotSessions.map((session) => session.timeSlotId)).size,
+			averageSessionDuration: averageDuration,
+			sessionsByDay
+		};
+	}
+
+	/**
+	 * Group sessions by day for statistics
+	 */
+	private groupSessionsByDay(timeSlotSessions: TimeSlotSession[]): { date: string; count: number }[] {
+		const dayMap = new Map<string, number>();
+
+		timeSlotSessions.forEach((tss) => {
+			const date = moment(tss.createdAt).format('YYYY-MM-DD');
+			dayMap.set(date, (dayMap.get(date) || 0) + 1);
+		});
+
+		return Array.from(dayMap.entries()).map(([date, count]) => ({ date, count }));
+	}
+
+	/**
+	 * Calculate average session duration in minutes
+	 */
+	private calculateAverageSessionDuration(timeSlotSessions: TimeSlotSession[]): number {
+		if (timeSlotSessions.length === 0) return 0;
+
+		const sessionDurations = new Map<string, number>();
+
+		timeSlotSessions.forEach((tss) => {
+			if (tss.startTime && tss.lastActivity) {
+				const duration = moment(tss.lastActivity).diff(moment(tss.startTime), 'minutes');
+				sessionDurations.set(tss.sessionId, Math.max(sessionDurations.get(tss.sessionId) || 0, duration));
+			}
+		});
+
+		const totalDuration = Array.from(sessionDurations.values()).reduce((sum, duration) => sum + duration, 0);
+		return sessionDurations.size > 0 ? totalDuration / sessionDurations.size : 0;
 	}
 }
