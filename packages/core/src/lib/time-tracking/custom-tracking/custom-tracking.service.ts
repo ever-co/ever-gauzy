@@ -66,7 +66,6 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 		sessions: ITrackingSessionResponse[];
 		summary: {
 			totalSessions: number;
-			uniqueSessionIds: number;
 			totalTimeSlots: number;
 			dateRange: { start: Date; end: Date } | null;
 		};
@@ -145,7 +144,7 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 		}
 
 		if (!tenantId || !organizationId) {
-			throw new BadRequestException('Tenant and Organization context is required');
+			throw new BadRequestException('Tenant and organization contexts are required');
 		}
 
 		const timeSlot = await this.typeOrmTimeSlotRepository.findOne({
@@ -363,7 +362,6 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 	 */
 	private calculateSessionsSummary(sessions: ITrackingSessionResponse[]): {
 		totalSessions: number;
-		uniqueSessionIds: number;
 		totalTimeSlots: number;
 		dateRange: { start: Date; end: Date } | null;
 	} {
@@ -373,20 +371,20 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 				session.timeSlots.forEach((ts) => allTimeSlotIds.add(ts.timeSlotId));
 			}
 		});
-
+		let minStart: Date | null = null;
+		let maxStart: Date | null = null;
+		for (const s of sessions) {
+			for (const ts of s.timeSlots || []) {
+				const t = ts.timeSlot?.startedAt ? new Date(ts.timeSlot.startedAt) : null;
+				if (!t || isNaN(t.getTime())) continue;
+				minStart = !minStart || t < minStart ? t : minStart;
+				maxStart = !maxStart || t > maxStart ? t : maxStart;
+			}
+		}
 		return {
-			totalSessions: sessions.length,
-			uniqueSessionIds: new Set(sessions.map((s) => s.sessionId)).size,
+			totalSessions: new Set(sessions.map((s) => s.sessionId)).size,
 			totalTimeSlots: allTimeSlotIds.size,
-			dateRange:
-				sessions.length > 0 && sessions[0]?.timeSlots?.[0]
-					? {
-							start: sessions[0].timeSlots[0].timeSlot.startedAt,
-							end:
-								sessions[sessions.length - 1]?.timeSlots?.[0]?.timeSlot.startedAt ||
-								sessions[0].timeSlots[0].timeSlot.startedAt
-					  }
-					: null
+			dateRange: minStart && maxStart ? { start: minStart, end: maxStart } : null
 		};
 	}
 

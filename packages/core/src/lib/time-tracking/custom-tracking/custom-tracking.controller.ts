@@ -1,4 +1,15 @@
-import { Controller, Post, Get, Body, Param, Query, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+	Controller,
+	Post,
+	Get,
+	Body,
+	Param,
+	Query,
+	HttpStatus,
+	UseGuards,
+	DefaultValuePipe,
+	ParseIntPipe
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { TenantPermissionGuard, PermissionGuard } from '../../shared/guards';
 import { PermissionsEnum, ITrackingSession, ITimeLog, ITrackingSessionResponse } from '@gauzy/contracts';
@@ -58,7 +69,6 @@ export class CustomTrackingController {
 		sessions: ITrackingSessionResponse[];
 		summary: {
 			totalSessions: number;
-			uniqueSessionIds: number;
 			totalTimeSlots: number;
 			dateRange: { start: Date; end: Date } | null;
 		};
@@ -141,10 +151,10 @@ export class CustomTrackingController {
 	})
 	@Get('/active')
 	async getActiveSessions(
-		@Query('employeeId') employeeId?: string,
-		@Query('activityThresholdMinutes') activityThresholdMinutes?: number
+		@Query('employeeId', UUIDValidationPipe) employeeId?: string,
+		@Query('activityThresholdMinutes', new DefaultValuePipe(30), ParseIntPipe) activityThresholdMinutes?: number
 	): Promise<any[]> {
-		return await this.customTrackingService.getActiveSessions(employeeId, activityThresholdMinutes || 30);
+		return await this.customTrackingService.getActiveSessions(employeeId, Math.max(1, activityThresholdMinutes!));
 	}
 
 	/**
@@ -160,7 +170,7 @@ export class CustomTrackingController {
 	})
 	@Get('/statistics')
 	async getSessionStatistics(
-		@Query('employeeId') employeeId?: string,
+		@Query('employeeId', UUIDValidationPipe) employeeId?: string,
 		@Query('startDate') startDate?: string,
 		@Query('endDate') endDate?: string
 	): Promise<{

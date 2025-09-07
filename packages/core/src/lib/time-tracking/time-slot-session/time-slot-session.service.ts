@@ -1,15 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Between } from 'typeorm';
 import { ID, ITimeSlotSession } from '@gauzy/contracts';
 import { TimeSlotSession } from './time-slot-session.entity';
+import { MikroOrmTimeSlotSessionRepository, TypeOrmTimeSlotSessionRepository } from './repository';
+import { TenantAwareCrudService } from '../../core';
 
 @Injectable()
-export class TimeSlotSessionService {
+export class TimeSlotSessionService extends TenantAwareCrudService<TimeSlotSession> {
 	constructor(
-		@InjectRepository(TimeSlotSession)
-		private readonly timeSlotSessionRepository: Repository<TimeSlotSession>
-	) {}
+		readonly typeOrmTimeSlotSessionRepository: TypeOrmTimeSlotSessionRepository,
+		readonly mikroOrmTimeSlotSessionRepository: MikroOrmTimeSlotSessionRepository
+	) {
+		super(typeOrmTimeSlotSessionRepository, mikroOrmTimeSlotSessionRepository);
+	}
 
 	/**
 	 * Create a new TimeSlotSession entry
@@ -23,7 +26,7 @@ export class TimeSlotSessionService {
 		startTime?: Date,
 		lastActivity?: Date
 	): Promise<ITimeSlotSession> {
-		const session = this.timeSlotSessionRepository.create({
+		const session = super.create({
 			sessionId,
 			timeSlotId,
 			employeeId,
@@ -33,7 +36,7 @@ export class TimeSlotSessionService {
 			lastActivity
 		});
 
-		return await this.timeSlotSessionRepository.save(session);
+		return await super.save(session);
 	}
 
 	/**
@@ -44,7 +47,7 @@ export class TimeSlotSessionService {
 		const defaultStartDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
 		const defaultEndDate = new Date();
 
-		return await this.timeSlotSessionRepository.find({
+		return await super.find({
 			where: {
 				sessionId,
 				tenantId,
@@ -60,21 +63,21 @@ export class TimeSlotSessionService {
 	 * Update session activity time
 	 */
 	async updateSessionActivity(sessionId: string, timeSlotId: ID, lastActivity: Date): Promise<void> {
-		await this.timeSlotSessionRepository.update({ sessionId, timeSlotId }, { lastActivity, updatedAt: new Date() });
+		await super.update({ sessionId, timeSlotId }, { lastActivity, updatedAt: new Date() });
 	}
 
 	/**
 	 * Delete sessions for a specific TimeSlot
 	 */
 	async deleteSessionsByTimeSlot(timeSlotId: ID): Promise<void> {
-		await this.timeSlotSessionRepository.delete({ timeSlotId });
+		await super.delete({ timeSlotId });
 	}
 
 	/**
 	 * Find sessions by TimeSlot ID
 	 */
 	async findSessionsByTimeSlotId(timeSlotId: ID, tenantId: ID, organizationId: ID): Promise<ITimeSlotSession[]> {
-		return await this.timeSlotSessionRepository.find({
+		return await super.find({
 			where: {
 				timeSlotId,
 				tenantId,
@@ -98,7 +101,7 @@ export class TimeSlotSessionService {
 		const defaultStartDate = startDate || new Date(Date.now() - 48 * 60 * 60 * 1000);
 		const defaultEndDate = endDate || new Date();
 
-		return await this.timeSlotSessionRepository.find({
+		return await super.find({
 			where: {
 				employeeId,
 				tenantId,
@@ -124,7 +127,7 @@ export class TimeSlotSessionService {
 		const defaultStartDate = startDate || new Date(Date.now() - 24 * 60 * 60 * 1000);
 		const defaultEndDate = endDate || new Date();
 
-		return await this.timeSlotSessionRepository.find({
+		return await super.find({
 			where: {
 				sessionId,
 				tenantId,
@@ -157,7 +160,7 @@ export class TimeSlotSessionService {
 			whereCondition.employeeId = employeeId;
 		}
 
-		return await this.timeSlotSessionRepository.find({
+		return await super.find({
 			where: whereCondition,
 			relations: ['timeSlot', 'employee'],
 			order: { lastActivity: 'DESC' }
@@ -168,7 +171,7 @@ export class TimeSlotSessionService {
 	 * Count sessions by sessionId
 	 */
 	async countSessionsBySessionId(sessionId: string, tenantId: ID, organizationId: ID): Promise<number> {
-		return await this.timeSlotSessionRepository.count({
+		return await super.count({
 			where: {
 				sessionId,
 				tenantId,

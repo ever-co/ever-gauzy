@@ -174,60 +174,6 @@ export class AddTimeSlotSessionEntity1757149401754 implements MigrationInterface
 	 * @param queryRunner
 	 */
 	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`DROP INDEX "IDX_dc605390f47dd26469f855307d"`);
-		await queryRunner.query(`DROP INDEX "IDX_8966a6ed4ff080f259844c38b9"`);
-		await queryRunner.query(`DROP INDEX "IDX_aed773ef44611150e65749733b"`);
-		await queryRunner.query(`DROP INDEX "IDX_ba7262af6a2906c992fe8ca3fe"`);
-		await queryRunner.query(`DROP INDEX "IDX_12a0a79f962a124f93c8796e4b"`);
-		await queryRunner.query(`DROP INDEX "IDX_674bdff03d51898ca8a237f163"`);
-		await queryRunner.query(`DROP INDEX "IDX_228e69500a55e2f311c0219d9f"`);
-		await queryRunner.query(`DROP INDEX "IDX_d79d3bd6115187d2e73ea8b3ff"`);
-		await queryRunner.query(`DROP INDEX "IDX_382c80e92aa263e9cd2e98a664"`);
-		await queryRunner.query(`DROP INDEX "IDX_f955d4fc2146d3696c9af8f068"`);
-		await queryRunner.query(`DROP INDEX "IDX_f120aba634b63389a3a351a4f5"`);
-		await queryRunner.query(`DROP INDEX "IDX_63d9e137716eb1bdfe93ccf23d"`);
-		await queryRunner.query(`ALTER TABLE "time_slot_session" RENAME TO "temporary_time_slot_session"`);
-		await queryRunner.query(
-			`CREATE TABLE "time_slot_session" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "sessionId" varchar NOT NULL, "startTime" datetime, "lastActivity" datetime, "timeSlotId" varchar NOT NULL, "employeeId" varchar NOT NULL)`
-		);
-		await queryRunner.query(
-			`INSERT INTO "time_slot_session"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "sessionId", "startTime", "lastActivity", "timeSlotId", "employeeId") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "sessionId", "startTime", "lastActivity", "timeSlotId", "employeeId" FROM "temporary_time_slot_session"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_time_slot_session"`);
-		await queryRunner.query(`CREATE INDEX "IDX_dc605390f47dd26469f855307d" ON "time_slot_session" ("employeeId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_8966a6ed4ff080f259844c38b9" ON "time_slot_session" ("timeSlotId") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_aed773ef44611150e65749733b" ON "time_slot_session" ("lastActivity") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_ba7262af6a2906c992fe8ca3fe" ON "time_slot_session" ("startTime") `);
-		await queryRunner.query(`CREATE INDEX "IDX_12a0a79f962a124f93c8796e4b" ON "time_slot_session" ("sessionId") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_674bdff03d51898ca8a237f163" ON "time_slot_session" ("organizationId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_228e69500a55e2f311c0219d9f" ON "time_slot_session" ("tenantId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_d79d3bd6115187d2e73ea8b3ff" ON "time_slot_session" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_382c80e92aa263e9cd2e98a664" ON "time_slot_session" ("isActive") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_f955d4fc2146d3696c9af8f068" ON "time_slot_session" ("deletedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_f120aba634b63389a3a351a4f5" ON "time_slot_session" ("updatedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_63d9e137716eb1bdfe93ccf23d" ON "time_slot_session" ("createdByUserId") `
-		);
-		await queryRunner.query(`DROP INDEX "IDX_dc605390f47dd26469f855307d"`);
-		await queryRunner.query(`DROP INDEX "IDX_8966a6ed4ff080f259844c38b9"`);
-		await queryRunner.query(`DROP INDEX "IDX_aed773ef44611150e65749733b"`);
-		await queryRunner.query(`DROP INDEX "IDX_ba7262af6a2906c992fe8ca3fe"`);
-		await queryRunner.query(`DROP INDEX "IDX_12a0a79f962a124f93c8796e4b"`);
-		await queryRunner.query(`DROP INDEX "IDX_674bdff03d51898ca8a237f163"`);
-		await queryRunner.query(`DROP INDEX "IDX_228e69500a55e2f311c0219d9f"`);
-		await queryRunner.query(`DROP INDEX "IDX_d79d3bd6115187d2e73ea8b3ff"`);
-		await queryRunner.query(`DROP INDEX "IDX_382c80e92aa263e9cd2e98a664"`);
-		await queryRunner.query(`DROP INDEX "IDX_f955d4fc2146d3696c9af8f068"`);
-		await queryRunner.query(`DROP INDEX "IDX_f120aba634b63389a3a351a4f5"`);
-		await queryRunner.query(`DROP INDEX "IDX_63d9e137716eb1bdfe93ccf23d"`);
 		await queryRunner.query(`DROP TABLE "time_slot_session"`);
 	}
 

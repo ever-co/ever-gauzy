@@ -582,12 +582,12 @@ export interface ITimeSlotSession extends IBasePerTenantAndOrganizationEntityMod
  */
 export interface ITrackingSessionResponse {
 	sessionId: string;
-	timeSlotId?: ID; // Optional - use timeSlots array as primary source
-	timeSlot?: TimeSlotSummary; // Optional - use timeSlots array as primary source
+	timeSlotId?: ID;
+	timeSlot?: TimeSlotSummary;
 	timeLogs: ITimeLog[];
 	session: ITrackingSession;
-	timeSlots: Array<{
+	timeSlots?: Array<{
 		timeSlotId: ID;
 		timeSlot: TimeSlotSummary;
-	}>; // Primary source for TimeSlot data
+	}>;
 }
