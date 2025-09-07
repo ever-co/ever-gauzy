@@ -13,8 +13,7 @@ import {
 	Delete,
 	Res,
 	BadRequestException,
-	Headers,
-	ValidationPipe
+	Headers
 } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere } from 'typeorm';
 import { Response } from 'express';

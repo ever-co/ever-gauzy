@@ -44,4 +44,23 @@ export class CountryService {
 			)
 			.subscribe();
 	}
+
+	/**
+	 * Get a country by ISO code
+	 * @param isoCode string
+	 */
+	getByIsoCode(isoCode: string): Observable<ICountry | null> {
+		if (!isoCode) {
+			return new BehaviorSubject<ICountry | null>(null).asObservable();
+		}
+
+		return this.http.get<ICountry>(`${API_PREFIX}/country/${isoCode}`).pipe(
+			tap((country) => {
+				if (!country) {
+					console.error('Failed to fetch country by ISO code');
+				}
+			}),
+			untilDestroyed(this)
+		);
+	}
 }

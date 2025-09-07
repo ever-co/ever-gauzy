@@ -469,7 +469,7 @@ export class TimerService {
 				if (moment(runningLog.startedAt).isBefore(newTimerStartedAt)) {
 					// Stop the current running log and save the time at end of day
 					const stoppedAt = moment(runningLog.startedAt).endOf('day').subtract(1, 'millisecond').toDate();
-					await this.stopTimer({
+					await this.safeStopTimer({
 						tenantId,
 						organizationId,
 						startedAt: runningLog.startedAt,
@@ -512,7 +512,7 @@ export class TimerService {
 			const isAssignedToProject = projects.some((project) => project.id === lastLog.projectId);
 
 			if (!isAssignedToProject) {
-				await this.stopTimer({
+				await this.safeStopTimer({
 					tenantId,
 					organizationId,
 					startedAt: lastLog.startedAt,
@@ -539,7 +539,7 @@ export class TimerService {
 			const isAssignedToTask = tasks.some((task) => task.id === lastLog.taskId);
 
 			if (!isAssignedToTask) {
-				await this.stopTimer({
+				await this.safeStopTimer({
 					tenantId,
 					organizationId,
 					startedAt: lastLog.startedAt,
@@ -551,7 +551,7 @@ export class TimerService {
 		}
 
 		// Get weekly statistics
-		const weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(
+		let weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(
 			employee,
 			start as Date,
 			request?.timeZone,
@@ -572,7 +572,7 @@ export class TimerService {
 
 			if (remainingWeeklyLimit <= 0) {
 				lastLogStopped = true;
-				lastLog = await this.stopTimer({
+				lastLog = await this.safeStopTimer({
 					tenantId,
 					organizationId,
 					startedAt: lastLog.startedAt,
@@ -586,6 +586,13 @@ export class TimerService {
 					clearTimeout(existingTimeout);
 					runningWeeklyLimitTimeouts.delete(employeeId);
 				}
+				// Recalculate the weekly limit status
+				weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(
+					employee,
+					start as Date,
+					request?.timeZone,
+					true
+				);
 			} else if (remainingWeeklyLimit <= 21 * 60) {
 				// Less than 21 minutes remaining → schedule a single socket event
 				const existingTimeout = runningWeeklyLimitTimeouts.get(employeeId);
@@ -651,8 +658,10 @@ export class TimerService {
 				const effectiveStart = started.isBefore(todayMidnight) ? todayMidnight : started;
 				status.duration += Math.abs(until.diff(effectiveStart, 'seconds'));
 
-				// Add the last log duration to workedThisWeek regardless of running/stopped
-				status.workedThisWeek += Math.abs(until.diff(started, 'seconds'));
+				// If timer is running, then add the non saved duration to the workedThisWeek
+				if (lastLog.isRunning) {
+					status.workedThisWeek += now.diff(moment(lastLog.stoppedAt), 'seconds');
+				}
 			}
 		}
 
@@ -1045,6 +1054,32 @@ export class TimerService {
 		} catch (error) {
 			this.logger.error('Error while handling conflicts in time logs', error);
 			throw error;
+		}
+	}
+
+	/**
+	 * Attempts to stop a running timer with a retry mechanism.
+	 *
+	 * This method wraps the standard stopTimer() call and ensures
+	 * that if the first attempt fails (e.g. due to a transient error),
+	 * it will retry once before propagating the error.
+	 *
+	 * @param request - The timer toggle input containing details for stopping the timer.
+	 * @returns A promise that resolves with the updated ITimeLog if successful.
+	 * @throws Will rethrow the error if both attempts to stop the timer fail.
+	 */
+	private async safeStopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+		try {
+			return await this.stopTimer(request);
+		} catch (error) {
+			this.logger.warn(`First stopTimer() attempt failed, retrying...`, error);
+
+			try {
+				return await this.stopTimer(request);
+			} catch (finalError) {
+				this.logger.error(`Second stopTimer() attempt failed`, finalError);
+				throw finalError;
+			}
 		}
 	}
 

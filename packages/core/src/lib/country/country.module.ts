@@ -9,6 +9,7 @@ import { TypeOrmCountryRepository } from './repository/type-orm-country.reposito
 @Module({
 	imports: [TypeOrmModule.forFeature([Country]), MikroOrmModule.forFeature([Country])],
 	controllers: [CountryController],
-	providers: [CountryService, TypeOrmCountryRepository]
+	providers: [CountryService, TypeOrmCountryRepository],
+	exports: [CountryService]
 })
 export class CountryModule {}

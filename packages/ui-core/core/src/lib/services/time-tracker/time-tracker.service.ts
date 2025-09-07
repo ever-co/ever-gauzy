@@ -587,9 +587,16 @@ export class TimeTrackerService implements OnDestroy {
 	turnOffTimer() {
 		this.running = false;
 		// post running state to worker on turning off
+		this.currentSessionDuration = 0;
+
 		this._worker.postMessage({
-			isRunning: this.running
+			isRunning: false,
+			session: this.currentSessionDuration,
+			duration: this.duration,
+			workedThisWeek: this.timerQuery.getValue().workedThisWeek,
+			reWeeklyLimit: this.timerQuery.getValue().reWeeklyLimit
 		});
+
 		this._broadcastState('SYNC_TIMER');
 	}
 
@@ -669,15 +676,25 @@ export class TimeTrackerService implements OnDestroy {
 		const currentState = this.timerQuery.getValue();
 		this._saveStateToLocalStorage();
 
+		const { projectId, taskId, description, taskTitle } = currentState.timerConfig;
+
 		if (type === 'SYNC_TIMER_CONFIG') {
 			this.channel.postMessage({
 				type: 'SYNC_TIMER_CONFIG',
-				data: currentState.timerConfig
+				data: currentState.timerConfig,
+				projectId,
+				taskId,
+				taskTitle,
+				description
 			});
 		} else {
 			this.channel.postMessage({
 				type,
-				data: currentState
+				data: currentState,
+				projectId,
+				taskId,
+				taskTitle,
+				description
 			});
 		}
 	}
@@ -698,6 +715,13 @@ export class TimeTrackerService implements OnDestroy {
 			switch (type) {
 				case 'SYNC_TIMER':
 					this.timerStore.update(data);
+					this._worker.postMessage({
+						isRunning: data.running,
+						session: data.currentSessionDuration,
+						duration: data.duration,
+						workedThisWeek: data.workedThisWeek,
+						reWeeklyLimit: data.reWeeklyLimit
+					});
 					break;
 
 				case 'SYNC_TIMER_CONFIG':

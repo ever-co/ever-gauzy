@@ -385,6 +385,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 
 	onTaskSelected(task: ITask) {
 		this.taskTitle = task?.title ?? null;
+		this.updateTimerConfig({ taskTitle: this.taskTitle });
 	}
 
 	/**

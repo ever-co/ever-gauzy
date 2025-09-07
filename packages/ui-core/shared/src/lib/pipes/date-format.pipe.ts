@@ -8,9 +8,9 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Pipe({
-    name: 'dateFormat',
-    pure: false,
-    standalone: false
+	name: 'dateFormat',
+	pure: false,
+	standalone: false
 })
 export class DateFormatPipe implements PipeTransform {
 	dateFormat = 'd MMMM, y';
@@ -24,7 +24,7 @@ export class DateFormatPipe implements PipeTransform {
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => {
 					this.regionCode = organization.regionCode || RegionsEnum.EN;
-					this.dateFormat = organization.dateFormat || 'd MMMM, y';
+					this.dateFormat = organization.dateFormat || 'D MMMM, YYYY';
 				}),
 				untilDestroyed(this)
 			)

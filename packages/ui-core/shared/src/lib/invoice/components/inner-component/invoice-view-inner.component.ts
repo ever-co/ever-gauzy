@@ -5,7 +5,7 @@ import { tap } from 'rxjs/operators';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DiscountTaxTypeEnum, IInvoice, IInvoiceItem, InvoiceTypeEnum } from '@gauzy/contracts';
-import { ErrorHandlingService, TranslatableService } from '@gauzy/ui-core/core';
+import { CountryService, ErrorHandlingService, TranslatableService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { CurrencyPositionPipe } from '../../../pipes/currency-position.pipe';
 
@@ -22,6 +22,7 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 	public smartTableSource = new LocalDataSource();
 	public loading = true;
 	public discountTaxTypes = DiscountTaxTypeEnum;
+	public country: string;
 
 	@Input() invoice: IInvoice;
 	@Input() isEstimate = false;
@@ -32,7 +33,8 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 		private readonly _translatableService: TranslatableService,
 		private readonly _currencyPipe: CurrencyPipe,
 		private readonly _currencyPipePosition: CurrencyPositionPipe,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _countryService: CountryService
 	) {
 		super(translateService);
 	}
@@ -41,6 +43,14 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
 		this._loadSmartTableData();
+		this._countryService
+			.getByIsoCode(this.invoice?.toOrganization?.contact?.country ?? this.invoice?.toContact?.contact?.country)
+			.pipe(untilDestroyed(this))
+			.subscribe((country) => {
+				if (country) {
+					this.country = country.country;
+				}
+			});
 	}
 
 	/**

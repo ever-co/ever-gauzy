@@ -1,7 +1,7 @@
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { Between, In, Not, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
 import {
 	IInvoice,
@@ -24,9 +24,11 @@ import { OrganizationService } from './../organization';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 import { RequestContext } from '../core/context';
+import { CountryService } from '../country/country.service';
 
 @Injectable()
 export class InvoiceService extends TenantAwareCrudService<Invoice> {
+	private readonly logger = new Logger(`GZY - ${InvoiceService.name}`);
 	constructor(
 		readonly typeOrmInvoiceRepository: TypeOrmInvoiceRepository,
 		readonly mikroOrmInvoiceRepository: MikroOrmInvoiceRepository,
@@ -34,7 +36,8 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		private readonly estimateEmailService: EstimateEmailService,
 		private readonly pdfmakerService: PdfmakerService,
 		private readonly i18n: I18nService,
-		private readonly organizationService: OrganizationService
+		private readonly organizationService: OrganizationService,
+		private readonly countryService: CountryService
 	) {
 		super(typeOrmInvoiceRepository, mikroOrmInvoiceRepository);
 	}
@@ -317,12 +320,28 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			address2: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.ADDRESS_2', { lang: language }),
 			postcode: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.POSTCODE', { lang: language })
 		};
+		let countryName: string | null = null;
+
+		try {
+			const country = await this.countryService.findByIsoCode(
+				invoice.toOrganization?.contact?.country ??
+					invoice.toContact?.contact?.country ??
+					invoice.toOrganization.contact?.country ??
+					invoice.fromOrganization.contact?.country
+			);
+
+			countryName = country?.country ?? null;
+		} catch (error) {
+			this.logger.warn('Failed to fetch country by ISO code', error);
+			countryName = null; // fallback
+		}
 		const docDefinition = await generateInvoicePdfDefinition(
 			invoice,
 			invoice.toOrganization ?? invoice.fromOrganization,
 			invoice.toContact,
 			translatedText,
-			language
+			language,
+			countryName
 		);
 		return await this.pdfmakerService.generatePdf(docDefinition);
 	}

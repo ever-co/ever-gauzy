@@ -12,6 +12,7 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { OrganizationModule } from './../organization/organization.module';
 import { PdfmakerService } from './pdfmaker.service';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
+import { CountryModule } from '../country/country.module';
 
 @Module({
 	imports: [
@@ -21,7 +22,8 @@ import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.reposito
 		EmailSendModule,
 		RolePermissionModule,
 		OrganizationModule,
-		forwardRef(() => EstimateEmailModule)
+		forwardRef(() => EstimateEmailModule),
+		CountryModule
 	],
 	controllers: [InvoiceController],
 	providers: [InvoiceService, PdfmakerService, TypeOrmInvoiceRepository, ...CommandHandlers],

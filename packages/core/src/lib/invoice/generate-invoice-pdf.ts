@@ -7,7 +7,8 @@ export async function generateInvoicePdfDefinition(
 	organization: IOrganization,
 	organizationContact: IOrganizationContact,
 	translatedText?: any,
-	language?: string
+	language?: string,
+	country?: string
 ) {
 	const body = [];
 	for (const item of invoice.invoiceItems) {
@@ -91,7 +92,7 @@ export async function generateInvoicePdfDefinition(
 
 	const city =
 		invoice.toOrganization?.contact?.city ?? organizationContact?.contact?.city ?? organization?.contact?.city;
-	const country =
+	const showCountry =
 		invoice.toOrganization?.contact?.country ??
 		organizationContact?.contact?.country ??
 		organization?.contact?.country;
@@ -114,7 +115,7 @@ export async function generateInvoicePdfDefinition(
 		});
 	}
 
-	if (city || country) {
+	if (city || showCountry) {
 		stack.push({
 			text: `${city ?? ''}${city ? ', ' : ''}${country ?? ''}`,
 			margin: [0, 0, 0, 5]
