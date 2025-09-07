@@ -6,7 +6,8 @@ import {
 	ITrackingSession,
 	ITrackingPayload,
 	ITrackingSessionResponse,
-	ITimeLog
+	ITimeLog,
+	IProcessTrackingDataInput
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../core/context';
@@ -16,7 +17,7 @@ import { moment } from '../../core/moment-extend';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { TimeSlot } from '../time-slot/time-slot.entity';
 import { TimeSlotSession } from '../time-slot-session/time-slot-session.entity';
-import { CustomTrackingDataDTO, CustomTrackingSessionsQueryDTO } from './dto';
+import { CustomTrackingSessionsQueryDTO } from './dto';
 import { ProcessTrackingDataCommand } from './commands';
 import { TypeOrmTimeSlotRepository } from '../time-slot/repository/type-orm-time-slot.repository';
 import { MikroOrmTimeSlotRepository } from '../time-slot/repository/mikro-orm-time-slot.repository';
@@ -38,23 +39,23 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 	/**
 	 * Submit custom tracking data
 	 */
-	async submitTrackingData(dto: CustomTrackingDataDTO): Promise<{
+	async submitTrackingData(input: IProcessTrackingDataInput): Promise<{
 		success: boolean;
 		sessionId: string;
 		timeSlotId: string;
 		message: string;
 		session: ITrackingSession | null;
 	}> {
-		const { trackingData, timestamp } = dto;
-		const startTime = new Date(timestamp);
-		if (isNaN(startTime.getTime())) {
-			throw new BadRequestException('Invalid timestamp');
+		const { startTime } = input;
+
+		if (isNaN(new Date(startTime).getTime())) {
+			throw new BadRequestException('Invalid start Time');
 		}
 
 		return await this.commandBus.execute(
 			new ProcessTrackingDataCommand({
-				payload: trackingData,
-				startTime
+				...input,
+				startTime: new Date(startTime)
 			})
 		);
 	}
@@ -87,7 +88,7 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 		}
 
 		if (!tenantId || !organizationId) {
-			throw new BadRequestException('Tenant and Organization context is required');
+			throw new BadRequestException('Tenant and Organization contexts are required');
 		}
 
 		const { start, end } = this.getDateRangeWithDefaults(query);
@@ -101,10 +102,7 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 			end
 		);
 
-		const sessions = await this.extractTrackingSessionsFromTimeSlotSessions(
-			timeSlotSessions,
-			query.includeDecodedData
-		);
+		const sessions = this.extractTrackingSessionsFromTimeSlotSessions(timeSlotSessions, query.includeDecodedData);
 
 		let workSessions = [];
 		if (query.groupBySession) {
@@ -134,14 +132,8 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 		trackingSessions?: ITrackingSession[];
 	}> {
 		const tenantId = RequestContext.currentTenantId();
-
-		const req = RequestContext.currentRequest();
-		let organizationId = req?.headers?.['organization-id'] as string;
-
-		if (!organizationId) {
-			const currentUser = RequestContext.currentUser();
-			organizationId = currentUser?.employee?.organizationId;
-		}
+		const currentUser = RequestContext.currentUser();
+		const organizationId = currentUser?.employee?.organizationId;
 
 		if (!tenantId || !organizationId) {
 			throw new BadRequestException('Tenant and organization contexts are required');
@@ -240,10 +232,10 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 	/**
 	 * Extract tracking sessions from TimeSlotSessions
 	 */
-	private async extractTrackingSessionsFromTimeSlotSessions(
+	private extractTrackingSessionsFromTimeSlotSessions(
 		timeSlotSessions: TimeSlotSession[],
 		includeDecodedData: boolean = false
-	): Promise<ITrackingSessionResponse[]> {
+	): ITrackingSessionResponse[] {
 		const sessions: ITrackingSessionResponse[] = [];
 
 		for (const timeSlotSession of timeSlotSessions) {
@@ -402,7 +394,7 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 		const contextOrgId = organizationId || RequestContext.currentUser()?.employee?.organizationId;
 
 		if (!contextTenantId || !contextOrgId) {
-			throw new BadRequestException('Tenant and Organization context is required');
+			throw new BadRequestException('Tenant and Organization contexts are required');
 		}
 
 		const defaultStart = startDate || new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -419,7 +411,7 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 			order: { createdAt: 'ASC' }
 		});
 
-		return await this.extractTrackingSessionsFromTimeSlotSessions(timeSlotSessions, false);
+		return this.extractTrackingSessionsFromTimeSlotSessions(timeSlotSessions, false);
 	}
 
 	/**
@@ -463,99 +455,6 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 			order: { lastActivity: 'DESC' }
 		});
 
-		return await this.extractTrackingSessionsFromTimeSlotSessions(timeSlotSessions, false);
-	}
-
-	/**
-	 * Get session statistics for reporting
-	 */
-	async getSessionStatistics(
-		employeeId?: string,
-		startDate?: Date,
-		endDate?: Date,
-		tenantId?: string,
-		organizationId?: string
-	): Promise<{
-		totalSessions: number;
-		uniqueSessions: number;
-		totalTimeSlots: number;
-		averageSessionDuration: number;
-		sessionsByDay: { date: string; count: number }[];
-	}> {
-		const contextTenantId = tenantId || RequestContext.currentTenantId();
-		const contextOrgId = organizationId || RequestContext.currentUser()?.employee?.organizationId;
-		const contextEmployeeId = employeeId || RequestContext.currentEmployeeId();
-
-		if (!contextTenantId || !contextOrgId) {
-			throw new BadRequestException('Tenant and Organization context is required');
-		}
-
-		const defaultStart = startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-		const defaultEnd = endDate || new Date();
-
-		const whereCondition: {
-			tenantId: string;
-			organizationId: string;
-			createdAt: any;
-			employeeId?: string;
-		} = {
-			tenantId: contextTenantId,
-			organizationId: contextOrgId,
-			createdAt: Between(defaultStart, defaultEnd)
-		};
-
-		if (contextEmployeeId) {
-			whereCondition.employeeId = contextEmployeeId;
-		}
-
-		const timeSlotSessions = await this.typeOrmTimeSlotSessionRepository.find({
-			where: whereCondition,
-			order: { createdAt: 'ASC' }
-		});
-
-		const uniqueSessionIds = new Set(timeSlotSessions.map((tss) => tss.sessionId));
-		const sessionsByDay = this.groupSessionsByDay(timeSlotSessions);
-		const averageDuration = this.calculateAverageSessionDuration(timeSlotSessions);
-
-		return {
-			totalSessions: timeSlotSessions.length,
-			uniqueSessions: uniqueSessionIds.size,
-			totalTimeSlots: new Set(timeSlotSessions.map((session) => session.timeSlotId)).size,
-			averageSessionDuration: averageDuration,
-			sessionsByDay
-		};
-	}
-
-	/**
-	 * Group sessions by day for statistics
-	 */
-	private groupSessionsByDay(timeSlotSessions: TimeSlotSession[]): { date: string; count: number }[] {
-		const dayMap = new Map<string, number>();
-
-		timeSlotSessions.forEach((tss) => {
-			const date = moment(tss.createdAt).format('YYYY-MM-DD');
-			dayMap.set(date, (dayMap.get(date) || 0) + 1);
-		});
-
-		return Array.from(dayMap.entries()).map(([date, count]) => ({ date, count }));
-	}
-
-	/**
-	 * Calculate average session duration in minutes
-	 */
-	private calculateAverageSessionDuration(timeSlotSessions: TimeSlotSession[]): number {
-		if (timeSlotSessions.length === 0) return 0;
-
-		const sessionDurations = new Map<string, number>();
-
-		timeSlotSessions.forEach((tss) => {
-			if (tss.startTime && tss.lastActivity) {
-				const duration = moment(tss.lastActivity).diff(moment(tss.startTime), 'minutes');
-				sessionDurations.set(tss.sessionId, Math.max(sessionDurations.get(tss.sessionId) || 0, duration));
-			}
-		});
-
-		const totalDuration = Array.from(sessionDurations.values()).reduce((sum, duration) => sum + duration, 0);
-		return sessionDurations.size > 0 ? totalDuration / sessionDurations.size : 0;
+		return this.extractTrackingSessionsFromTimeSlotSessions(timeSlotSessions, false);
 	}
 }

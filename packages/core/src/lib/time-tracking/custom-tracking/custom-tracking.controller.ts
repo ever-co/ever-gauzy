@@ -12,11 +12,17 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { TenantPermissionGuard, PermissionGuard } from '../../shared/guards';
-import { PermissionsEnum, ITrackingSession, ITimeLog, ITrackingSessionResponse } from '@gauzy/contracts';
+import {
+	PermissionsEnum,
+	ITrackingSession,
+	ITimeLog,
+	ITrackingSessionResponse,
+	IProcessTrackingDataInput
+} from '@gauzy/contracts';
 import { Permissions } from '../../shared/decorators';
 import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
 import { CustomTrackingService } from './custom-tracking.service';
-import { CustomTrackingDataDTO, CustomTrackingSessionsQueryDTO } from './dto';
+import { CustomTrackingSessionsQueryDTO } from './dto';
 
 @ApiTags('Custom Tracking')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -42,14 +48,14 @@ export class CustomTrackingController {
 	})
 	@Post('')
 	@UseValidationPipe({ transform: true })
-	async submitTrackingData(@Body() dto: CustomTrackingDataDTO): Promise<{
+	async submitTrackingData(@Body() input: IProcessTrackingDataInput): Promise<{
 		success: boolean;
 		sessionId: string;
 		timeSlotId: string;
 		message: string;
 		session: ITrackingSession | null;
 	}> {
-		return await this.customTrackingService.submitTrackingData(dto);
+		return await this.customTrackingService.submitTrackingData(input);
 	}
 
 	/**
@@ -155,33 +161,5 @@ export class CustomTrackingController {
 		@Query('activityThresholdMinutes', new DefaultValuePipe(30), ParseIntPipe) activityThresholdMinutes?: number
 	): Promise<any[]> {
 		return await this.customTrackingService.getActiveSessions(employeeId, Math.max(1, activityThresholdMinutes!));
-	}
-
-	/**
-	 * Get session statistics for reporting
-	 */
-	@ApiOperation({
-		summary: 'Get session statistics',
-		description: 'Retrieve statistical data about tracking sessions for reporting purposes'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Session statistics retrieved successfully'
-	})
-	@Get('/statistics')
-	async getSessionStatistics(
-		@Query('employeeId', UUIDValidationPipe) employeeId?: string,
-		@Query('startDate') startDate?: string,
-		@Query('endDate') endDate?: string
-	): Promise<{
-		totalSessions: number;
-		uniqueSessions: number;
-		totalTimeSlots: number;
-		averageSessionDuration: number;
-		sessionsByDay: { date: string; count: number }[];
-	}> {
-		const start = startDate ? new Date(startDate) : undefined;
-		const end = endDate ? new Date(endDate) : undefined;
-		return await this.customTrackingService.getSessionStatistics(employeeId, start, end);
 	}
 }

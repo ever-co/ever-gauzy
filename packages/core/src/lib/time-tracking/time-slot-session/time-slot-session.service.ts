@@ -40,26 +40,6 @@ export class TimeSlotSessionService extends TenantAwareCrudService<TimeSlotSessi
 	}
 
 	/**
-	 * Find TimeSlots by sessionId with time range filter for performance
-	 */
-	async findTimeSlotsBySessionId(sessionId: string, tenantId: ID, organizationId: ID): Promise<ITimeSlotSession[]> {
-		// Default to last 24 hours to prevent loading millions of records
-		const defaultStartDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
-		const defaultEndDate = new Date();
-
-		return await super.find({
-			where: {
-				sessionId,
-				tenantId,
-				organizationId,
-				createdAt: Between(defaultStartDate, defaultEndDate)
-			},
-			relations: ['timeSlot', 'employee'],
-			order: { createdAt: 'ASC' }
-		});
-	}
-
-	/**
 	 * Update session activity time
 	 */
 	async updateSessionActivity(sessionId: string, timeSlotId: ID, lastActivity: Date): Promise<void> {
@@ -114,9 +94,9 @@ export class TimeSlotSessionService extends TenantAwareCrudService<TimeSlotSessi
 	}
 
 	/**
-	 * Find sessions by sessionId with date range filter for performance
+	 * Private helper to find TimeSlots by sessionId with optional date range
 	 */
-	async findTimeSlotsBySessionIdWithDateRange(
+	private async findTimeSlotsBySessionIdWithRange(
 		sessionId: string,
 		tenantId: ID,
 		organizationId: ID,
@@ -137,6 +117,26 @@ export class TimeSlotSessionService extends TenantAwareCrudService<TimeSlotSessi
 			relations: ['timeSlot', 'employee'],
 			order: { createdAt: 'ASC' }
 		});
+	}
+
+	/**
+	 * Find TimeSlots by sessionId with time range filter for performance
+	 */
+	async findTimeSlotsBySessionId(sessionId: string, tenantId: ID, organizationId: ID): Promise<ITimeSlotSession[]> {
+		return this.findTimeSlotsBySessionIdWithRange(sessionId, tenantId, organizationId);
+	}
+
+	/**
+	 * Find TimeSlots by sessionId with custom date range
+	 */
+	async findTimeSlotsBySessionIdWithDateRange(
+		sessionId: string,
+		tenantId: ID,
+		organizationId: ID,
+		startDate?: Date,
+		endDate?: Date
+	): Promise<ITimeSlotSession[]> {
+		return this.findTimeSlotsBySessionIdWithRange(sessionId, tenantId, organizationId, startDate, endDate);
 	}
 
 	/**

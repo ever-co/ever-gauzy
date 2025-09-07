@@ -7,6 +7,7 @@ import { TimeLog } from '../time-log/time-log.entity';
 import { TimeSlotService } from '../time-slot/time-slot.service';
 import { TimeLogService } from '../time-log/time-log.service';
 import { ProcessTrackingDataCommand } from './commands/process-tracking-data.command';
+import { IProcessTrackingDataInput } from '@gauzy/contracts';
 
 describe('CustomTrackingService', () => {
 	let service: CustomTrackingService;
@@ -63,9 +64,12 @@ describe('CustomTrackingService', () => {
 	describe('submitTrackingData', () => {
 		it('should execute ProcessTrackingDataCommand', async () => {
 			const dto = {
-				trackingData: 'encoded_payload',
-				timestamp: new Date().toISOString(),
-				metadata: {}
+				payload: 'encoded_payload',
+				startTime: new Date().toISOString()
+			};
+			const input: IProcessTrackingDataInput = {
+				...dto,
+				startTime: new Date(dto.startTime)
 			};
 
 			const expectedResult = {
@@ -76,7 +80,7 @@ describe('CustomTrackingService', () => {
 
 			jest.spyOn(commandBus, 'execute').mockResolvedValue(expectedResult);
 
-			const result = await service.submitTrackingData(dto);
+			const result = await service.submitTrackingData(input);
 
 			expect(commandBus.execute).toHaveBeenCalledWith(expect.any(ProcessTrackingDataCommand));
 			expect(result).toEqual(expectedResult);

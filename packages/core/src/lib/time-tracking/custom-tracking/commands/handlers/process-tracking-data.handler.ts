@@ -41,16 +41,11 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
-			const req = RequestContext.currentRequest();
-			let organizationId = (req?.headers?.['organization-id'] as string) || input.organizationId;
-
-			if (!organizationId) {
-				const currentUser = RequestContext.currentUser();
-				organizationId = currentUser?.employee?.organizationId;
-			}
+			const currentUser = RequestContext.currentUser();
+			const organizationId = input.organizationId || currentUser?.employee?.organizationId;
 
 			if (!tenantId || !organizationId) {
-				throw new BadRequestException('Tenant and Organization contexts is required');
+				throw new BadRequestException('Tenant and Organization contexts are required');
 			}
 
 			let employeeId = input.employeeId;
