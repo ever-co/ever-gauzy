@@ -14,6 +14,7 @@ import {
 	NavMenuBuilderService,
 	NavMenuSectionItem,
 	PermissionsService,
+	SocketConnectionService,
 	Store,
 	UsersService
 } from '@gauzy/ui-core/core';
@@ -23,15 +24,15 @@ import { ReportService } from './reports/all-report/report.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-pages',
-    styleUrls: ['pages.component.scss'],
-    template: `
+	selector: 'ngx-pages',
+	styleUrls: ['pages.component.scss'],
+	template: `
 		<ngx-one-column-layout *ngIf="!!menu && user">
 			<ga-main-nav-menu></ga-main-nav-menu>
 			<router-outlet></router-outlet>
 		</ngx-one-column-layout>
 	`,
-    standalone: false
+	standalone: false
 })
 export class PagesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organization: IOrganization;
@@ -51,7 +52,8 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 		private readonly _integrationsService: IntegrationsService,
 		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
 		private readonly _navMenuBuilderService: NavMenuBuilderService,
-		private readonly _permissionsService: PermissionsService
+		private readonly _permissionsService: PermissionsService,
+		private readonly _socketConnectionService: SocketConnectionService
 	) {
 		super(translate);
 	}
@@ -127,6 +129,8 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 			// Add the report menu items to the navigation menu
 			this.addOrRemoveOrganizationReportsMenuItems();
 		});
+
+		if (this.store.token) this._socketConnectionService.connect();
 	}
 
 	/**

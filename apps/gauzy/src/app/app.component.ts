@@ -24,7 +24,6 @@ import {
 	NavigationService,
 	SelectorBuilderService,
 	SeoService,
-	SocketConnectionService,
 	Store
 } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
@@ -51,8 +50,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _selectorBuilderService: SelectorBuilderService,
 		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly _navigationService: NavigationService,
-		private readonly _socketConnectionService: SocketConnectionService
+		private readonly _navigationService: NavigationService
 	) {
 		this.getActivateRouterDataEvent();
 		this.getPreferredLanguage();
@@ -115,8 +113,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 		if (Number(this._store.serverConnection) === 0) {
 			this.loading = false;
 		}
-
-		if (this._store.token) this._socketConnectionService.connect();
 	}
 
 	/**

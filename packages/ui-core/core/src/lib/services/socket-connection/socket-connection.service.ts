@@ -21,6 +21,11 @@ export class SocketConnectionService {
 		const token = this.store.token;
 		const baseUrl = environment.API_BASE_URL;
 
+		if (this.socket && this.socket.connected) {
+			console.log('⚠️ Socket already connected, skipping...');
+			return;
+		}
+
 		// If no token is available, redirect to the login page
 		if (!token) {
 			console.warn('No token found, redirecting to login...');
