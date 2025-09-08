@@ -324,6 +324,11 @@
     <script>
         // IPC communication with main process via preload script
         const { electronAPI } = window;
+        
+        // Check if electronAPI is available
+        if (!electronAPI) {
+            console.error('Electron API not available. Make sure preload script is loaded correctly.');
+        }
 
         let serverStatus = {
             isRunning: false,
@@ -388,6 +393,11 @@
         // Refresh server status
         async function refreshStatus() {
             try {
+                if (!electronAPI) {
+                    addLogEntry('Electron API not available', 'error');
+                    return;
+                }
+                
                 addLogEntry('Refreshing server status...', 'info');
                 const status = await electronAPI.getMcpStatus();
                 serverStatus = status;
@@ -395,12 +405,23 @@
                 addLogEntry(`Status updated: ${status.status}`, 'info');
             } catch (error) {
                 addLogEntry(`Error refreshing status: ${error.message}`, 'error');
+                // Update UI to show error state
+                statusIcon.className = 'status-icon unknown';
+                statusIcon.textContent = '⚠️';
+                statusTitle.textContent = 'Connection Error';
+                statusDescription.textContent = 'Failed to connect to MCP server';
+                connectionStatusEl.textContent = 'Error';
             }
         }
 
         // Restart server
         async function restartServer() {
             try {
+                if (!electronAPI) {
+                    addLogEntry('Electron API not available', 'error');
+                    return;
+                }
+                
                 restartBtn.disabled = true;
                 addLogEntry('Restarting MCP server...', 'info');
                 const result = await electronAPI.restartMcpServer();
@@ -423,17 +444,16 @@
         // Event listeners
         restartBtn.addEventListener('click', restartServer);
         refreshBtn.addEventListener('click', refreshStatus);
+        document.getElementById('clearLogsBtn').addEventListener('click', clearLogs);
 
         // Initial status check
         refreshStatus();
 
-        // Periodic status updates
-        const tenSecondInterval = setInterval(refreshStatus, 10000); // Check every 10 seconds
-        const statusInterval = setInterval(refreshStatus, 1000);
+        // Periodic status updates (every 10 seconds)
+        const statusInterval = setInterval(refreshStatus, 10000);
 
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
-            clearInterval(tenSecondInterval);
             clearInterval(statusInterval);
         });
 

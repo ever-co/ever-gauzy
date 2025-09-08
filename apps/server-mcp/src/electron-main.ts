@@ -3,21 +3,29 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-import { app, BrowserWindow, shell, ipcMain, Menu, Tray, nativeImage, dialog, nativeTheme, screen } from 'electron';
-import type { BrowserWindow as BrowserWindowType, Tray as TrayType } from 'electron';
+// Import electron modules with error handling
+let app: any, BrowserWindow: any, shell: any, ipcMain: any, Menu: any, Tray: any, nativeImage: any, dialog: any, nativeTheme: any, screen: any;
+
+try {
+	const electron = require('electron');
+	({ app, BrowserWindow, shell, ipcMain, Menu, Tray, nativeImage, dialog, nativeTheme, screen } = electron);
+	console.log('Electron modules loaded successfully');
+} catch (error) {
+	console.error('Failed to load electron modules:', error);
+	console.error('This application must be run in an Electron environment');
+	process.exit(1);
+}
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
-import pkg from 'electron-updater';
-const { autoUpdater } = pkg;
-import titlebarPkg from 'custom-electron-titlebar/main';
-const { setupTitlebar } = titlebarPkg;
+// Use require for CommonJS modules that may not have proper ES module exports
+const { setupTitlebar } = require('custom-electron-titlebar/main');
 
 // Import environment
 import { environment } from '@gauzy/mcp-server';
 
 // Import electron-store (CommonJS module)
-import Store from 'electron-store';
+const Store = require('electron-store');
 
 // Import MCP Server Manager from shared package
 import { McpServerManager } from '@gauzy/mcp-server';
@@ -34,35 +42,53 @@ setupTitlebar();
 log.transports.file.level = 'info';
 log.transports.console.level = 'debug';
 
-let mainWindow: BrowserWindowType | null = null;
-let tray: TrayType | null = null;
+let mainWindow: any | null = null;
+let tray: any | null = null;
 let mcpServerManager: McpServerManager | null = null;
-const store = new Store();
+let store: any = null;
 
 // Only set specific environment variables that are needed
 if (environment.baseUrl) process.env.API_BASE_URL = environment.baseUrl;
 if (environment.apiTimeout) process.env.API_TIMEOUT = String(environment.apiTimeout);
 if (environment.debug !== undefined) process.env.GAUZY_MCP_DEBUG = String(environment.debug);
 
-// the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
-process.env.GAUZY_USER_PATH = app.getPath('userData');
-log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
-
-// Set app name
-app.setName(environment.mcpAppName);
-
-/* Setting the app user model id for the app. */
-if (process.platform === 'win32') {
-	app.setAppUserModelId(environment.appId);
+// Set unlimited listeners
+try {
+	if (ipcMain && typeof ipcMain.setMaxListeners === 'function') {
+		ipcMain.setMaxListeners(0);
+	} else {
+		console.warn('ipcMain.setMaxListeners not available');
+	}
+} catch (error) {
+	console.error('Failed to set max listeners on ipcMain:', error);
 }
 
-// Set unlimited listeners
-ipcMain.setMaxListeners(0);
+// Set security settings - these are safe to call before app ready
+try {
+	if (app && app.commandLine) {
+		app.commandLine.appendSwitch('disable-http2');
+		app.commandLine.appendSwitch('in-process-gpu');
+
+		// Fix DevTools autofill and console errors
+		app.commandLine.appendSwitch('disable-features', 'Autofill');
+		app.commandLine.appendSwitch('disable-background-timer-throttling');
+		app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+		app.commandLine.appendSwitch('disable-renderer-backgrounding');
+	} else {
+		console.warn('app.commandLine not available');
+	}
+} catch (error) {
+	console.error('Failed to set app command line switches:', error);
+}
 
 // Handle app events
-app.whenReady().then(async () => {
+if (app && typeof app.whenReady === 'function') {
+	app.whenReady().then(async () => {
 	try {
 		log.info('App is ready');
+
+		// Initialize app-specific configurations that require app to be ready
+		initializeAppConfiguration();
 
 		await createMainWindow();
 		setupApplicationMenu();
@@ -79,47 +105,58 @@ app.whenReady().then(async () => {
 
 		// Setup auto-updater event listeners
 		setupAutoUpdater();
-
-		// Handle auto-updater
-		if (environment.production) {
-			autoUpdater.checkForUpdatesAndNotify();
-		}
 	} catch (error) {
 		log.error('Error during app initialization:', error);
 	}
-});
+	});
+} else {
+	console.error('Electron app is not available - this should only run in an Electron environment');
+	process.exit(1);
+}
 
-app.on('window-all-closed', () => {
-	if (process.platform !== 'darwin') {
-		app.quit();
+function initializeAppConfiguration(): void {
+	// Set app-specific configurations that require app to be ready
+	try {
+		// Set app name
+		app.setName(environment.mcpAppName);
+
+		/* Setting the app user model id for the app. */
+		if (process.platform === 'win32') {
+			app.setAppUserModelId(environment.appId);
+		}
+
+		// the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
+		process.env.GAUZY_USER_PATH = app.getPath('userData');
+		log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
+	} catch (error) {
+		log.error('Error initializing app configuration:', error);
 	}
-});
+}
 
-app.on('activate', async () => {
-	if (BrowserWindow.getAllWindows().length === 0) {
-		await createMainWindow();
-	} else if (mainWindow) {
-		// If window exists but is hidden, show it
-		mainWindow.show();
-		mainWindow.focus();
-	}
-});
+if (app && typeof app.on === 'function') {
+	app.on('window-all-closed', () => {
+		if (process.platform !== 'darwin' && app && typeof app.quit === 'function') {
+			app.quit();
+		}
+	});
 
-app.on('before-quit', async () => {
-	if (mcpServerManager) {
-		await mcpServerManager.stop();
-	}
-});
+	app.on('activate', async () => {
+		if (BrowserWindow && BrowserWindow.getAllWindows().length === 0) {
+			await createMainWindow();
+		} else if (mainWindow) {
+			// If window exists but is hidden, show it
+			mainWindow.show();
+			mainWindow.focus();
+		}
+	});
 
-// Set security settings
-app.commandLine.appendSwitch('disable-http2');
-app.commandLine.appendSwitch('in-process-gpu');
+	app.on('before-quit', async () => {
+		if (mcpServerManager) {
+			await mcpServerManager.stop();
+		}
+	});
+}
 
-// Fix DevTools autofill and console errors
-app.commandLine.appendSwitch('disable-features', 'Autofill');
-app.commandLine.appendSwitch('disable-background-timer-throttling');
-app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
-app.commandLine.appendSwitch('disable-renderer-backgrounding');
 
 async function createMainWindow(): Promise<void> {
 	// Create an enhanced status window for the MCP server
@@ -258,6 +295,21 @@ async function createMainWindow(): Promise<void> {
 		} catch (error) {
 			log.error('Error saving theme:', error);
 			return false;
+		}
+	});
+
+	// Window management handlers
+	ipcMain.on('expand_window', () => {
+		if (mainWindow) {
+			try {
+				if (mainWindow.isMaximized()) {
+					mainWindow.unmaximize();
+				} else {
+					mainWindow.maximize();
+				}
+			} catch (error) {
+				log.error('Error expanding/contracting window:', error);
+			}
 		}
 	});
 }
@@ -434,6 +486,9 @@ function setupTray(): void {
 }
 
 function setupAutoUpdater(): void {
+	// Import autoUpdater only when needed, after app is ready
+	const { autoUpdater } = require('electron-updater');
+	
 	autoUpdater.on('checking-for-update', () => {
 		log.info('Checking for update...');
 	});
@@ -467,4 +522,9 @@ function setupAutoUpdater(): void {
 			}
 		});
 	});
+	
+	// Handle auto-updater
+	if (environment.production) {
+		autoUpdater.checkForUpdatesAndNotify();
+	}
 }
