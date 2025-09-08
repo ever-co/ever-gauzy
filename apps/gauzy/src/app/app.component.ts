@@ -116,7 +116,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			this.loading = false;
 		}
 
-		this._socketConnectionService.connect();
+		if (this._store.token) this._socketConnectionService.connect();
 	}
 
 	/**
