@@ -529,11 +529,9 @@ export interface IDeleteTimeLog extends IDeleteEntity {
 /**
  * Interface for processing custom tracking data
  */
-export interface IProcessTrackingDataInput {
+export interface IProcessTrackingDataInput extends IBasePerTenantAndOrganizationEntityModel {
 	payload: string;
 	startTime?: Date;
-	organizationId?: ID;
-	tenantId?: ID;
 	employeeId?: ID;
 }
 
