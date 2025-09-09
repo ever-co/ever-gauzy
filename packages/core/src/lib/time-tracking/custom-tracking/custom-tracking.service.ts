@@ -18,7 +18,7 @@ import { prepareSQLQuery as p } from '../../database/database.helper';
 import { TimeSlot } from '../time-slot/time-slot.entity';
 import { TimeSlotSession } from '../time-slot-session/time-slot-session.entity';
 import { CustomTrackingSessionsQueryDTO } from './dto';
-import { ProcessTrackingDataCommand } from './commands';
+import { ProcessTrackingDataCommand, CustomTrackingBulkCreateCommand } from './commands';
 import { TypeOrmTimeSlotRepository } from '../time-slot/repository/type-orm-time-slot.repository';
 import { MikroOrmTimeSlotRepository } from '../time-slot/repository/mikro-orm-time-slot.repository';
 import { TypeOrmTimeSlotSessionRepository } from '../time-slot-session/repository/type-orm-time-slot-session.repository';
@@ -58,6 +58,47 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 				startTime: new Date(startTime)
 			})
 		);
+	}
+
+	/**
+	 * Submit bulk custom tracking data
+	 */
+	async submitBulkTrackingData(input: IProcessTrackingDataInput[]): Promise<{
+		results: Array<{
+			success: boolean;
+			sessionId: string;
+			timeSlotId: string;
+			message: string;
+			session: ITrackingSession | null;
+			index: number;
+			error?: string;
+		}>;
+		summary: {
+			total: number;
+			successful: number;
+			failed: number;
+		};
+	}> {
+		if (!input || !Array.isArray(input) || input.length === 0) {
+			throw new BadRequestException('Invalid bulk input: array of tracking data is required');
+		}
+
+		// Execute bulk creation command
+		const results = await this.commandBus.execute(new CustomTrackingBulkCreateCommand(input));
+
+		// Calculate summary statistics
+		const total = results.length;
+		const successful = results.filter((r) => r.success).length;
+		const failed = total - successful;
+
+		return {
+			results,
+			summary: {
+				total,
+				successful,
+				failed
+			}
+		};
 	}
 
 	/**
