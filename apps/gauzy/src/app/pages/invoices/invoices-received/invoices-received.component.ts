@@ -44,14 +44,14 @@ import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-do
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-invoices-received',
-    templateUrl: './invoices-received.component.html',
-    styleUrls: ['./invoices-received.component.scss'],
-    standalone: false
+	selector: 'ga-invoices-received',
+	templateUrl: './invoices-received.component.html',
+	styleUrls: ['./invoices-received.component.scss'],
+	standalone: false
 })
 export class InvoicesReceivedComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-	public loading: boolean = false;
-	public disableButton: boolean = true;
+	public loading = false;
+	public disableButton = true;
 	public settingsSmartTable: object;
 	public smartTableSource: ServerDataSource;
 	public selectedInvoice: IInvoice;
@@ -68,7 +68,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 	/**
 	 * Represents a component property for handling the estimate status.
 	 */
-	private _isEstimate: boolean = false;
+	private _isEstimate = false;
 	/**
 	 * Gets the current estimate status.
 	 * @returns The current estimate status.
@@ -411,7 +411,9 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 			}
 		};
 		if (this.columns.includes(InvoiceColumnsEnum.CONTACT)) {
-			this.settingsSmartTable['columns']['toContact'] = {
+			// TODO: originally was this.settingsSmartTable['columns']['toContact'].
+			// After the task will be create, rework it in the same way as it was done for invoices, in order to maintain support for the two types of invoices
+			this.settingsSmartTable['columns']['fromUser'] = {
 				title: this.getTranslation('INVOICES_PAGE.SENDER'),
 				type: 'custom',
 				isFilterable: false,
