@@ -536,6 +536,13 @@ export interface IProcessTrackingDataInput extends IBasePerTenantAndOrganization
 }
 
 /**
+ * Interface for bulk processing custom tracking data
+ */
+export interface IProcessTrackingDataBulkInput {
+	list: IProcessTrackingDataInput[];
+}
+
+/**
  * Interface for tracking session payload
  */
 export interface ITrackingPayload {
