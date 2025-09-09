@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const electronMainPath = path.join(__dirname, '../../dist/apps/server-mcp/src/electron-main.js');
+const electronMainPath = path.join(__dirname, '../../dist/apps/server-mcp/main.js');
 
 // Check if the electron main file exists
 if (!fs.existsSync(electronMainPath)) {

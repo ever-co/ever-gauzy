@@ -87,12 +87,21 @@ if (app && typeof app.whenReady === 'function') {
 	try {
 		log.info('App is ready');
 
+		// Initialize electron-store
+		try {
+			const Store = require('electron-store');
+			store = new Store();
+			log.info('Electron store initialized successfully');
+		} catch (error) {
+			log.error('Failed to initialize electron store:', error);
+		}
+
 		// Initialize app-specific configurations that require app to be ready
 		initializeAppConfiguration();
 
 		await createMainWindow();
-		setupApplicationMenu();
-		setupTray();
+		// setupApplicationMenu();
+		// setupTray();
 
 		// Initialize MCP Server
 		try {
@@ -104,7 +113,7 @@ if (app && typeof app.whenReady === 'function') {
 		}
 
 		// Setup auto-updater event listeners
-		setupAutoUpdater();
+		// setupAutoUpdater();
 	} catch (error) {
 		log.error('Error during app initialization:', error);
 	}
@@ -159,6 +168,16 @@ if (app && typeof app.on === 'function') {
 
 
 async function createMainWindow(): Promise<void> {
+	// Debug path information
+	// Fix webpack __dirname issue by using app.getAppPath() for runtime resolution
+	const appPath = app.getAppPath();
+	const preloadPath = path.join(appPath, 'preload', 'preload.js');
+	console.log('Main: __dirname =', __dirname);
+	console.log('Main: app.getAppPath() =', appPath);
+	console.log('Main: Preload path =', preloadPath);
+	console.log('Main: Preload exists =', require('fs').existsSync(preloadPath));
+	console.log('Main: Current working directory =', process.cwd());
+
 	// Create an enhanced status window for the MCP server
 	mainWindow = new BrowserWindow({
 		width: 800,
@@ -167,14 +186,14 @@ async function createMainWindow(): Promise<void> {
 		minHeight: 400,
 		show: false,
 		title: 'Gauzy MCP Server Desktop',
-		icon: path.join(__dirname, 'favicon.ico'),
+		icon: path.join(appPath, 'favicon.ico'),
 		center: true,
 		alwaysOnTop: false,
 		skipTaskbar: false,
 		webPreferences: {
 			nodeIntegration: false,
 			contextIsolation: true,
-			preload: path.join(__dirname, 'preload', 'preload.js'),
+			preload: preloadPath,
 			webSecurity: true,
 			backgroundThrottling: false,
 			experimentalFeatures: false,
@@ -186,7 +205,7 @@ async function createMainWindow(): Promise<void> {
 	});
 
 	// Load the enhanced HTML file
-	const htmlPath = path.join(__dirname, 'static', 'index.html');
+	const htmlPath = path.join(appPath, 'static', 'index.html');
 	await mainWindow.loadFile(htmlPath);
 
 	// Suppress DevTools console errors
@@ -246,15 +265,29 @@ async function createMainWindow(): Promise<void> {
 	});
 
 	// IPC handlers for MCP server status
-	ipcMain.handle('get-mcp-status', async () => {
+	if (ipcMain && typeof ipcMain.handle === 'function') {
+		ipcMain.handle('get-mcp-status', async () => {
 		if (mcpServerManager) {
+			const statusData = mcpServerManager.getStatus();
 			return {
 				isRunning: mcpServerManager.isRunning(),
-				status: mcpServerManager.getStatus(),
-				version: mcpServerManager.getVersion()
+				status: statusData.running ? 'Running' : 'Stopped',
+				version: mcpServerManager.getVersion(),
+				port: statusData.port,
+				transport: statusData.transport,
+				url: statusData.url,
+				uptime: statusData.uptime
 			};
 		}
-		return { isRunning: false, status: 'Not initialized', version: 'Unknown' };
+		return {
+			isRunning: false,
+			status: 'Not initialized',
+			version: 'Unknown',
+			port: null,
+			transport: null,
+			url: null,
+			uptime: null
+		};
 	});
 
 	ipcMain.handle('restart-mcp-server', async () => {
@@ -315,7 +348,7 @@ async function createMainWindow(): Promise<void> {
 }
 
 function setupApplicationMenu(): void {
-	const template: Electron.MenuItemConstructorOptions[] = [
+	const template: any[] = [
 		{
 			label: 'File',
 			submenu: [
@@ -485,46 +518,47 @@ function setupTray(): void {
 	});
 }
 
-function setupAutoUpdater(): void {
-	// Import autoUpdater only when needed, after app is ready
-	const { autoUpdater } = require('electron-updater');
-	
-	autoUpdater.on('checking-for-update', () => {
-		log.info('Checking for update...');
-	});
+	function setupAutoUpdater(): void {
+		// Import autoUpdater only when needed, after app is ready
+		const { autoUpdater } = require('electron-updater');
 
-	autoUpdater.on('update-available', (info) => {
-		log.info('Update available:', info);
-	});
-
-	autoUpdater.on('update-not-available', (info) => {
-		log.info('Update not available:', info);
-	});
-
-	autoUpdater.on('error', (err) => {
-		log.error('AutoUpdater error:', err);
-	});
-
-	autoUpdater.on('download-progress', (progressObj) => {
-		log.info('Download progress:', progressObj);
-	});
-
-	autoUpdater.on('update-downloaded', (info) => {
-		log.info('Update downloaded:', info);
-		dialog.showMessageBox(mainWindow || undefined, {
-			type: 'info',
-			title: 'Update Available',
-			message: 'A new version has been downloaded. Restart now to apply the update?',
-			buttons: ['Restart', 'Later']
-		}).then((result) => {
-			if (result.response === 0) {
-				autoUpdater.quitAndInstall();
-			}
+		autoUpdater.on('checking-for-update', () => {
+			log.info('Checking for update...');
 		});
-	});
-	
-	// Handle auto-updater
-	if (environment.production) {
-		autoUpdater.checkForUpdatesAndNotify();
+
+		autoUpdater.on('update-available', (info) => {
+			log.info('Update available:', info);
+		});
+
+		autoUpdater.on('update-not-available', (info) => {
+			log.info('Update not available:', info);
+		});
+
+		autoUpdater.on('error', (err) => {
+			log.error('AutoUpdater error:', err);
+		});
+
+		autoUpdater.on('download-progress', (progressObj) => {
+			log.info('Download progress:', progressObj);
+		});
+
+		autoUpdater.on('update-downloaded', (info) => {
+			log.info('Update downloaded:', info);
+			dialog.showMessageBox(mainWindow || undefined, {
+				type: 'info',
+				title: 'Update Available',
+				message: 'A new version has been downloaded. Restart now to apply the update?',
+				buttons: ['Restart', 'Later']
+			}).then((result) => {
+				if (result.response === 0) {
+					autoUpdater.quitAndInstall();
+				}
+			});
+		});
+
+		// Handle auto-updater
+		if (environment.production) {
+			autoUpdater.checkForUpdatesAndNotify();
+		}
 	}
 }
