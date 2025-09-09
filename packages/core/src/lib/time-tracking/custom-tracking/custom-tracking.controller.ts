@@ -8,7 +8,8 @@ import {
 	HttpStatus,
 	UseGuards,
 	DefaultValuePipe,
-	ParseIntPipe
+	ParseIntPipe,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { TenantPermissionGuard, PermissionGuard } from '../../shared/guards';
@@ -20,9 +21,9 @@ import {
 	IProcessTrackingDataInput
 } from '@gauzy/contracts';
 import { Permissions } from '../../shared/decorators';
-import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe, BulkBodyLoadTransformPipe } from '../../shared/pipes';
 import { CustomTrackingService } from './custom-tracking.service';
-import { CustomTrackingSessionsQueryDTO } from './dto';
+import { CustomTrackingSessionsQueryDTO, CustomTrackingBulkInputDTO } from './dto';
 
 @ApiTags('Custom Tracking')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -56,6 +57,44 @@ export class CustomTrackingController {
 		session: ITrackingSession | null;
 	}> {
 		return await this.customTrackingService.submitTrackingData(input);
+	}
+
+	/**
+	 * Submit bulk custom tracking data
+	 */
+	@ApiOperation({
+		summary: 'Submit bulk custom tracking data',
+		description: 'Submit multiple encoded tracking data entries to be processed in bulk'
+	})
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Bulk custom tracking data submitted successfully'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid bulk tracking data'
+	})
+	@Post('/bulk')
+	async submitBulkTrackingData(
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true }))
+		input: CustomTrackingBulkInputDTO
+	): Promise<{
+		results: Array<{
+			success: boolean;
+			sessionId: string;
+			timeSlotId: string;
+			message: string;
+			session: ITrackingSession | null;
+			index: number;
+			error?: string;
+		}>;
+		summary: {
+			total: number;
+			successful: number;
+			failed: number;
+		};
+	}> {
+		return await this.customTrackingService.submitBulkTrackingData(input.list);
 	}
 
 	/**
