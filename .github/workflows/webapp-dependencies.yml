@@ -8,6 +8,16 @@ on:
         required: false
         type: string
         default: ''
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        type: choice
+        required: true
+        default: 'staging'
+        options:
+          - staging
+          - production
 
 jobs:
   check-web-changes:
@@ -20,13 +30,20 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ inputs.ref || github.ref }}
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Check for changes in dependency files
         id: check-web-changes
         run: |
-          # Formanual triggers or workflow calls, check if files have changed in the last commit
-          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+          # For manual triggers or workflow calls, check if files have changed
+          if git rev-parse --verify HEAD^1 >/dev/null 2>&1; then
+            # If we have a parent commit, compare with it
+            CHANGED_FILES=$(git diff --name-only HEAD^1 HEAD)
+          else
+            # If this is the first commit or we're on a different branch
+            # List all tracked files
+            CHANGED_FILES=$(git ls-tree -r --name-only HEAD)
+          fi
           # Define the pattern for dependency-related files
           DEPENDENCY_PATTERN="^package\.json$|^yarn\.lock$|^apps\/gauzy\/package\.json$"
           DEPENDENCY_PATTERN="$DEPENDENCY_PATTERN|^packages\/(contracts|ui-auth|ui-config|ui-core)\/.*package\.json$"
@@ -56,8 +73,8 @@ jobs:
     needs: check-web-changes
     if: needs.check-web-changes.outputs.changes_detected == 'true'
     runs-on: ubuntu-latest
-    # Determine environment based on ref (if tag or dev-dspot branch)
-    environment: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging' }}
+    # Determine environment based on manual input or ref
+    environment: ${{ inputs.environment || (startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging') }}
     permissions:
       contents: read
       id-token: write
