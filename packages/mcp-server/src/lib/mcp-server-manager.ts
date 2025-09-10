@@ -12,11 +12,13 @@ const logger = new Logger('McpServerManager');
 export interface McpServerStatus {
 	running: boolean;
 	port: number | null;
-	version: string | null;
+	version: string;
 	transport?: 'stdio' | 'http' | 'websocket';
 	url?: string;
 	uptime?: number;
 	lastError?: string;
+	initialized: boolean;
+	connectionString?: string;
 }
 
 export class McpServerManager {
@@ -41,7 +43,16 @@ export class McpServerManager {
 	}
 
 	getVersion(): string {
-		return this._version || 'Unknown';
+		if (!this._version) {
+			try {
+				// Fallback to version import if not set
+				return version || 'Unknown';
+			} catch (error) {
+				logger.warn('Failed to get version:', error);
+				return 'Unknown';
+			}
+		}
+		return this._version;
 	}
 
 	async restart(): Promise<boolean> {
@@ -57,6 +68,10 @@ export class McpServerManager {
 	}
 
 	getStatus(): McpServerStatus {
+		const isInitialized = this._transport !== null;
+		const connectionString = this._transport?.url ||
+			(this._transport?.type === 'stdio' ? 'stdio' : 'No connection');
+
 		return {
 			running: this._isRunning,
 			port: this._transport?.type === 'http' || this._transport?.type === 'websocket' ? this.getHttpPort() : null,
@@ -64,7 +79,9 @@ export class McpServerManager {
 			transport: this._transport?.type as 'stdio' | 'http' | 'websocket',
 			url: this._transport?.url,
 			uptime: this._startTime ? Date.now() - this._startTime.getTime() : undefined,
-			lastError: this._lastError || undefined
+			lastError: this._lastError || undefined,
+			initialized: isInitialized,
+			connectionString
 		};
 	}
 
