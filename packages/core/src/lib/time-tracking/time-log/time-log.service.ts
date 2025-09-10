@@ -186,6 +186,85 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Retrieves all time logs based on the provided input in chunks.
+	 * This method prevents loading too many records into memory at once
+	 * by fetching them in smaller batches and concatenating the results.
+	 *
+	 * @param request The input parameters for fetching time logs.
+	 * @returns A Promise that resolves to an array of time logs.
+	 */
+	async getAllTimeLogsInChunks(request: IGetTimeLogReportInput): Promise<ITimeLog[]> {
+		const limit = 100; // number of records per query batch
+		let page = 0;
+		let results: ITimeLog[] = [];
+		let hasMore = true;
+
+		while (hasMore) {
+			// Create a new query builder for the current batch
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+			// Join with related entities (employee, etc.)
+			query.innerJoin(`${query.alias}.employee`, 'employee');
+
+			// Define select fields, relations, and pagination options
+			query.setFindOptions({
+				select: {
+					project: {
+						id: true,
+						name: true,
+						imageUrl: true,
+						membersCount: true
+					},
+					task: TimeLogService.TASK_SELECT_FIELDS,
+					organizationContact: {
+						id: true,
+						name: true,
+						imageUrl: true
+					},
+					employee: {
+						id: true,
+						isAway: true,
+						isOnline: true,
+						reWeeklyLimit: true,
+						user: {
+							id: true,
+							firstName: true,
+							lastName: true,
+							imageUrl: true
+						}
+					}
+				},
+				relations: [...(request.relations ? request.relations : [])],
+				order: {
+					startedAt: 'ASC'
+				},
+				skip: page * limit,
+				take: limit
+			});
+
+			// Apply filters using the provided query builder helper
+			query.where((qb: SelectQueryBuilder<TimeLog>) => {
+				this.getFilterTimeLogQuery(qb, request, true);
+			});
+
+			// Fetch a batch of time logs
+			let chunk = await query.getMany();
+
+			// Adjust boundaries (startedAt, stoppedAt) and recalculate duration
+			chunk = fixTimeLogsBoundary(chunk, request.startDate, request.endDate, request.timeZone);
+
+			// Append the batch to the overall result set
+			results = results.concat(chunk);
+
+			// Determine if there are more records to fetch
+			hasMore = chunk.length === limit;
+			page++;
+		}
+
+		return results;
+	}
+
+	/**
 	 * Retrieves paginated time logs with optional filters.
 	 *
 	 * This method queries the database for time logs using pagination

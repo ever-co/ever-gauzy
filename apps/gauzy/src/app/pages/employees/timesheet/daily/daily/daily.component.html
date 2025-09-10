@@ -59,7 +59,7 @@
 					</div>
 				</div>
 			</div>
-			<div [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary" class="custom-body">
+			<div [nbSpinner]="loading$ | async" nbSpinnerSize="giant" nbSpinnerStatus="primary" class="custom-body">
 				<ng-container *ngIf="logs$ | async">
 					<ng-template [ngIf]="logs?.length > 0" [ngIfElse]="notFound">
 						<div class="content" style="cursor: pointer">
@@ -176,6 +176,18 @@
 							</ngx-no-data-message>
 						</div>
 					</ng-template>
+				</ng-container>
+				<ng-container *ngIf="logs$ | async">
+					<div class="pagination-custom">
+						<ga-pagination
+							[doEmit]="false"
+							[totalItems]="pagination?.totalItems"
+							[itemsPerPage]="pagination?.itemsPerPage"
+							[activePage]="pagination?.activePage"
+							(selectedOption)="onUpdateOption($event)"
+							(selectedPage)="onPageChange($event)"
+						></ga-pagination>
+					</div>
 				</ng-container>
 			</div>
 		</div>

@@ -23,7 +23,8 @@ import {
 	ISubmitTimesheetInput,
 	ID,
 	IDeleteTimeSlot,
-	IDeleteScreenshot
+	IDeleteScreenshot,
+	IPagination
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
@@ -104,6 +105,37 @@ export class TimesheetService {
 		return firstValueFrom(
 			this.http.get<ITimeLog[]>(`${API_PREFIX}/timesheet/time-log`, {
 				params: toParams({ ...request, relations })
+			})
+		);
+	}
+
+	/**
+	 * Fetches paginated time logs from the backend.
+	 *
+	 * @param request Optional request payload containing filters, pagination info, etc.
+	 * @param relations Optional array of related entities to include in the response.
+	 * @returns A Promise that resolves with a paginated list of time logs.
+	 */
+	getPaginatedTimeLogs(request?: any, relations = []) {
+		return firstValueFrom(
+			this.http.get<IPagination<ITimeLog>>(`${API_PREFIX}/timesheet/time-log/pagination`, {
+				params: toParams({ ...request, relations }) // Convert request object to HTTP query parameters
+			})
+		);
+	}
+
+	/**
+	 * Fetches a chunk (batch) of time logs from the backend.
+	 * This is useful for loading large datasets in smaller pieces to avoid overloading the server.
+	 *
+	 * @param request Optional request payload containing filters, date ranges, etc.
+	 * @param relations Optional array of related entities to include in the response.
+	 * @returns A Promise that resolves with an array of time logs.
+	 */
+	getTimeLogsChunk(request?: IGetTimeLogInput, relations = []) {
+		return firstValueFrom(
+			this.http.get<ITimeLog[]>(`${API_PREFIX}/timesheet/time-log/chunk`, {
+				params: toParams({ ...request, relations }) // Convert request object to HTTP query parameters
 			})
 		);
 	}
@@ -250,7 +282,7 @@ export class TimesheetService {
 	 * @param request - The request object containing parameters for deletion.
 	 * @returns A Promise that resolves when the time slots are deleted.
 	 */
-	deleteTimeSlots(request: IDeleteTimeSlot): Promise<Object> {
+	deleteTimeSlots(request: IDeleteTimeSlot): Promise<object> {
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/timesheet/time-slot`, {
 				params: toParams(request)
@@ -273,7 +305,7 @@ export class TimesheetService {
 	 * @param params - The parameters that include tenant and organization context.
 	 * @returns A Promise that resolves to an object containing the result of the deletion.
 	 */
-	deleteScreenshot(id: ID, params: IDeleteScreenshot): Promise<Object> {
+	deleteScreenshot(id: ID, params: IDeleteScreenshot): Promise<object> {
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/timesheet/screenshot/${id}`, {
 				params: toParams(params)

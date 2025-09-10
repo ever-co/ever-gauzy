@@ -32,7 +32,7 @@ import {
 	TimeZoneService,
 	EditTimeLogModalComponent
 } from '@gauzy/ui-core/shared';
-import { combineLatest, Subject, takeUntil } from 'rxjs';
+import { combineLatest, debounceTime, Subject, takeUntil } from 'rxjs';
 
 interface WeeklyDayData {
 	project?: IOrganizationProject;
@@ -88,6 +88,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 		this.subject$
 			.pipe(
 				filter(() => !!this.organization),
+				debounceTime(200),
 				tap(() => this.updateWeekDayList()),
 				tap(() => this.prepareRequest()),
 				untilDestroyed(this)
@@ -100,12 +101,15 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.timeLogEventService.changes$.pipe(untilDestroyed(this)).subscribe((action) => {
-			if (action === 'added' || action === 'deleted') {
-				this.subject$.next(true);
-				this.gauzyFiltersComponent.getStatistics();
-			}
-		});
+		this.timeLogEventService.changes$
+			.pipe(
+				filter((action) => action === 'added' || action === 'deleted'),
+				debounceTime(200),
+				tap(() => this.subject$.next(true)),
+				tap(() => this.gauzyFiltersComponent.getStatistics()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.timesheetService.updateLog$
 			.pipe(
 				filter((val) => val === true),
@@ -225,7 +229,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 
 		this.loading = true;
 		try {
-			const logs = await this.timesheetService.getTimeLogs(payloads, ['project', 'employee.user', 'task']);
+			const logs = await this.timesheetService.getTimeLogsChunk(payloads, ['project', 'employee.user', 'task']);
 
 			this.weekData = chain(logs)
 				.groupBy('projectId')

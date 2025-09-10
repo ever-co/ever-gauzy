@@ -269,6 +269,30 @@ export class TimeLogController {
 	}
 
 	/**
+	 * Get all time logs in chunks based on provided options.
+	 * This endpoint retrieves all records by fetching them in batches
+	 * to avoid memory issues with very large datasets.
+	 *
+	 * @param options The options for querying time logs.
+	 * @returns An array of all time logs matching the filter criteria.
+	 */
+	@ApiOperation({ summary: 'Get All Time Logs (Chunked)' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully retrieved all time logs in chunks',
+		isArray: true
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input. The response body may contain clues as to what went wrong.'
+	})
+	@Get('chunk')
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async getAllLogs(@Query() options: TimeLogQueryDTO): Promise<ITimeLog[]> {
+		return await this._timeLogService.getAllTimeLogsInChunks(options);
+	}
+
+	/**
 	 * GET time logs with pagination and filtering options.
 	 *
 	 * This endpoint retrieves time logs based on pagination and optional filtering criteria.

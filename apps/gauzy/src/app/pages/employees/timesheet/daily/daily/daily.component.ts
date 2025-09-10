@@ -1,5 +1,5 @@
 // tslint:disable: nx-enforce-module-boundaries
-import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
@@ -29,7 +29,8 @@ import {
 	TimeLogSourceEnum,
 	TimeLogPartialStatus,
 	IDeleteTimeLogData,
-	IDateRangePicker
+	IDateRangePicker,
+	IPagination
 } from '@gauzy/contracts';
 import {
 	DateRangePickerBuilderService,
@@ -46,6 +47,7 @@ import {
 	ConfirmComponent,
 	EditTimeLogModalComponent,
 	GauzyFiltersComponent,
+	IPaginationBase,
 	TimeZoneService,
 	ViewTimeLogModalComponent
 } from '@gauzy/ui-core/shared';
@@ -61,19 +63,25 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	public PermissionsEnum = PermissionsEnum; // Enum for permissions.
 	public logs$: Observable<ITimeLog[]>; // Observable for an array of Time Logs.
 	public logs: ITimeLog[] = []; // Array of organization time logs.
-	public loading = false; // Flag to indicate if data loading is in progress.
 	public disableButton = true; // Flag to indicate if button is disabled.
 	public allChecked = false; // All checked flag.
 	public filters: ITimeLogFilters = this.request; // Time log filters. Assuming request is defined somewhere.
 	public contextMenus: NbMenuItem[] = [];
 	public limitReached = false;
 	public hasPermission = false;
+	public pagination: IPaginationBase = {
+		activePage: 1,
+		itemsPerPage: 10,
+		totalItems: 0
+	};
+	public perPage: number = this.pagination.itemsPerPage;
 
 	//Reference to the GauzyFiltersComponent using @ViewChild.
 	@ViewChild(GauzyFiltersComponent) private readonly gauzyFiltersComponent: GauzyFiltersComponent;
 
 	// Observable containing the date picker configuration.
 	public datePickerConfig$: Observable<IDatePickerConfig> = this.dateRangePickerBuilderService.datePickerConfig$;
+	public loading$ = new BehaviorSubject<boolean>(false);
 
 	// BehaviorSubject holding the time log filters as payloads.
 	private readonly payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
@@ -85,6 +93,8 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	private readonly workedThisWeek$: Observable<number> = this._timeTrackerService.workedThisWeek$;
 	private readonly reWeeklyLimit$: Observable<number> = this._timeTrackerService.reWeeklyLimit$;
 	private readonly destroy$ = new Subject<void>();
+
+	private total: number;
 
 	// Represents the selected log along with its selection status.
 	public selectedLog: {
@@ -102,6 +112,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 		private readonly _route: ActivatedRoute,
 		private readonly _toastrService: ToastrService,
 		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _cdr: ChangeDetectorRef,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		protected readonly timeZoneService: TimeZoneService
@@ -145,6 +156,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 			.pipe(
 				// Filter to ensure there is a valid organization
 				filter(() => !!this.organization),
+				debounceTime(200),
 				// Tap to prepare the request
 				tap(() => this.prepareRequest()),
 				// Tap to set allChecked to false
@@ -215,6 +227,11 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 			filter((payloads: ITimeLogFilters) => !!this.organization && !!payloads),
 			// SwitchMap to fetch time logs using provided payloads
 			switchMap(() => this._getDailyLogs()),
+			tap((pagination) => {
+				this.total = pagination.total;
+				this.pagination.totalItems = pagination.total;
+			}),
+			map((pagination) => pagination.items),
 			// Ensure lifecycle management to avoid memory leaks
 			untilDestroyed(this)
 		);
@@ -230,6 +247,11 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 				filter((value) => !!this.organization && !!value),
 				// SwitchMap to fetch time logs using provided payloads
 				switchMap(() => this._getDailyLogs()),
+				tap((pagination) => {
+					this.total = pagination.total;
+					this.pagination.totalItems = pagination.total;
+				}),
+				map((pagination) => pagination.items),
 				// Ensure lifecycle management to avoid memory leaks
 				untilDestroyed(this)
 			)
@@ -239,48 +261,96 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	/**
 	 * Retrieves daily time logs based on payloads and handles observables.
 	 */
-	private _getDailyLogs(): Observable<ITimeLog[]> {
+	private _getDailyLogs(): Observable<IPagination<ITimeLog>> {
 		// Extract organizationId from the organization object
 		const organizationId = this.organization?.id;
 
-		// Check for a valid organization; return empty array if not valid
+		// If no organization is selected, return an empty result
 		if (!organizationId) {
-			return of([]); // No valid organization, return empty array
+			return of({ items: [], total: 0 });
 		}
 
-		// Set loading to true
-		this.loading = true;
+		// Show loading indicator
+		this.loading$.next(true);
 
-		// Get the current payloads value
+		// Get the current payloads from BehaviorSubject
 		const payloads = this.payloads$.getValue();
 
-		// Invoke the service to fetch time logs with given payloads
-		const api$ = this._timesheetService.getTimeLogs(payloads, [
-			'project',
-			'task',
-			'organizationContact',
-			'employee.user'
-		]);
+		// Calculate pagination parameters (skip and take)
+		const skip = ((this.pagination?.activePage || 1) - 1) * (this.pagination?.itemsPerPage || 10);
+		const take = this.pagination?.itemsPerPage || 10;
 
-		// Convert the promise-based API call to an observable
-		return from(api$).pipe(
-			// Handle API call errors and log them
+		// Merge payloads with pagination parameters
+		const paginatedPayloads = {
+			...payloads,
+			skip,
+			take
+		};
+
+		// Call the service to retrieve paginated time logs
+		return from(
+			this._timesheetService.getPaginatedTimeLogs(paginatedPayloads, [
+				'project',
+				'task',
+				'organizationContact',
+				'employee.user'
+			])
+		).pipe(
+			// Handle errors gracefully and return empty result
 			catchError((error) => {
-				console.error('Error while retrieving daily time logs entries', error);
 				this._errorHandlingService.handleError(error);
-				return of([]); // Return an empty observable to continue stream
+				this.loading$.next(false);
+				this._cdr.detectChanges();
+				return of({ items: [], total: 0 });
 			}),
-			// Update component state with fetched issues
-			tap((logs: ITimeLog[]) => {
-				this.logs = logs;
+			// Update component state with the received data
+			tap((pagination) => {
+				this.logs = pagination.items;
+				this.total = pagination.total;
+				this.pagination.totalItems = pagination.total;
 			}),
-			// Finalize to set loading to false
+			// Always finalize by hiding the loading indicator and triggering change detection
 			finalize(() => {
-				this.loading = false;
+				this.loading$.next(false);
+				this._cdr.detectChanges();
 			}),
-			// Ensure lifecycle management to avoid memory leaks
+			// Automatically unsubscribe when the component is destroyed
 			untilDestroyed(this)
 		);
+	}
+
+	/**
+	 * Updates the number of items per page and refreshes the data.
+	 * Resets pagination to the first page when the limit changes.
+	 */
+	public onUpdateOption(event: number) {
+		this.perPage = event;
+		this.pagination.itemsPerPage = this.perPage;
+		this.pagination.activePage = 1; // reset page on limit change
+
+		// Refresh the data
+		this.refreshTrigger$.next(true);
+	}
+
+	/**
+	 * Handles page change event and refreshes the data.
+	 * Optionally scrolls to the top of the page.
+	 */
+	public onPageChange(selectedPage: number) {
+		this.pagination.activePage = selectedPage;
+
+		// Refresh the data
+		this.refreshTrigger$.next(true);
+
+		// Scroll to top for better UX
+		this.scrollTop();
+	}
+
+	/**
+	 * Smoothly scrolls the window to the top of the page.
+	 */
+	private scrollTop() {
+		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 
 	/**
@@ -318,6 +388,8 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 			...appliedFilter,
 			...this.getFilterRequest(this.request)
 		};
+
+		this.pagination.activePage = 1;
 
 		// Update the payloads$ BehaviorSubject with the new request
 		this.payloads$.next(request);
@@ -438,9 +510,6 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 			// Use await to wait for the promise to resolve
 			await this._timesheetService.deleteLogs(request);
 
-			// Move the checkTimerStatus call outside the try block for consistency
-			this.checkTimerStatus();
-
 			// Display success message
 			this._toastrService.success('TOASTR.MESSAGE.TIME_LOG_DELETED', {
 				name: employee.fullName,
@@ -501,9 +570,6 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 				// Use await to wait for the promise to resolve
 				await this._timesheetService.deleteLogs({ logs, organizationId, tenantId });
 
-				// Move the checkTimerStatus call outside the try block for consistency
-				this.checkTimerStatus();
-
 				// Display success message
 				this._toastrService.success('TOASTR.MESSAGE.TIME_LOGS_DELETED', {
 					organization: this.organization.name
@@ -514,33 +580,6 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 			} finally {
 				this.refreshTrigger$.next(true);
 				this.gauzyFiltersComponent.getStatistics();
-			}
-		}
-	}
-
-	/**
-	 * Checks the timer status for the current user and organization.
-	 */
-	private async checkTimerStatus(): Promise<void> {
-		if (!this.organization) {
-			return;
-		}
-
-		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-		const { employeeId, tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		if (employeeId) {
-			try {
-				await this._timeTrackerService.checkTimerStatus({
-					organizationId,
-					tenantId,
-					source: TimeLogSourceEnum.WEB_TIMER,
-					timeZone
-				});
-			} catch (error) {
-				// Handle the error or display a message if needed
-				console.error('Error while checking timer status:', error);
 			}
 		}
 	}
