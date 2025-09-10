@@ -8,6 +8,7 @@ import {
 	IScreenshot,
 	IEmployee,
 	ITimeLog,
+	ITimeSlotSession,
 	ID,
 	JsonData
 } from '@gauzy/contracts';
@@ -23,6 +24,7 @@ import {
 	VirtualMultiOrmColumn
 } from './../../core/decorators/entity';
 import { TimeSlotMinute } from './time-slot-minute/time-slot-minute.entity';
+import { TimeSlotSession } from '../time-slot-session/time-slot-session.entity';
 import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
 
 @MultiORMEntity('time_slot', { mikroOrmRepository: () => MikroOrmTimeSlotRepository })
@@ -208,6 +210,12 @@ export class TimeSlot extends TenantOrganizationBaseEntity implements ITimeSlot 
 	 */
 	@MultiORMOneToMany(() => TimeSlotMinute, (it) => it.timeSlot, { cascade: true })
 	timeSlotMinutes?: ITimeSlotMinute[];
+
+	/**
+	 * The reference to the `TimeSlotSession` entities associated with this time slot.
+	 */
+	@MultiORMOneToMany(() => TimeSlotSession, (it) => it.timeSlot, { cascade: true })
+	timeSlotSessions?: ITimeSlotSession[];
 
 	/*
 	|--------------------------------------------------------------------------
