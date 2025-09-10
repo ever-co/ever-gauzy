@@ -545,6 +545,13 @@ export class TimeTrackerService implements OnDestroy {
 					throw new Error('Start timer failed, response invalid.');
 				}
 
+				// Update config with startedAt
+				this.timerConfig = {
+					...this.timerConfig,
+					startedAt: startConfig.startedAt,
+					source: TimeLogSourceEnum.WEB_TIMER
+				};
+
 				// Update local state only after successful response
 				this.currentSessionDuration = 0;
 				this.turnOnTimer();

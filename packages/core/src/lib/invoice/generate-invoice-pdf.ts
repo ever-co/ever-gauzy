@@ -61,19 +61,45 @@ export async function generateInvoicePdfDefinition(
 
 	const tableBody: any[] = [];
 
+	// TaxId
 	const taxId = invoice.toOrganization?.taxId ?? organization.taxId;
 	if (taxId) {
 		tableBody.push([{ text: `${translatedText.taxId}:`, bold: true }, { text: taxId }]);
 	}
 
+	// Address + City + Country
 	const address =
 		invoice.toOrganization?.contact?.address ??
 		organizationContact?.contact?.address ??
 		organization?.contact?.address;
-	if (address) {
-		tableBody.push([{ text: `${translatedText.address}:`, bold: true }, { text: address }]);
+
+	const city =
+		invoice.toOrganization?.contact?.city ?? organizationContact?.contact?.city ?? organization?.contact?.city;
+
+	const showCountry =
+		invoice.toOrganization?.contact?.country ??
+		organizationContact?.contact?.country ??
+		organization?.contact?.country;
+
+	if (address || city || showCountry) {
+		let addressLine = '';
+
+		if (address) {
+			addressLine += address;
+		}
+
+		if (city) {
+			addressLine += (address ? ', ' : '') + city;
+		}
+
+		if (showCountry) {
+			addressLine += (city || address ? ', ' : '') + country;
+		}
+
+		tableBody.push([{ text: `${translatedText.address}:`, bold: true }, { text: addressLine }]);
 	}
 
+	// Address2
 	const address2 =
 		invoice.toOrganization?.contact?.address2 ??
 		organizationContact?.contact?.address2 ??
@@ -82,6 +108,7 @@ export async function generateInvoicePdfDefinition(
 		tableBody.push([{ text: `${translatedText.address2}:`, bold: true }, { text: address2 }]);
 	}
 
+	// Postcode
 	const postcode =
 		invoice.toOrganization?.contact?.postcode ??
 		organizationContact?.contact?.postcode ??
@@ -89,14 +116,6 @@ export async function generateInvoicePdfDefinition(
 	if (postcode) {
 		tableBody.push([{ text: `${translatedText.postcode}:`, bold: true }, { text: postcode }]);
 	}
-
-	const city =
-		invoice.toOrganization?.contact?.city ?? organizationContact?.contact?.city ?? organization?.contact?.city;
-	const showCountry =
-		invoice.toOrganization?.contact?.country ??
-		organizationContact?.contact?.country ??
-		organization?.contact?.country;
-
 	const stack: any[] = [
 		{ bold: true, text: `${translatedText.to}:\n` },
 		{
@@ -112,13 +131,6 @@ export async function generateInvoicePdfDefinition(
 				body: tableBody
 			},
 			layout: 'noBorders'
-		});
-	}
-
-	if (city || showCountry) {
-		stack.push({
-			text: `${city ?? ''}${city ? ', ' : ''}${country ?? ''}`,
-			margin: [0, 0, 0, 5]
 		});
 	}
 
