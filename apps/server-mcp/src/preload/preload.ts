@@ -23,8 +23,25 @@ if (contextBridge && ipcRenderer) {
 		console.log('Preload: About to expose electronAPI to main world...');
 		const electronAPIObject = {
 			// MCP Server management
-			getMcpStatus: () => ipcRenderer.invoke('get-mcp-status'),
+			getMcpStatus: async () => {
+				console.log('Preload: getMcpStatus called');
+				try {
+					const result = await ipcRenderer.invoke('get-mcp-status');
+					console.log('Preload: getMcpStatus result:', result);
+					return result;
+				} catch (error) {
+					console.error('Preload: getMcpStatus error:', error);
+					throw error;
+				}
+			},
 			restartMcpServer: () => ipcRenderer.invoke('restart-mcp-server'),
+
+			// Event subscriptions
+			onServerStatusUpdate: (callback: () => void) => {
+				const listener = () => callback();
+				ipcRenderer.on('server-status-update', listener);
+				return () => ipcRenderer.removeListener('server-status-update', listener);
+			},
 
 			// App information
 			getAppVersion: () => ipcRenderer.invoke('get-app-version'),
@@ -39,7 +56,7 @@ if (contextBridge && ipcRenderer) {
 		console.log('Preload: electronAPI object created:', Object.keys(electronAPIObject));
 		contextBridge.exposeInMainWorld('electronAPI', electronAPIObject);
 		console.log('Preload: electronAPI exposed successfully');
-		
+
 		// Verify exposure worked
 		setTimeout(() => {
 			try {

@@ -283,15 +283,27 @@
             <div class="status-details">
                 <div class="detail-item">
                     <h3>Server Status</h3>
-                    <p id="serverStatus">Unknown</p>
+                    <p id="serverStatus">Loading...</p>
                 </div>
                 <div class="detail-item">
                     <h3>Version</h3>
-                    <p id="serverVersion">Unknown</p>
+                    <p id="serverVersion">Loading...</p>
                 </div>
                 <div class="detail-item">
                     <h3>Connection</h3>
                     <p id="connectionStatus">Checking...</p>
+                </div>
+                <div class="detail-item">
+                    <h3>Transport</h3>
+                    <p id="transportType">Detecting...</p>
+                </div>
+                <div class="detail-item">
+                    <h3>Uptime</h3>
+                    <p id="serverUptime">Loading...</p>
+                </div>
+                <div class="detail-item" id="portInfo" style="display: none;">
+                    <h3>Port</h3>
+                    <p id="serverPort">N/A</p>
                 </div>
             </div>
 
@@ -327,16 +339,16 @@
         console.log('HTML: window.electronAPI exists:', !!window.electronAPI);
         console.log('HTML: window keys:', Object.keys(window));
         console.log('HTML: typeof window.electronAPI:', typeof window.electronAPI);
-        
+
         // Wait a bit for electronAPI to be available
         let electronAPI = null;
         let attempts = 0;
         const maxAttempts = 50; // 5 seconds max wait
-        
+
         const checkForElectronAPI = () => {
             attempts++;
             console.log(`HTML: Attempt ${attempts} - checking for electronAPI...`);
-            
+
             if (window.electronAPI) {
                 electronAPI = window.electronAPI;
                 console.log('HTML: electronAPI found!', Object.keys(electronAPI));
@@ -353,7 +365,7 @@
                 return false;
             }
         };
-        
+
         // Add log entry function (declare early so it can be used in showError)
         function addLogEntry(message, type = 'info') {
             const logEntry = document.createElement('div');
@@ -384,19 +396,24 @@
                 statusDescription.textContent = message;
             }
         }
-        
+
         // Start checking immediately
         if (!checkForElectronAPI()) {
             // Will continue checking via setTimeout
         }
-        
+
         function initializeApp() {
             console.log('HTML: Initializing app with electronAPI:', !!electronAPI);
 
             let serverStatus = {
                 isRunning: false,
                 status: 'Unknown',
-                version: 'Unknown'
+                version: 'Unknown',
+                transport: null,
+                port: null,
+                uptime: null,
+                initialized: false,
+                connectionString: 'Unknown'
             };
 
             // DOM elements
@@ -406,31 +423,70 @@
             const serverStatusEl = document.getElementById('serverStatus');
             const serverVersionEl = document.getElementById('serverVersion');
             const connectionStatusEl = document.getElementById('connectionStatus');
+            const transportTypeEl = document.getElementById('transportType');
+            const serverUptimeEl = document.getElementById('serverUptime');
+            const serverPortEl = document.getElementById('serverPort');
+            const portInfoEl = document.getElementById('portInfo');
             const restartBtn = document.getElementById('restartBtn');
             const refreshBtn = document.getElementById('refreshBtn');
             const logsContent = document.getElementById('logsContent');
 
             // Update UI based on server status
             function updateStatusUI() {
-                if (serverStatus.isRunning) {
+                if (serverStatus.isRunning && serverStatus.initialized) {
                     statusIcon.className = 'status-icon running pulse';
                     statusIcon.textContent = '✅';
                     statusTitle.textContent = 'Server Running';
-                    statusDescription.textContent = 'MCP server is active and ready';
+                    statusDescription.textContent = `MCP server is active (${serverStatus.transport || 'unknown transport'})`;
                     serverStatusEl.textContent = 'Active';
-                    connectionStatusEl.textContent = 'Connected';
+                    connectionStatusEl.textContent = serverStatus.connectionString || 'Connected';
+                    restartBtn.disabled = false;
+                } else if (serverStatus.initialized && !serverStatus.isRunning) {
+                    statusIcon.className = 'status-icon stopped';
+                    statusIcon.textContent = '⏹️';
+                    statusTitle.textContent = 'Server Stopped';
+                    statusDescription.textContent = 'MCP server is initialized but not running';
+                    serverStatusEl.textContent = 'Stopped';
+                    connectionStatusEl.textContent = 'Stopped';
                     restartBtn.disabled = false;
                 } else {
-                    statusIcon.className = 'status-icon stopped';
-                    statusIcon.textContent = '❌';
-                    statusTitle.textContent = 'Server Stopped';
-                    statusDescription.textContent = 'MCP server is not running';
-                    serverStatusEl.textContent = 'Inactive';
-                    connectionStatusEl.textContent = 'Disconnected';
+                    statusIcon.className = 'status-icon unknown';
+                    statusIcon.textContent = '⚠️';
+                    statusTitle.textContent = 'Server Not Initialized';
+                    statusDescription.textContent = 'MCP server is not properly initialized';
+                    serverStatusEl.textContent = 'Not Initialized';
+                    connectionStatusEl.textContent = 'No Connection';
                     restartBtn.disabled = true;
                 }
 
-                serverVersionEl.textContent = serverStatus.version;
+                // Update all status fields with actual values
+                serverVersionEl.textContent = serverStatus.version || 'Version unavailable';
+                transportTypeEl.textContent = serverStatus.transport || 'Transport not detected';
+
+                // Format uptime
+                if (serverStatus.uptime && serverStatus.uptime > 0) {
+                    const seconds = Math.floor(serverStatus.uptime / 1000);
+                    const minutes = Math.floor(seconds / 60);
+                    const hours = Math.floor(minutes / 60);
+
+                    if (hours > 0) {
+                        serverUptimeEl.textContent = `${hours}h ${minutes % 60}m`;
+                    } else if (minutes > 0) {
+                        serverUptimeEl.textContent = `${minutes}m ${seconds % 60}s`;
+                    } else {
+                        serverUptimeEl.textContent = `${seconds}s`;
+                    }
+                } else {
+                    serverUptimeEl.textContent = serverStatus.isRunning ? 'Just started' : 'Not running';
+                }
+
+                // Show/hide port info based on transport type
+                if (serverStatus.port && (serverStatus.transport === 'http' || serverStatus.transport === 'websocket')) {
+                    serverPortEl.textContent = serverStatus.port;
+                    portInfoEl.style.display = 'block';
+                } else {
+                    portInfoEl.style.display = 'none';
+                }
             }
 
             // Note: addLogEntry function is declared globally above
@@ -448,12 +504,29 @@
                         addLogEntry('Electron API not available', 'error');
                         return;
                     }
-                    
+
                     addLogEntry('Refreshing server status...', 'info');
                     const status = await electronAPI.getMcpStatus();
-                    serverStatus = status;
+
+                    // Map the new status structure with actual server values
+                    serverStatus = {
+                        isRunning: status.isRunning || false,
+                        status: status.status || 'Status unavailable',
+                        version: status.version || 'Version unavailable',
+                        transport: status.transport || null,
+                        port: status.port || null,
+                        uptime: status.uptime || null,
+                        initialized: status.initialized || false,
+                        connectionString: status.connectionString || status.url || 'No connection'
+                    };
+
                     updateStatusUI();
-                    addLogEntry(`Status updated: ${status.status}`, 'info');
+
+                    if (status.error) {
+                        addLogEntry(`Status error: ${status.error}`, 'warning');
+                    } else {
+                        addLogEntry(`Status updated: ${status.status} (${status.transport || 'Unknown transport'})`, 'info');
+                    }
                 } catch (error) {
                     addLogEntry(`Error refreshing status: ${error.message}`, 'error');
                     // Update UI to show error state
@@ -462,6 +535,8 @@
                     statusTitle.textContent = 'Connection Error';
                     statusDescription.textContent = 'Failed to connect to MCP server';
                     connectionStatusEl.textContent = 'Error';
+                    transportTypeEl.textContent = 'Error';
+                    serverUptimeEl.textContent = 'Error';
                 }
             }
 
@@ -472,7 +547,7 @@
                         addLogEntry('Electron API not available', 'error');
                         return;
                     }
-                    
+
                     restartBtn.disabled = true;
                     addLogEntry('Restarting MCP server...', 'info');
                     const result = await electronAPI.restartMcpServer();
@@ -499,6 +574,18 @@
 
             // Initial status check
             refreshStatus();
+
+            // Listen for push updates from main
+            if (electronAPI.onServerStatusUpdate) {
+                try {
+                    electronAPI.onServerStatusUpdate(() => {
+                        addLogEntry('Received server status update', 'info');
+                        refreshStatus();
+                    });
+                } catch (e) {
+                    addLogEntry('Failed to subscribe to status updates', 'warning');
+                }
+            }
 
             // Periodic status updates (every 10 seconds)
             const statusInterval = setInterval(refreshStatus, 10000);

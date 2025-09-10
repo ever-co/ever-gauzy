@@ -4,7 +4,16 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 // Import electron modules with error handling
-let app: any, BrowserWindow: any, shell: any, ipcMain: any, Menu: any, Tray: any, nativeImage: any, dialog: any, nativeTheme: any, screen: any;
+let app: any,
+	BrowserWindow: any,
+	shell: any,
+	ipcMain: any,
+	Menu: any,
+	Tray: any,
+	nativeImage: any,
+	dialog: any,
+	nativeTheme: any,
+	screen: any;
 
 try {
 	const electron = require('electron');
@@ -46,6 +55,7 @@ let mainWindow: any | null = null;
 let tray: any | null = null;
 let mcpServerManager: McpServerManager | null = null;
 let store: any = null;
+let isServerInitialized = false;
 
 // Only set specific environment variables that are needed
 if (environment.baseUrl) process.env.API_BASE_URL = environment.baseUrl;
@@ -84,39 +94,55 @@ try {
 // Handle app events
 if (app && typeof app.whenReady === 'function') {
 	app.whenReady().then(async () => {
-	try {
-		log.info('App is ready');
-
-		// Initialize electron-store
 		try {
-			const Store = require('electron-store');
-			store = new Store();
-			log.info('Electron store initialized successfully');
+			log.info('App is ready');
+
+			// Initialize electron-store
+			try {
+				const Store = require('electron-store');
+				store = new Store();
+				log.info('Electron store initialized successfully');
+			} catch (error) {
+				log.error('Failed to initialize electron store:', error);
+			}
+
+			// Initialize app-specific configurations that require app to be ready
+			initializeAppConfiguration();
+
+			// Initialize MCP Server FIRST, before creating the window
+			try {
+				log.info('Initializing MCP Server...');
+				mcpServerManager = new McpServerManager(environment);
+
+				const started = await mcpServerManager.start();
+				isServerInitialized = started;
+
+				if (started) {
+					const status = mcpServerManager.getStatus();
+					log.info(
+						`MCP Server started successfully - Version: ${status.version}, Transport: ${
+							status.transport
+						}, URL: ${status.url || 'N/A'}`
+					);
+				} else {
+					log.warn('MCP Server failed to start properly');
+				}
+			} catch (error) {
+				log.error('Failed to start MCP Server:', error);
+				isServerInitialized = false;
+				// Still create the window so user can see the error and try to restart
+			}
+
+			// Create window AFTER server is initialized
+			await createMainWindow();
+			// setupApplicationMenu();
+			// setupTray();
+
+			// Setup auto-updater event listeners
+			// setupAutoUpdater();
 		} catch (error) {
-			log.error('Failed to initialize electron store:', error);
+			log.error('Error during app initialization:', error);
 		}
-
-		// Initialize app-specific configurations that require app to be ready
-		initializeAppConfiguration();
-
-		await createMainWindow();
-		// setupApplicationMenu();
-		// setupTray();
-
-		// Initialize MCP Server
-		try {
-			mcpServerManager = new McpServerManager(environment);
-			await mcpServerManager.start();
-			log.info('MCP Server started successfully');
-		} catch (error) {
-			log.error('Failed to start MCP Server:', error);
-		}
-
-		// Setup auto-updater event listeners
-		// setupAutoUpdater();
-	} catch (error) {
-		log.error('Error during app initialization:', error);
-	}
 	});
 } else {
 	console.error('Electron app is not available - this should only run in an Electron environment');
@@ -166,17 +192,68 @@ if (app && typeof app.on === 'function') {
 	});
 }
 
+// Function to notify renderer about server status changes
+function notifyServerStatusUpdate(): void {
+	if (mainWindow && !mainWindow.isDestroyed()) {
+		mainWindow.webContents.send('server-status-update');
+	}
+}
 
 async function createMainWindow(): Promise<void> {
 	// Debug path information
-	// Fix webpack __dirname issue by using app.getAppPath() for runtime resolution
+	const currentDir = process.cwd();
 	const appPath = app.getAppPath();
-	const preloadPath = path.join(appPath, 'preload', 'preload.js');
+
+	// Try to find the correct paths for built files
+	let actualAppPath: string;
+	let preloadPath: string;
+	let htmlPath: string;
+
+	// Check if we're in development or production
+	const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_IS_DEV === 'true';
+
+	if (isDev) {
+		// In development, use the built files from dist
+		actualAppPath = path.join(currentDir, 'dist', 'apps', 'server-mcp');
+		preloadPath = path.join(actualAppPath, 'preload', 'preload.js');
+		htmlPath = path.join(actualAppPath, 'static', 'index.html');
+	} else {
+		// In production, use app path
+		actualAppPath = appPath;
+		preloadPath = path.join(actualAppPath, 'preload', 'preload.js');
+		htmlPath = path.join(actualAppPath, 'static', 'index.html');
+	}
+
+	// Verify files exist and provide fallbacks
+	const fs = require('fs');
+	if (!fs.existsSync(preloadPath)) {
+		// When running from source maps/ts, webpack places compiled files next to this file at ../../dist/apps/server-mcp
+		const altPreloadPath = path.join(appPath, 'preload', 'preload.js');
+		if (fs.existsSync(altPreloadPath)) {
+			preloadPath = altPreloadPath;
+		} else {
+			log.warn(`Preload script not found at ${preloadPath} or ${altPreloadPath}`);
+		}
+	}
+
+	if (!fs.existsSync(htmlPath)) {
+		const altHtmlPath = path.join(__dirname, '..', 'static', 'index.html');
+		if (fs.existsSync(altHtmlPath)) {
+			htmlPath = altHtmlPath;
+		} else {
+			log.error(`HTML file not found at ${htmlPath} or ${altHtmlPath}`);
+			throw new Error('Required HTML file not found');
+		}
+	}
+
 	console.log('Main: __dirname =', __dirname);
+	console.log('Main: process.cwd() =', currentDir);
 	console.log('Main: app.getAppPath() =', appPath);
-	console.log('Main: Preload path =', preloadPath);
-	console.log('Main: Preload exists =', require('fs').existsSync(preloadPath));
-	console.log('Main: Current working directory =', process.cwd());
+	console.log('Main: actualAppPath =', actualAppPath);
+	console.log('Main: preloadPath =', preloadPath);
+	console.log('Main: htmlPath =', htmlPath);
+	console.log('Main: preloadExists =', fs.existsSync(preloadPath));
+	console.log('Main: htmlExists =', fs.existsSync(htmlPath));
 
 	// Create an enhanced status window for the MCP server
 	mainWindow = new BrowserWindow({
@@ -186,7 +263,7 @@ async function createMainWindow(): Promise<void> {
 		minHeight: 400,
 		show: false,
 		title: 'Gauzy MCP Server Desktop',
-		icon: path.join(appPath, 'favicon.ico'),
+		icon: path.join(actualAppPath, 'favicon.ico'),
 		center: true,
 		alwaysOnTop: false,
 		skipTaskbar: false,
@@ -204,8 +281,10 @@ async function createMainWindow(): Promise<void> {
 		}
 	});
 
+	// Setup IPC handlers BEFORE loading the HTML
+	setupIpcHandlers();
+
 	// Load the enhanced HTML file
-	const htmlPath = path.join(appPath, 'static', 'index.html');
 	await mainWindow.loadFile(htmlPath);
 
 	// Suppress DevTools console errors
@@ -264,42 +343,112 @@ async function createMainWindow(): Promise<void> {
 		return { action: 'deny' };
 	});
 
+	// Window management handlers
+	if (ipcMain && typeof ipcMain.on === 'function') {
+		ipcMain.on('expand_window', () => {
+			if (mainWindow) {
+				try {
+					if (mainWindow.isMaximized()) {
+						mainWindow.unmaximize();
+					} else {
+						mainWindow.maximize();
+					}
+				} catch (error) {
+					log.error('Error expanding/contracting window:', error);
+				}
+			}
+		});
+	}
+}
+
+function setupIpcHandlers(): void {
+	if (!ipcMain || typeof ipcMain.handle !== 'function') {
+		log.error('IPC Main not available');
+		return;
+	}
+
 	// IPC handlers for MCP server status
-	if (ipcMain && typeof ipcMain.handle === 'function') {
-		ipcMain.handle('get-mcp-status', async () => {
-		if (mcpServerManager) {
+	ipcMain.handle('get-mcp-status', async () => {
+		log.info('IPC: get-mcp-status handler called');
+		try {
+			if (!mcpServerManager) {
+				log.warn('IPC: McpServerManager not initialized');
+				return {
+					isRunning: false,
+					status: 'Not initialized',
+					version: 'Unknown',
+					port: null,
+					transport: null,
+					url: null,
+					uptime: null,
+					initialized: false,
+					connectionString: 'No connection',
+					error: 'Server manager not initialized'
+				};
+			}
+
 			const statusData = mcpServerManager.getStatus();
-			return {
-				isRunning: mcpServerManager.isRunning(),
-				status: statusData.running ? 'Running' : 'Stopped',
-				version: mcpServerManager.getVersion(),
+			log.info('IPC: Got status data:', {
+				running: statusData.running,
+				version: statusData.version,
+				transport: statusData.transport,
+				initialized: statusData.initialized
+			});
+
+			const result = {
+				isRunning: statusData.running,
+				status: statusData.running ? 'Running' : statusData.initialized ? 'Stopped' : 'Not initialized',
+				version: statusData.version,
 				port: statusData.port,
 				transport: statusData.transport,
 				url: statusData.url,
-				uptime: statusData.uptime
+				uptime: statusData.uptime,
+				initialized: statusData.initialized,
+				connectionString: statusData.connectionString,
+				error: statusData.lastError
 			};
+
+			log.info('IPC: Returning status result:', result);
+			return result;
+		} catch (error) {
+			log.error('Error getting MCP status:', error);
+			const errorResult = {
+				isRunning: false,
+				status: 'Error',
+				version: 'Unknown',
+				port: null,
+				transport: null,
+				url: null,
+				uptime: null,
+				initialized: false,
+				connectionString: 'Error',
+				error: error.message || 'Unknown error'
+			};
+			log.error('IPC: Returning error result:', errorResult);
+			return errorResult;
 		}
-		return {
-			isRunning: false,
-			status: 'Not initialized',
-			version: 'Unknown',
-			port: null,
-			transport: null,
-			url: null,
-			uptime: null
-		};
 	});
 
 	ipcMain.handle('restart-mcp-server', async () => {
-		if (mcpServerManager) {
-			try {
-				await mcpServerManager.restart();
-				return { success: true, message: 'MCP Server restarted successfully' };
-			} catch (error) {
-				return { success: false, message: `Failed to restart: ${error}` };
-			}
+		if (!mcpServerManager) {
+			return { success: false, message: 'MCP Server not initialized' };
 		}
-		return { success: false, message: 'MCP Server not initialized' };
+
+		try {
+			log.info('Restarting MCP Server...');
+			await mcpServerManager.restart();
+			isServerInitialized = true;
+			log.info('MCP Server restarted successfully');
+
+			// Notify renderer about the status change
+			notifyServerStatusUpdate();
+
+			return { success: true, message: 'MCP Server restarted successfully' };
+		} catch (error) {
+			log.error('Failed to restart MCP Server:', error);
+			isServerInitialized = false;
+			return { success: false, message: `Failed to restart: ${error.message || error}` };
+		}
 	});
 
 	// Additional IPC handlers for app functionality
@@ -314,7 +463,7 @@ async function createMainWindow(): Promise<void> {
 
 	ipcMain.handle('get-saved-theme', () => {
 		try {
-			return store.get('theme', 'default');
+			return store ? store.get('theme', 'default') : 'default';
 		} catch (error) {
 			log.error('Error getting saved theme:', error);
 			return 'default';
@@ -323,27 +472,20 @@ async function createMainWindow(): Promise<void> {
 
 	ipcMain.handle('save-theme', (_, theme: string) => {
 		try {
-			store.set('theme', theme);
-			return true;
+			if (store) {
+				store.set('theme', theme);
+				return true;
+			}
+			return false;
 		} catch (error) {
 			log.error('Error saving theme:', error);
 			return false;
 		}
 	});
 
-	// Window management handlers
-	ipcMain.on('expand_window', () => {
-		if (mainWindow) {
-			try {
-				if (mainWindow.isMaximized()) {
-					mainWindow.unmaximize();
-				} else {
-					mainWindow.maximize();
-				}
-			} catch (error) {
-				log.error('Error expanding/contracting window:', error);
-			}
-		}
+	// Handler to check if server is ready
+	ipcMain.handle('is-server-ready', () => {
+		return isServerInitialized && mcpServerManager !== null;
 	});
 }
 
@@ -406,6 +548,7 @@ function setupApplicationMenu(): void {
 							try {
 								await mcpServerManager.restart();
 								log.info('MCP Server restarted successfully');
+								notifyServerStatusUpdate();
 							} catch (error) {
 								log.error('Failed to restart MCP Server:', error);
 							}
@@ -518,47 +661,48 @@ function setupTray(): void {
 	});
 }
 
-	function setupAutoUpdater(): void {
-		// Import autoUpdater only when needed, after app is ready
-		const { autoUpdater } = require('electron-updater');
+function setupAutoUpdater(): void {
+	// Import autoUpdater only when needed, after app is ready
+	const { autoUpdater } = require('electron-updater');
 
-		autoUpdater.on('checking-for-update', () => {
-			log.info('Checking for update...');
-		});
+	autoUpdater.on('checking-for-update', () => {
+		log.info('Checking for update...');
+	});
 
-		autoUpdater.on('update-available', (info) => {
-			log.info('Update available:', info);
-		});
+	autoUpdater.on('update-available', (info) => {
+		log.info('Update available:', info);
+	});
 
-		autoUpdater.on('update-not-available', (info) => {
-			log.info('Update not available:', info);
-		});
+	autoUpdater.on('update-not-available', (info) => {
+		log.info('Update not available:', info);
+	});
 
-		autoUpdater.on('error', (err) => {
-			log.error('AutoUpdater error:', err);
-		});
+	autoUpdater.on('error', (err) => {
+		log.error('AutoUpdater error:', err);
+	});
 
-		autoUpdater.on('download-progress', (progressObj) => {
-			log.info('Download progress:', progressObj);
-		});
+	autoUpdater.on('download-progress', (progressObj) => {
+		log.info('Download progress:', progressObj);
+	});
 
-		autoUpdater.on('update-downloaded', (info) => {
-			log.info('Update downloaded:', info);
-			dialog.showMessageBox(mainWindow || undefined, {
+	autoUpdater.on('update-downloaded', (info) => {
+		log.info('Update downloaded:', info);
+		dialog
+			.showMessageBox(mainWindow || undefined, {
 				type: 'info',
 				title: 'Update Available',
 				message: 'A new version has been downloaded. Restart now to apply the update?',
 				buttons: ['Restart', 'Later']
-			}).then((result) => {
+			})
+			.then((result) => {
 				if (result.response === 0) {
 					autoUpdater.quitAndInstall();
 				}
 			});
-		});
+	});
 
-		// Handle auto-updater
-		if (environment.production) {
-			autoUpdater.checkForUpdatesAndNotify();
-		}
+	// Handle auto-updater
+	if (environment.production) {
+		autoUpdater.checkForUpdatesAndNotify();
 	}
 }
