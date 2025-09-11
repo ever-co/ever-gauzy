@@ -4,9 +4,11 @@
  * Manages JWT access tokens and refresh tokens for OAuth 2.0 flows
  */
 
-import { SignJWT, importPKCS8, importSPKI, jwtVerify } from 'jose';
 import * as crypto from 'node:crypto';
 import { SecurityLogger } from './security-logger';
+
+// Dynamic import type for jose library
+type JoseModule = typeof import('jose');
 
 export interface TokenPair {
 	accessToken: string;
@@ -54,6 +56,7 @@ export class OAuth2TokenManager {
 	private refreshTokens = new Map<string, RefreshToken>();
 	private keyPair: KeyPair;
 	private cleanupInterval: NodeJS.Timeout;
+	private josePromise: Promise<JoseModule> | null = null;
 
 	// Token expiration times
 	private readonly ACCESS_TOKEN_EXPIRATION = 15 * 60; // 15 minutes
@@ -74,6 +77,16 @@ export class OAuth2TokenManager {
 		this.cleanupInterval = setInterval(() => this.cleanupExpiredTokens(), 60 * 60 * 1000);
 		// Do not keep process alive just for cleanup
 		this.cleanupInterval.unref();
+	}
+
+	/**
+	 * Dynamically import jose library to handle ESM compatibility
+	 */
+	private async getJose(): Promise<JoseModule> {
+		if (!this.josePromise) {
+			this.josePromise = import('jose');
+		}
+		return this.josePromise;
 	}
 
 	/**
@@ -236,10 +249,12 @@ export class OAuth2TokenManager {
 	 */
 	private async signToken(payload: TokenPayload): Promise<string> {
 		try {
+			const jose = await this.getJose();
+			
 			if (this.keyPair.algorithm === 'RS256') {
 				// Use jose for RS256
-				const privateKey = await importPKCS8(this.keyPair.privateKey, 'RS256');
-				const token = await new SignJWT(payload)
+				const privateKey = await jose.importPKCS8(this.keyPair.privateKey, 'RS256');
+				const token = await new jose.SignJWT(payload)
 					.setProtectedHeader({
 						alg: 'RS256',
 						typ: 'JWT',
@@ -249,8 +264,8 @@ export class OAuth2TokenManager {
 				return token;
 			} else {
 				// Use jose for ES256
-				const privateKey = await importPKCS8(this.keyPair.privateKey, 'ES256');
-				const token = await new SignJWT(payload)
+				const privateKey = await jose.importPKCS8(this.keyPair.privateKey, 'ES256');
+				const token = await new jose.SignJWT(payload)
 					.setProtectedHeader({
 						alg: 'ES256',
 						typ: 'JWT',
@@ -270,10 +285,12 @@ export class OAuth2TokenManager {
 	 */
 	private async verifyToken(token: string): Promise<TokenPayload> {
 		try {
+			const jose = await this.getJose();
+			
 			if (this.keyPair.algorithm === 'RS256') {
 				// RS256 verification using jose library
-				const publicKey = await importSPKI(this.keyPair.publicKey, 'RS256');
-				const { payload } = await jwtVerify(token, publicKey, {
+				const publicKey = await jose.importSPKI(this.keyPair.publicKey, 'RS256');
+				const { payload } = await jose.jwtVerify(token, publicKey, {
 					algorithms: ['RS256'],
 					issuer: this.issuer,
 					audience: this.audience,
@@ -282,8 +299,8 @@ export class OAuth2TokenManager {
 				return payload as TokenPayload;
 			} else if (this.keyPair.algorithm === 'ES256') {
 				// ES256 verification using jose library
-				const publicKey = await importSPKI(this.keyPair.publicKey, 'ES256');
-				const { payload } = await jwtVerify(token, publicKey, {
+				const publicKey = await jose.importSPKI(this.keyPair.publicKey, 'ES256');
+				const { payload } = await jose.jwtVerify(token, publicKey, {
 					issuer: this.issuer,
 					audience: this.audience,
 					algorithms: ['ES256'],

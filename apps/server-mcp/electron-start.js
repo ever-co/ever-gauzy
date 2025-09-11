@@ -7,13 +7,29 @@ import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const electronMainPath = path.join(__dirname, '../../dist/apps/server-mcp/src/electron-main.js');
+
+// Read project configuration to construct correct path
+const projectJsonPath = path.join(__dirname, 'project.json');
+let outputPath = 'dist/apps/server-mcp'; // default fallback
+let mainFilename = 'main.js'; // default fallback
+
+try {
+  const projectJson = JSON.parse(fs.readFileSync(projectJsonPath, 'utf8'));
+  outputPath = projectJson.targets?.build?.options?.outputPath || outputPath;
+} catch (error) {
+  console.warn('⚠️ Could not read project.json, using default path:', error.message);
+}
+
+const electronMainPath = path.join(__dirname, '../../', outputPath, mainFilename);
 
 // Check if the electron main file exists
 if (!fs.existsSync(electronMainPath)) {
   console.error('❌ Electron main file not found at:', electronMainPath);
-  console.error('Please build the project first with: yarn nx build server-mcp');
-  process.exit(1);
+  console.error('📁 Resolved from outputPath:', outputPath);
+  console.error('📄 Expected filename:', mainFilename);
+  console.error('🔧 Please build the project first with: yarn nx build server-mcp');
+  console.error('💡 Or check if the build configuration in project.json is correct');
+  throw new Error(`Electron main file not found: ${electronMainPath}`);
 }
 
 console.log('🚀 Starting Electron app...');
