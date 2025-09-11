@@ -21,6 +21,16 @@ try {
 	console.error('Preload: Failed to load electron modules:', error);
 }
 
+// Timeout helper to prevent IPC calls from hanging indefinitely
+const withTimeout = <T>(promise: Promise<T>, timeout: number = 5000): Promise<T> => {
+	return Promise.race([
+		promise,
+		new Promise<never>((_, reject) => 
+			setTimeout(() => reject(new Error("IPC call timed out")), timeout)
+		)
+	]);
+};
+
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
 if (contextBridge && ipcRenderer) {
@@ -31,7 +41,7 @@ if (contextBridge && ipcRenderer) {
 			getMcpStatus: async () => {
 				__DEV__ && console.log('Preload: getMcpStatus called');
 				try {
-					const result = await ipcRenderer.invoke('get-mcp-status');
+					const result = await withTimeout(ipcRenderer.invoke('get-mcp-status'));
 					__DEV__ && console.log('Preload: getMcpStatus result:', result);
 					return result;
 				} catch (error) {
@@ -39,7 +49,7 @@ if (contextBridge && ipcRenderer) {
 					throw error;
 				}
 			},
-			restartMcpServer: () => ipcRenderer.invoke('restart-mcp-server'),
+			restartMcpServer: () => withTimeout(ipcRenderer.invoke('restart-mcp-server')),
 
 			// Event subscriptions
 			onServerStatusUpdate: (callback: (data?: any) => void) => {
@@ -49,11 +59,11 @@ if (contextBridge && ipcRenderer) {
 			},
 
 			// App information
-			getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+			getAppVersion: () => withTimeout(ipcRenderer.invoke('get-app-version')),
 
 			// Theme management
-			getSavedTheme: () => ipcRenderer.invoke('get-saved-theme'),
-			saveTheme: (theme: string) => ipcRenderer.invoke('save-theme', theme),
+			getSavedTheme: () => withTimeout(ipcRenderer.invoke('get-saved-theme')),
+			saveTheme: (theme: string) => withTimeout(ipcRenderer.invoke('save-theme', theme)),
 
 			// Window management
 			expandWindow: () => ipcRenderer.send('expand_window')

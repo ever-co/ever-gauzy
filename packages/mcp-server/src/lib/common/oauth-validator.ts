@@ -135,7 +135,8 @@ export class OAuthValidator {
 	private async validateJWT(token: string): Promise<TokenValidationResult> {
 		try {
 			const jose = await this.getJose();
-			let payload: Awaited<ReturnType<typeof jose.jwtVerify>>['payload'] | undefined;
+			type JWTPayload = Awaited<ReturnType<typeof jose.jwtVerify>>['payload'];
+			let payload: JWTPayload | undefined;
 
 			// Try JWKS URI first (recommended for production)
 			if (this.config.jwt?.jwksUri) {

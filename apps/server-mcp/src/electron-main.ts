@@ -7,14 +7,12 @@ Object.assign(console, log.functions);
 let app: any,
 	BrowserWindow: any,
 	shell: any,
-	ipcMain: any,
-	Menu: any,
-	dialog: any
+	ipcMain: any
 
 try {
 	const electron = require('electron');
-	({ app, BrowserWindow, shell, ipcMain, Menu, dialog } = electron);
-	console.log('Electron modules loaded successfully');
+	({ app, BrowserWindow, shell, ipcMain } = electron);
+	log.info('Electron modules loaded successfully');
 } catch (error) {
 	console.error('Failed to load electron modules:', error);
 	console.error('This application must be run in an Electron environment');
@@ -76,10 +74,10 @@ try {
 		const MAX_IPC_LISTENERS = Number(process.env.MAX_IPC_LISTENERS || 50);
 		ipcMain.setMaxListeners(MAX_IPC_LISTENERS);
 	} else {
-		console.warn('ipcMain.setMaxListeners not available');
+		log.warn('ipcMain.setMaxListeners not available');
 	}
 } catch (error) {
-	console.error('Failed to set max listeners on ipcMain:', error);
+	log.error('Failed to set max listeners on ipcMain:', error);
 }
 
 // Set security settings - these are safe to call before app ready
@@ -252,14 +250,14 @@ async function createMainWindow(): Promise<void> {
 		}
 	}
 
-	console.log('Main: __dirname =', __dirname);
-	console.log('Main: process.cwd() =', currentDir);
-	console.log('Main: app.getAppPath() =', appPath);
-	console.log('Main: actualAppPath =', actualAppPath);
-	console.log('Main: preloadPath =', preloadPath);
-	console.log('Main: htmlPath =', htmlPath);
-	console.log('Main: preloadExists =', fs.existsSync(preloadPath));
-	console.log('Main: htmlExists =', fs.existsSync(htmlPath));
+	log.debug('Main: __dirname =', __dirname);
+	log.debug('Main: process.cwd() =', currentDir);
+	log.debug('Main: app.getAppPath() =', appPath);
+	log.debug('Main: actualAppPath =', actualAppPath);
+	log.debug('Main: preloadPath =', preloadPath);
+	log.debug('Main: htmlPath =', htmlPath);
+	log.debug('Main: preloadExists =', fs.existsSync(preloadPath));
+	log.debug('Main: htmlExists =', fs.existsSync(htmlPath));
 
 	// Create an enhanced status window for the MCP server
 	mainWindow = new BrowserWindow({
@@ -356,7 +354,7 @@ async function createMainWindow(): Promise<void> {
 	// Window management handlers
 	if (ipcMain && typeof ipcMain.on === 'function') {
 		ipcMain.on('expand_window', () => {
-			if (mainWindow) {
+			if (mainWindow && !mainWindow.isDestroyed()) {
 				try {
 					if (mainWindow.isMaximized()) {
 						mainWindow.unmaximize();
@@ -498,114 +496,4 @@ function setupIpcHandlers(): void {
 	ipcMain.handle('is-server-ready', () => {
 		return isServerInitialized && mcpServerManager !== null;
 	});
-}
-
-function setupApplicationMenu(): void {
-	const template: any[] = [
-		{
-			label: 'File',
-			submenu: [
-				{
-					label: 'New Window',
-					accelerator: 'CmdOrCtrl+N',
-					click: async () => {
-						await createMainWindow();
-					}
-				},
-				{ type: 'separator' },
-				{
-					label: 'Quit',
-					accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
-					click: () => {
-						app.quit();
-					}
-				}
-			]
-		},
-		{
-			label: 'Edit',
-			submenu: [
-				{ role: 'undo' },
-				{ role: 'redo' },
-				{ type: 'separator' },
-				{ role: 'cut' },
-				{ role: 'copy' },
-				{ role: 'paste' },
-				{ role: 'selectAll' }
-			]
-		},
-		{
-			label: 'View',
-			submenu: [
-				{ role: 'reload' },
-				{ role: 'forceReload' },
-				{ role: 'toggleDevTools' },
-				{ type: 'separator' },
-				{ role: 'resetZoom' },
-				{ role: 'zoomIn' },
-				{ role: 'zoomOut' },
-				{ type: 'separator' },
-				{ role: 'togglefullscreen' }
-			]
-		},
-		{
-			label: 'MCP Server',
-			submenu: [
-				{
-					label: 'Restart Server',
-					accelerator: 'CmdOrCtrl+R',
-					click: async () => {
-						if (mcpServerManager) {
-							try {
-								await mcpServerManager.restart();
-								log.info('MCP Server restarted successfully');
-								notifyServerStatusUpdate();
-							} catch (error) {
-								log.error('Failed to restart MCP Server:', error);
-							}
-						}
-					}
-				},
-				{
-					label: 'Server Status',
-					click: async () => {
-						if (mcpServerManager) {
-							const status = mcpServerManager.getStatus();
-							const parentWindow = mainWindow || undefined;
-							dialog.showMessageBox(parentWindow, {
-								type: 'info',
-								title: 'MCP Server Status',
-								message: `Server Status: ${status}`,
-								detail: `Version: ${mcpServerManager.getVersion()}\nRunning: ${mcpServerManager.isRunning()}`
-							});
-						}
-					}
-				}
-			]
-		},
-		{
-			label: 'Window',
-			submenu: [{ role: 'minimize' }, { role: 'close' }]
-		},
-		{
-			role: 'help',
-			submenu: [
-				{
-					label: 'About Gauzy MCP Server',
-					click: () => {
-						const parentWindow = mainWindow || undefined;
-						dialog.showMessageBox(parentWindow, {
-							type: 'info',
-							title: 'About Gauzy MCP Server',
-							message: 'Gauzy MCP Server Desktop',
-							detail: `Version: ${app.getVersion()}\n\nA Model Context Protocol server providing AI assistants with access to Gauzy's time tracking, project, and employee management features.`
-						});
-					}
-				}
-			]
-		}
-	];
-
-	const menu = Menu.buildFromTemplate(template);
-	Menu.setApplicationMenu(menu);
 }
