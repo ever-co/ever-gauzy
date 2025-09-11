@@ -90,6 +90,7 @@ export {
 	CreateTimeSlotMinutesCommand
 } from './lib/time-tracking/time-slot';
 export { TimeLogModule, TimeLogService, TimeLogCreateCommand } from './lib/time-tracking/time-log';
+export { CustomTrackingModule, CustomTrackingService } from './lib/time-tracking/custom-tracking';
 export { ScreenshotModule, ScreenshotService, ScreenshotCreateCommand } from './lib/time-tracking/screenshot';
 export { TimerStartedEvent, TimerStoppedEvent, TimerStatusUpdatedEvent } from './lib/time-tracking/timer';
 export { TimerService } from './lib/time-tracking/timer/timer.service';

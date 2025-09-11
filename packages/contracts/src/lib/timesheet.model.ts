@@ -209,6 +209,7 @@ export interface ITimeSlot extends IBasePerTenantAndOrganizationEntityModel {
 	screenshots?: IScreenshot[];
 	timeLogs?: ITimeLog[];
 	timeSlotMinutes?: ITimeSlotMinute[];
+	timeSlotSessions?: ITimeSlotSession[];
 	project?: IOrganizationProject;
 	projectId?: ID;
 	duration?: number;
@@ -523,4 +524,68 @@ export interface IDeleteTimeSlot extends IDeleteEntity {
  */
 export interface IDeleteTimeLog extends IDeleteEntity {
 	logIds: ID[];
+}
+
+/**
+ * Interface for processing custom tracking data
+ */
+export interface IProcessTrackingDataInput extends IBasePerTenantAndOrganizationEntityModel {
+	payload: string;
+	startTime?: Date;
+	employeeId?: ID;
+}
+
+/**
+ * Interface for tracking session payload
+ */
+export interface ITrackingPayload {
+	timestamp: string;
+	encodedData: string;
+	decodedData?: unknown;
+}
+
+/**
+ * Interface for tracking session
+ */
+export interface ITrackingSession {
+	sessionId: string;
+	startTime: string;
+	lastActivity: string;
+	createdAt: string;
+	updatedAt: string;
+	payloads: ITrackingPayload[];
+}
+
+type TimeSlotSummary = Pick<ITimeSlot, 'startedAt' | 'duration'>;
+/**
+ * Interface for custom activity data stored in TimeSlot
+ */
+export interface ICustomActivity {
+	trackingSessions: ITrackingSession[];
+}
+
+/**
+ * Interface for TimeSlotSession entity
+ */
+export interface ITimeSlotSession extends IBasePerTenantAndOrganizationEntityModel {
+	sessionId: string;
+	startTime?: Date;
+	lastActivity?: Date;
+	timeSlotId: ID;
+	employeeId: ID;
+}
+
+/**
+ * Interface for tracking session response
+ */
+export interface ITrackingSessionResponse {
+	sessionId: string;
+	timeSlotId?: ID;
+	timeSlot?: TimeSlotSummary;
+	timeLogs: ITimeLog[];
+	session: ITrackingSession;
+	timeSlots?: Array<{
+		timeSlotId: ID;
+		timeSlot: TimeSlotSummary;
+	}>;
 }
