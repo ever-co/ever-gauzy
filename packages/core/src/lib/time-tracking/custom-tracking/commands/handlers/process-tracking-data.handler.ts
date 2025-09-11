@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { BadRequestException, Logger } from '@nestjs/common';
-import { Between } from 'typeorm';
+import { Raw } from 'typeorm';
 import { moment } from '../../../../core/moment-extend';
 import { getStartEndIntervals } from '../../../time-slot/utils';
 import { decode, Data } from 'clarity-decode';
@@ -131,12 +131,24 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 
 		let timeSlot: ITimeSlot;
 		try {
-			timeSlot = await this.timeSlotService.findOneByWhereOptions({
-				employeeId,
-				organizationId,
-				tenantId,
-				startedAt: Between<Date>(start as Date, end as Date)
+			const timeSlots = await this.timeSlotService.find({
+				where: {
+					employeeId,
+					organizationId,
+					tenantId,
+					startedAt: Raw((alias) => `${alias} >= :start AND ${alias} < :end`, { start, end })
+				}
 			});
+
+			if (timeSlots.length > 0) {
+				timeSlot = timeSlots.reduce((closest, current) => {
+					const closestDiff = Math.abs(moment(closest.startedAt).diff(moment.utc(trackingTime)));
+					const currentDiff = Math.abs(moment(current.startedAt).diff(moment.utc(trackingTime)));
+					return currentDiff < closestDiff ? current : closest;
+				});
+			} else {
+				throw new Error('No time slot found in interval');
+			}
 		} catch (error) {
 			this.logger.warn(`TimeSlot not found, creating new one: ${error.message}`);
 			timeSlot = await this.commandBus.execute(

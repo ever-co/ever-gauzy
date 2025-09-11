@@ -19,15 +19,17 @@ export class CustomTrackingBulkCreateHandler implements ICommandHandler<CustomTr
 	 * @param command The bulk create command containing array of tracking data inputs
 	 * @returns Promise resolving to array of results for each processed entry
 	 */
-	public async execute(command: CustomTrackingBulkCreateCommand): Promise<Array<{
-		success: boolean;
-		sessionId: string;
-		timeSlotId: string;
-		message: string;
-		session: ITrackingSession | null;
-		index: number;
-		error?: string;
-	}>> {
+	public async execute(command: CustomTrackingBulkCreateCommand): Promise<
+		Array<{
+			success: boolean;
+			sessionId: string;
+			timeSlotId: string;
+			message: string;
+			session: ITrackingSession | null;
+			index: number;
+			error?: string;
+		}>
+	> {
 		const { input } = command;
 		const results: Array<{
 			success: boolean;
@@ -41,12 +43,9 @@ export class CustomTrackingBulkCreateHandler implements ICommandHandler<CustomTr
 
 		this.logger.log(`Processing bulk custom tracking data: ${input.length} entries`);
 
-		// Process each entry sequentially to maintain data consistency
-		// and avoid potential race conditions with TimeSlot creation/updates
 		for (let i = 0; i < input.length; i++) {
 			const entry = input[i];
 			try {
-				// Validate startTime if provided
 				if (entry.startTime && isNaN(new Date(entry.startTime).getTime())) {
 					throw new BadRequestException(`Invalid start time at index ${i}`);
 				}
@@ -67,8 +66,7 @@ export class CustomTrackingBulkCreateHandler implements ICommandHandler<CustomTr
 				this.logger.debug(`Successfully processed entry ${i + 1}/${input.length}`);
 			} catch (error) {
 				this.logger.error(`Failed to process entry ${i + 1}/${input.length}:`, error.message);
-				
-				// Add error result but continue processing other entries
+
 				results.push({
 					success: false,
 					sessionId: '',
@@ -81,7 +79,7 @@ export class CustomTrackingBulkCreateHandler implements ICommandHandler<CustomTr
 			}
 		}
 
-		const successCount = results.filter(r => r.success).length;
+		const successCount = results.filter((r) => r.success).length;
 		const failureCount = results.length - successCount;
 
 		this.logger.log(`Bulk processing completed: ${successCount} successful, ${failureCount} failed`);

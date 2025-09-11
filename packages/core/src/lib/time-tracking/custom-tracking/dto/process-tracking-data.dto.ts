@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsUUID, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { IProcessTrackingDataInput, ID } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '../../../core/dto';
@@ -21,8 +21,7 @@ export class ProcessTrackingDataDTO extends TenantOrganizationBaseDTO implements
 		description: 'Start time for the tracking data. If not provided, current time will be used.'
 	})
 	@IsOptional()
-	@IsDateString()
-	@Transform(({ value }) => value ? new Date(value) : undefined)
+	@Transform(({ value }) => (value ? new Date(value) : undefined))
 	readonly startTime?: Date;
 
 	@ApiPropertyOptional({
