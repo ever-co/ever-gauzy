@@ -1,9 +1,11 @@
 export type ElectronAPI = {
-    getMcpStatus(): Promise<any>;
-    restartMcpServer(): Promise<any>;
-    onServerStatusUpdate(cb: (data?: any) => void): () => void;
+    getMcpStatus(): Promise<unknown>; // or McpStatus
+    restartMcpServer(): Promise<{ success: boolean; message: string }>;
+    onServerStatusUpdate(cb: (data?: unknown) => void): () => void;
+    isServerReady(): Promise<boolean>;
     getAppVersion(): Promise<string>;
     getSavedTheme(): Promise<string>;
     saveTheme(theme: string): Promise<boolean>;
     expandWindow(): void;
+    expandWindow(): Promise<boolean>;
 };

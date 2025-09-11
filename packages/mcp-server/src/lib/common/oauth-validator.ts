@@ -8,8 +8,10 @@
 import { Request } from 'express';
 import { AuthorizationConfig, TokenValidationResult, AuthorizationError } from './authorization-config';
 import { SecurityLogger } from './security-logger';
+import * as crypto from 'crypto';
 
 // Dynamic import type for jose library
+// Module usage: createRemoteJWKSet, jwtVerify, importSPKI, importJWK
 type JoseModule = typeof import('jose');
 
 export class OAuthValidator {
@@ -19,6 +21,56 @@ export class OAuthValidator {
 
 	constructor(private config: AuthorizationConfig) {
 		this.securityLogger = new SecurityLogger();
+	}
+
+	/**
+	 * Detect the key type from PEM data and map to appropriate JOSE algorithm
+	 */
+	private detectKeyTypeAndAlgorithm(keyData: string, configuredAlg: string): string {
+		try {
+			const publicKey = crypto.createPublicKey(keyData);
+			const keyType = publicKey.asymmetricKeyType;
+
+			// Map key types to JOSE algorithms
+			switch (keyType) {
+				case 'rsa':
+					return 'RS256';
+				case 'ec':
+					return 'ES256';
+				case 'dsa':
+					return 'PS256';
+				case 'ed25519':
+				case 'ed448':
+					return 'EdDSA';
+				default:
+					this.securityLogger.warn(`Unknown key type: ${keyType}, using configured algorithm: ${configuredAlg}`);
+					return configuredAlg;
+			}
+		} catch (error: any) {
+			this.securityLogger.warn(`Failed to detect key type: ${error.message}, using configured algorithm: ${configuredAlg}`);
+			return configuredAlg;
+		}
+	}
+
+	/**
+	 * Attempt to import SPKI with fallback algorithms if initial attempt fails
+	 */
+	private async importSPKIWithFallback(jose: any, keyData: string, primaryAlg: string): Promise<any> {
+		const fallbackAlgorithms = ['RS256', 'ES256', 'PS256', 'EdDSA'];
+		const attemptOrder = [primaryAlg, ...fallbackAlgorithms.filter(alg => alg !== primaryAlg)];
+
+		let lastError: Error | null = null;
+
+		for (const alg of attemptOrder) {
+			try {
+				return await jose.importSPKI(keyData, alg);
+			} catch (error: any) {
+				lastError = error;
+				this.securityLogger.debug(`Failed to import SPKI with algorithm ${alg}: ${error.message}`);
+			}
+		}
+
+		throw lastError || new Error('All SPKI import attempts failed');
 	}
 
 	/**
@@ -176,16 +228,19 @@ export class OAuthValidator {
 					// Determine if key is PEM or JWK format
 					const configuredAlg = this.config.jwt?.algorithms?.[0] || 'RS256';
 					if (keyData.startsWith('-----BEGIN')) {
-					// PEM format - use importSPKI with configured algorithm
-					publicKey = await jose.importSPKI(keyData, configuredAlg);
+						// PEM format - detect key type and map to appropriate algorithm
+						const mappedAlg = this.detectKeyTypeAndAlgorithm(keyData, configuredAlg);
+						publicKey = await this.importSPKIWithFallback(jose, keyData, mappedAlg);
 					} else {
 						try {
 							// Try to parse as JWK
 							const jwk = JSON.parse(keyData);
-							publicKey = await jose.importJWK(jwk, jwk.alg || configuredAlg);
+							const mappedAlg = this.detectKeyTypeAndAlgorithm(keyData, configuredAlg);
+							publicKey = await jose.importJWK(jwk, jwk.alg || mappedAlg);
 						} catch {
 							// If not valid JSON, assume PEM-like SPKI string
-							publicKey = await jose.importSPKI(keyData, configuredAlg);
+							const mappedAlg = this.detectKeyTypeAndAlgorithm(keyData, configuredAlg);
+							publicKey = await this.importSPKIWithFallback(jose, keyData, mappedAlg);
 						}
 					}
 

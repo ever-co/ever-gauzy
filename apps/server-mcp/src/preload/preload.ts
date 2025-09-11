@@ -1,7 +1,10 @@
 // Import electron modules with error handling
 let contextBridge: any, ipcRenderer: any;
 
-const __DEV__ = process.env.NODE_ENV !== 'production' || process.env.ELECTRON_IS_DEV === '1';
+const __DEV__ =
+	process.env.NODE_ENV !== 'production' ||
+	process.env.ELECTRON_IS_DEV === '1' ||
+	process.env.ELECTRON_IS_DEV === 'true';
 	__DEV__ && console.log('Preload script starting...');
 	__DEV__ && console.log('Process versions:', process.versions);
 	__DEV__ && console.log('Environment:', { NODE_ENV: process.env.NODE_ENV, ELECTRON_IS_DEV: process.env.ELECTRON_IS_DEV });
@@ -73,6 +76,9 @@ if (contextBridge && ipcRenderer) {
 				return () => ipcRenderer.removeListener('server-status-update', listener);
 			},
 
+			// Server readiness
+			isServerReady: () => withTimeout(ipcRenderer.invoke('is-server-ready')),
+
 			// App information
 			getAppVersion: () => withTimeout(ipcRenderer.invoke('get-app-version')),
 
@@ -81,7 +87,7 @@ if (contextBridge && ipcRenderer) {
 			saveTheme: (theme: string) => withTimeout(ipcRenderer.invoke('save-theme', theme)),
 
 			// Window management
-			expandWindow: () => ipcRenderer.send('expand_window')
+			expandWindow: () => withTimeout(ipcRenderer.invoke('expand_window'))
 		};
 		__DEV__ && console.log('Preload: electronAPI object created:', Object.keys(electronAPIObject));
 		contextBridge.exposeInMainWorld('electronAPI', electronAPIObject as import('./electron-api').ElectronAPI);
