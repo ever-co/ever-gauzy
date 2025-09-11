@@ -11,7 +11,7 @@ import { SecurityLogger } from './security-logger';
 import * as crypto from 'crypto';
 
 // Dynamic import type for jose library
-// Module usage: createRemoteJWKSet, jwtVerify, importSPKI, importJWK
+// Module usage: createRemoteJWKSet, jwtVerify, importSPKI, importJWK, importX509
 type JoseModule = typeof import('jose');
 
 export class OAuthValidator {
@@ -34,11 +34,18 @@ export class OAuthValidator {
 			// Map key types to JOSE algorithms
 			switch (keyType) {
 				case 'rsa':
-					return 'RS256';
+					// Keep configured RS*/PS* if provided, otherwise default to RS256
+					return /^RS\d+$/.test(configuredAlg) || /^PS\d+$/.test(configuredAlg) ? configuredAlg : 'RS256';
 				case 'ec':
-					return 'ES256';
+					// Keep configured ES* if provided, otherwise default to ES256 (fallbacks will try ES384/ES512)
+					return /^ES(256K|256|384|512)$/.test(configuredAlg) ? configuredAlg : 'ES256';
 				case 'dsa':
-					return 'PS256';
+				this.securityLogger.warn('DSA keys are not supported for JOSE/JWT. Falling back to configured algorithm.');
+					return configuredAlg;
+				case 'x25519':
+				case 'x448':
+					this.securityLogger.warn(`${keyType} is a key-agreement type, not suitable for JWT signatures. Falling back to configured algorithm.`);
+					return configuredAlg;
 				case 'ed25519':
 				case 'ed448':
 					return 'EdDSA';
@@ -60,7 +67,12 @@ export class OAuthValidator {
 		keyData: string,
 		primaryAlg: string
 	): Promise<any> {
-		const fallbackAlgorithms = ['RS256', 'ES256', 'PS256', 'EdDSA'];
+		const fallbackAlgorithms = [
+			'RS256','RS384','RS512',
+			'PS256','PS384','PS512',
+			'ES256','ES384','ES512','ES256K',
+			'EdDSA'
+		];
 		const attemptOrder = [primaryAlg, ...fallbackAlgorithms.filter(alg => alg !== primaryAlg)];
 
 		let lastError: Error | null = null;
@@ -231,10 +243,15 @@ export class OAuthValidator {
 
 					// Determine if key is PEM, JWK, or raw secret (HS*)
 					const configuredAlg = this.config.jwt?.algorithms?.[0] || 'RS256';
-					if (keyData.startsWith('-----BEGIN')) {
-						// PEM format - detect key type and map to appropriate algorithm
+					let headerAlg: string | undefined;
+					try { headerAlg = jose.decodeProtectedHeader(token)?.alg as string | undefined; } catch { /* ignore */ }
+					if (keyData.startsWith('-----BEGIN CERTIFICATE')) {
+						const primaryAlg = headerAlg || this.detectKeyTypeAndAlgorithm(keyData, configuredAlg);
+						publicKey = await jose.importX509(keyData, primaryAlg);
+					} else if (keyData.startsWith('-----BEGIN')) {
+						// PEM SPKI format
 						const mappedAlg = this.detectKeyTypeAndAlgorithm(keyData, configuredAlg);
-						publicKey = await this.importSPKIWithFallback(jose, keyData, mappedAlg);
+						publicKey = await this.importSPKIWithFallback(jose, keyData, headerAlg || mappedAlg);
 					} else {
 						try {
 							// Try to parse as JWK
@@ -247,7 +264,13 @@ export class OAuthValidator {
 										jwkAlg = /^PS\d+$/.test(configuredAlg) ? configuredAlg : 'RS256';
 										break;
 									case 'EC':
-										jwkAlg = 'ES256';
+										switch (jwk.crv) {
+											case 'P-256': jwkAlg = 'ES256'; break;
+											case 'P-384': jwkAlg = 'ES384'; break;
+											case 'P-521': jwkAlg = 'ES512'; break;
+											case 'secp256k1': jwkAlg = 'ES256K'; break;
+											default: jwkAlg = 'ES256';
+										}
 										break;
 									case 'OKP':
 										// Ed25519/Ed448 used for EdDSA
@@ -267,7 +290,7 @@ export class OAuthValidator {
 								publicKey = new TextEncoder().encode(keyData);
 							} else {
 								const mappedAlg = this.detectKeyTypeAndAlgorithm(keyData, configuredAlg);
-								publicKey = await this.importSPKIWithFallback(jose, keyData, mappedAlg);
+								publicKey = await this.importSPKIWithFallback(jose, keyData, headerAlg || mappedAlg);
 							}
 						}
 					}

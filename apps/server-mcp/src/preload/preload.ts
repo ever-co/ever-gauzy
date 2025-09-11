@@ -3,7 +3,7 @@ type MinimalContextBridge = { exposeInMainWorld: (key: string, api: unknown) => 
 type MinimalIpcRenderer = {
 	invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
 	on: (channel: string, listener: (event: unknown, ...args: unknown[]) => void) => void;
-	removeListener: (channel: string, listener: (...args: unknown[]) => void) => void;
+	removeListener: (channel: string, listener: (event: unknown, ...args: unknown[]) => void) => void;
 };
 let contextBridge: MinimalContextBridge | undefined, ipcRenderer: MinimalIpcRenderer | undefined;
 
@@ -28,10 +28,6 @@ try {
 	}
 } catch (error) {
 	console.error('Preload: Failed to load electron modules:', error);
-}
-
-if (!contextBridge || !ipcRenderer) {
-	console.error('Preload: contextBridge or ipcRenderer not available; aborting exposure');
 }
 
 // Timeout helper to prevent IPC calls from hanging indefinitely
@@ -114,8 +110,9 @@ if (contextBridge && ipcRenderer) {
 			}
 		}, 100);
 	} catch (error) {
-		console.error('Preload: Failed to expose electronAPI:', error);
-		console.error('Preload: Error details:', error.message, error.stack);
+		const err = error instanceof Error ? error : new Error(String(error));
+		console.error('Preload: Failed to expose electronAPI:', err);
+		console.error('Preload: Error details:', err.message, err.stack);
 	}
 } else {
 	console.error('Preload: contextBridge or ipcRenderer not available');
