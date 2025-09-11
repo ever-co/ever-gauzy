@@ -34,9 +34,6 @@ try {
 // Import environment
 import { environment } from '@gauzy/mcp-server';
 
-// Import electron-store (CommonJS module)
-const Store = require('electron-store');
-
 // Import MCP Server Manager from shared package
 import { McpServerManager } from '@gauzy/mcp-server';
 import { securityConfig } from '@gauzy/mcp-server';
