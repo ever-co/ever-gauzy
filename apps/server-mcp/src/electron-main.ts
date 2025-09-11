@@ -25,7 +25,8 @@ import { dirname } from 'node:path';
 // Import custom-electron-titlebar
 let setupTitlebar: any;
 try {
-	({ setupTitlebar } = await import('custom-electron-titlebar/main'));
+	const titlebarModule = require('custom-electron-titlebar/main');
+	setupTitlebar = titlebarModule.setupTitlebar;
 } catch (error) {
 	console.warn('Failed to load custom-electron-titlebar:', error);
 }
@@ -44,8 +45,7 @@ import { securityConfig } from '@gauzy/mcp-server';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Setup titlebar
-setupTitlebar();
+// Remove unconditional titlebar setup - will be called in app.whenReady() if available
 
 // Configure logging
 log.transports.file.level = 'info';
@@ -60,13 +60,6 @@ let isServerInitialized = false;
 if (environment.baseUrl) process.env.API_BASE_URL = environment.baseUrl;
 if (environment.apiTimeout) process.env.API_TIMEOUT = String(environment.apiTimeout);
 if (environment.debug !== undefined) process.env.GAUZY_MCP_DEBUG = String(environment.debug);
-
-//
-try {
-	store = new Store();
-} catch (error) {
-	log.error('Failed to initialize store:', error);
-}
 
 // Set unlimited listeners
 try {
@@ -104,12 +97,14 @@ if (app && typeof app.whenReady === 'function') {
 		try {
 			log.info('App is ready');
 
-			// Initialize electron-store
-			try {
-				store = new Store();
-				log.info('Electron store initialized successfully');
-			} catch (error) {
-				log.error('Failed to initialize electron store:', error);
+			// Setup titlebar if available
+			if (setupTitlebar) {
+				try {
+					setupTitlebar();
+					log.info('Custom titlebar setup completed');
+				} catch (error) {
+					log.error('Failed to setup titlebar:', error);
+				}
 			}
 
 			// Initialize app-specific configurations that require app to be ready
@@ -196,7 +191,9 @@ if (app && typeof app.on === 'function') {
 // Function to notify renderer about server status changes
 function notifyServerStatusUpdate(): void {
 	if (mainWindow && !mainWindow.isDestroyed()) {
-		mainWindow.webContents.send('server-status-update');
+		const status = mcpServerManager?.getStatus?.();
+		const { url, connectionString, ...safe } = (status || {}) as any;
+		mainWindow.webContents.send('server-status-update', safe);
 	}
 }
 
@@ -211,7 +208,10 @@ async function createMainWindow(): Promise<void> {
 	let htmlPath: string;
 
 	// Check if we're in development or production
-	const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_IS_DEV === 'true';
+	const isDev =
+		process.env.NODE_ENV === 'development' ||
+		process.env.ELECTRON_IS_DEV === 'true' ||
+		process.env.ELECTRON_IS_DEV === '1';
 
 	if (isDev) {
 		// In development, use the built files from dist
@@ -351,29 +351,28 @@ async function createMainWindow(): Promise<void> {
 		return { action: 'deny' };
 	});
 
-	// Window management handlers
-	if (ipcMain && typeof ipcMain.on === 'function') {
-		ipcMain.on('expand_window', () => {
-			if (mainWindow && !mainWindow.isDestroyed()) {
-				try {
-					if (mainWindow.isMaximized()) {
-						mainWindow.unmaximize();
-					} else {
-						mainWindow.maximize();
-					}
-				} catch (error) {
-					log.error('Error expanding/contracting window:', error);
-				}
-			}
-		});
-	}
 }
 
 function setupIpcHandlers(): void {
-	if (!ipcMain || typeof ipcMain.handle !== 'function') {
-		log.error('IPC Main not available');
+	if ((setupIpcHandlers as any)._registered) {
 		return;
 	}
+	(setupIpcHandlers as any)._registered = true;
+
+	// Window management handlers
+	ipcMain.handle('expand_window', (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		if (win && !win.isDestroyed()) {
+			try {
+				win.isMaximized() ? win.unmaximize() : win.maximize();
+				return true;
+			} catch (error) {
+				log.error('Error expanding/contracting window:', error);
+				return false;
+			}
+		}
+		return false;
+	});
 
 	// IPC handlers for MCP server status
 	ipcMain.handle('get-mcp-status', async () => {
@@ -445,14 +444,17 @@ function setupIpcHandlers(): void {
 
 		try {
 			log.info('Restarting MCP Server...');
-			await mcpServerManager.restart();
-			isServerInitialized = true;
-			log.info('MCP Server restarted successfully');
-
-			// Notify renderer about the status change
-			notifyServerStatusUpdate();
-
-			return { success: true, message: 'MCP Server restarted successfully' };
+			const ok = await mcpServerManager.restart();
+			isServerInitialized = !!ok;
+			if (ok) {
+				log.info('MCP Server restarted successfully');
+				notifyServerStatusUpdate();
+				return { success: true, message: 'MCP Server restarted successfully' };
+			} else {
+				log.warn('MCP Server restart reported failure');
+				notifyServerStatusUpdate();
+				return { success: false, message: 'Restart attempted but server reported failure' };
+			}
 		} catch (error) {
 			log.error('Failed to restart MCP Server:', error);
 			isServerInitialized = false;

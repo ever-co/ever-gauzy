@@ -22,13 +22,28 @@ try {
 }
 
 // Timeout helper to prevent IPC calls from hanging indefinitely
-const withTimeout = <T>(promise: Promise<T>, timeout: number = 5000): Promise<T> => {
-	return Promise.race([
-		promise,
-		new Promise<never>((_, reject) => 
-			setTimeout(() => reject(new Error("IPC call timed out")), timeout)
-		)
-	]);
+const withTimeout = <T>(
+	promise: Promise<T>,
+	timeout = 5000,
+	label = 'IPC call'
+): Promise<T> => {
+	let timer: ReturnType<typeof setTimeout> | null = null;
+	let timedOut = false;
+	const timeoutP = new Promise<never>((_, reject) => {
+		timer = setTimeout(() => {
+			timedOut = true;
+			reject(new Error(`${label} timed out after ${timeout}ms`));
+		}, timeout);
+	});
+	return Promise.race([promise, timeoutP])
+		.finally(() => { if (timer) clearTimeout(timer); })
+		.catch((err) => {
+		if (timedOut) {
+			// prevent unhandled rejection if the original promise settles later
+			promise.catch(() => {});
+		}
+	throw err;
+	});
 };
 
 // Expose protected methods that allow the renderer process to use
@@ -69,7 +84,7 @@ if (contextBridge && ipcRenderer) {
 			expandWindow: () => ipcRenderer.send('expand_window')
 		};
 		__DEV__ && console.log('Preload: electronAPI object created:', Object.keys(electronAPIObject));
-		contextBridge.exposeInMainWorld('electronAPI', electronAPIObject);
+		contextBridge.exposeInMainWorld('electronAPI', electronAPIObject as import('./electron-api').ElectronAPI);
 		__DEV__ && console.log('Preload: electronAPI exposed successfully');
 
 		// Verify exposure worked

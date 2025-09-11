@@ -26,7 +26,10 @@ export class OAuthValidator {
 	 */
 	private async getJose(): Promise<JoseModule> {
 		if (!this.josePromise) {
-			this.josePromise = import('jose');
+			this.josePromise = import('jose').catch((err) => {
+				this.josePromise = null;
+				throw err;
+			});
 		}
 		return this.josePromise;
 	}
