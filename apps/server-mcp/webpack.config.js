@@ -1,9 +1,11 @@
 const { composePlugins, withNx } = require('@nx/webpack');
-const path = require('path');
 
 module.exports = composePlugins(withNx(), (config, { options }) => {
-  // Check if we're building the preload script
-  const isPreload = config.entry && config.entry.toString().includes('preload');
+   // Check if we're building the preload script
+  const isPreload = config.entry && (
+    (typeof config.entry === 'string' && config.entry.includes('preload')) ||
+    (typeof config.entry === 'object' && Object.keys(config.entry).some(key => key.includes('preload')))
+  );
 
   if (isPreload) {
     // Configuration for preload script
@@ -18,7 +20,14 @@ module.exports = composePlugins(withNx(), (config, { options }) => {
     };
 
     // External dependencies for preload
-    config.externals = ['electron'];
+    const preloadExternals = ['electron'];
+    if (Array.isArray(config.externals)) {
+      config.externals = [...config.externals, ...preloadExternals];
+    } else if (config.externals) {
+      config.externals = [config.externals, ...preloadExternals];
+    } else {
+      config.externals = preloadExternals;
+    }
 
     // Remove ES module configuration for preload
     delete config.experiments?.outputModule;
@@ -38,13 +47,20 @@ module.exports = composePlugins(withNx(), (config, { options }) => {
     delete config.experiments?.outputModule;
 
     // External dependencies that should not be bundled for main process
-    config.externals = [
+    const mainExternals = [
       'electron',
       'electron-log',
       'electron-store',
       'electron-updater',
       'custom-electron-titlebar'
     ];
+    if (Array.isArray(config.externals)) {
+      config.externals = [...config.externals, ...mainExternals];
+    } else if (config.externals) {
+      config.externals = [config.externals, ...mainExternals];
+    } else {
+      config.externals = mainExternals;
+    }
   }
 
   return config;

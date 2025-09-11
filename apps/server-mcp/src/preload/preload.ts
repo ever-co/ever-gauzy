@@ -1,17 +1,22 @@
 // Import electron modules with error handling
 let contextBridge: any, ipcRenderer: any;
 
-console.log('Preload script starting...');
-console.log('Process versions:', process.versions);
-console.log('Environment:', { NODE_ENV: process.env.NODE_ENV, ELECTRON_IS_DEV: process.env.ELECTRON_IS_DEV });
+const __DEV__ = process.env.NODE_ENV !== 'production' || process.env.ELECTRON_IS_DEV === '1';
+	__DEV__ && console.log('Preload script starting...');
+	__DEV__ && console.log('Process versions:', process.versions);
+	__DEV__ && console.log('Environment:', { NODE_ENV: process.env.NODE_ENV, ELECTRON_IS_DEV: process.env.ELECTRON_IS_DEV });
 
 try {
 	const electron = require('electron');
-	console.log('Preload: Electron object:', typeof electron, Object.keys(electron || {}));
-	({ contextBridge, ipcRenderer } = electron);
-	console.log('Preload: Electron modules loaded successfully');
-	console.log('Preload: contextBridge available:', !!contextBridge);
-	console.log('Preload: ipcRenderer available:', !!ipcRenderer);
+	__DEV__ && console.log('Preload: Electron object:', typeof electron, Object.keys(electron || {}));
+	if (electron) {
+		({ contextBridge, ipcRenderer } = electron);
+		__DEV__ && console.log('Preload: Electron modules loaded successfully');
+		__DEV__ && console.log('Preload: contextBridge available:', !!contextBridge);
+		__DEV__ && console.log('Preload: ipcRenderer available:', !!ipcRenderer);
+	} else {
+		console.error('Preload: Electron object is null or undefined');
+	}
 } catch (error) {
 	console.error('Preload: Failed to load electron modules:', error);
 }
@@ -20,14 +25,14 @@ try {
 // the ipcRenderer without exposing the entire object
 if (contextBridge && ipcRenderer) {
 	try {
-		console.log('Preload: About to expose electronAPI to main world...');
+		__DEV__ && console.log('Preload: About to expose electronAPI to main world...');
 		const electronAPIObject = {
 			// MCP Server management
 			getMcpStatus: async () => {
-				console.log('Preload: getMcpStatus called');
+				__DEV__ && console.log('Preload: getMcpStatus called');
 				try {
 					const result = await ipcRenderer.invoke('get-mcp-status');
-					console.log('Preload: getMcpStatus result:', result);
+					__DEV__ && console.log('Preload: getMcpStatus result:', result);
 					return result;
 				} catch (error) {
 					console.error('Preload: getMcpStatus error:', error);
@@ -37,8 +42,8 @@ if (contextBridge && ipcRenderer) {
 			restartMcpServer: () => ipcRenderer.invoke('restart-mcp-server'),
 
 			// Event subscriptions
-			onServerStatusUpdate: (callback: () => void) => {
-				const listener = () => callback();
+			onServerStatusUpdate: (callback: (data?: any) => void) => {
+				const listener = (_event: unknown, data?: any) => callback(data);
 				ipcRenderer.on('server-status-update', listener);
 				return () => ipcRenderer.removeListener('server-status-update', listener);
 			},
@@ -53,9 +58,9 @@ if (contextBridge && ipcRenderer) {
 			// Window management
 			expandWindow: () => ipcRenderer.send('expand_window')
 		};
-		console.log('Preload: electronAPI object created:', Object.keys(electronAPIObject));
+		__DEV__ && console.log('Preload: electronAPI object created:', Object.keys(electronAPIObject));
 		contextBridge.exposeInMainWorld('electronAPI', electronAPIObject);
-		console.log('Preload: electronAPI exposed successfully');
+		__DEV__ && console.log('Preload: electronAPI exposed successfully');
 
 		// Verify exposure worked
 		setTimeout(() => {
@@ -75,23 +80,3 @@ if (contextBridge && ipcRenderer) {
 	console.error('Preload: contextBridge:', typeof contextBridge, !!contextBridge);
 	console.error('Preload: ipcRenderer:', typeof ipcRenderer, !!ipcRenderer);
 }
-
-// Type definitions for TypeScript (commented out to avoid module issues)
-// declare global {
-// 	interface Window {
-// 		electronAPI: {
-// 			getMcpStatus: () => Promise<{
-// 				isRunning: boolean;
-// 				message: string;
-// 			}>;
-// 			restartMcpServer: () => Promise<{
-// 				success: boolean;
-// 				message: string;
-// 			}>;
-// 			getAppVersion: () => Promise<string>;
-// 			getSavedTheme: () => Promise<string>;
-// 			saveTheme: (theme: string) => Promise<boolean>;
-// 			expandWindow: () => void;
-// 		};
-// 	}
-// }

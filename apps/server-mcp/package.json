@@ -19,10 +19,9 @@
 	"private": true,
 	"scripts": {
 		"build": "yarn nx build server-mcp --configuration=development",
-		"build:prod": "yarn nx build server-mcp --configuration=production", 
-		"build:dev": "yarn nx build server-mcp --configuration=development",
-		"start": "yarn build && node electron-start.js",
-		"start:prod": "yarn build:prod && node electron-start.js",
+		"build:prod": "yarn nx build server-mcp --configuration=production",
+		"start": "yarn nx run server-mcp:electron",
+		"start:prod": "yarn nx run server-mcp:electron --configuration=production",
 		"serve": "yarn nx serve server-mcp"
 	},
 	"devDependencies": {

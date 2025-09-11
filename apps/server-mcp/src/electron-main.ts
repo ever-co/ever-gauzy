@@ -9,15 +9,11 @@ let app: any,
 	shell: any,
 	ipcMain: any,
 	Menu: any,
-	Tray: any,
-	nativeImage: any,
-	dialog: any,
-	nativeTheme: any,
-	screen: any;
+	dialog: any
 
 try {
 	const electron = require('electron');
-	({ app, BrowserWindow, shell, ipcMain, Menu, Tray, nativeImage, dialog, nativeTheme, screen } = electron);
+	({ app, BrowserWindow, shell, ipcMain, Menu, dialog } = electron);
 	console.log('Electron modules loaded successfully');
 } catch (error) {
 	console.error('Failed to load electron modules:', error);
@@ -27,8 +23,14 @@ try {
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
-// Use require for CommonJS modules that may not have proper ES module exports
-const { setupTitlebar } = require('custom-electron-titlebar/main');
+
+// Import custom-electron-titlebar
+let setupTitlebar: any;
+try {
+	({ setupTitlebar } = await import('custom-electron-titlebar/main'));
+} catch (error) {
+	console.warn('Failed to load custom-electron-titlebar:', error);
+}
 
 // Import environment
 import { environment } from '@gauzy/mcp-server';
@@ -52,7 +54,6 @@ log.transports.file.level = 'info';
 log.transports.console.level = 'debug';
 
 let mainWindow: any | null = null;
-let tray: any | null = null;
 let mcpServerManager: McpServerManager | null = null;
 let store: any = null;
 let isServerInitialized = false;
@@ -62,10 +63,18 @@ if (environment.baseUrl) process.env.API_BASE_URL = environment.baseUrl;
 if (environment.apiTimeout) process.env.API_TIMEOUT = String(environment.apiTimeout);
 if (environment.debug !== undefined) process.env.GAUZY_MCP_DEBUG = String(environment.debug);
 
+//
+try {
+	store = new Store();
+} catch (error) {
+	log.error('Failed to initialize store:', error);
+}
+
 // Set unlimited listeners
 try {
 	if (ipcMain && typeof ipcMain.setMaxListeners === 'function') {
-		ipcMain.setMaxListeners(0);
+		const MAX_IPC_LISTENERS = Number(process.env.MAX_IPC_LISTENERS || 50);
+		ipcMain.setMaxListeners(MAX_IPC_LISTENERS);
 	} else {
 		console.warn('ipcMain.setMaxListeners not available');
 	}
@@ -99,7 +108,6 @@ if (app && typeof app.whenReady === 'function') {
 
 			// Initialize electron-store
 			try {
-				const Store = require('electron-store');
 				store = new Store();
 				log.info('Electron store initialized successfully');
 			} catch (error) {
@@ -135,11 +143,6 @@ if (app && typeof app.whenReady === 'function') {
 
 			// Create window AFTER server is initialized
 			await createMainWindow();
-			// setupApplicationMenu();
-			// setupTray();
-
-			// Setup auto-updater event listeners
-			// setupAutoUpdater();
 		} catch (error) {
 			log.error('Error during app initialization:', error);
 		}
@@ -232,7 +235,9 @@ async function createMainWindow(): Promise<void> {
 		if (fs.existsSync(altPreloadPath)) {
 			preloadPath = altPreloadPath;
 		} else {
-			log.warn(`Preload script not found at ${preloadPath} or ${altPreloadPath}`);
+			const msg = `Preload script not found at ${preloadPath} or ${altPreloadPath}`;
+			log.error(msg);
+			throw new Error(msg);
 		}
 	}
 
@@ -241,8 +246,9 @@ async function createMainWindow(): Promise<void> {
 		if (fs.existsSync(altHtmlPath)) {
 			htmlPath = altHtmlPath;
 		} else {
-			log.error(`HTML file not found at ${htmlPath} or ${altHtmlPath}`);
-			throw new Error('Required HTML file not found');
+			const msg = `HTML file not found at ${htmlPath} or ${altHtmlPath}`;
+			log.error(msg);
+			throw new Error(msg);
 		}
 	}
 
@@ -263,7 +269,11 @@ async function createMainWindow(): Promise<void> {
 		minHeight: 400,
 		show: false,
 		title: 'Gauzy MCP Server Desktop',
-		icon: path.join(actualAppPath, 'favicon.ico'),
+		icon: process.platform === 'darwin'
+			? path.join(actualAppPath, 'icons', 'app.icns')
+			: process.platform === 'win32'
+			? path.join(actualAppPath, 'icons', 'app.ico')
+			: path.join(actualAppPath, 'icons', 'app.png'),
 		center: true,
 		alwaysOnTop: false,
 		skipTaskbar: false,
@@ -408,7 +418,8 @@ function setupIpcHandlers(): void {
 				error: statusData.lastError
 			};
 
-			log.info('IPC: Returning status result:', result);
+			const { connectionString, ...safe } = result as any;
+			log.info('IPC: Returning status result:', safe);
 			return result;
 		} catch (error) {
 			log.error('Error getting MCP status:', error);
@@ -597,112 +608,4 @@ function setupApplicationMenu(): void {
 
 	const menu = Menu.buildFromTemplate(template);
 	Menu.setApplicationMenu(menu);
-}
-
-function setupTray(): void {
-	// Create tray icon
-	const iconPath = path.join(__dirname, 'favicon.ico');
-	const icon = nativeImage.createFromPath(iconPath);
-
-	// Resize icon for tray (16x16 or 32x32 depending on platform)
-	const trayIcon = icon.resize({ width: 16, height: 16 });
-	trayIcon.setTemplateImage(process.platform === 'darwin');
-
-	tray = new Tray(trayIcon);
-	tray.setToolTip('Gauzy MCP Server');
-
-	// Create tray menu
-	const trayMenu = Menu.buildFromTemplate([
-		{
-			label: 'Show App',
-			click: () => {
-				if (mainWindow) {
-					mainWindow.show();
-					mainWindow.focus();
-				}
-			}
-		},
-		{
-			label: 'MCP Server Status',
-			click: async () => {
-				if (mcpServerManager) {
-					const status = mcpServerManager.getStatus();
-					const parentWindow = mainWindow || undefined;
-					dialog.showMessageBox(parentWindow, {
-						type: 'info',
-						title: 'MCP Server Status',
-						message: `Server Status: ${status}`,
-						detail: `Version: ${mcpServerManager.getVersion()}\nRunning: ${mcpServerManager.isRunning()}`
-					});
-				}
-			}
-		},
-		{ type: 'separator' },
-		{
-			label: 'Quit',
-			click: () => {
-				app.quit();
-			}
-		}
-	]);
-
-	tray.setContextMenu(trayMenu);
-
-	// Handle tray click
-	tray.on('click', () => {
-		if (mainWindow) {
-			if (mainWindow.isVisible()) {
-				mainWindow.hide();
-			} else {
-				mainWindow.show();
-				mainWindow.focus();
-			}
-		}
-	});
-}
-
-function setupAutoUpdater(): void {
-	// Import autoUpdater only when needed, after app is ready
-	const { autoUpdater } = require('electron-updater');
-
-	autoUpdater.on('checking-for-update', () => {
-		log.info('Checking for update...');
-	});
-
-	autoUpdater.on('update-available', (info) => {
-		log.info('Update available:', info);
-	});
-
-	autoUpdater.on('update-not-available', (info) => {
-		log.info('Update not available:', info);
-	});
-
-	autoUpdater.on('error', (err) => {
-		log.error('AutoUpdater error:', err);
-	});
-
-	autoUpdater.on('download-progress', (progressObj) => {
-		log.info('Download progress:', progressObj);
-	});
-
-	autoUpdater.on('update-downloaded', (info) => {
-		log.info('Update downloaded:', info);
-		dialog
-			.showMessageBox(mainWindow || undefined, {
-				type: 'info',
-				title: 'Update Available',
-				message: 'A new version has been downloaded. Restart now to apply the update?',
-				buttons: ['Restart', 'Later']
-			})
-			.then((result) => {
-				if (result.response === 0) {
-					autoUpdater.quitAndInstall();
-				}
-			});
-	});
-
-	// Handle auto-updater
-	if (environment.production) {
-		autoUpdater.checkForUpdatesAndNotify();
-	}
 }

@@ -334,11 +334,14 @@
     </div>
 
     <script>
-        // Debug window object first
-        console.log('HTML: Script starting, checking window object...');
-        console.log('HTML: window.electronAPI exists:', !!window.electronAPI);
-        console.log('HTML: window keys:', Object.keys(window));
-        console.log('HTML: typeof window.electronAPI:', typeof window.electronAPI);
+        // Debug window object (enable via ?debug=1)
+        const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+        if (DEBUG) {
+            console.log('HTML: Script starting, checking window object...');
+            console.log('HTML: window.electronAPI exists:', !!window.electronAPI);
+            console.log('HTML: window keys:', Object.keys(window));
+            console.log('HTML: typeof window.electronAPI:', typeof window.electronAPI);
+        }
 
         // Wait a bit for electronAPI to be available
         let electronAPI = null;
@@ -508,10 +511,13 @@
                     addLogEntry('Refreshing server status...', 'info');
                     const status = await electronAPI.getMcpStatus();
 
-                    // Map the new status structure with actual server values
+                    // Normalize fields from backend
+                    const isRunning = (status.isRunning ?? status.running) || false;
+                    const statusText = status.status
+                        || (status.initialized ? (isRunning ? 'Running' : 'Stopped') : 'Not Initialized');
                     serverStatus = {
-                        isRunning: status.isRunning || false,
-                        status: status.status || 'Status unavailable',
+                        isRunning,
+                        status: statusText,
                         version: status.version || 'Version unavailable',
                         transport: status.transport || null,
                         port: status.port || null,
@@ -525,7 +531,7 @@
                     if (status.error) {
                         addLogEntry(`Status error: ${status.error}`, 'warning');
                     } else {
-                        addLogEntry(`Status updated: ${status.status} (${status.transport || 'Unknown transport'})`, 'info');
+                        addLogEntry(`Status updated: ${serverStatus.status} (${serverStatus.transport || 'Unknown transport'})`, 'info');
                     }
                 } catch (error) {
                     addLogEntry(`Error refreshing status: ${error.message}`, 'error');
@@ -576,9 +582,10 @@
             refreshStatus();
 
             // Listen for push updates from main
+            let unsubscribeStatus = null;
             if (electronAPI.onServerStatusUpdate) {
                 try {
-                    electronAPI.onServerStatusUpdate(() => {
+                    unsubscribeStatus = electronAPI.onServerStatusUpdate(() => {
                         addLogEntry('Received server status update', 'info');
                         refreshStatus();
                     });
@@ -593,6 +600,9 @@
             // Cleanup on page unload
             window.addEventListener('beforeunload', () => {
                 clearInterval(statusInterval);
+                if (typeof unsubscribeStatus === 'function') {
+                    try { unsubscribeStatus(); } catch {}
+                }
             });
 
             // Add some initial logs
