@@ -1,5 +1,11 @@
 // Import electron modules with error handling
-let contextBridge: any, ipcRenderer: any;
+type MinimalContextBridge = { exposeInMainWorld: (key: string, api: unknown) => void };
+type MinimalIpcRenderer = {
+	invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
+	on: (channel: string, listener: (event: unknown, ...args: unknown[]) => void) => void;
+	removeListener: (channel: string, listener: (...args: unknown[]) => void) => void;
+};
+let contextBridge: MinimalContextBridge | undefined, ipcRenderer: MinimalIpcRenderer | undefined;
 
 const __DEV__ =
 	process.env.NODE_ENV !== 'production' ||
@@ -22,6 +28,10 @@ try {
 	}
 } catch (error) {
 	console.error('Preload: Failed to load electron modules:', error);
+}
+
+if (!contextBridge || !ipcRenderer) {
+	console.error('Preload: contextBridge or ipcRenderer not available; aborting exposure');
 }
 
 // Timeout helper to prevent IPC calls from hanging indefinitely
@@ -59,7 +69,7 @@ if (contextBridge && ipcRenderer) {
 			getMcpStatus: async () => {
 				__DEV__ && console.log('Preload: getMcpStatus called');
 				try {
-					const result = await withTimeout(ipcRenderer.invoke('get-mcp-status'));
+					const result = await withTimeout(ipcRenderer.invoke('get-mcp-status'), 500, 'get-mcp-status');
 					__DEV__ && console.log('Preload: getMcpStatus result:', result);
 					return result;
 				} catch (error) {
@@ -67,7 +77,7 @@ if (contextBridge && ipcRenderer) {
 					throw error;
 				}
 			},
-			restartMcpServer: () => withTimeout(ipcRenderer.invoke('restart-mcp-server')),
+			restartMcpServer: () => withTimeout(ipcRenderer.invoke('restart-mcp-server'), 15000, 'restart-mcp-server'),
 
 			// Event subscriptions
 			onServerStatusUpdate: (callback: (data?: any) => void) => {
@@ -77,20 +87,21 @@ if (contextBridge && ipcRenderer) {
 			},
 
 			// Server readiness
-			isServerReady: () => withTimeout(ipcRenderer.invoke('is-server-ready')),
+			isServerReady: () => withTimeout(ipcRenderer.invoke('is-server-ready'), 3000, 'is-server-ready'),
 
 			// App information
-			getAppVersion: () => withTimeout(ipcRenderer.invoke('get-app-version')),
+			getAppVersion: () => withTimeout(ipcRenderer.invoke('get-app-version'), 3000, 'get-app-version'),
 
 			// Theme management
-			getSavedTheme: () => withTimeout(ipcRenderer.invoke('get-saved-theme')),
+			getSavedTheme: () => withTimeout(ipcRenderer.invoke('get-saved-theme'), 3000, 'get-saved-theme'),
 			saveTheme: (theme: string) => withTimeout(ipcRenderer.invoke('save-theme', theme)),
 
 			// Window management
-			expandWindow: () => withTimeout(ipcRenderer.invoke('expand_window'))
+			expandWindow: () => withTimeout(ipcRenderer.invoke('expand-window'), 3000, 'expand-window')
 		};
 		__DEV__ && console.log('Preload: electronAPI object created:', Object.keys(electronAPIObject));
-		contextBridge.exposeInMainWorld('electronAPI', electronAPIObject as import('./electron-api').ElectronAPI);
+		const api = Object.freeze(electronAPIObject) as import('./electron-api').ElectronAPI;
+	    contextBridge.exposeInMainWorld('electronAPI', api);
 		__DEV__ && console.log('Preload: electronAPI exposed successfully');
 
 		// Verify exposure worked

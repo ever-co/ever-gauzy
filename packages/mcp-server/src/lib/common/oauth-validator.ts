@@ -55,7 +55,11 @@ export class OAuthValidator {
 	/**
 	 * Attempt to import SPKI with fallback algorithms if initial attempt fails
 	 */
-	private async importSPKIWithFallback(jose: any, keyData: string, primaryAlg: string): Promise<any> {
+	private async importSPKIWithFallback(
+		jose: JoseModule,
+		keyData: string,
+		primaryAlg: string
+	): Promise<any> {
 		const fallbackAlgorithms = ['RS256', 'ES256', 'PS256', 'EdDSA'];
 		const attemptOrder = [primaryAlg, ...fallbackAlgorithms.filter(alg => alg !== primaryAlg)];
 
@@ -225,7 +229,7 @@ export class OAuthValidator {
 					let publicKey: any;
 					const keyData = this.config.jwt.publicKey;
 
-					// Determine if key is PEM or JWK format
+					// Determine if key is PEM, JWK, or raw secret (HS*)
 					const configuredAlg = this.config.jwt?.algorithms?.[0] || 'RS256';
 					if (keyData.startsWith('-----BEGIN')) {
 						// PEM format - detect key type and map to appropriate algorithm
@@ -235,12 +239,36 @@ export class OAuthValidator {
 						try {
 							// Try to parse as JWK
 							const jwk = JSON.parse(keyData);
-							const mappedAlg = this.detectKeyTypeAndAlgorithm(keyData, configuredAlg);
-							publicKey = await jose.importJWK(jwk, jwk.alg || mappedAlg);
+							// Derive algorithm from JWK if not provided
+							let jwkAlg = jwk.alg as string | undefined;
+							if (!jwkAlg) {
+								switch (jwk.kty) {
+									case 'RSA':
+										jwkAlg = /^PS\d+$/.test(configuredAlg) ? configuredAlg : 'RS256';
+										break;
+									case 'EC':
+										jwkAlg = 'ES256';
+										break;
+									case 'OKP':
+										// Ed25519/Ed448 used for EdDSA
+										jwkAlg = 'EdDSA';
+										break;
+									case 'oct':
+										jwkAlg = /^HS\d+$/.test(configuredAlg) ? configuredAlg : 'HS256';
+										break;
+									default:
+										throw new Error(`Unsupported JWK key type: ${jwk.kty}`);
+								}
+							}
+							publicKey = await jose.importJWK(jwk, jwkAlg);
 						} catch {
-							// If not valid JSON, assume PEM-like SPKI string
-							const mappedAlg = this.detectKeyTypeAndAlgorithm(keyData, configuredAlg);
-							publicKey = await this.importSPKIWithFallback(jose, keyData, mappedAlg);
+							// Not JSON: if HS*, treat as shared secret; otherwise assume PEM-like SPKI
+							if (/^HS\d+$/.test(configuredAlg)) {
+								publicKey = new TextEncoder().encode(keyData);
+							} else {
+								const mappedAlg = this.detectKeyTypeAndAlgorithm(keyData, configuredAlg);
+								publicKey = await this.importSPKIWithFallback(jose, keyData, mappedAlg);
+							}
 						}
 					}
 
