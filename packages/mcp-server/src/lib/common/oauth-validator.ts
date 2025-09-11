@@ -8,10 +8,12 @@
 import { Request } from 'express';
 import { AuthorizationConfig, TokenValidationResult, AuthorizationError } from './authorization-config';
 import { SecurityLogger } from './security-logger';
-import * as crypto from 'crypto';
+import * as crypto from 'node:crypto';
+import { TextEncoder } from 'node:util';
 
 // Dynamic import type for jose library
 // Module usage: createRemoteJWKSet, jwtVerify, importSPKI, importJWK, importX509
+import type { JWTPayload as JoseJWTPayload } from 'jose';
 type JoseModule = typeof import('jose');
 
 export class OAuthValidator {
@@ -36,6 +38,9 @@ export class OAuthValidator {
 				case 'rsa':
 					// Keep configured RS*/PS* if provided, otherwise default to RS256
 					return /^RS\d+$/.test(configuredAlg) || /^PS\d+$/.test(configuredAlg) ? configuredAlg : 'RS256';
+				case 'rsa-pss':
+					// RSA-PSS keys should use PS* algorithms
+					return /^PS\d+$/.test(configuredAlg) ? configuredAlg : 'PS256';
 				case 'ec':
 					// Keep configured ES* if provided, otherwise default to ES256 (fallbacks will try ES384/ES512)
 					return /^ES(256K|256|384|512)$/.test(configuredAlg) ? configuredAlg : 'ES256';
@@ -206,7 +211,7 @@ export class OAuthValidator {
 	private async validateJWT(token: string): Promise<TokenValidationResult> {
 		try {
 			const jose = await this.getJose();
-			type JWTPayload = Awaited<ReturnType<typeof jose.jwtVerify>>['payload'];
+			type JWTPayload = JoseJWTPayload;
 			let payload: JWTPayload | undefined;
 
 			// Try JWKS URI first (recommended for production)
@@ -299,7 +304,7 @@ export class OAuthValidator {
 					const { payload: josePayload } = await jose.jwtVerify(token, publicKey, {
 						issuer: this.config.jwt.issuer,
 						audience: this.config.jwt.audience,
-						algorithms: this.config.jwt.algorithms as string[],
+						algorithms: this.config.jwt?.algorithms ?? (headerAlg ? [headerAlg] : undefined),
 						clockTolerance: 30
 					});
 					payload = josePayload;

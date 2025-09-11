@@ -115,7 +115,9 @@ if (contextBridge && ipcRenderer) {
 		console.error('Preload: Error details:', err.message, err.stack);
 	}
 } else {
-	console.error('Preload: contextBridge or ipcRenderer not available');
-	console.error('Preload: contextBridge:', typeof contextBridge, !!contextBridge);
-	console.error('Preload: ipcRenderer:', typeof ipcRenderer, !!ipcRenderer);
+	console.error(
+		'Preload: contextBridge or ipcRenderer not available; contextBridge=%s ipcRenderer=%s',
+		!!contextBridge,
+		!!ipcRenderer
+	);
 }
