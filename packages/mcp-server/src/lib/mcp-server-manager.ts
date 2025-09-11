@@ -10,7 +10,8 @@ const logger = new Logger('McpServerManager');
 // import { environment } from '../environments/environment';
 
 export interface McpServerStatus {
-	running: boolean;
+	running: boolean;          // kept for backward compatibility
+	isRunning?: boolean;       // renderer expects this
 	port: number | null;
 	version: string;
 	transport?: 'stdio' | 'http' | 'websocket';
@@ -19,6 +20,7 @@ export interface McpServerStatus {
 	lastError?: string;
 	initialized: boolean;
 	connectionString?: string;
+	status?: string;           // "Running" | "Stopped" | "Not Initialized"
 }
 
 export class McpServerManager {
@@ -69,11 +71,13 @@ export class McpServerManager {
 
 	getStatus(): McpServerStatus {
 		const isInitialized = this._transport !== null;
-		const connectionString = this._transport?.url ||
+    	const connectionString =
+			this._transport?.url ??
 			(this._transport?.type === 'stdio' ? 'stdio' : 'No connection');
 
 		return {
 			running: this._isRunning,
+			isRunning: this._isRunning,
 			port: this._transport?.type === 'http' || this._transport?.type === 'websocket' ? this.getHttpPort() : null,
 			version: this.getVersion(),
 			transport: this._transport?.type as 'stdio' | 'http' | 'websocket',
@@ -81,7 +85,8 @@ export class McpServerManager {
 			uptime: this._startTime ? Date.now() - this._startTime.getTime() : undefined,
 			lastError: this._lastError || undefined,
 			initialized: isInitialized,
-			connectionString
+			connectionString,
+			status: isInitialized ? (this._isRunning ? 'Running' : 'Stopped') : 'Not Initialized'
 		};
 	}
 

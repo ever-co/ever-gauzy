@@ -6,16 +6,29 @@
  */
 
 import { Request } from 'express';
-import { jwtVerify, createRemoteJWKSet, importSPKI, importJWK, JWTPayload } from 'jose';
 import { AuthorizationConfig, TokenValidationResult, AuthorizationError } from './authorization-config';
 import { SecurityLogger } from './security-logger';
+
+// Dynamic import type for jose library
+type JoseModule = typeof import('jose');
 
 export class OAuthValidator {
 	private tokenCache = new Map<string, { result: TokenValidationResult; expires: number }>();
 	private securityLogger: SecurityLogger;
+	private josePromise: Promise<JoseModule> | null = null;
 
 	constructor(private config: AuthorizationConfig) {
 		this.securityLogger = new SecurityLogger();
+	}
+
+	/**
+	 * Dynamically import jose library to handle ESM compatibility
+	 */
+	private async getJose(): Promise<JoseModule> {
+		if (!this.josePromise) {
+			this.josePromise = import('jose');
+		}
+		return this.josePromise;
 	}
 
 	/**
@@ -121,16 +134,17 @@ export class OAuthValidator {
 	 */
 	private async validateJWT(token: string): Promise<TokenValidationResult> {
 		try {
-			let payload: JWTPayload | undefined;
+			const jose = await this.getJose();
+			let payload: Awaited<ReturnType<typeof jose.jwtVerify>>['payload'] | undefined;
 
 			// Try JWKS URI first (recommended for production)
 			if (this.config.jwt?.jwksUri) {
 				try {
-					const JWKS = createRemoteJWKSet(new URL(this.config.jwt.jwksUri), {
+					const JWKS = jose.createRemoteJWKSet(new URL(this.config.jwt.jwksUri), {
 						timeoutDuration: 5000,
 						cooldownDuration: 30000
 					});
-					const { payload: josePayload } = await jwtVerify(token, JWKS, {
+					const { payload: josePayload } = await jose.jwtVerify(token, JWKS, {
 						issuer: this.config.jwt.issuer,
 						audience: this.config.jwt.audience,
 						algorithms: this.config.jwt.algorithms as string[],
@@ -159,20 +173,20 @@ export class OAuthValidator {
 					const configuredAlg = this.config.jwt?.algorithms?.[0] || 'RS256';
 					if (keyData.startsWith('-----BEGIN')) {
 					// PEM format - use importSPKI with configured algorithm
-					publicKey = await importSPKI(keyData, configuredAlg);
+					publicKey = await jose.importSPKI(keyData, configuredAlg);
 					} else {
 						try {
 							// Try to parse as JWK
 							const jwk = JSON.parse(keyData);
-							publicKey = await importJWK(jwk, jwk.alg || configuredAlg);
+							publicKey = await jose.importJWK(jwk, jwk.alg || configuredAlg);
 						} catch {
 							// If not valid JSON, assume PEM-like SPKI string
-							publicKey = await importSPKI(keyData, configuredAlg);
+							publicKey = await jose.importSPKI(keyData, configuredAlg);
 						}
 					}
 
 					// Verify using jose
-					const { payload: josePayload } = await jwtVerify(token, publicKey, {
+					const { payload: josePayload } = await jose.jwtVerify(token, publicKey, {
 						issuer: this.config.jwt.issuer,
 						audience: this.config.jwt.audience,
 						algorithms: this.config.jwt.algorithms as string[],
