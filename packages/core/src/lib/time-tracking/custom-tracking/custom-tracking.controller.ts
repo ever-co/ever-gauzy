@@ -70,7 +70,15 @@ export class CustomTrackingController {
 	})
 	@Post('/bulk')
 	async submitBulkTrackingData(
-		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true }))
+		@Body(
+			BulkBodyLoadTransformPipe,
+			new ValidationPipe({
+				transform: true,
+				whitelist: true,
+				forbidNonWhitelisted: true,
+				forbidUnknownValues: true
+			})
+		)
 		input: CustomTrackingBulkInputDTO
 	): Promise<{
 		results: Array<{
@@ -88,7 +96,7 @@ export class CustomTrackingController {
 			failed: number;
 		};
 	}> {
-		return await this.customTrackingService.submitBulkTrackingData(input.list);
+		return await this.customTrackingService.submitBulkTrackingData(input.items);
 	}
 
 	/**

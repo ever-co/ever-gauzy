@@ -54,7 +54,7 @@ export class CustomTrackingBulkCreateHandler implements ICommandHandler<CustomTr
 				const result = await this.commandBus.execute(
 					new ProcessTrackingDataCommand({
 						...entry,
-						startTime: entry.startTime ? new Date(entry.startTime) : new Date()
+						...(entry.startTime ? { startTime: new Date(entry.startTime) } : {})
 					})
 				);
 
@@ -65,7 +65,7 @@ export class CustomTrackingBulkCreateHandler implements ICommandHandler<CustomTr
 
 				this.logger.debug(`Successfully processed entry ${i + 1}/${input.length}`);
 			} catch (error) {
-				this.logger.error(`Failed to process entry ${i + 1}/${input.length}:`, error as Error);
+				this.logger.error(`Failed to process entry ${i + 1}/${input.length}: ${error.message}`, error?.stack);
 
 				results.push({
 					success: false,

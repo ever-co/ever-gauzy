@@ -142,8 +142,9 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 
 			if (timeSlots.length > 0) {
 				timeSlot = timeSlots.reduce((closest, current) => {
-					const closestDiff = Math.abs(moment(closest.startedAt).diff(moment.utc(trackingTime)));
-					const currentDiff = Math.abs(moment(current.startedAt).diff(moment.utc(trackingTime)));
+					const target = moment.utc(trackingTime);
+					const closestDiff = Math.abs(moment.utc(closest.startedAt).diff(target));
+					const currentDiff = Math.abs(moment.utc(current.startedAt).diff(target));
 					return currentDiff < closestDiff ? current : closest;
 				});
 			} else {

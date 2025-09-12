@@ -538,9 +538,8 @@ export interface IProcessTrackingDataInput extends IBasePerTenantAndOrganization
 /**
  * Interface for bulk processing custom tracking data
  */
-export interface IProcessTrackingDataBulkInput
-  extends IBasePerTenantAndOrganizationEntityModel {
-  readonly list: ReadonlyArray<IProcessTrackingDataInput>;
+export interface IProcessTrackingDataBulkInput extends IBasePerTenantAndOrganizationEntityModel {
+	readonly items: ReadonlyArray<IProcessTrackingDataInput>;
 }
 /**
  * Interface for tracking session payload
