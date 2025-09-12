@@ -1,6 +1,5 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { BadRequestException, Logger } from '@nestjs/common';
-import { ITrackingSession } from '@gauzy/contracts';
 import { CustomTrackingBulkCreateCommand } from '../custom-tracking-bulk-create.command';
 import { ProcessTrackingDataCommand } from '../process-tracking-data.command';
 import { BulkProcessResult } from '../../dto';
