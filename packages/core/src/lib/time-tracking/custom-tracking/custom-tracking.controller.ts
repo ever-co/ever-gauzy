@@ -17,7 +17,12 @@ import { PermissionsEnum, ITrackingSession, ITimeLog, ITrackingSessionResponse }
 import { Permissions } from '../../shared/decorators';
 import { UUIDValidationPipe, UseValidationPipe, BulkBodyLoadTransformPipe } from '../../shared/pipes';
 import { CustomTrackingService } from './custom-tracking.service';
-import { CustomTrackingSessionsQueryDTO, CustomTrackingBulkInputDTO, ProcessTrackingDataDTO } from './dto';
+import {
+	CustomTrackingSessionsQueryDTO,
+	CustomTrackingBulkInputDTO,
+	ProcessTrackingDataDTO,
+	BulkProcessResult
+} from './dto';
 
 @ApiTags('Custom Tracking')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -81,22 +86,14 @@ export class CustomTrackingController {
 		)
 		input: CustomTrackingBulkInputDTO
 	): Promise<{
-		results: Array<{
-			success: boolean;
-			sessionId: string;
-			timeSlotId: string;
-			message: string;
-			session: ITrackingSession | null;
-			index: number;
-			error?: string;
-		}>;
+		results: BulkProcessResult[];
 		summary: {
 			total: number;
 			successful: number;
 			failed: number;
 		};
 	}> {
-		return await this.customTrackingService.submitBulkTrackingData(input.items);
+		return await this.customTrackingService.submitBulkTrackingData(input.list);
 	}
 
 	/**

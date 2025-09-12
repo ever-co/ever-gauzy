@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ArrayNotEmpty, IsArray, ValidateNested } from 'class-validator';
-import { IProcessTrackingDataBulkInput } from '@gauzy/contracts';
+import { IProcessTrackingDataBulkInput, ITrackingSession } from '@gauzy/contracts';
 import { ProcessTrackingDataDTO } from './process-tracking-data.dto';
 
 /**
@@ -18,5 +18,15 @@ export class CustomTrackingBulkInputDTO implements IProcessTrackingDataBulkInput
 	@ArrayNotEmpty()
 	@ValidateNested({ each: true })
 	@Type(() => ProcessTrackingDataDTO)
-	readonly items: ProcessTrackingDataDTO[];
+	readonly list: ProcessTrackingDataDTO[];
 }
+
+export type BulkProcessResult = {
+	success: boolean;
+	sessionId: string;
+	timeSlotId: string;
+	message: string;
+	session: ITrackingSession | null;
+	index: number;
+	error?: string;
+};

@@ -3,6 +3,7 @@ import { BadRequestException, Logger } from '@nestjs/common';
 import { ITrackingSession } from '@gauzy/contracts';
 import { CustomTrackingBulkCreateCommand } from '../custom-tracking-bulk-create.command';
 import { ProcessTrackingDataCommand } from '../process-tracking-data.command';
+import { BulkProcessResult } from '../../dto';
 
 /**
  * Handler for bulk creation of custom tracking data
@@ -19,27 +20,9 @@ export class CustomTrackingBulkCreateHandler implements ICommandHandler<CustomTr
 	 * @param command The bulk create command containing array of tracking data inputs
 	 * @returns Promise resolving to array of results for each processed entry
 	 */
-	public async execute(command: CustomTrackingBulkCreateCommand): Promise<
-		Array<{
-			success: boolean;
-			sessionId: string;
-			timeSlotId: string;
-			message: string;
-			session: ITrackingSession | null;
-			index: number;
-			error?: string;
-		}>
-	> {
+	public async execute(command: CustomTrackingBulkCreateCommand): Promise<BulkProcessResult[]> {
 		const { input } = command;
-		const results: Array<{
-			success: boolean;
-			sessionId: string;
-			timeSlotId: string;
-			message: string;
-			session: ITrackingSession | null;
-			index: number;
-			error?: string;
-		}> = [];
+		const results: BulkProcessResult[] = [];
 
 		this.logger.log(`Processing bulk custom tracking data: ${input.length} entries`);
 
@@ -51,10 +34,11 @@ export class CustomTrackingBulkCreateHandler implements ICommandHandler<CustomTr
 				}
 
 				// Execute individual tracking data processing command
+				const startTime = entry.startTime ? new Date(entry.startTime) : undefined;
 				const result = await this.commandBus.execute(
 					new ProcessTrackingDataCommand({
 						...entry,
-						...(entry.startTime ? { startTime: new Date(entry.startTime) } : {})
+						...(startTime ? { startTime } : {})
 					})
 				);
 
