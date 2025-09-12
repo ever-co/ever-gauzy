@@ -65,7 +65,7 @@ export class CustomTrackingBulkCreateHandler implements ICommandHandler<CustomTr
 
 				this.logger.debug(`Successfully processed entry ${i + 1}/${input.length}`);
 			} catch (error) {
-				this.logger.error(`Failed to process entry ${i + 1}/${input.length}: ${error.message}`, error?.stack);
+				this.logger.error(`Failed to process entry ${i + 1}/${input.length}: ${error.message}`, error.stack);
 
 				results.push({
 					success: false,
