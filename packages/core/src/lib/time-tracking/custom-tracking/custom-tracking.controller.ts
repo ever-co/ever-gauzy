@@ -8,21 +8,21 @@ import {
 	HttpStatus,
 	UseGuards,
 	DefaultValuePipe,
-	ParseIntPipe
+	ParseIntPipe,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { TenantPermissionGuard, PermissionGuard } from '../../shared/guards';
-import {
-	PermissionsEnum,
-	ITrackingSession,
-	ITimeLog,
-	ITrackingSessionResponse,
-	IProcessTrackingDataInput
-} from '@gauzy/contracts';
+import { PermissionsEnum, ITrackingSession, ITimeLog, ITrackingSessionResponse } from '@gauzy/contracts';
 import { Permissions } from '../../shared/decorators';
-import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe, BulkBodyLoadTransformPipe } from '../../shared/pipes';
 import { CustomTrackingService } from './custom-tracking.service';
-import { CustomTrackingSessionsQueryDTO } from './dto';
+import {
+	CustomTrackingSessionsQueryDTO,
+	CustomTrackingBulkInputDTO,
+	ProcessTrackingDataDTO,
+	BulkProcessResult
+} from './dto';
 
 @ApiTags('Custom Tracking')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -48,7 +48,7 @@ export class CustomTrackingController {
 	})
 	@Post('')
 	@UseValidationPipe({ transform: true })
-	async submitTrackingData(@Body() input: IProcessTrackingDataInput): Promise<{
+	async submitTrackingData(@Body() input: ProcessTrackingDataDTO): Promise<{
 		success: boolean;
 		sessionId: string;
 		timeSlotId: string;
@@ -56,6 +56,44 @@ export class CustomTrackingController {
 		session: ITrackingSession | null;
 	}> {
 		return await this.customTrackingService.submitTrackingData(input);
+	}
+
+	/**
+	 * Submit bulk custom tracking data
+	 */
+	@ApiOperation({
+		summary: 'Submit bulk custom tracking data',
+		description: 'Submit multiple encoded tracking data entries to be processed in bulk'
+	})
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Bulk custom tracking data submitted successfully'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid bulk tracking data'
+	})
+	@Post('/bulk')
+	async submitBulkTrackingData(
+		@Body(
+			BulkBodyLoadTransformPipe,
+			new ValidationPipe({
+				transform: true,
+				whitelist: true,
+				forbidNonWhitelisted: true,
+				forbidUnknownValues: true
+			})
+		)
+		input: CustomTrackingBulkInputDTO
+	): Promise<{
+		results: BulkProcessResult[];
+		summary: {
+			total: number;
+			successful: number;
+			failed: number;
+		};
+	}> {
+		return await this.customTrackingService.submitBulkTrackingData(input.list);
 	}
 
 	/**
