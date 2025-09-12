@@ -20,32 +20,6 @@
 	},
 	"main": "index.js",
 	"bin": "api/main.js",
-	"workspaces": {
-		"packages": [
-			"../../../dist/packages/auth",
-			"../../../dist/packages/common",
-			"../../../dist/packages/config",
-			"../../../dist/packages/constants",
-			"../../../dist/packages/contracts",
-			"../../../dist/packages/core",
-			"../../../dist/packages/desktop-core",
-			"../../../dist/packages/desktop-activity",
-			"../../../dist/packages/desktop-lib",
-			"../../../dist/packages/desktop-window",
-			"../../../dist/packages/plugin",
-			"../../../dist/packages/plugins/integration-ai",
-			"../../../dist/packages/plugins/job-proposal",
-			"../../../dist/packages/plugins/videos",
-			"../../../dist/packages/plugins/integration-zapier",
-			"../../../dist/packages/plugins/posthog",
-			"../../../dist/packages/plugins/registry",
-			"../../../dist/packages/plugins/camshot",
-			"../../../dist/packages/plugins/soundshot",
-			"../../../dist/packages/plugins/registry",
-			"../../../dist/packages/ui-config",
-			"../../../dist/packages/utils"
-		]
-	},
 	"build": {
 		"npmArgs": [
 			"--production"
@@ -152,6 +126,7 @@
 		"@gauzy/config": "file:../../../dist/packages/config",
 		"@gauzy/constants": "file:../../../dist/packages/constants",
 		"@gauzy/contracts": "file:../../../dist/packages/contracts",
+		"@gauzy/common": "file:../../../dist/packages/common",
 		"@gauzy/core": "file:../../../dist/packages/core",
 		"@gauzy/desktop-core": "file:../../../dist/packages/desktop-core",
 		"@gauzy/desktop-activity": "file:../../../dist/packages/desktop-activity",
@@ -178,6 +153,7 @@
 		"@gauzy/plugin-posthog": "file:../../../dist/packages/plugins/posthog",
 		"@gauzy/plugin-camshot": "file:../../../dist/packages/plugins/camshot",
 		"@gauzy/plugin-soundshot": "file:../../../dist/packages/plugins/soundshot",
+		"@gauzy/plugin-integration-activepieces": "file:../../../dist/packages/plugins/integration-activepieces",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@gauzy/utils": "file:../../../dist/packages/utils",
 		"@sentry/electron": "6.9.0",
@@ -208,7 +184,9 @@
 		"twing": "^5.0.2",
 		"underscore": "^1.13.3",
 		"undici": "^6.10.2",
-		"custom-electron-titlebar": "^4.2.8"
+		"custom-electron-titlebar": "^4.2.8",
+		"call-bind-apply-helpers": "^1.0.2",
+		"cheerio-select": "^2.1.0"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",

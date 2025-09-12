@@ -19,17 +19,6 @@
         "url": "https://ever.co"
     },
     "main": "index.js",
-    "workspaces": {
-        "packages": [
-            "../../../dist/packages/contracts",
-            "../../../dist/packages/desktop-core",
-            "../../../dist/packages/desktop-activity",
-            "../../../dist/packages/desktop-lib",
-            "../../../dist/packages/desktop-window",
-            "../../../dist/packages/ui-config",
-            "../../../dist/packages/constants"
-        ]
-    },
     "build": {
         "appId": "com.ever.gauzyagent",
         "artifactName": "${name}-${version}.${ext}",
@@ -125,12 +114,13 @@
         ]
     },
     "dependencies": {
-        "electron-log": "^4.4.8",
+		"electron-log": "^4.4.8",
         "electron-store": "^8.1.0",
         "electron-updater": "^6.1.7",
         "electron-util": "^0.18.1",
         "node-fetch": "^2.6.7",
         "node-notifier": "^8.0.0",
+        "@gauzy/common": "file:../../../dist/packages/common",
         "@gauzy/contracts": "file:../../../dist/packages/contracts",
         "@gauzy/desktop-core": "file:../../../dist/packages/desktop-core",
         "@gauzy/desktop-activity": "file:../../../dist/packages/desktop-activity",
@@ -145,6 +135,8 @@
         "@sentry/core": "9.43.0",
         "auto-launch": "5.0.5",
         "custom-electron-titlebar": "^4.2.8",
-        "form-data": "^4.0.1"
+        "form-data": "^4.0.1",
+        "call-bind-apply-helpers": "^1.0.2",
+        "cheerio-select": "^2.1.0"
     }
 }

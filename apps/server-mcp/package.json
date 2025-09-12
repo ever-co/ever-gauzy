@@ -28,7 +28,7 @@
 		"@types/node": "^22.14.0",
 		"electron": "^35.7.5",
 		"@electron/notarize": "^2.5.0",
-		"electron-builder": "^24.13.3",
+		"electron-builder": "^25.1.8",
 		"electron-installer-dmg": "^4.0.0",
 		"electron-packager": "^17.1.1",
 		"electron-reload": "~1.5.0",
