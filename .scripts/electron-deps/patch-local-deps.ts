@@ -100,7 +100,7 @@ for (const dir of packageDir) {
 
 const inScope = (name: string) => Scopes.some((s) => name.startsWith(s));
 
-const relFile = (from: string, to: string) => `file:${path.relative(from, to).split(path.sep).join('/')}` || 'file:.';
+const relFile = (from: string, to: string) => `file:${path.relative(from, to).split(path.sep).join('/')}`;
 
 function rewriteSection(pkgDir: string, json: IPackage, sections: string[]) {
 	let changed = false;
