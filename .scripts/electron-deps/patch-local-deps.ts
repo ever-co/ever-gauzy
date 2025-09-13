@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-
+import { IPackage } from '../electron-package-utils/interfaces/i-package';
 
 const argv = process.argv.slice(2);
 
@@ -10,7 +10,7 @@ const get = (k: string, d: string) => {
 }
 
 const DIST = path.resolve(get('--dist', 'dist'));
-const Scopes = get('---scope', '@gauzy').split(',').map((s: string) => s.trim()).filter((Boolean));
+const Scopes = get('--scope', '@gauzy').split(',').map((s: string) => s.trim()).filter((Boolean));
 const apps = get('--apps', 'desktop').split(',').map((s) => s.trim()).filter(Boolean);
 
 const isDry = argv.includes('--dry');
@@ -24,8 +24,8 @@ const getModuleName = (pathFile: string) => {
 }
 
 function filterDeps(deps: Record<string, unknown>) {
-	const usedPkg = [];
-	const depsKeys = Object.keys(deps);
+	const usedPkg: string[] = [];
+	const depsKeys: string[] = Object.keys(deps);
 	for (const dep of depsKeys) {
 		if (Scopes.some((s: string) => dep.startsWith(s))) {
 			usedPkg.push(dep);
@@ -35,7 +35,7 @@ function filterDeps(deps: Record<string, unknown>) {
 }
 
 function depsApps() {
-	const deps = [];
+	const deps: string[] = [];
 	for (const app of apps) {
 		const dir = appDir(app);
 		const json = JSON.parse(fs.readFileSync(pkgJson(dir), 'utf8'));
@@ -55,8 +55,8 @@ function requiredDeps(p: string) {
 
 function listImmidiatePackageDirs(root: string) {
 	if (!exists(root)) return [];
-	const dirs = fs.readdirSync(root).map((name: string) => path.join(root, name));
-	const pkgDirs = [];
+	const dirs: string[] = fs.readdirSync(root).map((name: string) => path.join(root, name));
+	const pkgDirs: string[] = [];
 	for (const dir of dirs) {
 		if (exists(pkgJson(dir))) {
 			pkgDirs.push(dir);
@@ -102,7 +102,7 @@ const inScope = (name: string) => Scopes.some((s) => name.startsWith(s));
 
 const relFile = (from: string, to: string) => `file:${path.relative(from, to).split(path.sep).join('/')}` || 'file:.';
 
-function rewriteSection(pkgDir: string, json: any, sections: string[]) {
+function rewriteSection(pkgDir: string, json: IPackage, sections: string[]) {
 	let changed = false;
 	for (const sec of sections) {
 		const deps = json[sec];
@@ -148,6 +148,6 @@ function patchOne(pkgDir: string) {
 let count = 0;
 for (const dir of packageDir) {
 	if (patchOne(dir)) {
-		count = + 1;
+		count += 1;
 	}
 }
