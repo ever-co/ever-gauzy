@@ -593,6 +593,7 @@ export class TimerService {
 					request?.timeZone,
 					true
 				);
+				lastLog.isRunning = false;
 			} else if (remainingWeeklyLimit <= 21 * 60) {
 				// Less than 21 minutes remaining → schedule a single socket event
 				const existingTimeout = runningWeeklyLimitTimeouts.get(employeeId);
@@ -657,11 +658,10 @@ export class TimerService {
 				const todayMidnight = moment.tz(request?.timeZone).startOf('day');
 				const effectiveStart = started.isBefore(todayMidnight) ? todayMidnight : started;
 				status.duration += Math.abs(until.diff(effectiveStart, 'seconds'));
-
-				// If timer is running, then add the non saved duration to the workedThisWeek
-				if (lastLog.isRunning) {
-					status.workedThisWeek += now.diff(moment(lastLog.stoppedAt), 'seconds');
-				}
+			}
+			// If timer is running, then add the non saved duration to the workedThisWeek
+			if (lastLog.isRunning) {
+				status.workedThisWeek += now.diff(moment(lastLog.stoppedAt), 'seconds');
 			}
 		}
 

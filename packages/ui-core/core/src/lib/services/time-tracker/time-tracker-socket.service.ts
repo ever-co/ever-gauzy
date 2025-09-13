@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, fromEvent, tap } from 'rxjs';
+import { BehaviorSubject, filter, fromEvent, switchMap, tap } from 'rxjs';
 import { ITimerStatusWithWeeklyLimits } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { SocketConnectionService } from '../socket-connection/socket-connection.service';
@@ -25,13 +25,20 @@ export class TimeTrackerSocketService {
 	 */
 	private listenToTimerChanges(): void {
 		console.log(this.socketConnection?.socket);
-		if (this.socketConnection?.socket)
-			fromEvent(this.socketConnection.socket, 'timer:changed')
-				.pipe(
-					untilDestroyed(this),
-					tap(() => this.fetchTimerStatus())
-				)
-				.subscribe();
+		this.socketConnection.connected$
+			.pipe(
+				filter((connected) => connected === true),
+				switchMap(() =>
+					fromEvent(this.socketConnection.socket, 'timer:changed').pipe(
+						tap(() => {
+							console.log('[Socket] timer:changed event');
+							this.fetchTimerStatus();
+						})
+					)
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**

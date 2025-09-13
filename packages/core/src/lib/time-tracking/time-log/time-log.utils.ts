@@ -165,7 +165,7 @@ export function calculateTimeLogDurationInRange(
 
 	// Adjust duration for partial logs (not COMPLETE), subtract 1 second to ensure correct rounding
 	if (log.partialStatus !== TimeLogPartialStatus.COMPLETE) {
-		duration -= 1;
+		duration += 5;
 	}
 
 	// Ensure duration is never negative

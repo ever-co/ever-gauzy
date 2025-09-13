@@ -24,10 +24,10 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '@gauzy/ui-core/sha
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'gauzy-teams',
-    templateUrl: './team.component.html',
-    styleUrls: ['./team.component.scss'],
-    standalone: false
+	selector: 'gauzy-teams',
+	templateUrl: './team.component.html',
+	styleUrls: ['./team.component.scss'],
+	standalone: false
 })
 export class TeamComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
 	private _logs: ITimeLog[] = [];
@@ -205,7 +205,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				const isTeamMember = team.members.some((member) => member.employeeId === this._selectedEmployee.id);
 				if (
 					(!isTeamMember && this._selectedEmployee?.id) ||
-					(this._selectedOrganizationTeam.id && team.id !== this._selectedOrganizationTeam.id)
+					(this._selectedOrganizationTeam?.id && team?.id !== this._selectedOrganizationTeam?.id)
 				) {
 					return null;
 				}

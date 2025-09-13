@@ -3,11 +3,13 @@ import { io, Socket } from 'socket.io-client';
 import { Router } from '@angular/router';
 import { environment } from '@gauzy/ui-config';
 import { Store } from '../store/store.service';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class SocketConnectionService {
 	// Socket instance for real-time communication
 	public socket: Socket;
+	public connected$ = new BehaviorSubject<boolean>(false);
 
 	constructor(private readonly store: Store, private readonly router: Router) {}
 
@@ -39,11 +41,12 @@ export class SocketConnectionService {
 			reconnectionAttempts: Infinity, // retry indefinitely
 			reconnectionDelay: 2000, // initial delay between reconnection attempts
 			reconnectionDelayMax: 10000, // max delay for reconnections
-			timeout: 5000 // connection timeout
+			timeout: 10000 // connection timeout
 		});
 
 		// Log when the socket is successfully connected
 		this.socket.on('connect', () => {
+			this.connected$.next(true);
 			const url = new URL(baseUrl);
 			console.log(
 				`Socket connected with ID: ${this.socket.id} | Host: ${url.hostname} | Port: ${url.port || 'default'}`
@@ -52,6 +55,7 @@ export class SocketConnectionService {
 
 		// Log socket disconnections
 		this.socket.on('disconnect', (reason) => {
+			this.connected$.next(false);
 			console.warn('Socket disconnected:', reason);
 		});
 	}

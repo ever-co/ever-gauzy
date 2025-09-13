@@ -47,7 +47,7 @@ import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-em
 import { TypeOrmActivityRepository } from '../activity/repository/type-orm-activity.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
-import { fixTimeLogsBoundary } from '../time-log/time-log.utils';
+import { calculateTotalDuration, fixTimeLogsBoundary } from '../time-log/time-log.utils';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -360,6 +360,74 @@ export class StatisticService {
 		};
 
 		return weekActivities;
+	}
+
+	/**
+	 * Get total work duration for the given period.
+	 *
+	 * @param request - Filters and options (organization, employees, projects, teams, date range, timezone, etc.)
+	 * @returns An object with the total duration (in seconds) for the selected period.
+	 */
+	async getPeriodStatisticsDuration(request: IGetCountsStatistics): Promise<{ duration: number }> {
+		const {
+			organizationId,
+			startDate,
+			endDate,
+			projectIds = [],
+			teamIds = [],
+			logType,
+			source,
+			onlyMe: isOnlyMeSelected
+		} = request;
+
+		let employeeIds = request.employeeIds || [];
+
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
+
+		// Check if the user has permission to view/change other employees
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// If the user does not have permission (or selected "only me"), restrict to their own employeeId
+		if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
+			employeeIds = [user.employeeId];
+		}
+
+		// Format the date range (default: current ISO week)
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('isoWeek')),
+			moment.utc(endDate || moment().endOf('isoWeek'))
+		);
+
+		// Fetch all time logs matching filters
+		const timeLogs = await this.typeOrmTimeLogRepository
+			.createQueryBuilder('time_log')
+			.where('time_log.tenantId = :tenantId', { tenantId })
+			.andWhere('time_log.organizationId = :organizationId', { organizationId })
+			.andWhere(
+				new Brackets((qb) => {
+					// Include logs where start OR stop falls inside the selected date range
+					qb.where('time_log.startedAt BETWEEN :startDate AND :endDate', { startDate: start, endDate: end });
+					qb.orWhere('time_log.stoppedAt BETWEEN :startDate AND :endDate', {
+						startDate: start,
+						endDate: end
+					});
+				})
+			)
+			.andWhere('time_log.stoppedAt >= time_log.startedAt') // Ignore invalid logs
+			.andWhere(isNotEmpty(employeeIds) ? 'time_log.employeeId IN (:...employeeIds)' : '1=1', { employeeIds })
+			.andWhere(isNotEmpty(projectIds) ? 'time_log.projectId IN (:...projectIds)' : '1=1', { projectIds })
+			.andWhere(isNotEmpty(teamIds) ? 'time_log.organizationTeamId IN (:...teamIds)' : '1=1', { teamIds })
+			.andWhere(isNotEmpty(logType) ? 'time_log.logType IN (:...logType)' : '1=1', { logType })
+			.andWhere(isNotEmpty(source) ? 'time_log.source IN (:...source)' : '1=1', { source })
+			.getMany();
+
+		// Sum up durations using the helper (handles overlaps, timezone, range boundaries)
+		const totalDuration = calculateTotalDuration(timeLogs, start, end, request?.timeZone);
+
+		return { duration: totalDuration };
 	}
 
 	/**

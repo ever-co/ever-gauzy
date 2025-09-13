@@ -33,7 +33,7 @@ export class TimerWeeklyLimitService {
 
 		const weekStartUTC = weekStartLocal.clone().utc().toDate();
 		const weekEndUTC = weekEndLocal.clone().utc().toDate();
-		const statistics = await this._statisticService.getWeeklyStatisticsActivities({
+		const statistics = await this._statisticService.getPeriodStatisticsDuration({
 			organizationId: employee.organizationId,
 			tenantId: employee.tenantId,
 			employeeId: employee.id,

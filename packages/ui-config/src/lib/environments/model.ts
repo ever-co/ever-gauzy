@@ -121,4 +121,14 @@ export interface Environment {
 	FORGOT_PASSWORD_URL: string;
 
 	I18N_FILES_URL: string;
+
+	// Additional plugins configuration
+	plugins?: {
+		useChangelog?: boolean;
+		useJobProposal?: boolean;
+		useJobSearch?: boolean;
+		useKnowledgeBase?: boolean;
+		useProductReviews?: boolean;
+		useVideos?: boolean;
+	};
 }
