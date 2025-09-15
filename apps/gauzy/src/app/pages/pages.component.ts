@@ -346,6 +346,13 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 			return;
 		}
 
+		const hasPermission = this.ngxPermissionsService.getPermissions()[PermissionsEnum.INTEGRATION_VIEW];
+
+		if (!hasPermission) {
+			console.warn('User has no INTEGRATION_VIEW permission. Skipping API call.');
+			return;
+		}
+
 		// Extract necessary properties from the organization
 		const { id: organizationId, tenantId } = this.organization;
 

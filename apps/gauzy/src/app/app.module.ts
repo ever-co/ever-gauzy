@@ -8,17 +8,7 @@ import { ExtraOptions, Router, RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
-import {
-	NbChatModule,
-	NbDatepickerModule,
-	NbDialogModule,
-	NbMenuModule,
-	NbSidebarModule,
-	NbToastrModule,
-	NbWindowModule,
-	NbCalendarModule,
-	NbCalendarKitModule
-} from '@nebular/theme';
+import { NbChatModule, NbDialogModule, NbToastrModule, NbWindowModule } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { FileUploadModule } from 'ng2-file-upload';
@@ -29,7 +19,6 @@ import { ColorPickerService } from 'ngx-color-picker';
 import * as Sentry from '@sentry/angular-ivy';
 import moment from 'moment';
 import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
-import { UiCoreModule } from '@gauzy/ui-core';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';
 import {
 	APIInterceptor,
@@ -47,9 +36,8 @@ import {
 	TokenInterceptor
 } from '@gauzy/ui-core/core';
 import { PostHogModule } from '@gauzy/plugin-posthog-ui';
-import { CommonModule } from '@gauzy/ui-core/common';
 import { HttpLoaderFactory, I18nModule, I18nService } from '@gauzy/ui-core/i18n';
-import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
+import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { AppComponent } from './app.component';
 import { appRoutes } from './app.routes';
@@ -84,11 +72,6 @@ const config: ExtraOptions = {
 
 // NB Modules
 const NB_MODULES = [
-	NbCalendarModule,
-	NbCalendarKitModule,
-	NbSidebarModule.forRoot(),
-	NbMenuModule.forRoot(),
-	NbDatepickerModule.forRoot(),
 	NbDialogModule.forRoot(),
 	NbWindowModule.forRoot(),
 	NbToastrModule.forRoot(),
@@ -126,11 +109,12 @@ const THIRD_PARTY_MODULES = [
 // Feature Modules
 const FEATURE_MODULES = [
 	ThemeModule.forRoot(),
-	UiCoreModule.forRoot(),
-	CommonModule.forRoot(),
+	// TODO: For testing
+	//UiCoreModule.forRoot(),
+	//CommonModule.forRoot(),
 	CoreModule.forRoot(),
-	SharedModule.forRoot(),
-	TimeTrackerModule.forRoot(),
+	//SharedModule.forRoot(),
+	//TimeTrackerModule.forRoot(),
 	I18nModule.forRoot()
 ];
 
