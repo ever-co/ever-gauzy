@@ -278,6 +278,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 				if (this.limitReached) {
 					this.timeTrackerService.turnOffTimer();
 					this.isDisable = true;
+					this.triggerCheckStatus();
 				} else {
 					this.isDisable = false;
 				}

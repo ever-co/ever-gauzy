@@ -594,6 +594,23 @@ export class TimerService {
 					true
 				);
 				lastLog.isRunning = false;
+
+				if (weeklyLimitStatus.remainWeeklyTime <= 5 && lastLogStopped) {
+					lastLog = await this.startTimer({
+						tenantId,
+						organizationId,
+						projectId: lastLog.projectId,
+						taskId: lastLog.taskId,
+						description: lastLog.description,
+						logType: lastLog.logType,
+						source: lastLog.source,
+						isBillable: lastLog.isBillable,
+						startedAt: now.toDate(),
+						timeZone: request?.timeZone
+					});
+					// Update flag: timer is running again
+					lastLogStopped = false;
+				}
 			} else if (remainingWeeklyLimit <= 21 * 60) {
 				// Less than 21 minutes remaining → schedule a single socket event
 				const existingTimeout = runningWeeklyLimitTimeouts.get(employeeId);
