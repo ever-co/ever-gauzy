@@ -62,26 +62,73 @@
   flex-direction: column;
   box-shadow: 2px 0 8px 0 rgb(0 0 0 / 3%);
 
-  .skeleton-logo {
-    @include skeleton-element(120px, 40px);
+  .skeleton-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-bottom: 2rem;
+
+    .skeleton-logo {
+      @include skeleton-element(120px, 40px);
+    }
+
+    .skeleton-dropdown-icon {
+      @include skeleton-element(16px, 16px);
+      border-radius: var(--skeleton-border-radius, 0.25rem);
+    }
+
+    .skeleton-menu-dots {
+      @include skeleton-element(20px, 20px);
+      border-radius: 50%;
+    }
   }
 
   .skeleton-menu {
     flex: 1;
 
     .skeleton-menu-item {
-      @include skeleton-element(100%, 40px);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
       margin-bottom: 8px;
-      border-radius: var(--skeleton-border-radius, 0.625rem);
+
+      .skeleton-menu-icon {
+        @include skeleton-element(20px, 20px);
+        border-radius: var(--skeleton-border-radius, 0.25rem);
+        flex-shrink: 0;
+      }
+
+      .skeleton-menu-text {
+        @include skeleton-element(100px, 16px);
+        flex: 1;
+        border-radius: var(--skeleton-border-radius, 0.25rem);
+      }
+
+      .skeleton-menu-arrow {
+        @include skeleton-element(12px, 12px);
+        border-radius: var(--skeleton-border-radius, 0.25rem);
+        flex-shrink: 0;
+      }
     }
   }
 
-  .skeleton-user-avatar {
-    @include skeleton-element(40px, 40px);
-    border-radius: 50%;
+  .skeleton-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-top: auto;
-    align-self: flex-start;
+    padding-top: 1rem;
+
+    .skeleton-user-avatar {
+      @include skeleton-element(40px, 40px);
+      border-radius: 50%;
+    }
+
+    .skeleton-collapse-icon {
+      @include skeleton-element(24px, 24px);
+      border-radius: 50%;
+    }
   }
 }
 
@@ -102,73 +149,151 @@
   .skeleton-header-actions {
     display: flex;
     gap: 1rem;
-    align-items: end;
+    align-items: center;
 
     .skeleton-create-button {
       @include skeleton-element(80px, 32px);
-      border-radius: 2rem;
+      border-radius: 1rem;
     }
 
     .skeleton-project-selector {
-      @include skeleton-element(120px, 32px);
-      border-radius: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      height: 32px;
+      border-radius: 1.5rem;
+      background: var(--skeleton-bg-secondary, #f5f5f5);
+
+      .skeleton-selector-text {
+        @include skeleton-element(80px, 16px);
+      }
+
+      .skeleton-selector-arrow {
+        @include skeleton-element(12px, 12px);
+        border-radius: 2px;
+      }
     }
 
     .skeleton-date-range-picker {
-      @include skeleton-element(200px, 32px);
-      border-radius: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px;
+      height: 32px;
+      border-radius: 1.5rem;
+      background: var(--skeleton-bg-secondary, #f5f5f5);
+
+      .skeleton-date-arrows {
+        display: flex;
+        gap: 4px;
+
+        .skeleton-arrow {
+          @include skeleton-element(16px, 16px);
+          border-radius: 2px;
+        }
+      }
+
+      .skeleton-date-text {
+        @include skeleton-element(140px, 16px);
+      }
     }
 
     .skeleton-user-menu {
-      @include skeleton-element(20px, 20px);
+      @include skeleton-element(24px, 24px);
       border-radius: 50%;
     }
   }
 }
+
 .skeleton-nav-tabs {
   display: flex;
   gap: 2rem;
   padding-bottom: 1rem;
+  border-bottom: 1px solid var(--skeleton-border-color, #e5e5e5);
 
   .skeleton-nav-tab {
-    @include skeleton-element(100px, 24px);
-    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+
+    .skeleton-tab-icon {
+      @include skeleton-element(20px, 20px);
+      border-radius: 3px;
+    }
+
+    .skeleton-tab-text {
+      @include skeleton-element(80px, 16px);
+      border-radius: 3px;
+    }
   }
 }
+
 .skeleton-page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 2rem;
+  padding-top: 1rem;
 
   .skeleton-page-info {
     .skeleton-page-title {
       @include skeleton-element(300px, 28px);
       margin-bottom: 8px;
+      border-radius: 0.4rem;
     }
 
     .skeleton-page-subtitle {
-      @include skeleton-element(250px, 16px);
+      @include skeleton-element(350px, 16px);
+      border-radius: 0.4rem;
     }
   }
 
   .skeleton-page-actions {
     display: flex;
-    gap: 1.5rem;
-    align-items: center;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-end;
 
-    .skeleton-time-info {
-      @include skeleton-element(180px, 18px);
-    }
+    .skeleton-time-widgets {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
 
-    .skeleton-manage-widgets {
-      @include skeleton-element(120px, 32px);
-      border-radius: var(--skeleton-border-radius, 0.625rem);
+      .skeleton-time-info {
+        @include skeleton-element(180px, 20px);
+        border-radius: var(--skeleton-border-radius, 2rem);
+      }
+
+      .skeleton-manage-widgets {
+        @include skeleton-element(120px, 20px);
+        border-radius: var(--skeleton-border-radius, 2rem);
+      }
     }
 
     .skeleton-auto-refresh {
-      @include skeleton-element(100px, 32px);
-      border-radius: var(--skeleton-border-radius, 0.625rem);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 1.5rem;
+      background: var(--skeleton-bg-secondary, #f5f5f5);
+
+      .skeleton-refresh-toggle {
+        @include skeleton-element(40px, 20px);
+        border-radius: 10px;
+      }
+
+      .skeleton-refresh-text {
+        @include skeleton-element(80px, 16px);
+        border-radius: 3px;
+      }
+
+      .skeleton-refresh-button {
+        @include skeleton-element(60px, 24px);
+        border-radius: 12px;
+      }
     }
   }
 }
@@ -185,58 +310,86 @@
     padding: 1.5rem;
     min-height: 120px;
     box-shadow: var(--skeleton-shadow, 0px 6px 20px 0px rgba(0, 0, 0, 0.05));
+    position: relative;
 
-    .skeleton-widget-title {
-      @include skeleton-element(80px, 14px);
-      margin-bottom: 1rem;
+    .skeleton-widget-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+
+      .skeleton-widget-title {
+        @include skeleton-element(120px, 14px);
+        border-radius: 3px;
+      }
+
+      .skeleton-widget-menu {
+        @include skeleton-element(16px, 16px);
+        border-radius: 2px;
+      }
     }
 
     .skeleton-widget-value {
-      @include skeleton-element(60px, 32px);
-      margin-bottom: 1rem;
+      @include skeleton-element(80px, 36px);
+      margin-bottom: 0.5rem;
+      border-radius: 4px;
     }
 
     .skeleton-widget-progress {
       @include skeleton-element(100%, 6px);
+      border-radius: 2px;
+      margin-top: auto;
     }
   }
 }
 
 .skeleton-windows-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
-  margin-top: 1rem;
+  margin-bottom: 2rem;
 
   .skeleton-window-card {
     background-color: var(--skeleton-bg-primary, #ffffff);
     border-radius: var(--skeleton-border-radius, 0.625rem);
-    min-height: 150px;
     box-shadow: var(--skeleton-shadow, 0px 6px 20px 0px rgba(0, 0, 0, 0.05));
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
 
     .skeleton-window-header {
-      padding: 1rem;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 1.5rem 1rem 1.5rem;
+      border-bottom: 1px solid var(--skeleton-border-color, #f0f0f0);
 
       .skeleton-window-title {
-        @include skeleton-element(140px, 18px);
+        @include skeleton-element(120px, 16px);
+        border-radius: 3px;
+      }
+
+      .skeleton-window-menu {
+        @include skeleton-element(16px, 16px);
+        border-radius: 2px;
       }
     }
 
     .skeleton-window-content {
-      padding: 2rem;
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 2rem 1.5rem;
 
       .skeleton-empty-message {
-        @include skeleton-element(180px, 16px);
+        @include skeleton-element(200px, 16px);
+        border-radius: 3px;
       }
     }
   }
 }
 
-// Thèmes sombres
 [data-theme='dark'],
 [data-theme='cosmic'],
 [data-theme='gauzy-dark'] {

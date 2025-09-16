@@ -7,7 +7,7 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter, map, mergeMap, take, tap, delay, combineLatest } from 'rxjs';
+import { filter, map, mergeMap, take, tap } from 'rxjs';
 import { pluck, union } from 'underscore';
 import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
@@ -117,7 +117,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 			// Observable that emits when theme languages change.
 			this._translateService.onLangChange.subscribe(() => {
-				// Marquer que la langue est chargée
+
 				this.languageLoaded = true;
 				this.checkLoadingComplete();
 			});
@@ -178,12 +178,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 		};
 	}
 
-	/**
-	 * Vérifie si tous les éléments sont chargés pour masquer le skeleton
-	 */
+
 	private checkLoadingComplete(): void {
 		if (this.languageLoaded && this.minimumLoadingTime && this.routerReady) {
-			// Délai supplémentaire pour s'assurer que tout est rendu
+
 			setTimeout(() => {
 				this.loading = false;
 			}, 500);
