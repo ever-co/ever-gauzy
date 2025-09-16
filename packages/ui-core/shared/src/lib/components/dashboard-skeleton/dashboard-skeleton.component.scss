@@ -1,0 +1,271 @@
+@use 'themes' as *;
+@use '@shared/reusable' as *;
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100vh;
+}
+
+:root {
+  --skeleton-bg-primary: #ffffff;
+  --skeleton-bg-secondary: #f8f9fa;
+  --skeleton-border-radius: 0.625rem;
+  --skeleton-shadow: 0px 6px 20px 0px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'],
+[data-theme='cosmic'],
+[data-theme='gauzy-dark'] {
+  --skeleton-bg-primary: rgba(32, 32, 35, 1);
+  --skeleton-bg-secondary: rgba(45, 47, 86, 1);
+  --skeleton-border-radius: 0.625rem;
+  --skeleton-shadow: 0px 6px 20px 0px rgba(0, 0, 0, 0.35);
+}
+
+@mixin skeleton-element($width: 100%, $height: 16px) {
+  width: $width;
+  height: $height;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.08) 50%, rgba(0, 0, 0, 0.04) 100%);
+  background-size: 200% 100%;
+  animation: shimmer-subtle 2s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@mixin skeleton-element-dark($width: 100%, $height: 16px) {
+  width: $width;
+  height: $height;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-subtle 2s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.skeleton-app-layout {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+
+  background-color: var(--skeleton-bg-secondary, #f8f9fa);
+}
+
+.skeleton-sidebar {
+  width: 260px;
+
+  background-color: var(--skeleton-bg-primary, #ffffff);
+  padding: 1rem;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 8px 0 rgb(0 0 0 / 3%);
+
+  .skeleton-logo {
+    @include skeleton-element(120px, 40px);
+    margin-bottom: 2rem;
+  }
+
+  .skeleton-menu {
+    flex: 1;
+
+    .skeleton-menu-item {
+      @include skeleton-element(100%, 40px);
+      margin-bottom: 8px;
+
+      border-radius: var(--skeleton-border-radius, 0.625rem);
+    }
+  }
+
+  .skeleton-user-avatar {
+    @include skeleton-element(40px, 40px);
+    border-radius: 50%;
+    margin-top: auto;
+    align-self: flex-start;
+  }
+}
+
+.skeleton-main-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+
+  background-color: var(--skeleton-bg-secondary, #f8f9fa);
+}
+
+.skeleton-top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+
+  .skeleton-breadcrumb {
+    @include skeleton-element(200px, 20px);
+  }
+
+  .skeleton-header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+
+    .skeleton-create-button {
+      @include skeleton-element(80px, 32px);
+      border-radius: var(--skeleton-border-radius, 0.625rem);
+    }
+
+    .skeleton-project-selector {
+      @include skeleton-element(120px, 32px);
+      border-radius: var(--skeleton-border-radius, 0.625rem);
+    }
+
+    .skeleton-date-range-picker {
+      @include skeleton-element(200px, 32px);
+      border-radius: var(--skeleton-border-radius, 0.625rem);
+    }
+
+    .skeleton-user-menu {
+      @include skeleton-element(40px, 40px);
+      border-radius: 50%;
+    }
+  }
+}
+
+.skeleton-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+
+  .skeleton-page-title {
+    @include skeleton-element(300px, 28px);
+    margin-bottom: 8px;
+  }
+
+  .skeleton-page-subtitle {
+    @include skeleton-element(250px, 16px);
+  }
+
+  .skeleton-page-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+
+    .skeleton-manage-widgets {
+      @include skeleton-element(120px, 32px);
+      border-radius: var(--skeleton-border-radius, 0.625rem);
+    }
+
+    .skeleton-auto-refresh {
+      @include skeleton-element(100px, 32px);
+      border-radius: var(--skeleton-border-radius, 0.625rem);
+    }
+  }
+}
+
+.skeleton-widgets-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+
+  .skeleton-widget-item {
+    flex: 1;
+    background-color: var(--skeleton-bg-primary, #ffffff);
+    border-radius: var(--skeleton-border-radius, 0.625rem);
+    padding: 1.5rem;
+    min-height: 120px;
+    box-shadow: var(--skeleton-shadow, 0px 6px 20px 0px rgba(0, 0, 0, 0.05));
+
+    .skeleton-widget-title {
+      @include skeleton-element(80px, 14px);
+      margin-bottom: 1rem;
+    }
+
+    .skeleton-widget-value {
+      @include skeleton-element(60px, 32px);
+      margin-bottom: 1rem;
+    }
+
+    .skeleton-widget-progress {
+      @include skeleton-element(100%, 6px);
+    }
+  }
+}
+
+.skeleton-windows-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+
+  .skeleton-window-card {
+    background-color: var(--skeleton-bg-primary, #ffffff);
+    border-radius: var(--skeleton-border-radius, 0.625rem);
+    min-height: 100px;
+    box-shadow: var(--skeleton-shadow, 0px 6px 20px 0px rgba(0, 0, 0, 0.05));
+
+    .skeleton-window-header {
+      padding: 1rem;
+
+      .skeleton-window-title {
+        @include skeleton-element(120px, 16px);
+      }
+    }
+
+    .skeleton-window-content {
+      padding: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      .skeleton-empty-message {
+        @include skeleton-element(200px, 16px);
+      }
+    }
+  }
+}
+
+[data-theme='dark'],
+[data-theme='cosmic'],
+[data-theme='gauzy-dark'] {
+  .skeleton-logo,
+  .skeleton-menu-item,
+  .skeleton-user-avatar,
+  .skeleton-breadcrumb,
+  .skeleton-create-button,
+  .skeleton-project-selector,
+  .skeleton-date-range-picker,
+  .skeleton-user-menu,
+  .skeleton-page-title,
+  .skeleton-page-subtitle,
+  .skeleton-manage-widgets,
+  .skeleton-auto-refresh,
+  .skeleton-widget-title,
+  .skeleton-widget-value,
+  .skeleton-widget-progress,
+  .skeleton-window-title,
+  .skeleton-empty-message {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(255, 255, 255, 0.06) 50%,
+      rgba(255, 255, 255, 0.03) 100%
+    ) !important;
+    background-size: 200% 100%;
+    animation: shimmer-subtle 2s ease-in-out infinite;
+  }
+}
+
+@keyframes shimmer-subtle {
+  0% {
+    background-position: -200% 0;
+  }
+  50% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
