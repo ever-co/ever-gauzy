@@ -152,7 +152,13 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 					this.organization = organization;
 					this.currency = organization.currency;
 					this.discountAfterTax = organization.discountAfterTax;
-					this.initializeForm();
+					if (!this.form) {
+						this.initializeForm();
+					} else {
+						this.form.patchValue({
+							organization: this.organization?.name
+						});
+					}
 					this._initializeMethods();
 				}),
 				untilDestroyed(this)
@@ -169,7 +175,13 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 					}
 
 					this.selectedEmployee = user;
-					this.initializeForm();
+					if (!this.form) {
+						this.initializeForm();
+					} else {
+						this.form.patchValue({
+							selectedEmployee: this.selectedEmployee?.name
+						});
+					}
 					this._initializeMethods();
 				}),
 				untilDestroyed(this)

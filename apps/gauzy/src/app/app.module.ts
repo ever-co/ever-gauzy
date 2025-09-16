@@ -8,7 +8,7 @@ import { ExtraOptions, Router, RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
-import { NbChatModule, NbDialogModule, NbToastrModule, NbWindowModule } from '@nebular/theme';
+import { NbMenuModule, NbChatModule, NbDialogModule, NbToastrModule, NbWindowModule } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { FileUploadModule } from 'ng2-file-upload';
@@ -72,6 +72,7 @@ const config: ExtraOptions = {
 
 // NB Modules
 const NB_MODULES = [
+	NbMenuModule.forRoot(),
 	NbDialogModule.forRoot(),
 	NbWindowModule.forRoot(),
 	NbToastrModule.forRoot(),
