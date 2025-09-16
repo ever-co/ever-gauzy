@@ -50,13 +50,11 @@
   display: flex;
   width: 100%;
   height: 100vh;
-
   background-color: var(--skeleton-bg-secondary, #f8f9fa);
 }
 
 .skeleton-sidebar {
   width: 260px;
-
   background-color: var(--skeleton-bg-primary, #ffffff);
   padding: 1rem;
   flex-shrink: 0;
@@ -75,7 +73,6 @@
     .skeleton-menu-item {
       @include skeleton-element(100%, 40px);
       margin-bottom: 8px;
-
       border-radius: var(--skeleton-border-radius, 0.625rem);
     }
   }
@@ -92,67 +89,77 @@
   flex: 1;
   padding: 1rem;
   overflow-y: auto;
-
   background-color: var(--skeleton-bg-secondary, #f8f9fa);
 }
 
 .skeleton-top-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 1rem;
   padding: 0.5rem 0;
 
-  .skeleton-breadcrumb {
-    @include skeleton-element(200px, 20px);
-  }
-
   .skeleton-header-actions {
     display: flex;
     gap: 1rem;
-    align-items: center;
+    align-items: end;
 
     .skeleton-create-button {
       @include skeleton-element(80px, 32px);
-      border-radius: var(--skeleton-border-radius, 0.625rem);
+      border-radius: 2rem;
     }
 
     .skeleton-project-selector {
       @include skeleton-element(120px, 32px);
-      border-radius: var(--skeleton-border-radius, 0.625rem);
+      border-radius: 2rem;
     }
 
     .skeleton-date-range-picker {
       @include skeleton-element(200px, 32px);
-      border-radius: var(--skeleton-border-radius, 0.625rem);
+      border-radius: 2rem;
     }
 
     .skeleton-user-menu {
-      @include skeleton-element(40px, 40px);
+      @include skeleton-element(20px, 20px);
       border-radius: 50%;
     }
   }
 }
+.skeleton-nav-tabs {
+  display: flex;
+  gap: 2rem;
+  padding-bottom: 1rem;
 
+  .skeleton-nav-tab {
+    @include skeleton-element(100px, 24px);
+    border-radius: 6px;
+  }
+}
 .skeleton-page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 2rem;
 
-  .skeleton-page-title {
-    @include skeleton-element(300px, 28px);
-    margin-bottom: 8px;
-  }
+  .skeleton-page-info {
+    .skeleton-page-title {
+      @include skeleton-element(300px, 28px);
+      margin-bottom: 8px;
+    }
 
-  .skeleton-page-subtitle {
-    @include skeleton-element(250px, 16px);
+    .skeleton-page-subtitle {
+      @include skeleton-element(250px, 16px);
+    }
   }
 
   .skeleton-page-actions {
     display: flex;
-    gap: 1rem;
+    gap: 1.5rem;
     align-items: center;
+
+    .skeleton-time-info {
+      @include skeleton-element(180px, 18px);
+    }
 
     .skeleton-manage-widgets {
       @include skeleton-element(120px, 32px);
@@ -199,18 +206,20 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+  margin-top: 1rem;
 
   .skeleton-window-card {
     background-color: var(--skeleton-bg-primary, #ffffff);
     border-radius: var(--skeleton-border-radius, 0.625rem);
-    min-height: 100px;
+    min-height: 150px;
     box-shadow: var(--skeleton-shadow, 0px 6px 20px 0px rgba(0, 0, 0, 0.05));
 
     .skeleton-window-header {
       padding: 1rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 
       .skeleton-window-title {
-        @include skeleton-element(120px, 16px);
+        @include skeleton-element(140px, 18px);
       }
     }
 
@@ -221,25 +230,27 @@
       justify-content: center;
 
       .skeleton-empty-message {
-        @include skeleton-element(200px, 16px);
+        @include skeleton-element(180px, 16px);
       }
     }
   }
 }
 
+// Thèmes sombres
 [data-theme='dark'],
 [data-theme='cosmic'],
 [data-theme='gauzy-dark'] {
   .skeleton-logo,
   .skeleton-menu-item,
   .skeleton-user-avatar,
-  .skeleton-breadcrumb,
+  .skeleton-nav-tab,
   .skeleton-create-button,
   .skeleton-project-selector,
   .skeleton-date-range-picker,
   .skeleton-user-menu,
   .skeleton-page-title,
   .skeleton-page-subtitle,
+  .skeleton-time-info,
   .skeleton-manage-widgets,
   .skeleton-auto-refresh,
   .skeleton-widget-title,
@@ -255,6 +266,14 @@
     ) !important;
     background-size: 200% 100%;
     animation: shimmer-subtle 2s ease-in-out infinite;
+  }
+
+  .skeleton-nav-tabs {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .skeleton-window-header {
+    border-bottom-color: rgba(255, 255, 255, 0.05);
   }
 }
 
