@@ -169,7 +169,8 @@ div {
 
 .skeleton-container {
   pointer-events: none;
- cursor: default;
+  cursor: default;
+  display: block;
   .workspace-skeleton-item {
     margin-bottom: 0.375rem;
     display: flex;
@@ -186,9 +187,9 @@ div {
         border-radius: 0.5rem;
         background: linear-gradient(
           90deg,
-          nb-theme(background-basic-color-3) 25%,
-          nb-theme(background-basic-color-2) 50%,
-          nb-theme(background-basic-color-3) 75%
+          nb-theme(background-basic-color-4) 25%,
+          nb-theme(background-basic-color-3) 50%,
+          nb-theme(background-basic-color-4) 75%
         );
         background-size: 200% 100%;
         animation: skeleton-shimmer 2s infinite;
@@ -203,9 +204,9 @@ div {
       border-radius: 4px;
       background: linear-gradient(
         90deg,
-        nb-theme(background-basic-color-3) 25%,
-        nb-theme(background-basic-color-2) 50%,
-        nb-theme(background-basic-color-3) 75%
+        nb-theme(background-basic-color-4) 25%,
+        nb-theme(background-basic-color-3) 50%,
+        nb-theme(background-basic-color-4) 75%
       );
       background-size: 200% 100%;
       animation: skeleton-shimmer 2s infinite;
@@ -213,7 +214,7 @@ div {
     }
   }
   .workspace-skeleton-item,
- .skeleton-add-workspace {
+  .skeleton-add-workspace {
     cursor: default;
   }
   .skeleton-add-workspace {
@@ -253,7 +254,7 @@ div {
   }
 }
 @media (prefers-reduced-motion: reduce) {
- .skeleton-container .workspace-skeleton-item,
+  .skeleton-container .workspace-skeleton-item,
   .skeleton-container .skeleton-img,
   .skeleton-container .skeleton-text,
   .skeleton-container .skeleton-add-btn {
