@@ -130,7 +130,7 @@ export class ActivepiecesService {
 			const integrationTenant = await this.saveConnectionSettings(response.data, input.accessToken, tenantId, organizationId);
 
 			this.logger.log(
-				`Successfully upserted ActivePieces connection: ${response.data.id}. ` +
+				`ActivePieces connection Successfully upsert: ${response.data.id}. ` +
 				`Integration tenant: ${integrationTenant.id}`
 			);
 
