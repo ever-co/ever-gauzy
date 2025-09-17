@@ -1,1 +1,4 @@
 export * from './create-activepieces-integration.dto';
+export * from './activepieces-query.dto';
+export * from './activepieces-token-exchange.dto';
+export * from './activepieces-mcp-update.dto';
