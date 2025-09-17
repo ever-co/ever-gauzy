@@ -1,6 +1,13 @@
 <!-- Loading skeleton -->
-<div *ngIf="loading$ | async" class="skeleton-container">
-	<div *ngFor="let item of [1, 2, 3]" class="workspace-skeleton-item">
+<div
+	*ngIf="!(loading$ | async)"
+	class="skeleton-container"
+	role="status"
+	aria-live="polite"
+	aria-label="Loading workspaces"
+	aria-busy="true"
+>
+	<div *ngFor="let item of [1, 2, 3]; let i = index" class="workspace-skeleton-item">
 		<div class="skeleton-img-container">
 			<div class="skeleton-img"></div>
 		</div>

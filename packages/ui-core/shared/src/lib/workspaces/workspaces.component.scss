@@ -168,6 +168,8 @@ div {
 }
 
 .skeleton-container {
+  pointer-events: none;
+ cursor: default;
   .workspace-skeleton-item {
     margin-bottom: 0.375rem;
     display: flex;
@@ -190,6 +192,7 @@ div {
         );
         background-size: 200% 100%;
         animation: skeleton-shimmer 2s infinite;
+        will-change: background-position, opacity;
       }
     }
 
@@ -206,9 +209,13 @@ div {
       );
       background-size: 200% 100%;
       animation: skeleton-shimmer 2s infinite;
+      will-change: background-position, opacity;
     }
   }
-
+  .workspace-skeleton-item,
+ .skeleton-add-workspace {
+    cursor: default;
+  }
   .skeleton-add-workspace {
     margin-bottom: 0.375rem;
     display: flex;
@@ -243,5 +250,13 @@ div {
   }
   50% {
     opacity: 0.7;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+ .skeleton-container .workspace-skeleton-item,
+  .skeleton-container .skeleton-img,
+  .skeleton-container .skeleton-text,
+  .skeleton-container .skeleton-add-btn {
+    animation: none !important;
   }
 }
