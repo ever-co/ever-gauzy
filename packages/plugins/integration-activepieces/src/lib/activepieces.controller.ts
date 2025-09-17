@@ -23,6 +23,8 @@ import { CreateActivepiecesIntegrationDto } from './dto';
 import {
 	IActivepiecesOAuthTokens,
 	IActivepiecesConnection,
+	IActivepiecesConnectionsListParams,
+	IActivepiecesConnectionsListResponse
 } from './activepieces.type';
 import { ACTIVEPIECES_OAUTH_TOKEN_URL, OAUTH_GRANT_TYPE } from './activepieces.config';
 
@@ -113,25 +115,79 @@ export class ActivepiecesController {
 	}
 
 	/**
-	 * Create a new ActivePieces connection
+	 * Create or update ActivePieces connection (upsert)
 	 */
-	@ApiOperation({ summary: 'Create ActivePieces connection' })
+	@ApiOperation({ summary: 'Create or update ActivePieces connection' })
 	@ApiResponse({
 		status: 201,
-		description: 'Successfully created ActivePieces connection'
+		description: 'Successfully created or updated ActivePieces connection'
 	})
 	@Post('/connection')
 	@Permissions(PermissionsEnum.INTEGRATION_ADD)
-	async createConnection(@Body() input: CreateActivepiecesIntegrationDto): Promise<IActivepiecesConnection> {
+	async upsertConnection(@Body() input: CreateActivepiecesIntegrationDto): Promise<IActivepiecesConnection> {
 		try {
-			return await this.activepiecesService.createConnection(input);
+			return await this.activepiecesService.upsertConnection(input);
 		} catch (error: any) {
 			if (error instanceof HttpException) {
 				throw error;
 			}
 			throw new HttpException(
-				`Failed to create ActivePieces connection: ${error.message}`,
+				`Failed to upsert ActivePieces connection: ${error.message}`,
 				HttpStatus.BAD_REQUEST
+			);
+		}
+	}
+
+	/**
+	 * List connections for a project
+	 */
+	@ApiOperation({ summary: 'List ActivePieces connections for a project' })
+	@ApiResponse({
+		status: 200,
+		description: 'Returns list of ActivePieces connections'
+	})
+	@Get('/connections/:integrationId')
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
+	async listConnections(
+		@Param('integrationId', UUIDValidationPipe) integrationId: string,
+		@Body() params: IActivepiecesConnectionsListParams
+	): Promise<IActivepiecesConnectionsListResponse> {
+		try {
+			return await this.activepiecesService.listConnections(params, integrationId);
+		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			throw new HttpException(
+				`Failed to list ActivePieces connections: ${error.message}`,
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
+	}
+
+	/**
+	 * Get tenant connections
+	 */
+	@ApiOperation({ summary: 'Get ActivePieces connections for current tenant' })
+	@ApiResponse({
+		status: 200,
+		description: 'Returns tenant ActivePieces connections'
+	})
+	@Get('/connections/tenant/:integrationId/:projectId')
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
+	async getTenantConnections(
+		@Param('integrationId', UUIDValidationPipe) integrationId: string,
+		@Param('projectId') projectId: string
+	): Promise<IActivepiecesConnection[]> {
+		try {
+			return await this.activepiecesService.getTenantConnections(projectId, integrationId);
+		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			throw new HttpException(
+				`Failed to get tenant ActivePieces connections: ${error.message}`,
+				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
 	}
@@ -212,6 +268,32 @@ export class ActivepiecesController {
 			}
 			throw new HttpException(
 				`Failed to get integration status: ${error.message}`,
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
+	}
+
+	/**
+	 * Get integration tenant information
+	 */
+	@ApiOperation({ summary: 'Get ActivePieces integration tenant information' })
+	@ApiResponse({
+		status: 200,
+		description: 'Returns integration tenant information'
+	})
+	@Get('/integration-tenant/:integrationId')
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
+	async getIntegrationTenant(
+		@Param('integrationId', UUIDValidationPipe) integrationId: string
+	): Promise<any> {
+		try {
+			return await this.activepiecesService.getIntegrationTenant(integrationId);
+		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			throw new HttpException(
+				`Failed to get ActivePieces integration tenant: ${error.message}`,
 				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
