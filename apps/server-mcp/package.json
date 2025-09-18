@@ -27,7 +27,7 @@
 	"devDependencies": {
 		"@electron/rebuild": "^3.2.10",
 		"@types/node": "^22.14.0",
-		"electron": "^30.0.1",
+		"electron": "^35.7.5",
 		"@electron/notarize": "^2.5.0",
 		"electron-builder": "^24.13.3",
 		"electron-installer-dmg": "^4.0.0",

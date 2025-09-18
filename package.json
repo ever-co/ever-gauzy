@@ -505,7 +505,7 @@
 		"bcrypt": "^5.1.1",
 		"camelcase": "^6.3.0",
 		"dotenv": "^16.0.3",
-		"electron": "^30.0.1",
+		"electron": "^35.7.5",
 		"jsdom": "^23.0.1",
 		"lodash-es": "^4.17.21",
 		"minizlib": "^2.1.2",
