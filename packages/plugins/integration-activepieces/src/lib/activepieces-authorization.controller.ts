@@ -8,7 +8,7 @@ import { IntegrationEnum } from '@gauzy/contracts';
 import { buildQueryString } from '@gauzy/utils';
 import { firstValueFrom, catchError } from 'rxjs';
 import { ACTIVEPIECES_OAUTH_AUTHORIZE_URL, ACTIVEPIECES_OAUTH_TOKEN_URL, ACTIVEPIECES_SCOPES, OAUTH_RESPONSE_TYPE, OAUTH_GRANT_TYPE } from './activepieces.config';
-import { ActivepiecesQueryDTO } from './dto/activepieces-query.dto';
+import { ActivepiecesQueryDto } from './dto/activepieces-query.dto';
 import { IActivepiecesTokenExchangeRequest, IActivepiecesOAuthTokens } from './activepieces.type';
 
 @ApiTags('ActivePieces Integration')
@@ -54,7 +54,7 @@ export class ActivepiecesAuthorizationController {
 	})
 	@Get('/authorize')
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async authorize(@Query() query: ActivepiecesQueryDTO, @Res() response: Response) {
+	async authorize(@Query() query: ActivepiecesQueryDto, @Res() response: Response) {
 		try {
 			// Get ActivePieces configuration
 			const activepiecesConfig = this.configService.get('activepieces') as IActivepiecesConfig;
@@ -103,7 +103,7 @@ export class ActivepiecesAuthorizationController {
 		description: 'Redirects to the application with authorization code'
 	})
 	@Get('/callback')
-	async callback(@Query() query: ActivepiecesQueryDTO, @Res() response: Response) {
+	async callback(@Query() query: ActivepiecesQueryDto, @Res() response: Response) {
 		try {
 			// Validate the input data
 			if (!query || !query.code || !query.state) {
@@ -184,7 +184,7 @@ export class ActivepiecesAuthorizationController {
 			// Exchange authorization code for access token
 			const response = await firstValueFrom(
 				this.httpService
-					.post<IActivepiecesOAuthTokens>(ACTIVEPIECES_OAUTH_TOKEN_URL, tokenRequest, {
+					.post<IActivepiecesOAuthTokens>(ACTIVEPIECES_OAUTH_TOKEN_URL, new URLSearchParams(tokenRequest as any), {
 						headers: {
 							'Content-Type': 'application/x-www-form-urlencoded'
 						}

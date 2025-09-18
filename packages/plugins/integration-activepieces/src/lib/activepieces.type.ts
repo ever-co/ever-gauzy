@@ -161,13 +161,18 @@ export interface IActivepiecesErrorResponse {
 }
 
 /**
- * ActivePieces list connections response
+ * Generic ActivePieces list response with pagination
  */
-export interface IActivepiecesConnectionsListResponse {
-	data: IActivepiecesConnection[];
+export interface IActivepiecesListResponse<T> {
+	data: T[];
 	next: string | null;
 	previous: string | null;
 }
+
+/**
+ * ActivePieces list connections response
+ */
+export interface IActivepiecesConnectionsListResponse extends IActivepiecesListResponse<IActivepiecesConnection> {}
 
 /**
  * ActivePieces list connections query params
@@ -224,11 +229,7 @@ export interface IActivepiecesMcpServer {
 /**
  * ActivePieces MCP Server list response
  */
-export interface IActivepiecesMcpServersListResponse {
-	data: IActivepiecesMcpServer[];
-	next: string | null;
-	previous: string | null;
-}
+export interface IActivepiecesMcpServersListResponse extends IActivepiecesListResponse<IActivepiecesMcpServer> {}
 
 /**
  * ActivePieces MCP Server list query params

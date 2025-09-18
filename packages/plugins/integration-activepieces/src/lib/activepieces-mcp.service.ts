@@ -4,22 +4,19 @@ import {
 	Logger,
 	HttpException,
 	HttpStatus,
-	UnauthorizedException,
-	InternalServerErrorException
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@gauzy/config';
-import { firstValueFrom, catchError, throwError } from 'rxjs';
+import { IntegrationEnum } from '@gauzy/contracts';
+import { firstValueFrom, catchError } from 'rxjs';
 import { AxiosError } from 'axios';
 import { IntegrationSettingService, IntegrationService, IntegrationTenantService, RequestContext } from '@gauzy/core';
 import {
 	IActivepiecesMcpServer,
 	IActivepiecesMcpServersListResponse,
 	IActivepiecesMcpServersListParams,
-	IActivepiecesMcpServerUpdateRequest,
 	ActivepiecesSettingName,
-	IActivepiecesErrorResponse
 } from './activepieces.type';
+import { ActivepiecesMcpUpdateDto } from './dto';
 import { ACTIVEPIECES_MCP_SERVERS_URL } from './activepieces.config';
 
 @Injectable()
@@ -28,9 +25,6 @@ export class ActivepiecesMcpService {
 
 	constructor(
 		private readonly httpService: HttpService,
-		private readonly configService: ConfigService,
-		private readonly integrationSettingService: IntegrationSettingService,
-		private readonly integrationService: IntegrationService,
 		private readonly integrationTenantService: IntegrationTenantService
 	) { }
 
@@ -39,39 +33,21 @@ export class ActivepiecesMcpService {
 	 */
 	async listMcpServers(params: IActivepiecesMcpServersListParams): Promise<IActivepiecesMcpServersListResponse> {
 		try {
-			const accessToken = await this.getValidAccessToken();
-
 			// Build query parameters
-			const queryParams = new URLSearchParams();
-			queryParams.append('projectId', params.projectId);
+			const queryParams: Record<string, any> = {
+				projectId: params.projectId
+			};
 
-			if (params.limit) queryParams.append('limit', params.limit.toString());
-			if (params.cursor) queryParams.append('cursor', params.cursor);
-			if (params.name) queryParams.append('name', params.name);
+			if (params.limit) queryParams['limit'] = params.limit.toString();
+			if (params.cursor) queryParams['cursor'] = params.cursor;
+			if (params.name) queryParams['name'] = params.name;
 
-			const response = await firstValueFrom(
-				this.httpService
-					.get<IActivepiecesMcpServersListResponse>(
-						`${ACTIVEPIECES_MCP_SERVERS_URL}?${queryParams.toString()}`,
-						{
-							headers: {
-								Authorization: `Bearer ${accessToken}`,
-								'Content-Type': 'application/json'
-							}
-						}
-					)
-					.pipe(
-						catchError((error: AxiosError) => {
-							this.logger.error('Error listing ActivePieces MCP servers:', error.response?.data);
-							throw new HttpException(
-								`Failed to list ActivePieces MCP servers: ${error.message}`,
-								error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
-							);
-						})
-					)
+			return await this.request<IActivepiecesMcpServersListResponse>(
+				'get',
+				ACTIVEPIECES_MCP_SERVERS_URL,
+				undefined,
+				queryParams
 			);
-
-			return response.data;
 		} catch (error: any) {
 			this.logger.error('Failed to list ActivePieces MCP servers:', error);
 			throw new HttpException(
@@ -86,31 +62,10 @@ export class ActivepiecesMcpService {
 	 */
 	async getMcpServer(serverId: string): Promise<IActivepiecesMcpServer> {
 		try {
-			const accessToken = await this.getValidAccessToken();
-
-			const response = await firstValueFrom(
-				this.httpService
-					.get<IActivepiecesMcpServer>(
-						`${ACTIVEPIECES_MCP_SERVERS_URL}/${serverId}`,
-						{
-							headers: {
-								Authorization: `Bearer ${accessToken}`,
-								'Content-Type': 'application/json'
-							}
-						}
-					)
-					.pipe(
-						catchError((error: AxiosError) => {
-							this.logger.error('Error fetching ActivePieces MCP server:', error.response?.data);
-							throw new HttpException(
-								`Failed to fetch ActivePieces MCP server: ${error.message}`,
-								error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
-							);
-						})
-					)
+			return await this.request<IActivepiecesMcpServer>(
+				'get',
+				`${ACTIVEPIECES_MCP_SERVERS_URL}/${serverId}`
 			);
-
-			return response.data;
 		} catch (error: any) {
 			this.logger.error('Failed to get ActivePieces MCP server:', error);
 			throw new HttpException(
@@ -123,51 +78,16 @@ export class ActivepiecesMcpService {
 	/**
 	 * Update MCP server
 	 */
-	async updateMcpServer(serverId: string, updateData: IActivepiecesMcpServerUpdateRequest): Promise<IActivepiecesMcpServer> {
+	async updateMcpServer(serverId: string, updateData: ActivepiecesMcpUpdateDto): Promise<IActivepiecesMcpServer> {
 		try {
-			const accessToken = await this.getValidAccessToken();
-
-			const response = await firstValueFrom(
-				this.httpService
-					.post<IActivepiecesMcpServer>(
-						`${ACTIVEPIECES_MCP_SERVERS_URL}/${serverId}`,
-						updateData,
-						{
-							headers: {
-								Authorization: `Bearer ${accessToken}`,
-								'Content-Type': 'application/json'
-							}
-						}
-					)
-					.pipe(
-						catchError((error: AxiosError) => {
-							const status = error?.response?.status;
-							const data = error?.response?.data as IActivepiecesErrorResponse;
-							const errorMessage = data?.error?.message || error.message;
-
-							this.logger.error('Error updating ActivePieces MCP server:', data);
-
-							if (status === HttpStatus.UNAUTHORIZED) {
-								return throwError(
-									() =>
-										new UnauthorizedException(
-											data?.error?.message ?? `Unauthorized to update ActivePieces MCP server: ${error.message}`
-										)
-								);
-							}
-
-							return throwError(
-								() =>
-									new InternalServerErrorException(
-										`Failed to update ActivePieces MCP server: ${errorMessage}`
-									)
-							);
-						})
-					)
+			const result = await this.request<IActivepiecesMcpServer>(
+				'post',
+				`${ACTIVEPIECES_MCP_SERVERS_URL}/${serverId}`,
+				updateData
 			);
 
-			this.logger.log(`Successfully updated ActivePieces MCP server: ${response.data.id}`);
-			return response.data;
+			this.logger.log(`Successfully updated ActivePieces MCP server: ${result.id}`);
+			return result;
 		} catch (error: any) {
 			if (error instanceof HttpException) {
 				throw error;
@@ -182,49 +102,14 @@ export class ActivepiecesMcpService {
 	 */
 	async rotateMcpServerToken(serverId: string): Promise<IActivepiecesMcpServer> {
 		try {
-			const accessToken = await this.getValidAccessToken();
-
-			const response = await firstValueFrom(
-				this.httpService
-					.post<IActivepiecesMcpServer>(
-						`${ACTIVEPIECES_MCP_SERVERS_URL}/${serverId}/rotate`,
-						{}, // No body required for rotate
-						{
-							headers: {
-								Authorization: `Bearer ${accessToken}`,
-								'Content-Type': 'application/json'
-							}
-						}
-					)
-					.pipe(
-						catchError((error: AxiosError) => {
-							const status = error?.response?.status;
-							const data = error?.response?.data as IActivepiecesErrorResponse;
-							const errorMessage = data?.error?.message || error.message;
-
-							this.logger.error('Error rotating ActivePieces MCP server token:', data);
-
-							if (status === HttpStatus.UNAUTHORIZED) {
-								return throwError(
-									() =>
-										new UnauthorizedException(
-											data?.error?.message ?? `Unauthorized to rotate ActivePieces MCP server token: ${error.message}`
-										)
-								);
-							}
-
-							return throwError(
-								() =>
-									new InternalServerErrorException(
-										`Failed to rotate ActivePieces MCP server token: ${errorMessage}`
-									)
-							);
-						})
-					)
+			const result = await this.request<IActivepiecesMcpServer>(
+				'post',
+				`${ACTIVEPIECES_MCP_SERVERS_URL}/${serverId}/rotate`,
+				{} // No body required for rotate
 			);
 
-			this.logger.log(`Successfully rotated ActivePieces MCP server token: ${response.data.id}`);
-			return response.data;
+			this.logger.log(`Successfully rotated ActivePieces MCP server token: ${result.id}`);
+			return result;
 		} catch (error: any) {
 			if (error instanceof HttpException) {
 				throw error;
@@ -263,6 +148,43 @@ export class ActivepiecesMcpService {
 	}
 
 	/**
+	 * Helper method for making HTTP requests with standard headers and error handling
+	 */
+	private async request<T>(
+		method: 'get' | 'post' | 'put' | 'delete',
+		url: string,
+		data?: any,
+		params?: Record<string, any>
+	): Promise<T> {
+		const accessToken = await this.getValidAccessToken();
+
+		const config = {
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+				'Content-Type': 'application/json'
+			},
+			...(params && { params })
+		};
+
+		return firstValueFrom(
+			this.httpService.request<T>({
+				method,
+				url,
+				data,
+				...config
+			}).pipe(
+				catchError((error: AxiosError) => {
+					this.logger.error(`Error making ${method.toUpperCase()} request to ${url}:`, error.response?.data);
+					throw new HttpException(
+						`HTTP ${method.toUpperCase()} request failed: ${error.message}`,
+						error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
+					);
+				})
+			)
+		).then(response => response.data);
+	}
+
+	/**
 	 * Get valid access token for API calls
 	 */
 	private async getValidAccessToken(): Promise<string> {
@@ -279,7 +201,7 @@ export class ActivepiecesMcpService {
 				where: {
 					tenantId,
 					integration: {
-						provider: 'ACTIVE_PIECES'
+						provider: IntegrationEnum.ACTIVE_PIECES
 					}
 				},
 				relations: ['settings']

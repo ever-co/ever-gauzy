@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Param, Query, HttpException, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
+import { ListMcpServersDto, ActivepiecesMcpUpdateDto } from './dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { TenantPermissionGuard, Permissions } from '@gauzy/core';
@@ -7,9 +8,7 @@ import { IntegrationEnum } from '@gauzy/contracts';
 import { ActivepiecesMcpService } from './activepieces-mcp.service';
 import {
 	IActivepiecesMcpServer,
-	IActivepiecesMcpServersListResponse,
-	IActivepiecesMcpServersListParams,
-	IActivepiecesMcpServerUpdateRequest
+	IActivepiecesMcpServersListResponse
 } from './activepieces.type';
 
 @ApiTags('ActivePieces MCP Server Integration')
@@ -22,10 +21,6 @@ export class ActivepiecesMcpController {
 	 * List MCP servers for a project
 	 */
 	@ApiOperation({ summary: 'List ActivePieces MCP servers for a project' })
-	@ApiQuery({ name: 'projectId', required: true, type: String, description: 'ActivePieces project ID' })
-	@ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of results to return' })
-	@ApiQuery({ name: 'cursor', required: false, type: String, description: 'Pagination cursor' })
-	@ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by MCP server name' })
 	@ApiResponse({
 		status: 200,
 		description: 'Returns list of MCP servers',
@@ -44,7 +39,7 @@ export class ActivepiecesMcpController {
 	@Get()
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async listMcpServers(@Query() query: IActivepiecesMcpServersListParams): Promise<IActivepiecesMcpServersListResponse> {
+	async listMcpServers(@Query() query: ListMcpServersDto): Promise<IActivepiecesMcpServersListResponse> {
 		try {
 			if (!query.projectId) {
 				throw new HttpException('Project ID is required', HttpStatus.BAD_REQUEST);
@@ -52,6 +47,7 @@ export class ActivepiecesMcpController {
 
 			return await this.activepiecesMcpService.listMcpServers(query);
 		} catch (error: any) {
+			if (error instanceof HttpException) throw error;
 			throw new HttpException(
 				`Failed to list ${IntegrationEnum.ACTIVE_PIECES} MCP servers: ${error.message}`,
 				error.status || HttpStatus.INTERNAL_SERVER_ERROR
@@ -83,6 +79,7 @@ export class ActivepiecesMcpController {
 
 			return await this.activepiecesMcpService.getTenantMcpServers(projectId);
 		} catch (error: any) {
+			if (error instanceof HttpException) throw error;
 			throw new HttpException(
 				`Failed to get tenant ${IntegrationEnum.ACTIVE_PIECES} MCP servers: ${error.message}`,
 				error.status || HttpStatus.INTERNAL_SERVER_ERROR
@@ -111,6 +108,7 @@ export class ActivepiecesMcpController {
 
 			return await this.activepiecesMcpService.getMcpServer(serverId);
 		} catch (error: any) {
+			if (error instanceof HttpException) throw error;
 			throw new HttpException(
 				`Failed to get ${IntegrationEnum.ACTIVE_PIECES} MCP server: ${error.message}`,
 				error.status || HttpStatus.INTERNAL_SERVER_ERROR
@@ -133,7 +131,7 @@ export class ActivepiecesMcpController {
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async updateMcpServer(
 		@Param('serverId') serverId: string,
-		@Body() updateData: IActivepiecesMcpServerUpdateRequest
+		@Body() updateData: ActivepiecesMcpUpdateDto
 	): Promise<IActivepiecesMcpServer> {
 		try {
 			if (!serverId) {
@@ -142,6 +140,7 @@ export class ActivepiecesMcpController {
 
 			return await this.activepiecesMcpService.updateMcpServer(serverId, updateData);
 		} catch (error: any) {
+			if (error instanceof HttpException) throw error;
 			throw new HttpException(
 				`Failed to update ${IntegrationEnum.ACTIVE_PIECES} MCP server: ${error.message}`,
 				error.status || HttpStatus.INTERNAL_SERVER_ERROR
@@ -170,6 +169,7 @@ export class ActivepiecesMcpController {
 
 			return await this.activepiecesMcpService.rotateMcpServerToken(serverId);
 		} catch (error: any) {
+			if (error instanceof HttpException) throw error;
 			throw new HttpException(
 				`Failed to rotate ${IntegrationEnum.ACTIVE_PIECES} MCP server token: ${error.message}`,
 				error.status || HttpStatus.INTERNAL_SERVER_ERROR

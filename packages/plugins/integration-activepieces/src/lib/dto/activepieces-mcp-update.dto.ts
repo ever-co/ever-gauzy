@@ -1,9 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ActivepiecesMcpToolDto {
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: 'Tool ID',
 		type: String,
 		required: false
@@ -12,7 +12,7 @@ export class ActivepiecesMcpToolDto {
 	@IsOptional()
 	readonly id?: string;
 
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: 'Tool type',
 		type: String,
 		required: false
@@ -21,15 +21,15 @@ export class ActivepiecesMcpToolDto {
 	@IsOptional()
 	readonly type?: string;
 
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: 'Tool metadata',
 		type: Object,
 		required: false
 	})
 	@IsOptional()
-	readonly pieceMetadata?: any;
+	readonly pieceMetadata?: Record<string, unknown>;
 
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: 'Flow ID associated with tool',
 		type: String,
 		required: false
@@ -40,7 +40,7 @@ export class ActivepiecesMcpToolDto {
 }
 
 export class ActivepiecesMcpUpdateDto {
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: 'MCP server name',
 		type: String,
 		required: false
@@ -49,7 +49,7 @@ export class ActivepiecesMcpUpdateDto {
 	@IsOptional()
 	readonly name?: string;
 
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: 'Array of tools for the MCP server',
 		type: [ActivepiecesMcpToolDto],
 		required: false

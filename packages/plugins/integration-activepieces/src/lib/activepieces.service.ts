@@ -140,7 +140,7 @@ export class ActivepiecesService {
 				throw error;
 			}
 			this.logger.error('Failed to upsert ActivePieces connection:', error);
-			throw new BadRequestException(`Failed to upsert connection: ${error.message}`);
+			throw new InternalServerErrorException(`Failed to upsert connection: ${error.message}`);
 		}
 	}
 

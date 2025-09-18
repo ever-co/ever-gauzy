@@ -11,10 +11,10 @@ export class ActivepiecesTokenExchangeDto {
 	readonly code!: string;
 
 	@ApiProperty({
-		description: 'OAuth grant type',
-		enum: ['authorization_code'],
-		default: 'authorization_code'
+		description: 'State parameter for CSRF protection',
+		type: String
 	})
-	@IsEnum(['authorization_code'])
-	readonly grant_type: 'authorization_code' = 'authorization_code';
+	@IsString()
+	@IsNotEmpty()
+	readonly state!: string;
 }

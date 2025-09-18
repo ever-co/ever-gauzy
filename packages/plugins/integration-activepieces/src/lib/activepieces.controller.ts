@@ -5,6 +5,7 @@ import {
 	Delete,
 	Body,
 	Param,
+	Query,
 	HttpException,
 	HttpStatus,
 	HttpCode,
@@ -19,7 +20,7 @@ import { IActivepiecesConfig } from '@gauzy/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { ActivepiecesService } from './activepieces.service';
-import { CreateActivepiecesIntegrationDto } from './dto';
+import { CreateActivepiecesIntegrationDto, ActivepiecesTokenExchangeDto } from './dto';
 import {
 	IActivepiecesOAuthTokens,
 	IActivepiecesConnection,
@@ -49,7 +50,7 @@ export class ActivepiecesController {
 	})
 	@Post('/oauth/token')
 	@Permissions(PermissionsEnum.INTEGRATION_ADD)
-	async exchangeToken(@Body() body: { code: string; state?: string }): Promise<IActivepiecesOAuthTokens> {
+	async exchangeToken(@Body() body: ActivepiecesTokenExchangeDto): Promise<IActivepiecesOAuthTokens> {
 		try {
 			const { code, state } = body;
 
@@ -133,7 +134,7 @@ export class ActivepiecesController {
 			}
 			throw new HttpException(
 				`Failed to upsert ActivePieces connection: ${error.message}`,
-				HttpStatus.BAD_REQUEST
+				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
 	}
@@ -150,7 +151,7 @@ export class ActivepiecesController {
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	async listConnections(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,
-		@Body() params: IActivepiecesConnectionsListParams
+		@Query() params: IActivepiecesConnectionsListParams
 	): Promise<IActivepiecesConnectionsListResponse> {
 		try {
 			return await this.activepiecesService.listConnections(params, integrationId);

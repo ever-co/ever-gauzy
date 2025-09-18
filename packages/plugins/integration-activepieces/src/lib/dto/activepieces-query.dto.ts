@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 
-export class ActivepiecesQueryDTO {
+export class ActivepiecesQueryDto {
 	@ApiProperty({
 		description: 'The state parameter for CSRF protection',
 		required: false,
