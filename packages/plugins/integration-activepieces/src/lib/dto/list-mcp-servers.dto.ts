@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsNumber, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, IsInt } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class ListMcpServersDto {
@@ -12,33 +12,30 @@ export class ListMcpServersDto {
 	@IsNotEmpty()
 	readonly projectId!: string;
 
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: 'Number of results to return',
 		type: Number,
-		required: false,
 		minimum: 1,
 		example: 10
 	})
 	@IsOptional()
-	@IsNumber()
+	@IsInt()
 	@Min(1)
 	@Transform(({ value }) => parseInt(value, 10))
 	readonly limit?: number;
 
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: 'Pagination cursor',
 		type: String,
-		required: false,
 		example: 'cursor-abc123'
 	})
 	@IsOptional()
 	@IsString()
 	readonly cursor?: string;
 
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: 'Filter by MCP server name',
 		type: String,
-		required: false,
 		example: 'my-mcp-server'
 	})
 	@IsOptional()

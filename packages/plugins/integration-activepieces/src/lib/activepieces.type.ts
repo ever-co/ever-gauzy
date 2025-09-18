@@ -227,9 +227,19 @@ export interface IActivepiecesMcpServer {
 }
 
 /**
+ * ActivePieces MCP Server (Public) - excludes sensitive token field
+ */
+export type IActivepiecesMcpServerPublic = Omit<IActivepiecesMcpServer, 'token'>;
+
+/**
  * ActivePieces MCP Server list response
  */
 export interface IActivepiecesMcpServersListResponse extends IActivepiecesListResponse<IActivepiecesMcpServer> {}
+
+/**
+ * ActivePieces MCP Server list response (Public) - excludes sensitive token fields
+ */
+export interface IActivepiecesMcpServersListResponsePublic extends IActivepiecesListResponse<IActivepiecesMcpServerPublic> {}
 
 /**
  * ActivePieces MCP Server list query params

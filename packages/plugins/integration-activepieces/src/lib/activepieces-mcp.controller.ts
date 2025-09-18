@@ -8,7 +8,9 @@ import { IntegrationEnum } from '@gauzy/contracts';
 import { ActivepiecesMcpService } from './activepieces-mcp.service';
 import {
 	IActivepiecesMcpServer,
-	IActivepiecesMcpServersListResponse
+	IActivepiecesMcpServerPublic,
+	IActivepiecesMcpServersListResponse,
+	IActivepiecesMcpServersListResponsePublic
 } from './activepieces.type';
 
 @ApiTags('ActivePieces MCP Server Integration')
@@ -16,6 +18,14 @@ import {
 @Controller('/integration/activepieces/mcp')
 export class ActivepiecesMcpController {
 	constructor(private readonly activepiecesMcpService: ActivepiecesMcpService) {}
+
+	/**
+	 * Remove sensitive token field from MCP server object
+	 */
+	private sanitizeMcpServer(server: IActivepiecesMcpServer): IActivepiecesMcpServerPublic {
+		const { token, ...publicServer } = server;
+		return publicServer;
+	}
 
 	/**
 	 * List MCP servers for a project
@@ -39,13 +49,16 @@ export class ActivepiecesMcpController {
 	@Get()
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async listMcpServers(@Query() query: ListMcpServersDto): Promise<IActivepiecesMcpServersListResponse> {
+	async listMcpServers(@Query() query: ListMcpServersDto): Promise<IActivepiecesMcpServersListResponsePublic> {
 		try {
-			if (!query.projectId) {
-				throw new HttpException('Project ID is required', HttpStatus.BAD_REQUEST);
-			}
+			const result = await this.activepiecesMcpService.listMcpServers(query);
 
-			return await this.activepiecesMcpService.listMcpServers(query);
+			// Remove sensitive token field from each server
+			return {
+				data: result.data.map(server => this.sanitizeMcpServer(server)),
+				next: result.next,
+				previous: result.previous
+			};
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
 			throw new HttpException(
@@ -71,13 +84,14 @@ export class ActivepiecesMcpController {
 	@Get('/tenant')
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async getTenantMcpServers(@Query('projectId') projectId: string): Promise<IActivepiecesMcpServer[]> {
+	async getTenantMcpServers(@Query('projectId') projectId: string): Promise<IActivepiecesMcpServerPublic[]> {
 		try {
 			if (!projectId) {
 				throw new HttpException('Project ID is required', HttpStatus.BAD_REQUEST);
 			}
 
-			return await this.activepiecesMcpService.getTenantMcpServers(projectId);
+			const servers = await this.activepiecesMcpService.getTenantMcpServers(projectId);
+			return servers.map(server => this.sanitizeMcpServer(server));
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
 			throw new HttpException(
@@ -100,13 +114,14 @@ export class ActivepiecesMcpController {
 	@Get('/:serverId')
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async getMcpServer(@Param('serverId') serverId: string): Promise<IActivepiecesMcpServer> {
+	async getMcpServer(@Param('serverId') serverId: string): Promise<IActivepiecesMcpServerPublic> {
 		try {
 			if (!serverId) {
 				throw new HttpException('Server ID is required', HttpStatus.BAD_REQUEST);
 			}
 
-			return await this.activepiecesMcpService.getMcpServer(serverId);
+			const server = await this.activepiecesMcpService.getMcpServer(serverId);
+			return this.sanitizeMcpServer(server);
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
 			throw new HttpException(
@@ -132,13 +147,14 @@ export class ActivepiecesMcpController {
 	async updateMcpServer(
 		@Param('serverId') serverId: string,
 		@Body() updateData: ActivepiecesMcpUpdateDto
-	): Promise<IActivepiecesMcpServer> {
+	): Promise<IActivepiecesMcpServerPublic> {
 		try {
 			if (!serverId) {
 				throw new HttpException('Server ID is required', HttpStatus.BAD_REQUEST);
 			}
 
-			return await this.activepiecesMcpService.updateMcpServer(serverId, updateData);
+			const server = await this.activepiecesMcpService.updateMcpServer(serverId, updateData);
+			return this.sanitizeMcpServer(server);
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
 			throw new HttpException(
@@ -161,13 +177,14 @@ export class ActivepiecesMcpController {
 	@Post('/:serverId/rotate')
 	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async rotateMcpServerToken(@Param('serverId') serverId: string): Promise<IActivepiecesMcpServer> {
+	async rotateMcpServerToken(@Param('serverId') serverId: string): Promise<IActivepiecesMcpServerPublic> {
 		try {
 			if (!serverId) {
 				throw new HttpException('Server ID is required', HttpStatus.BAD_REQUEST);
 			}
 
-			return await this.activepiecesMcpService.rotateMcpServerToken(serverId);
+			const server = await this.activepiecesMcpService.rotateMcpServerToken(serverId);
+			return this.sanitizeMcpServer(server);
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
 			throw new HttpException(

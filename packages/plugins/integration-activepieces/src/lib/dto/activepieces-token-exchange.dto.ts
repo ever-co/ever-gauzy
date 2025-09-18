@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class ActivepiecesTokenExchangeDto {
 	@ApiProperty({
@@ -8,6 +9,7 @@ export class ActivepiecesTokenExchangeDto {
 	})
 	@IsString()
 	@IsNotEmpty()
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	readonly code!: string;
 
 	@ApiProperty({
@@ -16,5 +18,6 @@ export class ActivepiecesTokenExchangeDto {
 	})
 	@IsString()
 	@IsNotEmpty()
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	readonly state!: string;
 }

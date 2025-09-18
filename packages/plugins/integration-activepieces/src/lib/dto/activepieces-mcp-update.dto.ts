@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsOptional, IsArray, ValidateNested, ArrayNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ActivepiecesMcpToolDto {
@@ -55,6 +55,7 @@ export class ActivepiecesMcpUpdateDto {
 		required: false
 	})
 	@IsArray()
+	@ArrayNotEmpty()
 	@ValidateNested({ each: true })
 	@Type(() => ActivepiecesMcpToolDto)
 	@IsOptional()

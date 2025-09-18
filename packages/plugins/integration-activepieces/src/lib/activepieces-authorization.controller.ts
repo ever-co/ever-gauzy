@@ -8,7 +8,7 @@ import { IntegrationEnum } from '@gauzy/contracts';
 import { buildQueryString } from '@gauzy/utils';
 import { firstValueFrom, catchError } from 'rxjs';
 import { ACTIVEPIECES_OAUTH_AUTHORIZE_URL, ACTIVEPIECES_OAUTH_TOKEN_URL, ACTIVEPIECES_SCOPES, OAUTH_RESPONSE_TYPE, OAUTH_GRANT_TYPE } from './activepieces.config';
-import { ActivepiecesQueryDto } from './dto/activepieces-query.dto';
+import { ActivepiecesQueryDto, ActivepiecesTokenExchangeDto } from './dto';
 import { IActivepiecesTokenExchangeRequest, IActivepiecesOAuthTokens } from './activepieces.type';
 
 @ApiTags('ActivePieces Integration')
@@ -163,7 +163,7 @@ export class ActivepiecesAuthorizationController {
 	})
 	@Post('/token')
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async exchangeToken(@Body() body: IActivepiecesTokenExchangeRequest): Promise<IActivepiecesOAuthTokens> {
+	async exchangeToken(@Body() body: ActivepiecesTokenExchangeDto): Promise<IActivepiecesOAuthTokens> {
 		try {
 			// Get ActivePieces configuration
 			const activepiecesConfig = this.configService.get('activepieces') as IActivepiecesConfig;

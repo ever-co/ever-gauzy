@@ -10,8 +10,11 @@ import {
 	HttpStatus,
 	HttpCode,
 	UseGuards,
+	UsePipes,
+	ValidationPipe,
+	Logger
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ConfigService } from '@gauzy/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, catchError } from 'rxjs';
@@ -20,7 +23,7 @@ import { IActivepiecesConfig } from '@gauzy/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { ActivepiecesService } from './activepieces.service';
-import { CreateActivepiecesIntegrationDto, ActivepiecesTokenExchangeDto } from './dto';
+import { CreateActivepiecesIntegrationDto, ActivepiecesTokenExchangeDto, ActivepiecesConnectionsListQueryDto } from './dto';
 import {
 	IActivepiecesOAuthTokens,
 	IActivepiecesConnection,
@@ -34,6 +37,7 @@ import { ACTIVEPIECES_OAUTH_TOKEN_URL, OAUTH_GRANT_TYPE } from './activepieces.c
 @UseGuards(TenantPermissionGuard)
 @Controller('/integration/activepieces')
 export class ActivepiecesController {
+	private readonly logger = new Logger(ActivepiecesController.name);
 	constructor(
 		private readonly activepiecesService: ActivepiecesService,
 		private readonly configService: ConfigService,
@@ -132,10 +136,8 @@ export class ActivepiecesController {
 			if (error instanceof HttpException) {
 				throw error;
 			}
-			throw new HttpException(
-				`Failed to upsert ActivePieces connection: ${error.message}`,
-				HttpStatus.INTERNAL_SERVER_ERROR
-			);
+			this.logger.error('Failed to upsert ActivePieces connection', error);
+			throw new HttpException('Failed to upsert ActivePieces connection', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -149,9 +151,10 @@ export class ActivepiecesController {
 	})
 	@Get('/connections/:integrationId')
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async listConnections(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,
-		@Query() params: IActivepiecesConnectionsListParams
+		@Query() params: ActivepiecesConnectionsListQueryDto
 	): Promise<IActivepiecesConnectionsListResponse> {
 		try {
 			return await this.activepiecesService.listConnections(params, integrationId);
@@ -159,10 +162,8 @@ export class ActivepiecesController {
 			if (error instanceof HttpException) {
 				throw error;
 			}
-			throw new HttpException(
-				`Failed to list ActivePieces connections: ${error.message}`,
-				HttpStatus.INTERNAL_SERVER_ERROR
-			);
+			this.logger.error('Failed to list Activepieces connections', error)
+			throw new HttpException('Failed to list ActivePieces connections', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -175,6 +176,8 @@ export class ActivepiecesController {
 		description: 'Returns tenant ActivePieces connections'
 	})
 	@Get('/connections/tenant/:integrationId/:projectId')
+	@ApiParam({ name: 'integrationId', description: 'Integration UUID' })
+	@ApiParam({ name: 'projectId', description: 'ActivePieces project ID' })
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	async getTenantConnections(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,
@@ -186,10 +189,8 @@ export class ActivepiecesController {
 			if (error instanceof HttpException) {
 				throw error;
 			}
-			throw new HttpException(
-				`Failed to get tenant ActivePieces connections: ${error.message}`,
-				HttpStatus.INTERNAL_SERVER_ERROR
-			);
+			this.logger.error('Failed to get tenant ActivePieces connections', error)
+			throw new HttpException('Failed to get tenant ActivePieces connections', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -293,10 +294,9 @@ export class ActivepiecesController {
 			if (error instanceof HttpException) {
 				throw error;
 			}
+			this.logger.error('Failed to get ActivePieces integration', error)
 			throw new HttpException(
-				`Failed to get ActivePieces integration tenant: ${error.message}`,
-				HttpStatus.INTERNAL_SERVER_ERROR
-			);
+				'Failed to get ActivePieces integration tenant', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -323,10 +323,9 @@ export class ActivepiecesController {
 			if (error instanceof HttpException) {
 				throw error;
 			}
+			this.logger.error('Failed to get ActivePieces configuration', error)
 			throw new HttpException(
-				`Failed to get ActivePieces configuration: ${error.message}`,
-				HttpStatus.INTERNAL_SERVER_ERROR
-			);
+				'Failed to get ActivePieces configuration', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 }

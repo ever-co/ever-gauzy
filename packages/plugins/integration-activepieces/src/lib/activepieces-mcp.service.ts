@@ -62,9 +62,12 @@ export class ActivepiecesMcpService {
 	 */
 	async getMcpServer(serverId: string): Promise<IActivepiecesMcpServer> {
 		try {
+			if (!serverId?.trim()) {
+				throw new BadRequestException('serverId is required');
+			}
 			return await this.request<IActivepiecesMcpServer>(
 				'get',
-				`${ACTIVEPIECES_MCP_SERVERS_URL}/${serverId}`
+				`${ACTIVEPIECES_MCP_SERVERS_URL}/${encodeURIComponent(serverId)}`
 			);
 		} catch (error: any) {
 			this.logger.error('Failed to get ActivePieces MCP server:', error);
@@ -171,10 +174,14 @@ export class ActivepiecesMcpService {
 				method,
 				url,
 				data,
-				...config
+				...config,
+				timeout: 8000
 			}).pipe(
 				catchError((error: AxiosError) => {
-					this.logger.error(`Error making ${method.toUpperCase()} request to ${url}:`, error.response?.data);
+					this.logger.error(`Error making ${method.toUpperCase()} ${url}`, {
+						status: error?.response?.status,
+						message: error?.message
+					});
 					throw new HttpException(
 						`HTTP ${method.toUpperCase()} request failed: ${error.message}`,
 						error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
