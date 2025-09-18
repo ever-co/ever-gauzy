@@ -384,7 +384,7 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 			isAddable: false,
 			isEditable: false,
 			valuePrepareFunction: (cell) => {
-				return `${this.invoice.currency} ${parseFloat(cell ?? '0')?.toFixed(2) ?? (0).toFixed(2)}`;
+				return `${this.invoice?.currency} ${parseFloat(cell ?? '0')?.toFixed(2) ?? (0).toFixed(2)}`;
 			},
 			isFilterable: false,
 			width: '13%'
@@ -627,7 +627,7 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 				id: invoiceData.id,
 				invoiceNumber: invoiceData.invoiceNumber,
 				invoiceDate: invoiceData.invoiceDate,
-				currency: this.organization.currency,
+				currency: invoiceData.currency,
 				dueDate: invoiceData.dueDate,
 				discountValue: invoiceData.discountValue,
 				discountType: invoiceData.discountType,

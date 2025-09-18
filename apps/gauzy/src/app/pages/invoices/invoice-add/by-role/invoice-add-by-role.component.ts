@@ -150,7 +150,6 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 				filter((organization) => !!organization),
 				tap((organization) => {
 					this.organization = organization;
-					this.currency = organization.currency;
 					this.discountAfterTax = organization.discountAfterTax;
 					if (!this.form) {
 						this.initializeForm();
@@ -752,6 +751,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 				if (data && data.length > 0) {
 					const rate = data[0];
 					this.rate = rate.billRateValue;
+					this.currency = rate.billRateCurrency;
 					return this.rate;
 				} else {
 					return 0;

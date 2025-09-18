@@ -54,9 +54,8 @@ export class SocketConnectionService {
 		});
 
 		// Log socket disconnections
-		this.socket.on('disconnect', (reason) => {
+		this.socket.on('disconnect', () => {
 			this.connected$.next(false);
-			console.warn('Socket disconnected:', reason);
 		});
 	}
 }
