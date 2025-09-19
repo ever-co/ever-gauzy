@@ -110,8 +110,6 @@ class AppWindow {
 		try {
 			if (!this.authWindow) {
 				this.authWindow = new AuthWindow(this.getUiPath('auth/login'), this.getPreloadPath(), true);
-				this.authWindow.config.options.titleBarStyle = 'hidden';
-				this.authWindow.config.options.titleBarOverlay = true;
 				this.authWindow.browserWindow.on('close', () => {
 					this.destroyAuthWindow();
 				});
