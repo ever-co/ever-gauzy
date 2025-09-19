@@ -8,7 +8,14 @@ import { ExtraOptions, Router, RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
-import { NbMenuModule, NbChatModule, NbDialogModule, NbToastrModule, NbWindowModule } from '@nebular/theme';
+import {
+	NbMenuModule,
+	NbChatModule,
+	NbDialogModule,
+	NbToastrModule,
+	NbWindowModule,
+	NbDatepickerModule
+} from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { FileUploadModule } from 'ng2-file-upload';
@@ -76,6 +83,7 @@ const NB_MODULES = [
 	NbDialogModule.forRoot(),
 	NbWindowModule.forRoot(),
 	NbToastrModule.forRoot(),
+	NbDatepickerModule.forRoot(),
 	NbChatModule.forRoot({ messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP }),
 	NbEvaIconsModule
 ];
