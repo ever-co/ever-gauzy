@@ -1,10 +1,9 @@
-import { Controller, Get, Post, Body, Param, Query, HttpException, HttpStatus, UsePipes, ValidationPipe, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, HttpException, HttpStatus, Patch, UsePipes, ValidationPipe, Logger } from '@nestjs/common';
 import { ListMcpServersDto, ActivepiecesMcpUpdateDto } from './dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { TenantPermissionGuard, Permissions } from '@gauzy/core';
 import { UseGuards } from '@nestjs/common';
-import { IntegrationEnum } from '@gauzy/contracts';
 import { ActivepiecesMcpService } from './activepieces-mcp.service';
 import {
 	IActivepiecesMcpServer,
@@ -61,8 +60,10 @@ export class ActivepiecesMcpController {
 			};
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
-			this.logger.error('Failed to list ActivePieces MCP servers', { message: error?.message, stack: error?.stack });
-			throw new HttpException('Failed to list ActivePieces MCP servers', error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+
+			const status = error?.status || HttpStatus.INTERNAL_SERVER_ERROR;
+			this.logger.error(`Failed to list ActivePieces MCP servers: ${error?.message}`, error?.stack);
+			throw new HttpException('Failed to list ActivePieces MCP servers', status);
 		}
 	}
 
@@ -88,10 +89,12 @@ export class ActivepiecesMcpController {
 			return servers.map(server => this.sanitizeMcpServer(server));
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
-			this.logger.error('Failed to get tenant ActivePieces MCP servers', { message: error?.message, stack: error?.stack });
+
+			const status = error?.status || HttpStatus.INTERNAL_SERVER_ERROR;
+			this.logger.error(`Failed to get tenant ActivePieces MCP servers: ${error?.message}`, error?.stack);
 			throw new HttpException(
 				'Failed to get tenant ActivePieces MCP servers',
-				error.status || HttpStatus.INTERNAL_SERVER_ERROR
+				status
 			);
 		}
 	}
@@ -120,8 +123,10 @@ export class ActivepiecesMcpController {
 			return this.sanitizeMcpServer(server);
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
-			this.logger.error('Failed to get ActivePieces MCP server', { message: error?.message, stack: error?.stack });
-			throw new HttpException('Failed to get ActivePieces MCP server', error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
+
+			const status = error?.status || HttpStatus.INTERNAL_SERVER_ERROR;
+			this.logger.error(`Failed to get ActivePieces MCP server: ${error?.message}`, error?.stack);
+			throw new HttpException('Failed to get ActivePieces MCP server', status);
 		}
 	}
 
@@ -135,7 +140,7 @@ export class ActivepiecesMcpController {
 		description: 'Returns updated MCP server',
 		schema: { type: 'object' }
 	})
-	@Post('/:serverId')
+	@Patch('/:serverId')
 	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async updateMcpServer(
@@ -152,10 +157,12 @@ export class ActivepiecesMcpController {
 			return this.sanitizeMcpServer(server);
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
-			this.logger.error('Failed to update ActivePieces MCP server', { message: error?.message, stack: error?.stack });
+
+			const status = error?.status || HttpStatus.INTERNAL_SERVER_ERROR;
+			this.logger.error(`Failed to update ActivePieces MCP server: ${error?.message}`, error?.stack);
 			throw new HttpException(
 				'Failed to update ActivePieces MCP server',
-				error.status || HttpStatus.INTERNAL_SERVER_ERROR
+				status
 			);
 		}
 	}
@@ -167,7 +174,7 @@ export class ActivepiecesMcpController {
 	@ApiParam({ name: 'serverId', required: true, type: String, description: 'MCP server ID' })
 	@ApiResponse({
 		status: 200,
-		description: 'Returns MCP server with new token',
+		description: 'Returns MCP server (token is not returned)',
 		schema: { type: 'object' }
 	})
 	@Post('/:serverId/rotate')
@@ -184,10 +191,12 @@ export class ActivepiecesMcpController {
 			return this.sanitizeMcpServer(server);
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
-			this.logger.error('Failed to rotate ActivePieces MCP server token', { message: error?.message, stack: error?.stack });
+
+			const status = error?.status || HttpStatus.INTERNAL_SERVER_ERROR;
+			this.logger.error(`Failed to rotate ActivePieces MCP server token: ${error?.message}`, error?.stack);
 			throw new HttpException(
 				'Failed to rotate ActivePieces MCP server token',
-				error.status || HttpStatus.INTERNAL_SERVER_ERROR
+				status
 			);
 		}
 	}

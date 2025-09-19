@@ -5,7 +5,7 @@ import { ActivepiecesConnectionScope, ActivepiecesConnectionStatus } from '../ac
 
 export class ActivepiecesConnectionsListQueryDto {
 	@ApiProperty({
-		description: 'ActivePieces project ID',
+		description: 'Activepieces project ID',
 		type: String,
 		example: 'project-123'
 	})
@@ -70,10 +70,9 @@ export class ActivepiecesConnectionsListQueryDto {
 		default: 10,
 		maximum: 100
 	})
-	@IsOptional()
 	@IsInt()
 	@Min(1)
 	@Max(100)
 	@Type(() => Number)
-	readonly limit?: number;
+	readonly limit: number = 10;
 }
