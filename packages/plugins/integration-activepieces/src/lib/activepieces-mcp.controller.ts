@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, HttpException, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, HttpException, HttpStatus, UsePipes, ValidationPipe, Logger } from '@nestjs/common';
 import { ListMcpServersDto, ActivepiecesMcpUpdateDto } from './dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
@@ -16,6 +16,7 @@ import {
 @UseGuards(TenantPermissionGuard)
 @Controller('/integration/activepieces/mcp')
 export class ActivepiecesMcpController {
+	private readonly logger = new Logger(ActivepiecesMcpController.name);
 	constructor(private readonly activepiecesMcpService: ActivepiecesMcpService) {}
 
 	/**
@@ -60,10 +61,8 @@ export class ActivepiecesMcpController {
 			};
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
-			throw new HttpException(
-				`Failed to list ${IntegrationEnum.ACTIVE_PIECES} MCP servers: ${error.message}`,
-				error.status || HttpStatus.INTERNAL_SERVER_ERROR
-			);
+			this.logger.error('Failed to list ActivePieces MCP servers', { message: error?.message, stack: error?.stack });
+			throw new HttpException('Failed to list ActivePieces MCP servers', error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -89,8 +88,9 @@ export class ActivepiecesMcpController {
 			return servers.map(server => this.sanitizeMcpServer(server));
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
+			this.logger.error('Failed to get tenant ActivePieces MCP servers', { message: error?.message, stack: error?.stack });
 			throw new HttpException(
-				`Failed to get tenant ${IntegrationEnum.ACTIVE_PIECES} MCP servers: ${error.message}`,
+				'Failed to get tenant ActivePieces MCP servers',
 				error.status || HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
@@ -111,18 +111,17 @@ export class ActivepiecesMcpController {
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async getMcpServer(@Param('serverId') serverId: string): Promise<IActivepiecesMcpServerPublic> {
 		try {
-			if (!serverId?.trim()) {
+			const id = serverId?.trim();
+            if (!id) {
 				throw new HttpException('Server ID is required', HttpStatus.BAD_REQUEST);
 			}
 
-			const server = await this.activepiecesMcpService.getMcpServer(serverId);
+			const server = await this.activepiecesMcpService.getMcpServer(id);
 			return this.sanitizeMcpServer(server);
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
-			throw new HttpException(
-				`Failed to get ${IntegrationEnum.ACTIVE_PIECES} MCP server: ${error.message}`,
-				error.status || HttpStatus.INTERNAL_SERVER_ERROR
-			);
+			this.logger.error('Failed to get ActivePieces MCP server', { message: error?.message, stack: error?.stack });
+			throw new HttpException('Failed to get ActivePieces MCP server', error?.status || HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -144,16 +143,18 @@ export class ActivepiecesMcpController {
 		@Body() updateData: ActivepiecesMcpUpdateDto
 	): Promise<IActivepiecesMcpServerPublic> {
 		try {
-			if (!serverId?.trim()) {
+			const id = serverId?.trim();
+            if (!id) {
 				throw new HttpException('Server ID is required', HttpStatus.BAD_REQUEST);
 			}
 
-			const server = await this.activepiecesMcpService.updateMcpServer(serverId, updateData);
+			const server = await this.activepiecesMcpService.updateMcpServer(id, updateData);
 			return this.sanitizeMcpServer(server);
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
+			this.logger.error('Failed to update ActivePieces MCP server', { message: error?.message, stack: error?.stack });
 			throw new HttpException(
-				`Failed to update ${IntegrationEnum.ACTIVE_PIECES} MCP server: ${error.message}`,
+				'Failed to update ActivePieces MCP server',
 				error.status || HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
@@ -174,16 +175,18 @@ export class ActivepiecesMcpController {
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async rotateMcpServerToken(@Param('serverId') serverId: string): Promise<IActivepiecesMcpServerPublic> {
 		try {
-			if (!serverId?.trim()) {
+			const id = serverId?.trim();
+            if (!id) {
 				throw new HttpException('Server ID is required', HttpStatus.BAD_REQUEST);
 			}
 
-			const server = await this.activepiecesMcpService.rotateMcpServerToken(serverId);
+			const server = await this.activepiecesMcpService.rotateMcpServerToken(id);
 			return this.sanitizeMcpServer(server);
 		} catch (error: any) {
 			if (error instanceof HttpException) throw error;
+			this.logger.error('Failed to rotate ActivePieces MCP server token', { message: error?.message, stack: error?.stack });
 			throw new HttpException(
-				`Failed to rotate ${IntegrationEnum.ACTIVE_PIECES} MCP server token: ${error.message}`,
+				'Failed to rotate ActivePieces MCP server token',
 				error.status || HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}

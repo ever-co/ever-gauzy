@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional, IsEnum, Min, Max, IsInt } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ActivepiecesConnectionScope, ActivepiecesConnectionStatus } from '../activepieces.type';
 
 export class ActivepiecesConnectionsListQueryDto {
@@ -10,6 +10,7 @@ export class ActivepiecesConnectionsListQueryDto {
 		example: 'project-123'
 	})
 	@IsString()
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	@IsNotEmpty()
 	readonly projectId!: string;
 
@@ -20,6 +21,7 @@ export class ActivepiecesConnectionsListQueryDto {
 	})
 	@IsOptional()
 	@IsString()
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	readonly cursor?: string;
 
 	@ApiPropertyOptional({
@@ -38,6 +40,7 @@ export class ActivepiecesConnectionsListQueryDto {
 	})
 	@IsOptional()
 	@IsString()
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	readonly pieceName?: string;
 
 	@ApiPropertyOptional({
@@ -46,6 +49,7 @@ export class ActivepiecesConnectionsListQueryDto {
 		example: 'My Slack Connection'
 	})
 	@IsOptional()
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	@IsString()
 	readonly displayName?: string;
 
