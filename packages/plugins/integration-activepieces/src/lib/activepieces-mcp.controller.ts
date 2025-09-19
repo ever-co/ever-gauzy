@@ -13,6 +13,7 @@ import {
 
 @ApiTags('ActivePieces MCP Server Integration')
 @UseGuards(TenantPermissionGuard)
+@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 @Controller('/integration/activepieces/mcp')
 export class ActivepiecesMcpController {
 	private readonly logger = new Logger(ActivepiecesMcpController.name);
@@ -24,6 +25,17 @@ export class ActivepiecesMcpController {
 	private sanitizeMcpServer(server: IActivepiecesMcpServer): IActivepiecesMcpServerPublic {
 		const { token, ...publicServer } = server;
 		return publicServer;
+	}
+
+	/**
+	 * Validate and trim ID parameter
+	 */
+	private validateAndTrimId(paramName: string, value?: string): string {
+		const trimmed = value?.trim();
+		if (!trimmed) {
+			throw new HttpException(`${paramName} is required`, HttpStatus.BAD_REQUEST);
+		}
+		return trimmed;
 	}
 
 	/**
@@ -58,7 +70,6 @@ export class ActivepiecesMcpController {
 	})
 	@Get()
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async listMcpServers(@Query() query: ListMcpServersDto): Promise<IActivepiecesMcpServersListResponsePublic> {
 		try {
 			const result = await this.activepiecesMcpService.listMcpServers(query);
@@ -89,7 +100,6 @@ export class ActivepiecesMcpController {
 	})
 	@Get('/tenant')
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async getTenantMcpServers(@Query() { projectId }: ListMcpServersDto): Promise<IActivepiecesMcpServerPublic[]> {
 		try {
 			const servers = await this.activepiecesMcpService.getTenantMcpServers(projectId);
@@ -111,13 +121,9 @@ export class ActivepiecesMcpController {
 	})
 	@Get('/:serverId')
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async getMcpServer(@Param('serverId') serverId: string): Promise<IActivepiecesMcpServerPublic> {
 		try {
-			const id = serverId?.trim();
-            if (!id) {
-				throw new HttpException('Server ID is required', HttpStatus.BAD_REQUEST);
-			}
+			const id = this.validateAndTrimId('Server ID', serverId);
 
 			const server = await this.activepiecesMcpService.getMcpServer(id);
 			return this.sanitizeMcpServer(server);
@@ -138,16 +144,12 @@ export class ActivepiecesMcpController {
 	})
 	@Patch('/:serverId')
 	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async updateMcpServer(
 		@Param('serverId') serverId: string,
 		@Body() updateData: ActivepiecesMcpUpdateDto
 	): Promise<IActivepiecesMcpServerPublic> {
 		try {
-			const id = serverId?.trim();
-            if (!id) {
-				throw new HttpException('Server ID is required', HttpStatus.BAD_REQUEST);
-			}
+			const id = this.validateAndTrimId('Server ID', serverId);
 
 			const server = await this.activepiecesMcpService.updateMcpServer(id, updateData);
 			return this.sanitizeMcpServer(server);
@@ -169,13 +171,9 @@ export class ActivepiecesMcpController {
 	@HttpCode(HttpStatus.OK)
 	@Post('/:serverId/rotate')
 	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async rotateMcpServerToken(@Param('serverId') serverId: string): Promise<IActivepiecesMcpServerPublic> {
 		try {
-			const id = serverId?.trim();
-            if (!id) {
-				throw new HttpException('Server ID is required', HttpStatus.BAD_REQUEST);
-			}
+			const id = this.validateAndTrimId('Server ID', serverId);
 
 			const server = await this.activepiecesMcpService.rotateMcpServerToken(id);
 			return this.sanitizeMcpServer(server);
