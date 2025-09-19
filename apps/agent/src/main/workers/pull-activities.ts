@@ -256,7 +256,7 @@ class PullActivities {
 				} else if (appSetting.screenshotNotification) {
 					try {
 						await this.appWindow.initScreenShotNotification();
-						await delaySync(100);
+						await delaySync(1000);
 						await notifyScreenshot(
 							this.appWindow.notificationWindow,
 							img,
@@ -348,6 +348,7 @@ class PullActivities {
 			this.agentLogger.warn('initActivityAndScreenshot skipped: startedDate is not set');
 			return;
 		}
+		console.log('start init screeshot');
 		return this.activityProcess({
 			timeStart: this.startedDate,
 			timeEnd: new Date()

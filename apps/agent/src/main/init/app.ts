@@ -144,6 +144,12 @@ async function appReady() {
 	if (!settings) {
 		launchAtStartup(true, false);
 		LocalStore.setAllDefaultConfig();
+
+		/* Set default application setting for agent app. */
+		LocalStore.updateApplicationSetting({
+			screenshotNotification: false,
+			simpleScreenshotNotification: false
+		});
 	}
 
 	// handle theme change listener
