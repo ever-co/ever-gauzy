@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, IsInt } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, Min, IsInt } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class ListMcpServersDto {
