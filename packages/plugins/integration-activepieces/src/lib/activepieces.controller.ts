@@ -149,6 +149,7 @@ export class ActivepiecesController {
 		description: 'Returns list of ActivePieces connections'
 	})
 	@Get('/connections/:integrationId')
+	@ApiParam({ name: 'integrationId', description: 'Integration UUID' })
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async listConnections(

@@ -111,7 +111,7 @@ export class ActivepiecesMcpController {
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async getMcpServer(@Param('serverId') serverId: string): Promise<IActivepiecesMcpServerPublic> {
 		try {
-			if (!serverId) {
+			if (!serverId?.trim()) {
 				throw new HttpException('Server ID is required', HttpStatus.BAD_REQUEST);
 			}
 
@@ -144,7 +144,7 @@ export class ActivepiecesMcpController {
 		@Body() updateData: ActivepiecesMcpUpdateDto
 	): Promise<IActivepiecesMcpServerPublic> {
 		try {
-			if (!serverId) {
+			if (!serverId?.trim()) {
 				throw new HttpException('Server ID is required', HttpStatus.BAD_REQUEST);
 			}
 
@@ -174,7 +174,7 @@ export class ActivepiecesMcpController {
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async rotateMcpServerToken(@Param('serverId') serverId: string): Promise<IActivepiecesMcpServerPublic> {
 		try {
-			if (!serverId) {
+			if (!serverId?.trim()) {
 				throw new HttpException('Server ID is required', HttpStatus.BAD_REQUEST);
 			}
 

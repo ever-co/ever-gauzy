@@ -5,7 +5,8 @@ import { Transform } from 'class-transformer';
 export class ActivepiecesTokenExchangeDto {
 	@ApiProperty({
 		description: 'Authorization code received from OAuth callback',
-		type: String
+		type: String,
+		maxLength: 2048
 	})
 	@IsString()
 	@IsNotEmpty()
@@ -15,7 +16,8 @@ export class ActivepiecesTokenExchangeDto {
 
 	@ApiProperty({
 		description: 'State parameter for CSRF protection',
-		type: String
+		type: String,
+		maxLength: 512
 	})
 	@IsString()
 	@IsNotEmpty()

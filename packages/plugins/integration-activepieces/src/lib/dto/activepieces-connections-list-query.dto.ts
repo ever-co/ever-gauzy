@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsEnum, Min, IsInt } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum, Min, Max, IsInt } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ActivepiecesConnectionScope, ActivepiecesConnectionStatus } from '../activepieces.type';
 
@@ -62,11 +62,14 @@ export class ActivepiecesConnectionsListQueryDto {
 		description: 'Number of results to return',
 		type: Number,
 		minimum: 1,
-		example: 10
+		example: 10,
+		default: 10,
+		maximum: 100
 	})
 	@IsOptional()
 	@IsInt()
 	@Min(1)
+	@Max(100)
 	@Type(() => Number)
 	readonly limit?: number;
 }
