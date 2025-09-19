@@ -9,7 +9,7 @@ import { HttpService } from '@nestjs/axios';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { firstValueFrom, catchError } from 'rxjs';
 import { AxiosError } from 'axios';
-import { IntegrationSettingService, IntegrationService, IntegrationTenantService, RequestContext } from '@gauzy/core';
+import { IntegrationTenantService, RequestContext } from '@gauzy/core';
 import {
 	IActivepiecesMcpServer,
 	IActivepiecesMcpServersListResponse,
@@ -156,8 +156,8 @@ export class ActivepiecesMcpService {
 	private async request<T>(
 		method: 'get' | 'post' | 'put' | 'delete',
 		url: string,
-		data?: any,
-		params?: Record<string, any>
+		data?: unknown,
+		params?: Record<string, unknown>
 	): Promise<T> {
 		const accessToken = await this.getValidAccessToken();
 
@@ -178,13 +178,16 @@ export class ActivepiecesMcpService {
 				timeout: 8000
 			}).pipe(
 				catchError((error: AxiosError) => {
+					const status = error?.response?.status || HttpStatus.INTERNAL_SERVER_ERROR;
+					const message = error?.message || 'Unknown error occurred';
+
 					this.logger.error(`Error making ${method.toUpperCase()} ${url}`, {
-						status: error?.response?.status,
-						message: error?.message
+						status,
+						message
 					});
 					throw new HttpException(
-						`HTTP ${method.toUpperCase()} request failed: ${error.message}`,
-						error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
+						`HTTP ${method.toUpperCase()} request failed: ${message}`,
+						status
 					);
 				})
 			)

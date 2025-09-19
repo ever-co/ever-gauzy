@@ -10,6 +10,7 @@ export class ListMcpServersDto {
 	})
 	@IsString()
 	@IsNotEmpty()
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	readonly projectId!: string;
 
 	@ApiPropertyOptional({
@@ -31,6 +32,7 @@ export class ListMcpServersDto {
 	})
 	@IsOptional()
 	@IsString()
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	readonly cursor?: string;
 
 	@ApiPropertyOptional({
@@ -40,5 +42,6 @@ export class ListMcpServersDto {
 	})
 	@IsOptional()
 	@IsString()
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	readonly name?: string;
 }

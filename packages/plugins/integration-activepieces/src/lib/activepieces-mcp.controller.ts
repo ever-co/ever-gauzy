@@ -9,7 +9,6 @@ import { ActivepiecesMcpService } from './activepieces-mcp.service';
 import {
 	IActivepiecesMcpServer,
 	IActivepiecesMcpServerPublic,
-	IActivepiecesMcpServersListResponse,
 	IActivepiecesMcpServersListResponsePublic
 } from './activepieces.type';
 
@@ -84,12 +83,8 @@ export class ActivepiecesMcpController {
 	@Get('/tenant')
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async getTenantMcpServers(@Query('projectId') projectId: string): Promise<IActivepiecesMcpServerPublic[]> {
+	async getTenantMcpServers(@Query() { projectId }: ListMcpServersDto): Promise<IActivepiecesMcpServerPublic[]> {
 		try {
-			if (!projectId) {
-				throw new HttpException('Project ID is required', HttpStatus.BAD_REQUEST);
-			}
-
 			const servers = await this.activepiecesMcpService.getTenantMcpServers(projectId);
 			return servers.map(server => this.sanitizeMcpServer(server));
 		} catch (error: any) {

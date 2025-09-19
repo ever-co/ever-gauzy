@@ -94,7 +94,7 @@ export interface IActivepiecesConnection {
 	status: ActivepiecesConnectionStatus;
 	ownerId: string | null;
 	owner: IActivepiecesUser | null;
-	metadata: Record<string, any> | null;
+	metadata: Record<string, unknown> | null;
 	flowIds: string[] | null;
 }
 
@@ -209,7 +209,7 @@ export interface IActivepiecesMcpTool {
 	mcpId: string;
 	pieceMetadata: IActivepiecesMcpToolPieceMetadata;
 	flowId: string;
-	flow: Record<string, any>;
+	flow: Record<string, unknown>;
 }
 
 /**

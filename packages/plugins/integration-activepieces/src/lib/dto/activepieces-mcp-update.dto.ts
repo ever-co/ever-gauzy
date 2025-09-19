@@ -1,6 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsArray, ValidateNested, ArrayNotEmpty } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsOptional, IsArray, ValidateNested, ArrayNotEmpty, IsNotEmpty, IsObject } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 
 export class ActivepiecesMcpToolDto {
 	@ApiPropertyOptional({
@@ -10,6 +10,7 @@ export class ActivepiecesMcpToolDto {
 	})
 	@IsString()
 	@IsOptional()
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	readonly id?: string;
 
 	@ApiPropertyOptional({
@@ -19,6 +20,7 @@ export class ActivepiecesMcpToolDto {
 	})
 	@IsString()
 	@IsOptional()
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	readonly type?: string;
 
 	@ApiPropertyOptional({
@@ -27,6 +29,7 @@ export class ActivepiecesMcpToolDto {
 		required: false
 	})
 	@IsOptional()
+	@IsObject()
 	readonly pieceMetadata?: Record<string, unknown>;
 
 	@ApiPropertyOptional({
@@ -36,6 +39,7 @@ export class ActivepiecesMcpToolDto {
 	})
 	@IsString()
 	@IsOptional()
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	readonly flowId?: string;
 }
 
@@ -47,6 +51,8 @@ export class ActivepiecesMcpUpdateDto {
 	})
 	@IsString()
 	@IsOptional()
+	@IsNotEmpty()
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	readonly name?: string;
 
 	@ApiPropertyOptional({

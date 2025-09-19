@@ -27,7 +27,6 @@ import { CreateActivepiecesIntegrationDto, ActivepiecesTokenExchangeDto, Activep
 import {
 	IActivepiecesOAuthTokens,
 	IActivepiecesConnection,
-	IActivepiecesConnectionsListParams,
 	IActivepiecesConnectionsListResponse
 } from './activepieces.type';
 import { ACTIVEPIECES_OAUTH_TOKEN_URL, OAUTH_GRANT_TYPE } from './activepieces.config';
@@ -136,7 +135,7 @@ export class ActivepiecesController {
 			if (error instanceof HttpException) {
 				throw error;
 			}
-			this.logger.error('Failed to upsert ActivePieces connection', error);
+			this.logger.error('Failed to upsert ActivePieces connection', { message: error?.message, stack: error?.stack });
 			throw new HttpException('Failed to upsert ActivePieces connection', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -162,7 +161,7 @@ export class ActivepiecesController {
 			if (error instanceof HttpException) {
 				throw error;
 			}
-			this.logger.error('Failed to list Activepieces connections', error)
+			this.logger.error('Failed to list ActivePieces connections', { message: error?.message, stack: error?.stack });
 			throw new HttpException('Failed to list ActivePieces connections', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -189,7 +188,7 @@ export class ActivepiecesController {
 			if (error instanceof HttpException) {
 				throw error;
 			}
-			this.logger.error('Failed to get tenant ActivePieces connections', error)
+			this.logger.error('Failed to get tenant ActivePieces connections', { message: error?.message, stack: error?.stack });
 			throw new HttpException('Failed to get tenant ActivePieces connections', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -294,7 +293,7 @@ export class ActivepiecesController {
 			if (error instanceof HttpException) {
 				throw error;
 			}
-			this.logger.error('Failed to get ActivePieces integration', error)
+			this.logger.error('Failed to get ActivePieces integration', { message: error?.message, stack: error?.stack });
 			throw new HttpException(
 				'Failed to get ActivePieces integration tenant', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -323,7 +322,7 @@ export class ActivepiecesController {
 			if (error instanceof HttpException) {
 				throw error;
 			}
-			this.logger.error('Failed to get ActivePieces configuration', error)
+			this.logger.error('Failed to get ActivePieces configuration', { message: error?.message, stack: error?.stack });
 			throw new HttpException(
 				'Failed to get ActivePieces configuration', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
