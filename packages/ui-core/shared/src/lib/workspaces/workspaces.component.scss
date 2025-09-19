@@ -166,3 +166,98 @@ div {
     }
   }
 }
+
+.skeleton-container {
+  pointer-events: none;
+  cursor: default;
+  display: block;
+  .workspace-skeleton-item {
+    margin-bottom: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+
+    .skeleton-img-container {
+      margin-right: 0.5rem;
+
+      .skeleton-img {
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 0.5rem;
+        background: linear-gradient(
+          90deg,
+          nb-theme(background-basic-color-4) 25%,
+          nb-theme(background-basic-color-3) 50%,
+          nb-theme(background-basic-color-4) 75%
+        );
+        background-size: 200% 100%;
+        animation: skeleton-shimmer 2s infinite;
+        will-change: background-position, opacity;
+      }
+    }
+
+    .skeleton-text {
+      height: 0.875rem;
+      flex: 1;
+      max-width: 120px;
+      border-radius: 4px;
+      background: linear-gradient(
+        90deg,
+        nb-theme(background-basic-color-4) 25%,
+        nb-theme(background-basic-color-3) 50%,
+        nb-theme(background-basic-color-4) 75%
+      );
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 2s infinite;
+      will-change: background-position, opacity;
+    }
+  }
+  .workspace-skeleton-item,
+  .skeleton-add-workspace {
+    cursor: default;
+  }
+  .skeleton-add-workspace {
+    margin-bottom: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    .skeleton-add-btn {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 0.5rem;
+      border: 2px dashed nb-theme(border-basic-color-4);
+      background: linear-gradient(90deg, transparent 25%, nb-theme(background-basic-color-3) 50%, transparent 75%);
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 2s infinite;
+    }
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-container .workspace-skeleton-item,
+  .skeleton-container .skeleton-img,
+  .skeleton-container .skeleton-text,
+  .skeleton-container .skeleton-add-btn {
+    animation: none !important;
+  }
+}
