@@ -165,7 +165,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 					keyboard: 0,
 					mouse: 0,
 					overall: 0,
-					startedAt: start as Date
+					startedAt: moment.utc(start).toDate()
 				})
 			);
 		}

@@ -1,6 +1,3 @@
-// Import your database detection functions
-// import { isSqlite, isBetterSqlite3 } from '../path-to-your-db-utils';
-
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 
 /**
@@ -29,6 +26,9 @@ export function stringifyForDatabase<T = any>(data: T): string | T {
 
 	if (requiresJsonSerialization()) {
 		try {
+			if (typeof data === 'string') {
+				return data;
+			}
 			return JSON.stringify(data);
 		} catch (error) {
 			throw new Error(`Database serialization failed: ${error.message}`);
