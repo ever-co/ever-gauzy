@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { BadRequestException, Logger } from '@nestjs/common';
-import { Raw } from 'typeorm';
+import { Between, Raw } from 'typeorm';
 import { moment } from '../../../../core/moment-extend';
 import { getStartEndIntervals } from '../../../time-slot/utils';
 import { decode, Data } from 'clarity-decode';
@@ -8,10 +8,11 @@ import { RequestContext } from '../../../../core/context';
 import { ICustomActivity, ITrackingSession, ITrackingPayload, ITimeSlot, JsonData } from '@gauzy/contracts';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
-import { TimeSlotCreateCommand } from '../../../time-slot/commands';
+import { CreateTimeSlotCommand, TimeSlotCreateCommand, UpdateTimeSlotCommand } from '../../../time-slot/commands';
 import { ProcessTrackingDataCommand } from '../process-tracking-data.command';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 import { TypeOrmTimeSlotSessionRepository } from '../../../time-slot-session/repository/type-orm-time-slot-session.repository';
+import { parseFromDatabase, stringifyforDatabase } from 'packages/core/src/lib/core/util/db-serialization-util';
 
 @CommandHandler(ProcessTrackingDataCommand)
 export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTrackingDataCommand> {
@@ -136,7 +137,10 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 					employeeId,
 					organizationId,
 					tenantId,
-					startedAt: Raw((alias) => `${alias} >= :start AND ${alias} < :end`, { start, end })
+					startedAt: Raw((alias) => `${alias} >= :start AND ${alias} < :end`, {
+						start: moment(start).toISOString(),
+						end: moment(end).toISOString()
+					})
 				}
 			});
 
@@ -153,7 +157,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		} catch (error) {
 			this.logger.warn(`TimeSlot not found, creating new one: ${error.message}`);
 			timeSlot = await this.commandBus.execute(
-				new TimeSlotCreateCommand({
+				new CreateTimeSlotCommand({
 					tenantId,
 					organizationId,
 					employeeId,
@@ -161,8 +165,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 					keyboard: 0,
 					mouse: 0,
 					overall: 0,
-					startedAt: start as Date,
-					time_slot: start as Date
+					startedAt: start as Date
 				})
 			);
 		}
@@ -190,8 +193,8 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 			.andWhere('tss.organizationId = :organizationId', { organizationId })
 			.andWhere('tss.tenantId = :tenantId', { tenantId })
 			.andWhere('tss.createdAt BETWEEN :startDate AND :endDate', {
-				startDate: defaultStartDate,
-				endDate: defaultEndDate
+				startDate: defaultStartDate.toISOString(),
+				endDate: defaultEndDate.toISOString()
 			})
 			.orderBy('tss.createdAt', 'ASC')
 			.getMany();
@@ -205,7 +208,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 
 		for (const timeSlotSession of timeSlotSessions) {
 			const timeSlot = timeSlotSession.timeSlot;
-			const customActivity = timeSlot.customActivity as ICustomActivity;
+			const customActivity = parseFromDatabase(timeSlot.customActivity) as ICustomActivity;
 			if (!customActivity?.trackingSessions) continue;
 
 			const session = customActivity.trackingSessions.find((s: ITrackingSession) => s.sessionId === sessionId);
@@ -254,7 +257,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		};
 
 		if (timeSlot.customActivity) {
-			const existingActivity = timeSlot.customActivity as ICustomActivity;
+			const existingActivity = parseFromDatabase(timeSlot.customActivity) as ICustomActivity;
 			if (existingActivity.trackingSessions && Array.isArray(existingActivity.trackingSessions)) {
 				customActivity.trackingSessions = existingActivity.trackingSessions;
 			}
@@ -287,7 +290,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		}
 
 		await this.typeOrmTimeSlotRepository.update(timeSlot.id, {
-			customActivity: customActivity as JsonData
+			customActivity: stringifyforDatabase(customActivity)
 		});
 
 		await this.createOrUpdateTimeSlotSession(
