@@ -138,8 +138,8 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 					organizationId,
 					tenantId,
 					startedAt: Raw((alias) => `${alias} >= :start AND ${alias} < :end`, {
-						start: moment(start).toISOString(),
-						end: moment(end).toISOString()
+						start: moment(start).toDate(),
+						end: moment(end).toDate()
 					})
 				}
 			});
@@ -193,8 +193,8 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 			.andWhere('tss.organizationId = :organizationId', { organizationId })
 			.andWhere('tss.tenantId = :tenantId', { tenantId })
 			.andWhere('tss.createdAt BETWEEN :startDate AND :endDate', {
-				startDate: defaultStartDate.toISOString(),
-				endDate: defaultEndDate.toISOString()
+				startDate: defaultStartDate,
+				endDate: defaultEndDate
 			})
 			.orderBy('tss.createdAt', 'ASC')
 			.getMany();
