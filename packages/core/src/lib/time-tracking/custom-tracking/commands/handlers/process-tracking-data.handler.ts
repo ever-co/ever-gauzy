@@ -1,14 +1,14 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { BadRequestException, Logger } from '@nestjs/common';
-import { Between, Raw } from 'typeorm';
+import { Raw } from 'typeorm';
 import { moment } from '../../../../core/moment-extend';
 import { getStartEndIntervals } from '../../../time-slot/utils';
 import { decode, Data } from 'clarity-decode';
 import { RequestContext } from '../../../../core/context';
-import { ICustomActivity, ITrackingSession, ITrackingPayload, ITimeSlot, JsonData } from '@gauzy/contracts';
+import { ICustomActivity, ITrackingSession, ITrackingPayload, ITimeSlot } from '@gauzy/contracts';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
-import { CreateTimeSlotCommand, TimeSlotCreateCommand, UpdateTimeSlotCommand } from '../../../time-slot/commands';
+import { CreateTimeSlotCommand } from '../../../time-slot/commands';
 import { ProcessTrackingDataCommand } from '../process-tracking-data.command';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 import { TypeOrmTimeSlotSessionRepository } from '../../../time-slot-session/repository/type-orm-time-slot-session.repository';
