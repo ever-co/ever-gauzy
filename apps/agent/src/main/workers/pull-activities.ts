@@ -36,7 +36,7 @@ class PullActivities {
 	private mainEvent: MainEvent;
 	private apiService: ApiService;
 	private startedDate: Date;
-	private stoppedDate: Date ;
+	private stoppedDate: Date;
 	private activityStores: KeyboardMouseActivityStores;
 	private activityWindow: ActivityWindow;
 	constructor() {

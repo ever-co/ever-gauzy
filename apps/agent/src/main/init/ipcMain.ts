@@ -22,6 +22,7 @@ import * as path from 'node:path';
 import PullActivities from '../workers/pull-activities';
 import PushActivities from '../workers/push-activities';
 import { checkUserAuthentication } from '../auth';
+import { ApiService } from '../api';
 const rootPath = path.join(__dirname, '../..')
 
 const userService = new UserService();
@@ -81,7 +82,7 @@ async function closeLoginWindow() {
 	appWindow.destroyAuthWindow();
 }
 
-export default function AppIpcMain(){
+export default function AppIpcMain() {
 	remoteMain.initialize();
 
 	/* Set unlimited listeners */
@@ -140,11 +141,13 @@ export default function AppIpcMain(){
 	ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
 
 	ipcMain.handle('AUTH_SUCCESS', async (_, arg) => {
+		let employeeId = null;
 		try {
 			const user = new User({ ...arg, ...arg.user });
 			user.remoteId = arg.userId;
 			user.organizationId = arg.organizationId;
 			if (user.employee) {
+				employeeId = user.employee.id;
 				await userService.save(user.toObject());
 			}
 		} catch (error) {
@@ -154,6 +157,16 @@ export default function AppIpcMain(){
 			auth: { ...arg, isLogout: false }
 		});
 
+		try {
+			/* validate user employee desktop setting */
+			const apiService = ApiService.getInstance();
+			await apiService.getEmployeeSetting(employeeId);
+		} catch (error) {
+			store.set({
+				auth: null
+			})
+			throw new AppError('GET_EMP_SETTING', error);
+		}
 		listenIO(false);
 		await closeLoginWindow();
 	});
@@ -199,4 +212,3 @@ export default function AppIpcMain(){
 
 	pluginListeners();
 }
-
