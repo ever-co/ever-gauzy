@@ -12,7 +12,7 @@ import { CreateTimeSlotCommand } from '../../../time-slot/commands';
 import { ProcessTrackingDataCommand } from '../process-tracking-data.command';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 import { TypeOrmTimeSlotSessionRepository } from '../../../time-slot-session/repository/type-orm-time-slot-session.repository';
-import { parseFromDatabase, stringifyforDatabase } from 'packages/core/src/lib/core/util/db-serialization-util';
+import { parseFromDatabase, stringifyForDatabase } from '../../../../core/util/db-serialization-util';
 
 @CommandHandler(ProcessTrackingDataCommand)
 export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTrackingDataCommand> {
@@ -290,7 +290,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		}
 
 		await this.typeOrmTimeSlotRepository.update(timeSlot.id, {
-			customActivity: stringifyforDatabase(customActivity)
+			customActivity: stringifyForDatabase(customActivity)
 		});
 
 		await this.createOrUpdateTimeSlotSession(
