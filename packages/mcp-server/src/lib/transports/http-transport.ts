@@ -9,12 +9,13 @@ import { McpTransportConfig } from '../common/config';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
 import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
-import { getEnhancedSecurityHeaders, validateMCPToolInput, validateRequestSize } from '../common/security-config';
+import { validateMCPToolInput, validateRequestSize } from '../common/security-config';
 import { sanitizeErrorMessage } from '../common/security-utils';
 import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 import { AuthorizationConfig, loadAuthorizationConfig } from '../common/authorization-config';
 import { AuthorizationMiddleware, AuthorizedRequest } from '../common/authorization-middleware';
 import { OAuth2AuthorizationServer, OAuth2ServerConfig } from '../common/oauth-authorization-server';
+import { ResponseBuilder } from '../common/response-builder';
 
 const logger = new Logger('HttpTransport');
 
@@ -138,6 +139,9 @@ export class HttpTransport {
 	}
 
 	private setupMiddleware() {
+		// Hide Express signature
+		this.app.disable('x-powered-by');
+
 		// CORS configuration
 		this.app.use(cors({
 			origin: this.transportConfig.cors.origin,
@@ -146,12 +150,9 @@ export class HttpTransport {
 			allowedHeaders: ['Content-Type', 'Authorization', 'mcp-session-id', 'mcp-csrf-token']
 		}));
 
-		// Enhanced security headers
+		// Global security headers middleware - applied to ALL routes
 		this.app.use((req, res, next) => {
-			const securityHeaders = getEnhancedSecurityHeaders();
-			for (const [header, value] of Object.entries(securityHeaders)) {
-				res.setHeader(header, value);
-			}
+			ResponseBuilder.setSecurityHeaders(res);
 			next();
 		});
 

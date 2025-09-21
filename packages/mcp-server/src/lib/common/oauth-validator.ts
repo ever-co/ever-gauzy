@@ -6,16 +6,105 @@
  */
 
 import { Request } from 'express';
-import { jwtVerify, createRemoteJWKSet, importSPKI, importJWK, JWTPayload } from 'jose';
 import { AuthorizationConfig, TokenValidationResult, AuthorizationError } from './authorization-config';
 import { SecurityLogger } from './security-logger';
+import * as crypto from 'node:crypto';
+import { TextEncoder } from 'node:util';
+
+// Dynamic import type for jose library
+// Module usage: createRemoteJWKSet, jwtVerify, importSPKI, importJWK, importX509
+import type { JWTPayload as JoseJWTPayload } from 'jose';
+type JoseModule = typeof import('jose');
 
 export class OAuthValidator {
 	private tokenCache = new Map<string, { result: TokenValidationResult; expires: number }>();
 	private securityLogger: SecurityLogger;
+	private josePromise: Promise<JoseModule> | null = null;
 
 	constructor(private config: AuthorizationConfig) {
 		this.securityLogger = new SecurityLogger();
+	}
+
+	/**
+	 * Detect the key type from PEM data and map to appropriate JOSE algorithm
+	 */
+	private detectKeyTypeAndAlgorithm(keyData: string, configuredAlg: string): string {
+		try {
+			const publicKey = crypto.createPublicKey(keyData);
+			const keyType = publicKey.asymmetricKeyType;
+
+			// Map key types to JOSE algorithms
+			switch (keyType) {
+				case 'rsa':
+					// Keep configured RS*/PS* if provided, otherwise default to RS256
+					return /^RS\d+$/.test(configuredAlg) || /^PS\d+$/.test(configuredAlg) ? configuredAlg : 'RS256';
+				case 'rsa-pss':
+					// RSA-PSS keys should use PS* algorithms
+					return /^PS\d+$/.test(configuredAlg) ? configuredAlg : 'PS256';
+				case 'ec':
+					// Keep configured ES* if provided, otherwise default to ES256 (fallbacks will try ES384/ES512)
+					return /^ES(256K|256|384|512)$/.test(configuredAlg) ? configuredAlg : 'ES256';
+				case 'dsa':
+				this.securityLogger.warn('DSA keys are not supported for JOSE/JWT. Falling back to configured algorithm.');
+					return configuredAlg;
+				case 'x25519':
+				case 'x448':
+					this.securityLogger.warn(`${keyType} is a key-agreement type, not suitable for JWT signatures. Falling back to configured algorithm.`);
+					return configuredAlg;
+				case 'ed25519':
+				case 'ed448':
+					return 'EdDSA';
+				default:
+					this.securityLogger.warn(`Unknown key type: ${keyType}, using configured algorithm: ${configuredAlg}`);
+					return configuredAlg;
+			}
+		} catch (error: any) {
+			this.securityLogger.warn(`Failed to detect key type: ${error.message}, using configured algorithm: ${configuredAlg}`);
+			return configuredAlg;
+		}
+	}
+
+	/**
+	 * Attempt to import SPKI with fallback algorithms if initial attempt fails
+	 */
+	private async importSPKIWithFallback(
+		jose: JoseModule,
+		keyData: string,
+		primaryAlg: string
+	): Promise<any> {
+		const fallbackAlgorithms = [
+			'RS256','RS384','RS512',
+			'PS256','PS384','PS512',
+			'ES256','ES384','ES512','ES256K',
+			'EdDSA'
+		];
+		const attemptOrder = [primaryAlg, ...fallbackAlgorithms.filter(alg => alg !== primaryAlg)];
+
+		let lastError: Error | null = null;
+
+		for (const alg of attemptOrder) {
+			try {
+				return await jose.importSPKI(keyData, alg);
+			} catch (error: any) {
+				lastError = error;
+				this.securityLogger.debug(`Failed to import SPKI with algorithm ${alg}: ${error.message}`);
+			}
+		}
+
+		throw lastError || new Error('All SPKI import attempts failed');
+	}
+
+	/**
+	 * Dynamically import jose library to handle ESM compatibility
+	 */
+	private async getJose(): Promise<JoseModule> {
+		if (!this.josePromise) {
+			this.josePromise = import('jose').catch((err) => {
+				this.josePromise = null;
+				throw err;
+			});
+		}
+		return this.josePromise;
 	}
 
 	/**
@@ -121,16 +210,18 @@ export class OAuthValidator {
 	 */
 	private async validateJWT(token: string): Promise<TokenValidationResult> {
 		try {
+			const jose = await this.getJose();
+			type JWTPayload = JoseJWTPayload;
 			let payload: JWTPayload | undefined;
 
 			// Try JWKS URI first (recommended for production)
 			if (this.config.jwt?.jwksUri) {
 				try {
-					const JWKS = createRemoteJWKSet(new URL(this.config.jwt.jwksUri), {
+					const JWKS = jose.createRemoteJWKSet(new URL(this.config.jwt.jwksUri), {
 						timeoutDuration: 5000,
 						cooldownDuration: 30000
 					});
-					const { payload: josePayload } = await jwtVerify(token, JWKS, {
+					const { payload: josePayload } = await jose.jwtVerify(token, JWKS, {
 						issuer: this.config.jwt.issuer,
 						audience: this.config.jwt.audience,
 						algorithms: this.config.jwt.algorithms as string[],
@@ -155,27 +246,65 @@ export class OAuthValidator {
 					let publicKey: any;
 					const keyData = this.config.jwt.publicKey;
 
-					// Determine if key is PEM or JWK format
+					// Determine if key is PEM, JWK, or raw secret (HS*)
 					const configuredAlg = this.config.jwt?.algorithms?.[0] || 'RS256';
-					if (keyData.startsWith('-----BEGIN')) {
-					// PEM format - use importSPKI with configured algorithm
-					publicKey = await importSPKI(keyData, configuredAlg);
+					let headerAlg: string | undefined;
+					try { headerAlg = jose.decodeProtectedHeader(token)?.alg as string | undefined; } catch { /* ignore */ }
+					if (keyData.startsWith('-----BEGIN CERTIFICATE')) {
+						const primaryAlg = headerAlg || this.detectKeyTypeAndAlgorithm(keyData, configuredAlg);
+						publicKey = await jose.importX509(keyData, primaryAlg);
+					} else if (keyData.startsWith('-----BEGIN')) {
+						// PEM SPKI format
+						const mappedAlg = this.detectKeyTypeAndAlgorithm(keyData, configuredAlg);
+						publicKey = await this.importSPKIWithFallback(jose, keyData, headerAlg || mappedAlg);
 					} else {
 						try {
 							// Try to parse as JWK
 							const jwk = JSON.parse(keyData);
-							publicKey = await importJWK(jwk, jwk.alg || configuredAlg);
+							// Derive algorithm from JWK if not provided
+							let jwkAlg = jwk.alg as string | undefined;
+							if (!jwkAlg) {
+								switch (jwk.kty) {
+									case 'RSA':
+										jwkAlg = /^PS\d+$/.test(configuredAlg) ? configuredAlg : 'RS256';
+										break;
+									case 'EC':
+										switch (jwk.crv) {
+											case 'P-256': jwkAlg = 'ES256'; break;
+											case 'P-384': jwkAlg = 'ES384'; break;
+											case 'P-521': jwkAlg = 'ES512'; break;
+											case 'secp256k1': jwkAlg = 'ES256K'; break;
+											default: jwkAlg = 'ES256';
+										}
+										break;
+									case 'OKP':
+										// Ed25519/Ed448 used for EdDSA
+										jwkAlg = 'EdDSA';
+										break;
+									case 'oct':
+										jwkAlg = /^HS\d+$/.test(configuredAlg) ? configuredAlg : 'HS256';
+										break;
+									default:
+										throw new Error(`Unsupported JWK key type: ${jwk.kty}`);
+								}
+							}
+							publicKey = await jose.importJWK(jwk, jwkAlg);
 						} catch {
-							// If not valid JSON, assume PEM-like SPKI string
-							publicKey = await importSPKI(keyData, configuredAlg);
+							// Not JSON: if HS*, treat as shared secret; otherwise assume PEM-like SPKI
+							if (/^HS\d+$/.test(configuredAlg)) {
+								publicKey = new TextEncoder().encode(keyData);
+							} else {
+								const mappedAlg = this.detectKeyTypeAndAlgorithm(keyData, configuredAlg);
+								publicKey = await this.importSPKIWithFallback(jose, keyData, headerAlg || mappedAlg);
+							}
 						}
 					}
 
 					// Verify using jose
-					const { payload: josePayload } = await jwtVerify(token, publicKey, {
+					const { payload: josePayload } = await jose.jwtVerify(token, publicKey, {
 						issuer: this.config.jwt.issuer,
 						audience: this.config.jwt.audience,
-						algorithms: this.config.jwt.algorithms as string[],
+						algorithms: this.config.jwt?.algorithms ?? (headerAlg ? [headerAlg] : undefined),
 						clockTolerance: 30
 					});
 					payload = josePayload;

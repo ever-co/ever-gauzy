@@ -18,6 +18,11 @@ import { oAuth2AuthorizationCodeManager } from './oauth-authorization-code-manag
 import { OAuth2TokenManager } from './oauth-token-manager';
 import { OAuthValidator } from './oauth-validator';
 import { AuthorizationConfig } from './authorization-config';
+import { BaseErrorHandler } from './base-error-handler';
+import { BaseValidator } from './base-validator';
+import { ResponseBuilder } from './response-builder';
+import { ConfigManager } from './config-manager';
+import { IntrospectionResponse } from './interfaces';
 
 export interface OAuth2ServerConfig {
 	issuer: string;
@@ -61,21 +66,6 @@ export interface IntrospectionRequest {
 	token_type_hint?: 'access_token' | 'refresh_token';
 }
 
-export interface IntrospectionResponse {
-	active: boolean;
-	scope?: string;
-	client_id?: string;
-	username?: string;
-	token_type?: string;
-	exp?: number;
-	iat?: number;
-	nbf?: number;
-	sub?: string;
-	aud?: string | string[];
-	iss?: string;
-	jti?: string;
-}
-
 export interface AuthorizeRequest {
 	response_type: string;
 	client_id: string;
@@ -90,7 +80,7 @@ export interface TokenRequest {
 	grant_type: string;
 	code?: string;
 	redirect_uri?: string;
-	client_id: string;
+	client_id?: string;
 	client_secret?: string;
 	code_verifier?: string;
 	refresh_token?: string;
@@ -102,6 +92,9 @@ export class OAuth2AuthorizationServer {
 	private tokenManager: OAuth2TokenManager;
 	private oAuthValidator: OAuthValidator;
 	private securityLogger: SecurityLogger;
+	private errorHandler: BaseErrorHandler;
+	private responseBuilder: ResponseBuilder;
+	private configManager: ConfigManager;
 	private userInfoProvider?: (userId: string) => Promise<UserInfo | null>;
 	private authenticateUser?: (credentials: LoginCredentials) => Promise<AuthenticatedUser | null>;
 	private users: Map<string, AuthenticatedUser> = new Map(); // In-memory user store for demo
@@ -112,6 +105,9 @@ export class OAuth2AuthorizationServer {
 
 	constructor(private config: OAuth2ServerConfig) {
 		this.securityLogger = new SecurityLogger();
+		this.errorHandler = new BaseErrorHandler();
+		this.responseBuilder = new ResponseBuilder();
+		this.configManager = ConfigManager.getInstance();
 		this.tokenManager = new OAuth2TokenManager(config.issuer, config.audience);
 
 		this.initializeCSRFProtection();
@@ -253,7 +249,8 @@ export class OAuth2AuthorizationServer {
 		};
 
 		// Add Redis store if URL is provided (prioritize REDIS_URL env var for production durability)
-		const redisUrl = process.env.REDIS_URL || this.config.redisUrl;
+		const serverConfig = this.configManager.getConfig();
+		const redisUrl = serverConfig.redisUrl;
 		if (redisUrl) {
 			try {
 				const RedisStore = require('connect-redis').default;
@@ -284,16 +281,16 @@ export class OAuth2AuthorizationServer {
 					prefix: 'mcp-oauth-sess:',
 					ttl: 60 * 60 * 24 // 24 hours TTL
 				});
-				this.securityLogger.info(`Redis session store configured using ${process.env.REDIS_URL ? 'REDIS_URL' : 'config.redisUrl'}`);
+				this.securityLogger.info('Redis session store configured successfully');
 			} catch (error: any) {
 				this.securityLogger.error('Failed to configure Redis store, falling back to memory store:', error);
-				if (process.env.NODE_ENV === 'production') {
+				if (serverConfig.environment === 'production') {
 					this.securityLogger.error('CRITICAL: Production deployment requires persistent session storage!');
 				}
 			}
 		}
 
-		if (!sessionConfig.store && process.env.NODE_ENV === 'production') {
+		if (!sessionConfig.store && serverConfig.environment === 'production') {
 			this.securityLogger.error('CRITICAL: Using in-memory session store in production. Configure REDIS_URL environment variable for session durability and scalability!');
 		} else if (!sessionConfig.store) {
 			this.securityLogger.info('Using in-memory session store for development');
@@ -308,7 +305,7 @@ export class OAuth2AuthorizationServer {
 					styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
 					fontSrc: ["'self'", "https://fonts.gstatic.com"],
 					imgSrc: ["'self'", "data:", "https:"],
-					scriptSrc: process.env.NODE_ENV !== 'production'
+					scriptSrc: serverConfig.environment !== 'production'
 						? ["'self'", "'unsafe-inline'"]
 						: ["'self'"],
 					objectSrc: ["'none'"],
@@ -537,7 +534,7 @@ export class OAuth2AuthorizationServer {
 			revocation_endpoint_auth_methods_supported: ['client_secret_post', 'client_secret_basic']
 		};
 
-		res.json(metadata);
+		this.responseBuilder.sendServerMetadata(res, metadata);
 	}
 
 	/**
@@ -546,13 +543,13 @@ export class OAuth2AuthorizationServer {
 	private handleJWKS(req: Request, res: Response) {
 		try {
 			const jwks = this.tokenManager.getJWKS();
-			res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-			res.json(jwks);
+			this.responseBuilder.sendJwksResponse(res, jwks);
 		} catch (error: any) {
 			this.securityLogger.error('JWKS endpoint error:', error);
-			res.status(500).json({
-				error: 'server_error',
-				error_description: 'Failed to retrieve key set'
+			this.errorHandler.handleStandardError(res, {
+				code: 'server_error',
+				message: 'Failed to retrieve key set',
+				statusCode: 500
 			});
 			return;
 		}
@@ -695,25 +692,45 @@ export class OAuth2AuthorizationServer {
 			const params = req.query as unknown as AuthorizeRequest;
 
 			// Validate required parameters
-			const validation = this.validateAuthorizeRequest(params);
+			const validation = BaseValidator.validateAuthorizeRequest(params);
 			if (!validation.valid) {
-				return this.sendError(res, validation.error!, validation.errorDescription);
+				return this.errorHandler.handleStandardError(res, {
+					code: validation.error!,
+					message: validation.errorDescription!,
+					statusCode: 400
+				});
 			}
 
 			// Get client information
 			const client = oAuth2ClientManager.getClient(params.client_id);
 			if (!client) {
-				return this.sendError(res, 'invalid_client', 'Client not found');
+				return this.errorHandler.handleStandardError(res, {
+					code: 'invalid_client',
+					message: 'Client not found',
+					statusCode: 400
+				});
 			}
 
 			// Validate redirect URI
 			if (!oAuth2ClientManager.isValidRedirectUri(params.client_id, params.redirect_uri)) {
-				return this.sendError(res, 'invalid_request', 'Invalid redirect URI');
+				return this.errorHandler.handleStandardError(res, {
+					code: 'invalid_request',
+					message: 'Invalid redirect URI',
+					statusCode: 400
+				});
 			}
 			// Enforce PKCE for public clients
 			if (client.clientType === 'public') {
-				if (!params.code_challenge || (process.env.NODE_ENV === 'production' && params.code_challenge_method !== 'S256')) {
-					return this.sendErrorRedirect(res, params.redirect_uri, 'invalid_request', 'PKCE (S256) is required for public clients', params.state);
+				const serverConfig = this.configManager.getConfig();
+				if (!params.code_challenge || (serverConfig.environment === 'production' && params.code_challenge_method !== 'S256')) {
+					return this.errorHandler.handleOAuthRedirectError(
+						res,
+						params.redirect_uri,
+						'invalid_request',
+						'PKCE (S256) is required for public clients',
+						params.state,
+						params.client_id
+					);
 				}
 			}
 
@@ -748,9 +765,10 @@ export class OAuth2AuthorizationServer {
 
 		} catch (error: any) {
 			this.securityLogger.error('Authorization endpoint error:', error);
-			res.status(500).json({
-				error: 'server_error',
-				error_description: 'Internal server error'
+			this.errorHandler.handleStandardError(res, {
+				code: 'server_error',
+				message: 'Internal server error',
+				statusCode: 500
 			});
 			return;
 		}
@@ -774,12 +792,39 @@ export class OAuth2AuthorizationServer {
 			// Check user session
 			const session = req.session as any;
 			if (!session || !session.isAuthenticated || !session.user) {
-				return this.sendErrorRedirect(res, redirect_uri, 'access_denied', 'User not authenticated', state);
+				if (!oAuth2ClientManager.isValidRedirectUri(client_id, redirect_uri)) {
+					return this.errorHandler.handleStandardError(res, {
+						code: 'invalid_request',
+						message: 'Invalid redirect URI',
+						statusCode: 400
+					});
+				}
+				return this.errorHandler.handleOAuthRedirectError(
+					res,
+					redirect_uri,
+					'access_denied',
+					'User not authenticated',
+					state
+				);
 			}
 
 			// Validate consent
 			if (user_consent !== 'approve') {
-				return this.sendErrorRedirect(res, redirect_uri, 'access_denied', 'User denied authorization', state);
+				if (!oAuth2ClientManager.isValidRedirectUri(client_id, redirect_uri)) {
+					return this.errorHandler.handleStandardError(res, {
+						code: 'invalid_request',
+						message: 'Invalid redirect URI',
+						statusCode: 400
+					});
+				}
+
+				return this.errorHandler.handleOAuthRedirectError(
+					res,
+					redirect_uri,
+					'access_denied',
+					'User denied authorization',
+					state
+				);
 			}
 
 			const user = session.user as AuthenticatedUser;
@@ -787,17 +832,39 @@ export class OAuth2AuthorizationServer {
 			// Load client and clamp scopes to what's registered
 			const client = oAuth2ClientManager.getClient(client_id);
 			if (!client) {
-				return this.sendErrorRedirect(res, redirect_uri, 'invalid_client', 'Client not found', state);
+				return this.errorHandler.handleStandardError(res, {
+					code: 'invalid_client',
+					message: 'Client not found',
+					statusCode: 400
+				});
 			}
 			const requestedScopes = scope ? scope.split(' ') : ['mcp.read'];
 			const grantedScopes = requestedScopes.filter(s => client.scopes.includes(s));
 			if (grantedScopes.length === 0) {
-				return this.sendErrorRedirect(res, redirect_uri, 'invalid_scope', 'No permitted scopes requested', state, client_id);
+				if (!oAuth2ClientManager.isValidRedirectUri(client_id, redirect_uri)) {
+					return this.errorHandler.handleStandardError(res, {
+						code: 'invalid_scope',
+						message: 'No permitted scopes requested',
+						statusCode: 400
+					});
+				}
+				return this.errorHandler.handleOAuthRedirectError(
+					res,
+					redirect_uri,
+					'invalid_scope',
+					'No permitted scopes requested',
+					state,
+					client_id
+				);
 			}
 
 			// Re-validate redirect URI (defense-in-depth)
 			if (!oAuth2ClientManager.isValidRedirectUri(client_id, redirect_uri)) {
-				return this.sendErrorRedirect(res, redirect_uri, 'invalid_request', 'Invalid redirect URI', state, client_id);
+				return this.errorHandler.handleStandardError(res, {
+					code: 'invalid_request',
+					message: 'Invalid redirect URI',
+					statusCode: 400
+				});
 			}
 
 			// Generate authorization code
@@ -822,19 +889,14 @@ export class OAuth2AuthorizationServer {
 			});
 
 			// Redirect with authorization code
-			const redirectUrl = new URL(redirect_uri);
-			redirectUrl.searchParams.append('code', code);
-			if (state) {
-				redirectUrl.searchParams.append('state', state);
-			}
-
-			res.redirect(redirectUrl.toString());
+			this.responseBuilder.sendAuthorizationRedirect(res, redirect_uri, code, state);
 
 		} catch (error: any) {
 			this.securityLogger.error('Authorization consent error:', error);
-			res.status(500).json({
-				error: 'server_error',
-				error_description: 'Internal server error'
+			this.errorHandler.handleStandardError(res, {
+				code: 'server_error',
+				message: 'Internal server error',
+				statusCode: 500
 			});
 			return;
 		}
@@ -849,10 +911,11 @@ export class OAuth2AuthorizationServer {
 
 			// Validate grant type
 			if (!params.grant_type) {
-				res.status(400).json({
-					error: 'invalid_request',
-					error_description: 'grant_type parameter is required'
-				});
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_request', 'grant_type parameter is required'),
+					400
+				);
 				return;
 			}
 
@@ -867,18 +930,20 @@ export class OAuth2AuthorizationServer {
 					await this.handleClientCredentialsGrant(req, res, params);
 					break;
 				default:
-					res.status(400).json({
-						error: 'unsupported_grant_type',
-						error_description: `Grant type ${params.grant_type} is not supported`
-					});
+					this.errorHandler.handleOAuthError(
+						res,
+						BaseErrorHandler.createAuthError('unsupported_grant_type', `Grant type ${params.grant_type} is not supported`),
+						400
+					);
 					break;
 			}
 
 		} catch (error: any) {
 			this.securityLogger.error('Token endpoint error:', error);
-			res.status(500).json({
-				error: 'server_error',
-				error_description: 'Internal server error'
+			this.errorHandler.handleStandardError(res, {
+				code: 'server_error',
+				message: 'Internal server error',
+				statusCode: 500
 			});
 			return;
 		}
@@ -890,20 +955,22 @@ export class OAuth2AuthorizationServer {
 	private async handleAuthorizationCodeGrant(req: Request, res: Response, params: TokenRequest): Promise<void> {
 		// Validate required parameters
 		if (!params.code || !params.redirect_uri || !params.client_id) {
-			res.status(400).json({
-				error: 'invalid_request',
-				error_description: 'Missing required parameters'
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_request', 'Missing required parameters'),
+				400
+			);
 			return;
 		}
 
 		// Validate client
 		const client = await oAuth2ClientManager.validateClient(params.client_id, params.client_secret);
 		if (!client) {
-			res.status(401).json({
-				error: 'invalid_client',
-				error_description: 'Client authentication failed'
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_client', 'Client authentication failed'),
+				401
+			);
 			return;
 		}
 
@@ -916,10 +983,11 @@ export class OAuth2AuthorizationServer {
 		);
 
 		if (!authCode) {
-			res.status(400).json({
-				error: 'invalid_grant',
-				error_description: 'Invalid authorization code'
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_grant', 'Invalid authorization code'),
+				400
+			);
 			return;
 		}
 
@@ -931,9 +999,7 @@ export class OAuth2AuthorizationServer {
 			{ includeRefreshToken: true }
 		);
 
-		res.setHeader('Cache-Control', 'no-store');
-		res.setHeader('Pragma', 'no-cache');
-		res.json({
+		this.responseBuilder.sendTokenResponse(res, {
 			access_token: tokenPair.accessToken,
 			token_type: tokenPair.tokenType,
 			expires_in: tokenPair.expiresIn,
@@ -947,36 +1013,37 @@ export class OAuth2AuthorizationServer {
 	 */
 	private async handleRefreshTokenGrant(req: Request, res: Response, params: TokenRequest): Promise<void> {
 		if (!params.refresh_token || !params.client_id) {
-			res.status(400).json({
-				error: 'invalid_request',
-				error_description: 'Missing required parameters'
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_request', 'Missing required parameters'),
+				400
+			);
 			return;
 		}
 
 		// Validate client
 		const client = await oAuth2ClientManager.validateClient(params.client_id, params.client_secret);
 		if (!client) {
-			res.status(401).json({
-				error: 'invalid_client',
-				error_description: 'Client authentication failed'
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_client', 'Client authentication failed'),
+				401
+			);
 			return;
 		}
 
 		// Refresh tokens
 		const newTokenPair = await this.tokenManager.refreshAccessToken(params.refresh_token, params.client_id);
 		if (!newTokenPair) {
-			res.status(400).json({
-				error: 'invalid_grant',
-				error_description: 'Invalid refresh token'
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_grant', 'Invalid refresh token'),
+				400
+			);
 			return;
 		}
 
-		res.setHeader('Cache-Control', 'no-store');
-		res.setHeader('Pragma', 'no-cache');
-		res.json({
+		this.responseBuilder.sendTokenResponse(res, {
 			access_token: newTokenPair.accessToken,
 			token_type: newTokenPair.tokenType,
 			expires_in: newTokenPair.expiresIn,
@@ -991,10 +1058,11 @@ export class OAuth2AuthorizationServer {
 		// Validate client credentials
 		const client = await oAuth2ClientManager.validateClient(params.client_id, params.client_secret);
 		if (!client) {
-			res.status(401).json({
-				error: 'invalid_client',
-				error_description: 'Client authentication failed'
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_client', 'Client authentication failed'),
+				401
+			);
 			return;
 		}
 
@@ -1003,10 +1071,11 @@ export class OAuth2AuthorizationServer {
 		const allowedScopes = requestedScopes.filter(scope => client.scopes.includes(scope));
 
 		if (allowedScopes.length === 0) {
-			res.status(400).json({
-				error: 'invalid_scope',
-				error_description: 'No valid scopes requested'
-			});
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_scope', 'No valid scopes requested'),
+				400
+			);
 			return;
 		}
 
@@ -1021,9 +1090,7 @@ export class OAuth2AuthorizationServer {
 			}
 		);
 
-		res.setHeader('Cache-Control', 'no-store');
-		res.setHeader('Pragma', 'no-cache');
-		res.json({
+		this.responseBuilder.sendTokenResponse(res, {
 			access_token: tokenPair.accessToken,
 			token_type: tokenPair.tokenType,
 			expires_in: tokenPair.expiresIn,
@@ -1037,12 +1104,13 @@ export class OAuth2AuthorizationServer {
 	private async handleClientRegistration(req: Request, res: Response) {
 		try {
 			const registrationResponse = await oAuth2ClientManager.registerClient(req.body);
-			res.status(201).json(registrationResponse);
+			this.responseBuilder.sendClientRegistrationResponse(res, registrationResponse);
 		} catch (error: any) {
 			this.securityLogger.error('Client registration error:', error);
-			res.status(400).json({
-				error: 'invalid_request',
-				error_description: error.message
+			this.errorHandler.handleStandardError(res, {
+				code: 'invalid_request',
+				message: error.message,
+				statusCode: 400
 			});
 			return;
 		}
@@ -1056,21 +1124,35 @@ export class OAuth2AuthorizationServer {
 			const { token } = req.body as IntrospectionRequest;
 
 			if (!token) {
-				res.status(400).json({
-					error: 'invalid_request',
-					error_description: 'token parameter is required'
-				});
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_request', 'token parameter is required'),
+					400
+				);
 				return;
 			}
 
 			// Validate the requesting client (simplified - in production, implement proper client auth)
 			const authHeader = req.headers.authorization;
 			if (!authHeader || !authHeader.startsWith('Basic ')) {
-				res.status(401).json({
-					error: 'invalid_client',
-					error_description: 'Client authentication (Basic) required'
-				});
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_client', 'Client authentication (Basic) required'),
+					401
+				);
 				return;
+			}
+			const credentials = Buffer.from(authHeader.slice('Basic '.length), 'base64').toString('utf8');
+			const sep = credentials.indexOf(':');
+			const clientId = sep >= 0 ? credentials.slice(0, sep) : '';
+			const clientSecret = sep >= 0 ? credentials.slice(sep + 1) : '';
+			const client = await oAuth2ClientManager.validateClient(clientId, clientSecret);
+			if (!client) {
+				return this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('invalid_request', 'Invalid client credentials'),
+				401
+				);
 			}
 
 			// Validate the token
@@ -1078,9 +1160,9 @@ export class OAuth2AuthorizationServer {
 
 			if (!validation.valid) {
 				// Token is invalid or expired
-				res.json({
+				this.responseBuilder.sendIntrospectionResponse(res, {
 					active: false
-				} as IntrospectionResponse);
+				});
 				return;
 			}
 
@@ -1116,13 +1198,14 @@ export class OAuth2AuthorizationServer {
 				subject: validation.subject
 			});
 
-			res.json(response);
+			this.responseBuilder.sendIntrospectionResponse(res, response);
 
 		} catch (error: any) {
 			this.securityLogger.error('Token introspection error:', error);
-			res.status(500).json({
-				error: 'server_error',
-				error_description: 'Internal server error'
+			this.errorHandler.handleStandardError(res, {
+				code: 'server_error',
+				message: 'Internal server error',
+				statusCode: 500
 			});
 			return;
 		}
@@ -1136,30 +1219,18 @@ export class OAuth2AuthorizationServer {
 			 // Extract access token (robust parsing)
 			const token = this.oAuthValidator.extractBearerToken(req);
 			if (!token) {
-				res.setHeader(
-				'WWW-Authenticate',
-				OAuthValidator.formatWWWAuthenticateHeader(
-					`${this.config.baseUrl}/.well-known/oauth-authorization-server`,
-					OAuthValidator.createAuthorizationError('invalid_token', 'Bearer token required')
-				)
-				);
-				res.status(401).json({ error: 'invalid_token', error_description: 'Bearer token required' });
-				return;
+				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-protected-resource`;
+				const authError = BaseErrorHandler.createAuthError('invalid_token', 'Bearer token required');
+				return this.errorHandler.handleAuthError(res, authError, resourceMetadataUrl);
 			}
 
 			// Validate the access token
 			const validation = await this.oAuthValidator.validateToken(token);
 
 			if (!validation.valid) {
-				res.setHeader(
-					'WWW-Authenticate',
-					OAuthValidator.formatWWWAuthenticateHeader(
-					`${this.config.baseUrl}/.well-known/oauth-authorization-server`,
-					OAuthValidator.createAuthorizationError('invalid_token', validation.error || 'Token validation failed')
-					)
-				);
-				res.status(401).json({ error: 'invalid_token', error_description: validation.error || 'Token validation failed' });
-				return;
+				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-protected-resource`;
+				const authError = BaseErrorHandler.createAuthError('invalid_token', validation.error || 'Token validation failed');
+				return this.errorHandler.handleAuthError(res, authError, resourceMetadataUrl);
 			}
 
 			// Check if token has required scope for userinfo
@@ -1168,18 +1239,9 @@ export class OAuth2AuthorizationServer {
 			);
 
 			if (!hasUserInfoScope) {
-				res.setHeader(
-					'WWW-Authenticate',
-					OAuthValidator.formatWWWAuthenticateHeader(
-						`${this.config.baseUrl}/.well-known/oauth-authorization-server`,
-						OAuthValidator.createAuthorizationError('insufficient_scope', 'Token lacks required scope (openid/profile/email)')
-					)
-				);
-				res.status(403).json({
-					error: 'insufficient_scope',
-					error_description: 'Token does not have required scope for user info'
-				});
-				return;
+				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-protected-resource`;
+				const authError = BaseErrorHandler.createAuthError('insufficient_scope', 'Token lacks required scope (openid/profile/email)');
+				return this.errorHandler.handleAuthError(res, authError, resourceMetadataUrl);
 			}
 
 			// Get user information
@@ -1198,9 +1260,10 @@ export class OAuth2AuthorizationServer {
 			}
 
 			if (!userInfo) {
-				res.status(404).json({
-					error: 'user_not_found',
-					error_description: 'User information not available'
+				this.errorHandler.handleStandardError(res, {
+					code: 'user_not_found',
+					message: 'User information not available',
+					statusCode: 404
 				});
 				return;
 			}
@@ -1237,47 +1300,32 @@ export class OAuth2AuthorizationServer {
 				scopes: validation.scopes?.join(' ')
 			});
 
-			res.json(userInfoResponse);
+			this.responseBuilder.sendUserInfoResponse(res, userInfoResponse);
 
 		} catch (error: any) {
 			this.securityLogger.error('User info endpoint error:', error);
-			res.status(500).json({
-				error: 'server_error',
-				error_description: 'Internal server error'
+			this.errorHandler.handleStandardError(res, {
+				code: 'server_error',
+				message: 'Internal server error',
+				statusCode: 500
 			});
 			return;
 		}
 	}
 
-	/**
-	 * Validate authorize request parameters
-	 */
-	private validateAuthorizeRequest(params: AuthorizeRequest): { valid: boolean; error?: string; errorDescription?: string } {
-		if (!params.response_type) {
-			return { valid: false, error: 'invalid_request', errorDescription: 'response_type parameter is required' };
-		}
-
-		if (params.response_type !== 'code') {
-			return { valid: false, error: 'unsupported_response_type', errorDescription: 'Only code response type is supported' };
-		}
-
-		if (!params.client_id) {
-			return { valid: false, error: 'invalid_request', errorDescription: 'client_id parameter is required' };
-		}
-
-		if (!params.redirect_uri) {
-			return { valid: false, error: 'invalid_request', errorDescription: 'redirect_uri parameter is required' };
-		}
-
-		return { valid: true };
-	}
 
 	/**
 	 * Generate login form with CSRF token
 	 */
 	private generateLoginForm(error?: string, returnUrl?: string, csrfToken?: string): string {
 		const errorMessage = error ? this.getErrorMessage(error) : '';
+		return this.buildLoginFormHtml(errorMessage, returnUrl, csrfToken);
+	}
 
+	/**
+	 * Build login form HTML (simplified)
+	 */
+	private buildLoginFormHtml(errorMessage: string, returnUrl?: string, csrfToken?: string): string {
 		return `
 			<!DOCTYPE html>
 			<html>
@@ -1285,23 +1333,7 @@ export class OAuth2AuthorizationServer {
 				<title>Sign In - Gauzy MCP OAuth Server</title>
 				<meta charset="utf-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1">
-				<style>
-					body { font-family: Arial, sans-serif; max-width: 400px; margin: 100px auto; padding: 20px; background: #f5f5f5; }
-					.card { border: 1px solid #ddd; border-radius: 8px; padding: 30px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-					.logo { text-align: center; margin-bottom: 30px; }
-					.logo h1 { color: #333; margin: 0; font-size: 24px; }
-					.logo p { color: #666; margin: 5px 0 0 0; font-size: 14px; }
-					.form-group { margin-bottom: 20px; }
-					label { display: block; margin-bottom: 5px; color: #333; font-weight: bold; }
-					input[type="email"], input[type="password"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
-					input[type="email"]:focus, input[type="password"]:focus { outline: none; border-color: #007bff; }
-					.btn { width: 100%; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
-					.btn-primary { background: #007bff; color: white; }
-					.btn-primary:hover { background: #0056b3; }
-					.error { color: #dc3545; margin-bottom: 15px; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; }
-					.demo-info { margin-top: 20px; padding: 15px; background: #e7f3ff; border: 1px solid #bee5eb; border-radius: 4px; font-size: 14px; }
-					.demo-info strong { color: #0c5460; }
-				</style>
+				${this.getCommonStyles()}
 			</head>
 			<body>
 				<div class="card">
@@ -1341,6 +1373,31 @@ export class OAuth2AuthorizationServer {
 	}
 
 	/**
+	 * Get common CSS styles for forms
+	 */
+	private getCommonStyles(): string {
+		return `
+			<style>
+				body { font-family: Arial, sans-serif; max-width: 400px; margin: 100px auto; padding: 20px; background: #f5f5f5; }
+				.card { border: 1px solid #ddd; border-radius: 8px; padding: 30px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+				.logo { text-align: center; margin-bottom: 30px; }
+				.logo h1 { color: #333; margin: 0; font-size: 24px; }
+				.logo p { color: #666; margin: 5px 0 0 0; font-size: 14px; }
+				.form-group { margin-bottom: 20px; }
+				label { display: block; margin-bottom: 5px; color: #333; font-weight: bold; }
+				input[type="email"], input[type="password"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
+				input[type="email"]:focus, input[type="password"]:focus { outline: none; border-color: #007bff; }
+				.btn { width: 100%; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+				.btn-primary { background: #007bff; color: white; }
+				.btn-primary:hover { background: #0056b3; }
+				.error { color: #dc3545; margin-bottom: 15px; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; }
+				.demo-info { margin-top: 20px; padding: 15px; background: #e7f3ff; border: 1px solid #bee5eb; border-radius: 4px; font-size: 14px; }
+				.demo-info strong { color: #0c5460; }
+			</style>
+		`;
+	}
+
+	/**
 	 * Get human-readable error message
 	 */
 	private getErrorMessage(error: string): string {
@@ -1357,7 +1414,15 @@ export class OAuth2AuthorizationServer {
 	 */
 	private generateConsentForm(params: AuthorizeRequest, client: OAuth2Client, user?: AuthenticatedUser, csrfToken?: string): string {
 		const scopes = params.scope ? params.scope.split(' ') : ['mcp.read'];
-		const scopeDescriptions = {
+		const scopeDescriptions = this.getScopeDescriptions();
+		return this.buildConsentFormHtml(params, client, user, scopes, scopeDescriptions, csrfToken);
+	}
+
+	/**
+	 * Get scope descriptions mapping
+	 */
+	private getScopeDescriptions(): Record<string, string> {
+		return {
 			'mcp.read': 'Read access to your MCP data and tools',
 			'mcp.write': 'Write access to modify your MCP data',
 			'mcp.admin': 'Administrative access to manage your MCP resources',
@@ -1366,7 +1431,19 @@ export class OAuth2AuthorizationServer {
 			'email': 'Access to your email address',
 			'roles': 'Access to your role and permission information'
 		};
+	}
 
+	/**
+	 * Build consent form HTML (simplified)
+	 */
+	private buildConsentFormHtml(
+		params: AuthorizeRequest,
+		client: OAuth2Client,
+		user?: AuthenticatedUser,
+		scopes?: string[],
+		scopeDescriptions?: Record<string, string>,
+		csrfToken?: string
+	): string {
 		return `
 			<!DOCTYPE html>
 			<html>
@@ -1374,31 +1451,7 @@ export class OAuth2AuthorizationServer {
 				<title>Authorize ${escapeHtml(client.clientName)}</title>
 				<meta charset="utf-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1">
-				<style>
-					body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
-					.card { border: 1px solid #ddd; border-radius: 8px; padding: 30px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-					.header { text-align: center; margin-bottom: 30px; }
-					.app-icon { width: 64px; height: 64px; border-radius: 8px; margin-bottom: 20px; }
-					h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
-					.subtitle { color: #666; margin-bottom: 20px; }
-					.user-info { background: #e7f3ff; border: 1px solid #bee5eb; border-radius: 6px; padding: 15px; margin-bottom: 25px; }
-					.user-info strong { color: #0c5460; }
-					.scopes { margin: 20px 0; }
-					.scopes h3 { color: #333; margin-bottom: 15px; font-size: 16px; }
-					.scope { padding: 12px; margin: 8px 0; background: #f8f9fa; border-left: 4px solid #007bff; border-radius: 4px; }
-					.scope-name { font-weight: bold; color: #007bff; }
-					.scope-desc { color: #666; font-size: 14px; margin-top: 4px; }
-					.warning { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 15px; margin: 20px 0; }
-					.warning strong { color: #856404; }
-					.buttons { margin-top: 30px; text-align: center; }
-					button { padding: 14px 30px; margin: 0 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; transition: all 0.2s; }
-					.approve { background: #28a745; color: white; }
-					.deny { background: #6c757d; color: white; }
-					.approve:hover { background: #218838; transform: translateY(-1px); }
-					.deny:hover { background: #545b62; transform: translateY(-1px); }
-					.footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #999; text-align: center; }
-					.security-info { margin-top: 15px; font-size: 11px; color: #666; }
-				</style>
+				${this.getConsentFormStyles()}
 			</head>
 			<body>
 				<div class="card">
@@ -1408,51 +1461,11 @@ export class OAuth2AuthorizationServer {
 						<p class="subtitle">${escapeHtml(client.clientName)} wants to access your MCP account</p>
 					</div>
 
-					${user ? `
-						<div class="user-info">
-							<strong>Signed in as:</strong> ${escapeHtml(user.name || user.email)}<br>
-							<small>${escapeHtml(user.email)}${user.organizationId ? ` • ${escapeHtml(user.organizationId)}` : ''}</small>
-						</div>
-					` : ''}
-
-					<div class="scopes">
-						<h3>📋 Requested Permissions</h3>
-						${scopes.map(scope => `
-							<div class="scope">
-								<div class="scope-name">${escapeHtml(scope)}</div>
-								<div class="scope-desc">${escapeHtml(scopeDescriptions[scope as keyof typeof scopeDescriptions] || 'Custom permission for this application')}</div>
-							</div>
-						`).join('')}
-					</div>
-
-					<div class="warning">
-						<strong>⚠️ Security Notice:</strong> Only authorize applications you trust. This will give ${escapeHtml(client.clientName)} access to the permissions listed above.
-					</div>
-
-					<form method="POST" action="${escapeHtml(this.config.authorizationEndpoint)}">
-            			<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken || '')}" />
-						<input type="hidden" name="client_id" value="${escapeHtml(params.client_id)}">
-						<input type="hidden" name="redirect_uri" value="${escapeHtml(params.redirect_uri)}">
-						<input type="hidden" name="scope" value="${escapeHtml(params.scope || '')}">
-						<input type="hidden" name="state" value="${escapeHtml(params.state || '')}">
-						<input type="hidden" name="code_challenge" value="${escapeHtml(params.code_challenge || '')}">
-						<input type="hidden" name="code_challenge_method" value="${escapeHtml(params.code_challenge_method || '')}">
-
-						<div class="buttons">
-							<button type="submit" name="user_consent" value="approve" class="approve">✓ Authorize</button>
-							<button type="submit" name="user_consent" value="deny" class="deny">✗ Deny</button>
-						</div>
-					</form>
-
-					<div class="footer">
-						<p>By clicking "Authorize", you allow ${escapeHtml(client.clientName)} to access your account using the permissions above.</p>
-						<div class="security-info">
-							<strong>Client ID:</strong> ${escapeHtml(params.client_id)}<br>
-							<strong>Redirect URI:</strong> ${escapeHtml(params.redirect_uri)}<br>
-							${params.state ? `<strong>State:</strong> ${escapeHtml(params.state)}<br>` : ''}
-							<strong>PKCE:</strong> ${params.code_challenge ? 'Enabled (Enhanced Security)' : 'Not Used'}
-						</div>
-					</div>
+					${user ? this.buildUserInfoSection(user) : ''}
+					${this.buildScopesSection(scopes || [], scopeDescriptions || {})}
+					${this.buildSecurityNotice(client.clientName)}
+					${this.buildConsentForm(params, csrfToken)}
+					${this.buildConsentFooter(params, client.clientName)}
 				</div>
 			</body>
 			</html>
@@ -1460,52 +1473,120 @@ export class OAuth2AuthorizationServer {
 	}
 
 	/**
-	 * Send error response
+	 * Get consent form styles
 	 */
-	private sendError(res: Response, error: string, errorDescription?: string) {
-		res.status(400).json({
-			error,
-			error_description: errorDescription
-		});
+	private getConsentFormStyles(): string {
+		return `
+			<style>
+				body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
+				.card { border: 1px solid #ddd; border-radius: 8px; padding: 30px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+				.header { text-align: center; margin-bottom: 30px; }
+				.app-icon { width: 64px; height: 64px; border-radius: 8px; margin-bottom: 20px; }
+				h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
+				.subtitle { color: #666; margin-bottom: 20px; }
+				.user-info { background: #e7f3ff; border: 1px solid #bee5eb; border-radius: 6px; padding: 15px; margin-bottom: 25px; }
+				.user-info strong { color: #0c5460; }
+				.scopes { margin: 20px 0; }
+				.scopes h3 { color: #333; margin-bottom: 15px; font-size: 16px; }
+				.scope { padding: 12px; margin: 8px 0; background: #f8f9fa; border-left: 4px solid #007bff; border-radius: 4px; }
+				.scope-name { font-weight: bold; color: #007bff; }
+				.scope-desc { color: #666; font-size: 14px; margin-top: 4px; }
+				.warning { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 15px; margin: 20px 0; }
+				.warning strong { color: #856404; }
+				.buttons { margin-top: 30px; text-align: center; }
+				button { padding: 14px 30px; margin: 0 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; transition: all 0.2s; }
+				.approve { background: #28a745; color: white; }
+				.deny { background: #6c757d; color: white; }
+				.approve:hover { background: #218838; transform: translateY(-1px); }
+				.deny:hover { background: #545b62; transform: translateY(-1px); }
+				.footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #999; text-align: center; }
+				.security-info { margin-top: 15px; font-size: 11px; color: #666; }
+			</style>
+		`;
 	}
 
 	/**
-	 * Send error redirect
+	 * Build user info section for consent form
 	 */
-	private sendErrorRedirect(
-		res: Response,
-		redirectUri: string | undefined,
-		error: string,
-		errorDescription?: string,
-		state?: string,
-		clientId?: string
-		) {
-		if (!redirectUri) {
-			return this.sendError(res, error, errorDescription);
-		}
-
-		try {
-			let url: URL;
-			if (clientId && oAuth2ClientManager.isValidRedirectUri(clientId, redirectUri)) {
-				// Safe to redirect to the validated client redirect_uri (can be external)
-				url = new URL(redirectUri);
-			} else {
-				// Fallback to a safe local endpoint
-				const safe = this.normalizeReturnUrl(redirectUri);
-				url = new URL(safe, this.config.baseUrl);
-			}
-			url.searchParams.append('error', error);
-			if (errorDescription) {
-				url.searchParams.append('error_description', errorDescription);
-			}
-			if (state) {
-				url.searchParams.append('state', state);
-			}
-			res.redirect(url.toString());
-		} catch {
-			this.sendError(res, error, errorDescription);
-		}
+	private buildUserInfoSection(user: AuthenticatedUser): string {
+		return `
+			<div class="user-info">
+				<strong>Signed in as:</strong> ${escapeHtml(user.name || user.email)}<br>
+				<small>${escapeHtml(user.email)}${user.organizationId ? ` • ${escapeHtml(user.organizationId)}` : ''}</small>
+			</div>
+		`;
 	}
+
+	/**
+	 * Build scopes section for consent form
+	 */
+	private buildScopesSection(scopes: string[], scopeDescriptions: Record<string, string>): string {
+		const scopeItems = scopes.map(scope => `
+			<div class="scope">
+				<div class="scope-name">${escapeHtml(scope)}</div>
+				<div class="scope-desc">${escapeHtml(scopeDescriptions[scope] || 'Custom permission for this application')}</div>
+			</div>
+		`).join('');
+
+		return `
+			<div class="scopes">
+				<h3>📋 Requested Permissions</h3>
+				${scopeItems}
+			</div>
+		`;
+	}
+
+	/**
+	 * Build security notice section
+	 */
+	private buildSecurityNotice(clientName: string): string {
+		return `
+			<div class="warning">
+				<strong>⚠️ Security Notice:</strong> Only authorize applications you trust. This will give ${escapeHtml(clientName)} access to the permissions listed above.
+			</div>
+		`;
+	}
+
+	/**
+	 * Build consent form section
+	 */
+	private buildConsentForm(params: AuthorizeRequest, csrfToken?: string): string {
+		return `
+			<form method="POST" action="${escapeHtml(this.config.authorizationEndpoint)}">
+            	<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken || '')}" />
+				<input type="hidden" name="client_id" value="${escapeHtml(params.client_id)}">
+				<input type="hidden" name="redirect_uri" value="${escapeHtml(params.redirect_uri)}">
+				<input type="hidden" name="scope" value="${escapeHtml(params.scope || '')}">
+				<input type="hidden" name="state" value="${escapeHtml(params.state || '')}">
+				<input type="hidden" name="code_challenge" value="${escapeHtml(params.code_challenge || '')}">
+				<input type="hidden" name="code_challenge_method" value="${escapeHtml(params.code_challenge_method || '')}">
+
+				<div class="buttons">
+					<button type="submit" name="user_consent" value="approve" class="approve">✓ Authorize</button>
+					<button type="submit" name="user_consent" value="deny" class="deny">✗ Deny</button>
+				</div>
+			</form>
+		`;
+	}
+
+	/**
+	 * Build consent form footer
+	 */
+	private buildConsentFooter(params: AuthorizeRequest, clientName: string): string {
+		return `
+			<div class="footer">
+				<p>By clicking "Authorize", you allow ${escapeHtml(clientName)} to access your account using the permissions above.</p>
+				<div class="security-info">
+					<strong>Client ID:</strong> ${escapeHtml(params.client_id)}<br>
+					<strong>Redirect URI:</strong> ${escapeHtml(params.redirect_uri)}<br>
+					${params.state ? `<strong>State:</strong> ${escapeHtml(params.state)}<br>` : ''}
+					<strong>PKCE:</strong> ${params.code_challenge ? 'Enabled (Enhanced Security)' : 'Not Used'}
+				</div>
+			</div>
+		`;
+	}
+
+
 
 	/**
 	 * Get Express app instance
@@ -1545,23 +1626,38 @@ export class OAuth2AuthorizationServer {
 				});
 
 				// For OAuth redirects, send error to redirect_uri if available
-				if (req.body.redirect_uri && req.body.state) {
-					this.sendErrorRedirect(res, req.body.redirect_uri, 'invalid_request', 'CSRF protection failed', req.body.state);
-					return;
+				if (req.body.client_id && req.body.redirect_uri && req.body.state) {
+					if (oAuth2ClientManager.isValidRedirectUri(req.body.client_id, req.body.redirect_uri)) {
+						this.errorHandler.handleOAuthRedirectError(
+							res,
+							req.body.redirect_uri,
+							'invalid_request',
+							'CSRF protection failed',
+							req.body.state,
+							req.body.client_id
+						);
+						return;
+					}
+					this.securityLogger.warn('Blocked CSRF redirect to unregistered redirect_uri', {
+						clientId: req.body.client_id,
+						redirectUri: req.body.redirect_uri
+					});
 				}
-
-				res.status(403).json({
-					error: 'invalid_request',
-					error_description: 'CSRF protection failed. Please try again.'
+				// Fallback JSON error
+				this.errorHandler.handleStandardError(res, {
+					code: 'invalid_request',
+					message: 'CSRF protection failed. Please try again.',
+					statusCode: 403
 				});
 				return;
 			}
 
 			// Handle other errors
 			this.securityLogger.error('Unhandled error:', error);
-			res.status(500).json({
-				error: 'server_error',
-				error_description: 'Internal server error'
+			this.errorHandler.handleStandardError(res, {
+				code: 'server_error',
+				message: 'Internal server error',
+				statusCode: 500
 			});
 		});
 	}

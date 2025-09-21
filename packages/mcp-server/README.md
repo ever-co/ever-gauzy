@@ -296,7 +296,7 @@ packages/mcp-server/
 1. **Create the tool**: Add your tool implementation to `src/lib/tools/`
 
    ```typescript
-   // src/lib/tools/my-new-tool.ts
+   // src/lib/tools/my-new-tool
    import { Tool } from '@modelcontextprotocol/sdk/types.js';
    import { ApiClient } from '../common/api-client';
 
