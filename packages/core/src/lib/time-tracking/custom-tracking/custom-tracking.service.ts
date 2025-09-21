@@ -22,6 +22,7 @@ import { TypeOrmTimeSlotRepository } from '../time-slot/repository/type-orm-time
 import { MikroOrmTimeSlotRepository } from '../time-slot/repository/mikro-orm-time-slot.repository';
 import { TypeOrmTimeSlotSessionRepository } from '../time-slot-session/repository/type-orm-time-slot-session.repository';
 import { MikroOrmTimeSlotSessionRepository } from '../time-slot-session/repository/mikro-orm-time-slot-session.repository';
+import { parseFromDatabase } from '../../core/util/db-serialization-util';
 
 @Injectable()
 export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
@@ -192,7 +193,7 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 			throw new NotFoundException('TimeSlot not found');
 		}
 
-		const customActivity = timeSlot.customActivity as ICustomActivity;
+		const customActivity = parseFromDatabase<ICustomActivity>(timeSlot.customActivity);
 		if (!customActivity?.trackingSessions) {
 			return {
 				timeSlotId,
@@ -282,7 +283,7 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 			const timeSlot = timeSlotSession.timeSlot;
 			if (!timeSlot) continue;
 
-			const customActivity = timeSlot.customActivity as ICustomActivity;
+			const customActivity = parseFromDatabase<ICustomActivity>(timeSlot.customActivity);
 			if (!customActivity?.trackingSessions) continue;
 
 			const session = customActivity.trackingSessions.find(
