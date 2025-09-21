@@ -1,0 +1,43 @@
+<nb-card>
+  <nb-card-header>
+    <div class="stats" *ngIf="health$|async as h">
+      <nb-badge [text]="h.queueLength + ' pending'" status="warning"></nb-badge>
+      <nb-badge [text]="'Last success ' + (h.lastSuccessAt | date:'HH:mm')" status="success"></nb-badge>
+      <nb-badge [text]="h.apiReachable? 'API Online':'API Offline'" [status]="h.apiReachable? 'info':'danger'"></nb-badge>
+    </div>
+    <button nbButton size="tiny" status="basic" (click)="clearSynced()">Clear Synced</button>
+  </nb-card-header>
+
+  <nb-card-body>
+    <nb-tabset (changeTab)="tab=$event.tabTitle"> <nb-tab tabTitle="PENDING" [active]="tab === 'PENDING'">
+        <div *ngFor="let it of (items$|async) | filterStatus:'PENDING'" class="trow">
+          <div>{{ it.type }}</div>
+          <div>{{ it.createdAt | date:'MMM d, HH:mm:ss' }}</div>
+          <div>{{ it.sizeBytes? (it.sizeBytes/1024|number:'1.0-0')+' KB' : '—' }}</div>
+          <div>{{ it.retries }}</div>
+          <div><nb-badge text="PENDING" status="warning"></nb-badge></div>
+          <button nbButton size="tiny" (click)="retry(it)">Retry</button>
+        </div>
+      </nb-tab>
+      <nb-tab tabTitle="FAILED" [active]="tab === 'FAILED'">
+        <div *ngFor="let it of (items$|async) | filterStatus:'FAILED'" class="trow">
+          <div>{{ it.type }}</div>
+          <div>{{ it.createdAt | date:'MMM d, HH:mm:ss' }}</div>
+          <div>{{ it.errorMessage }}</div>
+          <div>{{ it.retries }}</div>
+          <div><nb-badge text="FAILED" status="danger"></nb-badge></div>
+          <button nbButton size="tiny" (click)="retry(it)">Retry</button>
+        </div>
+      </nb-tab>
+      <nb-tab tabTitle="SYNCED" [active]="tab === 'SYNCED'">
+        <div *ngFor="let it of (items$|async) | filterStatus:'SYNCED'" class="trow">
+          <div>{{ it.type }}</div>
+          <div>{{ it.createdAt | date:'MMM d, HH:mm:ss' }}</div>
+          <div>{{ it.sizeBytes? (it.sizeBytes/1024|number:'1.0-0')+' KB':'—' }}</div>
+          <div>{{ it.retries }}</div>
+          <div><nb-badge text="SYNCED" status="success"></nb-badge></div>
+        </div>
+      </nb-tab>
+    </nb-tabset>
+  </nb-card-body>
+</nb-card>

@@ -1,0 +1,44 @@
+<nb-layout windowMode>
+  <nb-sidebar tag="menu" state="expanded">
+    <div class="brand">
+      <nb-icon icon="flash-outline"></nb-icon>
+      <span>Ever Gauzy Agent</span>
+    </div>
+    <nb-menu [items]="menu"></nb-menu>
+    <div class="sidebar-tray">
+      <small>Screenshot in 3:21</small>
+    </div>
+  </nb-sidebar>
+
+  <nb-layout-column class="">
+    <!-- KPI SUMMARY -->
+    <!-- <div class="grid kpis"> -->
+    <!--   <nb-card *ngFor="let k of kpis" size="small" accent="info"> -->
+    <!--     <nb-card-header>{{ k.label }}</nb-card-header> -->
+    <!--     <nb-card-body> -->
+    <!--       <div class="kpi-val">{{ k.value }}</div> -->
+    <!--     </nb-card-body> -->
+    <!--   </nb-card> -->
+    <!-- </div> -->
+    <!-- SCREENSHOT GALLERY -->
+    <!-- <nb-card> -->
+    <!--   <nb-card-header>Screenshot Gallery</nb-card-header> -->
+    <!--   <nb-card-body> -->
+    <!--     <div class="gallery"> -->
+    <!--       <div class="shot-thumb"><span>10:12 • VSCode</span></div> -->
+    <!--       <div class="shot-thumb"><span>11:05 • Chrome</span></div> -->
+    <!--       <div class="shot-thumb"><span>13:22 • Terminal</span></div> -->
+    <!--       <div class="shot-thumb"><span>15:42 • VSCode</span></div> -->
+    <!--       <div class="shot-thumb"><span>16:10 • Slack</span></div> -->
+    <!--       <div class="shot-thumb"><span>17:02 • Chrome</span></div> -->
+    <!--     </div> -->
+    <!--   </nb-card-body> -->
+    <!-- </nb-card> -->
+
+
+    <!-- LOGS -->
+	<!-- <app-logs-page></app-logs-page> -->
+	<app-sync-page></app-sync-page>
+
+  </nb-layout-column>
+</nb-layout>

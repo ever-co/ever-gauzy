@@ -8,7 +8,8 @@ import {
 	SplashScreenComponent,
 	UpdaterComponent,
 	ServerDashboardComponent,
-	ScreenCaptureComponent
+	ScreenCaptureComponent,
+	AgentDashboardComponent
 } from '@gauzy/desktop-ui-lib';
 import { AppModuleGuard } from './app.module.guards';
 
@@ -41,7 +42,7 @@ const routes: Routes = [
 	},
 	{
 		path: '',
-		component: ServerDashboardComponent
+		component: AgentDashboardComponent
 	},
 	{
 		path: 'about',
@@ -49,12 +50,12 @@ const routes: Routes = [
 	},
 	{
 		path: 'server-dashboard',
-		component: ServerDashboardComponent
+		component: AgentDashboardComponent
 	},
 	{
 		path: 'screen-capture',
 		component: ScreenCaptureComponent
-	},
+	}
 ];
 
 /**

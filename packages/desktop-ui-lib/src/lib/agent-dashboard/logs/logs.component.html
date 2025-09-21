@@ -1,0 +1,22 @@
+<nb-card>
+  <nb-card-header class="filters">
+    <nb-select [(selected)]="level" size="small">
+      <nb-option value="all">All</nb-option>
+      <nb-option value="DEBUG">Debug</nb-option>
+      <nb-option value="INFO">Info</nb-option>
+      <nb-option value="WARN">Warning</nb-option>
+      <nb-option value="ERROR">Error</nb-option>
+    </nb-select>
+    <input nbInput placeholder="Search message..." [(ngModel)]="query" />
+    <nb-checkbox [(ngModel)]="autoScroll">Auto-scroll</nb-checkbox>
+  </nb-card-header>
+  <nb-card-body class="loglist">
+    <div *ngIf="(logs$|async) as rows">
+      <div *ngFor="let r of filter(rows)" class="logline">
+        <span class="timestamp">{{ r.ts | date:'HH:mm:ss' }}</span>
+        <span [ngClass]="r.level" class="level">{{ r.level }}</span>
+        <span>{{ r.msg }}</span>
+      </div>
+    </div>
+  </nb-card-body>
+</nb-card>

@@ -52,7 +52,8 @@ import {
 	UpdaterModule,
 	serverConnectionFactory,
 	ServerDashboardModule,
-	ScreenCaptureModule
+	ScreenCaptureModule,
+	AgentDashboardModule
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { environment } from '../environments/environment';
@@ -114,7 +115,8 @@ if (environment.SENTRY_DSN) {
 		}),
 		LanguageModule.forRoot(),
 		NbDatepickerModule.forRoot(),
-		AboutModule
+		AboutModule,
+		AgentDashboardModule
 	],
 	providers: [
 		AppService,
