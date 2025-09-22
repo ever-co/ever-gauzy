@@ -203,7 +203,9 @@ class AppWindow {
 				return;
 			}
 			this.notificationWindow.show();
-		} catch (error) {}
+		} catch (error) {
+			console.error('Failed to initialize screenshot notification', error);
+		}
 	}
 
 	closeSettingWindow() {
