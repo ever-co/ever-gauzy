@@ -59,10 +59,10 @@ class AppWindow {
 				});
 				this.aboutWindow.once('ready-to-show', () => {
 					this.aboutWindow.show();
-				})
+				});
 			}
 		} catch (error) {
-			console.error('Failed to initialize about window', error)
+			console.error('Failed to initialize about window', error);
 			throw new Error(`About window initialization failed: ${error.message}`);
 		}
 	}
@@ -70,7 +70,11 @@ class AppWindow {
 	async initSplashScreenWindow() {
 		try {
 			if (!this.splashScreenWindow) {
-				this.splashScreenWindow = new SplashScreen(this.getUiPath('splash-screen'), this.getPreloadPath(), true);
+				this.splashScreenWindow = new SplashScreen(
+					this.getUiPath('splash-screen'),
+					this.getPreloadPath(),
+					true
+				);
 				this.splashScreenWindow.browserWindow.on('close', () => {
 					this.splashScreenWindow.browserWindow.destroy();
 					this.splashScreenWindow = null;
@@ -125,7 +129,7 @@ class AppWindow {
 	destroyAuthWindow() {
 		this.authWindow.browserWindow.destroy();
 		this.authWindow = null;
-		this.dockHideHandle()
+		this.dockHideHandle();
 	}
 
 	async initSettingWindow(): Promise<void> {
@@ -180,7 +184,7 @@ class AppWindow {
 
 				this.logWindow.on('hide', () => {
 					this.dockHideHandle();
-				})
+				});
 			}
 		} catch (error) {
 			console.error('Failed to initialize log window', error);
@@ -191,14 +195,15 @@ class AppWindow {
 	async initScreenShotNotification() {
 		try {
 			if (!this.notificationWindow) {
-				this.notificationWindow = new ScreenCaptureNotification(this.getUiPath('screen-capture'), this.getPreloadPath());
+				this.notificationWindow = new ScreenCaptureNotification(
+					this.getUiPath('screen-capture'),
+					this.getPreloadPath()
+				);
 				this.notificationWindow.loadURL();
 				return;
 			}
 			this.notificationWindow.show();
-		} catch (error) {
-
-		}
+		} catch (error) {}
 	}
 
 	closeSettingWindow() {

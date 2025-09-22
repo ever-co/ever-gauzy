@@ -25,18 +25,19 @@ export class BaseErrorHandler {
 	/**
 	 * Handle OAuth 2.0 errors with consistent formatting
 	 */
-	handleOAuthError(
-		res: Response,
-		error: AuthorizationError,
-		statusCode?: number
-	): void {
+	handleOAuthError(res: Response, error: AuthorizationError, statusCode?: number): void {
 		const mapped =
-			error.error === 'invalid_token' ? 401 :
-			error.error === 'invalid_client' ? 401 :
-			error.error === 'insufficient_scope' ? 403 :
-			error.error === 'server_error' ? 500 :
-			error.error === 'temporarily_unavailable' ? 503 :
-			400;
+			error.error === 'invalid_token'
+				? 401
+				: error.error === 'invalid_client'
+				? 401
+				: error.error === 'insufficient_scope'
+				? 403
+				: error.error === 'server_error'
+				? 500
+				: error.error === 'temporarily_unavailable'
+				? 503
+				: 400;
 		const status = statusCode ?? mapped;
 		this.setNoStoreJsonHeaders(res, true);
 		if (status === 503 && !res.getHeader('Retry-After')) {
@@ -46,7 +47,7 @@ export class BaseErrorHandler {
 			error: error.error,
 			error_description: error.errorDescription,
 			...(error.errorUri && { error_uri: error.errorUri }),
-			...(error.scope && { scope: error.scope }),
+			...(error.scope && { scope: error.scope })
 		});
 	}
 
@@ -105,7 +106,7 @@ export class BaseErrorHandler {
 				message: error.message,
 				statusCode: error.statusCode
 			});
-			} else {
+		} else {
 			this.securityLogger.warn('Standard error occurred', {
 				code: error.code,
 				message: error.message,
@@ -117,34 +118,25 @@ export class BaseErrorHandler {
 		res.status(error.statusCode).json({
 			error: error.code,
 			message: error.message,
-			...(error.details && { details: error.details }),
+			...(error.details && { details: error.details })
 		});
 	}
 
 	/**
 	 * Handle validation errors
 	 */
-	handleValidationError(
-		res: Response,
-		field: string,
-		message: string,
-		statusCode: number = 400
-	): void {
+	handleValidationError(res: Response, field: string, message: string, statusCode: number = 400): void {
 		this.handleStandardError(res, {
 			code: 'validation_error',
 			message: `${field}: ${message}`,
-			statusCode,
+			statusCode
 		});
 	}
 
 	/**
 	 * Handle authentication errors with proper WWW-Authenticate header
 	 */
-	handleAuthError(
-		res: Response,
-		error: AuthorizationError,
-		resourceMetadataUrl?: string
-	): void {
+	handleAuthError(res: Response, error: AuthorizationError, resourceMetadataUrl?: string): void {
 		if (resourceMetadataUrl) {
 			const wwwAuthenticate = this.formatWWWAuthenticateHeader(resourceMetadataUrl, error);
 			res.setHeader('WWW-Authenticate', wwwAuthenticate);
@@ -156,7 +148,7 @@ export class BaseErrorHandler {
 			error: error.error,
 			error_description: error.errorDescription,
 			...(error.errorUri && { error_uri: error.errorUri }),
-			...(error.scope && { scope: error.scope }),
+			...(error.scope && { scope: error.scope })
 		});
 	}
 
@@ -188,8 +180,8 @@ export class BaseErrorHandler {
 	private formatWWWAuthenticateHeader(resourceMetadataUrl: string, error?: AuthorizationError): string {
 		const escapeValue = (value: string) =>
 			value
-				.replace(/[\p{Cc}]/gu, '')            // drop control chars
-				.replace(/["\\\r\n]/g, '\\$&');       // quote specials
+				.replace(/[\p{Cc}]/gu, '') // drop control chars
+				.replace(/["\\\r\n]/g, '\\$&'); // quote specials
 		let header = `Bearer resource_metadata="${escapeValue(resourceMetadataUrl)}"`;
 
 		if (error) {
@@ -221,7 +213,7 @@ export class BaseErrorHandler {
 			error,
 			errorDescription: description,
 			scope,
-			errorUri,
+			errorUri
 		};
 	}
 }

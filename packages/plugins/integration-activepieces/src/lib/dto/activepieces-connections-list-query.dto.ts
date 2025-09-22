@@ -49,8 +49,8 @@ export class ActivepiecesConnectionsListQueryDto {
 		example: 'My Slack Connection'
 	})
 	@IsOptional()
-	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	@IsString()
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	readonly displayName?: string;
 
 	@ApiPropertyOptional({

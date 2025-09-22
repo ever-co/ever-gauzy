@@ -78,7 +78,7 @@ export class TimeSlotSessionService extends TenantAwareCrudService<TimeSlotSessi
 		endDate?: Date
 	): Promise<ITimeSlotSession[]> {
 		// Default to last 48 hours if no date range provided
-		const defaultStartDate = startDate || new Date(Date.now() - 48 * 60 * 60 * 1000);
+		const defaultStartDate = startDate || new Date(Date.now() - 24 * 60 * 60 * 1000);
 		const defaultEndDate = endDate || new Date();
 
 		return await super.find({

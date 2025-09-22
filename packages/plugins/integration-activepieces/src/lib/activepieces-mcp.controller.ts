@@ -1,4 +1,18 @@
-import { Controller, Get, Post, Body, Param, Query, HttpException, HttpStatus, Patch, UsePipes, ValidationPipe, Logger, HttpCode } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Post,
+	Body,
+	Param,
+	Query,
+	HttpException,
+	HttpStatus,
+	Patch,
+	UsePipes,
+	ValidationPipe,
+	Logger,
+	HttpCode
+} from '@nestjs/common';
 import { ListMcpServersDto, ActivepiecesMcpUpdateDto } from './dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
@@ -41,11 +55,18 @@ export class ActivepiecesMcpController {
 	/**
 	 * Handle errors consistently across all controller methods
 	 */
-	private handleError(publicMessage: string, error: any, fallbackStatus = HttpStatus.INTERNAL_SERVER_ERROR): never {
+	private handleError(
+		publicMessage: string,
+		error: unknown,
+		fallbackStatus = HttpStatus.INTERNAL_SERVER_ERROR
+	): never {
 		if (error instanceof HttpException) throw error;
 
-		const status = error?.status || fallbackStatus;
-		this.logger.error(`${publicMessage}: ${error?.message}`, error?.stack);
+		const status = error instanceof HttpException ? error.getStatus() : fallbackStatus;
+		this.logger.error(
+			`${publicMessage}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+			error instanceof Error ? error.stack : undefined
+		);
 		throw new HttpException(publicMessage, status);
 	}
 
@@ -76,11 +97,11 @@ export class ActivepiecesMcpController {
 
 			// Remove sensitive token field from each server
 			return {
-				data: result.data.map(server => this.sanitizeMcpServer(server)),
+				data: result.data.map((server) => this.sanitizeMcpServer(server)),
 				next: result.next,
 				previous: result.previous
 			};
-		} catch (error: any) {
+		} catch (error: unknown) {
 			this.handleError('Failed to list ActivePieces MCP servers', error);
 		}
 	}
@@ -103,8 +124,8 @@ export class ActivepiecesMcpController {
 	async getTenantMcpServers(@Query() { projectId }: ListMcpServersDto): Promise<IActivepiecesMcpServerPublic[]> {
 		try {
 			const servers = await this.activepiecesMcpService.getTenantMcpServers(projectId);
-			return servers.map(server => this.sanitizeMcpServer(server));
-		} catch (error: any) {
+			return servers.map((server) => this.sanitizeMcpServer(server));
+		} catch (error: unknown) {
 			this.handleError('Failed to get tenant ActivePieces MCP servers', error);
 		}
 	}
@@ -127,7 +148,7 @@ export class ActivepiecesMcpController {
 
 			const server = await this.activepiecesMcpService.getMcpServer(id);
 			return this.sanitizeMcpServer(server);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			this.handleError('Failed to get ActivePieces MCP server', error);
 		}
 	}
@@ -153,7 +174,7 @@ export class ActivepiecesMcpController {
 
 			const server = await this.activepiecesMcpService.updateMcpServer(id, updateData);
 			return this.sanitizeMcpServer(server);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			this.handleError('Failed to update ActivePieces MCP server', error);
 		}
 	}
@@ -177,7 +198,7 @@ export class ActivepiecesMcpController {
 
 			const server = await this.activepiecesMcpService.rotateMcpServerToken(id);
 			return this.sanitizeMcpServer(server);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			this.handleError('Failed to rotate ActivePieces MCP server token', error);
 		}
 	}

@@ -65,10 +65,7 @@ export class ResponseBuilder {
 	sendAuthorizationRedirect(res: Response, redirectUri: string, code: string, state?: string): void {
 		try {
 			const url = new URL(redirectUri);
-			const isLoopback =
-				url.hostname === 'localhost' ||
-				url.hostname === '127.0.0.1' ||
-				url.hostname === '::1';
+			const isLoopback = url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '::1';
 			const httpsOk = url.protocol === 'https:';
 			const httpOk = url.protocol === 'http:' && isLoopback;
 			if (!httpsOk && !httpOk) {
@@ -122,9 +119,36 @@ export class ResponseBuilder {
 		// Sanitize: expose only public JWK members
 		const sanitized = {
 			keys: (jwks.keys || []).map((k) => {
-				const { kty, use, key_ops, alg, kid, x5u, x5c, x5t, n, e, crv, x, y, ['x5t#S256']: x5tS256 } = k as {
-					kty?: string; use?: string; key_ops?: string[]; alg?: string; kid?: string; x5u?: string; x5c?: string[];
-					x5t?: string; n?: string; e?: string; crv?: string; x?: string; y?: string; ['x5t#S256']?: string;
+				const {
+					kty,
+					use,
+					key_ops,
+					alg,
+					kid,
+					x5u,
+					x5c,
+					x5t,
+					n,
+					e,
+					crv,
+					x,
+					y,
+					['x5t#S256']: x5tS256
+				} = k as {
+					kty?: string;
+					use?: string;
+					key_ops?: string[];
+					alg?: string;
+					kid?: string;
+					x5u?: string;
+					x5c?: string[];
+					x5t?: string;
+					n?: string;
+					e?: string;
+					crv?: string;
+					x?: string;
+					y?: string;
+					['x5t#S256']?: string;
 				};
 				const out: Record<string, unknown> = { kty, use, key_ops, alg, kid, x5u, x5c, x5t, n, e, crv, x, y };
 				if (x5tS256) out['x5t#S256'] = x5tS256;
@@ -149,13 +173,13 @@ export class ResponseBuilder {
 	sendServerMetadata(res: Response, metadata: ServerMetadata): void {
 		this.securityLogger.debug('Sending server metadata', {
 			issuer: metadata.issuer,
-			endpoints: Object.keys(metadata).filter(key => key.endsWith('_endpoint')).length
+			endpoints: Object.keys(metadata).filter((key) => key.endsWith('_endpoint')).length
 		});
 
 		res.setHeader('Content-Type', 'application/json');
 		res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
 		const body = JSON.stringify(metadata);
-		res.setHeader('ETag', `W/"${createHash('sha256').update(body).digest('hex')}"`)
+		res.setHeader('ETag', `W/"${createHash('sha256').update(body).digest('hex')}"`);
 		const req = (res as any).req;
 		const ifNoneMatch = req?.headers?.['if-none-match'] as string | undefined;
 		if (ifNoneMatch && ifNoneMatch === res.getHeader('ETag')) {
@@ -203,7 +227,12 @@ export class ResponseBuilder {
 		res.setHeader('Pragma', 'no-cache');
 		const existingVary = res.getHeader('Vary');
 		const vary = existingVary ? String(existingVary) : '';
-		const parts = new Set(vary.split(',').map(v => v.trim()).filter(Boolean));
+		const parts = new Set(
+			vary
+				.split(',')
+				.map((v) => v.trim())
+				.filter(Boolean)
+		);
 		parts.add('Authorization');
 		res.setHeader('Vary', Array.from(parts).join(', '));
 		res.json(userInfo);

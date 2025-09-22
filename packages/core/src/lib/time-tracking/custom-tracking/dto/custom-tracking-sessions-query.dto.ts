@@ -43,28 +43,6 @@ export class CustomTrackingSessionsQueryDTO extends IntersectionType(
 	readonly includeDecodedData?: boolean = false;
 
 	/**
-	 * Filter by specific employee
-	 */
-	@ApiPropertyOptional({
-		type: () => String,
-		description: 'Filter tracking sessions by employee ID'
-	})
-	@IsOptional()
-	@IsUUID()
-	readonly employeeId?: ID;
-
-	/**
-	 * Filter by specific project
-	 */
-	@ApiPropertyOptional({
-		type: () => String,
-		description: 'Filter tracking sessions by project ID'
-	})
-	@IsOptional()
-	@IsUUID()
-	readonly projectId?: ID;
-
-	/**
 	 * Filter by specific session ID
 	 */
 	@ApiPropertyOptional({
