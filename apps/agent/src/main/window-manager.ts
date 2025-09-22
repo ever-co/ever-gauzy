@@ -127,7 +127,9 @@ class AppWindow {
 	}
 
 	destroyAuthWindow() {
-		this.authWindow.browserWindow.destroy();
+		if (this.authWindow?.browserWindow && !this.authWindow.browserWindow.isDestroyed()) {
+			this.authWindow.browserWindow.destroy();
+		}
 		this.authWindow = null;
 		this.dockHideHandle();
 	}
