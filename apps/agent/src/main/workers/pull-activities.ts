@@ -347,7 +347,7 @@ class PullActivities {
 			this.agentLogger.warn('initActivityAndScreenshot skipped: startedDate is not set');
 			return;
 		}
-		return await this.activityProcess(
+		return this.activityProcess(
 			{
 				timeStart: this.startedDate,
 				timeEnd: new Date()
