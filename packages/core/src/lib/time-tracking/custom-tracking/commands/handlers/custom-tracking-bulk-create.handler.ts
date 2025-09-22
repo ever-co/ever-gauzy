@@ -33,7 +33,7 @@ export class CustomTrackingBulkCreateHandler implements ICommandHandler<CustomTr
 				}
 
 				// Execute individual tracking data processing command
-				const startTime = new Date(entry.startTime);
+				const startTime = entry.startTime ? new Date(entry.startTime) : undefined;
 				const result = await this.commandBus.execute(
 					new ProcessTrackingDataCommand({
 						...entry,

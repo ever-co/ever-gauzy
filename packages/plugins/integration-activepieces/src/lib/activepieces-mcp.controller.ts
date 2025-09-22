@@ -55,18 +55,11 @@ export class ActivepiecesMcpController {
 	/**
 	 * Handle errors consistently across all controller methods
 	 */
-	private handleError(
-		publicMessage: string,
-		error: unknown,
-		fallbackStatus = HttpStatus.INTERNAL_SERVER_ERROR
-	): never {
+	private handleError(publicMessage: string, error: any, fallbackStatus = HttpStatus.INTERNAL_SERVER_ERROR): never {
 		if (error instanceof HttpException) throw error;
 
-		const status = error instanceof HttpException ? error.getStatus() : fallbackStatus;
-		this.logger.error(
-			`${publicMessage}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-			error instanceof Error ? error.stack : undefined
-		);
+		const status = error?.status || fallbackStatus;
+		this.logger.error(`${publicMessage}: ${error?.message}`, error?.stack);
 		throw new HttpException(publicMessage, status);
 	}
 
@@ -101,7 +94,7 @@ export class ActivepiecesMcpController {
 				next: result.next,
 				previous: result.previous
 			};
-		} catch (error: unknown) {
+		} catch (error: any) {
 			this.handleError('Failed to list ActivePieces MCP servers', error);
 		}
 	}
@@ -125,7 +118,7 @@ export class ActivepiecesMcpController {
 		try {
 			const servers = await this.activepiecesMcpService.getTenantMcpServers(projectId);
 			return servers.map((server) => this.sanitizeMcpServer(server));
-		} catch (error: unknown) {
+		} catch (error: any) {
 			this.handleError('Failed to get tenant ActivePieces MCP servers', error);
 		}
 	}
@@ -148,7 +141,7 @@ export class ActivepiecesMcpController {
 
 			const server = await this.activepiecesMcpService.getMcpServer(id);
 			return this.sanitizeMcpServer(server);
-		} catch (error: unknown) {
+		} catch (error: any) {
 			this.handleError('Failed to get ActivePieces MCP server', error);
 		}
 	}
@@ -174,7 +167,7 @@ export class ActivepiecesMcpController {
 
 			const server = await this.activepiecesMcpService.updateMcpServer(id, updateData);
 			return this.sanitizeMcpServer(server);
-		} catch (error: unknown) {
+		} catch (error: any) {
 			this.handleError('Failed to update ActivePieces MCP server', error);
 		}
 	}
@@ -198,7 +191,7 @@ export class ActivepiecesMcpController {
 
 			const server = await this.activepiecesMcpService.rotateMcpServerToken(id);
 			return this.sanitizeMcpServer(server);
-		} catch (error: unknown) {
+		} catch (error: any) {
 			this.handleError('Failed to rotate ActivePieces MCP server token', error);
 		}
 	}
