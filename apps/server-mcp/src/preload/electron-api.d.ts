@@ -6,6 +6,5 @@ export type ElectronAPI = {
 	getAppVersion(): Promise<string>;
 	getSavedTheme(): Promise<string>;
 	saveTheme(theme: string): Promise<boolean>;
-	expandWindow(): void;
 	expandWindow(): Promise<boolean>;
 };

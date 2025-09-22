@@ -45,29 +45,21 @@ export class OAuthValidator {
 					// Keep configured ES* if provided, otherwise default to ES256 (fallbacks will try ES384/ES512)
 					return /^ES(256K|256|384|512)$/.test(configuredAlg) ? configuredAlg : 'ES256';
 				case 'dsa':
-					this.securityLogger.warn(
-						'DSA keys are not supported for JOSE/JWT. Falling back to configured algorithm.'
-					);
+				this.securityLogger.warn('DSA keys are not supported for JOSE/JWT. Falling back to configured algorithm.');
 					return configuredAlg;
 				case 'x25519':
 				case 'x448':
-					this.securityLogger.warn(
-						`${keyType} is a key-agreement type, not suitable for JWT signatures. Falling back to configured algorithm.`
-					);
+					this.securityLogger.warn(`${keyType} is a key-agreement type, not suitable for JWT signatures. Falling back to configured algorithm.`);
 					return configuredAlg;
 				case 'ed25519':
 				case 'ed448':
 					return 'EdDSA';
 				default:
-					this.securityLogger.warn(
-						`Unknown key type: ${keyType}, using configured algorithm: ${configuredAlg}`
-					);
+					this.securityLogger.warn(`Unknown key type: ${keyType}, using configured algorithm: ${configuredAlg}`);
 					return configuredAlg;
 			}
 		} catch (error: any) {
-			this.securityLogger.warn(
-				`Failed to detect key type: ${error.message}, using configured algorithm: ${configuredAlg}`
-			);
+			this.securityLogger.warn(`Failed to detect key type: ${error.message}, using configured algorithm: ${configuredAlg}`);
 			return configuredAlg;
 		}
 	}
@@ -75,21 +67,18 @@ export class OAuthValidator {
 	/**
 	 * Attempt to import SPKI with fallback algorithms if initial attempt fails
 	 */
-	private async importSPKIWithFallback(jose: JoseModule, keyData: string, primaryAlg: string): Promise<any> {
+	private async importSPKIWithFallback(
+		jose: JoseModule,
+		keyData: string,
+		primaryAlg: string
+	): Promise<any> {
 		const fallbackAlgorithms = [
-			'RS256',
-			'RS384',
-			'RS512',
-			'PS256',
-			'PS384',
-			'PS512',
-			'ES256',
-			'ES384',
-			'ES512',
-			'ES256K',
+			'RS256','RS384','RS512',
+			'PS256','PS384','PS512',
+			'ES256','ES384','ES512','ES256K',
 			'EdDSA'
 		];
-		const attemptOrder = [primaryAlg, ...fallbackAlgorithms.filter((alg) => alg !== primaryAlg)];
+		const attemptOrder = [primaryAlg, ...fallbackAlgorithms.filter(alg => alg !== primaryAlg)];
 
 		let lastError: Error | null = null;
 
@@ -260,11 +249,7 @@ export class OAuthValidator {
 					// Determine if key is PEM, JWK, or raw secret (HS*)
 					const configuredAlg = this.config.jwt?.algorithms?.[0] || 'RS256';
 					let headerAlg: string | undefined;
-					try {
-						headerAlg = jose.decodeProtectedHeader(token)?.alg as string | undefined;
-					} catch {
-						/* ignore */
-					}
+					try { headerAlg = jose.decodeProtectedHeader(token)?.alg as string | undefined; } catch { /* ignore */ }
 					if (keyData.startsWith('-----BEGIN CERTIFICATE')) {
 						const primaryAlg = headerAlg || this.detectKeyTypeAndAlgorithm(keyData, configuredAlg);
 						publicKey = await jose.importX509(keyData, primaryAlg);
@@ -285,20 +270,11 @@ export class OAuthValidator {
 										break;
 									case 'EC':
 										switch (jwk.crv) {
-											case 'P-256':
-												jwkAlg = 'ES256';
-												break;
-											case 'P-384':
-												jwkAlg = 'ES384';
-												break;
-											case 'P-521':
-												jwkAlg = 'ES512';
-												break;
-											case 'secp256k1':
-												jwkAlg = 'ES256K';
-												break;
-											default:
-												jwkAlg = 'ES256';
+											case 'P-256': jwkAlg = 'ES256'; break;
+											case 'P-384': jwkAlg = 'ES384'; break;
+											case 'P-521': jwkAlg = 'ES512'; break;
+											case 'secp256k1': jwkAlg = 'ES256K'; break;
+											default: jwkAlg = 'ES256';
 										}
 										break;
 									case 'OKP':
@@ -419,7 +395,7 @@ export class OAuthValidator {
 			const hasSecret = !!this.config.introspection.clientSecret;
 			const headers: Record<string, string> = {
 				'Content-Type': 'application/x-www-form-urlencoded',
-				Accept: 'application/json'
+				'Accept': 'application/json'
 			};
 			if (hasSecret) {
 				const credentials = Buffer.from(
@@ -430,7 +406,7 @@ export class OAuthValidator {
 
 			const body = new URLSearchParams({
 				token,
-				token_type_hint: 'access_token'
+				token_type_hint: 'access_token',
 			});
 			if (!hasSecret) {
 				body.set('client_id', this.config.introspection.clientId);
