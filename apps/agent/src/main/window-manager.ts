@@ -199,7 +199,7 @@ class AppWindow {
 					this.getUiPath('screen-capture'),
 					this.getPreloadPath()
 				);
-				this.notificationWindow.loadURL();
+				await this.notificationWindow.loadURL();
 				return;
 			}
 			this.notificationWindow.show();
