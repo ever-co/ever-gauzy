@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { sessionManager, UserContext, SessionValidationResult } from './session-manager';
 import { rateLimit } from 'express-rate-limit';
 import crypto from 'node:crypto';
+import type { CsrfTokenGeneratorRequestUtil } from 'csrf-csrf';
 
 const logger = new Logger('SessionMiddleware');
 
@@ -13,7 +14,7 @@ declare global {
 			sessionId?: string;
 			userContext?: UserContext;
 			sessionValidation?: SessionValidationResult;
-			csrfToken?: string;
+			csrfToken?: string | CsrfTokenGeneratorRequestUtil;
 			connectionId?: string;
 		}
 	}

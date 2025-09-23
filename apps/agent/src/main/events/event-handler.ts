@@ -16,6 +16,7 @@ export default class EventHandler {
 	private mainEvent: MainEvent;
 	private trayNotify: TrayNotify;
 	private pullActivities: PullActivities;
+	private pushActivities: PushActivities;
 
 	constructor() {
 		this.mainEvent = MainEvent.getInstance();
@@ -41,14 +42,20 @@ export default class EventHandler {
 		});
 	}
 
+	getPushActivities() {
+		if (!this.pushActivities) {
+			this.pushActivities = PushActivities.getInstance();
+		}
+	}
+
 	private stopAppTracking(logout?: boolean) {
 		const authConfig = getAuthConfig();
 		this.getPullActivities(authConfig);
-		const pushActivities = PushActivities.getInstance();
 		this.pullActivities.stopListener();
 		this.pullActivities.stopTracking();
 		if (logout) {
-			pushActivities.stopPooling();
+			this.getPushActivities();
+			this.pushActivities.stopPooling();
 		}
 	}
 
@@ -78,6 +85,17 @@ export default class EventHandler {
 		this.AppWindow.logWindow?.close();
 		await this.AppWindow.initSetupWindow();
 		this.AppWindow.setupWindow.show();
+	}
+
+	private async handleInitScreenshot() {
+		const authConfig = getAuthConfig();
+		this.getPullActivities(authConfig);
+		return this.pullActivities.initActivityAndScreenshot();
+	}
+
+	private async startTimerApi() {
+		this.getPushActivities();
+		this.pushActivities.saveOfflineTimer();
 	}
 
 	private updateAppSetting(args: TEventArgs) {
@@ -120,6 +138,10 @@ export default class EventHandler {
 				return this.stopAppTracking();
 			case MAIN_EVENT_TYPE.UPDATE_APP_SETTING:
 				return this.updateAppSetting(args);
+			case MAIN_EVENT_TYPE.INIT_SCREENSHOT:
+				return this.handleInitScreenshot();
+			case MAIN_EVENT_TYPE.START_TIMER_API:
+				return this.startTimerApi();
 			default: break;
 		}
 	}

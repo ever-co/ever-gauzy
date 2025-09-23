@@ -362,8 +362,14 @@ if (isMainModule()) {
 				logger.log(`🌐 HTTP transport available at: ${transport.url}`);
 				logger.log(`📡 API endpoints:`);
 				logger.log(`   - GET  ${transport.url}/health`);
-				logger.log(`   - POST ${transport.url}/mcp`);
-				logger.log(`   - GET  ${transport.url}/mcp/events`);
+				logger.log(`   - POST ${transport.url}/sse`);
+				logger.log(`   - GET  ${transport.url}/sse/events`);
+			}
+			else if (transport.type === 'websocket' && transport.url) {
+				logger.log(`🔌 WebSocket transport available at: ${transport.url}`);
+				logger.log(`   - Subscribe to events: ${transport.url}/sse/events`);
+				logger.log(`   - Send requests to: ${transport.url}/sse`);
+				logger.log(`   - Use 'wscat' to test: wscat -c ${transport.url}/sse`);
 			} else {
 				logger.log('📟 Server is ready to accept MCP requests via stdio');
 			}

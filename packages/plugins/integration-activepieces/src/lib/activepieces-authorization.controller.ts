@@ -1,18 +1,24 @@
-import { Controller, Get, HttpException, HttpStatus, Query, Res, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, HttpException, HttpStatus, Query, Res, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
+import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@gauzy/config';
 import { Public, IActivepiecesConfig } from '@gauzy/common';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { buildQueryString } from '@gauzy/utils';
-import { ACTIVEPIECES_OAUTH_AUTHORIZE_URL, ACTIVEPIECES_SCOPES, OAUTH_RESPONSE_TYPE } from './activepieces.config';
-import { ActivepiecesQueryDTO } from './dto/activepieces-query.dto';
+import { firstValueFrom, catchError } from 'rxjs';
+import { ACTIVEPIECES_OAUTH_AUTHORIZE_URL, ACTIVEPIECES_OAUTH_TOKEN_URL, ACTIVEPIECES_SCOPES, OAUTH_RESPONSE_TYPE, OAUTH_GRANT_TYPE } from './activepieces.config';
+import { ActivepiecesQueryDto, ActivepiecesTokenExchangeDto } from './dto';
+import { IActivepiecesTokenExchangeRequest, IActivepiecesOAuthTokens } from './activepieces.type';
 
 @ApiTags('ActivePieces Integration')
 @Public()
 @Controller('/integration/activepieces')
 export class ActivepiecesAuthorizationController {
-	constructor(private readonly configService: ConfigService) {}
+	constructor(
+		private readonly configService: ConfigService,
+		private readonly httpService: HttpService
+	) {}
 
 	/**
 	 * Generate a random state parameter for CSRF protection
@@ -48,7 +54,7 @@ export class ActivepiecesAuthorizationController {
 	})
 	@Get('/authorize')
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async authorize(@Query() query: ActivepiecesQueryDTO, @Res() response: Response) {
+	async authorize(@Query() query: ActivepiecesQueryDto, @Res() response: Response) {
 		try {
 			// Get ActivePieces configuration
 			const activepiecesConfig = this.configService.get('activepieces') as IActivepiecesConfig;
@@ -97,7 +103,7 @@ export class ActivepiecesAuthorizationController {
 		description: 'Redirects to the application with authorization code'
 	})
 	@Get('/callback')
-	async callback(@Query() query: ActivepiecesQueryDTO, @Res() response: Response) {
+	async callback(@Query() query: ActivepiecesQueryDto, @Res() response: Response) {
 		try {
 			// Validate the input data
 			if (!query || !query.code || !query.state) {
@@ -130,6 +136,80 @@ export class ActivepiecesAuthorizationController {
 			// Handle errors and return an appropriate error response
 			throw new HttpException(
 				`Failed to handle ${IntegrationEnum.ACTIVE_PIECES} callback: ${error.message}`,
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
+	}
+
+	/**
+	 * Exchange authorization code for access token
+	 *
+	 * @param {IActivepiecesTokenExchangeRequest} body - Token exchange request
+	 */
+	@ApiOperation({ summary: 'Exchange authorization code for access token' })
+	@ApiResponse({
+		status: 200,
+		description: 'Returns OAuth tokens',
+		schema: {
+			type: 'object',
+			properties: {
+				access_token: { type: 'string' },
+				refresh_token: { type: 'string' },
+				token_type: { type: 'string' },
+				expires_in: { type: 'number' },
+				scope: { type: 'string' }
+			}
+		}
+	})
+	@Post('/token')
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+	async exchangeToken(@Body() body: ActivepiecesTokenExchangeDto): Promise<IActivepiecesOAuthTokens> {
+		try {
+			// Get ActivePieces configuration
+			const activepiecesConfig = this.configService.get('activepieces') as IActivepiecesConfig;
+
+			if (!activepiecesConfig?.clientId || !activepiecesConfig?.clientSecret) {
+				throw new HttpException('ActivePieces OAuth credentials are not configured', HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+
+			// Prepare token exchange request
+			const tokenRequest: IActivepiecesTokenExchangeRequest = {
+				code: body.code,
+				client_id: activepiecesConfig.clientId,
+				client_secret: activepiecesConfig.clientSecret,
+				redirect_uri: activepiecesConfig.callbackUrl,
+				grant_type: OAUTH_GRANT_TYPE.AUTHORIZATION_CODE
+			};
+
+			// Exchange authorization code for access token
+			const response = await firstValueFrom(
+				this.httpService
+					.post<IActivepiecesOAuthTokens>(ACTIVEPIECES_OAUTH_TOKEN_URL, new URLSearchParams(tokenRequest as any), {
+						headers: {
+							'Content-Type': 'application/x-www-form-urlencoded'
+						}
+					})
+					.pipe(
+						catchError((error) => {
+							const status = error?.response?.status;
+							const data = error?.response?.data;
+							const errorMessage = data?.error_description || data?.error || error.message;
+
+							throw new HttpException(
+								`Failed to exchange authorization code: ${errorMessage}`,
+								status || HttpStatus.INTERNAL_SERVER_ERROR
+							);
+						})
+					)
+			);
+
+			return response.data;
+		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			throw new HttpException(
+				`Failed to exchange ${IntegrationEnum.ACTIVE_PIECES} authorization code: ${error.message}`,
 				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}

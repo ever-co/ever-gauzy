@@ -1,22 +1,36 @@
-# Gauzy MCP Server - Standalone App
+# Gauzy MCP Server
 
-A comprehensive MCP (Model Context Protocol) server for integration with AI assistants like Claude Desktop, ChatGPT, and other AI tools. Supports multiple transport layers for different use cases.
+A comprehensive MCP (Model Context Protocol) server for integration with
+AI assistants like Claude Desktop, ChatGPT, and other AI tools. Supports
+multiple transport layers with enterprise-grade OAuth 2.0 security for
+different use cases.
+
+🌐 **Live Demo**: [https://mcpdemo.gauzy.co](https://mcpdemo.gauzy.co)
+🔒 **Production**: [https://mcp.gauzy.co](https://mcp.gauzy.co)
 
 ## Overview
 
-The Gauzy MCP server provides multiple transport options to interact with your Gauzy platform:
+The Gauzy MCP server provides multiple transport options to interact with
+your Gauzy platform:
 
-- **Stdio Transport** - For direct integration with AI assistants like Claude Desktop
-- **HTTP Transport** - REST API with JSON-RPC 2.0 over HTTP for web applications and testing
-- **WebSocket Transport** - Real-time bidirectional communication for live applications
+- **Stdio Transport** - For direct integration with AI assistants like
+  Claude Desktop
+- **HTTP Transport** - REST API with JSON-RPC 2.0 over HTTP for web
+  applications and testing
+- **WebSocket Transport** - Real-time bidirectional communication for
+  live applications
 
-All transports offer access to project management, time tracking, employee management, and other Gauzy features.
+HTTP and WebSocket transports offer access to project management, time
+tracking, employee management, and other Gauzy features with optional
+OAuth 2.0 authorization. User sessions are stored in Redis for scalable
+session management across multiple server instances.
 
 ## Quick Start
 
 ### Prerequisites
 
 - Node.js (version 18 or higher)
+- Redis server (for session storage in HTTP/WebSocket modes)
 - Access to a running Gauzy API server
 - Valid Gauzy credentials
 
@@ -24,15 +38,16 @@ All transports offer access to project management, time tracking, employee manag
 
 ```bash
 # Build the shared MCP server package (required dependency)
-yarn nx build mcp-server
+yarn build:mcp-server
 
 # Build the standalone MCP server
-yarn nx build mcp --configuration=production
+yarn build:mcp
 ```
 
 ### Running the Server
 
-The server supports three transport modes configured via environment variables:
+The server supports three transport modes configured via environment
+variables:
 
 #### 1. Stdio Transport (Default)
 
@@ -40,13 +55,10 @@ Best for Claude Desktop and AI assistant integration:
 
 ```bash
 # Start with stdio transport (default)
-yarn nx serve mcp
+yarn start:mcp
 
 # Or explicitly set stdio mode
-MCP_TRANSPORT=stdio yarn nx serve mcp
-
-# Test the server connection
-yarn nx serve mcp --args="--test"
+MCP_TRANSPORT=stdio yarn start:mcp
 ```
 
 #### 2. HTTP Transport
@@ -55,12 +67,13 @@ REST API with JSON-RPC 2.0 for web applications:
 
 ```bash
 # Start HTTP transport server
-MCP_TRANSPORT=http
-MCP_SERVER_MODE=http
-yarn nx serve mcp
+MCP_TRANSPORT=http \
+MCP_SERVER_MODE=http \
+yarn start:mcp
 
 # Server runs on http://localhost:3001 by default
-# MCP endpoint: POST http://localhost:3001/mcp
+# MCP endpoint: POST http://localhost:3001/sse
+# NOTE: /sse is the HTTP JSON-RPC endpoint (not SSE)
 ```
 
 #### 3. WebSocket Transport
@@ -69,11 +82,13 @@ Real-time bidirectional communication:
 
 ```bash
 # Start WebSocket transport server
-MCP_TRANSPORT=websocket
-MCP_SERVER_MODE=websocket
-yarn nx serve mcp
+MCP_TRANSPORT=websocket \
+MCP_SERVER_MODE=websocket \
+yarn start:mcp
 
-# Server runs on ws://localhost:3002/ws by default (use wss:// when MCP_WS_TLS=true)
+# Server runs on ws://localhost:3002/sse by default
+# Use wss:// when MCP_WS_TLS=true
+# NOTE: "/sse" is the WebSocket upgrade route (not HTTP SSE)
 ```
 
 ### Integration with AI Assistants
@@ -83,9 +98,13 @@ yarn nx serve mcp
 1. Build the server for production:
    ```bash
    yarn nx build mcp --configuration=production
+   # or
+   yarn build:mcp:prod
    ```
 
-2. Add to your Claude Desktop configuration (`~/.claude_desktop_config.json`):
+2. Add to your Claude Desktop configuration
+   (`~/.claude_desktop_config.json`):
+
    ```json
    {
      "mcpServers": {
@@ -106,13 +125,16 @@ yarn nx serve mcp
 
 #### Other AI Assistants
 
-The server communicates via stdio transport, making it compatible with any AI assistant that supports the MCP standard. Refer to your AI assistant's documentation for specific integration steps.
+The server communicates via stdio transport, making it compatible with
+any AI assistant that supports the MCP standard. Refer to your AI
+assistant's documentation for specific integration steps.
 
 ## Transport Configuration
 
 ### Stdio Transport (Default)
 
-Best for AI assistant integration. Configure via environment variables or `.env.local`:
+Best for AI assistant integration. Configure via environment variables
+or `.env.local`:
 
 ```bash
 # Basic configuration
@@ -122,13 +144,13 @@ GAUZY_AUTH_EMAIL=<your-email>
 GAUZY_AUTH_PASSWORD=<your-password>
 
 # Optional
-GAUZY_AUTO_LOGIN=true                     # Enable automatic login
-GAUZY_MCP_DEBUG=true                      # Enable debug logging
+GAUZY_AUTO_LOGIN=true # Enable automatic login
+GAUZY_MCP_DEBUG=true # Enable debug logging
 ```
 
 ### HTTP Transport Configuration
 
-Configure HTTP transport in `.env.local`:
+Configure HTTP transport in environment file `.env.local` or `.env`:
 
 ```bash
 # Transport settings
@@ -143,15 +165,42 @@ MCP_HTTP_HOST=localhost
 MCP_CORS_ORIGIN=http://localhost:3000,http://localhost:4200
 MCP_CORS_CREDENTIALS=true
 
-# Session management
+# OAuth 2.0 Authorization (Optional)
+MCP_AUTH_ENABLED=false # Enable OAuth 2.0 authorization
+MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
+MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
+# JSON-encoded array of authorization servers
+MCP_AUTH_SERVERS='[]' # see the file .env.sample on how to configure it
+MCP_AUTH_JWT_AUDIENCE=https://mcp.gauzy.co
+MCP_AUTH_JWT_ISSUER=https://auth.gauzy.co
+MCP_AUTH_JWT_ALGORITHMS=RS256,ES256 # Supported JWT algorithms
+# JWT validation options (choose one):
+MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
+# MCP_AUTH_JWT_PUBLIC_KEY=-----BEGIN PUBLIC KEY-----...
+
+# Token Introspection (Alternative to JWT validation)
+MCP_AUTH_INTROSPECTION_ENDPOINT=https://auth.gauzy.co/token/introspect
+MCP_AUTH_INTROSPECTION_CLIENT_ID=mcp-client
+MCP_AUTH_INTROSPECTION_CLIENT_SECRET=client-secret
+
+# OAuth caching and performance
+MCP_AUTH_TOKEN_CACHE_TTL=300 # Token validation cache TTL (seconds)
+MCP_AUTH_METADATA_CACHE_TTL=3600 # Metadata cache TTL (seconds)
+
+# OAuth server options
+MCP_AUTH_ALLOW_EMBEDDED_SERVER=true # Allow embedded auth server
+MCP_AUTH_SESSION_SECRET=your-session-secret-key # Session secret
+
+# Session management (stored in Redis)
 MCP_SESSION_ENABLED=true
 MCP_SESSION_COOKIE_NAME=mcp-session-id
-MCP_SESSION_TTL=1800000                   # 30 minutes
+MCP_SESSION_TTL=1800000 # 30 minutes (milliseconds)
+REDIS_URL=redis://localhost:6379 # Redis connection for sessions
 
 # Rate limiting and security
 THROTTLE_ENABLED=true
-THROTTLE_TTL=60000                        # 1 minute
-THROTTLE_LIMIT=100                        # requests per minute
+THROTTLE_TTL=60000 # 1 minute (milliseconds)
+THROTTLE_LIMIT=100 # requests per minute
 MCP_TRUSTED_PROXIES=192.168.1.1,10.0.0.1
 
 # Required Gauzy API settings
@@ -163,11 +212,13 @@ GAUZY_AUTO_LOGIN=true
 
 #### Testing HTTP Transport
 
+##### Without OAuth 2.0 Authorization
+
 Use Postman, curl, or any HTTP client:
 
 ```bash
 # List available tools
-curl -X POST http://localhost:3001/mcp \
+curl -X POST http://localhost:3001/sse \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
@@ -175,9 +226,10 @@ curl -X POST http://localhost:3001/mcp \
     "method": "tools/list",
     "params": {}
   }'
+# NOTE: /sse is the HTTP JSON-RPC endpoint (not SSE)
 
 # Call a tool (e.g., login)
-curl -X POST http://localhost:3001/mcp \
+curl -X POST http://localhost:3001/sse \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
@@ -191,11 +243,39 @@ curl -X POST http://localhost:3001/mcp \
       }
     }
   }'
+# NOTE: /sse is the HTTP JSON-RPC endpoint (not SSE)
+```
+
+##### With OAuth 2.0 Authorization
+
+When `MCP_AUTH_ENABLED=true`, you need to include a Bearer token:
+
+```bash
+# Get OAuth 2.0 Protected Resource Metadata (RFC 9728)
+curl -X GET http://localhost:3001/.well-known/oauth-protected-resource \
+  -H "Accept: application/json"
+
+# Make authorized request with Bearer token
+curl -X POST http://localhost:3001/sse \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-access-token>" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/list",
+    "params": {}
+  }'
+# NOTE: /sse is the HTTP JSON-RPC endpoint (not SSE)
+
+# Without valid token, you'll get 401 Unauthorized with
+# WWW-Authenticate header:
+# WWW-Authenticate: Bearer resource_metadata="http://localhost:3001/
+#   .well-known/oauth-protected-resource", error="invalid_token"
 ```
 
 ### WebSocket Transport Configuration
 
-Configure WebSocket transport in `.env.local`:
+Configure WebSocket transport in environment file `.env.local` or `.env`:
 
 ```bash
 # Transport settings
@@ -205,7 +285,7 @@ MCP_SERVER_MODE=websocket
 # Server configuration
 MCP_WS_PORT=3002
 MCP_WS_HOST=localhost
-MCP_WS_PATH=/ws
+MCP_WS_PATH=/sse
 
 # TLS/SSL settings (recommended for production)
 MCP_WS_TLS=true
@@ -215,13 +295,28 @@ MCP_WS_CERT_PATH=/path/to/your/certs/cert.pem
 # WebSocket features
 MCP_WS_COMPRESSION=true
 MCP_WS_PER_MESSAGE_DEFLATE=true
-MCP_WS_MAX_PAYLOAD=16777216               # 16MB
+MCP_WS_MAX_PAYLOAD=16777216 # 16MB
+
+# OAuth 2.0 Authorization (Optional)
+MCP_AUTH_ENABLED=false # Enable OAuth 2.0 authorization
+MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
+MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
+# JSON-encoded array of authorization servers
+MCP_AUTH_SERVERS='[]' # see the file .env.sample on how to configure it
+MCP_AUTH_JWT_AUDIENCE=https://mcp.gauzy.co
+MCP_AUTH_JWT_ISSUER=https://auth.gauzy.co
+MCP_AUTH_JWT_ALGORITHMS=RS256,ES256 # Supported JWT algorithms
+MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
+# OAuth caching and performance
+MCP_AUTH_TOKEN_CACHE_TTL=300 # Token validation cache TTL (seconds)
+MCP_AUTH_METADATA_CACHE_TTL=3600 # Metadata cache TTL (seconds)
 
 # Security settings
-MCP_WS_ALLOWED_ORIGINS=*                  # Use specific origins in production
+MCP_WS_ALLOWED_ORIGINS=* # Use specific origins in production
 MCP_WS_SESSION_ENABLED=true
 MCP_WS_SESSION_COOKIE_NAME=mcp-ws-session-id
 MCP_WS_TRUSTED_PROXIES=192.168.1.1,10.0.0.1
+REDIS_URL=redis://localhost:6379 # Redis connection for sessions
 
 # Required Gauzy API settings
 API_BASE_URL=https://apidemo.gauzy.co
@@ -236,41 +331,80 @@ Using wscat (install with `npm install -g wscat`):
 
 ```bash
 # Connect to WebSocket (with TLS)
-wscat -c wss://localhost:3002/ws --no-check
+wscat -c wss://localhost:3002/sse --no-check
 
 # Or without TLS (set MCP_WS_TLS=false)
-wscat -c ws://localhost:3002/ws
+wscat -c ws://localhost:3002/sse
 
 # Send MCP protocol messages:
 # Initialize connection
-{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "test-client", "version": "1.0.0"}}}
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {},
+    "clientInfo": {
+      "name": "test-client",
+      "version": "1.0.0"
+    }
+  }
+}
 
 # List tools
-{"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/list",
+  "params": {}
+}
 
 # Call a tool
-{"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "login", "arguments": {"email": "<your-email>", "password": "<your-password>"}}}
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "login",
+    "arguments": {
+      "email": "<your-email>",
+      "password": "<your-password>"
+    }
+  }
+}
 ```
 
 #### Browser WebSocket Testing
 
 ```javascript
 // Default (TLS disabled): ws://. Use wss:// when MCP_WS_TLS=true
-const ws = new WebSocket('ws://localhost:3002/ws');
+const ws = new WebSocket('ws://localhost:3002/sse');
 
 ws.onopen = () => console.log('Connected');
 ws.onmessage = (event) => console.log('Received:', JSON.parse(event.data));
 
 // Initialize
 ws.send(JSON.stringify({
-  jsonrpc: "2.0", id: 1, method: "initialize",
-  params: { protocolVersion: "2024-11-05", capabilities: {},
-           clientInfo: { name: "browser-client", version: "1.0.0" }}
+  jsonrpc: "2.0",
+  id: 1,
+  method: "initialize",
+  params: {
+    protocolVersion: "2025-06-18",
+    capabilities: {},
+    clientInfo: {
+      name: "browser-client",
+      version: "1.0.0"
+    }
+  }
 }));
 
 // List tools
 ws.send(JSON.stringify({
-  jsonrpc: "2.0", id: 2, method: "tools/list", params: {}
+  jsonrpc: "2.0",
+  id: 2,
+  method: "tools/list",
+  params: {}
 }));
 ```
 
@@ -283,7 +417,11 @@ For WebSocket TLS, generate self-signed certificates for development:
 mkdir -p packages/mcp-server/certs
 
 # Generate private key and certificate
-openssl req -x509 -newkey rsa:4096 -keyout packages/mcp-server/certs/key.pem -out packages/mcp-server/certs/cert.pem -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+openssl req -x509 -newkey rsa:4096 \
+  -keyout packages/mcp-server/certs/key.pem \
+  -out packages/mcp-server/certs/cert.pem \
+  -days 365 -nodes \
+  -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
 
 # Set correct permissions
 chmod 600 packages/mcp-server/certs/key.pem
@@ -397,6 +535,7 @@ yarn nx test mcp
    - Check if port 3001 is already in use: `lsof -ti:3001`
    - Kill existing process: `kill -9 $(lsof -ti:3001)`
    - Try a different port: `MCP_HTTP_PORT=3002`
+   - Ensure Redis is running: `redis-server` or check `redis-cli ping`
 
 5. **CORS Errors**
    - Update `MCP_CORS_ORIGIN` to include your client domain
@@ -411,9 +550,12 @@ yarn nx test mcp
 #### WebSocket Transport Issues
 
 7. **WebSocket Connection Rejected**
-   - **"Unauthorized origin"**: Set `MCP_WS_ALLOWED_ORIGINS=*` for development
+   - **"Unauthorized origin"**: Set `MCP_WS_ALLOWED_ORIGINS=*` for
+     development
    - **SSL Certificate errors**: Use `--no-check` flag with wscat
    - **Port already in use**: Kill process: `kill -9 $(lsof -ti:3002)`
+   - **Session errors**: Ensure Redis is running: `redis-server` or
+     check `redis-cli ping`
 
 8. **SSL/TLS Issues**
    - For development: Set `MCP_WS_TLS=false` to disable SSL
@@ -422,7 +564,7 @@ yarn nx test mcp
 
 9. **WebSocket Disconnects Immediately**
    - Check server logs for specific error messages
-   - Verify WebSocket path includes `/ws`: `wss://localhost:3002/ws`
+   - Verify WebSocket path includes `/sse`: `wss://localhost:3002/sse`
    - Ensure server is fully started before connecting
 
 ### Debug Mode
@@ -444,7 +586,7 @@ This provides detailed information about:
 
 - Transport layer connections and messages
 - API requests and responses to Gauzy
-- Authentication status and session management
+- Authentication status and Redis session management
 - Tool execution details and results
 - Error messages and stack traces
 - WebSocket connection lifecycle (for WebSocket transport)
@@ -458,9 +600,10 @@ This provides detailed information about:
 | **Protocol** | Standard I/O | JSON-RPC over HTTP | JSON-RPC over WebSocket |
 | **Connection** | Process-based | Request/Response | Persistent Connection |
 | **Real-time** | No | No | Yes |
-| **Session Support** | N/A | Yes (Cookies) | Yes (Connection-based) |
+| **Session Support** | N/A | Yes (Redis) | Yes (Redis) |
 | **CORS** | N/A | Yes | Yes |
-| **Security** | Process isolation | HTTPS + Sessions | WSS + Origin validation |
+| **OAuth 2.0** | Not supported | Yes (Bearer tokens) | Yes (Bearer tokens) |
+| **Security** | Process isolation | HTTPS + Sessions | WSS + OAuth |
 | **Rate Limiting** | N/A | Yes | Yes |
 | **Best For** | Claude Desktop | REST clients, Postman | Live dashboards, browsers |
 | **Port** | N/A | 3001 (default) | 3002 (default) |
@@ -481,12 +624,206 @@ echo "MCP_TRANSPORT=websocket" >> .env.local
 yarn nx serve mcp
 ```
 
+## OAuth 2.0 Authorization
+
+The Gauzy MCP server supports enterprise-grade OAuth 2.0 authorization
+following:
+
+- RFC 6749 (OAuth 2.0 Authorization Framework)
+- RFC 9728 (OAuth 2.0 Protected Resource Metadata)
+- RFC 8707 (Resource Indicators)
+
+This enables secure access control for MCP clients like ChatGPT and
+other AI assistants.
+
+### Live Environments
+
+- **Production**: `https://mcp.gauzy.co` - Secure production MCP server
+  with full OAuth 2.0 authorization
+- **Demo**: `https://mcpdemo.gauzy.co` - Public demo environment for
+  testing and evaluation
+- **Authorization Server**: `https://auth.gauzy.co` - Production
+  OAuth 2.0 authorization server
+- **Demo Auth**: `https://authdemo.gauzy.co` - Demo authorization
+  server for testing
+
+### Authorization Features
+
+- **Bearer Token Authentication** - Standard RFC 6750 Bearer token
+  support
+- **JWT Token Validation** - Local JWT validation with public key or
+  JWKS endpoint
+- **Token Introspection** - RFC 7662 token introspection for opaque
+  tokens
+- **Protected Resource Metadata** - RFC 9728 metadata endpoint for
+  clients
+- **Scope-based Access Control** - Fine-grained permissions using
+  OAuth 2.0 scopes
+- **Audience Validation** - RFC 8707 resource indicators for token
+  audience claims
+
+### Configuration
+
+#### Demo Environment Configuration
+
+For testing with the live demo environment:
+
+```bash
+# .env.local - Demo/Development with JWT validation
+MCP_AUTH_ENABLED=true
+MCP_AUTH_RESOURCE_URI=https://mcpdemo.gauzy.co
+MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
+# JSON-encoded array of authorization servers
+MCP_AUTH_SERVERS='[]' # see the file .env.sample on how to configure it
+MCP_AUTH_JWT_AUDIENCE=https://mcpdemo.gauzy.co
+MCP_AUTH_JWT_ISSUER=https://authdemo.gauzy.co
+MCP_AUTH_JWT_ALGORITHMS=RS256,ES256
+MCP_AUTH_JWT_JWKS_URI=https://authdemo.gauzy.co/.well-known/jwks.json
+MCP_AUTH_TOKEN_CACHE_TTL=300 # 5 minutes cache
+MCP_AUTH_METADATA_CACHE_TTL=3600 # 1 hour cache
+```
+
+#### Production Environment Configuration
+
+For production deployment at `https://mcp.gauzy.co`:
+
+```bash
+# .env - Production with JWKS and introspection
+MCP_AUTH_ENABLED=true
+MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
+MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write,mcp.admin
+# JSON-encoded array of authorization servers
+MCP_AUTH_SERVERS='[]' # see the file .env.sample on how to configure it
+MCP_AUTH_JWT_AUDIENCE=https://mcp.gauzy.co
+MCP_AUTH_JWT_ISSUER=https://auth.gauzy.co
+MCP_AUTH_JWT_ALGORITHMS=RS256,ES256,PS256
+MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
+MCP_AUTH_INTROSPECTION_ENDPOINT=https://auth.gauzy.co/token/introspect
+MCP_AUTH_INTROSPECTION_CLIENT_ID=gauzy-mcp-server
+MCP_AUTH_INTROSPECTION_CLIENT_SECRET=secure-client-secret
+MCP_AUTH_TOKEN_CACHE_TTL=600 # 10 minutes cache
+MCP_AUTH_METADATA_CACHE_TTL=7200 # 2 hours cache
+MCP_AUTH_ALLOW_EMBEDDED_SERVER=false # Disable for production
+MCP_AUTH_SESSION_SECRET=production-session-secret-key
+```
+
+### Testing Authorization
+
+#### Using Postman
+
+1. **Get Protected Resource Metadata**:
+
+   ```bash
+   # Demo Environment
+   curl -X GET https://mcpdemo.gauzy.co/.well-known/oauth-protected-resource \
+     -H "Accept: application/json"
+
+   # Production Environment
+   curl -X GET https://mcp.gauzy.co/.well-known/oauth-protected-resource \
+     -H "Accept: application/json"
+
+   # Local Development
+   curl -X GET http://localhost:3001/.well-known/oauth-protected-resource \
+     -H "Accept: application/json"
+   ```
+
+2. **Make Authorized Request**:
+
+   ```bash
+   # Demo Environment
+   curl -X POST https://mcpdemo.gauzy.co/sse \
+     -H "Authorization: Bearer <your-jwt-token>" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "jsonrpc": "2.0",
+       "id": 1,
+       "method": "tools/list",
+       "params": {}
+     }'
+
+   # Production Environment
+   curl -X POST https://mcp.gauzy.co/sse \
+     -H "Authorization: Bearer <your-jwt-token>" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "jsonrpc": "2.0",
+       "id": 1,
+       "method": "tools/list",
+       "params": {}
+     }'
+   ```
+
+#### Error Responses
+
+- **401 Unauthorized** - Missing or invalid token:
+
+  ```http
+  HTTP/1.1 401 Unauthorized
+  WWW-Authenticate: Bearer resource_metadata="https://mcp.gauzy.co/
+    .well-known/oauth-protected-resource", error="invalid_token",
+    error_description="Token validation failed"
+  ```
+
+- **403 Forbidden** - Insufficient scopes:
+
+  ```json
+  {
+    "error": "insufficient_scope",
+    "error_description": "Request requires higher privileges than provided",
+    "scope": "mcp.read mcp.write"
+  }
+  ```
+
+### Authorization Server Setup
+
+The Gauzy MCP server is pre-configured to work with the Gauzy OAuth 2.0
+authorization infrastructure:
+
+- **Production**: `https://auth.gauzy.co` - Enterprise-grade OAuth 2.0
+  server
+- **Demo**: `https://authdemo.gauzy.co` - Public demo authorization
+  server
+
+#### Compatible Authorization Servers
+
+The MCP server works with any OAuth 2.0 compliant authorization server:
+
+- **Keycloak** - Open source identity and access management
+- **Auth0** - Cloud-based identity platform
+- **OAuth2 Server** - Custom implementation
+- **AWS Cognito** - AWS managed identity service
+- **Gauzy Auth** - Built-in Gauzy platform authorization (recommended)
+
+### Security Best Practices
+
+- **Use HTTPS in production** - Protect tokens in transit
+- **Implement proper token expiration** - Short-lived access tokens
+  (5-15 minutes)
+- **Use refresh tokens** - For long-term access without storing
+  credentials
+- **Validate audience claims** - Prevent token misuse across services
+- **Monitor token usage** - Track access patterns and detect anomalies
+- **Secure private keys** - Use HSM or secure key storage in production
+- **Regular key rotation** - Rotate signing keys periodically
+
+### Disabled Authorization
+
+When `MCP_AUTH_ENABLED=false` (default), the server operates without
+authentication, suitable for:
+
+- Local development and testing
+- Trusted network environments
+- Internal tools with existing authentication layers
+
 ## Security Notes
 
-- Store credentials securely (consider using environment files that are not committed to version control)
+- Store credentials securely (consider using environment files that are
+  not committed to version control)
 - Use HTTPS for production API URLs
 - Regularly rotate passwords and API keys
 - Monitor access logs for suspicious activity
+- When using OAuth 2.0, follow the security best practices outlined in
+  the Authorization section above
 
 ## Support
 
@@ -495,4 +832,5 @@ For issues specific to the standalone MCP server:
 1. Check the troubleshooting section above
 2. Review the shared MCP server package documentation
 3. Verify your Gauzy API server is running and accessible
-4. Check Claude Desktop or your AI assistant's logs for additional error details
+4. Check Claude Desktop or your AI assistant's logs for additional
+   error details

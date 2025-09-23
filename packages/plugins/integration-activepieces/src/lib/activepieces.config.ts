@@ -11,6 +11,9 @@ export const ACTIVEPIECES_OAUTH_TOKEN_URL = `${ACTIVEPIECES_BASE_URL}/oauth/toke
 /** ActivePieces connection endpoints */
 export const ACTIVEPIECES_CONNECTIONS_URL = `${ACTIVEPIECES_API_URL}/app-connections`;
 
+/** ActivePieces MCP Server endpoints */
+export const ACTIVEPIECES_MCP_SERVERS_URL = `${ACTIVEPIECES_API_URL}/mcp-servers`;
+
 /** ActivePieces Piece name */
 export const ACTIVEPIECES_PIECE_NAME = 'Ever-gauzy';
 
