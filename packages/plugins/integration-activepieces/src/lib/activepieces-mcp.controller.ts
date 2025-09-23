@@ -1,4 +1,18 @@
-import { Controller, Get, Post, Body, Param, Query, HttpException, HttpStatus, Patch, UsePipes, ValidationPipe, Logger, HttpCode } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Post,
+	Body,
+	Param,
+	Query,
+	HttpException,
+	HttpStatus,
+	Patch,
+	UsePipes,
+	ValidationPipe,
+	Logger,
+	HttpCode
+} from '@nestjs/common';
 import { ListMcpServersDto, ActivepiecesMcpUpdateDto } from './dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
@@ -76,7 +90,7 @@ export class ActivepiecesMcpController {
 
 			// Remove sensitive token field from each server
 			return {
-				data: result.data.map(server => this.sanitizeMcpServer(server)),
+				data: result.data.map((server) => this.sanitizeMcpServer(server)),
 				next: result.next,
 				previous: result.previous
 			};
@@ -103,7 +117,7 @@ export class ActivepiecesMcpController {
 	async getTenantMcpServers(@Query() { projectId }: ListMcpServersDto): Promise<IActivepiecesMcpServerPublic[]> {
 		try {
 			const servers = await this.activepiecesMcpService.getTenantMcpServers(projectId);
-			return servers.map(server => this.sanitizeMcpServer(server));
+			return servers.map((server) => this.sanitizeMcpServer(server));
 		} catch (error: any) {
 			this.handleError('Failed to get tenant ActivePieces MCP servers', error);
 		}

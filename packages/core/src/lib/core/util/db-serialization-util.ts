@@ -16,8 +16,8 @@ export function requiresJsonSerialization(): boolean {
 /**
  *  Serializes data for database storage
  * Converts objects to JSON strings for SQLite, leaves as-is for other databases
- * @param data - The data to  serialize
- * @returns  Serialized data (string for SQLite, original object for others)
+ * @param data - The data to serialize
+ * @returns Serialized data (string for SQLite, original object for others)
  */
 export function stringifyForDatabase<T = any>(data: T): string | T {
 	if (data === null || data === undefined) {

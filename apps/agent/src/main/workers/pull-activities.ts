@@ -19,7 +19,7 @@ type UserLogin = {
 	tenantId: string;
 	organizationId: string;
 	remoteId: string;
-}
+};
 
 class PullActivities {
 	static instance: PullActivities;
@@ -36,7 +36,7 @@ class PullActivities {
 	private mainEvent: MainEvent;
 	private apiService: ApiService;
 	private startedDate: Date;
-	private stoppedDate: Date ;
+	private stoppedDate: Date;
 	private activityStores: KeyboardMouseActivityStores;
 	private activityWindow: ActivityWindow;
 	constructor() {
@@ -82,7 +82,6 @@ class PullActivities {
 			startedAt,
 			employeeId
 		});
-
 	}
 
 	getListenerModule() {
@@ -277,7 +276,7 @@ class PullActivities {
 			title: title,
 			body: message,
 			closeButtonText: TranslateService.instant('BUTTONS.CLOSE'),
-			silent: true,
+			silent: true
 		});
 
 		notification.show();
@@ -348,10 +347,14 @@ class PullActivities {
 			this.agentLogger.warn('initActivityAndScreenshot skipped: startedDate is not set');
 			return;
 		}
-		return this.activityProcess({
-			timeStart: this.startedDate,
-			timeEnd: new Date()
-		}, true, 0)
+		return this.activityProcess(
+			{
+				timeStart: this.startedDate,
+				timeEnd: new Date()
+			},
+			true,
+			0
+		);
 	}
 
 	/** check employee setting periodically to keep agent setting up to date */

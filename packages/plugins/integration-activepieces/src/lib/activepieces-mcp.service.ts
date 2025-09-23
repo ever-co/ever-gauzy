@@ -1,10 +1,4 @@
-import {
-	Injectable,
-	BadRequestException,
-	Logger,
-	HttpException,
-	HttpStatus,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { firstValueFrom, catchError } from 'rxjs';
@@ -14,7 +8,7 @@ import {
 	IActivepiecesMcpServer,
 	IActivepiecesMcpServersListResponse,
 	IActivepiecesMcpServersListParams,
-	ActivepiecesSettingName,
+	ActivepiecesSettingName
 } from './activepieces.type';
 import { ActivepiecesMcpUpdateDto } from './dto';
 import { ACTIVEPIECES_MCP_SERVERS_URL } from './activepieces.config';
@@ -26,7 +20,7 @@ export class ActivepiecesMcpService {
 	constructor(
 		private readonly httpService: HttpService,
 		private readonly integrationTenantService: IntegrationTenantService
-	) { }
+	) {}
 
 	/**
 	 * List MCP servers for a project
@@ -34,7 +28,7 @@ export class ActivepiecesMcpService {
 	async listMcpServers(params: IActivepiecesMcpServersListParams): Promise<IActivepiecesMcpServersListResponse> {
 		try {
 			// Build query parameters
-			const queryParams: Record<string, any> = {
+			const queryParams: Record<string, unknown> = {
 				projectId: params.projectId
 			};
 
@@ -137,10 +131,7 @@ export class ActivepiecesMcpService {
 			});
 
 			// Filter MCP servers by tenant (if they have tenant-specific naming or metadata)
-			return response.data.filter(server =>
-				server.name.includes(tenantId) ||
-				server.name.includes('gauzy')
-			);
+			return response.data.filter((server) => server.name.includes(tenantId) || server.name.includes('gauzy'));
 		} catch (error: any) {
 			this.logger.error('Failed to get tenant MCP servers:', error);
 			throw new HttpException(
@@ -170,28 +161,27 @@ export class ActivepiecesMcpService {
 		};
 
 		return firstValueFrom(
-			this.httpService.request<T>({
-				method,
-				url,
-				data,
-				...config,
-				timeout: 8000
-			}).pipe(
-				catchError((error: AxiosError) => {
-					const status = error?.response?.status || HttpStatus.INTERNAL_SERVER_ERROR;
-					const message = error?.message || 'Unknown error occurred';
-
-					this.logger.error(`Error making ${method.toUpperCase()} ${url}`, {
-						status,
-						message
-					});
-					throw new HttpException(
-						`HTTP ${method.toUpperCase()} request failed: ${message}`,
-						status
-					);
+			this.httpService
+				.request<T>({
+					method,
+					url,
+					data,
+					...config,
+					timeout: 8000
 				})
-			)
-		).then(response => response.data);
+				.pipe(
+					catchError((error: AxiosError) => {
+						const status = error?.response?.status || HttpStatus.INTERNAL_SERVER_ERROR;
+						const message = error?.message || 'Unknown error occurred';
+
+						this.logger.error(`Error making ${method.toUpperCase()} ${url}`, {
+							status,
+							message
+						});
+						throw new HttpException(`HTTP ${method.toUpperCase()} request failed: ${message}`, status);
+					})
+				)
+		).then((response) => response.data);
 	}
 
 	/**
@@ -222,7 +212,7 @@ export class ActivepiecesMcpService {
 			}
 
 			const tokenSetting = integrationTenant.settings?.find(
-				setting => setting.settingsName === ActivepiecesSettingName.ACCESS_TOKEN
+				(setting) => setting.settingsName === ActivepiecesSettingName.ACCESS_TOKEN
 			);
 
 			if (!tokenSetting?.settingsValue) {
