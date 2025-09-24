@@ -332,7 +332,7 @@ This software is available under the following licenses:
 ## ™️ Trademarks
 
 **Ever**® is a registered trademark of [Ever Co. LTD](https://ever.co).
-**Ever® Demand™**, **Ever® Gauzy™**, **Ever® Teams™**, **Ever® Recu™**, **Ever® Clokr™** and **Ever® OpenSaaS™** are all trademarks of [Ever Co. LTD](https://ever.co).
+**Ever® Demand™**, **Ever® Gauzy™**, **Ever® Teams™**, **Ever® Rec™**, **Ever® Recu™**, **Ever® Cloc™**, **Ever® Works™** and **Ever® OpenSaaS™** are all trademarks of [Ever Co. LTD](https://ever.co).
 
 The trademarks may only be used with the written permission of Ever Co. LTD. and may not be used to promote or otherwise market competitive products or services.
 
