@@ -16,8 +16,11 @@ import { IntegrationSettingService, IntegrationService, IntegrationTenantService
 import {
 	IActivepiecesConnection,
 	IActivepiecesConnectionRequest,
+	IActivepiecesConnectionsListResponse,
+	IActivepiecesConnectionsListParams,
 	ActivepiecesSettingName,
 	ActivepiecesConnectionType,
+	ActivepiecesConnectionScope,
 	ICreateActivepiecesIntegrationInput,
 	IActivepiecesErrorResponse
 } from './activepieces.type';
@@ -36,9 +39,9 @@ export class ActivepiecesService {
 	) { }
 
 	/**
-	 * Create a new ActivePieces connection for the tenant
+	 * Create or update ActivePieces connection for the tenant (using upsert endpoint)
 	 */
-	async createConnection(input: ICreateActivepiecesIntegrationInput): Promise<IActivepiecesConnection> {
+	async upsertConnection(input: ICreateActivepiecesIntegrationInput): Promise<IActivepiecesConnection> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const organizationId = input.organizationId;
@@ -61,16 +64,17 @@ export class ActivepiecesService {
 			// Create display name for the connection
 			const displayName = input.connectionName || `Ever Gauzy - ${tenantId}`;
 
-			// Prepare the connection request for ActivePieces
+			// Prepare the connection request for ActivePieces (upsert format)
 			const connectionRequest: IActivepiecesConnectionRequest = {
 				externalId,
 				displayName,
-				pieceName: ACTIVEPIECES_PIECE_NAME, // Your piece name in ActivePieces
+				pieceName: ACTIVEPIECES_PIECE_NAME,
 				projectId: input.projectId,
 				metadata: {
 					tenantId,
 					organizationId: organizationId || 'default',
-					createdAt: new Date().toISOString()
+					createdAt: new Date().toISOString(),
+					gauzyVersion: '1.0.0'
 				},
 				type: ActivepiecesConnectionType.OAUTH2,
 				value: {
@@ -79,7 +83,8 @@ export class ActivepiecesService {
 					client_secret: clientSecret,
 					data: {
 						tenantId,
-						organizationId: organizationId || 'default'
+						organizationId: organizationId || 'default',
+						accessToken: input.accessToken
 					}
 				}
 			};
@@ -122,16 +127,103 @@ export class ActivepiecesService {
 			);
 
 			// Save the connection details to the database
-			await this.saveConnectionSettings(response.data, input.accessToken, tenantId, organizationId);
+			const integrationTenant = await this.saveConnectionSettings(response.data, input.accessToken, tenantId, organizationId);
 
-			this.logger.log(`Successfully created ActivePieces connection: ${response.data.id}`);
+			this.logger.log(
+				`ActivePieces connection Successfully upsert: ${response.data.id}. ` +
+				`Integration tenant: ${integrationTenant.id}`
+			);
+
 			return response.data;
 		} catch (error: any) {
 			if (error instanceof HttpException) {
 				throw error;
 			}
-			this.logger.error('Failed to create ActivePieces connection:', error);
-			throw new BadRequestException(`Failed to create connection: ${error.message}`);
+			this.logger.error('Failed to upsert ActivePieces connection:', error);
+			throw new InternalServerErrorException(`Failed to upsert connection: ${error.message}`);
+		}
+	}
+
+	/**
+	 * List ActivePieces connections for a project
+	 */
+	async listConnections(params: IActivepiecesConnectionsListParams, integrationId?: string): Promise<IActivepiecesConnectionsListResponse> {
+		try {
+			// We need an integration ID to get the access token
+			if (!integrationId) {
+				throw new BadRequestException('Integration ID is required to list connections');
+			}
+			const accessToken = await this.getValidAccessToken(integrationId);
+
+			// Build query parameters
+			const queryParams = new URLSearchParams();
+			queryParams.append('projectId', params.projectId);
+
+			if (params.cursor) queryParams.append('cursor', params.cursor);
+			if (params.scope) queryParams.append('scope', params.scope);
+			if (params.pieceName) queryParams.append('pieceName', params.pieceName);
+			if (params.displayName) queryParams.append('displayName', params.displayName);
+			if (params.status) queryParams.append('status', params.status);
+			if (params.limit) queryParams.append('limit', params.limit.toString());
+
+			const response = await firstValueFrom(
+				this.httpService
+					.get<IActivepiecesConnectionsListResponse>(
+						`${ACTIVEPIECES_CONNECTIONS_URL}?${queryParams.toString()}`,
+						{
+							headers: {
+								Authorization: `Bearer ${accessToken}`,
+								'Content-Type': 'application/json'
+							}
+						}
+					)
+					.pipe(
+						catchError((error: AxiosError) => {
+							this.logger.error('Error listing ActivePieces connections:', error.response?.data);
+							throw new HttpException(
+								`Failed to list ActivePieces connections: ${error.message}`,
+								error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
+							);
+						})
+					)
+			);
+
+			return response.data;
+		} catch (error: any) {
+			this.logger.error('Failed to list ActivePieces connections:', error);
+			throw new HttpException(
+				`Failed to list ActivePieces connections: ${error.message}`,
+				error.status || HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
+	}
+
+	/**
+	 * Get connections for current tenant
+	 */
+	async getTenantConnections(projectId: string, integrationId: string): Promise<IActivepiecesConnection[]> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID not found in request context');
+			}
+
+			const response = await this.listConnections({
+				projectId,
+				pieceName: ACTIVEPIECES_PIECE_NAME,
+				scope: ActivepiecesConnectionScope.PROJECT
+			}, integrationId);
+
+			// Filter connections by tenant metadata
+			return response.data.filter(connection =>
+				connection.metadata?.['tenantId'] === tenantId
+			);
+		} catch (error: any) {
+			this.logger.error('Failed to get tenant connections:', error);
+			throw new HttpException(
+				`Failed to get tenant connections: ${error.message}`,
+				error.status || HttpStatus.INTERNAL_SERVER_ERROR
+			);
 		}
 	}
 
@@ -264,6 +356,34 @@ export class ActivepiecesService {
 	}
 
 	/**
+	 * Get project IDs for an integration
+	 */
+	async getProjectIds(integrationId: string): Promise<string[]> {
+		try {
+			const projectIdSetting = await this.integrationSettingService.findOneByOptions({
+				where: {
+					integration: { id: integrationId },
+					settingsName: ActivepiecesSettingName.PROJECT_ID
+				}
+			});
+
+			if (!projectIdSetting?.settingsValue) {
+				return [];
+			}
+
+			try {
+				return JSON.parse(projectIdSetting.settingsValue);
+			} catch (error) {
+				// Handle case where it might be a single project ID stored as string
+				return [projectIdSetting.settingsValue];
+			}
+		} catch (error: any) {
+			this.logger.error('Failed to get project IDs:', error);
+			return [];
+		}
+	}
+
+	/**
 	 * Check if ActivePieces integration is enabled
 	 */
 	async isIntegrationEnabled(integrationId: string): Promise<boolean> {
@@ -288,6 +408,32 @@ export class ActivepiecesService {
 	}
 
 	/**
+	 * Get integration tenant information
+	 */
+	async getIntegrationTenant(integrationId: string): Promise<any> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID not found in request context');
+			}
+
+			return await this.integrationTenantService.findOneByOptions({
+				where: {
+					tenantId,
+					integration: { id: integrationId }
+				},
+				relations: ['integration', 'settings']
+			});
+		} catch (error: any) {
+			this.logger.error('Failed to get integration tenant:', error);
+			throw new HttpException(
+				`Failed to get integration tenant: ${error.message}`,
+				error.status || HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
+	}
+
+	/**
 	 * Save connection settings to the database
 	 */
 	private async saveConnectionSettings(
@@ -295,7 +441,7 @@ export class ActivepiecesService {
 		accessToken: string,
 		tenantId: string,
 		organizationId?: string
-	): Promise<void> {
+	): Promise<any> {
 		try {
 			// Find or create the integration
 			let integration = await this.integrationService.findOneByOptions({
@@ -325,7 +471,7 @@ export class ActivepiecesService {
 				},
 				{
 					settingsName: ActivepiecesSettingName.PROJECT_ID,
-					settingsValue: connection.projectId,
+					settingsValue: JSON.stringify(connection.projectIds), // Serialize array to string
 					tenantId,
 					organizationId
 				},
@@ -346,7 +492,14 @@ export class ActivepiecesService {
 				settings
 			});
 
-			this.logger.log(`Successfully saved ActivePieces connection settings for tenant ${tenantId}`);
+			this.logger.log(
+				`Successfully saved ActivePieces connection settings for tenant ${tenantId}. ` +
+				`Integration tenant ID: ${integrationTenant.id}, ` +
+				`Connection ID: ${connection.id}`
+			);
+
+			// Return the integration tenant for potential future use
+			return integrationTenant;
 		} catch (error: any) {
 			this.logger.error('Failed to save ActivePieces connection settings:', error);
 			throw new BadRequestException(`Failed to save connection settings: ${error.message}`);

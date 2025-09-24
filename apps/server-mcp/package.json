@@ -18,10 +18,11 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {
-		"build:electron": "yarn nx build server-mcp",
-		"build:electron:prod": "yarn nx build server-mcp --configuration=production",
-		"build:electron:dev": "yarn nx build server-mcp --configuration=development",
-		"start": "yarn nx serve server-mcp"
+		"build": "yarn nx build server-mcp --configuration=development",
+		"build:prod": "yarn nx build server-mcp --configuration=production",
+		"start": "yarn nx run server-mcp:electron",
+		"start:prod": "yarn nx run server-mcp:electron --configuration=production",
+		"serve": "yarn nx serve server-mcp"
 	},
 	"devDependencies": {
 		"@electron/rebuild": "^3.2.10",
