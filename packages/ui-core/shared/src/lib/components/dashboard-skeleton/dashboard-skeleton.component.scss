@@ -7,39 +7,14 @@
   height: 100vh;
 }
 
-:root {
-  --skeleton-bg-primary: #ffffff;
-  --skeleton-bg-secondary: #f8f9fa;
-  --skeleton-border-radius: 0.625rem;
-  --skeleton-shadow: 0px 6px 20px 0px rgba(0, 0, 0, 0.05);
-}
-
-[data-theme='dark'],
-[data-theme='cosmic'],
-[data-theme='gauzy-dark'] {
-  --skeleton-bg-primary: rgba(32, 32, 35, 1);
-  --skeleton-bg-secondary: rgba(45, 47, 86, 1);
-  --skeleton-border-radius: 0.625rem;
-  --skeleton-shadow: 0px 6px 20px 0px rgba(0, 0, 0, 0.35);
-}
-
 @mixin skeleton-element($width: 100%, $height: 16px) {
-  width: $width;
-  height: $height;
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.08) 50%, rgba(0, 0, 0, 0.04) 100%);
-  background-size: 200% 100%;
-  animation: shimmer-subtle 2s ease-in-out infinite;
-  border-radius: 4px;
-}
-
-@mixin skeleton-element-dark($width: 100%, $height: 16px) {
   width: $width;
   height: $height;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.03) 0%,
-    rgba(255, 255, 255, 0.06) 50%,
-    rgba(255, 255, 255, 0.03) 100%
+    nb-theme(background-basic-color-1) 0%,
+    nb-theme(border-basic-color-2) 50%,
+    nb-theme(background-basic-color-1) 100%
   );
   background-size: 200% 100%;
   animation: shimmer-subtle 2s ease-in-out infinite;
@@ -50,12 +25,12 @@
   display: flex;
   width: 100%;
   height: 100vh;
-  background-color: var(--skeleton-bg-secondary, #f8f9fa);
+  background-color: nb-theme(background-basic-color-1);
 }
 
 .skeleton-sidebar {
   width: 260px;
-  background-color: var(--skeleton-bg-primary, #ffffff);
+  background: nb-theme(gauzy-sidebar-background-2);
   padding: 1rem;
   flex-shrink: 0;
   display: flex;
@@ -74,7 +49,7 @@
 
     .skeleton-dropdown-icon {
       @include skeleton-element(16px, 16px);
-      border-radius: var(--skeleton-border-radius, 0.25rem);
+      border-radius: nb-theme(border-radius);
     }
 
     .skeleton-menu-dots {
@@ -95,19 +70,19 @@
 
       .skeleton-menu-icon {
         @include skeleton-element(20px, 20px);
-        border-radius: var(--skeleton-border-radius, 0.25rem);
+        border-radius: nb-theme(border-radius);
         flex-shrink: 0;
       }
 
       .skeleton-menu-text {
         @include skeleton-element(100px, 16px);
         flex: 1;
-        border-radius: var(--skeleton-border-radius, 0.25rem);
+        border-radius: nb-theme(border-radius);
       }
 
       .skeleton-menu-arrow {
         @include skeleton-element(12px, 12px);
-        border-radius: var(--skeleton-border-radius, 0.25rem);
+        border-radius: nb-theme(border-radius);
         flex-shrink: 0;
       }
     }
@@ -136,7 +111,7 @@
   flex: 1;
   padding: 1rem;
   overflow-y: auto;
-  background-color: var(--skeleton-bg-secondary, #f8f9fa);
+  background-color: nb-theme(gauzy-card-2);
 }
 
 .skeleton-top-header {
@@ -153,7 +128,7 @@
 
     .skeleton-create-button {
       @include skeleton-element(80px, 32px);
-      border-radius: 1rem;
+      border-radius: nb-theme(button-rectangle-border-radius);
     }
 
     .skeleton-project-selector {
@@ -162,8 +137,8 @@
       gap: 8px;
       padding: 0 12px;
       height: 32px;
-      border-radius: 1.5rem;
-      background: var(--skeleton-bg-secondary, #f5f5f5);
+      border-radius: nb-theme(button-rectangle-border-radius);
+      background: nb-theme(background-basic-color-1);
 
       .skeleton-selector-text {
         @include skeleton-element(80px, 16px);
@@ -181,8 +156,8 @@
       gap: 12px;
       padding: 0 12px;
       height: 32px;
-      border-radius: 1.5rem;
-      background: var(--skeleton-bg-secondary, #f5f5f5);
+      border-radius: nb-theme(button-rectangle-border-radius);
+      background: nb-theme(background-basic-color-1);
 
       .skeleton-date-arrows {
         display: flex;
@@ -210,7 +185,6 @@
   display: flex;
   gap: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid var(--skeleton-border-color, #e5e5e5);
 
   .skeleton-nav-tab {
     display: flex;
@@ -263,12 +237,12 @@
 
       .skeleton-time-info {
         @include skeleton-element(180px, 20px);
-        border-radius: var(--skeleton-border-radius, 2rem);
+        border-radius: nb-theme(border-radius);
       }
 
       .skeleton-manage-widgets {
         @include skeleton-element(120px, 20px);
-        border-radius: var(--skeleton-border-radius, 2rem);
+        border-radius: nb-theme(border-radius);
       }
     }
 
@@ -278,7 +252,7 @@
       gap: 8px;
       padding: 8px 12px;
       border-radius: 1.5rem;
-      background: var(--skeleton-bg-secondary, #f5f5f5);
+      background: nb;
 
       .skeleton-refresh-toggle {
         @include skeleton-element(40px, 20px);
@@ -305,11 +279,10 @@
 
   .skeleton-widget-item {
     flex: 1;
-    background-color: var(--skeleton-bg-primary, #ffffff);
-    border-radius: var(--skeleton-border-radius, 0.625rem);
+    background-color: nb-theme(background-basic-color-1);
+    border-radius: nb-theme(border-radius);
     padding: 1.5rem;
-    min-height: 120px;
-    box-shadow: var(--skeleton-shadow, 0px 6px 20px 0px rgba(0, 0, 0, 0.05));
+    min-height: 100px;
     position: relative;
 
     .skeleton-widget-header {
@@ -350,10 +323,9 @@
   margin-bottom: 2rem;
 
   .skeleton-window-card {
-    background-color: var(--skeleton-bg-primary, #ffffff);
-    border-radius: var(--skeleton-border-radius, 0.625rem);
-    box-shadow: var(--skeleton-shadow, 0px 6px 20px 0px rgba(0, 0, 0, 0.05));
-    min-height: 160px;
+    background: nb-theme(background-basic-color-1);
+    border-radius: nb-theme(border-radius);
+    min-height: 80px;
     display: flex;
     flex-direction: column;
 
@@ -362,7 +334,6 @@
       justify-content: space-between;
       align-items: center;
       padding: 1.5rem 1.5rem 1rem 1.5rem;
-      border-bottom: 1px solid var(--skeleton-border-color, #f0f0f0);
 
       .skeleton-window-title {
         @include skeleton-element(120px, 16px);
@@ -390,54 +361,11 @@
   }
 }
 
-[data-theme='dark'],
-[data-theme='cosmic'],
-[data-theme='gauzy-dark'] {
-  .skeleton-logo,
-  .skeleton-menu-item,
-  .skeleton-user-avatar,
-  .skeleton-nav-tab,
-  .skeleton-create-button,
-  .skeleton-project-selector,
-  .skeleton-date-range-picker,
-  .skeleton-user-menu,
-  .skeleton-page-title,
-  .skeleton-page-subtitle,
-  .skeleton-time-info,
-  .skeleton-manage-widgets,
-  .skeleton-auto-refresh,
-  .skeleton-widget-title,
-  .skeleton-widget-value,
-  .skeleton-widget-progress,
-  .skeleton-window-title,
-  .skeleton-empty-message {
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.03) 0%,
-      rgba(255, 255, 255, 0.06) 50%,
-      rgba(255, 255, 255, 0.03) 100%
-    ) !important;
-    background-size: 200% 100%;
-    animation: shimmer-subtle 2s ease-in-out infinite;
-  }
-
-  .skeleton-nav-tabs {
-    border-bottom-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .skeleton-window-header {
-    border-bottom-color: rgba(255, 255, 255, 0.05);
-  }
-}
-
 @keyframes shimmer-subtle {
   0% {
-    background-position: -200% 0;
-  }
-  50% {
-    background-position: 0% 0;
+    background-position: -100% 0;
   }
   100% {
-    background-position: 200% 0;
+    background-position: 100% 0;
   }
 }

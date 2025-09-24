@@ -117,7 +117,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 			// Observable that emits when theme languages change.
 			this._translateService.onLangChange.subscribe(() => {
-
 				this.languageLoaded = true;
 				this.checkLoadingComplete();
 			});
@@ -178,10 +177,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		};
 	}
 
-
 	private checkLoadingComplete(): void {
 		if (this.languageLoaded && this.minimumLoadingTime && this.routerReady) {
-
 			setTimeout(() => {
 				this.loading = false;
 			}, 500);

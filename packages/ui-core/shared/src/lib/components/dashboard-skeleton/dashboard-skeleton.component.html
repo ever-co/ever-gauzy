@@ -76,31 +76,7 @@
 		</div>
 
 		<div class="skeleton-widgets-row">
-			<div class="skeleton-widget-item">
-				<div class="skeleton-widget-header">
-					<div class="skeleton-widget-title"></div>
-					<div class="skeleton-widget-menu"></div>
-				</div>
-				<div class="skeleton-widget-value"></div>
-				<div class="skeleton-widget-progress"></div>
-			</div>
-			<div class="skeleton-widget-item">
-				<div class="skeleton-widget-header">
-					<div class="skeleton-widget-title"></div>
-					<div class="skeleton-widget-menu"></div>
-				</div>
-				<div class="skeleton-widget-value"></div>
-				<div class="skeleton-widget-progress"></div>
-			</div>
-			<div class="skeleton-widget-item">
-				<div class="skeleton-widget-header">
-					<div class="skeleton-widget-title"></div>
-					<div class="skeleton-widget-menu"></div>
-				</div>
-				<div class="skeleton-widget-value"></div>
-				<div class="skeleton-widget-progress"></div>
-			</div>
-			<div class="skeleton-widget-item">
+			<div class="skeleton-widget-item" *ngFor="let item of [1, 2, 3, 4]">
 				<div class="skeleton-widget-header">
 					<div class="skeleton-widget-title"></div>
 					<div class="skeleton-widget-menu"></div>
@@ -111,57 +87,7 @@
 		</div>
 
 		<div class="skeleton-windows-grid">
-			<div class="skeleton-window-card">
-				<div class="skeleton-window-header">
-					<div class="skeleton-window-title"></div>
-					<div class="skeleton-window-menu"></div>
-				</div>
-				<div class="skeleton-window-content">
-					<div class="skeleton-empty-message"></div>
-				</div>
-			</div>
-
-			<div class="skeleton-window-card">
-				<div class="skeleton-window-header">
-					<div class="skeleton-window-title"></div>
-					<div class="skeleton-window-menu"></div>
-				</div>
-				<div class="skeleton-window-content">
-					<div class="skeleton-empty-message"></div>
-				</div>
-			</div>
-
-			<div class="skeleton-window-card">
-				<div class="skeleton-window-header">
-					<div class="skeleton-window-title"></div>
-					<div class="skeleton-window-menu"></div>
-				</div>
-				<div class="skeleton-window-content">
-					<div class="skeleton-empty-message"></div>
-				</div>
-			</div>
-
-			<div class="skeleton-window-card">
-				<div class="skeleton-window-header">
-					<div class="skeleton-window-title"></div>
-					<div class="skeleton-window-menu"></div>
-				</div>
-				<div class="skeleton-window-content">
-					<div class="skeleton-empty-message"></div>
-				</div>
-			</div>
-
-			<div class="skeleton-window-card">
-				<div class="skeleton-window-header">
-					<div class="skeleton-window-title"></div>
-					<div class="skeleton-window-menu"></div>
-				</div>
-				<div class="skeleton-window-content">
-					<div class="skeleton-empty-message"></div>
-				</div>
-			</div>
-
-			<div class="skeleton-window-card">
+			<div class="skeleton-window-card" *ngFor="let item of [1, 2, 3, 4, 5, 6]">
 				<div class="skeleton-window-header">
 					<div class="skeleton-window-title"></div>
 					<div class="skeleton-window-menu"></div>
