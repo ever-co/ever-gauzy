@@ -161,16 +161,17 @@ class AppWindow {
 	async initLogWindow(): Promise<void> {
 		try {
 			if (!this.logWindow || this.logWindow?.isDestroyed()) {
-				console.log('this log window', this.logWindow);
 				this.logWindow = await createServerWindow(
 					null,
 					this.getUiPath('server-dashboard'),
 					this.getPreloadPath(),
 					true
 				);
-				const maxHeight = 480;
-				const maxWidth = 640;
+				const maxHeight = 860;
+				const maxWidth = 1200;
 				this.logWindow.setSize(maxWidth, maxHeight);
+				this.logWindow.setMinimumSize(maxWidth, maxHeight);
+				this.logWindow.setResizable(true);
 				// this.LogWindow.webContents.toggleDevTools();
 				this.logWindow.on('close', () => {
 					this.logWindow.hide();

@@ -31,13 +31,17 @@
 		"uiohook-napi": "^1.5.4",
 		"tslib": "^2.6.2",
 		"underscore": "^1.13.3",
-		"get-windows": "^9.2.3"
+		"get-windows": "^9.2.3",
+		"better-queue": "^3.8.12",
+		"better-queue-sqlite": "^1.0.7",
+		"is-online": "^9.0.1"
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.9",
 		"@types/unzipper": "^0.10.9",
 		"electron": "^30.0.1",
-		"@types/underscore": "^1.11.4"
+		"@types/underscore": "^1.11.4",
+		"@types/better-queue": "^3.8.6"
 	},
 	"keywords": [
 		"electron",

@@ -16,7 +16,11 @@ export class KbMouseActivityDAO implements DAO<KbMouseActivityTO> {
 		return await this._provider.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY).select('*');
 	}
 	public async save(value: KbMouseActivityTO): Promise<void> {
-		await this._trx.create(value);
+		return this._trx.create(value);
+	}
+
+	public async saveAndReturn(value: KbMouseActivityTO): Promise<any> {
+		return this._trx.createAndReturn(value);
 	}
 	public async findOneById(id: number): Promise<KbMouseActivityTO | undefined> {
 		const result = await this._provider

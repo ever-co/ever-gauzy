@@ -27,6 +27,23 @@ export class KbMouseTransaction implements IKbMouseTransaction {
 		);
 	}
 
+	public async createAndReturn(value: KbMouseActivityTO): Promise<any> {
+		return this._databaseProvider.connection.transaction(
+			async (trx: Knex.Transaction) => {
+				try {
+					const data = await trx
+						.insert(value)
+						.into(TABLE_NAME_KB_MOUSE_ACTIVITY)
+						.returning('id');
+					return data;
+				} catch (error) {
+					await trx.rollback();
+					throw new AppError('KB_MOUSE_TRX', error);
+				}
+			}
+		);
+	}
+
 	public async update(id: number, value: Partial<KbMouseActivityTO>): Promise<void> {
 		await this._databaseProvider.connection.transaction(
 			async (trx: Knex.Transaction) => {

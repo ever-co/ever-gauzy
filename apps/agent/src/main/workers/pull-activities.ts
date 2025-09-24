@@ -14,6 +14,7 @@ import { AgentLogger } from '../agent-logger';
 import MainEvent from '../events/events';
 import { MAIN_EVENT_TYPE, MAIN_EVENT } from '../../constant';
 import { ApiService } from '../api';
+import { WorkerQueue } from '../queue/woker-queue';
 
 type UserLogin = {
 	tenantId: string;
@@ -39,6 +40,7 @@ class PullActivities {
 	private stoppedDate: Date;
 	private activityStores: KeyboardMouseActivityStores;
 	private activityWindow: ActivityWindow;
+	private workerQueue: WorkerQueue;
 	constructor() {
 		this.listenerModule = null;
 		this.isStarted = false;
@@ -115,13 +117,25 @@ class PullActivities {
 		}
 	}
 
+	initWorkerQueue() {
+		if (!this.workerQueue) {
+			this.workerQueue = WorkerQueue.getInstance();
+		}
+	}
+
 	async startTimerApi() {
 		const authConfig = getAuthConfig();
 		try {
 			const timer = this.createOfflineTimer(this.startedDate, authConfig?.user?.employee?.id);
-			await this.timerService.save(timer);
-			this.mainEvent.emit('MAIN_EVENT', {
-				type: MAIN_EVENT_TYPE.START_TIMER_API
+			const timerData  = await this.timerService.saveAndReturn(timer);
+			this.initWorkerQueue();
+			this.workerQueue.desktopQueue.enqueueTimer({
+				queue: 'timer',
+				timerId: timerData[0],
+				data: {
+					startedAt: this.startedDate.toISOString(),
+					stoppedAt: null
+				}
 			});
 			this.mainEvent.emit('MAIN_EVENT', {
 				type: MAIN_EVENT_TYPE.INIT_SCREENSHOT
@@ -319,7 +333,7 @@ class PullActivities {
 			}
 			const activities = this.activityStores.getAndResetCurrentActivities();
 			const activityWindow = this.activityWindow.retrieveAndFlushActivities();
-			await this.activityService.save({
+			const savedActivity = await this.activityService.saveAndReturn({
 				timeStart: timeData.timeStart,
 				timeEnd: timeData.timeEnd,
 				tenantId: this.tenantId,
@@ -335,6 +349,17 @@ class PullActivities {
 				afkDuration: afkDuration || 0,
 				activeWindows: JSON.stringify(activityWindow)
 			});
+			console.log('savedActivity', savedActivity);
+			this.initWorkerQueue();
+			this.workerQueue.desktopQueue.enqueueTimeSlot({
+				activityId: Number(savedActivity[0]?.id),
+				queue: 'time_slot',
+				data: {
+					timeStart: timeData.timeStart.toISOString(),
+					timeEnd: timeData.timeEnd.toISOString(),
+					afkDuration: afkDuration
+				}
+			})
 			this.agentLogger.info('Keyboard and mouse activities saved');
 		} catch (error: unknown) {
 			console.error('KB/M activity persist failed', error);

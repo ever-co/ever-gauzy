@@ -1,3 +1,7 @@
+nb-layout {
+    height: 100vh;
+  }
+
   .button-big {
   	font-size: 14px;
   	font-weight: 600;
@@ -113,11 +117,29 @@
   }
 
   .brand {
-  	display: flex;
-  	align-items: center;
-  	gap: .5rem;
   	padding: .5rem 1rem;
-  	font-weight: 600
+  	font-weight: 600;
+    .brand-content {
+      display: flex;
+      align-items: center;
+      justify-content: center; // Center the icon horizontally
+
+      img {
+        height: 32px; // Slightly larger icon for better visibility
+        width: auto;
+      }
+    }
+  }
+
+  // Styles for compact sidebar mode
+  nb-sidebar.compacted {
+    .brand {
+      .brand-content {
+        img {
+          height: 24px; // Smaller icon for compact view
+        }
+      }
+    }
   }
 
   .sidebar-tray {

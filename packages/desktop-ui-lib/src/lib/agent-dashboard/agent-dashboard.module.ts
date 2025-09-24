@@ -1,7 +1,9 @@
+import { SidebarMenuComponent } from './components/sidebar-menu/sidebar-menu.component';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 
 import {
 	NbThemeModule,
@@ -24,21 +26,22 @@ import {
 	NbContextMenuModule,
 	NbInputModule,
 	NbCheckboxModule,
-	NbAlertModule,
+	NbAlertModule
 } from '@nebular/theme';
 
-import { AgentDashboardComponent } from './server-dashboard.component';
+import { AgentDashboardComponent } from './agent-dashboard.component';
 import { LogsPageComponent } from './logs/logs.component';
 import { SyncPageComponent } from './activity-sync/activity-sync.component';
 import { FilterStatusPipe } from './pipes/filter.status.pipe';
 
 @NgModule({
-	declarations: [AgentDashboardComponent, LogsPageComponent, SyncPageComponent],
+	declarations: [AgentDashboardComponent, LogsPageComponent, SyncPageComponent, SidebarMenuComponent],
 	imports: [
 		BrowserModule,
 		BrowserAnimationsModule,
 		FormsModule,
 		ReactiveFormsModule,
+		RouterModule,
 		NbThemeModule.forRoot({ name: 'dark' }),
 		NbLayoutModule,
 		NbSidebarModule.forRoot(),
@@ -63,8 +66,8 @@ import { FilterStatusPipe } from './pipes/filter.status.pipe';
 		FilterStatusPipe
 	],
 	exports: [
-		LogsPageComponent,
-		SyncPageComponent,
+		// LogsPageComponent,
+		// SyncPageComponent,
 		FilterStatusPipe
 	]
 })

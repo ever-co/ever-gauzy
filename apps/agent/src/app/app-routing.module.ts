@@ -41,16 +41,13 @@ const routes: Routes = [
 		component: ServerDownPage
 	},
 	{
-		path: '',
-		component: AgentDashboardComponent
-	},
-	{
 		path: 'about',
 		component: AboutComponent
 	},
 	{
 		path: 'server-dashboard',
-		component: AgentDashboardComponent
+		component: AgentDashboardComponent,
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.agentDashboardRoutes)
 	},
 	{
 		path: 'screen-capture',

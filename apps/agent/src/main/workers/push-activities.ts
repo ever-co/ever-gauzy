@@ -1,3 +1,5 @@
+import { app } from 'electron';
+import * as path from 'path';
 import {
 	KbMouseActivityService,
 	KbMouseActivityTO,
@@ -10,6 +12,9 @@ import {
 	TimeSlotActivities,
 	ActivityType,
 	TimeLogSourceEnum,
+	IScreenshotQueuePayload,
+	ITimeslotQueuePayload,
+	ITimerCallbackPayload
 } from '@gauzy/desktop-activity';
 import { ApiService, TResponseTimeSlot } from '../api';
 import { getAuthConfig, TAuthConfig, getInitialConfig } from '../util';
@@ -19,6 +24,7 @@ import { environment } from '../../environments/environment';
 import * as fs from 'node:fs';
 import MainEvent from '../events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
+import { WorkerQueue } from '../queue/woker-queue';
 
 type TParamsActivities = Omit<TimeSlotActivities, 'recordedAt'> & { recordedAt: string };
 
@@ -31,7 +37,7 @@ class PushActivities {
 	private mainEvent: MainEvent;
 	private isNetworkError = false;
 	private timerService: TimerService;
-
+	private workerQueue: WorkerQueue;
 
 	constructor() {
 		this.kbMouseActivityService = new KbMouseActivityService();
@@ -41,6 +47,7 @@ class PushActivities {
 		this.apiService = ApiService.getInstance();
 		this.trayUpdateMenuStatus('network', true);
 		this.timerService = new TimerService();
+		this.workerQueue = WorkerQueue.getInstance();
 	}
 
 	static getInstance(): PushActivities {
@@ -52,6 +59,14 @@ class PushActivities {
 		return PushActivities.instance;
 	}
 
+	public initQueueWorker() {
+		this.workerQueue.initQueue({
+			timerQueueHandler: this.timerQueueHandle.bind(this),
+			timeSlotQueueHandler: this.timeSlotQueueHandle.bind(this),
+			screenshotQueueHandler: this.screenshotsQueueHandle.bind(this)
+		});
+	}
+
 	getKbMousePoolModule() {
 		if (!this.kbMousePool) {
 			this.kbMousePool = KbMouseActivityPool.getInstance();
@@ -61,9 +76,41 @@ class PushActivities {
 		}
 	}
 
+	timerQueueHandle(job: ITimerCallbackPayload, cb: (err?: any) => void) {
+		(async () => {
+			try {
+				await this.syncTimer(job);
+				cb(null);
+			} catch (error) {
+				cb(error);
+			}
+		})();
+	}
+
+	timeSlotQueueHandle(job: ITimeslotQueuePayload, cb: (err?: any) => void) {
+		(async () => {
+			try {
+				await this.syncTimeSlot(job);
+				cb(null);
+			} catch (error) {
+				cb(error);
+			}
+		})();
+	}
+
+	screenshotsQueueHandle(job: IScreenshotQueuePayload, cb: (err?: any) => void) {
+		(async () => {
+			try {
+				await this.syncScreenshot(job);
+				cb(null);
+			} catch (error) {
+				cb(error);
+			}
+		})();
+	}
+
 	startPooling() {
 		try {
-			this.kbMousePool?.start();
 			this.agentLogger.info('Polling scheduler started');
 		} catch (error) {
 			console.error('Failed to start push activity pooling', error);
@@ -72,7 +119,7 @@ class PushActivities {
 	}
 
 	stopPooling() {
-		this.kbMousePool?.stop();
+		this.agentLogger.info('Pooling scheduler stpped');
 	}
 
 	async getOldestActivity(): Promise<KbMouseActivityTO | null> {
@@ -389,7 +436,74 @@ class PushActivities {
 		}
 	}
 
+	public async syncTimer(job: ITimerCallbackPayload) {
+		this.agentLogger.info(`Incomming job sync timer ${JSON.stringify(job)}`);
+		const authConfig = getAuthConfig();
+		const timerLocal = await this.timerService.findById({ id: job.timerId });
+		if (timerLocal?.id) {
+			await this.apiService.startTimer({
+				organizationId: authConfig?.user?.employee?.organizationId,
+				startedAt: timerLocal.startedAt,
+				tenantId: authConfig?.user?.employee?.tenantId,
+				organizationTeamId: null,
+				organizationContactId: null
+			});
+			this.agentLogger.info(`finished job timer sync ${JSON.stringify(job)}`);
+			await this.timerService.remove({ id: job.timerId });
+			return;
+		}
+		throw Error('TIMER_NOT_FOUND');
+	};
 
+	public async syncTimeSlot(job: ITimeslotQueuePayload) {
+		this.agentLogger.info(`Incomming job timeSlot sync ${JSON.stringify(job)}`);
+		const timeSlotLocal = await this.kbMouseActivityService.findById({ id: job.activityId });
+		if (timeSlotLocal?.id) {
+			const params = this.timeSlotParams(timeSlotLocal);
+			if (!params) {
+				return;
+			}
+			this.agentLogger.info(`Preparing send activity recordedAt ${params.recordedAt} to service`);
+			const resp = await this.apiService.saveTimeSlot(params);
+			if (this.isNetworkError) {
+				this.isNetworkError = false;
+				this.trayUpdateMenuStatus('network', !this.isNetworkError);
+				this.trayStatusHandler('Working');
+			}
+			console.log(`Time slot saved for activity ${timeSlotLocal.id}:`, resp?.id);
+			const images = typeof timeSlotLocal.screenshots === 'string'
+				? (() => {
+					try {
+						return JSON.parse(timeSlotLocal.screenshots);
+					} catch (error) {
+						console.error('Failed to parse screenshots:', error);
+						return [];
+					}
+				})()
+				: timeSlotLocal.screenshots || [];
+			for (const image of images) {
+				this.workerQueue.desktopQueue.enqueueScreenshot({
+					queue: 'screenshot',
+					screenshotId: image,
+					data: {
+						imagePath: image,
+						timeSlotId: resp?.id,
+						recordedAt: moment(timeSlotLocal.timeStart).toISOString()
+					}
+				})
+			}
+			this.agentLogger.info(`Finished process job timeSlot sync ${JSON.stringify(job)}`);
+			await this.removeCurrentActivity(timeSlotLocal.id);
+			return resp;
+		}
+		throw Error('TIME_SLOT_NOT_FOUND');
+	}
+
+	public async syncScreenshot(job: IScreenshotQueuePayload) {
+		this.agentLogger.info(`Incomming job screenshot sync ${JSON.stringify(job)}`);
+		await this.saveImage(job.data.recordedAt, [job.data.imagePath], job.data.timeSlotId);
+		this.agentLogger.info(`Finished job screenshot sync ${JSON.stringify(job)}`);
+	}
 
 	poolErrorHandler(error: Error) {
 		console.error(error);

@@ -21,33 +21,38 @@ export class AgentLogger {
 		return `${moment().format('YYYY-MM-DD HH:mm:ss')} ${type}: ${message}`;
 	}
 
-	showMessage(message: string) {
-        if (this.appWindow?.logWindow && !this.appWindow.logWindow.isDestroyed()) {
+	showMessage(message: string, type: string, time: Date) {
+		if (this.appWindow?.logWindow && !this.appWindow.logWindow.isDestroyed()) {
 			try {
-				this.appWindow.logWindow.webContents.send('log_state', {
-					msg: message
+				this.appWindow.logWindow.webContents.send('DASHBOARD_EVENT', {
+					type: 'log_state',
+					data: {
+						dateTime: time,
+						msg: message,
+						type
+					}
 				});
 			} catch (error) {
 				console.error('Log window error', error);
 			}
-        }
+		}
 	}
 
 	info(message: string) {
 		const logMsg = this.formatMessage(message, 'Info');
-		this.showMessage(logMsg);
+		this.showMessage(message, 'Info', new Date());
 		console.log(logMsg);
 	}
 
 	warn(message: string) {
 		const logMsg = this.formatMessage(message, 'Warn');
 		console.warn(logMsg);
-		this.showMessage(logMsg);
+		this.showMessage(message, 'Warn', new Date());
 	}
 
 	error(message: string) {
 		const logMsg = this.formatMessage(message, 'Error');
 		console.error(logMsg);
-		this.showMessage(logMsg);
+		this.showMessage(message, 'Error', new Date());
 	}
 }

@@ -23,7 +23,8 @@ import PullActivities from '../workers/pull-activities';
 import PushActivities from '../workers/push-activities';
 import { checkUserAuthentication } from '../auth';
 import { ApiService } from '../api';
-const rootPath = path.join(__dirname, '../..')
+const rootPath = path.join(__dirname, '../..');
+import { QueueAudit } from '../queue/audit-queue';
 
 const userService = new UserService();
 
@@ -55,6 +56,7 @@ function listenIO(stop: boolean) {
 		pullActivities.stopTracking();
 		pushActivities.stopPooling();
 	} else {
+		pushActivities.initQueueWorker();
 		pullActivities.startTracking();
 		pushActivities.startPooling();
 	}
@@ -208,6 +210,11 @@ export default function AppIpcMain() {
 	ipcMain.handle('FINAL_LOGOUT', async () => {
 		await userService.remove();
 		LocalStore.updateAuthSetting({ isLogout: true });
+	});
+
+	ipcMain.handle('SYNC_API_AUDIT',  async() => {
+		const auditQueue = QueueAudit.getInstance();
+		return auditQueue.list();
 	});
 
 	pluginListeners();

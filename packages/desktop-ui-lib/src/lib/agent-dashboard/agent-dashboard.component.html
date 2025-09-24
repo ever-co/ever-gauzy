@@ -1,13 +1,11 @@
 <nb-layout windowMode>
-  <nb-sidebar tag="menu" state="expanded">
-    <div class="brand">
-      <nb-icon icon="flash-outline"></nb-icon>
-      <span>Ever Gauzy Agent</span>
+  <nb-sidebar tag="menu" state="expanded" responsive="true">
+  <div class="brand">
+    <div class="brand-content">
+      <img [src]="gauzyIcon" [class]="styles.icon" />
     </div>
-    <nb-menu [items]="menu"></nb-menu>
-    <div class="sidebar-tray">
-      <small>Screenshot in 3:21</small>
-    </div>
+  </div>
+  <nb-menu [items]="menu"></nb-menu>
   </nb-sidebar>
 
   <nb-layout-column class="">
@@ -38,7 +36,7 @@
 
     <!-- LOGS -->
 	<!-- <app-logs-page></app-logs-page> -->
-	<app-sync-page></app-sync-page>
+	<router-outlet></router-outlet>
 
   </nb-layout-column>
 </nb-layout>

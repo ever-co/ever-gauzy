@@ -25,6 +25,7 @@ export class TimerDAO implements DAO<TimerTO> {
 		this._trx = new TimerTransaction(this._provider);
 		this._intervalDao = new IntervalDAO();
 	}
+
 	public async findAll(): Promise<TimerTO[]> {
 		return await this._provider
 			.connection<TimerTO>(TABLE_NAME_TIMERS)
@@ -32,6 +33,9 @@ export class TimerDAO implements DAO<TimerTO> {
 	}
 	public async save(value: TimerTO): Promise<void> {
 		await this._trx.create(value);
+	}
+	public async saveAndReturn(value: TimerTO): Promise<any> {
+	    return this._trx.createAndReturn(value);
 	}
 	public async findOneById(id: number): Promise<TimerTO> {
 		const [timer] = await this._provider
