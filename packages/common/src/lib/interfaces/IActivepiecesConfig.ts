@@ -1,31 +1,35 @@
 /**
- * Configuration interface for Activepieces integration settings.
- * This interface defines the necessary properties required
- * to configure OAuth and webhook settings for Activepieces.
+ * Interface for ActivePieces Integration Configuration entity
+ * Stores tenant-specific OAuth credentials for ActivePieces integration
  */
-
 export interface IActivepiecesConfig {
 	/**
-	 * The OAuth client ID provided by Activepieces.
-	 * This is used to identify the application during the OAuth flow.
+	 * OAuth client ID for the tenant's ActivePieces application
 	 */
-	readonly clientId: string;
+	clientId: string;
 
 	/**
-	 * The OAuth client secret provided by Activepieces.
-	 * This is used to authenticate the application during the OAuth flow.
+	 * OAuth client secret for the tenant's ActivePieces application
 	 */
-	readonly clientSecret: string;
+	clientSecret: string;
 
 	/**
-	 * The redirect URI registered with Activepieces for OAuth callback.
-	 * This URL receives the authorization code during the OAuth.
+	 * Callback URL for OAuth flow (optional, falls back to global config)
 	 */
-	readonly callbackUrl: string;
+	callbackUrl?: string;
 
 	/**
-	 * The URL to redirect to after successful installation.
-	 * This is typically a page in the application that handles the integration setup completion.
+	 * Post-installation redirect URL (optional, falls back to global config)
 	 */
-	readonly postInstallUrl: string;
+	postInstallUrl?: string;
+
+	/**
+	 * Whether this configuration is active and should be used
+	 */
+	isActive?: boolean;
+
+	/**
+	 * Optional description for the configuration
+	 */
+	description?: string;
 }
