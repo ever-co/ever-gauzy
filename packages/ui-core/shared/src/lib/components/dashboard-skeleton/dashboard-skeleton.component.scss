@@ -1,10 +1,85 @@
-@use 'themes' as *;
-@use '@shared/reusable' as *;
-
 :host {
   display: block;
   width: 100%;
   height: 100vh;
+
+  // === GAUZY LIGHT (défaut) ===
+  --background-basic-color-1: rgb(255, 255, 255);
+  --border-basic-color-2: #f5f5f5;
+  --border-radius: 0.625rem;
+  --button-rectangle-border-radius: 2rem;
+  --gauzy-sidebar-background-2: rgba(251, 251, 251, 1);
+  --gauzy-card-2: rgba(50, 50, 50, 0.03);
+}
+
+// === GAUZY DARK ===
+:host-context([data-skeleton-theme='gauzy-dark']) {
+  --background-basic-color-1: rgb(32, 32, 35);
+  --border-basic-color-2: #303030;
+  --border-radius: 0.625rem;
+  --button-rectangle-border-radius: 2rem;
+  --gauzy-sidebar-background-2: rgb(38, 38, 46);
+  --gauzy-card-2: rgba(16, 16, 20, 0.3);
+}
+
+// === DEFAULT THEME ===
+:host-context([data-skeleton-theme='default']) {
+  --background-basic-color-1: #ffffff;
+  --border-basic-color-2: #f5f5f5;
+  --border-radius: 0.25rem;
+  --button-rectangle-border-radius: 0.25rem;
+  --gauzy-sidebar-background-2: #ffffff;
+  --gauzy-card-2: rgba(50, 50, 50, 0.03);
+}
+
+// === DARK THEME ===
+:host-context([data-skeleton-theme='dark']) {
+  --background-basic-color-1: #222b45;
+  --border-basic-color-2: #303030;
+  --border-radius: 0.25rem;
+  --button-rectangle-border-radius: 0.25rem;
+  --gauzy-sidebar-background-2: rgb(32, 41, 67);
+  --gauzy-card-2: rgba(16, 16, 20, 0.3);
+}
+
+// === COSMIC THEME ===
+:host-context([data-skeleton-theme='cosmic']) {
+  --background-basic-color-1: #323259;
+  --border-basic-color-2: #303030;
+  --border-radius: 0.5rem;
+  --button-rectangle-border-radius: 1rem;
+  --gauzy-sidebar-background-2: rgb(45, 47, 86);
+  --gauzy-card-2: rgba(39, 39, 78, 0.5);
+}
+
+// === CORPORATE THEME ===
+:host-context([data-skeleton-theme='corporate']) {
+  --background-basic-color-1: rgba(255, 255, 255, 1);
+  --border-basic-color-2: #f5f5f5;
+  --border-radius: 0.375rem;
+  --button-rectangle-border-radius: 0.375rem;
+  --gauzy-sidebar-background-2: rgba(251, 251, 251, 1);
+  --gauzy-card-2: rgba(50, 50, 50, 0.03);
+}
+
+// === MATERIAL LIGHT ===
+:host-context([data-skeleton-theme='material']) {
+  --background-basic-color-1: #ffffff;
+  --border-basic-color-2: #f5f5f5;
+  --border-radius: 0.25rem;
+  --button-rectangle-border-radius: 0.375rem;
+  --gauzy-sidebar-background-2: rgb(51, 51, 51);
+  --gauzy-card-2: rgba(50, 50, 50, 0.03);
+}
+
+// === MATERIAL DARK ===
+:host-context([data-skeleton-theme='material-dark']) {
+  --background-basic-color-1: #303030;
+  --border-basic-color-2: #f5f5f5;
+  --border-radius: 0.25rem;
+  --button-rectangle-border-radius: 0.375rem;
+  --gauzy-sidebar-background-2: rgb(51, 51, 51);
+  --gauzy-card-2: rgba(50, 50, 50, 0.03);
 }
 
 @mixin skeleton-element($width: 100%, $height: 16px) {
@@ -12,9 +87,9 @@
   height: $height;
   background: linear-gradient(
     90deg,
-    nb-theme(background-basic-color-1) 0%,
-    nb-theme(border-basic-color-2) 50%,
-    nb-theme(background-basic-color-1) 100%
+    var(--background-basic-color-1) 0%,
+    var(--border-basic-color-2) 50%,
+    var(--background-basic-color-1) 100%
   );
   background-size: 200% 100%;
   animation: shimmer-subtle 2s ease-in-out infinite;
@@ -25,12 +100,12 @@
   display: flex;
   width: 100%;
   height: 100vh;
-  background-color: nb-theme(background-basic-color-1);
+  background-color: var(--background-basic-color-1);
 }
 
 .skeleton-sidebar {
   width: 260px;
-  background: nb-theme(gauzy-sidebar-background-2);
+  background: var(--gauzy-sidebar-background-2);
   padding: 1rem;
   flex-shrink: 0;
   display: flex;
@@ -49,7 +124,7 @@
 
     .skeleton-dropdown-icon {
       @include skeleton-element(16px, 16px);
-      border-radius: nb-theme(border-radius);
+      border-radius: var(--border-radius);
     }
 
     .skeleton-menu-dots {
@@ -70,19 +145,19 @@
 
       .skeleton-menu-icon {
         @include skeleton-element(20px, 20px);
-        border-radius: nb-theme(border-radius);
+        border-radius: var(--border-radius);
         flex-shrink: 0;
       }
 
       .skeleton-menu-text {
         @include skeleton-element(100px, 16px);
         flex: 1;
-        border-radius: nb-theme(border-radius);
+        border-radius: var(--border-radius);
       }
 
       .skeleton-menu-arrow {
         @include skeleton-element(12px, 12px);
-        border-radius: nb-theme(border-radius);
+        border-radius: var(--border-radius);
         flex-shrink: 0;
       }
     }
@@ -111,7 +186,7 @@
   flex: 1;
   padding: 1rem;
   overflow-y: auto;
-  background-color: nb-theme(gauzy-card-2);
+  background-color: var(--gauzy-card-2);
 }
 
 .skeleton-top-header {
@@ -128,7 +203,7 @@
 
     .skeleton-create-button {
       @include skeleton-element(80px, 32px);
-      border-radius: nb-theme(button-rectangle-border-radius);
+      border-radius: var(--button-rectangle-border-radius);
     }
 
     .skeleton-project-selector {
@@ -137,8 +212,8 @@
       gap: 8px;
       padding: 0 12px;
       height: 32px;
-      border-radius: nb-theme(button-rectangle-border-radius);
-      background: nb-theme(background-basic-color-1);
+      border-radius: var(--button-rectangle-border-radius);
+      background: var(--background-basic-color-1);
 
       .skeleton-selector-text {
         @include skeleton-element(80px, 16px);
@@ -156,8 +231,8 @@
       gap: 12px;
       padding: 0 12px;
       height: 32px;
-      border-radius: nb-theme(button-rectangle-border-radius);
-      background: nb-theme(background-basic-color-1);
+      border-radius: var(--button-rectangle-border-radius);
+      background: var(--background-basic-color-1);
 
       .skeleton-date-arrows {
         display: flex;
@@ -237,12 +312,12 @@
 
       .skeleton-time-info {
         @include skeleton-element(180px, 20px);
-        border-radius: nb-theme(border-radius);
+        border-radius: var(--border-radius);
       }
 
       .skeleton-manage-widgets {
         @include skeleton-element(120px, 20px);
-        border-radius: nb-theme(border-radius);
+        border-radius: var(--border-radius);
       }
     }
 
@@ -279,8 +354,8 @@
 
   .skeleton-widget-item {
     flex: 1;
-    background-color: nb-theme(background-basic-color-1);
-    border-radius: nb-theme(border-radius);
+    background-color: var(--background-basic-color-1);
+    border-radius: var(--border-radius);
     padding: 1.5rem;
     min-height: 100px;
     position: relative;
@@ -323,8 +398,8 @@
   margin-bottom: 2rem;
 
   .skeleton-window-card {
-    background: nb-theme(background-basic-color-1);
-    border-radius: nb-theme(border-radius);
+    background: var(--background-basic-color-1);
+    border-radius: var(--border-radius);
     min-height: 80px;
     display: flex;
     flex-direction: column;
@@ -363,9 +438,9 @@
 
 @keyframes shimmer-subtle {
   0% {
-    background-position: -100% 0;
+    background-position: -200% 0;
   }
   100% {
-    background-position: 100% 0;
+    background-position: 200% 0;
   }
 }

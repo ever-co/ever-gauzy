@@ -28,5 +28,14 @@
 
 		<!-- Asynchronous script loading to improve performance -->
 		<script src="https://cdn.ckeditor.com/4.22.1/full-all/ckeditor.js" async></script>
+		<script>
+			try {
+				const gauzyStore = JSON.parse(localStorage.getItem('_gauzyStore') || '{}');
+				const savedTheme = gauzyStore.persist?.themeName || 'gauzy-light';
+				document.body.setAttribute('data-skeleton-theme', savedTheme);
+			} catch (e) {
+				document.body.setAttribute('data-skeleton-theme', 'gauzy-light');
+			}
+		</script>
 	</body>
 </html>
