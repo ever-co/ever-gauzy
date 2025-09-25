@@ -53,7 +53,7 @@ function requiredDeps(p: string) {
 }
 
 
-function listImmidiatePackageDirs(root: string) {
+function listPackageDirs(root: string) {
 	if (!exists(root)) return [];
 	const dirs: string[] = fs.readdirSync(root).map((name: string) => path.join(root, name));
 	const pkgDirs: string[] = [];
@@ -61,7 +61,7 @@ function listImmidiatePackageDirs(root: string) {
 		if (exists(pkgJson(dir))) {
 			pkgDirs.push(dir);
 		} else {
-			const nestPkg = listImmidiatePackageDirs(path.join(dir));
+			const nestPkg = listPackageDirs(path.join(dir));
 			pkgDirs.push(...nestPkg);
 		}
 	}
@@ -91,7 +91,7 @@ function findLocalPackage(root: string, packageName: string) {
 
 const pkgRoots = ['packages'].map((n) => path.join(DIST, n)).filter(exists);
 
-const packageDir = pkgRoots.flatMap(listImmidiatePackageDirs);
+const packageDir = pkgRoots.flatMap(listPackageDirs);
 const nameToDir = {}
 for (const dir of packageDir) {
 	const json = JSON.parse(fs.readFileSync(pkgJson(dir), 'utf8'));
