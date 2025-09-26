@@ -10,30 +10,33 @@
 		<meta name="description" content="Business Management Platform" />
 		<link rel="icon" type="image/x-icon" href="favicon.ico" />
 		<link rel="manifest" href="manifest.json" />
-
 	</head>
 	<body>
 		<ga-app></ga-app>
 
-		<noscript>
-			<div
-				id="nb-global-spinner"
-				class="skeleton-layout"
-				role="status"
-				aria-live="polite"
-				aria-busy="true"
-				aria-label="Loading application"
-			>
-				<div class="skeleton-sidebar" aria-hidden="true"></div>
-				<div class="skeleton-main" aria-hidden="true"></div>
-			</div>
-		</noscript>
+		<div
+			class="skeleton-app-layout"
+			role="status"
+			aria-live="polite"
+			aria-busy="true"
+			aria-label="Loading dashboard"
+		>
+			<div class="skeleton-sidebar"></div>
+			<div class="skeleton-main-content"></div>
+		</div>
 		<script>
 			try {
 				const gauzyStore = JSON.parse(localStorage.getItem('_gauzyStore') || '{}');
 				const savedTheme = gauzyStore.persist?.themeName;
 				const allowedThemes = new Set([
-					'gauzy-light','gauzy-dark','default','dark','cosmic','corporate','material','material-dark'
+					'gauzy-light',
+					'gauzy-dark',
+					'default',
+					'dark',
+					'cosmic',
+					'corporate',
+					'material',
+					'material-dark'
 				]);
 				const theme = allowedThemes.has(savedTheme) ? savedTheme : 'gauzy-light';
 				document.body.setAttribute('data-skeleton-theme', theme);
@@ -43,6 +46,5 @@
 		</script>
 		<!-- Asynchronous script loading to improve performance -->
 		<script src="https://cdn.ckeditor.com/4.22.1/full-all/ckeditor.js" async></script>
-
 	</body>
 </html>
