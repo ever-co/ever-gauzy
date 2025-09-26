@@ -1,12 +1,17 @@
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ActivepiecesModule } from './activepieces.module';
+import { ActivepiecesIntegration } from './activepieces-integration.entity';
 
 @Plugin({
 	/**
 	 * An array of modules that will be imported and registered with the plugin.
 	 */
 	imports: [ActivepiecesModule],
+	/**
+	 * Entity needed for ActivePieces integration to store configuration data
+	 */
+	entities: [ActivepiecesIntegration],
 	/**
 	 * A callback that receives the main plugin configuration object and allows
 	 * custom modifications before returning the final configuration.

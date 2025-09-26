@@ -43,6 +43,7 @@ export class ActivepiecesConfigService {
 					postInstallUrl: tenantConfig.postInstallUrl || this.getDefaultPostInstallUrl(),
 					isActive: tenantConfig.isActive,
 					description: tenantConfig.description
+					
 				};
 			}
 

@@ -1,12 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Index, Unique } from 'typeorm';
+import { Index, Unique, JoinColumn, RelationId } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator';
 import { IActivepiecesConfig } from '@gauzy/common';
-import { TenantOrganizationBaseEntity, MultiORMColumn, MultiORMEntity } from '@gauzy/core';
+import { ID, IIntegrationTenant } from '@gauzy/contracts';
+import { TenantOrganizationBaseEntity, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, ColumnIndex, IntegrationTenant } from '@gauzy/core';
 import { IsSecret } from '@gauzy/core';
+import { MikroOrmActivepiecesIntegrationRepository } from './repository/mikro-orm-activepieces-integration.repository';
 
-@MultiORMEntity('activepieces_integration', { database: 'default' })
+@MultiORMEntity('activepieces_integration', {
+	mikroOrmRepository: () => MikroOrmActivepiecesIntegrationRepository
+})
 @Unique(['tenantId', 'organizationId'])
 @Index(['tenantId'])
 @Index(['organizationId'])
@@ -47,4 +51,28 @@ export class ActivepiecesIntegration extends TenantOrganizationBaseEntity implem
 	@IsString()
 	@MultiORMColumn({ nullable: true })
 	description?: string;
+
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/** What integration tenant sync to */
+	@MultiORMManyToOne(() => IntegrationTenant, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	integration?: IIntegrationTenant;
+
+	@ApiProperty({ type: () => String })
+	@IsUUID()
+	@RelationId((it: ActivepiecesIntegration) => it.integration)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	integrationId?: ID;
 }
