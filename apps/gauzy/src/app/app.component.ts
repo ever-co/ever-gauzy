@@ -32,10 +32,10 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 @Component({
 	selector: 'ga-app',
 	template: `
-		<ga-dashboard-skeleton *ngIf="loading; else appContent"></ga-dashboard-skeleton>
-		<ng-template #appContent>
+		<ga-dashboard-skeleton *ngIf="loading"></ga-dashboard-skeleton>
+		<div [style.visibility]="loading ? 'hidden' : 'visible'">
 			<router-outlet></router-outlet>
-		</ng-template>
+		</div>
 	`,
 	standalone: false
 })
@@ -67,7 +67,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		setTimeout(() => {
 			this.minimumLoadingTime = true;
 			this.checkLoadingComplete();
-		}, 2000);
+		}, 1500);
 	}
 
 	/**
