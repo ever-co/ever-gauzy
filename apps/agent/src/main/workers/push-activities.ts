@@ -1,5 +1,3 @@
-import { app } from 'electron';
-import * as path from 'path';
 import {
 	KbMouseActivityService,
 	KbMouseActivityTO,
@@ -24,7 +22,7 @@ import { environment } from '../../environments/environment';
 import * as fs from 'node:fs';
 import MainEvent from '../events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
-import { WorkerQueue } from '../queue/woker-queue';
+import { WorkerQueue } from '../queue/worker-queue';
 
 type TParamsActivities = Omit<TimeSlotActivities, 'recordedAt'> & { recordedAt: string };
 
@@ -77,40 +75,66 @@ class PushActivities {
 	}
 
 	timerQueueHandle(job: ITimerCallbackPayload, cb: (err?: any) => void) {
+		if (!job.timerId) {
+			return cb(new Error('job is not valid'));
+		}
 		(async () => {
 			try {
 				await this.syncTimer(job);
-				cb(null);
+				return cb(null);
 			} catch (error) {
-				cb(error);
+				if (job.attempts >= 10) {
+					return cb(new Error(error));
+				}
+				job.attempts += 1;
+				return cb(error);
 			}
 		})();
 	}
 
 	timeSlotQueueHandle(job: ITimeslotQueuePayload, cb: (err?: any) => void) {
+		if (!job.activityId) {
+			return cb(new Error('job is not valid'));
+		}
 		(async () => {
 			try {
 				await this.syncTimeSlot(job);
-				cb(null);
+				return cb(null);
 			} catch (error) {
-				cb(error);
+				if (job.attempts >= 5) {
+					return cb(new Error(error.message));
+				}
+				job.attempts += 1;
+				return cb(error);
 			}
 		})();
 	}
 
 	screenshotsQueueHandle(job: IScreenshotQueuePayload, cb: (err?: any) => void) {
 		(async () => {
+			if (!job.screenshotId) {
+				return cb(new Error('job is not valid'));
+			}
 			try {
 				await this.syncScreenshot(job);
-				cb(null);
+				return cb(null);
 			} catch (error) {
-				cb(error);
+				if ((error.message || '').toLowerCase().includes('image cannot be accessed')) {
+					job.attempts = 5;
+					return cb(new Error(error.message));
+				}
+				if (job.attempts >= 5) {
+					return cb(new Error(error.message));
+				}
+				job.attempts += 1;
+				return cb(error);
 			}
 		})();
 	}
 
 	startPooling() {
 		try {
+			this.workerQueue?.desktopQueue?.initWorker();
 			this.agentLogger.info('Polling scheduler started');
 		} catch (error) {
 			console.error('Failed to start push activity pooling', error);
@@ -119,6 +143,7 @@ class PushActivities {
 	}
 
 	stopPooling() {
+		this.workerQueue?.desktopQueue?.stopQueue();
 		this.agentLogger.info('Pooling scheduler stpped');
 	}
 
@@ -183,7 +208,7 @@ class PushActivities {
 		this.agentLogger.info(`image temporary path ${imageTemp}`);
 		const isAccessed = await this.imageAccessed(imageTemp);
 		if (!isAccessed) {
-			return;
+			throw new Error('Image cannot be accessed');
 		}
 
 		if (!fs.existsSync(imageTemp)) {
@@ -227,7 +252,6 @@ class PushActivities {
 			}
 			await Promise.all(images.map((imageTemp) => this.uploadCapturedImage(auth, recordedAt, imageTemp, timeSlotId)));
 		} catch (error) {
-			console.log(error);
 			throw error;
 		}
 	}
@@ -483,6 +507,7 @@ class PushActivities {
 				: timeSlotLocal.screenshots || [];
 			for (const image of images) {
 				this.workerQueue.desktopQueue.enqueueScreenshot({
+					attempts: 1,
 					queue: 'screenshot',
 					screenshotId: image,
 					data: {

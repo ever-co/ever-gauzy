@@ -14,7 +14,7 @@ import { AgentLogger } from '../agent-logger';
 import MainEvent from '../events/events';
 import { MAIN_EVENT_TYPE, MAIN_EVENT } from '../../constant';
 import { ApiService } from '../api';
-import { WorkerQueue } from '../queue/woker-queue';
+import { WorkerQueue } from '../queue/worker-queue';
 
 type UserLogin = {
 	tenantId: string;
@@ -130,6 +130,7 @@ class PullActivities {
 			const timerData  = await this.timerService.saveAndReturn(timer);
 			this.initWorkerQueue();
 			this.workerQueue.desktopQueue.enqueueTimer({
+				attempts: 1,
 				queue: 'timer',
 				timerId: timerData[0],
 				data: {
@@ -349,9 +350,9 @@ class PullActivities {
 				afkDuration: afkDuration || 0,
 				activeWindows: JSON.stringify(activityWindow)
 			});
-			console.log('savedActivity', savedActivity);
 			this.initWorkerQueue();
 			this.workerQueue.desktopQueue.enqueueTimeSlot({
+				attempts: 1,
 				activityId: Number(savedActivity[0]?.id),
 				queue: 'time_slot',
 				data: {

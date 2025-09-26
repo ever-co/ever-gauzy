@@ -55,7 +55,7 @@ export class AuditQueueService implements IAuditQueueService<AuditQueueTO> {
 		}
 	}
 
-	public async list(): Promise<AuditQueueTO[]> {
-		return this._auditQueueDAO.findAll()
+	public async list(page: number, limit: number, status: string): Promise<AuditQueueTO[]> {
+		return this._auditQueueDAO.pageAndFilter(page, limit, status);
 	}
 }

@@ -24,7 +24,7 @@ import PushActivities from '../workers/push-activities';
 import { checkUserAuthentication } from '../auth';
 import { ApiService } from '../api';
 const rootPath = path.join(__dirname, '../..');
-import { QueueAudit } from '../queue/audit-queue';
+import { QueueAudit, AuditStatus } from '../queue/audit-queue';
 
 const userService = new UserService();
 
@@ -78,7 +78,6 @@ function kbMouseListener(activate: boolean) {
 }
 
 async function closeLoginWindow() {
-
 	const appWindow = AppWindow.getInstance(rootPath);
 	await delaySync(2000); // delay 2s before destroy login window
 	appWindow.destroyAuthWindow();
@@ -178,7 +177,7 @@ export default function AppIpcMain() {
 		LocalStore.updateApplicationSetting(arg.values);
 	});
 
-	ipcMain.on('logout_desktop', async (_, arg) => {
+	ipcMain.on('logout_desktop', async () => {
 		try {
 			log.info('Logout Desktop');
 			store.set({
@@ -212,9 +211,14 @@ export default function AppIpcMain() {
 		LocalStore.updateAuthSetting({ isLogout: true });
 	});
 
-	ipcMain.handle('SYNC_API_AUDIT',  async() => {
+	ipcMain.handle('SYNC_API_AUDIT',  async(_, arg: { data: { page: number, limit: number, status: AuditStatus } }) => {
+		const { data } = arg;
 		const auditQueue = QueueAudit.getInstance();
-		return auditQueue.list();
+		return auditQueue.list({
+			page: data.page,
+			limit: data.limit,
+			status: data.status
+		});
 	});
 
 	pluginListeners();

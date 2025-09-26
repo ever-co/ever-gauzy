@@ -18,7 +18,7 @@ export class WorkerQueue {
 	private queueAudit: QueueAudit;
 
 	constructor() {
-		this.desktopQueue = DesktopQueue.getInstance(path.resolve(app?.getPath('userData') || __dirname, 'gauzy-queue.sqlite3'));
+		this.desktopQueue = DesktopQueue.getInstance(path.resolve(app?.getPath('userData') || __dirname));
 		this.queueAudit = QueueAudit.getInstance();
 		this.setQueueUpdateHandle();
 	}
@@ -37,7 +37,6 @@ export class WorkerQueue {
 	}
 
 	private queueAuditCallback(payload: IQueueUpadtePayload) {
-		console.log('audit payload', payload);
 		switch (payload.type) {
 			case 'queued':
 				return this.queueAudit.queued(
@@ -47,7 +46,7 @@ export class WorkerQueue {
 					0
 				);
 			case 'running':
-				return this.queueAudit.running(payload.id);
+				return this.queueAudit.running(payload.id, payload.data);
 			case 'succeeded':
 				return this.queueAudit.succeeded(payload.id);
 			case "failed":

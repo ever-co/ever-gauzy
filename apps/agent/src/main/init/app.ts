@@ -24,7 +24,6 @@ import MainEvent from '../events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
 import { handleSplashScreen } from './splash';
 import { AgentMenu } from './menu';
-import { WorkerQueue } from '../queue/woker-queue';
 
 const provider = ProviderFactory.instance;
 const knex = provider.connection;

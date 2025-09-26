@@ -7,7 +7,8 @@ export class FilterStatusPipe implements PipeTransform {
 		const typeStatus = {
 			PENDING: 'waiting',
 			FAILED: 'failed',
-			SYNCED: 'succeeded'
+			SYNCED: 'succeeded',
+			PROCESS: 'running'
 		}
 		if (!items) return [];
 		return items.filter(i => i.status === typeStatus[status]);

@@ -12,10 +12,20 @@ import { LogService } from '../services/logs.service';
 export class SyncPageComponent {
 	items$: Observable<QueueItem[]> = this.svc.queueStream$;
 	health$: Observable<SyncHealth> = this.svc.healthStream$;
-	tab: 'PENDING' | 'FAILED' | 'SYNCED' = 'PENDING';
+	tab: 'PENDING' | 'FAILED' | 'SYNCED' | 'PROCESS' = 'PENDING';
 
 	constructor(private svc: LogService) { }
 
-	retry(it: QueueItem) { this.svc.retryQueueItem(it.id); }
 	clearSynced() { this.svc.clearSynced(); }
+
+	onChangeTab(tab: 'PENDING' | 'FAILED' | 'SYNCED' | 'PROCESS') {
+		this.tab = tab;
+		const typeStatus = {
+			PENDING: 'waiting',
+			FAILED: 'failed',
+			SYNCED: 'succeeded',
+			PROCESS: 'running'
+		}
+		this.svc.getHistorySync(typeStatus[tab]);
+	}
 }

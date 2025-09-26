@@ -10,13 +10,15 @@
     <input nbInput placeholder="Search message..." [(ngModel)]="query" />
     <nb-checkbox [(ngModel)]="autoScroll">Auto-scroll</nb-checkbox>
   </nb-card-header>
-  <nb-card-body class="loglist">
-    <div *ngIf="(logs$|async) as rows">
-      <div *ngFor="let r of filter(rows)" class="logline">
-        <span class="timestamp">{{ r.ts | date:'HH:mm:ss' }}</span>
-        <span [ngClass]="r.level" class="level">{{ r.level }}</span>
-        <span>{{ r.msg }}</span>
-      </div>
-    </div>
+  <nb-card-body>
+	<div #logContainer class="loglist">
+		<div *ngIf="(logs$|async) as rows">
+			<div *ngFor="let r of filter(rows)" class="logline">
+				<span class="timestamp">{{ r.ts | date:'HH:mm:ss' }}</span>
+				<span [ngClass]="r.level" class="level">{{ r.level }}</span>
+				<span>{{ r.msg }}</span>
+			</div>
+		</div>
+	</div>
   </nb-card-body>
 </nb-card>

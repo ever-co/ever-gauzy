@@ -15,6 +15,15 @@ export class AuditQueueDAO implements DAO<AuditQueueTO> {
 	public async findAll(): Promise<AuditQueueTO[]> {
 		return await this._provider.connection<AuditQueueTO>(TABLE_NAME_AUDIT_QUEUE).select('*');
 	}
+	public async pageAndFilter(page: number, limit: number, status: string): Promise<AuditQueueTO[]> {
+		return await this._provider
+			.connection<AuditQueueTO>(TABLE_NAME_AUDIT_QUEUE)
+			.select('*')
+			.where('status', '=', status)
+			.orderBy('created_at', 'desc')
+			.limit(limit)
+			.offset(page * limit);
+	}
 	public async save(value: AuditQueueTO): Promise<void> {
 		await this._trx.create(value);
 	}

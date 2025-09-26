@@ -1,6 +1,7 @@
 import * as Queue from 'better-queue';
+import * as path from 'path';
 import * as QueueStore from 'better-queue-sqlite';
-import isOnline from 'is-online';
+import * as isOnline from 'is-online';
 import { IScreenshotQueuePayload, ITimerCallbackPayload, ITimeslotQueuePayload, IQueueUpadtePayload } from './i-queue';
 
 export class DesktopQueue {
@@ -8,7 +9,9 @@ export class DesktopQueue {
 	private timerQueue: Queue;
 	private timeSlotQueue: Queue;
 	private screenshotQueue: Queue;
-	private storeQueue: QueueStore;
+	private storeTimerQueue: QueueStore;
+	private storeTimeSlotQueue: QueueStore;
+	private storeScreenshotQueue: QueueStore;
 	private online: boolean;
 	private dbPath: string;
 	private auditQueueCallback: (param: IQueueUpadtePayload) => void;
@@ -17,8 +20,14 @@ export class DesktopQueue {
 	) {
 		this.dbPath = dbPath;
 		this.online = true;
-		this.storeQueue = new QueueStore({
-			path: this.dbPath
+		this.storeTimerQueue = new QueueStore({
+			path: path.join(this.dbPath, 'gauzy-timer-queue.sqlite3')
+		});
+		this.storeTimeSlotQueue = new QueueStore({
+			path: path.join(this.dbPath, 'gauzy-timeslot-queue.sqlite3')
+		});
+		this.storeScreenshotQueue = new QueueStore({
+			path: path.join(this.dbPath, 'gauzy-screenshot-queue.sqlite3')
 		});
 	}
 
@@ -41,45 +50,51 @@ export class DesktopQueue {
 			type: 'queued',
 			queue: name
 		}));
-		que.on("task_started", (id: string) => this.auditQueueCallback({
+		que.on("task_started", (id: string, info: any) => this.auditQueueCallback({
 			id,
 			type: 'running',
-			queue: name
+			queue: name,
+			data: info
 		}));
-		que.on("task_finish", (id: string) => this.auditQueueCallback({
+		que.on("task_finish", (id: string, info: any) => this.auditQueueCallback({
 			id,
 			queue: name,
-			type: 'succeeded'
+			type: 'succeeded',
+			data: info
 		}));
 		que.on(
 			'task_progress',
-			(id: string) => this.auditQueueCallback({
+			(id: string, info) => this.auditQueueCallback({
 				id,
 				queue: name,
-				type: 'progress'
+				type: 'progress',
+				data: info
 			})
 		)
 		que.on("task_failed", (id: string, err) => this.auditQueueCallback({
 			id,
 			queue: name,
 			type: 'failed',
-			err: err
+			err: err,
 		}));
 	}
 
 
 	public initTimerQueue(timerCallback: (job: ITimerCallbackPayload, cb: (err?: any) => void) => void) {
 		if (!this.timerQueue) {
-			console.log('queue store config', this.storeQueue);
+			console.log('queue store config', this.storeTimerQueue);
 			this.timerQueue = new Queue(
 				timerCallback,
 				{
-					store: this.storeQueue,
+					store: this.storeTimerQueue,
 					concurrent: 1,
-					maxRetries: 10,
+					maxRetries: 5,
 					retryDelay: 15_000,
 					filter: (task, cb) => {
 						if (task.queue === 'timer') cb(null, task);   // accept → worker runs with original task
+						else if (task.attempts >= 10) {
+							cb(new Error('Attempts maximum retry'), false);
+						}
 						else cb(new Error('Not valid task'), false);
 					}
 				}
@@ -93,12 +108,15 @@ export class DesktopQueue {
 			this.timeSlotQueue = new Queue(
 				timeSlotCallback,
 				{
-					store: this.storeQueue,
+					store: this.storeTimeSlotQueue,
 					concurrent: 1,
-					maxRetries: 10,
+					maxRetries: 5,
 					retryDelay: 15_000,
 					filter: (task, cb) => {
 						if (task.queue === 'time_slot') cb(null, task);   // accept → worker runs with original task
+						else if (task.attempts >= 10) {
+							cb(new Error('Attempts maximum retry'), false);
+						}
 						else cb(new Error('Not valid task'), false);
 					}
 				}
@@ -112,12 +130,15 @@ export class DesktopQueue {
 			this.screenshotQueue = new Queue(
 				screenshotCallback,
 				{
-					store: this.storeQueue,
+					store: this.storeScreenshotQueue,
 					concurrent: 1,
-					maxRetries: 10,
+					maxRetries: 5,
 					retryDelay: 15_000,
 					filter: (task, cb) => {
 						if (task.queue === 'screenshot') cb(null, task);   // accept → worker runs with original task
+						else if (task.attempts >= 5) {
+							cb(new Error('Attempts maximum retry'), false);
+						}
 						else cb(new Error('Not valid task'), false);                             // reject → skipped
 					}
 				}

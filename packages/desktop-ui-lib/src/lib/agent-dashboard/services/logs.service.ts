@@ -3,6 +3,18 @@ import { BehaviorSubject } from 'rxjs';
 import { LogEntry, QueueItem, SyncHealth } from '../models/logs.models';
 import { ElectronService } from '../../electron/services';
 
+interface IUpdateApiLogsArg {
+	queue_id: string;
+	queue?: string;
+	status?: string;
+	attempts?: number;
+	priority?: number;
+	data?: Record<string, unknown> | string;
+	created_at?: Date;
+	action: 'update' | 'add';
+	last_error: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class LogService {
 	private logs$ = new BehaviorSubject<LogEntry[]>([]);
@@ -17,10 +29,10 @@ export class LogService {
 		private electronService: ElectronService
 	) {
 		this.electronService.ipcRenderer.on('DASHBOARD_EVENT', this.dashboardEventHandle.bind(this));
-		this.getHistorySync();
+		this.getHistorySync('succeeded');
 	}
 
-	dashboardEventHandle(_, arg: { type: string, data: Record<string, unknown> }) {
+	dashboardEventHandle(_: any, arg: { type: string, data: any }) {
 		switch (arg.type) {
 			case 'log_state':
 				this.handleLogStream(arg.data);
@@ -47,16 +59,33 @@ export class LogService {
 		this.logs$.next(arr);
 	}
 
-	async updateApiLogs(data:any) {
-		console.log(data);
-	}
+	async updateApiLogs(data: IUpdateApiLogsArg) {
+		if (data.action === 'add') {
+			const arr = [...this.queue$.value];
+			const existQueueIdx = this.queue$.value.findIndex((q) => q.queue_id === data.queue_id);
+			if (existQueueIdx > -1) {
+				const currentQueue = { ...arr[existQueueIdx] };
+				arr.splice(existQueueIdx, 1);
+				currentQueue.attempts += 1;
+				arr.unshift(currentQueue);
+				this.queue$.next(arr);
+			} else {
+				const arr = [data, ...this.queue$.value];
+				this.queue$.next(arr);
+			}
+			return;
+		}
 
-	retryQueueItem(id: string) {
-		const arr = [...this.queue$.value];
-		const it = arr.find(x => x.id === id);
-		if (it) {
-			it.retries += 1;
-			if (it.retries >= 2) { it.status = 'SYNCED'; this.health$.next({ ...this.health$.value, lastSuccessAt: new Date().toISOString() }); }
+		if (data.action === 'update') {
+			const arr = [...this.queue$.value];
+			const existQueueIdx = this.queue$.value.findIndex((q) => q.queue_id === data.queue_id);
+			if (existQueueIdx > -1) {
+				const currentQueue = { ...arr[existQueueIdx] };
+				arr.splice(existQueueIdx, 1);
+				currentQueue.status = data.status;
+				currentQueue.last_error = data.last_error;
+				arr.unshift(currentQueue);
+			}
 			this.queue$.next(arr);
 		}
 	}
@@ -65,14 +94,14 @@ export class LogService {
 		this.queue$.next(this.queue$.value.filter(x => x.status !== 'SYNCED'));
 	}
 
-	private async getHistorySync() {
-		const dataSync = await this.electronService.ipcRenderer.invoke('SYNC_API_AUDIT');
-		console.log('datasync', dataSync);
+	async getHistorySync(status: string) {
+		const dataSync = await this.electronService.ipcRenderer.invoke('SYNC_API_AUDIT', {
+			data: {
+				page: 0,
+				limit: 100,
+				status
+			}
+		});
 		this.queue$.next(dataSync);
-	}
-
-	private mockQueue(): QueueItem[] {
-		const now = Date.now();
-		return Array.from({ length: 10 }, (_, i) => ({ id: 'q_' + i, createdAt: new Date(now - i * 5 * 60000).toISOString(), type: i % 2 === 0 ? 'screenshot' : 'window', sizeBytes: i % 2 === 0 ? 220000 + i * 10000 : undefined, retries: i % 3, status: i % 4 === 0 ? 'FAILED' : i % 5 === 0 ? 'SYNCED' : 'PENDING', errorMessage: i % 4 === 0 ? 'Network timeout' : undefined }));
 	}
 }

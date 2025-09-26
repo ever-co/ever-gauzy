@@ -1,6 +1,7 @@
 export interface ITimerCallbackPayload {
 	id?: number;
 	timerId: number;
+	attempts: number;
 	queue: 'timer' | 'time_slot' | 'screenshot';
 	data: {
 		startedAt: string;
@@ -11,6 +12,7 @@ export interface ITimerCallbackPayload {
 export interface ITimeslotQueuePayload {
 	id?: number;
 	activityId: number;
+	attempts: number;
 	queue: 'timer' | 'time_slot' | 'screenshot';
 	data: {
 		timeStart: string;
@@ -23,6 +25,7 @@ export interface IScreenshotQueuePayload {
 	id?: string;
 	screenshotId: string;
 	queue: 'timer' | 'time_slot' | 'screenshot';
+	attempts: number;
 	data: {
 		imagePath: string;
 		timeSlotId: string;
