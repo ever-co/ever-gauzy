@@ -43,10 +43,7 @@
 					</div>
 					<div class="skeleton-date-text"></div>
 				</div>
-				<div class="skeleton-user-menu"></div>
-				<div class="skeleton-user-menu"></div>
-				<div class="skeleton-user-menu"></div>
-				<div class="skeleton-user-menu"></div>
+				<div class="skeleton-user-menu" *ngFor="let i of [ 1, 2, 3,4]; trackBy: trackByIndex"></div>
 			</div>
 		</div>
 
