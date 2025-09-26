@@ -32,8 +32,10 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 @Component({
 	selector: 'ga-app',
 	template: `
-		<ga-dashboard-skeleton *ngIf="loading"></ga-dashboard-skeleton>
-		<router-outlet *ngIf="!loading"></router-outlet>
+		<ga-dashboard-skeleton *ngIf="loading; else appContent"></ga-dashboard-skeleton>
+		<ng-template #appContent>
+			<router-outlet></router-outlet>
+		</ng-template>
 	`,
 	standalone: false
 })
@@ -116,7 +118,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			this._i18nService.setLanguage(preferredLanguage || systemLanguage);
 
 			// Observable that emits when theme languages change.
-			this._translateService.onLangChange.subscribe(() => {
+			this._translateService.onLangChange.pipe(take(1), untilDestroyed(this)).subscribe(() => {
 				this.languageLoaded = true;
 				this.checkLoadingComplete();
 			});
