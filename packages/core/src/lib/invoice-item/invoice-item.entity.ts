@@ -1,7 +1,8 @@
 import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator';
+import { IsNumber, IsString, IsOptional, IsBoolean, IsUUID, IsEnum } from 'class-validator';
 import {
+	CurrenciesEnum,
 	IEmployee,
 	IExpense,
 	IInvoice,
@@ -46,13 +47,21 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 	})
 	quantity: number;
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
+	@IsOptional()
 	@MultiORMColumn({
+		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
 	})
-	totalValue: number;
+	totalValue?: number;
+
+	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum })
+	@IsEnum(CurrenciesEnum)
+	@IsOptional()
+	@MultiORMColumn({ nullable: true })
+	currency?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()

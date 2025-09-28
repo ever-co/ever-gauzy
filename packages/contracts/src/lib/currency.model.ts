@@ -1,5 +1,12 @@
 import { IBaseEntityModel } from './base-entity.model';
 
+export interface ICurrencyTotals {
+	subtotal: number;
+	totalTax?: number;
+	totalDiscount?: number;
+	total: number;
+}
+
 export interface ICurrency extends IBaseEntityModel {
 	isoCode: string;
 	currency: string;

@@ -1,0 +1,49 @@
+{
+	"CANNOT_DELETE_ALL_SUPER_ADMINS": "Deve esserci almeno {count} Super Admin per tenant",
+	"SOME_TEST_KEY": "Un valore di test da tradurre",
+	"INVOICES_PAGE": {
+		"ALREADY_PAID": "Già pagato",
+		"AMOUNT_DUE": "Importo dovuto",
+		"CURRENCY": "Valuta",
+		"CURRENCIES": "Valute",
+		"DATE": "Data",
+		"DISCOUNT_TYPE": "Tipo di sconto",
+		"DUE_DATE": "Data di scadenza",
+		"ESTIMATE": "Preventivo",
+		"FROM": "DA",
+		"INVOICE": "Fattura",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Valore dello sconto",
+		"INVOICES_SELECT_NOTES": "Note",
+		"NO": "No",
+		"NUMBER": "Numero",
+		"PAID": "Pagato",
+		"TAX_TYPE": "Tipo di tassa",
+		"TAX_VALUE": "Imposta",
+		"TO": "A",
+		"YES": "Sì",
+		"TAX_ID": "Partita IVA",
+		"ADDRESS": "Indirizzo",
+		"ADDRESS_2": "Indirizzo 2",
+		"POSTCODE": "CAP",
+		"INVOICE_ITEM": {
+			"DESCRIPTION": "Descrizione",
+			"ITEM": "Articolo",
+			"PRICE": "Prezzo",
+			"QUANTITY": "Quantità",
+			"TOTAL_VALUE": "Valore totale"
+		},
+		"PAYMENTS": {
+			"RECEIVER": "Destinatario",
+			"RECEIVED_FROM": "Ricevuto da",
+			"TOTAL_PAID": "Totale pagato",
+			"STATUS": "Stato",
+			"NOTE": "Nota",
+			"RECORDED_BY": "Registrato da",
+			"AMOUNT": "Importo",
+			"PAYMENT_DATE": "Data di pagamento",
+			"ON_TIME": "In orario",
+			"OVERDUE": "Scaduto",
+			"PAYMENTS_FOR_INVOICE": "Pagamenti per fattura"
+		}
+	}
+}

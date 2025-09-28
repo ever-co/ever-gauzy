@@ -1,0 +1,49 @@
+{
+	"CANNOT_DELETE_ALL_SUPER_ADMINS": "Deve haver pelo menos {count} Super Admin por inquilino",
+	"SOME_TEST_KEY": "Algum valor de teste para traduzir",
+	"INVOICES_PAGE": {
+		"ALREADY_PAID": "Já pago",
+		"AMOUNT_DUE": "Valor devido",
+		"CURRENCY": "Moeda",
+		"CURRENCIES": "Moedas",
+		"DATE": "Data",
+		"DISCOUNT_TYPE": "Tipo de desconto",
+		"DUE_DATE": "Data de vencimento",
+		"ESTIMATE": "Orçamento",
+		"FROM": "DE",
+		"INVOICE": "Fatura",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Valor do desconto",
+		"INVOICES_SELECT_NOTES": "Notas",
+		"NO": "Não",
+		"NUMBER": "Número",
+		"PAID": "Pago",
+		"TAX_TYPE": "Tipo de imposto",
+		"TAX_VALUE": "Imposto",
+		"TO": "PARA",
+		"YES": "Sim",
+		"TAX_ID": "NIF",
+		"ADDRESS": "Endereço",
+		"ADDRESS_2": "Endereço 2",
+		"POSTCODE": "Código postal",
+		"INVOICE_ITEM": {
+			"DESCRIPTION": "Descrição",
+			"ITEM": "Item",
+			"PRICE": "Preço",
+			"QUANTITY": "Quantidade",
+			"TOTAL_VALUE": "Valor total"
+		},
+		"PAYMENTS": {
+			"RECEIVER": "Recebedor",
+			"RECEIVED_FROM": "Recebido de",
+			"TOTAL_PAID": "Total pago",
+			"STATUS": "Status",
+			"NOTE": "Nota",
+			"RECORDED_BY": "Registrado por",
+			"AMOUNT": "Valor",
+			"PAYMENT_DATE": "Data de pagamento",
+			"ON_TIME": "No prazo",
+			"OVERDUE": "Atrasado",
+			"PAYMENTS_FOR_INVOICE": "Pagamentos para fatura"
+		}
+	}
+}

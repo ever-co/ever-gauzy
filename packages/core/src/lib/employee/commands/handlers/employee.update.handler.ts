@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
-import { IEmployee, PermissionsEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, IEmployee, IEmployeeHourlyRate, PermissionsEnum } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EmployeeUpdateCommand } from './../employee.update.command';
 import { EmployeeService } from './../../employee.service';
@@ -44,6 +44,24 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 				linkedInId: input.linkedInId || null,
 				id
 			});
+
+			if (input.billRateCurrency || input.billRateValue || input.minimumBillingRate) {
+				const employee = await this._employeeService.findOneByIdString(id, {
+					relations: ['hourlyRates']
+				});
+
+				employee.hourlyRates.push({
+					billRateCurrency: input.billRateCurrency,
+					billRateValue: input.billRateValue || 0,
+					minimumBillingRate: input.minimumBillingRate || 0,
+					lastUpdate: new Date(),
+					entity: BaseEntityEnum.Employee,
+					entityId: id,
+					employeeId: employee.id
+				} as IEmployeeHourlyRate);
+
+				await this._employeeService.save(employee);
+			}
 
 			// Send a real-time event to the specified user via socket.
 			// No error is thrown if the user is not currently connected.

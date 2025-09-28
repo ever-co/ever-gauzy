@@ -1,0 +1,49 @@
+{
+	"CANNOT_DELETE_ALL_SUPER_ADMINS": "Il doit y avoir au moins {count} Super Admin par locataire",
+	"SOME_TEST_KEY": "Une valeur de test à traduire",
+	"INVOICES_PAGE": {
+		"ALREADY_PAID": "Déjà payé",
+		"AMOUNT_DUE": "Montant dû",
+		"CURRENCY": "Devise",
+		"CURRENCIES": "Devises",
+		"DATE": "Date",
+		"DISCOUNT_TYPE": "Type de remise",
+		"DUE_DATE": "Date d'échéance",
+		"ESTIMATE": "Devis",
+		"FROM": "DE",
+		"INVOICE": "Facture",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Valeur de la remise",
+		"INVOICES_SELECT_NOTES": "Notes",
+		"NO": "Non",
+		"NUMBER": "Numéro",
+		"PAID": "Payé",
+		"TAX_TYPE": "Type de taxe",
+		"TAX_VALUE": "Taxe",
+		"TO": "À",
+		"YES": "Oui",
+		"TAX_ID": "Numéro fiscal",
+		"ADDRESS": "Adresse",
+		"ADDRESS_2": "Adresse 2",
+		"POSTCODE": "Code postal",
+		"INVOICE_ITEM": {
+			"DESCRIPTION": "Description",
+			"ITEM": "Article",
+			"PRICE": "Prix",
+			"QUANTITY": "Quantité",
+			"TOTAL_VALUE": "Valeur totale"
+		},
+		"PAYMENTS": {
+			"RECEIVER": "Bénéficiaire",
+			"RECEIVED_FROM": "Reçu de",
+			"TOTAL_PAID": "Total payé",
+			"STATUS": "Statut",
+			"NOTE": "Note",
+			"RECORDED_BY": "Enregistré par",
+			"AMOUNT": "Montant",
+			"PAYMENT_DATE": "Date de paiement",
+			"ON_TIME": "À temps",
+			"OVERDUE": "En retard",
+			"PAYMENTS_FOR_INVOICE": "Paiements pour facture"
+		}
+	}
+}

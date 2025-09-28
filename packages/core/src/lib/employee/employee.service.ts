@@ -20,13 +20,16 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
 import { Employee } from './employee.entity';
+import { TypeOrmEmployeeHourlyRateRepository } from '../employee-hourly-rates/repository/type-orm-hourly-rates.repository';
 
 @Injectable()
 export class EmployeeService extends TenantAwareCrudService<Employee> {
 	private readonly logger = new Logger(`GZY - ${EmployeeService.name}`);
 	constructor(
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
+		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
+		readonly typeOrmEmployeeHourlyRateRepository: TypeOrmEmployeeHourlyRateRepository,
+		readonly mikroOrmEmployeeHourlyRateRepository: MikroOrmEmployeeRepository
 	) {
 		super(typeOrmEmployeeRepository, mikroOrmEmployeeRepository);
 	}
@@ -291,9 +294,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					averageBonus: true,
 					startedWorkOn: true,
 					isTrackingEnabled: true,
-					billRateCurrency: true,
-					billRateValue: true,
-					minimumBillingRate: true,
+					hourlyRates: true,
 					reWeeklyLimit: true,
 					userId: true,
 					isAway: true,
@@ -362,29 +363,68 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		employeesId: string[],
 		forRange: IDateRangePicker
 	): Promise<IEmployeeHourlyRate[]> {
-		const query = this.typeOrmEmployeeRepository.createQueryBuilder(this.tableName);
+		const start = new Date(forRange.startDate);
+		const end = new Date(forRange.endDate);
+
+		// --- 1) Fetch all hourly rates within the given range ---
+		const query = this.typeOrmEmployeeHourlyRateRepository.createQueryBuilder('hourlyRates');
+
+		// Join employee to filter by organization
+		query.leftJoin('hourlyRates.employee', 'employee');
 		query.leftJoin('employee.user', 'user');
 
-		// Select only the required fields
-		query.setFindOptions({
-			select: {
-				id: true,
-				billRateCurrency: true,
-				billRateValue: true,
-				minimumBillingRate: true
-			}
-		});
-
-		// Filter by organization id and date range
-		query.where((qb: SelectQueryBuilder<Employee>) => {
-			this.getFilterQuery(qb, organizationId, forRange);
-		});
+		// Select only required fields
+		query.select([
+			'hourlyRates.id',
+			'hourlyRates.billRateCurrency',
+			'hourlyRates.billRateValue',
+			'hourlyRates.minimumBillingRate',
+			'hourlyRates.lastUpdate',
+			'hourlyRates.employeeId'
+		]);
 
 		// Filter by employee IDs
-		query.andWhere(p(`"${this.tableName}"."id" IN (:...employeesId)`), { employeesId });
+		query.where('hourlyRates.employeeId IN (:...employeesId)', { employeesId });
 
-		const data = await query.getMany();
-		return data as IEmployeeHourlyRate[];
+		// Filter by organization
+		query.andWhere('employee.organizationId = :organizationId', { organizationId });
+
+		// Filter by date range
+		query.andWhere('hourlyRates.lastUpdate BETWEEN :start AND :end', { start, end });
+
+		// Order by last update (newest first)
+		query.orderBy('hourlyRates.lastUpdate', 'DESC');
+
+		const inRange = await query.getMany();
+
+		// --- 2) Fetch the last hourly rate *before* the given range for each employee ---
+		const prevRates: IEmployeeHourlyRate[] = [];
+		for (const empId of employeesId) {
+			const prev = await this.typeOrmEmployeeHourlyRateRepository
+				.createQueryBuilder('hourlyRates')
+				.leftJoin('hourlyRates.employee', 'employee')
+				.select([
+					'hourlyRates.id',
+					'hourlyRates.billRateCurrency',
+					'hourlyRates.billRateValue',
+					'hourlyRates.minimumBillingRate',
+					'hourlyRates.lastUpdate',
+					'hourlyRates.employeeId'
+				])
+				.where('hourlyRates.employeeId = :empId', { empId })
+				.andWhere('employee.organizationId = :organizationId', { organizationId })
+				.andWhere('hourlyRates.lastUpdate < :start', { start }) // only before the range
+				.orderBy('hourlyRates.lastUpdate', 'DESC') // get the latest before range
+				.limit(1)
+				.getOne();
+
+			if (prev) {
+				prevRates.push(prev);
+			}
+		}
+
+		// --- 3) Merge previous rates with in-range rates ---
+		return [...prevRates, ...inRange];
 	}
 
 	/**

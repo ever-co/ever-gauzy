@@ -23,6 +23,15 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 	public loading = true;
 	public discountTaxTypes = DiscountTaxTypeEnum;
 	public country: string;
+	invoiceResultData: {
+		currency: string;
+		totalValue: number;
+		tax: number;
+		tax2: number;
+		discountValue: number;
+		alreadyPaid: number;
+		amountDue: number;
+	}[];
 
 	@Input() invoice: IInvoice;
 	@Input() isEstimate = false;
@@ -51,6 +60,20 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 					this.country = country.country;
 				}
 			});
+
+		this.invoiceResultData = this.invoiceResultDataToDisplay();
+	}
+
+	/**
+	 * Getter that returns a string representing the currency or currencies of the invoice
+	 */
+	get displayCurrencies(): string {
+		if (!this.invoice) return '';
+		if (this.invoice.currency) return this.invoice.currency;
+		if (this.invoice.amounts?.length) {
+			return this.invoice.amounts.map((a) => a.currency).join(', ');
+		}
+		return '';
 	}
 
 	/**
@@ -116,6 +139,58 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 	}
 
 	/**
+	 * Method that returns an array of objects containing the invoice amounts and related financial fields
+	 */
+	invoiceResultDataToDisplay(): {
+		currency: string;
+		totalValue: number;
+		tax: number;
+		tax2: number;
+		discountValue: number;
+		alreadyPaid: number;
+		amountDue: number;
+	}[] {
+		if (!this.invoice) return [];
+		if (this.invoice.currency != null) {
+			return [
+				{
+					currency: this.invoice.currency,
+					totalValue: this.invoice.totalValue ?? 0,
+					tax: this.invoice.tax ?? 0,
+					tax2: this.invoice.tax2 ?? 0,
+					discountValue: this.invoice.discountValue ?? 0,
+					alreadyPaid: this.invoice.alreadyPaid ?? 0,
+					amountDue: this.invoice.amountDue ?? 0
+				}
+			];
+		}
+
+		if (this.invoice.amounts?.length > 0) {
+			return this.invoice.amounts.map((a) => ({
+				currency: a.currency,
+				totalValue: a.totalValue ?? 0,
+				tax: this.invoice.tax ?? 0,
+				tax2: this.invoice.tax2 ?? 0,
+				discountValue: this.invoice.discountValue ?? 0,
+				alreadyPaid: this.invoice.alreadyPaid ?? 0,
+				amountDue: this.invoice.amountDue ?? 0
+			}));
+		}
+
+		return [
+			{
+				currency: '',
+				totalValue: 0,
+				tax: 0,
+				tax2: 0,
+				discountValue: 0,
+				alreadyPaid: 0,
+				amountDue: 0
+			}
+		];
+	}
+
+	/**
 	 * Apply translation on smart table
 	 */
 	private _applyTranslationOnSmartTable() {
@@ -141,7 +216,7 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 					quantity: item.quantity,
 					price: item.price,
 					totalValue: item.totalValue,
-					currency: this.invoice.currency,
+					currency: this.invoice.currency ?? item.currency,
 					id: item.id // Default inclusion
 				};
 

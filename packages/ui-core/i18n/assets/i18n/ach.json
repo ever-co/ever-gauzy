@@ -2701,6 +2701,7 @@
 		"ESTIMATE_DATE": "crwdns4422:0crwdne4422:0",
 		"DUE_DATE": "crwdns9668:0crwdne9668:0",
 		"CURRENCY": "crwdns9670:0crwdne9670:0",
+		"CURRENCIES": "crwdns100000:0crwdne100000:0",
 		"DISCOUNT": "crwdns9672:0crwdne9672:0",
 		"CONTACT": "crwdns9674:0crwdne9674:0",
 		"TOTAL_VALUE": "crwdns3278:0crwdne3278:0",

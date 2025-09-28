@@ -1,0 +1,49 @@
+{
+	"CANNOT_DELETE_ALL_SUPER_ADMINS": "يجب أن يكون هناك على الأقل {count} مشرف عام لكل مستأجر",
+	"SOME_TEST_KEY": "قيمة اختبارية للترجمة",
+	"INVOICES_PAGE": {
+		"ALREADY_PAID": "مدفوع بالفعل",
+		"AMOUNT_DUE": "المبلغ المستحق",
+		"CURRENCY": "العملة",
+		"CURRENCIES": "العملات",
+		"DATE": "التاريخ",
+		"DISCOUNT_TYPE": "نوع الخصم",
+		"DUE_DATE": "تاريخ الاستحقاق",
+		"ESTIMATE": "تقدير",
+		"FROM": "من",
+		"INVOICE": "فاتورة",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "قيمة الخصم",
+		"INVOICES_SELECT_NOTES": "ملاحظات",
+		"NO": "لا",
+		"NUMBER": "رقم",
+		"PAID": "مدفوع",
+		"TAX_TYPE": "نوع الضريبة",
+		"TAX_VALUE": "الضريبة",
+		"TO": "إلى",
+		"YES": "نعم",
+		"TAX_ID": "الرقم الضريبي",
+		"ADDRESS": "العنوان",
+		"ADDRESS_2": "العنوان 2",
+		"POSTCODE": "الرمز البريدي",
+		"INVOICE_ITEM": {
+			"DESCRIPTION": "الوصف",
+			"ITEM": "البند",
+			"PRICE": "السعر",
+			"QUANTITY": "الكمية",
+			"TOTAL_VALUE": "القيمة الإجمالية"
+		},
+		"PAYMENTS": {
+			"RECEIVER": "المستلم",
+			"RECEIVED_FROM": "مستلم من",
+			"TOTAL_PAID": "إجمالي المدفوع",
+			"STATUS": "الحالة",
+			"NOTE": "ملاحظة",
+			"RECORDED_BY": "مسجل بواسطة",
+			"AMOUNT": "المبلغ",
+			"PAYMENT_DATE": "تاريخ الدفع",
+			"ON_TIME": "في الوقت المحدد",
+			"OVERDUE": "متأخر",
+			"PAYMENTS_FOR_INVOICE": "المدفوعات للفاتورة"
+		}
+	}
+}

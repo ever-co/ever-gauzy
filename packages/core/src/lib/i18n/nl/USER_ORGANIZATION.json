@@ -1,0 +1,49 @@
+{
+	"CANNOT_DELETE_ALL_SUPER_ADMINS": "Er moet minstens {count} Super Admin per huurder zijn",
+	"SOME_TEST_KEY": "Een testwaarde om te vertalen",
+	"INVOICES_PAGE": {
+		"ALREADY_PAID": "Al betaald",
+		"AMOUNT_DUE": "Verschuldigd bedrag",
+		"CURRENCY": "Valuta",
+		"CURRENCIES": "Valuta's",
+		"DATE": "Datum",
+		"DISCOUNT_TYPE": "Kortingstype",
+		"DUE_DATE": "Vervaldatum",
+		"ESTIMATE": "Offerte",
+		"FROM": "VAN",
+		"INVOICE": "Factuur",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Kortingswaarde",
+		"INVOICES_SELECT_NOTES": "Notities",
+		"NO": "Nee",
+		"NUMBER": "Nummer",
+		"PAID": "Betaald",
+		"TAX_TYPE": "Belastingtype",
+		"TAX_VALUE": "Belasting",
+		"TO": "AAN",
+		"YES": "Ja",
+		"TAX_ID": "Btw-nummer",
+		"ADDRESS": "Adres",
+		"ADDRESS_2": "Adres 2",
+		"POSTCODE": "Postcode",
+		"INVOICE_ITEM": {
+			"DESCRIPTION": "Beschrijving",
+			"ITEM": "Artikel",
+			"PRICE": "Prijs",
+			"QUANTITY": "Aantal",
+			"TOTAL_VALUE": "Totale waarde"
+		},
+		"PAYMENTS": {
+			"RECEIVER": "Ontvanger",
+			"RECEIVED_FROM": "Ontvangen van",
+			"TOTAL_PAID": "Totaal betaald",
+			"STATUS": "Status",
+			"NOTE": "Notitie",
+			"RECORDED_BY": "Opgenomen door",
+			"AMOUNT": "Bedrag",
+			"PAYMENT_DATE": "Betaaldatum",
+			"ON_TIME": "Op tijd",
+			"OVERDUE": "Achterstallig",
+			"PAYMENTS_FOR_INVOICE": "Betalingen voor factuur"
+		}
+	}
+}

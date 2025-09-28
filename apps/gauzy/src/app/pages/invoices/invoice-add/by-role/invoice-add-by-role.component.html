@@ -492,12 +492,14 @@
 				</ng-container>
 			</div>
 
-			<div class="total d-flex">
+			<div class="total-invoice" *ngFor="let currency of getCurrencies()">
 				<div class="total-item">
-					{{ 'INVOICES_PAGE.SUBTOTAL' | translate }}: {{ currency }} {{ subtotal.toFixed(2) }}
+					{{ 'INVOICES_PAGE.SUBTOTAL' | translate }}: {{ currency }}
+					{{ totalsByCurrency[currency]?.subtotal.toFixed(2) }}
 				</div>
 				<div class="total-item">
-					{{ 'INVOICES_PAGE.TOTAL' | translate }}: {{ currency }} {{ total.toFixed(2) }}
+					{{ 'INVOICES_PAGE.TOTAL' | translate }}: {{ currency }}
+					{{ totalsByCurrency[currency]?.total.toFixed(2) }}
 				</div>
 			</div>
 		</div>

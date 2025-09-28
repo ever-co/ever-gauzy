@@ -1,0 +1,49 @@
+{
+	"CANNOT_DELETE_ALL_SUPER_ADMINS": "Es muss mindestens {count} Super-Admin pro Mandant geben",
+	"SOME_TEST_KEY": "Ein Testwert zum Übersetzen",
+	"INVOICES_PAGE": {
+		"ALREADY_PAID": "Bereits bezahlt",
+		"AMOUNT_DUE": "Fälliger Betrag",
+		"CURRENCY": "Währung",
+		"CURRENCIES": "Währungen",
+		"DATE": "Datum",
+		"DISCOUNT_TYPE": "Rabattart",
+		"DUE_DATE": "Fälligkeitsdatum",
+		"ESTIMATE": "Kostenvoranschlag",
+		"FROM": "VON",
+		"INVOICE": "Rechnung",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Rabattwert",
+		"INVOICES_SELECT_NOTES": "Notizen",
+		"NO": "Nein",
+		"NUMBER": "Nummer",
+		"PAID": "Bezahlt",
+		"TAX_TYPE": "Steuerart",
+		"TAX_VALUE": "Steuer",
+		"TO": "AN",
+		"YES": "Ja",
+		"TAX_ID": "Steuernummer",
+		"ADDRESS": "Adresse",
+		"ADDRESS_2": "Adresse 2",
+		"POSTCODE": "Postleitzahl",
+		"INVOICE_ITEM": {
+			"DESCRIPTION": "Beschreibung",
+			"ITEM": "Artikel",
+			"PRICE": "Preis",
+			"QUANTITY": "Menge",
+			"TOTAL_VALUE": "Gesamtwert"
+		},
+		"PAYMENTS": {
+			"RECEIVER": "Empfänger",
+			"RECEIVED_FROM": "Erhalten von",
+			"TOTAL_PAID": "Insgesamt bezahlt",
+			"STATUS": "Status",
+			"NOTE": "Notiz",
+			"RECORDED_BY": "Aufgezeichnet von",
+			"AMOUNT": "Betrag",
+			"PAYMENT_DATE": "Zahlungsdatum",
+			"ON_TIME": "Pünktlich",
+			"OVERDUE": "Überfällig",
+			"PAYMENTS_FOR_INVOICE": "Zahlungen für Rechnung"
+		}
+	}
+}

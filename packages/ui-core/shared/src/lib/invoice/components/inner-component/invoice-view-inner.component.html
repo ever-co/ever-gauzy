@@ -58,9 +58,14 @@
 							</div>
 							<div class="d-flex">
 								<div class="font-weight-bold text-left mr-2">
-									{{ 'INVOICES_PAGE.CURRENCY' | translate }}:
+									{{
+										(invoice?.amounts?.length > 1
+											? 'INVOICES_PAGE.CURRENCIES'
+											: 'INVOICES_PAGE.CURRENCY'
+										) | translate
+									}}:
 								</div>
-								<div>{{ invoice?.currency }}</div>
+								<div>{{ displayCurrencies }}</div>
 							</div>
 						</div>
 					</div>
@@ -179,88 +184,101 @@
 				</div>
 
 				<div class="d-flex flex-column w-40 align-items-end">
-					<div class="invoice-subtotal">
-						<div class="font-weight-bold">{{ 'INVOICES_PAGE.TAX' | translate }}:</div>
-						<div>
-							<span *ngIf="invoice.taxType === discountTaxTypes.PERCENT">
-								{{ invoice?.tax || 0 }} %
-							</span>
-							<span *ngIf="invoice.taxType !== discountTaxTypes.PERCENT">
-								{{
-									invoice?.tax || 0
-										| currency : invoice?.currency : 'code'
-										| position
-											: (invoice?.toOrganization ?? invoice?.fromOrganization)?.currencyPosition
-								}}
-							</span>
-						</div>
-					</div>
-					<div class="invoice-subtotal">
-						<div class="font-weight-bold">{{ 'INVOICES_PAGE.TAX_2' | translate }}:</div>
-						<div>
-							<span *ngIf="invoice.taxType === discountTaxTypes.PERCENT">
-								{{ invoice?.tax2 || 0 }}%
-							</span>
-							<span *ngIf="invoice.taxType !== discountTaxTypes.PERCENT">
-								{{
-									invoice?.tax2 || 0
-										| currency : invoice?.currency : 'code'
-										| position
-											: (invoice?.toOrganization ?? invoice?.fromOrganization)?.currencyPosition
-								}}
-							</span>
-						</div>
-					</div>
-					<div class="invoice-subtotal">
-						<div class="font-weight-bold">
-							{{ 'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE' | translate }}:
-						</div>
-						<div>
-							<span *ngIf="invoice.discountType === discountTaxTypes.PERCENT">
-								{{ invoice?.discountValue || 0 }}%
-							</span>
-							<span *ngIf="invoice.discountType !== discountTaxTypes.PERCENT">
-								{{
-									invoice.discountValue || 0
-										| currency : invoice?.currency : 'code'
-										| position
-											: (invoice?.toOrganization ?? invoice?.fromOrganization)?.currencyPosition
-								}}
-							</span>
-						</div>
-					</div>
-					<div class="invoice-subtotal">
-						<div class="font-weight-bold">{{ 'INVOICES_PAGE.TOTAL_VALUE' | translate | uppercase }}:</div>
-						<div class="font-weight-bold">
-							{{
-								invoice?.totalValue || 0
-									| currency : invoice?.currency : 'code'
-									| position
-										: (invoice?.toOrganization ?? invoice?.fromOrganization)?.currencyPosition
-							}}
-						</div>
-					</div>
+					<div class="invoice-total-wrapper" *ngFor="let amt of invoiceResultData">
+						<div class="invoice-total-item">
+							<div class="invoice-subtotal">
+								<div class="font-weight-bold">{{ 'INVOICES_PAGE.TAX' | translate }}:</div>
+								<div>
+									<span *ngIf="invoice.taxType === discountTaxTypes.PERCENT"
+										>{{ amt.tax || 0 }} %</span
+									>
+									<span *ngIf="invoice.taxType !== discountTaxTypes.PERCENT">
+										{{
+											amt.tax || 0
+												| currency : amt?.currency : 'code' : '1.0-2'
+												| position
+													: (invoice?.toOrganization ?? invoice?.fromOrganization)
+															?.currencyPosition
+										}}
+									</span>
+								</div>
+							</div>
+							<div class="invoice-subtotal">
+								<div class="font-weight-bold">{{ 'INVOICES_PAGE.TAX_2' | translate }}:</div>
+								<div>
+									<span *ngIf="invoice.tax2Type === discountTaxTypes.PERCENT"
+										>{{ amt?.tax2 || 0 }} %</span
+									>
+									<span *ngIf="invoice.tax2Type !== discountTaxTypes.PERCENT">
+										{{
+											amt?.tax2 || 0
+												| currency : amt?.currency : 'code' : '1.0-2'
+												| position
+													: (invoice?.toOrganization ?? invoice?.fromOrganization)
+															?.currencyPosition
+										}}
+									</span>
+								</div>
+							</div>
+							<div class="invoice-subtotal">
+								<div class="font-weight-bold">
+									{{ 'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE' | translate }}:
+								</div>
+								<div>
+									<span *ngIf="invoice.discountType === discountTaxTypes.PERCENT"
+										>{{ amt?.discountValue || 0 }} %</span
+									>
+									<span *ngIf="invoice.discountType !== discountTaxTypes.PERCENT">
+										{{
+											amt?.discountValue || 0
+												| currency : amt?.currency : 'code' : '1.0-2'
+												| position
+													: (invoice?.toOrganization ?? invoice?.fromOrganization)
+															?.currencyPosition
+										}}
+									</span>
+								</div>
+							</div>
+							<div class="invoice-subtotal">
+								<div class="font-weight-bold">
+									{{ 'INVOICES_PAGE.TOTAL_VALUE' | translate | uppercase }}:
+								</div>
+								<div class="font-weight-bold">
+									{{
+										amt?.totalValue || 0
+											| currency : amt?.currency : 'code' : '1.0-2'
+											| position
+												: (invoice?.toOrganization ?? invoice?.fromOrganization)
+														?.currencyPosition
+									}}
+								</div>
+							</div>
 
-					<div class="invoice-subtotal" *ngIf="invoice.hasRemainingAmountInvoiced">
-						<div class="font-weight-bold">{{ 'INVOICES_PAGE.ALREADY_PAID' | translate }}:</div>
-						<div>
-							{{
-								invoice?.alreadyPaid || 0
-									| currency : invoice?.currency
-									| position
-										: (invoice?.toOrganization ?? invoice?.fromOrganization)?.currencyPosition
-							}}
-						</div>
-					</div>
-					<div class="invoice-subtotal" *ngIf="invoice.hasRemainingAmountInvoiced">
-						<div class="font-weight-bold">{{ 'INVOICES_PAGE.AMOUNT_DUE' | translate }}:</div>
-						<div>
-							{{
-								invoice?.amountDue || 0
-									| currency : invoice?.currency
-									| position
-										: (invoice?.toOrganization ?? invoice?.fromOrganization)?.currencyPosition
-							}}
+							<div class="invoice-subtotal" *ngIf="invoice.hasRemainingAmountInvoiced">
+								<div class="font-weight-bold">{{ 'INVOICES_PAGE.ALREADY_PAID' | translate }}:</div>
+								<div>
+									{{
+										amt?.alreadyPaid || 0
+											| currency : amt?.currency
+											| position
+												: (invoice?.toOrganization ?? invoice?.fromOrganization)
+														?.currencyPosition
+									}}
+								</div>
+							</div>
+
+							<div class="invoice-subtotal" *ngIf="invoice.hasRemainingAmountInvoiced">
+								<div class="font-weight-bold">{{ 'INVOICES_PAGE.AMOUNT_DUE' | translate }}:</div>
+								<div>
+									{{
+										amt?.amountDue || 0
+											| currency : amt?.currency
+											| position
+												: (invoice?.toOrganization ?? invoice?.fromOrganization)
+														?.currencyPosition
+									}}
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>

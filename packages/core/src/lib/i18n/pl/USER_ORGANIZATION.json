@@ -1,0 +1,49 @@
+{
+	"CANNOT_DELETE_ALL_SUPER_ADMINS": "Musi istnieć co najmniej {count} Super Administrator na najemcę",
+	"SOME_TEST_KEY": "Jakaś testowa wartość do przetłumaczenia",
+	"INVOICES_PAGE": {
+		"ALREADY_PAID": "Już zapłacono",
+		"AMOUNT_DUE": "Kwota do zapłaty",
+		"CURRENCY": "Waluta",
+		"CURRENCIES": "Waluty",
+		"DATE": "Data",
+		"DISCOUNT_TYPE": "Rodzaj rabatu",
+		"DUE_DATE": "Termin płatności",
+		"ESTIMATE": "Szacunek",
+		"FROM": "OD",
+		"INVOICE": "Faktura",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Wartość rabatu",
+		"INVOICES_SELECT_NOTES": "Notatki",
+		"NO": "Nie",
+		"NUMBER": "Numer",
+		"PAID": "Zapłacono",
+		"TAX_TYPE": "Rodzaj podatku",
+		"TAX_VALUE": "Podatek",
+		"TO": "DO",
+		"YES": "Tak",
+		"TAX_ID": "NIP",
+		"ADDRESS": "Adres",
+		"ADDRESS_2": "Adres 2",
+		"POSTCODE": "Kod pocztowy",
+		"INVOICE_ITEM": {
+			"DESCRIPTION": "Opis",
+			"ITEM": "Pozycja",
+			"PRICE": "Cena",
+			"QUANTITY": "Ilość",
+			"TOTAL_VALUE": "Wartość całkowita"
+		},
+		"PAYMENTS": {
+			"RECEIVER": "Odbiorca",
+			"RECEIVED_FROM": "Otrzymano od",
+			"TOTAL_PAID": "Łącznie zapłacono",
+			"STATUS": "Status",
+			"NOTE": "Notatka",
+			"RECORDED_BY": "Zarejestrowane przez",
+			"AMOUNT": "Kwota",
+			"PAYMENT_DATE": "Data płatności",
+			"ON_TIME": "Na czas",
+			"OVERDUE": "Zaległe",
+			"PAYMENTS_FOR_INVOICE": "Płatności za fakturę"
+		}
+	}
+}

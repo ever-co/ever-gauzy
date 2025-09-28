@@ -14,6 +14,7 @@ import {
 	NbDialogModule,
 	NbToastrModule,
 	NbWindowModule,
+	NbSidebarModule,
 	NbDatepickerModule
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
@@ -80,6 +81,7 @@ const config: ExtraOptions = {
 // NB Modules
 const NB_MODULES = [
 	NbMenuModule.forRoot(),
+	NbSidebarModule.forRoot(),
 	NbDialogModule.forRoot(),
 	NbWindowModule.forRoot(),
 	NbToastrModule.forRoot(),

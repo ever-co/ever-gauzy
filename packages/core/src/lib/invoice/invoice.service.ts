@@ -275,6 +275,8 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				'invoiceItems.project',
 				'invoiceItems.task',
 				'invoiceItems',
+				'employee.hourlyRates',
+				'amounts',
 				'toContact'
 			]
 		});
@@ -307,6 +309,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			taxValue: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.TAX_VALUE', { lang: language }),
 			taxType: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.TAX_TYPE', { lang: language }),
 			currency: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.CURRENCY', { lang: language }),
+			currencies: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.CURRENCIES', { lang: language }),
 			notes: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.INVOICES_SELECT_NOTES', {
 				lang: language
 			}),
@@ -413,19 +416,22 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * @param filter
 	 * @returns
 	 */
-	public pagination(filter?: PaginationParams<any>) {
+	public async pagination(filter?: PaginationParams<any>) {
 		if ('where' in filter) {
 			const { where } = filter;
+
 			if (where.tags) {
 				filter.where.tags = {
 					id: In(where.tags)
 				};
 			}
+
 			if (where.toContact) {
 				filter.where.toContact = {
 					id: In(where.toContact)
 				};
 			}
+
 			if ('invoiceDate' in where) {
 				const { invoiceDate } = where;
 				const { startDate, endDate } = invoiceDate;
@@ -442,14 +448,15 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					);
 				}
 			}
+
 			if ('dueDate' in where) {
 				const { dueDate } = where;
 				const { startDate, endDate } = dueDate;
 
 				if (startDate && endDate) {
 					filter.where.dueDate = Between(
-						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
-						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
+						moment.utc(startDate).startOf('day').toDate(),
+						moment.utc(endDate).endOf('day').toDate()
 					);
 				} else {
 					filter.where.dueDate = Between(
@@ -459,22 +466,41 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				}
 			}
 
-			if ('totalValue' in where && where.totalValue) {
-				const { min, max } = where.totalValue as { min?: number; max?: number };
+			const currencyValue = where.currency;
+			delete where.currency;
 
-				if (min !== undefined && max !== undefined && min > max) {
-					throw new BadRequestException('Minimum value cannot be greater than maximum value');
-				}
+			const totalValue = where.totalValue;
+			delete where.totalValue;
 
-				if (min !== undefined && max !== undefined) {
-					filter.where.totalValue = Between(min, max);
-				} else if (min !== undefined) {
-					filter.where.totalValue = MoreThanOrEqual(min);
-				} else if (max !== undefined) {
-					filter.where.totalValue = LessThanOrEqual(max);
-				}
+			const result = await super.paginate(filter);
+			let filteredItems = result.items;
+
+			if (currencyValue) {
+				filteredItems = filteredItems.filter(
+					(invoice: Invoice) =>
+						invoice.currency === currencyValue || invoice.amounts?.some((a) => a.currency === currencyValue)
+				);
 			}
+
+			if (totalValue) {
+				const value = Number(totalValue);
+				if (isNaN(value)) {
+					throw new BadRequestException('Invalid totalValue');
+				}
+
+				filteredItems = filteredItems.filter(
+					(invoice) =>
+						invoice.totalValue === value || invoice.amounts?.some((amount) => amount.totalValue === value)
+				);
+			}
+
+			return {
+				...result,
+				items: filteredItems,
+				total: filteredItems.length
+			};
 		}
+
 		return super.paginate(filter);
 	}
 }

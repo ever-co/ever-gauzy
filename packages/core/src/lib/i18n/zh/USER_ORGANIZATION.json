@@ -1,0 +1,49 @@
+{
+	"CANNOT_DELETE_ALL_SUPER_ADMINS": "每个租户至少必须有 {count} 个超级管理员",
+	"SOME_TEST_KEY": "一些测试值以翻译",
+	"INVOICES_PAGE": {
+		"ALREADY_PAID": "已付款",
+		"AMOUNT_DUE": "应付金额",
+		"CURRENCY": "货币",
+		"CURRENCIES": "货币列表",
+		"DATE": "日期",
+		"DISCOUNT_TYPE": "折扣类型",
+		"DUE_DATE": "到期日",
+		"ESTIMATE": "估算",
+		"FROM": "从",
+		"INVOICE": "发票",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "折扣值",
+		"INVOICES_SELECT_NOTES": "备注",
+		"NO": "否",
+		"NUMBER": "编号",
+		"PAID": "已支付",
+		"TAX_TYPE": "税种",
+		"TAX_VALUE": "税额",
+		"TO": "至",
+		"YES": "是",
+		"TAX_ID": "税号",
+		"ADDRESS": "地址",
+		"ADDRESS_2": "地址2",
+		"POSTCODE": "邮编",
+		"INVOICE_ITEM": {
+			"DESCRIPTION": "描述",
+			"ITEM": "项目",
+			"PRICE": "价格",
+			"QUANTITY": "数量",
+			"TOTAL_VALUE": "总额"
+		},
+		"PAYMENTS": {
+			"RECEIVER": "接收人",
+			"RECEIVED_FROM": "收到自",
+			"TOTAL_PAID": "总支付",
+			"STATUS": "状态",
+			"NOTE": "备注",
+			"RECORDED_BY": "记录者",
+			"AMOUNT": "金额",
+			"PAYMENT_DATE": "支付日期",
+			"ON_TIME": "准时",
+			"OVERDUE": "逾期",
+			"PAYMENTS_FOR_INVOICE": "发票付款"
+		}
+	}
+}

@@ -1,6 +1,6 @@
 import { currencyWithSymbol } from '@gauzy/utils';
 import { IInvoice, IOrganization, IOrganizationContact, InvoiceTypeEnum } from '@gauzy/contracts';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 
 export async function generateInvoicePdfDefinition(
 	invoice: IInvoice,
@@ -15,8 +15,8 @@ export async function generateInvoicePdfDefinition(
 		const currentItem = [
 			`${item.description}`,
 			`${item.quantity}`,
-			currencyWithSymbol(item.price, invoice.currency),
-			currencyWithSymbol(item.totalValue, invoice.currency)
+			currencyWithSymbol(item.price, invoice.currency ?? item.currency),
+			currencyWithSymbol(item.totalValue, invoice.currency ?? item.currency)
 		];
 		switch (invoice.invoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS: {
@@ -134,6 +134,10 @@ export async function generateInvoicePdfDefinition(
 		});
 	}
 
+	const showCurrencies = displayCurrencies(invoice);
+
+	const resultDataToDisplay = invoiceResultDataToDisplay(invoice);
+
 	const docDefinition = {
 		watermark: {
 			text: `${invoice.paid ? translatedText.paid.toUpperCase() : ''}`,
@@ -179,7 +183,9 @@ export async function generateInvoicePdfDefinition(
 									translatedText.date
 								}: `
 							},
-							`${moment(invoice.invoiceDate).format(organization.dateFormat)}`
+							`${moment(invoice.invoiceDate)
+								.tz(invoice.fromUser?.timeZone ?? organization.timeZone)
+								.format(organization.dateFormat)}`
 						]
 					}
 				]
@@ -205,9 +211,11 @@ export async function generateInvoicePdfDefinition(
 						text: [
 							{
 								bold: true,
-								text: `${translatedText.currency}: `
+								text: `${
+									invoice?.amounts?.length > 1 ? translatedText.currencies : translatedText.currency
+								}: `
 							},
-							`${invoice.currency}`
+							`${showCurrencies}`
 						]
 					}
 				]
@@ -236,125 +244,155 @@ export async function generateInvoicePdfDefinition(
 			{
 				table: {
 					widths: ['60%', '20%', '20%'],
-					body: [
-						[
-							invoice.terms?.length > 0
-								? {
-										rowSpan: 7,
-										alignment: 'top',
-										columns: [
-											{
-												width: '*',
-												text: [
-													{
-														bold: true,
-														text: `${translatedText.notes}\n\n`
-													},
-													`${invoice.terms}`
-												]
-											}
-										]
-								  }
-								: '',
-							{
-								bold: true,
-								alignment: 'right',
-								text: `${translatedText.taxValue}:`
-							},
-							{
-								alignment: 'right',
-								text:
-									invoice.taxType === 'PERCENT'
-										? `${invoice.tax}%`
-										: currencyWithSymbol(invoice.tax, invoice.currency)
-							}
-						],
-						[
-							'',
-							{
-								bold: true,
-								alignment: 'right',
-								text: `${translatedText.taxValue} 2:`
-							},
-							{
-								alignment: 'right',
-								text:
-									invoice.tax2Type === 'PERCENT'
-										? `${invoice.tax2}%`
-										: currencyWithSymbol(invoice.tax2, invoice.currency)
-							}
-						],
-						[
-							'',
-							{
-								bold: true,
-								alignment: 'right',
-								text: `${translatedText.discountValue}:`
-							},
-							{
-								alignment: 'right',
-								text:
-									invoice.discountType === 'PERCENT'
-										? `${invoice.discountValue}%`
-										: currencyWithSymbol(invoice.discountValue, invoice.currency)
-							}
-						],
-						[
-							'',
-							{
-								bold: true,
-								alignment: 'right',
-								text: `${translatedText.totalValue.toUpperCase()}:`
-							},
-							{
-								bold: true,
-								alignment: 'right',
-								text: currencyWithSymbol(invoice.totalValue, invoice.currency)
-							}
-						],
-						...(invoice.hasRemainingAmountInvoiced
-							? [
-									[
-										'',
-										{
-											bold: true,
-											alignment: 'right',
-											text: `${translatedText.alreadyPaid}:`
-										},
-										{
-											alignment: 'right',
-											text: currencyWithSymbol(invoice.alreadyPaid, invoice.currency)
-										}
-									],
-									[
-										'',
-										{
-											bold: true,
-											alignment: 'right',
-											text: `${translatedText.amountDue}:`
-										},
-										{
-											alignment: 'right',
-											text: currencyWithSymbol(invoice.amountDue, invoice.currency)
-										}
-									]
-							  ]
-							: [
-									['', '', ''],
-									['', '', '']
-							  ]),
-						['', '', '']
-					]
+					body: resultDataToDisplay.flatMap((amt) => {
+						const rows: any[] = [
+							[
+								invoice.terms?.length > 0
+									? {
+											rowSpan: 7,
+											alignment: 'top',
+											columns: [
+												{
+													width: '*',
+													text: [
+														{ bold: true, text: `${translatedText.notes}\n\n` },
+														`${invoice.terms}`
+													]
+												}
+											]
+									  }
+									: '',
+								{ bold: true, alignment: 'right', text: `${translatedText.taxValue}:` },
+								{
+									alignment: 'right',
+									text:
+										invoice.taxType === 'PERCENT'
+											? `${amt.tax}%`
+											: currencyWithSymbol(amt.tax, amt.currency)
+								}
+							],
+							[
+								'',
+								{ bold: true, alignment: 'right', text: `${translatedText.taxValue} 2:` },
+								{
+									alignment: 'right',
+									text:
+										invoice.tax2Type === 'PERCENT'
+											? `${amt.tax2}%`
+											: currencyWithSymbol(amt.tax2, amt.currency)
+								}
+							],
+							[
+								'',
+								{ bold: true, alignment: 'right', text: `${translatedText.discountValue}:` },
+								{
+									alignment: 'right',
+									text:
+										invoice.discountType === 'PERCENT'
+											? `${amt.discountValue}%`
+											: currencyWithSymbol(amt.discountValue, amt.currency)
+								}
+							],
+							[
+								'',
+								{
+									bold: true,
+									alignment: 'right',
+									fillColor: '#E6E6E6',
+									text: `${translatedText.totalValue.toUpperCase()}:`
+								},
+								{
+									bold: true,
+									alignment: 'right',
+									fillColor: '#E6E6E6',
+									text: currencyWithSymbol(amt.totalValue, amt.currency)
+								}
+							],
+							['', '', '']
+						];
+
+						if (invoice.hasRemainingAmountInvoiced) {
+							rows.push(
+								[
+									'',
+									{ bold: true, alignment: 'right', text: `${translatedText.alreadyPaid}:` },
+									{ alignment: 'right', text: currencyWithSymbol(amt.alreadyPaid, amt.currency) }
+								],
+								[
+									'',
+									{ bold: true, alignment: 'right', text: `${translatedText.amountDue}:` },
+									{ alignment: 'right', text: currencyWithSymbol(amt.amountDue, amt.currency) }
+								]
+							);
+						}
+
+						return rows;
+					})
 				},
 				layout: {
 					defaultBorder: false,
-					border: [false, false, false, false],
-					fillColor: function (rowIndex, node, columnIndex) {
-						return rowIndex === 3 && columnIndex > 0 ? '#E6E6E6' : null;
-					}
+					border: [false, false, false, false]
 				}
 			}
 		]
 	};
 	return docDefinition;
+}
+
+function invoiceResultDataToDisplay(invoice): {
+	currency: string;
+	totalValue: number;
+	tax: number;
+	tax2: number;
+	discountValue: number;
+	alreadyPaid: number;
+	amountDue: number;
+}[] {
+	if (!invoice) return [];
+	if (invoice.currency != null) {
+		return [
+			{
+				currency: invoice.currency,
+				totalValue: invoice.totalValue ?? 0,
+				tax: invoice.tax ?? 0,
+				tax2: invoice.tax2 ?? 0,
+				discountValue: invoice.discountValue ?? 0,
+				alreadyPaid: invoice.alreadyPaid ?? 0,
+				amountDue: invoice.amountDue ?? 0
+			}
+		];
+	}
+
+	if (invoice.amounts?.length > 0) {
+		return invoice.amounts.map((a) => ({
+			currency: a.currency,
+			totalValue: a.totalValue ?? 0,
+			tax: invoice.tax ?? 0,
+			tax2: invoice.tax2 ?? 0,
+			discountValue: invoice.discountValue ?? 0,
+			alreadyPaid: invoice.alreadyPaid ?? 0,
+			amountDue: invoice.amountDue ?? 0
+		}));
+	}
+
+	return [
+		{
+			currency: '',
+			totalValue: 0,
+			tax: 0,
+			tax2: 0,
+			discountValue: 0,
+			alreadyPaid: 0,
+			amountDue: 0
+		}
+	];
+}
+
+function displayCurrencies(invoice): string {
+	if (!invoice) return '';
+	if (invoice.currency) return invoice.currency;
+	if (invoice.amounts?.length) {
+		return invoice.amounts.map((a) => a.currency).join(', ');
+	}
+	return '';
 }

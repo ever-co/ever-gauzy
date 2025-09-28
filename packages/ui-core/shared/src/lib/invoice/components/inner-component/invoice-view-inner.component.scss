@@ -43,3 +43,15 @@
   font-weight: 500;
   color: var(--gauzy-text-color-2);
 }
+
+.invoice-total-wrapper {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.invoice-total-item {
+  display: flex;
+  flex-direction: column;
+}

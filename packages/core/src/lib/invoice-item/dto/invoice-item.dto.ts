@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumber, IsNotEmpty, IsBoolean } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsNotEmpty, IsBoolean, IsEnum } from 'class-validator';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
+import { CurrenciesEnum } from '@gauzy/contracts';
 
 export abstract class InvoiceItemDTO extends TenantOrganizationBaseDTO {
 	@ApiProperty({ type: () => String, readOnly: true })
@@ -18,8 +19,13 @@ export abstract class InvoiceItemDTO extends TenantOrganizationBaseDTO {
 	@IsNumber()
 	readonly quantity: number;
 
+	@ApiProperty({ type: () => String, enum: CurrenciesEnum, readOnly: true })
+	@IsOptional()
+	@IsEnum(CurrenciesEnum)
+	readonly currency: CurrenciesEnum;
+
 	@ApiProperty({ type: () => Number, readOnly: true })
-	@IsNotEmpty()
+	@IsOptional()
 	@IsNumber()
 	readonly totalValue: number;
 

@@ -3064,6 +3064,7 @@
 		"ESTIMATE_DATE": "Fecha de estimación",
 		"DUE_DATE": "Fecha de vencimiento",
 		"CURRENCY": "Moneda",
+		"CURRENCIES": "Monedas",
 		"DISCOUNT": "Descuento",
 		"CONTACT": "Contacto",
 		"TOTAL_VALUE": "Valor total",

@@ -19,11 +19,11 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-edit-employee-profile',
-    templateUrl: './edit-employee-profile.component.html',
-    styleUrls: ['./edit-employee-profile.component.scss'],
-    providers: [EmployeeStore],
-    standalone: false
+	selector: 'ngx-edit-employee-profile',
+	templateUrl: './edit-employee-profile.component.html',
+	styleUrls: ['./edit-employee-profile.component.scss'],
+	providers: [EmployeeStore],
+	standalone: false
 })
 export class EditEmployeeProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
@@ -229,6 +229,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 					'user',
 					'organizationDepartments',
 					'organizationPosition',
+					'hourlyRates',
 					'organizationEmploymentTypes',
 					'tags',
 					'skills',
@@ -292,7 +293,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 				// Update the user using userService
 				await this._userService.update(this.selectedEmployee.user.id, user);
 
-				if (!!user.image) {
+				if (user.image) {
 					// Emit event for updated image (assuming this emits an event when the image is updated)
 					this.updatedImage.emit(user.image);
 				}

@@ -1,0 +1,49 @@
+{
+	"CANNOT_DELETE_ALL_SUPER_ADMINS": "crwdns10001:0crwdne10001:0",
+	"SOME_TEST_KEY": "crwdns10002:0crwdne10002:0",
+	"INVOICES_PAGE": {
+		"ALREADY_PAID": "crwdns10003:0crwdne10003:0",
+		"AMOUNT_DUE": "crwdns10004:0crwdne10004:0",
+		"CURRENCY": "crwdns10005:0crwdne10005:0",
+		"CURRENCIES": "crwdns10006:0crwdne10006:0",
+		"DATE": "crwdns10007:0crwdne10007:0",
+		"DISCOUNT_TYPE": "crwdns10008:0crwdne10008:0",
+		"DUE_DATE": "crwdns10009:0crwdne10009:0",
+		"ESTIMATE": "crwdns10010:0crwdne10010:0",
+		"FROM": "crwdns10011:0crwdne10011:0",
+		"INVOICE": "crwdns10012:0crwdne10012:0",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "crwdns10013:0crwdne10013:0",
+		"INVOICES_SELECT_NOTES": "crwdns10014:0crwdne10014:0",
+		"NO": "crwdns10015:0crwdne10015:0",
+		"NUMBER": "crwdns10016:0crwdne10016:0",
+		"PAID": "crwdns10017:0crwdne10017:0",
+		"TAX_TYPE": "crwdns10018:0crwdne10018:0",
+		"TAX_VALUE": "crwdns10019:0crwdne10019:0",
+		"TO": "crwdns10020:0crwdne10020:0",
+		"YES": "crwdns10021:0crwdne10021:0",
+		"TAX_ID": "crwdns10022:0crwdne10022:0",
+		"ADDRESS": "crwdns10023:0crwdne10023:0",
+		"ADDRESS_2": "crwdns10024:0crwdne10024:0",
+		"POSTCODE": "crwdns10025:0crwdne10025:0",
+		"INVOICE_ITEM": {
+			"DESCRIPTION": "crwdns10026:0crwdne10026:0",
+			"ITEM": "crwdns10027:0crwdne10027:0",
+			"PRICE": "crwdns10028:0crwdne10028:0",
+			"QUANTITY": "crwdns10029:0crwdne10029:0",
+			"TOTAL_VALUE": "crwdns10030:0crwdne10030:0"
+		},
+		"PAYMENTS": {
+			"RECEIVER": "crwdns10031:0crwdne10031:0",
+			"RECEIVED_FROM": "crwdns10032:0crwdne10032:0",
+			"TOTAL_PAID": "crwdns10033:0crwdne10033:0",
+			"STATUS": "crwdns10034:0crwdne10034:0",
+			"NOTE": "crwdns10035:0crwdne10035:0",
+			"RECORDED_BY": "crwdns10036:0crwdne10036:0",
+			"AMOUNT": "crwdns10037:0crwdne10037:0",
+			"PAYMENT_DATE": "crwdns10038:0crwdne10038:0",
+			"ON_TIME": "crwdns10039:0crwdne10039:0",
+			"OVERDUE": "crwdns10040:0crwdne10040:0",
+			"PAYMENTS_FOR_INVOICE": "crwdns10041:0crwdne10041:0"
+		}
+	}
+}

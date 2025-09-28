@@ -45,7 +45,7 @@ export class OptionParams<T> extends OptionsRelations<T> {
 	@ValidateNested({ each: true })
 	@Type(() => TenantOrganizationBaseDTO)
 	@Transform(({ value }: TransformFnParams) => (value ? escapeQueryWithParameters(value) : {}))
-	readonly where: FindOptionsWhere<T>;
+	where: FindOptionsWhere<T>;
 
 	/**
 	 * Indicates if soft-deleted rows should be included in entity result.
