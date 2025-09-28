@@ -1,6 +1,6 @@
 import * as Queue from 'better-queue';
 import * as path from 'path';
-import * as QueueStore from 'better-queue-sqlite';
+import { QueueStore } from './queue-store';
 import * as isOnline from 'is-online';
 import { IScreenshotQueuePayload, ITimerCallbackPayload, ITimeslotQueuePayload, IQueueUpadtePayload } from './i-queue';
 
@@ -86,7 +86,6 @@ export class DesktopQueue {
 			this.timerQueue = new Queue(
 				timerCallback,
 				{
-					store: this.storeTimerQueue,
 					concurrent: 1,
 					maxRetries: 5,
 					retryDelay: 15_000,
@@ -98,7 +97,8 @@ export class DesktopQueue {
 						else cb(new Error('Not valid task'), false);
 					}
 				}
-			)
+			);
+			this.timerQueue.use(this.storeTimerQueue);
 			this.auditQueue('timer', this.timerQueue);
 		}
 	}
@@ -108,7 +108,6 @@ export class DesktopQueue {
 			this.timeSlotQueue = new Queue(
 				timeSlotCallback,
 				{
-					store: this.storeTimeSlotQueue,
 					concurrent: 1,
 					maxRetries: 5,
 					retryDelay: 15_000,
@@ -120,7 +119,8 @@ export class DesktopQueue {
 						else cb(new Error('Not valid task'), false);
 					}
 				}
-			)
+			);
+			this.timeSlotQueue.use(this.storeTimeSlotQueue);
 			this.auditQueue('time_slot', this.timeSlotQueue);
 		}
 	}
@@ -130,7 +130,6 @@ export class DesktopQueue {
 			this.screenshotQueue = new Queue(
 				screenshotCallback,
 				{
-					store: this.storeScreenshotQueue,
 					concurrent: 1,
 					maxRetries: 5,
 					retryDelay: 15_000,
@@ -142,7 +141,8 @@ export class DesktopQueue {
 						else cb(new Error('Not valid task'), false);                             // reject → skipped
 					}
 				}
-			)
+			);
+			this.screenshotQueue.use(this.storeScreenshotQueue);
 			this.auditQueue('screenshot', this.screenshotQueue);
 		}
 	}
