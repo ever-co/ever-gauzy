@@ -566,7 +566,7 @@ type TimeSlotSummary = Pick<ITimeSlot, 'startedAt' | 'duration'>;
 /**
  * Interface for custom activity data stored in TimeSlot
  */
-export interface ICustomActivity {
+export interface ICustomActivity extends Record<string, any> {
 	trackingSessions: ITrackingSession[];
 }
 

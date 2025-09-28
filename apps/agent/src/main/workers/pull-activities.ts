@@ -20,7 +20,7 @@ type UserLogin = {
 	tenantId: string;
 	organizationId: string;
 	remoteId: string;
-}
+};
 
 class PullActivities {
 	static instance: PullActivities;
@@ -84,7 +84,6 @@ class PullActivities {
 			startedAt,
 			employeeId
 		});
-
 	}
 
 	getListenerModule() {
@@ -127,7 +126,7 @@ class PullActivities {
 		const authConfig = getAuthConfig();
 		try {
 			const timer = this.createOfflineTimer(this.startedDate, authConfig?.user?.employee?.id);
-			const timerData  = await this.timerService.saveAndReturn(timer);
+			const timerData = await this.timerService.saveAndReturn(timer);
 			this.initWorkerQueue();
 			this.workerQueue.desktopQueue.enqueueTimer({
 				attempts: 1,
@@ -292,7 +291,7 @@ class PullActivities {
 			title: title,
 			body: message,
 			closeButtonText: TranslateService.instant('BUTTONS.CLOSE'),
-			silent: true,
+			silent: true
 		});
 
 		notification.show();
@@ -374,11 +373,14 @@ class PullActivities {
 			this.agentLogger.warn('initActivityAndScreenshot skipped: startedDate is not set');
 			return;
 		}
-		console.log('start init screeshot');
-		return this.activityProcess({
-			timeStart: this.startedDate,
-			timeEnd: new Date()
-		}, true, 0)
+		return this.activityProcess(
+			{
+				timeStart: this.startedDate,
+				timeEnd: new Date()
+			},
+			true,
+			0
+		);
 	}
 
 	/** check employee setting periodically to keep agent setting up to date */

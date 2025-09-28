@@ -1,7 +1,22 @@
-<!-- Loading indicator -->
-<div *ngIf="loading$ | async" class="loading-container">
-	<nb-spinner size="small"></nb-spinner>
-	<span>{{ 'WORKSPACES.LOADING' | translate }}</span>
+<!-- Loading skeleton -->
+<div
+	*ngIf="loading$ | async"
+	class="skeleton-container"
+	role="status"
+	aria-live="polite"
+	aria-label="Loading workspaces"
+	aria-busy="true"
+>
+	<div *ngFor="let item of [1, 2, 3]" class="workspace-skeleton-item">
+		<div class="skeleton-img-container">
+			<div class="skeleton-img"></div>
+		</div>
+		<div class="skeleton-text"></div>
+	</div>
+
+	<div class="skeleton-add-workspace">
+		<div class="skeleton-add-btn"></div>
+	</div>
 </div>
 
 <!-- Workspaces list -->
