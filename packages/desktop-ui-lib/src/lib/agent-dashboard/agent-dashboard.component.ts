@@ -1,5 +1,5 @@
 import { Component, OnInit, Inject, OnDestroy } from '@angular/core';
-import { NbSidebarService } from '@nebular/theme';
+import { NbSidebarService, NbMenuItem } from '@nebular/theme';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { GAUZY_ENV } from '../constants';
 import { Subject, takeUntil } from 'rxjs';
@@ -14,7 +14,7 @@ import { Subject, takeUntil } from 'rxjs';
 export class AgentDashboardComponent implements OnInit, OnDestroy {
 	private readonly destroy$ = new Subject<void>();
 
-	menu: any[] = [
+	menu: NbMenuItem[] = [
 		{
 			title: 'Logs',
 			link: '/server-dashboard/logs', // Assuming this will be the route for logs
@@ -60,27 +60,13 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
 		this.sidebarService.onCollapse()
 			.pipe(takeUntil(this.destroy$))
 			.subscribe(() => {
-				console.log('Sidebar collapsed.');
 				this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
-				console.log('gauzyIcon after collapse:', this.gauzyIcon);
 			});
 
 		this.sidebarService.onExpand()
 			.pipe(takeUntil(this.destroy$))
 			.subscribe(() => {
-				console.log('Sidebar expanded.');
 				this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/images/logos/logo_Gauzy.svg');
-				console.log('gauzyIcon after expand:', this.gauzyIcon);
 			});
 	}
-
-	tracking = true;
-	range = 'Today · Fri, Sep 19';
-	workspace = 'Personal';
-
-	kpis = [
-		{ label: 'Worked', value: '7h 42m' },
-		{ label: 'Active', value: '6h 10m' }, { label: 'Idle', value: '1h 32m' },
-		{ label: 'Focus score', value: '82' },
-	];
 }

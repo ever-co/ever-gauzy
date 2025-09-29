@@ -1,4 +1,3 @@
-import { SidebarMenuComponent } from './components/sidebar-menu/sidebar-menu.component';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -35,7 +34,7 @@ import { SyncPageComponent } from './activity-sync/activity-sync.component';
 import { FilterStatusPipe } from './pipes/filter.status.pipe';
 
 @NgModule({
-	declarations: [AgentDashboardComponent, LogsPageComponent, SyncPageComponent, SidebarMenuComponent],
+	declarations: [AgentDashboardComponent, LogsPageComponent, SyncPageComponent],
 	imports: [
 		BrowserModule,
 		BrowserAnimationsModule,

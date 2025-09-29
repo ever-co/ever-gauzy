@@ -37,7 +37,6 @@ export class KbMouseTransaction implements IKbMouseTransaction {
 						.returning('*');
 					return data;
 				} catch (error) {
-					await trx.rollback();
 					throw new AppError('KB_MOUSE_TRX', error);
 				}
 			}
