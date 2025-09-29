@@ -31,7 +31,23 @@ export class AuditQueueTransaction implements IAuditQueueTransaction {
 		);
 	}
 
-	public async update(id: string, value: Partial<AuditQueueTO>): Promise<void> {
+	public async update(id: number, value: Partial<AuditQueueTO>): Promise<void> {
+		await this._databaseProvider.connection.transaction(
+			async (trx: Knex.Transaction) => {
+				try {
+					await trx(TABLE_NAME_AUDIT_QUEUE)
+						.where('queue_id', '=', id)
+						.update(value);
+					await trx.commit();
+				} catch (error) {
+					await trx.rollback();
+					throw new AppError('AUDIT_QUEUE_TRX', error);
+				}
+			}
+		);
+	}
+
+	public async updatePartial(id: number, value: Partial<AuditQueueTO>): Promise<void> {
 		await this._databaseProvider.connection.transaction(
 			async (trx: Knex.Transaction) => {
 				try {

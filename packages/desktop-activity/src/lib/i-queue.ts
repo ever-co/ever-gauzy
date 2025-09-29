@@ -33,7 +33,7 @@ export interface IScreenshotQueuePayload {
 	}
 }
 
-export interface IQueueUpadtePayload {
+export interface IQueueUpdatePayload {
 	id: string;
 	type: 'queued' | 'running' | 'succeeded' | 'progress' | 'failed';
 	err?: string;

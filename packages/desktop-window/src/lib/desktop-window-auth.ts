@@ -21,7 +21,6 @@ export class AuthWindow extends BaseWindow implements IBaseWindow {
      */
     constructor(public path: string, public preloadPath?: string, public contextIsolation?: boolean) {
         // Configure the Authentication with default properties
-        console.log('AuthWindow contextIsolation', contextIsolation);
         super(
             new DefaultWindow(
                 new WindowConfig('auth/login', path, {
@@ -46,7 +45,6 @@ export class AuthWindow extends BaseWindow implements IBaseWindow {
 
         // Register the Authentication with the WindowManager
         this.registerWindow();
-        this.browserWindow.webContents.toggleDevTools();
     }
 
     /**

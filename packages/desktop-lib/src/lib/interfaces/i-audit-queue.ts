@@ -15,7 +15,8 @@ export interface IAuditQueueService<T> {
  */
 export type TAuditQueue = {
 	queue: string,
-	id?: string,
+	id?: number,
+	queue_id: string,
 	status: string,
 	attempts: number,
 	priority: number,

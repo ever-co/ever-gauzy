@@ -27,7 +27,7 @@ export class AuditQueueService implements IAuditQueueService<AuditQueueTO> {
 			if (!queue.queue_id) {
 				return console.error('WARN[AUDIT_QUUE_SERVICE]: No audit queue data, cannot update');
 			}
-			await this._auditQueueDAO.update(queue.queue_id, queue);
+			await this._auditQueueDAO.updatePartial(queue.queue_id, queue);
 		} catch (error) {
 			throw new AppError('AUDIT_QUUE_SERVICE', error);
 		}

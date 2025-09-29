@@ -7,7 +7,7 @@ import {
 	createServerWindow,
 	ScreenCaptureNotification
 } from '@gauzy/desktop-window';
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, screen } from 'electron';
 import { resolveHtmlPath } from './util';
 import * as path from 'path';
 
@@ -173,12 +173,14 @@ class AppWindow {
 					this.getPreloadPath(),
 					true
 				);
-				const maxHeight = 860;
-				const maxWidth = 1200;
-				this.logWindow.setSize(maxWidth, maxHeight);
-				this.logWindow.setMinimumSize(maxWidth, maxHeight);
+				const desiredHeight = 860;
+				const desiredWidth = 1200;
+				const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+				const initialWidth = Math.min(desiredWidth, width);
+				const initialHeight = Math.min(desiredHeight, height);
+				this.logWindow.setSize(initialWidth, initialHeight);
+				this.logWindow.setMinimumSize(Math.min(800, width), Math.min(600, height));
 				this.logWindow.setResizable(true);
-				// this.LogWindow.webContents.toggleDevTools();
 				this.logWindow.on('close', () => {
 					this.logWindow.hide();
 				});

@@ -131,7 +131,7 @@ class PullActivities {
 			this.workerQueue.desktopQueue.enqueueTimer({
 				attempts: 1,
 				queue: 'timer',
-				timerId: timerData[0],
+				timerId: timerData?.id,
 				data: {
 					startedAt: this.startedDate.toISOString(),
 					stoppedAt: null
@@ -352,7 +352,7 @@ class PullActivities {
 			this.initWorkerQueue();
 			this.workerQueue.desktopQueue.enqueueTimeSlot({
 				attempts: 1,
-				activityId: Number(savedActivity[0]?.id),
+				activityId: Number(savedActivity?.id),
 				queue: 'time_slot',
 				data: {
 					timeStart: timeData.timeStart.toISOString(),

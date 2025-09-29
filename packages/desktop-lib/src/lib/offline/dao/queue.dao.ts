@@ -1,4 +1,4 @@
-import { DAO, IDatabaseProvider, IAuditQueueTransaction  } from '../../interfaces';
+import { DAO, IDatabaseProvider, IAuditQueueTransaction } from '../../interfaces';
 import { ProviderFactory } from '../databases';
 import { TABLE_NAME_AUDIT_QUEUE, AuditQueueTO } from '../dto';
 import { AuditQueueTransaction } from '../transactions';
@@ -28,18 +28,17 @@ export class AuditQueueDAO implements DAO<AuditQueueTO> {
 		await this._trx.create(value);
 	}
 
-	public async saveAndReturn(value: AuditQueueTO): Promise<any> {
-		return this._trx.create(value);
-	}
-
 	public async findOneById(id: number): Promise<AuditQueueTO | undefined> {
 		const result = await this._provider
 			.connection<AuditQueueTO>(TABLE_NAME_AUDIT_QUEUE)
 			.where('id', '=', id);
 		return result[0];
 	}
-	public async update(id: string, value: Partial<AuditQueueTO>): Promise<void> {
+	public async update(id: number, value: Partial<AuditQueueTO>): Promise<void> {
 		await this._trx.update(id, value);
+	}
+	public async updatePartial(id: string, value: Partial<AuditQueueTO>): Promise<void> {
+		await this._trx.updatePartial(id, value);
 	}
 	public async delete(value?: Partial<AuditQueueTO>): Promise<void> {
 		if (!value || value.id === undefined) {
@@ -60,4 +59,3 @@ export class AuditQueueDAO implements DAO<AuditQueueTO> {
 		return activities;
 	}
 }
-

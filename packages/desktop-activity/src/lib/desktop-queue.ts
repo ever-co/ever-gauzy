@@ -2,7 +2,7 @@ import * as Queue from 'better-queue';
 import * as path from 'path';
 import { QueueStore } from './queue-store';
 import * as isOnline from 'is-online';
-import { IScreenshotQueuePayload, ITimerCallbackPayload, ITimeslotQueuePayload, IQueueUpadtePayload } from './i-queue';
+import { IScreenshotQueuePayload, ITimerCallbackPayload, ITimeslotQueuePayload, IQueueUpdatePayload } from './i-queue';
 
 export class DesktopQueue {
 	static instance: DesktopQueue;
@@ -14,7 +14,7 @@ export class DesktopQueue {
 	private storeScreenshotQueue: QueueStore;
 	private online: boolean;
 	private dbPath: string;
-	private auditQueueCallback: (param: IQueueUpadtePayload) => void;
+	private auditQueueCallback: (param: IQueueUpdatePayload) => void;
 	constructor(
 		dbPath: string
 	) {
@@ -38,7 +38,7 @@ export class DesktopQueue {
 		return DesktopQueue.instance;
 	}
 
-	public setUpdateQueueCallback(callback: (param: IQueueUpadtePayload) => void) {
+	public setUpdateQueueCallback(callback: (param: IQueueUpdatePayload) => void) {
 		this.auditQueueCallback = callback;
 	}
 

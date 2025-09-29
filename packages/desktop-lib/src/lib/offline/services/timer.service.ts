@@ -100,7 +100,7 @@ export class TimerService implements ITimerService<TimerTO> {
 		}
 	}
 
-	public async saveAndReturn(timer: Timer): Promise<void> {
+	public async saveAndReturn(timer: Timer): Promise<TimerTO> {
 		try {
 			if (!timer) {
 				console.error('WARN[TIMER_SERVICE]: No timer data, cannot save');

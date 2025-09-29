@@ -1,5 +1,5 @@
 import { app } from "electron";
-import { DesktopQueue, IQueueUpadtePayload } from "@gauzy/desktop-activity";
+import { DesktopQueue, IQueueUpdatePayload } from "@gauzy/desktop-activity";
 import * as path from 'path';
 import { ITimeslotQueuePayload, ITimerCallbackPayload, IScreenshotQueuePayload } from "@gauzy/desktop-activity";
 import { QueueAudit } from "./audit-queue";
@@ -36,13 +36,13 @@ export class WorkerQueue {
 		this.desktopQueue.initScreenshotQueue(handler.screenshotQueueHandler);
 	}
 
-	private queueAuditCallback(payload: IQueueUpadtePayload) {
+	private queueAuditCallback(payload: IQueueUpdatePayload) {
 		switch (payload.type) {
 			case 'queued':
 				return this.queueAudit.queued(
 					payload.id,
 					payload.queue,
-					JSON.stringify(payload.data),
+					payload.data,
 					0
 				);
 			case 'running':

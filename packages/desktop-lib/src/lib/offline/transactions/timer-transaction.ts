@@ -23,11 +23,11 @@ export class TimerTransaction implements ITimerTransaction {
 		);
 	}
 
-	public async createAndReturn(value: TimerTO): Promise<any> {
-	    const dataTrx = await this._databaseProvider.connection.transaction(
+	public async createAndReturn(value: TimerTO): Promise<TimerTO> {
+		const [dataTrx] = await this._databaseProvider.connection.transaction(
 			async (trx: Knex.Transaction) => {
 				try {
-					const data  = await trx.insert(value).into(TABLE_NAME_TIMERS);
+					const data = await trx.insert(value).into(TABLE_NAME_TIMERS).returning('*');
 					return data;
 				} catch (error) {
 					throw new AppError('TIMERTRX', error);

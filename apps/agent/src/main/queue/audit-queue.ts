@@ -24,7 +24,7 @@ export class QueueAudit {
 		this.appWindow = AppWindow.getInstance(path.join(__dirname, '../..'));
 	}
 
-	deshboardEventUpdate(action: 'update' | 'add', queue: IQueueUpdatePayload) {
+	dashboardEventUpdate(action: 'update' | 'add', queue: IQueueUpdatePayload) {
 		if (this.appWindow.logWindow) {
 			this.appWindow.logWindow.webContents?.send('DASHBOARD_EVENT', {
 				type: 'api_sync_update',
@@ -53,10 +53,10 @@ export class QueueAudit {
 			status: 'waiting',
 			attempts: 1,
 			priority: priority,
-			data: data,
+			data: JSON.stringify(data),
 			created_at: new Date()
 		};
-		this.deshboardEventUpdate(
+		this.dashboardEventUpdate(
 			'add',
 			newQueue
 		);
@@ -67,7 +67,7 @@ export class QueueAudit {
 		if (data?.attempts >= 5) {
 			return;
 		}
-		this.deshboardEventUpdate('update', {
+		this.dashboardEventUpdate('update', {
 			queue_id: id,
 			status: 'running'
 		});
@@ -79,7 +79,7 @@ export class QueueAudit {
 	}
 
 	succeeded(id: string) {
-		this.deshboardEventUpdate('update', {
+		this.dashboardEventUpdate('update', {
 			queue_id: id,
 			status: 'succeeded'
 		});
@@ -92,7 +92,7 @@ export class QueueAudit {
 	}
 
 	failed(id: string, err: any) {
-		this.deshboardEventUpdate('update', {
+		this.dashboardEventUpdate('update', {
 			queue_id: id,
 			status: 'failed'
 		});
