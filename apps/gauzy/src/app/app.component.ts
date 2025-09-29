@@ -30,13 +30,22 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-app',
-    template: '<router-outlet *ngIf="!loading"></router-outlet>',
-    standalone: false
+	selector: 'ga-app',
+	template: `
+		<ga-dashboard-skeleton *ngIf="loading"></ga-dashboard-skeleton>
+		<div [style.visibility]="loading ? 'hidden' : 'visible'">
+			<router-outlet></router-outlet>
+		</div>
+	`,
+	standalone: false
 })
 export class AppComponent implements OnInit, AfterViewInit {
 	// Loading indicator
 	public loading: boolean = true;
+
+	private languageLoaded: boolean = false;
+	private routerReady: boolean = false;
+	private minimumLoadingTime: boolean = false;
 
 	constructor(
 		private readonly _jitsuService: JitsuService,
@@ -54,6 +63,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 	) {
 		this.getActivateRouterDataEvent();
 		this.getPreferredLanguage();
+
+		setTimeout(() => {
+			this.minimumLoadingTime = true;
+			this.checkLoadingComplete();
+		}, 1500);
 	}
 
 	/**
@@ -104,14 +118,15 @@ export class AppComponent implements OnInit, AfterViewInit {
 			this._i18nService.setLanguage(preferredLanguage || systemLanguage);
 
 			// Observable that emits when theme languages change.
-			this._translateService.onLangChange.subscribe(() => {
-				// Set the loading flag to false after the language change
-				this.loading = false;
+			this._translateService.onLangChange.pipe(take(1), untilDestroyed(this)).subscribe(() => {
+				this.languageLoaded = true;
+				this.checkLoadingComplete();
 			});
 		});
 
 		if (Number(this._store.serverConnection) === 0) {
-			this.loading = false;
+			this.languageLoaded = true;
+			this.checkLoadingComplete();
 		}
 	}
 
@@ -164,6 +179,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 		};
 	}
 
+	private checkLoadingComplete(): void {
+		if (this.languageLoaded && this.minimumLoadingTime && this.routerReady) {
+			setTimeout(() => {
+				this.loading = false;
+			}, 500);
+		}
+	}
+
 	/**
 	 * Subscribe to router events related to activating routes.
 	 * Handles updating Date Range Picker, Date Picker Config, and Selector visibility based on route data.
@@ -173,6 +196,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 			.pipe(
 				// Filter for NavigationEnd events
 				filter((event) => event instanceof NavigationEnd),
+
+				tap(() => {
+					this.routerReady = true;
+					this.checkLoadingComplete();
+				}),
 				// Map to the activated route
 				map(() => this._activatedRoute),
 				// Traverse to the primary outlet route
