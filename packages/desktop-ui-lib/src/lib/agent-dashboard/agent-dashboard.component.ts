@@ -1,7 +1,9 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, OnDestroy } from '@angular/core';
 import { NbSidebarService } from '@nebular/theme';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { GAUZY_ENV } from '../constants';
+import { Subject, takeUntil } from 'rxjs';
+
 
 @Component({
 	selector: 'ngx-agent-dashboard',
@@ -9,7 +11,9 @@ import { GAUZY_ENV } from '../constants';
 	styleUrls: ['./agent-dashboard.component.scss'],
 	standalone: false
 })
-export class AgentDashboardComponent implements OnInit {
+export class AgentDashboardComponent implements OnInit, OnDestroy {
+	private readonly destroy$ = new Subject<void>();
+
 	menu: any[] = [
 		{
 			title: 'Logs',
@@ -22,7 +26,7 @@ export class AgentDashboardComponent implements OnInit {
 			icon: 'sync-outline',
 		},
 	];
-	gauzyIcon:SafeResourceUrl  = './assets/images/logos/logo_Gauzy.svg';
+	gauzyIcon: SafeResourceUrl;
 	styles = {
 		btnStart: 'button-small',
 		icon: 'margin-icon-small'
@@ -34,29 +38,40 @@ export class AgentDashboardComponent implements OnInit {
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
 	) {
+		this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/images/logos/logo_Gauzy.svg');
+	}
+	ngOnDestroy(): void {
+		this.destroy$.next();
+		this.destroy$.complete();
 	}
 
 	ngOnInit(): void {
 		// Set initial logo based on sidebar state
-		this.sidebarService.getSidebarState('menu').subscribe(initialState => {
-			if (initialState === 'compacted' || initialState === 'collapsed') {
+		this.sidebarService.getSidebarState('menu')
+			.pipe(takeUntil(this.destroy$))
+			.subscribe(initialState => {
+				if (initialState === 'compacted' || initialState === 'collapsed') {
+					this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
+				} else {
+					this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/images/logos/logo_Gauzy.svg');
+				}
+			});
+
+		this.sidebarService.onCollapse()
+			.pipe(takeUntil(this.destroy$))
+			.subscribe(() => {
+				console.log('Sidebar collapsed.');
 				this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
-			} else {
+				console.log('gauzyIcon after collapse:', this.gauzyIcon);
+			});
+
+		this.sidebarService.onExpand()
+			.pipe(takeUntil(this.destroy$))
+			.subscribe(() => {
+				console.log('Sidebar expanded.');
 				this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/images/logos/logo_Gauzy.svg');
-			}
-		});
-
-		this.sidebarService.onCollapse().subscribe(() => {
-			console.log('Sidebar collapsed.');
-			this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
-			console.log('gauzyIcon after collapse:', this.gauzyIcon);
-		});
-
-		this.sidebarService.onExpand().subscribe(() => {
-			console.log('Sidebar expanded.');
-			this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/images/logos/logo_Gauzy.svg');
-			console.log('gauzyIcon after expand:', this.gauzyIcon);
-		});
+				console.log('gauzyIcon after expand:', this.gauzyIcon);
+			});
 	}
 
 	tracking = true;
@@ -65,7 +80,7 @@ export class AgentDashboardComponent implements OnInit {
 
 	kpis = [
 		{ label: 'Worked', value: '7h 42m' },
-		{ label: 'Active', value: '6h 10m' },		{ label: 'Idle', value: '1h 32m' },
+		{ label: 'Active', value: '6h 10m' }, { label: 'Idle', value: '1h 32m' },
 		{ label: 'Focus score', value: '82' },
 	];
 }

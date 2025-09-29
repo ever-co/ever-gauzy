@@ -10,7 +10,7 @@ import { NbMenuItem } from '@nebular/theme';
 export class SidebarMenuComponent {
 	menu: NbMenuItem[] = [
 		{
-			title: 'Logss',
+			title: 'Logs',
 			link: '/server-dashboard/logs', // Assuming this will be the route for logs
 			icon: 'file-text-outline',
 		},

@@ -22,10 +22,11 @@ export class KbMouseActivityService implements IKbMouseActivityService<KbMouseAc
 		}
 	}
 
-	public async saveAndReturn(activities: KbMouseActivityTO): Promise<KbMouseActivityTO> {
+	public async saveAndReturn(activities: KbMouseActivityTO): Promise<KbMouseActivityTO | null> {
 		try {
 			if (!activities) {
 				console.error('WARN[KB_MOUSE_SERVICE]: No keyboard and mouse data, cannot save');
+				return null;
 			}
 			return this._kbMouseDAO.saveAndReturn(activities);
 		} catch (error) {

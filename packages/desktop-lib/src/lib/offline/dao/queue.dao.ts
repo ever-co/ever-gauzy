@@ -42,7 +42,7 @@ export class AuditQueueDAO implements DAO<AuditQueueTO> {
 	}
 	public async delete(value?: Partial<AuditQueueTO>): Promise<void> {
 		if (!value || value.id === undefined) {
-			throw new Error('Cannot delete activity: Missing or invalid id');
+			throw new Error('Cannot delete audit queue: Missing or invalid id');
 		}
 		await this._provider
 			.connection<AuditQueueTO>(TABLE_NAME_AUDIT_QUEUE)

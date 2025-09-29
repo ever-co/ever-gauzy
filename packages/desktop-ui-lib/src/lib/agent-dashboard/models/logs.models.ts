@@ -1,5 +1,5 @@
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
-export type SyncStatus = 'PENDING' | 'SYNCED' | 'FAILED';
+export type SyncStatus = 'PENDING' | 'SYNCED' | 'FAILED' | 'PROCESS';
 
 export interface LogEntry {
 	id: string;

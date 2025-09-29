@@ -10,7 +10,6 @@ export async function up(knex: Knex): Promise<void> {
 		table.integer('attempts').notNullable().defaultTo(0);
 		table.integer('priority').notNullable();
 		table.text('data').notNullable();
-		table.timestamp('created_at').notNullable();
 		table.timestamp('started_at');
 		table.timestamp('finished_at');
 		table.string('last_error');

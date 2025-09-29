@@ -1,11 +1,11 @@
-.loglist {
+.log-list {
 	max-height: 80vh;
 	overflow: auto;
 	font-family: monospace;
 	font-size: 13px
 }
 
-.logline {
+.log-line {
 	padding: 4px 8px;
 	border-bottom: 1px solid var(--separator-color, rgba(255, 255, 255, .06))
 }
