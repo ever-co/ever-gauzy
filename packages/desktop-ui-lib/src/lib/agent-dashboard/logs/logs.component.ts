@@ -44,7 +44,7 @@ export class LogsPageComponent implements AfterViewChecked, OnDestroy {
 				this.logContainer.nativeElement.scrollTop = this.logContainer.nativeElement.scrollHeight;
 			}
 		} catch (err) {
-			// prevent autoscroll error and breaking the app
+			// prevent auto scroll error and breaking the app
 		}
 	}
 

@@ -144,7 +144,7 @@ class PushActivities {
 
 	stopPooling() {
 		this.workerQueue?.desktopQueue?.stopQueue();
-		this.agentLogger.info('Pooling scheduler stpped');
+		this.agentLogger.info('Pooling scheduler stopped');
 	}
 
 	async getOldestActivity(): Promise<KbMouseActivityTO | null> {
@@ -462,7 +462,7 @@ class PushActivities {
 	}
 
 	public async syncTimer(job: ITimerCallbackPayload) {
-		this.agentLogger.info(`Incomming job sync timer ${JSON.stringify(job)}`);
+		this.agentLogger.info(`In coming job sync timer ${JSON.stringify(job)}`);
 		const authConfig = getAuthConfig();
 		const timerLocal = await this.timerService.findById({ id: job.timerId });
 		if (timerLocal?.id) {
@@ -481,7 +481,7 @@ class PushActivities {
 	};
 
 	public async syncTimeSlot(job: ITimeslotQueuePayload) {
-		this.agentLogger.info(`Incomming job timeSlot sync ${JSON.stringify(job)}`);
+		this.agentLogger.info(`In coming job timeSlot sync ${JSON.stringify(job)}`);
 		const timeSlotLocal = await this.kbMouseActivityService.findById({ id: job.activityId });
 		if (timeSlotLocal?.id) {
 			const params = this.timeSlotParams(timeSlotLocal);
@@ -526,7 +526,7 @@ class PushActivities {
 	}
 
 	public async syncScreenshot(job: IScreenshotQueuePayload) {
-		this.agentLogger.info(`Incomming job screenshot sync ${JSON.stringify(job)}`);
+		this.agentLogger.info(`In coming job screenshot sync ${JSON.stringify(job)}`);
 		await this.saveImage(job.data.recordedAt, [job.data.imagePath], job.data.timeSlotId);
 		this.agentLogger.info(`Finished job screenshot sync ${JSON.stringify(job)}`);
 	}
