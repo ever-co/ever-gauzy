@@ -13,7 +13,7 @@ export class ActivepiecesConfigService {
 	private readonly logger = new Logger(ActivepiecesConfigService.name);
 	constructor(
 		private readonly activepiecesIntegrationRepository: TypeOrmActivepiecesIntegrationRepository,
-		private readonly configService: ConfigService
+		private readonly config: ConfigService
 	) { }
 
 	/**
@@ -22,9 +22,9 @@ export class ActivepiecesConfigService {
 	 *
 	 * @param tenantId - The tenant ID
 	 * @param organizationId - The organization ID (optional)
-	 * @returns ActivePieces configuration
+	 * @returns ActivePieces configuration (sanitized, without clientSecret)
 	 */
-	async getConfig(tenantId: string, organizationId?: string): Promise<ActivepiecesIntegration> {
+	async getConfig(tenantId: string, organizationId?: string): Promise<IActivepiecesConfig> {
 		try {
 			// First try to get tenant-specific configuration
 			const tenantConfig = await this.activepiecesIntegrationRepository.findOne({
@@ -38,25 +38,31 @@ export class ActivepiecesConfigService {
 			if (tenantConfig) {
 				return {
 					clientId: tenantConfig.clientId,
-					clientSecret: tenantConfig.clientSecret,
 					callbackUrl: tenantConfig.callbackUrl || this.getDefaultCallbackUrl(),
 					postInstallUrl: tenantConfig.postInstallUrl || this.getDefaultPostInstallUrl(),
 					isActive: tenantConfig.isActive,
 					description: tenantConfig.description
-					
 				};
 			}
 
 			// Fallback to global configuration
-			const globalConfig = this.configService.get('activepieces') as IActivepiecesConfig;
+			const globalConfig = this.config.get('activepieces') as IActivepiecesConfig;
 
 			if (!globalConfig?.clientId) {
 				throw new Error('ActivePieces integration not configured');
 			}
 
-			return globalConfig;
+			// Return sanitized global config without clientSecret
+			return {
+				clientId: globalConfig.clientId,
+				callbackUrl: globalConfig.callbackUrl,
+				postInstallUrl: globalConfig.postInstallUrl,
+				isActive: globalConfig.isActive,
+				description: globalConfig.description
+			};
 		} catch (error: any) {
-			throw new Error(`Failed to get ActivePieces configuration: ${error.message}`);
+			this.logger.error('Failed to get ActivePieces configuration', error?.stack || error);
+			throw error;
 		}
 	}
 
@@ -129,11 +135,12 @@ export class ActivepiecesConfigService {
 	 */
 	async updateTenantConfig(
 		id: string,
+		tenantId: string,
 		config: IActivepiecesIntegrationConfigUpdateInput
 	): Promise<ActivepiecesIntegration> {
 		try {
 			const existingConfig = await this.activepiecesIntegrationRepository.findOne({
-				where: { id }
+				where: { id, tenantId }
 			});
 
 			if (!existingConfig) {
@@ -189,8 +196,9 @@ export class ActivepiecesConfigService {
 	 * @returns Default callback URL
 	 */
 	private getDefaultCallbackUrl(): string {
-		const globalConfig = this.configService.get('activepieces') as IActivepiecesConfig;
-		return globalConfig?.callbackUrl || `${process.env['API_BASE_URL']}/api/integration/activepieces/callback`;
+		const globalConfig = this.config.get('activepieces') as IActivepiecesConfig;
+		const apiBaseUrl = this.config.get('baseUrl') ?? process.env['API_BASE_URL'];
+		return globalConfig?.callbackUrl || `${apiBaseUrl}/api/integration/activepieces/callback`;
 	}
 
 	/**
@@ -199,7 +207,8 @@ export class ActivepiecesConfigService {
 	 * @returns Default post-install URL
 	 */
 	private getDefaultPostInstallUrl(): string {
-		const globalConfig = this.configService.get('activepieces') as IActivepiecesConfig;
-		return globalConfig?.postInstallUrl || `${process.env['CLIENT_BASE_URL']}/#/pages/integrations/activepieces`;
+		const globalConfig = this.config.get('activepieces') as IActivepiecesConfig;
+		const clientBaseUrl = this.config.get('clientBaseUrl') ?? process.env['CLIENT_BASE_URL'];
+		return globalConfig?.postInstallUrl || `${clientBaseUrl}/#/pages/integrations/activepieces`;
 	}
 }

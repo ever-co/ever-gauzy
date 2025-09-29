@@ -8,10 +8,10 @@ export default registerAs(
 	'activepieces',
 	(): IActivepiecesConfig => ({
         // ActivePieces OAuth Client ID
-		clientId: process.env.GAUZY_ACTIVEPIECES_CLIENT_ID,
+		clientId: process.env.GAUZY_ACTIVEPIECES_CLIENT_ID ?? '',
 
         // ActivePieces OAuth Client Secret
-		clientSecret: process.env.GAUZY_ACTIVEPIECES_CLIENT_SECRET,
+		clientSecret: process.env.GAUZY_ACTIVEPIECES_CLIENT_SECRET ?? '',
 
         // ActivePieces Redirected URI after successful authentication
 		callbackUrl:

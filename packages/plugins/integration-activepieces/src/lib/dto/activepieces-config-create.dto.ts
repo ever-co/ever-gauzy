@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsNotEmpty, IsUrl } from 'class-validator';
 import { IActivepiecesIntegrationConfigCreateInput, ID } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
 
@@ -9,6 +9,7 @@ export class ActivepiecesConfigCreateDto extends TenantOrganizationBaseDTO imple
 		description: 'OAuth client ID for ActivePieces integration'
 	})
 	@IsString()
+	@IsNotEmpty()
 	readonly clientId!: string;
 
 	@ApiProperty({
@@ -16,6 +17,7 @@ export class ActivepiecesConfigCreateDto extends TenantOrganizationBaseDTO imple
 		description: 'OAuth client secret for ActivePieces integration'
 	})
 	@IsString()
+	@IsNotEmpty()
 	readonly clientSecret!: string;
 
 	@ApiPropertyOptional({

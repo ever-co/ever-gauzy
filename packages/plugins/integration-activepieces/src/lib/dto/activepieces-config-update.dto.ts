@@ -5,30 +5,6 @@ import { IActivepiecesIntegrationConfigUpdateInput, ID } from '@gauzy/contracts'
 export class ActivepiecesConfigUpdateDto implements IActivepiecesIntegrationConfigUpdateInput {
 	@ApiPropertyOptional({
 		type: String,
-		description: 'Configuration ID'
-	})
-	@IsOptional()
-	@IsUUID()
-	readonly id?: ID;
-
-	@ApiPropertyOptional({
-		type: String,
-		description: 'Tenant ID'
-	})
-	@IsOptional()
-	@IsUUID()
-	readonly tenantId?: ID;
-
-	@ApiPropertyOptional({
-		type: String,
-		description: 'Organization ID'
-	})
-	@IsOptional()
-	@IsUUID()
-	readonly organizationId?: ID;
-
-	@ApiPropertyOptional({
-		type: String,
 		description: 'OAuth client ID for ActivePieces integration'
 	})
 	@IsOptional()

@@ -11,7 +11,14 @@ import { MikroOrmActivepiecesIntegrationRepository } from './repository/mikro-or
 @MultiORMEntity('activepieces_integration', {
 	mikroOrmRepository: () => MikroOrmActivepiecesIntegrationRepository
 })
-@Unique(['tenantId', 'organizationId'])
+@Index('uq_activepieces_tenant_org_not_null', ['tenantId', 'organizationId'], {
+	unique: true,
+	where: '"organizationId" IS NOT NULL'
+})
+@Index('uq_activepieces_tenant_org_null', ['tenantId'], {
+	unique: true,
+	where: '"organizationId" IS NULL'
+})
 @Index(['tenantId'])
 @Index(['organizationId'])
 export class ActivepiecesIntegration extends TenantOrganizationBaseEntity implements IActivepiecesConfig {
@@ -22,11 +29,11 @@ export class ActivepiecesIntegration extends TenantOrganizationBaseEntity implem
 	@MultiORMColumn()
 	clientId!: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String, writeOnly: true, format: 'password' })
 	@IsString()
 	@IsSecret()
 	@Exclude() // Exclude from serialization for security
-	@MultiORMColumn({ type: 'text' })
+	@MultiORMColumn({ type: 'text', select: false })
 	clientSecret!: string;
 
 	@ApiPropertyOptional({ type: () => String })

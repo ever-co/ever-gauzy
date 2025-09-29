@@ -6,6 +6,7 @@ import { Public } from '@gauzy/common';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { buildQueryString } from '@gauzy/utils';
 import { firstValueFrom, catchError } from 'rxjs';
+import { createHmac } from 'crypto';
 import { ACTIVEPIECES_OAUTH_AUTHORIZE_URL, ACTIVEPIECES_OAUTH_TOKEN_URL, ACTIVEPIECES_SCOPES, OAUTH_RESPONSE_TYPE, OAUTH_GRANT_TYPE } from './activepieces.config';
 import { ActivepiecesQueryDto, ActivepiecesTokenExchangeDto } from './dto';
 import { IActivepiecesTokenExchangeRequest, IActivepiecesOAuthTokens } from './activepieces.type';
@@ -37,13 +38,21 @@ export class ActivepiecesAuthorizationController {
 	 * @param randomState - Random state for security
 	 * @returns Encoded state string
 	 */
+	private signStatePayload(payload: string): string {
+		// Fixed secret for OAuth state parameter signing - for demonstration purposes only
+		const secret = 'activepieces-oauth-state-signing-key-2025';
+		return createHmac('sha256', secret).update(payload).digest('base64url');
+	}
+
 	private encodeState(tenantId: string, organizationId?: string, randomState?: string): string {
 		const stateData = {
 			tenantId,
 			organizationId,
 			state: randomState || this.generateState()
 		};
-		return Buffer.from(JSON.stringify(stateData)).toString('base64url');
+		const payload = JSON.stringify(stateData);
+		const sig = this.signStatePayload(payload);
+		return `${Buffer.from(payload).toString('base64url')}.${sig}`;
 	}
 
 	/**
@@ -54,8 +63,12 @@ export class ActivepiecesAuthorizationController {
 	 */
 	private decodeState(encodedState: string): { tenantId: string; organizationId: string; state: string } {
 		try {
-			const decoded = Buffer.from(encodedState, 'base64url').toString();
-			return JSON.parse(decoded);
+			const [payloadB64, sig] = encodedState.split('.');
+			if (!payloadB64 || !sig) throw new Error('Invalid state parameter');
+			const payload = Buffer.from(payloadB64, 'base64url').toString();
+			const expected = this.signStatePayload(payload);
+			if (sig !== expected) throw new Error('Invalid state signature');
+			return JSON.parse(payload);
 		} catch (error) {
 			throw new Error('Invalid state parameter');
 		}
@@ -227,13 +240,12 @@ export class ActivepiecesAuthorizationController {
 	@Post('/token')
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async exchangeToken(
-		@Body() body: ActivepiecesTokenExchangeDto & { tenantId?: string; organizationId?: string },
+		@Body() body: ActivepiecesTokenExchangeDto,
 		@Headers() headers: any
 	): Promise<IActivepiecesOAuthTokens> {
 		try {
-			// Extract tenant and organization context from body or headers
-			const tenantId = body.tenantId || headers['tenant-id'];
-			const organizationId = body.organizationId || headers['organization-id'];
+			// Derive tenant and organization context from signed state
+			const { tenantId, organizationId } = this.decodeState(body.state);
 
 			if (!tenantId) {
 				throw new HttpException('Tenant context is required for token exchange', HttpStatus.BAD_REQUEST);

@@ -12,21 +12,22 @@ import {
 	UsePipes,
 	ValidationPipe,
 	UseGuards,
-	BadRequestException
+	BadRequestException,
+	Logger
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { IActivepiecesIntegrationConfigCreateInput, IActivepiecesIntegrationConfigUpdateInput, ID } from '@gauzy/contracts';
-import { TenantPermissionGuard, PermissionGuard, Permissions, RequestContext } from '@gauzy/core';
+import { TenantPermissionGuard, Permissions, RequestContext } from '@gauzy/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { ActivepiecesConfigService } from './activepieces-config.service';
 import { ActivepiecesConfigCreateDto, ActivepiecesConfigUpdateDto } from './dto';
-import { ActivepiecesIntegration } from './activepieces-integration.entity';
 
 @ApiTags('ActivePieces Configuration')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller('/integration/activepieces/config')
 export class ActivepiecesConfigController {
+	private readonly logger = new Logger(ActivepiecesConfigController.name);
 	constructor(private readonly activepiecesConfigService: ActivepiecesConfigService) {}
 
 	/**
@@ -67,12 +68,19 @@ export class ActivepiecesConfigController {
 				throw new BadRequestException('Tenant ID is required');
 			}
 
-			return await this.activepiecesConfigService.setTenantConfig(tenantId, {
+			const created = await this.activepiecesConfigService.setTenantConfig(tenantId, {
 				...config,
 				tenantId,
 				organizationId
 			});
+			return {
+				...created,
+				clientId: created.clientId,
+				clientSecret: created.clientSecret
+			};
 		} catch (error: any) {
+			this.logger.error('Failed to create ActivePieces configuration', error as Error);
+			if (error instanceof HttpException) throw error;
 			throw new HttpException(
 				`Failed to create ActivePieces configuration: ${error.message}`,
 				HttpStatus.BAD_REQUEST
@@ -131,6 +139,8 @@ export class ActivepiecesConfigController {
 				postInstallUrl: config.postInstallUrl
 			};
 		} catch (error: any) {
+			this.logger.error('Failed to get configuration status', error as Error);
+			if (error instanceof HttpException) throw error;
 			throw new HttpException(
 				`Failed to get configuration status: ${error.message}`,
 				HttpStatus.INTERNAL_SERVER_ERROR
@@ -169,6 +179,8 @@ export class ActivepiecesConfigController {
 				clientSecret: config.clientSecret ? '***' : undefined
 			}));
 		} catch (error: any) {
+			this.logger.error('Failed to get tenant configurations', error as Error);
+			if (error instanceof HttpException) throw error;
 			throw new HttpException(
 				`Failed to get tenant configurations: ${error.message}`,
 				HttpStatus.INTERNAL_SERVER_ERROR
@@ -201,10 +213,11 @@ export class ActivepiecesConfigController {
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async updateConfig(
 		@Param('id') id: ID,
+		@Query('tenantId') tenantId: string,
 		@Body() config: ActivepiecesConfigUpdateDto
 	): Promise<IActivepiecesIntegrationConfigUpdateInput> {
 		try {
-			const updatedConfig = await this.activepiecesConfigService.updateTenantConfig(id, config);
+			const updatedConfig = await this.activepiecesConfigService.updateTenantConfig(id, tenantId, config);
 
 			// Remove sensitive data from response
 			return {
@@ -213,6 +226,8 @@ export class ActivepiecesConfigController {
 				clientSecret: updatedConfig.clientSecret ? '***' : undefined
 			};
 		} catch (error: any) {
+			this.logger.error('Failed to update ActivePieces configuration', error as Error);
+			if (error instanceof HttpException) throw error;
 			const status = error.message.includes('not found') ? HttpStatus.NOT_FOUND : HttpStatus.BAD_REQUEST;
 			throw new HttpException(
 				`Failed to update ActivePieces configuration: ${error.message}`,
@@ -268,6 +283,8 @@ export class ActivepiecesConfigController {
 					: 'No configuration found to delete.'
 			};
 		} catch (error: any) {
+			this.logger.error('Failed to delete ActivePieces configuration', error as Error);
+			if (error instanceof HttpException) throw error;
 			throw new HttpException(
 				`Failed to delete ActivePieces configuration: ${error.message}`,
 				HttpStatus.INTERNAL_SERVER_ERROR
