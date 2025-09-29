@@ -60,18 +60,19 @@ body[data-skeleton-theme='material-dark'] {
   top: 0;
   left: 0;
   width: 100%;
+  height: 100%;
   z-index: 1003;
   display: flex;
   background: var(--skeleton-bg);
 }
 
 .skeleton-sidebar {
-  width:  260px;
+  width: 260px;
   background: var(--skeleton-sidebar-bg);
   flex-shrink: 0;
 }
 
-.skeleton-main {
+.skeleton-main-content {
   flex: 1 1 auto;
   background: var(--skeleton-card-bg);
   min-height: 0;
