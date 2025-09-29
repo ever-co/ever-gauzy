@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewChecked, OnDestroy, HostListener } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewChecked, OnDestroy } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { LogEntry } from '../models/logs.models';
 import { LogService } from '../services/logs.service';
@@ -40,9 +40,11 @@ export class LogsPageComponent implements AfterViewChecked, OnDestroy {
 
 	scrollToBottom(): void {
 		try {
-			this.logContainer.nativeElement.scrollTop = this.logContainer.nativeElement?.scrollHeight;
+			if (this.logContainer && this.logContainer.nativeElement) {
+				this.logContainer.nativeElement.scrollTop = this.logContainer.nativeElement.scrollHeight;
+			}
 		} catch (err) {
-			console.log('error on scrool', err);
+			// prevent autoscroll error and breaking the app
 		}
 	}
 

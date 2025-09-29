@@ -1,7 +1,6 @@
 
 import { Serializable } from '../../interfaces';
 import { AuditQueueTO } from '../dto/queue-audit.dto';
-import { Base } from './base.model';
 
 export class AuditQueue implements AuditQueueTO, Serializable<AuditQueueTO> {
 	private _queue: string;
@@ -43,21 +42,21 @@ export class AuditQueue implements AuditQueueTO, Serializable<AuditQueueTO> {
 	}
 
 	public set queue_id(value: string) {
-		this.queue_id = value;
+		this._queue_id = value;
 	}
 
 	public get queue(): string {
 		return this._queue;
 	}
 	public set queue(value: string) {
-		this.queue = value;
+		this._queue = value;
 	}
 
 	public get status(): string {
 		return this._status;
 	}
 	public set status(value: string) {
-		this.status = value;
+		this._status = value;
 	}
 
 	public get attempts(): number {
@@ -80,7 +79,7 @@ export class AuditQueue implements AuditQueueTO, Serializable<AuditQueueTO> {
 		return this._data;
 	}
 
-	public set data (value: Record<string, unknown> | string) {
+	public set data(value: Record<string, unknown> | string) {
 		this._data = value;
 	}
 

@@ -252,6 +252,7 @@ class PushActivities {
 			}
 			await Promise.all(images.map((imageTemp) => this.uploadCapturedImage(auth, recordedAt, imageTemp, timeSlotId)));
 		} catch (error) {
+			this.agentLogger.error(`error on save image ${JSON.stringify(error)}`);
 			throw error;
 		}
 	}

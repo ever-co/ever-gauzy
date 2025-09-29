@@ -1,7 +1,4 @@
 import { Routes } from '@angular/router';
-import { LogsPageComponent } from "./logs/logs.component";
-import { SyncPageComponent } from "./activity-sync/activity-sync.component";
-import { AgentDashboardComponent } from './agent-dashboard.component';
 
 export const agentDashboardRoutes: Routes = [
 	{
