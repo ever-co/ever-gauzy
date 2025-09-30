@@ -183,11 +183,15 @@ class PullActivities {
 			this.getListenerModule();
 		}
 		try {
-			await this.stopTimerApi();
-			this.agentLogger.info('Listener keyboard and mouse stopping');
-			this.listenerModule.stopListener();
-			this.isStarted = false;
-			this.stopTimerProcess();
+			if (this.isStarted) {
+				await this.stopTimerApi();
+				this.agentLogger.info('Listener keyboard and mouse stopping');
+				this.listenerModule.stopListener();
+				this.isStarted = false;
+				this.stopTimerProcess();
+				return;
+			}
+			this.agentLogger.warn('No timer started to stop');
 		} catch (error) {
 			console.error('error to stop tracking', error);
 		}
@@ -241,6 +245,7 @@ class PullActivities {
 		const appSetting = getAppSetting();
 		const screenshotInterval = (appSetting?.timer?.updatePeriod || 5) * 60; // value is in seconds and default to 5 minutes
 		this.timerModule.setScreenshotInterval(screenshotInterval);
+		this.timerModule.setRandomScreenshotInteval(appSetting?.randomScreenshotTime || false);
 		this.agentLogger.info('Agent started with 60 second interval keyboard and mouse activities collected');
 		this.agentLogger.info(`screenshot will taken every ${screenshotInterval} seconds`);
 	}
@@ -259,7 +264,9 @@ class PullActivities {
 
 	async showScreenshot(imgs: TScreenShot[], appSetting: Partial<TAppSetting>) {
 		if (imgs.length > 0) {
-			const img: any = imgs[0];
+			/* get random image to show when have more than 1 images */
+			const img: any = imgs.length > 1 ? imgs[Math.floor(Math.random() * imgs.length)] : imgs[0];
+			await delaySync(500);
 			img.img = this.buffToB64(img);
 			if (appSetting) {
 				if (appSetting.simpleScreenshotNotification) {
@@ -270,7 +277,6 @@ class PullActivities {
 				} else if (appSetting.screenshotNotification) {
 					try {
 						await this.appWindow.initScreenShotNotification();
-						await delaySync(1000);
 						await notifyScreenshot(
 							this.appWindow.notificationWindow,
 							img,
@@ -300,7 +306,7 @@ class PullActivities {
 		}, 3000);
 	}
 
-	buffToB64(imgs: any) {
+	buffToB64(imgs: TScreenShot) {
 		const bufferImg: Buffer = Buffer.isBuffer(imgs.img) ? imgs.img : Buffer.from(imgs.img);
 		const b64img = bufferImg.toString('base64');
 		return b64img;

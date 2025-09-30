@@ -108,7 +108,7 @@ export class DesktopQueue {
 			this.timeSlotQueue = new Queue(
 				timeSlotCallback,
 				{
-					concurrent: 1,
+					concurrent: 2,
 					maxRetries: 5,
 					retryDelay: 15_000,
 					filter: (task, cb) => {
@@ -130,7 +130,7 @@ export class DesktopQueue {
 			this.screenshotQueue = new Queue(
 				screenshotCallback,
 				{
-					concurrent: 1,
+					concurrent: 2,
 					maxRetries: 5,
 					retryDelay: 15_000,
 					filter: (task, cb) => {
@@ -160,14 +160,16 @@ export class DesktopQueue {
 	}
 
 	public async stopQueue() {
-		this.timeSlotQueue.pause();
-		this.timerQueue.pause();
-		this.screenshotQueue.pause();
-		await Promise.all([
-			new Promise<void>((resolve) => this.timerQueue.on('drain', () => resolve())),
-			new Promise<void>((resolve) => this.timeSlotQueue.on('drain', () => resolve())),
-			new Promise<void>((resolve) => this.screenshotQueue.on('drain', () => resolve()))
-		])
+		if (this.timeSlotQueue && this.timerQueue && this.screenshotQueue) {
+			this.timeSlotQueue.pause();
+			this.timerQueue.pause();
+			this.screenshotQueue.pause();
+			await Promise.all([
+				new Promise<void>((resolve) => this.timerQueue.on('drain', () => resolve())),
+				new Promise<void>((resolve) => this.timeSlotQueue.on('drain', () => resolve())),
+				new Promise<void>((resolve) => this.screenshotQueue.on('drain', () => resolve()))
+			])
+		}
 	}
 
 	public initWorker() {

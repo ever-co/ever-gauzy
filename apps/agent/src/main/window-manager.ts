@@ -8,7 +8,7 @@ import {
 	ScreenCaptureNotification
 } from '@gauzy/desktop-window';
 import { app, BrowserWindow, screen } from 'electron';
-import { resolveHtmlPath } from './util';
+import { resolveHtmlPath, getInitialConfig } from './util';
 import * as path from 'path';
 
 class AppWindow {
@@ -102,6 +102,12 @@ class AppWindow {
 					this.setupWindow.destroy();
 					this.setupWindow = null;
 					this.dockHideHandle();
+
+					/* terminate app when the setup close without complete the setup process */
+					const config = getInitialConfig();
+					if (!config.isSetup) {
+						app.quit();
+					}
 				});
 			}
 		} catch (error) {
@@ -205,7 +211,6 @@ class AppWindow {
 				await this.notificationWindow.loadURL();
 				return;
 			}
-			this.notificationWindow.show();
 		} catch (error) {
 			console.error('Failed to initialize screenshot notification', error);
 		}
