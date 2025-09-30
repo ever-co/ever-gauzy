@@ -6,7 +6,7 @@ import { IntegrationEnum } from '@gauzy/contracts';
 import { ConfigService } from '@gauzy/config';
 import { buildQueryString } from '@gauzy/utils';
 import { firstValueFrom, catchError } from 'rxjs';
-import { createHmac } from 'crypto';
+import { createHmac, randomBytes } from 'node:crypto';
 import { ACTIVEPIECES_OAUTH_AUTHORIZE_URL, ACTIVEPIECES_OAUTH_TOKEN_URL, ACTIVEPIECES_SCOPES, OAUTH_RESPONSE_TYPE, OAUTH_GRANT_TYPE } from './activepieces.config';
 import { ActivepiecesQueryDto, ActivepiecesTokenExchangeDto } from './dto';
 import { IActivepiecesTokenExchangeRequest, IActivepiecesOAuthTokens } from './activepieces.type';
@@ -28,7 +28,7 @@ export class ActivepiecesAuthorizationController {
 	 * @returns {string} Random state string
 	 */
 	private generateState(): string {
-		return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+		return randomBytes(32).toString('base64url');
 	}
 
 	/**
