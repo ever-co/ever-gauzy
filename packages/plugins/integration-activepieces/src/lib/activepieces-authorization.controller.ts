@@ -12,10 +12,9 @@ import { ACTIVEPIECES_OAUTH_AUTHORIZE_URL, ACTIVEPIECES_OAUTH_TOKEN_URL, ACTIVEP
 import { ActivepiecesQueryDto, ActivepiecesTokenExchangeDto } from './dto';
 import { IActivepiecesTokenExchangeRequest, IActivepiecesOAuthTokens } from './activepieces.type';
 import { ActivepiecesConfigService } from './activepieces-config.service';
-import { RequestContext } from 'packages/core/src';
+import { RequestContext } from '@gauzy/core';
 
 @ApiTags('ActivePieces Integration')
-@Public()
 @Controller('/integration/activepieces')
 export class ActivepiecesAuthorizationController {
 	constructor(
