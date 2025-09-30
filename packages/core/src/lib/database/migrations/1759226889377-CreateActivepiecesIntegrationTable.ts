@@ -152,8 +152,8 @@ export class CreateActivepiecesIntegrationTable1759226889377 implements Migratio
      */
     public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`CREATE TABLE \`activepieces_integration\` (\`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`deletedAt\` datetime(6) NULL, \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`isActive\` tinyint DEFAULT 1, \`isArchived\` tinyint DEFAULT 0, \`archivedAt\` datetime(6) NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`clientId\` varchar(255) NOT NULL, \`clientSecret\` text NOT NULL, \`callbackUrl\` varchar(255) NULL, \`postInstallUrl\` varchar(255) NULL, \`description\` varchar(255) NULL, \`integrationId\` varchar(255) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
-        await queryRunner.query(`CREATE UNIQUE INDEX \`uq_activepieces_tenant_org_not_null\` ON \`activepieces_integration\` (\`tenantId\`, \`organizationId\`)`);
-        await queryRunner.query(`CREATE UNIQUE INDEX \`uq_activepieces_tenant_org_null\` ON \`activepieces_integration\` (\`tenantId\`)`);
+        await queryRunner.query(`ALTER TABLE \`activepieces_integration\` ADD COLUMN \`tenantOrgKey\` varchar(511) AS (IF(\`organizationId\` IS NULL, \`tenantId\`, CONCAT(\`tenantId\`, ':', \`organizationId\`))) STORED`);
+        await queryRunner.query(`CREATE UNIQUE INDEX \`uq_activepieces_tenant_org_key\` ON \`activepieces_integration\` (\`tenantOrgKey\`)`);
         await queryRunner.query(`CREATE INDEX \`IDX_activepieces_integration_tenant\` ON \`activepieces_integration\` (\`tenantId\`)`);
         await queryRunner.query(`CREATE INDEX \`IDX_activepieces_integration_organization\` ON \`activepieces_integration\` (\`organizationId\`)`);
         await queryRunner.query(`CREATE INDEX \`IDX_activepieces_integration_integration\` ON \`activepieces_integration\` (\`integrationId\`)`);
@@ -183,8 +183,8 @@ export class CreateActivepiecesIntegrationTable1759226889377 implements Migratio
         await queryRunner.query(`ALTER TABLE \`activepieces_integration\` DROP FOREIGN KEY \`FK_activepieces_integration_integration\``);
         await queryRunner.query(`ALTER TABLE \`activepieces_integration\` DROP FOREIGN KEY \`FK_activepieces_integration_organization\``);
         await queryRunner.query(`ALTER TABLE \`activepieces_integration\` DROP FOREIGN KEY \`FK_activepieces_integration_tenant\``);
-        await queryRunner.query(`DROP INDEX \`uq_activepieces_tenant_org_not_null\` ON \`activepieces_integration\``);
-        await queryRunner.query(`DROP INDEX \`uq_activepieces_tenant_org_null\` ON \`activepieces_integration\``);
+        await queryRunner.query(`DROP INDEX \`uq_activepieces_tenant_org_key\` ON \`activepieces_integration\``);
+        await queryRunner.query(`ALTER TABLE \`activepieces_integration\` DROP COLUMN \`tenantOrgKey\``);
         await queryRunner.query(`DROP INDEX \`IDX_activepieces_integration_isArchived\` ON \`activepieces_integration\``);
         await queryRunner.query(`DROP INDEX \`IDX_activepieces_integration_isActive\` ON \`activepieces_integration\``);
         await queryRunner.query(`DROP INDEX \`IDX_activepieces_integration_deletedByUserId\` ON \`activepieces_integration\``);

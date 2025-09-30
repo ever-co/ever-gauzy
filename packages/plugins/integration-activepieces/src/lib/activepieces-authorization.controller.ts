@@ -12,6 +12,7 @@ import { ACTIVEPIECES_OAUTH_AUTHORIZE_URL, ACTIVEPIECES_OAUTH_TOKEN_URL, ACTIVEP
 import { ActivepiecesQueryDto, ActivepiecesTokenExchangeDto } from './dto';
 import { IActivepiecesTokenExchangeRequest, IActivepiecesOAuthTokens } from './activepieces.type';
 import { ActivepiecesConfigService } from './activepieces-config.service';
+import { RequestContext } from 'packages/core/src';
 
 @ApiTags('ActivePieces Integration')
 @Public()
@@ -126,8 +127,8 @@ export class ActivepiecesAuthorizationController {
 		@Headers() headers: any
 	) {
 		try {
+			const tenantId = RequestContext.currentTenantId();
 			// Extract tenant and organization context from query or headers
-			const tenantId = query.tenantId || headers['tenant-id'];
 			const organizationId = query.organizationId || headers['organization-id'];
 
 			if (!tenantId) {

@@ -75,8 +75,8 @@ export class ActivepiecesConfigController {
 			});
 			return {
 				...created,
-				clientId: '***',
-				clientSecret: '***'
+				clientId: created.clientId ? '***' : '',
+				clientSecret: created.clientSecret ? '***' : ''
 			};
 		} catch (error: any) {
 			this.logger.error('Failed to create ActivePieces configuration', error as Error);
@@ -181,8 +181,8 @@ export class ActivepiecesConfigController {
 			// Remove sensitive data from response
 			return configs.map(config => ({
 				...config,
-				clientId: '***',
-				clientSecret: '***'
+				clientId: config.clientId ? '***' : '',
+				clientSecret: config.clientSecret ? '***' : ''
 			}));
 		} catch (error: any) {
 			this.logger.error('Failed to get tenant configurations', error as Error);
@@ -228,8 +228,8 @@ export class ActivepiecesConfigController {
 			// Remove sensitive data from response
 			return {
 				...updatedConfig,
-				clientId: '***',
-				clientSecret: '***'
+				clientId: updatedConfig.clientId ? '***' : '',
+				clientSecret: updatedConfig.clientSecret ? '***' : ''
 			};
 		} catch (error: any) {
 			this.logger.error('Failed to update ActivePieces configuration', error as Error);
