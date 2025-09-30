@@ -111,31 +111,9 @@ export class CreateActivepiecesIntegrationTable1759226889377 implements Migratio
     * @param queryRunner
     */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`CREATE TABLE "activepieces_integration" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "deletedAt" datetime, "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "clientId" varchar NOT NULL, "clientSecret" text NOT NULL, "callbackUrl" varchar, "postInstallUrl" varchar, "description" varchar, "integrationId" varchar)`);
-        await queryRunner.query(`CREATE INDEX "IDX_activepieces_integration_tenant" ON "activepieces_integration" ("tenantId")`);
-        await queryRunner.query(`CREATE INDEX "IDX_activepieces_integration_organization" ON "activepieces_integration" ("organizationId")`);
-        await queryRunner.query(`CREATE INDEX "IDX_activepieces_integration_integration" ON "activepieces_integration" ("integrationId")`);
-        await queryRunner.query(`CREATE INDEX "IDX_activepieces_integration_deletedAt" ON "activepieces_integration" ("deletedAt")`);
-        await queryRunner.query(`CREATE INDEX "IDX_activepieces_integration_createdByUserId" ON "activepieces_integration" ("createdByUserId")`);
-        await queryRunner.query(`CREATE INDEX "IDX_activepieces_integration_updatedByUserId" ON "activepieces_integration" ("updatedByUserId")`);
-        await queryRunner.query(`CREATE INDEX "IDX_activepieces_integration_deletedByUserId" ON "activepieces_integration" ("deletedByUserId")`);
-        await queryRunner.query(`CREATE INDEX "IDX_activepieces_integration_isActive" ON "activepieces_integration" ("isActive")`);
-        await queryRunner.query(`CREATE INDEX "IDX_activepieces_integration_isArchived" ON "activepieces_integration" ("isArchived")`);
+        await queryRunner.query(`CREATE TABLE "activepieces_integration" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "deletedAt" datetime, "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "clientId" varchar NOT NULL, "clientSecret" text NOT NULL, "callbackUrl" varchar, "postInstallUrl" varchar, "description" varchar, "integrationId" varchar, CONSTRAINT "FK_activepieces_integration_tenant" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_activepieces_integration_organization" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_activepieces_integration_integration" FOREIGN KEY ("integrationId") REFERENCES "integration_tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_activepieces_integration_createdByUser" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_activepieces_integration_updatedByUser" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_activepieces_integration_deletedByUser" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
         await queryRunner.query(`CREATE UNIQUE INDEX "uq_activepieces_tenant_org_not_null" ON "activepieces_integration" ("tenantId", "organizationId") WHERE "organizationId" IS NOT NULL`);
         await queryRunner.query(`CREATE UNIQUE INDEX "uq_activepieces_tenant_org_null" ON "activepieces_integration" ("tenantId") WHERE "organizationId" IS NULL`);
-        await queryRunner.query(`DROP INDEX "IDX_activepieces_integration_tenant"`);
-        await queryRunner.query(`DROP INDEX "IDX_activepieces_integration_organization"`);
-        await queryRunner.query(`DROP INDEX "IDX_activepieces_integration_integration"`);
-        await queryRunner.query(`DROP INDEX "IDX_activepieces_integration_deletedAt"`);
-        await queryRunner.query(`DROP INDEX "IDX_activepieces_integration_createdByUserId"`);
-        await queryRunner.query(`DROP INDEX "IDX_activepieces_integration_updatedByUserId"`);
-        await queryRunner.query(`DROP INDEX "IDX_activepieces_integration_deletedByUserId"`);
-        await queryRunner.query(`DROP INDEX "IDX_activepieces_integration_isActive"`);
-        await queryRunner.query(`DROP INDEX "IDX_activepieces_integration_isArchived"`);
-        await queryRunner.query(`CREATE TABLE "temporary_activepieces_integration" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "deletedAt" datetime, "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "clientId" varchar NOT NULL, "clientSecret" text NOT NULL, "callbackUrl" varchar, "postInstallUrl" varchar, "description" varchar, "integrationId" varchar, CONSTRAINT "FK_activepieces_integration_tenant" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_activepieces_integration_organization" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_activepieces_integration_integration" FOREIGN KEY ("integrationId") REFERENCES "integration_tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_activepieces_integration_createdByUser" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_activepieces_integration_updatedByUser" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_activepieces_integration_deletedByUser" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
-        await queryRunner.query(`INSERT INTO "temporary_activepieces_integration"("id", "createdAt", "updatedAt", "deletedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "clientId", "clientSecret", "callbackUrl", "postInstallUrl", "description", "integrationId") SELECT "id", "createdAt", "updatedAt", "deletedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "clientId", "clientSecret", "callbackUrl", "postInstallUrl", "description", "integrationId" FROM "activepieces_integration"`);
-        await queryRunner.query(`DROP TABLE "activepieces_integration"`);
-        await queryRunner.query(`ALTER TABLE "temporary_activepieces_integration" RENAME TO "activepieces_integration"`);
         await queryRunner.query(`CREATE INDEX "IDX_activepieces_integration_tenant" ON "activepieces_integration" ("tenantId")`);
         await queryRunner.query(`CREATE INDEX "IDX_activepieces_integration_organization" ON "activepieces_integration" ("organizationId")`);
         await queryRunner.query(`CREATE INDEX "IDX_activepieces_integration_integration" ON "activepieces_integration" ("integrationId")`);
@@ -162,10 +140,6 @@ export class CreateActivepiecesIntegrationTable1759226889377 implements Migratio
         await queryRunner.query(`DROP INDEX "IDX_activepieces_integration_integration"`);
         await queryRunner.query(`DROP INDEX "IDX_activepieces_integration_organization"`);
         await queryRunner.query(`DROP INDEX "IDX_activepieces_integration_tenant"`);
-        await queryRunner.query(`ALTER TABLE "activepieces_integration" RENAME TO "temporary_activepieces_integration"`);
-        await queryRunner.query(`CREATE TABLE "activepieces_integration" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "clientId" varchar NOT NULL, "clientSecret" text NOT NULL, "callbackUrl" varchar, "postInstallUrl" varchar, "isActive" boolean NOT NULL DEFAULT (1), "description" varchar, "integrationId" varchar)`);
-        await queryRunner.query(`INSERT INTO "activepieces_integration"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "clientId", "clientSecret", "callbackUrl", "postInstallUrl", "isActive", "description", "integrationId") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "clientId", "clientSecret", "callbackUrl", "postInstallUrl", "isActive", "description", "integrationId" FROM "temporary_activepieces_integration"`);
-        await queryRunner.query(`DROP TABLE "temporary_activepieces_integration"`);
         await queryRunner.query(`DROP INDEX "uq_activepieces_tenant_org_null"`);
         await queryRunner.query(`DROP INDEX "uq_activepieces_tenant_org_not_null"`);
         await queryRunner.query(`DROP TABLE "activepieces_integration"`);
@@ -177,7 +151,18 @@ export class CreateActivepiecesIntegrationTable1759226889377 implements Migratio
      * @param queryRunner
      */
     public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`CREATE TABLE \`activepieces_integration\` (\`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`deletedAt\` datetime(6) NULL, \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`isActive\` tinyint DEFAULT 1, \`isArchived\` tinyint DEFAULT 0, \`archivedAt\` datetime(6) NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`clientId\` varchar(255) NOT NULL, \`clientSecret\` text NOT NULL, \`callbackUrl\` varchar(255) NULL, \`postInstallUrl\` varchar(255) NULL, \`description\` varchar(255) NULL, \`integrationId\` varchar(255) NULL, \`organizationId_coalesced\` varchar(255) AS (COALESCE(\`organizationId\`, '___NULL___')) STORED, UNIQUE INDEX \`UQ_activepieces_integration_tenant_org\` (\`tenantId\`, \`organizationId_coalesced\`), INDEX \`IDX_activepieces_integration_tenant\` (\`tenantId\`), INDEX \`IDX_activepieces_integration_organization\` (\`organizationId\`), INDEX \`IDX_activepieces_integration_integration\` (\`integrationId\`), INDEX \`IDX_activepieces_integration_deletedAt\` (\`deletedAt\`), INDEX \`IDX_activepieces_integration_createdByUserId\` (\`createdByUserId\`), INDEX \`IDX_activepieces_integration_updatedByUserId\` (\`updatedByUserId\`), INDEX \`IDX_activepieces_integration_deletedByUserId\` (\`deletedByUserId\`), INDEX \`IDX_activepieces_integration_isActive\` (\`isActive\`), INDEX \`IDX_activepieces_integration_isArchived\` (\`isArchived\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`activepieces_integration\` (\`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`deletedAt\` datetime(6) NULL, \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`isActive\` tinyint DEFAULT 1, \`isArchived\` tinyint DEFAULT 0, \`archivedAt\` datetime(6) NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`clientId\` varchar(255) NOT NULL, \`clientSecret\` text NOT NULL, \`callbackUrl\` varchar(255) NULL, \`postInstallUrl\` varchar(255) NULL, \`description\` varchar(255) NULL, \`integrationId\` varchar(255) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE UNIQUE INDEX \`uq_activepieces_tenant_org_not_null\` ON \`activepieces_integration\` (\`tenantId\`, \`organizationId\`)`);
+        await queryRunner.query(`CREATE UNIQUE INDEX \`uq_activepieces_tenant_org_null\` ON \`activepieces_integration\` (\`tenantId\`)`);
+        await queryRunner.query(`CREATE INDEX \`IDX_activepieces_integration_tenant\` ON \`activepieces_integration\` (\`tenantId\`)`);
+        await queryRunner.query(`CREATE INDEX \`IDX_activepieces_integration_organization\` ON \`activepieces_integration\` (\`organizationId\`)`);
+        await queryRunner.query(`CREATE INDEX \`IDX_activepieces_integration_integration\` ON \`activepieces_integration\` (\`integrationId\`)`);
+        await queryRunner.query(`CREATE INDEX \`IDX_activepieces_integration_deletedAt\` ON \`activepieces_integration\` (\`deletedAt\`)`);
+        await queryRunner.query(`CREATE INDEX \`IDX_activepieces_integration_createdByUserId\` ON \`activepieces_integration\` (\`createdByUserId\`)`);
+        await queryRunner.query(`CREATE INDEX \`IDX_activepieces_integration_updatedByUserId\` ON \`activepieces_integration\` (\`updatedByUserId\`)`);
+        await queryRunner.query(`CREATE INDEX \`IDX_activepieces_integration_deletedByUserId\` ON \`activepieces_integration\` (\`deletedByUserId\`)`);
+        await queryRunner.query(`CREATE INDEX \`IDX_activepieces_integration_isActive\` ON \`activepieces_integration\` (\`isActive\`)`);
+        await queryRunner.query(`CREATE INDEX \`IDX_activepieces_integration_isArchived\` ON \`activepieces_integration\` (\`isArchived\`)`);
         await queryRunner.query(`ALTER TABLE \`activepieces_integration\` ADD CONSTRAINT \`FK_activepieces_integration_tenant\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE \`activepieces_integration\` ADD CONSTRAINT \`FK_activepieces_integration_organization\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE \`activepieces_integration\` ADD CONSTRAINT \`FK_activepieces_integration_integration\` FOREIGN KEY (\`integrationId\`) REFERENCES \`integration_tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
@@ -198,7 +183,8 @@ export class CreateActivepiecesIntegrationTable1759226889377 implements Migratio
         await queryRunner.query(`ALTER TABLE \`activepieces_integration\` DROP FOREIGN KEY \`FK_activepieces_integration_integration\``);
         await queryRunner.query(`ALTER TABLE \`activepieces_integration\` DROP FOREIGN KEY \`FK_activepieces_integration_organization\``);
         await queryRunner.query(`ALTER TABLE \`activepieces_integration\` DROP FOREIGN KEY \`FK_activepieces_integration_tenant\``);
-        await queryRunner.query(`DROP INDEX \`UQ_activepieces_integration_tenant_org\` ON \`activepieces_integration\``);
+        await queryRunner.query(`DROP INDEX \`uq_activepieces_tenant_org_not_null\` ON \`activepieces_integration\``);
+        await queryRunner.query(`DROP INDEX \`uq_activepieces_tenant_org_null\` ON \`activepieces_integration\``);
         await queryRunner.query(`DROP INDEX \`IDX_activepieces_integration_isArchived\` ON \`activepieces_integration\``);
         await queryRunner.query(`DROP INDEX \`IDX_activepieces_integration_isActive\` ON \`activepieces_integration\``);
         await queryRunner.query(`DROP INDEX \`IDX_activepieces_integration_deletedByUserId\` ON \`activepieces_integration\``);
@@ -208,7 +194,6 @@ export class CreateActivepiecesIntegrationTable1759226889377 implements Migratio
         await queryRunner.query(`DROP INDEX \`IDX_activepieces_integration_integration\` ON \`activepieces_integration\``);
         await queryRunner.query(`DROP INDEX \`IDX_activepieces_integration_organization\` ON \`activepieces_integration\``);
         await queryRunner.query(`DROP INDEX \`IDX_activepieces_integration_tenant\` ON \`activepieces_integration\``);
-        await queryRunner.query(`DROP INDEX \`UQ_activepieces_integration_tenant_org\` ON \`activepieces_integration\``);
         await queryRunner.query(`DROP TABLE \`activepieces_integration\``);
     }
 }

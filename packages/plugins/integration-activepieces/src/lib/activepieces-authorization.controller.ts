@@ -66,7 +66,7 @@ export class ActivepiecesAuthorizationController {
 	 * @param encodedState - Encoded state string
 	 * @returns Decoded state data
 	 */
-	private decodeState(encodedState: string): { tenantId: string; organizationId: string; state: string } {
+	private decodeState(encodedState: string): { tenantId: string; organizationId?: string; state: string } {
 		try {
 			const [payloadB64, sig] = encodedState.split('.');
 			if (!payloadB64 || !sig) throw new Error('Invalid state parameter');
@@ -208,13 +208,19 @@ export class ActivepiecesAuthorizationController {
 			}
 
 			// Convert query params object to string, including tenant context
-			const queryParamsString = buildQueryString({
+			const queryParams: Record<string, string> = {
 				code: query.code,
 				state: originalState,
 				tenantId,
-				organizationId,
 				integration: IntegrationEnum.ACTIVE_PIECES
-			});
+			};
+
+			// Only include organizationId if it's defined
+			if (organizationId) {
+				queryParams['organizationId'] = organizationId;
+			}
+
+			const queryParamsString = buildQueryString(queryParams);
 
 			// Combine post install URL with query params
 			const redirectUrl = [activepiecesConfig.postInstallUrl, queryParamsString].filter(Boolean).join('?');

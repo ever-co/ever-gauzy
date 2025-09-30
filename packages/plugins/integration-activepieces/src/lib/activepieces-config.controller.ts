@@ -228,8 +228,8 @@ export class ActivepiecesConfigController {
 			// Remove sensitive data from response
 			return {
 				...updatedConfig,
-				clientId: updatedConfig.clientId ? '***' : '***',
-				clientSecret: updatedConfig.clientSecret ? '***' : '***'
+				clientId: '***',
+				clientSecret: '***'
 			};
 		} catch (error: any) {
 			this.logger.error('Failed to update ActivePieces configuration', error as Error);
