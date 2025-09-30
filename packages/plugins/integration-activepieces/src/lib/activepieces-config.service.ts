@@ -38,6 +38,7 @@ export class ActivepiecesConfigService {
 			if (tenantConfig) {
 				return {
 					clientId: tenantConfig.clientId,
+					clientSecret: tenantConfig.clientSecret,
 					callbackUrl: tenantConfig.callbackUrl || this.getDefaultCallbackUrl(),
 					postInstallUrl: tenantConfig.postInstallUrl || this.getDefaultPostInstallUrl(),
 					isActive: tenantConfig.isActive,
@@ -55,6 +56,7 @@ export class ActivepiecesConfigService {
 			// Return sanitized global config without clientSecret
 			return {
 				clientId: globalConfig.clientId,
+				clientSecret: globalConfig.clientSecret,
 				callbackUrl: globalConfig.callbackUrl,
 				postInstallUrl: globalConfig.postInstallUrl,
 				isActive: globalConfig.isActive,

@@ -10,7 +10,7 @@ export interface IActivepiecesConfig {
 	/**
 	 * OAuth client secret for the tenant's ActivePieces application
 	 */
-	readonly clientSecret?: string;
+	readonly clientSecret: string;
 
 	/**
 	 * Callback URL for OAuth flow (optional, falls back to global config)
@@ -31,4 +31,9 @@ export interface IActivepiecesConfig {
 	 * Optional description for the configuration
 	 */
 	readonly description?: string;
+
+	/**
+	 * Secret for signing OAuth state parameter
+	 */
+	readonly stateSecret?: string;
 }

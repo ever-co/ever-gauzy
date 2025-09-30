@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator';
-import { IActivepiecesIntegrationConfigUpdateInput, ID } from '@gauzy/contracts';
+import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IActivepiecesIntegrationConfigUpdateInput } from '@gauzy/contracts';
 
 export class ActivepiecesConfigUpdateDto implements IActivepiecesIntegrationConfigUpdateInput {
 	@ApiPropertyOptional({

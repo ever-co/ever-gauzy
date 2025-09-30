@@ -1,9 +1,10 @@
 import { Controller, Get, Post, Body, HttpException, HttpStatus, Query, Res, UsePipes, ValidationPipe, Headers } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { Response } from 'express';
 import { HttpService } from '@nestjs/axios';
 import { Public } from '@gauzy/common';
 import { IntegrationEnum } from '@gauzy/contracts';
+import { ConfigService } from '@gauzy/config';
 import { buildQueryString } from '@gauzy/utils';
 import { firstValueFrom, catchError } from 'rxjs';
 import { createHmac } from 'crypto';
@@ -18,7 +19,8 @@ import { ActivepiecesConfigService } from './activepieces-config.service';
 export class ActivepiecesAuthorizationController {
 	constructor(
 		private readonly httpService: HttpService,
-		private readonly activepiecesConfigService: ActivepiecesConfigService
+		private readonly activepiecesConfigService: ActivepiecesConfigService,
+		private readonly config: ConfigService
 	) {}
 
 	/**
@@ -40,7 +42,10 @@ export class ActivepiecesAuthorizationController {
 	 */
 	private signStatePayload(payload: string): string {
 		// Fixed secret for OAuth state parameter signing - for demonstration purposes only
-		const secret = 'activepieces-oauth-state-signing-key-2025';
+		const secret = this.config.get('activepieces')?.stateSecret;
+		if (!secret) {
+			throw new HttpException('ActivePieces state secret is not configured', HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 		return createHmac('sha256', secret).update(payload).digest('base64url');
 	}
 
@@ -100,6 +105,18 @@ export class ActivepiecesAuthorizationController {
 				}
 			}
 		}
+	})
+	@ApiQuery({
+		name: 'tenantId',
+		required: true,
+		type: String,
+		description: 'Tenant ID'
+	})
+	@ApiQuery({
+		name: 'organizationId',
+		required: false,
+		type: String,
+		description: 'Optional organization ID'
 	})
 	@Get('/authorize')
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))

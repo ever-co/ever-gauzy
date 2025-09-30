@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Index, Unique, JoinColumn, RelationId } from 'typeorm';
+import { Index, JoinColumn, RelationId } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator';
 import { IActivepiecesConfig } from '@gauzy/common';

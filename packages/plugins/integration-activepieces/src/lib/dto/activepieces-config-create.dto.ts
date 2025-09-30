@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsBoolean, IsNotEmpty, IsUrl } from 'class-validator';
-import { IActivepiecesIntegrationConfigCreateInput, ID } from '@gauzy/contracts';
+import { IsString, IsOptional, IsBoolean, IsNotEmpty } from 'class-validator';
+import { IActivepiecesIntegrationConfigCreateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
 
 export class ActivepiecesConfigCreateDto extends TenantOrganizationBaseDTO implements IActivepiecesIntegrationConfigCreateInput {

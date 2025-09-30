@@ -75,8 +75,8 @@ export class ActivepiecesConfigController {
 			});
 			return {
 				...created,
-				clientId: created.clientId,
-				clientSecret: created.clientSecret
+				clientId: '***',
+				clientSecret: '***'
 			};
 		} catch (error: any) {
 			this.logger.error('Failed to create ActivePieces configuration', error as Error);
@@ -116,6 +116,12 @@ export class ActivepiecesConfigController {
 		required: false,
 		type: String,
 		description: 'Optional organization ID'
+	})
+	@ApiQuery({
+		name: 'tenantId',
+		required: true,
+		type: String,
+		description: 'Tenant ID'
 	})
 	@Get('/status')
 	async getConfigStatus(@Query('organizationId') organizationId?: string) {
@@ -175,8 +181,8 @@ export class ActivepiecesConfigController {
 			// Remove sensitive data from response
 			return configs.map(config => ({
 				...config,
-				clientId: config.clientId ? '***' : undefined,
-				clientSecret: config.clientSecret ? '***' : undefined
+				clientId: '***',
+				clientSecret: '***'
 			}));
 		} catch (error: any) {
 			this.logger.error('Failed to get tenant configurations', error as Error);
@@ -222,8 +228,8 @@ export class ActivepiecesConfigController {
 			// Remove sensitive data from response
 			return {
 				...updatedConfig,
-				clientId: updatedConfig.clientId ? '***' : undefined,
-				clientSecret: updatedConfig.clientSecret ? '***' : undefined
+				clientId: updatedConfig.clientId ? '***' : '***',
+				clientSecret: updatedConfig.clientSecret ? '***' : '***'
 			};
 		} catch (error: any) {
 			this.logger.error('Failed to update ActivePieces configuration', error as Error);
