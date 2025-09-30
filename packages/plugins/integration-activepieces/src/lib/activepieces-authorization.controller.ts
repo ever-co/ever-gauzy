@@ -2,7 +2,6 @@ import { Controller, Get, Post, Body, HttpException, HttpStatus, Query, Res, Use
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { Response } from 'express';
 import { HttpService } from '@nestjs/axios';
-import { Public } from '@gauzy/common';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { ConfigService } from '@gauzy/config';
 import { buildQueryString } from '@gauzy/utils';
