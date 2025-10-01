@@ -23,10 +23,7 @@ export default registerAs(
 			process.env.GAUZY_ACTIVEPIECES_POST_INSTALL_URL ||
 			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/activepieces`,
 
-        // ActivePieces isActive
-		isActive: process.env.GAUZY_ACTIVEPIECES_IS_ACTIVE === 'true',
-
-        // ActivePieces description
-		description: process.env.GAUZY_ACTIVEPIECES_DESCRIPTION,
+        // ActivePieces state secret
+		stateSecret: process.env.ACTIVEPIECES_STATE_SECRET,
 	})
 );

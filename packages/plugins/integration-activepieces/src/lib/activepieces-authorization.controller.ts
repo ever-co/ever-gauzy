@@ -10,7 +10,7 @@ import { createHmac, randomBytes } from 'node:crypto';
 import { ACTIVEPIECES_OAUTH_AUTHORIZE_URL, ACTIVEPIECES_OAUTH_TOKEN_URL, ACTIVEPIECES_SCOPES, OAUTH_RESPONSE_TYPE, OAUTH_GRANT_TYPE } from './activepieces.config';
 import { ActivepiecesQueryDto, ActivepiecesTokenExchangeDto } from './dto';
 import { IActivepiecesTokenExchangeRequest, IActivepiecesOAuthTokens } from './activepieces.type';
-import { ActivepiecesConfigService } from './activepieces-config.service';
+import { ActivepiecesService } from './activepieces.service';
 import { RequestContext } from '@gauzy/core';
 
 @ApiTags('ActivePieces Integration')
@@ -18,7 +18,7 @@ import { RequestContext } from '@gauzy/core';
 export class ActivepiecesAuthorizationController {
 	constructor(
 		private readonly httpService: HttpService,
-		private readonly activepiecesConfigService: ActivepiecesConfigService,
+		private readonly activepiecesService: ActivepiecesService,
 		private readonly config: ConfigService
 	) {}
 
@@ -40,7 +40,6 @@ export class ActivepiecesAuthorizationController {
 	 * @returns Encoded state string
 	 */
 	private signStatePayload(payload: string): string {
-		// Fixed secret for OAuth state parameter signing - for demonstration purposes only
 		const secret = this.config.get('activepieces')?.stateSecret;
 		if (!secret) {
 			throw new HttpException('ActivePieces state secret is not configured', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -82,7 +81,6 @@ export class ActivepiecesAuthorizationController {
 	 *
 	 * @param {any} query - Query parameters including tenantId and organizationId
 	 * @param {Response} response - Express Response object
-	 * @param {any} headers - Request headers
 	 */
 	@ApiOperation({
 		summary: 'Initiate OAuth flow with ActivePieces',
@@ -126,15 +124,15 @@ export class ActivepiecesAuthorizationController {
 	) {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			// Extract tenant and organization context from query or headers
-			const organizationId = query.organizationId || headers['organization-id'];
+			// Extract tenant and organization context from query
+			const organizationId = query.organizationId;
 
 			if (!tenantId) {
 				throw new HttpException('Tenant context is required for OAuth authorization', HttpStatus.BAD_REQUEST);
 			}
 
 			// Get tenant-specific or global ActivePieces configuration
-			const activepiecesConfig = await this.activepiecesConfigService.getConfig(tenantId, organizationId);
+			const activepiecesConfig = await this.activepiecesService.getConfig(tenantId, organizationId);
 
 			if (!activepiecesConfig?.clientId || !activepiecesConfig?.callbackUrl) {
 				throw new HttpException('ActivePieces configuration is incomplete', HttpStatus.BAD_REQUEST);
@@ -197,7 +195,7 @@ export class ActivepiecesAuthorizationController {
 			const { tenantId, organizationId, state: originalState } = this.decodeState(query.state);
 
 			// Get tenant-specific ActivePieces configuration
-			const activepiecesConfig = await this.activepiecesConfigService.getConfig(tenantId, organizationId);
+			const activepiecesConfig = await this.activepiecesService.getConfig(tenantId, organizationId);
 
 			if (!activepiecesConfig?.postInstallUrl) {
 				throw new HttpException(
@@ -274,7 +272,7 @@ export class ActivepiecesAuthorizationController {
 			}
 
 			// Get tenant-specific ActivePieces configuration
-			const activepiecesConfig = await this.activepiecesConfigService.getConfig(tenantId, organizationId);
+			const activepiecesConfig = await this.activepiecesService.getConfig(tenantId, organizationId);
 
 			if (!activepiecesConfig?.clientId || !activepiecesConfig?.clientSecret) {
 				throw new HttpException('ActivePieces OAuth credentials are not configured for this tenant', HttpStatus.BAD_REQUEST);

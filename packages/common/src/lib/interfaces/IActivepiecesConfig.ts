@@ -23,16 +23,6 @@ export interface IActivepiecesConfig {
 	readonly postInstallUrl?: string;
 
 	/**
-	 * Whether this configuration is active and should be used
-	 */
-	readonly isActive?: boolean;
-
-	/**
-	 * Optional description for the configuration
-	 */
-	readonly description?: string;
-
-	/**
 	 * Secret for signing OAuth state parameter
 	 */
 	readonly stateSecret?: string;

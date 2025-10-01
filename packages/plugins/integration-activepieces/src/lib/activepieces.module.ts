@@ -23,11 +23,6 @@ import { ActivepiecesController } from './activepieces.controller';
 import { ActivepiecesAuthorizationController } from './activepieces-authorization.controller';
 import { ActivepiecesMcpService } from './activepieces-mcp.service';
 import { ActivepiecesMcpController } from './activepieces-mcp.controller';
-import { ActivepiecesConfigService } from './activepieces-config.service';
-import { ActivepiecesConfigController } from './activepieces-config.controller';
-import { ActivepiecesIntegration } from './activepieces-integration.entity';
-import { MikroOrmActivepiecesIntegrationRepository } from './repository/mikro-orm-activepieces-integration.repository';
-import { TypeOrmActivepiecesIntegrationRepository } from './repository/type-orm-activepieces-integration.repository';
 
 @Module({
 	imports: [
@@ -44,23 +39,17 @@ import { TypeOrmActivepiecesIntegrationRepository } from './repository/type-orm-
 		OrganizationProjectModule,
 		RoleModule,
 		RolePermissionModule,
-		UserModule,
-		TypeOrmModule.forFeature([ActivepiecesIntegration]),
-		MikroOrmModule.forFeature([ActivepiecesIntegration])
+		UserModule
 	],
 	controllers: [
 		ActivepiecesAuthorizationController,
 		ActivepiecesController,
-		ActivepiecesMcpController,
-		ActivepiecesConfigController
+		ActivepiecesMcpController
 	],
 	providers: [
 		ActivepiecesService,
-		ActivepiecesMcpService,
-		ActivepiecesConfigService,
-		MikroOrmActivepiecesIntegrationRepository,
-		TypeOrmActivepiecesIntegrationRepository
+		ActivepiecesMcpService
 	],
-	exports: [ActivepiecesService, ActivepiecesMcpService, ActivepiecesConfigService]
+	exports: [ActivepiecesService, ActivepiecesMcpService]
 })
 export class ActivepiecesModule {}
