@@ -15,12 +15,12 @@ export default registerAs(
 
         // ActivePieces Redirected URI after successful authentication
 		callbackUrl:
-			process.env.GAUZY_ACTIVEPIECES_CALLBACK_URL ||
+			process.env.GAUZY_ACTIVEPIECES_CALLBACK_URL ??
 			`${process.env.API_BASE_URL}/api/integration/activepieces/callback`,
 
         // ActivePieces post install URL
 		postInstallUrl:
-			process.env.GAUZY_ACTIVEPIECES_POST_INSTALL_URL ||
+			process.env.GAUZY_ACTIVEPIECES_POST_INSTALL_URL ??
 			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/activepieces`,
 
         // ActivePieces state secret

@@ -455,13 +455,15 @@ export class ActivepiecesService {
 				const clientSecret = integrationTenant.settings.find(s => s.settingsName === 'client_secret')?.settingsValue;
 				const callbackUrl = integrationTenant.settings.find(s => s.settingsName === 'callback_url')?.settingsValue;
 				const postInstallUrl = integrationTenant.settings.find(s => s.settingsName === 'post_install_url')?.settingsValue;
+				const stateSecret = integrationTenant.settings.find(s => s.settingsName === 'state_secret')?.settingsValue;
 
 				if (clientId && clientSecret) {
 					return {
 						clientId,
 						clientSecret,
 						callbackUrl: callbackUrl || this.getDefaultCallbackUrl(),
-						postInstallUrl: postInstallUrl || this.getDefaultPostInstallUrl()
+						postInstallUrl: postInstallUrl || this.getDefaultPostInstallUrl(),
+						stateSecret: stateSecret || this.getDefaultStateSecret()
 					};
 				}
 			}
@@ -476,7 +478,8 @@ export class ActivepiecesService {
 				clientId: globalConfig.clientId,
 				clientSecret: globalConfig.clientSecret,
 				callbackUrl: globalConfig.callbackUrl || this.getDefaultCallbackUrl(),
-				postInstallUrl: globalConfig.postInstallUrl || this.getDefaultPostInstallUrl()
+				postInstallUrl: globalConfig.postInstallUrl || this.getDefaultPostInstallUrl(),
+				stateSecret: globalConfig.stateSecret || this.getDefaultStateSecret()
 			};
 		} catch (error: any) {
 			this.logger.error('Failed to get ActivePieces configuration', error);
