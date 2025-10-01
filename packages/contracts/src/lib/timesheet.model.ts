@@ -14,6 +14,7 @@ import { IUser } from './user.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IScreenshot } from './screenshot.model';
 import { TimeFormatEnum } from './organization.model';
+import { IOrganizationEmploymentType } from './organization-employment-type.model';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	employee: IEmployee;
@@ -185,6 +186,7 @@ export interface ITimeLogFilters extends IBasePerTenantAndOrganizationEntityMode
 	taskIds?: ID[];
 	logType?: TimeLogType[];
 	source?: TimeLogSourceEnum[];
+	employmentTypes?: IOrganizationEmploymentType[];
 	activityLevel?: {
 		start: number;
 		end: number;

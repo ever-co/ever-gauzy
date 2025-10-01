@@ -255,7 +255,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 		const timeZone = this.timeZoneService.currentTimeZone;
 		const startDate = moment(arg.start).startOf('day').format('YYYY-MM-DD HH:mm:ss');
 		const endDate = moment(arg.end).subtract(1, 'days').endOf('day').format('YYYY-MM-DD HH:mm:ss');
-		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
+		const appliedFilter = pick(this.filters, 'source', 'employmentTypes', 'activityLevel', 'logType');
 		const request: IGetTimeLogInput = {
 			...appliedFilter,
 			...this.getFilterRequest({ startDate, endDate })
@@ -267,7 +267,8 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 				'project',
 				'task',
 				'organizationContact',
-				'employee.user'
+				'employee.user',
+				'employee.organizationEmploymentTypes'
 			]);
 			timeLogs$.then((logs: ITimeLog[]) => {
 				const events = logs.map((log: ITimeLog): EventInput => {

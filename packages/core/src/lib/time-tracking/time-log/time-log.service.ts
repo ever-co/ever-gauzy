@@ -100,6 +100,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Inner join with related entities (timeSlots)
 		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
+		// Inner join with employee
+		query.innerJoin('time_log.employee', 'employee');
+
+		// Left join z employment types
+		query.leftJoin('employee.organizationEmploymentTypes', 'organizationEmploymentTypes');
+
 		// Apply additional conditions to the query based on request filters
 		query.where((qb: SelectQueryBuilder<TimeLog>) => {
 			this.getFilterTimeLogQuery(qb, request);
@@ -205,6 +211,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// Join with related entities (employee, etc.)
 			query.innerJoin(`${query.alias}.employee`, 'employee');
+			query.leftJoinAndSelect('employee.organizationEmploymentTypes', 'organizationEmploymentTypes');
 
 			// Define select fields, relations, and pagination options
 			query.setFindOptions({
@@ -226,6 +233,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						isAway: true,
 						isOnline: true,
 						reWeeklyLimit: true,
+						organizationEmploymentTypes: { id: true, name: true },
 						user: {
 							id: true,
 							firstName: true,
@@ -284,6 +292,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Inner join with employee
 			query.innerJoin(`${query.alias}.employee`, 'employee');
 
+			// Join employment types
+			query.leftJoinAndSelect('employee.organizationEmploymentTypes', 'organizationEmploymentTypes');
+
 			// Set select, relations, order
 			query.setFindOptions({
 				select: {
@@ -295,7 +306,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						isAway: true,
 						isOnline: true,
 						reWeeklyLimit: true,
-						user: { id: true, firstName: true, lastName: true, imageUrl: true }
+						user: { id: true, firstName: true, lastName: true, imageUrl: true },
+						organizationEmploymentTypes: { id: true, name: true }
 					}
 				},
 				relations: [...(options.relations || [])],
@@ -366,6 +378,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Create a query builder for the TimeLog entity
 		const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
+		// Inner join with employee
+		query.innerJoin('time_log.employee', 'employee');
+
+		// Left join z employment types
+		query.leftJoin('employee.organizationEmploymentTypes', 'organizationEmploymentTypes');
+
 		// Set find options for the query
 		query.setFindOptions({
 			select: {
@@ -379,6 +397,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					userId: true,
 					isAway: true,
 					isOnline: true,
+					organizationEmploymentTypes: { id: true, name: true },
 					user: {
 						id: true,
 						firstName: true,
@@ -390,7 +409,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			relations: {
 				// Related entities to be included in the result
 				employee: {
-					user: true
+					user: true,
+					organizationEmploymentTypes: true
 				}
 			},
 			order: {
@@ -465,6 +485,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+		query.leftJoinAndSelect('employee.organizationEmploymentTypes', 'organizationEmploymentTypes');
 
 		// Set find options for the query
 		query.setFindOptions({
@@ -537,6 +558,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Create a query builder for the TimeLog entity
 		const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
+		query.innerJoin(`${query.alias}.employee`, 'employee');
+		query.leftJoinAndSelect('employee.organizationEmploymentTypes', 'organizationEmploymentTypes');
+
 		// Set find options for the query
 		query.setFindOptions({
 			select: {
@@ -571,6 +595,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					userId: true,
 					isAway: true,
 					isOnline: true,
+					organizationEmploymentTypes: { id: true, name: true },
 					user: {
 						id: true,
 						firstName: true,
@@ -584,7 +609,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				project: { organizationContact: true },
 				task: { taskStatus: true },
 				organizationContact: true,
-				employee: { user: true }
+				employee: { user: true, organizationEmploymentTypes: true }
 			},
 			order: {
 				// Order results by the 'startedAt' field in ascending order
@@ -1266,6 +1291,25 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					: p(`"${query.alias}"."logType" = :logType`);
 
 			query.andWhere(condition, { logType });
+		}
+
+		// Employment Types filter
+		if (isNotEmpty(request.employmentTypes)) {
+			query.andWhere(
+				new Brackets((subQb) => {
+					request.employmentTypes.forEach((et, index) => {
+						if (typeof et === 'string') {
+							subQb.orWhere(`organizationEmploymentTypes.name ILIKE :etName${index}`, {
+								[`etName${index}`]: `%${et}%`
+							});
+						} else if (et?.id) {
+							subQb.orWhere(`organizationEmploymentTypes.id = :etId${index}`, {
+								[`etId${index}`]: et.id
+							});
+						}
+					});
+				})
+			);
 		}
 
 		/**

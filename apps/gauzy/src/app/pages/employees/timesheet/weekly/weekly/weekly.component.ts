@@ -206,7 +206,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return; // Early return to avoid further processing
 		}
-		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
+		const appliedFilter = pick(this.filters, 'source', 'employmentTypes', 'activityLevel', 'logType');
 		const request: IGetTimeLogInput = {
 			...appliedFilter,
 			...this.getFilterRequest(this.request)
@@ -229,7 +229,12 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 
 		this.loading = true;
 		try {
-			const logs = await this.timesheetService.getTimeLogsChunk(payloads, ['project', 'employee.user', 'task']);
+			const logs = await this.timesheetService.getTimeLogsChunk(payloads, [
+				'project',
+				'employee.user',
+				'task',
+				'employee.organizationEmploymentTypes'
+			]);
 
 			this.weekData = chain(logs)
 				.groupBy('projectId')

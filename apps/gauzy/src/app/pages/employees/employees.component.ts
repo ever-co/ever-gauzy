@@ -24,8 +24,8 @@ import {
 	EmployeeViewModel,
 	CrudActionEnum,
 	IEmployee,
-	ITag,
-	PermissionsEnum
+	PermissionsEnum,
+	IOrganizationEmploymentType
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -36,12 +36,12 @@ import {
 	EmployeeEndWorkComponent,
 	EmployeeMutationComponent,
 	EmployeeStartWorkComponent,
+	EmploymentTypeComponent,
+	EmploymentTypeFilterComponent,
 	InputFilterComponent,
 	InviteMutationComponent,
 	PaginationFilterBaseComponent,
 	PictureNameTagsComponent,
-	TagsColorFilterComponent,
-	TagsOnlyComponent,
 	ToggleFilterComponent
 } from '@gauzy/ui-core/shared';
 import { EmployeeTimeTrackingStatusComponent, EmployeeWorkStatusComponent } from './table-components';
@@ -547,7 +547,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 
 			this.smartTableSource = new ServerDataSource(this._httpClient, {
 				endPoint: `${API_PREFIX}/employee/pagination`,
-				relations: ['user', 'tags'],
+				relations: ['user', 'tags', 'organizationEmploymentTypes'],
 				withDeleted: this.includeDeleted, // Include soft-deleted records if flag is true
 				where: {
 					organizationId,
@@ -621,7 +621,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			user = {},
 			isActive,
 			endWork,
-			tags,
+			organizationEmploymentTypes,
 			// Hidden from the table according to the task https://trello.com/c/78ttN8d4/409-remove-average-income-expenses-and-bonus-columns-from-table
 			/*averageIncome = 0,
 			averageExpenses = 0,
@@ -647,7 +647,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			endWork: endWork ? new Date(endWork) : '',
 			workStatus: endWork ? workStatus : '',
 			imageUrl: imageUrl || '',
-			tags: tags || [],
+			organizationEmploymentTypes: organizationEmploymentTypes || [],
 			bonus: this.bonusForSelectedMonth, // TODO: load real bonus and bonusDate
 			// Hidden from the table according to the task https://trello.com/c/78ttN8d4/409-remove-average-income-expenses-and-bonus-columns-from-table
 			//averageIncome: Math.floor(averageIncome),
@@ -772,24 +772,24 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			},
 			{
 				dataTableId: this.dataTableId,
-				columnId: 'tags',
+				columnId: 'organizationEmploymentTypes',
 				order: 3,
-				title: () => this.getTranslation('SM_TABLE.TAGS'),
+				title: () => this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE'),
 				type: 'custom',
-				width: '20%',
+				width: '15%',
 				isFilterable: true,
 				isSortable: false,
 				filter: {
 					type: 'custom',
-					component: TagsColorFilterComponent
+					component: EmploymentTypeFilterComponent
 				},
-				filterFunction: (tags: ITag[]) => {
-					const tagIds = tags.map((tag) => tag.id);
-					this.setFilter({ field: 'tags', search: tagIds });
-					return tags.length > 0;
+				filterFunction: (employmentTypes: IOrganizationEmploymentType[]) => {
+					const typeIds = employmentTypes.map((t) => t.id);
+					this.setFilter({ field: 'organizationEmploymentTypes', search: typeIds });
+					return true;
 				},
-				renderComponent: TagsOnlyComponent,
-				componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
+				renderComponent: EmploymentTypeComponent,
+				componentInitFunction: (instance: EmploymentTypeComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
 					instance.value = cell.getValue();
 				}

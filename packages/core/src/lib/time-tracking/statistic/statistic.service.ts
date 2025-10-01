@@ -285,6 +285,7 @@ export class StatisticService {
 			teamIds = [],
 			logType,
 			source,
+			employmentTypes = [],
 			onlyMe: isOnlyMeSelected
 		} = request;
 
@@ -312,9 +313,11 @@ export class StatisticService {
 		);
 
 		// Query time logs with related time slots applying all filters
-		const timeLogs = await this.typeOrmTimeLogRepository
+		const logs = this.typeOrmTimeLogRepository
 			.createQueryBuilder('time_log')
 			.leftJoinAndSelect('time_log.timeSlots', 'time_slot')
+			.leftJoin('time_log.employee', 'employee')
+			.leftJoin('employee.organizationEmploymentTypes', 'organizationEmploymentTypes')
 			.where('time_log.tenantId = :tenantId', { tenantId })
 			.andWhere('time_log.organizationId = :organizationId', { organizationId })
 			.andWhere(
@@ -331,8 +334,28 @@ export class StatisticService {
 			.andWhere(isNotEmpty(projectIds) ? 'time_log.projectId IN (:...projectIds)' : '1=1', { projectIds })
 			.andWhere(isNotEmpty(teamIds) ? 'time_log.organizationTeamId IN (:...teamIds)' : '1=1', { teamIds })
 			.andWhere(isNotEmpty(logType) ? 'time_log.logType IN (:...logType)' : '1=1', { logType })
-			.andWhere(isNotEmpty(source) ? 'time_log.source IN (:...source)' : '1=1', { source })
-			.getMany();
+			.andWhere(isNotEmpty(source) ? 'time_log.source IN (:...source)' : '1=1', { source });
+
+		// Apply employmentTypes filter if provided
+		if (isNotEmpty(employmentTypes)) {
+			logs.andWhere(
+				new Brackets((qb) => {
+					employmentTypes.forEach((et, index) => {
+						if (typeof et === 'string') {
+							qb.orWhere(`organizationEmploymentTypes.name ILIKE :etName${index}`, {
+								[`etName${index}`]: `%${et}%`
+							});
+						} else if (et?.id) {
+							qb.orWhere(`organizationEmploymentTypes.id = :etId${index}`, {
+								[`etId${index}`]: et.id
+							});
+						}
+					});
+				})
+			);
+		}
+
+		const timeLogs = await logs.getMany();
 
 		// Adjust logs that cross midnight boundaries according to timezone
 		const fixedTimeLogs = fixTimeLogsBoundary(timeLogs, start, end, request?.timeZone);
@@ -486,6 +509,8 @@ export class StatisticService {
 		// Define the base select statements and joins
 		query
 			.innerJoin(`${query.alias}.timeLogs`, 'time_log')
+			.innerJoin('time_log.employee', 'employee')
+			.innerJoin('employee.organizationEmploymentTypes', 'organizationEmploymentTypes')
 			.select([
 				getDurationQueryString(dbType, 'time_log', query.alias) + ' AS today_duration',
 				p(`COALESCE(SUM("${query.alias}"."overall"), 0)`) + ' AS overall',
@@ -2081,6 +2106,7 @@ export class StatisticService {
 		query
 			.select('COUNT(DISTINCT time_log.employeeId)', 'count')
 			.innerJoin('time_log.employee', 'employee')
+			.innerJoin('employee.organizationEmploymentTypes', 'organizationEmploymentTypes')
 			.innerJoin('time_log.timeSlots', 'time_slot')
 			.andWhere(
 				new Brackets((where: WhereExpressionBuilder) => {
@@ -2103,6 +2129,7 @@ export class StatisticService {
 		query
 			.select('COUNT(DISTINCT time_log.projectId)', 'count')
 			.innerJoin('time_log.employee', 'employee')
+			.innerJoin('employee.organizationEmploymentTypes', 'organizationEmploymentTypes')
 			.innerJoin('time_log.project', 'project')
 			.innerJoin('time_log.timeSlots', 'time_slot')
 			.andWhere(
@@ -2137,6 +2164,7 @@ export class StatisticService {
 			activityLevel,
 			logType,
 			source,
+			employmentTypes = [],
 			onlyMe: isOnlyMeSelected // Determine if the request specifies to retrieve data for the current user only
 		} = request;
 		let employeeIds = request.employeeIds || [];
@@ -2199,6 +2227,26 @@ export class StatisticService {
 		// Apply team filter
 		if (isNotEmpty(teamIds)) {
 			qb.andWhere(`${query.alias}.organizationTeamId IN (:...teamIds)`, { teamIds });
+		}
+
+		if (isNotEmpty(employmentTypes)) {
+			qb.andWhere(
+				new Brackets((subQb) => {
+					employmentTypes.forEach((et, index) => {
+						if (typeof et === 'string') {
+							// filter by name
+							subQb.orWhere(`organizationEmploymentTypes.name ILIKE :etName${index}`, {
+								[`etName${index}`]: `%${et}%`
+							});
+						} else if (et?.id) {
+							// filter by id
+							subQb.orWhere(`organizationEmploymentTypes.id = :etId${index}`, {
+								[`etId${index}`]: et.id
+							});
+						}
+					});
+				})
+			);
 		}
 
 		return qb;

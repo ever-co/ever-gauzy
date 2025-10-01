@@ -1,0 +1,10 @@
+<div class="types-container">
+	<ng-container *ngIf="rowData?.organizationEmploymentTypes as organizationEmploymentTypes; else noEmploymentType">
+		<div class="types" *ngFor="let organizationEmploymentType of organizationEmploymentTypes">
+			<div class="names-wrapper">{{ organizationEmploymentType.name }}</div>
+		</div>
+	</ng-container>
+	<ng-template #noEmploymentType>
+		<div class="names-wrapper">{{ value }}</div>
+	</ng-template>
+</div>

@@ -41,6 +41,7 @@ export * from './trust-html/trust-html.component';
 export * from './value-with-units/value-with-units.component';
 export * from './visibility/visibility.component';
 export * from './editors/non-editable-number-editor.component';
+export * from './employment-type/employment-type.component';
 
 // Export the table components main module
 export * from './table-components.module';

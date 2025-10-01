@@ -24,6 +24,7 @@ import { RangeFilterComponent } from './range-filter.component';
 import { ProductCategorySelectorModule, ProductTypeSelectorModule } from '../product';
 import { ProductCategoryFilterComponent } from './product-category-filter.component';
 import { ProductTypeFilterComponent } from './product-type-filter.component';
+import { EmploymentTypeFilterComponent } from './employment-type-filter.component';
 
 @NgModule({
 	imports: [
@@ -56,7 +57,8 @@ import { ProductTypeFilterComponent } from './product-type-filter.component';
 		OrganizationTeamFilterComponent,
 		TaskStatusFilterComponent,
 		ToggleFilterComponent,
-		DateFilterComponent
+		DateFilterComponent,
+		EmploymentTypeFilterComponent
 	],
 	exports: [],
 	providers: []

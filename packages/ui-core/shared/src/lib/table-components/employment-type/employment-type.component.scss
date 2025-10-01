@@ -1,0 +1,27 @@
+@use 'themes' as *;
+
+$radius: nb-theme(button-rectangle-border-radius);
+
+:host .types-container {
+  width: 100%;
+
+  .types {
+    border: 2px solid nb-theme(border-basic-color-1);
+    background-color: nb-theme(color-primary-transparent-default);
+    color: nb-theme(text-primary-color);
+    @include nb-ltr(padding, 5px 14px 5px 7px);
+    @include nb-rtl(padding, 5px 7px 5px 14px);
+    border-radius: $radius;
+    gap: 8px;
+    display: flex;
+    align-items: center;
+    width: fit-content;
+
+    .names-wrapper {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 110px;
+    }
+  }
+}

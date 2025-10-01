@@ -21,10 +21,10 @@ import { generateCsv } from '../../generate-csv-pdf';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-daily-grid',
-    templateUrl: './daily-grid.component.html',
-    styleUrls: ['./daily-grid.component.scss'],
-    standalone: false
+	selector: 'ga-daily-grid',
+	templateUrl: './daily-grid.component.html',
+	styleUrls: ['./daily-grid.component.scss'],
+	standalone: false
 })
 export class DailyGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	// This constant holds the URL for downloading content from the platform's website.
@@ -106,8 +106,8 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 			return;
 		}
 
-		// Pick specific properties ('source', 'activityLevel', 'logType') from this.filters
-		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
+		// Pick specific properties ('source', 'employmentTypes', 'activityLevel', 'logType') from this.filters
+		const appliedFilter = pick(this.filters, 'source', 'employmentTypes', 'activityLevel', 'logType');
 
 		// Create a request object of type IGetTimeLogReportInput
 		const request: IGetTimeLogReportInput = {

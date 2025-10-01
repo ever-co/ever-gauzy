@@ -18,10 +18,10 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../../timesheet
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-daily-statistics',
-    templateUrl: './daily-statistics.component.html',
-    styleUrls: ['./daily-statistics.component.scss'],
-    standalone: false
+	selector: 'ga-daily-statistics',
+	templateUrl: './daily-statistics.component.html',
+	styleUrls: ['./daily-statistics.component.scss'],
+	standalone: false
 })
 export class DailyStatisticsComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
@@ -82,7 +82,7 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent implem
 		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
+		const appliedFilter = pick(this.filters, 'source', 'employmentTypes', 'activityLevel', 'logType');
 		const request: IGetCountsStatistics = {
 			...appliedFilter,
 			...this.getFilterRequest(this.request)

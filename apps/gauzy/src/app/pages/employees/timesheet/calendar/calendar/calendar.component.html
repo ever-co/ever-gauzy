@@ -19,6 +19,7 @@
 			</div>
 			<ngx-gauzy-filters
 				[isTimeFormat]="true"
+				[hasEmploymentTypes]="true"
 				[filters]="filters"
 				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 				(filtersChange)="filtersChange($event)"

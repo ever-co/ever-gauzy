@@ -102,8 +102,8 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 			return;
 		}
 
-		// Pick specific properties ('source', 'activityLevel', 'logType') from this.filters
-		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
+		// Pick specific properties ('source', 'employmentTypes', 'activityLevel', 'logType') from this.filters
+		const appliedFilter = pick(this.filters, 'source', 'employmentTypes', 'activityLevel', 'logType');
 
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,

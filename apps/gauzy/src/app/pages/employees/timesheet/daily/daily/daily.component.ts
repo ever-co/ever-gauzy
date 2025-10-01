@@ -26,7 +26,6 @@ import {
 	ITimeLog,
 	PermissionsEnum,
 	ITimeLogFilters,
-	TimeLogSourceEnum,
 	TimeLogPartialStatus,
 	IDeleteTimeLogData,
 	IDateRangePicker,
@@ -293,7 +292,8 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 				'project',
 				'task',
 				'organizationContact',
-				'employee.user'
+				'employee.user',
+				'employee.organizationEmploymentTypes'
 			])
 		).pipe(
 			// Handle errors gracefully and return empty result
@@ -381,7 +381,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 		}
 
 		// Pick specific properties from filters
-		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
+		const appliedFilter = pick(this.filters, 'source', 'employmentTypes', 'activityLevel', 'logType');
 
 		// Create a request object by combining appliedFilter and processed request
 		const request: IGetTimeLogInput = {

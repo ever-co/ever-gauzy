@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -23,14 +23,14 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-time-reports',
-    templateUrl: './time-reports.component.html',
-    styleUrls: ['./time-reports.component.scss'],
-    standalone: false
+	selector: 'ga-time-reports',
+	templateUrl: './time-reports.component.html',
+	styleUrls: ['./time-reports.component.scss'],
+	standalone: false
 })
-export class TimeReportsComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
+export class TimeReportsComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public filters: ITimeLogFilters;
-	public loading: boolean = false;
+	public loading = false;
 	public charts: IChartData;
 	public groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	public datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
@@ -103,8 +103,8 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
-		// Pick specific properties ('source', 'activityLevel', 'logType') from this.filters
-		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
+		// Pick specific properties ('source', 'employmentTypes', 'activityLevel', 'logType') from this.filters
+		const appliedFilter = pick(this.filters, 'source', 'employmentTypes', 'activityLevel', 'logType');
 
 		// Create a request object of type IGetTimeLogReportInput
 		const request: IGetTimeLogReportInput = {
@@ -187,6 +187,4 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 			this.loading = false;
 		}
 	}
-
-	ngOnDestroy(): void {}
 }

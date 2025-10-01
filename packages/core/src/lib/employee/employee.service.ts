@@ -280,6 +280,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const query = this.typeOrmEmployeeRepository.createQueryBuilder(this.tableName);
 			query.innerJoin(`${query.alias}.user`, 'user');
 			query.innerJoin(`user.organizations`, 'organizations');
+			query.leftJoinAndSelect(`${query.alias}.organizationEmploymentTypes`, 'organizationEmploymentTypes');
 			query.setFindOptions({
 				/**
 				 * Load selected table properties/fields for self & relational select.
@@ -307,7 +308,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						imageUrl: true,
 						timeZone: true,
 						timeFormat: true
-					}
+					},
+					organizationEmploymentTypes: { id: true, name: true }
 				},
 				relations: {
 					...(withUser ? { user: true } : {})
@@ -508,6 +510,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			// Tables joins with relations
 			query.leftJoin(`${query.alias}.user`, 'user');
 			query.leftJoin(`${query.alias}.tags`, 'tags');
+			query.leftJoinAndSelect(`${query.alias}.organizationEmploymentTypes`, 'organizationEmploymentTypes');
 
 			// Set pagination options and selected table properties/fields
 			query.setFindOptions({
@@ -571,6 +574,18 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						new Brackets((web: WhereExpressionBuilder) => {
 							if (isNotEmpty(where.tags)) {
 								web.andWhere(p('tags.id IN (:...tags)'), { tags: where.tags });
+							}
+						})
+					);
+
+					//  Apply conditions related to Employment Types
+					qb.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							const employmentTypes = where.organizationEmploymentTypes;
+							if (Array.isArray(employmentTypes) && employmentTypes.length > 0) {
+								web.andWhere('organizationEmploymentTypes.id IN (:...employmentTypes)', {
+									employmentTypes
+								});
 							}
 						})
 					);

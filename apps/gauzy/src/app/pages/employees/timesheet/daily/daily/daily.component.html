@@ -17,6 +17,7 @@
 			<ngx-gauzy-filters
 				[isTimeFormat]="true"
 				[hasWorkedPerDay]="true"
+				[hasEmploymentTypes]="true"
 				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 				(filtersChange)="filtersChange($event)"
 			></ngx-gauzy-filters>

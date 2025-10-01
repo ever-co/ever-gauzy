@@ -52,6 +52,7 @@ import { ValueWithUnitComponent } from './value-with-units/value-with-units.comp
 import { VisibilityComponent } from './visibility/visibility.component';
 import { DirectivesModule } from '../directives/directives.module';
 import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badge-view.module';
+import { EmploymentTypeComponent } from './employment-type/employment-type.component';
 
 @NgModule({
 	imports: [
@@ -111,7 +112,8 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		ValueWithUnitComponent,
 		VisibilityComponent,
 		NonEditableNumberEditorComponent,
-		JobSearchAvailabilityEditorComponent
+		JobSearchAvailabilityEditorComponent,
+		EmploymentTypeComponent
 	],
 	exports: [
 		AllowScreenshotCaptureComponent,
@@ -155,7 +157,8 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		ToggleSwitcherComponent,
 		TrustHtmlLinkComponent,
 		ValueWithUnitComponent,
-		VisibilityComponent
+		VisibilityComponent,
+		EmploymentTypeComponent
 	],
 	providers: []
 })

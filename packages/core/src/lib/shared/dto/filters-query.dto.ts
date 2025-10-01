@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsOptional } from 'class-validator';
-import { ITimeLogFilters, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { IsArray, IsEnum, IsOptional } from 'class-validator';
+import { IOrganizationEmploymentType, ITimeLogFilters, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { IsBetweenActivity } from './../../shared/validators';
 
 /**
@@ -42,4 +42,13 @@ export class FiltersQueryDTO implements ITimeLogFilters {
 		start: number;
 		end: number;
 	};
+
+	/**
+	 * Filters time logs by employee's organization employment types (e.g., Direct Hired, Contractor, Intern).
+	 * Accepts multiple types for multi-select filtering.
+	 */
+	@ApiPropertyOptional({ type: () => [String], isArray: true, description: 'Employment Type IDs or names' })
+	@IsOptional()
+	@IsArray()
+	employmentTypes?: Array<{ id?: string; name: string } | IOrganizationEmploymentType>;
 }

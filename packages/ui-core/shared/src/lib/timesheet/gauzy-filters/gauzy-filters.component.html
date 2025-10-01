@@ -38,6 +38,20 @@
 					</nb-select>
 				</div>
 			</ng-container>
+			<ng-container *ngIf="employmentTypes?.length > 1 && hasEmploymentTypes">
+				<div class="col-auto filter-item single-filter-wrapper">
+					<nb-select
+						multiple
+						[placeholder]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE' | translate"
+						[(selected)]="filters.employmentTypes"
+						(selectedChange)="triggerFilterChange()"
+					>
+						<nb-option *ngFor="let employmentType of employmentTypes" [value]="employmentType.name">
+							{{ employmentType.name | replace : '_' : ' ' | titlecase }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</ng-container>
 			<ng-container *ngIf="hasActivityLevelFilter">
 				<div class="col-auto filter-item single-filter-wrapper">
 					<button
