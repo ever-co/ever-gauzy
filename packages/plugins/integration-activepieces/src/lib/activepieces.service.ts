@@ -533,6 +533,14 @@ export class ActivepiecesService {
 	}
 
 	/**
+	 * Get default state secret from global configuration
+	 */
+	private getDefaultStateSecret(): string {
+		const globalConfig = this.configService.get('activepieces');
+		return globalConfig?.stateSecret || '';
+	}
+
+	/**
 	 * Save connection settings to the database
 	 */
 	private async saveConnectionSettings(
