@@ -43,6 +43,13 @@ $default-box-shadow: var(--gauzy-shadow);
   }
 }
 
+@mixin custom-dialog($height, $card-background-color, $input-background-color) {
+  @include input-appearance($height, $input-background-color);
+  nb-card {
+    background-color: $card-background-color;
+  }
+}
+
 @mixin input-appearance($height, $input-background-color) {
   ::ng-deep input,
   ::ng-deep nb-select.appearance-outline.status-basic .select-button,

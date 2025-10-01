@@ -22,21 +22,23 @@
 				<ng-container *ngIf="multiple">
 					<input type="checkbox" [ngModel]="tag$.selected" />
 				</ng-container>
-				<nb-badge
-					[style.background]="background(tag.color)"
-					class="tag-color"
-				></nb-badge>
+				<nb-badge [style.background]="background(tag.color)" class="tag-color"></nb-badge>
 				<span class="text">{{ tag.name }}</span>
 			</div>
 		</ng-template>
 		<ng-template ng-multi-label-tmp let-tags="selectedTags" let-clear="clear">
 			<ng-container *ngIf="!!noOfTagsFits; else notOverflown">
-				<div class="ng-value" *ngFor="
-								let item of selectedTags
-									| slice : 0 : noOfTagsFits || selectedTags.length
-							">
-					<nb-badge class="tag-color tag-label" [style.background]="background(item.color)"
-						[style.color]="backgroundContrast(item.color)" [text]="item.name" (click)="clear(item)"></nb-badge>
+				<div
+					class="ng-value"
+					*ngFor="let item of selectedTags | slice : 0 : noOfTagsFits || selectedTags.length"
+				>
+					<nb-badge
+						class="tag-color tag-label"
+						[style.background]="background(item.color)"
+						[style.color]="backgroundContrast(item.color)"
+						[text]="item.name"
+						(click)="clear(item)"
+					></nb-badge>
 				</div>
 				<div class="ng-value" *ngIf="selectedTags && selectedTags.length > noOfTagsFits">
 					<span class="ng-value-label">...</span>
@@ -45,7 +47,8 @@
 
 			<ng-template #notOverflown>
 				<div class="ng-value" *ngFor="let item of selectedTags">
-					<nb-badge class="tag-color tag-label"
+					<nb-badge
+						class="tag-color tag-label"
 						[style.background]="background(item.color)"
 						[style.color]="backgroundContrast(item.color)"
 						[text]="item.name"

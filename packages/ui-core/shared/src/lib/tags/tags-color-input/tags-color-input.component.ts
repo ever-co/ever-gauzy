@@ -103,6 +103,17 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 		this._addTag = value;
 	}
 
+	/*
+	 * Getter & Setter fow flow with noOfTagsFits
+	 */
+	_useNoOfTagsFits = true;
+	get useNoOfTagsFits(): boolean {
+		return this._useNoOfTagsFits;
+	}
+	@Input() set useNoOfTagsFits(value: boolean) {
+		this._useNoOfTagsFits = value;
+	}
+
 	@Output() selectedTagsEvent = new EventEmitter<ITag[]>();
 
 	selectedTagsOverflow = false;
@@ -223,12 +234,14 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 		}
 		const selectedContainer = this.el.nativeElement.querySelector('.ng-value-container');
 		const containerWidth = selectedContainer.offsetWidth;
-		this.noOfTagsFits = 0;
+		if (this.useNoOfTagsFits) this.noOfTagsFits = 0;
 
 		const totalTagWidth = selectedTags.reduce((acc, tag, currentIndex) => {
 			const totalWidth = this.getTagWidth(tag.name) + acc;
 
-			if (totalWidth >= containerWidth && this.noOfTagsFits === 0) this.noOfTagsFits = currentIndex;
+			if (this.useNoOfTagsFits && totalWidth >= containerWidth && this.noOfTagsFits === 0) {
+				this.noOfTagsFits = currentIndex;
+			}
 
 			return totalWidth;
 		}, 30); // 30px is the additional buffer

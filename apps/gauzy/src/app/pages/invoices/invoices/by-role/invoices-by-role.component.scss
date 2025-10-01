@@ -382,7 +382,7 @@ nb-tab {
   ::ng-deep {
     @include card_overrides(auto, $default-card-height, $default-radius);
     @include ga-overrides.ng-select-overrides(
-    ga-overrides.$default-height,
+      ga-overrides.$default-height,
       $default-radius,
       ga-overrides.$default-box-shadow-inset
     );
@@ -402,7 +402,7 @@ nb-tab {
 }
 
 :host nb-accordion {
-  @include ga-overrides.dialog(var(--gauzy-card-1), var(--gauzy-card-1));
+  @include ga-overrides.custom-dialog(auto, var(--gauzy-card-1), var(--gauzy-card-1));
 }
 
 .comments-container {

@@ -25,10 +25,7 @@ input {
   height: unset;
 }
 :host ::ng-deep {
-  .ng-select.ng-select-multiple
-    .ng-select-container
-    .ng-value-container
-    .ng-value {
+  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value {
     background-color: transparent;
     margin-right: 0;
   }
