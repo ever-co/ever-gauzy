@@ -1,8 +1,6 @@
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@gauzy/config';
 import {
 	IntegrationEntitySettingModule,
