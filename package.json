@@ -372,7 +372,7 @@
 		"build:agent:linux:release:gh": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=60000 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --linux --publish=always --project dist/apps/agent",
 		"build:agent:mac": "yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --mac --project dist/apps/agent",
 		"build:agent:mac:release": "yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --mac --publish=always --project dist/apps/agent",
-		"copy-assets-agent": "copyfiles -f apps/agent/src/assets/snapshot-sound.wav dist/apps/agent/data/sound/",
+		"copy-assets-agent": "copyfiles -f apps/desktop/src/assets/snapshot-sound.wav dist/apps/agent/data/sound/",
 		"build:mcp-server": "yarn nx build mcp-server",
 		"build:mcp-server:prod": "yarn nx build mcp-server --configuration=production",
 		"build:mcp-server:docker": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=60000 yarn nx build mcp-server",
