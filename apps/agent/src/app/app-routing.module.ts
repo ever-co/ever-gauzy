@@ -8,7 +8,8 @@ import {
 	SplashScreenComponent,
 	UpdaterComponent,
 	ScreenCaptureComponent,
-	AgentDashboardComponent
+	AgentDashboardComponent,
+	AlwaysOnComponent
 } from '@gauzy/desktop-ui-lib';
 import { AppModuleGuard } from './app.module.guards';
 
@@ -38,6 +39,10 @@ const routes: Routes = [
 	{
 		path: 'server-down',
 		component: ServerDownPage
+	},
+	{
+		path: 'always-on',
+		component: AlwaysOnComponent
 	},
 	{
 		path: 'about',

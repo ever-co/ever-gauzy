@@ -358,7 +358,7 @@
 						<nb-card-body>
 							<nb-toggle [(ngModel)]="appSetting.alwaysOn" (ngModelChange)="
 									toggleAlwaysOn($event)
-								" status="basic" [disabled]="appSetting?.timerStarted || isAgent">{{
+								" status="basic" [disabled]="appSetting?.timerStarted">{{
 								'TIMER_TRACKER.SETTINGS.WIDGET'
 								| translate
 								}}

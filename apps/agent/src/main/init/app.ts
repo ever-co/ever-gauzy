@@ -11,7 +11,8 @@ import {
 import {
 	getApiBaseUrl,
 	getAuthConfig,
-	getTrayIcon
+	getTrayIcon,
+	getAppSetting
 } from '../util';
 import AppWindow from '../window-manager';
 import TrayMenu from '../tray';
@@ -77,6 +78,12 @@ async function handleSetupWindow() {
 	appWindow.setupWindow.show();
 }
 
+async function handleAlwaysOnWindow() {
+	await appWindow.initAlwaysOnWindow();
+	await appWindow.alwaysOnWindow.loadURL();
+	appWindow.alwaysOnWindow.show();
+}
+
 export async function startServer(value: any) {
 	try {
 		// Update the setting
@@ -112,6 +119,10 @@ export async function startServer(value: any) {
 		const isAuthenticated = await checkUserAuthentication(appRootPath);
 		if (isAuthenticated) {
 			runActivityConsumer();
+			const settings = getAppSetting();
+			if (settings?.alwaysOn) {
+				await handleAlwaysOnWindow();
+			}
 			listenIO();
 		}
 	} catch (error) {
@@ -140,7 +151,7 @@ async function initiationLocalDatabase() {
 
 async function appReady() {
 	const configs: any = store.get('configs');
-	const settings: any = store.get('appSetting');
+	const settings = getAppSetting();
 	if (!settings) {
 		launchAtStartup(true, false);
 		LocalStore.setAllDefaultConfig();

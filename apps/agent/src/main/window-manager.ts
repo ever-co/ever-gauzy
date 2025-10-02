@@ -5,7 +5,8 @@ import {
 	AuthWindow,
 	createSettingsWindow,
 	createServerWindow,
-	ScreenCaptureNotification
+	ScreenCaptureNotification,
+	AlwaysOn
 } from '@gauzy/desktop-window';
 import { app, BrowserWindow, screen } from 'electron';
 import { resolveHtmlPath, getInitialConfig } from './util';
@@ -20,6 +21,7 @@ class AppWindow {
 	settingWindow: BrowserWindow | null;
 	logWindow: BrowserWindow | null;
 	notificationWindow: ScreenCaptureNotification | null;
+	alwaysOnWindow: AlwaysOn | null;
 	private static instance: AppWindow;
 	constructor(rootPath: string) {
 		if (!AppWindow.instance) {
@@ -201,6 +203,24 @@ class AppWindow {
 		}
 	}
 
+	async initAlwaysOnWindow(): Promise<void> {
+		if (!this.alwaysOnWindow || this.alwaysOnWindow?.browserWindow?.isDestroyed()) {
+			console.log('new window alwaysOnWindow');
+			this.alwaysOnWindow = new AlwaysOn(this.getUiPath('always-on'), this.getPreloadPath(), true, true);
+			this.alwaysOnWindow.browserWindow.webContents.toggleDevTools();
+			this.alwaysOnWindow.browserWindow.removeAllListeners('close');
+			this.alwaysOnWindow.browserWindow.on('close', () => {
+				console.log('on close');
+				if (!this.alwaysOnWindow?.browserWindow?.isDestroyed()) {
+					this.alwaysOnWindow?.browserWindow?.destroy();
+				}
+
+				this.alwaysOnWindow = null;
+				console.log('current alwaysOnWindow', this.alwaysOnWindow);
+			});
+		}
+	}
+
 	async initScreenShotNotification() {
 		try {
 			if (!this.notificationWindow) {
@@ -217,7 +237,7 @@ class AppWindow {
 	}
 
 	closeSettingWindow() {
-		if (this.settingWindow && !this.settingWindow?.isDestroyed) {
+		if (this.settingWindow && !this.settingWindow?.isDestroyed()) {
 			this.settingWindow.close();
 			this.settingWindow = null;
 			this.dockHideHandle();
@@ -225,7 +245,7 @@ class AppWindow {
 	}
 
 	closeLogWindow() {
-		if (this.logWindow && !this.logWindow.isDestroyed) {
+		if (this.logWindow && !this.logWindow.isDestroyed()) {
 			this.logWindow.close();
 			this.logWindow = null;
 		}

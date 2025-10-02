@@ -1,43 +1,54 @@
 <nb-layout class="main">
 	<nb-layout-column class="p-0">
-		<div
-			id="drag-handle"
-			class="d-flex flex-column h-100 align-items-center justify-content-around"
-			draggable="true"
-		>
-			<button
-				nbButton
-				status="success"
-				*ngIf="!(start$ | async)"
-				class="button-ghost"
-				(click)="run()"
-				[disabled]="loading || !isTrackingEnabled"
-			>
-				<nb-icon
-					class="start-button"
-					icon="play"
-					pack="font-awesome"
-					[nbTooltip]="
+		<nb-layout *ngIf="isExpandMode">
+			<nb-layout-column>
+
+				<nb-card class="timer-card" size="tiny">
+					<nb-card-body class="timer-body">
+
+						<div class="timer-container">
+							<!-- Billable toggle -->
+
+							<button nbButton class="billable-btn" size="tiny"
+								[status]="isBillable ? 'primary' : 'basic'" (click)="isBillable = !isBillable">
+								$
+							</button>
+
+							<!-- Timer display -->
+							<div class="time-display">
+								<span class="current-session">{{ currentSessionTime }}</span>
+								<span class="today-time">Today {{ todaySessionTime }}</span>
+							</div>
+
+							<!-- Running / Stopped button -->
+							<button nbButton size="medium" [status]="running ? 'danger' : 'success'" shape="round"
+								(click)="toggleTimer()">
+								<fa-icon [icon]="running ? pause : play"></fa-icon>
+							</button>
+
+							<!-- Extra icons -->
+							<button nbButton class="billable-btn" size="tiny" status="basic"><fa-icon
+									[icon]="stopwatch"></fa-icon></button>
+						</div>
+
+					</nb-card-body>
+				</nb-card>
+			</nb-layout-column>
+		</nb-layout>
+		<div *ngIf="!isExpandMode" id="drag-handle" class="d-flex flex-column h-100 align-items-center justify-content-around"
+			draggable="true">
+			<button nbButton status="success" *ngIf="!(start$ | async)" class="button-ghost" (click)="run()"
+				[disabled]="loading || !isTrackingEnabled">
+				<nb-icon class="start-button" icon="play" pack="font-awesome" [nbTooltip]="
 						'TIMER_TRACKER.TIME_TRACKER_DISABLED' | translate
-					"
-					[nbTooltipIcon]="{
+					" [nbTooltipIcon]="{
 						icon: 'alert-triangle-outline',
 						pack: 'eva'
-					}"
-					nbTooltipStatus="warning"
-					[nbTooltipDisabled]="isTrackingEnabled"
-					nbTooltipPlacement="bottom"
-				>
+					}" nbTooltipStatus="warning" [nbTooltipDisabled]="isTrackingEnabled" nbTooltipPlacement="bottom">
 				</nb-icon>
 			</button>
-			<button
-				nbButton
-				status="danger"
-				*ngIf="start$ | async"
-				(click)="run()"
-				[disabled]="loading"
-				class="button-ghost"
-			>
+			<button nbButton status="danger" *ngIf="start$ | async" (click)="run()" [disabled]="loading"
+				class="button-ghost">
 				<nb-icon class="start-button" icon="pause" pack="font-awesome">
 				</nb-icon>
 			</button>
@@ -46,19 +57,12 @@
 					{{ (counter$ | async)?.current }}
 				</div>
 				<div class="today">
-					<nb-icon
-						class="today"
-						icon="stopwatch"
-						pack="font-awesome"
-					>
+					<nb-icon class="today" icon="stopwatch" pack="font-awesome">
 					</nb-icon>
 					{{ (counter$ | async)?.today }}
 				</div>
 			</div>
-			<div
-				class="status"
-				[ngClass]="{ offline: isOffline$ | async }"
-			></div>
+			<div class="status" [ngClass]="{ offline: isOffline$ | async }"></div>
 		</div>
 	</nb-layout-column>
 </nb-layout>

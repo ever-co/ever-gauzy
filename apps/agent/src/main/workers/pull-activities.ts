@@ -2,9 +2,16 @@ import {
 	KeyboardMouseEventCounter,
 	KbMouseTimer,
 	KeyboardMouseActivityStores,
-	ActivityWindow
+	ActivityWindow,
 } from '@gauzy/desktop-activity';
-import { KbMouseActivityService, TranslateService, notifyScreenshot, TimerService, Timer } from '@gauzy/desktop-lib';
+import {
+	KbMouseActivityService,
+	TranslateService,
+	notifyScreenshot,
+	TimerService,
+	Timer,
+	PowerManagerPreventDisplaySleep
+} from '@gauzy/desktop-lib';
 import AppWindow from '../window-manager';
 import * as path from 'node:path';
 import { getScreen, getAppSetting, delaySync, TAppSetting, getScreenshotSoundPath, getAuthConfig } from '../util';
@@ -41,6 +48,7 @@ class PullActivities {
 	private activityStores: KeyboardMouseActivityStores;
 	private activityWindow: ActivityWindow;
 	private workerQueue: WorkerQueue;
+	private powerManagerPreventDisplaySleep: PowerManagerPreventDisplaySleep;
 	constructor() {
 		this.listenerModule = null;
 		this.isStarted = false;
@@ -52,6 +60,7 @@ class PullActivities {
 		this.timerService = new TimerService();
 		this.activityStores = KeyboardMouseActivityStores.getInstance();
 		this.activityWindow = ActivityWindow.getInstance();
+		this.powerManagerPreventDisplaySleep = new PowerManagerPreventDisplaySleep(null);
 	}
 
 	static getInstance(): PullActivities {
@@ -110,6 +119,10 @@ class PullActivities {
 				}
 				this.timerProcess();
 				this.isStarted = true;
+
+				if (appSetting?.preventDisplaySleep) {
+					this.powerManagerPreventDisplaySleep.start();
+				}
 			}
 		} catch (error) {
 			console.error('error start tracking', error);
@@ -183,12 +196,17 @@ class PullActivities {
 			this.getListenerModule();
 		}
 		try {
+			const appSetting = getAppSetting();
 			if (this.isStarted) {
 				await this.stopTimerApi();
 				this.agentLogger.info('Listener keyboard and mouse stopping');
 				this.listenerModule.stopListener();
 				this.isStarted = false;
 				this.stopTimerProcess();
+
+				if (appSetting?.preventDisplaySleep) {
+					this.powerManagerPreventDisplaySleep.stop();
+				}
 				return;
 			}
 			this.agentLogger.warn('No timer started to stop');
