@@ -1,0 +1,38 @@
+.log-list {
+	max-height: 80vh;
+	overflow: auto;
+	font-family: monospace;
+	font-size: 13px
+}
+
+.log-line {
+	padding: 4px 8px;
+	border-bottom: 1px solid var(--separator-color, rgba(255, 255, 255, .06))
+}
+
+.level {
+	display: inline-block;
+	min-width: 64px;
+	font-weight: 600
+}
+
+.DEBUG {
+	color: #9aa4b2
+}
+
+.INFO {
+	color: #4f8cff
+}
+
+.WARN {
+	color: #f1c40f
+}
+
+.ERROR {
+	color: #e74c3c
+}
+
+.timestamp {
+	color: #777;
+	margin-right: 6px
+}

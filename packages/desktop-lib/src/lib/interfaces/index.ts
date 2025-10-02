@@ -42,3 +42,5 @@ export * from './i-updater-config-digital-ocean';
 export * from './i-user-service';
 export * from './i-user-transaction';
 export * from './serializable';
+export * from './i-audit-queue-transaction';
+export * from './i-audit-queue';

@@ -7,8 +7,8 @@ import {
 	createServerWindow,
 	ScreenCaptureNotification
 } from '@gauzy/desktop-window';
-import { app, BrowserWindow } from 'electron';
-import { resolveHtmlPath } from './util';
+import { app, BrowserWindow, screen } from 'electron';
+import { resolveHtmlPath, getInitialConfig } from './util';
 import * as path from 'path';
 
 class AppWindow {
@@ -102,6 +102,12 @@ class AppWindow {
 					this.setupWindow.destroy();
 					this.setupWindow = null;
 					this.dockHideHandle();
+
+					/* terminate app when the setup close without complete the setup process */
+					const config = getInitialConfig();
+					if (!config.isSetup) {
+						app.quit();
+					}
 				});
 			}
 		} catch (error) {
@@ -114,8 +120,6 @@ class AppWindow {
 		try {
 			if (!this.authWindow) {
 				this.authWindow = new AuthWindow(this.getUiPath('auth/login'), this.getPreloadPath(), true);
-				this.authWindow.config.options.titleBarStyle = 'hidden';
-				this.authWindow.config.options.titleBarOverlay = true;
 				this.authWindow.browserWindow.on('close', () => {
 					this.destroyAuthWindow();
 				});
@@ -169,17 +173,20 @@ class AppWindow {
 	async initLogWindow(): Promise<void> {
 		try {
 			if (!this.logWindow || this.logWindow?.isDestroyed()) {
-				console.log('this log window', this.logWindow);
 				this.logWindow = await createServerWindow(
 					null,
 					this.getUiPath('server-dashboard'),
 					this.getPreloadPath(),
 					true
 				);
-				const maxHeight = 480;
-				const maxWidth = 640;
-				this.logWindow.setSize(maxWidth, maxHeight);
-				// this.LogWindow.webContents.toggleDevTools();
+				const desiredHeight = 860;
+				const desiredWidth = 1200;
+				const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+				const initialWidth = Math.min(desiredWidth, width);
+				const initialHeight = Math.min(desiredHeight, height);
+				this.logWindow.setSize(initialWidth, initialHeight);
+				this.logWindow.setMinimumSize(Math.min(800, width), Math.min(600, height));
+				this.logWindow.setResizable(true);
 				this.logWindow.on('close', () => {
 					this.logWindow.hide();
 				});
@@ -204,7 +211,6 @@ class AppWindow {
 				await this.notificationWindow.loadURL();
 				return;
 			}
-			this.notificationWindow.show();
 		} catch (error) {
 			console.error('Failed to initialize screenshot notification', error);
 		}

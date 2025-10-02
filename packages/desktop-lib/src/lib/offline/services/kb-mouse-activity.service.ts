@@ -22,6 +22,19 @@ export class KbMouseActivityService implements IKbMouseActivityService<KbMouseAc
 		}
 	}
 
+	public async saveAndReturn(activities: KbMouseActivityTO): Promise<KbMouseActivityTO | null> {
+		try {
+			if (!activities) {
+				console.error('WARN[KB_MOUSE_SERVICE]: No keyboard and mouse data, cannot save');
+				return null;
+			}
+			const created = await this._kbMouseDAO.saveAndReturn(activities);
+			return created;
+		} catch (error) {
+			throw new AppError('KB_MOUSE_SERVICE', error);
+		}
+	}
+
 	public async update(activities: Partial<KbMouseActivityTO>): Promise<void> {
 		try {
 			if (!activities.id) {
@@ -41,6 +54,19 @@ export class KbMouseActivityService implements IKbMouseActivityService<KbMouseAc
 				return activities;
 			}
 			return null;
+		} catch (error) {
+			console.error(error);
+			return null;
+		}
+	}
+
+	public async findById(activity: Partial<KbMouseActivityTO>): Promise<KbMouseActivityTO> {
+		try {
+			if (!activity.id) {
+				console.error('WARN[KB_MOUSE_SERVICE]: No activity data, cannot find');
+				return null;
+			}
+			return await this._kbMouseDAO.findOneById(activity.id);
 		} catch (error) {
 			console.error(error);
 			return null;
