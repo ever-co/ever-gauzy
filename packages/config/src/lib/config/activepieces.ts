@@ -24,6 +24,6 @@ export default registerAs(
 			`${process.env.CLIENT_BASE_URL ?? ''}/#/pages/integrations/activepieces`,
 
         // ActivePieces state secret
-		stateSecret: process.env.ACTIVEPIECES_STATE_SECRET,
+		stateSecret: process.env.ACTIVEPIECES_STATE_SECRET ?? '',
 	})
 );

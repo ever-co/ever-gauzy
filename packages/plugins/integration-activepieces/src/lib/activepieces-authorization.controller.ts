@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, HttpException, HttpStatus, Query, Res, UsePipes, ValidationPipe, Headers } from '@nestjs/common';
+import { Controller, Get, Post, Body, HttpException, HttpStatus, Query, Res, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { Response } from 'express';
 import { HttpService } from '@nestjs/axios';
@@ -119,8 +119,7 @@ export class ActivepiecesAuthorizationController {
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async authorize(
 		@Query() query: ActivepiecesQueryDto & { tenantId?: string; organizationId?: string },
-		@Res() response: Response,
-		@Headers() headers: any
+		@Res() response: Response
 	) {
 		try {
 			const tenantId = RequestContext.currentTenantId();
@@ -237,7 +236,6 @@ export class ActivepiecesAuthorizationController {
 	 * Exchange authorization code for access token
 	 *
 	 * @param {IActivepiecesTokenExchangeRequest} body - Token exchange request with tenant context
-	 * @param {any} headers - Request headers
 	 */
 	@ApiOperation({
 		summary: 'Exchange authorization code for access token',
@@ -261,7 +259,6 @@ export class ActivepiecesAuthorizationController {
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async exchangeToken(
 		@Body() body: ActivepiecesTokenExchangeDto,
-		@Headers() headers: any
 	): Promise<IActivepiecesOAuthTokens> {
 		try {
 			// Derive tenant and organization context from signed state

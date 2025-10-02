@@ -470,8 +470,8 @@ export class ActivepiecesService {
 
 			// Fallback to global configuration
 			const globalConfig = this.configService.get('activepieces');
-			if (!globalConfig?.clientId) {
-				throw new BadRequestException('ActivePieces integration not configured');
+			if (!globalConfig?.clientId || !globalConfig?.clientSecret) {
+				throw new BadRequestException('ActivePieces integration not configured(missing clientId or clientSecret)');
 			}
 
 			return {
@@ -510,6 +510,7 @@ export class ActivepiecesService {
 
 			return hasClientId && hasClientSecret;
 		} catch (error) {
+			this.logger.error('Failed to check if tenant has specific OAuth configuration:', error);
 			return false;
 		}
 	}
@@ -520,6 +521,9 @@ export class ActivepiecesService {
 	private getDefaultCallbackUrl(): string {
 		const globalConfig = this.configService.get('activepieces');
 		const apiBaseUrl = this.configService.get('baseUrl') ?? process.env['API_BASE_URL'];
+		if (!apiBaseUrl) {
+			throw new BadRequestException('API base URL not found');
+		}
 		return globalConfig?.callbackUrl || `${apiBaseUrl}/api/integration/activepieces/callback`;
 	}
 
@@ -529,6 +533,9 @@ export class ActivepiecesService {
 	private getDefaultPostInstallUrl(): string {
 		const globalConfig = this.configService.get('activepieces');
 		const clientBaseUrl = this.configService.get('clientBaseUrl') ?? process.env['CLIENT_BASE_URL'];
+		if (!clientBaseUrl) {
+			throw new BadRequestException('Client base URL not found');
+		}
 		return globalConfig?.postInstallUrl || `${clientBaseUrl}/#/pages/integrations/activepieces`;
 	}
 
@@ -537,7 +544,10 @@ export class ActivepiecesService {
 	 */
 	private getDefaultStateSecret(): string {
 		const globalConfig = this.configService.get('activepieces');
-		return globalConfig?.stateSecret || '';
+		if (!globalConfig?.stateSecret) {
+			throw new BadRequestException('State secret not found');
+		}
+		return globalConfig?.stateSecret;
 	}
 
 	/**
