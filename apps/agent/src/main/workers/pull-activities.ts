@@ -245,7 +245,7 @@ class PullActivities {
 		const appSetting = getAppSetting();
 		const screenshotInterval = (appSetting?.timer?.updatePeriod || 5) * 60; // value is in seconds and default to 5 minutes
 		this.timerModule.setScreenshotInterval(screenshotInterval);
-		this.timerModule.setRandomScreenshotInteval(appSetting?.randomScreenshotTime || false);
+		this.timerModule.setRandomScreenshotInterval(appSetting?.randomScreenshotTime || false);
 		this.agentLogger.info('Agent started with 60 second interval keyboard and mouse activities collected');
 		this.agentLogger.info(`screenshot will taken every ${screenshotInterval} seconds`);
 	}
