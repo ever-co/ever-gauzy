@@ -230,6 +230,6 @@ export class DesktopQueue {
 		if (!this.timeSlotQueue) {
 			throw new Error('TimeSlot queue not initialized. Call initTimeslotQueue first.');
 		}
-		return this.timeSlotQueue.getStats();
+		this.timeSlotQueue.getStats()
 	}
 }
