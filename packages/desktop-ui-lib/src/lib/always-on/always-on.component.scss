@@ -8,6 +8,11 @@ nb-card-footer {
 	padding: 0px;
 }
 
+:host ::ng-deep nb-layout nb-layout-column {
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
 :host ::ng-deep .layout {
 	min-width: unset !important;
 }
@@ -67,4 +72,100 @@ button {
 	-webkit-border-radius: 50px;
 	-moz-border-radius: 50px;
 	border-radius: 50px;
+}
+
+/* Card styling */
+.timer-card {
+	margin: 0 !important;
+	padding: 0 !important;
+	width: 100%;
+	height: 100%;
+	border-radius: 12px;
+	background: #1a2138; // Nebular dark background
+	box-shadow: none; // remove heavy shadows
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	-webkit-app-region: drag;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4),
+		0 0 12px rgba(50, 150, 250, 0.2)
+}
+
+/* Body inside card */
+.timer-body {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	height: 100%;
+	padding: 0 8px;
+	box-sizing: border-box;
+	color: #fff;
+}
+
+/* Container for all elements */
+.timer-container {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+}
+
+/* Time display area */
+.time-display {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	text-align: left;
+
+	.current-session {
+		font-size: 18px;
+		font-weight: bold;
+		line-height: 1.2;
+	}
+
+	.today-time {
+		font-size: 12px;
+		opacity: 0.7;
+		margin-top: 2px;
+	}
+}
+
+/* Buttons */
+button[nbButton] {
+	min-width: 28px;
+	min-height: 28px;
+	padding: 0;
+	line-height: 1;
+	border-radius: 50%;
+}
+
+button[nbButton].status-basic {
+	background: #2e3a59;
+	color: #fff;
+}
+
+button[nbButton].status-danger {
+	background: #ff4d6d;
+	color: #fff;
+}
+
+button[nbButton].status-success {
+	background: #4caf50;
+	color: #fff;
+}
+
+.billable-btn {
+	width: 26px;
+	/* square */
+	height: 26px;
+	min-width: 26px;
+	/* prevent Nebular from expanding */
+	min-height: 26px;
+	padding: 0 !important;
+	font-size: 14px;
+	line-height: 1;
+	border-radius: 4px !important;
+	/* slight rounded corners */
+	margin: 10px;
 }

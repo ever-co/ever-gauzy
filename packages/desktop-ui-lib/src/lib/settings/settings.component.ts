@@ -875,6 +875,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	toggleAlwaysOn(value: boolean) {
 		this.updateSetting(value, 'alwaysOn');
+		if (this.isAgent) {
+			this.electronService.ipcRenderer.send('always_on_setting', { isEnabled: value });
+			return;
+		}
 		this.electronService.ipcRenderer.send(value ? 'show_ao' : 'hide_ao');
 	}
 

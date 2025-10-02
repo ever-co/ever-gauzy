@@ -14,7 +14,7 @@ import {
 	UserService,
 	pluginListeners
 } from '@gauzy/desktop-lib';
-import { getApiBaseUrl, delaySync, getAuthConfig } from '../util';
+import { getApiBaseUrl, delaySync, getAuthConfig, getAppSetting } from '../util';
 import { startServer } from './app';
 import AppWindow from '../window-manager';
 import * as moment from 'moment';
@@ -41,6 +41,21 @@ function getGlobalVariable(configs?: {
 		API_BASE_URL: getApiBaseUrl(appConfig),
 		IS_INTEGRATED_DESKTOP: appConfig?.isLocalServer || false
 	};
+}
+
+async function handleAlwaysOnWindow(isEnabled: boolean) {
+	const setting = getAppSetting();
+	const appWindow = AppWindow.getInstance(rootPath);
+	await appWindow.initAlwaysOnWindow();
+	if (!isEnabled) {
+		appWindow.alwaysOnWindow.browserWindow.close();
+		return;
+	}
+
+	if (setting?.alwaysOn) {
+		await appWindow.alwaysOnWindow.loadURL();
+		appWindow.alwaysOnWindow.show();
+	}
 }
 
 function listenIO(stop: boolean) {
@@ -169,6 +184,7 @@ export default function AppIpcMain() {
 			throw new AppError('GET_EMP_SETTING', error);
 		}
 		listenIO(false);
+		await handleAlwaysOnWindow(true);
 		await closeLoginWindow();
 	});
 
@@ -211,7 +227,7 @@ export default function AppIpcMain() {
 		LocalStore.updateAuthSetting({ isLogout: true });
 	});
 
-	ipcMain.handle('SYNC_API_AUDIT',  async(_, arg: { data: { page: number, limit: number, status: AuditStatus } }) => {
+	ipcMain.handle('SYNC_API_AUDIT', async (_, arg: { data: { page: number, limit: number, status: AuditStatus } }) => {
 		const { data } = arg;
 		const auditQueue = QueueAudit.getInstance();
 		return auditQueue.list({
@@ -221,5 +237,8 @@ export default function AppIpcMain() {
 		});
 	});
 
+	ipcMain.on('always_on_setting', async (_: any, arg: { isEnabled: boolean }) => {
+		await handleAlwaysOnWindow(arg.isEnabled)
+	});
 	pluginListeners();
 }

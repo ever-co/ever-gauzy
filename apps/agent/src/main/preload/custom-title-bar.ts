@@ -5,8 +5,9 @@ import * as path from 'path';
 
 const isNotificationWindow = location.hash.startsWith('#/screen-capture');
 const isSetupWindow = location.hash.startsWith('#/setup');
+const isTimerWidget = location.hash.startsWith('#/always-on');
 
-if (!isNotificationWindow) {
+if (!isNotificationWindow && !isTimerWidget) {
 	/**
  * Listens for the DOMContentLoaded event to ensure the DOM is fully loaded
  * before initializing the custom title bar and attaching styles or event listeners.

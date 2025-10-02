@@ -4,19 +4,29 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { AlwaysOnService, AlwaysOnStateEnum, ITimeCounter } from './always-on.service';
+import { faPlay, faPause, faStopwatch, faBars } from '@fortawesome/free-solid-svg-icons';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'gauzy-always-on',
-    templateUrl: './always-on.component.html',
-    styleUrls: ['./always-on.component.scss'],
-    standalone: false
+	selector: 'gauzy-always-on',
+	templateUrl: './always-on.component.html',
+	styleUrls: ['./always-on.component.scss'],
+	standalone: false
 })
 export class AlwaysOnComponent implements OnInit {
 	public start$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	public isOffline$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	public loading: boolean = false;
 	public isTrackingEnabled: boolean = true;
+	public running = false;
+	public currentSessionTime = '00:00:00';
+	public todaySessionTime = '00:00:00';
+	public isBillable = true;
+	play = faPlay;
+	pause = faPause;
+	stopwatch = faStopwatch;
+	bars = faBars;
+	public isExpandMode: boolean = true;
 
 	private _counter$: BehaviorSubject<ITimeCounter> = new BehaviorSubject({
 		current: '--:--:--',
@@ -76,6 +86,11 @@ export class AlwaysOnComponent implements OnInit {
 
 	public run(): void {
 		this._alwaysOnService.run(AlwaysOnStateEnum.LOADING);
+	}
+
+
+	toggleTimer() {
+
 	}
 
 	public get counter$(): Observable<ITimeCounter> {
