@@ -18,7 +18,7 @@ export class WorkerQueue {
 	private queueAudit: QueueAudit;
 
 	constructor() {
-		this.desktopQueue = DesktopQueue.getInstance(path.resolve(app?.getPath('userData') || __dirname));
+		this.desktopQueue = new DesktopQueue(path.resolve(app?.getPath('userData') || __dirname));
 		this.queueAudit = QueueAudit.getInstance();
 		this.setQueueUpdateHandle();
 	}

@@ -5,7 +5,6 @@ import * as isOnline from 'is-online';
 import { IScreenshotQueuePayload, ITimerCallbackPayload, ITimeslotQueuePayload, IQueueUpdatePayload } from './i-queue';
 
 export class DesktopQueue {
-	static instance: DesktopQueue;
 	private timerQueue: Queue;
 	private timeSlotQueue: Queue;
 	private screenshotQueue: Queue;
@@ -15,6 +14,7 @@ export class DesktopQueue {
 	private online: boolean;
 	private dbPath: string;
 	private auditQueueCallback: (param: IQueueUpdatePayload) => void;
+	private workerInterval: NodeJS.Timeout | null = null;
 	constructor(
 		dbPath: string
 	) {
@@ -31,32 +31,24 @@ export class DesktopQueue {
 		});
 	}
 
-	static getInstance(dbPath: string): DesktopQueue {
-		if (!DesktopQueue.instance) {
-			DesktopQueue.instance = new DesktopQueue(dbPath);
-		}
-		return DesktopQueue.instance;
-	}
-
 	public setUpdateQueueCallback(callback: (param: IQueueUpdatePayload) => void) {
 		this.auditQueueCallback = callback;
 	}
 
 	private auditQueue(name: 'timer' | 'time_slot' | 'screenshot', que: Queue) {
-		que.on('error', (err) => console.log(err));
-		que.on('task_queued', (id: string, info: any) => this.auditQueueCallback({
+		que.on('task_queued', (id: string, info: any) => this.auditQueueCallback?.({
 			id,
 			data: info,
 			type: 'queued',
 			queue: name
 		}));
-		que.on("task_started", (id: string, info: any) => this.auditQueueCallback({
+		que.on("task_started", (id: string, info: any) => this.auditQueueCallback?.({
 			id,
 			type: 'running',
 			queue: name,
 			data: info
 		}));
-		que.on("task_finish", (id: string, info: any) => this.auditQueueCallback({
+		que.on("task_finish", (id: string, info: any) => this.auditQueueCallback?.({
 			id,
 			queue: name,
 			type: 'succeeded',
@@ -64,14 +56,14 @@ export class DesktopQueue {
 		}));
 		que.on(
 			'task_progress',
-			(id: string, info) => this.auditQueueCallback({
+			(id: string, info) => this.auditQueueCallback?.({
 				id,
 				queue: name,
 				type: 'progress',
 				data: info
 			})
 		)
-		que.on("task_failed", (id: string, err) => this.auditQueueCallback({
+		que.on("task_failed", (id: string, err) => this.auditQueueCallback?.({
 			id,
 			queue: name,
 			type: 'failed',
@@ -82,7 +74,6 @@ export class DesktopQueue {
 
 	public initTimerQueue(timerCallback: (job: ITimerCallbackPayload, cb: (err?: any) => void) => void) {
 		if (!this.timerQueue) {
-			console.log('queue store config', this.storeTimerQueue);
 			this.timerQueue = new Queue(
 				timerCallback,
 				{
@@ -91,7 +82,7 @@ export class DesktopQueue {
 					retryDelay: 15_000,
 					filter: (task, cb) => {
 						if (task.queue === 'timer') cb(null, task);   // accept → worker runs with original task
-						else if (task.attempts >= 10) {
+						else if (task.attempts > 5) {
 							cb(new Error('Attempts maximum retry'), false);
 						}
 						else cb(new Error('Not valid task'), false);
@@ -113,7 +104,7 @@ export class DesktopQueue {
 					retryDelay: 15_000,
 					filter: (task, cb) => {
 						if (task.queue === 'time_slot') cb(null, task);   // accept → worker runs with original task
-						else if (task.attempts >= 10) {
+						else if (task.attempts > 10) {
 							cb(new Error('Attempts maximum retry'), false);
 						}
 						else cb(new Error('Not valid task'), false);
@@ -135,7 +126,7 @@ export class DesktopQueue {
 					retryDelay: 15_000,
 					filter: (task, cb) => {
 						if (task.queue === 'screenshot') cb(null, task);   // accept → worker runs with original task
-						else if (task.attempts >= 5) {
+						else if (task.attempts > 5) {
 							cb(new Error('Attempts maximum retry'), false);
 						}
 						else cb(new Error('Not valid task'), false);                             // reject → skipped
@@ -148,39 +139,97 @@ export class DesktopQueue {
 	}
 
 	public enqueueTimer(job: ITimerCallbackPayload) {
+		if (!this.timerQueue) {
+			throw new Error('Timer queue not initialized. Call initTimerQueue first.');
+		}
 		this.timerQueue.push(job);
 	}
 
 	public enqueueTimeSlot(job: ITimeslotQueuePayload) {
+		if (!this.timeSlotQueue) {
+			throw new Error('TimesSlot queue not initialized. Call initTimeSlotQueue first.');
+		}
 		this.timeSlotQueue.push(job);
 	}
 
 	public enqueueScreenshot(job: IScreenshotQueuePayload) {
+		if (!this.screenshotQueue) {
+			throw new Error('Screenshot queue not initialized. Call initScreenshotQueue first.');
+		}
 		this.screenshotQueue.push(job);
 	}
 
 	public async stopQueue() {
-		if (this.timeSlotQueue && this.timerQueue && this.screenshotQueue) {
-			this.timeSlotQueue.pause();
+		const drainPromises = [];
+
+		if (this.timerQueue) {
 			this.timerQueue.pause();
-			this.screenshotQueue.pause();
-			await Promise.all([
-				new Promise<void>((resolve) => this.timerQueue.on('drain', () => resolve())),
-				new Promise<void>((resolve) => this.timeSlotQueue.on('drain', () => resolve())),
-				new Promise<void>((resolve) => this.screenshotQueue.on('drain', () => resolve()))
-			])
+			drainPromises.push(
+				Promise.race([
+					new Promise<void>((resolve) => this.timerQueue.on('drain', () => resolve())),
+					new Promise<void>((resolve) => setTimeout(resolve, 500))
+				])
+			);
 		}
+
+		if (this.timeSlotQueue) {
+			this.timeSlotQueue.pause();
+			drainPromises.push(
+				Promise.race([
+					new Promise<void>((resolve) => this.timeSlotQueue.on('drain', () => resolve())),
+					new Promise<void>((resolve) => setTimeout(resolve, 500))
+				])
+			);
+		}
+
+		if (this.screenshotQueue) {
+			this.screenshotQueue.pause();
+			drainPromises.push(
+				Promise.race([
+					new Promise<void>((resolve) => this.screenshotQueue.on('drain', () => resolve())),
+					new Promise<void>((resolve) => setTimeout(resolve, 500))
+				])
+			);
+		}
+
+		if (drainPromises.length > 0) {
+			await Promise.all(drainPromises);
+		}
+
 	}
 
 	public initWorker() {
-		setInterval(async () => {
+		if (this.workerInterval) {
+			clearInterval(this.workerInterval);
+		}
+		this.workerInterval = setInterval(async () => {
 			const ok = await isOnline({ timeout: 1200 }).catch(() => false);
-			if (ok && !this.online) { this.online = true; this.timerQueue.resume(); this.timeSlotQueue.resume(); this.screenshotQueue.resume(); }
-			if (!ok && this.online) { this.online = false; this.timerQueue.pause(); this.timeSlotQueue.pause(); this.screenshotQueue.pause(); }
+			if (ok && !this.online) {
+				this.online = true;
+				this.timerQueue.resume();
+				this.timeSlotQueue.resume();
+				this.screenshotQueue.resume();
+			}
+			if (!ok && this.online) {
+				this.online = false;
+				this.timerQueue.pause();
+				this.timeSlotQueue.pause();
+				this.screenshotQueue.pause();
+			}
 		}, 3000)
 	}
 
+	public stopWorker() {
+		if (this.workerInterval) {
+			clearInterval(this.workerInterval);
+			this.workerInterval = null;
+		}
+	}
+
 	public getList() {
+		if (!this.timeSlotQueue) {
+			throw new Error('TimeSlot queue not initialized. Call initTimeslotQueue first.');
+		}
 		this.timeSlotQueue.getStats()
 	}
 }

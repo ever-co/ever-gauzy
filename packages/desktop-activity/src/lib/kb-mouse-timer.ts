@@ -39,7 +39,7 @@ export class KbMouseTimer {
 		return KbMouseTimer.instance;
 	}
 
-	public setRandomScreenshotInteval(value: boolean) {
+	public setRandomScreenshotInterval(value: boolean) {
 		this.randomScreenshotInterval = value;
 		if (this.randomScreenshotInterval) {
 			this.getTimeNextScreenshot();
