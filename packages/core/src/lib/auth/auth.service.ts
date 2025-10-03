@@ -130,39 +130,47 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException();
 			}
 
-			// Use Promise.all to check passwords and fetch employees concurrently
-			const userValidations = await Promise.all(
-				users.map(async (user) => {
-					const [isPasswordValid, employee] = await Promise.all([
-						bcrypt.compare(password, user.hash),
-						this.employeeService.findOneByUserId(user.id).catch((error) => {
-							if (error instanceof NotFoundException) {
-								return null;
-							}
-							throw error;
-						})
-					]);
-					return {
-						user,
-						employee,
-						isPasswordValid,
-						isEmployeeValid: !employee || (employee.isActive && !employee.isArchived)
-					};
-				})
-			);
+			// Validate each user individually to avoid cascade failures
+			const userValidations = [];
 
-			// Filter users with correct password and valid employee status
-			const validUsers = userValidations.filter(
-				({ isPasswordValid, isEmployeeValid }) => isPasswordValid && isEmployeeValid
-			);
+			for (const user of users) {
+				try {
+					// Check password
+					const isPasswordValid = await bcrypt.compare(password, user.hash);
 
-			// If no valid users found, throw an error
-			if (validUsers.length === 0) {
-				throw new UnauthorizedException();
+					if (!isPasswordValid) {
+						continue; // Skip this user if password doesn't match
+					}
+
+					// Fetch employee record
+					let employee = null;
+					let isEmployeeValid = true;
+
+					try {
+						employee = await this.employeeService.findOneByUserId(user.id);
+						// If employee exists, check if it's active and not archived
+						if (employee) {
+							isEmployeeValid = employee.isActive && !employee.isArchived;
+						}
+					} catch (employeeError) {
+						// Log employee fetch error but don't fail the entire login
+						console.warn(`Failed to fetch employee for user ${user.id}: ${employeeError.message}`);
+						// Assume no employee record if fetch fails
+						isEmployeeValid = true;
+					}
+
+					// Only add to validations if both password and employee status are valid
+					if (isEmployeeValid) {
+						userValidations.push({ user, employee });
+					}
+				} catch (error) {
+					// Skip this user if password comparison fails
+					continue;
+				}
 			}
 
 			// Select the most recently updated user (already sorted by updatedAt DESC)
-			const { user: selectedUser, employee } = validUsers[0];
+			const { user: selectedUser, employee } = userValidations[0];
 
 			// Generate both access and refresh tokens concurrently
 			const [access_token, refresh_token] = await Promise.all([
