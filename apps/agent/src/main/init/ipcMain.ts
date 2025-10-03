@@ -22,7 +22,9 @@ import * as path from 'node:path';
 import PullActivities from '../workers/pull-activities';
 import PushActivities from '../workers/push-activities';
 import { checkUserAuthentication } from '../auth';
-const rootPath = path.join(__dirname, '../..')
+import { ApiService } from '../api';
+const rootPath = path.join(__dirname, '../..');
+import { QueueAudit, AuditStatus } from '../queue/audit-queue';
 
 const userService = new UserService();
 
@@ -54,6 +56,7 @@ function listenIO(stop: boolean) {
 		pullActivities.stopTracking();
 		pushActivities.stopPooling();
 	} else {
+		pushActivities.initQueueWorker();
 		pullActivities.startTracking();
 		pushActivities.startPooling();
 	}
@@ -75,13 +78,12 @@ function kbMouseListener(activate: boolean) {
 }
 
 async function closeLoginWindow() {
-
 	const appWindow = AppWindow.getInstance(rootPath);
 	await delaySync(2000); // delay 2s before destroy login window
 	appWindow.destroyAuthWindow();
 }
 
-export default function AppIpcMain(){
+export default function AppIpcMain() {
 	remoteMain.initialize();
 
 	/* Set unlimited listeners */
@@ -140,11 +142,13 @@ export default function AppIpcMain(){
 	ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
 
 	ipcMain.handle('AUTH_SUCCESS', async (_, arg) => {
+		let employeeId = null;
 		try {
 			const user = new User({ ...arg, ...arg.user });
 			user.remoteId = arg.userId;
 			user.organizationId = arg.organizationId;
 			if (user.employee) {
+				employeeId = user.employee.id;
 				await userService.save(user.toObject());
 			}
 		} catch (error) {
@@ -154,6 +158,16 @@ export default function AppIpcMain(){
 			auth: { ...arg, isLogout: false }
 		});
 
+		try {
+			/* validate user employee desktop setting */
+			const apiService = ApiService.getInstance();
+			await apiService.getEmployeeSetting(employeeId);
+		} catch (error) {
+			store.set({
+				auth: null
+			})
+			throw new AppError('GET_EMP_SETTING', error);
+		}
 		listenIO(false);
 		await closeLoginWindow();
 	});
@@ -163,7 +177,7 @@ export default function AppIpcMain(){
 		LocalStore.updateApplicationSetting(arg.values);
 	});
 
-	ipcMain.on('logout_desktop', async (_, arg) => {
+	ipcMain.on('logout_desktop', async () => {
 		try {
 			log.info('Logout Desktop');
 			store.set({
@@ -197,6 +211,15 @@ export default function AppIpcMain(){
 		LocalStore.updateAuthSetting({ isLogout: true });
 	});
 
+	ipcMain.handle('SYNC_API_AUDIT',  async(_, arg: { data: { page: number, limit: number, status: AuditStatus } }) => {
+		const { data } = arg;
+		const auditQueue = QueueAudit.getInstance();
+		return auditQueue.list({
+			page: data.page,
+			limit: data.limit,
+			status: data.status
+		});
+	});
+
 	pluginListeners();
 }
-

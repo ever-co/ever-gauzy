@@ -1,11 +1,11 @@
 
 import {
-	IBaseWindow,
-	BaseWindow,
-	WindowManager,
-	DefaultWindow,
-	WindowConfig,
-	RegisteredWindow
+    IBaseWindow,
+    BaseWindow,
+    WindowManager,
+    DefaultWindow,
+    WindowConfig,
+    RegisteredWindow
 } from '@gauzy/desktop-core';
 
 /**
@@ -27,17 +27,21 @@ export class AuthWindow extends BaseWindow implements IBaseWindow {
                     frame: true,
                     resizable: false,
                     width: 1000,
-                    height: 768
+                    height: 768,
+                    ...(contextIsolation && preloadPath ? {
+                        webPreferences: {
+                            nodeIntegration: false,
+                            contextIsolation: true,
+                            sandbox: false,
+                            webSecurity: false,
+                            preload: preloadPath
+                        },
+                        titleBarStyle: 'hidden',
+                        titleBarOverlay: true
+                    } : {})
                 })
             )
         );
-
-        // Disable the menu bar for the Authentication
-		if (contextIsolation && preloadPath) {
-			this.config.options.webPreferences.contextIsolation = true;
-			this.config.options.webPreferences.preload = preloadPath;
-			this.config.options.webPreferences.nodeIntegration = false;
-		}
 
         // Register the Authentication with the WindowManager
         this.registerWindow();

@@ -1,3 +1,4 @@
+const DURATION_SCREENSHOT_LIST = [1, 3, 5, 10];
 export class KbMouseTimer {
 	private static instance: KbMouseTimer;
 
@@ -5,7 +6,10 @@ export class KbMouseTimer {
 	private intervalId: ReturnType<typeof setInterval> | null = null;
 	private onFlushCallback: ((timeData: { timeStart: Date; timeEnd: Date }, screenShot?: boolean, afkDuration?: number) => void) | null =
 		null;
+
+	/* interval screenshot from setting */
 	private screenshotIntervalSeconds = 60;
+
 	private lastFlushTime: Date = new Date();
 	private lastScreenshotTime: Date = new Date();
 	private afkThreshold = 30;  // in seconds
@@ -17,9 +21,15 @@ export class KbMouseTimer {
 	private timerStartedCallback: (status: 'Working' | 'Error') => void;
 	private activeWindowCallback: () => void;
 
+	private randomScreenshotInterval: boolean;
+
+	/* dynamic interval screenshot for random screenshot */
+	private currentScreenshotInterval: number = 60;
+
 	private constructor() {
 		this.afkCountdown = this.afkThreshold;
 		this.activeWindowCallback = () => {};
+		this.randomScreenshotInterval = false;
 	}
 
 	public static getInstance(): KbMouseTimer {
@@ -27,6 +37,13 @@ export class KbMouseTimer {
 			KbMouseTimer.instance = new KbMouseTimer();
 		}
 		return KbMouseTimer.instance;
+	}
+
+	public setRandomScreenshotInterval(value: boolean) {
+		this.randomScreenshotInterval = value;
+		if (this.randomScreenshotInterval) {
+			this.getTimeNextScreenshot();
+		}
 	}
 
 	public setFlushInterval(seconds: number): void {
@@ -39,6 +56,7 @@ export class KbMouseTimer {
 
 	public setScreenshotInterval(seconds: number): void {
 		this.screenshotIntervalSeconds = seconds;
+		this.currentScreenshotInterval = seconds;
 	}
 
 	public onFlush(callback: (timeData: { timeStart: Date; timeEnd: Date }, screenshot?: boolean, afkDuration?: number) => void): void {
@@ -117,6 +135,17 @@ export class KbMouseTimer {
 		this.afkDuration = 0;
 	}
 
+	/* reset the interval when using random interval */
+	private getTimeNextScreenshot() {
+		if (this.randomScreenshotInterval) {
+			const newDuration = DURATION_SCREENSHOT_LIST[Math.floor(Math.random() * DURATION_SCREENSHOT_LIST.length)] * 60;
+			this.currentScreenshotInterval = newDuration;
+			return;
+		}
+		this.currentScreenshotInterval = this.screenshotIntervalSeconds;
+		return;
+	}
+
 	private checkFlushTime(): void {
 		try {
 			if (!this.isStarted) {
@@ -130,7 +159,7 @@ export class KbMouseTimer {
 			const elapsedSecondsScreenshot = Math.floor((now.getTime() - this.lastScreenshotTime.getTime()) / 1000);
 			if (elapsedSeconds >= this.flushIntervalSeconds) {
 				if (this.onFlushCallback) {
-					if (elapsedSecondsScreenshot >= this.screenshotIntervalSeconds) {
+					if (elapsedSecondsScreenshot >= this.currentScreenshotInterval) {
 						this.onFlushCallback(
 							{
 								timeStart: this.lastFlushTime,
@@ -142,6 +171,7 @@ export class KbMouseTimer {
 						this.lastFlushTime = now;
 						this.lastScreenshotTime = now;
 						this.resetAfkCount();
+						this.getTimeNextScreenshot();
 					} else {
 						this.onFlushCallback(
 							{
