@@ -153,10 +153,14 @@ export class AuthService extends SocialAuthService {
 							isEmployeeValid = employee.isActive && !employee.isArchived;
 						}
 					} catch (employeeError) {
-						// Log employee fetch error but don't fail the entire login
-						console.warn(`Failed to fetch employee for user ${user.id}: ${employeeError.message}`);
-						// Assume no employee record if fetch fails
-						isEmployeeValid = true;
+						if (employeeError instanceof NotFoundException) {
+							// missing employee is okay
+							employee = null;
+							isEmployeeValid = true;
+						} else {
+							// real errors should still bubble up
+							throw employeeError;
+						}
 					}
 
 					// Only add to validations if both password and employee status are valid
