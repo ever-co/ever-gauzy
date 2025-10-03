@@ -420,11 +420,9 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		if ('where' in filter) {
 			const { where } = filter;
 
-			if (where.tags) {
-				filter.where.tags = {
-					id: In(where.tags)
-				};
-			}
+			// Extract tag filter and remove from TypeORM where (we'll filter in-memory)
+			const tagIds: string[] = where.tags;
+			delete where.tags;
 
 			if (where.toContact) {
 				filter.where.toContact = {
@@ -474,6 +472,11 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 
 			const result = await super.paginate(filter);
 			let filteredItems = result.items;
+
+			// In-memory filtering by tagIds
+			if (tagIds?.length) {
+				filteredItems = filteredItems.filter((invoice) => invoice.tags?.some((tag) => tagIds.includes(tag.id)));
+			}
 
 			if (currencyValue) {
 				filteredItems = filteredItems.filter(
