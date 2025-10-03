@@ -173,11 +173,12 @@ export class AuthService extends SocialAuthService {
 				}
 			}
 
-			// Select the most recently updated user (already sorted by updatedAt DESC)
+			// If no valid users are found after validation, throw an error
 			if (userValidations.length === 0) {
 				throw new UnauthorizedException();
 			}
 
+			// Select the most recently updated user (already sorted by updatedAt DESC)
 			const { user: selectedUser, employee } = userValidations[0];
 
 			// Generate both access and refresh tokens concurrently
