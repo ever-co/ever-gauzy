@@ -135,9 +135,13 @@ export class AuthService extends SocialAuthService {
 				users.map(async (user) => {
 					const [isPasswordValid, employee] = await Promise.all([
 						bcrypt.compare(password, user.hash),
-						this.employeeService.findOneByUserId(user.id)
+						this.employeeService.findOneByUserId(user.id).catch((error) => {
+							if (error instanceof NotFoundException) {
+								return null;
+							}
+							throw error;
+						})
 					]);
-
 					return {
 						user,
 						employee,
