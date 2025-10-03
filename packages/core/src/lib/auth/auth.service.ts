@@ -174,6 +174,10 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Select the most recently updated user (already sorted by updatedAt DESC)
+			if (userValidations.length === 0) {
+				throw new UnauthorizedException();
+			}
+
 			const { user: selectedUser, employee } = userValidations[0];
 
 			// Generate both access and refresh tokens concurrently
