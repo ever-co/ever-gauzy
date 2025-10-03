@@ -134,42 +134,39 @@ export class AuthService extends SocialAuthService {
 			const userValidations = [];
 
 			for (const user of users) {
+				// Check password (let real bcrypt errors bubble up)
+				let isPasswordValid = false;
 				try {
-					// Check password
-					const isPasswordValid = await bcrypt.compare(password, user.hash);
-
-					if (!isPasswordValid) {
-						continue; // Skip this user if password doesn't match
+					isPasswordValid = await bcrypt.compare(password, user.hash);
+				} catch (bcryptError) {
+					console.error(`Password comparison failed for user ${user.id}: ${bcryptError.message}`);
+					continue; // Skip this user if bcrypt fails
+				}
+				if (!isPasswordValid) {
+					continue; // Skip this user if password doesn't match
+				}
+				// Fetch employee record
+				let employee = null;
+				let isEmployeeValid = true;
+				try {
+					employee = await this.employeeService.findOneByUserId(user.id);
+					// If employee exists, check if it's active and not archived
+					if (employee) {
+						isEmployeeValid = employee.isActive && !employee.isArchived;
 					}
-
-					// Fetch employee record
-					let employee = null;
-					let isEmployeeValid = true;
-
-					try {
-						employee = await this.employeeService.findOneByUserId(user.id);
-						// If employee exists, check if it's active and not archived
-						if (employee) {
-							isEmployeeValid = employee.isActive && !employee.isArchived;
-						}
-					} catch (employeeError) {
-						if (employeeError instanceof NotFoundException) {
-							// missing employee is okay
-							employee = null;
-							isEmployeeValid = true;
-						} else {
-							// real errors should still bubble up
-							throw employeeError;
-						}
+				} catch (employeeError) {
+					if (employeeError instanceof NotFoundException) {
+						// missing employee is okay
+						employee = null;
+						isEmployeeValid = true;
+					} else {
+						// real errors should still bubble up
+						throw employeeError;
 					}
-
-					// Only add to validations if both password and employee status are valid
-					if (isEmployeeValid) {
-						userValidations.push({ user, employee });
-					}
-				} catch (error) {
-					// Skip this user if password comparison fails
-					continue;
+				}
+				// Only add to validations if both password and employee status are valid
+				if (isEmployeeValid) {
+					userValidations.push({ user, employee });
 				}
 			}
 
