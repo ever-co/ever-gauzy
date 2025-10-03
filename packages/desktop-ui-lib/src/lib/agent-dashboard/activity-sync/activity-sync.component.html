@@ -1,0 +1,90 @@
+<nb-card>
+  <nb-card-header class="d-flex justify-content-between align-items-center">
+
+  </nb-card-header>
+
+  <nb-card-body>
+    <nb-tabset (changeTab)="onChangeTab($event.tabTitle)">
+      <nb-tab tabTitle="PENDING" [active]="tab === 'PENDING'">
+        <nb-list>
+          <nb-list-item class="list-item-header">
+            <div class="col-2">Queue</div>
+            <div class="col-3">Created At</div>
+            <div class="col-3">Data</div>
+            <div class="col-2">Attempts</div>
+            <div class="col-1 centered-column">Status</div>
+          </nb-list-item>
+          <nb-list-item *ngFor="let it of (items$|async) | filterStatus:'PENDING'">
+            <div class="list-item-content">
+              <div class="col-2">{{ it.queue }}</div>
+              <div class="col-3">{{ it.createdAt | date:'MMM d, HH:mm:ss' }}</div>
+              <div class="col-3 word-wrap-content">{{ it.data}}</div>
+              <div class="col-2">{{ it.attempts }}</div>
+              <div class="col-1 centered-column"><nb-badge text="PENDING" status="warning"></nb-badge></div>
+            </div>
+          </nb-list-item>
+        </nb-list>
+      </nb-tab>
+      <nb-tab tabTitle="PROCESS" [active]="tab === 'PROCESS'">
+        <nb-list>
+          <nb-list-item class="list-item-header">
+            <div class="col-2">Queue</div>
+            <div class="col-3">Created At</div>
+            <div class="col-3">Data</div>
+            <div class="col-2">Attempts</div>
+            <div class="col-1 centered-column">Status</div>
+          </nb-list-item>
+          <nb-list-item *ngFor="let it of (items$|async) | filterStatus:'PROCESS'">
+            <div class="list-item-content">
+              <div class="col-2">{{ it.queue }}</div>
+              <div class="col-3">{{ it.createdAt | date:'MMM d, HH:mm:ss' }}</div>
+              <div class="col-3 word-wrap-content">{{ it.data }}</div>
+              <div class="col-2">{{ it.attempts }}</div>
+              <div class="col-1 centered-column"><nb-badge text="PROCESS" status="warning"></nb-badge></div>
+            </div>
+          </nb-list-item>
+        </nb-list>
+      </nb-tab>
+      <nb-tab tabTitle="FAILED" [active]="tab === 'FAILED'">
+        <nb-list>
+          <nb-list-item class="list-item-header">
+            <div class="col-2">Queue</div>
+            <div class="col-3">Created At</div>
+            <div class="col-3">Last Error</div>
+            <div class="col-2">Attempts</div>
+            <div class="col-1 centered-column">Status</div>
+          </nb-list-item>
+          <nb-list-item *ngFor="let it of (items$|async) | filterStatus:'FAILED'">
+            <div class="list-item-content">
+              <div class="col-2">{{ it.queue }}</div>
+              <div class="col-3">{{ it.createdAt | date:'MMM d, HH:mm:ss' }}</div>
+              <div class="col-3 word-wrap-content">{{ it.last_error }}</div>
+              <div class="col-2">{{ it.attempts }}</div>
+              <div class="col-1 centered-column"><nb-badge text="FAILED" status="danger"></nb-badge></div>
+            </div>
+          </nb-list-item>
+        </nb-list>
+      </nb-tab>
+      <nb-tab tabTitle="SYNCED" [active]="tab === 'SYNCED'">
+        <nb-list>
+          <nb-list-item class="list-item-header">
+            <div class="col-2">Queue</div>
+            <div class="col-3">Created At</div>
+            <div class="col-3">Data</div>
+            <div class="col-2">Attempts</div>
+            <div class="col-1 centered-column">Status</div>
+          </nb-list-item>
+          <nb-list-item *ngFor="let it of (items$|async) | filterStatus:'SYNCED'">
+            <div class="list-item-content">
+              <div class="col-2">{{ it.queue }}</div>
+              <div class="col-3">{{ it.createdAt | date:'MMM d, HH:mm:ss' }}</div>
+              <div class="col-3 word-wrap-content">{{ it.data }}</div>
+              <div class="col-2">{{ it.attempts }}</div>
+              <div class="col-1 centered-column"><nb-badge text="SYNCED" status="success"></nb-badge></div>
+            </div>
+          </nb-list-item>
+        </nb-list>
+      </nb-tab>
+    </nb-tabset>
+  </nb-card-body>
+</nb-card>

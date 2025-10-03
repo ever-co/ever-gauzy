@@ -39,8 +39,15 @@ import { ActivepiecesMcpController } from './activepieces-mcp.controller';
 		RolePermissionModule,
 		UserModule
 	],
-	controllers: [ActivepiecesAuthorizationController, ActivepiecesController, ActivepiecesMcpController],
-	providers: [ActivepiecesService, ActivepiecesMcpService],
+	controllers: [
+		ActivepiecesAuthorizationController,
+		ActivepiecesController,
+		ActivepiecesMcpController
+	],
+	providers: [
+		ActivepiecesService,
+		ActivepiecesMcpService
+	],
 	exports: [ActivepiecesService, ActivepiecesMcpService]
 })
 export class ActivepiecesModule {}

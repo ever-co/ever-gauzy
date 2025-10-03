@@ -22,7 +22,8 @@ export type TEmployeeResponse = {
 	allowAgentAppExit: boolean,
 	allowLogoutFromAgentApp: boolean,
 	trackKeyboardMouseActivity: boolean,
-	trackAllDisplays: boolean
+	trackAllDisplays: boolean,
+	randomScreenshot: boolean
 }
 
 
@@ -38,7 +39,8 @@ export type TAppSetting = {
 	kbMouseTracking: boolean,
 	allowAgentAppExit: boolean,
 	allowLogoutFromAgentApp: boolean,
-	allowScreenshotCapture: boolean
+	allowScreenshotCapture: boolean,
+	randomScreenshotTime: boolean,
 }
 
 export type TInitialConfig = {
@@ -133,7 +135,8 @@ export function updateAgentSetting(employee: Partial<TEmployeeResponse>) {
 			captured: employee.trackAllDisplays ? 'all' : 'active-only'
 		},
 		kbMouseTracking: employee.trackKeyboardMouseActivity,
-		allowScreenshotCapture: employee.allowScreenshotCapture ?? false
+		allowScreenshotCapture: employee.allowScreenshotCapture ?? false,
+		randomScreenshotTime: employee.randomScreenshot ?? false
 	}
 	LocalStore.updateApplicationSetting(appSetting);
 }

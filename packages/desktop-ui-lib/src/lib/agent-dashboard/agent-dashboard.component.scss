@@ -1,0 +1,284 @@
+nb-layout {
+	height: 100vh;
+}
+
+.button-big {
+	font-size: 14px;
+	font-weight: 600;
+	height: 32px;
+	width: auto;
+}
+
+.button-small {
+	font-size: 14px;
+	font-weight: bold;
+	height: 45px;
+	width: 120px;
+}
+
+.icon-medium {
+	font-size: 48px;
+}
+
+.margin-content {
+
+	h4,
+	h5 {
+		font-family: monospace;
+	}
+
+	.button {
+		margin-top: auto !important;
+	}
+}
+
+.col-center {
+	margin: auto;
+}
+
+.margin-icon {
+	margin-top: 0px;
+	height: 30px;
+}
+
+.margin-icon-small {
+	margin-top: 35px;
+	height: 45px;
+}
+
+.content-body {
+	height: 100%;
+}
+
+.top-bottom-space {
+	padding: 1px !important;
+}
+
+.log-box {
+	background-color: black;
+	color: white;
+	font-size: 11px;
+	text-align: left;
+	border-radius: 0 0 var(--border-radius) var(--border-radius) !important;
+}
+
+.log-content {
+	overflow-y: auto;
+	font-family: monospace;
+	height: calc(100vh - 15.5rem) !important;
+}
+
+.accordion {
+	height: calc(100vh - 11rem) !important;
+}
+
+.content-text {
+	color: #08c234;
+	font-size: 11px;
+	font-family: monospace !important;
+}
+
+.card-body {
+	padding: 1rem;
+}
+
+.btn-bottom {
+	position: absolute;
+	bottom: 0;
+	left: -50px;
+}
+
+::ng-deep body {
+	overflow: hidden !important;
+}
+
+.fh {
+	height: 100%;
+}
+
+nb-accordion-item-header {
+	font-family: monospace;
+}
+
+
+
+.header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem
+}
+
+.left,
+.right {
+	display: flex;
+	align-items: center;
+	gap: .5rem
+}
+
+.brand {
+	padding: .5rem 1rem;
+	font-weight: 600;
+
+	.brand-content {
+		display: flex;
+		align-items: center;
+		justify-content: center; // Center the icon horizontally
+
+		img {
+			height: 32px; // Slightly larger icon for better visibility
+			width: auto;
+		}
+	}
+}
+
+// Styles for compact sidebar mode
+nb-sidebar.compacted {
+	.brand {
+		.brand-content {
+			img {
+				height: 24px; // Smaller icon for compact view
+			}
+		}
+	}
+}
+
+.sidebar-tray {
+	margin: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: .25rem;
+	color: var(--text-hint-color)
+}
+
+.grid.kpis {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 1rem
+}
+
+.grid.two {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem
+}
+
+.kpi-val {
+	font-size: 1.6rem;
+	font-weight: 700
+}
+
+.timeline-scale {
+	display: flex;
+	justify-content: space-between;
+	color: var(--text-hint-color);
+	font-size: .8rem;
+	margin-bottom: .5rem
+}
+
+.timeline-bar {
+	position: relative;
+	height: 14px;
+	border-radius: 999px;
+	background: var(--background-basic-color-3);
+	overflow: hidden
+}
+
+.seg {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	border-radius: 999px
+}
+
+.seg-code {
+	background: linear-gradient(90deg, #5fa8ff, #7bd6ff)
+}
+
+.seg-term {
+	background: linear-gradient(90deg, #7bffbf, #4fd6a5)
+}
+
+.seg-break {
+	background: linear-gradient(90deg, #ff8ab0, #ff7a7a)
+}
+
+.shot {
+	position: absolute;
+	top: -3px;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #cfe3f7;
+	border: 1px solid #78a7e6;
+	box-shadow: 0 0 0 4px rgba(122, 176, 255, .12)
+}
+
+.form-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem
+}
+
+.nb-list nb-list-item {
+	display: grid;
+	grid-template-columns: 80px 1fr 60px;
+	gap: .5rem;
+	align-items: center
+}
+
+.chip {
+	padding: .125rem .5rem;
+	border-radius: 999px;
+	background: var(--background-basic-color-3);
+	font-size: .75rem
+}
+
+.title {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis
+}
+
+.gallery {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	gap: .5rem
+}
+
+.shot-thumb {
+	aspect-ratio: 16/10;
+	border-radius: .5rem;
+	background: var(--background-basic-color-3);
+	display: flex;
+	align-items: flex-end;
+	justify-content: flex-start;
+	padding: .25rem .5rem;
+	color: var(--text-hint-color)
+}
+
+.logs {
+	max-height: 860px;
+	min-height: 400px;
+	overflow: auto;
+	font-size: .85rem;
+	background: var(--background-basic-color-3);
+	border-radius: .5rem;
+	padding: .75rem
+}
+
+.log-entry {
+	margin-bottom: .35rem
+}
+
+.log-entry.error {
+	color: #ff7a7a
+}
+
+.log-entry.warn {
+	color: #ffd36a
+}
+
+.log-entry.info {
+	color: #6aa6ff
+}
