@@ -139,7 +139,8 @@ export class AuthService extends SocialAuthService {
 				try {
 					isPasswordValid = await bcrypt.compare(password, user.hash);
 				} catch (bcryptError) {
-					console.error(`Password comparison failed for user ${user.id}: ${bcryptError.message}`);
+					// We don't log "errors" below because we might have many such users whose passwords are different, really!
+					// console.error(`Password comparison failed for user ${user.id}: ${bcryptError.message}`);
 					continue; // Skip this user if bcrypt fails
 				}
 				if (!isPasswordValid) {
