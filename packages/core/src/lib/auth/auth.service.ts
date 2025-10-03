@@ -118,51 +118,72 @@ export class AuthService extends SocialAuthService {
 	 */
 	async login({ email, password }: IUserLoginInput): Promise<IAuthResponse | null> {
 		try {
-			// Find the user by email. Ensure the user is active, not archived, and has a hashed password.
-			const user = await this.userService.findOneByOptions({
+			// Find ALL users by email
+			const users = await this.userService.find({
 				where: { email, isActive: true, isArchived: false, hash: Not(IsNull()) },
-				relations: { role: true }, // Include user's role in the response
-				order: { createdAt: 'DESC' } // Order by creation time, latest first
+				relations: { role: true },
+				order: { updatedAt: 'DESC' } // Order by update time, latest first
 			});
 
-			// Verify the provided password. If no user is found or the password does not match, throw an error.
-			if (!user || !(await bcrypt.compare(password, user.hash))) {
-				throw new UnauthorizedException(); // Generic error for security purposes
-			}
-
-			// Retrieve the employee details associated with the user.
-			const employee = await this.employeeService.findOneByUserId(user.id);
-
-			// Check if the employee is active and not archived. If not, throw an error.
-			if (employee && (!employee.isActive || employee.isArchived)) {
+			// If no users are found, throw an error
+			if (!users || users.length === 0) {
 				throw new UnauthorizedException();
 			}
 
-			// Generate both access and refresh tokens concurrently for efficiency.
+			// Use Promise.all to check passwords and fetch employees concurrently
+			const userValidations = await Promise.all(
+				users.map(async (user) => {
+					const [isPasswordValid, employee] = await Promise.all([
+						bcrypt.compare(password, user.hash),
+						this.employeeService.findOneByUserId(user.id)
+					]);
+
+					return {
+						user,
+						employee,
+						isPasswordValid,
+						isEmployeeValid: !employee || (employee.isActive && !employee.isArchived)
+					};
+				})
+			);
+
+			// Filter users with correct password and valid employee status
+			const validUsers = userValidations.filter(
+				({ isPasswordValid, isEmployeeValid }) => isPasswordValid && isEmployeeValid
+			);
+
+			// If no valid users found, throw an error
+			if (validUsers.length === 0) {
+				throw new UnauthorizedException();
+			}
+
+			// Select the most recently updated user (already sorted by updatedAt DESC)
+			const { user: selectedUser, employee } = validUsers[0];
+
+			// Generate both access and refresh tokens concurrently
 			const [access_token, refresh_token] = await Promise.all([
-				this.getJwtAccessToken(user),
-				this.getJwtRefreshToken(user)
+				this.getJwtAccessToken(selectedUser),
+				this.getJwtRefreshToken(selectedUser)
 			]);
 
-			// Store the current refresh token with the user for later validation.
-			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+			// Update user's refresh token and last login timestamp concurrently
+			await Promise.all([
+				this.userService.setCurrentRefreshToken(refresh_token, selectedUser.id),
+				this.userService.setUserLastLoginTimestamp(selectedUser.id)
+			]);
 
-			// Set last the login timestamp
-			await this.userService.setUserLastLoginTimestamp(user.id);
-
-			// Return the user object with user details, tokens, and optionally employee info if it exists.
 			return {
 				user: new User({
-					...user,
+					...selectedUser,
 					...(employee && { employee })
 				}),
 				token: access_token,
 				refresh_token: refresh_token
 			};
 		} catch (error) {
-			// Log the error with a timestamp and the error message for debugging.
+			// Log the error with a timestamp and the error message for debugging
 			console.error(`Login failed at ${new Date().toISOString()}: ${error.message}.`);
-			throw new UnauthorizedException(); // Throw a generic error to avoid exposing specific failure reasons.
+			throw new UnauthorizedException();
 		}
 	}
 
