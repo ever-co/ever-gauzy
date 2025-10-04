@@ -2,7 +2,6 @@
 	<nb-layout-column class="p-0">
 		<nb-layout *ngIf="isExpandMode">
 			<nb-layout-column>
-
 				<nb-card class="timer-card" size="tiny">
 					<nb-card-body class="timer-body">
 
@@ -16,12 +15,13 @@
 
 							<!-- Timer display -->
 							<div class="time-display">
-								<span class="current-session">{{ currentSessionTime }}</span>
-								<span class="today-time">Today {{ todaySessionTime }}</span>
+								<span class="current-session">{{ (counter$ | async)?.current }}</span>
+								<span class="today-time">Today {{ (counter$ | async)?.today }}</span>
 							</div>
 
 							<!-- Running / Stopped button -->
-							<button nbButton size="medium" [status]="running ? 'danger' : 'success'" shape="round"
+							<button nbButton size="tiny" class="timer-btn" [status]="running ? 'danger' : 'success'" shape="round"
+								[disabled]="loading"
 								(click)="toggleTimer()">
 								<fa-icon [icon]="running ? pause : play"></fa-icon>
 							</button>

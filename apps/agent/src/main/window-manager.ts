@@ -207,10 +207,8 @@ class AppWindow {
 		if (!this.alwaysOnWindow || this.alwaysOnWindow?.browserWindow?.isDestroyed()) {
 			console.log('new window alwaysOnWindow');
 			this.alwaysOnWindow = new AlwaysOn(this.getUiPath('always-on'), this.getPreloadPath(), true, true);
-			this.alwaysOnWindow.browserWindow.webContents.toggleDevTools();
 			this.alwaysOnWindow.browserWindow.removeAllListeners('close');
 			this.alwaysOnWindow.browserWindow.on('close', () => {
-				console.log('on close');
 				if (!this.alwaysOnWindow?.browserWindow?.isDestroyed()) {
 					this.alwaysOnWindow?.browserWindow?.destroy();
 				}

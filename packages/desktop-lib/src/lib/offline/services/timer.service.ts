@@ -142,4 +142,15 @@ export class TimerService implements ITimerService<TimerTO> {
 			return 0;
 		}
 	}
+
+	public async todayDurations(): Promise<number> {
+		try {
+			const user = await this._userService.retrieve();
+			const [res] = await this._timerDAO.todayDuration(user);
+			return Number(res.today_duration_seconds);
+		} catch (error) {
+			console.log('error get today duration', error);
+			return 0;
+		}
+	}
 }

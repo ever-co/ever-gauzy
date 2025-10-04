@@ -1,3 +1,64 @@
+:host {
+	nb-sidebar {
+		background-color: var(--gauzy-sidebar-background-3);
+	}
+
+	nb-sidebar ::ng-deep .scrollable {
+		padding: 0px;
+	}
+
+	nb-sidebar ::ng-deep .main-container-fixed {
+		top: 30px !important;
+	}
+
+	::ng-deep nb-sidebar {
+		top: 30px !important;
+	}
+
+	h4 {
+		font-size: 20px;
+		font-weight: 600;
+		line-height: 24px;
+		letter-spacing: 0em;
+		color: var(--gauzy-text-color-1);
+	}
+
+	h6 {
+		font-size: 16px;
+		font-weight: 600;
+		color: var(--gauzy-text-color-2);
+	}
+
+	p {
+		font-size: 14px;
+		font-weight: 400;
+	}
+
+	.monitors,
+	.notification {
+		nb-card {
+			border-radius: var(--border-radius);
+		}
+
+		nb-card-body {
+			background-color: var(--gauzy-card-2);
+			border-radius: var(--border-radius);
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+
+	}
+}
+
+::ng-deep nb-menu {
+	width: 100%;
+}
+
+::ng-deep nb-menu ul.menu-items li>a.active {
+	background-color: var(--layout-background-color);
+}
+
 nb-layout {
 	height: 100vh;
 }
@@ -42,7 +103,6 @@ nb-layout {
 }
 
 .margin-icon-small {
-	margin-top: 35px;
 	height: 45px;
 }
 
@@ -119,6 +179,7 @@ nb-accordion-item-header {
 .brand {
 	padding: .5rem 1rem;
 	font-weight: 600;
+	margin-top: 10px;
 
 	.brand-content {
 		display: flex;

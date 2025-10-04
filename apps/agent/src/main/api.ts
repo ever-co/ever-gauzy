@@ -8,6 +8,50 @@ import { TimeLogSourceEnum, TimeLogType } from '@gauzy/desktop-activity';
 import MainEvent from './events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../constant';
 
+export interface ITimerResponse {
+	deletedAt: any
+	createdAt: string
+	updatedAt: string
+	createdByUserId: string
+	updatedByUserId: any
+	deletedByUserId: any
+	id: string
+	isActive: boolean
+	isArchived: boolean
+	archivedAt: any
+	tenantId: string
+	organizationId: string
+	startedAt: string
+	stoppedAt: string
+	editedAt: any
+	logType: string
+	source: string
+	description: any
+	reason: any
+	isBillable: boolean
+	isRunning: boolean
+	version: any
+	employeeId: string
+	timesheetId: string
+	projectId: any
+	taskId: any
+	organizationContactId: any
+	organizationTeamId: any
+	duration: number
+	isEdited: boolean
+}
+
+export interface ITimeLogPayload {
+	isBillable: boolean;
+	organizationId: string;
+	tenantId: string;
+	logType?: string;
+	startedAt: Date;
+	stoppedAt: Date;
+	source?: string;
+	employeeId: string;
+}
+
 
 type UploadParams = {
 	timeSlotId?: string;
@@ -61,9 +105,44 @@ export type TTimerStatusParams = {
 }
 
 export type TTimerStatusResponse = {
-	running?: boolean
+	duration: number;
+	running: boolean;
+	lastLog: ITimeLogResp | null;
+	startedAt?: Date;
 }
 
+export interface ITimeLogResp {
+	deletedAt: any
+	createdAt: string
+	updatedAt: string
+	createdByUserId: any
+	updatedByUserId: any
+	deletedByUserId: any
+	id: string
+	isActive: boolean
+	isArchived: boolean
+	archivedAt: any
+	tenantId: string
+	organizationId: string
+	startedAt: string
+	stoppedAt: string
+	editedAt: any
+	logType: string
+	source: string
+	description: any
+	reason: any
+	isBillable: boolean
+	isRunning: boolean
+	version: any
+	employeeId: string
+	timesheetId: string
+	projectId: any
+	taskId: string
+	organizationContactId: any
+	organizationTeamId: any
+	duration: number
+	isEdited: boolean
+}
 
 
 export class ApiService {
@@ -110,8 +189,8 @@ export class ApiService {
 		return baseUrl;
 	}
 
-	post(uriPath: string, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-		return this.request(uriPath, { method: 'POST', body: JSON.stringify(payload) })
+	post(uriPath: string, payload: Record<string, any>): Promise<Record<string, unknown>> {
+		return this.request(uriPath, { method: 'POST', body: JSON.stringify(payload) });
 	}
 
 	postFile(uriPath: string, payload: any): Promise<Record<string, unknown>> {
@@ -120,6 +199,10 @@ export class ApiService {
 
 	get(uriPath: string, params: Record<string, unknown>): Promise<Record<string, unknown>> {
 		return this.request(uriPath, { method: 'GET', headers: {}, params }, false);
+	}
+
+	put(uriPath: string, payload: Record<string, any>): Promise<Record<string, unknown>> {
+		return this.request(uriPath, { method: 'PUT', body: JSON.stringify(payload) });
 	}
 
 	saveTimeSlot(payload: TTimeSlot): Promise<TResponseTimeSlot> {
@@ -146,7 +229,7 @@ export class ApiService {
 		};
 	}
 
-	startTimer(payload: TToggleParams) {
+	startTimer(payload: TToggleParams): Promise<Partial<ITimerResponse>> {
 		const path: string = '/api/timesheet/timer/start';
 		const payloadTimer = this.getTimeToggleParams(payload);
 		return this.post(path, payloadTimer);
@@ -160,11 +243,46 @@ export class ApiService {
 		return this.post(path, payloadTimer);
 	}
 
-	timerStatus(params: TTimerStatusParams): Promise<TTimerStatusResponse> {
+	updateTimeLog(timeLogId: string, payload: ITimeLogPayload): Promise<Partial<ITimeLogResp>> {
+		const path: string = `/api/timesheet/time-log/${timeLogId}`;
+		const timeLogPayload = {
+			startedAt: moment(payload.startedAt).utc().toISOString(),
+			stoppedAt: moment(payload.stoppedAt).utc().toISOString(),
+			isBillable: true,
+			logType: 'TRACKED',
+			source: TimeLogSourceEnum.DESKTOP,
+			tenantId: payload.tenantId,
+			organizationId: payload.organizationId
+		}
+		return this.put(path, timeLogPayload);
+	}
+
+	addTimeLog(payload: ITimeLogPayload): Promise<Partial<ITimeLogResp>> {
+		const path: string = `/api/timesheet/time-log`;
+		const timeLogPayload = {
+			startedAt: moment(payload.startedAt).utc().toISOString(),
+			stoppedAt: moment(payload.stoppedAt).utc().toISOString(),
+			isBillable: true,
+			logType: 'TRACKED',
+			source: TimeLogSourceEnum.DESKTOP,
+			tenantId: payload.tenantId,
+			organizationId: payload.organizationId,
+			employeeId: payload.employeeId
+		}
+		return this.post(path, timeLogPayload);
+	}
+
+	toUTC(date: string | Date | moment.Moment): moment.Moment {
+		return moment(date).utc();
+	}
+
+	timerStatus(params: TTimerStatusParams): Promise<Partial<TTimerStatusResponse>> {
 		const path = '/api/timesheet/timer/status';
 		const reqParams = {
 			tenantId: params.tenantId,
-			organizationId: params.organizationId
+			organizationId: params.organizationId,
+			todayStart: this.toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss'),
+			todayEnd: this.toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss')
 		};
 		return this.get(path, reqParams);
 	}
@@ -208,7 +326,7 @@ export class ApiService {
 		path: string,
 		options: {
 			headers?: HeadersInit;
-			method: 'POST' | 'GET';
+			method: 'POST' | 'GET' | 'PUT';
 			body?: string;
 			params?: any
 		} = { method: 'GET' },
