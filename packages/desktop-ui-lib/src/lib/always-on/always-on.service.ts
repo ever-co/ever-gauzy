@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, interval, shareReplay } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 import { ElectronService } from '../electron/services';
 import * as moment from "moment/moment";
 
@@ -61,6 +62,7 @@ export class AlwaysOnService {
 	private todayBase = 0;
 	private currentBase = 0;
 	private startTime: Date | null = null;
+	private intervalCounter$?: Observable<ITimeCounter>;
 	constructor(
 		private readonly _electronService: ElectronService,
 	) { }
@@ -108,24 +110,16 @@ export class AlwaysOnService {
 	}
 
 
+
 	public get localCounter$(): Observable<ITimeCounter> {
-		return new Observable<ITimeCounter>((observer) => {
-			if (!this.startTime) {
-				observer.error('Timer not initialized');
-				return;
-			}
-
-			// immediate emit
-			observer.next(this.getCounters());
-
-			// interval emit
-			const id = setInterval(() => {
-				observer.next(this.getCounters());
-			}, 1000);
-
-			// cleanup on unsubscribe
-			return () => clearInterval(id);
-		});
+		if (!this.intervalCounter$) {
+			this.intervalCounter$ = interval(1000).pipe(
+				startWith(0),
+				map(() => this.getCounters()),
+				shareReplay(1)
+			);
+		}
+		return this.intervalCounter$;
 	}
 
 	public get checkTimerStatus$(): Observable<number> {
@@ -144,7 +138,7 @@ export class AlwaysOnService {
 			return { today: this.format(this.todayBase || 0), current: this.format(this.currentBase) };
 		}
 
-		 const elapsedSec = Math.floor((Date.now() - this.startTime.getTime()) / 1000);
+		const elapsedSec = Math.floor((Date.now() - this.startTime.getTime()) / 1000);
 
 		return {
 			today: this.format(this.todayBase + elapsedSec),

@@ -89,9 +89,6 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 			this.isExpandMode = true;
 			this._alwaysOnService.checkTimerStatus$.pipe(
 				tap(() => {
-					if (this.localCounterSub) {
-						this.localCounterSub.unsubscribe();
-					}
 					this.checkAndRunTimer();
 				}),
 				untilDestroyed(this)
@@ -101,9 +98,7 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy(): void {
-		if (this.localCounterSub) {
-			this.localCounterSub.unsubscribe();
-		}
+		this.localCounterSub?.unsubscribe();
 	}
 
 	public run(): void {
@@ -130,6 +125,7 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 	private async checkAndRunTimer() {
 		this.setLoading(true);
 		const timerStatus: ITimerStatus = await this._alwaysOnService.getTimerStatus();
+		this.localCounterSub?.unsubscribe();
 		if (timerStatus?.running) {
 			this.setRunning(true);
 			this._alwaysOnService.init(timerStatus.duration, timerStatus?.startedAt);
@@ -142,9 +138,7 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 
 		if (!timerStatus?.running) {
 			this.setRunning(false);
-			if (this.localCounterSub) {
-				this.localCounterSub.unsubscribe();
-			}
+			this.localCounterSub?.unsubscribe();
 		}
 		this.setLoading(false);
 	}
