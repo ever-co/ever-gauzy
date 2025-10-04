@@ -3,6 +3,46 @@ import { Observable } from 'rxjs';
 import { ElectronService } from '../electron/services';
 import * as moment from "moment/moment";
 
+export interface ITimerStatus {
+	duration: number;
+	running: boolean;
+	lastLog: LastLog | null;
+	startedAt?: Date;
+}
+
+export interface LastLog {
+	deletedAt: any
+	createdAt: string
+	updatedAt: string
+	createdByUserId: string
+	updatedByUserId: string
+	deletedByUserId: any
+	id: string
+	isActive: boolean
+	isArchived: boolean
+	archivedAt: any
+	tenantId: string
+	organizationId: string
+	startedAt: string
+	stoppedAt: string
+	editedAt: any
+	logType: string
+	source: string
+	description: any
+	reason: any
+	isBillable: boolean
+	isRunning: boolean
+	version: any
+	employeeId: string
+	timesheetId: string
+	projectId: any
+	taskId: any
+	organizationContactId: any
+	organizationTeamId: any
+	duration: number
+	isEdited: boolean
+}
+
 export enum AlwaysOnStateEnum {
 	STARTED = 'Started',
 	STOPPED = 'Stopped',
@@ -18,7 +58,12 @@ export interface ITimeCounter {
 	providedIn: 'root',
 })
 export class AlwaysOnService {
-	constructor(private readonly _electronService: ElectronService) { }
+	private todayBase = 0;
+	private currentBase = 0;
+	private startTime: Date | null = null;
+	constructor(
+		private readonly _electronService: ElectronService,
+	) { }
 
 	public run(state: AlwaysOnStateEnum) {
 		this._electronService.ipcRenderer.send('change_state_from_ao', state);
@@ -54,5 +99,77 @@ export class AlwaysOnService {
 			}),
 			current
 		});
+	}
+
+	init(today_duration: number, startedAt: Date) {
+		this.todayBase = today_duration;
+		this.currentBase = 0;
+		this.startTime = startedAt;
+	}
+
+
+	public get localCounter$(): Observable<ITimeCounter> {
+		return new Observable<ITimeCounter>((observer) => {
+			if (!this.startTime) {
+				observer.error('Timer not initialized');
+				return;
+			}
+
+			// immediate emit
+			observer.next(this.getCounters());
+
+			// interval emit
+			const id = setInterval(() => {
+				observer.next(this.getCounters());
+			}, 1000);
+
+			// cleanup on unsubscribe
+			return () => clearInterval(id);
+		});
+	}
+
+	public get checkTimerStatus$(): Observable<number> {
+		return new Observable((observer) => {
+			this._electronService.ipcRenderer.on(
+				'check_timer_status',
+				(_, arg: number) => {
+					observer.next(arg);
+				}
+			);
+		});
+	}
+
+	private getCounters(): ITimeCounter {
+		if (!this.startTime) {
+			return { today: this.format(this.todayBase || 0), current: this.format(this.currentBase) };
+		}
+
+		 const elapsedSec = Math.floor((Date.now() - this.startTime.getTime()) / 1000);
+
+		return {
+			today: this.format(this.todayBase + elapsedSec),
+			current: this.format(this.currentBase + elapsedSec),
+		};
+	}
+
+	private format(totalSeconds: number): string {
+		const h = Math.floor(totalSeconds / 3600);
+		const m = Math.floor((totalSeconds % 3600) / 60);
+		const s = totalSeconds % 60;
+		return `${this.pad(h)}:${this.pad(m)}:${this.pad(s)}`;
+	}
+
+	private pad(n: number): string {
+		return n < 10 ? '0' + n : n.toString();
+	}
+
+	public async getTimerStatus(): Promise<ITimerStatus> {
+		const timerStatus = await this._electronService.ipcRenderer.invoke('timer_status');
+		return timerStatus;
+	}
+
+	public async toggleTimer() {
+		const timerStatus = await this._electronService.ipcRenderer.invoke('toggle_timer');
+		return timerStatus;
 	}
 }

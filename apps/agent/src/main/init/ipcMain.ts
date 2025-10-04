@@ -25,8 +25,12 @@ import { checkUserAuthentication } from '../auth';
 import { ApiService } from '../api';
 const rootPath = path.join(__dirname, '../..');
 import { QueueAudit, AuditStatus } from '../queue/audit-queue';
+import * as isOnline from 'is-online';
 
 const userService = new UserService();
+const appWindow = AppWindow.getInstance(rootPath);
+const apiService = ApiService.getInstance();
+
 
 function getGlobalVariable(configs?: {
 	serverUrl?: string,
@@ -45,7 +49,6 @@ function getGlobalVariable(configs?: {
 
 async function handleAlwaysOnWindow(isEnabled: boolean) {
 	const setting = getAppSetting();
-	const appWindow = AppWindow.getInstance(rootPath);
 	await appWindow.initAlwaysOnWindow();
 	if (!isEnabled) {
 		appWindow.alwaysOnWindow.browserWindow.close();
@@ -93,7 +96,6 @@ function kbMouseListener(activate: boolean) {
 }
 
 async function closeLoginWindow() {
-	const appWindow = AppWindow.getInstance(rootPath);
 	await delaySync(2000); // delay 2s before destroy login window
 	appWindow.destroyAuthWindow();
 }
@@ -175,7 +177,7 @@ export default function AppIpcMain() {
 
 		try {
 			/* validate user employee desktop setting */
-			const apiService = ApiService.getInstance();
+
 			await apiService.getEmployeeSetting(employeeId);
 		} catch (error) {
 			store.set({
@@ -200,7 +202,6 @@ export default function AppIpcMain() {
 				auth: null
 			});
 
-			const appWindow = AppWindow.getInstance(rootPath)
 			await appWindow.initSettingWindow();
 			appWindow.settingWindow.reload();
 
@@ -239,6 +240,40 @@ export default function AppIpcMain() {
 
 	ipcMain.on('always_on_setting', async (_: any, arg: { isEnabled: boolean }) => {
 		await handleAlwaysOnWindow(arg.isEnabled)
+	});
+
+	ipcMain.handle('timer_status', async () => {
+		const authConfig = getAuthConfig();
+		const pullActivities = PullActivities.getInstance();
+		const pushActivities = PushActivities.getInstance();
+		const online = await isOnline({ timeout: 1200 }).catch(() => false);
+		if (online) {
+			const timerStatus = await apiService.timerStatus({
+				tenantId: authConfig.user.employee.tenantId,
+				organizationId: authConfig.user.employee.organizationId
+			});
+			timerStatus.startedAt = new Date(pushActivities.currentSessionStartTime);
+			if (pullActivities?.todayDuration) {
+				timerStatus.duration = pullActivities.todayDuration;
+			}
+			return timerStatus;
+		}
+		return {
+			running: pullActivities.running,
+			duration: pullActivities.todayDuration,
+			startedAt: pullActivities.startedAt
+		}
+	});
+
+	ipcMain.handle('toggle_timer', async () => {
+		const pullActivities = PullActivities.getInstance();
+		if (pullActivities.running) {
+			pullActivities.stopTracking();
+		} else {
+			pullActivities.startTracking();
+		}
+		return pullActivities.running;
+
 	});
 	pluginListeners();
 }

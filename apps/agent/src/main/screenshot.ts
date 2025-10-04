@@ -1,6 +1,7 @@
 import * as electron from 'electron';
-import * as fs from 'node:fs';
+import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 type TArgScreen = {
 	monitor: {
@@ -26,13 +27,15 @@ export type TScreenShot = {
 
 async function saveTempImage(screen: TScreenShot): Promise<TScreenShot> {
 	const buffer = screen.fullScreen;
-	const tempPath = electron.app.getPath('temp');
-	const filePath = path.join(tempPath, `screenshot-${Date.now()}.png`);
-	fs.writeFileSync(filePath, buffer);
+	const dir = path.join(electron.app.getPath("userData"), "screenshots");
+	await fs.mkdir(dir, { recursive: true });
+	const filePath = path.join(dir, `screenshot-${Date.now()}-${randomUUID()}.png`);
+
+	await fs.writeFile(filePath, buffer);
 	return {
 		...screen,
-		filePath
-	}
+		filePath,
+	};
 }
 
 export async function getScreenshot(args: TArgScreen): Promise<TScreenShot[]> {

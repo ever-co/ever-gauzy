@@ -12,7 +12,7 @@ const appRootPath: string = path.join(__dirname, '../..');
 
 export default class EventHandler {
 	private static instance: EventHandler;
-	private AppWindow: AppWindow;
+	private appWindow: AppWindow;
 	private mainEvent: MainEvent;
 	private trayNotify: TrayNotify;
 	private pullActivities: PullActivities;
@@ -20,7 +20,7 @@ export default class EventHandler {
 
 	constructor() {
 		this.mainEvent = MainEvent.getInstance();
-		this.AppWindow = AppWindow.getInstance(appRootPath);
+		this.appWindow = AppWindow.getInstance(appRootPath);
 		this.trayNotify = TrayNotify.getInstance();
 	}
 
@@ -69,22 +69,22 @@ export default class EventHandler {
 	}
 
 	private async handleLogout() {
-		if (!this.AppWindow.authWindow || this.AppWindow?.authWindow?.browserWindow?.isDestroyed) {
+		if (!this.appWindow.authWindow || this.appWindow?.authWindow?.browserWindow?.isDestroyed) {
 			this.stopAppTracking(true);
-			this.AppWindow.closeSettingWindow();
-			this.AppWindow.closeLogWindow();
-			await this.AppWindow.initAuthWindow();
-			await this.AppWindow.authWindow.loadURL();
-			this.AppWindow.authWindow.show();
+			this.appWindow.closeSettingWindow();
+			this.appWindow.closeLogWindow();
+			await this.appWindow.initAuthWindow();
+			await this.appWindow.authWindow.loadURL();
+			this.appWindow.authWindow.show();
 		}
 	}
 
 	private async handleApplicationSetup() {
 		this.stopAppTracking();
-		this.AppWindow.settingWindow?.close();
-		this.AppWindow.logWindow?.close();
-		await this.AppWindow.initSetupWindow();
-		this.AppWindow.setupWindow.show();
+		this.appWindow.settingWindow?.close();
+		this.appWindow.logWindow?.close();
+		await this.appWindow.initSetupWindow();
+		this.appWindow.setupWindow.show();
 	}
 
 	private async handleInitScreenshot() {
@@ -102,9 +102,9 @@ export default class EventHandler {
 		if (args?.data?.employee) {
 			updateAgentSetting(args.data.employee);
 			this.trayNotify.updateTrayExitMenu();
-			if (this.AppWindow?.settingWindow) {
+			if (this.appWindow?.settingWindow) {
 				const appSetting = getAppSetting();
-				this.AppWindow.settingWindow.webContents.send('setting_page_ipc', {
+				this.appWindow.settingWindow.webContents.send('setting_page_ipc', {
 					type: 'app_setting_update',
 					data: {
 						setting: appSetting
@@ -118,6 +118,13 @@ export default class EventHandler {
 					this.pullActivities.stopListener();
 				}
 			}
+		}
+	}
+
+	private async checkStatusTimer() {
+		const appSetting = getAppSetting();
+		if (appSetting?.alwaysOn && this.appWindow.alwaysOnWindow) {
+			this.appWindow.alwaysOnWindow.browserWindow.webContents.send('check_timer_status', Date.now());
 		}
 	}
 
@@ -142,6 +149,8 @@ export default class EventHandler {
 				return this.handleInitScreenshot();
 			case MAIN_EVENT_TYPE.START_TIMER_API:
 				return this.startTimerApi();
+			case MAIN_EVENT_TYPE.CHECK_STATUS_TIMER:
+				return this.checkStatusTimer();
 			default: break;
 		}
 	}
