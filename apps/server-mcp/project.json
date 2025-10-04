@@ -17,9 +17,14 @@
 				"assets": [
 					"apps/server-mcp/src/static",
 					"apps/server-mcp/src/favicon.ico",
-					"apps/server-mcp/src/preload",
 					"apps/server-mcp/src/package.json",
 					"apps/server-mcp/src/icons"
+				],
+				"additionalEntryPoints": [
+					{
+						"entryName": "preload/preload",
+						"entryPath": "apps/server-mcp/src/preload/preload.ts"
+					}
 				],
 				"isolatedConfig": true,
 				"webpackConfig": "apps/server-mcp/webpack.config.js"
@@ -44,6 +49,23 @@
 			"defaultConfiguration": "development",
 			"options": {
 				"buildTarget": "server-mcp:build"
+			},
+			"configurations": {
+				"development": {
+					"buildTarget": "server-mcp:build:development"
+				},
+				"production": {
+					"buildTarget": "server-mcp:build:production"
+				}
+			}
+		},
+		"electron": {
+			"executor": "@nx/js:node",
+			"defaultConfiguration": "development",
+			"options": {
+				"buildTarget": "server-mcp:build",
+				"runtimeArgs": ["--enable-logging"],
+				"exec": "electron"
 			},
 			"configurations": {
 				"development": {

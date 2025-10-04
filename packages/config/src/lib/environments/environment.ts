@@ -175,7 +175,8 @@ export const environment: IEnvironment = {
 			`${process.env.API_BASE_URL}/api/integration/activepieces/callback`,
 		postInstallUrl:
 			process.env.GAUZY_ACTIVEPIECES_POST_INSTALL_URL ||
-			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/activepieces`
+			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/activepieces`,
+		stateSecret: process.env.ACTIVEPIECES_STATE_SECRET
 	},
 
 	sentry: {

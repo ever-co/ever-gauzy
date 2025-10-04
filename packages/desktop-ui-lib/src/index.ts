@@ -49,6 +49,12 @@ export * from './lib/integrations/activity-watch/view/activity-watch.component';
 export * from './lib/recap/features/recap/recap.component';
 export * from './lib/recap/weekly/features/weekly-recap/weekly-recap.component';
 export * from './lib/server-connection.factory';
+export * from './lib/agent-dashboard/agent-dashboard.component';
+export * from './lib/agent-dashboard/agent-dashboard.module';
+export * from './lib/agent-dashboard/logs/logs.component';
+export * from './lib/agent-dashboard/activity-sync/activity-sync.component';
+export * from './lib/agent-dashboard/pipes/filter.status.pipe';
+export * from './lib/agent-dashboard/agent-dashboard-routing.module';
 
 /**
  * Auth Module

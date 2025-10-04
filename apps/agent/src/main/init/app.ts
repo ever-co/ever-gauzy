@@ -6,7 +6,7 @@ import {
 	LocalStore,
 	DesktopThemeListener,
 	ProviderFactory,
-	TranslateService
+	TranslateService,
 } from '@gauzy/desktop-lib';
 import {
 	getApiBaseUrl,
@@ -23,6 +23,7 @@ import { environment } from '../../environments/environment';
 import MainEvent from '../events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
 import { handleSplashScreen } from './splash';
+import { AgentMenu } from './menu';
 
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
@@ -86,6 +87,8 @@ export async function startServer(value: any) {
 	} catch (error) {
 		throw new AppError('MAINSTRSERVER', error);
 	}
+	const agentMenu: AgentMenu = AgentMenu.getInstance();
+	agentMenu.initMenu();
 
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
@@ -108,8 +111,8 @@ export async function startServer(value: any) {
 	try {
 		const isAuthenticated = await checkUserAuthentication(appRootPath);
 		if (isAuthenticated) {
-			listenIO();
 			runActivityConsumer();
+			listenIO();
 		}
 	} catch (error) {
 		throw new AppError('MAIN_AUTH', error);
@@ -141,6 +144,12 @@ async function appReady() {
 	if (!settings) {
 		launchAtStartup(true, false);
 		LocalStore.setAllDefaultConfig();
+
+		/* Set default application setting for agent app. */
+		LocalStore.updateApplicationSetting({
+			screenshotNotification: false,
+			simpleScreenshotNotification: false
+		});
 	}
 
 	// handle theme change listener
@@ -198,6 +207,8 @@ function listenIO() {
 function runActivityConsumer() {
 	try {
 		const pushActivities = PushActivities.getInstance();
+		/* start queue worker */
+		pushActivities.initQueueWorker();
 		pushActivities.startPooling();
 	} catch (error) {
 		log.error('Failed to start activity consumer', error);
@@ -279,7 +290,7 @@ export async function InitApp() {
 	app.on('browser-window-focus', () => {
 		try {
 			if (process.platform === 'darwin') {
-				if (!app.dock.isVisible) {
+				if (!app.dock.isVisible()) {
 					app.dock.show();
 				}
 			}

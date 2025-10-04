@@ -7,6 +7,7 @@
 import * as crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { SecurityLogger } from './security-logger';
+import { ClientRegistrationResponse } from './interfaces';
 
 export interface OAuth2Client {
 	clientId: string;
@@ -42,22 +43,6 @@ export interface ClientRegistrationRequest {
 	metadata?: Record<string, any>;
 }
 
-export interface ClientRegistrationResponse {
-	client_id: string;
-	client_secret?: string;
-	client_name: string;
-	client_type: 'confidential' | 'public';
-	redirect_uris: string[];
-	grant_types: string[];
-	response_types: string[];
-	scope: string;
-	logo_uri?: string;
-	client_uri?: string;
-	policy_uri?: string;
-	tos_uri?: string;
-	client_id_issued_at: number;
-	client_secret_expires_at?: number;
-}
 
 export class OAuth2ClientManager {
 	private clients = new Map<string, OAuth2Client>();
@@ -191,12 +176,10 @@ export class OAuth2ClientManager {
 
 			this.securityLogger.log(`OAuth 2.0 client registered: ${clientId} (${request.client_name})`);
 
-			// Return registration response
-			const response: ClientRegistrationResponse = {
+			// Return registration response based on client type
+			const baseResponse = {
 				client_id: clientId,
-				client_secret: clientSecret,
 				client_name: client.clientName,
-				client_type: client.clientType,
 				redirect_uris: client.redirectUris,
 				grant_types: client.grantTypes,
 				response_types: client.responseTypes,
@@ -205,9 +188,22 @@ export class OAuth2ClientManager {
 				client_uri: client.clientUri,
 				policy_uri: client.policyUri,
 				tos_uri: client.tosUri,
-				client_id_issued_at: Math.floor(client.createdAt.getTime() / 1000),
-				client_secret_expires_at: clientSecret ? 0 : undefined // 0 = never expires
+				client_id_issued_at: Math.floor(client.createdAt.getTime() / 1000)
 			};
+
+			const response: ClientRegistrationResponse = clientType === 'confidential'
+				? {
+					...baseResponse,
+					client_type: 'confidential',
+					client_secret: clientSecret!,
+					client_secret_expires_at: 0 // 0 = never expires
+				}
+				: {
+					...baseResponse,
+					client_type: 'public',
+					client_secret: undefined,
+					client_secret_expires_at: undefined
+				};
 
 			return response;
 

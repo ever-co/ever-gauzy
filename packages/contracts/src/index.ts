@@ -2,6 +2,7 @@
  * Public API Surface of @gauzy/contracts
  */
 export * from './lib/accounting-template.model';
+export * from './lib/activepieces-integration-config.model';
 /** App Setting Model */
 export * from './lib/activity-log.model';
 export * from './lib/activity-watch.model';

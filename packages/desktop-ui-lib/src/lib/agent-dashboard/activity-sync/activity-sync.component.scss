@@ -1,0 +1,63 @@
+:host {
+  nb-list-item {
+    padding: 0; // Remove default padding from nb-list-item
+  }
+
+  .list-item-content, .list-item-header {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem; // Adjust padding for better spacing
+    border-bottom: 1px solid var(--border-color);
+    width: 100%; // Ensure it takes full width of nb-list-item
+
+    div {
+      padding: 0 0.5rem;
+      box-sizing: border-box;
+      // Add a right border for visual separation, except for the last item
+      &:not(:last-child) {
+        border-right: 1px solid var(--border-color);
+      }
+    }
+  }
+
+  .list-item-header {
+    font-weight: bold;
+    background-color: var(--background-basic-color-2);
+  }
+
+  // Define column widths. Ensure these sum up to 100% or adjust as needed.
+  // The current setup has 6 columns: Queue, Created At, Data/Last Error, Attempts, Status, Actions
+  // Total: 2+3+3+1+1+2 = 12. So, each col-X represents X/12 of the total width.
+  .col-1 { flex: 0 0 8.33%; max-width: 8.33%; }
+  .col-2 { flex: 0 0 16.66%; max-width: 16.66%; }
+  .col-3 { flex: 0 0 25%; max-width: 25%; }
+  .col-4 { flex: 0 0 33.33%; max-width: 33.33%; }
+  .col-5 { flex: 0 0 41.66%; max-width: 41.66%; }
+  .col-6 { flex: 0 0 50%; max-width: 50%; }
+
+  .word-wrap-content {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .centered-column {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+nb-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .stats {
+    display: flex;
+    align-items: center;
+
+    nb-badge {
+      margin-right: 0.5rem;
+    }
+  }
+}

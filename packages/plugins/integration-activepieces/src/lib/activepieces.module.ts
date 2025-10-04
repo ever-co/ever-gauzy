@@ -19,6 +19,8 @@ import { ACTIVEPIECES_API_URL } from './activepieces.config';
 import { ActivepiecesService } from './activepieces.service';
 import { ActivepiecesController } from './activepieces.controller';
 import { ActivepiecesAuthorizationController } from './activepieces-authorization.controller';
+import { ActivepiecesMcpService } from './activepieces-mcp.service';
+import { ActivepiecesMcpController } from './activepieces-mcp.controller';
 
 @Module({
 	imports: [
@@ -37,8 +39,15 @@ import { ActivepiecesAuthorizationController } from './activepieces-authorizatio
 		RolePermissionModule,
 		UserModule
 	],
-	controllers: [ActivepiecesAuthorizationController, ActivepiecesController],
-	providers: [ActivepiecesService],
-	exports: [ActivepiecesService]
+	controllers: [
+		ActivepiecesAuthorizationController,
+		ActivepiecesController,
+		ActivepiecesMcpController
+	],
+	providers: [
+		ActivepiecesService,
+		ActivepiecesMcpService
+	],
+	exports: [ActivepiecesService, ActivepiecesMcpService]
 })
 export class ActivepiecesModule {}

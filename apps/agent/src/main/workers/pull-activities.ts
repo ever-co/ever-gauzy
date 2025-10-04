@@ -14,12 +14,13 @@ import { AgentLogger } from '../agent-logger';
 import MainEvent from '../events/events';
 import { MAIN_EVENT_TYPE, MAIN_EVENT } from '../../constant';
 import { ApiService } from '../api';
+import { WorkerQueue } from '../queue/worker-queue';
 
 type UserLogin = {
 	tenantId: string;
 	organizationId: string;
 	remoteId: string;
-}
+};
 
 class PullActivities {
 	static instance: PullActivities;
@@ -36,9 +37,10 @@ class PullActivities {
 	private mainEvent: MainEvent;
 	private apiService: ApiService;
 	private startedDate: Date;
-	private stoppedDate: Date ;
+	private stoppedDate: Date;
 	private activityStores: KeyboardMouseActivityStores;
 	private activityWindow: ActivityWindow;
+	private workerQueue: WorkerQueue;
 	constructor() {
 		this.listenerModule = null;
 		this.isStarted = false;
@@ -82,7 +84,6 @@ class PullActivities {
 			startedAt,
 			employeeId
 		});
-
 	}
 
 	getListenerModule() {
@@ -115,11 +116,30 @@ class PullActivities {
 		}
 	}
 
+	initWorkerQueue() {
+		if (!this.workerQueue) {
+			this.workerQueue = WorkerQueue.getInstance();
+		}
+	}
+
 	async startTimerApi() {
 		const authConfig = getAuthConfig();
 		try {
 			const timer = this.createOfflineTimer(this.startedDate, authConfig?.user?.employee?.id);
-			await this.timerService.save(timer);
+			const timerData = await this.timerService.saveAndReturn(timer);
+			this.initWorkerQueue();
+			this.workerQueue.desktopQueue.enqueueTimer({
+				attempts: 1,
+				queue: 'timer',
+				timerId: timerData?.id,
+				data: {
+					startedAt: this.startedDate.toISOString(),
+					stoppedAt: null
+				}
+			});
+			this.mainEvent.emit('MAIN_EVENT', {
+				type: MAIN_EVENT_TYPE.INIT_SCREENSHOT
+			});
 		} catch (error) {
 			this.agentLogger.error(`Start timer error ${error.message}`);
 		}
@@ -163,11 +183,15 @@ class PullActivities {
 			this.getListenerModule();
 		}
 		try {
-			await this.stopTimerApi();
-			this.agentLogger.info('Listener keyboard and mouse stopping');
-			this.listenerModule.stopListener();
-			this.isStarted = false;
-			this.stopTimerProcess();
+			if (this.isStarted) {
+				await this.stopTimerApi();
+				this.agentLogger.info('Listener keyboard and mouse stopping');
+				this.listenerModule.stopListener();
+				this.isStarted = false;
+				this.stopTimerProcess();
+				return;
+			}
+			this.agentLogger.warn('No timer started to stop');
 		} catch (error) {
 			console.error('error to stop tracking', error);
 		}
@@ -221,6 +245,7 @@ class PullActivities {
 		const appSetting = getAppSetting();
 		const screenshotInterval = (appSetting?.timer?.updatePeriod || 5) * 60; // value is in seconds and default to 5 minutes
 		this.timerModule.setScreenshotInterval(screenshotInterval);
+		this.timerModule.setRandomScreenshotInterval(appSetting?.randomScreenshotTime || false);
 		this.agentLogger.info('Agent started with 60 second interval keyboard and mouse activities collected');
 		this.agentLogger.info(`screenshot will taken every ${screenshotInterval} seconds`);
 	}
@@ -239,7 +264,9 @@ class PullActivities {
 
 	async showScreenshot(imgs: TScreenShot[], appSetting: Partial<TAppSetting>) {
 		if (imgs.length > 0) {
-			const img: any = imgs[0];
+			/* get random image to show when have more than 1 images */
+			const img: any = imgs.length > 1 ? imgs[Math.floor(Math.random() * imgs.length)] : imgs[0];
+			await delaySync(500);
 			img.img = this.buffToB64(img);
 			if (appSetting) {
 				if (appSetting.simpleScreenshotNotification) {
@@ -250,7 +277,6 @@ class PullActivities {
 				} else if (appSetting.screenshotNotification) {
 					try {
 						await this.appWindow.initScreenShotNotification();
-						await delaySync(100);
 						await notifyScreenshot(
 							this.appWindow.notificationWindow,
 							img,
@@ -271,7 +297,7 @@ class PullActivities {
 			title: title,
 			body: message,
 			closeButtonText: TranslateService.instant('BUTTONS.CLOSE'),
-			silent: true,
+			silent: true
 		});
 
 		notification.show();
@@ -280,7 +306,7 @@ class PullActivities {
 		}, 3000);
 	}
 
-	buffToB64(imgs: any) {
+	buffToB64(imgs: TScreenShot) {
 		const bufferImg: Buffer = Buffer.isBuffer(imgs.img) ? imgs.img : Buffer.from(imgs.img);
 		const b64img = bufferImg.toString('base64');
 		return b64img;
@@ -308,13 +334,12 @@ class PullActivities {
 	async activityProcess(timeData: { timeStart: Date; timeEnd: Date }, isScreenshot?: boolean, afkDuration?: number) {
 		try {
 			let imgs = [];
-			this.checkEmployeeSetting();
 			if (isScreenshot) {
 				imgs = await this.getScreenShot();
 			}
 			const activities = this.activityStores.getAndResetCurrentActivities();
 			const activityWindow = this.activityWindow.retrieveAndFlushActivities();
-			await this.activityService.save({
+			const savedActivity = await this.activityService.saveAndReturn({
 				timeStart: timeData.timeStart,
 				timeEnd: timeData.timeEnd,
 				tenantId: this.tenantId,
@@ -330,12 +355,38 @@ class PullActivities {
 				afkDuration: afkDuration || 0,
 				activeWindows: JSON.stringify(activityWindow)
 			});
+			this.initWorkerQueue();
+			this.workerQueue.desktopQueue.enqueueTimeSlot({
+				attempts: 1,
+				activityId: Number(savedActivity?.id),
+				queue: 'time_slot',
+				data: {
+					timeStart: timeData.timeStart.toISOString(),
+					timeEnd: timeData.timeEnd.toISOString(),
+					afkDuration: afkDuration
+				}
+			})
 			this.agentLogger.info('Keyboard and mouse activities saved');
 		} catch (error: unknown) {
 			console.error('KB/M activity persist failed', error);
 			this.agentLogger.error(`KB/M activity persist failed ${JSON.stringify(error)}`);
 			this.timerStatusHandler('Error');
 		}
+	}
+
+	async initActivityAndScreenshot() {
+		if (!this.startedDate) {
+			this.agentLogger.warn('initActivityAndScreenshot skipped: startedDate is not set');
+			return;
+		}
+		return this.activityProcess(
+			{
+				timeStart: this.startedDate,
+				timeEnd: new Date()
+			},
+			true,
+			0
+		);
 	}
 
 	/** check employee setting periodically to keep agent setting up to date */

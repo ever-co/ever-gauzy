@@ -119,7 +119,7 @@
 											<nb-toggle [(ngModel)]="
 													screenshotNotification
 												" [disabled]="
-													appSetting?.timerStarted || isAgent
+													appSetting?.timerStarted
 												" (ngModelChange)="
 													toggleNotificationChange(
 														$event
@@ -149,7 +149,7 @@
 													simpleScreenshotNotification$
 														| async
 												" [disabled]="
-													appSetting?.timerStarted || isAgent
+													appSetting?.timerStarted
 												" (checkedChange)="
 													toggleSimpleNotificationChange(
 														$event
@@ -195,7 +195,7 @@
 				<div class="col-10">
 					<nb-card>
 						<nb-card-body>
-							<nb-toggle [checked]="!muted" [disabled]="appSetting?.timerStarted || isAgent" (checkedChange)="
+							<nb-toggle [checked]="!muted" [disabled]="appSetting?.timerStarted" (checkedChange)="
 									toggleNotificationSoundChange($event)
 								" status="basic">
 								{{

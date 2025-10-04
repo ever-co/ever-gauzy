@@ -6,3 +6,4 @@ export * from './client.dao';
 export * from './tag.dao';
 export * from './timer.dao';
 export * from './kb-mouse-activity.dao';
+export * from './queue.dao';

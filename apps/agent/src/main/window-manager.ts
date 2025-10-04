@@ -7,8 +7,8 @@ import {
 	createServerWindow,
 	ScreenCaptureNotification
 } from '@gauzy/desktop-window';
-import { BrowserWindow } from 'electron';
-import { resolveHtmlPath } from './util';
+import { app, BrowserWindow, screen } from 'electron';
+import { resolveHtmlPath, getInitialConfig } from './util';
 import * as path from 'path';
 
 class AppWindow {
@@ -36,6 +36,10 @@ class AppWindow {
 		return AppWindow.instance;
 	}
 
+	hasActiveWindow() {
+		return BrowserWindow.getAllWindows().some((win) => win.isVisible());
+	}
+
 	getUiPath(hashPath: string) {
 		return resolveHtmlPath('index.html', hashPath);
 	}
@@ -51,13 +55,14 @@ class AppWindow {
 				this.aboutWindow.once('close', () => {
 					this.aboutWindow.destroy();
 					this.aboutWindow = null;
+					this.dockHideHandle();
 				});
 				this.aboutWindow.once('ready-to-show', () => {
 					this.aboutWindow.show();
-				})
+				});
 			}
 		} catch (error) {
-			console.error('Failed to initialize about window', error)
+			console.error('Failed to initialize about window', error);
 			throw new Error(`About window initialization failed: ${error.message}`);
 		}
 	}
@@ -65,10 +70,15 @@ class AppWindow {
 	async initSplashScreenWindow() {
 		try {
 			if (!this.splashScreenWindow) {
-				this.splashScreenWindow = new SplashScreen(this.getUiPath('splash-screen'), this.getPreloadPath(), true);
+				this.splashScreenWindow = new SplashScreen(
+					this.getUiPath('splash-screen'),
+					this.getPreloadPath(),
+					true
+				);
 				this.splashScreenWindow.browserWindow.on('close', () => {
 					this.splashScreenWindow.browserWindow.destroy();
 					this.splashScreenWindow = null;
+					this.dockHideHandle();
 				});
 			}
 		} catch (error) {
@@ -80,7 +90,7 @@ class AppWindow {
 	async initSetupWindow() {
 		try {
 			if (!this.setupWindow) {
-				this.setupWindow =  await createSetupWindow(
+				this.setupWindow = await createSetupWindow(
 					this.setupWindow,
 					true,
 					this.getUiPath('setup'),
@@ -91,6 +101,13 @@ class AppWindow {
 					console.log('on change setup window');
 					this.setupWindow.destroy();
 					this.setupWindow = null;
+					this.dockHideHandle();
+
+					/* terminate app when the setup close without complete the setup process */
+					const config = getInitialConfig();
+					if (!config.isSetup) {
+						app.quit();
+					}
 				});
 			}
 		} catch (error) {
@@ -103,8 +120,6 @@ class AppWindow {
 		try {
 			if (!this.authWindow) {
 				this.authWindow = new AuthWindow(this.getUiPath('auth/login'), this.getPreloadPath(), true);
-				this.authWindow.config.options.titleBarStyle = 'hidden';
-				this.authWindow.config.options.titleBarOverlay = true;
 				this.authWindow.browserWindow.on('close', () => {
 					this.destroyAuthWindow();
 				});
@@ -116,8 +131,11 @@ class AppWindow {
 	}
 
 	destroyAuthWindow() {
-		this.authWindow.browserWindow.destroy();
+		if (this.authWindow?.browserWindow && !this.authWindow.browserWindow.isDestroyed()) {
+			this.authWindow.browserWindow.destroy();
+		}
 		this.authWindow = null;
+		this.dockHideHandle();
 	}
 
 	async initSettingWindow(): Promise<void> {
@@ -135,6 +153,7 @@ class AppWindow {
 				this.settingWindow.on('close', () => {
 					this.settingWindow.destroy();
 					this.settingWindow = null;
+					this.dockHideHandle();
 				});
 			}
 		} catch (error) {
@@ -143,22 +162,37 @@ class AppWindow {
 		}
 	}
 
+	dockHideHandle(): void {
+		if (!this.hasActiveWindow()) {
+			if (process.platform === 'darwin') {
+				app.dock.hide();
+			}
+		}
+	}
+
 	async initLogWindow(): Promise<void> {
 		try {
 			if (!this.logWindow || this.logWindow?.isDestroyed()) {
-				console.log('this log window', this.logWindow);
 				this.logWindow = await createServerWindow(
 					null,
 					this.getUiPath('server-dashboard'),
 					this.getPreloadPath(),
 					true
 				);
-				const maxHeight = 480;
-				const maxWidth = 640;
-				this.logWindow.setSize(maxWidth, maxHeight);
-				// this.LogWindow.webContents.toggleDevTools();
+				const desiredHeight = 860;
+				const desiredWidth = 1200;
+				const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+				const initialWidth = Math.min(desiredWidth, width);
+				const initialHeight = Math.min(desiredHeight, height);
+				this.logWindow.setSize(initialWidth, initialHeight);
+				this.logWindow.setMinimumSize(Math.min(800, width), Math.min(600, height));
+				this.logWindow.setResizable(true);
 				this.logWindow.on('close', () => {
 					this.logWindow.hide();
+				});
+
+				this.logWindow.on('hide', () => {
+					this.dockHideHandle();
 				});
 			}
 		} catch (error) {
@@ -170,13 +204,15 @@ class AppWindow {
 	async initScreenShotNotification() {
 		try {
 			if (!this.notificationWindow) {
-				this.notificationWindow = new ScreenCaptureNotification(this.getUiPath('screen-capture'), this.getPreloadPath());
-				this.notificationWindow.loadURL();
+				this.notificationWindow = new ScreenCaptureNotification(
+					this.getUiPath('screen-capture'),
+					this.getPreloadPath()
+				);
+				await this.notificationWindow.loadURL();
 				return;
 			}
-			this.notificationWindow.show();
 		} catch (error) {
-
+			console.error('Failed to initialize screenshot notification', error);
 		}
 	}
 
@@ -184,6 +220,7 @@ class AppWindow {
 		if (this.settingWindow && !this.settingWindow?.isDestroyed) {
 			this.settingWindow.close();
 			this.settingWindow = null;
+			this.dockHideHandle();
 		}
 	}
 

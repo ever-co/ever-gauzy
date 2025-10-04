@@ -7,8 +7,8 @@ import {
 	SetupComponent,
 	SplashScreenComponent,
 	UpdaterComponent,
-	ServerDashboardComponent,
-	ScreenCaptureComponent
+	ScreenCaptureComponent,
+	AgentDashboardComponent
 } from '@gauzy/desktop-ui-lib';
 import { AppModuleGuard } from './app.module.guards';
 
@@ -40,21 +40,18 @@ const routes: Routes = [
 		component: ServerDownPage
 	},
 	{
-		path: '',
-		component: ServerDashboardComponent
-	},
-	{
 		path: 'about',
 		component: AboutComponent
 	},
 	{
 		path: 'server-dashboard',
-		component: ServerDashboardComponent
+		component: AgentDashboardComponent,
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.agentDashboardRoutes)
 	},
 	{
 		path: 'screen-capture',
 		component: ScreenCaptureComponent
-	},
+	}
 ];
 
 /**
@@ -68,4 +65,4 @@ const config: ExtraOptions = {
 	imports: [RouterModule.forRoot(routes, config)],
 	exports: [RouterModule]
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }
