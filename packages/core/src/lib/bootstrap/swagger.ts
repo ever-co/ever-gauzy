@@ -49,7 +49,7 @@ export const setupSwagger = async (app: INestApplication): Promise<string> => {
 	} catch (error) {
 		console.warn('Failed to load @scalar/nestjs-api-reference, falling back to CDN:', error);
 		// Fallback to CDN approach
-		// Fallback to CDN approach
+		const httpAdapter = app.getHttpAdapter();
 		const httpAdapter = app.getHttpAdapter();
 		httpAdapter.get('/scalar', (_req, res) => {
 			const html = `
