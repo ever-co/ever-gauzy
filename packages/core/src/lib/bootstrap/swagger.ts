@@ -62,7 +62,7 @@ export const setupSwagger = async (app: INestApplication): Promise<string> => {
     <script
       id="api-reference"
       data-url="/docs-json"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.0.3"></script>
   </body>
 </html>`;
 			res.type('text/html').send(html);
