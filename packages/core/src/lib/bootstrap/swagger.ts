@@ -60,7 +60,7 @@ export const setupSwagger = async (
 
 	// Setup Scalar UI if enabled
 	if (enableScalar) {
-		await setupScalarUI(app, document, swaggerPath, scalarPath, title);
+		await setupScalarUI(app, document, scalarPath, swaggerPath, title);
 	}
 
 	return swaggerPath;
