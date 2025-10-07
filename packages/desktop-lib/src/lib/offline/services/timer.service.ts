@@ -149,7 +149,7 @@ export class TimerService implements ITimerService<TimerTO> {
 			const [res] = await this._timerDAO.todayDuration(user);
 			return Number(res.today_duration_seconds);
 		} catch (error) {
-			console.log('error get today duration', error);
+			console.error('error get today duration', error);
 			return 0;
 		}
 	}

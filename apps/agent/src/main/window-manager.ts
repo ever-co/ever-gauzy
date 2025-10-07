@@ -187,7 +187,7 @@ class AppWindow {
 				const initialWidth = Math.min(desiredWidth, width);
 				const initialHeight = Math.min(desiredHeight, height);
 				this.logWindow.setSize(initialWidth, initialHeight);
-				this.logWindow.setMinimumSize(Math.min(800, width), Math.min(600, height));
+				this.logWindow.setMinimumSize(Math.min(initialWidth, width), Math.min(initialHeight, height));
 				this.logWindow.setResizable(true);
 				this.logWindow.on('close', () => {
 					this.logWindow.hide();
@@ -204,18 +204,21 @@ class AppWindow {
 	}
 
 	async initAlwaysOnWindow(): Promise<void> {
-		if (!this.alwaysOnWindow || this.alwaysOnWindow?.browserWindow?.isDestroyed()) {
-			console.log('new window alwaysOnWindow');
-			this.alwaysOnWindow = new AlwaysOn(this.getUiPath('always-on'), this.getPreloadPath(), true, true);
-			this.alwaysOnWindow.browserWindow.removeAllListeners('close');
-			this.alwaysOnWindow.browserWindow.on('close', () => {
-				if (!this.alwaysOnWindow?.browserWindow?.isDestroyed()) {
-					this.alwaysOnWindow?.browserWindow?.destroy();
-				}
+		try {
+			if (!this.alwaysOnWindow || this.alwaysOnWindow?.browserWindow?.isDestroyed()) {
+				this.alwaysOnWindow = new AlwaysOn(this.getUiPath('always-on'), this.getPreloadPath(), true, true);
+				this.alwaysOnWindow.browserWindow.removeAllListeners('close');
+				this.alwaysOnWindow.browserWindow.on('close', () => {
+					if (!this.alwaysOnWindow?.browserWindow?.isDestroyed()) {
+						this.alwaysOnWindow?.browserWindow?.destroy();
+					}
 
-				this.alwaysOnWindow = null;
-				console.log('current alwaysOnWindow', this.alwaysOnWindow);
-			});
+					this.alwaysOnWindow = null;
+				});
+			}
+		} catch (error) {
+			console.error('Failed to initialize always-on window', error);
+			throw new Error(`Always-on window initialization failed: ${error.message}`);
 		}
 	}
 

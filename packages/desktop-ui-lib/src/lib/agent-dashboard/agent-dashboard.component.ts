@@ -1,5 +1,5 @@
-import { Component, OnInit, Inject, OnDestroy, NgZone } from '@angular/core';
-import { NbSidebarService, NbMenuItem, NbSidebarState } from '@nebular/theme';
+import { Component, OnInit, Inject, OnDestroy } from '@angular/core';
+import { NbMenuItem, NbSidebarState } from '@nebular/theme';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { GAUZY_ENV } from '../constants';
 
@@ -10,7 +10,7 @@ import { GAUZY_ENV } from '../constants';
 	styleUrls: ['./agent-dashboard.component.scss'],
 	standalone: false
 })
-export class AgentDashboardComponent implements OnInit, OnDestroy {
+export class AgentDashboardComponent {
 
 	menu: NbMenuItem[] = [
 		{
@@ -35,12 +35,9 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
 	constructor(
 		private domSanitizer: DomSanitizer,
 		@Inject(GAUZY_ENV)
-		private readonly _environment: any,
-		private _ngZone: NgZone,
+		private readonly _environment: Record<string, any>,
 	) {
 		this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
-	}
-	ngOnDestroy(): void {
 	}
 
 	onSidebarStateChange(newState: NbSidebarState) {
@@ -49,11 +46,5 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
 		} else {
 			this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
 		}
-		console.log('Sidebar state changed:', newState);
 	}
-
-	ngOnInit() {
-
-	}
-
 }

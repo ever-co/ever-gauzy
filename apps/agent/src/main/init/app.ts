@@ -1,5 +1,6 @@
 import { app, ipcMain, systemPreferences, powerMonitor } from 'electron';
 import * as path from 'path';
+import { promises as fs } from 'fs';
 import { logger as log, store } from '@gauzy/desktop-core';
 import {
 	AppError,
@@ -79,9 +80,13 @@ async function handleSetupWindow() {
 }
 
 async function handleAlwaysOnWindow() {
-	await appWindow.initAlwaysOnWindow();
-	await appWindow.alwaysOnWindow.loadURL();
-	appWindow.alwaysOnWindow.show();
+	try {
+		await appWindow.initAlwaysOnWindow();
+		await appWindow.alwaysOnWindow.loadURL();
+		appWindow.alwaysOnWindow.show();
+	} catch (error) {
+		throw new AppError('ALWAYSON_WINDOW', error);
+	}
 }
 
 export async function startServer(value: any) {
@@ -149,7 +154,17 @@ async function initiationLocalDatabase() {
 	}
 }
 
+async function ensureScreenshotDir(): Promise<void> {
+	try {
+		const screenshotDir = path.join(app.getPath("userData"), "screenshots");
+		await fs.mkdir(screenshotDir, { recursive: true });
+	} catch (error) {
+		throw new AppError('INIT_SCREENSHOT_DIR', error);
+	}
+}
+
 async function appReady() {
+	await ensureScreenshotDir();
 	const configs: any = store.get('configs');
 	const settings = getAppSetting();
 	if (!settings) {
@@ -340,5 +355,3 @@ export async function InitApp() {
 		});
 	});
 }
-
-

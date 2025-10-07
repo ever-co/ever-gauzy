@@ -3,6 +3,10 @@
 		background-color: var(--gauzy-sidebar-background-3);
 	}
 
+	::ng-deep nb-sidebar>div>div {
+		overflow: hidden !important;
+	}
+
 	nb-sidebar ::ng-deep .scrollable {
 		padding: 0px;
 	}

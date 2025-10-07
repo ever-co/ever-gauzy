@@ -6,37 +6,27 @@
 					<nb-card-body class="timer-body">
 
 						<div class="timer-container">
-							<!-- Billable toggle -->
-
-							<button nbButton class="billable-btn" size="tiny"
-								[status]="isBillable ? 'primary' : 'basic'" (click)="isBillable = !isBillable">
-								$
-							</button>
-
-							<!-- Timer display -->
+							<span nbButton class="billable-btn" size="tiny" status="basic">
+								<fa-icon [icon]="stopwatch"></fa-icon>
+							</span>
 							<div class="time-display">
 								<span class="current-session">{{ (counter$ | async)?.current }}</span>
 								<span class="today-time">Today {{ (counter$ | async)?.today }}</span>
 							</div>
-
-							<!-- Running / Stopped button -->
-							<button nbButton size="tiny" class="timer-btn" [status]="running ? 'danger' : 'success'" shape="round"
-								[disabled]="loading"
-								(click)="toggleTimer()">
+							<button nbButton size="tiny" class="timer-btn" [status]="running ? 'danger' : 'success'"
+								shape="round" [disabled]="loading" (click)="toggleTimer()">
 								<fa-icon [icon]="running ? pause : play"></fa-icon>
 							</button>
-
-							<!-- Extra icons -->
-							<button nbButton class="billable-btn" size="tiny" status="basic"><fa-icon
-									[icon]="stopwatch"></fa-icon></button>
+							<span nbButton class="billable-btn" size="tiny" status="basic"><fa-icon
+									[icon]="stopwatch"></fa-icon></span>
 						</div>
 
 					</nb-card-body>
 				</nb-card>
 			</nb-layout-column>
 		</nb-layout>
-		<div *ngIf="!isExpandMode" id="drag-handle" class="d-flex flex-column h-100 align-items-center justify-content-around"
-			draggable="true">
+		<div *ngIf="!isExpandMode" id="drag-handle"
+			class="d-flex flex-column h-100 align-items-center justify-content-around" draggable="true">
 			<button nbButton status="success" *ngIf="!(start$ | async)" class="button-ghost" (click)="run()"
 				[disabled]="loading || !isTrackingEnabled">
 				<nb-icon class="start-button" icon="play" pack="font-awesome" [nbTooltip]="

@@ -451,7 +451,7 @@ class PushActivities {
 			for (let i = 0; i < notSyncTimer.length; i++) {
 				const timerOffline = notSyncTimer[i].timer;
 				if (timerOffline?.isStartedOffline) {
-					const resp = await this.apiService.startTimer({
+					await this.apiService.startTimer({
 						organizationId: authConfig?.user?.employee?.organizationId,
 						startedAt: timerOffline.startedAt,
 						tenantId: authConfig?.user?.employee?.tenantId,
@@ -469,7 +469,7 @@ class PushActivities {
 		const authConfig = getAuthConfig();
 		const timerLocal = await this.timerService.findById({ id: job.timerId });
 		if (timerLocal?.id) {
-			if (job.data.isStopped && timerLocal.stoppedAt && this.currentSessionTimeLogId === timerLocal.timelogId) {
+			if (job?.data?.isStopped && timerLocal.stoppedAt && this.currentSessionTimeLogId === timerLocal.timelogId) {
 				await this.apiService.stopTimer({
 					organizationId: authConfig?.user?.employee?.organizationId,
 					tenantId: authConfig?.user?.employee?.tenantId,
@@ -531,7 +531,7 @@ class PushActivities {
 					organizationContactId: null
 				});
 				this.currentSessionStartTime = new Date(resp?.startedAt);
-				this.currentSessionTimeLogId = resp.id;
+				this.currentSessionTimeLogId = resp?.id;
 				this.agentLogger.info(`finished job timer sync ${JSON.stringify(job)}`);
 				await this.timerService.update(new Timer({
 					id: timerLocal?.id,

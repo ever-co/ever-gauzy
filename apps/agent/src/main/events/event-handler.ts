@@ -69,7 +69,7 @@ export default class EventHandler {
 	}
 
 	private async handleLogout() {
-		if (!this.appWindow.authWindow || this.appWindow?.authWindow?.browserWindow?.isDestroyed) {
+		if (!this.appWindow.authWindow || this.appWindow.authWindow?.browserWindow?.isDestroyed) {
 			this.stopAppTracking(true);
 			this.appWindow.closeSettingWindow();
 			this.appWindow.closeLogWindow();

@@ -28,8 +28,7 @@ export type TScreenShot = {
 async function saveTempImage(screen: TScreenShot): Promise<TScreenShot> {
 	const buffer = screen.fullScreen;
 	const dir = path.join(electron.app.getPath("userData"), "screenshots");
-	await fs.mkdir(dir, { recursive: true });
-	const filePath = path.join(dir, `screenshot-${Date.now()}-${randomUUID()}.png`);
+	const filePath = path.join(dir, `screenshot-${randomUUID()}.png`);
 
 	await fs.writeFile(filePath, buffer);
 	return {

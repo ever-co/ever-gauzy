@@ -1,4 +1,4 @@
-import { Component, NgZone, OnDestroy, OnInit, Inject } from '@angular/core';
+import { Component, NgZone, OnDestroy, OnInit, Inject, Renderer2, HostBinding } from '@angular/core';
 import { NbIconLibraries } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable, Subscription, tap } from 'rxjs';
@@ -15,12 +15,14 @@ import { GAUZY_ENV } from '../constants';
 	standalone: false
 })
 export class AlwaysOnComponent implements OnInit, OnDestroy {
+	@HostBinding('class.rounded-theme') isRounded = false;
 	public start$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	public isOffline$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	public loading: boolean = false;
 	public isTrackingEnabled: boolean = true;
 	public running = false;
 	public isBillable = true;
+
 	play = faPlay;
 	pause = faPause;
 	stopwatch = faStopwatch;
@@ -40,7 +42,8 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 		private _languageElectronService: LanguageElectronService,
 		private _ngZone: NgZone,
 		@Inject(GAUZY_ENV)
-		private readonly _environment: any,
+		private readonly _environment: Record<string, any>,
+		private renderer: Renderer2
 	) {
 		this._iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -95,6 +98,11 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 			).subscribe();
 			this.checkAndRunTimer();
 		}
+
+		if (this.isExpandMode) {
+			this.renderer.setStyle(document.body, 'background-color', 'transparent');
+			this.isRounded = true;
+		}
 	}
 
 	ngOnDestroy(): void {
@@ -107,7 +115,13 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 
 	async toggleTimer() {
 		this.setLoading(true);
-		await this._alwaysOnService.toggleTimer();
+		try {
+			await this._alwaysOnService.toggleTimer();
+		} catch (error) {
+			console.error('Failed to toggle timer:', error);
+			this.setLoading(false);
+		}
+
 	}
 
 	async setLoading(isLoading: boolean) {

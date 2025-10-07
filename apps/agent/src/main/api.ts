@@ -249,7 +249,7 @@ export class ApiService {
 			startedAt: moment(payload.startedAt).utc().toISOString(),
 			stoppedAt: moment(payload.stoppedAt).utc().toISOString(),
 			isBillable: true,
-			logType: 'TRACKED',
+			logType: TimeLogType.TRACKED,
 			source: TimeLogSourceEnum.DESKTOP,
 			tenantId: payload.tenantId,
 			organizationId: payload.organizationId
@@ -263,7 +263,7 @@ export class ApiService {
 			startedAt: moment(payload.startedAt).utc().toISOString(),
 			stoppedAt: moment(payload.stoppedAt).utc().toISOString(),
 			isBillable: true,
-			logType: 'TRACKED',
+			logType: TimeLogType.TRACKED,
 			source: TimeLogSourceEnum.DESKTOP,
 			tenantId: payload.tenantId,
 			organizationId: payload.organizationId,

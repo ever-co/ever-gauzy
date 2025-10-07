@@ -1,27 +1,47 @@
+:host(.rounded-theme) ::ng-deep nb-layout,
+:host(.rounded-theme) ::ng-deep nb-layout>div,
+:host(.rounded-theme) ::ng-deep nb-layout>div>div {
+	background: transparent !important;
+	box-shadow: none !important;
+}
+
+
+:host(.rounded-theme) ::ng-deep nb-layout,
+:host(.rounded-theme) ::ng-deep nb-layout-column,
+:host(.rounded-theme) ::ng-deep nb-card {
+	border-radius: 16px !important;
+	overflow: hidden !important;
+}
+
+:host(.rounded-theme) ::ng-deep nb-layout-column {
+	background: transparent !important;
+}
+
 nb-card-body,
 nb-card-footer {
 	padding: 1rem;
-	background-color: var(--gauzy-card-1);
-	color: var(--gauzy-text-color-1);
+	background-color: var(--gauzy-card-4);
+	color: var(--gauzy-text-color-4);
 }
 
 nb-card {
-	background-color: var(--gauzy-card-1);
+	background-color: var(--gauzy-card-2);
 	color: var(--gauzy-text-color-1);
 }
 
-::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
+:host(.rounded-theme) ::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
 	padding: 0px;
 }
 
-:host ::ng-deep nb-layout nb-layout-column {
+:host(.rounded-theme) ::ng-deep nb-layout nb-layout-column {
 	padding: 0 !important;
 	margin: 0 !important;
 }
 
-:host ::ng-deep .layout {
+:host(.rounded-theme) ::ng-deep .layout {
 	min-width: unset !important;
 }
+
 
 button {
 	width: 48px;
@@ -80,15 +100,13 @@ button {
 	border-radius: 50px;
 }
 
-/* Card styling */
 .timer-card {
 	margin: 0 !important;
 	padding: 0 !important;
 	width: 100%;
 	height: 100%;
 	border-radius: 12px;
-	background: #1a2138; // Nebular dark background
-	box-shadow: none; // remove heavy shadows
+	background-color: var(--gauzy-card-4);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -147,17 +165,17 @@ button[nbButton] {
 }
 
 button[nbButton].status-basic {
-	background: #2e3a59;
+	background: var(--gauzy-card-2);
 	color: #fff;
 }
 
 button[nbButton].status-danger {
-	background: #ff4d6d;
+	background: var(--color-danger-default);
 	color: #fff;
 }
 
 button[nbButton].status-success {
-	background: #4caf50;
+	background: var(--color-success-default);
 	color: #fff;
 }
 
@@ -170,15 +188,12 @@ button[nbButton].status-success {
 
 .billable-btn {
 	width: 26px;
-	/* square */
 	height: 26px;
 	min-width: 26px;
-	/* prevent Nebular from expanding */
 	min-height: 26px;
 	padding: 0 !important;
 	font-size: 14px;
 	line-height: 1;
 	border-radius: 4px !important;
-	/* slight rounded corners */
 	margin: 10px;
 }
