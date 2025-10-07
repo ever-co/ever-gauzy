@@ -88,7 +88,6 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 	columns: string[] = [];
 	perPage = 10;
 	histories: IInvoiceEstimateHistory[] = [];
-	includeArchived = false;
 	invoiceTabsEnum = InvoiceTabsEnum;
 	permissionsEnum = PermissionsEnum;
 	invoices$: Subject<IInvoice[]> = this.subject$;
@@ -395,7 +394,6 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 				organizationId,
 				tenantId,
 				isEstimate: this.isEstimate,
-				isArchived: this.includeArchived,
 				invoiceDate: {
 					startDate: toInvoiceDateFilter(startDate),
 					endDate: toInvoiceDateFilter(endDate)
@@ -802,12 +800,6 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 			this._refresh$.next();
 			this.invoices$.next([]);
 		}
-	}
-
-	toggleIncludeArchived(event) {
-		this.includeArchived = event;
-		this._refresh$.next();
-		this.invoices$.next([]);
 	}
 
 	reset() {
