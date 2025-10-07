@@ -10,7 +10,12 @@ import {
 } from '@gauzy/core';
 import { In } from 'typeorm';
 import { IIntegrationEntitySetting, IIntegrationTenant, IntegrationEntity, IntegrationEnum } from '@gauzy/contracts';
-import { IMakeComIntegrationSettings, MakeSettingName, IMakeComCreateIntegration, IIntegrationFilter } from './interfaces/make-com.model';
+import {
+	IMakeComIntegrationSettings,
+	MakeSettingName,
+	IMakeComCreateIntegration,
+	IIntegrationFilter
+} from './interfaces/make-com.model';
 import { CommandBus } from '@nestjs/cqrs';
 
 @Injectable()
@@ -74,8 +79,10 @@ export class MakeComService {
 				webhookUrl: webhookUrlSetting ? webhookUrlSetting.settingsValue : null
 			};
 		} catch (error) {
-			this.logger.error('Error retrieving Make.com integration settings:', error);
-			throw error;
+			if (!(error instanceof NotFoundException)) {
+				this.logger.error('Error retrieving Make.com integration settings:', error);
+				throw error;
+			}
 		}
 	}
 
