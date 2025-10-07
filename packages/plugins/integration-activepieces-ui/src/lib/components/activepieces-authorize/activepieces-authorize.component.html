@@ -1,0 +1,121 @@
+<nb-card>
+	<nb-card-header>
+		<h5>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.TITLE' | translate }}</h5>
+		<p class="subtitle">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.SUBTITLE' | translate }}</p>
+	</nb-card-header>
+	<nb-card-body>
+		<!-- Show this if tenant settings already exist -->
+		<div *ngIf="hasTenantSettings" class="text-center">
+			<p>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.READY_MESSAGE' | translate }}</p>
+			<button
+				nbButton
+				status="primary"
+				size="large"
+				[disabled]="loading"
+				(click)="startAuthorization()"
+			>
+				<nb-icon *ngIf="loading" icon="loader-outline" class="mr-1"></nb-icon>
+				{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.START_BUTTON' | translate }}
+			</button>
+		</div>
+
+		<!-- Show this form if no tenant settings exist -->
+		<form *ngIf="!hasTenantSettings" [formGroup]="form" (ngSubmit)="setupAndAuthorize()">
+			<div class="row">
+				<div class="col-md-12">
+					<nb-alert status="info">
+						<p>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.SETUP_INFO' | translate }}</p>
+					</nb-alert>
+				</div>
+
+				<div class="col-md-12">
+					<div class="form-group">
+						<label class="label">
+							{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.CLIENT_ID' | translate }}
+							<span class="text-danger">*</span>
+						</label>
+						<input
+							nbInput
+							fullWidth
+							formControlName="client_id"
+							type="text"
+							placeholder="{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.CLIENT_ID_PLACEHOLDER' | translate }}"
+						/>
+					</div>
+				</div>
+
+				<div class="col-md-12">
+					<div class="form-group">
+						<label class="label">
+							{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.CLIENT_SECRET' | translate }}
+							<span class="text-danger">*</span>
+						</label>
+						<input
+							nbInput
+							fullWidth
+							formControlName="client_secret"
+							type="password"
+							placeholder="{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.CLIENT_SECRET_PLACEHOLDER' | translate }}"
+						/>
+					</div>
+				</div>
+
+				<div class="col-md-12">
+					<div class="form-group">
+						<label class="label">
+							{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.STATE_SECRET' | translate }}
+							<span class="text-danger">*</span>
+						</label>
+						<input
+							nbInput
+							fullWidth
+							formControlName="state_secret"
+							type="password"
+							placeholder="{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.STATE_SECRET_PLACEHOLDER' | translate }}"
+						/>
+						<div class="form-text text-muted">
+							{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.STATE_SECRET_HINT' | translate }}
+						</div>
+					</div>
+				</div>
+
+				<div class="col-md-12">
+					<div class="form-group">
+						<label class="label">
+							{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.CALLBACK_URL' | translate }}
+						</label>
+						<input
+							nbInput
+							fullWidth
+							formControlName="callback_url"
+							type="url"
+							placeholder="{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.CALLBACK_URL_PLACEHOLDER' | translate }}"
+						/>
+					</div>
+				</div>
+
+				<div class="col-md-12">
+					<div class="form-group">
+						<label class="label">
+							{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.POST_INSTALL_URL' | translate }}
+						</label>
+						<input
+							nbInput
+							fullWidth
+							formControlName="post_install_url"
+							type="url"
+							placeholder="{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.POST_INSTALL_URL_PLACEHOLDER' | translate }}"
+						/>
+					</div>
+				</div>
+			</div>
+
+			<div class="form-group text-right">
+				<button nbButton status="primary" [disabled]="form.invalid || loading" type="submit">
+					<nb-icon *ngIf="loading" icon="loader-outline" class="mr-1"></nb-icon>
+					{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.SETUP_AND_AUTHORIZE' | translate }}
+				</button>
+			</div>
+		</form>
+	</nb-card-body>
+</nb-card>

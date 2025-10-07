@@ -1,0 +1,56 @@
+<nb-card>
+	<nb-card-header>
+		<h5>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.TITLE' | translate }}</h5>
+		<p class="subtitle">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.SUBTITLE' | translate }}</p>
+	</nb-card-header>
+	<nb-card-body>
+		<div *ngIf="loading" class="text-center">
+			<nb-spinner size="large" status="primary"></nb-spinner>
+		</div>
+
+		<div *ngIf="!loading">
+			<div *ngIf="connections.length === 0" class="text-center">
+				<p>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.NO_CONNECTIONS' | translate }}</p>
+			</div>
+
+			<div *ngIf="connections.length > 0">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.DISPLAY_NAME' | translate }}</th>
+							<th>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.STATUS' | translate }}</th>
+							<th>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.TYPE' | translate }}</th>
+							<th>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.PIECE_NAME' | translate }}</th>
+							<th>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.CREATED' | translate }}</th>
+							<th>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.ACTIONS' | translate }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr *ngFor="let connection of connections">
+							<td>{{ connection.displayName }}</td>
+							<td>
+								<nb-badge [status]="connection.status === 'ACTIVE' ? 'success' : 'danger'">
+									{{ connection.status }}
+								</nb-badge>
+							</td>
+							<td>{{ connection.type }}</td>
+							<td>{{ connection.pieceName }}</td>
+							<td>{{ connection.created | date:'medium' }}</td>
+							<td>
+								<button
+									nbButton
+									status="danger"
+									size="small"
+									(click)="deleteConnection()"
+									[disabled]="loading"
+								>
+									{{ 'BUTTONS.DELETE' | translate }}
+								</button>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

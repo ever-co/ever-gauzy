@@ -1,0 +1,23 @@
+:host {
+	.subtitle {
+		margin-top: 0.5rem;
+		color: nb-theme(text-hint-color);
+		font-size: 0.9rem;
+	}
+
+	.table {
+		width: 100%;
+		margin-top: 1rem;
+
+		th {
+			font-weight: 600;
+			padding: 0.75rem;
+			border-bottom: 2px solid nb-theme(border-basic-color-3);
+		}
+
+		td {
+			padding: 0.75rem;
+			border-bottom: 1px solid nb-theme(border-basic-color-3);
+		}
+	}
+}
