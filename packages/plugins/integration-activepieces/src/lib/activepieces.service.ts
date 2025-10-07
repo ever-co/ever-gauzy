@@ -24,7 +24,7 @@ import {
 	ActivepiecesConnectionScope,
 	ICreateActivepiecesIntegrationInput,
 	IActivepiecesErrorResponse
-} from './activepieces.type';
+} from '@gauzy/contracts';
 import { ACTIVEPIECES_CONNECTIONS_URL, ACTIVEPIECES_PIECE_NAME } from './activepieces.config';
 
 @Injectable()

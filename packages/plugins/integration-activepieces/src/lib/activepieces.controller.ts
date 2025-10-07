@@ -23,13 +23,11 @@ import { IActivepiecesConfig } from '@gauzy/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { ActivepiecesService } from './activepieces.service';
-import { CreateActivepiecesIntegrationDto, ActivepiecesTokenExchangeDto, ActivepiecesConnectionsListQueryDto } from './dto';
+import { CreateActivepiecesIntegrationDto, ActivepiecesConnectionsListQueryDto } from './dto';
 import {
-	IActivepiecesOAuthTokens,
 	IActivepiecesConnection,
 	IActivepiecesConnectionsListResponse
-} from './activepieces.type';
-import { ACTIVEPIECES_OAUTH_TOKEN_URL, OAUTH_GRANT_TYPE } from './activepieces.config';
+} from '@gauzy/contracts';
 
 @ApiTags('ActivePieces Integration')
 @ApiBearerAuth()
@@ -40,83 +38,7 @@ export class ActivepiecesController {
 	constructor(
 		private readonly activepiecesService: ActivepiecesService,
 		private readonly configService: ConfigService,
-		private readonly httpService: HttpService
 	) {}
-
-	/**
-	 * Exchange OAuth authorization code for access token
-	 */
-	@ApiOperation({ summary: 'Exchange OAuth code for access token' })
-	@ApiResponse({
-		status: 200,
-		description: 'Returns access token and user info'
-	})
-	@Post('/oauth/token')
-	@Permissions(PermissionsEnum.INTEGRATION_ADD)
-	async exchangeToken(@Body() body: ActivepiecesTokenExchangeDto): Promise<IActivepiecesOAuthTokens> {
-		try {
-			const { code, state } = body;
-
-			if (!code) {
-				throw new HttpException('Authorization code is required', HttpStatus.BAD_REQUEST);
-			}
-
-			if (!state) {
-				throw new HttpException('State parameter is required for security', HttpStatus.BAD_REQUEST);
-			}
-
-			// Get ActivePieces OAuth configuration
-			const activepiecesConfig = this.configService.get('activepieces') as IActivepiecesConfig;
-
-			if (
-				!activepiecesConfig?.clientId?.trim() ||
-				!activepiecesConfig?.clientSecret?.trim() ||
-				!activepiecesConfig?.callbackUrl?.trim()
-			) {
-				throw new HttpException(
-					'ActivePieces OAuth configuration is incomplete',
-					HttpStatus.INTERNAL_SERVER_ERROR
-				);
-			}
-
-			// Prepare token exchange request
-			const tokenParams = new URLSearchParams({
-				grant_type: OAUTH_GRANT_TYPE.AUTHORIZATION_CODE,
-				client_id: activepiecesConfig.clientId,
-				client_secret: activepiecesConfig.clientSecret,
-				code: code,
-				redirect_uri: activepiecesConfig.callbackUrl
-			});
-
-			// Exchange authorization code for access token
-			const response = await firstValueFrom(
-				this.httpService
-					.post<IActivepiecesOAuthTokens>(ACTIVEPIECES_OAUTH_TOKEN_URL, tokenParams, {
-						headers: {
-							'Content-Type': 'application/x-www-form-urlencoded'
-						}
-					})
-					.pipe(
-						catchError((error: AxiosError) => {
-							throw new HttpException(
-								`Failed to exchange authorization code: ${error.message}`,
-								error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
-							);
-						})
-					)
-			);
-
-			return response.data;
-		} catch (error: any) {
-			if (error instanceof HttpException) {
-				throw error;
-			}
-			throw new HttpException(
-				`Failed to exchange OAuth code: ${error.message}`,
-				HttpStatus.INTERNAL_SERVER_ERROR
-			);
-		}
-	}
 
 	/**
 	 * Create or update ActivePieces connection (upsert)
