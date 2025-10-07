@@ -60,7 +60,7 @@ export const setupSwagger = async (
 
 	// Setup Scalar UI if enabled
 	if (enableScalar) {
-		await setupScalarUI(app, document, scalarPath, title);
+		await setupScalarUI(app, document, swaggerPath, scalarPath, title);
 	}
 
 	return swaggerPath;
@@ -70,7 +70,13 @@ export const setupSwagger = async (
  * Sets up Scalar UI documentation
  * @private
  */
-async function setupScalarUI(app: INestApplication, document: any, scalarPath: string, title: string): Promise<void> {
+async function setupScalarUI(
+	app: INestApplication,
+	document: any,
+	scalarPath: string,
+	swaggerPath: string,
+	title: string
+): Promise<void> {
 	try {
 		// Try to dynamically import @scalar/nestjs-api-reference
 		const { apiReference } = await eval("import('@scalar/nestjs-api-reference')");
@@ -78,7 +84,7 @@ async function setupScalarUI(app: INestApplication, document: any, scalarPath: s
 		app.use(
 			`/${scalarPath}`,
 			apiReference({
-				theme: 'kepler-11e',
+				theme: 'default',
 				layout: 'modern',
 				spec: {
 					content: document
@@ -102,9 +108,9 @@ async function setupScalarUI(app: INestApplication, document: any, scalarPath: s
   <body>
     <script
       id="api-reference"
-      data-url="/docs-json"
+      data-url="/${swaggerPath}-json"
       data-configuration='${JSON.stringify({
-			theme: 'kepler-11e',
+			theme: 'default',
 			layout: 'modern'
 		})}'
     ></script>
