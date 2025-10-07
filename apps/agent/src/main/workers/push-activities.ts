@@ -469,7 +469,7 @@ class PushActivities {
 		const authConfig = getAuthConfig();
 		const timerLocal = await this.timerService.findById({ id: job.timerId });
 		if (timerLocal?.id) {
-			if (job?.data?.isStopped && timerLocal.stoppedAt && this.currentSessionTimeLogId === timerLocal.timelogId) {
+			if (job.data?.isStopped && timerLocal.stoppedAt && this.currentSessionTimeLogId === timerLocal.timelogId) {
 				await this.apiService.stopTimer({
 					organizationId: authConfig?.user?.employee?.organizationId,
 					tenantId: authConfig?.user?.employee?.tenantId,
@@ -486,7 +486,7 @@ class PushActivities {
 				return;
 			}
 
-			if (job?.data?.isStopped && timerLocal?.stoppedAt && timerLocal?.timelogId && this.currentSessionTimeLogId !== timerLocal.timelogId && !timerLocal?.synced) {
+			if (job.data?.isStopped && timerLocal?.stoppedAt && timerLocal?.timelogId && this.currentSessionTimeLogId !== timerLocal.timelogId && !timerLocal?.synced) {
 				await this.apiService.updateTimeLog(timerLocal?.timelogId, {
 					tenantId: authConfig?.user?.employee?.tenantId,
 					organizationId: authConfig?.user?.employee?.organizationId,
@@ -503,7 +503,7 @@ class PushActivities {
 				return;
 			}
 
-			if (job?.data?.isStopped && timerLocal?.stoppedAt && !timerLocal?.timelogId && !timerLocal?.synced) {
+			if (job.data?.isStopped && timerLocal?.stoppedAt && !timerLocal?.timelogId && !timerLocal?.synced) {
 				const resp = await this.apiService.addTimeLog({
 					tenantId: authConfig?.user?.employee?.tenantId,
 					organizationId: authConfig?.user?.employee?.organizationId,
@@ -522,7 +522,7 @@ class PushActivities {
 				return;
 			}
 
-			if (!job?.data?.isStopped && timerLocal?.startedAt && !timerLocal?.stoppedAt && !timerLocal?.timelogId && !timerLocal?.synced) {
+			if (!job.data?.isStopped && timerLocal?.startedAt && !timerLocal?.stoppedAt && !timerLocal?.timelogId && !timerLocal?.synced) {
 				const resp = await this.apiService.startTimer({
 					organizationId: authConfig?.user?.employee?.organizationId,
 					startedAt: timerLocal.startedAt,
@@ -542,7 +542,7 @@ class PushActivities {
 				return;
 			}
 
-			if (!job?.data?.isStopped && timerLocal?.stoppedAt && timerLocal?.startedAt && !timerLocal?.timelogId && !timerLocal?.synced) {
+			if (!job.data?.isStopped && timerLocal?.stoppedAt && timerLocal?.startedAt && !timerLocal?.timelogId && !timerLocal?.synced) {
 				const resp = await this.apiService.addTimeLog({
 					tenantId: authConfig?.user?.employee?.tenantId,
 					organizationId: authConfig?.user?.employee?.organizationId,
@@ -613,7 +613,7 @@ class PushActivities {
 
 	public async syncScreenshot(job: IScreenshotQueuePayload) {
 		this.agentLogger.info(`In coming job screenshot sync ${JSON.stringify(job)}`);
-		await this.saveImage(job.data.recordedAt, [job.data.imagePath], job.data.timeSlotId);
+		await this.saveImage(job.data?.recordedAt, [job.data?.imagePath], job.data?.timeSlotId);
 		this.agentLogger.info(`Finished job screenshot sync ${JSON.stringify(job)}`);
 	}
 

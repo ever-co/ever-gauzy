@@ -85,7 +85,7 @@ async function handleAlwaysOnWindow() {
 		await appWindow.alwaysOnWindow.loadURL();
 		appWindow.alwaysOnWindow.show();
 	} catch (error) {
-		throw new AppError('ALWAYSON_WINDOW', error);
+		throw new AppError('ALWAYS_ON_WINDOW', error);
 	}
 }
 
