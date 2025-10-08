@@ -99,7 +99,7 @@ COPY --chown=node:node lerna.json package.json yarn.lock ./
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn cache clean
 
 
-FROM dependencies AS prodDependencies
+FROM dependencies AS proddependencies
 
 RUN rm -rf /srv/gauzy-mcp/node_modules
 
@@ -116,6 +116,7 @@ COPY --chown=node:node --from=dependencies /srv/gauzy-mcp/package.json ./package
 COPY --chown=node:node apps/mcp ./apps/mcp
 COPY --chown=node:node packages/mcp-server ./packages/mcp-server
 COPY --chown=node:node tsconfig.base.json tsconfig.json ./
+COPY --chown=node:node nx.json ./
 
 ARG NODE_OPTIONS
 
@@ -128,6 +129,9 @@ ENV DEMO=${DEMO:-false}
 ENV IS_DOCKER=true
 
 RUN rm -rf /srv/gauzy-mcp/dist
+
+# Ensure tslib is available for the build
+RUN yarn add tslib@^2.6.2 --dev
 
 RUN yarn build:mcp:prod
 
@@ -219,10 +223,10 @@ ENV MCP_WS_SESSION_ENABLED=${MCP_WS_SESSION_ENABLED:-true}
 ENV MCP_WS_SESSION_COOKIE_NAME=${MCP_WS_SESSION_COOKIE_NAME:-mcp-ws-session-id}
 ENV MCP_WS_TRUSTED_PROXIES=${MCP_WS_TRUSTED_PROXIES:-192.168.1.1,10.0.0.1}
 
-COPY --chown=node:node --from=prodDependencies /srv/gauzy-mcp/node_modules /srv/gauzy-mcp/node_modules
+COPY --chown=node:node --from=proddependencies /srv/gauzy-mcp/node_modules /srv/gauzy-mcp/node_modules
 COPY --chown=node:node --from=build /srv/gauzy-mcp/dist .
 
-EXPOSE ${MCP_WS_PORT}
+EXPOSE ${MCP_HTTP_PORT}
 EXPOSE ${MCP_WS_PORT}
 
-RUN ["node", "apps/server-mcp/main.js"]
+CMD ["node", "apps/mcp/main.js"]

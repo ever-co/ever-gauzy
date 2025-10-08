@@ -11,7 +11,11 @@ spec:
     - name: http
       protocol: TCP
       port: 443
-      targetPort: 3000
+      targetPort: 3001
+    - name: websocket
+      protocol: TCP
+      port: 3002
+      targetPort: 3002
 
 ---
 apiVersion: apps/v1
@@ -32,48 +36,73 @@ spec:
         - name: gauzy-prod-mcp
           image: registry.digitalocean.com/ever/gauzy-mcp:latest
           env:
-            - name: DEMO
-              value: "false"
-            - name: API_BASE_URL
-              value: "https://apistate.gauzy.co"
-            - name: CLIENT_BASE_URL
-              value: "https://appstate.gauzy.co"
-            - name: SENTRY_DSN
-              value: "https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292"
-            - name: CHATWOOT_SDK_TOKEN
-              value: "fPgSSzSQoAWRuDqYyNXmpGLM"
-            - name: CLOUDINARY_API_KEY
-              value: "256868982483961"
-            - name: CLOUDINARY_CLOUD_NAME
-              value: "dv6ezkfxg"
-            - name: GOOGLE_MAPS_API_KEY
-              value: "AIzaSyCJmnKzgTSq5Pc93HXar5bZrdmANTwtSIo"
-            - name: GOOGLE_PLACE_AUTOCOMPLETE
+            # MCP Server Configuration
+            - name: MCP_TRANSPORT
+              value: "http"
+            - name: MCP_SERVER_MODE
+              value: "http"
+            - name: MCP_HTTP_PORT
+              value: "3001"
+            - name: MCP_HTTP_HOST
+              value: "0.0.0.0"
+            - name: MCP_WS_PORT
+              value: "3002"
+            - name: MCP_WS_HOST
+              value: "0.0.0.0"
+
+            # Security and CORS
+            - name: MCP_CORS_ORIGIN
+              value: "https://mcp.gauzy.co"
+            - name: MCP_CORS_CREDENTIALS
               value: "true"
-            - name: DEFAULT_LATITUDE
-              value: "42.6459136"
-            - name: DEFAULT_LONGITUDE
-              value: "23.3332736"
-            - name: DEFAULT_CURRENCY
-              value: "USD"
-            - name: GAUZY_GITHUB_CLIENT_ID
-              value: "$GAUZY_GITHUB_CLIENT_ID"
-            - name: GAUZY_GITHUB_APP_NAME
-              value: "$GAUZY_GITHUB_APP_NAME"
-            - name: GAUZY_GITHUB_REDIRECT_URL
-              value: "$GAUZY_GITHUB_REDIRECT_URL"
-            - name: GAUZY_GITHUB_POST_INSTALL_URL
-              value: "$GAUZY_GITHUB_POST_INSTALL_URL"
-            - name: GAUZY_GITHUB_APP_ID
-              value: "$GAUZY_GITHUB_APP_ID"
-            - name: JITSU_BROWSER_URL
-              value: "$JITSU_BROWSER_URL"
-            - name: JITSU_BROWSER_WRITE_KEY
-              value: "$JITSU_BROWSER_WRITE_KEY"
+
+            # Authentication
+            - name: MCP_AUTH_ENABLED
+              value: "true"
+            - name: MCP_AUTH_RESOURCE_URI
+              value: "https://mcp.gauzy.co"
+            - name: MCP_AUTH_REQUIRED_SCOPES
+              value: "mcp.read,mcp.write"
+            - name: MCP_AUTH_JWT_AUDIENCE
+              value: "https://mcp.gauzy.co"
+            - name: MCP_AUTH_JWT_ISSUER
+              value: "https://auth.gauzy.co"
+            - name: MCP_AUTH_JWT_ALGORITHMS
+              value: "RS256,ES256"
+            - name: MCP_AUTH_JWT_JWKS_URI
+              value: "https://auth.gauzy.co/.well-known/jwks.json"
+
+            # Session Management
+            - name: MCP_SESSION_ENABLED
+              value: "true"
+            - name: MCP_SESSION_COOKIE_NAME
+              value: "mcp-session-id"
+            - name: MCP_SESSION_TTL
+              value: "1800000"
+            - name: MCP_AUTH_SESSION_SECRET
+              value: "production-session-secret-key"
+
+            # Rate Limiting
+            - name: THROTTLE_ENABLED
+              value: "true"
+            - name: THROTTLE_TTL
+              value: "60000"
+            - name: THROTTLE_LIMIT
+              value: "100"
+
+            # Gauzy API Integration
+            - name: API_BASE_URL
+              value: "https://api.gauzy.co"
+            - name: GAUZY_AUTO_LOGIN
+              value: "true"
 
           ports:
-            - containerPort: 4200
+            - containerPort: 3001
               protocol: TCP
+              name: http
+            - containerPort: 3002
+              protocol: TCP
+              name: websocket
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -95,7 +124,7 @@ spec:
               service:
                 name: gauzy-mcp-prod-svc
                 port:
-                  number: 3000
+                  number: 443
             path: /
             pathType: Prefix
   tls:
