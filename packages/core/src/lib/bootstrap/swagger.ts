@@ -55,7 +55,7 @@ export const setupSwagger = async (
 		customSiteTitle: title
 	};
 
-	// Setup Swagger UI at the `/docs` endpoint
+	// Setup Swagger UI at the `/swg` endpoint
 	SwaggerModule.setup(swaggerPath, app, document, customOptions);
 
 	// Setup Scalar UI if enabled
