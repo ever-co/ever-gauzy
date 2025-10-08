@@ -13,6 +13,7 @@ import { firstValueFrom, catchError, throwError } from 'rxjs';
 import { AxiosError } from 'axios';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { IntegrationSettingService, IntegrationService, IntegrationTenantService, RequestContext } from '@gauzy/core';
+import { IActivepiecesConfig } from '@gauzy/common';
 import {
 	IActivepiecesConnection,
 	IActivepiecesConnectionRequest,
@@ -431,6 +432,122 @@ export class ActivepiecesService {
 				error.status || HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
+	}
+
+	/**
+	 * Get configuration for a specific tenant and organization
+	 * Falls back to global configuration if tenant-specific config is not found
+	 */
+	async getConfig(tenantId: string, organizationId?: string): Promise<IActivepiecesConfig> {
+		try {
+			// Try to get tenant-specific configuration from integration_settings
+			const integrationTenant = await this.integrationTenantService.findOneByOptions({
+				where: {
+					tenantId,
+					...(organizationId && { organizationId }),
+					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+				},
+				relations: ['settings']
+			});
+
+			if (integrationTenant?.settings) {
+				const clientId = integrationTenant.settings.find(s => s.settingsName === 'client_id')?.settingsValue;
+				const clientSecret = integrationTenant.settings.find(s => s.settingsName === 'client_secret')?.settingsValue;
+				const callbackUrl = integrationTenant.settings.find(s => s.settingsName === 'callback_url')?.settingsValue;
+				const postInstallUrl = integrationTenant.settings.find(s => s.settingsName === 'post_install_url')?.settingsValue;
+				const stateSecret = integrationTenant.settings.find(s => s.settingsName === 'state_secret')?.settingsValue;
+
+				if (clientId && clientSecret) {
+					return {
+						clientId,
+						clientSecret,
+						callbackUrl: callbackUrl || this.getDefaultCallbackUrl(),
+						postInstallUrl: postInstallUrl || this.getDefaultPostInstallUrl(),
+						stateSecret: stateSecret || this.getDefaultStateSecret()
+					};
+				}
+			}
+
+			// Fallback to global configuration
+			const globalConfig = this.configService.get('activepieces');
+			if (!globalConfig?.clientId || !globalConfig?.clientSecret) {
+				throw new BadRequestException('ActivePieces integration not configured(missing clientId or clientSecret)');
+			}
+
+			return {
+				clientId: globalConfig.clientId,
+				clientSecret: globalConfig.clientSecret,
+				callbackUrl: globalConfig.callbackUrl || this.getDefaultCallbackUrl(),
+				postInstallUrl: globalConfig.postInstallUrl || this.getDefaultPostInstallUrl(),
+				stateSecret: globalConfig.stateSecret || this.getDefaultStateSecret()
+			};
+		} catch (error: any) {
+			this.logger.error('Failed to get ActivePieces configuration', error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Check if tenant has specific OAuth configuration
+	 */
+	async hasTenantConfig(tenantId: string, organizationId?: string): Promise<boolean> {
+		try {
+			const integrationTenant = await this.integrationTenantService.findOneByOptions({
+				where: {
+					tenantId,
+					...(organizationId && { organizationId }),
+					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+				},
+				relations: ['settings']
+			});
+
+			if (!integrationTenant?.settings) {
+				return false;
+			}
+
+			const hasClientId = integrationTenant.settings.some(s => s.settingsName === 'client_id');
+			const hasClientSecret = integrationTenant.settings.some(s => s.settingsName === 'client_secret');
+
+			return hasClientId && hasClientSecret;
+		} catch (error) {
+			this.logger.error('Failed to check if tenant has specific OAuth configuration:', error);
+			return false;
+		}
+	}
+
+	/**
+	 * Get default callback URL from global configuration
+	 */
+	private getDefaultCallbackUrl(): string {
+		const globalConfig = this.configService.get('activepieces');
+		const apiBaseUrl = this.configService.get('baseUrl') ?? process.env['API_BASE_URL'];
+		if (!apiBaseUrl) {
+			throw new BadRequestException('API base URL not found');
+		}
+		return globalConfig?.callbackUrl || `${apiBaseUrl}/api/integration/activepieces/callback`;
+	}
+
+	/**
+	 * Get default post-install URL from global configuration
+	 */
+	private getDefaultPostInstallUrl(): string {
+		const globalConfig = this.configService.get('activepieces');
+		const clientBaseUrl = this.configService.get('clientBaseUrl') ?? process.env['CLIENT_BASE_URL'];
+		if (!clientBaseUrl) {
+			throw new BadRequestException('Client base URL not found');
+		}
+		return globalConfig?.postInstallUrl || `${clientBaseUrl}/#/pages/integrations/activepieces`;
+	}
+
+	/**
+	 * Get default state secret from global configuration
+	 */
+	private getDefaultStateSecret(): string {
+		const globalConfig = this.configService.get('activepieces');
+		if (!globalConfig?.stateSecret) {
+			throw new BadRequestException('State secret not found');
+		}
+		return globalConfig?.stateSecret;
 	}
 
 	/**

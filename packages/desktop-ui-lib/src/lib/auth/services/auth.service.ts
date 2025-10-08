@@ -25,7 +25,7 @@ export class AuthService {
 		private readonly electronService: ElectronService,
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
-	) {}
+	) { }
 
 	isAuthenticated(): Promise<boolean> {
 		return firstValueFrom(this.http.get<boolean>(`${API_PREFIX}/auth/authenticated`));
@@ -134,7 +134,7 @@ export class AuthService {
 
 	public electronAuthentication({ user, token }: IAuthResponse) {
 		try {
-			if (this.electronService.isElectron) {
+			if (this.electronService.isElectron || this.electronService.isContextBridge) {
 				const channel = this.isAgent ? 'AUTH_SUCCESS' : 'auth_success';
 				const authArg = {
 					user: user,

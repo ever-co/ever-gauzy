@@ -6,3 +6,5 @@ export * from './lib/kb-mouse-activity-pool';
 export * from './lib/kb-mouse-activity-stores';
 export * from './lib/i-kb-mouse';
 export * from './lib/activity-window';
+export * from './lib/desktop-queue';
+export * from './lib/i-queue';

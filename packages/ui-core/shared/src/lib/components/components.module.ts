@@ -7,6 +7,7 @@ import { AlertModalComponent } from './alert-modal/alert-modal.component';
 import { AvatarComponent } from './avatar/avatar.component';
 import { BackNavigationComponent } from './back-navigation/back-navigation.component';
 import { BadgeLabelComponent } from './badge-label/badge-label.component';
+import { DashboardSkeletonComponent } from './dashboard-skeleton/dashboard-skeleton.component';
 import { DateRangeTitleComponent } from './date-range-title/date-range-title.component';
 import { HeaderTitleComponent } from './header-title/header-title.component';
 import { LayoutSelectorComponent } from './layout-selector/layout-selector.component';
@@ -19,6 +20,7 @@ export const Components = [
 	AvatarComponent,
 	BackNavigationComponent,
 	BadgeLabelComponent,
+	DashboardSkeletonComponent,
 	DateRangeTitleComponent,
 	HeaderTitleComponent,
 	LayoutSelectorComponent,

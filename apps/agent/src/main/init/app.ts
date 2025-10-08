@@ -111,8 +111,8 @@ export async function startServer(value: any) {
 	try {
 		const isAuthenticated = await checkUserAuthentication(appRootPath);
 		if (isAuthenticated) {
-			listenIO();
 			runActivityConsumer();
+			listenIO();
 		}
 	} catch (error) {
 		throw new AppError('MAIN_AUTH', error);
@@ -144,6 +144,12 @@ async function appReady() {
 	if (!settings) {
 		launchAtStartup(true, false);
 		LocalStore.setAllDefaultConfig();
+
+		/* Set default application setting for agent app. */
+		LocalStore.updateApplicationSetting({
+			screenshotNotification: false,
+			simpleScreenshotNotification: false
+		});
 	}
 
 	// handle theme change listener
@@ -201,6 +207,8 @@ function listenIO() {
 function runActivityConsumer() {
 	try {
 		const pushActivities = PushActivities.getInstance();
+		/* start queue worker */
+		pushActivities.initQueueWorker();
 		pushActivities.startPooling();
 	} catch (error) {
 		log.error('Failed to start activity consumer', error);

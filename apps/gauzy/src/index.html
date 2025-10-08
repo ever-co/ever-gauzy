@@ -12,13 +12,39 @@
 		<link rel="manifest" href="manifest.json" />
 	</head>
 	<body>
-		<ga-app>Loading...</ga-app>
+		<ga-app></ga-app>
 
-		<div id="nb-global-spinner" class="skeleton-layout" role="status" aria-live="polite" aria-busy="true" aria-label="Loading application">
+		<div
+			id="nb-global-spinner"
+			class="skeleton-layout"
+			role="status"
+			aria-live="polite"
+			aria-busy="true"
+			aria-label="Loading dashboard"
+		>
 			<div class="skeleton-sidebar" aria-hidden="true"></div>
-			<div class="skeleton-main" aria-hidden="true"></div>
+			<div class="skeleton-main-content" aria-hidden="true"></div>
 		</div>
-
+		<script>
+			try {
+				const gauzyStore = JSON.parse(localStorage.getItem('_gauzyStore') || '{}');
+				const savedTheme = gauzyStore.persist?.themeName;
+				const allowedThemes = new Set([
+					'gauzy-light',
+					'gauzy-dark',
+					'default',
+					'dark',
+					'cosmic',
+					'corporate',
+					'material',
+					'material-dark'
+				]);
+				const theme = allowedThemes.has(savedTheme) ? savedTheme : 'gauzy-light';
+				document.body.setAttribute('data-skeleton-theme', theme);
+			} catch {
+				document.body.setAttribute('data-skeleton-theme', 'gauzy-light');
+			}
+		</script>
 		<!-- Asynchronous script loading to improve performance -->
 		<script src="https://cdn.ckeditor.com/4.22.1/full-all/ckeditor.js" async></script>
 	</body>

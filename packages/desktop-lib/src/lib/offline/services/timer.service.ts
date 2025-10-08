@@ -100,6 +100,18 @@ export class TimerService implements ITimerService<TimerTO> {
 		}
 	}
 
+	public async saveAndReturn(timer: Timer): Promise<TimerTO | null> {
+		try {
+			if (!timer) {
+				console.error('WARN[TIMER_SERVICE]: No timer data, cannot save');
+				return null;
+			}
+			return this._timerDAO.saveAndReturn(timer.toObject());
+		} catch (error) {
+			throw new AppError('[TIMER_SERVICE]', error);
+		}
+	}
+
 	public async findToSynced(): Promise<ISequence[]> {
 		try {
 			const user = await this._userService.retrieve();
