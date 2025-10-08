@@ -17,8 +17,8 @@ export const setupSwagger = async (
 		title = 'Gauzy API',
 		description = 'Gauzy API Documentation',
 		version = '1.0',
-		swaggerPath = 'docs',
-		scalarPath = 'scalar',
+		swaggerPath = 'swg',
+		scalarPath = 'docs',
 		enableScalar = true
 	}: {
 		title?: string;
