@@ -86,9 +86,7 @@ async function setupScalarUI(
 			apiReference({
 				theme: 'default',
 				layout: 'modern',
-				spec: {
-					content: document
-				}
+				content: document
 			})
 		);
 	} catch (error) {
