@@ -1,0 +1,104 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: gauzy-mcp-prod-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: gauzy-mcp-prod
+  ports:
+    - name: http
+      protocol: TCP
+      port: 443
+      targetPort: 3000
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gauzy-mcp-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gauzy-mcp-prod
+  template:
+    metadata:
+      labels:
+        app: gauzy-mcp-prod
+    spec:
+      containers:
+        - name: gauzy-prod-mcp
+          image: registry.digitalocean.com/ever/gauzy-mcp:latest
+          env:
+            - name: DEMO
+              value: "false"
+            - name: API_BASE_URL
+              value: "https://apistate.gauzy.co"
+            - name: CLIENT_BASE_URL
+              value: "https://appstate.gauzy.co"
+            - name: SENTRY_DSN
+              value: "https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292"
+            - name: CHATWOOT_SDK_TOKEN
+              value: "fPgSSzSQoAWRuDqYyNXmpGLM"
+            - name: CLOUDINARY_API_KEY
+              value: "256868982483961"
+            - name: CLOUDINARY_CLOUD_NAME
+              value: "dv6ezkfxg"
+            - name: GOOGLE_MAPS_API_KEY
+              value: "AIzaSyCJmnKzgTSq5Pc93HXar5bZrdmANTwtSIo"
+            - name: GOOGLE_PLACE_AUTOCOMPLETE
+              value: "true"
+            - name: DEFAULT_LATITUDE
+              value: "42.6459136"
+            - name: DEFAULT_LONGITUDE
+              value: "23.3332736"
+            - name: DEFAULT_CURRENCY
+              value: "USD"
+            - name: GAUZY_GITHUB_CLIENT_ID
+              value: "$GAUZY_GITHUB_CLIENT_ID"
+            - name: GAUZY_GITHUB_APP_NAME
+              value: "$GAUZY_GITHUB_APP_NAME"
+            - name: GAUZY_GITHUB_REDIRECT_URL
+              value: "$GAUZY_GITHUB_REDIRECT_URL"
+            - name: GAUZY_GITHUB_POST_INSTALL_URL
+              value: "$GAUZY_GITHUB_POST_INSTALL_URL"
+            - name: GAUZY_GITHUB_APP_ID
+              value: "$GAUZY_GITHUB_APP_ID"
+            - name: JITSU_BROWSER_URL
+              value: "$JITSU_BROWSER_URL"
+            - name: JITSU_BROWSER_WRITE_KEY
+              value: "$JITSU_BROWSER_WRITE_KEY"
+
+          ports:
+            - containerPort: 4200
+              protocol: TCP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gauzy-mcp-state-ing
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: mcp.gauzy.co
+      http:
+        paths:
+          - backend:
+              service:
+                name: gauzy-mcp-prod-svc
+                port:
+                  number: 3000
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - mcp.gauzy.co
+      secretName: mcp.gauzy.co-tls
