@@ -223,6 +223,7 @@ class PullActivities {
 			});
 			this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
 		} catch (error) {
+			this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
 			this.agentLogger.error(`Stop timer error ${error.message}`);
 		}
 	}
