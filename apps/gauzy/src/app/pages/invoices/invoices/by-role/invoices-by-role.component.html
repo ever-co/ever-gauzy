@@ -378,7 +378,7 @@
 				></angular2-smart-table>
 			</div>
 			<div *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE" class="pagination-container">
-				<ng-container *ngIf="smartTableSource && perPage && isShouldShowPagination">
+				<ng-container *ngIf="smartTableSource && perPage">
 					<ngx-pagination
 						[source]="smartTableSource"
 						[isShouldShow]="isShouldShowPagination"

@@ -196,7 +196,6 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 				tap(([organization, dateRange]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
-					this._refresh$.next();
 					this.invoices$.next([]);
 				})
 			),
@@ -415,6 +414,7 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 					itemsPerPage: this.perPage,
 					totalItems: this.smartTableSource.count()
 				});
+				this.isShouldShowPagination = this.pagination.itemsPerPage < this.pagination.totalItems;
 				this.loading = false;
 			}
 		});
@@ -426,10 +426,6 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 		}
 		try {
 			this.setSmartTableSource();
-
-			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-			this.isShouldShowPagination = this.smartTableSource?.getPaging()?.perPage < this.pagination?.totalItems;
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.INVOICE.INVOICE_ERROR', {
@@ -734,7 +730,6 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 				...this.getPagination(),
 				itemsPerPage: this.perPage
 			});
-			this.isShouldShowPagination = this.pagination.itemsPerPage < this.pagination.totalItems;
 			this._loadSmartTableSettings();
 			this.toggleTableSettingsPopover();
 		}

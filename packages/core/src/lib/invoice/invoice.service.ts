@@ -420,9 +420,16 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		if ('where' in filter) {
 			const { where } = filter;
 
-			// Extract tag filter and remove from TypeORM where (we'll filter in-memory)
-			const tagIds: string[] = where.tags;
-			delete where.tags;
+			if (where.tags?.length) {
+				const subQuery = this.typeOrmInvoiceRepository
+					.createQueryBuilder('invoice')
+					.select('invoice.id')
+					.leftJoin('invoice.tags', 'tag')
+					.where('tag.id IN (:...tags)', { tags: where.tags });
+
+				filter.where.id = In(await subQuery.getRawMany().then((rows) => rows.map((r) => r.invoice_id)));
+				delete filter.where.tags;
+			}
 
 			if (where.toContact) {
 				filter.where.toContact = {
@@ -464,44 +471,19 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				}
 			}
 
-			const currencyValue = where.currency;
-			delete where.currency;
-
-			const totalValue = where.totalValue;
-			delete where.totalValue;
-
-			const result = await super.paginate(filter);
-			let filteredItems = result.items;
-
-			// In-memory filtering by tagIds
-			if (tagIds?.length) {
-				filteredItems = filteredItems.filter((invoice) => invoice.tags?.some((tag) => tagIds.includes(tag.id)));
-			}
-
-			if (currencyValue) {
-				filteredItems = filteredItems.filter(
-					(invoice: Invoice) =>
-						invoice.currency === currencyValue || invoice.amounts?.some((a) => a.currency === currencyValue)
-				);
-			}
-
-			if (totalValue) {
-				const value = Number(totalValue);
-				if (isNaN(value)) {
-					throw new BadRequestException('Invalid totalValue');
+			if ('totalValue' in where && where.totalValue) {
+				const { min, max } = where.totalValue as { min?: number; max?: number };
+				if (min !== undefined && max !== undefined && min > max) {
+					throw new BadRequestException('Minimum value cannot be greater than maximum value');
 				}
-
-				filteredItems = filteredItems.filter(
-					(invoice) =>
-						invoice.totalValue === value || invoice.amounts?.some((amount) => amount.totalValue === value)
-				);
+				if (min !== undefined && max !== undefined) {
+					filter.where.totalValue = Between(min, max);
+				} else if (min !== undefined) {
+					filter.where.totalValue = MoreThanOrEqual(min);
+				} else if (max !== undefined) {
+					filter.where.totalValue = LessThanOrEqual(max);
+				}
 			}
-
-			return {
-				...result,
-				items: filteredItems,
-				total: filteredItems.length
-			};
 		}
 
 		return super.paginate(filter);
