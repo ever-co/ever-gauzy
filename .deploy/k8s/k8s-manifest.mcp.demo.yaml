@@ -114,7 +114,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: gauzy-mcp-state-ing
+  name: gauzy-mcp-demo-ing
   namespace: default
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
