@@ -56,13 +56,15 @@ spec:
             - name: MCP_CORS_CREDENTIALS
               value: "true"
 
-            # Authentication
+            # OAuth 2.0 Authorization
             - name: MCP_AUTH_ENABLED
-              value: "true"
+              value: "false"
             - name: MCP_AUTH_RESOURCE_URI
               value: "https://mcpstage.gauzy.co"
             - name: MCP_AUTH_REQUIRED_SCOPES
               value: "mcp.read,mcp.write"
+            - name: MCP_AUTH_SERVERS
+              value: "[]"
             - name: MCP_AUTH_JWT_AUDIENCE
               value: "https://mcp.gauzy.co"
             - name: MCP_AUTH_JWT_ISSUER
@@ -71,6 +73,10 @@ spec:
               value: "RS256,ES256"
             - name: MCP_AUTH_JWT_JWKS_URI
               value: "https://auth.gauzy.co/.well-known/jwks.json"
+            - name: MCP_AUTH_TOKEN_CACHE_TTL
+              value: "300"
+            - name: MCP_AUTH_METADATA_CACHE_TTL
+              value: "3600"
 
             # Session Management
             - name: MCP_SESSION_ENABLED
