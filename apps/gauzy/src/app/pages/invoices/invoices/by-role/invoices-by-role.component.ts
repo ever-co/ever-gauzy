@@ -94,6 +94,9 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 	nbTab$: Subject<string> = new BehaviorSubject(InvoiceTabsEnum.ACTIONS);
 	currentUser: IUser;
 	isShouldShowPagination = false;
+
+	private lastSavePerPage = 10;
+
 	private readonly _refresh$: Subject<void> = new Subject();
 
 	/*
@@ -730,6 +733,7 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 				...this.getPagination(),
 				itemsPerPage: this.perPage
 			});
+			this.lastSavePerPage = this.perPage;
 			this._loadSmartTableSettings();
 			this.toggleTableSettingsPopover();
 		}
@@ -826,6 +830,14 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 	}
 
 	toggleTableSettingsPopover() {
+		if (!this.isPerPageValid()) {
+			this.perPage = this.lastSavePerPage || 10;
+			this.setPagination({
+				...this.getPagination(),
+				itemsPerPage: this.perPage
+			});
+			this._loadSmartTableSettings();
+		}
 		this.popups.first.toggle();
 		if (this.popups.length > 1) {
 			this.popups.last.hide();
