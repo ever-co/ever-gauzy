@@ -30,16 +30,12 @@ $height: calc(100vh - 25.5rem);
 
 :host {
   ::ng-deep {
-    @include nb-select-overrides(
-      2.25rem,
-      $default-button-radius,
-      $default-box-shadow
-    );
-    @include ng-select-overrides(
-      2.25rem,
-      $default-button-radius,
-      $default-box-shadow
-    );
+    @include nb-select-overrides(2.25rem, $default-button-radius, $default-box-shadow);
+    @include ng-select-overrides(2.25rem, $default-button-radius, $default-box-shadow);
+
+    .ng-select .ng-select-container {
+      background-color: nb-theme(select-outline-basic-background-color);
+    }
   }
 
   nb-card {
