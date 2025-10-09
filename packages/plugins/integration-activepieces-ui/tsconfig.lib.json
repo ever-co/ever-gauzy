@@ -3,14 +3,10 @@
 	"compilerOptions": {
 		"outDir": "../../../dist/out-tsc",
 		"declaration": true,
-		"types": ["node"],
-		"target": "es2021",
-		"strictNullChecks": true,
-		"noImplicitAny": true,
-		"strictBindCallApply": true,
-		"forceConsistentCasingInFileNames": true,
-		"noFallthroughCasesInSwitch": true
+		"declarationMap": true,
+		"inlineSources": true,
+		"types": []
 	},
-	"include": ["src/**/*.ts"],
-	"exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
+	"exclude": ["src/**/*.spec.ts", "src/test-setup.ts", "jest.config.ts", "src/**/*.test.ts"],
+	"include": ["src/**/*.ts"]
 }

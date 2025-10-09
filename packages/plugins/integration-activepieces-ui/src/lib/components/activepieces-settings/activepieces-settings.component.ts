@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { tap, catchError, finalize } from 'rxjs/operators';
+import { tap, catchError, finalize, filter } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { ToastrService, IntegrationTenantService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -16,52 +16,44 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	styleUrls: ['./activepieces-settings.component.scss'],
 	standalone: false
 })
-export class ActivepiecesSettingsComponent extends TranslationBaseComponent implements OnInit {
-	public form: FormGroup;
+export class ActivepiecesSettingsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public loading = false;
-	public integrationId: string;
-	public organization: IOrganization;
+	public integrationId!: string;
+	public organization!: IOrganization;
+
+	readonly form: UntypedFormGroup = ActivepiecesSettingsComponent.buildForm(this._fb);
+
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
+		return fb.group({
+			client_id: [null, Validators.required],
+			client_secret: [null, Validators.required],
+			state_secret: [null, [Validators.required, Validators.minLength(32)]],
+			callback_url: [null],
+			post_install_url: [null]
+		});
+	}
 
 	constructor(
-		private readonly _fb: FormBuilder,
+		private readonly _fb: UntypedFormBuilder,
 		private readonly _integrationTenantService: IntegrationTenantService,
 		private readonly _toastrService: ToastrService,
-		private readonly _route: ActivatedRoute,
+		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _store: Store,
-		public readonly translateService: TranslateService
+		public override readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this._initializeForm();
-		this._loadOrganization();
-		this._loadIntegrationId();
-	}
-
-	private _initializeForm() {
-		this.form = this._fb.group({
-			client_id: ['', [Validators.required]],
-			client_secret: ['', [Validators.required]],
-			callback_url: [''],
-			post_install_url: [''],
-			state_secret: ['', [Validators.required, Validators.minLength(32)]]
-		});
-	}
-
-	private _loadOrganization() {
 		this._store.selectedOrganization$
 			.pipe(
-				tap((organization) => {
-					this.organization = organization;
-				}),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
 
-	private _loadIntegrationId() {
-		this._route.parent.params
+		this._activatedRoute.parent?.params
 			.pipe(
 				tap((params) => {
 					this.integrationId = params['id'];
@@ -74,20 +66,23 @@ export class ActivepiecesSettingsComponent extends TranslationBaseComponent impl
 			.subscribe();
 	}
 
+	/**
+	 * Load existing settings for the integration
+	 */
 	private _loadSettings() {
 		if (!this.integrationId) return;
 
 		this.loading = true;
 		this._integrationTenantService
-			.getById(this.integrationId, ['settings'])
+			.getAll({ id: this.integrationId } as any, ['settings'])
 			.pipe(
-				tap((integrationTenant: IIntegrationTenant) => {
+				tap(({ items }) => {
+					const integrationTenant = items?.[0] as IIntegrationTenant | undefined;
 					if (integrationTenant?.settings) {
-						const settings = integrationTenant.settings.reduce((acc, setting) => {
+						const settings = integrationTenant.settings.reduce<Record<string, any>>((acc, setting) => {
 							acc[setting.settingsName] = setting.settingsValue;
 							return acc;
 						}, {});
-
 						this.form.patchValue(settings);
 					}
 				}),
@@ -109,6 +104,7 @@ export class ActivepiecesSettingsComponent extends TranslationBaseComponent impl
 
 	/**
 	 * Save ActivePieces tenant-specific settings
+	 * POST /integration-tenant
 	 */
 	saveSettings() {
 		if (this.form.invalid) {
@@ -140,7 +136,6 @@ export class ActivepiecesSettingsComponent extends TranslationBaseComponent impl
 
 		const integrationTenantInput = {
 			name: IntegrationEnum.ACTIVE_PIECES,
-			integration: IntegrationEnum.ACTIVE_PIECES,
 			tenantId,
 			organizationId,
 			settings
@@ -171,4 +166,6 @@ export class ActivepiecesSettingsComponent extends TranslationBaseComponent impl
 			)
 			.subscribe();
 	}
+
+	ngOnDestroy(): void {}
 }

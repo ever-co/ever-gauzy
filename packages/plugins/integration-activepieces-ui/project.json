@@ -1,37 +1,28 @@
 {
-	"name": "integration-activepieces-ui",
+	"name": "plugin-integration-activepieces-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/plugins/integration-activepieces-ui/src",
+	"prefix": "lib",
 	"projectType": "library",
-	"release": {
-		"version": {
-			"generatorOptions": {
-				"packageRoot": "dist/{projectRoot}",
-				"currentVersionResolver": "git-tag",
-				"fallbackCurrentVersionResolver": "disk"
-			}
-		}
-	},
 	"tags": [],
+	"implicitDependencies": [],
 	"targets": {
 		"build": {
-			"executor": "@nx/js:tsc",
-			"outputs": ["{options.outputPath}"],
+			"executor": "@nx/angular:package",
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"options": {
-				"outputPath": "dist/packages/plugins/integration-activepieces-ui",
-				"tsConfig": "packages/plugins/integration-activepieces-ui/tsconfig.lib.json",
-				"packageJson": "packages/plugins/integration-activepieces-ui/package.json",
-				"main": "packages/plugins/integration-activepieces-ui/src/index.ts",
-				"assets": ["packages/plugins/integration-activepieces-ui/*.md"]
-			}
-		},
-		"nx-release-publish": {
-			"options": {
-				"packageRoot": "dist/{projectRoot}"
-			}
-		},
-		"lint": {
-			"executor": "@nx/eslint:lint"
+				"project": "packages/plugins/integration-activepieces-ui/ng-package.json",
+				"tsConfig": "packages/plugins/integration-activepieces-ui/tsconfig.json"
+			},
+			"configurations": {
+				"production": {
+					"tsConfig": "packages/plugins/integration-activepieces-ui/tsconfig.lib.prod.json"
+				},
+				"development": {
+					"tsConfig": "packages/plugins/integration-activepieces-ui/tsconfig.lib.json"
+				}
+			},
+			"defaultConfiguration": "production"
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
@@ -39,6 +30,9 @@
 			"options": {
 				"jestConfig": "packages/plugins/integration-activepieces-ui/jest.config.ts"
 			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
 		}
 	}
 }

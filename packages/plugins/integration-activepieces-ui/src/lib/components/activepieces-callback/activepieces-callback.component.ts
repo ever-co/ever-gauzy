@@ -1,114 +1,181 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { tap, catchError, finalize, switchMap } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
-import { ActivepiecesService, ToastrService, Store } from '@gauzy/ui-core/core';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { TranslateService } from '@ngx-translate/core';
+import { tap, switchMap, filter, catchError } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IOrganization } from '@gauzy/contracts';
+import { ActivepiecesService, Store, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-activepieces-callback',
 	templateUrl: './activepieces-callback.component.html',
+	styleUrls: ['./activepieces-callback.component.scss'],
 	standalone: false
 })
-export class ActivepiecesCallbackComponent extends TranslationBaseComponent implements OnInit {
-	public loading = true;
-	public projectId: string = '';
+export class ActivepiecesCallbackComponent implements OnInit, OnDestroy {
+	public loading = false;
+	public organization!: IOrganization;
+	public showProjectIdForm = false;
+
+	readonly form: UntypedFormGroup = ActivepiecesCallbackComponent.buildForm(this._fb);
+
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
+		return fb.group({
+			projectId: [null, Validators.required]
+		});
+	}
 
 	constructor(
-		private readonly _route: ActivatedRoute,
+		private readonly _fb: UntypedFormBuilder,
+		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _router: Router,
 		private readonly _activepiecesService: ActivepiecesService,
-		private readonly _toastrService: ToastrService,
 		private readonly _store: Store,
-		public readonly translateService: TranslateService
-	) {
-		super(translateService);
-	}
+		private readonly _toastrService: ToastrService
+	) {}
 
 	ngOnInit() {
-		this._handleCallback();
+		this._store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(() => this._handleCallback()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
+	/**
+	 * Handle OAuth callback
+	 * GET /integration/activepieces/callback redirects here with code and state
+	 */
 	private _handleCallback() {
-		const { code, state } = this._route.snapshot.queryParams;
-
-		if (!code || !state) {
-			this._toastrService.error(
-				this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.INVALID_CALLBACK'),
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
-			this._redirectToIntegrations();
-			return;
-		}
-
-		this.loading = true;
-
-		// Step 1: Exchange code for access token
-		this._activepiecesService
-			.exchangeToken({ code, state })
+		this._activatedRoute.queryParams
 			.pipe(
-				tap((tokenResponse) => {
-					console.log('Token exchange successful', tokenResponse);
-				}),
-				// Step 2: Get organization and tenant info
-				switchMap((tokenResponse) => {
-					return this._store.selectedOrganization$.pipe(
-						tap((organization) => {
-							if (!organization) {
-								throw new Error('No organization selected');
-							}
+				switchMap((params) => {
+					const { code, state } = params;
+
+					if (!code || !state) {
+						this._toastrService.error('Invalid callback parameters');
+						this._redirectToIntegrations();
+						return EMPTY;
+					}
+
+					if (!this.organization) {
+						this._toastrService.error('Organization not found');
+						this._redirectToIntegrations();
+						return EMPTY;
+					}
+
+					this.loading = true;
+
+					// Step 1: Exchange authorization code for access token
+					// POST /integration/activepieces/oauth/token
+					return this._activepiecesService.exchangeToken({ code, state }).pipe(
+						tap((tokenResponse) => {
+							// Store token response temporarily
+							this._storeTokenResponse(tokenResponse);
+							// Show project ID form
+							this.showProjectIdForm = true;
+							this.loading = false;
 						}),
-						switchMap((organization) => {
-							// Ask user for project ID or use a default one
-							// For now, we'll show a prompt
-							this.projectId = prompt(
-								this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.PROMPTS.PROJECT_ID'),
-								''
-							);
-
-							if (!this.projectId) {
-								throw new Error('Project ID is required');
-							}
-
-							// Step 3: Create connection with the access token
-							return this._activepiecesService.upsertConnection({
-								accessToken: tokenResponse.access_token,
-								projectId: this.projectId,
-								tenantId: organization.tenantId,
-								organizationId: organization.id
-							});
+						catchError((error) => {
+							this._toastrService.error('Failed to exchange authorization code: ' + error.message);
+							this.loading = false;
+							this._redirectToIntegrations();
+							return EMPTY;
 						})
 					);
-				}),
-				tap((connection) => {
-					this._toastrService.success(
-						this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.SUCCESS.CONNECTION_CREATED'),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
-					);
-					console.log('Connection created successfully', connection);
-					this._redirectToIntegrations();
-				}),
-				catchError((error) => {
-					this._toastrService.error(
-						this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.CALLBACK_FAILED'),
-						this.getTranslation('TOASTR.TITLE.ERROR')
-					);
-					console.error('Error handling callback:', error);
-					this._redirectToIntegrations();
-					return EMPTY;
-				}),
-				finalize(() => {
-					this.loading = false;
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	private _redirectToIntegrations() {
-		this._router.navigate(['/pages/integrations']);
+	/**
+	 * Create connection with access token and project ID
+	 * Called after user submits project ID form
+	 */
+	createConnection() {
+		if (this.form.invalid || !this.organization) {
+			this._toastrService.error('Please provide a valid project ID');
+			return;
+		}
+
+		this.loading = true;
+		const { projectId } = this.form.value;
+		const tokenResponse = this._getStoredTokenResponse();
+
+		if (!tokenResponse || !tokenResponse.access_token) {
+			this._toastrService.error('Token not found. Please try authorization again.');
+			this._redirectToIntegrations();
+			return;
+		}
+
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Step 2: Create connection with access token
+		// POST /integration/activepieces/connection
+		this._activepiecesService
+			.upsertConnection({
+				accessToken: tokenResponse.access_token,
+				projectId,
+				tenantId,
+				organizationId
+			})
+			.pipe(
+				tap((connection: any) => {
+					this._toastrService.success('ActivePieces connection created successfully');
+					this._clearStoredTokenResponse();
+					this._redirectToActivepiecesIntegration(connection.integrationId);
+				}),
+				catchError((error) => {
+					this._toastrService.error('Failed to create connection: ' + error.message);
+					this.loading = false;
+					return EMPTY;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
+
+	/**
+	 * Store token response in sessionStorage
+	 */
+	private _storeTokenResponse(tokenResponse: any): void {
+		sessionStorage.setItem('activepieces_token_response', JSON.stringify(tokenResponse));
+	}
+
+	/**
+	 * Get stored token response from sessionStorage
+	 */
+	private _getStoredTokenResponse(): any {
+		const stored = sessionStorage.getItem('activepieces_token_response');
+		return stored ? JSON.parse(stored) : null;
+	}
+
+	/**
+	 * Clear stored token response from sessionStorage
+	 */
+	private _clearStoredTokenResponse(): void {
+		sessionStorage.removeItem('activepieces_token_response');
+	}
+
+	/**
+	 * Redirect to integrations page
+	 */
+	private _redirectToIntegrations() {
+		this._router.navigate(['pages/integrations']);
+	}
+
+	/**
+	 * Redirect to ActivePieces integration page
+	 */
+	private _redirectToActivepiecesIntegration(integrationId: string) {
+		this._router.navigate(['pages/integrations/activepieces', integrationId]);
+	}
+
+	ngOnDestroy(): void {}
 }

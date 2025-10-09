@@ -1,13 +1,17 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { tap, catchError, finalize, switchMap } from 'rxjs/operators';
+import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
-import { ActivepiecesService, ToastrService, IntegrationsService, Store, IntegrationTenantService } from '@gauzy/ui-core/core';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { TranslateService } from '@ngx-translate/core';
-import { IntegrationEnum, IOrganization } from '@gauzy/contracts';
+import { tap, switchMap, filter, debounceTime, catchError } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
+import {
+	ActivepiecesService,
+	IntegrationsService,
+	IntegrationTenantService,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,88 +20,68 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	styleUrls: ['./activepieces-authorize.component.scss'],
 	standalone: false
 })
-export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent implements OnInit {
-	public form: FormGroup;
-	public loading = false;
+export class ActivepiecesAuthorizeComponent implements OnInit, OnDestroy {
+	public rememberState = false;
+	public organization!: IOrganization;
 	public hasTenantSettings = false;
-	public organization: IOrganization;
+	public loading = false;
 
-	constructor(
-		private readonly _fb: FormBuilder,
-		private readonly _activepiecesService: ActivepiecesService,
-		private readonly _integrationTenantService: IntegrationTenantService,
-		private readonly _toastrService: ToastrService,
-		private readonly _router: Router,
-		private readonly _store: Store,
-		private readonly _integrationsService: IntegrationsService,
-		public readonly translateService: TranslateService
-	) {
-		super(translateService);
+	readonly form: UntypedFormGroup = ActivepiecesAuthorizeComponent.buildForm(this._fb);
+
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
+		return fb.group({
+			client_id: [null, Validators.required],
+			client_secret: [null, Validators.required],
+			state_secret: [null, [Validators.required, Validators.minLength(32)]],
+			callback_url: [null],
+			post_install_url: [null]
+		});
 	}
 
+	constructor(
+		private readonly _fb: UntypedFormBuilder,
+		private readonly _activepiecesService: ActivepiecesService,
+		private readonly _integrationTenantService: IntegrationTenantService,
+		private readonly _activatedRoute: ActivatedRoute,
+		private readonly _router: Router,
+		readonly _store: Store,
+		private readonly _integrationsService: IntegrationsService,
+		private readonly _toastrService: ToastrService
+	) {}
+
 	ngOnInit() {
-		this._initializeForm();
-		this._loadOrganization()
+		this._store.selectedOrganization$
 			.pipe(
-				switchMap(() => this._checkExistingIntegration()),
-				switchMap(() => this._checkTenantSettings()),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(() => this._checkTenantSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		this._activatedRoute.data
+			.pipe(
+				debounceTime(100),
+				filter(({ state }) => !!state),
+				tap(({ state }) => (this.rememberState = state)),
+				tap(() => this._checkRememberState()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	private _initializeForm() {
-		this.form = this._fb.group({
-			client_id: ['', [Validators.required]],
-			client_secret: ['', [Validators.required]],
-			callback_url: [''],
-			post_install_url: [''],
-			state_secret: ['', [Validators.required, Validators.minLength(32)]]
-		});
-	}
-
-	private _loadOrganization() {
-		return this._store.selectedOrganization$.pipe(
-			tap((organization) => {
-				this.organization = organization;
-			})
-		);
-	}
-
-	private _checkExistingIntegration() {
-		if (!this.organization) return EMPTY;
-
-		const { id: organizationId, tenantId } = this.organization;
-
-		return this._integrationsService
-			.getIntegrationByOptions({
-				name: IntegrationEnum.ACTIVE_PIECES,
-				organizationId,
-				tenantId
-			})
-			.pipe(
-				tap((integration) => {
-					if (integration) {
-						this._router.navigate(['/pages/integrations/activepieces', integration.id]);
-					}
-				}),
-				catchError((error) => {
-					console.error('Error checking existing integration:', error);
-					return EMPTY;
-				}),
-				finalize(() => {
-					this.loading = false;
-				})
-			);
-	}
-
+	/**
+	 * Check if tenant has OAuth settings configured
+	 */
 	private _checkTenantSettings() {
-		if (!this.organization) return EMPTY;
+		if (!this.organization) {
+			return;
+		}
 
 		const { id: organizationId, tenantId } = this.organization;
 
-		return this._integrationTenantService
-			.getByOptions({
+		this._integrationTenantService
+			.get({
 				where: {
 					name: IntegrationEnum.ACTIVE_PIECES,
 					organizationId,
@@ -106,45 +90,68 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 				relations: ['settings']
 			})
 			.pipe(
-				tap((integrationTenants) => {
+				tap((integrationTenants: any) => {
 					if (integrationTenants && integrationTenants.items && integrationTenants.items.length > 0) {
 						const integrationTenant = integrationTenants.items[0];
-						const hasClientId = integrationTenant.settings?.some((s) => s.settingsName === 'client_id');
-						const hasClientSecret = integrationTenant.settings?.some((s) => s.settingsName === 'client_secret');
-
+						const hasClientId = integrationTenant.settings?.some(
+							(s: any) => s.settingsName === 'client_id'
+						);
+						const hasClientSecret = integrationTenant.settings?.some(
+							(s: any) => s.settingsName === 'client_secret'
+						);
 						this.hasTenantSettings = hasClientId && hasClientSecret;
 					}
 				}),
-				catchError((error) => {
-					console.error('Error checking tenant settings:', error);
-					return EMPTY;
-				})
-			);
+				catchError(() => EMPTY),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
-	 * Save tenant-specific settings and start OAuth flow
+	 * ActivePieces integration remember state API call
 	 */
-	async setupAndAuthorize() {
-		if (this.form.invalid) {
-			this._toastrService.error(
-				this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.INVALID_FORM'),
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+	private _checkRememberState() {
+		if (!this.organization || !this.rememberState) {
 			return;
 		}
 
-		if (!this.organization) {
-			this.loading = false;
+		const { id: organizationId, tenantId } = this.organization;
+		this._integrationsService
+			.getIntegrationByOptions({
+				name: IntegrationEnum.ACTIVE_PIECES,
+				organizationId,
+				tenantId
+			})
+			.pipe(
+				filter((integration: IIntegrationTenant) => !!integration && !!integration.id),
+				tap((integration: IIntegrationTenant) => {
+					if (!integration?.id) return;
+					this._redirectToActivepiecesIntegration(integration.id);
+				}),
+				catchError(() => EMPTY),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Save tenant settings and start OAuth flow
+	 * POST /integration-tenant
+	 */
+	setupAndAuthorize() {
+		if (this.form.invalid || !this.organization) {
+			this._toastrService.error('Please fill all required fields correctly');
 			return;
 		}
 
+		this.loading = true;
 		const { id: organizationId, tenantId } = this.organization;
 		const formValues = this.form.value;
 
 		// Prepare settings array for integration tenant
 		const settings = Object.keys(formValues)
-			.filter((key) => formValues[key]) // Only include non-empty values
+			.filter((key) => formValues[key])
 			.map((key) => ({
 				settingsName: key,
 				settingsValue: formValues[key]
@@ -152,35 +159,23 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 
 		const integrationTenantInput = {
 			name: IntegrationEnum.ACTIVE_PIECES,
-			integration: IntegrationEnum.ACTIVE_PIECES,
 			tenantId,
 			organizationId,
 			settings
 		};
 
-		this.loading = true;
-
-		// First, save the tenant settings
 		this._integrationTenantService
 			.create(integrationTenantInput)
 			.pipe(
 				tap(() => {
-					this._toastrService.success(
-						this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.SUCCESS.SETTINGS_SAVED'),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
-					);
+					this._toastrService.success('Settings saved successfully');
+					this.hasTenantSettings = true;
 				}),
-				switchMap(() => this.startAuthorization()),
+				switchMap(() => this._startAuthorization()),
 				catchError((error) => {
-					this._toastrService.error(
-						this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.SETUP_FAILED'),
-						this.getTranslation('TOASTR.TITLE.ERROR')
-					);
-					console.error('Error setting up ActivePieces integration:', error);
-					return EMPTY;
-				}),
-				finalize(() => {
+					this._toastrService.error('Failed to save settings: ' + error.message);
 					this.loading = false;
+					return EMPTY;
 				}),
 				untilDestroyed(this)
 			)
@@ -189,32 +184,45 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 
 	/**
 	 * Start OAuth authorization flow (if tenant settings already exist)
+	 * GET /integration/activepieces/authorize?organizationId={orgId}
 	 */
 	startAuthorization() {
+		this.loading = true;
+		this._startAuthorization()
+			.pipe(
+				catchError((error) => {
+					this._toastrService.error('Failed to start authorization: ' + error.message);
+					this.loading = false;
+					return EMPTY;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Internal method to start authorization
+	 */
+	private _startAuthorization() {
 		if (!this.organization) {
-			this.loading = false;
 			return EMPTY;
 		}
 
-		this.loading = true;
-
+		// GET /integration/activepieces/authorize?organizationId={orgId}
 		return this._activepiecesService.authorize(this.organization.id).pipe(
-			tap((response: { authorizationUrl: string }) => {
+			tap((response: { authorizationUrl: string; state: string }) => {
 				// Redirect to ActivePieces OAuth page
 				window.location.href = response.authorizationUrl;
-			}),
-			catchError((error) => {
-				this._toastrService.error(
-					this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.START_AUTHORIZATION'),
-					this.getTranslation('TOASTR.TITLE.ERROR')
-				);
-				console.error('Error starting authorization:', error);
-				return EMPTY;
-			}),
-			finalize(() => {
-				this.loading = false;
-			}),
-			untilDestroyed(this)
+			})
 		);
 	}
+
+	/**
+	 * Redirect to ActivePieces integration page
+	 */
+	private _redirectToActivepiecesIntegration(integrationId: string) {
+		this._router.navigate(['pages/integrations/activepieces', integrationId]);
+	}
+
+	ngOnDestroy(): void {}
 }
