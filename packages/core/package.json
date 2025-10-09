@@ -158,7 +158,7 @@
 		"nestjs-cls": "^5.4.3",
 		"nestjs-i18n": "^10.5.1",
 		"node-fetch": "^2.6.7",
-		"nodemailer": "^7.0.7",
+		"nodemailer": "^7.0.9",
 		"nodemailer-handlebars": "^1.0.1",
 		"opentelemetry-instrumentation-typeorm": "^0.40.0",
 		"passport": "^0.7.0",
