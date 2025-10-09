@@ -1,0 +1,87 @@
+name: Deploy MCP to DigitalOcean Stage
+
+on:
+  workflow_run:
+    workflows: ["Build and Publish Gauzy MCP Image"]
+    branches: [develop]
+    types:
+      - completed
+
+jobs:
+  deploy-mcp-stage:
+    runs-on: buildjet-4vcpu-ubuntu-2204
+
+    environment: stage
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-gauzy
+
+      - name: Generate TLS Secrets for MCP Stage
+        run: |
+          rm -f ${HOME}/ingress.mcp.crt ${HOME}/ingress.mcp.key
+          echo ${{ secrets.INGRESS_API_CERT }} | base64 --decode > ${HOME}/ingress.mcp.crt
+          echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > ${HOME}/ingress.mcp.key
+          kubectl create secret tls mcp.gauzy.co-tls --save-config --dry-run=client --cert=${HOME}/ingress.mcp.crt --key=${HOME}/ingress.mcp.key -o yaml | kubectl apply -f -
+
+      - name: Apply k8s manifests changes in DigitalOcean k8s cluster (if any)
+        run: |
+          envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.mcp.stage.yaml | kubectl --context do-sfo2-k8s-gauzy apply -f -
+        env:
+          # MCP Server Configuration
+          MCP_TRANSPORT: "${{ secrets.MCP_TRANSPORT }}"
+          MCP_SERVER_MODE: "${{ secrets.MCP_SERVER_MODE }}"
+          MCP_HTTP_PORT: "${{ secrets.MCP_HTTP_PORT }}"
+          MCP_HTTP_HOST: "${{ secrets.MCP_HTTP_HOST }}"
+          MCP_WS_PORT: "${{ secrets.MCP_WS_PORT }}"
+          MCP_WS_HOST: "${{ secrets.MCP_WS_HOST }}"
+
+          # Security and CORS
+          MCP_CORS_ORIGIN: "${{ secrets.MCP_CORS_ORIGIN_STAGE }}"
+          MCP_CORS_CREDENTIALS: "${{ secrets.MCP_CORS_CREDENTIALS }}"
+
+          # Authentication
+          MCP_AUTH_ENABLED: "${{ secrets.MCP_AUTH_ENABLED }}"
+          MCP_AUTH_RESOURCE_URI: "${{ secrets.MCP_AUTH_RESOURCE_URI_STAGE }}"
+          MCP_AUTH_REQUIRED_SCOPES: "${{ secrets.MCP_AUTH_REQUIRED_SCOPES }}"
+          MCP_AUTH_JWT_AUDIENCE: "${{ secrets.MCP_AUTH_JWT_AUDIENCE }}"
+          MCP_AUTH_JWT_ISSUER: "${{ secrets.MCP_AUTH_JWT_ISSUER }}"
+          MCP_AUTH_JWT_ALGORITHMS: "${{ secrets.MCP_AUTH_JWT_ALGORITHMS }}"
+          MCP_AUTH_JWT_JWKS_URI: "${{ secrets.MCP_AUTH_JWT_JWKS_URI }}"
+
+          # Session Management
+          MCP_SESSION_ENABLED: "${{ secrets.MCP_SESSION_ENABLED }}"
+          MCP_SESSION_COOKIE_NAME: "${{ secrets.MCP_SESSION_COOKIE_NAME }}"
+          MCP_SESSION_TTL: "${{ secrets.MCP_SESSION_TTL }}"
+          MCP_AUTH_SESSION_SECRET: "${{ secrets.MCP_AUTH_SESSION_SECRET_STAGE }}"
+
+          # Rate Limiting
+          THROTTLE_ENABLED: "${{ secrets.THROTTLE_ENABLED }}"
+          THROTTLE_TTL: "${{ secrets.THROTTLE_TTL }}"
+          THROTTLE_LIMIT: "${{ secrets.THROTTLE_LIMIT }}"
+
+          # Gauzy API Integration
+          API_BASE_URL: "${{ secrets.API_BASE_URL_STAGE }}"
+          GAUZY_AUTH_EMAIL: "${{ secrets.GAUZY_AUTH_EMAIL_STAGE }}"
+          GAUZY_AUTH_PASSWORD: "${{ secrets.GAUZY_AUTH_PASSWORD_STAGE }}"
+          GAUZY_AUTO_LOGIN: "${{ secrets.GAUZY_AUTO_LOGIN }}"
+
+          # Redis (if needed)
+          REDIS_URL: "${{ secrets.REDIS_URL }}"
+
+      # we need this step because for now we just use :latest tag
+      # note: for production we will use different strategy later
+      - name: Restart Pods to pick up :latest tag version
+        run: |
+          kubectl --context do-sfo2-k8s-gauzy rollout restart deployment/gauzy-mcp-stage

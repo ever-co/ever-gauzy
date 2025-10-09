@@ -93,30 +93,21 @@ WORKDIR /srv/gauzy-mcp
 
 COPY --chown=node:node apps/mcp/package.json ./apps/mcp/
 COPY --chown=node:node packages/mcp-server/package.json ./packages/mcp-server/
-
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn cache clean
 
-
-FROM dependencies AS proddependencies
-
-RUN rm -rf /srv/gauzy-mcp/node_modules
-
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && yarn cache clean
+COPY --chown=node:node apps/mcp ./apps/mcp
+COPY --chown=node:node packages/mcp-server ./packages/mcp-server
 
 # BUILD
-FROM node:20.18.1-alpine3.19 AS build
+FROM dependencies AS build
 
 WORKDIR /srv/gauzy-mcp
 
 # Copy the node_modules from the dependencies stage
-COPY --chown=node:node --from=dependencies /srv/gauzy-mcp/node_modules ./node_modules
-COPY --chown=node:node --from=dependencies /srv/gauzy-mcp/package.json ./package.json
-COPY --chown=node:node apps/mcp ./apps/mcp
-COPY --chown=node:node packages/mcp-server ./packages/mcp-server
 COPY --chown=node:node tsconfig.base.json tsconfig.json ./
-COPY --chown=node:node nx.json ./
+COPY --chown=node:node nx.json lerna.json ./
 
 ARG NODE_OPTIONS
 
@@ -124,19 +115,27 @@ ENV NX_NO_CLOUD=true
 ENV CI=true
 
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=60000"}
-ENV NODE_ENV=${NODE_ENV}
-ENV DEMO=${DEMO:-false}
+ENV NODE_ENV=production
 ENV IS_DOCKER=true
 
 RUN rm -rf /srv/gauzy-mcp/dist
 
-# Ensure tslib is available for the build
-RUN yarn add tslib@^2.6.2 --dev
-
 RUN yarn build:mcp:prod
 
+# Only prod dependencies
+FROM node:20.18.1-alpine3.19 AS proddependencies
+
+USER node:node
+
+WORKDIR /srv/gauzy-mcp
+
+COPY --chown=node:node --from=build /srv/gauzy-mcp/dist .
+COPY --chown=node:node lerna.json package.json yarn.lock ./
+
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && yarn cache clean
+
 # PROD
-FROM node:20.18.1-alpine3.19 AS production
+FROM proddependencies AS production
 
 WORKDIR /srv/gauzy-mcp
 
@@ -223,10 +222,7 @@ ENV MCP_WS_SESSION_ENABLED=${MCP_WS_SESSION_ENABLED:-true}
 ENV MCP_WS_SESSION_COOKIE_NAME=${MCP_WS_SESSION_COOKIE_NAME:-mcp-ws-session-id}
 ENV MCP_WS_TRUSTED_PROXIES=${MCP_WS_TRUSTED_PROXIES:-192.168.1.1,10.0.0.1}
 
-COPY --chown=node:node --from=proddependencies /srv/gauzy-mcp/node_modules /srv/gauzy-mcp/node_modules
-COPY --chown=node:node --from=build /srv/gauzy-mcp/dist .
-
 EXPOSE ${MCP_HTTP_PORT}
 EXPOSE ${MCP_WS_PORT}
 
-CMD ["node", "apps/mcp/main.js"]
+CMD ["node", "apps/mcp/src/index.js"]
