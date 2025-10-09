@@ -87,6 +87,7 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 	settingsContextMenu: NbMenuItem[];
 	columns: string[] = [];
 	perPage = 10;
+	tempPerPage = this.perPage;
 	histories: IInvoiceEstimateHistory[] = [];
 	invoiceTabsEnum = InvoiceTabsEnum;
 	permissionsEnum = PermissionsEnum;
@@ -95,7 +96,7 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 	currentUser: IUser;
 	isShouldShowPagination = false;
 
-	private lastSavePerPage = 10;
+	private lastSavePerPage = this.perPage;
 
 	private readonly _refresh$: Subject<void> = new Subject();
 
@@ -728,7 +729,8 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 	}
 
 	showPerPage() {
-		if (this.perPage && this.isPerPageValid()) {
+		if (this.tempPerPage && this.isPerPageValid()) {
+			this.perPage = this.tempPerPage;
 			this.setPagination({
 				...this.getPagination(),
 				itemsPerPage: this.perPage
@@ -740,7 +742,7 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 	}
 
 	isPerPageValid(): boolean {
-		const value = Number(this.perPage);
+		const value = Number(this.tempPerPage);
 		return Number.isInteger(value) && value > 0 && value <= 100;
 	}
 

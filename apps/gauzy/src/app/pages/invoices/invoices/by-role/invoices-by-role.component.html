@@ -504,7 +504,15 @@
 				<span class="label per-page-label" *ngIf="isEstimate">
 					{{ 'INVOICES_PAGE.ESTIMATES_PER_PAGE' | translate }}
 				</span>
-				<input class="per-page-input" [(ngModel)]="perPage" type="number" nbInput min="1" step="1" max="100" />
+				<input
+					class="per-page-input"
+					[(ngModel)]="tempPerPage"
+					type="number"
+					nbInput
+					min="1"
+					step="1"
+					max="100"
+				/>
 				<div *ngIf="!isPerPageValid()" class="invalid-feedback d-block">
 					{{ 'FORM.ERROR.INVALID_WHOLE_NUMBER' | translate }}
 				</div>
