@@ -5,6 +5,10 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+  packages: write
+
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
