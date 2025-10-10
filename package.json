@@ -404,7 +404,7 @@
 		"build:gauzy-mcp-server:linux:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run build:gauzy-mcp-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=38.2.2 build --linux --publish=always --project dist/apps/server-mcp",
 		"build:gauzy-mcp-server:linux:release:gh": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=60000 yarn run build:gauzy-mcp-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=38.2.2 build --linux --publish=always --project dist/apps/server-mcp",
 		"build:gauzy-mcp-server:mac": "yarn run build:gauzy-mcp-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=38.2.2 build --mac --project dist/apps/server-mcp",
-		"build:gauzy-mcp-server:mac:release": "yarn run build:gauzy-mcp-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=38.2.2 build --mac --publish=always --project dist/apps/server-mcp",
+		"build:gauzy-mcp-server:mac:release": "yarn run build:gauzy-mcp-server && yarn run patch:gauzy-mcp-server:local:deps && npm config set cache .cache && yarn electron-builder -c.electronVersion=38.2.2 build --mac --publish=always --project dist/apps/server-mcp",
 		"copy-files-i18n-mcp-server": "yarn run download:translations --desktop=server-mcp",
 		"copy-files-gauzy-mcp-server": "copyfiles -f packages/core/src/**/*.gql dist/apps/server-mcp/data/",
 		"patch:gauzy-mcp-server:local:deps": "yarn run local:deps --dist=dist --scope=@gauzy --apps=server-mcp",
