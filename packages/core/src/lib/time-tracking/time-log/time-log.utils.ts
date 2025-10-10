@@ -161,15 +161,10 @@ export function calculateTimeLogDurationInRange(
 	if (clippedEnd.isBefore(clippedStart)) return 0;
 
 	// Calculate duration in seconds
-	let duration = clippedEnd.diff(clippedStart, 'seconds');
-
-	// Adjust duration for partial logs (not COMPLETE), subtract 1 second to ensure correct rounding
-	if (log.partialStatus !== TimeLogPartialStatus.COMPLETE) {
-		duration += 5;
-	}
+	const duration = clippedEnd.diff(clippedStart, 'seconds');
 
 	// Ensure duration is never negative
-	return Math.max(0, duration);
+	return Math.max(0, Math.trunc(duration));
 }
 
 /**

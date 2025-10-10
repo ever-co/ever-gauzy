@@ -2,6 +2,7 @@ import { Injectable, ConflictException, Logger } from '@nestjs/common';
 import * as moment from 'moment-timezone';
 import { ITimeLog, IEmployee, IWeeklyLimitStatus, TimeErrorsEnum } from '@gauzy/contracts';
 import { StatisticService } from '../statistic/statistic.service';
+import { RequestContext } from '../../core/context';
 
 @Injectable()
 export class TimerWeeklyLimitService {
@@ -26,6 +27,10 @@ export class TimerWeeklyLimitService {
 			timeZone = 'UTC';
 			throw new Error(`TimeZone is undefined`);
 		}
+		const currentUser = RequestContext.currentUser();
+		const isCurrentEmployee = employee.id === currentUser.employeeId;
+		const isOnlyMe = isCurrentEmployee;
+
 		const refMomentLocal = moment.utc(refDate).tz(timeZone);
 
 		const weekStartLocal = refMomentLocal.clone().startOf('isoWeek');
@@ -39,7 +44,7 @@ export class TimerWeeklyLimitService {
 			employeeId: employee.id,
 			startDate: weekStartUTC,
 			endDate: weekEndUTC,
-			onlyMe: true
+			onlyMe: isOnlyMe
 		});
 
 		const remainWeeklyTime = Math.trunc(employee.reWeeklyLimit * 3600) - statistics.duration;

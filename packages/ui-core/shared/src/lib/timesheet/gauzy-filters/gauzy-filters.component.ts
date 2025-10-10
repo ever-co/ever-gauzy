@@ -150,6 +150,7 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 			.pipe(
 				debounceTime(400),
 				tap(() => (this.hasFilterApplies = this.hasFilter())),
+				tap(() => this.logs$.next(true)),
 				tap(() => this.filtersChange.emit(this.arrangedFilters())),
 				untilDestroyed(this)
 			)
@@ -240,7 +241,14 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	 */
 	async getCounts(): Promise<void> {
 		try {
-			const request: IGetCountsStatistics = this.payloads$.getValue();
+			let request: IGetCountsStatistics = this.payloads$.getValue();
+			request = {
+				...request,
+				source: request.source || this.filters.source || [],
+				logType: request.logType || this.filters.logType || [],
+				employmentTypes: request.employmentTypes || this.filters.employmentTypes || [],
+				activityLevel: request.activityLevel || this.filters.activityLevel || ActivityLevel
+			};
 			this.counts = await this.timesheetStatisticsService.getCounts(request);
 		} catch (error) {
 			this.toastrService.error(error.message || 'An error occurred while fetching counts.');

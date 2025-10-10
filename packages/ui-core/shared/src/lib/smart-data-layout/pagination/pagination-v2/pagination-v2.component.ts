@@ -96,6 +96,10 @@ export class PaginationV2Component implements OnChanges {
 				)
 				.subscribe();
 		}
+
+		if (changes['isShouldShow'] && this._count > 0 && this._source) {
+			this._initPages();
+		}
 	}
 
 	public get isShouldShow(): boolean {

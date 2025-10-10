@@ -424,11 +424,14 @@ export class StatisticService {
 			moment.utc(endDate || moment().endOf('isoWeek'))
 		);
 
-		// Fetch all time logs matching filters
-		const timeLogs = await this.typeOrmTimeLogRepository
-			.createQueryBuilder('time_log')
+		// Create a query builder for the TimeLog entity
+		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
+
+		// Base conditions
+		query
 			.where('time_log.tenantId = :tenantId', { tenantId })
 			.andWhere('time_log.organizationId = :organizationId', { organizationId })
+			.andWhere('time_log.stoppedAt >= time_log.startedAt')
 			.andWhere(
 				new Brackets((qb) => {
 					// Include logs where start OR stop falls inside the selected date range
@@ -438,16 +441,35 @@ export class StatisticService {
 						endDate: end
 					});
 				})
-			)
-			.andWhere('time_log.stoppedAt >= time_log.startedAt') // Ignore invalid logs
-			.andWhere(isNotEmpty(employeeIds) ? 'time_log.employeeId IN (:...employeeIds)' : '1=1', { employeeIds })
-			.andWhere(isNotEmpty(projectIds) ? 'time_log.projectId IN (:...projectIds)' : '1=1', { projectIds })
-			.andWhere(isNotEmpty(teamIds) ? 'time_log.organizationTeamId IN (:...teamIds)' : '1=1', { teamIds })
-			.andWhere(isNotEmpty(logType) ? 'time_log.logType IN (:...logType)' : '1=1', { logType })
-			.andWhere(isNotEmpty(source) ? 'time_log.source IN (:...source)' : '1=1', { source })
-			.getMany();
+			);
 
-		// Sum up durations using the helper (handles overlaps, timezone, range boundaries)
+		// Apply filters conditionally
+		if (isNotEmpty(employeeIds)) {
+			query.andWhere('time_log.employeeId IN (:...employeeIds)', { employeeIds });
+		}
+
+		if (isNotEmpty(projectIds)) {
+			query.andWhere('time_log.projectId IN (:...projectIds)', { projectIds });
+		}
+
+		if (isNotEmpty(teamIds)) {
+			query.andWhere('time_log.organizationTeamId IN (:...teamIds)', { teamIds });
+		}
+
+		if (isNotEmpty(logType)) {
+			query.andWhere('time_log.logType IN (:...logType)', { logType });
+		}
+
+		if (isNotEmpty(source)) {
+			query.andWhere('time_log.source IN (:...source)', { source });
+		}
+
+		// Execute query
+		const timeLogs = await query.getMany();
+
+		this.logger.verbose(`Period Time Logs: ${JSON.stringify(timeLogs.map((t) => t.id))}`);
+
+		// Calculate total duration using helper
 		const totalDuration = calculateTotalDuration(timeLogs, start, end, request?.timeZone);
 
 		return { duration: totalDuration };
