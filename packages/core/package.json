@@ -33,6 +33,7 @@
 		"migration:create": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/lib/database/migration.ts migration:create"
 	},
 	"dependencies": {
+		"@scalar/nestjs-api-reference": "^1.0.3",
 		"@apollo/client": "^3.13.8",
 		"@apollo/server": "^4.12.0",
 		"@apollo/subgraph": "^2.10.2",
