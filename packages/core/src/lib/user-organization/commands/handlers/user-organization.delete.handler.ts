@@ -2,7 +2,6 @@ import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import { RolesEnum, ID, IRole } from '@gauzy/contracts';
-import { ConfigService } from '@gauzy/config';
 import { RequestContext } from '../../../core/context';
 import { UserOrganizationDeleteCommand } from '../user-organization.delete.command';
 import { UserOrganization } from '../../user-organization.entity';
@@ -23,8 +22,7 @@ export class UserOrganizationDeleteHandler implements ICommandHandler<UserOrgani
 	constructor(
 		private readonly _userOrganizationService: UserOrganizationService,
 		private readonly _userService: UserService,
-		private readonly _roleService: RoleService,
-		private readonly _configService: ConfigService
+		private readonly _roleService: RoleService
 	) {}
 
 	/**

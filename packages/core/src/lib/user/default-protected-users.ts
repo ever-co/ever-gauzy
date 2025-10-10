@@ -24,7 +24,7 @@ export function getDefaultProtectedUserEmails(): string[] {
 	];
 
 	// Filter out undefined/null values and convert to lowercase for comparison
-	return protectedEmails.filter((email) => !!email?.trim()).map((email) => email.toLowerCase());
+	return protectedEmails.filter((email) => !!email?.trim()).map((email) => email.trim().toLowerCase());
 }
 
 /**
@@ -46,7 +46,7 @@ export function isDefaultProtectedUser(email: string): boolean {
  * Validates if a user can be deleted in the current environment.
  * Throws ForbiddenException if user is protected in demo mode.
  *
- * @param user - The user to validate
+ * @param email - The user email to validate
  * @throws ForbiddenException if user is protected in demo
  */
 export function validateUserDeletion(email: string): void {
