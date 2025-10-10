@@ -1,4 +1,4 @@
-import { UnauthorizedException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import { RolesEnum, ID, IRole } from '@gauzy/contracts';
