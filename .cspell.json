@@ -716,7 +716,8 @@
 		"dtos",
 		"soundshot",
 		"soundshots",
-		"runtimes"
+		"runtimes",
+		"localtime"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

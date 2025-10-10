@@ -6,6 +6,7 @@ export interface ITimerCallbackPayload {
 	data: {
 		startedAt: string;
 		stoppedAt: string;
+		isStopped?: boolean;
 	}
 }
 

@@ -5,7 +5,8 @@ import {
 	AuthWindow,
 	createSettingsWindow,
 	createServerWindow,
-	ScreenCaptureNotification
+	ScreenCaptureNotification,
+	AlwaysOn
 } from '@gauzy/desktop-window';
 import { app, BrowserWindow, screen } from 'electron';
 import { resolveHtmlPath, getInitialConfig } from './util';
@@ -20,6 +21,7 @@ class AppWindow {
 	settingWindow: BrowserWindow | null;
 	logWindow: BrowserWindow | null;
 	notificationWindow: ScreenCaptureNotification | null;
+	alwaysOnWindow: AlwaysOn | null;
 	private static instance: AppWindow;
 	constructor(rootPath: string) {
 		if (!AppWindow.instance) {
@@ -185,7 +187,7 @@ class AppWindow {
 				const initialWidth = Math.min(desiredWidth, width);
 				const initialHeight = Math.min(desiredHeight, height);
 				this.logWindow.setSize(initialWidth, initialHeight);
-				this.logWindow.setMinimumSize(Math.min(800, width), Math.min(600, height));
+				this.logWindow.setMinimumSize(Math.min(initialWidth, width), Math.min(initialHeight, height));
 				this.logWindow.setResizable(true);
 				this.logWindow.on('close', () => {
 					this.logWindow.hide();
@@ -198,6 +200,25 @@ class AppWindow {
 		} catch (error) {
 			console.error('Failed to initialize log window', error);
 			throw new Error(`Log window initialization failed ${error.message}`);
+		}
+	}
+
+	async initAlwaysOnWindow(): Promise<void> {
+		try {
+			if (!this.alwaysOnWindow || this.alwaysOnWindow?.browserWindow?.isDestroyed()) {
+				this.alwaysOnWindow = new AlwaysOn(this.getUiPath('always-on'), this.getPreloadPath(), true, true);
+				this.alwaysOnWindow.browserWindow.removeAllListeners('close');
+				this.alwaysOnWindow.browserWindow.on('close', () => {
+					if (!this.alwaysOnWindow?.browserWindow?.isDestroyed()) {
+						this.alwaysOnWindow?.browserWindow?.destroy();
+					}
+
+					this.alwaysOnWindow = null;
+				});
+			}
+		} catch (error) {
+			console.error('Failed to initialize always-on window', error);
+			throw new Error(`Always-on window initialization failed: ${error.message}`);
 		}
 	}
 
@@ -217,7 +238,7 @@ class AppWindow {
 	}
 
 	closeSettingWindow() {
-		if (this.settingWindow && !this.settingWindow?.isDestroyed) {
+		if (this.settingWindow && !this.settingWindow?.isDestroyed()) {
 			this.settingWindow.close();
 			this.settingWindow = null;
 			this.dockHideHandle();
@@ -225,7 +246,7 @@ class AppWindow {
 	}
 
 	closeLogWindow() {
-		if (this.logWindow && !this.logWindow.isDestroyed) {
+		if (this.logWindow && !this.logWindow.isDestroyed()) {
 			this.logWindow.close();
 			this.logWindow = null;
 		}

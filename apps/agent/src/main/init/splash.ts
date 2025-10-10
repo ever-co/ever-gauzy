@@ -5,6 +5,7 @@ import { delaySync, getAuthConfig } from '../util';
 import { AppError } from '@gauzy/desktop-lib';
 const appRootPath: string = path.join(__dirname, '../..');
 import { ApiService } from '../api';
+import * as isOnline from 'is-online';
 
 async function checkAndGetPermissionAccess() {
 	if (process.platform === 'darwin') {
@@ -19,6 +20,10 @@ async function checkAndGetPermissionAccess() {
 
 async function getEmployeeSetting() {
 	try {
+		const online = await isOnline({ timeout: 1200 }).catch(() => false);
+		if (!online) {
+			return;
+		}
 		const authConfig = getAuthConfig();
 		if (authConfig?.token && authConfig?.user?.employee?.id) {
 			const apiService = ApiService.getInstance();

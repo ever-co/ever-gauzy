@@ -183,4 +183,18 @@ export class TimerDAO implements DAO<TimerTO> {
 			console.log('[dao]: ', 'timers count : ', error);
 		}
 	}
+
+	public async todayDuration(user: UserTO): Promise<Array<{ today_duration_seconds: string | number }>> {
+		return await this._provider
+			.connection<TimerTO>(TABLE_NAME_TIMERS)
+			.where('employeeId', user.employeeId)
+			.whereNotNull('startedAt')
+			.whereNotNull('stoppedAt')
+			.whereRaw("date(startedAt/1000, 'unixepoch', 'localtime') = date('now', 'localtime')")
+			.sum({
+				today_duration_seconds: this._provider.connection.client.raw(
+					"(stoppedAt/1000 - startedAt/1000)"
+				)
+			});
+	}
 }
