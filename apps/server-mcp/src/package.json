@@ -79,7 +79,6 @@
             "extendInfo": {}
         },
         "win": {
-            "publisherName": "Ever",
             "target": [
                 {
                     "target": "nsis",
