@@ -39,7 +39,7 @@ export function isDefaultProtectedUser(email: string): boolean {
 	}
 
 	const protectedEmails = getDefaultProtectedUserEmails();
-	return protectedEmails.includes(email.toLowerCase());
+	return protectedEmails.includes(email.trim().toLowerCase());
 }
 
 /**
