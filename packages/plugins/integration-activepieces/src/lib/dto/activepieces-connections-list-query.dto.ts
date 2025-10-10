@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional, IsEnum, Min, Max, IsInt } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { ActivepiecesConnectionScope, ActivepiecesConnectionStatus } from '../activepieces.type';
+import { ActivepiecesConnectionScope, ActivepiecesConnectionStatus } from '@gauzy/contracts';
 
 export class ActivepiecesConnectionsListQueryDto {
 	@ApiProperty({

@@ -23,7 +23,7 @@ import {
 	IActivepiecesMcpServer,
 	IActivepiecesMcpServerPublic,
 	IActivepiecesMcpServersListResponsePublic
-} from './activepieces.type';
+} from '@gauzy/contracts';
 
 @ApiTags('ActivePieces MCP Server Integration')
 @UseGuards(TenantPermissionGuard)
@@ -90,7 +90,7 @@ export class ActivepiecesMcpController {
 
 			// Remove sensitive token field from each server
 			return {
-				data: result.data.map((server) => this.sanitizeMcpServer(server)),
+				data: result.data.map((server: any) => this.sanitizeMcpServer(server)),
 				next: result.next,
 				previous: result.previous
 			};

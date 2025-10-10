@@ -1,0 +1,38 @@
+{
+	"name": "plugin-integration-activepieces-ui",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/integration-activepieces-ui/src",
+	"prefix": "lib",
+	"projectType": "library",
+	"tags": [],
+	"implicitDependencies": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/angular:package",
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"options": {
+				"project": "packages/plugins/integration-activepieces-ui/ng-package.json",
+				"tsConfig": "packages/plugins/integration-activepieces-ui/tsconfig.json"
+			},
+			"configurations": {
+				"production": {
+					"tsConfig": "packages/plugins/integration-activepieces-ui/tsconfig.lib.prod.json"
+				},
+				"development": {
+					"tsConfig": "packages/plugins/integration-activepieces-ui/tsconfig.lib.json"
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/integration-activepieces-ui/jest.config.ts"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}
