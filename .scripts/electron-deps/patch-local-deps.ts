@@ -61,15 +61,18 @@ function listPackageDirs(root: string) {
 		if (exists(pkgJson(dir))) {
 			pkgDirs.push(dir);
 		} else {
-			const nestPkg = listPackageDirs(path.join(dir));
+			const nestPkg = listPackageDirs(dir);
 			pkgDirs.push(...nestPkg);
 		}
 	}
 	return pkgDirs.filter((pkg) => requiredDeps(pkg));
 }
 
-function findLocalPackage(root: string, packageName: string) {
+function findLocalPackage(root: string, packageName: string): string | null {
 	let pathPkg: string | null = null;
+	if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) {
+		return null;
+	}
 	const dirNames = fs.readdirSync(root);
 	for (const name of dirNames) {
 		const pathName = path.join(root, name);
@@ -139,7 +142,7 @@ function patchOne(pkgDir: string) {
 	}
 
 	if (changed) {
-		console.log('patched ', pathFile);
+		console.log(`patched ${json.name} at ${pathFile}`);
 	}
 
 	return changed;
