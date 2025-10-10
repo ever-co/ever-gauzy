@@ -38,7 +38,7 @@ import { TaskService } from '../tasks/task.service';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
-import { isDefaultProtectedUser, validateUserDeletion } from './default-protected-users';
+import { validateUserDeletion } from './default-protected-users';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
