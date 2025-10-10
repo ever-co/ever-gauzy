@@ -1,4 +1,5 @@
 import { environment } from '@gauzy/config';
+import { ForbiddenException } from '@nestjs/common';
 
 /**
  * Get the list of default user emails that should be protected from deletion in demo environment
@@ -7,6 +8,10 @@ import { environment } from '@gauzy/config';
  * @returns Array of protected user emails
  */
 export function getDefaultProtectedUserEmails(): string[] {
+	// Guard against missing or undefined demo credential config
+	if (!environment.demoCredentialConfig) {
+		return [];
+	}
 	const protectedEmails: string[] = [
 		// Default Super Admin
 		environment.demoCredentialConfig.superAdminEmail,
@@ -19,7 +24,7 @@ export function getDefaultProtectedUserEmails(): string[] {
 	];
 
 	// Filter out undefined/null values and convert to lowercase for comparison
-	return protectedEmails.filter((email) => email != null && email !== '').map((email) => email.toLowerCase());
+	return protectedEmails.filter((email) => !!email?.trim()).map((email) => email.toLowerCase());
 }
 
 /**
@@ -35,4 +40,20 @@ export function isDefaultProtectedUser(email: string): boolean {
 
 	const protectedEmails = getDefaultProtectedUserEmails();
 	return protectedEmails.includes(email.toLowerCase());
+}
+
+/**
+ * Validates if a user can be deleted in the current environment.
+ * Throws ForbiddenException if user is protected in demo mode.
+ *
+ * @param user - The user to validate
+ * @throws ForbiddenException if user is protected in demo
+ */
+export function validateUserDeletion(email: string): void {
+	if (!!environment.demo && isDefaultProtectedUser(email)) {
+		throw new ForbiddenException(
+			`Cannot delete default user account "${email}" in demo environment. ` +
+				`This account is protected to ensure demo functionality remains available for all visitors.`
+		);
+	}
 }

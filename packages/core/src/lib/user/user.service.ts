@@ -38,7 +38,7 @@ import { TaskService } from '../tasks/task.service';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
-import { isDefaultProtectedUser } from './default-protected-users';
+import { isDefaultProtectedUser, validateUserDeletion } from './default-protected-users';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -588,14 +588,8 @@ export class UserService extends TenantAwareCrudService<User> {
 			throw new ForbiddenException('User not found for this ID!');
 		}
 
-		// In demo environment, prevent deletion of default users (check early to avoid unnecessary queries)
-		// This ensures essential demo accounts remain available
-		if (!!this._configService.get('demo') && isDefaultProtectedUser(user.email)) {
-			throw new ForbiddenException(
-				`Cannot delete default user account "${user.email}" in demo environment. ` +
-				`This account is protected to ensure demo functionality remains available for all visitors.`
-			);
-		}
+		// In demo environment, prevent deletion of default users
+		validateUserDeletion(user.email);
 
 		try {
 			// TODO: Unassign all the task assigned to this user

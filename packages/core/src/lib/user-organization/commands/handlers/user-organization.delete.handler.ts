@@ -9,7 +9,7 @@ import { UserOrganization } from '../../user-organization.entity';
 import { UserService } from '../../../user/user.service';
 import { UserOrganizationService } from '../../user-organization.services';
 import { RoleService } from '../../../role/role.service';
-import { isDefaultProtectedUser } from '../../../user/default-protected-users';
+import { validateUserDeletion } from '../../../user/default-protected-users';
 
 /**
  * 1. Remove user from given organization if user belongs to multiple organizations
@@ -47,14 +47,8 @@ export class UserOrganizationDeleteHandler implements ICommandHandler<UserOrgani
 			relations: { user: { role: true } }
 		});
 
-		// 2. In demo environment, prevent deletion of default users (check early to avoid unnecessary queries)
-		// This ensures essential demo accounts remain available
-		if (!!this._configService.get('demo') && isDefaultProtectedUser(email)) {
-			throw new ForbiddenException(
-				`Cannot delete default user account "${email}" in demo environment. ` +
-					`This account is protected to ensure demo functionality remains available for all visitors.`
-			);
-		}
+		// 2. In demo environment, prevent deletion of default users
+		validateUserDeletion(email);
 
 		// 3. Handle Super Admin Deletion if applicable
 		if (roleName === RolesEnum.SUPER_ADMIN) {
