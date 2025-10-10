@@ -1,13 +1,15 @@
-import { UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { UnauthorizedException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import { RolesEnum, ID, IRole } from '@gauzy/contracts';
+import { ConfigService } from '@gauzy/config';
 import { RequestContext } from '../../../core/context';
 import { UserOrganizationDeleteCommand } from '../user-organization.delete.command';
 import { UserOrganization } from '../../user-organization.entity';
 import { UserService } from '../../../user/user.service';
 import { UserOrganizationService } from '../../user-organization.services';
 import { RoleService } from '../../../role/role.service';
+import { isDefaultProtectedUser } from '../../../user/default-protected-users';
 
 /**
  * 1. Remove user from given organization if user belongs to multiple organizations
@@ -21,7 +23,8 @@ export class UserOrganizationDeleteHandler implements ICommandHandler<UserOrgani
 	constructor(
 		private readonly _userOrganizationService: UserOrganizationService,
 		private readonly _userService: UserService,
-		private readonly _roleService: RoleService
+		private readonly _roleService: RoleService,
+		private readonly _configService: ConfigService
 	) {}
 
 	/**
@@ -36,19 +39,29 @@ export class UserOrganizationDeleteHandler implements ICommandHandler<UserOrgani
 		// 1. Find user and their role to determine deletion handling
 		const {
 			user: {
-				role: { name: roleName }
+				role: { name: roleName },
+				email
 			},
 			userId
 		} = await this._userOrganizationService.findOneByIdString(userOrganizationId, {
 			relations: { user: { role: true } }
 		});
 
-		// 2. Handle Super Admin Deletion if applicable
+		// 2. In demo environment, prevent deletion of default users (check early to avoid unnecessary queries)
+		// This ensures essential demo accounts remain available
+		if (!!this._configService.get('demo') && isDefaultProtectedUser(email)) {
+			throw new ForbiddenException(
+				`Cannot delete default user account "${email}" in demo environment. ` +
+					`This account is protected to ensure demo functionality remains available for all visitors.`
+			);
+		}
+
+		// 3. Handle Super Admin Deletion if applicable
 		if (roleName === RolesEnum.SUPER_ADMIN) {
 			return await this._removeSuperAdmin(userId);
 		}
 
-		// 3. Remove user from organization based on the number of organizations they belong to
+		// 4. Remove user from organization based on the number of organizations they belong to
 		return await this._removeUserFromOrganization(userId, userOrganizationId);
 	}
 
