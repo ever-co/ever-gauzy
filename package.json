@@ -407,6 +407,7 @@
 		"build:gauzy-mcp-server:mac:release": "yarn run build:gauzy-mcp-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=38.2.2 build --mac --publish=always --project dist/apps/server-mcp",
 		"copy-files-i18n-mcp-server": "yarn run download:translations --desktop=server-mcp",
 		"copy-files-gauzy-mcp-server": "copyfiles -f packages/core/src/**/*.gql dist/apps/server-mcp/data/",
+		"patch:gauzy-mcp-server:local:deps": "yarn run local:deps --dist=dist --scope=@gauzy --apps=server-mcp",
 		"quick:build:gauzy-mcp-server": "yarn electron-builder -c.electronVersion=38.2.2 -c.extraMetadata.author.name=Ever build --mac --project dist/apps/server-mcp",
 		"generate:icons:server-mcp": "yarn run generate:icons --desktop=server-mcp",
 		"build:mcp:all": "yarn build:mcp-server && yarn build:mcp && yarn build:server-mcp",

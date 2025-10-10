@@ -22,11 +22,6 @@
     "bin": {
         "gauzy-mcp": "./main.js"
     },
-    "workspaces": {
-        "packages": [
-            "../../../dist/packages/mcp-server"
-        ]
-    },
     "build": {
         "npmArgs": [
             "--production"

@@ -18,7 +18,7 @@ const isDry = argv.includes('--dry');
 const appDir = (name: string) => path.join(DIST, 'apps', name);
 const pkgJson = (directory: string) => path.join(directory, 'package.json');
 const exists = (pathFile: string) => fs.existsSync(pathFile);
-const getModuleName = (pathFile: string) => {
+const getModuleName = (pathFile: string): string => {
 	const json = JSON.parse(fs.readFileSync(pkgJson(pathFile), 'utf8'));
 	return json?.name;
 }
@@ -92,7 +92,7 @@ function findLocalPackage(root: string, packageName: string) {
 const pkgRoots = ['packages'].map((n) => path.join(DIST, n)).filter(exists);
 
 const packageDir = pkgRoots.flatMap(listPackageDirs);
-const nameToDir = {}
+const nameToDir: Record<string, string> = {}
 for (const dir of packageDir) {
 	const json = JSON.parse(fs.readFileSync(pkgJson(dir), 'utf8'));
 	if (json?.name) nameToDir[json.name] = dir;
@@ -102,10 +102,10 @@ const inScope = (name: string) => Scopes.some((s) => name.startsWith(s));
 
 const relFile = (from: string, to: string) => `file:${path.relative(from, to).split(path.sep).join('/')}`;
 
-function rewriteSection(pkgDir: string, json: IPackage, sections: string[]) {
+function rewriteSection(pkgDir: string, json: IPackage, sections: string[]): boolean {
 	let changed = false;
 	for (const sec of sections) {
-		const deps = json[sec];
+		const deps = json[sec as keyof IPackage] as Record<string, string> | undefined;
 		if (!deps) continue;
 		for (const dep of Object.keys(deps)) {
 			if (inScope(dep)) {
