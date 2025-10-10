@@ -46,7 +46,9 @@ export class UserOrganizationDeleteHandler implements ICommandHandler<UserOrgani
 		});
 
 		// 2. In demo environment, prevent deletion of default users
-		validateUserDeletion(email);
+		if (email) {
+			validateUserDeletion(email);
+		}
 
 		// 3. Handle Super Admin Deletion if applicable
 		if (roleName === RolesEnum.SUPER_ADMIN) {
