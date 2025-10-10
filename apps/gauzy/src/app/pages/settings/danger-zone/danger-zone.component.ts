@@ -12,9 +12,9 @@ import { DangerZoneMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-danger-zone',
-    templateUrl: './danger-zone.component.html',
-    standalone: false
+	selector: 'ga-danger-zone',
+	templateUrl: './danger-zone.component.html',
+	standalone: false
 })
 export class DangerZoneComponent extends TranslationBaseComponent implements OnInit {
 	environment: Environment = environment;
@@ -45,22 +45,22 @@ export class DangerZoneComponent extends TranslationBaseComponent implements OnI
 			.subscribe(async (data) => {
 				if (data) {
 					try {
-						await this.userService
-							.getUserById(this.store.userId)
-							.then((user) => {
-								this.userService.delete(this.store.userId, data.user);
+						const user = await this.userService.getUserById(this.store.userId);
 
-								this.toastrService.success(
-									this.getTranslation('NOTES.DANGER_ZONE.ACCOUNT_DELETED', {
-										username: user.firstName + ' ' + user.lastName
-									})
-								);
+						// Delete user account
+						await this.userService.delete(this.store.userId, data.user);
+
+						// Show success message only after successful deletion
+						this.toastrService.success(
+							this.getTranslation('NOTES.DANGER_ZONE.ACCOUNT_DELETED', {
+								username: user.firstName + ' ' + user.lastName
 							})
-							.then(() => {
-								setTimeout(() => {
-									this.router.navigate(['/auth/register']);
-								}, 2500);
-							});
+						);
+
+						// Redirect to register page after successful deletion
+						setTimeout(() => {
+							this.router.navigate(['/auth/register']);
+						}, 2500);
 					} catch (error) {
 						this.toastrService.danger(
 							this.getTranslation('NOTES.ORGANIZATIONS.DATA_ERROR', {
