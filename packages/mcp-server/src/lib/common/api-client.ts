@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 import { Logger } from '@nestjs/common';
 import { environment } from '../environments/environment';
 import { authManager } from './auth-manager';
-import { sanitizeErrorMessage } from './security-utils';
+import { sanitizeErrorMessage } from '@gauzy/auth';
 
 const logger = new Logger('ApiClient');
 
@@ -113,14 +113,12 @@ export class GauzyApiClient {
 		}
 	}
 
-
 	public static getInstance(): GauzyApiClient {
 		if (!GauzyApiClient.instance) {
 			GauzyApiClient.instance = new GauzyApiClient();
 		}
 		return GauzyApiClient.instance;
 	}
-
 
 	public getBaseUrl(): string {
 		return environment.baseUrl;
@@ -231,7 +229,10 @@ export class GauzyApiClient {
 
 	private logError(method: string, path: string, error: any): void {
 		if (this.isDebug()) {
-			logger.error(`🔴 ${method} ${path} failed`, error instanceof Error ? error.stack : sanitizeErrorMessage(error));
+			logger.error(
+				`🔴 ${method} ${path} failed`,
+				error instanceof Error ? error.stack : sanitizeErrorMessage(error)
+			);
 		}
 	}
 
@@ -295,7 +296,10 @@ export class GauzyApiClient {
 				} catch (error) {
 					// Authenticated endpoint test failed, but basic connectivity works
 					if (this.isDebug()) {
-						logger.warn('Authenticated endpoint test failed:', error instanceof Error ? error.message : 'Unknown error');
+						logger.warn(
+							'Authenticated endpoint test failed:',
+							error instanceof Error ? error.message : 'Unknown error'
+						);
 					}
 				}
 			}

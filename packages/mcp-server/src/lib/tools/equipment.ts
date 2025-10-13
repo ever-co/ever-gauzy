@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { EquipmentSchema, EquipmentTypeEnum, EquipmentStatusEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('EquipmentTools');
-
 
 /**
  * Helper function to convert date fields in equipment data to Date objects
@@ -35,14 +34,27 @@ export const registerEquipmentTools = (server: McpServer) => {
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			search: z.string().optional().describe('Search term for equipment name, model, or serial number'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["assignedTo", "image", "tags", "equipmentSharings"])'),
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["assignedTo", "image", "tags", "equipmentSharings"])'),
 			type: EquipmentTypeEnum.optional().describe('Filter by equipment type'),
 			status: EquipmentStatusEnum.optional().describe('Filter by equipment status'),
 			assignedToEmployeeId: z.string().uuid().optional().describe('Filter by assigned employee ID'),
 			manufacturer: z.string().optional().describe('Filter by manufacturer'),
 			available: z.boolean().optional().describe('Filter by availability (status = AVAILABLE)')
 		},
-		async ({ page = 1, limit = 10, search, relations, type, status, assignedToEmployeeId, manufacturer, available }) => {
+		async ({
+			page = 1,
+			limit = 10,
+			search,
+			relations,
+			type,
+			status,
+			assignedToEmployeeId,
+			manufacturer,
+			available
+		}) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
@@ -124,7 +136,10 @@ export const registerEquipmentTools = (server: McpServer) => {
 		'Get a specific equipment by ID',
 		{
 			id: z.string().uuid().describe('The equipment ID'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["assignedTo", "image", "tags", "equipmentSharings"])')
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["assignedTo", "image", "tags", "equipmentSharings"])')
 		},
 		async ({ id, relations }) => {
 			try {
@@ -325,7 +340,11 @@ export const registerEquipmentTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Equipment deleted successfully', id }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Equipment deleted successfully', id },
+								null,
+								2
+							)
 						}
 					]
 				};

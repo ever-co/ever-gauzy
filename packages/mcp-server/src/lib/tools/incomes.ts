@@ -2,12 +2,10 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
 import { IncomeSchemaFull, CurrenciesEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('IncomeTools');
-
 
 /**
  * Helper function to convert date fields in income data to Date objects
@@ -34,7 +32,10 @@ export const registerIncomeTools = (server: McpServer) => {
 		'get_my_incomes',
 		'Get income records for the current authenticated user',
 		{
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["employee", "organizationContact", "tags"])'),
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["employee", "organizationContact", "tags"])'),
 			findInput: z.object({}).optional().describe('Find input parameters'),
 			filterDate: z.object({}).optional().describe('Date filter parameters')
 		},
@@ -46,7 +47,7 @@ export const registerIncomeTools = (server: McpServer) => {
 					...(filterDate && { filterDate })
 				};
 
-				const response = await apiClient.get('/api/income/me', { 
+				const response = await apiClient.get('/api/income/me', {
 					params: { data: JSON.stringify(data) }
 				});
 
@@ -68,7 +69,7 @@ export const registerIncomeTools = (server: McpServer) => {
 	// Get income count tool
 	server.tool(
 		'get_income_count',
-		"Get income count using available filters",
+		'Get income count using available filters',
 		{
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
 			organizationId: z.string().uuid().optional().describe('Filter by organization ID'),
@@ -108,7 +109,7 @@ export const registerIncomeTools = (server: McpServer) => {
 	// Get paginated incomes tool
 	server.tool(
 		'get_incomes_pagination',
-		"Get paginated list of incomes",
+		'Get paginated list of incomes',
 		{
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
@@ -144,9 +145,12 @@ export const registerIncomeTools = (server: McpServer) => {
 	// Get all incomes tool
 	server.tool(
 		'get_incomes',
-		"Get list of incomes with filtering options",
+		'Get list of incomes with filtering options',
 		{
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["employee", "organizationContact", "tags"])'),
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["employee", "organizationContact", "tags"])'),
 			findInput: z.object({}).optional().describe('Find input parameters'),
 			filterDate: z.object({}).optional().describe('Date filter parameters')
 		},
@@ -158,7 +162,7 @@ export const registerIncomeTools = (server: McpServer) => {
 					...(filterDate && { filterDate })
 				};
 
-				const response = await apiClient.get('/api/income', { 
+				const response = await apiClient.get('/api/income', {
 					params: { data: JSON.stringify(data) }
 				});
 
@@ -206,7 +210,7 @@ export const registerIncomeTools = (server: McpServer) => {
 	// Create income tool
 	server.tool(
 		'create_income',
-		"Create a new income record",
+		'Create a new income record',
 		{
 			income_data: IncomeSchemaFull.partial()
 				.required({

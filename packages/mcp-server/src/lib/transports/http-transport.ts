@@ -10,12 +10,17 @@ import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
 import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 import { validateMCPToolInput, validateRequestSize } from '../common/security-config';
-import { sanitizeErrorMessage } from '../common/security-utils';
-import { SecurityLogger, SecurityEvents } from '../common/security-logger';
-import { AuthorizationConfig, loadAuthorizationConfig } from '../common/authorization-config';
+import {
+	AuthorizationConfig,
+	loadAuthorizationConfig,
+	OAuth2AuthorizationServer,
+	OAuth2ServerConfig,
+	ResponseBuilder,
+	sanitizeErrorMessage,
+	SecurityEvents,
+	SecurityLogger
+} from '@gauzy/auth';
 import { AuthorizationMiddleware, AuthorizedRequest } from '../common/authorization-middleware';
-import { OAuth2AuthorizationServer, OAuth2ServerConfig } from '../common/oauth-authorization-server';
-import { ResponseBuilder } from '../common/response-builder';
 
 const logger = new Logger('HttpTransport');
 
@@ -88,7 +93,9 @@ export class HttpTransport {
 				const authServerConfig: OAuth2ServerConfig = {
 					issuer: this.authorizationConfig.authorizationServers[0]?.issuer || 'gauzy-dev-auth',
 					baseUrl: `http://${this.transportConfig.host}:${this.transportConfig.port}`,
-					audience: this.authorizationConfig.resourceUri || `http://${this.transportConfig.host}:${this.transportConfig.port}/sse`,
+					audience:
+						this.authorizationConfig.resourceUri ||
+						`http://${this.transportConfig.host}:${this.transportConfig.port}/sse`,
 					enableClientRegistration: true,
 					authorizationEndpoint: '/oauth2/authorize',
 					tokenEndpoint: '/oauth2/token',
@@ -112,14 +119,20 @@ export class HttpTransport {
 						issuer: this.authorizationConfig.jwt?.issuer || authServerConfig.issuer,
 						audience: this.authorizationConfig.jwt?.audience || authServerConfig.audience,
 						algorithms: ['RS256'], // Must match token manager algorithm
-						jwksUri: this.authorizationConfig.jwt?.jwksUri || `${authServerConfig.baseUrl}${authServerConfig.jwksEndpoint}`,
+						jwksUri:
+							this.authorizationConfig.jwt?.jwksUri ||
+							`${authServerConfig.baseUrl}${authServerConfig.jwksEndpoint}`,
 						// Provide public key from embedded server for direct validation
-						publicKey: this.authorizationConfig.jwt?.publicKey || this.authorizationServer!.getTokenManager().getPublicKeyPEM()
+						publicKey:
+							this.authorizationConfig.jwt?.publicKey ||
+							this.authorizationServer!.getTokenManager().getPublicKeyPEM()
 					}
 				};
 
 				logger.log('OAuth 2.0 authorization server initialized');
-				logger.log(`JWT validation configured - Issuer: ${synchronizedConfig.jwt?.issuer}, Audience: ${synchronizedConfig.jwt?.audience}`);
+				logger.log(
+					`JWT validation configured - Issuer: ${synchronizedConfig.jwt?.issuer}, Audience: ${synchronizedConfig.jwt?.audience}`
+				);
 				logger.log(`JWT algorithms: ${synchronizedConfig.jwt?.algorithms?.join(', ')}`);
 				logger.log(`JWKS URI: ${synchronizedConfig.jwt?.jwksUri}`);
 				logger.log(`Public key configured: ${synchronizedConfig.jwt?.publicKey ? 'Yes' : 'No'}`);
@@ -143,12 +156,14 @@ export class HttpTransport {
 		this.app.disable('x-powered-by');
 
 		// CORS configuration
-		this.app.use(cors({
-			origin: this.transportConfig.cors.origin,
-			credentials: this.transportConfig.cors.credentials,
-			methods: ['GET', 'POST', 'OPTIONS', 'DELETE'],
-			allowedHeaders: ['Content-Type', 'Authorization', 'mcp-session-id', 'mcp-csrf-token']
-		}));
+		this.app.use(
+			cors({
+				origin: this.transportConfig.cors.origin,
+				credentials: this.transportConfig.cors.credentials,
+				methods: ['GET', 'POST', 'OPTIONS', 'DELETE'],
+				allowedHeaders: ['Content-Type', 'Authorization', 'mcp-session-id', 'mcp-csrf-token']
+			})
+		);
 
 		// Global security headers middleware - applied to ALL routes
 		this.app.use((req, res, next) => {
@@ -157,39 +172,44 @@ export class HttpTransport {
 		});
 
 		// JSON parsing with enhanced validation
-		this.app.use(express.json({
-			limit: process.env.NODE_ENV === 'production' ? '1mb' : '10mb',
-			verify: (req, res, buf) => {
-				const validation = validateRequestSize(buf, process.env.NODE_ENV === 'production' ? 1024 * 1024 : 10 * 1024 * 1024);
-				if (!validation.valid) {
-					if (validation.error === 'Request too large') {
-						SecurityLogger.logSecurityEvent(SecurityEvents.LARGE_REQUEST, 'medium', {
-							size: buf.length,
-							ip: req.socket?.remoteAddress || 'unknown',
-							error: validation.error
-						});
-					} else {
-						SecurityLogger.logSecurityEvent(SecurityEvents.SUSPICIOUS_PAYLOAD, 'medium', {
-							size: buf.length,
-							ip: req.socket?.remoteAddress || 'unknown',
-							error: validation.error
-						});
-					}
+		this.app.use(
+			express.json({
+				limit: process.env.NODE_ENV === 'production' ? '1mb' : '10mb',
+				verify: (req, res, buf) => {
+					const validation = validateRequestSize(
+						buf,
+						process.env.NODE_ENV === 'production' ? 1024 * 1024 : 10 * 1024 * 1024
+					);
+					if (!validation.valid) {
+						if (validation.error === 'Request too large') {
+							SecurityLogger.logSecurityEvent(SecurityEvents.LARGE_REQUEST, 'medium', {
+								size: buf.length,
+								ip: req.socket?.remoteAddress || 'unknown',
+								error: validation.error
+							});
+						} else {
+							SecurityLogger.logSecurityEvent(SecurityEvents.SUSPICIOUS_PAYLOAD, 'medium', {
+								size: buf.length,
+								ip: req.socket?.remoteAddress || 'unknown',
+								error: validation.error
+							});
+						}
 
-					// Map size errors to proper HTTP status
-					if (validation.error === 'Request too large') {
-						const error = new Error(validation.error) as any;
-						error.status = 413;
-						error.statusCode = 413;
-						throw error;
+						// Map size errors to proper HTTP status
+						if (validation.error === 'Request too large') {
+							const error = new Error(validation.error) as any;
+							error.status = 413;
+							error.statusCode = 413;
+							throw error;
+						}
+						const err: any = new Error(validation.error);
+						err.status = 400;
+						err.statusCode = 400;
+						throw err;
 					}
-					const err: any = new Error(validation.error);
-					err.status = 400;
-					err.statusCode = 400;
-					throw err;
 				}
-			}
-		}));
+			})
+		);
 
 		// Cookie parsing for session management
 		// Note: CSRF protection is implemented below to prevent cross-site request forgery
@@ -238,7 +258,9 @@ export class HttpTransport {
 
 		// Request logging
 		this.app.use((req, res, next) => {
-			logger.debug(`${req.method} ${req.path} from ${this.getClientIP(req, this.transportConfig.trustedProxies || [])}`);
+			logger.debug(
+				`${req.method} ${req.path} from ${this.getClientIP(req, this.transportConfig.trustedProxies || [])}`
+			);
 			next();
 		});
 
@@ -260,9 +282,11 @@ export class HttpTransport {
 			const excludedPrefixes = ['/health', '/.well-known/', '/oauth2/'];
 			const excludedExactPaths = ['/sse/session']; // allow unauthenticated session creation
 
-			if (safeMethods.includes(req.method) ||
-				excludedPrefixes.some(p => req.path.startsWith(p)) ||
-				excludedExactPaths.includes(req.path)) {
+			if (
+				safeMethods.includes(req.method) ||
+				excludedPrefixes.some((p) => req.path.startsWith(p)) ||
+				excludedExactPaths.includes(req.path)
+			) {
 				return next();
 			}
 
@@ -271,11 +295,14 @@ export class HttpTransport {
 			// 2. Valid OAuth Bearer token (API access)
 			const hasBearerToken = /^Bearer\s+\S+$/.test(req.headers.authorization || '');
 			const oauthProtectedPrefixes = ['/sse', '/sse/events'];
-			const onOauthProtectedRoute = oauthProtectedPrefixes.some(p => req.path.startsWith(p)) && !req.path.startsWith('/sse/session');
+			const onOauthProtectedRoute =
+				oauthProtectedPrefixes.some((p) => req.path.startsWith(p)) && !req.path.startsWith('/sse/session');
 			const sessionId = req.sessionId || req.cookies?.[this.transportConfig.session?.cookieName || 'session'];
-			const csrfHeaderName =
-				req.get('mcp-csrf-token') ? 'mcp-csrf-token'
-				: (req.get('x-csrf-token') ? 'x-csrf-token' : null);
+			const csrfHeaderName = req.get('mcp-csrf-token')
+				? 'mcp-csrf-token'
+				: req.get('x-csrf-token')
+				? 'x-csrf-token'
+				: null;
 
 			if (hasBearerToken && onOauthProtectedRoute) {
 				// OAuth Bearer tokens are self-authenticating, skip CSRF
@@ -304,18 +331,18 @@ export class HttpTransport {
 			enableCSRF: true,
 			enableRateLimit: false,
 			excludedPaths: [
-					'/health',
-					'/sse/session*',   // retains exclusion for immediate session routes
-					'/sse/session/**', // adds exclusion for any deeper subpaths
-				],
-			trustedProxies: this.transportConfig.trustedProxies || [],
+				'/health',
+				'/sse/session*', // retains exclusion for immediate session routes
+				'/sse/session/**' // adds exclusion for any deeper subpaths
+			],
+			trustedProxies: this.transportConfig.trustedProxies || []
 		});
 
 		// Rate limiting middleware
 		const rateLimitMiddleware = sessionMiddleware.createRateLimitMiddleware({
 			windowMs: 15 * 60 * 1000, // 15 minutes
 			max: 100, // 100 requests per windowMs per session/IP
-			trustedProxies: this.transportConfig.trustedProxies || [],
+			trustedProxies: this.transportConfig.trustedProxies || []
 		});
 
 		// Apply middleware to MCP routes
@@ -332,16 +359,15 @@ export class HttpTransport {
 
 		// OAuth 2.0 Protected Resource Metadata endpoint (RFC 9728)
 		if (this.authorizationMiddleware) {
-			this.app.get('/.well-known/oauth-protected-resource',
+			this.app.get(
+				'/.well-known/oauth-protected-resource',
 				this.authorizationMiddleware.createProtectedResourceMetadataMiddleware()
 			);
 		}
 
 		// Health check endpoint (no session required)
 		this.app.get('/health', (req, res) => {
-			const sessionStats = this.transportConfig.session.enabled
-				? sessionManager.getStats()
-				: null;
+			const sessionStats = this.transportConfig.session.enabled ? sessionManager.getStats() : null;
 
 			res.json({
 				status: 'healthy',
@@ -352,22 +378,24 @@ export class HttpTransport {
 					authorization: {
 						enabled: true,
 						resourceUri: this.authorizationConfig.resourceUri,
-						authorizationServer: this.authorizationServer ? {
-					        issuer: this.authorizationConfig.jwt?.issuer,
-							endpoints: {
-								authorization: '/oauth2/authorize',
-								token: '/oauth2/token',
-								jwks: '/.well-known/jwks.json',
-								registration: '/oauth2/register'
-							}
-						} : undefined
+						authorizationServer: this.authorizationServer
+							? {
+									issuer: this.authorizationConfig.jwt?.issuer,
+									endpoints: {
+										authorization: '/oauth2/authorize',
+										token: '/oauth2/token',
+										jwks: '/.well-known/jwks.json',
+										registration: '/oauth2/register'
+									}
+							  }
+							: undefined
 					}
 				}),
 				...(sessionStats && {
 					sessions: {
 						total: sessionStats.totalSessions,
 						active: sessionStats.activeSessions,
-						connections: sessionStats.totalConnections,
+						connections: sessionStats.totalConnections
 					}
 				})
 			});
@@ -380,9 +408,7 @@ export class HttpTransport {
 		});
 
 		// MCP Protocol endpoint - POST for requests (protected)
-		this.app.post('/sse',
-			...(authMiddleware ? [authMiddleware] : []),
-			async (req: AuthorizedRequest, res) => {
+		this.app.post('/sse', ...(authMiddleware ? [authMiddleware] : []), async (req: AuthorizedRequest, res) => {
 			try {
 				await this.handleMcpRequest(req, res);
 			} catch (error) {
@@ -395,20 +421,17 @@ export class HttpTransport {
 		});
 
 		// Server-Sent Events endpoint for streaming (protected)
-		this.app.get('/sse/events',
-			...(authMiddleware ? [authMiddleware] : []),
-			(req: AuthorizedRequest, res) => {
-				try {
-					this.handleMcpEventStream(req, res);
-				} catch (error) {
-					logger.error('Error setting up event stream:', error);
-					res.status(500).json({
-						error: 'Internal server error',
-						message: error instanceof Error ? error.message : 'Unknown error'
-					});
-				}
+		this.app.get('/sse/events', ...(authMiddleware ? [authMiddleware] : []), (req: AuthorizedRequest, res) => {
+			try {
+				this.handleMcpEventStream(req, res);
+			} catch (error) {
+				logger.error('Error setting up event stream:', error);
+				res.status(500).json({
+					error: 'Internal server error',
+					message: error instanceof Error ? error.message : 'Unknown error'
+				});
 			}
-		);
+		});
 
 		// Session management endpoints
 		if (this.transportConfig.session.enabled) {
@@ -471,8 +494,8 @@ export class HttpTransport {
 					metadata: {
 						createdVia: 'http-endpoint',
 						userAgent: req.get('User-Agent'),
-						origin: req.get('Origin'),
-					},
+						origin: req.get('Origin')
+					}
 				});
 
 				// Generate CSRF token for the session
@@ -482,7 +505,9 @@ export class HttpTransport {
 				const cookieName = this.transportConfig.session.cookieName;
 				if (cookieName) {
 					try {
-						const maxAge = session.expiresAt ? new Date(session.expiresAt).getTime() - Date.now() : 24 * 60 * 60 * 1000; // 24 hours default
+						const maxAge = session.expiresAt
+							? new Date(session.expiresAt).getTime() - Date.now()
+							: 24 * 60 * 60 * 1000; // 24 hours default
 						res.cookie(cookieName, session.id, {
 							httpOnly: true,
 							secure: req.secure || process.env.NODE_ENV === 'production',
@@ -507,8 +532,8 @@ export class HttpTransport {
 						id: session.userId,
 						email: session.userEmail,
 						organizationId: session.organizationId,
-						tenantId: session.tenantId,
-					},
+						tenantId: session.tenantId
+					}
 				});
 			} catch (error) {
 				logger.error('Error creating session:', error);
@@ -574,7 +599,6 @@ export class HttpTransport {
 				} else {
 					res.status(404).json({ error: 'Session not found' });
 				}
-
 			} catch (error) {
 				logger.error('Error deleting session:', error);
 				res.status(500).json({
@@ -585,65 +609,70 @@ export class HttpTransport {
 		});
 
 		// Get session info endpoint
-		this.app.get('/sse/session/:sessionId', sessionRateLimit, sessionMiddleware.createAuthorizationMiddleware(), async (req, res): Promise<void> => {
-			const sessionId = req.params.sessionId;
+		this.app.get(
+			'/sse/session/:sessionId',
+			sessionRateLimit,
+			sessionMiddleware.createAuthorizationMiddleware(),
+			async (req, res): Promise<void> => {
+				const sessionId = req.params.sessionId;
 
-			try {
-				// Only allow accessing own session
-				if (req.sessionId !== sessionId) {
-					res.status(403).json({
-						error: 'Forbidden',
-						message: 'Cannot access another user\'s session'
+				try {
+					// Only allow accessing own session
+					if (req.sessionId !== sessionId) {
+						res.status(403).json({
+							error: 'Forbidden',
+							message: "Cannot access another user's session"
+						});
+						return;
+					}
+					const validation = await sessionManager.validateSession(
+						sessionId,
+						this.getClientIP(req),
+						req.get('User-Agent')
+					);
+
+					if (!validation.valid || !validation.session) {
+						res.status(404).json({
+							error: 'Session not found or invalid',
+							reason: validation.reason
+						});
+						return;
+					}
+
+					const connections = sessionManager.getSessionConnections(sessionId);
+
+					res.json({
+						session: {
+							id: validation.session.id,
+							userId: validation.session.userId,
+							userEmail: validation.session.userEmail,
+							organizationId: validation.session.organizationId,
+							tenantId: validation.session.tenantId,
+							created: validation.session.created,
+							lastAccessed: validation.session.lastAccessed,
+							lastActivity: validation.session.lastActivity,
+							expiresAt: validation.session.expiresAt,
+							isActive: validation.session.isActive,
+							loginSource: validation.session.loginSource,
+							connectionCount: connections.length
+						},
+						connections: connections.map((conn) => ({
+							id: conn.id,
+							type: conn.type,
+							created: conn.created,
+							lastSeen: conn.lastSeen,
+							isActive: conn.isActive
+						}))
 					});
-					return;
-				}
-				const validation = await sessionManager.validateSession(
-					sessionId,
-					this.getClientIP(req),
-					req.get('User-Agent')
-				);
-
-				if (!validation.valid || !validation.session) {
-					res.status(404).json({
-						error: 'Session not found or invalid',
-						reason: validation.reason,
+				} catch (error) {
+					logger.error('Error getting session info:', error);
+					res.status(500).json({
+						error: 'Internal server error',
+						message: 'Failed to retrieve session information'
 					});
-					return;
 				}
-
-				const connections = sessionManager.getSessionConnections(sessionId);
-
-				res.json({
-					session: {
-						id: validation.session.id,
-						userId: validation.session.userId,
-						userEmail: validation.session.userEmail,
-						organizationId: validation.session.organizationId,
-						tenantId: validation.session.tenantId,
-						created: validation.session.created,
-						lastAccessed: validation.session.lastAccessed,
-						lastActivity: validation.session.lastActivity,
-						expiresAt: validation.session.expiresAt,
-						isActive: validation.session.isActive,
-						loginSource: validation.session.loginSource,
-						connectionCount: connections.length,
-					},
-					connections: connections.map(conn => ({
-						id: conn.id,
-						type: conn.type,
-						created: conn.created,
-						lastSeen: conn.lastSeen,
-						isActive: conn.isActive,
-					})),
-				});
-			} catch (error) {
-				logger.error('Error getting session info:', error);
-				res.status(500).json({
-					error: 'Internal server error',
-					message: 'Failed to retrieve session information'
-				});
 			}
-		});
+		);
 
 		// Session stats endpoint
 		this.app.get('/sse/sessions/stats', sessionRateLimit, (req, res) => {
@@ -659,8 +688,8 @@ export class HttpTransport {
 						connectionsCreated: metrics.connectionsCreated,
 						connectionsDestroyed: metrics.connectionsDestroyed,
 						cleanupRuns: metrics.cleanupRuns,
-						lastCleanup: metrics.lastCleanup,
-					},
+						lastCleanup: metrics.lastCleanup
+					}
 				});
 			} catch (error) {
 				logger.error('Error getting session stats:', error);
@@ -694,27 +723,27 @@ export class HttpTransport {
 			const tokenInfo = req.tokenInfo;
 			const enrichedParams =
 				(userContext || tokenInfo) && params && !Array.isArray(params)
-				? {
-					...(params as Record<string, unknown>),
-					_context: {
-						// Session-based context (if available)
-						...(userContext && {
-							userId: userContext.userId,
-							organizationId: userContext.organizationId,
-							tenantId: userContext.tenantId,
-							sessionId: userContext.sessionId,
-							connectionId: req.connectionId,
-						}),
-						// OAuth 2.0 context (if available)
-						...(tokenInfo && {
-							oauthSubject: tokenInfo.subject,
-							oauthClientId: tokenInfo.clientId,
-							oauthScopes: tokenInfo.scopes,
-							authorized: tokenInfo.valid,
-						}),
-					}
-					}
-				: params;
+					? {
+							...(params as Record<string, unknown>),
+							_context: {
+								// Session-based context (if available)
+								...(userContext && {
+									userId: userContext.userId,
+									organizationId: userContext.organizationId,
+									tenantId: userContext.tenantId,
+									sessionId: userContext.sessionId,
+									connectionId: req.connectionId
+								}),
+								// OAuth 2.0 context (if available)
+								...(tokenInfo && {
+									oauthSubject: tokenInfo.subject,
+									oauthClientId: tokenInfo.clientId,
+									oauthScopes: tokenInfo.scopes,
+									authorized: tokenInfo.valid
+								})
+							}
+					  }
+					: params;
 
 			// Create a mock transport interface for the MCP server
 			const mockTransport: MockTransport = {
@@ -726,7 +755,7 @@ export class HttpTransport {
 						sessionManager.updateSessionActivity(req.sessionId, {
 							lastMcpMethod: method,
 							lastMcpId: id,
-							lastMcpTimestamp: new Date().toISOString(),
+							lastMcpTimestamp: new Date().toISOString()
 						});
 					}
 
@@ -743,7 +772,6 @@ export class HttpTransport {
 
 			// Route the request to appropriate MCP server handler
 			await this.routeMcpRequest(method, enrichedParams, id, mockTransport, userContext);
-
 		} catch (error) {
 			logger.error(`Error processing MCP method ${method}:`, error);
 			res.status(500).json({
@@ -759,27 +787,30 @@ export class HttpTransport {
 	}
 
 	private handleMcpEventStream(req: express.Request, res: express.Response) {
-
 		// Set SSE headers (CORS is handled by the global cors() middleware)
 		res.writeHead(200, {
 			'Content-Type': 'text/event-stream',
 			'Cache-Control': 'no-cache',
-			'Connection': 'keep-alive',
+			Connection: 'keep-alive',
 			'X-Accel-Buffering': 'no'
 		});
 
 		// Send initial connection event
-		res.write(`data: ${JSON.stringify({
-			type: 'connected',
-			timestamp: new Date().toISOString()
-		})}\n\n`);
+		res.write(
+			`data: ${JSON.stringify({
+				type: 'connected',
+				timestamp: new Date().toISOString()
+			})}\n\n`
+		);
 
 		// Keep connection alive
 		const keepAlive = setInterval(() => {
-			res.write(`data: ${JSON.stringify({
-				type: 'ping',
-				timestamp: new Date().toISOString()
-			})}\n\n`);
+			res.write(
+				`data: ${JSON.stringify({
+					type: 'ping',
+					timestamp: new Date().toISOString()
+				})}\n\n`
+			);
 			// Force flush to prevent proxy buffering
 			(res as any).flush?.();
 		}, 15000);
@@ -791,7 +822,13 @@ export class HttpTransport {
 		});
 	}
 
-	private async routeMcpRequest(method: string, params: Record<string, unknown> | unknown[] | undefined, id: string | number | null | undefined, transport: MockTransport, userContext?: UserContext) {
+	private async routeMcpRequest(
+		method: string,
+		params: Record<string, unknown> | unknown[] | undefined,
+		id: string | number | null | undefined,
+		transport: MockTransport,
+		userContext?: UserContext
+	) {
 		try {
 			// Handle MCP protocol methods by delegating to the actual MCP server
 			switch (method) {
@@ -810,28 +847,26 @@ export class HttpTransport {
 					});
 					break;
 
-				case 'tools/list':
-					{
-						const tools = await this.getTools();
-						logger.debug(`Tools list: ${JSON.stringify(tools)}`);
-						transport.send({
-							jsonrpc: '2.0',
-							id,
-							result: { tools }
-						});
-						break;
-					}
+				case 'tools/list': {
+					const tools = await this.getTools();
+					logger.debug(`Tools list: ${JSON.stringify(tools)}`);
+					transport.send({
+						jsonrpc: '2.0',
+						id,
+						result: { tools }
+					});
+					break;
+				}
 
-				case 'tools/call':
-					{
-						const result = await this.callTool(params as Record<string, unknown>);
-						transport.send({
-							jsonrpc: '2.0',
-							id,
-							result
-						});
-						break;
-					}
+				case 'tools/call': {
+					const result = await this.callTool(params as Record<string, unknown>);
+					transport.send({
+						jsonrpc: '2.0',
+						id,
+						result
+					});
+					break;
+				}
 
 				default:
 					transport.send({
@@ -887,23 +922,24 @@ export class HttpTransport {
 			}
 
 			if (name === 'login') {
-                logger.debug(`Calling tool: ${name} with args keys:`, Object.keys((args as Record<string, unknown>) || {}));
-            } else {
-                logger.debug(`Calling tool: ${name} with args:`, validation.sanitized);
- 			}
+				logger.debug(
+					`Calling tool: ${name} with args keys:`,
+					Object.keys((args as Record<string, unknown>) || {})
+				);
+			} else {
+				logger.debug(`Calling tool: ${name} with args:`, validation.sanitized);
+			}
 
 			// Use the public method for tool invocation with sanitized args
 			const result = await this.mcpServer.invokeTool(name, validation.sanitized);
 			logger.debug(`Tool ${name} executed successfully`);
 
 			return result;
-
 		} catch (error) {
 			logger.error('Error calling tool:', error);
 			throw error;
 		}
 	}
-
 
 	private getClientIP(req: express.Request, trustedProxies: string[] = []): string {
 		// If no trusted proxies configured, use socket address
@@ -941,52 +977,59 @@ export class HttpTransport {
 
 			// Start HTTP server and wait for it to be listening
 			await new Promise<void>((resolve, reject) => {
-				this.httpServer = this.app.listen(
-					this.transportConfig.port,
-					this.transportConfig.host,
-					() => {
-						logger.log(
-							`🚀 MCP HTTP Transport listening on http://${this.transportConfig.host}:${this.transportConfig.port}`
-						);
-						logger.log(`📡 Available endpoints:`);
-						logger.log(`   - GET  /health - Health check`);
+				this.httpServer = this.app.listen(this.transportConfig.port, this.transportConfig.host, () => {
+					logger.log(
+						`🚀 MCP HTTP Transport listening on http://${this.transportConfig.host}:${this.transportConfig.port}`
+					);
+					logger.log(`📡 Available endpoints:`);
+					logger.log(`   - GET  /health - Health check`);
 
-						if (this.authorizationConfig.enabled) {
-							logger.log(`   - GET  /.well-known/oauth-protected-resource - OAuth 2.0 metadata`);
-						}
-
-						logger.log(`   - POST /sse - MCP protocol requests${this.authorizationConfig.enabled ? ' (protected)' : ''}`);
-						logger.log(`   - GET  /sse/events - Server-sent events${this.authorizationConfig.enabled ? ' (protected)' : ''}`);
-
-						if (this.authorizationConfig.enabled) {
-							logger.log(`🔐 OAuth 2.0 Authorization:`);
-							logger.log(`   - Resource URI: ${this.authorizationConfig.resourceUri}`);
-							logger.log(`   - Required scopes: ${this.authorizationConfig.requiredScopes?.join(', ') || 'none'}`);
-							logger.log(`   - Authorization servers: ${this.authorizationConfig.authorizationServers.length}`);
-						}
-
-						if (this.transportConfig.session.enabled) {
-							logger.log(`   - POST /sse/session - Create session`);
-							logger.log(`   - GET  /sse/session/:sessionId - Get session info`);
-							logger.log(`   - DELETE /sse/session/:sessionId - Delete session`);
-							logger.log(`   - GET  /sse/sessions/stats - Session statistics`);
-							logger.log(`📡 Session management features:`);
-							logger.log(`   - Multi-user session isolation`);
-							logger.log(`   - Automatic session cleanup`);
-							logger.log(`   - CSRF protection`);
-							logger.log(`   - Rate limiting`);
-						}
-
-						resolve();
+					if (this.authorizationConfig.enabled) {
+						logger.log(`   - GET  /.well-known/oauth-protected-resource - OAuth 2.0 metadata`);
 					}
-				);
+
+					logger.log(
+						`   - POST /sse - MCP protocol requests${
+							this.authorizationConfig.enabled ? ' (protected)' : ''
+						}`
+					);
+					logger.log(
+						`   - GET  /sse/events - Server-sent events${
+							this.authorizationConfig.enabled ? ' (protected)' : ''
+						}`
+					);
+
+					if (this.authorizationConfig.enabled) {
+						logger.log(`🔐 OAuth 2.0 Authorization:`);
+						logger.log(`   - Resource URI: ${this.authorizationConfig.resourceUri}`);
+						logger.log(
+							`   - Required scopes: ${this.authorizationConfig.requiredScopes?.join(', ') || 'none'}`
+						);
+						logger.log(
+							`   - Authorization servers: ${this.authorizationConfig.authorizationServers.length}`
+						);
+					}
+
+					if (this.transportConfig.session.enabled) {
+						logger.log(`   - POST /sse/session - Create session`);
+						logger.log(`   - GET  /sse/session/:sessionId - Get session info`);
+						logger.log(`   - DELETE /sse/session/:sessionId - Delete session`);
+						logger.log(`   - GET  /sse/sessions/stats - Session statistics`);
+						logger.log(`📡 Session management features:`);
+						logger.log(`   - Multi-user session isolation`);
+						logger.log(`   - Automatic session cleanup`);
+						logger.log(`   - CSRF protection`);
+						logger.log(`   - Rate limiting`);
+					}
+
+					resolve();
+				});
 
 				this.httpServer.on('error', (error) => {
 					logger.error('HTTP server error:', error);
 					reject(error);
 				});
 			});
-
 		} catch (error) {
 			throw error;
 		}
