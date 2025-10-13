@@ -26,8 +26,8 @@ export const setupSwagger = async (
 			email: 'support@ever.co'
 		},
 		license = {
-			name: 'MIT',
-			url: 'https://opensource.org/licenses/MIT'
+			name: 'AGPL-3.0-only',
+			url: 'https://opensource.org/license/agpl-v3'
 		},
 		externalDocs = {
 			description: 'Find more info here',
