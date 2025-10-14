@@ -8,6 +8,7 @@ import { UserOrganization } from '../../user-organization.entity';
 import { UserService } from '../../../user/user.service';
 import { UserOrganizationService } from '../../user-organization.services';
 import { RoleService } from '../../../role/role.service';
+import { validateUserDeletion } from '../../../user/default-protected-users';
 
 /**
  * 1. Remove user from given organization if user belongs to multiple organizations
@@ -36,19 +37,25 @@ export class UserOrganizationDeleteHandler implements ICommandHandler<UserOrgani
 		// 1. Find user and their role to determine deletion handling
 		const {
 			user: {
-				role: { name: roleName }
+				role: { name: roleName },
+				email
 			},
 			userId
 		} = await this._userOrganizationService.findOneByIdString(userOrganizationId, {
 			relations: { user: { role: true } }
 		});
 
-		// 2. Handle Super Admin Deletion if applicable
+		// 2. In demo environment, prevent deletion of default users
+		if (email) {
+			validateUserDeletion(email);
+		}
+
+		// 3. Handle Super Admin Deletion if applicable
 		if (roleName === RolesEnum.SUPER_ADMIN) {
 			return await this._removeSuperAdmin(userId);
 		}
 
-		// 3. Remove user from organization based on the number of organizations they belong to
+		// 4. Remove user from organization based on the number of organizations they belong to
 		return await this._removeUserFromOrganization(userId, userOrganizationId);
 	}
 
