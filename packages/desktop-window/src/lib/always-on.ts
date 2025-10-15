@@ -20,7 +20,8 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 		private readonly isExpandMode?: boolean
 	) {
 		if (isExpandMode) {
-			AlwaysOn.WIDTH = 328;
+			AlwaysOn.WIDTH = 260;
+			AlwaysOn.HEIGHT = 80;
 		}
 
 		super(

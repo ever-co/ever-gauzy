@@ -29,7 +29,7 @@ nb-card {
 	color: var(--gauzy-text-color-1);
 }
 
-:host(.rounded-theme) ::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
+::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
 	padding: 0px;
 }
 
@@ -38,7 +38,7 @@ nb-card {
 	margin: 0 !important;
 }
 
-:host(.rounded-theme) ::ng-deep .layout {
+::ng-deep .layout {
 	min-width: unset !important;
 }
 

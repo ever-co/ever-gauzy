@@ -1,10 +1,10 @@
-import { Component, NgZone, OnDestroy, OnInit, Inject, Renderer2, HostBinding } from '@angular/core';
+import { Component, NgZone, OnDestroy, OnInit, Inject, Renderer2, HostBinding, HostListener } from '@angular/core';
 import { NbIconLibraries } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable, Subscription, tap } from 'rxjs';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { AlwaysOnService, AlwaysOnStateEnum, ITimeCounter, ITimerStatus } from './always-on.service';
-import { faPlay, faPause, faStopwatch, faBars } from '@fortawesome/free-solid-svg-icons';
+import { faPlay, faPause, faStopwatch, faBars, faDollar } from '@fortawesome/free-solid-svg-icons';
 import { GAUZY_ENV } from '../constants';
 
 @UntilDestroy({ checkProperties: true })
@@ -27,6 +27,7 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 	pause = faPause;
 	stopwatch = faStopwatch;
 	bars = faBars;
+	currency = faDollar;
 	public isExpandMode: boolean = false;
 
 	private _counter$: BehaviorSubject<ITimeCounter> = new BehaviorSubject({
@@ -52,6 +53,7 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
+		this.changeExpandMode(window.innerWidth);
 		this._languageElectronService.initialize<void>();
 		this._alwaysOnService.state$
 			.pipe(
@@ -88,8 +90,7 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		if (this.isAgent) {
-			this.isExpandMode = true;
+		if (this.isExpandMode) {
 			this._alwaysOnService.checkTimerStatus$.pipe(
 				tap(() => {
 					this.checkAndRunTimer();
@@ -97,11 +98,22 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			).subscribe();
 			this.checkAndRunTimer();
-		}
-
-		if (this.isExpandMode) {
 			this.renderer.setStyle(document.body, 'background-color', 'transparent');
 			this.isRounded = true;
+		}
+	}
+
+	@HostListener('window:resize', ['$event'])
+	onSizeChange(event: any) {
+		this.changeExpandMode(event.target.innerWidth);
+	}
+
+	changeExpandMode(width: number) {
+		const compactModeWidth = 60;
+		if (width > compactModeWidth) {
+			this.isExpandMode = true;
+		} else {
+			this.isExpandMode = false;
 		}
 	}
 
