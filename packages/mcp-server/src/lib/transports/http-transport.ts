@@ -87,63 +87,18 @@ export class HttpTransport {
 		if (this.authorizationConfig.enabled) {
 			let synchronizedConfig: AuthorizationConfig;
 
-			// Initialize embedded OAuth server only if explicitly allowed
-			if (this.authorizationConfig.allowEmbeddedServer) {
-				// Initialize OAuth 2.0 authorization server first to get token manager configuration
-				const authServerConfig: OAuth2ServerConfig = {
-					issuer: this.authorizationConfig.authorizationServers[0]?.issuer || 'gauzy-dev-auth',
-					baseUrl: `http://${this.transportConfig.host}:${this.transportConfig.port}`,
-					audience:
-						this.authorizationConfig.resourceUri ||
-						`http://${this.transportConfig.host}:${this.transportConfig.port}/sse`,
-					enableClientRegistration: true,
-					authorizationEndpoint: '/oauth2/authorize',
-					tokenEndpoint: '/oauth2/token',
-					jwksEndpoint: '/.well-known/jwks.json',
-					registrationEndpoint: '/oauth2/register',
-					introspectionEndpoint: '/oauth2/introspect',
-					userInfoEndpoint: '/oauth2/userinfo',
-					loginEndpoint: '/oauth2/login',
-					sessionSecret: process.env.MCP_AUTH_SESSION_SECRET || crypto.randomBytes(32).toString('hex')
-				};
+			// IMPORTANT: The MCP Server (port 3001) should NOT have an embedded OAuth server
+			// OAuth endpoints should ONLY be available on the dedicated OAuth Server (port 3003)
+			// This server only needs to VALIDATE tokens, not issue them
 
-				this.authorizationServer = new OAuth2AuthorizationServer(authServerConfig);
-
-				// Merge JWT settings, preserving existing user configuration
-				synchronizedConfig = {
-					...this.authorizationConfig,
-					jwt: {
-						// Start with existing JWT config
-						...this.authorizationConfig.jwt,
-						// Only set missing fields from auth server config
-						issuer: this.authorizationConfig.jwt?.issuer || authServerConfig.issuer,
-						audience: this.authorizationConfig.jwt?.audience || authServerConfig.audience,
-						algorithms: ['RS256'], // Must match token manager algorithm
-						jwksUri:
-							this.authorizationConfig.jwt?.jwksUri ||
-							`${authServerConfig.baseUrl}${authServerConfig.jwksEndpoint}`,
-						// Provide public key from embedded server for direct validation
-						publicKey:
-							this.authorizationConfig.jwt?.publicKey ||
-							this.authorizationServer!.getTokenManager().getPublicKeyPEM()
-					}
-				};
-
-				logger.log('OAuth 2.0 authorization server initialized');
-				logger.log(
-					`JWT validation configured - Issuer: ${synchronizedConfig.jwt?.issuer}, Audience: ${synchronizedConfig.jwt?.audience}`
-				);
-				logger.log(`JWT algorithms: ${synchronizedConfig.jwt?.algorithms?.join(', ')}`);
-				logger.log(`JWKS URI: ${synchronizedConfig.jwt?.jwksUri}`);
-				logger.log(`Public key configured: ${synchronizedConfig.jwt?.publicKey ? 'Yes' : 'No'}`);
-			} else {
-				// Use existing authorization config as-is without embedded server
-				synchronizedConfig = this.authorizationConfig;
-				logger.log('OAuth 2.0 authorization enabled with external server configuration');
-			}
+			// Always use external OAuth server configuration - no embedded server
+			synchronizedConfig = this.authorizationConfig;
+			logger.log('OAuth 2.0 authorization enabled with external server configuration');
+			logger.log(`External OAuth Server: ${this.authorizationConfig.authorizationServers[0]?.issuer || 'Not configured'}`);
+			logger.log(`Resource URI: ${this.authorizationConfig.resourceUri || 'Not configured'}`);
 
 			this.authorizationMiddleware = new AuthorizationMiddleware(synchronizedConfig);
-			logger.log('OAuth 2.0 authorization middleware initialized');
+			logger.log('OAuth 2.0 authorization middleware initialized for token validation only');
 		}
 
 		this.app = express();
@@ -351,11 +306,9 @@ export class HttpTransport {
 	}
 
 	private setupRoutes() {
-		// Mount OAuth 2.0 authorization server routes
-		if (this.authorizationServer) {
-			logger.log('Mounting OAuth 2.0 authorization server routes');
-			this.app.use('/', this.authorizationServer.getApp());
-		}
+		// NOTE: OAuth 2.0 authorization server routes are NOT mounted here
+		// They are available on the dedicated OAuth Server (port 3003)
+		// This server (MCP Server on port 3001) only validates tokens, it does not issue them
 
 		// OAuth 2.0 Protected Resource Metadata endpoint (RFC 9728)
 		if (this.authorizationMiddleware) {
@@ -378,17 +331,8 @@ export class HttpTransport {
 					authorization: {
 						enabled: true,
 						resourceUri: this.authorizationConfig.resourceUri,
-						authorizationServer: this.authorizationServer
-							? {
-									issuer: this.authorizationConfig.jwt?.issuer,
-									endpoints: {
-										authorization: '/oauth2/authorize',
-										token: '/oauth2/token',
-										jwks: '/.well-known/jwks.json',
-										registration: '/oauth2/register'
-									}
-							  }
-							: undefined
+						externalAuthServer: this.authorizationConfig.authorizationServers[0]?.issuer || 'Not configured',
+						note: 'This server validates tokens. OAuth endpoints are on the external auth server.'
 					}
 				}),
 				...(sessionStats && {

@@ -13,14 +13,17 @@ export class McpOAuthService implements OnModuleInit {
 
 	constructor(private readonly userService: OAuthUserService) {
 		// Initialize OAuth server with configuration
+		const port = process.env.MCP_AUTH_PORT || 3003;
+		const baseUrl = process.env.MCP_AUTH_JWT_ISSUER || `http://localhost:${port}`;
+
 		this.oauthServer = new OAuth2AuthorizationServer({
-			issuer: process.env.MCP_AUTH_JWT_ISSUER || 'https://auth.gauzy.co',
-			baseUrl: process.env.MCP_AUTH_RESOURCE_URI || 'http://localhost:3001',
+			issuer: process.env.MCP_AUTH_JWT_ISSUER || baseUrl,
+			baseUrl: baseUrl,
 			audience: process.env.MCP_AUTH_JWT_AUDIENCE || 'gauzy-mcp-api',
 			enableClientRegistration: true,
 			authorizationEndpoint: '/oauth2/authorize',
 			tokenEndpoint: '/oauth2/token',
-			jwksEndpoint: '/oauth2/jwks',
+			jwksEndpoint: '/.well-known/jwks.json',
 			loginEndpoint: '/oauth2/login',
 			registrationEndpoint: '/oauth2/register',
 			introspectionEndpoint: '/oauth2/introspect',
