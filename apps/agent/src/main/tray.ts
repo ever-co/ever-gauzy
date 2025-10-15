@@ -8,12 +8,15 @@ import {
 } from 'electron';
 import { TranslateService } from '@gauzy/desktop-lib';
 import AppWindow from './window-manager';
+import MainEvent from './events/events';
+import  { MAIN_EVENT, MAIN_EVENT_TYPE } from '../constant';
 import * as path from 'path';
 
 type ISiteUrl = {
 	helpSiteUrl: string
 }
 const appWindow = AppWindow.getInstance(path.join(__dirname, '..'));
+const mainEvent = MainEvent.getInstance();
 
 class TrayMenu {
 	private trayIconPath: string;
@@ -21,9 +24,9 @@ class TrayMenu {
 		width: number;
 		height: number;
 	} = {
-		width: 16,
-		height: 16
-	};
+			width: 16,
+			height: 16
+		};
 	private TrayMenuList: MenuItemConstructorOptions[] = [];
 	private tray: Tray | null = null;
 	private useCommonMenu: boolean;
@@ -64,6 +67,29 @@ class TrayMenu {
 				async click() {
 					await appWindow.initLogWindow();
 					appWindow.logWindow.show();
+				}
+			},
+			{
+				id: 'timer_start',
+				label: TranslateService.instant('TIMER_TRACKER.MENU.START_TRACKING'),
+				accelerator: 'CmdOrCtrl+Shift+Space',
+				async click(c) {
+					c.enabled = false;
+					mainEvent.emit(MAIN_EVENT, {
+						type: MAIN_EVENT_TYPE.START_TIMER
+					});
+				}
+			},
+			{
+				id: 'timer_stop',
+				label: TranslateService.instant('TIMER_TRACKER.MENU.STOP_TRACKING'),
+				enabled: false,
+				accelerator: 'CmdOrCtrl+E',
+				click(c) {
+					c.enabled = false;
+					mainEvent.emit(MAIN_EVENT, {
+						type: MAIN_EVENT_TYPE.STOP_TIMER
+					});
 				}
 			},
 			{
@@ -171,6 +197,19 @@ class TrayMenu {
 			this.tray.setToolTip(`Agent is ${status}`);
 		}
 
+	}
+
+	public updateTimerMenu(isStarted: boolean) {
+		const menuTimerStartIdx = this.TrayMenuList.findIndex((menu) => menu.id === 'timer_start');
+		const menuTimerStopIdx = this.TrayMenuList.findIndex((menu) => menu.id === 'timer_stop');
+		if (menuTimerStartIdx > -1) {
+			this.TrayMenuList[menuTimerStartIdx].enabled = !isStarted;
+		}
+
+		if (menuTimerStopIdx > -1) {
+			this.TrayMenuList[menuTimerStopIdx].enabled = isStarted;
+		}
+		this.tray?.setContextMenu(Menu.buildFromTemplate(this.TrayMenuList));
 	}
 
 	public updateTryMenu() {

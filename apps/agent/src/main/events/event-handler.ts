@@ -121,8 +121,15 @@ export default class EventHandler {
 		}
 	}
 
+	private trayTimerStatus() {
+		const authConfig = getAuthConfig();
+		this.getPullActivities(authConfig);
+		this.trayNotify.updateTrayTimerStatus(this.pullActivities.running);
+	}
+
 	private async checkStatusTimer() {
 		const appSetting = getAppSetting();
+		this.trayTimerStatus();
 		if (appSetting?.alwaysOn && this.appWindow.alwaysOnWindow) {
 			this.appWindow.alwaysOnWindow.browserWindow.webContents.send('check_timer_status', Date.now());
 		}
