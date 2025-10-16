@@ -7,6 +7,13 @@ import { IVerifySMTPTransport } from '@gauzy/contracts';
  * Email utils functions.
  */
 export class SMTPUtils {
+	/** Normalize secure flag by port and explicit configuration */
+	public static normalizeSecure(port?: number, secure?: boolean): boolean {
+		const p = port ?? 587;
+		if (p === 465) return true; // implicit TLS
+		if (p === 587) return false; // always STARTTLS on submission port
+		return !!secure; // other ports: respect provided value
+	}
 	/**
 	 * Returns the default SMTP transporter configuration based on the environment.
 	 * @param auth Whether to include the authentication details in the configuration.
@@ -40,15 +47,15 @@ export class SMTPUtils {
 	public static async verifyTransporter(config: IVerifySMTPTransport): Promise<boolean> {
 		try {
 			const port = config.port || 587;
-			// For SMTP: port 465 requires secure: true (implicit TLS). Port 587 should be secure: false with STARTTLS.
-			const secure = port === 465 ? true : false;
+			// Port 465 => implicit TLS; otherwise respect provided secure value
+			const secure = SMTPUtils.normalizeSecure(port, config.secure);
 			const transporter = nodemailer.createTransport({
 				from: config.fromAddress,
 				host: config.host,
 				port,
 				secure,
 				requireTLS: port === 587 ? true : undefined,
-				tls: port === 587 ? { servername: config.host } : undefined,
+				tls: port === 587 && !secure ? { servername: config.host } : undefined,
 				auth: {
 					user: config.username,
 					pass: config.password
@@ -69,8 +76,8 @@ export class SMTPUtils {
 	public static convertSmtpToTransporter(config: ISMTPConfig): IVerifySMTPTransport {
 		/** */
 		const normalizedPort = config?.port ?? 587;
-		// Normalize secure flag: enforce true for 465, false for others (e.g., 587 STARTTLS)
-		const normalizedSecure = normalizedPort === 465 ? true : false;
+		// Normalize secure flag using helper (465 => true, otherwise respect provided secure)
+		const normalizedSecure = SMTPUtils.normalizeSecure(normalizedPort, config?.secure);
 		const transport: IVerifySMTPTransport = {
 			host: config?.host,
 			port: normalizedPort,
@@ -81,5 +88,21 @@ export class SMTPUtils {
 		};
 		// console.log('SMTP config to transporter configuration: %s', transport);
 		return transport;
+	}
+
+	/** Build Nodemailer transport options from ISMTPConfig with proper STARTTLS/TLS semantics */
+	public static buildTransportFromSMTPConfig(config: ISMTPConfig) {
+		const port = config?.port ?? 587;
+		let secure = SMTPUtils.normalizeSecure(port, config?.secure);
+		if (port === 587 && secure === true) {
+			secure = false; // enforce STARTTLS on 587
+		}
+		return {
+			...config,
+			port,
+			secure,
+			requireTLS: port === 587 ? true : undefined,
+			tls: port === 587 ? { servername: config.host } : undefined
+		};
 	}
 }
