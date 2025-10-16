@@ -11,11 +11,12 @@ import { McpOAuthModule } from './mcp-oauth/mcp-oauth.module';
 @Module({
 	imports: [
 		ConfigModule,
-		// TypeORM configuration (minimal - just for User entity)
+		// TypeORM configuration - use autoLoadEntities to automatically load entities from feature modules
 		TypeOrmModule.forRootAsync({
-			useFactory: async (configService: ConfigService) => {
-				return configService.getConfigValue('dbConnectionOptions');
-			},
+			useFactory: (configService: ConfigService) => ({
+				...configService.getConfigValue('dbConnectionOptions'),
+				autoLoadEntities: true
+			}),
 			imports: [ConfigModule],
 			inject: [ConfigService]
 		}),
