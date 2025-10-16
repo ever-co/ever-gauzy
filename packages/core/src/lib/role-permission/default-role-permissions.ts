@@ -440,6 +440,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PLUGIN_ASSIGN_ACCESS,
 			PermissionsEnum.PLUGIN_DELETE,
 			PermissionsEnum.PLUGIN_DELETE_FOREVER
+		]
 	},
 	{
 		role: RolesEnum.DATA_ENTRY,
