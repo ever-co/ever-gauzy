@@ -61,11 +61,13 @@ export class CustomSmtp extends TenantOrganizationBaseEntity implements ICustomS
 	 * @returns
 	 */
 	getSmtpTransporter?(): ISMTPConfig {
+		const normalizedPort = this.port ?? 587;
+		const normalizedSecure = normalizedPort === 465 ? true : false;
 		return {
 			fromAddress: this.fromAddress,
 			host: this.host,
-			port: this.port,
-			secure: this.secure || false, // true for 465, false for other ports
+			port: normalizedPort,
+			secure: normalizedSecure,
 			auth: {
 				user: this.username,
 				pass: this.password

@@ -39,11 +39,16 @@ export class SMTPUtils {
 	 */
 	public static async verifyTransporter(config: IVerifySMTPTransport): Promise<boolean> {
 		try {
+			const port = config.port || 587;
+			// For SMTP: port 465 requires secure: true (implicit TLS). Port 587 should be secure: false with STARTTLS.
+			const secure = port === 465 ? true : false;
 			const transporter = nodemailer.createTransport({
 				from: config.fromAddress,
 				host: config.host,
-				port: config.port || 587,
-				secure: config.secure || false, // use TLS
+				port,
+				secure,
+				requireTLS: port === 587 ? true : undefined,
+				tls: port === 587 ? { servername: config.host } : undefined,
 				auth: {
 					user: config.username,
 					pass: config.password
@@ -63,10 +68,13 @@ export class SMTPUtils {
 	 */
 	public static convertSmtpToTransporter(config: ISMTPConfig): IVerifySMTPTransport {
 		/** */
+		const normalizedPort = config?.port ?? 587;
+		// Normalize secure flag: enforce true for 465, false for others (e.g., 587 STARTTLS)
+		const normalizedSecure = normalizedPort === 465 ? true : false;
 		const transport: IVerifySMTPTransport = {
 			host: config?.host,
-			port: config?.port,
-			secure: config?.secure,
+			port: normalizedPort,
+			secure: normalizedSecure,
 			username: config?.auth.user,
 			password: config?.auth.pass,
 			fromAddress: config?.fromAddress
