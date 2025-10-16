@@ -94,7 +94,7 @@ export class OAuthUserService {
 
 			return user || null;
 		} catch (error) {
-			console.error('Error retrieving MCP user info:', error);
+			logger.error('Error retrieving MCP user info:', error as Error);
 			return null;
 		}
 	}
