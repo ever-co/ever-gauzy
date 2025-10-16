@@ -62,7 +62,7 @@ export class OAuthUserService {
 
 			return user;
 		} catch (error) {
-			console.error('Error authenticating MCP user:', error);
+			logger.error('Error authenticating MCP user:', error as Error);
 			return null;
 		}
 	}
