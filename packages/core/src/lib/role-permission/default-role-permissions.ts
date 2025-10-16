@@ -616,7 +616,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PLUGIN_UPDATE,
 			PermissionsEnum.PLUGIN_ENABLE,
 			PermissionsEnum.PLUGIN_DISABLE,
-			PermissionsEnum.PLUGIN_CONFIGURE
+			PermissionsEnum.PLUGIN_CONFIGURE,
+			PermissionsEnum.PLUGIN_DELETE
 		]
 	},
 	{
