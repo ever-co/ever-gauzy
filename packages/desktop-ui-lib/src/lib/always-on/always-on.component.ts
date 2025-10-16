@@ -22,6 +22,7 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 	public isTrackingEnabled: boolean = true;
 	public running = false;
 	public isBillable = true;
+	private readonly COMPACT_MODE_WIDTH = 60;
 
 	play = faPlay;
 	pause = faPause;
@@ -104,13 +105,12 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 	}
 
 	@HostListener('window:resize', ['$event'])
-	onSizeChange(event: any) {
-		this.changeExpandMode(event.target.innerWidth);
+	onSizeChange(event: UIEvent) {
+		this.changeExpandMode((event.target as Window).innerWidth);
 	}
 
 	changeExpandMode(width: number) {
-		const compactModeWidth = 60;
-		if (width > compactModeWidth) {
+		if (width > this.COMPACT_MODE_WIDTH) {
 			this.isExpandMode = true;
 		} else {
 			this.isExpandMode = false;
