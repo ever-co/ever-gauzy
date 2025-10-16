@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
+import { authManager } from '../common/auth-manager';
 import { IncomeSchemaFull, CurrenciesEnum } from '../schema';
 import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
@@ -221,7 +222,20 @@ export const registerIncomeTools = (server: McpServer) => {
 		},
 		async ({ income_data }) => {
 			try {
-				const createData = convertIncomeDateFields(income_data);
+				// Get default parameters from authenticated user
+				const defaultParams = authManager.getDefaultParams();
+
+				if (!defaultParams.tenantId || !defaultParams.organizationId) {
+					throw new Error(
+						'Tenant ID and Organization ID not available. Please ensure you are logged in and have an organization.'
+					);
+				}
+
+				const createData = {
+					...convertIncomeDateFields(income_data),
+					tenantId: defaultParams.tenantId,
+					organizationId: defaultParams.organizationId
+				};
 
 				const response = await apiClient.post('/api/income', createData);
 
@@ -250,7 +264,20 @@ export const registerIncomeTools = (server: McpServer) => {
 		},
 		async ({ id, income_data }) => {
 			try {
-				const updateData = convertIncomeDateFields(income_data);
+				// Get default parameters from authenticated user
+				const defaultParams = authManager.getDefaultParams();
+
+				if (!defaultParams.tenantId || !defaultParams.organizationId) {
+					throw new Error(
+						'Tenant ID and Organization ID not available. Please ensure you are logged in and have an organization.'
+					);
+				}
+
+				const updateData = {
+					...convertIncomeDateFields(income_data),
+					tenantId: defaultParams.tenantId,
+					organizationId: defaultParams.organizationId
+				};
 
 				const response = await apiClient.put(`/api/income/${id}`, updateData);
 

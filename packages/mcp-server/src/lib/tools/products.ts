@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
+import { authManager } from '../common/auth-manager';
 import { ProductSchema } from '../schema';
 import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
@@ -300,7 +301,20 @@ export const registerProductTools = (server: McpServer) => {
 		},
 		async ({ product_data }) => {
 			try {
-				const createData = convertProductDateFields(product_data);
+				// Get default parameters from authenticated user
+				const defaultParams = authManager.getDefaultParams();
+
+				if (!defaultParams.tenantId || !defaultParams.organizationId) {
+					throw new Error(
+						'Tenant ID and Organization ID not available. Please ensure you are logged in and have an organization.'
+					);
+				}
+
+				const createData = {
+					...convertProductDateFields(product_data),
+					tenantId: defaultParams.tenantId,
+					organizationId: defaultParams.organizationId
+				};
 
 				const response = await apiClient.post('/api/products', createData);
 
@@ -329,7 +343,20 @@ export const registerProductTools = (server: McpServer) => {
 		},
 		async ({ id, product_data }) => {
 			try {
-				const updateData = convertProductDateFields(product_data);
+				// Get default parameters from authenticated user
+				const defaultParams = authManager.getDefaultParams();
+
+				if (!defaultParams.tenantId || !defaultParams.organizationId) {
+					throw new Error(
+						'Tenant ID and Organization ID not available. Please ensure you are logged in and have an organization.'
+					);
+				}
+
+				const updateData = {
+					...convertProductDateFields(product_data),
+					tenantId: defaultParams.tenantId,
+					organizationId: defaultParams.organizationId
+				};
 
 				const response = await apiClient.put(`/api/products/${id}`, updateData);
 

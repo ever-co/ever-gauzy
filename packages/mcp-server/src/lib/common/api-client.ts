@@ -28,14 +28,29 @@ export class GauzyApiClient {
 
 		// Add request interceptor to include auth token and handle authentication
 		this.client.interceptors.request.use(async (config) => {
+			// Skip if Authorization header already set by caller
+			if (config.headers.Authorization) {
+				return config;
+			}
+
 			// Skip authentication for auth endpoints
 			const isAuthEndpoint = config.url?.includes('/api/auth/') || config.url?.includes('/auth/');
 
 			if (!isAuthEndpoint) {
-				// Only ensure valid token for non-auth endpoints
-				const hasValidToken = await authManager.ensureValidToken();
+				const authStatus = authManager.getAuthStatus();
 
-				if (hasValidToken) {
+				if (!authStatus.isLoginInProgress && !authStatus.isRefreshInProgress) {
+					// Only ensure valid token for non-auth endpoints when not already authenticating
+					const hasValidToken = await authManager.ensureValidToken();
+
+					if (hasValidToken) {
+						const token = authManager.getAccessToken();
+						if (token) {
+							config.headers.Authorization = `Bearer ${token}`;
+						}
+					}
+				} else {
+					// If login/refresh is in progress, just add the current token if available
 					const token = authManager.getAccessToken();
 					if (token) {
 						config.headers.Authorization = `Bearer ${token}`;

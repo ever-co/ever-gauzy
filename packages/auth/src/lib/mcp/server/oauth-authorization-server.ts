@@ -125,8 +125,7 @@ export class OAuth2AuthorizationServer {
 			}
 		};
 
-		// Add the public key to the auth config for JWT validation
-		authConfig.jwt!.publicKey = this.tokenManager.getPublicKeyPEM();
+		// Don't set publicKey - use JWKS only for better caching and key rotation support
 
 		this.oAuthValidator = new OAuthValidator(authConfig);
 		this.app = express();
@@ -1327,7 +1326,7 @@ export class OAuth2AuthorizationServer {
 					<div class="demo-info">
 						<strong>Demo Credentials:</strong><br>
 						Email: employee@ever.co / Password: 123456<br>
-						Email: admin@ever.co / Password: admin123
+						Email: admin@ever.co / Password: admin
 					</div>
 				</div>
 			</body>
