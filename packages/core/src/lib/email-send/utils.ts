@@ -102,7 +102,7 @@ export class SMTPUtils {
 			port,
 			secure,
 			requireTLS: port === 587 ? true : undefined,
-			tls: port === 587 ? { servername: config.host } : undefined
+			tls: port === 587 && secure === false ? { servername: config.host } : undefined
 		};
 	}
 }
