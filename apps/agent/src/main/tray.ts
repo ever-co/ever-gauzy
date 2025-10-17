@@ -73,6 +73,7 @@ class TrayMenu {
 				id: 'timer_start',
 				label: TranslateService.instant('TIMER_TRACKER.MENU.START_TRACKING'),
 				accelerator: 'CmdOrCtrl+Shift+Space',
+				enabled: false,
 				async click(c) {
 					c.enabled = false;
 					mainEvent.emit(MAIN_EVENT, {

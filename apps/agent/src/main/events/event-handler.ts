@@ -129,7 +129,6 @@ export default class EventHandler {
 
 	private async checkStatusTimer() {
 		const appSetting = getAppSetting();
-		this.trayTimerStatus();
 		if (appSetting?.alwaysOn && this.appWindow.alwaysOnWindow) {
 			this.appWindow.alwaysOnWindow.browserWindow.webContents.send('check_timer_status', Date.now());
 		}
@@ -158,6 +157,8 @@ export default class EventHandler {
 				return this.startTimerApi();
 			case MAIN_EVENT_TYPE.CHECK_STATUS_TIMER:
 				return this.checkStatusTimer();
+			case MAIN_EVENT_TYPE.TRAY_TIMER_STATUS:
+				return this.trayTimerStatus();
 			default: break;
 		}
 	}

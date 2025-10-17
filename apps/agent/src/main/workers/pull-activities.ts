@@ -134,7 +134,10 @@ class PullActivities {
 				}
 				this.timerProcess();
 				this.isStarted = true;
-
+				this.timerStatusHandler('Working');
+				this.mainEvent.emit('MAIN_EVENT', {
+					type: MAIN_EVENT_TYPE.TRAY_TIMER_STATUS
+				});
 				if (appSetting?.preventDisplaySleep) {
 					this.powerManagerPreventDisplaySleep.start();
 				}
@@ -209,6 +212,7 @@ class PullActivities {
 					stoppedAt: this.stoppedDate
 				}));
 				this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
+				this.timerStatusHandler('Idle');
 				return;
 			}
 			this.workerQueue.desktopQueue.enqueueTimer({
@@ -256,6 +260,9 @@ class PullActivities {
 				this.listenerModule.stopListener();
 				this.isStarted = false;
 				this.stopTimerProcess();
+				this.mainEvent.emit('MAIN_EVENT', {
+					type: MAIN_EVENT_TYPE.TRAY_TIMER_STATUS
+				});
 
 				if (appSetting?.preventDisplaySleep) {
 					this.powerManagerPreventDisplaySleep.stop();
@@ -281,7 +288,7 @@ class PullActivities {
 		if (isAfk) {
 			this.timerStatusHandler('Afk');
 		} else {
-			this.timerStatusHandler('Working');
+			this.timerStatusHandler(this.isStarted ? 'Working' : 'Idle');
 		}
 	}
 
@@ -472,7 +479,7 @@ class PullActivities {
 		}
 	}
 
-	private timerStatusHandler(status: 'Working' | 'Error' | 'Afk' | 'Network error') {
+	private timerStatusHandler(status: 'Working' | 'Error' | 'Afk' | 'Network error' | 'Idle') {
 		this.mainEvent.emit(MAIN_EVENT, {
 			type: MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT,
 			data: {
