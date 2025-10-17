@@ -1,16 +1,47 @@
+:host(.rounded-theme) ::ng-deep nb-layout,
+:host(.rounded-theme) ::ng-deep nb-layout>div,
+:host(.rounded-theme) ::ng-deep nb-layout>div>div {
+	background: transparent !important;
+	box-shadow: none !important;
+}
+
+
+:host(.rounded-theme) ::ng-deep nb-layout,
+:host(.rounded-theme) ::ng-deep nb-layout-column,
+:host(.rounded-theme) ::ng-deep nb-card {
+	border-radius: 16px !important;
+	overflow: hidden !important;
+}
+
+:host(.rounded-theme) ::ng-deep nb-layout-column {
+	background: transparent !important;
+}
+
 nb-card-body,
 nb-card-footer {
 	padding: 1rem;
+	background-color: var(--gauzy-card-4);
+	color: var(--gauzy-text-color-4);
+}
+
+nb-card {
 	background-color: var(--gauzy-card-2);
+	color: var(--gauzy-text-color-1);
 }
 
 ::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
 	padding: 0px;
 }
 
-:host ::ng-deep .layout {
+:host(.rounded-theme) ::ng-deep nb-layout nb-layout-column {
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
+::ng-deep .layout {
 	min-width: unset !important;
 }
+
 
 button {
 	width: 48px;
@@ -67,4 +98,102 @@ button {
 	-webkit-border-radius: 50px;
 	-moz-border-radius: 50px;
 	border-radius: 50px;
+}
+
+.timer-card {
+	margin: 0 !important;
+	padding: 0 !important;
+	width: 100%;
+	height: 100%;
+	border-radius: 12px;
+	background-color: var(--gauzy-card-4);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	-webkit-app-region: drag;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4),
+		0 0 12px rgba(50, 150, 250, 0.2)
+}
+
+/* Body inside card */
+.timer-body {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	height: 100%;
+	padding: 0 8px;
+	box-sizing: border-box;
+	color: var(--gauzy-text-color-1);
+}
+
+/* Container for all elements */
+.timer-container {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+}
+
+/* Time display area */
+.time-display {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	text-align: left;
+
+	.current-session {
+		font-size: 18px;
+		font-weight: bold;
+		line-height: 1.2;
+	}
+
+	.today-time {
+		font-size: 12px;
+		opacity: 0.7;
+		margin-top: 2px;
+	}
+}
+
+/* Buttons */
+button[nbButton] {
+	min-width: 28px;
+	min-height: 28px;
+	padding: 0;
+	line-height: 1;
+	border-radius: 50%;
+}
+
+button[nbButton].status-basic {
+	background: var(--gauzy-card-2);
+	color: #fff;
+}
+
+button[nbButton].status-danger {
+	background: var(--color-danger-default);
+	color: #fff;
+}
+
+button[nbButton].status-success {
+	background: var(--color-success-default);
+	color: #fff;
+}
+
+.timer-btn {
+	width: 32px;
+	height: 32px;
+	min-height: 32px;
+	min-width: 32px;
+}
+
+.billable-btn {
+	width: 26px;
+	height: 26px;
+	min-width: 26px;
+	min-height: 26px;
+	padding: 0 !important;
+	font-size: 14px;
+	line-height: 1;
+	border-radius: 4px !important;
+	margin: 10px;
 }

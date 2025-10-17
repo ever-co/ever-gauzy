@@ -42,4 +42,8 @@ export class TrayNotify {
 			this.trayMenu.updateExitVisibility(canExit);
 		}
 	}
+
+	public updateTrayTimerStatus(running: boolean) {
+		this.trayMenu.updateTimerMenu(running);
+	}
 }

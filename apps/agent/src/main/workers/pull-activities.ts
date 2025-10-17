@@ -2,9 +2,16 @@ import {
 	KeyboardMouseEventCounter,
 	KbMouseTimer,
 	KeyboardMouseActivityStores,
-	ActivityWindow
+	ActivityWindow,
 } from '@gauzy/desktop-activity';
-import { KbMouseActivityService, TranslateService, notifyScreenshot, TimerService, Timer } from '@gauzy/desktop-lib';
+import {
+	KbMouseActivityService,
+	TranslateService,
+	notifyScreenshot,
+	TimerService,
+	Timer,
+	PowerManagerPreventDisplaySleep
+} from '@gauzy/desktop-lib';
 import AppWindow from '../window-manager';
 import * as path from 'node:path';
 import { getScreen, getAppSetting, delaySync, TAppSetting, getScreenshotSoundPath, getAuthConfig } from '../util';
@@ -15,6 +22,7 @@ import MainEvent from '../events/events';
 import { MAIN_EVENT_TYPE, MAIN_EVENT } from '../../constant';
 import { ApiService } from '../api';
 import { WorkerQueue } from '../queue/worker-queue';
+import * as isOnline from 'is-online';
 
 type UserLogin = {
 	tenantId: string;
@@ -41,6 +49,9 @@ class PullActivities {
 	private activityStores: KeyboardMouseActivityStores;
 	private activityWindow: ActivityWindow;
 	private workerQueue: WorkerQueue;
+	private powerManagerPreventDisplaySleep: PowerManagerPreventDisplaySleep;
+	private currentTimerId: number;
+	private lastTodayDuration: number;
 	constructor() {
 		this.listenerModule = null;
 		this.isStarted = false;
@@ -52,6 +63,7 @@ class PullActivities {
 		this.timerService = new TimerService();
 		this.activityStores = KeyboardMouseActivityStores.getInstance();
 		this.activityWindow = ActivityWindow.getInstance();
+		this.powerManagerPreventDisplaySleep = new PowerManagerPreventDisplaySleep(null);
 	}
 
 	static getInstance(): PullActivities {
@@ -59,6 +71,18 @@ class PullActivities {
 			PullActivities.instance = new PullActivities();
 		}
 		return PullActivities.instance;
+	}
+
+	public get running(): boolean {
+		return this.isStarted;
+	}
+
+	public get todayDuration(): number {
+		return this.lastTodayDuration;
+	}
+
+	public get startedAt(): Date {
+		return this.startedDate;
 	}
 
 	public updateAppUserAuth(user: UserLogin) {
@@ -110,6 +134,13 @@ class PullActivities {
 				}
 				this.timerProcess();
 				this.isStarted = true;
+				this.timerStatusHandler('Working');
+				this.mainEvent.emit('MAIN_EVENT', {
+					type: MAIN_EVENT_TYPE.TRAY_TIMER_STATUS
+				});
+				if (appSetting?.preventDisplaySleep) {
+					this.powerManagerPreventDisplaySleep.start();
+				}
 			}
 		} catch (error) {
 			console.error('error start tracking', error);
@@ -125,8 +156,20 @@ class PullActivities {
 	async startTimerApi() {
 		const authConfig = getAuthConfig();
 		try {
+			const online = await isOnline({ timeout: 1200 }).catch(() => false);
+			if (online) {
+				const timerStatus = await this.apiService.timerStatus({
+					tenantId: authConfig.user.employee.tenantId,
+					organizationId: authConfig.user.employee.organizationId
+				});
+				this.lastTodayDuration = timerStatus?.duration;
+			} else {
+				const localTodayDuration = await this.timerService.todayDurations();
+				this.lastTodayDuration = localTodayDuration;
+			}
 			const timer = this.createOfflineTimer(this.startedDate, authConfig?.user?.employee?.id);
 			const timerData = await this.timerService.saveAndReturn(timer);
+			this.currentTimerId = timerData?.id;
 			this.initWorkerQueue();
 			this.workerQueue.desktopQueue.enqueueTimer({
 				attempts: 1,
@@ -140,6 +183,7 @@ class PullActivities {
 			this.mainEvent.emit('MAIN_EVENT', {
 				type: MAIN_EVENT_TYPE.INIT_SCREENSHOT
 			});
+			this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
 		} catch (error) {
 			this.agentLogger.error(`Start timer error ${error.message}`);
 		}
@@ -149,15 +193,37 @@ class PullActivities {
 		this.stoppedDate = new Date();
 		const authConfig = getAuthConfig();
 		try {
-			await this.apiService.stopTimer({
-				organizationId: authConfig?.user?.employee?.organizationId,
-				tenantId: authConfig?.user?.employee?.tenantId,
-				startedAt: this.startedDate,
-				organizationTeamId: null,
-				organizationContactId: null,
+			await this.timerService.update(new Timer({
+				id: this.currentTimerId,
 				stoppedAt: this.stoppedDate
+			}));
+			const online = await isOnline({ timeout: 1200 }).catch(() => false);
+			if (online) {
+				await this.apiService.stopTimer({
+					organizationId: authConfig?.user?.employee?.organizationId,
+					tenantId: authConfig?.user?.employee?.tenantId,
+					startedAt: this.startedDate,
+					organizationTeamId: null,
+					organizationContactId: null,
+					stoppedAt: this.stoppedDate
+				});
+				this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
+				this.timerStatusHandler('Idle');
+				return;
+			}
+			this.workerQueue.desktopQueue.enqueueTimer({
+				attempts: 1,
+				queue: 'timer',
+				timerId: this.currentTimerId,
+				data: {
+					startedAt: this.startedDate.toISOString(),
+					stoppedAt: this.stoppedDate.toISOString(),
+					isStopped: true
+				}
 			});
+			this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
 		} catch (error) {
+			this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
 			this.agentLogger.error(`Stop timer error ${error.message}`);
 		}
 	}
@@ -183,12 +249,20 @@ class PullActivities {
 			this.getListenerModule();
 		}
 		try {
+			const appSetting = getAppSetting();
 			if (this.isStarted) {
 				await this.stopTimerApi();
 				this.agentLogger.info('Listener keyboard and mouse stopping');
 				this.listenerModule.stopListener();
 				this.isStarted = false;
 				this.stopTimerProcess();
+				this.mainEvent.emit('MAIN_EVENT', {
+					type: MAIN_EVENT_TYPE.TRAY_TIMER_STATUS
+				});
+
+				if (appSetting?.preventDisplaySleep) {
+					this.powerManagerPreventDisplaySleep.stop();
+				}
 				return;
 			}
 			this.agentLogger.warn('No timer started to stop');
@@ -210,7 +284,7 @@ class PullActivities {
 		if (isAfk) {
 			this.timerStatusHandler('Afk');
 		} else {
-			this.timerStatusHandler('Working');
+			this.timerStatusHandler(this.isStarted ? 'Working' : 'Idle');
 		}
 	}
 
@@ -401,7 +475,7 @@ class PullActivities {
 		}
 	}
 
-	private timerStatusHandler(status: 'Working' | 'Error' | 'Afk' | 'Network error') {
+	private timerStatusHandler(status: 'Working' | 'Error' | 'Afk' | 'Network error' | 'Idle') {
 		this.mainEvent.emit(MAIN_EVENT, {
 			type: MAIN_EVENT_TYPE.TRAY_NOTIFY_EVENT,
 			data: {

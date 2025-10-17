@@ -41,6 +41,8 @@ export type TAppSetting = {
 	allowLogoutFromAgentApp: boolean,
 	allowScreenshotCapture: boolean,
 	randomScreenshotTime: boolean,
+	preventDisplaySleep: boolean,
+	alwaysOn: boolean
 }
 
 export type TInitialConfig = {

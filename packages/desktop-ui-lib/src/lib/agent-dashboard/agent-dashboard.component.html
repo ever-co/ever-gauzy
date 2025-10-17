@@ -1,5 +1,5 @@
 <nb-layout windowMode>
-  <nb-sidebar tag="menu" state="expanded" [responsive]="true">
+  <nb-sidebar tag="menu" state="expanded" [responsive]="true" (stateChange)="onSidebarStateChange($event)">
     <div class="brand">
       <div class="brand-content">
         <img [src]="gauzyIcon" [ngClass]="styles.icon" />
