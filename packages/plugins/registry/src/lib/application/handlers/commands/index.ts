@@ -14,6 +14,13 @@ import { UpdatePluginCommandHandler } from './update-plugin-command.handler';
 import { UpdatePluginVersionCommandHandler } from './update-plugin-version-command.handler';
 import { VerifyPluginCommandHandler } from './verify-plugin-command.handler';
 
+// Plugin Category Command Handlers
+import {
+	CreatePluginCategoryHandler,
+	UpdatePluginCategoryHandler,
+	DeletePluginCategoryHandler
+} from '../../../domain/handlers';
+
 export const commands = [
 	InstallPluginCommandHandler,
 	UninstallPluginCommandHandler,
@@ -29,5 +36,9 @@ export const commands = [
 	UpdatePluginVersionCommandHandler,
 	CreatePluginSourceCommandHandler,
 	DeletePluginSourceCommandHandler,
-	RecoverPluginSourceCommandHandler
+	RecoverPluginSourceCommandHandler,
+	// Plugin Category Handlers
+	CreatePluginCategoryHandler,
+	UpdatePluginCategoryHandler,
+	DeletePluginCategoryHandler
 ];

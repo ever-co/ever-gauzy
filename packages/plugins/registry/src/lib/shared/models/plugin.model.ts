@@ -1,6 +1,6 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID, IEmployee, PluginStatus, PluginType } from '@gauzy/contracts';
-import { IPluginSource } from './plugin-source.model';
-import { IPluginVersion, IPluginVersionUpdate } from './plugin-version.model';
+import type { BaseEntityModel, ID, IEmployee, PluginStatus, PluginType } from '@gauzy/contracts';
+import type { IPluginSource } from './plugin-source.model';
+import type { IPluginVersion, IPluginVersionUpdate } from './plugin-version.model';
 
 export interface IPluginUpdate {
 	id: ID;
@@ -15,7 +15,7 @@ export interface IPluginUpdate {
 	version?: IPluginVersionUpdate;
 }
 
-export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
+export interface IPlugin extends BaseEntityModel {
 	name: string; // Plugin name
 	description?: string; // Optional description
 	type: PluginType; // Type of the plugin

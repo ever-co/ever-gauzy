@@ -8,18 +8,17 @@ import {
 	MultiORMOneToMany,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { Index, JoinColumn, RelationId } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { BaseEntity, Index, JoinColumn, RelationId } from 'typeorm';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPlugin } from '../../shared/models/plugin.model';
-import { MikroOrmPluginRepository } from '../repositories/mikro-orm-plugin.repository';
-import { PluginVersion } from './plugin-version.entity';
+import { IPluginCategory } from '../../shared/models/plugin-category.model';
 
 @Index('plugin_name_unique', ['name', 'tenantId', 'organizationId'], { unique: true })
-@MultiORMEntity('plugin', { mikroOrmRepository: () => MikroOrmPluginRepository })
-export class Plugin extends TenantOrganizationBaseEntity implements IPlugin {
+@MultiORMEntity('plugin')
+export class Plugin extends BaseEntity implements IPlugin {
 	@ApiProperty({ type: String, description: 'Plugin name' })
 	@IsNotEmpty({ message: 'Plugin name is required' })
 	@IsString({ message: 'Plugin name must be a string' })
@@ -42,8 +41,26 @@ export class Plugin extends TenantOrganizationBaseEntity implements IPlugin {
 	@MultiORMColumn({ type: 'simple-enum', enum: PluginStatus, default: PluginStatus.ACTIVE })
 	status: PluginStatus;
 
-	@ApiProperty({ type: () => [PluginVersion], description: 'Versions of the plugin' })
-	@MultiORMOneToMany(() => PluginVersion, (version) => version.plugin, { onDelete: 'SET NULL' })
+	/*
+	 * Plugin Category relationship
+	 */
+	@ApiPropertyOptional({ type: String, description: 'Plugin category ID' })
+	@IsOptional()
+	@IsUUID()
+	@MultiORMColumn({ type: 'uuid', nullable: true })
+	@RelationId((plugin: Plugin) => plugin.category)
+	categoryId?: string;
+
+	@ApiPropertyOptional({ type: () => Object, description: 'Plugin category' })
+	@MultiORMManyToOne('PluginCategory', 'plugins', {
+		onDelete: 'SET NULL',
+		nullable: true
+	})
+	@JoinColumn()
+	category?: IPluginCategory;
+
+	@ApiProperty({ type: () => Array, description: 'Versions of the plugin' })
+	@MultiORMOneToMany('PluginVersion', 'plugin', { onDelete: 'SET NULL' })
 	versions: IPluginVersion[];
 
 	@ApiProperty({ type: String, description: 'Plugin author', required: false })

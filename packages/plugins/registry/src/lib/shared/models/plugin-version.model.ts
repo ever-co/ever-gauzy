@@ -1,7 +1,7 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
-import { IPlugin } from './plugin.model';
-import { IPluginSource, IPluginSourceUpdate } from './plugin-source.model';
-import { IPluginInstallation } from './plugin-installation.model';
+import type { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
+import type { IPlugin } from './plugin.model';
+import type { IPluginSource, IPluginSourceUpdate } from './plugin-source.model';
+import type { IPluginInstallation } from './plugin-installation.model';
 
 export interface IPluginVersionUpdate extends Partial<Pick<IPluginVersion, 'number' | 'changelog' | 'releaseDate'>> {
 	id: ID;

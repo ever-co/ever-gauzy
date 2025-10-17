@@ -1,4 +1,4 @@
-import {
+import type {
 	FileStorageProviderEnum,
 	IBasePerTenantAndOrganizationEntityModel,
 	ID,
@@ -6,7 +6,7 @@ import {
 	PluginOSType,
 	PluginSourceType
 } from '@gauzy/contracts';
-import { IPluginVersion } from './plugin-version.model';
+import type { IPluginVersion } from './plugin-version.model';
 
 export interface IPluginSourceUpdate extends Partial<Omit<IPluginSource, 'storageProvider' | 'versions' | 'fullName'>> {
 	id: ID;
