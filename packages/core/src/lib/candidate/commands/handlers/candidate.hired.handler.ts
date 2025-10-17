@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException, ConflictException } from '@nestjs/common';
-import { BaseEntityEnum, CandidateStatusEnum, ICandidate, IRole, RolesEnum } from '@gauzy/contracts';
+import { CandidateStatusEnum, ICandidate, IRole, RolesEnum } from '@gauzy/contracts';
 import { CandidateService } from '../../candidate.service';
 import { CandidateHiredCommand } from '../candidate.hired.command';
 import { EmployeeService } from './../../../employee/employee.service';
@@ -43,6 +43,8 @@ export class CandidateHiredHandler implements ICommandHandler<CandidateHiredComm
 
 			// Step 1: Create an employee for the respective candidate
 			const employee = await this.employeeService.create({
+				billRateValue: candidate.billRateValue,
+				billRateCurrency: candidate.billRateCurrency,
 				reWeeklyLimit: candidate.reWeeklyLimit,
 				payPeriod: candidate.payPeriod,
 				tenantId: candidate.tenantId,
@@ -54,28 +56,6 @@ export class CandidateHiredHandler implements ICommandHandler<CandidateHiredComm
 				isActive: true,
 				startedWorkOn: hiredDate
 			});
-
-			const employeeWithRates = await this.employeeService.findOneByIdString(employee.id, {
-				relations: ['hourlyRates']
-			});
-
-			if (
-				!employeeWithRates.hourlyRates.find(
-					(hr) => hr.entityId === employee.id && hr.entity === BaseEntityEnum.Employee
-				)
-			) {
-				employeeWithRates.hourlyRates.push({
-					billRateCurrency: candidate.billRateCurrency,
-					billRateValue: candidate.billRateValue || 0,
-					minimumBillingRate: candidate.minimumBillingRate || 0,
-					lastUpdate: new Date(),
-					entity: BaseEntityEnum.Employee,
-					entityId: employee.id,
-					employeeId: employee.id
-				});
-			}
-
-			await this.employeeService.save(employeeWithRates);
 
 			// Step 2: Migrate CANDIDATE role to EMPLOYEE role
 			const role: IRole = await this.roleService.findOneByWhereOptions({ name: RolesEnum.EMPLOYEE });

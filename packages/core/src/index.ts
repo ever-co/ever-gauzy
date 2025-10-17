@@ -42,7 +42,6 @@ export {
 } from './lib/organization-project';
 
 export * from './lib/employee';
-export * from './lib/employee-hourly-rates';
 export { TaskModule, TaskService, TaskCreateCommand, TaskUpdateCommand, AutomationTaskSyncCommand } from './lib/tasks';
 
 export { IntegrationModule, IntegrationService } from './lib/integration';

@@ -13,8 +13,7 @@ import {
 	IOrganization,
 	ITag,
 	IUser,
-	IEmployee,
-	IInvoiceAmount
+	IEmployee
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
@@ -39,12 +38,10 @@ import {
 	VirtualMultiOrmColumn
 } from './../core/decorators/entity';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
-import { InvoiceAmount } from '../invoice-amount/invoice-amount.entity';
 
 @MultiORMEntity('invoice', { mikroOrmRepository: () => MikroOrmInvoiceRepository })
 @Unique(['invoiceNumber'])
 export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
-	organizationContactName?: string;
 	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@MultiORMColumn({ nullable: true })
@@ -293,18 +290,6 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	})
 	@JoinColumn()
 	historyRecords?: IInvoiceEstimateHistory[];
-
-	// Invoice Amounts (multi-currency support)
-	@ApiPropertyOptional({ type: () => InvoiceAmount, isArray: true })
-	@MultiORMOneToMany(() => InvoiceAmount, (amount) => amount.invoice, {
-		/** Cascade insert/update/remove from parent invoice */
-		cascade: true,
-
-		/** Eager load amounts whenever invoice is fetched */
-		eager: true
-	})
-	@JoinColumn()
-	amounts?: IInvoiceAmount[];
 
 	/*
 	|--------------------------------------------------------------------------

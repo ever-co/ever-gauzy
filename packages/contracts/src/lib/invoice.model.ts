@@ -7,7 +7,6 @@ import { IPayment } from './payment.model';
 import { IInvoiceEstimateHistory } from './invoice-estimate-history.model';
 import { IUser } from './user.model';
 import { IEmployee } from './employee.model';
-import { IInvoiceAmount } from './invoice-amount.model';
 
 /**
  * Interface representing invoice statistics.
@@ -38,7 +37,6 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	toContact?: IOrganizationContact;
 	invoiceItems?: IInvoiceItem[];
 	invoiceType?: string;
-	amounts?: IInvoiceAmount[];
 	sentTo?: string;
 	tags?: ITag[];
 	isEstimate?: boolean;
@@ -76,7 +74,6 @@ export interface IInvoiceCreateInput extends IBasePerTenantAndOrganizationEntity
 	fromOrganizationId?: string;
 	toContactId?: string;
 	invoiceType?: string;
-	amounts?: IInvoiceAmount[];
 	sentTo?: string;
 	tags?: ITag[];
 	status?: string;

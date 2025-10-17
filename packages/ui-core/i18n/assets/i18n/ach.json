@@ -603,7 +603,8 @@
 			"ONLY_FUTURE": "crwdns8042:0crwdne8042:0"
 		},
 		"NOTIFICATIONS": {
-			"STARTED_WORK_ON": "crwdns3268:0crwdne3268:0"
+			"STARTED_WORK_ON": "crwdns3268:0crwdne3268:0",
+			"RATE_EFFECTIVE_VALUE_CONFIRM": "crwdns100001:0crwdne100001:0"
 		},
 		"ARCHIVE_CONFIRMATION": {
 			"SURE": "crwdns3934:0crwdne3934:0",

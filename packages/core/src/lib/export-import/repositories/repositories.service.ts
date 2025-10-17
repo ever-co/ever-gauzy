@@ -435,12 +435,6 @@ import { TypeOrmCountryRepository } from '../../country/repository/type-orm-coun
 import { TypeOrmCurrencyRepository } from '../../currency/repository/type-orm-currency.repository';
 import { TypeOrmDashboardRepository } from '../../dashboard/repository/type-orm-dashboard.repository';
 import { TypeOrmDashboardWidgetRepository } from '../../dashboard/dashboard-widget/repository/type-orm-dashboard-widget.repository';
-import { EmployeeHourlyRate } from '../../employee-hourly-rates/employee-hourly-rate.entity';
-import { TypeOrmEmployeeHourlyRateRepository } from '../../employee-hourly-rates/repository/type-orm-hourly-rates.repository';
-import { MikroOrmEmployeeHourlyRateRepository } from '../../employee-hourly-rates/repository/mikro-orm-hourly-rates.repository';
-import { InvoiceAmount } from '../../invoice-amount/invoice-amount.entity';
-import { TypeOrmInvoiceAmountRepository } from '../../invoice-amount/repository/type-orm-invoice-amount.repository';
-import { MikroOrmInvoiceAmountRepository } from '../../invoice-amount/repository/mikro-orm-invoice-amount.repository';
 
 export interface IForeignKey<T = any> {
 	column: string;
@@ -589,11 +583,6 @@ export class RepositoriesService implements OnModuleInit {
 		public typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
 		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
-
-		@InjectRepository(EmployeeHourlyRate)
-		public typeOrmEmployeeHourlyRateRepository: TypeOrmEmployeeHourlyRateRepository,
-
-		mikroOrmEmployeeHourlyRateRepository: MikroOrmEmployeeHourlyRateRepository,
 
 		@InjectRepository(EmployeeAppointment)
 		public typeOrmEmployeeAppointmentRepository: TypeOrmEmployeeAppointmentRepository,
@@ -749,11 +738,6 @@ export class RepositoriesService implements OnModuleInit {
 		public typeOrmInvoiceItemRepository: TypeOrmInvoiceItemRepository,
 
 		mikroOrmInvoiceItemRepository: MikroOrmInvoiceItemRepository,
-
-		@InjectRepository(InvoiceAmount)
-		public typeOrmInvoiceAmountRepository: TypeOrmInvoiceAmountRepository,
-
-		mikroOrmInvoiceAmountRepository: MikroOrmInvoiceAmountRepository,
 
 		@InjectRepository(KeyResult)
 		public typeOrmKeyResultRepository: TypeOrmKeyResultRepository,
@@ -1431,9 +1415,6 @@ export class RepositoriesService implements OnModuleInit {
 				repository: this.typeOrmEmployeeRepository
 			},
 			{
-				repository: this.typeOrmEmployeeHourlyRateRepository
-			},
-			{
 				repository: this.typeOrmActivityLogRepository
 			},
 			{
@@ -1564,9 +1545,6 @@ export class RepositoriesService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmInvoiceEstimateHistoryRepository
-			},
-			{
-				repository: this.typeOrmInvoiceAmountRepository
 			},
 			/*
 			 * Expense & Related Entities

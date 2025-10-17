@@ -730,7 +730,8 @@
 			"ONLY_FUTURE": "Solo futuro"
 		},
 		"NOTIFICATIONS": {
-			"STARTED_WORK_ON": "È necessario inserire la data di inizio lavoro del dipendente per generare il libro paga, abilitare la partecipazione alle spese condivise, vedere le statistiche del dipendente"
+			"STARTED_WORK_ON": "È necessario inserire la data di inizio lavoro del dipendente per generare il libro paga, abilitare la partecipazione alle spese condivise, vedere le statistiche del dipendente",
+			"RATE_EFFECTIVE_VALUE_CONFIRM": "\nQueste modifiche saranno effettive dal momento dell'accettazione e influenzeranno il processo di fatturazione e altri processi nell'applicazione.\nPrima di confermare, chiedi al dipendente di emettere una fattura per il periodo che non è ancora stato fatturato.\nDopo di che, assicurati che la fattura sia stata creata e poi puoi procedere con le modifiche.\nTieni presente che la nuova fattura, con i dati aggiornati, dovrebbe coprire il periodo a partire da oggi in poi.\nSi consiglia inoltre di informare il dipendente sul periodo di generazione delle voci della fattura."
 		},
 		"ARCHIVE_CONFIRMATION": {
 			"SURE": "Sei sicuro di voler archiviare",

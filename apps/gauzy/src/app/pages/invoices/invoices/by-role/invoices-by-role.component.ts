@@ -377,7 +377,6 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 				'invoiceItems.invoice',
 				'invoiceItems.expense',
 				'invoiceItems.task',
-				'amounts',
 				'tags',
 				'payments',
 				'fromUser',
@@ -462,7 +461,6 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 				'invoiceItems.invoice',
 				'invoiceItems.expense',
 				'invoiceItems.task',
-				'amounts',
 				'tags',
 				'payments',
 				'historyRecords',
@@ -628,9 +626,7 @@ export class InvoicesByRoleComponent extends PaginationFilterBaseComponent imple
 				isFilterable: false,
 				renderComponent: InvoiceTotalValueComponent,
 				componentInitFunction: (instance: InvoiceTotalValueComponent, cell: Cell) => {
-					instance.rowData = cell.getRow().getData().amounts?.length
-						? cell.getRow().getData().amounts
-						: cell.getRow().getData();
+					instance.rowData = cell.getRow().getData();
 					instance.value = cell.getValue();
 				}
 			};

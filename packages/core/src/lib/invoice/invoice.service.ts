@@ -275,8 +275,6 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				'invoiceItems.project',
 				'invoiceItems.task',
 				'invoiceItems',
-				'employee.hourlyRates',
-				'amounts',
 				'toContact'
 			]
 		});
@@ -309,7 +307,6 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			taxValue: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.TAX_VALUE', { lang: language }),
 			taxType: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.TAX_TYPE', { lang: language }),
 			currency: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.CURRENCY', { lang: language }),
-			currencies: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.CURRENCIES', { lang: language }),
 			notes: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.INVOICES_SELECT_NOTES', {
 				lang: language
 			}),

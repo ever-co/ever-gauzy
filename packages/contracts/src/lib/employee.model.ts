@@ -1,5 +1,4 @@
 import {
-	IBasePerEntityType,
 	IBasePerTenantAndOrganizationEntityModel,
 	IBasePerTenantAndOrganizationEntityMutationInput,
 	ID
@@ -65,7 +64,9 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	description?: string;
 	teams?: IOrganizationTeam[];
 	payPeriod?: PayPeriodEnum;
-	hourlyRates?: IEmployeeHourlyRate[];
+	billRateValue?: number;
+	billRateCurrency?: CurrenciesEnum;
+	minimumBillingRate?: number;
 	reWeeklyLimit?: number;
 	organizationDepartments?: IOrganizationDepartment[];
 	organizationContacts?: IOrganizationContact[];
@@ -318,11 +319,11 @@ export interface IEmployeeFindInputQuery {
 	findInput: IFindInputQuery;
 }
 
-export interface IEmployeeHourlyRate extends IEmployeeEntityInput, IBasePerEntityType {
-	billRateCurrency?: CurrenciesEnum;
-	billRateValue?: number;
-	minimumBillingRate?: number;
-	lastUpdate?: Date;
+export interface IEmployeeHourlyRate {
+	id: ID;
+	billRateCurrency: string;
+	billRateValue: number;
+	minimumBillingRate: number;
 }
 
 export interface IGetEmployeeHourlyRateInput {

@@ -31,11 +31,3 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
   color: nb-theme(button-outline-basic-disabled-text-color);
   box-shadow: unset;
 }
-
-.total-invoice {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  max-width: 40%;
-  margin-left: auto;
-}

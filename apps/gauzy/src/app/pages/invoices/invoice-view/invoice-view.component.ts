@@ -52,8 +52,6 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 			'invoiceItems.task',
 			'fromOrganization',
 			'fromOrganization.contact',
-			'employee.hourlyRates',
-			'amounts',
 			'toContact',
 			'fromUser'
 		];

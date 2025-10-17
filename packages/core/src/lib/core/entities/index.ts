@@ -158,9 +158,7 @@ import {
 	Warehouse,
 	WarehouseProduct,
 	WarehouseProductVariant,
-	TaskProjectSequence,
-	EmployeeHourlyRate,
-	InvoiceAmount
+	TaskProjectSequence
 } from './internal';
 
 export const coreEntities = [
@@ -196,7 +194,6 @@ export const coreEntities = [
 	EmailReset,
 	EmailTemplate,
 	Employee,
-	EmployeeHourlyRate,
 	EmployeeAppointment,
 	EmployeeAvailability,
 	EmployeeAward,
@@ -238,7 +235,6 @@ export const coreEntities = [
 	Invoice,
 	InvoiceEstimateHistory,
 	InvoiceItem,
-	InvoiceAmount,
 	IssueType,
 	KeyResult,
 	KeyResultTemplate,

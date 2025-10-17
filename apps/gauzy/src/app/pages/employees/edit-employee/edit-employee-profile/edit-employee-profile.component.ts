@@ -229,7 +229,6 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 					'user',
 					'organizationDepartments',
 					'organizationPosition',
-					'hourlyRates',
 					'organizationEmploymentTypes',
 					'tags',
 					'skills',

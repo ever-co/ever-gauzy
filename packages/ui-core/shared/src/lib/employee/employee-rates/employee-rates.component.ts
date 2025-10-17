@@ -4,6 +4,9 @@ import { IEmployee, PayPeriodEnum, ICandidate, ICurrency } from '@gauzy/contract
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs';
 import { CandidateStore, EmployeeStore, Store } from '@gauzy/ui-core/core';
+import { ActionConfirmationComponent } from '../../user';
+import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,7 +41,9 @@ export class EmployeeRatesComponent implements OnInit {
 		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly employeeStore: EmployeeStore,
-		private readonly candidateStore: CandidateStore
+		private readonly candidateStore: CandidateStore,
+		private readonly dialogService: NbDialogService,
+		public readonly translateService: TranslateService
 	) {}
 
 	ngOnInit() {
@@ -68,18 +73,56 @@ export class EmployeeRatesComponent implements OnInit {
 		if (this.form.invalid || !this.store.selectedOrganization) {
 			return;
 		}
+
 		const { id: organizationId } = this.store.selectedOrganization;
-		if (this.form.valid && this.isEmployee) {
-			this.employeeStore.employeeForm = {
-				...this.form.getRawValue(),
-				organizationId
-			};
+
+		const hasCurrencyChanged = this.form.value.billRateCurrency !== this.selectedEmployee?.billRateCurrency;
+		const hasRateChanged = this.form.value.billRateValue !== this.selectedEmployee?.billRateValue;
+
+		if ((!hasCurrencyChanged && !hasRateChanged) || this.isCandidate) {
+			await this._saveForm(organizationId);
+			return;
 		}
-		if (this.form.valid && this.isCandidate) {
-			this.candidateStore.candidateForm = {
-				...this.form.getRawValue(),
-				organizationId
-			};
+
+		let recordType = '';
+
+		if (hasCurrencyChanged && hasRateChanged) {
+			recordType = ` ${this.translateService.instant(
+				'FORM.LABELS.CURRENCY_PER_HOUR'
+			)} & ${this.translateService.instant('FORM.LABELS.BILL_RATE')}`;
+		} else if (hasCurrencyChanged) {
+			recordType = this.translateService.instant('FORM.LABELS.CURRENCY_PER_HOUR');
+		} else if (hasRateChanged) {
+			recordType = this.translateService.instant('FORM.LABELS.BILL_RATE');
+		}
+
+		const dialogRef = this.dialogService.open(ActionConfirmationComponent, {
+			context: {
+				recordType: ` ${recordType}`,
+				extraText: `${this.translateService.instant('FORM.NOTIFICATIONS.RATE_EFFECTIVE_VALUE_CONFIRM')}`
+			}
+		});
+
+		dialogRef.onClose.pipe(untilDestroyed(this)).subscribe(async (confirmed) => {
+			if (confirmed) {
+				await this._saveForm(organizationId);
+			} else {
+				this._syncRates(this.selectedEmployee);
+			}
+		});
+	}
+
+	private async _saveForm(organizationId: string) {
+		const formData = {
+			...this.form.getRawValue(),
+			organizationId
+		};
+
+		if (this.isEmployee) {
+			this.employeeStore.employeeForm = formData;
+		}
+		if (this.isCandidate) {
+			this.candidateStore.candidateForm = formData;
 		}
 	}
 

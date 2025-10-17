@@ -730,7 +730,8 @@
 			"ONLY_FUTURE": "Only Future"
 		},
 		"NOTIFICATIONS": {
-			"STARTED_WORK_ON": "It's required to enter the date when the employee started work to generate employee payroll, enable the employee to participate in split expenses, see employee statistics"
+			"STARTED_WORK_ON": "It's required to enter the date when the employee started work to generate employee payroll, enable the employee to participate in split expenses, see employee statistics",
+			"RATE_EFFECTIVE_VALUE_CONFIRM": "\nThese changes will be effective from the moment of acceptance and will affect the invoicing process and other processes in the application. \nBefore confirming, please ask the employee to issue an invoice for the period that has not yet been invoiced.\nAfter that, make sure the invoice has been created, and then you can proceed with the changes.\nKeep in mind that the new invoice, with the updated data, should cover the period starting from today and onwards.\nIt is also recommended to inform the employee about the invoice items generation period."
 		},
 		"ARCHIVE_CONFIRMATION": {
 			"SURE": "Are you sure you want to archive",

@@ -153,7 +153,6 @@ export * from './lib/user.model';
 export * from './lib/wakatime.model';
 export * from './lib/plugin.model';
 export * from './lib/smart-table-filters.model';
-export * from './lib/invoice-amount.model';
 
 export {
 	ActorTypeEnum,

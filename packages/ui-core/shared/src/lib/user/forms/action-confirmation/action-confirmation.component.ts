@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 
 @Component({
-    selector: 'ga-action-confirmation',
-    template: `
+	selector: 'ga-action-confirmation',
+	template: `
 		<nb-card>
 			<nb-card-header>
 				<span class="cancel"><i class="fas fa-times" (click)="close()"></i></span>
@@ -12,9 +12,12 @@ import { NbDialogRef } from '@nebular/theme';
 				</h6>
 			</nb-card-header>
 			<nb-card-body>
-				<span>
+				<span class="body-text">
 					{{ 'POP_UPS.ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE' | translate }}
 					{{ recordType }}?
+					<span *ngIf="extraText">
+						{{ ' ' + extraText }}
+					</span>
 				</span>
 			</nb-card-body>
 			<nb-card-footer>
@@ -27,8 +30,11 @@ import { NbDialogRef } from '@nebular/theme';
 			</nb-card-footer>
 		</nb-card>
 	`,
-    styles: [
-        `
+	styles: [
+		`
+			.body-text {
+				white-space: pre-line;
+			}
 			nb-card-footer {
 				text-align: left;
 				width: 100%;
@@ -38,12 +44,14 @@ import { NbDialogRef } from '@nebular/theme';
 				width: 300px;
 			}
 		`
-    ],
-    styleUrls: ['../delete-confirmation/delete-confirmation.component.scss'],
-    standalone: false
+	],
+	styleUrls: ['../delete-confirmation/delete-confirmation.component.scss'],
+	standalone: false
 })
 export class ActionConfirmationComponent {
 	recordType: string;
+	extraText?: string;
+
 	constructor(protected dialogRef: NbDialogRef<ActionConfirmationComponent>) {}
 
 	close() {

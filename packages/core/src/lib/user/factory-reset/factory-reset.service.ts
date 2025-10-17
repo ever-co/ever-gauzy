@@ -265,12 +265,6 @@ import { MikroOrmUserOrganizationRepository } from '../../user-organization/repo
 import { TypeOrmUserOrganizationRepository } from '../../user-organization/repository/type-orm-user-organization.repository';
 import { MikroOrmUserRepository } from '../../user/repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from '../../user/repository/type-orm-user.repository';
-import { EmployeeHourlyRate } from '../../employee-hourly-rates/employee-hourly-rate.entity';
-import { TypeOrmEmployeeHourlyRateRepository } from '../../employee-hourly-rates/repository/type-orm-hourly-rates.repository';
-import { MikroOrmEmployeeHourlyRateRepository } from '../../employee-hourly-rates/repository/mikro-orm-hourly-rates.repository';
-import { InvoiceAmount } from '../../invoice-amount/invoice-amount.entity';
-import { TypeOrmInvoiceAmountRepository } from '../../invoice-amount/repository/type-orm-invoice-amount.repository';
-import { MikroOrmInvoiceAmountRepository } from '../../invoice-amount/repository/mikro-orm-invoice-amount.repository';
 
 @Injectable()
 export class FactoryResetService {
@@ -371,11 +365,6 @@ export class FactoryResetService {
 		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
 		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
-
-		@InjectRepository(EmployeeHourlyRate)
-		private typeOrmEmployeeHourlyRateRepository: TypeOrmEmployeeHourlyRateRepository,
-
-		mikroOrmEmployeeHourlyRateRepository: MikroOrmEmployeeHourlyRateRepository,
 
 		@InjectRepository(EmployeeAppointment)
 		private typeOrmEmployeeAppointmentRepository: TypeOrmEmployeeAppointmentRepository,
@@ -506,11 +495,6 @@ export class FactoryResetService {
 		private typeOrmInvoiceItemRepository: TypeOrmInvoiceItemRepository,
 
 		mikroOrmInvoiceItemRepository: MikroOrmInvoiceItemRepository,
-
-		@InjectRepository(InvoiceAmount)
-		private typeOrmInvoiceAmountRepository: TypeOrmInvoiceAmountRepository,
-
-		mikroOrmInvoiceAmountRepository: MikroOrmInvoiceAmountRepository,
 
 		@InjectRepository(KeyResult)
 		private typeOrmKeyResultRepository: TypeOrmKeyResultRepository,
@@ -856,14 +840,12 @@ export class FactoryResetService {
 			this.typeOrmInvoiceItemRepository,
 			this.typeOrmInvoiceEstimateHistoryRepository,
 			this.typeOrmInvoiceRepository,
-			this.typeOrmInvoiceAmountRepository,
 			this.typeOrmFeatureOrganizationRepository,
 			this.typeOrmEmployeeAppointmentRepository,
 			this.typeOrmEmployeeAwardRepository,
 			this.typeOrmEmployeeLevelRepository,
 			this.typeOrmEmployeeRecurringExpenseRepository,
 			this.typeOrmEmployeeRepository,
-			this.typeOrmEmployeeHourlyRateRepository,
 			this.typeOrmEmployeeSettingRepository,
 			this.typeOrmEquipmentSharingRepository,
 			this.typeOrmEquipmentRepository,

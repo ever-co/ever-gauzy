@@ -11,6 +11,7 @@ import {
 	TypeOrmEntityManager
 } from '../core/entities/subscribers/entity-event-subscriber.types';
 import { environment } from '@gauzy/config';
+import { CurrenciesEnum } from '@gauzy/contracts';
 
 @EventSubscriber()
 export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
@@ -40,22 +41,14 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 				entity.isDeleted = !!entity.deletedAt;
 			}
 
-			if (entity.hourlyRates && entity.hourlyRates.length > 0) {
-				const latestRate = entity.hourlyRates.reduce((prev, curr) =>
-					prev.lastUpdate > curr.lastUpdate ? prev : curr
-				);
+			// Default billRateValue to 0 if it's not set or falsy
+			if (Object.hasOwn(entity, 'billRateValue')) {
+				entity.billRateValue = entity.billRateValue || 0;
+			}
 
-				(entity as any).billRateValue = latestRate.billRateValue;
-				(entity as any).billRateCurrency = latestRate.billRateCurrency;
-				(entity as any).minimumBillingRate = latestRate.minimumBillingRate ?? 0;
-
-				(entity as any).currentRate = latestRate;
-			} else {
-				(entity as any).billRateValue = 0;
-				(entity as any).billRateCurrency = environment.defaultCurrency;
-				(entity as any).minimumBillingRate = 0;
-
-				entity.hourlyRates = [];
+			// Default billRateValue to 0 if it's not set or falsy
+			if (Object.hasOwn(entity, 'billRateCurrency')) {
+				entity.billRateCurrency = entity.billRateCurrency || (environment.defaultCurrency as CurrenciesEnum);
 			}
 		} catch (error) {
 			// Handle or log the error as needed

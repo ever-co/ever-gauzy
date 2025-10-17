@@ -730,7 +730,8 @@
 			"ONLY_FUTURE": "Apenas Futuro"
 		},
 		"NOTIFICATIONS": {
-			"STARTED_WORK_ON": "É necessário inserir a data de início do trabalho do funcionário para gerar a folha de pagamento, permitir que o funcionário participe de despesas divididas, ver estatísticas do funcionário"
+			"STARTED_WORK_ON": "É necessário inserir a data de início do trabalho do funcionário para gerar a folha de pagamento, permitir que o funcionário participe de despesas divididas, ver estatísticas do funcionário",
+			"RATE_EFFECTIVE_VALUE_CONFIRM": "\nEssas alterações entrarão em vigor a partir do momento da aceitação e afetarão o processo de faturamento e outros processos no aplicativo.\nAntes de confirmar, peça ao funcionário para emitir uma fatura para o período que ainda não foi faturado.\nDepois disso, certifique-se de que a fatura foi criada e, em seguida, você pode prosseguir com as alterações.\nLembre-se de que a nova fatura, com os dados atualizados, deve cobrir o período a partir de hoje.\nTambém é recomendável informar o funcionário sobre o período de geração dos itens da fatura."
 		},
 		"ARCHIVE_CONFIRMATION": {
 			"SURE": "Tem certeza de que deseja arquivar",

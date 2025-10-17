@@ -36,7 +36,7 @@ import {
 	IComment,
 	IOrganizationSprint,
 	IEmployeeAvailability,
-	IEmployeeHourlyRate
+	CurrenciesEnum
 } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -94,7 +94,7 @@ import { ColumnNumericTransformerPipe } from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { OrganizationProjectModuleEmployee } from '../organization-project-module/organization-project-module-employee.entity';
-import { EmployeeHourlyRate } from '../employee-hourly-rates/employee-hourly-rate.entity';
+import { Transform, TransformFnParams } from 'class-transformer';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee, Taggable, HasCustomFields {
@@ -133,6 +133,26 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@IsEnum(PayPeriodEnum)
 	@MultiORMColumn({ nullable: true })
 	payPeriod?: PayPeriodEnum;
+
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
+	@MultiORMColumn({ nullable: true })
+	billRateValue?: number;
+
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
+	@MultiORMColumn({ nullable: true })
+	minimumBillingRate?: number;
+
+	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum, example: CurrenciesEnum.USD })
+	@IsOptional()
+	@IsEnum(CurrenciesEnum)
+	@MultiORMColumn({ nullable: true })
+	billRateCurrency?: CurrenciesEnum;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
@@ -619,13 +639,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 		cascade: true
 	})
 	favorites?: IFavorite[];
-
-	@ApiPropertyOptional({ type: () => EmployeeHourlyRate, isArray: true })
-	@IsOptional()
-	@MultiORMOneToMany(() => EmployeeHourlyRate, (rate) => rate.employee, {
-		cascade: true
-	})
-	hourlyRates?: IEmployeeHourlyRate[];
 
 	/*
 	|--------------------------------------------------------------------------

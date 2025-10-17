@@ -690,7 +690,8 @@
 			"ONLY_FUTURE": "Seulement l'avenir"
 		},
 		"NOTIFICATIONS": {
-			"STARTED_WORK_ON": "Il est nécessaire de saisir la date à laquelle l'employé a commencé à travailler afin de générer la paie de l'employé, de lui permettre de participer aux dépenses partagées et de consulter les statistiques de l'employé."
+			"STARTED_WORK_ON": "Il est nécessaire de saisir la date à laquelle l'employé a commencé à travailler afin de générer la paie de l'employé, de lui permettre de participer aux dépenses partagées et de consulter les statistiques de l'employé.",
+			"RATE_EFFECTIVE_VALUE_CONFIRM": "\nCes changements prendront effet au moment de l’acceptation et affecteront le processus de facturation ainsi que d’autres processus dans l’application.\nAvant de confirmer, veuillez demander à l’employé d’émettre une facture pour la période qui n’a pas encore été facturée.\nEnsuite, assurez-vous que la facture a été créée, puis vous pouvez procéder aux modifications.\nGardez à l’esprit que la nouvelle facture, avec les données mises à jour, doit couvrir la période à partir d’aujourd’hui.\nIl est également recommandé d’informer l’employé de la période de génération des éléments de facture."
 		},
 		"ARCHIVE_CONFIRMATION": {
 			"SURE": "Êtes-vous certain(e) de vouloir archiver ?",

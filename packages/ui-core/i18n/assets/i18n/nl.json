@@ -730,7 +730,8 @@
 			"ONLY_FUTURE": "Alleen toekomst"
 		},
 		"NOTIFICATIONS": {
-			"STARTED_WORK_ON": "Het is vereist om de datum in te voeren waarop de werknemer is begonnen met werken om de loonlijst van de werknemer te genereren, de werknemer in staat te stellen deel te nemen aan gedeelde uitgaven, werknemersstatistieken te bekijken"
+			"STARTED_WORK_ON": "Het is vereist om de datum in te voeren waarop de werknemer is begonnen met werken om de loonlijst van de werknemer te genereren, de werknemer in staat te stellen deel te nemen aan gedeelde uitgaven, werknemersstatistieken te bekijken",
+			"RATE_EFFECTIVE_VALUE_CONFIRM": "\nDeze wijzigingen worden van kracht vanaf het moment van acceptatie en beïnvloeden het factureringsproces en andere processen in de applicatie.\nVraag de werknemer vóór bevestiging om een factuur uit te geven voor de periode die nog niet is gefactureerd.\nControleer daarna of de factuur is aangemaakt en ga dan verder met de wijzigingen.\nHoud er rekening mee dat de nieuwe factuur met de bijgewerkte gegevens de periode vanaf vandaag moet dekken.\nHet wordt ook aanbevolen om de werknemer te informeren over de periode voor het genereren van factuuritems."
 		},
 		"ARCHIVE_CONFIRMATION": {
 			"SURE": "Weet u zeker dat u wilt archiveren",

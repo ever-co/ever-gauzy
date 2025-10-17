@@ -23,7 +23,6 @@ import {
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 import { CreateInvoiceEstimateHistoryDTO } from './../../invoice-estimate-history/dto';
 import { CreateInvoiceItemDTO } from './../../invoice-item/dto';
-import { InvoiceAmountDTO } from '../../invoice-amount/dto/invoice-amount.dto';
 
 export class InvoiceDTO extends TenantOrganizationBaseDTO {
 	@ApiProperty({ type: () => Number, readOnly: true })
@@ -129,13 +128,6 @@ export class InvoiceDTO extends TenantOrganizationBaseDTO {
 	@ValidateNested({ each: true })
 	@Type(() => CreateInvoiceItemDTO)
 	readonly invoiceItems: CreateInvoiceItemDTO[];
-
-	@ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
-	@IsOptional()
-	@IsArray()
-	@ValidateNested({ each: true })
-	@Type(() => InvoiceAmountDTO)
-	readonly amounts: InvoiceAmountDTO[];
 
 	@ApiPropertyOptional({ type: () => Array, isArray: true, readOnly: true })
 	@IsOptional()

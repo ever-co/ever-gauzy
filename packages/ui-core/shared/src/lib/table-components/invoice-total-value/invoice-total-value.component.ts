@@ -8,23 +8,9 @@ import { Store } from '@gauzy/ui-core/core';
 @Component({
 	selector: 'ga-invoice-total-amount',
 	template: `
-		<ng-container *ngIf="isArray(rowData); else singleValue">
-			<div *ngFor="let amount of rowData">
-				{{
-					amount.totalValue
-						| currency : amount.currency : 'code' : '1.0-4'
-						| position : organization?.currencyPosition
-				}}
-			</div>
-		</ng-container>
-
-		<ng-template #singleValue>
-			<span>
-				{{
-					value | currency : rowData?.currency : 'code' : '1.0-4' | position : organization?.currencyPosition
-				}}
-			</span>
-		</ng-template>
+		<span>
+			{{ value | currency : rowData?.currency : 'code' | position : organization?.currencyPosition }}
+		</span>
 	`,
 	standalone: false
 })
@@ -46,9 +32,5 @@ export class InvoiceTotalValueComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	isArray(value: any): boolean {
-		return Array.isArray(value);
 	}
 }

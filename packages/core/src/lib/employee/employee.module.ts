@@ -15,7 +15,6 @@ import { Employee } from './employee.entity';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { SocketModule } from '../socket/socket.module';
-import { EmployeeHourlyRateModule } from '../employee-hourly-rates/employee-hourly-rate.module';
 
 @Module({
 	imports: [
@@ -26,7 +25,6 @@ import { EmployeeHourlyRateModule } from '../employee-hourly-rates/employee-hour
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => AuthModule),
-		forwardRef(() => EmployeeHourlyRateModule),
 		SocketModule,
 		RoleModule,
 		CqrsModule

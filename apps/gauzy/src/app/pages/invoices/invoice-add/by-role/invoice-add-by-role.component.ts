@@ -21,8 +21,7 @@ import {
 	IReportDayData,
 	IReportDayGroupByEmployee,
 	IGetEmployeeHourlyRateInput,
-	IEmployeeHourlyRate,
-	ICurrencyTotals
+	IEmployeeHourlyRate
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { compareDate, distinctUntilChange, extractNumber, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
@@ -98,13 +97,12 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 	disableSaveButton = true;
 	organizationId: string;
 	discountAfterTax: boolean;
+	subtotal = 0;
+	total = 0;
 	currency: string;
 	selectedLanguage: string;
 	selectedDateRange: IDateRangePicker;
-	totalsByCurrency: Record<string, ICurrencyTotals>;
 	private rate = 0;
-	private subtotal: Record<string, number>;
-	private total = 0;
 
 	private _isEstimate = false;
 	@Input() set isEstimate(val: boolean) {
@@ -349,8 +347,8 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 				type: 'text',
 				isFilterable: false,
 				width: '13%',
-				valuePrepareFunction: (cell, row) => {
-					return `${row?.row?.data?.currency ?? ''} ${cell ?? 0}`;
+				valuePrepareFunction: (cell) => {
+					return `${this.currency} ${cell ?? this.rate}`;
 				}
 			};
 			quantity = {
@@ -390,8 +388,8 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			type: 'text',
 			isAddable: false,
 			isEditable: false,
-			valuePrepareFunction: (cell, row: any) => {
-				return `${row?.row?.data?.currency ?? ''} ${parseFloat(cell ?? '0')?.toFixed(2) ?? (0).toFixed(2)}`;
+			valuePrepareFunction: (cell: string) => {
+				return `${this.currency} ${parseFloat(cell ?? '0')?.toFixed(2) ?? (0).toFixed(2)}`;
 			},
 			isFilterable: false,
 			width: '13%'
@@ -453,16 +451,11 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		} = this.form.value;
 
 		try {
-			const amounts = Object.entries(this.totalsByCurrency).map(([currency, values]: any) => ({
-				currency,
-				totalValue: values.total,
-				organizationId,
-				tenantId
-			}));
 			const createdInvoice = await this.invoicesService.addOwn({
 				invoiceNumber,
 				invoiceDate: moment(invoiceDate).startOf('day').toDate(),
 				dueDate: moment(dueDate).endOf('day').toDate(),
+				currency: this.currency,
 				discountValue,
 				discountType,
 				tax,
@@ -471,7 +464,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 				tax2Type,
 				terms: notes,
 				paid: false,
-				amounts,
+				totalValue: +this.total.toFixed(2),
 				fromUserId: this.selectedEmployee?.id,
 				fromOrganizationId: organizationId,
 				organizationId,
@@ -746,7 +739,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		);
 	}
 
-	private loadInvoiceEmployeeRateData(): Observable<IEmployeeHourlyRate[]> {
+	private loadInvoiceEmployeeRateData(): Observable<number> {
 		const request: IGetEmployeeHourlyRateInput = {
 			organizationId: this.organization.id,
 			startDate: this.selectedDateRange.startDate.toISOString(),
@@ -755,28 +748,15 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		};
 
 		return this.employeeRateService.getEmployeeHourlyRate(request).pipe(
-			map((data: IEmployeeHourlyRate[] = []) => {
-				const unique = data.filter(
-					(item, index, self) =>
-						index ===
-						self.findIndex(
-							(t) =>
-								t.billRateCurrency === item.billRateCurrency && t.billRateValue === item.billRateValue
-						)
-				);
-				// sort by lastUpdate ascending
-				const sorted = unique.sort(
-					(a, b) => new Date(a.lastUpdate).getTime() - new Date(b.lastUpdate).getTime()
-				);
-
-				// take the last (most recent) one
-				const last = sorted[sorted.length - 1];
-				if (last) {
-					this.rate = last.billRateValue;
-					this.currency = last.billRateCurrency;
+			map((data: IEmployeeHourlyRate[]) => {
+				if (data && data.length > 0) {
+					const rate = data[0];
+					this.rate = rate.billRateValue;
+					this.currency = rate.billRateCurrency;
+					return this.rate;
+				} else {
+					return 0;
 				}
-
-				return sorted;
 			}),
 			untilDestroyed(this)
 		);
@@ -900,16 +880,9 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			switch (this.selectedInvoiceType) {
 				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 					if (isNotEmpty(this.selectedEmployee)) {
-						const { time, rates } = await this.getEmployeeData();
-						rates.forEach((rate) => {
-							const data = this.createInvoiceData(
-								this.selectedEmployee?.name,
-								rate.billRateValue,
-								time,
-								rate.billRateCurrency
-							);
-							invoiceData.push(data);
-						});
+						const { time, rate } = await this.getEmployeeData();
+						const data = this.createInvoiceData(this.selectedEmployee?.name, rate, time);
+						invoiceData.push(data);
 					}
 					break;
 				case InvoiceTypeEnum.BY_PROJECT_HOURS:
@@ -960,21 +933,14 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		await generateData();
 
 		if (isNotEmpty(invoiceData)) {
-			const subtotal: Record<string, number> = {};
+			let subtotal = 0;
 
 			invoiceData.forEach((data) => {
-				const currency = data.currency || this.currency;
-				const lineTotal = +data.price * +data.quantity;
-
-				if (!subtotal[currency]) {
-					subtotal[currency] = 0;
-				}
-
-				subtotal[currency] += lineTotal;
+				subtotal += +data.price * +data.quantity;
 			});
 			this.subtotal = subtotal;
 		} else {
-			this.subtotal = {};
+			this.subtotal = 0;
 		}
 
 		this.shouldLoadTable = true;
@@ -984,20 +950,16 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		this.calculateTotal();
 	}
 
-	getCurrencies(): string[] {
-		return this.totalsByCurrency ? Object.keys(this.totalsByCurrency) : [];
-	}
-
 	private getEmployeeData() {
-		return new Promise<{ time: number; rates: IEmployeeHourlyRate[] }>((resolve, reject) => {
+		return new Promise<{ time: number; rate: number }>((resolve, reject) => {
 			forkJoin({
 				time: this.loadInvoiceTimeLogsData(),
-				rates: this.loadInvoiceEmployeeRateData()
+				rate: this.loadInvoiceEmployeeRateData()
 			})
 				.pipe(untilDestroyed(this))
 				.subscribe({
-					next: ({ time, rates }) => {
-						resolve({ time, rates });
+					next: ({ time, rate }) => {
+						resolve({ time, rate });
 					},
 					error: (err) => {
 						this.toastrService.error(err?.message || 'An unknown error occurred');
@@ -1041,43 +1003,33 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			this.form.value.discountValue && this.form.value.discountValue > 0 ? this.form.value.discountValue : 0;
 		const tax = this.form.value.tax && this.form.value.tax > 0 ? this.form.value.tax : 0;
 		const tax2 = this.form.value.tax2 && this.form.value.tax2 > 0 ? this.form.value.tax2 : 0;
+		let totalDiscount = 0;
+		let totalTax = 0;
 		const tableData = await this.smartTableSource.getAll();
-		const totalsByCurrency: Record<string, ICurrencyTotals> = {};
-
-		tableData.forEach((item) => {
-			const currency = item.currency || this.currency;
-			const lineTotal = +item.price * +item.quantity;
-
-			if (!totalsByCurrency[currency]) {
-				totalsByCurrency[currency] = { subtotal: 0, totalTax: 0, totalDiscount: 0, total: 0 };
-			}
-
-			// --- SUBTOTAL ---
-			totalsByCurrency[currency].subtotal += lineTotal;
-
+		for (const item of tableData) {
 			// --- TAX ---
 			if (item.applyTax) {
 				switch (this.form.value.taxType) {
 					case DiscountTaxTypeEnum.PERCENT:
-						totalsByCurrency[currency].totalTax += lineTotal * (+tax / 100);
+						totalTax += item.totalValue * (+tax / 100);
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalsByCurrency[currency].totalTax += +tax;
+						totalTax += +tax;
 						break;
 					default:
-						totalsByCurrency[currency].totalTax = 0;
+						totalTax = 0;
 						break;
 				}
 
 				switch (this.form.value.tax2Type) {
 					case DiscountTaxTypeEnum.PERCENT:
-						totalsByCurrency[currency].totalTax += lineTotal * (+tax2 / 100);
+						totalTax += item.totalValue * (+tax2 / 100);
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalsByCurrency[currency].totalTax += +tax2;
+						totalTax += +tax2;
 						break;
 					default:
-						totalsByCurrency[currency].totalTax = 0;
+						totalTax += +tax2;
 						break;
 				}
 			}
@@ -1087,40 +1039,25 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 				switch (this.form.value.discountType) {
 					case DiscountTaxTypeEnum.PERCENT:
 						if (!this.discountAfterTax) {
-							totalsByCurrency[currency].totalDiscount += lineTotal * (+discountValue / 100);
+							totalDiscount += item.totalValue * (+discountValue / 100);
 						}
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalsByCurrency[currency].totalDiscount += +discountValue;
+						totalDiscount += +discountValue;
 						break;
 					default:
-						totalsByCurrency[currency].totalDiscount = 0;
+						totalDiscount = 0;
 						break;
 				}
 			}
-		});
-
-		// --- DISCOUNT AFTER TAX ---
-		Object.keys(totalsByCurrency).forEach((currency) => {
-			if (this.discountAfterTax && this.form.value.discountType === DiscountTaxTypeEnum.PERCENT) {
-				totalsByCurrency[currency].totalDiscount =
-					(totalsByCurrency[currency].subtotal + totalsByCurrency[currency].totalTax) *
-					(+discountValue / 100);
-			}
-
-			// --- TOTAL ---
-			totalsByCurrency[currency].total =
-				totalsByCurrency[currency].subtotal -
-				totalsByCurrency[currency].totalDiscount +
-				totalsByCurrency[currency].totalTax;
-
-			if (totalsByCurrency[currency].total < 0) totalsByCurrency[currency].total = 0;
-		});
-
-		this.totalsByCurrency = totalsByCurrency;
-
-		// Global total across all currencies
-		this.total = Object.values(totalsByCurrency).reduce((acc, cur) => acc + cur.total, 0);
+		}
+		if (this.discountAfterTax && this.form.value.discountType === DiscountTaxTypeEnum.PERCENT) {
+			totalDiscount = (this.subtotal + totalTax) * (+discountValue / 100);
+		}
+		this.total = this.subtotal - totalDiscount + totalTax;
+		if (this.total < 0) {
+			this.total = 0;
+		}
 
 		// Update pagination
 		this.setPagination({
@@ -1170,11 +1107,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		) {
 			newData = { ...newData, price: extractNumber(newData.price) };
 			const itemTotal = +newData.quantity * +extractNumber(newData.price);
-			newData.totalValue = itemTotal;
-			// Update subtotal for currency
-			const currency = newData.currency || this.currency;
-			this.subtotal[currency] += itemTotal;
-
+			this.subtotal += itemTotal;
 			await event.confirm.resolve(newData);
 			await this.calculateTotal();
 		} else {
@@ -1221,11 +1154,10 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			const newValue = +newData.quantity * +extractNumber(event.newData.price);
 			newData.totalValue = newValue;
 
-			const currency = newData.currency || this.currency;
 			if (newValue > oldValue) {
-				this.subtotal[currency] += newValue - oldValue;
+				this.subtotal += newValue - oldValue;
 			} else if (oldValue > newValue) {
-				this.subtotal[currency] -= oldValue - newValue;
+				this.subtotal -= oldValue - newValue;
 			}
 			await event.confirm.resolve(newData);
 			await this.calculateTotal();
@@ -1239,8 +1171,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 	}
 
 	async onDeleteConfirm(event) {
-		const currency = event.data.currency || this.currency;
-		this.subtotal[currency] -= +event.data.quantity * +event.data.price;
+		this.subtotal -= +event.data.quantity * +event.data.price;
 		await event.confirm.resolve(event.data);
 		await this.calculateTotal();
 	}

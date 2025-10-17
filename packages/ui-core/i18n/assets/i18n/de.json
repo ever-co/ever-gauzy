@@ -730,7 +730,8 @@
 			"ONLY_FUTURE": "Nur Zukunft"
 		},
 		"NOTIFICATIONS": {
-			"STARTED_WORK_ON": "Das Eintrittsdatum des Mitarbeiters ist erforderlich, um die Gehaltsabrechnung zu erstellen, Split-Ausgaben zu ermöglichen und Mitarbeiterstatistiken anzuzeigen"
+			"STARTED_WORK_ON": "Das Eintrittsdatum des Mitarbeiters ist erforderlich, um die Gehaltsabrechnung zu erstellen, Split-Ausgaben zu ermöglichen und Mitarbeiterstatistiken anzuzeigen",
+			"RATE_EFFECTIVE_VALUE_CONFIRM": "\nDiese Änderungen treten ab dem Moment der Bestätigung in Kraft und wirken sich auf den Rechnungsstellungsprozess und andere Prozesse in der Anwendung aus.\nBevor Sie bestätigen, bitten Sie den Mitarbeiter, eine Rechnung für den Zeitraum auszustellen, der noch nicht abgerechnet wurde.\nStellen Sie danach sicher, dass die Rechnung erstellt wurde, und fahren Sie dann mit den Änderungen fort.\nBeachten Sie, dass die neue Rechnung mit den aktualisierten Daten den Zeitraum ab heute abdecken sollte.\nEs wird auch empfohlen, den Mitarbeiter über den Zeitraum der Rechnungsposten-Generierung zu informieren."
 		},
 		"ARCHIVE_CONFIRMATION": {
 			"SURE": "Sind Sie sicher, dass Sie archivieren möchten",

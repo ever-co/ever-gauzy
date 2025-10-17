@@ -13,7 +13,6 @@ export interface IInvoiceItem extends IBasePerTenantAndOrganizationEntityModel {
 	totalValue?: number;
 	invoiceId?: string;
 	taskId?: string;
-	currency?: string;
 	employeeId?: string;
 	projectId?: string;
 	productId?: string;
@@ -36,7 +35,6 @@ export interface IInvoiceItemCreateInput extends IBasePerTenantAndOrganizationEn
 	price: number;
 	quantity: number;
 	totalValue: number;
-	currency?: string;
 	description?: string;
 	invoiceId?: string;
 	taskId?: string;
