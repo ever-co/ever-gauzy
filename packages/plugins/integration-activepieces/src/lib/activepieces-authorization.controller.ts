@@ -9,7 +9,7 @@ import { firstValueFrom, catchError } from 'rxjs';
 import { createHmac, randomBytes } from 'node:crypto';
 import { ACTIVEPIECES_OAUTH_AUTHORIZE_URL, ACTIVEPIECES_OAUTH_TOKEN_URL, ACTIVEPIECES_SCOPES, OAUTH_RESPONSE_TYPE, OAUTH_GRANT_TYPE } from './activepieces.config';
 import { ActivepiecesQueryDto, ActivepiecesTokenExchangeDto } from './dto';
-import { IActivepiecesTokenExchangeRequest, IActivepiecesOAuthTokens } from './activepieces.type';
+import { IActivepiecesTokenExchangeRequest, IActivepiecesOAuthTokens } from '@gauzy/contracts';
 import { ActivepiecesService } from './activepieces.service';
 import { RequestContext } from '@gauzy/core';
 
@@ -255,7 +255,7 @@ export class ActivepiecesAuthorizationController {
 			}
 		}
 	})
-	@Post('/token')
+	@Post('oauth/token')
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async exchangeToken(
 		@Body() body: ActivepiecesTokenExchangeDto,

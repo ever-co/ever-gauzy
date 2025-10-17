@@ -1,0 +1,35 @@
+<nb-card>
+	<nb-card-header>
+		<h5>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.TITLE' | translate }}</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="form-group">
+			<label class="label">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.PROJECT_ID' | translate }}</label>
+			<div class="input-group">
+				<input nbInput fullWidth [(ngModel)]="projectId" type="text" placeholder="Enter Project ID" />
+				<button nbButton status="primary" (click)="loadMcpServers()" [disabled]="loading || !projectId">
+					{{ 'BUTTONS.LOAD' | translate }}
+				</button>
+			</div>
+		</div>
+
+		<div *ngIf="loading" class="text-center">
+			<nb-spinner size="large" status="primary"></nb-spinner>
+		</div>
+
+		<div *ngIf="!loading && mcpServers.length === 0" class="text-center">
+			<p>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.NO_SERVERS' | translate }}</p>
+		</div>
+
+		<div *ngIf="mcpServers.length > 0" class="mcp-servers-list">
+			<nb-card *ngFor="let server of mcpServers" class="mcp-server-card">
+				<nb-card-header>{{ server.name }}</nb-card-header>
+				<nb-card-body>
+					<p><strong>ID:</strong> {{ server.id }}</p>
+					<p><strong>Agent ID:</strong> {{ server.agentId }}</p>
+					<p><strong>Tools:</strong> {{ server.tools?.length || 0 }}</p>
+				</nb-card-body>
+			</nb-card>
+		</div>
+	</nb-card-body>
+</nb-card>
