@@ -34,7 +34,7 @@ spec:
     spec:
       containers:
         - name: gauzy-demo-mcp
-          image: registry.digitalocean.com/ever/gauzy-mcp:latest
+          image: registry.digitalocean.com/ever/gauzy-mcp-demo:latest
           env:
             # MCP Server Configuration
             - name: MCP_TRANSPORT
