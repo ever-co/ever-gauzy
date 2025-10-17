@@ -115,7 +115,7 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 				.subscribe(async (result) => {
 					if (result) {
 						try {
-							this.usersService.delete(this.userToRemove.user.id, this.userToRemove);
+							await this.usersService.delete(this.userToRemove.user.id, this.userToRemove);
 
 							this.toastrService.success(
 								this.getTranslation('ORGANIZATIONS_PAGE.EDIT.USER_WAS_DELETED', { name: userName })
