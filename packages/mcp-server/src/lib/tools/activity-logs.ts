@@ -216,21 +216,36 @@ export const registerActivityLogTools = (server: McpServer) => {
 			entityId: z.string().uuid().describe('The entity ID'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["createdBy", "employee"])'),
 			action: ActivityLogActionEnum.optional().describe('Filter by action type'),
+			actorType: z.string().optional().describe('Filter by actor type'),
+			createdByUserId: z.string().uuid().optional().describe('Filter by user who performed the action'),
+			employeeId: z.string().uuid().optional().describe('Filter by employee context'),
 			startDate: z.string().optional().describe('Filter logs from this date (ISO format)'),
 			endDate: z.string().optional().describe('Filter logs until this date (ISO format)'),
-			relations: z.array(z.string()).optional().describe('Relations to include'),
-			sortOrder: z.enum(['ASC', 'DESC']).optional().default('DESC').describe('Sort order by creation date')
+			sortBy: z
+				.enum(['createdAt', 'updatedAt', 'entity', 'action'])
+				.optional()
+				.default('createdAt')
+				.describe('Sort logs by field'),
+			sortOrder: z.enum(['ASC', 'DESC']).optional().default('DESC').describe('Sort order')
 		},
 		async ({
 			entity,
 			entityId,
 			page = 1,
 			limit = 10,
+			relations,
 			action,
+			actorType,
+			createdByUserId,
+			employeeId,
 			startDate,
 			endDate,
-			relations,
+			sortBy = 'createdAt',
 			sortOrder = 'DESC'
 		}) => {
 			try {
@@ -243,11 +258,14 @@ export const registerActivityLogTools = (server: McpServer) => {
 					entityId,
 					page,
 					limit,
+					...(relations && { relations }),
 					...(action && { action }),
+					...(actorType && { actorType }),
+					...(createdByUserId && { createdByUserId }),
+					...(employeeId && { employeeId }),
 					...(startDate && { startDate }),
 					...(endDate && { endDate }),
-					...(relations && { relations }),
-					sortBy: 'createdAt',
+					sortBy,
 					sortOrder
 				};
 

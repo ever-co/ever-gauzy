@@ -12,6 +12,13 @@ export class McpOAuthService implements OnModuleInit {
 	private oauthServer: OAuth2AuthorizationServer;
 
 	constructor(private readonly userService: OAuthUserService) {
+		// Validate required environment variable
+		if (!process.env.MCP_AUTH_SESSION_SECRET || process.env.MCP_AUTH_SESSION_SECRET.trim() === '') {
+			throw new Error(
+				'Please set a secure session secret in your environment configuration.'
+			);
+		}
+
 		// Initialize OAuth server with configuration
 		const port = process.env.MCP_AUTH_PORT || 3003;
 		const baseUrl = process.env.MCP_AUTH_JWT_ISSUER || `http://localhost:${port}`;
@@ -20,7 +27,7 @@ export class McpOAuthService implements OnModuleInit {
 			issuer: process.env.MCP_AUTH_JWT_ISSUER || baseUrl,
 			baseUrl: baseUrl,
 			audience: process.env.MCP_AUTH_JWT_AUDIENCE || 'gauzy-mcp-api',
-			enableClientRegistration: true,
+			enableClientRegistration: false,
 			authorizationEndpoint: '/oauth2/authorize',
 			tokenEndpoint: '/oauth2/token',
 			jwksEndpoint: '/.well-known/jwks.json',
@@ -28,7 +35,7 @@ export class McpOAuthService implements OnModuleInit {
 			registrationEndpoint: '/oauth2/register',
 			introspectionEndpoint: '/oauth2/introspect',
 			userInfoEndpoint: '/oauth2/userinfo',
-			sessionSecret: process.env.MCP_AUTH_SESSION_SECRET || 'your-secret-key-change-in-production',
+			sessionSecret: process.env.MCP_AUTH_SESSION_SECRET,
 			redisUrl: process.env.REDIS_URL // Optional
 		});
 	}

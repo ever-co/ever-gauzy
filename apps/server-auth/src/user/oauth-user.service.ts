@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -14,10 +14,33 @@ import { IUser } from '@gauzy/contracts'
  */
 @Injectable()
 export class OAuthUserService {
+	private readonly logger = new Logger(OAuthUserService.name);
 	constructor(
 		@InjectRepository(User)
 		private readonly typeOrmRepository: Repository<User>
 	) {}
+
+	/**
+	 * Find user by email or ID with required relations
+	 */
+	private async findUserWithRelations(
+		where: { email: string } | { id: string }
+	): Promise<User | null> {
+		return this.typeOrmRepository.findOne({
+			where: {
+				...where,
+				isActive: true,
+				isArchived: false
+			},
+			relations: {
+				role: true,
+				tenant: true,
+				organizations: {
+					organization: true
+				}
+			}
+		});
+	}
 
 	/**
 	 * Authenticate user with email and password for MCP OAuth
@@ -29,21 +52,7 @@ export class OAuthUserService {
 	 */
 	async authenticateMcpUser(email: string, password: string): Promise<IUser | null> {
 		try {
-			// Find user by email from Gauzy DB
-			const user = await this.typeOrmRepository.findOne({
-				where: {
-					email,
-					isActive: true,
-					isArchived: false
-				},
-				relations: {
-					role: true,
-					tenant: true,
-					organizations: {
-						organization: true
-					}
-				}
-			});
+			const user = await this.findUserWithRelations({ email });
 
 			// If no user found, return null
 			if (!user) {
@@ -62,7 +71,7 @@ export class OAuthUserService {
 
 			return user;
 		} catch (error) {
-			logger.error('Error authenticating MCP user:', error as Error);
+			this.logger.error('Error authenticating MCP user:', error as Error);
 			return null;
 		}
 	}
@@ -76,25 +85,11 @@ export class OAuthUserService {
 	 */
 	async getMcpUserInfo(userId: string): Promise<IUser | null> {
 		try {
-			// Find user by ID from Gauzy DB
-			const user = await this.typeOrmRepository.findOne({
-				where: {
-					id: userId,
-					isActive: true,
-					isArchived: false
-				},
-				relations: {
-					role: true,
-					tenant: true,
-					organizations: {
-						organization: true
-					}
-				}
-			});
+			const user = await this.findUserWithRelations({ id: userId });
 
 			return user || null;
 		} catch (error) {
-			logger.error('Error retrieving MCP user info:', error as Error);
+			this.logger.error('Error retrieving MCP user info:', error as Error);
 			return null;
 		}
 	}

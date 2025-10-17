@@ -30,6 +30,24 @@ const convertProductDateFields = <T extends ProductDataWithDates>(productData: T
 	};
 };
 
+/**
+ * Helper function to get and validate default parameters from authManager
+ * @param authManager - The authentication manager instance
+ * @returns Validated default parameters with tenantId and organizationId
+ * @throws Error if tenantId or organizationId is missing
+ */
+const getValidatedDefaultParams = (authManager: typeof import('../common/auth-manager').authManager) => {
+	const defaultParams = authManager.getDefaultParams();
+
+	if (!defaultParams.tenantId || !defaultParams.organizationId) {
+		throw new Error(
+			'Tenant ID and Organization ID not available. Please ensure you are logged in and have an organization.'
+		);
+	}
+
+	return defaultParams;
+};
+
 export const registerProductTools = (server: McpServer) => {
 	// Get products tool
 	server.tool(
@@ -301,14 +319,8 @@ export const registerProductTools = (server: McpServer) => {
 		},
 		async ({ product_data }) => {
 			try {
-				// Get default parameters from authenticated user
-				const defaultParams = authManager.getDefaultParams();
-
-				if (!defaultParams.tenantId || !defaultParams.organizationId) {
-					throw new Error(
-						'Tenant ID and Organization ID not available. Please ensure you are logged in and have an organization.'
-					);
-				}
+				// Get and validate default parameters from authenticated user
+				const defaultParams = getValidatedDefaultParams(authManager);
 
 				const createData = {
 					...convertProductDateFields(product_data),
@@ -343,14 +355,8 @@ export const registerProductTools = (server: McpServer) => {
 		},
 		async ({ id, product_data }) => {
 			try {
-				// Get default parameters from authenticated user
-				const defaultParams = authManager.getDefaultParams();
-
-				if (!defaultParams.tenantId || !defaultParams.organizationId) {
-					throw new Error(
-						'Tenant ID and Organization ID not available. Please ensure you are logged in and have an organization.'
-					);
-				}
+				// Get and validate default parameters from authenticated user
+				const defaultParams = getValidatedDefaultParams(authManager);
 
 				const updateData = {
 					...convertProductDateFields(product_data),

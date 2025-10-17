@@ -4,7 +4,6 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import { Server } from 'node:http';
-import crypto from 'node:crypto';
 import { McpTransportConfig } from '../common/config';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
@@ -14,7 +13,6 @@ import {
 	AuthorizationConfig,
 	loadAuthorizationConfig,
 	OAuth2AuthorizationServer,
-	OAuth2ServerConfig,
 	ResponseBuilder,
 	sanitizeErrorMessage,
 	SecurityEvents,

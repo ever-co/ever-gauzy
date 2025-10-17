@@ -225,7 +225,7 @@ export const registerIncomeTools = (server: McpServer) => {
 				// Get default parameters from authenticated user
 				const defaultParams = authManager.getDefaultParams();
 
-				if (!defaultParams.tenantId || !defaultParams.organizationId) {
+				if (!defaultParams || !defaultParams.tenantId || !defaultParams.organizationId) {
 					throw new Error(
 						'Tenant ID and Organization ID not available. Please ensure you are logged in and have an organization.'
 					);

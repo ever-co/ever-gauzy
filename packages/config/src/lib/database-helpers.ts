@@ -54,7 +54,7 @@ export const getTlsOptions = (dbSslMode: boolean): TlsOptions | undefined => {
 		};
 	} catch (error) {
 		// Handle decoding errors
-		console.error('Error decoding DB_CA_CERT:', error instanceof Error ? error.message : String(error));
+		console.error('Error decoding DB_CA_CERT:', error instanceof Error ? (error.stack || error.message) : String(error));
 		return undefined;
 	}
 };

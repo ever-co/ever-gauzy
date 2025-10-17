@@ -90,8 +90,8 @@ export const registerTimerTools = (server: McpServer) => {
 				}
 
 				const startData = {
-					organizationId: defaultParams.organizationId,
 					tenantId: defaultParams.tenantId,
+					organizationId: defaultParams.organizationId,
 					...(projectId && { projectId }),
 					...(taskId && { taskId }),
 					...(organizationContactId && { organizationContactId }),
@@ -145,8 +145,8 @@ export const registerTimerTools = (server: McpServer) => {
 				}
 
 				const stopData = {
-					organizationId: defaultParams.organizationId,
 					tenantId: defaultParams.tenantId,
+					organizationId: defaultParams.organizationId,
 					...(description && { description }),
 					source: source || 'BROWSER',
 					...(manualTimeSlot !== undefined && { manualTimeSlot })

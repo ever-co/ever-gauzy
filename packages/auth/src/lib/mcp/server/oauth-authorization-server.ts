@@ -132,6 +132,9 @@ export class OAuth2AuthorizationServer {
 		this.setupMiddleware();
 		this.setupRoutes();
 		this.setupErrorHandling();
+
+		// Validate configuration during initialization
+		this.validateConfiguration();
 	}
 
 	private initializeCSRFProtection() {
@@ -188,6 +191,45 @@ export class OAuth2AuthorizationServer {
 		this.authenticateUser = authenticator;
 	}
 
+	/**
+	 * Validate required configuration and providers
+	 * Fails fast in production when required providers are not configured
+	 */
+	private validateConfiguration(): void {
+		const serverConfig = this.configManager.getConfig();
+		const errors: string[] = [];
+
+		// Check for required providers
+		if (!this.authenticateUser) {
+			errors.push('User authenticator is not configured. Call setUserAuthenticator() to provide authentication logic.');
+		}
+
+		if (!this.userInfoProvider) {
+			errors.push('User info provider is not configured. Call setUserInfoProvider() to provide user information retrieval logic.');
+		}
+
+		// If there are configuration errors
+		if (errors.length > 0) {
+			const errorMessage = `OAuth2 Authorization Server configuration validation failed:\n${errors.map(e => `  - ${e}`).join('\n')}`;
+
+			// Log all errors
+			errors.forEach(error => {
+				this.securityLogger.error(`Configuration error: ${error}`);
+			});
+
+			// In production, fail fast by throwing an error
+			if (serverConfig.environment === 'production') {
+				this.securityLogger.error('CRITICAL: Server cannot start with missing required providers in production environment');
+				throw new Error(errorMessage);
+			} else {
+				// In non-production, log warning
+				this.securityLogger.warn('WARNING: Server is starting with incomplete configuration. This is only allowed in non-production environments.');
+				this.securityLogger.warn(errorMessage);
+			}
+		} else {
+			this.securityLogger.info('OAuth2 Authorization Server configuration validated successfully');
+		}
+	}
 
 	/**
 	 * Setup middleware
@@ -1322,12 +1364,6 @@ export class OAuth2AuthorizationServer {
 
 						<button type="submit" class="btn btn-primary">Sign In</button>
 					</form>
-
-					<div class="demo-info">
-						<strong>Demo Credentials:</strong><br>
-						Email: employee@ever.co / Password: 123456<br>
-						Email: admin@ever.co / Password: admin
-					</div>
 				</div>
 			</body>
 			</html>
