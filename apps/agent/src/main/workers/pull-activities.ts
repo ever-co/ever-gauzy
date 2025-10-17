@@ -207,10 +207,6 @@ class PullActivities {
 					organizationContactId: null,
 					stoppedAt: this.stoppedDate
 				});
-				await this.timerService.update(new Timer({
-					id: this.currentTimerId,
-					stoppedAt: this.stoppedDate
-				}));
 				this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
 				this.timerStatusHandler('Idle');
 				return;
