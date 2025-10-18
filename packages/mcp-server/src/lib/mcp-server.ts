@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { version } from './common/version';
-import { sanitizeErrorMessage } from './common/security-utils';
+import { sanitizeErrorMessage } from '@gauzy/auth';
 import { TransportFactory, TransportResult } from './transports';
 import { sessionManager } from './session/session-manager';
 import { registerTimerTools } from './tools/timer';
@@ -60,12 +60,14 @@ export class ExtendedMcpServer extends McpServer {
 	 * Helper to detect Zod schemas more robustly
 	 */
 	private isZodSchema(obj: any): boolean {
-		return obj &&
+		return (
+			obj &&
 			typeof obj === 'object' &&
 			obj._def &&
 			typeof obj._def === 'object' &&
 			typeof obj.parse === 'function' &&
-			typeof obj.safeParse === 'function';
+			typeof obj.safeParse === 'function'
+		);
 	}
 
 	/**
@@ -82,8 +84,10 @@ export class ExtendedMcpServer extends McpServer {
 			const serverInternal = this as unknown as McpServerWithRegisteredTools;
 
 			// Ensure _registeredTools is a plain object before iterating
-			if (serverInternal._registeredTools &&
-				Object.prototype.toString.call(serverInternal._registeredTools) === '[object Object]') {
+			if (
+				serverInternal._registeredTools &&
+				Object.prototype.toString.call(serverInternal._registeredTools) === '[object Object]'
+			) {
 				// Tools are stored as a plain object - iterate only own properties
 				for (const name in serverInternal._registeredTools) {
 					if (!Object.prototype.hasOwnProperty.call(serverInternal._registeredTools, name)) {
@@ -121,7 +125,9 @@ export class ExtendedMcpServer extends McpServer {
 									try {
 										const { zodToJsonSchema } = await import('zod-to-json-schema');
 										inputSchema = zodToJsonSchema(zodSchema, name) as typeof inputSchema;
-										logger.debug(`Converted Zod schema to JSON schema using zod-to-json-schema for tool: ${name}`);
+										logger.debug(
+											`Converted Zod schema to JSON schema using zod-to-json-schema for tool: ${name}`
+										);
 									} catch (importErr) {
 										logger.warn(
 											`zod-to-json-schema not available or failed for tool: ${name}, falling back to default empty schema.`
@@ -186,9 +192,7 @@ export class ExtendedMcpServer extends McpServer {
 			const mask = (obj: Record<string, unknown> | undefined) => {
 				if (!obj) return obj;
 				const SENSITIVE = /pass|secret|token|key|auth|credential/i;
-				return Object.fromEntries(
-					Object.entries(obj).map(([k, v]) => [k, SENSITIVE.test(k) ? '***' : v])
-				);
+				return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, SENSITIVE.test(k) ? '***' : v]));
 			};
 			logger.debug(`Invoking tool: ${name} with args:`, mask(args as Record<string, unknown>));
 
@@ -364,8 +368,7 @@ if (isMainModule()) {
 				logger.log(`   - GET  ${transport.url}/health`);
 				logger.log(`   - POST ${transport.url}/sse`);
 				logger.log(`   - GET  ${transport.url}/sse/events`);
-			}
-			else if (transport.type === 'websocket' && transport.url) {
+			} else if (transport.type === 'websocket' && transport.url) {
 				logger.log(`🔌 WebSocket transport available at: ${transport.url}`);
 				logger.log(`   - Subscribe to events: ${transport.url}/sse/events`);
 				logger.log(`   - Send requests to: ${transport.url}/sse`);
@@ -397,7 +400,11 @@ if (isMainModule()) {
 		}
 
 		const exitCode = hasShutdownErrors ? 1 : 0;
-		logger.log(`Shutdown ${hasShutdownErrors ? 'completed with errors' : 'completed successfully'}, exiting with code ${exitCode}`);
+		logger.log(
+			`Shutdown ${
+				hasShutdownErrors ? 'completed with errors' : 'completed successfully'
+			}, exiting with code ${exitCode}`
+		);
 		process.exit(exitCode);
 	}
 

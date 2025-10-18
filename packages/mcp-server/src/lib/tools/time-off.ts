@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { TimeOffRequestSchema, TimeOffPolicySchema, TimeOffStatusEnum, TimeOffTypeEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('TimeOffTools');
-
 
 /**
  * Helper function to convert date fields in time-off data to Date objects
@@ -21,7 +20,8 @@ interface TimeOffData {
 	[key: string]: any; // Allow other properties since we spread them
 }
 
-interface ConvertedTimeOffData extends Omit<TimeOffData, 'startDate' | 'endDate' | 'requestDate' | 'approvedDate' | 'carryForwardExpiryDate'> {
+interface ConvertedTimeOffData
+	extends Omit<TimeOffData, 'startDate' | 'endDate' | 'requestDate' | 'approvedDate' | 'carryForwardExpiryDate'> {
 	startDate?: Date;
 	endDate?: Date;
 	requestDate?: Date;
@@ -36,7 +36,9 @@ const convertTimeOffDateFields = (timeOffData: TimeOffData): ConvertedTimeOffDat
 		endDate: timeOffData.endDate ? new Date(timeOffData.endDate) : undefined,
 		requestDate: timeOffData.requestDate ? new Date(timeOffData.requestDate) : undefined,
 		approvedDate: timeOffData.approvedDate ? new Date(timeOffData.approvedDate) : undefined,
-		carryForwardExpiryDate: timeOffData.carryForwardExpiryDate ? new Date(timeOffData.carryForwardExpiryDate) : undefined
+		carryForwardExpiryDate: timeOffData.carryForwardExpiryDate
+			? new Date(timeOffData.carryForwardExpiryDate)
+			: undefined
 	};
 };
 
@@ -49,7 +51,10 @@ export const registerTimeOffTools = (server: McpServer) => {
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			search: z.string().optional().describe('Search term for request description'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["employee", "policy", "approvedBy"])'),
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["employee", "policy", "approvedBy"])'),
 			status: TimeOffStatusEnum.optional().describe('Filter by request status'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
 			policyId: z.string().uuid().optional().describe('Filter by policy ID'),
@@ -139,7 +144,10 @@ export const registerTimeOffTools = (server: McpServer) => {
 		'Get a specific time-off request by ID',
 		{
 			id: z.string().uuid().describe('The time-off request ID'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["employee", "policy", "approvedBy"])')
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["employee", "policy", "approvedBy"])')
 		},
 		async ({ id, relations }) => {
 			try {
@@ -250,7 +258,11 @@ export const registerTimeOffTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Time-off request deleted successfully', id }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Time-off request deleted successfully', id },
+								null,
+								2
+							)
 						}
 					]
 				};
@@ -599,7 +611,11 @@ export const registerTimeOffTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Time-off policy deleted successfully', id }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Time-off policy deleted successfully', id },
+								null,
+								2
+							)
 						}
 					]
 				};

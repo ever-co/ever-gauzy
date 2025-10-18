@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
 import { sessionManager } from '../session/session-manager';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 import type { SessionData } from '../session/session-store';
 
 const logger = new Logger('AuthTools');
@@ -50,7 +50,9 @@ export const registerAuthTools = (server: McpServer, sessionId?: string) => {
 						} catch (sessionError) {
 							// Check if session manager is properly initialized
 							if (!sessionManager.isInitialized()) {
-								logger.error('Session manager not initialized at startup. This is a configuration issue.');
+								logger.error(
+									'Session manager not initialized at startup. This is a configuration issue.'
+								);
 							} else {
 								// Log other session creation errors
 								logger.warn('Failed to create session after login:', sanitizeForLogging(sessionError));
@@ -62,7 +64,11 @@ export const registerAuthTools = (server: McpServer, sessionId?: string) => {
 
 User ID: ${authStatus.userId || 'Unknown'}
 Token expires: ${authStatus.tokenExpiresAt?.toISOString() || 'Unknown'}
-Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not authenticated'}${session ? `\nSession ID: ${session.id}\nSession expires: ${session.expiresAt.toISOString()}` : ''}`;
+Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not authenticated'}${
+						session
+							? `\nSession ID: ${session.id}\nSession expires: ${session.expiresAt.toISOString()}`
+							: ''
+					}`;
 
 					return {
 						content: [
@@ -126,7 +132,10 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 							const destroyed = sessionManager.destroySession(sessionId);
 							if (destroyed) sessionsDestroyed = 1;
 						} catch (sessionError) {
-							logger.warn('Failed to cleanup current session during logout (fallback):', sanitizeForLogging(sessionError));
+							logger.warn(
+								'Failed to cleanup current session during logout (fallback):',
+								sanitizeForLogging(sessionError)
+							);
 						}
 					}
 				} else if (sessionId) {
@@ -135,11 +144,16 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 						const destroyed = sessionManager.destroySession(sessionId);
 						if (destroyed) sessionsDestroyed = 1;
 					} catch (sessionError) {
-						logger.warn('Failed to cleanup current session during logout:', sanitizeForLogging(sessionError));
+						logger.warn(
+							'Failed to cleanup current session during logout:',
+							sanitizeForLogging(sessionError)
+						);
 					}
 				}
 
-				const statusText = `✅ Logout successful. Authentication tokens have been cleared.${sessionsDestroyed > 0 ? `\n🗑️  Cleaned up ${sessionsDestroyed} session(s).` : ''}`;
+				const statusText = `✅ Logout successful. Authentication tokens have been cleared.${
+					sessionsDestroyed > 0 ? `\n🗑️  Cleaned up ${sessionsDestroyed} session(s).` : ''
+				}`;
 
 				return {
 					content: [
@@ -168,7 +182,10 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 		'get_auth_status',
 		'Get current authentication status, user information, and session details',
 		{
-			includeSessionInfo: z.boolean().optional().describe('Whether to include session information (default: true)')
+			includeSessionInfo: z
+				.boolean()
+				.optional()
+				.describe('Whether to include session information (default: true)')
 		},
 		async ({ includeSessionInfo = true }) => {
 			try {
@@ -183,7 +200,7 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 					} else {
 						try {
 							const userSessions = sessionManager.getUserSessions(authStatus.userId);
-							const activeSessions = userSessions.filter(s => s.isActive);
+							const activeSessions = userSessions.filter((s) => s.isActive);
 
 							// Find current session if sessionId is provided and owned by current user
 							if (sessionId) {
@@ -197,7 +214,17 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 
 📊 Session Information:
 Active Sessions: ${activeSessions.length}
-Total Sessions: ${userSessions.length}${currentSession ? `\nCurrent Session: ${currentSession.id}\nSession Expires: ${currentSession.expiresAt.toISOString()}\nSession Status: ${currentSession.isActive ? 'Active' : 'Inactive'}` : sessionId ? `\nCurrent Session: ${sessionId} (Not found, expired, or not accessible)` : ''}`;
+Total Sessions: ${userSessions.length}${
+								currentSession
+									? `\nCurrent Session: ${
+											currentSession.id
+									  }\nSession Expires: ${currentSession.expiresAt.toISOString()}\nSession Status: ${
+											currentSession.isActive ? 'Active' : 'Inactive'
+									  }`
+									: sessionId
+									? `\nCurrent Session: ${sessionId} (Not found, expired, or not accessible)`
+									: ''
+							}`;
 						} catch (sessionError) {
 							logger.warn('Failed to get session information:', sanitizeForLogging(sessionError));
 							sessionInfo = '\n\n⚠️  Session information unavailable';
@@ -273,7 +300,10 @@ ${
 								sessionUpdateInfo = '\n🔄 Session activity updated';
 							}
 						} catch (sessionError) {
-							logger.warn('Failed to update session activity after token refresh:', sanitizeForLogging(sessionError));
+							logger.warn(
+								'Failed to update session activity after token refresh:',
+								sanitizeForLogging(sessionError)
+							);
 						}
 					}
 
@@ -318,7 +348,10 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 		'Get detailed information about current or user sessions',
 		{
 			targetSessionId: z.string().optional().describe('Specific session ID to query (default: current session)'),
-			includeConnections: z.boolean().optional().describe('Whether to include connection details (default: false)')
+			includeConnections: z
+				.boolean()
+				.optional()
+				.describe('Whether to include connection details (default: false)')
 		},
 		async ({ targetSessionId, includeConnections = false }) => {
 			try {
@@ -357,9 +390,14 @@ Connections: ${session.connectionIds.size}`;
 
 						if (includeConnections && session.connectionIds.size > 0) {
 							const connections = sessionManager.getSessionConnections(querySessionId);
-							connectionDetails = connections.map(conn =>
-								`  - ${conn.id} (${conn.type}) - ${conn.isActive ? 'Active' : 'Inactive'} - Last seen: ${conn.lastSeen?.toISOString?.() || 'Unknown'}`
-							).join('\n');
+							connectionDetails = connections
+								.map(
+									(conn) =>
+										`  - ${conn.id} (${conn.type}) - ${
+											conn.isActive ? 'Active' : 'Inactive'
+										} - Last seen: ${conn.lastSeen?.toISOString?.() || 'Unknown'}`
+								)
+								.join('\n');
 							if (connectionDetails) {
 								connectionDetails = `\n\n🔗 Connections:\n${connectionDetails}`;
 							}
@@ -371,7 +409,7 @@ Connections: ${session.connectionIds.size}`;
 
 				// Get user's all sessions
 				const userSessions = sessionManager.getUserSessions(authStatus.userId);
-				const activeSessions = userSessions.filter(s => s.isActive);
+				const activeSessions = userSessions.filter((s) => s.isActive);
 
 				const summaryText = `📊 Session Summary:
 Total Sessions: ${userSessions.length}
@@ -401,16 +439,12 @@ Current Session: ${sessionId ? 'Present' : 'Not in session context'}`;
 	);
 
 	// Session cleanup tool
-	server.tool(
-		'cleanup_sessions',
-		'Cleanup expired sessions and get session statistics',
-		{},
-		async () => {
-			try {
-				const cleanupResult = sessionManager.cleanup();
-				const stats = sessionManager.getStats();
+	server.tool('cleanup_sessions', 'Cleanup expired sessions and get session statistics', {}, async () => {
+		try {
+			const cleanupResult = sessionManager.cleanup();
+			const stats = sessionManager.getStats();
 
-				const statusText = `🧹 Session Cleanup Completed:
+			const statusText = `🧹 Session Cleanup Completed:
 
 Sessions Removed: ${cleanupResult.sessionsRemoved}
 Connections Removed: ${cleanupResult.connectionsRemoved}
@@ -422,27 +456,26 @@ Expired Sessions: ${stats.expiredSessions}
 Total Connections: ${stats.totalConnections}
 Active Connections: ${stats.activeConnections}`;
 
-				return {
-					content: [
-						{
-							type: 'text',
-							text: statusText
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Session cleanup tool error:', sanitizeForLogging(error));
-				return {
-					content: [
-						{
-							type: 'text',
-							text: `❌ Failed to cleanup sessions: ${sanitizeErrorMessage(error)}`
-						}
-					]
-				};
-			}
+			return {
+				content: [
+					{
+						type: 'text',
+						text: statusText
+					}
+				]
+			};
+		} catch (error) {
+			logger.error('Session cleanup tool error:', sanitizeForLogging(error));
+			return {
+				content: [
+					{
+						type: 'text',
+						text: `❌ Failed to cleanup sessions: ${sanitizeErrorMessage(error)}`
+					}
+				]
+			};
 		}
-	);
+	});
 
 	logger.log('Session-aware authentication tools registered successfully');
 };

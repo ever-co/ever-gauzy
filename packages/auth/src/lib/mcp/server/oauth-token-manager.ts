@@ -5,7 +5,7 @@
  */
 
 import * as crypto from 'node:crypto';
-import { SecurityLogger } from './security-logger';
+import { SecurityLogger } from '../utils/security-logger';
 
 // Dynamic import type for jose library
 type JoseModule = typeof import('jose');
@@ -250,7 +250,7 @@ export class OAuth2TokenManager {
 	private async signToken(payload: TokenPayload): Promise<string> {
 		try {
 			const jose = await this.getJose();
-			
+
 			if (this.keyPair.algorithm === 'RS256') {
 				// Use jose for RS256
 				const privateKey = await jose.importPKCS8(this.keyPair.privateKey, 'RS256');
@@ -286,7 +286,7 @@ export class OAuth2TokenManager {
 	private async verifyToken(token: string): Promise<TokenPayload> {
 		try {
 			const jose = await this.getJose();
-			
+
 			if (this.keyPair.algorithm === 'RS256') {
 				// RS256 verification using jose library
 				const publicKey = await jose.importSPKI(this.keyPair.publicKey, 'RS256');

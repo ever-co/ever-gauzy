@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { CandidateSchema, CandidateStatusEnum } from '../schema';
 import { validateOrganizationContext } from './utils';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('CandidateTools');
-
 
 /**
  * Helper function to convert date fields in candidate data to Date objects
@@ -31,7 +30,12 @@ export const registerCandidateTools = (server: McpServer) => {
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			search: z.string().optional().describe('Search term for candidate name or email'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["user", "contact", "organizationPosition", "skills", "experience"])'),
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe(
+					'Relations to include (e.g., ["user", "contact", "organizationPosition", "skills", "experience"])'
+				),
 			status: CandidateStatusEnum.optional().describe('Filter by candidate status'),
 			organizationPositionId: z.string().uuid().optional().describe('Filter by organization position ID'),
 			sourceId: z.string().uuid().optional().describe('Filter by candidate source ID'),
@@ -115,7 +119,12 @@ export const registerCandidateTools = (server: McpServer) => {
 		'Get a specific candidate by ID',
 		{
 			id: z.string().uuid().describe('The candidate ID'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["user", "contact", "skills", "experience", "education", "documents"])')
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe(
+					'Relations to include (e.g., ["user", "contact", "skills", "experience", "education", "documents"])'
+				)
 		},
 		async ({ id, relations }) => {
 			try {
@@ -316,7 +325,11 @@ export const registerCandidateTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Candidate deleted successfully', id }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Candidate deleted successfully', id },
+								null,
+								2
+							)
 						}
 					]
 				};
@@ -411,10 +424,15 @@ export const registerCandidateTools = (server: McpServer) => {
 		'Add a skill to a candidate',
 		{
 			candidateId: z.string().uuid().describe('The candidate ID'),
-			skill: z.object({
-				name: z.string().describe('Skill name'),
-				proficiency: z.string().optional().describe('Proficiency level (e.g., "Beginner", "Intermediate", "Advanced", "Expert")')
-			}).describe('The skill to add')
+			skill: z
+				.object({
+					name: z.string().describe('Skill name'),
+					proficiency: z
+						.string()
+						.optional()
+						.describe('Proficiency level (e.g., "Beginner", "Intermediate", "Advanced", "Expert")')
+				})
+				.describe('The skill to add')
 		},
 		async ({ candidateId, skill }) => {
 			try {
@@ -488,12 +506,14 @@ export const registerCandidateTools = (server: McpServer) => {
 		'Add work experience to a candidate',
 		{
 			candidateId: z.string().uuid().describe('The candidate ID'),
-			experience: z.object({
-				occupation: z.string().describe('Job title/occupation'),
-				organization: z.string().describe('Company/organization name'),
-				duration: z.string().describe('Duration of employment (e.g., "2 years", "Jan 2020 - Dec 2022")'),
-				description: z.string().optional().describe('Description of responsibilities and achievements')
-			}).describe('The experience to add')
+			experience: z
+				.object({
+					occupation: z.string().describe('Job title/occupation'),
+					organization: z.string().describe('Company/organization name'),
+					duration: z.string().describe('Duration of employment (e.g., "2 years", "Jan 2020 - Dec 2022")'),
+					description: z.string().optional().describe('Description of responsibilities and achievements')
+				})
+				.describe('The experience to add')
 		},
 		async ({ candidateId, experience }) => {
 			try {
@@ -567,13 +587,15 @@ export const registerCandidateTools = (server: McpServer) => {
 		'Add education to a candidate',
 		{
 			candidateId: z.string().uuid().describe('The candidate ID'),
-			education: z.object({
-				schoolName: z.string().describe('School/university name'),
-				degree: z.string().describe('Degree obtained'),
-				field: z.string().describe('Field of study'),
-				completionDate: z.string().optional().describe('Completion date (ISO format)'),
-				notes: z.string().optional().describe('Additional notes about the education')
-			}).describe('The education to add')
+			education: z
+				.object({
+					schoolName: z.string().describe('School/university name'),
+					degree: z.string().describe('Degree obtained'),
+					field: z.string().describe('Field of study'),
+					completionDate: z.string().optional().describe('Completion date (ISO format)'),
+					notes: z.string().optional().describe('Additional notes about the education')
+				})
+				.describe('The education to add')
 		},
 		async ({ candidateId, education }) => {
 			try {

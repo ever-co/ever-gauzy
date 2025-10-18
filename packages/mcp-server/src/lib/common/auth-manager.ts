@@ -1,5 +1,5 @@
 import { environment } from '../environments/environment';
-import { sanitizeForLogging } from './security-utils';
+import { sanitizeForLogging } from '@gauzy/auth';
 import { Logger } from '@nestjs/common';
 
 const logger = new Logger('AuthManager');
@@ -383,9 +383,9 @@ export class AuthManager {
 			const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
 			const jsonPayload = decodeURIComponent(
 				atob(base64)
-				.split('')
-				.map((c) => `%${('00' + c.charCodeAt(0).toString(16)).slice(-2)}`)
-				.join('')
+					.split('')
+					.map((c) => `%${('00' + c.charCodeAt(0).toString(16)).slice(-2)}`)
+					.join('')
 			);
 			const decoded = JSON.parse(jsonPayload);
 

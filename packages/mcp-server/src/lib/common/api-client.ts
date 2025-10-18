@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 import { Logger } from '@nestjs/common';
 import { environment } from '../environments/environment';
 import { authManager } from './auth-manager';
-import { sanitizeErrorMessage } from './security-utils';
+import { sanitizeErrorMessage } from '@gauzy/auth';
 
 const logger = new Logger('ApiClient');
 
@@ -28,14 +28,29 @@ export class GauzyApiClient {
 
 		// Add request interceptor to include auth token and handle authentication
 		this.client.interceptors.request.use(async (config) => {
+			// Skip if Authorization header already set by caller
+			if (config.headers.Authorization) {
+				return config;
+			}
+
 			// Skip authentication for auth endpoints
 			const isAuthEndpoint = config.url?.includes('/api/auth/') || config.url?.includes('/auth/');
 
 			if (!isAuthEndpoint) {
-				// Only ensure valid token for non-auth endpoints
-				const hasValidToken = await authManager.ensureValidToken();
+				const authStatus = authManager.getAuthStatus();
 
-				if (hasValidToken) {
+				if (!authStatus.isLoginInProgress && !authStatus.isRefreshInProgress) {
+					// Only ensure valid token for non-auth endpoints when not already authenticating
+					const hasValidToken = await authManager.ensureValidToken();
+
+					if (hasValidToken) {
+						const token = authManager.getAccessToken();
+						if (token) {
+							config.headers.Authorization = `Bearer ${token}`;
+						}
+					}
+				} else {
+					// If login/refresh is in progress, just add the current token if available
 					const token = authManager.getAccessToken();
 					if (token) {
 						config.headers.Authorization = `Bearer ${token}`;
@@ -113,14 +128,12 @@ export class GauzyApiClient {
 		}
 	}
 
-
 	public static getInstance(): GauzyApiClient {
 		if (!GauzyApiClient.instance) {
 			GauzyApiClient.instance = new GauzyApiClient();
 		}
 		return GauzyApiClient.instance;
 	}
-
 
 	public getBaseUrl(): string {
 		return environment.baseUrl;
@@ -231,7 +244,10 @@ export class GauzyApiClient {
 
 	private logError(method: string, path: string, error: any): void {
 		if (this.isDebug()) {
-			logger.error(`🔴 ${method} ${path} failed`, error instanceof Error ? error.stack : sanitizeErrorMessage(error));
+			logger.error(
+				`🔴 ${method} ${path} failed`,
+				error instanceof Error ? error.stack : sanitizeErrorMessage(error)
+			);
 		}
 	}
 
@@ -295,7 +311,10 @@ export class GauzyApiClient {
 				} catch (error) {
 					// Authenticated endpoint test failed, but basic connectivity works
 					if (this.isDebug()) {
-						logger.warn('Authenticated endpoint test failed:', error instanceof Error ? error.message : 'Unknown error');
+						logger.warn(
+							'Authenticated endpoint test failed:',
+							error instanceof Error ? error.message : 'Unknown error'
+						);
 					}
 				}
 			}

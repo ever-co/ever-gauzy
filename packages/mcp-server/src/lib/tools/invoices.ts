@@ -3,11 +3,10 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { InvoiceSchema, InvoiceStatusEnum, InvoiceTypeEnum, CurrenciesEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { InvoiceSchema, InvoiceStatusEnum, InvoiceTypeEnum } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('InvoiceTools');
-
 
 /**
  * Helper function to convert date fields in invoice data to Date objects
@@ -271,11 +270,13 @@ export const registerInvoiceTools = (server: McpServer) => {
 		'Update estimate status of an invoice',
 		{
 			id: z.string().uuid().describe('The invoice ID'),
-			data: z.object({
-				isEstimate: z.boolean().optional(),
-				status: InvoiceStatusEnum.optional(),
-				paid: z.boolean().optional()
-			}).describe('Data to update for the estimate')
+			data: z
+				.object({
+					isEstimate: z.boolean().optional(),
+					status: InvoiceStatusEnum.optional(),
+					paid: z.boolean().optional()
+				})
+				.describe('Data to update for the estimate')
 		},
 		async ({ id, data }) => {
 			try {
@@ -369,11 +370,13 @@ export const registerInvoiceTools = (server: McpServer) => {
 		'Send an invoice via email',
 		{
 			email: z.string().email().describe('Email address to send the invoice to'),
-			params: z.object({
-				invoiceId: z.string().uuid(),
-				organizationId: z.string().uuid().optional(),
-				tenantId: z.string().uuid().optional()
-			}).describe('Email parameters including invoice ID')
+			params: z
+				.object({
+					invoiceId: z.string().uuid(),
+					organizationId: z.string().uuid().optional(),
+					tenantId: z.string().uuid().optional()
+				})
+				.describe('Email parameters including invoice ID')
 		},
 		async ({ email, params }) => {
 			try {
@@ -447,28 +450,23 @@ export const registerInvoiceTools = (server: McpServer) => {
 	);
 
 	// Get highest invoice number tool
-	server.tool(
-		'get_highest_invoice_number',
-		'Get the highest invoice number in the organization',
-		{},
-		async () => {
-			try {
-				const response = await apiClient.get('/api/invoices/highest');
+	server.tool('get_highest_invoice_number', 'Get the highest invoice number in the organization', {}, async () => {
+		try {
+			const response = await apiClient.get('/api/invoices/highest');
 
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching highest invoice number:', sanitizeForLogging(error));
-				throw new Error(`Failed to fetch highest invoice number: ${sanitizeErrorMessage(error)}`);
-			}
+			return {
+				content: [
+					{
+						type: 'text',
+						text: JSON.stringify(response, null, 2)
+					}
+				]
+			};
+		} catch (error) {
+			logger.error('Error fetching highest invoice number:', sanitizeForLogging(error));
+			throw new Error(`Failed to fetch highest invoice number: ${sanitizeErrorMessage(error)}`);
 		}
-	);
+	});
 
 	// Generate public link for invoice tool
 	server.tool(
@@ -505,7 +503,9 @@ export const registerInvoiceTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
-				const response = await apiClient.get(`/api/invoices/payment/download/${id}`, { responseType: 'arraybuffer' });
+				const response = await apiClient.get(`/api/invoices/payment/download/${id}`, {
+					responseType: 'arraybuffer'
+				});
 
 				// Convert to Base64 for transport
 				const buffer = Buffer.from(response as unknown as string);

@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { DealSchema, DealStatusEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('DealTools');
-
 
 export const registerDealTools = (server: McpServer) => {
 	// Get deals tool
@@ -18,7 +17,10 @@ export const registerDealTools = (server: McpServer) => {
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			search: z.string().optional().describe('Search term for deal title'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["client", "createdByUser"])'),
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["client", "createdByUser"])'),
 			stage: DealStatusEnum.optional().describe('Filter by deal stage'),
 			clientId: z.string().uuid().optional().describe('Filter by client ID'),
 			createdByUserId: z.string().uuid().optional().describe('Filter by creator user ID')
@@ -100,7 +102,10 @@ export const registerDealTools = (server: McpServer) => {
 		'Get a specific deal by ID',
 		{
 			id: z.string().uuid().describe('The deal ID'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["client", "createdByUser", "properties"])')
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["client", "createdByUser", "properties"])')
 		},
 		async ({ id, relations }) => {
 			try {
@@ -371,10 +376,12 @@ export const registerDealTools = (server: McpServer) => {
 		'Add a custom property to a deal',
 		{
 			dealId: z.string().uuid().describe('The deal ID'),
-			property: z.object({
-				name: z.string().describe('Property name'),
-				value: z.string().describe('Property value')
-			}).describe('The property to add')
+			property: z
+				.object({
+					name: z.string().describe('Property name'),
+					value: z.string().describe('Property value')
+				})
+				.describe('The property to add')
 		},
 		async ({ dealId, property }) => {
 			try {
@@ -439,7 +446,11 @@ export const registerDealTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Deal property removed successfully', dealId, propertyName }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Deal property removed successfully', dealId, propertyName },
+								null,
+								2
+							)
 						}
 					]
 				};

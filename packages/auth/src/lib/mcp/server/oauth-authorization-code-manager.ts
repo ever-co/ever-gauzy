@@ -5,7 +5,7 @@
  */
 
 import * as crypto from 'crypto';
-import { SecurityLogger } from './security-logger';
+import { SecurityLogger } from '../utils/security-logger';
 
 export interface AuthorizationCode {
 	code: string;

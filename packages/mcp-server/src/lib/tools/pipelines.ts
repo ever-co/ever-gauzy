@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { PipelineSchema } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('PipelineTools');
-
 
 export const registerPipelineTools = (server: McpServer) => {
 	// Get pipelines tool
@@ -161,7 +160,11 @@ export const registerPipelineTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Pipeline deleted successfully', id }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Pipeline deleted successfully', id },
+								null,
+								2
+							)
 						}
 					]
 				};
@@ -178,11 +181,13 @@ export const registerPipelineTools = (server: McpServer) => {
 		'Add a stage to a pipeline',
 		{
 			pipelineId: z.string().uuid().describe('The pipeline ID'),
-			stage_data: z.object({
-				name: z.string().describe('Stage name'),
-				probability: z.number().min(0).max(100).optional().describe('Win probability percentage'),
-				description: z.string().optional().describe('Stage description')
-			}).describe('The stage data')
+			stage_data: z
+				.object({
+					name: z.string().describe('Stage name'),
+					probability: z.number().min(0).max(100).optional().describe('Win probability percentage'),
+					description: z.string().optional().describe('Stage description')
+				})
+				.describe('The stage data')
 		},
 		async ({ pipelineId, stage_data }) => {
 			try {
@@ -210,11 +215,13 @@ export const registerPipelineTools = (server: McpServer) => {
 		{
 			pipelineId: z.string().uuid().describe('The pipeline ID'),
 			stageId: z.string().uuid().describe('The stage ID'),
-			stage_data: z.object({
-				name: z.string().optional().describe('Stage name'),
-				probability: z.number().min(0).max(100).optional().describe('Win probability percentage'),
-				description: z.string().optional().describe('Stage description')
-			}).describe('The stage data to update')
+			stage_data: z
+				.object({
+					name: z.string().optional().describe('Stage name'),
+					probability: z.number().min(0).max(100).optional().describe('Win probability percentage'),
+					description: z.string().optional().describe('Stage description')
+				})
+				.describe('The stage data to update')
 		},
 		async ({ pipelineId, stageId, stage_data }) => {
 			try {
@@ -251,7 +258,11 @@ export const registerPipelineTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Pipeline stage removed successfully', pipelineId, stageId }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Pipeline stage removed successfully', pipelineId, stageId },
+								null,
+								2
+							)
 						}
 					]
 				};

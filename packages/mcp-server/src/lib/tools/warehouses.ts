@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { WarehouseSchema } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('WarehouseTools');
-
 
 export const registerWarehouseTools = (server: McpServer) => {
 	// Get warehouses tool
@@ -188,7 +187,11 @@ export const registerWarehouseTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Warehouse deleted successfully', id }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Warehouse deleted successfully', id },
+								null,
+								2
+							)
 						}
 					]
 				};
@@ -198,5 +201,4 @@ export const registerWarehouseTools = (server: McpServer) => {
 			}
 		}
 	);
-
 };

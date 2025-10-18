@@ -5,8 +5,8 @@
  * Provides consistent configuration parsing and validation
  */
 
-import { AuthorizationConfig, DEFAULT_AUTHORIZATION_CONFIG, AUTH_ENV_KEYS } from './authorization-config';
-import { OAuth2ServerConfig } from './oauth-authorization-server';
+import { AuthorizationConfig, DEFAULT_AUTHORIZATION_CONFIG, AUTH_ENV_KEYS } from '../interfaces/authorization-config';
+import { OAuth2ServerConfig } from '../server/oauth-authorization-server';
 import { SecurityLogger } from './security-logger';
 const DEFAULT_SESSION_SECRET = 'your-session-secret-key';
 
@@ -14,6 +14,7 @@ export interface ServerConfig {
 	// Server basic settings
 	host: string;
 	port: number;
+	mcpAuthUrl: string;
 	baseUrl: string;
 	environment: 'development' | 'production' | 'test';
 
@@ -45,6 +46,10 @@ export class ConfigManager {
 	}
 
 	private normalizeBaseUrl(url: string): string {
+		return url.replace(/\/+$/, '');
+	}
+
+	private normalizeAuthUrl(url: string): string {
 		return url.replace(/\/+$/, '');
 	}
 
@@ -91,18 +96,19 @@ export class ConfigManager {
 	 */
 	getOAuthServerConfig(): OAuth2ServerConfig {
 		const baseUrl = this.normalizeBaseUrl(this.config.baseUrl);
+		const authUrl = this.normalizeAuthUrl(this.config.mcpAuthUrl);
 		return {
-			issuer: baseUrl,
+			issuer: authUrl,
 			baseUrl,
 			audience: this.config.oauth.resourceUri,
 			enableClientRegistration: this.config.environment === 'development',
-			authorizationEndpoint: `${baseUrl}/oauth2/authorize`,
-			tokenEndpoint: `${baseUrl}/oauth2/token`,
-			jwksEndpoint: `${baseUrl}/.well-known/jwks.json`,
-			registrationEndpoint: `${baseUrl}/oauth2/register`,
-			introspectionEndpoint: `${baseUrl}/oauth2/introspect`,
-			userInfoEndpoint: `${baseUrl}/oauth2/userinfo`,
-			loginEndpoint: `${baseUrl}/oauth2/login`,
+			authorizationEndpoint: `${authUrl}/oauth2/authorize`,
+			tokenEndpoint: `${authUrl}/oauth2/token`,
+			jwksEndpoint: `${authUrl}/.well-known/jwks.json`,
+			registrationEndpoint: `${authUrl}/oauth2/register`,
+			introspectionEndpoint: `${authUrl}/oauth2/introspect`,
+			userInfoEndpoint: `${authUrl}/oauth2/userinfo`,
+			loginEndpoint: `${authUrl}/oauth2/login`,
 			sessionSecret: this.config.sessionSecret,
 			redisUrl: this.config.redisUrl
 		};
@@ -114,13 +120,14 @@ export class ConfigManager {
 	private loadConfiguration(): ServerConfig {
 		const config: ServerConfig = {
 			// Basic server settings
-			host: this.getEnvString('MCP_HOST', 'localhost'),
-			port: this.getEnvNumber('MCP_PORT', 3001),
+			host: this.getEnvString('MCP_HTTP_HOST', 'localhost'),
+			port: this.getEnvNumber('MCP_HTTP_PORT', 3001),
+			mcpAuthUrl: this.getEnvString('MCP_AUTH_JWT_ISSUER', 'http://localhost:3003'),
 			baseUrl: this.getEnvString('MCP_BASE_URL', 'http://localhost:3001'),
 			environment: this.getEnvEnvironment('NODE_ENV', 'development'),
 
 			// Security settings
-			sessionSecret: this.getRequiredEnvString('MCP_SESSION_SECRET', DEFAULT_SESSION_SECRET),
+			sessionSecret: this.getRequiredEnvString('MCP_AUTH_SESSION_SECRET', DEFAULT_SESSION_SECRET),
 			corsOrigins: this.parseStringArray(
 				this.getEnvString('MCP_CORS_ORIGINS', this.getEnvString('MCP_CORS_ORIGIN', ''))
 			),
@@ -151,10 +158,6 @@ export class ConfigManager {
 			enabled: this.getEnvBoolean(AUTH_ENV_KEYS.ENABLED, false),
 			resourceUri: this.getEnvString(AUTH_ENV_KEYS.RESOURCE_URI, ''),
 			authorizationServers: [],
-			allowEmbeddedServer: this.getEnvBoolean(
-				AUTH_ENV_KEYS.ALLOW_EMBEDDED_SERVER,
-				this.getEnvEnvironment('NODE_ENV', 'development') === 'development'
-			)
 		};
 
 		// Parse authorization servers
@@ -247,17 +250,13 @@ export class ConfigManager {
 			const hasIntrospection = !!config.oauth.introspection;
 			const hasJwtKeys = !!(config.oauth.jwt && (config.oauth.jwt.jwksUri || config.oauth.jwt.publicKey));
 
-			if (
-				config.oauth.authorizationServers.length === 0 &&
-				!config.oauth.allowEmbeddedServer &&
-				!hasIntrospection
-			) {
+			if (config.oauth.authorizationServers.length === 0 && !hasIntrospection) {
 				errors.push(
 					'At least one authorization server or token introspection must be configured when OAuth is enabled'
 				);
 			}
 
-			if (!hasJwtKeys && !hasIntrospection && !config.oauth.allowEmbeddedServer) {
+			if (!hasJwtKeys && !hasIntrospection) {
 				errors.push(
 					'Either MCP_AUTH_JWT_JWKS_URI or MCP_AUTH_JWT_PUBLIC_KEY must be set for JWT validation, or MCP_AUTH_INTROSPECTION_* must be configured'
 				);
@@ -266,7 +265,7 @@ export class ConfigManager {
 
 		// Validate session secret in production
 		if (config.environment === 'production' && config.sessionSecret === DEFAULT_SESSION_SECRET) {
-			errors.push('MCP_SESSION_SECRET must be set to a secure value in production');
+			errors.push('MCP_AUTH_SESSION_SECRET must be set to a secure value in production');
 		}
 
 		if (errors.length > 0) {

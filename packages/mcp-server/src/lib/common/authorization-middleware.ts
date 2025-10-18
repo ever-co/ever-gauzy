@@ -6,9 +6,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { AuthorizationConfig, ProtectedResourceMetadata } from './authorization-config';
-import { OAuthValidator } from './oauth-validator';
-import { SecurityLogger } from './security-logger';
+import { AuthorizationConfig, ProtectedResourceMetadata, OAuthValidator, SecurityLogger } from '@gauzy/auth';
 
 export interface AuthorizedRequest extends Request {
 	/** OAuth token validation result */
@@ -33,10 +31,12 @@ export class AuthorizationMiddleware {
 	/**
 	 * Create middleware function for protecting MCP endpoints
 	 */
-	createAuthorizationMiddleware(options: {
-		requiredScopes?: string[];
-		optional?: boolean; // Allow requests without tokens if true
-	} = {}) {
+	createAuthorizationMiddleware(
+		options: {
+			requiredScopes?: string[];
+			optional?: boolean; // Allow requests without tokens if true
+		} = {}
+	) {
 		return async (req: AuthorizedRequest, res: Response, next: NextFunction) => {
 			try {
 				// Skip authorization if disabled
@@ -78,9 +78,9 @@ export class AuthorizationMiddleware {
 
 					// Map scope failures to 403 as per RFC 6750
 					if (/^insufficient[_\s]?scope$/i.test(validationResult.error || '') && requiredScopes?.length) {
-							return this.sendForbiddenResponse(res, requiredScopes);
-						}
-						return this.sendUnauthorizedResponse(res, validationResult.error, requiredScopes);
+						return this.sendForbiddenResponse(res, requiredScopes);
+					}
+					return this.sendUnauthorizedResponse(res, validationResult.error, requiredScopes);
 				}
 
 				// Attach token info to request
@@ -124,7 +124,6 @@ export class AuthorizationMiddleware {
 				res.setHeader('Content-Type', 'application/json');
 				res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
 				res.json(metadata);
-
 			} catch (error: any) {
 				this.securityLogger.error('Error serving protected resource metadata:', error);
 				res.status(500).json({
@@ -143,13 +142,13 @@ export class AuthorizationMiddleware {
 		const resourceUri = this.config.resourceUri || this.buildCanonicalResourceUri(req);
 
 		// Extract authorization server issuers
-		const authorizationServers = this.config.authorizationServers.map(server => server.issuer);
+		const authorizationServers = this.config.authorizationServers.map((server) => server.issuer);
 
 		const metadata: ProtectedResourceMetadata = {
 			resource: resourceUri,
 			authorizationServers,
 			scopesRequired: this.config.requiredScopes,
-			bearerMethodsSupported: ['header'], // RFC 6750 Section 2.1
+			bearerMethodsSupported: ['header'] // RFC 6750 Section 2.1
 		};
 
 		// Add optional metadata
@@ -193,10 +192,7 @@ export class AuthorizationMiddleware {
 			(requiredScopes || this.config.requiredScopes)?.join(' ')
 		);
 
-		const wwwAuthenticateHeader = OAuthValidator.formatWWWAuthenticateHeader(
-			resourceMetadataUrl,
-			authError
-		);
+		const wwwAuthenticateHeader = OAuthValidator.formatWWWAuthenticateHeader(resourceMetadataUrl, authError);
 
 		res.setHeader('WWW-Authenticate', wwwAuthenticateHeader);
 		res.setHeader('Vary', 'Authorization');
@@ -237,7 +233,7 @@ export class AuthorizationMiddleware {
 	 */
 	private sendServerError(res: Response, message: string): void {
 		res.setHeader('Cache-Control', 'no-store');
-        res.status(500).json({
+		res.status(500).json({
 			error: 'server_error',
 			error_description: message
 		});
@@ -267,7 +263,7 @@ export class AuthorizationMiddleware {
 			return false;
 		}
 
-		return requiredScopes.every(scope => req.tokenInfo!.scopes!.includes(scope));
+		return requiredScopes.every((scope) => req.tokenInfo!.scopes!.includes(scope));
 	}
 
 	/**

@@ -3,12 +3,12 @@
  */
 
 import 'express-session';
-import type { AuthenticatedUser } from '../lib/common/oauth-authorization-server';
+import type { AuthenticatedUser } from '@gauzy/auth';
 
 declare module 'express-session' {
-  interface SessionData {
-    user?: AuthenticatedUser;
-    isAuthenticated?: boolean;
-    returnUrl?: string;
-  }
+	interface SessionData {
+		user?: AuthenticatedUser;
+		isAuthenticated?: boolean;
+		returnUrl?: string;
+	}
 }

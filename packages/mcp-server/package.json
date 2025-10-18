@@ -28,6 +28,7 @@
 		"lib:watch": "yarn nx build mcp-server --watch"
 	},
 	"dependencies": {
+		"@gauzy/auth": "^0.1.0",
 		"@modelcontextprotocol/sdk": "^1.13.1",
 		"@nestjs/common": "^11.1.0",
 		"@nestjs/core": "^11.1.0",

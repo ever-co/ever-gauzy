@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { ReportCategoryEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('ReportTools');
 
@@ -56,28 +56,23 @@ export const registerReportTools = (server: McpServer) => {
 	);
 
 	// Get report categories tool
-	server.tool(
-		'get_report_categories',
-		'Get available report categories',
-		{},
-		async () => {
-			try {
-				const response = await apiClient.get('/api/report/category');
+	server.tool('get_report_categories', 'Get available report categories', {}, async () => {
+		try {
+			const response = await apiClient.get('/api/report/category');
 
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
-			} catch (error) {
-				logger.error('Error fetching report categories:', sanitizeForLogging(error));
-				throw new Error(`Failed to fetch report categories: ${sanitizeErrorMessage(error)}`);
-			}
+			return {
+				content: [
+					{
+						type: 'text',
+						text: JSON.stringify(response, null, 2)
+					}
+				]
+			};
+		} catch (error) {
+			logger.error('Error fetching report categories:', sanitizeForLogging(error));
+			throw new Error(`Failed to fetch report categories: ${sanitizeErrorMessage(error)}`);
 		}
-	);
+	});
 
 	// Get report menu items tool
 	server.tool(
