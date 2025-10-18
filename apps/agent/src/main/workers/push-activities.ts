@@ -2,7 +2,8 @@ import {
 	KbMouseActivityService,
 	KbMouseActivityTO,
 	TTimeSlot,
-	TimerService
+	TimerService,
+	Timer
 } from '@gauzy/desktop-lib';
 import {
 	KbMouseActivityPool,
@@ -36,6 +37,8 @@ class PushActivities {
 	private isNetworkError = false;
 	private timerService: TimerService;
 	private workerQueue: WorkerQueue;
+	public currentSessionStartTime: Date;
+	public currentSessionTimeLogId: string | null;
 
 	constructor() {
 		this.kbMouseActivityService = new KbMouseActivityService();
@@ -466,15 +469,98 @@ class PushActivities {
 		const authConfig = getAuthConfig();
 		const timerLocal = await this.timerService.findById({ id: job.timerId });
 		if (timerLocal?.id) {
-			await this.apiService.startTimer({
-				organizationId: authConfig?.user?.employee?.organizationId,
-				startedAt: timerLocal.startedAt,
-				tenantId: authConfig?.user?.employee?.tenantId,
-				organizationTeamId: null,
-				organizationContactId: null
-			});
-			this.agentLogger.info(`finished job timer sync ${JSON.stringify(job)}`);
-			await this.timerService.remove({ id: job.timerId });
+			if (job.data?.isStopped && timerLocal.stoppedAt && this.currentSessionTimeLogId === timerLocal.timelogId) {
+				await this.apiService.stopTimer({
+					organizationId: authConfig?.user?.employee?.organizationId,
+					tenantId: authConfig?.user?.employee?.tenantId,
+					startedAt: timerLocal.startedAt,
+					organizationTeamId: null,
+					organizationContactId: null,
+					stoppedAt: timerLocal.stoppedAt
+				});
+				await this.timerService.update(new Timer({
+					id: timerLocal?.id,
+					synced: true
+				}));
+				this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
+				return;
+			}
+
+			if (job.data?.isStopped && timerLocal?.stoppedAt && timerLocal?.timelogId && this.currentSessionTimeLogId !== timerLocal.timelogId && !timerLocal?.synced) {
+				await this.apiService.updateTimeLog(timerLocal?.timelogId, {
+					tenantId: authConfig?.user?.employee?.tenantId,
+					organizationId: authConfig?.user?.employee?.organizationId,
+					startedAt: timerLocal?.startedAt,
+					stoppedAt: timerLocal?.stoppedAt,
+					isBillable: true,
+					employeeId: authConfig?.user?.employee?.id
+				});
+				await this.timerService.update(new Timer({
+					id: timerLocal?.id,
+					synced: true
+				}));
+				this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
+				return;
+			}
+
+			if (job.data?.isStopped && timerLocal?.stoppedAt && !timerLocal?.timelogId && !timerLocal?.synced) {
+				const resp = await this.apiService.addTimeLog({
+					tenantId: authConfig?.user?.employee?.tenantId,
+					organizationId: authConfig?.user?.employee?.organizationId,
+					startedAt: timerLocal?.startedAt,
+					stoppedAt: timerLocal?.stoppedAt,
+					isBillable: true,
+					employeeId: authConfig?.user?.employee?.id
+				});
+				await this.timerService.update(new Timer({
+					id: timerLocal?.id,
+					timelogId: resp?.id,
+					timesheetId: resp?.timesheetId,
+					synced: true
+				}));
+				this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
+				return;
+			}
+
+			if (!job.data?.isStopped && timerLocal?.startedAt && !timerLocal?.stoppedAt && !timerLocal?.timelogId && !timerLocal?.synced) {
+				const resp = await this.apiService.startTimer({
+					organizationId: authConfig?.user?.employee?.organizationId,
+					startedAt: timerLocal.startedAt,
+					tenantId: authConfig?.user?.employee?.tenantId,
+					organizationTeamId: null,
+					organizationContactId: null
+				});
+				this.currentSessionStartTime = new Date(resp?.startedAt);
+				this.currentSessionTimeLogId = resp?.id;
+				this.agentLogger.info(`finished job timer sync ${JSON.stringify(job)}`);
+				await this.timerService.update(new Timer({
+					id: timerLocal?.id,
+					timelogId: resp?.id,
+					timesheetId: resp?.timesheetId
+				}));
+				this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
+				return;
+			}
+
+			if (!job.data?.isStopped && timerLocal?.stoppedAt && timerLocal?.startedAt && !timerLocal?.timelogId && !timerLocal?.synced) {
+				const resp = await this.apiService.addTimeLog({
+					tenantId: authConfig?.user?.employee?.tenantId,
+					organizationId: authConfig?.user?.employee?.organizationId,
+					startedAt: timerLocal?.startedAt,
+					stoppedAt: timerLocal?.stoppedAt,
+					isBillable: true,
+					employeeId: authConfig?.user?.employee?.id
+				});
+				await this.timerService.update(new Timer({
+					id: timerLocal?.id,
+					timelogId: resp?.id,
+					timesheetId: resp?.timesheetId,
+					synced: true
+				}));
+				this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
+				return;
+			}
+			this.agentLogger.warn(`This timer is already synced ${timerLocal?.id}, logId ${timerLocal?.timelogId}`);
 			return;
 		}
 		throw Error('TIMER_NOT_FOUND');
@@ -527,7 +613,7 @@ class PushActivities {
 
 	public async syncScreenshot(job: IScreenshotQueuePayload) {
 		this.agentLogger.info(`In coming job screenshot sync ${JSON.stringify(job)}`);
-		await this.saveImage(job.data.recordedAt, [job.data.imagePath], job.data.timeSlotId);
+		await this.saveImage(job.data?.recordedAt, [job.data?.imagePath], job.data?.timeSlotId);
 		this.agentLogger.info(`Finished job screenshot sync ${JSON.stringify(job)}`);
 	}
 
