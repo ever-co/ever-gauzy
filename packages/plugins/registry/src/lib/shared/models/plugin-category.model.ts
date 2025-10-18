@@ -1,12 +1,6 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
-import { IPlugin } from './plugin.model';
-
-// Forward declaration to avoid circular dependency
-interface IPluginSetting {
-	id: string;
-	key: string;
-	value: string;
-}
+import type { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
+import type { IPlugin } from './plugin.model';
+import type { IPluginSetting } from './plugin-setting.model';
 
 /**
  * Plugin Category Domain Model
@@ -31,11 +25,9 @@ export interface IPluginCategory extends IBasePerTenantAndOrganizationEntityMode
 	// Display order for sorting
 	order: number;
 
-	// Whether the category is active
-	isActive: boolean;
-
 	// Parent category for hierarchical structure
 	parent?: IPluginCategory;
+
 	parentId?: ID;
 
 	// Child categories
@@ -45,10 +37,10 @@ export interface IPluginCategory extends IBasePerTenantAndOrganizationEntityMode
 	plugins?: IPlugin[];
 
 	// Default settings for plugins in this category
-	defaultSettings?: IPluginSetting[];
+	settings?: IPluginSetting[];
 
-	// Category metadata (JSON string for flexibility)
-	metadata?: string;
+	// Category metadata (JSON object for flexibility)
+	metadata?: Record<string, any>;
 }
 
 /**

@@ -24,13 +24,10 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 	/**
 	 * Find plugin settings by plugin ID
 	 */
-	async findByPluginId(
-		pluginId: string,
-		relations: string[] = []
-	): Promise<IPluginSetting[]> {
+	async findByPluginId(pluginId: string, relations: string[] = []): Promise<IPluginSetting[]> {
 		const result = await this.findAll({
 			where: { pluginId },
-			relations,
+			relations
 		} as FindManyOptions);
 		return result.items || [];
 	}
@@ -38,13 +35,10 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 	/**
 	 * Find plugin settings by plugin tenant ID
 	 */
-	async findByPluginTenantId(
-		pluginTenantId: string,
-		relations: string[] = []
-	): Promise<IPluginSetting[]> {
+	async findByPluginTenantId(pluginTenantId: string, relations: string[] = []): Promise<IPluginSetting[]> {
 		const result = await this.findAll({
 			where: { pluginTenantId },
-			relations,
+			relations
 		} as FindManyOptions);
 		return result.items || [];
 	}
@@ -74,11 +68,7 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 	/**
 	 * Get plugin setting value by key
 	 */
-	async getSettingValue(
-		pluginId: string,
-		key: string,
-		pluginTenantId?: string
-	): Promise<any> {
+	async getSettingValue(pluginId: string, key: string, pluginTenantId?: string): Promise<any> {
 		const setting = await this.findByKey(pluginId, key, pluginTenantId);
 		if (!setting) {
 			return null;
@@ -89,12 +79,7 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 	/**
 	 * Set plugin setting value
 	 */
-	async setSettingValue(
-		pluginId: string,
-		key: string,
-		value: any,
-		pluginTenantId?: string
-	): Promise<IPluginSetting> {
+	async setSettingValue(pluginId: string, key: string, value: any, pluginTenantId?: string): Promise<IPluginSetting> {
 		const existing = await this.findByKey(pluginId, key, pluginTenantId);
 
 		const settingValue = this.serializeSettingValue(value);
@@ -109,7 +94,7 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 				pluginId,
 				key,
 				value: settingValue,
-				pluginTenantId,
+				tenantId: pluginTenantId,
 				dataType: this.inferDataType(value),
 				isRequired: false,
 				isEncrypted: false
@@ -144,17 +129,12 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 	 */
 	async bulkUpdateSettings(
 		pluginId: string,
-		settings: Array<{ key: string; value: any; pluginTenantId?: string }>,
+		settings: Array<{ key: string; value: any; pluginTenantId?: string }>
 	): Promise<IPluginSetting[]> {
 		const results: IPluginSetting[] = [];
 
 		for (const setting of settings) {
-			const result = await this.setSettingValue(
-				pluginId,
-				setting.key,
-				setting.value,
-				setting.pluginTenantId
-			);
+			const result = await this.setSettingValue(pluginId, setting.key, setting.value, setting.pluginTenantId);
 			results.push(result);
 		}
 

@@ -13,23 +13,8 @@ import {
 	Max
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { IPluginCategoryCreateInput } from '../models';
-import { IOrganization, ITenant, IUser } from '@gauzy/contracts';
 
-export class CreatePluginCategoryDTO implements IPluginCategoryCreateInput {
-	metadata?: string;
-	organization?: IOrganization;
-	tenant?: ITenant;
-	isArchived?: boolean;
-	archivedAt?: Date;
-	createdByUser?: IUser;
-	createdByUserId?: string;
-	updatedByUser?: IUser;
-	updatedByUserId?: string;
-	deletedByUser?: IUser;
-	deletedByUserId?: string;
-	deletedAt?: Date;
-
+export class CreatePluginCategoryDTO {
 	@ApiProperty({
 		description: 'Category name',
 		example: 'Authentication',

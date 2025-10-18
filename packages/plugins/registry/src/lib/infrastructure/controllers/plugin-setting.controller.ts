@@ -37,7 +37,7 @@ export class PluginSettingController {
 		description: 'Plugin setting created successfully',
 		type: PluginSetting
 	})
-	@Permissions(PermissionsEnum.PLUGIN_MANAGE)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post()
 	async create(@Body() createDto: CreatePluginSettingDTO): Promise<PluginSetting> {
 		return await this.pluginSettingService.create(createDto);
@@ -83,7 +83,7 @@ export class PluginSettingController {
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get('plugin/:pluginId')
 	async findByPluginId(@Param('pluginId', ParseUUIDPipe) pluginId: string): Promise<PluginSetting[]> {
-		return await this.pluginSettingService.findByPluginId(pluginId, ['plugin', 'pluginTenant']);
+		return this.pluginSettingService.findByPluginId(pluginId, ['plugin', 'pluginTenant']);
 	}
 
 	@ApiOperation({ summary: 'Get plugin settings by plugin tenant ID' })
@@ -111,13 +111,13 @@ export class PluginSettingController {
 	@ApiParam({ name: 'category', description: 'Setting category' })
 	@ApiQuery({ name: 'pluginTenantId', required: false, description: 'Plugin Tenant ID' })
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
-	@Get('plugin/:pluginId/category/:category')
+	@Get('plugin/:pluginId/category/:categoryId')
 	async findByCategory(
 		@Param('pluginId', ParseUUIDPipe) pluginId: string,
-		@Param('category') category: string,
+		@Param('categoryId') category: string,
 		@Query('pluginTenantId') pluginTenantId?: string
 	): Promise<PluginSetting[]> {
-		return await this.pluginSettingService.findByCategory(pluginId, category, pluginTenantId, [
+		return this.pluginSettingService.findByCategory(pluginId, categoryId, pluginTenantId, [
 			'plugin',
 			'pluginTenant'
 		]);
@@ -147,10 +147,10 @@ export class PluginSettingController {
 		description: 'Plugin setting value updated successfully',
 		type: PluginSetting
 	})
-	@Permissions(PermissionsEnum.PLUGIN_MANAGE)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Put('value')
 	async setSettingValue(@Body() setValueDto: SetPluginSettingValueDTO): Promise<PluginSetting> {
-		return await this.pluginSettingService.setSettingValue(
+		return this.pluginSettingService.setSettingValue(
 			setValueDto.pluginId,
 			setValueDto.key,
 			setValueDto.value,
@@ -164,7 +164,7 @@ export class PluginSettingController {
 		description: 'Plugin settings updated successfully',
 		type: [PluginSetting]
 	})
-	@Permissions(PermissionsEnum.PLUGIN_MANAGE)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Put('bulk')
 	async bulkUpdateSettings(@Body() bulkUpdateDto: BulkUpdatePluginSettingsDTO): Promise<PluginSetting[]> {
 		const settingsWithTenantId = bulkUpdateDto.settings.map((setting) => ({
@@ -172,7 +172,7 @@ export class PluginSettingController {
 			pluginTenantId: bulkUpdateDto.pluginTenantId
 		}));
 
-		return await this.pluginSettingService.bulkUpdateSettings(bulkUpdateDto.pluginId, settingsWithTenantId);
+		return this.pluginSettingService.bulkUpdateSettings(bulkUpdateDto.pluginId, settingsWithTenantId);
 	}
 
 	@ApiOperation({ summary: 'Update plugin setting' })
@@ -182,13 +182,13 @@ export class PluginSettingController {
 		type: PluginSetting
 	})
 	@ApiParam({ name: 'id', description: 'Plugin setting ID' })
-	@Permissions(PermissionsEnum.PLUGIN_MANAGE)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Put(':id')
 	async update(
 		@Param('id', ParseUUIDPipe) id: string,
 		@Body() updateDto: UpdatePluginSettingDTO
 	): Promise<PluginSetting> {
-		return await this.pluginSettingService.update(id, updateDto);
+		return this.pluginSettingService.update(id, updateDto);
 	}
 
 	@ApiOperation({ summary: 'Delete plugin setting' })
@@ -197,7 +197,7 @@ export class PluginSettingController {
 		description: 'Plugin setting deleted successfully'
 	})
 	@ApiParam({ name: 'id', description: 'Plugin setting ID' })
-	@Permissions(PermissionsEnum.PLUGIN_MANAGE)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Delete(':id')
 	@HttpCode(HttpStatus.NO_CONTENT)
 	async delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

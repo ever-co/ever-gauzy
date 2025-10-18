@@ -3,12 +3,13 @@ import { NotFoundException, ConflictException, BadRequestException } from '@nest
 import { UpdatePluginCategoryCommand } from '../../commands/update-plugin-category.command';
 import { PluginCategoryService } from '../../services/plugin-category.service';
 import { IPluginCategory } from '../../../shared/models';
+import { UpdateResult } from 'typeorm';
 
 @CommandHandler(UpdatePluginCategoryCommand)
 export class UpdatePluginCategoryHandler implements ICommandHandler<UpdatePluginCategoryCommand> {
 	constructor(private readonly pluginCategoryService: PluginCategoryService) {}
 
-	async execute(command: UpdatePluginCategoryCommand): Promise<IPluginCategory> {
+	async execute(command: UpdatePluginCategoryCommand): Promise<IPluginCategory | UpdateResult> {
 		const { id, input } = command;
 
 		try {
@@ -21,11 +22,9 @@ export class UpdatePluginCategoryHandler implements ICommandHandler<UpdatePlugin
 			// Validate slug uniqueness if it's being changed
 			if (input.slug && input.slug !== existingCategory.slug) {
 				const categoryWithSlug = await this.pluginCategoryService.findOneByWhereOptions({
-					where: {
-						slug: input.slug,
-						tenantId: existingCategory.tenantId,
-						organizationId: existingCategory.organizationId
-					}
+					slug: input.slug,
+					tenantId: existingCategory.tenantId,
+					organizationId: existingCategory.organizationId
 				});
 
 				if (categoryWithSlug && categoryWithSlug.id !== id) {
@@ -53,7 +52,7 @@ export class UpdatePluginCategoryHandler implements ICommandHandler<UpdatePlugin
 			}
 
 			// Update the category using domain service
-			return await this.pluginCategoryService.update(id, input);
+			return this.pluginCategoryService.update(id, input);
 		} catch (error) {
 			if (
 				error instanceof NotFoundException ||

@@ -8,7 +8,9 @@ import {
 	IsNumber,
 	Matches,
 	MaxLength,
-	MinLength
+	MinLength,
+	IsJSON,
+	IsObject
 } from 'class-validator';
 import { JoinColumn, Relation, RelationId, Tree, TreeParent, TreeChildren } from 'typeorm';
 import {
@@ -21,9 +23,11 @@ import {
 import { IPluginCategory } from '../../shared/models/plugin-category.model';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { IPluginSetting } from '../../shared/models/plugin-setting.model';
+import { MikroOrmPluginCategoryRepository } from '../repositories/mikro-orm-plugin-category.repository';
+import { ID } from '@gauzy/contracts';
 
 @Tree('closure-table')
-@MultiORMEntity('plugin_categories')
+@MultiORMEntity('plugin_categories', { mikroOrmRepository: () => MikroOrmPluginCategoryRepository })
 export class PluginCategory extends TenantOrganizationBaseEntity implements IPluginCategory {
 	@ApiProperty({ type: String, description: 'Category name' })
 	@IsNotEmpty({ message: 'Category name is required' })
@@ -68,16 +72,11 @@ export class PluginCategory extends TenantOrganizationBaseEntity implements IPlu
 	@MultiORMColumn({ type: 'int', default: 0 })
 	order: number;
 
-	@ApiProperty({ type: Boolean, description: 'Whether the category is active' })
-	@IsBoolean({ message: 'isActive must be a boolean' })
-	@MultiORMColumn({ type: 'boolean', default: true })
-	isActive: boolean;
-
-	@ApiPropertyOptional({ type: String, description: 'Category metadata (JSON string)' })
+	@ApiPropertyOptional({ type: Object, description: 'Category metadata (JSON object)' })
 	@IsOptional()
-	@IsString({ message: 'Metadata must be a string' })
-	@MultiORMColumn({ type: 'text', nullable: true })
-	metadata?: string;
+	@IsObject({ message: 'Metadata must be a valid JSON object' })
+	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	metadata?: Record<string, any>;
 
 	/*
 	 * Parent-Child Relationships for hierarchical structure
@@ -87,7 +86,7 @@ export class PluginCategory extends TenantOrganizationBaseEntity implements IPlu
 	@IsUUID()
 	@MultiORMColumn({ type: 'uuid', nullable: true })
 	@RelationId((category: PluginCategory) => category.parent)
-	parentId?: string;
+	parentId?: ID;
 
 	@TreeParent()
 	@MultiORMManyToOne(() => PluginCategory, (category) => category.children, {
@@ -108,7 +107,7 @@ export class PluginCategory extends TenantOrganizationBaseEntity implements IPlu
 	@MultiORMOneToMany('Plugin', 'category', {
 		onDelete: 'SET NULL'
 	})
-	plugins?: IPlugin[];
+	plugins?: Relation<IPlugin[]>;
 
 	/*
 	 * Default settings for plugins in this category
@@ -117,7 +116,7 @@ export class PluginCategory extends TenantOrganizationBaseEntity implements IPlu
 	@MultiORMOneToMany('PluginSetting', 'category', {
 		onDelete: 'CASCADE'
 	})
-	defaultSettings?: IPluginSetting[];
+	settings?: Relation<IPluginSetting[]>;
 
 	/*
 	 * Domain Methods
@@ -138,52 +137,9 @@ export class PluginCategory extends TenantOrganizationBaseEntity implements IPlu
 	}
 
 	/**
-	 * Get the full path of category names from root to this category
-	 */
-	getPath(): string[] {
-		const path: string[] = [];
-		let current: IPluginCategory = this;
-
-		while (current) {
-			path.unshift(current.name);
-			current = current.parent;
-		}
-
-		return path;
-	}
-
-	/**
-	 * Generate a display name with full path
-	 */
-	getDisplayName(): string {
-		return this.getPath().join(' > ');
-	}
-
-	/**
 	 * Check if this category can be deleted
 	 */
 	canBeDeleted(): boolean {
 		return !this.hasChildren() && (!this.plugins || this.plugins.length === 0);
-	}
-
-	/**
-	 * Validate category hierarchy (prevent circular references)
-	 */
-	validateHierarchy(newParentId?: string): boolean {
-		if (!newParentId) return true;
-
-		// Can't be parent of itself
-		if (newParentId === this.id) return false;
-
-		// Can't be parent of its children (circular reference check)
-		const checkCircular = (category: IPluginCategory, targetId: string): boolean => {
-			if (category.id === targetId) return true;
-			if (category.children) {
-				return category.children.some((child) => checkCircular(child, targetId));
-			}
-			return false;
-		};
-
-		return !checkCircular(this, newParentId);
 	}
 }

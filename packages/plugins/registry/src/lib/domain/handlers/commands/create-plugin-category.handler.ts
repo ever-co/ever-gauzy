@@ -14,11 +14,9 @@ export class CreatePluginCategoryHandler implements ICommandHandler<CreatePlugin
 		try {
 			// Validate slug uniqueness
 			const existingCategory = await this.pluginCategoryService.findOneByWhereOptions({
-				where: {
-					slug: input.slug,
-					tenantId: input.tenantId,
-					organizationId: input.organizationId
-				}
+				slug: input.slug,
+				tenantId: input.tenantId,
+				organizationId: input.organizationId
 			});
 
 			if (existingCategory) {

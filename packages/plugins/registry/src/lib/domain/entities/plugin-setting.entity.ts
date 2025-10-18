@@ -6,9 +6,9 @@ import { IPluginSetting } from '../../shared/models/plugin-setting.model';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import { IPluginCategory } from '../../shared/models/plugin-category.model';
-import { PluginSettingDataType } from '../../shared/models/plugin-setting.model';
 import { Plugin } from './plugin.entity';
 import { PluginTenant } from './plugin-tenant.entity';
+import { ID } from '@gauzy/contracts';
 
 @MultiORMEntity('plugin_settings')
 export class PluginSetting extends TenantOrganizationBaseEntity implements IPluginSetting {
@@ -21,13 +21,8 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	@ApiProperty({ type: String, description: 'Setting value (stored as JSON string)' })
 	@IsNotEmpty({ message: 'Setting value is required' })
 	@IsString({ message: 'Setting value must be a string' })
-	@MultiORMColumn({ type: 'text' })
-	value: string;
-
-	@ApiProperty({ enum: PluginSettingDataType, description: 'Setting data type' })
-	@IsEnum(PluginSettingDataType, { message: 'Invalid setting data type' })
-	@MultiORMColumn({ type: 'simple-enum', enum: PluginSettingDataType, default: PluginSettingDataType.STRING })
-	dataType: PluginSettingDataType;
+	@MultiORMColumn({ type: 'jsonb' })
+	value: Record<string, any>;
 
 	@ApiProperty({ type: Boolean, description: 'Whether the setting is required' })
 	@IsBoolean({ message: 'isRequired must be a boolean' })
@@ -39,23 +34,11 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	@MultiORMColumn({ type: 'boolean', default: false })
 	isEncrypted: boolean;
 
-	@ApiPropertyOptional({ type: String, description: 'Default value for the setting' })
-	@IsOptional()
-	@IsString({ message: 'Default value must be a string' })
-	@MultiORMColumn({ type: 'text', nullable: true })
-	defaultValue?: string;
-
 	@ApiPropertyOptional({ type: String, description: 'Setting description/help text' })
 	@IsOptional()
 	@IsString({ message: 'Description must be a string' })
 	@MultiORMColumn({ type: 'text', nullable: true })
 	description?: string;
-
-	@ApiPropertyOptional({ type: String, description: 'Setting category/group' })
-	@IsOptional()
-	@IsString({ message: 'Category must be a string' })
-	@MultiORMColumn({ nullable: true })
-	category?: string;
 
 	@ApiPropertyOptional({ type: Number, description: 'Display order for UI' })
 	@IsOptional()
@@ -73,7 +56,7 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	 */
 	@MultiORMColumn({ type: 'uuid' })
 	@RelationId((pluginSetting: PluginSetting) => pluginSetting.plugin)
-	pluginId: string;
+	pluginId: ID;
 
 	@MultiORMManyToOne(() => Plugin, { onDelete: 'CASCADE' })
 	@JoinColumn()
@@ -87,12 +70,12 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	@IsUUID()
 	@ValidateIf((object, value) => value !== null)
 	@MultiORMColumn({ type: 'uuid', nullable: true })
-	@RelationId((pluginSetting: PluginSetting) => pluginSetting.pluginTenant)
-	pluginTenantId?: string;
+	@RelationId((pluginSetting: PluginSetting) => pluginSetting.tenant)
+	tenantId?: ID;
 
 	@MultiORMManyToOne(() => PluginTenant, { onDelete: 'CASCADE', nullable: true })
 	@JoinColumn()
-	pluginTenant?: Relation<IPluginTenant>;
+	tenant?: Relation<IPluginTenant>;
 
 	/*
 	 * Plugin Category relationship (for default category settings)
@@ -102,13 +85,13 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	@IsUUID()
 	@ValidateIf((object, value) => value !== null)
 	@MultiORMColumn({ type: 'uuid', nullable: true })
-	@RelationId((pluginSetting: PluginSetting) => pluginSetting.pluginCategory)
-	pluginCategoryId?: string;
+	@RelationId((pluginSetting: PluginSetting) => pluginSetting.category)
+	categoryId?: ID;
 
-	@MultiORMManyToOne('PluginCategory', 'defaultSettings', {
+	@MultiORMManyToOne('PluginCategory', 'PluginSetting', {
 		onDelete: 'CASCADE',
 		nullable: true
 	})
 	@JoinColumn()
-	pluginCategory?: Relation<IPluginCategory>;
+	category?: Relation<IPluginCategory>;
 }

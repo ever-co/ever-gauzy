@@ -1,13 +1,7 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
 import { IPlugin } from './plugin.model';
 import { IPluginTenant } from './plugin-tenant.model';
-
-// Forward declaration to avoid circular dependency
-interface IPluginCategory {
-	id: string;
-	name: string;
-	slug: string;
-}
+import { IPluginCategory } from './plugin-category.model';
 
 /**
  * Interface for plugin settings
@@ -16,11 +10,8 @@ export interface IPluginSetting extends IBasePerTenantAndOrganizationEntityModel
 	// Setting key/name
 	key: string;
 
-	// Setting value (stored as JSON string for flexibility)
-	value: string;
-
-	// Setting data type for validation
-	dataType: PluginSettingDataType;
+	// Setting value (stored as JSON object for flexibility)
+	value: Record<string, any>;
 
 	// Whether the setting is required
 	isRequired: boolean;
@@ -28,57 +19,38 @@ export interface IPluginSetting extends IBasePerTenantAndOrganizationEntityModel
 	// Whether the setting is encrypted/sensitive
 	isEncrypted: boolean;
 
-	// Default value for the setting
-	defaultValue?: string;
-
 	// Setting description/help text
 	description?: string;
-
-	// Setting category/group
-	category?: string;
 
 	// Display order for UI
 	order?: number;
 
-	// Validation rules (JSON string)
-	validationRules?: string;
-
 	// The plugin this setting belongs to
 	plugin: IPlugin;
+
+	// Foreign key to the plugin
 	pluginId: ID;
 
 	// Optional plugin tenant relationship for tenant-specific settings
-	pluginTenant?: IPluginTenant;
-	pluginTenantId?: string;
+	tenant?: IPluginTenant;
+
+	// Foreign key to the tenant
+	tenantId?: string;
 
 	// Plugin Category relationship (for default category settings)
-	pluginCategory?: IPluginCategory;
-	pluginCategoryId?: string;
-}
+	category?: IPluginCategory;
 
-/**
- * Enum for plugin setting data types
- */
-export enum PluginSettingDataType {
-	STRING = 'string',
-	NUMBER = 'number',
-	BOOLEAN = 'boolean',
-	JSON = 'json',
-	ARRAY = 'array',
-	DATE = 'date',
-	EMAIL = 'email',
-	URL = 'url',
-	PASSWORD = 'password',
-	FILE = 'file'
+	// Foreign key to the category
+	categoryId?: string;
 }
 
 /**
  * Interface for creating plugin settings
  */
 export interface IPluginSettingCreateInput
-	extends Omit<IPluginSetting, 'id' | 'createdAt' | 'updatedAt' | 'plugin' | 'pluginTenant'> {
+	extends Omit<IPluginSetting, 'id' | 'createdAt' | 'updatedAt' | 'plugin' | 'tenant'> {
 	pluginId: ID;
-	pluginTenantId?: ID;
+	tenantId?: ID;
 }
 
 /**
@@ -90,4 +62,4 @@ export interface IPluginSettingUpdateInput extends Partial<Omit<IPluginSettingCr
  * Interface for finding plugin settings
  */
 export interface IPluginSettingFindInput
-	extends Partial<Pick<IPluginSetting, 'key' | 'category' | 'pluginId' | 'pluginTenantId'>> {}
+	extends Partial<Pick<IPluginSetting, 'key' | 'category' | 'pluginId' | 'tenantId'>> {}
