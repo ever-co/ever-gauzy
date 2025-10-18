@@ -13,21 +13,18 @@ import {
 	ParseUUIDPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { IPagination } from '@gauzy/contracts';
-import { TenantPermissionGuard, PermissionGuard } from '@gauzy/core';
-import { Permissions } from '@gauzy/common';
-import { UUIDValidationPipe, UseValidationPipe } from '@gauzy/core/pipes';
-
+import { TenantPermissionGuard, PermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import { PluginBillingService } from '../../domain/services/plugin-billing.service';
 import { IPluginBilling, IPluginBillingSummary, IPluginBillingFindInput } from '../../shared/models';
 import { CreatePluginBillingDTO } from '../../shared/dto/create-plugin-billing.dto';
 import { UpdatePluginBillingDTO } from '../../shared/dto/update-plugin-billing.dto';
+import { IPagination } from '@gauzy/contracts';
+import { UpdateResult } from 'typeorm';
 
 @ApiTags('Plugin Billing')
 @ApiBearerAuth()
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions('MANAGE_PLUGINS')
-@Controller('plugin-billings')
+@Controller('billings')
 export class PluginBillingController {
 	constructor(private readonly pluginBillingService: PluginBillingService) {}
 
@@ -59,7 +56,7 @@ export class PluginBillingController {
 	async findAll(
 		@Query(new ValidationPipe({ whitelist: true, transform: true }))
 		options?: IPluginBillingFindInput
-	): Promise<IPluginBilling[]> {
+	): Promise<IPagination<IPluginBilling>> {
 		if (options && Object.keys(options).length > 0) {
 			return this.pluginBillingService.findBillings(options);
 		}
@@ -76,7 +73,7 @@ export class PluginBillingController {
 	})
 	@Get('overdue')
 	async getOverdue(): Promise<IPluginBilling[]> {
-		return await this.pluginBillingService.getOverdueBillings();
+		return this.pluginBillingService.getOverdueBillings();
 	}
 
 	/**
@@ -104,7 +101,7 @@ export class PluginBillingController {
 	})
 	@Get(':id')
 	async findOne(@Param('id', UUIDValidationPipe) id: string): Promise<IPluginBilling> {
-		return await this.pluginBillingService.findOneByIdString(id);
+		return this.pluginBillingService.findOneByIdString(id);
 	}
 
 	/**
@@ -121,7 +118,7 @@ export class PluginBillingController {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() input: UpdatePluginBillingDTO
 	): Promise<IPluginBilling> {
-		return await this.pluginBillingService.update(id, input);
+		return this.pluginBillingService.update(id, input);
 	}
 
 	/**
@@ -137,7 +134,7 @@ export class PluginBillingController {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body('paymentReference') paymentReference?: string
 	): Promise<IPluginBilling> {
-		return await this.pluginBillingService.markAsPaid(id, paymentReference);
+		return this.pluginBillingService.markAsPaid(id, paymentReference);
 	}
 
 	/**
@@ -152,7 +149,7 @@ export class PluginBillingController {
 	async markAsFailed(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body('reason') reason?: string
-	): Promise<IPluginBilling> {
-		return await this.pluginBillingService.markAsFailed(id, reason);
+	): Promise<IPluginBilling | UpdateResult> {
+		return this.pluginBillingService.markAsFailed(id, reason);
 	}
 }

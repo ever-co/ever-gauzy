@@ -1,15 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, TreeRepository, FindManyOptions, FindOneOptions, Not } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { PluginCategory } from '../entities/plugin-category.entity';
-import {
-	IPluginCategory,
-	IPluginCategoryCreateInput,
-	IPluginCategoryUpdateInput,
-	IPluginCategoryFindInput,
-	IPluginCategoryTree
-} from '../../shared/models';
+import { IPluginCategoryFindInput, IPluginCategoryTree } from '../../shared/models';
 
 @Injectable()
 export class PluginCategoryService extends TenantAwareCrudService<PluginCategory> {

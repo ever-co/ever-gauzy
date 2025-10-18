@@ -177,7 +177,7 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 			subscription.nextBillingDate || new Date()
 		);
 
-		return await this.update(subscriptionId, {
+		return this.update(subscriptionId, {
 			status: PluginSubscriptionStatus.ACTIVE,
 			nextBillingDate,
 			endDate
@@ -191,7 +191,7 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		const expiryDate = new Date();
 		expiryDate.setDate(expiryDate.getDate() + days);
 
-		return await this.findAll({
+		return this.findAll({
 			where: {
 				status: PluginSubscriptionStatus.ACTIVE,
 				nextBillingDate: MoreThan(new Date()),

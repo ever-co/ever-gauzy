@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThan, LessThan } from 'typeorm';
+import { Repository, Between, LessThan, UpdateResult } from 'typeorm';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { PluginBilling } from '../entities/plugin-billing.entity';
 import {
@@ -40,7 +40,7 @@ export class PluginBillingService extends TenantAwareCrudService<PluginBilling> 
 	/**
 	 * Update billing record and recalculate total if necessary
 	 */
-	async update(id: string, input: IPluginBillingUpdateInput): Promise<IPluginBilling> {
+	async update(id: string, input: IPluginBillingUpdateInput): Promise<IPluginBilling | UpdateResult> {
 		const existing = await this.findOneByIdString(id);
 		if (!existing) {
 			throw new Error(`Billing record with ID '${id}' not found`);
@@ -173,8 +173,8 @@ export class PluginBillingService extends TenantAwareCrudService<PluginBilling> 
 	/**
 	 * Mark billing as paid
 	 */
-	async markAsPaid(id: string, paymentReference?: string): Promise<IPluginBilling> {
-		return await this.update(id, {
+	async markAsPaid(id: string, paymentReference?: string): Promise<IPluginBilling | UpdateResult> {
+		return this.update(id, {
 			status: PluginBillingStatus.PAID,
 			paymentReference
 		});
@@ -183,7 +183,7 @@ export class PluginBillingService extends TenantAwareCrudService<PluginBilling> 
 	/**
 	 * Mark billing as failed and handle retry logic
 	 */
-	async markAsFailed(id: string, reason?: string): Promise<IPluginBilling> {
+	async markAsFailed(id: string, reason?: string): Promise<IPluginBilling | UpdateResult> {
 		const billing = await this.findOneByIdString(id);
 		if (!billing) {
 			throw new Error(`Billing record with ID '${id}' not found`);
@@ -192,9 +192,8 @@ export class PluginBillingService extends TenantAwareCrudService<PluginBilling> 
 		const retryCount = (billing.retryCount || 0) + 1;
 		const nextRetryAt = this.calculateNextRetryDate(retryCount);
 
-		return await this.update(id, {
+		return this.update(id, {
 			status: PluginBillingStatus.FAILED,
-			retryCount,
 			lastRetryAt: new Date(),
 			nextRetryAt,
 			metadata: reason ? JSON.stringify({ failureReason: reason }) : billing.metadata

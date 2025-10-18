@@ -114,7 +114,7 @@ export class PluginSettingController {
 	@Get('plugin/:pluginId/category/:categoryId')
 	async findByCategory(
 		@Param('pluginId', ParseUUIDPipe) pluginId: string,
-		@Param('categoryId') category: string,
+		@Param('categoryId') categoryId: string,
 		@Query('pluginTenantId') pluginTenantId?: string
 	): Promise<PluginSetting[]> {
 		return this.pluginSettingService.findByCategory(pluginId, categoryId, pluginTenantId, [

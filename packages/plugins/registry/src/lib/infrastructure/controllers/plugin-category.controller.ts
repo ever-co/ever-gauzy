@@ -10,46 +10,30 @@ import {
 	HttpStatus,
 	HttpCode,
 	UseGuards,
-	ValidationPipe,
-	ParseUUIDPipe
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { IPagination } from '@gauzy/contracts';
-import { TenantPermissionGuard, PermissionGuard } from '@gauzy/core';
-import { Permissions } from '@gauzy/common';
-import { UUIDValidationPipe, UseValidationPipe } from '@gauzy/core/pipes';
+import { TenantPermissionGuard, PermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 
 import {
 	CreatePluginCategoryCommand,
 	UpdatePluginCategoryCommand,
 	DeletePluginCategoryCommand
-} from '../domain/commands';
-import {
-	GetPluginCategoriesQuery,
-	GetPluginCategoryQuery,
-	GetPluginCategoryTreeQuery
-} from '../domain/queries';
-import {
-	IPluginCategory,
-	IPluginCategoryTree,
-	IPluginCategoryFindInput
-} from '../shared/models';
-import { CreatePluginCategoryDTO } from '../shared/dto/create-plugin-category.dto';
-import { UpdatePluginCategoryDTO } from '../shared/dto/update-plugin-category.dto';
-import { PluginCategoryQueryDTO } from '../shared/dto/plugin-category-query.dto';
+} from '../../domain/commands';
+import { GetPluginCategoriesQuery, GetPluginCategoryQuery, GetPluginCategoryTreeQuery } from '../../domain/queries';
+import { IPluginCategory, IPluginCategoryTree, IPluginCategoryFindInput } from '../../shared/models';
+import { CreatePluginCategoryDTO } from '../../shared/dto/create-plugin-category.dto';
+import { UpdatePluginCategoryDTO } from '../../shared/dto/update-plugin-category.dto';
+import { PluginCategoryQueryDTO } from '../../shared/dto/plugin-category-query.dto';
 
 @ApiTags('Plugin Categories')
 @ApiBearerAuth()
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions('MANAGE_PLUGINS')
-@Controller('plugin-categories')
+@Controller('categories')
 export class PluginCategoryController {
-
-	constructor(
-		private readonly commandBus: CommandBus,
-		private readonly queryBus: QueryBus
-	) {}
+	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
 	/**
 	 * Create a new plugin category
@@ -63,12 +47,8 @@ export class PluginCategoryController {
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ whitelist: true })
-	async create(
-		@Body() input: CreatePluginCategoryDTO
-	): Promise<IPluginCategory> {
-		return await this.commandBus.execute(
-			new CreatePluginCategoryCommand(input)
-		);
+	async create(@Body() input: CreatePluginCategoryDTO): Promise<IPluginCategory> {
+		return this.commandBus.execute(new CreatePluginCategoryCommand(input));
 	}
 
 	/**
@@ -81,12 +61,10 @@ export class PluginCategoryController {
 	})
 	@Get()
 	async findAll(
-		@Query(new ValidationPipe({ whitelist: true, transform: true })) 
+		@Query(new ValidationPipe({ whitelist: true, transform: true }))
 		options: PluginCategoryQueryDTO
 	): Promise<IPagination<IPluginCategory>> {
-		return await this.queryBus.execute(
-			new GetPluginCategoriesQuery(options)
-		);
+		return this.queryBus.execute(new GetPluginCategoriesQuery(options));
 	}
 
 	/**
@@ -99,12 +77,10 @@ export class PluginCategoryController {
 	})
 	@Get('tree')
 	async getTree(
-		@Query(new ValidationPipe({ whitelist: true, transform: true })) 
+		@Query(new ValidationPipe({ whitelist: true, transform: true }))
 		options?: IPluginCategoryFindInput
 	): Promise<IPluginCategoryTree[]> {
-		return await this.queryBus.execute(
-			new GetPluginCategoryTreeQuery(options)
-		);
+		return this.queryBus.execute(new GetPluginCategoryTreeQuery(options));
 	}
 
 	/**
@@ -120,9 +96,7 @@ export class PluginCategoryController {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query('relations') relations?: string[]
 	): Promise<IPluginCategory> {
-		return await this.queryBus.execute(
-			new GetPluginCategoryQuery(id, relations)
-		);
+		return this.queryBus.execute(new GetPluginCategoryQuery(id, relations));
 	}
 
 	/**
@@ -139,9 +113,7 @@ export class PluginCategoryController {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() input: UpdatePluginCategoryDTO
 	): Promise<IPluginCategory> {
-		return await this.commandBus.execute(
-			new UpdatePluginCategoryCommand(id, input)
-		);
+		return this.commandBus.execute(new UpdatePluginCategoryCommand(id, input));
 	}
 
 	/**
@@ -154,11 +126,7 @@ export class PluginCategoryController {
 	})
 	@HttpCode(HttpStatus.NO_CONTENT)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<void> {
-		await this.commandBus.execute(
-			new DeletePluginCategoryCommand(id)
-		);
+	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<void> {
+		await this.commandBus.execute(new DeletePluginCategoryCommand(id));
 	}
 }
