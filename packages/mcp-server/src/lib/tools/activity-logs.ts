@@ -9,15 +9,10 @@ import {
 	ActivityLogEntityEnum,
 	ActorTypeEnum,
 	SortOrderEnum,
-	ActivityLogSortByEnum
+	ActivityLogSortByEnum,
+	ActivityLogRelationsSchema
 } from '../schema';
 import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
-// Allowed relations for ActivityLog responses
-const ALLOWED_ACTIVITY_LOG_RELATIONS = ['createdBy', 'employee'] as const;
-const RelationsParamSchema = z
-	.array(z.enum(ALLOWED_ACTIVITY_LOG_RELATIONS))
-	.optional()
-	.describe('Relations to include (allowed: "createdBy", "employee")');
 
 const ActivityLogGroupBy = z.enum(['entity', 'action', 'user', 'date', 'hour']);
 
@@ -31,7 +26,7 @@ export const registerActivityLogTools = (server: McpServer) => {
 		{
 			page: z.number().int().min(1).optional().default(1).describe('Page number for pagination'),
       		limit: z.number().int().min(1).max(100).optional().default(10).describe('Number of items per page'),
-			relations: RelationsParamSchema,
+			relations: ActivityLogRelationsSchema,
 			entity: ActivityLogEntityEnum.optional().describe('Filter by entity type'),
 			entityId: z.string().uuid().optional().describe('Filter by entity ID'),
 			action: ActivityLogActionEnum.optional().describe('Filter by action type'),
@@ -224,7 +219,7 @@ export const registerActivityLogTools = (server: McpServer) => {
 			entityId: z.string().uuid().describe('The entity ID'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
-			relations: RelationsParamSchema,
+			relations: ActivityLogRelationsSchema,
 			action: ActivityLogActionEnum.optional().describe('Filter by action type'),
 			actorType: ActorTypeEnum.optional().describe('Filter by actor type (System or User)'),
 			createdByUserId: z.string().uuid().optional().describe('Filter by user who performed the action'),

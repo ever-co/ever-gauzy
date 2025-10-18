@@ -105,6 +105,15 @@ const SortOrderEnum = z.enum(['ASC', 'DESC']);
 // Activity log sort fields enum
 const ActivityLogSortByEnum = z.enum(['createdAt', 'updatedAt', 'entity', 'action']);
 
+// Activity log allowed relations - shared whitelist for all activity log tools
+const ALLOWED_ACTIVITY_LOG_RELATIONS = ['createdBy', 'employee'] as const;
+
+// Activity log relations parameter schema - shared across all activity log tools
+const ActivityLogRelationsSchema = z
+	.array(z.enum(ALLOWED_ACTIVITY_LOG_RELATIONS))
+	.optional()
+	.describe('Relations to include (allowed: "createdBy", "employee")');
+
 // ===== BASE SCHEMAS =====
 
 // Base entity schema with common fields
@@ -854,6 +863,32 @@ const ProductSchema = TenantOrganizationBaseSchema.extend({
 	gallery: z.array(ImageAssetRefSchema).optional()
 });
 
+// Product Create Schema - enforces server-mandated required fields
+// Server requires: code, type, and category for product creation
+const ProductCreateSchema = ProductSchema.pick({
+	code: true,
+	enabled: true,
+	imageUrl: true,
+	featuredImageId: true,
+	productTypeId: true,
+	productCategoryId: true,
+	translations: true,
+	tags: true,
+	variants: true
+}).extend({
+	// Enforce required fields per server validation (CreateProductDTO)
+	code: z.string().min(1, 'Product code is required'),
+	productType: z.object({
+		name: z.string(),
+		icon: z.string().optional()
+	}),
+	productCategory: z.object({
+		name: z.string(),
+		description: z.string().optional(),
+		imageUrl: z.string().optional()
+	})
+}).strict();
+
 // Product Category Schema
 const ProductCategorySchema = TenantOrganizationBaseSchema.extend({
 	name: z.string(),
@@ -1406,6 +1441,8 @@ export {
 	ActorTypeEnum,
 	SortOrderEnum,
 	ActivityLogSortByEnum,
+	ALLOWED_ACTIVITY_LOG_RELATIONS,
+	ActivityLogRelationsSchema,
 	// Base schemas
 	BaseEntitySchema,
 	TenantBaseSchema,
@@ -1432,6 +1469,7 @@ export {
 	TagSchema,
 	// New entity schemas
 	ProductSchema,
+	ProductCreateSchema,
 	ProductCategorySchema,
 	WarehouseSchema,
 	InvoiceSchema,

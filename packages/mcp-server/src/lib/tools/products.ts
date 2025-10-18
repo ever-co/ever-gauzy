@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager, type AuthManager } from '../common/auth-manager';
-import { ProductSchema } from '../schema';
+import { ProductSchema, ProductCreateSchema } from '../schema';
 import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('ProductTools');
@@ -54,12 +54,12 @@ const getValidatedDefaultParams = (authMgr: AuthManager) => {
  */
 const productImageSchema = z.object({
 	id: z.string().optional(),
-	name: z.string(),
+	name: z.string().min(1),
 	url: z.union([z.string().url(), z.string().startsWith('data:')]),
 	thumb: z.union([z.string().url(), z.string().startsWith('data:')]).optional(),
 	width: z.number().int().positive().optional(),
 	height: z.number().int().positive().optional(),
-	size: z.number().int().positive().optional(),
+	size: z.number().int().nonnegative().optional(),
 	isFeatured: z.boolean().optional(),
 	externalProviderId: z.string().optional(),
 	storageProvider: z.string().optional()
@@ -95,8 +95,9 @@ export const registerProductTools = (server: McpServer) => {
 			try {
 				const params = {
 					data: JSON.stringify(data),
+					// If backend supports these here, use conventional names; otherwise drop and use pagination tool
 					...(page && { page }),
-					...(limit && { _limit: limit })
+					...(limit && { limit })
 				};
 
 				const response = await apiClient.get('/api/products', { params });
@@ -220,6 +221,7 @@ export const registerProductTools = (server: McpServer) => {
 					productCategoryId: z.string().uuid().optional(),
 					productTypeId: z.string().uuid().optional()
 				})
+				.passthrough()
 				.optional()
 				.describe('Where conditions')
 		},
@@ -262,7 +264,7 @@ export const registerProductTools = (server: McpServer) => {
 						.array(z.string())
 						.optional()
 						.describe('Relations to include (e.g., ["productType", "productCategory", "tags"])'),
-					findInput: z.object({}).optional().describe('Additional find input')
+					findInput: z.object({}).passthrough().optional().describe('Additional find input')
 				})
 				.optional()
 				.describe('Query data object')
@@ -332,7 +334,9 @@ export const registerProductTools = (server: McpServer) => {
 		'create_product',
 		"Create a new product in the authenticated user's organization",
 		{
-			product_data: ProductSchema.partial().describe('The data for creating the product')
+			product_data: ProductCreateSchema.describe(
+				'The data for creating the product. Required fields: code (string), productType (object with name), productCategory (object with name)'
+			)
 		},
 		async ({ product_data }) => {
 			try {

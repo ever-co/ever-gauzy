@@ -1,6 +1,17 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { OAuth2AuthorizationServer } from '@gauzy/auth';
 import { OAuthUserService } from '../user/oauth-user.service';
+import { IUser } from '@gauzy/contracts';
+
+/**
+ * Extended user interface with additional fields that may be present
+ * on the user object but are not part of the base IUser interface
+ */
+interface ExtendedMcpUser extends Omit<IUser, 'emailVerifiedAt'> {
+	defaultOrganizationId?: string;
+	emailVerifiedAt?: Date | string | null;
+	imageUrl?: string | null;
+}
 
 /**
  * MCP OAuth Service
@@ -42,45 +53,45 @@ export class McpOAuthService implements OnModuleInit {
 					const user = await this.userService.authenticateMcpUser(email, password);
 					if (!user) return null;
 
-					// Validate required fields
-					if (!user.id || !user.email || !user.tenantId) {
-						return null;
-					}
-
-					const organizationId = user.organizations?.[0]?.organization?.id || (user as any)['defaultOrganizationId'];
-					return {
-						userId: user.id,
-						email: user.email,
-						name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email,
-						organizationId,
-						tenantId: user.tenantId,
-						roles: user.role ? [user.role.name] : [],
-						emailVerified: !!(user as any)['emailVerifiedAt'],
-						picture: (user as any)['imageUrl']
-					};
+					return this.mapMcpUserToAuthPayload(user);
 				},
 				userInfoProvider: async (userId: string) => {
 					const user = await this.userService.getMcpUserInfo(userId);
 					if (!user) return null;
 
-					// Validate required fields
-					if (!user.id || !user.email || !user.tenantId) {
-						return null;
-					}
-
-					const organizationId = user.organizations?.[0]?.organization?.id || (user as any)['defaultOrganizationId'];
-					return {
-						userId: user.id,
-						email: user.email,
-						name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email,
-						organizationId,
-						tenantId: user.tenantId,
-						roles: user.role ? [user.role.name] : [],
-						emailVerified: !!(user as any)['emailVerifiedAt'],
-						picture: (user as any)['imageUrl']
-					};
+					return this.mapMcpUserToAuthPayload(user);
 				}
 		});
+	}
+
+	/**
+	 * Maps an MCP user to the auth payload object
+	 * Extracts and transforms user data for OAuth authentication
+	 *
+	 * @param user - The user object from the database
+	 * @returns Auth payload object with user information, or null if required fields are missing
+	 */
+	private mapMcpUserToAuthPayload(user: IUser) {
+		// Validate required fields
+		if (!user.id || !user.email || !user.tenantId) {
+			return null;
+		}
+
+		// Cast to extended user type for accessing optional fields
+		const extendedUser = user as ExtendedMcpUser;
+
+		const organizationId = user.organizations?.[0]?.organization?.id || extendedUser.defaultOrganizationId;
+
+		return {
+			userId: user.id,
+			email: user.email,
+			name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email,
+			organizationId,
+			tenantId: user.tenantId,
+			roles: user.role ? [user.role.name] : [],
+			emailVerified: !!extendedUser.emailVerifiedAt,
+			picture: extendedUser.imageUrl
+		};
 	}
 
 	onModuleInit() {
