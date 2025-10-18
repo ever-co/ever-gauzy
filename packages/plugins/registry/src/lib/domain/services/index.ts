@@ -5,6 +5,7 @@ import { PluginVersionService } from './plugin-version.service';
 import { PluginService } from './plugin.service';
 import { PluginSettingService } from './plugin-setting.service';
 import { PluginSubscriptionService } from './plugin-subscription.service';
+import { PluginBillingService } from './plugin-billing.service';
 import { PluginCategoryService } from './plugin-category.service';
 
 export const services = [
@@ -15,6 +16,7 @@ export const services = [
 	PluginSecurityService,
 	PluginSettingService,
 	PluginSubscriptionService,
+	PluginBillingService,
 	PluginCategoryService
 ];
 
@@ -26,4 +28,5 @@ export * from './plugin-version.service';
 export * from './plugin.service';
 export * from './plugin-setting.service';
 export * from './plugin-subscription.service';
+export * from './plugin-billing.service';
 export * from './plugin-category.service';

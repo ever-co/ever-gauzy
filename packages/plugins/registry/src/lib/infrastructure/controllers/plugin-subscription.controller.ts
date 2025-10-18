@@ -13,10 +13,10 @@ import {
 	ParseUUIDPipe,
 	Request
 } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { TenantPermissionGuard, PermissionGuard, Permissions, RequestContext } from '@gauzy/core';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PluginSubscriptionService } from '../../domain/services/plugin-subscription.service';
 import {
 	CreatePluginSubscriptionDTO,
 	UpdatePluginSubscriptionDTO,
@@ -28,11 +28,36 @@ import {
 } from '../../shared/dto/plugin-subscription.dto';
 import { PluginSubscription } from '../../domain/entities/plugin-subscription.entity';
 
+// CQRS Commands
+import {
+	PurchasePluginSubscriptionCommand,
+	CreatePluginSubscriptionCommand,
+	UpdatePluginSubscriptionCommand,
+	DeletePluginSubscriptionCommand,
+	CancelPluginSubscriptionCommand,
+	RenewPluginSubscriptionCommand,
+	ProcessBillingCommand
+} from '../../domain/commands';
+
+// CQRS Queries
+import {
+	GetPluginSubscriptionsQuery,
+	GetPluginSubscriptionByIdQuery,
+	GetPluginSubscriptionsByPluginIdQuery,
+	GetPluginSubscriptionsBySubscriberIdQuery,
+	GetActivePluginSubscriptionQuery,
+	CheckPluginAccessQuery,
+	GetExpiringSubscriptionsQuery
+} from '../../domain/queries';
+
 @ApiTags('Plugin Subscriptions')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugin-subscriptions')
 export class PluginSubscriptionController {
-	constructor(private readonly pluginSubscriptionService: PluginSubscriptionService) {}
+	constructor(
+		private readonly commandBus: CommandBus,
+		private readonly queryBus: QueryBus
+	) {}
 
 	@ApiOperation({ summary: 'Purchase plugin subscription' })
 	@ApiResponse({
@@ -40,19 +65,20 @@ export class PluginSubscriptionController {
 		description: 'Plugin subscription purchased successfully',
 		type: PluginSubscription
 	})
-	@Permissions(PermissionsEnum.PLUGIN_MANAGE)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post('purchase')
-	async purchaseSubscription(
-		@Body() purchaseDto: PurchasePluginSubscriptionDTO,
-		@Request() req: any
-	): Promise<PluginSubscription> {
-		const { tenantId, organizationId, user } = RequestContext.currentRequestContext();
+	async purchaseSubscription(@Body() purchaseDto: PurchasePluginSubscriptionDTO): Promise<PluginSubscription> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		const user = RequestContext.currentUser();
 
-		return await this.pluginSubscriptionService.purchaseSubscription(
-			purchaseDto,
-			tenantId,
-			organizationId,
-			user?.id
+		return await this.commandBus.execute(
+			new PurchasePluginSubscriptionCommand(
+				purchaseDto,
+				tenantId,
+				organizationId,
+				user?.id
+			)
 		);
 	}
 
@@ -62,10 +88,10 @@ export class PluginSubscriptionController {
 		description: 'Plugin subscription created successfully',
 		type: PluginSubscription
 	})
-	@Permissions(PermissionsEnum.PLUGIN_MANAGE)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post()
 	async create(@Body() createDto: CreatePluginSubscriptionDTO): Promise<PluginSubscription> {
-		return await this.pluginSubscriptionService.create(createDto);
+		return await this.commandBus.execute(new CreatePluginSubscriptionCommand(createDto));
 	}
 
 	@ApiOperation({ summary: 'Get all plugin subscriptions' })
@@ -77,11 +103,7 @@ export class PluginSubscriptionController {
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get()
 	async findAll(@Query() query: PluginSubscriptionQueryDTO): Promise<PluginSubscription[]> {
-		return await this.pluginSubscriptionService.findAll({
-			where: query,
-			relations: ['plugin', 'pluginTenant', 'subscriber'],
-			order: { createdAt: 'DESC' }
-		});
+		return await this.queryBus.execute(new GetPluginSubscriptionsQuery(query));
 	}
 
 	@ApiOperation({ summary: 'Get plugin subscription by ID' })
@@ -94,9 +116,9 @@ export class PluginSubscriptionController {
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get(':id')
 	async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<PluginSubscription> {
-		return await this.pluginSubscriptionService.findOneByIdString(id, {
-			relations: ['plugin', 'pluginTenant', 'subscriber']
-		});
+		return await this.queryBus.execute(
+			new GetPluginSubscriptionByIdQuery(id, ['plugin', 'pluginTenant', 'subscriber'])
+		);
 	}
 
 	@ApiOperation({ summary: 'Get plugin subscriptions by plugin ID' })
@@ -109,7 +131,9 @@ export class PluginSubscriptionController {
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get('plugin/:pluginId')
 	async findByPluginId(@Param('pluginId', ParseUUIDPipe) pluginId: string): Promise<PluginSubscription[]> {
-		return await this.pluginSubscriptionService.findByPluginId(pluginId, ['plugin', 'pluginTenant', 'subscriber']);
+		return await this.queryBus.execute(
+			new GetPluginSubscriptionsByPluginIdQuery(pluginId, ['plugin', 'pluginTenant', 'subscriber'])
+		);
 	}
 
 	@ApiOperation({ summary: 'Get plugin subscriptions by subscriber ID' })
@@ -124,11 +148,13 @@ export class PluginSubscriptionController {
 	async findBySubscriberId(
 		@Param('subscriberId', ParseUUIDPipe) subscriberId: string
 	): Promise<PluginSubscription[]> {
-		return await this.pluginSubscriptionService.findBySubscriberId(subscriberId, [
-			'plugin',
-			'pluginTenant',
-			'subscriber'
-		]);
+		return await this.queryBus.execute(
+			new GetPluginSubscriptionsBySubscriberIdQuery(subscriberId, [
+				'plugin',
+				'pluginTenant',
+				'subscriber'
+			])
+		);
 	}
 
 	@ApiOperation({ summary: 'Get active subscription for plugin' })
@@ -145,13 +171,11 @@ export class PluginSubscriptionController {
 		@Param('pluginId', ParseUUIDPipe) pluginId: string,
 		@Query('subscriberId') subscriberId?: string
 	): Promise<PluginSubscription | null> {
-		const { tenantId, organizationId } = RequestContext.currentRequestContext();
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
 
-		return await this.pluginSubscriptionService.findActiveSubscription(
-			pluginId,
-			tenantId,
-			organizationId,
-			subscriberId
+		return await this.queryBus.execute(
+			new GetActivePluginSubscriptionQuery(pluginId, tenantId, organizationId, subscriberId)
 		);
 	}
 
@@ -165,26 +189,12 @@ export class PluginSubscriptionController {
 	async checkPluginAccess(
 		@Body() accessCheckDto: PluginAccessCheckDTO
 	): Promise<{ hasAccess: boolean; subscription?: PluginSubscription }> {
-		const { tenantId, organizationId } = RequestContext.currentRequestContext();
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
 
-		const hasAccess = await this.pluginSubscriptionService.hasPluginAccess(
-			accessCheckDto.pluginId,
-			tenantId,
-			organizationId,
-			accessCheckDto.subscriberId
+		return await this.queryBus.execute(
+			new CheckPluginAccessQuery(accessCheckDto, tenantId, organizationId)
 		);
-
-		let subscription = null;
-		if (hasAccess) {
-			subscription = await this.pluginSubscriptionService.findActiveSubscription(
-				accessCheckDto.pluginId,
-				tenantId,
-				organizationId,
-				accessCheckDto.subscriberId
-			);
-		}
-
-		return { hasAccess, subscription };
 	}
 
 	@ApiOperation({ summary: 'Get expiring subscriptions' })
@@ -197,7 +207,7 @@ export class PluginSubscriptionController {
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get('expiring/list')
 	async getExpiringSubscriptions(@Query('days') days?: number): Promise<PluginSubscription[]> {
-		return await this.pluginSubscriptionService.getExpiringSubscriptions(days || 7);
+		return await this.queryBus.execute(new GetExpiringSubscriptionsQuery(days || 7));
 	}
 
 	@ApiOperation({ summary: 'Cancel plugin subscription' })
@@ -213,7 +223,7 @@ export class PluginSubscriptionController {
 		@Param('id', ParseUUIDPipe) id: string,
 		@Body() cancelDto: CancelPluginSubscriptionDTO
 	): Promise<PluginSubscription> {
-		return await this.pluginSubscriptionService.cancelSubscription(id, cancelDto.reason);
+		return await this.commandBus.execute(new CancelPluginSubscriptionCommand(id, cancelDto.reason));
 	}
 
 	@ApiOperation({ summary: 'Renew plugin subscription' })
@@ -229,7 +239,7 @@ export class PluginSubscriptionController {
 		@Param('id', ParseUUIDPipe) id: string,
 		@Body() renewDto: RenewPluginSubscriptionDTO
 	): Promise<PluginSubscription> {
-		return await this.pluginSubscriptionService.renewSubscription(id);
+		return await this.commandBus.execute(new RenewPluginSubscriptionCommand(id));
 	}
 
 	@ApiOperation({ summary: 'Process subscription billing' })
@@ -238,15 +248,10 @@ export class PluginSubscriptionController {
 		description: 'Billing processed successfully'
 	})
 	@ApiParam({ name: 'id', description: 'Plugin subscription ID' })
-	@Permissions(PermissionsEnum.PLUGIN_MANAGE)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post(':id/billing/process')
 	async processBilling(@Param('id', ParseUUIDPipe) id: string): Promise<{ success: boolean; message: string }> {
-		const success = await this.pluginSubscriptionService.processBilling(id);
-
-		return {
-			success,
-			message: success ? 'Billing processed successfully' : 'Billing processing failed'
-		};
+		return await this.commandBus.execute(new ProcessBillingCommand(id));
 	}
 
 	@ApiOperation({ summary: 'Update plugin subscription' })
@@ -262,7 +267,7 @@ export class PluginSubscriptionController {
 		@Param('id', ParseUUIDPipe) id: string,
 		@Body() updateDto: UpdatePluginSubscriptionDTO
 	): Promise<PluginSubscription> {
-		return this.pluginSubscriptionService.update(id, updateDto);
+		return await this.commandBus.execute(new UpdatePluginSubscriptionCommand(id, updateDto));
 	}
 
 	@ApiOperation({ summary: 'Delete plugin subscription' })
@@ -275,6 +280,6 @@ export class PluginSubscriptionController {
 	@Delete(':id')
 	@HttpCode(HttpStatus.NO_CONTENT)
 	async delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-		await this.pluginSubscriptionService.delete(id);
+		await this.commandBus.execute(new DeletePluginSubscriptionCommand(id));
 	}
 }

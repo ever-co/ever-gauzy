@@ -9,6 +9,10 @@ export * from './update-plugin-version.dto';
 export * from './update-plugin.dto';
 export * from './verify-plugin.dto';
 
+// Plugin Billing DTOs
+export * from './create-plugin-billing.dto';
+export * from './update-plugin-billing.dto';
+
 // Plugin Category DTOs
 export * from './create-plugin-category.dto';
 export * from './update-plugin-category.dto';

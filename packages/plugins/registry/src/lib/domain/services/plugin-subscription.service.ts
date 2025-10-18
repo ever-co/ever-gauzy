@@ -50,15 +50,12 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		}
 
 		// Calculate subscription dates
-		const { startDate, endDate, nextBillingDate, trialEndDate } =
-			this.calculateSubscriptionDates(purchaseInput.billingPeriod);
+		const { startDate, endDate, nextBillingDate, trialEndDate } = this.calculateSubscriptionDates(
+			purchaseInput.billingPeriod
+		);
 
 		// Create plugin tenant relationship (assuming it exists or needs to be created)
-		const pluginTenantId = await this.ensurePluginTenantExists(
-			purchaseInput.pluginId,
-			tenantId,
-			organizationId
-		);
+		const pluginTenantId = await this.ensurePluginTenantExists(purchaseInput.pluginId, tenantId, organizationId);
 
 		// Create subscription
 		const subscriptionData: IPluginSubscriptionCreateInput = {
@@ -67,9 +64,10 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 			subscriptionType: purchaseInput.subscriptionType,
 			scope: purchaseInput.scope,
 			billingPeriod: purchaseInput.billingPeriod,
-			status: purchaseInput.subscriptionType === PluginSubscriptionType.FREE
-				? PluginSubscriptionStatus.ACTIVE
-				: PluginSubscriptionStatus.PENDING,
+			status:
+				purchaseInput.subscriptionType === PluginSubscriptionType.FREE
+					? PluginSubscriptionStatus.ACTIVE
+					: PluginSubscriptionStatus.PENDING,
 			price: await this.getSubscriptionPrice(purchaseInput),
 			currency: 'USD', // Default currency, should be configurable
 			startDate,
@@ -116,20 +114,17 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 			where.subscriberId = subscriberId;
 		}
 
-		return await this.findOne({
+		return this.findOne({
 			where,
-			relations: ['plugin', 'pluginTenant', 'subscriber']
+			relations: ['plugin', 'tenant', 'subscriber']
 		} as FindOneOptions);
 	}
 
 	/**
 	 * Find subscriptions by plugin ID
 	 */
-	async findByPluginId(
-		pluginId: string,
-		relations: string[] = []
-	): Promise<IPluginSubscription[]> {
-		return await this.findAll({
+	async findByPluginId(pluginId: string, relations: string[] = []): Promise<IPluginSubscription[]> {
+		return this.findAll({
 			where: { pluginId },
 			relations,
 			order: { createdAt: 'DESC' }
@@ -139,11 +134,8 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 	/**
 	 * Find subscriptions by subscriber ID
 	 */
-	async findBySubscriberId(
-		subscriberId: string,
-		relations: string[] = []
-	): Promise<IPluginSubscription[]> {
-		return await this.findAll({
+	async findBySubscriberId(subscriberId: string, relations: string[] = []): Promise<IPluginSubscription[]> {
+		return this.findAll({
 			where: { subscriberId },
 			relations,
 			order: { createdAt: 'DESC' }
@@ -153,10 +145,7 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 	/**
 	 * Cancel a subscription
 	 */
-	async cancelSubscription(
-		subscriptionId: string,
-		reason?: string
-	): Promise<IPluginSubscription> {
+	async cancelSubscription(subscriptionId: string, reason?: string): Promise<IPluginSubscription> {
 		const subscription = await this.findOneByIdString(subscriptionId);
 		if (!subscription) {
 			throw new NotFoundException('Subscription not found');
@@ -166,7 +155,7 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 			throw new BadRequestException('Subscription is already cancelled');
 		}
 
-		return await this.update(subscriptionId, {
+		return this.update(subscriptionId, {
 			status: PluginSubscriptionStatus.CANCELLED,
 			cancelledAt: new Date(),
 			cancellationReason: reason,
@@ -250,20 +239,17 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		organizationId?: string,
 		subscriberId?: string
 	): Promise<boolean> {
-		const subscription = await this.findActiveSubscription(
-			pluginId,
-			tenantId,
-			organizationId,
-			subscriberId
-		);
+		const subscription = await this.findActiveSubscription(pluginId, tenantId, organizationId, subscriberId);
 
 		if (!subscription) {
 			return false;
 		}
 
 		// Check if subscription is active and not expired
-		return subscription.status === PluginSubscriptionStatus.ACTIVE &&
-			(!subscription.endDate || subscription.endDate > new Date());
+		return (
+			subscription.status === PluginSubscriptionStatus.ACTIVE &&
+			(!subscription.endDate || subscription.endDate > new Date())
+		);
 	}
 
 	/**
@@ -328,10 +314,7 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 	/**
 	 * Calculate next billing period
 	 */
-	private calculateNextBillingPeriod(
-		billingPeriod: PluginBillingPeriod,
-		currentDate: Date
-	) {
+	private calculateNextBillingPeriod(billingPeriod: PluginBillingPeriod, currentDate: Date) {
 		const nextBillingDate = new Date(currentDate);
 		let endDate: Date | undefined;
 
@@ -418,7 +401,9 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 	/**
 	 * Process payment
 	 */
-	private async processPayment(subscription: IPluginSubscription): Promise<{ success: boolean; transactionId?: string }> {
+	private async processPayment(
+		subscription: IPluginSubscription
+	): Promise<{ success: boolean; transactionId?: string }> {
 		// Integrate with payment processing service
 		console.log('Processing payment for subscription renewal:', subscription.id);
 		// Implementation depends on payment provider

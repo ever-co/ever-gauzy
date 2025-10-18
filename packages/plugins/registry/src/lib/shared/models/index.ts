@@ -7,5 +7,6 @@ export * from './plugin-version.model';
 export * from './plugin.model';
 export * from './plugin-setting.model';
 export * from './plugin-subscription.model';
+export * from './plugin-billing.model';
 export * from './plugin-category.model';
 export * from './storage-provider.model';

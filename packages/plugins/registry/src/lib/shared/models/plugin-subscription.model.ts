@@ -3,6 +3,14 @@ import { IPlugin } from './plugin.model';
 import { IPluginTenant } from './plugin-tenant.model';
 import { PluginScope } from './plugin-scope.model';
 
+// Forward declaration to avoid circular dependency
+interface IPluginBilling {
+	id: string;
+	amount: number;
+	currency: string;
+	status: string;
+}
+
 /**
  * Interface for plugin subscriptions
  */
@@ -19,20 +27,11 @@ export interface IPluginSubscription extends IBasePerTenantAndOrganizationEntity
 	// Billing period
 	billingPeriod: PluginBillingPeriod;
 
-	// Price per billing period
-	price: number;
-
-	// Currency code
-	currency: string;
-
 	// Start date of subscription
 	startDate: Date;
 
 	// End date of subscription (null for active subscriptions)
 	endDate?: Date;
-
-	// Next billing date
-	nextBillingDate?: Date;
 
 	// Trial period end date (if applicable)
 	trialEndDate?: Date;
@@ -61,7 +60,10 @@ export interface IPluginSubscription extends IBasePerTenantAndOrganizationEntity
 	// Subscription metadata (JSON string for flexibility)
 	metadata?: string;
 
-	// Payment records for this subscription
+	// Billing records for this subscription
+	billings?: IPluginBilling[];
+
+	// Payment records for this subscription (when payment system is implemented)
 	payments?: IPayment[];
 }
 
@@ -130,32 +132,6 @@ export interface IPluginSubscriptionFindInput
 			'status' | 'subscriptionType' | 'scope' | 'pluginId' | 'pluginTenantId' | 'subscriberId'
 		>
 	> {}
-
-/**
- * Interface for subscription billing information
- */
-export interface IPluginSubscriptionBilling {
-	subscriptionId: ID;
-	amount: number;
-	currency: string;
-	billingDate: Date;
-	dueDate: Date;
-	status: PluginBillingStatus;
-	paymentMethod?: string;
-	invoiceUrl?: string;
-	metadata?: string;
-}
-
-/**
- * Enum for billing status
- */
-export enum PluginBillingStatus {
-	PENDING = 'pending',
-	PAID = 'paid',
-	OVERDUE = 'overdue',
-	FAILED = 'failed',
-	REFUNDED = 'refunded'
-}
 
 /**
  * Interface for subscription purchase request

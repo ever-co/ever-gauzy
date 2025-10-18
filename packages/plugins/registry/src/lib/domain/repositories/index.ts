@@ -12,8 +12,11 @@ import { TypeOrmPluginVersionRepository } from './type-orm-plugin-version.reposi
 import { TypeOrmPluginRepository } from './type-orm-plugin.repository';
 import { TypeOrmPluginSettingRepository } from './type-orm-plugin-setting.repository';
 import { TypeOrmPluginSubscriptionRepository } from './type-orm-plugin-subscription.repository';
-import { TypeOrmPluginCategoryRepository } from './type-orm-plugin-category.repository';
-import { MikroOrmPluginCategoryRepository } from './mikro-orm-plugin-category.repository';
+import { TypeOrmPluginBillingRepository } from './type-orm-plugin-billing.repository';
+import { MikroOrmPluginBillingRepository } from './mikro-orm-plugin-billing.repository';
+// Category repositories - to be added after fixing circular dependencies
+// import { TypeOrmPluginCategoryRepository } from './type-orm-plugin-category.repository';
+// import { MikroOrmPluginCategoryRepository } from './mikro-orm-plugin-category.repository';
 
 export const repositories = [
 	TypeOrmPluginSourceRepository,
@@ -30,8 +33,11 @@ export const repositories = [
 	MikroOrmPluginTenantRepository,
 	MikroOrmPluginSettingRepository,
 	MikroOrmPluginSubscriptionRepository,
-	TypeOrmPluginCategoryRepository,
-	MikroOrmPluginCategoryRepository
+	TypeOrmPluginBillingRepository,
+	MikroOrmPluginBillingRepository
+	// Category repositories - to be added after fixing circular dependencies
+	// TypeOrmPluginCategoryRepository,
+	// MikroOrmPluginCategoryRepository
 ];
 
 // Export individual repositories
@@ -49,5 +55,8 @@ export * from './type-orm-plugin-version.repository';
 export * from './type-orm-plugin.repository';
 export * from './type-orm-plugin-setting.repository';
 export * from './type-orm-plugin-subscription.repository';
-export * from './type-orm-plugin-category.repository';
-export * from './mikro-orm-plugin-category.repository';
+export * from './type-orm-plugin-billing.repository';
+export * from './mikro-orm-plugin-billing.repository';
+// Category repositories - to be added after fixing circular dependencies
+// export * from './type-orm-plugin-category.repository';
+// export * from './mikro-orm-plugin-category.repository';

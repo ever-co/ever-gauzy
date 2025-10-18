@@ -28,11 +28,8 @@ export class CreatePluginSubscriptionDTO extends IntersectionType(
 		'subscriptionType',
 		'scope',
 		'billingPeriod',
-		'price',
-		'currency',
 		'startDate',
 		'endDate',
-		'nextBillingDate',
 		'trialEndDate',
 		'autoRenew',
 		'metadata'
@@ -60,10 +57,7 @@ export class CreatePluginSubscriptionDTO extends IntersectionType(
 export class UpdatePluginSubscriptionDTO extends PickType(PluginSubscription, [
 	'subscriptionType',
 	'billingPeriod',
-	'price',
-	'currency',
 	'endDate',
-	'nextBillingDate',
 	'trialEndDate',
 	'autoRenew',
 	'cancelledAt',

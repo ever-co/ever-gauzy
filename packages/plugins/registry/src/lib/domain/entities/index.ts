@@ -5,6 +5,7 @@ import { PluginVersion } from './plugin-version.entity';
 import { Plugin } from './plugin.entity';
 import { PluginSetting } from './plugin-setting.entity';
 import { PluginSubscription } from './plugin-subscription.entity';
+import { PluginBilling } from './plugin-billing.entity';
 import { PluginCategory } from './plugin-category.entity';
 
 export const entities = [
@@ -15,6 +16,7 @@ export const entities = [
 	Plugin,
 	PluginSetting,
 	PluginSubscription,
+	PluginBilling,
 	PluginCategory
 ];
 
@@ -26,4 +28,5 @@ export * from './plugin-version.entity';
 export * from './plugin.entity';
 export * from './plugin-setting.entity';
 export * from './plugin-subscription.entity';
+export * from './plugin-billing.entity';
 export * from './plugin-category.entity';
