@@ -183,6 +183,17 @@ export class RequestContext {
 	}
 
 	/**
+	 * Retrieves the current organization ID associated with the user in the RequestContext.
+	 * Returns the organization ID if available, otherwise returns null.
+	 *
+	 * @returns {string | null} - The current organization ID or null if not available.
+	 */
+	static currentOrganizationId(): ID | null {
+		const user: IUser | null = RequestContext.currentUser();
+		return user?.employee?.organizationId || null;
+	}
+
+	/**
 	 * Retrieves the current role ID associated with the user in the RequestContext.
 	 * Returns the role ID if available, otherwise returns null.
 	 *
