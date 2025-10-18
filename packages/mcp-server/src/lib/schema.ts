@@ -96,6 +96,15 @@ const ActivityLogActionEnum = z.enum(['CREATED', 'UPDATED', 'DELETED', 'VIEWED',
 
 const ActivityLogEntityEnum = z.enum(['USER', 'EMPLOYEE', 'TASK', 'PROJECT', 'GOAL', 'INVOICE', 'EXPENSE', 'DEAL', 'CANDIDATE']);
 
+// Actor type enum - matches ActorTypeEnum from @gauzy/contracts
+const ActorTypeEnum = z.enum(['System', 'User']);
+
+// Sort order enum - shared across all tools
+const SortOrderEnum = z.enum(['ASC', 'DESC']);
+
+// Activity log sort fields enum
+const ActivityLogSortByEnum = z.enum(['createdAt', 'updatedAt', 'entity', 'action']);
+
 // ===== BASE SCHEMAS =====
 
 // Base entity schema with common fields
@@ -1297,7 +1306,7 @@ const ActivityLogSchema = TenantOrganizationBaseSchema.extend({
 	updatedFields: z.array(z.string()).optional(),
 
 	// Relations
-	actorType: z.string().optional(),
+	actorType: ActorTypeEnum.optional(),
 
 	// User who performed the action
 	createdByUserId: z.string().uuid().optional(),
@@ -1394,6 +1403,9 @@ export {
 	CommentableTypeEnum,
 	ActivityLogActionEnum,
 	ActivityLogEntityEnum,
+	ActorTypeEnum,
+	SortOrderEnum,
+	ActivityLogSortByEnum,
 	// Base schemas
 	BaseEntitySchema,
 	TenantBaseSchema,

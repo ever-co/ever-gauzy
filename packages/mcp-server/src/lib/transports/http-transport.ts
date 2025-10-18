@@ -108,13 +108,26 @@ export class HttpTransport {
 		// Hide Express signature
 		this.app.disable('x-powered-by');
 
+		// Configure trust proxy to honor X-Forwarded-For headers from trusted proxies
+		if (this.transportConfig.trustedProxies && this.transportConfig.trustedProxies.length > 0) {
+			this.app.set('trust proxy', true);
+			logger.log(`Trust proxy enabled for: ${this.transportConfig.trustedProxies.join(', ')}`);
+		}
+
 		// CORS configuration
 		this.app.use(
 			cors({
 				origin: this.transportConfig.cors.origin,
 				credentials: this.transportConfig.cors.credentials,
 				methods: ['GET', 'POST', 'OPTIONS', 'DELETE'],
-				allowedHeaders: ['Content-Type', 'Authorization', 'mcp-session-id', 'mcp-csrf-token']
+				allowedHeaders: [
+					'Content-Type',
+					'Authorization',
+					'mcp-session-id',
+					'mcp-csrf-token',
+					'X-CSRF-Token',
+					'x-csrf-token'
+				]
 			})
 		);
 
@@ -134,16 +147,17 @@ export class HttpTransport {
 						process.env.NODE_ENV === 'production' ? 1024 * 1024 : 10 * 1024 * 1024
 					);
 					if (!validation.valid) {
+						const clientIP = this.normalizeIP(req.socket?.remoteAddress || 'unknown');
 						if (validation.error === 'Request too large') {
 							SecurityLogger.logSecurityEvent(SecurityEvents.LARGE_REQUEST, 'medium', {
 								size: buf.length,
-								ip: req.socket?.remoteAddress || 'unknown',
+								ip: clientIP,
 								error: validation.error
 							});
 						} else {
 							SecurityLogger.logSecurityEvent(SecurityEvents.SUSPICIOUS_PAYLOAD, 'medium', {
 								size: buf.length,
-								ip: req.socket?.remoteAddress || 'unknown',
+								ip: clientIP,
 								error: validation.error
 							});
 						}
@@ -401,8 +415,8 @@ export class HttpTransport {
 			skip: (req) => {
 				// Skip rate limiting for localhost in development
 				if (process.env.NODE_ENV !== 'production') {
-					const ip = req.ip || req.socket?.remoteAddress;
-					return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+					const ip = this.normalizeIP(req.ip || req.socket?.remoteAddress || '');
+					return ip === '127.0.0.1' || ip === '::1';
 				}
 				return false;
 			}
@@ -462,7 +476,7 @@ export class HttpTransport {
 					}
 				}
 
-				logger.log(`Session created: ${session.id} for user ${session.userId} from ${req.ip}`);
+				logger.log(`Session created: ${session.id} for user ${session.userId} from ${this.getClientIP(req, this.transportConfig.trustedProxies || [])}`);
 
 				res.json({
 					sessionId: session.id,
@@ -536,7 +550,7 @@ export class HttpTransport {
 							logger.warn('Failed to clear session cookie:', err);
 						}
 					}
-					logger.log(`Session deleted: ${sessionId} by user ${requesterUserId} from ${req.ip}`);
+					logger.log(`Session deleted: ${sessionId} by user ${requesterUserId} from ${this.getClientIP(req, this.transportConfig.trustedProxies || [])}`);
 					res.status(204).send();
 				} else {
 					res.status(404).json({ error: 'Session not found' });
@@ -883,15 +897,34 @@ export class HttpTransport {
 		}
 	}
 
+	/**
+	 * Normalize IP address by stripping IPv4-mapped IPv6 prefix
+	 * Converts "::ffff:127.0.0.1" to "127.0.0.1"
+	 * @param ip - The IP address to normalize
+	 * @returns Normalized IP address
+	 */
+	private normalizeIP(ip: string): string {
+		if (!ip) {
+			return ip;
+		}
+		// Strip IPv4-mapped IPv6 prefix
+		if (ip.startsWith('::ffff:')) {
+			return ip.substring(7);
+		}
+		return ip;
+	}
+
 	private getClientIP(req: express.Request, trustedProxies: string[] = []): string {
 		// If no trusted proxies configured, use socket address
 		if (trustedProxies.length === 0) {
-			return req.socket.remoteAddress || 'unknown';
+			return this.normalizeIP(req.socket.remoteAddress || 'unknown');
 		}
 
 		// Only trust headers if request comes from a trusted proxy
-		const remoteAddress = req.socket.remoteAddress || '';
-		if (!trustedProxies.includes(remoteAddress)) {
+		const remoteAddress = this.normalizeIP(req.socket.remoteAddress || '');
+		const normalizedProxies = trustedProxies.map(proxy => this.normalizeIP(proxy));
+
+		if (!normalizedProxies.includes(remoteAddress)) {
 			return remoteAddress;
 		}
 
@@ -899,14 +932,14 @@ export class HttpTransport {
 		const realIP = req.get('X-Real-IP');
 
 		if (forwarded) {
-			return forwarded.split(',')[0].trim();
+			return this.normalizeIP(forwarded.split(',')[0].trim());
 		}
 
 		if (realIP) {
-			return realIP.trim();
+			return this.normalizeIP(realIP.trim());
 		}
 
-		return req.socket.remoteAddress || 'unknown';
+		return this.normalizeIP(req.socket.remoteAddress || 'unknown');
 	}
 
 	async start(): Promise<void> {

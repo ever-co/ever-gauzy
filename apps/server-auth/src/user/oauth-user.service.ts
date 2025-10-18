@@ -71,7 +71,10 @@ export class OAuthUserService {
 
 			return user;
 		} catch (error) {
-			this.logger.error('Error authenticating MCP user:', error as Error);
+			this.logger.error(
+				'Error authenticating MCP user',
+				(error as Error)?.stack || (error as Error)?.message
+			);
 			return null;
 		}
 	}
@@ -89,7 +92,10 @@ export class OAuthUserService {
 
 			return user || null;
 		} catch (error) {
-			this.logger.error('Error retrieving MCP user info:', error as Error);
+			this.logger.error(
+				'Error retrieving MCP user info',
+				(error as Error)?.stack || (error as Error)?.message
+			);
 			return null;
 		}
 	}

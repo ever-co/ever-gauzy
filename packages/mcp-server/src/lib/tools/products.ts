@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { authManager } from '../common/auth-manager';
+import { authManager, type AuthManager } from '../common/auth-manager';
 import { ProductSchema } from '../schema';
 import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
@@ -32,12 +32,12 @@ const convertProductDateFields = <T extends ProductDataWithDates>(productData: T
 
 /**
  * Helper function to get and validate default parameters from authManager
- * @param authManager - The authentication manager instance
+ * @param authMgr - The authentication manager instance
  * @returns Validated default parameters with tenantId and organizationId
  * @throws Error if tenantId or organizationId is missing
  */
-const getValidatedDefaultParams = (authManager: typeof import('../common/auth-manager').authManager) => {
-	const defaultParams = authManager.getDefaultParams();
+const getValidatedDefaultParams = (authMgr: AuthManager) => {
+	const defaultParams = authMgr.getDefaultParams();
 
 	if (!defaultParams.tenantId || !defaultParams.organizationId) {
 		throw new Error(
@@ -421,9 +421,15 @@ export const registerProductTools = (server: McpServer) => {
 				.array(
 					z.object({
 						id: z.string().optional(),
+						name: z.string(),
 						url: z.string(),
-						alt: z.string().optional(),
-						title: z.string().optional()
+						thumb: z.string().optional(),
+						width: z.number().optional(),
+						height: z.number().optional(),
+						size: z.number().optional(),
+						isFeatured: z.boolean().optional(),
+						externalProviderId: z.string().optional(),
+						storageProvider: z.string().optional()
 					})
 				)
 				.describe('Array of image objects to add to gallery')
@@ -456,9 +462,15 @@ export const registerProductTools = (server: McpServer) => {
 			image: z
 				.object({
 					id: z.string().optional(),
+					name: z.string(),
 					url: z.string(),
-					alt: z.string().optional(),
-					title: z.string().optional()
+					thumb: z.string().optional(),
+					width: z.number().optional(),
+					height: z.number().optional(),
+					size: z.number().optional(),
+					isFeatured: z.boolean().optional(),
+					externalProviderId: z.string().optional(),
+					storageProvider: z.string().optional()
 				})
 				.describe('Image object to set as featured')
 		},

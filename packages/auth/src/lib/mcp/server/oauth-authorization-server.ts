@@ -33,6 +33,9 @@ export interface OAuth2ServerConfig {
 	loginEndpoint?: string;
 	sessionSecret: string;
 	redisUrl?: string;
+	// Optional providers that can be configured during initialization
+	userInfoProvider?: (userId: string) => Promise<UserInfo | null>;
+	userAuthenticator?: (credentials: LoginCredentials) => Promise<AuthenticatedUser | null>;
 }
 
 export interface UserInfo {
@@ -128,6 +131,16 @@ export class OAuth2AuthorizationServer {
 		// Don't set publicKey - use JWKS only for better caching and key rotation support
 
 		this.oAuthValidator = new OAuthValidator(authConfig);
+
+		// Initialize optional providers from config before validation
+		// This ensures validateConfiguration() can see and validate them
+		if (config.userInfoProvider) {
+			this.userInfoProvider = config.userInfoProvider;
+		}
+		if (config.userAuthenticator) {
+			this.authenticateUser = config.userAuthenticator;
+		}
+
 		this.app = express();
 		this.setupMiddleware();
 		this.setupRoutes();

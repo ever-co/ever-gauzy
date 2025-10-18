@@ -36,76 +36,43 @@ export class McpOAuthService implements OnModuleInit {
 			introspectionEndpoint: '/oauth2/introspect',
 			userInfoEndpoint: '/oauth2/userinfo',
 			sessionSecret: process.env.MCP_AUTH_SESSION_SECRET,
-			redisUrl: process.env.REDIS_URL // Optional
+			redisUrl: process.env.REDIS_URL, // Optional
+			// Wire providers up-front to satisfy constructor validation
+			userAuthenticator: async ({ email, password }) => {
+					const user = await this.userService.authenticateMcpUser(email, password);
+					if (!user) return null;
+					const organizationId = user.organizations?.[0]?.organization?.id || (user as any)['defaultOrganizationId'];
+					return {
+						userId: user.id!,
+						email: user.email!,
+						name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email!,
+						organizationId,
+						tenantId: user.tenantId!,
+						roles: user.role ? [user.role.name] : [],
+						emailVerified: !!(user as any)['emailVerifiedAt'],
+						picture: (user as any)['imageUrl']
+					};
+				},
+				userInfoProvider: async (userId: string) => {
+					const user = await this.userService.getMcpUserInfo(userId);
+					if (!user) return null;
+					const organizationId = user.organizations?.[0]?.organization?.id || (user as any)['defaultOrganizationId'];
+					return {
+						userId: user.id!,
+						email: user.email!,
+						name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email!,
+						organizationId,
+						tenantId: user.tenantId!,
+						roles: user.role ? [user.role.name] : [],
+						emailVerified: !!(user as any)['emailVerifiedAt'],
+						picture: (user as any)['imageUrl']
+					};
+				}
 		});
 	}
 
 	onModuleInit() {
-		// Wire UserService methods with OAuth server
-		this.setupAuthentication();
-	}
-
-	/**
-	 * Setup authentication by wiring UserService with OAuth server
-	 */
-	private setupAuthentication() {
-		// Set user authenticator
-		this.oauthServer.setUserAuthenticator(async (credentials) => {
-			const { email, password } = credentials;
-
-			// Use UserService to authenticate
-			const user = await this.userService.authenticateMcpUser(email, password);
-
-			if (!user) {
-				return null;
-			}
-
-			const organizationId =
-				user.organizations?.[0]?.organization?.id || user['defaultOrganizationId'];
-
-			// Transform to OAuth format
-			return {
-				userId: user.id,
-				email: user.email,
-				name:
-					user.firstName && user.lastName
-						? `${user.firstName} ${user.lastName}`
-						: user.email,
-				organizationId,
-				tenantId: user.tenantId,
-				roles: user.role ? [user.role.name] : [],
-				emailVerified: !!user['emailVerifiedAt'],
-				picture: user['imageUrl']
-			};
-		});
-
-		// Set user info provider
-		this.oauthServer.setUserInfoProvider(async (userId) => {
-			// Use UserService to get user info
-			const user = await this.userService.getMcpUserInfo(userId);
-
-			if (!user) {
-				return null;
-			}
-
-			const organizationId =
-				user.organizations?.[0]?.organization?.id || user['defaultOrganizationId'];
-
-			// Transform to OAuth format
-			return {
-				userId: user.id,
-				email: user.email,
-				name:
-					user.firstName && user.lastName
-						? `${user.firstName} ${user.lastName}`
-						: user.email,
-				organizationId,
-				tenantId: user.tenantId,
-				roles: user.role ? [user.role.name] : [],
-				emailVerified: !!user['emailVerifiedAt'],
-				picture: user['imageUrl']
-			};
-		});
+		// No-op; providers wired in constructor
 	}
 
 	/**
