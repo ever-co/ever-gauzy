@@ -41,13 +41,19 @@ export class McpOAuthService implements OnModuleInit {
 			userAuthenticator: async ({ email, password }) => {
 					const user = await this.userService.authenticateMcpUser(email, password);
 					if (!user) return null;
+
+					// Validate required fields
+					if (!user.id || !user.email || !user.tenantId) {
+						return null;
+					}
+
 					const organizationId = user.organizations?.[0]?.organization?.id || (user as any)['defaultOrganizationId'];
 					return {
-						userId: user.id!,
-						email: user.email!,
-						name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email!,
+						userId: user.id,
+						email: user.email,
+						name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email,
 						organizationId,
-						tenantId: user.tenantId!,
+						tenantId: user.tenantId,
 						roles: user.role ? [user.role.name] : [],
 						emailVerified: !!(user as any)['emailVerifiedAt'],
 						picture: (user as any)['imageUrl']
@@ -56,13 +62,19 @@ export class McpOAuthService implements OnModuleInit {
 				userInfoProvider: async (userId: string) => {
 					const user = await this.userService.getMcpUserInfo(userId);
 					if (!user) return null;
+
+					// Validate required fields
+					if (!user.id || !user.email || !user.tenantId) {
+						return null;
+					}
+
 					const organizationId = user.organizations?.[0]?.organization?.id || (user as any)['defaultOrganizationId'];
 					return {
-						userId: user.id!,
-						email: user.email!,
-						name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email!,
+						userId: user.id,
+						email: user.email,
+						name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email,
 						organizationId,
-						tenantId: user.tenantId!,
+						tenantId: user.tenantId,
 						roles: user.role ? [user.role.name] : [],
 						emailVerified: !!(user as any)['emailVerifiedAt'],
 						picture: (user as any)['imageUrl']

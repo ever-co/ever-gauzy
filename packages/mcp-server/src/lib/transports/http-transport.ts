@@ -12,7 +12,6 @@ import { validateMCPToolInput, validateRequestSize } from '../common/security-co
 import {
 	AuthorizationConfig,
 	loadAuthorizationConfig,
-	OAuth2AuthorizationServer,
 	ResponseBuilder,
 	sanitizeErrorMessage,
 	SecurityEvents,
@@ -74,7 +73,6 @@ export class HttpTransport {
 	private isInitialized = false;
 	private authorizationConfig: AuthorizationConfig;
 	private authorizationMiddleware: AuthorizationMiddleware | null = null;
-	private authorizationServer: OAuth2AuthorizationServer | null = null;
 
 	constructor(options: HttpTransportOptions) {
 		this.mcpServer = options.server;
@@ -83,19 +81,14 @@ export class HttpTransport {
 
 		// Initialize authorization middleware if enabled
 		if (this.authorizationConfig.enabled) {
-			let synchronizedConfig: AuthorizationConfig;
-
 			// IMPORTANT: The MCP Server (port 3001) should NOT have an embedded OAuth server
 			// OAuth endpoints should ONLY be available on the dedicated OAuth Server (port 3003)
 			// This server only needs to VALIDATE tokens, not issue them
-
-			// Always use external OAuth server configuration - no embedded server
-			synchronizedConfig = this.authorizationConfig;
 			logger.log('OAuth 2.0 authorization enabled with external server configuration');
 			logger.log(`External OAuth Server: ${this.authorizationConfig.authorizationServers[0]?.issuer || 'Not configured'}`);
 			logger.log(`Resource URI: ${this.authorizationConfig.resourceUri || 'Not configured'}`);
 
-			this.authorizationMiddleware = new AuthorizationMiddleware(synchronizedConfig);
+			this.authorizationMiddleware = new AuthorizationMiddleware(this.authorizationConfig);
 			logger.log('OAuth 2.0 authorization middleware initialized for token validation only');
 		}
 
@@ -110,7 +103,12 @@ export class HttpTransport {
 
 		// Configure trust proxy to honor X-Forwarded-For headers from trusted proxies
 		if (this.transportConfig.trustedProxies && this.transportConfig.trustedProxies.length > 0) {
-			this.app.set('trust proxy', true);
+		// Trust only explicitly configured proxies
+		const normalizedProxies = this.transportConfig.trustedProxies.map(p => this.normalizeIP(p));
+		this.app.set('trust proxy', (ip) => {
+			const normalized = this.normalizeIP(ip || '');
+			return normalizedProxies.includes(normalized);
+		});
 			logger.log(`Trust proxy enabled for: ${this.transportConfig.trustedProxies.join(', ')}`);
 		}
 
@@ -246,7 +244,7 @@ export class HttpTransport {
 		return (req: express.Request, res: express.Response, next: express.NextFunction) => {
 			// Skip CSRF for safe methods and excluded paths
 			const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
-			const excludedPrefixes = ['/health', '/.well-known/', '/oauth2/'];
+			const excludedPrefixes = ['/health', '/.well-known/'];
 			const excludedExactPaths = ['/sse/session']; // allow unauthenticated session creation
 
 			if (

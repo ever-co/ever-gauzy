@@ -48,6 +48,23 @@ const getValidatedDefaultParams = (authMgr: AuthManager) => {
 	return defaultParams;
 };
 
+/**
+ * Shared schema for product image objects
+ * Validates image data with stricter type checking for URLs and numeric fields
+ */
+const productImageSchema = z.object({
+	id: z.string().optional(),
+	name: z.string(),
+	url: z.union([z.string().url(), z.string().startsWith('data:')]),
+	thumb: z.union([z.string().url(), z.string().startsWith('data:')]).optional(),
+	width: z.number().int().positive().optional(),
+	height: z.number().int().positive().optional(),
+	size: z.number().int().positive().optional(),
+	isFeatured: z.boolean().optional(),
+	externalProviderId: z.string().optional(),
+	storageProvider: z.string().optional()
+});
+
 export const registerProductTools = (server: McpServer) => {
 	// Get products tool
 	server.tool(
@@ -417,22 +434,7 @@ export const registerProductTools = (server: McpServer) => {
 		'Add images to product gallery',
 		{
 			productId: z.string().uuid().describe('The product ID'),
-			images: z
-				.array(
-					z.object({
-						id: z.string().optional(),
-						name: z.string(),
-						url: z.string(),
-						thumb: z.string().optional(),
-						width: z.number().optional(),
-						height: z.number().optional(),
-						size: z.number().optional(),
-						isFeatured: z.boolean().optional(),
-						externalProviderId: z.string().optional(),
-						storageProvider: z.string().optional()
-					})
-				)
-				.describe('Array of image objects to add to gallery')
+			images: z.array(productImageSchema).describe('Array of image objects to add to gallery')
 		},
 		async ({ productId, images }) => {
 			try {
@@ -459,20 +461,7 @@ export const registerProductTools = (server: McpServer) => {
 		'Set an image as featured for a product',
 		{
 			productId: z.string().uuid().describe('The product ID'),
-			image: z
-				.object({
-					id: z.string().optional(),
-					name: z.string(),
-					url: z.string(),
-					thumb: z.string().optional(),
-					width: z.number().optional(),
-					height: z.number().optional(),
-					size: z.number().optional(),
-					isFeatured: z.boolean().optional(),
-					externalProviderId: z.string().optional(),
-					storageProvider: z.string().optional()
-				})
-				.describe('Image object to set as featured')
+			image: productImageSchema.describe('Image object to set as featured')
 		},
 		async ({ productId, image }) => {
 			try {
