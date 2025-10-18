@@ -2,7 +2,7 @@ name: Deploy to DigitalOcean Demo
 
 on:
   workflow_run:
-    workflows: ['Build and Publish Docker Images Demo']
+    workflows: ["Build and Publish Docker Images Demo"]
     branches: [develop]
     types:
       - completed
@@ -28,24 +28,34 @@ jobs:
       - name: Save DigitalOcean kubeconfig with short-lived credentials
         run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-gauzy
 
+      - name: Generate TLS Secrets
+        run: |
+          rm -f ${HOME}/ingress.demo.crt ${HOME}/ingress.demo.key ${HOME}/ingress.apidemo.crt ${HOME}/ingress.apidemo.key
+          echo "${{ secrets.INGRESS_WEBAPP_CERT }}" | base64 --decode > ${HOME}/ingress.demo.crt
+          echo "${{ secrets.INGRESS_WEBAPP_CERT_KEY }}" | base64 --decode > ${HOME}/ingress.demo.key
+          echo "${{ secrets.INGRESS_API_CERT }}" | base64 --decode > ${HOME}/ingress.apidemo.crt
+          echo "${{ secrets.INGRESS_API_CERT_KEY }}" | base64 --decode > ${HOME}/ingress.apidemo.key
+          kubectl create secret tls demo.gauzy.co-tls --save-config --dry-run=client --cert=${HOME}/ingress.demo.crt --key=${HOME}/ingress.demo.key -o yaml | kubectl --context do-sfo2-k8s-gauzy apply -f -
+          kubectl create secret tls apidemo.gauzy.co-tls --save-config --dry-run=client --cert=${HOME}/ingress.apidemo.crt --key=${HOME}/ingress.apidemo.key -o yaml | kubectl --context do-sfo2-k8s-gauzy apply -f -
+
       - name: Apply k8s manifests changes in DigitalOcean k8s cluster (if any)
         run: |
           envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.demo.yaml | kubectl --context do-sfo2-k8s-gauzy apply -f -
         env:
           # below we are using GitHub secrets for both frontend and backend
-          CLOUD_PROVIDER: 'DO'
-          DB_NAME: '${{ secrets.DB_NAME }}'
-          SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
-          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
-          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
-          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
-          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
-          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
-          OTEL_ENABLED: '${{ secrets.OTEL_ENABLED }}'
-          OTEL_PROVIDER: '${{ secrets.OTEL_PROVIDER }}'
-          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: '${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}'
-          OTEL_EXPORTER_OTLP_HEADERS: '${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}'
-          FEATURE_OPEN_STATS: '${{ vars.FEATURE_OPEN_STATS }}'
+          CLOUD_PROVIDER: "DO"
+          DB_NAME: "${{ secrets.DB_NAME }}"
+          SENTRY_DSN: "${{ secrets.SENTRY_DSN }}"
+          SENTRY_TRACES_SAMPLE_RATE: "${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}"
+          SENTRY_PROFILE_SAMPLE_RATE: "${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}"
+          SENTRY_HTTP_TRACING_ENABLED: "${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}"
+          SENTRY_POSTGRES_TRACKING_ENABLED: "${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}"
+          SENTRY_PROFILING_ENABLED: "${{ secrets.SENTRY_PROFILING_ENABLED }}"
+          OTEL_ENABLED: "${{ secrets.OTEL_ENABLED }}"
+          OTEL_PROVIDER: "${{ secrets.OTEL_PROVIDER }}"
+          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}"
+          OTEL_EXPORTER_OTLP_HEADERS: "${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}"
+          FEATURE_OPEN_STATS: "${{ vars.FEATURE_OPEN_STATS }}"
 
       # we need this step because for now we just use :latest tag
       # note: for production we will use different strategy later

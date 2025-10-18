@@ -71,9 +71,9 @@ if (environment.SENTRY_DSN) {
 	}
 }
 
-if (environment.POSTHOG_KEY) {
-	if (environment.POSTHOG_KEY === 'DOCKER_POSTHOG_API_KEY') {
-		console.warn('You are running inside Docker but does not have POSTHOG_API_KEY env set');
+if (environment.POSTHOG_ENABLED && environment.POSTHOG_KEY) {
+	if (environment.POSTHOG_KEY === 'DOCKER_POSTHOG_KEY') {
+		console.warn('You are running inside Docker but does not have POSTHOG_KEY env set');
 	} else {
 		console.log(`Enabling PostHog with API Key: ${environment.POSTHOG_KEY}`);
 	}
@@ -115,7 +115,7 @@ const THIRD_PARTY_MODULES = [
 		}
 	}),
 
-	...(environment.POSTHOG_KEY && environment.POSTHOG_KEY !== 'DOCKER_POSTHOG_API_KEY'
+	...(environment.POSTHOG_ENABLED && environment.POSTHOG_KEY && environment.POSTHOG_KEY !== 'DOCKER_POSTHOG_KEY'
 		? [
 				PostHogModule.forRoot({
 					apiKey: environment.POSTHOG_KEY,
