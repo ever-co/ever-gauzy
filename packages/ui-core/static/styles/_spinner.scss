@@ -456,3 +456,8 @@ body[data-skeleton-theme='material-dark'] {
     animation: none !important;
   }
 }
+@media (max-width: 768px) {
+  .skeleton-windows-grid {
+    grid-template-columns: 1fr;
+  }
+}
