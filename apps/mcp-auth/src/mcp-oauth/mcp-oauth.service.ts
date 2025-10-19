@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { OAuth2AuthorizationServer } from '@gauzy/auth';
+import { OAuth2AuthorizationServer, UserInfo } from '@gauzy/auth';
 import { OAuthUserService } from '../user/oauth-user.service';
 import { IUser } from '@gauzy/contracts';
 
@@ -71,7 +71,7 @@ export class McpOAuthService implements OnModuleInit {
 	 * @param user - The user object from the database
 	 * @returns Auth payload object with user information, or null if required fields are missing
 	 */
-	private mapMcpUserToAuthPayload(user: IUser) {
+	private mapMcpUserToAuthPayload(user: IUser): UserInfo | null {
 		// Validate required fields
 		if (!user.id || !user.email || !user.tenantId) {
 			return null;
@@ -89,7 +89,7 @@ export class McpOAuthService implements OnModuleInit {
 			organizationId,
 			tenantId: user.tenantId,
 			roles: user.role ? [user.role.name] : [],
-			emailVerified: !!extendedUser.emailVerifiedAt,
+			emailVerified: user.isEmailVerified ?? !!extendedUser.emailVerifiedAt,
 			picture: extendedUser.imageUrl
 		};
 	}

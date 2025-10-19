@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager, type AuthManager } from '../common/auth-manager';
-import { ProductSchema, ProductCreateSchema } from '../schema';
+import { ProductSchema, ProductCreateSchema, ImageAssetRefSchema } from '../schema';
 import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('ProductTools');
@@ -50,17 +50,15 @@ const getValidatedDefaultParams = (authMgr: AuthManager) => {
 
 /**
  * Shared schema for product image objects
- * Validates image data with stricter type checking for URLs and numeric fields
+ * Extends ImageAssetRefSchema with stricter URL validation and product-specific fields
  */
-const productImageSchema = z.object({
-	id: z.string().optional(),
+const productImageSchema = ImageAssetRefSchema.extend({
 	name: z.string().min(1),
-	url: z.union([z.string().url(), z.string().startsWith('data:')]),
-	thumb: z.union([z.string().url(), z.string().startsWith('data:')]).optional(),
+	url: z.union([z.string().url(), z.string().startsWith('data:')]).optional(),
 	width: z.number().int().positive().optional(),
 	height: z.number().int().positive().optional(),
+	thumb: z.union([z.string().url(), z.string().startsWith('data:')]).optional(),
 	size: z.number().int().nonnegative().optional(),
-	isFeatured: z.boolean().optional(),
 	externalProviderId: z.string().optional(),
 	storageProvider: z.string().optional()
 });
@@ -342,13 +340,11 @@ export const registerProductTools = (server: McpServer) => {
 		},
 		async ({ product_data }) => {
 			try {
-				// Get and validate default parameters from authenticated user
-				const defaultParams = getValidatedDefaultParams(authManager);
+				// Validate user is authenticated
+				getValidatedDefaultParams(authManager);
 
 				const createData = {
-					...convertProductDateFields(product_data),
-					tenantId: defaultParams.tenantId,
-					organizationId: defaultParams.organizationId
+					...convertProductDateFields(product_data)
 				};
 
 				const response = await apiClient.post('/api/products', createData);

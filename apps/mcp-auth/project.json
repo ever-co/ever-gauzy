@@ -18,8 +18,15 @@
 				"generatePackageJson": true
 			},
 			"configurations": {
-				"development": {},
-				"production": {}
+				"development": {
+					"sourceMap": true,
+					"optimization": false
+				},
+				"production": {
+					"sourceMap": false,
+					"optimization": true,
+					"externalDependencies": "none"
+				}
 			}
 		},
 		"serve": {

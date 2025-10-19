@@ -870,8 +870,6 @@ const ProductCreateSchema = ProductSchema.pick({
 	enabled: true,
 	imageUrl: true,
 	featuredImageId: true,
-	productTypeId: true,
-	productCategoryId: true,
 	translations: true,
 	tags: true,
 	variants: true
