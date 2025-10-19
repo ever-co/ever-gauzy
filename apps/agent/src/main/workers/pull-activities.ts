@@ -128,6 +128,16 @@ class PullActivities {
 		}
 	}
 
+	updateAppSetting() {
+		updateTimerStatus(this.isStarted);
+		this.appWindow.settingWindow?.webContents?.send?.('setting_page_ipc', {
+			type: 'app_setting_update',
+			data: {
+				setting: getAppSetting()
+			}
+		});
+	};
+
 	async startTracking() {
 		if (!this.listenerModule) {
 			this.getListenerModule();
@@ -147,7 +157,7 @@ class PullActivities {
 				this.mainEvent.emit('MAIN_EVENT', {
 					type: MAIN_EVENT_TYPE.TRAY_TIMER_STATUS
 				});
-				updateTimerStatus(true);
+				this.updateAppSetting();
 
 				if (appSetting?.preventDisplaySleep) {
 					this.powerManagerPreventDisplaySleep.start();
@@ -305,7 +315,7 @@ class PullActivities {
 				this.mainEvent.emit('MAIN_EVENT', {
 					type: MAIN_EVENT_TYPE.TRAY_TIMER_STATUS
 				});
-				updateTimerStatus(false);
+				this.updateAppSetting();
 
 				if (appSetting?.preventDisplaySleep) {
 					this.powerManagerPreventDisplaySleep.stop();

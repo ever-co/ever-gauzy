@@ -48,23 +48,23 @@ export default class EventHandler {
 		}
 	}
 
-	private stopAppTracking(logout?: boolean) {
+	private async stopAppTracking(logout?: boolean) {
 		const authConfig = getAuthConfig();
 		this.getPullActivities(authConfig);
 		this.pullActivities.stopListener();
-		this.pullActivities.stopTracking();
+		await this.pullActivities.stopTracking();
 		if (logout) {
 			this.getPushActivities();
-			this.pushActivities.stopPooling();
+			await this.pushActivities.stopPooling();
 		}
 	}
 
-	private startAppTracking() {
+	private async startAppTracking() {
 		const authConfig = getAuthConfig();
 		if (authConfig?.token) {
 			this.getPullActivities(authConfig);
 			this.pullActivities.startListener();
-			this.pullActivities.startTracking();
+			await this.pullActivities.startTracking();
 		}
 	}
 

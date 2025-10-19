@@ -3,7 +3,6 @@ import { environment } from '../environments/environment';
 import { LocalStore } from '@gauzy/desktop-lib';
 import { screen } from 'electron';
 import { CONSTANT } from '../constant';
-import { functions } from 'underscore';
 
 export type TAuthConfig = {
 	user: {

@@ -63,7 +63,7 @@ async function handleAlwaysOnWindow(isEnabled: boolean) {
 	}
 }
 
-function listenIO(stop: boolean) {
+async function listenIO(stop: boolean) {
 	const auth = getAuthConfig();
 	const pullActivities = PullActivities.getInstance();
 	pullActivities.updateAppUserAuth({
@@ -73,11 +73,11 @@ function listenIO(stop: boolean) {
 	});
 	const pushActivities = PushActivities.getInstance();
 	if (stop) {
-		pullActivities.stopTracking();
-		pushActivities.stopPooling();
+		await pullActivities.stopTracking();
+		await pushActivities.stopPooling();
 	} else {
 		pushActivities.initQueueWorker();
-		pullActivities.startTracking();
+		await pullActivities.startTracking();
 		pushActivities.startPooling();
 	}
 }
@@ -278,7 +278,7 @@ export default function AppIpcMain() {
 
 	});
 
-	ipcMain.on('restart_app', async (event, arg) => {
+	ipcMain.on('restart_app', async (_: any, arg) => {
 		LocalStore.updateConfigSetting(arg);
 		const configs = LocalStore.getStore('configs');
 		global.variableGlobal = {
@@ -289,6 +289,10 @@ export default function AppIpcMain() {
 		await provider.kill();
 		/* Creating a database if not exit. */
 		await ProviderFactory.instance.createDatabase();
+
+		/* stop queue consumer */
+		const pushActivities = PushActivities.getInstance();
+		await pushActivities.stopPooling();
 		/* Kill all windows */
 		appWindow.alwaysOnWindow?.close?.();
 		appWindow.settingWindow?.close?.();
