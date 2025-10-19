@@ -12,7 +12,8 @@ import {
 	AppError,
 	User,
 	UserService,
-	pluginListeners
+	pluginListeners,
+	ProviderFactory,
 } from '@gauzy/desktop-lib';
 import { getApiBaseUrl, delaySync, getAuthConfig, getAppSetting } from '../util';
 import { startServer } from './app';
@@ -30,6 +31,7 @@ import * as isOnline from 'is-online';
 const userService = new UserService();
 const appWindow = AppWindow.getInstance(rootPath);
 const apiService = ApiService.getInstance();
+const provider = ProviderFactory.instance;
 
 
 function getGlobalVariable(configs?: {
@@ -275,5 +277,30 @@ export default function AppIpcMain() {
 		return pullActivities.running;
 
 	});
+
+	ipcMain.on('restart_app', async (event, arg) => {
+		LocalStore.updateConfigSetting(arg);
+		const configs = LocalStore.getStore('configs');
+		global.variableGlobal = {
+			API_BASE_URL: getApiBaseUrl(configs),
+			IS_INTEGRATED_DESKTOP: configs.isLocalServer
+		};
+		/* Killing the provider. */
+		await provider.kill();
+		/* Creating a database if not exit. */
+		await ProviderFactory.instance.createDatabase();
+		/* Kill all windows */
+		appWindow.alwaysOnWindow?.close?.();
+		appWindow.settingWindow?.close?.();
+		appWindow.closeLogWindow();
+		appWindow.aboutWindow?.close?.();
+		appWindow.setupWindow?.close?.();
+		appWindow.splashScreenWindow?.close?.();
+		appWindow.authWindow?.close?.();
+		appWindow.notificationWindow?.close?.();
+		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+		app.exit(0);
+	});
+
 	pluginListeners();
 }

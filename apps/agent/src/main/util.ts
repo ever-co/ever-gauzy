@@ -3,6 +3,7 @@ import { environment } from '../environments/environment';
 import { LocalStore } from '@gauzy/desktop-lib';
 import { screen } from 'electron';
 import { CONSTANT } from '../constant';
+import { functions } from 'underscore';
 
 export type TAuthConfig = {
 	user: {
@@ -141,4 +142,10 @@ export function updateAgentSetting(employee: Partial<TEmployeeResponse>) {
 		randomScreenshotTime: employee.randomScreenshot ?? false
 	}
 	LocalStore.updateApplicationSetting(appSetting);
+}
+
+export function updateTimerStatus(timerStarted: boolean): void {
+	LocalStore.updateApplicationSetting({
+		timerStarted: timerStarted
+	});
 }
