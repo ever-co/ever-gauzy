@@ -1,0 +1,48 @@
+{
+	"name": "mcp-auth",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "apps/mcp-auth/src",
+	"projectType": "application",
+	"tags": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
+			"options": {
+				"target": "node",
+				"compiler": "tsc",
+				"outputPath": "dist/apps/mcp-auth",
+				"main": "apps/mcp-auth/src/main.ts",
+				"tsConfig": "apps/mcp-auth/tsconfig.app.json",
+				"generatePackageJson": true
+			},
+			"configurations": {
+				"development": {},
+				"production": {}
+			}
+		},
+		"serve": {
+			"executor": "@nx/js:node",
+			"defaultConfiguration": "development",
+			"dependsOn": ["build"],
+			"options": {
+				"buildTarget": "mcp-auth:build",
+				"runBuildTargetDependencies": false
+			},
+			"configurations": {
+				"development": {
+					"buildTarget": "mcp-auth:build:development"
+				},
+				"production": {
+					"buildTarget": "mcp-auth:build:production"
+				}
+			}
+		},
+		"test": {
+			"options": {
+				"passWithNoTests": true
+			}
+		}
+	}
+}
