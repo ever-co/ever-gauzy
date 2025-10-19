@@ -717,7 +717,8 @@
 		"soundshot",
 		"soundshots",
 		"runtimes",
-		"localtime"
+		"localtime",
+		"STARTTLS"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
