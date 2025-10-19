@@ -13240,6 +13240,13 @@
   dependencies:
     undici-types "~6.21.0"
 
+"@types/node@^22.7.7":
+  version "22.18.11"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.18.11.tgz#aa8a8ccae8cc828512df642f0d82606b89450d71"
+  integrity sha512-Gd33J2XIrXurb+eT2ktze3rJAfAp9ZNjlBdh4SVgyrKEOADwCbdUDaK7QgJno8Ue4kcajscsKqu6n8OBG3hhCQ==
+  dependencies:
+    undici-types "~6.21.0"
+
 "@types/nodemailer@*":
   version "6.4.17"
   resolved "https://registry.yarnpkg.com/@types/nodemailer/-/nodemailer-6.4.17.tgz#5c82a42aee16a3dd6ea31446a1bd6a447f1ac1a4"
