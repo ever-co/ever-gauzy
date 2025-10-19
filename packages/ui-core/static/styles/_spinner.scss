@@ -451,8 +451,9 @@ body[data-skeleton-theme='material-dark'] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .skeleton-app-layout,
-  .skeleton-app-layout * {
+  .skeleton-layout,
+  .skeleton-layout * {
     animation: none !important;
   }
+}
 }
