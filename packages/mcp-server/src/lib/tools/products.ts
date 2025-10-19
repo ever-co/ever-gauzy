@@ -86,6 +86,7 @@ export const registerProductTools = (server: McpServer) => {
 						.optional()
 						.describe('Find input filters')
 				})
+				.passthrough()
 				.optional()
 				.describe('Query data object'),
 			page: z.number().optional().describe('Page number for pagination'),
@@ -96,8 +97,8 @@ export const registerProductTools = (server: McpServer) => {
 				const params = {
 					data: JSON.stringify(data),
 					// If backend supports these here, use conventional names; otherwise drop and use pagination tool
-					...(page && { page }),
-					...(limit && { limit })
+					...(page !== undefined ? { page } : {}),
+					...(limit !== undefined ? { limit } : {})
 				};
 
 				const response = await apiClient.get('/api/products', { params });
@@ -180,6 +181,7 @@ export const registerProductTools = (server: McpServer) => {
 						.optional()
 						.describe('Find input filters')
 				})
+				.passthrough()
 				.optional()
 				.describe('Query data object')
 		},
@@ -231,7 +233,7 @@ export const registerProductTools = (server: McpServer) => {
 					page,
 					limit,
 					...(search && { search }),
-					...(relations && { relations }),
+					...(relations !== undefined ? { relations } : {}),
 					...(where && { where })
 				};
 
@@ -335,7 +337,7 @@ export const registerProductTools = (server: McpServer) => {
 		"Create a new product in the authenticated user's organization",
 		{
 			product_data: ProductCreateSchema.describe(
-				'The data for creating the product. Required fields: code (string), productType (object with name), productCategory (object with name)'
+				'The data for creating the product. Required fields: code (string), type (object with name), category (object with name)'
 			)
 		},
 		async ({ product_data }) => {

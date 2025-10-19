@@ -878,11 +878,11 @@ const ProductCreateSchema = ProductSchema.pick({
 }).extend({
 	// Enforce required fields per server validation (CreateProductDTO)
 	code: z.string().min(1, 'Product code is required'),
-	productType: z.object({
+	type: z.object({
 		name: z.string(),
 		icon: z.string().optional()
 	}),
-	productCategory: z.object({
+	category: z.object({
 		name: z.string(),
 		description: z.string().optional(),
 		imageUrl: z.string().optional()
