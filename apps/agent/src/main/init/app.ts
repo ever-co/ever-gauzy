@@ -1,5 +1,6 @@
 import { app, ipcMain, systemPreferences, powerMonitor } from 'electron';
 import * as path from 'path';
+import { promises as fs } from 'fs';
 import { logger as log, store } from '@gauzy/desktop-core';
 import {
 	AppError,
@@ -11,7 +12,8 @@ import {
 import {
 	getApiBaseUrl,
 	getAuthConfig,
-	getTrayIcon
+	getTrayIcon,
+	getAppSetting
 } from '../util';
 import AppWindow from '../window-manager';
 import TrayMenu from '../tray';
@@ -77,6 +79,16 @@ async function handleSetupWindow() {
 	appWindow.setupWindow.show();
 }
 
+async function handleAlwaysOnWindow() {
+	try {
+		await appWindow.initAlwaysOnWindow();
+		await appWindow.alwaysOnWindow.loadURL();
+		appWindow.alwaysOnWindow.show();
+	} catch (error) {
+		throw new AppError('ALWAYS_ON_WINDOW', error);
+	}
+}
+
 export async function startServer(value: any) {
 	try {
 		// Update the setting
@@ -112,6 +124,10 @@ export async function startServer(value: any) {
 		const isAuthenticated = await checkUserAuthentication(appRootPath);
 		if (isAuthenticated) {
 			runActivityConsumer();
+			const settings = getAppSetting();
+			if (settings?.alwaysOn) {
+				await handleAlwaysOnWindow();
+			}
 			listenIO();
 		}
 	} catch (error) {
@@ -138,9 +154,19 @@ async function initiationLocalDatabase() {
 	}
 }
 
+async function ensureScreenshotDir(): Promise<void> {
+	try {
+		const screenshotDir = path.join(app.getPath("userData"), "screenshots");
+		await fs.mkdir(screenshotDir, { recursive: true });
+	} catch (error) {
+		throw new AppError('INIT_SCREENSHOT_DIR', error);
+	}
+}
+
 async function appReady() {
+	await ensureScreenshotDir();
 	const configs: any = store.get('configs');
-	const settings: any = store.get('appSetting');
+	const settings = getAppSetting();
 	if (!settings) {
 		launchAtStartup(true, false);
 		LocalStore.setAllDefaultConfig();
@@ -328,5 +354,3 @@ export async function InitApp() {
 		});
 	});
 }
-
-
