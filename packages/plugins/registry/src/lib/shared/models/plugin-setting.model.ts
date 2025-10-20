@@ -18,8 +18,9 @@ export interface IPluginSetting extends IBasePerTenantAndOrganizationEntityModel
 	// Setting key/name
 	key: string;
 
-	// Setting value (stored as JSON object for flexibility)
-	value: Record<string, any>;
+	// Setting value (stored as JSON string or original primitive/object for flexibility)
+	// Can be a string (JSON), object, number, boolean, etc.
+	value: any;
 
 	// Data type of the setting
 	dataType: PluginSettingDataType;

@@ -1,7 +1,8 @@
 import type { BaseEntityModel, ID, IEmployee, PluginStatus, PluginType } from '@gauzy/contracts';
 import type { IPluginSource } from './plugin-source.model';
 import type { IPluginVersion, IPluginVersionUpdate } from './plugin-version.model';
-import type { PluginBillingPeriod } from './plugin-subscription.model';
+// Re-export PluginBillingPeriod for external consumers (e.g., DTOs)
+export { PluginBillingPeriod } from './plugin-subscription.model';
 
 export enum PluginPricingType {
 	FREE = 'free',
