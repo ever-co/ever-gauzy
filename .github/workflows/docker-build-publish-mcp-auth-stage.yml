@@ -82,7 +82,7 @@ jobs:
 
       - name: Push to Github Registry
         run: |
-          docker push ghcr.io/ever-co/gauzy-mcp-auth:latest
+          docker push ghcr.io/ever-co/gauzy-mcp-auth-stage:latest
           docker push ghcr.io/ever-co/gauzy-mcp-auth-stage:latest
 
       - name: Login to CW Container Registry
