@@ -1,12 +1,10 @@
-name: Build and Publish Gauzy MCP Image
+name: Build and Publish Gauzy MCP Image Demo
 
 on:
   push:
     branches:
-      - master
       - develop
       - temp
-      - stage
 
 permissions:
   contents: read
@@ -39,11 +37,11 @@ jobs:
           load: true
           platforms: linux/amd64
           tags: |
-            ghcr.io/ever-co/gauzy-mcp:latest
-            everco/gauzy-mcp:latest
-            registry.digitalocean.com/ever/gauzy-mcp:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-mcp:latest
-          cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-mcp:latest
+            ghcr.io/ever-co/gauzy-mcp-demo:latest
+            everco/gauzy-mcp-demo:latest
+            registry.digitalocean.com/ever/gauzy-mcp-demo:latest
+            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-mcp-demo:latest
+          cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-mcp-demo:latest
           cache-to: type=inline
           build-args: |
             NODE_ENV=production
@@ -60,7 +58,7 @@ jobs:
 
       - name: Push to Docker Hub Registry
         run: |
-          docker push everco/gauzy-mcp:latest
+          docker push everco/gauzy-mcp-demo:latest
 
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
@@ -72,7 +70,7 @@ jobs:
 
       - name: Push to DigitalOcean Registry
         run: |
-          docker push registry.digitalocean.com/ever/gauzy-mcp:latest
+          docker push registry.digitalocean.com/ever/gauzy-mcp-demo:latest
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -83,7 +81,7 @@ jobs:
 
       - name: Push to Github Registry
         run: |
-          docker push ghcr.io/ever-co/gauzy-mcp:latest
+          docker push ghcr.io/ever-co/gauzy-mcp-demo:latest
 
       - name: Login to CW Container Registry
         uses: docker/login-action@v3
@@ -94,4 +92,4 @@ jobs:
 
     #  - name: Push to CW Registry
     #    run: |
-    #      docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-mcp:latest
+    #      docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-mcp-demo:latest
