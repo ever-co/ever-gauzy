@@ -88,7 +88,6 @@ jobs:
           registry: ${{ secrets.CW_DOCKER_REGISTRY }}
           username: ${{ secrets.CW_DOCKER_USER }}
           password: ${{ secrets.CW_DOCKER_USER_PASSWORD }}
-
 #  - name: Push to CW Registry
 #    run: |
 #      docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-mcp-auth:latest
