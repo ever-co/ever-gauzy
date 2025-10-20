@@ -1,6 +1,6 @@
 import { IQuery } from '@nestjs/cqrs';
 import { FindManyOptions } from 'typeorm';
-import { PluginCategory } from '../../entities/plugin-category.entity';
+import { PluginCategory } from '../entities';
 
 export class GetPluginCategoriesQuery implements IQuery {
 	static readonly type = '[Plugin Category] Get Categories';

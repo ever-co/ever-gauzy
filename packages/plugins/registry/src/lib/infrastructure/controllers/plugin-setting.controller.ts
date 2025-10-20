@@ -13,9 +13,9 @@ import {
 	ParseUUIDPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
-import { TenantPermissionGuard, PermissionGuard, Permissions } from '@gauzy/core';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { PluginSettingService } from '../../domain/services/plugin-setting.service';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { TenantPermissionGuard, PermissionGuard, Permissions, RequestContext } from '@gauzy/core';
+import { PermissionsEnum, IPagination } from '@gauzy/contracts';
 import {
 	CreatePluginSettingDTO,
 	UpdatePluginSettingDTO,
@@ -24,12 +24,29 @@ import {
 	SetPluginSettingValueDTO
 } from '../../shared/dto/plugin-setting.dto';
 import { PluginSetting } from '../../domain/entities/plugin-setting.entity';
+import { IPluginSetting } from '../../shared/models/plugin-setting.model';
+
+// Commands
+import {
+	CreatePluginSettingCommand,
+	UpdatePluginSettingCommand,
+	DeletePluginSettingCommand,
+	SetPluginSettingValueCommand,
+	BulkUpdatePluginSettingsCommand
+} from '../../domain/commands';
+
+// Queries
+import {
+	GetPluginSettingsQuery,
+	GetPluginSettingByIdQuery,
+	GetPluginSettingsByPluginIdQuery
+} from '../../domain/queries';
 
 @ApiTags('Plugin Settings')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugin-settings')
 export class PluginSettingController {
-	constructor(private readonly pluginSettingService: PluginSettingService) {}
+	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
 	@ApiOperation({ summary: 'Create plugin setting' })
 	@ApiResponse({
@@ -39,8 +56,11 @@ export class PluginSettingController {
 	})
 	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post()
-	async create(@Body() createDto: CreatePluginSettingDTO): Promise<PluginSetting> {
-		return await this.pluginSettingService.create(createDto);
+	async create(@Body() createDto: CreatePluginSettingDTO): Promise<IPluginSetting> {
+		const ctx = RequestContext.currentRequestContext();
+		return await this.commandBus.execute(
+			new CreatePluginSettingCommand(createDto, ctx.tenantId, ctx.organizationId, ctx.userId)
+		);
 	}
 
 	@ApiOperation({ summary: 'Get all plugin settings' })
@@ -51,11 +71,15 @@ export class PluginSettingController {
 	})
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get()
-	async findAll(@Query() query: PluginSettingQueryDTO): Promise<PluginSetting[]> {
-		return this.pluginSettingService.findAll({
-			where: query,
-			relations: ['plugin', 'pluginTenant']
-		});
+	async findAll(@Query() query: PluginSettingQueryDTO): Promise<IPagination<IPluginSetting>> {
+		const ctx = RequestContext.currentRequestContext();
+		return await this.queryBus.execute(
+			new GetPluginSettingsQuery(
+				{ where: query, relations: ['plugin', 'pluginTenant'] },
+				ctx.tenantId,
+				ctx.organizationId
+			)
+		);
 	}
 
 	@ApiOperation({ summary: 'Get plugin setting by ID' })
@@ -67,10 +91,11 @@ export class PluginSettingController {
 	@ApiParam({ name: 'id', description: 'Plugin setting ID' })
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get(':id')
-	async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<PluginSetting> {
-		return await this.pluginSettingService.findOneByIdString(id, {
-			relations: ['plugin', 'pluginTenant']
-		});
+	async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<IPluginSetting> {
+		const ctx = RequestContext.currentRequestContext();
+		return await this.queryBus.execute(
+			new GetPluginSettingByIdQuery(id, ['plugin', 'pluginTenant'], ctx.tenantId, ctx.organizationId)
+		);
 	}
 
 	@ApiOperation({ summary: 'Get plugin settings by plugin ID' })
@@ -82,8 +107,11 @@ export class PluginSettingController {
 	@ApiParam({ name: 'pluginId', description: 'Plugin ID' })
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get('plugin/:pluginId')
-	async findByPluginId(@Param('pluginId', ParseUUIDPipe) pluginId: string): Promise<PluginSetting[]> {
-		return this.pluginSettingService.findByPluginId(pluginId, ['plugin', 'pluginTenant']);
+	async findByPluginId(@Param('pluginId', ParseUUIDPipe) pluginId: string): Promise<IPluginSetting[]> {
+		const ctx = RequestContext.currentRequestContext();
+		return await this.queryBus.execute(
+			new GetPluginSettingsByPluginIdQuery(pluginId, ['plugin', 'pluginTenant'], ctx.tenantId, ctx.organizationId)
+		);
 	}
 
 	@ApiOperation({ summary: 'Get plugin settings by plugin tenant ID' })
