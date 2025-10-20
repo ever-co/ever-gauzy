@@ -50,9 +50,7 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		}
 
 		// Calculate subscription dates
-		const { startDate, endDate, nextBillingDate, trialEndDate } = this.calculateSubscriptionDates(
-			purchaseInput.billingPeriod
-		);
+		const { startDate, endDate, trialEndDate } = this.calculateSubscriptionDates(purchaseInput.billingPeriod);
 
 		// Create plugin tenant relationship (assuming it exists or needs to be created)
 		const pluginTenantId = await this.ensurePluginTenantExists(purchaseInput.pluginId, tenantId, organizationId);
@@ -68,11 +66,8 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 				purchaseInput.subscriptionType === PluginSubscriptionType.FREE
 					? PluginSubscriptionStatus.ACTIVE
 					: PluginSubscriptionStatus.PENDING,
-			price: await this.getSubscriptionPrice(purchaseInput),
-			currency: 'USD', // Default currency, should be configurable
 			startDate,
 			endDate,
-			nextBillingDate,
 			trialEndDate,
 			autoRenew: purchaseInput.autoRenew,
 			subscriberId,
@@ -114,32 +109,38 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 			where.subscriberId = subscriberId;
 		}
 
-		return this.findOne({
-			where,
-			relations: ['plugin', 'tenant', 'subscriber']
-		} as FindOneOptions);
+		try {
+			return await this.findOneByOptions({
+				where,
+				relations: ['plugin', 'tenant', 'subscriber']
+			});
+		} catch {
+			return null;
+		}
 	}
 
 	/**
 	 * Find subscriptions by plugin ID
 	 */
 	async findByPluginId(pluginId: string, relations: string[] = []): Promise<IPluginSubscription[]> {
-		return this.findAll({
+		const result = await this.findAll({
 			where: { pluginId },
 			relations,
 			order: { createdAt: 'DESC' }
 		} as FindManyOptions);
+		return result.items || [];
 	}
 
 	/**
 	 * Find subscriptions by subscriber ID
 	 */
 	async findBySubscriberId(subscriberId: string, relations: string[] = []): Promise<IPluginSubscription[]> {
-		return this.findAll({
+		const result = await this.findAll({
 			where: { subscriberId },
 			relations,
 			order: { createdAt: 'DESC' }
 		} as FindManyOptions);
+		return result.items || [];
 	}
 
 	/**
@@ -155,12 +156,14 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 			throw new BadRequestException('Subscription is already cancelled');
 		}
 
-		return this.update(subscriptionId, {
+		await this.update(subscriptionId, {
 			status: PluginSubscriptionStatus.CANCELLED,
 			cancelledAt: new Date(),
 			cancellationReason: reason,
 			autoRenew: false
 		} as IPluginSubscriptionUpdateInput);
+
+		return await this.findOneByIdString(subscriptionId);
 	}
 
 	/**
@@ -172,16 +175,17 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 			throw new NotFoundException('Subscription not found');
 		}
 
-		const { nextBillingDate, endDate } = this.calculateNextBillingPeriod(
+		const { endDate } = this.calculateNextBillingPeriod(
 			subscription.billingPeriod,
-			subscription.nextBillingDate || new Date()
+			subscription.endDate || new Date()
 		);
 
-		return this.update(subscriptionId, {
+		await this.update(subscriptionId, {
 			status: PluginSubscriptionStatus.ACTIVE,
-			nextBillingDate,
 			endDate
 		} as IPluginSubscriptionUpdateInput);
+
+		return await this.findOneByIdString(subscriptionId);
 	}
 
 	/**
@@ -191,14 +195,15 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		const expiryDate = new Date();
 		expiryDate.setDate(expiryDate.getDate() + days);
 
-		return this.findAll({
+		const result = await this.findAll({
 			where: {
 				status: PluginSubscriptionStatus.ACTIVE,
-				nextBillingDate: MoreThan(new Date()),
 				autoRenew: true
 			},
 			relations: ['plugin', 'pluginTenant', 'subscriber']
 		} as FindManyOptions);
+
+		return result.items || [];
 	}
 
 	/**
@@ -279,65 +284,60 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 	private calculateSubscriptionDates(billingPeriod: PluginBillingPeriod) {
 		const startDate = new Date();
 		let endDate: Date | undefined;
-		let nextBillingDate: Date | undefined;
 		let trialEndDate: Date | undefined;
 
 		switch (billingPeriod) {
 			case PluginBillingPeriod.MONTHLY:
-				nextBillingDate = new Date(startDate);
-				nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
-				endDate = new Date(nextBillingDate);
+				endDate = new Date(startDate);
+				endDate.setMonth(endDate.getMonth() + 1);
 				break;
 			case PluginBillingPeriod.YEARLY:
-				nextBillingDate = new Date(startDate);
-				nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1);
-				endDate = new Date(nextBillingDate);
+				endDate = new Date(startDate);
+				endDate.setFullYear(endDate.getFullYear() + 1);
 				break;
 			case PluginBillingPeriod.QUARTERLY:
-				nextBillingDate = new Date(startDate);
-				nextBillingDate.setMonth(nextBillingDate.getMonth() + 3);
-				endDate = new Date(nextBillingDate);
+				endDate = new Date(startDate);
+				endDate.setMonth(endDate.getMonth() + 3);
 				break;
 			case PluginBillingPeriod.WEEKLY:
-				nextBillingDate = new Date(startDate);
-				nextBillingDate.setDate(nextBillingDate.getDate() + 7);
-				endDate = new Date(nextBillingDate);
+				endDate = new Date(startDate);
+				endDate.setDate(endDate.getDate() + 7);
 				break;
 			case PluginBillingPeriod.ONE_TIME:
 				// One-time payment, no renewal
 				break;
 		}
 
-		return { startDate, endDate, nextBillingDate, trialEndDate };
+		return { startDate, endDate, trialEndDate };
 	}
 
 	/**
 	 * Calculate next billing period
 	 */
 	private calculateNextBillingPeriod(billingPeriod: PluginBillingPeriod, currentDate: Date) {
-		const nextBillingDate = new Date(currentDate);
+		const nextDate = new Date(currentDate);
 		let endDate: Date | undefined;
 
 		switch (billingPeriod) {
 			case PluginBillingPeriod.MONTHLY:
-				nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
-				endDate = new Date(nextBillingDate);
+				nextDate.setMonth(nextDate.getMonth() + 1);
+				endDate = new Date(nextDate);
 				break;
 			case PluginBillingPeriod.YEARLY:
-				nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1);
-				endDate = new Date(nextBillingDate);
+				nextDate.setFullYear(nextDate.getFullYear() + 1);
+				endDate = new Date(nextDate);
 				break;
 			case PluginBillingPeriod.QUARTERLY:
-				nextBillingDate.setMonth(nextBillingDate.getMonth() + 3);
-				endDate = new Date(nextBillingDate);
+				nextDate.setMonth(nextDate.getMonth() + 3);
+				endDate = new Date(nextDate);
 				break;
 			case PluginBillingPeriod.WEEKLY:
-				nextBillingDate.setDate(nextBillingDate.getDate() + 7);
-				endDate = new Date(nextBillingDate);
+				nextDate.setDate(nextDate.getDate() + 7);
+				endDate = new Date(nextDate);
 				break;
 		}
 
-		return { nextBillingDate, endDate };
+		return { endDate };
 	}
 
 	/**

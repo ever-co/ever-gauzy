@@ -132,7 +132,7 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 		}
 
 		try {
-			const result = await this.findOneOrFailByWhereOptions(where, { relations });
+			const result = await this.findOneOrFailByWhereOptions(where);
 			return result.record;
 		} catch {
 			return null;
@@ -144,16 +144,16 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 	 */
 	async findByCategory(
 		pluginId: string,
-		category: string,
+		categoryId: string,
 		pluginTenantId?: string,
 		relations: string[] = [],
 		tenantId?: string,
 		organizationId?: string
 	): Promise<IPluginSetting[]> {
 		this.validatePluginId(pluginId);
-		this.validateCategory(category);
+		this.validateCategory(categoryId);
 
-		const where: FindOptionsWhere<PluginSetting> = { pluginId, category };
+		const where: FindOptionsWhere<PluginSetting> = { pluginId, categoryId };
 		if (pluginTenantId) where.tenantId = pluginTenantId;
 		if (tenantId) where.tenantId = tenantId;
 		if (organizationId) where.organizationId = organizationId;
@@ -185,12 +185,12 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 		try {
 			// Try to parse JSON if the value is a string that looks like JSON
 			if (typeof setting.value === 'string' && (setting.value.startsWith('{') || setting.value.startsWith('['))) {
-				return JSON.parse(setting.value);
+				return JSON.parse(setting.value) as T;
 			}
-			return setting.value;
+			return setting.value as T;
 		} catch {
 			// If JSON parsing fails, return the raw value
-			return setting.value;
+			return setting.value as T;
 		}
 	}
 
@@ -230,7 +230,7 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 	 */
 	async bulkUpdateSettings(
 		pluginId: string,
-		settings: Array<{ key: string; value: any; category?: string }>,
+		settings: Array<{ key: string; value: any; categoryId?: string }>,
 		pluginTenantId?: string,
 		tenantId?: string,
 		organizationId?: string
@@ -244,14 +244,14 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 		const updatedSettings: IPluginSetting[] = [];
 
 		for (const settingData of settings) {
-			const { key, value, category } = settingData;
+			const { key, value, categoryId } = settingData;
 			this.validateKey(key);
 
 			const setting = await this.setSettingValue(pluginId, key, value, pluginTenantId, tenantId, organizationId);
 
 			// Update category if provided
-			if (category && setting.categoryId !== category) {
-				await this.update(setting.id, { category });
+			if (categoryId && setting.categoryId !== categoryId) {
+				await this.update(setting.id, { categoryId });
 				const updatedSetting = await this.findOneByIdString(setting.id);
 				updatedSettings.push(updatedSetting);
 			} else {
@@ -283,6 +283,35 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 	async exists(pluginId: string, key: string, pluginTenantId?: string): Promise<boolean> {
 		const setting = await this.findByKey(pluginId, key, pluginTenantId);
 		return !!setting;
+	}
+
+	/**
+	 * Validate setting value against its configuration
+	 */
+	async validateSetting(setting: IPluginSetting, value: any): Promise<boolean> {
+		if (!setting) {
+			return false;
+		}
+
+		// Basic validation based on data type
+		switch (setting.dataType) {
+			case 'string':
+				return typeof value === 'string';
+			case 'number':
+				return typeof value === 'number' && !isNaN(value);
+			case 'boolean':
+				return typeof value === 'boolean';
+			case 'json':
+				try {
+					if (typeof value === 'object') return true;
+					JSON.parse(value);
+					return true;
+				} catch {
+					return false;
+				}
+			default:
+				return true;
+		}
 	}
 
 	// Private validation methods

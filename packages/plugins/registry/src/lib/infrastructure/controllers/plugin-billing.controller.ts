@@ -58,7 +58,12 @@ export class PluginBillingController {
 		options?: IPluginBillingFindInput
 	): Promise<IPagination<IPluginBilling>> {
 		if (options && Object.keys(options).length > 0) {
-			return this.pluginBillingService.findBillings(options);
+			const result = await this.pluginBillingService.findBillings(options);
+			// Convert array to IPagination format
+			return {
+				items: result,
+				total: result.length
+			};
 		}
 		return this.pluginBillingService.findAll();
 	}
@@ -118,7 +123,8 @@ export class PluginBillingController {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() input: UpdatePluginBillingDTO
 	): Promise<IPluginBilling> {
-		return this.pluginBillingService.update(id, input);
+		await this.pluginBillingService.update(id, input);
+		return await this.pluginBillingService.findOneByIdString(id);
 	}
 
 	/**
@@ -134,7 +140,8 @@ export class PluginBillingController {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body('paymentReference') paymentReference?: string
 	): Promise<IPluginBilling> {
-		return this.pluginBillingService.markAsPaid(id, paymentReference);
+		await this.pluginBillingService.markAsPaid(id, paymentReference);
+		return await this.pluginBillingService.findOneByIdString(id);
 	}
 
 	/**

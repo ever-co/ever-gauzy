@@ -48,7 +48,13 @@ export class PluginCategoryController {
 	@Post()
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() input: CreatePluginCategoryDTO): Promise<IPluginCategory> {
-		return this.commandBus.execute(new CreatePluginCategoryCommand(input));
+		// Ensure order has a default value if not provided
+		const inputWithDefaults = {
+			...input,
+			order: input.order ?? 0,
+			isActive: input.isActive ?? true
+		};
+		return this.commandBus.execute(new CreatePluginCategoryCommand(inputWithDefaults));
 	}
 
 	/**

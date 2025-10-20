@@ -1,21 +1,13 @@
 import type { BaseEntityModel, ID, IEmployee, PluginStatus, PluginType } from '@gauzy/contracts';
 import type { IPluginSource } from './plugin-source.model';
 import type { IPluginVersion, IPluginVersionUpdate } from './plugin-version.model';
+import type { PluginBillingPeriod } from './plugin-subscription.model';
 
 export enum PluginPricingType {
 	FREE = 'free',
 	ONE_TIME = 'one_time',
 	SUBSCRIPTION = 'subscription',
 	FREEMIUM = 'freemium',
-	USAGE_BASED = 'usage_based'
-}
-
-export enum PluginBillingPeriod {
-	MONTHLY = 'monthly',
-	YEARLY = 'yearly',
-	QUARTERLY = 'quarterly',
-	WEEKLY = 'weekly',
-	ONE_TIME = 'one_time',
 	USAGE_BASED = 'usage_based'
 }
 

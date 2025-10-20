@@ -9,16 +9,16 @@ export class GetPluginSettingsByCategoryHandler implements IQueryHandler<GetPlug
 	constructor(private readonly pluginSettingService: PluginSettingService) {}
 
 	async execute(query: GetPluginSettingsByCategoryQuery): Promise<IPluginSetting[]> {
-		const { pluginId, category, pluginTenantId, relations, tenantId, organizationId } = query;
+		const { pluginId, categoryId, pluginTenantId, relations, tenantId, organizationId } = query;
 
 		try {
-			if (!pluginId || !category) {
+			if (!pluginId || !categoryId) {
 				throw new BadRequestException('Plugin ID and category are required');
 			}
 
 			let settings = await this.pluginSettingService.findByCategory(
 				pluginId,
-				category,
+				categoryId,
 				pluginTenantId,
 				relations || ['plugin', 'pluginTenant']
 			);

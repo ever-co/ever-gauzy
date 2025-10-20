@@ -24,6 +24,7 @@ import {
 	SetPluginSettingValueDTO
 } from '../../shared/dto/plugin-setting.dto';
 import { PluginSetting } from '../../domain/entities/plugin-setting.entity';
+import { PluginSettingService } from '../../domain/services/plugin-setting.service';
 import { IPluginSetting } from '../../shared/models/plugin-setting.model';
 
 // Commands
@@ -46,7 +47,11 @@ import {
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugin-settings')
 export class PluginSettingController {
-	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
+	constructor(
+		private readonly commandBus: CommandBus,
+		private readonly queryBus: QueryBus,
+		private readonly pluginSettingService: PluginSettingService
+	) {}
 
 	@ApiOperation({ summary: 'Create plugin setting' })
 	@ApiResponse({
@@ -57,9 +62,11 @@ export class PluginSettingController {
 	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post()
 	async create(@Body() createDto: CreatePluginSettingDTO): Promise<IPluginSetting> {
-		const ctx = RequestContext.currentRequestContext();
+		const tenantId = RequestContext.currentTenantId();
+		const userId = RequestContext.currentUserId();
+		// Note: organizationId should come from the DTO or be retrieved from user context
 		return await this.commandBus.execute(
-			new CreatePluginSettingCommand(createDto, ctx.tenantId, ctx.organizationId, ctx.userId)
+			new CreatePluginSettingCommand(createDto, tenantId, createDto.organizationId, userId)
 		);
 	}
 
@@ -72,12 +79,18 @@ export class PluginSettingController {
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get()
 	async findAll(@Query() query: PluginSettingQueryDTO): Promise<IPagination<IPluginSetting>> {
-		const ctx = RequestContext.currentRequestContext();
+		const tenantId = RequestContext.currentTenantId();
+		// Convert query to proper where conditions
+		const where: any = { ...query };
+		if (query.category) {
+			where.categoryId = query.category;
+			delete where.category;
+		}
 		return await this.queryBus.execute(
 			new GetPluginSettingsQuery(
-				{ where: query, relations: ['plugin', 'pluginTenant'] },
-				ctx.tenantId,
-				ctx.organizationId
+				{ where, relations: ['plugin', 'pluginTenant'] },
+				tenantId,
+				null // organizationId - should be passed in query or derived from context
 			)
 		);
 	}
@@ -92,9 +105,9 @@ export class PluginSettingController {
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get(':id')
 	async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<IPluginSetting> {
-		const ctx = RequestContext.currentRequestContext();
+		const tenantId = RequestContext.currentTenantId();
 		return await this.queryBus.execute(
-			new GetPluginSettingByIdQuery(id, ['plugin', 'pluginTenant'], ctx.tenantId, ctx.organizationId)
+			new GetPluginSettingByIdQuery(id, ['plugin', 'pluginTenant'], tenantId, null)
 		);
 	}
 
@@ -108,9 +121,9 @@ export class PluginSettingController {
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get('plugin/:pluginId')
 	async findByPluginId(@Param('pluginId', ParseUUIDPipe) pluginId: string): Promise<IPluginSetting[]> {
-		const ctx = RequestContext.currentRequestContext();
+		const tenantId = RequestContext.currentTenantId();
 		return await this.queryBus.execute(
-			new GetPluginSettingsByPluginIdQuery(pluginId, ['plugin', 'pluginTenant'], ctx.tenantId, ctx.organizationId)
+			new GetPluginSettingsByPluginIdQuery(pluginId, ['plugin', 'pluginTenant'], tenantId, null)
 		);
 	}
 
@@ -215,8 +228,9 @@ export class PluginSettingController {
 	async update(
 		@Param('id', ParseUUIDPipe) id: string,
 		@Body() updateDto: UpdatePluginSettingDTO
-	): Promise<PluginSetting> {
-		return this.pluginSettingService.update(id, updateDto);
+	): Promise<IPluginSetting> {
+		await this.pluginSettingService.update(id, updateDto);
+		return await this.pluginSettingService.findOneByIdString(id);
 	}
 
 	@ApiOperation({ summary: 'Delete plugin setting' })

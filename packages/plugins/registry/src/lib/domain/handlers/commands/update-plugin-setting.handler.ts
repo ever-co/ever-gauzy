@@ -29,7 +29,6 @@ export class UpdatePluginSettingHandler implements ICommandHandler<UpdatePluginS
 			// Add metadata to update DTO
 			const settingUpdateData = {
 				...updateDto,
-				updatedBy: userId,
 				updatedAt: new Date()
 			};
 
