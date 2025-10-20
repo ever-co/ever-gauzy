@@ -37,7 +37,11 @@
 									}}:
 								</div>
 								<div>
-									{{ getFormattedDate() }}
+									{{
+										invoice?.invoiceDate
+											| dateFormat
+												: (invoice?.toOrganization ?? invoice?.fromOrganization)?.dateFormat
+									}}
 								</div>
 							</div>
 							<div class="d-flex">

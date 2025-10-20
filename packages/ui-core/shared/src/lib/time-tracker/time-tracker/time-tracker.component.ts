@@ -405,8 +405,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	private triggerCheckStatus() {
 		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 		this.timeTrackerService.checkTimerStatus({
-			tenantId: this.store.tenantId,
-			organizationId: this.store.organizationId,
+			tenantId: this.store.tenantId ?? this.timeTrackerService.timerConfig?.tenantId,
+			organizationId: this.store.organizationId ?? this.timeTrackerService.timerConfig?.organizationId,
 			relations: ['employee'],
 			timeZone
 		});

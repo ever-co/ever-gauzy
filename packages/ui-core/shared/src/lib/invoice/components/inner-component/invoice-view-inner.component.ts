@@ -8,7 +8,6 @@ import { DiscountTaxTypeEnum, IInvoice, IInvoiceItem, InvoiceTypeEnum } from '@g
 import { CountryService, ErrorHandlingService, TranslatableService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { CurrencyPositionPipe } from '../../../pipes/currency-position.pipe';
-import moment from 'moment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -52,22 +51,6 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 					this.country = country.country;
 				}
 			});
-	}
-
-	/**
-	 * Get formatted invoice date
-	 */
-	getFormattedDate() {
-		if (!this.invoice?.invoiceDate) return '';
-
-		const timeZone =
-			this.invoice?.fromUser?.timeZone ??
-			this.invoice?.toOrganization?.timeZone ??
-			this.invoice?.fromOrganization?.timeZone;
-
-		const dateFormat = (this.invoice?.toOrganization ?? this.invoice?.fromOrganization)?.dateFormat;
-
-		return moment(this.invoice.invoiceDate).tz(timeZone).format(dateFormat);
 	}
 
 	/**
