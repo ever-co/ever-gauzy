@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { PaymentSchema, PaymentStatusEnum, PaymentMethodEnum, CurrenciesEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('PaymentTools');
-
 
 /**
  * Helper function to convert date fields in payment data to Date objects
@@ -37,7 +36,10 @@ export const registerPaymentTools = (server: McpServer) => {
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			search: z.string().optional().describe('Search term for payment notes'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["invoice", "organizationContact", "project", "recordedBy"])'),
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["invoice", "organizationContact", "project", "recordedBy"])'),
 			status: PaymentStatusEnum.optional().describe('Filter by payment status'),
 			paymentMethod: PaymentMethodEnum.optional().describe('Filter by payment method'),
 			invoiceId: z.string().uuid().optional().describe('Filter by invoice ID'),
@@ -48,7 +50,21 @@ export const registerPaymentTools = (server: McpServer) => {
 			endDate: z.string().optional().describe('Filter payments until this date (ISO format)'),
 			overdue: z.boolean().optional().describe('Filter by overdue status')
 		},
-		async ({ page = 1, limit = 10, search, relations, status, paymentMethod, invoiceId, organizationContactId, projectId, currency, startDate, endDate, overdue }) => {
+		async ({
+			page = 1,
+			limit = 10,
+			search,
+			relations,
+			status,
+			paymentMethod,
+			invoiceId,
+			organizationContactId,
+			projectId,
+			currency,
+			startDate,
+			endDate,
+			overdue
+		}) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
@@ -137,7 +153,10 @@ export const registerPaymentTools = (server: McpServer) => {
 		'Get a specific payment by ID',
 		{
 			id: z.string().uuid().describe('The payment ID'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["invoice", "organizationContact", "project", "recordedBy"])')
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["invoice", "organizationContact", "project", "recordedBy"])')
 		},
 		async ({ id, relations }) => {
 			try {
@@ -310,7 +329,11 @@ export const registerPaymentTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Payment deleted successfully', id }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Payment deleted successfully', id },
+								null,
+								2
+							)
 						}
 					]
 				};

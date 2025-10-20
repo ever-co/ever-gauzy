@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { MerchantSchema } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('MerchantTools');
-
 
 export const registerMerchantTools = (server: McpServer) => {
 	// Get merchants tool
@@ -19,10 +18,13 @@ export const registerMerchantTools = (server: McpServer) => {
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			search: z.string().optional().describe('Search term for merchant name, code, or email'),
 			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["contact", "tags"])'),
-			where: z.object({
-				isActive: z.boolean().optional(),
-				isArchived: z.boolean().optional()
-			}).optional().describe('Additional filters')
+			where: z
+				.object({
+					isActive: z.boolean().optional(),
+					isArchived: z.boolean().optional()
+				})
+				.optional()
+				.describe('Additional filters')
 		},
 		async ({ page = 1, limit = 10, search, relations, where }) => {
 			try {
@@ -60,10 +62,13 @@ export const registerMerchantTools = (server: McpServer) => {
 		'get_merchant_count',
 		"Get merchant count in the authenticated user's organization",
 		{
-			where: z.object({
-				isActive: z.boolean().optional(),
-				isArchived: z.boolean().optional()
-			}).optional().describe('Additional filters')
+			where: z
+				.object({
+					isActive: z.boolean().optional(),
+					isArchived: z.boolean().optional()
+				})
+				.optional()
+				.describe('Additional filters')
 		},
 		async ({ where }) => {
 			try {
@@ -203,7 +208,11 @@ export const registerMerchantTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Merchant deleted successfully', id }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Merchant deleted successfully', id },
+								null,
+								2
+							)
 						}
 					]
 				};
@@ -381,13 +390,15 @@ export const registerMerchantTools = (server: McpServer) => {
 		'bulk_create_merchants',
 		"Create multiple merchants in bulk for the authenticated user's organization",
 		{
-			merchants: z.array(
-				MerchantSchema.partial()
-					.required({
-						name: true
-					})
-					.describe('Merchant data')
-			).describe('Array of merchant data to create')
+			merchants: z
+				.array(
+					MerchantSchema.partial()
+						.required({
+							name: true
+						})
+						.describe('Merchant data')
+				)
+				.describe('Array of merchant data to create')
 		},
 		async ({ merchants }) => {
 			try {

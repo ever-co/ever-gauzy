@@ -1,8 +1,10 @@
 import { Logger } from '@nestjs/common';
 import { Request } from 'express';
 import { sanitizeForLogging } from './security-utils';
-import { environment } from '../environments/environment';
 import { inspect } from 'node:util';
+
+// Use environment variables directly
+const isProduction = process.env.NODE_ENV === 'production';
 
 const logger = new Logger('SecurityLogger');
 
@@ -66,7 +68,7 @@ export class SecurityLogger {
 		}
 
 		// In production, send to external monitoring
-		if (environment.production && ['high', 'critical'].includes(severity)) {
+		if (isProduction && ['high', 'critical'].includes(severity)) {
 			this.sendToExternalMonitoring(securityEvent);
 		}
 	}
@@ -108,7 +110,7 @@ export class SecurityLogger {
 
 	// Instance methods for easier usage in middleware
 	debug(message: string, data?: Record<string, unknown>): void {
-		if (environment.production === false || process.env.GAUZY_MCP_DEBUG === 'true') {
+		if (!isProduction || process.env.GAUZY_MCP_DEBUG === 'true') {
 			logger.debug(message, SecurityLogger.safeStringify(data));
 		}
 	}

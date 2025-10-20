@@ -3,11 +3,20 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { ActivityLogSchema, ActivityLogActionEnum, ActivityLogEntityEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import {
+	ActivityLogSchema,
+	ActivityLogActionEnum,
+	ActivityLogEntityEnum,
+	ActorTypeEnum,
+	SortOrderEnum,
+	ActivityLogSortByEnum,
+	ActivityLogRelationsSchema
+} from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+
+const ActivityLogGroupBy = z.enum(['entity', 'action', 'user', 'date', 'hour']);
 
 const logger = new Logger('ActivityLogTools');
-
 
 export const registerActivityLogTools = (server: McpServer) => {
 	// Get activity logs tool
@@ -15,21 +24,35 @@ export const registerActivityLogTools = (server: McpServer) => {
 		'get_activity_logs',
 		"Get list of activity logs for the authenticated user's organization",
 		{
-			page: z.number().optional().default(1).describe('Page number for pagination'),
-			limit: z.number().optional().default(10).describe('Number of items per page'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["createdBy", "employee"])'),
+			page: z.number().int().min(1).optional().default(1).describe('Page number for pagination'),
+      		limit: z.number().int().min(1).max(100).optional().default(10).describe('Number of items per page'),
+			relations: ActivityLogRelationsSchema,
 			entity: ActivityLogEntityEnum.optional().describe('Filter by entity type'),
 			entityId: z.string().uuid().optional().describe('Filter by entity ID'),
 			action: ActivityLogActionEnum.optional().describe('Filter by action type'),
-			actorType: z.string().optional().describe('Filter by actor type'),
+			actorType: ActorTypeEnum.optional().describe('Filter by actor type (System or User)'),
 			createdByUserId: z.string().uuid().optional().describe('Filter by user who performed the action'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee context'),
-			startDate: z.string().optional().describe('Filter logs from this date (ISO format)'),
-			endDate: z.string().optional().describe('Filter logs until this date (ISO format)'),
-			sortBy: z.enum(['createdAt', 'updatedAt', 'entity', 'action']).optional().default('createdAt').describe('Sort logs by field'),
-			sortOrder: z.enum(['ASC', 'DESC']).optional().default('DESC').describe('Sort order')
+			startDate: z.string().datetime({ offset: true }).optional().describe('Filter logs from this date (ISO format)'),
+		    endDate: z.string().datetime({ offset: true }).optional().describe('Filter logs until this date (ISO format)'),
+			sortBy: ActivityLogSortByEnum.optional().default('createdAt').describe('Sort logs by field'),
+			sortOrder: SortOrderEnum.optional().default('DESC').describe('Sort order')
 		},
-		async ({ page = 1, limit = 10, relations, entity, entityId, action, actorType, createdByUserId, employeeId, startDate, endDate, sortBy = 'createdAt', sortOrder = 'DESC' }) => {
+		async ({
+			page = 1,
+			limit = 10,
+			relations,
+			entity,
+			entityId,
+			action,
+			actorType,
+			createdByUserId,
+			employeeId,
+			startDate,
+			endDate,
+			sortBy = 'createdAt',
+			sortOrder = 'DESC'
+		}) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
@@ -38,7 +61,7 @@ export const registerActivityLogTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
 					page,
 					limit,
-					...(relations && { relations }),
+					...(relations !== undefined ? { relations } : {}),
 					...(entity && { entity }),
 					...(entityId && { entityId }),
 					...(action && { action }),
@@ -76,7 +99,7 @@ export const registerActivityLogTools = (server: McpServer) => {
 			entity: ActivityLogEntityEnum.optional().describe('Filter by entity type'),
 			entityId: z.string().uuid().optional().describe('Filter by entity ID'),
 			action: ActivityLogActionEnum.optional().describe('Filter by action type'),
-			actorType: z.string().optional().describe('Filter by actor type'),
+			actorType: ActorTypeEnum.optional().describe('Filter by actor type (System or User)'),
 			createdByUserId: z.string().uuid().optional().describe('Filter by user who performed the action'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee context'),
 			startDate: z.string().optional().describe('Filter logs from this date (ISO format)'),
@@ -196,13 +219,31 @@ export const registerActivityLogTools = (server: McpServer) => {
 			entityId: z.string().uuid().describe('The entity ID'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
+			relations: ActivityLogRelationsSchema,
 			action: ActivityLogActionEnum.optional().describe('Filter by action type'),
+			actorType: ActorTypeEnum.optional().describe('Filter by actor type (System or User)'),
+			createdByUserId: z.string().uuid().optional().describe('Filter by user who performed the action'),
+			employeeId: z.string().uuid().optional().describe('Filter by employee context'),
 			startDate: z.string().optional().describe('Filter logs from this date (ISO format)'),
 			endDate: z.string().optional().describe('Filter logs until this date (ISO format)'),
-			relations: z.array(z.string()).optional().describe('Relations to include'),
-			sortOrder: z.enum(['ASC', 'DESC']).optional().default('DESC').describe('Sort order by creation date')
+			sortBy: ActivityLogSortByEnum.optional().default('createdAt').describe('Sort logs by field'),
+			sortOrder: SortOrderEnum.optional().default('DESC').describe('Sort order')
 		},
-		async ({ entity, entityId, page = 1, limit = 10, action, startDate, endDate, relations, sortOrder = 'DESC' }) => {
+		async ({
+			entity,
+			entityId,
+			page = 1,
+			limit = 10,
+			relations,
+			action,
+			actorType,
+			createdByUserId,
+			employeeId,
+			startDate,
+			endDate,
+			sortBy = 'createdAt',
+			sortOrder = 'DESC'
+		}) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
@@ -213,11 +254,14 @@ export const registerActivityLogTools = (server: McpServer) => {
 					entityId,
 					page,
 					limit,
+					...(relations !== undefined ? { relations } : {}),
 					...(action && { action }),
+					...(actorType && { actorType }),
+					...(createdByUserId && { createdByUserId }),
+					...(employeeId && { employeeId }),
 					...(startDate && { startDate }),
 					...(endDate && { endDate }),
-					...(relations && { relations }),
-					sortBy: 'createdAt',
+					sortBy,
 					sortOrder
 				};
 
@@ -350,7 +394,7 @@ export const registerActivityLogTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				// Calculate the start date based on hours
-				const startDate = new Date(Date.now() - (hours * 60 * 60 * 1000)).toISOString();
+				const startDate = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
 				const params = {
 					organizationId: defaultParams.organizationId,
@@ -390,7 +434,7 @@ export const registerActivityLogTools = (server: McpServer) => {
 			endDate: z.string().optional().describe('End date for statistics (ISO format)'),
 			entity: ActivityLogEntityEnum.optional().describe('Filter by entity type'),
 			action: ActivityLogActionEnum.optional().describe('Filter by action type'),
-			groupBy: z.enum(['entity', 'action', 'user', 'date', 'hour']).optional().default('entity').describe('Group statistics by'),
+			groupBy: ActivityLogGroupBy.optional().default('entity').describe('Group statistics by'),
 			userId: z.string().uuid().optional().describe('Filter by specific user ID')
 		},
 		async ({ startDate, endDate, entity, action, groupBy = 'entity', userId }) => {

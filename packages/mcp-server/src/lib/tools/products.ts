@@ -2,12 +2,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
-import { ProductSchema } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { authManager, type AuthManager } from '../common/auth-manager';
+import { ProductSchema, ProductCreateSchema, ImageAssetRefSchema } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('ProductTools');
-
 
 /**
  * Interface for product data with date fields that need conversion
@@ -31,20 +30,63 @@ const convertProductDateFields = <T extends ProductDataWithDates>(productData: T
 	};
 };
 
+/**
+ * Helper function to get and validate default parameters from authManager
+ * @param authMgr - The authentication manager instance
+ * @returns Validated default parameters with tenantId and organizationId
+ * @throws Error if tenantId or organizationId is missing
+ */
+const getValidatedDefaultParams = (authMgr: AuthManager) => {
+	const defaultParams = authMgr.getDefaultParams();
+
+	if (!defaultParams.tenantId || !defaultParams.organizationId) {
+		throw new Error(
+			'Tenant ID and Organization ID not available. Please ensure you are logged in and have an organization.'
+		);
+	}
+
+	return defaultParams;
+};
+
+/**
+ * Shared schema for product image objects
+ * Extends ImageAssetRefSchema with stricter URL validation and product-specific fields
+ */
+const productImageSchema = ImageAssetRefSchema.extend({
+	name: z.string().min(1),
+	url: z.union([z.string().url(), z.string().startsWith('data:')]).optional(),
+	width: z.number().int().positive().optional(),
+	height: z.number().int().positive().optional(),
+	thumb: z.union([z.string().url(), z.string().startsWith('data:')]).optional(),
+	size: z.number().int().nonnegative().optional(),
+	externalProviderId: z.string().optional(),
+	storageProvider: z.string().optional()
+});
+
 export const registerProductTools = (server: McpServer) => {
 	// Get products tool
 	server.tool(
 		'get_products',
 		"Get list of products for the authenticated user's organization",
 		{
-			data: z.object({
-				relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["productType", "productCategory", "tags"])'),
-				findInput: z.object({
-					enabled: z.boolean().optional(),
-					productCategoryId: z.string().uuid().optional(),
-					productTypeId: z.string().uuid().optional()
-				}).optional().describe('Find input filters')
-			}).optional().describe('Query data object'),
+			data: z
+				.object({
+					relations: z
+						.array(z.string())
+						.optional()
+						.describe('Relations to include (e.g., ["productType", "productCategory", "tags"])'),
+					findInput: z
+						.object({
+							enabled: z.boolean().optional(),
+							productCategoryId: z.string().uuid().optional(),
+							productTypeId: z.string().uuid().optional()
+						})
+						.optional()
+						.describe('Find input filters')
+				})
+				.passthrough()
+				.optional()
+				.describe('Query data object'),
 			page: z.number().optional().describe('Page number for pagination'),
 			limit: z.number().optional().describe('Number of items per page')
 		},
@@ -52,8 +94,9 @@ export const registerProductTools = (server: McpServer) => {
 			try {
 				const params = {
 					data: JSON.stringify(data),
-					...(page && { page }),
-					...(limit && { _limit: limit })
+					// If backend supports these here, use conventional names; otherwise drop and use pagination tool
+					...(page !== undefined ? { page } : {}),
+					...(limit !== undefined ? { limit } : {})
 				};
 
 				const response = await apiClient.get('/api/products', { params });
@@ -76,16 +119,22 @@ export const registerProductTools = (server: McpServer) => {
 	// Get products with translations tool
 	server.tool(
 		'get_products_translated',
-		"Get list of products with translations for a specific language",
+		'Get list of products with translations for a specific language',
 		{
 			langCode: z.string().describe('Language code for translations (e.g., "en", "fr", "es")'),
-			data: z.object({
-				relations: z.array(z.string()).optional().describe('Relations to include'),
-				findInput: z.object({
-					enabled: z.boolean().optional(),
-					productCategoryId: z.string().uuid().optional()
-				}).optional().describe('Find input filters')
-			}).optional().describe('Query data object'),
+			data: z
+				.object({
+					relations: z.array(z.string()).optional().describe('Relations to include'),
+					findInput: z
+						.object({
+							enabled: z.boolean().optional(),
+							productCategoryId: z.string().uuid().optional()
+						})
+						.optional()
+						.describe('Find input filters')
+				})
+				.optional()
+				.describe('Query data object'),
 			page: z.number().optional().describe('Page number for pagination'),
 			limit: z.number().optional().describe('Number of items per page')
 		},
@@ -119,13 +168,20 @@ export const registerProductTools = (server: McpServer) => {
 		'get_product_count',
 		"Get product count in the authenticated user's organization",
 		{
-			data: z.object({
-				findInput: z.object({
-					enabled: z.boolean().optional(),
-					productCategoryId: z.string().uuid().optional(),
-					productTypeId: z.string().uuid().optional()
-				}).optional().describe('Find input filters')
-			}).optional().describe('Query data object')
+			data: z
+				.object({
+					findInput: z
+						.object({
+							enabled: z.boolean().optional(),
+							productCategoryId: z.string().uuid().optional(),
+							productTypeId: z.string().uuid().optional()
+						})
+						.optional()
+						.describe('Find input filters')
+				})
+				.passthrough()
+				.optional()
+				.describe('Query data object')
 		},
 		async ({ data = {} }) => {
 			try {
@@ -153,26 +209,30 @@ export const registerProductTools = (server: McpServer) => {
 	// Get products by pagination tool
 	server.tool(
 		'get_products_pagination',
-		"Get products with pagination support",
+		'Get products with pagination support',
 		{
 			page: z.number().optional().default(1).describe('Page number'),
 			limit: z.number().optional().default(10).describe('Items per page'),
 			search: z.string().optional().describe('Search term'),
 			relations: z.array(z.string()).optional().describe('Relations to include'),
-			where: z.object({
-				enabled: z.boolean().optional(),
-				productCategoryId: z.string().uuid().optional(),
-				productTypeId: z.string().uuid().optional()
-			}).optional().describe('Where conditions')
+			where: z
+				.object({
+					enabled: z.boolean().optional(),
+					productCategoryId: z.string().uuid().optional(),
+					productTypeId: z.string().uuid().optional()
+				})
+				.passthrough()
+				.optional()
+				.describe('Where conditions')
 		},
 		async ({ page = 1, limit = 10, search, relations, where }) => {
 			try {
 				const params = {
 					page,
 					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(where && { where })
+					...(search !== undefined ? { search } : {}),
+					...(relations !== undefined ? { relations } : {}),
+					...(where !== undefined ? { where } : {})
 				};
 
 				const response = await apiClient.get('/api/products/pagination', { params });
@@ -198,10 +258,16 @@ export const registerProductTools = (server: McpServer) => {
 		'Get a specific product by ID',
 		{
 			id: z.string().uuid().describe('The product ID'),
-			data: z.object({
-				relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["productType", "productCategory", "tags"])'),
-				findInput: z.object({}).optional().describe('Additional find input')
-			}).optional().describe('Query data object')
+			data: z
+				.object({
+					relations: z
+						.array(z.string())
+						.optional()
+						.describe('Relations to include (e.g., ["productType", "productCategory", "tags"])'),
+					findInput: z.object({}).passthrough().optional().describe('Additional find input')
+				})
+				.optional()
+				.describe('Query data object')
 		},
 		async ({ id, data = {} }) => {
 			try {
@@ -233,9 +299,12 @@ export const registerProductTools = (server: McpServer) => {
 		{
 			id: z.string().uuid().describe('The product ID'),
 			langCode: z.string().describe('Language code for translations'),
-			data: z.object({
-				relations: z.array(z.string()).optional().describe('Relations to include')
-			}).optional().describe('Query data object')
+			data: z
+				.object({
+					relations: z.array(z.string()).optional().describe('Relations to include')
+				})
+				.optional()
+				.describe('Query data object')
 		},
 		async ({ id, langCode, data = {} }) => {
 			try {
@@ -265,12 +334,18 @@ export const registerProductTools = (server: McpServer) => {
 		'create_product',
 		"Create a new product in the authenticated user's organization",
 		{
-			product_data: ProductSchema.partial()
-				.describe('The data for creating the product')
+			product_data: ProductCreateSchema.describe(
+				'The data for creating the product. Required fields: code (string), type (object with name), category (object with name)'
+			)
 		},
 		async ({ product_data }) => {
 			try {
-				const createData = convertProductDateFields(product_data);
+				// Validate user is authenticated
+				getValidatedDefaultParams(authManager);
+
+				const createData = {
+					...convertProductDateFields(product_data)
+				};
 
 				const response = await apiClient.post('/api/products', createData);
 
@@ -299,7 +374,12 @@ export const registerProductTools = (server: McpServer) => {
 		},
 		async ({ id, product_data }) => {
 			try {
-				const updateData = convertProductDateFields(product_data);
+				// Validate user is authenticated
+			getValidatedDefaultParams(authManager);
+
+				const updateData = {
+					...convertProductDateFields(product_data)
+				};
 
 				const response = await apiClient.put(`/api/products/${id}`, updateData);
 
@@ -333,7 +413,11 @@ export const registerProductTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Product deleted successfully', id }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Product deleted successfully', id },
+								null,
+								2
+							)
 						}
 					]
 				};
@@ -350,12 +434,7 @@ export const registerProductTools = (server: McpServer) => {
 		'Add images to product gallery',
 		{
 			productId: z.string().uuid().describe('The product ID'),
-			images: z.array(z.object({
-				id: z.string().optional(),
-				url: z.string(),
-				alt: z.string().optional(),
-				title: z.string().optional()
-			})).describe('Array of image objects to add to gallery')
+			images: z.array(productImageSchema).describe('Array of image objects to add to gallery')
 		},
 		async ({ productId, images }) => {
 			try {
@@ -382,12 +461,7 @@ export const registerProductTools = (server: McpServer) => {
 		'Set an image as featured for a product',
 		{
 			productId: z.string().uuid().describe('The product ID'),
-			image: z.object({
-				id: z.string().optional(),
-				url: z.string(),
-				alt: z.string().optional(),
-				title: z.string().optional()
-			}).describe('Image object to set as featured')
+			image: productImageSchema.describe('Image object to set as featured')
 		},
 		async ({ productId, image }) => {
 			try {

@@ -5,7 +5,7 @@
  * Provides consistent validation patterns across OAuth 2.0 components
  */
 
-import type { AuthorizeRequest, TokenRequest } from './oauth-authorization-server';
+import type { AuthorizeRequest, TokenRequest } from '../server/oauth-authorization-server';
 
 export interface ValidationResult {
 	valid: boolean;

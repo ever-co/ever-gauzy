@@ -6,8 +6,8 @@
 
 import * as crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import { SecurityLogger } from './security-logger';
-import { ClientRegistrationResponse } from './interfaces';
+import { SecurityLogger } from '../utils/security-logger';
+import { ClientRegistrationResponse } from '../interfaces';
 
 export interface OAuth2Client {
 	clientId: string;
