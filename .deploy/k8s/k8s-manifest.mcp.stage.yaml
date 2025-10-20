@@ -64,7 +64,7 @@ spec:
             - name: MCP_AUTH_REQUIRED_SCOPES
               value: $MCP_AUTH_REQUIRED_SCOPES
             - name: MCP_AUTH_SERVERS
-              value: $MCP_AUTH_SERVERS
+              value: "$MCP_AUTH_SERVERS"
             - name: MCP_AUTH_JWT_AUDIENCE
               value: $MCP_AUTH_JWT_AUDIENCE
             - name: MCP_AUTH_JWT_ISSUER
