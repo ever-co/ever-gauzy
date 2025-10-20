@@ -10,7 +10,7 @@ import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum } from 'class-validator';
-import { JoinColumn, Relation, RelationId } from 'typeorm';
+import { Relation, RelationId } from 'typeorm';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { IPluginSetting } from '../../shared/models/plugin-setting.model';
 import { IPluginSubscription } from '../../shared/models/plugin-subscription.model';
@@ -43,7 +43,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	@MultiORMOneToMany('PluginSetting', 'pluginTenant', {
 		onDelete: 'CASCADE'
 	})
-	settings?: IPluginSetting[];
+	settings?: Relation<IPluginSetting[]>;
 
 	/*
 	 * Plugin Subscriptions relationships - subscriptions for this plugin tenant
@@ -52,5 +52,5 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	@MultiORMOneToMany('PluginSubscription', 'pluginTenant', {
 		onDelete: 'CASCADE'
 	})
-	subscriptions?: IPluginSubscription[];
+	subscriptions?: Relation<IPluginSubscription[]>;
 }
