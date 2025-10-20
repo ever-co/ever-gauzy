@@ -59,7 +59,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: mcpauthdev.gauzy.co
+    - host: mcpauthdemo.gauzy.co
       http:
         paths:
           - backend:
@@ -71,5 +71,5 @@ spec:
             pathType: Prefix
   tls:
     - hosts:
-        - mcpauthdev.gauzy.co
+        - mcpauthdemo.gauzy.co
       secretName: mcpauth.gauzy.co-tls
