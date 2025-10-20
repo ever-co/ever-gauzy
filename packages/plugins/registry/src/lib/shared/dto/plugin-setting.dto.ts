@@ -12,14 +12,13 @@ export class CreatePluginSettingDTO extends IntersectionType(
 	PickType(PluginSetting, [
 		'key',
 		'value',
-		'dataType',
 		'isRequired',
 		'isEncrypted',
-		'defaultValue',
 		'description',
-		'category',
 		'order',
-		'validationRules'
+		'validationRules',
+		'dataType',
+		'defaultValue'
 	] as const)
 ) {
 	@ApiProperty({ type: String, description: 'Plugin ID' })
@@ -43,7 +42,6 @@ export class UpdatePluginSettingDTO extends PickType(CreatePluginSettingDTO, [
 	'isEncrypted',
 	'defaultValue',
 	'description',
-	'category',
 	'order',
 	'validationRules'
 ] as const) {}

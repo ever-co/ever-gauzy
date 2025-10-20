@@ -3,6 +3,14 @@ import { IPlugin } from './plugin.model';
 import { IPluginTenant } from './plugin-tenant.model';
 import { IPluginCategory } from './plugin-category.model';
 
+export enum PluginSettingDataType {
+	STRING = 'string',
+	NUMBER = 'number',
+	BOOLEAN = 'boolean',
+	JSON = 'json',
+	FILE = 'file'
+}
+
 /**
  * Interface for plugin settings
  */
@@ -12,6 +20,12 @@ export interface IPluginSetting extends IBasePerTenantAndOrganizationEntityModel
 
 	// Setting value (stored as JSON object for flexibility)
 	value: Record<string, any>;
+
+	// Data type of the setting
+	dataType: PluginSettingDataType;
+
+	// Default value for the setting
+	defaultValue?: string;
 
 	// Whether the setting is required
 	isRequired: boolean;
@@ -32,10 +46,10 @@ export interface IPluginSetting extends IBasePerTenantAndOrganizationEntityModel
 	pluginId: ID;
 
 	// Optional plugin tenant relationship for tenant-specific settings
-	tenant?: IPluginTenant;
+	pluginTenant?: IPluginTenant;
 
-	// Foreign key to the tenant
-	tenantId?: string;
+	// Foreign key to the plugin tenant
+	pluginTenantId?: string;
 
 	// Plugin Category relationship (for default category settings)
 	category?: IPluginCategory;
@@ -48,9 +62,9 @@ export interface IPluginSetting extends IBasePerTenantAndOrganizationEntityModel
  * Interface for creating plugin settings
  */
 export interface IPluginSettingCreateInput
-	extends Omit<IPluginSetting, 'id' | 'createdAt' | 'updatedAt' | 'plugin' | 'tenant'> {
+	extends Omit<IPluginSetting, 'id' | 'createdAt' | 'updatedAt' | 'plugin' | 'pluginTenant'> {
 	pluginId: ID;
-	tenantId?: ID;
+	pluginTenantId?: ID;
 }
 
 /**
@@ -62,4 +76,4 @@ export interface IPluginSettingUpdateInput extends Partial<Omit<IPluginSettingCr
  * Interface for finding plugin settings
  */
 export interface IPluginSettingFindInput
-	extends Partial<Pick<IPluginSetting, 'key' | 'category' | 'pluginId' | 'tenantId'>> {}
+	extends Partial<Pick<IPluginSetting, 'key' | 'category' | 'pluginId' | 'pluginTenantId'>> {}

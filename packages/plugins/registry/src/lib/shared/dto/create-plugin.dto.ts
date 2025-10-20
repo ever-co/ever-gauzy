@@ -5,15 +5,14 @@ import { Plugin } from '../../domain/entities/plugin.entity';
 import { PluginVersionDTO } from './plugin-version.dto';
 
 export class CreatePluginDTO extends OmitType(Plugin, [
-	'id',
-	'createdAt',
-	'updatedAt',
-	'deletedAt',
 	'versions',
 	'version',
 	'source',
 	'downloadCount',
-	'installed'
+	'installed',
+	'lastDownloadedAt',
+	'uploadedBy',
+	'category'
 ] as const) {
 	@ValidateNested()
 	@IsNotEmptyObject(

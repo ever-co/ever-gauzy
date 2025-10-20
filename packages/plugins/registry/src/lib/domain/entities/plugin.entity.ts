@@ -18,7 +18,7 @@ import { IPluginCategory } from '../../shared/models/plugin-category.model';
 
 @Index('plugin_name_unique', ['name', 'tenantId', 'organizationId'], { unique: true })
 @MultiORMEntity('plugin')
-export class Plugin extends BaseEntity implements IPlugin {
+export class Plugin extends TenantOrganizationBaseEntity implements IPlugin {
 	@ApiProperty({ type: String, description: 'Plugin name' })
 	@IsNotEmpty({ message: 'Plugin name is required' })
 	@IsString({ message: 'Plugin name must be a string' })
@@ -40,6 +40,11 @@ export class Plugin extends BaseEntity implements IPlugin {
 	@IsEnum(PluginStatus, { message: 'Invalid plugin status' })
 	@MultiORMColumn({ type: 'simple-enum', enum: PluginStatus, default: PluginStatus.ACTIVE })
 	status: PluginStatus;
+
+	@ApiProperty({ type: Boolean, description: 'Plugin is active or not', default: false })
+	@IsOptional()
+	@MultiORMColumn({ default: false })
+	isActive?: boolean;
 
 	/*
 	 * Plugin Category relationship

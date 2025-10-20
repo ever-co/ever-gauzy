@@ -36,7 +36,7 @@ export class SetPluginSettingValueHandler implements ICommandHandler<SetPluginSe
 				// Update existing setting
 				await this.pluginSettingService.update(pluginSetting.id, {
 					value,
-					updatedBy: userId,
+					updatedBy: { id: userId },
 					updatedAt: new Date()
 				});
 				pluginSetting = await this.pluginSettingService.findOneByIdString(pluginSetting.id);
@@ -49,7 +49,7 @@ export class SetPluginSettingValueHandler implements ICommandHandler<SetPluginSe
 					pluginTenantId,
 					tenantId,
 					organizationId,
-					createdBy: userId
+					createdBy: { id: userId }
 				});
 			}
 

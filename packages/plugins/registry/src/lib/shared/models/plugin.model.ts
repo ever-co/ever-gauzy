@@ -2,6 +2,23 @@ import type { BaseEntityModel, ID, IEmployee, PluginStatus, PluginType } from '@
 import type { IPluginSource } from './plugin-source.model';
 import type { IPluginVersion, IPluginVersionUpdate } from './plugin-version.model';
 
+export enum PluginPricingType {
+	FREE = 'free',
+	ONE_TIME = 'one_time',
+	SUBSCRIPTION = 'subscription',
+	FREEMIUM = 'freemium',
+	USAGE_BASED = 'usage_based'
+}
+
+export enum PluginBillingPeriod {
+	MONTHLY = 'monthly',
+	YEARLY = 'yearly',
+	QUARTERLY = 'quarterly',
+	WEEKLY = 'weekly',
+	ONE_TIME = 'one_time',
+	USAGE_BASED = 'usage_based'
+}
+
 export interface IPluginUpdate {
 	id: ID;
 	name?: string;

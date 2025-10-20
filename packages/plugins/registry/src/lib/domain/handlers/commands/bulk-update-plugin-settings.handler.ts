@@ -53,7 +53,7 @@ export class BulkUpdatePluginSettingsHandler implements ICommandHandler<BulkUpda
 						// Update existing setting
 						await this.pluginSettingService.update(existingSetting.id, {
 							value,
-							updatedBy: userId,
+							updatedBy: { id: userId },
 							updatedAt: new Date()
 						});
 						existingSetting = await this.pluginSettingService.findOneByIdString(existingSetting.id);
@@ -66,8 +66,7 @@ export class BulkUpdatePluginSettingsHandler implements ICommandHandler<BulkUpda
 							value,
 							pluginTenantId,
 							tenantId,
-							organizationId,
-							createdBy: userId
+							organizationId
 						});
 						updatedSettings.push(newSetting);
 					}
