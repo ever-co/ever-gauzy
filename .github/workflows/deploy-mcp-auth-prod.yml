@@ -1,0 +1,50 @@
+name: Deploy MCP Auth to DigitalOcean Prod
+
+on:
+  workflow_run:
+    workflows: ["Build and Publish Gauzy MCP Auth Image Prod"]
+    branches: [master]
+    types:
+      - completed
+
+jobs:
+  deploy-mcp-auth-prod:
+    runs-on: buildjet-4vcpu-ubuntu-2204
+
+    environment: prod
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-gauzy
+
+      - name: Generate TLS Secrets for MCP Auth Prod
+        run: |
+          rm -f ${HOME}/ingress.mcpauth.crt ${HOME}/ingress.mcpauth.key
+          echo ${{ secrets.INGRESS_API_CERT }} | base64 --decode > ${HOME}/ingress.mcpauth.crt
+          echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > ${HOME}/ingress.mcpauth.key
+          kubectl create secret tls mcpauth.gauzy.co-tls --save-config --dry-run=client --cert=${HOME}/ingress.mcpauth.crt --key=${HOME}/ingress.mcpauth.key -o yaml | kubectl apply -f -
+
+      - name: Apply k8s manifests changes in DigitalOcean k8s cluster (if any)
+        run: |
+          envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.mcp-auth.prod.yaml | kubectl --context do-sfo2-k8s-gauzy apply -f -
+        env:
+          MCP_AUTH_PORT: "3003"
+          MCP_AUTH_SESSION_SECRET: "${{ secrets.MCP_AUTH_SESSION_SECRET_PROD }}"
+          MCP_AUTH_JWT_ISSUER: "${{ secrets.MCP_AUTH_JWT_ISSUER }}"
+          MCP_AUTH_JWT_AUDIENCE: "${{ secrets.MCP_AUTH_JWT_AUDIENCE_PROD }}"
+          REDIS_URL: "${{ secrets.REDIS_URL }}"
+
+      - name: Restart Pods to pick up :latest tag version
+        run: |
+          kubectl --context do-sfo2-k8s-gauzy rollout restart deployment/gauzy-mcp-auth-prod
