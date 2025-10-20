@@ -8,12 +8,15 @@ import { PROTOCOL_VERSION } from '../config';
 import https from 'node:https';
 import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 import { getEnhancedTLSOptions, validateMCPToolInput, validateRequestSize } from '../common/security-config';
-import { SecurityLogger, SecurityEvents } from '../common/security-logger';
+import { SecurityLogger, SecurityEvents } from '@gauzy/auth';
 
 const logger = new Logger('WebSocketTransport');
 
 // In-memory rate limiter
-interface RateLimitEntry { count: number; resetAt: number; }
+interface RateLimitEntry {
+	count: number;
+	resetAt: number;
+}
 const rateLimiter = new Map<string, RateLimitEntry>();
 const MAX_RATE_LIMIT_ENTRIES = 10000;
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
@@ -74,7 +77,13 @@ interface WebSocketWelcomeMessage {
 	};
 }
 
-type WebSocketMessage = JsonRpcRequest | JsonRpcResponse | JsonRpcErrorResponse | WebSocketPingMessage | WebSocketPongMessage | WebSocketWelcomeMessage;
+type WebSocketMessage =
+	| JsonRpcRequest
+	| JsonRpcResponse
+	| JsonRpcErrorResponse
+	| WebSocketPingMessage
+	| WebSocketPongMessage
+	| WebSocketWelcomeMessage;
 
 // MCP Transport interface
 interface McpTransport {
@@ -142,15 +151,17 @@ export class WebSocketTransport {
 				this.sessionMiddlewareInstance = sessionMiddleware.createWebSocketSessionMiddleware({
 					requireAuth: false, // WebSocket handles its own auth validation
 					validateIP: false,
-					validateUserAgent: false,
+					validateUserAgent: false
 				});
 				this.isInitialized = true;
 			}
 
 			// Create WebSocket server (supports TLS, path, and proper compression flags)
 			let httpsServer: import('node:https').Server | undefined;
-			const perMessageDeflate =
-				!!(this.transportConfig.compression && (this.transportConfig.perMessageDeflate ?? true));
+			const perMessageDeflate = !!(
+				this.transportConfig.compression &&
+				(this.transportConfig.perMessageDeflate ?? true)
+			);
 
 			if (this.transportConfig.tls) {
 				if (!this.transportConfig.cert || !this.transportConfig.key) {
@@ -168,7 +179,7 @@ export class WebSocketTransport {
 					perMessageDeflate,
 					maxPayload: this.transportConfig.maxPayload || 1024 * 1024, // 1MB for security
 					path: this.transportConfig.path,
-					verifyClient: (info) => this.verifyClient(info),
+					verifyClient: (info) => this.verifyClient(info)
 				});
 			} else {
 				this.wss = new WebSocketServer({
@@ -177,7 +188,7 @@ export class WebSocketTransport {
 					perMessageDeflate,
 					maxPayload: this.transportConfig.maxPayload || 1024 * 1024, // 1MB for security
 					path: this.transportConfig.path,
-					verifyClient: (info) => this.verifyClient(info),
+					verifyClient: (info) => this.verifyClient(info)
 				});
 			}
 
@@ -218,7 +229,6 @@ export class WebSocketTransport {
 			this.wss.on('connection', (ws, request) => {
 				this.handleConnection(ws, request);
 			});
-
 		} catch (error) {
 			throw error;
 		}
@@ -282,7 +292,7 @@ export class WebSocketTransport {
 				origin: request.headers.origin,
 				userAgent,
 				remoteAddress: clientIP,
-				url: request.url,
+				url: request.url
 			}
 		};
 
@@ -292,15 +302,11 @@ export class WebSocketTransport {
 
 			if (sessionId) {
 				try {
-					const validation = await this.sessionMiddlewareInstance(
-						sessionId,
-						connectionId,
-						{
-							ipAddress: clientIP,
-							userAgent,
-							origin: request.headers.origin,
-						}
-					);
+					const validation = await this.sessionMiddlewareInstance(sessionId, connectionId, {
+						ipAddress: clientIP,
+						userAgent,
+						origin: request.headers.origin
+					});
 
 					if (validation.valid) {
 						connection.sessionId = sessionId;
@@ -404,7 +410,6 @@ export class WebSocketTransport {
 				logger.warn(`Received invalid message format from ${connection.id}`);
 				this.sendError(connection, null, -32600, 'Invalid Request');
 			}
-
 		} catch (error) {
 			logger.error(`Error parsing message from ${connection.id}:`, error);
 			this.sendError(connection, null, -32700, 'Parse error');
@@ -425,17 +430,17 @@ export class WebSocketTransport {
 			const userContext = connection.userContext;
 			const enrichedParams =
 				userContext && params && !Array.isArray(params)
-				? {
-					...(params as Record<string, unknown>),
-					_context: {
-						userId: userContext.userId,
-						organizationId: userContext.organizationId,
-						tenantId: userContext.tenantId,
-						sessionId: userContext.sessionId,
-						connectionId: connection.id,
-					}
-					}
-				: params;
+					? {
+							...(params as Record<string, unknown>),
+							_context: {
+								userId: userContext.userId,
+								organizationId: userContext.organizationId,
+								tenantId: userContext.tenantId,
+								sessionId: userContext.sessionId,
+								connectionId: connection.id
+							}
+					  }
+					: params;
 
 			// Create a mock transport interface for the MCP server
 			const mockTransport: McpTransport = {
@@ -448,7 +453,7 @@ export class WebSocketTransport {
 							lastMcpMethod: method,
 							lastMcpId: id,
 							lastMcpTimestamp: new Date().toISOString(),
-							connectionType: 'websocket',
+							connectionType: 'websocket'
 						});
 					}
 					this.sendToConnection(connection, response);
@@ -457,14 +462,25 @@ export class WebSocketTransport {
 
 			// Route the request to appropriate MCP server handler
 			await this.routeMcpRequest(method, enrichedParams, id, mockTransport, userContext);
-
 		} catch (error) {
 			logger.error(`Error processing MCP method ${method} for ${connection.id}:`, error);
-			this.sendError(connection, id, -32603, 'Internal error', error instanceof Error ? error.message : 'Unknown error');
+			this.sendError(
+				connection,
+				id,
+				-32603,
+				'Internal error',
+				error instanceof Error ? error.message : 'Unknown error'
+			);
 		}
 	}
 
-	private async routeMcpRequest(method: string, params: Record<string, unknown> | unknown[] | undefined, id: string | number | null | undefined, transport: McpTransport, userContext?: UserContext) {
+	private async routeMcpRequest(
+		method: string,
+		params: Record<string, unknown> | unknown[] | undefined,
+		id: string | number | null | undefined,
+		transport: McpTransport,
+		userContext?: UserContext
+	) {
 		try {
 			// Handle basic MCP protocol methods
 			switch (method) {
@@ -483,27 +499,25 @@ export class WebSocketTransport {
 					});
 					break;
 
-				case 'tools/list':
-					{
-						const tools = await this.getTools();
-						logger.debug(`Tools list: ${JSON.stringify(tools)}`);
-						transport.send({
-							jsonrpc: '2.0',
-							id,
-							result: { tools }
-						});
-						break;
-					}
-				case 'tools/call':
-					{
-						const result = await this.callTool(params as Record<string, unknown>);
-						transport.send({
-							jsonrpc: '2.0',
-							id,
-							result
-						});
-						break;
-					}
+				case 'tools/list': {
+					const tools = await this.getTools();
+					logger.debug(`Tools list: ${JSON.stringify(tools)}`);
+					transport.send({
+						jsonrpc: '2.0',
+						id,
+						result: { tools }
+					});
+					break;
+				}
+				case 'tools/call': {
+					const result = await this.callTool(params as Record<string, unknown>);
+					transport.send({
+						jsonrpc: '2.0',
+						id,
+						result
+					});
+					break;
+				}
 
 				default:
 					transport.send({
@@ -533,7 +547,7 @@ export class WebSocketTransport {
 			const now = Date.now();
 
 			// Return cached tools if cache is still valid
-			if (this.cachedTools && (now - this.cacheTimestamp) < this.CACHE_TTL) {
+			if (this.cachedTools && now - this.cacheTimestamp < this.CACHE_TTL) {
 				logger.debug('Returning cached tools list');
 				return this.cachedTools;
 			}
@@ -558,16 +572,17 @@ export class WebSocketTransport {
 			}
 
 			// Validate and sanitize tool input
-			const { valid, errors, sanitized } = validateMCPToolInput(String(name), (args as Record<string, unknown>) || {});
+			const { valid, errors, sanitized } = validateMCPToolInput(
+				String(name),
+				(args as Record<string, unknown>) || {}
+			);
 			if (!valid) {
 				throw new Error(`Tool input validation failed: ${errors.join(', ')}`);
 			}
 
 			// Never log sensitive args; for login show only argument keys
 			const safeArgsForLog =
-				name === 'login'
-					? { keys: Object.keys((args as Record<string, unknown>) || {}) }
-					: sanitized;
+				name === 'login' ? { keys: Object.keys((args as Record<string, unknown>) || {}) } : sanitized;
 			logger.debug(`Calling tool: ${name} with args:`, safeArgsForLog);
 
 			// Use the public method for tool invocation
@@ -575,7 +590,6 @@ export class WebSocketTransport {
 			logger.debug(`Tool ${name} executed successfully`);
 
 			return result;
-
 		} catch (error) {
 			logger.error('Error calling tool:', error);
 			throw error;
@@ -588,7 +602,9 @@ export class WebSocketTransport {
 				const payload = JSON.stringify(message);
 				// Drop or log when buffering too much (5MB threshold example)
 				if (connection.socket.bufferedAmount > 5 * 1024 * 1024) {
-					logger.warn(`Backpressure: dropping message to ${connection.id} (buffered=${connection.socket.bufferedAmount})`);
+					logger.warn(
+						`Backpressure: dropping message to ${connection.id} (buffered=${connection.socket.bufferedAmount})`
+					);
 					return;
 				}
 				connection.socket.send(payload);
@@ -598,7 +614,13 @@ export class WebSocketTransport {
 		}
 	}
 
-	private sendError(connection: WebSocketConnection, id: string | number | null | undefined, code: number, message: string, data?: unknown): void {
+	private sendError(
+		connection: WebSocketConnection,
+		id: string | number | null | undefined,
+		code: number,
+		message: string,
+		data?: unknown
+	): void {
 		this.sendToConnection(connection, {
 			jsonrpc: '2.0',
 			id: id ?? null,
@@ -624,7 +646,7 @@ export class WebSocketTransport {
 				}
 			});
 			// Delete dead connections after iteration
-        	deadConnections.forEach(id => this.connections.delete(id));
+			deadConnections.forEach((id) => this.connections.delete(id));
 		}, 30000);
 		this.heartbeatInterval.unref?.();
 
@@ -638,7 +660,6 @@ export class WebSocketTransport {
 			logger.debug('WebSocket heartbeat mechanism stopped');
 		}
 	}
-
 
 	private generateConnectionId(): string {
 		const randomPart = crypto.randomBytes(16).toString('hex');
@@ -659,7 +680,10 @@ export class WebSocketTransport {
 			const url = new URL(request.url || '/', baseUrl);
 			return url.searchParams.get('sessionId') || null;
 		} catch (error) {
-			logger.warn(`Failed to parse WebSocket URL for session extraction (host: ${host}, url: ${request.url}):`, error);
+			logger.warn(
+				`Failed to parse WebSocket URL for session extraction (host: ${host}, url: ${request.url}):`,
+				error
+			);
 			return null;
 		}
 	}
@@ -693,21 +717,23 @@ export class WebSocketTransport {
 	}
 
 	// Session management methods (now delegated to centralized session manager)
-	async createSession(options: {
-		userId?: string;
-		userEmail?: string;
-		organizationId?: string;
-		tenantId?: string;
-		metadata?: Record<string, any>;
-		autoAuthenticate?: boolean;
-	} = {}): Promise<{ sessionId: string; created: Date; cookieName?: string }> {
+	async createSession(
+		options: {
+			userId?: string;
+			userEmail?: string;
+			organizationId?: string;
+			tenantId?: string;
+			metadata?: Record<string, any>;
+			autoAuthenticate?: boolean;
+		} = {}
+	): Promise<{ sessionId: string; created: Date; cookieName?: string }> {
 		if (!this.transportConfig.session?.enabled) {
 			throw new Error('Sessions are not enabled for WebSocket transport');
 		}
 
 		const session = await sessionManager.createSession({
 			...options,
-			loginSource: 'websocket',
+			loginSource: 'websocket'
 		});
 
 		logger.debug(`WebSocket session created: ${session.id}`);
@@ -733,7 +759,7 @@ export class WebSocketTransport {
 		});
 
 		// Remove connections from session manager before destroying session
-		connectionsToClose.forEach(connectionId => {
+		connectionsToClose.forEach((connectionId) => {
 			sessionManager.removeConnection(connectionId);
 			const connection = this.connections.get(connectionId);
 			if (connection) {
@@ -759,8 +785,9 @@ export class WebSocketTransport {
 
 	// Send message to specific session
 	sendToSession(sessionId: string, message: WebSocketMessage): boolean {
-		const connectionsInSession = Array.from(this.connections.values())
-			.filter(connection => connection.sessionId === sessionId);
+		const connectionsInSession = Array.from(this.connections.values()).filter(
+			(connection) => connection.sessionId === sessionId
+		);
 
 		if (connectionsInSession.length === 0) {
 			return false;
@@ -823,7 +850,11 @@ export class WebSocketTransport {
 		rateLimiter.set(ip, entry);
 
 		if (entry.count > RATE_LIMIT_MAX_ATTEMPTS) {
-			SecurityLogger.logSecurityEvent(SecurityEvents.RATE_LIMIT_EXCEEDED, 'medium', { ip, origin, count: entry.count });
+			SecurityLogger.logSecurityEvent(SecurityEvents.RATE_LIMIT_EXCEEDED, 'medium', {
+				ip,
+				origin,
+				count: entry.count
+			});
 			return false;
 		}
 
@@ -833,7 +864,7 @@ export class WebSocketTransport {
 			for (const [cleanupIp, cleanupEntry] of rateLimiter) {
 				if (now >= cleanupEntry.resetAt) expiredIps.push(cleanupIp);
 			}
-			expiredIps.forEach(expiredIp => rateLimiter.delete(expiredIp));
+			expiredIps.forEach((expiredIp) => rateLimiter.delete(expiredIp));
 		}
 
 		// Origin validation in production

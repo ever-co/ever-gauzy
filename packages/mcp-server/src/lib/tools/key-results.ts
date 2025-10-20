@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { KeyResultSchema } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('KeyResultTools');
-
 
 /**
  * Helper function to convert date fields in key result data to Date objects
@@ -37,7 +36,10 @@ export const registerKeyResultTools = (server: McpServer) => {
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			search: z.string().optional().describe('Search term for key result name or description'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["goal", "owner", "lead"])'),
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["goal", "owner", "lead"])'),
 			goalId: z.string().uuid().optional().describe('Filter by goal ID'),
 			ownerId: z.string().uuid().optional().describe('Filter by owner ID'),
 			status: z.string().optional().describe('Filter by key result status')
@@ -261,7 +263,11 @@ export const registerKeyResultTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Key result deleted successfully', id }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Key result deleted successfully', id },
+								null,
+								2
+							)
 						}
 					]
 				};
@@ -360,12 +366,14 @@ export const registerKeyResultTools = (server: McpServer) => {
 		'Create an update for a key result',
 		{
 			keyResultId: z.string().uuid().describe('The key result ID'),
-			update_data: z.object({
-				update: z.number().describe('The current value/update'),
-				progress: z.number().min(0).max(100).describe('The progress percentage (0-100)'),
-				description: z.string().optional().describe('Description of the update'),
-				status: z.string().optional().describe('Status of the key result')
-			}).describe('The update data')
+			update_data: z
+				.object({
+					update: z.number().describe('The current value/update'),
+					progress: z.number().min(0).max(100).describe('The progress percentage (0-100)'),
+					description: z.string().optional().describe('Description of the update'),
+					status: z.string().optional().describe('Status of the key result')
+				})
+				.describe('The update data')
 		},
 		async ({ keyResultId, update_data }) => {
 			try {
