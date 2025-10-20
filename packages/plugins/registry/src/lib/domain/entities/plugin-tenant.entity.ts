@@ -5,6 +5,7 @@ import {
 	MultiORMOneToMany,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
+import { ID } from '@gauzy/contracts';
 import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -27,13 +28,12 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	@MultiORMColumn({ type: 'simple-enum', enum: PluginScope, default: PluginScope.TENANT })
 	scope: PluginScope;
 
-	@MultiORMColumn({ type: 'uuid' })
 	@RelationId((pluginTenant: PluginTenant) => pluginTenant.plugin)
-	pluginId: string;
+	@MultiORMColumn({ nullable: true, relationId: true })
+	pluginId: ID;
 
 	// Define relation with Plugin entity
 	@MultiORMManyToOne(() => Plugin, { onDelete: 'CASCADE' })
-	@JoinColumn()
 	plugin: Relation<IPlugin>;
 
 	/*
