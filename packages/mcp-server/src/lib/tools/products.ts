@@ -230,9 +230,9 @@ export const registerProductTools = (server: McpServer) => {
 				const params = {
 					page,
 					limit,
-					...(search && { search }),
+					...(search !== undefined ? { search } : {}),
 					...(relations !== undefined ? { relations } : {}),
-					...(where && { where })
+					...(where !== undefined ? { where } : {})
 				};
 
 				const response = await apiClient.get('/api/products/pagination', { params });
@@ -379,8 +379,6 @@ export const registerProductTools = (server: McpServer) => {
 
 				const updateData = {
 					...convertProductDateFields(product_data),
-					tenantId: defaultParams.tenantId,
-					organizationId: defaultParams.organizationId
 				};
 
 				const response = await apiClient.put(`/api/products/${id}`, updateData);
