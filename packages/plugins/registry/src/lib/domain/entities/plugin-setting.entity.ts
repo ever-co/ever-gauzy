@@ -62,9 +62,9 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	defaultValue?: string;
 
 	/*
-	* Plugin relationship
-	*/
-	@MultiORMColumn({ type: 'uuid' })
+	 * Plugin relationship
+	 */
+	@MultiORMColumn({ type: 'uuid', relationId: true })
 	@RelationId((pluginSetting: PluginSetting) => pluginSetting.plugin)
 	pluginId: ID;
 
@@ -73,13 +73,13 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	plugin: Relation<IPlugin>;
 
 	/*
-	* Plugin Tenant relationship (optional for tenant-specific settings)
-	*/
+	 * Plugin Tenant relationship (optional for tenant-specific settings)
+	 */
 	@ApiPropertyOptional({ type: String, description: 'Plugin tenant ID for tenant-specific settings' })
 	@IsOptional()
 	@IsUUID()
 	@ValidateIf((object, value) => value !== null)
-	@MultiORMColumn({ type: 'uuid', nullable: true })
+	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
 	@RelationId((pluginSetting: PluginSetting) => pluginSetting.pluginTenant)
 	pluginTenantId?: ID;
 
@@ -88,17 +88,17 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	pluginTenant?: Relation<IPluginTenant>;
 
 	/*
-	* Plugin Category relationship (for default category settings)
-	*/
+	 * Plugin Category relationship (for default category settings)
+	 */
 	@ApiPropertyOptional({ type: String, description: 'Plugin category ID for default category settings' })
 	@IsOptional()
 	@IsUUID()
 	@ValidateIf((object, value) => value !== null)
-	@MultiORMColumn({ type: 'uuid', nullable: true })
+	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
 	@RelationId((pluginSetting: PluginSetting) => pluginSetting.category)
 	categoryId?: ID;
 
-	@MultiORMManyToOne('PluginCategory', 'PluginSetting', {
+	@MultiORMManyToOne('PluginCategory', 'settings', {
 		onDelete: 'CASCADE',
 		nullable: true
 	})

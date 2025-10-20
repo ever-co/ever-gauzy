@@ -1,24 +1,27 @@
 import { ID, IEmployee, PluginStatus, PluginType } from '@gauzy/contracts';
 import {
+	BaseEntity,
 	ColumnIndex,
 	Employee,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
-	MultiORMOneToMany,
-	TenantOrganizationBaseEntity
+	MultiORMOneToMany
 } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { BaseEntity, Index, JoinColumn, RelationId } from 'typeorm';
+import { Index, JoinColumn, RelationId, Relation } from 'typeorm';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { IPluginCategory } from '../../shared/models/plugin-category.model';
+import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
+import { IPluginSetting } from '../../shared/models';
+import { PluginCategory } from './plugin-category.entity';
 
-@Index('plugin_name_unique', ['name', 'tenantId', 'organizationId'], { unique: true })
+@Index('plugin_name_unique', ['name'], { unique: true })
 @MultiORMEntity('plugin')
-export class Plugin extends TenantOrganizationBaseEntity implements IPlugin {
+export class Plugin extends BaseEntity implements IPlugin {
 	@ApiProperty({ type: String, description: 'Plugin name' })
 	@IsNotEmpty({ message: 'Plugin name is required' })
 	@IsString({ message: 'Plugin name must be a string' })
@@ -52,18 +55,21 @@ export class Plugin extends TenantOrganizationBaseEntity implements IPlugin {
 	@ApiPropertyOptional({ type: String, description: 'Plugin category ID' })
 	@IsOptional()
 	@IsUUID()
-	@MultiORMColumn({ type: 'uuid', nullable: true })
+	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
 	@RelationId((plugin: Plugin) => plugin.category)
 	categoryId?: string;
 
 	@ApiPropertyOptional({ type: () => Object, description: 'Plugin category' })
-	@MultiORMManyToOne('PluginCategory', 'plugins', {
+	@MultiORMManyToOne(() => PluginCategory, (category) => category.plugins, {
 		onDelete: 'SET NULL',
 		nullable: true
 	})
 	@JoinColumn()
 	category?: IPluginCategory;
 
+	/*
+	 * Plugin Versions relationship
+	 */
 	@ApiProperty({ type: () => Array, description: 'Versions of the plugin' })
 	@MultiORMOneToMany('PluginVersion', 'plugin', { onDelete: 'SET NULL' })
 	versions: IPluginVersion[];
@@ -125,4 +131,31 @@ export class Plugin extends TenantOrganizationBaseEntity implements IPlugin {
 	@IsDate({ message: 'LastDownloadedAt must be a valid date' })
 	@MultiORMColumn({ nullable: true })
 	lastDownloadedAt?: Date;
+
+	/*
+	 * Plugin Tenants relationships - tenant-specific plugin configurations
+	 */
+	@ApiPropertyOptional({ type: () => Array, description: 'Plugin tenants for this plugin' })
+	@MultiORMOneToMany('PluginTenant', 'plugin', {
+		onDelete: 'CASCADE'
+	})
+	tenants?: Relation<IPluginTenant[]>;
+
+	/**
+	 * Plugin Settings relationships - global plugin settings
+	 */
+	@ApiPropertyOptional({ type: () => Array, description: 'Plugin settings' })
+	@MultiORMOneToMany('PluginSetting', 'plugin', {
+		onDelete: 'CASCADE'
+	})
+	settings?: Relation<IPluginSetting[]>;
+
+	/**
+	 * Plugin Subscriptions relationships - subscriptions for this plugin
+	 */
+	@ApiPropertyOptional({ type: () => Array, description: 'Plugin subscriptions' })
+	@MultiORMOneToMany('PluginSubscription', 'plugin', {
+		onDelete: 'CASCADE'
+	})
+	subscriptions?: Relation<import('../../shared/models/plugin-subscription.model').IPluginSubscription[]>;
 }

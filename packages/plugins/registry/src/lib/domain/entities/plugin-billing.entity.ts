@@ -5,10 +5,9 @@ import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne, TenantOrganizationBa
 import { IPluginBilling, PluginBillingStatus } from '../../shared/models/plugin-billing.model';
 import { IPluginSubscription, PluginBillingPeriod } from '../../shared/models/plugin-subscription.model';
 import { PluginSubscription } from './plugin-subscription.entity';
-import { MikroOrmPluginBillingRepository } from '../repositories';
 import { ID } from '@gauzy/contracts';
 
-@MultiORMEntity('plugin_billings', { mikroOrmRepository: () => MikroOrmPluginBillingRepository })
+@MultiORMEntity('plugin_billings')
 export class PluginBilling extends TenantOrganizationBaseEntity implements IPluginBilling {
 	@ApiProperty({ type: Number, description: 'Billing amount' })
 	@IsNumber({}, { message: 'Amount must be a number' })

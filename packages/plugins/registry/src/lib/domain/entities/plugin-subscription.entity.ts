@@ -12,11 +12,19 @@ import {
 	ValidateIf
 } from 'class-validator';
 import { JoinColumn, Relation, RelationId, Index } from 'typeorm';
-import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne, TenantOrganizationBaseEntity, User } from '@gauzy/core';
+import {
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	MultiORMOneToMany,
+	TenantOrganizationBaseEntity,
+	User
+} from '@gauzy/core';
 import { IUser } from '@gauzy/contracts';
 import { IPluginSubscription } from '../../shared/models/plugin-subscription.model';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
+import { IPluginBilling } from '../../shared/models/plugin-billing.model';
 import {
 	PluginSubscriptionStatus,
 	PluginSubscriptionType,
@@ -186,11 +194,14 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	subscriber?: Relation<IUser>;
 
 	/*
-	 * Billing relationships
-	 * Note: Import moved to avoid circular dependency - will be added when needed
-	 * @MultiORMOneToMany(() => PluginBilling, (billing) => billing.subscription, { onDelete: 'CASCADE' })
-	 * billings?: IPluginBilling[];
+	 * Billing relationships - inverse relationship for PluginBilling
+	 * Note: Using optional relationship to avoid circular dependency issues
 	 */
+	@ApiPropertyOptional({ type: () => Array, description: 'Plugin billings for this subscription' })
+	@MultiORMOneToMany('PluginBilling', 'subscription', {
+		onDelete: 'CASCADE'
+	})
+	billings?: any[];
 
 	/*
 	 * Payment relationships - will be added when Payment entity is available

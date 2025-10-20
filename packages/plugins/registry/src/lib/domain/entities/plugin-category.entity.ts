@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	IsBoolean,
 	IsNotEmpty,
 	IsOptional,
 	IsString,
@@ -9,7 +8,6 @@ import {
 	Matches,
 	MaxLength,
 	MinLength,
-	IsJSON,
 	IsObject
 } from 'class-validator';
 import { JoinColumn, Relation, RelationId, Tree, TreeParent, TreeChildren } from 'typeorm';
@@ -23,11 +21,10 @@ import {
 import { IPluginCategory } from '../../shared/models/plugin-category.model';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { IPluginSetting } from '../../shared/models/plugin-setting.model';
-import { MikroOrmPluginCategoryRepository } from '../repositories/mikro-orm-plugin-category.repository';
 import { ID } from '@gauzy/contracts';
 
 @Tree('closure-table')
-@MultiORMEntity('plugin_categories', { mikroOrmRepository: () => MikroOrmPluginCategoryRepository })
+@MultiORMEntity('plugin_categories')
 export class PluginCategory extends TenantOrganizationBaseEntity implements IPluginCategory {
 	@ApiProperty({ type: String, description: 'Category name' })
 	@IsNotEmpty({ message: 'Category name is required' })
