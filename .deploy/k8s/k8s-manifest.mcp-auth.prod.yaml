@@ -32,7 +32,7 @@ spec:
         - name: gauzy-prod-mcp
           image: registry.digitalocean.com/ever/gauzy-mcp-auth:latest
           env:
-            - name: ARG MCP_AUTH_PORT
+            - name: MCP_AUTH_PORT
               value: "3003"
             - name: MCP_AUTH_SESSION_SECRET
               value: "$MCP_AUTH_SESSION_SECRET"
