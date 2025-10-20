@@ -57,7 +57,7 @@ jobs:
 
       - name: Push to Docker Hub Registry
         run: |
-          docker push everco/gauzy-mcp-auth:latest
+        run: |
           docker push everco/gauzy-mcp-auth-stage:latest
 
       - name: Install doctl
