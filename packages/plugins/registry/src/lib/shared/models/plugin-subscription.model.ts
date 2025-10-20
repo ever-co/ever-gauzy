@@ -109,7 +109,7 @@ export enum PluginBillingPeriod {
 export interface IPluginSubscriptionCreateInput
 	extends Omit<
 		IPluginSubscription,
-		'id' | 'createdAt' | 'updatedAt' | 'plugin' | 'pluginTenant' | 'subscriber' | 'payments'
+		'id' | 'createdAt' | 'updatedAt' | 'plugin' | 'pluginTenant' | 'subscriber' | 'payments' | 'billings'
 	> {
 	pluginId: ID;
 	pluginTenantId: ID;
@@ -120,7 +120,7 @@ export interface IPluginSubscriptionCreateInput
  * Interface for updating plugin subscriptions
  */
 export interface IPluginSubscriptionUpdateInput
-	extends Partial<Omit<IPluginSubscriptionCreateInput, 'pluginId' | 'pluginTenantId'>> {}
+	extends Partial<Omit<IPluginSubscriptionCreateInput, 'pluginId' | 'pluginTenantId' | 'billings'>> {}
 
 /**
  * Interface for finding plugin subscriptions
