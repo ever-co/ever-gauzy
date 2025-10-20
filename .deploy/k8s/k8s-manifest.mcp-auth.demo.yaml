@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
         - name: gauzy-demo-mcp
-          image: registry.digitalocean.com/ever/gauzy-mcp-auth:latest
+          image: registry.digitalocean.com/ever/gauzy-mcp-auth-demo:latest
           env:
             - name: MCP_AUTH_PORT
               value: "3003"
