@@ -374,11 +374,11 @@ export const registerProductTools = (server: McpServer) => {
 		},
 		async ({ id, product_data }) => {
 			try {
-				// Get and validate default parameters from authenticated user
-				const defaultParams = getValidatedDefaultParams(authManager);
+				// Validate user is authenticated
+			getValidatedDefaultParams(authManager);
 
 				const updateData = {
-					...convertProductDateFields(product_data),
+					...convertProductDateFields(product_data)
 				};
 
 				const response = await apiClient.put(`/api/products/${id}`, updateData);
