@@ -38,7 +38,7 @@ export class McpOAuthService implements OnModuleInit {
 			issuer: process.env.MCP_AUTH_JWT_ISSUER || baseUrl,
 			baseUrl: baseUrl,
 			audience: process.env.MCP_AUTH_JWT_AUDIENCE || 'gauzy-mcp-api',
-			enableClientRegistration: false,
+			enableClientRegistration: true,
 			authorizationEndpoint: '/oauth2/authorize',
 			tokenEndpoint: '/oauth2/token',
 			jwksEndpoint: '/.well-known/jwks.json',
