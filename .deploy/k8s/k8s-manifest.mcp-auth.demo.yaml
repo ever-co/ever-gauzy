@@ -1,0 +1,75 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: gauzy-mcp-auth-demo-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: gauzy-mcp-auth-demo
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 3003
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gauzy-mcp-auth-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gauzy-mcp-auth-demo
+  template:
+    metadata:
+      labels:
+        app: gauzy-mcp-auth-demo
+    spec:
+      containers:
+        - name: gauzy-demo-mcp
+          image: registry.digitalocean.com/ever/gauzy-mcp-auth-demo:latest
+          env:
+            - name: MCP_AUTH_PORT
+              value: "3003"
+            - name: MCP_AUTH_SESSION_SECRET
+              value: "$MCP_AUTH_SESSION_SECRET"
+            - name: MCP_AUTH_JWT_ISSUER
+              value: "$MCP_AUTH_JWT_ISSUER"
+            - name: MCP_AUTH_JWT_AUDIENCE
+              value: "$MCP_AUTH_JWT_AUDIENCE"
+            - name: REDIS_URL
+              value: "$REDIS_URL"
+
+          ports:
+            - containerPort: 3003
+              protocol: TCP
+              name: http
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gauzy-mcp-auth-demo-ing
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: mcpauthdev.gauzy.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: gauzy-mcp-auth-demo-svc
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - mcpauthdev.gauzy.com
+      secretName: mcpauth.gauzy.co-tls
