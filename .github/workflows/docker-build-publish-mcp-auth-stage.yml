@@ -70,7 +70,7 @@ jobs:
 
       - name: Push to DigitalOcean Registry
         run: |
-          docker push registry.digitalocean.com/ever/gauzy-mcp-auth:latest
+          docker push registry.digitalocean.com/ever/gauzy-mcp-auth-stage:latest
           docker push registry.digitalocean.com/ever/gauzy-mcp-auth-stage:latest
 
       - name: Login to GitHub Container Registry
