@@ -161,9 +161,9 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 			cancelledAt: new Date(),
 			cancellationReason: reason,
 			autoRenew: false
-		} as IPluginSubscriptionUpdateInput);
+		});
 
-		return await this.findOneByIdString(subscriptionId);
+		return this.findOneByIdString(subscriptionId);
 	}
 
 	/**

@@ -15,6 +15,8 @@ import { IPlugin } from '../../shared/models/plugin.model';
 import { IPluginSetting } from '../../shared/models/plugin-setting.model';
 import { IPluginSubscription } from '../../shared/models/plugin-subscription.model';
 import { Plugin } from './plugin.entity';
+import { PluginSubscription } from './plugin-subscription.entity';
+import { PluginSetting } from './plugin-setting.entity';
 
 @MultiORMEntity('plugin_tenants')
 export class PluginTenant extends TenantOrganizationBaseEntity implements IPluginTenant {
@@ -40,7 +42,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	 * Plugin Settings relationships - settings specific to this plugin tenant
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugin settings for this tenant' })
-	@MultiORMOneToMany('PluginSetting', 'pluginTenant', {
+	@MultiORMOneToMany(() => PluginSetting, {
 		onDelete: 'CASCADE'
 	})
 	settings?: Relation<IPluginSetting[]>;
@@ -49,7 +51,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	 * Plugin Subscriptions relationships - subscriptions for this plugin tenant
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugin subscriptions for this tenant' })
-	@MultiORMOneToMany('PluginSubscription', 'pluginTenant', {
+	@MultiORMOneToMany(() => PluginSubscription, {
 		onDelete: 'CASCADE'
 	})
 	subscriptions?: Relation<IPluginSubscription[]>;

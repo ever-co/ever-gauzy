@@ -22,6 +22,8 @@ import { IPluginCategory } from '../../shared/models/plugin-category.model';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { IPluginSetting } from '../../shared/models/plugin-setting.model';
 import { ID } from '@gauzy/contracts';
+import { Plugin } from './plugin.entity';
+import { PluginSetting } from './plugin-setting.entity';
 
 @Tree('closure-table')
 @MultiORMEntity('plugin_categories')
@@ -101,7 +103,7 @@ export class PluginCategory extends TenantOrganizationBaseEntity implements IPlu
 	 * Plugin relationships
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugins in this category' })
-	@MultiORMOneToMany('Plugin', 'category', {
+	@MultiORMOneToMany(() => Plugin, (plugin) => plugin.category, {
 		onDelete: 'SET NULL'
 	})
 	plugins?: Relation<IPlugin[]>;
@@ -110,7 +112,7 @@ export class PluginCategory extends TenantOrganizationBaseEntity implements IPlu
 	 * Default settings for plugins in this category
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Default settings for plugins in this category' })
-	@MultiORMOneToMany('PluginSetting', 'category', {
+	@MultiORMOneToMany(() => PluginSetting, (setting) => setting.category, {
 		onDelete: 'CASCADE'
 	})
 	settings?: Relation<IPluginSetting[]>;

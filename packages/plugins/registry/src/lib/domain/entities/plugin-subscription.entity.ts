@@ -33,6 +33,7 @@ import {
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import { Plugin } from './plugin.entity';
 import { PluginTenant } from './plugin-tenant.entity';
+import { PluginBilling } from './plugin-billing.entity';
 
 @MultiORMEntity('plugin_subscriptions')
 @Index(['pluginId', 'tenantId', 'organizationId'], { unique: false })
@@ -198,7 +199,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	 * Note: Using optional relationship to avoid circular dependency issues
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugin billings for this subscription' })
-	@MultiORMOneToMany('PluginBilling', 'subscription', {
+	@MultiORMOneToMany(() => PluginBilling, (billing) => billing.subscription, {
 		onDelete: 'CASCADE'
 	})
 	billings?: any[];

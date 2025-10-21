@@ -16,8 +16,12 @@ import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { IPluginCategory } from '../../shared/models/plugin-category.model';
 import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
-import { IPluginSetting } from '../../shared/models';
+import { IPluginSetting, IPluginSubscription } from '../../shared/models';
 import { PluginCategory } from './plugin-category.entity';
+import { PluginSubscription } from './plugin-subscription.entity';
+import { PluginSetting } from './plugin-setting.entity';
+import { PluginTenant } from './plugin-tenant.entity';
+import { PluginVersion } from './plugin-version.entity';
 
 @Index('plugin_name_unique', ['name'], { unique: true })
 @MultiORMEntity('plugin')
@@ -71,7 +75,7 @@ export class Plugin extends BaseEntity implements IPlugin {
 	 * Plugin Versions relationship
 	 */
 	@ApiProperty({ type: () => Array, description: 'Versions of the plugin' })
-	@MultiORMOneToMany('PluginVersion', 'plugin', { onDelete: 'SET NULL' })
+	@MultiORMOneToMany(() => PluginVersion, { onDelete: 'SET NULL' })
 	versions: IPluginVersion[];
 
 	@ApiProperty({ type: String, description: 'Plugin author', required: false })
@@ -136,16 +140,16 @@ export class Plugin extends BaseEntity implements IPlugin {
 	 * Plugin Tenants relationships - tenant-specific plugin configurations
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugin tenants for this plugin' })
-	@MultiORMOneToMany('PluginTenant', 'plugin', {
+	@MultiORMOneToMany(() => PluginTenant, {
 		onDelete: 'CASCADE'
 	})
-	tenants?: Relation<IPluginTenant[]>;
+	pluginTenants?: Relation<IPluginTenant[]>;
 
 	/**
 	 * Plugin Settings relationships - global plugin settings
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugin settings' })
-	@MultiORMOneToMany('PluginSetting', 'plugin', {
+	@MultiORMOneToMany(() => PluginSetting, {
 		onDelete: 'CASCADE'
 	})
 	settings?: Relation<IPluginSetting[]>;
@@ -154,8 +158,8 @@ export class Plugin extends BaseEntity implements IPlugin {
 	 * Plugin Subscriptions relationships - subscriptions for this plugin
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugin subscriptions' })
-	@MultiORMOneToMany('PluginSubscription', 'plugin', {
+	@MultiORMOneToMany(() => PluginSubscription, {
 		onDelete: 'CASCADE'
 	})
-	subscriptions?: Relation<import('../../shared/models/plugin-subscription.model').IPluginSubscription[]>;
+	subscriptions?: Relation<IPluginSubscription[]>;
 }

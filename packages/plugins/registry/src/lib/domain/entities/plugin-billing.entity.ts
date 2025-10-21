@@ -152,7 +152,7 @@ export class PluginBilling extends TenantOrganizationBaseEntity implements IPlug
 	@RelationId((pluginBilling: PluginBilling) => pluginBilling.subscription)
 	subscriptionId: ID;
 
-	@MultiORMManyToOne(() => PluginSubscription, { onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => PluginSubscription, (subscription) => subscription.billings, { onDelete: 'CASCADE' })
 	@JoinColumn()
 	subscription: Relation<IPluginSubscription>;
 }
