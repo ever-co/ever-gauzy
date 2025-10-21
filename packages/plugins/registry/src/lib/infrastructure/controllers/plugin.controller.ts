@@ -85,7 +85,7 @@ export class PluginController {
 	@Get(':id')
 	public async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() options: FindOneOptions<IPlugin>
+		@Query() options: FindOneOptions<Plugin>
 	): Promise<IPlugin> {
 		return this.queryBus.execute(new GetPluginQuery(id, options));
 	}
