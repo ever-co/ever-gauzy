@@ -1,11 +1,11 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Min, ValidateIf } from 'class-validator';
-import { JoinColumn, Relation, RelationId } from 'typeorm';
+import { ID } from '@gauzy/contracts';
 import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { JoinColumn, Relation } from 'typeorm';
 import { IPluginBilling, PluginBillingStatus } from '../../shared/models/plugin-billing.model';
 import { IPluginSubscription, PluginBillingPeriod } from '../../shared/models/plugin-subscription.model';
 import { PluginSubscription } from './plugin-subscription.entity';
-import { ID } from '@gauzy/contracts';
 
 @MultiORMEntity('plugin_billings')
 export class PluginBilling extends TenantOrganizationBaseEntity implements IPluginBilling {
@@ -149,7 +149,6 @@ export class PluginBilling extends TenantOrganizationBaseEntity implements IPlug
 	@ApiProperty({ type: String, description: 'Associated subscription ID' })
 	@IsUUID(4, { message: 'Subscription ID must be a valid UUID' })
 	@MultiORMColumn({ type: 'uuid' })
-	@RelationId((pluginBilling: PluginBilling) => pluginBilling.subscription)
 	subscriptionId: ID;
 
 	@MultiORMManyToOne(() => PluginSubscription, (subscription) => subscription.billings, { onDelete: 'CASCADE' })

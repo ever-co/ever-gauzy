@@ -1,16 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsNotEmpty,
-	IsOptional,
-	IsString,
-	IsUUID,
-	IsNumber,
-	Matches,
-	MaxLength,
-	MinLength,
-	IsObject
-} from 'class-validator';
-import { JoinColumn, Relation, RelationId, Tree, TreeParent, TreeChildren } from 'typeorm';
+import { ID } from '@gauzy/contracts';
 import {
 	MultiORMColumn,
 	MultiORMEntity,
@@ -18,12 +6,24 @@ import {
 	MultiORMOneToMany,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	IsNotEmpty,
+	IsNumber,
+	IsObject,
+	IsOptional,
+	IsString,
+	IsUUID,
+	Matches,
+	MaxLength,
+	MinLength
+} from 'class-validator';
+import { JoinColumn, Relation, Tree, TreeChildren, TreeParent } from 'typeorm';
 import { IPluginCategory } from '../../shared/models/plugin-category.model';
-import { IPlugin } from '../../shared/models/plugin.model';
 import { IPluginSetting } from '../../shared/models/plugin-setting.model';
-import { ID } from '@gauzy/contracts';
-import { Plugin } from './plugin.entity';
+import { IPlugin } from '../../shared/models/plugin.model';
 import { PluginSetting } from './plugin-setting.entity';
+import { Plugin } from './plugin.entity';
 
 @Tree('closure-table')
 @MultiORMEntity('plugin_categories')
@@ -83,8 +83,7 @@ export class PluginCategory extends TenantOrganizationBaseEntity implements IPlu
 	@ApiPropertyOptional({ type: String, description: 'Parent category ID' })
 	@IsOptional()
 	@IsUUID()
-	@MultiORMColumn({ type: 'uuid', nullable: true })
-	@RelationId((category: PluginCategory) => category.parent)
+	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
 	parentId?: ID;
 
 	@TreeParent()

@@ -1,3 +1,12 @@
+import { IUser } from '@gauzy/contracts';
+import {
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	MultiORMOneToMany,
+	TenantOrganizationBaseEntity,
+	User
+} from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsBoolean,
@@ -11,29 +20,19 @@ import {
 	Min,
 	ValidateIf
 } from 'class-validator';
-import { JoinColumn, Relation, RelationId, Index } from 'typeorm';
-import {
-	MultiORMColumn,
-	MultiORMEntity,
-	MultiORMManyToOne,
-	MultiORMOneToMany,
-	TenantOrganizationBaseEntity,
-	User
-} from '@gauzy/core';
-import { IUser } from '@gauzy/contracts';
-import { IPluginSubscription } from '../../shared/models/plugin-subscription.model';
-import { IPlugin } from '../../shared/models/plugin.model';
-import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
-import { IPluginBilling } from '../../shared/models/plugin-billing.model';
-import {
-	PluginSubscriptionStatus,
-	PluginSubscriptionType,
-	PluginBillingPeriod
-} from '../../shared/models/plugin-subscription.model';
+import { Index, JoinColumn, Relation } from 'typeorm';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
-import { Plugin } from './plugin.entity';
-import { PluginTenant } from './plugin-tenant.entity';
+import {
+	IPluginSubscription,
+	PluginBillingPeriod,
+	PluginSubscriptionStatus,
+	PluginSubscriptionType
+} from '../../shared/models/plugin-subscription.model';
+import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
+import { IPlugin } from '../../shared/models/plugin.model';
 import { PluginBilling } from './plugin-billing.entity';
+import { PluginTenant } from './plugin-tenant.entity';
+import { Plugin } from './plugin.entity';
 
 @MultiORMEntity('plugin_subscriptions')
 @Index(['pluginId', 'tenantId', 'organizationId'], { unique: false })
@@ -145,8 +144,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@ApiProperty({ type: String, description: 'Plugin ID' })
 	@IsNotEmpty({ message: 'Plugin ID is required' })
 	@IsUUID(4, { message: 'Plugin ID must be a valid UUID' })
-	@MultiORMColumn({ type: 'uuid', nullable: false })
-	@RelationId((pluginSubscription: PluginSubscription) => pluginSubscription.plugin)
+	@MultiORMColumn({ type: 'uuid', nullable: false, relationId: true })
 	pluginId: string;
 
 	@MultiORMManyToOne(() => Plugin, {
@@ -154,7 +152,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 		nullable: false,
 		eager: false
 	})
-	@JoinColumn({ name: 'pluginId' })
+	@JoinColumn()
 	plugin: Relation<IPlugin>;
 
 	/*
@@ -163,8 +161,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@ApiProperty({ type: String, description: 'Plugin Tenant ID' })
 	@IsNotEmpty({ message: 'Plugin Tenant ID is required' })
 	@IsUUID(4, { message: 'Plugin Tenant ID must be a valid UUID' })
-	@MultiORMColumn({ type: 'uuid', nullable: false })
-	@RelationId((pluginSubscription: PluginSubscription) => pluginSubscription.pluginTenant)
+	@MultiORMColumn({ type: 'uuid', nullable: false, relationId: true })
 	pluginTenantId: string;
 
 	@MultiORMManyToOne(() => PluginTenant, {
@@ -172,7 +169,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 		nullable: false,
 		eager: false
 	})
-	@JoinColumn({ name: 'pluginTenantId' })
+	@JoinColumn()
 	pluginTenant: Relation<IPluginTenant>;
 
 	/*
@@ -182,8 +179,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@IsOptional()
 	@IsUUID(4, { message: 'Subscriber ID must be a valid UUID' })
 	@ValidateIf((object, value) => value !== null)
-	@MultiORMColumn({ type: 'uuid', nullable: true })
-	@RelationId((pluginSubscription: PluginSubscription) => pluginSubscription.subscriber)
+	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
 	subscriberId?: string;
 
 	@MultiORMManyToOne(() => User, {
@@ -191,7 +187,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 		nullable: true,
 		eager: false
 	})
-	@JoinColumn({ name: 'subscriberId' })
+	@JoinColumn()
 	subscriber?: Relation<IUser>;
 
 	/*

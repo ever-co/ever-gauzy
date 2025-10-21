@@ -42,7 +42,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	 * Plugin Settings relationships - settings specific to this plugin tenant
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugin settings for this tenant' })
-	@MultiORMOneToMany(() => PluginSetting, {
+	@MultiORMOneToMany(() => PluginSetting, (setting) => setting.pluginTenant, {
 		onDelete: 'CASCADE'
 	})
 	settings?: Relation<IPluginSetting[]>;

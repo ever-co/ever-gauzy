@@ -1,14 +1,15 @@
+import { ID, IUser } from '@gauzy/contracts';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateIf } from 'class-validator';
-import { JoinColumn, Relation, RelationId } from 'typeorm';
-import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne, TenantOrganizationBaseEntity } from '@gauzy/core';
-import { IPluginSetting, PluginSettingDataType } from '../../shared/models/plugin-setting.model';
-import { IPlugin } from '../../shared/models/plugin.model';
-import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
+import { JoinColumn, Relation } from 'typeorm';
 import { IPluginCategory } from '../../shared/models/plugin-category.model';
-import { Plugin } from './plugin.entity';
+import { IPluginSetting, PluginSettingDataType } from '../../shared/models/plugin-setting.model';
+import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
+import { IPlugin } from '../../shared/models/plugin.model';
+import { PluginCategory } from './plugin-category.entity';
 import { PluginTenant } from './plugin-tenant.entity';
-import { ID, IUser } from '@gauzy/contracts';
+import { Plugin } from './plugin.entity';
 
 @MultiORMEntity('plugin_settings')
 export class PluginSetting extends TenantOrganizationBaseEntity implements IPluginSetting {
@@ -65,7 +66,6 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	 * Plugin relationship
 	 */
 	@MultiORMColumn({ type: 'uuid', relationId: true })
-	@RelationId((pluginSetting: PluginSetting) => pluginSetting.plugin)
 	pluginId: ID;
 
 	@MultiORMManyToOne(() => Plugin, { onDelete: 'CASCADE' })
@@ -80,10 +80,9 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	@IsUUID()
 	@ValidateIf((object, value) => value !== null)
 	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
-	@RelationId((pluginSetting: PluginSetting) => pluginSetting.pluginTenant)
 	pluginTenantId?: ID;
 
-	@MultiORMManyToOne(() => PluginTenant, { onDelete: 'CASCADE', nullable: true })
+	@MultiORMManyToOne(() => PluginTenant, (tenant) => tenant.settings, { onDelete: 'CASCADE', nullable: true })
 	@JoinColumn()
 	pluginTenant?: Relation<IPluginTenant>;
 
@@ -95,10 +94,9 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	@IsUUID()
 	@ValidateIf((object, value) => value !== null)
 	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
-	@RelationId((pluginSetting: PluginSetting) => pluginSetting.category)
 	categoryId?: ID;
 
-	@MultiORMManyToOne('PluginCategory', 'settings', {
+	@MultiORMManyToOne(() => PluginCategory, {
 		onDelete: 'CASCADE',
 		nullable: true
 	})
