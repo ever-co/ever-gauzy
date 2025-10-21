@@ -82,7 +82,9 @@ FROM node:20.18.1-alpine3.19 AS dependencies
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
 
-RUN npm install yarn -g --force
+RUN apk add --no-cache python3 make g++ \
+    && npm install yarn -g --force
+
 RUN mkdir /srv/gauzy-mcp && chown -R node:node /srv/gauzy-mcp
 
 USER node:node
@@ -91,12 +93,26 @@ WORKDIR /srv/gauzy-mcp
 
 COPY --chown=node:node apps/mcp/package.json ./apps/mcp/
 COPY --chown=node:node packages/mcp-server/package.json ./packages/mcp-server/
+COPY --chown=node:node packages/auth/package.json ./packages/auth/
+COPY --chown=node:node packages/common/package.json ./packages/common/
+COPY --chown=node:node packages/config/package.json ./packages/config/
+COPY --chown=node:node packages/constants/package.json ./packages/constants/
+COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
+COPY --chown=node:node packages/utils/package.json ./packages/utils/
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn cache clean
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
+    && npm rebuild bcrypt --build-from-source \
+    && yarn cache clean
 
 COPY --chown=node:node apps/mcp ./apps/mcp
-COPY --chown=node:node packages/mcp-server ./packages/mcp-server
+COPY --chown=node:node packages/mcp-server ./packages/mcp-server/
+COPY --chown=node:node packages/auth ./packages/auth/
+COPY --chown=node:node packages/common ./packages/common/
+COPY --chown=node:node packages/config ./packages/config/
+COPY --chown=node:node packages/constants ./packages/constants/
+COPY --chown=node:node packages/contracts ./packages/contracts/
+COPY --chown=node:node packages/utils ./packages/utils/
 
 # BUILD
 FROM dependencies AS build
@@ -123,6 +139,8 @@ RUN yarn build:mcp:prod
 # Only prod dependencies
 FROM node:20.18.1-alpine3.19 AS proddependencies
 
+RUN apk add --no-cache python3 make g++
+
 USER node:node
 
 WORKDIR /srv/gauzy-mcp
@@ -130,7 +148,9 @@ WORKDIR /srv/gauzy-mcp
 COPY --chown=node:node --from=build /srv/gauzy-mcp/dist .
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && yarn cache clean
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
+    && npm rebuild bcrypt --build-from-source \
+    && yarn cache clean
 
 # PROD
 FROM proddependencies AS production
