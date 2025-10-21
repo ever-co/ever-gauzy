@@ -202,7 +202,21 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
-			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE,
+			// Plugin permissions
+			PermissionsEnum.PLUGIN_VIEW,
+			PermissionsEnum.PLUGIN_DISCOVER,
+			PermissionsEnum.PLUGIN_INSTALL,
+			PermissionsEnum.PLUGIN_UNINSTALL,
+			PermissionsEnum.PLUGIN_UPDATE,
+			PermissionsEnum.PLUGIN_ENABLE,
+			PermissionsEnum.PLUGIN_DISABLE,
+			PermissionsEnum.PLUGIN_CONFIGURE,
+			PermissionsEnum.PLUGIN_PUBLISH,
+			PermissionsEnum.PLUGIN_RESTRICT,
+			PermissionsEnum.PLUGIN_DELETE,
+			PermissionsEnum.PLUGIN_DELETE_FOREVER,
+			PermissionsEnum.PLUGIN_ASSIGN_ACCESS
 		]
 	},
 	{
@@ -411,7 +425,21 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
-			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE,
+			// Plugin permissions
+			PermissionsEnum.PLUGIN_VIEW,
+			PermissionsEnum.PLUGIN_DISCOVER,
+			PermissionsEnum.PLUGIN_INSTALL,
+			PermissionsEnum.PLUGIN_UNINSTALL,
+			PermissionsEnum.PLUGIN_UPDATE,
+			PermissionsEnum.PLUGIN_ENABLE,
+			PermissionsEnum.PLUGIN_DISABLE,
+			PermissionsEnum.PLUGIN_CONFIGURE,
+			PermissionsEnum.PLUGIN_PUBLISH,
+			PermissionsEnum.PLUGIN_RESTRICT,
+			PermissionsEnum.PLUGIN_ASSIGN_ACCESS,
+			PermissionsEnum.PLUGIN_DELETE,
+			PermissionsEnum.PLUGIN_DELETE_FOREVER
 		]
 	},
 	{
@@ -449,6 +477,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_HELP_CENTER_EDIT,
 			PermissionsEnum.PROFILE_EDIT,
 			PermissionsEnum.SELECT_EMPLOYEE,
+			PermissionsEnum.PLUGIN_VIEW,
+			PermissionsEnum.PLUGIN_DISCOVER,
+			PermissionsEnum.PLUGIN_CONFIGURE
 		]
 	},
 	{
@@ -553,7 +584,12 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
-			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE,
+			// Plugin permissions
+			PermissionsEnum.PLUGIN_VIEW,
+			PermissionsEnum.PLUGIN_DISCOVER,
+			PermissionsEnum.PLUGIN_INSTALL,
+			PermissionsEnum.PLUGIN_UNINSTALL
 		]
 	},
 	{
@@ -561,19 +597,31 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 		defaultEnabledPermissions: [
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_VIEW,
-			PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW
+			PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW,
+			PermissionsEnum.PLUGIN_VIEW
 		]
 	},
 	{
 		role: RolesEnum.CANDIDATE,
-		defaultEnabledPermissions: []
+		defaultEnabledPermissions: [PermissionsEnum.PLUGIN_VIEW]
 	},
 	{
 		role: RolesEnum.MANAGER,
-		defaultEnabledPermissions: []
+		defaultEnabledPermissions: [
+			// Plugin permissions
+			PermissionsEnum.PLUGIN_VIEW,
+			PermissionsEnum.PLUGIN_DISCOVER,
+			PermissionsEnum.PLUGIN_INSTALL,
+			PermissionsEnum.PLUGIN_UNINSTALL,
+			PermissionsEnum.PLUGIN_UPDATE,
+			PermissionsEnum.PLUGIN_ENABLE,
+			PermissionsEnum.PLUGIN_DISABLE,
+			PermissionsEnum.PLUGIN_CONFIGURE,
+			PermissionsEnum.PLUGIN_DELETE
+		]
 	},
 	{
 		role: RolesEnum.VIEWER,
-		defaultEnabledPermissions: []
+		defaultEnabledPermissions: [PermissionsEnum.PLUGIN_VIEW, PermissionsEnum.PLUGIN_DISCOVER]
 	}
 ];

@@ -25,7 +25,7 @@ export class QueueAudit {
 	}
 
 	dashboardEventUpdate(action: 'update' | 'add', queue: IQueueUpdatePayload) {
-		if (this.appWindow.logWindow) {
+		if (this.appWindow.logWindow && !this.appWindow.logWindow?.webContents?.isDestroyed()) {
 			this.appWindow.logWindow.webContents?.send('DASHBOARD_EVENT', {
 				type: 'api_sync_update',
 				data: {

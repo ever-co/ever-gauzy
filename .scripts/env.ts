@@ -35,6 +35,11 @@ export type Env = Readonly<{
 	SENTRY_DSN: string;
 	SENTRY_TRACES_SAMPLE_RATE: string;
 
+	POSTHOG_KEY: string;
+	POSTHOG_HOST: string;
+	POSTHOG_ENABLED: boolean;
+	POSTHOG_FLUSH_INTERVAL: number;
+
 	GOOGLE_MAPS_API_KEY: string;
 	GOOGLE_PLACE_AUTOCOMPLETE: boolean;
 
@@ -186,6 +191,11 @@ export const env: Env = cleanEnv(
 
 		SENTRY_DSN: str({ default: '' }),
 		SENTRY_TRACES_SAMPLE_RATE: str({ default: '' }),
+
+		POSTHOG_KEY: str({ default: '' }),
+		POSTHOG_HOST: str({ default: '' }),
+		POSTHOG_ENABLED: bool({ default: false }),
+		POSTHOG_FLUSH_INTERVAL: num({ default: 10000 }),
 
 		GOOGLE_MAPS_API_KEY: str({ default: '' }),
 		GOOGLE_PLACE_AUTOCOMPLETE: bool({ default: false }),

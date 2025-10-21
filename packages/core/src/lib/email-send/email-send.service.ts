@@ -135,13 +135,16 @@ export class EmailSendService {
 	 * @returns
 	 */
 	private getEmailConfig(smtpConfig: ISMTPConfig): Email<any> {
+		// Single source of truth for transport normalization
+		const transport: any = SMTPUtils.buildTransportFromSMTPConfig(smtpConfig);
+
 		const config: Email.EmailConfig<any> = {
 			message: {
 				from: smtpConfig.fromAddress || 'noreply@gauzy.co'
 			},
 			// if you want to send emails in development or test environments, set options.send to true.
 			send: true,
-			transport: smtpConfig,
+			transport: transport,
 			i18n: {},
 			views: {
 				options: {

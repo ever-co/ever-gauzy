@@ -71,7 +71,7 @@ export class QueueStore {
 			this.db
 				.prepare(
 					`INSERT OR REPLACE INTO ${this.tableName} (id, lock, task, priority, added)
-           VALUES (@id, '', @task, @priority, @added)`
+					VALUES (@id, '', @task, @priority, @added)`
 				)
 				.run({
 					id: taskId,
@@ -88,19 +88,20 @@ export class QueueStore {
 
 	private lockRows(n: number, orderBy: string): string {
 		const lockId = randomUUID();
-		this.db
-			.prepare(
+		const txn = this.db.transaction(() => {
+			const result = this.db.prepare(
 				`UPDATE ${this.tableName}
-         SET lock=@lockId
-         WHERE id IN (
-           SELECT id FROM ${this.tableName}
-           WHERE lock='' OR lock IS NULL
-           ${orderBy}
-           LIMIT @n
-         )`
-			)
-			.run({ lockId, n });
-		return lockId;
+				SET lock = @lockId
+				WHERE id IN (
+					SELECT id FROM ${this.tableName}
+					WHERE lock='' OR lock IS NULL
+					${orderBy}
+					LIMIT @n
+				)`
+			).run({ lockId, n });
+			return result.changes > 0 ? lockId : '';
+		});
+		return txn();
 	}
 
 	takeFirstN(n: number, cb: (err: any, lockId: string) => void) {

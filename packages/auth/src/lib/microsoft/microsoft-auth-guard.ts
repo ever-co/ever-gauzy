@@ -11,7 +11,7 @@ export class MicrosoftAuthGuard extends AuthGuard('microsoft') {
 	 * @param context - The execution context for the incoming request.
 	 * @returns A boolean, Promise<boolean>, or Observable<boolean> indicating whether access is granted.
 	 */
-	canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
+	override canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
 		const request = context.switchToHttp().getRequest();
 		const baseUrl: string = request.headers.referer;
 		const { roleName } = request.query;

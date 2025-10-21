@@ -38,6 +38,7 @@ import { TaskService } from '../tasks/task.service';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
+import { validateUserDeletion } from './default-protected-users';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -570,11 +571,6 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns
 	 */
 	public async delete(userId: ID): Promise<DeleteResult> {
-		// Do not allow user to delete account in Demo server.
-		if (!!this._configService.get('demo')) {
-			throw new ForbiddenException('Do not allow user to delete account in Demo server');
-		}
-
 		const currentUserId = RequestContext.currentUserId();
 
 		// If user don't have enough permission (CHANGE_SELECTED_EMPLOYEE).
@@ -585,11 +581,15 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 		}
 
+		// Get user first to check email for demo protection
 		const user = await this.findOneByIdString(userId);
 
 		if (!user) {
 			throw new ForbiddenException('User not found for this ID!');
 		}
+
+		// In demo environment, prevent deletion of default users
+		validateUserDeletion(user.email);
 
 		try {
 			// TODO: Unassign all the task assigned to this user
