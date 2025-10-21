@@ -89,7 +89,7 @@ body[data-skeleton-theme='material-dark'] {
   );
   background-size: 200% 100%;
   animation: shimmer 2s ease-in-out infinite;
-  border-radius: 4px;
+  border-radius: var(--skeleton-border-radius, 0.4rem);
 }
 
 .skeleton-layout {
@@ -269,12 +269,12 @@ body[data-skeleton-theme='material-dark'] {
 
     .skeleton-tab-icon {
       @include skeleton-element(20px, 20px);
-      border-radius: 3px;
+      border-radius: var(--skeleton-border-radius);
     }
 
     .skeleton-tab-text {
       @include skeleton-element(80px, 16px);
-      border-radius: 3px;
+      border-radius: var(--skeleton-border-radius);
     }
   }
 }
@@ -290,12 +290,12 @@ body[data-skeleton-theme='material-dark'] {
     .skeleton-page-title {
       @include skeleton-element(300px, 28px);
       margin-bottom: 8px;
-      border-radius: 0.4rem;
+      border-radius: var(--skeleton-border-radius);
     }
 
     .skeleton-page-subtitle {
       @include skeleton-element(350px, 16px);
-      border-radius: 0.4rem;
+      border-radius: var(--skeleton-border-radius);
     }
   }
 
