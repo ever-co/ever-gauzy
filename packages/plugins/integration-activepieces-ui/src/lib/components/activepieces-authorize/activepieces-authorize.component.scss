@@ -1,16 +1,16 @@
-:host {
-	.subtitle {
-		margin-top: 0.5rem;
-		color: nb-theme(text-hint-color);
-		font-size: 0.9rem;
-	}
+.hint {
+	margin-bottom: 20px;
+  }
 
-	.form-text {
-		font-size: 0.875rem;
-		margin-top: 0.25rem;
-	}
+  button {
+	box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.15);
+	border: none !important;
+  }
 
-	nb-alert {
-		margin-bottom: 1.5rem;
+  :host {
+
+	nb-card,
+	nb-card-body {
+	  background-color: var(--gauzy-card-2);
 	}
-}
+  }

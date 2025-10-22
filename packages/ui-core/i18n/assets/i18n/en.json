@@ -61,6 +61,7 @@
 		"REJECT": "Reject",
 		"FIND_TIME": "Find time",
 		"DOWNLOAD": "Download",
+		"LOAD": "Load",
 		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base",
 		"CHOOSE_ICON": "Choose icon",
 		"MAKE_PRIVATE": "make private",
@@ -879,6 +880,7 @@
 		"MAKE_COM": "Make.com",
 		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
+		"ACTIVEPIECES": "Activepieces",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"APPROVALS": "Approvals",
@@ -1454,6 +1456,65 @@
 			"TAB": {
 				"AUTO_SYNC": "Auto sync",
 				"MANUAL_SYNC": "Manual sync"
+			}
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "Your Activepieces integration is ready. Click the button below to authorize.",
+				"INFOS": "Next you will be taken to Activepieces to grant permission to Gauzy.",
+				"START_BUTTON": "Authorize Activepieces",
+				"NEXT": "Next"
+			},
+			"SETTINGS": {
+				"TITLE": "Activepieces Settings",
+				"SUBTITLE": "Configure your Activepieces integration settings",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "Enter your Client ID",
+				"CLIENT_ID_HINT": "Your Activepieces OAuth Client ID",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "Enter your Client Secret",
+				"CLIENT_SECRET_HINT": "Your Activepieces OAuth Client Secret",
+				"SETTINGS_UPDATED": "Activepieces settings updated successfully"
+			},
+			"CONNECTIONS": {
+				"TITLE": "Connections",
+				"SUBTITLE": "Manage your Activepieces connections",
+				"NO_CONNECTIONS": "No connections configured",
+				"DISPLAY_NAME": "Display Name",
+				"NAME": "Connection Name",
+				"TYPE": "Type",
+				"STATUS": "Status",
+				"PIECE_NAME": "Piece Name",
+				"CREATED": "Created",
+				"ACTIONS": "Actions",
+				"ACTIVE": "Active",
+				"INACTIVE": "Inactive"
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP Servers",
+				"NO_SERVERS": "No MCP servers configured",
+				"PROJECT_ID": "Project ID",
+				"NAME": "Server Name",
+				"URL": "Server URL",
+				"STATUS": "Status",
+				"ACTIONS": "Actions"
+			},
+			"TAB": {
+				"CONNECTIONS": "Connections",
+				"MCP_SERVERS": "MCP Servers",
+				"SETTINGS": "Settings"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "Please fill in all required fields",
+				"LOAD_SETTINGS": "Failed to load Activepieces settings",
+				"SAVE_SETTINGS": "Failed to save Activepieces settings",
+				"START_AUTHORIZATION": "Failed to start authorization"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "Successfully authorized with Activepieces",
+				"SETTINGS_SAVED": "Activepieces settings saved successfully"
 			}
 		},
 		"COMING_SOON": "Coming soon",
