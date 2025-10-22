@@ -1,63 +1,59 @@
+import { PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import {
-	Controller,
-	Get,
-	Post,
-	Put,
-	Delete,
 	Body,
-	Param,
-	Query,
+	Controller,
+	Delete,
+	Get,
 	HttpCode,
 	HttpStatus,
-	UseGuards,
+	Param,
 	ParseUUIDPipe,
-	Request
+	Post,
+	Put,
+	Query,
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
-import { TenantPermissionGuard, PermissionGuard, Permissions, RequestContext } from '@gauzy/core';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { PluginSubscription } from '../../domain/entities/plugin-subscription.entity';
 import {
+	CancelPluginSubscriptionDTO,
 	CreatePluginSubscriptionDTO,
-	UpdatePluginSubscriptionDTO,
+	PluginAccessCheckDTO,
 	PluginSubscriptionQueryDTO,
 	PurchasePluginSubscriptionDTO,
-	CancelPluginSubscriptionDTO,
 	RenewPluginSubscriptionDTO,
-	PluginAccessCheckDTO
+	UpdatePluginSubscriptionDTO
 } from '../../shared/dto/plugin-subscription.dto';
-import { PluginSubscription } from '../../domain/entities/plugin-subscription.entity';
 
 // CQRS Commands
 import {
-	PurchasePluginSubscriptionCommand,
-	CreatePluginSubscriptionCommand,
-	UpdatePluginSubscriptionCommand,
-	DeletePluginSubscriptionCommand,
 	CancelPluginSubscriptionCommand,
+	CreatePluginSubscriptionCommand,
+	DeletePluginSubscriptionCommand,
+	ProcessBillingCommand,
+	PurchasePluginSubscriptionCommand,
 	RenewPluginSubscriptionCommand,
-	ProcessBillingCommand
-} from '../../domain/commands';
+	UpdatePluginSubscriptionCommand
+} from '../../application/commands';
 
 // CQRS Queries
 import {
-	GetPluginSubscriptionsQuery,
+	CheckPluginAccessQuery,
+	GetActivePluginSubscriptionQuery,
+	GetExpiringSubscriptionsQuery,
 	GetPluginSubscriptionByIdQuery,
 	GetPluginSubscriptionsByPluginIdQuery,
 	GetPluginSubscriptionsBySubscriberIdQuery,
-	GetActivePluginSubscriptionQuery,
-	CheckPluginAccessQuery,
-	GetExpiringSubscriptionsQuery
-} from '../../domain/queries';
+	GetPluginSubscriptionsQuery
+} from '../../application/queries';
 
 @ApiTags('Plugin Subscriptions')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugin-subscriptions')
 export class PluginSubscriptionController {
-	constructor(
-		private readonly commandBus: CommandBus,
-		private readonly queryBus: QueryBus
-	) {}
+	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
 	@ApiOperation({ summary: 'Purchase plugin subscription' })
 	@ApiResponse({
@@ -73,12 +69,7 @@ export class PluginSubscriptionController {
 		const user = RequestContext.currentUser();
 
 		return await this.commandBus.execute(
-			new PurchasePluginSubscriptionCommand(
-				purchaseDto,
-				tenantId,
-				organizationId,
-				user?.id
-			)
+			new PurchasePluginSubscriptionCommand(purchaseDto, tenantId, organizationId, user?.id)
 		);
 	}
 
@@ -149,11 +140,7 @@ export class PluginSubscriptionController {
 		@Param('subscriberId', ParseUUIDPipe) subscriberId: string
 	): Promise<PluginSubscription[]> {
 		return await this.queryBus.execute(
-			new GetPluginSubscriptionsBySubscriberIdQuery(subscriberId, [
-				'plugin',
-				'pluginTenant',
-				'subscriber'
-			])
+			new GetPluginSubscriptionsBySubscriberIdQuery(subscriberId, ['plugin', 'pluginTenant', 'subscriber'])
 		);
 	}
 
@@ -192,9 +179,7 @@ export class PluginSubscriptionController {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 
-		return await this.queryBus.execute(
-			new CheckPluginAccessQuery(accessCheckDto, tenantId, organizationId)
-		);
+		return await this.queryBus.execute(new CheckPluginAccessQuery(accessCheckDto, tenantId, organizationId));
 	}
 
 	@ApiOperation({ summary: 'Get expiring subscriptions' })

@@ -1,7 +1,7 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { NotFoundException } from '@nestjs/common';
 import { GetPluginSubscriptionByIdQuery } from '../../queries';
-import { PluginSubscriptionService } from '../../services';
+import { PluginSubscriptionService } from '../../../domain/services';
 import { IPluginSubscription } from '../../../shared/models';
 
 @QueryHandler(GetPluginSubscriptionByIdQuery)

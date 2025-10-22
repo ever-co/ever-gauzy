@@ -1,8 +1,8 @@
-import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
-import { GetActivePluginSubscriptionQuery } from '../../queries';
-import { PluginSubscriptionService } from '../../services';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { PluginSubscriptionService } from '../../../domain/services';
 import { IPluginSubscription } from '../../../shared/models';
+import { GetActivePluginSubscriptionQuery } from '../../queries';
 
 @QueryHandler(GetActivePluginSubscriptionQuery)
 export class GetActivePluginSubscriptionQueryHandler implements IQueryHandler<GetActivePluginSubscriptionQuery> {

@@ -1,47 +1,41 @@
+import { IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import {
-	Controller,
-	Get,
-	Post,
-	Put,
-	Delete,
 	Body,
-	Param,
-	Query,
+	Controller,
+	Delete,
+	Get,
 	HttpCode,
 	HttpStatus,
-	UseGuards,
-	ParseUUIDPipe
+	Param,
+	ParseUUIDPipe,
+	Post,
+	Put,
+	Query,
+	UseGuards
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { TenantPermissionGuard, PermissionGuard, Permissions, RequestContext } from '@gauzy/core';
-import { PermissionsEnum, IPagination } from '@gauzy/contracts';
-import {
-	CreatePluginSettingDTO,
-	UpdatePluginSettingDTO,
-	PluginSettingQueryDTO,
-	BulkUpdatePluginSettingsDTO,
-	SetPluginSettingValueDTO
-} from '../../shared/dto/plugin-setting.dto';
+import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PluginSetting } from '../../domain/entities/plugin-setting.entity';
 import { PluginSettingService } from '../../domain/services/plugin-setting.service';
+import {
+	BulkUpdatePluginSettingsDTO,
+	CreatePluginSettingDTO,
+	PluginSettingQueryDTO,
+	SetPluginSettingValueDTO,
+	UpdatePluginSettingDTO
+} from '../../shared/dto/plugin-setting.dto';
 import { IPluginSetting } from '../../shared/models/plugin-setting.model';
 
 // Commands
-import {
-	CreatePluginSettingCommand,
-	UpdatePluginSettingCommand,
-	DeletePluginSettingCommand,
-	SetPluginSettingValueCommand,
-	BulkUpdatePluginSettingsCommand
-} from '../../domain/commands';
+import { CreatePluginSettingCommand } from '../../application/commands';
 
 // Queries
 import {
-	GetPluginSettingsQuery,
 	GetPluginSettingByIdQuery,
-	GetPluginSettingsByPluginIdQuery
-} from '../../domain/queries';
+	GetPluginSettingsByPluginIdQuery,
+	GetPluginSettingsQuery
+} from '../../application/queries';
 
 @ApiTags('Plugin Settings')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
