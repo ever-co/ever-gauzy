@@ -1,3 +1,4 @@
+import { RolePermissionModule } from '@gauzy/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -7,8 +8,8 @@ import { entities } from './domain/entities';
 import { repositories } from './domain/repositories';
 import { services } from './domain/services';
 import { controllers } from './infrastructure/controllers';
+import { PluginSubscriptionGuard } from './infrastructure/guards';
 import { subscribers } from './infrastructure/subscribers';
-import { RolePermissionModule } from '@gauzy/core';
 
 @Module({
 	imports: [
@@ -17,7 +18,7 @@ import { RolePermissionModule } from '@gauzy/core';
 		RolePermissionModule,
 		CqrsModule
 	],
-	providers: [...services, ...handlers, ...repositories, ...subscribers],
+	providers: [...services, ...handlers, ...repositories, ...subscribers, PluginSubscriptionGuard],
 	controllers
 })
 export class PluginRegistryModule {}
