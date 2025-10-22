@@ -1,24 +1,24 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, LessThan, UpdateResult } from 'typeorm';
 import { TenantAwareCrudService } from '@gauzy/core';
-import { PluginBilling } from '../entities/plugin-billing.entity';
+import { Injectable } from '@nestjs/common';
+import { Between, LessThan, UpdateResult } from 'typeorm';
 import {
 	IPluginBilling,
 	IPluginBillingCreateInput,
-	IPluginBillingUpdateInput,
 	IPluginBillingFindInput,
 	IPluginBillingSummary,
+	IPluginBillingUpdateInput,
 	PluginBillingStatus
 } from '../../shared/models/plugin-billing.model';
+import { PluginBilling } from '../entities/plugin-billing.entity';
+import { MikroOrmPluginBillingRepository, TypeOrmPluginBillingRepository } from '../repositories';
 
 @Injectable()
 export class PluginBillingService extends TenantAwareCrudService<PluginBilling> {
 	constructor(
-		@InjectRepository(PluginBilling)
-		private readonly typeOrmPluginBillingRepository: Repository<PluginBilling>
+		public readonly typeOrmPluginBillingRepository: TypeOrmPluginBillingRepository,
+		public readonly mikroOrmPluginBillingRepository: MikroOrmPluginBillingRepository
 	) {
-		super(typeOrmPluginBillingRepository, null);
+		super(typeOrmPluginBillingRepository, mikroOrmPluginBillingRepository);
 	}
 
 	/**

@@ -1,17 +1,18 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
 import { TenantAwareCrudService } from '@gauzy/core';
-import { PluginCategory } from '../entities/plugin-category.entity';
+import { Injectable } from '@nestjs/common';
+import { Not } from 'typeorm';
 import { IPluginCategoryFindInput, IPluginCategoryTree } from '../../shared/models';
+import { PluginCategory } from '../entities/plugin-category.entity';
+import { MikroOrmPluginCategoryRepository } from '../repositories/mikro-orm-plugin-category.repository';
+import { TypeOrmPluginCategoryRepository } from '../repositories/type-orm-plugin-category.repository';
 
 @Injectable()
 export class PluginCategoryService extends TenantAwareCrudService<PluginCategory> {
 	constructor(
-		@InjectRepository(PluginCategory)
-		private readonly typeOrmPluginCategoryRepository: Repository<PluginCategory>
+		public readonly typeOrmPluginCategoryRepository: TypeOrmPluginCategoryRepository,
+		public readonly mikroOrmPluginCategoryRepository: MikroOrmPluginCategoryRepository
 	) {
-		super(typeOrmPluginCategoryRepository, null);
+		super(typeOrmPluginCategoryRepository, mikroOrmPluginCategoryRepository);
 	}
 
 	/**
