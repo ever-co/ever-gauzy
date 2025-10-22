@@ -1,3 +1,4 @@
+import { Public } from '@gauzy/common';
 import { HttpStatus, ID, IPagination } from '@gauzy/contracts';
 import { BaseQueryDTO, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import { Controller, Get, Param, Query } from '@nestjs/common';
@@ -10,6 +11,7 @@ import { Plugin } from '../../domain/entities/plugin.entity';
 import { IPlugin } from '../../shared/models/plugin.model';
 
 @ApiTags('Plugin Registry')
+@Public()
 @Controller('/plugins')
 export class PluginController {
 	constructor(private readonly queryBus: QueryBus) {}
