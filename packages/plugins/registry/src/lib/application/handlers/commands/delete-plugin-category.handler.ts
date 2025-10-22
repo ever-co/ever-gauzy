@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { DeletePluginCategoryCommand } from '../../commands/delete-plugin-category.command';
-import { PluginCategoryService } from '../../services/plugin-category.service';
+import { PluginCategoryService } from '../../../domain/services/plugin-category.service';
 import { DeleteResult } from 'typeorm';
 
 @CommandHandler(DeletePluginCategoryCommand)

@@ -4,9 +4,15 @@ export * from './create-plugin.command';
 export * from './deactivate-plugin.command';
 export * from './delete-plugin.command';
 export * from './install-plugin.command';
+export * from './plugin-install.command';
 export * from './uninstall-plugin.command';
+export * from './plugin-uninstall.command';
 export * from './update-plugin.command';
 export * from './verify-plugin.command';
+
+// Plugin Config Commands  
+export * from './plugin-config-get.command';
+export * from './plugin-config-set.command';
 
 // Plugin Category Commands
 export * from './create-plugin-category.command';

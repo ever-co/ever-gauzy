@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
 import { CreatePluginSubscriptionCommand } from '../../commands';
-import { PluginSubscriptionService } from '../../services';
+import { PluginSubscriptionService } from '../../../domain/services';
 import { IPluginSubscription } from '../../../shared/models';
 
 @CommandHandler(CreatePluginSubscriptionCommand)

@@ -1,9 +1,9 @@
 import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
 import { BadRequestException, Logger } from '@nestjs/common';
 import { SetPluginSettingValueCommand } from '../../commands/set-plugin-setting-value.command';
-import { PluginSettingService } from '../../services/plugin-setting.service';
+import { PluginSettingService } from '../../../domain/services/plugin-setting.service';
 import { IPluginSetting } from '../../../shared/models/plugin-setting.model';
-import { PluginSettingValueSetEvent } from '../../events/plugin-setting-value-set.event';
+import { PluginSettingValueSetEvent } from '../../../domain/events/plugin-setting-value-set.event';
 
 @CommandHandler(SetPluginSettingValueCommand)
 export class SetPluginSettingValueHandler implements ICommandHandler<SetPluginSettingValueCommand> {

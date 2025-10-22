@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { UpdatePluginCategoryCommand } from '../../commands/update-plugin-category.command';
-import { PluginCategoryService } from '../../services/plugin-category.service';
+import { PluginCategoryService } from '../../../domain/services/plugin-category.service';
 import { IPluginCategory } from '../../../shared/models';
 import { UpdateResult } from 'typeorm';
 

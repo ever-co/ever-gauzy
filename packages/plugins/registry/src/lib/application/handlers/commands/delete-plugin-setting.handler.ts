@@ -1,8 +1,8 @@
 import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
 import { BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { DeletePluginSettingCommand } from '../../commands/delete-plugin-setting.command';
-import { PluginSettingService } from '../../services/plugin-setting.service';
-import { PluginSettingDeletedEvent } from '../../events/plugin-setting-deleted.event';
+import { PluginSettingService } from '../../../domain/services/plugin-setting.service';
+import { PluginSettingDeletedEvent } from '../../../domain/events/plugin-setting-deleted.event';
 
 @CommandHandler(DeletePluginSettingCommand)
 export class DeletePluginSettingHandler implements ICommandHandler<DeletePluginSettingCommand> {

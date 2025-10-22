@@ -1,7 +1,7 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { NotFoundException } from '@nestjs/common';
 import { GetPluginCategoryQuery } from '../../queries/get-plugin-category.query';
-import { PluginCategoryService } from '../../services/plugin-category.service';
+import { PluginCategoryService } from '../../../domain/services/plugin-category.service';
 import { IPluginCategory } from '../../../shared/models';
 
 @QueryHandler(GetPluginCategoryQuery)

@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ConflictException, BadRequestException } from '@nestjs/common';
 import { CreatePluginCategoryCommand } from '../../commands/create-plugin-category.command';
-import { PluginCategoryService } from '../../services/plugin-category.service';
+import { PluginCategoryService } from '../../../domain/services/plugin-category.service';
 import { IPluginCategory } from '../../../shared/models';
 
 @CommandHandler(CreatePluginCategoryCommand)
