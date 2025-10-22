@@ -1,11 +1,11 @@
 import { ID } from '@gauzy/contracts';
+import { RequestContext } from '@gauzy/core';
 import { Logger } from '@nestjs/common';
 import { DataSource, EntitySubscriberInterface, EventSubscriber, InsertEvent } from 'typeorm';
 import { Plugin } from '../../domain/entities/plugin.entity';
-import { PluginVersionService } from '../../domain/services/plugin-version.service';
-import { PluginSourceService } from '../../domain/services/plugin-source.service';
 import { PluginInstallationService } from '../../domain/services/plugin-installation.service';
-import { RequestContext } from '@gauzy/core';
+import { PluginSourceService } from '../../domain/services/plugin-source.service';
+import { PluginVersionService } from '../../domain/services/plugin-version.service';
 import { PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 
@@ -41,7 +41,7 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 
 		const entity = event.entity;
 		// Set uploadedBy and uploadedAt
-		entity.uploadedById = RequestContext.currentEmployeeId();
+		entity.uploadedById = RequestContext.currentUserId();
 		entity.uploadedAt = new Date();
 		// Normalize string fields
 		if (entity.name) entity.name = entity.name.trim();

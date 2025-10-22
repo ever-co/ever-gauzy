@@ -219,6 +219,6 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public get isOwner(): boolean {
-		return !!this.store.user && this.store.user.employee?.id === this.plugin?.uploadedById;
+		return !!this.store.user && this.store.user.id === this.plugin?.uploadedById;
 	}
 }

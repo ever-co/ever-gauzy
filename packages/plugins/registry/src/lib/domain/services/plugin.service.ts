@@ -13,13 +13,13 @@ export class PluginService extends TenantAwareCrudService<Plugin> {
 		super(typeOrmPluginRepository, mikroOrmPluginRepository);
 	}
 
-	public async validatePluginOwnership(pluginId: string, employeeId: string): Promise<boolean> {
+	public async validatePluginOwnership(pluginId: string, userId: string): Promise<boolean> {
 		const plugin = await this.findOneOrFailByWhereOptions({ id: pluginId });
 
 		if (!plugin.success) {
 			throw new NotFoundException(`Plugin with ID "${pluginId}" not found.`);
 		}
-		if (plugin.record.uploadedById !== employeeId) {
+		if (plugin.record.uploadedById !== userId) {
 			return false;
 		}
 

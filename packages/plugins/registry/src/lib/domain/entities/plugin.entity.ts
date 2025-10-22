@@ -1,25 +1,25 @@
-import { ID, IEmployee, PluginStatus, PluginType } from '@gauzy/contracts';
+import { ID, IUser, PluginStatus, PluginType } from '@gauzy/contracts';
 import {
 	BaseEntity,
 	ColumnIndex,
-	Employee,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
-	MultiORMOneToMany
+	MultiORMOneToMany,
+	User
 } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { Index, JoinColumn, RelationId, Relation } from 'typeorm';
+import { Index, JoinColumn, Relation, RelationId } from 'typeorm';
+import { IPluginSetting, IPluginSubscription } from '../../shared/models';
+import { IPluginCategory } from '../../shared/models/plugin-category.model';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
+import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPlugin } from '../../shared/models/plugin.model';
-import { IPluginCategory } from '../../shared/models/plugin-category.model';
-import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
-import { IPluginSetting, IPluginSubscription } from '../../shared/models';
 import { PluginCategory } from './plugin-category.entity';
-import { PluginSubscription } from './plugin-subscription.entity';
 import { PluginSetting } from './plugin-setting.entity';
+import { PluginSubscription } from './plugin-subscription.entity';
 import { PluginTenant } from './plugin-tenant.entity';
 import { PluginVersion } from './plugin-version.entity';
 
@@ -102,10 +102,10 @@ export class Plugin extends BaseEntity implements IPlugin {
 	@MultiORMColumn({ nullable: true })
 	repository?: string;
 
-	@ApiProperty({ type: () => Employee, description: 'Employee who uploaded the plugin', required: false })
-	@MultiORMManyToOne(() => Employee, { nullable: true })
+	@ApiProperty({ type: () => User, description: 'User who uploaded the plugin', required: false })
+	@MultiORMManyToOne(() => User, { nullable: true })
 	@JoinColumn()
-	uploadedBy?: IEmployee;
+	uploadedBy?: IUser;
 
 	@RelationId((plugin: Plugin) => plugin.uploadedBy)
 	@ColumnIndex()

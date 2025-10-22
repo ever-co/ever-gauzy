@@ -3,6 +3,7 @@
  */
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployee } from './employee.model';
+import { IUser } from './user.model';
 
 /**
  * Defines the possible states of a plugin
@@ -86,8 +87,8 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
 	homepage?: string; // Optional homepage URL
 	repository?: string; // Optional repository URL
 
-	uploadedBy?: IEmployee; // Employee who uploaded the plugin
-	uploadedById?: ID; // ID reference for the employee who uploaded the plugin
+	uploadedBy?: IUser; // User who uploaded the plugin
+	uploadedById?: ID; // ID reference for the user who uploaded the plugin
 	uploadedAt?: Date; // Optional date when the plugin was uploaded
 
 	source?: IPluginSource; // Optional reference to the plugin's source
