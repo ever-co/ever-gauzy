@@ -6,6 +6,7 @@
 
 ![visitors](https://visitor-badge.laobi.icu/badge?page_id=ever-co.gauzy-platform)
 [![License: AGPL v3][uri_license_image]][uri_license]
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ever-co/ever-gauzy)
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ever-co/ever-gauzy)
 
 ## 💡 What's New
