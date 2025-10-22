@@ -20,7 +20,7 @@ import {
 	Min,
 	ValidateIf
 } from 'class-validator';
-import { Index, JoinColumn, Relation } from 'typeorm';
+import { Index, JoinColumn, Relation, RelationId } from 'typeorm';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import {
 	IPluginSubscription,
@@ -144,6 +144,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@ApiProperty({ type: String, description: 'Plugin ID' })
 	@IsNotEmpty({ message: 'Plugin ID is required' })
 	@IsUUID(4, { message: 'Plugin ID must be a valid UUID' })
+	@RelationId((subscription: PluginSubscription) => subscription.plugin)
 	@MultiORMColumn({ type: 'uuid', nullable: false, relationId: true })
 	pluginId: string;
 
@@ -162,6 +163,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@IsNotEmpty({ message: 'Plugin Tenant ID is required' })
 	@IsUUID(4, { message: 'Plugin Tenant ID must be a valid UUID' })
 	@MultiORMColumn({ type: 'uuid', nullable: false, relationId: true })
+	@RelationId((subscription: PluginSubscription) => subscription.pluginTenant)
 	pluginTenantId: string;
 
 	@MultiORMManyToOne(() => PluginTenant, {
@@ -180,6 +182,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@IsUUID(4, { message: 'Subscriber ID must be a valid UUID' })
 	@ValidateIf((object, value) => value !== null)
 	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
+	@RelationId((subscription: PluginSubscription) => subscription.subscriber)
 	subscriberId?: string;
 
 	@MultiORMManyToOne(() => User, {

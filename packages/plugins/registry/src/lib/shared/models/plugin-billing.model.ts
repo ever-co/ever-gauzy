@@ -53,8 +53,8 @@ export interface IPluginBilling extends IBasePerTenantAndOrganizationEntityModel
 	// Payment reference (to be used when payment system is implemented)
 	paymentReference?: string;
 
-	// Billing metadata (JSON string for flexibility)
-	metadata?: string;
+	// Billing metadata
+	metadata?: Record<string, any>;
 
 	// Retry information for failed billings
 	retryCount?: number;

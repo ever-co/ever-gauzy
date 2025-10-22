@@ -196,7 +196,7 @@ export class PluginBillingService extends TenantAwareCrudService<PluginBilling> 
 			status: PluginBillingStatus.FAILED,
 			lastRetryAt: new Date(),
 			nextRetryAt,
-			metadata: reason ? JSON.stringify({ failureReason: reason }) : billing.metadata
+			metadata: reason ? { ...billing.metadata, failureReason: reason } : billing.metadata
 		});
 	}
 

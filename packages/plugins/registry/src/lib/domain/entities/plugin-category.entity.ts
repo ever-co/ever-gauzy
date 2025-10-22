@@ -18,7 +18,7 @@ import {
 	MaxLength,
 	MinLength
 } from 'class-validator';
-import { JoinColumn, Relation, Tree, TreeChildren, TreeParent } from 'typeorm';
+import { JoinColumn, Relation, RelationId, Tree, TreeChildren, TreeParent } from 'typeorm';
 import { IPluginCategory } from '../../shared/models/plugin-category.model';
 import { IPluginSetting } from '../../shared/models/plugin-setting.model';
 import { IPlugin } from '../../shared/models/plugin.model';
@@ -83,6 +83,7 @@ export class PluginCategory extends TenantOrganizationBaseEntity implements IPlu
 	@ApiPropertyOptional({ type: String, description: 'Parent category ID' })
 	@IsOptional()
 	@IsUUID()
+	@RelationId((category: PluginCategory) => category.parent)
 	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
 	parentId?: ID;
 

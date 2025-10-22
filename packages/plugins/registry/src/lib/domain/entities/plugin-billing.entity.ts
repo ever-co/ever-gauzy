@@ -2,7 +2,7 @@ import { ID } from '@gauzy/contracts';
 import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
-import { JoinColumn, Relation } from 'typeorm';
+import { JoinColumn, Relation, RelationId } from 'typeorm';
 import { IPluginBilling, PluginBillingStatus } from '../../shared/models/plugin-billing.model';
 import { IPluginSubscription, PluginBillingPeriod } from '../../shared/models/plugin-subscription.model';
 import { PluginSubscription } from './plugin-subscription.entity';
@@ -118,11 +118,10 @@ export class PluginBilling extends TenantOrganizationBaseEntity implements IPlug
 	@MultiORMColumn({ nullable: true })
 	paymentReference?: string;
 
-	@ApiPropertyOptional({ type: String, description: 'Billing metadata (JSON string)' })
+	@ApiPropertyOptional({ type: Object, description: 'Billing metadata' })
 	@IsOptional()
-	@IsString({ message: 'Metadata must be a string' })
-	@MultiORMColumn({ type: 'text', nullable: true })
-	metadata?: string;
+	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	metadata?: Record<string, any>;
 
 	@ApiPropertyOptional({ type: Number, description: 'Retry count for failed billings' })
 	@IsOptional()
@@ -148,6 +147,7 @@ export class PluginBilling extends TenantOrganizationBaseEntity implements IPlug
 	 */
 	@ApiProperty({ type: String, description: 'Associated subscription ID' })
 	@IsUUID(4, { message: 'Subscription ID must be a valid UUID' })
+	@RelationId((billing: PluginBilling) => billing.subscription)
 	@MultiORMColumn({ type: 'uuid', relationId: true })
 	subscriptionId: ID;
 

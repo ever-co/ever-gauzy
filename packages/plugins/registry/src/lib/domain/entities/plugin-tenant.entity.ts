@@ -8,7 +8,7 @@ import {
 } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum } from 'class-validator';
-import { Relation } from 'typeorm';
+import { Relation, RelationId } from 'typeorm';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import { IPluginSetting } from '../../shared/models/plugin-setting.model';
 import { IPluginSubscription } from '../../shared/models/plugin-subscription.model';
@@ -30,6 +30,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	@MultiORMColumn({ type: 'simple-enum', enum: PluginScope, default: PluginScope.TENANT })
 	scope: PluginScope;
 
+	@RelationId((tenant: PluginTenant) => tenant.plugin)
 	@MultiORMColumn({ nullable: true, relationId: true })
 	pluginId: ID;
 

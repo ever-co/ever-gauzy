@@ -2,7 +2,7 @@ import { ID, IUser } from '@gauzy/contracts';
 import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateIf } from 'class-validator';
-import { JoinColumn, Relation } from 'typeorm';
+import { JoinColumn, Relation, RelationId } from 'typeorm';
 import { IPluginCategory } from '../../shared/models/plugin-category.model';
 import { IPluginSetting, PluginSettingDataType } from '../../shared/models/plugin-setting.model';
 import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
@@ -66,6 +66,7 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	 * Plugin relationship
 	 */
 	@MultiORMColumn({ type: 'uuid', relationId: true })
+	@RelationId((setting: PluginSetting) => setting.plugin)
 	pluginId: ID;
 
 	@MultiORMManyToOne(() => Plugin, { onDelete: 'CASCADE' })
@@ -79,6 +80,7 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	@IsOptional()
 	@IsUUID()
 	@ValidateIf((object, value) => value !== null)
+	@RelationId((setting: PluginSetting) => setting.pluginTenant)
 	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
 	pluginTenantId?: ID;
 
@@ -93,6 +95,7 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	@IsOptional()
 	@IsUUID()
 	@ValidateIf((object, value) => value !== null)
+	@RelationId((setting: PluginSetting) => setting.category)
 	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
 	categoryId?: ID;
 

@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsUUID, IsNumber, IsDate, IsEnum, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 import { IPluginBillingCreateInput, PluginBillingPeriod } from '../models';
 import { PluginBillingStatus } from '../models/plugin-billing.model';
 
@@ -164,12 +164,11 @@ export class CreatePluginBillingDTO implements IPluginBillingCreateInput {
 	readonly paymentReference?: string;
 
 	@ApiPropertyOptional({
-		description: 'Billing metadata (JSON string)',
-		example: '{"source": "automated", "campaign": "summer2025"}'
+		description: 'Billing metadata',
+		example: { source: 'automated', campaign: 'summer2025' }
 	})
 	@IsOptional()
-	@IsString()
-	readonly metadata?: string;
+	readonly metadata?: Record<string, any>;
 
 	@ApiProperty({
 		description: 'Tenant ID',
