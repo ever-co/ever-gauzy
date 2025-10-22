@@ -1,9 +1,9 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
-import { UpdatePluginSubscriptionCommand } from '../../commands';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { UpdateResult } from 'typeorm';
 import { PluginSubscriptionService } from '../../../domain/services';
 import { IPluginSubscription } from '../../../shared/models';
-import { UpdateResult } from 'typeorm';
+import { UpdatePluginSubscriptionCommand } from '../../commands';
 
 @CommandHandler(UpdatePluginSubscriptionCommand)
 export class UpdatePluginSubscriptionCommandHandler implements ICommandHandler<UpdatePluginSubscriptionCommand> {

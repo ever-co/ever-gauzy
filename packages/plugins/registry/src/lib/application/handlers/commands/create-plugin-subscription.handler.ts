@@ -1,8 +1,8 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
-import { CreatePluginSubscriptionCommand } from '../../commands';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginSubscriptionService } from '../../../domain/services';
 import { IPluginSubscription } from '../../../shared/models';
+import { CreatePluginSubscriptionCommand } from '../../commands';
 
 @CommandHandler(CreatePluginSubscriptionCommand)
 export class CreatePluginSubscriptionCommandHandler implements ICommandHandler<CreatePluginSubscriptionCommand> {

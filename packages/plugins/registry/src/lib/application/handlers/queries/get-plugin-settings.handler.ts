@@ -1,9 +1,9 @@
-import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
+import { IPagination } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
-import { GetPluginSettingsQuery } from '../../queries/get-plugin-settings.query';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PluginSettingService } from '../../../domain/services/plugin-setting.service';
 import { IPluginSetting } from '../../../shared/models/plugin-setting.model';
-import { IPagination } from '@gauzy/contracts';
+import { GetPluginSettingsQuery } from '../../queries/get-plugin-settings.query';
 
 @QueryHandler(GetPluginSettingsQuery)
 export class GetPluginSettingsHandler implements IQueryHandler<GetPluginSettingsQuery> {

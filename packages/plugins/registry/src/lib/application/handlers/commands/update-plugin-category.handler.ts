@@ -1,9 +1,9 @@
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
-import { UpdatePluginCategoryCommand } from '../../commands/update-plugin-category.command';
+import { UpdateResult } from 'typeorm';
 import { PluginCategoryService } from '../../../domain/services/plugin-category.service';
 import { IPluginCategory } from '../../../shared/models';
-import { UpdateResult } from 'typeorm';
+import { UpdatePluginCategoryCommand } from '../../commands/update-plugin-category.command';
 
 @CommandHandler(UpdatePluginCategoryCommand)
 export class UpdatePluginCategoryHandler implements ICommandHandler<UpdatePluginCategoryCommand> {

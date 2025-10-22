@@ -1,7 +1,7 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
-import { ProcessBillingCommand } from '../../commands';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginSubscriptionService } from '../../../domain/services';
+import { ProcessBillingCommand } from '../../commands';
 
 @CommandHandler(ProcessBillingCommand)
 export class ProcessBillingCommandHandler implements ICommandHandler<ProcessBillingCommand> {

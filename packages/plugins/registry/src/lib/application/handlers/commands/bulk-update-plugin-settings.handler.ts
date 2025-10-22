@@ -1,10 +1,10 @@
-import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
 import { BadRequestException, Logger } from '@nestjs/common';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
-import { BulkUpdatePluginSettingsCommand } from '../../commands/bulk-update-plugin-settings.command';
+import { PluginSettingsBulkUpdatedEvent } from '../../../domain/events/plugin-settings-bulk-updated.event';
 import { PluginSettingService } from '../../../domain/services/plugin-setting.service';
 import { IPluginSetting } from '../../../shared/models/plugin-setting.model';
-import { PluginSettingsBulkUpdatedEvent } from '../../../domain/events/plugin-settings-bulk-updated.event';
+import { BulkUpdatePluginSettingsCommand } from '../../commands/bulk-update-plugin-settings.command';
 
 @CommandHandler(BulkUpdatePluginSettingsCommand)
 export class BulkUpdatePluginSettingsHandler implements ICommandHandler<BulkUpdatePluginSettingsCommand> {

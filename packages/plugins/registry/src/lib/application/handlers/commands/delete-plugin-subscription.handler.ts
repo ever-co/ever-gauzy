@@ -1,7 +1,7 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
-import { DeletePluginSubscriptionCommand } from '../../commands';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginSubscriptionService } from '../../../domain/services';
+import { DeletePluginSubscriptionCommand } from '../../commands';
 
 @CommandHandler(DeletePluginSubscriptionCommand)
 export class DeletePluginSubscriptionCommandHandler implements ICommandHandler<DeletePluginSubscriptionCommand> {

@@ -1,8 +1,8 @@
-import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
-import { GetPluginSettingsByPluginIdQuery } from '../../queries/get-plugin-settings-by-plugin-id.query';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PluginSettingService } from '../../../domain/services/plugin-setting.service';
 import { IPluginSetting } from '../../../shared/models/plugin-setting.model';
+import { GetPluginSettingsByPluginIdQuery } from '../../queries/get-plugin-settings-by-plugin-id.query';
 
 @QueryHandler(GetPluginSettingsByPluginIdQuery)
 export class GetPluginSettingsByPluginIdHandler implements IQueryHandler<GetPluginSettingsByPluginIdQuery> {
@@ -23,12 +23,12 @@ export class GetPluginSettingsByPluginIdHandler implements IQueryHandler<GetPlug
 
 			// Filter by tenant if provided
 			if (tenantId) {
-				settings = settings.filter(setting => setting.tenantId === tenantId);
+				settings = settings.filter((setting) => setting.tenantId === tenantId);
 			}
 
 			// Filter by organization if provided
 			if (organizationId) {
-				settings = settings.filter(setting => setting.organizationId === organizationId);
+				settings = settings.filter((setting) => setting.organizationId === organizationId);
 			}
 
 			return settings;

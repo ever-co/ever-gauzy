@@ -1,7 +1,7 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { GetPluginCategoryTreeQuery } from '../../queries/get-plugin-category-tree.query';
 import { PluginCategoryService } from '../../../domain/services/plugin-category.service';
 import { IPluginCategoryTree } from '../../../shared/models';
+import { GetPluginCategoryTreeQuery } from '../../queries/get-plugin-category-tree.query';
 
 @QueryHandler(GetPluginCategoryTreeQuery)
 export class GetPluginCategoryTreeHandler implements IQueryHandler<GetPluginCategoryTreeQuery> {

@@ -1,8 +1,8 @@
+import { IPagination } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { GetPluginCategoriesQuery } from '../../queries/get-plugin-categories.query';
 import { PluginCategoryService } from '../../../domain/services/plugin-category.service';
 import { IPluginCategory } from '../../../shared/models';
-import { IPagination } from '@gauzy/contracts';
+import { GetPluginCategoriesQuery } from '../../queries/get-plugin-categories.query';
 
 @QueryHandler(GetPluginCategoriesQuery)
 export class GetPluginCategoriesHandler implements IQueryHandler<GetPluginCategoriesQuery> {

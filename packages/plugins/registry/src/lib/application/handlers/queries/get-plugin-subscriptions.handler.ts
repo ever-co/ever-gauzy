@@ -1,9 +1,9 @@
-import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { BadRequestException } from '@nestjs/common';
-import { GetPluginSubscriptionsQuery } from '../../queries';
-import { PluginSubscriptionService } from '../../../domain/services';
-import { PluginSubscription } from '../../../domain/entities';
 import { IPagination } from '@gauzy/contracts';
+import { BadRequestException } from '@nestjs/common';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { PluginSubscription } from '../../../domain/entities';
+import { PluginSubscriptionService } from '../../../domain/services';
+import { GetPluginSubscriptionsQuery } from '../../queries';
 
 @QueryHandler(GetPluginSubscriptionsQuery)
 export class GetPluginSubscriptionsQueryHandler implements IQueryHandler<GetPluginSubscriptionsQuery> {
