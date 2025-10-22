@@ -148,7 +148,7 @@ export class PluginBilling extends TenantOrganizationBaseEntity implements IPlug
 	 */
 	@ApiProperty({ type: String, description: 'Associated subscription ID' })
 	@IsUUID(4, { message: 'Subscription ID must be a valid UUID' })
-	@MultiORMColumn({ type: 'uuid' })
+	@MultiORMColumn({ type: 'uuid', relationId: true })
 	subscriptionId: ID;
 
 	@MultiORMManyToOne(() => PluginSubscription, (subscription) => subscription.billings, { onDelete: 'CASCADE' })

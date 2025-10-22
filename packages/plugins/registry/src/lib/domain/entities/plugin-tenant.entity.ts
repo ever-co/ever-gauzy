@@ -1,3 +1,4 @@
+import { ID } from '@gauzy/contracts';
 import {
 	MultiORMColumn,
 	MultiORMEntity,
@@ -5,18 +6,17 @@ import {
 	MultiORMOneToMany,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
-import { ID } from '@gauzy/contracts';
-import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
-import { PluginScope } from '../../shared/models/plugin-scope.model';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum } from 'class-validator';
-import { Relation, RelationId } from 'typeorm';
-import { IPlugin } from '../../shared/models/plugin.model';
+import { Relation } from 'typeorm';
+import { PluginScope } from '../../shared/models/plugin-scope.model';
 import { IPluginSetting } from '../../shared/models/plugin-setting.model';
 import { IPluginSubscription } from '../../shared/models/plugin-subscription.model';
-import { Plugin } from './plugin.entity';
-import { PluginSubscription } from './plugin-subscription.entity';
+import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
+import { IPlugin } from '../../shared/models/plugin.model';
 import { PluginSetting } from './plugin-setting.entity';
+import { PluginSubscription } from './plugin-subscription.entity';
+import { Plugin } from './plugin.entity';
 
 @MultiORMEntity('plugin_tenants')
 export class PluginTenant extends TenantOrganizationBaseEntity implements IPluginTenant {
@@ -30,7 +30,6 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	@MultiORMColumn({ type: 'simple-enum', enum: PluginScope, default: PluginScope.TENANT })
 	scope: PluginScope;
 
-	@RelationId((pluginTenant: PluginTenant) => pluginTenant.plugin)
 	@MultiORMColumn({ nullable: true, relationId: true })
 	pluginId: ID;
 
@@ -51,7 +50,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	 * Plugin Subscriptions relationships - subscriptions for this plugin tenant
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugin subscriptions for this tenant' })
-	@MultiORMOneToMany(() => PluginSubscription, {
+	@MultiORMOneToMany(() => PluginSubscription, (subscription) => subscription.pluginTenant, {
 		onDelete: 'CASCADE'
 	})
 	subscriptions?: Relation<IPluginSubscription[]>;

@@ -75,7 +75,7 @@ export class Plugin extends BaseEntity implements IPlugin {
 	 * Plugin Versions relationship
 	 */
 	@ApiProperty({ type: () => Array, description: 'Versions of the plugin' })
-	@MultiORMOneToMany(() => PluginVersion, { onDelete: 'SET NULL' })
+	@MultiORMOneToMany(() => PluginVersion, (version) => version.plugin, { onDelete: 'SET NULL' })
 	versions: IPluginVersion[];
 
 	@ApiProperty({ type: String, description: 'Plugin author', required: false })
@@ -140,7 +140,7 @@ export class Plugin extends BaseEntity implements IPlugin {
 	 * Plugin Tenants relationships - tenant-specific plugin configurations
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugin tenants for this plugin' })
-	@MultiORMOneToMany(() => PluginTenant, {
+	@MultiORMOneToMany(() => PluginTenant, (tenant) => tenant.plugin, {
 		onDelete: 'CASCADE'
 	})
 	pluginTenants?: Relation<IPluginTenant[]>;
@@ -149,7 +149,7 @@ export class Plugin extends BaseEntity implements IPlugin {
 	 * Plugin Settings relationships - global plugin settings
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugin settings' })
-	@MultiORMOneToMany(() => PluginSetting, {
+	@MultiORMOneToMany(() => PluginSetting, (setting) => setting.plugin, {
 		onDelete: 'CASCADE'
 	})
 	settings?: Relation<IPluginSetting[]>;
@@ -158,7 +158,7 @@ export class Plugin extends BaseEntity implements IPlugin {
 	 * Plugin Subscriptions relationships - subscriptions for this plugin
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugin subscriptions' })
-	@MultiORMOneToMany(() => PluginSubscription, {
+	@MultiORMOneToMany(() => PluginSubscription, (subscription) => subscription.plugin, {
 		onDelete: 'CASCADE'
 	})
 	subscriptions?: Relation<IPluginSubscription[]>;
