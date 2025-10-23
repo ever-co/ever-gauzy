@@ -82,7 +82,7 @@ export async function configureRedisSession(app: any): Promise<void> {
 					port,
 					passphrase: password,
 					keepAlive: 10_000, // enable TCP keepalive (initial delay in ms)
-					reconnectStrategy: (retries: number) => Math.min(1000 + retries * 200, 5000), // gentle exponential backoff
+					reconnectStrategy: (retries: number) => Math.min(1000 + retries * 200, 5000),
 					connectTimeout: 10_000,
 					rejectUnauthorized: process.env.NODE_ENV === 'production'
 				},
