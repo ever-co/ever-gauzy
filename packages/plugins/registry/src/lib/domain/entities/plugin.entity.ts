@@ -14,12 +14,14 @@ import { Index, JoinColumn, Relation, RelationId } from 'typeorm';
 import { IPluginSetting, IPluginSubscription } from '../../shared/models';
 import { IPluginCategory } from '../../shared/models/plugin-category.model';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
+import { IPluginTag } from '../../shared/models/plugin-tag.model';
 import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { PluginCategory } from './plugin-category.entity';
 import { PluginSetting } from './plugin-setting.entity';
 import { PluginSubscription } from './plugin-subscription.entity';
+import { PluginTag } from './plugin-tag.entity';
 import { PluginTenant } from './plugin-tenant.entity';
 import { PluginVersion } from './plugin-version.entity';
 
@@ -162,4 +164,13 @@ export class Plugin extends BaseEntity implements IPlugin {
 		onDelete: 'CASCADE'
 	})
 	subscriptions?: Relation<IPluginSubscription[]>;
+
+	/**
+	 * Plugin Tags relationships - tag associations for this plugin
+	 */
+	@ApiPropertyOptional({ type: () => Array, description: 'Plugin tag relationships' })
+	@MultiORMOneToMany(() => PluginTag, (pluginTag) => pluginTag.plugin, {
+		onDelete: 'CASCADE'
+	})
+	pluginTags?: Relation<IPluginTag[]>;
 }

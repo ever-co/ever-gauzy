@@ -1,6 +1,7 @@
 import type { BaseEntityModel, ID, IUser, PluginStatus, PluginType } from '@gauzy/contracts';
 import type { IPluginSetting } from './plugin-setting.model';
 import type { IPluginSource } from './plugin-source.model';
+import type { IPluginTag } from './plugin-tag.model';
 import type { IPluginTenant } from './plugin-tenant.model';
 import type { IPluginVersion, IPluginVersionUpdate } from './plugin-version.model';
 // Re-export PluginBillingPeriod for external consumers (e.g., DTOs)
@@ -51,4 +52,5 @@ export interface IPlugin extends BaseEntityModel {
 	lastDownloadedAt?: Date; // Optional date when the plugin was last downloaded
 	tenants?: IPluginTenant[]; // List of tenants using the plugin
 	settings?: IPluginSetting[]; // List of global plugin settings
+	pluginTags?: IPluginTag[]; // List of plugin-tag relationships for this plugin
 }

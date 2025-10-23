@@ -46,12 +46,32 @@ import { PluginConfigSetHandler } from './plugin-config-set.handler';
 import { PluginInstallHandler } from './plugin-install.handler';
 import { PluginUninstallHandler } from './plugin-uninstall.handler';
 
+// Plugin Tag Command Handlers
+import { AutoTagPluginHandler } from './plugin-tag/auto-tag-plugin.handler';
+import { BulkCreatePluginTagsHandler } from './plugin-tag/bulk-create-plugin-tags.handler';
+import { CreatePluginTagHandler } from './plugin-tag/create-plugin-tag.handler';
+import {
+	BulkDeletePluginTagsHandler,
+	DeletePluginTagHandler,
+	ReplacePluginTagsHandler
+} from './plugin-tag/delete-plugin-tag.handler';
+import {
+	BulkUpdatePluginTagsHandler,
+	UpdatePluginTagHandler,
+	UpdatePluginTagsPriorityHandler
+} from './plugin-tag/update-plugin-tag.handler';
+
 // Export individual handlers
 export {
 	// Plugin Management Command Handlers
 	ActivatePluginCommandHandler,
+	// Plugin Tag Command Handlers
+	AutoTagPluginHandler,
+	BulkCreatePluginTagsHandler,
+	BulkDeletePluginTagsHandler,
 	// Plugin Settings Command Handlers
 	BulkUpdatePluginSettingsHandler,
+	BulkUpdatePluginTagsHandler,
 	// Plugin Subscription Command Handlers
 	CancelPluginSubscriptionCommandHandler,
 	// Plugin Category Command Handlers
@@ -61,6 +81,7 @@ export {
 	// Plugin Source Command Handlers
 	CreatePluginSourceCommandHandler,
 	CreatePluginSubscriptionCommandHandler,
+	CreatePluginTagHandler,
 	// Plugin Version Command Handlers
 	CreatePluginVersionCommandHandler,
 	DeactivatePluginCommandHandler,
@@ -69,6 +90,7 @@ export {
 	DeletePluginSettingHandler,
 	DeletePluginSourceCommandHandler,
 	DeletePluginSubscriptionCommandHandler,
+	DeletePluginTagHandler,
 	DeletePluginVersionCommandHandler,
 	InstallPluginCommandHandler,
 	// Plugin Configuration Command Handlers
@@ -81,12 +103,15 @@ export {
 	RecoverPluginSourceCommandHandler,
 	RecoverPluginVersionCommandHandler,
 	RenewPluginSubscriptionCommandHandler,
+	ReplacePluginTagsHandler,
 	SetPluginSettingValueHandler,
 	UninstallPluginCommandHandler,
 	UpdatePluginCategoryHandler,
 	UpdatePluginCommandHandler,
 	UpdatePluginSettingHandler,
 	UpdatePluginSubscriptionCommandHandler,
+	UpdatePluginTagHandler,
+	UpdatePluginTagsPriorityHandler,
 	UpdatePluginVersionCommandHandler,
 	VerifyPluginCommandHandler
 };
@@ -139,5 +164,16 @@ export const commands = [
 	PluginConfigGetHandler,
 	PluginConfigSetHandler,
 	PluginInstallHandler,
-	PluginUninstallHandler
+	PluginUninstallHandler,
+
+	// Plugin Tag Command Handlers
+	AutoTagPluginHandler,
+	BulkCreatePluginTagsHandler,
+	BulkDeletePluginTagsHandler,
+	BulkUpdatePluginTagsHandler,
+	CreatePluginTagHandler,
+	DeletePluginTagHandler,
+	ReplacePluginTagsHandler,
+	UpdatePluginTagHandler,
+	UpdatePluginTagsPriorityHandler
 ];

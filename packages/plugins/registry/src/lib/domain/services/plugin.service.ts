@@ -1,16 +1,65 @@
 import { TenantAwareCrudService } from '@gauzy/core';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { AutoTagPluginCommand } from '../../application/commands/auto-tag-plugin.command';
 import { Plugin } from '../entities/plugin.entity';
 import { MikroOrmPluginRepository } from '../repositories/mikro-orm-plugin.repository';
 import { TypeOrmPluginRepository } from '../repositories/type-orm-plugin.repository';
 
 @Injectable()
 export class PluginService extends TenantAwareCrudService<Plugin> {
+	private readonly logger = new Logger(PluginService.name);
+
 	constructor(
 		public readonly typeOrmPluginRepository: TypeOrmPluginRepository,
-		public readonly mikroOrmPluginRepository: MikroOrmPluginRepository
+		public readonly mikroOrmPluginRepository: MikroOrmPluginRepository,
+		private readonly commandBus: CommandBus
 	) {
 		super(typeOrmPluginRepository, mikroOrmPluginRepository);
+	}
+
+	/**
+	 * Create a plugin with auto-tagging functionality
+	 *
+	 * @param entity - Plugin creation data
+	 * @returns Promise<Plugin>
+	 */
+	public async create(entity: Partial<Plugin>): Promise<Plugin> {
+		try {
+			this.logger.log(`Creating plugin: ${entity.name}`);
+
+			// Create the plugin first
+			const plugin = await super.create(entity);
+
+			// Auto-tag the plugin after creation
+			try {
+				await this.commandBus.execute(
+					new AutoTagPluginCommand(
+						plugin.id,
+						{
+							name: plugin.name,
+							description: plugin.description,
+							type: plugin.type
+						},
+						{
+							createMissingTags: true,
+							overwriteExisting: false,
+							tenantId: (entity as any).tenantId,
+							organizationId: (entity as any).organizationId
+						}
+					)
+				);
+				this.logger.log(`Auto-tagging completed for plugin: ${plugin.id}`);
+			} catch (taggingError) {
+				// Log tagging error but don't fail plugin creation
+				this.logger.warn(`Auto-tagging failed for plugin ${plugin.id}: ${taggingError.message}`);
+			}
+
+			return plugin;
+		} catch (error) {
+			this.logger.error(`Failed to create plugin: ${error.message}`, error.stack);
+			throw error;
+		}
 	}
 
 	public async validatePluginOwnership(pluginId: string, userId: string): Promise<boolean> {
