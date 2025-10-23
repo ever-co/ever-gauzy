@@ -92,12 +92,17 @@ export class RedisHealthIndicator extends HealthIndicator {
 				password,
 				isolationPoolOptions: { min: 1, max: 10 }, // Limited connections for health checks
 				socket: {
-					tls: isTls,
+					tls: isTls, // enable TLS only when using rediss:// (kept in sync)
 					host,
 					port: parseInt(port),
 					passphrase: password,
+					keepAlive: 10_000, // enable TCP keepalive (initial delay in ms)
+					reconnectStrategy: (retries: number) => Math.min(1000 + retries * 200, 5000), // gentle exponential backoff
+					connectTimeout: 10_000,
 					rejectUnauthorized: process.env.NODE_ENV === 'production'
 				},
+				// Keep the socket from idling out at LB/firewall
+				pingInterval: 30_000, // send PING every 30s
 				ttl: 60 * 60 // 1 hour
 			};
 
