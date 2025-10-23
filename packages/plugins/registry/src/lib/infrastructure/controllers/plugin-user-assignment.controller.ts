@@ -182,9 +182,9 @@ export class PluginUserAssignmentController {
 	}
 
 	@ApiOperation({
-		summary: 'Check if user has access to plugin installation',
+		summary: 'Get user assignment details',
 		description:
-			'Checks if a specific user has access to the plugin installation. Requires PLUGIN_ASSIGN_ACCESS permission.'
+			'Retrieves user assignment details including access status. Requires PLUGIN_ASSIGN_ACCESS permission.'
 	})
 	@ApiParam({
 		name: 'pluginId',
@@ -206,11 +206,12 @@ export class PluginUserAssignmentController {
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'User access check completed',
+		description: 'User assignment details retrieved',
 		schema: {
 			type: 'object',
 			properties: {
-				hasAccess: { type: 'boolean' }
+				hasAccess: { type: 'boolean' },
+				assignment: { $ref: '#/components/schemas/PluginUserAssignment' }
 			}
 		}
 	})
@@ -219,14 +220,22 @@ export class PluginUserAssignmentController {
 		description: 'Insufficient permissions'
 	})
 	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS)
-	@Get(':userId/access')
-	public async checkUserAccess(
+	@Get(':userId')
+	public async getUserAssignmentDetails(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
 		@Param('installationId', UUIDValidationPipe) installationId: ID,
 		@Param('userId', UUIDValidationPipe) userId: ID
-	): Promise<{ hasAccess: boolean }> {
+	): Promise<{ hasAccess: boolean; assignment?: PluginUserAssignment }> {
 		const hasAccess = await this.queryBus.execute(new CheckUserPluginAccessQuery(installationId, userId));
-		return { hasAccess };
+
+		// If user has access, try to get the assignment details
+		let assignment: PluginUserAssignment | undefined;
+		if (hasAccess) {
+			const assignments = await this.queryBus.execute(new GetPluginUserAssignmentsQuery(installationId, false));
+			assignment = assignments.find((a) => a.userId === userId);
+		}
+
+		return { hasAccess, assignment };
 	}
 }
 
@@ -283,12 +292,12 @@ export class PluginUserAssignmentManagementController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
 	@ApiOperation({
-		summary: 'Bulk assign users to multiple plugin installations',
-		description: 'Assigns users to multiple plugin installations in bulk. Requires PLUGIN_ASSIGN_ACCESS permission.'
+		summary: 'Create multiple plugin user assignments',
+		description: 'Creates multiple plugin user assignments in batch. Requires PLUGIN_ASSIGN_ACCESS permission.'
 	})
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Bulk assignment completed successfully',
+		description: 'Plugin user assignments created successfully',
 		type: [PluginUserAssignment]
 	})
 	@ApiResponse({
@@ -301,8 +310,8 @@ export class PluginUserAssignmentManagementController {
 	})
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS)
-	@Post('bulk-assign')
-	public async bulkAssignUsers(@Body() bulkAssignDto: BulkPluginUserAssignmentDTO): Promise<PluginUserAssignment[]> {
+	@Post('batch')
+	public async createBatch(@Body() bulkAssignDto: BulkPluginUserAssignmentDTO): Promise<PluginUserAssignment[]> {
 		return await this.commandBus.execute(
 			new BulkAssignUsersToPluginsCommand(
 				bulkAssignDto.pluginInstallationIds,

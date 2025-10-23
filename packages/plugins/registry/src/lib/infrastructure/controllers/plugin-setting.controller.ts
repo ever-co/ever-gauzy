@@ -1,6 +1,18 @@
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
-import { Body, Controller, Get, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpStatus,
+	Param,
+	ParseUUIDPipe,
+	Patch,
+	Post,
+	Put,
+	Query,
+	UseGuards
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PluginSetting } from '../../domain/entities/plugin-setting.entity';
@@ -60,6 +72,21 @@ export class PluginSettingController {
 		type: String,
 		format: 'uuid'
 	})
+	@ApiQuery({
+		name: 'category',
+		required: false,
+		description: 'Filter by setting category'
+	})
+	@ApiQuery({
+		name: 'key',
+		required: false,
+		description: 'Filter by setting key'
+	})
+	@ApiQuery({
+		name: 'pluginTenantId',
+		required: false,
+		description: 'Filter by plugin tenant ID'
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Plugin settings retrieved successfully',
@@ -72,6 +99,22 @@ export class PluginSettingController {
 		@Query() query: PluginSettingQueryDTO
 	): Promise<IPluginSetting[]> {
 		const tenantId = RequestContext.currentTenantId();
+
+		// Handle category filter
+		if (query.category) {
+			return this.pluginSettingService.findByCategory(pluginId, query.category, query.pluginTenantId, [
+				'plugin',
+				'pluginTenant'
+			]);
+		}
+
+		// Handle key filter
+		if (query.key) {
+			const setting = await this.pluginSettingService.getSettingValue(pluginId, query.key, query.pluginTenantId);
+			return setting ? [setting] : [];
+		}
+
+		// Default: get all settings
 		return await this.queryBus.execute(
 			new GetPluginSettingsByPluginIdQuery(pluginId, ['plugin', 'pluginTenant'], tenantId, null)
 		);
@@ -97,46 +140,6 @@ export class PluginSettingController {
 		);
 	}
 
-	@ApiOperation({ summary: 'Get plugin settings by category' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Plugin settings retrieved successfully',
-		type: [PluginSetting]
-	})
-	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
-	@ApiParam({ name: 'categoryId', description: 'Setting category ID' })
-	@ApiQuery({ name: 'pluginTenantId', required: false, description: 'Plugin Tenant ID' })
-	@Permissions(PermissionsEnum.PLUGIN_VIEW)
-	@Get('categories/:categoryId')
-	async findByCategory(
-		@Param('pluginId', ParseUUIDPipe) pluginId: string,
-		@Param('categoryId') categoryId: string,
-		@Query('pluginTenantId') pluginTenantId?: string
-	): Promise<PluginSetting[]> {
-		return this.pluginSettingService.findByCategory(pluginId, categoryId, pluginTenantId, [
-			'plugin',
-			'pluginTenant'
-		]);
-	}
-
-	@ApiOperation({ summary: 'Get plugin setting value by key' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Plugin setting value retrieved successfully'
-	})
-	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
-	@ApiParam({ name: 'key', description: 'Setting key' })
-	@ApiQuery({ name: 'pluginTenantId', required: false, description: 'Plugin Tenant ID' })
-	@Permissions(PermissionsEnum.PLUGIN_VIEW)
-	@Get('keys/:key/value')
-	async getSettingValue(
-		@Param('pluginId', ParseUUIDPipe) pluginId: string,
-		@Param('key') key: string,
-		@Query('pluginTenantId') pluginTenantId?: string
-	): Promise<any> {
-		return await this.pluginSettingService.getSettingValue(pluginId, key, pluginTenantId);
-	}
-
 	@ApiOperation({ summary: 'Bulk update plugin settings' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -145,7 +148,7 @@ export class PluginSettingController {
 	})
 	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
 	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
-	@Patch('bulk')
+	@Patch()
 	async bulkUpdateSettings(
 		@Param('pluginId', ParseUUIDPipe) pluginId: string,
 		@Body() bulkUpdateDto: BulkUpdatePluginSettingsDTO
@@ -158,26 +161,51 @@ export class PluginSettingController {
 		return this.pluginSettingService.bulkUpdateSettings(pluginId, settingsWithTenantId);
 	}
 
-	@ApiOperation({ summary: 'Validate plugin setting' })
+	@ApiOperation({ summary: 'Update plugin setting and validate' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Setting validation result'
+		description: 'Setting updated and validation result',
+		schema: {
+			type: 'object',
+			properties: {
+				setting: { $ref: '#/components/schemas/PluginSetting' },
+				validation: {
+					type: 'object',
+					properties: {
+						valid: { type: 'boolean' },
+						errors: { type: 'array', items: { type: 'string' } }
+					}
+				}
+			}
+		}
 	})
 	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
 	@ApiParam({ name: 'id', description: 'Plugin setting ID', type: String, format: 'uuid' })
-	@Permissions(PermissionsEnum.PLUGIN_VIEW)
-	@Post(':id/validate')
-	async validateSetting(
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
+	@Put(':id')
+	async updateAndValidate(
 		@Param('pluginId', ParseUUIDPipe) pluginId: string,
 		@Param('id', ParseUUIDPipe) id: string,
-		@Body('value') value: any
-	): Promise<{ valid: boolean; errors?: string[] }> {
+		@Body() updateData: { value: any; [key: string]: any }
+	): Promise<{ setting: IPluginSetting; validation: { valid: boolean; errors?: string[] } }> {
 		const setting = await this.pluginSettingService.findOneByIdString(id);
-		const isValid = await this.pluginSettingService.validateSetting(setting, value);
+		const isValid = await this.pluginSettingService.validateSetting(setting, updateData.value);
 
-		return {
-			valid: isValid,
-			errors: isValid ? undefined : ['Validation failed']
-		};
+		// Update the setting if validation passes
+		if (isValid) {
+			const updatedSetting = await this.pluginSettingService.update(id, updateData);
+			return {
+				setting: updatedSetting as IPluginSetting,
+				validation: { valid: true }
+			};
+		} else {
+			return {
+				setting,
+				validation: {
+					valid: false,
+					errors: ['Validation failed']
+				}
+			};
+		}
 	}
 }

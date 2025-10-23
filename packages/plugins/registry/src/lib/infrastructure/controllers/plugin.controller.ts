@@ -1,6 +1,6 @@
 import { Public } from '@gauzy/common';
 import { HttpStatus, ID, IPagination } from '@gauzy/contracts';
-import { BaseQueryDTO, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
+import { UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -19,38 +19,12 @@ export class PluginController {
 	constructor(private readonly queryBus: QueryBus) {}
 
 	/**
-	 * Search and filter plugins with advanced criteria.
+	 * Retrieves a paginated list of plugins with optional filtering and search.
 	 */
 	@ApiOperation({
-		summary: 'Search and filter plugins',
-		description: 'Search and filter plugins using advanced criteria including text search, type, status, category, and more.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Plugins found and filtered successfully.',
-		type: Plugin,
-		isArray: true
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid search criteria provided.'
-	})
-	@UseValidationPipe({
-		whitelist: true,
-		transform: true,
-		forbidNonWhitelisted: true
-	})
-	@Get('search')
-	public async search(@Query() filters: PluginSearchFilterDTO): Promise<IPagination<IPlugin>> {
-		return this.queryBus.execute(new SearchPluginsQuery(filters));
-	}
-
-	/**
-	 * Retrieves a paginated list of plugins with optional filtering.
-	 */
-	@ApiOperation({
-		summary: 'List all plugins',
-		description: 'Retrieve a paginated list of plugins with optional filtering capabilities.'
+		summary: 'List all plugins with optional search and filtering',
+		description:
+			'Retrieve a paginated list of plugins with optional filtering and search capabilities. Use query parameters for search, category, status, type filtering.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -66,9 +40,23 @@ export class PluginController {
 		status: HttpStatus.UNAUTHORIZED,
 		description: 'Unauthorized access.'
 	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid search or filter criteria provided.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
 	@Get()
-	public async findAll(@Query() params: BaseQueryDTO<IPlugin>): Promise<IPagination<IPlugin>> {
-		return this.queryBus.execute(new ListPluginsQuery(params));
+	public async findAll(@Query() params: PluginSearchFilterDTO): Promise<IPagination<IPlugin>> {
+		// If search parameters are provided, use search query, otherwise use list query
+		if (params.search || params.type || params.status || params.categoryId || params.tags || params.author) {
+			return this.queryBus.execute(new SearchPluginsQuery(params));
+		}
+		// Use simple base parameters for list query
+		return this.queryBus.execute(new ListPluginsQuery({ where: {} }));
 	}
 
 	/**

@@ -15,6 +15,7 @@ import {
 	Delete,
 	Get,
 	Param,
+	Patch,
 	Post,
 	Put,
 	Query,
@@ -247,11 +248,11 @@ export class PluginVersionController {
 	}
 
 	/**
-	 * Recover a soft-deleted plugin version.
+	 * Update plugin version status (including restoration)
 	 */
 	@ApiOperation({
-		summary: 'Recover a deleted plugin version',
-		description: 'Soft-recovers a previously deleted plugin version using its UUID and the plugin ID.'
+		summary: 'Update plugin version status',
+		description: 'Updates a plugin version status, including restoring deleted versions.'
 	})
 	@ApiParam({
 		name: 'pluginId',
@@ -264,12 +265,26 @@ export class PluginVersionController {
 		name: 'versionId',
 		type: String,
 		format: 'uuid',
-		description: 'UUID of the plugin version to recover',
+		description: 'UUID of the plugin version to update',
 		required: true
+	})
+	@ApiBody({
+		description: 'Status update data',
+		schema: {
+			type: 'object',
+			properties: {
+				status: {
+					type: 'string',
+					enum: ['active', 'inactive', 'deleted', 'restored'],
+					description: 'The new status for the plugin version'
+				}
+			},
+			required: ['status']
+		}
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Plugin version recovered successfully.'
+		description: 'Plugin version status updated successfully.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -277,7 +292,7 @@ export class PluginVersionController {
 	})
 	@ApiResponse({
 		status: HttpStatus.FORBIDDEN,
-		description: 'User does not have permission to recover this plugin version.'
+		description: 'User does not have permission to update this plugin version.'
 	})
 	@ApiResponse({
 		status: HttpStatus.UNAUTHORIZED,
@@ -289,12 +304,19 @@ export class PluginVersionController {
 		forbidNonWhitelisted: true
 	})
 	@UseGuards(PluginOwnerGuard)
-	@Post(':versionId')
-	public async recover(
+	@Patch(':versionId/status')
+	public async updateStatus(
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
-		@Param('pluginId', UUIDValidationPipe) pluginId: ID
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
+		@Body() updateDto: { status: 'active' | 'inactive' | 'deleted' | 'restored' }
 	): Promise<void> {
-		return this.commandBus.execute(new RecoverPluginVersionCommand(versionId, pluginId));
+		if (updateDto.status === 'restored') {
+			return this.commandBus.execute(new RecoverPluginVersionCommand(versionId, pluginId));
+		}
+
+		// Handle other status updates as needed
+		// Note: Implement appropriate command handling for other statuses
+		throw new Error(`Status '${updateDto.status}' update not implemented yet`);
 	}
 
 	/**

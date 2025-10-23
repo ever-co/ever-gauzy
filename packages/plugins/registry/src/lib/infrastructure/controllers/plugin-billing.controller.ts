@@ -14,17 +14,21 @@ import {
 	UseGuards,
 	ValidationPipe
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { UpdateResult } from 'typeorm';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PluginBillingService } from '../../domain/services/plugin-billing.service';
 import { CreatePluginBillingDTO } from '../../shared/dto/create-plugin-billing.dto';
 import { UpdatePluginBillingDTO } from '../../shared/dto/update-plugin-billing.dto';
-import { IPluginBilling, IPluginBillingFindInput, IPluginBillingSummary } from '../../shared/models';
+import {
+	IPluginBilling,
+	IPluginBillingFindInput,
+	IPluginBillingSummary,
+	PluginBillingStatus
+} from '../../shared/models';
 
 @ApiTags('Plugin Billing')
 @ApiBearerAuth()
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller('plugin-billings')
+@Controller('plugins/:pluginId/subscriptions/:subscriptionId/billings')
 export class PluginBillingController {
 	constructor(private readonly pluginBillingService: PluginBillingService) {}
 
@@ -48,18 +52,53 @@ export class PluginBillingController {
 	 * Get all plugin billing records
 	 */
 	@ApiOperation({ summary: 'Get all plugin billing records' })
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
+	@ApiParam({ name: 'subscriptionId', description: 'Subscription ID', type: String, format: 'uuid' })
+	@ApiQuery({
+		name: 'status',
+		required: false,
+		description: 'Filter by billing status (overdue, paid, pending, failed)'
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Plugin billing records retrieved successfully'
 	})
 	@Get()
 	async findAll(
+		@Param('pluginId', UUIDValidationPipe) pluginId: string,
+		@Param('subscriptionId', UUIDValidationPipe) subscriptionId: string,
+		@Query('status') status?: 'overdue' | 'paid' | 'pending' | 'failed',
 		@Query(new ValidationPipe({ whitelist: true, transform: true }))
 		options?: IPluginBillingFindInput
 	): Promise<IPagination<IPluginBilling>> {
-		if (options && Object.keys(options).length > 0) {
-			const result = await this.pluginBillingService.findBillings(options);
-			// Convert array to IPagination format
+		// Build search criteria
+		const searchOptions: IPluginBillingFindInput = {
+			...options,
+			subscriptionId
+		};
+
+		// Handle status filter
+		if (status === 'overdue') {
+			const overdueResults = await this.pluginBillingService.getOverdueBillings();
+			return {
+				items: overdueResults.filter((bill) => bill.subscriptionId === subscriptionId),
+				total: overdueResults.filter((bill) => bill.subscriptionId === subscriptionId).length
+			};
+		}
+
+		if (status) {
+			// Map string status to enum
+			const statusMap = {
+				overdue: PluginBillingStatus.OVERDUE,
+				paid: PluginBillingStatus.PAID,
+				pending: PluginBillingStatus.PENDING,
+				failed: PluginBillingStatus.FAILED
+			};
+			searchOptions.status = statusMap[status];
+		}
+
+		if (searchOptions && Object.keys(searchOptions).length > 0) {
+			const result = await this.pluginBillingService.findBillings(searchOptions);
 			return {
 				items: result,
 				total: result.length
@@ -69,28 +108,18 @@ export class PluginBillingController {
 	}
 
 	/**
-	 * Get overdue billing records
-	 */
-	@ApiOperation({ summary: 'Get overdue billing records' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Overdue billing records retrieved successfully'
-	})
-	@Get('overdue')
-	async getOverdue(): Promise<IPluginBilling[]> {
-		return this.pluginBillingService.getOverdueBillings();
-	}
-
-	/**
 	 * Get billing summary for a subscription
 	 */
 	@ApiOperation({ summary: 'Get billing summary for subscription' })
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
+	@ApiParam({ name: 'subscriptionId', description: 'Subscription ID', type: String, format: 'uuid' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Billing summary retrieved successfully'
 	})
-	@Get('summary/:subscriptionId')
+	@Get('summary')
 	async getBillingSummary(
+		@Param('pluginId', UUIDValidationPipe) pluginId: string,
 		@Param('subscriptionId', UUIDValidationPipe) subscriptionId: string
 	): Promise<IPluginBillingSummary> {
 		return this.pluginBillingService.getBillingSummary(subscriptionId);
@@ -131,6 +160,9 @@ export class PluginBillingController {
 	 * Update billing record status
 	 */
 	@ApiOperation({ summary: 'Update billing record status' })
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
+	@ApiParam({ name: 'subscriptionId', description: 'Subscription ID', type: String, format: 'uuid' })
+	@ApiParam({ name: 'id', description: 'Billing record ID', type: String, format: 'uuid' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Billing record status updated successfully'
@@ -138,43 +170,19 @@ export class PluginBillingController {
 	@Patch(':id')
 	@UseValidationPipe({ whitelist: true })
 	async updateStatus(
+		@Param('pluginId', UUIDValidationPipe) pluginId: string,
+		@Param('subscriptionId', UUIDValidationPipe) subscriptionId: string,
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() input: UpdatePluginBillingDTO
+		@Body() input: { status: 'paid' | 'failed'; paymentReference?: string; reason?: string }
 	): Promise<IPluginBilling> {
-		await this.pluginBillingService.update(id, input);
+		if (input.status === 'paid') {
+			await this.pluginBillingService.markAsPaid(id, input.paymentReference);
+		} else if (input.status === 'failed') {
+			await this.pluginBillingService.markAsFailed(id, input.reason);
+		} else {
+			// General status update
+			await this.pluginBillingService.update(id, { status: input.status as any });
+		}
 		return await this.pluginBillingService.findOneByIdString(id);
-	}
-
-	/**
-	 * Mark billing record as paid
-	 */
-	@ApiOperation({ summary: 'Mark billing record as paid' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Billing record marked as paid'
-	})
-	@Patch(':id/paid')
-	async markAsPaid(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body('paymentReference') paymentReference?: string
-	): Promise<IPluginBilling> {
-		await this.pluginBillingService.markAsPaid(id, paymentReference);
-		return await this.pluginBillingService.findOneByIdString(id);
-	}
-
-	/**
-	 * Mark billing record as failed
-	 */
-	@ApiOperation({ summary: 'Mark billing record as failed' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Billing record marked as failed'
-	})
-	@Patch(':id/failed')
-	async markAsFailed(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body('reason') reason?: string
-	): Promise<IPluginBilling | UpdateResult> {
-		return this.pluginBillingService.markAsFailed(id, reason);
 	}
 }

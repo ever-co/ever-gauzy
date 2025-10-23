@@ -8,6 +8,7 @@ import {
 	HttpCode,
 	HttpStatus,
 	Param,
+	Patch,
 	Post,
 	Put,
 	Query,
@@ -15,7 +16,7 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import {
 	CreatePluginCategoryCommand,
@@ -30,7 +31,7 @@ import {
 import { CreatePluginCategoryDTO } from '../../shared/dto/create-plugin-category.dto';
 import { PluginCategoryQueryDTO } from '../../shared/dto/plugin-category-query.dto';
 import { UpdatePluginCategoryDTO } from '../../shared/dto/update-plugin-category.dto';
-import { IPluginCategory, IPluginCategoryFindInput, IPluginCategoryTree } from '../../shared/models';
+import { IPluginCategory, IPluginCategoryTree } from '../../shared/models';
 
 @ApiTags('Plugin Categories')
 @ApiBearerAuth()
@@ -62,35 +63,29 @@ export class PluginCategoryController {
 	}
 
 	/**
-	 * Get all plugin categories
+	 * Get all plugin categories with optional tree format
 	 */
 	@ApiOperation({ summary: 'Get all plugin categories' })
+	@ApiQuery({
+		name: 'format',
+		required: false,
+		description: 'Response format (tree for hierarchical structure)',
+		enum: ['tree', 'flat']
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Plugin categories retrieved successfully'
 	})
 	@Get()
 	async findAll(
+		@Query('format') format?: 'tree' | 'flat',
 		@Query(new ValidationPipe({ whitelist: true, transform: true }))
-		options: PluginCategoryQueryDTO
-	): Promise<IPagination<IPluginCategory>> {
+		options?: PluginCategoryQueryDTO
+	): Promise<IPagination<IPluginCategory> | IPluginCategoryTree[]> {
+		if (format === 'tree') {
+			return this.queryBus.execute(new GetPluginCategoryTreeQuery(options));
+		}
 		return this.queryBus.execute(new GetPluginCategoriesQuery(options));
-	}
-
-	/**
-	 * Get plugin category tree structure
-	 */
-	@ApiOperation({ summary: 'Get plugin category tree' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Plugin category tree retrieved successfully'
-	})
-	@Get('tree')
-	async getTree(
-		@Query(new ValidationPipe({ whitelist: true, transform: true }))
-		options?: IPluginCategoryFindInput
-	): Promise<IPluginCategoryTree[]> {
-		return this.queryBus.execute(new GetPluginCategoryTreeQuery(options));
 	}
 
 	/**
@@ -110,7 +105,7 @@ export class PluginCategoryController {
 	}
 
 	/**
-	 * Update plugin category
+	 * Update plugin category (full replacement)
 	 */
 	@ApiOperation({ summary: 'Update plugin category' })
 	@ApiResponse({
@@ -124,6 +119,23 @@ export class PluginCategoryController {
 		@Body() input: UpdatePluginCategoryDTO
 	): Promise<IPluginCategory> {
 		return this.commandBus.execute(new UpdatePluginCategoryCommand(id, input));
+	}
+
+	/**
+	 * Partially update plugin category
+	 */
+	@ApiOperation({ summary: 'Partially update plugin category' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin category partially updated successfully'
+	})
+	@Patch(':id')
+	@UseValidationPipe({ whitelist: true })
+	async partialUpdate(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() input: Partial<UpdatePluginCategoryDTO>
+	): Promise<IPluginCategory> {
+		return this.commandBus.execute(new UpdatePluginCategoryCommand(id, input as UpdatePluginCategoryDTO));
 	}
 
 	/**

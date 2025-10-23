@@ -14,6 +14,7 @@ import {
 	Controller,
 	Delete,
 	Param,
+	Patch,
 	Post,
 	Put,
 	UseGuards,
@@ -271,6 +272,56 @@ export class PluginManagementController {
 		// Implement your matching logic here
 		// This could be based on filename, metadata, or other criteria
 		return files.find((file) => file.originalname.includes(source.fileName));
+	}
+
+	/**
+	 * Partially updates an existing plugin by ID.
+	 */
+	@ApiOperation({
+		summary: 'Partially update plugin',
+		description: 'Partially updates an existing plugin record with only the provided fields.'
+	})
+	@ApiParam({
+		name: 'id',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin to update',
+		required: true
+	})
+	@ApiBody({
+		type: UpdatePluginDTO,
+		description: 'Partial plugin metadata to update'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin updated successfully.',
+		type: Plugin
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input provided. Check the response body for error details.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
+	@UseGuards(PluginOwnerGuard)
+	@Patch(':id')
+	public async partialUpdate(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() input: Partial<UpdatePluginDTO>
+	): Promise<IPlugin> {
+		return this.commandBus.execute(new UpdatePluginCommand(id, input as UpdatePluginDTO));
 	}
 
 	/**

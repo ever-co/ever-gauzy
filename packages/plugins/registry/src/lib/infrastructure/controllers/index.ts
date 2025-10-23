@@ -1,4 +1,5 @@
 import { PluginActivationController } from './plugin-activation.controller';
+import { PluginAnalyticsController } from './plugin-analytics.controller';
 import { PluginBillingController } from './plugin-billing.controller';
 import { PluginCategoryController } from './plugin-category.controller';
 import { PluginInstallationController } from './plugin-installation.controller';
@@ -6,7 +7,13 @@ import { PluginManagementController } from './plugin-management.controller';
 import { PluginSecurityController } from './plugin-security.controller';
 import { PluginSettingController } from './plugin-setting.controller';
 import { PluginSourceController } from './plugin-source.controller';
+import { PluginSubscriptionAnalyticsController } from './plugin-subscription-analytics.controller';
 import { PluginSubscriptionController } from './plugin-subscription.controller';
+import {
+	PluginRecommendationsController,
+	PluginTagsController,
+	TagPluginsController
+} from './plugin-tag-management.controller';
 import { PluginTagController } from './plugin-tag.controller';
 import {
 	PluginUserAssignmentController,
@@ -21,6 +28,9 @@ export const controllers = [
 	PluginActivationController,
 	PluginInstallationController,
 	PluginSecurityController,
+	PluginTagsController,
+	PluginRecommendationsController,
+	TagPluginsController,
 	PluginTagController,
 	PluginVersionController,
 	PluginSourceController,
@@ -31,20 +41,7 @@ export const controllers = [
 	PluginCategoryController,
 	PluginUserAssignmentController,
 	UserPluginAssignmentController,
-	PluginUserAssignmentManagementController
+	PluginUserAssignmentManagementController,
+	PluginAnalyticsController,
+	PluginSubscriptionAnalyticsController
 ];
-
-// Export individual controllers
-export * from './plugin-activation.controller';
-export * from './plugin-billing.controller';
-export * from './plugin-category.controller';
-export * from './plugin-installation.controller';
-export * from './plugin-management.controller';
-export * from './plugin-security.controller';
-export * from './plugin-setting.controller';
-export * from './plugin-source.controller';
-export * from './plugin-subscription.controller';
-export * from './plugin-tag.controller';
-export * from './plugin-user-assignment.controller';
-export * from './plugin-version.controller';
-export * from './plugin.controller';

@@ -233,11 +233,11 @@ export class PluginSourceController {
 	}
 
 	/**
-	 * Recover a soft-deleted plugin source.
+	 * Update plugin source status (including restoration)
 	 */
 	@ApiOperation({
-		summary: 'Recover a deleted plugin source',
-		description: 'Soft-recovers a previously deleted plugin source using its UUID, version UUID the plugin ID.'
+		summary: 'Update plugin source status',
+		description: 'Updates a plugin source status, including restoring deleted sources.'
 	})
 	@ApiParam({
 		name: 'pluginId',
@@ -250,19 +250,33 @@ export class PluginSourceController {
 		name: 'versionId',
 		type: String,
 		format: 'uuid',
-		description: "UUID of the plugin source's version on to recover",
+		description: "UUID of the plugin source's version",
 		required: true
 	})
 	@ApiParam({
 		name: 'sourceId',
 		type: String,
 		format: 'uuid',
-		description: 'UUID of the plugin source to recover',
+		description: 'UUID of the plugin source to update',
 		required: true
+	})
+	@ApiBody({
+		description: 'Status update data',
+		schema: {
+			type: 'object',
+			properties: {
+				status: {
+					type: 'string',
+					enum: ['active', 'inactive', 'deleted', 'restored'],
+					description: 'The new status for the plugin source'
+				}
+			},
+			required: ['status']
+		}
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Plugin source recovered successfully.'
+		description: 'Plugin source status updated successfully.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -270,7 +284,7 @@ export class PluginSourceController {
 	})
 	@ApiResponse({
 		status: HttpStatus.FORBIDDEN,
-		description: 'User does not have permission to recover this plugin source.'
+		description: 'User does not have permission to update this plugin source.'
 	})
 	@ApiResponse({
 		status: HttpStatus.UNAUTHORIZED,
@@ -282,12 +296,19 @@ export class PluginSourceController {
 		forbidNonWhitelisted: true
 	})
 	@UseGuards(PluginOwnerGuard)
-	@Patch(':sourceId')
-	public async recover(
+	@Patch(':sourceId/status')
+	public async updateStatus(
 		@Param('sourceId', UUIDValidationPipe) sourceId: ID,
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
-		@Param('pluginId', UUIDValidationPipe) pluginId: ID
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
+		@Body() updateDto: { status: 'active' | 'inactive' | 'deleted' | 'restored' }
 	): Promise<void> {
-		return this.commandBus.execute(new RecoverPluginSourceCommand(sourceId, versionId, pluginId));
+		if (updateDto.status === 'restored') {
+			return this.commandBus.execute(new RecoverPluginSourceCommand(sourceId, versionId, pluginId));
+		}
+
+		// Handle other status updates as needed
+		// Note: Implement appropriate command handling for other statuses
+		throw new Error(`Status '${updateDto.status}' update not implemented yet`);
 	}
 }

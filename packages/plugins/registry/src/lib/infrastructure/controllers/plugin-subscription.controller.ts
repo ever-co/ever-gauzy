@@ -9,6 +9,7 @@ import {
 	HttpStatus,
 	Param,
 	ParseUUIDPipe,
+	Patch,
 	Post,
 	Put,
 	Query,
@@ -18,21 +19,16 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PluginSubscription } from '../../domain/entities/plugin-subscription.entity';
 import {
-	CancelPluginSubscriptionDTO,
-	CreatePluginSubscriptionDTO,
-	PluginAccessCheckDTO,
 	PluginSubscriptionQueryDTO,
 	PurchasePluginSubscriptionDTO,
-	RenewPluginSubscriptionDTO,
 	UpdatePluginSubscriptionDTO
 } from '../../shared/dto/plugin-subscription.dto';
+import { PluginSubscriptionStatus } from '../../shared/models/plugin-subscription.model';
 
 // CQRS Commands
 import {
 	CancelPluginSubscriptionCommand,
-	CreatePluginSubscriptionCommand,
 	DeletePluginSubscriptionCommand,
-	ProcessBillingCommand,
 	PurchasePluginSubscriptionCommand,
 	RenewPluginSubscriptionCommand,
 	UpdatePluginSubscriptionCommand
@@ -40,40 +36,20 @@ import {
 
 // CQRS Queries
 import {
-	CheckPluginAccessQuery,
 	GetActivePluginSubscriptionQuery,
-	GetExpiringSubscriptionsQuery,
 	GetPluginSubscriptionByIdQuery,
 	GetPluginSubscriptionsByPluginIdQuery,
-	GetPluginSubscriptionsBySubscriberIdQuery,
-	GetPluginSubscriptionsQuery
+	GetPluginSubscriptionsBySubscriberIdQuery
 } from '../../application/queries';
 
 @ApiTags('Plugin Subscriptions')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller('plugin-subscriptions')
+@Controller('plugins/:pluginId/subscriptions')
 export class PluginSubscriptionController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
-	@ApiOperation({ summary: 'Purchase plugin subscription' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'Plugin subscription purchased successfully',
-		type: PluginSubscription
-	})
-	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
-	@Post('purchase')
-	async purchaseSubscription(@Body() purchaseDto: PurchasePluginSubscriptionDTO): Promise<PluginSubscription> {
-		const tenantId = RequestContext.currentTenantId();
-		const organizationId = RequestContext.currentOrganizationId();
-		const user = RequestContext.currentUser();
-
-		return await this.commandBus.execute(
-			new PurchasePluginSubscriptionCommand(purchaseDto, tenantId, organizationId, user?.id)
-		);
-	}
-
-	@ApiOperation({ summary: 'Create plugin subscription (admin only)' })
+	@ApiOperation({ summary: 'Create plugin subscription' })
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'Plugin subscription created successfully',
@@ -81,11 +57,27 @@ export class PluginSubscriptionController {
 	})
 	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post()
-	async create(@Body() createDto: CreatePluginSubscriptionDTO): Promise<PluginSubscription> {
-		return await this.commandBus.execute(new CreatePluginSubscriptionCommand(createDto));
+	async create(
+		@Param('pluginId', ParseUUIDPipe) pluginId: string,
+		@Body() purchaseDto: PurchasePluginSubscriptionDTO
+	): Promise<PluginSubscription> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		const user = RequestContext.currentUser();
+
+		// Use the purchase command for creating subscriptions
+		return await this.commandBus.execute(
+			new PurchasePluginSubscriptionCommand({ ...purchaseDto, pluginId }, tenantId, organizationId, user?.id)
+		);
 	}
 
 	@ApiOperation({ summary: 'Get all plugin subscriptions' })
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
+	@ApiQuery({ name: 'status', required: false, description: 'Filter by subscription status' })
+	@ApiQuery({ name: 'subscriberId', required: false, description: 'Filter by subscriber ID' })
+	@ApiQuery({ name: 'expiring', required: false, description: 'Show only expiring subscriptions', type: Boolean })
+	@ApiQuery({ name: 'days', required: false, description: 'Days until expiry (default: 7)', type: Number })
+	@ApiQuery({ name: 'active', required: false, description: 'Show only active subscriptions', type: Boolean })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Plugin subscriptions retrieved successfully',
@@ -93,8 +85,42 @@ export class PluginSubscriptionController {
 	})
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get()
-	async findAll(@Query() query: PluginSubscriptionQueryDTO): Promise<PluginSubscription[]> {
-		return await this.queryBus.execute(new GetPluginSubscriptionsQuery(query));
+	async findAll(
+		@Param('pluginId', ParseUUIDPipe) pluginId: string,
+		@Query() query: PluginSubscriptionQueryDTO,
+		@Query('expiring') expiring?: boolean,
+		@Query('days') days?: number,
+		@Query('active') active?: boolean
+	): Promise<PluginSubscription[]> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		// Note: Access checks and expiring subscriptions analytics have been moved to
+		// plugin-subscription-analytics.controller.ts for better separation of concerns
+
+		// Handle active subscription filter
+		if (active) {
+			const activeSubscription = await this.queryBus.execute(
+				new GetActivePluginSubscriptionQuery(pluginId, tenantId, organizationId, query.subscriberId)
+			);
+			return activeSubscription ? [activeSubscription] : [];
+		}
+
+		// Handle subscriber filter
+		if (query.subscriberId) {
+			return await this.queryBus.execute(
+				new GetPluginSubscriptionsBySubscriberIdQuery(query.subscriberId, [
+					'plugin',
+					'pluginTenant',
+					'subscriber'
+				])
+			);
+		}
+
+		// Default: get subscriptions for this plugin
+		return await this.queryBus.execute(
+			new GetPluginSubscriptionsByPluginIdQuery(pluginId, ['plugin', 'pluginTenant', 'subscriber'])
+		);
 	}
 
 	@ApiOperation({ summary: 'Get plugin subscription by ID' })
@@ -112,131 +138,39 @@ export class PluginSubscriptionController {
 		);
 	}
 
-	@ApiOperation({ summary: 'Get plugin subscriptions by plugin ID' })
+	@ApiOperation({ summary: 'Update plugin subscription status' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Plugin subscriptions retrieved successfully',
-		type: [PluginSubscription]
-	})
-	@ApiParam({ name: 'pluginId', description: 'Plugin ID' })
-	@Permissions(PermissionsEnum.PLUGIN_VIEW)
-	@Get('plugin/:pluginId')
-	async findByPluginId(@Param('pluginId', ParseUUIDPipe) pluginId: string): Promise<PluginSubscription[]> {
-		return await this.queryBus.execute(
-			new GetPluginSubscriptionsByPluginIdQuery(pluginId, ['plugin', 'pluginTenant', 'subscriber'])
-		);
-	}
-
-	@ApiOperation({ summary: 'Get plugin subscriptions by subscriber ID' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Plugin subscriptions retrieved successfully',
-		type: [PluginSubscription]
-	})
-	@ApiParam({ name: 'subscriberId', description: 'Subscriber ID' })
-	@Permissions(PermissionsEnum.PLUGIN_VIEW)
-	@Get('subscriber/:subscriberId')
-	async findBySubscriberId(
-		@Param('subscriberId', ParseUUIDPipe) subscriberId: string
-	): Promise<PluginSubscription[]> {
-		return await this.queryBus.execute(
-			new GetPluginSubscriptionsBySubscriberIdQuery(subscriberId, ['plugin', 'pluginTenant', 'subscriber'])
-		);
-	}
-
-	@ApiOperation({ summary: 'Get active subscription for plugin' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Active subscription retrieved successfully',
+		description: 'Plugin subscription updated successfully',
 		type: PluginSubscription
 	})
-	@ApiParam({ name: 'pluginId', description: 'Plugin ID' })
-	@ApiQuery({ name: 'subscriberId', required: false, description: 'Subscriber ID' })
-	@Permissions(PermissionsEnum.PLUGIN_VIEW)
-	@Get('plugin/:pluginId/active')
-	async findActiveSubscription(
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
+	@ApiParam({ name: 'id', description: 'Plugin subscription ID', type: String, format: 'uuid' })
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
+	@Patch(':id')
+	async updateStatus(
 		@Param('pluginId', ParseUUIDPipe) pluginId: string,
-		@Query('subscriberId') subscriberId?: string
-	): Promise<PluginSubscription | null> {
-		const tenantId = RequestContext.currentTenantId();
-		const organizationId = RequestContext.currentOrganizationId();
-
-		return await this.queryBus.execute(
-			new GetActivePluginSubscriptionQuery(pluginId, tenantId, organizationId, subscriberId)
-		);
-	}
-
-	@ApiOperation({ summary: 'Check plugin access' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Plugin access check result'
-	})
-	@Permissions(PermissionsEnum.PLUGIN_VIEW)
-	@Post('check-access')
-	async checkPluginAccess(
-		@Body() accessCheckDto: PluginAccessCheckDTO
-	): Promise<{ hasAccess: boolean; subscription?: PluginSubscription }> {
-		const tenantId = RequestContext.currentTenantId();
-		const organizationId = RequestContext.currentOrganizationId();
-
-		return await this.queryBus.execute(new CheckPluginAccessQuery(accessCheckDto, tenantId, organizationId));
-	}
-
-	@ApiOperation({ summary: 'Get expiring subscriptions' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Expiring subscriptions retrieved successfully',
-		type: [PluginSubscription]
-	})
-	@ApiQuery({ name: 'days', required: false, description: 'Days until expiry (default: 7)' })
-	@Permissions(PermissionsEnum.PLUGIN_VIEW)
-	@Get('expiring/list')
-	async getExpiringSubscriptions(@Query('days') days?: number): Promise<PluginSubscription[]> {
-		return await this.queryBus.execute(new GetExpiringSubscriptionsQuery(days || 7));
-	}
-
-	@ApiOperation({ summary: 'Cancel plugin subscription' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Plugin subscription cancelled successfully',
-		type: PluginSubscription
-	})
-	@ApiParam({ name: 'id', description: 'Plugin subscription ID' })
-	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
-	@Put(':id/cancel')
-	async cancelSubscription(
 		@Param('id', ParseUUIDPipe) id: string,
-		@Body() cancelDto: CancelPluginSubscriptionDTO
+		@Body() updateDto: { status: 'cancelled' | 'renewed' | 'active' | 'expired' | 'suspended'; reason?: string }
 	): Promise<PluginSubscription> {
-		return await this.commandBus.execute(new CancelPluginSubscriptionCommand(id, cancelDto.reason));
-	}
-
-	@ApiOperation({ summary: 'Renew plugin subscription' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Plugin subscription renewed successfully',
-		type: PluginSubscription
-	})
-	@ApiParam({ name: 'id', description: 'Plugin subscription ID' })
-	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
-	@Put(':id/renew')
-	async renewSubscription(
-		@Param('id', ParseUUIDPipe) id: string,
-		@Body() renewDto: RenewPluginSubscriptionDTO
-	): Promise<PluginSubscription> {
-		return await this.commandBus.execute(new RenewPluginSubscriptionCommand(id));
-	}
-
-	@ApiOperation({ summary: 'Process subscription billing' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Billing processed successfully'
-	})
-	@ApiParam({ name: 'id', description: 'Plugin subscription ID' })
-	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
-	@Post(':id/billing/process')
-	async processBilling(@Param('id', ParseUUIDPipe) id: string): Promise<{ success: boolean; message: string }> {
-		return await this.commandBus.execute(new ProcessBillingCommand(id));
+		if (updateDto.status === 'cancelled') {
+			return await this.commandBus.execute(new CancelPluginSubscriptionCommand(id, updateDto.reason));
+		} else if (updateDto.status === 'renewed') {
+			return await this.commandBus.execute(new RenewPluginSubscriptionCommand(id));
+		} else {
+			// For other status updates, use UpdatePluginSubscriptionCommand with minimal data
+			const updateData: Partial<UpdatePluginSubscriptionDTO> = {};
+			if (updateDto.status === 'active') {
+				updateData.status = PluginSubscriptionStatus.ACTIVE;
+			} else if (updateDto.status === 'expired') {
+				updateData.status = PluginSubscriptionStatus.EXPIRED;
+			} else if (updateDto.status === 'suspended') {
+				updateData.status = PluginSubscriptionStatus.SUSPENDED;
+			}
+			return await this.commandBus.execute(
+				new UpdatePluginSubscriptionCommand(id, updateData as UpdatePluginSubscriptionDTO)
+			);
+		}
 	}
 
 	@ApiOperation({ summary: 'Update plugin subscription' })
