@@ -32,9 +32,6 @@ export interface IPluginUserAssignment extends IBasePerTenantAndOrganizationEnti
 
 	// Reason for revoking the assignment
 	revocationReason?: string;
-
-	// Whether this assignment is currently active
-	isActive: boolean;
 }
 
 /**

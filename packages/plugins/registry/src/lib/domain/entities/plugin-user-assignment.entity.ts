@@ -88,9 +88,4 @@ export class PluginUserAssignment extends TenantOrganizationBaseEntity implement
 	@IsOptional()
 	@MultiORMColumn({ type: 'text', nullable: true })
 	revocationReason?: string;
-
-	@ApiPropertyOptional({ type: () => Boolean, description: 'Whether this assignment is currently active' })
-	@ColumnIndex()
-	@MultiORMColumn({ type: 'boolean', default: true })
-	isActive: boolean;
 }
