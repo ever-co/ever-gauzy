@@ -5,6 +5,9 @@ export * from './list-plugin-versions.query';
 export * from './list-plugins.query';
 export * from './search-plugins.query';
 
+// Plugin User Assignment Queries
+export * from './plugin-user-assignment.queries';
+
 // Plugin Category Queries
 export * from './get-plugin-categories.query';
 export * from './get-plugin-category-tree.query';

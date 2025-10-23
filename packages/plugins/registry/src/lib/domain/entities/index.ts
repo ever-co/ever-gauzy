@@ -6,6 +6,7 @@ import { PluginSource } from './plugin-source.entity';
 import { PluginSubscription } from './plugin-subscription.entity';
 import { PluginTag } from './plugin-tag.entity';
 import { PluginTenant } from './plugin-tenant.entity';
+import { PluginUserAssignment } from './plugin-user-assignment.entity';
 import { PluginVersion } from './plugin-version.entity';
 import { Plugin } from './plugin.entity';
 
@@ -19,7 +20,8 @@ export const entities = [
 	PluginSetting,
 	PluginSubscription,
 	PluginBilling,
-	PluginCategory
+	PluginCategory,
+	PluginUserAssignment
 ];
 
 // Export individual entities
@@ -31,5 +33,6 @@ export * from './plugin-source.entity';
 export * from './plugin-subscription.entity';
 export * from './plugin-tag.entity';
 export * from './plugin-tenant.entity';
+export * from './plugin-user-assignment.entity';
 export * from './plugin-version.entity';
 export * from './plugin.entity';

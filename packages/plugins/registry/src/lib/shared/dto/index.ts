@@ -4,6 +4,7 @@ export * from './file.dto';
 export * from './install-plugin.dto';
 export * from './plugin-source.dto';
 export * from './plugin-tag.dto';
+export * from './plugin-user-assignment.dto';
 export * from './plugin-version.dto';
 export * from './update-plugin-source.dto';
 export * from './update-plugin-version.dto';

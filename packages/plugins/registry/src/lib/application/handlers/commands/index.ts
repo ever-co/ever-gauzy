@@ -8,6 +8,13 @@ import { UninstallPluginCommandHandler } from './uninstall-plugin-command.handle
 import { UpdatePluginCommandHandler } from './update-plugin-command.handler';
 import { VerifyPluginCommandHandler } from './verify-plugin-command.handler';
 
+// Plugin User Assignment Command Handlers
+import {
+	AssignUsersToPluginCommandHandler,
+	BulkAssignUsersToPluginsCommandHandler,
+	UnassignUsersFromPluginCommandHandler
+} from './plugin-user-assignment-command.handlers';
+
 // Plugin Version Command Handlers
 import { CreatePluginVersionCommandHandler } from './create-plugin-version-command.handler';
 import { DeletePluginVersionCommandHandler } from './delete-plugin-version-command.handler';
@@ -65,8 +72,11 @@ import {
 export {
 	// Plugin Management Command Handlers
 	ActivatePluginCommandHandler,
+	// Plugin User Assignment Command Handlers
+	AssignUsersToPluginCommandHandler,
 	// Plugin Tag Command Handlers
 	AutoTagPluginHandler,
+	BulkAssignUsersToPluginsCommandHandler,
 	BulkCreatePluginTagsHandler,
 	BulkDeletePluginTagsHandler,
 	// Plugin Settings Command Handlers
@@ -105,6 +115,7 @@ export {
 	RenewPluginSubscriptionCommandHandler,
 	ReplacePluginTagsHandler,
 	SetPluginSettingValueHandler,
+	UnassignUsersFromPluginCommandHandler,
 	UninstallPluginCommandHandler,
 	UpdatePluginCategoryHandler,
 	UpdatePluginCommandHandler,
@@ -127,6 +138,11 @@ export const commands = [
 	UninstallPluginCommandHandler,
 	UpdatePluginCommandHandler,
 	VerifyPluginCommandHandler,
+
+	// Plugin User Assignment Command Handlers
+	AssignUsersToPluginCommandHandler,
+	UnassignUsersFromPluginCommandHandler,
+	BulkAssignUsersToPluginsCommandHandler,
 
 	// Plugin Version Command Handlers
 	CreatePluginVersionCommandHandler,

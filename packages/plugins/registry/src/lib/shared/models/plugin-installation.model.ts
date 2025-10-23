@@ -1,6 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID, IEmployee } from '@gauzy/contracts';
-import { IPlugin } from './plugin.model';
 import { IPluginVersion } from './plugin-version.model';
+import { IPlugin } from './plugin.model';
 
 export enum PluginInstallationStatus {
 	INSTALLED = 'INSTALLED',
@@ -8,6 +8,7 @@ export enum PluginInstallationStatus {
 	FAILED = 'FAILED',
 	IN_PROGRESS = 'IN_PROGRESS'
 }
+
 /**
  * Plugin installation record
  */
@@ -25,4 +26,9 @@ export interface IPluginInstallation extends IBasePerTenantAndOrganizationEntity
 	uninstalledAt?: Date; // Optional date when the plugin was uninstalled
 
 	status: PluginInstallationStatus; // Status of the plugin installation
+
+	// Activation state for this specific installation
+	isActivated?: boolean; // Whether this installation is currently activated
+	activatedAt?: Date; // When this installation was last activated
+	deactivatedAt?: Date; // When this installation was last deactivated
 }

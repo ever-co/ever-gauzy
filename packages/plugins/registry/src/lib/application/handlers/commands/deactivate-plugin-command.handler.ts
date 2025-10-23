@@ -1,40 +1,48 @@
-import { BadRequestException } from '@nestjs/common';
-import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PluginService } from '../../../domain/services/plugin.service';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { PluginInstallationService } from '../../../domain/services/plugin-installation.service';
+import { PluginInstallationStatus } from '../../../shared/models/plugin-installation.model';
 import { DeactivatePluginCommand } from '../../commands/deactivate-plugin.command';
-import { UpdatePluginCommand } from '../../commands/update-plugin.command';
-import { PluginStatus } from '@gauzy/contracts';
 
 /**
- * Command handler for deactivating plugins
+ * Command handler for deactivating plugin installations
  */
 @CommandHandler(DeactivatePluginCommand)
 export class DeactivatePluginCommandHandler implements ICommandHandler<DeactivatePluginCommand> {
-	constructor(private readonly commandBus: CommandBus, private readonly pluginService: PluginService) {}
+	constructor(private readonly pluginInstallationService: PluginInstallationService) {}
 
 	/**
-	 * Deactivates a plugin if the current employee has permission
-	 * @param command - Command containing the plugin ID to deactivate
+	 * Deactivates a plugin installation if the current user has permission
+	 * @param command - Command containing the installation ID to deactivate
 	 * @returns Promise resolving to void upon successful deactivation
-	 * @throws BadRequestException if plugin ID is missing
-	 * @throws NotFoundException if plugin doesn't exist
+	 * @throws BadRequestException if installation ID is missing
+	 * @throws NotFoundException if installation doesn't exist
 	 */
 	public async execute(command: DeactivatePluginCommand): Promise<void> {
-		const { pluginId } = command;
+		const { installationId } = command;
 
 		// Validate input
-		if (!pluginId) {
-			throw new BadRequestException('Plugin ID is required');
+		if (!installationId) {
+			throw new BadRequestException('Plugin installation ID is required');
 		}
 
-		// Find the plugin
-		const plugin = await this.pluginService.findOneOrFailByIdString(pluginId);
+		// Find the plugin installation
+		const installation = await this.pluginInstallationService.findOneByIdString(installationId);
+		if (!installation) {
+			throw new NotFoundException('Plugin installation not found');
+		}
 
-		// Only update if plugin is currently active
-		if (plugin.success && plugin.record.isActive) {
-			await this.commandBus.execute(
-				new UpdatePluginCommand(pluginId, { id: pluginId, isActive: false, status: PluginStatus.INACTIVE })
-			);
+		// Ensure installation is in INSTALLED status
+		if (installation.status !== PluginInstallationStatus.INSTALLED) {
+			throw new BadRequestException('Only installed plugins can be deactivated');
+		}
+
+		// Only update if plugin installation is currently activated
+		if (installation.isActivated) {
+			await this.pluginInstallationService.update(installationId, {
+				isActivated: false,
+				deactivatedAt: new Date()
+			});
 		}
 	}
 }

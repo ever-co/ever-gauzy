@@ -6,6 +6,7 @@ import { PluginSettingService } from './plugin-setting.service';
 import { PluginSourceService } from './plugin-source.service';
 import { PluginSubscriptionService } from './plugin-subscription.service';
 import { PluginTagService } from './plugin-tag.service';
+import { PluginUserAssignmentService } from './plugin-user-assignment.service';
 import { PluginVersionService } from './plugin-version.service';
 import { PluginService } from './plugin.service';
 
@@ -19,7 +20,8 @@ export const services = [
 	PluginSettingService,
 	PluginSubscriptionService,
 	PluginBillingService,
-	PluginCategoryService
+	PluginCategoryService,
+	PluginUserAssignmentService
 ];
 
 // Export individual services
@@ -31,5 +33,6 @@ export * from './plugin-setting.service';
 export * from './plugin-source.service';
 export * from './plugin-subscription.service';
 export * from './plugin-tag.service';
+export * from './plugin-user-assignment.service';
 export * from './plugin-version.service';
 export * from './plugin.service';

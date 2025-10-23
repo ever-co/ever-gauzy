@@ -10,6 +10,9 @@ export * from './uninstall-plugin.command';
 export * from './update-plugin.command';
 export * from './verify-plugin.command';
 
+// Plugin User Assignment Commands
+export * from './plugin-user-assignment.commands';
+
 // Plugin Config Commands
 export * from './plugin-config-get.command';
 export * from './plugin-config-set.command';

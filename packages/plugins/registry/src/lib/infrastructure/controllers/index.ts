@@ -8,6 +8,11 @@ import { PluginSettingController } from './plugin-setting.controller';
 import { PluginSourceController } from './plugin-source.controller';
 import { PluginSubscriptionController } from './plugin-subscription.controller';
 import { PluginTagController } from './plugin-tag.controller';
+import {
+	PluginUserAssignmentController,
+	PluginUserAssignmentManagementController,
+	UserPluginAssignmentController
+} from './plugin-user-assignment.controller';
 import { PluginVersionController } from './plugin-version.controller';
 import { PluginController } from './plugin.controller';
 
@@ -23,7 +28,10 @@ export const controllers = [
 	PluginSettingController,
 	PluginSubscriptionController,
 	PluginBillingController,
-	PluginCategoryController
+	PluginCategoryController,
+	PluginUserAssignmentController,
+	UserPluginAssignmentController,
+	PluginUserAssignmentManagementController
 ];
 
 // Export individual controllers
@@ -37,5 +45,6 @@ export * from './plugin-setting.controller';
 export * from './plugin-source.controller';
 export * from './plugin-subscription.controller';
 export * from './plugin-tag.controller';
+export * from './plugin-user-assignment.controller';
 export * from './plugin-version.controller';
 export * from './plugin.controller';

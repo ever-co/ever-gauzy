@@ -5,6 +5,9 @@ export * from './list-plugins-query.handler';
 export * from './list-plugins-sources-query.handler';
 export * from './search-plugins-query.handler';
 
+// Plugin User Assignment Query Handlers
+export * from './plugin-user-assignment-query.handlers';
+
 // Plugin Category Query Handlers
 export * from './get-plugin-categories.handler';
 export * from './get-plugin-category-tree.handler';
@@ -50,6 +53,12 @@ import { GetPluginSubscriptionsQueryHandler } from './get-plugin-subscriptions.h
 import { ListPluginVersionsQueryHandler } from './list-plugin-versions-query.handler';
 import { ListPluginsQueryHandler } from './list-plugins-query.handler';
 import { ListPluginSourcesQueryHandler } from './list-plugins-sources-query.handler';
+import {
+	CheckUserPluginAccessQueryHandler,
+	GetAllPluginUserAssignmentsQueryHandler,
+	GetPluginUserAssignmentsQueryHandler,
+	GetUserPluginAssignmentsQueryHandler
+} from './plugin-user-assignment-query.handlers';
 import { SearchPluginsQueryHandler } from './search-plugins-query.handler';
 
 export const queries = [
@@ -74,5 +83,10 @@ export const queries = [
 	GetPluginSettingsByTenantIdHandler,
 	GetPluginSettingByKeyHandler,
 	GetPluginSettingsByCategoryHandler,
-	GetPluginSettingValueHandler
+	GetPluginSettingValueHandler,
+	// Plugin User Assignment Query Handlers
+	GetPluginUserAssignmentsQueryHandler,
+	GetUserPluginAssignmentsQueryHandler,
+	CheckUserPluginAccessQueryHandler,
+	GetAllPluginUserAssignmentsQueryHandler
 ];

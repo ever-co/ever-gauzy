@@ -8,7 +8,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsNotEmpty, IsOptional, ValidateIf } from 'class-validator';
+import { IsBoolean, IsDateString, IsNotEmpty, IsOptional, ValidateIf } from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IPluginInstallation, PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
@@ -72,4 +72,28 @@ export class PluginInstallation extends TenantOrganizationBaseEntity implements 
 	@ApiProperty({ enum: PluginInstallationStatus, description: 'Plugin installation status' })
 	@IsNotEmpty({ message: 'Plugin installation status is required' })
 	status: PluginInstallationStatus;
+
+	@ApiPropertyOptional({
+		type: Boolean,
+		description: 'Whether this installation is currently activated',
+		default: false
+	})
+	@IsOptional()
+	@IsBoolean({ message: 'IsActivated must be a boolean' })
+	@MultiORMColumn({ default: false })
+	isActivated?: boolean;
+
+	@ApiPropertyOptional({ type: Date, description: 'When this installation was last activated' })
+	@IsOptional()
+	@IsDateString({}, { message: 'ActivatedAt date must be a valid ISO 8601 date string' })
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	activatedAt?: Date;
+
+	@ApiPropertyOptional({ type: Date, description: 'When this installation was last deactivated' })
+	@IsOptional()
+	@IsDateString({}, { message: 'DeactivatedAt date must be a valid ISO 8601 date string' })
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	deactivatedAt?: Date;
 }

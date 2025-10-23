@@ -8,6 +8,7 @@ export * from './plugin-source.model';
 export * from './plugin-subscription.model';
 export * from './plugin-tag.model';
 export * from './plugin-tenant.model';
+export * from './plugin-user-assignment.model';
 export * from './plugin-version.model';
 export * from './plugin.model';
 export * from './storage-provider.model';

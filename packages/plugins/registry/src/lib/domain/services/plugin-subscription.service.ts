@@ -1,20 +1,19 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { FindManyOptions, FindOneOptions, MoreThan } from 'typeorm';
 import { TenantAwareCrudService } from '@gauzy/core';
-import { PluginSubscription } from '../entities/plugin-subscription.entity';
-import { TypeOrmPluginSubscriptionRepository } from '../repositories/type-orm-plugin-subscription.repository';
-import { MikroOrmPluginSubscriptionRepository } from '../repositories/mikro-orm-plugin-subscription.repository';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { FindManyOptions } from 'typeorm';
+import { PluginScope } from '../../shared/models/plugin-scope.model';
 import {
 	IPluginSubscription,
 	IPluginSubscriptionCreateInput,
-	IPluginSubscriptionUpdateInput,
-	IPluginSubscriptionFindInput,
 	IPluginSubscriptionPurchaseInput,
+	IPluginSubscriptionUpdateInput,
+	PluginBillingPeriod,
 	PluginSubscriptionStatus,
-	PluginSubscriptionType,
-	PluginBillingPeriod
+	PluginSubscriptionType
 } from '../../shared/models/plugin-subscription.model';
-import { PluginScope } from '../../shared/models/plugin-scope.model';
+import { PluginSubscription } from '../entities/plugin-subscription.entity';
+import { MikroOrmPluginSubscriptionRepository } from '../repositories/mikro-orm-plugin-subscription.repository';
+import { TypeOrmPluginSubscriptionRepository } from '../repositories/type-orm-plugin-subscription.repository';
 
 @Injectable()
 export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubscription> {
@@ -244,13 +243,40 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		organizationId?: string,
 		subscriberId?: string
 	): Promise<boolean> {
-		const subscription = await this.findActiveSubscription(pluginId, tenantId, organizationId, subscriberId);
-
-		if (!subscription) {
-			return false;
+		// If subscriberId is provided, check for user-level subscription first
+		if (subscriberId) {
+			const userSubscription = await this.findActiveSubscription(
+				pluginId,
+				tenantId,
+				organizationId,
+				subscriberId
+			);
+			if (userSubscription && this.isSubscriptionActive(userSubscription)) {
+				return true;
+			}
 		}
 
-		// Check if subscription is active and not expired
+		// Check for organization-level subscription
+		if (organizationId) {
+			const orgSubscription = await this.findActiveSubscription(pluginId, tenantId, organizationId);
+			if (orgSubscription && this.isSubscriptionActive(orgSubscription)) {
+				return true;
+			}
+		}
+
+		// Check for tenant-level subscription
+		const tenantSubscription = await this.findActiveSubscription(pluginId, tenantId);
+		if (tenantSubscription && this.isSubscriptionActive(tenantSubscription)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check if subscription is active and not expired
+	 */
+	private isSubscriptionActive(subscription: IPluginSubscription): boolean {
 		return (
 			subscription.status === PluginSubscriptionStatus.ACTIVE &&
 			(!subscription.endDate || subscription.endDate > new Date())
