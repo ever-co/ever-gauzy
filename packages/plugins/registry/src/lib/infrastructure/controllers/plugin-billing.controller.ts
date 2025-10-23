@@ -1,30 +1,30 @@
+import { IPagination } from '@gauzy/contracts';
+import { PermissionGuard, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import {
+	Body,
 	Controller,
 	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Patch,
 	Post,
 	Put,
-	Param,
-	Body,
 	Query,
-	HttpStatus,
-	HttpCode,
 	UseGuards,
-	ValidationPipe,
-	ParseUUIDPipe
+	ValidationPipe
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { TenantPermissionGuard, PermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UpdateResult } from 'typeorm';
 import { PluginBillingService } from '../../domain/services/plugin-billing.service';
-import { IPluginBilling, IPluginBillingSummary, IPluginBillingFindInput } from '../../shared/models';
 import { CreatePluginBillingDTO } from '../../shared/dto/create-plugin-billing.dto';
 import { UpdatePluginBillingDTO } from '../../shared/dto/update-plugin-billing.dto';
-import { IPagination } from '@gauzy/contracts';
-import { UpdateResult } from 'typeorm';
+import { IPluginBilling, IPluginBillingFindInput, IPluginBillingSummary } from '../../shared/models';
 
 @ApiTags('Plugin Billing')
 @ApiBearerAuth()
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller('billings')
+@Controller('plugin-billings')
 export class PluginBillingController {
 	constructor(private readonly pluginBillingService: PluginBillingService) {}
 
@@ -128,6 +128,24 @@ export class PluginBillingController {
 	}
 
 	/**
+	 * Update billing record status
+	 */
+	@ApiOperation({ summary: 'Update billing record status' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Billing record status updated successfully'
+	})
+	@Patch(':id')
+	@UseValidationPipe({ whitelist: true })
+	async updateStatus(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() input: UpdatePluginBillingDTO
+	): Promise<IPluginBilling> {
+		await this.pluginBillingService.update(id, input);
+		return await this.pluginBillingService.findOneByIdString(id);
+	}
+
+	/**
 	 * Mark billing record as paid
 	 */
 	@ApiOperation({ summary: 'Mark billing record as paid' })
@@ -135,7 +153,7 @@ export class PluginBillingController {
 		status: HttpStatus.OK,
 		description: 'Billing record marked as paid'
 	})
-	@Put(':id/mark-paid')
+	@Patch(':id/paid')
 	async markAsPaid(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body('paymentReference') paymentReference?: string
@@ -152,7 +170,7 @@ export class PluginBillingController {
 		status: HttpStatus.OK,
 		description: 'Billing record marked as failed'
 	})
-	@Put(':id/mark-failed')
+	@Patch(':id/failed')
 	async markAsFailed(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body('reason') reason?: string

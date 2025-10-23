@@ -1,28 +1,32 @@
 import { IPagination } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    HttpCode,
-    HttpStatus,
-    Param,
-    Post,
-    Put,
-    Query,
-    UseGuards,
-    ValidationPipe
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import {
-    CreatePluginCategoryCommand,
-    DeletePluginCategoryCommand,
-    UpdatePluginCategoryCommand
+	CreatePluginCategoryCommand,
+	DeletePluginCategoryCommand,
+	UpdatePluginCategoryCommand
 } from '../../application/commands';
-import { GetPluginCategoriesQuery, GetPluginCategoryQuery, GetPluginCategoryTreeQuery } from '../../application/queries';
+import {
+	GetPluginCategoriesQuery,
+	GetPluginCategoryQuery,
+	GetPluginCategoryTreeQuery
+} from '../../application/queries';
 import { CreatePluginCategoryDTO } from '../../shared/dto/create-plugin-category.dto';
 import { PluginCategoryQueryDTO } from '../../shared/dto/plugin-category-query.dto';
 import { UpdatePluginCategoryDTO } from '../../shared/dto/update-plugin-category.dto';
@@ -31,7 +35,7 @@ import { IPluginCategory, IPluginCategoryFindInput, IPluginCategoryTree } from '
 @ApiTags('Plugin Categories')
 @ApiBearerAuth()
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller('categories')
+@Controller('plugin-categories')
 export class PluginCategoryController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 

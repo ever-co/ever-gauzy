@@ -3,6 +3,7 @@ import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe
 import {
 	Body,
 	Controller,
+	Delete,
 	Get,
 	HttpStatus,
 	Param,
@@ -22,8 +23,7 @@ import { PluginUserAssignment } from '../../domain/entities/plugin-user-assignme
 import {
 	AssignPluginUsersDTO,
 	BulkPluginUserAssignmentDTO,
-	PluginUserAssignmentQueryDTO,
-	UnassignPluginUsersDTO
+	PluginUserAssignmentQueryDTO
 } from '../../shared/dto/plugin-user-assignment.dto';
 
 // Commands
@@ -45,7 +45,7 @@ import {
 @ApiBearerAuth('Bearer')
 @ApiSecurity('api_key')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller('/plugin-installations/:pluginInstallationId/users')
+@Controller('/plugins/:pluginId/installations/:installationId/users')
 export class PluginUserAssignmentController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
@@ -55,7 +55,13 @@ export class PluginUserAssignmentController {
 			'Assigns users to a plugin installation. Requires PLUGIN_ASSIGN_ACCESS permission. Only works for plugins purchased at organization or tenant scope.'
 	})
 	@ApiParam({
-		name: 'pluginInstallationId',
+		name: 'pluginId',
+		description: 'Unique identifier of the plugin',
+		type: String,
+		example: '550e8400-e29b-41d4-a716-446655440000'
+	})
+	@ApiParam({
+		name: 'installationId',
 		description: 'Unique identifier of the plugin installation',
 		type: String,
 		example: '550e8400-e29b-41d4-a716-446655440000'
@@ -75,30 +81,42 @@ export class PluginUserAssignmentController {
 	})
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS)
-	@Post('assign')
+	@Post()
 	public async assignUsers(
-		@Param('pluginInstallationId', UUIDValidationPipe) pluginInstallationId: ID,
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
+		@Param('installationId', UUIDValidationPipe) installationId: ID,
 		@Body() assignDto: AssignPluginUsersDTO
 	): Promise<PluginUserAssignment[]> {
 		return await this.commandBus.execute(
-			new AssignUsersToPluginCommand(pluginInstallationId, assignDto.userIds, assignDto.reason)
+			new AssignUsersToPluginCommand(installationId, assignDto.userIds, assignDto.reason)
 		);
 	}
 
 	@ApiOperation({
-		summary: 'Unassign users from plugin installation',
-		description: 'Removes user assignments from a plugin installation. Requires PLUGIN_ASSIGN_ACCESS permission.'
+		summary: 'Unassign user from plugin installation',
+		description: 'Removes a user assignment from a plugin installation. Requires PLUGIN_ASSIGN_ACCESS permission.'
 	})
 	@ApiParam({
-		name: 'pluginInstallationId',
+		name: 'pluginId',
+		description: 'Unique identifier of the plugin',
+		type: String,
+		example: '550e8400-e29b-41d4-a716-446655440000'
+	})
+	@ApiParam({
+		name: 'installationId',
 		description: 'Unique identifier of the plugin installation',
 		type: String,
 		example: '550e8400-e29b-41d4-a716-446655440000'
 	})
+	@ApiParam({
+		name: 'userId',
+		description: 'Unique identifier of the user to unassign',
+		type: String,
+		example: '550e8400-e29b-41d4-a716-446655440001'
+	})
 	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Users unassigned successfully',
-		type: [PluginUserAssignment]
+		status: HttpStatus.NO_CONTENT,
+		description: 'User unassigned successfully'
 	})
 	@ApiResponse({
 		status: HttpStatus.FORBIDDEN,
@@ -106,17 +124,17 @@ export class PluginUserAssignmentController {
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'No active assignments found for specified users'
+		description: 'No active assignment found for specified user'
 	})
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS)
-	@Post('unassign')
-	public async unassignUsers(
-		@Param('pluginInstallationId', UUIDValidationPipe) pluginInstallationId: ID,
-		@Body() unassignDto: UnassignPluginUsersDTO
-	): Promise<PluginUserAssignment[]> {
-		return await this.commandBus.execute(
-			new UnassignUsersFromPluginCommand(pluginInstallationId, unassignDto.userIds, unassignDto.reason)
+	@Delete(':userId')
+	public async unassignUser(
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
+		@Param('installationId', UUIDValidationPipe) installationId: ID,
+		@Param('userId', UUIDValidationPipe) userId: ID
+	): Promise<void> {
+		await this.commandBus.execute(
+			new UnassignUsersFromPluginCommand(installationId, [userId], 'Individual user unassignment')
 		);
 	}
 
@@ -126,7 +144,13 @@ export class PluginUserAssignmentController {
 			'Retrieves all user assignments for a specific plugin installation. Requires PLUGIN_ASSIGN_ACCESS permission.'
 	})
 	@ApiParam({
-		name: 'pluginInstallationId',
+		name: 'pluginId',
+		description: 'Unique identifier of the plugin',
+		type: String,
+		example: '550e8400-e29b-41d4-a716-446655440000'
+	})
+	@ApiParam({
+		name: 'installationId',
 		description: 'Unique identifier of the plugin installation',
 		type: String,
 		example: '550e8400-e29b-41d4-a716-446655440000'
@@ -150,12 +174,11 @@ export class PluginUserAssignmentController {
 	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS)
 	@Get()
 	public async getPluginUserAssignments(
-		@Param('pluginInstallationId', UUIDValidationPipe) pluginInstallationId: ID,
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
+		@Param('installationId', UUIDValidationPipe) installationId: ID,
 		@Query('includeInactive') includeInactive?: boolean
 	): Promise<PluginUserAssignment[]> {
-		return await this.queryBus.execute(
-			new GetPluginUserAssignmentsQuery(pluginInstallationId, includeInactive || false)
-		);
+		return await this.queryBus.execute(new GetPluginUserAssignmentsQuery(installationId, includeInactive || false));
 	}
 
 	@ApiOperation({
@@ -164,7 +187,13 @@ export class PluginUserAssignmentController {
 			'Checks if a specific user has access to the plugin installation. Requires PLUGIN_ASSIGN_ACCESS permission.'
 	})
 	@ApiParam({
-		name: 'pluginInstallationId',
+		name: 'pluginId',
+		description: 'Unique identifier of the plugin',
+		type: String,
+		example: '550e8400-e29b-41d4-a716-446655440000'
+	})
+	@ApiParam({
+		name: 'installationId',
 		description: 'Unique identifier of the plugin installation',
 		type: String,
 		example: '550e8400-e29b-41d4-a716-446655440000'
@@ -190,12 +219,13 @@ export class PluginUserAssignmentController {
 		description: 'Insufficient permissions'
 	})
 	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS)
-	@Get('check/:userId')
+	@Get(':userId/access')
 	public async checkUserAccess(
-		@Param('pluginInstallationId', UUIDValidationPipe) pluginInstallationId: ID,
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
+		@Param('installationId', UUIDValidationPipe) installationId: ID,
 		@Param('userId', UUIDValidationPipe) userId: ID
 	): Promise<{ hasAccess: boolean }> {
-		const hasAccess = await this.queryBus.execute(new CheckUserPluginAccessQuery(pluginInstallationId, userId));
+		const hasAccess = await this.queryBus.execute(new CheckUserPluginAccessQuery(installationId, userId));
 		return { hasAccess };
 	}
 }

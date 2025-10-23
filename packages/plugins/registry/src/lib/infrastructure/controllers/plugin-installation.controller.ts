@@ -1,8 +1,8 @@
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
-import { Controller, HttpStatus, Param, Patch, Query, UseGuards, UsePipes } from '@nestjs/common';
+import { Body, Controller, Delete, HttpStatus, Param, Post, UseGuards, UsePipes } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { ValidationPipe } from '@nestjs/common';
 import { InstallPluginCommand } from '../../application/commands/install-plugin.command';
@@ -14,13 +14,14 @@ import { PluginSubscriptionGuard } from '../guards';
 @ApiBearerAuth('Bearer')
 @ApiSecurity('api_key')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller('/plugins/:pluginId')
+@Controller('/plugins/:pluginId/installations')
 export class PluginInstallationController {
 	constructor(private readonly commandBus: CommandBus) {}
 
 	@ApiOperation({
 		summary: 'Install a plugin with a specific version',
-		description: 'Installs a plugin for the current tenant. Requires a valid subscription for the plugin.'
+		description:
+			'Creates a new plugin installation for the current tenant. Requires a valid subscription for the plugin.'
 	})
 	@ApiParam({
 		name: 'pluginId',
@@ -28,15 +29,9 @@ export class PluginInstallationController {
 		type: String,
 		example: '550e8400-e29b-41d4-a716-446655440000'
 	})
-	@ApiQuery({
-		name: 'versionId',
-		description: 'Unique identifier of the version to install',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440000'
-	})
 	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Plugin installed successfully'
+		status: HttpStatus.CREATED,
+		description: 'Plugin installation created successfully'
 	})
 	@ApiResponse({
 		status: HttpStatus.FORBIDDEN,
@@ -49,24 +44,37 @@ export class PluginInstallationController {
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	@UseGuards(PluginSubscriptionGuard)
 	@Permissions(PermissionsEnum.PLUGIN_INSTALL)
-	@Patch('install')
-	public async install(
-		@Param('pluginId', UUIDValidationPipe) id: ID,
-		@Query() query: InstallPluginDTO
-	): Promise<void> {
-		await this.commandBus.execute(new InstallPluginCommand(id, query));
+	@Post()
+	public async create(@Param('pluginId', UUIDValidationPipe) id: ID, @Body() body: InstallPluginDTO): Promise<void> {
+		await this.commandBus.execute(new InstallPluginCommand(id, body));
 	}
 
-	@ApiOperation({ summary: 'Uninstall a plugin' })
+	@ApiOperation({
+		summary: 'Uninstall a plugin',
+		description: 'Removes a plugin installation by ID'
+	})
 	@ApiParam({
 		name: 'pluginId',
 		description: 'Unique identifier of the plugin',
 		type: String,
 		example: '550e8400-e29b-41d4-a716-446655440000'
 	})
+	@ApiParam({
+		name: 'installationId',
+		description: 'Unique identifier of the plugin installation',
+		type: String,
+		example: '550e8400-e29b-41d4-a716-446655440000'
+	})
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'Plugin installation removed successfully'
+	})
 	@Permissions(PermissionsEnum.PLUGIN_UNINSTALL)
-	@Patch('uninstall')
-	public async uninstall(@Param('pluginId', UUIDValidationPipe) id: ID): Promise<void> {
-		await this.commandBus.execute(new UninstallPluginCommand(id));
+	@Delete(':installationId')
+	public async remove(
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
+		@Param('installationId', UUIDValidationPipe) installationId: ID
+	): Promise<void> {
+		await this.commandBus.execute(new UninstallPluginCommand(installationId));
 	}
 }
