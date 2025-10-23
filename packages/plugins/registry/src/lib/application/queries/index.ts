@@ -3,6 +3,7 @@ export * from './get-plugin.query';
 export * from './list-plugin-sources.query';
 export * from './list-plugin-versions.query';
 export * from './list-plugins.query';
+export * from './search-plugins.query';
 
 // Plugin Category Queries
 export * from './get-plugin-categories.query';

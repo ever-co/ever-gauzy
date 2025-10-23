@@ -7,7 +7,9 @@ import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/
 import { FindOneOptions } from 'typeorm';
 import { GetPluginQuery } from '../../application/queries/get-plugin.query';
 import { ListPluginsQuery } from '../../application/queries/list-plugins.query';
+import { SearchPluginsQuery } from '../../application/queries/search-plugins.query';
 import { Plugin } from '../../domain/entities/plugin.entity';
+import { PluginSearchFilterDTO } from '../../shared/dto/plugin-search-filter.dto';
 import { IPlugin } from '../../shared/models/plugin.model';
 
 @ApiTags('Plugin Registry')
@@ -15,6 +17,33 @@ import { IPlugin } from '../../shared/models/plugin.model';
 @Controller('/plugins')
 export class PluginController {
 	constructor(private readonly queryBus: QueryBus) {}
+
+	/**
+	 * Search and filter plugins with advanced criteria.
+	 */
+	@ApiOperation({
+		summary: 'Search and filter plugins',
+		description: 'Search and filter plugins using advanced criteria including text search, type, status, category, and more.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugins found and filtered successfully.',
+		type: Plugin,
+		isArray: true
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid search criteria provided.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@Get('search')
+	public async search(@Query() filters: PluginSearchFilterDTO): Promise<IPagination<IPlugin>> {
+		return this.queryBus.execute(new SearchPluginsQuery(filters));
+	}
 
 	/**
 	 * Retrieves a paginated list of plugins with optional filtering.

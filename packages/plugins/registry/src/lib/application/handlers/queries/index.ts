@@ -3,6 +3,7 @@ export * from './get-plugin-query.handler';
 export * from './list-plugin-versions-query.handler';
 export * from './list-plugins-query.handler';
 export * from './list-plugins-sources-query.handler';
+export * from './search-plugins-query.handler';
 
 // Plugin Category Query Handlers
 export * from './get-plugin-categories.handler';
@@ -49,12 +50,14 @@ import { GetPluginSubscriptionsQueryHandler } from './get-plugin-subscriptions.h
 import { ListPluginVersionsQueryHandler } from './list-plugin-versions-query.handler';
 import { ListPluginsQueryHandler } from './list-plugins-query.handler';
 import { ListPluginSourcesQueryHandler } from './list-plugins-sources-query.handler';
+import { SearchPluginsQueryHandler } from './search-plugins-query.handler';
 
 export const queries = [
 	GetPluginQueryHandler,
 	ListPluginsQueryHandler,
 	ListPluginVersionsQueryHandler,
 	ListPluginSourcesQueryHandler,
+	SearchPluginsQueryHandler,
 	GetPluginCategoriesHandler,
 	GetPluginCategoryHandler,
 	GetPluginCategoryTreeHandler,

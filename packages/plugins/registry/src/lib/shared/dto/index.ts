@@ -15,7 +15,8 @@ export * from './update-plugin-billing.dto';
 
 // Plugin Category DTOs
 export * from './create-plugin-category.dto';
-export * from './update-plugin-category.dto';
 export * from './plugin-category-query.dto';
+export * from './plugin-search-filter.dto';
 export * from './plugin-setting.dto';
 export * from './plugin-subscription.dto';
+export * from './update-plugin-category.dto';
