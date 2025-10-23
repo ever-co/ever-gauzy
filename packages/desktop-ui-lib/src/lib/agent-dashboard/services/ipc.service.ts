@@ -1,6 +1,4 @@
 import { Injectable, NgZone } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { LogEntry, QueueItem, SyncHealth } from '../models/logs.models';
 import { LogService } from './logs.service';
 import { TasksService } from './tasks-service';
 import { ElectronService } from '../../electron/services';

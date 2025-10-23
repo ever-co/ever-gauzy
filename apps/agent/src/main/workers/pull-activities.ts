@@ -255,7 +255,7 @@ class PullActivities {
 						synced: true
 					}));
 				} catch (error) {
-					if (error && error.status === 406 && error.message.includes('No running log found')) {
+					if (error.status === 406 && error.message?.includes('No running log found')) {
 						await this.handleManualTimeLog(authConfig);
 					} else {
 						console.error('Error stopping timer online', error.message);
