@@ -50,7 +50,7 @@ export class ActivepiecesController {
 	})
 	@Post('/connection')
 	@Permissions(PermissionsEnum.INTEGRATION_ADD)
-	async upsertConnection(@Body() input: CreateActivepiecesIntegrationDto): Promise<IActivepiecesConnection> {
+	async upsertConnection(@Body() input: CreateActivepiecesIntegrationDto): Promise<IActivepiecesConnection & { integrationId: string }> {
 		try {
 			return await this.activepiecesService.upsertConnection(input);
 		} catch (error: any) {
