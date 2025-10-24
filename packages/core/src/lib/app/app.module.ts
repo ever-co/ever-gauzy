@@ -1,5 +1,6 @@
 import { CacheModule } from '@nestjs/cache-manager';
-import { redisStore } from 'cache-manager-redis-yet';
+import Keyv from 'keyv';
+import KeyvRedis from '@keyv/redis';
 import { Module, OnModuleInit } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
@@ -275,31 +276,36 @@ if (environment.THROTTLE_ENABLED) {
 								ttl: 60 * 60 * 24 * 7 // 1 week
 							};
 
-							const store = await redisStore(storeOptions);
+							// Create Keyv instance with Redis adapter
+							const keyvRedis = new KeyvRedis(url, {
+								keepAlive: storeOptions.socket.keepAlive,
+								connectTimeout: storeOptions.socket.connectTimeout,
+								reconnectStrategy: storeOptions.socket.reconnectStrategy,
+								pingInterval: storeOptions.pingInterval,
+								ttl: storeOptions.ttl
+							});
 
-							store.client
-								.on('error', (err) => {
-									console.log('Redis Cache Client Error: ', err);
-								})
-								.on('connect', () => {
-									console.log('Redis Cache Client Connected');
-								})
-								.on('ready', () => {
-									console.log('Redis Cache Client Ready');
-								})
-								.on('reconnecting', () => {
-									console.log('Redis Cache Client Reconnecting');
-								})
-								.on('end', () => {
-									console.log('Redis Cache Client End');
-								});
+							const keyv = new Keyv({
+								store: keyvRedis,
+								ttl: storeOptions.ttl
+							});
 
-							// ping Redis
-							const res = await store.client.ping();
-							console.log('Redis Cache Client Cache Ping: ', res);
+							// Set up event listeners
+							keyv.on('error', (err) => {
+								console.log('Redis Cache Client Error: ', err);
+							});
+
+							// Test connection
+							try {
+								await keyv.set('test', 'connection');
+								await keyv.delete('test');
+								console.log('Redis Cache Client Cache Ping: PONG');
+							} catch (error) {
+								console.log('Redis Cache Client Cache Ping Error: ', error);
+							}
 
 							return {
-								store: () => store
+								store: () => keyv
 							};
 						}
 					})
