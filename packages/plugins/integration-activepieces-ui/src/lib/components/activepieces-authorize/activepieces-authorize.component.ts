@@ -32,9 +32,6 @@ export class ActivepiecesAuthorizeComponent implements OnInit, OnDestroy {
 		return fb.group({
 			client_id: [null, Validators.required],
 			client_secret: [null, Validators.required],
-			state_secret: [null, [Validators.required, Validators.minLength(32)]],
-			callback_url: [null],
-			post_install_url: [null]
 		});
 	}
 
@@ -137,7 +134,7 @@ export class ActivepiecesAuthorizeComponent implements OnInit, OnDestroy {
 
 	/**
 	 * Save tenant settings and start OAuth flow
-	 * POST /integration-tenant
+	 * POST /integration/activepieces/oauth/settings
 	 */
 	setupAndAuthorize() {
 		if (this.form.invalid || !this.organization) {
@@ -146,26 +143,11 @@ export class ActivepiecesAuthorizeComponent implements OnInit, OnDestroy {
 		}
 
 		this.loading = true;
-		const { id: organizationId, tenantId } = this.organization;
-		const formValues = this.form.value;
+		const { id: organizationId } = this.organization;
+		const { client_id, client_secret } = this.form.value;
 
-		// Prepare settings array for integration tenant
-		const settings = Object.keys(formValues)
-			.filter((key) => formValues[key])
-			.map((key) => ({
-				settingsName: key,
-				settingsValue: formValues[key]
-			}));
-
-		const integrationTenantInput = {
-			name: IntegrationEnum.ACTIVE_PIECES,
-			tenantId,
-			organizationId,
-			settings
-		};
-
-		this._integrationTenantService
-			.create(integrationTenantInput)
+		this._activepiecesService
+			.saveOAuthSettings(client_id, client_secret, organizationId)
 			.pipe(
 				tap(() => {
 					this._toastrService.success('Settings saved successfully');
@@ -184,7 +166,6 @@ export class ActivepiecesAuthorizeComponent implements OnInit, OnDestroy {
 
 	/**
 	 * Start OAuth authorization flow (if tenant settings already exist)
-	 * GET /integration/activepieces/authorize?organizationId={orgId}
 	 */
 	startAuthorization() {
 		this.loading = true;
@@ -208,8 +189,10 @@ export class ActivepiecesAuthorizeComponent implements OnInit, OnDestroy {
 			return EMPTY;
 		}
 
-		// GET /integration/activepieces/authorize?organizationId={orgId}
-		return this._activepiecesService.authorize(this.organization.id).pipe(
+		const { id: organizationId, tenantId } = this.organization;
+
+		// GET /integration/activepieces/authorize?tenantId={tenantId}&organizationId={orgId}
+		return this._activepiecesService.authorize(tenantId, organizationId).pipe(
 			tap((response: { authorizationUrl: string; state: string }) => {
 				// Redirect to ActivePieces OAuth page
 				window.location.href = response.authorizationUrl;

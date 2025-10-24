@@ -38,8 +38,13 @@
 				{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.INFOS' | translate }}
 			</div>
 
-			<button nbButton type="submit" status="primary" size="small" outline [disabled]="form.invalid || loading">
-				<nb-icon *ngIf="loading" icon="loader-outline"></nb-icon>
+			<button
+				nbButton
+				status="primary"
+				[disabled]="form.invalid"
+				size="small"
+				outline
+			>
 				{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.NEXT' | translate }}
 			</button>
 		</form>

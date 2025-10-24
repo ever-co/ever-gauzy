@@ -4,7 +4,6 @@ import { ActivepiecesAuthorizeComponent } from './components/activepieces-author
 import { IntegrationActivepiecesLayoutComponent } from './integration-activepieces.layout.component';
 import { ActivepiecesComponent } from './components/activepieces/activepieces.component';
 import { ActivepiecesCallbackComponent } from './components/activepieces-callback/activepieces-callback.component';
-import { ActivepiecesSettingsComponent } from './components/activepieces-settings/activepieces-settings.component';
 import { ActivepiecesConnectionsComponent } from './components/activepieces-connections/activepieces-connections.component';
 import { ActivepiecesMcpServersComponent } from './components/activepieces-mcp-servers/activepieces-mcp-servers.component';
 
@@ -45,10 +44,6 @@ import { ActivepiecesMcpServersComponent } from './components/activepieces-mcp-s
 							{
 								path: 'mcp-servers',
 								component: ActivepiecesMcpServersComponent
-							},
-							{
-								path: 'settings',
-								component: ActivepiecesSettingsComponent
 							}
 						]
 					}

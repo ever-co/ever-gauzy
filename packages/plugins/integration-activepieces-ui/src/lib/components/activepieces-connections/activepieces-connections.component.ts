@@ -117,7 +117,7 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 		this._activepiecesService
 			.listConnections(this.integrationId, params)
 			.pipe(
-				tap((response) => {
+				tap((response: any) => {
 					this.connections = response.data;
 					this._activepiecesStore.setConnections(response.data);
 				}),

@@ -65,22 +65,16 @@ export class ActivepiecesComponent extends TranslationBaseComponent implements O
 	private _loadTabs() {
 		this.tabs = [
 			{
-				title: this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS'),
+				title: this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.TITLE'),
 				icon: 'link-2-outline',
 				responsive: true,
 				route: this.getRoute('connections')
 			},
 			{
-				title: this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS'),
-				icon: 'server-outline',
+				title: this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.TITLE'),
+				icon: 'swap-outline',
 				responsive: true,
 				route: this.getRoute('mcp-servers')
-			},
-			{
-				title: this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS'),
-				icon: 'settings-2-outline',
-				responsive: true,
-				route: this.getRoute('settings')
 			}
 		];
 	}

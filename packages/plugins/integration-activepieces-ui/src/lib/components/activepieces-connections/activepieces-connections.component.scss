@@ -1,8 +1,22 @@
+.input-group {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.table-responsive {
+	overflow-x: auto;
+}
+
+button {
+	box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.15);
+	border: none !important;
+}
+
 :host {
-	.subtitle {
-		margin-top: 0.5rem;
-		color: nb-theme(text-hint-color);
-		font-size: 0.9rem;
+	nb-card,
+	nb-card-body {
+		background-color: var(--gauzy-card-2);
 	}
 
 	.table {
@@ -19,5 +33,33 @@
 			padding: 0.75rem;
 			border-bottom: 1px solid nb-theme(border-basic-color-3);
 		}
+	}
+
+	.form-group {
+		margin-bottom: 1.5rem;
+
+		.label {
+			display: block;
+			margin-bottom: 0.5rem;
+			font-weight: 500;
+		}
+
+		input {
+			width: 100%;
+		}
+	}
+
+	.text-muted {
+		color: nb-theme(text-hint-color);
+		font-size: 0.875rem;
+		margin-top: 0.25rem;
+	}
+
+	.mt-2 {
+		margin-top: 0.5rem;
+	}
+
+	.mt-3 {
+		margin-top: 1rem;
 	}
 }

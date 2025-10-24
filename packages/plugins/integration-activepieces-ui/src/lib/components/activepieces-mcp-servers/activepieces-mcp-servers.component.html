@@ -1,35 +1,97 @@
-<nb-card>
-	<nb-card-header>
+<nb-card class="card-scroll">
+	<nb-card-header class="d-flex">
+		<ngx-back-navigation></ngx-back-navigation>
 		<h5>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.TITLE' | translate }}</h5>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="form-group">
-			<label class="label">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.PROJECT_ID' | translate }}</label>
-			<div class="input-group">
-				<input nbInput fullWidth [(ngModel)]="projectId" type="text" placeholder="Enter Project ID" />
-				<button nbButton status="primary" (click)="loadMcpServers()" [disabled]="loading || !projectId">
-					{{ 'BUTTONS.LOAD' | translate }}
-				</button>
+		<!-- Project ID Input Form -->
+		<div class="col-xl-6 col-12">
+			<div class="form-group">
+				<label for="projectId" class="label">
+					{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.PROJECT_ID' | translate }}
+				</label>
+				<div class="input-group">
+					<input
+						fullWidth
+						id="projectId"
+						[(ngModel)]="projectId"
+						type="text"
+						nbInput
+						[placeholder]="'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.PROJECT_ID_PLACEHOLDER' | translate"
+					/>
+					<button
+						nbButton
+						status="primary"
+						size="small"
+						outline
+						(click)="loadMcpServers()"
+						[disabled]="loading || !projectId"
+					>
+						{{ 'BUTTONS.LOAD' | translate }}
+					</button>
+				</div>
+				<small class="form-text text-muted">
+					{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.PROJECT_ID_HINT' | translate }}
+				</small>
 			</div>
 		</div>
 
-		<div *ngIf="loading" class="text-center">
+		<!-- Loading Spinner -->
+		<div *ngIf="loading" class="text-center mt-3">
 			<nb-spinner size="large" status="primary"></nb-spinner>
+			<p class="mt-2">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.LOADING' | translate }}</p>
 		</div>
 
-		<div *ngIf="!loading && mcpServers.length === 0" class="text-center">
-			<p>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.NO_SERVERS' | translate }}</p>
+		<!-- No Servers Message -->
+		<div *ngIf="!loading && mcpServers.length === 0" class="text-center mt-3">
+			<nb-icon icon="swap-outline" status="basic" style="font-size: 3rem;"></nb-icon>
+			<p class="mt-2">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.NO_SERVERS' | translate }}</p>
 		</div>
 
-		<div *ngIf="mcpServers.length > 0" class="mcp-servers-list">
-			<nb-card *ngFor="let server of mcpServers" class="mcp-server-card">
-				<nb-card-header>{{ server.name }}</nb-card-header>
-				<nb-card-body>
-					<p><strong>ID:</strong> {{ server.id }}</p>
-					<p><strong>Agent ID:</strong> {{ server.agentId }}</p>
-					<p><strong>Tools:</strong> {{ server.tools?.length || 0 }}</p>
-				</nb-card-body>
-			</nb-card>
+		<!-- MCP Servers List -->
+		<div *ngIf="!loading && mcpServers.length > 0" class="mcp-servers-list mt-3">
+			<div class="row">
+				<div class="col-xl-4 col-lg-6 col-12" *ngFor="let server of mcpServers">
+					<nb-card class="mcp-server-card">
+						<nb-card-header>
+							<div class="d-flex align-items-center justify-content-between">
+								<span class="server-name">{{ server.name }}</span>
+								<nb-badge status="success" *ngIf="server.id">
+									{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.ACTIVE' | translate }}
+								</nb-badge>
+							</div>
+						</nb-card-header>
+						<nb-card-body>
+							<div class="server-info">
+								<div class="info-row">
+									<span class="info-label">
+										{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.SERVER_ID' | translate }}:
+									</span>
+									<span class="info-value">{{ server.id }}</span>
+								</div>
+								<div class="info-row" *ngIf="server.agentId">
+									<span class="info-label">
+										{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.AGENT_ID' | translate }}:
+									</span>
+									<span class="info-value">{{ server.agentId }}</span>
+								</div>
+								<div class="info-row" *ngIf="server.tools">
+									<span class="info-label">
+										{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.TOOLS_COUNT' | translate }}:
+									</span>
+									<span class="info-value">{{ server.tools?.length || 0 }}</span>
+								</div>
+								<div class="info-row" *ngIf="server.created">
+									<span class="info-label">
+										{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.MCP_SERVERS.CREATED' | translate }}:
+									</span>
+									<span class="info-value">{{ server.created | date:'medium' }}</span>
+								</div>
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</div>
+			</div>
 		</div>
 	</nb-card-body>
 </nb-card>
