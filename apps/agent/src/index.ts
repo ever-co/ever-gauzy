@@ -54,7 +54,7 @@ async function stopAppActivity() {
 	});
 	await pullActivities.stopTracking();
 	const pushActivities = PushActivities.getInstance();
-	pushActivities.stopPooling();
+	await pushActivities.stopPooling();
 }
 
 app.on('before-quit', async (e) => {

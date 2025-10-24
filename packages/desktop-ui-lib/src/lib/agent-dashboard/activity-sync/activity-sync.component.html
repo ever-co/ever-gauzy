@@ -17,7 +17,7 @@
           <nb-list-item *ngFor="let it of (items$|async) | filterStatus:'PENDING'">
             <div class="list-item-content">
               <div class="col-2">{{ it.queue }}</div>
-              <div class="col-3">{{ it.createdAt | date:'MMM d, HH:mm:ss' }}</div>
+              <div class="col-3">{{ it.created_at | localDateParse }}</div>
               <div class="col-3 word-wrap-content">{{ it.data}}</div>
               <div class="col-2">{{ it.attempts }}</div>
               <div class="col-1 centered-column"><nb-badge text="PENDING" status="warning"></nb-badge></div>
@@ -37,7 +37,7 @@
           <nb-list-item *ngFor="let it of (items$|async) | filterStatus:'PROCESS'">
             <div class="list-item-content">
               <div class="col-2">{{ it.queue }}</div>
-              <div class="col-3">{{ it.createdAt | date:'MMM d, HH:mm:ss' }}</div>
+              <div class="col-3">{{ it.created_at | localDateParse }}</div>
               <div class="col-3 word-wrap-content">{{ it.data }}</div>
               <div class="col-2">{{ it.attempts }}</div>
               <div class="col-1 centered-column"><nb-badge text="PROCESS" status="warning"></nb-badge></div>
@@ -57,7 +57,7 @@
           <nb-list-item *ngFor="let it of (items$|async) | filterStatus:'FAILED'">
             <div class="list-item-content">
               <div class="col-2">{{ it.queue }}</div>
-              <div class="col-3">{{ it.createdAt | date:'MMM d, HH:mm:ss' }}</div>
+              <div class="col-3">{{ it.created_at | localDateParse }}</div>
               <div class="col-3 word-wrap-content">{{ it.last_error }}</div>
               <div class="col-2">{{ it.attempts }}</div>
               <div class="col-1 centered-column"><nb-badge text="FAILED" status="danger"></nb-badge></div>
@@ -77,7 +77,7 @@
           <nb-list-item *ngFor="let it of (items$|async) | filterStatus:'SYNCED'">
             <div class="list-item-content">
               <div class="col-2">{{ it.queue }}</div>
-              <div class="col-3">{{ it.createdAt | date:'MMM d, HH:mm:ss' }}</div>
+              <div class="col-3">{{ it.created_at | localDateParse }}</div>
               <div class="col-3 word-wrap-content">{{ it.data }}</div>
               <div class="col-2">{{ it.attempts }}</div>
               <div class="col-1 centered-column"><nb-badge text="SYNCED" status="success"></nb-badge></div>

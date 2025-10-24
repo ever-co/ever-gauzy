@@ -25,13 +25,17 @@ import {
 	NbContextMenuModule,
 	NbInputModule,
 	NbCheckboxModule,
-	NbAlertModule
+	NbAlertModule,
+	NbRouteTabsetModule
 } from '@nebular/theme';
+import { NbEvaIconsModule } from '@nebular/eva-icons';
 
 import { AgentDashboardComponent } from './agent-dashboard.component';
 import { LogsPageComponent } from './logs/logs.component';
 import { SyncPageComponent } from './activity-sync/activity-sync.component';
 import { FilterStatusPipe } from './pipes/filter.status.pipe';
+import { LocalDateParse } from './pipes/date.pipe';
+import { TasksModule } from '../tasks/tasks.module';
 
 @NgModule({
 	declarations: [AgentDashboardComponent, LogsPageComponent, SyncPageComponent],
@@ -46,6 +50,7 @@ import { FilterStatusPipe } from './pipes/filter.status.pipe';
 		NbSidebarModule.forRoot(),
 		NbMenuModule,
 		NbIconModule,
+		NbEvaIconsModule,
 		NbButtonModule,
 		NbCardModule,
 		NbActionsModule,
@@ -62,12 +67,14 @@ import { FilterStatusPipe } from './pipes/filter.status.pipe';
 		NbInputModule,
 		NbCheckboxModule,
 		NbAlertModule,
-		FilterStatusPipe
+		FilterStatusPipe,
+		LocalDateParse,
+		NbRouteTabsetModule,
+		TasksModule
 	],
 	exports: [
-		// LogsPageComponent,
-		// SyncPageComponent,
-		FilterStatusPipe
+		FilterStatusPipe,
+		LocalDateParse
 	]
 })
 export class AgentDashboardModule { }

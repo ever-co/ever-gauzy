@@ -142,3 +142,9 @@ export function updateAgentSetting(employee: Partial<TEmployeeResponse>) {
 	}
 	LocalStore.updateApplicationSetting(appSetting);
 }
+
+export function updateTimerStatus(timerStarted: boolean): void {
+	LocalStore.updateApplicationSetting({
+		timerStarted: timerStarted
+	});
+}
