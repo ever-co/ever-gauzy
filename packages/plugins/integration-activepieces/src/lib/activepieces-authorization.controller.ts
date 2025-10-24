@@ -8,8 +8,8 @@ import { buildQueryString } from '@gauzy/utils';
 import { firstValueFrom, catchError } from 'rxjs';
 import { createHmac, randomBytes } from 'node:crypto';
 import { ACTIVEPIECES_OAUTH_AUTHORIZE_URL, ACTIVEPIECES_OAUTH_TOKEN_URL, ACTIVEPIECES_SCOPES, OAUTH_RESPONSE_TYPE, OAUTH_GRANT_TYPE } from './activepieces.config';
-import { ActivepiecesQueryDto, ActivepiecesTokenExchangeDto } from './dto';
-import { IActivepiecesTokenExchangeRequest, IActivepiecesOAuthTokens } from './activepieces.type';
+import { ActivepiecesQueryDto, ActivepiecesTokenExchangeDto, SaveOAuthSettingsDto } from './dto';
+import { IActivepiecesTokenExchangeRequest, IActivepiecesOAuthTokens } from '@gauzy/contracts';
 import { ActivepiecesService } from './activepieces.service';
 import { RequestContext } from '@gauzy/core';
 
@@ -169,6 +169,59 @@ export class ActivepiecesAuthorizationController {
 	}
 
 	/**
+	 * Save OAuth settings for a tenant/organization
+	 *
+	 * @param {SaveOAuthSettingsDto} body - OAuth settings to save
+	 */
+	@ApiOperation({
+		summary: 'Save OAuth settings for ActivePieces integration',
+		description: 'Saves client ID and client secret for tenant-specific OAuth configuration'
+	})
+	@ApiResponse({
+		status: 201,
+		description: 'OAuth settings saved successfully',
+		schema: {
+			type: 'object',
+			properties: {
+				message: { type: 'string' },
+				integrationTenantId: { type: 'string' }
+			}
+		}
+	})
+	@Post('/oauth/settings')
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+	async saveOAuthSettings(@Body() body: SaveOAuthSettingsDto) {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			const { client_id, client_secret, organizationId } = body;
+
+			if (!tenantId) {
+				throw new HttpException('Tenant context is required', HttpStatus.BAD_REQUEST);
+			}
+
+			const integrationTenant = await this.activepiecesService.saveOAuthSettings(
+				client_id,
+				client_secret,
+				tenantId,
+				organizationId
+			);
+
+			return {
+				message: 'OAuth settings saved successfully',
+				integrationTenantId: integrationTenant.id
+			};
+		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			throw new HttpException(
+				`Failed to save OAuth settings: ${error.message}`,
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
+	}
+
+	/**
 	 * Handle the callback from ActivePieces after user authorization
 	 *
 	 * @param {any} query - The query parameters from the callback
@@ -255,7 +308,7 @@ export class ActivepiecesAuthorizationController {
 			}
 		}
 	})
-	@Post('/token')
+	@Post('oauth/token')
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async exchangeToken(
 		@Body() body: ActivepiecesTokenExchangeDto,

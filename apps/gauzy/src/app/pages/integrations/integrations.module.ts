@@ -135,6 +135,19 @@ export class IntegrationsModule {
 			loadChildren: () => import('@gauzy/plugin-integration-github-ui').then((m) => m.IntegrationGithubUiModule)
 		});
 
+		// Register the routes for activepieces integration
+		this._pageRouteRegistryService.registerPageRoute({
+			// Data to be passed to the component
+			data: { selectors: false },
+			// Register the location 'integrations'
+			location: 'integrations',
+			// Register the path 'activepieces'
+			path: 'activepieces',
+			// Register the loadChildren function to load the IntegrationActivepiecesUiModule lazy module
+			loadChildren: () =>
+				import('@gauzy/plugin-integration-activepieces-ui').then((m) => m.IntegrationActivepiecesUiModule)
+		});
+
 		// Set hasRegisteredRoutes to true
 		IntegrationsModule.hasRegisteredPageRoutes = true;
 	}
