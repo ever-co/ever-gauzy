@@ -96,6 +96,7 @@ export interface IActivepiecesConnection {
 	owner: IActivepiecesUser | null;
 	metadata: Record<string, unknown> | null;
 	flowIds: string[] | null;
+	integrationId: string;
 }
 
 /**

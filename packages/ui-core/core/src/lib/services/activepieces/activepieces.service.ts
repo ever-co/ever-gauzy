@@ -36,13 +36,13 @@ export class ActivepiecesService {
 	/**
 	 * Initiate OAuth flow with ActivePieces
 	 */
-	authorize(organizationId?: string): Observable<{
+	authorize(tenantId: string, organizationId?: string): Observable<{
 		authorizationUrl: string;
 		state: string;
 		tenantId: string;
 		organizationId?: string;
 	}> {
-		const params: any = {};
+		const params: any = { tenantId };
 		if (organizationId) {
 			params.organizationId = organizationId;
 		}
@@ -53,6 +53,26 @@ export class ActivepiecesService {
 			tenantId: string;
 			organizationId?: string;
 		}>(`${API_PREFIX}/integration/activepieces/authorize`, { params });
+	}
+
+	/**
+	 * Save OAuth settings (client ID and client secret)
+	 */
+	saveOAuthSettings(clientId: string, clientSecret: string, organizationId?: string): Observable<{
+		message: string;
+		integrationTenantId: string;
+	}> {
+		const body: any = {
+			client_id: clientId,
+			client_secret: clientSecret
+		};
+		if (organizationId) {
+			body.organizationId = organizationId;
+		}
+		return this.http.post<{ message: string; integrationTenantId: string }>(
+			`${API_PREFIX}/integration/activepieces/oauth/settings`,
+			body
+		);
 	}
 
 	/**
