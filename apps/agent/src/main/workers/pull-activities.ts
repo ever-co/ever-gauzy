@@ -259,6 +259,7 @@ class PullActivities {
 						await this.handleManualTimeLog(authConfig);
 					} else {
 						console.error('Error stopping timer online', error.message);
+						this.agentLogger.error(`Error stopping timer online ${error.message}`);
 						throw error;
 					}
 				}

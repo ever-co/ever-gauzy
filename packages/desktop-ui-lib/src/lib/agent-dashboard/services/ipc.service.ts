@@ -13,18 +13,22 @@ export class IpcService {
 	) { }
 
 	dashboardEventHandle(_: any, arg: { type: string, data: any }) {
-		switch (arg.type) {
-			case 'log_state':
-				this.logService.handleLogStream(arg.data);
-				break;
-			case 'api_sync_update':
-				this.logService.updateApiLogs(arg.data);
-				break;
-			case 'init_dashboard':
-				this.initDashboard();
-				break;
-			default:
-				break;
+		try {
+			switch (arg.type) {
+				case 'log_state':
+					this.logService.handleLogStream(arg.data);
+					break;
+				case 'api_sync_update':
+					this.logService.updateApiLogs(arg.data);
+					break;
+				case 'init_dashboard':
+					this.initDashboard();
+					break;
+				default:
+					break;
+			}
+		} catch (error) {
+			console.error('Error handling dashboard event', error);
 		}
 	}
 

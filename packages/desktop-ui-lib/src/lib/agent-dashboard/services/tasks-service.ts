@@ -16,19 +16,29 @@ export class TasksService {
 		private _taskStatusCacheService: TaskStatusCacheService,
 		private _store: Store,
 		private http: HttpClient
-	) {}
+	) { }
 
 	public async loadTaskStatus(): Promise<void> {
-		this._store.statuses = await this.getTaskStatus();
+		try {
+			this._store.statuses = await this.getTaskStatus();
+		} catch (error) {
+			console.error('Failed to load task statuses:', error);
+			this._store.statuses = [];
+		}
 	}
 
 	public async getTaskStatus(): Promise<ITaskStatus[]> {
 		const tenantId = this._store.tenantId;
 		const organizationId = this._store.organizationId;
+
+		if (!tenantId || !organizationId) {
+			return [];
+		}
+
 		const params = {
 			tenantId,
 			organizationId
-		}
+		};
 		let taskStatuses$ = this._taskStatusCacheService.getValue(params);
 		if (!taskStatuses$) {
 			taskStatuses$ = this.http

@@ -51,7 +51,6 @@ export default class EventHandler {
 	private async stopAppTracking(logout?: boolean) {
 		const authConfig = getAuthConfig();
 		this.getPullActivities(authConfig);
-		this.pullActivities.stopListener();
 		await this.pullActivities.stopTracking();
 		if (logout) {
 			this.getPushActivities();
@@ -63,7 +62,6 @@ export default class EventHandler {
 		const authConfig = getAuthConfig();
 		if (authConfig?.token) {
 			this.getPullActivities(authConfig);
-			this.pullActivities.startListener();
 			await this.pullActivities.startTracking();
 		}
 	}
