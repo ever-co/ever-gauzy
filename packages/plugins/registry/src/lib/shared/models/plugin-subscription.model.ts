@@ -1,15 +1,8 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID, IUser, IPayment } from '@gauzy/contracts';
-import { IPlugin } from './plugin.model';
-import { IPluginTenant } from './plugin-tenant.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID, IPayment, IUser } from '@gauzy/contracts';
+import type { IPluginBilling } from './plugin-billing.model';
 import { PluginScope } from './plugin-scope.model';
-
-// Forward declaration to avoid circular dependency
-interface IPluginBilling {
-	id: string;
-	amount: number;
-	currency: string;
-	status: string;
-}
+import { IPluginTenant } from './plugin-tenant.model';
+import { IPlugin } from './plugin.model';
 
 /**
  * Interface for plugin subscriptions

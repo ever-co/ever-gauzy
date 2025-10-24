@@ -21,6 +21,7 @@ import {
 	ValidateIf
 } from 'class-validator';
 import { Index, JoinColumn, Relation, RelationId } from 'typeorm';
+import { IPluginBilling } from '../../shared/models';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import {
 	IPluginSubscription,
@@ -28,8 +29,8 @@ import {
 	PluginSubscriptionStatus,
 	PluginSubscriptionType
 } from '../../shared/models/plugin-subscription.model';
-import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
-import { IPlugin } from '../../shared/models/plugin.model';
+import type { IPluginTenant } from '../../shared/models/plugin-tenant.model';
+import type { IPlugin } from '../../shared/models/plugin.model';
 import { PluginBilling } from './plugin-billing.entity';
 import { PluginTenant } from './plugin-tenant.entity';
 import { Plugin } from './plugin.entity';
@@ -194,15 +195,14 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	subscriber?: Relation<IUser>;
 
 	/*
+	/*
 	 * Billing relationships - inverse relationship for PluginBilling
-	 * Note: Using optional relationship to avoid circular dependency issues
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugin billings for this subscription' })
 	@MultiORMOneToMany(() => PluginBilling, (billing) => billing.subscription, {
 		onDelete: 'CASCADE'
 	})
-	billings?: any[];
-
+	billings?: Relation<IPluginBilling[]>;
 	/*
 	 * Payment relationships - will be added when Payment entity is available
 	 * @MultiORMOneToMany(() => Payment, (payment) => payment.pluginSubscription, { onDelete: 'SET NULL' })

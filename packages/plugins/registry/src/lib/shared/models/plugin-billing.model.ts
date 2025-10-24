@@ -1,5 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
-import { IPluginSubscription } from './plugin-subscription.model';
+import type { IPluginSubscription } from './plugin-subscription.model';
 
 /**
  * Interface for plugin billing records
