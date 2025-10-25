@@ -48,7 +48,7 @@
 		"uuid": "^11.1.0",
 		"express-session": "^1.18.1",
 		"connect-redis": "^7.1.0",
-		"ioredis": "^5.7.0",
+		"ioredis": "^5.8.2",
 		"helmet": "^4.1.1",
 		"escape-html": "^1.0.3"
 	},

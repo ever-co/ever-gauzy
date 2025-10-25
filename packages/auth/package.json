@@ -45,7 +45,7 @@
 		"express-rate-limit": "^8.0.1",
 		"express-session": "^1.18.1",
 		"helmet": "^4.1.1",
-		"ioredis": "^5.7.0",
+		"ioredis": "^5.8.2",
 		"jose": "^6.0.13",
 		"passport": "^0.7.0",
 		"passport-auth0": "^1.3.3",
