@@ -1,6 +1,3 @@
-import { CacheModule } from '@nestjs/cache-manager';
-import Keyv from 'keyv';
-import KeyvRedis from '@keyv/redis';
 import { Module, OnModuleInit } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
@@ -29,6 +26,7 @@ import { TaskStatusModule } from '../tasks/statuses/status.module';
 import { TaskVersionModule } from '../tasks/versions/version.module';
 import { SkillModule } from '../skills/skill.module';
 import { LanguageModule } from '../language/language.module';
+import { CacheModule } from '../cache/cache.module';
 import { AppBootstrapLogger } from './app-bootstrap-logger';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -220,97 +218,7 @@ if (environment.THROTTLE_ENABLED) {
 			global: true,
 			middleware: { mount: false }
 		}),
-		...(process.env.REDIS_ENABLED === 'true'
-			? [
-					CacheModule.registerAsync({
-						isGlobal: true,
-						useFactory: async () => {
-							const url =
-								process.env.REDIS_URL ||
-								(process.env.REDIS_TLS === 'true'
-									? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
-									: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
-
-							console.log('REDIS_URL: ', url);
-
-							let host, port, username, password;
-
-							const isTls = url.startsWith('rediss://');
-
-							// Removing the protocol part
-							let authPart = url.split('://')[1];
-
-							// Check if the URL contains '@' (indicating the presence of username/password)
-							if (authPart.includes('@')) {
-								// Splitting user:password and host:port
-								let [userPass, hostPort] = authPart.split('@');
-								[username, password] = userPass.split(':');
-								[host, port] = hostPort.split(':');
-							} else {
-								// If there is no '@', it means there is no username/password
-								[host, port] = authPart.split(':');
-							}
-
-							port = parseInt(port);
-
-							const storeOptions = {
-								url: url,
-								username: username,
-								password: password,
-								isolationPoolOptions: {
-									min: 1,
-									max: 100
-								},
-								socket: {
-									tls: isTls, // enable TLS only when using rediss:// (kept in sync)
-									host: host,
-									port: port,
-									passphrase: password,
-									keepAlive: 10_000, // enable TCP keepalive (initial delay in ms)
-									reconnectStrategy: (retries: number) => Math.min(1000 * Math.pow(2, retries), 5000),
-									connectTimeout: 10_000,
-									rejectUnauthorized: process.env.NODE_ENV === 'production'
-								},
-								// Keep the socket from idling out at LB/firewall
-								pingInterval: 30_000, // send PING every 30s
-								ttl: 60 * 60 * 24 * 7 // 1 week
-							};
-
-							// Create Keyv instance with Redis adapter
-							const keyvRedis = new KeyvRedis(url, {
-								keepAlive: storeOptions.socket.keepAlive,
-								connectTimeout: storeOptions.socket.connectTimeout,
-								reconnectStrategy: storeOptions.socket.reconnectStrategy,
-								pingInterval: storeOptions.pingInterval,
-								ttl: storeOptions.ttl
-							});
-
-							const keyv = new Keyv({
-								store: keyvRedis,
-								ttl: storeOptions.ttl
-							});
-
-							// Set up event listeners
-							keyv.on('error', (err) => {
-								console.log('Redis Cache Client Error: ', err);
-							});
-
-							// Test connection
-							try {
-								await keyv.set('test', 'connection');
-								await keyv.delete('test');
-								console.log('Redis Cache Client Cache Ping: PONG');
-							} catch (error) {
-								console.log('Redis Cache Client Cache Ping Error: ', error);
-							}
-
-							return {
-								store: () => keyv
-							};
-						}
-					})
-			  ]
-			: [CacheModule.register({ isGlobal: true })]),
+		...(process.env.REDIS_ENABLED === 'true' ? [CacheModule] : []),
 		// Serve Static Module Configuration
 		ServeStaticModule.forRootAsync({
 			useFactory: async (config: ConfigService): Promise<ServeStaticModuleOptions[]> => {
