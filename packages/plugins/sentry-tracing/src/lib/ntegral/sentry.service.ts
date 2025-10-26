@@ -23,16 +23,12 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		Sentry.init({
 			...sentryOptions,
 			integrations: [
-				// V9 Migration: Updated integration names from Sentry.Integrations.OnUncaughtException to Sentry.onUncaughtExceptionIntegration
-				// Reference: https://docs.sentry.io/platforms/javascript/guides/node/configuration/integrations/onuncaughtexception/
 				Sentry.onUncaughtExceptionIntegration({
 					onFatalError: async (error) => {
 						console.error('Uncaught Exception Handler in Sentry Service', error);
 						if (error.name === 'SentryError') {
 							console.log(error);
 						} else {
-							// V9 Migration: getCurrentHub() was removed, use getClient() instead
-							// Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/#removed-apis
 							Sentry.getClient()?.captureException(error);
 
 							Sentry.flush(3000).then(() => {
@@ -41,8 +37,7 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 						}
 					}
 				}),
-				// V9 Migration: Updated integration names from Sentry.Integrations.OnUnhandledRejection to Sentry.onUnhandledRejectionIntegration
-				// Reference: https://docs.sentry.io/platforms/javascript/guides/node/configuration/integrations/unhandledrejection/
+
 				Sentry.onUnhandledRejectionIntegration({ mode: 'warn' }),
 				...integrations
 			]
@@ -70,15 +65,14 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		message = `${this.app} ${message}`;
 		try {
 			super.log(message, context);
-			asBreadcrumb
-				? Sentry.addBreadcrumb({
-						message,
-						level: 'log',
-						data: {
-							context
-						}
-				  })
-				: Sentry.captureMessage(message, 'log');
+			// Only add as breadcrumb, don't send to Sentry
+			Sentry.addBreadcrumb({
+				message,
+				level: 'log',
+				data: {
+					context
+				}
+			});
 		} catch (err) {}
 	}
 
@@ -128,15 +122,14 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		message = `${this.app} ${message}`;
 		try {
 			super.debug(message, context);
-			asBreadcrumb
-				? Sentry.addBreadcrumb({
-						message,
-						level: 'debug',
-						data: {
-							context
-						}
-				  })
-				: Sentry.captureMessage(message, 'debug');
+			// Only add as breadcrumb, don't send to Sentry
+			Sentry.addBreadcrumb({
+				message,
+				level: 'debug',
+				data: {
+					context
+				}
+			});
 		} catch (err) {}
 	}
 
@@ -150,15 +143,14 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		message = `${this.app} ${message}`;
 		try {
 			super.verbose(message, context);
-			asBreadcrumb
-				? Sentry.addBreadcrumb({
-						message,
-						level: 'info',
-						data: {
-							context
-						}
-				  })
-				: Sentry.captureMessage(message, 'info');
+			// Only add as breadcrumb, don't send to Sentry
+			Sentry.addBreadcrumb({
+				message,
+				level: 'info',
+				data: {
+					context
+				}
+			});
 		} catch (err) {}
 	}
 

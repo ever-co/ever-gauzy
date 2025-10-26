@@ -1,6 +1,11 @@
 @use '../email-templates/email-templates.component' as *;
 
 :host {
+  ::ng-deep {
+    .ng-select .ng-select-container {
+      background-color: nb-theme(select-outline-basic-background-color);
+    }
+  }
   .ace-editor {
     height: calc($height + 3.5rem) !important;
   }

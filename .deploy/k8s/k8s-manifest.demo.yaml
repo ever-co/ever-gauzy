@@ -3,45 +3,77 @@ kind: Service
 apiVersion: v1
 metadata:
     name: gauzy-demo-lb
-    annotations:
-        service.beta.kubernetes.io/do-loadbalancer-name: 'demo.gauzy.co'
-        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http2'
-        service.beta.kubernetes.io/do-loadbalancer-http2-ports: '443'
-        # Replace with your Certificate Id. You can get a list of Ids with 'doctl compute certificate list'
-        service.beta.kubernetes.io/do-loadbalancer-certificate-id: '4bf6d197-6dbb-4394-815b-a543761d94d2'
-        service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
-        service.beta.kubernetes.io/do-loadbalancer-hostname: 'demo.gauzy.co'
 spec:
-    type: LoadBalancer
+    type: ClusterIP
     selector:
         app: gauzy-demo-webapp
     ports:
         - name: http
           protocol: TCP
-          port: 443
+          port: 80
           targetPort: 4200
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: gauzy-demo-web-ingress
+    annotations:
+        nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+spec:
+    ingressClassName: nginx
+    rules:
+        - host: demo.gauzy.co
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: gauzy-demo-lb
+                            port:
+                                number: 80
+    tls:
+        - hosts:
+            - demo.gauzy.co
+          secretName: demo.gauzy.co-tls
 ---
 kind: Service
 apiVersion: v1
 metadata:
     name: gauzy-demo-api-lb
-    annotations:
-        service.beta.kubernetes.io/do-loadbalancer-name: 'apidemo.gauzy.co'
-        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http2'
-        service.beta.kubernetes.io/do-loadbalancer-http2-ports: '443'
-        # Replace with your Certificate Id. You can get a list of Ids with 'doctl compute certificate list'
-        service.beta.kubernetes.io/do-loadbalancer-certificate-id: '4bf6d197-6dbb-4394-815b-a543761d94d2'
-        service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
-        service.beta.kubernetes.io/do-loadbalancer-hostname: 'apidemo.gauzy.co'
 spec:
-    type: LoadBalancer
+    type: ClusterIP
     selector:
         app: gauzy-demo-api
     ports:
         - name: http
           protocol: TCP
-          port: 443
+          port: 80
           targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: gauzy-demo-api-ingress
+    annotations:
+        nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+spec:
+    ingressClassName: nginx
+    rules:
+        - host: apidemo.gauzy.co
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: gauzy-demo-api-lb
+                            port:
+                                number: 80
+    tls:
+        - hosts:
+            - apidemo.gauzy.co
+          secretName: apidemo.gauzy.co-tls
 ---
 apiVersion: apps/v1
 kind: Deployment

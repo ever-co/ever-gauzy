@@ -45,7 +45,7 @@ export class OctokitService implements OnModuleInit {
 				// console.log(chalk.magenta(`Octokit App Configuration ${JSON.stringify(config)}`));
 				console.log(chalk.green(`Octokit App successfully initialized.`));
 			} else {
-				console.error(chalk.red(`Octokit App initialization failed: Missing appId or privateKey.`));
+				console.warn(chalk.yellow(`Octokit App initialization skipped: Missing appId or privateKey.`));
 			}
 		} catch (error) {
 			console.error(chalk.red(`Octokit App initialization failed: ${error.message}`));

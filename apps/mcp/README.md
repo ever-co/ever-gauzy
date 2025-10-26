@@ -636,6 +636,131 @@ following:
 This enables secure access control for MCP clients like ChatGPT and
 other AI assistants.
 
+### MCP Authorization Server (`apps/mcp-auth`)
+
+The project includes a dedicated OAuth 2.0 authorization server in
+`apps/mcp-auth` that provides authentication and token management for
+the MCP server. This separation of concerns allows independent scaling
+and security management.
+
+#### Setting Up the MCP Auth Server
+
+1. **Build the Auth Server**:
+
+   ```bash
+   # Development build
+   yarn build:mcp-auth
+
+   # Production build
+   yarn build:mcp-auth:prod
+   ```
+
+2. **Configure Environment Variables** (`.env.local` or `.env`):
+
+   ```bash
+   # Auth Server Configuration
+   MCP_AUTH_PORT=3003
+   MCP_AUTH_SESSION_SECRET=your-secure-session-secret-key
+
+   # Required Gauzy API settings
+   API_BASE_URL=http://localhost:3000
+   GAUZY_AUTH_EMAIL=<your-email>
+   GAUZY_AUTH_PASSWORD=<your-password>
+   ```
+
+3. **Start the Auth Server**:
+
+   ```bash
+   yarn start:mcp-auth
+   ```
+
+   The server will start on `http://localhost:3003` with the following
+   endpoints:
+
+   - **Authorization**: `POST /oauth2/authorize`
+   - **Token**: `POST /oauth2/token`
+   - **User Info**: `GET /oauth2/userinfo`
+   - **JWKS**: `GET /.well-known/jwks.json`
+   - **Client Registration**: `POST /oauth2/register`
+   - **Token Introspection**: `POST /oauth2/introspect`
+   - **Metadata**: `GET /.well-known/oauth-authorization-server`
+
+4. **Configure MCP Server to Use Auth Server**:
+
+   In your MCP server configuration (`.env.local`):
+
+   ```bash
+   # Enable OAuth 2.0 authorization
+   MCP_AUTH_ENABLED=true
+
+   # Resource and scope configuration
+   MCP_AUTH_RESOURCE_URI=http://localhost:3001/sse
+   MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
+
+   # JWT validation settings
+   MCP_AUTH_JWT_ALGORITHMS=RS256
+   MCP_AUTH_JWT_AUDIENCE=http://localhost:3001/sse
+   MCP_AUTH_JWT_ISSUER=http://localhost:3003
+   MCP_AUTH_JWT_JWKS_URI=http://localhost:3003/.well-known/jwks.json
+
+   # Cache settings
+   MCP_AUTH_TOKEN_CACHE_TTL=300 # 5 minutes
+   MCP_AUTH_METADATA_CACHE_TTL=3600 # 1 hour
+
+   # Authorization server metadata
+   MCP_AUTH_SERVERS='[
+     {
+       "issuer": "http://localhost:3003",
+       "authorizationEndpoint": "http://localhost:3003/oauth2/authorize",
+       "tokenEndpoint": "http://localhost:3003/oauth2/token",
+       "grantTypesSupported": [
+         "authorization_code",
+         "client_credentials",
+         "refresh_token"
+       ],
+       "responseTypesSupported": [
+         "code"
+       ],
+       "scopesSupported": [
+         "mcp.read",
+         "mcp.write",
+         "mcp.admin"
+       ],
+       "codeChallengeMethodsSupported": [
+         "S256"
+       ]
+     }
+   ]'
+   ```
+
+5. **Test the Integration**:
+
+   ```bash
+   # Get authorization server metadata
+   curl http://localhost:3003/.well-known/oauth-authorization-server
+
+   # Get JWKS (public keys for token verification)
+   curl http://localhost:3003/.well-known/jwks.json
+
+   # Test MCP server with authorization
+   curl -X POST http://localhost:3001/sse \
+     -H "Authorization: Bearer <your-access-token>" \
+     -H "Content-Type: application/json" \
+     -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+   ```
+
+#### Running Both Servers Together
+
+For a complete OAuth 2.0 setup, run both servers:
+
+```bash
+# Terminal 1: Start Auth Server
+yarn start:mcp-auth
+
+# Terminal 2: Start MCP Server with HTTP transport
+MCP_TRANSPORT=http MCP_AUTH_ENABLED=true yarn start:mcp
+```
+
 ### Live Environments
 
 - **Production**: `https://mcp.gauzy.co` - Secure production MCP server

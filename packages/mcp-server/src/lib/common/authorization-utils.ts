@@ -7,7 +7,7 @@
 
 import { URL } from 'node:url';
 import { createHash, randomBytes } from 'node:crypto';
-import { SecurityLogger } from './security-logger';
+import { SecurityLogger } from '@gauzy/auth';
 
 const securityLogger = new SecurityLogger();
 
@@ -76,8 +76,7 @@ export function normalizeCanonicalResourceUri(uri: string): string {
 		}
 
 		// Remove default ports
-		if ((url.protocol === 'https:' && url.port === '443') ||
-		    (url.protocol === 'http:' && url.port === '80')) {
+		if ((url.protocol === 'https:' && url.port === '443') || (url.protocol === 'http:' && url.port === '80')) {
 			url.port = '';
 		}
 
@@ -155,7 +154,9 @@ export function validateJWTStructure(token: string): { valid: boolean; header?: 
 		}
 
 		// Decode header and payload
-		const header: { alg: string; typ: string; [key: string]: unknown } = JSON.parse(Buffer.from(headerB64, 'base64url').toString());
+		const header: { alg: string; typ: string; [key: string]: unknown } = JSON.parse(
+			Buffer.from(headerB64, 'base64url').toString()
+		);
 		const payload: { [key: string]: unknown } = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
 
 		// Basic header validation
@@ -189,13 +190,17 @@ export function validateJWTStructure(token: string): { valid: boolean; header?: 
 /**
  * Validate OAuth 2.0 scopes format
  */
-export function validateOAuthScopes(scopes: string | string[]): { valid: boolean; normalizedScopes?: string[]; error?: string } {
+export function validateOAuthScopes(scopes: string | string[]): {
+	valid: boolean;
+	normalizedScopes?: string[];
+	error?: string;
+} {
 	try {
 		let scopeArray: string[];
 
 		if (typeof scopes === 'string') {
 			// RFC 6749: scope values are case-sensitive and space-delimited
-			scopeArray = scopes.split(' ').filter(s => s.length > 0);
+			scopeArray = scopes.split(' ').filter((s) => s.length > 0);
 		} else if (Array.isArray(scopes)) {
 			scopeArray = scopes;
 		} else {
@@ -239,11 +244,14 @@ export function validateOAuthScopes(scopes: string | string[]): { valid: boolean
 /**
  * Check if required scopes are present in granted scopes
  */
-export function checkScopeAccess(grantedScopes: string[], requiredScopes: string[]): {
+export function checkScopeAccess(
+	grantedScopes: string[],
+	requiredScopes: string[]
+): {
 	hasAccess: boolean;
-	missingScopes?: string[]
+	missingScopes?: string[];
 } {
-	const missing = requiredScopes.filter(required => !grantedScopes.includes(required));
+	const missing = requiredScopes.filter((required) => !grantedScopes.includes(required));
 
 	return {
 		hasAccess: missing.length === 0,
@@ -337,7 +345,10 @@ export function validateRedirectUri(uri: string, registeredUris: string[]): { va
 			const parsed = new URL(u);
 			parsed.protocol = parsed.protocol.toLowerCase();
 			parsed.hostname = parsed.hostname.toLowerCase();
-			if ((parsed.protocol === 'https:' && parsed.port === '443') || (parsed.protocol === 'http:' && parsed.port === '80')) {
+			if (
+				(parsed.protocol === 'https:' && parsed.port === '443') ||
+				(parsed.protocol === 'http:' && parsed.port === '80')
+			) {
 				parsed.port = '';
 			}
 			if (parsed.pathname.endsWith('/') && parsed.pathname !== '/') {
@@ -386,7 +397,8 @@ export class AuthorizationRateLimiter {
 	private readonly maxAttempts: number;
 	private readonly windowMs: number;
 
-	constructor(maxAttempts = 10, windowMs = 15 * 60 * 1000) { // 10 attempts per 15 minutes
+	constructor(maxAttempts = 10, windowMs = 15 * 60 * 1000) {
+		// 10 attempts per 15 minutes
 		this.maxAttempts = maxAttempts;
 		this.windowMs = windowMs;
 

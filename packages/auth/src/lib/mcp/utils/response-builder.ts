@@ -15,7 +15,7 @@ import {
 	ServerMetadata,
 	TokenResponse,
 	UserInfoResponse
-} from './interfaces';
+} from '../interfaces/interfaces';
 import { createHash } from 'crypto';
 
 export class ResponseBuilder {

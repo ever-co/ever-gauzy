@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { SkillSchema } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('SkillTools');
-
 
 export const registerSkillTools = (server: McpServer) => {
 	// Get skills tool
@@ -69,7 +68,10 @@ export const registerSkillTools = (server: McpServer) => {
 
 				const response = await apiClient.get(`/api/skills/${id}`, { params });
 				// Verify the returned skill belongs to the user's organization
-				if (response && (response as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+				if (
+					response &&
+					(response as { organizationId: string }).organizationId !== defaultParams.organizationId
+				) {
 					throw new Error('Unauthorized: Skill not found or does not belong to your organization');
 				}
 
@@ -237,7 +239,10 @@ export const registerSkillTools = (server: McpServer) => {
 					params: { organizationId: defaultParams.organizationId }
 				});
 
-				if (!employee || (employee as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+				if (
+					!employee ||
+					(employee as { organizationId: string }).organizationId !== defaultParams.organizationId
+				) {
 					throw new Error('Unauthorized: Employee not found or does not belong to your organization');
 				}
 
@@ -285,7 +290,10 @@ export const registerSkillTools = (server: McpServer) => {
 					params: { organizationId: defaultParams.organizationId }
 				});
 
-				if (!employee || (employee as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+				if (
+					!employee ||
+					(employee as { organizationId: string }).organizationId !== defaultParams.organizationId
+				) {
 					throw new Error('Unauthorized: Employee not found or does not belong to your organization');
 				}
 
@@ -295,7 +303,16 @@ export const registerSkillTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Skill removed from employee successfully', skillId, employeeId }, null, 2)
+							text: JSON.stringify(
+								{
+									success: true,
+									message: 'Skill removed from employee successfully',
+									skillId,
+									employeeId
+								},
+								null,
+								2
+							)
 						}
 					]
 				};
@@ -324,7 +341,10 @@ export const registerSkillTools = (server: McpServer) => {
 					params: { organizationId: defaultParams.organizationId }
 				});
 
-				if (!employee || (employee as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+				if (
+					!employee ||
+					(employee as { organizationId: string }).organizationId !== defaultParams.organizationId
+				) {
 					throw new Error('Unauthorized: Employee not found or does not belong to your organization');
 				}
 
@@ -394,13 +414,15 @@ export const registerSkillTools = (server: McpServer) => {
 		'bulk_create_skills',
 		"Create multiple skills in bulk for the authenticated user's organization",
 		{
-			skills: z.array(
-				SkillSchema.partial()
-					.required({
-						name: true
-					})
-					.describe('Skill data')
-			).describe('Array of skill data to create')
+			skills: z
+				.array(
+					SkillSchema.partial()
+						.required({
+							name: true
+						})
+						.describe('Skill data')
+				)
+				.describe('Array of skill data to create')
 		},
 		async ({ skills }) => {
 			try {

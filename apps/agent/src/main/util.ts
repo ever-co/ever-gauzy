@@ -41,6 +41,8 @@ export type TAppSetting = {
 	allowLogoutFromAgentApp: boolean,
 	allowScreenshotCapture: boolean,
 	randomScreenshotTime: boolean,
+	preventDisplaySleep: boolean,
+	alwaysOn: boolean
 }
 
 export type TInitialConfig = {
@@ -139,4 +141,10 @@ export function updateAgentSetting(employee: Partial<TEmployeeResponse>) {
 		randomScreenshotTime: employee.randomScreenshot ?? false
 	}
 	LocalStore.updateApplicationSetting(appSetting);
+}
+
+export function updateTimerStatus(timerStarted: boolean): void {
+	LocalStore.updateApplicationSetting({
+		timerStarted: timerStarted
+	});
 }

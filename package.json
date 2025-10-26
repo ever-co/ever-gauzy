@@ -381,6 +381,9 @@
 		"build:mcp:prod": "yarn nx build mcp --configuration=production",
 		"start:mcp": "yarn nx serve mcp",
 		"test:mcp": "yarn nx test mcp",
+		"build:mcp-auth": "yarn nx build mcp-auth --configuration=development",
+		"build:mcp-auth:prod": "yarn nx build mcp-auth --configuration=production",
+		"start:mcp-auth": "yarn nx serve mcp-auth",
 		"build:server-mcp": "yarn nx build server-mcp --configuration=development",
 		"build:server-mcp:prod": "yarn nx build server-mcp --configuration=production",
 		"start:server-mcp": "yarn build:server-mcp && node apps/server-mcp/electron-start.js",
@@ -690,5 +693,6 @@
 	},
 	"nx": {
 		"includedScripts": []
-	}
+	},
+	"packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

@@ -1,8 +1,9 @@
-import { Component, OnInit, Inject, OnDestroy } from '@angular/core';
-import { NbSidebarService, NbMenuItem } from '@nebular/theme';
+import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
+import { NbMenuItem, NbSidebarState } from '@nebular/theme';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { GAUZY_ENV } from '../constants';
-import { Subject, takeUntil } from 'rxjs';
+import { IpcService } from './services/ipc.service';
+import { TasksService } from './services/tasks-service';
 
 
 @Component({
@@ -12,18 +13,22 @@ import { Subject, takeUntil } from 'rxjs';
 	standalone: false
 })
 export class AgentDashboardComponent implements OnInit, OnDestroy {
-	private readonly destroy$ = new Subject<void>();
-
 	menu: NbMenuItem[] = [
+		{
+			title: 'Tasks',
+			link: '/server-dashboard/tasks',
+			icon: 'checkmark-square-2-outline',
+			pathMatch: 'prefix'
+		},
 		{
 			title: 'Logs',
 			link: '/server-dashboard/logs', // Assuming this will be the route for logs
-			icon: 'file-text-outline',
+			icon: 'file-text-outline'
 		},
 		{
 			title: 'Sync API Activity',
 			link: '/server-dashboard/sync-activity', // Assuming this will be the route for sync activity
-			icon: 'sync-outline',
+			icon: 'cloud-upload-outline'
 		},
 	];
 	gauzyIcon: SafeResourceUrl;
@@ -33,40 +38,29 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
 	};
 
 	constructor(
-		private sidebarService: NbSidebarService,
 		private domSanitizer: DomSanitizer,
 		@Inject(GAUZY_ENV)
-		private readonly _environment: any,
+		private readonly _environment: Record<string, any>,
+		private _ipcService: IpcService,
+		private _tasksService: TasksService
 	) {
-		this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/images/logos/logo_Gauzy.svg');
+		this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
 	}
-	ngOnDestroy(): void {
-		this.destroy$.next();
-		this.destroy$.complete();
+
+	onSidebarStateChange(newState: NbSidebarState) {
+		if (newState === 'compacted') {
+			this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl(this._environment.GAUZY_DESKTOP_LOGO_512X512);
+		} else {
+			this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
+		}
 	}
 
 	ngOnInit(): void {
-		// Set initial logo based on sidebar state
-		this.sidebarService.getSidebarState('menu')
-			.pipe(takeUntil(this.destroy$))
-			.subscribe(initialState => {
-				if (initialState === 'compacted' || initialState === 'collapsed') {
-					this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
-				} else {
-					this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/images/logos/logo_Gauzy.svg');
-				}
-			});
+		this._ipcService.ipcListen();
+		this._tasksService.loadTaskStatus();
+	}
 
-		this.sidebarService.onCollapse()
-			.pipe(takeUntil(this.destroy$))
-			.subscribe(() => {
-				this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
-			});
-
-		this.sidebarService.onExpand()
-			.pipe(takeUntil(this.destroy$))
-			.subscribe(() => {
-				this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/images/logos/logo_Gauzy.svg');
-			});
+	ngOnDestroy(): void {
+		this._ipcService.ipcRemoveListener();
 	}
 }

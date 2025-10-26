@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { CommentSchema, CommentableTypeEnum } from '../schema';
 import { validateOrganizationContext } from './utils';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('CommentTools');
-
 
 export const registerCommentTools = (server: McpServer) => {
 	// Get comments tool
@@ -18,7 +17,10 @@ export const registerCommentTools = (server: McpServer) => {
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			search: z.string().optional().describe('Search term for comment content'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["createdBy", "employee", "parent", "replies"])'),
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["createdBy", "employee", "parent", "replies"])'),
 			entity: CommentableTypeEnum.optional().describe('Filter by entity type'),
 			entityId: z.string().uuid().optional().describe('Filter by entity ID'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
@@ -104,7 +106,10 @@ export const registerCommentTools = (server: McpServer) => {
 		'Get a specific comment by ID',
 		{
 			id: z.string().uuid().describe('The comment ID'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["createdBy", "employee", "parent", "replies"])')
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["createdBy", "employee", "parent", "replies"])')
 		},
 		async ({ id, relations }) => {
 			try {
@@ -213,7 +218,11 @@ export const registerCommentTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Comment deleted successfully', id }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Comment deleted successfully', id },
+								null,
+								2
+							)
 						}
 					]
 				};

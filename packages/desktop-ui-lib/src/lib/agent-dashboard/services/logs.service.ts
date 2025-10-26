@@ -28,21 +28,7 @@ export class LogService {
 	constructor(
 		private electronService: ElectronService
 	) {
-		this.electronService.ipcRenderer.on('DASHBOARD_EVENT', this.dashboardEventHandle.bind(this));
 		this.getHistorySync('succeeded');
-	}
-
-	dashboardEventHandle(_: any, arg: { type: string, data: any }) {
-		switch (arg.type) {
-			case 'log_state':
-				this.handleLogStream(arg.data);
-				break;
-			case 'api_sync_update':
-				this.updateApiLogs(arg.data);
-				break;
-			default:
-				break;
-		}
 	}
 
 	handleLogStream(data: any) {

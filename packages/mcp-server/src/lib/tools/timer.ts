@@ -17,15 +17,15 @@ export const registerTimerTools = (server: McpServer) => {
 				// Get default parameters from authenticated user
 				const defaultParams = authManager.getDefaultParams();
 
-				if (!defaultParams.organizationId) {
+				if (!defaultParams.tenantId || !defaultParams.organizationId) {
 					throw new Error(
-						'Organization ID not available. Please ensure you are logged in and have an organization.'
+						'Tenant ID and Organization ID not available. Please ensure you are logged in and have an organization.'
 					);
 				}
 
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+					tenantId: defaultParams.tenantId,
+					organizationId: defaultParams.organizationId
 				};
 
 				const response = await apiClient.get('/api/timesheet/timer/status', { params });
@@ -83,15 +83,15 @@ export const registerTimerTools = (server: McpServer) => {
 				// Get default parameters from authenticated user
 				const defaultParams = authManager.getDefaultParams();
 
-				if (!defaultParams.organizationId) {
+				if (!defaultParams.tenantId || !defaultParams.organizationId) {
 					throw new Error(
-						'Organization ID not available. Please ensure you are logged in and have an organization.'
+						'Tenant ID and Organization ID not available. Please ensure you are logged in and have an organization.'
 					);
 				}
 
 				const startData = {
+					tenantId: defaultParams.tenantId,
 					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
 					...(projectId && { projectId }),
 					...(taskId && { taskId }),
 					...(organizationContactId && { organizationContactId }),
@@ -138,15 +138,15 @@ export const registerTimerTools = (server: McpServer) => {
 				// Get default parameters from authenticated user
 				const defaultParams = authManager.getDefaultParams();
 
-				if (!defaultParams.organizationId) {
+				if (!defaultParams.tenantId || !defaultParams.organizationId) {
 					throw new Error(
-						'Organization ID not available. Please ensure you are logged in and have an organization.'
+						'Tenant ID and Organization ID not available. Please ensure you are logged in and have an organization.'
 					);
 				}
 
 				const stopData = {
+					tenantId: defaultParams.tenantId,
 					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
 					...(description && { description }),
 					source: source || 'BROWSER',
 					...(manualTimeSlot !== undefined && { manualTimeSlot })

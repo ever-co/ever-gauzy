@@ -1,0 +1,139 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: gauzy-mcp-stage-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: gauzy-mcp-stage
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 3001
+    - name: websocket
+      protocol: TCP
+      port: 3002
+      targetPort: 3002
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gauzy-mcp-stage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gauzy-mcp-stage
+  template:
+    metadata:
+      labels:
+        app: gauzy-mcp-stage
+    spec:
+      containers:
+        - name: gauzy-stage-mcp
+          image: registry.digitalocean.com/ever/gauzy-mcp-stage:latest
+          env:
+            # MCP Server Configuration
+            - name: MCP_TRANSPORT
+              value: $MCP_TRANSPORT
+            - name: MCP_SERVER_MODE
+              value: $MCP_SERVER_MODE
+            - name: MCP_HTTP_PORT
+              value: $MCP_HTTP_PORT
+            - name: MCP_HTTP_HOST
+              value: $MCP_HTTP_HOST
+            - name: MCP_WS_PORT
+              value: $MCP_WS_PORT
+            - name: MCP_WS_HOST
+              value: $MCP_WS_HOST
+
+            # Security and CORS
+            - name: MCP_CORS_ORIGIN
+              value: $MCP_CORS_ORIGIN
+            - name: MCP_CORS_CREDENTIALS
+              value: $MCP_CORS_CREDENTIALS
+
+            # OAuth 2.0 Authorization
+            - name: MCP_AUTH_ENABLED
+              value: $MCP_AUTH_ENABLED
+            - name: MCP_AUTH_RESOURCE_URI
+              value: $MCP_AUTH_RESOURCE_URI
+            - name: MCP_AUTH_REQUIRED_SCOPES
+              value: $MCP_AUTH_REQUIRED_SCOPES
+            - name: MCP_AUTH_SERVERS
+              value: "$MCP_AUTH_SERVERS"
+            - name: MCP_AUTH_JWT_AUDIENCE
+              value: $MCP_AUTH_JWT_AUDIENCE
+            - name: MCP_AUTH_JWT_ISSUER
+              value: $MCP_AUTH_JWT_ISSUER
+            - name: MCP_AUTH_JWT_ALGORITHMS
+              value: $MCP_AUTH_JWT_ALGORITHMS
+            - name: MCP_AUTH_JWT_JWKS_URI
+              value: $MCP_AUTH_JWT_JWKS_URI
+            - name: MCP_AUTH_TOKEN_CACHE_TTL
+              value: $MCP_AUTH_TOKEN_CACHE_TTL
+            - name: MCP_AUTH_METADATA_CACHE_TTL
+              value: $MCP_AUTH_METADATA_CACHE_TTL
+
+            # Session Management
+            - name: MCP_SESSION_ENABLED
+              value: $MCP_SESSION_ENABLED
+            - name: MCP_SESSION_COOKIE_NAME
+              value: $MCP_SESSION_COOKIE_NAME
+            - name: MCP_SESSION_TTL
+              value: $MCP_SESSION_TTL
+            - name: MCP_AUTH_SESSION_SECRET
+              value: $MCP_AUTH_SESSION_SECRET
+
+            # Rate Limiting
+            - name: THROTTLE_ENABLED
+              value: $THROTTLE_ENABLED
+            - name: THROTTLE_TTL
+              value: $THROTTLE_TTL
+            - name: THROTTLE_LIMIT
+              value: $THROTTLE_LIMIT
+
+            # Gauzy API Integration
+            - name: API_BASE_URL
+              value: $API_BASE_URL
+            - name: GAUZY_AUTO_LOGIN
+              value: $GAUZY_AUTO_LOGIN
+
+          ports:
+            - containerPort: 3001
+              protocol: TCP
+              name: http
+            - containerPort: 3002
+              protocol: TCP
+              name: websocket
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gauzy-mcp-stage-ing
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: mcpstage.gauzy.co
+      http:
+        paths:
+          - backend:
+              service:
+                name: gauzy-mcp-stage-svc
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - mcpstage.gauzy.co
+      secretName: mcp.gauzy.co-tls

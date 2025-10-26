@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { ProductCategorySchema } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('ProductCategoryTools');
-
 
 export const registerProductCategoryTools = (server: McpServer) => {
 	// Get product categories tool
@@ -52,7 +51,6 @@ export const registerProductCategoryTools = (server: McpServer) => {
 		}
 	);
 
-
 	// Get product category count tool
 	server.tool(
 		'get_product_category_count',
@@ -84,7 +82,6 @@ export const registerProductCategoryTools = (server: McpServer) => {
 		}
 	);
 
-
 	// Create product category tool
 	server.tool(
 		'create_product_category',
@@ -95,11 +92,16 @@ export const registerProductCategoryTools = (server: McpServer) => {
 					name: true
 				})
 				.extend({
-					translations: z.array(z.object({
-						languageCode: z.string(),
-						name: z.string(),
-						description: z.string().optional()
-					})).optional().describe('Category translations for different languages')
+					translations: z
+						.array(
+							z.object({
+								languageCode: z.string(),
+								name: z.string(),
+								description: z.string().optional()
+							})
+						)
+						.optional()
+						.describe('Category translations for different languages')
 				})
 				.describe('The data for creating the product category')
 		},
@@ -138,11 +140,16 @@ export const registerProductCategoryTools = (server: McpServer) => {
 			id: z.string().uuid().describe('The product category ID'),
 			category_data: ProductCategorySchema.partial()
 				.extend({
-					translations: z.array(z.object({
-						languageCode: z.string(),
-						name: z.string(),
-						description: z.string().optional()
-					})).optional().describe('Category translations for different languages')
+					translations: z
+						.array(
+							z.object({
+								languageCode: z.string(),
+								name: z.string(),
+								description: z.string().optional()
+							})
+						)
+						.optional()
+						.describe('Category translations for different languages')
 				})
 				.describe('The data for updating the product category')
 		},
@@ -164,8 +171,6 @@ export const registerProductCategoryTools = (server: McpServer) => {
 			}
 		}
 	);
-
-
 
 	// Get products by category tool
 	server.tool(
@@ -210,5 +215,4 @@ export const registerProductCategoryTools = (server: McpServer) => {
 			}
 		}
 	);
-
 };
