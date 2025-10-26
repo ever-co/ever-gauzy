@@ -288,7 +288,7 @@
 						<nb-card-body>
 							<nb-toggle [(ngModel)]="appSetting.preventDisplaySleep" (ngModelChange)="
 									togglePreventDisplaySleep($event)
-								" status="basic" [disabled]="appSetting?.timerStarted || isAgent">{{
+								" status="basic" [disabled]="appSetting?.timerStarted">{{
 								'TIMER_TRACKER.SETTINGS.PREVENT_DISPLAY_SLEEP'
 								| translate
 								}}
@@ -323,7 +323,7 @@
 						<nb-card-body>
 							<nb-select [placeholder]="'TIMER_TRACKER.SETTINGS.TIMEZONE_PLACEHOLDER'| translate"
 								[(ngModel)]="selectedZone" (ngModelChange)="selectZone($event)"
-								[disabled]="appSetting?.timerStarted || isAgent">
+								[disabled]="appSetting?.timerStarted">
 								<nb-option *ngFor="let zone of zones" [value]="zone.name"> {{ zone.translation |
 									translate }}
 								</nb-option>
@@ -358,7 +358,7 @@
 						<nb-card-body>
 							<nb-toggle [(ngModel)]="appSetting.alwaysOn" (ngModelChange)="
 									toggleAlwaysOn($event)
-								" status="basic" [disabled]="appSetting?.timerStarted || isAgent">{{
+								" status="basic" [disabled]="appSetting?.timerStarted">{{
 								'TIMER_TRACKER.SETTINGS.WIDGET'
 								| translate
 								}}
@@ -702,7 +702,7 @@
 																	$event
 																)
 															" [disabled]="
-																appSetting?.timerStarted || isAgent
+																appSetting?.timerStarted
 															">
 															<nb-option *ngFor="
 																	let item of serverOptions
@@ -723,7 +723,7 @@
 														<input [(ngModel)]="
 																config.host
 															" type="text" nbInput fullWidth [disabled]="
-																appSetting?.timerStarted || isAgent
+																appSetting?.timerStarted
 															" status="basic" />
 													</div>
 													<div class="col-5 centered-text" *ngIf="
@@ -787,7 +787,7 @@
 															" type="text" nbInput fullWidth [disabled]="
 																appSetting?.timerStarted ||
 																config?.serverType ===
-																	serverTypes?.live || isAgent
+																	serverTypes?.live
 															" status="basic" />
 													</div>
 													<div *ngIf="
@@ -797,7 +797,7 @@
 														<button nbButton status="basic" class="check-db" (click)="
 																checkHostConnectivity()
 															" [disabled]="
-																appSetting?.timerStarted || isAgent
+																appSetting?.timerStarted
 															">
 															<nb-icon *gauzySpinnerButton="
 																	(
@@ -881,7 +881,7 @@
 																	$event
 																)
 															" [disabled]="
-																appSetting?.timerStarted || isAgent
+																appSetting?.timerStarted
 															">
 															<nb-option *ngFor="
 																	let item of driverOptions
@@ -904,7 +904,7 @@
 														<button nbButton status="basic" class="check-db" (click)="
 																checkDatabaseConnectivity()
 															" [disabled]="
-																appSetting?.timerStarted || isAgent
+																appSetting?.timerStarted
 															">
 															<nb-icon *gauzySpinnerButton="
 																	isCheckDatabase$

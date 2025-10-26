@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { GoalSchema, GoalLevelEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('GoalTools');
-
 
 /**
  * Helper function to convert date fields in goal data to Date objects
@@ -37,7 +36,10 @@ export const registerGoalTools = (server: McpServer) => {
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			search: z.string().optional().describe('Search term for goal name or description'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["ownerTeam", "ownerEmployee", "keyResults"])'),
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["ownerTeam", "ownerEmployee", "keyResults"])'),
 			level: GoalLevelEnum.optional().describe('Filter by goal level'),
 			ownerEmployeeId: z.string().uuid().optional().describe('Filter by owner employee ID'),
 			ownerTeamId: z.string().uuid().optional().describe('Filter by owner team ID'),
@@ -123,7 +125,10 @@ export const registerGoalTools = (server: McpServer) => {
 		'Get a specific goal by ID',
 		{
 			id: z.string().uuid().describe('The goal ID'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["ownerTeam", "ownerEmployee", "keyResults", "alignedGoals"])')
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["ownerTeam", "ownerEmployee", "keyResults", "alignedGoals"])')
 		},
 		async ({ id, relations }) => {
 			try {

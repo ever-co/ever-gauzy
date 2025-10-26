@@ -11,7 +11,7 @@ export class KeycloakAuthGuard extends AuthGuard('keycloak') {
 	 * @param context - The execution context containing the incoming request.
 	 * @returns A boolean, a Promise of a boolean, or an Observable of a boolean.
 	 */
-	canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
+	override canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
 		const request = context.switchToHttp().getRequest();
 		const baseUrl: string = request.headers.referer;
 		const { roleName } = request.query;

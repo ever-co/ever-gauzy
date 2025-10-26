@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { ExpenseSchema, ExpenseCategoriesEnum, CurrenciesEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('ExpenseTools');
-
 
 /**
  * Helper function to convert date fields in expense data to Date objects
@@ -28,7 +27,10 @@ export const registerExpenseTools = (server: McpServer) => {
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			search: z.string().optional().describe('Search term for expense notes or purpose'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["employee", "category", "project", "tags"])'),
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["employee", "category", "project", "tags"])'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
 			categoryId: z.string().uuid().optional().describe('Filter by expense category ID'),
 			projectId: z.string().uuid().optional().describe('Filter by project ID'),
@@ -37,7 +39,19 @@ export const registerExpenseTools = (server: McpServer) => {
 			endDate: z.string().optional().describe('Filter expenses until this date (ISO format)'),
 			currency: CurrenciesEnum.optional().describe('Filter by currency')
 		},
-		async ({ page = 1, limit = 10, search, relations, employeeId, categoryId, projectId, status, startDate, endDate, currency }) => {
+		async ({
+			page = 1,
+			limit = 10,
+			search,
+			relations,
+			employeeId,
+			categoryId,
+			projectId,
+			status,
+			startDate,
+			endDate,
+			currency
+		}) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
@@ -122,7 +136,10 @@ export const registerExpenseTools = (server: McpServer) => {
 		'Get a specific expense by ID',
 		{
 			id: z.string().uuid().describe('The expense ID'),
-			relations: z.array(z.string()).optional().describe('Relations to include (e.g., ["employee", "category", "project", "tags"])')
+			relations: z
+				.array(z.string())
+				.optional()
+				.describe('Relations to include (e.g., ["employee", "category", "project", "tags"])')
 		},
 		async ({ id, relations }) => {
 			try {
@@ -230,7 +247,11 @@ export const registerExpenseTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Expense deleted successfully', id }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Expense deleted successfully', id },
+								null,
+								2
+							)
 						}
 					]
 				};
@@ -366,9 +387,4 @@ export const registerExpenseTools = (server: McpServer) => {
 			}
 		}
 	);
-
-
-
-
-
 };

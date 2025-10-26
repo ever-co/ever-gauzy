@@ -7,7 +7,7 @@
 
 import { Response } from 'express';
 import { SecurityLogger } from './security-logger';
-import { AuthorizationError } from './authorization-config';
+import { AuthorizationError } from '../interfaces/authorization-config';
 
 export interface StandardError {
 	code: string;

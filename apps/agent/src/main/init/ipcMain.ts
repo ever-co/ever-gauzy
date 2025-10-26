@@ -12,9 +12,10 @@ import {
 	AppError,
 	User,
 	UserService,
-	pluginListeners
+	pluginListeners,
+	ProviderFactory,
 } from '@gauzy/desktop-lib';
-import { getApiBaseUrl, delaySync, getAuthConfig } from '../util';
+import { getApiBaseUrl, delaySync, getAuthConfig, getAppSetting } from '../util';
 import { startServer } from './app';
 import AppWindow from '../window-manager';
 import * as moment from 'moment';
@@ -25,8 +26,13 @@ import { checkUserAuthentication } from '../auth';
 import { ApiService } from '../api';
 const rootPath = path.join(__dirname, '../..');
 import { QueueAudit, AuditStatus } from '../queue/audit-queue';
+import * as isOnline from 'is-online';
 
 const userService = new UserService();
+const appWindow = AppWindow.getInstance(rootPath);
+const apiService = ApiService.getInstance();
+const provider = ProviderFactory.instance;
+
 
 function getGlobalVariable(configs?: {
 	serverUrl?: string,
@@ -43,7 +49,21 @@ function getGlobalVariable(configs?: {
 	};
 }
 
-function listenIO(stop: boolean) {
+async function handleAlwaysOnWindow(isEnabled: boolean) {
+	const setting = getAppSetting();
+	await appWindow.initAlwaysOnWindow();
+	if (!isEnabled) {
+		appWindow.alwaysOnWindow.browserWindow.close();
+		return;
+	}
+
+	if (setting?.alwaysOn) {
+		await appWindow.alwaysOnWindow.loadURL();
+		appWindow.alwaysOnWindow.show();
+	}
+}
+
+async function listenIO(stop: boolean) {
 	const auth = getAuthConfig();
 	const pullActivities = PullActivities.getInstance();
 	pullActivities.updateAppUserAuth({
@@ -53,11 +73,11 @@ function listenIO(stop: boolean) {
 	});
 	const pushActivities = PushActivities.getInstance();
 	if (stop) {
-		pullActivities.stopTracking();
-		pushActivities.stopPooling();
+		await pullActivities.stopTracking();
+		await pushActivities.stopPooling();
 	} else {
 		pushActivities.initQueueWorker();
-		pullActivities.startTracking();
+		await pullActivities.startTracking();
 		pushActivities.startPooling();
 	}
 }
@@ -78,7 +98,6 @@ function kbMouseListener(activate: boolean) {
 }
 
 async function closeLoginWindow() {
-	const appWindow = AppWindow.getInstance(rootPath);
 	await delaySync(2000); // delay 2s before destroy login window
 	appWindow.destroyAuthWindow();
 }
@@ -160,7 +179,7 @@ export default function AppIpcMain() {
 
 		try {
 			/* validate user employee desktop setting */
-			const apiService = ApiService.getInstance();
+
 			await apiService.getEmployeeSetting(employeeId);
 		} catch (error) {
 			store.set({
@@ -169,6 +188,7 @@ export default function AppIpcMain() {
 			throw new AppError('GET_EMP_SETTING', error);
 		}
 		listenIO(false);
+		await handleAlwaysOnWindow(true);
 		await closeLoginWindow();
 	});
 
@@ -184,7 +204,6 @@ export default function AppIpcMain() {
 				auth: null
 			});
 
-			const appWindow = AppWindow.getInstance(rootPath)
 			await appWindow.initSettingWindow();
 			appWindow.settingWindow.reload();
 
@@ -211,7 +230,7 @@ export default function AppIpcMain() {
 		LocalStore.updateAuthSetting({ isLogout: true });
 	});
 
-	ipcMain.handle('SYNC_API_AUDIT',  async(_, arg: { data: { page: number, limit: number, status: AuditStatus } }) => {
+	ipcMain.handle('SYNC_API_AUDIT', async (_, arg: { data: { page: number, limit: number, status: AuditStatus } }) => {
 		const { data } = arg;
 		const auditQueue = QueueAudit.getInstance();
 		return auditQueue.list({
@@ -219,6 +238,72 @@ export default function AppIpcMain() {
 			limit: data.limit,
 			status: data.status
 		});
+	});
+
+	ipcMain.on('always_on_setting', async (_: any, arg: { isEnabled: boolean }) => {
+		await handleAlwaysOnWindow(arg.isEnabled)
+	});
+
+	ipcMain.handle('timer_status', async () => {
+		const authConfig = getAuthConfig();
+		const pullActivities = PullActivities.getInstance();
+		const pushActivities = PushActivities.getInstance();
+		const online = await isOnline({ timeout: 1200 }).catch(() => false);
+		if (online) {
+			const timerStatus = await apiService.timerStatus({
+				tenantId: authConfig.user.employee.tenantId,
+				organizationId: authConfig.user.employee.organizationId
+			});
+			timerStatus.startedAt = new Date(pushActivities.currentSessionStartTime);
+			if (pullActivities?.todayDuration) {
+				timerStatus.duration = pullActivities.todayDuration;
+			}
+			return timerStatus;
+		}
+		return {
+			running: pullActivities.running,
+			duration: pullActivities.todayDuration,
+			startedAt: pullActivities.startedAt
+		}
+	});
+
+	ipcMain.handle('toggle_timer', async () => {
+		const pullActivities = PullActivities.getInstance();
+		if (pullActivities.running) {
+			pullActivities.stopTracking();
+		} else {
+			pullActivities.startTracking();
+		}
+		return pullActivities.running;
+
+	});
+
+	ipcMain.on('restart_app', async (_: any, arg) => {
+		LocalStore.updateConfigSetting(arg);
+		const configs = LocalStore.getStore('configs');
+		global.variableGlobal = {
+			API_BASE_URL: getApiBaseUrl(configs),
+			IS_INTEGRATED_DESKTOP: configs.isLocalServer
+		};
+		/* Killing the provider. */
+		await provider.kill();
+		/* Creating a database if not exit. */
+		await ProviderFactory.instance.createDatabase();
+
+		/* stop queue consumer */
+		const pushActivities = PushActivities.getInstance();
+		await pushActivities.stopPooling();
+		/* Kill all windows */
+		appWindow.alwaysOnWindow?.close?.();
+		appWindow.settingWindow?.close?.();
+		appWindow.closeLogWindow();
+		appWindow.aboutWindow?.close?.();
+		appWindow.setupWindow?.close?.();
+		appWindow.splashScreenWindow?.close?.();
+		appWindow.authWindow?.close?.();
+		appWindow.notificationWindow?.close?.();
+		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+		app.exit(0);
 	});
 
 	pluginListeners();

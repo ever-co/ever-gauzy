@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import { EmployeeAwardSchema } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '../common/security-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
 
 const logger = new Logger('EmployeeAwardTools');
-
 
 export const registerEmployeeAwardTools = (server: McpServer) => {
 	// Get employee awards tool
@@ -57,7 +56,6 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			}
 		}
 	);
-
 
 	// Get employee award by ID tool
 	server.tool(
@@ -172,7 +170,11 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ success: true, message: 'Employee award deleted successfully', id }, null, 2)
+							text: JSON.stringify(
+								{ success: true, message: 'Employee award deleted successfully', id },
+								null,
+								2
+							)
 						}
 					]
 				};
@@ -227,7 +229,6 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		}
 	);
 
-
 	// Get awards by year tool
 	server.tool(
 		'get_employee_awards_by_year',
@@ -238,7 +239,11 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
 			relations: z.array(z.string()).optional().describe('Relations to include'),
-			sortBy: z.enum(['name', 'createdAt', 'employee']).optional().default('name').describe('Sort awards by field'),
+			sortBy: z
+				.enum(['name', 'createdAt', 'employee'])
+				.optional()
+				.default('name')
+				.describe('Sort awards by field'),
 			sortOrder: z.enum(['ASC', 'DESC']).optional().default('ASC').describe('Sort order')
 		},
 		async ({ year, page = 1, limit = 10, employeeId, relations, sortBy = 'name', sortOrder = 'ASC' }) => {
@@ -453,11 +458,15 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ 
-								success: true, 
-								message: `Successfully deleted ${ids.length} employee awards`,
-								deletedIds: ids 
-							}, null, 2)
+							text: JSON.stringify(
+								{
+									success: true,
+									message: `Successfully deleted ${ids.length} employee awards`,
+									deletedIds: ids
+								},
+								null,
+								2
+							)
 						}
 					]
 				};

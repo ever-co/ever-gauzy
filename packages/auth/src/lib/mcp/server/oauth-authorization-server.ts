@@ -10,19 +10,14 @@ import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
-import { SecurityLogger } from './security-logger';
+import { SecurityLogger, BaseErrorHandler, BaseValidator, ResponseBuilder, ConfigManager } from '../utils';
 import escapeHtml from 'escape-html';
 import { doubleCsrf } from 'csrf-csrf';
 import { oAuth2ClientManager, OAuth2Client } from './oauth-client-manager';
 import { oAuth2AuthorizationCodeManager } from './oauth-authorization-code-manager';
 import { OAuth2TokenManager } from './oauth-token-manager';
 import { OAuthValidator } from './oauth-validator';
-import { AuthorizationConfig } from './authorization-config';
-import { BaseErrorHandler } from './base-error-handler';
-import { BaseValidator } from './base-validator';
-import { ResponseBuilder } from './response-builder';
-import { ConfigManager } from './config-manager';
-import { IntrospectionResponse } from './interfaces';
+import { AuthorizationConfig, IntrospectionResponse } from '../interfaces';
 
 export interface OAuth2ServerConfig {
 	issuer: string;
@@ -38,6 +33,9 @@ export interface OAuth2ServerConfig {
 	loginEndpoint?: string;
 	sessionSecret: string;
 	redisUrl?: string;
+	// Optional providers that can be configured during initialization
+	userInfoProvider?: (userId: string) => Promise<UserInfo | null>;
+	userAuthenticator?: (credentials: LoginCredentials) => Promise<AuthenticatedUser | null>;
 }
 
 export interface UserInfo {
@@ -97,7 +95,6 @@ export class OAuth2AuthorizationServer {
 	private configManager: ConfigManager;
 	private userInfoProvider?: (userId: string) => Promise<UserInfo | null>;
 	private authenticateUser?: (credentials: LoginCredentials) => Promise<AuthenticatedUser | null>;
-	private users: Map<string, AuthenticatedUser> = new Map(); // In-memory user store for demo
 
 	// Add CSRF protection properties
 	private csrfProtection: any;
@@ -131,15 +128,26 @@ export class OAuth2AuthorizationServer {
 			}
 		};
 
-		// Add the public key to the auth config for JWT validation
-		authConfig.jwt!.publicKey = this.tokenManager.getPublicKeyPEM();
+		// Don't set publicKey - use JWKS only for better caching and key rotation support
 
 		this.oAuthValidator = new OAuthValidator(authConfig);
+
+		// Initialize optional providers from config before validation
+		// This ensures validateConfiguration() can see and validate them
+		if (config.userInfoProvider) {
+			this.userInfoProvider = config.userInfoProvider;
+		}
+		if (config.userAuthenticator) {
+			this.authenticateUser = config.userAuthenticator;
+		}
+
 		this.app = express();
-		this.initializeDemoUsers();
 		this.setupMiddleware();
 		this.setupRoutes();
 		this.setupErrorHandling();
+
+		// Validate configuration during initialization
+		this.validateConfiguration();
 	}
 
 	private initializeCSRFProtection() {
@@ -197,33 +205,43 @@ export class OAuth2AuthorizationServer {
 	}
 
 	/**
-	 * Initialize demo users for local environment (development/testing) only.
+	 * Validate required configuration and providers
+	 * Fails fast in production when required providers are not configured
 	 */
-	private initializeDemoUsers() {
-		const demoUsers: AuthenticatedUser[] = [
-			{
-				userId: '19040f7c-064f-4ed6-824d-d692003be6b1',
-				email: 'employee@ever.co',
-				name: 'Default Employee',
-				organizationId: 'f180cd17-4cfd-4bab-bf14-c3ea94747930',
-				tenantId: 'ccd9e6d7-47c5-4166-8161-de1134c82629',
-				roles: ['employee'],
-				emailVerified: true
-			},
-			{
-				userId: 'admin-user-456',
-				email: 'admin@ever.co',
-				name: 'Default Admin',
-				organizationId: 'org-123',
-				tenantId: 'tenant-123',
-				roles: ['admin'],
-				emailVerified: true
-			}
-		];
+	private validateConfiguration(): void {
+		const serverConfig = this.configManager.getConfig();
+		const errors: string[] = [];
 
-		demoUsers.forEach(user => {
-			this.users.set(user.email, user);
-		});
+		// Check for required providers
+		if (!this.authenticateUser) {
+			errors.push('User authenticator is not configured. Call setUserAuthenticator() to provide authentication logic.');
+		}
+
+		if (!this.userInfoProvider) {
+			errors.push('User info provider is not configured. Call setUserInfoProvider() to provide user information retrieval logic.');
+		}
+
+		// If there are configuration errors
+		if (errors.length > 0) {
+			const errorMessage = `OAuth2 Authorization Server configuration validation failed:\n${errors.map(e => `  - ${e}`).join('\n')}`;
+
+			// Log all errors
+			errors.forEach(error => {
+				this.securityLogger.error(`Configuration error: ${error}`);
+			});
+
+			// In production, fail fast by throwing an error
+			if (serverConfig.environment === 'production') {
+				this.securityLogger.error('CRITICAL: Server cannot start with missing required providers in production environment');
+				throw new Error(errorMessage);
+			} else {
+				// In non-production, log warning
+				this.securityLogger.warn('WARNING: Server is starting with incomplete configuration. This is only allowed in non-production environments.');
+				this.securityLogger.warn(errorMessage);
+			}
+		} else {
+			this.securityLogger.info('OAuth2 Authorization Server configuration validated successfully');
+		}
 	}
 
 	/**
@@ -623,17 +641,15 @@ export class OAuth2AuthorizationServer {
 				return res.redirect(`${this.config.loginEndpoint}?error=missing_credentials&return_url=${encodeURIComponent(normalizedReturnUrl)}`);
 			}
 
-			// Use custom authenticator if provided, otherwise use demo authentication
+			// Authenticate user using configured authenticator
 			let user: AuthenticatedUser | null = null;
 
 			if (this.authenticateUser) {
 				user = await this.authenticateUser({ email, password });
 			} else {
-				// Demo authentication - check against in-memory users
-				const demoUser = this.users.get(email);
-				if (demoUser && (password === '123456' || password === 'admin123')) {
-					user = { ...demoUser };
-				}
+				// No authenticator configured
+				this.securityLogger.error('User authenticator not configured');
+				return res.redirect(`${this.config.loginEndpoint}?error=server_error`);
 			}
 
 			if (!user) {
@@ -1250,13 +1266,14 @@ export class OAuth2AuthorizationServer {
 			if (this.userInfoProvider) {
 				userInfo = await this.userInfoProvider(validation.subject!);
 			} else {
-				// Use in-memory user store for demo
-				for (const user of this.users.values()) {
-					if (user.userId === validation.subject) {
-						userInfo = user;
-						break;
-					}
-				}
+				// No user info provider configured
+				this.securityLogger.error('User info provider not configured');
+				this.errorHandler.handleStandardError(res, {
+					code: 'server_error',
+					message: 'User information service not available',
+					statusCode: 500
+				});
+				return;
 			}
 
 			if (!userInfo) {
@@ -1360,12 +1377,6 @@ export class OAuth2AuthorizationServer {
 
 						<button type="submit" class="btn btn-primary">Sign In</button>
 					</form>
-
-					<div class="demo-info">
-						<strong>Demo Credentials:</strong><br>
-						Email: employee@ever.co / Password: 123456<br>
-						Email: admin@ever.co / Password: admin123
-					</div>
 				</div>
 			</body>
 			</html>
