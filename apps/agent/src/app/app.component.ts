@@ -64,6 +64,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.electronService.ipcRenderer.removeListener('server_ping_restart', this.handleRestart.bind(this));
 		this.electronService.ipcRenderer.removeListener('social_auth_success', this.handleSocialAuthSuccess.bind(this));
 		this.electronService.ipcRenderer.removeListener('__logout__', this.handleLogout.bind(this));
+		this.electronService.ipcRenderer.removeListener('__auth__', this.handleAuthSuccess.bind(this));
 		if (this.pingHostInterval) {
 			clearInterval(this.pingHostInterval);
 		}
@@ -123,6 +124,20 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		})
 	}
 
+	handleAuthSuccess(_: unknown, arg: any) {
+		this._ngZone.run(async () => {
+			try {
+				this.store.userId = arg.userId;
+				this.store.token = arg.token;
+				this.store.organizationId = arg.organizationId;
+				this.store.tenantId = arg.tenantId;
+				this.store.user = arg.user;
+			} catch (error) {
+
+			}
+		});
+	}
+
 	handleSocialAuthSuccess(_: unknown, arg: any) {
 		this._ngZone.run(async () => {
 			try {
@@ -141,6 +156,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.electronService.ipcRenderer.on('server_ping_restart', this.handleRestart.bind(this));
 		this.electronService.ipcRenderer.on('__logout__', this.handleLogout.bind(this));
 		this.electronService.ipcRenderer.on('social_auth_success', this.handleSocialAuthSuccess.bind(this));
+		this.electronService.ipcRenderer.on('__auth__', this.handleAuthSuccess.bind(this));
 	}
 
 	async authFromSocial(arg) {

@@ -261,13 +261,18 @@ if (environment.THROTTLE_ENABLED) {
 									max: 100
 								},
 								socket: {
-									tls: isTls,
+									tls: isTls, // enable TLS only when using rediss:// (kept in sync)
 									host: host,
 									port: port,
 									passphrase: password,
+									keepAlive: 10_000, // enable TCP keepalive (initial delay in ms)
+									reconnectStrategy: (retries: number) => Math.min(1000 * Math.pow(2, retries), 5000),
+									connectTimeout: 10_000,
 									rejectUnauthorized: process.env.NODE_ENV === 'production'
 								},
-								ttl: 60 * 60 * 24 * 7 // 1 week,
+								// Keep the socket from idling out at LB/firewall
+								pingInterval: 30_000, // send PING every 30s
+								ttl: 60 * 60 * 24 * 7 // 1 week
 							};
 
 							const store = await redisStore(storeOptions);
