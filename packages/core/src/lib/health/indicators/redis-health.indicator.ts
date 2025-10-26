@@ -64,7 +64,7 @@ export class RedisHealthIndicator extends HealthIndicator {
 	 */
 	private async startRedis(): Promise<boolean> {
 		if (process.env.REDIS_ENABLED !== 'true') {
-			console.warn('Redis Health Client is not enabled.');
+			console.log('Redis Health Client is not enabled.');
 			return false;
 		}
 
