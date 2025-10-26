@@ -87,12 +87,12 @@ export class ActivepiecesComponent extends TranslationBaseComponent implements O
 			{
 				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
 				icon: 'text-outline',
-				link: `pages/integrations/activepieces/regenerate`
+				link: `/pages/integrations/activepieces/regenerate`
 			},
 			{
 				title: this.getTranslation('INTEGRATIONS.SETTINGS'),
 				icon: 'settings-2-outline',
-				link: `pages/integrations/activepieces/${this.integrationId}/settings`
+				link: `/pages/integrations/activepieces/${this.integrationId}/settings`
 			}
 		];
 	}

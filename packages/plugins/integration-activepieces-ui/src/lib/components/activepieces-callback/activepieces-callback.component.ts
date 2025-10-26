@@ -2,10 +2,12 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
-import { tap, switchMap, filter, catchError } from 'rxjs/operators';
+import { tap, switchMap, filter, catchError, take } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IOrganization } from '@gauzy/contracts';
+import { IActivepiecesConnection, IActivepiecesOAuthTokens, ID, IOrganization } from '@gauzy/contracts';
 import { ActivepiecesService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -14,7 +16,7 @@ import { ActivepiecesService, Store, ToastrService } from '@gauzy/ui-core/core';
 	styleUrls: ['./activepieces-callback.component.scss'],
 	standalone: false
 })
-export class ActivepiecesCallbackComponent implements OnInit, OnDestroy {
+export class ActivepiecesCallbackComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public loading = false;
 	public organization!: IOrganization;
 	public showProjectIdForm = false;
@@ -33,15 +35,19 @@ export class ActivepiecesCallbackComponent implements OnInit, OnDestroy {
 		private readonly _router: Router,
 		private readonly _activepiecesService: ActivepiecesService,
 		private readonly _store: Store,
-		private readonly _toastrService: ToastrService
-	) {}
+		private readonly _toastrService: ToastrService,
+		public readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this._store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
-				tap(() => this._handleCallback()),
+				take(1),
+			    tap(() => this._handleCallback()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -58,13 +64,13 @@ export class ActivepiecesCallbackComponent implements OnInit, OnDestroy {
 					const { code, state } = params;
 
 					if (!code || !state) {
-						this._toastrService.error('Invalid callback parameters');
+						this._toastrService.error(this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.ERRORS.INVALID_PARAMETERS'));
 						this._redirectToIntegrations();
 						return EMPTY;
 					}
 
 					if (!this.organization) {
-						this._toastrService.error('Organization not found');
+						this._toastrService.error(this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.ERRORS.ORGANIZATION_NOT_FOUND'));
 						this._redirectToIntegrations();
 						return EMPTY;
 					}
@@ -74,15 +80,16 @@ export class ActivepiecesCallbackComponent implements OnInit, OnDestroy {
 					// Step 1: Exchange authorization code for access token
 					// POST /integration/activepieces/oauth/token
 					return this._activepiecesService.exchangeToken({ code, state }).pipe(
-						tap((tokenResponse) => {
+						tap((tokenResponse: IActivepiecesOAuthTokens) => {
 							// Store token response temporarily
-							this._storeTokenResponse(tokenResponse);
+							this._storeAccessToken(tokenResponse.access_token);
 							// Show project ID form
 							this.showProjectIdForm = true;
 							this.loading = false;
 						}),
 						catchError((error) => {
-							this._toastrService.error('Failed to exchange authorization code: ' + error.message);
+							const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.ERRORS.EXCHANGE_TOKEN') + ': ' + error.message;
+							this._toastrService.error(errorMessage);
 							this.loading = false;
 							this._redirectToIntegrations();
 							return EMPTY;
@@ -100,16 +107,16 @@ export class ActivepiecesCallbackComponent implements OnInit, OnDestroy {
 	 */
 	createConnection() {
 		if (this.form.invalid || !this.organization) {
-			this._toastrService.error('Please provide a valid project ID');
+			this._toastrService.error(this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.ERRORS.INVALID_PROJECT_ID'));
 			return;
 		}
 
 		this.loading = true;
 		const { projectId } = this.form.value;
-		const tokenResponse = this._getStoredTokenResponse();
+		const accessToken = this._getStoredAccessToken();
 
-		if (!tokenResponse || !tokenResponse.access_token) {
-			this._toastrService.error('Token not found. Please try authorization again.');
+		if (!accessToken) {
+			this._toastrService.error(this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.ERRORS.TOKEN_NOT_FOUND'));
 			this._redirectToIntegrations();
 			return;
 		}
@@ -120,19 +127,20 @@ export class ActivepiecesCallbackComponent implements OnInit, OnDestroy {
 		// POST /integration/activepieces/connection
 		this._activepiecesService
 			.upsertConnection({
-				accessToken: tokenResponse.access_token,
+				accessToken,
 				projectId,
 				tenantId,
 				organizationId
 			})
 			.pipe(
-				tap((connection: any) => {
-					this._toastrService.success('ActivePieces connection created successfully');
-					this._clearStoredTokenResponse();
+				tap((connection: IActivepiecesConnection & { integrationId: ID }) => {
+					this._toastrService.success(this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.SUCCESS.CONNECTION_CREATED'));
+					this._clearStoredAccessToken();
 					this._redirectToActivepiecesIntegration(connection.integrationId);
 				}),
 				catchError((error) => {
-					this._toastrService.error('Failed to create connection: ' + error.message);
+					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.ERRORS.CREATE_CONNECTION') + ': ' + error.message;
+					this._toastrService.error(errorMessage);
 					this.loading = false;
 					return EMPTY;
 				}),
@@ -144,37 +152,36 @@ export class ActivepiecesCallbackComponent implements OnInit, OnDestroy {
 	/**
 	 * Store token response in sessionStorage
 	 */
-	private _storeTokenResponse(tokenResponse: any): void {
-		sessionStorage.setItem('activepieces_token_response', JSON.stringify(tokenResponse));
+	private _storeAccessToken(accessToken: string): void {
+		sessionStorage.setItem('activepieces_access_token', accessToken);
 	}
 
 	/**
 	 * Get stored token response from sessionStorage
 	 */
-	private _getStoredTokenResponse(): any {
-		const stored = sessionStorage.getItem('activepieces_token_response');
-		return stored ? JSON.parse(stored) : null;
+	private _getStoredAccessToken(): string | null {
+		return sessionStorage.getItem('activepieces_access_token');
 	}
 
 	/**
 	 * Clear stored token response from sessionStorage
 	 */
-	private _clearStoredTokenResponse(): void {
-		sessionStorage.removeItem('activepieces_token_response');
+	private _clearStoredAccessToken(): void {
+		sessionStorage.removeItem('activepieces_access_token');
 	}
 
 	/**
 	 * Redirect to integrations page
 	 */
 	private _redirectToIntegrations() {
-		this._router.navigate(['pages/integrations']);
+		this._router.navigate(['/pages/integrations']);
 	}
 
 	/**
 	 * Redirect to ActivePieces integration page
 	 */
 	private _redirectToActivepiecesIntegration(integrationId: string) {
-		this._router.navigate(['pages/integrations/activepieces', integrationId]);
+		this._router.navigate(['/pages/integrations/activepieces', integrationId]);
 	}
 
 	ngOnDestroy(): void {}

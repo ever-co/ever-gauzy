@@ -16,9 +16,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ConfigService } from '@gauzy/config';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom, catchError } from 'rxjs';
-import { AxiosError } from 'axios';
 import { IActivepiecesConfig } from '@gauzy/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
@@ -50,7 +47,7 @@ export class ActivepiecesController {
 	})
 	@Post('/connection')
 	@Permissions(PermissionsEnum.INTEGRATION_ADD)
-	async upsertConnection(@Body() input: CreateActivepiecesIntegrationDto): Promise<IActivepiecesConnection & { integrationId: string }> {
+	async upsertConnection(@Body() input: CreateActivepiecesIntegrationDto): Promise<IActivepiecesConnection> {
 		try {
 			return await this.activepiecesService.upsertConnection(input);
 		} catch (error: any) {

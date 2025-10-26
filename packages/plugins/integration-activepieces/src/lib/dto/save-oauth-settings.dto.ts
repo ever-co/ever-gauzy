@@ -8,7 +8,7 @@ export class SaveOAuthSettingsDto {
 	})
 	@IsNotEmpty()
 	@IsString()
-	client_id!: string;
+	readonly client_id!: string;
 
 	@ApiProperty({
 		description: 'OAuth Client Secret for ActivePieces integration',
@@ -16,7 +16,7 @@ export class SaveOAuthSettingsDto {
 	})
 	@IsNotEmpty()
 	@IsString()
-	client_secret!: string;
+	readonly client_secret!: string;
 
 	@ApiProperty({
 		description: 'Tenant ID',
@@ -24,7 +24,7 @@ export class SaveOAuthSettingsDto {
 	})
 	@IsOptional()
 	@IsString()
-	tenantId?: string;
+	readonly tenantId?: string;
 
 	@ApiProperty({
 		description: 'Organization ID',
@@ -32,5 +32,5 @@ export class SaveOAuthSettingsDto {
 	})
 	@IsOptional()
 	@IsString()
-	organizationId?: string;
+	readonly organizationId?: string;
 }

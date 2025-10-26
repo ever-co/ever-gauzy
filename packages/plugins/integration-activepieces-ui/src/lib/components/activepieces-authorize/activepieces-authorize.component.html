@@ -30,6 +30,10 @@
 					formControlName="client_secret"
 					type="password"
 					nbInput
+					autocomplete="new-password"
+					autocapitalize="off"
+					autocorrect="off"
+					spellcheck="false"
 					[placeholder]="'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.CLIENT_SECRET_PLACEHOLDER' | translate"
 				/>
 			</div>
@@ -41,7 +45,8 @@
 			<button
 				nbButton
 				status="primary"
-				[disabled]="form.invalid"
+				type="submit"
+				[disabled]="form.invalid || loading"
 				size="small"
 				outline
 			>

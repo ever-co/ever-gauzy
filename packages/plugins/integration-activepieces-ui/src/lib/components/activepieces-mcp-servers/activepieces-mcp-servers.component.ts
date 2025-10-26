@@ -78,7 +78,7 @@ export class ActivepiecesMcpServersComponent extends TranslationBaseComponent im
 		this._activepiecesService
 			.listMcpServers(this.integrationId, params)
 			.pipe(
-				tap((response: any) => {
+				tap((response: { data: IActivepiecesMcpServerPublic[] }) => {
 					this.mcpServers = response.data;
 					this._activepiecesStore.setMcpServers(response.data);
 				}),

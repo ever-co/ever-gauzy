@@ -22,7 +22,6 @@ export class IntegrationActivepiecesLayoutComponent implements OnInit, OnDestroy
 
 	ngOnInit() {
 		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
-		console.log(`Integration Activepieces UI module plugin initialized`);
 	}
 
 	/**
@@ -34,7 +33,6 @@ export class IntegrationActivepiecesLayoutComponent implements OnInit, OnDestroy
 			distinctUntilChange(),
 			filter((lang: string | LanguagesEnum) => !!lang),
 			tap((lang: string | LanguagesEnum) => {
-				console.log('integration activepieces ui module plugin lang', lang);
 				this._translateService.use(lang);
 			}),
 			untilDestroyed(this)
@@ -44,7 +42,5 @@ export class IntegrationActivepiecesLayoutComponent implements OnInit, OnDestroy
 		preferredLanguage$.subscribe();
 	}
 
-	ngOnDestroy(): void {
-		console.log(`Integration Activepieces UI module plugin destroyed`);
-	}
+	ngOnDestroy(): void {}
 }

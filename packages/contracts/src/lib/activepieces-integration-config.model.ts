@@ -39,7 +39,7 @@ export interface IActivepiecesOAuth2ConnectionValue {
 	type: ActivepiecesConnectionType.OAUTH2;
 	client_id: string;
 	client_secret: string;
-	data: Record<string, string | number>;
+	data: Record<string, string | number | boolean>;
 }
 
 /**
@@ -110,7 +110,12 @@ export enum ActivepiecesSettingName {
 	EXPIRES_AT = 'expires_at',
 	CONNECTION_ID = 'connection_id',
 	PROJECT_ID = 'project_id',
-	IS_ENABLED = 'is_enabled'
+	IS_ENABLED = 'is_enabled',
+	CLIENT_ID = 'client_id',
+	CLIENT_SECRET = 'client_secret',
+	CALLBACK_URL = 'callback_url',
+	POST_INSTALL_URL = 'post_install_url',
+	STATE_SECRET = 'state_secret'
 }
 
 /**

@@ -42,10 +42,8 @@ export class ActivepiecesService {
 		tenantId: string;
 		organizationId?: string;
 	}> {
-		const params: any = { tenantId };
-		if (organizationId) {
-			params.organizationId = organizationId;
-		}
+		let params = new HttpParams();
+  		if (organizationId) params = params.set('organizationId', organizationId);
 
 		return this.http.get<{
 			authorizationUrl: string;
@@ -62,7 +60,7 @@ export class ActivepiecesService {
 		message: string;
 		integrationTenantId: string;
 	}> {
-		const body: any = {
+		const body: { client_id: string; client_secret: string; organizationId?: string } = {
 			client_id: clientId,
 			client_secret: clientSecret
 		};

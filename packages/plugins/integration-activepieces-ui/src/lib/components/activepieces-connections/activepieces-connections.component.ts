@@ -80,8 +80,9 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 					}
 				}),
 				catchError((error) => {
-					this._toastrService.error('Failed to load connection: ' + error.message);
-					this._activepiecesStore.setError(error.message);
+					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.ERRORS.LOAD_CONNECTION') + ': ' + error.message;
+					this._toastrService.error(errorMessage);
+					this._activepiecesStore.setError(errorMessage);
 					return EMPTY;
 				}),
 				finalize(() => {
@@ -99,7 +100,7 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 	 */
 	loadConnections() {
 		if (!this.projectId) {
-			this._toastrService.error('Project ID is required');
+			this._toastrService.error(this.getTranslation('ACTIVEPIECES_PAGE.ERRORS.PROJECT_ID_REQUIRED'));
 			return;
 		}
 
@@ -122,8 +123,9 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 					this._activepiecesStore.setConnections(response.data);
 				}),
 				catchError((error) => {
-					this._toastrService.error('Failed to load connections: ' + error.message);
-					this._activepiecesStore.setError(error.message);
+					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.ERRORS.LOAD_CONNECTIONS') + ': ' + error.message;
+					this._toastrService.error(errorMessage);
+					this._activepiecesStore.setError(errorMessage);
 					return EMPTY;
 				}),
 				finalize(() => {
@@ -139,7 +141,7 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 	 * Delete connection
 	 * DELETE /integration/activepieces/connection/:integrationId
 	 */
-	deleteConnection() {
+	deleteConnection(connection: IActivepiecesConnection) {
 		if (!confirm('Are you sure you want to delete this connection?')) {
 			return;
 		}
@@ -155,13 +157,15 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 			.deleteConnection(this.integrationId)
 			.pipe(
 				tap(() => {
-					this._toastrService.success('Connection deleted successfully');
-					this.connections = [];
-					this._activepiecesStore.clearConnections();
+					this._toastrService.success(this.getTranslation('ACTIVEPIECES_PAGE.SUCCESS.CONNECTION_DELETED'));
+					// Remove the deleted connection from the list
+					this.connections = this.connections.filter(conn => conn !== connection);
+					this._activepiecesStore.setConnections(this.connections);
 				}),
 				catchError((error) => {
-					this._toastrService.error('Failed to delete connection: ' + error.message);
-					this._activepiecesStore.setError(error.message);
+					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.ERRORS.DELETE_CONNECTION') + ': ' + error.message;
+					this._toastrService.error(errorMessage);
+					this._activepiecesStore.setError(errorMessage);
 					return EMPTY;
 				}),
 				finalize(() => {

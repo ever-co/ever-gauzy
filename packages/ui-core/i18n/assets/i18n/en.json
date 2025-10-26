@@ -1465,7 +1465,15 @@
 				"READY_MESSAGE": "Your Activepieces integration is ready. Click the button below to authorize.",
 				"INFOS": "Next you will be taken to Activepieces to grant permission to Gauzy.",
 				"START_BUTTON": "Authorize Activepieces",
-				"NEXT": "Next"
+				"NEXT": "Next",
+				"ERRORS": {
+					"INVALID_FORM": "Please fill all required fields correctly",
+					"SAVE_SETTINGS": "Failed to save settings",
+					"START_AUTHORIZATION": "Failed to start authorization"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Settings saved successfully"
+				}
 			},
 			"SETTINGS": {
 				"TITLE": "Activepieces Settings",
@@ -1531,11 +1539,29 @@
 				"INVALID_FORM": "Please fill in all required fields",
 				"LOAD_SETTINGS": "Failed to load Activepieces settings",
 				"SAVE_SETTINGS": "Failed to save Activepieces settings",
-				"START_AUTHORIZATION": "Failed to start authorization"
+				"START_AUTHORIZATION": "Failed to start authorization",
+				"LOAD_CONNECTION": "Failed to load connection",
+				"PROJECT_ID_REQUIRED": "Project ID is required",
+				"LOAD_CONNECTIONS": "Failed to load connections",
+				"DELETE_CONNECTION": "Failed to delete connection"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "Successfully authorized with Activepieces",
-				"SETTINGS_SAVED": "Activepieces settings saved successfully"
+				"SETTINGS_SAVED": "Activepieces settings saved successfully",
+				"CONNECTION_DELETED": "Connection deleted successfully"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "Invalid callback parameters",
+					"ORGANIZATION_NOT_FOUND": "Organization not found",
+					"EXCHANGE_TOKEN": "Failed to exchange authorization code",
+					"INVALID_PROJECT_ID": "Please provide a valid project ID",
+					"TOKEN_NOT_FOUND": "Token not found. Please try authorization again.",
+					"CREATE_CONNECTION": "Failed to create connection"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "ActivePieces connection created successfully"
+				}
 			}
 		},
 		"COMING_SOON": "Coming soon",

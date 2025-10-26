@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
@@ -12,6 +12,8 @@ import {
 	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -20,7 +22,7 @@ import {
 	styleUrls: ['./activepieces-authorize.component.scss'],
 	standalone: false
 })
-export class ActivepiecesAuthorizeComponent implements OnInit, OnDestroy {
+export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public rememberState = false;
 	public organization!: IOrganization;
 	public hasTenantSettings = false;
@@ -43,8 +45,11 @@ export class ActivepiecesAuthorizeComponent implements OnInit, OnDestroy {
 		private readonly _router: Router,
 		readonly _store: Store,
 		private readonly _integrationsService: IntegrationsService,
-		private readonly _toastrService: ToastrService
-	) {}
+		private readonly _toastrService: ToastrService,
+		public readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this._store.selectedOrganization$
@@ -88,16 +93,13 @@ export class ActivepiecesAuthorizeComponent implements OnInit, OnDestroy {
 			})
 			.pipe(
 				tap((integrationTenants: any) => {
-					if (integrationTenants && integrationTenants.items && integrationTenants.items.length > 0) {
-						const integrationTenant = integrationTenants.items[0];
-						const hasClientId = integrationTenant.settings?.some(
-							(s: any) => s.settingsName === 'client_id'
-						);
-						const hasClientSecret = integrationTenant.settings?.some(
-							(s: any) => s.settingsName === 'client_secret'
-						);
-						this.hasTenantSettings = hasClientId && hasClientSecret;
-					}
+					const integrationTenant = integrationTenants?.items?.[0];
+					if (!integrationTenant) return;
+					const { settings } = integrationTenant;
+					this.hasTenantSettings = Boolean(
+						settings?.some((s: any) => s.settingsName === 'client_id') &&
+						settings?.some((s: any) => s.settingsName === 'client_secret')
+					);
 				}),
 				catchError(() => EMPTY),
 				untilDestroyed(this)
@@ -138,7 +140,7 @@ export class ActivepiecesAuthorizeComponent implements OnInit, OnDestroy {
 	 */
 	setupAndAuthorize() {
 		if (this.form.invalid || !this.organization) {
-			this._toastrService.error('Please fill all required fields correctly');
+			this._toastrService.error(this.getTranslation('ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.INVALID_FORM'));
 			return;
 		}
 
@@ -150,12 +152,13 @@ export class ActivepiecesAuthorizeComponent implements OnInit, OnDestroy {
 			.saveOAuthSettings(client_id, client_secret, organizationId)
 			.pipe(
 				tap(() => {
-					this._toastrService.success('Settings saved successfully');
+					this._toastrService.success(this.getTranslation('ACTIVEPIECES_PAGE.AUTHORIZE.SUCCESS.SETTINGS_SAVED'));
 					this.hasTenantSettings = true;
 				}),
 				switchMap(() => this._startAuthorization()),
 				catchError((error) => {
-					this._toastrService.error('Failed to save settings: ' + error.message);
+					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.SAVE_SETTINGS') + ': ' + error.message;
+					this._toastrService.error(errorMessage);
 					this.loading = false;
 					return EMPTY;
 				}),
@@ -172,7 +175,8 @@ export class ActivepiecesAuthorizeComponent implements OnInit, OnDestroy {
 		this._startAuthorization()
 			.pipe(
 				catchError((error) => {
-					this._toastrService.error('Failed to start authorization: ' + error.message);
+					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.START_AUTHORIZATION') + ': ' + error.message;
+					this._toastrService.error(errorMessage);
 					this.loading = false;
 					return EMPTY;
 				}),
@@ -204,7 +208,7 @@ export class ActivepiecesAuthorizeComponent implements OnInit, OnDestroy {
 	 * Redirect to ActivePieces integration page
 	 */
 	private _redirectToActivepiecesIntegration(integrationId: string) {
-		this._router.navigate(['pages/integrations/activepieces', integrationId]);
+		this._router.navigate(['/pages/integrations/activepieces', integrationId]);
 	}
 
 	ngOnDestroy(): void {}
