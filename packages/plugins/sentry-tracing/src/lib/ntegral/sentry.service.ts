@@ -56,7 +56,7 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 	}
 
 	/**
-	 *
+	 * Log messages are only printed to console, NOT sent to Sentry
 	 * @param message
 	 * @param context
 	 * @param asBreadcrumb
@@ -65,14 +65,8 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		message = `${this.app} ${message}`;
 		try {
 			super.log(message, context);
-			// Only add as breadcrumb, don't send to Sentry
-			Sentry.addBreadcrumb({
-				message,
-				level: 'log',
-				data: {
-					context
-				}
-			});
+			// console.log() messages are NOT sent to Sentry at all
+			// Only console.warn() and console.error() are sent to Sentry
 		} catch (err) {}
 	}
 
@@ -134,7 +128,7 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 	}
 
 	/**
-	 *
+	 * Verbose messages are only printed to console, NOT sent to Sentry
 	 * @param message
 	 * @param context
 	 * @param asBreadcrumb
@@ -143,14 +137,8 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		message = `${this.app} ${message}`;
 		try {
 			super.verbose(message, context);
-			// Only add as breadcrumb, don't send to Sentry
-			Sentry.addBreadcrumb({
-				message,
-				level: 'info',
-				data: {
-					context
-				}
-			});
+			// Verbose messages are NOT sent to Sentry at all
+			// Only console.warn() and console.error() are sent to Sentry
 		} catch (err) {}
 	}
 
