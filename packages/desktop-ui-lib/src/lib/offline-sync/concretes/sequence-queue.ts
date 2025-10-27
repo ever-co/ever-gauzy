@@ -55,6 +55,13 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 					...timer,
 					...params
 				});
+			} else if (timer.isStartedOffline && !timer.timelogId && timer.startedAt && timer.stoppedAt) {
+				latest = await this._timeTrackerService.addTimeLog({
+					startedAt: timer.startedAt,
+					stoppedAt: timer.stoppedAt,
+					taskId: timer.taskId,
+					projectId: timer.projectId
+				});
 			}
 
 			console.log('🛠 - Create queue');

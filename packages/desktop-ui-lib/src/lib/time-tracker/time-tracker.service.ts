@@ -551,6 +551,43 @@ export class TimeTrackerService {
 		}
 	}
 
+	addTimeLog(payload: {
+		startedAt: string,
+		stoppedAt: string,
+		projectId: string | null,
+		taskId: string | null
+	}) {
+		const TIMEOUT = 15000;
+		const API_URL = `${API_PREFIX}/timesheet/time-log`;
+		const timeLogPayload: Record<string, unknown> = {
+			startedAt: moment(payload.startedAt).utc().toISOString(),
+			stoppedAt: moment(payload.stoppedAt).utc().toISOString(),
+			isBillable: true,
+			logType: TimeLogType.TRACKED,
+			source: TimeLogSourceEnum.DESKTOP,
+			tenantId: this._store.tenantId,
+			organizationId: this._store.organizationId
+		}
+
+		if (payload.projectId) {
+			timeLogPayload.projectId = payload.projectId;
+		}
+
+		if (payload.taskId) {
+			timeLogPayload.taskId = payload.taskId;
+		}
+
+		const options = {
+			headers: new HttpHeaders({ timeout: TIMEOUT.toString() })
+		};
+		try {
+			return firstValueFrom(this.http.post<ITimeLog>(API_URL, timeLogPayload, options));
+		} catch (error) {
+			this._loggerService.error<any>(`Error adding timer: ${moment().format()}`, { error, requestBody: timeLogPayload });
+			throw error;
+		}
+	}
+
 	deleteTimeSlot(values) {
 		const params = toParams({
 			ids: [values.timeSlotId],
