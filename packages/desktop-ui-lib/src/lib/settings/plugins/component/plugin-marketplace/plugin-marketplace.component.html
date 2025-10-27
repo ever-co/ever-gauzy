@@ -1,65 +1,145 @@
-@let plugins = query.plugins$ | async; @let available = (query.count$ | async) > 0; @let isLoading = (query.isLoading$ |
-async) && plugins.length === 0; @let uploading = query.uploading$ | async; @let progress = query.progress$ | async; @let
-isOffline = store.isOffline$ | async;
+@let plugins = query.plugins$ | async;
+@let available = (query.count$ | async) > 0;
+@let isLoading = (query.isLoading$ | async) && plugins.length === 0;
+@let uploading = query.uploading$ | async;
+@let progress = query.progress$ | async;
+@let isOffline = store.isOffline$ | async;
+@let totalCount = query.totalCount$ | async;
+@let filteredCount = query.filteredCount$ | async;
+@let showAdvancedFilters = query.showAdvancedFilters$ | async;
 
-<nb-card
-	nbInfiniteList
-	[threshold]="500"
-	[throttleTime]="300"
-	(bottomThreshold)="loadMore()"
-	class="content-active first"
->
-	@if (available) { @for (plugin of plugins; track plugin.id; let isLast = $last) { @defer (on viewport; when
-	isLoading) {
-	<lib-plugin-marketplace-detail
-		class="plugin"
-		[ngClass]="{ none: isLast }"
-		[plugin]="plugin"
-	></lib-plugin-marketplace-detail>
-	} @placeholder (minimum 500ms) {
-	<div class="plugin-container skeleton-loader">
-		<div class="plugin-details">
-			<div class="plugin-header">
-				<div class="skeleton-line plugin-name" style="width: 180px; height: 24px"></div>
-				<div class="skeleton-line plugin-version" style="width: 60px; height: 18px"></div>
+<div class="marketplace-container">
+	<!-- Filter Panel -->
+	<div class="filter-panel">
+		<lib-plugin-marketplace-filter
+			[plugins]="plugins"
+			[isLoading]="isLoading"
+			[totalCount]="totalCount || 0"
+			[showAdvanced]="showAdvancedFilters"
+			[isMobile]="isMobile"
+			(filterChange)="onFilterChange($event)"
+			(clearFilters)="onClearFilters()"
+			(toggleAdvanced)="onToggleAdvancedFilters($event)">
+		</lib-plugin-marketplace-filter>
+	</div>
+
+	<!-- Main Content -->
+	<div class="content-panel">
+		<!-- Results Header -->
+		<div class="results-header" *ngIf="available || isLoading">
+			<div class="results-info">
+				<h3 class="results-title">Plugin Marketplace</h3>
+				<div class="results-stats" *ngIf="!isLoading">
+					<span class="stats-text">
+						Showing {{ (filteredCount || 0) }} of {{ (totalCount || 0) }} plugins
+					</span>
+				</div>
 			</div>
-			<div class="plugin-description">
-				<div class="skeleton-line" style="width: 100%; height: 16px; margin-bottom: 6px"></div>
-				<div class="skeleton-line" style="width: 90%; height: 16px; margin-bottom: 6px"></div>
-				<div class="skeleton-line" style="width: 80%; height: 16px"></div>
+
+			<div class="results-actions">
+				<!-- View Toggle -->
+				<nb-button-group>
+					<button
+						nbButton
+						[status]="(query.selectedView$ | async) === 'grid' ? 'primary' : 'basic'"
+						(click)="setViewMode('grid')"
+						nbTooltip="Grid view"
+						size="small">
+						<nb-icon icon="grid-outline"></nb-icon>
+					</button>
+					<button
+						nbButton
+						[status]="(query.selectedView$ | async) === 'list' ? 'primary' : 'basic'"
+						(click)="setViewMode('list')"
+						nbTooltip="List view"
+						size="small">
+						<nb-icon icon="list-outline"></nb-icon>
+					</button>
+				</nb-button-group>
+
+				<!-- Advanced Filters Toggle -->
+				<button
+					nbButton
+					[status]="showAdvancedFilters ? 'primary' : 'basic'"
+					(click)="toggleAdvancedFilters()"
+					nbTooltip="Toggle advanced filters"
+					size="small">
+					<nb-icon icon="options-outline"></nb-icon>
+					Advanced
+				</button>
 			</div>
 		</div>
-		<div class="plugin-actions">
-			<div class="skeleton-icon" style="width: 24px; height: 24px; margin-right: 12px"></div>
-			<div class="skeleton-toggle" style="width: 48px; height: 24px"></div>
-		</div>
-	</div>
-	} } } @else if (isLoading) {
-	<div class="no-data">
-		<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.LOADING' | translate"></ngx-no-data-message>
-	</div>
-	} @else {
-	<div class="no-data">
-		<ngx-no-data-message
-			[message]="(isOffline ? 'PLUGIN.MARKETPLACE.OFFLINE' : 'SM_TABLE.NO_DATA.PLUGIN') | translate"
-		></ngx-no-data-message>
-	</div>
-	} @if (isUploadAvailable) { @defer (on idle) {
-	<div class="button-upload">
-		<button
-			(click)="upload()"
-			[nbTooltip]="'PLUGIN.MARKETPLACE.UPLOAD' | translate"
-			status="primary"
-			nbButton
-			[disabled]="isOffline"
-		>
-			<nb-icon *gauzySpinnerButton="uploading" icon="cloud-upload-outline"></nb-icon>
-			@if (uploading) {
-			<span>{{ progress | percent : '1.2-2' }}</span>
+
+		<!-- Plugin List -->
+		<nb-card
+			nbInfiniteList
+			[threshold]="500"
+			[throttleTime]="300"
+			(bottomThreshold)="loadMore()"
+			class="content-active first"
+			[class.grid-view]="(query.selectedView$ | async) === 'grid'"
+			[class.list-view]="(query.selectedView$ | async) === 'list'">
+
+			@if (available) {
+				@for (plugin of plugins; track plugin.id; let isLast = $last) {
+					@defer (on viewport; when isLoading) {
+						<lib-plugin-marketplace-detail
+							class="plugin"
+							[ngClass]="{ none: isLast }"
+							[plugin]="plugin"
+							[viewMode]="(query.selectedView$ | async) || 'grid'">
+						</lib-plugin-marketplace-detail>
+					} @placeholder (minimum 500ms) {
+						<div class="plugin-container skeleton-loader">
+							<div class="plugin-details">
+								<div class="plugin-header">
+									<div class="skeleton-line plugin-name" style="width: 180px; height: 24px"></div>
+									<div class="skeleton-line plugin-version" style="width: 60px; height: 18px"></div>
+								</div>
+								<div class="plugin-description">
+									<div class="skeleton-line" style="width: 100%; height: 16px; margin-bottom: 6px"></div>
+									<div class="skeleton-line" style="width: 90%; height: 16px; margin-bottom: 6px"></div>
+									<div class="skeleton-line" style="width: 80%; height: 16px"></div>
+								</div>
+							</div>
+							<div class="plugin-actions">
+								<div class="skeleton-icon" style="width: 24px; height: 24px; margin-right: 12px"></div>
+								<div class="skeleton-toggle" style="width: 48px; height: 24px"></div>
+							</div>
+						</div>
+					}
+				}
+			} @else if (isLoading) {
+				<div class="no-data">
+					<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.LOADING' | translate"></ngx-no-data-message>
+				</div>
+			} @else {
+				<div class="no-data">
+					<ngx-no-data-message
+						[message]="(isOffline ? 'PLUGIN.MARKETPLACE.OFFLINE' : 'SM_TABLE.NO_DATA.PLUGIN') | translate">
+					</ngx-no-data-message>
+				</div>
 			}
-		</button>
+
+			@if (isUploadAvailable) {
+				@defer (on idle) {
+					<div class="button-upload">
+						<button
+							(click)="upload()"
+							[nbTooltip]="'PLUGIN.MARKETPLACE.UPLOAD' | translate"
+							status="primary"
+							nbButton
+							[disabled]="isOffline">
+							<nb-icon *gauzySpinnerButton="uploading" icon="cloud-upload-outline"></nb-icon>
+							@if (uploading) {
+								<span>{{ progress | percent : '1.2-2' }}</span>
+							}
+						</button>
+					</div>
+				} @placeholder {
+					<div class="upload-placeholder"></div>
+				}
+			}
+		</nb-card>
 	</div>
-	} @placeholder {
-	<div class="upload-placeholder"></div>
-	} }
-</nb-card>
+</div>

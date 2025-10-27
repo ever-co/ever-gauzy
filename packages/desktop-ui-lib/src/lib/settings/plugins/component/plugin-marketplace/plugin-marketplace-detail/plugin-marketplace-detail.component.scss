@@ -1,47 +1,455 @@
-.plugin-container {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px;
+/* Enhanced Plugin Card Styles */
+.plugin-card {
+  background: var(--nb-card-background-color);
+  border: 1px solid var(--nb-card-border-color);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: var(--nb-primary-color);
+  }
+
+  &.featured {
+    border-color: var(--nb-warning-color);
+    background: linear-gradient(135deg,
+      var(--nb-card-background-color) 0%,
+      rgba(255, 193, 7, 0.05) 100%
+    );
+
+    &::before {
+      content: '⭐';
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 20px;
+      z-index: 1;
+    }
+  }
+
+  &.verified {
+    border-left: 4px solid var(--nb-success-color);
+  }
 }
 
-.plugin-details {
-  flex-grow: 1;
-}
-
+/* Plugin Header Section */
 .plugin-header {
   display: flex;
-  align-items: center;
-  font-weight: bold;
-  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 16px;
+}
+
+.plugin-title-section {
+  flex: 1;
+  min-width: 0; // Allow text truncation
 }
 
 .plugin-name {
-  font-size: 16px;
-  color: var(--text-primary-color);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--nb-text-primary-color);
   cursor: pointer;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    color: var(--nb-primary-color);
+  }
 }
 
-.plugin-version {
-  font-size: 14px;
-  color: var(--gauzy-text-color-1);
+.security-badges {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+
+  .security-badge {
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 12px;
+
+    &.verified {
+      background-color: var(--nb-success-color);
+      color: white;
+    }
+
+    &.signed {
+      background-color: var(--nb-info-color);
+      color: white;
+    }
+  }
 }
 
-.plugin-description {
-  font-size: 14px;
+.plugin-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
   color: var(--nb-text-hint-color);
-  margin-top: 4px;
+
+  .plugin-version {
+    background: var(--nb-primary-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+
+  .plugin-author {
+    font-style: italic;
+  }
+
+  .download-count {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    nb-icon {
+      font-size: 14px;
+    }
+  }
 }
 
+.plugin-status-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.status-badge, .type-badge {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+}
+
+/* Plugin Description */
+.plugin-description {
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--nb-text-basic-color);
+}
+
+/* Plugin Categories */
+.plugin-categories {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  .category-icon {
+    color: var(--nb-primary-color);
+    font-size: 16px;
+  }
+
+  .category-badge {
+    font-size: 12px;
+    background: var(--nb-primary-color);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 16px;
+  }
+}
+
+/* Plugin Tags */
+.plugin-tags {
+  margin-bottom: 16px;
+
+  .tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .tag-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: var(--nb-basic-background-color);
+    border: 1px solid var(--nb-border-color);
+    color: var(--nb-text-basic-color);
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--nb-primary-color);
+      color: white;
+    }
+
+    &.featured {
+      background: var(--nb-warning-color);
+      color: white;
+      font-weight: 500;
+    }
+  }
+
+  .more-tags {
+    font-size: 11px;
+    color: var(--nb-text-hint-color);
+    font-style: italic;
+  }
+}
+
+/* Plugin Subscription */
+.plugin-subscription {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--nb-basic-background-color);
+  border-radius: 8px;
+  border: 1px solid var(--nb-border-color);
+
+  .subscription-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .subscription-type {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--nb-text-basic-color);
+
+    nb-icon {
+      color: var(--nb-primary-color);
+    }
+
+    .price {
+      color: var(--nb-success-color);
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .billing-period {
+      color: var(--nb-text-hint-color);
+      font-size: 12px;
+    }
+  }
+
+  .trial-badge, .expiring-badge {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    nb-icon {
+      font-size: 12px;
+    }
+  }
+
+  .trial-badge {
+    background: var(--nb-warning-color);
+    color: white;
+  }
+
+  .expiring-badge {
+    background: var(--nb-danger-color);
+    color: white;
+  }
+}
+
+/* Plugin Metrics */
+.plugin-metrics {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+
+  .metric-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--nb-text-hint-color);
+
+    nb-icon {
+      color: var(--nb-primary-color);
+      font-size: 14px;
+    }
+
+    .metric-label {
+      font-weight: 500;
+    }
+
+    .metric-value {
+      color: var(--nb-text-basic-color);
+    }
+  }
+}
+
+/* Plugin Actions */
 .plugin-actions {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.5rem !important;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--nb-border-color);
+}
 
-  .plugin-edit {
-    color: var(--gauzy-text-color-1);
-    cursor: pointer;
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  .action-btn {
+    min-width: 36px;
+    height: 36px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &.settings-btn:hover:not(:disabled) {
+      background: var(--nb-primary-color);
+      color: white;
+    }
+
+    &.users-btn:hover:not(:disabled) {
+      background: var(--nb-info-color);
+      color: white;
+    }
+
+    &.edit-btn:hover:not(:disabled) {
+      background: var(--nb-warning-color);
+      color: white;
+    }
+
+    &.more-btn:hover:not(:disabled) {
+      background: var(--nb-basic-background-color);
+      color: var(--nb-text-basic-color);
+    }
+
+    nb-icon {
+      font-size: 16px;
+    }
   }
+}
+
+.installation-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .progress-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--nb-primary-color);
+    font-size: 13px;
+
+    nb-icon {
+      font-size: 16px;
+    }
+  }
+
+  .toggle-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--nb-text-basic-color);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .plugin-card {
+    padding: 16px;
+  }
+
+  .plugin-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .plugin-status-section {
+    align-items: flex-start;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .plugin-meta {
+    font-size: 12px;
+    gap: 8px;
+  }
+
+  .plugin-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .action-buttons {
+    justify-content: center;
+  }
+
+  .installation-control {
+    justify-content: center;
+  }
+
+  .plugin-metrics {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .plugin-name {
+    font-size: 16px;
+  }
+
+  .plugin-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .subscription-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .plugin-metrics {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.plugin-card {
+  animation: fadeIn 0.3s ease-out;
 }

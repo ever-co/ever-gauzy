@@ -19,6 +19,7 @@ import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
 import { patterns } from '../../../../../constants';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../services';
+import { IPluginPlanCreateInput, PluginSubscriptionService } from '../../../services/plugin-subscription.service';
 import { SourceContext } from './plugin-source/creator/source.context';
 
 @UntilDestroy({ checkProperties: true })
@@ -43,6 +44,11 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	destroy$ = new Subject<void>();
 	selectedSourceType: PluginSourceType = PluginSourceType.CDN;
 
+	// Subscription plan properties
+	subscriptionPlans: IPluginPlanCreateInput[] = [];
+	isSubscriptionStepValid = false;
+	enableSubscriptions = false;
+
 	constructor(
 		private readonly dialogRef: NbDialogRef<PluginMarketplaceUploadComponent>,
 		private readonly toastrService: ToastrNotificationService,
@@ -51,7 +57,8 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		private readonly sourceContext: SourceContext,
 		private readonly versionQuery: PluginVersionQuery,
 		private readonly dialog: NbDialogService,
-		private readonly action: Actions
+		private readonly action: Actions,
+		private readonly subscriptionService: PluginSubscriptionService
 	) {
 		this.today = dateService.today();
 	}
@@ -225,10 +232,56 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			return;
 		}
 
+		// Check subscription plans validation if subscriptions are enabled
+		if (this.enableSubscriptions && !this.isSubscriptionStepValid) {
+			this.toastrService.error(
+				this.translateService.instant('PLUGIN.FORM.VALIDATION.SUBSCRIPTION_PLANS_INVALID')
+			);
+			return;
+		}
+
 		this.isSubmitting = true;
 
-		this.dialogRef.close(this.pluginForm.value);
+		const pluginData = this.pluginForm.value;
+
+		// Add subscription plans to the plugin data if enabled
+		if (this.enableSubscriptions && this.subscriptionPlans.length > 0) {
+			pluginData.subscriptionPlans = this.subscriptionPlans;
+		}
+
+		this.dialogRef.close(pluginData);
 		this.isSubmitting = false;
+	}
+
+	// Subscription plan related methods
+	public onSubscriptionPlansChanged(plans: any[]): void {
+		this.subscriptionPlans = plans.map((plan) => ({
+			...plan,
+			pluginId: this.plugin?.id || undefined
+		}));
+	}
+
+	public onSubscriptionValidationChanged(isValid: boolean): void {
+		this.isSubscriptionStepValid = isValid;
+	}
+
+	public toggleSubscriptions(enabled: boolean): void {
+		this.enableSubscriptions = enabled;
+		if (!enabled) {
+			this.subscriptionPlans = [];
+			this.isSubscriptionStepValid = true;
+		}
+	}
+
+	public isSubscriptionStepComplete(): boolean {
+		if (!this.enableSubscriptions) {
+			return true;
+		}
+		return this.isSubscriptionStepValid && this.subscriptionPlans.length > 0;
+	}
+
+	public canProceedToFinalStep(): boolean {
+		return this.pluginForm.valid && (!this.enableSubscriptions || this.isSubscriptionStepComplete());
 	}
 
 	public get sources(): FormArray {

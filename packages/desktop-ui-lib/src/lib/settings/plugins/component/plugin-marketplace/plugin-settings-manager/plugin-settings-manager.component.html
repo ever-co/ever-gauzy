@@ -1,0 +1,428 @@
+<div class="settings-manager">
+	<div class="manager-header">
+		<div class="header-info">
+			<h4 class="manager-title">
+				<nb-icon icon="settings-outline"></nb-icon>
+				Plugin Settings: {{ plugin?.name }}
+			</h4>
+			<p class="manager-subtitle" *ngIf="isTenantSpecific">
+				Tenant-specific configuration
+			</p>
+		</div>
+
+		<div class="header-actions">
+			<button
+				nbButton
+				ghost
+				size="small"
+				(click)="testConnection()"
+				[disabled]="!canEdit || (isLoading$ | async)"
+				*gauzySpinnerButton="isLoading$ | async"
+				nbTooltip="Test connection with current settings">
+				<nb-icon icon="flash-outline"></nb-icon>
+				Test
+			</button>
+
+			<button
+				nbButton
+				ghost
+				size="small"
+				class="close-btn"
+				(click)="close()">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
+	</div>
+
+	<!-- Search and Filters -->
+	<div class="filters-section">
+		<div class="search-container">
+			<nb-form-field>
+				<nb-icon nbPrefix icon="search-outline"></nb-icon>
+				<input
+					nbInput
+					placeholder="Search settings..."
+					[value]="searchTerm$ | async"
+					(input)="searchTerm$.next($event.target.value)">
+			</nb-form-field>
+		</div>
+
+		<div class="filter-toggles">
+			<nb-toggle
+				[checked]="showAdvanced$ | async"
+				(checkedChange)="showAdvanced$.next($event)"
+				class="filter-toggle">
+				Show Advanced
+			</nb-toggle>
+
+			<nb-toggle
+				[checked]="showEncrypted$ | async"
+				(checkedChange)="showEncrypted$.next($event)"
+				class="filter-toggle">
+				Show Encrypted
+			</nb-toggle>
+		</div>
+
+		<div class="action-buttons">
+			<button
+				nbButton
+				ghost
+				size="small"
+				(click)="exportSettings()"
+				nbTooltip="Export settings to file">
+				<nb-icon icon="download-outline"></nb-icon>
+				Export
+			</button>
+
+			<label class="import-button">
+				<input
+					type="file"
+					accept=".json"
+					(change)="importSettings($event)"
+					style="display: none;">
+				<button
+					nbButton
+					ghost
+					size="small"
+					type="button"
+					nbTooltip="Import settings from file">
+					<nb-icon icon="upload-outline"></nb-icon>
+					Import
+				</button>
+			</label>
+
+			<button
+				nbButton
+				ghost
+				size="small"
+				status="warning"
+				(click)="resetAllSettings()"
+				[disabled]="!canEdit"
+				nbTooltip="Reset all settings to defaults">
+				<nb-icon icon="refresh-outline"></nb-icon>
+				Reset All
+			</button>
+		</div>
+	</div>
+
+	<!-- Settings Form -->
+	<form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="settings-form">
+		<div formArrayName="settings" class="settings-groups">
+			@for(groupName of getGroupNames(); track groupName) {
+				<div class="settings-group" *ngIf="getSettingsByGroup(groupName).some(s => isSettingVisible(s))">
+					<div class="group-header">
+						<h5 class="group-title">
+							<nb-icon [icon]="getGroupIcon(groupName)"></nb-icon>
+							{{ groupName }}
+						</h5>
+						<div class="group-actions">
+							<button
+								type="button"
+								nbButton
+								ghost
+								size="tiny"
+								(click)="resetGroupSettings(groupName)"
+								[disabled]="!canEdit"
+								nbTooltip="Reset group to defaults">
+								<nb-icon icon="refresh-outline"></nb-icon>
+							</button>
+						</div>
+					</div>
+
+					<div class="group-settings">
+						@for(setting of getSettingsByGroup(groupName); track setting.key) {
+							<div
+								class="setting-item"
+								[class.required]="setting.isRequired"
+								[class.encrypted]="setting.isEncrypted"
+								*ngIf="isSettingVisible(setting)"
+								[formGroupName]="getSettingIndex(setting)">
+
+								<div class="setting-header">
+									<div class="setting-info">
+										<label class="setting-label">
+											{{ setting.key | titlecase }}
+											@if(setting.isRequired) {
+												<span class="required-indicator">*</span>
+											}
+											@if(setting.isEncrypted) {
+												<nb-icon
+													icon="lock-outline"
+													class="encrypted-icon"
+													nbTooltip="Encrypted setting">
+												</nb-icon>
+											}
+										</label>
+
+										@if(setting.description) {
+											<p class="setting-description">{{ setting.description }}</p>
+										}
+									</div>
+
+									<div class="setting-actions">
+										<button
+											type="button"
+											nbButton
+											ghost
+											size="tiny"
+											(click)="resetSetting(setting)"
+											[disabled]="!canEdit"
+											nbTooltip="Reset to default">
+											<nb-icon icon="refresh-outline"></nb-icon>
+										</button>
+									</div>
+								</div>
+
+								<div class="setting-control">
+									<!-- String Input -->
+									@if(setting.dataType === PluginSettingDataType.STRING) {
+										<nb-form-field>
+											<input
+												nbInput
+												formControlName="value"
+												[placeholder]="setting.defaultValue || 'Enter value...'"
+												[readonly]="!canEdit">
+										</nb-form-field>
+									}
+
+									<!-- Password Input -->
+									@if(setting.dataType === PluginSettingDataType.PASSWORD) {
+										<nb-form-field>
+											<input
+												nbInput
+												type="password"
+												formControlName="value"
+												[placeholder]="setting.defaultValue || 'Enter password...'"
+												[readonly]="!canEdit">
+											<nb-icon nbSuffix icon="eye-outline" class="toggle-password"></nb-icon>
+										</nb-form-field>
+									}
+
+									<!-- Email Input -->
+									@if(setting.dataType === PluginSettingDataType.EMAIL) {
+										<nb-form-field>
+											<input
+												nbInput
+												type="email"
+												formControlName="value"
+												[placeholder]="setting.defaultValue || 'Enter email...'"
+												[readonly]="!canEdit">
+										</nb-form-field>
+									}
+
+									<!-- URL Input -->
+									@if(setting.dataType === PluginSettingDataType.URL) {
+										<nb-form-field>
+											<input
+												nbInput
+												type="url"
+												formControlName="value"
+												[placeholder]="setting.defaultValue || 'Enter URL...'"
+												[readonly]="!canEdit">
+										</nb-form-field>
+									}
+
+									<!-- Number Input -->
+									@if(setting.dataType === PluginSettingDataType.NUMBER) {
+										<nb-form-field>
+											<input
+												nbInput
+												type="number"
+												formControlName="value"
+												[min]="setting.min"
+												[max]="setting.max"
+												[step]="setting.step || 1"
+												[placeholder]="setting.defaultValue?.toString() || '0'"
+												[readonly]="!canEdit">
+										</nb-form-field>
+									}
+
+									<!-- Boolean Toggle -->
+									@if(setting.dataType === PluginSettingDataType.BOOLEAN) {
+										<nb-toggle
+											formControlName="value"
+											[disabled]="!canEdit">
+										</nb-toggle>
+									}
+
+									<!-- Select Dropdown -->
+									@if(setting.dataType === PluginSettingDataType.SELECT && setting.options) {
+										<nb-select
+											formControlName="value"
+											[disabled]="!canEdit"
+											placeholder="Select option...">
+											@for(option of setting.options; track option.value) {
+												<nb-option [value]="option.value">{{ option.label }}</nb-option>
+											}
+										</nb-select>
+									}
+
+									<!-- Multi Select -->
+									@if(setting.dataType === PluginSettingDataType.MULTISELECT && setting.options) {
+										<nb-select
+											formControlName="value"
+											[disabled]="!canEdit"
+											multiple
+											placeholder="Select options...">
+											@for(option of setting.options; track option.value) {
+												<nb-option [value]="option.value">{{ option.label }}</nb-option>
+											}
+										</nb-select>
+									}
+
+									<!-- Text Area -->
+									@if(setting.dataType === PluginSettingDataType.TEXT) {
+										<nb-form-field>
+											<textarea
+												nbInput
+												formControlName="value"
+												rows="3"
+												[placeholder]="setting.defaultValue || 'Enter text...'"
+												[readonly]="!canEdit">
+											</textarea>
+										</nb-form-field>
+									}
+
+									<!-- Color Picker -->
+									@if(setting.dataType === PluginSettingDataType.COLOR) {
+										<div class="color-input-container">
+											<input
+												type="color"
+												formControlName="value"
+												[disabled]="!canEdit"
+												class="color-input">
+											<nb-form-field>
+												<input
+													nbInput
+													formControlName="value"
+													[placeholder]="setting.defaultValue || '#000000'"
+													[readonly]="!canEdit">
+											</nb-form-field>
+										</div>
+									}
+
+									<!-- Slider -->
+									@if(setting.dataType === PluginSettingDataType.SLIDER) {
+										<div class="slider-container">
+											<input
+												type="range"
+												formControlName="value"
+												[min]="setting.min || 0"
+												[max]="setting.max || 100"
+												[step]="setting.step || 1"
+												[disabled]="!canEdit"
+												class="slider">
+											<div class="slider-value">
+												{{ getSettingFormGroup(getSettingIndex(setting)).get('value')?.value }}
+												@if(setting.dataType === PluginSettingDataType.SLIDER && setting.key === 'sync_interval') {
+													seconds
+												}
+											</div>
+										</div>
+									}
+
+									<!-- JSON Editor -->
+									@if(setting.dataType === PluginSettingDataType.JSON) {
+										<div class="json-editor">
+											<nb-form-field>
+												<textarea
+													nbInput
+													formControlName="value"
+													rows="4"
+													[placeholder]="'{}'"
+													[readonly]="!canEdit"
+													class="json-textarea">
+												</textarea>
+											</nb-form-field>
+											<div class="json-actions">
+												<button
+													type="button"
+													nbButton
+													ghost
+													size="tiny"
+													(click)="formatJson(setting)"
+													[disabled]="!canEdit">
+													<nb-icon icon="code-outline"></nb-icon>
+													Format
+												</button>
+												<button
+													type="button"
+													nbButton
+													ghost
+													size="tiny"
+													(click)="validateJson(setting)"
+													[disabled]="!canEdit">
+													<nb-icon icon="checkmark-outline"></nb-icon>
+													Validate
+												</button>
+											</div>
+										</div>
+									}
+
+									<!-- Date Input -->
+									@if(setting.dataType === PluginSettingDataType.DATE) {
+										<nb-form-field>
+											<input
+												nbInput
+												type="date"
+												formControlName="value"
+												[readonly]="!canEdit">
+										</nb-form-field>
+									}
+
+									<!-- Validation Errors -->
+									@if(getSettingFormGroup(getSettingIndex(setting)).get('value')?.invalid &&
+										  getSettingFormGroup(getSettingIndex(setting)).get('value')?.touched) {
+										<div class="validation-errors">
+											@if(getSettingFormGroup(getSettingIndex(setting)).get('value')?.errors?.['required']) {
+												<div class="error-message">This field is required</div>
+											}
+											@if(getSettingFormGroup(getSettingIndex(setting)).get('value')?.errors?.['email']) {
+												<div class="error-message">Please enter a valid email address</div>
+											}
+											@if(getSettingFormGroup(getSettingIndex(setting)).get('value')?.errors?.['invalidUrl']) {
+												<div class="error-message">Please enter a valid URL</div>
+											}
+											@if(getSettingFormGroup(getSettingIndex(setting)).get('value')?.errors?.['invalidJson']) {
+												<div class="error-message">Please enter valid JSON</div>
+											}
+											@if(getSettingFormGroup(getSettingIndex(setting)).get('value')?.errors?.['min']) {
+												<div class="error-message">
+													Minimum value is {{ setting.min }}
+												</div>
+											}
+											@if(getSettingFormGroup(getSettingIndex(setting)).get('value')?.errors?.['max']) {
+												<div class="error-message">
+													Maximum value is {{ setting.max }}
+												</div>
+											}
+										</div>
+									}
+								</div>
+							</div>
+						}
+					</div>
+				</div>
+			}
+		</div>
+
+		<!-- Form Actions -->
+		<div class="form-actions" *ngIf="canEdit">
+			<button
+				type="button"
+				nbButton
+				ghost
+				(click)="close()">
+				Cancel
+			</button>
+			<button
+				type="submit"
+				nbButton
+				status="primary"
+				[disabled]="!settingsForm.valid || !settingsForm.dirty || (isSaving$ | async)"
+				*gauzySpinnerButton="isSaving$ | async">
+				Save Settings
+			</button>
+		</div>
+	</form>
+</div>

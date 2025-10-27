@@ -1,0 +1,528 @@
+<div class="subscription-plan-creator">
+	<div class="header">
+		<h5 class="title">
+			<nb-icon icon="pricetags-outline"></nb-icon>
+			{{ 'PLUGIN_MARKETPLACE.SUBSCRIPTION_PLANS.TITLE' | translate }}
+		</h5>
+		<p class="subtitle">
+			{{ 'PLUGIN_MARKETPLACE.SUBSCRIPTION_PLANS.DESCRIPTION' | translate }}
+		</p>
+	</div>
+
+	<form [formGroup]="subscriptionForm" class="subscription-form">
+		<div formArrayName="plans" class="plans-container">
+			<div
+				*ngFor="let planGroup of subscriptionForm.get('plans')?.controls; let i = index"
+				[formGroupName]="i"
+				class="plan-card"
+				[class.popular]="getPlanFormGroup(i).get('isPopular')?.value"
+				[class.recommended]="getPlanFormGroup(i).get('isRecommended')?.value"
+			>
+				<!-- Plan Header -->
+				<div class="plan-header">
+					<div class="plan-type-section">
+						<nb-select
+							formControlName="type"
+							placeholder="Select plan type"
+							[status]="getPlanFormGroup(i).get('type')?.invalid && getPlanFormGroup(i).get('type')?.touched ? 'danger' : 'basic'"
+						>
+							<nb-option
+								*ngFor="let option of getSubscriptionTypeOptions()"
+								[value]="option.value"
+							>
+								<nb-icon [icon]="getPlanTypeIcon(option.value)"></nb-icon>
+								{{ option.label }}
+							</nb-option>
+						</nb-select>
+
+						<!-- Type Badge -->
+						<nb-badge
+							*ngIf="getPlanFormGroup(i).get('type')?.value"
+							[status]="getPlanTypeColor(getPlanFormGroup(i).get('type')?.value)"
+							class="type-badge"
+						>
+							{{ getPlanFormGroup(i).get('type')?.value }}
+						</nb-badge>
+					</div>
+
+					<div class="plan-actions">
+						<!-- Popular Badge -->
+						<button
+							*ngIf="!getPlanFormGroup(i).get('isPopular')?.value"
+							type="button"
+							nbButton
+							ghost
+							size="tiny"
+							status="warning"
+							(click)="setPopularPlan(i)"
+							nbTooltip="Mark as popular"
+						>
+							<nb-icon icon="star-outline"></nb-icon>
+						</button>
+
+						<!-- Recommended Badge -->
+						<button
+							*ngIf="!getPlanFormGroup(i).get('isRecommended')?.value"
+							type="button"
+							nbButton
+							ghost
+							size="tiny"
+							status="info"
+							(click)="setRecommendedPlan(i)"
+							nbTooltip="Mark as recommended"
+						>
+							<nb-icon icon="checkmark-circle-outline"></nb-icon>
+						</button>
+
+						<!-- Duplicate Plan -->
+						<button
+							type="button"
+							nbButton
+							ghost
+							size="tiny"
+							(click)="duplicatePlan(i)"
+							nbTooltip="Duplicate plan"
+						>
+							<nb-icon icon="copy-outline"></nb-icon>
+						</button>
+
+						<!-- Preview Plan -->
+						<button
+							type="button"
+							nbButton
+							ghost
+							size="tiny"
+							(click)="previewPlan(i)"
+							nbTooltip="Preview plan"
+						>
+							<nb-icon icon="eye-outline"></nb-icon>
+						</button>
+
+						<!-- Remove Plan -->
+						<button
+							*ngIf="subscriptionForm.get('plans')?.controls.length > 1 || !requireAtLeastOnePlan"
+							type="button"
+							nbButton
+							ghost
+							size="tiny"
+							status="danger"
+							(click)="removePlan(i)"
+							nbTooltip="Remove plan"
+						>
+							<nb-icon icon="trash-2-outline"></nb-icon>
+						</button>
+					</div>
+				</div>
+
+				<!-- Popular/Recommended Badges -->
+				<div class="plan-badges" *ngIf="getPlanFormGroup(i).get('isPopular')?.value || getPlanFormGroup(i).get('isRecommended')?.value">
+					<nb-badge
+						*ngIf="getPlanFormGroup(i).get('isPopular')?.value"
+						status="warning"
+						class="badge-popular"
+					>
+						<nb-icon icon="star"></nb-icon>
+						{{ 'PLUGIN_MARKETPLACE.SUBSCRIPTION_PLANS.POPULAR' | translate }}
+					</nb-badge>
+					<nb-badge
+						*ngIf="getPlanFormGroup(i).get('isRecommended')?.value"
+						status="info"
+						class="badge-recommended"
+					>
+						<nb-icon icon="checkmark-circle"></nb-icon>
+						{{ 'PLUGIN_MARKETPLACE.SUBSCRIPTION_PLANS.RECOMMENDED' | translate }}
+					</nb-badge>
+				</div>
+
+				<!-- Basic Plan Info -->
+				<div class="plan-basic-info">
+					<div class="name-description">
+						<nb-form-field>
+							<nb-icon nbPrefix icon="edit-outline"></nb-icon>
+							<input
+								nbInput
+								formControlName="name"
+								placeholder="Plan name (e.g., Basic, Pro, Enterprise)"
+								[status]="getPlanFormGroup(i).get('name')?.invalid && getPlanFormGroup(i).get('name')?.touched ? 'danger' : 'basic'"
+							>
+							<nb-form-field-error *ngIf="getPlanFormGroup(i).get('name')?.invalid && getPlanFormGroup(i).get('name')?.touched">
+								Plan name is required
+							</nb-form-field-error>
+						</nb-form-field>
+
+						<nb-form-field>
+							<nb-icon nbPrefix icon="file-text-outline"></nb-icon>
+							<textarea
+								nbInput
+								formControlName="description"
+								placeholder="Plan description"
+								rows="2"
+								[status]="getPlanFormGroup(i).get('description')?.invalid && getPlanFormGroup(i).get('description')?.touched ? 'danger' : 'basic'"
+							></textarea>
+							<nb-form-field-error *ngIf="getPlanFormGroup(i).get('description')?.invalid && getPlanFormGroup(i).get('description')?.touched">
+								Plan description is required
+							</nb-form-field-error>
+						</nb-form-field>
+					</div>
+
+					<div class="pricing-info">
+						<div class="price-currency">
+							<nb-form-field>
+								<nb-icon nbPrefix icon="pricetags-outline"></nb-icon>
+								<input
+									nbInput
+									type="number"
+									formControlName="price"
+									placeholder="0.00"
+									min="0"
+									step="0.01"
+									[status]="getPlanFormGroup(i).get('price')?.invalid && getPlanFormGroup(i).get('price')?.touched ? 'danger' : 'basic'"
+								>
+								<nb-form-field-error *ngIf="getPlanFormGroup(i).get('price')?.invalid && getPlanFormGroup(i).get('price')?.touched">
+									Price must be 0 or greater
+								</nb-form-field-error>
+							</nb-form-field>
+
+							<nb-select
+								formControlName="currency"
+								placeholder="Currency"
+								[status]="getPlanFormGroup(i).get('currency')?.invalid && getPlanFormGroup(i).get('currency')?.touched ? 'danger' : 'basic'"
+							>
+								<nb-option *ngFor="let currency of availableCurrencies" [value]="currency.code">
+									{{ currency.symbol }} {{ currency.code }} - {{ currency.name }}
+								</nb-option>
+							</nb-select>
+						</div>
+
+						<nb-select
+							formControlName="billingPeriod"
+							placeholder="Billing period"
+							[status]="getPlanFormGroup(i).get('billingPeriod')?.invalid && getPlanFormGroup(i).get('billingPeriod')?.touched ? 'danger' : 'basic'"
+						>
+							<nb-option *ngFor="let period of getBillingPeriodOptions()" [value]="period.value">
+								{{ period.label }}
+							</nb-option>
+						</nb-select>
+
+						<!-- Price Preview -->
+						<div class="price-preview" *ngIf="getPlanFormGroup(i).get('price')?.value !== null">
+							<span class="price-display">
+								{{ formatPrice(getPlanFormGroup(i).get('price')?.value, getPlanFormGroup(i).get('currency')?.value) }}
+								<span class="billing-period">/{{ getPlanFormGroup(i).get('billingPeriod')?.value }}</span>
+							</span>
+							<small class="monthly-equivalent" *ngIf="getPlanFormGroup(i).get('billingPeriod')?.value !== 'MONTHLY' && getPlanFormGroup(i).get('price')?.value > 0">
+								~{{ formatPrice(calculateMonthlyPrice(plans[i]), getPlanFormGroup(i).get('currency')?.value) }}/month
+							</small>
+							<small class="yearly-savings" *ngIf="calculateYearlySavings(plans[i]) > 0">
+								Save {{ formatPrice(calculateYearlySavings(plans[i]), getPlanFormGroup(i).get('currency')?.value) }}/year
+							</small>
+						</div>
+					</div>
+				</div>
+
+				<!-- Additional Pricing Options -->
+				<div class="additional-pricing">
+					<div class="pricing-extras">
+						<nb-form-field>
+							<nb-icon nbPrefix icon="calendar-outline"></nb-icon>
+							<input
+								nbInput
+								type="number"
+								formControlName="trialDays"
+								placeholder="Trial days (optional)"
+								min="0"
+								max="365"
+							>
+						</nb-form-field>
+
+						<nb-form-field>
+							<nb-icon nbPrefix icon="credit-card-outline"></nb-icon>
+							<input
+								nbInput
+								type="number"
+								formControlName="setupFee"
+								placeholder="Setup fee (optional)"
+								min="0"
+								step="0.01"
+							>
+						</nb-form-field>
+
+						<nb-form-field>
+							<nb-icon nbPrefix icon="percent-outline"></nb-icon>
+							<input
+								nbInput
+								type="number"
+								formControlName="discountPercentage"
+								placeholder="Discount % (optional)"
+								min="0"
+								max="100"
+							>
+						</nb-form-field>
+					</div>
+				</div>
+
+				<!-- Features Section -->
+				<div class="features-section" formGroupName="limitations">
+					<h6 class="section-title">
+						<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+						Features & Limitations
+					</h6>
+
+					<!-- Plan Features -->
+					<div class="features-list">
+						<label class="features-label">Plan Features:</label>
+						<div formArrayName="features" class="features-array">
+							<div
+								*ngFor="let feature of getFeaturesArray(i).controls; let j = index"
+								class="feature-item"
+							>
+								<nb-form-field>
+									<input
+										nbInput
+										[formControlName]="j"
+										placeholder="Feature description"
+									>
+									<button
+										type="button"
+										nbSuffix
+										nbButton
+										ghost
+										size="tiny"
+										status="danger"
+										(click)="removeFeature(i, j)"
+									>
+										<nb-icon icon="close-outline"></nb-icon>
+									</button>
+								</nb-form-field>
+							</div>
+						</div>
+
+						<!-- Add Feature Buttons -->
+						<div class="feature-actions">
+							<button
+								type="button"
+								nbButton
+								outline
+								size="small"
+								(click)="addFeature(i)"
+							>
+								<nb-icon icon="plus-outline"></nb-icon>
+								Add Custom Feature
+							</button>
+
+							<!-- Common Features Dropdown -->
+							<nb-select
+								placeholder="Add common feature"
+								(selectionChange)="addCommonFeature(i, $event)"
+								size="small"
+							>
+								<nb-option *ngFor="let feature of commonFeatures" [value]="feature">
+									{{ feature }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+
+					<!-- Usage Limitations -->
+					<div class="limitations-list">
+						<label class="limitations-label">Usage Limitations:</label>
+						<div class="limitation-fields">
+							<nb-form-field>
+								<nb-icon nbPrefix icon="people-outline"></nb-icon>
+								<input
+									nbInput
+									type="number"
+									formControlName="maxUsers"
+									placeholder="Max users"
+									min="0"
+								>
+							</nb-form-field>
+
+							<nb-form-field>
+								<nb-icon nbPrefix icon="folder-outline"></nb-icon>
+								<input
+									nbInput
+									type="number"
+									formControlName="maxProjects"
+									placeholder="Max projects"
+									min="0"
+								>
+							</nb-form-field>
+
+							<nb-form-field>
+								<nb-icon nbPrefix icon="hard-drive-outline"></nb-icon>
+								<input
+									nbInput
+									type="number"
+									formControlName="storageGB"
+									placeholder="Storage (GB)"
+									min="0"
+								>
+							</nb-form-field>
+
+							<nb-form-field>
+								<nb-icon nbPrefix icon="flash-outline"></nb-icon>
+								<input
+									nbInput
+									type="number"
+									formControlName="apiCallsPerMonth"
+									placeholder="API calls/month"
+									min="0"
+								>
+							</nb-form-field>
+						</div>
+
+						<!-- Custom Limitations -->
+						<div formArrayName="customLimitations" class="custom-limitations">
+							<div
+								*ngFor="let limitation of getCustomLimitationsArray(i).controls; let k = index"
+								[formGroupName]="k"
+								class="custom-limitation-item"
+							>
+								<nb-form-field>
+									<input
+										nbInput
+										formControlName="key"
+										placeholder="Limitation name"
+									>
+								</nb-form-field>
+								<nb-form-field>
+									<input
+										nbInput
+										formControlName="value"
+										placeholder="Limitation value"
+									>
+								</nb-form-field>
+								<button
+									type="button"
+									nbButton
+									ghost
+									size="tiny"
+									status="danger"
+									(click)="removeCustomLimitation(i, k)"
+								>
+									<nb-icon icon="trash-2-outline"></nb-icon>
+								</button>
+							</div>
+						</div>
+
+						<button
+							type="button"
+							nbButton
+							outline
+							size="small"
+							(click)="addCustomLimitation(i)"
+						>
+							<nb-icon icon="plus-outline"></nb-icon>
+							Add Custom Limitation
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Add Plan Actions -->
+		<div class="add-plan-actions" *ngIf="allowMultiplePlans">
+			<button
+				type="button"
+				nbButton
+				outline
+				status="primary"
+				(click)="addPlan()"
+			>
+				<nb-icon icon="plus-outline"></nb-icon>
+				{{ 'PLUGIN_MARKETPLACE.SUBSCRIPTION_PLANS.ADD_PLAN' | translate }}
+			</button>
+
+			<!-- Quick Plan Templates -->
+			<div class="plan-templates">
+				<button
+					type="button"
+					nbButton
+					outline
+					size="small"
+					(click)="addPlan({
+						type: PluginSubscriptionType.BASIC,
+						name: 'Basic',
+						description: 'Essential features for individuals',
+						price: 9.99,
+						currency: 'USD',
+						billingPeriod: PluginBillingPeriod.MONTHLY,
+						features: ['Basic support', 'Essential features'],
+						limitations: { maxUsers: 5, maxProjects: 10, storageGB: 5 }
+					})"
+				>
+					Basic Plan Template
+				</button>
+
+				<button
+					type="button"
+					nbButton
+					outline
+					size="small"
+					(click)="addPlan({
+						type: PluginSubscriptionType.PREMIUM,
+						name: 'Premium',
+						description: 'Advanced features for growing teams',
+						price: 29.99,
+						currency: 'USD',
+						billingPeriod: PluginBillingPeriod.MONTHLY,
+						features: ['Priority support', 'Advanced features', 'Team collaboration'],
+						limitations: { maxUsers: 25, maxProjects: 100, storageGB: 50 }
+					})"
+				>
+					Premium Plan Template
+				</button>
+
+				<button
+					type="button"
+					nbButton
+					outline
+					size="small"
+					(click)="addPlan({
+						type: PluginSubscriptionType.ENTERPRISE,
+						name: 'Enterprise',
+						description: 'Complete solution for large organizations',
+						price: 99.99,
+						currency: 'USD',
+						billingPeriod: PluginBillingPeriod.MONTHLY,
+						features: ['24/7 support', 'All features', 'Custom integrations', 'Dedicated account manager'],
+						limitations: { maxUsers: -1, maxProjects: -1, storageGB: -1 }
+					})"
+				>
+					Enterprise Plan Template
+				</button>
+			</div>
+		</div>
+
+		<!-- Form Validation Summary -->
+		<div class="validation-summary" *ngIf="!isFormValid()">
+			<nb-alert status="danger" size="small">
+				<strong>Please fix the following issues:</strong>
+				<ul>
+					<li *ngFor="let error of getFormErrors()">{{ error }}</li>
+				</ul>
+			</nb-alert>
+		</div>
+
+		<!-- Plan Summary -->
+		<div class="plan-summary" *ngIf="plans.length > 0">
+			<h6>Plan Summary</h6>
+			<div class="summary-cards">
+				<div *ngFor="let plan of plans; let i = index" class="summary-card">
+					<div class="summary-header">
+						<span class="plan-name">{{ plan.name || 'Unnamed Plan' }}</span>
+						<nb-badge [status]="getPlanTypeColor(plan.type)">{{ plan.type }}</nb-badge>
+					</div>
+					<div class="summary-price">
+						{{ formatPrice(plan.price, plan.currency) }}
+						<span class="billing-period">/{{ plan.billingPeriod }}</span>
+					</div>
+					<div class="summary-features">
+						<small>{{ plan.features.length }} features</small>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>

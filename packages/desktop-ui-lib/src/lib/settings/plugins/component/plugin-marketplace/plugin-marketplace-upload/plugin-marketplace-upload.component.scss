@@ -383,13 +383,311 @@ $transition-speed: 0.2s;
   }
 }
 
-/* Drag & Drop Styles */
-.cdk-drag-placeholder {
-  opacity: 0.5;
-  background: var(--background-basic-color-3);
-  border: 2px dashed var(--color-primary-default);
+// Subscription Step Styles
+.subscription-step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem;
+
+  .subscription-toggle {
+    background: var(--background-basic-color-2);
+    border: 1px solid var(--border-basic-color-4);
+    border-radius: 12px;
+    padding: 1.5rem;
+
+    nb-checkbox {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .subscription-description {
+      margin: 0;
+      color: var(--text-hint-color);
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+  }
+
+  .subscription-creator-container {
+    border: 1px solid var(--border-basic-color-4);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--background-basic-color-1);
+  }
+
+  .no-subscription-message {
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+
+    nb-alert {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      max-width: 400px;
+      text-align: center;
+    }
+  }
 }
 
-.sources-list.cdk-drop-list-dragging .source-card:not(.cdk-drag-placeholder) {
-  transition: transform 300ms cubic-bezier(0, 0, 0.2, 1);
+// Review Step Styles
+.review-step-content {
+  padding: 1rem;
+  max-height: 60vh;
+  overflow-y: auto;
+
+  > h6 {
+    margin-bottom: 1.5rem;
+    color: var(--text-primary-color);
+    font-weight: 600;
+    font-size: 1.1rem;
+    text-align: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-basic-color-4);
+  }
+
+  .review-section {
+    background: var(--background-basic-color-2);
+    border: 1px solid var(--border-basic-color-4);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+
+    > h6 {
+      margin: 0 0 1rem 0;
+      color: var(--color-primary-default);
+      font-weight: 600;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &::before {
+        content: '';
+        width: 4px;
+        height: 1rem;
+        background: var(--color-primary-default);
+        border-radius: 2px;
+      }
+    }
+
+    .review-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border-basic-color-5);
+      gap: 1rem;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      strong {
+        color: var(--text-primary-color);
+        font-weight: 600;
+        min-width: 140px;
+        flex-shrink: 0;
+      }
+
+      span {
+        color: var(--text-basic-color);
+        text-align: right;
+        word-break: break-word;
+      }
+    }
+
+    .subscription-plans-preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+
+      .plan-preview-card {
+        background: var(--background-basic-color-1);
+        border: 1px solid var(--border-basic-color-3);
+        border-radius: 8px;
+        padding: 1rem;
+        transition: all 0.2s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .plan-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.75rem;
+
+          .plan-name {
+            font-weight: 600;
+            color: var(--text-primary-color);
+          }
+        }
+
+        .plan-price {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: var(--color-primary-default);
+          margin-bottom: 0.5rem;
+        }
+
+        .plan-features {
+          small {
+            color: var(--text-hint-color);
+          }
+        }
+      }
+    }
+
+    nb-alert {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+}
+
+// Enhanced Dialog Card for Better Content Management
+.dialog-card {
+  width: 800px; // Increased width for subscription content
+  height: 85vh; // Increased height
+
+  @media (max-width: 1024px) {
+    width: 95vw;
+    height: 90vh;
+  }
+
+  @media (max-width: 768px) {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+}
+
+// Stepper Button Enhancements
+.stepper-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-top: 1px solid var(--border-basic-color-4);
+  background: var(--background-basic-color-1);
+  margin-top: auto;
+
+  button {
+    min-width: 100px;
+
+    &[status="success"] {
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  // Group buttons appropriately
+  > :first-child {
+    margin-right: auto;
+  }
+
+  > :last-child:not(:first-child) {
+    margin-left: 0;
+  }
+}
+
+// Animation for step transitions
+::ng-deep {
+  nb-stepper {
+    .step-content {
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: calc(100% - 60px);
+      animation: fadeInUp 0.3s ease-out;
+    }
+
+    .step-header {
+      .step-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+
+      .step-number {
+        background: var(--color-primary-default);
+        color: white;
+        font-weight: 700;
+      }
+
+      &.completed .step-number {
+        background: var(--color-success-default);
+      }
+    }
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Responsive adjustments for new content
+@media (max-width: 768px) {
+  .subscription-step-content {
+    padding: 0.5rem;
+
+    .subscription-toggle {
+      padding: 1rem;
+    }
+  }
+
+  .review-step-content {
+    padding: 0.5rem;
+
+    .review-section {
+      padding: 1rem;
+
+      .review-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+
+        strong {
+          min-width: unset;
+        }
+
+        span {
+          text-align: left;
+        }
+      }
+
+      .subscription-plans-preview {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+
+  .stepper-buttons {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    button {
+      min-width: 80px;
+      font-size: 0.875rem;
+    }
+  }
 }

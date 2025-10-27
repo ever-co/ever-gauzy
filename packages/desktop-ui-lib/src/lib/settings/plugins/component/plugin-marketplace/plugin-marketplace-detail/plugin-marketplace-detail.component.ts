@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
+import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType, PluginStatus } from '@gauzy/contracts';
+import { NbDialogService, NbMenuService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, catchError, EMPTY, filter, from, map, Observable, of, switchMap, take, tap } from 'rxjs';
@@ -16,6 +16,15 @@ import { PluginElectronService } from '../../../services/plugin-electron.service
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import { DialogInstallationValidationComponent } from '../plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
+
+// Define enums locally since they might not be available in contracts
+enum PluginSubscriptionType {
+	FREE = 'free',
+	TRIAL = 'trial',
+	BASIC = 'basic',
+	PREMIUM = 'premium',
+	ENTERPRISE = 'enterprise'
+}
 
 @UntilDestroy()
 @Component({
@@ -36,6 +45,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		private readonly store: Store,
 		private readonly action: Actions,
 		private readonly pluginService: PluginElectronService,
+		private readonly menuService: NbMenuService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery
 	) {}
@@ -220,5 +230,98 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 
 	public get isOwner(): boolean {
 		return !!this.store.user && this.store.user.id === this.plugin?.uploadedById;
+	}
+
+	/**
+	 * Get the color status for plugin status badge
+	 */
+	public getStatusColor(status: PluginStatus): string {
+		switch (status) {
+			case PluginStatus.ACTIVE:
+				return 'success';
+			case PluginStatus.INACTIVE:
+				return 'warning';
+			case PluginStatus.DEPRECATED:
+				return 'danger';
+			case PluginStatus.ARCHIVED:
+				return 'basic';
+			default:
+				return 'basic';
+		}
+	}
+
+	/**
+	 * Get the appropriate icon for subscription type
+	 */
+	public getSubscriptionIcon(type: PluginSubscriptionType): string {
+		switch (type) {
+			case PluginSubscriptionType.FREE:
+				return 'gift-outline';
+			case PluginSubscriptionType.TRIAL:
+				return 'clock-outline';
+			case PluginSubscriptionType.BASIC:
+				return 'person-outline';
+			case PluginSubscriptionType.PREMIUM:
+				return 'star-outline';
+			case PluginSubscriptionType.ENTERPRISE:
+				return 'briefcase-outline';
+			default:
+				return 'info-outline';
+		}
+	}
+
+	/**
+	 * Open plugin settings dialog
+	 */
+	public openSettings(): void {
+		// TODO: Implement settings dialog
+		console.log('Opening settings for plugin:', this.plugin.name);
+	}
+
+	/**
+	 * Open user assignment dialog
+	 */
+	public manageUsers(): void {
+		// TODO: Implement user management dialog
+		console.log('Managing users for plugin:', this.plugin.name);
+	}
+
+	/**
+	 * Get context menu items for more actions
+	 */
+	public getContextMenuItems() {
+		const items: any[] = [
+			{
+				title: 'View Details',
+				icon: 'eye-outline',
+				link: `/settings/marketplace-plugins/${this.plugin.id}`
+			}
+		];
+
+		if (this.plugin.homepage) {
+			items.push({
+				title: 'Homepage',
+				icon: 'external-link-outline',
+				data: { action: 'homepage', url: this.plugin.homepage }
+			});
+		}
+
+		if (this.plugin.repository) {
+			items.push({
+				title: 'Repository',
+				icon: 'github-outline',
+				data: { action: 'repository', url: this.plugin.repository }
+			});
+		}
+
+		if (this.isOwner) {
+			items.push({
+				title: 'Delete',
+				icon: 'trash-outline',
+				data: { action: 'delete' }
+			});
+		}
+
+		return items;
 	}
 }

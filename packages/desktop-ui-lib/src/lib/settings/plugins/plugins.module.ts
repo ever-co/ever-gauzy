@@ -9,6 +9,7 @@ import {
 	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
+	NbCheckboxModule,
 	NbDatepickerModule,
 	NbFormFieldModule,
 	NbIconModule,
@@ -63,9 +64,15 @@ import { NpmFormComponent } from './component/plugin-marketplace/plugin-marketpl
 import { PluginSourceComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/plugin-source.component';
 import { PluginVersionComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-version/plugin-version.component';
 import { PluginMarketplaceComponent } from './component/plugin-marketplace/plugin-marketplace.component';
+import { PluginSubscriptionPlanCreatorComponent } from './component/plugin-marketplace/plugin-subscription-plan-creator/plugin-subscription-plan-creator.component';
 import { PluginComponent } from './component/plugin/plugin.component';
+import { PluginAnalyticsService } from './services/plugin-analytics.service';
 import { PluginElectronService } from './services/plugin-electron.service';
 import { PluginLoaderService } from './services/plugin-loader.service';
+import { PluginSecurityService } from './services/plugin-security.service';
+import { PluginSettingsService } from './services/plugin-settings.service';
+import { PluginSubscriptionService } from './services/plugin-subscription.service';
+import { PluginTagsService } from './services/plugin-tags.service';
 import { PluginService } from './services/plugin.service';
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 
@@ -85,6 +92,7 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		PluginSourceComponent,
 		PluginMetadataComponent,
 		PluginBasicInformationComponent,
+		PluginSubscriptionPlanCreatorComponent,
 		FormSectionComponent,
 		FormRowComponent,
 		FileUploadComponent,
@@ -124,6 +132,7 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		NbDatepickerModule,
 		NbStepperModule,
 		NbAlertModule,
+		NbCheckboxModule,
 		PipeModule,
 		NbListModule,
 		SelectModule,
@@ -135,6 +144,11 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		PluginLoaderService,
 		PluginElectronService,
 		PluginService,
+		PluginSubscriptionService,
+		PluginTagsService,
+		PluginSettingsService,
+		PluginAnalyticsService,
+		PluginSecurityService,
 		provideEffectsManager(),
 		provideEffects(
 			PluginEffects,

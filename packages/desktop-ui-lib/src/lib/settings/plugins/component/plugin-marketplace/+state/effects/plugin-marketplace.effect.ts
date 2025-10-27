@@ -1,14 +1,23 @@
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { EMPTY, catchError, filter, finalize, map, switchMap, tap } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { EMPTY, catchError, debounceTime, distinctUntilChanged, filter, finalize, map, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
+import { coalesceValue } from '../../../../../../utils';
+import { PluginAnalyticsService } from '../../../../services/plugin-analytics.service';
+import { PluginSecurityService } from '../../../../services/plugin-security.service';
+import { PluginSettingsService } from '../../../../services/plugin-settings.service';
+import {
+	PluginBillingPeriod,
+	PluginSubscriptionService,
+	PluginSubscriptionType
+} from '../../../../services/plugin-subscription.service';
+import { PluginTagsService } from '../../../../services/plugin-tags.service';
 import { PluginService } from '../../../../services/plugin.service';
 import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
-import { Router } from '@angular/router';
-import { coalesceValue } from '../../../../../../utils';
-import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({ providedIn: 'root' })
 export class PluginMarketplaceEffects {
@@ -16,6 +25,11 @@ export class PluginMarketplaceEffects {
 		private readonly action$: Actions,
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
 		private readonly pluginService: PluginService,
+		private readonly pluginTagsService: PluginTagsService,
+		private readonly pluginSubscriptionService: PluginSubscriptionService,
+		private readonly pluginSettingsService: PluginSettingsService,
+		private readonly pluginAnalyticsService: PluginAnalyticsService,
+		private readonly pluginSecurityService: PluginSecurityService,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService,
 		private readonly router: Router
@@ -39,6 +53,8 @@ export class PluginMarketplaceEffects {
 							count: state.count + 1
 						}));
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UPLOADED'));
+						// Track analytics event
+						this.trackPluginEvent(uploaded.id, 'upload', { plugin: uploaded });
 					}),
 					finalize(() => this.pluginMarketplaceStore.setUpload({ uploading: false })), // Always stop loading
 					catchError((error) => {
@@ -81,11 +97,11 @@ export class PluginMarketplaceEffects {
 			switchMap(({ id, params = {} }) =>
 				this.pluginService.getOne(id, params).pipe(
 					filter(Boolean), // Filter out null or undefined responses
-					tap((plugin) =>
-						this.pluginMarketplaceStore.update({
-							plugin
-						})
-					),
+					tap((plugin) => {
+						this.pluginMarketplaceStore.update({ plugin });
+						// Track analytics event
+						this.trackPluginEvent(plugin.id, 'access', { source: 'marketplace' });
+					}),
 					finalize(() => this.pluginMarketplaceStore.setLoading(false)), // Always stop loading
 					catchError((error) => {
 						this.toastrService.error(error.message || error); // Handle error properly
@@ -111,6 +127,8 @@ export class PluginMarketplaceEffects {
 							plugin: { ...state.plugin, ...plugin }
 						}));
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UPDATED'));
+						// Track analytics event
+						this.trackPluginEvent(plugin.id, 'update', { plugin });
 					}),
 					finalize(() => this.pluginMarketplaceStore.update({ updating: false })),
 					catchError((error) => {
@@ -138,6 +156,8 @@ export class PluginMarketplaceEffects {
 							plugin: null
 						}));
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.DELETED'));
+						// Track analytics event
+						this.trackPluginEvent(id, 'delete', {});
 					}),
 					finalize(() => this.pluginMarketplaceStore.update({ deleting: false })),
 					catchError((error) => {
@@ -155,4 +175,334 @@ export class PluginMarketplaceEffects {
 			tap(() => this.pluginMarketplaceStore.update({ plugins: [] }))
 		)
 	);
+
+	// Filter Effects
+	setFilters$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.setFilters),
+			tap(({ filters }) => {
+				this.pluginMarketplaceStore.setFilters(filters);
+			})
+		)
+	);
+
+	applyFilters$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.applyFilters),
+			debounceTime(300),
+			tap(() => {
+				this.pluginMarketplaceStore.applyFilters();
+			})
+		)
+	);
+
+	clearFilters$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.clearFilters),
+			tap(() => {
+				this.pluginMarketplaceStore.clearFilters();
+			})
+		)
+	);
+
+	toggleAdvancedFilters$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.toggleAdvancedFilters),
+			tap(({ show }) => {
+				this.pluginMarketplaceStore.updateUI({ showAdvancedFilters: show });
+			})
+		)
+	);
+
+	setViewMode$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.setViewMode),
+			tap(({ view }) => {
+				this.pluginMarketplaceStore.updateUI({ selectedView: view });
+			})
+		)
+	);
+
+	// Search Effects
+	search$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.search),
+			debounceTime(300),
+			distinctUntilChanged((prev, curr) => prev.query === curr.query),
+			tap(() => this.pluginMarketplaceStore.setLoading(true)),
+			switchMap(({ query }) =>
+				this.pluginService.search({ search: query }).pipe(
+					tap(({ items, total }) => {
+						this.pluginMarketplaceStore.update({
+							plugins: items,
+							count: total,
+							searchQuery: query
+						});
+					}),
+					finalize(() => this.pluginMarketplaceStore.setLoading(false)),
+					catchError((error) => {
+						this.toastrService.error(error.message || error);
+						return EMPTY;
+					})
+				)
+			)
+		)
+	);
+
+	// Installation Effects
+	install$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.install),
+			tap(({ pluginId }) => {
+				this.pluginMarketplaceStore.setInstalling(pluginId, true);
+				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.INSTALLING'));
+			}),
+			switchMap(({ pluginId, options = {} }) =>
+				this.pluginService.install(pluginId, options).pipe(
+					tap((installation) => {
+						this.pluginMarketplaceStore.update((state) => ({
+							plugins: state.plugins.map((p) => (p.id === pluginId ? { ...p, isInstalled: true } : p))
+						}));
+						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.INSTALLED'));
+						// Track analytics event
+						this.trackPluginEvent(pluginId, 'install', { installation, options });
+					}),
+					finalize(() => this.pluginMarketplaceStore.setInstalling(pluginId, false)),
+					catchError((error) => {
+						this.toastrService.error(
+							error.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.INSTALL')
+						);
+						return EMPTY;
+					})
+				)
+			)
+		)
+	);
+
+	uninstall$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.uninstall),
+			tap(({ pluginId }) => {
+				this.pluginMarketplaceStore.setInstalling(pluginId, true);
+				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.UNINSTALLING'));
+			}),
+			switchMap(({ pluginId, reason }) =>
+				this.pluginService.uninstall(pluginId, { reason }).pipe(
+					tap(() => {
+						this.pluginMarketplaceStore.update((state) => ({
+							plugins: state.plugins.map((p) => (p.id === pluginId ? { ...p, isInstalled: false } : p))
+						}));
+						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED'));
+						// Track analytics event
+						this.trackPluginEvent(pluginId, 'uninstall', { reason });
+					}),
+					finalize(() => this.pluginMarketplaceStore.setInstalling(pluginId, false)),
+					catchError((error) => {
+						this.toastrService.error(
+							error.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UNINSTALL')
+						);
+						return EMPTY;
+					})
+				)
+			)
+		)
+	);
+
+	// Subscription Effects
+	loadSubscriptionPlans$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.loadSubscriptionPlans),
+			switchMap(({ pluginId }) =>
+				this.pluginSubscriptionService.getPluginPlans(pluginId).pipe(
+					tap((plans) => {
+						this.pluginMarketplaceStore.setSubscriptionPlans(pluginId, plans);
+					}),
+					catchError((error) => {
+						this.toastrService.error(error.message || 'Failed to load subscription plans');
+						return EMPTY;
+					})
+				)
+			)
+		)
+	);
+
+	subscribe$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.subscribe),
+			tap(() => {
+				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.SUBSCRIBING'));
+			}),
+			switchMap(({ pluginId, planId, paymentMethod }) =>
+				this.pluginSubscriptionService
+					.createSubscription({
+						pluginId,
+						planId,
+						subscriptionType: PluginSubscriptionType.BASIC,
+						billingPeriod: PluginBillingPeriod.MONTHLY,
+						paymentMethodId: paymentMethod.id
+					})
+					.pipe(
+						tap((subscription) => {
+							this.pluginMarketplaceStore.setSubscription(pluginId, subscription);
+							this.toastrService.success(
+								this.translateService.instant('PLUGIN.TOASTR.SUCCESS.SUBSCRIBED')
+							);
+							// Track analytics event
+							this.trackPluginEvent(pluginId, 'subscription_start', {
+								planId,
+								amount: subscription.amount
+							});
+						}),
+						catchError((error) => {
+							this.toastrService.error(error.message || 'Failed to create subscription');
+							return EMPTY;
+						})
+					)
+			)
+		)
+	);
+
+	// Tags Effects
+	loadTags$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.loadTags),
+			switchMap(() =>
+				this.pluginTagsService.getAllTags().pipe(
+					tap(({ items: tags }) => {
+						this.pluginMarketplaceStore.setTags(tags);
+					}),
+					catchError((error) => {
+						this.toastrService.error(error.message || 'Failed to load tags');
+						return EMPTY;
+					})
+				)
+			)
+		)
+	);
+
+	createTag$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.createTag),
+			switchMap(({ tag }) =>
+				this.pluginTagsService.createTag(tag).pipe(
+					tap((newTag) => {
+						this.pluginMarketplaceStore.addTag(newTag);
+						this.toastrService.success('Tag created successfully');
+					}),
+					catchError((error) => {
+						this.toastrService.error(error.message || 'Failed to create tag');
+						return EMPTY;
+					})
+				)
+			)
+		)
+	);
+
+	// Settings Effects
+	loadPluginSettings$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.loadPluginSettings),
+			switchMap(({ pluginId }) =>
+				this.pluginSettingsService.getPluginSettings(pluginId).pipe(
+					tap((settings) => {
+						this.pluginMarketplaceStore.setPluginSettings(pluginId, settings);
+					}),
+					catchError((error) => {
+						this.toastrService.error(error.message || 'Failed to load plugin settings');
+						return EMPTY;
+					})
+				)
+			)
+		)
+	);
+
+	updatePluginSetting$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.updatePluginSetting),
+			switchMap(({ pluginId, key, value }) =>
+				this.pluginSettingsService.setSettingValue(pluginId, key, value).pipe(
+					tap((setting) => {
+						this.pluginMarketplaceStore.updatePluginSetting(pluginId, setting);
+						this.toastrService.success('Setting updated successfully');
+						// Track analytics event
+						this.trackPluginEvent(pluginId, 'settings_change', { key, value });
+					}),
+					catchError((error) => {
+						this.toastrService.error(error.message || 'Failed to update setting');
+						return EMPTY;
+					})
+				)
+			)
+		)
+	);
+
+	// Analytics Effects
+	loadPluginAnalytics$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.loadPluginAnalytics),
+			switchMap(({ pluginId, period }) =>
+				this.pluginAnalyticsService.getPluginMetrics(pluginId, period).pipe(
+					tap((analytics) => {
+						this.pluginMarketplaceStore.setPluginAnalytics(pluginId, analytics);
+					}),
+					catchError((error) => {
+						this.toastrService.error(error.message || 'Failed to load plugin analytics');
+						return EMPTY;
+					})
+				)
+			)
+		)
+	);
+
+	// Security Effects
+	loadPluginSecurity$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.loadPluginSecurity),
+			switchMap(({ pluginId }) =>
+				this.pluginSecurityService.getPluginSecurity(pluginId).pipe(
+					tap((security) => {
+						this.pluginMarketplaceStore.setPluginSecurity(pluginId, security);
+					}),
+					catchError((error) => {
+						this.toastrService.error(error.message || 'Failed to load plugin security');
+						return EMPTY;
+					})
+				)
+			)
+		)
+	);
+
+	// Rating Effects
+	ratePlugin$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.ratePlugin),
+			switchMap(({ pluginId, rating, review }) =>
+				this.pluginService.ratePlugin(pluginId, rating, review).pipe(
+					tap((ratingData) => {
+						this.pluginMarketplaceStore.updatePluginRating(pluginId, ratingData);
+						this.toastrService.success('Rating submitted successfully');
+						// Track analytics event
+						this.trackPluginEvent(pluginId, 'review', { rating, hasReview: !!review });
+					}),
+					catchError((error) => {
+						this.toastrService.error(error.message || 'Failed to submit rating');
+						return EMPTY;
+					})
+				)
+			)
+		)
+	);
+
+	// Helper method to track analytics events
+	private trackPluginEvent(pluginId: string, eventType: string, data: any) {
+		this.pluginAnalyticsService
+			.trackEvent({
+				pluginId,
+				eventType: eventType as any,
+				eventData: data
+			})
+			.subscribe({
+				error: () => {} // Silently fail analytics tracking
+			});
+	}
 }

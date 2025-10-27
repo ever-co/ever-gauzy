@@ -5272,7 +5272,8 @@
 				"LICENSE_TOO_LONG": "License field is too long",
 				"CHANGELOG_TOO_SHORT": "Changelog is too short",
 				"CHANGELOG_REQUIRED": "Changelog is required",
-				"FAILED": "Validation failed",
+				"FAILED": "Please fix all validation errors before submitting",
+				"SUBSCRIPTION_PLANS_INVALID": "Please ensure all subscription plans are valid",
 				"REQUIRED": "Required"
 			},
 			"TYPE": "Plugin Type",
@@ -5336,7 +5337,17 @@
 			"SELECT_SOURCE_TYPE": "Select source type",
 			"ADD_SOURCE": "Add new source",
 			"OPERATING_SYSTEM": "Operating System",
-			"ARCHITECTURE": "Architecture"
+			"ARCHITECTURE": "Architecture",
+			"SUBSCRIPTION_PLANS": "Subscription Plans",
+			"ENABLE_SUBSCRIPTIONS": "Enable subscription plans for this plugin",
+			"SUBSCRIPTION_DESCRIPTION": "Create subscription plans to monetize your plugin. Users can choose from different pricing tiers based on their needs.",
+			"FREE_PLUGIN_MESSAGE": "This plugin will be available for free to all users.",
+			"FREE_PLUGIN_REVIEW_MESSAGE": "Your plugin will be available for free to all users.",
+			"REVIEW": "Review & Submit",
+			"REVIEW_TITLE": "Please review your plugin information before submitting",
+			"PLUGIN_INFORMATION": "Plugin Information",
+			"VERSION_INFORMATION": "Version Information",
+			"SUBSCRIPTION_PLANS_SUMMARY": "Subscription Plans"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Usage Statistics",
@@ -5352,7 +5363,14 @@
 		},
 		"MARKETPLACE": {
 			"UPLOAD": "Upload New Plugin",
-			"OFFLINE": "You are currently offline/disconnected ⛓️‍"
+			"OFFLINE": "You are currently offline/disconnected ⛓️‍",
+			"SUBSCRIPTION_PLANS": {
+				"TITLE": "Subscription Plans",
+				"DESCRIPTION": "Create subscription plans for your plugin to monetize your work",
+				"ADD_PLAN": "Add New Plan",
+				"POPULAR": "Most Popular",
+				"RECOMMENDED": "Recommended"
+			}
 		},
 		"LAYOUT": {
 			"DISCOVER": "Discover",
