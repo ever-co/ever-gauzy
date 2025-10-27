@@ -109,7 +109,7 @@
 	<form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="settings-form">
 		<div formArrayName="settings" class="settings-groups">
 			@for(groupName of getGroupNames(); track groupName) {
-				<div class="settings-group" *ngIf="getSettingsByGroup(groupName).some(s => isSettingVisible(s))">
+				<div class="settings-group" *ngIf="hasVisibleSettingsInGroup(groupName)">
 					<div class="group-header">
 						<h5 class="group-title">
 							<nb-icon [icon]="getGroupIcon(groupName)"></nb-icon>

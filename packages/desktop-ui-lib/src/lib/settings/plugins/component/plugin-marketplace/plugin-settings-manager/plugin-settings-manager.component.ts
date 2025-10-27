@@ -372,6 +372,10 @@ export class PluginSettingsManagerComponent implements OnInit, OnDestroy {
 		return setting.isVisible !== false;
 	}
 
+	public hasVisibleSettingsInGroup(groupName: string): boolean {
+		return this.getSettingsByGroup(groupName).some((setting) => this.isSettingVisible(setting));
+	}
+
 	public resetSetting(setting: IPluginSetting): void {
 		const index = this.getSettingIndex(setting);
 		if (index >= 0) {

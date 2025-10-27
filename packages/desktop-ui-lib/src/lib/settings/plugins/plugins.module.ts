@@ -7,10 +7,12 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
 	NbAlertModule,
 	NbBadgeModule,
+	NbButtonGroupModule,
 	NbButtonModule,
 	NbCardModule,
 	NbCheckboxModule,
 	NbDatepickerModule,
+	NbDialogModule,
 	NbFormFieldModule,
 	NbIconModule,
 	NbInfiniteListDirective,
@@ -45,6 +47,7 @@ import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/
 import { PluginSourceEffects } from './component/plugin-marketplace/+state/effects/plugin-source.effect';
 import { PluginVersionEffects } from './component/plugin-marketplace/+state/effects/plugin-version.effect';
 import { PluginMarketplaceDetailComponent } from './component/plugin-marketplace/plugin-marketplace-detail/plugin-marketplace-detail.component';
+import { PluginMarketplaceFilterComponent } from './component/plugin-marketplace/plugin-marketplace-filter/plugin-marketplace-filter.component';
 import { DialogCreateSourceComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-source/dialog-create-source.component';
 import { DialogCreateVersionComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-version/dialog-create-version.component';
 import { DialogInstallationValidationComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
@@ -64,7 +67,10 @@ import { NpmFormComponent } from './component/plugin-marketplace/plugin-marketpl
 import { PluginSourceComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/plugin-source.component';
 import { PluginVersionComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-version/plugin-version.component';
 import { PluginMarketplaceComponent } from './component/plugin-marketplace/plugin-marketplace.component';
+import { PluginSettingsManagerComponent } from './component/plugin-marketplace/plugin-settings-manager/plugin-settings-manager.component';
+import { PluginSubscriptionManagerComponent } from './component/plugin-marketplace/plugin-subscription-manager/plugin-subscription-manager.component';
 import { PluginSubscriptionPlanCreatorComponent } from './component/plugin-marketplace/plugin-subscription-plan-creator/plugin-subscription-plan-creator.component';
+import { PluginTagsManagerComponent } from './component/plugin-marketplace/plugin-tags-manager/plugin-tags-manager.component';
 import { PluginComponent } from './component/plugin/plugin.component';
 import { PluginAnalyticsService } from './services/plugin-analytics.service';
 import { PluginElectronService } from './services/plugin-electron.service';
@@ -86,6 +92,10 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		PluginUpdateComponent,
 		PluginMarketplaceComponent,
 		PluginMarketplaceDetailComponent,
+		PluginMarketplaceFilterComponent,
+		PluginSettingsManagerComponent,
+		PluginSubscriptionManagerComponent,
+		PluginTagsManagerComponent,
 		PluginMarketplaceUploadComponent,
 		PluginMarketplaceItemComponent,
 		PluginVersionComponent,
@@ -112,6 +122,8 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		Angular2SmartTableModule,
 		PaginationModule,
 		NbButtonModule,
+		NbButtonGroupModule,
+		NbDialogModule,
 		NbInputModule,
 		NbCardModule,
 		DesktopDirectiveModule,

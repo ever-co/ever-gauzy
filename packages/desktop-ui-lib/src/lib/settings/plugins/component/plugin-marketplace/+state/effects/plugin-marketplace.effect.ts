@@ -74,14 +74,30 @@ export class PluginMarketplaceEffects {
 			tap(() => this.pluginMarketplaceStore.setLoading(true)), // Start loading state
 			switchMap(({ params = {} }) =>
 				this.pluginService.getAll(params).pipe(
-					tap(({ items, total }) =>
+					tap((response) => {
+						console.log('API Response:', response); // Debug log
+						const items = Array.isArray(response?.items)
+							? response.items
+							: Array.isArray(response)
+							? response
+							: [];
+						const total = typeof response?.total === 'number' ? response.total : items.length;
+						const skip = (params as any)?.skip || 0;
+
 						this.pluginMarketplaceStore.update((state) => ({
-							plugins: [...new Map([...state.plugins, ...items].map((item) => [item.id, item])).values()],
-							count: total
-						}))
-					),
+							...state,
+							plugins:
+								skip > 1
+									? [...new Map([...state.plugins, ...items].map((item) => [item.id, item])).values()]
+									: items, // Replace on first load, merge on pagination
+							count: total,
+							totalCount: total,
+							filteredCount: total
+						}));
+					}),
 					finalize(() => this.pluginMarketplaceStore.setLoading(false)), // Always stop loading
 					catchError((error) => {
+						console.error('Plugin fetch error:', error); // Debug log
 						this.toastrService.error(error.message || error); // Handle error properly
 						return EMPTY; // Return a fallback observable
 					})
@@ -232,15 +248,27 @@ export class PluginMarketplaceEffects {
 			tap(() => this.pluginMarketplaceStore.setLoading(true)),
 			switchMap(({ query }) =>
 				this.pluginService.search({ search: query }).pipe(
-					tap(({ items, total }) => {
-						this.pluginMarketplaceStore.update({
+					tap((response) => {
+						console.log('Search API Response:', response); // Debug log
+						const items = Array.isArray(response?.items)
+							? response.items
+							: Array.isArray(response)
+							? response
+							: [];
+						const total = typeof response?.total === 'number' ? response.total : items.length;
+
+						this.pluginMarketplaceStore.update((state) => ({
+							...state,
 							plugins: items,
 							count: total,
+							totalCount: total,
+							filteredCount: total,
 							searchQuery: query
-						});
+						}));
 					}),
 					finalize(() => this.pluginMarketplaceStore.setLoading(false)),
 					catchError((error) => {
+						console.error('Search error:', error); // Debug log
 						this.toastrService.error(error.message || error);
 						return EMPTY;
 					})

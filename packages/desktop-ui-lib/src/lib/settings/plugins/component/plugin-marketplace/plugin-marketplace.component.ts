@@ -79,6 +79,14 @@ export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 		const filters = this.query.appliedFilters;
 		const params = this.buildQueryParams(filters);
 
+		console.log('Loading plugins with params:', {
+			...params,
+			skip: this.skip,
+			take: this.take,
+			relations: ['uploadedBy'],
+			order: this.buildOrderParams(filters)
+		});
+
 		this.action.dispatch(
 			PluginMarketplaceActions.getAll({
 				...params,
