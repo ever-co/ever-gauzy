@@ -5,7 +5,7 @@ import { EMPTY } from 'rxjs';
 import { ActivepiecesService, ActivepiecesStoreService, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { IActivepiecesMcpServerPublic, IActivepiecesMcpServersListParams } from '@gauzy/contracts';
+import { IActivepiecesMcpServerPublic, IActivepiecesMcpServersListParams, IActivepiecesMcpServersListResponsePublic } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
@@ -45,7 +45,7 @@ export class ActivepiecesMcpServersComponent extends TranslationBaseComponent im
 		this._activepiecesStore.mcpServers$
 			.pipe(
 				tap((servers: IActivepiecesMcpServerPublic[]) => {
-					if (servers && servers.length > 0) {
+					if (Array.isArray(servers)) {
 						this.mcpServers = servers;
 					}
 				}),
@@ -54,13 +54,15 @@ export class ActivepiecesMcpServersComponent extends TranslationBaseComponent im
 			.subscribe();
 	}
 
+	trackByServerId(_: number, s: IActivepiecesMcpServerPublic) { return s.id; }
+
 	/**
 	 * Load MCP servers for a specific project
 	 * GET /integration/activepieces/mcp-servers/:integrationId?projectId={projectId}
 	 */
 	loadMcpServers() {
 		if (!this.projectId) {
-			this._toastrService.error('Project ID is required');
+			this._toastrService.error(this.getTranslation('ACTIVEPIECES_PAGE.ERRORS.PROJECT_ID_REQUIRED'));
 			return;
 		}
 
@@ -78,13 +80,13 @@ export class ActivepiecesMcpServersComponent extends TranslationBaseComponent im
 		this._activepiecesService
 			.listMcpServers(this.integrationId, params)
 			.pipe(
-				tap((response: { data: IActivepiecesMcpServerPublic[] }) => {
+				tap((response: IActivepiecesMcpServersListResponsePublic) => {
 					this.mcpServers = response.data;
 					this._activepiecesStore.setMcpServers(response.data);
 				}),
 				catchError((error) => {
-					this._toastrService.error('Failed to load MCP servers: ' + error.message);
-					this._activepiecesStore.setMcpError(error.message);
+					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.ERRORS.LOAD_MCP_SERVERS') + ': ' + error.message;
++					this._toastrService.error(errorMessage);
 					return EMPTY;
 				}),
 				finalize(() => {

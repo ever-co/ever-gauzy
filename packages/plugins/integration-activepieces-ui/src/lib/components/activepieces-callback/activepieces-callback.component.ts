@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
 import { tap, switchMap, filter, catchError, take } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IActivepiecesConnection, IActivepiecesOAuthTokens, ID, IOrganization } from '@gauzy/contracts';
+import { IActivepiecesConnection, IActivepiecesOAuthTokens, IOrganization } from '@gauzy/contracts';
 import { ActivepiecesService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
@@ -133,7 +133,7 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 				organizationId
 			})
 			.pipe(
-				tap((connection: IActivepiecesConnection & { integrationId: ID }) => {
+				tap((connection: IActivepiecesConnection) => {
 					this._toastrService.success(this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.SUCCESS.CONNECTION_CREATED'));
 					this._clearStoredAccessToken();
 					this._redirectToActivepiecesIntegration(connection.integrationId);
@@ -149,9 +149,6 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 			.subscribe();
 	}
 
-	/**
-	 * Store token response in sessionStorage
-	 */
 	private _storeAccessToken(accessToken: string): void {
 		sessionStorage.setItem('activepieces_access_token', accessToken);
 	}

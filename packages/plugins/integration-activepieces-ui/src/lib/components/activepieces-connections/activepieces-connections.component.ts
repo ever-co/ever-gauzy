@@ -47,14 +47,16 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 		// Subscribe to store connections
 		this._activepiecesStore.connections$
 			.pipe(
-				tap((connections: IActivepiecesConnection[]) => {
-					if (connections && connections.length > 0) {
-						this.connections = connections;
-					}
+				tap((connections: IActivepiecesConnection[] | null | undefined) => {
+					this.connections = connections ?? [];
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	trackByConnectionId(index: number, connection: any): any {
+		return connection.id; // or another unique identifier if 'id' is not available
 	}
 
 	/**
@@ -118,7 +120,7 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 		this._activepiecesService
 			.listConnections(this.integrationId, params)
 			.pipe(
-				tap((response: any) => {
+				tap((response: { data: IActivepiecesConnection[]; next?: string; previous?: string }) => {
 					this.connections = response.data;
 					this._activepiecesStore.setConnections(response.data);
 				}),

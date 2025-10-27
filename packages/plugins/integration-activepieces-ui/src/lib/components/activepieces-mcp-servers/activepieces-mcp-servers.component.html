@@ -51,7 +51,7 @@
 		<!-- MCP Servers List -->
 		<div *ngIf="!loading && mcpServers.length > 0" class="mcp-servers-list mt-3">
 			<div class="row">
-				<div class="col-xl-4 col-lg-6 col-12" *ngFor="let server of mcpServers">
+				<div class="col-xl-4 col-lg-6 col-12" *ngFor="let server of mcpServers; trackBy: trackByServerId">
 					<nb-card class="mcp-server-card">
 						<nb-card-header>
 							<div class="d-flex align-items-center justify-content-between">

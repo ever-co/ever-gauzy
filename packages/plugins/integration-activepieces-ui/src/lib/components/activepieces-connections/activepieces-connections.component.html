@@ -63,7 +63,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr *ngFor="let connection of connections">
+						<tr *ngFor="let connection of connections; trackBy: trackByConnectionId">
 							<td>{{ connection.displayName }}</td>
 							<td>
 								<nb-badge [status]="connection.status === 'ACTIVE' ? 'success' : 'danger'">
@@ -81,6 +81,7 @@
 									outline
 									(click)="deleteConnection(connection)"
 									[disabled]="loading"
+									[attr.aria-label]="'Delete connection: ' + connection.displayName"
 								>
 									{{ 'BUTTONS.DELETE' | translate }}
 								</button>

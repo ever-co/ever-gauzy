@@ -8,7 +8,6 @@ import type {
 	ICreateActivepiecesIntegrationInput,
 	IActivepiecesConnectionsListResponse,
 	IActivepiecesConnectionsListParams,
-	IActivepiecesMcpServer,
 	IActivepiecesMcpServerPublic,
 	IActivepiecesMcpServersListResponsePublic,
 	IActivepiecesMcpServersListParams,
@@ -42,8 +41,8 @@ export class ActivepiecesService {
 		tenantId: string;
 		organizationId?: string;
 	}> {
-		let params = new HttpParams();
-  		if (organizationId) params = params.set('organizationId', organizationId);
+		let params = new HttpParams().set('tenantId', tenantId);
+		if (organizationId) params = params.set('organizationId', organizationId);
 
 		return this.http.get<{
 			authorizationUrl: string;

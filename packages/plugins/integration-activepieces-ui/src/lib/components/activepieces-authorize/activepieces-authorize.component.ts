@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
 import { tap, switchMap, filter, debounceTime, catchError } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
+import { IIntegrationTenant, IOrganization, IntegrationEnum, IPagination } from '@gauzy/contracts';
 import {
 	ActivepiecesService,
 	IntegrationsService,
@@ -83,22 +83,22 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 		const { id: organizationId, tenantId } = this.organization;
 
 		this._integrationTenantService
-			.get({
-				where: {
+			.getAll(
+				{
 					name: IntegrationEnum.ACTIVE_PIECES,
 					organizationId,
 					tenantId
 				},
-				relations: ['settings']
-			})
+				['settings']
+			)
 			.pipe(
-				tap((integrationTenants: any) => {
+				tap((integrationTenants) => {
 					const integrationTenant = integrationTenants?.items?.[0];
 					if (!integrationTenant) return;
 					const { settings } = integrationTenant;
 					this.hasTenantSettings = Boolean(
-						settings?.some((s: any) => s.settingsName === 'client_id') &&
-						settings?.some((s: any) => s.settingsName === 'client_secret')
+						settings?.some((s) => s.settingsName === 'client_id') &&
+						settings?.some((s) => s.settingsName === 'client_secret')
 					);
 				}),
 				catchError(() => EMPTY),
