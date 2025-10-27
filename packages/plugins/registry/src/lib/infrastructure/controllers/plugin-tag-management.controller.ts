@@ -1,18 +1,8 @@
+import { Public } from '@gauzy/common';
 import { ID } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
-import {
-	Body,
-	Controller,
-	Get,
-	HttpStatus,
-	Param,
-	ParseIntPipe,
-	Put,
-	Query,
-	UseGuards,
-	ValidationPipe
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UUIDValidationPipe } from '@gauzy/core';
+import { Body, Controller, Get, HttpStatus, Param, ParseIntPipe, Put, Query, ValidationPipe } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PluginTag } from '../../domain/entities/plugin-tag.entity';
 import { PluginTagService } from '../../domain/services/plugin-tag.service';
 import { ReplacePluginTagsDTO } from '../../shared/dto/plugin-tag.dto';
@@ -23,8 +13,6 @@ import { IPluginTag } from '../../shared/models/plugin-tag.model';
  * Handles tag-related operations for plugins
  */
 @ApiTags('Plugins - Tag Management')
-@ApiBearerAuth()
-@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugins/:pluginId/tags')
 export class PluginTagsController {
 	constructor(private readonly pluginTagService: PluginTagService) {}
@@ -44,6 +32,7 @@ export class PluginTagsController {
 		type: PluginTag,
 		isArray: true
 	})
+	@Public()
 	async getPluginTags(@Param('pluginId', UUIDValidationPipe) pluginId: ID): Promise<PluginTag[]> {
 		const result = await this.pluginTagService.findAll({
 			where: { pluginId },
@@ -86,8 +75,6 @@ export class PluginTagsController {
  * Handles plugin recommendation and similarity operations
  */
 @ApiTags('Plugins - Recommendations')
-@ApiBearerAuth()
-@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugins/:pluginId')
 export class PluginRecommendationsController {
 	constructor(private readonly pluginTagService: PluginTagService) {}
@@ -95,7 +82,7 @@ export class PluginRecommendationsController {
 	/**
 	 * Find similar plugins based on shared tags
 	 */
-	@Get()
+	@Get('similar')
 	@ApiOperation({
 		summary: 'Get plugin with optional similar plugins',
 		description: 'Get plugin details with optional similar plugins based on shared tags.'
@@ -132,6 +119,7 @@ export class PluginRecommendationsController {
 			}
 		}
 	})
+	@Public()
 	async getPluginWithSimilar(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
 		@Query('similar') similar?: boolean,
@@ -152,8 +140,6 @@ export class PluginRecommendationsController {
  * Handles plugin operations for specific tags
  */
 @ApiTags('Tags - Plugin Management')
-@ApiBearerAuth()
-@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('tags/:tagId/plugins')
 export class TagPluginsController {
 	constructor(private readonly pluginTagService: PluginTagService) {}

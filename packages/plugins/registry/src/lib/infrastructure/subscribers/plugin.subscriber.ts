@@ -6,7 +6,7 @@ import { Plugin } from '../../domain/entities/plugin.entity';
 import { PluginInstallationService } from '../../domain/services/plugin-installation.service';
 import { PluginSourceService } from '../../domain/services/plugin-source.service';
 import { PluginVersionService } from '../../domain/services/plugin-version.service';
-import { PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
+import { PluginInstallationStatus } from '../../shared/models';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 
 @EventSubscriber()
@@ -68,10 +68,12 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			const version = await this.computeLatestVersion(entity.id);
 
 			// compute installation
-			const installation = await this.pluginInstallationService.findOneOrFailByWhereOptions({
-				pluginId: entity.id,
-				installedById: RequestContext.currentEmployeeId(),
-				status: PluginInstallationStatus.INSTALLED
+			const installation = await this.pluginInstallationService.findOneOrFailByOptions({
+				where: {
+					pluginId: entity.id,
+					installedById: RequestContext.currentEmployeeId(),
+					status: PluginInstallationStatus.INSTALLED
+				}
 			});
 
 			// Compute latest source associated to version

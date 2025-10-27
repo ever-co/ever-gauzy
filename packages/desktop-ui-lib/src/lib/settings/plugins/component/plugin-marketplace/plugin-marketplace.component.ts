@@ -5,10 +5,10 @@ import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChanged, filter, map, tap } from 'rxjs';
+import { Store } from '../../../../services';
 import { PluginMarketplaceActions } from './+state/actions/plugin-marketplace.action';
 import { PluginMarketplaceQuery } from './+state/queries/plugin-marketplace.query';
 import { PluginMarketplaceUploadComponent } from './plugin-marketplace-upload/plugin-marketplace-upload.component';
-import { Store } from '../../../../services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -48,7 +48,7 @@ export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 			PluginMarketplaceActions.getAll({
 				skip: this.skip,
 				take: this.take,
-				relations: ['uploadedBy', 'uploadedBy.user'],
+				relations: ['uploadedBy'],
 				order: { createdAt: 'DESC' }
 			})
 		);

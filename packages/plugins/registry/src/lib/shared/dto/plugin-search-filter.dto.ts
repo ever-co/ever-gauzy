@@ -1,13 +1,14 @@
 import { PluginStatus, PluginType } from '@gauzy/contracts';
+import { BaseQueryDTO } from '@gauzy/core';
 import { parseToBoolean } from '@gauzy/utils';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 
 /**
  * DTO for plugin search and filtering functionality
  */
-export class PluginSearchFilterDTO {
+export class PluginSearchFilterDTO extends PartialType(BaseQueryDTO) {
 	@ApiPropertyOptional({
 		description: 'Search text to filter plugins by name, description, or author',
 		example: 'time tracking'
@@ -225,14 +226,4 @@ export class PluginSearchFilterDTO {
 	@IsOptional()
 	@IsString()
 	readonly sortDirection?: 'ASC' | 'DESC';
-
-	@ApiPropertyOptional({
-		description: 'Relations to include',
-		example: ['category', 'versions', 'versions.sources', 'uploadedBy'],
-		type: [String]
-	})
-	@IsOptional()
-	@IsArray()
-	@IsString({ each: true })
-	readonly relations?: string[];
 }

@@ -30,9 +30,9 @@ import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
+import { DialogCreateSourceComponent } from './dialog-create-source/dialog-create-source.component';
 import { DialogCreateVersionComponent } from './dialog-create-version/dialog-create-version.component';
 import { DialogInstallationValidationComponent } from './dialog-installation-validation/dialog-installation-validation.component';
-import { DialogCreateSourceComponent } from './dialog-create-source/dialog-create-source.component';
 
 @Component({
 	selector: 'gauzy-plugin-marketplace-item',
@@ -94,7 +94,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	public loadPlugin(): void {
 		this.action.dispatch(
 			PluginMarketplaceActions.getOne(this.pluginId, {
-				relations: ['versions', 'versions.sources', 'uploadedBy', 'uploadedBy.user'],
+				relations: ['versions', 'versions.sources', 'uploadedBy'],
 				order: { versions: { releaseDate: 'DESC' } }
 			})
 		);
@@ -231,7 +231,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	public get isOwner(): boolean {
-		return !!this.store.user && this.store.user.employee?.id === this.plugin?.uploadedBy?.id;
+		return !!this.store.user && this.store.user?.id === this.plugin?.uploadedBy?.id;
 	}
 
 	updatePlugin(): void {

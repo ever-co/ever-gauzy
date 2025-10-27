@@ -49,30 +49,33 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 			tags,
 			hasInstallations,
 			isVerified,
-			page = 1,
-			limit = 10,
+			skip = 1,
+			take = 10,
 			sortBy = 'createdAt',
 			sortDirection = 'DESC',
 			relations = []
 		} = filters;
 
+		const isArray = Array.isArray(relations);
 		const queryBuilder = this.pluginService.typeOrmPluginRepository.createQueryBuilder('plugin');
 
-		// Add relations
-		if (relations.includes('category')) {
-			queryBuilder.leftJoinAndSelect('plugin.category', 'category');
-		}
-		if (relations.includes('versions')) {
-			queryBuilder.leftJoinAndSelect('plugin.versions', 'versions');
-		}
-		if (relations.includes('versions.sources')) {
-			queryBuilder.leftJoinAndSelect('versions.sources', 'sources');
-		}
-		if (relations.includes('uploadedBy')) {
-			queryBuilder.leftJoinAndSelect('plugin.uploadedBy', 'uploadedBy');
-		}
-		if (relations.includes('settings')) {
-			queryBuilder.leftJoinAndSelect('plugin.settings', 'settings');
+		if (isArray && relations.length > 0) {
+			// Add relations
+			if (relations.includes('category')) {
+				queryBuilder.leftJoinAndSelect('plugin.category', 'category');
+			}
+			if (relations.includes('versions')) {
+				queryBuilder.leftJoinAndSelect('plugin.versions', 'versions');
+			}
+			if (relations.includes('versions.sources')) {
+				queryBuilder.leftJoinAndSelect('versions.sources', 'sources');
+			}
+			if (relations.includes('uploadedBy')) {
+				queryBuilder.leftJoinAndSelect('plugin.uploadedBy', 'uploadedBy');
+			}
+			if (relations.includes('settings')) {
+				queryBuilder.leftJoinAndSelect('plugin.settings', 'settings');
+			}
 		}
 
 		// Global search across multiple fields
@@ -146,7 +149,7 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 
 		// Version filter
 		if (version) {
-			if (!relations.includes('versions')) {
+			if (isArray && !relations.includes('versions')) {
 				queryBuilder.leftJoin('plugin.versions', 'versionFilter');
 			}
 			queryBuilder.andWhere('versions.number = :version OR versionFilter.number = :version', { version });
@@ -190,17 +193,17 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 		// Tags filter (placeholder - depends on how tags are implemented)
 		if (tags && tags.length > 0) {
 			// If tags are stored as JSON array in the plugin table
-			// queryBuilder.andWhere('plugin.tags @> :tags', { tags: JSON.stringify(tags) });
+			queryBuilder.andWhere('plugin.tags @> :tags', { tags: JSON.stringify(tags) });
 			// Or if tags are in a separate table
-			// queryBuilder.leftJoin('plugin.tags', 'pluginTags')
-			//             .andWhere('pluginTags.name IN (:...tags)', { tags });
+			queryBuilder.leftJoin('plugin.tags', 'pluginTags').andWhere('pluginTags.name IN (:...tags)', { tags });
 		}
 
 		// Is verified filter (placeholder - depends on verification system)
 		if (isVerified !== undefined) {
 			// Could join with verification/security table
-			// queryBuilder.leftJoin('plugin_verification', 'verification', 'verification.pluginId = plugin.id')
-			//             .andWhere('verification.isVerified = :isVerified', { isVerified });
+			queryBuilder
+				.leftJoin('plugin_verification', 'verification', 'verification.pluginId = plugin.id')
+				.andWhere('verification.isVerified = :isVerified', { isVerified });
 		}
 
 		// Apply sorting - special handling for downloadCount
@@ -232,16 +235,14 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 		}
 
 		// Pagination
-		queryBuilder.skip((page - 1) * limit).take(limit);
+		queryBuilder.skip((skip - 1) * take).take(take);
 
 		// Execute query and get results with total count
 		const [items, total] = await queryBuilder.getManyAndCount();
 
 		return {
 			items,
-			total,
-			page,
-			limit
+			total
 		} as IPagination<IPlugin>;
 	}
 }

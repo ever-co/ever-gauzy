@@ -1,3 +1,4 @@
+import { Public } from '@gauzy/common';
 import { HttpStatus, ID, IPagination, PluginSourceType } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
@@ -23,16 +24,7 @@ import {
 	UseInterceptors
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import {
-	ApiBearerAuth,
-	ApiBody,
-	ApiConsumes,
-	ApiOperation,
-	ApiParam,
-	ApiResponse,
-	ApiSecurity,
-	ApiTags
-} from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreatePluginVersionCommand } from '../../application/commands/create-plugin-version.command';
 import { DeletePluginVersionCommand } from '../../application/commands/delete-plugin-version.command';
 import { RecoverPluginVersionCommand } from '../../application/commands/recover-plugin-version.command';
@@ -50,9 +42,6 @@ import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provide
 import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
 
 @ApiTags('Plugin Versions')
-@ApiBearerAuth('Bearer')
-@ApiSecurity('api_key')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/plugins/:pluginId/versions')
 export class PluginVersionController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
@@ -69,6 +58,7 @@ export class PluginVersionController {
 		description: 'No plugin versions found matching the provided criteria.'
 	})
 	@ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized access.' })
+	@Public()
 	@Get()
 	public async findAllVersions(
 		@Param('pluginId', UUIDValidationPipe) id: ID,
@@ -95,7 +85,7 @@ export class PluginVersionController {
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
-	@UseGuards(PluginOwnerGuard)
+	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
 	@Post()
 	public async createVersion(
 		@Param('pluginId', UUIDValidationPipe) id: ID,
@@ -196,7 +186,7 @@ export class PluginVersionController {
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
-	@UseGuards(PluginOwnerGuard)
+	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
 	@Put(':versionId')
 	public async update(
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
@@ -303,7 +293,7 @@ export class PluginVersionController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
-	@UseGuards(PluginOwnerGuard)
+	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
 	@Patch(':versionId/status')
 	public async updateStatus(
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
@@ -354,7 +344,7 @@ export class PluginVersionController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
-	@UseGuards(PluginOwnerGuard)
+	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
 	@Delete(':versionId')
 	public async delete(
 		@Param('versionId', UUIDValidationPipe) versionId: ID,

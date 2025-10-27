@@ -16,8 +16,9 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+import { Public } from '@gauzy/common';
 import {
 	CreatePluginCategoryCommand,
 	DeletePluginCategoryCommand,
@@ -34,8 +35,6 @@ import { UpdatePluginCategoryDTO } from '../../shared/dto/update-plugin-category
 import { IPluginCategory, IPluginCategoryTree } from '../../shared/models';
 
 @ApiTags('Plugin Categories')
-@ApiBearerAuth()
-@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugin-categories')
 export class PluginCategoryController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
@@ -52,6 +51,7 @@ export class PluginCategoryController {
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ whitelist: true })
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	async create(@Body() input: CreatePluginCategoryDTO): Promise<IPluginCategory> {
 		// Ensure order has a default value if not provided
 		const inputWithDefaults = {
@@ -76,6 +76,7 @@ export class PluginCategoryController {
 		status: HttpStatus.OK,
 		description: 'Plugin categories retrieved successfully'
 	})
+	@Public()
 	@Get()
 	async findAll(
 		@Query('format') format?: 'tree' | 'flat',
@@ -96,6 +97,7 @@ export class PluginCategoryController {
 		status: HttpStatus.OK,
 		description: 'Plugin category retrieved successfully'
 	})
+	@Public()
 	@Get(':id')
 	async findOne(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -130,6 +132,7 @@ export class PluginCategoryController {
 		description: 'Plugin category partially updated successfully'
 	})
 	@Patch(':id')
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@UseValidationPipe({ whitelist: true })
 	async partialUpdate(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -147,6 +150,7 @@ export class PluginCategoryController {
 		description: 'Plugin category deleted successfully'
 	})
 	@HttpCode(HttpStatus.NO_CONTENT)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<void> {
 		await this.commandBus.execute(new DeletePluginCategoryCommand(id));

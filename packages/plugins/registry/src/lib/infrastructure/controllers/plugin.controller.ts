@@ -13,8 +13,8 @@ import { PluginSearchFilterDTO } from '../../shared/dto/plugin-search-filter.dto
 import { IPlugin } from '../../shared/models/plugin.model';
 
 @ApiTags('Plugin Registry')
-@Public()
 @Controller('/plugins')
+@Public()
 export class PluginController {
 	constructor(private readonly queryBus: QueryBus) {}
 
@@ -56,7 +56,7 @@ export class PluginController {
 			return this.queryBus.execute(new SearchPluginsQuery(params));
 		}
 		// Use simple base parameters for list query
-		return this.queryBus.execute(new ListPluginsQuery({ where: {} }));
+		return this.queryBus.execute(new ListPluginsQuery(params));
 	}
 
 	/**

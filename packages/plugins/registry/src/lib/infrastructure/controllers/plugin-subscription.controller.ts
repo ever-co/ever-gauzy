@@ -35,6 +35,7 @@ import {
 } from '../../application/commands';
 
 // CQRS Queries
+import { Public } from '@gauzy/common';
 import {
 	GetActivePluginSubscriptionQuery,
 	GetPluginSubscriptionByIdQuery,
@@ -43,7 +44,6 @@ import {
 } from '../../application/queries';
 
 @ApiTags('Plugin Subscriptions')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugins/:pluginId/subscriptions')
 export class PluginSubscriptionController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
@@ -55,6 +55,7 @@ export class PluginSubscriptionController {
 		description: 'Plugin subscription created successfully',
 		type: PluginSubscription
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post()
 	async create(
@@ -84,6 +85,7 @@ export class PluginSubscriptionController {
 		type: [PluginSubscription]
 	})
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
+	@Public()
 	@Get()
 	async findAll(
 		@Param('pluginId', ParseUUIDPipe) pluginId: string,
@@ -131,6 +133,7 @@ export class PluginSubscriptionController {
 	})
 	@ApiParam({ name: 'id', description: 'Plugin subscription ID' })
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
+	@Public()
 	@Get(':id')
 	async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<PluginSubscription> {
 		return await this.queryBus.execute(
@@ -147,6 +150,7 @@ export class PluginSubscriptionController {
 	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
 	@ApiParam({ name: 'id', description: 'Plugin subscription ID', type: String, format: 'uuid' })
 	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Patch(':id')
 	async updateStatus(
 		@Param('pluginId', ParseUUIDPipe) pluginId: string,
@@ -180,6 +184,7 @@ export class PluginSubscriptionController {
 		type: PluginSubscription
 	})
 	@ApiParam({ name: 'id', description: 'Plugin subscription ID' })
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Put(':id')
 	async update(
@@ -195,6 +200,7 @@ export class PluginSubscriptionController {
 		description: 'Plugin subscription deleted successfully'
 	})
 	@ApiParam({ name: 'id', description: 'Plugin subscription ID' })
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.PLUGIN_DELETE)
 	@Delete(':id')
 	@HttpCode(HttpStatus.NO_CONTENT)

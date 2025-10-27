@@ -2,7 +2,7 @@ import { ID, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { Body, Controller, Delete, HttpStatus, Param, Post, UseGuards, UsePipes } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { ValidationPipe } from '@nestjs/common';
 import { InstallPluginCommand } from '../../application/commands/install-plugin.command';
@@ -11,10 +11,8 @@ import { InstallPluginDTO } from '../../shared/dto/install-plugin.dto';
 import { PluginSubscriptionGuard } from '../guards';
 
 @ApiTags('Plugin Installation')
-@ApiBearerAuth('Bearer')
-@ApiSecurity('api_key')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/plugins/:pluginId/installations')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 export class PluginInstallationController {
 	constructor(private readonly commandBus: CommandBus) {}
 

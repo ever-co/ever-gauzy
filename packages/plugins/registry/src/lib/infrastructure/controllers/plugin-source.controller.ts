@@ -1,3 +1,4 @@
+import { Public } from '@gauzy/common';
 import { HttpStatus, ID, IPagination, PluginSourceType } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
@@ -22,16 +23,7 @@ import {
 	UseInterceptors
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import {
-	ApiBearerAuth,
-	ApiBody,
-	ApiConsumes,
-	ApiOperation,
-	ApiParam,
-	ApiResponse,
-	ApiSecurity,
-	ApiTags
-} from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreatePluginSourceCommand } from '../../application/commands/create-plugin-source.command';
 import { DeletePluginSourceCommand } from '../../application/commands/delete-plugin-source.command';
 import { RecoverPluginSourceCommand } from '../../application/commands/recover-plugin-source.command';
@@ -47,9 +39,6 @@ import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provide
 import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
 
 @ApiTags('Plugin Sources')
-@ApiBearerAuth('Bearer')
-@ApiSecurity('api_key')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/plugins/:pluginId/versions/:versionId/sources')
 export class PluginSourceController {
 	constructor(private readonly queryBus: QueryBus, private readonly commandBus: CommandBus) {}
@@ -66,6 +55,7 @@ export class PluginSourceController {
 		description: 'No plugin sources found matching the provided criteria.'
 	})
 	@ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized access.' })
+	@Public()
 	@Get()
 	public async findAllSources(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
@@ -99,7 +89,7 @@ export class PluginSourceController {
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
-	@UseGuards(PluginOwnerGuard)
+	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
 	@Post()
 	public async create(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
@@ -222,7 +212,7 @@ export class PluginSourceController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
-	@UseGuards(PluginOwnerGuard)
+	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
 	@Delete(':sourceId')
 	public async delete(
 		@Param('sourceId', UUIDValidationPipe) sourceId: ID,
@@ -295,7 +285,7 @@ export class PluginSourceController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
-	@UseGuards(PluginOwnerGuard)
+	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
 	@Patch(':sourceId/status')
 	public async updateStatus(
 		@Param('sourceId', UUIDValidationPipe) sourceId: ID,

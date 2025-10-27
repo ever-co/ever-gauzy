@@ -11,5 +11,5 @@ export class ListPluginsQuery implements IQuery {
 	/**
 	 * @param params - Pagination and filtering parameters for plugins
 	 */
-	constructor(public readonly params: BaseQueryDTO<IPlugin>) {}
+	constructor(public readonly params: Partial<BaseQueryDTO<IPlugin>>) {}
 }

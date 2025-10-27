@@ -1,5 +1,6 @@
 import { ID } from '@gauzy/contracts';
-import { Controller, Get, HttpStatus, ParseUUIDPipe, Query } from '@nestjs/common';
+import { PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { Controller, Get, HttpStatus, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PluginTagService } from '../../domain/services/plugin-tag.service';
 import { IPluginTagStatistics } from '../../shared/models/plugin-tag.model';
@@ -9,6 +10,7 @@ import { IPluginTagStatistics } from '../../shared/models/plugin-tag.model';
  * Provides analytics and statistics for various plugin-related data
  */
 @ApiTags('Plugin Analytics')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugins/analytics')
 export class PluginAnalyticsController {
 	constructor(private readonly pluginTagService: PluginTagService) {}

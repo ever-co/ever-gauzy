@@ -1,3 +1,4 @@
+import { Public } from '@gauzy/common';
 import { ID, IPagination } from '@gauzy/contracts';
 import { CrudController, PermissionGuard, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import {
@@ -13,7 +14,7 @@ import {
 	UseGuards,
 	ValidationPipe
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { PluginTag } from '../../domain/entities/plugin-tag.entity';
 import { PluginTagService } from '../../domain/services/plugin-tag.service';
@@ -45,8 +46,6 @@ import { IPluginTag, IPluginTagBulkCreateResponse } from '../../shared/models/pl
  * - PluginRecommendationsController: /plugins/{id}?similar=true (plugin recommendations)
  */
 @ApiTags('Plugin Tags')
-@ApiBearerAuth()
-@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugin-tags')
 export class PluginTagController extends CrudController<PluginTag> {
 	constructor(private readonly pluginTagService: PluginTagService) {
@@ -82,6 +81,7 @@ export class PluginTagController extends CrudController<PluginTag> {
 		required: false,
 		description: 'Type of aggregation: count (redirects to count endpoint)'
 	})
+	@Public()
 	async findAll(
 		@Query() options: any,
 		@Query(new ValidationPipe({ transform: true })) filter: FindPluginTagDTO,
@@ -110,6 +110,7 @@ export class PluginTagController extends CrudController<PluginTag> {
 	 * @returns Plugin-tag relationship details
 	 */
 	@Get(':id')
+	@Public()
 	@ApiOperation({
 		summary: 'Get plugin-tag relationship by ID',
 		description: 'Retrieve a specific plugin-tag relationship by its unique identifier.'
@@ -152,6 +153,7 @@ export class PluginTagController extends CrudController<PluginTag> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input data or relationship already exists'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	async create(@Body(new ValidationPipe({ transform: true })) createDto: CreatePluginTagDTO): Promise<IPluginTag> {
 		return this.pluginTagService.create(createDto);
 	}
@@ -206,6 +208,7 @@ export class PluginTagController extends CrudController<PluginTag> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Plugin-tag relationship not found'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return this.pluginTagService.delete(id);
 	}
@@ -231,6 +234,7 @@ export class PluginTagController extends CrudController<PluginTag> {
 			}
 		}
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	async batchCreate(
 		@Body(new ValidationPipe({ transform: true })) bulkCreateDto: BulkCreatePluginTagDTO
 	): Promise<IPluginTagBulkCreateResponse> {
@@ -257,6 +261,7 @@ export class PluginTagController extends CrudController<PluginTag> {
 			}
 		}
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	async batchDelete(
 		@Body(new ValidationPipe({ transform: true })) bulkDeleteDto: BulkDeletePluginTagDTO
 	): Promise<{ deleted: number }> {

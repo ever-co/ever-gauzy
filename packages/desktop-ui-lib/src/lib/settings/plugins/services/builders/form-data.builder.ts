@@ -23,8 +23,7 @@ export class PluginFormDataBuilder {
 			author: plugin.author,
 			license: plugin.license,
 			homepage: plugin.homepage,
-			repository: plugin.repository,
-			...this.commonData
+			repository: plugin.repository
 		};
 
 		this.appendFiltered(pluginData);

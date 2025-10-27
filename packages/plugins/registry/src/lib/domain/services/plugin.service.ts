@@ -1,4 +1,4 @@
-import { TenantAwareCrudService } from '@gauzy/core';
+import { CrudService } from '@gauzy/core';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { AutoTagPluginCommand } from '../../application/commands/auto-tag-plugin.command';
@@ -7,7 +7,7 @@ import { MikroOrmPluginRepository } from '../repositories/mikro-orm-plugin.repos
 import { TypeOrmPluginRepository } from '../repositories/type-orm-plugin.repository';
 
 @Injectable()
-export class PluginService extends TenantAwareCrudService<Plugin> {
+export class PluginService extends CrudService<Plugin> {
 	private readonly logger = new Logger(PluginService.name);
 
 	constructor(
