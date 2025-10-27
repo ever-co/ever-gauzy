@@ -67,19 +67,19 @@ export class PluginService {
 	}
 
 	public install({ pluginId, versionId }: { pluginId: string; versionId: string }): Observable<void> {
-		return this.http.patch<void>(`${this.endPoint}/${pluginId}/install`, null, { params: toParams({ versionId }) });
+		return this.http.post<void>(`${this.endPoint}/${pluginId}/installations`, { versionId });
 	}
 
 	public uninstall(pluginId: string): Observable<void> {
-		return this.http.patch<void>(`${this.endPoint}/${pluginId}/uninstall`, null);
+		return this.http.delete<void>(`${this.endPoint}/${pluginId}/installations`);
 	}
 
 	public activate(pluginId: string): Observable<void> {
-		return this.http.patch<void>(`${this.endPoint}/${pluginId}/activate`, null);
+		return this.http.patch<void>(`${this.endPoint}/${pluginId}/installations`, { status: 'active' });
 	}
 
 	public deactivate(pluginId: string): Observable<void> {
-		return this.http.patch<void>(`${this.endPoint}/${pluginId}/deactivate`, null);
+		return this.http.patch<void>(`${this.endPoint}/${pluginId}/installations`, { status: 'inactive' });
 	}
 
 	public addVersion(
