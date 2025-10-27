@@ -735,3 +735,13 @@ angular2-smart-table > div {
 angular2-smart-table a:hover {
   text-decoration: auto !important;
 }
+
+nb-toastr-container {
+  position:  absolute !important;
+  top: 20px !important;        /* change this value to what you want */
+  right: 0px !important;      /* keep consistent with your toast position */
+}
+
+nb-toast {
+	width: 21rem !important;
+}

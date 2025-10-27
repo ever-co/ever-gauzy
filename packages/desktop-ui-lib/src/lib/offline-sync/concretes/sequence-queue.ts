@@ -47,7 +47,9 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 
 			let latest = null;
 
-			if (timer.isStartedOffline) {
+			if (timer.isStartedOffline && timer.timelogId) {
+				latest = await this._timeTrackerService.getTimeLogById(timer.timelogId);
+			} else if (timer.isStartedOffline && !timer.stoppedAt) {
 				console.log('⏱ - Silent start');
 				latest = await this._timeTrackerService.toggleApiStart({
 					...timer,
@@ -78,10 +80,24 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 
 			if (timer.isStoppedOffline) {
 				console.log('⏱ - Silent stop');
-				latest = await this._timeTrackerService.toggleApiStop({
-					...timer,
-					...params
-				});
+				if (!latest) {
+					const currentTimeLog = await this._timeTrackerService.getTimeLogById(timer.timelogId);
+					if (currentTimeLog.id && currentTimeLog.isRunning) {
+						latest = await this._timeTrackerService.toggleApiStop({
+							...timer,
+							...params
+						});
+					} else if (currentTimeLog.id && timer.stoppedAt){
+						latest = await this._timeTrackerService.updateTimeLog(
+							timer.timelogId,
+							{
+								startedAt: timer.statedAt || currentTimeLog.startedAt,
+								stoppedAt: timer.stoppedAt
+							}
+						)
+					}
+				}
+
 			}
 
 			const status = await this._timeTrackerStatusService.status();
@@ -92,9 +108,9 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 						lastTimer: latest
 							? latest
 							: {
-									...timer,
-									id: status?.lastLog?.id
-							  },
+								...timer,
+								id: status?.lastLog?.id
+							},
 						...timer
 					});
 					console.log('⏱ - local database updated');

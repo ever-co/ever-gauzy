@@ -386,9 +386,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		let isPassed = false;
 		// Verify if tracking is enabled
 		if (!this.userData?.employee?.isTrackingEnabled) {
-			this.toastrService.show(this._translateService.instant('TIMER_TRACKER.TOASTR.CANT_RUN_TIMER'), `Warning`, {
-				status: 'danger'
-			});
+			this._toastrNotifier.error(this._translateService.instant('TIMER_TRACKER.TOASTR.CANT_RUN_TIMER'));
 			isPassed = false;
 		}
 		// Verify work status of user
@@ -399,23 +397,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		) {
 			// Verify if user are already started to work for organization, if yes you can run time tracker else no
 			if (!this.userData?.employee?.startedWorkOn) {
-				this.toastrService.show(
-					this._translateService.instant('TIMER_TRACKER.TOASTR.NOT_AUTHORIZED'),
-					`Warning`,
-					{
-						status: 'danger'
-					}
+				this._toastrNotifier.error(
+					this._translateService.instant('TIMER_TRACKER.TOASTR.NOT_AUTHORIZED')
 				);
 			}
 			// Verify if user are deleted for organization, if yes can't run time tracker
 			if (this.userData?.employee?.startedWorkOn && !this.userData?.employee?.isActive) {
-				this.toastrService.show(
-					this._translateService.instant('TIMER_TRACKER.TOASTR.ACCOUNT_DELETED'),
-					`Warning`,
-					{
-						status: 'danger'
-					}
-				);
+				this._toastrNotifier.error(
+					this._translateService.instant('TIMER_TRACKER.TOASTR.ACCOUNT_DELETED'));
 			}
 			isPassed = false;
 		} else isPassed = true;
@@ -544,9 +533,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			} else {
 				messageError = 'Internal server error';
 			}
-			this.toastrService.show(messageError, `Warning`, {
-				status: 'danger'
-			});
+			this._toastrNotifier.error(messageError);
 			this._loggerService.info(`Timer Toggle Catch: ${moment().format()}`, error);
 			this.loading = false;
 			this.isProcessingEnabled = false;
@@ -915,7 +902,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							name: source.name,
 							id: source.display_id
 						});
-						this._loggerService.info('screenshot data::', JSON.stringify(screens));
+						// this._loggerService.info('screenshot data::', JSON.stringify(screens));
 					});
 					if (!arg.isTemp) {
 						event.sender.send('save_screen_shoot', {
@@ -1771,10 +1758,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		try {
 			const res = await this.timeTrackerService.getTimeSlot(arg);
 			const { screenshots = [] } = res || {};
-			console.log('Get Last Timeslot Image Response:', screenshots);
+			// console.log('Get Last Timeslot Image Response:', screenshots);
 			if (screenshots && screenshots.length > 0) {
 				const [lastCaptureScreen] = screenshots;
-				console.log('Last Capture Screen:', lastCaptureScreen);
+				// console.log('Last Capture Screen:', lastCaptureScreen);
 				this.lastScreenCapture$.next(lastCaptureScreen);
 				await this.localImage(this.lastScreenCapture);
 				this.screenshots$.next(screenshots);
@@ -1898,7 +1885,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public showImage(): void {
 		if (!this.screenshots.length) {
 			const message = 'Attempted to open an empty image gallery.';
-			this.toastrService.warning(message);
+			this._toastrNotifier.warn(message);
 			this._loggerService.warn(`WARN: ${message}`);
 			return;
 		}
@@ -1979,7 +1966,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}
 			});
 
-			this._loggerService.info('screenshot data::', JSON.stringify(screens));
+			// this._loggerService.info('screenshot data::', JSON.stringify(screens));
 
 			return screens;
 		} catch (error) {
@@ -2246,10 +2233,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public showErrorMessage(msg): void {
-		this.toastrService.show(`${msg}`, `Warning`, {
-			status: 'danger'
-		});
+	public showErrorMessage(msg: string): void {
+		this._toastrNotifier.error(`${msg}`);
 	}
 
 	public toggle(event: boolean) {

@@ -596,6 +596,7 @@ export default class TimerHandler {
 				await this._timerService.save(
 					new Timer({
 						...payload,
+						startedAt: timeLog.startedAt,
 						day: this.todayLocalTimezone,
 						duration: 0,
 						synced: !this._offlineMode.enabled,
