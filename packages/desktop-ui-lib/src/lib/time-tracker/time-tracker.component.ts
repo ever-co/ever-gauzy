@@ -83,7 +83,6 @@ import { IRemoteTimer } from './time-tracker-status/interfaces';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { TimeTrackerService } from './time-tracker.service';
 import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog/timer-tracker-change-dialog.component';
-import { timeLog } from 'console';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
