@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { EmitterWebhookEventName } from '@octokit/webhooks/dist-types/types';
+import type { EmitterWebhookEventName } from '@octokit/webhooks';
 
 @Injectable()
 export class HookMetadataAccessor {
