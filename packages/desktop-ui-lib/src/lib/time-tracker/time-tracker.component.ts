@@ -83,6 +83,7 @@ import { IRemoteTimer } from './time-tracker-status/interfaces';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { TimeTrackerService } from './time-tracker.service';
 import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog/timer-tracker-change-dialog.component';
+import { timeLog } from 'console';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -519,7 +520,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				try {
 					await this.electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
 						lastTimer: timelog,
-						...lastTimer
+						...lastTimer,
+						...(lastTimer.startedAt ? {} : { startedAt: timelog.startedAt })
 					});
 					await this.getTimerStatus(params);
 				} catch (error) {
