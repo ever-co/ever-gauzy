@@ -1,5 +1,5 @@
 @let plugins = query.plugins$ | async;
-@let available = (query.count$ | async) > 0;
+@let available = plugins && plugins.length > 0;
 @let isLoading = (query.isLoading$ | async) && plugins.length === 0;
 @let uploading = query.uploading$ | async;
 @let progress = query.progress$ | async;
@@ -81,8 +81,10 @@
 			[class.list-view]="(query.selectedView$ | async) === 'list'">
 
 			@if (available) {
+				<!-- Debug info - remove in production -->
+				<!-- Plugins count: {{ plugins?.length || 0 }} -->
 				@for (plugin of plugins; track plugin.id; let isLast = $last) {
-					@defer (on viewport; when isLoading) {
+					@defer (on viewport) {
 						<lib-plugin-marketplace-detail
 							class="plugin"
 							[ngClass]="{ none: isLast }"

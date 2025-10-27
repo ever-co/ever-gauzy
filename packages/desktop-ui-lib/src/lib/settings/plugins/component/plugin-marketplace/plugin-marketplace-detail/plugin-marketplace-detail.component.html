@@ -129,7 +129,7 @@
 		<div class="metric-item">
 			<nb-icon icon="calendar-outline"></nb-icon>
 			<span class="metric-label">Updated</span>
-			<span class="metric-value">{{ plugin.updatedAt | timeAgo }}</span>
+			<span class="metric-value">{{ plugin.updatedAt | date:'short' }}</span>
 		</div>
 		<div class="metric-item" *ngIf="plugin.license">
 			<nb-icon icon="file-text-outline"></nb-icon>
