@@ -60,7 +60,8 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 					startedAt: timer.startedAt,
 					stoppedAt: timer.stoppedAt,
 					taskId: timer.taskId,
-					projectId: timer.projectId
+					projectId: timer.projectId,
+					description: timer.description
 				});
 			}
 
@@ -87,24 +88,31 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 
 			if (timer.isStoppedOffline) {
 				console.log('⏱ - Silent stop');
-				if (!latest) {
+				if (!latest && timer.timelogId) {
 					const currentTimeLog = await this._timeTrackerService.getTimeLogById(timer.timelogId);
 					if (currentTimeLog.id && currentTimeLog.isRunning) {
 						latest = await this._timeTrackerService.toggleApiStop({
 							...timer,
 							...params
 						});
-					} else if (currentTimeLog.id && timer.stoppedAt){
+					} else if (currentTimeLog.id && timer.stoppedAt) {
 						latest = await this._timeTrackerService.updateTimeLog(
 							timer.timelogId,
 							{
-								startedAt: timer.statedAt || currentTimeLog.startedAt,
-								stoppedAt: timer.stoppedAt
+								startedAt: timer.startedAt || currentTimeLog.startedAt,
+								stoppedAt: timer.stoppedAt,
+								description: timer.description,
+								projectId: timer.projectId,
+								taskId: timer.taskId
 							}
 						)
 					}
+				} else if (latest && latest.id && latest.isRunning) {
+					latest = await this._timeTrackerService.toggleApiStop({
+						...timer,
+						...params
+					});
 				}
-
 			}
 
 			const status = await this._timeTrackerStatusService.status();

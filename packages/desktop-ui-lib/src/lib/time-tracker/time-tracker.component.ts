@@ -520,7 +520,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					await this.electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
 						lastTimer: timelog,
 						...lastTimer,
-						...(lastTimer.startedAt ? {} : { startedAt: timelog.startedAt })
+						...(!lastTimer.startedAt && timelog?.startedAt ? { startedAt: timelog.startedAt } : {})
 					});
 					await this.getTimerStatus(params);
 				} catch (error) {
@@ -1759,10 +1759,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		try {
 			const res = await this.timeTrackerService.getTimeSlot(arg);
 			const { screenshots = [] } = res || {};
-			// console.log('Get Last Timeslot Image Response:', screenshots);
 			if (screenshots && screenshots.length > 0) {
 				const [lastCaptureScreen] = screenshots;
-				// console.log('Last Capture Screen:', lastCaptureScreen);
 				this.lastScreenCapture$.next(lastCaptureScreen);
 				await this.localImage(this.lastScreenCapture);
 				this.screenshots$.next(screenshots);
