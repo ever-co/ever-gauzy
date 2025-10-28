@@ -155,12 +155,12 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 			.saveOAuthSettings(client_id, client_secret, organizationId)
 			.pipe(
 				tap(() => {
-					this._toastrService.success(this.getTranslation('ACTIVEPIECES_PAGE.AUTHORIZE.SUCCESS.SETTINGS_SAVED'));
+					this._toastrService.success(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.SUCCESS.SETTINGS_SAVED'));
 					this.hasTenantSettings = true;
 				}),
 				switchMap(() => this._startAuthorization()),
 				catchError((error) => {
-					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.SAVE_SETTINGS') + ': ' + error.message;
+					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.SAVE_SETTINGS') + ': ' + error.message;
 					this._toastrService.error(errorMessage);
 					this.loading = false;
 					return EMPTY;
@@ -182,7 +182,7 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 		this._startAuthorization()
 			.pipe(
 				catchError((error) => {
-					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.START_AUTHORIZATION') + ': ' + error.message;
+					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.START_AUTHORIZATION') + ': ' + error.message;
 					this._toastrService.error(errorMessage);
 					this.loading = false;
 					return EMPTY;

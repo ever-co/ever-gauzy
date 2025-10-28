@@ -164,9 +164,12 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 			.pipe(
 				tap(() => {
 					this._toastrService.success(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.SUCCESS.CONNECTION_DELETED'));
-					// Remove the deleted connection from the list
-					this.connections = this.connections.filter(conn => conn.id !== connection.id);
-					this._activepiecesStore.setConnections(this.connections);
+					// Reload connections from ActivePieces to reflect the actual current state
+					if (this.projectId) {
+						this.loadConnections();
+					} else {
+						this._loadConnection();
+					}
 				}),
 				catchError((error) => {
 					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.DELETE_CONNECTION', { error: error.message });
