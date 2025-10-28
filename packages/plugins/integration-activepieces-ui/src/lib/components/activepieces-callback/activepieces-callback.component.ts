@@ -20,6 +20,7 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 	public loading = false;
 	public organization!: IOrganization;
 	public showProjectIdForm = false;
+	private _accessToken: string | null = null;
 
 	readonly form: UntypedFormGroup = ActivepiecesCallbackComponent.buildForm(this._fb);
 
@@ -81,8 +82,8 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 					// POST /integration/activepieces/oauth/token
 					return this._activepiecesService.exchangeToken({ code, state }).pipe(
 						tap((tokenResponse: IActivepiecesOAuthTokens) => {
-							// Store token response temporarily
-							this._storeAccessToken(tokenResponse.access_token);
+							// Hold token in-memory only
+				            this._accessToken = tokenResponse.access_token;
 							// Show project ID form
 							this.showProjectIdForm = true;
 							this.loading = false;
@@ -112,10 +113,10 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 		}
 
 		this.loading = true;
-		const { projectId } = this.form.value;
-		const accessToken = this._getStoredAccessToken();
+		const projectId = (this.form.value?.projectId ?? '').trim();
+	    const accessToken = this._accessToken;
 
-		if (!accessToken) {
+		if (!accessToken || !projectId) {
 			this._toastrService.error(this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.ERRORS.TOKEN_NOT_FOUND'));
 			this._redirectToIntegrations();
 			return;
@@ -135,7 +136,7 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 			.pipe(
 				tap((connection: IActivepiecesConnection) => {
 					this._toastrService.success(this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.SUCCESS.CONNECTION_CREATED'));
-					this._clearStoredAccessToken();
+      	        	this._accessToken = null;
 					this._redirectToActivepiecesIntegration(connection.integrationId);
 				}),
 				catchError((error) => {
@@ -147,24 +148,6 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	private _storeAccessToken(accessToken: string): void {
-		sessionStorage.setItem('activepieces_access_token', accessToken);
-	}
-
-	/**
-	 * Get stored token response from sessionStorage
-	 */
-	private _getStoredAccessToken(): string | null {
-		return sessionStorage.getItem('activepieces_access_token');
-	}
-
-	/**
-	 * Clear stored token response from sessionStorage
-	 */
-	private _clearStoredAccessToken(): void {
-		sessionStorage.removeItem('activepieces_access_token');
 	}
 
 	/**
@@ -181,5 +164,5 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 		this._router.navigate(['/pages/integrations/activepieces', integrationId]);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { this._accessToken = null; }
 }

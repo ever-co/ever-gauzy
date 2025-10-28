@@ -18,7 +18,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class ActivepiecesMcpServersComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public loading = false;
 	public mcpServers: IActivepiecesMcpServerPublic[] = [];
-	public integrationId: string;
+	public integrationId!: string;
 	public projectId: string = '';
 
 	constructor(
@@ -32,7 +32,8 @@ export class ActivepiecesMcpServersComponent extends TranslationBaseComponent im
 	}
 
 	ngOnInit() {
-		this._activatedRoute.parent.params
+		const route = this._activatedRoute.parent ?? this._activatedRoute;
+		route.params
 			.pipe(
 				tap((params) => {
 					this.integrationId = params['id'];
@@ -86,7 +87,8 @@ export class ActivepiecesMcpServersComponent extends TranslationBaseComponent im
 				}),
 				catchError((error) => {
 					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.ERRORS.LOAD_MCP_SERVERS') + ': ' + error.message;
-+					this._toastrService.error(errorMessage);
+					this._toastrService.error(errorMessage);
+					this._activepiecesStore.setError(errorMessage);
 					return EMPTY;
 				}),
 				finalize(() => {

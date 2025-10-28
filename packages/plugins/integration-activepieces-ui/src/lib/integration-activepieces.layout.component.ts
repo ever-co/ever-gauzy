@@ -37,10 +37,6 @@ export class IntegrationActivepiecesLayoutComponent implements OnInit, OnDestroy
 			tap((lang: string | LanguagesEnum) => {
 				this._translateService.use(lang);
 			}),
-			catchError((error) => {
-				console.error('Failed to load language translations:', error);
-				return EMPTY;
-			}),
 			untilDestroyed(this)
 		);
 

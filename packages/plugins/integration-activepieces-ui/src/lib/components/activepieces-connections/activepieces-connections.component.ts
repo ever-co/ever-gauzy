@@ -55,8 +55,8 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 			.subscribe();
 	}
 
-	trackByConnectionId(index: number, connection: any): any {
-		return connection.id; // or another unique identifier if 'id' is not available
+	trackByConnectionId(_: number, connection: IActivepiecesConnection): string {
+		return connection.id;
 	}
 
 	/**
@@ -144,7 +144,7 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 	 * DELETE /integration/activepieces/connection/:integrationId
 	 */
 	deleteConnection(connection: IActivepiecesConnection) {
-		if (!confirm('Are you sure you want to delete this connection?')) {
+		if (!window.confirm(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.DELETE_CONFIRM'))) {
 			return;
 		}
 
@@ -161,7 +161,7 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 				tap(() => {
 					this._toastrService.success(this.getTranslation('ACTIVEPIECES_PAGE.SUCCESS.CONNECTION_DELETED'));
 					// Remove the deleted connection from the list
-					this.connections = this.connections.filter(conn => conn !== connection);
+					this.connections = this.connections.filter(conn => conn.id !== connection.id);
 					this._activepiecesStore.setConnections(this.connections);
 				}),
 				catchError((error) => {

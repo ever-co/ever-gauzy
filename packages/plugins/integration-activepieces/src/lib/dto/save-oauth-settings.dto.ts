@@ -24,7 +24,8 @@ export class SaveOAuthSettingsDto {
 
 	@ApiProperty({
 		description: 'Tenant ID',
-		required: false
+		required: false,
+		format: 'uuid'
 	})
 	@IsOptional()
 	@IsString()
@@ -34,11 +35,12 @@ export class SaveOAuthSettingsDto {
 
 	@ApiProperty({
 		description: 'Organization ID',
-		required: false
+		required: false,
+		format: 'uuid'
 	})
 	@IsOptional()
 	@IsString()
-	@IsUUID('4', { message: 'tenantId must be a valid UUID' })
+	@IsUUID('4', { message: 'organizationId must be a valid UUID' })
 	@Transform(({ value }) => value?.trim() || undefined)
 	readonly organizationId?: string;
 }

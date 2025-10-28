@@ -1511,7 +1511,9 @@
 				"PROJECT_ID": "Project ID",
 				"PROJECT_ID_PLACEHOLDER": "Enter Activepieces Project ID",
 				"PROJECT_ID_HINT": "Enter your Activepieces project ID to load connections",
-				"LOADING": "Loading connections..."
+				"LOADING": "Loading connections...",
+				"DELETE_CONFIRM": "Are you sure you want to delete this connection?",
+				"DELETE_ARIA": "Delete connection"
 			},
 			"MCP_SERVERS": {
 				"TITLE": "MCP",

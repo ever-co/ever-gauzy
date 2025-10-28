@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
 import { tap, switchMap, filter, debounceTime, catchError } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IIntegrationTenant, IOrganization, IntegrationEnum, IPagination } from '@gauzy/contracts';
+import { IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
 import {
 	ActivepiecesService,
 	IntegrationsService,
@@ -171,6 +171,10 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 	 * Start OAuth authorization flow (if tenant settings already exist)
 	 */
 	startAuthorization() {
+		if (!this.organization) {
+			// Optional: toast an error here if desired
+			return;
+		}
 		this.loading = true;
 		this._startAuthorization()
 			.pipe(

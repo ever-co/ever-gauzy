@@ -81,7 +81,7 @@
 									outline
 									(click)="deleteConnection(connection)"
 									[disabled]="loading"
-									[attr.aria-label]="'Delete connection: ' + connection.displayName"
+									[attr.aria-label]="'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.DELETE_ARIA' | translate: { name: connection.displayName }"
 								>
 									{{ 'BUTTONS.DELETE' | translate }}
 								</button>
