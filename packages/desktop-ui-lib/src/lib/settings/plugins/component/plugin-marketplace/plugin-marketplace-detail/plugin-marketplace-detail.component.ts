@@ -53,6 +53,12 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {
+		// Guard against undefined plugin
+		if (!this.plugin) {
+			this._isChecked$.next(false);
+			return;
+		}
+
 		// Set selector position
 		this._isChecked$.next(this.plugin.installed);
 		// Set selector on installation
@@ -231,7 +237,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public get isOwner(): boolean {
-		return !!this.store.user && this.store.user.id === this.plugin?.uploadedById;
+		return !!this.store.user && !!this.plugin && this.store.user.id === this.plugin.uploadedById;
 	}
 
 	/**
@@ -329,6 +335,11 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	 * Get context menu items for more actions
 	 */
 	public getContextMenuItems() {
+		// Return empty array if plugin is not available
+		if (!this.plugin) {
+			return [];
+		}
+
 		const items: any[] = [
 			{
 				title: 'View Details',
@@ -394,7 +405,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	 * Handle context menu item selection
 	 */
 	public onContextMenuItemSelect(item: any): void {
-		if (!item.data?.action) {
+		if (!item.data?.action || !this.plugin) {
 			return;
 		}
 
