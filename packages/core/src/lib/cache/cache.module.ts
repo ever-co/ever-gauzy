@@ -59,8 +59,7 @@ import { CacheService } from './cache.service';
 						rejectUnauthorized: process.env.NODE_ENV === 'production'
 					},
 					// Keep the socket from idling out at LB/firewall
-					pingInterval: 30_000, // send PING every 30s
-					ttl: 7 * 24 * 60 * 60 * 1000 // 1 week
+					pingInterval: 30_000 // send PING every 30s
 				} as any);
 
 				// Create KeyvRedis adapter with production-ready options
@@ -109,7 +108,8 @@ import { CacheService } from './cache.service';
 				}
 
 				return {
-					stores: [keyv]
+					stores: [keyv],
+					ttl: 7 * 24 * 60 * 60 * 1000 // 1 week in ms
 				};
 			}
 		})
