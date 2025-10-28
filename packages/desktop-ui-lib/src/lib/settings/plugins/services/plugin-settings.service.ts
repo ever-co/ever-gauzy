@@ -1,6 +1,5 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IPagination } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { BehaviorSubject, map, Observable, shareReplay, tap } from 'rxjs';
 
@@ -169,12 +168,43 @@ export interface IPluginSettingsBulkUpdateInput {
 	userId?: string;
 }
 
+export interface CreatePluginSettingDTO {
+	key: string;
+	value: any;
+	type: PluginSettingType;
+	label: string;
+	description?: string;
+	category?: string;
+	isRequired?: boolean;
+	isEncrypted?: boolean;
+	isVisible?: boolean;
+	validation?: IPluginSettingValidation;
+	options?: IPluginSettingOption[];
+	scope: PluginSettingScope;
+	organizationId?: string;
+	metadata?: Record<string, any>;
+}
+
+export interface BulkUpdatePluginSettingsDTO {
+	settings: Array<{
+		key: string;
+		value: any;
+		[key: string]: any;
+	}>;
+	pluginTenantId?: string;
+}
+
+export interface PluginSettingQueryDTO {
+	category?: string;
+	key?: string;
+	pluginTenantId?: string;
+}
+
 @Injectable({
 	providedIn: 'root'
 })
 export class PluginSettingsService {
-	private readonly endPoint = `${API_PREFIX}/plugin-settings`;
-	private readonly templatesEndPoint = `${API_PREFIX}/plugin-setting-templates`;
+	private readonly endPoint = `${API_PREFIX}/plugins`;
 
 	private readonly settingsCache$ = new BehaviorSubject<Map<string, IPluginSetting[]>>(new Map());
 	private readonly templatesCache$ = new BehaviorSubject<Map<string, IPluginSettingTemplate[]>>(new Map());
@@ -182,76 +212,59 @@ export class PluginSettingsService {
 	constructor(private readonly http: HttpClient) {}
 
 	// Plugin Settings CRUD Operations
-	public getAllSettings<T>(params = {} as T): Observable<IPagination<IPluginSetting>> {
-		return this.http
-			.get<IPagination<IPluginSetting>>(this.endPoint, {
-				params: toParams(params)
+	public createPluginSetting(pluginId: string, setting: IPluginSetting): Observable<IPluginSetting> {
+		return this.http.post<IPluginSetting>(`${this.endPoint}/${pluginId}/settings`, setting).pipe(
+			tap((newSetting) => {
+				const cache = this.settingsCache$.value;
+				const pluginSettings = cache.get(pluginId) || [];
+				cache.set(pluginId, [...pluginSettings, newSetting]);
+				this.settingsCache$.next(cache);
 			})
-			.pipe(shareReplay(1));
+		);
 	}
 
-	public getSetting(id: string): Observable<IPluginSetting> {
-		return this.http.get<IPluginSetting>(`${this.endPoint}/${id}`);
+	public getPluginSettings(pluginId: string, query?: PluginSettingQueryDTO): Observable<IPluginSetting[]> {
+		let params = new HttpParams();
+		if (query?.category) {
+			params = params.set('category', query.category);
+		}
+		if (query?.key) {
+			params = params.set('key', query.key);
+		}
+		if (query?.pluginTenantId) {
+			params = params.set('pluginTenantId', query.pluginTenantId);
+		}
+
+		return this.http.get<IPluginSetting[]>(`${this.endPoint}/${pluginId}/settings`, { params }).pipe(
+			tap((settings) => {
+				const cache = this.settingsCache$.value;
+				cache.set(pluginId, settings);
+				this.settingsCache$.next(cache);
+			}),
+			shareReplay(1)
+		);
 	}
 
-	public getPluginSettings(
-		pluginId: string,
-		scope?: PluginSettingScope,
-		tenantId?: string,
-		organizationId?: string,
-		userId?: string
-	): Observable<IPluginSetting[]> {
-		const params: any = {};
-		if (scope) params.scope = scope;
-		if (tenantId) params.tenantId = tenantId;
-		if (organizationId) params.organizationId = organizationId;
-		if (userId) params.userId = userId;
-
-		return this.http
-			.get<IPluginSetting[]>(`${this.endPoint}/plugin/${pluginId}`, {
-				params: toParams(params)
-			})
-			.pipe(
-				tap((settings) => {
-					const cache = this.settingsCache$.value;
-					cache.set(pluginId, settings);
-					this.settingsCache$.next(cache);
-				}),
-				shareReplay(1)
-			);
+	public getPluginSettingById(pluginId: string, id: string): Observable<IPluginSetting> {
+		return this.http.get<IPluginSetting>(`${this.endPoint}/${pluginId}/settings/${id}`);
 	}
 
 	public getPluginSettingsGrouped(
 		pluginId: string,
-		scope?: PluginSettingScope,
-		tenantId?: string,
-		organizationId?: string,
-		userId?: string
+		query?: PluginSettingQueryDTO
 	): Observable<IPluginSettingGroup[]> {
-		return this.getPluginSettings(pluginId, scope, tenantId, organizationId, userId).pipe(
-			map((settings) => this.groupSettingsByCategory(settings))
-		);
+		return this.getPluginSettings(pluginId, query).pipe(map((settings) => this.groupSettingsByCategory(settings)));
 	}
 
-	public getSettingValue(
-		pluginId: string,
-		key: string,
-		scope?: PluginSettingScope,
-		tenantId?: string,
-		organizationId?: string,
-		userId?: string
-	): Observable<any> {
-		const params: any = { key };
-		if (scope) params.scope = scope;
-		if (tenantId) params.tenantId = tenantId;
-		if (organizationId) params.organizationId = organizationId;
-		if (userId) params.userId = userId;
+	public getSettingValue(pluginId: string, key: string, pluginTenantId?: string): Observable<any> {
+		let params = new HttpParams().set('key', key);
+		if (pluginTenantId) {
+			params = params.set('pluginTenantId', pluginTenantId);
+		}
 
 		return this.http
-			.get<{ value: any }>(`${this.endPoint}/plugin/${pluginId}/value`, {
-				params: toParams(params)
-			})
-			.pipe(map((response) => response.value));
+			.get<IPluginSetting>(`${this.endPoint}/${pluginId}/settings`, { params })
+			.pipe(map((setting) => setting?.value));
 	}
 
 	public createSetting(setting: IPluginSettingCreateInput): Observable<IPluginSetting> {
@@ -324,14 +337,38 @@ export class PluginSettingsService {
 	}
 
 	// Bulk Operations
-	public bulkUpdateSettings(pluginId: string, updates: IPluginSettingsBulkUpdateInput): Observable<IPluginSetting[]> {
-		return this.http.put<IPluginSetting[]>(`${this.endPoint}/plugin/${pluginId}/bulk`, updates).pipe(
+	public bulkUpdatePluginSettings(
+		pluginId: string,
+		bulkUpdateDto: BulkUpdatePluginSettingsDTO
+	): Observable<IPluginSetting[]> {
+		return this.http.patch<IPluginSetting[]>(`${this.endPoint}/${pluginId}/settings`, bulkUpdateDto).pipe(
 			tap((updatedSettings) => {
 				const cache = this.settingsCache$.value;
 				cache.set(pluginId, updatedSettings);
 				this.settingsCache$.next(cache);
 			})
 		);
+	}
+
+	public updateAndValidatePluginSetting(
+		pluginId: string,
+		id: string,
+		updateData: { value: any; [key: string]: any }
+	): Observable<{ setting: IPluginSetting; validation: { valid: boolean; errors?: string[] } }> {
+		return this.http
+			.put<{ setting: IPluginSetting; validation: { valid: boolean; errors?: string[] } }>(
+				`${this.endPoint}/${pluginId}/settings/${id}`,
+				updateData
+			)
+			.pipe(
+				tap(({ setting }) => {
+					const cache = this.settingsCache$.value;
+					const pluginSettings = cache.get(pluginId) || [];
+					const updatedSettings = pluginSettings.map((s) => (s.id === id ? setting : s));
+					cache.set(pluginId, updatedSettings);
+					this.settingsCache$.next(cache);
+				})
+			);
 	}
 
 	public resetSettingsToDefault(
@@ -358,7 +395,7 @@ export class PluginSettingsService {
 
 	// Setting Templates
 	public getPluginSettingTemplates(pluginId: string): Observable<IPluginSettingTemplate[]> {
-		return this.http.get<IPluginSettingTemplate[]>(`${this.templatesEndPoint}/plugin/${pluginId}`).pipe(
+		return this.http.get<IPluginSettingTemplate[]>(`${this.endPoint}/${pluginId}/templates`).pipe(
 			tap((templates) => {
 				const cache = this.templatesCache$.value;
 				cache.set(pluginId, templates);
@@ -369,7 +406,7 @@ export class PluginSettingsService {
 	}
 
 	public createSettingTemplate(template: IPluginSettingTemplateCreateInput): Observable<IPluginSettingTemplate> {
-		return this.http.post<IPluginSettingTemplate>(this.templatesEndPoint, template).pipe(
+		return this.http.post<IPluginSettingTemplate>(`${this.endPoint}/${template.pluginId}/templates`, template).pipe(
 			tap((newTemplate) => {
 				const cache = this.templatesCache$.value;
 				const pluginTemplates = cache.get(newTemplate.pluginId) || [];
@@ -380,10 +417,11 @@ export class PluginSettingsService {
 	}
 
 	public updateSettingTemplate(
+		pluginId: string,
 		id: string,
 		template: Partial<IPluginSettingTemplateCreateInput>
 	): Observable<IPluginSettingTemplate> {
-		return this.http.put<IPluginSettingTemplate>(`${this.templatesEndPoint}/${id}`, template).pipe(
+		return this.http.put<IPluginSettingTemplate>(`${this.endPoint}/${pluginId}/templates/${id}`, template).pipe(
 			tap((updatedTemplate) => {
 				const cache = this.templatesCache$.value;
 				const pluginTemplates = cache.get(updatedTemplate.pluginId) || [];
@@ -394,14 +432,13 @@ export class PluginSettingsService {
 		);
 	}
 
-	public deleteSettingTemplate(id: string): Observable<void> {
-		return this.http.delete<void>(`${this.templatesEndPoint}/${id}`).pipe(
+	public deleteSettingTemplate(pluginId: string, id: string): Observable<void> {
+		return this.http.delete<void>(`${this.endPoint}/${pluginId}/templates/${id}`).pipe(
 			tap(() => {
 				const cache = this.templatesCache$.value;
-				cache.forEach((templates, pluginId) => {
-					const filtered = templates.filter((t) => t.id !== id);
-					cache.set(pluginId, filtered);
-				});
+				const pluginTemplates = cache.get(pluginId) || [];
+				const filtered = pluginTemplates.filter((t) => t.id !== id);
+				cache.set(pluginId, filtered);
 				this.templatesCache$.next(cache);
 			})
 		);

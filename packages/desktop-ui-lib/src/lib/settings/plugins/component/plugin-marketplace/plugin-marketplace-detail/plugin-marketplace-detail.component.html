@@ -221,5 +221,5 @@
 </div>
 
 <!-- Context Menu for More Actions -->
-<nb-context-menu #moreActionsMenu [items]="getContextMenuItems()"></nb-context-menu>
+<nb-context-menu #moreActionsMenu [items]="getContextMenuItems()" (itemClick)="onContextMenuItemSelect($event)"></nb-context-menu>
 }

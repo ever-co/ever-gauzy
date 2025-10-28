@@ -1,0 +1,245 @@
+.plugin-user-management {
+	width: 100%;
+	max-width: 800px;
+	max-height: 90vh;
+
+	.header-info {
+		.card-title {
+			color: var(--text-basic-color);
+			font-weight: 600;
+		}
+
+		.card-subtitle {
+			font-size: 0.875rem;
+		}
+	}
+
+	.header-stats {
+		.assignment-count {
+			font-size: 0.75rem;
+			padding: 0.25rem 0.5rem;
+		}
+	}
+}
+
+.search-form {
+	.search-input {
+		border-radius: var(--border-radius);
+	}
+}
+
+.selected-users {
+	.section-title {
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--text-basic-color);
+		margin-bottom: 0.75rem;
+	}
+
+	.selected-users-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+
+		.selected-user-chip {
+			display: flex;
+			align-items: center;
+			background: var(--background-basic-color-2);
+			border: 1px solid var(--border-basic-color-3);
+			border-radius: var(--border-radius);
+			padding: 0.25rem 0.5rem;
+			gap: 0.5rem;
+
+			.remove-btn {
+				padding: 0.125rem;
+				min-height: auto;
+				min-width: auto;
+			}
+		}
+	}
+}
+
+.available-users, .current-assignments-section {
+	.section-title {
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--text-basic-color);
+		margin-bottom: 1rem;
+	}
+
+	.users-list, .assignments-list {
+		max-height: 300px;
+		overflow-y: auto;
+		border: 1px solid var(--border-basic-color-3);
+		border-radius: var(--border-radius);
+		padding: 0.5rem;
+
+		.user-item, .assignment-item {
+			display: flex;
+			align-items: center;
+			padding: 0.75rem;
+			cursor: pointer;
+			border-radius: var(--border-radius);
+			transition: all 0.2s ease-in-out;
+
+			&:hover {
+				background: var(--background-basic-color-2);
+			}
+
+			&.selected {
+				background: rgba(var(--color-primary-default), 0.1);
+				border: 1px solid var(--color-primary-default);
+			}
+		}
+
+		.user-item {
+			justify-content: space-between;
+
+			.user-actions {
+				display: flex;
+				align-items: center;
+			}
+		}
+
+		.assignment-item {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 0.5rem;
+
+			@media (min-width: 576px) {
+				flex-direction: row;
+				align-items: center;
+			}
+
+			.assignment-user {
+				flex: 1;
+			}
+
+			.assignment-details {
+				flex: 2;
+				display: flex;
+				flex-direction: column;
+				gap: 0.25rem;
+
+				.assignment-meta {
+					display: flex;
+					flex-direction: column;
+					gap: 0.25rem;
+
+					@media (min-width: 768px) {
+						flex-direction: row;
+						gap: 1rem;
+					}
+
+					.meta-item {
+						display: flex;
+						align-items: center;
+						gap: 0.25rem;
+						font-size: 0.75rem;
+						color: var(--text-hint-color);
+
+						nb-icon {
+							font-size: 0.875rem;
+						}
+					}
+				}
+
+				.assignment-status {
+					align-self: flex-start;
+				}
+			}
+
+			.assignment-actions {
+				display: flex;
+				align-items: center;
+				justify-content: flex-end;
+			}
+		}
+	}
+}
+
+.loading-state, .empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 2rem;
+	text-align: center;
+
+	.loading-text, .empty-text {
+		margin-top: 0.5rem;
+		color: var(--text-basic-color);
+		font-weight: 500;
+	}
+
+	.empty-icon {
+		font-size: 3rem;
+		color: var(--text-hint-color);
+	}
+
+	.empty-hint {
+		color: var(--text-hint-color);
+		margin-top: 0.25rem;
+	}
+}
+
+.assignment-form {
+	border-top: 1px solid var(--border-basic-color-3);
+	padding-top: 1rem;
+
+	.form-actions {
+		display: flex;
+		justify-content: flex-end;
+		margin-top: 1rem;
+
+		.assign-btn {
+			min-width: 150px;
+		}
+	}
+}
+
+// Responsive adjustments
+@media (max-width: 767px) {
+	.plugin-user-management {
+		max-width: 100%;
+		max-height: 95vh;
+
+		.selected-users-list {
+			.selected-user-chip {
+				font-size: 0.75rem;
+			}
+		}
+
+		.users-list, .assignments-list {
+			max-height: 250px;
+		}
+	}
+}
+
+// Tab content spacing
+::ng-deep nb-tab {
+	padding: 1rem 0;
+}
+
+// Nebular form field styling
+::ng-deep nb-form-field {
+	margin-bottom: 1rem;
+
+	.label {
+		font-weight: 600;
+		margin-bottom: 0.5rem;
+		display: block;
+	}
+}
+
+// Spinner button styling
+::ng-deep .gauzy-spinner-button {
+	nb-icon {
+		animation: spin 1s linear infinite;
+	}
+}
+
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}

@@ -11,6 +11,7 @@ import {
 	NbButtonModule,
 	NbCardModule,
 	NbCheckboxModule,
+	NbContextMenuModule,
 	NbDatepickerModule,
 	NbDialogModule,
 	NbFormFieldModule,
@@ -22,8 +23,10 @@ import {
 	NbSelectModule,
 	NbSpinnerModule,
 	NbStepperModule,
+	NbTabsetModule,
 	NbToggleModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbUserModule
 } from '@nebular/theme';
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
@@ -44,8 +47,12 @@ import { PluginStatusComponent } from './component/plugin-list/plugin-status/plu
 import { PluginUpdateComponent } from './component/plugin-list/plugin-update/plugin-update.component';
 import { PluginInstallationEffects } from './component/plugin-marketplace/+state/effects/plugin-installation.effect';
 import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/effects/plugin-marketplace.effect';
+import { PluginSettingsEffects } from './component/plugin-marketplace/+state/effects/plugin-settings.effects';
 import { PluginSourceEffects } from './component/plugin-marketplace/+state/effects/plugin-source.effect';
+import { PluginUserAssignmentEffects } from './component/plugin-marketplace/+state/effects/plugin-user-assignment.effects';
 import { PluginVersionEffects } from './component/plugin-marketplace/+state/effects/plugin-version.effect';
+import { PluginSettingsQuery } from './component/plugin-marketplace/+state/queries/plugin-settings.query';
+import { PluginSettingsStore } from './component/plugin-marketplace/+state/stores/plugin-settings.store';
 import { PluginMarketplaceDetailComponent } from './component/plugin-marketplace/plugin-marketplace-detail/plugin-marketplace-detail.component';
 import { PluginMarketplaceFilterComponent } from './component/plugin-marketplace/plugin-marketplace-filter/plugin-marketplace-filter.component';
 import { DialogCreateSourceComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-source/dialog-create-source.component';
@@ -67,10 +74,12 @@ import { NpmFormComponent } from './component/plugin-marketplace/plugin-marketpl
 import { PluginSourceComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/plugin-source.component';
 import { PluginVersionComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-version/plugin-version.component';
 import { PluginMarketplaceComponent } from './component/plugin-marketplace/plugin-marketplace.component';
+import { PluginSettingsManagementComponent } from './component/plugin-marketplace/plugin-settings-management/plugin-settings-management.component';
 import { PluginSettingsManagerComponent } from './component/plugin-marketplace/plugin-settings-manager/plugin-settings-manager.component';
 import { PluginSubscriptionManagerComponent } from './component/plugin-marketplace/plugin-subscription-manager/plugin-subscription-manager.component';
 import { PluginSubscriptionPlanCreatorComponent } from './component/plugin-marketplace/plugin-subscription-plan-creator/plugin-subscription-plan-creator.component';
 import { PluginTagsManagerComponent } from './component/plugin-marketplace/plugin-tags-manager/plugin-tags-manager.component';
+import { PluginUserManagementComponent } from './component/plugin-marketplace/plugin-user-management/plugin-user-management.component';
 import { PluginComponent } from './component/plugin/plugin.component';
 import { PluginAnalyticsService } from './services/plugin-analytics.service';
 import { PluginElectronService } from './services/plugin-electron.service';
@@ -79,6 +88,7 @@ import { PluginSecurityService } from './services/plugin-security.service';
 import { PluginSettingsService } from './services/plugin-settings.service';
 import { PluginSubscriptionService } from './services/plugin-subscription.service';
 import { PluginTagsService } from './services/plugin-tags.service';
+import { PluginUserAssignmentService } from './services/plugin-user-assignment.service';
 import { PluginService } from './services/plugin.service';
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 
@@ -94,8 +104,10 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		PluginMarketplaceDetailComponent,
 		PluginMarketplaceFilterComponent,
 		PluginSettingsManagerComponent,
+		PluginSettingsManagementComponent,
 		PluginSubscriptionManagerComponent,
 		PluginTagsManagerComponent,
+		PluginUserManagementComponent,
 		PluginMarketplaceUploadComponent,
 		PluginMarketplaceItemComponent,
 		PluginVersionComponent,
@@ -145,6 +157,9 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		NbStepperModule,
 		NbAlertModule,
 		NbCheckboxModule,
+		NbContextMenuModule,
+		NbTabsetModule,
+		NbUserModule,
 		PipeModule,
 		NbListModule,
 		SelectModule,
@@ -161,16 +176,21 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		PluginSettingsService,
 		PluginAnalyticsService,
 		PluginSecurityService,
+		PluginUserAssignmentService,
 		provideEffectsManager(),
 		provideEffects(
 			PluginEffects,
 			PluginInstallationEffects,
 			PluginMarketplaceEffects,
 			PluginVersionEffects,
-			PluginSourceEffects
+			PluginSourceEffects,
+			PluginUserAssignmentEffects,
+			PluginSettingsEffects
 		),
 		PluginQuery,
 		PluginStore,
+		PluginSettingsQuery,
+		PluginSettingsStore,
 		NbInfiniteListDirective
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA]

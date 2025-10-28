@@ -16,6 +16,8 @@ import { PluginElectronService } from '../../../services/plugin-electron.service
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import { DialogInstallationValidationComponent } from '../plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
+import { PluginSettingsManagementComponent } from '../plugin-settings-management/plugin-settings-management.component';
+import { PluginUserManagementComponent } from '../plugin-user-management/plugin-user-management.component';
 
 // Define enums locally since they might not be available in contracts
 enum PluginSubscriptionType {
@@ -274,16 +276,53 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	 * Open plugin settings dialog
 	 */
 	public openSettings(): void {
-		// TODO: Implement settings dialog
-		console.log('Opening settings for plugin:', this.plugin.name);
+		this.dialog
+			.open(PluginSettingsManagementComponent, {
+				backdropClass: 'backdrop-blur',
+				closeOnEsc: false,
+				context: {
+					plugin: this.plugin,
+					// TODO: Get actual installation ID
+					installationId: this.plugin.id, // This should be the actual installation ID
+					scope: 'global', // or determine based on context
+					organizationId: this.store.selectedOrganization?.id,
+					tenantId: this.store.user?.tenantId
+				}
+			})
+			.onClose.pipe(
+				filter(Boolean),
+				tap(() => {
+					console.log('Settings updated for plugin:', this.plugin.name);
+					// Could dispatch an action to refresh plugin data if needed
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
 	 * Open user assignment dialog
 	 */
 	public manageUsers(): void {
-		// TODO: Implement user management dialog
-		console.log('Managing users for plugin:', this.plugin.name);
+		this.dialog
+			.open(PluginUserManagementComponent, {
+				backdropClass: 'backdrop-blur',
+				closeOnEsc: false,
+				context: {
+					plugin: this.plugin,
+					// TODO: Get actual installation ID
+					installationId: this.plugin.id // This should be the actual installation ID
+				}
+			})
+			.onClose.pipe(
+				filter(Boolean),
+				tap(() => {
+					console.log('Users managed for plugin:', this.plugin.name);
+					// Could dispatch an action to refresh plugin data if needed
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -298,6 +337,24 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			}
 		];
 
+		// Add plugin management options if installed
+		const isChecked = this._isChecked$.value;
+		if (isChecked) {
+			items.push(
+				{
+					title: 'Settings',
+					icon: 'settings-outline',
+					data: { action: 'settings' }
+				},
+				{
+					title: 'Manage Users',
+					icon: 'people-outline',
+					data: { action: 'manage-users' }
+				}
+			);
+		}
+
+		// Add external links
 		if (this.plugin.homepage) {
 			items.push({
 				title: 'Homepage',
@@ -314,14 +371,76 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			});
 		}
 
+		// Add owner-specific actions
 		if (this.isOwner) {
-			items.push({
-				title: 'Delete',
-				icon: 'trash-outline',
-				data: { action: 'delete' }
-			});
+			items.push(
+				{
+					title: 'Edit Plugin',
+					icon: 'edit-outline',
+					data: { action: 'edit' }
+				},
+				{
+					title: 'Delete',
+					icon: 'trash-outline',
+					data: { action: 'delete' }
+				}
+			);
 		}
 
 		return items;
+	}
+
+	/**
+	 * Handle context menu item selection
+	 */
+	public onContextMenuItemSelect(item: any): void {
+		if (!item.data?.action) {
+			return;
+		}
+
+		switch (item.data.action) {
+			case 'settings':
+				this.openSettings();
+				break;
+			case 'manage-users':
+				this.manageUsers();
+				break;
+			case 'edit':
+				this.editPlugin();
+				break;
+			case 'homepage':
+			case 'repository':
+				if (item.data.url) {
+					window.open(item.data.url, '_blank');
+				}
+				break;
+			case 'delete':
+				this.confirmDeletePlugin();
+				break;
+		}
+	}
+
+	/**
+	 * Confirm plugin deletion
+	 */
+	private confirmDeletePlugin(): void {
+		this.dialog
+			.open(AlertComponent, {
+				backdropClass: 'backdrop-blur',
+				context: {
+					data: {
+						title: 'PLUGIN.DIALOG.DELETE.TITLE',
+						message: 'PLUGIN.DIALOG.DELETE.DESCRIPTION',
+						confirmText: 'PLUGIN.DIALOG.DELETE.CONFIRM',
+						status: 'danger'
+					}
+				}
+			})
+			.onClose.subscribe(async (isDelete: boolean) => {
+				if (isDelete) {
+					// Dispatch delete action
+					this.action.dispatch(PluginMarketplaceActions.delete(this.plugin.id));
+				}
+			});
 	}
 }
