@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
-import { tap, switchMap, filter, catchError } from 'rxjs/operators';
+import { tap, switchMap, filter, catchError, map, distinctUntilChanged } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
 import {
@@ -63,8 +63,9 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 
 		this._activatedRoute.data
 			.pipe(
-				filter(({ state }) => !!state),
-				tap(({ state }) => (this.rememberState = state)),
+				map(({ state }) => !!state),
+				distinctUntilChanged(),
+				tap((state) => (this.rememberState = state)),
 				tap(() => this._checkRememberState()),
 				untilDestroyed(this)
 			)
@@ -92,13 +93,11 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 			)
 			.pipe(
 				tap((integrationTenants) => {
-					const integrationTenant = integrationTenants?.items?.[0];
-					if (!integrationTenant) return;
-					const { settings } = integrationTenant;
-					this.hasTenantSettings = Boolean(
-						settings?.some((s) => s.settingsName === 'client_id') &&
-						settings?.some((s) => s.settingsName === 'client_secret')
-					);
+				const integrationTenant = integrationTenants?.items?.[0];
+				const settings = integrationTenant?.settings ?? [];
+				this.hasTenantSettings =
+					settings.some((s) => s.settingsName === 'client_id') &&
+					settings.some((s) => s.settingsName === 'client_secret');
 				}),
 				catchError((error) => {
 					console.error('Failed to check tenant settings:', error);
@@ -216,7 +215,7 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 	 * Redirect to ActivePieces integration page
 	 */
 	private _redirectToActivepiecesIntegration(integrationId: string) {
-		this._router.navigate(['/pages/integrations/activepieces', integrationId]);
+		this._router.navigate(['/pages/integrations/activepieces', integrationId], { replaceUrl: true });
 	}
 
 	ngOnDestroy(): void {}

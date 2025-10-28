@@ -80,6 +80,9 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 						this.connections = [connection];
 						this._activepiecesStore.setCurrentConnection(connection);
 						this._activepiecesStore.setConnections([connection]);
+					} else {
+						this.connections = [];
+						this._activepiecesStore.setConnections([]);
 					}
 				}),
 				catchError((error) => {
