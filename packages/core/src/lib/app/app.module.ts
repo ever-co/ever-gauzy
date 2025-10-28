@@ -3,6 +3,7 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
+import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
 import { ClsModule, ClsService } from 'nestjs-cls';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
@@ -218,7 +219,7 @@ if (environment.THROTTLE_ENABLED) {
 			global: true,
 			middleware: { mount: false }
 		}),
-		...(process.env.REDIS_ENABLED === 'true' ? [CacheModule] : []),
+		...(process.env.REDIS_ENABLED === 'true' ? [CacheModule] : [NestCacheModule.register({ isGlobal: true })]),
 		// Serve Static Module Configuration
 		ServeStaticModule.forRootAsync({
 			useFactory: async (config: ConfigService): Promise<ServeStaticModuleOptions[]> => {

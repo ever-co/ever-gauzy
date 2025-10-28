@@ -20,8 +20,6 @@ import { CacheService } from './cache.service';
 						? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
 						: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
 
-				console.log('REDIS_URL: ', url);
-
 				// Parse Redis URL to extract connection details for advanced options
 				let host: string | undefined;
 				let port: string | number | undefined;
@@ -54,14 +52,15 @@ import { CacheService } from './cache.service';
 						host: host as string,
 						port: port as number,
 						passphrase: password,
-						keepAlive: 10_000, // enable TCP keepalive (initial delay in ms)
+						keepAlive: true, // enable TCP keepalive
+						keepAliveInitialDelay: 10_000, // initial delay in ms
 						reconnectStrategy: (retries: number) => Math.min(1000 * Math.pow(2, retries), 5000),
 						connectTimeout: 10_000,
 						rejectUnauthorized: process.env.NODE_ENV === 'production'
 					},
 					// Keep the socket from idling out at LB/firewall
 					pingInterval: 30_000, // send PING every 30s
-					ttl: 60 * 60 * 24 * 7 // 1 week
+					ttl: 7 * 24 * 60 * 60 * 1000 // 1 week
 				} as any);
 
 				// Create KeyvRedis adapter with production-ready options
@@ -98,7 +97,9 @@ import { CacheService } from './cache.service';
 				redisClient.on('end', () => {
 					console.log('Redis Cache Client End');
 				});
-
+				redisClient.on('error', (err: any) => {
+					console.error('Redis Cache Client Error', err);
+				});
 				// Ping Redis to verify connection
 				try {
 					const res = await redisClient.ping();

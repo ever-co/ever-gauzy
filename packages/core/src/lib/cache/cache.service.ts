@@ -1,5 +1,5 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 
 /**
@@ -8,6 +8,7 @@ import { Cache } from 'cache-manager';
  */
 @Injectable()
 export class CacheService {
+	private readonly logger = new Logger(CacheService.name);
 	constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
 	/**
@@ -19,7 +20,7 @@ export class CacheService {
 		try {
 			return await this.cacheManager.get<T>(key);
 		} catch (error) {
-			console.error(`Error getting cache key ${key}:`, error);
+			this.logger.error(`get(${key}) failed`, error);
 			return undefined;
 		}
 	}
@@ -34,7 +35,7 @@ export class CacheService {
 		try {
 			await this.cacheManager.set(key, value, ttl);
 		} catch (error) {
-			console.error(`Error setting cache key ${key}:`, error);
+			this.logger.error(`set(${key}) failed`, error);
 		}
 	}
 
@@ -46,7 +47,7 @@ export class CacheService {
 		try {
 			await this.cacheManager.del(key);
 		} catch (error) {
-			console.error(`Error deleting cache key ${key}:`, error);
+			this.logger.error(`del(${key}) failed`, error);
 		}
 	}
 
@@ -64,7 +65,7 @@ export class CacheService {
 				await (this.cacheManager as any).reset?.();
 			}
 		} catch (error) {
-			console.error('Error clearing cache:', error);
+			this.logger.error('clear() failed', error);
 		}
 	}
 
@@ -77,7 +78,7 @@ export class CacheService {
 		try {
 			return await Promise.all(keys.map((key) => this.get<T>(key)));
 		} catch (error) {
-			console.error('Error getting multiple cache keys:', error);
+			this.logger.error('getMany() failed', error);
 			return keys.map(() => undefined);
 		}
 	}
@@ -91,7 +92,7 @@ export class CacheService {
 		try {
 			await Promise.all(entries.map(([key, value]) => this.set(key, value, ttl)));
 		} catch (error) {
-			console.error('Error setting multiple cache keys:', error);
+			this.logger.error('setMany() failed', error);
 		}
 	}
 
@@ -103,7 +104,7 @@ export class CacheService {
 		try {
 			await Promise.all(keys.map((key) => this.delete(key)));
 		} catch (error) {
-			console.error('Error deleting multiple cache keys:', error);
+			this.logger.error('deleteMany() failed', error);
 		}
 	}
 
@@ -117,7 +118,7 @@ export class CacheService {
 			const value = await this.get(key);
 			return value !== undefined;
 		} catch (error) {
-			console.error(`Error checking cache key ${key}:`, error);
+			this.logger.error(`has(${key}) failed`, error);
 			return false;
 		}
 	}
