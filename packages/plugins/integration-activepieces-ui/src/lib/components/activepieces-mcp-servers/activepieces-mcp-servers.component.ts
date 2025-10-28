@@ -61,7 +61,7 @@ export class ActivepiecesMcpServersComponent extends TranslationBaseComponent im
 	 */
 	loadMcpServers() {
 		if (!this.projectId) {
-			this._toastrService.error(this.getTranslation('ACTIVEPIECES_PAGE.ERRORS.PROJECT_ID_REQUIRED'));
+			this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.PROJECT_ID_REQUIRED'));
 			return;
 		}
 
@@ -84,7 +84,7 @@ export class ActivepiecesMcpServersComponent extends TranslationBaseComponent im
 					this._activepiecesStore.setMcpServers(response.data);
 				}),
 				catchError((error) => {
-					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.ERRORS.LOAD_MCP_SERVERS') + ': ' + error.message;
+					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.LOAD_MCP_SERVERS') + ': ' + error.message;
 					this._toastrService.error(errorMessage);
 					this._activepiecesStore.setError(errorMessage);
 					return EMPTY;

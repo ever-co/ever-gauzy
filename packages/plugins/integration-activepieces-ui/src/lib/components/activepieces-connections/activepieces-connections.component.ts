@@ -126,7 +126,7 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 					this._activepiecesStore.setConnections(response.data);
 				}),
 				catchError((error) => {
-					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.LOAD_CONNECTIONS') + ': ' + error.message;
+					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.LOAD_CONNECTIONS', { error: error.message });
 					this._toastrService.error(errorMessage);
 					this._activepiecesStore.setError(errorMessage);
 					return EMPTY;

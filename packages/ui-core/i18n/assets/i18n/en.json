@@ -1460,6 +1460,7 @@
 		},
 		"ACTIVEPIECES_PAGE": {
 			"TITLE": "Activepieces",
+			"SUBTITLE": "Activepieces Integration Setup",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
 				"READY_MESSAGE": "Your Activepieces integration is ready. Click the button below to authorize.",
@@ -1507,8 +1508,8 @@
 				"CREATED": "Created",
 				"ACTIONS": "Actions",
 				"PROJECT_ID": "Project ID",
-				"PROJECT_ID_PLACEHOLDER": "Enter Activepieces Project ID",
-				"PROJECT_ID_HINT": "Enter your Activepieces project ID to load connections",
+				"PROJECT_ID_PLACEHOLDER": "Enter Activepieces Project ID (found in project settings)",
+				"PROJECT_ID_HINT": "Enter your Activepieces project ID (found in project settings) to load connections",
 				"LOADING": "Loading connections...",
 				"DELETE_CONFIRM": "Are you sure you want to delete this connection?",
 				"DELETE_ARIA": "Delete connection",
@@ -1529,8 +1530,8 @@
 				"TITLE": "MCP",
 				"NO_SERVERS": "No MCP servers found. Enter a Project ID and click Load to view servers.",
 				"PROJECT_ID": "Project ID",
-				"PROJECT_ID_PLACEHOLDER": "Enter Activepieces Project ID",
-				"PROJECT_ID_HINT": "Enter your Activepieces project ID to load MCP servers",
+				"PROJECT_ID_PLACEHOLDER": "Enter Activepieces Project ID (found in project settings)",
+				"PROJECT_ID_HINT": "Enter your Activepieces project ID (found in project settings) to load MCP servers",
 				"NAME": "Server Name",
 				"SERVER_ID": "Server ID",
 				"AGENT_ID": "Agent ID",
@@ -1564,11 +1565,11 @@
 			},
 			"CALLBACK": {
 				"ERRORS": {
-					"INVALID_PARAMETERS": "Invalid callback parameters",
+					"INVALID_PARAMETERS": "Invalid callback parameters. Check that authorization was completed successfully and verify callback parameters.",
 					"ORGANIZATION_NOT_FOUND": "Organization not found",
 					"EXCHANGE_TOKEN": "Failed to exchange authorization code",
 					"INVALID_PROJECT_ID": "Please provide a valid project ID",
-					"TOKEN_NOT_FOUND": "Token not found. Please try authorization again.",
+					"TOKEN_NOT_FOUND": "Token not found. Please try authorization again and verify callback parameters.",
 					"CREATE_CONNECTION": "Failed to create connection"
 				},
 				"SUCCESS": {

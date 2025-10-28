@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
-import { tap, switchMap, filter, debounceTime, catchError } from 'rxjs/operators';
+import { tap, switchMap, filter, catchError } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
 import {
@@ -144,7 +144,7 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 	 */
 	setupAndAuthorize() {
 		if (this.form.invalid || !this.organization) {
-			this._toastrService.error(this.getTranslation('ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.INVALID_FORM'));
+			this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.INVALID_FORM'));
 			return;
 		}
 
