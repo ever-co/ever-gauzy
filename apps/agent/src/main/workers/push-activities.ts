@@ -145,7 +145,7 @@ class PushActivities {
 		}
 	}
 
-	stopPooling() {
+	async stopPooling() {
 		this.workerQueue?.desktopQueue?.stopQueue();
 		this.agentLogger.info('Pooling scheduler stopped');
 	}

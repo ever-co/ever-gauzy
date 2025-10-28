@@ -12,7 +12,8 @@ import {
 	AppError,
 	User,
 	UserService,
-	pluginListeners
+	pluginListeners,
+	ProviderFactory,
 } from '@gauzy/desktop-lib';
 import { getApiBaseUrl, delaySync, getAuthConfig, getAppSetting } from '../util';
 import { startServer } from './app';
@@ -30,6 +31,7 @@ import * as isOnline from 'is-online';
 const userService = new UserService();
 const appWindow = AppWindow.getInstance(rootPath);
 const apiService = ApiService.getInstance();
+const provider = ProviderFactory.instance;
 
 
 function getGlobalVariable(configs?: {
@@ -61,7 +63,7 @@ async function handleAlwaysOnWindow(isEnabled: boolean) {
 	}
 }
 
-function listenIO(stop: boolean) {
+async function listenIO(stop: boolean) {
 	const auth = getAuthConfig();
 	const pullActivities = PullActivities.getInstance();
 	pullActivities.updateAppUserAuth({
@@ -71,11 +73,11 @@ function listenIO(stop: boolean) {
 	});
 	const pushActivities = PushActivities.getInstance();
 	if (stop) {
-		pullActivities.stopTracking();
-		pushActivities.stopPooling();
+		await pullActivities.stopTracking();
+		await pushActivities.stopPooling();
 	} else {
 		pushActivities.initQueueWorker();
-		pullActivities.startTracking();
+		await pullActivities.startTracking();
 		pushActivities.startPooling();
 	}
 }
@@ -275,5 +277,34 @@ export default function AppIpcMain() {
 		return pullActivities.running;
 
 	});
+
+	ipcMain.on('restart_app', async (_: any, arg) => {
+		LocalStore.updateConfigSetting(arg);
+		const configs = LocalStore.getStore('configs');
+		global.variableGlobal = {
+			API_BASE_URL: getApiBaseUrl(configs),
+			IS_INTEGRATED_DESKTOP: configs.isLocalServer
+		};
+		/* Killing the provider. */
+		await provider.kill();
+		/* Creating a database if not exit. */
+		await ProviderFactory.instance.createDatabase();
+
+		/* stop queue consumer */
+		const pushActivities = PushActivities.getInstance();
+		await pushActivities.stopPooling();
+		/* Kill all windows */
+		appWindow.alwaysOnWindow?.close?.();
+		appWindow.settingWindow?.close?.();
+		appWindow.closeLogWindow();
+		appWindow.aboutWindow?.close?.();
+		appWindow.setupWindow?.close?.();
+		appWindow.splashScreenWindow?.close?.();
+		appWindow.authWindow?.close?.();
+		appWindow.notificationWindow?.close?.();
+		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+		app.exit(0);
+	});
+
 	pluginListeners();
 }
