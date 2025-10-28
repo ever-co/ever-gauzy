@@ -4,7 +4,20 @@ import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType, PluginStatus 
 import { NbDialogService, NbMenuService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, catchError, EMPTY, filter, from, map, Observable, of, switchMap, take, tap } from 'rxjs';
+import {
+	BehaviorSubject,
+	catchError,
+	EMPTY,
+	filter,
+	from,
+	lastValueFrom,
+	map,
+	Observable,
+	of,
+	switchMap,
+	take,
+	tap
+} from 'rxjs';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginVersionActions } from '../+state/actions/plugin-version.action';
@@ -14,6 +27,7 @@ import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
+import { PluginSubscriptionService, PluginSubscriptionType } from '../../../services/plugin-subscription.service';
 import { DialogInstallationValidationComponent } from '../plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginSettingsManagementComponent } from '../plugin-settings-management/plugin-settings-management.component';
@@ -24,7 +38,7 @@ import {
 import { PluginUserManagementComponent } from '../plugin-user-management/plugin-user-management.component';
 
 // Define enums locally since they might not be available in contracts
-enum PluginSubscriptionType {
+enum LocalPluginSubscriptionType {
 	FREE = 'free',
 	TRIAL = 'trial',
 	BASIC = 'basic',
@@ -52,6 +66,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		private readonly action: Actions,
 		private readonly pluginService: PluginElectronService,
 		private readonly menuService: NbMenuService,
+		private readonly subscriptionService: PluginSubscriptionService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery
 	) {}
@@ -146,6 +161,47 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public installPlugin(isUpdate = false): void {
+		// First, check if plugin requires subscription
+		this.checkSubscriptionRequirement()
+			.then((requiresSubscription) => {
+				if (requiresSubscription && !isUpdate) {
+					// Show subscription selection dialog
+					this.showSubscriptionDialog();
+				} else {
+					// Proceed directly with installation
+					this.proceedWithInstallationValidation(isUpdate);
+				}
+			})
+			.catch((error) => {
+				console.error('Failed to check subscription requirement:', error);
+				// Proceed with installation if subscription check fails
+				this.proceedWithInstallationValidation(isUpdate);
+			});
+	}
+
+	private async checkSubscriptionRequirement(): Promise<boolean> {
+		if (!this.plugin?.id) {
+			return false;
+		}
+
+		try {
+			// Load plugin plans to check if subscription is required
+			const plans = await lastValueFrom(this.subscriptionService.getPluginPlans(this.plugin.id));
+
+			// If plugin has plans and no free plan, subscription is required
+			if (plans && plans.length > 0) {
+				const hasFreePlan = plans.some((plan) => plan.type === PluginSubscriptionType.FREE || plan.price === 0);
+				return !hasFreePlan;
+			}
+
+			return false;
+		} catch (error) {
+			console.warn('Failed to load plugin plans:', error);
+			return false;
+		}
+	}
+
+	private proceedWithInstallationValidation(isUpdate = false): void {
 		const installation$ = this.createInstallationObservable(isUpdate);
 		installation$.subscribe({
 			error: (err) => this.handleInstallationError(err)
