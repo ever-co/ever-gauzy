@@ -15,7 +15,7 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject, Observable, Subject, tap } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subject, tap } from 'rxjs';
 import { catchError, concatMap, filter, take, takeUntil } from 'rxjs/operators';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
@@ -29,7 +29,9 @@ import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
+import { PluginSubscriptionService, PluginSubscriptionType } from '../../../services/plugin-subscription.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
+import { PluginSubscriptionSelectionComponent } from '../plugin-subscription-selection/plugin-subscription-selection.component';
 import { DialogCreateSourceComponent } from './dialog-create-source/dialog-create-source.component';
 import { DialogCreateVersionComponent } from './dialog-create-version/dialog-create-version.component';
 import { DialogInstallationValidationComponent } from './dialog-installation-validation/dialog-installation-validation.component';
@@ -60,6 +62,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		private readonly translateService: TranslateService,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly action: Actions,
+		private readonly subscriptionService: PluginSubscriptionService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery,
 		public readonly versionQuery: PluginVersionQuery,
@@ -265,6 +268,74 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	public installPlugin(isUpdate = false): void {
+		// First, check if plugin requires subscription
+		this.checkSubscriptionRequirement()
+			.then((requiresSubscription) => {
+				if (requiresSubscription && !isUpdate) {
+					// Show subscription selection dialog
+					this.showSubscriptionSelectionDialog()
+						.pipe(
+							tap((subscriptionResult) => {
+								if (subscriptionResult?.proceedWithInstallation) {
+									// Proceed with installation after subscription
+									this.proceedWithInstallationValidation(isUpdate);
+								}
+							}),
+							catchError((error) => {
+								console.error('Subscription selection failed:', error);
+								this.toastrService.error(
+									this.translateService.instant('PLUGIN.SUBSCRIPTION.SELECTION_FAILED')
+								);
+								return EMPTY;
+							})
+						)
+						.subscribe();
+				} else {
+					// Proceed directly with installation
+					this.proceedWithInstallationValidation(isUpdate);
+				}
+			})
+			.catch((error) => {
+				console.error('Failed to check subscription requirement:', error);
+				// Proceed with installation if subscription check fails
+				this.proceedWithInstallationValidation(isUpdate);
+			});
+	}
+
+	private async checkSubscriptionRequirement(): Promise<boolean> {
+		if (!this.pluginId) {
+			return false;
+		}
+
+		try {
+			// Load plugin plans to check if subscription is required
+			const plans = await this.subscriptionService.getPluginPlans(this.pluginId).toPromise();
+
+			// If plugin has plans and no free plan, subscription is required
+			if (plans && plans.length > 0) {
+				const hasFreePlan = plans.some((plan) => plan.type === PluginSubscriptionType.FREE || plan.price === 0);
+				return !hasFreePlan;
+			}
+
+			return false;
+		} catch (error) {
+			console.warn('Failed to load plugin plans:', error);
+			return false;
+		}
+	}
+
+	private showSubscriptionSelectionDialog(): Observable<{ proceedWithInstallation: boolean }> {
+		return this.dialogService.open(PluginSubscriptionSelectionComponent, {
+			context: {
+				plugin: this.plugin,
+				pluginId: this.pluginId
+			},
+			backdropClass: 'backdrop-blur',
+			closeOnEsc: false
+		}).onClose;
+	}
+
+	private proceedWithInstallationValidation(isUpdate = false): void {
 		this.dialogService
 			.open(DialogInstallationValidationComponent, {
 				context: {

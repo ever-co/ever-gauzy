@@ -14,6 +14,7 @@ import {
 	IsEnum,
 	IsNotEmpty,
 	IsNumber,
+	IsObject,
 	IsOptional,
 	IsString,
 	IsUUID,
@@ -25,15 +26,13 @@ import { IPluginBilling } from '../../shared/models';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import {
 	IPluginSubscription,
+	IPluginSubscriptionPlan,
 	PluginBillingPeriod,
 	PluginSubscriptionStatus,
 	PluginSubscriptionType
 } from '../../shared/models/plugin-subscription.model';
 import type { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import type { IPlugin } from '../../shared/models/plugin.model';
-import { PluginBilling } from './plugin-billing.entity';
-import { PluginTenant } from './plugin-tenant.entity';
-import { Plugin } from './plugin.entity';
 
 @MultiORMEntity('plugin_subscriptions')
 @Index(['pluginId', 'tenantId', 'organizationId'], { unique: false })
@@ -108,11 +107,11 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@MultiORMColumn({ type: 'text', nullable: true })
 	cancellationReason?: string;
 
-	@ApiPropertyOptional({ type: String, description: 'Subscription metadata (JSON string)' })
+	@ApiPropertyOptional({ type: Object, description: 'Subscription metadata for additional data' })
 	@IsOptional()
-	@IsString({ message: 'Metadata must be a string' })
-	@MultiORMColumn({ type: 'text', nullable: true })
-	metadata?: string;
+	@IsObject({ message: 'Metadata must be an object' })
+	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	metadata?: Record<string, any>;
 
 	@ApiPropertyOptional({ type: Number, description: 'Subscription price' })
 	@IsOptional()
@@ -149,7 +148,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@MultiORMColumn({ type: 'uuid', nullable: false, relationId: true })
 	pluginId: string;
 
-	@MultiORMManyToOne(() => Plugin, {
+	@MultiORMManyToOne(() => 'Plugin', {
 		onDelete: 'CASCADE',
 		nullable: false,
 		eager: false
@@ -167,13 +166,31 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@RelationId((subscription: PluginSubscription) => subscription.pluginTenant)
 	pluginTenantId: string;
 
-	@MultiORMManyToOne(() => PluginTenant, {
+	@MultiORMManyToOne(() => 'PluginTenant', {
 		onDelete: 'CASCADE',
 		nullable: false,
 		eager: false
 	})
 	@JoinColumn()
 	pluginTenant: Relation<IPluginTenant>;
+
+	/*
+	 * Subscription Plan relationship
+	 */
+	@ApiPropertyOptional({ type: String, description: 'Subscription plan ID' })
+	@IsOptional()
+	@IsUUID(4, { message: 'Plan ID must be a valid UUID' })
+	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
+	@RelationId((subscription: PluginSubscription) => subscription.plan)
+	planId?: string;
+
+	@MultiORMManyToOne(() => 'PluginSubscriptionPlan', 'subscriptions', {
+		onDelete: 'SET NULL',
+		nullable: true,
+		eager: false
+	})
+	@JoinColumn()
+	plan?: Relation<IPluginSubscriptionPlan>;
 
 	/*
 	 * Subscriber (User) relationship - Enhanced for user-level subscriptions
@@ -199,7 +216,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	 * Billing relationships - inverse relationship for PluginBilling
 	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugin billings for this subscription' })
-	@MultiORMOneToMany(() => PluginBilling, (billing) => billing.subscription, {
+	@MultiORMOneToMany(() => 'PluginBilling', 'subscription', {
 		onDelete: 'CASCADE'
 	})
 	billings?: Relation<IPluginBilling[]>;

@@ -1,11 +1,13 @@
+import { IPlugin } from '@gauzy/contracts';
+import { RequestContext } from '@gauzy/core';
 import { BadRequestException } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
 import { Plugin } from '../../../domain/entities/plugin.entity';
 import { PluginSourceService } from '../../../domain/services/plugin-source.service';
 import { PluginVersionService } from '../../../domain/services/plugin-version.service';
 import { PluginService } from '../../../domain/services/plugin.service';
-import { IPlugin } from '../../../shared/models/plugin.model';
+import { CreatePluginSubscriptionPlanCommand } from '../../commands/create-plugin-subscription-plan.command';
 import { CreatePluginCommand } from '../../commands/create-plugin.command';
 
 @CommandHandler(CreatePluginCommand)
@@ -14,7 +16,8 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 		private readonly versionService: PluginVersionService,
 		private readonly sourceService: PluginSourceService,
 		private readonly pluginService: PluginService,
-		private readonly dataSource: DataSource
+		private readonly dataSource: DataSource,
+		private readonly commandBus: CommandBus
 	) {}
 
 	/**
@@ -52,12 +55,31 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 				await this.versionService.createVersion(input.version, savedPlugin, savedSource);
 			}
 
+			// Create subscription plans if provided
+			if (input.subscriptionPlans && input.subscriptionPlans.length > 0) {
+				const tenantId = RequestContext.currentTenantId();
+				const organizationId = RequestContext.currentOrganizationId();
+				const user = RequestContext.currentUser();
+
+				for (const planData of input.subscriptionPlans) {
+					const planWithPluginId = {
+						...planData,
+						pluginId: savedPlugin.id
+					};
+
+					await this.commandBus.execute(
+						new CreatePluginSubscriptionPlanCommand(planWithPluginId, tenantId, organizationId, user?.id)
+					);
+				}
+			}
+
 			await queryRunner.commitTransaction();
 
 			// Return the complete plugin with all relations
-			return this.pluginService.findOneByIdString(savedPlugin.id, {
+			const result = await this.pluginService.findOneByIdString(savedPlugin.id, {
 				relations: ['versions', 'versions.sources']
 			});
+			return result as IPlugin;
 		} catch (error) {
 			// Rollback transaction on error
 			await queryRunner.rollbackTransaction();

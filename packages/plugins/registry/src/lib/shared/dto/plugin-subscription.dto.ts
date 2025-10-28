@@ -1,23 +1,24 @@
+import { TenantOrganizationBaseDTO } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
 import {
+	IsBoolean,
+	IsDateString,
 	IsEnum,
 	IsNotEmpty,
+	IsNumber,
+	IsObject,
 	IsOptional,
 	IsString,
-	IsBoolean,
 	IsUUID,
-	IsNumber,
-	IsDateString,
 	Min
 } from 'class-validator';
-import { TenantOrganizationBaseDTO } from '@gauzy/core';
 import { PluginSubscription } from '../../domain/entities/plugin-subscription.entity';
-import {
-	PluginSubscriptionStatus,
-	PluginSubscriptionType,
-	PluginBillingPeriod
-} from '../../shared/models/plugin-subscription.model';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
+import {
+	PluginBillingPeriod,
+	PluginSubscriptionStatus,
+	PluginSubscriptionType
+} from '../../shared/models/plugin-subscription.model';
 
 /**
  * Create Plugin Subscription DTO
@@ -140,10 +141,10 @@ export class PurchasePluginSubscriptionDTO {
 	@IsString()
 	promoCode?: string;
 
-	@ApiPropertyOptional({ type: String, description: 'Additional metadata' })
+	@ApiPropertyOptional({ type: Object, description: 'Additional metadata' })
 	@IsOptional()
-	@IsString()
-	metadata?: string;
+	@IsObject()
+	metadata?: Record<string, any>;
 }
 
 /**

@@ -17,6 +17,10 @@ import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.ser
 import { DialogInstallationValidationComponent } from '../plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginSettingsManagementComponent } from '../plugin-settings-management/plugin-settings-management.component';
+import {
+	IPluginSubscriptionSelectionResult,
+	PluginSubscriptionSelectionComponent
+} from '../plugin-subscription-selection/plugin-subscription-selection.component';
 import { PluginUserManagementComponent } from '../plugin-user-management/plugin-user-management.component';
 
 // Define enums locally since they might not be available in contracts
@@ -92,7 +96,53 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 
 	public togglePlugin(checked: boolean): void {
 		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: checked, plugin: this.plugin }));
-		checked ? this.installPlugin() : this.uninstallPlugin();
+		checked ? this.showSubscriptionDialog() : this.uninstallPlugin();
+	}
+
+	/**
+	 * Show subscription selection dialog before installation
+	 */
+	private showSubscriptionDialog(): void {
+		this.dialog
+			.open(PluginSubscriptionSelectionComponent, {
+				context: {
+					plugin: this.plugin,
+					pluginId: this.plugin.id
+				},
+				backdropClass: 'backdrop-blur',
+				closeOnEsc: false
+			})
+			.onClose.pipe(
+				take(1),
+				tap((result: IPluginSubscriptionSelectionResult | null) => {
+					if (result?.proceedWithInstallation) {
+						// If subscription was created or it's a free plugin, proceed with installation
+						this.installPlugin();
+					} else {
+						// User cancelled or there was an error, reset the toggle
+						this.action.dispatch(
+							PluginInstallationActions.toggle({
+								isChecked: false,
+								plugin: this.plugin
+							})
+						);
+						this._isChecked$.next(false);
+					}
+				}),
+				catchError((err) => {
+					console.error('Subscription dialog error:', err);
+					// Reset toggle on error
+					this.action.dispatch(
+						PluginInstallationActions.toggle({
+							isChecked: false,
+							plugin: this.plugin
+						})
+					);
+					this._isChecked$.next(false);
+					return EMPTY;
+				})
+			)
+			.subscribe();
 	}
 
 	public installPlugin(isUpdate = false): void {

@@ -1,0 +1,220 @@
+.subscription-plan-creator {
+	width: 100%;
+	max-width: 100%;
+
+	.creator-header {
+		margin-bottom: 1.5rem;
+
+		h6 {
+			margin-bottom: 0.5rem;
+			color: nb-theme(text-basic-color);
+		}
+
+		.text-hint {
+			color: nb-theme(text-hint-color);
+			font-size: 0.875rem;
+			margin: 0;
+		}
+	}
+
+	.plans-form {
+		.plans-array {
+			display: flex;
+			flex-direction: column;
+			gap: 1.5rem;
+		}
+
+		.plan-card {
+			border: 1px solid nb-theme(border-basic-color-3);
+			border-radius: nb-theme(border-radius);
+			background: nb-theme(background-basic-color-1);
+			overflow: hidden;
+
+			.plan-card-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 1rem;
+				background: nb-theme(background-basic-color-2);
+				border-bottom: 1px solid nb-theme(border-basic-color-3);
+
+				.plan-title {
+					display: flex;
+					align-items: center;
+					gap: 0.5rem;
+					font-weight: 600;
+					color: nb-theme(text-basic-color);
+
+					nb-icon {
+						color: nb-theme(color-primary-default);
+					}
+				}
+
+				.plan-actions {
+					display: flex;
+					gap: 0.5rem;
+				}
+			}
+
+			.plan-card-body {
+				padding: 1.5rem;
+
+				.form-row {
+					margin-bottom: 1rem;
+
+					&.pricing-row {
+						display: grid;
+						grid-template-columns: 2fr 1fr 1.5fr;
+						gap: 1rem;
+
+						@media (max-width: 768px) {
+							grid-template-columns: 1fr;
+							gap: 1rem;
+						}
+					}
+				}
+
+				.price-preview {
+					margin-bottom: 1rem;
+				}
+
+				.form-section {
+					margin-bottom: 1.5rem;
+
+					.section-header {
+						display: flex;
+						justify-content: space-between;
+						align-items: center;
+						margin-bottom: 1rem;
+
+						.label {
+							margin: 0;
+						}
+					}
+
+					.section-title {
+						display: block;
+						margin-bottom: 1rem;
+						font-weight: 600;
+						color: nb-theme(text-basic-color);
+					}
+
+					.features-list {
+						display: flex;
+						flex-direction: column;
+						gap: 0.75rem;
+
+						.feature-item {
+							display: flex;
+							align-items: center;
+							gap: 0.5rem;
+
+							.feature-input {
+								flex: 1;
+							}
+						}
+					}
+
+					.limitations-grid {
+						display: grid;
+						grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+						gap: 1rem;
+					}
+
+					.options-grid {
+						display: grid;
+						grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+						gap: 1rem;
+						margin-bottom: 1rem;
+					}
+
+					.checkboxes-row {
+						display: flex;
+						gap: 1.5rem;
+						flex-wrap: wrap;
+					}
+				}
+			}
+		}
+
+		.add-plan-section {
+			display: flex;
+			justify-content: center;
+			padding: 2rem;
+
+			.add-plan-button {
+				min-width: 200px;
+				border: 2px dashed nb-theme(border-basic-color-3);
+				background: nb-theme(background-basic-color-1);
+
+				&:hover {
+					border-color: nb-theme(color-primary-default);
+					background: nb-theme(background-basic-color-2);
+				}
+			}
+		}
+
+		.no-plans-message {
+			padding: 2rem;
+			text-align: center;
+		}
+	}
+
+	// Form field styles
+	nb-form-field {
+		margin-bottom: 0;
+
+		.label {
+			font-weight: 500;
+			color: nb-theme(text-basic-color);
+			margin-bottom: 0.5rem;
+			display: block;
+		}
+	}
+
+	// Button spacing
+	button {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	// Alert customization
+	nb-alert {
+		margin-bottom: 0;
+
+		&.size-small {
+			padding: 0.75rem;
+		}
+	}
+
+	// Badge in selects
+	nb-option {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	// Responsive design
+	@media (max-width: 768px) {
+		.plan-card-header {
+			flex-direction: column;
+			gap: 1rem;
+			align-items: flex-start;
+
+			.plan-actions {
+				align-self: flex-end;
+			}
+		}
+
+		.limitations-grid,
+		.options-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.checkboxes-row {
+			flex-direction: column;
+			gap: 1rem;
+		}
+	}
+}

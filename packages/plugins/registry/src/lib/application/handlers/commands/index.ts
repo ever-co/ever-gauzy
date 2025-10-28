@@ -35,10 +35,20 @@ import { UpdatePluginCategoryHandler } from './update-plugin-category.handler';
 import { CancelPluginSubscriptionCommandHandler } from './cancel-plugin-subscription.handler';
 import { CreatePluginSubscriptionCommandHandler } from './create-plugin-subscription.handler';
 import { DeletePluginSubscriptionCommandHandler } from './delete-plugin-subscription.handler';
+import { DowngradePluginSubscriptionCommandHandler } from './downgrade-plugin-subscription.handler';
+import { ExtendTrialSubscriptionCommandHandler } from './extend-trial-subscription.handler';
 import { ProcessBillingCommandHandler } from './process-billing.handler';
 import { PurchasePluginSubscriptionCommandHandler } from './purchase-plugin-subscription.handler';
 import { RenewPluginSubscriptionCommandHandler } from './renew-plugin-subscription.handler';
 import { UpdatePluginSubscriptionCommandHandler } from './update-plugin-subscription.handler';
+import { UpgradePluginSubscriptionCommandHandler } from './upgrade-plugin-subscription.handler';
+
+// Plugin Subscription Plan Command Handlers
+import { BulkPluginPlanOperationCommandHandler } from './bulk-plugin-plan-operation.handler';
+import { CopyPluginPlanCommandHandler } from './copy-plugin-plan.handler';
+import { CreatePluginSubscriptionPlanCommandHandler } from './create-plugin-subscription-plan.handler';
+import { DeletePluginSubscriptionPlanCommandHandler } from './delete-plugin-subscription-plan.handler';
+import { UpdatePluginSubscriptionPlanCommandHandler } from './update-plugin-subscription-plan.handler';
 
 // Plugin Settings Command Handlers
 import { BulkUpdatePluginSettingsHandler } from './bulk-update-plugin-settings.handler';
@@ -79,11 +89,14 @@ export {
 	BulkAssignUsersToPluginsCommandHandler,
 	BulkCreatePluginTagsHandler,
 	BulkDeletePluginTagsHandler,
+	// Plugin Subscription Plan Command Handlers
+	BulkPluginPlanOperationCommandHandler,
 	// Plugin Settings Command Handlers
 	BulkUpdatePluginSettingsHandler,
 	BulkUpdatePluginTagsHandler,
 	// Plugin Subscription Command Handlers
 	CancelPluginSubscriptionCommandHandler,
+	CopyPluginPlanCommandHandler,
 	// Plugin Category Command Handlers
 	CreatePluginCategoryHandler,
 	CreatePluginCommandHandler,
@@ -91,6 +104,7 @@ export {
 	// Plugin Source Command Handlers
 	CreatePluginSourceCommandHandler,
 	CreatePluginSubscriptionCommandHandler,
+	CreatePluginSubscriptionPlanCommandHandler,
 	CreatePluginTagHandler,
 	// Plugin Version Command Handlers
 	CreatePluginVersionCommandHandler,
@@ -100,6 +114,7 @@ export {
 	DeletePluginSettingHandler,
 	DeletePluginSourceCommandHandler,
 	DeletePluginSubscriptionCommandHandler,
+	DeletePluginSubscriptionPlanCommandHandler,
 	DeletePluginTagHandler,
 	DeletePluginVersionCommandHandler,
 	InstallPluginCommandHandler,
@@ -121,6 +136,7 @@ export {
 	UpdatePluginCommandHandler,
 	UpdatePluginSettingHandler,
 	UpdatePluginSubscriptionCommandHandler,
+	UpdatePluginSubscriptionPlanCommandHandler,
 	UpdatePluginTagHandler,
 	UpdatePluginTagsPriorityHandler,
 	UpdatePluginVersionCommandHandler,
@@ -164,10 +180,20 @@ export const commands = [
 	CancelPluginSubscriptionCommandHandler,
 	CreatePluginSubscriptionCommandHandler,
 	DeletePluginSubscriptionCommandHandler,
+	DowngradePluginSubscriptionCommandHandler,
+	ExtendTrialSubscriptionCommandHandler,
 	ProcessBillingCommandHandler,
 	PurchasePluginSubscriptionCommandHandler,
 	RenewPluginSubscriptionCommandHandler,
 	UpdatePluginSubscriptionCommandHandler,
+	UpgradePluginSubscriptionCommandHandler,
+
+	// Plugin Subscription Plan Command Handlers
+	BulkPluginPlanOperationCommandHandler,
+	CopyPluginPlanCommandHandler,
+	CreatePluginSubscriptionPlanCommandHandler,
+	DeletePluginSubscriptionPlanCommandHandler,
+	UpdatePluginSubscriptionPlanCommandHandler,
 
 	// Plugin Settings Command Handlers
 	BulkUpdatePluginSettingsHandler,

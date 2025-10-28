@@ -196,27 +196,41 @@
 			</button>
 		</div>
 
-		<!-- Install/Uninstall Toggle -->
-		<div class="installation-control">
-			@if(showProgress) {
-				<div class="progress-indicator">
-					<nb-icon *gauzySpinnerButton="true" icon="sync-outline"></nb-icon>
-					<span class="progress-text">
-						{{ installing ? 'Installing...' : 'Uninstalling...' }}
-					</span>
-				</div>
-			} @else {
-				<nb-toggle
-					[disabled]="disabled"
-					[checked]="checked"
-					(checkedChange)="togglePlugin($event)"
-					class="install-toggle">
-				</nb-toggle>
-				<span class="toggle-label">
-					{{ checked ? 'Installed' : 'Install' }}
+	<!-- Install/Uninstall Toggle -->
+	<div class="installation-control">
+		@if(showProgress) {
+			<div class="progress-indicator">
+				<nb-icon *gauzySpinnerButton="true" icon="sync-outline"></nb-icon>
+				<span class="progress-text">
+					{{ installing ? 'Installing...' : 'Uninstalling...' }}
 				</span>
+			</div>
+		} @else {
+			<!-- Show subscription requirement if needed -->
+			@if(plugin.requiresSubscription && !checked) {
+				<div class="subscription-required">
+					<nb-icon icon="card-outline" class="subscription-icon"></nb-icon>
+					<span class="subscription-text">Subscription Required</span>
+				</div>
 			}
-		</div>
+
+			<nb-toggle
+				[disabled]="disabled"
+				[checked]="checked"
+				(checkedChange)="togglePlugin($event)"
+				class="install-toggle">
+			</nb-toggle>
+			<span class="toggle-label">
+				@if(checked) {
+					Installed
+				} @else if(plugin.requiresSubscription) {
+					Subscribe & Install
+				} @else {
+					Install
+				}
+			</span>
+		}
+	</div>
 	</div>
 </div>
 <!-- Context Menu for More Actions -->

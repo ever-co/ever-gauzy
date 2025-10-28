@@ -43,6 +43,54 @@ export enum PluginOSArch {
 }
 
 /**
+ * Plugin subscription information
+ */
+export interface IPluginSubscription {
+	id?: string;
+	pluginId?: string;
+	subscriptionType: PluginSubscriptionType;
+	status: PluginSubscriptionStatus;
+	billingPeriod: PluginBillingPeriod;
+	price: number;
+	currency: string;
+	isInTrial?: boolean;
+	isExpiringSoon?: boolean;
+	daysUntilExpiration?: number;
+	features?: string[];
+	startDate?: Date;
+	endDate?: Date;
+	nextBillingDate?: Date;
+}
+
+export enum PluginSubscriptionType {
+	FREE = 'free',
+	TRIAL = 'trial',
+	BASIC = 'basic',
+	PREMIUM = 'premium',
+	ENTERPRISE = 'enterprise',
+	CUSTOM = 'custom'
+}
+
+export enum PluginSubscriptionStatus {
+	ACTIVE = 'active',
+	CANCELLED = 'cancelled',
+	EXPIRED = 'expired',
+	TRIAL = 'trial',
+	PAST_DUE = 'past_due',
+	SUSPENDED = 'suspended',
+	PENDING = 'pending'
+}
+
+export enum PluginBillingPeriod {
+	DAILY = 'daily',
+	WEEKLY = 'weekly',
+	MONTHLY = 'monthly',
+	QUARTERLY = 'quarterly',
+	YEARLY = 'yearly',
+	ONE_TIME = 'one-time'
+}
+
+/**
  * CDN-hosted plugin source configuration
  */
 export interface ICDNSource extends IPluginSource {
@@ -95,6 +143,38 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
 
 	downloadCount: number; // Number of times the plugin has been downloaded
 	lastDownloadedAt?: Date; // Optional date when the plugin was last downloaded
+
+	// Subscription information
+	subscription?: IPluginSubscription; // Current subscription information if applicable
+	requiresSubscription?: boolean; // Whether this plugin requires a subscription
+
+	// Security and verification
+	isFeatured?: boolean; // Whether the plugin is featured
+	isVerified?: boolean; // Whether the plugin is verified by Gauzy
+
+	// Categories and tags
+	category?: IPluginCategory; // Plugin category
+	tags?: IPluginTag[]; // Plugin tags
+}
+
+/**
+ * Plugin category interface
+ */
+export interface IPluginCategory {
+	id: string;
+	name: string;
+	description?: string;
+	icon?: string;
+}
+
+/**
+ * Plugin tag interface
+ */
+export interface IPluginTag {
+	id: string;
+	name: string;
+	color?: string;
+	isFeatured?: boolean;
 }
 
 /**

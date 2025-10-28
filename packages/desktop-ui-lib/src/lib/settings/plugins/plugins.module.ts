@@ -19,6 +19,7 @@ import {
 	NbInfiniteListDirective,
 	NbInputModule,
 	NbListModule,
+	NbRadioModule,
 	NbRouteTabsetModule,
 	NbSelectModule,
 	NbSpinnerModule,
@@ -49,10 +50,14 @@ import { PluginInstallationEffects } from './component/plugin-marketplace/+state
 import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/effects/plugin-marketplace.effect';
 import { PluginSettingsEffects } from './component/plugin-marketplace/+state/effects/plugin-settings.effects';
 import { PluginSourceEffects } from './component/plugin-marketplace/+state/effects/plugin-source.effect';
+import { PluginSubscriptionEffects } from './component/plugin-marketplace/+state/effects/plugin-subscription.effect';
 import { PluginUserAssignmentEffects } from './component/plugin-marketplace/+state/effects/plugin-user-assignment.effects';
 import { PluginVersionEffects } from './component/plugin-marketplace/+state/effects/plugin-version.effect';
+import { PluginSubscriptionFacade } from './component/plugin-marketplace/+state/plugin-subscription.facade';
 import { PluginSettingsQuery } from './component/plugin-marketplace/+state/queries/plugin-settings.query';
+import { PluginSubscriptionQuery } from './component/plugin-marketplace/+state/queries/plugin-subscription.query';
 import { PluginSettingsStore } from './component/plugin-marketplace/+state/stores/plugin-settings.store';
+import { PluginSubscriptionStore } from './component/plugin-marketplace/+state/stores/plugin-subscription.store';
 import { PluginMarketplaceDetailComponent } from './component/plugin-marketplace/plugin-marketplace-detail/plugin-marketplace-detail.component';
 import { PluginMarketplaceFilterComponent } from './component/plugin-marketplace/plugin-marketplace-filter/plugin-marketplace-filter.component';
 import { DialogCreateSourceComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-source/dialog-create-source.component';
@@ -78,6 +83,7 @@ import { PluginSettingsManagementComponent } from './component/plugin-marketplac
 import { PluginSettingsManagerComponent } from './component/plugin-marketplace/plugin-settings-manager/plugin-settings-manager.component';
 import { PluginSubscriptionManagerComponent } from './component/plugin-marketplace/plugin-subscription-manager/plugin-subscription-manager.component';
 import { PluginSubscriptionPlanCreatorComponent } from './component/plugin-marketplace/plugin-subscription-plan-creator/plugin-subscription-plan-creator.component';
+import { PluginSubscriptionSelectionComponent } from './component/plugin-marketplace/plugin-subscription-selection/plugin-subscription-selection.component';
 import { PluginTagsManagerComponent } from './component/plugin-marketplace/plugin-tags-manager/plugin-tags-manager.component';
 import { PluginUserManagementComponent } from './component/plugin-marketplace/plugin-user-management/plugin-user-management.component';
 import { PluginComponent } from './component/plugin/plugin.component';
@@ -106,6 +112,7 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		PluginSettingsManagerComponent,
 		PluginSettingsManagementComponent,
 		PluginSubscriptionManagerComponent,
+		PluginSubscriptionSelectionComponent,
 		PluginTagsManagerComponent,
 		PluginUserManagementComponent,
 		PluginMarketplaceUploadComponent,
@@ -160,6 +167,7 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		NbContextMenuModule,
 		NbTabsetModule,
 		NbUserModule,
+		NbRadioModule,
 		PipeModule,
 		NbListModule,
 		SelectModule,
@@ -185,12 +193,16 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 			PluginVersionEffects,
 			PluginSourceEffects,
 			PluginUserAssignmentEffects,
-			PluginSettingsEffects
+			PluginSettingsEffects,
+			PluginSubscriptionEffects
 		),
 		PluginQuery,
 		PluginStore,
 		PluginSettingsQuery,
 		PluginSettingsStore,
+		PluginSubscriptionQuery,
+		PluginSubscriptionStore,
+		PluginSubscriptionFacade,
 		NbInfiniteListDirective
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA]

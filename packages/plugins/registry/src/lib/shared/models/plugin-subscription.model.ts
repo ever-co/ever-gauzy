@@ -5,6 +5,70 @@ import { IPluginTenant } from './plugin-tenant.model';
 import { IPlugin } from './plugin.model';
 
 /**
+ * Interface for plugin subscription plans
+ */
+export interface IPluginSubscriptionPlan extends IBasePerTenantAndOrganizationEntityModel {
+	// Plan name
+	name: string;
+
+	// Plan description
+	description?: string;
+
+	// Subscription type/plan level
+	type: PluginSubscriptionType;
+
+	// Plan price
+	price: number;
+
+	// Currency code (e.g., USD, EUR)
+	currency: string;
+
+	// Billing period
+	billingPeriod: PluginBillingPeriod;
+
+	// Plan features list
+	features: string[];
+
+	// Plan limitations and quotas
+	limitations?: Record<string, any>;
+
+	// Whether the plan is active and available for purchase
+	isActive: boolean;
+
+	// Whether this plan is marked as popular
+	isPopular?: boolean;
+
+	// Whether this plan is recommended
+	isRecommended?: boolean;
+
+	// Trial period duration in days
+	trialDays?: number;
+
+	// Setup fee for the plan
+	setupFee?: number;
+
+	// Discount percentage for the plan
+	discountPercentage?: number;
+
+	// Plan metadata
+	metadata?: Record<string, any>;
+
+	// Sort order for displaying plans
+	sortOrder?: number;
+
+	// The plugin this plan belongs to
+	plugin?: IPlugin;
+	pluginId: ID;
+
+	// User who created this plan
+	createdBy?: IUser;
+	createdById?: ID;
+
+	// Subscriptions using this plan
+	subscriptions?: IPluginSubscription[];
+}
+
+/**
  * Interface for plugin subscriptions
  */
 export interface IPluginSubscription extends IBasePerTenantAndOrganizationEntityModel {
@@ -32,6 +96,12 @@ export interface IPluginSubscription extends IBasePerTenantAndOrganizationEntity
 	// Whether auto-renewal is enabled
 	autoRenew: boolean;
 
+	// Subscription price
+	price: number;
+
+	// Currency code (e.g., USD, EUR)
+	currency: string;
+
 	// Cancellation date (if cancelled)
 	cancelledAt?: Date;
 
@@ -50,8 +120,12 @@ export interface IPluginSubscription extends IBasePerTenantAndOrganizationEntity
 	subscriber?: IUser;
 	subscriberId?: ID;
 
-	// Subscription metadata (JSON string for flexibility)
-	metadata?: string;
+	// Subscription metadata for additional data
+	metadata?: Record<string, any>;
+
+	// Subscription plan (if subscription is based on a specific plan)
+	plan?: IPluginSubscriptionPlan;
+	planId?: ID;
 
 	// Billing records for this subscription
 	billings?: IPluginBilling[];
@@ -69,8 +143,7 @@ export enum PluginSubscriptionStatus {
 	EXPIRED = 'expired',
 	CANCELLED = 'cancelled',
 	SUSPENDED = 'suspended',
-	PENDING = 'pending',
-	FAILED = 'failed'
+	PENDING = 'pending'
 }
 
 /**
@@ -78,6 +151,7 @@ export enum PluginSubscriptionStatus {
  */
 export enum PluginSubscriptionType {
 	FREE = 'free',
+	TRIAL = 'trial',
 	BASIC = 'basic',
 	PREMIUM = 'premium',
 	ENTERPRISE = 'enterprise',
@@ -88,25 +162,53 @@ export enum PluginSubscriptionType {
  * Enum for billing periods
  */
 export enum PluginBillingPeriod {
-	MONTHLY = 'monthly',
-	YEARLY = 'yearly',
-	QUARTERLY = 'quarterly',
+	DAILY = 'daily',
 	WEEKLY = 'weekly',
-	ONE_TIME = 'one_time',
+	MONTHLY = 'monthly',
+	QUARTERLY = 'quarterly',
+	YEARLY = 'yearly',
+	ONE_TIME = 'one-time',
 	USAGE_BASED = 'usage_based'
 }
 
 /**
  * Interface for creating plugin subscriptions
  */
-export interface IPluginSubscriptionCreateInput
-	extends Omit<
-		IPluginSubscription,
-		'id' | 'createdAt' | 'updatedAt' | 'plugin' | 'pluginTenant' | 'subscriber' | 'payments' | 'billings'
-	> {
+export interface IPluginSubscriptionCreateInput {
+	// Core subscription details
+	status: PluginSubscriptionStatus;
+	subscriptionType: PluginSubscriptionType;
+	scope: PluginScope;
+	billingPeriod: PluginBillingPeriod;
+	startDate: Date;
+	endDate?: Date;
+	trialEndDate?: Date;
+	autoRenew: boolean;
+
+	// Pricing details
+	price?: number;
+	currency?: string;
+
+	// Cancellation details
+	cancelledAt?: Date;
+	cancellationReason?: string;
+
+	// Metadata
+	metadata?: Record<string, any>;
+
+	// Billing info
+	nextBillingDate?: Date;
+	externalSubscriptionId?: string;
+
+	// Relationships
 	pluginId: ID;
 	pluginTenantId: ID;
 	subscriberId?: ID;
+	planId?: ID;
+
+	// Base entity fields
+	tenantId?: ID;
+	organizationId?: ID;
 }
 
 /**
@@ -137,5 +239,31 @@ export interface IPluginSubscriptionPurchaseInput {
 	autoRenew: boolean;
 	paymentMethod?: string;
 	promoCode?: string;
-	metadata?: string;
+	metadata?: Record<string, any>;
 }
+
+/**
+ * Interface for creating plugin subscription plans
+ */
+export interface IPluginSubscriptionPlanCreateInput
+	extends Omit<IPluginSubscriptionPlan, 'id' | 'createdAt' | 'updatedAt' | 'plugin' | 'createdBy' | 'subscriptions'> {
+	pluginId: ID;
+	createdById?: ID;
+}
+
+/**
+ * Interface for updating plugin subscription plans
+ */
+export interface IPluginSubscriptionPlanUpdateInput
+	extends Partial<Omit<IPluginSubscriptionPlanCreateInput, 'pluginId'>> {}
+
+/**
+ * Interface for finding plugin subscription plans
+ */
+export interface IPluginSubscriptionPlanFindInput
+	extends Partial<
+		Pick<
+			IPluginSubscriptionPlan,
+			'type' | 'isActive' | 'pluginId' | 'isPopular' | 'isRecommended' | 'billingPeriod'
+		>
+	> {}

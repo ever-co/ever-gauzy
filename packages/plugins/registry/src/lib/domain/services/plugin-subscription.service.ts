@@ -188,6 +188,127 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 	}
 
 	/**
+	 * Upgrade a subscription to a new plan
+	 */
+	async upgradeSubscription(
+		subscriptionId: string,
+		newPlanId: string,
+		tenantId: string,
+		organizationId?: string,
+		userId?: string
+	): Promise<IPluginSubscription> {
+		const subscription = await this.findOneByIdString(subscriptionId);
+		if (!subscription) {
+			throw new NotFoundException('Subscription not found');
+		}
+
+		if (subscription.status !== PluginSubscriptionStatus.ACTIVE) {
+			throw new BadRequestException('Can only upgrade active subscriptions');
+		}
+
+		// Calculate prorated amount and process payment difference
+		const upgradeDetails = await this.calculateUpgradeDetails(subscription, newPlanId);
+
+		// Process upgrade payment if needed
+		if (upgradeDetails.proratedAmount > 0) {
+			await this.processUpgradePayment(subscription, upgradeDetails);
+		}
+
+		// Update subscription with new plan details
+		await this.update(subscriptionId, {
+			subscriptionType: upgradeDetails.newSubscriptionType,
+			billingPeriod: upgradeDetails.newBillingPeriod,
+			metadata: {
+				...subscription.metadata,
+				previousPlanId: subscription.metadata?.planId,
+				upgradedAt: new Date().toISOString(),
+				upgradeReason: 'user_requested'
+			}
+		} as IPluginSubscriptionUpdateInput);
+
+		return await this.findOneByIdString(subscriptionId);
+	}
+
+	/**
+	 * Downgrade a subscription to a new plan
+	 */
+	async downgradeSubscription(
+		subscriptionId: string,
+		newPlanId: string,
+		tenantId: string,
+		organizationId?: string,
+		userId?: string
+	): Promise<IPluginSubscription> {
+		const subscription = await this.findOneByIdString(subscriptionId);
+		if (!subscription) {
+			throw new NotFoundException('Subscription not found');
+		}
+
+		if (subscription.status !== PluginSubscriptionStatus.ACTIVE) {
+			throw new BadRequestException('Can only downgrade active subscriptions');
+		}
+
+		// Calculate credit for unused time
+		const downgradeDetails = await this.calculateDowngradeDetails(subscription, newPlanId);
+
+		// Process credit if applicable
+		if (downgradeDetails.creditAmount > 0) {
+			await this.processCreditRefund(subscription, downgradeDetails);
+		}
+
+		// Update subscription with new plan details
+		await this.update(subscriptionId, {
+			subscriptionType: downgradeDetails.newSubscriptionType,
+			billingPeriod: downgradeDetails.newBillingPeriod,
+			metadata: {
+				...subscription.metadata,
+				previousPlanId: subscription.metadata?.planId,
+				downgradedAt: new Date().toISOString(),
+				downgradeReason: 'user_requested'
+			}
+		} as IPluginSubscriptionUpdateInput);
+
+		return await this.findOneByIdString(subscriptionId);
+	}
+
+	/**
+	 * Extend trial period for a subscription
+	 */
+	async extendTrial(
+		subscriptionId: string,
+		days: number,
+		tenantId: string,
+		organizationId?: string,
+		userId?: string
+	): Promise<IPluginSubscription> {
+		const subscription = await this.findOneByIdString(subscriptionId);
+		if (!subscription) {
+			throw new NotFoundException('Subscription not found');
+		}
+
+		if (subscription.subscriptionType !== PluginSubscriptionType.TRIAL) {
+			throw new BadRequestException('Can only extend trial subscriptions');
+		}
+
+		const currentTrialEnd = subscription.trialEndDate || new Date();
+		const newTrialEnd = new Date(currentTrialEnd);
+		newTrialEnd.setDate(newTrialEnd.getDate() + days);
+
+		await this.update(subscriptionId, {
+			trialEndDate: newTrialEnd,
+			metadata: {
+				...subscription.metadata,
+				trialExtended: true,
+				extensionDays: days,
+				extendedAt: new Date().toISOString(),
+				extendedBy: userId
+			}
+		} as IPluginSubscriptionUpdateInput);
+
+		return await this.findOneByIdString(subscriptionId);
+	}
+
+	/**
 	 * Get expiring subscriptions
 	 */
 	async getExpiringSubscriptions(days: number = 7): Promise<IPluginSubscription[]> {
@@ -441,9 +562,55 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 	 */
 	private async handleFailedPayment(subscription: IPluginSubscription): Promise<void> {
 		await this.update(subscription.id, {
-			status: PluginSubscriptionStatus.FAILED
+			status: PluginSubscriptionStatus.SUSPENDED
 		} as IPluginSubscriptionUpdateInput);
 
 		// Send notification, retry logic, etc.
+	}
+
+	/**
+	 * Calculate upgrade details including prorated amount
+	 */
+	private async calculateUpgradeDetails(subscription: IPluginSubscription, newPlanId: string) {
+		// This would integrate with subscription plan service to get plan details
+		// Mock implementation for now
+		return {
+			newSubscriptionType: PluginSubscriptionType.PREMIUM,
+			newBillingPeriod: subscription.billingPeriod,
+			proratedAmount: 15.0, // Calculate based on remaining time and price difference
+			newPlanId
+		};
+	}
+
+	/**
+	 * Calculate downgrade details including credit amount
+	 */
+	private async calculateDowngradeDetails(subscription: IPluginSubscription, newPlanId: string) {
+		// This would integrate with subscription plan service to get plan details
+		// Mock implementation for now
+		return {
+			newSubscriptionType: PluginSubscriptionType.BASIC,
+			newBillingPeriod: subscription.billingPeriod,
+			creditAmount: 5.0, // Calculate based on remaining time and price difference
+			newPlanId
+		};
+	}
+
+	/**
+	 * Process upgrade payment
+	 */
+	private async processUpgradePayment(subscription: IPluginSubscription, upgradeDetails: any): Promise<void> {
+		// Integrate with payment processing service for upgrade charges
+		console.log('Processing upgrade payment:', upgradeDetails.proratedAmount);
+		// Implementation depends on payment provider
+	}
+
+	/**
+	 * Process credit refund for downgrades
+	 */
+	private async processCreditRefund(subscription: IPluginSubscription, downgradeDetails: any): Promise<void> {
+		// Integrate with payment processing service for credit/refunds
+		console.log('Processing credit refund:', downgradeDetails.creditAmount);
+		// Implementation depends on payment provider
 	}
 }

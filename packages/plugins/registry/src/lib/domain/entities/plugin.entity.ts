@@ -14,12 +14,14 @@ import { Index, JoinColumn, Relation, RelationId } from 'typeorm';
 import { IPluginSetting, IPluginSubscription } from '../../shared/models';
 import { IPluginCategory } from '../../shared/models/plugin-category.model';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
+import { IPluginSubscriptionPlan } from '../../shared/models/plugin-subscription.model';
 import { IPluginTag } from '../../shared/models/plugin-tag.model';
 import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { PluginCategory } from './plugin-category.entity';
 import { PluginSetting } from './plugin-setting.entity';
+import { PluginSubscriptionPlan } from './plugin-subscription-plan.entity';
 import { PluginSubscription } from './plugin-subscription.entity';
 import { PluginTag } from './plugin-tag.entity';
 import { PluginTenant } from './plugin-tenant.entity';
@@ -164,6 +166,15 @@ export class Plugin extends BaseEntity implements IPlugin {
 		onDelete: 'CASCADE'
 	})
 	subscriptions?: Relation<IPluginSubscription[]>;
+
+	/**
+	 * Plugin Subscription Plans relationships - available plans for this plugin
+	 */
+	@ApiPropertyOptional({ type: () => Array, description: 'Plugin subscription plans' })
+	@MultiORMOneToMany(() => PluginSubscriptionPlan, (plan) => plan.plugin, {
+		onDelete: 'CASCADE'
+	})
+	subscriptionPlans?: Relation<IPluginSubscriptionPlan[]>;
 
 	/**
 	 * Plugin Tags relationships - tag associations for this plugin

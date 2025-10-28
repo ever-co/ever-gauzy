@@ -1,6 +1,7 @@
 import { IPlugin, IPluginSource, IPluginVersion } from '@gauzy/contracts';
 import { Store } from '../../../../services';
 import { SourceStrategyFactory } from '../factories/source.factory';
+import { IPluginPlanCreateInput } from '../plugin-subscription.service';
 
 export class PluginFormDataBuilder {
 	private formData: FormData = new FormData();
@@ -13,7 +14,7 @@ export class PluginFormDataBuilder {
 		};
 	}
 
-	public appendPlugin(plugin: Partial<IPlugin>): this {
+	public appendPlugin(plugin: Partial<IPlugin & { subscriptionPlans?: IPluginPlanCreateInput[] }>): this {
 		const pluginData = {
 			...(plugin.id && { id: plugin.id }),
 			name: plugin.name,
@@ -29,6 +30,12 @@ export class PluginFormDataBuilder {
 		this.appendFiltered(pluginData);
 		this.appendVersion(plugin.version, 'version');
 		this.appendSource(plugin.version.sources, 'sources', 'version');
+
+		// Append subscription plans if provided
+		if (plugin.subscriptionPlans && plugin.subscriptionPlans.length > 0) {
+			this.appendSubscriptionPlans(plugin.subscriptionPlans);
+		}
+
 		return this;
 	}
 
@@ -58,6 +65,14 @@ export class PluginFormDataBuilder {
 		return this;
 	}
 
+	public appendSubscriptionPlans(plans: IPluginPlanCreateInput[]): this {
+		if (plans && plans.length > 0) {
+			const plansData = plans.map((plan) => this.buildSubscriptionPlanData(plan));
+			this.appendFiltered(plansData, 'subscriptionPlans');
+		}
+		return this;
+	}
+
 	private buildVersionData(version: IPluginVersion) {
 		return {
 			...(version.id && { id: version.id }),
@@ -80,6 +95,25 @@ export class PluginFormDataBuilder {
 			...commonData,
 			...this.commonData,
 			...strategy.getSourceData(source)
+		};
+	}
+
+	private buildSubscriptionPlanData(plan: IPluginPlanCreateInput) {
+		return {
+			type: plan.type,
+			name: plan.name,
+			description: plan.description,
+			price: plan.price,
+			currency: plan.currency,
+			billingPeriod: plan.billingPeriod,
+			features: plan.features,
+			limitations: plan.limitations,
+			trialDays: plan.trialDays,
+			setupFee: plan.setupFee,
+			discountPercentage: plan.discountPercentage,
+			isPopular: plan.isPopular,
+			isRecommended: plan.isRecommended,
+			...this.commonData
 		};
 	}
 

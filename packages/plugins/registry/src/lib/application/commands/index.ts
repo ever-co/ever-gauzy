@@ -53,11 +53,19 @@ export * from './create-plugin-subscription.command';
 export * from './delete-plugin-subscription.command';
 export * from './downgrade-plugin-subscription.command';
 export * from './extend-plugin-trial.command';
+export * from './extend-trial-subscription.command';
 export * from './process-billing.command';
 export * from './purchase-plugin-subscription.command';
 export * from './renew-plugin-subscription.command';
 export * from './update-plugin-subscription.command';
 export * from './upgrade-plugin-subscription.command';
+
+// Plugin Subscription Plan Commands
+export * from './bulk-plugin-plan-operation.command';
+export * from './copy-plugin-plan.command';
+export * from './create-plugin-subscription-plan.command';
+export * from './delete-plugin-subscription-plan.command';
+export * from './update-plugin-subscription-plan.command';
 
 // Plugin Settings Commands
 export * from './bulk-update-plugin-settings.command';

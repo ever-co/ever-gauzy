@@ -1,7 +1,8 @@
 import { OmitType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmptyObject, ValidateNested } from 'class-validator';
+import { IsArray, IsNotEmptyObject, IsOptional, ValidateNested } from 'class-validator';
 import { Plugin } from '../../domain/entities/plugin.entity';
+import { CreatePluginSubscriptionPlanDTO } from './plugin-subscription-plan.dto';
 import { PluginVersionDTO } from './plugin-version.dto';
 
 export class CreatePluginDTO extends OmitType(Plugin, [
@@ -12,7 +13,8 @@ export class CreatePluginDTO extends OmitType(Plugin, [
 	'installed',
 	'lastDownloadedAt',
 	'uploadedBy',
-	'category'
+	'category',
+	'subscriptionPlans'
 ] as const) {
 	@ValidateNested()
 	@IsNotEmptyObject(
@@ -24,4 +26,10 @@ export class CreatePluginDTO extends OmitType(Plugin, [
 	)
 	@Type(() => PluginVersionDTO)
 	version: PluginVersionDTO;
+
+	@IsOptional()
+	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => CreatePluginSubscriptionPlanDTO)
+	subscriptionPlans?: CreatePluginSubscriptionPlanDTO[];
 }

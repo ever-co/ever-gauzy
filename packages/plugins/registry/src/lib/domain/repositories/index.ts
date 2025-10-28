@@ -3,6 +3,7 @@ import { MikroOrmPluginCategoryRepository } from './mikro-orm-plugin-category.re
 import { MikroOrmPluginInstallationRepository } from './mikro-orm-plugin-installation.repository';
 import { MikroOrmPluginSettingRepository } from './mikro-orm-plugin-setting.repository';
 import { MikroOrmPluginSourceRepository } from './mikro-orm-plugin-source.repository';
+import { MikroOrmPluginSubscriptionPlanRepository } from './mikro-orm-plugin-subscription-plan.reposittory';
 import { MikroOrmPluginSubscriptionRepository } from './mikro-orm-plugin-subscription.repository';
 import { MikroOrmPluginTagRepository } from './mikro-orm-plugin-tag.repository';
 import { MikroOrmPluginUserAssignmentRepository } from './mikro-orm-plugin-user-assignment.repository';
@@ -15,6 +16,7 @@ import { TypeOrmPluginCategoryRepository } from './type-orm-plugin-category.repo
 import { TypeOrmPluginInstallationRepository } from './type-orm-plugin-installation.repository';
 import { TypeOrmPluginSettingRepository } from './type-orm-plugin-setting.repository';
 import { TypeOrmPluginSourceRepository } from './type-orm-plugin-source.repository';
+import { TypeOrmPluginSubscriptionPlanRepository } from './type-orm-plugin-subscription-plan.reposittory';
 import { TypeOrmPluginSubscriptionRepository } from './type-orm-plugin-subscription.repository';
 import { TypeOrmPluginTagRepository } from './type-orm-plugin-tag.repository';
 import { TypeOrmPluginUserAssignmentRepository } from './type-orm-plugin-user-assignment.repository';
@@ -43,7 +45,9 @@ export const repositories = [
 	TypeOrmPluginBillingRepository,
 	MikroOrmPluginBillingRepository,
 	TypeOrmPluginCategoryRepository,
-	MikroOrmPluginCategoryRepository
+	MikroOrmPluginCategoryRepository,
+	MikroOrmPluginSubscriptionPlanRepository,
+	TypeOrmPluginSubscriptionPlanRepository
 ];
 
 // Export individual repositories
@@ -52,6 +56,7 @@ export * from './mikro-orm-plugin-category.repository';
 export * from './mikro-orm-plugin-installation.repository';
 export * from './mikro-orm-plugin-setting.repository';
 export * from './mikro-orm-plugin-source.repository';
+export * from './mikro-orm-plugin-subscription-plan.reposittory';
 export * from './mikro-orm-plugin-subscription.repository';
 export * from './mikro-orm-plugin-tag.repository';
 export * from './mikro-orm-plugin-user-assignment.repository';
@@ -64,6 +69,7 @@ export * from './type-orm-plugin-category.repository';
 export * from './type-orm-plugin-installation.repository';
 export * from './type-orm-plugin-setting.repository';
 export * from './type-orm-plugin-source.repository';
+export * from './type-orm-plugin-subscription-plan.reposittory';
 export * from './type-orm-plugin-subscription.repository';
 export * from './type-orm-plugin-tag.repository';
 export * from './type-orm-plugin-user-assignment.repository';

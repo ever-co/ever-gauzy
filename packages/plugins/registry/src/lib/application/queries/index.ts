@@ -22,6 +22,13 @@ export * from './get-plugin-subscriptions-by-plugin-id.query';
 export * from './get-plugin-subscriptions-by-subscriber-id.query';
 export * from './get-plugin-subscriptions.query';
 
+// Plugin Subscription Plan Queries
+export * from './get-active-plugin-plans.query';
+export * from './get-plugin-plan-analytics.query';
+export * from './get-plugin-subscription-plan-by-id.query';
+export * from './get-plugin-subscription-plans-by-plugin-id.query';
+export * from './list-plugin-subscription-plans.query';
+
 // Plugin Settings Queries
 export * from './get-plugin-setting-by-id.query';
 export * from './get-plugin-setting-by-key.query';
