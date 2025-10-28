@@ -26,7 +26,7 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
-			projectId: [null, Validators.required]
+			projectId: [null, [Validators.required, Validators.pattern(/\S/)]]
 		});
 	}
 
@@ -65,7 +65,7 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 					const { code, state } = params;
 
 					if (!code || !state) {
-						this._toastrService.error(this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.ERRORS.INVALID_PARAMETERS'));
+						this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.CALLBACK.ERRORS.INVALID_PARAMETERS'));
 						this._redirectToIntegrations();
 						return EMPTY;
 					}
@@ -97,9 +97,7 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 						})
 					);
 				}),
-				untilDestroyed(this)
 			)
-			.subscribe();
 	}
 
 	/**
@@ -108,7 +106,7 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 	 */
 	createConnection() {
 		if (this.form.invalid || !this.organization) {
-			this._toastrService.error(this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.ERRORS.INVALID_PROJECT_ID'));
+			this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.CALLBACK.ERRORS.INVALID_PROJECT_ID'));
 			return;
 		}
 
@@ -116,8 +114,12 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 		const projectId = (this.form.value?.projectId ?? '').trim();
 	    const accessToken = this._accessToken;
 
-		if (!accessToken || !projectId) {
-			this._toastrService.error(this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.ERRORS.TOKEN_NOT_FOUND'));
+		if (!projectId) {
+			this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.CALLBACK.ERRORS.INVALID_PROJECT_ID'));
+			return;
+		}
+		if (!accessToken) {
+			this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.CALLBACK.ERRORS.TOKEN_NOT_FOUND'));
 			this._redirectToIntegrations();
 			return;
 		}
@@ -135,12 +137,12 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 			})
 			.pipe(
 				tap((connection: IActivepiecesConnection) => {
-					this._toastrService.success(this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.SUCCESS.CONNECTION_CREATED'));
+					this._toastrService.success(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.CALLBACK.SUCCESS.CONNECTION_CREATED'));
       	        	this._accessToken = null;
 					this._redirectToActivepiecesIntegration(connection.integrationId);
 				}),
 				catchError((error) => {
-					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.CALLBACK.ERRORS.CREATE_CONNECTION') + ': ' + error.message;
+					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.CALLBACK.ERRORS.CREATE_CONNECTION') + ': ' + error.message;
 					this._toastrService.error(errorMessage);
 					this.loading = false;
 					return EMPTY;
@@ -154,14 +156,14 @@ export class ActivepiecesCallbackComponent extends TranslationBaseComponent impl
 	 * Redirect to integrations page
 	 */
 	private _redirectToIntegrations() {
-		this._router.navigate(['/pages/integrations']);
+		this._router.navigate(['/pages/integrations'], { replaceUrl: true });
 	}
 
 	/**
 	 * Redirect to ActivePieces integration page
 	 */
 	private _redirectToActivepiecesIntegration(integrationId: string) {
-		this._router.navigate(['/pages/integrations/activepieces', integrationId]);
+		this._router.navigate(['/pages/integrations/activepieces', integrationId], { replaceUrl: true });
 	}
 
 	ngOnDestroy(): void { this._accessToken = null; }

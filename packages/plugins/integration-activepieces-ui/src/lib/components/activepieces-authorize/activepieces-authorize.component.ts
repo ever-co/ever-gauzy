@@ -63,7 +63,6 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 
 		this._activatedRoute.data
 			.pipe(
-				debounceTime(100),
 				filter(({ state }) => !!state),
 				tap(({ state }) => (this.rememberState = state)),
 				tap(() => this._checkRememberState()),
@@ -101,7 +100,10 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 						settings?.some((s) => s.settingsName === 'client_secret')
 					);
 				}),
-				catchError(() => EMPTY),
+				catchError((error) => {
+					console.error('Failed to check tenant settings:', error);
+					return EMPTY;
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -125,10 +127,12 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 			.pipe(
 				filter((integration: IIntegrationTenant) => !!integration && !!integration.id),
 				tap((integration: IIntegrationTenant) => {
-					if (!integration?.id) return;
 					this._redirectToActivepiecesIntegration(integration.id);
 				}),
-				catchError(() => EMPTY),
+				catchError((error) => {
+					console.error('Failed to check remember state:', error);
+					return EMPTY;
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();

@@ -45,17 +45,15 @@ export class ActivepiecesMcpServersComponent extends TranslationBaseComponent im
 		// Subscribe to store MCP servers
 		this._activepiecesStore.mcpServers$
 			.pipe(
-				tap((servers: IActivepiecesMcpServerPublic[]) => {
-					if (Array.isArray(servers)) {
-						this.mcpServers = servers;
-					}
+				tap((servers: IActivepiecesMcpServerPublic[] | null | undefined) => {
+					this.mcpServers = servers ?? [];
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	trackByServerId(_: number, s: IActivepiecesMcpServerPublic) { return s.id; }
+	trackByServerId(_: number, s: IActivepiecesMcpServerPublic): string { return s.id; }
 
 	/**
 	 * Load MCP servers for a specific project

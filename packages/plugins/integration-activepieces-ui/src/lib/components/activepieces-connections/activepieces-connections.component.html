@@ -37,7 +37,7 @@
 		</div>
 
 		<!-- Loading Spinner -->
-		<div *ngIf="loading" class="text-center mt-3">
+		<div *ngIf="loading" class="text-center mt-3" role="status" aria-live="polite">
 			<nb-spinner size="large" status="primary"></nb-spinner>
 			<p class="mt-2">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.LOADING' | translate }}</p>
 		</div>
@@ -54,12 +54,12 @@
 				<table class="table">
 					<thead>
 						<tr>
-							<th>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.DISPLAY_NAME' | translate }}</th>
-							<th>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.STATUS' | translate }}</th>
-							<th>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.TYPE' | translate }}</th>
-							<th>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.PIECE_NAME' | translate }}</th>
-							<th>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.CREATED' | translate }}</th>
-							<th>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.ACTIONS' | translate }}</th>
+							<th scope="col">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.DISPLAY_NAME' | translate }}</th>
+							<th scope="col">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.STATUS_HEADER' | translate }}</th>
+							<th scope="col">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.TYPE_HEADER' | translate }}</th>
+							<th scope="col">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.PIECE_NAME' | translate }}</th>
+							<th scope="col">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.CREATED' | translate }}</th>
+							<th scope="col">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.ACTIONS' | translate }}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -67,10 +67,10 @@
 							<td>{{ connection.displayName }}</td>
 							<td>
 								<nb-badge [status]="connection.status === 'ACTIVE' ? 'success' : 'danger'">
-									{{ connection.status }}
+									{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.STATUS.' + connection.status | translate }}
 								</nb-badge>
 							</td>
-							<td>{{ connection.type }}</td>
+							<td>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.TYPE.' + connection.type | translate }}</td>
 							<td>{{ connection.pieceName }}</td>
 							<td>{{ connection.created | date:'medium' }}</td>
 							<td>

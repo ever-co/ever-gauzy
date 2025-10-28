@@ -5,7 +5,7 @@ import { EMPTY } from 'rxjs';
 import { ActivepiecesService, ActivepiecesStoreService, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { IActivepiecesConnection, IActivepiecesConnectionsListParams } from '@gauzy/contracts';
+import { IActivepiecesConnection, IActivepiecesConnectionsListParams, IActivepiecesConnectionsListResponse } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
@@ -18,7 +18,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class ActivepiecesConnectionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public loading = false;
 	public connections: IActivepiecesConnection[] = [];
-	public integrationId: string;
+	public integrationId!: string;
 	public projectId: string = '';
 
 	constructor(
@@ -32,7 +32,8 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 	}
 
 	ngOnInit() {
-		this._activatedRoute.parent.params
+		const route = this._activatedRoute.parent ?? this._activatedRoute;
+		route.params
 			.pipe(
 				tap((params) => {
 					this.integrationId = params['id'];
@@ -82,7 +83,7 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 					}
 				}),
 				catchError((error) => {
-					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.ERRORS.LOAD_CONNECTION') + ': ' + error.message;
+					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.LOAD_CONNECTION', { error: error.message });
 					this._toastrService.error(errorMessage);
 					this._activepiecesStore.setError(errorMessage);
 					return EMPTY;
@@ -102,7 +103,7 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 	 */
 	loadConnections() {
 		if (!this.projectId) {
-			this._toastrService.error(this.getTranslation('ACTIVEPIECES_PAGE.ERRORS.PROJECT_ID_REQUIRED'));
+			this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.PROJECT_ID_REQUIRED'));
 			return;
 		}
 
@@ -120,12 +121,12 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 		this._activepiecesService
 			.listConnections(this.integrationId, params)
 			.pipe(
-				tap((response: { data: IActivepiecesConnection[]; next?: string; previous?: string }) => {
+				tap((response: IActivepiecesConnectionsListResponse) => {
 					this.connections = response.data;
 					this._activepiecesStore.setConnections(response.data);
 				}),
 				catchError((error) => {
-					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.ERRORS.LOAD_CONNECTIONS') + ': ' + error.message;
+					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.LOAD_CONNECTIONS') + ': ' + error.message;
 					this._toastrService.error(errorMessage);
 					this._activepiecesStore.setError(errorMessage);
 					return EMPTY;
@@ -159,13 +160,13 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 			.deleteConnection(this.integrationId)
 			.pipe(
 				tap(() => {
-					this._toastrService.success(this.getTranslation('ACTIVEPIECES_PAGE.SUCCESS.CONNECTION_DELETED'));
+					this._toastrService.success(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.SUCCESS.CONNECTION_DELETED'));
 					// Remove the deleted connection from the list
 					this.connections = this.connections.filter(conn => conn.id !== connection.id);
 					this._activepiecesStore.setConnections(this.connections);
 				}),
 				catchError((error) => {
-					const errorMessage = this.getTranslation('ACTIVEPIECES_PAGE.ERRORS.DELETE_CONNECTION') + ': ' + error.message;
+					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.DELETE_CONNECTION', { error: error.message });
 					this._toastrService.error(errorMessage);
 					this._activepiecesStore.setError(errorMessage);
 					return EMPTY;
