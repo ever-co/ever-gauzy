@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, merge, tap, catchError, EMPTY, distinctUntilChanged } from 'rxjs';
+import { filter, merge, tap, distinctUntilChanged } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
