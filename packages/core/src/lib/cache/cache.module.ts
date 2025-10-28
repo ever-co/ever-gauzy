@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
 import Keyv from 'keyv';
-import KeyvRedis, { createClient } from '@keyv/redis';
+import KeyvRedis, { createClient, RedisClientOptions } from '@keyv/redis';
 import { CacheService } from './cache.service';
 
 /**
@@ -38,48 +38,40 @@ import { CacheService } from './cache.service';
 
 				port = parseInt(port as string, 10);
 
-				// Create Redis client with production-ready connection options
-				const redisClient = createClient({
+				const redisConnectionOptions: Parameters<typeof createClient>[0] = {
 					url,
 					username,
 					password,
-					isolationPoolOptions: {
-						min: 1,
-						max: 100
-					},
-					socket: {
-						tls: isTls, // enable TLS only when using rediss://
-						host: host as string,
-						port: port as number,
-						passphrase: password,
-						keepAlive: true, // enable TCP keepalive
-						keepAliveInitialDelay: 10_000, // initial delay in ms
-						reconnectStrategy: (retries: number) => Math.min(1000 * Math.pow(2, retries), 5000),
-						connectTimeout: 10_000,
-						rejectUnauthorized: process.env.NODE_ENV === 'production'
-					},
-					// Keep the socket from idling out at LB/firewall
-					pingInterval: 30_000 // send PING every 30s
-				} as any);
+					socket: isTls
+						? {
+								// TLS socket options (RedisTlsOptions)
+								host,
+								port,
+								tls: true,
+								rejectUnauthorized: process.env.NODE_ENV === 'production',
+								// Reconnection strategy
+								reconnectStrategy: (retries: number) => Math.min(1000 + retries * 200, 5000),
+								// Connection timeout
+								connectTimeout: 10_000
+						  }
+						: {
+								// TCP socket options (RedisSocketOptions)
+								host,
+								port,
+								// TCP keepalive (value in milliseconds for initial delay)
+								keepAlive: true,
+								keepAliveInitialDelay: 10_000,
+								// Reconnection strategy
+								reconnectStrategy: (retries: number) => Math.min(1000 + retries * 200, 5000),
+								// Connection timeout
+								connectTimeout: 10_000
+						  },
+					// Send PING every 30s to keep connection alive
+					pingInterval: 30_000
+				};
 
-				// Create KeyvRedis adapter with production-ready options
-				const keyvRedis = new KeyvRedis(redisClient, {
-					namespace: 'gauzy-cache',
-					keyPrefixSeparator: ':',
-					clearBatchSize: 1000,
-					useUnlink: true,
-					noNamespaceAffectsAll: false,
-					throwOnConnectError: true,
-					throwOnErrors: false
-				});
-
-				// Create Keyv instance with Redis adapter
-				const keyv = new Keyv({ store: keyvRedis, useKeyPrefix: false });
-
-				// Handle connection errors
-				keyv.on('error', (error: any) => {
-					console.error('Redis Cache Client Error:', error);
-				});
+				// Create Redis client with production-ready connection options
+				const redisClient = createClient(redisConnectionOptions);
 
 				redisClient.on('connect', () => {
 					console.log('Redis Cache Client Connected');
@@ -106,10 +98,27 @@ import { CacheService } from './cache.service';
 				} catch (error) {
 					console.error('Failed to ping Redis:', error);
 				}
+				// Create KeyvRedis adapter with production-ready options
+				const keyvRedis = new KeyvRedis(redisClient, {
+					namespace: 'gauzy-cache',
+					keyPrefixSeparator: ':',
+					clearBatchSize: 1000,
+					useUnlink: true,
+					noNamespaceAffectsAll: false,
+					throwOnConnectError: true,
+					throwOnErrors: false
+				});
 
+				// Create Keyv instance with Redis adapter
+				const keyv = new Keyv({ store: keyvRedis });
+
+				// Handle connection errors
+				keyv.on('error', (error: any) => {
+					console.error('Redis Cache Client Error:', error);
+				});
 				return {
 					stores: [keyv],
-					ttl: 7 * 24 * 60 * 60 * 1000 // 1 week in ms
+					ttl: 7 * 24 * 60 * 60 * 1000 // 1 week in milliseconds
 				};
 			}
 		})
