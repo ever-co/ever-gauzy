@@ -158,6 +158,11 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 			return;
 		}
 
+		if (connection.integrationId !== this.integrationId) {
+			this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.INTEGRATION_MISMATCH'));
+			return;
+		}
+
 		if (!window.confirm(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.DELETE_CONFIRM'))) {
 			return;
 		}

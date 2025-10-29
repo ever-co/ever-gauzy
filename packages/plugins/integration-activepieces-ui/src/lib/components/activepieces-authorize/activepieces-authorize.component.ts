@@ -100,8 +100,10 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 					settings.some((s) => s.settingsName === 'client_secret');
 				}),
 				catchError((error) => {
-					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.CHECK_TENANT_SETTINGS') + ': ' + error.message;
-					this._toastrService.error(errorMessage);
+					console.error('Failed to check tenant settings:', error);
+					this._toastrService.error(
+						this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.CHECK_TENANT_SETTINGS')
+					);
 					return EMPTY;
 				}),
 				untilDestroyed(this)
@@ -130,8 +132,10 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 					this._redirectToActivepiecesIntegration(integration.id);
 				}),
 				catchError((error) => {
-					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.CHECK_REMEMBER_STATE') + ': ' + error.message;
-					this._toastrService.error(errorMessage);
+					console.error('Failed to check remember state:', error);
+					this._toastrService.error(
+						this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.CHECK_REMEMBER_STATE')
+					);
 					return EMPTY;
 				}),
 				untilDestroyed(this)
@@ -153,11 +157,6 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 		const { id: organizationId } = this.organization;
 		const client_id = (this.form.value?.client_id ?? '').trim();
 		const client_secret = (this.form.value?.client_secret ?? '').trim();
-		if (!client_id || !client_secret) {
-			this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.INVALID_FORM'));
-			this.loading = false;
-			return;
-		}
 
 		this._activepiecesService
 			.saveOAuthSettings(client_id, client_secret, organizationId)
@@ -168,8 +167,10 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 				}),
 				switchMap(() => this._startAuthorization()),
 				catchError((error) => {
-					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.SAVE_SETTINGS') + ': ' + error.message;
-					this._toastrService.error(errorMessage);
+					console.error('Failed to save OAuth settings:', error);
+					this._toastrService.error(
+						this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.SAVE_SETTINGS')
+					);
 					this.loading = false;
 					return EMPTY;
 				}),
@@ -190,8 +191,10 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 		this._startAuthorization()
 			.pipe(
 				catchError((error) => {
-					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.START_AUTHORIZATION') + ': ' + error.message;
-					this._toastrService.error(errorMessage);
+					console.error('Failed to start authorization:', error);
+					this._toastrService.error(
+						this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.START_AUTHORIZATION')
+					);
 					this.loading = false;
 					return EMPTY;
 				}),

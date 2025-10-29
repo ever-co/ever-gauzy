@@ -1490,7 +1490,7 @@
 				}
 			},
 			"MCP_SERVERS": {
-				"TITLE": "MCP",
+				"TITLE": "Серверы MCP",
 				"NO_SERVERS": "Серверы MCP не найдены. Введите ID проекта и нажмите «Загрузить», чтобы просмотреть серверы.",
 				"PROJECT_ID": "ID проекта",
 				"PROJECT_ID_PLACEHOLDER": "Введите ID проекта Activepieces (находится в настройках проекта)",
@@ -1498,7 +1498,7 @@
 				"NAME": "Имя сервера",
 				"SERVER_ID": "ID сервера",
 				"AGENT_ID": "ID агента",
-				"URL": "Server URL",
+				"URL": "URL сервера",
 				"STATUS": "Статус",
 				"ACTIONS": "Действия",
 				"ACTIVE": "Активно",
