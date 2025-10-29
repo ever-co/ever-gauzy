@@ -25,6 +25,7 @@ import {
 	NbSpinnerModule,
 	NbStepperModule,
 	NbTabsetModule,
+	NbTagModule,
 	NbToggleModule,
 	NbTooltipModule,
 	NbUserModule
@@ -172,7 +173,8 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		NbListModule,
 		SelectModule,
 		NbEvaIconsModule,
-		DragDropModule
+		DragDropModule,
+		NbTagModule
 	],
 	exports: [PluginLayoutComponent],
 	providers: [
