@@ -22,7 +22,7 @@
 	display: flex;
 	flex-direction: column;
 	height: fit-content;
-	max-height: 85vh;
+	max-height: calc(100vh - 15rem);
 	position: sticky;
 	top: 1rem;
 
@@ -45,7 +45,7 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 1.5rem;
+	margin-bottom: 1rem;
 	padding: 1rem;
 	background: var(--card-background-color);
 	border: 1px solid var(--card-divider-color);
@@ -135,7 +135,7 @@
 
 // No Data States
 .no-data {
-	height: 400px;
+	height: 100%;
 	width: 100%;
 	display: flex;
 	align-items: center;

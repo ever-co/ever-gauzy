@@ -15,7 +15,7 @@ h4 {
     background-color: var(--gauzy-card-2);
     border-radius: var(--border-radius);
     &.first {
-      border-radius: 0 0 var(--border-radius) 0;
+      border-radius: var(--border-radius) 0 var(--border-radius) 0;
     }
     height: calc(100vh - 10rem);
     padding: 1rem;
