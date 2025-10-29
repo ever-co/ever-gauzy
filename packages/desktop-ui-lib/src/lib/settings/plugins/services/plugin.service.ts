@@ -55,9 +55,7 @@ export class PluginService {
 	}
 
 	public search<T>(params = {} as T): Observable<IPagination<IPlugin>> {
-		return this.http.get<IPagination<IPlugin>>(`${this.endPoint}/search`, {
-			params: toParams(params)
-		});
+		return this.getAll(params);
 	}
 
 	public ratePlugin(pluginId: string, rating: number, review?: string): Observable<any> {
