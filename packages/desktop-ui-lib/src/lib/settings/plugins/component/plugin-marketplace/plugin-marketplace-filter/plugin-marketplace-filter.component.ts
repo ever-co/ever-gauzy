@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { IPlugin, ITag, PluginStatus, PluginType } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -71,7 +71,7 @@ enum PluginPriceCategory {
 	styleUrls: ['./plugin-marketplace-filter.component.scss'],
 	standalone: false
 })
-export class PluginMarketplaceFilterComponent implements OnInit, OnDestroy {
+export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDestroy {
 	@Input() plugins: IPlugin[] = [];
 	@Input() availableTags: ITag[] = [];
 	@Input() isLoading: boolean = false;
@@ -119,6 +119,21 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnDestroy {
 		this.setupFormSubscriptions();
 		this.loadFilterOptions();
 		this.updateCategoryCounts();
+
+		// Collapse filters by default on mobile for better initial fit
+		if (this.isMobile) {
+			this.isCollapsed$.next(true);
+		}
+	}
+
+	ngOnChanges(changes: SimpleChanges): void {
+		if (changes['isMobile'] && !changes['isMobile'].firstChange) {
+			const mobile = changes['isMobile'].currentValue as boolean;
+			// Auto-collapse when switching to mobile; keep current state when going back to desktop
+			if (mobile) {
+				this.isCollapsed$.next(true);
+			}
+		}
 	}
 
 	ngOnDestroy(): void {

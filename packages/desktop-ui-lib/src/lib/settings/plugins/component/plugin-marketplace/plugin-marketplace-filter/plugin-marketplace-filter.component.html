@@ -1,11 +1,16 @@
-<div class="marketplace-filter" [class.collapsed]="isCollapsed$ | async" [class.mobile]="isMobile">
+@let collapsed = (isCollapsed$ | async);
+@let hasActive = (hasActiveFilters$ | async);
+@let activeCount = (activeFiltersCount$ | async);
+@let filteredCount = (filteredPluginsCount$ | async);
+
+<div class="marketplace-filter" [class.collapsed]="collapsed" [class.mobile]="isMobile">
 	<!-- Filter Header -->
 	<div class="filter-header">
 		<div class="header-content">
 			<div class="filter-title">
 				<nb-icon icon="funnel-outline"></nb-icon>
 				<h4>Filters</h4>
-				<div class="active-filters-badge" *ngIf="(activeFiltersCount$ | async) as count; trackBy: trackByCount">
+				<div class="active-filters-badge" *ngIf="activeCount as count">
 					<nb-badge
 						[text]="count.toString()"
 						status="primary"
@@ -16,7 +21,7 @@
 
 			<div class="header-stats">
 				<span class="results-count">
-					{{ (filteredPluginsCount$ | async) || 0 }} of {{ totalCount }} plugins
+					{{ (filteredCount || 0) }} of {{ totalCount }} plugins
 				</span>
 			</div>
 		</div>
@@ -27,8 +32,9 @@
 				ghost
 				size="small"
 				(click)="clearAllFilters()"
-				[disabled]="!(hasActiveFilters$ | async)"
-				nbTooltip="Clear all filters">
+				[disabled]="!hasActive"
+				nbTooltip="Clear all filters"
+				aria-label="Clear all filters">
 				<nb-icon icon="refresh-outline"></nb-icon>
 				Clear
 			</button>
@@ -38,21 +44,32 @@
 				ghost
 				size="small"
 				(click)="toggleCollapse()"
-				[nbTooltip]="(isCollapsed$ | async) ? 'Expand filters' : 'Collapse filters'"
-				class="collapse-toggle">
-				<nb-icon [icon]="(isCollapsed$ | async) ? 'chevron-down-outline' : 'chevron-up-outline'"></nb-icon>
+				[nbTooltip]="collapsed ? 'Expand filters' : 'Collapse filters'"
+				class="collapse-toggle"
+				[attr.aria-expanded]="!collapsed"
+				aria-controls="marketplace-filter-content"
+				aria-label="Toggle filter panel">
+				<nb-icon [icon]="collapsed ? 'chevron-down-outline' : 'chevron-up-outline'"></nb-icon>
 			</button>
 		</div>
 	</div>
 
 	<!-- Filter Content -->
-	<div class="filter-content" *ngIf="!(isCollapsed$ | async)">
+	<div id="marketplace-filter-content" class="filter-content" *ngIf="!collapsed">
 		<form [formGroup]="filterForm" class="filter-form">
 
 			<!-- Search & Sort Section -->
 			@if(filterSections[0]?.visible) {
-				<div class="filter-section" [class.expanded]="filterSections[0]?.expanded">
-					<div class="section-header" (click)="toggleSection('search')">
+				<div class="filter-section" [class.expanded]="filterSections[0]?.expanded" [attr.aria-labelledby]="'section-search-header'">
+					<button
+						type="button"
+						class="section-header"
+						(click)="toggleSection('search')"
+						(keydown.enter)="toggleSection('search')"
+						(keydown.space)="toggleSection('search')"
+						[attr.aria-expanded]="filterSections[0]?.expanded"
+						[attr.id]="'section-search-header'"
+						[attr.aria-controls]="'section-search-content'">
 						<div class="section-title">
 							<nb-icon [icon]="filterSections[0]?.icon"></nb-icon>
 							<span>{{ filterSections[0]?.label }}</span>
@@ -61,9 +78,9 @@
 							[icon]="filterSections[0]?.expanded ? 'chevron-up-outline' : 'chevron-down-outline'"
 							class="section-toggle">
 						</nb-icon>
-					</div>
+					</button>
 
-					<div class="section-content" *ngIf="filterSections[0]?.expanded">
+					<div class="section-content" *ngIf="filterSections[0]?.expanded" [attr.id]="'section-search-content'">
 						<!-- Search Input -->
 						<div class="form-group">
 							<label class="form-label">Search Plugins</label>
@@ -131,8 +148,16 @@
 
 			<!-- Categories Section -->
 			@if(filterSections[1]?.visible) {
-				<div class="filter-section" [class.expanded]="filterSections[1]?.expanded">
-					<div class="section-header" (click)="toggleSection('categories')">
+				<div class="filter-section" [class.expanded]="filterSections[1]?.expanded" [attr.aria-labelledby]="'section-categories-header'">
+					<button
+						type="button"
+						class="section-header"
+						(click)="toggleSection('categories')"
+						(keydown.enter)="toggleSection('categories')"
+						(keydown.space)="toggleSection('categories')"
+						[attr.aria-expanded]="filterSections[1]?.expanded"
+						[attr.id]="'section-categories-header'"
+						[attr.aria-controls]="'section-categories-content'">
 						<div class="section-title">
 							<nb-icon [icon]="filterSections[1]?.icon"></nb-icon>
 							<span>{{ filterSections[1]?.label }}</span>
@@ -141,14 +166,16 @@
 							[icon]="filterSections[1]?.expanded ? 'chevron-up-outline' : 'chevron-down-outline'"
 							class="section-toggle">
 						</nb-icon>
-					</div>
+					</button>
 
-					<div class="section-content" *ngIf="filterSections[1]?.expanded">
+					<div class="section-content" *ngIf="filterSections[1]?.expanded" [attr.id]="'section-categories-content'">
 						<div class="categories-grid">
 							@for(category of categoryOptions; track category.value) {
-								<div
+								<button
+									type="button"
 									class="category-item"
 									[class.selected]="isCategorySelected(category.value)"
+									[attr.aria-pressed]="isCategorySelected(category.value)"
 									(click)="selectCategory(category.value)">
 
 									<div class="category-content">
@@ -164,7 +191,7 @@
 									<div class="category-indicator" *ngIf="isCategorySelected(category.value)">
 										<nb-icon icon="checkmark-circle-outline"></nb-icon>
 									</div>
-								</div>
+								</button>
 							}
 						</div>
 					</div>
@@ -173,8 +200,16 @@
 
 			<!-- Properties Section -->
 			@if(filterSections[2]?.visible) {
-				<div class="filter-section" [class.expanded]="filterSections[2]?.expanded">
-					<div class="section-header" (click)="toggleSection('properties')">
+				<div class="filter-section" [class.expanded]="filterSections[2]?.expanded" [attr.aria-labelledby]="'section-properties-header'">
+					<button
+						type="button"
+						class="section-header"
+						(click)="toggleSection('properties')"
+						(keydown.enter)="toggleSection('properties')"
+						(keydown.space)="toggleSection('properties')"
+						[attr.aria-expanded]="filterSections[2]?.expanded"
+						[attr.id]="'section-properties-header'"
+						[attr.aria-controls]="'section-properties-content'">
 						<div class="section-title">
 							<nb-icon [icon]="filterSections[2]?.icon"></nb-icon>
 							<span>{{ filterSections[2]?.label }}</span>
@@ -183,12 +218,12 @@
 							[icon]="filterSections[2]?.expanded ? 'chevron-up-outline' : 'chevron-down-outline'"
 							class="section-toggle">
 						</nb-icon>
-					</div>
+					</button>
 
-					<div class="section-content" *ngIf="filterSections[2]?.expanded">
+					<div class="section-content" *ngIf="filterSections[2]?.expanded" [attr.id]="'section-properties-content'">
 						<!-- Plugin Status -->
-						<div class="form-group">
-							<label class="form-label">Status</label>
+						<fieldset class="form-group form-fieldset">
+							<legend class="form-label">Status</legend>
 							<div class="checkbox-group">
 								@for(status of statusOptions; track status) {
 									<div class="checkbox-item">
@@ -204,11 +239,11 @@
 									</div>
 								}
 							</div>
-						</div>
+						</fieldset>
 
 						<!-- Plugin Type -->
-						<div class="form-group">
-							<label class="form-label">Type</label>
+						<fieldset class="form-group form-fieldset">
+							<legend class="form-label">Type</legend>
 							<div class="checkbox-group">
 								@for(type of typeOptions; track type) {
 									<div class="checkbox-item">
@@ -224,7 +259,7 @@
 									</div>
 								}
 							</div>
-						</div>
+						</fieldset>
 
 						<!-- Special Properties -->
 						<div class="form-group">
@@ -254,8 +289,16 @@
 
 			<!-- Pricing Section -->
 			@if(filterSections[3]?.visible) {
-				<div class="filter-section" [class.expanded]="filterSections[3]?.expanded">
-					<div class="section-header" (click)="toggleSection('pricing')">
+				<div class="filter-section" [class.expanded]="filterSections[3]?.expanded" [attr.aria-labelledby]="'section-pricing-header'">
+					<button
+						type="button"
+						class="section-header"
+						(click)="toggleSection('pricing')"
+						(keydown.enter)="toggleSection('pricing')"
+						(keydown.space)="toggleSection('pricing')"
+						[attr.aria-expanded]="filterSections[3]?.expanded"
+						[attr.id]="'section-pricing-header'"
+						[attr.aria-controls]="'section-pricing-content'">
 						<div class="section-title">
 							<nb-icon [icon]="filterSections[3]?.icon"></nb-icon>
 							<span>{{ filterSections[3]?.label }}</span>
@@ -264,9 +307,9 @@
 							[icon]="filterSections[3]?.expanded ? 'chevron-up-outline' : 'chevron-down-outline'"
 							class="section-toggle">
 						</nb-icon>
-					</div>
+					</button>
 
-					<div class="section-content" *ngIf="filterSections[3]?.expanded">
+					<div class="section-content" *ngIf="filterSections[3]?.expanded" [attr.id]="'section-pricing-content'">
 						<!-- Price Categories -->
 						<div class="form-group">
 							<label class="form-label">Price Category</label>
@@ -313,8 +356,16 @@
 
 			<!-- Advanced Section -->
 			@if(filterSections[4]?.visible && showAdvanced) {
-				<div class="filter-section" [class.expanded]="filterSections[4]?.expanded">
-					<div class="section-header" (click)="toggleSection('advanced')">
+				<div class="filter-section" [class.expanded]="filterSections[4]?.expanded" [attr.aria-labelledby]="'section-advanced-header'">
+					<button
+						type="button"
+						class="section-header"
+						(click)="toggleSection('advanced')"
+						(keydown.enter)="toggleSection('advanced')"
+						(keydown.space)="toggleSection('advanced')"
+						[attr.aria-expanded]="filterSections[4]?.expanded"
+						[attr.id]="'section-advanced-header'"
+						[attr.aria-controls]="'section-advanced-content'">
 						<div class="section-title">
 							<nb-icon [icon]="filterSections[4]?.icon"></nb-icon>
 							<span>{{ filterSections[4]?.label }}</span>
@@ -323,9 +374,9 @@
 							[icon]="filterSections[4]?.expanded ? 'chevron-up-outline' : 'chevron-down-outline'"
 							class="section-toggle">
 						</nb-icon>
-					</div>
+					</button>
 
-					<div class="section-content" *ngIf="filterSections[4]?.expanded">
+					<div class="section-content" *ngIf="filterSections[4]?.expanded" [attr.id]="'section-advanced-content'">
 						<!-- Author Filter -->
 						<div class="form-group">
 							<label class="form-label">Author</label>
@@ -394,13 +445,13 @@
 	</div>
 
 	<!-- Quick Filters (Mobile) -->
-	<div class="quick-filters" *ngIf="isMobile && !(isCollapsed$ | async)">
+	<div class="quick-filters" *ngIf="isMobile && !collapsed">
 		<div class="quick-filter-chips">
 			<button
 				nbButton
 				ghost
 				size="tiny"
-				*ngIf="!(hasActiveFilters$ | async)"
+				*ngIf="!hasActive"
 				disabled>
 				No filters applied
 			</button>

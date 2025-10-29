@@ -1,13 +1,15 @@
 // Marketplace Container Layout
 .marketplace-container {
 	display: grid;
-	grid-template-columns: 320px 1fr;
+	/* Use a flexible sidebar width that adapts without forcing fixed heights */
+	grid-template-columns: minmax(260px, 320px) 1fr;
 	gap: 1.5rem;
-	min-height: 650px;
-	height: 100%;
+	/* Avoid forcing a fixed/min height that can make the screen feel "stuck" */
+	min-height: auto;
+	height: auto;
 
 	@media (max-width: 1024px) {
-		grid-template-columns: 280px 1fr;
+		grid-template-columns: minmax(240px, 280px) 1fr;
 		gap: 1rem;
 	}
 
@@ -49,6 +51,12 @@
 	background: var(--nb-card-background-color);
 	border: 1px solid var(--nb-card-divider-color);
 	border-radius: var(--nb-card-border-radius);
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	backdrop-filter: saturate(180%) blur(6px);
+	/* Prevent content jump when header sticks */
+	margin-top: -1px;
 
 	@media (max-width: 768px) {
 		flex-direction: column;
@@ -95,7 +103,8 @@
 
 // Content Active (Plugin List)
 .content-active {
-	overflow: auto;
+	/* Let the page scroll naturally; avoid nested scrolling here */
+	overflow: visible;
 	flex: 1;
 
 	&.grid-view {
@@ -114,13 +123,14 @@
 
 	.button-upload {
 		cursor: pointer;
-		position: absolute;
-		bottom: 3.5rem;
-		right: 3rem;
+		position: fixed;
+		bottom: 2rem;
+		right: 2rem;
+		z-index: 10;
 
 		@media (max-width: 768px) {
-			bottom: 2rem;
-			right: 2rem;
+			bottom: 1rem;
+			right: 1rem;
 		}
 	}
 }
@@ -224,7 +234,7 @@
 @media (max-width: 576px) {
 	.marketplace-container {
 		gap: 0.5rem;
-		padding: 0.5rem;
+		padding: 0 0.5rem 0.5rem;
 	}
 
 	.results-header {
@@ -232,10 +242,7 @@
 		border-radius: 8px;
 	}
 
-	.content-active .button-upload {
-		bottom: 1rem;
-		right: 1rem;
-	}
+/* upload button adjustments handled above with fixed positioning */
 }
 
 // High contrast mode

@@ -35,6 +35,12 @@
 		background: var(--nb-background-basic-color-2);
 		border-bottom: 1px solid var(--nb-card-divider-color);
 		min-height: 60px;
+		position: sticky;
+		top: 0;
+		z-index: 2;
+		backdrop-filter: saturate(180%) blur(6px);
+		/* Ensure sticky header overlays section content smoothly */
+		background-clip: padding-box;
 
 		.header-content {
 			display: flex;
@@ -93,8 +99,10 @@
 	// Filter Content
 	.filter-content {
 		padding: 1rem 1.5rem;
+		/* Limit inner scrolling to large screens only; allow natural page scroll elsewhere */
 		max-height: 80vh;
 		overflow-y: auto;
+		scroll-padding-top: 72px; /* account for sticky header height */
 
 		&::-webkit-scrollbar {
 			width: 6px;
@@ -127,6 +135,7 @@
 		border-radius: var(--nb-card-border-radius);
 		overflow: hidden;
 		transition: all 0.2s ease;
+		background: var(--nb-card-background-color);
 
 		&.expanded {
 			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -139,6 +148,11 @@
 			padding: 0.75rem 1rem;
 			background: var(--nb-background-basic-color-2);
 			cursor: pointer;
+			/* button reset */
+			border: none;
+			width: 100%;
+			text-align: left;
+			appearance: none;
 			transition: background-color 0.2s ease;
 
 			&:hover {
@@ -209,7 +223,8 @@
 	// Categories Grid
 	.categories-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+		/* Auto-fit creates modern, responsive wrapping for category chips */
+		grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
 		gap: 0.75rem;
 
 		.category-item {
@@ -221,6 +236,11 @@
 			border-radius: var(--nb-card-border-radius);
 			background: var(--nb-card-background-color);
 			cursor: pointer;
+			/* button reset */
+			width: 100%;
+			text-align: left;
+			border-width: 1px;
+			appearance: none;
 			transition: all 0.2s ease;
 			position: relative;
 
@@ -382,6 +402,12 @@
 
 	// Responsive Design
 	@media (max-width: 768px) {
+		/* Disable inner scroll on small screens so the whole page scrolls */
+		.filter-content {
+			max-height: none;
+			overflow: visible;
+		}
+
 		&:not(.mobile) {
 			margin: 0 -1rem;
 			border-radius: 0;
@@ -394,7 +420,7 @@
 		}
 
 		.categories-grid {
-			grid-template-columns: 1fr;
+			grid-template-columns: repeat(2, 1fr);
 		}
 
 		.sort-controls {
