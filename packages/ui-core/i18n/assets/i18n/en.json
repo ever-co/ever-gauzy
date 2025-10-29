@@ -1470,7 +1470,8 @@
 				"ERRORS": {
 					"INVALID_FORM": "Please fill all required fields correctly",
 					"SAVE_SETTINGS": "Failed to save settings",
-					"START_AUTHORIZATION": "Failed to start authorization"
+					"START_AUTHORIZATION": "Failed to start authorization",
+					"ORGANIZATION_NOT_FOUND": "Organization not found"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "Settings saved successfully"

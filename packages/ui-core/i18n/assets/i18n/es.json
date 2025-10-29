@@ -843,6 +843,7 @@
 		"MAKE_COM": "Make.com",
 		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
+		"ACTIVEPIECES": "Activepieces",
 		"PROPOSALS": "Propuestas",
 		"TIME_OFF": "Tiempo libre",
 		"APPROVALS": "Aprobaciones",
@@ -1377,6 +1378,126 @@
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Clave de Gauzy AI",
 			"API_SECRET": "Gauzy AI Secret: Secreto de Inteligencia Artificial de Gauzy."
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"SUBTITLE": "Configuración de integración de Activepieces",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "Su integración de Activepieces está lista. Haga clic en el botón a continuación para autorizar.",
+				"INFOS": "A continuación, será dirigido a Activepieces para otorgar permiso a Gauzy.",
+				"START_BUTTON": "Autorizar Activepieces",
+				"NEXT": "Siguiente",
+				"ERRORS": {
+					"INVALID_FORM": "Por favor, complete todos los campos obligatorios correctamente",
+					"SAVE_SETTINGS": "Error al guardar la configuración",
+					"START_AUTHORIZATION": "Error al iniciar la autorización",
+					"ORGANIZATION_NOT_FOUND": "Organización no encontrada"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Configuración guardada con éxito"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Configuración de Activepieces",
+				"SUBTITLE": "Configure los ajustes de integración de Activepieces",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "Ingrese su Client ID",
+				"CLIENT_ID_HINT": "Su Activepieces OAuth Client ID",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "Ingrese su Client Secret",
+				"CLIENT_SECRET_HINT": "Su Activepieces OAuth Client Secret",
+				"STATE_SECRET": "State Secret",
+				"STATE_SECRET_PLACEHOLDER": "Ingrese su State Secret (mínimo 32 caracteres)",
+				"STATE_SECRET_HINT": "Una cadena aleatoria segura utilizada para la verificación del estado de OAuth",
+				"CALLBACK_URL": "Callback URL",
+				"CALLBACK_URL_PLACEHOLDER": "Ingrese su Callback URL",
+				"CALLBACK_URL_HINT": "La URL a la que Activepieces redirigirá después de la autorización",
+				"POST_INSTALL_URL": "Post Install URL",
+				"POST_INSTALL_URL_PLACEHOLDER": "Ingrese su Post Install URL",
+				"POST_INSTALL_URL_HINT": "La URL a la que redirigir después de completar la instalación",
+				"SETTINGS_UPDATED": "Configuración de Activepieces actualizada con éxito"
+			},
+			"CONNECTIONS": {
+				"TITLE": "Conexiones",
+				"SUBTITLE": "Administre sus conexiones de Activepieces",
+				"NO_CONNECTIONS": "No se encontraron conexiones. Ingrese un ID de proyecto y haga clic en Cargar para ver las conexiones.",
+				"DISPLAY_NAME": "Nombre para mostrar",
+				"NAME": "Nombre de conexión",
+				"TYPE_HEADER": "Tipo",
+				"STATUS_HEADER": "Estado",
+				"PIECE_NAME": "Nombre de pieza",
+				"CREATED": "Creado",
+				"ACTIONS": "Acciones",
+				"PROJECT_ID": "ID de proyecto",
+				"PROJECT_ID_PLACEHOLDER": "Ingrese el ID de proyecto de Activepieces (se encuentra en la configuración del proyecto)",
+				"PROJECT_ID_HINT": "Ingrese su ID de proyecto de Activepieces (se encuentra en la configuración del proyecto) para cargar conexiones",
+				"LOADING": "Cargando conexiones...",
+				"DELETE_CONFIRM": "¿Está seguro de que desea eliminar esta conexión?",
+				"DELETE_ARIA": "Eliminar conexión",
+				"STATUS": {
+					"ACTIVE": "Activo",
+					"ERROR": "Error"
+				},
+				"TYPE": {
+					"SECRET_TEXT": "Texto secreto",
+					"OAUTH2": "OAuth 2.0",
+					"CLOUD_OAUTH2": "Cloud OAuth 2.0",
+					"PLATFORM_OAUTH2": "Platform OAuth 2.0",
+					"BASIC_AUTH": "Autenticación básica",
+					"CUSTOM_AUTH": "Autenticación personalizada"
+				}
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP",
+				"NO_SERVERS": "No se encontraron servidores MCP. Ingrese un ID de proyecto y haga clic en Cargar para ver los servidores.",
+				"PROJECT_ID": "ID de proyecto",
+				"PROJECT_ID_PLACEHOLDER": "Ingrese el ID de proyecto de Activepieces (se encuentra en la configuración del proyecto)",
+				"PROJECT_ID_HINT": "Ingrese su ID de proyecto de Activepieces (se encuentra en la configuración del proyecto) para cargar servidores MCP",
+				"NAME": "Nombre del servidor",
+				"SERVER_ID": "ID del servidor",
+				"AGENT_ID": "ID del agente",
+				"URL": "Server URL",
+				"STATUS": "Estado",
+				"ACTIONS": "Acciones",
+				"ACTIVE": "Activo",
+				"TOOLS_COUNT": "Cantidad de herramientas",
+				"CREATED": "Creado",
+				"LOADING": "Cargando servidores MCP..."
+			},
+			"TAB": {
+				"CONNECTIONS": "Conexiones",
+				"MCP_SERVERS": "Servidores MCP",
+				"SETTINGS": "Configuración"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "Por favor, complete todos los campos obligatorios",
+				"LOAD_SETTINGS": "Error al cargar la configuración de Activepieces",
+				"SAVE_SETTINGS": "Error al guardar la configuración de Activepieces",
+				"START_AUTHORIZATION": "Error al iniciar la autorización",
+				"LOAD_CONNECTION": "Error al cargar la conexión",
+				"PROJECT_ID_REQUIRED": "El ID de proyecto es obligatorio",
+				"LOAD_CONNECTIONS": "Error al cargar las conexiones",
+				"DELETE_CONNECTION": "Error al eliminar la conexión"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "Autorizado con éxito con Activepieces",
+				"SETTINGS_SAVED": "Configuración de Activepieces guardada con éxito",
+				"CONNECTION_DELETED": "Conexión eliminada con éxito"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "Parámetros de callback no válidos. Verifique que la autorización se haya completado con éxito y verifique los parámetros de callback.",
+					"ORGANIZATION_NOT_FOUND": "Organización no encontrada",
+					"EXCHANGE_TOKEN": "Error al intercambiar el código de autorización",
+					"INVALID_PROJECT_ID": "Por favor, proporcione un ID de proyecto válido",
+					"TOKEN_NOT_FOUND": "Token no encontrado. Por favor, intente la autorización nuevamente y verifique los parámetros de callback.",
+					"CREATE_CONNECTION": "Error al crear la conexión"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "Conexión de ActivePieces creada con éxito"
+				}
+			}
 		},
 		"COMING_SOON": "Próximamente",
 		"RE_INTEGRATE": "Reintegrar",

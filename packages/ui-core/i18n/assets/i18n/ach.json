@@ -743,6 +743,8 @@
 		"INTEGRATIONS": "crwdns8128:0crwdne8128:0",
 		"UPWORK": "crwdns3200:0crwdne3200:0",
 		"ZAPIER": "Zapier",
+		"GAUZY_AI": "Gauzy AI",
+		"ACTIVEPIECES": "Activepieces",
 		"MAKE_COM": "Make.com",
 		"PROPOSALS": "crwdns2104:0crwdne2104:0",
 		"TIME_OFF": "crwdns2495:0crwdne2495:0",
@@ -1261,6 +1263,126 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "Pe tye webhook ma kigoyo"
+			}
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"SUBTITLE": "Activepieces Integration Setup",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "Activepieces integration ni tye kare. Dii button me authorize.",
+				"INFOS": "Ikare i nen teri i Activepieces me miyo permission bot Gauzy.",
+				"START_BUTTON": "Authorize Activepieces",
+				"NEXT": "Malubo",
+				"ERRORS": {
+					"INVALID_FORM": "Tim ber i pik jami ma mite weng maber",
+					"SAVE_SETTINGS": "Gwoko settings pe olare",
+					"START_AUTHORIZATION": "Cakke authorization pe olare",
+					"ORGANIZATION_NOT_FOUND": "Pe inongo organization"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Kigwoko settings maber"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Activepieces Settings",
+				"SUBTITLE": "Yub Activepieces integration settings ni",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "Ket Client ID ni",
+				"CLIENT_ID_HINT": "Activepieces OAuth Client ID ni",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "Ket Client Secret ni",
+				"CLIENT_SECRET_HINT": "Activepieces OAuth Client Secret ni",
+				"STATE_SECRET": "State Secret",
+				"STATE_SECRET_PLACEHOLDER": "Ket State Secret ni (characters 32 minimum)",
+				"STATE_SECRET_HINT": "String me random ma ber pi OAuth state verification",
+				"CALLBACK_URL": "Callback URL",
+				"CALLBACK_URL_PLACEHOLDER": "Ket Callback URL ni",
+				"CALLBACK_URL_HINT": "URL ma Activepieces bi nwoyo kany ikom authorization",
+				"POST_INSTALL_URL": "Post Install URL",
+				"POST_INSTALL_URL_PLACEHOLDER": "Ket Post Install URL ni",
+				"POST_INSTALL_URL_HINT": "URL me nwoyo kany installation otum",
+				"SETTINGS_UPDATED": "Kiyubu Activepieces settings maber"
+			},
+			"CONNECTIONS": {
+				"TITLE": "Connections",
+				"SUBTITLE": "Lo Activepieces connections ni",
+				"NO_CONNECTIONS": "Pe inongo connections. Ket Project ID ka i dii Load me neno connections.",
+				"DISPLAY_NAME": "Display Name",
+				"NAME": "Connection Name",
+				"TYPE_HEADER": "Type",
+				"STATUS_HEADER": "Status",
+				"PIECE_NAME": "Piece Name",
+				"CREATED": "Kicweyo",
+				"ACTIONS": "Actions",
+				"PROJECT_ID": "Project ID",
+				"PROJECT_ID_PLACEHOLDER": "Ket Activepieces Project ID (nongo i project settings)",
+				"PROJECT_ID_HINT": "Ket Activepieces Project ID ni (nongo i project settings) me load connections",
+				"LOADING": "Tye ka load connections...",
+				"DELETE_CONFIRM": "In moko ada ni i mito kwanyo connection man?",
+				"DELETE_ARIA": "Kwany connection",
+				"STATUS": {
+					"ACTIVE": "Active",
+					"ERROR": "Bal"
+				},
+				"TYPE": {
+					"SECRET_TEXT": "Secret Text",
+					"OAUTH2": "OAuth 2.0",
+					"CLOUD_OAUTH2": "Cloud OAuth 2.0",
+					"PLATFORM_OAUTH2": "Platform OAuth 2.0",
+					"BASIC_AUTH": "Basic Authentication",
+					"CUSTOM_AUTH": "Custom Authentication"
+				}
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP",
+				"NO_SERVERS": "Pe inongo MCP servers. Ket Project ID ka i dii Load me neno servers.",
+				"PROJECT_ID": "Project ID",
+				"PROJECT_ID_PLACEHOLDER": "Ket Activepieces Project ID (nongo i project settings)",
+				"PROJECT_ID_HINT": "Ket Activepieces Project ID ni (nongo i project settings) me load MCP servers",
+				"NAME": "Server Name",
+				"SERVER_ID": "Server ID",
+				"AGENT_ID": "Agent ID",
+				"URL": "Server URL",
+				"STATUS": "Status",
+				"ACTIONS": "Actions",
+				"ACTIVE": "Active",
+				"TOOLS_COUNT": "Tools Count",
+				"CREATED": "Kicweyo",
+				"LOADING": "Tye ka load MCP servers..."
+			},
+			"TAB": {
+				"CONNECTIONS": "Connections",
+				"MCP_SERVERS": "MCP Servers",
+				"SETTINGS": "Settings"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "Tim ber i pik jami ma mite weng",
+				"LOAD_SETTINGS": "Load Activepieces settings pe olare",
+				"SAVE_SETTINGS": "Gwoko Activepieces settings pe olare",
+				"START_AUTHORIZATION": "Cakke authorization pe olare",
+				"LOAD_CONNECTION": "Load connection pe olare",
+				"PROJECT_ID_REQUIRED": "Project ID mite",
+				"LOAD_CONNECTIONS": "Load connections pe olare",
+				"DELETE_CONNECTION": "Kwanyo connection pe olare"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "Ki authorize maber ki Activepieces",
+				"SETTINGS_SAVED": "Kigwoko Activepieces settings maber",
+				"CONNECTION_DELETED": "Kikwanyo connection maber"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "Callback parameters pe tye atir. Rot ni authorization otum maber ka i rot callback parameters.",
+					"ORGANIZATION_NOT_FOUND": "Pe inongo organization",
+					"EXCHANGE_TOKEN": "Loko authorization code pe olare",
+					"INVALID_PROJECT_ID": "Tim ber i mi Project ID ma atir",
+					"TOKEN_NOT_FOUND": "Pe inongo token. Tim ber i tem authorization dong ka i rot callback parameters.",
+					"CREATE_CONNECTION": "Cweyo connection pe olare"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "Kicweyo ActivePieces connection maber"
+				}
 			}
 		},
 		"COMING_SOON": "crwdns4078:0crwdne4078:0",

@@ -842,6 +842,7 @@
 		"MAKE_COM": "Make.com",
 		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
+		"ACTIVEPIECES": "Activepieces",
 		"PROPOSALS": "Proposition",
 		"TIME_OFF": "Congé",
 		"APPROVALS": "Approbations",
@@ -1376,6 +1377,126 @@
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Clé Gauzy AI",
 			"API_SECRET": "Gauzy AI Secret"
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"SUBTITLE": "Configuration de l'intégration Activepieces",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "Votre intégration Activepieces est prête. Cliquez sur le bouton ci-dessous pour autoriser.",
+				"INFOS": "Ensuite, vous serez redirigé vers Activepieces pour accorder l'autorisation à Gauzy.",
+				"START_BUTTON": "Autoriser Activepieces",
+				"NEXT": "Suivant",
+				"ERRORS": {
+					"INVALID_FORM": "Veuillez remplir correctement tous les champs obligatoires",
+					"SAVE_SETTINGS": "Échec de l'enregistrement des paramètres",
+					"START_AUTHORIZATION": "Échec du démarrage de l'autorisation",
+					"ORGANIZATION_NOT_FOUND": "Organisation introuvable"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Paramètres enregistrés avec succès"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Paramètres Activepieces",
+				"SUBTITLE": "Configurez vos paramètres d'intégration Activepieces",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "Entrez votre Client ID",
+				"CLIENT_ID_HINT": "Votre Activepieces OAuth Client ID",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "Entrez votre Client Secret",
+				"CLIENT_SECRET_HINT": "Votre Activepieces OAuth Client Secret",
+				"STATE_SECRET": "State Secret",
+				"STATE_SECRET_PLACEHOLDER": "Entrez votre State Secret (minimum 32 caractères)",
+				"STATE_SECRET_HINT": "Une chaîne aléatoire sécurisée utilisée pour la vérification de l'état OAuth",
+				"CALLBACK_URL": "Callback URL",
+				"CALLBACK_URL_PLACEHOLDER": "Entrez votre Callback URL",
+				"CALLBACK_URL_HINT": "L'URL vers laquelle Activepieces redirigera après l'autorisation",
+				"POST_INSTALL_URL": "Post Install URL",
+				"POST_INSTALL_URL_PLACEHOLDER": "Entrez votre Post Install URL",
+				"POST_INSTALL_URL_HINT": "L'URL vers laquelle rediriger une fois l'installation terminée",
+				"SETTINGS_UPDATED": "Paramètres Activepieces mis à jour avec succès"
+			},
+			"CONNECTIONS": {
+				"TITLE": "Connexions",
+				"SUBTITLE": "Gérez vos connexions Activepieces",
+				"NO_CONNECTIONS": "Aucune connexion trouvée. Entrez un ID de projet et cliquez sur Charger pour voir les connexions.",
+				"DISPLAY_NAME": "Nom d'affichage",
+				"NAME": "Nom de connexion",
+				"TYPE_HEADER": "Type",
+				"STATUS_HEADER": "Statut",
+				"PIECE_NAME": "Nom de la pièce",
+				"CREATED": "Créé",
+				"ACTIONS": "Actions",
+				"PROJECT_ID": "ID de projet",
+				"PROJECT_ID_PLACEHOLDER": "Entrez l'ID de projet Activepieces (trouvé dans les paramètres du projet)",
+				"PROJECT_ID_HINT": "Entrez votre ID de projet Activepieces (trouvé dans les paramètres du projet) pour charger les connexions",
+				"LOADING": "Chargement des connexions...",
+				"DELETE_CONFIRM": "Êtes-vous sûr de vouloir supprimer cette connexion ?",
+				"DELETE_ARIA": "Supprimer la connexion",
+				"STATUS": {
+					"ACTIVE": "Actif",
+					"ERROR": "Erreur"
+				},
+				"TYPE": {
+					"SECRET_TEXT": "Texte secret",
+					"OAUTH2": "OAuth 2.0",
+					"CLOUD_OAUTH2": "Cloud OAuth 2.0",
+					"PLATFORM_OAUTH2": "Platform OAuth 2.0",
+					"BASIC_AUTH": "Authentification de base",
+					"CUSTOM_AUTH": "Authentification personnalisée"
+				}
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP",
+				"NO_SERVERS": "Aucun serveur MCP trouvé. Entrez un ID de projet et cliquez sur Charger pour voir les serveurs.",
+				"PROJECT_ID": "ID de projet",
+				"PROJECT_ID_PLACEHOLDER": "Entrez l'ID de projet Activepieces (trouvé dans les paramètres du projet)",
+				"PROJECT_ID_HINT": "Entrez votre ID de projet Activepieces (trouvé dans les paramètres du projet) pour charger les serveurs MCP",
+				"NAME": "Nom du serveur",
+				"SERVER_ID": "ID du serveur",
+				"AGENT_ID": "ID de l'agent",
+				"URL": "Server URL",
+				"STATUS": "Statut",
+				"ACTIONS": "Actions",
+				"ACTIVE": "Actif",
+				"TOOLS_COUNT": "Nombre d'outils",
+				"CREATED": "Créé",
+				"LOADING": "Chargement des serveurs MCP..."
+			},
+			"TAB": {
+				"CONNECTIONS": "Connexions",
+				"MCP_SERVERS": "Serveurs MCP",
+				"SETTINGS": "Paramètres"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "Veuillez remplir tous les champs obligatoires",
+				"LOAD_SETTINGS": "Échec du chargement des paramètres Activepieces",
+				"SAVE_SETTINGS": "Échec de l'enregistrement des paramètres Activepieces",
+				"START_AUTHORIZATION": "Échec du démarrage de l'autorisation",
+				"LOAD_CONNECTION": "Échec du chargement de la connexion",
+				"PROJECT_ID_REQUIRED": "L'ID de projet est requis",
+				"LOAD_CONNECTIONS": "Échec du chargement des connexions",
+				"DELETE_CONNECTION": "Échec de la suppression de la connexion"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "Autorisé avec succès avec Activepieces",
+				"SETTINGS_SAVED": "Paramètres Activepieces enregistrés avec succès",
+				"CONNECTION_DELETED": "Connexion supprimée avec succès"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "Paramètres de callback invalides. Vérifiez que l'autorisation a été complétée avec succès et vérifiez les paramètres de callback.",
+					"ORGANIZATION_NOT_FOUND": "Organisation introuvable",
+					"EXCHANGE_TOKEN": "Échec de l'échange du code d'autorisation",
+					"INVALID_PROJECT_ID": "Veuillez fournir un ID de projet valide",
+					"TOKEN_NOT_FOUND": "Token introuvable. Veuillez réessayer l'autorisation et vérifier les paramètres de callback.",
+					"CREATE_CONNECTION": "Échec de la création de la connexion"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "Connexion ActivePieces créée avec succès"
+				}
+			}
 		},
 		"COMING_SOON": "Bientôt disponible",
 		"RE_INTEGRATE": "Réintégrer",

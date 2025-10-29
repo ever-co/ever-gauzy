@@ -840,6 +840,7 @@
 		"MAKE_COM": "Make.com",
 		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
+		"ACTIVEPIECES": "Activepieces",
 		"PROPOSALS": "Propozycje",
 		"TIME_OFF": "Czas wolny",
 		"APPROVALS": "Zatwierdzenia",
@@ -1374,6 +1375,126 @@
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Klucz Gauzy AI",
 			"API_SECRET": "Tajemnica Gauzy AI"
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"SUBTITLE": "Konfiguracja integracji Activepieces",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "Twoja integracja Activepieces jest gotowa. Kliknij przycisk poniżej, aby autoryzować.",
+				"INFOS": "Następnie zostaniesz przeniesiony do Activepieces, aby przyznać uprawnienia Gauzy.",
+				"START_BUTTON": "Autoryzuj Activepieces",
+				"NEXT": "Dalej",
+				"ERRORS": {
+					"INVALID_FORM": "Proszę poprawnie wypełnić wszystkie wymagane pola",
+					"SAVE_SETTINGS": "Nie udało się zapisać ustawień",
+					"START_AUTHORIZATION": "Nie udało się rozpocząć autoryzacji",
+					"ORGANIZATION_NOT_FOUND": "Nie znaleziono organizacji"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Ustawienia zapisane pomyślnie"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Ustawienia Activepieces",
+				"SUBTITLE": "Skonfiguruj ustawienia integracji Activepieces",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "Wprowadź swój Client ID",
+				"CLIENT_ID_HINT": "Twój Activepieces OAuth Client ID",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "Wprowadź swój Client Secret",
+				"CLIENT_SECRET_HINT": "Twój Activepieces OAuth Client Secret",
+				"STATE_SECRET": "State Secret",
+				"STATE_SECRET_PLACEHOLDER": "Wprowadź swój State Secret (minimum 32 znaki)",
+				"STATE_SECRET_HINT": "Bezpieczny losowy ciąg znaków używany do weryfikacji stanu OAuth",
+				"CALLBACK_URL": "Callback URL",
+				"CALLBACK_URL_PLACEHOLDER": "Wprowadź swój Callback URL",
+				"CALLBACK_URL_HINT": "Adres URL, do którego Activepieces przekieruje po autoryzacji",
+				"POST_INSTALL_URL": "Post Install URL",
+				"POST_INSTALL_URL_PLACEHOLDER": "Wprowadź swój Post Install URL",
+				"POST_INSTALL_URL_HINT": "Adres URL przekierowania po zakończeniu instalacji",
+				"SETTINGS_UPDATED": "Ustawienia Activepieces zaktualizowane pomyślnie"
+			},
+			"CONNECTIONS": {
+				"TITLE": "Połączenia",
+				"SUBTITLE": "Zarządzaj swoimi połączeniami Activepieces",
+				"NO_CONNECTIONS": "Nie znaleziono połączeń. Wprowadź ID projektu i kliknij Załaduj, aby wyświetlić połączenia.",
+				"DISPLAY_NAME": "Nazwa wyświetlana",
+				"NAME": "Nazwa połączenia",
+				"TYPE_HEADER": "Typ",
+				"STATUS_HEADER": "Status",
+				"PIECE_NAME": "Nazwa części",
+				"CREATED": "Utworzono",
+				"ACTIONS": "Akcje",
+				"PROJECT_ID": "ID projektu",
+				"PROJECT_ID_PLACEHOLDER": "Wprowadź ID projektu Activepieces (znajduje się w ustawieniach projektu)",
+				"PROJECT_ID_HINT": "Wprowadź swój ID projektu Activepieces (znajduje się w ustawieniach projektu), aby załadować połączenia",
+				"LOADING": "Ładowanie połączeń...",
+				"DELETE_CONFIRM": "Czy na pewno chcesz usunąć to połączenie?",
+				"DELETE_ARIA": "Usuń połączenie",
+				"STATUS": {
+					"ACTIVE": "Aktywny",
+					"ERROR": "Błąd"
+				},
+				"TYPE": {
+					"SECRET_TEXT": "Tajny tekst",
+					"OAUTH2": "OAuth 2.0",
+					"CLOUD_OAUTH2": "Cloud OAuth 2.0",
+					"PLATFORM_OAUTH2": "Platform OAuth 2.0",
+					"BASIC_AUTH": "Uwierzytelnianie podstawowe",
+					"CUSTOM_AUTH": "Uwierzytelnianie niestandardowe"
+				}
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP",
+				"NO_SERVERS": "Nie znaleziono serwerów MCP. Wprowadź ID projektu i kliknij Załaduj, aby wyświetlić serwery.",
+				"PROJECT_ID": "ID projektu",
+				"PROJECT_ID_PLACEHOLDER": "Wprowadź ID projektu Activepieces (znajduje się w ustawieniach projektu)",
+				"PROJECT_ID_HINT": "Wprowadź swój ID projektu Activepieces (znajduje się w ustawieniach projektu), aby załadować serwery MCP",
+				"NAME": "Nazwa serwera",
+				"SERVER_ID": "ID serwera",
+				"AGENT_ID": "ID agenta",
+				"URL": "Server URL",
+				"STATUS": "Status",
+				"ACTIONS": "Akcje",
+				"ACTIVE": "Aktywny",
+				"TOOLS_COUNT": "Liczba narzędzi",
+				"CREATED": "Utworzono",
+				"LOADING": "Ładowanie serwerów MCP..."
+			},
+			"TAB": {
+				"CONNECTIONS": "Połączenia",
+				"MCP_SERVERS": "Serwery MCP",
+				"SETTINGS": "Ustawienia"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "Proszę wypełnić wszystkie wymagane pola",
+				"LOAD_SETTINGS": "Nie udało się załadować ustawień Activepieces",
+				"SAVE_SETTINGS": "Nie udało się zapisać ustawień Activepieces",
+				"START_AUTHORIZATION": "Nie udało się rozpocząć autoryzacji",
+				"LOAD_CONNECTION": "Nie udało się załadować połączenia",
+				"PROJECT_ID_REQUIRED": "ID projektu jest wymagane",
+				"LOAD_CONNECTIONS": "Nie udało się załadować połączeń",
+				"DELETE_CONNECTION": "Nie udało się usunąć połączenia"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "Pomyślnie autoryzowano z Activepieces",
+				"SETTINGS_SAVED": "Ustawienia Activepieces zapisane pomyślnie",
+				"CONNECTION_DELETED": "Połączenie usunięte pomyślnie"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "Nieprawidłowe parametry wywołania zwrotnego. Sprawdź, czy autoryzacja została ukończona pomyślnie i zweryfikuj parametry wywołania zwrotnego.",
+					"ORGANIZATION_NOT_FOUND": "Nie znaleziono organizacji",
+					"EXCHANGE_TOKEN": "Nie udało się wymienić kodu autoryzacji",
+					"INVALID_PROJECT_ID": "Proszę podać prawidłowy ID projektu",
+					"TOKEN_NOT_FOUND": "Nie znaleziono tokenu. Spróbuj ponownie autoryzacji i zweryfikuj parametry wywołania zwrotnego.",
+					"CREATE_CONNECTION": "Nie udało się utworzyć połączenia"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "Połączenie ActivePieces utworzone pomyślnie"
+				}
+			}
 		},
 		"COMING_SOON": "Niedługo będzie dostępne",
 		"RE_INTEGRATE": "Ponowna integracja",

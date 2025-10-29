@@ -847,6 +847,8 @@
 		"INTEGRATIONS": "Приложения и интеграция",
 		"MAKE_COM": "Make.com",
 		"ZAPIER": "Zapier",
+		"GAUZY_AI": "Gauzy AI",
+		"ACTIVEPIECES": "Activepieces",
 		"UPWORK": "Обновления",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Время выключено",
@@ -1414,6 +1416,126 @@
 			"TAB": {
 				"AUTO_SYNC": "Auto sync",
 				"MANUAL_SYNC": "Manual sync"
+			}
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"SUBTITLE": "Настройка интеграции Activepieces",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "Ваша интеграция Activepieces готова. Нажмите кнопку ниже для авторизации.",
+				"INFOS": "Далее вы будете перенаправлены в Activepieces для предоставления разрешения Gauzy.",
+				"START_BUTTON": "Авторизовать Activepieces",
+				"NEXT": "Далее",
+				"ERRORS": {
+					"INVALID_FORM": "Пожалуйста, правильно заполните все обязательные поля",
+					"SAVE_SETTINGS": "Не удалось сохранить настройки",
+					"START_AUTHORIZATION": "Не удалось начать авторизацию",
+					"ORGANIZATION_NOT_FOUND": "Организация не найдена"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Настройки успешно сохранены"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Настройки Activepieces",
+				"SUBTITLE": "Настройте параметры интеграции Activepieces",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "Введите ваш Client ID",
+				"CLIENT_ID_HINT": "Ваш Activepieces OAuth Client ID",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "Введите ваш Client Secret",
+				"CLIENT_SECRET_HINT": "Ваш Activepieces OAuth Client Secret",
+				"STATE_SECRET": "State Secret",
+				"STATE_SECRET_PLACEHOLDER": "Введите ваш State Secret (минимум 32 символа)",
+				"STATE_SECRET_HINT": "Безопасная случайная строка, используемая для проверки состояния OAuth",
+				"CALLBACK_URL": "Callback URL",
+				"CALLBACK_URL_PLACEHOLDER": "Введите ваш Callback URL",
+				"CALLBACK_URL_HINT": "URL, на который Activepieces перенаправит после авторизации",
+				"POST_INSTALL_URL": "Post Install URL",
+				"POST_INSTALL_URL_PLACEHOLDER": "Введите ваш Post Install URL",
+				"POST_INSTALL_URL_HINT": "URL для перенаправления после завершения установки",
+				"SETTINGS_UPDATED": "Настройки Activepieces успешно обновлены"
+			},
+			"CONNECTIONS": {
+				"TITLE": "Подключения",
+				"SUBTITLE": "Управление вашими подключениями Activepieces",
+				"NO_CONNECTIONS": "Подключения не найдены. Введите ID проекта и нажмите «Загрузить», чтобы просмотреть подключения.",
+				"DISPLAY_NAME": "Отображаемое имя",
+				"NAME": "Имя подключения",
+				"TYPE_HEADER": "Тип",
+				"STATUS_HEADER": "Статус",
+				"PIECE_NAME": "Имя части",
+				"CREATED": "Создано",
+				"ACTIONS": "Действия",
+				"PROJECT_ID": "ID проекта",
+				"PROJECT_ID_PLACEHOLDER": "Введите ID проекта Activepieces (находится в настройках проекта)",
+				"PROJECT_ID_HINT": "Введите ваш ID проекта Activepieces (находится в настройках проекта) для загрузки подключений",
+				"LOADING": "Загрузка подключений...",
+				"DELETE_CONFIRM": "Вы уверены, что хотите удалить это подключение?",
+				"DELETE_ARIA": "Удалить подключение",
+				"STATUS": {
+					"ACTIVE": "Активно",
+					"ERROR": "Ошибка"
+				},
+				"TYPE": {
+					"SECRET_TEXT": "Секретный текст",
+					"OAUTH2": "OAuth 2.0",
+					"CLOUD_OAUTH2": "Cloud OAuth 2.0",
+					"PLATFORM_OAUTH2": "Platform OAuth 2.0",
+					"BASIC_AUTH": "Базовая аутентификация",
+					"CUSTOM_AUTH": "Пользовательская аутентификация"
+				}
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP",
+				"NO_SERVERS": "Серверы MCP не найдены. Введите ID проекта и нажмите «Загрузить», чтобы просмотреть серверы.",
+				"PROJECT_ID": "ID проекта",
+				"PROJECT_ID_PLACEHOLDER": "Введите ID проекта Activepieces (находится в настройках проекта)",
+				"PROJECT_ID_HINT": "Введите ваш ID проекта Activepieces (находится в настройках проекта) для загрузки серверов MCP",
+				"NAME": "Имя сервера",
+				"SERVER_ID": "ID сервера",
+				"AGENT_ID": "ID агента",
+				"URL": "Server URL",
+				"STATUS": "Статус",
+				"ACTIONS": "Действия",
+				"ACTIVE": "Активно",
+				"TOOLS_COUNT": "Количество инструментов",
+				"CREATED": "Создано",
+				"LOADING": "Загрузка серверов MCP..."
+			},
+			"TAB": {
+				"CONNECTIONS": "Подключения",
+				"MCP_SERVERS": "Серверы MCP",
+				"SETTINGS": "Настройки"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "Пожалуйста, заполните все обязательные поля",
+				"LOAD_SETTINGS": "Не удалось загрузить настройки Activepieces",
+				"SAVE_SETTINGS": "Не удалось сохранить настройки Activepieces",
+				"START_AUTHORIZATION": "Не удалось начать авторизацию",
+				"LOAD_CONNECTION": "Не удалось загрузить подключение",
+				"PROJECT_ID_REQUIRED": "ID проекта обязателен",
+				"LOAD_CONNECTIONS": "Не удалось загрузить подключения",
+				"DELETE_CONNECTION": "Не удалось удалить подключение"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "Успешно авторизовано с Activepieces",
+				"SETTINGS_SAVED": "Настройки Activepieces успешно сохранены",
+				"CONNECTION_DELETED": "Подключение успешно удалено"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "Недопустимые параметры обратного вызова. Проверьте, что авторизация была успешно завершена, и проверьте параметры обратного вызова.",
+					"ORGANIZATION_NOT_FOUND": "Организация не найдена",
+					"EXCHANGE_TOKEN": "Не удалось обменять код авторизации",
+					"INVALID_PROJECT_ID": "Пожалуйста, укажите действительный ID проекта",
+					"TOKEN_NOT_FOUND": "Токен не найден. Пожалуйста, попробуйте авторизацию снова и проверьте параметры обратного вызова.",
+					"CREATE_CONNECTION": "Не удалось создать подключение"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "Подключение ActivePieces успешно создано"
+				}
 			}
 		},
 		"COMING_SOON": "Скоро появится",
