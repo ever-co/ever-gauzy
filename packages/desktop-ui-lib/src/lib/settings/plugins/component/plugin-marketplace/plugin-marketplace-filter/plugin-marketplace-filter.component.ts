@@ -3,24 +3,7 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { IPlugin, ITag, PluginStatus, PluginType } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable, debounceTime, distinctUntilChanged, map, startWith } from 'rxjs';
-
-// Plugin marketplace specific interfaces
-interface IPluginFilter {
-	search?: string;
-	categories?: string[];
-	status?: PluginStatus[];
-	types?: PluginType[];
-	tags?: string[];
-	priceRange?: IPriceRange;
-	sortBy?: PluginSortOption;
-	sortDirection?: 'asc' | 'desc';
-	author?: string;
-	license?: string[];
-	minDownloads?: number;
-	dateRange?: IDateRange;
-	featured?: boolean;
-	verified?: boolean;
-}
+import { IPluginFilter } from '../+state/stores/plugin-market.store';
 
 interface IPriceRange {
 	min: number;
