@@ -147,7 +147,7 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 	 * Delete connection
 	 * DELETE /integration/activepieces/connection/:integrationId
 	 */
-	deleteConnection(connection: IActivepiecesConnection) {
+	deleteConnection() {
 		if (!window.confirm(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.DELETE_CONFIRM'))) {
 			return;
 		}
@@ -160,7 +160,7 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 		this.loading = true;
 
 		this._activepiecesService
-			.deleteConnection(this.integrationId)
+		.deleteConnection(this.integrationId)
 			.pipe(
 				tap(() => {
 					this._toastrService.success(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.SUCCESS.CONNECTION_DELETED'));

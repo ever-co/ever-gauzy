@@ -175,7 +175,7 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 	 */
 	startAuthorization() {
 		if (!this.organization) {
-			// Optional: toast an error here if desired
+			this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.ORGANIZATION_NOT_FOUND'));
 			return;
 		}
 		this.loading = true;
