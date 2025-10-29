@@ -290,3 +290,9 @@
 nb-button-group {
 	max-height: 32px;
 }
+
+:host {
+	ngx-no-data-message {
+		width: 100%;
+	}
+}

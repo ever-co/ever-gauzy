@@ -175,6 +175,10 @@ nb-tag-list {
   }
 
   .plugin-content {
+	display: flex;
+    flex-direction: column;
+    gap: 2rem;
+
     .quick-actions {
       display: flex;
       align-items: center;
@@ -315,5 +319,24 @@ nb-tag-list {
 
   .action-buttons {
     display: flex;
+  }
+}
+
+:host ::ng-deep nb-route-tabset .route-tab .tab-link {
+  display: flex !important;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+
+  nb-icon {
+    margin-bottom: unset;
+  }
+  svg {
+    fill: var(--text-primary-color);
+  }
+  span {
+    display: inline-block;
+    text-transform: initial;
+    &:first-letter {
+      text-transform: uppercase;
+    }
   }
 }
