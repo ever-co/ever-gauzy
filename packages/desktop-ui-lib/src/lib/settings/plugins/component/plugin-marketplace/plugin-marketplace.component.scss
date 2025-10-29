@@ -3,11 +3,9 @@
 	display: grid;
 	/* Use a flexible sidebar width that adapts without forcing fixed heights */
 	grid-template-columns: minmax(260px, 320px) 1fr;
-	gap: 1.5rem;
-	/* Avoid forcing a fixed/min height that can make the screen feel "stuck" */
-	min-height: auto;
-	height: auto;
 	background: var(--gauzy-card-2);
+	height: calc(100vh - 10rem);
+	gap: 1.5rem;
 
 	@media (max-width: 1024px) {
 		grid-template-columns: minmax(240px, 280px) 1fr;
