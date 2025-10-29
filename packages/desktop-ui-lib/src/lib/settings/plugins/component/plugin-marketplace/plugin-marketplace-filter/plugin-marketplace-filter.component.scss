@@ -154,7 +154,7 @@
 				align-items: center;
 				gap: 0.5rem;
 				font-weight: 600;
-				color: var(--nb-text-basic-color);
+				color: var(--gauzy-text-color-1);
 
 				nb-icon {
 					color: var(--nb-text-hint-color);
@@ -404,10 +404,6 @@
 			border-radius: 0;
 			border-left: none;
 			border-right: none;
-		}
-
-		.filter-content {
-			padding: 1rem;
 		}
 
 		.categories-grid {

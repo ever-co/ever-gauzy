@@ -40,7 +40,7 @@
   .section-title {
     font-weight: 600;
     margin-bottom: 1rem;
-    color: nb-theme(text-basic-color);
+    color: var(--gauzy-text-color-1);
     border-bottom: 1px solid nb-theme(border-basic-color-3);
     padding-bottom: 0.5rem;
   }

@@ -7,6 +7,7 @@
 	/* Avoid forcing a fixed/min height that can make the screen feel "stuck" */
 	min-height: auto;
 	height: auto;
+	background: var(--gauzy-card-2);
 
 	@media (max-width: 1024px) {
 		grid-template-columns: minmax(240px, 280px) 1fr;
@@ -103,8 +104,7 @@
 
 // Content Active (Plugin List)
 .content-active {
-	/* Let the page scroll naturally; avoid nested scrolling here */
-	overflow: visible;
+	overflow: auto;
 	flex: 1;
 
 	&.grid-view {
@@ -287,4 +287,8 @@
 	.button-upload {
 		display: none;
 	}
+}
+
+nb-button-group {
+	max-height: 32px;
 }
