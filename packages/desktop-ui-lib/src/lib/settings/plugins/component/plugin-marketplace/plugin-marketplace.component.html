@@ -7,6 +7,7 @@
 @let totalCount = query.totalCount$ | async;
 @let filteredCount = query.filteredCount$ | async;
 @let showAdvancedFilters = query.showAdvancedFilters$ | async;
+@let selectedView = query.selectedView$ | async;
 
 <div class="marketplace-container">
 	<!-- Filter Panel -->
@@ -41,7 +42,7 @@
 				<nb-button-group>
 					<button
 						nbButton
-						[status]="(query.selectedView$ | async) === 'grid' ? 'primary' : 'basic'"
+						[status]="selectedView === 'grid' ? 'primary' : 'basic'"
 						(click)="setViewMode('grid')"
 						nbTooltip="Grid view"
 						size="small">
@@ -49,7 +50,7 @@
 					</button>
 					<button
 						nbButton
-						[status]="(query.selectedView$ | async) === 'list' ? 'primary' : 'basic'"
+						[status]="selectedView === 'list' ? 'primary' : 'basic'"
 						(click)="setViewMode('list')"
 						nbTooltip="List view"
 						size="small">
@@ -77,8 +78,8 @@
 			[throttleTime]="300"
 			(bottomThreshold)="loadMore()"
 			class="content-active first"
-			[class.grid-view]="(query.selectedView$ | async) === 'grid'"
-			[class.list-view]="(query.selectedView$ | async) === 'list'">
+			[class.grid-view]="selectedView === 'grid'"
+			[class.list-view]="selectedView === 'list'">
 
 			@if (available) {
 				<!-- Debug info - remove in production -->
@@ -89,7 +90,7 @@
 							class="plugin"
 							[ngClass]="{ none: isLast }"
 							[plugin]="plugin"
-							[viewMode]="(query.selectedView$ | async) || 'grid'">
+							[viewMode]="selectedView || 'grid'">
 						</lib-plugin-marketplace-detail>
 					} @placeholder (minimum 500ms) {
 						<div class="plugin-container skeleton-loader">
