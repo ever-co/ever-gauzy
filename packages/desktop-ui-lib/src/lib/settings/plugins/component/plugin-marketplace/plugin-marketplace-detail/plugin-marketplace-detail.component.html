@@ -8,7 +8,7 @@
 @let editing = marketplaceQuery.updating$ | async;
 
 @if(plugin) {
-<div class="plugin-card" [class.featured]="plugin.isFeatured" [class.verified]="plugin.isVerified">
+<div class="plugin-card" [class.featured]="plugin.isFeatured" [class.verified]="plugin.isVerified" [class.list-view]="viewMode === 'list'" [class.grid-view]="viewMode === 'grid'">
 	<!-- Plugin Header with Status Indicators -->
 	<div class="plugin-header">
 		<div class="plugin-title-section">

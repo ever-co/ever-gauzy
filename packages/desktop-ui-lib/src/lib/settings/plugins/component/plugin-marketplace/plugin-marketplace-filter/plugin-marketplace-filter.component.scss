@@ -31,10 +31,9 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 1rem 1.5rem;
 		background: var(--nb-background-basic-color-2);
 		border-bottom: 1px solid var(--nb-card-divider-color);
-		min-height: 60px;
+		padding: 1rem;
 		position: sticky;
 		top: 0;
 		z-index: 2;
@@ -71,14 +70,6 @@
 					margin-left: 0.5rem;
 				}
 			}
-
-			.header-stats {
-				.results-count {
-					font-size: 0.875rem;
-					color: var(--nb-text-hint-color);
-					font-weight: 500;
-				}
-			}
 		}
 
 		.header-actions {
@@ -98,7 +89,6 @@
 
 	// Filter Content
 	.filter-content {
-		padding: 1rem 1.5rem;
 		/* Limit inner scrolling to large screens only; allow natural page scroll elsewhere */
 		max-height: 80vh;
 		overflow-y: auto;
@@ -216,6 +206,7 @@
 		}
 
 		nb-button-group {
+			max-height: 32px;
 			flex-shrink: 0;
 		}
 	}

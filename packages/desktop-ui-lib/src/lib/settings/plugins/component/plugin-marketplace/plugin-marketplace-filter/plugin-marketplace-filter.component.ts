@@ -134,6 +134,17 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 				this.isCollapsed$.next(true);
 			}
 		}
+
+		// Update advanced section visibility when showAdvanced input changes
+		if (changes['showAdvanced']) {
+			this.updateFilterSectionVisibility();
+		}
+
+		// Update filter options when plugins change
+		if (changes['plugins'] && !changes['plugins'].firstChange) {
+			this.loadFilterOptions();
+			this.updateCategoryCounts();
+		}
 	}
 
 	ngOnDestroy(): void {
@@ -238,15 +249,6 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 				const filters = this.mapFormValueToFilter(formValue);
 				this.updateActiveFiltersCount(filters);
 				this.filterChange.emit(filters);
-			});
-
-		// Advanced mode visibility
-		this.filterForm
-			.get('advanced')
-			?.valueChanges.pipe(untilDestroyed(this))
-			.subscribe((showAdvanced) => {
-				this.toggleAdvanced.emit(showAdvanced);
-				this.updateFilterSectionVisibility();
 			});
 	}
 

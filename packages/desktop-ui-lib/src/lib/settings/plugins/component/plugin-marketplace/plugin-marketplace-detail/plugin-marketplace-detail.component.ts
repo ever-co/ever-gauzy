@@ -57,6 +57,10 @@ enum LocalPluginSubscriptionType {
 export class PluginMarketplaceDetailComponent implements OnInit {
 	@Input()
 	public plugin: IPlugin;
+
+	@Input()
+	public viewMode: 'grid' | 'list' = 'grid';
+
 	private readonly _isChecked$ = new BehaviorSubject<boolean>(false);
 
 	constructor(

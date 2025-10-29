@@ -35,6 +35,72 @@
   &.verified {
     border-left: 4px solid var(--nb-success-color);
   }
+
+  // List view compact layout
+  &.list-view {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+
+    .plugin-header {
+      flex: 1;
+      margin-bottom: 0;
+      min-width: 0;
+    }
+
+    .plugin-title-section {
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .plugin-name {
+      margin-bottom: 0;
+      font-size: 16px;
+    }
+
+    .plugin-meta {
+      margin-top: 4px;
+      gap: 8px;
+    }
+
+    .plugin-description,
+    .plugin-categories,
+    .plugin-tags,
+    .plugin-subscription,
+    .plugin-metrics {
+      display: none;
+    }
+
+    .plugin-status-section {
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .plugin-actions {
+      border-top: none;
+      padding-top: 0;
+      flex-shrink: 0;
+      width: auto;
+
+      .action-buttons {
+        gap: 4px;
+      }
+    }
+
+    .installation-control {
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
 }
 
 /* Plugin Header Section */

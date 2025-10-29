@@ -221,22 +221,26 @@ export class PluginMarketplaceEffects {
 		)
 	);
 
-	toggleAdvancedFilters$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginMarketplaceActions.toggleAdvancedFilters),
-			tap(({ show }) => {
-				this.pluginMarketplaceStore.updateUI({ showAdvancedFilters: show });
-			})
-		)
+	toggleAdvancedFilters$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginMarketplaceActions.toggleAdvancedFilters),
+				tap(({ show }) => {
+					this.pluginMarketplaceStore.updateUI({ showAdvancedFilters: show });
+				})
+			),
+		{ dispatch: false }
 	);
 
-	setViewMode$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginMarketplaceActions.setViewMode),
-			tap(({ view }) => {
-				this.pluginMarketplaceStore.updateUI({ selectedView: view });
-			})
-		)
+	setViewMode$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginMarketplaceActions.setViewMode),
+				tap(({ view }) => {
+					this.pluginMarketplaceStore.updateUI({ selectedView: view });
+				})
+			),
+		{ dispatch: false }
 	);
 
 	// Search Effects
