@@ -50,7 +50,7 @@ import { CacheService } from './cache.service';
 								tls: true,
 								rejectUnauthorized: process.env.NODE_ENV === 'production',
 								// Reconnection strategy
-								reconnectStrategy: (retries: number) => Math.min(1000 + retries * 200, 5000),
+								reconnectStrategy: (retries: number) => Math.min(1000 * Math.pow(2, retries), 5000),
 								// Connection timeout
 								connectTimeout: 10_000
 						  }
@@ -62,7 +62,7 @@ import { CacheService } from './cache.service';
 								keepAlive: true,
 								keepAliveInitialDelay: 10_000,
 								// Reconnection strategy
-								reconnectStrategy: (retries: number) => Math.min(1000 + retries * 200, 5000),
+								reconnectStrategy: (retries: number) => Math.min(1000 * Math.pow(2, retries), 5000),
 								// Connection timeout
 								connectTimeout: 10_000
 						  },
@@ -93,6 +93,7 @@ import { CacheService } from './cache.service';
 				});
 				// Ping Redis to verify connection
 				try {
+					await redisClient.connect();
 					const res = await redisClient.ping();
 					console.log('Redis Cache Client Ping:', res);
 				} catch (error) {
