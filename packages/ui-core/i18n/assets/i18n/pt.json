@@ -841,6 +841,7 @@
 		"MAKE_COM": "Make.com",
 		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
+		"ACTIVEPIECES": "Activepieces",
 		"PROPOSALS": "Propostas",
 		"TIME_OFF": "Tempo livre",
 		"APPROVALS": "Aprovações",
@@ -1375,6 +1376,129 @@
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Chave de IA Gauzy",
 			"API_SECRET": "Gauzy AI Secret: Gauzy AI Secret é uma tecnologia avançada e revolucionária que combina inteligência artificial com recursos intuitivos. Essa solução inovadora oferece segurança e privacidade máxima, permitindo que os usuários protejam seus dados confidenciais de hackers e outras ameaças. Com o Gauzy AI Secret, é possível ter tranquilidade ao realizar qualquer tipo de comunicação ou transação online."
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"SUBTITLE": "Configuração da integração Activepieces",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "Sua integração Activepieces está pronta. Clique no botão abaixo para autorizar.",
+				"INFOS": "Em seguida, você será direcionado ao Activepieces para conceder permissão ao Gauzy.",
+				"START_BUTTON": "Autorizar Activepieces",
+				"NEXT": "Próximo",
+				"ERRORS": {
+					"INVALID_FORM": "Por favor, preencha todos os campos obrigatórios corretamente",
+					"SAVE_SETTINGS": "Falha ao salvar as configurações",
+					"START_AUTHORIZATION": "Falha ao iniciar a autorização",
+					"ORGANIZATION_NOT_FOUND": "Organização não encontrada",
+					"CHECK_TENANT_SETTINGS": "Falha ao verificar as configurações do inquilino",
+					"CHECK_REMEMBER_STATE": "Falha ao verificar o estado de lembrar"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Configurações salvas com sucesso"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Configurações do Activepieces",
+				"SUBTITLE": "Configure suas configurações de integração do Activepieces",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "Insira seu Client ID",
+				"CLIENT_ID_HINT": "Seu Activepieces OAuth Client ID",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "Insira seu Client Secret",
+				"CLIENT_SECRET_HINT": "Seu Activepieces OAuth Client Secret",
+				"STATE_SECRET": "State Secret",
+				"STATE_SECRET_PLACEHOLDER": "Insira seu State Secret (mínimo de 32 caracteres)",
+				"STATE_SECRET_HINT": "Uma string aleatória segura usada para verificação de estado OAuth",
+				"CALLBACK_URL": "Callback URL",
+				"CALLBACK_URL_PLACEHOLDER": "Insira seu Callback URL",
+				"CALLBACK_URL_HINT": "A URL para onde o Activepieces redirecionará após a autorização",
+				"POST_INSTALL_URL": "Post Install URL",
+				"POST_INSTALL_URL_PLACEHOLDER": "Insira seu Post Install URL",
+				"POST_INSTALL_URL_HINT": "A URL para redirecionar após a conclusão da instalação",
+				"SETTINGS_UPDATED": "Configurações do Activepieces atualizadas com sucesso"
+			},
+			"CONNECTIONS": {
+				"TITLE": "Conexões",
+				"SUBTITLE": "Gerencie suas conexões Activepieces",
+				"NO_CONNECTIONS": "Nenhuma conexão encontrada. Insira um ID de projeto e clique em Carregar para visualizar as conexões.",
+				"DISPLAY_NAME": "Nome de exibição",
+				"NAME": "Nome da conexão",
+				"TYPE_HEADER": "Tipo",
+				"STATUS_HEADER": "Status",
+				"PIECE_NAME": "Nome da peça",
+				"CREATED": "Criado",
+				"ACTIONS": "Ações",
+				"PROJECT_ID": "ID do projeto",
+				"PROJECT_ID_PLACEHOLDER": "Insira o ID do projeto Activepieces (encontrado nas configurações do projeto)",
+				"PROJECT_ID_HINT": "Insira seu ID de projeto Activepieces (encontrado nas configurações do projeto) para carregar conexões",
+				"LOADING": "Carregando conexões...",
+				"DELETE_CONFIRM": "Tem certeza de que deseja excluir esta conexão?",
+				"DELETE_ARIA": "Excluir conexão",
+				"STATUS": {
+					"ACTIVE": "Ativo",
+					"ERROR": "Erro"
+				},
+				"TYPE": {
+					"SECRET_TEXT": "Texto secreto",
+					"OAUTH2": "OAuth 2.0",
+					"CLOUD_OAUTH2": "Cloud OAuth 2.0",
+					"PLATFORM_OAUTH2": "Platform OAuth 2.0",
+					"BASIC_AUTH": "Autenticação básica",
+					"CUSTOM_AUTH": "Autenticação personalizada"
+				}
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP",
+				"NO_SERVERS": "Nenhum servidor MCP encontrado. Insira um ID de projeto e clique em Carregar para visualizar os servidores.",
+				"PROJECT_ID": "ID do projeto",
+				"PROJECT_ID_PLACEHOLDER": "Insira o ID do projeto Activepieces (encontrado nas configurações do projeto)",
+				"PROJECT_ID_HINT": "Insira seu ID de projeto Activepieces (encontrado nas configurações do projeto) para carregar servidores MCP",
+				"NAME": "Nome do servidor",
+				"SERVER_ID": "ID do servidor",
+				"AGENT_ID": "ID do agente",
+				"URL": "Server URL",
+				"STATUS": "Status",
+				"ACTIONS": "Ações",
+				"ACTIVE": "Ativo",
+				"TOOLS_COUNT": "Contagem de ferramentas",
+				"CREATED": "Criado",
+				"LOADING": "Carregando servidores MCP..."
+			},
+			"TAB": {
+				"CONNECTIONS": "Conexões",
+				"MCP_SERVERS": "Servidores MCP",
+				"SETTINGS": "Configurações"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "Por favor, preencha todos os campos obrigatórios",
+				"LOAD_SETTINGS": "Falha ao carregar as configurações do Activepieces",
+				"SAVE_SETTINGS": "Falha ao salvar as configurações do Activepieces",
+				"START_AUTHORIZATION": "Falha ao iniciar a autorização",
+				"LOAD_CONNECTION": "Falha ao carregar a conexão",
+				"PROJECT_ID_REQUIRED": "ID do projeto é obrigatório",
+				"LOAD_CONNECTIONS": "Falha ao carregar as conexões",
+				"DELETE_CONNECTION": "Falha ao excluir a conexão",
+				"INVALID_CONNECTION": "Dados de conexão inválidos"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "Autorizado com sucesso com Activepieces",
+				"SETTINGS_SAVED": "Configurações do Activepieces salvas com sucesso",
+				"CONNECTION_DELETED": "Conexão excluída com sucesso"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "Parâmetros de callback inválidos. Verifique se a autorização foi concluída com sucesso e verifique os parâmetros de callback.",
+					"ORGANIZATION_NOT_FOUND": "Organização não encontrada",
+					"EXCHANGE_TOKEN": "Falha ao trocar o código de autorização",
+					"INVALID_PROJECT_ID": "Por favor, forneça um ID de projeto válido",
+					"TOKEN_NOT_FOUND": "Token não encontrado. Por favor, tente a autorização novamente e verifique os parâmetros de callback.",
+					"CREATE_CONNECTION": "Falha ao criar a conexão"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "Conexão ActivePieces criada com sucesso"
+				}
+			}
 		},
 		"COMING_SOON": "Em breve",
 		"RE_INTEGRATE": "Reintegrar",
