@@ -1,8 +1,8 @@
 .tags-manager {
 	padding: 1.5rem;
-	background: var(--nb-card-background-color);
-	border-radius: var(--nb-card-border-radius);
-	border: 1px solid var(--nb-card-divider-color);
+	background: var(--card-background-color);
+	border-radius: var(--card-border-radius);
+	border: 1px solid var(--card-divider-color);
 	min-height: 400px;
 	position: relative;
 
@@ -12,7 +12,7 @@
 		align-items: flex-start;
 		margin-bottom: 1.5rem;
 		padding-bottom: 1rem;
-		border-bottom: 1px solid var(--nb-card-divider-color);
+		border-bottom: 1px solid var(--card-divider-color);
 
 		.header-info {
 			flex: 1;
@@ -24,22 +24,22 @@
 				margin: 0 0 0.5rem 0;
 				font-size: 1.25rem;
 				font-weight: 600;
-				color: var(--nb-text-basic-color);
+				color: var(--text-basic-color);
 
 				nb-icon {
 					font-size: 1.5rem;
-					color: var(--nb-text-hint-color);
+					color: var(--text-hint-color);
 				}
 			}
 
 			.manager-subtitle {
 				margin: 0;
-				color: var(--nb-text-hint-color);
+				color: var(--text-hint-color);
 				font-size: 0.875rem;
 
 				.tag-count {
 					font-weight: 600;
-					color: var(--nb-text-primary-color);
+					color: var(--text-primary-color);
 				}
 			}
 		}
@@ -60,7 +60,7 @@
 		color: var(--gauzy-text-color-1);
 
 		nb-icon {
-			color: var(--nb-text-hint-color);
+			color: var(--text-hint-color);
 		}
 	}
 
@@ -79,9 +79,9 @@
 			justify-content: space-between;
 			align-items: center;
 			padding: 0.75rem;
-			border: 1px solid var(--nb-card-divider-color);
-			border-radius: var(--nb-card-border-radius);
-			background: var(--nb-card-background-color);
+			border: 1px solid var(--card-divider-color);
+			border-radius: var(--card-border-radius);
+			background: var(--card-background-color);
 			border-left: 3px solid;
 			transition: all 0.2s ease;
 
@@ -95,7 +95,7 @@
 				gap: 0.5rem;
 
 				.featured-icon {
-					color: var(--nb-status-warning-color);
+					color: var(--status-warning-color);
 					font-size: 1.125rem;
 				}
 			}
@@ -113,7 +113,7 @@
 
 					.control-label {
 						font-size: 0.75rem;
-						color: var(--nb-text-hint-color);
+						color: var(--text-hint-color);
 						white-space: nowrap;
 					}
 
@@ -124,7 +124,7 @@
 					.priority-value {
 						font-size: 0.75rem;
 						font-weight: 600;
-						color: var(--nb-text-basic-color);
+						color: var(--text-basic-color);
 						min-width: 2rem;
 						text-align: center;
 					}
@@ -137,9 +137,9 @@
 	.suggestions-section {
 		margin-bottom: 2rem;
 		padding: 1rem;
-		background: var(--nb-status-info-background-color);
-		border-radius: var(--nb-card-border-radius);
-		border: 1px solid var(--nb-status-info-border-color);
+		background: var(--status-info-background-color);
+		border-radius: var(--card-border-radius);
+		border: 1px solid var(--status-info-border-color);
 
 		.suggestions-container {
 			display: flex;
@@ -152,9 +152,9 @@
 			justify-content: space-between;
 			align-items: center;
 			padding: 0.75rem;
-			background: var(--nb-card-background-color);
-			border-radius: var(--nb-card-border-radius);
-			border: 1px solid var(--nb-card-divider-color);
+			background: var(--card-background-color);
+			border-radius: var(--card-border-radius);
+			border: 1px solid var(--card-divider-color);
 
 			.suggestion-content {
 				display: flex;
@@ -169,12 +169,12 @@
 
 					.suggestion-reason {
 						font-size: 0.875rem;
-						color: var(--nb-text-basic-color);
+						color: var(--text-basic-color);
 					}
 
 					.suggestion-score {
 						font-size: 0.75rem;
-						color: var(--nb-text-hint-color);
+						color: var(--text-hint-color);
 						font-weight: 600;
 					}
 				}
@@ -200,9 +200,9 @@
 		.tag-item {
 			position: relative;
 			padding: 1rem;
-			border: 1px solid var(--nb-card-divider-color);
-			border-radius: var(--nb-card-border-radius);
-			background: var(--nb-card-background-color);
+			border: 1px solid var(--card-divider-color);
+			border-radius: var(--card-border-radius);
+			background: var(--card-background-color);
 			cursor: pointer;
 			transition: all 0.2s ease;
 
@@ -212,14 +212,14 @@
 			}
 
 			&.selected {
-				border-color: var(--nb-status-success-color);
-				background: var(--nb-status-success-background-color);
+				border-color: var(--status-success-color);
+				background: var(--status-success-background-color);
 
 				.selected-indicator {
 					position: absolute;
 					top: 0.5rem;
 					right: 0.5rem;
-					color: var(--nb-status-success-color);
+					color: var(--status-success-color);
 					font-size: 1.25rem;
 				}
 			}
@@ -244,14 +244,14 @@
 						align-items: center;
 						gap: 0.25rem;
 						font-size: 0.75rem;
-						color: var(--nb-text-hint-color);
+						color: var(--text-hint-color);
 						text-transform: uppercase;
 						font-weight: 600;
 					}
 
 					.tag-usage {
 						font-size: 0.75rem;
-						color: var(--nb-text-hint-color);
+						color: var(--text-hint-color);
 					}
 				}
 			}
@@ -273,21 +273,21 @@
 				gap: 0.5rem;
 				padding: 0.5rem 0.75rem;
 				border-radius: 1.5rem;
-				border: 1px solid var(--nb-card-divider-color);
-				background: var(--nb-card-background-color);
+				border: 1px solid var(--card-divider-color);
+				background: var(--card-background-color);
 				transition: all 0.2s ease;
 
 				&:hover:not(:disabled) {
-					border-color: var(--nb-text-primary-color);
+					border-color: var(--text-primary-color);
 				}
 
 				&.selected {
-					border-color: var(--nb-status-success-color);
-					background: var(--nb-status-success-background-color);
-					color: var(--nb-status-success-color);
+					border-color: var(--status-success-color);
+					background: var(--status-success-background-color);
+					color: var(--status-success-color);
 
 					.selected-icon {
-						color: var(--nb-status-success-color);
+						color: var(--status-success-color);
 					}
 				}
 
@@ -327,16 +327,16 @@
 			}
 
 			&::-webkit-scrollbar-track {
-				background: var(--nb-background-basic-color-2);
+				background: var(--background-basic-color-2);
 				border-radius: 3px;
 			}
 
 			&::-webkit-scrollbar-thumb {
-				background: var(--nb-background-basic-color-4);
+				background: var(--background-basic-color-4);
 				border-radius: 3px;
 
 				&:hover {
-					background: var(--nb-background-basic-color-3);
+					background: var(--background-basic-color-3);
 				}
 			}
 		}
@@ -346,18 +346,18 @@
 			justify-content: space-between;
 			align-items: center;
 			padding: 0.75rem;
-			border: 1px solid var(--nb-card-divider-color);
-			border-radius: var(--nb-card-border-radius);
-			background: var(--nb-card-background-color);
+			border: 1px solid var(--card-divider-color);
+			border-radius: var(--card-border-radius);
+			background: var(--card-background-color);
 			transition: all 0.2s ease;
 
 			&:hover:not(.disabled) {
-				border-color: var(--nb-text-primary-color);
+				border-color: var(--text-primary-color);
 			}
 
 			&.selected {
-				border-color: var(--nb-status-success-color);
-				background: var(--nb-status-success-background-color);
+				border-color: var(--status-success-color);
+				background: var(--status-success-background-color);
 			}
 
 			&.disabled {
@@ -386,13 +386,13 @@
 
 					.tag-name {
 						font-weight: 600;
-						color: var(--nb-text-basic-color);
+						color: var(--text-basic-color);
 						display: block;
 					}
 
 					.tag-description {
 						font-size: 0.75rem;
-						color: var(--nb-text-hint-color);
+						color: var(--text-hint-color);
 						display: block;
 						margin-top: 0.25rem;
 						overflow: hidden;
@@ -418,7 +418,7 @@
 
 					.tag-usage-count {
 						font-size: 0.75rem;
-						color: var(--nb-text-hint-color);
+						color: var(--text-hint-color);
 					}
 				}
 			}
@@ -456,8 +456,8 @@
 
 		.modal-content {
 			position: relative;
-			background: var(--nb-card-background-color);
-			border-radius: var(--nb-card-border-radius);
+			background: var(--card-background-color);
+			border-radius: var(--card-border-radius);
 			box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 			max-width: 500px;
 			width: 90vw;
@@ -479,12 +479,12 @@
 			justify-content: space-between;
 			align-items: center;
 			padding: 1.5rem;
-			border-bottom: 1px solid var(--nb-card-divider-color);
+			border-bottom: 1px solid var(--card-divider-color);
 
 			h5 {
 				margin: 0;
 				font-weight: 600;
-				color: var(--nb-text-basic-color);
+				color: var(--text-basic-color);
 			}
 		}
 
@@ -504,13 +504,13 @@
 					display: block;
 					margin-bottom: 0.5rem;
 					font-weight: 600;
-					color: var(--nb-text-basic-color);
+					color: var(--text-basic-color);
 					font-size: 0.875rem;
 				}
 
 				.error-message {
 					margin-top: 0.5rem;
-					color: var(--nb-status-danger-color);
+					color: var(--status-danger-color);
 					font-size: 0.75rem;
 				}
 
@@ -522,8 +522,8 @@
 					.color-picker {
 						width: 60px;
 						height: 40px;
-						border: 1px solid var(--nb-card-divider-color);
-						border-radius: var(--nb-card-border-radius);
+						border: 1px solid var(--card-divider-color);
+						border-radius: var(--card-border-radius);
 						cursor: pointer;
 						background: none;
 
@@ -533,7 +533,7 @@
 
 						&::-webkit-color-swatch {
 							border: none;
-							border-radius: calc(var(--nb-card-border-radius) - 2px);
+							border-radius: calc(var(--card-border-radius) - 2px);
 						}
 					}
 
@@ -549,7 +549,7 @@
 			justify-content: flex-end;
 			gap: 1rem;
 			padding: 1.5rem;
-			border-top: 1px solid var(--nb-card-divider-color);
+			border-top: 1px solid var(--card-divider-color);
 		}
 	}
 
@@ -560,7 +560,7 @@
 			justify-content: space-between;
 			align-items: center;
 			padding: 1.5rem;
-			border-bottom: 1px solid var(--nb-card-divider-color);
+			border-bottom: 1px solid var(--card-divider-color);
 
 			.tag-preview {
 				display: flex;
@@ -572,7 +572,7 @@
 				}
 
 				.featured-icon {
-					color: var(--nb-status-warning-color);
+					color: var(--status-warning-color);
 					font-size: 1.25rem;
 				}
 			}
@@ -593,9 +593,9 @@
 				h6 {
 					margin: 0 0 1rem 0;
 					font-weight: 600;
-					color: var(--nb-text-basic-color);
+					color: var(--text-basic-color);
 					padding-bottom: 0.5rem;
-					border-bottom: 1px solid var(--nb-card-divider-color);
+					border-bottom: 1px solid var(--card-divider-color);
 				}
 
 				.detail-grid {
@@ -611,12 +611,12 @@
 
 					.label {
 						font-weight: 600;
-						color: var(--nb-text-hint-color);
+						color: var(--text-hint-color);
 						font-size: 0.875rem;
 					}
 
 					.value {
-						color: var(--nb-text-basic-color);
+						color: var(--text-basic-color);
 						font-size: 0.875rem;
 						display: flex;
 						align-items: center;
@@ -626,7 +626,7 @@
 
 				.description-text {
 					margin: 0;
-					color: var(--nb-text-basic-color);
+					color: var(--text-basic-color);
 					line-height: 1.5;
 					font-size: 0.875rem;
 				}
@@ -747,7 +747,7 @@
 	button:focus,
 	.tag-item:focus,
 	.browsable-tag-item:focus {
-		outline: 2px solid var(--nb-text-primary-color);
+		outline: 2px solid var(--text-primary-color);
 		outline-offset: 2px;
 	}
 

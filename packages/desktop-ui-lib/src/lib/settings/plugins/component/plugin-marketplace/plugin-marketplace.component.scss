@@ -47,9 +47,9 @@
 	align-items: center;
 	margin-bottom: 1.5rem;
 	padding: 1rem;
-	background: var(--nb-card-background-color);
-	border: 1px solid var(--nb-card-divider-color);
-	border-radius: var(--nb-card-border-radius);
+	background: var(--card-background-color);
+	border: 1px solid var(--card-divider-color);
+	border-radius: var(--card-border-radius);
 	position: sticky;
 	top: 0;
 	z-index: 2;
@@ -73,13 +73,13 @@
 			margin: 0;
 			font-size: 1.25rem;
 			font-weight: 600;
-			color: var(--nb-text-basic-color);
+			color: var(--text-basic-color);
 		}
 
 		.results-stats {
 			.stats-text {
 				font-size: 0.875rem;
-				color: var(--nb-text-hint-color);
+				color: var(--text-hint-color);
 			}
 		}
 	}
@@ -155,9 +155,9 @@
 	}
 
 	@media (max-width: 768px) {
-		border-bottom: 1px solid var(--nb-card-divider-color);
+		border-bottom: 1px solid var(--card-divider-color);
 		margin-bottom: 0.5rem;
-		border-radius: var(--nb-card-border-radius);
+		border-radius: var(--card-border-radius);
 	}
 }
 
@@ -166,9 +166,9 @@
 	display: flex;
 	justify-content: space-between;
 	padding: 16px;
-	background: var(--nb-card-background-color);
-	border: 1px solid var(--nb-card-divider-color);
-	border-radius: var(--nb-card-border-radius);
+	background: var(--card-background-color);
+	border: 1px solid var(--card-divider-color);
+	border-radius: var(--card-border-radius);
 	margin-bottom: 0.5rem;
 
 	.plugin-details {
@@ -248,7 +248,7 @@
 	.marketplace-container {
 		.filter-panel,
 		.content-panel {
-			border: 2px solid var(--nb-text-basic-color);
+			border: 2px solid var(--text-basic-color);
 		}
 	}
 

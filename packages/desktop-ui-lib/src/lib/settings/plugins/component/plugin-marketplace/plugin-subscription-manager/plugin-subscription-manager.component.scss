@@ -3,7 +3,7 @@
   max-width: 900px;
   margin: 0 auto;
   padding: 24px;
-  background: var(--nb-card-background-color);
+  background: var(--card-background-color);
   border-radius: 12px;
 }
 
@@ -14,19 +14,19 @@
   align-items: center;
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--nb-border-color);
+  border-bottom: 1px solid var(--border-color);
 
   .manager-title {
     margin: 0;
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--nb-text-primary-color);
+    color: var(--text-primary-color);
     font-size: 20px;
     font-weight: 600;
 
     nb-icon {
-      color: var(--nb-primary-color);
+      color: var(--primary-color);
       font-size: 24px;
     }
   }
@@ -50,14 +50,14 @@
   margin-bottom: 32px;
 
   .subscription-card {
-    background: var(--nb-basic-background-color);
-    border: 2px solid var(--nb-primary-color);
+    background: var(--basic-background-color);
+    border: 2px solid var(--primary-color);
     border-radius: 12px;
     padding: 20px;
 
     &.current {
       background: linear-gradient(135deg,
-        var(--nb-card-background-color) 0%,
+        var(--card-background-color) 0%,
         rgba(64, 123, 255, 0.05) 100%
       );
     }
@@ -74,7 +74,7 @@
         margin: 0 0 8px 0;
         font-size: 18px;
         font-weight: 600;
-        color: var(--nb-text-primary-color);
+        color: var(--text-primary-color);
       }
 
       .subscription-status {
@@ -86,15 +86,15 @@
         margin: 0;
 
         &.active {
-          color: var(--nb-success-color);
+          color: var(--success-color);
         }
 
         &.trial {
-          color: var(--nb-warning-color);
+          color: var(--warning-color);
         }
 
         &.expired, &.cancelled {
-          color: var(--nb-danger-color);
+          color: var(--danger-color);
         }
 
         nb-icon {
@@ -113,27 +113,27 @@
       display: flex;
       justify-content: space-between;
       padding: 8px 12px;
-      background: var(--nb-card-background-color);
+      background: var(--card-background-color);
       border-radius: 6px;
-      border: 1px solid var(--nb-border-color);
+      border: 1px solid var(--border-color);
 
       .label {
         font-size: 13px;
-        color: var(--nb-text-hint-color);
+        color: var(--text-hint-color);
         font-weight: 500;
       }
 
       .value {
         font-size: 13px;
-        color: var(--nb-text-basic-color);
+        color: var(--text-basic-color);
         font-weight: 600;
 
         &.warning {
-          color: var(--nb-warning-color);
+          color: var(--warning-color);
         }
 
         &.danger {
-          color: var(--nb-danger-color);
+          color: var(--danger-color);
         }
       }
     }
@@ -148,7 +148,7 @@
     margin: 0 0 20px 0;
     font-size: 18px;
     font-weight: 600;
-    color: var(--nb-text-primary-color);
+    color: var(--text-primary-color);
   }
 
   .plans-grid {
@@ -160,8 +160,8 @@
 
 /* Plan Card */
 .plan-card {
-  background: var(--nb-card-background-color);
-  border: 2px solid var(--nb-border-color);
+  background: var(--card-background-color);
+  border: 2px solid var(--border-color);
   border-radius: 12px;
   padding: 20px;
   cursor: pointer;
@@ -172,27 +172,27 @@
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    border-color: var(--nb-primary-color);
+    border-color: var(--primary-color);
   }
 
   &.selected {
-    border-color: var(--nb-primary-color);
+    border-color: var(--primary-color);
     background: linear-gradient(135deg,
-      var(--nb-card-background-color) 0%,
+      var(--card-background-color) 0%,
       rgba(64, 123, 255, 0.08) 100%
     );
   }
 
   &.current {
-    border-color: var(--nb-success-color);
+    border-color: var(--success-color);
     background: linear-gradient(135deg,
-      var(--nb-card-background-color) 0%,
+      var(--card-background-color) 0%,
       rgba(0, 214, 143, 0.05) 100%
     );
   }
 
   &.popular {
-    border-color: var(--nb-warning-color);
+    border-color: var(--warning-color);
 
     &::before {
       content: '';
@@ -201,12 +201,12 @@
       left: 0;
       right: 0;
       height: 4px;
-      background: var(--nb-warning-color);
+      background: var(--warning-color);
     }
   }
 
   &.recommended {
-    border-color: var(--nb-success-color);
+    border-color: var(--success-color);
 
     &::after {
       content: '✓';
@@ -215,7 +215,7 @@
       right: 12px;
       width: 24px;
       height: 24px;
-      background: var(--nb-success-color);
+      background: var(--success-color);
       color: white;
       border-radius: 50%;
       display: flex;
@@ -242,20 +242,20 @@
     margin: 0 0 8px 0;
     font-size: 20px;
     font-weight: 600;
-    color: var(--nb-text-primary-color);
+    color: var(--text-primary-color);
   }
 
   .plan-price {
     .price-amount {
       font-size: 24px;
       font-weight: 700;
-      color: var(--nb-primary-color);
+      color: var(--primary-color);
     }
 
     .trial-info {
       display: block;
       font-size: 12px;
-      color: var(--nb-warning-color);
+      color: var(--warning-color);
       font-weight: 500;
       margin-top: 4px;
     }
@@ -263,14 +263,14 @@
 
   .savings {
     font-size: 12px;
-    color: var(--nb-success-color);
+    color: var(--success-color);
     font-weight: 600;
     margin-top: 4px;
   }
 }
 
 .plan-description {
-  color: var(--nb-text-hint-color);
+  color: var(--text-hint-color);
   font-size: 14px;
   line-height: 1.4;
   margin: 0 0 16px 0;
@@ -290,10 +290,10 @@
       gap: 8px;
       margin-bottom: 8px;
       font-size: 13px;
-      color: var(--nb-text-basic-color);
+      color: var(--text-basic-color);
 
       .feature-check {
-        color: var(--nb-success-color);
+        color: var(--success-color);
         font-size: 16px;
         margin-top: 1px;
         flex-shrink: 0;
@@ -310,15 +310,15 @@
 
 /* Billing Form */
 .billing-form {
-  background: var(--nb-basic-background-color);
+  background: var(--basic-background-color);
   border-radius: 12px;
   padding: 24px;
-  border: 1px solid var(--nb-border-color);
+  border: 1px solid var(--border-color);
 
   .form-header {
     margin-bottom: 24px;
     padding-bottom: 16px;
-    border-bottom: 1px solid var(--nb-border-color);
+    border-bottom: 1px solid var(--border-color);
 
     h5 {
       margin: 0 0 8px 0;
@@ -327,17 +327,17 @@
       gap: 8px;
       font-size: 18px;
       font-weight: 600;
-      color: var(--nb-text-primary-color);
+      color: var(--text-primary-color);
 
       nb-icon {
-        color: var(--nb-primary-color);
+        color: var(--primary-color);
       }
     }
 
     .selected-plan-info {
       margin: 0;
       font-size: 14px;
-      color: var(--nb-text-hint-color);
+      color: var(--text-hint-color);
     }
   }
 
@@ -348,7 +348,7 @@
       margin: 0 0 12px 0;
       font-size: 14px;
       font-weight: 600;
-      color: var(--nb-text-primary-color);
+      color: var(--text-primary-color);
     }
 
     .billing-period, .payment-methods {
@@ -361,24 +361,24 @@
         align-items: center;
         gap: 8px;
         padding: 12px;
-        border: 1px solid var(--nb-border-color);
+        border: 1px solid var(--border-color);
         border-radius: 6px;
         transition: all 0.2s ease;
 
         &:hover {
-          background: var(--nb-card-background-color);
-          border-color: var(--nb-primary-color);
+          background: var(--card-background-color);
+          border-color: var(--primary-color);
         }
 
         .savings {
           margin-left: auto;
           font-size: 12px;
-          color: var(--nb-success-color);
+          color: var(--success-color);
           font-weight: 600;
         }
 
         nb-icon {
-          color: var(--nb-primary-color);
+          color: var(--primary-color);
           margin-right: 4px;
         }
       }
@@ -393,12 +393,12 @@
           margin-bottom: 6px;
           font-size: 13px;
           font-weight: 500;
-          color: var(--nb-text-basic-color);
+          color: var(--text-basic-color);
         }
 
         .error-message {
           font-size: 12px;
-          color: var(--nb-danger-color);
+          color: var(--danger-color);
           margin-top: 4px;
         }
       }
@@ -421,12 +421,12 @@
           margin-bottom: 6px;
           font-size: 13px;
           font-weight: 500;
-          color: var(--nb-text-basic-color);
+          color: var(--text-basic-color);
         }
 
         .error-message {
           font-size: 12px;
-          color: var(--nb-danger-color);
+          color: var(--danger-color);
           margin-top: 4px;
         }
       }
@@ -434,18 +434,18 @@
 
     .checkbox-help {
       font-size: 12px;
-      color: var(--nb-text-hint-color);
+      color: var(--text-hint-color);
       margin: 8px 0 0 24px;
     }
 
     .error-message {
       font-size: 12px;
-      color: var(--nb-danger-color);
+      color: var(--danger-color);
       margin-top: 4px;
     }
 
     a {
-      color: var(--nb-primary-color);
+      color: var(--primary-color);
       text-decoration: none;
 
       &:hover {
@@ -460,7 +460,7 @@
     justify-content: flex-end;
     margin-top: 32px;
     padding-top: 16px;
-    border-top: 1px solid var(--nb-border-color);
+    border-top: 1px solid var(--border-color);
   }
 }
 

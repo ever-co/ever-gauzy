@@ -190,7 +190,8 @@
 				ghost
 				size="small"
 				class="action-btn more-btn"
-				[nbContextMenu]="moreActionsMenu"
+				[nbContextMenu]="getContextMenuItems()"
+				[nbContextMenuTag]="'plugin-more-actions-' + plugin.id"
 				[nbTooltip]="'PLUGIN.ACTIONS.MORE' | translate">
 				<nb-icon icon="more-vertical-outline"></nb-icon>
 			</button>
@@ -233,6 +234,4 @@
 	</div>
 	</div>
 </div>
-<!-- Context Menu for More Actions -->
-<nb-context-menu #moreActionsMenu [items]="getContextMenuItems()" (itemClick)="onContextMenuItemSelect($event)"></nb-context-menu>
 }

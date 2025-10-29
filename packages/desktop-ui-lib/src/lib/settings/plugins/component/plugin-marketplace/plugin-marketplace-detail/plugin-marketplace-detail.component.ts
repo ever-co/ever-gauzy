@@ -94,6 +94,16 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			.subscribe();
 		// Check local installation
 		this.check(this.plugin).subscribe((isChecked) => this._isChecked$.next(isChecked));
+
+		// Listen to context menu item clicks
+		this.menuService
+			.onItemClick()
+			.pipe(
+				filter(({ tag }) => tag === `plugin-more-actions-${this.plugin.id}`),
+				tap(({ item }) => this.onContextMenuItemSelect(item)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	public check(plugin: IPlugin): Observable<boolean> {

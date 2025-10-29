@@ -1,7 +1,7 @@
 .marketplace-filter {
-	background: var(--nb-card-background-color);
-	border: 1px solid var(--nb-card-divider-color);
-	border-radius: var(--nb-card-border-radius);
+	background: var(--card-background-color);
+	border: 1px solid var(--card-divider-color);
+	border-radius: var(--card-border-radius);
 	overflow: hidden;
 	transition: all 0.3s ease;
 	position: relative;
@@ -31,8 +31,8 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		background: var(--nb-background-basic-color-2);
-		border-bottom: 1px solid var(--nb-card-divider-color);
+		background: var(--background-basic-color-2);
+		border-bottom: 1px solid var(--card-divider-color);
 		padding: 1rem;
 		position: sticky;
 		top: 0;
@@ -54,7 +54,7 @@
 				position: relative;
 
 				nb-icon {
-					color: var(--nb-text-hint-color);
+					color: var(--text-hint-color);
 					font-size: 1.25rem;
 				}
 
@@ -62,7 +62,7 @@
 					margin: 0;
 					font-size: 1.125rem;
 					font-weight: 600;
-					color: var(--nb-text-basic-color);
+					color: var(--text-basic-color);
 				}
 
 				.active-filters-badge {
@@ -99,16 +99,16 @@
 		}
 
 		&::-webkit-scrollbar-track {
-			background: var(--nb-background-basic-color-2);
+			background: var(--background-basic-color-2);
 			border-radius: 3px;
 		}
 
 		&::-webkit-scrollbar-thumb {
-			background: var(--nb-background-basic-color-4);
+			background: var(--background-basic-color-4);
 			border-radius: 3px;
 
 			&:hover {
-				background: var(--nb-background-basic-color-3);
+				background: var(--background-basic-color-3);
 			}
 		}
 	}
@@ -121,11 +121,11 @@
 
 	// Filter Sections
 	.filter-section {
-		border: 1px solid var(--nb-card-divider-color);
-		border-radius: var(--nb-card-border-radius);
+		border: 1px solid var(--card-divider-color);
+		border-radius: var(--card-border-radius);
 		overflow: hidden;
 		transition: all 0.2s ease;
-		background: var(--nb-card-background-color);
+		background: var(--card-background-color);
 
 		&.expanded {
 			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -136,7 +136,7 @@
 			justify-content: space-between;
 			align-items: center;
 			padding: 0.75rem 1rem;
-			background: var(--nb-background-basic-color-2);
+			background: var(--background-basic-color-2);
 			cursor: pointer;
 			/* button reset */
 			border: none;
@@ -146,7 +146,7 @@
 			transition: background-color 0.2s ease;
 
 			&:hover {
-				background: var(--nb-background-basic-color-3);
+				background: var(--background-basic-color-3);
 			}
 
 			.section-title {
@@ -157,20 +157,20 @@
 				color: var(--gauzy-text-color-1);
 
 				nb-icon {
-					color: var(--nb-text-hint-color);
+					color: var(--text-hint-color);
 				}
 			}
 
 			.section-toggle {
-				color: var(--nb-text-hint-color);
+				color: var(--text-hint-color);
 				transition: transform 0.2s ease;
 			}
 		}
 
 		.section-content {
 			padding: 1rem;
-			background: var(--nb-card-background-color);
-			border-top: 1px solid var(--nb-card-divider-color);
+			background: var(--card-background-color);
+			border-top: 1px solid var(--card-divider-color);
 		}
 	}
 
@@ -186,7 +186,7 @@
 			display: block;
 			margin-bottom: 0.5rem;
 			font-weight: 600;
-			color: var(--nb-text-basic-color);
+			color: var(--text-basic-color);
 			font-size: 0.875rem;
 		}
 
@@ -223,9 +223,9 @@
 			align-items: center;
 			justify-content: space-between;
 			padding: 0.75rem;
-			border: 1px solid var(--nb-card-divider-color);
-			border-radius: var(--nb-card-border-radius);
-			background: var(--nb-card-background-color);
+			border: 1px solid var(--card-divider-color);
+			border-radius: var(--card-border-radius);
+			background: var(--card-background-color);
 			cursor: pointer;
 			/* button reset */
 			width: 100%;
@@ -236,16 +236,16 @@
 			position: relative;
 
 			&:hover {
-				border-color: var(--nb-text-primary-color);
+				border-color: var(--text-primary-color);
 				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 			}
 
 			&.selected {
-				border-color: var(--nb-status-success-color);
-				background: var(--nb-status-success-background-color);
+				border-color: var(--status-success-color);
+				background: var(--status-success-background-color);
 
 				.category-indicator {
-					color: var(--nb-status-success-color);
+					color: var(--status-success-color);
 				}
 			}
 
@@ -258,7 +258,7 @@
 
 				.category-icon {
 					flex-shrink: 0;
-					color: var(--nb-text-hint-color);
+					color: var(--text-hint-color);
 					font-size: 1.125rem;
 				}
 
@@ -270,7 +270,7 @@
 					.category-name {
 						font-weight: 600;
 						font-size: 0.875rem;
-						color: var(--nb-text-basic-color);
+						color: var(--text-basic-color);
 						white-space: nowrap;
 						overflow: hidden;
 						text-overflow: ellipsis;
@@ -278,13 +278,13 @@
 
 					.category-count {
 						font-size: 0.75rem;
-						color: var(--nb-text-hint-color);
+						color: var(--text-hint-color);
 					}
 				}
 			}
 
 			.category-indicator {
-				color: var(--nb-status-success-color);
+				color: var(--status-success-color);
 				font-size: 1rem;
 			}
 		}
@@ -306,7 +306,7 @@
 				gap: 0.5rem;
 				margin-left: 0.5rem;
 				font-size: 0.875rem;
-				color: var(--nb-text-basic-color);
+				color: var(--text-basic-color);
 			}
 		}
 	}
@@ -333,7 +333,7 @@
 		}
 
 		.range-separator {
-			color: var(--nb-text-hint-color);
+			color: var(--text-hint-color);
 			font-size: 0.875rem;
 			white-space: nowrap;
 		}
@@ -350,7 +350,7 @@
 		}
 
 		.date-separator {
-			color: var(--nb-text-hint-color);
+			color: var(--text-hint-color);
 			font-size: 0.875rem;
 			white-space: nowrap;
 		}
@@ -359,8 +359,8 @@
 	// Quick Filters (Mobile)
 	.quick-filters {
 		padding: 1rem;
-		background: var(--nb-background-basic-color-1);
-		border-top: 1px solid var(--nb-card-divider-color);
+		background: var(--background-basic-color-1);
+		border-top: 1px solid var(--card-divider-color);
 
 		.quick-filter-chips {
 			display: flex;
@@ -386,7 +386,7 @@
 		z-index: 10;
 
 		span {
-			color: var(--nb-text-hint-color);
+			color: var(--text-hint-color);
 			font-size: 0.875rem;
 		}
 	}
@@ -533,11 +533,11 @@
 		}
 
 		&::-webkit-scrollbar-track {
-			background: var(--nb-background-basic-color-2);
+			background: var(--background-basic-color-2);
 		}
 
 		&::-webkit-scrollbar-thumb {
-			background: var(--nb-background-basic-color-4);
+			background: var(--background-basic-color-4);
 			border-radius: 3px;
 		}
 	}
@@ -565,13 +565,13 @@
 	input:focus,
 	select:focus,
 	.category-item:focus {
-		outline: 2px solid var(--nb-text-primary-color);
+		outline: 2px solid var(--text-primary-color);
 		outline-offset: 2px;
 	}
 
 	.category-item {
 		&:focus {
-			border-color: var(--nb-text-primary-color);
+			border-color: var(--text-primary-color);
 		}
 	}
 }

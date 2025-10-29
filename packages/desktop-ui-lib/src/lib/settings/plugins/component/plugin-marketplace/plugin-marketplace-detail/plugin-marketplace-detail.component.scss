@@ -1,7 +1,7 @@
 /* Enhanced Plugin Card Styles */
 .plugin-card {
-  background: var(--nb-card-background-color);
-  border: 1px solid var(--nb-card-border-color);
+  background: var(--card-background-color);
+  border: 1px solid var(--card-border-color);
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 16px;
@@ -12,13 +12,13 @@
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    border-color: var(--nb-primary-color);
+    border-color: var(--primary-color);
   }
 
   &.featured {
-    border-color: var(--nb-warning-color);
+    border-color: var(--warning-color);
     background: linear-gradient(135deg,
-      var(--nb-card-background-color) 0%,
+      var(--card-background-color) 0%,
       rgba(255, 193, 7, 0.05) 100%
     );
 
@@ -33,7 +33,7 @@
   }
 
   &.verified {
-    border-left: 4px solid var(--nb-success-color);
+    border-left: 4px solid var(--success-color);
   }
 
   // List view compact layout
@@ -120,7 +120,7 @@
 .plugin-name {
   font-size: 18px;
   font-weight: 600;
-  color: var(--nb-text-primary-color);
+  color: var(--text-primary-color);
   cursor: pointer;
   margin-bottom: 8px;
   display: flex;
@@ -128,7 +128,7 @@
   gap: 8px;
 
   &:hover {
-    color: var(--nb-primary-color);
+    color: var(--primary-color);
   }
 }
 
@@ -143,12 +143,12 @@
     border-radius: 12px;
 
     &.verified {
-      background-color: var(--nb-success-color);
+      background-color: var(--success-color);
       color: white;
     }
 
     &.signed {
-      background-color: var(--nb-info-color);
+      background-color: var(--info-color);
       color: white;
     }
   }
@@ -160,10 +160,10 @@
   gap: 12px;
   flex-wrap: wrap;
   font-size: 13px;
-  color: var(--nb-text-hint-color);
+  color: var(--text-hint-color);
 
   .plugin-version {
-    background: var(--nb-primary-color);
+    background: var(--primary-color);
     color: var(--gauzy-text-color-2);
     padding: 2px 8px;
     border-radius: 12px;
@@ -204,7 +204,7 @@
   margin-bottom: 16px;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--nb-text-basic-color);
+  color: var(--text-basic-color);
 }
 
 /* Plugin Categories */
@@ -215,13 +215,13 @@
   margin-bottom: 12px;
 
   .category-icon {
-    color: var(--nb-primary-color);
+    color: var(--primary-color);
     font-size: 16px;
   }
 
   .category-badge {
     font-size: 12px;
-    background: var(--nb-primary-color);
+    background: var(--primary-color);
     color: white;
     padding: 4px 12px;
     border-radius: 16px;
@@ -243,18 +243,18 @@
     font-size: 11px;
     padding: 3px 8px;
     border-radius: 12px;
-    background: var(--nb-basic-background-color);
-    border: 1px solid var(--nb-border-color);
-    color: var(--nb-text-basic-color);
+    background: var(--basic-background-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-basic-color);
     transition: all 0.2s ease;
 
     &:hover {
-      background: var(--nb-primary-color);
+      background: var(--primary-color);
       color: white;
     }
 
     &.featured {
-      background: var(--nb-warning-color);
+      background: var(--warning-color);
       color: white;
       font-weight: 500;
     }
@@ -262,7 +262,7 @@
 
   .more-tags {
     font-size: 11px;
-    color: var(--nb-text-hint-color);
+    color: var(--text-hint-color);
     font-style: italic;
   }
 }
@@ -271,9 +271,9 @@
 .plugin-subscription {
   margin-bottom: 16px;
   padding: 12px;
-  background: var(--nb-basic-background-color);
+  background: var(--basic-background-color);
   border-radius: 8px;
-  border: 1px solid var(--nb-border-color);
+  border: 1px solid var(--border-color);
 
   .subscription-info {
     display: flex;
@@ -289,20 +289,20 @@
     gap: 6px;
     font-size: 13px;
     font-weight: 500;
-    color: var(--nb-text-basic-color);
+    color: var(--text-basic-color);
 
     nb-icon {
-      color: var(--nb-primary-color);
+      color: var(--primary-color);
     }
 
     .price {
-      color: var(--nb-success-color);
+      color: var(--success-color);
       font-weight: 600;
       margin-left: 8px;
     }
 
     .billing-period {
-      color: var(--nb-text-hint-color);
+      color: var(--text-hint-color);
       font-size: 12px;
     }
   }
@@ -321,12 +321,12 @@
   }
 
   .trial-badge {
-    background: var(--nb-warning-color);
+    background: var(--warning-color);
     color: white;
   }
 
   .expiring-badge {
-    background: var(--nb-danger-color);
+    background: var(--danger-color);
     color: white;
   }
 }
@@ -343,10 +343,10 @@
     align-items: center;
     gap: 6px;
     font-size: 12px;
-    color: var(--nb-text-hint-color);
+    color: var(--text-hint-color);
 
     nb-icon {
-      color: var(--nb-primary-color);
+      color: var(--primary-color);
       font-size: 14px;
     }
 
@@ -355,7 +355,7 @@
     }
 
     .metric-value {
-      color: var(--nb-text-basic-color);
+      color: var(--text-basic-color);
     }
   }
 }
@@ -367,7 +367,7 @@
   align-items: center;
   gap: 16px;
   padding-top: 16px;
-  border-top: 1px solid var(--nb-border-color);
+  border-top: 1px solid var(--border-color);
 }
 
 .action-buttons {
@@ -390,23 +390,23 @@
     }
 
     &.settings-btn:hover:not(:disabled) {
-      background: var(--nb-primary-color);
+      background: var(--primary-color);
       color: white;
     }
 
     &.users-btn:hover:not(:disabled) {
-      background: var(--nb-info-color);
+      background: var(--info-color);
       color: white;
     }
 
     &.edit-btn:hover:not(:disabled) {
-      background: var(--nb-warning-color);
+      background: var(--warning-color);
       color: white;
     }
 
     &.more-btn:hover:not(:disabled) {
-      background: var(--nb-basic-background-color);
-      color: var(--nb-text-basic-color);
+      background: var(--basic-background-color);
+      color: var(--text-basic-color);
     }
 
     nb-icon {
@@ -424,7 +424,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--nb-primary-color);
+    color: var(--primary-color);
     font-size: 13px;
 
     nb-icon {
@@ -435,7 +435,7 @@
   .toggle-label {
     font-size: 13px;
     font-weight: 500;
-    color: var(--nb-text-basic-color);
+    color: var(--text-basic-color);
   }
 }
 
