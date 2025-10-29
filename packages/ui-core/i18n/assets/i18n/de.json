@@ -1390,7 +1390,9 @@
 					"INVALID_FORM": "Bitte füllen Sie alle Pflichtfelder korrekt aus",
 					"SAVE_SETTINGS": "Fehler beim Speichern der Einstellungen",
 					"START_AUTHORIZATION": "Fehler beim Starten der Autorisierung",
-					"ORGANIZATION_NOT_FOUND": "Organisation nicht gefunden"
+					"ORGANIZATION_NOT_FOUND": "Organisation nicht gefunden",
+					"CHECK_TENANT_SETTINGS": "Fehler beim Überprüfen der Mandanteneinstellungen",
+					"CHECK_REMEMBER_STATE": "Fehler beim Überprüfen des gespeicherten Status"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "Einstellungen erfolgreich gespeichert"
@@ -1455,7 +1457,7 @@
 				"NAME": "Servername",
 				"SERVER_ID": "Server-ID",
 				"AGENT_ID": "Agent-ID",
-				"URL": "Server URL",
+				"URL": "Server-URL",
 				"STATUS": "Status",
 				"ACTIONS": "Aktionen",
 				"ACTIVE": "Aktiv",
@@ -1476,7 +1478,8 @@
 				"LOAD_CONNECTION": "Fehler beim Laden der Verbindung",
 				"PROJECT_ID_REQUIRED": "Projekt-ID ist erforderlich",
 				"LOAD_CONNECTIONS": "Fehler beim Laden der Verbindungen",
-				"DELETE_CONNECTION": "Fehler beim Löschen der Verbindung"
+				"DELETE_CONNECTION": "Fehler beim Löschen der Verbindung",
+				"INVALID_CONNECTION": "Ungültige Verbindungsdaten"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "Erfolgreich mit Activepieces autorisiert",
@@ -1493,7 +1496,7 @@
 					"CREATE_CONNECTION": "Fehler beim Erstellen der Verbindung"
 				},
 				"SUCCESS": {
-					"CONNECTION_CREATED": "ActivePieces-Verbindung erfolgreich erstellt"
+					"CONNECTION_CREATED": "Activepieces-Verbindung erfolgreich erstellt"
 				}
 			}
 		},

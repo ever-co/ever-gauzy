@@ -1390,7 +1390,9 @@
 					"INVALID_FORM": "Si prega di compilare correttamente tutti i campi obbligatori",
 					"SAVE_SETTINGS": "Impossibile salvare le impostazioni",
 					"START_AUTHORIZATION": "Impossibile avviare l'autorizzazione",
-					"ORGANIZATION_NOT_FOUND": "Organizzazione non trovata"
+					"ORGANIZATION_NOT_FOUND": "Organizzazione non trovata",
+					"CHECK_TENANT_SETTINGS": "Impossibile verificare le impostazioni del tenant",
+					"CHECK_REMEMBER_STATE": "Impossibile verificare lo stato di memorizzazione"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "Impostazioni salvate con successo"
@@ -1476,7 +1478,8 @@
 				"LOAD_CONNECTION": "Impossibile caricare la connessione",
 				"PROJECT_ID_REQUIRED": "L'ID progetto è obbligatorio",
 				"LOAD_CONNECTIONS": "Impossibile caricare le connessioni",
-				"DELETE_CONNECTION": "Impossibile eliminare la connessione"
+				"DELETE_CONNECTION": "Impossibile eliminare la connessione",
+				"INVALID_CONNECTION": "Dati di connessione non validi"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "Autorizzato con successo con Activepieces",

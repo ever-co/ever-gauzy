@@ -1389,7 +1389,9 @@
 					"INVALID_FORM": "Proszę poprawnie wypełnić wszystkie wymagane pola",
 					"SAVE_SETTINGS": "Nie udało się zapisać ustawień",
 					"START_AUTHORIZATION": "Nie udało się rozpocząć autoryzacji",
-					"ORGANIZATION_NOT_FOUND": "Nie znaleziono organizacji"
+					"ORGANIZATION_NOT_FOUND": "Nie znaleziono organizacji",
+					"CHECK_TENANT_SETTINGS": "Nie udało się sprawdzić ustawień najemcy",
+					"CHECK_REMEMBER_STATE": "Nie udało się sprawdzić stanu zapamiętywania"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "Ustawienia zapisane pomyślnie"
@@ -1475,7 +1477,8 @@
 				"LOAD_CONNECTION": "Nie udało się załadować połączenia",
 				"PROJECT_ID_REQUIRED": "ID projektu jest wymagane",
 				"LOAD_CONNECTIONS": "Nie udało się załadować połączeń",
-				"DELETE_CONNECTION": "Nie udało się usunąć połączenia"
+				"DELETE_CONNECTION": "Nie udało się usunąć połączenia",
+				"INVALID_CONNECTION": "Nieprawidłowe dane połączenia"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "Pomyślnie autoryzowano z Activepieces",

@@ -1391,7 +1391,9 @@
 					"INVALID_FORM": "Veuillez remplir correctement tous les champs obligatoires",
 					"SAVE_SETTINGS": "Échec de l'enregistrement des paramètres",
 					"START_AUTHORIZATION": "Échec du démarrage de l'autorisation",
-					"ORGANIZATION_NOT_FOUND": "Organisation introuvable"
+					"ORGANIZATION_NOT_FOUND": "Organisation introuvable",
+					"CHECK_TENANT_SETTINGS": "Échec de la vérification des paramètres du locataire",
+					"CHECK_REMEMBER_STATE": "Échec de la vérification de l'état mémorisé"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "Paramètres enregistrés avec succès"
@@ -1477,7 +1479,8 @@
 				"LOAD_CONNECTION": "Échec du chargement de la connexion",
 				"PROJECT_ID_REQUIRED": "L'ID de projet est requis",
 				"LOAD_CONNECTIONS": "Échec du chargement des connexions",
-				"DELETE_CONNECTION": "Échec de la suppression de la connexion"
+				"DELETE_CONNECTION": "Échec de la suppression de la connexion",
+				"INVALID_CONNECTION": "Données de connexion invalides"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "Autorisé avec succès avec Activepieces",

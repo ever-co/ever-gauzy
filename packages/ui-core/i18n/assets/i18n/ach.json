@@ -1278,7 +1278,9 @@
 					"INVALID_FORM": "Tim ber i pik jami ma mite weng maber",
 					"SAVE_SETTINGS": "Gwoko settings pe olare",
 					"START_AUTHORIZATION": "Cakke authorization pe olare",
-					"ORGANIZATION_NOT_FOUND": "Pe inongo organization"
+					"ORGANIZATION_NOT_FOUND": "Pe inongo organization",
+					"CHECK_TENANT_SETTINGS": "Roto tenant settings pe olare",
+					"CHECK_REMEMBER_STATE": "Roto remember state pe olare"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "Kigwoko settings maber"
@@ -1364,7 +1366,8 @@
 				"LOAD_CONNECTION": "Load connection pe olare",
 				"PROJECT_ID_REQUIRED": "Project ID mite",
 				"LOAD_CONNECTIONS": "Load connections pe olare",
-				"DELETE_CONNECTION": "Kwanyo connection pe olare"
+				"DELETE_CONNECTION": "Kwanyo connection pe olare",
+				"INVALID_CONNECTION": "Connection data pe tye atir"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "Ki authorize maber ki Activepieces",

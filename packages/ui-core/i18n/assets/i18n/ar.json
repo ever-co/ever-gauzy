@@ -1389,7 +1389,9 @@
 					"INVALID_FORM": "يرجى ملء جميع الحقول المطلوبة بشكل صحيح",
 					"SAVE_SETTINGS": "فشل حفظ الإعدادات",
 					"START_AUTHORIZATION": "فشل بدء التفويض",
-					"ORGANIZATION_NOT_FOUND": "المنظمة غير موجودة"
+					"ORGANIZATION_NOT_FOUND": "المنظمة غير موجودة",
+					"CHECK_TENANT_SETTINGS": "فشل التحقق من إعدادات المستأجر",
+					"CHECK_REMEMBER_STATE": "فشل التحقق من حالة التذكر"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "تم حفظ الإعدادات بنجاح"
@@ -1475,7 +1477,8 @@
 				"LOAD_CONNECTION": "فشل تحميل الاتصال",
 				"PROJECT_ID_REQUIRED": "معرف المشروع مطلوب",
 				"LOAD_CONNECTIONS": "فشل تحميل الاتصالات",
-				"DELETE_CONNECTION": "فشل حذف الاتصال"
+				"DELETE_CONNECTION": "فشل حذف الاتصال",
+				"INVALID_CONNECTION": "بيانات الاتصال غير صالحة"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "تم التفويض بنجاح مع Activepieces",

@@ -1431,7 +1431,9 @@
 					"INVALID_FORM": "Пожалуйста, правильно заполните все обязательные поля",
 					"SAVE_SETTINGS": "Не удалось сохранить настройки",
 					"START_AUTHORIZATION": "Не удалось начать авторизацию",
-					"ORGANIZATION_NOT_FOUND": "Организация не найдена"
+					"ORGANIZATION_NOT_FOUND": "Организация не найдена",
+					"CHECK_TENANT_SETTINGS": "Не удалось проверить настройки арендатора",
+					"CHECK_REMEMBER_STATE": "Не удалось проверить состояние запоминания"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "Настройки успешно сохранены"
@@ -1517,7 +1519,8 @@
 				"LOAD_CONNECTION": "Не удалось загрузить подключение",
 				"PROJECT_ID_REQUIRED": "ID проекта обязателен",
 				"LOAD_CONNECTIONS": "Не удалось загрузить подключения",
-				"DELETE_CONNECTION": "Не удалось удалить подключение"
+				"DELETE_CONNECTION": "Не удалось удалить подключение",
+				"INVALID_CONNECTION": "Недействительные данные подключения"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "Успешно авторизовано с Activepieces",

@@ -32,8 +32,8 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
-			client_id: [null, Validators.required],
-			client_secret: [null, Validators.required],
+			client_id: [null, [Validators.required, Validators.pattern(/\S/)]],
+		    client_secret: [null, [Validators.required, Validators.pattern(/\S/)]],
 		});
 	}
 
@@ -100,7 +100,8 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 					settings.some((s) => s.settingsName === 'client_secret');
 				}),
 				catchError((error) => {
-					console.error('Failed to check tenant settings:', error);
+					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.CHECK_TENANT_SETTINGS') + ': ' + error.message;
+					this._toastrService.error(errorMessage);
 					return EMPTY;
 				}),
 				untilDestroyed(this)
@@ -129,7 +130,8 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 					this._redirectToActivepiecesIntegration(integration.id);
 				}),
 				catchError((error) => {
-					console.error('Failed to check remember state:', error);
+					const errorMessage = this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.CHECK_REMEMBER_STATE') + ': ' + error.message;
+					this._toastrService.error(errorMessage);
 					return EMPTY;
 				}),
 				untilDestroyed(this)
@@ -149,7 +151,13 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 
 		this.loading = true;
 		const { id: organizationId } = this.organization;
-		const { client_id, client_secret } = this.form.value;
+		const client_id = (this.form.value?.client_id ?? '').trim();
+		const client_secret = (this.form.value?.client_secret ?? '').trim();
+		if (!client_id || !client_secret) {
+			this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.INVALID_FORM'));
+			this.loading = false;
+			return;
+		}
 
 		this._activepiecesService
 			.saveOAuthSettings(client_id, client_secret, organizationId)
@@ -206,7 +214,7 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 		return this._activepiecesService.authorize(tenantId, organizationId).pipe(
 			tap((response: { authorizationUrl: string; state: string }) => {
 				// Redirect to ActivePieces OAuth page
-				window.location.href = response.authorizationUrl;
+				window.location.assign(response.authorizationUrl);
 			})
 		);
 	}

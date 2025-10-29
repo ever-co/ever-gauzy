@@ -1390,7 +1390,9 @@
 					"INVALID_FORM": "Vul alle verplichte velden correct in",
 					"SAVE_SETTINGS": "Kan instellingen niet opslaan",
 					"START_AUTHORIZATION": "Kan autorisatie niet starten",
-					"ORGANIZATION_NOT_FOUND": "Organisatie niet gevonden"
+					"ORGANIZATION_NOT_FOUND": "Organisatie niet gevonden",
+					"CHECK_TENANT_SETTINGS": "Kan tenant-instellingen niet controleren",
+					"CHECK_REMEMBER_STATE": "Kan onthouden status niet controleren"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "Instellingen succesvol opgeslagen"
@@ -1476,7 +1478,8 @@
 				"LOAD_CONNECTION": "Kan verbinding niet laden",
 				"PROJECT_ID_REQUIRED": "Project-ID is verplicht",
 				"LOAD_CONNECTIONS": "Kan verbindingen niet laden",
-				"DELETE_CONNECTION": "Kan verbinding niet verwijderen"
+				"DELETE_CONNECTION": "Kan verbinding niet verwijderen",
+				"INVALID_CONNECTION": "Ongeldige verbindingsgegevens"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "Succesvol geautoriseerd met Activepieces",

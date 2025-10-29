@@ -1471,7 +1471,9 @@
 					"INVALID_FORM": "Please fill all required fields correctly",
 					"SAVE_SETTINGS": "Failed to save settings",
 					"START_AUTHORIZATION": "Failed to start authorization",
-					"ORGANIZATION_NOT_FOUND": "Organization not found"
+					"ORGANIZATION_NOT_FOUND": "Organization not found",
+					"CHECK_TENANT_SETTINGS": "Failed to check tenant settings",
+					"CHECK_REMEMBER_STATE": "Failed to check remember state"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "Settings saved successfully"
@@ -1557,7 +1559,8 @@
 				"LOAD_CONNECTION": "Failed to load connection",
 				"PROJECT_ID_REQUIRED": "Project ID is required",
 				"LOAD_CONNECTIONS": "Failed to load connections",
-				"DELETE_CONNECTION": "Failed to delete connection"
+				"DELETE_CONNECTION": "Failed to delete connection",
+				"INVALID_CONNECTION": "Invalid connection data"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "Successfully authorized with Activepieces",
@@ -1574,7 +1577,7 @@
 					"CREATE_CONNECTION": "Failed to create connection"
 				},
 				"SUCCESS": {
-					"CONNECTION_CREATED": "ActivePieces connection created successfully"
+					"CONNECTION_CREATED": "Activepieces connection created successfully"
 				}
 			}
 		},

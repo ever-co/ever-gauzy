@@ -1425,7 +1425,9 @@
 					"INVALID_FORM": "אנא מלא את כל השדות הנדרשים בצורה נכונה",
 					"SAVE_SETTINGS": "שמירת ההגדרות נכשלה",
 					"START_AUTHORIZATION": "התחלת האישור נכשלה",
-					"ORGANIZATION_NOT_FOUND": "הארגון לא נמצא"
+					"ORGANIZATION_NOT_FOUND": "הארגון לא נמצא",
+					"CHECK_TENANT_SETTINGS": "בדיקת הגדרות הדייר נכשלה",
+					"CHECK_REMEMBER_STATE": "בדיקת מצב הזכירה נכשלה"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "ההגדרות נשמרו בהצלחה"
@@ -1511,7 +1513,8 @@
 				"LOAD_CONNECTION": "טעינת החיבור נכשלה",
 				"PROJECT_ID_REQUIRED": "מזהה פרויקט נדרש",
 				"LOAD_CONNECTIONS": "טעינת החיבורים נכשלה",
-				"DELETE_CONNECTION": "מחיקת החיבור נכשלה"
+				"DELETE_CONNECTION": "מחיקת החיבור נכשלה",
+				"INVALID_CONNECTION": "נתוני חיבור לא תקינים"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "אושר בהצלחה עם Activepieces",

@@ -82,7 +82,7 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 						this._activepiecesStore.setConnections([connection]);
 					} else {
 						this.connections = [];
-						this._activepiecesStore.setConnections([]);
+						this._activepiecesStore.clearConnections();
 					}
 				}),
 				catchError((error) => {
@@ -105,7 +105,8 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 	 * GET /integration/activepieces/connections/:integrationId?projectId={projectId}
 	 */
 	loadConnections() {
-		if (!this.projectId) {
+		const trimmedProjectId = (this.projectId ?? '').trim();
+		if (!trimmedProjectId) {
 			this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.PROJECT_ID_REQUIRED'));
 			return;
 		}
@@ -114,9 +115,7 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 			return;
 		}
 
-		const params: IActivepiecesConnectionsListParams = {
-			projectId: this.projectId
-		};
+		const params: IActivepiecesConnectionsListParams = { projectId: trimmedProjectId };
 
 		this._activepiecesStore.setLoading(true);
 		this.loading = true;
@@ -147,12 +146,19 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 	 * Delete connection
 	 * DELETE /integration/activepieces/connection/:integrationId
 	 */
-	deleteConnection() {
-		if (!window.confirm(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.DELETE_CONFIRM'))) {
+	deleteConnection(connection: IActivepiecesConnection) {
+		// Validate connection parameter
+		if (!connection) {
+			this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.INVALID_CONNECTION'));
 			return;
 		}
 
-		if (!this.integrationId) {
+		if (!connection.integrationId) {
+			this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.ERRORS.INVALID_CONNECTION'));
+			return;
+		}
+
+		if (!window.confirm(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.DELETE_CONFIRM'))) {
 			return;
 		}
 
@@ -160,7 +166,7 @@ export class ActivepiecesConnectionsComponent extends TranslationBaseComponent i
 		this.loading = true;
 
 		this._activepiecesService
-		.deleteConnection(this.integrationId)
+		.deleteConnection(connection.integrationId)
 			.pipe(
 				tap(() => {
 					this._toastrService.success(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.SUCCESS.CONNECTION_DELETED'));

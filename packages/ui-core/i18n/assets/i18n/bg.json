@@ -1458,7 +1458,9 @@
 					"INVALID_FORM": "Моля, попълнете правилно всички задължителни полета",
 					"SAVE_SETTINGS": "Неуспешно запазване на настройките",
 					"START_AUTHORIZATION": "Неуспешно стартиране на разрешаването",
-					"ORGANIZATION_NOT_FOUND": "Организацията не е намерена"
+					"ORGANIZATION_NOT_FOUND": "Организацията не е намерена",
+					"CHECK_TENANT_SETTINGS": "Неуспешна проверка на настройките на клиента",
+					"CHECK_REMEMBER_STATE": "Неуспешна проверка на състоянието на запомняне"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "Настройките са запазени успешно"
@@ -1544,7 +1546,8 @@
 				"LOAD_CONNECTION": "Неуспешно зареждане на връзката",
 				"PROJECT_ID_REQUIRED": "ID на проект е задължително",
 				"LOAD_CONNECTIONS": "Неуспешно зареждане на връзките",
-				"DELETE_CONNECTION": "Неуспешно изтриване на връзката"
+				"DELETE_CONNECTION": "Неуспешно изтриване на връзката",
+				"INVALID_CONNECTION": "Невалидни данни за връзка"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "Успешно разрешаване с Activepieces",

@@ -1390,7 +1390,9 @@
 					"INVALID_FORM": "请正确填写所有必填字段",
 					"SAVE_SETTINGS": "保存设置失败",
 					"START_AUTHORIZATION": "启动授权失败",
-					"ORGANIZATION_NOT_FOUND": "未找到组织"
+					"ORGANIZATION_NOT_FOUND": "未找到组织",
+					"CHECK_TENANT_SETTINGS": "检查租户设置失败",
+					"CHECK_REMEMBER_STATE": "检查记忆状态失败"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "设置保存成功"
@@ -1476,7 +1478,8 @@
 				"LOAD_CONNECTION": "加载连接失败",
 				"PROJECT_ID_REQUIRED": "项目 ID 为必填项",
 				"LOAD_CONNECTIONS": "加载连接失败",
-				"DELETE_CONNECTION": "删除连接失败"
+				"DELETE_CONNECTION": "删除连接失败",
+				"INVALID_CONNECTION": "无效的连接数据"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "已成功授权 Activepieces",

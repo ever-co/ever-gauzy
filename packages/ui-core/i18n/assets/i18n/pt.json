@@ -1390,7 +1390,9 @@
 					"INVALID_FORM": "Por favor, preencha todos os campos obrigatórios corretamente",
 					"SAVE_SETTINGS": "Falha ao salvar as configurações",
 					"START_AUTHORIZATION": "Falha ao iniciar a autorização",
-					"ORGANIZATION_NOT_FOUND": "Organização não encontrada"
+					"ORGANIZATION_NOT_FOUND": "Organização não encontrada",
+					"CHECK_TENANT_SETTINGS": "Falha ao verificar as configurações do inquilino",
+					"CHECK_REMEMBER_STATE": "Falha ao verificar o estado de lembrar"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "Configurações salvas com sucesso"
@@ -1476,7 +1478,8 @@
 				"LOAD_CONNECTION": "Falha ao carregar a conexão",
 				"PROJECT_ID_REQUIRED": "ID do projeto é obrigatório",
 				"LOAD_CONNECTIONS": "Falha ao carregar as conexões",
-				"DELETE_CONNECTION": "Falha ao excluir a conexão"
+				"DELETE_CONNECTION": "Falha ao excluir a conexão",
+				"INVALID_CONNECTION": "Dados de conexão inválidos"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "Autorizado com sucesso com Activepieces",

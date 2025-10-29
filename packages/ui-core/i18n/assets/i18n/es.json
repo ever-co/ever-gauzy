@@ -1392,7 +1392,9 @@
 					"INVALID_FORM": "Por favor, complete todos los campos obligatorios correctamente",
 					"SAVE_SETTINGS": "Error al guardar la configuración",
 					"START_AUTHORIZATION": "Error al iniciar la autorización",
-					"ORGANIZATION_NOT_FOUND": "Organización no encontrada"
+					"ORGANIZATION_NOT_FOUND": "Organización no encontrada",
+					"CHECK_TENANT_SETTINGS": "Error al verificar la configuración del inquilino",
+					"CHECK_REMEMBER_STATE": "Error al verificar el estado de recordar"
 				},
 				"SUCCESS": {
 					"SETTINGS_SAVED": "Configuración guardada con éxito"
@@ -1478,7 +1480,8 @@
 				"LOAD_CONNECTION": "Error al cargar la conexión",
 				"PROJECT_ID_REQUIRED": "El ID de proyecto es obligatorio",
 				"LOAD_CONNECTIONS": "Error al cargar las conexiones",
-				"DELETE_CONNECTION": "Error al eliminar la conexión"
+				"DELETE_CONNECTION": "Error al eliminar la conexión",
+				"INVALID_CONNECTION": "Datos de conexión no válidos"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "Autorizado con éxito con Activepieces",
