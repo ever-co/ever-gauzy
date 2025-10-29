@@ -31,7 +31,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		background: var(--background-basic-color-2);
+		background: var(--gauzy-card-1);
 		border-bottom: 1px solid var(--card-divider-color);
 		padding: 1rem;
 		position: sticky;
@@ -116,13 +116,11 @@
 	.filter-form {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
 	}
 
 	// Filter Sections
 	.filter-section {
 		border: 1px solid var(--card-divider-color);
-		border-radius: var(--card-border-radius);
 		overflow: hidden;
 		transition: all 0.2s ease;
 		background: var(--card-background-color);
@@ -136,7 +134,7 @@
 			justify-content: space-between;
 			align-items: center;
 			padding: 0.75rem 1rem;
-			background: var(--background-basic-color-2);
+			background: var(--gauzy-card-1);
 			cursor: pointer;
 			/* button reset */
 			border: none;
