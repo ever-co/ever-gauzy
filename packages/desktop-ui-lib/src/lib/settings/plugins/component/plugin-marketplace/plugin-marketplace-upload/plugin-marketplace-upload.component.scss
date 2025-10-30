@@ -555,7 +555,7 @@ $transition-speed: 0.2s;
 // Enhanced Dialog Card for Better Content Management
 .dialog-card {
   width: 800px; // Increased width for subscription content
-  height: 85vh; // Increased height
+  height: calc(100vh - 16rem);
 
   @media (max-width: 1024px) {
     width: 95vw;

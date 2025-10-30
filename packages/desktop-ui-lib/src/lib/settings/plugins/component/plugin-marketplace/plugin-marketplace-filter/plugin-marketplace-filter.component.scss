@@ -90,7 +90,7 @@
 	// Filter Content
 	.filter-content {
 		/* Limit inner scrolling to large screens only; allow natural page scroll elsewhere */
-		max-height: 80vh;
+		max-height: calc(100vh - 16.125rem);
 		overflow-y: auto;
 		scroll-padding-top: 72px; /* account for sticky header height */
 

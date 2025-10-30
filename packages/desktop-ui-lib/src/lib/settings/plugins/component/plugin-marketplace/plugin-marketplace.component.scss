@@ -114,6 +114,11 @@
 		padding: 1rem;
 		align-content: start;
 
+		&.first {
+			max-height: calc(100vh - 19rem);
+            overflow: auto;
+		}
+
 		@media (max-width: 1400px) {
 			grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 		}

@@ -6,6 +6,5 @@ export class PluginSourceDTO extends OmitType(PluginSource, [
 	'createdAt',
 	'updatedAt',
 	'deletedAt',
-	'fullName',
-	'url'
+	'fullName'
 ] as const) {}

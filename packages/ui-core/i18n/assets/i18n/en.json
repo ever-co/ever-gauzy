@@ -5359,7 +5359,9 @@
 			"CHECKSUM": "Checksum",
 			"SIGNATURE": "Signature",
 			"INSTALLED": "Installed",
-			"HIDDEN_FOR_SECURITY": "Hidden for security reasons"
+			"HIDDEN_FOR_SECURITY": "Hidden for security reasons",
+			"OVERVIEW": "Overview",
+			"SOURCE_CODE": "Source Code"
 		},
 		"MARKETPLACE": {
 			"UPLOAD": "Upload New Plugin",
