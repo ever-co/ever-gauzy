@@ -6340,9 +6340,9 @@
     moo "^0.5.1"
 
 "@messageformat/runtime@^3.0.1":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@messageformat/runtime/-/runtime-3.0.1.tgz#94d1f6c43265c28ef7aed98ecfcc0968c6c849ac"
-  integrity sha512-6RU5ol2lDtO8bD9Yxe6CZkl0DArdv0qkuoZC+ZwowU+cdRlVE1157wjCmlA5Rsf1Xc/brACnsZa5PZpEDfTFFg==
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@messageformat/runtime/-/runtime-3.0.2.tgz#7186cd772c55298cb5d2f2ec402af266db06af15"
+  integrity sha512-dkIPDCjXcfhSHgNE1/qV6TeczQZR59Yx0xXeafVKgK3QVWoxc38ljwpksUpnzCGvN151KUbCJTDZVmahtf1YZw==
   dependencies:
     make-plural "^7.0.0"
 
