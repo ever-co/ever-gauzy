@@ -56,6 +56,14 @@
 				class="type-badge"
 				[text]="plugin.type | titlecase">
 			</nb-badge>
+			<!-- Free Badge if plugin has no plans -->
+			@if(!plugin.hasPlan) {
+				<nb-badge
+					status="success"
+					class="free-badge"
+					text="Free">
+				</nb-badge>
+			}
 		</div>
 	</div>
 
@@ -208,10 +216,15 @@
 			</div>
 		} @else {
 			<!-- Show subscription requirement if needed -->
-			@if(plugin.requiresSubscription && !checked) {
+			@if(plugin.hasPlan && !checked) {
 				<div class="subscription-required">
 					<nb-icon icon="card-outline" class="subscription-icon"></nb-icon>
 					<span class="subscription-text">Subscription Required</span>
+				</div>
+			} @else if(!plugin.hasPlan && !checked) {
+				<div class="free-plugin">
+					<nb-icon icon="gift-outline" class="free-icon" status="success"></nb-icon>
+					<span class="free-text">Free Plugin</span>
 				</div>
 			}
 
@@ -224,7 +237,7 @@
 			<span class="toggle-label">
 				@if(checked) {
 					Installed
-				} @else if(plugin.requiresSubscription) {
+				} @else if(plugin.hasPlan) {
 					Subscribe & Install
 				} @else {
 					Install

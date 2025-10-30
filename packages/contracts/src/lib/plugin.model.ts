@@ -141,6 +141,7 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
 
 	source?: IPluginSource; // Optional reference to the plugin's source
 
+	hasPlan: boolean; // Whether the plugin has at least one subscription plan
 	downloadCount: number; // Number of times the plugin has been downloaded
 	lastDownloadedAt?: Date; // Optional date when the plugin was last downloaded
 

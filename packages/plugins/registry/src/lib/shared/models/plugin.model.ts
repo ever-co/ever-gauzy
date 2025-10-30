@@ -48,6 +48,7 @@ export interface IPlugin extends BaseEntityModel {
 	source?: IPluginSource; // Optional reference to the plugin's source
 
 	installed: boolean; // Flag indicating if the plugin is installed
+	hasPlan: boolean; // Flag indicating if the plugin has at least one subscription plan
 	downloadCount: number; // Number of times the plugin has been downloaded
 	lastDownloadedAt?: Date; // Optional date when the plugin was last downloaded
 	tenants?: IPluginTenant[]; // List of tenants using the plugin

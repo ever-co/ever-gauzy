@@ -29,7 +29,7 @@ import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
-import { PluginSubscriptionService, PluginSubscriptionType } from '../../../services/plugin-subscription.service';
+import { PluginSubscriptionService } from '../../../services/plugin-subscription.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginSubscriptionSelectionComponent } from '../plugin-subscription-selection/plugin-subscription-selection.component';
 import { DialogCreateSourceComponent } from './dialog-create-source/dialog-create-source.component';
@@ -303,25 +303,12 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	private async checkSubscriptionRequirement(): Promise<boolean> {
-		if (!this.pluginId) {
+		if (!this.plugin) {
 			return false;
 		}
 
-		try {
-			// Load plugin plans to check if subscription is required
-			const plans = await this.subscriptionService.getPluginPlans(this.pluginId).toPromise();
-
-			// If plugin has plans and no free plan, subscription is required
-			if (plans && plans.length > 0) {
-				const hasFreePlan = plans.some((plan) => plan.type === PluginSubscriptionType.FREE || plan.price === 0);
-				return !hasFreePlan;
-			}
-
-			return false;
-		} catch (error) {
-			console.warn('Failed to load plugin plans:', error);
-			return false;
-		}
+		// Use the computed hasPlan property to check if subscription is required
+		return this.plugin.hasPlan;
 	}
 
 	private showSubscriptionSelectionDialog(): Observable<{ proceedWithInstallation: boolean }> {

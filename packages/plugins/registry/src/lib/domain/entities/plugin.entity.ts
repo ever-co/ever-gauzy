@@ -134,6 +134,9 @@ export class Plugin extends BaseEntity implements IPlugin {
 	// Computed state
 	installed: boolean;
 
+	// Computed state - whether plugin has at least one subscription plan
+	hasPlan: boolean;
+
 	@ApiProperty({ type: Date, description: 'Last downloaded date', required: false })
 	@IsOptional()
 	@IsDate({ message: 'LastDownloadedAt must be a valid date' })

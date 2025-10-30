@@ -25,7 +25,9 @@
 				<nb-badge *ngIf="plugin" [status]="getStatusBadgeStatus(plugin.status)"
 					[text]="getStatusLabel(plugin.status)" class="mr-2 position-relative"></nb-badge>
 				<nb-badge *ngIf="plugin" [status]="getPluginTypeBadgeStatus(plugin.type)"
-					[text]="getTypeLabel(plugin.type)" class="position-relative"></nb-badge>
+					[text]="getTypeLabel(plugin.type)" class="mr-2 position-relative"></nb-badge>
+				<nb-badge *ngIf="plugin && !plugin.hasPlan" status="success"
+					text="Free" class="position-relative"></nb-badge>
 			</div>
 		</div>
 		<button nbButton ghost size="small" (click)="navigateBack()">
