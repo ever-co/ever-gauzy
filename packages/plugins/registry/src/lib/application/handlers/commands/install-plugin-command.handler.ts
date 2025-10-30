@@ -3,6 +3,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginInstallation } from '../../../domain/entities/plugin-installation.entity';
 import { PluginInstallationService } from '../../../domain/services/plugin-installation.service';
+import { PluginSubscriptionPlanService } from '../../../domain/services/plugin-subscription-plan.service';
 import { PluginSubscriptionService } from '../../../domain/services/plugin-subscription.service';
 import { PluginInstallationStatus } from '../../../shared/models/plugin-installation.model';
 import { PluginScope } from '../../../shared/models/plugin-scope.model';
@@ -22,7 +23,11 @@ export class InstallPluginCommandHandler implements ICommandHandler<InstallPlugi
 		/**
 		 * Service responsible for handling plugin subscription logic.
 		 */
-		private readonly subscriptionService: PluginSubscriptionService
+		private readonly subscriptionService: PluginSubscriptionService,
+		/**
+		 * Service responsible for handling plugin subscription plans.
+		 */
+		private readonly subscriptionPlanService: PluginSubscriptionPlanService
 	) {}
 
 	/**
@@ -87,6 +92,15 @@ export class InstallPluginCommandHandler implements ICommandHandler<InstallPlugi
 		organizationId: string,
 		userId: string
 	): Promise<void> {
+		// Check if the plugin has any subscription plans
+		const hasPlans = await this.subscriptionPlanService.hasPlans(pluginId);
+
+		// If no subscription plans exist, the plugin is free and anyone can install it
+		if (!hasPlans) {
+			console.log(`Plugin is free (no subscription plans), allowing installation: Plugin ID: ${pluginId}`);
+			return;
+		}
+
 		// Check for active subscription at user level (user bought for themselves)
 		const hasUserSubscription = await this.subscriptionService.findOneByWhereOptions({
 			pluginId,

@@ -1,5 +1,6 @@
 import { RequestContext } from '@gauzy/core';
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { PluginSubscriptionPlanService } from '../../domain/services/plugin-subscription-plan.service';
 import { PluginSubscriptionService } from '../../domain/services/plugin-subscription.service';
 
 /**
@@ -7,7 +8,10 @@ import { PluginSubscriptionService } from '../../domain/services/plugin-subscrip
  */
 @Injectable()
 export class PluginSubscriptionGuard implements CanActivate {
-	constructor(private readonly pluginSubscriptionService: PluginSubscriptionService) {}
+	constructor(
+		private readonly pluginSubscriptionService: PluginSubscriptionService,
+		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService
+	) {}
 
 	/**
 	 * Validates that the user has a valid subscription for the plugin
@@ -33,6 +37,17 @@ export class PluginSubscriptionGuard implements CanActivate {
 		}
 
 		try {
+			// Check if the plugin has any subscription plans
+			const hasPlans = await this.pluginSubscriptionPlanService.hasPlans(pluginId);
+
+			// If no subscription plans exist, the plugin is free and anyone can install it
+			if (!hasPlans) {
+				console.log(
+					`Plugin is free (no subscription plans): Plugin ID: ${pluginId}, Tenant ID: ${tenantId}, User ID: ${userId}`
+				);
+				return true;
+			}
+
 			// Check if the user has a valid subscription for this plugin
 			const hasAccess = await this.pluginSubscriptionService.hasPluginAccess(
 				pluginId,

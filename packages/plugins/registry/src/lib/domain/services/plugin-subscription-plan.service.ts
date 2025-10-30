@@ -129,6 +129,24 @@ export class PluginSubscriptionPlanService extends TenantAwareCrudService<Plugin
 	}
 
 	/**
+	 * Check if a plugin has any subscription plans
+	 * @param pluginId - The plugin ID
+	 * @returns Promise<boolean> indicating if the plugin has any plans
+	 */
+	async hasPlans(pluginId: ID): Promise<boolean> {
+		try {
+			const count = await this.typeOrmRepository.count({
+				where: { pluginId }
+			});
+			return count > 0;
+		} catch (error) {
+			// If there's an error checking, default to false (treat as free plugin)
+			console.error(`Error checking if plugin ${pluginId} has plans:`, error);
+			return false;
+		}
+	}
+
+	/**
 	 * Get subscription plans by plugin ID
 	 */
 	async getByPluginId(
