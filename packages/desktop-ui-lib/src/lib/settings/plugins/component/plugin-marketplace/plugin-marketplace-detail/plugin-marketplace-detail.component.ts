@@ -112,7 +112,16 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 
 	public togglePlugin(checked: boolean): void {
 		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: checked, plugin: this.plugin }));
-		checked ? this.showSubscriptionDialog() : this.uninstallPlugin();
+		if (checked) {
+			// If plugin is free (has no plans), install directly without showing subscription dialog
+			if (!this.plugin.hasPlan) {
+				this.installPlugin();
+			} else {
+				this.showSubscriptionDialog();
+			}
+		} else {
+			this.uninstallPlugin();
+		}
 	}
 
 	/**
@@ -162,22 +171,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public installPlugin(isUpdate = false): void {
-		// First, check if plugin requires subscription
-		this.checkSubscriptionRequirement()
-			.then((requiresSubscription) => {
-				if (requiresSubscription && !isUpdate) {
-					// Show subscription selection dialog
-					this.showSubscriptionDialog();
-				} else {
-					// Proceed directly with installation
-					this.proceedWithInstallationValidation(isUpdate);
-				}
-			})
-			.catch((error) => {
-				console.error('Failed to check subscription requirement:', error);
-				// Proceed with installation if subscription check fails
-				this.proceedWithInstallationValidation(isUpdate);
-			});
+		// Proceed directly with installation for free plugins or updates
+		this.proceedWithInstallationValidation(isUpdate);
 	}
 
 	private async checkSubscriptionRequirement(): Promise<boolean> {
@@ -445,18 +440,20 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		// Add plugin management options if installed
 		const isChecked = this._isChecked$.value;
 		if (isChecked) {
-			items.push(
-				{
-					title: 'Settings',
-					icon: 'settings-outline',
-					data: { action: 'settings' }
-				},
-				{
+			items.push({
+				title: 'Settings',
+				icon: 'settings-outline',
+				data: { action: 'settings' }
+			});
+
+			// Only show user management for plugins with plans (subscription-based)
+			if (this.plugin.hasPlan) {
+				items.push({
 					title: 'Manage Users',
 					icon: 'people-outline',
 					data: { action: 'manage-users' }
-				}
-			);
+				});
+			}
 		}
 
 		// Add external links

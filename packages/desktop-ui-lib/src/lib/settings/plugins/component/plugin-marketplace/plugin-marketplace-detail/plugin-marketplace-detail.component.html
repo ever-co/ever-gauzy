@@ -166,17 +166,19 @@
 				<nb-icon icon="settings-outline"></nb-icon>
 			</button>
 
-			<!-- User assignment button -->
-			<button
-				nbButton
-				ghost
-				size="small"
-				class="action-btn users-btn"
-				(click)="manageUsers()"
-				[disabled]="!checked"
-				[nbTooltip]="'PLUGIN.ACTIONS.MANAGE_USERS' | translate">
-				<nb-icon icon="people-outline"></nb-icon>
-			</button>
+			<!-- User assignment button (only for plugins with plans) -->
+			@if(plugin.hasPlan) {
+				<button
+					nbButton
+					ghost
+					size="small"
+					class="action-btn users-btn"
+					(click)="manageUsers()"
+					[disabled]="!checked"
+					[nbTooltip]="'PLUGIN.ACTIONS.MANAGE_USERS' | translate">
+					<nb-icon icon="people-outline"></nb-icon>
+				</button>
+			}
 
 			<!-- Edit button (owner only) -->
 			@if(isOwner) {

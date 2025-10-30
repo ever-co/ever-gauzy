@@ -268,38 +268,28 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	public installPlugin(isUpdate = false): void {
-		// First, check if plugin requires subscription
-		this.checkSubscriptionRequirement()
-			.then((requiresSubscription) => {
-				if (requiresSubscription && !isUpdate) {
-					// Show subscription selection dialog
-					this.showSubscriptionSelectionDialog()
-						.pipe(
-							tap((subscriptionResult) => {
-								if (subscriptionResult?.proceedWithInstallation) {
-									// Proceed with installation after subscription
-									this.proceedWithInstallationValidation(isUpdate);
-								}
-							}),
-							catchError((error) => {
-								console.error('Subscription selection failed:', error);
-								this.toastrService.error(
-									this.translateService.instant('PLUGIN.SUBSCRIPTION.SELECTION_FAILED')
-								);
-								return EMPTY;
-							})
-						)
-						.subscribe();
-				} else {
-					// Proceed directly with installation
-					this.proceedWithInstallationValidation(isUpdate);
-				}
-			})
-			.catch((error) => {
-				console.error('Failed to check subscription requirement:', error);
-				// Proceed with installation if subscription check fails
-				this.proceedWithInstallationValidation(isUpdate);
-			});
+		// Check if plugin has plans (requires subscription)
+		if (this.plugin.hasPlan && !isUpdate) {
+			// Show subscription selection dialog for plugins with plans
+			this.showSubscriptionSelectionDialog()
+				.pipe(
+					tap((subscriptionResult) => {
+						if (subscriptionResult?.proceedWithInstallation) {
+							// Proceed with installation after subscription
+							this.proceedWithInstallationValidation(isUpdate);
+						}
+					}),
+					catchError((error) => {
+						console.error('Subscription selection failed:', error);
+						this.toastrService.error(this.translateService.instant('PLUGIN.SUBSCRIPTION.SELECTION_FAILED'));
+						return EMPTY;
+					})
+				)
+				.subscribe();
+		} else {
+			// Proceed directly with installation for free plugins or updates
+			this.proceedWithInstallationValidation(isUpdate);
+		}
 	}
 
 	private async checkSubscriptionRequirement(): Promise<boolean> {
