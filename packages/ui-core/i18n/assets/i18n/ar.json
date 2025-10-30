@@ -840,6 +840,7 @@
 		"MAKE_COM": "Make.com",
 		"ZAPIER": "Zapier",
 		"GAUZY_AI": "جوزي الذكاء الاصطناعي",
+		"ACTIVEPIECES": "Activepieces",
 		"PROPOSALS": "مقترحات",
 		"TIME_OFF": "وقت مرتاح",
 		"APPROVALS": "الموافقات",
@@ -1374,6 +1375,129 @@
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "مفتاح Gauzy AI",
 			"API_SECRET": "Gauzy AI سري"
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"SUBTITLE": "إعداد تكامل Activepieces",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "تكامل Activepieces جاهز. انقر على الزر أدناه للتفويض.",
+				"INFOS": "بعد ذلك سيتم نقلك إلى Activepieces لمنح الإذن لـ Gauzy.",
+				"START_BUTTON": "تفويض Activepieces",
+				"NEXT": "التالي",
+				"ERRORS": {
+					"INVALID_FORM": "يرجى ملء جميع الحقول المطلوبة بشكل صحيح",
+					"SAVE_SETTINGS": "فشل حفظ الإعدادات",
+					"START_AUTHORIZATION": "فشل بدء التفويض",
+					"ORGANIZATION_NOT_FOUND": "المنظمة غير موجودة",
+					"CHECK_TENANT_SETTINGS": "فشل التحقق من إعدادات المستأجر",
+					"CHECK_REMEMBER_STATE": "فشل التحقق من حالة التذكر"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "تم حفظ الإعدادات بنجاح"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "إعدادات Activepieces",
+				"SUBTITLE": "قم بتكوين إعدادات تكامل Activepieces الخاصة بك",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "أدخل Client ID الخاص بك",
+				"CLIENT_ID_HINT": "Activepieces OAuth Client ID الخاص بك",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "أدخل Client Secret الخاص بك",
+				"CLIENT_SECRET_HINT": "Activepieces OAuth Client Secret الخاص بك",
+				"STATE_SECRET": "State Secret",
+				"STATE_SECRET_PLACEHOLDER": "أدخل State Secret الخاص بك (32 حرفًا على الأقل)",
+				"STATE_SECRET_HINT": "سلسلة عشوائية آمنة تُستخدم للتحقق من حالة OAuth",
+				"CALLBACK_URL": "Callback URL",
+				"CALLBACK_URL_PLACEHOLDER": "أدخل Callback URL الخاص بك",
+				"CALLBACK_URL_HINT": "عنوان URL الذي سيتم إعادة التوجيه إليه بعد التفويض من Activepieces",
+				"POST_INSTALL_URL": "Post Install URL",
+				"POST_INSTALL_URL_PLACEHOLDER": "أدخل Post Install URL الخاص بك",
+				"POST_INSTALL_URL_HINT": "عنوان URL لإعادة التوجيه إليه بعد اكتمال التثبيت",
+				"SETTINGS_UPDATED": "تم تحديث إعدادات Activepieces بنجاح"
+			},
+			"CONNECTIONS": {
+				"TITLE": "الاتصالات",
+				"SUBTITLE": "إدارة اتصالات Activepieces الخاصة بك",
+				"NO_CONNECTIONS": "لم يتم العثور على اتصالات. أدخل معرف المشروع وانقر فوق تحميل لعرض الاتصالات.",
+				"DISPLAY_NAME": "اسم العرض",
+				"NAME": "اسم الاتصال",
+				"TYPE_HEADER": "النوع",
+				"STATUS_HEADER": "الحالة",
+				"PIECE_NAME": "اسم القطعة",
+				"CREATED": "تم الإنشاء",
+				"ACTIONS": "الإجراءات",
+				"PROJECT_ID": "معرف المشروع",
+				"PROJECT_ID_PLACEHOLDER": "أدخل معرف مشروع Activepieces (موجود في إعدادات المشروع)",
+				"PROJECT_ID_HINT": "أدخل معرف مشروع Activepieces الخاص بك (موجود في إعدادات المشروع) لتحميل الاتصالات",
+				"LOADING": "جارٍ تحميل الاتصالات...",
+				"DELETE_CONFIRM": "هل أنت متأكد من أنك تريد حذف هذا الاتصال؟",
+				"DELETE_ARIA": "حذف الاتصال",
+				"STATUS": {
+					"ACTIVE": "نشط",
+					"ERROR": "خطأ"
+				},
+				"TYPE": {
+					"SECRET_TEXT": "نص سري",
+					"OAUTH2": "OAuth 2.0",
+					"CLOUD_OAUTH2": "Cloud OAuth 2.0",
+					"PLATFORM_OAUTH2": "Platform OAuth 2.0",
+					"BASIC_AUTH": "المصادقة الأساسية",
+					"CUSTOM_AUTH": "مصادقة مخصصة"
+				}
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP",
+				"NO_SERVERS": "لم يتم العثور على خوادم MCP. أدخل معرف المشروع وانقر فوق تحميل لعرض الخوادم.",
+				"PROJECT_ID": "معرف المشروع",
+				"PROJECT_ID_PLACEHOLDER": "أدخل معرف مشروع Activepieces (موجود في إعدادات المشروع)",
+				"PROJECT_ID_HINT": "أدخل معرف مشروع Activepieces الخاص بك (موجود في إعدادات المشروع) لتحميل خوادم MCP",
+				"NAME": "اسم الخادم",
+				"SERVER_ID": "معرف الخادم",
+				"AGENT_ID": "معرف الوكيل",
+				"URL": "Server URL",
+				"STATUS": "الحالة",
+				"ACTIONS": "الإجراءات",
+				"ACTIVE": "نشط",
+				"TOOLS_COUNT": "عدد الأدوات",
+				"CREATED": "تم الإنشاء",
+				"LOADING": "جارٍ تحميل خوادم MCP..."
+			},
+			"TAB": {
+				"CONNECTIONS": "الاتصالات",
+				"MCP_SERVERS": "خوادم MCP",
+				"SETTINGS": "الإعدادات"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "يرجى ملء جميع الحقول المطلوبة",
+				"LOAD_SETTINGS": "فشل تحميل إعدادات Activepieces",
+				"SAVE_SETTINGS": "فشل حفظ إعدادات Activepieces",
+				"START_AUTHORIZATION": "فشل بدء التفويض",
+				"LOAD_CONNECTION": "فشل تحميل الاتصال",
+				"PROJECT_ID_REQUIRED": "معرف المشروع مطلوب",
+				"LOAD_CONNECTIONS": "فشل تحميل الاتصالات",
+				"DELETE_CONNECTION": "فشل حذف الاتصال",
+				"INVALID_CONNECTION": "بيانات الاتصال غير صالحة"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "تم التفويض بنجاح مع Activepieces",
+				"SETTINGS_SAVED": "تم حفظ إعدادات Activepieces بنجاح",
+				"CONNECTION_DELETED": "تم حذف الاتصال بنجاح"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "معلمات الاستدعاء غير صالحة. تحقق من اكتمال التفويض بنجاح والتحقق من معلمات الاستدعاء.",
+					"ORGANIZATION_NOT_FOUND": "المنظمة غير موجودة",
+					"EXCHANGE_TOKEN": "فشل تبادل رمز التفويض",
+					"INVALID_PROJECT_ID": "يرجى تقديم معرف مشروع صالح",
+					"TOKEN_NOT_FOUND": "لم يتم العثور على الرمز. يرجى المحاولة مرة أخرى والتحقق من معلمات الاستدعاء.",
+					"CREATE_CONNECTION": "فشل إنشاء الاتصال"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "تم إنشاء اتصال ActivePieces بنجاح"
+				}
+			}
 		},
 		"COMING_SOON": "قريبًا",
 		"RE_INTEGRATE": "إعادة الاندماج",

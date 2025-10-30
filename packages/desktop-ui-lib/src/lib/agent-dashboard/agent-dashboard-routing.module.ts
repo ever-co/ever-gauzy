@@ -10,6 +10,10 @@ export const agentDashboardRoutes: Routes = [
 		loadComponent: () => import('./activity-sync/activity-sync.component').then((m) => m.SyncPageComponent),
 	},
 	{
+		path: 'tasks',
+		loadChildren: () => import('../time-tracker/task-table/task-table.routing.module').then((m) => m.taskTableRoutes)
+	},
+	{
 		path: '',
 		redirectTo: 'logs',
 		pathMatch: 'full',

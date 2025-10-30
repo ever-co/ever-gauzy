@@ -9,7 +9,7 @@ import {
 	IActivepiecesMcpServersListResponse,
 	IActivepiecesMcpServersListParams,
 	ActivepiecesSettingName
-} from './activepieces.type';
+} from '@gauzy/contracts';
 import { ActivepiecesMcpUpdateDto } from './dto';
 import { ACTIVEPIECES_MCP_SERVERS_URL } from './activepieces.config';
 
