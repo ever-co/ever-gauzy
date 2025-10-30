@@ -1,5 +1,6 @@
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
 import {
 	IsArray,
 	IsBoolean,
@@ -16,31 +17,102 @@ import { PluginSubscriptionPlan } from '../../domain/entities/plugin-subscriptio
 import { PluginBillingPeriod, PluginSubscriptionType } from '../../shared/models/plugin-subscription.model';
 
 /**
+ * Helper function to transform string to boolean
+ */
+const transformToBoolean = ({ value }: { value: any }): boolean | undefined => {
+	if (value === 'true' || value === true) return true;
+	if (value === 'false' || value === false) return false;
+	return value;
+};
+
+/**
+ * Helper function to transform string to number (optional)
+ */
+const transformToOptionalNumber = ({ value }: { value: any }): number | undefined => {
+	if (value === '' || value === null || value === undefined) return undefined;
+	return Number(value);
+};
+
+/**
+ * Helper function to transform string to number (with default 0)
+ */
+const transformToNumber = ({ value }: { value: any }): number => {
+	if (value === '' || value === null || value === undefined) return 0;
+	return Number(value);
+};
+
+/**
+ * Base class for subscription plan fields with transformations
+ */
+class BaseSubscriptionPlanFieldsDTO {
+	@ApiPropertyOptional({ type: Number, description: 'Plan price' })
+	@IsOptional()
+	@IsNumber({}, { message: 'Price must be a valid number' })
+	@Min(0, { message: 'Price cannot be negative' })
+	@Type(() => Number)
+	@Transform(transformToOptionalNumber)
+	price?: number;
+
+	@ApiPropertyOptional({ type: Boolean, description: 'Whether this plan is marked as popular' })
+	@IsOptional()
+	@IsBoolean({ message: 'isPopular must be a boolean' })
+	@Transform(transformToBoolean)
+	isPopular?: boolean;
+
+	@ApiPropertyOptional({ type: Boolean, description: 'Whether this plan is recommended' })
+	@IsOptional()
+	@IsBoolean({ message: 'isRecommended must be a boolean' })
+	@Transform(transformToBoolean)
+	isRecommended?: boolean;
+
+	@ApiPropertyOptional({ type: Number, description: 'Trial period duration in days' })
+	@IsOptional()
+	@IsNumber({}, { message: 'Trial days must be a number' })
+	@Min(0, { message: 'Trial days cannot be negative' })
+	@Type(() => Number)
+	@Transform(transformToOptionalNumber)
+	trialDays?: number;
+
+	@ApiPropertyOptional({ type: Number, description: 'Setup fee for the plan' })
+	@IsOptional()
+	@IsNumber({}, { message: 'Setup fee must be a number' })
+	@Min(0, { message: 'Setup fee cannot be negative' })
+	@Type(() => Number)
+	@Transform(transformToOptionalNumber)
+	setupFee?: number;
+
+	@ApiPropertyOptional({ type: Number, description: 'Discount percentage for the plan' })
+	@IsOptional()
+	@IsNumber({}, { message: 'Discount percentage must be a number' })
+	@Min(0, { message: 'Discount percentage cannot be negative' })
+	@Type(() => Number)
+	@Transform(transformToOptionalNumber)
+	discountPercentage?: number;
+}
+
+/**
  * Create Plugin Subscription Plan DTO
  */
 export class CreatePluginSubscriptionPlanDTO extends IntersectionType(
-	TenantOrganizationBaseDTO,
-	PickType(PluginSubscriptionPlan, [
-		'name',
-		'description',
-		'type',
-		'price',
-		'currency',
-		'billingPeriod',
-		'features',
-		'limitations',
-		'isActive',
-		'isPopular',
-		'isRecommended',
-		'trialDays',
-		'setupFee',
-		'discountPercentage',
-		'metadata',
-		'sortOrder'
-	] as const)
+	IntersectionType(
+		TenantOrganizationBaseDTO,
+		PickType(PluginSubscriptionPlan, [
+			'name',
+			'description',
+			'type',
+			'currency',
+			'billingPeriod',
+			'features',
+			'limitations',
+			'isActive',
+			'metadata',
+			'sortOrder'
+		] as const)
+	),
+	BaseSubscriptionPlanFieldsDTO
 ) {
-	@ApiProperty({ type: String, description: 'Plugin ID' })
-	@IsNotEmpty()
+	@ApiPropertyOptional({ type: String, description: 'Plugin ID (will be auto-assigned during creation)' })
+	@IsOptional()
 	@IsUUID()
 	pluginId: string;
 
@@ -48,29 +120,34 @@ export class CreatePluginSubscriptionPlanDTO extends IntersectionType(
 	@IsOptional()
 	@IsUUID()
 	createdById?: string;
+
+	// Override price to make it required for creation
+	@ApiProperty({ type: Number, description: 'Plan price' })
+	@IsNumber({}, { message: 'Price must be a valid number' })
+	@Min(0, { message: 'Price cannot be negative' })
+	@Type(() => Number)
+	@Transform(transformToNumber)
+	price: number;
 }
 
 /**
  * Update Plugin Subscription Plan DTO
  */
-export class UpdatePluginSubscriptionPlanDTO extends PickType(PluginSubscriptionPlan, [
-	'name',
-	'description',
-	'type',
-	'price',
-	'currency',
-	'billingPeriod',
-	'features',
-	'limitations',
-	'isActive',
-	'isPopular',
-	'isRecommended',
-	'trialDays',
-	'setupFee',
-	'discountPercentage',
-	'metadata',
-	'sortOrder'
-] as const) {}
+export class UpdatePluginSubscriptionPlanDTO extends IntersectionType(
+	PickType(PluginSubscriptionPlan, [
+		'name',
+		'description',
+		'type',
+		'currency',
+		'billingPeriod',
+		'features',
+		'limitations',
+		'isActive',
+		'metadata',
+		'sortOrder'
+	] as const),
+	BaseSubscriptionPlanFieldsDTO
+) {}
 
 /**
  * Plugin Subscription Plan Query DTO
