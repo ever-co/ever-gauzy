@@ -1,11 +1,11 @@
 import { ID, PluginStatus, PluginType } from '@gauzy/contracts';
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import { IPluginVersionUpdate } from '../models/plugin-version.model';
+import { IPluginUpdate } from '../models/plugin.model';
 import { CreatePluginDTO } from './create-plugin.dto';
 import { UpdatePluginVersionDTO } from './update-plugin-version.dto';
-import { IPluginUpdate } from '../models/plugin.model';
-import { IPluginVersionUpdate } from '../models/plugin-version.model';
 
 export class UpdatePluginDTO
 	extends PartialType(OmitType(CreatePluginDTO, ['version'] as const))
@@ -73,4 +73,15 @@ export class UpdatePluginDTO
 	@IsOptional()
 	@Type(() => UpdatePluginVersionDTO)
 	readonly version?: IPluginVersionUpdate;
+
+	@ApiProperty({
+		description:
+			'Subscription plans to create or update. Plans with an id will be updated, plans without an id will be created',
+		required: false,
+		type: [Object],
+		isArray: true
+	})
+	@IsOptional()
+	@IsArray()
+	subscriptionPlans?: any[];
 }

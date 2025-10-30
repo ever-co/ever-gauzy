@@ -1,6 +1,10 @@
 import type { BaseEntityModel, ID, IUser, PluginStatus, PluginType } from '@gauzy/contracts';
 import type { IPluginSetting } from './plugin-setting.model';
 import type { IPluginSource } from './plugin-source.model';
+import type {
+	IPluginSubscriptionPlanCreateInput,
+	IPluginSubscriptionPlanUpdateInput
+} from './plugin-subscription.model';
 import type { IPluginTag } from './plugin-tag.model';
 import type { IPluginTenant } from './plugin-tenant.model';
 import type { IPluginVersion, IPluginVersionUpdate } from './plugin-version.model';
@@ -26,6 +30,7 @@ export interface IPluginUpdate {
 	homepage?: string;
 	repository?: string;
 	version?: IPluginVersionUpdate;
+	subscriptionPlans?: Array<IPluginSubscriptionPlanCreateInput | (IPluginSubscriptionPlanUpdateInput & { id: ID })>;
 }
 
 export interface IPlugin extends BaseEntityModel {

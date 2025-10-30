@@ -1,11 +1,15 @@
+import { RequestContext } from '@gauzy/core';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
 
 import { PluginSourceService } from '../../../domain/services/plugin-source.service';
+import { PluginSubscriptionPlanService } from '../../../domain/services/plugin-subscription-plan.service';
 import { PluginVersionService } from '../../../domain/services/plugin-version.service';
 import { PluginService } from '../../../domain/services/plugin.service';
 import { IPlugin } from '../../../shared/models/plugin.model';
+import { CreatePluginSubscriptionPlanCommand } from '../../commands/create-plugin-subscription-plan.command';
+import { UpdatePluginSubscriptionPlanCommand } from '../../commands/update-plugin-subscription-plan.command';
 import { UpdatePluginCommand } from '../../commands/update-plugin.command';
 
 @CommandHandler(UpdatePluginCommand)
@@ -14,7 +18,9 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 		private readonly versionService: PluginVersionService,
 		private readonly sourceService: PluginSourceService,
 		private readonly pluginService: PluginService,
-		private readonly dataSource: DataSource
+		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService,
+		private readonly dataSource: DataSource,
+		private readonly commandBus: CommandBus
 	) {}
 
 	/**
@@ -69,6 +75,36 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 				homepage: input.homepage
 			};
 			await this.pluginService.update(found.record.id, plugin);
+
+			// Handle subscription plans if provided
+			if (input.subscriptionPlans && input.subscriptionPlans.length > 0) {
+				const tenantId = RequestContext.currentTenantId();
+				const organizationId = RequestContext.currentOrganizationId();
+				const user = RequestContext.currentUser();
+
+				for (const planData of input.subscriptionPlans) {
+					// Check if this is an update (has id) or create (no id)
+					if ('id' in planData && planData.id) {
+						// Update existing plan
+						await this.commandBus.execute(new UpdatePluginSubscriptionPlanCommand(planData.id, planData));
+					} else {
+						// Create new plan
+						const planWithPluginId = {
+							...planData,
+							pluginId: id
+						};
+
+						await this.commandBus.execute(
+							new CreatePluginSubscriptionPlanCommand(
+								planWithPluginId,
+								tenantId,
+								organizationId,
+								user?.id
+							)
+						);
+					}
+				}
+			}
 
 			await queryRunner.commitTransaction();
 
