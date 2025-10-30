@@ -205,46 +205,50 @@
 			</button>
 		</div>
 
-	<!-- Install/Uninstall Toggle -->
-	<div class="installation-control">
-		@if(showProgress) {
-			<div class="progress-indicator">
-				<nb-icon *gauzySpinnerButton="true" icon="sync-outline"></nb-icon>
-				<span class="progress-text">
-					{{ installing ? 'Installing...' : 'Uninstalling...' }}
-				</span>
-			</div>
-		} @else {
-			<!-- Show subscription requirement if needed -->
-			@if(plugin.hasPlan && !checked) {
-				<div class="subscription-required">
-					<nb-icon icon="card-outline" class="subscription-icon"></nb-icon>
-					<span class="subscription-text">Subscription Required</span>
+		<!-- Install/Uninstall Toggle -->
+		<div class="installation-control">
+			@if(showProgress) {
+				<div class="progress-indicator">
+					<nb-icon *gauzySpinnerButton="true" icon="sync-outline"></nb-icon>
+					<span class="progress-text">
+						{{ installing ? 'Installing...' : 'Uninstalling...' }}
+					</span>
 				</div>
-			} @else if(!plugin.hasPlan && !checked) {
-				<div class="free-plugin">
-					<nb-icon icon="gift-outline" class="free-icon" status="success"></nb-icon>
-					<span class="free-text">Free Plugin</span>
+			} @else {
+				<div class="installation-wrapper">
+					<!-- Show subscription requirement if needed -->
+					@if(plugin.hasPlan && !checked) {
+						<div class="subscription-required">
+							<nb-icon icon="card-outline" class="subscription-icon"></nb-icon>
+							<span class="subscription-text">Subscription Required</span>
+						</div>
+					} @else if(!plugin.hasPlan && !checked) {
+						<div class="free-plugin">
+							<nb-icon icon="gift-outline" class="free-icon" status="success"></nb-icon>
+							<span class="free-text">Free</span>
+						</div>
+					}
+
+					<div class="toggle-wrapper">
+						<nb-toggle
+							[disabled]="disabled"
+							[checked]="checked"
+							(checkedChange)="togglePlugin($event)"
+							class="install-toggle">
+						</nb-toggle>
+						<span class="toggle-label">
+							@if(checked) {
+								Installed
+							} @else if(plugin.hasPlan) {
+								Subscribe & Install
+							} @else {
+								Install
+							}
+						</span>
+					</div>
 				</div>
 			}
-
-			<nb-toggle
-				[disabled]="disabled"
-				[checked]="checked"
-				(checkedChange)="togglePlugin($event)"
-				class="install-toggle">
-			</nb-toggle>
-			<span class="toggle-label">
-				@if(checked) {
-					Installed
-				} @else if(plugin.hasPlan) {
-					Subscribe & Install
-				} @else {
-					Install
-				}
-			</span>
-		}
-	</div>
+		</div>
 	</div>
 </div>
 }

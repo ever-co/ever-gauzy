@@ -4,14 +4,15 @@
   border: 1px solid var(--card-border-color);
   border-radius: 12px;
   padding: 20px;
-  margin-bottom: 16px;
+  margin-bottom: 0;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
     border-color: var(--primary-color);
   }
 
@@ -38,39 +39,60 @@
 
   // List view compact layout
   &.list-view {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 12px 16px;
-    margin-bottom: 8px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
 
     .plugin-header {
-      flex: 1;
+      flex-direction: row;
+      align-items: center;
       margin-bottom: 0;
-      min-width: 0;
+      gap: 16px;
     }
 
     .plugin-title-section {
-      flex-direction: row;
-      align-items: center;
-      gap: 12px;
+      flex: 1;
+      min-width: 0;
     }
 
     .plugin-name {
-      margin-bottom: 0;
+      margin-bottom: 4px;
       font-size: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .security-badges {
+      margin-left: 4px;
     }
 
     .plugin-meta {
-      margin-top: 4px;
-      gap: 8px;
+      margin-top: 0;
+      gap: 12px;
+      font-size: 12px;
+
+      .plugin-version {
+        padding: 2px 6px;
+        font-size: 11px;
+      }
     }
 
-    .plugin-description,
-    .plugin-categories,
-    .plugin-tags,
-    .plugin-subscription,
+    .plugin-description {
+      display: none;
+    }
+
+    .plugin-categories {
+      display: none;
+    }
+
+    .plugin-tags {
+      display: none;
+    }
+
+    .plugin-subscription {
+      display: none;
+    }
+
     .plugin-metrics {
       display: none;
     }
@@ -78,27 +100,103 @@
     .plugin-status-section {
       flex-direction: row;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .status-badge,
+    .type-badge,
+    .free-badge {
+      font-size: 10px;
+      padding: 3px 6px;
     }
 
     .plugin-actions {
       border-top: none;
       padding-top: 0;
-      flex-shrink: 0;
-      width: 100%;
+      margin-top: 0;
+      gap: 12px;
 
       .action-buttons {
-        gap: 4px;
-      }
-    }
+        gap: 6px;
 
-    .installation-control {
-      flex-shrink: 0;
+        .action-btn {
+          min-width: 32px;
+          height: 32px;
+          border-radius: 16px;
+
+          nb-icon {
+            font-size: 14px;
+          }
+        }
+      }
+
+      .installation-control {
+        flex-shrink: 0;
+
+        .installation-wrapper {
+          flex-direction: row;
+          gap: 8px;
+        }
+
+        .free-plugin,
+        .subscription-required {
+          padding: 4px 8px;
+          font-size: 11px;
+
+          .free-icon,
+          .subscription-icon {
+            font-size: 12px;
+          }
+
+          .free-text,
+          .subscription-text {
+            display: none;
+          }
+        }
+
+        .toggle-wrapper {
+          flex-direction: row;
+          gap: 6px;
+
+          .toggle-label {
+            font-size: 12px;
+          }
+        }
+      }
     }
 
     &:hover {
       transform: translateY(0);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  // Grid view - enhanced layout
+  &.grid-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 400px;
+
+    .plugin-header {
+      flex-shrink: 0;
+    }
+
+    .plugin-description {
+      flex-shrink: 0;
+    }
+
+    .plugin-categories,
+    .plugin-tags,
+    .plugin-subscription,
+    .plugin-metrics {
+      flex-shrink: 0;
+    }
+
+    .plugin-actions {
+      margin-top: auto;
+      flex-shrink: 0;
     }
   }
 }
@@ -192,11 +290,26 @@
   gap: 6px;
 }
 
-.status-badge, .type-badge {
+.status-badge, .type-badge, .free-badge {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 4px 8px;
+  white-space: nowrap;
+}
+
+.free-badge {
+  background: var(--success-color) !important;
+  color: white !important;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &::before {
+    content: '✓';
+    font-size: 12px;
+  }
 }
 
 /* Plugin Description */
@@ -418,7 +531,7 @@
 .installation-control {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 
   .progress-indicator {
     display: flex;
@@ -426,81 +539,239 @@
     gap: 8px;
     color: var(--primary-color);
     font-size: 13px;
+    font-weight: 500;
 
     nb-icon {
       font-size: 16px;
+      animation: spin 1s linear infinite;
+    }
+
+    .progress-text {
+      white-space: nowrap;
     }
   }
 
-  .toggle-label {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-basic-color);
+  .installation-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .free-plugin,
+    .subscription-required {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+
+      .free-icon,
+      .subscription-icon {
+        font-size: 14px;
+      }
+    }
+
+    .free-plugin {
+      background: rgba(0, 214, 143, 0.1);
+      color: var(--success-color);
+      border: 1px solid rgba(0, 214, 143, 0.3);
+
+      .free-icon {
+        color: var(--success-color);
+      }
+    }
+
+    .subscription-required {
+      background: rgba(255, 170, 0, 0.1);
+      color: var(--warning-color);
+      border: 1px solid rgba(255, 170, 0, 0.3);
+
+      .subscription-icon {
+        color: var(--warning-color);
+      }
+    }
+
+    .toggle-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .toggle-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-basic-color);
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
 /* Responsive Design */
+@media (max-width: 992px) {
+  .plugin-card.grid-view {
+    .plugin-actions {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    .action-buttons {
+      justify-content: flex-start;
+    }
+
+    .installation-control {
+      justify-content: flex-start;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .plugin-card {
     padding: 16px;
-  }
 
-  .plugin-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
+    &.grid-view {
+      .plugin-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
 
-  .plugin-status-section {
-    align-items: flex-start;
-    flex-direction: row;
-    gap: 8px;
-  }
+      .plugin-status-section {
+        align-self: stretch;
+        flex-direction: row;
+        gap: 6px;
+      }
 
-  .plugin-meta {
-    font-size: 12px;
-    gap: 8px;
-  }
+      .plugin-meta {
+        font-size: 12px;
+        gap: 8px;
+      }
 
-  .plugin-actions {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
+      .plugin-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
 
-  .action-buttons {
-    justify-content: center;
-  }
+      .action-buttons {
+        justify-content: center;
+      }
 
-  .installation-control {
-    justify-content: center;
-  }
+      .installation-control {
+        .installation-wrapper {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 8px;
 
-  .plugin-metrics {
-    gap: 12px;
+          .free-plugin,
+          .subscription-required {
+            justify-content: center;
+          }
+
+          .toggle-wrapper {
+            justify-content: center;
+          }
+        }
+      }
+
+      .plugin-metrics {
+        gap: 12px;
+      }
+    }
+
+    &.list-view {
+      .plugin-header {
+        flex-wrap: wrap;
+      }
+
+      .plugin-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-color);
+        margin-top: 12px;
+
+        .action-buttons {
+          justify-content: center;
+        }
+
+        .installation-control {
+          .installation-wrapper {
+            justify-content: center;
+          }
+        }
+      }
+    }
   }
 }
 
 @media (max-width: 480px) {
-  .plugin-name {
-    font-size: 16px;
-  }
+  .plugin-card {
+    padding: 12px;
 
-  .plugin-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
+    &.grid-view {
+      .plugin-name {
+        font-size: 16px;
+      }
 
-  .subscription-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
+      .plugin-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
 
-  .plugin-metrics {
-    flex-direction: column;
-    gap: 8px;
+      .subscription-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .plugin-metrics {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .action-buttons {
+        .action-btn {
+          flex: 1;
+          min-width: auto;
+        }
+      }
+    }
+
+    &.list-view {
+      padding: 10px;
+
+      .plugin-status-section {
+        flex-wrap: wrap;
+      }
+
+      .plugin-meta {
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .action-buttons {
+        flex-wrap: wrap;
+
+        .action-btn {
+          flex: 1;
+          min-width: 40px;
+        }
+      }
+    }
   }
 }
 
