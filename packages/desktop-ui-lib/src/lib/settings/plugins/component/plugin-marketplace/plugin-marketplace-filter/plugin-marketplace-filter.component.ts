@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { IPlugin, ITag, PluginStatus, PluginType } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable, debounceTime, distinctUntilChanged, map, startWith } from 'rxjs';
+import { PluginCategoryActions, PluginCategoryQuery } from '../+state';
 import { IPluginFilter } from '../+state/stores/plugin-market.store';
 
 interface IPriceRange {
@@ -74,6 +75,8 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 
 	// Filter options
 	public categoryOptions: ICategoryOption[] = [];
+	public hasCategoriesLoaded: boolean = false;
+	public isCategoriesLoading: boolean = false;
 	public statusOptions = Object.values(PluginStatus);
 	public typeOptions = Object.values(PluginType);
 	public sortOptions = Object.values(PluginSortOption);
@@ -92,7 +95,7 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 	public PluginType = PluginType;
 	public PluginPriceCategory = PluginPriceCategory;
 
-	constructor(private readonly formBuilder: FormBuilder) {
+	constructor(private readonly formBuilder: FormBuilder, private readonly pluginCategoryQuery: PluginCategoryQuery) {
 		this.initializeForm();
 		this.setupFilterSections();
 		this.setupComputedObservables();
@@ -101,7 +104,7 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 	ngOnInit(): void {
 		this.setupFormSubscriptions();
 		this.loadFilterOptions();
-		this.updateCategoryCounts();
+		this.loadCategoriesFromBackend();
 
 		// Collapse filters by default on mobile for better initial fit
 		if (this.isMobile) {
@@ -126,7 +129,10 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 		// Update filter options when plugins change
 		if (changes['plugins'] && !changes['plugins'].firstChange) {
 			this.loadFilterOptions();
-			this.updateCategoryCounts();
+			// Update category counts with new plugin data
+			if (this.categoryOptions.length > 0) {
+				this.updateCategoryCounts();
+			}
 		}
 	}
 
@@ -173,7 +179,7 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 				label: 'Categories',
 				icon: 'grid-outline',
 				expanded: true,
-				visible: true
+				visible: false // Initially hidden until categories are loaded
 			},
 			{
 				id: 'properties',
@@ -255,9 +261,6 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 	}
 
 	private loadFilterOptions(): void {
-		// Extract unique categories from plugins
-		this.categoryOptions = this.extractCategories();
-
 		// Extract unique licenses
 		this.licenseOptions = [...new Set(this.plugins.map((p) => p.license).filter(Boolean))].sort();
 
@@ -265,81 +268,60 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 		this.authorOptions = [...new Set(this.plugins.map((p) => p.author).filter(Boolean))].sort();
 	}
 
-	private extractCategories(): ICategoryOption[] {
-		const categories = new Map<string, ICategoryOption>();
+	/**
+	 * Load plugin categories from the backend using state management
+	 */
+	private loadCategoriesFromBackend(): void {
+		// Set loading state
+		this.isCategoriesLoading = true;
 
-		// Pre-defined categories with icons
-		const predefinedCategories: ICategoryOption[] = [
-			{ value: 'productivity', label: 'Productivity', icon: 'briefcase-outline' },
-			{ value: 'development', label: 'Development', icon: 'code-outline' },
-			{ value: 'design', label: 'Design', icon: 'brush-outline' },
-			{ value: 'communication', label: 'Communication', icon: 'people-outline' },
-			{ value: 'analytics', label: 'Analytics', icon: 'pie-chart-outline' },
-			{ value: 'integration', label: 'Integration', icon: 'link-outline' },
-			{ value: 'automation', label: 'Automation', icon: 'flash-outline' },
-			{ value: 'security', label: 'Security', icon: 'shield-outline' },
-			{ value: 'utilities', label: 'Utilities', icon: 'options-outline' },
-			{ value: 'other', label: 'Other', icon: 'cube-outline' }
-		];
+		// Dispatch action to load categories on first launch
+		PluginCategoryActions.loadAll({ isActive: true });
 
-		predefinedCategories.forEach((cat) => {
-			categories.set(cat.value, { ...cat, count: 0 });
-		});
-
-		// Count plugins by category (this would be based on plugin metadata or tags)
-		this.plugins.forEach((plugin) => {
-			const category = this.inferPluginCategory(plugin);
-			const existing = categories.get(category);
-			if (existing) {
-				existing.count = (existing.count || 0) + 1;
+		// Subscribe to loading state
+		this.pluginCategoryQuery.isLoading$.pipe(untilDestroyed(this)).subscribe({
+			next: (isLoading) => {
+				this.isCategoriesLoading = isLoading;
 			}
 		});
 
-		return Array.from(categories.values()).filter((cat) => cat.count && cat.count > 0);
+		// Subscribe to categories from store
+		this.pluginCategoryQuery.activeCategories$.pipe(untilDestroyed(this)).subscribe({
+			next: (categories) => {
+				this.hasCategoriesLoaded = true;
+				this.isCategoriesLoading = false;
+				this.categoryOptions = categories.map((category) => ({
+					value: category.id,
+					label: category.name,
+					icon: category.icon || 'cube-outline',
+					count: 0 // Will be updated by updateCategoryCounts
+				}));
+				this.updateCategoryCounts();
+
+				// Update category section visibility based on whether categories exist
+				this.updateCategorySectionVisibility();
+			},
+			error: (error) => {
+				console.error('Failed to load plugin categories:', error);
+				this.hasCategoriesLoaded = true;
+				this.isCategoriesLoading = false;
+				// Fallback to empty array if backend fails
+				this.categoryOptions = [];
+				// Hide category section if loading failed
+				this.updateCategorySectionVisibility();
+			}
+		});
 	}
 
-	private inferPluginCategory(plugin: IPlugin): string {
-		const name = plugin.name?.toLowerCase() || '';
-		const description = plugin.description?.toLowerCase() || '';
-		const content = `${name} ${description}`;
-
-		// Simple categorization based on keywords
-		if (content.includes('develop') || content.includes('code') || content.includes('debug')) {
-			return 'development';
-		}
-		if (content.includes('design') || content.includes('ui') || content.includes('theme')) {
-			return 'design';
-		}
-		if (content.includes('chat') || content.includes('message') || content.includes('communication')) {
-			return 'communication';
-		}
-		if (content.includes('analytics') || content.includes('report') || content.includes('chart')) {
-			return 'analytics';
-		}
-		if (content.includes('integrate') || content.includes('connect') || content.includes('api')) {
-			return 'integration';
-		}
-		if (content.includes('automate') || content.includes('workflow') || content.includes('trigger')) {
-			return 'automation';
-		}
-		if (content.includes('security') || content.includes('auth') || content.includes('encrypt')) {
-			return 'security';
-		}
-		if (content.includes('productivity') || content.includes('task') || content.includes('manage')) {
-			return 'productivity';
-		}
-		if (content.includes('utility') || content.includes('tool') || content.includes('helper')) {
-			return 'utilities';
-		}
-
-		return 'other';
-	}
+	/**
+	 * @deprecated Removed - Categories are now loaded from backend via loadCategoriesFromBackend()
+	 * This method was used to infer categories from plugin names and descriptions.
+	 * Categories are now managed in the database and fetched via the PluginCategoryService.
+	 */
 
 	private updateCategoryCounts(): void {
 		this.categoryOptions.forEach((category) => {
-			category.count = this.plugins.filter(
-				(plugin) => this.inferPluginCategory(plugin) === category.value
-			).length;
+			category.count = this.plugins.filter((plugin) => plugin.category?.id === category.value).length;
 		});
 	}
 
@@ -363,8 +345,9 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 
 			// Category filter
 			if (filters.categories?.length) {
-				const pluginCategory = this.inferPluginCategory(plugin);
-				if (!filters.categories.includes(pluginCategory)) return false;
+				if (!plugin.category?.id || !filters.categories.includes(plugin.category.id)) {
+					return false;
+				}
 			}
 
 			// Status filter
@@ -472,6 +455,17 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 		this.filterSections.forEach((section) => {
 			if (section.id === 'advanced') {
 				section.visible = this.showAdvanced;
+			}
+		});
+	}
+
+	/**
+	 * Update category section visibility based on whether categories are available
+	 */
+	private updateCategorySectionVisibility(): void {
+		this.filterSections.forEach((section) => {
+			if (section.id === 'categories') {
+				section.visible = this.hasCategoriesLoaded && this.categoryOptions.length > 0;
 			}
 		});
 	}

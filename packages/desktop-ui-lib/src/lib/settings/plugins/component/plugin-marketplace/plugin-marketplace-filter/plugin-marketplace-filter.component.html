@@ -163,7 +163,20 @@
 					</button>
 
 					<div class="section-content" *ngIf="filterSections[1]?.expanded" [attr.id]="'section-categories-content'">
-						<div class="categories-grid">
+						<!-- Loading state -->
+						<div class="categories-loading" *ngIf="isCategoriesLoading">
+							<nb-spinner size="small"></nb-spinner>
+							<span class="loading-text">Loading categories...</span>
+						</div>
+
+						<!-- Empty state -->
+						<div class="categories-empty" *ngIf="!isCategoriesLoading && hasCategoriesLoaded && categoryOptions.length === 0">
+							<nb-icon icon="cube-outline" class="empty-icon"></nb-icon>
+							<p class="empty-text">No categories available</p>
+						</div>
+
+						<!-- Categories grid -->
+						<div class="categories-grid" *ngIf="!isCategoriesLoading && categoryOptions.length > 0">
 							@for(category of categoryOptions; track category.value) {
 								<button
 									type="button"
