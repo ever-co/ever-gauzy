@@ -1,12 +1,5 @@
 import { IUser } from '@gauzy/contracts';
-import {
-	MultiORMColumn,
-	MultiORMEntity,
-	MultiORMManyToOne,
-	MultiORMOneToMany,
-	TenantOrganizationBaseEntity,
-	User
-} from '@gauzy/core';
+import { BaseEntity, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany, User } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsArray,
@@ -35,7 +28,7 @@ import { Plugin } from './plugin.entity';
 @Index(['pluginId', 'type'], { unique: false })
 @Index(['isActive', 'type'], { unique: false })
 @Index(['price', 'billingPeriod'], { unique: false })
-export class PluginSubscriptionPlan extends TenantOrganizationBaseEntity implements IPluginSubscriptionPlan {
+export class PluginSubscriptionPlan extends BaseEntity implements IPluginSubscriptionPlan {
 	@ApiProperty({ type: String, description: 'Plan name' })
 	@IsNotEmpty({ message: 'Plan name is required' })
 	@IsString({ message: 'Plan name must be a string' })

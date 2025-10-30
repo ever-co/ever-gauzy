@@ -1,5 +1,5 @@
 import { ID } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '@gauzy/core';
+import { CrudService } from '@gauzy/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, FindOneOptions } from 'typeorm';
 import {
@@ -13,7 +13,7 @@ import { PluginSubscriptionPlan } from '../entities/plugin-subscription-plan.ent
 import { MikroOrmPluginSubscriptionPlanRepository, TypeOrmPluginSubscriptionPlanRepository } from '../repositories';
 
 @Injectable()
-export class PluginSubscriptionPlanService extends TenantAwareCrudService<PluginSubscriptionPlan> {
+export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptionPlan> {
 	constructor(
 		public readonly typeOrmPluginSubscriptionPlanRepository: TypeOrmPluginSubscriptionPlanRepository,
 		public readonly mikroOrmPluginSubscriptionPlanRepository: MikroOrmPluginSubscriptionPlanRepository
@@ -40,9 +40,7 @@ export class PluginSubscriptionPlanService extends TenantAwareCrudService<Plugin
 			const existingPlan = await this.typeOrmRepository.findOne({
 				where: {
 					pluginId: createInput.pluginId,
-					name: createInput.name,
-					tenantId,
-					...(organizationId && { organizationId })
+					name: createInput.name
 				}
 			});
 
@@ -52,9 +50,7 @@ export class PluginSubscriptionPlanService extends TenantAwareCrudService<Plugin
 
 			// Create the plan
 			const plan = this.typeOrmRepository.create({
-				...createInput,
-				tenantId,
-				organizationId
+				...createInput
 			});
 
 			return await this.typeOrmRepository.save(plan);
@@ -78,9 +74,7 @@ export class PluginSubscriptionPlanService extends TenantAwareCrudService<Plugin
 				const duplicatePlan = await this.typeOrmRepository.findOne({
 					where: {
 						pluginId: existingPlan.pluginId,
-						name: updateInput.name,
-						tenantId: existingPlan.tenantId,
-						organizationId: existingPlan.organizationId
+						name: updateInput.name
 					}
 				});
 
@@ -222,9 +216,7 @@ export class PluginSubscriptionPlanService extends TenantAwareCrudService<Plugin
 			const existingPlan = await this.typeOrmRepository.findOne({
 				where: {
 					pluginId: sourcePlan.pluginId,
-					name: newName,
-					tenantId: tenantId || sourcePlan.tenantId,
-					organizationId: organizationId || sourcePlan.organizationId
+					name: newName
 				}
 			});
 
@@ -239,13 +231,11 @@ export class PluginSubscriptionPlanService extends TenantAwareCrudService<Plugin
 				name: newName,
 				description: newDescription || sourcePlan.description,
 				price: newPrice !== undefined ? newPrice : sourcePlan.price,
-				tenantId: tenantId || sourcePlan.tenantId,
-				organizationId: organizationId || sourcePlan.organizationId,
 				createdAt: undefined,
 				updatedAt: undefined
 			});
 
-			return await this.typeOrmRepository.save(newPlan);
+			return this.typeOrmRepository.save(newPlan);
 		} catch (error) {
 			if (error instanceof NotFoundException || error instanceof BadRequestException) {
 				throw error;
