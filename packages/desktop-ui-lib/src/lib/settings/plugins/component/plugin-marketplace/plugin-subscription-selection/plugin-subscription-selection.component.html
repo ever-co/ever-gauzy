@@ -1,5 +1,5 @@
-@let plans = availablePlans$ | async;
-@let selectedPlan = selectedPlan$ | async;
+@let planViewModels = planViewModels$ | async;
+@let selectedPlanViewModel = selectedPlanViewModel$ | async;
 @let loading = loading$ | async;
 @let error = error$ | async;
 @let creating = creating$ | async;
@@ -46,110 +46,14 @@
 						Choose Your Plan
 					</h5>
 
-					@if (plans && plans.length > 0) {
-						<div class="plans-grid" [class.single-plan]="plans.length === 1">
-							@for (plan of plans; track plan.id) {
-								<div
-									class="plan-card"
-									[class.selected]="selectedPlan?.id === plan.id"
-									[class.popular]="plan.isPopular"
-									[class.recommended]="plan.isRecommended"
-									(click)="selectPlan(plan)">
-
-									<!-- Plan Header -->
-									<div class="plan-header">
-										<div class="plan-type">
-											<nb-icon [icon]="getPlanTypeIcon(plan.type)"></nb-icon>
-											<span class="plan-name">{{ plan.name }}</span>
-										</div>
-										<nb-badge
-											[status]="getPlanTypeColor(plan.type)"
-											[text]="plan.type | titlecase"
-											class="plan-badge">
-										</nb-badge>
-
-										@if (plan.isPopular) {
-											<nb-badge status="warning" text="Popular" class="popular-badge"></nb-badge>
-										}
-										@if (plan.isRecommended) {
-											<nb-badge status="info" text="Recommended" class="recommended-badge"></nb-badge>
-										}
-									</div>
-
-									<!-- Plan Pricing -->
-									<div class="plan-pricing">
-										@if (plan.type === PluginSubscriptionType.FREE) {
-											<div class="price-display">
-												<span class="price-amount">Free</span>
-											</div>
-										} @else {
-											<div class="price-display">
-												<span class="price-amount">{{ formatPrice(plan.price, plan.currency) }}</span>
-												<span class="price-period">/ {{ formatBillingPeriod(plan.billingPeriod) }}</span>
-											</div>
-											@if (plan.setupFee && plan.setupFee > 0) {
-												<div class="setup-fee">
-													Setup fee: {{ formatPrice(plan.setupFee, plan.currency) }}
-												</div>
-											}
-											@if (plan.discountPercentage && plan.discountPercentage > 0) {
-												<div class="discount">
-													<nb-badge status="success" [text]="plan.discountPercentage + '% OFF'"></nb-badge>
-												</div>
-											}
-										}
-
-										@if (plan.trialDays && plan.trialDays > 0) {
-											<div class="trial-info">
-												<nb-icon icon="clock-outline"></nb-icon>
-												{{ plan.trialDays }} days free trial
-											</div>
-										}
-									</div>
-
-									<!-- Plan Description -->
-									<div class="plan-description">
-										<p>{{ plan.description }}</p>
-									</div>
-
-									<!-- Plan Features -->
-									<div class="plan-features">
-										<h6 class="features-title">Features included:</h6>
-										<ul class="features-list">
-											@for (feature of plan.features; track feature) {
-												<li class="feature-item">
-													<nb-icon icon="checkmark-outline" status="success"></nb-icon>
-													<span>{{ feature }}</span>
-												</li>
-											}
-										</ul>
-									</div>
-
-									<!-- Plan Limitations -->
-									@if (plan.limitations && Object.keys(plan.limitations).length > 0) {
-										<div class="plan-limitations">
-											<h6 class="limitations-title">Limitations:</h6>
-											<ul class="limitations-list">
-												@for (limitation of Object.entries(plan.limitations); track limitation[0]) {
-													<li class="limitation-item">
-														<nb-icon icon="info-outline" status="warning"></nb-icon>
-														<span>{{ limitation[0] }}: {{ limitation[1] }}</span>
-													</li>
-												}
-											</ul>
-										</div>
-									}
-
-									<!-- Selection Radio -->
-									<div class="plan-selection">
-										<nb-radio
-											[value]="plan.id"
-											formControlName="planId"
-											[checked]="selectedPlan?.id === plan.id">
-											Select this plan
-										</nb-radio>
-									</div>
-								</div>
+					@if (planViewModels && planViewModels.length > 0) {
+						<div class="plans-grid" [class.single-plan]="planViewModels.length === 1">
+							@for (planViewModel of planViewModels; track planViewModel.id) {
+								<lib-plan-card
+									[plan]="planViewModel"
+									[isSelected]="selectedPlanViewModel?.id === planViewModel.id"
+									(planSelected)="onPlanSelected($event)">
+								</lib-plan-card>
 							}
 						</div>
 					} @else {
@@ -161,7 +65,7 @@
 				</div>
 
 				<!-- Billing Options (for paid plans) -->
-				@if (selectedPlan && selectedPlan.type !== PluginSubscriptionType.FREE) {
+				@if (selectedPlanViewModel && !selectedPlanViewModel.isFree) {
 					<div class="billing-section">
 						<h5 class="section-title">
 							<nb-icon icon="calendar-outline"></nb-icon>
@@ -207,67 +111,10 @@
 				}
 
 				<!-- Subscription Preview -->
-				@if (preview && selectedPlan) {
-					<div class="preview-section">
-						<h5 class="section-title">
-							<nb-icon icon="file-text-outline"></nb-icon>
-							Order Summary
-						</h5>
-
-						<div class="preview-card">
-							<div class="preview-item">
-								<span class="item-label">Plan:</span>
-								<span class="item-value">{{ selectedPlan.name }}</span>
-							</div>
-
-							@if (selectedPlan.type !== PluginSubscriptionType.FREE) {
-								<div class="preview-item">
-									<span class="item-label">Base Amount:</span>
-									<span class="item-value">{{ formatPrice(preview.baseAmount, preview.currency) }}</span>
-								</div>
-
-								@if (preview.setupFee && preview.setupFee > 0) {
-									<div class="preview-item">
-										<span class="item-label">Setup Fee:</span>
-										<span class="item-value">{{ formatPrice(preview.setupFee, preview.currency) }}</span>
-									</div>
-								}
-
-								@if (preview.discount && preview.discount > 0) {
-									<div class="preview-item discount">
-										<span class="item-label">Discount:</span>
-										<span class="item-value">-{{ formatPrice(preview.discount, preview.currency) }}</span>
-									</div>
-								}
-
-								<div class="preview-item total">
-									<span class="item-label">Total:</span>
-									<span class="item-value">{{ formatPrice(preview.totalAmount, preview.currency) }}</span>
-								</div>
-
-								<div class="preview-item billing">
-									<span class="item-label">Billing:</span>
-									<span class="item-value">{{ formatBillingPeriod(preview.billingPeriod) }}</span>
-								</div>
-							} @else {
-								<div class="preview-item total">
-									<span class="item-label">Total:</span>
-									<span class="item-value">Free</span>
-								</div>
-							}
-
-							@if (preview.trialDays && preview.trialDays > 0) {
-								<div class="preview-item trial">
-									<span class="item-label">Trial Period:</span>
-									<span class="item-value">{{ preview.trialDays }} days</span>
-								</div>
-							}
-						</div>
-					</div>
-				}
+				<lib-subscription-preview [preview]="preview"></lib-subscription-preview>
 
 				<!-- Terms and Conditions -->
-				@if (selectedPlan && selectedPlan.type !== PluginSubscriptionType.FREE) {
+				@if (selectedPlanViewModel && !selectedPlanViewModel.isFree) {
 					<div class="terms-section">
 						<nb-checkbox formControlName="agreeToTerms">
 							I agree to the
@@ -308,9 +155,9 @@
 					nbButton
 					status="primary"
 					(click)="onSubscribeAndInstall()"
-					[disabled]="!subscriptionForm.valid || creating || !selectedPlan"
+					[disabled]="!subscriptionForm.valid || creating || !selectedPlanViewModel"
 					*gauzySpinnerButton="creating">
-					@if (selectedPlan?.type === PluginSubscriptionType.FREE) {
+					@if (selectedPlanViewModel?.isFree) {
 						Install Plugin
 					} @else {
 						Subscribe & Install

@@ -1,0 +1,73 @@
+@if (preview) {
+	<div class="preview-section">
+		<h5 class="section-title">
+			<nb-icon icon="file-text-outline"></nb-icon>
+			Order Summary
+		</h5>
+
+		<div class="preview-card">
+			<div class="preview-item">
+				<span class="item-label">Plan:</span>
+				<span class="item-value">{{ preview.planName }}</span>
+			</div>
+
+			@if (!preview.isFree) {
+				<div class="preview-item">
+					<span class="item-label">Base Amount:</span>
+					<span class="item-value">{{ preview.formattedBaseAmount }}</span>
+				</div>
+
+				@if (preview.setupFee > 0) {
+					<div class="preview-item">
+						<span class="item-label">Setup Fee:</span>
+						<span class="item-value">{{ preview.formattedSetupFee }}</span>
+					</div>
+				}
+
+				@if (preview.discount > 0) {
+					<div class="preview-item discount">
+						<span class="item-label">Discount:</span>
+						<span class="item-value">-{{ preview.formattedDiscount }}</span>
+					</div>
+				}
+
+				<div class="preview-item total">
+					<span class="item-label">Total:</span>
+					<span class="item-value">{{ preview.formattedTotalAmount }}</span>
+				</div>
+
+				<div class="preview-item billing">
+					<span class="item-label">Billing:</span>
+					<span class="item-value">{{ preview.formattedBillingPeriod }}</span>
+				</div>
+			} @else {
+				<div class="preview-item total">
+					<span class="item-label">Total:</span>
+					<span class="item-value">Free</span>
+				</div>
+			}
+
+			@if (preview.trialDays && preview.trialDays > 0) {
+				<div class="preview-item trial">
+					<span class="item-label">Trial Period:</span>
+					<span class="item-value">{{ preview.trialText }}</span>
+				</div>
+			}
+
+			<!-- Features Summary -->
+			@if (preview.features && preview.features.length > 0) {
+				<div class="preview-features">
+					<div class="features-header">
+						<nb-icon icon="checkmark-circle-outline" status="success"></nb-icon>
+						<span>Included Features</span>
+					</div>
+					<ul class="features-list">
+						@for (feature of preview.features; track feature) {
+							<li>{{ feature }}</li>
+						}
+					</ul>
+				</div>
+			}
+		</div>
+	</div>
+}

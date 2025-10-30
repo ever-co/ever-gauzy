@@ -4,7 +4,7 @@ import { IPlugin } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, Observable, combineLatest, map, startWith, tap } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest, filter, map, startWith, switchMap, tap } from 'rxjs';
 import { PluginSubscriptionActions } from '../+state/actions/plugin-subscription.action';
 import { PluginSubscriptionQuery } from '../+state/queries/plugin-subscription.query';
 import { Store } from '../../../../../services';
@@ -15,6 +15,8 @@ import {
 	PluginSubscriptionService,
 	PluginSubscriptionType
 } from '../../../services/plugin-subscription.service';
+import { IPlanViewModel, ISubscriptionPreviewViewModel } from './models/plan-view.model';
+import { PlanFormatterService } from './services/plan-formatter.service';
 
 export interface IPluginSubscriptionSelectionContext {
 	plugin: IPlugin;
@@ -27,6 +29,15 @@ export interface IPluginSubscriptionSelectionResult {
 	proceedWithInstallation: boolean;
 }
 
+/**
+ * Smart component for managing subscription plan selection
+ * Follows SOLID principles:
+ * - Single Responsibility: Coordinates subscription selection flow
+ * - Open/Closed: Extensible through child components
+ * - Liskov Substitution: Uses interfaces for dependencies
+ * - Interface Segregation: Focused interfaces for each concern
+ * - Dependency Inversion: Depends on abstractions (services, queries)
+ */
 @UntilDestroy()
 @Component({
 	selector: 'lib-plugin-subscription-selection',
@@ -40,7 +51,11 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	@Input() pluginId: string;
 
 	public subscriptionForm: FormGroup;
-	public selectedPlan$ = new BehaviorSubject<IPluginSubscriptionPlan | null>(null);
+	public selectedPlanViewModel$ = new BehaviorSubject<IPlanViewModel | null>(null);
+
+	// View models for presentation
+	public planViewModels$: Observable<IPlanViewModel[]>;
+	public subscriptionPreview$: Observable<ISubscriptionPreviewViewModel | null>;
 
 	// State management observables
 	public availablePlans$: Observable<IPluginSubscriptionPlan[]>;
@@ -55,7 +70,6 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	// Computed observables
 	public hasFreePlan$: Observable<boolean>;
 	public hasPaidPlans$: Observable<boolean>;
-	public subscriptionPreview$!: Observable<any>;
 
 	constructor(
 		private readonly dialogRef: NbDialogRef<PluginSubscriptionSelectionComponent>,
@@ -63,7 +77,8 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 		private readonly formBuilder: FormBuilder,
 		private readonly store: Store,
 		private readonly pluginSubscriptionQuery: PluginSubscriptionQuery,
-		private readonly actions$: Actions
+		private readonly actions$: Actions,
+		private readonly planFormatter: PlanFormatterService
 	) {
 		this.initializeForm();
 		this.initializeObservables();
@@ -75,7 +90,7 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy(): void {
-		this.selectedPlan$.complete();
+		this.selectedPlanViewModel$.complete();
 	}
 
 	private initializeObservables(): void {
@@ -86,6 +101,11 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 		this.loading$ = this.pluginSubscriptionQuery.loading$;
 		this.creating$ = this.pluginSubscriptionQuery.creating$;
 		this.error$ = this.pluginSubscriptionQuery.error$;
+
+		// Transform plans to view models using formatter service
+		this.planViewModels$ = this.availablePlans$.pipe(
+			map((plans) => this.planFormatter.transformToViewModels(plans))
+		);
 
 		// Computed observables
 		this.hasFreePlan$ = this.availablePlans$.pipe(
@@ -106,21 +126,14 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			agreeToTerms: [false, Validators.requiredTrue]
 		});
 
-		// React to plan selection
+		// React to plan selection using view models
 		this.subscriptionForm
 			.get('planId')
 			?.valueChanges.pipe(
-				tap((planId) => {
-					this.availablePlans$
-						.pipe(
-							tap((plans) => {
-								const plan = plans.find((p) => p.id === planId);
-								this.selectedPlan$.next(plan || null);
-							}),
-							untilDestroyed(this)
-						)
-						.subscribe();
-				}),
+				switchMap((planId) =>
+					this.planViewModels$.pipe(map((viewModels) => viewModels.find((vm) => vm.id === planId) || null))
+				),
+				tap((viewModel) => this.selectedPlanViewModel$.next(viewModel)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -128,23 +141,17 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 
 	private initializeSubscriptionPreview(): void {
 		this.subscriptionPreview$ = combineLatest([
-			this.selectedPlan$,
+			this.selectedPlanViewModel$,
 			this.subscriptionForm.valueChanges.pipe(startWith(this.subscriptionForm.value))
 		]).pipe(
-			map(([plan, formValues]) => {
-				if (!plan) return null;
+			map(([planViewModel, formValues]) => {
+				if (!planViewModel) return null;
 
 				const promoCode = (formValues as any).promoCode;
-				return {
-					baseAmount: plan.price,
-					setupFee: plan.setupFee || 0,
-					discount: 0, // Will be calculated based on promo code
-					totalAmount: plan.price + (plan.setupFee || 0),
-					currency: plan.currency,
-					billingPeriod: plan.billingPeriod,
-					trialDays: plan.trialDays,
-					features: plan.features
-				};
+				// TODO: Calculate discount based on promo code validation
+				const promoDiscount = 0;
+
+				return this.planFormatter.createPreviewViewModel(planViewModel.originalPlan, promoDiscount);
 			})
 		);
 	}
@@ -159,11 +166,12 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 		// Dispatch action to load plans
 		this.actions$.dispatch(PluginSubscriptionActions.loadPluginPlans(targetPluginId));
 
-		// Watch for plans and auto-select free plan if available
-		this.availablePlans$
+		// Watch for plan view models and auto-select free plan if available
+		this.planViewModels$
 			.pipe(
-				tap((plans) => {
-					const freePlan = plans.find((plan) => plan.type === PluginSubscriptionType.FREE);
+				filter((viewModels) => viewModels.length > 0),
+				tap((viewModels) => {
+					const freePlan = viewModels.find((vm) => vm.isFree);
 					if (freePlan && !this.subscriptionForm.value.planId) {
 						this.subscriptionForm.patchValue({
 							planId: freePlan.id,
@@ -176,29 +184,25 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	public selectPlan(plan: IPluginSubscriptionPlan): void {
+	public onPlanSelected(planViewModel: IPlanViewModel): void {
 		this.subscriptionForm.patchValue({
-			planId: plan.id,
-			billingPeriod: plan.billingPeriod
+			planId: planViewModel.id,
+			billingPeriod: planViewModel.billingPeriod
 		});
 	}
 
 	public onBillingPeriodChange(period: PluginBillingPeriod): void {
-		const currentPlan = this.selectedPlan$.value;
-		if (!currentPlan) return;
+		const currentPlanViewModel = this.selectedPlanViewModel$.value;
+		if (!currentPlanViewModel) return;
 
 		// Find if there's a plan with the same type but different billing period
-		this.availablePlans$
+		this.planViewModels$
 			.pipe(
-				tap((plans) => {
-					const alternativePlan = plans.find(
-						(plan) => plan.type === currentPlan.type && plan.billingPeriod === period
-					);
-
-					if (alternativePlan) {
-						this.selectPlan(alternativePlan);
-					}
-				}),
+				map((viewModels) =>
+					viewModels.find((vm) => vm.type === currentPlanViewModel.type && vm.billingPeriod === period)
+				),
+				filter((viewModel): viewModel is IPlanViewModel => viewModel !== undefined),
+				tap((viewModel) => this.onPlanSelected(viewModel)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -230,16 +234,16 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			return;
 		}
 
-		const selectedPlan = this.selectedPlan$.value;
-		if (!selectedPlan) {
+		const selectedPlanViewModel = this.selectedPlanViewModel$.value;
+		if (!selectedPlanViewModel) {
 			console.log('Please select a subscription plan');
 			return;
 		}
 
 		const subscriptionInput: IPluginSubscriptionCreateInput = {
 			pluginId: this.pluginId || this.plugin?.id!,
-			planId: selectedPlan.id,
-			subscriptionType: selectedPlan.type,
+			planId: selectedPlanViewModel.id,
+			subscriptionType: selectedPlanViewModel.type,
 			billingPeriod: this.subscriptionForm.value.billingPeriod,
 			paymentMethodId: this.subscriptionForm.value.paymentMethodId,
 			promoCode: this.subscriptionForm.value.promoCode,
@@ -249,12 +253,12 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			}
 		};
 
-		if (selectedPlan.type === PluginSubscriptionType.FREE) {
+		if (selectedPlanViewModel.isFree) {
 			// For free plans, proceed directly to installation
-			this.proceedWithInstallation(selectedPlan, subscriptionInput);
+			this.proceedWithInstallation(selectedPlanViewModel.originalPlan, subscriptionInput);
 		} else {
 			// For paid plans, create subscription using state management
-			this.createSubscription(selectedPlan, subscriptionInput);
+			this.createSubscription(selectedPlanViewModel.originalPlan, subscriptionInput);
 		}
 	}
 
@@ -317,56 +321,14 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 		this.dialogRef.close(result);
 	}
 
-	// Helper methods for template
-	public getPlanTypeIcon(type: PluginSubscriptionType): string {
-		switch (type) {
-			case PluginSubscriptionType.FREE:
-				return 'gift-outline';
-			case PluginSubscriptionType.TRIAL:
-				return 'clock-outline';
-			case PluginSubscriptionType.BASIC:
-				return 'person-outline';
-			case PluginSubscriptionType.PREMIUM:
-				return 'star-outline';
-			case PluginSubscriptionType.ENTERPRISE:
-				return 'briefcase-outline';
-			default:
-				return 'info-outline';
-		}
-	}
-
-	public getPlanTypeColor(type: PluginSubscriptionType): string {
-		switch (type) {
-			case PluginSubscriptionType.FREE:
-				return 'success';
-			case PluginSubscriptionType.TRIAL:
-				return 'info';
-			case PluginSubscriptionType.BASIC:
-				return 'basic';
-			case PluginSubscriptionType.PREMIUM:
-				return 'warning';
-			case PluginSubscriptionType.ENTERPRISE:
-				return 'danger';
-			default:
-				return 'basic';
-		}
-	}
-
-	public formatPrice(amount: number, currency: string): string {
-		return new Intl.NumberFormat(undefined, {
-			style: 'currency',
-			currency: currency || 'USD'
-		}).format(amount);
-	}
-
-	public formatBillingPeriod(period: PluginBillingPeriod): string {
-		return this.subscriptionService.formatBillingPeriod(period);
-	}
-
+	// Computed properties for template
 	public get canProceedWithoutSubscription(): boolean {
 		// Allow skipping subscription if there are free plans or if it's optional
 		let hasFreePlans = false;
-		this.hasFreePlan$.subscribe((value) => (hasFreePlans = value)).unsubscribe();
+		this.hasFreePlan$
+			.pipe(tap((value) => (hasFreePlans = value)))
+			.subscribe()
+			.unsubscribe();
 		return hasFreePlans || this.plugin?.type === ('FREE' as any);
 	}
 }

@@ -1,0 +1,130 @@
+@import 'styles/themes';
+
+.preview-section {
+	.section-title {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 1rem;
+		font-weight: 600;
+		margin-bottom: 1rem;
+		color: var(--text-basic-color);
+
+		nb-icon {
+			font-size: 1.25rem;
+		}
+	}
+}
+
+.preview-card {
+	padding: 1.5rem;
+	background: var(--background-basic-color-2);
+	border: 1px solid var(--border-basic-color-3);
+	border-radius: 8px;
+
+	.preview-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.75rem 0;
+		border-bottom: 1px solid var(--border-basic-color-4);
+
+		&:last-child {
+			border-bottom: none;
+		}
+
+		.item-label {
+			font-size: 0.875rem;
+			color: var(--text-hint-color);
+			font-weight: 500;
+		}
+
+		.item-value {
+			font-size: 0.875rem;
+			color: var(--text-basic-color);
+			font-weight: 600;
+		}
+
+		&.discount {
+			.item-value {
+				color: var(--color-success-default);
+			}
+		}
+
+		&.total {
+			padding-top: 1rem;
+			margin-top: 0.5rem;
+			border-top: 2px solid var(--border-basic-color-3);
+
+			.item-label {
+				font-size: 1rem;
+				color: var(--text-basic-color);
+				font-weight: 700;
+			}
+
+			.item-value {
+				font-size: 1.25rem;
+				color: var(--color-primary-default);
+				font-weight: 700;
+			}
+		}
+
+		&.billing,
+		&.trial {
+			background: var(--background-basic-color-3);
+			padding: 0.75rem;
+			margin: 0.5rem -1.5rem 0;
+			border-radius: 6px;
+
+			.item-label {
+				color: var(--text-basic-color);
+			}
+		}
+
+		&.trial {
+			.item-value {
+				color: var(--color-info-default);
+			}
+		}
+	}
+
+	.preview-features {
+		margin-top: 1rem;
+		padding-top: 1rem;
+		border-top: 1px solid var(--border-basic-color-3);
+
+		.features-header {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			margin-bottom: 0.75rem;
+			font-size: 0.875rem;
+			font-weight: 600;
+			color: var(--text-basic-color);
+
+			nb-icon {
+				font-size: 1rem;
+			}
+		}
+
+		.features-list {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+
+			li {
+				padding: 0.25rem 0 0.25rem 1.5rem;
+				font-size: 0.75rem;
+				color: var(--text-hint-color);
+				position: relative;
+
+				&::before {
+					content: '•';
+					position: absolute;
+					left: 0.5rem;
+					color: var(--color-success-default);
+				}
+			}
+		}
+	}
+}
