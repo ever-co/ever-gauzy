@@ -36,6 +36,13 @@ export interface IPluginCategoryState {
 	count: number;
 	filters: IPluginCategoryFilter;
 	expandedCategories: Set<ID>;
+	pagination: {
+		page: number;
+		limit: number;
+		total: number;
+		hasNext: boolean;
+		hasPrevious: boolean;
+	};
 	ui: {
 		viewMode: 'flat' | 'tree';
 		sortBy: 'name' | 'order' | 'createdAt';
@@ -57,6 +64,13 @@ export function createInitialCategoryState(): IPluginCategoryState {
 		count: 0,
 		filters: {},
 		expandedCategories: new Set<ID>(),
+		pagination: {
+			page: 1,
+			limit: 20,
+			total: 0,
+			hasNext: false,
+			hasPrevious: false
+		},
 		ui: {
 			viewMode: 'flat',
 			sortBy: 'order',
@@ -96,9 +110,31 @@ export class PluginCategoryStore extends Store<IPluginCategoryState> {
 
 	// Categories
 	public setCategories(categories: IPluginCategory[], count?: number): void {
+		const total = count !== undefined ? count : categories.length;
 		this.update({
 			categories,
-			count: count !== undefined ? count : categories.length
+			count: total,
+			pagination: {
+				...this.getValue().pagination,
+				total,
+				hasNext: categories.length >= this.getValue().pagination.limit,
+				hasPrevious: this.getValue().pagination.page > 1
+			}
+		});
+	}
+
+	public appendCategories(categories: IPluginCategory[], count?: number): void {
+		const state = this.getValue();
+		const total = count !== undefined ? count : state.count + categories.length;
+		this.update({
+			categories: [...state.categories, ...categories],
+			count: total,
+			pagination: {
+				...state.pagination,
+				total,
+				hasNext: categories.length >= state.pagination.limit,
+				hasPrevious: state.pagination.page > 1
+			}
 		});
 	}
 
@@ -208,6 +244,49 @@ export class PluginCategoryStore extends Store<IPluginCategoryState> {
 		}));
 	}
 
+	// Pagination
+	public setPage(page: number): void {
+		this.update((state) => ({
+			pagination: {
+				...state.pagination,
+				page,
+				hasPrevious: page > 1
+			}
+		}));
+	}
+
+	public setLimit(limit: number): void {
+		this.update((state) => ({
+			pagination: {
+				...state.pagination,
+				limit
+			}
+		}));
+	}
+
+	public incrementPage(): void {
+		this.update((state) => ({
+			pagination: {
+				...state.pagination,
+				page: state.pagination.page + 1,
+				hasPrevious: true
+			}
+		}));
+	}
+
+	public resetPagination(): void {
+		this.update((state) => ({
+			pagination: {
+				...state.pagination,
+				page: 1,
+				total: 0,
+				hasNext: false,
+				hasPrevious: false
+			},
+			categories: []
+		}));
+	}
+
 	// Bulk operations
 	public bulkUpdateCategories(updates: Array<{ id: ID; updates: Partial<IPluginCategory> }>): void {
 		this.update((state) => {
@@ -226,8 +305,10 @@ export class PluginCategoryStore extends Store<IPluginCategoryState> {
 		this.update((state) => ({
 			categories: state.categories.filter((cat) => !idsSet.has(cat.id)),
 			count: state.count - ids.length,
-			selectedCategory: state.selectedCategory && idsSet.has(state.selectedCategory.id) ? null : state.selectedCategory,
-			selectedCategoryId: state.selectedCategoryId && idsSet.has(state.selectedCategoryId) ? null : state.selectedCategoryId
+			selectedCategory:
+				state.selectedCategory && idsSet.has(state.selectedCategory.id) ? null : state.selectedCategory,
+			selectedCategoryId:
+				state.selectedCategoryId && idsSet.has(state.selectedCategoryId) ? null : state.selectedCategoryId
 		}));
 	}
 

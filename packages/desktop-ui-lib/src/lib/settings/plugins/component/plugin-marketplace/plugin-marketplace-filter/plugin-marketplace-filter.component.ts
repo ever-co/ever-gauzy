@@ -1,10 +1,22 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { IPlugin, ITag, PluginStatus, PluginType } from '@gauzy/contracts';
+import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, Observable, debounceTime, distinctUntilChanged, map, startWith } from 'rxjs';
+import {
+	BehaviorSubject,
+	Observable,
+	combineLatest,
+	debounceTime,
+	distinctUntilChanged,
+	map,
+	startWith,
+	tap
+} from 'rxjs';
 import { PluginCategoryActions, PluginCategoryQuery } from '../+state';
 import { IPluginFilter } from '../+state/stores/plugin-market.store';
+import { FilterStrategyService } from '../services/filter-strategy.service';
+import { ReactiveFilterStateService, ToggleCategoryCommand } from '../services/reactive-filter-state.service';
 
 interface IPriceRange {
 	min: number;
@@ -95,7 +107,13 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 	public PluginType = PluginType;
 	public PluginPriceCategory = PluginPriceCategory;
 
-	constructor(private readonly formBuilder: FormBuilder, private readonly pluginCategoryQuery: PluginCategoryQuery) {
+	constructor(
+		private readonly formBuilder: FormBuilder,
+		private readonly pluginCategoryQuery: PluginCategoryQuery,
+		private readonly actions: Actions,
+		private readonly filterStrategyService: FilterStrategyService,
+		private readonly reactiveFilterService: ReactiveFilterStateService
+	) {
 		this.initializeForm();
 		this.setupFilterSections();
 		this.setupComputedObservables();
@@ -103,7 +121,10 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 
 	ngOnInit(): void {
 		this.setupFormSubscriptions();
+		this.setupReactiveStreams();
 		this.loadFilterOptions();
+
+		// Load categories on initialization
 		this.loadCategoriesFromBackend();
 
 		// Collapse filters by default on mobile for better initial fit
@@ -227,7 +248,7 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 	}
 
 	private setupFormSubscriptions(): void {
-		// Main filter changes
+		// Main filter changes with debounce
 		this.filterForm.valueChanges
 			.pipe(
 				debounceTime(300),
@@ -237,8 +258,42 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 			.subscribe((formValue) => {
 				const filters = this.mapFormValueToFilter(formValue);
 				this.updateActiveFiltersCount(filters);
+				this.reactiveFilterService.setFilter(filters);
 				this.filterChange.emit(filters);
 			});
+	}
+
+	/**
+	 * Setup reactive streams for filter state management
+	 * Observer Pattern: Subscribe to filter changes
+	 */
+	private setupReactiveStreams(): void {
+		// Subscribe to reactive filter service (with debounce)
+		this.reactiveFilterService.filter$.pipe(untilDestroyed(this)).subscribe((filter) => {
+			// Update form without triggering valueChanges
+			this.filterForm.patchValue(
+				{
+					search: filter.search || '',
+					categories: filter.categories || [],
+					status: filter.status || [],
+					types: filter.types || [],
+					tags: filter.tags || [],
+					sortBy: filter.sortBy,
+					sortDirection: filter.sortDirection,
+					author: filter.author || '',
+					license: filter.license || [],
+					minDownloads: filter.minDownloads || 0,
+					featured: filter.featured || false,
+					verified: filter.verified || false
+				},
+				{ emitEvent: false }
+			);
+		});
+
+		// Subscribe to active filter count
+		this.reactiveFilterService.activeFilterCount$.pipe(untilDestroyed(this)).subscribe((count) => {
+			this.activeFiltersCount$.next(count);
+		});
 	}
 
 	private mapFormValueToFilter(formValue: any): IPluginFilter {
@@ -270,13 +325,14 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 
 	/**
 	 * Load plugin categories from the backend using state management
+	 * Implements automatic loading on component initialization
 	 */
 	private loadCategoriesFromBackend(): void {
 		// Set loading state
 		this.isCategoriesLoading = true;
 
-		// Dispatch action to load categories on first launch
-		PluginCategoryActions.loadAll({ isActive: true });
+		// Dispatch action to load categories with filters
+		this.actions.dispatch(PluginCategoryActions.loadAll({ isActive: true }));
 
 		// Subscribe to loading state
 		this.pluginCategoryQuery.isLoading$.pipe(untilDestroyed(this)).subscribe({
@@ -285,32 +341,46 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 			}
 		});
 
-		// Subscribe to categories from store
-		this.pluginCategoryQuery.activeCategories$.pipe(untilDestroyed(this)).subscribe({
-			next: (categories) => {
-				this.hasCategoriesLoaded = true;
-				this.isCategoriesLoading = false;
-				this.categoryOptions = categories.map((category) => ({
-					value: category.id,
-					label: category.name,
-					icon: category.icon || 'cube-outline',
-					count: 0 // Will be updated by updateCategoryCounts
-				}));
-				this.updateCategoryCounts();
+		// Subscribe to categories from store with reactive updates
+		combineLatest([this.pluginCategoryQuery.activeCategories$, this.pluginCategoryQuery.hasNext$])
+			.pipe(
+				tap(([categories, hasNext]) => {
+					this.hasCategoriesLoaded = true;
+					this.isCategoriesLoading = false;
 
-				// Update category section visibility based on whether categories exist
-				this.updateCategorySectionVisibility();
-			},
-			error: (error) => {
-				console.error('Failed to load plugin categories:', error);
-				this.hasCategoriesLoaded = true;
-				this.isCategoriesLoading = false;
-				// Fallback to empty array if backend fails
-				this.categoryOptions = [];
-				// Hide category section if loading failed
-				this.updateCategorySectionVisibility();
-			}
-		});
+					this.categoryOptions = categories.map((category) => ({
+						value: category.id,
+						label: category.name,
+						icon: category.icon || 'cube-outline',
+						count: 0 // Will be updated by updateCategoryCounts
+					}));
+
+					this.updateCategoryCounts();
+					this.updateCategorySectionVisibility();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe({
+				error: (error) => {
+					console.error('Failed to load plugin categories:', error);
+					this.hasCategoriesLoaded = true;
+					this.isCategoriesLoading = false;
+					this.categoryOptions = [];
+					this.updateCategorySectionVisibility();
+				}
+			});
+	}
+
+	/**
+	 * Load more categories for infinite scroll
+	 * Command Pattern: Dispatch loadMore action
+	 */
+	public loadMoreCategories(): void {
+		if (!this.pluginCategoryQuery.hasNext || this.isCategoriesLoading) {
+			return;
+		}
+
+		this.actions.dispatch(PluginCategoryActions.loadMore());
 	}
 
 	/**
@@ -325,90 +395,35 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 		});
 	}
 
+	/**
+	 * Get filtered plugins count using Strategy Pattern
+	 */
 	private getFilteredPluginsCount(): number {
 		const filters = this.mapFormValueToFilter(this.filterForm.value);
-		return this.applyFiltersToPlugins(this.plugins, filters).length;
+		return this.filterStrategyService.countFiltered(this.plugins, filters);
 	}
 
+	/**
+	 * Apply filters to plugins using Strategy Pattern
+	 */
 	private applyFiltersToPlugins(plugins: IPlugin[], filters: IPluginFilter): IPlugin[] {
-		return plugins.filter((plugin) => {
-			// Search filter
-			if (filters.search) {
-				const searchLower = filters.search.toLowerCase();
-				const matchesSearch =
-					plugin.name?.toLowerCase().includes(searchLower) ||
-					plugin.description?.toLowerCase().includes(searchLower) ||
-					plugin.author?.toLowerCase().includes(searchLower);
-
-				if (!matchesSearch) return false;
-			}
-
-			// Category filter
-			if (filters.categories?.length) {
-				if (!plugin.category?.id || !filters.categories.includes(plugin.category.id)) {
-					return false;
-				}
-			}
-
-			// Status filter
-			if (filters.status?.length && !filters.status.includes(plugin.status)) {
-				return false;
-			}
-
-			// Type filter
-			if (filters.types?.length && !filters.types.includes(plugin.type)) {
-				return false;
-			}
-
-			// Author filter
-			if (filters.author && plugin.author?.toLowerCase() !== filters.author.toLowerCase()) {
-				return false;
-			}
-
-			// License filter
-			if (filters.license?.length && plugin.license && !filters.license.includes(plugin.license)) {
-				return false;
-			}
-
-			// Download count filter
-			if (filters.minDownloads && (plugin.downloadCount || 0) < filters.minDownloads) {
-				return false;
-			}
-
-			return true;
-		});
+		return this.filterStrategyService.applyFilters(plugins, filters);
 	}
 
+	/**
+	 * Update active filters count using Strategy Service
+	 */
 	private updateActiveFiltersCount(filters: IPluginFilter): void {
-		let count = 0;
-
-		if (filters.search) count++;
-		if (filters.categories?.length) count++;
-		if (filters.status?.length) count++;
-		if (filters.types?.length) count++;
-		if (filters.tags?.length) count++;
-		if (filters.priceRange) count++;
-		if (filters.author) count++;
-		if (filters.license?.length) count++;
-		if (filters.minDownloads) count++;
-		if (filters.dateRange) count++;
-		if (filters.featured) count++;
-		if (filters.verified) count++;
-
+		const count = this.filterStrategyService.countActiveFilters(filters);
 		this.activeFiltersCount$.next(count);
 	}
 
+	/**
+	 * Check if any filters are active using Strategy Service
+	 */
 	private hasAnyActiveFilters(): boolean {
 		const filters = this.mapFormValueToFilter(this.filterForm.value);
-		return Object.entries(filters).some(([key, value]) => {
-			if (key === 'sortBy' || key === 'sortDirection') return false;
-			return (
-				value !== undefined &&
-				value !== null &&
-				value !== '' &&
-				(Array.isArray(value) ? value.length > 0 : true)
-			);
-		});
+		return this.filterStrategyService.hasActiveFilters(filters);
 	}
 
 	private isValidPriceRange(priceRange: any): boolean {
@@ -482,7 +497,11 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 		this.isCollapsed$.next(!this.isCollapsed$.value);
 	}
 
+	/**
+	 * Clear all filters using Command Pattern
+	 */
 	public clearAllFilters(): void {
+		this.reactiveFilterService.resetFilter();
 		this.filterForm.reset({
 			search: '',
 			categories: [],
@@ -502,17 +521,12 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 		this.clearFilters.emit();
 	}
 
+	/**
+	 * Select/deselect category using Command Pattern
+	 */
 	public selectCategory(category: string): void {
-		const categories = this.filterForm.get('categories')?.value || [];
-		const index = categories.indexOf(category);
-
-		if (index > -1) {
-			categories.splice(index, 1);
-		} else {
-			categories.push(category);
-		}
-
-		this.filterForm.patchValue({ categories });
+		const command = new ToggleCategoryCommand(category);
+		this.reactiveFilterService.executeCommand(command);
 	}
 
 	public isCategorySelected(category: string): boolean {
@@ -657,5 +671,32 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 
 	public trackByCount(index: number, count: number): number {
 		return count;
+	}
+
+	/**
+	 * Handle category list scroll for infinite loading
+	 * @param event Scroll event from the category list container
+	 */
+	public onCategoryScroll(event: Event): void {
+		const element = event.target as HTMLElement;
+		const threshold = 100; // Load more when within 100px of bottom
+
+		if (element.scrollHeight - element.scrollTop - element.clientHeight < threshold) {
+			this.loadMoreCategories();
+		}
+	}
+
+	/**
+	 * Check if categories are being loaded
+	 */
+	public get isCategoriesLoadingMore(): boolean {
+		return this.isCategoriesLoading && this.categoryOptions.length > 0;
+	}
+
+	/**
+	 * Check if there are more categories to load
+	 */
+	public get hasMoreCategories(): boolean {
+		return this.pluginCategoryQuery.hasNext;
 	}
 }

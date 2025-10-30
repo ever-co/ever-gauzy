@@ -24,9 +24,19 @@ export class PluginCategoryEffects {
 	loadAll$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginCategoryActions.loadAll),
-			tap(() => this.pluginCategoryStore.setLoading(true)),
-			switchMap(({ params = {} }) =>
-				this.pluginCategoryService.getAll(params).pipe(
+			tap(() => {
+				this.pluginCategoryStore.setLoading(true);
+				this.pluginCategoryStore.resetPagination();
+			}),
+			switchMap(({ params = {} }) => {
+				const state = this.pluginCategoryStore.getValue();
+				const paginationParams = {
+					...(params as object),
+					page: state.pagination.page,
+					limit: state.pagination.limit
+				};
+
+				return this.pluginCategoryService.getAll(paginationParams).pipe(
 					tap((response) => {
 						const items = Array.isArray(response?.items)
 							? response.items
@@ -45,8 +55,55 @@ export class PluginCategoryEffects {
 						);
 						return EMPTY;
 					})
-				)
-			)
+				);
+			})
+		)
+	);
+
+	// Load more categories (infinite scroll)
+	loadMore$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginCategoryActions.loadMore),
+			tap(() => this.pluginCategoryStore.setLoading(true)),
+			switchMap(() => {
+				const state = this.pluginCategoryStore.getValue();
+
+				// Don't load if no more items
+				if (!state.pagination.hasNext) {
+					this.pluginCategoryStore.setLoading(false);
+					return EMPTY;
+				}
+
+				// Increment page
+				this.pluginCategoryStore.incrementPage();
+
+				const paginationParams = {
+					...state.filters,
+					page: state.pagination.page,
+					limit: state.pagination.limit
+				};
+
+				return this.pluginCategoryService.getAll(paginationParams).pipe(
+					tap((response) => {
+						const items = Array.isArray(response?.items)
+							? response.items
+							: Array.isArray(response)
+							? response
+							: [];
+						const total = typeof response?.total === 'number' ? response.total : state.count + items.length;
+
+						this.pluginCategoryStore.appendCategories(items, total);
+					}),
+					finalize(() => this.pluginCategoryStore.setLoading(false)),
+					catchError((error) => {
+						this.pluginCategoryStore.setError(error.message || 'Failed to load more categories');
+						this.toastrService.error(
+							this.translateService.instant('PLUGIN.CATEGORY.TOASTR.ERROR.LOAD_MORE') || error.message
+						);
+						return EMPTY;
+					})
+				);
+			})
 		)
 	);
 
@@ -456,6 +513,40 @@ export class PluginCategoryEffects {
 				ofType(PluginCategoryActions.setError),
 				tap(({ error }) => {
 					this.pluginCategoryStore.setError(error);
+				})
+			),
+		{ dispatch: false }
+	);
+
+	// Pagination effects
+	setPage$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginCategoryActions.setPage),
+				tap(({ page }) => {
+					this.pluginCategoryStore.setPage(page);
+				})
+			),
+		{ dispatch: false }
+	);
+
+	setLimit$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginCategoryActions.setLimit),
+				tap(({ limit }) => {
+					this.pluginCategoryStore.setLimit(limit);
+				})
+			),
+		{ dispatch: false }
+	);
+
+	resetPagination$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginCategoryActions.resetPagination),
+				tap(() => {
+					this.pluginCategoryStore.resetPagination();
 				})
 			),
 		{ dispatch: false }

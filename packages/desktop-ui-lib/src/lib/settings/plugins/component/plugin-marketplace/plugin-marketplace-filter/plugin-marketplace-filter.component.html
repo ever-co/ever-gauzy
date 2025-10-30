@@ -163,8 +163,8 @@
 					</button>
 
 					<div class="section-content" *ngIf="filterSections[1]?.expanded" [attr.id]="'section-categories-content'">
-						<!-- Loading state -->
-						<div class="categories-loading" *ngIf="isCategoriesLoading">
+						<!-- Loading state (initial load) -->
+						<div class="categories-loading" *ngIf="isCategoriesLoading && categoryOptions.length === 0">
 							<nb-spinner size="small"></nb-spinner>
 							<span class="loading-text">Loading categories...</span>
 						</div>
@@ -175,31 +175,48 @@
 							<p class="empty-text">No categories available</p>
 						</div>
 
-						<!-- Categories grid -->
-						<div class="categories-grid" *ngIf="!isCategoriesLoading && categoryOptions.length > 0">
-							@for(category of categoryOptions; track category.value) {
-								<button
-									type="button"
-									class="category-item"
-									[class.selected]="isCategorySelected(category.value)"
-									[attr.aria-pressed]="isCategorySelected(category.value)"
-									(click)="selectCategory(category.value)">
+						<!-- Categories grid with infinite scroll -->
+						<div
+							class="categories-grid-wrapper"
+							*ngIf="categoryOptions.length > 0"
+							(scroll)="onCategoryScroll($event)">
 
-									<div class="category-content">
-										<div class="category-icon">
-											<nb-icon [icon]="category.icon"></nb-icon>
-										</div>
-										<div class="category-info">
-											<span class="category-name">{{ category.label }}</span>
-											<span class="category-count">{{ category.count || 0 }}</span>
-										</div>
-									</div>
+							<div class="categories-grid">
+								@for(category of categoryOptions; track category.value) {
+									<button
+										type="button"
+										class="category-item"
+										[class.selected]="isCategorySelected(category.value)"
+										[attr.aria-pressed]="isCategorySelected(category.value)"
+										(click)="selectCategory(category.value)">
 
-									<div class="category-indicator" *ngIf="isCategorySelected(category.value)">
-										<nb-icon icon="checkmark-circle-outline"></nb-icon>
-									</div>
-								</button>
-							}
+										<div class="category-content">
+											<div class="category-icon">
+												<nb-icon [icon]="category.icon"></nb-icon>
+											</div>
+											<div class="category-info">
+												<span class="category-name">{{ category.label }}</span>
+												<span class="category-count">{{ category.count || 0 }}</span>
+											</div>
+										</div>
+
+										<div class="category-indicator" *ngIf="isCategorySelected(category.value)">
+											<nb-icon icon="checkmark-circle-outline"></nb-icon>
+										</div>
+									</button>
+								}
+							</div>
+
+							<!-- Loading more indicator -->
+							<div class="categories-loading-more" *ngIf="isCategoriesLoadingMore">
+								<nb-spinner size="tiny"></nb-spinner>
+								<span class="loading-text">Loading more...</span>
+							</div>
+
+							<!-- End of list indicator -->
+							<div class="categories-end" *ngIf="!hasMoreCategories && categoryOptions.length > 0">
+								<span class="end-text">No more categories</span>
+							</div>
 						</div>
 					</div>
 				</div>

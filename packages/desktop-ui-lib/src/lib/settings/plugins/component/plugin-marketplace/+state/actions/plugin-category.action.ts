@@ -18,6 +18,7 @@ export interface IPluginCategoryUpdateInput extends Partial<IPluginCategoryCreat
 export class PluginCategoryActions {
 	// Core CRUD actions
 	public static loadAll = createAction('[Plugin Category] Load All', <T>(params?: T) => ({ params }));
+	public static loadMore = createAction('[Plugin Category] Load More');
 	public static loadTree = createAction('[Plugin Category] Load Tree', <T>(params?: T) => ({ params }));
 	public static loadOne = createAction('[Plugin Category] Load One', <T>(id: ID, params?: T) => ({ id, params }));
 	public static create = createAction('[Plugin Category] Create', (category: IPluginCategoryCreateInput) => ({
@@ -82,6 +83,11 @@ export class PluginCategoryActions {
 	public static collapseCategory = createAction('[Plugin Category] Collapse Category', (id: ID) => ({ id }));
 	public static expandAll = createAction('[Plugin Category] Expand All');
 	public static collapseAll = createAction('[Plugin Category] Collapse All');
+
+	// Pagination actions
+	public static setPage = createAction('[Plugin Category] Set Page', (page: number) => ({ page }));
+	public static setLimit = createAction('[Plugin Category] Set Limit', (limit: number) => ({ limit }));
+	public static resetPagination = createAction('[Plugin Category] Reset Pagination');
 
 	// State management actions
 	public static reset = createAction('[Plugin Category] Reset');

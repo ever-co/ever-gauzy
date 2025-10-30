@@ -30,6 +30,14 @@ export class PluginCategoryQuery extends Query<IPluginCategoryState> {
 	public readonly isDeleting$: Observable<boolean> = this.select((state) => state.deleting);
 	public readonly error$: Observable<string | null> = this.select((state) => state.error);
 
+	// Pagination selectors
+	public readonly pagination$ = this.select((state) => state.pagination);
+	public readonly hasNext$: Observable<boolean> = this.select((state) => state.pagination.hasNext);
+	public readonly hasPrevious$: Observable<boolean> = this.select((state) => state.pagination.hasPrevious);
+	public readonly currentPage$: Observable<number> = this.select((state) => state.pagination.page);
+	public readonly pageLimit$: Observable<number> = this.select((state) => state.pagination.limit);
+	public readonly totalCategories$: Observable<number> = this.select((state) => state.pagination.total);
+
 	// UI selectors
 	public readonly viewMode$: Observable<'flat' | 'tree'> = this.select((state) => state.ui.viewMode);
 	public readonly sortBy$: Observable<'name' | 'order' | 'createdAt'> = this.select((state) => state.ui.sortBy);
@@ -98,6 +106,18 @@ export class PluginCategoryQuery extends Query<IPluginCategoryState> {
 
 	public get expandedCategories(): Set<ID> {
 		return this.getValue().expandedCategories;
+	}
+
+	public get pagination() {
+		return this.getValue().pagination;
+	}
+
+	public get hasNext(): boolean {
+		return this.getValue().pagination.hasNext;
+	}
+
+	public get hasPrevious(): boolean {
+		return this.getValue().pagination.hasPrevious;
 	}
 
 	// Utility methods

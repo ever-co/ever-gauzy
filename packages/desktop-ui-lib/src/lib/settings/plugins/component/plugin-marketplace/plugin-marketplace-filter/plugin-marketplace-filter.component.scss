@@ -209,6 +209,88 @@
 		}
 	}
 
+	// Categories Loading State
+	.categories-loading,
+	.categories-loading-more {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.75rem;
+		padding: 1.5rem;
+		color: var(--text-hint-color);
+
+		.loading-text {
+			font-size: 0.875rem;
+		}
+	}
+
+	.categories-loading-more {
+		padding: 1rem;
+		border-top: 1px solid var(--card-divider-color);
+	}
+
+	// Categories Empty State
+	.categories-empty {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.75rem;
+		padding: 2rem;
+		text-align: center;
+
+		.empty-icon {
+			font-size: 2.5rem;
+			color: var(--text-disabled-color);
+		}
+
+		.empty-text {
+			margin: 0;
+			color: var(--text-hint-color);
+			font-size: 0.875rem;
+		}
+	}
+
+	// Categories End Indicator
+	.categories-end {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 1rem;
+		border-top: 1px solid var(--card-divider-color);
+
+		.end-text {
+			font-size: 0.75rem;
+			color: var(--text-hint-color);
+			font-style: italic;
+		}
+	}
+
+	// Categories Grid Wrapper for Infinite Scroll
+	.categories-grid-wrapper {
+		max-height: 400px;
+		overflow-y: auto;
+		overflow-x: hidden;
+		padding-right: 0.25rem;
+
+		&::-webkit-scrollbar {
+			width: 6px;
+		}
+
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background: var(--card-divider-color);
+			border-radius: 3px;
+
+			&:hover {
+				background: var(--text-hint-color);
+			}
+		}
+	}
+
 	// Categories Grid
 	.categories-grid {
 		display: grid;
