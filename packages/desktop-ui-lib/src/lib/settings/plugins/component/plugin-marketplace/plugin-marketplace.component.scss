@@ -5,6 +5,7 @@
 	grid-template-columns: minmax(260px, 320px) 1fr;
 	background: var(--gauzy-card-2);
 	height: calc(100vh - 10rem);
+	padding: 1rem;
 	gap: 1.5rem;
 
 	@media (max-width: 1024px) {
