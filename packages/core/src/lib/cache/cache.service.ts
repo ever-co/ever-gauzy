@@ -56,12 +56,9 @@ export class CacheService {
 	 */
 	async clear(): Promise<void> {
 		try {
-			// Use store's clear method if available, otherwise iterate and delete
-			const store = (this.cacheManager as any).store;
-			if (store && typeof store.clear === 'function') {
-				await store.clear();
+			if (typeof (this.cacheManager as any).clear === 'function') {
+				await (this.cacheManager as any).clear();
 			} else {
-				// Fallback: reset the cache manager
 				await (this.cacheManager as any).reset?.();
 			}
 		} catch (error) {
