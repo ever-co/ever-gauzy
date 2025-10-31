@@ -65,6 +65,46 @@
     }
 
     .subscription-form {
+      // Subscription Error Alert
+      .subscription-error {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+
+        .error-content {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.75rem;
+          margin-bottom: 1rem;
+
+          nb-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+          }
+
+          .error-message {
+            flex: 1;
+
+            strong {
+              display: block;
+              margin-bottom: 0.25rem;
+              font-size: 1rem;
+            }
+
+            p {
+              margin: 0;
+              font-size: 0.9rem;
+              opacity: 0.9;
+            }
+          }
+        }
+
+        .error-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 0.5rem;
+        }
+      }
+
       .section-title {
         display: flex;
         align-items: center;

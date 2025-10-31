@@ -399,6 +399,26 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 		this.dialogRef.close(result);
 	}
 
+	/**
+	 * Reset the subscription process after a failure
+	 * Clears error state and allows user to try again
+	 */
+	public onResetSubscription(): void {
+		console.log('[PluginSubscriptionSelection] Resetting subscription process');
+		// Keep the selected plan but reset other fields
+		this.subscriptionForm.patchValue({
+			paymentMethodId: '',
+			promoCode: '',
+			agreeToTerms: false
+		});
+
+		// Clear any error state in the store
+		this.actions$.dispatch(PluginSubscriptionActions.resetError());
+
+		// Keep the selected plan but allow user to modify their choices
+		console.log('[PluginSubscriptionSelection] Subscription process reset, ready to try again');
+	}
+
 	// Computed properties for template
 	public get canProceedWithoutSubscription(): boolean {
 		// Allow skipping subscription if there are free plans or if it's optional

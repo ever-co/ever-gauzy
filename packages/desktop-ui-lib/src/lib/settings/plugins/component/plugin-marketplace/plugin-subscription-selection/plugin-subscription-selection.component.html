@@ -26,7 +26,7 @@
 				<nb-spinner size="large" status="primary"></nb-spinner>
 				<p class="loading-text">Loading subscription plans...</p>
 			</div>
-		} @else if (error) {
+		} @else if (error && !creating) {
 			<nb-alert status="danger" closable="false">
 				<nb-icon icon="alert-triangle-outline"></nb-icon>
 				{{ error }}
@@ -34,11 +34,30 @@
 			<div class="error-actions">
 				<button nbButton status="basic" (click)="loadSubscriptionPlans()">
 					<nb-icon icon="refresh-outline"></nb-icon>
-					Retry
+					Retry Loading Plans
 				</button>
 			</div>
 		} @else {
 			<form [formGroup]="subscriptionForm" class="subscription-form">
+				<!-- Subscription Creation Error -->
+				@if (error && !loading) {
+					<nb-alert status="danger" closable="false" class="subscription-error">
+						<div class="error-content">
+							<nb-icon icon="alert-triangle-outline"></nb-icon>
+							<div class="error-message">
+								<strong>Subscription Failed</strong>
+								<p>{{ error }}</p>
+							</div>
+						</div>
+						<div class="error-actions">
+							<button nbButton status="danger" size="small" (click)="onResetSubscription()">
+								<nb-icon icon="refresh-outline"></nb-icon>
+								Try Again
+							</button>
+						</div>
+					</nb-alert>
+				}
+
 				<!-- Subscription Plans -->
 				<div class="plans-section">
 					<h5 class="section-title">
@@ -151,11 +170,21 @@
 					Cancel
 				</button>
 
+				@if (error && !loading) {
+					<button
+						nbButton
+						status="warning"
+						(click)="onResetSubscription()">
+						<nb-icon icon="refresh-outline"></nb-icon>
+						Reset & Try Again
+					</button>
+				}
+
 				<button
 					nbButton
 					status="primary"
 					(click)="onSubscribeAndInstall()"
-					[disabled]="!subscriptionForm.valid || creating || !selectedPlanViewModel"
+					[disabled]="!subscriptionForm.valid || creating || !selectedPlanViewModel || error"
 					*gauzySpinnerButton="creating">
 					@if (selectedPlanViewModel?.isFree) {
 						Install Plugin
