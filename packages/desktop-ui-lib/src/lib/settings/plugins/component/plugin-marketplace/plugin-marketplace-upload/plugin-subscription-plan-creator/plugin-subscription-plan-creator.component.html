@@ -4,6 +4,7 @@
 		<p class="text-hint">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DESCRIPTION' | translate }}</p>
 	</div>
 
+	@if(plansForm) {
 	<form [formGroup]="plansForm" class="plans-form">
 		<div formArrayName="plans" class="plans-array">
 			<!-- Plan Cards -->
@@ -49,7 +50,9 @@
 					<!-- Plan Type -->
 					<div class="form-row">
 						<nb-form-field class="form-group">
-							<label class="label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TYPE' | translate }} *</label>
+							<label class="label"
+								>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TYPE' | translate }} *</label
+							>
 							<nb-select
 								fullWidth
 								formControlName="type"
@@ -66,25 +69,33 @@
 					<!-- Plan Name and Description -->
 					<div class="form-row">
 						<nb-form-field class="form-group">
-							<label class="label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NAME' | translate }} *</label>
+							<label class="label"
+								>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NAME' | translate }} *</label
+							>
 							<input
 								nbInput
 								fullWidth
 								formControlName="name"
-								placeholder="{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NAME_PLACEHOLDER' | translate }}"
+								placeholder="{{
+									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NAME_PLACEHOLDER' | translate
+								}}"
 							/>
 						</nb-form-field>
 					</div>
 
 					<div class="form-row">
 						<nb-form-field class="form-group">
-							<label class="label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DESCRIPTION' | translate }} *</label>
+							<label class="label"
+								>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DESCRIPTION' | translate }} *</label
+							>
 							<textarea
 								nbInput
 								fullWidth
 								formControlName="description"
 								rows="3"
-								placeholder="{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DESCRIPTION_PLACEHOLDER' | translate }}"
+								placeholder="{{
+									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DESCRIPTION_PLACEHOLDER' | translate
+								}}"
 							></textarea>
 						</nb-form-field>
 					</div>
@@ -92,7 +103,9 @@
 					<!-- Pricing -->
 					<div class="form-row pricing-row">
 						<nb-form-field class="form-group price-group">
-							<label class="label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PRICE' | translate }} *</label>
+							<label class="label"
+								>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PRICE' | translate }} *</label
+							>
 							<input
 								nbInput
 								fullWidth
@@ -105,7 +118,9 @@
 						</nb-form-field>
 
 						<nb-form-field class="form-group currency-group">
-							<label class="label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.CURRENCY' | translate }} *</label>
+							<label class="label"
+								>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.CURRENCY' | translate }} *</label
+							>
 							<nb-select fullWidth formControlName="currency">
 								<nb-option value="USD">USD ($)</nb-option>
 								<nb-option value="EUR">EUR (€)</nb-option>
@@ -115,7 +130,9 @@
 						</nb-form-field>
 
 						<nb-form-field class="form-group billing-group">
-							<label class="label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.BILLING_PERIOD' | translate }} *</label>
+							<label class="label"
+								>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.BILLING_PERIOD' | translate }} *</label
+							>
 							<nb-select fullWidth formControlName="billingPeriod">
 								<nb-option *ngFor="let period of PluginBillingPeriod | keyvalue" [value]="period.value">
 									{{ formatBillingPeriod(period.value) | titlecase }}
@@ -141,7 +158,9 @@
 					<!-- Features -->
 					<div class="form-section">
 						<div class="section-header">
-							<label class="label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.FEATURES' | translate }} *</label>
+							<label class="label"
+								>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.FEATURES' | translate }} *</label
+							>
 							<button
 								type="button"
 								nbButton
@@ -157,7 +176,10 @@
 
 						<div class="features-list">
 							<div
-								*ngFor="let featureControl of getPlanFeatures(planIndex).controls; let featureIndex = index"
+								*ngFor="
+									let featureControl of getPlanFeatures(planIndex).controls;
+									let featureIndex = index
+								"
 								class="feature-item"
 							>
 								<nb-form-field class="feature-input">
@@ -165,7 +187,9 @@
 										nbInput
 										fullWidth
 										[formControl]="featureControl"
-										placeholder="{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.FEATURE_PLACEHOLDER' | translate }}"
+										placeholder="{{
+											'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.FEATURE_PLACEHOLDER' | translate
+										}}"
 									/>
 								</nb-form-field>
 								<button
@@ -185,10 +209,14 @@
 
 					<!-- Limitations -->
 					<div class="form-section" formGroupName="limitations">
-						<label class="label section-title">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.LIMITATIONS' | translate }}</label>
+						<label class="label section-title">{{
+							'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.LIMITATIONS' | translate
+						}}</label>
 						<div class="limitations-grid">
 							<nb-form-field class="form-group">
-								<label class="label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.MAX_USERS' | translate }}</label>
+								<label class="label">{{
+									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.MAX_USERS' | translate
+								}}</label>
 								<input
 									nbInput
 									fullWidth
@@ -200,7 +228,9 @@
 							</nb-form-field>
 
 							<nb-form-field class="form-group">
-								<label class="label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.MAX_PROJECTS' | translate }}</label>
+								<label class="label">{{
+									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.MAX_PROJECTS' | translate
+								}}</label>
 								<input
 									nbInput
 									fullWidth
@@ -212,7 +242,9 @@
 							</nb-form-field>
 
 							<nb-form-field class="form-group">
-								<label class="label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.API_CALLS' | translate }}</label>
+								<label class="label">{{
+									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.API_CALLS' | translate
+								}}</label>
 								<input
 									nbInput
 									fullWidth
@@ -224,7 +256,9 @@
 							</nb-form-field>
 
 							<nb-form-field class="form-group">
-								<label class="label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.STORAGE_LIMIT' | translate }}</label>
+								<label class="label">{{
+									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.STORAGE_LIMIT' | translate
+								}}</label>
 								<input
 									nbInput
 									fullWidth
@@ -239,10 +273,14 @@
 
 					<!-- Additional Options -->
 					<div class="form-section">
-						<label class="label section-title">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.ADDITIONAL_OPTIONS' | translate }}</label>
+						<label class="label section-title">{{
+							'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.ADDITIONAL_OPTIONS' | translate
+						}}</label>
 						<div class="options-grid">
 							<nb-form-field class="form-group">
-								<label class="label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TRIAL_DAYS' | translate }}</label>
+								<label class="label">{{
+									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TRIAL_DAYS' | translate
+								}}</label>
 								<input
 									nbInput
 									fullWidth
@@ -255,7 +293,9 @@
 							</nb-form-field>
 
 							<nb-form-field class="form-group">
-								<label class="label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.SETUP_FEE' | translate }}</label>
+								<label class="label">{{
+									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.SETUP_FEE' | translate
+								}}</label>
 								<input
 									nbInput
 									fullWidth
@@ -268,7 +308,9 @@
 							</nb-form-field>
 
 							<nb-form-field class="form-group">
-								<label class="label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DISCOUNT' | translate }}</label>
+								<label class="label">{{
+									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DISCOUNT' | translate
+								}}</label>
 								<input
 									nbInput
 									fullWidth
@@ -318,4 +360,12 @@
 			</div>
 		</div>
 	</form>
+	}@else {
+		<div class="no-plans-message">
+			<nb-alert status="warning" size="small">
+				<nb-icon icon="alert-triangle-outline"></nb-icon>
+				{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NO_PLANS' | translate }}
+			</nb-alert>
+		</div>
+	}
 </div>

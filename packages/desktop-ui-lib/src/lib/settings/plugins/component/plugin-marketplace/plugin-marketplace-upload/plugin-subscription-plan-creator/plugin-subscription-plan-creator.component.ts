@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	EventEmitter,
+	inject,
+	Input,
+	OnDestroy,
+	OnInit,
+	Output
+} from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -29,8 +38,8 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 	// Expose enums to template
 	public readonly PluginSubscriptionType = PluginSubscriptionType;
 	public readonly PluginBillingPeriod = PluginBillingPeriod;
-
-	constructor(private readonly formBuilder: FormBuilder) {}
+	// FormBuilder
+	private readonly formBuilder = inject(FormBuilder);
 
 	ngOnInit(): void {
 		this.initializeForm();
