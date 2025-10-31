@@ -4,7 +4,17 @@ import { IPlugin } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, Observable, combineLatest, filter, map, startWith, switchMap, tap } from 'rxjs';
+import {
+	BehaviorSubject,
+	Observable,
+	combineLatest,
+	filter,
+	firstValueFrom,
+	map,
+	startWith,
+	switchMap,
+	tap
+} from 'rxjs';
 import { PluginSubscriptionActions } from '../+state/actions/plugin-subscription.action';
 import { PluginSubscriptionQuery } from '../+state/queries/plugin-subscription.query';
 import { Store } from '../../../../../services';
@@ -58,6 +68,9 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	public subscriptionPreview$: Observable<ISubscriptionPreviewViewModel | null>;
 
 	// State management observables
+	// IMPORTANT: These are SUBSCRIPTION PLANS (available options), not user subscriptions
+	// Plans = What options are available to subscribe to (Free, Premium, Enterprise, etc.)
+	// Subscriptions = What the user has actually subscribed to (managed elsewhere)
 	public availablePlans$: Observable<IPluginSubscriptionPlan[]>;
 	public loading$: Observable<boolean>;
 	public creating$: Observable<boolean>;
@@ -67,7 +80,7 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	public readonly PluginSubscriptionType = PluginSubscriptionType;
 	public readonly PluginBillingPeriod = PluginBillingPeriod;
 
-	// Computed observables
+	// Computed observables based on available PLANS
 	public hasFreePlan$: Observable<boolean>;
 	public hasPaidPlans$: Observable<boolean>;
 
@@ -81,10 +94,11 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 		private readonly planFormatter: PlanFormatterService
 	) {
 		this.initializeForm();
-		this.initializeObservables();
 	}
 
 	ngOnInit(): void {
+		// Initialize observables after @Input properties are set
+		this.initializeObservables();
 		this.loadSubscriptionPlans();
 		this.initializeSubscriptionPreview();
 	}
@@ -96,18 +110,36 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	private initializeObservables(): void {
 		const targetPluginId = this.pluginId || this.plugin?.id;
 
-		// Use state management observables
+		if (!targetPluginId) {
+			console.error('[PluginSubscriptionSelection] Cannot initialize observables: Plugin ID is required');
+			return;
+		}
+
+		console.log('[PluginSubscriptionSelection] Initializing observables for plugin:', targetPluginId);
+
+		// IMPORTANT: We're loading PLANS (available subscription options),
+		// NOT SUBSCRIPTIONS (user's active subscriptions)
+		// Plans = What the user CAN subscribe to
+		// Subscriptions = What the user HAS subscribed to
+
+		// Get available subscription PLANS from the query
 		this.availablePlans$ = this.pluginSubscriptionQuery.getPlansForPlugin(targetPluginId!);
 		this.loading$ = this.pluginSubscriptionQuery.loading$;
 		this.creating$ = this.pluginSubscriptionQuery.creating$;
 		this.error$ = this.pluginSubscriptionQuery.error$;
 
-		// Transform plans to view models using formatter service
+		// Transform subscription plans to view models using formatter service
 		this.planViewModels$ = this.availablePlans$.pipe(
-			map((plans) => this.planFormatter.transformToViewModels(plans))
+			tap((plans) =>
+				console.log('[PluginSubscriptionSelection] Subscription PLANS before transformation:', plans)
+			),
+			map((plans) => this.planFormatter.transformToViewModels(plans)),
+			tap((viewModels) =>
+				console.log('[PluginSubscriptionSelection] Plan view models after transformation:', viewModels)
+			)
 		);
 
-		// Computed observables
+		// Computed observables based on available PLANS
 		this.hasFreePlan$ = this.availablePlans$.pipe(
 			map((plans) => plans.some((plan) => plan.type === PluginSubscriptionType.FREE))
 		);
@@ -159,20 +191,50 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	private loadSubscriptionPlans(): void {
 		const targetPluginId = this.pluginId || this.plugin?.id;
 		if (!targetPluginId) {
-			console.error('Plugin ID is required');
+			console.error('[PluginSubscriptionSelection] Plugin ID is required');
 			return;
 		}
 
-		// Dispatch action to load plans
+		console.log(
+			'[PluginSubscriptionSelection] Loading subscription PLANS (not subscriptions) for plugin:',
+			targetPluginId
+		);
+
+		// Dispatch action to load PLANS (available options to subscribe to)
+		// This is different from loading SUBSCRIPTIONS (user's active subscriptions)
 		this.actions$.dispatch(PluginSubscriptionActions.loadPluginPlans(targetPluginId));
 
-		// Watch for plan view models and auto-select free plan if available
+		// Watch for all plan updates (including empty arrays) for debugging
+		this.availablePlans$
+			.pipe(
+				tap((plans) => {
+					console.log(
+						'[PluginSubscriptionSelection] Subscription PLANS received:',
+						plans?.length || 0,
+						plans
+					);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		// THEN watch for plan view models and auto-select free plan if available
 		this.planViewModels$
 			.pipe(
+				tap((viewModels) => {
+					console.log('[PluginSubscriptionSelection] Plan view models transformed:', viewModels?.length || 0);
+					if (viewModels.length === 0) {
+						console.warn(
+							'[PluginSubscriptionSelection] No subscription plans available for plugin:',
+							targetPluginId
+						);
+					}
+				}),
 				filter((viewModels) => viewModels.length > 0),
 				tap((viewModels) => {
 					const freePlan = viewModels.find((vm) => vm.isFree);
 					if (freePlan && !this.subscriptionForm.value.planId) {
+						console.log('[PluginSubscriptionSelection] Auto-selecting free plan:', freePlan.name);
 						this.subscriptionForm.patchValue({
 							planId: freePlan.id,
 							billingPeriod: freePlan.billingPeriod
@@ -213,9 +275,9 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 		if (!promoCode) return;
 
 		try {
-			const validation = await this.subscriptionService
-				.validatePromoCode(promoCode, this.pluginId || this.plugin?.id)
-				.toPromise();
+			const validation = await firstValueFrom(
+				this.subscriptionService.validatePromoCode(promoCode, this.pluginId || this.plugin?.id)
+			);
 
 			if (validation?.valid) {
 				console.log('Promo code applied successfully');
@@ -240,9 +302,17 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			return;
 		}
 
+		console.log(
+			'[PluginSubscriptionSelection] Creating subscription from selected plan:',
+			selectedPlanViewModel.name
+		);
+
+		// Create a SUBSCRIPTION from the selected PLAN
+		// Plan = The option the user chose (e.g., "Premium Plan")
+		// Subscription = The actual user subscription that will be created
 		const subscriptionInput: IPluginSubscriptionCreateInput = {
 			pluginId: this.pluginId || this.plugin?.id!,
-			planId: selectedPlanViewModel.id,
+			planId: selectedPlanViewModel.id, // Reference to the plan
 			subscriptionType: selectedPlanViewModel.type,
 			billingPeriod: this.subscriptionForm.value.billingPeriod,
 			paymentMethodId: this.subscriptionForm.value.paymentMethodId,
@@ -255,25 +325,33 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 
 		if (selectedPlanViewModel.isFree) {
 			// For free plans, proceed directly to installation
+			console.log('[PluginSubscriptionSelection] Free plan selected, proceeding with installation');
 			this.proceedWithInstallation(selectedPlanViewModel.originalPlan, subscriptionInput);
 		} else {
 			// For paid plans, create subscription using state management
+			console.log('[PluginSubscriptionSelection] Paid plan selected, creating subscription first');
 			this.createSubscription(selectedPlanViewModel.originalPlan, subscriptionInput);
 		}
 	}
 
 	private createSubscription(plan: IPluginSubscriptionPlan, input: IPluginSubscriptionCreateInput): void {
-		// Dispatch create subscription action
+		console.log('[PluginSubscriptionSelection] Creating SUBSCRIPTION from PLAN:', plan.name);
+		console.log('[PluginSubscriptionSelection] Subscription input:', input);
+
+		// Dispatch action to create a SUBSCRIPTION based on the selected PLAN
+		// This will create a new subscription record for the user
 		this.actions$.dispatch(PluginSubscriptionActions.createSubscription(input.pluginId, input));
 
-		// Watch for successful creation
+		// Watch for successful subscription creation
 		this.creating$
 			.pipe(
 				tap((creating) => {
 					if (!creating && !this.pluginSubscriptionQuery.error) {
-						// Success case - proceed with installation
+						// Success case - subscription created, proceed with installation
 						console.log(
-							`Successfully subscribed to ${plan.name} plan for ${this.plugin?.name || 'plugin'}`
+							`[PluginSubscriptionSelection] Successfully created subscription to ${plan.name} plan for ${
+								this.plugin?.name || 'plugin'
+							}`
 						);
 						this.proceedWithInstallation(plan, input);
 					}
@@ -282,12 +360,12 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			)
 			.subscribe();
 
-		// Watch for errors
+		// Watch for subscription creation errors
 		this.error$
 			.pipe(
 				tap((error) => {
 					if (error) {
-						console.error('Failed to create subscription:', error);
+						console.error('[PluginSubscriptionSelection] Failed to create subscription:', error);
 						console.log('Failed to create subscription. Please try again.');
 					}
 				}),
