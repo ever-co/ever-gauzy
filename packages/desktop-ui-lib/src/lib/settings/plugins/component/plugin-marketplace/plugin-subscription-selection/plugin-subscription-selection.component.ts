@@ -409,4 +409,26 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			.unsubscribe();
 		return hasFreePlans || this.plugin?.type === ('FREE' as any);
 	}
+
+	/**
+	 * Format billing period for display in the UI
+	 */
+	public formatBillingPeriod(period: PluginBillingPeriod): string {
+		switch (period) {
+			case PluginBillingPeriod.DAILY:
+				return 'Daily';
+			case PluginBillingPeriod.WEEKLY:
+				return 'Weekly';
+			case PluginBillingPeriod.MONTHLY:
+				return 'Monthly';
+			case PluginBillingPeriod.QUARTERLY:
+				return 'Quarterly';
+			case PluginBillingPeriod.YEARLY:
+				return 'Yearly';
+			case PluginBillingPeriod.ONE_TIME:
+				return 'One-Time';
+			default:
+				return 'Unknown';
+		}
+	}
 }
