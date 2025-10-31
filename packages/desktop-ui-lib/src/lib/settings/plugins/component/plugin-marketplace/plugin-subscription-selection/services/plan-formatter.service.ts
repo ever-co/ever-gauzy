@@ -58,9 +58,17 @@ export class PlanFormatterService {
 		plan: IPluginSubscriptionPlan,
 		promoDiscount: number = 0
 	): ISubscriptionPreviewViewModel {
-		const baseAmount = plan.price;
-		const setupFee = plan.setupFee || 0;
-		const totalAmount = baseAmount + setupFee - promoDiscount;
+		const baseAmount = Number(plan.price);
+		const setupFee = Number(plan.setupFee) || 0;
+
+		// Calculate plan discount if applicable
+		const planDiscount = plan.discountPercentage ? (baseAmount * plan.discountPercentage) / 100 : 0;
+
+		// Calculate subtotal after plan discount
+		const subtotal = baseAmount - planDiscount + setupFee;
+
+		// Calculate final total, ensuring it's not negative
+		const totalAmount = Math.max(0, subtotal - promoDiscount);
 
 		return {
 			planName: plan.name,

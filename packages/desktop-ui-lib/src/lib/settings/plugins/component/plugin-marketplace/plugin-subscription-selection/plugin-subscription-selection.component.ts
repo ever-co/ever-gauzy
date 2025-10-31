@@ -420,14 +420,11 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	}
 
 	// Computed properties for template
-	public get canProceedWithoutSubscription(): boolean {
+	public async canProceedWithoutSubscription(): Promise<boolean> {
 		// Allow skipping subscription if there are free plans or if it's optional
-		let hasFreePlans = false;
-		this.hasFreePlan$
-			.pipe(tap((value) => (hasFreePlans = value)))
-			.subscribe()
-			.unsubscribe();
-		return hasFreePlans || this.plugin?.type === ('FREE' as any);
+		const hasFreePlans = await firstValueFrom(this.hasFreePlan$);
+		// Check if plugin type allows free installation
+		return hasFreePlans || !this.plugin.hasPlan;
 	}
 
 	/**
