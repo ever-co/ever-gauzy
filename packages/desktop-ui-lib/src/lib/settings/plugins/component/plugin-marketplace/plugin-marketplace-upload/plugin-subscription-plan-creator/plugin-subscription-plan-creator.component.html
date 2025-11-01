@@ -1,7 +1,10 @@
 <div class="subscription-plan-creator">
 	<div class="creator-header">
-		<h6>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TITLE' | translate }}</h6>
-		<p class="text-hint">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DESCRIPTION' | translate }}</p>
+		<nb-icon icon="pricetags-outline" status="primary"></nb-icon>
+		<div>
+			<h6>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TITLE' | translate }}</h6>
+			<p class="text-hint">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DESCRIPTION' | translate }}</p>
+		</div>
 	</div>
 
 	@if(plansForm) {
@@ -15,8 +18,20 @@
 			>
 				<div class="plan-card-header">
 					<div class="plan-title">
-						<nb-icon icon="layers-outline"></nb-icon>
+						<nb-icon icon="layers-outline" status="primary"></nb-icon>
 						<span>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PLAN' | translate }} {{ planIndex + 1 }}</span>
+						<nb-badge
+							*ngIf="planGroup.get('isPopular')?.value"
+							text="Popular"
+							status="success"
+							position="top right"
+						></nb-badge>
+						<nb-badge
+							*ngIf="planGroup.get('isRecommended')?.value"
+							text="Recommended"
+							status="info"
+							position="top right"
+						></nb-badge>
 					</div>
 					<div class="plan-actions">
 						<button
@@ -24,9 +39,10 @@
 							type="button"
 							nbButton
 							ghost
-							size="tiny"
-							status="basic"
+							size="small"
+							status="info"
 							nbTooltip="{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DUPLICATE_PLAN' | translate }}"
+							nbTooltipPlacement="top"
 							(click)="duplicatePlan(planIndex)"
 						>
 							<nb-icon icon="copy-outline"></nb-icon>
@@ -36,9 +52,10 @@
 							type="button"
 							nbButton
 							ghost
-							size="tiny"
+							size="small"
 							status="danger"
 							nbTooltip="{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.REMOVE_PLAN' | translate }}"
+							nbTooltipPlacement="top"
 							(click)="removePlan(planIndex)"
 						>
 							<nb-icon icon="trash-2-outline"></nb-icon>
@@ -50,9 +67,10 @@
 					<!-- Plan Type -->
 					<div class="form-row">
 						<nb-form-field class="form-group">
-							<label class="label"
-								>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TYPE' | translate }} *</label
-							>
+							<label class="label">
+								<nb-icon icon="grid-outline" status="primary"></nb-icon>
+								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TYPE' | translate }} *
+							</label>
 							<nb-select
 								fullWidth
 								formControlName="type"
@@ -60,6 +78,15 @@
 								(selectionChange)="onPlanTypeChange(planIndex)"
 							>
 								<nb-option *ngFor="let type of PluginSubscriptionType | keyvalue" [value]="type.value">
+									<nb-icon
+										[icon]="
+											type.value === 'FREE'
+												? 'gift-outline'
+												: type.value === 'PAID'
+												? 'credit-card-outline'
+												: 'infinity-outline'
+										"
+									></nb-icon>
 									{{ type.value | titlecase }}
 								</nb-option>
 							</nb-select>
@@ -69,9 +96,10 @@
 					<!-- Plan Name and Description -->
 					<div class="form-row">
 						<nb-form-field class="form-group">
-							<label class="label"
-								>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NAME' | translate }} *</label
-							>
+							<label class="label">
+								<nb-icon icon="text-outline" status="primary"></nb-icon>
+								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NAME' | translate }} *
+							</label>
 							<input
 								nbInput
 								fullWidth
@@ -85,9 +113,10 @@
 
 					<div class="form-row">
 						<nb-form-field class="form-group">
-							<label class="label"
-								>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DESCRIPTION' | translate }} *</label
-							>
+							<label class="label">
+								<nb-icon icon="file-text-outline" status="primary"></nb-icon>
+								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PLAN_DESCRIPTION' | translate }} *
+							</label>
 							<textarea
 								nbInput
 								fullWidth
@@ -103,9 +132,10 @@
 					<!-- Pricing -->
 					<div class="form-row pricing-row">
 						<nb-form-field class="form-group price-group">
-							<label class="label"
-								>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PRICE' | translate }} *</label
-							>
+							<label class="label">
+								<nb-icon icon="pricetags-outline" status="success"></nb-icon>
+								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PRICE' | translate }} *
+							</label>
 							<input
 								nbInput
 								fullWidth
@@ -118,23 +148,38 @@
 						</nb-form-field>
 
 						<nb-form-field class="form-group currency-group">
-							<label class="label"
-								>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.CURRENCY' | translate }} *</label
-							>
+							<label class="label">
+								<nb-icon icon="trending-up-outline" status="success"></nb-icon>
+								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.CURRENCY' | translate }} *
+							</label>
 							<nb-select fullWidth formControlName="currency">
-								<nb-option value="USD">USD ($)</nb-option>
-								<nb-option value="EUR">EUR (€)</nb-option>
-								<nb-option value="GBP">GBP (£)</nb-option>
-								<nb-option value="JPY">JPY (¥)</nb-option>
+								<nb-option value="USD">
+									<nb-icon icon="dollar-sign-outline"></nb-icon>
+									USD ($)
+								</nb-option>
+								<nb-option value="EUR">
+									<nb-icon icon="euro-outline"></nb-icon>
+									EUR (€)
+								</nb-option>
+								<nb-option value="GBP">
+									<nb-icon icon="pound-outline"></nb-icon>
+									GBP (£)
+								</nb-option>
+								<nb-option value="JPY">
+									<nb-icon icon="yen-outline"></nb-icon>
+									JPY (¥)
+								</nb-option>
 							</nb-select>
 						</nb-form-field>
 
 						<nb-form-field class="form-group billing-group">
-							<label class="label"
-								>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.BILLING_PERIOD' | translate }} *</label
-							>
+							<label class="label">
+								<nb-icon icon="calendar-outline" status="success"></nb-icon>
+								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.BILLING_PERIOD' | translate }} *
+							</label>
 							<nb-select fullWidth formControlName="billingPeriod">
 								<nb-option *ngFor="let period of PluginBillingPeriod | keyvalue" [value]="period.value">
+									<nb-icon icon="clock-outline"></nb-icon>
 									{{ formatBillingPeriod(period.value) | titlecase }}
 								</nb-option>
 							</nb-select>
@@ -144,11 +189,14 @@
 					<!-- Price Preview -->
 					<div class="price-preview" *ngIf="planGroup.get('price')?.value >= 0">
 						<nb-alert status="info" size="small">
+							<nb-icon icon="eye-outline"></nb-icon>
 							<strong>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PRICE_PREVIEW' | translate }}:</strong>
 							<span *ngIf="planGroup.get('price')?.value === 0">
+								<nb-icon icon="gift-outline" status="success"></nb-icon>
 								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.FREE' | translate }}
 							</span>
 							<span *ngIf="planGroup.get('price')?.value > 0">
+								<nb-icon icon="credit-card-outline" status="primary"></nb-icon>
 								{{ formatCurrency(planGroup.get('price')?.value, planGroup.get('currency')?.value) }}
 								/ {{ formatBillingPeriod(planGroup.get('billingPeriod')?.value) }}
 							</span>
@@ -158,18 +206,21 @@
 					<!-- Features -->
 					<div class="form-section">
 						<div class="section-header">
-							<label class="label"
-								>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.FEATURES' | translate }} *</label
-							>
+							<label class="label">
+								<nb-icon icon="checkmark-square-outline" status="success"></nb-icon>
+								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.FEATURES' | translate }} *
+							</label>
 							<button
 								type="button"
 								nbButton
 								ghost
-								size="tiny"
+								size="small"
 								status="success"
+								nbTooltip="Add a new feature"
+								nbTooltipPlacement="top"
 								(click)="addFeature(planIndex)"
 							>
-								<nb-icon icon="plus-outline"></nb-icon>
+								<nb-icon icon="plus-circle-outline"></nb-icon>
 								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.ADD_FEATURE' | translate }}
 							</button>
 						</div>
@@ -182,6 +233,7 @@
 								"
 								class="feature-item"
 							>
+								<nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
 								<nb-form-field class="feature-input">
 									<input
 										nbInput
@@ -197,11 +249,13 @@
 									type="button"
 									nbButton
 									ghost
-									size="tiny"
+									size="small"
 									status="danger"
+									nbTooltip="Remove feature"
+									nbTooltipPlacement="top"
 									(click)="removeFeature(planIndex, featureIndex)"
 								>
-									<nb-icon icon="trash-2-outline"></nb-icon>
+									<nb-icon icon="close-circle-outline"></nb-icon>
 								</button>
 							</div>
 						</div>
@@ -209,14 +263,16 @@
 
 					<!-- Limitations -->
 					<div class="form-section" formGroupName="limitations">
-						<label class="label section-title">{{
-							'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.LIMITATIONS' | translate
-						}}</label>
+						<label class="label section-title">
+							<nb-icon icon="lock-outline" status="warning"></nb-icon>
+							{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.LIMITATIONS' | translate }}
+						</label>
 						<div class="limitations-grid">
 							<nb-form-field class="form-group">
-								<label class="label">{{
-									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.MAX_USERS' | translate
-								}}</label>
+								<label class="label">
+									<nb-icon icon="people-outline"></nb-icon>
+									{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.MAX_USERS' | translate }}
+								</label>
 								<input
 									nbInput
 									fullWidth
@@ -228,9 +284,10 @@
 							</nb-form-field>
 
 							<nb-form-field class="form-group">
-								<label class="label">{{
-									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.MAX_PROJECTS' | translate
-								}}</label>
+								<label class="label">
+									<nb-icon icon="folder-outline"></nb-icon>
+									{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.MAX_PROJECTS' | translate }}
+								</label>
 								<input
 									nbInput
 									fullWidth
@@ -242,9 +299,10 @@
 							</nb-form-field>
 
 							<nb-form-field class="form-group">
-								<label class="label">{{
-									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.API_CALLS' | translate
-								}}</label>
+								<label class="label">
+									<nb-icon icon="activity-outline"></nb-icon>
+									{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.API_CALLS' | translate }}
+								</label>
 								<input
 									nbInput
 									fullWidth
@@ -256,9 +314,10 @@
 							</nb-form-field>
 
 							<nb-form-field class="form-group">
-								<label class="label">{{
-									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.STORAGE_LIMIT' | translate
-								}}</label>
+								<label class="label">
+									<nb-icon icon="hard-drive-outline"></nb-icon>
+									{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.STORAGE_LIMIT' | translate }}
+								</label>
 								<input
 									nbInput
 									fullWidth
@@ -273,14 +332,16 @@
 
 					<!-- Additional Options -->
 					<div class="form-section">
-						<label class="label section-title">{{
-							'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.ADDITIONAL_OPTIONS' | translate
-						}}</label>
+						<label class="label section-title">
+							<nb-icon icon="settings-2-outline" status="info"></nb-icon>
+							{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.ADDITIONAL_OPTIONS' | translate }}
+						</label>
 						<div class="options-grid">
 							<nb-form-field class="form-group">
-								<label class="label">{{
-									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TRIAL_DAYS' | translate
-								}}</label>
+								<label class="label">
+									<nb-icon icon="clock-outline"></nb-icon>
+									{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TRIAL_DAYS' | translate }}
+								</label>
 								<input
 									nbInput
 									fullWidth
@@ -293,9 +354,10 @@
 							</nb-form-field>
 
 							<nb-form-field class="form-group">
-								<label class="label">{{
-									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.SETUP_FEE' | translate
-								}}</label>
+								<label class="label">
+									<nb-icon icon="credit-card-outline"></nb-icon>
+									{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.SETUP_FEE' | translate }}
+								</label>
 								<input
 									nbInput
 									fullWidth
@@ -308,9 +370,10 @@
 							</nb-form-field>
 
 							<nb-form-field class="form-group">
-								<label class="label">{{
-									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DISCOUNT' | translate
-								}}</label>
+								<label class="label">
+									<nb-icon icon="percent-outline"></nb-icon>
+									{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DISCOUNT' | translate }}
+								</label>
 								<input
 									nbInput
 									fullWidth
@@ -325,9 +388,11 @@
 
 						<div class="checkboxes-row">
 							<nb-checkbox formControlName="isPopular">
+								<nb-icon icon="star-outline" status="success"></nb-icon>
 								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.POPULAR' | translate }}
 							</nb-checkbox>
 							<nb-checkbox formControlName="isRecommended">
+								<nb-icon icon="award-outline" status="info"></nb-icon>
 								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.RECOMMENDED' | translate }}
 							</nb-checkbox>
 						</div>
@@ -345,27 +410,43 @@
 					size="large"
 					(click)="addPlan()"
 					class="add-plan-button"
+					nbTooltip="Create a new subscription plan"
+					nbTooltipPlacement="top"
 				>
-					<nb-icon icon="plus-outline"></nb-icon>
+					<nb-icon icon="plus-circle-outline"></nb-icon>
 					{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.ADD_PLAN' | translate }}
 				</button>
 			</div>
 
 			<!-- No Plans Message -->
 			<div *ngIf="plans.length === 0" class="no-plans-message">
-				<nb-alert status="warning" size="small">
-					<nb-icon icon="alert-triangle-outline"></nb-icon>
-					{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NO_PLANS' | translate }}
+				<nb-alert status="warning" size="medium" closable="false">
+					<div style="display: flex; align-items: center; gap: 1rem">
+						<nb-icon icon="alert-circle-outline" style="font-size: 2rem"></nb-icon>
+						<div>
+							<strong>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NO_PLANS' | translate }}</strong>
+							<p style="margin: 0.5rem 0 0 0; opacity: 0.8">
+								Get started by creating your first subscription plan
+							</p>
+						</div>
+					</div>
 				</nb-alert>
 			</div>
 		</div>
 	</form>
 	}@else {
-		<div class="no-plans-message">
-			<nb-alert status="warning" size="small">
-				<nb-icon icon="alert-triangle-outline"></nb-icon>
-				{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NO_PLANS' | translate }}
-			</nb-alert>
-		</div>
+	<div class="no-plans-message">
+		<nb-alert status="warning" size="medium" closable="false">
+			<div style="display: flex; align-items: center; gap: 1rem">
+				<nb-icon icon="alert-circle-outline" style="font-size: 2rem"></nb-icon>
+				<div>
+					<strong>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NO_PLANS' | translate }}</strong>
+					<p style="margin: 0.5rem 0 0 0; opacity: 0.8">
+						Initialize the form to start creating subscription plans
+					</p>
+				</div>
+			</div>
+		</nb-alert>
+	</div>
 	}
 </div>
