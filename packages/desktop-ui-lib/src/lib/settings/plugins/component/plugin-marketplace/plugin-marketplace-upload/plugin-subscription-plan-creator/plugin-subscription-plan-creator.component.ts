@@ -1,5 +1,6 @@
 import {
 	ChangeDetectionStrategy,
+	ChangeDetectorRef,
 	Component,
 	EventEmitter,
 	inject,
@@ -8,15 +9,28 @@ import {
 	OnInit,
 	Output
 } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormGroup } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { filter, take, takeUntil } from 'rxjs/operators';
+import { PluginSubscriptionFacade } from '../../+state/plugin-subscription.facade';
 import {
 	IPluginPlanCreateInput,
+	IPluginSubscriptionPlan,
 	PluginBillingPeriod,
 	PluginSubscriptionType
 } from '../../../../services/plugin-subscription.service';
+import { SubscriptionPlanFormBuilderService } from './services/subscription-plan-form-builder.service';
+import { SubscriptionPlanFormatService } from './services/subscription-plan-format.service';
 
+/**
+ * Component for creating and managing subscription plans for plugins
+ *
+ * @principle Single Responsibility - Manages subscription plan forms
+ * @principle Open/Closed - Extensible through inputs and outputs
+ * @principle Dependency Inversion - Depends on abstractions (facade, services)
+ * @pattern Facade Pattern - Uses PluginSubscriptionFacade for state management
+ * @pattern Builder Pattern - Uses SubscriptionPlanFormBuilderService for form creation
+ */
 @Component({
 	selector: 'lib-plugin-subscription-plan-creator',
 	templateUrl: './plugin-subscription-plan-creator.component.html',
@@ -32,18 +46,23 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 	@Output() plansChanged = new EventEmitter<IPluginPlanCreateInput[]>();
 	@Output() validationStateChanged = new EventEmitter<boolean>();
 
-	public plansForm: FormGroup;
+	public plansForm!: FormGroup;
 	private destroy$ = new Subject<void>();
+	private isInitialized = false;
+	private plansLoaded = false;
 
 	// Expose enums to template
 	public readonly PluginSubscriptionType = PluginSubscriptionType;
 	public readonly PluginBillingPeriod = PluginBillingPeriod;
-	// FormBuilder
-	private readonly formBuilder = inject(FormBuilder);
+
+	// Inject services following Dependency Injection
+	private readonly formBuilderService = inject(SubscriptionPlanFormBuilderService);
+	private readonly formatService = inject(SubscriptionPlanFormatService);
+	private readonly subscriptionFacade = inject(PluginSubscriptionFacade);
+	private readonly cdr = inject(ChangeDetectorRef);
 
 	ngOnInit(): void {
-		this.initializeForm();
-		this.setupFormListeners();
+		this.initializeComponent();
 	}
 
 	ngOnDestroy(): void {
@@ -51,64 +70,119 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 		this.destroy$.complete();
 	}
 
-	private initializeForm(): void {
-		this.plansForm = this.formBuilder.group({
-			plans: this.formBuilder.array([])
-		});
+	/**
+	 * Initializes the component, form, and loads existing plans if pluginId is provided
+	 */
+	private initializeComponent(): void {
+		this.initializeForm();
+		this.setupFormListeners();
+		this.loadExistingPlans();
+		this.isInitialized = true;
+	}
 
-		// Add at least one plan if required or by default
-		if (this.requireAtLeastOnePlan || this.plans.length === 0) {
+	/**
+	 * Initializes the plans form using the form builder service
+	 */
+	private initializeForm(): void {
+		this.plansForm = this.formBuilderService.createPlansForm();
+
+		// Add at least one plan if required and no pluginId (new plugin)
+		if (this.requireAtLeastOnePlan && !this.pluginId) {
 			this.addPlan();
 		}
 	}
 
+	/**
+	 * Sets up reactive form listeners
+	 */
 	private setupFormListeners(): void {
 		this.plansForm.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
 			this.emitChanges();
 		});
 	}
 
-	private createPlanFormGroup(plan?: Partial<IPluginPlanCreateInput>): FormGroup {
-		return this.formBuilder.group({
-			type: [plan?.type || PluginSubscriptionType.FREE, Validators.required],
-			name: [plan?.name || '', [Validators.required, Validators.maxLength(100)]],
-			description: [plan?.description || '', [Validators.required, Validators.maxLength(500)]],
-			price: [plan?.price || 0, [Validators.required, Validators.min(0)]],
-			currency: [plan?.currency || 'USD', Validators.required],
-			billingPeriod: [plan?.billingPeriod || PluginBillingPeriod.MONTHLY, Validators.required],
-			features: this.formBuilder.array(
-				plan?.features?.map((feature) => this.formBuilder.control(feature, Validators.required)) || [
-					this.formBuilder.control('', Validators.required)
-				]
-			),
-			limitations: this.formBuilder.group({
-				maxUsers: [plan?.limitations?.maxUsers || null],
-				maxProjects: [plan?.limitations?.maxProjects || null],
-				apiCallsPerMonth: [plan?.limitations?.apiCallsPerMonth || null],
-				storageLimit: [plan?.limitations?.storageLimit || null]
-			}),
-			trialDays: [plan?.trialDays || 0, [Validators.min(0), Validators.max(365)]],
-			setupFee: [plan?.setupFee || 0, [Validators.min(0)]],
-			discountPercentage: [plan?.discountPercentage || 0, [Validators.min(0), Validators.max(100)]],
-			isPopular: [plan?.isPopular || false],
-			isRecommended: [plan?.isRecommended || false]
-		});
+	/**
+	 * Loads existing plans from state if pluginId is provided
+	 * Uses state management through facade (no direct service calls)
+	 */
+	private loadExistingPlans(): void {
+		if (!this.pluginId) {
+			return;
+		}
+
+		// Dispatch action to load plans
+		this.subscriptionFacade.loadPluginPlans(this.pluginId);
+
+		// Subscribe to plans from state
+		this.subscriptionFacade
+			.getPlansForPlugin(this.pluginId)
+			.pipe(
+				filter((plans) => plans.length > 0 && !this.plansLoaded),
+				take(1),
+				takeUntil(this.destroy$)
+			)
+			.subscribe((plans) => {
+				this.prepopulatePlans(plans);
+				this.plansLoaded = true;
+				this.cdr.markForCheck();
+			});
 	}
 
+	/**
+	 * Prepopulates the form with existing plans
+	 * Prevents duplicate additions by checking plansLoaded flag
+	 */
+	private prepopulatePlans(plans: IPluginSubscriptionPlan[]): void {
+		if (!plans || plans.length === 0) {
+			return;
+		}
+
+		// Convert IPluginSubscriptionPlan to IPluginPlanCreateInput format
+		const planInputs: Partial<IPluginPlanCreateInput>[] = plans.map((plan) => ({
+			pluginId: plan.pluginId,
+			type: plan.type,
+			name: plan.name,
+			description: plan.description,
+			price: plan.price,
+			currency: plan.currency,
+			billingPeriod: plan.billingPeriod,
+			features: plan.features,
+			limitations: plan.limitations,
+			trialDays: plan.trialDays,
+			setupFee: plan.setupFee,
+			discountPercentage: plan.discountPercentage,
+			isPopular: plan.isPopular,
+			isRecommended: plan.isRecommended
+		}));
+
+		// Use form builder service to populate plans
+		this.formBuilderService.populatePlansFormArray(this.plans, planInputs);
+	}
+
+	/**
+	 * Gets the plans FormArray from the form
+	 */
 	public get plans(): FormArray {
-		return this.plansForm.get('plans') as FormArray;
+		return this.plansForm?.get('plans') as FormArray;
 	}
 
+	/**
+	 * Adds a new plan to the form
+	 * Uses the form builder service for plan creation
+	 */
 	public addPlan(plan?: Partial<IPluginPlanCreateInput>): void {
 		if (!this.allowMultiplePlans && this.plans.length >= 1) {
 			return;
 		}
 
-		const planGroup = this.createPlanFormGroup(plan);
+		const planGroup = this.formBuilderService.createPlanFormGroup(plan);
 		this.plans.push(planGroup);
 		this.emitChanges();
 	}
 
+	/**
+	 * Removes a plan from the form at the specified index
+	 */
 	public removePlan(index: number): void {
 		if (this.requireAtLeastOnePlan && this.plans.length <= 1) {
 			return;
@@ -118,31 +192,43 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 		this.emitChanges();
 	}
 
+	/**
+	 * Duplicates an existing plan
+	 */
 	public duplicatePlan(index: number): void {
 		if (!this.allowMultiplePlans) {
 			return;
 		}
 
-		const planValue = this.plans.at(index).value;
-		const duplicatedPlan = {
+		const planValue = this.plans.at(index).value as IPluginPlanCreateInput;
+		const duplicatedPlan: Partial<IPluginPlanCreateInput> = {
 			...planValue,
 			name: `${planValue.name} (Copy)`
 		};
 		this.addPlan(duplicatedPlan);
 	}
 
-	// Feature management for a specific plan
+	/**
+	 * Gets the features FormArray for a specific plan
+	 */
 	public getPlanFeatures(planIndex: number): FormArray {
 		const plan = this.plans.at(planIndex) as FormGroup;
 		return plan.get('features') as FormArray;
 	}
 
+	/**
+	 * Adds a new feature to a plan
+	 */
 	public addFeature(planIndex: number): void {
 		const features = this.getPlanFeatures(planIndex);
-		features.push(this.formBuilder.control('', Validators.required));
+		const featureControl = this.formBuilderService.createFeatureControl();
+		features.push(featureControl);
 		this.emitChanges();
 	}
 
+	/**
+	 * Removes a feature from a plan
+	 */
 	public removeFeature(planIndex: number, featureIndex: number): void {
 		const features = this.getPlanFeatures(planIndex);
 		if (features.length > 1) {
@@ -151,130 +237,83 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 		}
 	}
 
-	// Auto-fill plan details based on type
+	/**
+	 * Handles plan type change and applies preset values
+	 * Uses the form builder service for preset creation
+	 */
 	public onPlanTypeChange(planIndex: number): void {
 		const plan = this.plans.at(planIndex) as FormGroup;
-		const type = plan.get('type')?.value;
+		const type = plan.get('type')?.value as PluginSubscriptionType;
 
-		const presets = this.getTypePresets(type);
-		plan.patchValue(presets, { emitEvent: false });
+		if (!type) {
+			return;
+		}
+
+		// Create a new plan with presets
+		const presetPlan = this.formBuilderService.createPlanWithPresets(type);
+		const presetValue = presetPlan.value;
+
+		// Patch the current plan with preset values (excluding type to avoid recursion)
+		plan.patchValue(
+			{
+				name: presetValue.name,
+				description: presetValue.description,
+				price: presetValue.price,
+				currency: presetValue.currency,
+				billingPeriod: presetValue.billingPeriod,
+				limitations: presetValue.limitations,
+				trialDays: presetValue.trialDays,
+				setupFee: presetValue.setupFee,
+				discountPercentage: presetValue.discountPercentage,
+				isPopular: presetValue.isPopular,
+				isRecommended: presetValue.isRecommended
+			},
+			{ emitEvent: false }
+		);
 
 		// Update features array
 		const features = this.getPlanFeatures(planIndex);
 		features.clear();
-		presets.features.forEach((feature: string) => {
-			features.push(this.formBuilder.control(feature, Validators.required));
-		});
+		const presetFeatures = presetValue.features as string[];
+		if (presetFeatures && presetFeatures.length > 0) {
+			presetFeatures.forEach((feature: string) => {
+				features.push(this.formBuilderService.createFeatureControl(feature));
+			});
+		}
 
 		this.emitChanges();
 	}
 
-	private getTypePresets(type: PluginSubscriptionType): Partial<IPluginPlanCreateInput> {
-		const presets: Record<PluginSubscriptionType, Partial<IPluginPlanCreateInput>> = {
-			[PluginSubscriptionType.FREE]: {
-				name: 'Free Plan',
-				description: 'Basic features for getting started',
-				price: 0,
-				currency: 'USD',
-				billingPeriod: PluginBillingPeriod.MONTHLY,
-				features: ['Basic functionality', 'Email support'],
-				limitations: {
-					maxUsers: 5,
-					maxProjects: 3,
-					apiCallsPerMonth: 1000
-				}
-			},
-			[PluginSubscriptionType.TRIAL]: {
-				name: 'Trial Plan',
-				description: 'Full access for a limited time',
-				price: 0,
-				currency: 'USD',
-				billingPeriod: PluginBillingPeriod.MONTHLY,
-				trialDays: 14,
-				features: ['All premium features', 'Priority support', 'Advanced analytics'],
-				limitations: {}
-			},
-			[PluginSubscriptionType.BASIC]: {
-				name: 'Basic Plan',
-				description: 'Essential features for small teams',
-				price: 9.99,
-				currency: 'USD',
-				billingPeriod: PluginBillingPeriod.MONTHLY,
-				features: ['Core functionality', 'Email support', 'Basic analytics'],
-				limitations: {
-					maxUsers: 10,
-					maxProjects: 10,
-					apiCallsPerMonth: 5000
-				}
-			},
-			[PluginSubscriptionType.PREMIUM]: {
-				name: 'Premium Plan',
-				description: 'Advanced features for growing teams',
-				price: 29.99,
-				currency: 'USD',
-				billingPeriod: PluginBillingPeriod.MONTHLY,
-				features: ['Advanced functionality', 'Priority support', 'Advanced analytics', 'Integrations'],
-				limitations: {
-					maxUsers: 50,
-					maxProjects: 50,
-					apiCallsPerMonth: 25000
-				}
-			},
-			[PluginSubscriptionType.ENTERPRISE]: {
-				name: 'Enterprise Plan',
-				description: 'Full features for large organizations',
-				price: 99.99,
-				currency: 'USD',
-				billingPeriod: PluginBillingPeriod.MONTHLY,
-				features: [
-					'All features',
-					'24/7 support',
-					'Custom integrations',
-					'Advanced security',
-					'Dedicated manager'
-				],
-				limitations: {}
-			},
-			[PluginSubscriptionType.CUSTOM]: {
-				name: 'Custom Plan',
-				description: 'Tailored solution for specific needs',
-				price: 0,
-				currency: 'USD',
-				billingPeriod: PluginBillingPeriod.MONTHLY,
-				features: ['Custom features'],
-				limitations: {}
-			}
-		};
-
-		return presets[type] || presets[PluginSubscriptionType.FREE];
-	}
-
+	/**
+	 * Emits form changes and validation state to parent component
+	 * Uses form builder service for validation
+	 */
 	private emitChanges(): void {
-		const plansValue = this.plans.value as IPluginPlanCreateInput[];
-		const validPlans = plansValue.filter((plan) => this.isPlanValid(plan));
+		if (!this.isInitialized) {
+			return;
+		}
 
-		this.plansChanged.emit(validPlans);
+		const formValue = this.plansForm.value;
+		const validPlans = this.formBuilderService.extractValidPlansFromForm(formValue);
+
+		// Add pluginId to each plan if available
+		const plansWithPluginId = validPlans.map((plan) => ({
+			...plan,
+			pluginId: this.pluginId || plan.pluginId
+		}));
+
+		this.plansChanged.emit(plansWithPluginId);
 
 		// Emit validation state
 		const isValid = this.isFormValid();
 		this.validationStateChanged.emit(isValid);
 	}
 
-	private isPlanValid(plan: IPluginPlanCreateInput): boolean {
-		return !!(
-			plan.name?.trim() &&
-			plan.description?.trim() &&
-			plan.type &&
-			plan.price >= 0 &&
-			plan.currency &&
-			plan.billingPeriod &&
-			plan.features?.length > 0 &&
-			plan.features.every((feature) => feature.trim())
-		);
-	}
-
+	/**
+	 * Validates if the entire form is valid
+	 */
 	private isFormValid(): boolean {
-		if (!this.plansForm.valid) {
+		if (!this.plansForm?.valid) {
 			return false;
 		}
 
@@ -282,35 +321,36 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 			return false;
 		}
 
-		const plansValue = this.plans.value as IPluginPlanCreateInput[];
-		return plansValue.every((plan) => this.isPlanValid(plan));
+		const formValue = this.plansForm.value;
+		const validPlans = this.formBuilderService.extractValidPlansFromForm(formValue);
+
+		return validPlans.length > 0;
 	}
 
-	// Helper methods for template
+	/**
+	 * Formats currency using the format service
+	 */
 	public formatCurrency(amount: number, currency: string): string {
-		return new Intl.NumberFormat(undefined, {
-			style: 'currency',
-			currency: currency || 'USD'
-		}).format(amount);
+		return this.formatService.formatCurrency(amount, currency);
 	}
 
+	/**
+	 * Formats billing period using the format service
+	 */
 	public formatBillingPeriod(period: PluginBillingPeriod): string {
-		const periodMap = {
-			[PluginBillingPeriod.DAILY]: 'day',
-			[PluginBillingPeriod.WEEKLY]: 'week',
-			[PluginBillingPeriod.MONTHLY]: 'month',
-			[PluginBillingPeriod.QUARTERLY]: 'quarter',
-			[PluginBillingPeriod.YEARLY]: 'year',
-			[PluginBillingPeriod.ONE_TIME]: 'one-time'
-		};
-
-		return periodMap[period] || period;
+		return this.formatService.formatBillingPeriod(period);
 	}
 
+	/**
+	 * Checks if a plan can be removed based on configuration
+	 */
 	public canRemovePlan(): boolean {
 		return !this.requireAtLeastOnePlan || this.plans.length > 1;
 	}
 
+	/**
+	 * Checks if a plan can be added based on configuration
+	 */
 	public canAddPlan(): boolean {
 		return this.allowMultiplePlans || this.plans.length === 0;
 	}

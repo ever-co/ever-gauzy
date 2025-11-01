@@ -82,7 +82,7 @@
 						<div class="subscription-toggle">
 							<nb-checkbox
 								[(ngModel)]="enableSubscriptions"
-								[ngModelOptions]="{standalone: true}"
+								[ngModelOptions]="{ standalone: true }"
 								(checkedChange)="toggleSubscriptions($event)"
 							>
 								{{ 'PLUGIN.FORM.ENABLE_SUBSCRIPTIONS' | translate }}
@@ -92,7 +92,8 @@
 							</p>
 						</div>
 
-						<div *ngIf="enableSubscriptions" class="subscription-creator-container">
+						@if(enableSubscriptions){
+						<div class="subscription-creator-container">
 							<lib-plugin-subscription-plan-creator
 								[pluginId]="plugin?.id"
 								[allowMultiplePlans]="true"
@@ -101,13 +102,14 @@
 								(validationStateChanged)="onSubscriptionValidationChanged($event)"
 							></lib-plugin-subscription-plan-creator>
 						</div>
-
-						<div *ngIf="!enableSubscriptions" class="no-subscription-message">
+						}@else{
+						<div class="no-subscription-message">
 							<nb-alert status="info" size="small">
 								<nb-icon icon="info-outline"></nb-icon>
 								{{ 'PLUGIN.FORM.FREE_PLUGIN_MESSAGE' | translate }}
 							</nb-alert>
 						</div>
+						}
 					</div>
 
 					<div class="stepper-buttons">
@@ -168,10 +170,7 @@
 						<div class="review-section" *ngIf="enableSubscriptions && subscriptionPlans.length > 0">
 							<h6>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_SUMMARY' | translate }}</h6>
 							<div class="subscription-plans-preview">
-								<div
-									*ngFor="let plan of subscriptionPlans"
-									class="plan-preview-card"
-								>
+								<div *ngFor="let plan of subscriptionPlans" class="plan-preview-card">
 									<div class="plan-header">
 										<span class="plan-name">{{ plan.name }}</span>
 										<nb-badge [status]="plan.type === 'FREE' ? 'success' : 'primary'">
@@ -181,8 +180,9 @@
 									<div class="plan-price">
 										<span *ngIf="plan.price === 0">Free</span>
 										<span *ngIf="plan.price > 0">
-											{{ plan.currency === 'USD' ? '$' : plan.currency }}{{ plan.price }}
-											/{{ plan.billingPeriod }}
+											{{ plan.currency === 'USD' ? '$' : plan.currency }}{{ plan.price }} /{{
+												plan.billingPeriod
+											}}
 										</span>
 									</div>
 									<div class="plan-features">

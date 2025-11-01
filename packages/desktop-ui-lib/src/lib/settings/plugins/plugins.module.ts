@@ -5,30 +5,30 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
-    NbAlertModule,
-    NbBadgeModule,
-    NbButtonGroupModule,
-    NbButtonModule,
-    NbCardModule,
-    NbCheckboxModule,
-    NbContextMenuModule,
-    NbDatepickerModule,
-    NbDialogModule,
-    NbFormFieldModule,
-    NbIconModule,
-    NbInfiniteListDirective,
-    NbInputModule,
-    NbListModule,
-    NbRadioModule,
-    NbRouteTabsetModule,
-    NbSelectModule,
-    NbSpinnerModule,
-    NbStepperModule,
-    NbTabsetModule,
-    NbTagModule,
-    NbToggleModule,
-    NbTooltipModule,
-    NbUserModule
+	NbAlertModule,
+	NbBadgeModule,
+	NbButtonGroupModule,
+	NbButtonModule,
+	NbCardModule,
+	NbCheckboxModule,
+	NbContextMenuModule,
+	NbDatepickerModule,
+	NbDialogModule,
+	NbFormFieldModule,
+	NbIconModule,
+	NbInfiniteListDirective,
+	NbInputModule,
+	NbListModule,
+	NbRadioModule,
+	NbRouteTabsetModule,
+	NbSelectModule,
+	NbSpinnerModule,
+	NbStepperModule,
+	NbTabsetModule,
+	NbTagModule,
+	NbToggleModule,
+	NbTooltipModule,
+	NbUserModule
 } from '@nebular/theme';
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
@@ -78,12 +78,12 @@ import { CdnFormComponent } from './component/plugin-marketplace/plugin-marketpl
 import { GauzyFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/gauzy-form/gauzy-form.component';
 import { NpmFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/npm-form/npm-form.component';
 import { PluginSourceComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/plugin-source.component';
+import { PluginSubscriptionPlanCreatorComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-subscription-plan-creator/plugin-subscription-plan-creator.component';
 import { PluginVersionComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-version/plugin-version.component';
 import { PluginMarketplaceComponent } from './component/plugin-marketplace/plugin-marketplace.component';
 import { PluginSettingsManagementComponent } from './component/plugin-marketplace/plugin-settings-management/plugin-settings-management.component';
 import { PluginSettingsManagerComponent } from './component/plugin-marketplace/plugin-settings-manager/plugin-settings-manager.component';
 import { PluginSubscriptionManagerComponent } from './component/plugin-marketplace/plugin-subscription-manager/plugin-subscription-manager.component';
-import { PluginSubscriptionPlanCreatorComponent } from './component/plugin-marketplace/plugin-subscription-plan-creator/plugin-subscription-plan-creator.component';
 import { PlanCardComponent } from './component/plugin-marketplace/plugin-subscription-selection/components/plan-card/plan-card.component';
 import { SubscriptionPreviewComponent } from './component/plugin-marketplace/plugin-subscription-selection/components/subscription-preview/subscription-preview.component';
 import { PluginSubscriptionSelectionComponent } from './component/plugin-marketplace/plugin-subscription-selection/plugin-subscription-selection.component';
