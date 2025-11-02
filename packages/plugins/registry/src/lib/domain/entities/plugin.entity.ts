@@ -122,6 +122,12 @@ export class Plugin extends BaseEntity implements IPlugin {
 	@MultiORMColumn({ nullable: true })
 	uploadedAt?: Date;
 
+	// Add subscription plan enbled flag
+	@ApiProperty({ type: Boolean, description: 'Is subscription plan enabled', default: false })
+	@IsOptional()
+	@MultiORMColumn({ default: false })
+	requiresSubscription?: boolean;
+
 	// Computed source
 	source: IPluginSource;
 

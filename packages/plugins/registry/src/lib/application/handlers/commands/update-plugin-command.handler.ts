@@ -29,6 +29,7 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 	 * @param command - The update plugin command with input data and plugin ID
 	 * @returns The updated plugin
 	 * @throws NotFoundException if plugin, source, or version is not found
+	 * @throws BadRequestException if plugin ID is missing or update fails
 	 */
 	public async execute(command: UpdatePluginCommand): Promise<IPlugin> {
 		const { input, id } = command;
@@ -43,27 +44,28 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 		await queryRunner.startTransaction();
 
 		try {
-			// Check if plugin exists
-			const found = await this.pluginService.findOneOrFailByIdString(id);
-			if (!found.success) {
-				throw new NotFoundException(`Plugin with ID ${id} not found`);
+			// Validate plugin exists - throws NotFoundException if not found
+			const existingPlugin = await this.pluginService.findOneOrFailByIdString(id);
+			if (!existingPlugin.success) {
+				throw new NotFoundException(`Plugin with ID "${id}" not found`);
 			}
 
-			// Update source and version
+			// Update version and sources if provided
 			if (input.version) {
 				await this.versionService.updateVersion(input.version, id);
 
-				if (input.version.sources.length > 0) {
+				// Update sources in parallel if they exist
+				if (input.version.sources?.length > 0) {
 					await Promise.all(
-						input.version.sources.map(async (source) => {
-							this.sourceService.updateSource(source, input.version.id);
-						})
+						input.version.sources.map((source) =>
+							this.sourceService.updateSource(source, input.version.id)
+						)
 					);
 				}
 			}
 
-			// Update plugin
-			const plugin: Partial<IPlugin> = {
+			// Update plugin with only provided fields
+			const pluginUpdate: Partial<IPlugin> = {
 				name: input.name,
 				type: input.type,
 				status: input.status,
@@ -72,54 +74,54 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 				repository: input.repository,
 				author: input.author,
 				license: input.license,
-				homepage: input.homepage
+				homepage: input.homepage,
+				requiresSubscription: input.requiresSubscription
 			};
-			await this.pluginService.update(found.record.id, plugin);
+			await this.pluginService.update(id, pluginUpdate);
 
 			// Handle subscription plans if provided
-			if (input.subscriptionPlans && input.subscriptionPlans.length > 0) {
+			if (input.subscriptionPlans?.length > 0) {
 				const tenantId = RequestContext.currentTenantId();
 				const organizationId = RequestContext.currentOrganizationId();
-				const user = RequestContext.currentUser();
+				const userId = RequestContext.currentUser()?.id;
 
-				for (const planData of input.subscriptionPlans) {
-					// Check if this is an update (has id) or create (no id)
-					if ('id' in planData && planData.id) {
-						// Update existing plan
-						await this.commandBus.execute(new UpdatePluginSubscriptionPlanCommand(planData.id, planData));
-					} else {
-						// Create new plan
-						const planWithPluginId = {
-							...planData,
-							pluginId: id
-						};
-
-						await this.commandBus.execute(
-							new CreatePluginSubscriptionPlanCommand(
-								planWithPluginId,
-								tenantId,
-								organizationId,
-								user?.id
-							)
-						);
-					}
-				}
+				await Promise.all(
+					input.subscriptionPlans.map((planData) => {
+						// Update existing plan if it has an ID, otherwise create new
+						if (planData.id) {
+							return this.commandBus.execute(
+								new UpdatePluginSubscriptionPlanCommand(planData.id, planData)
+							);
+						} else {
+							return this.commandBus.execute(
+								new CreatePluginSubscriptionPlanCommand(
+									{ ...planData, pluginId: id },
+									tenantId,
+									organizationId,
+									userId
+								)
+							);
+						}
+					})
+				);
 			}
 
 			await queryRunner.commitTransaction();
 
 			// Return the updated plugin with relations
-			return this.pluginService.findOneByIdString(id, {
+			return await this.pluginService.findOneByIdString(id, {
 				relations: ['versions', 'versions.sources']
 			});
 		} catch (error) {
 			// Roll back transaction on error
 			await queryRunner.rollbackTransaction();
 
-			if (error instanceof NotFoundException) {
+			// Re-throw known exceptions
+			if (error instanceof NotFoundException || error instanceof BadRequestException) {
 				throw error;
 			}
 
+			// Wrap unknown errors
 			throw new BadRequestException(`Failed to update plugin: ${error.message}`);
 		} finally {
 			// Release resources

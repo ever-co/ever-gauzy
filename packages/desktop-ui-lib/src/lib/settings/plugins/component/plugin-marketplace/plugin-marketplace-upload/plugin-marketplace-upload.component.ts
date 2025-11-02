@@ -31,23 +31,23 @@ import { SourceContext } from './plugin-source/creator/source.context';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
+
 	@ViewChild('stepper', { static: false }) stepper: NbStepperComponent;
+
+	readonly pluginTypes = Object.values(PluginType);
+	readonly pluginStatuses = Object.values(PluginStatus);
+	readonly sourceTypes = Object.values(PluginSourceType);
+	readonly today: Date;
 
 	pluginForm: FormGroup;
 	plugin: IPlugin;
-	pluginTypes = Object.values(PluginType);
-	pluginStatuses = Object.values(PluginStatus);
-	sourceTypes = Object.values(PluginSourceType);
 	isSubmitting = false;
 	formTouched = false;
-	today: Date; // Ensures a proper date comparison
-	destroy$ = new Subject<void>();
 	selectedSourceType: PluginSourceType = PluginSourceType.CDN;
 
 	// Subscription plan properties
 	subscriptionPlans: IPluginPlanCreateInput[] = [];
 	isSubscriptionStepValid = false;
-	enableSubscriptions = false;
 
 	constructor(
 		private readonly dialogRef: NbDialogRef<PluginMarketplaceUploadComponent>,
@@ -68,16 +68,19 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		this.setupVersionListeners();
 	}
 
-	private setupVersionListeners() {
+	private setupVersionListeners(): void {
 		this.versionQuery.version$
 			.pipe(
-				filter(() => Boolean(this.plugin)),
+				filter(() => !!this.plugin),
 				tap((version) => {
-					this.plugin = {
-						...this.plugin,
-						version: this.plugin?.version ? version : null
-					};
-					this.patch();
+					// Only update if plugin exists and has a version
+					if (this.plugin?.version) {
+						this.plugin = {
+							...this.plugin,
+							version
+						};
+						this.patch();
+					}
 				}),
 				untilDestroyed(this)
 			)
@@ -95,16 +98,31 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			author: new FormControl('', Validators.maxLength(100)),
 			license: new FormControl('', Validators.maxLength(50)),
 			homepage: new FormControl('', Validators.pattern(patterns.websiteUrl)),
-			repository: new FormControl('', Validators.pattern(patterns.websiteUrl))
+			repository: new FormControl('', Validators.pattern(patterns.websiteUrl)),
+			requiresSubscription: new FormControl(false)
 		});
 	}
 
 	private patch(): void {
-		if (!this.plugin) return;
+		if (!this.plugin) {
+			return;
+		}
 
-		const { name, description, type, status, version, author, license, homepage, repository } = this.plugin;
+		const {
+			name,
+			description,
+			type,
+			status,
+			version,
+			author,
+			license,
+			homepage,
+			repository,
+			requiresSubscription
+		} = this.plugin;
 
-		const data: Partial<IPlugin> = {
+		// Patch basic plugin data
+		this.pluginForm.patchValue({
 			name,
 			description,
 			type,
@@ -112,23 +130,28 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			author,
 			license,
 			homepage,
-			repository
-		};
+			repository,
+			requiresSubscription
+		});
 
-		if (!version) return;
-
-		data.version = { ...version };
-
-		const sources = version.sources ?? [];
-		const versionGroup = this.pluginForm.get('version') as FormGroup;
-		const sourcesArray = versionGroup.get('sources') as FormArray;
-		sourcesArray.clear();
-
-		for (const source of sources) {
-			this.addSource(source.type, source);
+		// Handle version and sources separately
+		if (version) {
+			const versionGroup = this.pluginForm.get('version') as FormGroup;
+			const sourcesArray = versionGroup?.get('sources') as FormArray;
+			
+			// Patch version data (excluding sources)
+			versionGroup?.patchValue({
+				number: version.number,
+				changelog: version.changelog,
+				releaseDate: version.releaseDate
+			});
+			
+			// Clear and repopulate sources array
+			if (sourcesArray && version.sources?.length) {
+				sourcesArray.clear();
+				version.sources.forEach((source) => this.addSource(source.type, source));
+			}
 		}
-
-		this.pluginForm.patchValue(data);
 	}
 
 	public addSource(type: PluginSourceType = this.selectedSourceType, data?: IPluginSource): void {
@@ -137,14 +160,17 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	}
 
 	public removeSource(idx: number): void {
-		if (this.plugin && this.plugin.version) {
+		const source = this.sources.at(idx)?.value as IPluginSource;
+		
+		// If the source has an ID, it's persisted and needs confirmation
+		if (source?.id && this.plugin?.version) {
 			this.dialog
 				.open(AlertComponent, {
 					context: {
 						data: {
-							message: 'Delete this source?',
-							title: 'Delete Source',
-							confirmText: 'Delete',
+							message: this.translateService.instant('PLUGIN.SOURCE.DELETE_CONFIRMATION'),
+							title: this.translateService.instant('PLUGIN.SOURCE.DELETE_TITLE'),
+							confirmText: this.translateService.instant('BUTTONS.DELETE'),
 							status: 'basic'
 						}
 					}
@@ -153,29 +179,34 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 					take(1),
 					filter(Boolean),
 					tap(() => {
-						const { id } = this.sources.at(idx).value as IPluginSource;
-						const {
-							id: pluginId,
-							version: { id: versionId }
-						} = this.plugin;
+						const { id: pluginId, version } = this.plugin;
+						this.action.dispatch(PluginSourceActions.delete(pluginId, version.id, source.id));
 						this.sources.removeAt(idx);
-						this.action.dispatch(PluginSourceActions.delete(pluginId, versionId, id));
-					})
+					}),
+					untilDestroyed(this)
 				)
 				.subscribe();
 		} else {
+			// No confirmation needed for unsaved sources
 			this.sources.removeAt(idx);
 		}
 	}
 
 	public restoreSource(idx: number): void {
+		const source = this.sources.at(idx)?.value as IPluginSource;
+		
+		// Validate source and plugin before showing confirmation
+		if (!source?.id || !source?.versionId || !this.plugin?.id) {
+			return;
+		}
+
 		this.dialog
 			.open(AlertComponent, {
 				context: {
 					data: {
-						message: 'Restore this source?',
-						title: 'Restore Source',
-						confirmText: 'Restore',
+						message: this.translateService.instant('PLUGIN.SOURCE.RESTORE_CONFIRMATION'),
+						title: this.translateService.instant('PLUGIN.SOURCE.RESTORE_TITLE'),
+						confirmText: this.translateService.instant('BUTTONS.RESTORE'),
 						status: 'basic'
 					}
 				}
@@ -184,9 +215,11 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 				take(1),
 				filter(Boolean),
 				tap(() => {
-					const { id, versionId } = this.sources.at(idx).value as IPluginSource;
-					this.action.dispatch(PluginSourceActions.restore(this.plugin.id, versionId, id));
-				})
+					this.action.dispatch(
+						PluginSourceActions.restore(this.plugin.id, source.versionId, source.id)
+					);
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -206,11 +239,12 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 	/**
 	 * Custom validator to ensure the release date is not in the future.
-	 * Note: today is recalculated each time for accuracy.
 	 */
 	private pastDateValidator(): ValidatorFn {
 		return (control: AbstractControl): ValidationErrors | null => {
-			if (!control.value) return null;
+			if (!control.value) {
+				return null;
+			}
 			const inputDate = new Date(control.value);
 			const today = this.dateService.today();
 			return inputDate > today ? { futureDate: true } : null;
@@ -220,20 +254,25 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	public reset(): void {
 		this.initForm();
 		this.formTouched = false;
+		this.isSubmitting = false;
+		this.subscriptionPlans = [];
+		this.isSubscriptionStepValid = false;
 	}
 
 	public submit(): void {
 		this.formTouched = true;
+		this.markFormGroupTouched(this.pluginForm);
 
+		// Validate form
 		if (this.pluginForm.invalid) {
-			this.markFormGroupTouched(this.pluginForm);
 			this.scrollToFirstInvalidControl();
 			this.toastrService.error(this.translateService.instant('PLUGIN.FORM.VALIDATION.FAILED'));
 			return;
 		}
 
-		// Check subscription plans validation if subscriptions are enabled
-		if (this.enableSubscriptions && !this.isSubscriptionStepValid) {
+		// Validate subscription plans if required
+		const requiresSubscription = this.pluginForm.get('requiresSubscription')?.value;
+		if (requiresSubscription && !this.isSubscriptionStepValid) {
 			this.toastrService.error(
 				this.translateService.instant('PLUGIN.FORM.VALIDATION.SUBSCRIPTION_PLANS_INVALID')
 			);
@@ -242,23 +281,27 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 		this.isSubmitting = true;
 
-		const pluginData = this.pluginForm.value;
+		try {
+			const pluginData = { ...this.pluginForm.value };
 
-		// Add subscription plans to the plugin data if enabled
-		if (this.enableSubscriptions && this.subscriptionPlans.length > 0) {
-			pluginData.subscriptionPlans = this.subscriptionPlans;
+			// Add subscription plans to the plugin data if enabled
+			if (requiresSubscription && this.subscriptionPlans.length > 0) {
+				pluginData.subscriptionPlans = this.subscriptionPlans;
+			}
+
+			this.dialogRef.close(pluginData);
+		} finally {
+			this.isSubmitting = false;
 		}
-
-		this.dialogRef.close(pluginData);
-		this.isSubmitting = false;
 	}
 
-	// Subscription plan related methods
-	public onSubscriptionPlansChanged(plans: any[]): void {
-		this.subscriptionPlans = plans.map((plan) => ({
-			...plan,
-			pluginId: this.plugin?.id || undefined
-		}));
+	/**
+	 * Handle subscription plan changes from child component
+	 */
+	public onSubscriptionPlansChanged(plans: IPluginPlanCreateInput[]): void {
+		this.subscriptionPlans = plans?.length
+			? plans.map((plan) => ({ ...plan, pluginId: this.plugin?.id }))
+			: [];
 	}
 
 	public onSubscriptionValidationChanged(isValid: boolean): void {
@@ -266,7 +309,6 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	}
 
 	public toggleSubscriptions(enabled: boolean): void {
-		this.enableSubscriptions = enabled;
 		if (!enabled) {
 			this.subscriptionPlans = [];
 			this.isSubscriptionStepValid = true;
@@ -274,31 +316,29 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	}
 
 	public isSubscriptionStepComplete(): boolean {
-		if (!this.enableSubscriptions) {
+		const requiresSubscription = this.pluginForm.get('requiresSubscription')?.value;
+		if (!requiresSubscription) {
 			return true;
 		}
 		return this.isSubscriptionStepValid && this.subscriptionPlans.length > 0;
 	}
 
 	public canProceedToFinalStep(): boolean {
-		return this.pluginForm.valid && (!this.enableSubscriptions || this.isSubscriptionStepComplete());
+		const requiresSubscription = this.pluginForm.get('requiresSubscription')?.value;
+		return this.pluginForm.valid && (!requiresSubscription || this.isSubscriptionStepComplete());
 	}
 
 	public get sources(): FormArray {
-		if (!this.pluginForm) return new FormArray([]);
-		const versionGroup = this.pluginForm.get('version');
-		if (!versionGroup) return new FormArray([]);
-		const sourcesArray = (versionGroup as FormGroup).get('sources');
-		if (!sourcesArray) return new FormArray([]);
-		return sourcesArray as FormArray;
+		return (this.pluginForm?.get('version') as FormGroup)?.get('sources') as FormArray;
 	}
 
 	private scrollToFirstInvalidControl(): void {
-		const firstInvalidControl = document.querySelector('form .ng-invalid') as HTMLElement;
-		if (firstInvalidControl) {
-			firstInvalidControl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-			firstInvalidControl.focus?.();
-		}
+		// Use setTimeout to ensure DOM has updated after marking controls as touched
+		setTimeout(() => {
+			const firstInvalidControl = document.querySelector('form .ng-invalid') as HTMLElement;
+			firstInvalidControl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			firstInvalidControl?.focus?.();
+		}, 0);
 	}
 
 	private markFormGroupTouched(formGroup: FormGroup): void {
@@ -308,6 +348,15 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 			if (control instanceof FormGroup) {
 				this.markFormGroupTouched(control);
+			} else if (control instanceof FormArray) {
+				control.controls.forEach((arrayControl) => {
+					if (arrayControl instanceof FormGroup) {
+						this.markFormGroupTouched(arrayControl);
+					} else {
+						arrayControl.markAsTouched();
+						arrayControl.markAsDirty();
+					}
+				});
 			}
 		});
 	}
@@ -317,12 +366,10 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	}
 
 	public get isFormInvalid(): boolean {
-		return this.pluginForm.invalid;
+		return this.pluginForm?.invalid ?? true;
 	}
 
 	ngOnDestroy(): void {
-		this.reset();
-		this.destroy$.next();
-		this.destroy$.complete();
+		// Clean up is handled by @UntilDestroy decorator
 	}
 }

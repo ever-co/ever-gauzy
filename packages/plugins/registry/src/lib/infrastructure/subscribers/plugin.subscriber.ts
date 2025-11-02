@@ -107,7 +107,7 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			entity.installed = installation.success;
 
 			// Add the hasPlan state
-			entity.hasPlan = hasPlan;
+			entity.hasPlan = hasPlan && entity.requiresSubscription;
 
 			this.logger.debug(`Total downloads for plugin ${entity.id}: ${downloadCount}`);
 		} catch (error) {

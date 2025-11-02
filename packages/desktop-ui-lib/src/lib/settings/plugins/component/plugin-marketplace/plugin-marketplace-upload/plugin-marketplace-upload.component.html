@@ -81,8 +81,7 @@
 					<div class="subscription-step-content">
 						<div class="subscription-toggle">
 							<nb-checkbox
-								[(ngModel)]="enableSubscriptions"
-								[ngModelOptions]="{ standalone: true }"
+								formControlName="requiresSubscription"
 								(checkedChange)="toggleSubscriptions($event)"
 							>
 								{{ 'PLUGIN.FORM.ENABLE_SUBSCRIPTIONS' | translate }}
@@ -92,12 +91,12 @@
 							</p>
 						</div>
 
-						@if(enableSubscriptions){
+						@if(pluginForm.get('requiresSubscription')?.value){
 						<div class="subscription-creator-container">
 							<lib-plugin-subscription-plan-creator
 								[pluginId]="plugin?.id"
 								[allowMultiplePlans]="true"
-								[requireAtLeastOnePlan]="enableSubscriptions"
+								[requireAtLeastOnePlan]="pluginForm.get('requiresSubscription')?.value"
 								(plansChanged)="onSubscriptionPlansChanged($event)"
 								(validationStateChanged)="onSubscriptionValidationChanged($event)"
 							></lib-plugin-subscription-plan-creator>
@@ -120,7 +119,7 @@
 							nbButton
 							status="primary"
 							nbStepperNext
-							[disabled]="enableSubscriptions && !isSubscriptionStepComplete()"
+							[disabled]="pluginForm.get('requiresSubscription')?.value && !isSubscriptionStepComplete()"
 						>
 							{{ 'BUTTONS.NEXT' | translate }}
 						</button>
@@ -167,7 +166,10 @@
 						</div>
 
 						<!-- Subscription Plans Summary -->
-						<div class="review-section" *ngIf="enableSubscriptions && subscriptionPlans.length > 0">
+						<div
+							class="review-section"
+							*ngIf="pluginForm.get('requiresSubscription')?.value && subscriptionPlans.length > 0"
+						>
 							<h6>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_SUMMARY' | translate }}</h6>
 							<div class="subscription-plans-preview">
 								<div *ngFor="let plan of subscriptionPlans" class="plan-preview-card">
@@ -193,7 +195,7 @@
 						</div>
 
 						<!-- Free Plugin Message -->
-						<div class="review-section" *ngIf="!enableSubscriptions">
+						<div class="review-section" *ngIf="!pluginForm.get('requiresSubscription')?.value">
 							<nb-alert status="success" size="small">
 								<nb-icon icon="gift-outline"></nb-icon>
 								{{ 'PLUGIN.FORM.FREE_PLUGIN_REVIEW_MESSAGE' | translate }}

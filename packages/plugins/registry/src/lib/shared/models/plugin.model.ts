@@ -29,6 +29,7 @@ export interface IPluginUpdate {
 	license?: string;
 	homepage?: string;
 	repository?: string;
+	requiresSubscription?: boolean;
 	version?: IPluginVersionUpdate;
 	subscriptionPlans?: Array<IPluginSubscriptionPlanCreateInput | (IPluginSubscriptionPlanUpdateInput & { id: ID })>;
 }
@@ -51,6 +52,7 @@ export interface IPlugin extends BaseEntityModel {
 	uploadedAt?: Date; // Optional date when the plugin was uploaded
 
 	source?: IPluginSource; // Optional reference to the plugin's source
+	requiresSubscription?: boolean; // Flag indicating if subscription plans are enable
 
 	installed: boolean; // Flag indicating if the plugin is installed
 	hasPlan: boolean; // Flag indicating if the plugin has at least one subscription plan

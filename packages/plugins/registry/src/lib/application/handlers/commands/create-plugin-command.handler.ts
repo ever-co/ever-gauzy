@@ -47,6 +47,11 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 		try {
 			// Create the plugin
 			const plugin = Object.assign(new Plugin(), input);
+			// Check if has plans
+			const requiresSubscription = input.subscriptionPlans && input.subscriptionPlans.length > 0;
+			// Requires subscription if plans are provided
+			plugin.requiresSubscription = requiresSubscription;
+			// Save the plugin
 			const savedPlugin = await this.pluginService.save(plugin);
 
 			// Process source and version if provided
@@ -56,7 +61,7 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 			}
 
 			// Create subscription plans if provided
-			if (input.subscriptionPlans && input.subscriptionPlans.length > 0) {
+			if (requiresSubscription) {
 				const tenantId = RequestContext.currentTenantId();
 				const organizationId = RequestContext.currentOrganizationId();
 				const user = RequestContext.currentUser();
