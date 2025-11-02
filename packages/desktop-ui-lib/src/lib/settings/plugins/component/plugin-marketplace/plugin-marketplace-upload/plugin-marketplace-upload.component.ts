@@ -13,7 +13,7 @@ import { NbDateService, NbDialogRef, NbDialogService, NbStepperComponent } from 
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, Subject, take, tap } from 'rxjs';
+import { filter, take, tap } from 'rxjs';
 import { PluginSourceActions } from '../+state/actions/plugin-source.action';
 import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
 import { patterns } from '../../../../../constants';
@@ -138,14 +138,14 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		if (version) {
 			const versionGroup = this.pluginForm.get('version') as FormGroup;
 			const sourcesArray = versionGroup?.get('sources') as FormArray;
-			
+
 			// Patch version data (excluding sources)
 			versionGroup?.patchValue({
 				number: version.number,
 				changelog: version.changelog,
 				releaseDate: version.releaseDate
 			});
-			
+
 			// Clear and repopulate sources array
 			if (sourcesArray && version.sources?.length) {
 				sourcesArray.clear();
@@ -161,7 +161,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 	public removeSource(idx: number): void {
 		const source = this.sources.at(idx)?.value as IPluginSource;
-		
+
 		// If the source has an ID, it's persisted and needs confirmation
 		if (source?.id && this.plugin?.version) {
 			this.dialog
@@ -194,7 +194,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 	public restoreSource(idx: number): void {
 		const source = this.sources.at(idx)?.value as IPluginSource;
-		
+
 		// Validate source and plugin before showing confirmation
 		if (!source?.id || !source?.versionId || !this.plugin?.id) {
 			return;

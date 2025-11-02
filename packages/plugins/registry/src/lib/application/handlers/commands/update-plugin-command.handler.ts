@@ -57,9 +57,7 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 				// Update sources in parallel if they exist
 				if (input.version.sources?.length > 0) {
 					await Promise.all(
-						input.version.sources.map((source) =>
-							this.sourceService.updateSource(source, input.version.id)
-						)
+						input.version.sources.map((source) => this.sourceService.updateSource(source, input.version.id))
 					);
 				}
 			}
