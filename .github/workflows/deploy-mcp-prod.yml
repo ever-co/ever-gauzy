@@ -2,7 +2,7 @@ name: Deploy MCP to DigitalOcean Prod
 
 on:
   workflow_run:
-    workflows: ["Build and Publish Gauzy MCP Image"]
+    workflows: ['Build and Publish Gauzy MCP Image Prod']
     branches: [master]
     types:
       - completed
@@ -40,43 +40,44 @@ jobs:
           envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.mcp.prod.yaml | kubectl --context do-sfo2-k8s-gauzy apply -f -
         env:
           # MCP Server Configuration
-          MCP_TRANSPORT: "${{ secrets.MCP_TRANSPORT }}"
-          MCP_SERVER_MODE: "${{ secrets.MCP_SERVER_MODE }}"
-          MCP_HTTP_PORT: "${{ secrets.MCP_HTTP_PORT }}"
-          MCP_HTTP_HOST: "${{ secrets.MCP_HTTP_HOST }}"
-          MCP_WS_PORT: "${{ secrets.MCP_WS_PORT }}"
-          MCP_WS_HOST: "${{ secrets.MCP_WS_HOST }}"
+          REDIS_URL: '${{ secrets.REDIS_URL }}'
+          MCP_TRANSPORT: '${{ secrets.MCP_TRANSPORT }}'
+          MCP_SERVER_MODE: '${{ secrets.MCP_SERVER_MODE }}'
+          MCP_HTTP_PORT: '${{ secrets.MCP_HTTP_PORT }}'
+          MCP_HTTP_HOST: '${{ secrets.MCP_HTTP_HOST }}'
+          MCP_WS_PORT: '${{ secrets.MCP_WS_PORT }}'
+          MCP_WS_HOST: '${{ secrets.MCP_WS_HOST }}'
 
           # Security and CORS
-          MCP_CORS_ORIGIN: "${{ secrets.MCP_CORS_ORIGIN_PROD }}"
-          MCP_CORS_CREDENTIALS: "${{ secrets.MCP_CORS_CREDENTIALS }}"
+          MCP_CORS_ORIGIN: '${{ secrets.MCP_CORS_ORIGIN_PROD }}'
+          MCP_CORS_CREDENTIALS: '${{ secrets.MCP_CORS_CREDENTIALS }}'
 
           # OAuth 2.0 Authorization
-          MCP_AUTH_ENABLED: "${{ secrets.MCP_AUTH_ENABLED }}"
-          MCP_AUTH_RESOURCE_URI: "${{ secrets.MCP_AUTH_RESOURCE_URI_PROD }}"
-          MCP_AUTH_REQUIRED_SCOPES: "${{ secrets.MCP_AUTH_REQUIRED_SCOPES }}"
-          MCP_AUTH_SERVERS: "${{ secrets.MCP_AUTH_SERVERS }}"
-          MCP_AUTH_JWT_AUDIENCE: "${{ secrets.MCP_AUTH_JWT_AUDIENCE_PROD }}"
-          MCP_AUTH_JWT_ISSUER: "${{ secrets.MCP_AUTH_JWT_ISSUER }}"
-          MCP_AUTH_JWT_ALGORITHMS: "${{ secrets.MCP_AUTH_JWT_ALGORITHMS }}"
-          MCP_AUTH_JWT_JWKS_URI: "${{ secrets.MCP_AUTH_JWT_JWKS_URI }}"
-          MCP_AUTH_TOKEN_CACHE_TTL: "${{ secrets.MCP_AUTH_TOKEN_CACHE_TTL }}"
-          MCP_AUTH_METADATA_CACHE_TTL: "${{ secrets.MCP_AUTH_METADATA_CACHE_TTL }}"
+          MCP_AUTH_ENABLED: '${{ secrets.MCP_AUTH_ENABLED }}'
+          MCP_AUTH_RESOURCE_URI: '${{ secrets.MCP_AUTH_RESOURCE_URI_PROD }}'
+          MCP_AUTH_REQUIRED_SCOPES: '${{ secrets.MCP_AUTH_REQUIRED_SCOPES }}'
+          MCP_AUTH_SERVERS: '${{ secrets.MCP_AUTH_SERVERS }}'
+          MCP_AUTH_JWT_AUDIENCE: '${{ secrets.MCP_AUTH_JWT_AUDIENCE_PROD }}'
+          MCP_AUTH_JWT_ISSUER: '${{ secrets.MCP_AUTH_JWT_ISSUER }}'
+          MCP_AUTH_JWT_ALGORITHMS: '${{ secrets.MCP_AUTH_JWT_ALGORITHMS }}'
+          MCP_AUTH_JWT_JWKS_URI: '${{ secrets.MCP_AUTH_JWT_JWKS_URI }}'
+          MCP_AUTH_TOKEN_CACHE_TTL: '${{ secrets.MCP_AUTH_TOKEN_CACHE_TTL }}'
+          MCP_AUTH_METADATA_CACHE_TTL: '${{ secrets.MCP_AUTH_METADATA_CACHE_TTL }}'
 
           # Session Management
-          MCP_SESSION_ENABLED: "${{ secrets.MCP_SESSION_ENABLED }}"
-          MCP_SESSION_COOKIE_NAME: "${{ secrets.MCP_SESSION_COOKIE_NAME }}"
-          MCP_SESSION_TTL: "${{ secrets.MCP_SESSION_TTL }}"
-          MCP_AUTH_SESSION_SECRET: "${{ secrets.MCP_AUTH_SESSION_SECRET_PROD }}"
+          MCP_SESSION_ENABLED: '${{ secrets.MCP_SESSION_ENABLED }}'
+          MCP_SESSION_COOKIE_NAME: '${{ secrets.MCP_SESSION_COOKIE_NAME }}'
+          MCP_SESSION_TTL: '${{ secrets.MCP_SESSION_TTL }}'
+          MCP_AUTH_SESSION_SECRET: '${{ secrets.MCP_AUTH_SESSION_SECRET_PROD }}'
 
           # Rate Limiting
-          THROTTLE_ENABLED: "${{ secrets.THROTTLE_ENABLED }}"
-          THROTTLE_TTL: "${{ secrets.THROTTLE_TTL }}"
-          THROTTLE_LIMIT: "${{ secrets.THROTTLE_LIMIT }}"
+          THROTTLE_ENABLED: '${{ secrets.THROTTLE_ENABLED }}'
+          THROTTLE_TTL: '${{ secrets.THROTTLE_TTL }}'
+          THROTTLE_LIMIT: '${{ secrets.THROTTLE_LIMIT }}'
 
           # Gauzy API Integration
-          API_BASE_URL: "${{ secrets.API_BASE_URL_PROD }}"
-          GAUZY_AUTO_LOGIN: "${{ secrets.GAUZY_AUTO_LOGIN }}"
+          API_BASE_URL: '${{ secrets.API_BASE_URL_PROD }}'
+          GAUZY_AUTO_LOGIN: '${{ secrets.GAUZY_AUTO_LOGIN }}'
 
       # we need this step because for now we just use :latest tag
       # note: for production we will use different strategy later

@@ -49,6 +49,15 @@ export const DEFAULT_SYSTEM_INTEGRATIONS = [
 		order: 8,
 		redirectUrl: sluggable(IntegrationEnum.ZAPIER),
 		provider: IntegrationEnum.ZAPIER
+	},
+	{
+		name: IntegrationEnum.ACTIVE_PIECES,
+		imgSrc: 'activepieces.svg',
+		isComingSoon: false,
+		integrationTypesMap: <string[]>[IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.AUTOMATION_TOOLS],
+		order: 9,
+		redirectUrl: sluggable(IntegrationEnum.ACTIVE_PIECES),
+		provider: IntegrationEnum.ACTIVE_PIECES
 	}
 ];
 
