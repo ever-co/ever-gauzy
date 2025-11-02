@@ -129,4 +129,60 @@ export class PluginSubscriptionActions {
 	public static resetError = createAction('[Plugin Subscription] Reset Error');
 
 	public static resetState = createAction('[Plugin Subscription] Reset State');
+
+	// Plan CRUD Actions
+	public static createPlan = createAction(
+		'[Plugin Subscription] Create Plan',
+		(planData: Omit<IPluginSubscriptionPlan, 'id' | 'createdAt' | 'updatedAt' | 'isActive'>) => ({ planData })
+	);
+
+	public static createPlanSuccess = createAction(
+		'[Plugin Subscription] Create Plan Success',
+		(plan: IPluginSubscriptionPlan) => ({ plan })
+	);
+
+	public static createPlanFailure = createAction('[Plugin Subscription] Create Plan Failure', (error: string) => ({
+		error
+	}));
+
+	public static updatePlan = createAction(
+		'[Plugin Subscription] Update Plan',
+		(planId: string, updates: Partial<IPluginSubscriptionPlan>) => ({ planId, updates })
+	);
+
+	public static updatePlanSuccess = createAction(
+		'[Plugin Subscription] Update Plan Success',
+		(plan: IPluginSubscriptionPlan) => ({ plan })
+	);
+
+	public static updatePlanFailure = createAction('[Plugin Subscription] Update Plan Failure', (error: string) => ({
+		error
+	}));
+
+	public static deletePlan = createAction('[Plugin Subscription] Delete Plan', (planId: string) => ({ planId }));
+
+	public static deletePlanSuccess = createAction('[Plugin Subscription] Delete Plan Success', (planId: string) => ({
+		planId
+	}));
+
+	public static deletePlanFailure = createAction('[Plugin Subscription] Delete Plan Failure', (error: string) => ({
+		error
+	}));
+
+	public static bulkCreatePlans = createAction(
+		'[Plugin Subscription] Bulk Create Plans',
+		(plansData: Array<Omit<IPluginSubscriptionPlan, 'id' | 'createdAt' | 'updatedAt' | 'isActive'>>) => ({
+			plansData
+		})
+	);
+
+	public static bulkCreatePlansSuccess = createAction(
+		'[Plugin Subscription] Bulk Create Plans Success',
+		(plans: IPluginSubscriptionPlan[]) => ({ plans })
+	);
+
+	public static bulkCreatePlansFailure = createAction(
+		'[Plugin Subscription] Bulk Create Plans Failure',
+		(error: string) => ({ error })
+	);
 }

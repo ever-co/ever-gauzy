@@ -51,6 +51,10 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 	private isInitialized = false;
 	private plansLoaded = false;
 
+	// Track existing plan IDs to differentiate between new and existing plans
+	private existingPlanIds = new Set<string>();
+	private planIdMap = new Map<number, string>(); // Maps form array index to plan ID
+
 	// Expose enums to template
 	public readonly PluginSubscriptionType = PluginSubscriptionType;
 	public readonly PluginBillingPeriod = PluginBillingPeriod;
@@ -131,29 +135,42 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 	/**
 	 * Prepopulates the form with existing plans
 	 * Prevents duplicate additions by checking plansLoaded flag
+	 * Tracks existing plan IDs for update/delete operations
 	 */
 	private prepopulatePlans(plans: IPluginSubscriptionPlan[]): void {
 		if (!plans || plans.length === 0) {
 			return;
 		}
 
+		// Clear existing tracking
+		this.existingPlanIds.clear();
+		this.planIdMap.clear();
+
 		// Convert IPluginSubscriptionPlan to IPluginPlanCreateInput format
-		const planInputs: Partial<IPluginPlanCreateInput>[] = plans.map((plan) => ({
-			pluginId: plan.pluginId,
-			type: plan.type,
-			name: plan.name,
-			description: plan.description,
-			price: plan.price,
-			currency: plan.currency,
-			billingPeriod: plan.billingPeriod,
-			features: plan.features,
-			limitations: plan.limitations,
-			trialDays: plan.trialDays,
-			setupFee: plan.setupFee,
-			discountPercentage: plan.discountPercentage,
-			isPopular: plan.isPopular,
-			isRecommended: plan.isRecommended
-		}));
+		const planInputs: Partial<IPluginPlanCreateInput>[] = plans.map((plan, index) => {
+			// Track existing plan IDs
+			if (plan.id) {
+				this.existingPlanIds.add(plan.id);
+				this.planIdMap.set(index, plan.id);
+			}
+
+			return {
+				pluginId: plan.pluginId,
+				type: plan.type,
+				name: plan.name,
+				description: plan.description,
+				price: plan.price,
+				currency: plan.currency,
+				billingPeriod: plan.billingPeriod,
+				features: plan.features,
+				limitations: plan.limitations,
+				trialDays: plan.trialDays,
+				setupFee: plan.setupFee,
+				discountPercentage: plan.discountPercentage,
+				isPopular: plan.isPopular,
+				isRecommended: plan.isRecommended
+			};
+		});
 
 		// Use form builder service to populate plans
 		this.formBuilderService.populatePlansFormArray(this.plans, planInputs);
@@ -182,13 +199,35 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 
 	/**
 	 * Removes a plan from the form at the specified index
+	 * If it's an existing plan, dispatches delete action through facade
 	 */
 	public removePlan(index: number): void {
 		if (this.requireAtLeastOnePlan && this.plans.length <= 1) {
 			return;
 		}
 
+		// Check if this is an existing plan
+		const planId = this.planIdMap.get(index);
+		if (planId && this.existingPlanIds.has(planId)) {
+			// Dispatch delete action for existing plan
+			this.subscriptionFacade.deletePlan(planId);
+			this.existingPlanIds.delete(planId);
+		}
+
+		// Remove from form array
 		this.plans.removeAt(index);
+
+		// Update plan ID mapping for remaining plans
+		const updatedMap = new Map<number, string>();
+		this.planIdMap.forEach((id, idx) => {
+			if (idx > index) {
+				updatedMap.set(idx - 1, id);
+			} else if (idx < index) {
+				updatedMap.set(idx, id);
+			}
+		});
+		this.planIdMap = updatedMap;
+
 		this.emitChanges();
 	}
 
@@ -353,5 +392,105 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 	 */
 	public canAddPlan(): boolean {
 		return this.allowMultiplePlans || this.plans.length === 0;
+	}
+
+	/**
+	 * Checks if a plan at the given index is an existing plan (has an ID)
+	 */
+	public isExistingPlan(index: number): boolean {
+		const planId = this.planIdMap.get(index);
+		return !!planId && this.existingPlanIds.has(planId);
+	}
+
+	/**
+	 * Updates an existing plan via the facade
+	 */
+	public updateExistingPlan(index: number): void {
+		const planId = this.planIdMap.get(index);
+		if (!planId || !this.existingPlanIds.has(planId)) {
+			return;
+		}
+
+		const planValue = this.plans.at(index).value as IPluginPlanCreateInput;
+		const validPlans = this.formBuilderService.extractValidPlansFromForm({ plans: [planValue] });
+
+		if (validPlans.length === 0) {
+			return;
+		}
+
+		// Extract the plan data without the pluginId (it's already in the backend)
+		const { pluginId, ...updates } = validPlans[0];
+
+		// Dispatch update action through facade
+		this.subscriptionFacade.updatePlan(planId, updates as any);
+	}
+
+	/**
+	 * Saves all plans - creates new plans and updates existing ones
+	 * Separates new plans from existing ones to avoid duplication
+	 */
+	public savePlans(): void {
+		if (!this.isFormValid()) {
+			return;
+		}
+
+		const formValue = this.plansForm.value;
+		const allPlans = this.formBuilderService.extractValidPlansFromForm(formValue);
+
+		// Separate new plans from existing ones
+		const newPlans: IPluginPlanCreateInput[] = [];
+		const updatedPlans: Array<{ id: string; updates: Partial<IPluginPlanCreateInput> }> = [];
+
+		allPlans.forEach((plan, index) => {
+			const planId = this.planIdMap.get(index);
+			const planWithPluginId = {
+				...plan,
+				pluginId: this.pluginId || plan.pluginId
+			};
+
+			if (planId && this.existingPlanIds.has(planId)) {
+				// Existing plan - prepare for update
+				const { pluginId, ...updates } = planWithPluginId;
+				updatedPlans.push({ id: planId, updates });
+			} else {
+				// New plan - prepare for creation
+				newPlans.push(planWithPluginId);
+			}
+		});
+
+		// Update existing plans
+		updatedPlans.forEach(({ id, updates }) => {
+			this.subscriptionFacade.updatePlan(id, updates as any);
+		});
+
+		// Bulk create new plans if any
+		if (newPlans.length > 0) {
+			// Remove id, createdAt, updatedAt, isActive fields for creation
+			const plansForCreation = newPlans.map(
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
+				({ pluginId, type, name, description, price, currency, billingPeriod, features, ...rest }) => ({
+					pluginId,
+					type,
+					name,
+					description,
+					price,
+					currency,
+					billingPeriod,
+					features,
+					...rest
+				})
+			);
+			this.subscriptionFacade.bulkCreatePlans(plansForCreation as any);
+		}
+
+		// Emit only new plans to parent component
+		this.plansChanged.emit(newPlans);
+	}
+
+	/**
+	 * Gets the plan ID for a given index
+	 */
+	public getPlanId(index: number): string | undefined {
+		return this.planIdMap.get(index);
 	}
 }

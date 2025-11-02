@@ -86,6 +86,24 @@ export class PluginSubscriptionStore extends Store<IPluginSubscriptionState> {
 		this.update({ plans });
 	}
 
+	public addPlan(plan: IPluginSubscriptionPlan): void {
+		this.update((state) => ({
+			plans: [...state.plans, plan]
+		}));
+	}
+
+	public updatePlan(id: string, plan: Partial<IPluginSubscriptionPlan>): void {
+		this.update((state) => ({
+			plans: state.plans.map((p) => (p.id === id ? { ...p, ...plan } : p))
+		}));
+	}
+
+	public removePlan(id: string): void {
+		this.update((state) => ({
+			plans: state.plans.filter((p) => p.id !== id)
+		}));
+	}
+
 	public selectPlan(plan: IPluginSubscriptionPlan | null): void {
 		this.update({ selectedPlan: plan });
 	}

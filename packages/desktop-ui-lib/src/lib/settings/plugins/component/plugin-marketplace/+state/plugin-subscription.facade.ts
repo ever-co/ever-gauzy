@@ -156,4 +156,23 @@ export class PluginSubscriptionFacade {
 	public get currentSelectedPluginId(): string | null {
 		return this.query.selectedPluginId;
 	}
+
+	// Plan Management Methods
+	public createPlan(planData: Omit<IPluginSubscriptionPlan, 'id' | 'createdAt' | 'updatedAt' | 'isActive'>): void {
+		this.actions$.dispatch(PluginSubscriptionActions.createPlan(planData));
+	}
+
+	public updatePlan(planId: string, updates: Partial<IPluginSubscriptionPlan>): void {
+		this.actions$.dispatch(PluginSubscriptionActions.updatePlan(planId, updates));
+	}
+
+	public deletePlan(planId: string): void {
+		this.actions$.dispatch(PluginSubscriptionActions.deletePlan(planId));
+	}
+
+	public bulkCreatePlans(
+		plansData: Array<Omit<IPluginSubscriptionPlan, 'id' | 'createdAt' | 'updatedAt' | 'isActive'>>
+	): void {
+		this.actions$.dispatch(PluginSubscriptionActions.bulkCreatePlans(plansData));
+	}
 }

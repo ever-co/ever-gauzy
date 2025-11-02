@@ -20,6 +20,19 @@
 					<div class="plan-title">
 						<nb-icon icon="layers-outline" status="primary"></nb-icon>
 						<span>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PLAN' | translate }} {{ planIndex + 1 }}</span>
+						<!-- Indicator for existing vs new plans -->
+						<nb-badge
+							*ngIf="isExistingPlan(planIndex)"
+							text="Existing"
+							status="basic"
+							position="top left"
+						></nb-badge>
+						<nb-badge
+							*ngIf="!isExistingPlan(planIndex)"
+							text="New"
+							status="primary"
+							position="top left"
+						></nb-badge>
 						<nb-badge
 							*ngIf="planGroup.get('isPopular')?.value"
 							text="Popular"
@@ -34,6 +47,21 @@
 						></nb-badge>
 					</div>
 					<div class="plan-actions">
+						<!-- Update button for existing plans -->
+						<button
+							*ngIf="isExistingPlan(planIndex)"
+							type="button"
+							nbButton
+							ghost
+							size="small"
+							status="primary"
+							nbTooltip="{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.UPDATE_PLAN' | translate }}"
+							nbTooltipPlacement="top"
+							(click)="updateExistingPlan(planIndex)"
+						>
+							<nb-icon icon="save-outline"></nb-icon>
+						</button>
+						<!-- Duplicate button -->
 						<button
 							*ngIf="allowMultiplePlans"
 							type="button"
@@ -47,14 +75,19 @@
 						>
 							<nb-icon icon="copy-outline"></nb-icon>
 						</button>
+						<!-- Delete button (shows confirmation for existing plans) -->
 						<button
 							*ngIf="canRemovePlan()"
 							type="button"
 							nbButton
 							ghost
 							size="small"
-							status="danger"
-							nbTooltip="{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.REMOVE_PLAN' | translate }}"
+							[status]="isExistingPlan(planIndex) ? 'danger' : 'basic'"
+							nbTooltip="{{
+								isExistingPlan(planIndex)
+									? ('PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DELETE_PLAN' | translate)
+									: ('PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.REMOVE_PLAN' | translate)
+							}}"
 							nbTooltipPlacement="top"
 							(click)="removePlan(planIndex)"
 						>
