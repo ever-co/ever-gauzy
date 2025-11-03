@@ -48,6 +48,7 @@ export class SubscriptionPlanFormBuilderService {
 
 		// Build the plan form group with all controls initialized
 		const planGroup = this.formBuilder.group({
+			id: new FormControl(plan?.id ?? null),
 			type: new FormControl(plan?.type ?? PluginSubscriptionType.FREE, [Validators.required]),
 			name: new FormControl(plan?.name ?? '', [Validators.required, Validators.maxLength(100)]),
 			description: new FormControl(plan?.description ?? '', [Validators.required, Validators.maxLength(500)]),

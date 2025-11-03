@@ -158,6 +158,7 @@ export interface IPluginSubscriptionUpdateInput {
 }
 
 export interface IPluginPlanCreateInput {
+	id?: string;
 	pluginId: string;
 	type: PluginSubscriptionType;
 	name: string;

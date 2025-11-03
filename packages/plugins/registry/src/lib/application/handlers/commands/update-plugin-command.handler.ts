@@ -8,9 +8,8 @@ import { PluginSubscriptionPlanService } from '../../../domain/services/plugin-s
 import { PluginVersionService } from '../../../domain/services/plugin-version.service';
 import { PluginService } from '../../../domain/services/plugin.service';
 import { IPlugin } from '../../../shared/models/plugin.model';
-import { CreatePluginSubscriptionPlanCommand } from '../../commands/create-plugin-subscription-plan.command';
-import { UpdatePluginSubscriptionPlanCommand } from '../../commands/update-plugin-subscription-plan.command';
 import { UpdatePluginCommand } from '../../commands/update-plugin.command';
+import { SubscriptionPlanOperationFactory } from '../../strategies';
 
 @CommandHandler(UpdatePluginCommand)
 export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginCommand> {
@@ -79,28 +78,19 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 
 			// Handle subscription plans if provided
 			if (input.subscriptionPlans?.length > 0) {
-				const tenantId = RequestContext.currentTenantId();
-				const organizationId = RequestContext.currentOrganizationId();
-				const userId = RequestContext.currentUser()?.id;
+				const context = {
+					pluginId: id,
+					tenantId: RequestContext.currentTenantId(),
+					organizationId: RequestContext.currentOrganizationId(),
+					userId: RequestContext.currentUser()?.id,
+					commandBus: this.commandBus
+				};
 
+				// Use strategy pattern to handle create/update operations
 				await Promise.all(
-					input.subscriptionPlans.map((planData) => {
-						// Update existing plan if it has an ID, otherwise create new
-						if (planData.id) {
-							return this.commandBus.execute(
-								new UpdatePluginSubscriptionPlanCommand(planData.id, planData)
-							);
-						} else {
-							return this.commandBus.execute(
-								new CreatePluginSubscriptionPlanCommand(
-									{ ...planData, pluginId: id },
-									tenantId,
-									organizationId,
-									userId
-								)
-							);
-						}
-					})
+					input.subscriptionPlans.map((planData) =>
+						SubscriptionPlanOperationFactory.execute(planData, context)
+					)
 				);
 			}
 

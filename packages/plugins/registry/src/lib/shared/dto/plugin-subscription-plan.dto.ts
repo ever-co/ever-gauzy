@@ -1,4 +1,4 @@
-import { TenantOrganizationBaseDTO } from '@gauzy/core';
+import { ID } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
@@ -94,21 +94,18 @@ class BaseSubscriptionPlanFieldsDTO {
  * Create Plugin Subscription Plan DTO
  */
 export class CreatePluginSubscriptionPlanDTO extends IntersectionType(
-	IntersectionType(
-		TenantOrganizationBaseDTO,
-		PickType(PluginSubscriptionPlan, [
-			'name',
-			'description',
-			'type',
-			'currency',
-			'billingPeriod',
-			'features',
-			'limitations',
-			'isActive',
-			'metadata',
-			'sortOrder'
-		] as const)
-	),
+	PickType(PluginSubscriptionPlan, [
+		'name',
+		'description',
+		'type',
+		'currency',
+		'billingPeriod',
+		'features',
+		'limitations',
+		'isActive',
+		'metadata',
+		'sortOrder'
+	] as const),
 	BaseSubscriptionPlanFieldsDTO
 ) {
 	@ApiPropertyOptional({ type: String, description: 'Plugin ID (will be auto-assigned during creation)' })
@@ -147,7 +144,12 @@ export class UpdatePluginSubscriptionPlanDTO extends IntersectionType(
 		'sortOrder'
 	] as const),
 	BaseSubscriptionPlanFieldsDTO
-) {}
+) {
+	@ApiPropertyOptional({ type: String, description: 'User ID who updated this plan' })
+	@IsOptional()
+	@IsUUID()
+	id?: ID;
+}
 
 /**
  * Plugin Subscription Plan Query DTO

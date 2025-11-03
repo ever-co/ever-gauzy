@@ -101,6 +101,7 @@ export class PluginFormDataBuilder {
 
 	private buildSubscriptionPlanData(plan: IPluginPlanCreateInput) {
 		return {
+			...(plan?.id && { id: plan?.id }),
 			type: plan.type,
 			name: plan.name,
 			description: plan.description,
@@ -113,8 +114,7 @@ export class PluginFormDataBuilder {
 			setupFee: plan.setupFee,
 			discountPercentage: plan.discountPercentage,
 			isPopular: plan.isPopular,
-			isRecommended: plan.isRecommended,
-			...this.commonData
+			isRecommended: plan.isRecommended
 		};
 	}
 

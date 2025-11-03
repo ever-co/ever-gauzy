@@ -221,7 +221,7 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 	 * Uses the form builder service for plan creation
 	 */
 	public addPlan(plan?: Partial<IPluginPlanCreateInput>): void {
-		if (!this.allowMultiplePlans && this.plans.length >= 1) {
+		if (!this.allowMultiplePlans && this.plans.length > 0) {
 			return;
 		}
 
@@ -388,7 +388,7 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 	 * Validates if the entire form is valid
 	 */
 	private isFormValid(): boolean {
-		if (!this.plansForm?.valid) {
+		if (this.plansForm?.invalid) {
 			return false;
 		}
 
@@ -536,7 +536,6 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 		if (newPlans.length > 0) {
 			// Remove id, createdAt, updatedAt, isActive fields for creation
 			const plansForCreation = newPlans.map(
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 				({ pluginId, type, name, description, price, currency, billingPeriod, features, ...rest }) => ({
 					pluginId,
 					type,
@@ -549,7 +548,7 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 					...rest
 				})
 			);
-			this.subscriptionFacade.bulkCreatePlans(plansForCreation as any);
+			this.subscriptionFacade.bulkCreatePlans(plansForCreation);
 		}
 
 		// Emit only new plans to parent component
