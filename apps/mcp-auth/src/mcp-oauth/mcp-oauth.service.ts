@@ -40,13 +40,25 @@ export class McpOAuthService implements OnModuleInit {
 				return undefined;
 			}
 
-			const redisProtocol = process.env.REDIS_TLS === 'true' ? 'rediss' : 'redis';
-			const { REDIS_URL, REDIS_USER, REDIS_PASSWORD, REDIS_HOST, REDIS_PORT } = process.env;
+			const { REDIS_URL, REDIS_HOST, REDIS_PORT, REDIS_USER, REDIS_PASSWORD, REDIS_TLS } = process.env;
 
-			return (
-				REDIS_URL ||
-				`${redisProtocol}://${REDIS_USER || ''}:${REDIS_PASSWORD || ''}@${REDIS_HOST}:${REDIS_PORT}`
+			// If REDIS_URL is provided, use it directly
+			if (REDIS_URL) {
+				return REDIS_URL;
+			}
+
+			// If individual parameters are provided, construct the URL
+			if (REDIS_HOST && REDIS_PORT) {
+				const redisProtocol = REDIS_TLS === 'true' ? 'rediss' : 'redis';
+				const auth = REDIS_USER && REDIS_PASSWORD ? `${REDIS_USER}:${REDIS_PASSWORD}@` : '';
+				return `${redisProtocol}://${auth}${REDIS_HOST}:${REDIS_PORT}`;
+			}
+
+			// If neither REDIS_URL nor required individual parameters are provided, log warning
+			console.warn(
+				'Redis is enabled but neither REDIS_URL nor REDIS_HOST/REDIS_PORT are configured. Redis will not be used.'
 			);
+			return undefined;
 		})();
 
 		this.oauthServer = new OAuth2AuthorizationServer({
