@@ -351,9 +351,9 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 			return true;
 		}
 		/**
-		 * Disabled all administration permissions except "SUPER_ADMIN"
+		 * Disabled all administration permissions except "ADMIN"
 		 */
-		if (this.user.role.name === RolesEnum.SUPER_ADMIN) {
+		if (this.user.role.name === RolesEnum.ADMIN) {
 			return false;
 		}
 		return true;
