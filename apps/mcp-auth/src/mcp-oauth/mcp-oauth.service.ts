@@ -34,6 +34,21 @@ export class McpOAuthService implements OnModuleInit {
 		const port = process.env.MCP_AUTH_PORT || 3003;
 		const baseUrl = process.env.MCP_AUTH_JWT_ISSUER || `http://localhost:${port}`;
 
+		// Build Redis URL from REDIS_URL or individual parameters (same pattern as ConfigManager)
+		const redisUrl = (() => {
+			if (process.env.REDIS_ENABLED !== 'true') {
+				return undefined;
+			}
+
+			const redisProtocol = process.env.REDIS_TLS === 'true' ? 'rediss' : 'redis';
+			const { REDIS_URL, REDIS_USER, REDIS_PASSWORD, REDIS_HOST, REDIS_PORT } = process.env;
+
+			return (
+				REDIS_URL ||
+				`${redisProtocol}://${REDIS_USER || ''}:${REDIS_PASSWORD || ''}@${REDIS_HOST}:${REDIS_PORT}`
+			);
+		})();
+
 		this.oauthServer = new OAuth2AuthorizationServer({
 			issuer: process.env.MCP_AUTH_JWT_ISSUER || baseUrl,
 			baseUrl: baseUrl,
@@ -47,20 +62,20 @@ export class McpOAuthService implements OnModuleInit {
 			introspectionEndpoint: '/oauth2/introspect',
 			userInfoEndpoint: '/oauth2/userinfo',
 			sessionSecret: process.env.MCP_AUTH_SESSION_SECRET,
-			redisUrl: process.env.REDIS_URL, // Optional
+			redisUrl: redisUrl,
 			// Wire providers up-front to satisfy constructor validation
 			userAuthenticator: async ({ email, password }) => {
-					const user = await this.userService.authenticateMcpUser(email, password);
-					if (!user) return null;
+				const user = await this.userService.authenticateMcpUser(email, password);
+				if (!user) return null;
 
-					return this.mapMcpUserToAuthPayload(user);
-				},
-				userInfoProvider: async (userId: string) => {
-					const user = await this.userService.getMcpUserInfo(userId);
-					if (!user) return null;
+				return this.mapMcpUserToAuthPayload(user);
+			},
+			userInfoProvider: async (userId: string) => {
+				const user = await this.userService.getMcpUserInfo(userId);
+				if (!user) return null;
 
-					return this.mapMcpUserToAuthPayload(user);
-				}
+				return this.mapMcpUserToAuthPayload(user);
+			}
 		});
 	}
 
