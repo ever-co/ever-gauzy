@@ -188,6 +188,7 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 			}
 
 			return {
+				...(plan.id && { id: plan.id }),
 				pluginId: plan.pluginId,
 				type: plan.type,
 				name: plan.name,
@@ -471,6 +472,7 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 
 		// Build the update payload directly from form value
 		const updates: Partial<IPluginPlanCreateInput> = {
+			...(planValue?.id && { id: planValue.id }),
 			type: planValue.type,
 			name: planValue.name,
 			description: planValue.description,
