@@ -88,6 +88,9 @@ services:
           - key: REDIS_USER
             scope: RUN_TIME
             value: '$REDIS_USER'
+          - key: REDIS_TLS
+            scope: RUN_TIME
+            value: '$REDIS_TLS'
           - key: CLOUD_PROVIDER
             scope: RUN_TIME
             value: 'DO'

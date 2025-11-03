@@ -62,6 +62,7 @@ jobs:
           REDIS_PASSWORD: '${{ secrets.REDIS_PASSWORD }}'
           REDIS_PORT: '${{ secrets.REDIS_PORT }}'
           REDIS_USER: '${{ secrets.REDIS_USER }}'
+          REDIS_TLS: '${{ secrets.REDIS_TLS }}'
           CLOUD_PROVIDER: 'CIVO'
           SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
           SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'

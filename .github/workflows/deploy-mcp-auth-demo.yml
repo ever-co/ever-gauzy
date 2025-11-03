@@ -49,6 +49,7 @@ jobs:
           REDIS_PASSWORD: '${{ secrets.REDIS_PASSWORD }}'
           REDIS_PORT: '${{ secrets.REDIS_PORT }}'
           REDIS_USER: '${{ secrets.REDIS_USER }}'
+          REDIS_TLS: '${{ secrets.REDIS_TLS }}'
 
       - name: Restart Pods to pick up :latest tag version
         run: |
