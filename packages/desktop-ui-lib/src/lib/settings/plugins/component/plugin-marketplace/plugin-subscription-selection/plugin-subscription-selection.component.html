@@ -1,11 +1,6 @@
-@let planViewModels = planViewModels$ | async;
-@let selectedPlanViewModel = selectedPlanViewModel$ | async;
-@let loading = loading$ | async;
-@let error = error$ | async;
-@let creating = creating$ | async;
-@let preview = subscriptionPreview$ | async;
-@let hasFreePlans = hasFreePlan$ | async;
-@let hasPaidPlans = hasPaidPlans$ | async;
+@let planViewModels = planViewModels$ | async; @let selectedPlanViewModel = selectedPlanViewModel$ | async; @let loading
+= loading$ | async; @let error = error$ | async; @let creating = creating$ | async; @let preview = subscriptionPreview$
+| async; @let hasFreePlans = hasFreePlan$ | async; @let hasPaidPlans = hasPaidPlans$ | async;
 
 <nb-card class="subscription-selection-dialog">
 	<nb-card-header class="dialog-header">
@@ -14,7 +9,9 @@
 				<nb-icon icon="puzzle-outline" class="plugin-icon"></nb-icon>
 				<div class="plugin-details">
 					<h4 class="plugin-name">{{ plugin?.name || 'Plugin' }}</h4>
-					<p class="plugin-description">{{ plugin?.description || 'Choose a subscription plan to continue' }}</p>
+					<p class="plugin-description">
+						{{ plugin?.description || 'Choose a subscription plan to continue' }}
+					</p>
 				</div>
 			</div>
 		</div>
@@ -22,128 +19,132 @@
 
 	<nb-card-body class="dialog-body">
 		@if (loading) {
-			<div class="loading-container">
-				<nb-spinner size="large" status="primary"></nb-spinner>
-				<p class="loading-text">Loading subscription plans...</p>
-			</div>
+		<div class="loading-container">
+			<nb-spinner size="large" status="primary"></nb-spinner>
+			<p class="loading-text">Loading subscription plans...</p>
+		</div>
 		} @else if (error && !creating) {
-			<nb-alert status="danger" closable="false">
-				<nb-icon icon="alert-triangle-outline"></nb-icon>
-				{{ error }}
-			</nb-alert>
-			<div class="error-actions">
-				<button nbButton status="basic" (click)="loadSubscriptionPlans()">
-					<nb-icon icon="refresh-outline"></nb-icon>
-					Retry Loading Plans
-				</button>
-			</div>
+		<nb-alert status="danger" closable="false">
+			<nb-icon icon="alert-triangle-outline"></nb-icon>
+			{{ error }}
+		</nb-alert>
+		<div class="error-actions">
+			<button nbButton status="basic" (click)="loadSubscriptionPlans()">
+				<nb-icon icon="refresh-outline"></nb-icon>
+				Retry Loading Plans
+			</button>
+		</div>
 		} @else {
-			<form [formGroup]="subscriptionForm" class="subscription-form">
-				<!-- Subscription Creation Error -->
-				@if (error && !loading) {
-					<nb-alert status="danger" closable="false" class="subscription-error">
-						<div class="error-content">
-							<nb-icon icon="alert-triangle-outline"></nb-icon>
-							<div class="error-message">
-								<strong>Subscription Failed</strong>
-								<p>{{ error }}</p>
-							</div>
-						</div>
-						<div class="error-actions">
-							<button nbButton status="danger" size="small" (click)="onResetSubscription()">
-								<nb-icon icon="refresh-outline"></nb-icon>
-								Try Again
-							</button>
-						</div>
-					</nb-alert>
-				}
+		<form [formGroup]="subscriptionForm" class="subscription-form">
+			<!-- Subscription Creation Error -->
+			@if (error && !loading) {
+			<nb-alert status="danger" closable="false" class="subscription-error">
+				<div class="error-content">
+					<nb-icon icon="alert-triangle-outline"></nb-icon>
+					<div class="error-message">
+						<strong>Subscription Failed</strong>
+						<p>{{ error }}</p>
+					</div>
+				</div>
+				<div class="error-actions">
+					<button nbButton status="danger" size="small" (click)="onResetSubscription()">
+						<nb-icon icon="refresh-outline"></nb-icon>
+						Try Again
+					</button>
+				</div>
+			</nb-alert>
+			}
 
-				<!-- Subscription Plans -->
-				<div class="plans-section">
-					<h5 class="section-title">
-						<nb-icon icon="credit-card-outline"></nb-icon>
-						Choose Your Plan
-					</h5>
+			<!-- Subscription Plans -->
+			<div class="plans-section">
+				<h5 class="section-title">
+					<nb-icon icon="credit-card-outline"></nb-icon>
+					Choose Your Plan
+				</h5>
 
-					@if (planViewModels && planViewModels.length > 0) {
-						<div class="plans-grid" [class.single-plan]="planViewModels.length === 1">
-							@for (planViewModel of planViewModels; track planViewModel.id) {
-								<lib-plan-card
-									[plan]="planViewModel"
-									[isSelected]="selectedPlanViewModel?.id === planViewModel.id"
-									(planSelected)="onPlanSelected($event)">
-								</lib-plan-card>
-							}
-						</div>
-					} @else {
-						<nb-alert status="info" closable="false">
-							<nb-icon icon="info-outline"></nb-icon>
-							No subscription plans available for this plugin.
-						</nb-alert>
+				@if (planViewModels && planViewModels.length > 0) {
+				<div class="plans-grid" [class.single-plan]="planViewModels.length === 1">
+					@for (planViewModel of planViewModels; track planViewModel.id) {
+					<lib-plan-card
+						[plan]="planViewModel"
+						[isSelected]="selectedPlanViewModel?.id === planViewModel.id"
+						(planSelected)="onPlanSelected($event)"
+					>
+					</lib-plan-card>
 					}
 				</div>
-
-				<!-- Billing Options (for paid plans) -->
-				@if (selectedPlanViewModel && !selectedPlanViewModel.isFree) {
-					<div class="billing-section">
-						<h5 class="section-title">
-							<nb-icon icon="calendar-outline"></nb-icon>
-							Billing Options
-						</h5>
-
-						<div class="billing-period-selector">
-							<nb-button-group>
-								@for (period of [PluginBillingPeriod.MONTHLY, PluginBillingPeriod.YEARLY]; track period) {
-									<button
-										type="button"
-										nbButton
-										[status]="subscriptionForm.get('billingPeriod')?.value === period ? 'primary' : 'basic'"
-										(click)="onBillingPeriodChange(period)">
-										{{ formatBillingPeriod(period) }}
-									</button>
-								}
-							</nb-button-group>
-						</div>
-
-						<!-- Promo Code -->
-						<div class="promo-code-section">
-							<nb-form-field>
-								<nb-icon nbPrefix icon="gift-outline"></nb-icon>
-								<input
-									nbInput
-									type="text"
-									placeholder="Enter promo code (optional)"
-									formControlName="promoCode">
-								<button
-									nbSuffix
-									nbButton
-									ghost
-									size="small"
-									type="button"
-									(click)="validatePromoCode()"
-									[disabled]="!subscriptionForm.get('promoCode')?.value">
-									Apply
-								</button>
-							</nb-form-field>
-						</div>
-					</div>
+				} @else {
+				<nb-alert status="info" closable="false">
+					<nb-icon icon="info-outline"></nb-icon>
+					No subscription plans available for this plugin.
+				</nb-alert>
 				}
+			</div>
 
-				<!-- Subscription Preview -->
-				<lib-subscription-preview [preview]="preview"></lib-subscription-preview>
+			<!-- Billing Options (for paid plans) -->
+			@if (selectedPlanViewModel && !selectedPlanViewModel.isFree) {
+			<div class="billing-section">
+				<h5 class="section-title">
+					<nb-icon icon="calendar-outline"></nb-icon>
+					Billing Options
+				</h5>
 
-				<!-- Terms and Conditions -->
-				@if (selectedPlanViewModel && !selectedPlanViewModel.isFree) {
-					<div class="terms-section">
-						<nb-checkbox formControlName="agreeToTerms">
-							I agree to the
-							<a href="#" target="_blank">Terms of Service</a>
-							and
-							<a href="#" target="_blank">Privacy Policy</a>
-						</nb-checkbox>
-					</div>
-				}
-			</form>
+				<div class="billing-period-selector">
+					<nb-button-group>
+						@for (period of [PluginBillingPeriod.MONTHLY, PluginBillingPeriod.YEARLY]; track period) {
+						<button
+							type="button"
+							nbButton
+							[status]="subscriptionForm.get('billingPeriod')?.value === period ? 'primary' : 'basic'"
+							(click)="onBillingPeriodChange(period)"
+						>
+							{{ formatBillingPeriod(period) }}
+						</button>
+						}
+					</nb-button-group>
+				</div>
+
+				<!-- Promo Code -->
+				<div class="promo-code-section">
+					<nb-form-field>
+						<nb-icon nbPrefix icon="gift-outline"></nb-icon>
+						<input
+							nbInput
+							type="text"
+							placeholder="Enter promo code (optional)"
+							formControlName="promoCode"
+						/>
+						<button
+							nbSuffix
+							nbButton
+							ghost
+							size="small"
+							type="button"
+							(click)="validatePromoCode()"
+							[disabled]="!subscriptionForm.get('promoCode')?.value"
+						>
+							Apply
+						</button>
+					</nb-form-field>
+				</div>
+			</div>
+			}
+
+			<!-- Subscription Preview -->
+			<lib-subscription-preview [preview]="preview"></lib-subscription-preview>
+
+			<!-- Terms and Conditions -->
+			@if (selectedPlanViewModel) {
+			<div class="terms-section">
+				<nb-checkbox formControlName="agreeToTerms">
+					I agree to the
+					<a href="#" target="_blank">Terms of Service</a>
+					and
+					<a href="#" target="_blank">Privacy Policy</a>
+				</nb-checkbox>
+			</div>
+			}
+		</form>
 		}
 	</nb-card-body>
 
@@ -151,33 +152,20 @@
 		<div class="footer-actions">
 			<div class="left-actions">
 				@if (canProceedWithoutSubscription) {
-					<button
-						nbButton
-						status="basic"
-						(click)="onSkipSubscription()"
-						[disabled]="creating">
-						Skip & Install Free
-					</button>
+				<button nbButton status="basic" (click)="onSkipSubscription()" [disabled]="creating">
+					Skip & Install Free
+				</button>
 				}
 			</div>
 
 			<div class="right-actions">
-				<button
-					nbButton
-					status="basic"
-					(click)="onCancel()"
-					[disabled]="creating">
-					Cancel
-				</button>
+				<button nbButton status="basic" (click)="onCancel()" [disabled]="creating">Cancel</button>
 
 				@if (error && !loading) {
-					<button
-						nbButton
-						status="warning"
-						(click)="onResetSubscription()">
-						<nb-icon icon="refresh-outline"></nb-icon>
-						Reset & Try Again
-					</button>
+				<button nbButton status="warning" (click)="onResetSubscription()">
+					<nb-icon icon="refresh-outline"></nb-icon>
+					Reset & Try Again
+				</button>
 				}
 
 				<button
@@ -185,12 +173,9 @@
 					status="primary"
 					(click)="onSubscribeAndInstall()"
 					[disabled]="!subscriptionForm.valid || creating || !selectedPlanViewModel || error"
-					*gauzySpinnerButton="creating">
-					@if (selectedPlanViewModel?.isFree) {
-						Install Plugin
-					} @else {
-						Subscribe & Install
-					}
+					*gauzySpinnerButton="creating"
+				>
+					@if (selectedPlanViewModel?.isFree) { Install Plugin } @else { Subscribe & Install }
 				</button>
 			</div>
 		</div>
