@@ -149,6 +149,14 @@ spec:
                         value: '$REDIS_ENABLED'
                       - name: REDIS_URL
                         value: '$REDIS_URL'
+                      - name: REDIS_HOST
+                        value: '$REDIS_HOST'
+                      - name: REDIS_PASSWORD
+                        value: '$REDIS_PASSWORD'
+                      - name: REDIS_PORT
+                        value: '$REDIS_PORT'
+                      - name: REDIS_USER
+                        value: '$REDIS_USER'
                       - name: AWS_ACCESS_KEY_ID
                         value: '$AWS_ACCESS_KEY_ID'
                       - name: AWS_SECRET_ACCESS_KEY
