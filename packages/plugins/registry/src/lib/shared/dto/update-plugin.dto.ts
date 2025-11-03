@@ -1,6 +1,6 @@
 import { ID, PluginStatus, PluginType } from '@gauzy/contracts';
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { IPluginVersionUpdate } from '../models/plugin-version.model';
 import { CreatePluginDTO } from './create-plugin.dto';
@@ -39,6 +39,11 @@ export class UpdatePluginDTO extends PartialType(OmitType(CreatePluginDTO, ['ver
 	@ApiProperty({ type: Boolean, description: 'Plugin is active or not' })
 	@IsOptional()
 	@IsBoolean()
+	@Transform(({ value }) => {
+		if (typeof value === 'boolean') return value;
+		if (typeof value === 'string') return value.trim().toLowerCase() === 'true';
+		return value;
+	})
 	isActive?: boolean;
 
 	@ApiProperty({ type: String, description: 'Repository URL' })
@@ -60,6 +65,16 @@ export class UpdatePluginDTO extends PartialType(OmitType(CreatePluginDTO, ['ver
 	@IsOptional()
 	@IsString()
 	homepage?: string;
+
+	@ApiProperty({ type: Boolean, description: 'Is subscription plan enabled', default: false })
+	@IsOptional()
+	@IsBoolean()
+	@Transform(({ value }) => {
+		if (value === 'true' || value === true) return true;
+		if (value === 'false' || value === false) return false;
+		return value;
+	})
+	requiresSubscription?: boolean;
 
 	@ApiProperty({
 		description: 'Updated version details for the plugin',
