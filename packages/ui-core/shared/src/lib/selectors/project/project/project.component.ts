@@ -26,17 +26,17 @@ import { ALL_PROJECT_SELECTED } from './default-project';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-project-selector',
-    templateUrl: './project.component.html',
-    styleUrls: ['./project.component.scss'],
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => ProjectSelectorComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'ga-project-selector',
+	templateUrl: './project.component.html',
+	styleUrls: ['./project.component.scss'],
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => ProjectSelectorComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
 export class ProjectSelectorComponent implements OnInit, AfterViewInit {
 	private _requiresEmployee = false;
@@ -337,7 +337,13 @@ export class ProjectSelectorComponent implements OnInit, AfterViewInit {
 
 		const { id: organizationId, tenantId } = this.organization;
 
-		// Construct query options
+		const isAdmin =
+			this._store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT) &&
+			!this._store.hasPermission(PermissionsEnum.VIEW_ASSIGNED_PROJECTS_ONLY);
+		const isManager =
+			this._store.hasPermission(PermissionsEnum.VIEW_ASSIGNED_PROJECTS_ONLY) &&
+			this._store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT);
+
 		const queryOptions: IOrganizationProjectsFindInput = {
 			...(this.organizationContactId && { organizationContactId: this.organizationContactId }),
 			organizationId,
@@ -345,10 +351,27 @@ export class ProjectSelectorComponent implements OnInit, AfterViewInit {
 		};
 
 		try {
-			// Retrieve projects based on whether employeeId is provided
-			this.projects = this.employeeId
-				? await this._organizationProjects.getAllByEmployee(this.employeeId, queryOptions)
-				: (await this._organizationProjects.getAll([], queryOptions)).items || [];
+			let projects: IOrganizationProject[] = [];
+
+			// ADMIN — full access to all projects
+			if (isAdmin) {
+				const { items } = await this._organizationProjects.getAll([], queryOptions);
+				projects = items || [];
+			}
+			// MANAGER — only projects where the manager is a member
+			else if (isManager) {
+				const managerId = this._store.user.employee?.id;
+				if (managerId) {
+					projects = await this._organizationProjects.getAllByEmployee(managerId, queryOptions);
+				}
+			}
+			// EMPLOYEE — only their own projects
+			else {
+				if (this.employeeId) {
+					projects = await this._organizationProjects.getAllByEmployee(this.employeeId, queryOptions);
+				}
+			}
+			this.projects = projects;
 
 			// Optionally add "All Projects" option
 			if (this.showAllOption) {

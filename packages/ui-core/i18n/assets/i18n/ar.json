@@ -2165,6 +2165,8 @@
 			}
 		},
 		"PERMISSIONS": {
+			"VIEW_ASSIGNED_PROJECTS_ONLY": "عرض المشاريع المعينة فقط (للأدوار الإدارية)",
+			"PROFILE_EDIT": "تعديل الملف الشخصي",
 			"ADMIN_DASHBOARD_VIEW": "عرض لوحة تحكم المسؤول",
 			"TEAM_DASHBOARD": "عرض لوحة تحكم الفريق",
 			"PROJECT_MANAGEMENT_DASHBOARD": "عرض لوحة تحكم إدارة المشاريع",

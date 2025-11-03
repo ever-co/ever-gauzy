@@ -472,14 +472,19 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { where } = options;
 			const { members } = where;
 
-			const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+			const hasPermission =
+				RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT) &&
+				!RequestContext.hasPermission(PermissionsEnum.VIEW_ASSIGNED_PROJECTS_ONLY);
+			const isManager =
+				RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT) &&
+				RequestContext.hasPermission(PermissionsEnum.VIEW_ASSIGNED_PROJECTS_ONLY);
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.innerJoin(`${query.alias}.members`, 'members');
 
-			if (!hasPermission) {
+			if (!hasPermission || isManager) {
 				// Employee without permission: get their projects first
-				const employeeId = RequestContext.currentEmployeeId();
+				const employeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser().employeeId;
 				if (isNotEmpty(employeeId)) {
 					const tenantId = RequestContext.currentTenantId();
 					const organizationId = where?.organizationId as string;
@@ -511,6 +516,30 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
 						const employeeId = members['id'];
 						subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
+					}
+				} else if (isManager) {
+					const selectedEmployeeId = members?.['id'];
+					const managerId = RequestContext.currentUser().employeeId;
+
+					if (isNotEmpty(selectedEmployeeId) && selectedEmployeeId !== managerId) {
+						subQuery
+							.andWhere(p('"task_employee"."employeeId" = :employeeId'), {
+								employeeId: selectedEmployeeId
+							})
+							.andWhere(
+								`EXISTS (
+					SELECT 1 FROM "task_employee" te2
+					WHERE te2."taskId" = "task_employee"."taskId"
+					AND te2."employeeId" = :managerId
+				)`
+							)
+							.setParameters({ managerId });
+					} else {
+						if (isNotEmpty(managerId)) {
+							subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), {
+								employeeId: managerId
+							});
+						}
 					}
 				} else {
 					// If employee has login and don't have permission to change employee
@@ -623,14 +652,19 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { teams = [] } = where;
 			const { members } = where;
 
-			const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+			const hasPermission =
+				RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT) &&
+				!RequestContext.hasPermission(PermissionsEnum.VIEW_ASSIGNED_PROJECTS_ONLY);
+			const isManager =
+				RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT) &&
+				RequestContext.hasPermission(PermissionsEnum.VIEW_ASSIGNED_PROJECTS_ONLY);
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.teams`, 'teams');
 
 			let projectIds: string[] = [];
 
-			if (!hasPermission) {
-				const employeeId = RequestContext.currentEmployeeId();
+			if (!hasPermission || isManager) {
+				const employeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser().employeeId;
 				if (isNotEmpty(employeeId)) {
 					const tenantId = RequestContext.currentTenantId();
 					const organizationId = where?.organizationId as string;
@@ -667,6 +701,31 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
 						const employeeId = members['id'];
 						subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), { employeeId });
+					}
+				} else if (isManager) {
+					const selectedEmployeeId = members?.['id'];
+					const managerId = RequestContext.currentUser().employeeId;
+
+					if (isNotEmpty(selectedEmployeeId) && selectedEmployeeId !== managerId) {
+						subQuery
+							.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), {
+								employeeId: selectedEmployeeId
+							})
+							.andWhere(
+								`EXISTS (
+						SELECT 1
+						FROM "organization_team_employee" te
+						WHERE te."organizationTeamId" = "organization_team_employee"."organizationTeamId"
+						  AND te."employeeId" = :managerId
+					)`
+							)
+							.setParameters({ managerId });
+					} else {
+						if (isNotEmpty(managerId)) {
+							subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), {
+								employeeId: managerId
+							});
+						}
 					}
 				} else {
 					// If employee has login and don't have permission to change employee
@@ -769,11 +828,17 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const employeeId = RequestContext.currentEmployeeId();
 			const tenantId = RequestContext.currentTenantId();
 			const organizationId = where.organizationId as string;
-			const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+			const hasPermission =
+				RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT) &&
+				!RequestContext.hasPermission(PermissionsEnum.VIEW_ASSIGNED_PROJECTS_ONLY);
+			const isManager =
+				RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT) &&
+				RequestContext.hasPermission(PermissionsEnum.VIEW_ASSIGNED_PROJECTS_ONLY);
 			const userProvidedProjectId = !!options.where?.projectId;
 
-			if (!userProvidedProjectId && !hasPermission) {
-				const projects = await this._organizationProjectService.findByEmployee(employeeId, {
+			if (!userProvidedProjectId && (isManager || !hasPermission)) {
+				const emplId = employeeId ?? RequestContext.currentUser().employeeId;
+				const projects = await this._organizationProjectService.findByEmployee(emplId, {
 					tenantId,
 					organizationId,
 					relations: ['members']

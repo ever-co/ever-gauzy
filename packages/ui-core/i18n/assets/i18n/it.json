@@ -2165,6 +2165,8 @@
 			}
 		},
 		"PERMISSIONS": {
+			"VIEW_ASSIGNED_PROJECTS_ONLY": "Mostra solo i progetti assegnati (per ruoli gestionali)",
+			"PROFILE_EDIT": "Modifica profilo",
 			"ADMIN_DASHBOARD_VIEW": "Visualizza dashboard admin",
 			"TEAM_DASHBOARD": "Visualizza dashboard team",
 			"PROJECT_MANAGEMENT_DASHBOARD": "Visualizza dashboard gestione progetti",

@@ -242,7 +242,6 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			/** Member View Permissions Start */
 			PermissionsEnum.ORG_MEMBERS_VIEW,
 			/** Member View Permissions End */
-			PermissionsEnum.ORG_EMPLOYEES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_VIEW,
 			PermissionsEnum.ORG_CANDIDATES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
@@ -448,7 +447,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
 			PermissionsEnum.ORG_HELP_CENTER_EDIT,
 			PermissionsEnum.PROFILE_EDIT,
-			PermissionsEnum.SELECT_EMPLOYEE,
+			PermissionsEnum.SELECT_EMPLOYEE
 		]
 	},
 	{
@@ -570,7 +569,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 	},
 	{
 		role: RolesEnum.MANAGER,
-		defaultEnabledPermissions: []
+		defaultEnabledPermissions: [PermissionsEnum.VIEW_ASSIGNED_PROJECTS_ONLY]
 	},
 	{
 		role: RolesEnum.VIEWER,

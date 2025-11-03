@@ -24,7 +24,12 @@ const routes: Routes = [
 			},
 			{
 				path: 'me',
-				component: TaskComponent
+				component: TaskComponent,
+				data: {
+					selectors: {
+						team: false
+					}
+				}
 			},
 			{
 				path: 'settings/:id',

@@ -509,7 +509,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				...(this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) && this.selectedEmployeeId
 					? {
 							members: {
-								id: this.selectedEmployeeId
+								id: this.selectedEmployeeId ?? this._store.user.employeeId
 							}
 					  }
 					: {}),

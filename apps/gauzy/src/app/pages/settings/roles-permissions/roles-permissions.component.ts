@@ -12,15 +12,15 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-org-roles-permissions',
-    templateUrl: './roles-permissions.component.html',
-    styleUrls: ['./roles-permissions.component.scss'],
-    standalone: false
+	selector: 'ga-org-roles-permissions',
+	templateUrl: './roles-permissions.component.html',
+	styleUrls: ['./roles-permissions.component.scss'],
+	standalone: false
 })
 export class RolesPermissionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	rolesEnum = RolesEnum;
 	permissionGroups = PermissionGroups;
-	isWantToCreate: boolean = false;
+	isWantToCreate = false;
 	loading: boolean;
 	enabledPermissions: any = {};
 	user: IUser;
@@ -354,9 +354,7 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 		 * Disabled all administration permissions except "SUPER_ADMIN"
 		 */
 		if (this.user.role.name === RolesEnum.SUPER_ADMIN) {
-			if (this.role.name === RolesEnum.ADMIN) {
-				return false;
-			}
+			return false;
 		}
 		return true;
 	}

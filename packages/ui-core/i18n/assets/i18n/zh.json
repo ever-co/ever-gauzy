@@ -2165,6 +2165,8 @@
 			}
 		},
 		"PERMISSIONS": {
+			"VIEW_ASSIGNED_PROJECTS_ONLY": "仅显示分配的项目（适用于管理角色）",
+			"PROFILE_EDIT": "编辑个人资料",
 			"ADMIN_DASHBOARD_VIEW": "查看管理员仪表盘",
 			"TEAM_DASHBOARD": "查看团队仪表盘",
 			"PROJECT_MANAGEMENT_DASHBOARD": "查看项目管理仪表盘",

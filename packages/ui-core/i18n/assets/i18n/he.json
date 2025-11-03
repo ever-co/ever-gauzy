@@ -2164,6 +2164,8 @@
 			}
 		},
 		"PERMISSIONS": {
+			"VIEW_ASSIGNED_PROJECTS_ONLY": "הצג רק פרויקטים שהוקצו (לתפקידי ניהול)",
+			"PROFILE_EDIT": "ערוך פרופיל",
 			"ADMIN_DASHBOARD_VIEW": "הצג לוח מחוונים למנהל",
 			"TEAM_DASHBOARD": "הצג לוח מחוונים לצוות",
 			"PROJECT_MANAGEMENT_DASHBOARD": "הצג לוח מחוונים לניהול פרויקטים",

@@ -2165,6 +2165,8 @@
 			}
 		},
 		"PERMISSIONS": {
+			"VIEW_ASSIGNED_PROJECTS_ONLY": "Показывать только назначенные проекты (для управленческих ролей)",
+			"PROFILE_EDIT": "Редактировать профиль",
 			"ADMIN_DASHBOARD_VIEW": "Просмотр панели администратора",
 			"TEAM_DASHBOARD": "Просмотр панели команды",
 			"PROJECT_MANAGEMENT_DASHBOARD": "Просмотр панели управления проектами",

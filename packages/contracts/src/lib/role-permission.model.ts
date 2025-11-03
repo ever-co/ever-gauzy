@@ -136,6 +136,7 @@ export enum PermissionsEnum {
 	ORG_PROJECT_VIEW = 'ORG_PROJECT_VIEW',
 	ORG_PROJECT_EDIT = 'ORG_PROJECT_EDIT',
 	ORG_PROJECT_DELETE = 'ORG_PROJECT_DELETE',
+	VIEW_ASSIGNED_PROJECTS_ONLY = 'VIEW_ASSIGNED_PROJECTS_ONLY',
 	/* Invoices */
 	INVOICES_VIEW = 'INVOICES_VIEW',
 	ORG_INVOICES_VIEW = 'ORG_INVOICES_VIEW',
@@ -444,6 +445,13 @@ export const PermissionGroups = {
 		/** Tenant API Key */
 		PermissionsEnum.TENANT_API_KEY_CREATE,
 		PermissionsEnum.TENANT_API_KEY_VIEW,
-		PermissionsEnum.TENANT_API_KEY_DELETE
+		PermissionsEnum.TENANT_API_KEY_DELETE,
+
+		/** Used for managerial roles to restrict project visibility
+		 *  so that managers and other roles can only see projects they are assigned to.
+		 */
+		PermissionsEnum.VIEW_ASSIGNED_PROJECTS_ONLY,
+
+		PermissionsEnum.PROFILE_EDIT
 	]
 };

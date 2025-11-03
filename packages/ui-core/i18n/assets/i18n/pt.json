@@ -2165,6 +2165,8 @@
 			}
 		},
 		"PERMISSIONS": {
+			"VIEW_ASSIGNED_PROJECTS_ONLY": "Mostrar apenas projetos atribuídos (para funções de gestão)",
+			"PROFILE_EDIT": "Editar perfil",
 			"ADMIN_DASHBOARD_VIEW": "Ver Painel de Administração",
 			"TEAM_DASHBOARD": "Ver Painel da Equipe",
 			"PROJECT_MANAGEMENT_DASHBOARD": "Ver Painel de Gestão de Projetos",

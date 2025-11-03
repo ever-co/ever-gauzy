@@ -1922,6 +1922,8 @@
 			}
 		},
 		"PERMISSIONS": {
+			"VIEW_ASSIGNED_PROJECTS_ONLY": "crwdns100002:0crwdne100002:0",
+			"PROFILE_EDIT": "crwdns100003:0crwdne100003:0",
 			"ADMIN_DASHBOARD_VIEW": "crwdns2651:0crwdne2651:0",
 			"ORG_PAYMENT_VIEW": "crwdns8296:0crwdne8296:0",
 			"ORG_PAYMENT_ADD_EDIT": "crwdns8298:0crwdne8298:0",

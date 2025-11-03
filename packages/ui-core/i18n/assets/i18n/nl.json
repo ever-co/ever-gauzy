@@ -2165,6 +2165,8 @@
 			}
 		},
 		"PERMISSIONS": {
+			"VIEW_ASSIGNED_PROJECTS_ONLY": "Toon alleen toegewezen projecten (voor managementrollen)",
+			"PROFILE_EDIT": "Profiel bewerken",
 			"ADMIN_DASHBOARD_VIEW": "Bekijk admin-dashboard",
 			"TEAM_DASHBOARD": "Bekijk team-dashboard",
 			"PROJECT_MANAGEMENT_DASHBOARD": "Bekijk projectmanagement-dashboard",

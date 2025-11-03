@@ -2164,6 +2164,8 @@
 			}
 		},
 		"PERMISSIONS": {
+			"VIEW_ASSIGNED_PROJECTS_ONLY": "Pokazuj tylko przypisane projekty (dla menedżerskich ról)",
+			"PROFILE_EDIT": "Edytuj profil",
 			"ADMIN_DASHBOARD_VIEW": "Wyświetl pulpit administratora",
 			"TEAM_DASHBOARD": "Wyświetl pulpit zespołu",
 			"PROJECT_MANAGEMENT_DASHBOARD": "Wyświetl pulpit zarządzania projektami",

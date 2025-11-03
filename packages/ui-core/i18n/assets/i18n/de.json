@@ -2165,6 +2165,8 @@
 			}
 		},
 		"PERMISSIONS": {
+			"VIEW_ASSIGNED_PROJECTS_ONLY": "Nur zugewiesene Projekte anzeigen (für Management-Rollen)",
+			"PROFILE_EDIT": "Profil bearbeiten",
 			"ADMIN_DASHBOARD_VIEW": "Admin-Dashboard anzeigen",
 			"TEAM_DASHBOARD": "Team-Dashboard anzeigen",
 			"PROJECT_MANAGEMENT_DASHBOARD": "Projektmanagement-Dashboard anzeigen",

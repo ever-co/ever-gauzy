@@ -2046,6 +2046,8 @@
 			}
 		},
 		"PERMISSIONS": {
+			"VIEW_ASSIGNED_PROJECTS_ONLY": "Afficher uniquement les projets attribués (pour les rôles de gestion)",
+			"PROFILE_EDIT": "Modifier le profil",
 			"ADMIN_DASHBOARD_VIEW": "Afficher le tableau de bord de l'administrateur",
 			"TEAM_DASHBOARD": "Voir le tableau de bord de l'équipe",
 			"PROJECT_MANAGEMENT_DASHBOARD": "Voir le tableau de bord de gestion de projet",
