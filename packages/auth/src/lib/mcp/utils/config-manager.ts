@@ -138,8 +138,22 @@ export class ConfigManager {
 			rateLimitTtl: this.getEnvNumber('MCP_RATE_LIMIT_TTL', 60000), // 1 minute
 			rateLimitMax: this.getEnvNumber('MCP_RATE_LIMIT_MAX', 100),
 
-			// Redis
-			redisUrl: this.getEnvString('REDIS_URL'),
+			// Redis - construct URL from REDIS_URL or individual parameters
+			redisUrl: (() => {
+				if (process.env.REDIS_ENABLED !== 'true') {
+					console.log('Redis is not enabled for MCP.');
+					return undefined;
+				}
+
+				const redisProtocol = process.env.REDIS_TLS === 'true' ? 'rediss' : 'redis';
+				const { REDIS_URL, REDIS_USER, REDIS_PASSWORD, REDIS_HOST, REDIS_PORT } = process.env;
+
+				const url =
+					REDIS_URL ||
+					`${redisProtocol}://${REDIS_USER || ''}:${REDIS_PASSWORD || ''}@${REDIS_HOST}:${REDIS_PORT}`;
+
+				return url;
+			})(),
 
 			// OAuth 2.0
 			oauth: this.loadOAuthConfiguration()
