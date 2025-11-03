@@ -40,7 +40,12 @@ jobs:
           envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.mcp.demo.yaml | kubectl --context do-sfo2-k8s-gauzy apply -f -
         env:
           # MCP Server Configuration
+          REDIS_ENABLED: '${{ secrets.REDIS_ENABLED }}'
           REDIS_URL: '${{ secrets.REDIS_URL }}'
+          REDIS_HOST: '${{ secrets.REDIS_HOST }}'
+          REDIS_PASSWORD: '${{ secrets.REDIS_PASSWORD }}'
+          REDIS_PORT: '${{ secrets.REDIS_PORT }}'
+          REDIS_USER: '${{ secrets.REDIS_USER }}'
           MCP_TRANSPORT: '${{ secrets.MCP_TRANSPORT }}'
           MCP_SERVER_MODE: '${{ secrets.MCP_SERVER_MODE }}'
           MCP_HTTP_PORT: '${{ secrets.MCP_HTTP_PORT }}'

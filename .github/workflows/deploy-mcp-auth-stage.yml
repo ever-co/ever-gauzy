@@ -43,7 +43,12 @@ jobs:
           MCP_AUTH_SESSION_SECRET: '${{ secrets.MCP_AUTH_SESSION_SECRET_STAGE }}'
           MCP_AUTH_JWT_ISSUER: '${{ secrets.MCP_AUTH_JWT_ISSUER }}'
           MCP_AUTH_JWT_AUDIENCE: '${{ secrets.MCP_AUTH_JWT_AUDIENCE_STAGE }}'
+          REDIS_ENABLED: '${{ secrets.REDIS_ENABLED }}'
           REDIS_URL: '${{ secrets.REDIS_URL }}'
+          REDIS_HOST: '${{ secrets.REDIS_HOST }}'
+          REDIS_PASSWORD: '${{ secrets.REDIS_PASSWORD }}'
+          REDIS_PORT: '${{ secrets.REDIS_PORT }}'
+          REDIS_USER: '${{ secrets.REDIS_USER }}'
 
       - name: Restart Pods to pick up :latest tag version
         run: |
