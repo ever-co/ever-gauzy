@@ -34,7 +34,7 @@ export class McpOAuthService implements OnModuleInit {
 		const port = process.env.MCP_AUTH_PORT || 3003;
 		const baseUrl = process.env.MCP_AUTH_JWT_ISSUER || `http://localhost:${port}`;
 
-		// Build Redis URL from REDIS_URL or individual parameters (same pattern as ConfigManager)
+		// Build Redis URL from REDIS_URL or individual parameters
 		const redisUrl = (() => {
 			if (process.env.REDIS_ENABLED !== 'true') {
 				return undefined;
