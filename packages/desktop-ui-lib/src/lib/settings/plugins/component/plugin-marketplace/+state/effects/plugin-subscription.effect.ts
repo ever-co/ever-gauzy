@@ -243,7 +243,7 @@ export class PluginSubscriptionEffects {
 				this.toastrService.info(this.translateService.instant('PLUGIN.SUBSCRIPTION.PLAN.UPDATING'));
 			}),
 			switchMap(({ planId, updates }) =>
-				this.pluginSubscriptionService.updatePlan(planId, updates as any).pipe(
+				this.pluginSubscriptionService.updatePlan(planId, updates).pipe(
 					tap((plan) => {
 						this.pluginSubscriptionStore.updatePlan(planId, plan);
 						this.toastrService.success(this.translateService.instant('PLUGIN.SUBSCRIPTION.PLAN.UPDATED'));

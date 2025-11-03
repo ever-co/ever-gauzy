@@ -1,4 +1,28 @@
-<div class="subscription-plan-creator">
+<div
+	class="subscription-plan-creator"
+	[class.loading]="(loading$ | async) || (creating$ | async) || (updating$ | async) || (deleting$ | async)"
+>
+	<!-- Loading Overlay -->
+	@if((loading$ | async) || (creating$ | async) || (updating$ | async) || (deleting$ | async)) {
+	<div class="loading-overlay">
+		<nb-spinner status="primary" size="large"></nb-spinner>
+		<p class="loading-text">
+			@if(loading$ | async) { {{ 'PLUGIN.SUBSCRIPTION.LOADING' | translate }} } @else if(creating$ | async) {
+			{{ 'PLUGIN.SUBSCRIPTION.CREATING' | translate }} } @else if(updating$ | async) {
+			{{ 'PLUGIN.SUBSCRIPTION.UPDATING' | translate }} } @else if(deleting$ | async) {
+			{{ 'PLUGIN.SUBSCRIPTION.DELETING' | translate }} }
+		</p>
+	</div>
+	}
+
+	<!-- Error Alert -->
+	@if(error$ | async; as error) {
+	<nb-alert status="danger" closable (close)="subscriptionFacade.resetError()">
+		<nb-icon icon="alert-circle-outline"></nb-icon>
+		{{ error }}
+	</nb-alert>
+	}
+
 	<div class="creator-header">
 		<nb-icon icon="pricetags-outline" status="primary"></nb-icon>
 		<div>

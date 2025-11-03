@@ -94,6 +94,7 @@
 						@if(pluginForm.get('requiresSubscription')?.value){
 						<div class="subscription-creator-container">
 							<lib-plugin-subscription-plan-creator
+								#subscriptionPlanCreator
 								[pluginId]="plugin?.id"
 								[allowMultiplePlans]="true"
 								[requireAtLeastOnePlan]="pluginForm.get('requiresSubscription')?.value"

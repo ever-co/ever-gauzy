@@ -13,7 +13,7 @@ import { NbDateService, NbDialogRef, NbDialogService, NbStepperComponent } from 
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, take, tap } from 'rxjs';
+import { asapScheduler, filter, take, tap } from 'rxjs';
 import { PluginSourceActions } from '../+state/actions/plugin-source.action';
 import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
 import { patterns } from '../../../../../constants';
@@ -21,6 +21,7 @@ import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../services';
 import { IPluginPlanCreateInput, PluginSubscriptionService } from '../../../services/plugin-subscription.service';
 import { SourceContext } from './plugin-source/creator/source.context';
+import { PluginSubscriptionPlanCreatorComponent } from './plugin-subscription-plan-creator/plugin-subscription-plan-creator.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,8 +32,8 @@ import { SourceContext } from './plugin-source/creator/source.context';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
-
 	@ViewChild('stepper', { static: false }) stepper: NbStepperComponent;
+	@ViewChild('subscriptionPlanCreator') subscriptionPlanCreator: PluginSubscriptionPlanCreatorComponent;
 
 	readonly pluginTypes = Object.values(PluginType);
 	readonly pluginStatuses = Object.values(PluginStatus);
@@ -215,9 +216,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 				take(1),
 				filter(Boolean),
 				tap(() => {
-					this.action.dispatch(
-						PluginSourceActions.restore(this.plugin.id, source.versionId, source.id)
-					);
+					this.action.dispatch(PluginSourceActions.restore(this.plugin.id, source.versionId, source.id));
 				}),
 				untilDestroyed(this)
 			)
@@ -285,12 +284,16 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			const pluginData = { ...this.pluginForm.value };
 
 			// Add subscription plans to the plugin data if enabled
+			// For edit mode: Only include new plans (existing plans are updated via facade)
 			if (requiresSubscription && this.subscriptionPlans.length > 0) {
 				pluginData.subscriptionPlans = this.subscriptionPlans;
 			}
 
+			// Close dialog with the plugin data
+			// The parent will handle the actual save operation
 			this.dialogRef.close(pluginData);
-		} finally {
+		} catch (error) {
+			this.toastrService.error(this.translateService.instant('PLUGIN.FORM.SUBMISSION_ERROR'));
 			this.isSubmitting = false;
 		}
 	}
@@ -299,9 +302,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	 * Handle subscription plan changes from child component
 	 */
 	public onSubscriptionPlansChanged(plans: IPluginPlanCreateInput[]): void {
-		this.subscriptionPlans = plans?.length
-			? plans.map((plan) => ({ ...plan, pluginId: this.plugin?.id }))
-			: [];
+		this.subscriptionPlans = plans?.length ? plans.map((plan) => ({ ...plan, pluginId: this.plugin?.id })) : [];
 	}
 
 	public onSubscriptionValidationChanged(isValid: boolean): void {
@@ -325,7 +326,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 	public canProceedToFinalStep(): boolean {
 		const requiresSubscription = this.pluginForm.get('requiresSubscription')?.value;
-		return this.pluginForm.valid && (!requiresSubscription || this.isSubscriptionStepComplete());
+		return !requiresSubscription || this.isSubscriptionStepComplete();
 	}
 
 	public get sources(): FormArray {
@@ -333,12 +334,12 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	}
 
 	private scrollToFirstInvalidControl(): void {
-		// Use setTimeout to ensure DOM has updated after marking controls as touched
-		setTimeout(() => {
+		// Use asapScheduler to ensure DOM has updated after marking controls as touched
+		asapScheduler.schedule(() => {
 			const firstInvalidControl = document.querySelector('form .ng-invalid') as HTMLElement;
 			firstInvalidControl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 			firstInvalidControl?.focus?.();
-		}, 0);
+		});
 	}
 
 	private markFormGroupTouched(formGroup: FormGroup): void {
