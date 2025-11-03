@@ -138,8 +138,33 @@ export class ConfigManager {
 			rateLimitTtl: this.getEnvNumber('MCP_RATE_LIMIT_TTL', 60000), // 1 minute
 			rateLimitMax: this.getEnvNumber('MCP_RATE_LIMIT_MAX', 100),
 
-			// Redis
-			redisUrl: this.getEnvString('REDIS_URL'),
+			// Redis - construct URL from REDIS_URL or individual parameters
+			redisUrl: (() => {
+				if (process.env.REDIS_ENABLED !== 'true') {
+					console.log('Redis is not enabled for MCP.');
+					return undefined;
+				}
+
+				const { REDIS_URL, REDIS_HOST, REDIS_PORT, REDIS_USER, REDIS_PASSWORD, REDIS_TLS } = process.env;
+
+				// If REDIS_URL is provided, use it directly
+				if (REDIS_URL) {
+					return REDIS_URL;
+				}
+
+				// If individual parameters are provided, construct the URL
+				if (REDIS_HOST && REDIS_PORT) {
+					const redisProtocol = REDIS_TLS === 'true' ? 'rediss' : 'redis';
+					const auth = REDIS_USER && REDIS_PASSWORD ? `${REDIS_USER}:${REDIS_PASSWORD}@` : '';
+					return `${redisProtocol}://${auth}${REDIS_HOST}:${REDIS_PORT}`;
+				}
+
+				// If neither REDIS_URL nor required individual parameters are provided, log warning
+				console.warn(
+					'Redis is enabled but neither REDIS_URL nor REDIS_HOST/REDIS_PORT are configured. Redis will not be used.'
+				);
+				return undefined;
+			})(),
 
 			// OAuth 2.0
 			oauth: this.loadOAuthConfiguration()
