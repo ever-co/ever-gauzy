@@ -103,13 +103,15 @@ export class HttpTransport {
 
 		// Configure trust proxy to honor X-Forwarded-For headers from trusted proxies
 		if (this.transportConfig.trustedProxies && this.transportConfig.trustedProxies.length > 0) {
-		// Trust only explicitly configured proxies
-		const normalizedProxies = this.transportConfig.trustedProxies.map(p => this.normalizeIP(p));
-		this.app.set('trust proxy', (ip) => {
-			const normalized = this.normalizeIP(ip || '');
-			return normalizedProxies.includes(normalized);
-		});
+			const normalizedProxies = this.transportConfig.trustedProxies.map(p => this.normalizeIP(p));
+			this.app.set('trust proxy', (ip) => {
+				const normalized = this.normalizeIP(ip || '');
+				return normalizedProxies.includes(normalized);
+			});
 			logger.log(`Trust proxy enabled for: ${this.transportConfig.trustedProxies.join(', ')}`);
+		} else if (process.env.NODE_ENV === 'production') {
+			this.app.set('trust proxy', true);
+			logger.log('Trust proxy enabled for all proxies (production mode)');
 		}
 
 		// CORS configuration
