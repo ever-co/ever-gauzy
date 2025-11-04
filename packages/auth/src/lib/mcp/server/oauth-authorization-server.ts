@@ -235,7 +235,7 @@ export class OAuth2AuthorizationServer {
 				this.securityLogger.error('CRITICAL: Server cannot start with missing required providers in production environment');
 				throw new Error(errorMessage);
 			} else {
-				// In non-production, log warningd
+				// In non-production, log warning
 				this.securityLogger.warn('WARNING: Server is starting with incomplete configuration. This is only allowed in non-production environments.');
 				this.securityLogger.warn(errorMessage);
 			}
