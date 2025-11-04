@@ -34,6 +34,7 @@ export interface IPluginSubscriptionPlan {
 	id: string;
 	pluginId: string;
 	type: PluginSubscriptionType;
+	scope?: string; // 'user', 'organization', 'tenant', 'global'
 	name: string;
 	description: string;
 	price: number;
@@ -161,6 +162,7 @@ export interface IPluginPlanCreateInput {
 	id?: string;
 	pluginId: string;
 	type: PluginSubscriptionType;
+	scope?: string; // 'user', 'organization', 'tenant', 'global'
 	name: string;
 	description: string;
 	price: number;

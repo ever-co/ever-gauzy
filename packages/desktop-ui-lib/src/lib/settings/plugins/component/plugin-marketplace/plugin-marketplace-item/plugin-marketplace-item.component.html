@@ -1,33 +1,44 @@
-@let plugin = plugin$ | async;
-@let editing = marketplaceQuery.updating$ | async;
-@let toggle = installationQuery.toggle$ | async;
-@let isSelected = toggle.plugin?.id === plugin?.id;
-@let installing = installationQuery.installing$ |async;
-@let uninstalling = installationQuery.uninstalling$ |async;
-@let deleting = marketplaceQuery.deleting$ | async;
-@let adding = versionQuery.creating$ | async;
-@let needUpdate = needUpdate$ | async;
-@let installed = installed$ | async;
-@let loading = marketplaceQuery.isLoading$ | async;
-@let disabled = editing || installing || uninstalling || deleting || adding;
-@let selectedVersion = versionQuery.version$ | async;
-@let uploading = marketplaceQuery.uploading$ | async;
-@let progress = marketplaceQuery.progress$ | async;
-@let sources = this.sourceQuery.sources$ | async;
-@let selectedSource = this.sourceQuery.source$ | async;
-@let creatingSource = this.sourceQuery.creating$ | async;
+@let plugin = plugin$ | async; @let editing = marketplaceQuery.updating$ | async; @let toggle =
+installationQuery.toggle$ | async; @let isSelected = toggle.plugin?.id === plugin?.id; @let installing =
+installationQuery.installing$ |async; @let uninstalling = installationQuery.uninstalling$ |async; @let deleting =
+marketplaceQuery.deleting$ | async; @let adding = versionQuery.creating$ | async; @let needUpdate = needUpdate$ | async;
+@let installed = installed$ | async; @let loading = marketplaceQuery.isLoading$ | async; @let disabled = editing ||
+installing || uninstalling || deleting || adding; @let selectedVersion = versionQuery.version$ | async; @let uploading =
+marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ | async; @let sources =
+this.sourceQuery.sources$ | async; @let selectedSource = this.sourceQuery.source$ | async; @let creatingSource =
+this.sourceQuery.creating$ | async;
 
 <nb-card class="content-active first plugin-details-card">
 	<nb-card-header class="d-flex align-items-center justify-content-between">
 		<div class="d-flex align-items-center">
 			<h5 class="mb-0">{{ plugin?.name || ('SM_TABLE.NO_DATA.LOADING' | translate) }}</h5>
 			<div class="ml-3">
-				<nb-badge *ngIf="plugin" [status]="getStatusBadgeStatus(plugin.status)"
-					[text]="getStatusLabel(plugin.status)" class="mr-2 position-relative"></nb-badge>
-				<nb-badge *ngIf="plugin" [status]="getPluginTypeBadgeStatus(plugin.type)"
-					[text]="getTypeLabel(plugin.type)" class="mr-2 position-relative"></nb-badge>
-				<nb-badge *ngIf="plugin && !plugin.hasPlan" status="success"
-					text="Free" class="position-relative"></nb-badge>
+				<nb-badge
+					*ngIf="plugin"
+					[status]="getStatusBadgeStatus(plugin.status)"
+					[text]="getStatusLabel(plugin.status)"
+					class="mr-2 position-relative"
+				></nb-badge>
+				<nb-badge
+					*ngIf="plugin"
+					[status]="getPluginTypeBadgeStatus(plugin.type)"
+					[text]="getTypeLabel(plugin.type)"
+					class="mr-2 position-relative"
+				></nb-badge>
+				<nb-badge
+					*ngIf="plugin && !plugin.hasPlan"
+					status="success"
+					text="Free"
+					class="position-relative"
+				></nb-badge>
+				<!-- Access Level Badge -->
+				<nb-badge
+					*ngIf="accessLevel$ | async as accessLevel"
+					[status]="getAccessLevelBadgeStatus(accessLevel)"
+					[text]="getAccessLevelLabel(accessLevel)"
+					class="mr-2 position-relative"
+				>
+				</nb-badge>
 			</div>
 		</div>
 		<button nbButton ghost size="small" (click)="navigateBack()">
@@ -54,23 +65,47 @@
 					<span class="text-success">{{ 'PLUGIN.DETAILS.INSTALLED' | translate }}</span>
 				</div>
 				@if(needUpdate) {
-				<button nbButton status="basic" size="small" [disabled]="disabled" (click)="updatePlugin()"
-					class="ml-3 action primary">
+				<button
+					nbButton
+					status="basic"
+					size="small"
+					[disabled]="disabled"
+					(click)="updatePlugin()"
+					class="ml-3 action primary"
+				>
 					<nb-icon *gauzySpinnerButton="installing" icon="sync-outline" class="mr-1"></nb-icon>
 					{{ 'BUTTONS.UPDATE' | translate }}
 				</button>
 				}
-				<button nbButton status="basic" size="small" [disabled]="disabled" (click)="uninstallPlugin()"
-					class="ml-2 action danger">
-					<nb-icon *gauzySpinnerButton="uninstalling && isSelected" status="danger"
-						icon="slash-outline"></nb-icon>
+				<button
+					nbButton
+					status="basic"
+					size="small"
+					[disabled]="disabled"
+					(click)="uninstallPlugin()"
+					class="ml-2 action danger"
+				>
+					<nb-icon
+						*gauzySpinnerButton="uninstalling && isSelected"
+						status="danger"
+						icon="slash-outline"
+					></nb-icon>
 					{{ 'BUTTONS.UNINSTALL' | translate }}
 				</button>
 				}@else {
-				<button nbButton status="basic" size="small" class="action success" [disabled]="disabled"
-					(click)="installPlugin()">
-					<nb-icon *gauzySpinnerButton="installing && isSelected" icon="cloud-download-outline"
-						class="mr-1"></nb-icon>
+				<button
+					nbButton
+					status="basic"
+					size="small"
+					class="action success"
+					[disabled]="disabled"
+					(click)="installPlugin()"
+				>
+					<nb-icon
+						*gauzySpinnerButton="installing && isSelected"
+						icon="cloud-download-outline"
+						class="mr-1"
+					></nb-icon>
 					{{ 'BUTTONS.INSTALL' | translate }}
 				</button>
 				}
@@ -82,8 +117,12 @@
 					<!-- Description -->
 					@if(plugin.description) {
 					<div class="description-container mb-4">
-						<p [readMore]="256" [readMoreText]="'BUTTONS.READ_MORE' | translate"
-							[readLessText]="'BUTTONS.READ_LESS' | translate" class="plugin-description">
+						<p
+							[readMore]="256"
+							[readMoreText]="'BUTTONS.READ_MORE' | translate"
+							[readLessText]="'BUTTONS.READ_LESS' | translate"
+							class="plugin-description"
+						>
 							{{ plugin.description }}
 						</p>
 					</div>
@@ -105,17 +144,25 @@
 								<div class="label">{{ 'PLUGIN.FORM.STATUS' | translate }}</div>
 								<div class="value">
 									@if(isOwner) {
-									<nb-select placeholder="{{ 'PLUGIN.FORM.STATUS' | translate }}"
-										[selected]="plugin.status" (selectedChange)="updatePluginStatus($event)"
-										status="primary" size="small">
-										<nb-option *ngFor="
+									<nb-select
+										placeholder="{{ 'PLUGIN.FORM.STATUS' | translate }}"
+										[selected]="plugin.status"
+										(selectedChange)="updatePluginStatus($event)"
+										status="primary"
+										size="small"
+									>
+										<nb-option
+											*ngFor="
 												let status of [
 													pluginStatus.ACTIVE,
 													pluginStatus.INACTIVE,
 													pluginStatus.DEPRECATED,
 													pluginStatus.ARCHIVED
 												]
-											" [value]="status" [disabled]="status === plugin.status">
+											"
+											[value]="status"
+											[disabled]="status === plugin.status"
+										>
 											{{ getStatusLabel(status) }}
 										</nb-option>
 									</nb-select>
@@ -128,8 +175,10 @@
 							<div class="info-item">
 								<div class="label">{{ 'PLUGIN.FORM.SOURCE' | translate }}</div>
 								<div class="value">
-									<gauzy-source-selector [pluginId]="plugin.id"
-										[versionId]="selectedVersion.id"></gauzy-source-selector>
+									<gauzy-source-selector
+										[pluginId]="plugin.id"
+										[versionId]="selectedVersion.id"
+									></gauzy-source-selector>
 								</div>
 							</div>
 
@@ -153,8 +202,12 @@
 							<div class="label">Version {{ version.number }}</div>
 							<div class="value">{{ version.createdAt | humanize }}</div>
 						</div>
-						<p [readMore]="128" [readMoreText]="'BUTTONS.READ_MORE' | translate"
-							[readLessText]="'BUTTONS.READ_LESS' | translate" class="plugin-description">
+						<p
+							[readMore]="128"
+							[readMoreText]="'BUTTONS.READ_MORE' | translate"
+							[readLessText]="'BUTTONS.READ_LESS' | translate"
+							class="plugin-description"
+						>
 							{{ version.changelog }}
 						</p>
 					</div>
@@ -179,8 +232,12 @@
 							<div class="info-item">
 								<div class="label">{{ 'PLUGIN.FORM.METADATA.HOMEPAGE' | translate }}</div>
 								<div class="value">
-									<a [href]="plugin.homepage" target="_blank" rel="noopener noreferrer"
-										class="external-link">
+									<a
+										[href]="plugin.homepage"
+										target="_blank"
+										rel="noopener noreferrer"
+										class="external-link"
+									>
 										{{ plugin.homepage }}
 										<nb-icon icon="external-link-outline" class="link-icon"></nb-icon>
 									</a>
@@ -190,8 +247,12 @@
 							<div class="info-item">
 								<div class="label">{{ 'PLUGIN.FORM.METADATA.REPOSITORY' | translate }}</div>
 								<div class="value">
-									<a [href]="plugin.repository" target="_blank" rel="noopener noreferrer"
-										class="external-link">
+									<a
+										[href]="plugin.repository"
+										target="_blank"
+										rel="noopener noreferrer"
+										class="external-link"
+									>
 										{{ plugin.repository }}
 										<nb-icon icon="external-link-outline" class="link-icon"></nb-icon>
 									</a>
@@ -239,8 +300,11 @@
 					<div class="info-card">
 						<div class="d-flex justify-content-between align-items-center mb-3">
 							<h6 class="section-title mb-0">{{ 'PLUGIN.FORM.SOURCE' | translate }}</h6>
-							<nb-badge class="badge" [text]="getSourceTypeLabel(source.type)"
-								[status]="getPluginSourceTypeBadgeStatus(source.type)"></nb-badge>
+							<nb-badge
+								class="badge"
+								[text]="getSourceTypeLabel(source.type)"
+								[status]="getPluginSourceTypeBadgeStatus(source.type)"
+							></nb-badge>
 						</div>
 
 						<!-- CDN Source -->
@@ -291,7 +355,7 @@
 									<div class="value">
 										<span class="text-muted">{{
 											'PLUGIN.DETAILS.HIDDEN_FOR_SECURITY' | translate
-											}}</span>
+										}}</span>
 									</div>
 								</div>
 								}
@@ -305,8 +369,12 @@
 									<div class="label">{{ 'PLUGIN.FORM.FILE_UPLOAD.FILE' | translate }}</div>
 									<div class="value">
 										@if(source.url) {
-										<a [href]="source.url" target="_blank" rel="noopener noreferrer"
-											class="external-link">
+										<a
+											[href]="source.url"
+											target="_blank"
+											rel="noopener noreferrer"
+											class="external-link"
+										>
 											{{ source.url }}
 											<nb-icon icon="external-link-outline" class="link-icon"></nb-icon>
 										</a>
@@ -355,9 +423,30 @@
 		</button>
 
 		<div class="action-buttons">
-			@if(isOwner) {
-			<button nbButton type="button" size="small" status="basic" [disabled]="disabled" (click)="addVersion()"
-				class="mr-2 action primary soft">
+			<!-- Assign Users Button (for users with canAssign permission) -->
+			@if(canAssign$ | async) {
+			<button
+				nbButton
+				type="button"
+				size="small"
+				status="info"
+				[disabled]="disabled"
+				(click)="showAssignUsersDialog()"
+				class="mr-2 action"
+			>
+				<nb-icon icon="person-add-outline" class="mr-1"></nb-icon>
+				{{ 'PLUGIN.BUTTONS.ASSIGN_USERS' | translate }}
+			</button>
+			} @if(isOwner) {
+			<button
+				nbButton
+				type="button"
+				size="small"
+				status="basic"
+				[disabled]="disabled"
+				(click)="addVersion()"
+				class="mr-2 action primary soft"
+			>
 				<nb-icon *gauzySpinnerButton="adding && isSelected" icon="plus-outline" class="mr-1"></nb-icon>
 				{{ 'BUTTONS.ADD_VERSION' | translate }}
 				@if(uploading && adding){
@@ -365,8 +454,15 @@
 				}
 			</button>
 
-			<button nbButton type="button" status="basic" [disabled]="disabled" size="small" (click)="addSource()"
-				class="mr-2 action info">
+			<button
+				nbButton
+				type="button"
+				status="basic"
+				[disabled]="disabled"
+				size="small"
+				(click)="addSource()"
+				class="mr-2 action info"
+			>
 				<nb-icon *gauzySpinnerButton="creatingSource && isSelected" icon="plus-outline" class="mr-1"></nb-icon>
 				{{ 'BUTTONS.ADD_MORE_SOURCES' | translate }}
 				@if(uploading && creatingSource){
@@ -374,15 +470,30 @@
 				}
 			</button>
 
-			<button nbButton type="button" status="basic" [disabled]="disabled" size="small" (click)="navigateToEdit()"
-				class="mr-2 action secondary">
+			<button
+				nbButton
+				type="button"
+				status="basic"
+				[disabled]="disabled"
+				size="small"
+				(click)="navigateToEdit()"
+				class="mr-2 action secondary"
+			>
 				<nb-icon *gauzySpinnerButton="editing && isSelected" icon="edit-2-outline" class="mr-1"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 
-			<button nbButton type="button" status="basic" class="action" [disabled]="disabled" size="small"
-				(click)="delete()" [nbTooltip]="'BUTTONS.DELETE' | translate"
-				*gauzySpinnerButton="deleting && isSelected">
+			<button
+				nbButton
+				type="button"
+				status="basic"
+				class="action"
+				[disabled]="disabled"
+				size="small"
+				(click)="delete()"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+				*gauzySpinnerButton="deleting && isSelected"
+			>
 				<nb-icon icon="trash-2-outline" status="danger"></nb-icon>
 			</button>
 			}

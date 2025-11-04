@@ -50,6 +50,7 @@ export class SubscriptionPlanFormBuilderService {
 		const planGroup = this.formBuilder.group({
 			id: new FormControl(plan?.id ?? null),
 			type: new FormControl(plan?.type ?? PluginSubscriptionType.FREE, [Validators.required]),
+			scope: new FormControl(plan?.scope ?? 'user', [Validators.required]),
 			name: new FormControl(plan?.name ?? '', [Validators.required, Validators.maxLength(100)]),
 			description: new FormControl(plan?.description ?? '', [Validators.required, Validators.maxLength(500)]),
 			price: new FormControl(plan?.price ?? 0, [Validators.required, Validators.min(0)]),
@@ -145,6 +146,7 @@ export class SubscriptionPlanFormBuilderService {
 			[PluginSubscriptionType.FREE]: {
 				name: 'Free Plan',
 				description: 'Basic features for getting started',
+				scope: 'user',
 				price: 0,
 				currency: 'USD',
 				billingPeriod: PluginBillingPeriod.MONTHLY,
@@ -158,6 +160,7 @@ export class SubscriptionPlanFormBuilderService {
 			[PluginSubscriptionType.TRIAL]: {
 				name: 'Trial Plan',
 				description: 'Full access for a limited time',
+				scope: 'user',
 				price: 0,
 				currency: 'USD',
 				billingPeriod: PluginBillingPeriod.MONTHLY,
@@ -168,6 +171,7 @@ export class SubscriptionPlanFormBuilderService {
 			[PluginSubscriptionType.BASIC]: {
 				name: 'Basic Plan',
 				description: 'Essential features for small teams',
+				scope: 'user',
 				price: 9.99,
 				currency: 'USD',
 				billingPeriod: PluginBillingPeriod.MONTHLY,
@@ -181,6 +185,7 @@ export class SubscriptionPlanFormBuilderService {
 			[PluginSubscriptionType.PREMIUM]: {
 				name: 'Premium Plan',
 				description: 'Advanced features for growing teams',
+				scope: 'organization',
 				price: 29.99,
 				currency: 'USD',
 				billingPeriod: PluginBillingPeriod.MONTHLY,
@@ -194,6 +199,7 @@ export class SubscriptionPlanFormBuilderService {
 			[PluginSubscriptionType.ENTERPRISE]: {
 				name: 'Enterprise Plan',
 				description: 'Full features for large organizations',
+				scope: 'tenant',
 				price: 99.99,
 				currency: 'USD',
 				billingPeriod: PluginBillingPeriod.MONTHLY,
@@ -209,6 +215,7 @@ export class SubscriptionPlanFormBuilderService {
 			[PluginSubscriptionType.CUSTOM]: {
 				name: 'Custom Plan',
 				description: 'Tailored solution for specific needs',
+				scope: 'user',
 				price: 0,
 				currency: 'USD',
 				billingPeriod: PluginBillingPeriod.MONTHLY,

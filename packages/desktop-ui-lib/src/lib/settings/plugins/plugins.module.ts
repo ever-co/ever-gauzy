@@ -51,13 +51,17 @@ import { PluginInstallationEffects } from './component/plugin-marketplace/+state
 import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/effects/plugin-marketplace.effect';
 import { PluginSettingsEffects } from './component/plugin-marketplace/+state/effects/plugin-settings.effects';
 import { PluginSourceEffects } from './component/plugin-marketplace/+state/effects/plugin-source.effect';
+import { PluginSubscriptionAccessEffects } from './component/plugin-marketplace/+state/effects/plugin-subscription-access.effects';
 import { PluginSubscriptionEffects } from './component/plugin-marketplace/+state/effects/plugin-subscription.effect';
 import { PluginUserAssignmentEffects } from './component/plugin-marketplace/+state/effects/plugin-user-assignment.effects';
 import { PluginVersionEffects } from './component/plugin-marketplace/+state/effects/plugin-version.effect';
+import { PluginSubscriptionAccessFacade } from './component/plugin-marketplace/+state/plugin-subscription-access.facade';
 import { PluginSubscriptionFacade } from './component/plugin-marketplace/+state/plugin-subscription.facade';
 import { PluginSettingsQuery } from './component/plugin-marketplace/+state/queries/plugin-settings.query';
+import { PluginSubscriptionAccessQuery } from './component/plugin-marketplace/+state/queries/plugin-subscription-access.query';
 import { PluginSubscriptionQuery } from './component/plugin-marketplace/+state/queries/plugin-subscription.query';
 import { PluginSettingsStore } from './component/plugin-marketplace/+state/stores/plugin-settings.store';
+import { PluginSubscriptionAccessStore } from './component/plugin-marketplace/+state/stores/plugin-subscription-access.store';
 import { PluginSubscriptionStore } from './component/plugin-marketplace/+state/stores/plugin-subscription.store';
 import { PluginMarketplaceDetailComponent } from './component/plugin-marketplace/plugin-marketplace-detail/plugin-marketplace-detail.component';
 import { PluginMarketplaceFilterComponent } from './component/plugin-marketplace/plugin-marketplace-filter/plugin-marketplace-filter.component';
@@ -95,6 +99,7 @@ import { PluginElectronService } from './services/plugin-electron.service';
 import { PluginLoaderService } from './services/plugin-loader.service';
 import { PluginSecurityService } from './services/plugin-security.service';
 import { PluginSettingsService } from './services/plugin-settings.service';
+import { PluginSubscriptionAccessService } from './services/plugin-subscription-access.service';
 import { PluginSubscriptionService } from './services/plugin-subscription.service';
 import { PluginTagsService } from './services/plugin-tags.service';
 import { PluginUserAssignmentService } from './services/plugin-user-assignment.service';
@@ -186,6 +191,7 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		PluginElectronService,
 		PluginService,
 		PluginSubscriptionService,
+		PluginSubscriptionAccessService,
 		PluginTagsService,
 		PluginSettingsService,
 		PluginAnalyticsService,
@@ -200,7 +206,8 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 			PluginSourceEffects,
 			PluginUserAssignmentEffects,
 			PluginSettingsEffects,
-			PluginSubscriptionEffects
+			PluginSubscriptionEffects,
+			PluginSubscriptionAccessEffects
 		),
 		PluginQuery,
 		PluginStore,
@@ -208,7 +215,10 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		PluginSettingsStore,
 		PluginSubscriptionQuery,
 		PluginSubscriptionStore,
+		PluginSubscriptionAccessQuery,
+		PluginSubscriptionAccessStore,
 		PluginSubscriptionFacade,
+		PluginSubscriptionAccessFacade,
 		NbInfiniteListDirective
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA]

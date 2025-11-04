@@ -11,6 +11,13 @@ export * from './plugin-subscription.facade';
 export * from './queries/plugin-subscription.query';
 export * from './stores/plugin-subscription.store';
 
+// Plugin Subscription Access State Management
+export * from './actions/plugin-subscription-access.actions';
+export * from './effects/plugin-subscription-access.effects';
+export * from './plugin-subscription-access.facade';
+export * from './queries/plugin-subscription-access.query';
+export * from './stores/plugin-subscription-access.store';
+
 // Plugin Category State Management
 export * from './actions/plugin-category.action';
 export * from './effects/plugin-category.effect';

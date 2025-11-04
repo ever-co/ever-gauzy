@@ -1,0 +1,109 @@
+<div class="dialog-container">
+	<nb-card>
+		<nb-card-header class="d-flex justify-content-between align-items-center">
+			<h5 class="mb-0">{{ 'PLUGIN.ASSIGNMENT_DIALOG.TITLE' | translate }}</h5>
+			<button nbButton ghost size="small" (click)="close()" [disabled]="loading$ | async">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</nb-card-header>
+
+		<nb-card-body>
+			<form [formGroup]="form">
+				<!-- User Selection -->
+				<div class="form-group">
+					<label class="label">
+						{{ 'PLUGIN.ASSIGNMENT_DIALOG.SELECT_USERS' | translate }}
+						<span class="text-danger">*</span>
+					</label>
+
+					<nb-select
+						fullWidth
+						multiple
+						placeholder="{{ 'PLUGIN.ASSIGNMENT_DIALOG.SELECT_USERS_PLACEHOLDER' | translate }}"
+						formControlName="userIds"
+						[disabled]="loadingUsers || (loading$ | async)"
+					>
+						<nb-option *ngFor="let user of availableUsers" [value]="user.id">
+							<div class="user-option">
+								<span class="user-name">{{ user.name || user.email }}</span>
+								<span class="user-email text-muted" *ngIf="user.email">
+									{{ user.email }}
+								</span>
+							</div>
+						</nb-option>
+					</nb-select>
+
+					<div class="form-help-text" *ngIf="selectedCount > 0">
+						{{ 'PLUGIN.ASSIGNMENT_DIALOG.SELECTED_COUNT' | translate : { count: selectedCount } }}
+					</div>
+
+					<div class="form-error" *ngIf="form.get('userIds')?.invalid && form.get('userIds')?.touched">
+						<span *ngIf="form.get('userIds')?.errors?.['required']">
+							{{ 'PLUGIN.ASSIGNMENT_DIALOG.USERS_REQUIRED' | translate }}
+						</span>
+					</div>
+				</div>
+
+				<!-- Reason (Optional) -->
+				<div class="form-group">
+					<label class="label">
+						{{ 'PLUGIN.ASSIGNMENT_DIALOG.REASON' | translate }}
+						<span class="text-muted">({{ 'PLUGIN.ASSIGNMENT_DIALOG.OPTIONAL' | translate }})</span>
+					</label>
+
+					<textarea
+						nbInput
+						fullWidth
+						rows="3"
+						placeholder="{{ 'PLUGIN.ASSIGNMENT_DIALOG.REASON_PLACEHOLDER' | translate }}"
+						formControlName="reason"
+						[disabled]="loading$ | async"
+					>
+					</textarea>
+
+					<div class="form-help-text">{{ form.get('reason')?.value?.length || 0 }} / 500</div>
+
+					<div class="form-error" *ngIf="form.get('reason')?.invalid && form.get('reason')?.touched">
+						<span *ngIf="form.get('reason')?.errors?.['maxlength']">
+							{{ 'PLUGIN.ASSIGNMENT_DIALOG.REASON_TOO_LONG' | translate }}
+						</span>
+					</div>
+				</div>
+
+				<!-- Loading Indicator -->
+				<div class="loading-overlay" *ngIf="loadingUsers">
+					<nb-spinner status="primary"></nb-spinner>
+					<span class="mt-2">{{ 'PLUGIN.ASSIGNMENT_DIALOG.LOADING_USERS' | translate }}</span>
+				</div>
+
+				<!-- Error Message -->
+				<nb-alert status="danger" *ngIf="error$ | async as error" class="mt-3">
+					<div class="d-flex justify-content-between align-items-center">
+						<span>{{ error }}</span>
+						<button nbButton ghost size="tiny" (click)="accessFacade.resetError()">
+							<nb-icon icon="close-outline"></nb-icon>
+						</button>
+					</div>
+				</nb-alert>
+			</form>
+		</nb-card-body>
+
+		<nb-card-footer class="d-flex justify-content-between">
+			<button nbButton status="basic" size="small" (click)="close()" [disabled]="loading$ | async">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+
+			<button
+				nbButton
+				status="primary"
+				size="small"
+				(click)="assignUsers()"
+				[disabled]="!isValid || (loading$ | async)"
+			>
+				<nb-spinner *ngIf="loading$ | async" size="tiny" status="control"></nb-spinner>
+				<nb-icon *ngIf="!(loading$ | async)" icon="person-add-outline" class="mr-1"></nb-icon>
+				{{ 'PLUGIN.ASSIGNMENT_DIALOG.ASSIGN_BUTTON' | translate }}
+			</button>
+		</nb-card-footer>
+	</nb-card>
+</div>

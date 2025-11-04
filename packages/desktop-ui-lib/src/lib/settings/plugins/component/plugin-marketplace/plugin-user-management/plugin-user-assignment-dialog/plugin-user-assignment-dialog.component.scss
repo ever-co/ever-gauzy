@@ -1,0 +1,63 @@
+.dialog-container {
+	min-width: 500px;
+	max-width: 600px;
+}
+
+.form-group {
+	margin-bottom: 1.5rem;
+	position: relative;
+}
+
+.label {
+	display: block;
+	margin-bottom: 0.5rem;
+	font-weight: 600;
+	font-size: 0.875rem;
+}
+
+.form-help-text {
+	display: block;
+	margin-top: 0.25rem;
+	font-size: 0.75rem;
+	color: var(--text-hint-color);
+}
+
+.form-error {
+	display: block;
+	margin-top: 0.25rem;
+	font-size: 0.75rem;
+	color: var(--color-danger-default);
+}
+
+.user-option {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+
+	.user-name {
+		font-weight: 500;
+	}
+
+	.user-email {
+		font-size: 0.75rem;
+	}
+}
+
+.loading-overlay {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 2rem;
+	background: var(--background-basic-color-1);
+	border-radius: var(--border-radius);
+	margin: 1rem 0;
+
+	span {
+		color: var(--text-hint-color);
+	}
+}
+
+nb-alert {
+	margin-bottom: 0;
+}

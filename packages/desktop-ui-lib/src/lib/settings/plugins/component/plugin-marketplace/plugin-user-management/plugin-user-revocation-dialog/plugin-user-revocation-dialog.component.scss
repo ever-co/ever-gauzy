@@ -1,0 +1,54 @@
+.dialog-container {
+	min-width: 500px;
+	max-width: 600px;
+}
+
+.form-group {
+	margin-bottom: 1.5rem;
+	position: relative;
+}
+
+.label {
+	display: block;
+	margin-bottom: 0.5rem;
+	font-weight: 600;
+	font-size: 0.875rem;
+}
+
+.form-help-text {
+	display: block;
+	margin-top: 0.25rem;
+	font-size: 0.75rem;
+	color: var(--text-hint-color);
+}
+
+.form-error {
+	display: block;
+	margin-top: 0.25rem;
+	font-size: 0.75rem;
+	color: var(--color-danger-default);
+}
+
+.users-list {
+	.user-chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		padding: 0.75rem;
+		background: var(--background-basic-color-2);
+		border-radius: var(--border-radius);
+
+		.user-chip {
+			font-size: 0.75rem;
+		}
+	}
+}
+
+nb-alert {
+	margin-bottom: 0;
+
+	p {
+		font-size: 0.875rem;
+		line-height: 1.5;
+	}
+}

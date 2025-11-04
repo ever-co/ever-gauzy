@@ -1,0 +1,128 @@
+<div class="dialog-container">
+	<nb-card>
+		<nb-card-header class="d-flex justify-content-between align-items-center">
+			<h5 class="mb-0 text-danger">
+				<nb-icon icon="alert-triangle-outline" class="mr-2"></nb-icon>
+				{{ 'PLUGIN.REVOCATION_DIALOG.TITLE' | translate }}
+			</h5>
+			<button nbButton ghost size="small" (click)="close()" [disabled]="loading$ | async">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</nb-card-header>
+
+		<nb-card-body>
+			<!-- Warning Message -->
+			<nb-alert status="warning" class="mb-3">
+				<div class="d-flex align-items-start">
+					<nb-icon icon="alert-circle-outline" class="mr-2 flex-shrink-0"></nb-icon>
+					<div>
+						<strong>{{ 'PLUGIN.REVOCATION_DIALOG.WARNING_TITLE' | translate }}</strong>
+						<p class="mb-0 mt-1">
+							{{ 'PLUGIN.REVOCATION_DIALOG.WARNING_MESSAGE' | translate : { count: userCount } }}
+						</p>
+					</div>
+				</div>
+			</nb-alert>
+
+			<!-- Users to Revoke -->
+			<div class="users-list mb-3" *ngIf="userCount > 0">
+				<label class="label">
+					{{ 'PLUGIN.REVOCATION_DIALOG.USERS_TO_REVOKE' | translate }}
+				</label>
+				<div class="user-chips">
+					<nb-badge
+						*ngFor="let user of usersToRevoke"
+						status="danger"
+						class="user-chip"
+						[text]="user.name || user.email"
+					>
+					</nb-badge>
+					<nb-badge
+						*ngIf="userCount > usersToRevoke.length"
+						status="basic"
+						class="user-chip"
+						[text]="'+' + (userCount - usersToRevoke.length) + ' more'"
+					>
+					</nb-badge>
+				</div>
+			</div>
+
+			<form [formGroup]="form">
+				<!-- Revocation Reason (Required) -->
+				<div class="form-group">
+					<label class="label">
+						{{ 'PLUGIN.REVOCATION_DIALOG.REASON' | translate }}
+						<span class="text-danger">*</span>
+					</label>
+
+					<textarea
+						nbInput
+						fullWidth
+						rows="4"
+						placeholder="{{ 'PLUGIN.REVOCATION_DIALOG.REASON_PLACEHOLDER' | translate }}"
+						formControlName="revocationReason"
+						[disabled]="loading$ | async"
+						[status]="
+							form.get('revocationReason')?.invalid && form.get('revocationReason')?.touched
+								? 'danger'
+								: 'basic'
+						"
+					>
+					</textarea>
+
+					<div class="form-help-text">
+						<span [class.text-danger]="form.get('revocationReason')?.value?.length > 500">
+							{{ form.get('revocationReason')?.value?.length || 0 }} / 500
+						</span>
+						<span class="ml-2 text-muted">
+							({{ 'PLUGIN.REVOCATION_DIALOG.MIN_LENGTH' | translate : { min: 10 } }})
+						</span>
+					</div>
+
+					<div
+						class="form-error"
+						*ngIf="form.get('revocationReason')?.invalid && form.get('revocationReason')?.touched"
+					>
+						<span *ngIf="form.get('revocationReason')?.errors?.['required']">
+							{{ 'PLUGIN.REVOCATION_DIALOG.REASON_REQUIRED' | translate }}
+						</span>
+						<span *ngIf="form.get('revocationReason')?.errors?.['minlength']">
+							{{ 'PLUGIN.REVOCATION_DIALOG.REASON_TOO_SHORT' | translate }}
+						</span>
+						<span *ngIf="form.get('revocationReason')?.errors?.['maxlength']">
+							{{ 'PLUGIN.REVOCATION_DIALOG.REASON_TOO_LONG' | translate }}
+						</span>
+					</div>
+				</div>
+
+				<!-- Error Message -->
+				<nb-alert status="danger" *ngIf="error$ | async as error" class="mt-3">
+					<div class="d-flex justify-content-between align-items-center">
+						<span>{{ error }}</span>
+						<button nbButton ghost size="tiny" (click)="accessFacade.resetError()">
+							<nb-icon icon="close-outline"></nb-icon>
+						</button>
+					</div>
+				</nb-alert>
+			</form>
+		</nb-card-body>
+
+		<nb-card-footer class="d-flex justify-content-between">
+			<button nbButton status="basic" size="small" (click)="close()" [disabled]="loading$ | async">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+
+			<button
+				nbButton
+				status="danger"
+				size="small"
+				(click)="revokeUsers()"
+				[disabled]="!isValid || (loading$ | async)"
+			>
+				<nb-spinner *ngIf="loading$ | async" size="tiny" status="control"></nb-spinner>
+				<nb-icon *ngIf="!(loading$ | async)" icon="person-remove-outline" class="mr-1"></nb-icon>
+				{{ 'PLUGIN.REVOCATION_DIALOG.REVOKE_BUTTON' | translate }}
+			</button>
+		</nb-card-footer>
+	</nb-card>
+</div>

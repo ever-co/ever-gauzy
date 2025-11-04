@@ -1,6 +1,5 @@
 import { IUser } from '@gauzy/contracts';
 import {
-	ColumnIndex,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
@@ -227,7 +226,6 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@ApiPropertyOptional({ type: String, description: 'Parent subscription ID for hierarchical subscriptions' })
 	@IsOptional()
 	@IsUUID(4, { message: 'Parent subscription ID must be a valid UUID' })
-	@ColumnIndex()
 	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
 	@RelationId((subscription: PluginSubscription) => subscription.parent)
 	parentId?: string;

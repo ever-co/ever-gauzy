@@ -21,6 +21,7 @@ import { PluginInstallationActions } from '../+state/actions/plugin-installation
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginSourceActions } from '../+state/actions/plugin-source.action';
 import { PluginVersionActions } from '../+state/actions/plugin-version.action';
+import { PluginSubscriptionAccessFacade } from '../+state/plugin-subscription-access.facade';
 import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
 import { PluginSourceQuery } from '../+state/queries/plugin-source.query';
@@ -29,6 +30,7 @@ import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
+import { PluginScope } from '../../../services/plugin-subscription-access.service';
 import { PluginSubscriptionService } from '../../../services/plugin-subscription.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginSubscriptionSelectionComponent } from '../plugin-subscription-selection/plugin-subscription-selection.component';
@@ -52,6 +54,12 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	readonly pluginStatus = PluginStatus;
 	readonly pluginType = PluginType;
 	readonly pluginSourceType = PluginSourceType;
+	readonly pluginScope = PluginScope;
+
+	// Access observables
+	hasAccess$: Observable<boolean>;
+	canAssign$: Observable<boolean>;
+	accessLevel$: Observable<PluginScope | undefined>;
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -66,7 +74,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery,
 		public readonly versionQuery: PluginVersionQuery,
-		public readonly sourceQuery: PluginSourceQuery
+		public readonly sourceQuery: PluginSourceQuery,
+		public readonly accessFacade: PluginSubscriptionAccessFacade
 	) {}
 
 	ngOnInit(): void {
@@ -74,6 +83,15 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			.pipe(
 				filter(Boolean),
 				distinctUntilChange(),
+				tap((plugin) => {
+					// Check access when plugin loads
+					this.accessFacade.checkAccess(plugin.id);
+
+					// Initialize access observables
+					this.hasAccess$ = this.accessFacade.hasAccess$(plugin.id);
+					this.canAssign$ = this.accessFacade.canAssign$(plugin.id);
+					this.accessLevel$ = this.accessFacade.getAccessLevel$(plugin.id);
+				}),
 				concatMap((plugin) => {
 					this.action.dispatch(PluginVersionActions.selectVersion(plugin.version));
 					this.action.dispatch(PluginSourceActions.selectSource(plugin.source));
@@ -176,6 +194,31 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			[PluginSourceType.NPM]: 'danger'
 		};
 		return typeMap[type] || 'basic';
+	}
+
+	getAccessLevelLabel(level: PluginScope): string {
+		const labels: Record<PluginScope, string> = {
+			[PluginScope.USER]: this.translateService.instant('PLUGIN.ACCESS.USER_LEVEL'),
+			[PluginScope.ORGANIZATION]: this.translateService.instant('PLUGIN.ACCESS.ORG_LEVEL'),
+			[PluginScope.TENANT]: this.translateService.instant('PLUGIN.ACCESS.TENANT_LEVEL'),
+			[PluginScope.GLOBAL]: this.translateService.instant('PLUGIN.ACCESS.GLOBAL_LEVEL')
+		};
+		return labels[level] || level;
+	}
+
+	getAccessLevelBadgeStatus(level: PluginScope): string {
+		const statusMap: Record<PluginScope, string> = {
+			[PluginScope.TENANT]: 'success',
+			[PluginScope.ORGANIZATION]: 'info',
+			[PluginScope.USER]: 'warning',
+			[PluginScope.GLOBAL]: 'primary'
+		};
+		return statusMap[level] || 'basic';
+	}
+
+	showAssignUsersDialog(): void {
+		if (!this.pluginId) return;
+		this.accessFacade.showAssignmentDialog(this.pluginId);
 	}
 
 	getSourceDetails(plugin: IPlugin): string {
