@@ -19,8 +19,8 @@ import { DialogInstallationValidationComponent } from '../plugin-marketplace-ite
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginSettingsManagementComponent } from '../plugin-settings-management/plugin-settings-management.component';
 import {
-	IPluginSubscriptionSelectionResult,
-	PluginSubscriptionSelectionComponent
+    IPluginSubscriptionSelectionResult,
+    PluginSubscriptionSelectionComponent
 } from '../plugin-subscription-selection/plugin-subscription-selection.component';
 import { PluginUserManagementComponent } from '../plugin-user-management/plugin-user-management.component';
 
@@ -113,11 +113,13 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	public togglePlugin(checked: boolean): void {
 		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: checked, plugin: this.plugin }));
 		if (checked) {
-			// If plugin is free (has no plans), install directly without showing subscription dialog
-			if (!this.plugin.hasPlan) {
-				this.installPlugin();
-			} else {
+			// Check if plugin requires subscription
+			if (this.plugin.hasPlan) {
+				// Plugin has subscription plans - must subscribe before installation
 				this.showSubscriptionDialog();
+			} else {
+				// Plugin doesn't require subscription - install directly
+				this.installPlugin();
 			}
 		} else {
 			this.uninstallPlugin();
@@ -171,7 +173,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public installPlugin(isUpdate = false): void {
-		// Proceed directly with installation for free plugins or updates
+		// For plugins with subscription plans, this should only be called after subscription verification
+		// The togglePlugin method handles showing the subscription dialog first
 		this.proceedWithInstallationValidation(isUpdate);
 	}
 
@@ -185,6 +188,9 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	private proceedWithInstallationValidation(isUpdate = false): void {
+		// Note: Access verification is handled in togglePlugin before reaching here
+		// For plugins with subscription plans, subscription dialog is shown first
+		// This method proceeds with installation validation after subscription is confirmed
 		const installation$ = this.createInstallationObservable(isUpdate);
 		installation$.subscribe({
 			error: (err) => this.handleInstallationError(err)

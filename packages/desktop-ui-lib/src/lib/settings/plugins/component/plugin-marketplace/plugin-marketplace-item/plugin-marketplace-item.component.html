@@ -93,6 +93,9 @@ this.sourceQuery.creating$ | async;
 					{{ 'BUTTONS.UNINSTALL' | translate }}
 				</button>
 				}@else {
+				<!-- Install button with subscription check -->
+				@if(plugin.hasPlan) { @if(hasAccess$ | async) {
+				<!-- User has active subscription -->
 				<button
 					nbButton
 					status="basic"
@@ -100,6 +103,7 @@ this.sourceQuery.creating$ | async;
 					class="action success"
 					[disabled]="disabled"
 					(click)="installPlugin()"
+					[nbTooltip]="'PLUGIN.TOOLTIP.INSTALL_WITH_SUBSCRIPTION' | translate"
 				>
 					<nb-icon
 						*gauzySpinnerButton="installing && isSelected"
@@ -108,7 +112,39 @@ this.sourceQuery.creating$ | async;
 					></nb-icon>
 					{{ 'BUTTONS.INSTALL' | translate }}
 				</button>
-				}
+				} @else {
+				<!-- User needs to subscribe first -->
+				<button
+					nbButton
+					status="basic"
+					size="small"
+					class="action warning"
+					[disabled]="disabled"
+					(click)="installPlugin()"
+					[nbTooltip]="'PLUGIN.TOOLTIP.SUBSCRIBE_TO_INSTALL' | translate"
+				>
+					<nb-icon *gauzySpinnerButton="installing && isSelected" icon="lock-outline" class="mr-1"></nb-icon>
+					{{ 'PLUGIN.BUTTONS.SUBSCRIBE_AND_INSTALL' | translate }}
+				</button>
+				} } @else {
+				<!-- Free plugin - no subscription required -->
+				<button
+					nbButton
+					status="basic"
+					size="small"
+					class="action success"
+					[disabled]="disabled"
+					(click)="installPlugin()"
+					[nbTooltip]="'PLUGIN.TOOLTIP.INSTALL_FREE' | translate"
+				>
+					<nb-icon
+						*gauzySpinnerButton="installing && isSelected"
+						icon="cloud-download-outline"
+						class="mr-1"
+					></nb-icon>
+					{{ 'BUTTONS.INSTALL' | translate }}
+				</button>
+				} }
 			</div>
 
 			<!-- Plugin Info Tabs -->

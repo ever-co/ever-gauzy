@@ -5,25 +5,26 @@ import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
-	BehaviorSubject,
-	Observable,
-	combineLatest,
-	filter,
-	firstValueFrom,
-	map,
-	startWith,
-	switchMap,
-	tap
+    BehaviorSubject,
+    Observable,
+    combineLatest,
+    filter,
+    firstValueFrom,
+    map,
+    startWith,
+    switchMap,
+    take,
+    tap
 } from 'rxjs';
 import { PluginSubscriptionActions } from '../+state/actions/plugin-subscription.action';
 import { PluginSubscriptionQuery } from '../+state/queries/plugin-subscription.query';
 import { Store } from '../../../../../services';
 import {
-	IPluginSubscriptionCreateInput,
-	IPluginSubscriptionPlan,
-	PluginBillingPeriod,
-	PluginSubscriptionService,
-	PluginSubscriptionType
+    IPluginSubscriptionCreateInput,
+    IPluginSubscriptionPlan,
+    PluginBillingPeriod,
+    PluginSubscriptionService,
+    PluginSubscriptionType
 } from '../../../services/plugin-subscription.service';
 import { IPlanViewModel, ISubscriptionPreviewViewModel } from './models/plan-view.model';
 import { PlanFormatterService } from './services/plan-formatter.service';
@@ -293,12 +294,13 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	public onSubscribeAndInstall(): void {
 		if (!this.subscriptionForm.valid) {
 			this.subscriptionForm.markAllAsTouched();
+			console.log('[PluginSubscriptionSelection] Form validation failed');
 			return;
 		}
 
 		const selectedPlanViewModel = this.selectedPlanViewModel$.value;
 		if (!selectedPlanViewModel) {
-			console.log('Please select a subscription plan');
+			console.log('[PluginSubscriptionSelection] No plan selected');
 			return;
 		}
 
@@ -319,17 +321,19 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			promoCode: this.subscriptionForm.value.promoCode,
 			metadata: {
 				source: 'plugin-marketplace',
-				pluginName: this.plugin?.name
+				pluginName: this.plugin?.name,
+				requiresSubscription: true
 			}
 		};
 
 		if (selectedPlanViewModel.isFree) {
-			// For free plans, proceed directly to installation
-			console.log('[PluginSubscriptionSelection] Free plan selected, proceeding with installation');
-			this.proceedWithInstallation(selectedPlanViewModel.originalPlan, subscriptionInput);
+			// For free plans, create subscription then proceed to installation
+			// Even free plans require a subscription record to track access
+			console.log('[PluginSubscriptionSelection] Free plan selected, creating free subscription');
+			this.createSubscription(selectedPlanViewModel.originalPlan, subscriptionInput);
 		} else {
-			// For paid plans, create subscription using state management
-			console.log('[PluginSubscriptionSelection] Paid plan selected, creating subscription first');
+			// For paid plans, create subscription with payment validation
+			console.log('[PluginSubscriptionSelection] Paid plan selected, creating paid subscription');
 			this.createSubscription(selectedPlanViewModel.originalPlan, subscriptionInput);
 		}
 	}
@@ -342,36 +346,67 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 		// This will create a new subscription record for the user
 		this.actions$.dispatch(PluginSubscriptionActions.createSubscription(input.pluginId, input));
 
-		// Watch for successful subscription creation
-		this.creating$
+		// Combine both observables to handle both success and error cases
+		combineLatest([this.creating$, this.error$])
 			.pipe(
-				tap((creating) => {
-					if (!creating && !this.pluginSubscriptionQuery.error) {
-						// Success case - subscription created, proceed with installation
+				// Skip initial emissions
+				filter(([creating, error]) => {
+					// We're interested in state changes after dispatch
+					return !creating || !!error;
+				}),
+				// Take only the first relevant emission
+				take(1),
+				tap(([creating, error]) => {
+					if (error) {
+						// Error case - subscription creation failed
+						console.error('[PluginSubscriptionSelection] Failed to create subscription:', error);
+						console.log('Failed to create subscription. Please try again.');
+					} else if (!creating) {
+						// Success case - subscription created successfully
 						console.log(
 							`[PluginSubscriptionSelection] Successfully created subscription to ${plan.name} plan for ${
 								this.plugin?.name || 'plugin'
 							}`
 						);
-						this.proceedWithInstallation(plan, input);
+						// Verify subscription was actually created before proceeding
+						this.verifyAndProceed(plan, input);
 					}
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
 
-		// Watch for subscription creation errors
-		this.error$
-			.pipe(
-				tap((error) => {
-					if (error) {
-						console.error('[PluginSubscriptionSelection] Failed to create subscription:', error);
-						console.log('Failed to create subscription. Please try again.');
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+	/**
+	 * Verify subscription was successfully created before allowing installation
+	 * This ensures the backend has properly recorded the subscription
+	 */
+	private verifyAndProceed(plan: IPluginSubscriptionPlan, input: IPluginSubscriptionCreateInput): void {
+		// Get the selected subscription from the query state
+		const createdSubscription = this.pluginSubscriptionQuery.selectedSubscription;
+
+		if (createdSubscription && createdSubscription.status) {
+			// Subscription exists and has a valid status
+			console.log('[PluginSubscriptionSelection] Subscription verified, proceeding with installation');
+			this.proceedWithInstallation(plan, input);
+		} else {
+			// Subscription state is invalid or missing - check if subscription was added to collection
+			console.warn('[PluginSubscriptionSelection] No selected subscription, checking subscriptions list');
+
+			// Try to find a recently created subscription for this plugin
+			const subscriptions = this.pluginSubscriptionQuery.subscriptions;
+			const recentSubscription = subscriptions.find(
+				s => s.pluginId === input.pluginId && s.subscriptionType === input.subscriptionType
+			);
+
+			if (recentSubscription) {
+				console.log('[PluginSubscriptionSelection] Found subscription in collection, proceeding with installation');
+				this.proceedWithInstallation(plan, input);
+			} else {
+				console.error('[PluginSubscriptionSelection] Subscription verification failed - no valid subscription found');
+				console.log('Subscription could not be verified. Please try again or contact support.');
+			}
+		}
 	}
 
 	private proceedWithInstallation(plan: IPluginSubscriptionPlan, input: IPluginSubscriptionCreateInput): void {
