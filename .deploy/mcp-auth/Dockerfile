@@ -32,6 +32,9 @@ ARG DB_LOGGING
 ARG DB_ORM
 ARG DB_SYNCHRONIZE
 
+# Proxy Configuration
+ARG MCP_TRUSTED_PROXIES
+
 
 FROM node:20.18.1-alpine3.19 AS dependencies
 
