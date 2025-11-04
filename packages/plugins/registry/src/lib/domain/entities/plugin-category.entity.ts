@@ -1,11 +1,5 @@
 import { ID } from '@gauzy/contracts';
-import {
-	MultiORMColumn,
-	MultiORMEntity,
-	MultiORMManyToOne,
-	MultiORMOneToMany,
-	TenantOrganizationBaseEntity
-} from '@gauzy/core';
+import { MultiORMColumn, MultiORMEntity, MultiORMOneToMany, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -87,16 +81,13 @@ export class PluginCategory extends TenantOrganizationBaseEntity implements IPlu
 	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
 	parentId?: ID;
 
+	@ApiPropertyOptional({ type: () => PluginCategory, description: 'Parent category' })
 	@TreeParent()
-	@MultiORMManyToOne(() => PluginCategory, (category) => category.children, {
-		onDelete: 'SET NULL',
-		nullable: true
-	})
 	@JoinColumn()
 	parent?: Relation<IPluginCategory>;
 
-	@TreeChildren()
-	@MultiORMOneToMany(() => PluginCategory, (category) => category.parent)
+	@ApiPropertyOptional({ type: () => [PluginCategory], description: 'Child categories' })
+	@TreeChildren({ cascade: true })
 	children?: Relation<IPluginCategory[]>;
 
 	/*

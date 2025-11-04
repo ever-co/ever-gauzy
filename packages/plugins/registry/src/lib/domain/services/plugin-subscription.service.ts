@@ -14,14 +14,45 @@ import {
 import { PluginSubscription } from '../entities/plugin-subscription.entity';
 import { MikroOrmPluginSubscriptionRepository } from '../repositories/mikro-orm-plugin-subscription.repository';
 import { TypeOrmPluginSubscriptionRepository } from '../repositories/type-orm-plugin-subscription.repository';
+import { PluginTenantService } from './plugin-tenant.service';
 
 @Injectable()
 export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubscription> {
 	constructor(
 		public readonly typeOrmPluginSubscriptionRepository: TypeOrmPluginSubscriptionRepository,
-		public readonly mikroOrmPluginSubscriptionRepository: MikroOrmPluginSubscriptionRepository
+		public readonly mikroOrmPluginSubscriptionRepository: MikroOrmPluginSubscriptionRepository,
+		private readonly pluginTenantService: PluginTenantService
 	) {
 		super(typeOrmPluginSubscriptionRepository, mikroOrmPluginSubscriptionRepository);
+	}
+
+	/**
+	 * Override create method to handle tree entity properly for TypeORM
+	 * This is necessary because PluginSubscription uses TypeORM's closure-table tree functionality
+	 * which requires the parent entity to be loaded when creating child subscriptions
+	 */
+	async create(entity: IPluginSubscriptionCreateInput): Promise<PluginSubscription> {
+		// If parentId is provided, load the parent entity first and pass the loaded
+		// entity as `parent` to the create flow. This ensures both TypeORM (closure-table)
+		// and MikroORM get a proper relation object instead of a raw id which can cause
+		// persistence internals to fail (e.g. getEntityValue undefined).
+		if (entity.parentId) {
+			const parent = await this.findOneByIdString(entity.parentId);
+			if (!parent) {
+				throw new NotFoundException(`Parent subscription with ID ${entity.parentId} not found`);
+			}
+			// Remove parentId from the entity data and replace with loaded parent object
+			const { parentId, ...entityWithoutParentId } = entity;
+			// Delegate to the base create which will handle ORM specifics for both
+			// MikroORM and TypeORM when given a proper `parent` relation object.
+			return await super.create({
+				...entityWithoutParentId,
+				parent
+			} as any);
+		}
+
+		// No parent, proceed with standard creation
+		return await super.create(entity);
 	}
 
 	/**
@@ -699,15 +730,19 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 
 	/**
 	 * Ensure plugin tenant exists
+	 * Uses the PluginTenantService to find or create a plugin tenant relationship
+	 *
+	 * @param pluginId - The plugin ID
+	 * @param tenantId - The tenant ID
+	 * @param organizationId - Optional organization ID
+	 * @returns The plugin tenant ID
 	 */
 	private async ensurePluginTenantExists(
 		pluginId: string,
 		tenantId: string,
 		organizationId?: string
 	): Promise<string> {
-		// This would integrate with PluginTenantService to create or get existing relationship
-		// For now, return a placeholder - this should be implemented properly
-		return `${pluginId}-${tenantId}-${organizationId || 'no-org'}`;
+		return this.pluginTenantService.findOrCreate(pluginId, tenantId, organizationId);
 	}
 
 	/**

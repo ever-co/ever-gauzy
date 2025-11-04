@@ -26,6 +26,7 @@ import {
 export class CreatePluginSubscriptionDTO extends IntersectionType(
 	TenantOrganizationBaseDTO,
 	PickType(PluginSubscription, [
+		'status',
 		'subscriptionType',
 		'scope',
 		'billingPeriod',

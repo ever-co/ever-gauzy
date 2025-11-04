@@ -33,6 +33,10 @@ import {
 } from '../../shared/models/plugin-subscription.model';
 import type { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import type { IPlugin } from '../../shared/models/plugin.model';
+import { PluginBilling } from './plugin-billing.entity';
+import { PluginSubscriptionPlan } from './plugin-subscription-plan.entity';
+import { PluginTenant } from './plugin-tenant.entity';
+import { Plugin } from './plugin.entity';
 
 @MultiORMEntity('plugin_subscriptions')
 @Tree('closure-table')
@@ -150,7 +154,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@MultiORMColumn({ type: 'uuid', nullable: false, relationId: true })
 	pluginId: string;
 
-	@MultiORMManyToOne(() => 'Plugin', {
+	@MultiORMManyToOne(() => Plugin, (plugin) => plugin.subscriptions, {
 		onDelete: 'CASCADE',
 		nullable: false,
 		eager: false
@@ -168,7 +172,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@RelationId((subscription: PluginSubscription) => subscription.pluginTenant)
 	pluginTenantId: string;
 
-	@MultiORMManyToOne(() => 'PluginTenant', {
+	@MultiORMManyToOne(() => PluginTenant, (pluginTenant) => pluginTenant.subscriptions, {
 		onDelete: 'CASCADE',
 		nullable: false,
 		eager: false
@@ -186,7 +190,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@RelationId((subscription: PluginSubscription) => subscription.plan)
 	planId?: string;
 
-	@MultiORMManyToOne(() => 'PluginSubscriptionPlan', 'subscriptions', {
+	@MultiORMManyToOne(() => PluginSubscriptionPlan, (plan) => plan.subscriptions, {
 		onDelete: 'SET NULL',
 		nullable: true,
 		eager: false
@@ -239,10 +243,6 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 		description: 'Parent subscription (for subscriptions created through assignment)'
 	})
 	@TreeParent()
-	@MultiORMManyToOne(() => PluginSubscription, (subscription) => subscription.children, {
-		onDelete: 'CASCADE',
-		nullable: true
-	})
 	@JoinColumn()
 	parent?: Relation<IPluginSubscription>;
 
@@ -254,17 +254,15 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 		type: () => [PluginSubscription],
 		description: 'Child subscriptions (user subscriptions created through assignment)'
 	})
-	@TreeChildren()
-	@MultiORMOneToMany(() => PluginSubscription, (subscription) => subscription.parent, {
-		cascade: true
+	@ApiPropertyOptional({
+		type: () => [PluginSubscription],
+		description: 'Child subscriptions (user subscriptions created through assignment)'
 	})
+	@TreeChildren({ cascade: true })
 	children?: Relation<IPluginSubscription[]>;
 
-	/*
-	 * Billing relationships - inverse relationship for PluginBilling
-	 */
 	@ApiPropertyOptional({ type: () => Array, description: 'Plugin billings for this subscription' })
-	@MultiORMOneToMany(() => 'PluginBilling', 'subscription', {
+	@MultiORMOneToMany(() => PluginBilling, (billing) => billing.subscription, {
 		onDelete: 'CASCADE'
 	})
 	billings?: Relation<IPluginBilling[]>;

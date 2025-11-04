@@ -8,6 +8,7 @@ import { PluginSubscriptionAccessService } from './plugin-subscription-access.se
 import { PluginSubscriptionPlanService } from './plugin-subscription-plan.service';
 import { PluginSubscriptionService } from './plugin-subscription.service';
 import { PluginTagService } from './plugin-tag.service';
+import { PluginTenantService } from './plugin-tenant.service';
 import { PluginUserAssignmentService } from './plugin-user-assignment.service';
 import { PluginVersionService } from './plugin-version.service';
 import { PluginService } from './plugin.service';
@@ -20,6 +21,7 @@ export const services = [
 	PluginVersionService,
 	PluginSecurityService,
 	PluginSettingService,
+	PluginTenantService,
 	PluginSubscriptionService,
 	PluginSubscriptionAccessService,
 	PluginSubscriptionPlanService,
@@ -39,6 +41,7 @@ export * from './plugin-subscription-access.service';
 export * from './plugin-subscription-plan.service';
 export * from './plugin-subscription.service';
 export * from './plugin-tag.service';
+export * from './plugin-tenant.service';
 export * from './plugin-user-assignment.service';
 export * from './plugin-version.service';
 export * from './plugin.service';
