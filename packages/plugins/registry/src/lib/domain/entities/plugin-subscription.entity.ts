@@ -1,5 +1,6 @@
 import { IUser } from '@gauzy/contracts';
 import {
+	ColumnIndex,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
@@ -21,7 +22,7 @@ import {
 	Min,
 	ValidateIf
 } from 'class-validator';
-import { Index, JoinColumn, Relation, RelationId } from 'typeorm';
+import { Index, JoinColumn, Relation, RelationId, Tree, TreeChildren, TreeParent } from 'typeorm';
 import { IPluginBilling } from '../../shared/models';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import {
@@ -35,11 +36,13 @@ import type { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import type { IPlugin } from '../../shared/models/plugin.model';
 
 @MultiORMEntity('plugin_subscriptions')
+@Tree('closure-table')
 @Index(['pluginId', 'tenantId', 'organizationId'], { unique: false })
 @Index(['subscriberId', 'tenantId'], { unique: false })
 @Index(['status', 'endDate'], { unique: false })
 @Index(['nextBillingDate'], { unique: false })
 @Index(['externalSubscriptionId'], { unique: false })
+@Index(['parentId'], { unique: false })
 export class PluginSubscription extends TenantOrganizationBaseEntity implements IPluginSubscription {
 	@ApiProperty({ enum: PluginSubscriptionStatus, description: 'Subscription status' })
 	@IsEnum(PluginSubscriptionStatus, { message: 'Invalid subscription status' })
@@ -212,6 +215,53 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	subscriber?: Relation<IUser>;
 
 	/*
+	 * Parent-Child Subscription Relationships
+	 * Used for hierarchical subscription management where tenant/organization subscriptions
+	 * can have child user subscriptions created through assignment
+	 */
+
+	/**
+	 * Parent subscription ID - References the tenant/organization subscription that spawned this user subscription
+	 * Only set for user subscriptions created through assignment from a parent subscription
+	 */
+	@ApiPropertyOptional({ type: String, description: 'Parent subscription ID for hierarchical subscriptions' })
+	@IsOptional()
+	@IsUUID(4, { message: 'Parent subscription ID must be a valid UUID' })
+	@ColumnIndex()
+	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
+	@RelationId((subscription: PluginSubscription) => subscription.parent)
+	parentId?: string;
+
+	/**
+	 * Parent subscription relationship
+	 * The tenant/organization subscription that this user subscription was derived from
+	 */
+	@ApiPropertyOptional({
+		type: () => PluginSubscription,
+		description: 'Parent subscription (for subscriptions created through assignment)'
+	})
+	@TreeParent()
+	@MultiORMManyToOne(() => PluginSubscription, (subscription) => subscription.children, {
+		onDelete: 'CASCADE',
+		nullable: true
+	})
+	@JoinColumn()
+	parent?: Relation<IPluginSubscription>;
+
+	/**
+	 * Child subscriptions relationship
+	 * User subscriptions that were created through assignment from this tenant/organization subscription
+	 */
+	@ApiPropertyOptional({
+		type: () => [PluginSubscription],
+		description: 'Child subscriptions (user subscriptions created through assignment)'
+	})
+	@TreeChildren()
+	@MultiORMOneToMany(() => PluginSubscription, (subscription) => subscription.parent, {
+		cascade: true
+	})
+	children?: Relation<IPluginSubscription[]>;
+
 	/*
 	 * Billing relationships - inverse relationship for PluginBilling
 	 */

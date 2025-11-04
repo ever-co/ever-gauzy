@@ -25,7 +25,7 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 	}
 
 	/**
-	 * Purchase a plugin subscription
+	 * Purchase a plugin subscription with proper handling for free vs paid plans
 	 */
 	async purchaseSubscription(
 		purchaseInput: IPluginSubscriptionPurchaseInput,
@@ -36,41 +36,58 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		// Validate purchase input
 		await this.validatePurchaseInput(purchaseInput, tenantId, organizationId);
 
-		// Check for existing active subscription
+		// Determine the actual scope based on subscription type
+		// Free plans automatically use USER scope for immediate access
+		const actualScope = this.determineSubscriptionScope(purchaseInput.subscriptionType, purchaseInput.scope);
+
+		// Set subscriberId for USER scope subscriptions
+		const actualSubscriberId = actualScope === PluginScope.USER ? subscriberId : undefined;
+
+		// Check for existing active subscription at the determined scope
 		const existingSubscription = await this.findActiveSubscription(
 			purchaseInput.pluginId,
 			tenantId,
-			organizationId,
-			subscriberId
+			actualScope === PluginScope.ORGANIZATION ? organizationId : undefined,
+			actualSubscriberId
 		);
 
 		if (existingSubscription) {
-			throw new BadRequestException('An active subscription already exists for this plugin');
+			throw new BadRequestException('An active subscription already exists for this plugin at this scope');
 		}
 
 		// Calculate subscription dates
 		const { startDate, endDate, trialEndDate } = this.calculateSubscriptionDates(purchaseInput.billingPeriod);
 
+		// Determine initial status based on subscription type
+		const initialStatus = this.determineInitialStatus(purchaseInput.subscriptionType);
+
 		// Create plugin tenant relationship (assuming it exists or needs to be created)
 		const pluginTenantId = await this.ensurePluginTenantExists(purchaseInput.pluginId, tenantId, organizationId);
+
+		// Get subscription price
+		const price = await this.getSubscriptionPrice(purchaseInput);
 
 		// Create subscription
 		const subscriptionData: IPluginSubscriptionCreateInput = {
 			pluginId: purchaseInput.pluginId,
 			pluginTenantId,
 			subscriptionType: purchaseInput.subscriptionType,
-			scope: purchaseInput.scope,
+			scope: actualScope,
 			billingPeriod: purchaseInput.billingPeriod,
-			status:
-				purchaseInput.subscriptionType === PluginSubscriptionType.FREE
-					? PluginSubscriptionStatus.ACTIVE
-					: PluginSubscriptionStatus.PENDING,
+			status: initialStatus,
 			startDate,
 			endDate,
 			trialEndDate,
 			autoRenew: purchaseInput.autoRenew,
-			subscriberId,
-			metadata: purchaseInput.metadata,
+			subscriberId: actualSubscriberId,
+			price,
+			currency: 'USD',
+			metadata: {
+				...purchaseInput.metadata,
+				purchasedAt: new Date().toISOString(),
+				paymentMethod: purchaseInput.paymentMethod,
+				promoCode: purchaseInput.promoCode
+			},
 			tenantId,
 			organizationId
 		};
@@ -83,6 +100,51 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		}
 
 		return subscription;
+	}
+
+	/**
+	 * Determine the appropriate subscription scope based on subscription type.
+	 * Free plans automatically use USER scope for immediate access.
+	 * Paid plans respect the requested scope.
+	 *
+	 * @param subscriptionType - The subscription type
+	 * @param requestedScope - The requested scope from purchase
+	 * @returns The determined subscription scope
+	 */
+	private determineSubscriptionScope(
+		subscriptionType: PluginSubscriptionType,
+		requestedScope: PluginScope
+	): PluginScope {
+		// Free plans always use USER scope for immediate individual access
+		if (subscriptionType === PluginSubscriptionType.FREE) {
+			return PluginScope.USER;
+		}
+
+		// Paid plans respect the requested scope
+		return requestedScope;
+	}
+
+	/**
+	 * Determine the initial subscription status based on subscription type.
+	 * Free plans are immediately ACTIVE.
+	 * Paid plans start as PENDING until payment is confirmed.
+	 *
+	 * @param subscriptionType - The subscription type
+	 * @returns The initial subscription status
+	 */
+	private determineInitialStatus(subscriptionType: PluginSubscriptionType): PluginSubscriptionStatus {
+		// Free plans are immediately active
+		if (subscriptionType === PluginSubscriptionType.FREE) {
+			return PluginSubscriptionStatus.ACTIVE;
+		}
+
+		// Trial plans start as TRIAL
+		if (subscriptionType === PluginSubscriptionType.TRIAL) {
+			return PluginSubscriptionStatus.TRIAL;
+		}
+
+		// Paid plans start as PENDING until payment confirmation
+		return PluginSubscriptionStatus.PENDING;
 	}
 
 	/**
@@ -306,6 +368,121 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		} as IPluginSubscriptionUpdateInput);
 
 		return await this.findOneByIdString(subscriptionId);
+	}
+
+	/**
+	 * Create child user subscriptions from a parent tenant/organization subscription
+	 * Used when assigning plugin access to users from an organization/tenant-level subscription
+	 *
+	 * @param parentSubscriptionId - The parent subscription ID (tenant/organization level)
+	 * @param userIds - Array of user IDs to create child subscriptions for
+	 * @param tenantId - The tenant ID
+	 * @param organizationId - Optional organization ID
+	 * @returns Array of created child subscriptions
+	 */
+	async createChildSubscriptions(
+		parentSubscriptionId: string,
+		userIds: string[],
+		tenantId: string,
+		organizationId?: string
+	): Promise<IPluginSubscription[]> {
+		// Get the parent subscription
+		const parentSubscription = await this.findOneByIdString(parentSubscriptionId);
+		if (!parentSubscription) {
+			throw new NotFoundException('Parent subscription not found');
+		}
+
+		// Validate parent subscription is at organization or tenant level
+		if (parentSubscription.scope !== PluginScope.ORGANIZATION && parentSubscription.scope !== PluginScope.TENANT) {
+			throw new BadRequestException(
+				'Can only create child subscriptions from organization or tenant-level subscriptions'
+			);
+		}
+
+		// Validate parent subscription is active
+		if (parentSubscription.status !== PluginSubscriptionStatus.ACTIVE) {
+			throw new BadRequestException('Parent subscription must be active to create child subscriptions');
+		}
+
+		const childSubscriptions: IPluginSubscription[] = [];
+
+		for (const userId of userIds) {
+			// Check if child subscription already exists for this user
+			const existingChild = await this.findOneByWhereOptions({
+				pluginId: parentSubscription.pluginId,
+				subscriberId: userId,
+				parentId: parentSubscriptionId,
+				tenantId,
+				organizationId
+			}).catch(() => null);
+
+			if (existingChild) {
+				// Skip if already exists
+				continue;
+			}
+
+			// Create child subscription with USER scope
+			const childSubscriptionData: IPluginSubscriptionCreateInput = {
+				pluginId: parentSubscription.pluginId,
+				pluginTenantId: parentSubscription.pluginTenantId,
+				subscriptionType: parentSubscription.subscriptionType,
+				scope: PluginScope.USER, // Child subscriptions are always USER scope
+				billingPeriod: parentSubscription.billingPeriod,
+				status: PluginSubscriptionStatus.ACTIVE, // Inherit active status from parent
+				startDate: new Date(),
+				endDate: parentSubscription.endDate, // Inherit end date from parent
+				trialEndDate: parentSubscription.trialEndDate,
+				autoRenew: false, // Child subscriptions don't auto-renew independently
+				subscriberId: userId,
+				price: 0, // Child subscriptions don't have separate pricing
+				currency: parentSubscription.currency,
+				parentId: parentSubscriptionId, // Link to parent subscription
+				metadata: {
+					createdFrom: 'assignment',
+					parentSubscriptionId: parentSubscriptionId,
+					assignedAt: new Date().toISOString()
+				},
+				tenantId,
+				organizationId
+			};
+
+			const childSubscription = await this.create(childSubscriptionData);
+			childSubscriptions.push(childSubscription);
+		}
+
+		return childSubscriptions;
+	}
+
+	/**
+	 * Revoke child subscriptions for specific users
+	 *
+	 * @param parentSubscriptionId - The parent subscription ID
+	 * @param userIds - Array of user IDs whose child subscriptions should be revoked
+	 * @returns Array of revoked subscriptions
+	 */
+	async revokeChildSubscriptions(parentSubscriptionId: string, userIds: string[]): Promise<IPluginSubscription[]> {
+		const revokedSubscriptions: IPluginSubscription[] = [];
+
+		for (const userId of userIds) {
+			const childSubscription = await this.findOneByWhereOptions({
+				parentId: parentSubscriptionId,
+				subscriberId: userId,
+				status: PluginSubscriptionStatus.ACTIVE
+			}).catch(() => null);
+
+			if (childSubscription) {
+				await this.update(childSubscription.id, {
+					status: PluginSubscriptionStatus.CANCELLED,
+					cancelledAt: new Date(),
+					cancellationReason: 'Access revoked by parent subscription owner'
+				} as IPluginSubscriptionUpdateInput);
+
+				const updated = await this.findOneByIdString(childSubscription.id);
+				revokedSubscriptions.push(updated);
+			}
+		}
+
+		return revokedSubscriptions;
 	}
 
 	/**

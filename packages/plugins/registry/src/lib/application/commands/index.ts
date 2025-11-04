@@ -47,6 +47,7 @@ export * from './refund-plugin-purchase.command';
 export * from './validate-plugin-license.command';
 
 // Plugin Subscription Commands
+export * from './assign-plugin-subscription-users.command';
 export * from './auto-renew-plugin-subscription.command';
 export * from './cancel-plugin-subscription.command';
 export * from './create-plugin-subscription.command';
@@ -57,6 +58,7 @@ export * from './extend-trial-subscription.command';
 export * from './process-billing.command';
 export * from './purchase-plugin-subscription.command';
 export * from './renew-plugin-subscription.command';
+export * from './revoke-plugin-subscription-users.command';
 export * from './update-plugin-subscription.command';
 export * from './upgrade-plugin-subscription.command';
 

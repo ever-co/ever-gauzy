@@ -7,6 +7,7 @@ import { PluginManagementController } from './plugin-management.controller';
 import { PluginSecurityController } from './plugin-security.controller';
 import { PluginSettingController } from './plugin-setting.controller';
 import { PluginSourceController } from './plugin-source.controller';
+import { PluginSubscriptionAccessController } from './plugin-subscription-access.controller';
 import { PluginSubscriptionAnalyticsController } from './plugin-subscription-analytics.controller';
 import { PluginSubscriptionPlanController } from './plugin-subscription-plan.controller';
 import { PluginSubscriptionController } from './plugin-subscription.controller';
@@ -28,6 +29,7 @@ export const controllers = [
 	PluginUserAssignmentController,
 	PluginSettingController,
 	PluginSubscriptionController,
+	PluginSubscriptionAccessController,
 	PluginSubscriptionPlanController,
 	PluginBillingController,
 	PluginTagsController,

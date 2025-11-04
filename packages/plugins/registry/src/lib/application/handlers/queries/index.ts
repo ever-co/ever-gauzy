@@ -15,12 +15,14 @@ export * from './get-plugin-category.handler';
 
 // Plugin Subscription Query Handlers
 export * from './check-plugin-access.handler';
+export * from './check-user-subscription-access.handler';
 export * from './get-active-plugin-subscription.handler';
 export * from './get-expiring-subscriptions.handler';
 export * from './get-plugin-subscription-by-id.handler';
 export * from './get-plugin-subscriptions-by-plugin-id.handler';
 export * from './get-plugin-subscriptions-by-subscriber-id.handler';
 export * from './get-plugin-subscriptions.handler';
+export * from './get-subscription-access.handler';
 
 // Plugin Subscription Plan Query Handlers
 export * from './get-active-plugin-plans.handler';
@@ -40,6 +42,7 @@ export * from './get-plugin-settings.handler';
 
 // Import all handlers for array export
 import { CheckPluginAccessQueryHandler } from './check-plugin-access.handler';
+import { CheckUserSubscriptionAccessQueryHandler } from './check-user-subscription-access.handler';
 import { GetActivePluginPlansQueryHandler } from './get-active-plugin-plans.handler';
 import { GetActivePluginSubscriptionQueryHandler } from './get-active-plugin-subscription.handler';
 import { GetExpiringSubscriptionsQueryHandler } from './get-expiring-subscriptions.handler';
@@ -61,6 +64,7 @@ import { GetPluginSubscriptionPlansByPluginIdQueryHandler } from './get-plugin-s
 import { GetPluginSubscriptionsByPluginIdQueryHandler } from './get-plugin-subscriptions-by-plugin-id.handler';
 import { GetPluginSubscriptionsBySubscriberIdQueryHandler } from './get-plugin-subscriptions-by-subscriber-id.handler';
 import { GetPluginSubscriptionsQueryHandler } from './get-plugin-subscriptions.handler';
+import { GetSubscriptionAccessQueryHandler } from './get-subscription-access.handler';
 import { ListPluginSubscriptionPlansQueryHandler } from './list-plugin-subscription-plans.handler';
 import { ListPluginVersionsQueryHandler } from './list-plugin-versions-query.handler';
 import { ListPluginsQueryHandler } from './list-plugins-query.handler';
@@ -88,6 +92,8 @@ export const queries = [
 	GetPluginSubscriptionsBySubscriberIdQueryHandler,
 	GetActivePluginSubscriptionQueryHandler,
 	CheckPluginAccessQueryHandler,
+	CheckUserSubscriptionAccessQueryHandler,
+	GetSubscriptionAccessQueryHandler,
 	GetExpiringSubscriptionsQueryHandler,
 	// Plugin Subscription Plan Query Handlers
 	GetActivePluginPlansQueryHandler,

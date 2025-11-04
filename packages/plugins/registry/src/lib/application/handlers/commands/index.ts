@@ -32,6 +32,7 @@ import { DeletePluginCategoryHandler } from './delete-plugin-category.handler';
 import { UpdatePluginCategoryHandler } from './update-plugin-category.handler';
 
 // Plugin Subscription Command Handlers
+import { AssignPluginSubscriptionUsersCommandHandler } from './assign-plugin-subscription-users.handler';
 import { CancelPluginSubscriptionCommandHandler } from './cancel-plugin-subscription.handler';
 import { CreatePluginSubscriptionCommandHandler } from './create-plugin-subscription.handler';
 import { DeletePluginSubscriptionCommandHandler } from './delete-plugin-subscription.handler';
@@ -40,6 +41,7 @@ import { ExtendTrialSubscriptionCommandHandler } from './extend-trial-subscripti
 import { ProcessBillingCommandHandler } from './process-billing.handler';
 import { PurchasePluginSubscriptionCommandHandler } from './purchase-plugin-subscription.handler';
 import { RenewPluginSubscriptionCommandHandler } from './renew-plugin-subscription.handler';
+import { RevokePluginSubscriptionUsersCommandHandler } from './revoke-plugin-subscription-users.handler';
 import { UpdatePluginSubscriptionCommandHandler } from './update-plugin-subscription.handler';
 import { UpgradePluginSubscriptionCommandHandler } from './upgrade-plugin-subscription.handler';
 
@@ -82,6 +84,8 @@ import {
 export {
 	// Plugin Management Command Handlers
 	ActivatePluginCommandHandler,
+	// Plugin Subscription Access Command Handlers
+	AssignPluginSubscriptionUsersCommandHandler,
 	// Plugin User Assignment Command Handlers
 	AssignUsersToPluginCommandHandler,
 	// Plugin Tag Command Handlers
@@ -129,6 +133,7 @@ export {
 	RecoverPluginVersionCommandHandler,
 	RenewPluginSubscriptionCommandHandler,
 	ReplacePluginTagsHandler,
+	RevokePluginSubscriptionUsersCommandHandler,
 	SetPluginSettingValueHandler,
 	UnassignUsersFromPluginCommandHandler,
 	UninstallPluginCommandHandler,
@@ -177,6 +182,7 @@ export const commands = [
 	UpdatePluginCategoryHandler,
 
 	// Plugin Subscription Command Handlers
+	AssignPluginSubscriptionUsersCommandHandler,
 	CancelPluginSubscriptionCommandHandler,
 	CreatePluginSubscriptionCommandHandler,
 	DeletePluginSubscriptionCommandHandler,
@@ -185,6 +191,7 @@ export const commands = [
 	ProcessBillingCommandHandler,
 	PurchasePluginSubscriptionCommandHandler,
 	RenewPluginSubscriptionCommandHandler,
+	RevokePluginSubscriptionUsersCommandHandler,
 	UpdatePluginSubscriptionCommandHandler,
 	UpgradePluginSubscriptionCommandHandler,
 

@@ -127,6 +127,11 @@ export interface IPluginSubscription extends IBasePerTenantAndOrganizationEntity
 	plan?: IPluginSubscriptionPlan;
 	planId?: ID;
 
+	// Parent-child subscription relationships for hierarchical management
+	parent?: IPluginSubscription;
+	parentId?: ID;
+	children?: IPluginSubscription[];
+
 	// Billing records for this subscription
 	billings?: IPluginBilling[];
 
@@ -205,6 +210,9 @@ export interface IPluginSubscriptionCreateInput {
 	pluginTenantId: ID;
 	subscriberId?: ID;
 	planId?: ID;
+
+	// Parent-child subscription hierarchy
+	parentId?: ID;
 
 	// Base entity fields
 	tenantId?: ID;

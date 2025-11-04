@@ -15,12 +15,14 @@ export * from './get-plugin-category.query';
 
 // Plugin Subscription Queries
 export * from './check-plugin-access.query';
+export * from './check-user-subscription-access.query';
 export * from './get-active-plugin-subscription.query';
 export * from './get-expiring-subscriptions.query';
 export * from './get-plugin-subscription-by-id.query';
 export * from './get-plugin-subscriptions-by-plugin-id.query';
 export * from './get-plugin-subscriptions-by-subscriber-id.query';
 export * from './get-plugin-subscriptions.query';
+export * from './get-subscription-access.query';
 
 // Plugin Subscription Plan Queries
 export * from './get-active-plugin-plans.query';
