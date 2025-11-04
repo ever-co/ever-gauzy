@@ -256,6 +256,7 @@ export class OAuth2AuthorizationServer {
 			this.securityLogger.info(`Trust proxy enabled for: ${serverConfig.trustedProxies.join(', ')}`);
 		} else {
 			if (serverConfig.environment === 'production') {
+				this.securityLogger.warn('⚠️  Trusted proxies not configured in production. Trusting all proxies may allow IP spoofing.');
 				this.app.set('trust proxy', true);
 				this.securityLogger.info('Trust proxy enabled for all proxies (production mode)');
 			} else {

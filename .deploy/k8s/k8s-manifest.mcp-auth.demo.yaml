@@ -74,6 +74,8 @@ spec:
               value: "$MCP_AUTH_JWT_ISSUER"
             - name: MCP_AUTH_JWT_AUDIENCE
               value: "$MCP_AUTH_JWT_AUDIENCE"
+            - name: MCP_TRUSTED_PROXIES
+              value: "$MCP_TRUSTED_PROXIES"
             - name: REDIS_ENABLED
               value: '$REDIS_ENABLED'
             - name: REDIS_URL

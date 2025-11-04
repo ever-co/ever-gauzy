@@ -29,8 +29,14 @@ async function bootstrap() {
 			expressApp.set('trust proxy', trustedProxies);
 			logger.log(`Trust proxy enabled for NestJS app: ${trustedProxies.join(', ')}`);
 		} else if (process.env.NODE_ENV === 'production') {
-			expressApp.set('trust proxy', true);
-			logger.log('Trust proxy enabled for all proxies (production mode)');
+			// SECURITY: In production, we require explicit trust proxy configuration
+			// Failing fast prevents running in an insecure state where all proxies are trusted
+			logger.error('❌ CRITICAL SECURITY ERROR: MCP_TRUSTED_PROXIES is not configured in production!');
+			logger.error('   MCP_TRUSTED_PROXIES must be set to a comma-separated list of trusted proxy IPs or CIDR ranges.');
+			logger.error('   Example: MCP_TRUSTED_PROXIES="loopback,linklocal,uniquelocal"');
+			throw new Error('MCP_TRUSTED_PROXIES must be configured in production environments. Cannot start server without explicit trust proxy configuration.');
+		} else {
+			logger.warn('⚠️  Trust proxy not configured. X-Forwarded-* headers will be ignored. Set MCP_TRUSTED_PROXIES to enable.');
 		}
 
 		const oauthService = app.get(McpOAuthService);

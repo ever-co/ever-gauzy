@@ -69,6 +69,7 @@ export class HttpTransport {
 	private app: express.Application;
 	private httpServer: Server | null = null;
 	private mcpServer: ExtendedMcpServer;
+	private securityLogger: SecurityLogger;
 	private transportConfig: McpTransportConfig['http'];
 	private isInitialized = false;
 	private authorizationConfig: AuthorizationConfig;
@@ -76,6 +77,7 @@ export class HttpTransport {
 
 	constructor(options: HttpTransportOptions) {
 		this.mcpServer = options.server;
+		this.securityLogger = new SecurityLogger();
 		this.transportConfig = options.transportConfig;
 		this.authorizationConfig = loadAuthorizationConfig();
 
@@ -110,6 +112,7 @@ export class HttpTransport {
 			});
 			logger.log(`Trust proxy enabled for: ${this.transportConfig.trustedProxies.join(', ')}`);
 		} else if (process.env.NODE_ENV === 'production') {
+			this.securityLogger.warn('⚠️  Trusted proxies not configured in production. Trusting all proxies may allow IP spoofing.');
 			this.app.set('trust proxy', true);
 			logger.log('Trust proxy enabled for all proxies (production mode)');
 		}

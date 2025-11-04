@@ -60,6 +60,7 @@ jobs:
           MCP_AUTH_SESSION_SECRET: '${{ secrets.MCP_AUTH_SESSION_SECRET }}'
           MCP_AUTH_JWT_ISSUER: '${{ secrets.MCP_AUTH_JWT_ISSUER }}'
           MCP_AUTH_JWT_AUDIENCE: '${{ secrets.MCP_AUTH_JWT_AUDIENCE }}'
+          MCP_TRUSTED_PROXIES: '${{ secrets.MCP_TRUSTED_PROXIES }}'
           REDIS_ENABLED: '${{ secrets.REDIS_ENABLED }}'
           REDIS_URL: '${{ secrets.REDIS_URL }}'
           REDIS_HOST: '${{ secrets.REDIS_HOST }}'

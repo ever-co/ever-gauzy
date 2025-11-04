@@ -153,6 +153,9 @@ ENV DB_LOGGING=${DB_LOGGING}
 ENV DB_ORM=${DB_ORM:-typeorm}
 ENV DB_SYNCHRONIZE=${DB_SYNCHRONIZE:-false}
 
+# Proxy Configuration
+ENV MCP_TRUSTED_PROXIES=${MCP_TRUSTED_PROXIES}
+
 EXPOSE ${MCP_AUTH_PORT}
 
 CMD ["node", "apps/mcp-auth/src/main.js"]
