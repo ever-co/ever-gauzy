@@ -869,6 +869,8 @@
 		"UPWORK": "Апуърк",
 		"MAKE_COM": "Make.com",
 		"ZAPIER": "Zapier",
+		"GAUZY_AI": "Gauzy AI",
+		"ACTIVEPIECES": "Activepieces",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Отпуска",
 		"APPROVALS": "Одобрения",
@@ -1441,6 +1443,129 @@
 			"TAB": {
 				"AUTO_SYNC": "Авто синхронизация",
 				"MANUAL_SYNC": "Ръчна синхронизация"
+			}
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"SUBTITLE": "Настройка на интеграция с Activepieces",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "Вашата интеграция с Activepieces е готова. Щракнете на бутона по-долу, за да разрешите.",
+				"INFOS": "След това ще бъдете прехвърлени към Activepieces, за да предоставите разрешение на Gauzy.",
+				"START_BUTTON": "Разрешаване на Activepieces",
+				"NEXT": "Напред",
+				"ERRORS": {
+					"INVALID_FORM": "Моля, попълнете правилно всички задължителни полета",
+					"SAVE_SETTINGS": "Неуспешно запазване на настройките",
+					"START_AUTHORIZATION": "Неуспешно стартиране на разрешаването",
+					"ORGANIZATION_NOT_FOUND": "Организацията не е намерена",
+					"CHECK_TENANT_SETTINGS": "Неуспешна проверка на настройките на клиента",
+					"CHECK_REMEMBER_STATE": "Неуспешна проверка на състоянието на запомняне"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Настройките са запазени успешно"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Настройки на Activepieces",
+				"SUBTITLE": "Конфигурирайте настройките си за интеграция с Activepieces",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "Въведете вашия Client ID",
+				"CLIENT_ID_HINT": "Вашият Activepieces OAuth Client ID",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "Въведете вашия Client Secret",
+				"CLIENT_SECRET_HINT": "Вашият Activepieces OAuth Client Secret",
+				"STATE_SECRET": "State Secret",
+				"STATE_SECRET_PLACEHOLDER": "Въведете вашия State Secret (минимум 32 символа)",
+				"STATE_SECRET_HINT": "Сигурен случаен низ, използван за проверка на състоянието на OAuth",
+				"CALLBACK_URL": "Callback URL",
+				"CALLBACK_URL_PLACEHOLDER": "Въведете вашия Callback URL",
+				"CALLBACK_URL_HINT": "URL адресът, към който Activepieces ще пренасочи след разрешаване",
+				"POST_INSTALL_URL": "Post Install URL",
+				"POST_INSTALL_URL_PLACEHOLDER": "Въведете вашия Post Install URL",
+				"POST_INSTALL_URL_HINT": "URL адресът за пренасочване след завършване на инсталацията",
+				"SETTINGS_UPDATED": "Настройките на Activepieces са актуализирани успешно"
+			},
+			"CONNECTIONS": {
+				"TITLE": "Връзки",
+				"SUBTITLE": "Управление на вашите връзки с Activepieces",
+				"NO_CONNECTIONS": "Не са намерени връзки. Въведете ID на проект и щракнете върху Зареди, за да видите връзките.",
+				"DISPLAY_NAME": "Показвано име",
+				"NAME": "Име на връзката",
+				"TYPE_HEADER": "Тип",
+				"STATUS_HEADER": "Състояние",
+				"PIECE_NAME": "Име на частта",
+				"CREATED": "Създадено",
+				"ACTIONS": "Действия",
+				"PROJECT_ID": "ID на проект",
+				"PROJECT_ID_PLACEHOLDER": "Въведете ID на проект на Activepieces (намерете в настройките на проекта)",
+				"PROJECT_ID_HINT": "Въведете вашия ID на проект на Activepieces (намерете в настройките на проекта), за да заредите връзките",
+				"LOADING": "Зареждане на връзки...",
+				"DELETE_CONFIRM": "Сигурни ли сте, че искате да изтриете тази връзка?",
+				"DELETE_ARIA": "Изтриване на връзка",
+				"STATUS": {
+					"ACTIVE": "Активен",
+					"ERROR": "Грешка"
+				},
+				"TYPE": {
+					"SECRET_TEXT": "Секретен текст",
+					"OAUTH2": "OAuth 2.0",
+					"CLOUD_OAUTH2": "Cloud OAuth 2.0",
+					"PLATFORM_OAUTH2": "Platform OAuth 2.0",
+					"BASIC_AUTH": "Основно удостоверяване",
+					"CUSTOM_AUTH": "Персонализирано удостоверяване"
+				}
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP",
+				"NO_SERVERS": "Не са намерени MCP сървъри. Въведете ID на проект и щракнете върху Зареди, за да видите сървърите.",
+				"PROJECT_ID": "ID на проект",
+				"PROJECT_ID_PLACEHOLDER": "Въведете ID на проект на Activepieces (намерете в настройките на проекта)",
+				"PROJECT_ID_HINT": "Въведете вашия ID на проект на Activepieces (намерете в настройките на проекта), за да заредите MCP сървърите",
+				"NAME": "Име на сървъра",
+				"SERVER_ID": "ID на сървър",
+				"AGENT_ID": "ID на агент",
+				"URL": "Server URL",
+				"STATUS": "Състояние",
+				"ACTIONS": "Действия",
+				"ACTIVE": "Активен",
+				"TOOLS_COUNT": "Брой инструменти",
+				"CREATED": "Създадено",
+				"LOADING": "Зареждане на MCP сървъри..."
+			},
+			"TAB": {
+				"CONNECTIONS": "Връзки",
+				"MCP_SERVERS": "MCP сървъри",
+				"SETTINGS": "Настройки"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "Моля, попълнете всички задължителни полета",
+				"LOAD_SETTINGS": "Неуспешно зареждане на настройките на Activepieces",
+				"SAVE_SETTINGS": "Неуспешно запазване на настройките на Activepieces",
+				"START_AUTHORIZATION": "Неуспешно стартиране на разрешаването",
+				"LOAD_CONNECTION": "Неуспешно зареждане на връзката",
+				"PROJECT_ID_REQUIRED": "ID на проект е задължително",
+				"LOAD_CONNECTIONS": "Неуспешно зареждане на връзките",
+				"DELETE_CONNECTION": "Неуспешно изтриване на връзката",
+				"INVALID_CONNECTION": "Невалидни данни за връзка"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "Успешно разрешаване с Activepieces",
+				"SETTINGS_SAVED": "Настройките на Activepieces са запазени успешно",
+				"CONNECTION_DELETED": "Връзката е изтрита успешно"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "Невалидни параметри за обратно повикване. Проверете дали разрешаването е завършено успешно и проверете параметрите за обратно повикване.",
+					"ORGANIZATION_NOT_FOUND": "Организацията не е намерена",
+					"EXCHANGE_TOKEN": "Неуспешна размяна на кода за разрешаване",
+					"INVALID_PROJECT_ID": "Моля, предоставете валиден ID на проект",
+					"TOKEN_NOT_FOUND": "Токенът не е намерен. Моля, опитайте отново разрешаването и проверете параметрите за обратно повикване.",
+					"CREATE_CONNECTION": "Неуспешно създаване на връзка"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "Връзката с ActivePieces е създадена успешно"
+				}
 			}
 		},
 		"COMING_SOON": "Очаквайте скоро",

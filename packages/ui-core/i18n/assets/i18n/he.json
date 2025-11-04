@@ -844,6 +844,8 @@
 		"UPWORK": "Upwork",
 		"MAKE_COM": "Make.com",
 		"ZAPIER": "Zapier",
+		"GAUZY_AI": "Gauzy AI",
+		"ACTIVEPIECES": "Activepieces",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"APPROVALS": "Approvals",
@@ -1407,6 +1409,129 @@
 			"TAB": {
 				"AUTO_SYNC": "Auto sync",
 				"MANUAL_SYNC": "Manual sync"
+			}
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"SUBTITLE": "הגדרת אינטגרציה של Activepieces",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "האינטגרציה שלך עם Activepieces מוכנה. לחץ על הכפתור למטה כדי לאשר.",
+				"INFOS": "בשלב הבא תועבר ל-Activepieces כדי להעניק הרשאה ל-Gauzy.",
+				"START_BUTTON": "אשר את Activepieces",
+				"NEXT": "הבא",
+				"ERRORS": {
+					"INVALID_FORM": "אנא מלא את כל השדות הנדרשים בצורה נכונה",
+					"SAVE_SETTINGS": "שמירת ההגדרות נכשלה",
+					"START_AUTHORIZATION": "התחלת האישור נכשלה",
+					"ORGANIZATION_NOT_FOUND": "הארגון לא נמצא",
+					"CHECK_TENANT_SETTINGS": "בדיקת הגדרות הדייר נכשלה",
+					"CHECK_REMEMBER_STATE": "בדיקת מצב הזכירה נכשלה"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "ההגדרות נשמרו בהצלחה"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "הגדרות Activepieces",
+				"SUBTITLE": "הגדר את הגדרות האינטגרציה שלך עם Activepieces",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "הזן את Client ID שלך",
+				"CLIENT_ID_HINT": "Activepieces OAuth Client ID שלך",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "הזן את Client Secret שלך",
+				"CLIENT_SECRET_HINT": "Activepieces OAuth Client Secret שלך",
+				"STATE_SECRET": "State Secret",
+				"STATE_SECRET_PLACEHOLDER": "הזן את State Secret שלך (מינימום 32 תווים)",
+				"STATE_SECRET_HINT": "מחרוזת אקראית מאובטחת המשמשת לאימות מצב OAuth",
+				"CALLBACK_URL": "Callback URL",
+				"CALLBACK_URL_PLACEHOLDER": "הזן את Callback URL שלך",
+				"CALLBACK_URL_HINT": "כתובת ה-URL שאליה Activepieces יפנה לאחר האישור",
+				"POST_INSTALL_URL": "Post Install URL",
+				"POST_INSTALL_URL_PLACEHOLDER": "הזן את Post Install URL שלך",
+				"POST_INSTALL_URL_HINT": "כתובת ה-URL להפניה לאחר השלמת ההתקנה",
+				"SETTINGS_UPDATED": "הגדרות Activepieces עודכנו בהצלחה"
+			},
+			"CONNECTIONS": {
+				"TITLE": "חיבורים",
+				"SUBTITLE": "נהל את החיבורים שלך ל-Activepieces",
+				"NO_CONNECTIONS": "לא נמצאו חיבורים. הזן מזהה פרויקט ולחץ על טעינה כדי להציג חיבורים.",
+				"DISPLAY_NAME": "שם תצוגה",
+				"NAME": "שם חיבור",
+				"TYPE_HEADER": "סוג",
+				"STATUS_HEADER": "סטטוס",
+				"PIECE_NAME": "שם רכיב",
+				"CREATED": "נוצר",
+				"ACTIONS": "פעולות",
+				"PROJECT_ID": "מזהה פרויקט",
+				"PROJECT_ID_PLACEHOLDER": "הזן מזהה פרויקט Activepieces (נמצא בהגדרות הפרויקט)",
+				"PROJECT_ID_HINT": "הזן את מזהה הפרויקט שלך ב-Activepieces (נמצא בהגדרות הפרויקט) כדי לטעון חיבורים",
+				"LOADING": "טוען חיבורים...",
+				"DELETE_CONFIRM": "האם אתה בטוח שברצונך למחוק חיבור זה?",
+				"DELETE_ARIA": "מחק חיבור",
+				"STATUS": {
+					"ACTIVE": "פעיל",
+					"ERROR": "שגיאה"
+				},
+				"TYPE": {
+					"SECRET_TEXT": "טקסט סודי",
+					"OAUTH2": "OAuth 2.0",
+					"CLOUD_OAUTH2": "Cloud OAuth 2.0",
+					"PLATFORM_OAUTH2": "Platform OAuth 2.0",
+					"BASIC_AUTH": "אימות בסיסי",
+					"CUSTOM_AUTH": "אימות מותאם אישית"
+				}
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP",
+				"NO_SERVERS": "לא נמצאו שרתי MCP. הזן מזהה פרויקט ולחץ על טעינה כדי להציג שרתים.",
+				"PROJECT_ID": "מזהה פרויקט",
+				"PROJECT_ID_PLACEHOLDER": "הזן מזהה פרויקט Activepieces (נמצא בהגדרות הפרויקט)",
+				"PROJECT_ID_HINT": "הזן את מזהה הפרויקט שלך ב-Activepieces (נמצא בהגדרות הפרויקט) כדי לטעון שרתי MCP",
+				"NAME": "שם שרת",
+				"SERVER_ID": "מזהה שרת",
+				"AGENT_ID": "מזהה סוכן",
+				"URL": "Server URL",
+				"STATUS": "סטטוס",
+				"ACTIONS": "פעולות",
+				"ACTIVE": "פעיל",
+				"TOOLS_COUNT": "מספר כלים",
+				"CREATED": "נוצר",
+				"LOADING": "טוען שרתי MCP..."
+			},
+			"TAB": {
+				"CONNECTIONS": "חיבורים",
+				"MCP_SERVERS": "שרתי MCP",
+				"SETTINGS": "הגדרות"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
+				"LOAD_SETTINGS": "טעינת הגדרות Activepieces נכשלה",
+				"SAVE_SETTINGS": "שמירת הגדרות Activepieces נכשלה",
+				"START_AUTHORIZATION": "התחלת האישור נכשלה",
+				"LOAD_CONNECTION": "טעינת החיבור נכשלה",
+				"PROJECT_ID_REQUIRED": "מזהה פרויקט נדרש",
+				"LOAD_CONNECTIONS": "טעינת החיבורים נכשלה",
+				"DELETE_CONNECTION": "מחיקת החיבור נכשלה",
+				"INVALID_CONNECTION": "נתוני חיבור לא תקינים"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "אושר בהצלחה עם Activepieces",
+				"SETTINGS_SAVED": "הגדרות Activepieces נשמרו בהצלחה",
+				"CONNECTION_DELETED": "החיבור נמחק בהצלחה"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "פרמטרי callback לא תקינים. בדוק שהאישור הושלם בהצלחה ואמת את פרמטרי ה-callback.",
+					"ORGANIZATION_NOT_FOUND": "הארגון לא נמצא",
+					"EXCHANGE_TOKEN": "החלפת קוד האישור נכשלה",
+					"INVALID_PROJECT_ID": "אנא ספק מזהה פרויקט תקין",
+					"TOKEN_NOT_FOUND": "האסימון לא נמצא. אנא נסה שוב את האישור ואמת את פרמטרי ה-callback.",
+					"CREATE_CONNECTION": "יצירת החיבור נכשלה"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "חיבור ActivePieces נוצר בהצלחה"
+				}
 			}
 		},
 		"COMING_SOON": "Coming soon",

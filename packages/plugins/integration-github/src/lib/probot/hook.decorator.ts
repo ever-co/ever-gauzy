@@ -1,5 +1,5 @@
 import { applyDecorators, SetMetadata } from '@nestjs/common';
-import { EmitterWebhookEventName } from '@octokit/webhooks/dist-types/types';
+import type { EmitterWebhookEventName } from '@octokit/webhooks';
 
 /**
  * Sets up hook trigger on functions.

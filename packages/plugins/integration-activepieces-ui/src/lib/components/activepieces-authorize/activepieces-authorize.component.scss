@@ -1,0 +1,16 @@
+.hint {
+	margin-bottom: 20px;
+  }
+
+  button {
+	box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.15);
+	border: none !important;
+  }
+
+  :host {
+
+	nb-card,
+	nb-card-body {
+	  background-color: var(--gauzy-card-2);
+	}
+  }
