@@ -841,6 +841,7 @@
 		"MAKE_COM": "Make.com",
 		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
+		"ACTIVEPIECES": "Activepieces",
 		"PROPOSALS": "Proposte",
 		"TIME_OFF": "Tempo libero",
 		"APPROVALS": "Approvazioni",
@@ -1375,6 +1376,129 @@
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Chiave Gauzy AI",
 			"API_SECRET": "Gauzy AI Segreto"
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"SUBTITLE": "Configurazione integrazione Activepieces",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "La tua integrazione Activepieces è pronta. Fai clic sul pulsante qui sotto per autorizzare.",
+				"INFOS": "Successivamente verrai reindirizzato ad Activepieces per concedere l'autorizzazione a Gauzy.",
+				"START_BUTTON": "Autorizza Activepieces",
+				"NEXT": "Avanti",
+				"ERRORS": {
+					"INVALID_FORM": "Si prega di compilare correttamente tutti i campi obbligatori",
+					"SAVE_SETTINGS": "Impossibile salvare le impostazioni",
+					"START_AUTHORIZATION": "Impossibile avviare l'autorizzazione",
+					"ORGANIZATION_NOT_FOUND": "Organizzazione non trovata",
+					"CHECK_TENANT_SETTINGS": "Impossibile verificare le impostazioni del tenant",
+					"CHECK_REMEMBER_STATE": "Impossibile verificare lo stato di memorizzazione"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Impostazioni salvate con successo"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Impostazioni Activepieces",
+				"SUBTITLE": "Configura le impostazioni di integrazione Activepieces",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "Inserisci il tuo Client ID",
+				"CLIENT_ID_HINT": "Il tuo Activepieces OAuth Client ID",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "Inserisci il tuo Client Secret",
+				"CLIENT_SECRET_HINT": "Il tuo Activepieces OAuth Client Secret",
+				"STATE_SECRET": "State Secret",
+				"STATE_SECRET_PLACEHOLDER": "Inserisci il tuo State Secret (minimo 32 caratteri)",
+				"STATE_SECRET_HINT": "Una stringa casuale sicura utilizzata per la verifica dello stato OAuth",
+				"CALLBACK_URL": "Callback URL",
+				"CALLBACK_URL_PLACEHOLDER": "Inserisci il tuo Callback URL",
+				"CALLBACK_URL_HINT": "L'URL a cui Activepieces reindirizzerà dopo l'autorizzazione",
+				"POST_INSTALL_URL": "Post Install URL",
+				"POST_INSTALL_URL_PLACEHOLDER": "Inserisci il tuo Post Install URL",
+				"POST_INSTALL_URL_HINT": "L'URL a cui reindirizzare dopo il completamento dell'installazione",
+				"SETTINGS_UPDATED": "Impostazioni Activepieces aggiornate con successo"
+			},
+			"CONNECTIONS": {
+				"TITLE": "Connessioni",
+				"SUBTITLE": "Gestisci le tue connessioni Activepieces",
+				"NO_CONNECTIONS": "Nessuna connessione trovata. Inserisci un ID progetto e fai clic su Carica per visualizzare le connessioni.",
+				"DISPLAY_NAME": "Nome visualizzato",
+				"NAME": "Nome connessione",
+				"TYPE_HEADER": "Tipo",
+				"STATUS_HEADER": "Stato",
+				"PIECE_NAME": "Nome del pezzo",
+				"CREATED": "Creato",
+				"ACTIONS": "Azioni",
+				"PROJECT_ID": "ID progetto",
+				"PROJECT_ID_PLACEHOLDER": "Inserisci ID progetto Activepieces (trovato nelle impostazioni del progetto)",
+				"PROJECT_ID_HINT": "Inserisci il tuo ID progetto Activepieces (trovato nelle impostazioni del progetto) per caricare le connessioni",
+				"LOADING": "Caricamento connessioni...",
+				"DELETE_CONFIRM": "Sei sicuro di voler eliminare questa connessione?",
+				"DELETE_ARIA": "Elimina connessione",
+				"STATUS": {
+					"ACTIVE": "Attivo",
+					"ERROR": "Errore"
+				},
+				"TYPE": {
+					"SECRET_TEXT": "Testo segreto",
+					"OAUTH2": "OAuth 2.0",
+					"CLOUD_OAUTH2": "Cloud OAuth 2.0",
+					"PLATFORM_OAUTH2": "Platform OAuth 2.0",
+					"BASIC_AUTH": "Autenticazione di base",
+					"CUSTOM_AUTH": "Autenticazione personalizzata"
+				}
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP",
+				"NO_SERVERS": "Nessun server MCP trovato. Inserisci un ID progetto e fai clic su Carica per visualizzare i server.",
+				"PROJECT_ID": "ID progetto",
+				"PROJECT_ID_PLACEHOLDER": "Inserisci ID progetto Activepieces (trovato nelle impostazioni del progetto)",
+				"PROJECT_ID_HINT": "Inserisci il tuo ID progetto Activepieces (trovato nelle impostazioni del progetto) per caricare i server MCP",
+				"NAME": "Nome server",
+				"SERVER_ID": "ID server",
+				"AGENT_ID": "ID agente",
+				"URL": "Server URL",
+				"STATUS": "Stato",
+				"ACTIONS": "Azioni",
+				"ACTIVE": "Attivo",
+				"TOOLS_COUNT": "Numero di strumenti",
+				"CREATED": "Creato",
+				"LOADING": "Caricamento server MCP..."
+			},
+			"TAB": {
+				"CONNECTIONS": "Connessioni",
+				"MCP_SERVERS": "Server MCP",
+				"SETTINGS": "Impostazioni"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "Si prega di compilare tutti i campi obbligatori",
+				"LOAD_SETTINGS": "Impossibile caricare le impostazioni Activepieces",
+				"SAVE_SETTINGS": "Impossibile salvare le impostazioni Activepieces",
+				"START_AUTHORIZATION": "Impossibile avviare l'autorizzazione",
+				"LOAD_CONNECTION": "Impossibile caricare la connessione",
+				"PROJECT_ID_REQUIRED": "L'ID progetto è obbligatorio",
+				"LOAD_CONNECTIONS": "Impossibile caricare le connessioni",
+				"DELETE_CONNECTION": "Impossibile eliminare la connessione",
+				"INVALID_CONNECTION": "Dati di connessione non validi"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "Autorizzato con successo con Activepieces",
+				"SETTINGS_SAVED": "Impostazioni Activepieces salvate con successo",
+				"CONNECTION_DELETED": "Connessione eliminata con successo"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "Parametri di callback non validi. Verifica che l'autorizzazione sia stata completata con successo e verifica i parametri di callback.",
+					"ORGANIZATION_NOT_FOUND": "Organizzazione non trovata",
+					"EXCHANGE_TOKEN": "Impossibile scambiare il codice di autorizzazione",
+					"INVALID_PROJECT_ID": "Si prega di fornire un ID progetto valido",
+					"TOKEN_NOT_FOUND": "Token non trovato. Si prega di riprovare l'autorizzazione e verificare i parametri di callback.",
+					"CREATE_CONNECTION": "Impossibile creare la connessione"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "Connessione ActivePieces creata con successo"
+				}
+			}
 		},
 		"COMING_SOON": "Prossimamente",
 		"RE_INTEGRATE": "Reintegrare",

@@ -14,7 +14,7 @@ import {
 	HttpCode
 } from '@nestjs/common';
 import { ListMcpServersDto, ActivepiecesMcpUpdateDto } from './dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { TenantPermissionGuard, Permissions } from '@gauzy/core';
 import { UseGuards } from '@nestjs/common';
@@ -23,10 +23,11 @@ import {
 	IActivepiecesMcpServer,
 	IActivepiecesMcpServerPublic,
 	IActivepiecesMcpServersListResponsePublic
-} from './activepieces.type';
+} from '@gauzy/contracts';
 
 @ApiTags('ActivePieces MCP Server Integration')
 @UseGuards(TenantPermissionGuard)
+@ApiBearerAuth()
 @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 @Controller('/integration/activepieces/mcp')
 export class ActivepiecesMcpController {
@@ -90,7 +91,7 @@ export class ActivepiecesMcpController {
 
 			// Remove sensitive token field from each server
 			return {
-				data: result.data.map((server) => this.sanitizeMcpServer(server)),
+				data: result.data.map((server: IActivepiecesMcpServer) => this.sanitizeMcpServer(server)),
 				next: result.next,
 				previous: result.previous
 			};

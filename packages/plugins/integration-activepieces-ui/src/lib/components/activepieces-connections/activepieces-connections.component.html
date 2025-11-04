@@ -1,0 +1,95 @@
+<nb-card class="card-scroll">
+	<nb-card-header class="d-flex">
+		<ngx-back-navigation></ngx-back-navigation>
+		<h5>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.TITLE' | translate }}</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<!-- Project ID Input Form -->
+		<div class="col-xl-6 col-12">
+			<div class="form-group">
+				<label for="projectId" class="label">
+					{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.PROJECT_ID' | translate }}
+				</label>
+				<div class="input-group">
+					<input
+						fullWidth
+						id="projectId"
+						[(ngModel)]="projectId"
+						type="text"
+						nbInput
+						[placeholder]="'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.PROJECT_ID_PLACEHOLDER' | translate"
+					/>
+					<button
+						nbButton
+						status="primary"
+						size="small"
+						outline
+						(click)="loadConnections()"
+						[disabled]="loading || !projectId"
+					>
+						{{ 'BUTTONS.LOAD' | translate }}
+					</button>
+				</div>
+				<small class="form-text text-muted">
+					{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.PROJECT_ID_HINT' | translate }}
+				</small>
+			</div>
+		</div>
+
+		<!-- Loading Spinner -->
+		<div *ngIf="loading" class="text-center mt-3" role="status" aria-live="polite">
+			<nb-spinner size="large" status="primary"></nb-spinner>
+			<p class="mt-2">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.LOADING' | translate }}</p>
+		</div>
+
+		<!-- No Connections Message -->
+		<div *ngIf="!loading && connections.length === 0" class="text-center mt-3">
+			<nb-icon icon="link-outline" status="basic" style="font-size: 3rem;"></nb-icon>
+			<p class="mt-2">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.NO_CONNECTIONS' | translate }}</p>
+		</div>
+
+		<!-- Connections Table -->
+		<div *ngIf="!loading && connections.length > 0" class="mt-3">
+			<div class="table-responsive">
+				<table class="table">
+					<thead>
+						<tr>
+							<th scope="col">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.DISPLAY_NAME' | translate }}</th>
+							<th scope="col">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.STATUS_HEADER' | translate }}</th>
+							<th scope="col">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.TYPE_HEADER' | translate }}</th>
+							<th scope="col">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.PIECE_NAME' | translate }}</th>
+							<th scope="col">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.CREATED' | translate }}</th>
+							<th scope="col">{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.ACTIONS' | translate }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr *ngFor="let connection of connections; trackBy: trackByConnectionId">
+							<td>{{ connection.displayName }}</td>
+							<td>
+								<nb-badge [status]="connection.status === 'ACTIVE' ? 'success' : 'danger'">
+									{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.STATUS.' + connection.status | translate }}
+								</nb-badge>
+							</td>
+							<td>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.TYPE.' + connection.type | translate }}</td>
+							<td>{{ connection.pieceName }}</td>
+							<td>{{ connection.created | date:'medium' }}</td>
+							<td>
+								<button
+									nbButton
+									status="danger"
+									size="small"
+									outline
+									(click)="deleteConnection(connection)"
+									[disabled]="loading"
+									[attr.aria-label]="'INTEGRATIONS.ACTIVEPIECES_PAGE.CONNECTIONS.DELETE_ARIA' | translate: { name: connection.displayName }"
+								>
+									{{ 'BUTTONS.DELETE' | translate }}
+								</button>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

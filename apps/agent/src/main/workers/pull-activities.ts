@@ -14,7 +14,16 @@ import {
 } from '@gauzy/desktop-lib';
 import AppWindow from '../window-manager';
 import * as path from 'node:path';
-import { getScreen, getAppSetting, delaySync, TAppSetting, getScreenshotSoundPath, getAuthConfig } from '../util';
+import {
+	getScreen,
+	getAppSetting,
+	delaySync,
+	TAppSetting,
+	getScreenshotSoundPath,
+	getAuthConfig,
+	TAuthConfig,
+	updateTimerStatus
+} from '../util';
 import { getScreenshot, TScreenShot } from '../screenshot';
 import { Notification } from 'electron';
 import { AgentLogger } from '../agent-logger';
@@ -119,6 +128,16 @@ class PullActivities {
 		}
 	}
 
+	updateAppSetting() {
+		updateTimerStatus(this.isStarted);
+		this.appWindow.settingWindow?.webContents?.send?.('setting_page_ipc', {
+			type: 'app_setting_update',
+			data: {
+				setting: getAppSetting()
+			}
+		});
+	};
+
 	async startTracking() {
 		if (!this.listenerModule) {
 			this.getListenerModule();
@@ -138,6 +157,8 @@ class PullActivities {
 				this.mainEvent.emit('MAIN_EVENT', {
 					type: MAIN_EVENT_TYPE.TRAY_TIMER_STATUS
 				});
+				this.updateAppSetting();
+
 				if (appSetting?.preventDisplaySleep) {
 					this.powerManagerPreventDisplaySleep.start();
 				}
@@ -189,6 +210,27 @@ class PullActivities {
 		}
 	}
 
+	async handleManualTimeLog(authConfig: TAuthConfig) {
+		const timerLocal = await this.timerService.findById({
+			id: this.currentTimerId
+		});
+		if (timerLocal.timelogId) {
+			await this.apiService.updateTimeLog(timerLocal.timelogId, {
+				tenantId: authConfig?.user?.employee?.tenantId,
+				organizationId: authConfig?.user?.employee?.organizationId,
+				startedAt: this.startedDate,
+				stoppedAt: this.stoppedDate,
+				isBillable: true,
+				employeeId: authConfig?.user?.employee?.id
+			});
+			await this.timerService.update(new Timer({
+				id: this.currentTimerId,
+				synced: true
+			}));
+			return;
+		}
+	}
+
 	async stopTimerApi() {
 		this.stoppedDate = new Date();
 		const authConfig = getAuthConfig();
@@ -199,14 +241,28 @@ class PullActivities {
 			}));
 			const online = await isOnline({ timeout: 1200 }).catch(() => false);
 			if (online) {
-				await this.apiService.stopTimer({
-					organizationId: authConfig?.user?.employee?.organizationId,
-					tenantId: authConfig?.user?.employee?.tenantId,
-					startedAt: this.startedDate,
-					organizationTeamId: null,
-					organizationContactId: null,
-					stoppedAt: this.stoppedDate
-				});
+				try {
+					await this.apiService.stopTimer({
+						organizationId: authConfig?.user?.employee?.organizationId,
+						tenantId: authConfig?.user?.employee?.tenantId,
+						startedAt: this.startedDate,
+						organizationTeamId: null,
+						organizationContactId: null,
+						stoppedAt: this.stoppedDate
+					});
+					await this.timerService.update(new Timer({
+						id: this.currentTimerId,
+						synced: true
+					}));
+				} catch (error) {
+					if (error.status === 406 && error.message?.includes('No running log found')) {
+						await this.handleManualTimeLog(authConfig);
+					} else {
+						console.error('Error stopping timer online', error.message);
+						this.agentLogger.error(`Error stopping timer online ${error.message}`);
+						throw error;
+					}
+				}
 				this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
 				this.timerStatusHandler('Idle');
 				return;
@@ -222,6 +278,7 @@ class PullActivities {
 				}
 			});
 			this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
+			this.timerStatusHandler('Idle');
 		} catch (error) {
 			this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
 			this.agentLogger.error(`Stop timer error ${error.message}`);
@@ -259,6 +316,7 @@ class PullActivities {
 				this.mainEvent.emit('MAIN_EVENT', {
 					type: MAIN_EVENT_TYPE.TRAY_TIMER_STATUS
 				});
+				this.updateAppSetting();
 
 				if (appSetting?.preventDisplaySleep) {
 					this.powerManagerPreventDisplaySleep.stop();

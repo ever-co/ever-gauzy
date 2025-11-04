@@ -54,6 +54,7 @@ export * from './lib/agent-dashboard/agent-dashboard.module';
 export * from './lib/agent-dashboard/logs/logs.component';
 export * from './lib/agent-dashboard/activity-sync/activity-sync.component';
 export * from './lib/agent-dashboard/pipes/filter.status.pipe';
+export * from './lib/agent-dashboard/pipes/date.pipe';
 export * from './lib/agent-dashboard/agent-dashboard-routing.module';
 
 /**
