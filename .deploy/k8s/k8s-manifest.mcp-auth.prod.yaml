@@ -32,6 +32,40 @@ spec:
         - name: gauzy-prod-mcp
           image: registry.digitalocean.com/ever/gauzy-mcp-auth:latest
           env:
+            - name: DB_URI
+              value: "$DB_URI"
+            - name: DB_HOST
+              value: "$DB_HOST"
+            - name: DB_NAME
+              value: "$DB_NAME"
+            - name: DB_PORT
+              value: "$DB_PORT"
+            - name: DB_USER
+              value: "$DB_USER"
+            - name: DB_PASS
+              value: "$DB_PASS"
+            - name: DB_TYPE
+              value: "$DB_TYPE"
+            - name: DB_SSL_MODE
+              value: "$DB_SSL_MODE"
+            - name: DB_CA_CERT
+              value: "$DB_CA_CERT"
+            - name: DB_POOL_SIZE
+              value: "$DB_POOL_SIZE"
+            - name: DB_POOL_SIZE_KNEX
+              value: "$DB_POOL_SIZE_KNEX"
+            - name: DB_CONNECTION_TIMEOUT
+              value: "$DB_CONNECTION_TIMEOUT"
+            - name: DB_IDLE_TIMEOUT
+              value: "$DB_IDLE_TIMEOUT"
+            - name: DB_SLOW_QUERY_LOGGING_TIMEOUT
+              value: "$DB_SLOW_QUERY_LOGGING_TIMEOUT"
+            - name: DB_LOGGING
+              value: "$DB_LOGGING"
+            - name: DB_ORM
+              value: "$DB_ORM"
+            - name: DB_SYNCHRONIZE
+              value: "$DB_SYNCHRONIZE"
             - name: MCP_AUTH_PORT
               value: "3003"
             - name: MCP_AUTH_SESSION_SECRET
