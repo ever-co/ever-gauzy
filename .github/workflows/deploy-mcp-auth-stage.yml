@@ -35,6 +35,12 @@ jobs:
           echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > ${HOME}/ingress.mcpauth.key
           kubectl create secret tls mcpauth.gauzy.co-tls --save-config --dry-run=client --cert=${HOME}/ingress.mcpauth.crt --key=${HOME}/ingress.mcpauth.key -o yaml | kubectl apply -f -
 
+      - name: Write PostgreSQL Certificate file
+        run: |
+          echo "$DB_CA_CERT" | base64 --decode > ${HOME}/ca-certificate.crt
+        env:
+          DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
+
       - name: Apply k8s manifests changes in DigitalOcean k8s cluster (if any)
         run: |
           envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.mcp-auth.stage.yaml | kubectl --context do-sfo2-k8s-gauzy apply -f -
