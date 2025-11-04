@@ -69,6 +69,7 @@ export class HttpTransport {
 	private app: express.Application;
 	private httpServer: Server | null = null;
 	private mcpServer: ExtendedMcpServer;
+	private securityLogger: SecurityLogger;
 	private transportConfig: McpTransportConfig['http'];
 	private isInitialized = false;
 	private authorizationConfig: AuthorizationConfig;
@@ -76,6 +77,7 @@ export class HttpTransport {
 
 	constructor(options: HttpTransportOptions) {
 		this.mcpServer = options.server;
+		this.securityLogger = new SecurityLogger();
 		this.transportConfig = options.transportConfig;
 		this.authorizationConfig = loadAuthorizationConfig();
 
@@ -103,13 +105,13 @@ export class HttpTransport {
 
 		// Configure trust proxy to honor X-Forwarded-For headers from trusted proxies
 		if (this.transportConfig.trustedProxies && this.transportConfig.trustedProxies.length > 0) {
-		// Trust only explicitly configured proxies
-		const normalizedProxies = this.transportConfig.trustedProxies.map(p => this.normalizeIP(p));
-		this.app.set('trust proxy', (ip) => {
-			const normalized = this.normalizeIP(ip || '');
-			return normalizedProxies.includes(normalized);
-		});
-			logger.log(`Trust proxy enabled for: ${this.transportConfig.trustedProxies.join(', ')}`);
+			const normalizedProxies = this.transportConfig.trustedProxies.map(p => p.trim()).filter(Boolean);
+			this.app.set('trust proxy', normalizedProxies);
+			logger.log(`Trust proxy enabled for: ${normalizedProxies.join(', ')}`);
+		} else if (process.env.NODE_ENV === 'production') {
+			this.securityLogger.warn('⚠️  Trusted proxies not configured in production. Trusting all proxies may allow IP spoofing.');
+			this.app.set('trust proxy', true);
+			logger.log('Trust proxy enabled for all proxies (production mode)');
 		}
 
 		// CORS configuration
