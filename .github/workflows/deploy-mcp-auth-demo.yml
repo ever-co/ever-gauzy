@@ -35,14 +35,38 @@ jobs:
           echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > ${HOME}/ingress.mcpauth.key
           kubectl create secret tls mcpauth.gauzy.co-tls --save-config --dry-run=client --cert=${HOME}/ingress.mcpauth.crt --key=${HOME}/ingress.mcpauth.key -o yaml | kubectl apply -f -
 
+      - name: Write PostgreSQL Certificate file
+        run: |
+          echo "$DB_CA_CERT" | base64 --decode > ${HOME}/ca-certificate.crt
+        env:
+          DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
+
       - name: Apply k8s manifests changes in DigitalOcean k8s cluster (if any)
         run: |
           envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.mcp-auth.demo.yaml | kubectl --context do-sfo2-k8s-gauzy apply -f -
         env:
+          DB_URI: '${{ secrets.DB_URI }}'
+          DB_HOST: '${{ secrets.DB_HOST }}'
+          DB_NAME: '${{ secrets.DB_NAME }}'
+          DB_PORT: '${{ secrets.DB_PORT }}'
+          DB_USER: '${{ secrets.DB_USER }}'
+          DB_PASS: '${{ secrets.DB_PASS }}'
+          DB_TYPE: '${{ secrets.DB_TYPE }}'
+          DB_SSL_MODE: '${{ secrets.DB_SSL_MODE }}'
+          DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
+          DB_POOL_SIZE: '${{ secrets.DB_POOL_SIZE }}'
+          DB_POOL_SIZE_KNEX: '${{ secrets.DB_POOL_SIZE_KNEX }}'
+          DB_CONNECTION_TIMEOUT: '${{ secrets.DB_CONNECTION_TIMEOUT }}'
+          DB_IDLE_TIMEOUT: '${{ secrets.DB_IDLE_TIMEOUT }}'
+          DB_SLOW_QUERY_LOGGING_TIMEOUT: '${{ secrets.DB_SLOW_QUERY_LOGGING_TIMEOUT }}'
+          DB_LOGGING: '${{ secrets.DB_LOGGING }}'
+          DB_ORM: '${{ secrets.DB_ORM }}'
+          DB_SYNCHRONIZE: '${{ secrets.DB_SYNCHRONIZE }}'
           MCP_AUTH_PORT: '3003'
           MCP_AUTH_SESSION_SECRET: '${{ secrets.MCP_AUTH_SESSION_SECRET }}'
           MCP_AUTH_JWT_ISSUER: '${{ secrets.MCP_AUTH_JWT_ISSUER }}'
           MCP_AUTH_JWT_AUDIENCE: '${{ secrets.MCP_AUTH_JWT_AUDIENCE }}'
+          MCP_TRUSTED_PROXIES: '${{ secrets.MCP_TRUSTED_PROXIES }}'
           REDIS_ENABLED: '${{ secrets.REDIS_ENABLED }}'
           REDIS_URL: '${{ secrets.REDIS_URL }}'
           REDIS_HOST: '${{ secrets.REDIS_HOST }}'
