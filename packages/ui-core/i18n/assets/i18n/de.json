@@ -4362,14 +4362,15 @@
 			"CLIENT_ADDED": "Kunde erfolgreich hinzugefügt",
 			"NO_INTERNET_CONNECTION": "Keine Internetverbindung. Bitte überprüfen Sie Ihre Verbindung.",
 			"BAD_REQUEST": "Ungültige Anfrage",
-			"UNAUTHORIZE": "Nicht autorisiert. Bitte erneut anmelden.",
+			"UNAUTHORIZED": "Nicht autorisiert. Bitte erneut anmelden.",
 			"ACCESS_DENIED": "Zugriff verweigert.",
 			"NOT_FOUND": "Nicht gefunden.",
 			"TIMEOUT": "Zeitüberschreitung. Bitte erneut versuchen.",
 			"SERVER_ERROR": "Serverfehler. Bitte wenden Sie sich an den Support.",
 			"LARGE_FILE": "Die Datei ist zu groß.",
 			"SERVICE_UNAVAILABLE": "Dienst vorübergehend nicht verfügbar.",
-			"UNEXPECTED_ERROR": "Ein unerwarteter Fehler ist aufgetreten."
+			"UNEXPECTED_ERROR": "Ein unerwarteter Fehler ist aufgetreten.",
+			"NETWORK_ERROR": "Netzwerkfehler: {{message}}"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Der Tracker wurde aufgrund von Inaktivität gestoppt!",

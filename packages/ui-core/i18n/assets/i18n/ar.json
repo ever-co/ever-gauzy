@@ -4351,14 +4351,15 @@
 			"CLIENT_ADDED": "تمت إضافة العميل بنجاح",
 			"NO_INTERNET_CONNECTION": "لا يوجد اتصال بالإنترنت. يرجى التحقق من الشبكة.",
 			"BAD_REQUEST": "طلب غير صالح",
-			"UNAUTHORIZE": "غير مصرح. يرجى تسجيل الدخول مرة أخرى.",
+			"UNAUTHORIZED": "غير مصرح. يرجى تسجيل الدخول مرة أخرى.",
 			"ACCESS_DENIED": "تم رفض الوصول.",
 			"NOT_FOUND": "العنصر غير موجود.",
 			"TIMEOUT": "انتهت المهلة. حاول مرة أخرى.",
 			"SERVER_ERROR": "خطأ في الخادم. يرجى التواصل مع الدعم.",
 			"LARGE_FILE": "الملف كبير جدًا.",
 			"SERVICE_UNAVAILABLE": "الخدمة غير متاحة مؤقتًا.",
-			"UNEXPECTED_ERROR": "حدث خطأ غير متوقع."
+			"UNEXPECTED_ERROR": "حدث خطأ غير متوقع.",
+			"NETWORK_ERROR": "خطأ في الشبكة: {{message}}"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "تم إيقاف التتبع بسبب الخمول!",

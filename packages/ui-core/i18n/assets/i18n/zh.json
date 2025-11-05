@@ -4366,14 +4366,15 @@
 			"CLIENT_ADDED": "客户添加成功",
 			"NO_INTERNET_CONNECTION": "网络未连接，请检查您的互联网。",
 			"BAD_REQUEST": "无效请求",
-			"UNAUTHORIZE": "未授权，请重新登录。",
+			"UNAUTHORIZED": "未授权，请重新登录。",
 			"ACCESS_DENIED": "访问被拒绝。",
 			"NOT_FOUND": "未找到资源。",
 			"TIMEOUT": "请求超时，请重试。",
 			"SERVER_ERROR": "服务器错误，请联系支持。",
 			"LARGE_FILE": "文件过大。",
 			"SERVICE_UNAVAILABLE": "服务暂不可用，请稍后重试。",
-			"UNEXPECTED_ERROR": "发生未知错误。"
+			"UNEXPECTED_ERROR": "发生未知错误。",
+			"NETWORK_ERROR": "网络错误：{{message}}"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "由于不活动，追踪器已停止！",

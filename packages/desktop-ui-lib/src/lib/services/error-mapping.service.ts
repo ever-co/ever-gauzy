@@ -10,8 +10,7 @@ export class ErrorMapping {
 	) {}
 	public mapErrorMessage(error: HttpErrorResponse): string {
 		if (error.error instanceof ErrorEvent) {
-			// Client-side or network error
-			return `Network error: ${error.error.message}`;
+			return this._translateService.instant('TIMER_TRACKER.TOASTR.NETWORK_ERROR', { message: error.error.message });
 		}
 
 		switch (error.status) {
@@ -20,7 +19,7 @@ export class ErrorMapping {
 			case 400:
 				return this.extractMessage(error, this._translateService.instant('TIMER_TRACKER.TOASTR.BAD_REQUEST'));
 			case 401:
-				return this._translateService.instant('TIMER_TRACKER.TOASTR.UNAUTHORIZE');
+				return this._translateService.instant('TIMER_TRACKER.TOASTR.UNAUTHORIZED');
 			case 403:
 				return this._translateService.instant('TIMER_TRACKER.TOASTR.ACCESS_DENIED');
 			case 404:

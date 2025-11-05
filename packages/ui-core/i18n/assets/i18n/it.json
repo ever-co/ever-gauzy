@@ -4366,14 +4366,15 @@
 			"CLIENT_ADDED": "Cliente aggiunto con successo",
 			"NO_INTERNET_CONNECTION": "Nessuna connessione Internet. Controlla la rete.",
 			"BAD_REQUEST": "Richiesta non valida",
-			"UNAUTHORIZE": "Non autorizzato. Effettua di nuovo l’accesso.",
+			"UNAUTHORIZED": "Non autorizzato. Effettua di nuovo l’accesso.",
 			"ACCESS_DENIED": "Accesso negato.",
 			"NOT_FOUND": "Elemento non trovato.",
 			"TIMEOUT": "Tempo scaduto. Riprova.",
 			"SERVER_ERROR": "Errore del server. Contatta il supporto.",
 			"LARGE_FILE": "Il file è troppo grande.",
 			"SERVICE_UNAVAILABLE": "Servizio temporaneamente non disponibile.",
-			"UNEXPECTED_ERROR": "Si è verificato un errore imprevisto."
+			"UNEXPECTED_ERROR": "Si è verificato un errore imprevisto.",
+			"NETWORK_ERROR": "Errore di rete: {{message}}"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Il tracker è stato fermato a causa di inattività!",
