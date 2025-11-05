@@ -53,8 +53,6 @@ export class PluginMarketplaceEffects {
 							count: state.count + 1
 						}));
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UPLOADED'));
-						// Track analytics event
-						this.trackPluginEvent(uploaded.id, 'upload', { plugin: uploaded });
 					}),
 					finalize(() => this.pluginMarketplaceStore.setUpload({ uploading: false })), // Always stop loading
 					catchError((error) => {
@@ -115,8 +113,6 @@ export class PluginMarketplaceEffects {
 					filter(Boolean), // Filter out null or undefined responses
 					tap((plugin) => {
 						this.pluginMarketplaceStore.update({ plugin });
-						// Track analytics event
-						this.trackPluginEvent(plugin.id, 'access', { source: 'marketplace' });
 					}),
 					finalize(() => this.pluginMarketplaceStore.setLoading(false)), // Always stop loading
 					catchError((error) => {
@@ -143,8 +139,6 @@ export class PluginMarketplaceEffects {
 							plugin: { ...state.plugin, ...plugin }
 						}));
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UPDATED'));
-						// Track analytics event
-						this.trackPluginEvent(plugin.id, 'update', { plugin });
 					}),
 					finalize(() => this.pluginMarketplaceStore.update({ updating: false })),
 					catchError((error) => {
@@ -172,8 +166,6 @@ export class PluginMarketplaceEffects {
 							plugin: null
 						}));
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.DELETED'));
-						// Track analytics event
-						this.trackPluginEvent(id, 'delete', {});
 					}),
 					finalize(() => this.pluginMarketplaceStore.update({ deleting: false })),
 					catchError((error) => {
@@ -296,8 +288,6 @@ export class PluginMarketplaceEffects {
 							plugins: state.plugins.map((p) => (p.id === pluginId ? { ...p, isInstalled: true } : p))
 						}));
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.INSTALLED'));
-						// Track analytics event
-						this.trackPluginEvent(pluginId, 'install', { installation, options });
 					}),
 					finalize(() => this.pluginMarketplaceStore.setInstalling(pluginId, false)),
 					catchError((error) => {
@@ -325,8 +315,6 @@ export class PluginMarketplaceEffects {
 							plugins: state.plugins.map((p) => (p.id === pluginId ? { ...p, isInstalled: false } : p))
 						}));
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED'));
-						// Track analytics event
-						this.trackPluginEvent(pluginId, 'uninstall', { reason });
 					}),
 					finalize(() => this.pluginMarketplaceStore.setInstalling(pluginId, false)),
 					catchError((error) => {
@@ -379,11 +367,6 @@ export class PluginMarketplaceEffects {
 							this.toastrService.success(
 								this.translateService.instant('PLUGIN.TOASTR.SUCCESS.SUBSCRIBED')
 							);
-							// Track analytics event
-							this.trackPluginEvent(pluginId, 'subscription_start', {
-								planId,
-								amount: subscription.amount
-							});
 						}),
 						catchError((error) => {
 							this.toastrService.error(error.message || 'Failed to create subscription');
@@ -456,8 +439,6 @@ export class PluginMarketplaceEffects {
 					tap((setting) => {
 						this.pluginMarketplaceStore.updatePluginSetting(pluginId, setting);
 						this.toastrService.success('Setting updated successfully');
-						// Track analytics event
-						this.trackPluginEvent(pluginId, 'settings_change', { key, value });
 					}),
 					catchError((error) => {
 						this.toastrService.error(error.message || 'Failed to update setting');
@@ -513,8 +494,6 @@ export class PluginMarketplaceEffects {
 					tap((ratingData) => {
 						this.pluginMarketplaceStore.updatePluginRating(pluginId, ratingData);
 						this.toastrService.success('Rating submitted successfully');
-						// Track analytics event
-						this.trackPluginEvent(pluginId, 'review', { rating, hasReview: !!review });
 					}),
 					catchError((error) => {
 						this.toastrService.error(error.message || 'Failed to submit rating');
@@ -524,17 +503,4 @@ export class PluginMarketplaceEffects {
 			)
 		)
 	);
-
-	// Helper method to track analytics events
-	private trackPluginEvent(pluginId: string, eventType: string, data: any) {
-		this.pluginAnalyticsService
-			.trackEvent({
-				pluginId,
-				eventType: eventType as any,
-				eventData: data
-			})
-			.subscribe({
-				error: () => {} // Silently fail analytics tracking
-			});
-	}
 }
