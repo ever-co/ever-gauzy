@@ -841,6 +841,7 @@
 		"MAKE_COM": "Make.com",
 		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
+		"ACTIVEPIECES": "Activepieces",
 		"PROPOSALS": "Vorschläge",
 		"TIME_OFF": "Freizeit",
 		"APPROVALS": "Genehmigungen",
@@ -1375,6 +1376,129 @@
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Gauzy KI",
 			"API_SECRET": "Gauzy KI Geheimnis"
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"SUBTITLE": "Activepieces Integration einrichten",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "Ihre Activepieces-Integration ist bereit. Klicken Sie auf die Schaltfläche unten, um zu autorisieren.",
+				"INFOS": "Als Nächstes werden Sie zu Activepieces weitergeleitet, um Gauzy Berechtigung zu erteilen.",
+				"START_BUTTON": "Activepieces autorisieren",
+				"NEXT": "Weiter",
+				"ERRORS": {
+					"INVALID_FORM": "Bitte füllen Sie alle Pflichtfelder korrekt aus",
+					"SAVE_SETTINGS": "Fehler beim Speichern der Einstellungen",
+					"START_AUTHORIZATION": "Fehler beim Starten der Autorisierung",
+					"ORGANIZATION_NOT_FOUND": "Organisation nicht gefunden",
+					"CHECK_TENANT_SETTINGS": "Fehler beim Überprüfen der Mandanteneinstellungen",
+					"CHECK_REMEMBER_STATE": "Fehler beim Überprüfen des gespeicherten Status"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Einstellungen erfolgreich gespeichert"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Activepieces-Einstellungen",
+				"SUBTITLE": "Konfigurieren Sie Ihre Activepieces-Integrationseinstellungen",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "Geben Sie Ihre Client ID ein",
+				"CLIENT_ID_HINT": "Ihre Activepieces OAuth Client ID",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "Geben Sie Ihr Client Secret ein",
+				"CLIENT_SECRET_HINT": "Ihr Activepieces OAuth Client Secret",
+				"STATE_SECRET": "State Secret",
+				"STATE_SECRET_PLACEHOLDER": "Geben Sie Ihr State Secret ein (mindestens 32 Zeichen)",
+				"STATE_SECRET_HINT": "Eine sichere Zufallszeichenfolge zur OAuth-Statusüberprüfung",
+				"CALLBACK_URL": "Callback URL",
+				"CALLBACK_URL_PLACEHOLDER": "Geben Sie Ihre Callback URL ein",
+				"CALLBACK_URL_HINT": "Die URL, zu der Activepieces nach der Autorisierung umleitet",
+				"POST_INSTALL_URL": "Post Install URL",
+				"POST_INSTALL_URL_PLACEHOLDER": "Geben Sie Ihre Post Install URL ein",
+				"POST_INSTALL_URL_HINT": "Die URL zur Umleitung nach Abschluss der Installation",
+				"SETTINGS_UPDATED": "Activepieces-Einstellungen erfolgreich aktualisiert"
+			},
+			"CONNECTIONS": {
+				"TITLE": "Verbindungen",
+				"SUBTITLE": "Verwalten Sie Ihre Activepieces-Verbindungen",
+				"NO_CONNECTIONS": "Keine Verbindungen gefunden. Geben Sie eine Projekt-ID ein und klicken Sie auf Laden, um Verbindungen anzuzeigen.",
+				"DISPLAY_NAME": "Anzeigename",
+				"NAME": "Verbindungsname",
+				"TYPE_HEADER": "Typ",
+				"STATUS_HEADER": "Status",
+				"PIECE_NAME": "Piece-Name",
+				"CREATED": "Erstellt",
+				"ACTIONS": "Aktionen",
+				"PROJECT_ID": "Projekt-ID",
+				"PROJECT_ID_PLACEHOLDER": "Activepieces Projekt-ID eingeben (in den Projekteinstellungen zu finden)",
+				"PROJECT_ID_HINT": "Geben Sie Ihre Activepieces Projekt-ID ein (in den Projekteinstellungen zu finden), um Verbindungen zu laden",
+				"LOADING": "Verbindungen werden geladen...",
+				"DELETE_CONFIRM": "Sind Sie sicher, dass Sie diese Verbindung löschen möchten?",
+				"DELETE_ARIA": "Verbindung löschen",
+				"STATUS": {
+					"ACTIVE": "Aktiv",
+					"ERROR": "Fehler"
+				},
+				"TYPE": {
+					"SECRET_TEXT": "Geheimer Text",
+					"OAUTH2": "OAuth 2.0",
+					"CLOUD_OAUTH2": "Cloud OAuth 2.0",
+					"PLATFORM_OAUTH2": "Platform OAuth 2.0",
+					"BASIC_AUTH": "Basisauthentifizierung",
+					"CUSTOM_AUTH": "Benutzerdefinierte Authentifizierung"
+				}
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP",
+				"NO_SERVERS": "Keine MCP-Server gefunden. Geben Sie eine Projekt-ID ein und klicken Sie auf Laden, um Server anzuzeigen.",
+				"PROJECT_ID": "Projekt-ID",
+				"PROJECT_ID_PLACEHOLDER": "Activepieces Projekt-ID eingeben (in den Projekteinstellungen zu finden)",
+				"PROJECT_ID_HINT": "Geben Sie Ihre Activepieces Projekt-ID ein (in den Projekteinstellungen zu finden), um MCP-Server zu laden",
+				"NAME": "Servername",
+				"SERVER_ID": "Server-ID",
+				"AGENT_ID": "Agent-ID",
+				"URL": "Server-URL",
+				"STATUS": "Status",
+				"ACTIONS": "Aktionen",
+				"ACTIVE": "Aktiv",
+				"TOOLS_COUNT": "Anzahl der Tools",
+				"CREATED": "Erstellt",
+				"LOADING": "MCP-Server werden geladen..."
+			},
+			"TAB": {
+				"CONNECTIONS": "Verbindungen",
+				"MCP_SERVERS": "MCP-Server",
+				"SETTINGS": "Einstellungen"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "Bitte füllen Sie alle Pflichtfelder aus",
+				"LOAD_SETTINGS": "Fehler beim Laden der Activepieces-Einstellungen",
+				"SAVE_SETTINGS": "Fehler beim Speichern der Activepieces-Einstellungen",
+				"START_AUTHORIZATION": "Fehler beim Starten der Autorisierung",
+				"LOAD_CONNECTION": "Fehler beim Laden der Verbindung",
+				"PROJECT_ID_REQUIRED": "Projekt-ID ist erforderlich",
+				"LOAD_CONNECTIONS": "Fehler beim Laden der Verbindungen",
+				"DELETE_CONNECTION": "Fehler beim Löschen der Verbindung",
+				"INVALID_CONNECTION": "Ungültige Verbindungsdaten"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "Erfolgreich mit Activepieces autorisiert",
+				"SETTINGS_SAVED": "Activepieces-Einstellungen erfolgreich gespeichert",
+				"CONNECTION_DELETED": "Verbindung erfolgreich gelöscht"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "Ungültige Callback-Parameter. Überprüfen Sie, ob die Autorisierung erfolgreich abgeschlossen wurde, und überprüfen Sie die Callback-Parameter.",
+					"ORGANIZATION_NOT_FOUND": "Organisation nicht gefunden",
+					"EXCHANGE_TOKEN": "Fehler beim Austausch des Autorisierungscodes",
+					"INVALID_PROJECT_ID": "Bitte geben Sie eine gültige Projekt-ID an",
+					"TOKEN_NOT_FOUND": "Token nicht gefunden. Bitte versuchen Sie die Autorisierung erneut und überprüfen Sie die Callback-Parameter.",
+					"CREATE_CONNECTION": "Fehler beim Erstellen der Verbindung"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "Activepieces-Verbindung erfolgreich erstellt"
+				}
+			}
 		},
 		"COMING_SOON": "Demnächst verfügbar.",
 		"RE_INTEGRATE": "Wieder integrieren",
@@ -4235,7 +4359,18 @@
 			"ACCOUNT_DELETED": "Dein Konto wurde bereits gelöscht.",
 			"PROJECT_ADDED": "Projekt erfolgreich hinzugefügt",
 			"TASK_ADDED": "Aufgabe erfolgreich hinzugefügt",
-			"CLIENT_ADDED": "Kunde erfolgreich hinzugefügt"
+			"CLIENT_ADDED": "Kunde erfolgreich hinzugefügt",
+			"NO_INTERNET_CONNECTION": "Keine Internetverbindung. Bitte überprüfen Sie Ihre Verbindung.",
+			"BAD_REQUEST": "Ungültige Anfrage",
+			"UNAUTHORIZED": "Nicht autorisiert. Bitte erneut anmelden.",
+			"ACCESS_DENIED": "Zugriff verweigert.",
+			"NOT_FOUND": "Nicht gefunden.",
+			"TIMEOUT": "Zeitüberschreitung. Bitte erneut versuchen.",
+			"SERVER_ERROR": "Serverfehler. Bitte wenden Sie sich an den Support.",
+			"LARGE_FILE": "Die Datei ist zu groß.",
+			"SERVICE_UNAVAILABLE": "Dienst vorübergehend nicht verfügbar.",
+			"UNEXPECTED_ERROR": "Ein unerwarteter Fehler ist aufgetreten.",
+			"NETWORK_ERROR": "Netzwerkfehler: {{message}}"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Der Tracker wurde aufgrund von Inaktivität gestoppt!",
@@ -4863,7 +4998,7 @@
 			"PASSWORD": "Passwort"
 		},
 		"SIGN_IN_TITLE": "Anmeldung im Arbeitsbereich",
-        "SIGN_IN_SUBTITLE": "Geben Sie Ihre E-Mail-Adresse ein, um sich in Ihren Arbeitsbereich anzumelden",
+		"SIGN_IN_SUBTITLE": "Geben Sie Ihre E-Mail-Adresse ein, um sich in Ihren Arbeitsbereich anzumelden",
 		"BACK_TO": "Zurück zu",
 		"SUCCESS_SIGNIN_TITLE": "Herzlichen Glückwunsch! Sie haben sich erfolgreich in Ihren Arbeitsbereich eingeloggt.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Bitte haben Sie Geduld, während wir den Arbeitsbereich vorbereiten...",
@@ -4872,13 +5007,13 @@
 		"THANKING_TEXT": "Vielen Dank, dass Sie uns gewählt haben.",
 		"UNKNOWN_WORKSPACE": "Kennen Sie Ihren Arbeitsbereich nicht?",
 		"FIND_WORKSPACE": "Finden Sie Ihren Arbeitsbereich",
-        "CREATE": {
-            "TITLE": "Neuen Arbeitsbereich erstellen",
-            "SUBTITLE": "Geben Sie Ihre E-Mail-Adresse ein, um zu beginnen",
-            "SUCCESS_SENT_CODE_TITLE": "Wir haben einen Bestätigungscode gesendet an: ",
-            "SUCCESS_SENT_CODE_SUB_TITLE": "Bitte überprüfen Sie Ihre E-Mail und geben Sie den Code unten ein",
-            "CREATE_NEW_WORKSPACE": "Neuen Arbeitsbereich erstellen"
-        },
+		"CREATE": {
+			"TITLE": "Neuen Arbeitsbereich erstellen",
+			"SUBTITLE": "Geben Sie Ihre E-Mail-Adresse ein, um zu beginnen",
+			"SUCCESS_SENT_CODE_TITLE": "Wir haben einen Bestätigungscode gesendet an: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Bitte überprüfen Sie Ihre E-Mail und geben Sie den Code unten ein",
+			"CREATE_NEW_WORKSPACE": "Neuen Arbeitsbereich erstellen"
+		},
 		"FIND": {
 			"TITLE": "Finden Sie Ihren Arbeitsbereich",
 			"SUBTITLE": "Geben Sie Ihre E-Mail ein, um Ihre Arbeitsbereiche zu finden",

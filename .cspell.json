@@ -313,6 +313,7 @@
 		"mathieudutour",
 		"maximizable",
 		"maxlength",
+		"mcpauth",
 		"memlock",
 		"Metadatas",
 		"metatype",
@@ -481,6 +482,7 @@
 		"stackoverflow",
 		"stagecivo",
 		"stagecw",
+		"STARTTLS",
 		"stefanzweifel",
 		"streamifier",
 		"stylelint",
@@ -553,6 +555,7 @@
 		"Upwork",
 		"UPWORK",
 		"urlpath",
+		"userinfo",
 		"USERSRVCE",
 		"USERTRX",
 		"uuidv4",
@@ -716,7 +719,9 @@
 		"dtos",
 		"soundshot",
 		"soundshots",
-		"runtimes"
+		"runtimes",
+		"localtime",
+		"Behaviour"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

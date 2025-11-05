@@ -80,7 +80,7 @@ kind: Deployment
 metadata:
     name: gauzy-prod-api
 spec:
-    replicas: 6
+    replicas: 4
     selector:
         matchLabels:
             app: gauzy-prod-api
@@ -149,6 +149,16 @@ spec:
                         value: '$REDIS_ENABLED'
                       - name: REDIS_URL
                         value: '$REDIS_URL'
+                      - name: REDIS_HOST
+                        value: '$REDIS_HOST'
+                      - name: REDIS_PASSWORD
+                        value: '$REDIS_PASSWORD'
+                      - name: REDIS_PORT
+                        value: '$REDIS_PORT'
+                      - name: REDIS_USER
+                        value: '$REDIS_USER'
+                      - name: REDIS_TLS
+                        value: '$REDIS_TLS'
                       - name: AWS_ACCESS_KEY_ID
                         value: '$AWS_ACCESS_KEY_ID'
                       - name: AWS_SECRET_ACCESS_KEY
@@ -311,7 +321,7 @@ kind: Deployment
 metadata:
     name: gauzy-prod-webapp
 spec:
-    replicas: 3
+    replicas: 2
     selector:
         matchLabels:
             app: gauzy-prod-webapp

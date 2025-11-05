@@ -840,6 +840,7 @@
 		"UPWORK": "Upwork: 艾普沃克",
 		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI 云知能",
+		"ACTIVEPIECES": "Activepieces",
 		"PROPOSALS": "提议",
 		"TIME_OFF": "休假",
 		"APPROVALS": "批准",
@@ -1375,6 +1376,129 @@
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Gauzy AI 密钥",
 			"API_SECRET": "AI秘密"
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"SUBTITLE": "Activepieces 集成设置",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "您的 Activepieces 集成已就绪。点击下面的按钮进行授权。",
+				"INFOS": "接下来您将被带到 Activepieces 以授予 Gauzy 权限。",
+				"START_BUTTON": "授权 Activepieces",
+				"NEXT": "下一步",
+				"ERRORS": {
+					"INVALID_FORM": "请正确填写所有必填字段",
+					"SAVE_SETTINGS": "保存设置失败",
+					"START_AUTHORIZATION": "启动授权失败",
+					"ORGANIZATION_NOT_FOUND": "未找到组织",
+					"CHECK_TENANT_SETTINGS": "检查租户设置失败",
+					"CHECK_REMEMBER_STATE": "检查记忆状态失败"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "设置保存成功"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Activepieces 设置",
+				"SUBTITLE": "配置您的 Activepieces 集成设置",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "输入您的 Client ID",
+				"CLIENT_ID_HINT": "您的 Activepieces OAuth Client ID",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "输入您的 Client Secret",
+				"CLIENT_SECRET_HINT": "您的 Activepieces OAuth Client Secret",
+				"STATE_SECRET": "State Secret",
+				"STATE_SECRET_PLACEHOLDER": "输入您的 State Secret（最少32个字符）",
+				"STATE_SECRET_HINT": "用于 OAuth 状态验证的安全随机字符串",
+				"CALLBACK_URL": "Callback URL",
+				"CALLBACK_URL_PLACEHOLDER": "输入您的 Callback URL",
+				"CALLBACK_URL_HINT": "Activepieces 授权后将重定向到的 URL",
+				"POST_INSTALL_URL": "Post Install URL",
+				"POST_INSTALL_URL_PLACEHOLDER": "输入您的 Post Install URL",
+				"POST_INSTALL_URL_HINT": "安装完成后重定向到的 URL",
+				"SETTINGS_UPDATED": "Activepieces 设置更新成功"
+			},
+			"CONNECTIONS": {
+				"TITLE": "连接",
+				"SUBTITLE": "管理您的 Activepieces 连接",
+				"NO_CONNECTIONS": "未找到连接。输入项目 ID 并点击加载以查看连接。",
+				"DISPLAY_NAME": "显示名称",
+				"NAME": "连接名称",
+				"TYPE_HEADER": "类型",
+				"STATUS_HEADER": "状态",
+				"PIECE_NAME": "组件名称",
+				"CREATED": "创建时间",
+				"ACTIONS": "操作",
+				"PROJECT_ID": "项目 ID",
+				"PROJECT_ID_PLACEHOLDER": "输入 Activepieces 项目 ID（在项目设置中找到）",
+				"PROJECT_ID_HINT": "输入您的 Activepieces 项目 ID（在项目设置中找到）以加载连接",
+				"LOADING": "正在加载连接...",
+				"DELETE_CONFIRM": "您确定要删除此连接吗？",
+				"DELETE_ARIA": "删除连接",
+				"STATUS": {
+					"ACTIVE": "活动",
+					"ERROR": "错误"
+				},
+				"TYPE": {
+					"SECRET_TEXT": "秘密文本",
+					"OAUTH2": "OAuth 2.0",
+					"CLOUD_OAUTH2": "Cloud OAuth 2.0",
+					"PLATFORM_OAUTH2": "Platform OAuth 2.0",
+					"BASIC_AUTH": "基本身份验证",
+					"CUSTOM_AUTH": "自定义身份验证"
+				}
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP",
+				"NO_SERVERS": "未找到 MCP 服务器。输入项目 ID 并点击加载以查看服务器。",
+				"PROJECT_ID": "项目 ID",
+				"PROJECT_ID_PLACEHOLDER": "输入 Activepieces 项目 ID（在项目设置中找到）",
+				"PROJECT_ID_HINT": "输入您的 Activepieces 项目 ID（在项目设置中找到）以加载 MCP 服务器",
+				"NAME": "服务器名称",
+				"SERVER_ID": "服务器 ID",
+				"AGENT_ID": "代理 ID",
+				"URL": "Server URL",
+				"STATUS": "状态",
+				"ACTIONS": "操作",
+				"ACTIVE": "活动",
+				"TOOLS_COUNT": "工具数量",
+				"CREATED": "创建时间",
+				"LOADING": "正在加载 MCP 服务器..."
+			},
+			"TAB": {
+				"CONNECTIONS": "连接",
+				"MCP_SERVERS": "MCP 服务器",
+				"SETTINGS": "设置"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "请填写所有必填字段",
+				"LOAD_SETTINGS": "加载 Activepieces 设置失败",
+				"SAVE_SETTINGS": "保存 Activepieces 设置失败",
+				"START_AUTHORIZATION": "启动授权失败",
+				"LOAD_CONNECTION": "加载连接失败",
+				"PROJECT_ID_REQUIRED": "项目 ID 为必填项",
+				"LOAD_CONNECTIONS": "加载连接失败",
+				"DELETE_CONNECTION": "删除连接失败",
+				"INVALID_CONNECTION": "无效的连接数据"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "已成功授权 Activepieces",
+				"SETTINGS_SAVED": "Activepieces 设置保存成功",
+				"CONNECTION_DELETED": "连接删除成功"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "回调参数无效。检查授权是否成功完成并验证回调参数。",
+					"ORGANIZATION_NOT_FOUND": "未找到组织",
+					"EXCHANGE_TOKEN": "交换授权码失败",
+					"INVALID_PROJECT_ID": "请提供有效的项目 ID",
+					"TOKEN_NOT_FOUND": "未找到令牌。请重新尝试授权并验证回调参数。",
+					"CREATE_CONNECTION": "创建连接失败"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "ActivePieces 连接创建成功"
+				}
+			}
 		},
 		"COMING_SOON": "即将推出",
 		"RE_INTEGRATE": "重新整合",
@@ -4239,7 +4363,18 @@
 			"ACCOUNT_DELETED": "您的账户已经被删除。",
 			"PROJECT_ADDED": "项目已成功添加",
 			"TASK_ADDED": "任务已成功添加",
-			"CLIENT_ADDED": "客户添加成功"
+			"CLIENT_ADDED": "客户添加成功",
+			"NO_INTERNET_CONNECTION": "网络未连接，请检查您的互联网。",
+			"BAD_REQUEST": "无效请求",
+			"UNAUTHORIZED": "未授权，请重新登录。",
+			"ACCESS_DENIED": "访问被拒绝。",
+			"NOT_FOUND": "未找到资源。",
+			"TIMEOUT": "请求超时，请重试。",
+			"SERVER_ERROR": "服务器错误，请联系支持。",
+			"LARGE_FILE": "文件过大。",
+			"SERVICE_UNAVAILABLE": "服务暂不可用，请稍后重试。",
+			"UNEXPECTED_ERROR": "发生未知错误。",
+			"NETWORK_ERROR": "网络错误：{{message}}"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "由于不活动，追踪器已停止！",
@@ -4899,19 +5034,19 @@
 			"OPEN": "打开"
 		}
 	},
-    "WORKSPACE_CREATE": {
-        "ACCOUNT_CREATION": {
-            "TITLE": "创建您的账户",
-            "SUBTITLE": "完善您的资料以创建新工作区"
-        },
-        "WORKSPACE_SETUP": {
-            "TITLE": "设置您的工作区",
-            "SUBTITLE": "创建您的组织并开始使用"
-        },
-        "BUTTONS": {
-            "CONTINUE_TO_WORKSPACE_SETUP": "继续进行工作区设置"
-        }
-    },
+	"WORKSPACE_CREATE": {
+		"ACCOUNT_CREATION": {
+			"TITLE": "创建您的账户",
+			"SUBTITLE": "完善您的资料以创建新工作区"
+		},
+		"WORKSPACE_SETUP": {
+			"TITLE": "设置您的工作区",
+			"SUBTITLE": "创建您的组织并开始使用"
+		},
+		"BUTTONS": {
+			"CONTINUE_TO_WORKSPACE_SETUP": "继续进行工作区设置"
+		}
+	},
 	"NO_IMAGE": {
 		"ADD_DROP": "添加或删除图像",
 		"AVAILABLE": "图像不可用"

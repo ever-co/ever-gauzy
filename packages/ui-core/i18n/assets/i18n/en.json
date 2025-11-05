@@ -61,6 +61,7 @@
 		"REJECT": "Reject",
 		"FIND_TIME": "Find time",
 		"DOWNLOAD": "Download",
+		"LOAD": "Load",
 		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base",
 		"CHOOSE_ICON": "Choose icon",
 		"MAKE_PRIVATE": "make private",
@@ -879,6 +880,7 @@
 		"MAKE_COM": "Make.com",
 		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
+		"ACTIVEPIECES": "Activepieces",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"APPROVALS": "Approvals",
@@ -1454,6 +1456,129 @@
 			"TAB": {
 				"AUTO_SYNC": "Auto sync",
 				"MANUAL_SYNC": "Manual sync"
+			}
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"SUBTITLE": "Activepieces Integration Setup",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "Your Activepieces integration is ready. Click the button below to authorize.",
+				"INFOS": "Next you will be taken to Activepieces to grant permission to Gauzy.",
+				"START_BUTTON": "Authorize Activepieces",
+				"NEXT": "Next",
+				"ERRORS": {
+					"INVALID_FORM": "Please fill all required fields correctly",
+					"SAVE_SETTINGS": "Failed to save settings",
+					"START_AUTHORIZATION": "Failed to start authorization",
+					"ORGANIZATION_NOT_FOUND": "Organization not found",
+					"CHECK_TENANT_SETTINGS": "Failed to check tenant settings",
+					"CHECK_REMEMBER_STATE": "Failed to check remember state"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Settings saved successfully"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Activepieces Settings",
+				"SUBTITLE": "Configure your Activepieces integration settings",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "Enter your Client ID",
+				"CLIENT_ID_HINT": "Your Activepieces OAuth Client ID",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "Enter your Client Secret",
+				"CLIENT_SECRET_HINT": "Your Activepieces OAuth Client Secret",
+				"STATE_SECRET": "State Secret",
+				"STATE_SECRET_PLACEHOLDER": "Enter your State Secret (minimum 32 characters)",
+				"STATE_SECRET_HINT": "A secure random string used for OAuth state verification",
+				"CALLBACK_URL": "Callback URL",
+				"CALLBACK_URL_PLACEHOLDER": "Enter your Callback URL",
+				"CALLBACK_URL_HINT": "The URL where Activepieces will redirect after authorization",
+				"POST_INSTALL_URL": "Post Install URL",
+				"POST_INSTALL_URL_PLACEHOLDER": "Enter your Post Install URL",
+				"POST_INSTALL_URL_HINT": "The URL to redirect to after installation is complete",
+				"SETTINGS_UPDATED": "Activepieces settings updated successfully"
+			},
+			"CONNECTIONS": {
+				"TITLE": "Connections",
+				"SUBTITLE": "Manage your Activepieces connections",
+				"NO_CONNECTIONS": "No connections found. Enter a Project ID and click Load to view connections.",
+				"DISPLAY_NAME": "Display Name",
+				"NAME": "Connection Name",
+				"TYPE_HEADER": "Type",
+				"STATUS_HEADER": "Status",
+				"PIECE_NAME": "Piece Name",
+				"CREATED": "Created",
+				"ACTIONS": "Actions",
+				"PROJECT_ID": "Project ID",
+				"PROJECT_ID_PLACEHOLDER": "Enter Activepieces Project ID (found in project settings)",
+				"PROJECT_ID_HINT": "Enter your Activepieces project ID (found in project settings) to load connections",
+				"LOADING": "Loading connections...",
+				"DELETE_CONFIRM": "Are you sure you want to delete this connection?",
+				"DELETE_ARIA": "Delete connection",
+				"STATUS": {
+					"ACTIVE": "Active",
+					"ERROR": "Error"
+				},
+				"TYPE": {
+					"SECRET_TEXT": "Secret Text",
+					"OAUTH2": "OAuth 2.0",
+					"CLOUD_OAUTH2": "Cloud OAuth 2.0",
+					"PLATFORM_OAUTH2": "Platform OAuth 2.0",
+					"BASIC_AUTH": "Basic Authentication",
+					"CUSTOM_AUTH": "Custom Authentication"
+				}
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP",
+				"NO_SERVERS": "No MCP servers found. Enter a Project ID and click Load to view servers.",
+				"PROJECT_ID": "Project ID",
+				"PROJECT_ID_PLACEHOLDER": "Enter Activepieces Project ID (found in project settings)",
+				"PROJECT_ID_HINT": "Enter your Activepieces project ID (found in project settings) to load MCP servers",
+				"NAME": "Server Name",
+				"SERVER_ID": "Server ID",
+				"AGENT_ID": "Agent ID",
+				"URL": "Server URL",
+				"STATUS": "Status",
+				"ACTIONS": "Actions",
+				"ACTIVE": "Active",
+				"TOOLS_COUNT": "Tools Count",
+				"CREATED": "Created",
+				"LOADING": "Loading MCP servers..."
+			},
+			"TAB": {
+				"CONNECTIONS": "Connections",
+				"MCP_SERVERS": "MCP Servers",
+				"SETTINGS": "Settings"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "Please fill in all required fields",
+				"LOAD_SETTINGS": "Failed to load Activepieces settings",
+				"SAVE_SETTINGS": "Failed to save Activepieces settings",
+				"START_AUTHORIZATION": "Failed to start authorization",
+				"LOAD_CONNECTION": "Failed to load connection",
+				"PROJECT_ID_REQUIRED": "Project ID is required",
+				"LOAD_CONNECTIONS": "Failed to load connections",
+				"DELETE_CONNECTION": "Failed to delete connection",
+				"INVALID_CONNECTION": "Invalid connection data"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "Successfully authorized with Activepieces",
+				"SETTINGS_SAVED": "Activepieces settings saved successfully",
+				"CONNECTION_DELETED": "Connection deleted successfully"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "Invalid callback parameters. Check that authorization was completed successfully and verify callback parameters.",
+					"ORGANIZATION_NOT_FOUND": "Organization not found",
+					"EXCHANGE_TOKEN": "Failed to exchange authorization code",
+					"INVALID_PROJECT_ID": "Please provide a valid project ID",
+					"TOKEN_NOT_FOUND": "Token not found. Please try authorization again and verify callback parameters.",
+					"CREATE_CONNECTION": "Failed to create connection"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "Activepieces connection created successfully"
+				}
 			}
 		},
 		"COMING_SOON": "Coming soon",
@@ -4369,7 +4494,18 @@
 			"ACCOUNT_DELETED": "Your account is already deleted",
 			"PROJECT_ADDED": "Project added successfully",
 			"TASK_ADDED": "Task added successfully",
-			"CLIENT_ADDED": "Client added successfully"
+			"CLIENT_ADDED": "Client added successfully",
+			"NO_INTERNET_CONNECTION": "No connection — please check your internet.",
+			"BAD_REQUEST": "Bad Request",
+			"UNAUTHORIZED": "Unauthorized. Please login again.",
+			"ACCESS_DENIED": "Access denied. You don’t have permission.",
+			"NOT_FOUND": "Not found. The requested resource does not exist.",
+			"TIMEOUT": "Request timeout. Please try again.",
+			"SERVER_ERROR": "Server error. Please contact support.",
+			"LARGE_FILE": "The file or data is too large.",
+			"SERVICE_UNAVAILABLE": "Service unavailable. Try again later.",
+			"UNEXPECTED_ERROR": "Unexpected error occurred.",
+			"NETWORK_ERROR": "Network error: {{message}}"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Tracker was stopped due to inactivity!",

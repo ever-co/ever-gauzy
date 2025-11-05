@@ -5,6 +5,8 @@
 		"declaration": true,
 		"types": ["node"],
 		"target": "es2021",
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
 		"strictNullChecks": false,
 		"noImplicitAny": false,
 		"strictBindCallApply": false,

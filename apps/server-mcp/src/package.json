@@ -24,7 +24,13 @@
     },
     "workspaces": {
         "packages": [
-            "../../../dist/packages/mcp-server"
+            "../../../dist/packages/mcp-server",
+            "../../../dist/packages/auth",
+            "../../../dist/packages/config",
+            "../../../dist/packages/contracts",
+            "../../../dist/packages/utils",
+            "../../../dist/packages/common",
+            "../../../dist/packages/constants"
         ]
     },
     "build": {
@@ -122,6 +128,12 @@
     },
     "dependencies": {
         "@gauzy/mcp-server": "file:../../../dist/packages/mcp-server",
+        "@gauzy/auth": "file:../../../dist/packages/auth",
+        "@gauzy/config": "file:../../../dist/packages/config",
+        "@gauzy/contracts": "file:../../../dist/packages/contracts",
+        "@gauzy/utils": "file:../../../dist/packages/utils",
+        "@gauzy/common": "file:../../../dist/packages/common",
+        "@gauzy/constants": "file:../../../dist/packages/constants",
         "@modelcontextprotocol/sdk": "^1.13.1",
         "axios": "^1.7.0",
         "dotenv": "^16.4.5",

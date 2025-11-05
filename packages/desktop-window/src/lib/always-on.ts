@@ -9,11 +9,21 @@ import {
 } from '@gauzy/desktop-core';
 
 export class AlwaysOn extends BaseWindow implements IBaseWindow {
-	private static readonly WIDTH: number = 60;
-	private static readonly HEIGHT: number = 110;
+	private static WIDTH: number = 60;
+	private static HEIGHT: number = 110;
 	private manager = WindowManager.getInstance();
 
-	constructor(private readonly path?: string) {
+	constructor(
+		private readonly path?: string,
+		private readonly preloadPath?: string,
+		private readonly contextIsolation?: boolean,
+		private readonly isExpandMode?: boolean
+	) {
+		if (isExpandMode) {
+			AlwaysOn.WIDTH = 270;
+			AlwaysOn.HEIGHT = 90;
+		}
+
 		super(
 			new DefaultWindow(
 				new WindowConfig('/always-on', path, {
@@ -22,11 +32,24 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 					roundedCorners: true,
 					width: AlwaysOn.WIDTH,
 					height: AlwaysOn.HEIGHT,
-					opacity: 0.8,
+					...(isExpandMode ? {
+						transparent: true
+					} : {
+						opacity: 0.8
+					}),
 					alwaysOnTop: true,
 					center: false,
 					x: 16,
-					y: Math.floor((screen.getPrimaryDisplay().workAreaSize.height - AlwaysOn.HEIGHT) / 2)
+					y: Math.floor((screen.getPrimaryDisplay().workAreaSize.height - AlwaysOn.HEIGHT) / 2),
+					...(contextIsolation && preloadPath ? {
+						webPreferences: {
+							nodeIntegration: false,
+							contextIsolation: true,
+							sandbox: false,
+							webSecurity: false,
+							preload: preloadPath
+						},
+					} : {})
 				})
 			)
 		);

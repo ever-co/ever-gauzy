@@ -36,6 +36,7 @@ export class TimeSlotQueue extends OfflineQueue<ITimeSlot> {
 		)
 		await this._electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
 			id: interval.timerId,
+			startedAt: interval.startedAt,
 			timeSlotId
 		});
 		this._timeSlotQueueService.updater = { ...interval, timeSlotId };

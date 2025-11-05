@@ -75,8 +75,14 @@ function addPostgresTrackingIntegration(integrations: Integration[]): void {
  * @param integrations The array of Sentry integrations.
  */
 function addConsoleIntegration(integrations: Integration[]): void {
-	integrations.push(Sentry.captureConsoleIntegration());
-	console.log('Sentry Console Enabled');
+	// Only capture console.error and console.warn, not console.log or console.info
+	// This prevents info/debug messages from being sent to Sentry
+	integrations.push(
+		Sentry.captureConsoleIntegration({
+			levels: ['error', 'warn'] // Only capture errors and warnings
+		})
+	);
+	console.log('Sentry Console Enabled (errors and warnings only)');
 }
 
 /**

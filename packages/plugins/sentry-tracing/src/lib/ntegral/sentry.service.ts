@@ -23,16 +23,12 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		Sentry.init({
 			...sentryOptions,
 			integrations: [
-				// V9 Migration: Updated integration names from Sentry.Integrations.OnUncaughtException to Sentry.onUncaughtExceptionIntegration
-				// Reference: https://docs.sentry.io/platforms/javascript/guides/node/configuration/integrations/onuncaughtexception/
 				Sentry.onUncaughtExceptionIntegration({
 					onFatalError: async (error) => {
 						console.error('Uncaught Exception Handler in Sentry Service', error);
 						if (error.name === 'SentryError') {
 							console.log(error);
 						} else {
-							// V9 Migration: getCurrentHub() was removed, use getClient() instead
-							// Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/#removed-apis
 							Sentry.getClient()?.captureException(error);
 
 							Sentry.flush(3000).then(() => {
@@ -41,8 +37,7 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 						}
 					}
 				}),
-				// V9 Migration: Updated integration names from Sentry.Integrations.OnUnhandledRejection to Sentry.onUnhandledRejectionIntegration
-				// Reference: https://docs.sentry.io/platforms/javascript/guides/node/configuration/integrations/unhandledrejection/
+
 				Sentry.onUnhandledRejectionIntegration({ mode: 'warn' }),
 				...integrations
 			]
@@ -79,7 +74,9 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 						}
 				  })
 				: Sentry.captureMessage(message, 'log');
-		} catch (err) {}
+		} catch (err) {
+			// do nothing to avoid blocking the application
+		}
 	}
 
 	/**
@@ -93,7 +90,9 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		try {
 			super.error(message, trace, context);
 			Sentry.captureMessage(message, 'error');
-		} catch (err) {}
+		} catch (err) {
+			// do nothing to avoid blocking the application
+		}
 	}
 
 	/**
@@ -115,7 +114,9 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 						}
 				  })
 				: Sentry.captureMessage(message, 'warning');
-		} catch (err) {}
+		} catch (err) {
+			// do nothing to avoid blocking the application
+		}
 	}
 
 	/**
@@ -137,7 +138,9 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 						}
 				  })
 				: Sentry.captureMessage(message, 'debug');
-		} catch (err) {}
+		} catch (err) {
+			// do nothing to avoid blocking the application
+		}
 	}
 
 	/**
@@ -159,7 +162,9 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 						}
 				  })
 				: Sentry.captureMessage(message, 'info');
-		} catch (err) {}
+		} catch (err) {
+			// do nothing to avoid blocking the application
+		}
 	}
 
 	/**

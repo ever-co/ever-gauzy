@@ -7,6 +7,7 @@ export type TEventArgs = {
 		trayMenuId?: 'keyboard_mouse' | 'network' | 'afk';
 		trayMenuChecked?: boolean;
 		trayUpdateType?: 'title' | 'menu',
-		employee?: Partial<TEmployeeResponse>
+		employee?: Partial<TEmployeeResponse>,
+		enabledTimerWidget?: boolean;
 	}>
 };
