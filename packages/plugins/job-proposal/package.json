@@ -43,7 +43,7 @@
 		"class-validator": "^0.14.2",
 		"moment": "^2.30.1",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.24"
+		"typeorm": "^0.3.27"
 	},
 	"devDependencies": {
 		"@nestjs/testing": "^11.0.0",
