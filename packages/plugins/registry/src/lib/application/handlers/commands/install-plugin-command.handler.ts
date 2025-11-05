@@ -2,12 +2,10 @@ import { RequestContext } from '@gauzy/core';
 import { ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginInstallation } from '../../../domain/entities/plugin-installation.entity';
+import { PluginSubscriptionAccessService } from '../../../domain/services';
 import { PluginInstallationService } from '../../../domain/services/plugin-installation.service';
-import { PluginSubscriptionPlanService } from '../../../domain/services/plugin-subscription-plan.service';
-import { PluginSubscriptionService } from '../../../domain/services/plugin-subscription.service';
 import { PluginInstallationStatus } from '../../../shared/models/plugin-installation.model';
 import { PluginScope } from '../../../shared/models/plugin-scope.model';
-import { PluginSubscriptionStatus } from '../../../shared/models/plugin-subscription.model';
 import { InstallPluginCommand } from '../../commands/install-plugin.command';
 
 /**
@@ -15,19 +13,26 @@ import { InstallPluginCommand } from '../../commands/install-plugin.command';
  */
 @CommandHandler(InstallPluginCommand)
 export class InstallPluginCommandHandler implements ICommandHandler<InstallPluginCommand> {
+	private readonly accessDeniedMessages: Record<PluginScope, string> = {
+		[PluginScope.USER]:
+			'You do not have an active subscription for this plugin. Please subscribe to install and use it.',
+		[PluginScope.ORGANIZATION]:
+			'Your organization does not have an active subscription for this plugin. Please contact your administrator.',
+		[PluginScope.TENANT]:
+			'Your tenant does not have an active subscription for this plugin. Please contact your administrator.',
+		[PluginScope.GLOBAL]:
+			'Your tenant does not have an active subscription for this plugin. Please contact your administrator.'
+	};
+
 	constructor(
 		/**
 		 * Service responsible for handling plugin installation logic.
 		 */
 		private readonly installationService: PluginInstallationService,
 		/**
-		 * Service responsible for handling plugin subscription logic.
+		 * Service responsible for validating plugin subscription access.
 		 */
-		private readonly subscriptionService: PluginSubscriptionService,
-		/**
-		 * Service responsible for handling plugin subscription plans.
-		 */
-		private readonly subscriptionPlanService: PluginSubscriptionPlanService
+		private readonly subscriptionAccessService: PluginSubscriptionAccessService
 	) {}
 
 	/**
@@ -49,7 +54,15 @@ export class InstallPluginCommandHandler implements ICommandHandler<InstallPlugi
 		const organizationId = RequestContext.currentOrganizationId();
 
 		// Check if user has valid subscription for this plugin (any scope: user, organization, or tenant)
-		await this.validatePluginSubscription(pluginId, tenantId, organizationId, userId);
+		const state = await this.subscriptionAccessService.getSubscriptionDetails(
+			pluginId,
+			tenantId,
+			organizationId,
+			userId
+		);
+
+		// Ensure user has access to install the plugin
+		this.ensurePluginAccess(state);
 
 		// Find existing plugin installation
 		const found = await this.installationService.findOneOrFailByWhereOptions({
@@ -78,61 +91,9 @@ export class InstallPluginCommandHandler implements ICommandHandler<InstallPlugi
 		await this.installationService.save(installation);
 	}
 
-	/**
-	 * Validate that the user has an active subscription for this plugin
-	 * @param pluginId - The plugin ID
-	 * @param tenantId - The tenant ID
-	 * @param organizationId - The organization ID
-	 * @param userId - The user ID
-	 * @throws ForbiddenException if user doesn't have an active subscription
-	 */
-	private async validatePluginSubscription(
-		pluginId: string,
-		tenantId: string,
-		organizationId: string,
-		userId: string
-	): Promise<void> {
-		// Check if the plugin has any subscription plans
-		const hasPlans = await this.subscriptionPlanService.hasPlans(pluginId);
-
-		// If no subscription plans exist, the plugin is free and anyone can install it
-		if (!hasPlans) {
-			console.log(`Plugin is free (no subscription plans), allowing installation: Plugin ID: ${pluginId}`);
-			return;
-		}
-
-		// Check for active subscription at user level (user bought for themselves)
-		const hasUserSubscription = await this.subscriptionService.findOneByWhereOptions({
-			pluginId,
-			tenantId,
-			organizationId,
-			subscriberId: userId,
-			status: PluginSubscriptionStatus.ACTIVE,
-			scope: PluginScope.USER
-		});
-
-		// Check for active subscription at organization level
-		const hasOrgSubscription = await this.subscriptionService.findOneByWhereOptions({
-			pluginId,
-			tenantId,
-			organizationId,
-			status: PluginSubscriptionStatus.ACTIVE,
-			scope: PluginScope.ORGANIZATION
-		});
-
-		// Check for active subscription at tenant level
-		const hasTenantSubscription = await this.subscriptionService.findOneByWhereOptions({
-			pluginId,
-			tenantId,
-			status: PluginSubscriptionStatus.ACTIVE,
-			scope: PluginScope.TENANT
-		});
-
-		if (!hasUserSubscription && !hasOrgSubscription && !hasTenantSubscription) {
-			throw new ForbiddenException(
-				'You must have an active subscription for this plugin to install it. ' +
-					'Please purchase the plugin first or contact your administrator if it should be available to you.'
-			);
-		}
+	private ensurePluginAccess(state: { hasAccess: boolean; accessLevel: PluginScope }): void {
+		if (state.hasAccess) return;
+		const message = this.accessDeniedMessages[state.accessLevel] ?? 'Access denied. Missing valid subscription.';
+		throw new ForbiddenException(message);
 	}
 }

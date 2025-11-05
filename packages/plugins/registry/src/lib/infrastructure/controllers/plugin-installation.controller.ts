@@ -69,10 +69,7 @@ export class PluginInstallationController {
 	})
 	@Permissions(PermissionsEnum.PLUGIN_UNINSTALL)
 	@Delete(':installationId')
-	public async remove(
-		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
-		@Param('installationId', UUIDValidationPipe) installationId: ID
-	): Promise<void> {
+	public async remove(@Param('installationId', UUIDValidationPipe) installationId: ID): Promise<void> {
 		await this.commandBus.execute(new UninstallPluginCommand(installationId));
 	}
 }
