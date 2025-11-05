@@ -1,9 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 @Injectable({
 	providedIn: 'root',
 })
 export class ErrorMapping {
+	constructor(
+		private readonly _translateService: TranslateService
+	) {}
 	public mapErrorMessage(error: HttpErrorResponse): string {
 		if (error.error instanceof ErrorEvent) {
 			// Client-side or network error
@@ -12,25 +16,25 @@ export class ErrorMapping {
 
 		switch (error.status) {
 			case 0:
-				return 'No connection — please check your internet.';
+				return this._translateService.instant('TIMER_TRACKER.TOASTR.NO_INTERNET_CONNECTION');
 			case 400:
-				return this.extractMessage(error, 'Bad Request');
+				return this.extractMessage(error, this._translateService.instant('TIMER_TRACKER.TOASTR.BAD_REQUEST'));
 			case 401:
-				return 'Unauthorized. Please login again.';
+				return this._translateService.instant('TIMER_TRACKER.TOASTR.UNAUTHORIZE');
 			case 403:
-				return 'Access denied. You don’t have permission.';
+				return this._translateService.instant('TIMER_TRACKER.TOASTR.ACCESS_DENIED');
 			case 404:
-				return 'Not found. The requested resource does not exist.';
+				return this._translateService.instant('TIMER_TRACKER.TOASTR.NOT_FOUND');
 			case 408:
-				return 'Request timeout. Please try again.';
+				return this._translateService.instant('TIMER_TRACKER.TOASTR.TIMEOUT');
 			case 500:
-				return 'Server error. Please contact support.';
+				return this._translateService.instant('TIMER_TRACKER.TOASTR.SERVER_ERROR');
 			case 413:
-				return 'The file or data is too large.';
+				return this._translateService.instant('TIMER_TRACKER.TOASTR.LARGE_FILE');
 			case 503:
-				return 'Service unavailable. Try again later.';
+				return this._translateService.instant('TIMER_TRACKER.TOASTR.SERVICE_UNAVAILABLE');
 			default:
-				return this.extractMessage(error, 'Unexpected error occurred.');
+				return this.extractMessage(error, this._translateService.instant('TIMER_TRACKER.TOASTR.UNEXPECTED_ERROR'));
 		}
 	}
 

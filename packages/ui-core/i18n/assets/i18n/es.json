@@ -4365,7 +4365,17 @@
 			"ACCOUNT_DELETED": "Tu cuenta ya está eliminada.",
 			"PROJECT_ADDED": "Proyecto agregado exitosamente.",
 			"TASK_ADDED": "Tarea añadida correctamente",
-			"CLIENT_ADDED": "Cliente agregado exitosamente"
+			"CLIENT_ADDED": "Cliente agregado exitosamente",
+			"NO_INTERNET_CONNECTION": "Sin conexión a Internet. Revisa tu red.",
+			"BAD_REQUEST": "Solicitud no válida",
+			"UNAUTHORIZE": "No autorizado. Inicia sesión nuevamente.",
+			"ACCESS_DENIED": "Acceso denegado.",
+			"NOT_FOUND": "No encontrado.",
+			"TIMEOUT": "Tiempo de espera agotado.",
+			"SERVER_ERROR": "Error del servidor. Contacta con soporte.",
+			"LARGE_FILE": "El archivo es demasiado grande.",
+			"SERVICE_UNAVAILABLE": "Servicio temporalmente no disponible.",
+			"UNEXPECTED_ERROR": "Ha ocurrido un error inesperado."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "¡El seguimiento fue detenido debido a la inactividad!",

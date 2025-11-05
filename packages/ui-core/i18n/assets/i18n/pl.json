@@ -4362,7 +4362,17 @@
 			"ACCOUNT_DELETED": "Twoje konto zostało już usunięte",
 			"PROJECT_ADDED": "Projekt dodany pomyślnie",
 			"TASK_ADDED": "Zadanie dodane pomyślnie",
-			"CLIENT_ADDED": "Klient został dodany pomyślnie"
+			"CLIENT_ADDED": "Klient został dodany pomyślnie",
+			"NO_INTERNET_CONNECTION": "Brak połączenia z Internetem. Sprawdź sieć.",
+			"BAD_REQUEST": "Nieprawidłowe żądanie",
+			"UNAUTHORIZE": "Brak autoryzacji. Zaloguj się ponownie.",
+			"ACCESS_DENIED": "Odmowa dostępu.",
+			"NOT_FOUND": "Nie znaleziono.",
+			"TIMEOUT": "Przekroczono limit czasu.",
+			"SERVER_ERROR": "Błąd serwera. Skontaktuj się z pomocą techniczną.",
+			"LARGE_FILE": "Plik jest zbyt duży.",
+			"SERVICE_UNAVAILABLE": "Usługa chwilowo niedostępna.",
+			"UNEXPECTED_ERROR": "Wystąpił nieoczekiwany błąd."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Śledzenie zostało zatrzymane z powodu braku aktywności!",
