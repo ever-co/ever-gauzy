@@ -1,6 +1,7 @@
 @let planViewModels = planViewModels$ | async; @let selectedPlanViewModel = selectedPlanViewModel$ | async; @let loading
-= loading$ | async; @let error = error$ | async; @let creating = creating$ | async; @let preview = subscriptionPreview$
-| async; @let hasFreePlans = hasFreePlan$ | async; @let hasPaidPlans = hasPaidPlans$ | async;
+= loading$ | async; @let error = error$ | async; @let creating = creating$ | async; @let updating = updating$ | async;
+@let preview = subscriptionPreview$ | async; @let hasFreePlans = hasFreePlan$ | async; @let hasPaidPlans = hasPaidPlans$ | async;
+@let currentSubscription = currentSubscription$ | async; @let hasExistingSubscription = hasExistingSubscription$ | async;
 
 <nb-card class="subscription-selection-dialog">
 	<nb-card-header class="dialog-header">
@@ -14,6 +15,17 @@
 					</p>
 				</div>
 			</div>
+
+			<!-- Current Subscription Alert -->
+			@if (hasExistingSubscription && currentSubscription) {
+			<nb-alert status="info" size="tiny" closable="false" class="current-subscription-alert">
+				<nb-icon icon="shield-outline"></nb-icon>
+				<span>
+					You have an active <strong>{{ currentSubscription.subscriptionType | titlecase }}</strong> subscription.
+					{{ currentSubscription.subscriptionType === selectedPlanViewModel?.type ? 'Select a different plan to upgrade or downgrade.' : 'Select a plan below to upgrade or downgrade.' }}
+				</span>
+			</nb-alert>
+			}
 		</div>
 	</nb-card-header>
 
@@ -68,6 +80,8 @@
 					<lib-plan-card
 						[plan]="planViewModel"
 						[isSelected]="selectedPlanViewModel?.id === planViewModel.id"
+						[isCurrentPlan]="currentSubscription && currentSubscription.subscriptionType === planViewModel.type"
+						[isDisabled]="currentSubscription && currentSubscription.subscriptionType === planViewModel.type"
 						(planSelected)="onPlanSelected($event)"
 					>
 					</lib-plan-card>
@@ -159,7 +173,7 @@
 			</div>
 
 			<div class="right-actions">
-				<button nbButton status="basic" (click)="onCancel()" [disabled]="creating">Cancel</button>
+				<button nbButton status="basic" (click)="onCancel()" [disabled]="creating || updating">Cancel</button>
 
 				@if (error && !loading) {
 				<button nbButton status="warning" (click)="onResetSubscription()">
@@ -168,15 +182,50 @@
 				</button>
 				}
 
-				<button
-					nbButton
-					status="primary"
-					(click)="onSubscribeAndInstall()"
-					[disabled]="!subscriptionForm.valid || creating || !selectedPlanViewModel || error"
-					*gauzySpinnerButton="creating"
-				>
-					@if (selectedPlanViewModel?.isFree) { Install Plugin } @else { Subscribe & Install }
-				</button>
+				@if (currentSubscription && selectedPlanViewModel && currentSubscription.subscriptionType === selectedPlanViewModel.type) {
+					<!-- Current plan is selected - show disabled button -->
+					<button
+						nbButton
+						status="success"
+						[disabled]="true"
+					>
+						<nb-icon icon="checkmark-circle-outline"></nb-icon>
+						Current Plan
+					</button>
+				} @else if (hasExistingSubscription && selectedPlanViewModel) {
+					<!-- User has subscription and selected a different plan - show upgrade/downgrade -->
+					<button
+						nbButton
+						[status]="isPlanUpgrade(currentSubscription!.subscriptionType, selectedPlanViewModel.type) ? 'success' : 'warning'"
+						(click)="onSubscribeAndInstall()"
+						[disabled]="!subscriptionForm.valid || creating || updating || !selectedPlanViewModel || error"
+						*gauzySpinnerButton="creating || updating"
+					>
+						<nb-icon [icon]="isPlanUpgrade(currentSubscription!.subscriptionType, selectedPlanViewModel.type) ? 'arrow-upward-outline' : 'arrow-downward-outline'"></nb-icon>
+						@if (isPlanUpgrade(currentSubscription!.subscriptionType, selectedPlanViewModel.type)) {
+							Upgrade Plan
+						} @else {
+							Downgrade Plan
+						}
+					</button>
+				} @else {
+					<!-- No existing subscription - show normal subscribe button -->
+					<button
+						nbButton
+						status="primary"
+						(click)="onSubscribeAndInstall()"
+						[disabled]="!subscriptionForm.valid || creating || updating || !selectedPlanViewModel || error"
+						*gauzySpinnerButton="creating || updating"
+					>
+						@if (selectedPlanViewModel?.isFree) {
+							<nb-icon icon="download-outline"></nb-icon>
+							Install Plugin
+						} @else {
+							<nb-icon icon="shopping-cart-outline"></nb-icon>
+							Subscribe & Install
+						}
+					</button>
+				}
 			</div>
 		</div>
 	</nb-card-footer>

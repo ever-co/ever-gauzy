@@ -18,6 +18,8 @@ import { PlanFormatterService } from '../../services/plan-formatter.service';
 export class PlanCardComponent {
 	@Input() plan!: IPlanViewModel;
 	@Input() isSelected: boolean = false;
+	@Input() isCurrentPlan: boolean = false;
+	@Input() isDisabled: boolean = false;
 	@Input() showSelection: boolean = true;
 
 	@Output() planSelected = new EventEmitter<IPlanViewModel>();
@@ -27,6 +29,10 @@ export class PlanCardComponent {
 	constructor(public readonly formatter: PlanFormatterService) {}
 
 	public onCardClick(): void {
+		// Don't allow selection if this is the current plan
+		if (this.isDisabled || this.isCurrentPlan) {
+			return;
+		}
 		this.planSelected.emit(this.plan);
 	}
 

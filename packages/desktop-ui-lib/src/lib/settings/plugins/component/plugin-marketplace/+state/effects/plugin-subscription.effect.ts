@@ -134,6 +134,62 @@ export class PluginSubscriptionEffects {
 		)
 	);
 
+	// Upgrade subscription
+	upgradeSubscription$ = createEffect(() =>
+		this.actions$.pipe(
+			ofType(PluginSubscriptionActions.upgradeSubscription),
+			tap(() => {
+				this.pluginSubscriptionStore.setUpdating(true);
+				this.toastrService.info(this.translateService.instant('PLUGIN.SUBSCRIPTION.UPGRADING'));
+			}),
+			switchMap(({ pluginId, subscriptionId, newPlanId }) =>
+				this.pluginSubscriptionService.upgradeSubscription(pluginId, subscriptionId, newPlanId).pipe(
+					tap((subscription) => {
+						this.pluginSubscriptionStore.updateSubscription(subscriptionId, subscription);
+						this.pluginSubscriptionStore.selectSubscription(subscription);
+						this.pluginSubscriptionStore.setShowSubscriptionDialog(false);
+						this.toastrService.success(this.translateService.instant('PLUGIN.SUBSCRIPTION.UPGRADED'));
+					}),
+					finalize(() => this.pluginSubscriptionStore.setUpdating(false)),
+					catchError((error) => {
+						this.pluginSubscriptionStore.setErrorMessage(error.message || 'Failed to upgrade subscription');
+						this.toastrService.error(error.message || 'Failed to upgrade subscription');
+						return EMPTY;
+					})
+				)
+			)
+		)
+	);
+
+	// Downgrade subscription
+	downgradeSubscription$ = createEffect(() =>
+		this.actions$.pipe(
+			ofType(PluginSubscriptionActions.downgradeSubscription),
+			tap(() => {
+				this.pluginSubscriptionStore.setUpdating(true);
+				this.toastrService.info(this.translateService.instant('PLUGIN.SUBSCRIPTION.DOWNGRADING'));
+			}),
+			switchMap(({ pluginId, subscriptionId, newPlanId }) =>
+				this.pluginSubscriptionService.downgradeSubscription(pluginId, subscriptionId, newPlanId).pipe(
+					tap((subscription) => {
+						this.pluginSubscriptionStore.updateSubscription(subscriptionId, subscription);
+						this.pluginSubscriptionStore.selectSubscription(subscription);
+						this.pluginSubscriptionStore.setShowSubscriptionDialog(false);
+						this.toastrService.success(this.translateService.instant('PLUGIN.SUBSCRIPTION.DOWNGRADED'));
+					}),
+					finalize(() => this.pluginSubscriptionStore.setUpdating(false)),
+					catchError((error) => {
+						this.pluginSubscriptionStore.setErrorMessage(
+							error.message || 'Failed to downgrade subscription'
+						);
+						this.toastrService.error(error.message || 'Failed to downgrade subscription');
+						return EMPTY;
+					})
+				)
+			)
+		)
+	);
+
 	// Load subscription analytics
 	loadSubscriptionAnalytics$ = createEffect(() =>
 		this.actions$.pipe(

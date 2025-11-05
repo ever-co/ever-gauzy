@@ -36,6 +36,20 @@
           }
         }
       }
+
+      .current-subscription-alert {
+        margin-top: 1rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+
+        nb-icon {
+          margin-right: 0.5rem;
+        }
+
+        strong {
+          font-weight: 600;
+        }
+      }
     }
   }
 
@@ -175,6 +189,23 @@
               border-color: var(--color-info-default);
             }
 
+            &.current-plan {
+              border-color: var(--color-success-default);
+              background: var(--color-success-transparent);
+              box-shadow: 0 4px 12px rgba(0, 214, 143, 0.2);
+            }
+
+            &.disabled {
+              opacity: 0.7;
+              cursor: not-allowed;
+
+              &:hover {
+                transform: none;
+                box-shadow: none;
+                border-color: var(--color-success-default);
+              }
+            }
+
             .plan-header {
               display: flex;
               align-items: center;
@@ -200,12 +231,18 @@
               }
 
               .popular-badge,
-              .recommended-badge {
+              .recommended-badge,
+              .current-plan-badge {
                 position: absolute;
                 top: -8px;
                 right: 1rem;
                 font-size: 0.7rem;
                 padding: 0.25rem 0.5rem;
+              }
+
+              .current-plan-badge {
+                right: auto;
+                left: 1rem;
               }
             }
 

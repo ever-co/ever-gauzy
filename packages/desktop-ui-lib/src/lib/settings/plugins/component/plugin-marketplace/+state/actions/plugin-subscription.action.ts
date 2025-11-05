@@ -76,6 +76,46 @@ export class PluginSubscriptionActions {
 		(error: string) => ({ error })
 	);
 
+	// Upgrade Subscription
+	public static upgradeSubscription = createAction(
+		'[Plugin Subscription] Upgrade Subscription',
+		(pluginId: string, subscriptionId: string, newPlanId: string) => ({
+			pluginId,
+			subscriptionId,
+			newPlanId
+		})
+	);
+
+	public static upgradeSubscriptionSuccess = createAction(
+		'[Plugin Subscription] Upgrade Subscription Success',
+		(subscription: IPluginSubscription) => ({ subscription })
+	);
+
+	public static upgradeSubscriptionFailure = createAction(
+		'[Plugin Subscription] Upgrade Subscription Failure',
+		(error: string) => ({ error })
+	);
+
+	// Downgrade Subscription
+	public static downgradeSubscription = createAction(
+		'[Plugin Subscription] Downgrade Subscription',
+		(pluginId: string, subscriptionId: string, newPlanId: string) => ({
+			pluginId,
+			subscriptionId,
+			newPlanId
+		})
+	);
+
+	public static downgradeSubscriptionSuccess = createAction(
+		'[Plugin Subscription] Downgrade Subscription Success',
+		(subscription: IPluginSubscription) => ({ subscription })
+	);
+
+	public static downgradeSubscriptionFailure = createAction(
+		'[Plugin Subscription] Downgrade Subscription Failure',
+		(error: string) => ({ error })
+	);
+
 	// Cancel Subscription
 	public static cancelSubscription = createAction(
 		'[Plugin Subscription] Cancel Subscription',

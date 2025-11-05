@@ -5,26 +5,28 @@ import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
-    BehaviorSubject,
-    Observable,
-    combineLatest,
-    filter,
-    firstValueFrom,
-    map,
-    startWith,
-    switchMap,
-    take,
-    tap
+	BehaviorSubject,
+	Observable,
+	combineLatest,
+	filter,
+	firstValueFrom,
+	map,
+	of,
+	startWith,
+	switchMap,
+	take,
+	tap
 } from 'rxjs';
 import { PluginSubscriptionActions } from '../+state/actions/plugin-subscription.action';
 import { PluginSubscriptionQuery } from '../+state/queries/plugin-subscription.query';
 import { Store } from '../../../../../services';
 import {
-    IPluginSubscriptionCreateInput,
-    IPluginSubscriptionPlan,
-    PluginBillingPeriod,
-    PluginSubscriptionService,
-    PluginSubscriptionType
+	IPluginSubscription,
+	IPluginSubscriptionCreateInput,
+	IPluginSubscriptionPlan,
+	PluginBillingPeriod,
+	PluginSubscriptionService,
+	PluginSubscriptionType
 } from '../../../services/plugin-subscription.service';
 import { IPlanViewModel, ISubscriptionPreviewViewModel } from './models/plan-view.model';
 import { PlanFormatterService } from './services/plan-formatter.service';
@@ -75,7 +77,13 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	public availablePlans$: Observable<IPluginSubscriptionPlan[]>;
 	public loading$: Observable<boolean>;
 	public creating$: Observable<boolean>;
+	public updating$: Observable<boolean>;
 	public error$: Observable<string | null>;
+
+	// Current subscription state
+	public currentSubscription$: Observable<IPluginSubscription | null>;
+	public hasExistingSubscription$: Observable<boolean>;
+	public currentPlanId$: Observable<string | null>;
 
 	// Expose enums to template
 	public readonly PluginSubscriptionType = PluginSubscriptionType;
@@ -98,10 +106,17 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
+		console.log('[PluginSubscriptionSelection] ngOnInit - Plugin data:', {
+			plugin: this.plugin?.name,
+			pluginId: this.pluginId,
+			subscription: this.plugin?.subscription
+		});
+
 		// Initialize observables after @Input properties are set
 		this.initializeObservables();
 		this.loadSubscriptionPlans();
 		this.initializeSubscriptionPreview();
+		this.initializeCurrentSubscription();
 	}
 
 	ngOnDestroy(): void {
@@ -148,6 +163,63 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 		this.hasPaidPlans$ = this.availablePlans$.pipe(
 			map((plans) => plans.some((plan) => plan.type !== PluginSubscriptionType.FREE))
 		);
+
+		// Initialize updating state
+		this.updating$ = this.pluginSubscriptionQuery.updating$;
+	}
+
+	/**
+	 * Initialize current subscription state
+	 * Checks for existing active subscription for this plugin
+	 */
+	private initializeCurrentSubscription(): void {
+		const targetPluginId = this.pluginId || this.plugin?.id;
+
+		if (!targetPluginId) {
+			console.warn('[PluginSubscriptionSelection] Cannot check current subscription: Plugin ID is required');
+			this.currentSubscription$ = of(null);
+			this.hasExistingSubscription$ = of(false);
+			this.currentPlanId$ = of(null);
+			return;
+		}
+
+		// Get current active subscription from the query
+		this.currentSubscription$ = this.pluginSubscriptionQuery.getActiveSubscriptionForPlugin(targetPluginId);
+
+		// Compute whether user has an existing subscription
+		this.hasExistingSubscription$ = this.currentSubscription$.pipe(
+			map((subscription) => !!subscription),
+			tap((hasSubscription) => {
+				console.log('[PluginSubscriptionSelection] Has existing subscription:', hasSubscription);
+			})
+		);
+
+		// Extract current plan ID from subscription
+		this.currentPlanId$ = this.currentSubscription$.pipe(
+			map((subscription) => {
+				// Try to get planId from metadata or subscription type
+				const planId = subscription?.metadata?.planId;
+				console.log('[PluginSubscriptionSelection] Current plan ID:', planId);
+				return planId || null;
+			})
+		);
+
+		// Watch for current subscription and log changes
+		this.currentSubscription$
+			.pipe(
+				tap((subscription) => {
+					if (subscription) {
+						console.log('[PluginSubscriptionSelection] User has active subscription:', {
+							id: subscription.id,
+							type: subscription.subscriptionType,
+							status: subscription.status,
+							planId: subscription.metadata?.planId
+						});
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	private initializeForm(): void {
@@ -200,6 +272,11 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			'[PluginSubscriptionSelection] Loading subscription PLANS (not subscriptions) for plugin:',
 			targetPluginId
 		);
+
+		// Dispatch action to load user's current SUBSCRIPTIONS for this plugin
+		// This is needed to determine if user has an active subscription
+		console.log('[PluginSubscriptionSelection] Loading user subscriptions for plugin:', targetPluginId);
+		this.actions$.dispatch(PluginSubscriptionActions.loadPluginSubscriptions(targetPluginId));
 
 		// Dispatch action to load PLANS (available options to subscribe to)
 		// This is different from loading SUBSCRIPTIONS (user's active subscriptions)
@@ -291,7 +368,7 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	public onSubscribeAndInstall(): void {
+	public async onSubscribeAndInstall(): Promise<void> {
 		if (!this.subscriptionForm.valid) {
 			this.subscriptionForm.markAllAsTouched();
 			console.log('[PluginSubscriptionSelection] Form validation failed');
@@ -304,14 +381,19 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			return;
 		}
 
-		console.log(
-			'[PluginSubscriptionSelection] Creating subscription from selected plan:',
-			selectedPlanViewModel.name
-		);
+		// Check if user has existing subscription
+		const currentSubscription = await firstValueFrom(this.currentSubscription$);
+		const isUpgrade = !!currentSubscription;
+
+		console.log('[PluginSubscriptionSelection] Subscription action:', {
+			action: isUpgrade ? 'upgrade' : 'new',
+			selectedPlan: selectedPlanViewModel.name,
+			currentSubscription: currentSubscription?.subscriptionType
+		});
 
 		// Create a SUBSCRIPTION from the selected PLAN
 		// Plan = The option the user chose (e.g., "Premium Plan")
-		// Subscription = The actual user subscription that will be created
+		// Subscription = The actual user subscription that will be created or upgraded
 		const subscriptionInput: IPluginSubscriptionCreateInput = {
 			pluginId: this.pluginId || this.plugin?.id!,
 			planId: selectedPlanViewModel.id, // Reference to the plan
@@ -322,13 +404,17 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			metadata: {
 				source: 'plugin-marketplace',
 				pluginName: this.plugin?.name,
-				requiresSubscription: true
+				requiresSubscription: true,
+				isUpgrade,
+				previousSubscriptionId: currentSubscription?.id
 			}
 		};
 
-		if (selectedPlanViewModel.isFree) {
+		if (isUpgrade) {
+			// User is upgrading/changing their existing subscription
+			this.upgradeSubscription(currentSubscription!, selectedPlanViewModel.originalPlan, subscriptionInput);
+		} else if (selectedPlanViewModel.isFree) {
 			// For free plans, create subscription then proceed to installation
-			// Even free plans require a subscription record to track access
 			console.log('[PluginSubscriptionSelection] Free plan selected, creating free subscription');
 			this.createSubscription(selectedPlanViewModel.originalPlan, subscriptionInput);
 		} else {
@@ -378,6 +464,76 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	}
 
 	/**
+	 * Upgrade existing subscription to a new plan
+	 * Handles upgrade/downgrade logic with proper state management
+	 */
+	private upgradeSubscription(
+		currentSubscription: IPluginSubscription,
+		newPlan: IPluginSubscriptionPlan,
+		input: IPluginSubscriptionCreateInput
+	): void {
+		console.log('[PluginSubscriptionSelection] Upgrading SUBSCRIPTION:', {
+			from: currentSubscription.subscriptionType,
+			to: newPlan.type,
+			currentSubscriptionId: currentSubscription.id,
+			newPlanId: newPlan.id
+		});
+
+		const pluginId = this.pluginId || this.plugin?.id!;
+
+		// Determine if this is an upgrade or downgrade
+		const isUpgrade = this.isPlanUpgrade(currentSubscription.subscriptionType, newPlan.type);
+
+		if (isUpgrade) {
+			console.log('[PluginSubscriptionSelection] Dispatching upgrade action');
+			this.actions$.dispatch(
+				PluginSubscriptionActions.upgradeSubscription(pluginId, currentSubscription.id, newPlan.id)
+			);
+		} else {
+			console.log('[PluginSubscriptionSelection] Dispatching downgrade action');
+			this.actions$.dispatch(
+				PluginSubscriptionActions.downgradeSubscription(pluginId, currentSubscription.id, newPlan.id)
+			);
+		}
+
+		// Watch for upgrade/downgrade completion
+		combineLatest([this.updating$, this.error$])
+			.pipe(
+				filter(([updating, error]) => !updating || !!error),
+				take(1),
+				tap(([updating, error]) => {
+					if (error) {
+						console.error('[PluginSubscriptionSelection] Failed to upgrade subscription:', error);
+						console.log('Failed to upgrade subscription. Please try again.');
+					} else if (!updating) {
+						console.log('[PluginSubscriptionSelection] Successfully upgraded subscription');
+						// Close dialog and proceed with installation
+						this.proceedWithInstallation(newPlan, input);
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Determine if the plan change is an upgrade
+	 * Order: FREE < TRIAL < BASIC < PREMIUM < ENTERPRISE < CUSTOM
+	 */
+	private isPlanUpgrade(currentType: PluginSubscriptionType, newType: PluginSubscriptionType): boolean {
+		const planHierarchy = {
+			[PluginSubscriptionType.FREE]: 0,
+			[PluginSubscriptionType.TRIAL]: 1,
+			[PluginSubscriptionType.BASIC]: 2,
+			[PluginSubscriptionType.PREMIUM]: 3,
+			[PluginSubscriptionType.ENTERPRISE]: 4,
+			[PluginSubscriptionType.CUSTOM]: 5
+		};
+
+		return planHierarchy[newType] > planHierarchy[currentType];
+	}
+
+	/**
 	 * Verify subscription was successfully created before allowing installation
 	 * This ensures the backend has properly recorded the subscription
 	 */
@@ -396,14 +552,18 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			// Try to find a recently created subscription for this plugin
 			const subscriptions = this.pluginSubscriptionQuery.subscriptions;
 			const recentSubscription = subscriptions.find(
-				s => s.pluginId === input.pluginId && s.subscriptionType === input.subscriptionType
+				(s) => s.pluginId === input.pluginId && s.subscriptionType === input.subscriptionType
 			);
 
 			if (recentSubscription) {
-				console.log('[PluginSubscriptionSelection] Found subscription in collection, proceeding with installation');
+				console.log(
+					'[PluginSubscriptionSelection] Found subscription in collection, proceeding with installation'
+				);
 				this.proceedWithInstallation(plan, input);
 			} else {
-				console.error('[PluginSubscriptionSelection] Subscription verification failed - no valid subscription found');
+				console.error(
+					'[PluginSubscriptionSelection] Subscription verification failed - no valid subscription found'
+				);
 				console.log('Subscription could not be verified. Please try again or contact support.');
 			}
 		}
@@ -482,5 +642,48 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			default:
 				return 'Unknown';
 		}
+	}
+
+	/**
+	 * Check if a plan is the user's current subscription plan
+	 * Used to highlight and disable the current plan
+	 */
+	public async isCurrentPlan(planId: string): Promise<boolean> {
+		const currentPlanId = await firstValueFrom(this.currentPlanId$);
+		return currentPlanId === planId;
+	}
+
+	/**
+	 * Get the action button text based on subscription state
+	 * Returns "Current Plan", "Upgrade", "Downgrade", or "Subscribe & Install"
+	 */
+	public async getActionButtonText(planType: PluginSubscriptionType): Promise<string> {
+		const currentSubscription = await firstValueFrom(this.currentSubscription$);
+
+		if (!currentSubscription) {
+			return 'Subscribe & Install';
+		}
+
+		const currentType = currentSubscription.subscriptionType;
+
+		// Check if it's the same plan
+		if (currentType === planType) {
+			return 'Current Plan';
+		}
+
+		// Check if it's an upgrade or downgrade
+		const isUpgrade = this.isPlanUpgrade(currentType, planType);
+		return isUpgrade ? 'Upgrade' : 'Downgrade';
+	}
+
+	/**
+	 * Check if the plan should be disabled (i.e., it's the current plan)
+	 */
+	public async isPlanDisabled(planType: PluginSubscriptionType): Promise<boolean> {
+		const currentSubscription = await firstValueFrom(this.currentSubscription$);
+		if (!currentSubscription) {
+			return false;
+		}
+		return currentSubscription.subscriptionType === planType;
 	}
 }

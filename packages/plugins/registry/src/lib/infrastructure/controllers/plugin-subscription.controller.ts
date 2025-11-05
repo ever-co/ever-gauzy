@@ -29,9 +29,11 @@ import { PluginSubscriptionStatus } from '../../shared/models/plugin-subscriptio
 import {
 	CancelPluginSubscriptionCommand,
 	DeletePluginSubscriptionCommand,
+	DowngradePluginSubscriptionCommand,
 	PurchasePluginSubscriptionCommand,
 	RenewPluginSubscriptionCommand,
-	UpdatePluginSubscriptionCommand
+	UpdatePluginSubscriptionCommand,
+	UpgradePluginSubscriptionCommand
 } from '../../application/commands';
 
 // CQRS Queries
@@ -192,6 +194,54 @@ export class PluginSubscriptionController {
 		@Body() updateDto: UpdatePluginSubscriptionDTO
 	): Promise<PluginSubscription> {
 		return await this.commandBus.execute(new UpdatePluginSubscriptionCommand(id, updateDto));
+	}
+
+	@ApiOperation({ summary: 'Upgrade plugin subscription to a higher plan' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin subscription upgraded successfully',
+		type: PluginSubscription
+	})
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
+	@ApiParam({ name: 'id', description: 'Plugin subscription ID', type: String, format: 'uuid' })
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
+	@Post(':id/upgrade')
+	async upgrade(
+		@Param('id', ParseUUIDPipe) id: string,
+		@Body() body: { planId: string }
+	): Promise<PluginSubscription> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		const userId = RequestContext.currentUserId();
+
+		return await this.commandBus.execute(
+			new UpgradePluginSubscriptionCommand(id, body.planId, tenantId, organizationId, userId)
+		);
+	}
+
+	@ApiOperation({ summary: 'Downgrade plugin subscription to a lower plan' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin subscription downgraded successfully',
+		type: PluginSubscription
+	})
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
+	@ApiParam({ name: 'id', description: 'Plugin subscription ID', type: String, format: 'uuid' })
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
+	@Post(':id/downgrade')
+	async downgrade(
+		@Param('id', ParseUUIDPipe) id: string,
+		@Body() body: { planId: string }
+	): Promise<PluginSubscription> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		const userId = RequestContext.currentUserId();
+
+		return await this.commandBus.execute(
+			new DowngradePluginSubscriptionCommand(id, body.planId, tenantId, organizationId, userId)
+		);
 	}
 
 	@ApiOperation({ summary: 'Delete plugin subscription' })
