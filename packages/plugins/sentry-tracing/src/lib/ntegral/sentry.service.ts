@@ -65,15 +65,18 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		message = `${this.app} ${message}`;
 		try {
 			super.log(message, context);
-			// Only add as breadcrumb, don't send to Sentry
-			Sentry.addBreadcrumb({
-				message,
-				level: 'log',
-				data: {
-					context
-				}
-			});
-		} catch (err) {}
+			asBreadcrumb
+				? Sentry.addBreadcrumb({
+						message,
+						level: 'log',
+						data: {
+							context
+						}
+				  })
+				: Sentry.captureMessage(message, 'log');
+		} catch (err) {
+			// do nothing to avoid blocking the application
+		}
 	}
 
 	/**
@@ -87,7 +90,9 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		try {
 			super.error(message, trace, context);
 			Sentry.captureMessage(message, 'error');
-		} catch (err) {}
+		} catch (err) {
+			// do nothing to avoid blocking the application
+		}
 	}
 
 	/**
@@ -109,7 +114,9 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 						}
 				  })
 				: Sentry.captureMessage(message, 'warning');
-		} catch (err) {}
+		} catch (err) {
+			// do nothing to avoid blocking the application
+		}
 	}
 
 	/**
@@ -122,15 +129,18 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		message = `${this.app} ${message}`;
 		try {
 			super.debug(message, context);
-			// Only add as breadcrumb, don't send to Sentry
-			Sentry.addBreadcrumb({
-				message,
-				level: 'debug',
-				data: {
-					context
-				}
-			});
-		} catch (err) {}
+			asBreadcrumb
+				? Sentry.addBreadcrumb({
+						message,
+						level: 'debug',
+						data: {
+							context
+						}
+				  })
+				: Sentry.captureMessage(message, 'debug');
+		} catch (err) {
+			// do nothing to avoid blocking the application
+		}
 	}
 
 	/**
@@ -143,15 +153,18 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		message = `${this.app} ${message}`;
 		try {
 			super.verbose(message, context);
-			// Only add as breadcrumb, don't send to Sentry
-			Sentry.addBreadcrumb({
-				message,
-				level: 'info',
-				data: {
-					context
-				}
-			});
-		} catch (err) {}
+			asBreadcrumb
+				? Sentry.addBreadcrumb({
+						message,
+						level: 'info',
+						data: {
+							context
+						}
+				  })
+				: Sentry.captureMessage(message, 'info');
+		} catch (err) {
+			// do nothing to avoid blocking the application
+		}
 	}
 
 	/**

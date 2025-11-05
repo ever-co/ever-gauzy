@@ -248,6 +248,22 @@ export class OAuth2AuthorizationServer {
 	 * Setup middleware
 	 */
 	private setupMiddleware() {
+		// Configure trust proxy to honor X-Forwarded-For headers from trusted proxies
+		// This must be set before any middleware that uses req.ip or rate limiting
+		const serverConfig = this.configManager.getConfig();
+		if (serverConfig.trustedProxies && serverConfig.trustedProxies.length > 0) {
+			this.app.set('trust proxy', serverConfig.trustedProxies);
+			this.securityLogger.info(`Trust proxy enabled for: ${serverConfig.trustedProxies.join(', ')}`);
+		} else {
+			if (serverConfig.environment === 'production') {
+				this.securityLogger.warn('⚠️  Trusted proxies not configured in production. Trusting all proxies may allow IP spoofing.');
+				this.app.set('trust proxy', true);
+				this.securityLogger.info('Trust proxy enabled for all proxies (production mode)');
+			} else {
+				this.securityLogger.info('Trust proxy not configured (development mode)');
+			}
+		}
+
 		// Cookie parser
 		this.app.use(cookieParser());
 
@@ -267,7 +283,6 @@ export class OAuth2AuthorizationServer {
 		};
 
 		// Add Redis store if URL is provided (prioritize REDIS_URL env var for production durability)
-		const serverConfig = this.configManager.getConfig();
 		const redisUrl = serverConfig.redisUrl;
 		if (redisUrl) {
 			try {
