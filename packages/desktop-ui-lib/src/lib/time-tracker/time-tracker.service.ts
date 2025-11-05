@@ -69,7 +69,7 @@ export class TimeTrackerService {
 		private readonly _teamsCacheService: TeamsCacheService,
 		private readonly _taskPriorityCacheService: TaskPriorityCacheService,
 		private readonly _taskSizeCacheService: TaskSizeCacheService
-	) {}
+	) { }
 
 	createAuthorizationHeader(headers: Headers) {
 		headers.append('Authorization', 'Basic ' + btoa('username:password'));
@@ -82,8 +82,8 @@ export class TimeTrackerService {
 				tenantId: values.tenantId,
 				...(values.projectId
 					? {
-							projectId: values.projectId
-					  }
+						projectId: values.projectId
+					}
 					: {}),
 				...(values.organizationTeamId && {
 					teams: {
@@ -274,8 +274,8 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			...(values.organizationContactId
 				? {
-						organizationContactId: values.organizationContactId
-				  }
+					organizationContactId: values.organizationContactId
+				}
 				: {}),
 			...(values.organizationTeamId && {
 				organizationTeamId: values.organizationTeamId
@@ -400,6 +400,16 @@ export class TimeTrackerService {
 		return firstValueFrom(timeLogs$);
 	}
 
+	async getTimeLogById(timeLogId: string) {
+		const timeLog$ = this.http
+			.get(`${API_PREFIX}/timesheet/time-log/${timeLogId}`)
+			.pipe(
+				map((response: any) => response),
+				shareReplay(1)
+			);
+		return firstValueFrom(timeLog$);
+	}
+
 	async getTimeSlot(values: { timeSlotId: string }): Promise<ITimeSlot> {
 		const { timeSlotId } = values;
 		if (!timeSlotId) {
@@ -513,6 +523,53 @@ export class TimeTrackerService {
 			this._loggerService.error<any>(`Error stopping timer: ${moment().format()}`, { error, requestBody: body });
 			throw error;
 		}
+	}
+
+	updateTimeLog(timeLogId: string, payload: Partial<ITimeLog>) {
+		const TIMEOUT = 15000;
+		const API_URL = `${API_PREFIX}/timesheet/time-log/${timeLogId}`;
+		const timeLogPayload: Partial<ITimeLog> = {
+			startedAt: moment(payload.startedAt).utc().toDate(),
+			stoppedAt: moment(payload.stoppedAt).utc().toDate(),
+			isBillable: true,
+			logType: TimeLogType.TRACKED,
+			source: TimeLogSourceEnum.DESKTOP,
+			tenantId: this._store.tenantId,
+			organizationId: this._store.organizationId,
+			employeeId: this._store.user?.employee?.id,
+			...(payload.description ? { description: payload.description } : {}),
+			...(payload.taskId ? { taskId: payload.taskId } : {}),
+			...(payload.projectId ? { projectId: payload.projectId } : {})
+		}
+		const options = {
+			headers: new HttpHeaders({ timeout: TIMEOUT.toString() })
+		};
+		this._loggerService.log.info(`Update Time Log Request: ${timeLogId} ${moment().format()}`, timeLogPayload);
+		return firstValueFrom(this.http.put<ITimeLog>(API_URL, timeLogPayload, options));
+	}
+
+	addTimeLog(payload: Partial<ITimeLog>) {
+		const TIMEOUT = 15000;
+		const API_URL = `${API_PREFIX}/timesheet/time-log`;
+		const timeLogPayload: Partial<ITimeLog> = {
+			startedAt: moment(payload.startedAt).utc().toDate(),
+			stoppedAt: moment(payload.stoppedAt).utc().toDate(),
+			isBillable: true,
+			logType: TimeLogType.TRACKED,
+			source: TimeLogSourceEnum.DESKTOP,
+			tenantId: this._store.tenantId,
+			organizationId: this._store.organizationId,
+			employeeId: this._store.user?.employee?.id,
+			...(payload.description ? { description: payload.description } : {}),
+			...(payload.taskId ? { taskId: payload.taskId } : {}),
+			...(payload.projectId ? { projectId: payload.projectId } : {})
+		}
+
+		const options = {
+			headers: new HttpHeaders({ timeout: TIMEOUT.toString() })
+		};
+		this._loggerService.log.info(`Add Time Log Request: ${moment().format()}`, timeLogPayload);
+		return firstValueFrom(this.http.post<ITimeLog>(API_URL, timeLogPayload, options));
 	}
 
 	deleteTimeSlot(values) {

@@ -4363,7 +4363,18 @@
 			"ACCOUNT_DELETED": "您的账户已经被删除。",
 			"PROJECT_ADDED": "项目已成功添加",
 			"TASK_ADDED": "任务已成功添加",
-			"CLIENT_ADDED": "客户添加成功"
+			"CLIENT_ADDED": "客户添加成功",
+			"NO_INTERNET_CONNECTION": "网络未连接，请检查您的互联网。",
+			"BAD_REQUEST": "无效请求",
+			"UNAUTHORIZED": "未授权，请重新登录。",
+			"ACCESS_DENIED": "访问被拒绝。",
+			"NOT_FOUND": "未找到资源。",
+			"TIMEOUT": "请求超时，请重试。",
+			"SERVER_ERROR": "服务器错误，请联系支持。",
+			"LARGE_FILE": "文件过大。",
+			"SERVICE_UNAVAILABLE": "服务暂不可用，请稍后重试。",
+			"UNEXPECTED_ERROR": "发生未知错误。",
+			"NETWORK_ERROR": "网络错误：{{message}}"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "由于不活动，追踪器已停止！",
@@ -5023,19 +5034,19 @@
 			"OPEN": "打开"
 		}
 	},
-    "WORKSPACE_CREATE": {
-        "ACCOUNT_CREATION": {
-            "TITLE": "创建您的账户",
-            "SUBTITLE": "完善您的资料以创建新工作区"
-        },
-        "WORKSPACE_SETUP": {
-            "TITLE": "设置您的工作区",
-            "SUBTITLE": "创建您的组织并开始使用"
-        },
-        "BUTTONS": {
-            "CONTINUE_TO_WORKSPACE_SETUP": "继续进行工作区设置"
-        }
-    },
+	"WORKSPACE_CREATE": {
+		"ACCOUNT_CREATION": {
+			"TITLE": "创建您的账户",
+			"SUBTITLE": "完善您的资料以创建新工作区"
+		},
+		"WORKSPACE_SETUP": {
+			"TITLE": "设置您的工作区",
+			"SUBTITLE": "创建您的组织并开始使用"
+		},
+		"BUTTONS": {
+			"CONTINUE_TO_WORKSPACE_SETUP": "继续进行工作区设置"
+		}
+	},
 	"NO_IMAGE": {
 		"ADD_DROP": "添加或删除图像",
 		"AVAILABLE": "图像不可用"

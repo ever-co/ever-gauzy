@@ -39,7 +39,7 @@
 		"chalk": "^4.1.0",
 		"class-validator": "^0.14.2",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.24"
+		"typeorm": "^0.3.27"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",

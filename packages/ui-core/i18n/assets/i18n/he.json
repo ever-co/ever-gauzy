@@ -4375,7 +4375,18 @@
 			"ACCOUNT_DELETED": "החשבון שלך כבר נמחק",
 			"PROJECT_ADDED": "הפרויקט נוסף בהצלחה",
 			"TASK_ADDED": "המשימה נוספה בהצלחה",
-			"CLIENT_ADDED": "הלקוח נוסף בהצלחה"
+			"CLIENT_ADDED": "הלקוח נוסף בהצלחה",
+			"NO_INTERNET_CONNECTION": "אין חיבור לאינטרנט. בדוק את הרשת שלך.",
+			"BAD_REQUEST": "בקשה לא תקינה",
+			"UNAUTHORIZED": "גישה לא מורשית. היכנס שוב.",
+			"ACCESS_DENIED": "הגישה נדחתה.",
+			"NOT_FOUND": "לא נמצא.",
+			"TIMEOUT": "תם הזמן לבקשה.",
+			"SERVER_ERROR": "שגיאת שרת. פנה לתמיכה במידת הצורך.",
+			"LARGE_FILE": "הקובץ גדול מדי.",
+			"SERVICE_UNAVAILABLE": "השירות אינו זמין כעת.",
+			"UNEXPECTED_ERROR": "אירעה שגיאה בלתי צפויה.",
+			"NETWORK_ERROR": "שגיאת רשת: {{message}}"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "המעקב נעצר בשל ביטול הפעילות!",

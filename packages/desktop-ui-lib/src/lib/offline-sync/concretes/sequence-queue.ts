@@ -47,11 +47,21 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 
 			let latest = null;
 
-			if (timer.isStartedOffline) {
+			if (timer.isStartedOffline && timer.timelogId) {
+				latest = await this._timeTrackerService.getTimeLogById(timer.timelogId);
+			} else if (timer.isStartedOffline && !timer.stoppedAt) {
 				console.log('⏱ - Silent start');
 				latest = await this._timeTrackerService.toggleApiStart({
 					...timer,
 					...params
+				});
+			} else if (timer.isStartedOffline && !timer.timelogId && timer.startedAt && timer.stoppedAt) {
+				latest = await this._timeTrackerService.addTimeLog({
+					startedAt: timer.startedAt,
+					stoppedAt: timer.stoppedAt,
+					taskId: timer.taskId,
+					projectId: timer.projectId,
+					description: timer.description
 				});
 			}
 
@@ -78,10 +88,31 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 
 			if (timer.isStoppedOffline) {
 				console.log('⏱ - Silent stop');
-				latest = await this._timeTrackerService.toggleApiStop({
-					...timer,
-					...params
-				});
+				if (!latest && timer.timelogId) {
+					const currentTimeLog = await this._timeTrackerService.getTimeLogById(timer.timelogId);
+					if (currentTimeLog.id && currentTimeLog.isRunning) {
+						latest = await this._timeTrackerService.toggleApiStop({
+							...timer,
+							...params
+						});
+					} else if (currentTimeLog.id && timer.stoppedAt) {
+						latest = await this._timeTrackerService.updateTimeLog(
+							timer.timelogId,
+							{
+								startedAt: timer.startedAt || currentTimeLog.startedAt,
+								stoppedAt: timer.stoppedAt,
+								description: timer.description,
+								projectId: timer.projectId,
+								taskId: timer.taskId
+							}
+						)
+					}
+				} else if (latest && latest.id && latest.isRunning) {
+					latest = await this._timeTrackerService.toggleApiStop({
+						...timer,
+						...params
+					});
+				}
 			}
 
 			const status = await this._timeTrackerStatusService.status();
@@ -92,9 +123,9 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 						lastTimer: latest
 							? latest
 							: {
-									...timer,
-									id: status?.lastLog?.id
-							  },
+								...timer,
+								id: status?.lastLog?.id
+							},
 						...timer
 					});
 					console.log('⏱ - local database updated');

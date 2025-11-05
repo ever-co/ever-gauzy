@@ -20,19 +20,26 @@ export class ToastrNotificationService extends NotificationService {
 
 	public success(message: string): void {
 		this._toastrService.success(message, this._notification.title, {
-			toastClass: 'toast-top-custom-title-bar'
+			toastClass: 'toast-top-custom-title-bar',
+			preventDuplicates: true
 		});
 	}
 
 	public error(message: string): void {
-		this._toastrService.danger(message, this._notification.title);
+		this._toastrService.danger(message, this._notification.title, {
+			preventDuplicates: true
+		});
 	}
 
 	public warn(message: string): void {
-		this._toastrService.warning(message, this._notification.title);
+		this._toastrService.warning(message, this._notification.title, {
+			preventDuplicates: true
+		});
 	}
 
 	public info(message: string): void {
-		this._toastrService.info(message, this._notification.title);
+		this._toastrService.info(message, this._notification.title, {
+			preventDuplicates: true
+		});
 	}
 }

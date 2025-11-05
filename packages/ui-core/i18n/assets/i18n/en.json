@@ -4494,7 +4494,18 @@
 			"ACCOUNT_DELETED": "Your account is already deleted",
 			"PROJECT_ADDED": "Project added successfully",
 			"TASK_ADDED": "Task added successfully",
-			"CLIENT_ADDED": "Client added successfully"
+			"CLIENT_ADDED": "Client added successfully",
+			"NO_INTERNET_CONNECTION": "No connection — please check your internet.",
+			"BAD_REQUEST": "Bad Request",
+			"UNAUTHORIZED": "Unauthorized. Please login again.",
+			"ACCESS_DENIED": "Access denied. You don’t have permission.",
+			"NOT_FOUND": "Not found. The requested resource does not exist.",
+			"TIMEOUT": "Request timeout. Please try again.",
+			"SERVER_ERROR": "Server error. Please contact support.",
+			"LARGE_FILE": "The file or data is too large.",
+			"SERVICE_UNAVAILABLE": "Service unavailable. Try again later.",
+			"UNEXPECTED_ERROR": "Unexpected error occurred.",
+			"NETWORK_ERROR": "Network error: {{message}}"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Tracker was stopped due to inactivity!",
