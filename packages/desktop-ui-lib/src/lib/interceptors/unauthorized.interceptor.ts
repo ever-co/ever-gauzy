@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { AuthStrategy } from '../auth';
 import { ElectronService } from '../electron/services';
 import { Router } from '@angular/router';
-import { Store } from '../services';
+import { Store, ErrorMapping } from '../services';
 
 @Injectable()
 export class UnauthorizedInterceptor implements HttpInterceptor {
@@ -13,8 +13,9 @@ export class UnauthorizedInterceptor implements HttpInterceptor {
 		private authStrategy: AuthStrategy,
 		private electronService: ElectronService,
 		private router: Router,
-		private store: Store
-	) {}
+		private store: Store,
+		private _errorMapping: ErrorMapping
+	) { }
 
 	intercept(
 		request: HttpRequest<any>,
@@ -24,7 +25,10 @@ export class UnauthorizedInterceptor implements HttpInterceptor {
 			catchError((error) => {
 				// Early return if offline is triggered.
 				if (this.store.isOffline) {
-					return;
+					return throwError(() => {
+						const message = this._errorMapping.mapErrorMessage(error);
+						return new Error(message);
+					});
 				}
 				// Unauthorized error occurred
 				if (error.status === HttpStatusCode.Unauthorized) {
@@ -39,7 +43,8 @@ export class UnauthorizedInterceptor implements HttpInterceptor {
 						})
 					);
 				}
-				return throwError(() => error);
+
+				return throwError(() => new Error(this._errorMapping.mapErrorMessage(error)));
 			})
 		);
 	}

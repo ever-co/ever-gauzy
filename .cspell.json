@@ -720,7 +720,8 @@
 		"soundshot",
 		"soundshots",
 		"runtimes",
-		"localtime"
+		"localtime",
+		"Behaviour"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
