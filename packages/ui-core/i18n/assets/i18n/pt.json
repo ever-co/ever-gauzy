@@ -4363,7 +4363,18 @@
 			"ACCOUNT_DELETED": "Sua conta já foi excluída.",
 			"PROJECT_ADDED": "Projeto adicionado com sucesso.",
 			"TASK_ADDED": "Tarefa adicionada com sucesso.",
-			"CLIENT_ADDED": "Cliente adicionado com sucesso."
+			"CLIENT_ADDED": "Cliente adicionado com sucesso.",
+			"NO_INTERNET_CONNECTION": "Sem conexão com a Internet. Verifique sua rede.",
+			"BAD_REQUEST": "Requisição inválida",
+			"UNAUTHORIZED": "Não autorizado. Faça login novamente.",
+			"ACCESS_DENIED": "Acesso negado.",
+			"NOT_FOUND": "Não encontrado.",
+			"TIMEOUT": "Tempo limite excedido.",
+			"SERVER_ERROR": "Erro do servidor. Contate o suporte.",
+			"LARGE_FILE": "O arquivo é muito grande.",
+			"SERVICE_UNAVAILABLE": "Serviço temporariamente indisponível.",
+			"UNEXPECTED_ERROR": "Ocorreu um erro inesperado.",
+			"NETWORK_ERROR": "Erro de rede: {{message}}"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "O rastreador foi parado devido à inatividade!",

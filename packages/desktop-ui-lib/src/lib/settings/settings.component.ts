@@ -1069,7 +1069,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			default:
 				break;
 		}
-		this.toastrService.show(this._translateService.instant(message), `Success`, { status: arg?.status });
+		this._notifier.success(this._translateService.instant(message));
 		this._isRestart$.next(false);
 	}
 

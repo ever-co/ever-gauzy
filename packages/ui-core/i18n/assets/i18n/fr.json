@@ -4354,7 +4354,18 @@
 			"ACCOUNT_DELETED": "Votre compte est déjà supprimé.",
 			"PROJECT_ADDED": "Projet ajouté avec succès.",
 			"TASK_ADDED": "Tâche ajoutée avec succès",
-			"CLIENT_ADDED": "Client ajouté avec succès."
+			"CLIENT_ADDED": "Client ajouté avec succès.",
+			"NO_INTERNET_CONNECTION": "Pas de connexion Internet. Vérifiez votre réseau.",
+			"BAD_REQUEST": "Requête invalide",
+			"UNAUTHORIZED": "Non autorisé. Veuillez vous reconnecter.",
+			"ACCESS_DENIED": "Accès refusé. Vous n’avez pas les droits nécessaires.",
+			"NOT_FOUND": "Introuvable. La ressource demandée est absente.",
+			"TIMEOUT": "Délai dépassé. Réessayez.",
+			"SERVER_ERROR": "Erreur serveur. Contactez l’assistance si le problème persiste.",
+			"LARGE_FILE": "Le fichier est trop volumineux.",
+			"SERVICE_UNAVAILABLE": "Service temporairement indisponible.",
+			"UNEXPECTED_ERROR": "Une erreur inattendue s’est produite.",
+			"NETWORK_ERROR": "Erreur réseau : {{message}}"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Le tracker a été arrêté en raison d'inactivité !",
