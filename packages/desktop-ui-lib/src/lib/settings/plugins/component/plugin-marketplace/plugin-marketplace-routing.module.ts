@@ -18,7 +18,42 @@ export const pluginMarketplaceRoutes: Routes = [
 		loadComponent: () =>
 			import('./plugin-marketplace-item/plugin-marketplace-item.component').then(
 				(m) => m.PluginMarketplaceItemComponent
-			)
+			),
+		children: [
+			{
+				path: '',
+				redirectTo: 'overview',
+				pathMatch: 'full'
+			},
+			{
+				path: 'overview',
+				loadChildren: () =>
+					import('./plugin-marketplace-item/tabs/overview-tab/overview-tab.module').then(
+						(m) => m.OverviewTabModule
+					)
+			},
+			{
+				path: 'source-code',
+				loadChildren: () =>
+					import('./plugin-marketplace-item/tabs/source-code-tab/source-code-tab.module').then(
+						(m) => m.SourceCodeTabModule
+					)
+			},
+			{
+				path: 'user-management',
+				loadChildren: () =>
+					import('./plugin-marketplace-item/tabs/user-management-tab/user-management-tab.module').then(
+						(m) => m.UserManagementTabModule
+					)
+			},
+			{
+				path: 'settings',
+				loadChildren: () =>
+					import('./plugin-marketplace-item/tabs/settings-tab/settings-tab.module').then(
+						(m) => m.SettingsTabModule
+					)
+			}
+		]
 	},
 	{
 		path: '**',

@@ -12,11 +12,11 @@ import {
 	PluginType
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbRouteTab } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject, EMPTY, Observable, Subject, tap } from 'rxjs';
-import { catchError, concatMap, filter, switchMap, take, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, EMPTY, Observable, Subject, tap } from 'rxjs';
+import { catchError, concatMap, filter, map, switchMap, take, takeUntil } from 'rxjs/operators';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginSourceActions } from '../+state/actions/plugin-source.action';
@@ -59,7 +59,11 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	// Access observables
 	hasAccess$: Observable<boolean>;
 	canAssign$: Observable<boolean>;
+	canConfigure$: Observable<boolean>;
 	accessLevel$: Observable<PluginScope | undefined>;
+
+	// Tabs configuration
+	tabs$: Observable<NbRouteTab[]>;
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -90,7 +94,11 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 					// Initialize access observables
 					this.hasAccess$ = this.accessFacade.hasAccess$(plugin.id);
 					this.canAssign$ = this.accessFacade.canAssign$(plugin.id);
+					this.canConfigure$ = this.accessFacade.hasAccess$(plugin.id); // Using hasAccess for now
 					this.accessLevel$ = this.accessFacade.getAccessLevel$(plugin.id);
+
+					// Build tabs based on permissions
+					this.tabs$ = this.buildTabs$();
 				}),
 				concatMap((plugin) => {
 					this.action.dispatch(PluginVersionActions.selectVersion(plugin.version));
@@ -269,6 +277,56 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	navigateToHistory(): void {
 		this.router.navigate(['settings', 'marketplace-plugins', this.pluginId, 'versions']);
+	}
+
+	/**
+	 * Build tabs array dynamically based on user permissions
+	 * Uses combineLatest for better performance and cleaner logic
+	 */
+	private buildTabs$(): Observable<NbRouteTab[]> {
+		const baseTabs: NbRouteTab[] = [
+			{
+				title: this.translateService.instant('PLUGIN.DETAILS.OVERVIEW'),
+				icon: 'info-outline',
+				route: './overview',
+				responsive: true
+			},
+			{
+				title: this.translateService.instant('PLUGIN.DETAILS.SOURCE_CODE'),
+				icon: 'code-outline',
+				route: './source-code',
+				responsive: true
+			}
+		];
+
+		// Use combineLatest to efficiently combine multiple observables
+		return combineLatest([this.canConfigure$, this.canAssign$]).pipe(
+			map(([canConfigure, canAssign]) => {
+				const tabs = [...baseTabs];
+
+				// Add settings tab if user can configure
+				if (canConfigure) {
+					tabs.push({
+						title: this.translateService.instant('PLUGIN.DETAILS.SETTINGS'),
+						icon: 'settings-outline',
+						route: './settings',
+						responsive: true
+					});
+				}
+
+				// Add user management tab if user can assign
+				if (canAssign) {
+					tabs.push({
+						title: this.translateService.instant('PLUGIN.DETAILS.USER_MANAGEMENT'),
+						icon: 'people-outline',
+						route: './user-management',
+						responsive: true
+					});
+				}
+
+				return tabs;
+			})
+		);
 	}
 
 	formatDate(date: Date | string | null): string {

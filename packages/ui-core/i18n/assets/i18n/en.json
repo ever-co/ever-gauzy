@@ -5396,7 +5396,9 @@
 			"INSTALLED": "Installed",
 			"HIDDEN_FOR_SECURITY": "Hidden for security reasons",
 			"OVERVIEW": "Overview",
-			"SOURCE_CODE": "Source Code"
+			"SOURCE_CODE": "Source Code",
+			"SETTINGS": "Settings",
+			"USER_MANAGEMENT": "User Management"
 		},
 		"MARKETPLACE": {
 			"UPLOAD": "Upload New Plugin",
@@ -5519,6 +5521,40 @@
 				"INSTALL": "Failed to install plugin. Please try again!",
 				"REVERT_INSTALLATION": "Failed to revert installation!"
 			}
+		},
+		"BUTTONS": {
+			"ASSIGN_USERS": "Assign Users",
+			"ASSIGN_FIRST_USER": "Assign Your First User"
+		},
+		"USER_MANAGEMENT": {
+			"TITLE": "User Assignment Management",
+			"DESCRIPTION": "Manage user access and assignments for this plugin",
+			"TOTAL_ASSIGNED": "Total Assigned",
+			"ACTIVE_USERS": "Active Users",
+			"ASSIGNED_USERS": "Assigned Users",
+			"ASSIGNED_ON": "Assigned on",
+			"ACTIVE": "Active",
+			"INACTIVE": "Inactive",
+			"UNASSIGN": "Unassign User",
+			"NO_USERS_ASSIGNED": "No users assigned yet",
+			"NO_USERS_HINT": "Users you assign to this plugin will appear here"
+		},
+		"SETTINGS": {
+			"TITLE": "Plugin Settings",
+			"DESCRIPTION": "Configure and customize plugin behavior",
+			"CONFIGURE": "Configure Plugin Settings",
+			"CONFIGURE_DESCRIPTION": "Access and modify plugin configuration options to customize its behavior according to your needs.",
+			"OPEN_SETTINGS": "Open Settings Manager",
+			"NO_PERMISSION": "You don't have permission to configure this plugin. Please contact your administrator.",
+			"FEATURES_TITLE": "What You Can Configure",
+			"FEATURE_1_TITLE": "Custom Configuration",
+			"FEATURE_1_DESC": "Modify plugin settings to match your workflow and requirements",
+			"FEATURE_2_TITLE": "Validation & Security",
+			"FEATURE_2_DESC": "Built-in validation ensures all settings are correct and secure",
+			"FEATURE_3_TITLE": "Scoped Settings",
+			"FEATURE_3_DESC": "Configure settings at different levels: global, tenant, organization, or user",
+			"FEATURE_4_TITLE": "Real-time Updates",
+			"FEATURE_4_DESC": "Changes are applied immediately without requiring plugin restart"
 		}
 	},
 	"SERVER_DOWN": {

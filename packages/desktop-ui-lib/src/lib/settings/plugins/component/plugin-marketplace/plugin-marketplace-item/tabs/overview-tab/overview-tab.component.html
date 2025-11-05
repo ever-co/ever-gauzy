@@ -1,0 +1,162 @@
+@let plugin = plugin$ | async; @let selectedVersion = selectedVersion$ | async; @if(plugin) {
+<div class="overview-tab-content">
+	<!-- Description -->
+	@if(plugin.description) {
+	<div class="description-container mb-4">
+		<p
+			[readMore]="256"
+			[readMoreText]="'BUTTONS.READ_MORE' | translate"
+			[readLessText]="'BUTTONS.READ_LESS' | translate"
+			class="plugin-description"
+		>
+			{{ plugin.description }}
+		</p>
+	</div>
+	}
+
+	<!-- Basic Information -->
+	<div class="info-card mb-4">
+		<h6 class="section-title mb-3">{{ 'PLUGIN.FORM.BASIC_INFO' | translate }}</h6>
+
+		<div class="info-grid">
+			@if(selectedVersion) {
+			<div class="info-item">
+				<div class="label">{{ 'PLUGIN.FORM.VERSION' | translate }}</div>
+				<div class="value">{{ selectedVersion.number }}</div>
+			</div>
+			}
+
+			<div class="info-item">
+				<div class="label">{{ 'PLUGIN.FORM.STATUS' | translate }}</div>
+				<div class="value">
+					@if(isOwner) {
+					<nb-select
+						placeholder="{{ 'PLUGIN.FORM.STATUS' | translate }}"
+						[selected]="plugin.status"
+						(selectedChange)="updatePluginStatus($event)"
+						status="primary"
+						size="small"
+					>
+						<nb-option
+							*ngFor="
+								let status of [
+									pluginStatus.ACTIVE,
+									pluginStatus.INACTIVE,
+									pluginStatus.DEPRECATED,
+									pluginStatus.ARCHIVED
+								]
+							"
+							[value]="status"
+							[disabled]="status === plugin.status"
+						>
+							{{ getStatusLabel(status) | translate }}
+						</nb-option>
+					</nb-select>
+					}@else {
+					{{ 'PLUGIN.FORM.STATUSES.' + plugin.status | translate }}
+					}
+				</div>
+			</div>
+
+			<div class="info-item">
+				<div class="label">{{ 'PLUGIN.FORM.TYPE' | translate }}</div>
+				<div class="value">{{ getTypeLabel(plugin.type) | translate }}</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- What's new -->
+	@if(selectedVersion; as version) {
+	<div class="info-card mb-4">
+		<div class="d-flex align-items-center mb-3">
+			<h6 class="section-title m-0">{{ 'CHANGELOG_MENU.HEADER' | translate }}</h6>
+			<button nbButton ghost status="basic" class="ml-2 mr-2" (click)="navigateToHistory()">
+				<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+			</button>
+		</div>
+		<div class="info-version full-width d-flex justify-content-between">
+			<div class="label">Version {{ version.number }}</div>
+			<div class="value">{{ version.createdAt | humanize }}</div>
+		</div>
+		<p
+			[readMore]="128"
+			[readMoreText]="'BUTTONS.READ_MORE' | translate"
+			[readLessText]="'BUTTONS.READ_LESS' | translate"
+			class="plugin-description"
+		>
+			{{ version.changelog }}
+		</p>
+	</div>
+	}
+
+	<!-- Metadata Section -->
+	<div class="info-card mb-4">
+		<h6 class="section-title mb-3">{{ 'PLUGIN.FORM.METADATA.TITLE' | translate }}</h6>
+
+		<div class="info-grid">
+			<div class="info-item">
+				<div class="label">{{ 'PLUGIN.FORM.METADATA.AUTHOR' | translate }}</div>
+				<div class="value">{{ plugin.author || 'N/A' }}</div>
+			</div>
+
+			<div class="info-item">
+				<div class="label">{{ 'PLUGIN.FORM.METADATA.LICENSE' | translate }}</div>
+				<div class="value">{{ plugin.license || 'N/A' }}</div>
+			</div>
+
+			@if(plugin.homepage) {
+			<div class="info-item">
+				<div class="label">{{ 'PLUGIN.FORM.METADATA.HOMEPAGE' | translate }}</div>
+				<div class="value">
+					<a [href]="plugin.homepage" target="_blank" rel="noopener noreferrer" class="external-link">
+						{{ plugin.homepage }}
+						<nb-icon icon="external-link-outline" class="link-icon"></nb-icon>
+					</a>
+				</div>
+			</div>
+			} @if(plugin.repository) {
+			<div class="info-item">
+				<div class="label">{{ 'PLUGIN.FORM.METADATA.REPOSITORY' | translate }}</div>
+				<div class="value">
+					<a [href]="plugin.repository" target="_blank" rel="noopener noreferrer" class="external-link">
+						{{ plugin.repository }}
+						<nb-icon icon="external-link-outline" class="link-icon"></nb-icon>
+					</a>
+				</div>
+			</div>
+			}
+		</div>
+	</div>
+
+	<!-- Usage Statistics Section -->
+	<div class="info-card">
+		<h6 class="section-title mb-3">{{ 'PLUGIN.DETAILS.USAGE_STATS' | translate }}</h6>
+
+		<div class="info-grid">
+			<div class="info-item">
+				<div class="label">{{ 'PLUGIN.DETAILS.DOWNLOAD_COUNT' | translate }}</div>
+				<div class="value">{{ plugin.downloadCount }}</div>
+			</div>
+
+			@if(plugin.lastDownloadedAt) {
+			<div class="info-item">
+				<div class="label">{{ 'PLUGIN.DETAILS.LAST_DOWNLOADED' | translate }}</div>
+				<div class="value">{{ formatDate(plugin.lastDownloadedAt) }}</div>
+			</div>
+			} @if(plugin.uploadedBy) {
+			<div class="info-item">
+				<div class="label">{{ 'PLUGIN.DETAILS.UPLOADED_BY' | translate }}</div>
+				<div class="value">
+					{{ plugin.uploadedBy.name }}
+				</div>
+			</div>
+			} @if(plugin.uploadedAt) {
+			<div class="info-item">
+				<div class="label">{{ 'PLUGIN.DETAILS.UPLOADED_AT' | translate }}</div>
+				<div class="value">{{ formatDate(plugin.uploadedAt) }}</div>
+			</div>
+			}
+		</div>
+	</div>
+</div>
+}

@@ -1,0 +1,130 @@
+@let plugin = plugin$ | async; @let assignedUsers = assignedUsers$ | async; @let loading = loading$ | async; @let
+canAssign = canAssign$ | async; @if(plugin) {
+<div class="user-management-tab-content">
+	<!-- Header Section -->
+	<div class="header-section mb-4">
+		<div class="d-flex justify-content-between align-items-center">
+			<div class="header-info">
+				<h6 class="section-title mb-1">{{ 'PLUGIN.USER_MANAGEMENT.TITLE' | translate }}</h6>
+				<p class="section-description text-hint mb-0">
+					{{ 'PLUGIN.USER_MANAGEMENT.DESCRIPTION' | translate }}
+				</p>
+			</div>
+			@if(canAssign) {
+			<button nbButton status="primary" size="small" (click)="showAssignmentDialog()" class="assign-users-btn">
+				<nb-icon icon="person-add-outline" class="mr-1"></nb-icon>
+				{{ 'PLUGIN.BUTTONS.ASSIGN_USERS' | translate }}
+			</button>
+			}
+		</div>
+	</div>
+
+	<!-- Stats Summary -->
+	@if(assignedUsers) {
+	<div class="stats-card mb-4">
+		<div class="stat-item">
+			<nb-icon icon="people-outline" status="primary"></nb-icon>
+			<div class="stat-content">
+				<span class="stat-label">{{ 'PLUGIN.USER_MANAGEMENT.TOTAL_ASSIGNED' | translate }}</span>
+				<span class="stat-value">{{ assignedUsers.length }}</span>
+			</div>
+		</div>
+		<div class="stat-item">
+			<nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
+			<div class="stat-content">
+				<span class="stat-label">{{ 'PLUGIN.USER_MANAGEMENT.ACTIVE_USERS' | translate }}</span>
+				<span class="stat-value">{{ (assignedUsers | where : { isActive: true })?.length || 0 }}</span>
+			</div>
+		</div>
+	</div>
+	}
+
+	<!-- Assigned Users List -->
+	<div class="assigned-users-section">
+		<h6 class="section-title mb-3">{{ 'PLUGIN.USER_MANAGEMENT.ASSIGNED_USERS' | translate }}</h6>
+
+		@if(loading) {
+		<div class="loading-state">
+			<nb-spinner size="medium"></nb-spinner>
+			<span class="loading-text">{{ 'SM_TABLE.LOADING' | translate }}</span>
+		</div>
+		} @else if(assignedUsers && assignedUsers.length > 0) {
+		<div class="users-list">
+			@for(assignment of assignedUsers; track trackByAssignmentId($index, assignment); let isLast = $last) {
+			<div class="user-assignment-item">
+				<div class="user-info">
+					<nb-user
+						[picture]="getUserAvatar(assignment.user)"
+						[name]="getUserDisplayName(assignment)"
+						[title]="assignment.user?.email || 'N/A'"
+						size="medium"
+					></nb-user>
+				</div>
+
+				<div class="assignment-metadata">
+					<div class="metadata-row">
+						<div class="metadata-item">
+							<nb-icon icon="calendar-outline" class="metadata-icon"></nb-icon>
+							<span class="metadata-text">
+								{{ 'PLUGIN.USER_MANAGEMENT.ASSIGNED_ON' | translate }}:
+								{{ getAssignmentDate(assignment) | date : 'medium' }}
+							</span>
+						</div>
+						@if(assignment.reason) {
+						<div class="metadata-item">
+							<nb-icon icon="message-circle-outline" class="metadata-icon"></nb-icon>
+							<span class="metadata-text">{{ assignment.reason }}</span>
+						</div>
+						}
+					</div>
+
+					<div class="status-badge">
+						<nb-badge
+							[status]="assignment.isActive ? 'success' : 'warning'"
+							[text]="
+								assignment.isActive
+									? ('PLUGIN.USER_MANAGEMENT.ACTIVE' | translate)
+									: ('PLUGIN.USER_MANAGEMENT.INACTIVE' | translate)
+							"
+						></nb-badge>
+					</div>
+				</div>
+
+				@if(canAssign && assignment.isActive) {
+				<div class="assignment-actions">
+					<button
+						nbButton
+						ghost
+						size="small"
+						status="danger"
+						(click)="onUnassignUser(assignment)"
+						[nbTooltip]="'PLUGIN.USER_MANAGEMENT.UNASSIGN' | translate"
+						class="unassign-btn"
+					>
+						<nb-icon icon="person-remove-outline"></nb-icon>
+					</button>
+				</div>
+				}
+			</div>
+			@if(!isLast) {
+			<nb-divider></nb-divider>
+			} }
+		</div>
+		} @else {
+		<div class="empty-state">
+			<nb-icon icon="person-outline" class="empty-icon"></nb-icon>
+			<p class="empty-text">{{ 'PLUGIN.USER_MANAGEMENT.NO_USERS_ASSIGNED' | translate }}</p>
+			<small class="empty-hint">
+				{{ 'PLUGIN.USER_MANAGEMENT.NO_USERS_HINT' | translate }}
+			</small>
+			@if(canAssign) {
+			<button nbButton status="primary" size="small" (click)="showAssignmentDialog()" class="mt-3">
+				<nb-icon icon="person-add-outline" class="mr-1"></nb-icon>
+				{{ 'PLUGIN.BUTTONS.ASSIGN_FIRST_USER' | translate }}
+			</button>
+			}
+		</div>
+		}
+	</div>
+</div>
+}

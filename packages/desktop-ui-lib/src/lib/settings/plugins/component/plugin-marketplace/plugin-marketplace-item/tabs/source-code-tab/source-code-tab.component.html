@@ -1,0 +1,112 @@
+@let plugin = plugin$ | async; @let selectedSource = selectedSource$ | async;
+
+<div class="source-code-tab-content">
+	<!-- Source Information Section -->
+	@if(selectedSource; as source) {
+	<div class="info-card">
+		<div class="d-flex justify-content-between align-items-center mb-3">
+			<h6 class="section-title mb-0">{{ 'PLUGIN.FORM.SOURCE' | translate }}</h6>
+			<nb-badge
+				class="badge"
+				[text]="getSourceTypeLabel(source.type)"
+				[status]="getPluginSourceTypeBadgeStatus(source.type)"
+			></nb-badge>
+		</div>
+
+		<!-- CDN Source -->
+		<ng-container *ngIf="source.type === pluginSourceType.CDN">
+			<div class="source-container">
+				<div class="info-item full-width mb-3">
+					<div class="label">{{ 'PLUGIN.FORM.CDN.URL' | translate }}</div>
+					<div class="value code-like">{{ source.url }}</div>
+				</div>
+
+				@if(source.integrity) {
+				<div class="info-item full-width mb-3">
+					<div class="label">{{ 'PLUGIN.FORM.CDN.INTEGRITY' | translate }}</div>
+					<div class="value code-like text-truncate" [nbTooltip]="source.integrity">
+						{{ source.integrity }}
+					</div>
+				</div>
+				} @if(source.crossOrigin) {
+				<div class="info-item full-width">
+					<div class="label">{{ 'PLUGIN.FORM.CDN.CROSS_ORIGIN' | translate }}</div>
+					<div class="value">{{ source.crossOrigin }}</div>
+				</div>
+				}
+			</div>
+		</ng-container>
+
+		<!-- NPM Source -->
+		<ng-container *ngIf="source.type === pluginSourceType.NPM">
+			<div class="source-container">
+				<div class="info-item full-width mb-3">
+					<div class="label">{{ 'PLUGIN.FORM.NPM.PACKAGE_NAME' | translate }}</div>
+					<div class="value code-like">{{ source.name }}</div>
+				</div>
+
+				@if(source.scope) {
+				<div class="info-item mb-3">
+					<div class="label">{{ 'PLUGIN.FORM.NPM.SCOPE' | translate }}</div>
+					<div class="value">{{ source.scope }}</div>
+				</div>
+				} @if(source.registry) {
+				<div class="info-item mb-3">
+					<div class="label">{{ 'PLUGIN.FORM.NPM.REGISTRY' | translate }}</div>
+					<div class="value code-like">{{ source.registry }}</div>
+				</div>
+				} @if(source.private) {
+				<div class="info-item">
+					<div class="label">{{ 'PLUGIN.FORM.NPM.AUTH_TOKEN' | translate }}</div>
+					<div class="value">
+						<span class="text-muted">{{ 'PLUGIN.DETAILS.HIDDEN_FOR_SECURITY' | translate }}</span>
+					</div>
+				</div>
+				}
+			</div>
+		</ng-container>
+
+		<!-- GAUZY Source -->
+		<ng-container *ngIf="source.type === pluginSourceType.GAUZY">
+			<div class="source-container">
+				<div class="info-item full-width">
+					<div class="label">{{ 'PLUGIN.FORM.FILE_UPLOAD.FILE' | translate }}</div>
+					<div class="value">
+						@if(source.url) {
+						<a [href]="source.url" target="_blank" rel="noopener noreferrer" class="external-link">
+							{{ source.url }}
+							<nb-icon icon="external-link-outline" class="link-icon"></nb-icon>
+						</a>
+						}@else {
+						{{ 'PLUGIN.DETAILS.UPLOADED_FILE' | translate }}
+						}
+					</div>
+				</div>
+			</div>
+		</ng-container>
+	</div>
+	}
+
+	<!-- Security Info -->
+	@if(plugin && (plugin.checksum || plugin.signature)) {
+	<div class="info-card mt-4">
+		<h6 class="section-title mb-3">{{ 'PLUGIN.DETAILS.SECURITY_INFO' | translate }}</h6>
+
+		@if(plugin.checksum) {
+		<div class="info-item full-width mb-3">
+			<div class="label">{{ 'PLUGIN.DETAILS.CHECKSUM' | translate }}</div>
+			<div class="value code-like text-truncate" [nbTooltip]="plugin.checksum">
+				{{ plugin.checksum }}
+			</div>
+		</div>
+		} @if(plugin.signature) {
+		<div class="info-item full-width">
+			<div class="label">{{ 'PLUGIN.DETAILS.SIGNATURE' | translate }}</div>
+			<div class="value code-like text-truncate" [nbTooltip]="plugin.signature">
+				{{ plugin.signature }}
+			</div>
+		</div>
+		}
+	</div>
+	}
+</div>
