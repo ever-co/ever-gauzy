@@ -43,8 +43,9 @@ export class PluginInstallationController {
 	@UseGuards(PluginSubscriptionGuard)
 	@Permissions(PermissionsEnum.PLUGIN_INSTALL)
 	@Post()
-	public async create(@Param('pluginId', UUIDValidationPipe) id: ID, @Body() body: InstallPluginDTO): Promise<void> {
+	public async create(@Param('pluginId', UUIDValidationPipe) id: ID, @Body() body: InstallPluginDTO) {
 		await this.commandBus.execute(new InstallPluginCommand(id, body));
+		return { message: 'Plugin installation created successfully', statusCode: HttpStatus.CREATED };
 	}
 
 	@ApiOperation({
@@ -69,7 +70,8 @@ export class PluginInstallationController {
 	})
 	@Permissions(PermissionsEnum.PLUGIN_UNINSTALL)
 	@Delete(':installationId')
-	public async remove(@Param('installationId', UUIDValidationPipe) installationId: ID): Promise<void> {
+	public async remove(@Param('installationId', UUIDValidationPipe) installationId: ID) {
 		await this.commandBus.execute(new UninstallPluginCommand(installationId));
+		return { message: 'Plugin installation removed successfully', statusCode: HttpStatus.NO_CONTENT };
 	}
 }
