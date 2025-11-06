@@ -1,36 +1,38 @@
 import { ChangeDetectionStrategy, Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { IPlugin, IUser, IUserOrganization } from '@gauzy/contracts';
+import { IPlugin, IUser } from '@gauzy/contracts';
 import { NB_DIALOG_CONFIG, NbDialogRef, NbDialogService } from '@nebular/theme';
-import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	BehaviorSubject,
-	catchError,
-	combineLatest,
-	debounceTime,
-	distinctUntilChanged,
-	filter,
-	from,
-	map,
-	Observable,
-	of,
-	startWith,
-	switchMap,
-	tap
-} from 'rxjs';
-import { PluginUserAssignmentActions } from '../+state/actions/plugin-user-assignment.actions';
-import { PluginUserAssignmentQuery } from '../+state/queries/plugin-user-assignment.query';
+import { debounceTime, distinctUntilChanged, filter, map, Observable, startWith, tap } from 'rxjs';
+import { UserManagementDialogViewModel, UserManagementFacade } from '../+state/facades/user-management.facade';
 import { PluginUserAssignment } from '../+state/stores/plugin-user-assignment.store';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store } from '../../../../../services';
-import { UserOrganizationService } from '../../../../../time-tracker/organization-selector/user-organization.service';
 
 export interface PluginUserManagementDialogData {
 	plugin: IPlugin;
 	installationId: string;
 }
 
+/**
+ * Plugin User Management Component
+ *
+ * Responsibilities (Single Responsibility Principle):
+ * - Present user management UI
+ * - Handle user interactions
+ * - Delegate business logic to facade
+ *
+ * Design Patterns:
+ * - Facade Pattern: Uses facade for all business operations
+ * - Observer Pattern: Reactive UI with observables
+ * - Presentation Pattern: Thin controller, delegates to facade
+ *
+ * SOLID Principles Applied:
+ * - Single Responsibility: Only handles UI presentation
+ * - Open/Closed: Can extend without modifying
+ * - Dependency Inversion: Depends on abstractions (facade)
+ * - Interface Segregation: Uses focused interfaces
+ */
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'lib-plugin-user-management',
@@ -45,19 +47,18 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	public assignmentForm: FormGroup;
 	public searchForm: FormGroup;
 
-	// Search and filter
-	private readonly searchTerm$ = new BehaviorSubject<string>('');
-	private readonly selectedUsers$ = new BehaviorSubject<IUser[]>([]);
+	// View Model - Single source of truth for UI state
+	public viewModel$: Observable<UserManagementDialogViewModel>;
 
-	// Available users (filtered by search)
-	public availableUsers$: Observable<IUser[]>;
-	public assignedUsers$: Observable<PluginUserAssignment[]>;
+	// Individual observables for template convenience
 	public filteredAvailableUsers$: Observable<IUser[]>;
+	public assignedUsers$: Observable<PluginUserAssignment[]>;
+	public selectedUsers$: Observable<IUser[]>;
+	public loadingAvailableUsers$: Observable<boolean>;
+	public loadingMoreAvailableUsers$: Observable<boolean>;
+	public hasMoreAvailableUsers$: Observable<boolean>;
+	public loading$: Observable<boolean>;
 
-	// Loading states
-	public loading$ = this.query.loading$;
-	public loadingMore$ = this.query.loadingMore$;
-	public hasMore$ = this.query.hasMore$;
 	public submitting = false;
 
 	constructor(
@@ -65,40 +66,33 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 		private readonly dialogRef: NbDialogRef<PluginUserManagementComponent>,
 		private readonly dialogService: NbDialogService,
 		private readonly formBuilder: FormBuilder,
-		private readonly actions: Actions,
-		private readonly query: PluginUserAssignmentQuery,
-		private readonly store: Store,
-		private readonly userOrganizationService: UserOrganizationService
+		private readonly facade: UserManagementFacade,
+		private readonly store: Store
 	) {
 		this.plugin = this.data.plugin;
 		this.installationId = this.data.installationId;
 		this.initializeForms();
+		this.initializeObservables();
 	}
 
 	ngOnInit(): void {
-		// Load current assignments with pagination
-		this.actions.dispatch(
-			PluginUserAssignmentActions.loadAssignments({
-				pluginId: this.plugin.id,
-				installationId: this.installationId,
-				includeInactive: false,
-				skip: 0,
-				take: 20
-			})
-		);
-
-		// Set up data streams
-		this.setupDataStreams();
-
-		// Set up search functionality
+		this.loadInitialData();
 		this.setupSearch();
 	}
 
 	ngOnDestroy(): void {
-		this.selectedUsers$.complete();
-		this.searchTerm$.complete();
+		// Cleanup handled by @UntilDestroy decorator
+		this.facade.clearSelection();
 	}
 
+	// ============================================================================
+	// INITIALIZATION
+	// ============================================================================
+
+	/**
+	 * Initialize forms
+	 * Follows Form Builder Pattern
+	 */
 	private initializeForms(): void {
 		this.assignmentForm = this.formBuilder.group({
 			userIds: [[], Validators.required],
@@ -110,132 +104,145 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	private setupDataStreams(): void {
-		// Get assigned users for this installation
-		this.assignedUsers$ = this.query.getAssignmentsForInstallation(this.installationId);
+	/**
+	 * Initialize observables from facade
+	 * Single source of truth principle
+	 */
+	private initializeObservables(): void {
+		// Get complete view model
+		this.viewModel$ = this.facade.viewModel$;
 
-		// Get all available users from the organization using the action states service
-		this.availableUsers$ = this.loadOrganizationUsers();
-
-		// Filter available users by search term and exclude already assigned
-		this.filteredAvailableUsers$ = combineLatest([
-			this.availableUsers$,
-			this.assignedUsers$,
-			this.searchTerm$
-		]).pipe(
-			map(([availableUsers, assignedUsers, searchTerm]) => {
-				const assignedUserIds = assignedUsers.map((assignment) => assignment.userId);
-				let filtered = availableUsers.filter((user) => !assignedUserIds.includes(user.id));
-
-				if (searchTerm.trim()) {
-					const term = searchTerm.toLowerCase();
-					filtered = filtered.filter(
-						(user) =>
-							user.firstName?.toLowerCase().includes(term) ||
-							user.lastName?.toLowerCase().includes(term) ||
-							user.email?.toLowerCase().includes(term)
-					);
-				}
-
-				return filtered;
-			})
-		);
+		// Expose individual streams for template convenience
+		this.filteredAvailableUsers$ = this.facade.filteredAvailableUsers$;
+		this.assignedUsers$ = this.facade.assignedUsers$;
+		this.selectedUsers$ = this.facade.selectedUsers$;
+		this.loadingAvailableUsers$ = this.facade.loadingAvailableUsers$;
+		this.loadingMoreAvailableUsers$ = this.facade.loadingMoreAvailableUsers$;
+		this.hasMoreAvailableUsers$ = this.facade.hasMoreAvailableUsers$;
+		this.loading$ = this.facade.loadingAssignedUsers$;
 	}
 
-	private setupSearch(): void {
-		// Handle search term changes
-		this.searchForm
-			.get('searchTerm')
-			?.valueChanges.pipe(
-				startWith(''),
-				debounceTime(300),
-				distinctUntilChanged(),
-				tap((term) => this.searchTerm$.next(term || '')),
+	/**
+	 * Load initial data from facade
+	 * Delegates to facade for business logic
+	 */
+	private loadInitialData(): void {
+		// Load assigned users
+		this.facade.loadAssignedUsers(this.plugin.id, this.installationId, false);
+
+		// Load available users with organization context
+		this.store.selectedOrganization$
+			.pipe(
+				filter((org) => !!org),
+				tap((org) => {
+					console.log('[PluginUserManagementComponent] Loading available users for org:', org.id);
+					this.facade.setOrganizationContext(org.id, org.tenantId);
+					this.facade.loadAvailableUsers(org.id, org.tenantId, 0, 20);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	/**
-	 * Load organization users using the users organizations service
-	 * @returns Observable of users in the current organization
+	 * Setup search functionality
+	 * Debounces user input for better performance
 	 */
-	private loadOrganizationUsers(): Observable<IUser[]> {
-		// Get current organization from store
-		return this.store.selectedOrganization$.pipe(
-			filter((organization) => !!organization),
-			switchMap((organization) => {
-				const { id: organizationId, tenantId } = organization;
-
-				// Convert the promise to observable and handle the user organizations
-				return from(
-					this.userOrganizationService.getAll(['user', 'user.role'], { organizationId, tenantId }, false)
-				).pipe(
-					map((userOrganizations) => {
-						// Extract users from user organizations and filter active users
-						return userOrganizations.items
-							.filter((userOrg: IUserOrganization) => userOrg.isActive && userOrg.user)
-							.map((userOrg: IUserOrganization) => userOrg.user);
-					}),
-					// Handle errors gracefully
-					catchError((error) => {
-						console.error('Error loading organization users:', error);
-						return of([]);
-					})
-				);
-			}),
-			startWith([]) // Start with empty array while loading
-		);
+	private setupSearch(): void {
+		this.searchForm
+			.get('searchTerm')
+			?.valueChanges.pipe(
+				startWith(''),
+				debounceTime(300),
+				distinctUntilChanged(),
+				tap((term) => {
+					console.log('[PluginUserManagementComponent] Search term changed:', term);
+					this.facade.setSearchTerm(term || '');
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
+	// ============================================================================
+	// USER SELECTION
+	// ============================================================================
+
+	/**
+	 * Handle user selection
+	 * Delegates to facade
+	 * @param user - User to select
+	 */
 	public onUserSelect(user: IUser): void {
-		const currentSelection = this.selectedUsers$.value;
-		if (!currentSelection.find((u) => u.id === user.id)) {
-			const newSelection = [...currentSelection, user];
-			this.selectedUsers$.next(newSelection);
-			this.assignmentForm.patchValue({
-				userIds: newSelection.map((u) => u.id)
-			});
+		if (!this.facade.isUserSelected(user.id)) {
+			this.facade.selectUser(user.id);
+
+			// Update form
+			this.facade.selectedUserIds$
+				.pipe(
+					tap((ids) => this.assignmentForm.patchValue({ userIds: ids })),
+					untilDestroyed(this)
+				)
+				.subscribe();
 		}
 	}
 
+	/**
+	 * Handle user deselection
+	 * Delegates to facade
+	 * @param user - User to deselect
+	 */
 	public onUserDeselect(user: IUser): void {
-		const currentSelection = this.selectedUsers$.value;
-		const newSelection = currentSelection.filter((u) => u.id !== user.id);
-		this.selectedUsers$.next(newSelection);
-		this.assignmentForm.patchValue({
-			userIds: newSelection.map((u) => u.id)
-		});
+		this.facade.deselectUser(user.id);
+
+		// Update form
+		this.facade.selectedUserIds$
+			.pipe(
+				tap((ids) => this.assignmentForm.patchValue({ userIds: ids })),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
+	/**
+	 * Check if user is selected
+	 * @param user - User to check
+	 */
 	public isUserSelected(user: IUser): boolean {
-		return this.selectedUsers$.value.some((u) => u.id === user.id);
+		return this.facade.isUserSelected(user.id);
 	}
 
+	// ============================================================================
+	// USER ASSIGNMENT
+	// ============================================================================
+
+	/**
+	 * Handle user assignment
+	 * Validates form and delegates to facade
+	 */
 	public onAssignUsers(): void {
 		if (this.assignmentForm.valid && !this.submitting) {
 			this.submitting = true;
 			const formValue = this.assignmentForm.value;
 
-			this.actions.dispatch(
-				PluginUserAssignmentActions.assignUsers({
-					pluginId: this.plugin.id,
-					userIds: formValue.userIds,
-					reason: formValue.reason || 'Manual assignment via user management dialog'
-				})
+			this.facade.assignUsers(
+				this.plugin.id,
+				formValue.userIds,
+				formValue.reason || 'Manual assignment via user management dialog'
 			);
 
-			// Listen for success/failure
-			this.query.loading$
+			// Wait for completion
+			this.facade.loadingAssignedUsers$
 				.pipe(
 					filter((loading) => !loading),
 					tap(() => {
 						this.submitting = false;
-						// Reset form and selections on success
-						if (!this.query.error) {
-							this.assignmentForm.reset();
-							this.selectedUsers$.next([]);
-						}
+						// Reset form on success
+						this.assignmentForm.reset();
+						this.facade.clearSelection();
+
+						// Reload assigned users
+						this.facade.loadAssignedUsers(this.plugin.id, this.installationId, false);
 					}),
 					untilDestroyed(this)
 				)
@@ -243,6 +250,11 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	/**
+	 * Handle user unassignment
+	 * Shows confirmation dialog and delegates to facade
+	 * @param assignment - Assignment to remove
+	 */
 	public onUnassignUser(assignment: PluginUserAssignment): void {
 		this.dialogService
 			.open(AlertComponent, {
@@ -260,70 +272,105 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 			.onClose.pipe(
 				filter(Boolean),
 				tap(() => {
-					this.actions.dispatch(
-						PluginUserAssignmentActions.unassignUser({
-							pluginId: this.plugin.id,
-							userId: assignment.userId
-						})
-					);
+					this.facade.unassignUser(this.plugin.id, assignment.userId);
+
+					// Wait for completion and reload
+					this.facade.loadingAssignedUsers$
+						.pipe(
+							filter((loading) => !loading),
+							tap(() => {
+								this.facade.loadAssignedUsers(this.plugin.id, this.installationId, false);
+							}),
+							untilDestroyed(this)
+						)
+						.subscribe();
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
+	// ============================================================================
+	// INFINITE SCROLL
+	// ============================================================================
+
+	/**
+	 * Load more available users for infinite scroll
+	 * Delegates to facade
+	 */
+	public onLoadMoreAvailableUsers(): void {
+		this.store.selectedOrganization$
+			.pipe(
+				filter((org) => !!org),
+				tap((org) => {
+					console.log('[PluginUserManagementComponent] Loading more users');
+					this.facade.loadMoreAvailableUsers(org.id, org.tenantId);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	// ============================================================================
+	// UI HELPERS
+	// ============================================================================
+
+	/**
+	 * Get user display name
+	 * Delegates to facade
+	 * @param assignment - Plugin user assignment
+	 */
 	public getUserDisplayName(assignment: PluginUserAssignment): string {
-		if (assignment.user) {
-			const { firstName, lastName, email } = assignment.user;
-			if (firstName || lastName) {
-				return `${firstName || ''} ${lastName || ''}`.trim();
-			}
-			return email;
-		}
-		return 'Unknown User';
+		return this.facade.getUserDisplayName(assignment);
 	}
 
+	/**
+	 * Get user avatar URL
+	 * Delegates to facade
+	 * @param user - User object
+	 */
 	public getUserAvatar(user: IUser | PluginUserAssignment['user']): string {
-		return user?.imageUrl || '/assets/images/avatars/default-avatar.png';
+		return this.facade.getUserAvatar(user as IUser);
 	}
 
+	/**
+	 * Get selected users observable
+	 */
 	public getSelectedUsers(): Observable<IUser[]> {
-		return this.selectedUsers$.asObservable();
+		return this.facade.selectedUsers$;
 	}
 
+	/**
+	 * Get total assigned count
+	 */
 	public getTotalAssignedCount(): Observable<number> {
-		return this.assignedUsers$.pipe(map((assignments) => assignments.length));
+		return this.facade.assignedUsers$.pipe(map((assignments) => assignments.length));
 	}
 
+	/**
+	 * Get assignment date
+	 * Delegates to facade
+	 * @param assignment - Plugin user assignment
+	 */
 	public getAssignmentDate(assignment: PluginUserAssignment): Date {
-		return new Date(assignment.assignedAt);
+		return this.facade.getAssignmentDate(assignment);
 	}
 
+	// ============================================================================
+	// DIALOG ACTIONS
+	// ============================================================================
+
+	/**
+	 * Close dialog
+	 */
 	public close(): void {
 		this.dialogRef.close();
 	}
 
+	/**
+	 * Save and close dialog
+	 */
 	public save(): void {
 		this.dialogRef.close(true);
-	}
-
-	/**
-	 * Load more assignments for infinite scroll
-	 */
-	public onLoadMoreAssignments(): void {
-		const hasMore = this.query.hasMore;
-		const loadingMore = this.query.loadingMore;
-
-		if (!hasMore || loadingMore) {
-			return;
-		}
-
-		this.actions.dispatch(
-			PluginUserAssignmentActions.loadMoreAssignments({
-				pluginId: this.plugin.id,
-				installationId: this.installationId,
-				includeInactive: false
-			})
-		);
 	}
 }

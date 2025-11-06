@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { IPlugin, IUser } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChanged, filter, Observable } from 'rxjs';
+import { distinctUntilChanged, filter, Observable, tap } from 'rxjs';
 import {
 	PluginUserAssignmentFacade,
 	UserManagementViewModel
@@ -162,7 +162,12 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	 * @param plugin - The plugin that changed
 	 */
 	private handlePluginChange(plugin: IPlugin): void {
-		// Load all assignments for this plugin
+		console.log('Plugin changed in user-management-tab, loading assignments for plugin:', plugin.id);
+
+		// Clear previous assignments first to avoid showing stale data
+		this.userAssignmentFacade.clearAssignments();
+
+		// Load all assignments for this plugin (not installation-specific)
 		this.userAssignmentFacade.loadAssignmentsForPlugin(plugin.id, false);
 
 		// Update canAssign observable
@@ -204,8 +209,23 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 			return;
 		}
 
+		console.log('Unassigning user:', assignment.userId, 'from plugin:', plugin.id);
+
 		// Delegate to facade
 		this.userAssignmentFacade.unassignUser(plugin.id, assignment.pluginInstallationId, assignment.userId);
+
+		// Wait for the unassignment operation to complete, then reload
+		this.loading$
+			.pipe(
+				filter((loading) => !loading),
+				tap(() => {
+					console.log('Unassignment complete, reloading assignments for plugin:', plugin.id);
+					// Reload assignments to reflect the changes
+					this.userAssignmentFacade.loadAssignmentsForPlugin(plugin.id, false);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	// ============================================================================
