@@ -109,12 +109,6 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 		this.hasMore$ = this.userAssignmentFacade.hasMore$;
 		this.error$ = this.userAssignmentFacade.error$;
 		this.assignedUsers$ = this.userAssignmentFacade.assignments$;
-
-		// Initialize permission check observable (will be set properly in setupDataStreams)
-		this.canAssign$ = this.plugin$.pipe(
-			filter(Boolean),
-			distinctUntilChanged((prev, curr) => prev?.id === curr?.id)
-		) as any; // Will be properly initialized in ngOnInit
 	}
 
 	/**

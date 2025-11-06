@@ -71,11 +71,11 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	) {
 		this.plugin = this.data.plugin;
 		this.installationId = this.data.installationId;
-		this.initializeForms();
-		this.initializeObservables();
 	}
 
 	ngOnInit(): void {
+		this.initializeForms();
+		this.initializeObservables();
 		this.loadInitialData();
 		this.setupSearch();
 	}
