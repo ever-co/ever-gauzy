@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
-import { ID } from '@gauzy/contracts';
+import { ID, IUser } from '@gauzy/contracts';
 
 export interface PluginUserAssignmentState {
 	assignments: PluginUserAssignment[];
@@ -26,13 +26,7 @@ export interface PluginUserAssignment {
 	assignedBy: string;
 	isActive: boolean;
 	reason?: string;
-	user?: {
-		id: string;
-		firstName: string;
-		lastName: string;
-		email: string;
-		imageUrl?: string;
-	};
+	user?: IUser;
 }
 
 export interface AssignPluginUsersRequest {
@@ -78,7 +72,7 @@ function createInitialState(): PluginUserAssignmentState {
 }
 
 @Injectable({ providedIn: 'root' })
-@StoreConfig({ name: 'plugin-user-assignment' })
+@StoreConfig({ name: '_plugin-user-assignment' })
 export class PluginUserAssignmentStore extends Store<PluginUserAssignmentState> {
 	constructor() {
 		super(createInitialState());
