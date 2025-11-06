@@ -37,28 +37,40 @@ export class PluginUserAssignmentEffects {
 	) {}
 
 	/**
-	 * Load assignments effect
+	 * Load assignments effect with pagination support
 	 * Handles loading user assignments for a plugin or specific installation
 	 */
 	loadAssignments$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(PluginUserAssignmentActions.loadAssignments),
 			tap(() => this.store.setLoading(true)),
-			switchMap(({ pluginId, installationId, includeInactive }) => {
+			switchMap(({ pluginId, installationId, includeInactive, take, skip, append }) => {
+				const currentSkip = skip !== undefined ? skip : this.store.getValue().pagination.skip;
+				const currentTake = take !== undefined ? take : this.store.getValue().pagination.take;
+
 				// Choose appropriate API based on whether installationId is provided
 				const pluginUserAssignmentRequest = installationId
 					? this.pluginUserAssignmentService.getPluginUserAssignments(
 							pluginId,
 							installationId,
-							includeInactive
+							includeInactive,
+							currentTake,
+							currentSkip
 					  )
-					: this.pluginUserAssignmentService.getAllPluginUserAssignments({
-							pluginId,
-							includeInactive
-					  });
+					: this.pluginUserAssignmentService.getAllPluginUserAssignments(
+							{ pluginId, includeInactive },
+							currentTake,
+							currentSkip
+					  );
 
 				return pluginUserAssignmentRequest.pipe(
-					map((assignments) => PluginUserAssignmentActions.loadAssignmentsSuccess({ assignments })),
+					map((response) =>
+						PluginUserAssignmentActions.loadAssignmentsSuccess({
+							assignments: response.items,
+							total: response.total,
+							append: append || false
+						})
+					),
 					catchError((error) => {
 						const errorMessage = this.translateService.instant(
 							'PLUGIN.USER_MANAGEMENT.ERRORS.LOAD_FAILED',
@@ -73,24 +85,88 @@ export class PluginUserAssignmentEffects {
 	});
 
 	/**
+	 * Load more assignments effect for infinite scroll
+	 * Handles loading next page of user assignments
+	 */
+	loadMoreAssignments$ = createEffect(() => {
+		return this.actions$.pipe(
+			ofType(PluginUserAssignmentActions.loadMoreAssignments),
+			tap(() => {
+				this.store.setLoadingMore(true);
+				this.store.incrementSkip();
+			}),
+			switchMap(({ pluginId, installationId, includeInactive }) => {
+				const { skip, take } = this.store.getValue().pagination;
+
+				// Choose appropriate API based on whether installationId is provided
+				const pluginUserAssignmentRequest = installationId
+					? this.pluginUserAssignmentService.loadNextPage(
+							pluginId,
+							installationId,
+							take,
+							skip,
+							includeInactive
+					  )
+					: this.pluginUserAssignmentService.getAllPluginUserAssignments(
+							{ pluginId, includeInactive },
+							take,
+							skip
+					  );
+
+				return pluginUserAssignmentRequest.pipe(
+					map((response) =>
+						PluginUserAssignmentActions.loadMoreAssignmentsSuccess({
+							assignments: response.items,
+							total: response.total
+						})
+					),
+					catchError((error) => {
+						const errorMessage = this.translateService.instant(
+							'PLUGIN.USER_MANAGEMENT.ERRORS.LOAD_MORE_FAILED',
+							{ message: error.message || 'Unknown error' }
+						);
+						return of(PluginUserAssignmentActions.loadMoreAssignmentsFailure({ error: errorMessage }));
+					}),
+					finalize(() => this.store.setLoadingMore(false))
+				);
+			})
+		);
+	});
+
+	/**
 	 * Assign users effect
-	 * Handles assigning users to a plugin installation
+	 * Uses subscription-based access control for user assignment
+	 * Creates child USER-scoped subscriptions for the assigned users
 	 */
 	assignUsers$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(PluginUserAssignmentActions.assignUsers),
 			tap(() => this.store.setLoading(true)),
-			switchMap(({ pluginId, installationId, userIds, reason }) =>
-				this.pluginUserAssignmentService.assignUsers(pluginId, installationId, { userIds, reason }).pipe(
-					map((assignments) => {
-						this.store.addAssignments(assignments);
-						return PluginUserAssignmentActions.assignUsersSuccess({ assignments });
+			switchMap(({ pluginId, userIds, reason }) =>
+				this.pluginUserAssignmentService.assignUsers(pluginId, userIds, reason).pipe(
+					map((response) => {
+						// Show success notification
+						this.toastrService.success(
+							this.translateService.instant('PLUGIN.USER_MANAGEMENT.SUCCESS.USERS_ASSIGNED', {
+								count: response.assignedUsers
+							})
+						);
+
+						// Reload assignments to reflect changes
+						return PluginUserAssignmentActions.loadAssignments({
+							pluginId,
+							installationId: '',
+							includeInactive: false,
+							take: this.store.getValue().pagination.take,
+							skip: 0
+						});
 					}),
 					catchError((error) => {
 						const errorMessage = this.translateService.instant(
 							'PLUGIN.USER_MANAGEMENT.ERRORS.ASSIGN_FAILED',
-							{ message: error.message || 'Unknown error' }
+							{ message: error.error?.message || error.message || 'Unknown error' }
 						);
+						this.toastrService.error(errorMessage);
 						return of(PluginUserAssignmentActions.assignUsersFailure({ error: errorMessage }));
 					}),
 					finalize(() => this.store.setLoading(false))
@@ -101,27 +177,42 @@ export class PluginUserAssignmentEffects {
 
 	/**
 	 * Unassign user effect
-	 * Handles removing user assignment from a plugin installation
+	 * Uses subscription-based revocation to remove user access
+	 * Cancels the child USER-scoped subscription
 	 */
 	unassignUser$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(PluginUserAssignmentActions.unassignUser),
 			tap(() => this.store.setLoading(true)),
-			switchMap(({ pluginId, installationId, userId }) =>
-				this.pluginUserAssignmentService.unassignUser(pluginId, installationId, userId).pipe(
-					map(() => {
-						this.store.removeAssignment(userId, installationId);
-						return PluginUserAssignmentActions.unassignUserSuccess({ pluginId, installationId, userId });
-					}),
-					catchError((error) => {
-						const errorMessage = this.translateService.instant(
-							'PLUGIN.USER_MANAGEMENT.ERRORS.UNASSIGN_FAILED',
-							{ message: error.message || 'Unknown error' }
-						);
-						return of(PluginUserAssignmentActions.unassignUserFailure({ error: errorMessage }));
-					}),
-					finalize(() => this.store.setLoading(false))
-				)
+			switchMap(({ pluginId, userId }) =>
+				this.pluginUserAssignmentService
+					.revokeUsers(pluginId, [userId], 'User unassigned by administrator')
+					.pipe(
+						map((response) => {
+							// Show success notification
+							this.toastrService.success(
+								this.translateService.instant('PLUGIN.USER_MANAGEMENT.SUCCESS.USER_UNASSIGNED')
+							);
+
+							// Reload assignments to reflect changes
+							return PluginUserAssignmentActions.loadAssignments({
+								pluginId,
+								installationId: '',
+								includeInactive: false,
+								take: this.store.getValue().pagination.take,
+								skip: 0
+							});
+						}),
+						catchError((error) => {
+							const errorMessage = this.translateService.instant(
+								'PLUGIN.USER_MANAGEMENT.ERRORS.UNASSIGN_FAILED',
+								{ message: error.error?.message || error.message || 'Unknown error' }
+							);
+							this.toastrService.error(errorMessage);
+							return of(PluginUserAssignmentActions.unassignUserFailure({ error: errorMessage }));
+						}),
+						finalize(() => this.store.setLoading(false))
+					)
 			)
 		);
 	});
@@ -164,16 +255,22 @@ export class PluginUserAssignmentEffects {
 		);
 	});
 
+	/**
+	 * Check user access effect
+	 * Uses subscription-based access check
+	 */
 	checkUserAccess$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(PluginUserAssignmentActions.checkUserAccess),
-			switchMap(({ pluginId, installationId, userId }) =>
-				this.pluginUserAssignmentService.checkUserAccess(pluginId, installationId, userId).pipe(
-					map((hasAccess) => PluginUserAssignmentActions.checkUserAccessSuccess({ hasAccess })),
+			switchMap(({ pluginId, userId }) =>
+				this.pluginUserAssignmentService.checkUserAccess(pluginId, userId).pipe(
+					map((response) =>
+						PluginUserAssignmentActions.checkUserAccessSuccess({ hasAccess: response.hasAccess })
+					),
 					catchError((error) =>
 						of(
 							PluginUserAssignmentActions.checkUserAccessFailure({
-								error: error.message || 'Unknown error'
+								error: error.error?.message || error.message || 'Unknown error'
 							})
 						)
 					)
@@ -194,8 +291,28 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.loadAssignmentsSuccess),
-				tap(({ assignments }) => {
-					this.store.setAssignments(assignments);
+				tap(({ assignments, total, append }) => {
+					if (append) {
+						this.store.appendAssignments(assignments, total);
+					} else {
+						this.store.setAssignments(assignments, total);
+					}
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	/**
+	 * Handle successful load more
+	 * Appends new assignments to existing list
+	 */
+	handleLoadMoreSuccess$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.loadMoreAssignmentsSuccess),
+				tap(({ assignments, total }) => {
+					this.store.appendAssignments(assignments, total);
 				})
 			);
 		},
@@ -247,6 +364,7 @@ export class PluginUserAssignmentEffects {
 			return this.actions$.pipe(
 				ofType(
 					PluginUserAssignmentActions.loadAssignmentsFailure,
+					PluginUserAssignmentActions.loadMoreAssignmentsFailure,
 					PluginUserAssignmentActions.assignUsersFailure,
 					PluginUserAssignmentActions.unassignUserFailure,
 					PluginUserAssignmentActions.bulkAssignUsersFailure,

@@ -22,8 +22,13 @@ export class GetPluginUserAssignmentsQueryHandler implements IQueryHandler<GetPl
 	 * @returns Array of plugin user assignments
 	 */
 	async execute(query: GetPluginUserAssignmentsQuery): Promise<IPagination<PluginUserAssignment>> {
-		const { pluginInstallationId, includeInactive } = query;
-		return this.pluginUserAssignmentService.getPluginUserAssignments(pluginInstallationId, includeInactive);
+		const { pluginInstallationId, includeInactive, take, skip } = query;
+		return this.pluginUserAssignmentService.getPluginUserAssignments(
+			pluginInstallationId,
+			includeInactive,
+			take,
+			skip
+		);
 	}
 }
 
@@ -40,8 +45,8 @@ export class GetUserPluginAssignmentsQueryHandler implements IQueryHandler<GetUs
 	 * @returns Array of plugin user assignments
 	 */
 	async execute(query: GetUserPluginAssignmentsQuery): Promise<IPagination<PluginUserAssignment>> {
-		const { userId, includeInactive } = query;
-		return this.pluginUserAssignmentService.getUserPluginAssignments(userId, includeInactive);
+		const { userId, includeInactive, take, skip } = query;
+		return this.pluginUserAssignmentService.getUserPluginAssignments(userId, includeInactive, take, skip);
 	}
 }
 

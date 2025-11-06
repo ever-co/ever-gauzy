@@ -1,6 +1,7 @@
 import { ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { In } from 'typeorm';
 import { IPagination } from '../../../../../../../dist/packages/contracts/src/lib/core.model';
 import { PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
@@ -61,7 +62,7 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 		const existingAssignments = await this.find({
 			where: {
 				pluginInstallationId,
-				userId: userIds as any, // TypeORM In operator
+				userId: In(userIds),
 				isActive: true,
 				tenantId,
 				organizationId
@@ -121,7 +122,7 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 		const existingAssignments = await this.find({
 			where: {
 				pluginInstallationId,
-				userId: userIds as any, // TypeORM In operator
+				userId: In(userIds),
 				isActive: true,
 				tenantId,
 				organizationId
@@ -150,11 +151,15 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 	 * Get all user assignments for a plugin installation
 	 * @param pluginInstallationId - The plugin installation ID
 	 * @param includeInactive - Whether to include inactive assignments
+	 * @param take - Number of items to take
+	 * @param skip - Number of items to skip
 	 * @returns Array of plugin user assignments
 	 */
 	async getPluginUserAssignments(
 		pluginInstallationId: ID,
-		includeInactive: boolean = false
+		includeInactive: boolean = false,
+		take?: number,
+		skip?: number
 	): Promise<IPagination<PluginUserAssignment>> {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
@@ -170,7 +175,9 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 				tenantId,
 				organizationId
 			},
-			relations: ['user', 'assignedBy', 'revokedBy', 'pluginInstallation']
+			relations: ['user', 'assignedBy', 'revokedBy', 'pluginInstallation'],
+			...(take && { take }),
+			...(skip && { skip })
 		});
 	}
 
@@ -178,11 +185,15 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 	 * Get all plugin assignments for a user
 	 * @param userId - The user ID
 	 * @param includeInactive - Whether to include inactive assignments
+	 * @param take - Number of items to take
+	 * @param skip - Number of items to skip
 	 * @returns Array of plugin user assignments
 	 */
 	async getUserPluginAssignments(
 		userId: ID,
-		includeInactive: boolean = false
+		includeInactive: boolean = false,
+		take?: number,
+		skip?: number
 	): Promise<IPagination<PluginUserAssignment>> {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
@@ -198,7 +209,9 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 				tenantId,
 				organizationId
 			},
-			relations: ['pluginInstallation', 'assignedBy', 'revokedBy']
+			relations: ['user', 'assignedBy', 'revokedBy', 'pluginInstallation'],
+			...(take && { take }),
+			...(skip && { skip })
 		});
 	}
 
@@ -237,7 +250,7 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 			tenantId,
 			organizationId,
 			status: PluginSubscriptionStatus.ACTIVE,
-			scope: [PluginScope.ORGANIZATION, PluginScope.TENANT] as any // TypeORM In operator
+			scope: In([PluginScope.ORGANIZATION, PluginScope.TENANT])
 		});
 
 		if (!subscription) {

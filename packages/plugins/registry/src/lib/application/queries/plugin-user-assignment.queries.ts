@@ -7,7 +7,12 @@ import { IQuery } from '@nestjs/cqrs';
 export class GetPluginUserAssignmentsQuery implements IQuery {
 	public static readonly type = '[Plugin User Assignment] Get Plugin User Assignments';
 
-	constructor(public readonly pluginInstallationId: ID, public readonly includeInactive: boolean = false) {}
+	constructor(
+		public readonly pluginInstallationId: ID,
+		public readonly includeInactive: boolean = false,
+		public readonly take?: number,
+		public readonly skip?: number
+	) {}
 }
 
 /**
@@ -16,7 +21,12 @@ export class GetPluginUserAssignmentsQuery implements IQuery {
 export class GetUserPluginAssignmentsQuery implements IQuery {
 	public static readonly type = '[Plugin User Assignment] Get User Plugin Assignments';
 
-	constructor(public readonly userId: ID, public readonly includeInactive: boolean = false) {}
+	constructor(
+		public readonly userId: ID,
+		public readonly includeInactive: boolean = false,
+		public readonly take?: number,
+		public readonly skip?: number
+	) {}
 }
 
 /**

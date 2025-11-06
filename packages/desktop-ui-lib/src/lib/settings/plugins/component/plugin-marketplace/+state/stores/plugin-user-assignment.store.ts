@@ -5,9 +5,17 @@ import { ID } from '@gauzy/contracts';
 export interface PluginUserAssignmentState {
 	assignments: PluginUserAssignment[];
 	loading: boolean;
+	loadingMore: boolean; // For infinite scroll loading state
 	error: string | null;
 	selectedPluginId: string | null;
 	selectedInstallationId: string | null;
+	// Pagination metadata using standard TypeORM naming
+	pagination: {
+		skip: number; // Offset (how many to skip)
+		take: number; // Limit (how many to take)
+		total: number;
+		hasMore: boolean;
+	};
 }
 
 export interface PluginUserAssignment {
@@ -56,9 +64,16 @@ function createInitialState(): PluginUserAssignmentState {
 	return {
 		assignments: [],
 		loading: false,
+		loadingMore: false,
 		error: null,
 		selectedPluginId: null,
-		selectedInstallationId: null
+		selectedInstallationId: null,
+		pagination: {
+			skip: 0,
+			take: 20,
+			total: 0,
+			hasMore: false
+		}
 	};
 }
 
@@ -73,12 +88,51 @@ export class PluginUserAssignmentStore extends Store<PluginUserAssignmentState> 
 		this.update({ loading });
 	}
 
+	setLoadingMore(loadingMore: boolean): void {
+		this.update({ loadingMore });
+	}
+
 	setErrorMessage(error: string | null): void {
 		this.update({ error });
 	}
 
-	setAssignments(assignments: PluginUserAssignment[]): void {
-		this.update({ assignments, error: null });
+	setAssignments(assignments: PluginUserAssignment[], total?: number): void {
+		const currentState = this.getValue();
+		this.update({
+			assignments,
+			error: null,
+			pagination: {
+				...currentState.pagination,
+				total: total !== undefined ? total : assignments.length,
+				hasMore: total !== undefined ? assignments.length < total : false
+			}
+		});
+	}
+
+	appendAssignments(newAssignments: PluginUserAssignment[], total: number): void {
+		const currentState = this.getValue();
+		const currentAssignments = currentState.assignments;
+
+		// Merge assignments, avoiding duplicates
+		const mergedAssignments = [...currentAssignments];
+		newAssignments.forEach((newAssignment) => {
+			const existingIndex = mergedAssignments.findIndex((a) => a.id === newAssignment.id);
+			if (existingIndex >= 0) {
+				mergedAssignments[existingIndex] = newAssignment;
+			} else {
+				mergedAssignments.push(newAssignment);
+			}
+		});
+
+		this.update({
+			assignments: mergedAssignments,
+			error: null,
+			pagination: {
+				...currentState.pagination,
+				total,
+				hasMore: mergedAssignments.length < total
+			}
+		});
 	}
 
 	addAssignments(newAssignments: PluginUserAssignment[]): void {
@@ -120,11 +174,50 @@ export class PluginUserAssignmentStore extends Store<PluginUserAssignmentState> 
 	}
 
 	clearAssignments(): void {
-		this.update({ assignments: [] });
+		this.update({
+			assignments: [],
+			pagination: {
+				skip: 0,
+				take: 20,
+				total: 0,
+				hasMore: false
+			}
+		});
 	}
 
 	clearError(): void {
 		this.update({ error: null });
+	}
+
+	setSkip(skip: number): void {
+		const currentState = this.getValue();
+		this.update({
+			pagination: {
+				...currentState.pagination,
+				skip
+			}
+		});
+	}
+
+	setTake(take: number): void {
+		const currentState = this.getValue();
+		this.update({
+			pagination: {
+				...currentState.pagination,
+				take,
+				skip: 0 // Reset to beginning when take size changes
+			}
+		});
+	}
+
+	incrementSkip(): void {
+		const currentState = this.getValue();
+		this.update({
+			pagination: {
+				...currentState.pagination,
+				skip: currentState.pagination.skip + currentState.pagination.take
+			}
+		});
 	}
 
 	reset(): void {

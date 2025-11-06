@@ -1,8 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { ID } from '@gauzy/contracts';
+import { ID, IPagination } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 export interface PluginUserAssignment {
 	id: string;
@@ -46,38 +45,66 @@ export class PluginUserAssignmentService {
 	constructor(private readonly http: HttpClient) {}
 
 	/**
-	 * Assign users to a plugin installation
+	 * Assign users to a plugin subscription
+	 * Uses subscription-based access control endpoint
+	 * @param pluginId - Plugin identifier
+	 * @param userIds - Array of user IDs to assign
+	 * @param reason - Optional reason for assignment
 	 */
-	assignUsers(pluginId: ID, installationId: ID, assignDto: AssignPluginUsersDTO): Observable<PluginUserAssignment[]> {
-		return this.http.post<PluginUserAssignment[]>(
-			`/api/plugins/${pluginId}/installations/${installationId}/users`,
-			assignDto
+	assignUsers(
+		pluginId: ID,
+		userIds: string[],
+		reason?: string
+	): Observable<{ message: string; assignedUsers: number }> {
+		return this.http.post<{ message: string; assignedUsers: number }>(
+			`/api/plugins/${pluginId}/subscription/access/assign`,
+			{ userIds, reason }
 		);
 	}
 
 	/**
-	 * Unassign a user from plugin installation
+	 * Revoke plugin subscription from users
+	 * Uses subscription-based access control endpoint
+	 * @param pluginId - Plugin identifier
+	 * @param userIds - Array of user IDs to revoke
+	 * @param revocationReason - Reason for revocation
 	 */
-	unassignUser(pluginId: ID, installationId: ID, userId: ID): Observable<void> {
-		return this.http.delete<void>(`/api/plugins/${pluginId}/installations/${installationId}/users/${userId}`);
+	revokeUsers(
+		pluginId: ID,
+		userIds: string[],
+		revocationReason: string
+	): Observable<{ message: string; revokedUsers: number }> {
+		return this.http.post<{ message: string; revokedUsers: number }>(
+			`/api/plugins/${pluginId}/subscription/access/revoke`,
+			{ userIds, revocationReason }
+		);
 	}
 
 	/**
-	 * Get all user assignments for a plugin installation
+	 * Get all user assignments for a plugin installation with pagination
 	 */
 	getPluginUserAssignments(
 		pluginId: ID,
 		installationId: ID,
-		includeInactive = false
-	): Observable<PluginUserAssignment[]> {
+		includeInactive = false,
+		take?: number,
+		skip?: number
+	): Observable<IPagination<PluginUserAssignment>> {
 		let params = new HttpParams();
 		if (includeInactive) {
 			params = params.set('includeInactive', 'true');
 		}
+		if (take !== undefined) {
+			params = params.set('take', take.toString());
+		}
+		if (skip !== undefined) {
+			params = params.set('skip', skip.toString());
+		}
 
-		return this.http.get<PluginUserAssignment[]>(`/api/plugins/${pluginId}/installations/${installationId}/users`, {
-			params
-		});
+		return this.http.get<IPagination<PluginUserAssignment>>(
+			`/api/plugins/${pluginId}/installations/${installationId}/users`,
+			{ params }
+		);
 	}
 
 	/**
@@ -94,15 +121,26 @@ export class PluginUserAssignmentService {
 	}
 
 	/**
-	 * Get all plugin assignments for a user
+	 * Get all plugin assignments for a user with pagination
 	 */
-	getUserPluginAssignments(userId: ID, includeInactive = false): Observable<PluginUserAssignment[]> {
+	getUserPluginAssignments(
+		userId: ID,
+		includeInactive = false,
+		page?: number,
+		limit?: number
+	): Observable<IPagination<PluginUserAssignment>> {
 		let params = new HttpParams();
 		if (includeInactive) {
 			params = params.set('includeInactive', 'true');
 		}
+		if (page !== undefined) {
+			params = params.set('page', page.toString());
+		}
+		if (limit !== undefined) {
+			params = params.set('limit', limit.toString());
+		}
 
-		return this.http.get<PluginUserAssignment[]>(`/api/users/${userId}/plugin-assignments`, { params });
+		return this.http.get<IPagination<PluginUserAssignment>>(`/api/users/${userId}/plugin-assignments`, { params });
 	}
 
 	/**
@@ -113,9 +151,13 @@ export class PluginUserAssignmentService {
 	}
 
 	/**
-	 * Get all plugin user assignments with optional filters
+	 * Get all plugin user assignments with optional filters and pagination
 	 */
-	getAllPluginUserAssignments(queryDto?: PluginUserAssignmentQueryDTO): Observable<PluginUserAssignment[]> {
+	getAllPluginUserAssignments(
+		queryDto?: PluginUserAssignmentQueryDTO,
+		take?: number,
+		skip?: number
+	): Observable<IPagination<PluginUserAssignment>> {
 		let params = new HttpParams();
 
 		if (queryDto) {
@@ -133,15 +175,72 @@ export class PluginUserAssignmentService {
 			}
 		}
 
-		return this.http.get<PluginUserAssignment[]>('/api/plugin-user-assignments', { params });
+		if (take !== undefined) {
+			params = params.set('take', take.toString());
+		}
+		if (skip !== undefined) {
+			params = params.set('skip', skip.toString());
+		}
+
+		return this.http.get<IPagination<PluginUserAssignment>>('/api/plugin-user-assignments', { params });
 	}
 
 	/**
-	 * Check if a user has access to a specific plugin installation
+	 * Check if current user has access to the plugin
+	 * Uses subscription access check endpoint
+	 * @param pluginId - Plugin identifier
 	 */
-	checkUserAccess(pluginId: ID, installationId: ID, userId: ID): Observable<boolean> {
-		return this.http
-			.get<{ hasAccess: boolean }>(`/api/plugins/${pluginId}/installations/${installationId}/users/${userId}`)
-			.pipe(map((response) => response.hasAccess));
+	checkAccess(pluginId: ID): Observable<{
+		hasAccess: boolean;
+		accessLevel?: string;
+		canAssign?: boolean;
+		requiresSubscription?: boolean;
+		subscription?: any;
+	}> {
+		return this.http.get<{
+			hasAccess: boolean;
+			accessLevel?: string;
+			canAssign?: boolean;
+			requiresSubscription?: boolean;
+			subscription?: any;
+		}>(`/api/plugins/${pluginId}/subscription/access`);
+	}
+
+	/**
+	 * Check if a specific user has access to the plugin
+	 * Uses subscription access check endpoint
+	 * @param pluginId - Plugin identifier
+	 * @param userId - User identifier
+	 */
+	checkUserAccess(
+		pluginId: ID,
+		userId: ID
+	): Observable<{
+		hasAccess: boolean;
+		accessLevel?: string;
+		canAssign?: boolean;
+		requiresSubscription?: boolean;
+		subscription?: any;
+	}> {
+		return this.http.post<{
+			hasAccess: boolean;
+			accessLevel?: string;
+			canAssign?: boolean;
+			requiresSubscription?: boolean;
+			subscription?: any;
+		}>(`/api/plugins/${pluginId}/subscription/access/check`, { userId });
+	}
+
+	/**
+	 * Load next page of assignments (for infinite scroll)
+	 */
+	loadNextPage(
+		pluginId: ID,
+		installationId: ID,
+		take: number,
+		skip: number,
+		includeInactive = false
+	): Observable<IPagination<PluginUserAssignment>> {
+		return this.getPluginUserAssignments(pluginId, installationId, includeInactive, take, skip);
 	}
 }

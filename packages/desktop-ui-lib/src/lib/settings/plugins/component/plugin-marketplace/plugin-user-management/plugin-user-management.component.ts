@@ -56,6 +56,8 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 
 	// Loading states
 	public loading$ = this.query.loading$;
+	public loadingMore$ = this.query.loadingMore$;
+	public hasMore$ = this.query.hasMore$;
 	public submitting = false;
 
 	constructor(
@@ -74,12 +76,14 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
-		// Load current assignments
+		// Load current assignments with pagination
 		this.actions.dispatch(
 			PluginUserAssignmentActions.loadAssignments({
 				pluginId: this.plugin.id,
 				installationId: this.installationId,
-				includeInactive: false
+				includeInactive: false,
+				skip: 0,
+				take: 20
 			})
 		);
 
@@ -216,7 +220,6 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 			this.actions.dispatch(
 				PluginUserAssignmentActions.assignUsers({
 					pluginId: this.plugin.id,
-					installationId: this.installationId,
 					userIds: formValue.userIds,
 					reason: formValue.reason || 'Manual assignment via user management dialog'
 				})
@@ -260,7 +263,6 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 					this.actions.dispatch(
 						PluginUserAssignmentActions.unassignUser({
 							pluginId: this.plugin.id,
-							installationId: this.installationId,
 							userId: assignment.userId
 						})
 					);
@@ -303,5 +305,25 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 
 	public save(): void {
 		this.dialogRef.close(true);
+	}
+
+	/**
+	 * Load more assignments for infinite scroll
+	 */
+	public onLoadMoreAssignments(): void {
+		const hasMore = this.query.hasMore;
+		const loadingMore = this.query.loadingMore;
+
+		if (!hasMore || loadingMore) {
+			return;
+		}
+
+		this.actions.dispatch(
+			PluginUserAssignmentActions.loadMoreAssignments({
+				pluginId: this.plugin.id,
+				installationId: this.installationId,
+				includeInactive: false
+			})
+		);
 	}
 }

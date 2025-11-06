@@ -1,41 +1,56 @@
 import { ID } from '@gauzy/contracts';
 import { createAction, props } from '@ngneat/effects';
 import {
-	AssignPluginUsersRequest,
 	BulkAssignPluginUsersRequest,
 	GetPluginUserAssignmentsRequest,
-	PluginUserAssignment,
-	UnassignPluginUserRequest
+	PluginUserAssignment
 } from '../stores/plugin-user-assignment.store';
 
 export const PluginUserAssignmentActions = {
 	// Load plugin user assignments
 	loadAssignments: createAction(
 		'[Plugin User Assignment] Load Assignments',
-		props<GetPluginUserAssignmentsRequest>()
+		props<GetPluginUserAssignmentsRequest & { take?: number; skip?: number; append?: boolean }>()
 	),
 	loadAssignmentsSuccess: createAction(
 		'[Plugin User Assignment] Load Assignments Success',
-		props<{ assignments: PluginUserAssignment[] }>()
+		props<{ assignments: PluginUserAssignment[]; total: number; append?: boolean }>()
 	),
 	loadAssignmentsFailure: createAction(
 		'[Plugin User Assignment] Load Assignments Failure',
 		props<{ error: string }>()
 	),
 
-	// Assign users to plugin
-	assignUsers: createAction('[Plugin User Assignment] Assign Users', props<AssignPluginUsersRequest>()),
+	// Load more assignments (infinite scroll)
+	loadMoreAssignments: createAction(
+		'[Plugin User Assignment] Load More Assignments',
+		props<GetPluginUserAssignmentsRequest>()
+	),
+	loadMoreAssignmentsSuccess: createAction(
+		'[Plugin User Assignment] Load More Assignments Success',
+		props<{ assignments: PluginUserAssignment[]; total: number }>()
+	),
+	loadMoreAssignmentsFailure: createAction(
+		'[Plugin User Assignment] Load More Assignments Failure',
+		props<{ error: string }>()
+	),
+
+	// Assign users to plugin (subscription-based)
+	assignUsers: createAction(
+		'[Plugin User Assignment] Assign Users',
+		props<{ pluginId: ID; userIds: string[]; reason?: string }>()
+	),
 	assignUsersSuccess: createAction(
 		'[Plugin User Assignment] Assign Users Success',
-		props<{ assignments: PluginUserAssignment[] }>()
+		props<{ message: string; assignedUsers: number }>()
 	),
 	assignUsersFailure: createAction('[Plugin User Assignment] Assign Users Failure', props<{ error: string }>()),
 
-	// Unassign user from plugin
-	unassignUser: createAction('[Plugin User Assignment] Unassign User', props<UnassignPluginUserRequest>()),
+	// Unassign user from plugin (subscription-based revocation)
+	unassignUser: createAction('[Plugin User Assignment] Unassign User', props<{ pluginId: ID; userId: ID }>()),
 	unassignUserSuccess: createAction(
 		'[Plugin User Assignment] Unassign User Success',
-		props<{ pluginId: ID; installationId: ID; userId: ID }>()
+		props<{ message: string; revokedUsers: number }>()
 	),
 	unassignUserFailure: createAction('[Plugin User Assignment] Unassign User Failure', props<{ error: string }>()),
 
@@ -64,11 +79,8 @@ export const PluginUserAssignmentActions = {
 		props<{ error: string }>()
 	),
 
-	// Check user access
-	checkUserAccess: createAction(
-		'[Plugin User Assignment] Check User Access',
-		props<{ pluginId: ID; installationId: ID; userId: ID }>()
-	),
+	// Check user access (subscription-based)
+	checkUserAccess: createAction('[Plugin User Assignment] Check User Access', props<{ pluginId: ID; userId: ID }>()),
 	checkUserAccessSuccess: createAction(
 		'[Plugin User Assignment] Check User Access Success',
 		props<{ hasAccess: boolean }>()
@@ -85,5 +97,10 @@ export const PluginUserAssignmentActions = {
 	),
 	clearSelection: createAction('[Plugin User Assignment] Clear Selection'),
 	clearAssignments: createAction('[Plugin User Assignment] Clear Assignments'),
-	clearError: createAction('[Plugin User Assignment] Clear Error')
+	clearError: createAction('[Plugin User Assignment] Clear Error'),
+
+	// Pagination management
+	setSkip: createAction('[Plugin User Assignment] Set Skip', props<{ skip: number }>()),
+	setTake: createAction('[Plugin User Assignment] Set Take', props<{ take: number }>()),
+	resetPagination: createAction('[Plugin User Assignment] Reset Pagination')
 };

@@ -1,4 +1,5 @@
 import { ID } from '@gauzy/contracts';
+import { BaseQueryDTO } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
@@ -49,9 +50,10 @@ export class UnassignPluginUsersDTO {
 }
 
 /**
- * DTO for querying plugin user assignments
+ * DTO for querying plugin user assignments with pagination support
+ * Extends BaseQueryDTO to inherit standard query capabilities (take, skip, where, relations, etc.)
  */
-export class PluginUserAssignmentQueryDTO {
+export class PluginUserAssignmentQueryDTO extends BaseQueryDTO {
 	@ApiPropertyOptional({
 		description: 'Plugin installation ID to filter by',
 		type: String,

@@ -1,7 +1,7 @@
 <!-- User Management Tab Template -->
 <!-- Uses reactive programming with async pipe and proper null-safety -->
-@let plugin = plugin$ | async; @let viewModel = viewModel$ | async; @let canAssign = canAssign$ | async; @if (plugin &&
-viewModel) {
+@let plugin = plugin$ | async; @let viewModel = viewModel$ | async; @let canAssign = canAssign$ | async; @let hasMore =
+hasMore$ | async; @let loadingMore = loadingMore$ | async; @if (plugin && viewModel) {
 <div class="user-management-tab-content">
 	<!-- Header Section -->
 	<div class="header-section mb-4">
@@ -60,7 +60,7 @@ viewModel) {
 	</nb-alert>
 	}
 
-	<!-- Assigned Users List -->
+	<!-- Assigned Users List with Infinite Scroll -->
 	<div class="assigned-users-section">
 		<h6 class="section-title mb-3">{{ 'PLUGIN.USER_MANAGEMENT.ASSIGNED_USERS' | translate }}</h6>
 
@@ -72,64 +72,88 @@ viewModel) {
 		</div>
 		}
 
-		<!-- Users List -->
+		<!-- Users List with Infinite Scroll -->
 		@else if (viewModel.hasAssignments) {
-		<div class="users-list">
-			@for (assignment of viewModel.assignments; track trackByAssignmentId($index, assignment); let isLast =
-			$last) {
-			<div class="user-assignment-item">
-				<div class="user-info">
-					<nb-user
-						[picture]="getUserAvatar(assignment.user)"
-						[name]="getUserDisplayName(assignment)"
-						[title]="assignment.user?.email || 'N/A'"
-						size="medium"
-					></nb-user>
-				</div>
-
-				<div class="assignment-metadata">
-					<div class="metadata-row">
-						<div class="metadata-item">
-							<nb-icon icon="calendar-outline" class="metadata-icon"></nb-icon>
-							<span class="metadata-text">
-								{{ 'PLUGIN.USER_MANAGEMENT.ASSIGNED_ON' | translate }}:
-								{{ getAssignmentDate(assignment) | date : 'medium' }}
-							</span>
-						</div>
-						@if (assignment.reason) {
-						<div class="metadata-item">
-							<nb-icon icon="message-circle-outline" class="metadata-icon"></nb-icon>
-							<span class="metadata-text">{{ assignment.reason }}</span>
-						</div>
-						}
+		<div
+			class="users-list-container"
+			libInfiniteScroll
+			[scrollThreshold]="200"
+			[debounceTime]="300"
+			[disabled]="!hasMore || loadingMore"
+			(scrolled)="onLoadMore()"
+		>
+			<div class="users-list">
+				@for (assignment of viewModel.assignments; track trackByAssignmentId($index, assignment); let isLast =
+				$last) {
+				<div class="user-assignment-item">
+					<div class="user-info">
+						<nb-user
+							[picture]="getUserAvatar(assignment.user)"
+							[name]="getUserDisplayName(assignment)"
+							[title]="assignment.user?.email || 'N/A'"
+							size="medium"
+						></nb-user>
 					</div>
 
-					<div class="status-badge">
-						@let statusBadge = getStatusBadge(assignment);
-						<nb-badge [status]="statusBadge.status" [text]="statusBadge.text | translate"></nb-badge>
-					</div>
-				</div>
+					<div class="assignment-metadata">
+						<div class="metadata-row">
+							<div class="metadata-item">
+								<nb-icon icon="calendar-outline" class="metadata-icon"></nb-icon>
+								<span class="metadata-text">
+									{{ 'PLUGIN.USER_MANAGEMENT.ASSIGNED_ON' | translate }}:
+									{{ getAssignmentDate(assignment) | date : 'medium' }}
+								</span>
+							</div>
+							@if (assignment.reason) {
+							<div class="metadata-item">
+								<nb-icon icon="message-circle-outline" class="metadata-icon"></nb-icon>
+								<span class="metadata-text">{{ assignment.reason }}</span>
+							</div>
+							}
+						</div>
 
-				@if (canAssign && isActive(assignment)) {
-				<div class="assignment-actions">
-					<button
-						nbButton
-						ghost
-						size="small"
-						status="danger"
-						(click)="onUnassignUser(assignment)"
-						[nbTooltip]="'PLUGIN.USER_MANAGEMENT.UNASSIGN' | translate"
-						[disabled]="viewModel.loading"
-						class="unassign-btn"
-					>
-						<nb-icon icon="person-remove-outline"></nb-icon>
-					</button>
+						<div class="status-badge">
+							@let statusBadge = getStatusBadge(assignment);
+							<nb-badge [status]="statusBadge.status" [text]="statusBadge.text | translate"></nb-badge>
+						</div>
+					</div>
+
+					@if (canAssign && isActive(assignment)) {
+					<div class="assignment-actions">
+						<button
+							nbButton
+							ghost
+							size="small"
+							status="danger"
+							(click)="onUnassignUser(assignment)"
+							[nbTooltip]="'PLUGIN.USER_MANAGEMENT.UNASSIGN' | translate"
+							[disabled]="viewModel.loading"
+							class="unassign-btn"
+						>
+							<nb-icon icon="person-remove-outline"></nb-icon>
+						</button>
+					</div>
+					}
 				</div>
-				}
+				@if (!isLast) {
+				<nb-divider></nb-divider>
+				} }
 			</div>
-			@if (!isLast) {
-			<nb-divider></nb-divider>
-			} }
+
+			<!-- Loading More Indicator -->
+			@if (loadingMore) {
+			<div class="loading-more-state">
+				<nb-spinner size="small"></nb-spinner>
+				<span class="loading-text">{{ 'SM_TABLE.LOADING_MORE' | translate }}</span>
+			</div>
+			}
+
+			<!-- End of List Indicator -->
+			@if (!hasMore && !loadingMore) {
+			<div class="end-of-list">
+				<span class="text-hint">{{ 'PLUGIN.USER_MANAGEMENT.END_OF_LIST' | translate }}</span>
+			</div>
+			}
 		</div>
 		}
 

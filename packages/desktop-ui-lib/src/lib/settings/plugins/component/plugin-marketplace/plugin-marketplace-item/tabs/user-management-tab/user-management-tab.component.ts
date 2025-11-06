@@ -72,6 +72,16 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	readonly loading$: Observable<boolean>;
 
 	/**
+	 * Loading more state (for infinite scroll)
+	 */
+	readonly loadingMore$: Observable<boolean>;
+
+	/**
+	 * Has more data to load
+	 */
+	readonly hasMore$: Observable<boolean>;
+
+	/**
 	 * Error state
 	 */
 	readonly error$: Observable<string | null>;
@@ -95,6 +105,8 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 		this.viewModel$ = this.userAssignmentFacade.viewModel$;
 		this.activeUsersCount$ = this.userAssignmentFacade.activeUsersCount$;
 		this.loading$ = this.userAssignmentFacade.loading$;
+		this.loadingMore$ = this.userAssignmentFacade.loadingMore$;
+		this.hasMore$ = this.userAssignmentFacade.hasMore$;
 		this.error$ = this.userAssignmentFacade.error$;
 		this.assignedUsers$ = this.userAssignmentFacade.assignments$;
 
@@ -259,5 +271,17 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	 */
 	getStatusBadge(assignment: PluginUserAssignment): { status: string; text: string } {
 		return this.userAssignmentFacade.getStatusBadge(assignment);
+	}
+
+	/**
+	 * Load more assignments for infinite scroll
+	 */
+	onLoadMore(): void {
+		const plugin = this.marketplaceQuery.plugin;
+		if (!plugin) {
+			return;
+		}
+
+		this.userAssignmentFacade.loadMoreAssignments(plugin.id, '', false);
 	}
 }

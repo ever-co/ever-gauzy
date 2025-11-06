@@ -16,9 +16,17 @@ export class PluginUserAssignmentQuery extends Query<PluginUserAssignmentState> 
 	// State selectors
 	assignments$ = this.select('assignments');
 	loading$ = this.select('loading');
+	loadingMore$ = this.select('loadingMore');
 	error$ = this.select('error');
 	selectedPluginId$ = this.select('selectedPluginId');
 	selectedInstallationId$ = this.select('selectedInstallationId');
+	pagination$ = this.select('pagination');
+
+	// Pagination selectors
+	currentSkip$ = this.select((state) => state.pagination.skip);
+	currentTake$ = this.select((state) => state.pagination.take);
+	total$ = this.select((state) => state.pagination.total);
+	hasMore$ = this.select((state) => state.pagination.hasMore);
 
 	// Computed selectors
 	get assignments(): PluginUserAssignment[] {
@@ -39,6 +47,30 @@ export class PluginUserAssignmentQuery extends Query<PluginUserAssignmentState> 
 
 	get selectedInstallationId(): string | null {
 		return this.getValue().selectedInstallationId;
+	}
+
+	get pagination() {
+		return this.getValue().pagination;
+	}
+
+	get currentSkip(): number {
+		return this.getValue().pagination.skip;
+	}
+
+	get currentTake(): number {
+		return this.getValue().pagination.take;
+	}
+
+	get total(): number {
+		return this.getValue().pagination.total;
+	}
+
+	get hasMore(): boolean {
+		return this.getValue().pagination.hasMore;
+	}
+
+	get loadingMore(): boolean {
+		return this.getValue().loadingMore;
 	}
 
 	// Get assignments for specific installation

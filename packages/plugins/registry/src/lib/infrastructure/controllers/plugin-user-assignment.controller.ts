@@ -1,4 +1,4 @@
-import { ID, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import {
 	Body,
@@ -141,7 +141,7 @@ export class PluginUserAssignmentController {
 	@ApiOperation({
 		summary: 'Get all user assignments for plugin installation',
 		description:
-			'Retrieves all user assignments for a specific plugin installation. Requires PLUGIN_ASSIGN_ACCESS permission.'
+			'Retrieves all user assignments for a specific plugin installation with pagination support. Requires PLUGIN_ASSIGN_ACCESS permission.'
 	})
 	@ApiParam({
 		name: 'pluginId',
@@ -162,10 +162,30 @@ export class PluginUserAssignmentController {
 		type: Boolean,
 		example: false
 	})
+	@ApiQuery({
+		name: 'take',
+		required: false,
+		description: 'Number of items to take',
+		type: Number,
+		example: 20
+	})
+	@ApiQuery({
+		name: 'skip',
+		required: false,
+		description: 'Number of items to skip',
+		type: Number,
+		example: 0
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'User assignments retrieved successfully',
-		type: [PluginUserAssignment]
+		schema: {
+			type: 'object',
+			properties: {
+				items: { type: 'array', items: { $ref: '#/components/schemas/PluginUserAssignment' } },
+				total: { type: 'number' }
+			}
+		}
 	})
 	@ApiResponse({
 		status: HttpStatus.FORBIDDEN,
@@ -176,9 +196,13 @@ export class PluginUserAssignmentController {
 	public async getPluginUserAssignments(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
 		@Param('installationId', UUIDValidationPipe) installationId: ID,
-		@Query('includeInactive') includeInactive?: boolean
-	): Promise<PluginUserAssignment[]> {
-		return await this.queryBus.execute(new GetPluginUserAssignmentsQuery(installationId, includeInactive || false));
+		@Query('includeInactive') includeInactive?: boolean,
+		@Query('take') take?: number,
+		@Query('skip') skip?: number
+	): Promise<IPagination<PluginUserAssignment>> {
+		return await this.queryBus.execute(
+			new GetPluginUserAssignmentsQuery(installationId, includeInactive || false, take, skip)
+		);
 	}
 
 	@ApiOperation({
@@ -249,7 +273,8 @@ export class UserPluginAssignmentController {
 
 	@ApiOperation({
 		summary: 'Get all plugin assignments for user',
-		description: 'Retrieves all plugin assignments for a specific user. Requires PLUGIN_ASSIGN_ACCESS permission.'
+		description:
+			'Retrieves all plugin assignments for a specific user with pagination support. Requires PLUGIN_ASSIGN_ACCESS permission.'
 	})
 	@ApiParam({
 		name: 'userId',
@@ -264,10 +289,30 @@ export class UserPluginAssignmentController {
 		type: Boolean,
 		example: false
 	})
+	@ApiQuery({
+		name: 'take',
+		required: false,
+		description: 'Number of items to take',
+		type: Number,
+		example: 20
+	})
+	@ApiQuery({
+		name: 'skip',
+		required: false,
+		description: 'Number of items to skip',
+		type: Number,
+		example: 0
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Plugin assignments retrieved successfully',
-		type: [PluginUserAssignment]
+		schema: {
+			type: 'object',
+			properties: {
+				items: { type: 'array', items: { $ref: '#/components/schemas/PluginUserAssignment' } },
+				total: { type: 'number' }
+			}
+		}
 	})
 	@ApiResponse({
 		status: HttpStatus.FORBIDDEN,
@@ -277,9 +322,13 @@ export class UserPluginAssignmentController {
 	@Get()
 	public async getUserPluginAssignments(
 		@Param('userId', UUIDValidationPipe) userId: ID,
-		@Query('includeInactive') includeInactive?: boolean
-	): Promise<PluginUserAssignment[]> {
-		return await this.queryBus.execute(new GetUserPluginAssignmentsQuery(userId, includeInactive || false));
+		@Query('includeInactive') includeInactive?: boolean,
+		@Query('take') take?: number,
+		@Query('skip') skip?: number
+	): Promise<IPagination<PluginUserAssignment>> {
+		return await this.queryBus.execute(
+			new GetUserPluginAssignmentsQuery(userId, includeInactive || false, take, skip)
+		);
 	}
 }
 
@@ -339,7 +388,7 @@ export class PluginUserAssignmentManagementController {
 	@Get()
 	public async getAllPluginUserAssignments(
 		@Query() queryDto: PluginUserAssignmentQueryDTO
-	): Promise<PluginUserAssignment[]> {
+	): Promise<IPagination<PluginUserAssignment>> {
 		const filters = {
 			pluginId: queryDto.pluginId,
 			userId: queryDto.userId,

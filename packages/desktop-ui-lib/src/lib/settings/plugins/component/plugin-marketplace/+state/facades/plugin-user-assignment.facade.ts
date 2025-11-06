@@ -65,6 +65,27 @@ export class PluginUserAssignmentFacade {
 	}
 
 	/**
+	 * Get loading more state (for infinite scroll)
+	 */
+	get loadingMore$(): Observable<boolean> {
+		return this.query.loadingMore$;
+	}
+
+	/**
+	 * Get has more data to load
+	 */
+	get hasMore$(): Observable<boolean> {
+		return this.query.hasMore$;
+	}
+
+	/**
+	 * Get pagination state
+	 */
+	get pagination$(): Observable<any> {
+		return this.query.pagination$;
+	}
+
+	/**
 	 * Get error state
 	 */
 	get error$(): Observable<string | null> {
@@ -154,17 +175,32 @@ export class PluginUserAssignmentFacade {
 	}
 
 	/**
-	 * Assign users to a plugin installation
+	 * Load more assignments (for infinite scroll)
 	 * @param pluginId - Plugin identifier
 	 * @param installationId - Installation identifier
+	 * @param includeInactive - Whether to include inactive assignments
+	 */
+	loadMoreAssignments(pluginId: ID, installationId: ID, includeInactive = false): void {
+		this.actions.dispatch(
+			PluginUserAssignmentActions.loadMoreAssignments({
+				pluginId,
+				installationId,
+				includeInactive
+			})
+		);
+	}
+
+	/**
+	 * Assign users to a plugin subscription
+	 * Uses subscription-based access control (creates child USER-scoped subscriptions)
+	 * @param pluginId - Plugin identifier
 	 * @param userIds - Array of user identifiers
 	 * @param reason - Optional reason for assignment
 	 */
-	assignUsers(pluginId: ID, installationId: ID, userIds: string[], reason?: string): void {
+	assignUsers(pluginId: ID, userIds: string[], reason?: string): void {
 		this.actions.dispatch(
 			PluginUserAssignmentActions.assignUsers({
 				pluginId,
-				installationId,
 				userIds,
 				reason
 			})
@@ -172,16 +208,17 @@ export class PluginUserAssignmentFacade {
 	}
 
 	/**
-	 * Unassign a user from plugin installation
+	 * Unassign a user from plugin (revoke subscription)
+	 * Uses subscription-based revocation to cancel child USER-scoped subscription
 	 * @param pluginId - Plugin identifier
-	 * @param installationId - Installation identifier
+	 * @param installationId - Installation identifier (kept for backward compatibility, not used)
 	 * @param userId - User identifier
 	 */
 	unassignUser(pluginId: ID, installationId: ID, userId: ID): void {
+		// Note: installationId parameter is kept for backward compatibility but not used in subscription-based approach
 		this.actions.dispatch(
 			PluginUserAssignmentActions.unassignUser({
 				pluginId,
-				installationId,
 				userId
 			})
 		);
@@ -221,15 +258,16 @@ export class PluginUserAssignmentFacade {
 
 	/**
 	 * Check if user has access to plugin
+	 * Uses subscription-based access check
 	 * @param pluginId - Plugin identifier
-	 * @param installationId - Installation identifier
+	 * @param installationId - Installation identifier (kept for backward compatibility, not used)
 	 * @param userId - User identifier
 	 */
 	checkUserAccess(pluginId: ID, installationId: ID, userId: ID): void {
+		// Note: installationId parameter is kept for backward compatibility but not used in subscription-based approach
 		this.actions.dispatch(
 			PluginUserAssignmentActions.checkUserAccess({
 				pluginId,
-				installationId,
 				userId
 			})
 		);
