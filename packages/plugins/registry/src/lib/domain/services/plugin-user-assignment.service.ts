@@ -1,6 +1,7 @@
 import { ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { IPagination } from '../../../../../../../dist/packages/contracts/src/lib/core.model';
 import { PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import { PluginSubscriptionStatus } from '../../shared/models/plugin-subscription.model';
@@ -39,17 +40,15 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 		const organizationId = RequestContext.currentOrganizationId();
 
 		// Validate plugin installation exists and get plugin details
-		const pluginInstallation = await this.pluginInstallationService.findOneByOptions(
-			{
-				where: {
-					id: pluginInstallationId,
-					tenantId,
-					organizationId,
-					status: PluginInstallationStatus.INSTALLED
-				},
-				relations: ['plugin', 'version']
-			}
-		);
+		const pluginInstallation = await this.pluginInstallationService.findOneByOptions({
+			where: {
+				id: pluginInstallationId,
+				tenantId,
+				organizationId,
+				status: PluginInstallationStatus.INSTALLED
+			},
+			relations: ['plugin', 'version']
+		});
 
 		if (!pluginInstallation) {
 			throw new NotFoundException('Plugin installation not found');
@@ -69,8 +68,8 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 			}
 		});
 
-		const existingUserIds = existingAssignments.map(assignment => assignment.userId);
-		const newUserIds = userIds.filter(userId => !existingUserIds.includes(userId));
+		const existingUserIds = existingAssignments.map((assignment) => assignment.userId);
+		const newUserIds = userIds.filter((userId) => !existingUserIds.includes(userId));
 
 		if (newUserIds.length === 0) {
 			throw new BadRequestException('All specified users are already assigned to this plugin');
@@ -156,7 +155,7 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 	async getPluginUserAssignments(
 		pluginInstallationId: ID,
 		includeInactive: boolean = false
-	): Promise<PluginUserAssignment[]> {
+	): Promise<IPagination<PluginUserAssignment>> {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 
@@ -165,7 +164,7 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 			...(includeInactive ? {} : { isActive: true })
 		};
 
-		return await this.find({
+		return this.findAll({
 			where: {
 				...where,
 				tenantId,
@@ -184,7 +183,7 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 	async getUserPluginAssignments(
 		userId: ID,
 		includeInactive: boolean = false
-	): Promise<PluginUserAssignment[]> {
+	): Promise<IPagination<PluginUserAssignment>> {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 
@@ -193,7 +192,7 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 			...(includeInactive ? {} : { isActive: true })
 		};
 
-		return await this.find({
+		return this.findAll({
 			where: {
 				...where,
 				tenantId,
@@ -231,11 +230,7 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 	 * @param organizationId - The organization ID
 	 * @throws ForbiddenException if plugin is not purchased for organization/tenant scope
 	 */
-	private async validatePluginSubscriptionScope(
-		pluginId: ID,
-		tenantId: ID,
-		organizationId: ID
-	): Promise<void> {
+	private async validatePluginSubscriptionScope(pluginId: ID, tenantId: ID, organizationId: ID): Promise<void> {
 		// Find active subscription for this plugin at organization or tenant level
 		const subscription = await this.pluginSubscriptionService.findOneByWhereOptions({
 			pluginId,
@@ -246,9 +241,7 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 		});
 
 		if (!subscription) {
-			throw new ForbiddenException(
-				'Plugin must be purchased for organization or tenant scope to assign users'
-			);
+			throw new ForbiddenException('Plugin must be purchased for organization or tenant scope to assign users');
 		}
 	}
 

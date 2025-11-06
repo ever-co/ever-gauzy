@@ -1,3 +1,4 @@
+import { IPagination } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PluginUserAssignment } from '../../../domain/entities/plugin-user-assignment.entity';
 import { PluginUserAssignmentService } from '../../../domain/services/plugin-user-assignment.service';
@@ -20,9 +21,9 @@ export class GetPluginUserAssignmentsQueryHandler implements IQueryHandler<GetPl
 	 * @param query - The get plugin user assignments query
 	 * @returns Array of plugin user assignments
 	 */
-	async execute(query: GetPluginUserAssignmentsQuery): Promise<PluginUserAssignment[]> {
+	async execute(query: GetPluginUserAssignmentsQuery): Promise<IPagination<PluginUserAssignment>> {
 		const { pluginInstallationId, includeInactive } = query;
-		return await this.pluginUserAssignmentService.getPluginUserAssignments(pluginInstallationId, includeInactive);
+		return this.pluginUserAssignmentService.getPluginUserAssignments(pluginInstallationId, includeInactive);
 	}
 }
 
@@ -38,9 +39,9 @@ export class GetUserPluginAssignmentsQueryHandler implements IQueryHandler<GetUs
 	 * @param query - The get user plugin assignments query
 	 * @returns Array of plugin user assignments
 	 */
-	async execute(query: GetUserPluginAssignmentsQuery): Promise<PluginUserAssignment[]> {
+	async execute(query: GetUserPluginAssignmentsQuery): Promise<IPagination<PluginUserAssignment>> {
 		const { userId, includeInactive } = query;
-		return await this.pluginUserAssignmentService.getUserPluginAssignments(userId, includeInactive);
+		return this.pluginUserAssignmentService.getUserPluginAssignments(userId, includeInactive);
 	}
 }
 
@@ -74,14 +75,14 @@ export class GetAllPluginUserAssignmentsQueryHandler implements IQueryHandler<Ge
 	 * @param query - The get all plugin user assignments query
 	 * @returns Array of plugin user assignments
 	 */
-	async execute(query: GetAllPluginUserAssignmentsQuery): Promise<PluginUserAssignment[]> {
+	async execute(query: GetAllPluginUserAssignmentsQuery): Promise<IPagination<PluginUserAssignment>> {
 		const { filters } = query;
 
 		if (!filters) {
 			const result = await this.pluginUserAssignmentService.findAll({
 				relations: ['user', 'assignedBy', 'revokedBy', 'pluginInstallation']
 			});
-			return result.items || [];
+			return result;
 		}
 
 		// Build where clause based on filters
@@ -92,7 +93,7 @@ export class GetAllPluginUserAssignmentsQueryHandler implements IQueryHandler<Ge
 
 		// If pluginId filter is provided, we need to join with plugin installation
 		if (filters.pluginId) {
-			return await this.pluginUserAssignmentService.find({
+			return this.pluginUserAssignmentService.findAll({
 				where: {
 					...where,
 					pluginInstallation: {
@@ -103,7 +104,7 @@ export class GetAllPluginUserAssignmentsQueryHandler implements IQueryHandler<Ge
 			});
 		}
 
-		return await this.pluginUserAssignmentService.find({
+		return this.pluginUserAssignmentService.findAll({
 			where,
 			relations: ['user', 'assignedBy', 'revokedBy', 'pluginInstallation']
 		});
