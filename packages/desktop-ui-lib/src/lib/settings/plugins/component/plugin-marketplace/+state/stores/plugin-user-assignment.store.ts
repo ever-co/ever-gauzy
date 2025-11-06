@@ -42,7 +42,7 @@ export interface UnassignPluginUserRequest {
 
 export interface GetPluginUserAssignmentsRequest {
 	pluginId: ID;
-	installationId: ID;
+	installationId?: ID; // Optional: if not provided, returns all assignments for the plugin
 	includeInactive?: boolean;
 }
 

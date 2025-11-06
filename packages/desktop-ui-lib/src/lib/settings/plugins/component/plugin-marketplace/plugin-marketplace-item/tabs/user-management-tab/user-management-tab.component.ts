@@ -1,15 +1,38 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { IPlugin, IUser } from '@gauzy/contracts';
-import { Actions } from '@ngneat/effects-ng';
-import { BehaviorSubject, distinctUntilChanged, filter, Observable, Subject, takeUntil, tap } from 'rxjs';
-import { PluginUserAssignmentActions } from '../../../+state/actions/plugin-user-assignment.actions';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChanged, filter, Observable } from 'rxjs';
+import {
+	PluginUserAssignmentFacade,
+	UserManagementViewModel
+} from '../../../+state/facades/plugin-user-assignment.facade';
 import { PluginSubscriptionAccessFacade } from '../../../+state/plugin-subscription-access.facade';
 import { PluginMarketplaceQuery } from '../../../+state/queries/plugin-marketplace.query';
-import { PluginUserAssignmentQuery } from '../../../+state/queries/plugin-user-assignment.query';
-import { PluginVersionQuery } from '../../../+state/queries/plugin-version.query';
 import { PluginUserAssignment } from '../../../+state/stores/plugin-user-assignment.store';
 
+/**
+ * User Management Tab Component
+ *
+ * Smart Component responsible for:
+ * - Managing plugin user assignments
+ * - Displaying assigned users
+ * - Handling user assignment/unassignment operations
+ *
+ * Architecture:
+ * - Uses OnPush change detection for optimal performance
+ * - Leverages Facade pattern for business logic
+ * - Implements reactive programming with RxJS
+ * - Follows Single Responsibility Principle
+ *
+ * State Management:
+ * - All state operations delegated to PluginUserAssignmentFacade
+ * - Uses observables for reactive data flow
+ * - No manual subscriptions (UntilDestroy handles cleanup)
+ *
+ * @example
+ * <gauzy-plugin-user-management-tab></gauzy-plugin-user-management-tab>
+ */
+@UntilDestroy()
 @Component({
 	selector: 'gauzy-plugin-user-management-tab',
 	standalone: false,
@@ -18,108 +41,223 @@ import { PluginUserAssignment } from '../../../+state/stores/plugin-user-assignm
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserManagementTabComponent implements OnInit, OnDestroy {
-	private readonly destroy$ = new Subject<void>();
-	private readonly searchTerm$ = new BehaviorSubject<string>('');
+	// ============================================================================
+	// PUBLIC OBSERVABLES - Exposed to template
+	// ============================================================================
 
-	plugin$: Observable<IPlugin>;
-	assignedUsers$: Observable<PluginUserAssignment[]>;
+	/**
+	 * Current plugin being managed
+	 */
+	readonly plugin$: Observable<IPlugin | null>;
+
+	/**
+	 * Complete view model containing all UI state
+	 * Combines assignments, loading, error, and computed values
+	 */
+	readonly viewModel$: Observable<UserManagementViewModel>;
+
+	/**
+	 * Permission check for assigning users
+	 */
 	canAssign$: Observable<boolean>;
-	loading$ = this.userAssignmentQuery.loading$;
+
+	/**
+	 * Active users count for stats display
+	 */
+	readonly activeUsersCount$: Observable<number>;
+
+	/**
+	 * Loading state
+	 */
+	readonly loading$: Observable<boolean>;
+
+	/**
+	 * Error state
+	 */
+	readonly error$: Observable<string | null>;
+
+	/**
+	 * Assigned users list
+	 */
+	readonly assignedUsers$: Observable<PluginUserAssignment[]>;
+
+	// ============================================================================
+	// CONSTRUCTOR & LIFECYCLE
+	// ============================================================================
 
 	constructor(
-		private readonly route: ActivatedRoute,
-		private readonly actions: Actions,
 		private readonly marketplaceQuery: PluginMarketplaceQuery,
-		private readonly versionQuery: PluginVersionQuery,
 		private readonly accessFacade: PluginSubscriptionAccessFacade,
-		private readonly userAssignmentQuery: PluginUserAssignmentQuery
+		private readonly userAssignmentFacade: PluginUserAssignmentFacade
 	) {
+		// Initialize observables
 		this.plugin$ = this.marketplaceQuery.plugin$;
+		this.viewModel$ = this.userAssignmentFacade.viewModel$;
+		this.activeUsersCount$ = this.userAssignmentFacade.activeUsersCount$;
+		this.loading$ = this.userAssignmentFacade.loading$;
+		this.error$ = this.userAssignmentFacade.error$;
+		this.assignedUsers$ = this.userAssignmentFacade.assignments$;
+
+		// Initialize permission check observable (will be set properly in setupDataStreams)
+		this.canAssign$ = this.plugin$.pipe(
+			filter(Boolean),
+			distinctUntilChanged((prev, curr) => prev?.id === curr?.id)
+		) as any; // Will be properly initialized in ngOnInit
 	}
 
+	/**
+	 * Component initialization
+	 * Sets up reactive data streams and loads initial data
+	 */
 	ngOnInit(): void {
-		// Set up data streams
-		this.setupDataStreams();
+		this.initializeDataStreams();
 	}
 
+	/**
+	 * Component cleanup
+	 * UntilDestroy decorator handles subscription cleanup automatically
+	 */
 	ngOnDestroy(): void {
-		this.destroy$.next();
-		this.destroy$.complete();
-		this.searchTerm$.complete();
+		// Cleanup is handled by @UntilDestroy decorator
+		// Clear facade state on component destroy
+		this.userAssignmentFacade.clearContext();
 	}
 
-	private setupDataStreams(): void {
-		// Load assignments when plugin and installation are available
+	// ============================================================================
+	// PRIVATE METHODS - Initialization
+	// ============================================================================
+
+	/**
+	 * Initialize reactive data streams
+	 * Sets up plugin monitoring and loads assignments when plugin changes
+	 */
+	private initializeDataStreams(): void {
+		// Monitor plugin changes and load assignments
 		this.plugin$
 			.pipe(
 				filter(Boolean),
-				distinctUntilChanged((prev, curr) => prev.id === curr.id),
-				tap((plugin) => {
-					// Check permissions
-					this.canAssign$ = this.accessFacade.canAssign$(plugin.id);
-
-					// Load assignments (assuming installationId is available or derived)
-					// For now, we'll load based on pluginId only
-					this.actions.dispatch(
-						PluginUserAssignmentActions.loadAssignments({
-							pluginId: plugin.id,
-							installationId: '', // Update this if you have installation context
-							includeInactive: false
-						})
-					);
-				}),
-				takeUntil(this.destroy$)
+				distinctUntilChanged((prev, curr) => prev?.id === curr?.id),
+				untilDestroyed(this)
 			)
-			.subscribe();
-
-		// Get assigned users - show all assignments for this plugin across all installations
-		this.assignedUsers$ = this.userAssignmentQuery.assignments$;
+			.subscribe((plugin) => {
+				this.handlePluginChange(plugin);
+			});
 	}
 
+	/**
+	 * Handle plugin change event
+	 * Loads assignments and updates permission checks
+	 * @param plugin - The plugin that changed
+	 */
+	private handlePluginChange(plugin: IPlugin): void {
+		// Load all assignments for this plugin
+		this.userAssignmentFacade.loadAssignmentsForPlugin(plugin.id, false);
+
+		// Update canAssign observable
+		this.canAssign$ = this.accessFacade.canAssign$(plugin.id);
+	}
+
+	// ============================================================================
+	// PUBLIC METHODS - User Actions
+	// ============================================================================
+
+	/**
+	 * Show assignment dialog for adding users
+	 * Opens modal to select and assign users to plugin
+	 */
 	showAssignmentDialog(): void {
 		const plugin = this.marketplaceQuery.plugin;
-		if (!plugin) return;
+		if (!plugin) {
+			console.warn('Cannot show assignment dialog: plugin not found');
+			return;
+		}
 
 		this.accessFacade.showAssignmentDialog(plugin.id);
 	}
 
-	onSearchChange(searchTerm: string): void {
-		this.searchTerm$.next(searchTerm);
-	}
-
-	getUserDisplayName(assignment: PluginUserAssignment): string {
-		if (assignment.user) {
-			const { firstName, lastName, email } = assignment.user;
-			if (firstName || lastName) {
-				return `${firstName || ''} ${lastName || ''}`.trim();
-			}
-			return email;
-		}
-		return 'Unknown User';
-	}
-
-	getUserAvatar(user: IUser | PluginUserAssignment['user']): string {
-		return user?.imageUrl || '/assets/images/avatars/default-avatar.png';
-	}
-
-	getAssignmentDate(assignment: PluginUserAssignment): Date {
-		return new Date(assignment.assignedAt);
-	}
-
+	/**
+	 * Handle user unassignment action
+	 * Removes user assignment from plugin installation
+	 * @param assignment - The assignment to remove
+	 */
 	onUnassignUser(assignment: PluginUserAssignment): void {
-		const plugin = this.marketplaceQuery.plugin;
-		if (!plugin) return;
+		if (!assignment) {
+			console.warn('Cannot unassign: assignment is null or undefined');
+			return;
+		}
 
-		this.actions.dispatch(
-			PluginUserAssignmentActions.unassignUser({
-				pluginId: plugin.id,
-				installationId: assignment.pluginInstallationId,
-				userId: assignment.userId
-			})
-		);
+		const plugin = this.marketplaceQuery.plugin;
+		if (!plugin) {
+			console.warn('Cannot unassign user: plugin not found');
+			return;
+		}
+
+		// Delegate to facade
+		this.userAssignmentFacade.unassignUser(plugin.id, assignment.pluginInstallationId, assignment.userId);
 	}
 
+	// ============================================================================
+	// PUBLIC METHODS - UI Helpers (Presentation Logic)
+	// ============================================================================
+
+	/**
+	 * Get display name for user from assignment
+	 * Formats user's full name or falls back to email
+	 * @param assignment - Plugin user assignment
+	 * @returns Formatted display name
+	 */
+	getUserDisplayName(assignment: PluginUserAssignment): string {
+		return this.userAssignmentFacade.getUserDisplayName(assignment);
+	}
+
+	/**
+	 * Get avatar URL for user
+	 * Returns user's image URL or default avatar
+	 * @param user - User object from assignment
+	 * @returns Avatar URL
+	 */
+	getUserAvatar(user: IUser | PluginUserAssignment['user']): string {
+		if (!user) {
+			return '/assets/images/avatars/default-avatar.png';
+		}
+		return user.imageUrl || '/assets/images/avatars/default-avatar.png';
+	}
+
+	/**
+	 * Get formatted assignment date
+	 * @param assignment - Plugin user assignment
+	 * @returns Date object for formatting in template
+	 */
+	getAssignmentDate(assignment: PluginUserAssignment): Date {
+		return this.userAssignmentFacade.getAssignmentDate(assignment);
+	}
+
+	/**
+	 * Track by function for ngFor optimization
+	 * Helps Angular track items for efficient DOM updates
+	 * @param index - Item index
+	 * @param assignment - Plugin user assignment
+	 * @returns Unique identifier for assignment
+	 */
 	trackByAssignmentId(index: number, assignment: PluginUserAssignment): string {
-		return assignment.id;
+		return assignment?.id || `${index}`;
+	}
+
+	/**
+	 * Check if assignment is active
+	 * @param assignment - Plugin user assignment
+	 * @returns True if assignment is active
+	 */
+	isActive(assignment: PluginUserAssignment): boolean {
+		return this.userAssignmentFacade.isAssignmentActive(assignment);
+	}
+
+	/**
+	 * Get status badge configuration
+	 * @param assignment - Plugin user assignment
+	 * @returns Badge status and text configuration
+	 */
+	getStatusBadge(assignment: PluginUserAssignment): { status: string; text: string } {
+		return this.userAssignmentFacade.getStatusBadge(assignment);
 	}
 }

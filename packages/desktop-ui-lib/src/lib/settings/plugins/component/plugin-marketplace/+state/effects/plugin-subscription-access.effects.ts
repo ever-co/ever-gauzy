@@ -3,11 +3,17 @@
 
 import { Injectable } from '@angular/core';
 import { ToastrService } from '@gauzy/ui-core/core';
+import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { catchError, map, of, switchMap, tap } from 'rxjs';
 import { PluginSubscriptionAccessService } from '../../../../services/plugin-subscription-access.service';
+import {
+	PluginUserManagementComponent,
+	PluginUserManagementDialogData
+} from '../../plugin-user-management/plugin-user-management.component';
 import { PluginSubscriptionAccessActions } from '../actions/plugin-subscription-access.actions';
+import { PluginMarketplaceQuery } from '../queries/plugin-marketplace.query';
 import { PluginSubscriptionAccessStore } from '../stores/plugin-subscription-access.store';
 
 @Injectable({
@@ -18,7 +24,9 @@ export class PluginSubscriptionAccessEffects {
 		private readonly actions$: Actions,
 		private readonly subscriptionAccessService: PluginSubscriptionAccessService,
 		private readonly subscriptionAccessStore: PluginSubscriptionAccessStore,
-		private readonly toastrService: ToastrService
+		private readonly toastrService: ToastrService,
+		private readonly dialogService: NbDialogService,
+		private readonly marketplaceQuery: PluginMarketplaceQuery
 	) {}
 
 	// ============================================================================
@@ -223,6 +231,136 @@ export class PluginSubscriptionAccessEffects {
 			ofType(PluginSubscriptionAccessActions.refreshPluginAccess),
 			map(({ pluginId }) => PluginSubscriptionAccessActions.checkAccess(pluginId))
 		)
+	);
+
+	// ============================================================================
+	// Show Assignment Dialog Effect
+	// ============================================================================
+
+	/**
+	 * Opens the user assignment dialog when showAssignmentDialog action is dispatched
+	 * This effect handles the UI side effect of displaying the modal dialog
+	 */
+	showAssignmentDialog$ = createEffect(
+		(actions$ = this.actions$) =>
+			actions$.pipe(
+				ofType(PluginSubscriptionAccessActions.showAssignmentDialog),
+				tap(({ pluginId }) => {
+					// Get the current plugin from the marketplace query
+					const plugin = this.marketplaceQuery.plugin;
+
+					if (!plugin || plugin.id !== pluginId) {
+						console.warn('Plugin not found or ID mismatch for assignment dialog');
+						return;
+					}
+
+					// Get the plugin installation ID (you may need to adapt this based on your store structure)
+					// For now, we'll use the pluginId as installationId or get it from the plugin object
+					const installationId = plugin.id; // This should be the actual installation ID
+
+					// Prepare dialog data
+					const dialogData: PluginUserManagementDialogData = {
+						plugin,
+						installationId
+					};
+
+					// Update store to reflect dialog is open (setAssignmentDialog handles selectedPluginId too)
+					this.subscriptionAccessStore.setAssignmentDialog(true, pluginId);
+
+					// Open the dialog
+					const dialogRef = this.dialogService.open(PluginUserManagementComponent, {
+						context: dialogData,
+						closeOnBackdropClick: false,
+						closeOnEsc: true,
+						hasBackdrop: true
+					});
+
+					// Handle dialog close
+					dialogRef.onClose
+						.pipe(
+							tap((result) => {
+								// Update store when dialog closes
+								this.subscriptionAccessStore.setAssignmentDialog(false);
+
+								// If dialog closed with success result, potentially refresh data
+								if (result === true) {
+									// You can dispatch a refresh action here if needed
+									console.log('Assignment dialog closed with success');
+								}
+							})
+						)
+						.subscribe();
+				})
+			),
+		{ dispatch: false }
+	);
+
+	// ============================================================================
+	// Hide Assignment Dialog Effect
+	// ============================================================================
+
+	/**
+	 * Handles hiding the assignment dialog
+	 */
+	hideAssignmentDialog$ = createEffect(
+		(actions$ = this.actions$) =>
+			actions$.pipe(
+				ofType(PluginSubscriptionAccessActions.hideAssignmentDialog),
+				tap(() => {
+					this.subscriptionAccessStore.setAssignmentDialog(false);
+				})
+			),
+		{ dispatch: false }
+	);
+
+	// ============================================================================
+	// Show Revocation Dialog Effect
+	// ============================================================================
+
+	/**
+	 * Opens the user revocation dialog when showRevocationDialog action is dispatched
+	 */
+	showRevocationDialog$ = createEffect(
+		(actions$ = this.actions$) =>
+			actions$.pipe(
+				ofType(PluginSubscriptionAccessActions.showRevocationDialog),
+				tap(({ pluginId, userIds }) => {
+					// Get the current plugin from the marketplace query
+					const plugin = this.marketplaceQuery.plugin;
+
+					if (!plugin || plugin.id !== pluginId) {
+						console.warn('Plugin not found or ID mismatch for revocation dialog');
+						return;
+					}
+
+					// Update store to reflect dialog is open (setRevocationDialog handles all state)
+					this.subscriptionAccessStore.setRevocationDialog(true, pluginId, userIds);
+
+					// TODO: Open revocation dialog component when ready
+					// const dialogRef = this.dialogService.open(PluginUserRevocationDialogComponent, { ... });
+					console.log('Revocation dialog effect triggered for users:', userIds);
+				})
+			),
+		{ dispatch: false }
+	);
+
+	// ============================================================================
+	// Hide Revocation Dialog Effect
+	// ============================================================================
+
+	/**
+	 * Handles hiding the revocation dialog
+	 */
+	hideRevocationDialog$ = createEffect(
+		(actions$ = this.actions$) =>
+			actions$.pipe(
+				ofType(PluginSubscriptionAccessActions.hideRevocationDialog),
+				tap(() => {
+					// Clear revocation dialog state (setRevocationDialog clears all related state)
+					this.subscriptionAccessStore.setRevocationDialog(false);
+				})
+			),
+		{ dispatch: false }
 	);
 
 	// ============================================================================
