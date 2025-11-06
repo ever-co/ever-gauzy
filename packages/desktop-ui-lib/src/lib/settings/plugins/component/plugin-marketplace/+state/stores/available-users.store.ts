@@ -63,7 +63,7 @@ function createInitialState(): AvailableUsersState {
  * - Immutable State: All updates create new state
  */
 @Injectable({ providedIn: 'root' })
-@StoreConfig({ name: '_available-users' })
+@StoreConfig({ name: '_available_users' })
 export class AvailableUsersStore extends Store<AvailableUsersState> {
 	constructor() {
 		super(createInitialState());

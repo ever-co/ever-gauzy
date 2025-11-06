@@ -72,7 +72,7 @@ function createInitialState(): PluginUserAssignmentState {
 }
 
 @Injectable({ providedIn: 'root' })
-@StoreConfig({ name: '_plugin-user-assignment' })
+@StoreConfig({ name: '_plugin_user_assignments' })
 export class PluginUserAssignmentStore extends Store<PluginUserAssignmentState> {
 	constructor() {
 		super(createInitialState());
