@@ -75,15 +75,9 @@ export class AvailableUsersEffects {
 							.filter((userOrg: IUserOrganization) => userOrg.isActive && userOrg.user)
 							.map((userOrg: IUserOrganization) => userOrg.user);
 
-						// Apply pagination
-						const paginatedUsers = allUsers.slice(currentSkip, currentSkip + currentTake);
-						const total = allUsers.length;
-
-						console.log('[AvailableUsersEffects] Loaded users:', paginatedUsers.length, 'of', total);
-
 						return AvailableUsersActions.loadUsersSuccess({
-							users: paginatedUsers,
-							total
+							users: allUsers,
+							total: response.total
 						});
 					}),
 					catchError((error) => {

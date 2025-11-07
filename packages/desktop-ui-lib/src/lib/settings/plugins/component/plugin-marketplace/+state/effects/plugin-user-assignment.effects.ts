@@ -292,6 +292,7 @@ export class PluginUserAssignmentEffects {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.loadAssignmentsSuccess),
 				tap(({ assignments, total, append }) => {
+					console.log('Load assignments success:', assignments);
 					if (append) {
 						this.store.appendAssignments(assignments, total);
 					} else {
