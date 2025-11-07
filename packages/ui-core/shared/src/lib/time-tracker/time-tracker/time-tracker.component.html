@@ -162,6 +162,7 @@
 							(taskSelected)="onTaskSelected($event)"
 							requiresProject="true"
 							requiresEmployee="true"
+							showOnlyActiveTasks="true"
 						></ga-task-selector>
 						<div *ngIf="taskInput?.errors?.required && taskInput?.touched" class="invalid-feedback d-block">
 							{{ 'TIMER_TRACKER.VALIDATION.TASK_REQUIRED' | translate }}

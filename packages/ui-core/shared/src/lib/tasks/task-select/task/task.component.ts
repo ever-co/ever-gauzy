@@ -92,6 +92,18 @@ export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
 		this.subject$.next(true);
 	}
 
+	/*
+	 * Getter & Setter for set showOnlyActiveTasks
+	 */
+	private _showOnlyActiveTasks = false;
+	public get showOnlyActiveTasks(): boolean {
+		return this._showOnlyActiveTasks;
+	}
+	@Input() public set showOnlyActiveTasks(value: boolean) {
+		this._showOnlyActiveTasks = value;
+		this.subject$.next(true);
+	}
+
 	@Output() taskSelected = new EventEmitter<ITask>();
 
 	/*
@@ -245,7 +257,13 @@ export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
 
 			// Retrieve tasks based on employee or all tasks
 			if (this.employeeId) {
-				this.tasks = await this.tasksService.getAllTasksByEmployee(this.employeeId, { where: queryOption });
+				if (this.showOnlyActiveTasks) {
+					this.tasks = await this.tasksService.getActiveTasksByEmployee(this.employeeId, {
+						where: queryOption
+					});
+				} else {
+					this.tasks = await this.tasksService.getAllTasksByEmployee(this.employeeId, { where: queryOption });
+				}
 			} else {
 				const { items = [] } = await firstValueFrom(this.tasksService.getAllTasks({ ...queryOption }));
 				this.tasks = items;

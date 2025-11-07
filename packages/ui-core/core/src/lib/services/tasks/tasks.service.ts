@@ -40,6 +40,16 @@ export class TasksService extends TranslationBaseComponent {
 		);
 	}
 
+	getActiveTasksByEmployee(id: IEmployee['id'], options: IGetTaskByEmployeeOptions) {
+		return firstValueFrom(
+			this._http
+				.get<ITask[]>(`${this.API_URL}/active/employee/${id}`, {
+					params: toParams(options)
+				})
+				.pipe(catchError((error) => this.errorHandler(error)))
+		);
+	}
+
 	getMyTasks(findInput: IGetTaskOptions = {}): Observable<IPagination<ITask>> {
 		const data = JSON.stringify({
 			findInput

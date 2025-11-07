@@ -22,7 +22,8 @@ import {
 	IEmployeeFindInput,
 	ID,
 	ITimerStatusWithWeeklyLimits,
-	TimeErrorsEnum
+	TimeErrorsEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { SortOrderEnum } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
@@ -536,6 +537,24 @@ export class TimerService {
 					createdAt: SortOrderEnum.DESC
 				}
 			});
+
+			const hasDoneTask = tasks.some((task) => task.id === lastLog.taskId && task.status === TaskStatusEnum.DONE);
+
+			if (hasDoneTask) {
+				this.logger.debug('Stopping timer because the related task is DONE', {
+					taskId: lastLog.taskId
+				});
+
+				await this.safeStopTimer({
+					tenantId,
+					organizationId,
+					startedAt: lastLog.startedAt,
+					stoppedAt: now.toDate(),
+					timeZone: request?.timeZone
+				});
+				throw new ForbiddenException(TimeErrorsEnum.INVALID_TASK_PERMISSIONS);
+			}
+
 			const isAssignedToTask = tasks.some((task) => task.id === lastLog.taskId);
 
 			if (!isAssignedToTask) {

@@ -36,7 +36,8 @@ import {
 	IAdvancedTaskFiltering,
 	EmployeeNotificationTypeEnum,
 	NotificationActionTypeEnum,
-	ITimeLog
+	ITimeLog,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { isSqlite } from '@gauzy/config';
@@ -167,6 +168,26 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 
 			const { organizationId } = updatedTask;
+
+			// Check if status changed to DONE
+			if (updatedTask.status === TaskStatusEnum.DONE && task.status !== TaskStatusEnum.DONE) {
+				try {
+					this.logger.debug(`Task ${updatedTask.id} changed status to DONE`);
+					const taskMembers = updatedTask.members?.length ? updatedTask.members : task.members;
+
+					if (taskMembers?.length) {
+						await Promise.all(
+							taskMembers.map(async (member) => {
+								// Send a real-time event to the specified user via socket.
+								// No error is thrown if the user is not currently connected.
+								this._socketService.sendTimerChanged(member?.id);
+							})
+						);
+					}
+				} catch (error) {
+					this.logger.error(`Error emitting DONE status event for task ${updatedTask.id}: ${error}`);
+				}
+			}
 
 			// Unsubscribe members who were unassigned from task
 			if (removedMembers.length > 0) {
@@ -631,6 +652,89 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			query.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), {
 				isScreeningTask
+			});
+
+			return await query.getMany();
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * GET all active tasks by employee
+	 *
+	 * @param employeeId - The employee ID for whom retrieve tasks
+	 * @param options - Pagination options including limit, page, and sorting.
+	 * @param filters - Optional filters for advanced task filtering.
+	 * @returns
+	 */
+	async getActiveTasksByEmployee(
+		employeeId: IEmployee['id'],
+		options: PaginationParams<Task> & IAdvancedTaskFiltering
+	) {
+		try {
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+			query.leftJoin(`${query.alias}.members`, 'members');
+			query.leftJoin(`${query.alias}.teams`, 'teams');
+			const { isScreeningTask = false } = options.where;
+			const { filters } = options;
+
+			// Apply advanced filters
+			if (filters) {
+				const advancedWhere = this.buildAdvancedWhereCondition(filters, options.where);
+				query.setFindOptions({ where: advancedWhere });
+			}
+
+			/**
+			 * If additional options found
+			 */
+			query.setFindOptions({
+				...(isNotEmpty(options) &&
+					isNotEmpty(options.where) && {
+						where: options.where
+					}),
+				...(isNotEmpty(options) &&
+					isNotEmpty(options.relations) && {
+						relations: options.relations
+					})
+			});
+
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					const tenantId = RequestContext.currentTenantId();
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
+						tenantId
+					});
+				})
+			);
+			query.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.andWhere((qb: SelectQueryBuilder<Task>) => {
+						const subQuery = qb.subQuery();
+						subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
+						subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
+						return p(`"task_members"."taskId" IN (${subQuery.distinct(true).getQuery()})`);
+					});
+					web.orWhere((qb: SelectQueryBuilder<Task>) => {
+						const subQuery = qb.subQuery();
+						subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
+						subQuery.leftJoin(
+							'organization_team_employee',
+							'organization_team_employee',
+							p('"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"')
+						);
+						subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), { employeeId });
+						return p(`"task_teams"."taskId" IN (${subQuery.distinct(true).getQuery()})`);
+					});
+				})
+			);
+
+			query.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), {
+				isScreeningTask
+			});
+
+			query.andWhere(`${query.alias}.status != :excludedStatus`, {
+				excludedStatus: TaskStatusEnum.DONE
 			});
 
 			return await query.getMany();

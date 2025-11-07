@@ -219,6 +219,23 @@ export class TaskController extends CrudController<Task> {
 	}
 
 	/**
+	 * GET tasks by employee
+	 *
+	 * @param employeeId The ID of the employee.
+	 * @param params The pagination and filter parameters for tasks.
+	 * @returns A list of tasks assigned to the specified employee.
+	 */
+	@ApiOperation({ summary: 'Get tasks assigned to a specific employee.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Tasks retrieved successfully.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No records found.' })
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@Get('active/employee/:id')
+	@UseValidationPipe()
+	async getActiveTasksByEmployee(@Param('id') employeeId: ID, @Query() params: TaskQueryDTO): Promise<ITask[]> {
+		return this.taskService.getActiveTasksByEmployee(employeeId, params);
+	}
+
+	/**
 	 * GET all tasks
 	 *
 	 * @param params The pagination and filter parameters for retrieving tasks.
