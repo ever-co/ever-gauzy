@@ -204,7 +204,7 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		try {
 			return await this.findOneByOptions({
 				where,
-				relations: ['plugin', 'tenant', 'subscriber']
+				relations: ['plugin', 'tenant', 'subscriber', 'parent']
 			});
 		} catch {
 			return null;

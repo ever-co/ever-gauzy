@@ -63,13 +63,12 @@ export class PluginActivationController {
 	@Patch(':installationId')
 	public async updateStatus(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
-		@Param('installationId', UUIDValidationPipe) installationId: ID,
 		@Body() updateStatusDto: UpdateInstallationStatusDTO
 	): Promise<void> {
 		if (updateStatusDto.status === 'active') {
-			return this.commandBus.execute(new ActivatePluginCommand(installationId));
+			return this.commandBus.execute(new ActivatePluginCommand(pluginId));
 		} else {
-			return this.commandBus.execute(new DeactivatePluginCommand(installationId));
+			return this.commandBus.execute(new DeactivatePluginCommand(pluginId));
 		}
 	}
 }

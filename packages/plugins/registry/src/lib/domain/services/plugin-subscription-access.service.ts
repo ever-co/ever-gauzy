@@ -1,4 +1,4 @@
-import { ID } from '@gauzy/contracts';
+import { ID, IPluginAccess } from '@gauzy/contracts';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import {
@@ -8,6 +8,7 @@ import {
 } from '../../shared/models/plugin-subscription.model';
 import { PluginSubscriptionPlanService } from './plugin-subscription-plan.service';
 import { PluginSubscriptionService } from './plugin-subscription.service';
+import { PluginUserAssignmentService } from './plugin-user-assignment.service';
 
 /**
  * Centralized service for handling plugin subscription access validation and scope management.
@@ -18,8 +19,20 @@ import { PluginSubscriptionService } from './plugin-subscription.service';
 export class PluginSubscriptionAccessService {
 	constructor(
 		private readonly pluginSubscriptionService: PluginSubscriptionService,
-		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService
+		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService,
+		private readonly pluginUserAssignmentService: PluginUserAssignmentService
 	) {}
+
+	/**
+	 * Validate if a user has access to a plugin based on their assignments.
+	 *
+	 * @param pluginId - The plugin ID to check access for
+	 * @param userId - The user ID
+	 * @returns Promise<boolean> indicating if the user has access
+	 */
+	async validatePluginUserAccess(pluginId: ID, userId?: ID): Promise<boolean> {
+		return this.pluginUserAssignmentService.hasUserAccessToPlugin({ pluginId }, userId);
+	}
 
 	/**
 	 * Validate if a user has access to a plugin based on their subscriptions.
@@ -206,6 +219,8 @@ export class PluginSubscriptionAccessService {
 
 	/**
 	 * Get subscription details for a plugin and user.
+	 * Provides comprehensive access information including subscription status,
+	 * permissions, and user capabilities.
 	 *
 	 * @param pluginId - The plugin ID
 	 * @param tenantId - The tenant ID
@@ -218,28 +233,57 @@ export class PluginSubscriptionAccessService {
 		tenantId: ID,
 		organizationId?: ID,
 		userId?: ID
-	): Promise<{
-		hasAccess: boolean;
-		subscription: IPluginSubscription | null;
-		accessLevel: PluginScope | null;
-		canAssign: boolean;
-		requiresSubscription: boolean;
-	}> {
-		const requiresSub = await this.requiresSubscription(pluginId);
-		const subscription = requiresSub
-			? await this.findApplicableSubscription(pluginId, tenantId, organizationId, userId)
-			: null;
-		const hasAccess = requiresSub ? !!subscription && this.isSubscriptionValid(subscription) : true;
-		const canAssign = requiresSub
+	): Promise<
+		Omit<IPluginAccess, 'subscription' | 'accessLevel'> & {
+			subscription: IPluginSubscription | null;
+			accessLevel: PluginScope | null;
+		}
+	> {
+		// Check if plugin requires a subscription (has paid plans)
+		const requiresSubscription = await this.requiresSubscription(pluginId);
+
+		// Early return for free plugins with simplified access
+		if (!requiresSubscription) {
+			const canActivate = await this.validatePluginUserAccess(pluginId, userId);
+			return {
+				hasAccess: true,
+				subscription: null,
+				accessLevel: null,
+				canAssign: false,
+				canActivate,
+				requiresSubscription: false
+			};
+		}
+
+		// Find applicable subscription for paid plugins
+		const subscription = await this.findApplicableSubscription(pluginId, tenantId, organizationId, userId);
+		const isValidSubscription = subscription ? this.isSubscriptionValid(subscription) : false;
+
+		// Determine access and permissions
+		const hasAccess = isValidSubscription;
+		const accessLevel = subscription?.scope || null;
+
+		// Calculate assignment permissions (can only assign if org/tenant subscription)
+		const canAssign = hasAccess
 			? await this.canAssignSubscriptions(pluginId, tenantId, organizationId, userId)
 			: false;
+
+		// Calculate activation permissions
+		// User can activate if:
+		// 1. They have explicit user assignment access, OR
+		// 2. They own the subscription (no parent), AND
+		// 3. They have valid access to the plugin
+		const hasUserAssignment = await this.validatePluginUserAccess(pluginId, userId);
+		const ownsSubscription = subscription ? !subscription.parent : false;
+		const canActivate = (hasUserAssignment || ownsSubscription) && hasAccess;
 
 		return {
 			hasAccess,
 			subscription,
-			accessLevel: subscription?.scope || null,
+			accessLevel,
 			canAssign,
-			requiresSubscription: requiresSub
+			canActivate,
+			requiresSubscription: true
 		};
 	}
 
@@ -251,6 +295,9 @@ export class PluginSubscriptionAccessService {
 	 * @returns boolean indicating if subscription is valid
 	 */
 	private isSubscriptionValid(subscription: IPluginSubscription): boolean {
+		if (subscription.parent) {
+			return this.isSubscriptionValid(subscription.parent);
+		}
 		// Check if subscription is in a valid status
 		const validStatuses = [PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL];
 		if (!validStatuses.includes(subscription.status)) {

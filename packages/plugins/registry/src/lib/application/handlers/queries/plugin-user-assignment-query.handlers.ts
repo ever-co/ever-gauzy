@@ -64,7 +64,7 @@ export class CheckUserPluginAccessQueryHandler implements IQueryHandler<CheckUse
 	 */
 	async execute(query: CheckUserPluginAccessQuery): Promise<boolean> {
 		const { pluginInstallationId, userId } = query;
-		return await this.pluginUserAssignmentService.hasUserAccessToPlugin(pluginInstallationId, userId);
+		return await this.pluginUserAssignmentService.hasUserAccessToPlugin({ pluginInstallationId }, userId);
 	}
 }
 

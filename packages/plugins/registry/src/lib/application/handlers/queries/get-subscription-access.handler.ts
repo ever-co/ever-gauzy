@@ -14,22 +14,8 @@ export class GetSubscriptionAccessQueryHandler implements IQueryHandler<GetSubsc
 	 */
 	async execute(query: GetSubscriptionAccessQuery): Promise<PluginSubscriptionAccessResponseDTO> {
 		const { pluginId, tenantId, organizationId, userId } = query;
-
 		try {
-			const details = await this.subscriptionAccessService.getSubscriptionDetails(
-				pluginId,
-				tenantId,
-				organizationId,
-				userId
-			);
-
-			return {
-				hasAccess: details.hasAccess,
-				accessLevel: details.accessLevel,
-				canAssign: details.canAssign,
-				requiresSubscription: details.requiresSubscription,
-				subscription: details.subscription
-			};
+			return this.subscriptionAccessService.getSubscriptionDetails(pluginId, tenantId, organizationId, userId);
 		} catch (error) {
 			throw new BadRequestException(`Failed to get subscription access: ${error.message}`);
 		}

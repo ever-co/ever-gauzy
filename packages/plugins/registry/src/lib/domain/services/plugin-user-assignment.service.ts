@@ -1,7 +1,7 @@
 import { ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { In } from 'typeorm';
+import { In, IsNull } from 'typeorm';
 import { IPagination } from '../../../../../../../dist/packages/contracts/src/lib/core.model';
 import { PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
@@ -221,19 +221,27 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 	 * @param userId - The user ID
 	 * @returns Boolean indicating if user has access
 	 */
-	async hasUserAccessToPlugin(pluginInstallationId: ID, userId: ID): Promise<boolean> {
+	async hasUserAccessToPlugin(input: { pluginInstallationId?: ID; pluginId?: ID }, userId: ID): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
+		const { pluginInstallationId, pluginId } = input;
 
-		const assignment = await this.findOneByWhereOptions({
-			pluginInstallationId,
+		const assignment = await this.findOneOrFailByWhereOptions({
+			pluginInstallation: {
+				...(pluginInstallationId && { id: pluginInstallationId }),
+				...(pluginId && {
+					pluginId
+				})
+			},
+			revokedAt: IsNull(),
+			revokedById: IsNull(),
 			userId,
 			isActive: true,
 			tenantId,
 			organizationId
 		});
 
-		return !!assignment;
+		return assignment.success;
 	}
 
 	/**

@@ -28,7 +28,8 @@ export class CheckUserSubscriptionAccessQueryHandler implements IQueryHandler<Ch
 				accessLevel: details.accessLevel,
 				canAssign: details.canAssign,
 				requiresSubscription: details.requiresSubscription,
-				subscription: details.subscription
+				subscription: details.subscription,
+				canActivate: details.canActivate
 			};
 		} catch (error) {
 			throw new BadRequestException(`Failed to check user subscription access: ${error.message}`);

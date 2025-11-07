@@ -64,6 +64,9 @@ export class PluginSubscriptionAccessResponseDTO {
 	@ApiProperty({ type: Boolean, description: 'Whether the plugin requires a subscription' })
 	requiresSubscription: boolean;
 
+	@ApiProperty({ type: Boolean, description: 'Whether the user can activate the plugin' })
+	canActivate: boolean;
+
 	@ApiPropertyOptional({ type: Object, description: 'Subscription details if available' })
 	subscription?: any;
 }

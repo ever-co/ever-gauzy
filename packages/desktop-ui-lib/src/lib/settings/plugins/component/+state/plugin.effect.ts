@@ -4,6 +4,7 @@ import { Actions } from '@ngneat/effects-ng';
 import { catchError, EMPTY, filter, finalize, from, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../services';
 import { PluginElectronService } from '../../services/plugin-electron.service';
+import { PluginService } from '../../services/plugin.service';
 import { PluginActions } from './plugin.action';
 import { PluginStore } from './plugin.store';
 
@@ -12,7 +13,8 @@ export class PluginEffects {
 	constructor(
 		private readonly pluginStore: PluginStore,
 		private readonly action$: Actions,
-		private readonly pluginService: PluginElectronService,
+		private readonly pluginElectronService: PluginElectronService,
+		private readonly pluginService: PluginService,
 		private readonly toastrService: ToastrNotificationService
 	) {}
 
@@ -21,7 +23,7 @@ export class PluginEffects {
 			ofType(PluginActions.getPlugins),
 			tap(() => this.pluginStore.setLoading(true)), // Start loading state
 			switchMap(() =>
-				from(this.pluginService.plugins).pipe(
+				from(this.pluginElectronService.plugins).pipe(
 					tap((plugins) => this.pluginStore.update({ plugins })),
 					finalize(() => this.pluginStore.setLoading(false)), // Always stop loading
 					catchError((error) => {
@@ -38,7 +40,7 @@ export class PluginEffects {
 			ofType(PluginActions.getPlugin),
 			tap(() => this.pluginStore.setLoading(true)), // Start loading state
 			switchMap(({ name }) =>
-				from(this.pluginService.plugin(name)).pipe(
+				from(this.pluginElectronService.plugin(name)).pipe(
 					filter(Boolean), // Filter out null or undefined responses
 					tap((plugin) => this.pluginStore.update({ plugin })),
 					finalize(() => this.pluginStore.setLoading(false)), // Always stop loading
@@ -56,17 +58,30 @@ export class PluginEffects {
 			ofType(PluginActions.activate),
 			tap(() => this.pluginStore.update({ activating: true })),
 			switchMap(({ plugin }) => {
-				this.pluginService.activate(plugin);
-				return this.pluginService
-					.progress((message) => this.toastrService.info(message))
-					.pipe(
-						tap((res) => this.handleProgress(res)),
-						finalize(() => this.pluginStore.update({ activating: false })),
-						catchError((error) => {
-							this.toastrService.error(error);
-							return EMPTY;
-						})
-					);
+				// First check with server-side to validate plugin can be activated
+				return this.pluginService.activate(plugin.marketplaceId).pipe(
+					switchMap(() => {
+						// If server validation passes, proceed with local activation
+						this.pluginElectronService.activate(plugin);
+						return this.pluginElectronService
+							.progress((message) => this.toastrService.info(message))
+							.pipe(
+								tap((res) => this.handleProgress(res)),
+								finalize(() => this.pluginStore.update({ activating: false })),
+								catchError((error) => {
+									this.toastrService.error(error);
+									return EMPTY;
+								})
+							);
+					}),
+					catchError((error) => {
+						this.toastrService.error(
+							error?.error?.message || error?.message || 'Failed to activate plugin on server'
+						);
+						this.pluginStore.update({ activating: false });
+						return EMPTY;
+					})
+				);
 			})
 		)
 	);
@@ -76,17 +91,30 @@ export class PluginEffects {
 			ofType(PluginActions.deactivate),
 			tap(() => this.pluginStore.update({ deactivating: true })),
 			switchMap(({ plugin }) => {
-				this.pluginService.deactivate(plugin);
-				return this.pluginService
-					.progress((message) => this.toastrService.info(message))
-					.pipe(
-						tap((res) => this.handleProgress(res)),
-						finalize(() => this.pluginStore.update({ deactivating: false })),
-						catchError((error) => {
-							this.toastrService.error(error);
-							return EMPTY;
-						})
-					);
+				// First check with server-side to validate plugin can be deactivated
+				return this.pluginService.deactivate(plugin.marketplaceId).pipe(
+					switchMap(() => {
+						// If server validation passes, proceed with local deactivation
+						this.pluginElectronService.deactivate(plugin);
+						return this.pluginElectronService
+							.progress((message) => this.toastrService.info(message))
+							.pipe(
+								tap((res) => this.handleProgress(res)),
+								finalize(() => this.pluginStore.update({ deactivating: false })),
+								catchError((error) => {
+									this.toastrService.error(error);
+									return EMPTY;
+								})
+							);
+					}),
+					catchError((error) => {
+						this.toastrService.error(
+							error?.error?.message || error?.message || 'Failed to deactivate plugin on server'
+						);
+						this.pluginStore.update({ deactivating: false });
+						return EMPTY;
+					})
+				);
 			})
 		)
 	);
@@ -107,7 +135,7 @@ export class PluginEffects {
 	refresh$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginActions.refresh),
-			switchMap(() => this.pluginService.plugins),
+			switchMap(() => this.pluginElectronService.plugins),
 			tap((plugins) => this.pluginStore.update({ plugins })),
 			catchError((error) => {
 				this.toastrService.error(error);

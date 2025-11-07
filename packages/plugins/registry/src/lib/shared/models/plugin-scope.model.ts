@@ -1,6 +1,4 @@
-export enum PluginScope {
-	GLOBAL = 'global',
-	TENANT = 'tenant',
-	ORGANIZATION = 'organization',
-	USER = 'user'
-}
+import { PluginScope } from '@gauzy/contracts';
+
+// Rexport enum for plugin subscription types
+export { PluginScope };

@@ -5,6 +5,13 @@ import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.mode
 import { IEmployee } from './employee.model';
 import { IUser } from './user.model';
 
+export enum PluginScope {
+	GLOBAL = 'global',
+	TENANT = 'tenant',
+	ORGANIZATION = 'organization',
+	USER = 'user'
+}
+
 /**
  * Defines the possible states of a plugin
  */
@@ -262,4 +269,13 @@ export interface IPluginInstallation extends IBasePerTenantAndOrganizationEntity
 	uninstalledAt?: Date; // Optional date when the plugin was uninstalled
 
 	status: PluginInstallationStatus; // Status of the plugin installation
+}
+
+export interface IPluginAccess {
+	hasAccess: boolean;
+	subscription: IPluginSubscription;
+	accessLevel: PluginScope;
+	canAssign: boolean;
+	canActivate: boolean;
+	requiresSubscription: boolean;
 }
