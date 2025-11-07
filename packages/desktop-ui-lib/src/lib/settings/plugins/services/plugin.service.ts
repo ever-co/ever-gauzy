@@ -1,6 +1,6 @@
 import { HttpClient, HttpEvent, HttpEventType, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { ID, IPagination, IPlugin, IPluginSource, IPluginVersion } from '@gauzy/contracts';
+import { ID, IPagination, IPlugin, IPluginInstallation, IPluginSource, IPluginVersion } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { catchError, map, Observable } from 'rxjs';
 import { Store } from '../../../services';
@@ -74,29 +74,29 @@ export class PluginService {
 		return this.http.post<IPlugin>(`${this.endPoint}/${pluginId}/verify`, { versionId, signature });
 	}
 
-	public install(pluginIdOrOptions: string | { pluginId: string; versionId: string }, options = {}): Observable<any> {
-		if (typeof pluginIdOrOptions === 'string') {
-			return this.http.post<any>(`${this.endPoint}/${pluginIdOrOptions}/install`, options);
-		} else {
-			const { pluginId, versionId } = pluginIdOrOptions;
-			return this.http.post<void>(`${this.endPoint}/${pluginId}/installations`, { versionId });
-		}
+	public install(pluginInstallRequest: { pluginId: string; versionId: string }): Observable<IPluginInstallation> {
+		const { pluginId, versionId } = pluginInstallRequest;
+		return this.http.post<IPluginInstallation>(`${this.endPoint}/${pluginId}/installations`, {
+			versionId
+		});
 	}
 
-	public uninstall(pluginId: string, options = {}): Observable<any> {
-		if (options && Object.keys(options).length > 0) {
-			return this.http.post<any>(`${this.endPoint}/${pluginId}/uninstall`, options);
-		} else {
-			return this.http.delete<void>(`${this.endPoint}/${pluginId}/installations`);
-		}
+	public uninstall(pluginId: string, installationId: string, reason: string): Observable<void> {
+		return this.http.delete<void>(`${this.endPoint}/${pluginId}/installations/${installationId}`, {
+			body: { reason }
+		});
 	}
 
-	public activate(pluginId: string): Observable<void> {
-		return this.http.patch<void>(`${this.endPoint}/${pluginId}/installations`, { status: 'active' });
+	public activate(pluginId: string, installationId: string): Observable<void> {
+		return this.http.patch<void>(`${this.endPoint}/${pluginId}/installations/${installationId}`, {
+			status: 'active'
+		});
 	}
 
-	public deactivate(pluginId: string): Observable<void> {
-		return this.http.patch<void>(`${this.endPoint}/${pluginId}/installations`, { status: 'inactive' });
+	public deactivate(pluginId: string, installationId: string): Observable<void> {
+		return this.http.patch<void>(`${this.endPoint}/${pluginId}/installations/${installationId}`, {
+			status: 'inactive'
+		});
 	}
 
 	public addVersion(

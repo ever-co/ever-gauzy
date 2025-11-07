@@ -4,7 +4,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginInstallation } from '../../../domain/entities/plugin-installation.entity';
 import { PluginSubscriptionAccessService } from '../../../domain/services';
 import { PluginInstallationService } from '../../../domain/services/plugin-installation.service';
-import { PluginInstallationStatus } from '../../../shared/models/plugin-installation.model';
+import { IPluginInstallation, PluginInstallationStatus } from '../../../shared/models/plugin-installation.model';
 import { PluginScope } from '../../../shared/models/plugin-scope.model';
 import { InstallPluginCommand } from '../../commands/install-plugin.command';
 
@@ -43,7 +43,7 @@ export class InstallPluginCommandHandler implements ICommandHandler<InstallPlugi
 	 * @throws {NotFoundException} If the plugin installation entry is not found.
 	 * @throws {ForbiddenException} If user doesn't have proper subscription for plugin installation.
 	 */
-	public async execute(command: InstallPluginCommand): Promise<void> {
+	public async execute(command: InstallPluginCommand): Promise<IPluginInstallation> {
 		const {
 			pluginId,
 			input: { versionId }
@@ -73,8 +73,8 @@ export class InstallPluginCommandHandler implements ICommandHandler<InstallPlugi
 		});
 
 		if (found.success) {
-			// Plugin is already installed, no further action needed
-			return;
+			// Plugin is already installed, return the existing record
+			return found.record;
 		}
 
 		// Create or update the PluginInstallation entity
@@ -86,9 +86,8 @@ export class InstallPluginCommandHandler implements ICommandHandler<InstallPlugi
 			installedAt: new Date(),
 			uninstalledAt: null
 		});
-
 		// Persist the plugin installation record
-		await this.installationService.save(installation);
+		return this.installationService.save(installation);
 	}
 
 	private ensurePluginAccess(state: { hasAccess: boolean; accessLevel: PluginScope }): void {

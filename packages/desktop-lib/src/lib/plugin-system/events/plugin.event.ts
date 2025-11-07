@@ -27,7 +27,8 @@ class ElectronPluginListener {
 			[PluginChannel.DOWNLOAD]: this.downloadPlugin,
 			[PluginChannel.ACTIVATE]: this.activatePlugin,
 			[PluginChannel.DEACTIVATE]: this.deactivatePlugin,
-			[PluginChannel.UNINSTALL]: this.uninstallPlugin
+			[PluginChannel.UNINSTALL]: this.uninstallPlugin,
+			[PluginChannel.COMPLETE_INSTALLATION]: this.syncMarketplaceInstallationId
 		};
 
 		for (const [channel, handler] of Object.entries(eventMap)) {
@@ -160,6 +161,18 @@ class ElectronPluginListener {
 		event.reply(PluginChannel.STATUS, { status: 'inProgress', message: 'Plugin Activating...' });
 		await this.pluginManager.activatePlugin(name);
 		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugin Activated' });
+	}
+
+	private async syncMarketplaceInstallationId(
+		event: IpcMainEvent,
+		{ marketplaceId, installationId }: { marketplaceId: string; installationId: string }
+	): Promise<void> {
+		event.reply(PluginChannel.STATUS, {
+			status: 'inProgress',
+			message: 'Updating Plugin Marketplace Installation ID...'
+		});
+		await this.pluginManager.completeInstallation(marketplaceId, installationId);
+		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Installation completed' });
 	}
 
 	private async deactivatePlugin(event: IpcMainEvent, name: string): Promise<void> {

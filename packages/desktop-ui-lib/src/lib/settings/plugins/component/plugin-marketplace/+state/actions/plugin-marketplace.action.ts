@@ -28,13 +28,15 @@ export class PluginMarketplaceActions {
 	public static search = createAction('[Plugin Marketplace] Search', (query: string) => ({ query }));
 
 	// Installation actions
-	public static install = createAction('[Plugin Marketplace] Install Plugin', (pluginId: ID, options?: any) => ({
+	public static install = createAction('[Plugin Marketplace] Install Plugin', (pluginId: ID, versionId: ID) => ({
 		pluginId,
-		options
+		versionId
 	}));
+
 	public static uninstall = createAction(
 		'[Plugin Marketplace] Uninstall Plugin',
-		(pluginId: ID, reason?: string) => ({
+		(pluginId: ID, installationId: ID, reason?: string) => ({
+			installationId,
 			pluginId,
 			reason
 		})

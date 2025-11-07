@@ -1,5 +1,6 @@
-import { app, MenuItemConstructorOptions } from 'electron';
+import { ID } from '@gauzy/contracts';
 import { logger } from '@gauzy/desktop-core';
+import { app, MenuItemConstructorOptions } from 'electron';
 import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -8,7 +9,6 @@ import { PluginEventManager } from '../events/plugin-event.manager';
 import { IPlugin, IPluginManager, IPluginMetadata, PluginDownloadContextType } from '../shared';
 import { lazyLoader } from '../shared/lazy-loader';
 import { DownloadContextFactory } from './download-context.factory';
-import { ID } from '@gauzy/contracts';
 
 export class PluginManager implements IPluginManager {
 	private plugins: Map<string, IPlugin> = new Map();
@@ -42,8 +42,6 @@ export class PluginManager implements IPluginManager {
 				{ ...metadata, marketplaceId: config.marketplaceId, versionId: config.versionId },
 				pathDirname
 			);
-			/* Activate plugin */
-			await this.activatePlugin(metadata.name);
 		}
 		process.noAsar = false;
 		return this.pluginMetadataService.findOne({ name: metadata.name });
@@ -84,6 +82,14 @@ export class PluginManager implements IPluginManager {
 		}
 	}
 
+	// Update plugin marketplace metadata
+	public async completeInstallation(marketplaceId: string, installationId: string): Promise<void> {
+		await this.pluginMetadataService.update({
+			marketplaceId,
+			installationId
+		});
+	}
+
 	public async installPlugin(pluginMetadata: IPluginMetadata, pluginDir: string): Promise<void> {
 		try {
 			if (!pluginDir && !pluginMetadata) {
@@ -100,6 +106,7 @@ export class PluginManager implements IPluginManager {
 				version: pluginMetadata.version,
 				description: pluginMetadata.description,
 				main: pluginMetadata.main,
+				installationId: pluginMetadata.installationId,
 				marketplaceId: pluginMetadata.marketplaceId ? pluginMetadata.marketplaceId : null,
 				versionId: pluginMetadata.versionId ? pluginMetadata.versionId : null,
 				renderer: pluginMetadata.renderer ? path.join(pluginDir, pluginMetadata.renderer) : null,
@@ -138,7 +145,9 @@ export class PluginManager implements IPluginManager {
 		const metadata = await this.pluginMetadataService.findOne({ name });
 		const plugin = this.plugins.get(name);
 		if (plugin) {
-			await this.deactivatePlugin(name);
+			if (metadata.isActivate) {
+				await this.deactivatePlugin(name);
+			}
 			this.plugins.delete(name);
 			await this.pluginMetadataService.delete({ name });
 			await fs.rm(metadata.pathname, { recursive: true, force: true, retryDelay: 1000, maxRetries: 3 });

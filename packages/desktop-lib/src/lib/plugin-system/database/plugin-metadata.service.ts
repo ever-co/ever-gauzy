@@ -18,7 +18,7 @@ export class PluginMetadataService {
 
 	public async update(input: IPluginMetadataUpdate): Promise<void> {
 		const query = this.buildQuery(input);
-		await query.update({ isActivate: input.isActivate, version: input.version, description: input.description });
+		await query.update(input);
 	}
 
 	public async delete(input: IPluginMetadataDelete): Promise<void> {

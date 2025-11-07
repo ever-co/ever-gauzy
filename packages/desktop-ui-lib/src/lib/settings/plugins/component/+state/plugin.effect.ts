@@ -59,7 +59,7 @@ export class PluginEffects {
 			tap(() => this.pluginStore.update({ activating: true })),
 			switchMap(({ plugin }) => {
 				// First check with server-side to validate plugin can be activated
-				return this.pluginService.activate(plugin.marketplaceId).pipe(
+				return this.pluginService.activate(plugin.marketplaceId, plugin.installationId).pipe(
 					switchMap(() => {
 						// If server validation passes, proceed with local activation
 						this.pluginElectronService.activate(plugin);
@@ -92,7 +92,7 @@ export class PluginEffects {
 			tap(() => this.pluginStore.update({ deactivating: true })),
 			switchMap(({ plugin }) => {
 				// First check with server-side to validate plugin can be deactivated
-				return this.pluginService.deactivate(plugin.marketplaceId).pipe(
+				return this.pluginService.deactivate(plugin.marketplaceId, plugin.installationId).pipe(
 					switchMap(() => {
 						// If server validation passes, proceed with local deactivation
 						this.pluginElectronService.deactivate(plugin);

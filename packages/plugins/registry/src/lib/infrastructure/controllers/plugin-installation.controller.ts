@@ -9,6 +9,7 @@ import { InstallPluginCommand } from '../../application/commands/install-plugin.
 import { UninstallPluginCommand } from '../../application/commands/uninstall-plugin.command';
 import { InstallPluginDTO } from '../../shared/dto/install-plugin.dto';
 import { PluginSubscriptionGuard } from '../guards';
+import { IPluginInstallation } from '../../shared/models';
 
 @ApiTags('Plugin Installation')
 @Controller('/plugins/:pluginId/installations')
@@ -43,9 +44,11 @@ export class PluginInstallationController {
 	@UseGuards(PluginSubscriptionGuard)
 	@Permissions(PermissionsEnum.PLUGIN_INSTALL)
 	@Post()
-	public async create(@Param('pluginId', UUIDValidationPipe) id: ID, @Body() body: InstallPluginDTO) {
-		await this.commandBus.execute(new InstallPluginCommand(id, body));
-		return { message: 'Plugin installation created successfully', statusCode: HttpStatus.CREATED };
+	public async create(
+		@Param('pluginId', UUIDValidationPipe) id: ID,
+		@Body() body: InstallPluginDTO
+	): Promise<IPluginInstallation> {
+		return this.commandBus.execute(new InstallPluginCommand(id, body));
 	}
 
 	@ApiOperation({

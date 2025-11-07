@@ -281,9 +281,9 @@ export class PluginMarketplaceEffects {
 				this.pluginMarketplaceStore.setInstalling(pluginId, true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.INSTALLING'));
 			}),
-			switchMap(({ pluginId, options = {} }) =>
-				this.pluginService.install(pluginId, options).pipe(
-					tap((installation) => {
+			switchMap(({ pluginId, versionId }) =>
+				this.pluginService.install({ pluginId, versionId }).pipe(
+					tap(() => {
 						this.pluginMarketplaceStore.update((state) => ({
 							plugins: state.plugins.map((p) => (p.id === pluginId ? { ...p, isInstalled: true } : p))
 						}));
@@ -308,8 +308,8 @@ export class PluginMarketplaceEffects {
 				this.pluginMarketplaceStore.setInstalling(pluginId, true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.UNINSTALLING'));
 			}),
-			switchMap(({ pluginId, reason }) =>
-				this.pluginService.uninstall(pluginId, { reason }).pipe(
+			switchMap(({ pluginId, installationId, reason }) =>
+				this.pluginService.uninstall(pluginId, installationId, reason).pipe(
 					tap(() => {
 						this.pluginMarketplaceStore.update((state) => ({
 							plugins: state.plugins.map((p) => (p.id === pluginId ? { ...p, isInstalled: false } : p))
