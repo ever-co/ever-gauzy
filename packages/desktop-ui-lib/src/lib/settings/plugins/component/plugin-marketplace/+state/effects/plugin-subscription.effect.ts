@@ -7,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ToastrNotificationService } from '../../../../../../services';
 import { IPluginSubscriptionPlan, PluginSubscriptionService } from '../../../../services/plugin-subscription.service';
 import { PluginSubscriptionActions } from '../actions/plugin-subscription.action';
-import { PluginSubscriptionQuery } from '../queries/plugin-subscription.query';
 import { PluginSubscriptionStore } from '../stores/plugin-subscription.store';
 
 @Injectable({ providedIn: 'root' })
@@ -16,7 +15,6 @@ export class PluginSubscriptionEffects {
 		private readonly actions$: Actions,
 		private readonly pluginSubscriptionService: PluginSubscriptionService,
 		private readonly pluginSubscriptionStore: PluginSubscriptionStore,
-		private readonly pluginSubscriptionQuery: PluginSubscriptionQuery,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService
 	) {}

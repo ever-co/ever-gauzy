@@ -14,226 +14,273 @@ export class PluginSettingsEffects {
 		private readonly store: PluginSettingsStore
 	) {}
 
-	loadSettings$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(PluginSettingsActions.loadSettings),
-			tap(() => this.store.setLoading(true)),
-			switchMap(({ pluginId, query }) =>
-				this.pluginSettingsService.getPluginSettings(pluginId, query).pipe(
-					map((settings) => {
-						this.store.setLoading(false);
-						return PluginSettingsActions.loadSettingsSuccess({ settings });
-					}),
-					catchError((error) => {
-						this.store.setLoading(false);
-						return of(
-							PluginSettingsActions.loadSettingsFailure({ error: error.message || 'Unknown error' })
-						);
-					})
-				)
-			)
-		);
-	});
-
-	loadGroupedSettings$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(PluginSettingsActions.loadGroupedSettings),
-			tap(() => this.store.setLoading(true)),
-			switchMap(({ pluginId, query }) =>
-				this.pluginSettingsService.getPluginSettingsGrouped(pluginId, query).pipe(
-					map((settingsGroups) => {
-						this.store.setLoading(false);
-						return PluginSettingsActions.loadGroupedSettingsSuccess({ settingsGroups });
-					}),
-					catchError((error) => {
-						this.store.setLoading(false);
-						return of(
-							PluginSettingsActions.loadGroupedSettingsFailure({
-								error: error.message || 'Unknown error'
-							})
-						);
-					})
-				)
-			)
-		);
-	});
-
-	createSetting$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(PluginSettingsActions.createSetting),
-			tap(() => this.store.setSaving(true)),
-			switchMap(({ pluginId, setting }) =>
-				this.pluginSettingsService.createPluginSetting(pluginId, setting).pipe(
-					map((newSetting) => {
-						this.store.setSaving(false);
-						return PluginSettingsActions.createSettingSuccess({ setting: newSetting });
-					}),
-					catchError((error) => {
-						this.store.setSaving(false);
-						return of(
-							PluginSettingsActions.createSettingFailure({ error: error.message || 'Unknown error' })
-						);
-					})
-				)
-			)
-		);
-	});
-
-	updateSetting$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(PluginSettingsActions.updateSetting),
-			tap(() => this.store.setSaving(true)),
-			switchMap(({ pluginId, settingId, updateData }) =>
-				this.pluginSettingsService.updateAndValidatePluginSetting(pluginId, settingId, updateData).pipe(
-					map(({ setting, validation }) => {
-						this.store.setSaving(false);
-						return PluginSettingsActions.updateSettingSuccess({ setting, validation });
-					}),
-					catchError((error) => {
-						this.store.setSaving(false);
-						return of(
-							PluginSettingsActions.updateSettingFailure({ error: error.message || 'Unknown error' })
-						);
-					})
-				)
-			)
-		);
-	});
-
-	bulkUpdateSettings$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(PluginSettingsActions.bulkUpdateSettings),
-			tap(() => this.store.setSaving(true)),
-			switchMap(({ pluginId, updates }) =>
-				this.pluginSettingsService.bulkUpdatePluginSettings(pluginId, updates).pipe(
-					map((settings) => {
-						this.store.setSaving(false);
-						return PluginSettingsActions.bulkUpdateSettingsSuccess({ settings });
-					}),
-					catchError((error) => {
-						this.store.setSaving(false);
-						return of(
-							PluginSettingsActions.bulkUpdateSettingsFailure({ error: error.message || 'Unknown error' })
-						);
-					})
-				)
-			)
-		);
-	});
-
-	deleteSetting$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(PluginSettingsActions.deleteSetting),
-			tap(() => this.store.setSaving(true)),
-			switchMap(({ settingId }) =>
-				this.pluginSettingsService.deleteSetting(settingId).pipe(
-					map(() => {
-						this.store.setSaving(false);
-						return PluginSettingsActions.deleteSettingSuccess({ settingId });
-					}),
-					catchError((error) => {
-						this.store.setSaving(false);
-						return of(
-							PluginSettingsActions.deleteSettingFailure({ error: error.message || 'Unknown error' })
-						);
-					})
-				)
-			)
-		);
-	});
-
-	validateSettings$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(PluginSettingsActions.validateSettings),
-			tap(() => this.store.setValidating(true)),
-			switchMap(({ pluginId, settings }) =>
-				this.pluginSettingsService.validateSettingsSchema(pluginId, settings).pipe(
-					map(({ valid, errors }) => {
-						this.store.setValidating(false);
-						return PluginSettingsActions.validateSettingsSuccess({ valid, errors });
-					}),
-					catchError((error) => {
-						this.store.setValidating(false);
-						return of(
-							PluginSettingsActions.validateSettingsFailure({ error: error.message || 'Unknown error' })
-						);
-					})
-				)
-			)
-		);
-	});
-
-	validateSetting$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(PluginSettingsActions.validateSetting),
-			switchMap(({ pluginId, key, value, template }) =>
-				this.pluginSettingsService.validateSetting(pluginId, key, value, template).pipe(
-					map(({ valid, errors }) => PluginSettingsActions.validateSettingSuccess({ key, valid, errors })),
-					catchError((error) =>
-						of(
-							PluginSettingsActions.validateSettingFailure({
-								key,
-								error: error.message || 'Unknown error'
-							})
-						)
+	loadSettings$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.loadSettings),
+				tap(() => this.store.setLoading(true)),
+				switchMap(({ pluginId, query }) =>
+					this.pluginSettingsService.getPluginSettings(pluginId, query).pipe(
+						map((settings) => {
+							this.store.setLoading(false);
+							return PluginSettingsActions.loadSettingsSuccess({ settings });
+						}),
+						catchError((error) => {
+							this.store.setLoading(false);
+							return of(
+								PluginSettingsActions.loadSettingsFailure({ error: error.message || 'Unknown error' })
+							);
+						})
 					)
 				)
-			)
-		);
-	});
+			);
+		},
+		{ dispatch: true }
+	);
 
-	resetSettings$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(PluginSettingsActions.resetSettings),
-			tap(() => this.store.setSaving(true)),
-			switchMap(({ pluginId, scope, tenantId, organizationId, userId }) =>
-				this.pluginSettingsService
-					.resetSettingsToDefault(pluginId, scope, tenantId, organizationId, userId)
-					.pipe(
-						map((settings) => {
+	loadGroupedSettings$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.loadGroupedSettings),
+				tap(() => this.store.setLoading(true)),
+				switchMap(({ pluginId, query }) =>
+					this.pluginSettingsService.getPluginSettingsGrouped(pluginId, query).pipe(
+						map((settingsGroups) => {
+							this.store.setLoading(false);
+							return PluginSettingsActions.loadGroupedSettingsSuccess({ settingsGroups });
+						}),
+						catchError((error) => {
+							this.store.setLoading(false);
+							return of(
+								PluginSettingsActions.loadGroupedSettingsFailure({
+									error: error.message || 'Unknown error'
+								})
+							);
+						})
+					)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
+
+	createSetting$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.createSetting),
+				tap(() => this.store.setSaving(true)),
+				switchMap(({ pluginId, setting }) =>
+					this.pluginSettingsService.createPluginSetting(pluginId, setting).pipe(
+						map((newSetting) => {
 							this.store.setSaving(false);
-							return PluginSettingsActions.resetSettingsSuccess({ settings });
+							return PluginSettingsActions.createSettingSuccess({ setting: newSetting });
 						}),
 						catchError((error) => {
 							this.store.setSaving(false);
 							return of(
-								PluginSettingsActions.resetSettingsFailure({ error: error.message || 'Unknown error' })
+								PluginSettingsActions.createSettingFailure({ error: error.message || 'Unknown error' })
 							);
 						})
 					)
-			)
-		);
-	});
+				)
+			);
+		},
+		{ dispatch: true }
+	);
 
-	exportSettings$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(PluginSettingsActions.exportSettings),
-			switchMap(({ pluginId, scope, tenantId, organizationId, userId }) =>
-				this.pluginSettingsService.exportSettings(pluginId, scope, tenantId, organizationId, userId).pipe(
-					map((blob) => PluginSettingsActions.exportSettingsSuccess({ blob })),
-					catchError((error) =>
-						of(PluginSettingsActions.exportSettingsFailure({ error: error.message || 'Unknown error' }))
+	updateSetting$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.updateSetting),
+				tap(() => this.store.setSaving(true)),
+				switchMap(({ pluginId, settingId, updateData }) =>
+					this.pluginSettingsService.updateAndValidatePluginSetting(pluginId, settingId, updateData).pipe(
+						map(({ setting, validation }) => {
+							this.store.setSaving(false);
+							return PluginSettingsActions.updateSettingSuccess({ setting, validation });
+						}),
+						catchError((error) => {
+							this.store.setSaving(false);
+							return of(
+								PluginSettingsActions.updateSettingFailure({ error: error.message || 'Unknown error' })
+							);
+						})
 					)
 				)
-			)
-		);
-	});
+			);
+		},
+		{ dispatch: true }
+	);
 
-	importSettings$ = createEffect(() => {
-		return this.actions$.pipe(
-			ofType(PluginSettingsActions.importSettings),
-			switchMap(({ pluginId, file, scope, tenantId, organizationId, userId }) =>
-				this.pluginSettingsService.importSettings(pluginId, file, scope, tenantId, organizationId, userId).pipe(
-					map(({ imported, skipped, errors }) =>
-						PluginSettingsActions.importSettingsSuccess({ imported, skipped, errors })
-					),
-					catchError((error) =>
-						of(PluginSettingsActions.importSettingsFailure({ error: error.message || 'Unknown error' }))
+	bulkUpdateSettings$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.bulkUpdateSettings),
+				tap(() => this.store.setSaving(true)),
+				switchMap(({ pluginId, updates }) =>
+					this.pluginSettingsService.bulkUpdatePluginSettings(pluginId, updates).pipe(
+						map((settings) => {
+							this.store.setSaving(false);
+							return PluginSettingsActions.bulkUpdateSettingsSuccess({ settings });
+						}),
+						catchError((error) => {
+							this.store.setSaving(false);
+							return of(
+								PluginSettingsActions.bulkUpdateSettingsFailure({
+									error: error.message || 'Unknown error'
+								})
+							);
+						})
 					)
 				)
-			)
-		);
-	});
+			);
+		},
+		{ dispatch: true }
+	);
+
+	deleteSetting$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.deleteSetting),
+				tap(() => this.store.setSaving(true)),
+				switchMap(({ settingId }) =>
+					this.pluginSettingsService.deleteSetting(settingId).pipe(
+						map(() => {
+							this.store.setSaving(false);
+							return PluginSettingsActions.deleteSettingSuccess({ settingId });
+						}),
+						catchError((error) => {
+							this.store.setSaving(false);
+							return of(
+								PluginSettingsActions.deleteSettingFailure({ error: error.message || 'Unknown error' })
+							);
+						})
+					)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
+
+	validateSettings$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.validateSettings),
+				tap(() => this.store.setValidating(true)),
+				switchMap(({ pluginId, settings }) =>
+					this.pluginSettingsService.validateSettingsSchema(pluginId, settings).pipe(
+						map(({ valid, errors }) => {
+							this.store.setValidating(false);
+							return PluginSettingsActions.validateSettingsSuccess({ valid, errors });
+						}),
+						catchError((error) => {
+							this.store.setValidating(false);
+							return of(
+								PluginSettingsActions.validateSettingsFailure({
+									error: error.message || 'Unknown error'
+								})
+							);
+						})
+					)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
+
+	validateSetting$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.validateSetting),
+				switchMap(({ pluginId, key, value, template }) =>
+					this.pluginSettingsService.validateSetting(pluginId, key, value, template).pipe(
+						map(({ valid, errors }) =>
+							PluginSettingsActions.validateSettingSuccess({ key, valid, errors })
+						),
+						catchError((error) =>
+							of(
+								PluginSettingsActions.validateSettingFailure({
+									key,
+									error: error.message || 'Unknown error'
+								})
+							)
+						)
+					)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
+
+	resetSettings$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.resetSettings),
+				tap(() => this.store.setSaving(true)),
+				switchMap(({ pluginId, scope, tenantId, organizationId, userId }) =>
+					this.pluginSettingsService
+						.resetSettingsToDefault(pluginId, scope, tenantId, organizationId, userId)
+						.pipe(
+							map((settings) => {
+								this.store.setSaving(false);
+								return PluginSettingsActions.resetSettingsSuccess({ settings });
+							}),
+							catchError((error) => {
+								this.store.setSaving(false);
+								return of(
+									PluginSettingsActions.resetSettingsFailure({
+										error: error.message || 'Unknown error'
+									})
+								);
+							})
+						)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
+
+	exportSettings$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.exportSettings),
+				switchMap(({ pluginId, scope, tenantId, organizationId, userId }) =>
+					this.pluginSettingsService.exportSettings(pluginId, scope, tenantId, organizationId, userId).pipe(
+						map((blob) => PluginSettingsActions.exportSettingsSuccess({ blob })),
+						catchError((error) =>
+							of(PluginSettingsActions.exportSettingsFailure({ error: error.message || 'Unknown error' }))
+						)
+					)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
+
+	importSettings$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.importSettings),
+				switchMap(({ pluginId, file, scope, tenantId, organizationId, userId }) =>
+					this.pluginSettingsService
+						.importSettings(pluginId, file, scope, tenantId, organizationId, userId)
+						.pipe(
+							map(({ imported, skipped, errors }) =>
+								PluginSettingsActions.importSettingsSuccess({ imported, skipped, errors })
+							),
+							catchError((error) =>
+								of(
+									PluginSettingsActions.importSettingsFailure({
+										error: error.message || 'Unknown error'
+									})
+								)
+							)
+						)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
 
 	// Store updates based on actions
 	loadSettingsSuccess$ = createEffect(
