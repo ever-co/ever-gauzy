@@ -343,7 +343,9 @@
 		"RESYNC_ISSUES": "Resync Issues",
 		"ENABLED_DISABLED_SYNC": "Enabled / Disabled Sync",
 		"ENABLE_DISABLE_INTEGRATION": "Enable / Disable Integration",
-		"ACTIONS": "Actions"
+		"ACTIONS": "Actions",
+		"LOADING": "Loading...",
+		"LOADING_MORE": "Loading more..."
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -5274,7 +5276,10 @@
 				"CHANGELOG_REQUIRED": "Changelog is required",
 				"FAILED": "Please fix all validation errors before submitting",
 				"SUBSCRIPTION_PLANS_INVALID": "Please ensure all subscription plans are valid",
-				"REQUIRED": "Required"
+				"REQUIRED": "Required",
+				"INVALID_SOURCE": "Invalid source configuration",
+				"RELEASE_DATE_REQUIRED": "Release date is required",
+				"FUTURE_DATE": "Release date cannot be in the future"
 			},
 			"TYPE": "Plugin Type",
 			"TYPE_PLACEHOLDER": "Select plugin type",
@@ -5284,6 +5289,7 @@
 				"MOBILE": "Mobile"
 			},
 			"VERSION": "Version",
+			"VERSION_NUMBER": "Version Number",
 			"STATUS": "Status",
 			"STATUSES": {
 				"ACTIVE": "Active",
@@ -5294,6 +5300,7 @@
 			"DESCRIPTION": "Description",
 			"DESCRIPTION_PLACEHOLDER": "Enter plugin description",
 			"SOURCE": "Source",
+			"SOURCES": "Sources",
 			"SOURCE_TYPE": "Source Type",
 			"SOURCE_TYPES": {
 				"CDN": "CDN",
@@ -5379,6 +5386,8 @@
 				"POPULAR": "Mark as Popular",
 				"RECOMMENDED": "Mark as Recommended",
 				"ADD_PLAN": "Add New Plan",
+				"UPDATE_PLAN": "Update Plan",
+				"DELETE_PLAN": "Delete Plan",
 				"DUPLICATE_PLAN": "Duplicate Plan",
 				"REMOVE_PLAN": "Remove Plan",
 				"NO_PLANS": "No subscription plans created yet"
@@ -5398,11 +5407,13 @@
 			"OVERVIEW": "Overview",
 			"SOURCE_CODE": "Source Code",
 			"SETTINGS": "Settings",
-			"USER_MANAGEMENT": "User Management"
+			"USER_MANAGEMENT": "User Management",
+			"UPLOADED_FILE": "Uploaded File",
+			"UNKNOWN_SOURCE": "Unknown Source"
 		},
 		"MARKETPLACE": {
 			"UPLOAD": "Upload New Plugin",
-			"OFFLINE": "You are currently offline/disconnected ⛓️‍",
+			"OFFLINE": "You are currently offline/disconnected ⛓️‍💔",
 			"SUBSCRIPTION_PLANS": {
 				"TITLE": "Subscription Plans",
 				"DESCRIPTION": "Create subscription plans for your plugin to monetize your work",
@@ -5479,6 +5490,7 @@
 					"RESTORED": "Restore plugin version successfully!"
 				},
 				"SOURCE": {
+					"ADD": "Plugin source created successfully!",
 					"CREATED": "Create plugin source successfully!",
 					"UPDATED": "Update plugin source successfully!",
 					"DELETED": "Delete plugin source successfully!",
@@ -5514,6 +5526,7 @@
 					"RESTORE": "Failed to restore plugin version. Please try again!"
 				},
 				"SOURCE": {
+					"ADD": "Failed to add plugin source. Please try again!",
 					"RESTORE": "Failed to restore plugin source. Please try again!"
 				},
 				"UPLOAD": "Failed to upload plugin. Please try again!",
@@ -5524,7 +5537,37 @@
 		},
 		"BUTTONS": {
 			"ASSIGN_USERS": "Assign Users",
-			"ASSIGN_FIRST_USER": "Assign Your First User"
+			"ASSIGN_FIRST_USER": "Assign Your First User",
+			"SUBSCRIBE_AND_INSTALL": "Subscribe & Install"
+		},
+		"LOADING": "Loading plugin...",
+		"ACCESS": {
+			"HAS_ACCESS": "Access granted",
+			"NO_ACCESS": "Access denied",
+			"OPERATION_DENIED": "Operation '{{operation}}' denied",
+			"INVALID_PLUGIN": "Invalid plugin",
+			"USER_LEVEL": "User Level",
+			"ORG_LEVEL": "Organization Level",
+			"TENANT_LEVEL": "Tenant Level",
+			"GLOBAL_LEVEL": "Global Level"
+		},
+		"SUBSCRIPTION": {
+			"REQUIRED_FOR_INSTALLATION": "A subscription is required to install this plugin",
+			"ACCESS_NOT_GRANTED": "Subscription access was not granted",
+			"RESUBSCRIBE_REQUIRED": "Subscription expired. Please resubscribe to continue using this plugin",
+			"ACCESS_REVOKED": "Your subscription access has been revoked",
+			"LOADING": "Loading subscription...",
+			"CREATING": "Creating subscription...",
+			"UPDATING": "Updating subscription...",
+			"DELETING": "Deleting subscription..."
+		},
+		"INSTALLATION": {
+			"ERROR": "Failed to install plugin"
+		},
+		"TOOLTIP": {
+			"INSTALL_WITH_SUBSCRIPTION": "Install plugin (subscription required)",
+			"SUBSCRIBE_TO_INSTALL": "Subscribe to install this plugin",
+			"INSTALL_FREE": "Install this free plugin"
 		},
 		"USER_MANAGEMENT": {
 			"TITLE": "User Assignment Management",
@@ -5537,7 +5580,8 @@
 			"INACTIVE": "Inactive",
 			"UNASSIGN": "Unassign User",
 			"NO_USERS_ASSIGNED": "No users assigned yet",
-			"NO_USERS_HINT": "Users you assign to this plugin will appear here"
+			"NO_USERS_HINT": "Users you assign to this plugin will appear here",
+			"END_OF_LIST": "End of list"
 		},
 		"SETTINGS": {
 			"TITLE": "Plugin Settings",
@@ -5555,6 +5599,57 @@
 			"FEATURE_3_DESC": "Configure settings at different levels: global, tenant, organization, or user",
 			"FEATURE_4_TITLE": "Real-time Updates",
 			"FEATURE_4_DESC": "Changes are applied immediately without requiring plugin restart"
+		},
+		"ASSIGNMENT_DIALOG": {
+			"TITLE": "Assign Users to Plugin",
+			"SELECT_USERS": "Select Users",
+			"SELECT_USERS_PLACEHOLDER": "Choose users to assign",
+			"SELECTED_COUNT": "{{count}} user(s) selected",
+			"USERS_REQUIRED": "Please select at least one user",
+			"REASON": "Reason for Assignment",
+			"OPTIONAL": "Optional",
+			"REASON_PLACEHOLDER": "Enter reason for assignment (optional)",
+			"REASON_TOO_LONG": "Reason is too long (max 500 characters)",
+			"LOADING_USERS": "Loading users...",
+			"ASSIGN_BUTTON": "Assign Users"
+		},
+		"REVOCATION_DIALOG": {
+			"TITLE": "Revoke User Access",
+			"WARNING_TITLE": "Warning",
+			"WARNING_MESSAGE": "You are about to revoke access for {{count}} user(s). This action cannot be undone.",
+			"USERS_TO_REVOKE": "Users to Revoke",
+			"REASON": "Reason for Revocation",
+			"REASON_PLACEHOLDER": "Enter reason for revocation (required)",
+			"MIN_LENGTH": "Minimum {{min}} characters",
+			"REASON_REQUIRED": "Reason is required",
+			"REASON_TOO_SHORT": "Reason is too short",
+			"REASON_TOO_LONG": "Reason is too long",
+			"REVOKE_BUTTON": "Revoke Access"
+		},
+		"HIERARCHY": {
+			"TITLE": "Subscription Hierarchy",
+			"USER_ID": "User ID",
+			"TYPE": "Type",
+			"BILLING_PERIOD": "Billing Period",
+			"AMOUNT": "Amount",
+			"START_DATE": "Start Date",
+			"END_DATE": "End Date",
+			"NEXT_BILLING": "Next Billing Date",
+			"AUTO_RENEW": "Auto Renew",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"FEATURES": "Features",
+			"NO_SUBSCRIPTIONS": "No subscriptions found"
+		},
+		"SECURITY": {
+			"VERIFIED": "Verified Plugin",
+			"SIGNED": "Digitally Signed"
+		},
+		"ACTIONS": {
+			"SETTINGS": "Plugin Settings",
+			"MANAGE_USERS": "Manage Users",
+			"EDIT": "Edit Plugin",
+			"MORE": "More Actions"
 		}
 	},
 	"SERVER_DOWN": {
