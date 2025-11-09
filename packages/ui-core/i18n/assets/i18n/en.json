@@ -237,7 +237,7 @@
 			"PRODUCT_TYPE_NO_DATA": "You have not created any product types.",
 			"TEAM_DASHBOARD": "You don't have any teams.",
 			"PLUGIN": "You haven't install any plugin.",
-			"PLUGIN_MARKETPLACE": "This plugin is unvailable on marketplace",
+			"PLUGIN_MARKETPLACE": "Plugin not found",
 			"HISTORY": "There's no history"
 		},
 		"TRANSACTION_TYPE": "Type",
@@ -5281,6 +5281,7 @@
 				"RELEASE_DATE_REQUIRED": "Release date is required",
 				"FUTURE_DATE": "Release date cannot be in the future"
 			},
+			"SUBMISSION_ERROR": "An error occurred while submitting the form",
 			"TYPE": "Plugin Type",
 			"TYPE_PLACEHOLDER": "Select plugin type",
 			"TYPES": {
@@ -5484,8 +5485,8 @@
 		"TOASTR": {
 			"SUCCESS": {
 				"VERSION": {
-					"CREATED": "Create plugin version v{{number}} successfully!",
-					"UPDATED": "Update plugin version v{{number}} successfully!",
+					"CREATED": "Create plugin version v{{version}} successfully!",
+					"UPDATED": "Update plugin version v{{version}} successfully!",
 					"DELETED": "Delete plugin version successfully!",
 					"RESTORED": "Restore plugin version successfully!"
 				},
@@ -5493,14 +5494,17 @@
 					"ADD": "Plugin source created successfully!",
 					"CREATED": "Create plugin source successfully!",
 					"UPDATED": "Update plugin source successfully!",
+					"DELETE": "Delete plugin source successfully!",
 					"DELETED": "Delete plugin source successfully!",
+					"RESTORE": "Restore plugin source successfully!",
 					"RESTORED": "Restore plugin source successfully!"
 				},
 				"UPLOADED": "Upload plugin successfully!",
 				"UPDATED": "Update plugin successfully!",
 				"DELETED": "Delete plugin successfully!",
 				"INSTALLED": "Install plugin successfully!",
-				"UNINSTALLED": "Uninstall plugin successfully!"
+				"UNINSTALLED": "Uninstall plugin successfully!",
+				"SUBSCRIBED": "Subscription successful"
 			},
 			"INFO": {
 				"VERSION": {
@@ -5519,7 +5523,10 @@
 				"UPDATING": "Updating plugin version...",
 				"DELETING": "Deleting plugin...",
 				"INSTALLING": "Installing plugin...",
-				"UNINSTALLING": "Uninstalling plugin..."
+				"UNINSTALLING": "Uninstalling plugin...",
+				"SUBSCRIBING": "Processing subscription...",
+				"DOWNLOAD_COMPLETED": "Download completed",
+				"SERVER_INSTALLATION_COMPLETED": "Server installation completed"
 			},
 			"ERROR": {
 				"VERSION": {
@@ -5527,12 +5534,15 @@
 				},
 				"SOURCE": {
 					"ADD": "Failed to add plugin source. Please try again!",
+					"DELETE": "Failed to delete plugin source. Please try again!",
 					"RESTORE": "Failed to restore plugin source. Please try again!"
 				},
 				"UPLOAD": "Failed to upload plugin. Please try again!",
 				"NOT_FOUND": "Plugin with ID {{ id }} not found.",
 				"INSTALL": "Failed to install plugin. Please try again!",
-				"REVERT_INSTALLATION": "Failed to revert installation!"
+				"UNINSTALL": "Failed to uninstall plugin. Please try again!",
+				"REVERT_INSTALLATION": "Failed to revert installation!",
+				"INVALID_PLUGIN_DATA": "Invalid plugin data"
 			}
 		},
 		"BUTTONS": {
@@ -5581,7 +5591,18 @@
 			"UNASSIGN": "Unassign User",
 			"NO_USERS_ASSIGNED": "No users assigned yet",
 			"NO_USERS_HINT": "Users you assign to this plugin will appear here",
-			"END_OF_LIST": "End of list"
+			"END_OF_LIST": "End of list",
+			"SUCCESS": {
+				"USERS_ASSIGNED": "{{count}} user(s) assigned successfully",
+				"USER_UNASSIGNED": "User unassigned successfully",
+				"BULK_ASSIGNED": "{{count}} user(s) assigned in bulk"
+			},
+			"ERROR": {
+				"LOAD_USERS": "Failed to load assigned users",
+				"LOAD_AVAILABLE": "Failed to load available users",
+				"ASSIGN": "Failed to assign user(s)",
+				"UNASSIGN": "Failed to unassign user"
+			}
 		},
 		"SETTINGS": {
 			"TITLE": "Plugin Settings",
@@ -5650,6 +5671,37 @@
 			"MANAGE_USERS": "Manage Users",
 			"EDIT": "Edit Plugin",
 			"MORE": "More Actions"
+		},
+		"SOURCE": {
+			"DELETE_CONFIRMATION": "Are you sure you want to delete this source?",
+			"DELETE_TITLE": "Delete Source",
+			"RESTORE_CONFIRMATION": "Are you sure you want to restore this source?",
+			"RESTORE_TITLE": "Restore Source"
+		},
+		"CATEGORY": {
+			"TOASTR": {
+				"INFO": {
+					"CREATING": "Creating category...",
+					"UPDATING": "Updating category...",
+					"DELETING": "Deleting category..."
+				},
+				"SUCCESS": {
+					"CREATED": "Category created successfully",
+					"UPDATED": "Category updated successfully",
+					"PATCHED": "Category patched successfully",
+					"DELETED": "Category deleted successfully"
+				},
+				"ERROR": {
+					"LOAD": "Failed to load categories",
+					"LOAD_MORE": "Failed to load more categories",
+					"LOAD_TREE": "Failed to load category tree",
+					"LOAD_ONE": "Failed to load category",
+					"CREATE": "Failed to create category",
+					"UPDATE": "Failed to update category",
+					"PATCH": "Failed to patch category",
+					"DELETE": "Failed to delete category"
+				}
+			}
 		}
 	},
 	"SERVER_DOWN": {
