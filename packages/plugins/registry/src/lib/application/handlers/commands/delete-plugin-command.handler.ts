@@ -2,13 +2,14 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
 
+import { PluginInstallationService } from '../../../domain/services';
 import { PluginService } from '../../../domain/services/plugin.service';
-import { DeactivatePluginCommand } from '../../commands/deactivate-plugin.command';
 import { DeletePluginCommand } from '../../commands/delete-plugin.command';
 
 @CommandHandler(DeletePluginCommand)
 export class DeletePluginCommandHandler implements ICommandHandler<DeletePluginCommand> {
 	constructor(
+		private readonly pluginInstallationService: PluginInstallationService,
 		private readonly pluginService: PluginService,
 		private readonly dataSource: DataSource,
 		private readonly commandBus: CommandBus
@@ -22,6 +23,7 @@ export class DeletePluginCommandHandler implements ICommandHandler<DeletePluginC
 	 * @throws BadRequestException if the deletion fails
 	 */
 	public async execute(command: DeletePluginCommand): Promise<void> {
+		// Extract plugin ID from command
 		const { pluginId } = command;
 
 		// Validate plugin ID
@@ -37,12 +39,10 @@ export class DeletePluginCommandHandler implements ICommandHandler<DeletePluginC
 		try {
 			// Verify that the plugin exists
 			const plugin = await this.pluginService.findOneOrFailByIdString(pluginId);
+
 			if (!plugin.success) {
 				throw new NotFoundException(`Plugin with ID ${pluginId} not found`);
 			}
-
-			// Deactivate the plugin
-			await this.commandBus.execute(new DeactivatePluginCommand(pluginId));
 
 			// Delete the plugin
 			await this.pluginService.delete(pluginId);

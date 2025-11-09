@@ -24,12 +24,16 @@ export class UninstallPluginCommandHandler implements ICommandHandler<UninstallP
 	 * @throws {NotFoundException} If the plugin installation is not found.
 	 */
 	public async execute(command: UninstallPluginCommand): Promise<void> {
+		// Get current user and context
+		const currentUser = RequestContext.currentUser();
+		// Get employeeId - may be null for users without employee records or with CHANGE_SELECTED_EMPLOYEE permission
+		const installedById = currentUser?.employeeId || null;
 		const { pluginId } = command;
 
 		// Find the plugin installation by plugin ID and the current employee ID
 		const found = await this.installationService.findOneOrFailByWhereOptions({
 			pluginId,
-			installedById: RequestContext.currentEmployeeId(),
+			installedById,
 			status: PluginInstallationStatus.INSTALLED
 		});
 

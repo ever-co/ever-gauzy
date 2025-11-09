@@ -42,7 +42,7 @@ export class PluginInstallationActions {
 	);
 	public static installationCompleted = createAction(
 		'[Plugin Installation] Installation Completed',
-		(plugin: IPluginMarketplace) => ({ plugin })
+		(marketplaceId: IPluginMarketplace['id']) => ({ marketplaceId })
 	);
 	public static installationFailed = createAction('[Plugin Installation] Installation Failed', (error: string) => ({
 		error

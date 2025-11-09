@@ -48,7 +48,7 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 			return await super.create({
 				...entityWithoutParentId,
 				parent
-			} as any);
+			});
 		}
 
 		// No parent, proceed with standard creation

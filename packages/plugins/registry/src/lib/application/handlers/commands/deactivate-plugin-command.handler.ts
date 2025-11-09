@@ -18,7 +18,7 @@ export class DeactivatePluginCommandHandler implements ICommandHandler<Deactivat
 	 * @throws BadRequestException if installation ID is missing
 	 * @throws NotFoundException if installation doesn't exist
 	 */
-	public async execute(command: DeactivatePluginCommand): Promise<void> {
+	public async execute(command: DeactivatePluginCommand) {
 		const { installationId } = command;
 
 		// Validate input
@@ -27,10 +27,14 @@ export class DeactivatePluginCommandHandler implements ICommandHandler<Deactivat
 		}
 
 		// Find the plugin installation
-		const installation = await this.pluginInstallationService.findOneByIdString(installationId);
-		if (!installation) {
+		const found = await this.pluginInstallationService.findOneOrFailByIdString(installationId);
+
+		if (!found.success) {
 			throw new NotFoundException('Plugin installation not found');
 		}
+
+		// Get the installation record
+		const installation = found.record;
 
 		// Ensure installation is in INSTALLED status
 		if (installation.status !== PluginInstallationStatus.INSTALLED) {
@@ -44,5 +48,10 @@ export class DeactivatePluginCommandHandler implements ICommandHandler<Deactivat
 				deactivatedAt: new Date()
 			});
 		}
+
+		return {
+			success: true,
+			message: 'Plugin deactivated successfully'
+		};
 	}
 }

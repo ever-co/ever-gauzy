@@ -1,15 +1,32 @@
 import { HttpStatus, ID } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
-import { Body, Controller, Param, Patch, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Param, Patch, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+	ApiBearerAuth,
+	ApiBody,
+	ApiOperation,
+	ApiParam,
+	ApiProperty,
+	ApiResponse,
+	ApiSecurity,
+	ApiTags
+} from '@nestjs/swagger';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 import { ActivatePluginCommand } from '../../application/commands/activate-plugin.command';
 import { DeactivatePluginCommand } from '../../application/commands/deactivate-plugin.command';
-import { PluginAccessGuard } from '../../core/guards/plugin-access.guard';
+import { PluginSubscriptionAccessGuard } from '../../core/guards';
 
+enum InstallationStatus {
+	ACTIVE = 'active',
+	INACTIVE = 'inactive'
+}
 // DTO for status update
 export class UpdateInstallationStatusDTO {
-	status: 'active' | 'inactive';
+	@ApiProperty({ type: () => String, enum: InstallationStatus })
+	@IsNotEmpty()
+	@IsEnum(InstallationStatus, { message: 'Invalid installation status' })
+	status: InstallationStatus;
 }
 
 @ApiTags('Plugin Installation Management')
@@ -59,16 +76,20 @@ export class PluginActivationController {
 	})
 	@ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized access.' })
 	@UseValidationPipe({ whitelist: true, transform: true })
-	@UseGuards(PluginAccessGuard)
+	@UseGuards(PluginSubscriptionAccessGuard)
 	@Patch(':installationId')
 	public async updateStatus(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
-		@Body() updateStatusDto: UpdateInstallationStatusDTO
+		@Param('installationId', UUIDValidationPipe) installationId: ID,
+		@Body() { status }: UpdateInstallationStatusDTO
 	): Promise<void> {
-		if (updateStatusDto.status === 'active') {
-			return this.commandBus.execute(new ActivatePluginCommand(pluginId));
-		} else {
-			return this.commandBus.execute(new DeactivatePluginCommand(pluginId));
+		switch (status) {
+			case InstallationStatus.ACTIVE:
+				return this.commandBus.execute(new ActivatePluginCommand(pluginId, installationId));
+			case InstallationStatus.INACTIVE:
+				return this.commandBus.execute(new DeactivatePluginCommand(installationId));
+			default:
+				throw new BadRequestException(`Invalid status value ${status}`);
 		}
 	}
 }

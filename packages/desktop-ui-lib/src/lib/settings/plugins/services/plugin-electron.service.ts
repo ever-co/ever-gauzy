@@ -46,8 +46,8 @@ export class PluginElectronService {
 		this.electronService.ipcRenderer.send('plugin::uninstall', plugin.name);
 	}
 
-	public completeInstallation(marketplaceId: string, installationId: string): Promise<void> {
-		return this.electronService.ipcRenderer.invoke('plugin::complete::installation', {
+	public completeInstallation(marketplaceId: string, installationId: string): void {
+		this.electronService.ipcRenderer.send('plugin::complete::installation', {
 			marketplaceId,
 			installationId
 		});

@@ -48,10 +48,20 @@ export class InstallPluginCommandHandler implements ICommandHandler<InstallPlugi
 			pluginId,
 			input: { versionId }
 		} = command;
-		const installedById = RequestContext.currentEmployeeId();
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
+
+		// Get employeeId - may be null for users without employee records or with CHANGE_SELECTED_EMPLOYEE permission
+		const currentUser = RequestContext.currentUser();
+		const installedById = currentUser?.employeeId || null;
+
+		// Ensure user has an associated employee record
+		if (!installedById) {
+			throw new ForbiddenException(
+				'Plugin installation requires an associated employee record. Please contact your administrator.'
+			);
+		}
 
 		// Check if user has valid subscription for this plugin (any scope: user, organization, or tenant)
 		const state = await this.subscriptionAccessService.getSubscriptionDetails(
@@ -64,28 +74,36 @@ export class InstallPluginCommandHandler implements ICommandHandler<InstallPlugi
 		// Ensure user has access to install the plugin
 		this.ensurePluginAccess(state);
 
-		// Find existing plugin installation
-		const found = await this.installationService.findOneOrFailByWhereOptions({
+		// Build where clause for finding existing installation
+		const whereClause: Partial<IPluginInstallation> = {
 			pluginId,
 			versionId,
 			installedById,
 			status: PluginInstallationStatus.INSTALLED
-		});
+		};
+
+		// Find existing plugin installation
+		const found = await this.installationService.findOneOrFailByWhereOptions(whereClause);
 
 		if (found.success) {
 			// Plugin is already installed, return the existing record
 			return found.record;
 		}
 
-		// Create or update the PluginInstallation entity
-		const installation = Object.assign(new PluginInstallation(), {
-			installedById,
+		// Create the PluginInstallation entity
+		const installationData: Partial<IPluginInstallation> = {
+			tenantId,
 			pluginId,
 			versionId,
+			installedById,
 			status: PluginInstallationStatus.INSTALLED,
 			installedAt: new Date(),
-			uninstalledAt: null
-		});
+			uninstalledAt: null,
+			...(organizationId && { organizationId })
+		};
+
+		const installation = Object.assign(new PluginInstallation(), installationData);
+
 		// Persist the plugin installation record
 		return this.installationService.save(installation);
 	}

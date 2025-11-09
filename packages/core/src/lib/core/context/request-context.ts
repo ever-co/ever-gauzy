@@ -2,15 +2,15 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { HttpException, HttpStatus } from '@nestjs/common';
-import { CLS_ID, ClsService } from 'nestjs-cls';
-import { v4 as uuidv4 } from 'uuid';
-import { Request, Response } from 'express';
-import { ExtractJwt } from 'passport-jwt';
-import { JsonWebTokenError, verify } from 'jsonwebtoken';
-import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum, ID } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
+import { ID, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
+import { HttpException, HttpStatus } from '@nestjs/common';
+import { Request, Response } from 'express';
+import { JsonWebTokenError, verify } from 'jsonwebtoken';
+import { CLS_ID, ClsService } from 'nestjs-cls';
+import { ExtractJwt } from 'passport-jwt';
+import { v4 as uuidv4 } from 'uuid';
 import { SerializedRequestContext } from './types';
 
 export class RequestContext {
@@ -190,7 +190,11 @@ export class RequestContext {
 	 */
 	static currentOrganizationId(): ID | null {
 		const user: IUser | null = RequestContext.currentUser();
-		return user?.employee?.organizationId || null;
+		return (
+			user?.employee?.organizationId ||
+			(RequestContext?.currentRequest()?.headers['organization-id'] as ID) ||
+			null
+		);
 	}
 
 	/**

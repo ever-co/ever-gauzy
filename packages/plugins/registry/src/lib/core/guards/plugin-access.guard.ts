@@ -20,6 +20,8 @@ export class PluginAccessGuard implements CanActivate {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
+		const currentUser = RequestContext.currentUser();
+		const installedById = currentUser?.employeeId || null;
 
 		if (!idFromRequest) {
 			throw new ForbiddenException('Plugin ID or Installation ID is required.');
@@ -38,7 +40,7 @@ export class PluginAccessGuard implements CanActivate {
 			}
 
 			// Check if user is the one who installed the plugin
-			if (installation.installedById === userId) {
+			if (installation.installedById === installedById) {
 				return true;
 			}
 

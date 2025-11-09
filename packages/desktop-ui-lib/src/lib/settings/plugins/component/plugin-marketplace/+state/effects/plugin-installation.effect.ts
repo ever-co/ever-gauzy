@@ -180,9 +180,7 @@ export class PluginInstallationEffects {
 							);
 						}),
 						map(() => {
-							// Find the installed plugin to get its details
-							const plugin = this.pluginMarketplaceQuery.plugins.find((p) => p.id === marketplaceId);
-							return PluginInstallationActions.installationCompleted(plugin);
+							return PluginInstallationActions.installationCompleted(marketplaceId);
 						}),
 						finalize(() => this.pluginInstallationStore.update({ completingInstallation: false })),
 						catchError((error) =>
@@ -209,13 +207,16 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.installationCompleted),
-				switchMap(({ plugin }) =>
-					from(this.pluginElectronService.checkInstallation(plugin.id)).pipe(
+				switchMap(({ marketplaceId }) =>
+					from(this.pluginElectronService.checkInstallation(marketplaceId)).pipe(
 						tap(() => {
 							this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.ACTIVATING'));
 						}),
 						map((installedPlugin) =>
-							PluginInstallationActions.startActivation(plugin.id, installedPlugin.installationId)
+							PluginInstallationActions.startActivation(
+								installedPlugin.installationId,
+								installedPlugin.marketplaceId
+							)
 						),
 						catchError((error) =>
 							of(
@@ -410,7 +411,7 @@ export class PluginInstallationEffects {
 						.progress((message) => this.toastrService.info(message))
 						.pipe(
 							switchMap(({ message }) => {
-								const { marketplaceId: pluginId } = plugin || {};
+								const { marketplaceId: pluginId, installationId } = plugin || {};
 
 								if (!pluginId) {
 									this.toastrService.success(
@@ -418,11 +419,6 @@ export class PluginInstallationEffects {
 									);
 									return of(PluginActions.refresh());
 								}
-
-								// Get installationId from pending installations
-								const pendingInstallation =
-									this.pluginInstallationQuery.getPendingInstallation(pluginId);
-								const installationId = pendingInstallation?.installationId;
 
 								// Handle server-side uninstallation
 								return this.pluginService

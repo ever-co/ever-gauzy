@@ -1,4 +1,5 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { RequestContext } from '@gauzy/core';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginInstallationService } from '../../../domain/services/plugin-installation.service';
 import { PluginInstallationStatus } from '../../../shared/models/plugin-installation.model';
@@ -18,8 +19,13 @@ export class ActivatePluginCommandHandler implements ICommandHandler<ActivatePlu
 	 * @throws BadRequestException if installation ID is missing
 	 * @throws NotFoundException if installation doesn't exist
 	 */
-	public async execute(command: ActivatePluginCommand): Promise<void> {
-		const { installationId } = command;
+	public async execute(command: ActivatePluginCommand) {
+		// Get current user and context
+		const currentUser = RequestContext.currentUser();
+		// Get employeeId - may be null for users without employee records or with CHANGE_SELECTED_EMPLOYEE permission
+		const installedById = currentUser?.employeeId || null;
+		// Extract installation ID and plugin ID from command
+		const { installationId, pluginId } = command;
 
 		// Validate input
 		if (!installationId) {
@@ -27,10 +33,18 @@ export class ActivatePluginCommandHandler implements ICommandHandler<ActivatePlu
 		}
 
 		// Find the plugin installation
-		const installation = await this.pluginInstallationService.findOneByIdString(installationId);
-		if (!installation) {
-			throw new NotFoundException('Plugin installation not found');
+		const found = await this.pluginInstallationService.findOneOrFailByWhereOptions({
+			id: installationId,
+			installedById,
+			pluginId
+		});
+
+		if (!found.success) {
+			throw new ForbiddenException('You do not have permission to activate this plugin installation');
 		}
+
+		// Get the installation record
+		const installation = found.record;
 
 		// Ensure installation is in INSTALLED status before activation
 		if (installation.status !== PluginInstallationStatus.INSTALLED) {
@@ -45,5 +59,10 @@ export class ActivatePluginCommandHandler implements ICommandHandler<ActivatePlu
 				deactivatedAt: null // Clear any previous deactivation date
 			});
 		}
+
+		return {
+			success: true,
+			message: 'Plugin activated successfully'
+		};
 	}
 }

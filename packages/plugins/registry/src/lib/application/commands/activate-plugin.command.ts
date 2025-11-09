@@ -3,5 +3,5 @@ import { ICommand } from '@nestjs/cqrs';
 
 export class ActivatePluginCommand implements ICommand {
 	public static readonly type = '[Plugin] Activate';
-	constructor(public readonly installationId: ID) {}
+	constructor(public readonly pluginId: ID, public readonly installationId: ID) {}
 }

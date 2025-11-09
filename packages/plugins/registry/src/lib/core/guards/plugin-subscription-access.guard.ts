@@ -28,9 +28,7 @@ export class PluginSubscriptionAccessGuard implements CanActivate {
 		const pluginId = request.params[pluginIdParam];
 
 		if (!pluginId) {
-			// If no plugin ID in params, allow the request to proceed
-			// The controller method should handle validation
-			return true;
+			throw new ForbiddenException('Plugin ID parameter is missing in the request');
 		}
 
 		// Get context information
@@ -44,8 +42,13 @@ export class PluginSubscriptionAccessGuard implements CanActivate {
 
 		// Check if user has access to the plugin
 		try {
-			await this.subscriptionAccessService.requirePluginAccess(pluginId, tenantId, organizationId, userId);
-			return true;
+			const { canActivate } = await this.subscriptionAccessService.getSubscriptionDetails(
+				pluginId,
+				tenantId,
+				organizationId,
+				userId
+			);
+			return canActivate;
 		} catch (error) {
 			throw new ForbiddenException(
 				error.message || 'You do not have an active subscription to access this plugin'

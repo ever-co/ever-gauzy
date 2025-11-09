@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, map, switchMap } from 'rxjs';
+import { EMPTY, Observable, from, map, switchMap } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { IPlugin } from '../../services/plugin-loader.service';
 import { PluginService } from '../../services/plugin.service';
@@ -71,7 +71,7 @@ export class ActivatePluginCommand
 			switchMap(() => from(this.pluginElectronService.checkInstallation(params.marketplaceId))),
 			switchMap((plugin) => {
 				this.pluginElectronService.deactivate(plugin);
-				return this.pluginElectronService.progress<void, IPlugin>().pipe(map(() => void 0));
+				return this.pluginElectronService.progress<void, IPlugin>().pipe(switchMap(() => EMPTY));
 			})
 		);
 	}

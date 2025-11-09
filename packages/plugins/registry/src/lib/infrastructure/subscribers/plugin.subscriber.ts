@@ -65,15 +65,18 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 
 			// Compute total download count from all versions
 			const downloadCount = await this.computeDownloadCount(entity.id);
-
 			// Compute latest version
 			const version = await this.computeLatestVersion(entity.id);
+			// Get current user and context
+			const currentUser = RequestContext.currentUser();
+			// Get employeeId - may be null for users without employee records or with CHANGE_SELECTED_EMPLOYEE permission
+			const installedById = currentUser?.employeeId || null;
 
 			// compute installation
 			const installation = await this.pluginInstallationService.findOneOrFailByOptions({
 				where: {
 					pluginId: entity.id,
-					installedById: RequestContext.currentEmployeeId(),
+					installedById,
 					status: PluginInstallationStatus.INSTALLED
 				}
 			});

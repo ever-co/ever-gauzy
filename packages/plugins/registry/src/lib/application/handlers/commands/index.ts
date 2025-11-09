@@ -62,8 +62,6 @@ import { UpdatePluginSettingHandler } from './update-plugin-setting.handler';
 // Plugin Configuration Command Handlers
 import { PluginConfigGetHandler } from './plugin-config-get.handler';
 import { PluginConfigSetHandler } from './plugin-config-set.handler';
-import { PluginInstallHandler } from './plugin-install.handler';
-import { PluginUninstallHandler } from './plugin-uninstall.handler';
 
 // Plugin Tag Command Handlers
 import { AutoTagPluginHandler } from './plugin-tag/auto-tag-plugin.handler';
@@ -125,8 +123,6 @@ export {
 	// Plugin Configuration Command Handlers
 	PluginConfigGetHandler,
 	PluginConfigSetHandler,
-	PluginInstallHandler,
-	PluginUninstallHandler,
 	ProcessBillingCommandHandler,
 	PurchasePluginSubscriptionCommandHandler,
 	RecoverPluginSourceCommandHandler,
@@ -212,8 +208,6 @@ export const commands = [
 	// Plugin Configuration Command Handlers
 	PluginConfigGetHandler,
 	PluginConfigSetHandler,
-	PluginInstallHandler,
-	PluginUninstallHandler,
 
 	// Plugin Tag Command Handlers
 	AutoTagPluginHandler,

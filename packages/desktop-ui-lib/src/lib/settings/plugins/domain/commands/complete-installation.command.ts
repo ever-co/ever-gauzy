@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, map } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
+import { IPlugin } from '../../services/plugin-loader.service';
 import { IInstallationCommand } from '../interfaces';
 
 /**
@@ -38,7 +39,10 @@ export class CompleteInstallationCommand
 	public execute(params: ICompleteInstallCommandParams): Observable<ICompleteInstallCommandResult> {
 		const { marketplaceId, installationId } = params;
 
-		return from(this.pluginElectronService.completeInstallation(marketplaceId, installationId)).pipe(
+		this.pluginElectronService.completeInstallation(marketplaceId, installationId);
+
+		// Monitor progress and return result
+		return this.pluginElectronService.progress<void, IPlugin>().pipe(
 			map(() => ({
 				success: true,
 				message: 'Installation completed successfully'
