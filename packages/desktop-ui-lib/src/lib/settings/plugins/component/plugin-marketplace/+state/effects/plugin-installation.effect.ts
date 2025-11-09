@@ -182,7 +182,9 @@ export class PluginInstallationEffects {
 						map(() => {
 							return PluginInstallationActions.installationCompleted(marketplaceId);
 						}),
-						finalize(() => this.pluginInstallationStore.update({ completingInstallation: false })),
+						finalize(() =>
+							this.pluginInstallationStore.update({ completingInstallation: false, installing: false })
+						),
 						catchError((error) =>
 							of(
 								PluginInstallationActions.installationFailed(
