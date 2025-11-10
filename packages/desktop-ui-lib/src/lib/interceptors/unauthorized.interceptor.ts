@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { concatMap, Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AuthStrategy } from '../auth';
+import { AUTH_ENDPOINTS } from '../constants';
 import { ElectronService } from '../electron/services';
 import { ErrorMapping, Store } from '../services';
 
@@ -60,12 +61,6 @@ export class UnauthorizedInterceptor implements HttpInterceptor {
 	 * Checks if the request URL is for an authentication endpoint
 	 */
 	private isAuthEndpoint(url: string): boolean {
-		return (
-			url.includes('/auth/login') ||
-			url.includes('/auth/refresh-token') ||
-			url.includes('/auth/register') ||
-			url.includes('/auth/request-password') ||
-			url.includes('/auth/reset-password')
-		);
+		return AUTH_ENDPOINTS.some((endpoint) => url.includes(endpoint));
 	}
 }

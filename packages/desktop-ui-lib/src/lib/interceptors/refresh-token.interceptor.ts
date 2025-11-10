@@ -11,6 +11,7 @@ import { NbAuthResult } from '@nebular/auth';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, finalize, switchMap, take } from 'rxjs/operators';
 import { AuthStrategy } from '../auth';
+import { AUTH_ENDPOINTS } from '../constants';
 import { Store } from '../services';
 
 /**
@@ -106,12 +107,6 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
 	 * to avoid infinite refresh loops
 	 */
 	private isAuthEndpoint(url: string): boolean {
-		return (
-			url.includes('/auth/login') ||
-			url.includes('/auth/refresh-token') ||
-			url.includes('/auth/register') ||
-			url.includes('/auth/request-password') ||
-			url.includes('/auth/reset-password')
-		);
+		return AUTH_ENDPOINTS.some((endpoint) => url.includes(endpoint));
 	}
 }
