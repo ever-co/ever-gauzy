@@ -1,24 +1,25 @@
 import { AfterViewInit, Component, NgZone, OnInit, Renderer2 } from '@angular/core';
-import { NbToastrService } from '@nebular/theme';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { firstValueFrom } from 'rxjs';
 import {
 	ActivityWatchElectronService,
 	AuthStrategy,
 	ElectronService,
 	LanguageElectronService,
 	Store,
-	TimeTrackerDateManager
+	TimeTrackerDateManager,
+	TokenRefreshService
 } from '@gauzy/desktop-ui-lib';
+import { NbToastrService } from '@nebular/theme';
+import { UntilDestroy } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
 import { AppService } from './app.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'gauzy-root',
-    template: '<router-outlet></router-outlet>',
-    styleUrls: ['./app.component.scss'],
-    standalone: false
+	selector: 'gauzy-root',
+	template: '<router-outlet></router-outlet>',
+	styleUrls: ['./app.component.scss'],
+	standalone: false
 })
 export class AppComponent implements OnInit, AfterViewInit {
 	constructor(
@@ -31,7 +32,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private _ngZone: NgZone,
 		private _renderer: Renderer2,
 		readonly activityWatchElectronService: ActivityWatchElectronService,
-		readonly languageElectronService: LanguageElectronService
+		readonly languageElectronService: LanguageElectronService,
+		private readonly tokenRefreshService: TokenRefreshService
 	) {
 		activityWatchElectronService.setupActivitiesCollection();
 	}
@@ -41,6 +43,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 		if (nebularLinkMedia) this._renderer.setAttribute(nebularLinkMedia, 'media', 'all');
 
 		this.electronService.ipcRenderer.send('app_is_init');
+
+		// Start token refresh timer if user is authenticated
+		if (this.store.token && this.store.refreshToken) {
+			this.tokenRefreshService.start();
+		}
 	}
 
 	ngAfterViewInit(): void {
@@ -112,6 +119,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 					this.store.userId = arg.userId;
 					this.store.token = arg.token;
 					await this.authFromSocial(arg);
+
+					// Start token refresh timer on authentication
+					if (arg.token && this.store.refreshToken) {
+						this.tokenRefreshService.start();
+					}
 				} catch (error) {
 					console.log('ERROR', error);
 				}

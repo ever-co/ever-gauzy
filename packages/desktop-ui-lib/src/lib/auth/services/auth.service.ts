@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, Inject } from '@angular/core';
-import { GAUZY_ENV } from '../../constants';
+import { Inject, Injectable } from '@angular/core';
 import {
 	IAuthResponse,
 	IUser,
@@ -15,6 +14,7 @@ import {
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-core/common';
 import { Observable, firstValueFrom } from 'rxjs';
+import { GAUZY_ENV } from '../../constants';
 import { API_PREFIX } from '../../constants/app.constants';
 import { ElectronService } from '../../electron/services';
 
@@ -24,8 +24,8 @@ export class AuthService {
 		private http: HttpClient,
 		private readonly electronService: ElectronService,
 		@Inject(GAUZY_ENV)
-		private readonly _environment: any,
-	) { }
+		private readonly _environment: any
+	) {}
 
 	isAuthenticated(): Promise<boolean> {
 		return firstValueFrom(this.http.get<boolean>(`${API_PREFIX}/auth/authenticated`));
@@ -128,8 +128,8 @@ export class AuthService {
 	 * @param refresh_token
 	 * @returns
 	 */
-	refreshToken(refresh_token: string): Promise<{ token: string } | null> {
-		return firstValueFrom(this.http.post<{ token: string }>(`${API_PREFIX}/auth/refresh-token`, { refresh_token }));
+	refreshToken(refresh_token: string): Observable<{ token: string }> {
+		return this.http.post<{ token: string }>(`${API_PREFIX}/auth/refresh-token`, { refresh_token });
 	}
 
 	public electronAuthentication({ user, token }: IAuthResponse) {

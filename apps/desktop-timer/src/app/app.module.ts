@@ -4,19 +4,6 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import {
-	NbButtonModule,
-	NbCardModule,
-	NbDatepickerModule,
-	NbDialogModule,
-	NbDialogService,
-	NbLayoutModule,
-	NbThemeModule,
-	NbToastrModule
-} from '@nebular/theme';
-import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import * as Sentry from '@sentry/angular';
-import {
 	APIInterceptor,
 	AboutModule,
 	ActivityWatchInterceptor,
@@ -40,6 +27,7 @@ import {
 	NoAuthGuard,
 	OrganizationInterceptor,
 	RecapModule,
+	RefreshTokenInterceptor,
 	ScreenCaptureModule,
 	ServerConnectionService,
 	ServerDownModule,
@@ -58,6 +46,19 @@ import {
 	serverConnectionFactory
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbDatepickerModule,
+	NbDialogModule,
+	NbDialogService,
+	NbLayoutModule,
+	NbThemeModule,
+	NbToastrModule
+} from '@nebular/theme';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import * as Sentry from '@sentry/angular';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -120,100 +121,106 @@ if (environment.SENTRY_DSN) {
 		AboutModule,
 		ActivityWatchModule,
 		RecapModule,
-		TaskTableModule], providers: [
-			AppService,
-			NbDialogService,
-			AuthGuard,
-			NoAuthGuard,
-			AppModuleGuard,
-			AuthStrategy,
-			AuthService,
-			ServerConnectionService,
-			ElectronService,
-			LoggerService,
-			Store,
-			{
-				provide: HTTP_INTERCEPTORS,
-				useClass: TokenInterceptor,
-				multi: true
-			},
-			{
-				provide: HTTP_INTERCEPTORS,
-				useClass: TenantInterceptor,
-				multi: true
-			},
-			{
-				provide: HTTP_INTERCEPTORS,
-				useClass: ActivityWatchInterceptor,
-				multi: true
-			},
-			{
-				provide: HTTP_INTERCEPTORS,
-				useClass: OrganizationInterceptor,
-				multi: true
-			},
-			{
-				provide: HTTP_INTERCEPTORS,
-				useClass: APIInterceptor,
-				multi: true
-			},
-			{
-				provide: HTTP_INTERCEPTORS,
-				useClass: LanguageInterceptor,
-				multi: true
-			},
-			{
-				provide: HTTP_INTERCEPTORS,
-				useClass: TimeoutInterceptor,
-				multi: true
-			},
-			{
-				provide: HTTP_INTERCEPTORS,
-				useClass: UnauthorizedInterceptor,
-				multi: true
-			},
-			{
-				provide: HTTP_INTERCEPTORS,
-				useClass: ServerErrorInterceptor,
-				multi: true
-			},
-			{
-				provide: ErrorHandler,
-				useClass: ErrorHandlerService
-			},
-			provideAppInitializer(() => {
-				const initializerFn = (serverConnectionFactory)(
-					inject(ServerConnectionService),
-					inject(Store),
-					inject(Router),
-					inject(Injector)
-				);
-				return initializerFn();
-			}),
-			{
-				provide: ErrorHandler,
-				useValue: Sentry.createErrorHandler({
-					showDialog: true
-				})
-			},
-			{
-				provide: Sentry.TraceService,
-				deps: [Router]
-			},
-			provideAppInitializer(() => {
-				const initializerFn = ((trace: Sentry.TraceService) => () => { })(inject(Sentry.TraceService));
-				return initializerFn();
-			}),
-			{ provide: DEFAULT_TIMEOUT, useValue: 80000 },
-			{
-				provide: GAUZY_ENV,
-				useValue: {
-					...gauzyEnvironment,
-					...environment
-				}
-			},
-			provideHttpClient(withInterceptorsFromDi())
-		]
+		TaskTableModule
+	],
+	providers: [
+		AppService,
+		NbDialogService,
+		AuthGuard,
+		NoAuthGuard,
+		AppModuleGuard,
+		AuthStrategy,
+		AuthService,
+		ServerConnectionService,
+		ElectronService,
+		LoggerService,
+		Store,
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: TokenInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: TenantInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: ActivityWatchInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: OrganizationInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: APIInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: LanguageInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: TimeoutInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: UnauthorizedInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: RefreshTokenInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: ServerErrorInterceptor,
+			multi: true
+		},
+		{
+			provide: ErrorHandler,
+			useClass: ErrorHandlerService
+		},
+		provideAppInitializer(() => {
+			const initializerFn = serverConnectionFactory(
+				inject(ServerConnectionService),
+				inject(Store),
+				inject(Router),
+				inject(Injector)
+			);
+			return initializerFn();
+		}),
+		{
+			provide: ErrorHandler,
+			useValue: Sentry.createErrorHandler({
+				showDialog: true
+			})
+		},
+		{
+			provide: Sentry.TraceService,
+			deps: [Router]
+		},
+		provideAppInitializer(() => {
+			const initializerFn = ((trace: Sentry.TraceService) => () => {})(inject(Sentry.TraceService));
+			return initializerFn();
+		}),
+		{ provide: DEFAULT_TIMEOUT, useValue: 80000 },
+		{
+			provide: GAUZY_ENV,
+			useValue: {
+				...gauzyEnvironment,
+				...environment
+			}
+		},
+		provideHttpClient(withInterceptorsFromDi())
+	]
 })
-export class AppModule { }
-
+export class AppModule {}
