@@ -1,12 +1,12 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { interval, Subject } from 'rxjs';
-import { takeUntil, filter, switchMap } from 'rxjs/operators';
+import { filter, switchMap, takeUntil } from 'rxjs/operators';
 import { Store } from '../../services';
 import { AuthStrategy } from './auth-strategy.service';
 
 /**
  * Service that handles proactive token refresh before expiration.
- * 
+ *
  * Best Practices:
  * 1. Checks token expiry every minute
  * 2. Refreshes token proactively before it expires (5 min buffer)
@@ -20,10 +20,7 @@ export class TokenRefreshService implements OnDestroy {
 	private destroy$ = new Subject<void>();
 	private readonly CHECK_INTERVAL = 60 * 1000; // Check every minute
 
-	constructor(
-		private readonly store: Store,
-		private readonly authStrategy: AuthStrategy
-	) {}
+	constructor(private readonly store: Store, private readonly authStrategy: AuthStrategy) {}
 
 	/**
 	 * Starts the automatic token refresh timer
@@ -41,9 +38,7 @@ export class TokenRefreshService implements OnDestroy {
 					// 1. We have a refresh token
 					// 2. Token is expired/expiring
 					// 3. Not in offline mode
-					return !!this.store.refreshToken && 
-					       this.store.isTokenExpired() && 
-					       !this.store.isOffline;
+					return !!this.store.refreshToken && this.store.isTokenExpired() && !this.store.isOffline;
 				}),
 				switchMap(() => {
 					console.log('Token expiring soon, refreshing proactively...');

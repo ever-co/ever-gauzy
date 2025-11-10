@@ -123,56 +123,31 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	refreshToken(): Observable<NbAuthResult> {
 		const refreshToken = this.store.refreshToken;
-		
+
 		if (!refreshToken) {
 			return of(
-				new NbAuthResult(
-					false, 
-					null, 
-					false, 
-					['No refresh token available'], 
-					['No refresh token available']
-				)
+				new NbAuthResult(false, null, false, ['No refresh token available'], ['No refresh token available'])
 			);
 		}
 
 		return this.authService.refreshToken(refreshToken).pipe(
 			map((res: { token: string }) => {
 				if (!res || !res.token) {
-					return new NbAuthResult(
-						false, 
-						res, 
-						false, 
-						['Failed to refresh token']
-					);
+					return new NbAuthResult(false, res, false, ['Failed to refresh token']);
 				}
 
 				// Update access token in store
 				// Note: Refresh token stays the same on backend
 				this.store.token = res.token;
-				
+
 				// Set token expiry (extract exp claim from JWT or use default 1 hour)
 				this.setTokenExpiry(res.token);
 
-				return new NbAuthResult(
-					true, 
-					res, 
-					false, 
-					[], 
-					['Token refreshed successfully']
-				);
+				return new NbAuthResult(true, res, false, [], ['Token refreshed successfully']);
 			}),
 			catchError((error) => {
 				console.error('Token refresh failed:', error);
-				return of(
-					new NbAuthResult(
-						false, 
-						error, 
-						false, 
-						['Token refresh failed'], 
-						['Token refresh failed']
-					)
-				);
+				return of(new NbAuthResult(false, error, false, ['Token refresh failed'], ['Token refresh failed']));
 			})
 		);
 	}
@@ -226,7 +201,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				this.store.token = token;
 				this.store.user = user;
 				this.store.refreshToken = refreshToken;
-				
+
 				// Set token expiry time
 				this.setTokenExpiry(token);
 
@@ -280,12 +255,12 @@ export class AuthStrategy extends NbAuthStrategy {
 				this.store.tokenExpiresAt = payload.exp * 1000;
 			} else {
 				// Default to 1 hour if no exp claim
-				this.store.tokenExpiresAt = Date.now() + (60 * 60 * 1000);
+				this.store.tokenExpiresAt = Date.now() + 60 * 60 * 1000;
 			}
 		} catch (error) {
 			console.warn('Failed to parse token expiry, using default 1 hour:', error);
 			// Default to 1 hour
-			this.store.tokenExpiresAt = Date.now() + (60 * 60 * 1000);
+			this.store.tokenExpiresAt = Date.now() + 60 * 60 * 1000;
 		}
 	}
 }

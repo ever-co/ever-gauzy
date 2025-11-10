@@ -1,24 +1,25 @@
 import {
 	AfterViewInit,
 	Component,
-	NgZone,
-	OnInit,
-	Renderer2,
 	HostBinding,
-	OnDestroy
+	NgZone,
+	OnDestroy,
+	OnInit,
+	Renderer2
 } from '@angular/core';
-import { NbToastrService } from '@nebular/theme';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { firstValueFrom } from 'rxjs';
 import {
 	ActivityWatchElectronService,
 	AuthStrategy,
 	ElectronService,
 	LanguageElectronService,
 	Store,
-	TimeTrackerDateManager
+	TimeTrackerDateManager,
+	TokenRefreshService
 } from '@gauzy/desktop-ui-lib';
+import { NbToastrService } from '@nebular/theme';
+import { UntilDestroy } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
 import { AppService } from './app.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -43,7 +44,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		private _ngZone: NgZone,
 		private _renderer: Renderer2,
 		readonly activityWatchElectronService: ActivityWatchElectronService,
-		readonly languageElectronService: LanguageElectronService
+		readonly languageElectronService: LanguageElectronService,
+		private readonly tokenRefreshService: TokenRefreshService
 	) {
 		activityWatchElectronService.setupActivitiesCollection();
 	}
@@ -57,6 +59,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
 		this.electronService.ipcRenderer.send('app_is_init');
+
+		// Start token refresh timer if user is authenticated
+		if (this.store.token && this.store.refreshToken) {
+			this.tokenRefreshService.startTokenRefreshTimer();
+		}
 	}
 
 	ngOnDestroy(): void {
@@ -132,6 +139,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 				this.store.organizationId = arg.organizationId;
 				this.store.tenantId = arg.tenantId;
 				this.store.user = arg.user;
+
+				// Start token refresh timer on authentication
+				if (arg.token && this.store.refreshToken) {
+					this.tokenRefreshService.startTokenRefreshTimer();
+				}
 			} catch (error) {
 
 			}
@@ -176,6 +188,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 					tenantId: jwtParsed.tenantId,
 					organizationId: user?.employee?.organizationId
 				});
+
+				// Start token refresh timer after social auth
+				if (arg.token && this.store.refreshToken) {
+					this.tokenRefreshService.startTokenRefreshTimer();
+				}
 			} else {
 				this.toastrService.show('Your account is not an employee', `Warning`, {
 					status: 'danger'

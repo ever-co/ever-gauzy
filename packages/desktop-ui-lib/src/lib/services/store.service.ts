@@ -1,25 +1,25 @@
+import { Injectable } from '@angular/core';
+import { Store as AkitaStore, Query, StoreConfig } from '@datorama/akita';
 import {
+	ComponentLayoutStyleEnum,
 	DefaultValueDateTypeEnum,
+	FeatureEnum,
+	IFeatureOrganization,
+	IFeatureToggle,
+	ILanguage,
 	IOrganization,
-	PermissionsEnum,
+	IOrganizationProject,
+	IProposalViewModel,
 	IRolePermission,
+	ITaskStatus,
 	IUser,
 	LanguagesEnum,
-	IOrganizationProject,
-	ILanguage,
-	IProposalViewModel,
-	IFeatureToggle,
-	IFeatureOrganization,
-	FeatureEnum,
-	ComponentLayoutStyleEnum,
-	ITaskStatus
+	PermissionsEnum
 } from '@gauzy/contracts';
-import { Injectable } from '@angular/core';
-import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
-import { ComponentEnum, SYSTEM_DEFAULT_LAYOUT } from '../constants/layout.constants';
-import { map } from 'rxjs/operators';
 import { merge, Observable, Subject } from 'rxjs';
+import { map } from 'rxjs/operators';
 import * as _ from 'underscore';
+import { ComponentEnum, SYSTEM_DEFAULT_LAYOUT } from '../constants/layout.constants';
 
 export interface AppState {
 	user: IUser;
@@ -66,8 +66,8 @@ export function createInitialAppState(): AppState {
 export function createInitialPersistState(): PersistState {
 	const token = localStorage.getItem('token') || null;
 	const refreshToken = localStorage.getItem('refreshToken') || null;
-	const tokenExpiresAt = localStorage.getItem('tokenExpiresAt') 
-		? parseInt(localStorage.getItem('tokenExpiresAt'), 10) 
+	const tokenExpiresAt = localStorage.getItem('tokenExpiresAt')
+		? parseInt(localStorage.getItem('tokenExpiresAt'), 10)
 		: null;
 	const userId = localStorage.getItem('_userId') || null;
 	const organizationId = localStorage.getItem('_organizationId') || null;
