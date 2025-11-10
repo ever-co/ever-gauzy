@@ -73,6 +73,8 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 						catchError((refreshError) => {
 							// Refresh failed, clear tokens and rethrow error
 							// The application should handle this by redirecting to login
+							this.store.token = null;
+							this.store.refresh_token = null;
 							return throwError(() => refreshError);
 						}),
 						// When the call to refreshToken completes we reset the refreshTokenInProgress to false
@@ -132,6 +134,10 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 			'/auth/signin.workspace'
 		];
 
-		return authEndpoints.some((endpoint) => url.includes(endpoint));
+		return authEndpoints.some((endpoint) => {
+			// Handle both with and without trailing slash, and query params
+			const pattern = new RegExp(`${endpoint.replace(/[.*?^${}()|[\]\\]/g, '\\$&')}(/|\\?|$)`);
+			return pattern.test(url);
+		});
 	}
 }
