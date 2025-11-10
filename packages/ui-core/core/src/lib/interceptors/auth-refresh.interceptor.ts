@@ -130,13 +130,30 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 			'/auth/request-password',
 			'/auth/reset-password',
 			'/auth/signin.email.password',
+			'/auth/signin.email',
 			'/auth/signin.email/confirm',
-			'/auth/signin.workspace'
+			'/auth/signin.workspace',
+			'/auth/signin.email.social',
+			'/auth/signup.provider.social',
+			'/auth/signup.link.account',
+			'/auth/google',
+			'/auth/google/callback',
+			'/auth/facebook',
+			'/auth/facebook/callback',
+			'/auth/github',
+			'/auth/github/callback',
+			'/auth/linkedin',
+			'/auth/linkedin/callback',
+			'/auth/twitter',
+			'/auth/twitter/callback',
+			'/auth/microsoft',
+			'/auth/microsoft/callback',
+			'/auth/auth0',
+			'/auth/auth0/callback'
 		];
 
 		return authEndpoints.some((endpoint) => {
-			// Handle both with and without trailing slash, and query params
-			const pattern = new RegExp(`${endpoint.replace(/[.*?^${}()|[\]\\]/g, '\\$&')}(/|\\?|$)`);
+			const pattern = new RegExp(`${endpoint.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(/|\\?|$)`);
 			return pattern.test(url);
 		});
 	}
