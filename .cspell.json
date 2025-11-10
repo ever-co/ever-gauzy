@@ -314,6 +314,7 @@
 		"mathieudutour",
 		"maximizable",
 		"maxlength",
+		"mcpauth",
 		"memlock",
 		"Metadatas",
 		"metatype",
@@ -721,7 +722,8 @@
 		"soundshot",
 		"soundshots",
 		"runtimes",
-		"localtime"
+		"localtime",
+		"Behaviour"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

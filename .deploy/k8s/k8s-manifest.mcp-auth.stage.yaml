@@ -32,6 +32,40 @@ spec:
         - name: gauzy-stage-mcp
           image: registry.digitalocean.com/ever/gauzy-mcp-auth-stage:latest
           env:
+            - name: DB_URI
+              value: "$DB_URI"
+            - name: DB_HOST
+              value: "$DB_HOST"
+            - name: DB_NAME
+              value: "$DB_NAME"
+            - name: DB_PORT
+              value: "$DB_PORT"
+            - name: DB_USER
+              value: "$DB_USER"
+            - name: DB_PASS
+              value: "$DB_PASS"
+            - name: DB_TYPE
+              value: "$DB_TYPE"
+            - name: DB_SSL_MODE
+              value: "$DB_SSL_MODE"
+            - name: DB_CA_CERT
+              value: "$DB_CA_CERT"
+            - name: DB_POOL_SIZE
+              value: "$DB_POOL_SIZE"
+            - name: DB_POOL_SIZE_KNEX
+              value: "$DB_POOL_SIZE_KNEX"
+            - name: DB_CONNECTION_TIMEOUT
+              value: "$DB_CONNECTION_TIMEOUT"
+            - name: DB_IDLE_TIMEOUT
+              value: "$DB_IDLE_TIMEOUT"
+            - name: DB_SLOW_QUERY_LOGGING_TIMEOUT
+              value: "$DB_SLOW_QUERY_LOGGING_TIMEOUT"
+            - name: DB_LOGGING
+              value: "$DB_LOGGING"
+            - name: DB_ORM
+              value: "$DB_ORM"
+            - name: DB_SYNCHRONIZE
+              value: "$DB_SYNCHRONIZE"
             - name: MCP_AUTH_PORT
               value: "3003"
             - name: MCP_AUTH_SESSION_SECRET
@@ -40,8 +74,22 @@ spec:
               value: "$MCP_AUTH_JWT_ISSUER"
             - name: MCP_AUTH_JWT_AUDIENCE
               value: "$MCP_AUTH_JWT_AUDIENCE"
+            - name: MCP_TRUSTED_PROXIES
+              value: "$MCP_TRUSTED_PROXIES"
+            - name: REDIS_ENABLED
+              value: '$REDIS_ENABLED'
             - name: REDIS_URL
               value: "$REDIS_URL"
+            - name: REDIS_HOST
+              value: "$REDIS_HOST"
+            - name: REDIS_PASSWORD
+              value: "$REDIS_PASSWORD"
+            - name: REDIS_PORT
+              value: "$REDIS_PORT"
+            - name: REDIS_USER
+              value: "$REDIS_USER"
+            - name: REDIS_TLS
+              value: "$REDIS_TLS"
 
           ports:
             - containerPort: 3003

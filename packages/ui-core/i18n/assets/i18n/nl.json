@@ -841,6 +841,7 @@
 		"MAKE_COM": "Make.com",
 		"ZAPIER": "Zapier",
 		"GAUZY_AI": "Gauzy AI",
+		"ACTIVEPIECES": "Activepieces",
 		"PROPOSALS": "Voorstellen",
 		"TIME_OFF": "Vrije tijd",
 		"APPROVALS": "Goedkeuringen",
@@ -1375,6 +1376,129 @@
 		"GAUZY_AI_PAGE": {
 			"API_KEY": "Gauzy AI-sleutel",
 			"API_SECRET": "Gauzy AI Geheim"
+		},
+		"ACTIVEPIECES_PAGE": {
+			"TITLE": "Activepieces",
+			"SUBTITLE": "Activepieces integratie instellen",
+			"AUTHORIZE": {
+				"TITLE": "Activepieces",
+				"READY_MESSAGE": "Uw Activepieces-integratie is klaar. Klik op de knop hieronder om te autoriseren.",
+				"INFOS": "Vervolgens wordt u doorgestuurd naar Activepieces om toestemming te verlenen aan Gauzy.",
+				"START_BUTTON": "Activepieces autoriseren",
+				"NEXT": "Volgende",
+				"ERRORS": {
+					"INVALID_FORM": "Vul alle verplichte velden correct in",
+					"SAVE_SETTINGS": "Kan instellingen niet opslaan",
+					"START_AUTHORIZATION": "Kan autorisatie niet starten",
+					"ORGANIZATION_NOT_FOUND": "Organisatie niet gevonden",
+					"CHECK_TENANT_SETTINGS": "Kan tenant-instellingen niet controleren",
+					"CHECK_REMEMBER_STATE": "Kan onthouden status niet controleren"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Instellingen succesvol opgeslagen"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Activepieces-instellingen",
+				"SUBTITLE": "Configureer uw Activepieces-integratie-instellingen",
+				"CLIENT_ID": "Client ID",
+				"CLIENT_ID_PLACEHOLDER": "Voer uw Client ID in",
+				"CLIENT_ID_HINT": "Uw Activepieces OAuth Client ID",
+				"CLIENT_SECRET": "Client Secret",
+				"CLIENT_SECRET_PLACEHOLDER": "Voer uw Client Secret in",
+				"CLIENT_SECRET_HINT": "Uw Activepieces OAuth Client Secret",
+				"STATE_SECRET": "State Secret",
+				"STATE_SECRET_PLACEHOLDER": "Voer uw State Secret in (minimaal 32 tekens)",
+				"STATE_SECRET_HINT": "Een veilige willekeurige string die wordt gebruikt voor OAuth-statusverificatie",
+				"CALLBACK_URL": "Callback URL",
+				"CALLBACK_URL_PLACEHOLDER": "Voer uw Callback URL in",
+				"CALLBACK_URL_HINT": "De URL waarnaar Activepieces zal doorverwijzen na autorisatie",
+				"POST_INSTALL_URL": "Post Install URL",
+				"POST_INSTALL_URL_PLACEHOLDER": "Voer uw Post Install URL in",
+				"POST_INSTALL_URL_HINT": "De URL om naar door te verwijzen nadat de installatie is voltooid",
+				"SETTINGS_UPDATED": "Activepieces-instellingen succesvol bijgewerkt"
+			},
+			"CONNECTIONS": {
+				"TITLE": "Verbindingen",
+				"SUBTITLE": "Beheer uw Activepieces-verbindingen",
+				"NO_CONNECTIONS": "Geen verbindingen gevonden. Voer een project-ID in en klik op Laden om verbindingen te bekijken.",
+				"DISPLAY_NAME": "Weergavenaam",
+				"NAME": "Verbindingsnaam",
+				"TYPE_HEADER": "Type",
+				"STATUS_HEADER": "Status",
+				"PIECE_NAME": "Onderdeel naam",
+				"CREATED": "Gemaakt",
+				"ACTIONS": "Acties",
+				"PROJECT_ID": "Project-ID",
+				"PROJECT_ID_PLACEHOLDER": "Voer Activepieces project-ID in (te vinden in projectinstellingen)",
+				"PROJECT_ID_HINT": "Voer uw Activepieces project-ID in (te vinden in projectinstellingen) om verbindingen te laden",
+				"LOADING": "Verbindingen laden...",
+				"DELETE_CONFIRM": "Weet u zeker dat u deze verbinding wilt verwijderen?",
+				"DELETE_ARIA": "Verbinding verwijderen",
+				"STATUS": {
+					"ACTIVE": "Actief",
+					"ERROR": "Fout"
+				},
+				"TYPE": {
+					"SECRET_TEXT": "Geheime tekst",
+					"OAUTH2": "OAuth 2.0",
+					"CLOUD_OAUTH2": "Cloud OAuth 2.0",
+					"PLATFORM_OAUTH2": "Platform OAuth 2.0",
+					"BASIC_AUTH": "Basisauthenticatie",
+					"CUSTOM_AUTH": "Aangepaste authenticatie"
+				}
+			},
+			"MCP_SERVERS": {
+				"TITLE": "MCP",
+				"NO_SERVERS": "Geen MCP-servers gevonden. Voer een project-ID in en klik op Laden om servers te bekijken.",
+				"PROJECT_ID": "Project-ID",
+				"PROJECT_ID_PLACEHOLDER": "Voer Activepieces project-ID in (te vinden in projectinstellingen)",
+				"PROJECT_ID_HINT": "Voer uw Activepieces project-ID in (te vinden in projectinstellingen) om MCP-servers te laden",
+				"NAME": "Servernaam",
+				"SERVER_ID": "Server-ID",
+				"AGENT_ID": "Agent-ID",
+				"URL": "Server URL",
+				"STATUS": "Status",
+				"ACTIONS": "Acties",
+				"ACTIVE": "Actief",
+				"TOOLS_COUNT": "Aantal tools",
+				"CREATED": "Gemaakt",
+				"LOADING": "MCP-servers laden..."
+			},
+			"TAB": {
+				"CONNECTIONS": "Verbindingen",
+				"MCP_SERVERS": "MCP-servers",
+				"SETTINGS": "Instellingen"
+			},
+			"ERRORS": {
+				"INVALID_FORM": "Vul alle verplichte velden in",
+				"LOAD_SETTINGS": "Kan Activepieces-instellingen niet laden",
+				"SAVE_SETTINGS": "Kan Activepieces-instellingen niet opslaan",
+				"START_AUTHORIZATION": "Kan autorisatie niet starten",
+				"LOAD_CONNECTION": "Kan verbinding niet laden",
+				"PROJECT_ID_REQUIRED": "Project-ID is verplicht",
+				"LOAD_CONNECTIONS": "Kan verbindingen niet laden",
+				"DELETE_CONNECTION": "Kan verbinding niet verwijderen",
+				"INVALID_CONNECTION": "Ongeldige verbindingsgegevens"
+			},
+			"SUCCESS": {
+				"AUTHORIZED": "Succesvol geautoriseerd met Activepieces",
+				"SETTINGS_SAVED": "Activepieces-instellingen succesvol opgeslagen",
+				"CONNECTION_DELETED": "Verbinding succesvol verwijderd"
+			},
+			"CALLBACK": {
+				"ERRORS": {
+					"INVALID_PARAMETERS": "Ongeldige callback-parameters. Controleer of de autorisatie succesvol is voltooid en verifieer de callback-parameters.",
+					"ORGANIZATION_NOT_FOUND": "Organisatie niet gevonden",
+					"EXCHANGE_TOKEN": "Kan autorisatiecode niet uitwisselen",
+					"INVALID_PROJECT_ID": "Geef een geldige project-ID op",
+					"TOKEN_NOT_FOUND": "Token niet gevonden. Probeer de autorisatie opnieuw en verifieer de callback-parameters.",
+					"CREATE_CONNECTION": "Kan verbinding niet maken"
+				},
+				"SUCCESS": {
+					"CONNECTION_CREATED": "ActivePieces-verbinding succesvol gemaakt"
+				}
+			}
 		},
 		"COMING_SOON": "Binnenkort beschikbaar.",
 		"RE_INTEGRATE": "Re-integreren",
@@ -4239,7 +4363,18 @@
 			"ACCOUNT_DELETED": "Uw account is al verwijderd.",
 			"PROJECT_ADDED": "Project succesvol toegevoegd",
 			"TASK_ADDED": "Taak succesvol toegevoegd",
-			"CLIENT_ADDED": "Klant succesvol toegevoegd"
+			"CLIENT_ADDED": "Klant succesvol toegevoegd",
+			"NO_INTERNET_CONNECTION": "Geen internetverbinding. Controleer je netwerk.",
+			"BAD_REQUEST": "Ongeldige aanvraag",
+			"UNAUTHORIZED": "Niet gemachtigd. Log opnieuw in.",
+			"ACCESS_DENIED": "Toegang geweigerd.",
+			"NOT_FOUND": "Niet gevonden.",
+			"TIMEOUT": "Time-out. Probeer opnieuw.",
+			"SERVER_ERROR": "Serverfout. Neem contact op met support.",
+			"LARGE_FILE": "Het bestand is te groot.",
+			"SERVICE_UNAVAILABLE": "Dienst tijdelijk niet beschikbaar.",
+			"UNEXPECTED_ERROR": "Er is een onverwachte fout opgetreden.",
+			"NETWORK_ERROR": "Netwerkfout: {{message}}"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "De tracker is gestopt vanwege inactiviteit!",

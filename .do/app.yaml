@@ -76,6 +76,21 @@ services:
           - key: REDIS_URL
             scope: RUN_TIME
             value: '$REDIS_URL'
+          - key: REDIS_HOST
+            scope: RUN_TIME
+            value: '$REDIS_HOST'
+          - key: REDIS_PASSWORD
+            scope: RUN_TIME
+            value: '$REDIS_PASSWORD'
+          - key: REDIS_PORT
+            scope: RUN_TIME
+            value: '$REDIS_PORT'
+          - key: REDIS_USER
+            scope: RUN_TIME
+            value: '$REDIS_USER'
+          - key: REDIS_TLS
+            scope: RUN_TIME
+            value: '$REDIS_TLS'
           - key: CLOUD_PROVIDER
             scope: RUN_TIME
             value: 'DO'

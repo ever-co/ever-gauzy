@@ -19,6 +19,26 @@ async function bootstrap() {
 			bodyParser: false // Disable NestJS body parser to let Express handle it
 		});
 
+		// Get Express instance to configure trust proxy
+		const expressApp = app.getHttpAdapter().getInstance();
+
+		// Configure trust proxy for production environments behind reverse proxies
+		// This allows Express to correctly identify client IPs from X-Forwarded-For headers
+		const trustedProxies = process.env.MCP_TRUSTED_PROXIES?.split(',').map(p => p.trim()).filter(p => p.length > 0);
+		if (trustedProxies && trustedProxies.length > 0) {
+			expressApp.set('trust proxy', trustedProxies);
+			logger.log(`Trust proxy enabled for NestJS app: ${trustedProxies.join(', ')}`);
+		} else if (process.env.NODE_ENV === 'production') {
+			// SECURITY: In production, we require explicit trust proxy configuration
+			// Failing fast prevents running in an insecure state where all proxies are trusted
+			logger.error('❌ CRITICAL SECURITY ERROR: MCP_TRUSTED_PROXIES is not configured in production!');
+			logger.error('   MCP_TRUSTED_PROXIES must be set to a comma-separated list of trusted proxy IPs or CIDR ranges.');
+			logger.error('   Example: MCP_TRUSTED_PROXIES="loopback,linklocal,uniquelocal"');
+			throw new Error('MCP_TRUSTED_PROXIES must be configured in production environments. Cannot start server without explicit trust proxy configuration.');
+		} else {
+			logger.warn('⚠️  Trust proxy not configured. X-Forwarded-* headers will be ignored. Set MCP_TRUSTED_PROXIES to enable.');
+		}
+
 		const oauthService = app.get(McpOAuthService);
 
 		// Enable CORS before mounting OAuth routes
@@ -31,7 +51,6 @@ async function bootstrap() {
 
 		// Mount OAuth Express app BEFORE NestJS middleware
 		// This ensures OAuth routes are handled by the OAuth server's Express app
-		const expressApp = app.getHttpAdapter().getInstance();
 		expressApp.use('/', oauthService.getOAuthApp());
 
 		// Get port from environment or use default

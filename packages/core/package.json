@@ -177,7 +177,7 @@
 		"sql.js": "^1.5.0",
 		"streamifier": "^0.1.1",
 		"swagger-ui-express": "^5.0.0",
-		"typeorm": "^0.3.24",
+		"typeorm": "^0.3.27",
 		"underscore": "^1.13.3",
 		"unleash-client": "^3.16.1",
 		"unzipper": "^0.10.11",
