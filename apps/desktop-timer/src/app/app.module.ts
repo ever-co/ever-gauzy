@@ -142,11 +142,6 @@ if (environment.SENTRY_DSN) {
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
-			useClass: RefreshTokenInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
 			useClass: TenantInterceptor,
 			multi: true
 		},
@@ -178,6 +173,11 @@ if (environment.SENTRY_DSN) {
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: UnauthorizedInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: RefreshTokenInterceptor,
 			multi: true
 		},
 		{
