@@ -17,7 +17,6 @@ export { LazyFileInterceptor } from './lib/core/interceptors';
 export { FileStorage, FileStorageFactory, UploadedFileStorage } from './lib/core/file-storage';
 export * from './lib/shared';
 export * from './lib/event-bus';
-export { CacheModule, CacheService } from './lib/cache';
 
 export * from './lib/tenant';
 export { RoleModule, RoleService } from './lib/role';
