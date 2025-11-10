@@ -923,7 +923,9 @@ export class AuthService extends SocialAuthService {
 			};
 
 			// Generate the JWT access token using the payload
-			return sign(payload, environment.JWT_SECRET, {});
+			return sign(payload, environment.JWT_SECRET, {
+				expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
+			});
 		} catch (error) {
 			// Log and rethrow any errors encountered during the process
 			console.log('Error while generating JWT access token:', error);
