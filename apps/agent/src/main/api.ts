@@ -1,5 +1,5 @@
 import { LocalStore, TTimeSlot } from '@gauzy/desktop-lib';
-import { getAuthConfig, getApiBaseUrl, TAuthConfig, TEmployeeResponse } from './util';
+import { getAuthConfig, getApiBaseUrl, TAuthConfig, TEmployeeResponse, updateAuthConfig } from './util';
 import fetch, { HeadersInit } from 'node-fetch';
 import * as moment from 'moment';
 import * as fs from 'node:fs';
@@ -299,7 +299,7 @@ export class ApiService {
 		return this.postFile('/api/timesheet/screenshot', formData);
 	}
 
-	handleUnAuthorize() {
+	async handleUnAuthorize() {
 		this.isLogout = true;
 		this.mainEvent.emit(MAIN_EVENT, {
 			type: MAIN_EVENT_TYPE.LOGOUT_EVENT
@@ -320,6 +320,29 @@ export class ApiService {
 			});
 		}
 		return employee;
+	}
+
+	async refreshToken(): Promise<string | boolean> {
+		const authConfig = getAuthConfig();
+		if (!authConfig.refreshToken) {
+			return false;
+		}
+		let url = this.baseURL + '/api/auth/refresh-token';
+		const res = await fetch(url, {
+			method: 'POST',
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				refresh_token: authConfig.refreshToken
+			})
+		});
+		if (res.ok) {
+			const resJson: { token: string } = await res.json();
+			if (resJson?.token) {
+				updateAuthConfig(resJson.token);
+				return resJson.token;
+			}
+		}
+		return false;
 	}
 
 	async request(
@@ -356,6 +379,11 @@ export class ApiService {
 				const respText = await response.text();
 				console.warn('[Response Error]', response.status, respText);
 				if (response.status === 401 && !this.isLogout) {
+					const refreshedToken = await this.refreshToken();
+					if (refreshedToken) {
+						requestOptions.headers.Authorization = refreshedToken as string;
+						return this.request(path, options, isFile);
+					}
 					this.handleUnAuthorize();
 				}
 				const error = new Error(`API error: ${response.status} ${respText}`);

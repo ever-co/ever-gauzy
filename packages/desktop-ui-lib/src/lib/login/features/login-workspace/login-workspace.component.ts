@@ -131,6 +131,7 @@ export class NgxLoginWorkspaceComponent implements OnInit {
 				tap((response: IAuthResponse) => {
 					const user: IUser = response.user;
 					const token: string = response.token;
+					const refreshToken: string = response.refresh_token;
 
 					const { id, employee, tenantId } = user;
 					TimeTrackerDateManager.organization = employee.organization;
@@ -139,9 +140,10 @@ export class NgxLoginWorkspaceComponent implements OnInit {
 					this._store.userId = id;
 					this._store.token = token;
 					this._store.user = user;
+					this._store.refreshToken = refreshToken;
 
 					asyncScheduler.schedule(() => {
-						this._authService.electronAuthentication({ token, user });
+						this._authService.electronAuthentication({ token, user, refresh_token: refreshToken });
 						this.loading = false;
 					}, 3000);
 				}),
