@@ -1,12 +1,4 @@
-import {
-	AfterViewInit,
-	Component,
-	HostBinding,
-	NgZone,
-	OnDestroy,
-	OnInit,
-	Renderer2
-} from '@angular/core';
+import { AfterViewInit, Component, HostBinding, NgZone, OnDestroy, OnInit, Renderer2 } from '@angular/core';
 import {
 	ActivityWatchElectronService,
 	AuthStrategy,
@@ -32,7 +24,7 @@ import { AppService } from './app.service';
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 	@HostBinding('class.login-small-height') isLoginPage = false;
 	@HostBinding('class.setup-max-height') isSetupPage = false;
-	private pingHostInterval: NodeJS.Timeout
+	private pingHostInterval: NodeJS.Timeout;
 
 	constructor(
 		private electronService: ElectronService,
@@ -57,12 +49,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		const nebularLinkMedia = document.querySelector('link[media="print"]');
 		if (nebularLinkMedia) this._renderer.setAttribute(nebularLinkMedia, 'media', 'all');
 
-
 		this.electronService.ipcRenderer.send('app_is_init');
 
 		// Start token refresh timer if user is authenticated
 		if (this.store.token && this.store.refreshToken) {
-			this.tokenRefreshService.startTokenRefreshTimer();
+			this.tokenRefreshService.start();
 		}
 	}
 
@@ -95,7 +86,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 					}
 				}
 			}, 1000);
-		})
+		});
 	}
 
 	handleRestart(event: any, arg: any) {
@@ -116,7 +107,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 					}
 				}
 			}, 3000);
-		})
+		});
 	}
 
 	handleLogout(_: unknown, arg: any) {
@@ -128,7 +119,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 			} catch (error) {
 				console.log('ERROR', error);
 			}
-		})
+		});
 	}
 
 	handleAuthSuccess(_: unknown, arg: any) {
@@ -142,11 +133,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
 				// Start token refresh timer on authentication
 				if (arg.token && this.store.refreshToken) {
-					this.tokenRefreshService.startTokenRefreshTimer();
+					this.tokenRefreshService.start();
 				}
-			} catch (error) {
-
-			}
+			} catch (error) {}
 		});
 	}
 
@@ -159,7 +148,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 			} catch (error) {
 				console.log('ERROR', error);
 			}
-		})
+		});
 	}
 
 	ngAfterViewInit(): void {
@@ -191,7 +180,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
 				// Start token refresh timer after social auth
 				if (arg.token && this.store.refreshToken) {
-					this.tokenRefreshService.startTokenRefreshTimer();
+					this.tokenRefreshService.start();
 				}
 			} else {
 				this.toastrService.show('Your account is not an employee', `Warning`, {
@@ -218,7 +207,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.isSetupPage = location.hash.startsWith('#/setup');
 	}
 
-
 	async checkAuthValidation() {
 		const hashPage = location.hash;
 		if (hashPage.includes('auth')) {
@@ -227,7 +215,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 				if (!mainAuth?.token) {
 					await firstValueFrom(this.authStrategy.logout());
 				}
-			} catch(error) {
+			} catch (error) {
 				console.error('Failed to check main auth:', error);
 			}
 		}

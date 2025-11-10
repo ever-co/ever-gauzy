@@ -39,7 +39,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 		// Start token refresh timer if user is authenticated
 		if (this._store.token && this._store.refreshToken) {
-			this.tokenRefreshService.startTokenRefreshTimer();
+			this.tokenRefreshService.start();
 		}
 	}
 
@@ -59,7 +59,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 					}
 					// Start token refresh timer on authentication
 					if (arg.token && this._store.refreshToken) {
-						this.tokenRefreshService.startTokenRefreshTimer();
+						this.tokenRefreshService.start();
 					}
 				}
 			});

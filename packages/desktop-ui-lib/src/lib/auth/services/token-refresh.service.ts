@@ -25,9 +25,9 @@ export class TokenRefreshService implements OnDestroy {
 	/**
 	 * Starts the automatic token refresh timer
 	 */
-	startTokenRefreshTimer(): void {
+	start(): void {
 		// Stop any existing timer
-		this.stopTokenRefreshTimer();
+		this.stop();
 
 		// Check token expiry every minute
 		interval(this.CHECK_INTERVAL)
@@ -62,11 +62,11 @@ export class TokenRefreshService implements OnDestroy {
 	/**
 	 * Stops the automatic token refresh timer
 	 */
-	stopTokenRefreshTimer(): void {
+	stop(): void {
 		this.destroy$.next();
 	}
 
 	ngOnDestroy(): void {
-		this.stopTokenRefreshTimer();
+		this.stop();
 	}
 }
