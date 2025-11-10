@@ -1,5 +1,12 @@
 import { Injectable, Injector } from '@angular/core';
-import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
+import {
+	HttpRequest,
+	HttpHandler,
+	HttpEvent,
+	HttpInterceptor,
+	HttpErrorResponse,
+	HttpStatusCode
+} from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError, from } from 'rxjs';
 import { catchError, filter, take, switchMap, finalize } from 'rxjs/operators';
 import { AuthService } from '../services/auth/auth.service';
@@ -8,18 +15,13 @@ import { Store } from '../services/store/store.service';
 /**
  * Interceptor that automatically refreshes the access token when a 401 Unauthorized error occurs.
  * This prevents users from being logged out when their access token expires.
- * 
- * Based on the HubstaffTokenInterceptor pattern but applied to all API requests.
  */
 @Injectable()
 export class AuthRefreshInterceptor implements HttpInterceptor {
 	private refreshTokenInProgress = false;
 	private refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
 
-	constructor(
-		private readonly injector: Injector,
-		private readonly store: Store
-	) {}
+	constructor(private readonly injector: Injector, private readonly store: Store) {}
 
 	/**
 	 * Intercepts HTTP requests and handles authentication token refresh if necessary.
@@ -90,7 +92,7 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 	 */
 	private refreshAccessToken(): Observable<{ token: string } | null> {
 		const refresh_token = this.store.refresh_token;
-		
+
 		if (!refresh_token) {
 			return throwError(() => new Error('No refresh token available'));
 		}
@@ -130,7 +132,6 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 			'/auth/signin.workspace'
 		];
 
-		return authEndpoints.some(endpoint => url.includes(endpoint));
+		return authEndpoints.some((endpoint) => url.includes(endpoint));
 	}
 }
-
