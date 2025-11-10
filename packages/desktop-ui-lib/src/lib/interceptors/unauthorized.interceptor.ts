@@ -30,22 +30,43 @@ export class UnauthorizedInterceptor implements HttpInterceptor {
 						return new Error(message);
 					});
 				}
-				// Unauthorized error occurred
+				
+				// Unauthorized error occurred - but only logout if:
+				// 1. It's from an auth endpoint (login, refresh-token failed)
+				// 2. No refresh token is available
 				if (error.status === HttpStatusCode.Unauthorized) {
-					// Log out the user
-					this.authStrategy.logout();
-					// logout from desktop
-					this.electronService.ipcRenderer.send('logout');
-					// redirect to login page
-					concatMap(() =>
-						this.router.navigate(['auth', 'login'], {
-							queryParams: { returnUrl: this.router.url },
-						})
-					);
+					const isAuthEndpoint = this.isAuthEndpoint(request.url);
+					const hasRefreshToken = !!this.store.refreshToken;
+					
+					// Only force logout if it's an auth endpoint failure or no refresh token
+					// The RefreshTokenInterceptor will handle other 401s
+					if (isAuthEndpoint || !hasRefreshToken) {
+						// Log out the user
+						this.authStrategy.logout();
+						// logout from desktop
+						this.electronService.ipcRenderer.send('logout');
+						// redirect to login page
+						concatMap(() =>
+							this.router.navigate(['auth', 'login'], {
+								queryParams: { returnUrl: this.router.url },
+							})
+						);
+					}
 				}
 
 				return throwError(() => new Error(this._errorMapping.mapErrorMessage(error)));
 			})
 		);
+	}
+
+	/**
+	 * Checks if the request URL is for an authentication endpoint
+	 */
+	private isAuthEndpoint(url: string): boolean {
+		return url.includes('/auth/login') || 
+		       url.includes('/auth/refresh-token') ||
+		       url.includes('/auth/register') ||
+		       url.includes('/auth/request-password') ||
+		       url.includes('/auth/reset-password');
 	}
 }

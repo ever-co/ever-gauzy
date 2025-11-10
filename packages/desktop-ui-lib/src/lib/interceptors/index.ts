@@ -5,5 +5,6 @@ export * from './api.interceptor';
 export * from './timeout.interceptor';
 export * from './language.interceptor';
 export * from './unauthorized.interceptor';
+export * from './refresh-token.interceptor';
 export * from './activity-watch.interceptor';
 export * from './organization.interceptor';

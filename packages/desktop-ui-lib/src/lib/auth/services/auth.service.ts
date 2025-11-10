@@ -128,8 +128,8 @@ export class AuthService {
 	 * @param refresh_token
 	 * @returns
 	 */
-	refreshToken(refresh_token: string): Promise<{ token: string } | null> {
-		return firstValueFrom(this.http.post<{ token: string }>(`${API_PREFIX}/auth/refresh-token`, { refresh_token }));
+	refreshToken(refresh_token: string): Observable<{ token: string }> {
+		return this.http.post<{ token: string }>(`${API_PREFIX}/auth/refresh-token`, { refresh_token });
 	}
 
 	public electronAuthentication({ user, token }: IAuthResponse) {
