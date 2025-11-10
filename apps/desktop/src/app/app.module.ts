@@ -33,6 +33,7 @@ import {
 	NoAuthGuard,
 	OrganizationInterceptor,
 	RecapModule,
+	RefreshTokenInterceptor,
 	ScreenCaptureModule,
 	ServerErrorInterceptor,
 	SettingsModule,
@@ -106,6 +107,11 @@ if (environment.SENTRY_DSN) {
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: RefreshTokenInterceptor,
 			multi: true
 		},
 		{

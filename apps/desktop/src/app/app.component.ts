@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, NgZone, OnInit } from '@angular/core';
-import { ActivityWatchElectronService, ElectronService, LanguageElectronService, Store } from '@gauzy/desktop-ui-lib';
+import { ActivityWatchElectronService, ElectronService, LanguageElectronService, Store, TokenRefreshService } from '@gauzy/desktop-ui-lib';
 import { AppService } from './app.service';
 
 @Component({
@@ -17,7 +17,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private _ngZone: NgZone,
 		private _store: Store,
 		readonly activityWatchElectronService: ActivityWatchElectronService,
-		private readonly languageElectronService: LanguageElectronService
+		private readonly languageElectronService: LanguageElectronService,
+		private readonly tokenRefreshService: TokenRefreshService
 	) {
 		this._isInitialized = false;
 		activityWatchElectronService.setupActivitiesCollection();
@@ -28,6 +29,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 		if (!this._isInitialized && isEmployee) {
 			this._electronService.ipcRenderer.send('app_is_init');
 			this._isInitialized = true;
+		}
+		
+		// Start token refresh timer if user is authenticated
+		if (this._store.token && this._store.refreshToken) {
+			this.tokenRefreshService.startTokenRefreshTimer();
 		}
 	}
 
@@ -44,6 +50,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 					if (!this._isInitialized) {
 						this._electronService.ipcRenderer.send('app_is_init');
 						this._isInitialized = true;
+					}
+					// Start token refresh timer on authentication
+					if (arg.token && this._store.refreshToken) {
+						this.tokenRefreshService.startTokenRefreshTimer();
 					}
 				}
 			});
