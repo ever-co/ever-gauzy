@@ -13,12 +13,10 @@ import {
 	IsDate,
 	IsEnum,
 	IsNotEmpty,
-	IsNumber,
 	IsObject,
 	IsOptional,
 	IsString,
 	IsUUID,
-	Min,
 	ValidateIf
 } from 'class-validator';
 import { Index, JoinColumn, Relation, RelationId, Tree, TreeChildren, TreeParent } from 'typeorm';
@@ -27,9 +25,7 @@ import { PluginScope } from '../../shared/models/plugin-scope.model';
 import {
 	IPluginSubscription,
 	IPluginSubscriptionPlan,
-	PluginBillingPeriod,
-	PluginSubscriptionStatus,
-	PluginSubscriptionType
+	PluginSubscriptionStatus
 } from '../../shared/models/plugin-subscription.model';
 import type { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import type { IPlugin } from '../../shared/models/plugin.model';
@@ -43,7 +39,7 @@ import { Plugin } from './plugin.entity';
 @Index(['pluginId', 'tenantId', 'organizationId'], { unique: false })
 @Index(['subscriberId', 'tenantId'], { unique: false })
 @Index(['status', 'endDate'], { unique: false })
-@Index(['nextBillingDate'], { unique: false })
+@Index(['planId'], { unique: false })
 @Index(['externalSubscriptionId'], { unique: false })
 @Index(['parentId'], { unique: false })
 export class PluginSubscription extends TenantOrganizationBaseEntity implements IPluginSubscription {
@@ -56,28 +52,10 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	})
 	status: PluginSubscriptionStatus;
 
-	@ApiProperty({ enum: PluginSubscriptionType, description: 'Subscription type/plan' })
-	@IsEnum(PluginSubscriptionType, { message: 'Invalid subscription type' })
-	@MultiORMColumn({
-		type: 'simple-enum',
-		enum: PluginSubscriptionType,
-		default: PluginSubscriptionType.FREE
-	})
-	subscriptionType: PluginSubscriptionType;
-
 	@ApiProperty({ enum: PluginScope, description: 'Subscription scope' })
 	@IsEnum(PluginScope, { message: 'Invalid plugin scope' })
 	@MultiORMColumn({ type: 'simple-enum', enum: PluginScope, default: PluginScope.TENANT })
 	scope: PluginScope;
-
-	@ApiProperty({ enum: PluginBillingPeriod, description: 'Billing period' })
-	@IsEnum(PluginBillingPeriod, { message: 'Invalid billing period' })
-	@MultiORMColumn({
-		type: 'simple-enum',
-		enum: PluginBillingPeriod,
-		default: PluginBillingPeriod.MONTHLY
-	})
-	billingPeriod: PluginBillingPeriod;
 
 	@ApiProperty({ type: Date, description: 'Start date of subscription' })
 	@IsDate({ message: 'Start date must be a valid date' })
@@ -119,25 +97,6 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@MultiORMColumn({ type: 'jsonb', nullable: true })
 	metadata?: Record<string, any>;
 
-	@ApiPropertyOptional({ type: Number, description: 'Subscription price' })
-	@IsOptional()
-	@IsNumber({}, { message: 'Price must be a valid number' })
-	@Min(0, { message: 'Price cannot be negative' })
-	@MultiORMColumn({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-	price: number;
-
-	@ApiPropertyOptional({ type: String, description: 'Currency code (e.g., USD, EUR)' })
-	@IsOptional()
-	@IsString({ message: 'Currency must be a string' })
-	@MultiORMColumn({ type: 'varchar', length: 3, default: 'USD' })
-	currency: string;
-
-	@ApiPropertyOptional({ type: Date, description: 'Next billing date' })
-	@IsOptional()
-	@IsDate({ message: 'Next billing date must be a valid date' })
-	@MultiORMColumn({ nullable: true })
-	nextBillingDate?: Date;
-
 	@ApiPropertyOptional({ type: String, description: 'External subscription ID from payment provider' })
 	@IsOptional()
 	@IsString({ message: 'External subscription ID must be a string' })
@@ -150,8 +109,8 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@ApiProperty({ type: String, description: 'Plugin ID' })
 	@IsNotEmpty({ message: 'Plugin ID is required' })
 	@IsUUID(4, { message: 'Plugin ID must be a valid UUID' })
-	@RelationId((subscription: PluginSubscription) => subscription.plugin)
 	@MultiORMColumn({ type: 'uuid', nullable: false, relationId: true })
+	@RelationId((subscription: PluginSubscription) => subscription.plugin)
 	pluginId: string;
 
 	@MultiORMManyToOne(() => Plugin, (plugin) => plugin.subscriptions, {
@@ -254,10 +213,6 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 		type: () => [PluginSubscription],
 		description: 'Child subscriptions (user subscriptions created through assignment)'
 	})
-	@ApiPropertyOptional({
-		type: () => [PluginSubscription],
-		description: 'Child subscriptions (user subscriptions created through assignment)'
-	})
 	@TreeChildren({ cascade: true })
 	children?: Relation<IPluginSubscription[]>;
 
@@ -318,9 +273,27 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	}
 
 	/**
+	 * Get next billing date from pending billings
+	 * This is a computed property that looks at the billing records
+	 */
+	get nextBillingDate(): Date | null {
+		if (!this.billings || this.billings.length === 0) return null;
+
+		const pendingBillings = this.billings
+			.filter((b) => b.status === 'pending' && b.dueDate > new Date())
+			.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+
+		return pendingBillings.length > 0 ? pendingBillings[0].dueDate : null;
+	}
+
+	/**
 	 * Check if billing is due
+	 * This checks if there are any pending billings that are due
 	 */
 	get isBillingDue(): boolean {
-		return this.nextBillingDate ? this.nextBillingDate <= new Date() : false;
+		if (!this.billings || this.billings.length === 0) return false;
+
+		const now = new Date();
+		return this.billings.some((b) => b.status === 'pending' && b.dueDate <= now);
 	}
 }

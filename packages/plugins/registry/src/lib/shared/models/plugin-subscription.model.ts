@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID, IPayment, IUser } from '@gauzy/contracts';
+import { BaseEntityModel, IBasePerTenantAndOrganizationEntityModel, ID, IPayment, IUser } from '@gauzy/contracts';
 import type { IPluginBilling } from './plugin-billing.model';
 import { PluginScope } from './plugin-scope.model';
 import { IPluginTenant } from './plugin-tenant.model';
@@ -7,7 +7,7 @@ import { IPlugin } from './plugin.model';
 /**
  * Interface for plugin subscription plans
  */
-export interface IPluginSubscriptionPlan extends IBasePerTenantAndOrganizationEntityModel {
+export interface IPluginSubscriptionPlan extends BaseEntityModel {
 	// Plan name
 	name: string;
 
@@ -75,14 +75,8 @@ export interface IPluginSubscription extends IBasePerTenantAndOrganizationEntity
 	// Subscription status
 	status: PluginSubscriptionStatus;
 
-	// Subscription type/plan
-	subscriptionType: PluginSubscriptionType;
-
 	// Subscription scope (tenant, organization, user)
 	scope: PluginScope;
-
-	// Billing period
-	billingPeriod: PluginBillingPeriod;
 
 	// Start date of subscription
 	startDate: Date;
@@ -96,11 +90,8 @@ export interface IPluginSubscription extends IBasePerTenantAndOrganizationEntity
 	// Whether auto-renewal is enabled
 	autoRenew: boolean;
 
-	// Subscription price
-	price: number;
-
-	// Currency code (e.g., USD, EUR)
-	currency: string;
+	// External subscription ID from payment provider
+	externalSubscriptionId?: string;
 
 	// Cancellation date (if cancelled)
 	cancelledAt?: Date;
@@ -182,17 +173,11 @@ export enum PluginBillingPeriod {
 export interface IPluginSubscriptionCreateInput {
 	// Core subscription details
 	status: PluginSubscriptionStatus;
-	subscriptionType: PluginSubscriptionType;
 	scope: PluginScope;
-	billingPeriod: PluginBillingPeriod;
 	startDate: Date;
 	endDate?: Date;
 	trialEndDate?: Date;
 	autoRenew: boolean;
-
-	// Pricing details
-	price?: number;
-	currency?: string;
 
 	// Cancellation details
 	cancelledAt?: Date;
@@ -201,8 +186,7 @@ export interface IPluginSubscriptionCreateInput {
 	// Metadata
 	metadata?: Record<string, any>;
 
-	// Billing info
-	nextBillingDate?: Date;
+	// External subscription ID
 	externalSubscriptionId?: string;
 
 	// Relationships
@@ -229,20 +213,14 @@ export interface IPluginSubscriptionUpdateInput
  * Interface for finding plugin subscriptions
  */
 export interface IPluginSubscriptionFindInput
-	extends Partial<
-		Pick<
-			IPluginSubscription,
-			'status' | 'subscriptionType' | 'scope' | 'pluginId' | 'pluginTenantId' | 'subscriberId'
-		>
-	> {}
+	extends Partial<Pick<IPluginSubscription, 'status' | 'scope' | 'pluginId' | 'pluginTenantId' | 'subscriberId'>> {}
 
 /**
  * Interface for subscription purchase request
  */
 export interface IPluginSubscriptionPurchaseInput {
 	pluginId: ID;
-	subscriptionType: PluginSubscriptionType;
-	billingPeriod: PluginBillingPeriod;
+	planId?: ID;
 	scope: PluginScope;
 	autoRenew: boolean;
 	paymentMethod?: string;

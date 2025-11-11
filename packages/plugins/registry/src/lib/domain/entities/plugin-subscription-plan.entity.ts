@@ -139,8 +139,8 @@ export class PluginSubscriptionPlan extends BaseEntity implements IPluginSubscri
 	@ApiProperty({ type: String, description: 'Plugin ID' })
 	@IsNotEmpty({ message: 'Plugin ID is required' })
 	@IsUUID(4, { message: 'Plugin ID must be a valid UUID' })
-	@RelationId((plan: PluginSubscriptionPlan) => plan.plugin)
 	@MultiORMColumn({ type: 'uuid', nullable: false, relationId: true })
+	@RelationId((plan: PluginSubscriptionPlan) => plan.plugin)
 	pluginId: string;
 
 	@MultiORMManyToOne(() => Plugin, (plugin) => plugin.subscriptionPlans, {
@@ -157,8 +157,8 @@ export class PluginSubscriptionPlan extends BaseEntity implements IPluginSubscri
 	@ApiPropertyOptional({ type: String, description: 'User who created this plan' })
 	@IsOptional()
 	@IsUUID(4, { message: 'Created by ID must be a valid UUID' })
-	@RelationId((plan: PluginSubscriptionPlan) => plan.createdBy)
 	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
+	@RelationId((plan: PluginSubscriptionPlan) => plan.createdBy)
 	createdById?: string;
 
 	@MultiORMManyToOne(() => User, {

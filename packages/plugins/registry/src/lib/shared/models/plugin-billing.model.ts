@@ -21,9 +21,6 @@ export interface IPluginBilling extends IBasePerTenantAndOrganizationEntityModel
 	// Due date for payment
 	dueDate: Date;
 
-	// Payment due date (when payment should be completed)
-	paymentDueDate?: Date;
-
 	// Billing status
 	status: PluginBillingStatus;
 
@@ -32,34 +29,11 @@ export interface IPluginBilling extends IBasePerTenantAndOrganizationEntityModel
 	billingPeriodStart: Date;
 	billingPeriodEnd: Date;
 
-	// Invoice information
-	invoiceNumber?: string;
-	invoiceUrl?: string;
-
-	// Tax information
-	taxAmount?: number;
-	taxRate?: number;
-
-	// Discount information
-	discountAmount?: number;
-	discountCode?: string;
-
-	// Total amount (amount + tax - discount)
-	totalAmount: number;
-
 	// Billing description/notes
 	description?: string;
 
-	// Payment reference (to be used when payment system is implemented)
-	paymentReference?: string;
-
 	// Billing metadata
 	metadata?: Record<string, any>;
-
-	// Retry information for failed billings
-	retryCount?: number;
-	lastRetryAt?: Date;
-	nextRetryAt?: Date;
 }
 
 /**
@@ -83,7 +57,7 @@ import { PluginBillingPeriod } from './plugin-subscription.model';
  * Interface for creating plugin billing records
  */
 export interface IPluginBillingCreateInput
-	extends Omit<IPluginBilling, 'id' | 'createdAt' | 'updatedAt' | 'subscription' | 'totalAmount' | 'retryCount'> {
+	extends Omit<IPluginBilling, 'id' | 'createdAt' | 'updatedAt' | 'subscription'> {
 	subscriptionId: ID;
 }
 
