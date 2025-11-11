@@ -61,7 +61,7 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 		// Check for existing assignments to avoid duplicates
 		const existingAssignments = await this.find({
 			where: {
-				pluginInstallationId,
+				subscriptionId: pluginInstallationId,
 				userId: In(userIds),
 				isActive: true,
 				tenantId,
@@ -121,7 +121,7 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 		// Find existing active assignments
 		const existingAssignments = await this.find({
 			where: {
-				pluginInstallationId,
+				subscriptionId: pluginInstallationId,
 				userId: In(userIds),
 				isActive: true,
 				tenantId,
@@ -165,7 +165,7 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 		const organizationId = RequestContext.currentOrganizationId();
 
 		const where: IPluginUserAssignmentFindInput = {
-			pluginInstallationId,
+			subscriptionId: pluginInstallationId,
 			...(includeInactive ? {} : { isActive: true })
 		};
 
@@ -227,7 +227,7 @@ export class PluginUserAssignmentService extends TenantAwareCrudService<PluginUs
 		const { pluginInstallationId, pluginId } = input;
 
 		const assignment = await this.findOneOrFailByWhereOptions({
-			pluginInstallation: {
+			subscription: {
 				...(pluginInstallationId && { id: pluginInstallationId }),
 				...(pluginId && {
 					pluginId

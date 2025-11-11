@@ -1,7 +1,7 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
-import { IPlugin } from './plugin.model';
-import { IPluginTenant } from './plugin-tenant.model';
 import { IPluginCategory } from './plugin-category.model';
+import { IPluginTenant } from './plugin-tenant.model';
+import { IPlugin } from './plugin.model';
 
 export enum PluginSettingDataType {
 	STRING = 'string',
@@ -18,9 +18,8 @@ export interface IPluginSetting extends IBasePerTenantAndOrganizationEntityModel
 	// Setting key/name
 	key: string;
 
-	// Setting value (stored as JSON string or original primitive/object for flexibility)
-	// Can be a string (JSON), object, number, boolean, etc.
-	value: any;
+	// Setting value
+	value: string;
 
 	// Data type of the setting
 	dataType: PluginSettingDataType;

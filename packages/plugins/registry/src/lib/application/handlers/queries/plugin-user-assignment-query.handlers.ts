@@ -101,7 +101,7 @@ export class GetAllPluginUserAssignmentsQueryHandler implements IQueryHandler<Ge
 			return this.pluginUserAssignmentService.findAll({
 				where: {
 					...where,
-					pluginInstallation: {
+					subscription: {
 						pluginId: filters.pluginId
 					}
 				},

@@ -1,8 +1,15 @@
 import { ID, IUser } from '@gauzy/contracts';
-import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne, TenantOrganizationBaseEntity } from '@gauzy/core';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	TenantOrganizationBaseEntity,
+	User
+} from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateIf } from 'class-validator';
-import { JoinColumn, Relation, RelationId } from 'typeorm';
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, ValidateIf } from 'class-validator';
+import { Index, JoinColumn, Relation, RelationId } from 'typeorm';
 import { IPluginCategory } from '../../shared/models/plugin-category.model';
 import { IPluginSetting, PluginSettingDataType } from '../../shared/models/plugin-setting.model';
 import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
@@ -11,6 +18,7 @@ import { PluginCategory } from './plugin-category.entity';
 import { PluginTenant } from './plugin-tenant.entity';
 import { Plugin } from './plugin.entity';
 
+@Index(['pluginId', 'key', 'pluginTenantId'], { unique: true })
 @MultiORMEntity('plugin_settings')
 export class PluginSetting extends TenantOrganizationBaseEntity implements IPluginSetting {
 	@ApiProperty({ type: String, description: 'Setting key/name' })
@@ -19,10 +27,10 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	@MultiORMColumn()
 	key: string;
 
-	@ApiProperty({ type: String, description: 'Setting value (stored as JSON string)' })
+	@ApiProperty({ type: String, description: 'Setting value string' })
 	@IsNotEmpty({ message: 'Setting value is required' })
-	@MultiORMColumn({ type: 'jsonb' })
-	value: Record<string, any>;
+	@MultiORMColumn({ type: 'text' })
+	value: string;
 
 	@ApiProperty({ type: Boolean, description: 'Whether the setting is required' })
 	@IsBoolean({ message: 'isRequired must be a boolean' })
@@ -42,6 +50,7 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 
 	@ApiPropertyOptional({ type: Number, description: 'Display order for UI' })
 	@IsOptional()
+	@IsNumber({}, { message: 'Order must be a number' })
 	@MultiORMColumn({ type: 'int', nullable: true })
 	order?: number;
 
@@ -58,18 +67,25 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 
 	@ApiPropertyOptional({ type: String, description: 'Default value for the setting' })
 	@IsOptional()
-	@IsString()
+	@IsString({ message: 'Default value must be a string' })
 	@MultiORMColumn({ nullable: true })
 	defaultValue?: string;
 
 	/*
 	 * Plugin relationship
 	 */
-	@MultiORMColumn({ type: 'uuid', relationId: true })
+	@ApiProperty({ type: String, description: 'Plugin ID' })
+	@IsNotEmpty({ message: 'Plugin ID is required' })
+	@IsUUID()
 	@RelationId((setting: PluginSetting) => setting.plugin)
+	@ColumnIndex()
+	@MultiORMColumn({ type: 'uuid', relationId: true })
 	pluginId: ID;
 
-	@MultiORMManyToOne(() => Plugin, { onDelete: 'CASCADE' })
+	@ApiPropertyOptional({ type: () => Plugin, description: 'Plugin' })
+	@MultiORMManyToOne(() => Plugin, (plugin) => plugin.settings, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	plugin: Relation<IPlugin>;
 
@@ -81,10 +97,15 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	@IsUUID()
 	@ValidateIf((object, value) => value !== null)
 	@RelationId((setting: PluginSetting) => setting.pluginTenant)
+	@ColumnIndex()
 	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
 	pluginTenantId?: ID;
 
-	@MultiORMManyToOne(() => PluginTenant, (tenant) => tenant.settings, { onDelete: 'CASCADE', nullable: true })
+	@ApiPropertyOptional({ type: () => PluginTenant, description: 'Plugin tenant' })
+	@MultiORMManyToOne(() => PluginTenant, (tenant) => tenant.settings, {
+		onDelete: 'CASCADE',
+		nullable: true
+	})
 	@JoinColumn()
 	pluginTenant?: Relation<IPluginTenant>;
 
@@ -96,9 +117,11 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	@IsUUID()
 	@ValidateIf((object, value) => value !== null)
 	@RelationId((setting: PluginSetting) => setting.category)
+	@ColumnIndex()
 	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
 	categoryId?: ID;
 
+	@ApiPropertyOptional({ type: () => PluginCategory, description: 'Plugin category' })
 	@MultiORMManyToOne(() => PluginCategory, {
 		onDelete: 'CASCADE',
 		nullable: true
@@ -106,7 +129,22 @@ export class PluginSetting extends TenantOrganizationBaseEntity implements IPlug
 	@JoinColumn()
 	category?: Relation<IPluginCategory>;
 
-	@MultiORMManyToOne('User', { onDelete: 'SET NULL', nullable: true })
+	/*
+	 * User who last updated this setting
+	 */
+	@ApiPropertyOptional({ type: () => User, description: 'User who last updated this setting' })
+	@MultiORMManyToOne(() => User, {
+		nullable: true,
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
-	updatedBy?: IUser;
+	updatedBy?: Relation<IUser>;
+
+	@ApiPropertyOptional({ type: String, description: 'ID of the user who last updated this setting' })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((setting: PluginSetting) => setting.updatedBy)
+	@ColumnIndex()
+	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
+	updatedById?: ID;
 }
