@@ -1,5 +1,6 @@
 import { PluginInstallationSubscriber } from './plugin-installation.subscriber';
 import { PluginSourceSubscriber } from './plugin-source.subscriber';
+import { PluginSubscriptionSubscriber } from './plugin-subscription.subscriber';
 import { PluginVersionSubscriber } from './plugin-version.subscriber';
 import { PluginSubscriber } from './plugin.subscriber';
 
@@ -7,5 +8,6 @@ export const subscribers = [
 	PluginSourceSubscriber,
 	PluginVersionSubscriber,
 	PluginSubscriber,
-	PluginInstallationSubscriber
+	PluginInstallationSubscriber,
+	PluginSubscriptionSubscriber
 ];

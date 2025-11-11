@@ -20,7 +20,7 @@ import {
 	ValidateIf
 } from 'class-validator';
 import { Index, JoinColumn, Relation, RelationId, Tree, TreeChildren, TreeParent } from 'typeorm';
-import { IPluginBilling } from '../../shared/models';
+import { IPluginBilling, PluginBillingStatus } from '../../shared/models';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import {
 	IPluginSubscription,
@@ -227,10 +227,6 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	 * payments?: IPayment[];
 	 */
 
-	/*
-	 * Computed properties and helper methods
-	 */
-
 	/**
 	 * Check if the subscription is currently active
 	 */
@@ -280,7 +276,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 		if (!this.billings || this.billings.length === 0) return null;
 
 		const pendingBillings = this.billings
-			.filter((b) => b.status === 'pending' && b.dueDate > new Date())
+			.filter((b) => b.status === PluginBillingStatus.PENDING && b.dueDate > new Date())
 			.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
 
 		return pendingBillings.length > 0 ? pendingBillings[0].dueDate : null;
