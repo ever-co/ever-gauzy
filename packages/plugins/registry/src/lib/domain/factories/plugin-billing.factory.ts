@@ -5,6 +5,24 @@ import { PluginBillingPeriod } from '../../shared/models/plugin-subscription.mod
 /**
  * Factory for creating plugin billing records
  * Implements Factory Pattern to encapsulate complex billing creation logic
+ *
+ * Billing Calculation Rules:
+ * 1. Initial Billing: Base Price - Discount + Setup Fee (one-time charges)
+ * 2. Renewal Billing: Base Price ONLY (no discount, no setup fee)
+ * 3. Upgrade Billing: Prorated amount based on price difference
+ *
+ * Discount Application:
+ * - Applied ONLY to initial billing as a one-time promotional discount
+ * - Discount amount = Base Price × (Discount % / 100)
+ * - Effective Price = Base Price - Discount Amount
+ *
+ * Setup Fee:
+ * - Only included in INITIAL billing
+ * - NOT included in renewals or recurring charges
+ *
+ * Total Calculation:
+ * - Initial: (Base Price - Discount) + Setup Fee = Total
+ * - Renewal: Base Price = Total (full price, no discounts)
  */
 @Injectable()
 export class PluginBillingFactory {
@@ -55,16 +73,16 @@ export class PluginBillingFactory {
 
 	/**
 	 * Creates a billing record for a subscription renewal
+	 * Renewals use the FULL base price with NO discounts or setup fees
 	 * @param subscriptionId - The subscription ID
-	 * @param amount - The billing amount
-	 * @param billingPeriod - The billing period
-	 * @param planPrice - The plan price
+	 * @param plan - The subscription plan
+	 * @param tenantId - The tenant ID
+	 * @param organizationId - The organization ID (optional)
 	 * @returns Billing data for renewal
 	 */
 	async createForRenewal(
 		subscriptionId: string,
-		amount: number,
-		billingPeriod: PluginBillingPeriod,
+		plan: any,
 		tenantId?: string,
 		organizationId?: string
 	): Promise<IPluginBillingCreateInput> {
@@ -72,23 +90,34 @@ export class PluginBillingFactory {
 
 		const now = new Date();
 		const billingPeriodStart = new Date(now);
-		const billingPeriodEnd = this.calculateBillingPeriodEnd(billingPeriodStart, billingPeriod);
+		const billingPeriodEnd = this.calculateBillingPeriodEnd(billingPeriodStart, plan.billingPeriod);
 		const dueDate = new Date(now);
 		dueDate.setDate(dueDate.getDate() + 14); // 14 days to pay
 
+		// Use full base price for renewals (no discount, no setup fee)
+		// Convert to number (decimal columns may return strings from database)
+		const basePrice = Number(plan.price) || 0;
+		const totalAmount = basePrice;
+
+		this.logger.log(
+			`Renewal billing - Full price: ${totalAmount} ${plan.currency || 'USD'} (no discounts applied)`
+		);
+
 		return {
 			subscriptionId,
-			amount,
-			currency: 'USD',
+			amount: totalAmount,
+			currency: plan.currency || 'USD',
 			billingDate: now,
 			dueDate,
 			status: PluginBillingStatus.PENDING,
-			billingPeriod,
+			billingPeriod: plan.billingPeriod,
 			billingPeriodStart,
 			billingPeriodEnd,
-			description: `Subscription renewal for ${billingPeriod} period`,
+			description: `Subscription renewal for ${plan.billingPeriod} period`,
 			metadata: {
 				type: 'renewal',
+				basePrice: basePrice,
+				note: 'Renewal uses full base price - no discounts or setup fees applied',
 				createdVia: 'factory',
 				createdAt: now.toISOString()
 			},
@@ -141,16 +170,17 @@ export class PluginBillingFactory {
 
 	/**
 	 * Creates an initial billing record for a new subscription
+	 * Calculates total amount including setup fee and discounts
 	 * @param subscriptionId - The subscription ID
-	 * @param amount - The initial billing amount
-	 * @param billingPeriod - The billing period
+	 * @param plan - The subscription plan with pricing details
 	 * @param hasTrial - Whether the subscription has a trial period
+	 * @param tenantId - The tenant ID
+	 * @param organizationId - The organization ID (optional)
 	 * @returns Billing data for initial subscription
 	 */
 	async createInitialBilling(
 		subscriptionId: string,
-		amount: number,
-		billingPeriod: PluginBillingPeriod,
+		plan: any,
 		hasTrial: boolean = false,
 		tenantId?: string,
 		organizationId?: string
@@ -158,30 +188,109 @@ export class PluginBillingFactory {
 		this.logger.log(`Creating initial billing for subscription: ${subscriptionId}`);
 
 		const now = new Date();
-		const billingDate = hasTrial ? this.addDaysToDate(now, 14) : now; // Delay billing if trial
+		const billingDate = hasTrial ? this.addDaysToDate(now, plan.trialDays || 14) : now; // Delay billing if trial
 		const billingPeriodStart = new Date(billingDate);
-		const billingPeriodEnd = this.calculateBillingPeriodEnd(billingPeriodStart, billingPeriod);
+		const billingPeriodEnd = this.calculateBillingPeriodEnd(billingPeriodStart, plan.billingPeriod);
 		const dueDate = this.addDaysToDate(billingDate, 14);
+
+		// Calculate billing amount with setup fee and discount
+		const billingCalculation = this.calculateBillingAmount(plan, true); // true = include setup fee for initial billing
 
 		return {
 			subscriptionId,
-			amount,
-			currency: 'USD',
+			amount: billingCalculation.totalAmount,
+			currency: plan.currency || 'USD',
 			billingDate,
 			dueDate,
 			status: hasTrial ? PluginBillingStatus.PENDING : PluginBillingStatus.PENDING,
-			billingPeriod,
+			billingPeriod: plan.billingPeriod,
 			billingPeriodStart,
 			billingPeriodEnd,
 			description: hasTrial ? 'Initial billing after trial period' : 'Initial subscription billing',
 			metadata: {
 				type: 'initial',
 				hasTrial,
+				basePrice: plan.price,
+				setupFee: billingCalculation.setupFee,
+				discountPercentage: plan.discountPercentage,
+				discountAmount: billingCalculation.discountAmount,
+				effectivePrice: billingCalculation.effectivePrice,
+				subtotal: billingCalculation.subtotal,
+				breakdown: billingCalculation.breakdown,
 				createdVia: 'factory',
 				createdAt: now.toISOString()
 			},
 			tenantId,
 			organizationId
+		};
+	}
+
+	/**
+	 * Calculate billing amount with setup fee, discounts, and other options
+	 * NOTE: This is only used for INITIAL billing. Renewals use full base price.
+	 * @param plan - The subscription plan
+	 * @param includeSetupFee - Whether to include setup fee (typically only for initial billing)
+	 * @returns Calculated billing amounts and breakdown
+	 */
+	private calculateBillingAmount(
+		plan: any,
+		includeSetupFee: boolean = false
+	): {
+		basePrice: number;
+		discountAmount: number;
+		effectivePrice: number;
+		setupFee: number;
+		subtotal: number;
+		totalAmount: number;
+		breakdown: string;
+	} {
+		// Convert to numbers (decimal columns may return strings from database)
+		const basePrice = Number(plan.price) || 0;
+		const discountPercentage = Number(plan.discountPercentage) || 0;
+		const setupFee = includeSetupFee ? Number(plan.setupFee) || 0 : 0;
+
+		// Calculate discount amount (only for initial billing)
+		const discountAmount = basePrice * (discountPercentage / 100);
+
+		// Calculate effective price after discount
+		const effectivePrice = basePrice - discountAmount;
+
+		// Calculate subtotal (effective price + setup fee)
+		const subtotal = effectivePrice + setupFee;
+
+		// Total amount (same as subtotal for now, can add taxes later)
+		const totalAmount = subtotal;
+
+		// Create breakdown string
+		const breakdownParts: string[] = [];
+		breakdownParts.push(`Base Price: ${basePrice.toFixed(2)} ${plan.currency || 'USD'}`);
+
+		if (discountPercentage > 0) {
+			breakdownParts.push(
+				`One-time Discount (${discountPercentage}%): -${discountAmount.toFixed(2)} ${plan.currency || 'USD'}`
+			);
+			breakdownParts.push(`Effective Price: ${effectivePrice.toFixed(2)} ${plan.currency || 'USD'}`);
+		}
+
+		if (setupFee > 0) {
+			breakdownParts.push(`Setup Fee: ${setupFee.toFixed(2)} ${plan.currency || 'USD'}`);
+		}
+
+		breakdownParts.push(`Total: ${totalAmount.toFixed(2)} ${plan.currency || 'USD'}`);
+		breakdownParts.push('(Note: Discounts and setup fees apply only to initial billing)');
+
+		const breakdown = breakdownParts.join(' | ');
+
+		this.logger.debug(`Initial billing calculation: ${breakdown}`);
+
+		return {
+			basePrice,
+			discountAmount,
+			effectivePrice,
+			setupFee,
+			subtotal,
+			totalAmount,
+			breakdown
 		};
 	}
 

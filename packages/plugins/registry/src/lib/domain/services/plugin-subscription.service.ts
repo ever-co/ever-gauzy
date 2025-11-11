@@ -177,11 +177,10 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		try {
 			this.logger.log(`Creating initial billing for subscription: ${subscription.id}`);
 
-			// Create initial billing using the factory
+			// Create initial billing using the factory with full plan details
 			const billingInput = await this.pluginBillingFactory.createInitialBilling(
 				subscription.id,
-				plan.price,
-				plan.billingPeriod,
+				plan,
 				!!plan.trialDays,
 				tenantId,
 				organizationId
@@ -191,7 +190,9 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 
 			// Execute billing creation command
 			const billing = await this.commandBus.execute(new PluginBillingCreateCommand(billingInput));
-			this.logger.log(`Billing created successfully: ${billing.id}`);
+			this.logger.log(
+				`Billing created successfully: ${billing.id} - Amount: ${billing.amount} ${billing.currency}`
+			);
 
 			// TODO: Implement payment processing integration
 			// If payment method is provided and not a trial, process payment immediately
@@ -370,14 +371,16 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		if (subscription.plan && subscription.plan.price > 0) {
 			const billingInput = await this.pluginBillingFactory.createForRenewal(
 				subscriptionId,
-				subscription.plan.price,
-				billingPeriod,
+				subscription.plan,
 				subscription.tenantId,
 				subscription.organizationId
 			);
 
 			// Execute billing creation command
 			await this.commandBus.execute(new PluginBillingCreateCommand(billingInput));
+			this.logger.log(
+				`Renewal billing created for subscription: ${subscriptionId} - Amount: ${billingInput.amount}`
+			);
 		}
 
 		return await this.findOneByIdString(subscriptionId);
@@ -910,13 +913,13 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 
 			const billingInput = await this.pluginBillingFactory.createForRenewal(
 				subscription.id,
-				plan.price,
-				plan.billingPeriod,
+				plan,
 				subscription.tenantId,
 				subscription.organizationId
 			);
 
 			const billing = await this.commandBus.execute(new PluginBillingCreateCommand(billingInput));
+			this.logger.log(`Payment billing created: ${billing.id} - Amount: ${billing.amount} ${billing.currency}`);
 
 			// TODO: Process payment through payment gateway
 			/*
@@ -929,6 +932,7 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 
 			return { success: true, transactionId: billing.id };
 		} catch (error) {
+			this.logger.error(`Payment processing failed: ${error.message}`, error.stack);
 			return { success: false };
 		}
 	}
