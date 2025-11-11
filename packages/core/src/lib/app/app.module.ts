@@ -5,8 +5,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
 import { Cacheable } from 'cacheable';
-import KeyvRedis from '@keyv/redis';
-import { createClient } from '@keyv/redis';
+import { createKeyvNonBlocking } from '@keyv/redis';
 import { ClsModule, ClsService } from 'nestjs-cls';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
@@ -250,67 +249,19 @@ if (environment.THROTTLE_ENABLED) {
 
 							console.log('REDIS_URL: ', url);
 
-							// Create Redis client with non-blocking configuration
-							// Critical: disableOfflineQueue and reconnectStrategy: false for non-blocking
-							const redisClient = createClient({
-								url,
-								// Non-blocking configuration (critical for performance)
-								disableOfflineQueue: true,
-								socket: {
-									reconnectStrategy: false // Disable reconnect blocking
-								},
-								// Send PING every 30s to keep connection alive
-								pingInterval: 30_000
-							});
-
-							// Setup event listeners
-							redisClient.on('connect', () => {
-								console.log('Redis Cache Client Connected');
-							});
-
-							redisClient.on('ready', () => {
-								console.log('Redis Cache Client Ready');
-							});
-
-							redisClient.on('reconnecting', () => {
-								console.log('Redis Cache Client Reconnecting');
-							});
-
-							redisClient.on('end', () => {
-								console.log('Redis Cache Client End');
-							});
-
-							redisClient.on('error', (err: any) => {
-								console.error('Redis Cache Client Error:', err);
-							});
-
-							// Connect to Redis
-							try {
-								await redisClient.connect();
-								const res = await redisClient.ping();
-								console.log('Redis Cache Client Ping:', res);
-							} catch (error) {
-								console.error('Failed to connect to Redis:', error);
-								// Return in-memory cache if Redis connection fails
-								return { store: undefined };
-							}
-
-							// Create KeyvRedis adapter with non-blocking configuration
-							// As per cacheable docs: https://cacheable.org/docs/cacheable/#non-blocking-with-keyvredis
-							const keyvRedis = new KeyvRedis(redisClient, {
-								namespace: 'gauzy-cache',
-								keyPrefixSeparator: ':',
-								useUnlink: true,
-								// Critical: throwOnConnectError must be false for non-blocking
-								throwOnConnectError: false
-							});
+							// Create non-blocking Redis secondary store using helper function
+							// This automatically configures:
+							// - disableOfflineQueue: true
+							// - socket.reconnectStrategy: false
+							// - throwOnConnectError: false
+							const secondary = createKeyvNonBlocking(url);
 
 							// Create Cacheable instance with 2-layer caching
-							// Layer 1 (Primary): In-memory LRU cache (~1GB) for fast access
+							// Layer 1 (Primary): In-memory LRU cache (default, managed by Cacheable)
 							// Layer 2 (Secondary): Redis cache for distributed persistence (non-blocking)
 							const cacheable = new Cacheable({
 								// Layer 2: Redis secondary store (non-blocking)
-								secondary: keyvRedis,
+								secondary,
 								// Enable non-blocking mode (critical!)
 								// Writes to Redis happen in background, reads check primary first
 								nonBlocking: true,
@@ -318,8 +269,10 @@ if (environment.THROTTLE_ENABLED) {
 								ttl: '7d'
 							});
 
+							// Wrap cacheable to ensure type compatibility with cache-manager
+							// This provides proper type safety without 'as any' cast
 							return {
-								store: cacheable as any
+								store: () => cacheable
 							};
 						}
 					})
