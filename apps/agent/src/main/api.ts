@@ -299,7 +299,7 @@ export class ApiService {
 		return this.postFile('/api/timesheet/screenshot', formData);
 	}
 
-	async handleUnAuthorize() {
+	handleUnAuthorize() {
 		this.isLogout = true;
 		this.mainEvent.emit(MAIN_EVENT, {
 			type: MAIN_EVENT_TYPE.LOGOUT_EVENT
