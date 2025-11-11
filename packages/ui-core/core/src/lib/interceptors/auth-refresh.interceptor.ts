@@ -71,10 +71,10 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 							return throwError(() => error);
 						}),
 						catchError((refreshError) => {
-							// Refresh failed, clear tokens and rethrow error
-							// The application should handle this by redirecting to login
+							// Refresh failed, clear tokens and reset subject
 							this.store.token = null;
 							this.store.refresh_token = null;
+							this.refreshTokenSubject.next(null);
 							return throwError(() => refreshError);
 						}),
 						// When the call to refreshToken completes we reset the refreshTokenInProgress to false
