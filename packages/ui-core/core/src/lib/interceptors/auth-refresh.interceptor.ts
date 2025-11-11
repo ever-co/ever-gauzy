@@ -1,4 +1,5 @@
-import { Injectable, Injector } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import {
 	HttpRequest,
 	HttpHandler,
@@ -7,8 +8,8 @@ import {
 	HttpErrorResponse,
 	HttpStatusCode
 } from '@angular/common/http';
-import { BehaviorSubject, Observable, throwError, from } from 'rxjs';
-import { catchError, filter, take, switchMap, finalize } from 'rxjs/operators';
+import { Observable, Subject, throwError, from } from 'rxjs';
+import { catchError, take, switchMap, finalize } from 'rxjs/operators';
 import { AuthService } from '../services/auth/auth.service';
 import { Store } from '../services/store/store.service';
 
@@ -18,10 +19,12 @@ import { Store } from '../services/store/store.service';
  */
 @Injectable()
 export class AuthRefreshInterceptor implements HttpInterceptor {
-	private refreshTokenInProgress = false;
-	private refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
+	private readonly authService = inject(AuthService);
+	private readonly store = inject(Store);
+	private readonly router = inject(Router);
 
-	constructor(private readonly injector: Injector, private readonly store: Store) {}
+	private refreshTokenInProgress = false;
+	private refreshTokenSubject: Subject<string> = new Subject<string>();
 
 	/**
 	 * Intercepts HTTP requests and handles authentication token refresh if necessary.
@@ -46,24 +49,21 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 
 				// HttpStatus.UNAUTHORIZED errors are most likely going to be because we have an expired token that we need to refresh.
 				if (this.refreshTokenInProgress) {
-					// If refreshTokenInProgress is true, we will wait until refreshTokenSubject has a non-null value
-					// which means the new token is ready and we can retry the request again
+					// If refreshTokenInProgress is true, we will wait until refreshTokenSubject emits the new token
+					// This ensures all pending requests use the same refreshed token
 					return this.refreshTokenSubject.pipe(
-						filter((result) => result !== null),
 						take(1),
-						switchMap((token) => next.handle(this.addToken(req, token!)))
+						switchMap((token) => next.handle(this.addToken(req, token)))
 					);
 				} else {
 					this.refreshTokenInProgress = true;
-
-					// Set the refreshTokenSubject to null so that subsequent API calls will wait until the new token has been retrieved
-					this.refreshTokenSubject.next(null);
 
 					return this.refreshAccessToken().pipe(
 						switchMap((response) => {
 							if (response?.token) {
 								// Update the token in the store
 								this.store.token = response.token;
+								// Emit the new token to all waiting requests
 								this.refreshTokenSubject.next(response.token);
 								return next.handle(this.addToken(req, response.token));
 							}
@@ -71,10 +71,17 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 							return throwError(() => error);
 						}),
 						catchError((refreshError) => {
-							// Refresh failed, clear tokens and rethrow error
-							// The application should handle this by redirecting to login
+							// Refresh failed, clear tokens
 							this.store.token = null;
 							this.store.refresh_token = null;
+							// Emit error to all waiting requests (completes the Subject)
+							this.refreshTokenSubject.error(refreshError);
+							// Recreate Subject since .error() completes it and makes it unusable
+							this.refreshTokenSubject = new Subject<string>();
+							// Redirect to login page
+							this.router.navigate(['/auth/login'], {
+								queryParams: { returnUrl: this.router.url }
+							});
 							return throwError(() => refreshError);
 						}),
 						// When the call to refreshToken completes we reset the refreshTokenInProgress to false
@@ -99,8 +106,7 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 			return throwError(() => new Error('No refresh token available'));
 		}
 
-		const authService = this.injector.get(AuthService);
-		return from(authService.refreshToken(refresh_token));
+		return from(this.authService.refreshToken(refresh_token));
 	}
 
 	/**
