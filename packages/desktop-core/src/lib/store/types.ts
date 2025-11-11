@@ -79,7 +79,7 @@ export interface IAuth {
 	tenantId?: string;
 	isLogout?: boolean;
 	allowScreenshotCapture?: boolean;
-	refreshToken?: boolean;
+	refreshToken?: string;
 }
 
 export interface IProject {

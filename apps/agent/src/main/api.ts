@@ -381,7 +381,7 @@ export class ApiService {
 				if (response.status === 401 && !this.isLogout) {
 					const refreshedToken = await this.refreshToken();
 					if (refreshedToken) {
-						requestOptions.headers.Authorization = refreshedToken as string;
+						requestOptions.headers.Authorization = `Bearer ${refreshedToken as string}`;
 						return this.request(path, options, isFile);
 					}
 					this.handleUnAuthorize();
