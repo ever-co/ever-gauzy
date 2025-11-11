@@ -1,19 +1,8 @@
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { ErrorHandler, NgModule, inject, provideAppInitializer } from '@angular/core';
+import { ErrorHandler, inject, NgModule, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
-import {
-	NbButtonModule,
-	NbCardModule,
-	NbDatepickerModule,
-	NbDialogModule,
-	NbDialogService,
-	NbLayoutModule,
-	NbThemeModule,
-	NbToastrModule
-} from '@nebular/theme';
-import * as Sentry from '@sentry/angular';
 import {
 	AboutModule,
 	ActivityWatchInterceptor,
@@ -30,9 +19,11 @@ import {
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
+	NgxDesktopThemeModule,
 	NoAuthGuard,
 	OrganizationInterceptor,
 	RecapModule,
+	RefreshTokenInterceptor,
 	ScreenCaptureModule,
 	ServerErrorInterceptor,
 	SettingsModule,
@@ -42,10 +33,20 @@ import {
 	TimeoutInterceptor,
 	TimeTrackerModule,
 	TokenInterceptor,
-	UpdaterModule,
-	NgxDesktopThemeModule
+	UpdaterModule
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbDatepickerModule,
+	NbDialogModule,
+	NbDialogService,
+	NbLayoutModule,
+	NbThemeModule,
+	NbToastrModule
+} from '@nebular/theme';
+import * as Sentry from '@sentry/angular';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -106,6 +107,11 @@ if (environment.SENTRY_DSN) {
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: RefreshTokenInterceptor,
 			multi: true
 		},
 		{

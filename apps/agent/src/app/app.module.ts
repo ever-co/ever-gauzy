@@ -4,23 +4,10 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import {
-	NbButtonModule,
-	NbCardModule,
-	NbDatepickerModule,
-	NbDialogModule,
-	NbDialogService,
-	NbLayoutModule,
-	NbThemeModule,
-	NbToastrModule,
-	NbSidebarModule,
-	NbSidebarService
-} from '@nebular/theme';
-import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import * as Sentry from '@sentry/angular';
-import {
 	APIInterceptor,
 	AboutModule,
+	AgentDashboardModule,
+	AlwaysOnModule,
 	AuthGuard,
 	AuthModule,
 	AuthService,
@@ -38,7 +25,10 @@ import {
 	NgxLoginModule,
 	NoAuthGuard,
 	OrganizationInterceptor,
+	RefreshTokenInterceptor,
+	ScreenCaptureModule,
 	ServerConnectionService,
+	ServerDashboardModule,
 	ServerDownModule,
 	ServerErrorInterceptor,
 	SettingsModule,
@@ -50,13 +40,24 @@ import {
 	TokenInterceptor,
 	UnauthorizedInterceptor,
 	UpdaterModule,
-	serverConnectionFactory,
-	ServerDashboardModule,
-	ScreenCaptureModule,
-	AgentDashboardModule,
-	AlwaysOnModule
+	serverConnectionFactory
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbDatepickerModule,
+	NbDialogModule,
+	NbDialogService,
+	NbLayoutModule,
+	NbSidebarModule,
+	NbSidebarService,
+	NbThemeModule,
+	NbToastrModule
+} from '@nebular/theme';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import * as Sentry from '@sentry/angular';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -136,6 +137,11 @@ if (environment.SENTRY_DSN) {
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: RefreshTokenInterceptor,
 			multi: true
 		},
 		{

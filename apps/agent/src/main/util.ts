@@ -14,6 +14,7 @@ export type TAuthConfig = {
 		id: string
 	};
 	token: string;
+	refreshToken: string;
 }
 
 export type TEmployeeResponse = {
@@ -118,7 +119,7 @@ export function getInitialConfig(): Partial<TInitialConfig> {
 	return initialConfig;
 }
 
-export function getScreenshotSoundPath():string {
+export function getScreenshotSoundPath(): string {
 	if (process.env.NODE_ENV === 'development') {
 		return path.join(__dirname, '..', 'data', 'sound', 'snapshot-sound.wav');
 	}
@@ -147,4 +148,8 @@ export function updateTimerStatus(timerStarted: boolean): void {
 	LocalStore.updateApplicationSetting({
 		timerStarted: timerStarted
 	});
+}
+
+export function updateAuthConfig(token: string): void {
+	LocalStore.updateAuthSetting({ token })
 }
