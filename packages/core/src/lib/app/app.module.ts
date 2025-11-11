@@ -235,7 +235,8 @@ if (environment.THROTTLE_ENABLED) {
 								console.warn(
 									'Redis is enabled but neither REDIS_URL nor REDIS_HOST/REDIS_PORT are configured. Falling back to in-memory cache.'
 								);
-								return { store: undefined };
+								// Return in-memory cache configuration (no store specified = default in-memory)
+								return { isGlobal: true };
 							}
 
 							// Construct Redis URL
@@ -247,33 +248,53 @@ if (environment.THROTTLE_ENABLED) {
 									return `${redisProtocol}://${auth}${REDIS_HOST}:${REDIS_PORT}`;
 								})();
 
-							console.log('REDIS_URL: ', url);
+							// Log Redis connection info WITHOUT credentials (security best practice)
+							const redisHost = REDIS_URL ? new URL(url).hostname : REDIS_HOST;
+							const redisPort = REDIS_URL ? new URL(url).port : REDIS_PORT;
+							const redisTls = REDIS_TLS === 'true' || url.startsWith('rediss://');
+							console.log(
+								`Redis Cache: Connecting to ${
+									redisTls ? 'rediss' : 'redis'
+								}://${redisHost}:${redisPort}`
+							);
 
-							// Create non-blocking Redis secondary store using helper function
-							// This automatically configures:
-							// - disableOfflineQueue: true
-							// - socket.reconnectStrategy: false
-							// - throwOnConnectError: false
-							const secondary = createKeyvNonBlocking(url);
+							try {
+								// Create non-blocking Redis secondary store using helper function
+								// This automatically configures:
+								// - disableOfflineQueue: true
+								// - socket.reconnectStrategy: false
+								// - throwOnConnectError: false
+								const secondary = createKeyvNonBlocking(url);
 
-							// Create Cacheable instance with 2-layer caching
-							// Layer 1 (Primary): In-memory LRU cache (default, managed by Cacheable)
-							// Layer 2 (Secondary): Redis cache for distributed persistence (non-blocking)
-							const cacheable = new Cacheable({
-								// Layer 2: Redis secondary store (non-blocking)
-								secondary,
-								// Enable non-blocking mode (critical!)
-								// Writes to Redis happen in background, reads check primary first
-								nonBlocking: true,
-								// Default TTL: 1 week
-								ttl: '7d'
-							});
+								// Create Cacheable instance with 2-layer caching
+								// Layer 1 (Primary): In-memory LRU cache (default, managed by Cacheable)
+								// Layer 2 (Secondary): Redis cache for distributed persistence (non-blocking)
+								const cacheable = new Cacheable({
+									// Layer 2: Redis secondary store (non-blocking)
+									secondary,
+									// Enable non-blocking mode (critical!)
+									// Writes to Redis happen in background, reads check primary first
+									nonBlocking: true,
+									// Default TTL: 1 week
+									ttl: '7d'
+								});
 
-							// Wrap cacheable to ensure type compatibility with cache-manager
-							// This provides proper type safety without 'as any' cast
-							return {
-								store: () => cacheable
-							};
+								console.log('✓ Redis cache configured successfully (2-layer: in-memory + Redis)');
+
+								// Wrap cacheable to ensure type compatibility with cache-manager
+								// This provides proper type safety without 'as any' cast
+								return {
+									store: () => cacheable
+								};
+							} catch (error) {
+								console.error(
+									'Failed to configure Redis cache, falling back to in-memory cache:',
+									error.message
+								);
+								// Return in-memory cache configuration as fallback
+								// This ensures cache operations continue to work even if Redis fails
+								return { isGlobal: true };
+							}
 						}
 					})
 			  ]
