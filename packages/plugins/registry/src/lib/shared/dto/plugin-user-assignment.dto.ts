@@ -1,116 +1,63 @@
-import { ID } from '@gauzy/contracts';
-import { BaseQueryDTO } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 /**
- * DTO for assigning users to plugin installations
+ * DTO for assigning users to a plugin
  */
 export class AssignPluginUsersDTO {
-	@ApiProperty({
-		description: 'Array of user IDs to assign to the plugin installation',
-		type: [String],
-		example: ['550e8400-e29b-41d4-a716-446655440000', '550e8400-e29b-41d4-a716-446655440001']
-	})
-	@IsArray()
-	@IsUUID('4', { each: true, message: 'Each userId must be a valid UUID (version 4)' })
-	@IsNotEmpty({ message: 'userIds array cannot be empty' })
-	userIds: ID[];
+	@ApiProperty({ type: [String], description: 'Array of user IDs to assign to the plugin' })
+	@IsArray({ message: 'userIds must be an array' })
+	@IsUUID('4', { each: true, message: 'Each userId must be a valid UUID' })
+	@IsNotEmpty({ message: 'At least one user ID is required' })
+	userIds: string[];
 
-	@ApiPropertyOptional({
-		description: 'Optional reason for the assignment',
-		type: String,
-		example: 'Team members need access to this plugin for project work'
-	})
+	@ApiPropertyOptional({ type: String, description: 'Optional reason for the assignment' })
 	@IsOptional()
+	@IsString({ message: 'Reason must be a string' })
 	reason?: string;
 }
 
 /**
- * DTO for unassigning users from plugin installations
+ * DTO for unassigning users from a plugin
  */
 export class UnassignPluginUsersDTO {
-	@ApiProperty({
-		description: 'Array of user IDs to unassign from the plugin installation',
-		type: [String],
-		example: ['550e8400-e29b-41d4-a716-446655440000', '550e8400-e29b-41d4-a716-446655440001']
-	})
-	@IsArray()
-	@IsUUID('4', { each: true, message: 'Each userId must be a valid UUID (version 4)' })
-	@IsNotEmpty({ message: 'userIds array cannot be empty' })
-	userIds: ID[];
+	@ApiProperty({ type: [String], description: 'Array of user IDs to unassign from the plugin' })
+	@IsArray({ message: 'userIds must be an array' })
+	@IsUUID('4', { each: true, message: 'Each userId must be a valid UUID' })
+	@IsNotEmpty({ message: 'At least one user ID is required' })
+	userIds: string[];
 
-	@ApiPropertyOptional({
-		description: 'Optional reason for the unassignment',
-		type: String,
-		example: 'Users no longer need access to this plugin'
-	})
+	@ApiPropertyOptional({ type: String, description: 'Optional reason for the unassignment' })
 	@IsOptional()
+	@IsString({ message: 'Reason must be a string' })
 	reason?: string;
 }
 
 /**
- * DTO for querying plugin user assignments with pagination support
- * Extends BaseQueryDTO to inherit standard query capabilities (take, skip, where, relations, etc.)
+ * DTO for checking plugin user access
  */
-export class PluginUserAssignmentQueryDTO extends BaseQueryDTO {
-	@ApiPropertyOptional({
-		description: 'Plugin installation ID to filter by',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440000'
-	})
-	@IsOptional()
-	@IsUUID('4', { message: 'pluginInstallationId must be a valid UUID (version 4)' })
-	pluginInstallationId?: ID;
+export class CheckPluginUserAccessDTO {
+	@ApiProperty({ type: String, description: 'Plugin ID to check access for' })
+	@IsUUID('4', { message: 'Plugin ID must be a valid UUID' })
+	@IsNotEmpty({ message: 'Plugin ID is required' })
+	pluginId: string;
 
-	@ApiPropertyOptional({
-		description: 'User ID to filter by',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440000'
-	})
+	@ApiPropertyOptional({ type: String, description: 'User ID to check access for' })
 	@IsOptional()
-	@IsUUID('4', { message: 'userId must be a valid UUID (version 4)' })
-	userId?: ID;
-
-	@ApiPropertyOptional({
-		description: 'Plugin ID to filter by',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440000'
-	})
-	@IsOptional()
-	@IsUUID('4', { message: 'pluginId must be a valid UUID (version 4)' })
-	pluginId?: ID;
+	@IsUUID('4', { message: 'User ID must be a valid UUID' })
+	userId?: string;
 }
 
 /**
- * DTO for bulk plugin user assignment operations
+ * Response DTO for plugin user access check
  */
-export class BulkPluginUserAssignmentDTO {
-	@ApiProperty({
-		description: 'Array of plugin installation IDs',
-		type: [String],
-		example: ['550e8400-e29b-41d4-a716-446655440000', '550e8400-e29b-41d4-a716-446655440001']
-	})
-	@IsArray()
-	@IsUUID('4', { each: true, message: 'Each pluginInstallationId must be a valid UUID (version 4)' })
-	@IsNotEmpty({ message: 'pluginInstallationIds array cannot be empty' })
-	pluginInstallationIds: ID[];
+export class PluginUserAccessResponseDTO {
+	@ApiProperty({ type: Boolean, description: 'Whether the user has access to the plugin' })
+	hasAccess: boolean;
 
-	@ApiProperty({
-		description: 'Array of user IDs to assign to all specified plugin installations',
-		type: [String],
-		example: ['550e8400-e29b-41d4-a716-446655440000', '550e8400-e29b-41d4-a716-446655440001']
-	})
-	@IsArray()
-	@IsUUID('4', { each: true, message: 'Each userId must be a valid UUID (version 4)' })
-	@IsNotEmpty({ message: 'userIds array cannot be empty' })
-	userIds: ID[];
+	@ApiProperty({ type: String, description: 'Access level', required: false })
+	accessLevel?: string;
 
-	@ApiPropertyOptional({
-		description: 'Optional reason for the bulk assignment',
-		type: String,
-		example: 'Department-wide plugin access grant'
-	})
-	@IsOptional()
-	reason?: string;
+	@ApiPropertyOptional({ type: Object, description: 'Assignment details if available' })
+	assignment?: any;
 }

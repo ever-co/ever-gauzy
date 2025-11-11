@@ -6,7 +6,6 @@ import { MikroOrmPluginSourceRepository } from './mikro-orm-plugin-source.reposi
 import { MikroOrmPluginSubscriptionPlanRepository } from './mikro-orm-plugin-subscription-plan.reposittory';
 import { MikroOrmPluginSubscriptionRepository } from './mikro-orm-plugin-subscription.repository';
 import { MikroOrmPluginTagRepository } from './mikro-orm-plugin-tag.repository';
-import { MikroOrmPluginUserAssignmentRepository } from './mikro-orm-plugin-user-assignment.repository';
 import { MikroOrmPluginVersionRepository } from './mikro-orm-plugin-version.repository';
 import { MikroOrmPluginRepository } from './mikro-orm-plugin.repository';
 import { MikroOrmPluginTenantRepository } from './tenant/mikro-orm-plugin-tenant.repository';
@@ -19,7 +18,6 @@ import { TypeOrmPluginSourceRepository } from './type-orm-plugin-source.reposito
 import { TypeOrmPluginSubscriptionPlanRepository } from './type-orm-plugin-subscription-plan.reposittory';
 import { TypeOrmPluginSubscriptionRepository } from './type-orm-plugin-subscription.repository';
 import { TypeOrmPluginTagRepository } from './type-orm-plugin-tag.repository';
-import { TypeOrmPluginUserAssignmentRepository } from './type-orm-plugin-user-assignment.repository';
 import { TypeOrmPluginVersionRepository } from './type-orm-plugin-version.repository';
 import { TypeOrmPluginRepository } from './type-orm-plugin.repository';
 
@@ -32,7 +30,6 @@ export const repositories = [
 	TypeOrmPluginSettingRepository,
 	TypeOrmPluginSubscriptionRepository,
 	TypeOrmPluginTagRepository,
-	TypeOrmPluginUserAssignmentRepository,
 	MikroOrmPluginSourceRepository,
 	MikroOrmPluginVersionRepository,
 	MikroOrmPluginRepository,
@@ -41,7 +38,6 @@ export const repositories = [
 	MikroOrmPluginSettingRepository,
 	MikroOrmPluginSubscriptionRepository,
 	MikroOrmPluginTagRepository,
-	MikroOrmPluginUserAssignmentRepository,
 	TypeOrmPluginBillingRepository,
 	MikroOrmPluginBillingRepository,
 	TypeOrmPluginCategoryRepository,
@@ -59,7 +55,6 @@ export * from './mikro-orm-plugin-source.repository';
 export * from './mikro-orm-plugin-subscription-plan.reposittory';
 export * from './mikro-orm-plugin-subscription.repository';
 export * from './mikro-orm-plugin-tag.repository';
-export * from './mikro-orm-plugin-user-assignment.repository';
 export * from './mikro-orm-plugin-version.repository';
 export * from './mikro-orm-plugin.repository';
 export * from './tenant/mikro-orm-plugin-tenant.repository';
@@ -72,6 +67,5 @@ export * from './type-orm-plugin-source.repository';
 export * from './type-orm-plugin-subscription-plan.reposittory';
 export * from './type-orm-plugin-subscription.repository';
 export * from './type-orm-plugin-tag.repository';
-export * from './type-orm-plugin-user-assignment.repository';
 export * from './type-orm-plugin-version.repository';
 export * from './type-orm-plugin.repository';

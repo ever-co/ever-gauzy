@@ -14,6 +14,7 @@ import {
 import { PluginSubscription } from '../entities/plugin-subscription.entity';
 import { MikroOrmPluginSubscriptionRepository } from '../repositories/mikro-orm-plugin-subscription.repository';
 import { TypeOrmPluginSubscriptionRepository } from '../repositories/type-orm-plugin-subscription.repository';
+import { PluginSubscriptionPlanService } from './plugin-subscription-plan.service';
 import { PluginTenantService } from './plugin-tenant.service';
 
 @Injectable()
@@ -21,7 +22,8 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 	constructor(
 		public readonly typeOrmPluginSubscriptionRepository: TypeOrmPluginSubscriptionRepository,
 		public readonly mikroOrmPluginSubscriptionRepository: MikroOrmPluginSubscriptionRepository,
-		private readonly pluginTenantService: PluginTenantService
+		private readonly pluginTenantService: PluginTenantService,
+		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService
 	) {
 		super(typeOrmPluginSubscriptionRepository, mikroOrmPluginSubscriptionRepository);
 	}
@@ -31,7 +33,7 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 	 * This is necessary because PluginSubscription uses TypeORM's closure-table tree functionality
 	 * which requires the parent entity to be loaded when creating child subscriptions
 	 */
-	async create(entity: IPluginSubscriptionCreateInput): Promise<PluginSubscription> {
+	private async create(entity: IPluginSubscriptionCreateInput): Promise<PluginSubscription> {
 		// If parentId is provided, load the parent entity first and pass the loaded
 		// entity as `parent` to the create flow. This ensures both TypeORM (closure-table)
 		// and MikroORM get a proper relation object instead of a raw id which can cause
@@ -67,52 +69,53 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		// Validate purchase input
 		await this.validatePurchaseInput(purchaseInput, tenantId, organizationId);
 
-		// Determine the actual scope based on subscription type
-		// Free plans automatically use USER scope for immediate access
-		const actualScope = this.determineSubscriptionScope(purchaseInput.subscriptionType, purchaseInput.scope);
-
-		// Set subscriberId for USER scope subscriptions
-		const actualSubscriberId = actualScope === PluginScope.USER ? subscriberId : undefined;
+		// Determine the actual scope
+		const actualScope = purchaseInput.scope;
 
 		// Check for existing active subscription at the determined scope
 		const existingSubscription = await this.findActiveSubscription(
 			purchaseInput.pluginId,
 			tenantId,
 			actualScope === PluginScope.ORGANIZATION ? organizationId : undefined,
-			actualSubscriberId
+			subscriberId
 		);
 
 		if (existingSubscription) {
 			throw new BadRequestException('An active subscription already exists for this plugin at this scope');
 		}
 
-		// Calculate subscription dates
-		const { startDate, endDate, trialEndDate } = this.calculateSubscriptionDates(purchaseInput.billingPeriod);
+		// Get the plan if planId is provided
+		let plan = null;
+		if (purchaseInput.planId) {
+			plan = await this.pluginSubscriptionPlanService.findOneByIdString(purchaseInput.planId);
+			if (!plan) {
+				throw new NotFoundException('Subscription plan not found');
+			}
+		}
 
-		// Determine initial status based on subscription type
-		const initialStatus = this.determineInitialStatus(purchaseInput.subscriptionType);
+		// Calculate subscription dates based on plan's billing period
+		const billingPeriod = plan?.billingPeriod || PluginBillingPeriod.MONTHLY;
+		const { startDate, endDate, trialEndDate } = this.calculateSubscriptionDates(billingPeriod);
+
+		// Determine initial status
+		const initialStatus =
+			plan?.trialDays && plan.trialDays > 0 ? PluginSubscriptionStatus.TRIAL : PluginSubscriptionStatus.ACTIVE;
 
 		// Create plugin tenant relationship (assuming it exists or needs to be created)
 		const pluginTenantId = await this.ensurePluginTenantExists(purchaseInput.pluginId, tenantId, organizationId);
-
-		// Get subscription price
-		const price = await this.getSubscriptionPrice(purchaseInput);
 
 		// Create subscription
 		const subscriptionData: IPluginSubscriptionCreateInput = {
 			pluginId: purchaseInput.pluginId,
 			pluginTenantId,
-			subscriptionType: purchaseInput.subscriptionType,
 			scope: actualScope,
-			billingPeriod: purchaseInput.billingPeriod,
 			status: initialStatus,
 			startDate,
 			endDate,
-			trialEndDate,
+			trialEndDate: plan?.trialDays ? trialEndDate : undefined,
 			autoRenew: purchaseInput.autoRenew,
-			subscriberId: actualSubscriberId,
-			price,
-			currency: 'USD',
+			subscriberId,
+			planId: purchaseInput.planId,
 			metadata: {
 				...purchaseInput.metadata,
 				purchasedAt: new Date().toISOString(),
@@ -125,8 +128,8 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 
 		const subscription = await this.create(subscriptionData);
 
-		// Process payment if not free
-		if (purchaseInput.subscriptionType !== PluginSubscriptionType.FREE) {
+		// Process payment if plan has a price
+		if (plan && plan.price > 0) {
 			await this.processSubscriptionPayment(subscription, purchaseInput);
 		}
 
@@ -262,15 +265,15 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 	 * Renew a subscription
 	 */
 	async renewSubscription(subscriptionId: string): Promise<IPluginSubscription> {
-		const subscription = await this.findOneByIdString(subscriptionId);
+		const subscription = await this.findOneByIdString(subscriptionId, {
+			relations: ['plan']
+		});
 		if (!subscription) {
 			throw new NotFoundException('Subscription not found');
 		}
 
-		const { endDate } = this.calculateNextBillingPeriod(
-			subscription.billingPeriod,
-			subscription.endDate || new Date()
-		);
+		const billingPeriod = subscription.plan?.billingPeriod || PluginBillingPeriod.MONTHLY;
+		const { endDate } = this.calculateNextBillingPeriod(billingPeriod, subscription.endDate || new Date());
 
 		await this.update(subscriptionId, {
 			status: PluginSubscriptionStatus.ACTIVE,
@@ -307,13 +310,12 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 			await this.processUpgradePayment(subscription, upgradeDetails);
 		}
 
-		// Update subscription with new plan details
+		// Update subscription with new plan
 		await this.update(subscriptionId, {
-			subscriptionType: upgradeDetails.newSubscriptionType,
-			billingPeriod: upgradeDetails.newBillingPeriod,
+			planId: newPlanId,
 			metadata: {
 				...subscription.metadata,
-				previousPlanId: subscription.metadata?.planId,
+				previousPlanId: subscription.planId,
 				upgradedAt: new Date().toISOString(),
 				upgradeReason: 'user_requested'
 			}
@@ -349,13 +351,12 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 			await this.processCreditRefund(subscription, downgradeDetails);
 		}
 
-		// Update subscription with new plan details
+		// Update subscription with new plan
 		await this.update(subscriptionId, {
-			subscriptionType: downgradeDetails.newSubscriptionType,
-			billingPeriod: downgradeDetails.newBillingPeriod,
+			planId: newPlanId,
 			metadata: {
 				...subscription.metadata,
-				previousPlanId: subscription.metadata?.planId,
+				previousPlanId: subscription.planId,
 				downgradedAt: new Date().toISOString(),
 				downgradeReason: 'user_requested'
 			}
@@ -379,7 +380,7 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 			throw new NotFoundException('Subscription not found');
 		}
 
-		if (subscription.subscriptionType !== PluginSubscriptionType.TRIAL) {
+		if (subscription.status !== PluginSubscriptionStatus.TRIAL) {
 			throw new BadRequestException('Can only extend trial subscriptions');
 		}
 
@@ -456,17 +457,14 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 			const childSubscriptionData: IPluginSubscriptionCreateInput = {
 				pluginId: parentSubscription.pluginId,
 				pluginTenantId: parentSubscription.pluginTenantId,
-				subscriptionType: parentSubscription.subscriptionType,
+				planId: parentSubscription.planId,
 				scope: PluginScope.USER, // Child subscriptions are always USER scope
-				billingPeriod: parentSubscription.billingPeriod,
 				status: PluginSubscriptionStatus.ACTIVE, // Inherit active status from parent
 				startDate: new Date(),
 				endDate: parentSubscription.endDate, // Inherit end date from parent
 				trialEndDate: parentSubscription.trialEndDate,
 				autoRenew: false, // Child subscriptions don't auto-renew independently
 				subscriberId: userId,
-				price: 0, // Child subscriptions don't have separate pricing
-				currency: parentSubscription.currency,
 				parentId: parentSubscriptionId, // Link to parent subscription
 				metadata: {
 					createdFrom: 'assignment',
@@ -696,39 +694,6 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 	}
 
 	/**
-	 * Get subscription price based on type and billing period
-	 */
-	private async getSubscriptionPrice(input: IPluginSubscriptionPurchaseInput): Promise<number> {
-		// This should be integrated with a pricing service or configuration
-		// For now, return static prices based on type and period
-
-		if (input.subscriptionType === PluginSubscriptionType.FREE) {
-			return 0;
-		}
-
-		const basePrices = {
-			[PluginSubscriptionType.BASIC]: 10,
-			[PluginSubscriptionType.PREMIUM]: 25,
-			[PluginSubscriptionType.ENTERPRISE]: 100,
-			[PluginSubscriptionType.CUSTOM]: 50
-		};
-
-		const periodMultipliers = {
-			[PluginBillingPeriod.WEEKLY]: 0.25,
-			[PluginBillingPeriod.MONTHLY]: 1,
-			[PluginBillingPeriod.QUARTERLY]: 2.7,
-			[PluginBillingPeriod.YEARLY]: 10,
-			[PluginBillingPeriod.ONE_TIME]: 5,
-			[PluginBillingPeriod.USAGE_BASED]: 1
-		};
-
-		const basePrice = basePrices[input.subscriptionType] || 0;
-		const multiplier = periodMultipliers[input.billingPeriod] || 1;
-
-		return basePrice * multiplier;
-	}
-
-	/**
 	 * Ensure plugin tenant exists
 	 * Uses the PluginTenantService to find or create a plugin tenant relationship
 	 *
@@ -784,11 +749,13 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 	 * Calculate upgrade details including prorated amount
 	 */
 	private async calculateUpgradeDetails(subscription: IPluginSubscription, newPlanId: string) {
-		// This would integrate with subscription plan service to get plan details
-		// Mock implementation for now
+		// Get the new plan details
+		const newPlan = await this.pluginSubscriptionPlanService.findOneByIdString(newPlanId);
+		if (!newPlan) {
+			throw new NotFoundException('New plan not found');
+		}
+
 		return {
-			newSubscriptionType: PluginSubscriptionType.PREMIUM,
-			newBillingPeriod: subscription.billingPeriod,
 			proratedAmount: 15.0, // Calculate based on remaining time and price difference
 			newPlanId
 		};
@@ -798,11 +765,13 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 	 * Calculate downgrade details including credit amount
 	 */
 	private async calculateDowngradeDetails(subscription: IPluginSubscription, newPlanId: string) {
-		// This would integrate with subscription plan service to get plan details
-		// Mock implementation for now
+		// Get the new plan details
+		const newPlan = await this.pluginSubscriptionPlanService.findOneByIdString(newPlanId);
+		if (!newPlan) {
+			throw new NotFoundException('New plan not found');
+		}
+
 		return {
-			newSubscriptionType: PluginSubscriptionType.BASIC,
-			newBillingPeriod: subscription.billingPeriod,
 			creditAmount: 5.0, // Calculate based on remaining time and price difference
 			newPlanId
 		};

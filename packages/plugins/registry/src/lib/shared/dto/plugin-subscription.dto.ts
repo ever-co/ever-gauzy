@@ -27,9 +27,7 @@ export class CreatePluginSubscriptionDTO extends IntersectionType(
 	TenantOrganizationBaseDTO,
 	PickType(PluginSubscription, [
 		'status',
-		'subscriptionType',
 		'scope',
-		'billingPeriod',
 		'startDate',
 		'endDate',
 		'trialEndDate',
@@ -51,25 +49,56 @@ export class CreatePluginSubscriptionDTO extends IntersectionType(
 	@IsOptional()
 	@IsUUID()
 	subscriberId?: string;
+
+	@ApiPropertyOptional({ type: String, description: 'Subscription Plan ID' })
+	@IsOptional()
+	@IsUUID()
+	planId?: string;
 }
 
 /**
  * Update Plugin Subscription DTO
  */
-export class UpdatePluginSubscriptionDTO extends PickType(PluginSubscription, [
-	'subscriptionType',
-	'billingPeriod',
-	'endDate',
-	'trialEndDate',
-	'autoRenew',
-	'cancelledAt',
-	'cancellationReason',
-	'metadata'
-] as const) {
+export class UpdatePluginSubscriptionDTO {
 	@ApiPropertyOptional({ enum: PluginSubscriptionStatus, description: 'Subscription status' })
 	@IsOptional()
 	@IsEnum(PluginSubscriptionStatus)
 	status?: PluginSubscriptionStatus;
+
+	@ApiPropertyOptional({ type: String, description: 'End date' })
+	@IsOptional()
+	@IsDateString()
+	endDate?: string;
+
+	@ApiPropertyOptional({ type: String, description: 'Trial end date' })
+	@IsOptional()
+	@IsDateString()
+	trialEndDate?: string;
+
+	@ApiPropertyOptional({ type: Boolean, description: 'Auto-renewal enabled' })
+	@IsOptional()
+	@IsBoolean()
+	autoRenew?: boolean;
+
+	@ApiPropertyOptional({ type: String, description: 'Cancelled date' })
+	@IsOptional()
+	@IsDateString()
+	cancelledAt?: string;
+
+	@ApiPropertyOptional({ type: String, description: 'Cancellation reason' })
+	@IsOptional()
+	@IsString()
+	cancellationReason?: string;
+
+	@ApiPropertyOptional({ type: Object, description: 'Metadata' })
+	@IsOptional()
+	@IsObject()
+	metadata?: Record<string, any>;
+
+	@ApiPropertyOptional({ type: String, description: 'Plan ID' })
+	@IsOptional()
+	@IsUUID()
+	planId?: string;
 }
 
 /**
@@ -116,13 +145,10 @@ export class PurchasePluginSubscriptionDTO {
 	@IsUUID()
 	pluginId: string;
 
-	@ApiProperty({ enum: PluginSubscriptionType, description: 'Subscription type' })
-	@IsEnum(PluginSubscriptionType)
-	subscriptionType: PluginSubscriptionType;
-
-	@ApiProperty({ enum: PluginBillingPeriod, description: 'Billing period' })
-	@IsEnum(PluginBillingPeriod)
-	billingPeriod: PluginBillingPeriod;
+	@ApiPropertyOptional({ type: String, description: 'Plan ID' })
+	@IsOptional()
+	@IsUUID()
+	planId?: string;
 
 	@ApiProperty({ enum: PluginScope, description: 'Subscription scope' })
 	@IsEnum(PluginScope)

@@ -22,46 +22,22 @@ export class PluginBillingService extends TenantAwareCrudService<PluginBilling> 
 	}
 
 	/**
-	 * Create billing record and calculate total amount
+	 * Create billing record
 	 */
-	async create(input: IPluginBillingCreateInput): Promise<IPluginBilling> {
-		// Calculate total amount
-		const totalAmount = this.calculateTotalAmount(input.amount, input.taxAmount || 0, input.discountAmount || 0);
-
-		const billingData = {
-			...input,
-			totalAmount,
-			retryCount: 0
-		};
-
-		return await super.create(billingData);
+	async create(input: IPluginBillingCreateInput): Promise<PluginBilling> {
+		return await super.create(input);
 	}
 
 	/**
-	 * Update billing record and recalculate total if necessary
+	 * Update billing record
 	 */
-	async update(id: string, input: IPluginBillingUpdateInput): Promise<IPluginBilling | UpdateResult> {
+	async update(id: string, input: IPluginBillingUpdateInput): Promise<PluginBilling | UpdateResult> {
 		const existing = await this.findOneByIdString(id);
 		if (!existing) {
 			throw new Error(`Billing record with ID '${id}' not found`);
 		}
 
-		// Recalculate total if amount-related fields changed
-		let totalAmount = existing.totalAmount;
-		if (input.amount !== undefined || input.taxAmount !== undefined || input.discountAmount !== undefined) {
-			totalAmount = this.calculateTotalAmount(
-				input.amount ?? existing.amount,
-				input.taxAmount ?? existing.taxAmount ?? 0,
-				input.discountAmount ?? existing.discountAmount ?? 0
-			);
-		}
-
-		const updateData = {
-			...input,
-			...(totalAmount !== existing.totalAmount && { totalAmount })
-		};
-
-		return super.update(id, updateData);
+		return super.update(id, input);
 	}
 
 	/**
@@ -130,19 +106,19 @@ export class PluginBillingService extends TenantAwareCrudService<PluginBilling> 
 		};
 
 		billings.forEach((billing) => {
-			summary.totalAmount += billing.totalAmount;
+			summary.totalAmount += billing.amount;
 
 			switch (billing.status) {
 				case PluginBillingStatus.PAID:
 				case PluginBillingStatus.PARTIALLY_PAID:
-					summary.paidAmount += billing.totalAmount;
+					summary.paidAmount += billing.amount;
 					break;
 				case PluginBillingStatus.PENDING:
 				case PluginBillingStatus.PROCESSED:
-					summary.pendingAmount += billing.totalAmount;
+					summary.pendingAmount += billing.amount;
 					break;
 				case PluginBillingStatus.OVERDUE:
-					summary.overdueAmount += billing.totalAmount;
+					summary.overdueAmount += billing.amount;
 					break;
 			}
 		});
@@ -173,49 +149,38 @@ export class PluginBillingService extends TenantAwareCrudService<PluginBilling> 
 	/**
 	 * Mark billing as paid
 	 */
-	async markAsPaid(id: string, paymentReference?: string): Promise<IPluginBilling | UpdateResult> {
-		return this.update(id, {
-			status: PluginBillingStatus.PAID,
-			paymentReference
-		});
+	async markAsPaid(id: string, paymentReference?: string): Promise<PluginBilling | UpdateResult> {
+		const updateData: Partial<IPluginBilling> = {
+			status: PluginBillingStatus.PAID
+		};
+
+		// Add payment reference to metadata if provided
+		if (paymentReference) {
+			const billing = await this.findOneByIdString(id);
+			updateData.metadata = {
+				...billing?.metadata,
+				paymentReference
+			};
+		}
+
+		return this.update(id, updateData);
 	}
 
 	/**
-	 * Mark billing as failed and handle retry logic
+	 * Mark billing as failed
 	 */
-	async markAsFailed(id: string, reason?: string): Promise<IPluginBilling | UpdateResult> {
+	async markAsFailed(id: string, reason?: string): Promise<PluginBilling | UpdateResult> {
 		const billing = await this.findOneByIdString(id);
 		if (!billing) {
 			throw new Error(`Billing record with ID '${id}' not found`);
 		}
 
-		const retryCount = (billing.retryCount || 0) + 1;
-		const nextRetryAt = this.calculateNextRetryDate(retryCount);
-
-		return this.update(id, {
+		const updateData = {
 			status: PluginBillingStatus.FAILED,
-			lastRetryAt: new Date(),
-			nextRetryAt,
 			metadata: reason ? { ...billing.metadata, failureReason: reason } : billing.metadata
-		});
-	}
+		};
 
-	/**
-	 * Calculate total amount including tax and discount
-	 */
-	private calculateTotalAmount(amount: number, taxAmount: number, discountAmount: number): number {
-		return Math.max(0, amount + taxAmount - discountAmount);
-	}
-
-	/**
-	 * Calculate next retry date based on retry count
-	 */
-	private calculateNextRetryDate(retryCount: number): Date {
-		const now = new Date();
-		const delays = [1, 3, 6, 24, 72]; // hours
-		const delayHours = delays[Math.min(retryCount - 1, delays.length - 1)];
-
-		return new Date(now.getTime() + delayHours * 60 * 60 * 1000);
+		return this.update(id, updateData);
 	}
 
 	/**

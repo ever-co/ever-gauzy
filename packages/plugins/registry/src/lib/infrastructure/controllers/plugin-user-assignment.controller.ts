@@ -1,409 +1,172 @@
-import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
-import {
-	Body,
-	Controller,
-	Delete,
-	Get,
-	HttpStatus,
-	Param,
-	Post,
-	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
-} from '@nestjs/common';
+import { ID } from '@gauzy/contracts';
+import { UUIDValidationPipe } from '@gauzy/core';
+import { Body, Controller, Delete, Get, HttpStatus, Param, Post, ValidationPipe } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
-
-// Entities
-import { PluginUserAssignment } from '../../domain/entities/plugin-user-assignment.entity';
-
-// DTOs
-import {
-	AssignPluginUsersDTO,
-	BulkPluginUserAssignmentDTO,
-	PluginUserAssignmentQueryDTO
-} from '../../shared/dto/plugin-user-assignment.dto';
-
-// Commands
+import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	AssignUsersToPluginCommand,
-	BulkAssignUsersToPluginsCommand,
 	UnassignUsersFromPluginCommand
 } from '../../application/commands/plugin-user-assignment.commands';
-
-// Queries
 import {
 	CheckUserPluginAccessQuery,
-	GetAllPluginUserAssignmentsQuery,
 	GetPluginUserAssignmentsQuery,
 	GetUserPluginAssignmentsQuery
 } from '../../application/queries/plugin-user-assignment.queries';
+import { AssignPluginUsersDTO, UnassignPluginUsersDTO } from '../../shared/dto/plugin-user-assignment.dto';
 
-@ApiTags('Plugin User Assignment')
-@ApiBearerAuth('Bearer')
-@ApiSecurity('api_key')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller('/plugins/:pluginId/installations/:installationId/users')
+/**
+ * Plugin User Assignment Controller
+ * Handles user assignment operations for specific plugins
+ */
+@ApiTags('Plugins - User Assignment')
+@Controller('plugins/:pluginId/users')
 export class PluginUserAssignmentController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
+	/**
+	 * Get all users assigned to a specific plugin
+	 */
+	@Get()
 	@ApiOperation({
-		summary: 'Assign users to plugin installation',
-		description:
-			'Assigns users to a plugin installation. Requires PLUGIN_ASSIGN_ACCESS permission. Only works for plugins purchased at organization or tenant scope.'
+		summary: 'Get users assigned to a plugin',
+		description: 'Retrieve all users assigned to a specific plugin.'
 	})
-	@ApiParam({
-		name: 'pluginId',
-		description: 'Unique identifier of the plugin',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440000'
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: 'string', format: 'uuid' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully retrieved plugin user assignments'
 	})
-	@ApiParam({
-		name: 'installationId',
-		description: 'Unique identifier of the plugin installation',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440000'
+	async getPluginUserAssignments(@Param('pluginId', UUIDValidationPipe) pluginId: ID): Promise<any> {
+		// TODO: Get tenantId and organizationId from request context
+		return this.queryBus.execute(new GetPluginUserAssignmentsQuery(pluginId, null, null));
+	}
+
+	/**
+	 * Assign users to a plugin
+	 */
+	@Post()
+	@ApiOperation({
+		summary: 'Assign users to a plugin',
+		description: 'Assign one or more users to a specific plugin.'
 	})
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: 'string', format: 'uuid' })
+	@ApiBody({ type: AssignPluginUsersDTO })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Users assigned successfully',
-		type: [PluginUserAssignment]
+		description: 'Successfully assigned users to plugin'
 	})
-	@ApiResponse({
-		status: HttpStatus.FORBIDDEN,
-		description: 'Insufficient permissions or plugin not purchased for organization/tenant scope'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid plugin installation ID or users already assigned'
-	})
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS)
-	@Post()
-	public async assignUsers(
+	async assignUsersToPlugin(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
-		@Param('installationId', UUIDValidationPipe) installationId: ID,
-		@Body() assignDto: AssignPluginUsersDTO
-	): Promise<PluginUserAssignment[]> {
-		return await this.commandBus.execute(
-			new AssignUsersToPluginCommand(installationId, assignDto.userIds, assignDto.reason)
+		@Body(new ValidationPipe({ transform: true })) assignDto: AssignPluginUsersDTO
+	): Promise<any> {
+		// TODO: Get tenantId and organizationId from request context
+		return this.commandBus.execute(
+			new AssignUsersToPluginCommand(pluginId, assignDto.userIds, null, null, assignDto.reason)
 		);
 	}
 
+	/**
+	 * Unassign users from a plugin
+	 */
+	@Delete()
 	@ApiOperation({
-		summary: 'Unassign user from plugin installation',
-		description: 'Removes a user assignment from a plugin installation. Requires PLUGIN_ASSIGN_ACCESS permission.'
+		summary: 'Unassign users from a plugin',
+		description: 'Remove one or more users from a specific plugin.'
 	})
-	@ApiParam({
-		name: 'pluginId',
-		description: 'Unique identifier of the plugin',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440000'
-	})
-	@ApiParam({
-		name: 'installationId',
-		description: 'Unique identifier of the plugin installation',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440000'
-	})
-	@ApiParam({
-		name: 'userId',
-		description: 'Unique identifier of the user to unassign',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440001'
-	})
-	@ApiResponse({
-		status: HttpStatus.NO_CONTENT,
-		description: 'User unassigned successfully'
-	})
-	@ApiResponse({
-		status: HttpStatus.FORBIDDEN,
-		description: 'Insufficient permissions'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'No active assignment found for specified user'
-	})
-	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS)
-	@Delete(':userId')
-	public async unassignUser(
-		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
-		@Param('installationId', UUIDValidationPipe) installationId: ID,
-		@Param('userId', UUIDValidationPipe) userId: ID
-	): Promise<void> {
-		await this.commandBus.execute(
-			new UnassignUsersFromPluginCommand(installationId, [userId], 'Individual user unassignment')
-		);
-	}
-
-	@ApiOperation({
-		summary: 'Get all user assignments for plugin installation',
-		description:
-			'Retrieves all user assignments for a specific plugin installation with pagination support. Requires PLUGIN_ASSIGN_ACCESS permission.'
-	})
-	@ApiParam({
-		name: 'pluginId',
-		description: 'Unique identifier of the plugin',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440000'
-	})
-	@ApiParam({
-		name: 'installationId',
-		description: 'Unique identifier of the plugin installation',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440000'
-	})
-	@ApiQuery({
-		name: 'includeInactive',
-		required: false,
-		description: 'Whether to include inactive assignments',
-		type: Boolean,
-		example: false
-	})
-	@ApiQuery({
-		name: 'take',
-		required: false,
-		description: 'Number of items to take',
-		type: Number,
-		example: 20
-	})
-	@ApiQuery({
-		name: 'skip',
-		required: false,
-		description: 'Number of items to skip',
-		type: Number,
-		example: 0
-	})
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: 'string', format: 'uuid' })
+	@ApiBody({ type: UnassignPluginUsersDTO })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'User assignments retrieved successfully',
-		schema: {
-			type: 'object',
-			properties: {
-				items: { type: 'array', items: { $ref: '#/components/schemas/PluginUserAssignment' } },
-				total: { type: 'number' }
-			}
-		}
+		description: 'Successfully unassigned users from plugin'
 	})
-	@ApiResponse({
-		status: HttpStatus.FORBIDDEN,
-		description: 'Insufficient permissions'
-	})
-	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS)
-	@Get()
-	public async getPluginUserAssignments(
+	async unassignUsersFromPlugin(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
-		@Param('installationId', UUIDValidationPipe) installationId: ID,
-		@Query('includeInactive') includeInactive?: boolean,
-		@Query('take') take?: number,
-		@Query('skip') skip?: number
-	): Promise<IPagination<PluginUserAssignment>> {
-		return await this.queryBus.execute(
-			new GetPluginUserAssignmentsQuery(installationId, includeInactive || false, take, skip)
+		@Body(new ValidationPipe({ transform: true })) unassignDto: UnassignPluginUsersDTO
+	): Promise<any> {
+		// TODO: Get tenantId and organizationId from request context
+		return this.commandBus.execute(
+			new UnassignUsersFromPluginCommand(pluginId, unassignDto.userIds, null, null, unassignDto.reason)
 		);
-	}
-
-	@ApiOperation({
-		summary: 'Get user assignment details',
-		description:
-			'Retrieves user assignment details including access status. Requires PLUGIN_ASSIGN_ACCESS permission.'
-	})
-	@ApiParam({
-		name: 'pluginId',
-		description: 'Unique identifier of the plugin',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440000'
-	})
-	@ApiParam({
-		name: 'installationId',
-		description: 'Unique identifier of the plugin installation',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440000'
-	})
-	@ApiParam({
-		name: 'userId',
-		description: 'Unique identifier of the user',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440001'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'User assignment details retrieved',
-		schema: {
-			type: 'object',
-			properties: {
-				hasAccess: { type: 'boolean' },
-				assignment: { $ref: '#/components/schemas/PluginUserAssignment' }
-			}
-		}
-	})
-	@ApiResponse({
-		status: HttpStatus.FORBIDDEN,
-		description: 'Insufficient permissions'
-	})
-	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS)
-	@Get(':userId')
-	public async getUserAssignmentDetails(
-		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
-		@Param('installationId', UUIDValidationPipe) installationId: ID,
-		@Param('userId', UUIDValidationPipe) userId: ID
-	): Promise<{ hasAccess: boolean; assignment?: PluginUserAssignment }> {
-		const hasAccess = await this.queryBus.execute(new CheckUserPluginAccessQuery(installationId, userId));
-
-		// If user has access, try to get the assignment details
-		let assignment: PluginUserAssignment | undefined;
-		if (hasAccess) {
-			const assignments = await this.queryBus.execute(new GetPluginUserAssignmentsQuery(installationId, false));
-			assignment = assignments.find((a) => a.userId === userId);
-		}
-
-		return { hasAccess, assignment };
 	}
 }
 
-@ApiTags('Plugin User Assignment')
-@ApiBearerAuth('Bearer')
-@ApiSecurity('api_key')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller('/users/:userId/plugin-assignments')
+/**
+ * User Plugin Assignment Controller
+ * Handles plugin assignment operations for specific users
+ */
+@ApiTags('Users - Plugin Assignment')
+@Controller('users/:userId/plugins')
 export class UserPluginAssignmentController {
 	constructor(private readonly queryBus: QueryBus) {}
 
+	/**
+	 * Get all plugins assigned to a specific user
+	 */
+	@Get()
 	@ApiOperation({
-		summary: 'Get all plugin assignments for user',
-		description:
-			'Retrieves all plugin assignments for a specific user with pagination support. Requires PLUGIN_ASSIGN_ACCESS permission.'
+		summary: 'Get plugins assigned to a user',
+		description: 'Retrieve all plugins assigned to a specific user.'
 	})
-	@ApiParam({
-		name: 'userId',
-		description: 'Unique identifier of the user',
-		type: String,
-		example: '550e8400-e29b-41d4-a716-446655440000'
-	})
-	@ApiQuery({
-		name: 'includeInactive',
-		required: false,
-		description: 'Whether to include inactive assignments',
-		type: Boolean,
-		example: false
-	})
-	@ApiQuery({
-		name: 'take',
-		required: false,
-		description: 'Number of items to take',
-		type: Number,
-		example: 20
-	})
-	@ApiQuery({
-		name: 'skip',
-		required: false,
-		description: 'Number of items to skip',
-		type: Number,
-		example: 0
-	})
+	@ApiParam({ name: 'userId', description: 'User ID', type: 'string', format: 'uuid' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Plugin assignments retrieved successfully',
-		schema: {
-			type: 'object',
-			properties: {
-				items: { type: 'array', items: { $ref: '#/components/schemas/PluginUserAssignment' } },
-				total: { type: 'number' }
-			}
-		}
+		description: 'Successfully retrieved user plugin assignments'
 	})
+	async getUserPluginAssignments(@Param('userId', UUIDValidationPipe) userId: ID): Promise<any> {
+		// TODO: Get tenantId and organizationId from request context
+		return this.queryBus.execute(new GetUserPluginAssignmentsQuery(userId, null, null));
+	}
+
+	/**
+	 * Check if a user has access to a specific plugin
+	 */
+	@Get(':pluginId/access')
+	@ApiOperation({
+		summary: 'Check user plugin access',
+		description: 'Check if a user has access to a specific plugin.'
+	})
+	@ApiParam({ name: 'userId', description: 'User ID', type: 'string', format: 'uuid' })
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: 'string', format: 'uuid' })
 	@ApiResponse({
-		status: HttpStatus.FORBIDDEN,
-		description: 'Insufficient permissions'
+		status: HttpStatus.OK,
+		description: 'Successfully checked user plugin access'
 	})
-	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS)
-	@Get()
-	public async getUserPluginAssignments(
+	async checkUserPluginAccess(
 		@Param('userId', UUIDValidationPipe) userId: ID,
-		@Query('includeInactive') includeInactive?: boolean,
-		@Query('take') take?: number,
-		@Query('skip') skip?: number
-	): Promise<IPagination<PluginUserAssignment>> {
-		return await this.queryBus.execute(
-			new GetUserPluginAssignmentsQuery(userId, includeInactive || false, take, skip)
-		);
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID
+	): Promise<{ hasAccess: boolean }> {
+		// TODO: Get tenantId and organizationId from request context
+		return this.queryBus.execute(new CheckUserPluginAccessQuery(pluginId, userId, null, null));
 	}
 }
 
-@ApiTags('Plugin User Assignment')
-@ApiBearerAuth('Bearer')
-@ApiSecurity('api_key')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller('/plugin-user-assignments')
+/**
+ * Plugin User Assignment Management Controller
+ * Handles general management operations for plugin user assignments
+ */
+@ApiTags('Plugins - User Assignment Management')
+@Controller('plugin-user-assignments')
 export class PluginUserAssignmentManagementController {
-	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
+	constructor(private readonly queryBus: QueryBus) {}
 
-	@ApiOperation({
-		summary: 'Create multiple plugin user assignments',
-		description: 'Creates multiple plugin user assignments in batch. Requires PLUGIN_ASSIGN_ACCESS permission.'
-	})
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'Plugin user assignments created successfully',
-		type: [PluginUserAssignment]
-	})
-	@ApiResponse({
-		status: HttpStatus.FORBIDDEN,
-		description: 'Insufficient permissions'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input data'
-	})
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS)
-	@Post('batch')
-	public async createBatch(@Body() bulkAssignDto: BulkPluginUserAssignmentDTO): Promise<PluginUserAssignment[]> {
-		return await this.commandBus.execute(
-			new BulkAssignUsersToPluginsCommand(
-				bulkAssignDto.pluginInstallationIds,
-				bulkAssignDto.userIds,
-				bulkAssignDto.reason
-			)
-		);
-	}
-
+	/**
+	 * Get all plugin user assignments
+	 */
+	@Get()
 	@ApiOperation({
 		summary: 'Get all plugin user assignments',
-		description:
-			'Retrieves all plugin user assignments with optional filters. Requires PLUGIN_ASSIGN_ACCESS permission.'
+		description: 'Retrieve all plugin user assignments.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Plugin user assignments retrieved successfully',
-		type: [PluginUserAssignment]
+		description: 'Successfully retrieved all plugin user assignments'
 	})
-	@ApiResponse({
-		status: HttpStatus.FORBIDDEN,
-		description: 'Insufficient permissions'
-	})
-	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS)
-	@Get()
-	public async getAllPluginUserAssignments(
-		@Query() queryDto: PluginUserAssignmentQueryDTO
-	): Promise<IPagination<PluginUserAssignment>> {
-		const filters = {
-			pluginId: queryDto.pluginId,
-			userId: queryDto.userId,
-			pluginInstallationId: queryDto.pluginInstallationId
+	async getAllPluginUserAssignments(): Promise<any> {
+		// TODO: Get tenantId and organizationId from request context
+		// TODO: Implement query
+		return {
+			items: [],
+			total: 0
 		};
-
-		// Remove undefined values
-		Object.keys(filters).forEach((key) => {
-			if (filters[key] === undefined) {
-				delete filters[key];
-			}
-		});
-
-		return await this.queryBus.execute(
-			new GetAllPluginUserAssignmentsQuery(Object.keys(filters).length > 0 ? filters : undefined)
-		);
 	}
 }

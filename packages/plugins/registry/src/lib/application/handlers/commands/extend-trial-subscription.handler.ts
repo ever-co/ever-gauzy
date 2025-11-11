@@ -1,7 +1,7 @@
-import { IPluginSubscription } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginSubscriptionService } from '../../../domain/services/plugin-subscription.service';
+import { IPluginSubscription } from '../../../shared/models';
 import { ExtendTrialSubscriptionCommand } from '../../commands/extend-trial-subscription.command';
 
 @CommandHandler(ExtendTrialSubscriptionCommand)
@@ -12,14 +12,7 @@ export class ExtendTrialSubscriptionCommandHandler implements ICommandHandler<Ex
 		const { subscriptionId, days, tenantId, organizationId, userId } = command;
 
 		try {
-			const result = await this.pluginSubscriptionService.extendTrial(
-				subscriptionId,
-				days,
-				tenantId,
-				organizationId,
-				userId
-			);
-			return result as IPluginSubscription;
+			return this.pluginSubscriptionService.extendTrial(subscriptionId, days, tenantId, organizationId, userId);
 		} catch (error) {
 			throw new BadRequestException(`Failed to extend trial subscription: ${error.message}`);
 		}
