@@ -6,6 +6,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganization, ITask, PermissionsEnum, TaskStatusEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { AuthService, Store, TasksService, ToastrService } from '@gauzy/ui-core/core';
+import { TaskSocketService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -136,7 +137,8 @@ export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
 		private readonly tasksService: TasksService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
-		private readonly authService: AuthService
+		private readonly authService: AuthService,
+		private readonly taskSocketService: TaskSocketService
 	) {}
 
 	onChange: any = () => {};
@@ -151,6 +153,13 @@ export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
 			.pipe(
 				debounceTime(50),
 				tap(() => this.getTasks()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.taskSocketService.tasksChanged$
+			.pipe(
+				filter((changed) => changed === true && !!this.organization),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();

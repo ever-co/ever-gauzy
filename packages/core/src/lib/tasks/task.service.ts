@@ -173,17 +173,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			if (updatedTask.status === TaskStatusEnum.DONE && task.status !== TaskStatusEnum.DONE) {
 				try {
 					this.logger.debug(`Task ${updatedTask.id} changed status to DONE`);
-					const taskMembers = updatedTask.members?.length ? updatedTask.members : task.members;
-
-					if (taskMembers?.length) {
-						await Promise.all(
-							taskMembers.map(async (member) => {
-								// Send a real-time event to the specified user via socket.
-								// No error is thrown if the user is not currently connected.
-								this._socketService.sendTimerChanged(member?.id);
-							})
-						);
-					}
+					this._socketService.sendTimerChangedMany([...existingMemberIdSet])
 				} catch (error) {
 					this.logger.error(`Error emitting DONE status event for task ${updatedTask.id}: ${error}`);
 				}
@@ -248,6 +238,18 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				} catch (error) {
 					this.logger.error(`Error publishing CreateSubscriptionEvent: ${error}`);
 				}
+			}
+
+			try {
+				[
+					...existingMemberIdSet,
+					...newMembers.map((member) => member.id)
+				].forEach((memberId) => {
+					this._socketService.emitToClient(memberId, 'tasks:changed', null);
+				});
+
+			} catch (error) {
+				this.logger.error(`Error while sending tasks changed event: ${error}`);
 			}
 
 			// Generate the activity log
