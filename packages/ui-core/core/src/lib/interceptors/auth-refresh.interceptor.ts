@@ -1,4 +1,4 @@
-import { Injectable, Injector } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
 	HttpRequest,
@@ -19,10 +19,12 @@ import { Store } from '../services/store/store.service';
  */
 @Injectable()
 export class AuthRefreshInterceptor implements HttpInterceptor {
+	private readonly authService = inject(AuthService);
+	private readonly store = inject(Store);
+	private readonly router = inject(Router);
+
 	private refreshTokenInProgress = false;
 	private refreshTokenSubject: Subject<string> = new Subject<string>();
-
-	constructor(private readonly injector: Injector, private readonly store: Store, private readonly router: Router) {}
 
 	/**
 	 * Intercepts HTTP requests and handles authentication token refresh if necessary.
@@ -72,9 +74,9 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 							// Refresh failed, clear tokens
 							this.store.token = null;
 							this.store.refresh_token = null;
-							// Emit error to all waiting requests so they fail immediately
+							// Emit error to all waiting requests (completes the Subject)
 							this.refreshTokenSubject.error(refreshError);
-							// Create a new subject for future refresh attempts
+							// Recreate Subject since .error() completes it and makes it unusable
 							this.refreshTokenSubject = new Subject<string>();
 							// Redirect to login page
 							this.router.navigate(['/auth/login'], {
@@ -104,8 +106,7 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 			return throwError(() => new Error('No refresh token available'));
 		}
 
-		const authService = this.injector.get(AuthService);
-		return from(authService.refreshToken(refresh_token));
+		return from(this.authService.refreshToken(refresh_token));
 	}
 
 	/**
