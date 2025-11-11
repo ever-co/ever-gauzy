@@ -42,6 +42,8 @@ export * from './unpublish-plugin.command';
 
 // Plugin Purchase/Payment Commands
 export * from './generate-plugin-license.command';
+export * from './plugin-billing-create.command';
+export * from './plugin-billing-process-payment.command';
 export * from './process-plugin-payment.command';
 export * from './refund-plugin-purchase.command';
 export * from './validate-plugin-license.command';

@@ -38,6 +38,8 @@ import { CreatePluginSubscriptionCommandHandler } from './create-plugin-subscrip
 import { DeletePluginSubscriptionCommandHandler } from './delete-plugin-subscription.handler';
 import { DowngradePluginSubscriptionCommandHandler } from './downgrade-plugin-subscription.handler';
 import { ExtendTrialSubscriptionCommandHandler } from './extend-trial-subscription.handler';
+import { PluginBillingCreateHandler } from './plugin-billing-create.handler';
+import { PluginBillingProcessPaymentHandler } from './plugin-billing-process-payment.handler';
 import { ProcessBillingCommandHandler } from './process-billing.handler';
 import { PurchasePluginSubscriptionCommandHandler } from './purchase-plugin-subscription.handler';
 import { RenewPluginSubscriptionCommandHandler } from './renew-plugin-subscription.handler';
@@ -120,6 +122,9 @@ export {
 	DeletePluginTagHandler,
 	DeletePluginVersionCommandHandler,
 	InstallPluginCommandHandler,
+	// Plugin Billing Command Handlers
+	PluginBillingCreateHandler,
+	PluginBillingProcessPaymentHandler,
 	// Plugin Configuration Command Handlers
 	PluginConfigGetHandler,
 	PluginConfigSetHandler,
@@ -184,6 +189,8 @@ export const commands = [
 	DeletePluginSubscriptionCommandHandler,
 	DowngradePluginSubscriptionCommandHandler,
 	ExtendTrialSubscriptionCommandHandler,
+	PluginBillingCreateHandler,
+	PluginBillingProcessPaymentHandler,
 	ProcessBillingCommandHandler,
 	PurchasePluginSubscriptionCommandHandler,
 	RenewPluginSubscriptionCommandHandler,
