@@ -1,16 +1,14 @@
 import { RequestContext } from '@gauzy/core';
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { PluginInstallationService } from '../../domain/services/plugin-installation.service';
-import { PluginSubscriptionService } from '../../domain/services/plugin-subscription.service';
+import { PluginSubscriptionAccessService } from '../../domain/services/plugin-subscription-access.service';
 import { PluginService } from '../../domain/services/plugin.service';
-import { PluginScope } from '../../shared/models/plugin-scope.model';
-import { PluginSubscriptionStatus } from '../../shared/models/plugin-subscription.model';
 
 @Injectable()
 export class PluginAccessGuard implements CanActivate {
 	constructor(
 		private readonly pluginService: PluginService,
-		private readonly pluginSubscriptionService: PluginSubscriptionService,
+		private readonly pluginSubscriptionAccessService: PluginSubscriptionAccessService,
 		private readonly pluginInstallationService: PluginInstallationService
 	) {}
 
@@ -55,8 +53,13 @@ export class PluginAccessGuard implements CanActivate {
 			return true;
 		}
 
-		// Check if user has an active subscription for this plugin
-		const hasAccess = await this.checkPluginSubscriptionAccess(pluginId, userId, tenantId, organizationId);
+		// Check if user has an active subscription for this plugin using centralized service
+		const hasAccess = await this.pluginSubscriptionAccessService.validatePluginAccess(
+			pluginId,
+			tenantId,
+			organizationId,
+			userId
+		);
 		if (hasAccess) {
 			return true;
 		}
@@ -81,61 +84,5 @@ export class PluginAccessGuard implements CanActivate {
 		}
 
 		return undefined;
-	}
-
-	/**
-	 * Check if user has access to plugin through subscription
-	 * @param pluginId - The plugin ID
-	 * @param userId - The user ID
-	 * @param tenantId - The tenant ID
-	 * @param organizationId - The organization ID
-	 * @returns True if user has access through any subscription
-	 */
-	private async checkPluginSubscriptionAccess(
-		pluginId: string,
-		userId: string,
-		tenantId: string,
-		organizationId: string
-	): Promise<boolean> {
-		// Check for user-level subscription (user bought for themselves)
-		const hasUserSubscription = await this.pluginSubscriptionService.findOneByWhereOptions({
-			pluginId,
-			tenantId,
-			organizationId,
-			subscriberId: userId,
-			status: PluginSubscriptionStatus.ACTIVE,
-			scope: PluginScope.USER
-		});
-
-		if (hasUserSubscription) {
-			return true;
-		}
-
-		// Check for organization-level subscription
-		const hasOrgSubscription = await this.pluginSubscriptionService.findOneByWhereOptions({
-			pluginId,
-			tenantId,
-			organizationId,
-			status: PluginSubscriptionStatus.ACTIVE,
-			scope: PluginScope.ORGANIZATION
-		});
-
-		if (hasOrgSubscription) {
-			return true;
-		}
-
-		// Check for tenant-level subscription
-		const hasTenantSubscription = await this.pluginSubscriptionService.findOneByWhereOptions({
-			pluginId,
-			tenantId,
-			status: PluginSubscriptionStatus.ACTIVE,
-			scope: PluginScope.TENANT
-		});
-
-		if (hasTenantSubscription) {
-			return true;
-		}
-
-		return false;
 	}
 }

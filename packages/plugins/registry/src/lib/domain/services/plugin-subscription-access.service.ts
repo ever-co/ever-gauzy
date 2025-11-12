@@ -8,20 +8,231 @@ import {
 } from '../../shared/models/plugin-subscription.model';
 import { PluginSubscriptionPlanService } from './plugin-subscription-plan.service';
 import { PluginSubscriptionService } from './plugin-subscription.service';
-import { PluginUserAssignmentService } from './plugin-user-assignment.service';
+
+/**
+ * Strategy interface for finding subscriptions at different scopes
+ */
+interface ISubscriptionFinderStrategy {
+	findSubscription(pluginId: ID, tenantId: ID, organizationId?: ID, userId?: ID): Promise<IPluginSubscription | null>;
+}
+
+/**
+ * Access context interface for subscription access details
+ */
+interface ISubscriptionAccessContext {
+	hasAccess: boolean;
+	subscription: IPluginSubscription | null;
+	accessLevel: PluginScope | null;
+	canAssign: boolean;
+	canActivate: boolean;
+	requiresSubscription: boolean;
+}
+
+/**
+ * Factory for creating subscription access contexts
+ */
+class SubscriptionAccessContextFactory {
+	constructor(
+		private readonly pluginSubscriptionService: PluginSubscriptionService,
+		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService
+	) {}
+
+	/**
+	 * Creates access context for free plugins (no subscription required)
+	 */
+	async createFreeAccessContext(pluginId: ID, userId?: ID): Promise<ISubscriptionAccessContext> {
+		const canActivate = await this.validateUserAssignment(pluginId, userId);
+		return {
+			hasAccess: true,
+			subscription: null,
+			accessLevel: null,
+			canAssign: false,
+			canActivate,
+			requiresSubscription: false
+		};
+	}
+
+	/**
+	 * Creates access context for paid plugins with subscription
+	 */
+	async createPaidAccessContext(
+		subscription: IPluginSubscription | null,
+		pluginId: ID,
+		tenantId: ID,
+		organizationId?: ID,
+		userId?: ID
+	): Promise<ISubscriptionAccessContext> {
+		const isValidSubscription = subscription
+			? (this.pluginSubscriptionService as any).isSubscriptionActive(subscription)
+			: false;
+
+		const hasAccess = isValidSubscription;
+		const accessLevel = subscription?.scope || null;
+
+		// Calculate assignment permissions
+		const canAssign = hasAccess
+			? await this.canAssignSubscriptions(subscription, pluginId, tenantId, organizationId, userId)
+			: false;
+
+		// Calculate activation permissions
+		const hasUserAssignment = await this.validateUserAssignment(pluginId, userId);
+		const ownsSubscription = subscription ? !subscription.parent : false;
+		const canActivate = (hasUserAssignment || ownsSubscription) && hasAccess;
+
+		return {
+			hasAccess,
+			subscription,
+			accessLevel,
+			canAssign,
+			canActivate,
+			requiresSubscription: true
+		};
+	}
+
+	/**
+	 * Validate if user has assignment access to the plugin
+	 */
+	private async validateUserAssignment(pluginId: ID, userId?: ID): Promise<boolean> {
+		if (!userId) return false;
+		const subscription = await this.pluginSubscriptionService.findActiveSubscription(pluginId, userId);
+		return !!subscription;
+	}
+
+	/**
+	 * Check if user can assign subscriptions based on subscription scope
+	 */
+	public async canAssignSubscriptions(
+		subscription: IPluginSubscription | null,
+		pluginId: ID,
+		tenantId: ID,
+		organizationId?: ID,
+		userId?: ID
+	): Promise<boolean> {
+		if (!subscription) return false;
+
+		// Can only assign if subscription is at ORGANIZATION or TENANT scope
+		return subscription.scope === PluginScope.ORGANIZATION || subscription.scope === PluginScope.TENANT;
+	}
+}
+
+/**
+ * Strategy for finding user-level subscriptions
+ */
+class UserSubscriptionFinder implements ISubscriptionFinderStrategy {
+	constructor(private readonly subscriptionService: PluginSubscriptionService) {}
+
+	async findSubscription(
+		pluginId: ID,
+		tenantId: ID,
+		organizationId?: ID,
+		userId?: ID
+	): Promise<IPluginSubscription | null> {
+		if (!userId) return null;
+
+		return this.subscriptionService.findActiveSubscription(pluginId, tenantId, organizationId, userId);
+	}
+}
+
+/**
+ * Strategy for finding organization-level subscriptions
+ */
+class OrganizationSubscriptionFinder implements ISubscriptionFinderStrategy {
+	constructor(private readonly subscriptionService: PluginSubscriptionService) {}
+
+	async findSubscription(
+		pluginId: ID,
+		tenantId: ID,
+		organizationId?: ID,
+		userId?: ID
+	): Promise<IPluginSubscription | null> {
+		if (!organizationId) return null;
+
+		// Use the existing hasPluginAccess method to find organization subscriptions
+		const hasAccess = await this.subscriptionService.hasPluginAccess(pluginId, tenantId, organizationId);
+
+		if (hasAccess) {
+			// Find the actual subscription with organization scope
+			try {
+				const subscription = await this.subscriptionService.findOneByWhereOptions({
+					pluginId,
+					tenantId,
+					organizationId,
+					scope: PluginScope.ORGANIZATION,
+					status: PluginSubscriptionStatus.ACTIVE
+				});
+				return subscription;
+			} catch {
+				return null;
+			}
+		}
+
+		return null;
+	}
+}
+
+/**
+ * Strategy for finding tenant-level subscriptions
+ */
+class TenantSubscriptionFinder implements ISubscriptionFinderStrategy {
+	constructor(private readonly subscriptionService: PluginSubscriptionService) {}
+
+	async findSubscription(
+		pluginId: ID,
+		tenantId: ID,
+		organizationId?: ID,
+		userId?: ID
+	): Promise<IPluginSubscription | null> {
+		// Use the existing hasPluginAccess method to find tenant subscriptions
+		const hasAccess = await this.subscriptionService.hasPluginAccess(pluginId, tenantId);
+
+		if (hasAccess) {
+			// Find the actual subscription with tenant scope
+			try {
+				const subscription = await this.subscriptionService.findOneByWhereOptions({
+					pluginId,
+					tenantId,
+					scope: PluginScope.TENANT,
+					status: PluginSubscriptionStatus.ACTIVE
+				});
+				return subscription;
+			} catch {
+				return null;
+			}
+		}
+
+		return null;
+	}
+}
 
 /**
  * Centralized service for handling plugin subscription access validation and scope management.
  * Follows Single Responsibility Principle (SRP) by focusing only on access control logic.
  * Follows Open/Closed Principle (OCP) by allowing extension through methods without modifying core logic.
+ * Uses Strategy pattern for subscription finding to eliminate code duplication.
+ * Uses Factory pattern for access context creation.
  */
 @Injectable()
 export class PluginSubscriptionAccessService {
+	private readonly userFinder: ISubscriptionFinderStrategy;
+	private readonly organizationFinder: ISubscriptionFinderStrategy;
+	private readonly tenantFinder: ISubscriptionFinderStrategy;
+	private readonly accessContextFactory: SubscriptionAccessContextFactory;
+
 	constructor(
 		private readonly pluginSubscriptionService: PluginSubscriptionService,
-		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService,
-		private readonly pluginUserAssignmentService: PluginUserAssignmentService
-	) {}
+		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService
+	) {
+		// Initialize strategy instances
+		this.userFinder = new UserSubscriptionFinder(this.pluginSubscriptionService);
+		this.organizationFinder = new OrganizationSubscriptionFinder(this.pluginSubscriptionService);
+		this.tenantFinder = new TenantSubscriptionFinder(this.pluginSubscriptionService);
+
+		// Initialize factory
+		this.accessContextFactory = new SubscriptionAccessContextFactory(
+			this.pluginSubscriptionService,
+			this.pluginSubscriptionPlanService
+		);
+	}
 
 	/**
 	 * Validate if a user has access to a plugin based on their assignments.
@@ -31,7 +242,8 @@ export class PluginSubscriptionAccessService {
 	 * @returns Promise<boolean> indicating if the user has access
 	 */
 	async validatePluginUserAccess(pluginId: ID, userId?: ID): Promise<boolean> {
-		return this.pluginUserAssignmentService.hasUserAccessToPlugin({ pluginId }, userId);
+		const subscription = await this.pluginSubscriptionService.findActiveSubscription(pluginId, userId);
+		return !!subscription;
 	}
 
 	/**
@@ -81,6 +293,7 @@ export class PluginSubscriptionAccessService {
 	/**
 	 * Find the most specific applicable subscription for a user.
 	 * Priority: USER scope > ORGANIZATION scope > TENANT scope
+	 * Uses Strategy pattern to eliminate code duplication.
 	 *
 	 * @param pluginId - The plugin ID
 	 * @param tenantId - The tenant ID
@@ -95,28 +308,24 @@ export class PluginSubscriptionAccessService {
 		userId?: ID
 	): Promise<IPluginSubscription | null> {
 		// 1. Check for user-level subscription (highest priority)
-		if (userId) {
-			const userSubscription = await this.pluginSubscriptionService.findActiveSubscription(
-				pluginId,
-				tenantId,
-				organizationId,
-				userId
-			);
-			if (userSubscription && this.isSubscriptionValid(userSubscription)) {
-				return userSubscription;
-			}
+		const userSubscription = await this.userFinder.findSubscription(pluginId, tenantId, organizationId, userId);
+		if (userSubscription && this.isSubscriptionValid(userSubscription)) {
+			return userSubscription;
 		}
 
 		// 2. Check for organization-level subscription
-		if (organizationId) {
-			const orgSubscription = await this.findOrganizationSubscription(pluginId, tenantId, organizationId);
-			if (orgSubscription && this.isSubscriptionValid(orgSubscription)) {
-				return orgSubscription;
-			}
+		const orgSubscription = await this.organizationFinder.findSubscription(
+			pluginId,
+			tenantId,
+			organizationId,
+			userId
+		);
+		if (orgSubscription && this.isSubscriptionValid(orgSubscription)) {
+			return orgSubscription;
 		}
 
 		// 3. Check for tenant-level subscription (lowest priority)
-		const tenantSubscription = await this.findTenantSubscription(pluginId, tenantId);
+		const tenantSubscription = await this.tenantFinder.findSubscription(pluginId, tenantId, organizationId, userId);
 		if (tenantSubscription && this.isSubscriptionValid(tenantSubscription)) {
 			return tenantSubscription;
 		}
@@ -126,7 +335,7 @@ export class PluginSubscriptionAccessService {
 
 	/**
 	 * Check if a user can assign plugin subscriptions to other users.
-	 * User must have an organization or tenant-level subscription.
+	 * Delegates to the access context factory for logic reuse.
 	 *
 	 * @param pluginId - The plugin ID
 	 * @param tenantId - The tenant ID
@@ -142,8 +351,14 @@ export class PluginSubscriptionAccessService {
 			return false;
 		}
 
-		// Can only assign if subscription is at ORGANIZATION or TENANT scope
-		return subscription.scope === PluginScope.ORGANIZATION || subscription.scope === PluginScope.TENANT;
+		// Delegate to factory logic for consistency
+		return this.accessContextFactory.canAssignSubscriptions(
+			subscription,
+			pluginId,
+			tenantId,
+			organizationId,
+			userId
+		);
 	}
 
 	/**
@@ -209,18 +424,18 @@ export class PluginSubscriptionAccessService {
 
 	/**
 	 * Check if plugin requires a subscription (has paid plans).
+	 * Delegates to PluginSubscriptionPlanService to avoid duplication.
 	 *
 	 * @param pluginId - The plugin ID
 	 * @returns Promise<boolean> indicating if plugin requires subscription
 	 */
 	async requiresSubscription(pluginId: ID): Promise<boolean> {
-		return await this.pluginSubscriptionPlanService.hasPlans(pluginId);
+		return this.pluginSubscriptionPlanService.hasPlans(pluginId);
 	}
 
 	/**
 	 * Get subscription details for a plugin and user.
-	 * Provides comprehensive access information including subscription status,
-	 * permissions, and user capabilities.
+	 * Provides comprehensive access information using Factory pattern for context creation.
 	 *
 	 * @param pluginId - The plugin ID
 	 * @param tenantId - The tenant ID
@@ -242,130 +457,32 @@ export class PluginSubscriptionAccessService {
 		// Check if plugin requires a subscription (has paid plans)
 		const requiresSubscription = await this.requiresSubscription(pluginId);
 
-		// Early return for free plugins with simplified access
+		// Use factory to create appropriate access context
 		if (!requiresSubscription) {
-			const canActivate = await this.validatePluginUserAccess(pluginId, userId);
-			return {
-				hasAccess: true,
-				subscription: null,
-				accessLevel: null,
-				canAssign: false,
-				canActivate,
-				requiresSubscription: false
-			};
+			return this.accessContextFactory.createFreeAccessContext(pluginId, userId);
 		}
 
 		// Find applicable subscription for paid plugins
 		const subscription = await this.findApplicableSubscription(pluginId, tenantId, organizationId, userId);
-		const isValidSubscription = subscription ? this.isSubscriptionValid(subscription) : false;
 
-		// Determine access and permissions
-		const hasAccess = isValidSubscription;
-		const accessLevel = subscription?.scope || null;
-
-		// Calculate assignment permissions (can only assign if org/tenant subscription)
-		const canAssign = hasAccess
-			? await this.canAssignSubscriptions(pluginId, tenantId, organizationId, userId)
-			: false;
-
-		// Calculate activation permissions
-		// User can activate if:
-		// 1. They have explicit user assignment access, OR
-		// 2. They own the subscription (no parent), AND
-		// 3. They have valid access to the plugin
-		const hasUserAssignment = await this.validatePluginUserAccess(pluginId, userId);
-		const ownsSubscription = subscription ? !subscription.parent : false;
-		const canActivate = (hasUserAssignment || ownsSubscription) && hasAccess;
-
-		return {
-			hasAccess,
+		return this.accessContextFactory.createPaidAccessContext(
 			subscription,
-			accessLevel,
-			canAssign,
-			canActivate,
-			requiresSubscription: true
-		};
+			pluginId,
+			tenantId,
+			organizationId,
+			userId
+		);
 	}
 
 	/**
 	 * Check if a subscription is currently valid and active.
-	 * Private helper method for internal validation logic.
+	 * Delegates to PluginSubscriptionService to avoid code duplication.
 	 *
 	 * @param subscription - The subscription to validate
 	 * @returns boolean indicating if subscription is valid
 	 */
 	private isSubscriptionValid(subscription: IPluginSubscription): boolean {
-		if (subscription.parent) {
-			return this.isSubscriptionValid(subscription.parent);
-		}
-		// Check if subscription is in a valid status
-		const validStatuses = [PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL];
-		if (!validStatuses.includes(subscription.status)) {
-			return false;
-		}
-
-		// Check if subscription has expired
-		if (subscription.endDate && subscription.endDate <= new Date()) {
-			return false;
-		}
-
-		// Check if trial has expired
-		if (
-			subscription.status === PluginSubscriptionStatus.TRIAL &&
-			subscription.trialEndDate &&
-			subscription.trialEndDate <= new Date()
-		) {
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Find organization-level subscription (excludes user-level subscriptions).
-	 * Private helper method.
-	 *
-	 * @param pluginId - The plugin ID
-	 * @param tenantId - The tenant ID
-	 * @param organizationId - The organization ID
-	 * @returns Organization subscription or null
-	 */
-	private async findOrganizationSubscription(
-		pluginId: ID,
-		tenantId: ID,
-		organizationId: ID
-	): Promise<IPluginSubscription | null> {
-		try {
-			return await this.pluginSubscriptionService.findOneByWhereOptions({
-				pluginId,
-				tenantId,
-				organizationId,
-				scope: PluginScope.ORGANIZATION,
-				status: PluginSubscriptionStatus.ACTIVE
-			});
-		} catch {
-			return null;
-		}
-	}
-
-	/**
-	 * Find tenant-level subscription (excludes org and user-level subscriptions).
-	 * Private helper method.
-	 *
-	 * @param pluginId - The plugin ID
-	 * @param tenantId - The tenant ID
-	 * @returns Tenant subscription or null
-	 */
-	private async findTenantSubscription(pluginId: ID, tenantId: ID): Promise<IPluginSubscription | null> {
-		try {
-			return await this.pluginSubscriptionService.findOneByWhereOptions({
-				pluginId,
-				tenantId,
-				scope: PluginScope.TENANT,
-				status: PluginSubscriptionStatus.ACTIVE
-			});
-		} catch {
-			return null;
-		}
+		// Delegate to the existing method in PluginSubscriptionService to avoid duplication
+		return (this.pluginSubscriptionService as any).isSubscriptionActive(subscription);
 	}
 }

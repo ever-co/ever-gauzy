@@ -1,17 +1,13 @@
 import { RequestContext } from '@gauzy/core';
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
-import { PluginSubscriptionPlanService } from '../../domain/services/plugin-subscription-plan.service';
-import { PluginSubscriptionService } from '../../domain/services/plugin-subscription.service';
+import { PluginSubscriptionAccessService } from '../../domain/services/plugin-subscription-access.service';
 
 /**
  * Guard to validate that the user has a valid subscription before installing a plugin
  */
 @Injectable()
 export class PluginSubscriptionGuard implements CanActivate {
-	constructor(
-		private readonly pluginSubscriptionService: PluginSubscriptionService,
-		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService
-	) {}
+	constructor(private readonly pluginSubscriptionAccessService: PluginSubscriptionAccessService) {}
 
 	/**
 	 * Validates that the user has a valid subscription for the plugin
@@ -37,19 +33,8 @@ export class PluginSubscriptionGuard implements CanActivate {
 		}
 
 		try {
-			// Check if the plugin has any subscription plans
-			const hasPlans = await this.pluginSubscriptionPlanService.hasPlans(pluginId);
-
-			// If no subscription plans exist, the plugin is free and anyone can install it
-			if (!hasPlans) {
-				console.log(
-					`Plugin is free (no subscription plans): Plugin ID: ${pluginId}, Tenant ID: ${tenantId}, User ID: ${userId}`
-				);
-				return true;
-			}
-
-			// Check if the user has a valid subscription for this plugin
-			const hasAccess = await this.pluginSubscriptionService.hasPluginAccess(
+			// Use centralized subscription access service for validation
+			const hasAccess = await this.pluginSubscriptionAccessService.validatePluginAccess(
 				pluginId,
 				tenantId,
 				organizationId,

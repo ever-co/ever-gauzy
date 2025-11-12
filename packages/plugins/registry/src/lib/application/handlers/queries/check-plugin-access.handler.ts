@@ -1,18 +1,19 @@
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { PluginSubscriptionService } from '../../../domain/services';
+import { PluginSubscriptionAccessService } from '../../../domain/services/plugin-subscription-access.service';
 import { IPluginSubscription } from '../../../shared/models';
 import { CheckPluginAccessQuery } from '../../queries';
 
 @QueryHandler(CheckPluginAccessQuery)
 export class CheckPluginAccessQueryHandler implements IQueryHandler<CheckPluginAccessQuery> {
-	constructor(private readonly pluginSubscriptionService: PluginSubscriptionService) {}
+	constructor(private readonly pluginSubscriptionAccessService: PluginSubscriptionAccessService) {}
 
 	async execute(query: CheckPluginAccessQuery): Promise<{ hasAccess: boolean; subscription?: IPluginSubscription }> {
 		const { accessCheckDto, tenantId, organizationId } = query;
 
 		try {
-			const hasAccess = await this.pluginSubscriptionService.hasPluginAccess(
+			// Use centralized subscription access service
+			const hasAccess = await this.pluginSubscriptionAccessService.validatePluginAccess(
 				accessCheckDto.pluginId,
 				tenantId,
 				organizationId,
@@ -21,7 +22,7 @@ export class CheckPluginAccessQueryHandler implements IQueryHandler<CheckPluginA
 
 			let subscription = null;
 			if (hasAccess) {
-				subscription = await this.pluginSubscriptionService.findActiveSubscription(
+				subscription = await this.pluginSubscriptionAccessService.findApplicableSubscription(
 					accessCheckDto.pluginId,
 					tenantId,
 					organizationId,
