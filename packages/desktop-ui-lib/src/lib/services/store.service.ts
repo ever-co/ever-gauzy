@@ -1,25 +1,25 @@
+import { Injectable } from '@angular/core';
+import { Store as AkitaStore, Query, StoreConfig } from '@datorama/akita';
 import {
+	ComponentLayoutStyleEnum,
 	DefaultValueDateTypeEnum,
+	FeatureEnum,
+	IFeatureOrganization,
+	IFeatureToggle,
+	ILanguage,
 	IOrganization,
-	PermissionsEnum,
+	IOrganizationProject,
+	IProposalViewModel,
 	IRolePermission,
+	ITaskStatus,
 	IUser,
 	LanguagesEnum,
-	IOrganizationProject,
-	ILanguage,
-	IProposalViewModel,
-	IFeatureToggle,
-	IFeatureOrganization,
-	FeatureEnum,
-	ComponentLayoutStyleEnum,
-	ITaskStatus
+	PermissionsEnum
 } from '@gauzy/contracts';
-import { Injectable } from '@angular/core';
-import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
-import { ComponentEnum, SYSTEM_DEFAULT_LAYOUT } from '../constants/layout.constants';
-import { map } from 'rxjs/operators';
 import { merge, Observable, Subject } from 'rxjs';
+import { map } from 'rxjs/operators';
 import * as _ from 'underscore';
+import { ComponentEnum, SYSTEM_DEFAULT_LAYOUT } from '../constants/layout.constants';
 
 export interface AppState {
 	user: IUser;
@@ -41,6 +41,8 @@ export interface PersistState {
 	clientId?: string;
 	tenantId: string;
 	token: string;
+	refreshToken: string;
+	tokenExpiresAt: number | null;
 	userId: string;
 	serverConnection: number;
 	preferredLanguage: LanguagesEnum;
@@ -63,6 +65,10 @@ export function createInitialAppState(): AppState {
 
 export function createInitialPersistState(): PersistState {
 	const token = localStorage.getItem('token') || null;
+	const refreshToken = localStorage.getItem('refreshToken') || null;
+	const tokenExpiresAt = localStorage.getItem('tokenExpiresAt')
+		? parseInt(localStorage.getItem('tokenExpiresAt'), 10)
+		: null;
 	const userId = localStorage.getItem('_userId') || null;
 	const organizationId = localStorage.getItem('_organizationId') || null;
 	const serverConnection = parseInt(localStorage.getItem('serverConnection')) || 0;
@@ -73,6 +79,8 @@ export function createInitialPersistState(): PersistState {
 
 	return {
 		token,
+		refreshToken,
+		tokenExpiresAt,
 		userId,
 		organizationId,
 		serverConnection,
@@ -211,6 +219,41 @@ export class Store {
 		this.persistStore.update({
 			token: token
 		});
+	}
+
+	get refreshToken(): string | null {
+		const { refreshToken } = this.persistQuery.getValue();
+		return refreshToken;
+	}
+
+	set refreshToken(refreshToken: string) {
+		this.persistStore.update({
+			refreshToken: refreshToken
+		});
+	}
+
+	get tokenExpiresAt(): number | null {
+		const { tokenExpiresAt } = this.persistQuery.getValue();
+		return tokenExpiresAt;
+	}
+
+	set tokenExpiresAt(expiresAt: number | null) {
+		this.persistStore.update({
+			tokenExpiresAt: expiresAt
+		});
+	}
+
+	/**
+	 * Checks if the token is expired or close to expiring (within 5 minutes)
+	 */
+	isTokenExpired(): boolean {
+		const expiresAt = this.tokenExpiresAt;
+		if (!expiresAt) {
+			return false; // If no expiry set, assume not expired
+		}
+		const now = Date.now();
+		const bufferTime = 5 * 60 * 1000; // 5 minutes buffer
+		return now >= expiresAt - bufferTime;
 	}
 
 	get userId(): IUser['id'] | null {
