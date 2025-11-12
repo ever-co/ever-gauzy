@@ -145,9 +145,7 @@ export class PluginManager implements IPluginManager {
 		const metadata = await this.pluginMetadataService.findOne({ name });
 		const plugin = this.plugins.get(name);
 		if (plugin) {
-			if (metadata.isActivate) {
-				await this.deactivatePlugin(name);
-			}
+			await this.deactivatePlugin(name);
 			this.plugins.delete(name);
 			await this.pluginMetadataService.delete({ name });
 			await fs.rm(metadata.pathname, { recursive: true, force: true, retryDelay: 1000, maxRetries: 3 });
