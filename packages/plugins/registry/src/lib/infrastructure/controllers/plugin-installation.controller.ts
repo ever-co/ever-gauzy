@@ -1,15 +1,11 @@
-import { ID, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IPluginInstallation, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
-import { Body, Controller, Delete, HttpStatus, Param, Post, UseGuards, UsePipes } from '@nestjs/common';
+import { Body, Controller, Delete, HttpStatus, Param, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-
-import { ValidationPipe } from '@nestjs/common';
-import { InstallPluginCommand } from '../../application/commands/install-plugin.command';
-import { UninstallPluginCommand } from '../../application/commands/uninstall-plugin.command';
-import { InstallPluginDTO } from '../../shared/dto/install-plugin.dto';
-import { PluginSubscriptionGuard } from '../guards';
-import { IPluginInstallation } from '../../shared/models';
+import { InstallPluginCommand, UninstallPluginCommand } from '../../application';
+import { PluginSubscriptionGuard } from '../../core';
+import { InstallPluginDTO } from '../../shared';
 
 @ApiTags('Plugin Installation')
 @Controller('/plugins/:pluginId/installations')

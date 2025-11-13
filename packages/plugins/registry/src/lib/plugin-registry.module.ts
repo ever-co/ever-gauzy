@@ -3,14 +3,10 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { handlers } from './application/handlers';
-import { entities } from './domain/entities';
+import { handlers } from './application';
+import { entities, factories, repositories, services } from './domain';
 import { eventHandlers } from './domain/events/handlers';
-import { factories } from './domain/factories';
-import { repositories } from './domain/repositories';
-import { services } from './domain/services';
-import { controllers } from './infrastructure/controllers';
-import { subscribers } from './infrastructure/subscribers';
+import { controllers, subscribers } from './infrastructure';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([...entities]),

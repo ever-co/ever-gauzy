@@ -1,7 +1,7 @@
 import { BadRequestException, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PluginTagService } from '../../../../domain/services/plugin-tag.service';
-import { IPluginTagBulkCreateResponse } from '../../../../shared/models/plugin-tag.model';
+import { PluginTagService } from '../../../../domain';
+import { IPluginTagBulkCreateResponse } from '../../../../shared';
 import { BulkCreatePluginTagsCommand } from '../bulk-create-plugin-tags.command';
 
 /**

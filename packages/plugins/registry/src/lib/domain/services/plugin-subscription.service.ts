@@ -2,8 +2,7 @@ import { TenantAwareCrudService } from '@gauzy/core';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { FindManyOptions, In } from 'typeorm';
-import { PluginBillingCreateCommand } from '../../application/commands';
-import { PluginScope } from '../../shared/models/plugin-scope.model';
+import { PluginBillingCreateCommand } from '../../application';
 import {
 	IPluginSubscription,
 	IPluginSubscriptionCreateInput,
@@ -11,11 +10,11 @@ import {
 	IPluginSubscriptionUpdateInput,
 	PluginBillingPeriod,
 	PluginSubscriptionStatus
-} from '../../shared/models/plugin-subscription.model';
+} from '../../shared';
+import { PluginScope } from '../../shared/models/plugin-scope.model';
 import { PluginSubscription } from '../entities/plugin-subscription.entity';
 import { PluginBillingFactory } from '../factories';
-import { MikroOrmPluginSubscriptionRepository } from '../repositories/mikro-orm-plugin-subscription.repository';
-import { TypeOrmPluginSubscriptionRepository } from '../repositories/type-orm-plugin-subscription.repository';
+import { MikroOrmPluginSubscriptionRepository, TypeOrmPluginSubscriptionRepository } from '../repositories/';
 import { PluginSubscriptionPlanService } from './plugin-subscription-plan.service';
 import { PluginTenantService } from './plugin-tenant.service';
 
@@ -657,14 +656,15 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 
 		// Use domain method for validation if available
 		if (parentSubscription.canAssignToUsers && !parentSubscription.canAssignToUsers()) {
-			throw new BadRequestException(
-				'Parent subscription cannot assign access to users in its current state'
-			);
+			throw new BadRequestException('Parent subscription cannot assign access to users in its current state');
 		}
 
 		// Validate parent subscription is at organization or tenant level (fallback)
 		if (!parentSubscription.canAssignToUsers) {
-			if (parentSubscription.scope !== PluginScope.ORGANIZATION && parentSubscription.scope !== PluginScope.TENANT) {
+			if (
+				parentSubscription.scope !== PluginScope.ORGANIZATION &&
+				parentSubscription.scope !== PluginScope.TENANT
+			) {
 				throw new BadRequestException(
 					'Can only create child subscriptions from organization or tenant-level subscriptions'
 				);

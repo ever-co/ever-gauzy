@@ -1,9 +1,8 @@
-import { IPagination } from '@gauzy/contracts';
+import { IPagination, IPlugin } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { PluginService } from '../../../domain/services/plugin.service';
-import { PluginSearchFilterDTO } from '../../../shared/dto';
-import { IPlugin } from '../../../shared/models/plugin.model';
-import { SearchPluginsQuery } from '../../queries/search-plugins.query';
+import { PluginService } from '../../../../domain';
+import { PluginSearchFilterDTO } from '../../../../shared';
+import { SearchPluginsQuery } from '../search-plugins.query';
 
 /**
  * Query handler for searching and filtering plugins with advanced criteria

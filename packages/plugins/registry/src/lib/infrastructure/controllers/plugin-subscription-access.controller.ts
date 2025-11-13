@@ -3,14 +3,18 @@ import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } f
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AssignPluginSubscriptionUsersCommand, RevokePluginSubscriptionUsersCommand } from '../../application/commands';
-import { CheckUserSubscriptionAccessQuery, GetSubscriptionAccessQuery } from '../../application/queries';
+import {
+	AssignPluginSubscriptionUsersCommand,
+	CheckUserSubscriptionAccessQuery,
+	GetSubscriptionAccessQuery,
+	RevokePluginSubscriptionUsersCommand
+} from '../../application';
 import {
 	AssignPluginSubscriptionDTO,
 	CheckPluginSubscriptionAccessDTO,
 	PluginSubscriptionAccessResponseDTO,
 	RevokePluginSubscriptionAssignmentDTO
-} from '../../shared/dto/plugin-subscription-assignment.dto';
+} from '../../shared';
 
 @ApiTags('Plugin Subscription Access')
 @Controller('plugins/:pluginId/subscription/access')

@@ -1,13 +1,13 @@
 import { BadRequestException, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
-import { PluginTagService } from '../../../../domain/services/plugin-tag.service';
-import { IPluginTag } from '../../../../shared/models';
+import { PluginTagService } from '../../../../domain';
+import { IPluginTag } from '../../../../shared';
 import {
 	BulkDeletePluginTagsCommand,
 	DeletePluginTagCommand,
 	ReplacePluginTagsCommand
-} from '../../../commands/delete-plugin-tag.command';
+} from '../delete-plugin-tag.command';
 
 /**
  * Handler for deleting single plugin-tag relationship

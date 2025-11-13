@@ -1,10 +1,9 @@
 import { CrudService } from '@gauzy/core';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { AutoTagPluginCommand } from '../../application/commands/auto-tag-plugin.command';
-import { Plugin } from '../entities/plugin.entity';
-import { MikroOrmPluginRepository } from '../repositories/mikro-orm-plugin.repository';
-import { TypeOrmPluginRepository } from '../repositories/type-orm-plugin.repository';
+import { AutoTagPluginCommand } from '../../application';
+import { Plugin } from '../entities';
+import { MikroOrmPluginRepository, TypeOrmPluginRepository } from '../repositories';
 
 @Injectable()
 export class PluginService extends CrudService<Plugin> {

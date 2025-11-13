@@ -1,3 +1,4 @@
+import { Public } from '@gauzy/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import {
@@ -17,33 +18,26 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { PluginSubscription } from '../../domain/entities/plugin-subscription.entity';
-import {
-	PluginSubscriptionQueryDTO,
-	PurchasePluginSubscriptionDTO,
-	UpdatePluginSubscriptionDTO
-} from '../../shared/dto/plugin-subscription.dto';
-import { PluginSubscriptionStatus } from '../../shared/models/plugin-subscription.model';
-
-// CQRS Commands
 import {
 	CancelPluginSubscriptionCommand,
 	DeletePluginSubscriptionCommand,
 	DowngradePluginSubscriptionCommand,
+	GetActivePluginSubscriptionQuery,
+	GetPluginSubscriptionByIdQuery,
+	GetPluginSubscriptionsByPluginIdQuery,
+	GetPluginSubscriptionsBySubscriberIdQuery,
 	PurchasePluginSubscriptionCommand,
 	RenewPluginSubscriptionCommand,
 	UpdatePluginSubscriptionCommand,
 	UpgradePluginSubscriptionCommand
-} from '../../application/commands';
-
-// CQRS Queries
-import { Public } from '@gauzy/common';
+} from '../../application';
+import { PluginSubscription } from '../../domain';
 import {
-	GetActivePluginSubscriptionQuery,
-	GetPluginSubscriptionByIdQuery,
-	GetPluginSubscriptionsByPluginIdQuery,
-	GetPluginSubscriptionsBySubscriberIdQuery
-} from '../../application/queries';
+	PluginSubscriptionQueryDTO,
+	PluginSubscriptionStatus,
+	PurchasePluginSubscriptionDTO,
+	UpdatePluginSubscriptionDTO
+} from '../../shared';
 
 @ApiTags('Plugin Subscriptions')
 @Controller('plugins/:pluginId/subscriptions')

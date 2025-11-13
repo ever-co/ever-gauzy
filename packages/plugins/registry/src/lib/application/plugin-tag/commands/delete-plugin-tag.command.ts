@@ -1,6 +1,6 @@
 import { ID } from '@gauzy/contracts';
 import { ICommand } from '@nestjs/cqrs';
-import { IPluginTagBulkDeleteInput } from '../../../shared/models';
+import { IPluginTagBulkDeleteInput } from '../../../shared';
 
 /**
  * Command to delete a single plugin-tag relationship

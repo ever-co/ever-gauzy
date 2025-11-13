@@ -22,26 +22,29 @@ import {
 	GetPluginCategoryHandler,
 	GetPluginCategoryTreeHandler
 } from './plugin-category/queries/handlers';
-import { ActivatePluginCommandHandler } from './plugin-installation/commands/handlers/activate-plugin-command.handler';
-import { DeactivatePluginCommandHandler } from './plugin-installation/commands/handlers/deactivate-plugin-command.handler';
-import { InstallPluginCommandHandler } from './plugin-installation/commands/handlers/install-plugin-command.handler';
-import { UninstallPluginCommandHandler } from './plugin-installation/commands/handlers/uninstall-plugin-command.handler';
+import {
+	ActivatePluginCommandHandler,
+	DeactivatePluginCommandHandler,
+	InstallPluginCommandHandler,
+	UninstallPluginCommandHandler
+} from './plugin-installation';
 import {
 	BulkUpdatePluginSettingsHandler,
 	CreatePluginSettingHandler,
 	DeletePluginSettingHandler,
+	GetPluginSettingByIdHandler,
+	GetPluginSettingByKeyHandler,
+	GetPluginSettingsByCategoryHandler,
+	GetPluginSettingsByPluginIdHandler,
+	GetPluginSettingsByTenantIdHandler,
+	GetPluginSettingsHandler,
+	GetPluginSettingValueHandler,
 	PluginConfigGetHandler,
 	PluginConfigSetHandler,
 	SetPluginSettingValueHandler,
 	UpdatePluginSettingHandler
 } from './plugin-setting';
-import { GetPluginSettingByIdHandler } from './plugin-setting/queries/handlers/get-plugin-setting-by-id.handler';
-import { GetPluginSettingByKeyHandler } from './plugin-setting/queries/handlers/get-plugin-setting-by-key.handler';
-import { GetPluginSettingValueHandler } from './plugin-setting/queries/handlers/get-plugin-setting-value.handler';
-import { GetPluginSettingsByCategoryHandler } from './plugin-setting/queries/handlers/get-plugin-settings-by-category.handler';
-import { GetPluginSettingsByPluginIdHandler } from './plugin-setting/queries/handlers/get-plugin-settings-by-plugin-id.handler';
-import { GetPluginSettingsByTenantIdHandler } from './plugin-setting/queries/handlers/get-plugin-settings-by-tenant-id.handler';
-import { GetPluginSettingsHandler } from './plugin-setting/queries/handlers/get-plugin-settings.handler';
+
 import { ListPluginSourcesQueryHandler } from './plugin-source';
 import {
 	CreatePluginSourceCommandHandler,
@@ -262,3 +265,6 @@ export * from './plugin-user-assignment';
 
 // exports for backward compatibility
 export * from './strategies';
+
+// export for installations
+export * from './plugin-installation';

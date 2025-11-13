@@ -3,9 +3,9 @@ import { PermissionGuard, RequestContext, TenantPermissionGuard } from '@gauzy/c
 import { Controller, Get, HttpStatus, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CheckPluginAccessQuery, GetExpiringSubscriptionsQuery } from '../../application/queries';
-import { PluginSubscription } from '../../domain/entities/plugin-subscription.entity';
-import { PluginAccessCheckDTO } from '../../shared/dto/plugin-subscription.dto';
+import { CheckPluginAccessQuery, GetExpiringSubscriptionsQuery } from '../../application';
+import { PluginSubscription } from '../../domain';
+import { PluginAccessCheckDTO } from '../../shared';
 
 /**
  * Plugin Subscription Analytics Controller

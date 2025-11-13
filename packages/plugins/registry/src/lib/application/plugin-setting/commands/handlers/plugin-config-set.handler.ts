@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PluginConfigSetCommand } from '../../commands';
+import { PluginConfigSetCommand } from '../plugin-config-set.command';
 
 @CommandHandler(PluginConfigSetCommand)
 export class PluginConfigSetHandler implements ICommandHandler<PluginConfigSetCommand> {

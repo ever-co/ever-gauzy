@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { PluginSettingService } from '../../../domain/services/plugin-setting.service';
-import { GetPluginSettingValueQuery } from '../../queries/get-plugin-setting-value.query';
+import { PluginSettingService } from '../../../../domain';
+import { GetPluginSettingValueQuery } from '../get-plugin-setting-value.query';
 
 @QueryHandler(GetPluginSettingValueQuery)
 export class GetPluginSettingValueHandler implements IQueryHandler<GetPluginSettingValueQuery> {

@@ -1,8 +1,8 @@
 import { BadRequestException, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PluginTagService } from '../../../../domain/services/plugin-tag.service';
-import { IPluginTag } from '../../../../shared/models/plugin-tag.model';
-import { CreatePluginTagCommand } from '../../../commands/plugin-tag/create-plugin-tag.command';
+import { PluginTagService } from '../../../../domain';
+import { CreatePluginTagCommand } from '../create-plugin-tag.command';
+import { IPluginTag } from '../../../../shared';
 
 /**
  * Handler for creating plugin-tag relationships

@@ -1,8 +1,8 @@
+import { IPluginSubscription } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { PluginSubscriptionAccessService } from '../../../domain/services/plugin-subscription-access.service';
-import { IPluginSubscription } from '../../../shared/models';
-import { CheckPluginAccessQuery } from '../../queries';
+import { PluginSubscriptionAccessService } from '../../../../domain';
+import { CheckPluginAccessQuery } from '../check-plugin-access.query';
 
 @QueryHandler(CheckPluginAccessQuery)
 export class CheckPluginAccessQueryHandler implements IQueryHandler<CheckPluginAccessQuery> {

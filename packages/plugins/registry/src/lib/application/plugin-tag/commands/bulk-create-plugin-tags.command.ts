@@ -1,5 +1,5 @@
 import { ICommand } from '@nestjs/cqrs';
-import { IPluginTagBulkCreateInput } from '../../shared/models/plugin-tag.model';
+import { IPluginTagBulkCreateInput } from '../../../shared';
 
 /**
  * Command to bulk create plugin-tag relationships

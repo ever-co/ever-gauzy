@@ -2,7 +2,7 @@ import { IPagination, IPluginSource } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { FindManyOptions, FindOptionsWhere, IsNull } from 'typeorm';
+import { FindOptionsWhere, IsNull } from 'typeorm';
 import { PluginService, PluginSourceService } from '../../../../domain';
 import { ListPluginSourcesQuery } from '../list-plugin-sources.query';
 
@@ -27,7 +27,7 @@ export class ListPluginSourcesQueryHandler implements IQueryHandler<ListPluginSo
 	 */
 	public async execute(query: ListPluginSourcesQuery): Promise<IPagination<IPluginSource>> {
 		try {
-			const { pluginId, versionId, params = {} as FindManyOptions<IPluginSource> } = query;
+			const { pluginId, versionId, params } = query;
 			const employeeId = RequestContext.currentEmployeeId();
 
 			// Validate required parameters

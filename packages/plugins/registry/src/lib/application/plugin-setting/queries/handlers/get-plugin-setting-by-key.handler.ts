@@ -1,8 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { PluginSettingService } from '../../../domain/services/plugin-setting.service';
-import { IPluginSetting } from '../../../shared/models/plugin-setting.model';
-import { GetPluginSettingsByKeyQuery } from '../../queries/get-plugin-setting-by-key.query';
+import { PluginSettingService } from '../../../../domain';
+import { IPluginSetting } from '../../../../shared';
+import { GetPluginSettingsByKeyQuery } from '../get-plugin-setting-by-key.query';
 
 @QueryHandler(GetPluginSettingsByKeyQuery)
 export class GetPluginSettingByKeyHandler implements IQueryHandler<GetPluginSettingsByKeyQuery> {

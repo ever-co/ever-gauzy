@@ -1,10 +1,6 @@
 import { ID } from '@gauzy/contracts';
 import { ICommand } from '@nestjs/cqrs';
-import {
-	IPluginTagBulkUpdateInput,
-	IPluginTagPriorityUpdateInput,
-	IPluginTagUpdateInput
-} from '../../../shared/models';
+import { IPluginTagBulkUpdateInput, IPluginTagPriorityUpdateInput, IPluginTagUpdateInput } from '../../../shared';
 
 /**
  * Command to update a single plugin-tag relationship

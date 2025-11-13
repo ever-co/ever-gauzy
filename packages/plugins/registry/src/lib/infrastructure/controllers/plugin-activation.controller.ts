@@ -13,8 +13,7 @@ import {
 	ApiTags
 } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import { ActivatePluginCommand } from '../../application/plugin-installation/commands/activate-plugin.command';
-import { DeactivatePluginCommand } from '../../application/plugin-installation/commands/deactivate-plugin.command';
+import { ActivatePluginCommand, DeactivatePluginCommand } from '../../application';
 import { PluginSubscriptionAccessGuard } from '../../core';
 
 enum InstallationStatus {

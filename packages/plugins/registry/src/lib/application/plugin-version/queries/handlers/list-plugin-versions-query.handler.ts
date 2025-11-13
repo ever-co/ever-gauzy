@@ -1,7 +1,6 @@
 import { IPagination } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { PluginService, PluginVersionService } from '../../../../domain';
 import { IPluginVersion } from '../../../../shared';
 import { ListPluginVersionsQuery } from '../list-plugin-versions.query';
@@ -20,8 +19,8 @@ export class ListPluginVersionsQueryHandler implements IQueryHandler<ListPluginV
 	 * @returns A promise resolving to paginated plugin version results.
 	 */
 	public async execute(query: ListPluginVersionsQuery): Promise<IPagination<IPluginVersion>> {
-		const { pluginId, params = {} as FindManyOptions<IPluginVersion> } = query;
-		const { where = {} as FindOptionsWhere<IPluginVersion> } = params;
+		const { pluginId, params } = query;
+		const { where } = params;
 		const employeeId = RequestContext.currentEmployeeId();
 
 		const withDeleted = await this.pluginService.validatePluginOwnership(pluginId, employeeId);

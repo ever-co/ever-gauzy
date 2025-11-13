@@ -5,14 +5,12 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	AssignUsersToPluginCommand,
-	UnassignUsersFromPluginCommand
-} from '../../application/commands/plugin-user-assignment.commands';
-import {
 	CheckUserPluginAccessQuery,
 	GetPluginUserAssignmentsQuery,
-	GetUserPluginAssignmentsQuery
-} from '../../application/queries/plugin-user-assignment.queries';
-import { AssignPluginUsersDTO, UnassignPluginUsersDTO } from '../../shared/dto/plugin-user-assignment.dto';
+	GetUserPluginAssignmentsQuery,
+	UnassignUsersFromPluginCommand
+} from '../../application';
+import { AssignPluginUsersDTO, UnassignPluginUsersDTO } from '../../shared';
 
 /**
  * Plugin User Assignment Controller

@@ -3,8 +3,8 @@ import { UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import { Body, Controller, Param, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { VerifyPluginCommand } from '../../application/commands/verify-plugin.command';
-import { VerifyPluginDTO } from '../../shared/dto/verify-plugin.dto';
+import { VerifyPluginCommand } from '../../application';
+import { VerifyPluginDTO } from '../../shared';
 
 @ApiTags('Plugin Security')
 @Controller('/plugins/:id/verifications')

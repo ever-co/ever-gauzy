@@ -1,8 +1,8 @@
 import { IPagination } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { PluginService } from '../../../domain/services/plugin.service';
-import { ListPluginsQuery } from '../../queries/list-plugins.query';
-import { IPlugin } from '../../../shared/models/plugin.model';
+import { PluginService } from '../../../../domain';
+import { IPlugin } from '../../../../shared';
+import { ListPluginsQuery } from '../list-plugins.query';
 
 @QueryHandler(ListPluginsQuery)
 export class ListPluginsQueryHandler implements IQueryHandler<ListPluginsQuery> {

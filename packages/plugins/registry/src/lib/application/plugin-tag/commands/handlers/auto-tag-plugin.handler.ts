@@ -1,7 +1,7 @@
 import { TagService } from '@gauzy/core';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IPluginTagBulkCreateResponse } from '../../../../shared/models/plugin-tag.model';
+import { IPluginTagBulkCreateResponse } from '../../../../shared';
 import { AutoTagPluginCommand } from '../auto-tag-plugin.command';
 import { BulkCreatePluginTagsCommand } from '../bulk-create-plugin-tags.command';
 

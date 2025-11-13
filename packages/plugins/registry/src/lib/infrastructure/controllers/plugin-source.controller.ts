@@ -24,19 +24,15 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CreatePluginSourceCommand } from '../../application/commands/create-plugin-source.command';
-import { DeletePluginSourceCommand } from '../../application/commands/delete-plugin-source.command';
-import { RecoverPluginSourceCommand } from '../../application/commands/recover-plugin-source.command';
-import { ListPluginSourcesQuery } from '../../application/queries/list-plugin-sources.query';
-import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
-import { LazyAnyFileInterceptor } from '../../core/interceptors/lazy-any-file.interceptor';
-import { CreatePluginSourceDTO } from '../../shared/dto/create-plugin-source.dto';
-import { FileDTO } from '../../shared/dto/file.dto';
-import { PluginSourceDTO } from '../../shared/dto/plugin-source.dto';
-import { IPluginSource } from '../../shared/models/plugin-source.model';
-import { IPluginVersion } from '../../shared/models/plugin-version.model';
-import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provider';
-import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
+import {
+	CreatePluginSourceCommand,
+	DeletePluginSourceCommand,
+	ListPluginSourcesQuery,
+	RecoverPluginSourceCommand
+} from '../../application';
+import { LazyAnyFileInterceptor, PluginOwnerGuard } from '../../core';
+import { CreatePluginSourceDTO, FileDTO, IPluginSource, IPluginVersion, PluginSourceDTO } from '../../shared';
+import { GauzyStorageProvider, UploadedPluginStorage } from '../storage';
 
 @ApiTags('Plugin Sources')
 @Controller('/plugins/:pluginId/versions/:versionId/sources')

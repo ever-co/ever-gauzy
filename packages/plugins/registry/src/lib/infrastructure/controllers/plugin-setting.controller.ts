@@ -15,20 +15,18 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { PluginSetting } from '../../domain/entities/plugin-setting.entity';
-import { PluginSettingService } from '../../domain/services/plugin-setting.service';
+import {
+	CreatePluginSettingCommand,
+	GetPluginSettingByIdQuery,
+	GetPluginSettingsByPluginIdQuery
+} from '../../application';
+import { PluginSetting, PluginSettingService } from '../../domain';
 import {
 	BulkUpdatePluginSettingsDTO,
 	CreatePluginSettingDTO,
+	IPluginSetting,
 	PluginSettingQueryDTO
-} from '../../shared/dto/plugin-setting.dto';
-import { IPluginSetting } from '../../shared/models/plugin-setting.model';
-
-// Commands
-import { CreatePluginSettingCommand } from '../../application/commands';
-
-// Queries
-import { GetPluginSettingByIdQuery, GetPluginSettingsByPluginIdQuery } from '../../application/queries';
+} from '../../shared';
 
 @ApiTags('Plugin Settings')
 @UseGuards(TenantPermissionGuard, PermissionGuard)

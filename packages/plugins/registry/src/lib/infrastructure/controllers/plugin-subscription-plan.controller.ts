@@ -18,7 +18,19 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { PluginSubscriptionPlan } from '../../domain/entities/plugin-subscription-plan.entity';
+import {
+	BulkPluginPlanOperationCommand,
+	CopyPluginPlanCommand,
+	CreatePluginSubscriptionPlanCommand,
+	DeletePluginSubscriptionPlanCommand,
+	GetActivePluginPlansQuery,
+	GetPluginPlanAnalyticsQuery,
+	GetPluginSubscriptionPlanByIdQuery,
+	GetPluginSubscriptionPlansByPluginIdQuery,
+	ListPluginSubscriptionPlansQuery,
+	UpdatePluginSubscriptionPlanCommand
+} from '../../application';
+import { PluginSubscriptionPlan } from '../../domain';
 import {
 	BulkPluginPlanOperationDTO,
 	CopyPluginPlanDTO,
@@ -26,25 +38,7 @@ import {
 	PluginPlanAnalyticsDTO,
 	PluginSubscriptionPlanQueryDTO,
 	UpdatePluginSubscriptionPlanDTO
-} from '../../shared/dto/plugin-subscription-plan.dto';
-
-// CQRS Commands
-import {
-	BulkPluginPlanOperationCommand,
-	CopyPluginPlanCommand,
-	CreatePluginSubscriptionPlanCommand,
-	DeletePluginSubscriptionPlanCommand,
-	UpdatePluginSubscriptionPlanCommand
-} from '../../application/commands';
-
-// CQRS Queries
-import {
-	GetActivePluginPlansQuery,
-	GetPluginPlanAnalyticsQuery,
-	GetPluginSubscriptionPlanByIdQuery,
-	GetPluginSubscriptionPlansByPluginIdQuery,
-	ListPluginSubscriptionPlansQuery
-} from '../../application/queries';
+} from '../../shared';
 
 @ApiTags('Plugin Subscription Plans')
 @Controller('plugin-plans')

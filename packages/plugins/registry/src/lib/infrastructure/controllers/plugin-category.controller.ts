@@ -22,17 +22,18 @@ import { Public } from '@gauzy/common';
 import {
 	CreatePluginCategoryCommand,
 	DeletePluginCategoryCommand,
-	UpdatePluginCategoryCommand
-} from '../../application/commands';
-import {
 	GetPluginCategoriesQuery,
 	GetPluginCategoryQuery,
-	GetPluginCategoryTreeQuery
-} from '../../application/queries';
-import { CreatePluginCategoryDTO } from '../../shared/dto/create-plugin-category.dto';
-import { PluginCategoryQueryDTO } from '../../shared/dto/plugin-category-query.dto';
-import { UpdatePluginCategoryDTO } from '../../shared/dto/update-plugin-category.dto';
-import { IPluginCategory, IPluginCategoryTree } from '../../shared/models';
+	GetPluginCategoryTreeQuery,
+	UpdatePluginCategoryCommand
+} from '../../application';
+import {
+	CreatePluginCategoryDTO,
+	IPluginCategory,
+	IPluginCategoryTree,
+	PluginCategoryQueryDTO,
+	UpdatePluginCategoryDTO
+} from '../../shared';
 
 @ApiTags('Plugin Categories')
 @Controller('plugin-categories')

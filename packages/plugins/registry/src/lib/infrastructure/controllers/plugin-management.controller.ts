@@ -31,19 +31,11 @@ import {
 	ApiSecurity,
 	ApiTags
 } from '@nestjs/swagger';
-import { CreatePluginCommand } from '../../application/commands/create-plugin.command';
-import { DeletePluginCommand } from '../../application/commands/delete-plugin.command';
-import { UpdatePluginCommand } from '../../application/commands/update-plugin.command';
-import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
-import { LazyAnyFileInterceptor } from '../../core/interceptors/lazy-any-file.interceptor';
-import { Plugin } from '../../domain/entities/plugin.entity';
-import { CreatePluginDTO } from '../../shared/dto/create-plugin.dto';
-import { FileDTO } from '../../shared/dto/file.dto';
-import { UpdatePluginDTO } from '../../shared/dto/update-plugin.dto';
-import { IPluginSource } from '../../shared/models/plugin-source.model';
-import { IPlugin } from '../../shared/models/plugin.model';
-import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provider';
-import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
+import { CreatePluginCommand, DeletePluginCommand, UpdatePluginCommand } from '../../application';
+import { LazyAnyFileInterceptor, PluginOwnerGuard } from '../../core';
+import { CreatePluginDTO, FileDTO, IPlugin, IPluginSource, UpdatePluginDTO } from '../../shared';
+import { GauzyStorageProvider, UploadedPluginStorage } from '../storage';
+import { Plugin } from '../../domain';
 
 @ApiTags('Plugin Management')
 @ApiBearerAuth('Bearer')

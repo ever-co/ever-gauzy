@@ -5,3 +5,4 @@ export * from './get-plugin-settings-by-category.query';
 export * from './get-plugin-settings-by-plugin-id.query';
 export * from './get-plugin-settings-by-tenant-id.query';
 export * from './get-plugin-settings.query';
+export * from './handlers';

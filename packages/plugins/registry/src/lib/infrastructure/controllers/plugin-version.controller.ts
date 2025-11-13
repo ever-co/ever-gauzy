@@ -25,21 +25,17 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CreatePluginVersionCommand } from '../../application/commands/create-plugin-version.command';
-import { DeletePluginVersionCommand } from '../../application/commands/delete-plugin-version.command';
-import { RecoverPluginVersionCommand } from '../../application/commands/recover-plugin-version.command';
-import { UpdatePluginVersionCommand } from '../../application/commands/update-plugin-version.command';
-import { ListPluginVersionsQuery } from '../../application/queries/list-plugin-versions.query';
-import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
-import { LazyAnyFileInterceptor } from '../../core/interceptors/lazy-any-file.interceptor';
-import { PluginVersion } from '../../domain/entities/plugin-version.entity';
-import { FileDTO } from '../../shared/dto/file.dto';
-import { PluginVersionDTO } from '../../shared/dto/plugin-version.dto';
-import { UpdatePluginVersionDTO } from '../../shared/dto/update-plugin-version.dto';
-import { IPluginSource } from '../../shared/models/plugin-source.model';
-import { IPluginVersion } from '../../shared/models/plugin-version.model';
-import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provider';
-import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
+import {
+	CreatePluginVersionCommand,
+	DeletePluginVersionCommand,
+	ListPluginVersionsQuery,
+	RecoverPluginVersionCommand,
+	UpdatePluginVersionCommand
+} from '../../application';
+import { LazyAnyFileInterceptor, PluginOwnerGuard } from '../../core';
+import { PluginVersion } from '../../domain';
+import { FileDTO, IPluginSource, IPluginVersion, PluginVersionDTO, UpdatePluginVersionDTO } from '../../shared';
+import { GauzyStorageProvider, UploadedPluginStorage } from '../storage';
 
 @ApiTags('Plugin Versions')
 @Controller('/plugins/:pluginId/versions')

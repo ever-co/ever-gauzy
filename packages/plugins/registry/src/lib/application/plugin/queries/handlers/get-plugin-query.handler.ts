@@ -1,8 +1,8 @@
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { GetPluginQuery } from '../../queries/get-plugin.query';
-import { PluginService } from '../../../domain/services/plugin.service';
 import { NotFoundException } from '@nestjs/common';
-import { IPlugin } from '../../../shared/models/plugin.model';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { PluginService } from '../../../../domain';
+import { IPlugin } from '../../../../shared';
+import { GetPluginQuery } from '../get-plugin.query';
 
 @QueryHandler(GetPluginQuery)
 export class GetPluginQueryHandler implements IQueryHandler<GetPluginQuery> {
@@ -10,7 +10,7 @@ export class GetPluginQueryHandler implements IQueryHandler<GetPluginQuery> {
 
 	public async execute(query: GetPluginQuery): Promise<IPlugin> {
 		// Destructure the query to extract the plugin ID and options
-		const { id, options = {} } = query;
+		const { id, options } = query;
 
 		// Step 1: Fetch the plugin entity from the database
 		const plugin = await this.pluginService.findOneOrFailByIdString(id, options);

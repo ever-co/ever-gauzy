@@ -1,12 +1,13 @@
 import { BadRequestException, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PluginTagService } from '../../../../domain/services';
-import { IPluginTag } from '../../../../shared/models';
+import { PluginTagService } from '../../../../domain';
+import { IPluginTag } from '../../../../shared';
 import {
 	BulkUpdatePluginTagsCommand,
 	UpdatePluginTagCommand,
 	UpdatePluginTagsPriorityCommand
-} from '../../../commands/plugin-tag/update-plugin-tag.command';
+} from '../update-plugin-tag.command';
+
 /**
  * Handler for updating single plugin-tag relationship
  */

@@ -3,10 +3,8 @@ import { ID } from '@gauzy/contracts';
 import { UUIDValidationPipe } from '@gauzy/core';
 import { Body, Controller, Get, HttpStatus, Param, ParseIntPipe, Put, Query, ValidationPipe } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { PluginTag } from '../../domain/entities/plugin-tag.entity';
-import { PluginTagService } from '../../domain/services/plugin-tag.service';
-import { ReplacePluginTagsDTO } from '../../shared/dto/plugin-tag.dto';
-import { IPluginTag } from '../../shared/models/plugin-tag.model';
+import { PluginTag, PluginTagService } from '../../domain';
+import { IPluginTag, ReplacePluginTagsDTO } from '../../shared';
 
 /**
  * Plugin Tags Management Controller
