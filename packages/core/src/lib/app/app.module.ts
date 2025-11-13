@@ -284,7 +284,7 @@ if (environment.THROTTLE_ENABLED) {
 								// Wrap cacheable to ensure type compatibility with cache-manager
 								// This provides proper type safety without 'as any' cast
 								return {
-									store: () => cacheable
+									stores: [cacheable.primary, cacheable.secondary]
 								};
 							} catch (error) {
 								console.error(
