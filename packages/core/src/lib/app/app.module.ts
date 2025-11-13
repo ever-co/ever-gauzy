@@ -237,7 +237,7 @@ if (environment.THROTTLE_ENABLED) {
 									'Redis is enabled but neither REDIS_URL nor REDIS_HOST/REDIS_PORT are configured. Falling back to in-memory cache.'
 								);
 								// Return in-memory cache configuration (no store specified = default in-memory)
-								return { isGlobal: true };
+								return {};
 							}
 
 							// Construct Redis URL
@@ -300,7 +300,7 @@ if (environment.THROTTLE_ENABLED) {
 								);
 								// Return in-memory cache configuration as fallback
 								// This ensures cache operations continue to work even if Redis fails
-								return { isGlobal: true };
+								return {};
 							}
 						}
 					})
