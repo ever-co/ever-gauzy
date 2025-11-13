@@ -250,25 +250,27 @@ if (environment.THROTTLE_ENABLED) {
 								})();
 
 							// Log Redis connection info WITHOUT credentials (security best practice)
-							const redisHost = REDIS_URL ? new URL(url).hostname : REDIS_HOST;
-							const redisPort = REDIS_URL ? new URL(url).port : REDIS_PORT;
-							const redisTls = REDIS_TLS === 'true' || url.startsWith('rediss://');
-							console.log(
-								`Redis Cache: Connecting to ${
-									redisTls ? 'rediss' : 'redis'
-								}://${redisHost}:${redisPort}`
-							);
+							const host = REDIS_URL ? new URL(url).hostname : REDIS_HOST;
+							const port = parseInt(REDIS_URL ? new URL(url).port : REDIS_PORT);
+							const isTls = REDIS_TLS === 'true' || url.startsWith('rediss://');
 
 							try {
 								const primary = new Keyv({
-									store: new CacheableMemory({ ttl: 60000, lruSize: 10000 })
+									store: new CacheableMemory({ ttl: '1h', lruSize: 10000 })
 								});
 								// Create non-blocking Redis secondary store using helper function
 								// This automatically configures:
 								// - disableOfflineQueue: true
 								// - socket.reconnectStrategy: false
 								// - throwOnConnectError: false
-								const secondary = createKeyvNonBlocking(url);
+								const secondary = createKeyvNonBlocking({
+									url,
+									pingInterval: 30_000,
+									socket: {
+										connectTimeout: 10_000,
+										rejectUnauthorized: process.env.NODE_ENV === 'production'
+									}
+								});
 
 								// Create Cacheable instance with 2-layer caching
 								// Layer 1 (Primary): In-memory LRU cache (default, managed by Cacheable)
