@@ -11,3 +11,9 @@ export const subscribers = [
 	PluginInstallationSubscriber,
 	PluginSubscriptionSubscriber
 ];
+
+export * from './plugin-installation.subscriber';
+export * from './plugin-source.subscriber';
+export * from './plugin-subscription.subscriber';
+export * from './plugin-version.subscriber';
+export * from './plugin.subscriber';

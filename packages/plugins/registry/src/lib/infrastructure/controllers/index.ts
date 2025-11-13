@@ -49,3 +49,22 @@ export const controllers = [
 	PluginAnalyticsController,
 	PluginSubscriptionAnalyticsController
 ];
+
+export * from './plugin-activation.controller';
+export * from './plugin-analytics.controller';
+export * from './plugin-billing.controller';
+export * from './plugin-category.controller';
+export * from './plugin-installation.controller';
+export * from './plugin-management.controller';
+export * from './plugin-security.controller';
+export * from './plugin-setting.controller';
+export * from './plugin-source.controller';
+export * from './plugin-subscription-access.controller';
+export * from './plugin-subscription-analytics.controller';
+export * from './plugin-subscription-plan.controller';
+export * from './plugin-subscription.controller';
+export * from './plugin-tag-management.controller';
+export * from './plugin-tag.controller';
+export * from './plugin-user-assignment.controller';
+export * from './plugin-version.controller';
+export * from './plugin.controller';

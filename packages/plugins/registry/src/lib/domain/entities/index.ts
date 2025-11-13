@@ -24,12 +24,12 @@ export const entities = [
 	PluginSubscriptionPlan
 ];
 
-// Export individual entities
 export * from './plugin-billing.entity';
 export * from './plugin-category.entity';
 export * from './plugin-installation.entity';
 export * from './plugin-setting.entity';
 export * from './plugin-source.entity';
+export * from './plugin-subscription-plan.entity';
 export * from './plugin-subscription.entity';
 export * from './plugin-tag.entity';
 export * from './plugin-tenant.entity';

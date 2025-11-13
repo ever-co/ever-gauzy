@@ -13,9 +13,9 @@ import {
 	ApiTags
 } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import { ActivatePluginCommand } from '../../application/commands/activate-plugin.command';
-import { DeactivatePluginCommand } from '../../application/commands/deactivate-plugin.command';
-import { PluginSubscriptionAccessGuard } from '../../core/guards';
+import { ActivatePluginCommand } from '../../application/plugin-installation/commands/activate-plugin.command';
+import { DeactivatePluginCommand } from '../../application/plugin-installation/commands/deactivate-plugin.command';
+import { PluginSubscriptionAccessGuard } from '../../core';
 
 enum InstallationStatus {
 	ACTIVE = 'active',
