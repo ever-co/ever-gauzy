@@ -249,11 +249,6 @@ if (environment.THROTTLE_ENABLED) {
 									return `${redisProtocol}://${auth}${REDIS_HOST}:${REDIS_PORT}`;
 								})();
 
-							// Log Redis connection info WITHOUT credentials (security best practice)
-							const host = REDIS_URL ? new URL(url).hostname : REDIS_HOST;
-							const port = parseInt(REDIS_URL ? new URL(url).port : REDIS_PORT);
-							const isTls = REDIS_TLS === 'true' || url.startsWith('rediss://');
-
 							try {
 								const primary = new Keyv({
 									store: new CacheableMemory({ ttl: '1h', lruSize: 10000 })
