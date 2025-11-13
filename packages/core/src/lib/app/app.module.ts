@@ -4,8 +4,9 @@ import { MulterModule } from '@nestjs/platform-express';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
-import { Cacheable } from 'cacheable';
+import { Cacheable, CacheableMemory } from 'cacheable';
 import { createKeyvNonBlocking } from '@keyv/redis';
+import { Keyv } from 'keyv';
 import { ClsModule, ClsService } from 'nestjs-cls';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
@@ -259,6 +260,9 @@ if (environment.THROTTLE_ENABLED) {
 							);
 
 							try {
+								const primary = new Keyv({
+									store: new CacheableMemory({ ttl: 60000, lruSize: 10000 })
+								});
 								// Create non-blocking Redis secondary store using helper function
 								// This automatically configures:
 								// - disableOfflineQueue: true
@@ -270,6 +274,7 @@ if (environment.THROTTLE_ENABLED) {
 								// Layer 1 (Primary): In-memory LRU cache (default, managed by Cacheable)
 								// Layer 2 (Secondary): Redis cache for distributed persistence (non-blocking)
 								const cacheable = new Cacheable({
+									primary,
 									// Layer 2: Redis secondary store (non-blocking)
 									secondary,
 									// Enable non-blocking mode (critical!)
