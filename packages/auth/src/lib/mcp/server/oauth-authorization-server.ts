@@ -332,7 +332,13 @@ export class OAuth2AuthorizationServer {
 
 		// Security headers
 		// Extract origin from baseUrl for CSP (handles subdomain and scheme issues)
-		const baseUrlOrigin = new URL(this.config.baseUrl).origin;
+		let baseUrlOrigin: string;
+		try {
+			baseUrlOrigin = new URL(this.config.baseUrl).origin;
+		} catch (error) {
+			this.securityLogger.error('Invalid baseUrl in configuration', { baseUrl: this.config.baseUrl, error });
+			throw new Error(`Failed to parse baseUrl: ${this.config.baseUrl}`);
+		}
 
 		this.app.use(helmet({
 			contentSecurityPolicy: {
