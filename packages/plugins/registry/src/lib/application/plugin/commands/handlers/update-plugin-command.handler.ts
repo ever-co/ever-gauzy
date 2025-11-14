@@ -44,27 +44,29 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 				throw new NotFoundException(`Plugin with ID "${id}" not found`);
 			}
 
-		// Update version and sources if provided
-		if (input.version) {
-			// Find the existing version by pluginId
-			const existingVersion = await this.versionService.findOneByWhereOptions({
-				pluginId: id
-			});
+			// Update version and sources if provided
+			if (input.version) {
+				// Find the existing version by pluginId
+				const existingVersion = await this.versionService.findOneByWhereOptions({
+					pluginId: id
+				});
 
-			// Update the version with the existing version ID
-			const updateVersionDto = {
-				...input.version,
-				id: existingVersion.id
-			};
-			await this.versionService.updateVersion(updateVersionDto, id);
+				// Update the version with the existing version ID
+				const updateVersionDto = {
+					...input.version,
+					id: existingVersion.id
+				};
+				await this.versionService.updateVersion(updateVersionDto, id);
 
-			// Update sources in parallel if they exist
-			if (input.version.sources?.length > 0) {
-				await Promise.all(
-					input.version.sources.map((source) => this.sourceService.updateSource(source, existingVersion.id))
-				);
-			}
-		}			// Update plugin with only provided fields
+				// Update sources in parallel if they exist
+				if (input.version.sources?.length > 0) {
+					await Promise.all(
+						input.version.sources.map((source) =>
+							this.sourceService.updateSource(source, existingVersion.id)
+						)
+					);
+				}
+			} // Update plugin with only provided fields
 			const pluginUpdate: Partial<IPlugin> = {
 				name: input.name,
 				type: input.type,

@@ -1,5 +1,5 @@
 import { CurrenciesEnum, ID } from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
 	IsArray,
@@ -14,7 +14,6 @@ import {
 	MaxLength,
 	Min
 } from 'class-validator';
-import { PluginSubscriptionPlan } from '../../domain/entities/plugin-subscription-plan.entity';
 import { PluginBillingPeriod, PluginSubscriptionType } from '../../shared/models/plugin-subscription.model';
 
 /**

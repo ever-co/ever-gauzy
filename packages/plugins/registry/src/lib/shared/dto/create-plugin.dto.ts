@@ -1,18 +1,17 @@
 import { PluginStatus, PluginType } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { 
-	IsArray, 
-	IsBoolean, 
-	IsEnum, 
-	IsNotEmpty, 
-	IsNotEmptyObject, 
-	IsOptional, 
-	IsString, 
-	IsUUID, 
-	ValidateNested 
+import {
+	IsArray,
+	IsBoolean,
+	IsEnum,
+	IsNotEmpty,
+	IsNotEmptyObject,
+	IsOptional,
+	IsString,
+	IsUUID,
+	ValidateNested
 } from 'class-validator';
-import { CreatePluginSubscriptionPlanDTO } from './plugin-subscription-plan.dto';
 import { PluginVersionDTO } from './plugin-version.dto';
 
 export class CreatePluginDTO {

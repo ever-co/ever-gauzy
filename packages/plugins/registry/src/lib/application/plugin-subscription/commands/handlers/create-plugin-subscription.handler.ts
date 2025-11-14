@@ -10,7 +10,7 @@ export class CreatePluginSubscriptionCommandHandler implements ICommandHandler<C
 
 	async execute(command: CreatePluginSubscriptionCommand): Promise<IPluginSubscription> {
 		const { createDto } = command;
-		
+
 		// Transform date strings to Date objects for service compatibility
 		const transformedDto = {
 			...createDto,

@@ -1,7 +1,5 @@
-import { ApiProperty, ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsBoolean, IsUUID } from 'class-validator';
-import { TenantOrganizationBaseDTO } from '@gauzy/core';
-import { PluginSetting } from '../../domain/entities/plugin-setting.entity';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PluginSettingDataType } from '../../shared/models/plugin-setting.model';
 
 /**

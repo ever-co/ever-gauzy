@@ -1,31 +1,31 @@
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import {
-	Body,
-	Controller,
-	Get,
-	HttpStatus,
-	Param,
-	ParseUUIDPipe,
-	Patch,
-	Post,
-	Put,
-	Query,
-	UseGuards
+    Body,
+    Controller,
+    Get,
+    HttpStatus,
+    Param,
+    ParseUUIDPipe,
+    Patch,
+    Post,
+    Put,
+    Query,
+    UseGuards
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
-	CreatePluginSettingCommand,
-	GetPluginSettingByIdQuery,
-	GetPluginSettingsByPluginIdQuery
+    CreatePluginSettingCommand,
+    GetPluginSettingByIdQuery,
+    GetPluginSettingsByPluginIdQuery
 } from '../../application';
 import { PluginSetting, PluginSettingService } from '../../domain';
 import {
-	BulkUpdatePluginSettingsDTO,
-	CreatePluginSettingDTO,
-	IPluginSetting,
-	PluginSettingQueryDTO
+    BulkUpdatePluginSettingsDTO,
+    CreatePluginSettingDTO,
+    IPluginSetting,
+    PluginSettingQueryDTO
 } from '../../shared';
 
 @ApiTags('Plugin Settings')
