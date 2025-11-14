@@ -15,19 +15,38 @@ export function generateCSPNonce(): string {
  * Get Content Security Policy header with nonces
  * @param scriptNonce - Nonce for script-src directive
  * @param styleNonce - Nonce for style-src directive
+ * @param baseUrl - Optional base URL for form-action directive (handles subdomain issues)
  */
-function getCSPHeader(scriptNonce?: string, styleNonce?: string): string {
+function getCSPHeader(scriptNonce?: string, styleNonce?: string, baseUrl?: string): string {
+	// Extract origin from baseUrl if provided (handles subdomain/scheme issues)
+	const baseUrlOrigin = baseUrl ? new URL(baseUrl).origin : undefined;
+	const isProduction = environment.production;
+
+	// Build script-src with Cloudflare Insights support in production
+	const scriptSrc = scriptNonce
+		? `script-src 'self' 'nonce-${scriptNonce}'${isProduction ? ' https://static.cloudflareinsights.com' : ''}`
+		: `script-src 'self'${isProduction ? ' https://static.cloudflareinsights.com' : ''}`;
+
+	const styleSrc = styleNonce
+		? `style-src 'self' 'nonce-${styleNonce}'`
+		: "style-src 'self'";
+
+	// Build form-action with explicit origin support
+	const formAction = baseUrlOrigin
+		? `form-action 'self' ${baseUrlOrigin}`
+		: "form-action 'self'";
+
 	const csp = [
 		"default-src 'self'",
-		`script-src 'self'${scriptNonce ? ` 'nonce-${scriptNonce}'` : ''}`, // Use nonce instead of unsafe-inline
-		`style-src 'self'${styleNonce ? ` 'nonce-${styleNonce}'` : ''}`, // Use nonce instead of unsafe-inline
+		scriptSrc,
+		styleSrc,
 		"img-src 'self' data: https:",
 		"font-src 'self' data:",
-		"connect-src 'self' https:",
+		"connect-src 'self' https: https://cloudflareinsights.com",
 		"media-src 'self'",
 		"object-src 'none'",
 		"base-uri 'self'",
-		"form-action 'self'",
+		formAction,
 		"frame-ancestors 'none'",
 		'upgrade-insecure-requests'
 	];
@@ -39,7 +58,7 @@ function getCSPHeader(scriptNonce?: string, styleNonce?: string): string {
  * Get security headers for HTTP responses
  * @param options - Options for customizing security headers
  */
-export function getSecurityHeaders(options?: { scriptNonce?: string; styleNonce?: string }): Record<string, string> {
+export function getSecurityHeaders(options?: { scriptNonce?: string; styleNonce?: string; baseUrl?: string }): Record<string, string> {
 	return {
 		// Prevent MIME type sniffing
 		'X-Content-Type-Options': 'nosniff',
@@ -53,8 +72,8 @@ export function getSecurityHeaders(options?: { scriptNonce?: string; styleNonce?
 		// Referrer policy
 		'Referrer-Policy': 'strict-origin-when-cross-origin',
 
-		// Content Security Policy with nonces
-		'Content-Security-Policy': getCSPHeader(options?.scriptNonce, options?.styleNonce),
+		// Content Security Policy with nonces and base URL support
+		'Content-Security-Policy': getCSPHeader(options?.scriptNonce, options?.styleNonce, options?.baseUrl),
 
 		// Strict Transport Security (HTTPS only)
 		...(environment.production
@@ -73,7 +92,7 @@ export function getSecurityHeaders(options?: { scriptNonce?: string; styleNonce?
  * Get enhanced security headers for enterprise production deployment
  * @param options - Options for customizing security headers
  */
-export function getEnhancedSecurityHeaders(options?: { scriptNonce?: string; styleNonce?: string }): Record<string, string> {
+export function getEnhancedSecurityHeaders(options?: { scriptNonce?: string; styleNonce?: string; baseUrl?: string }): Record<string, string> {
 	const baseHeaders = getSecurityHeaders(options);
 
 	return {
@@ -93,10 +112,18 @@ export function getEnhancedSecurityHeaders(options?: { scriptNonce?: string; sty
  * Generate CSP header with specific script and style hashes
  * @param scriptHashes - Array of SHA-256 hashes for inline scripts
  * @param styleHashes - Array of SHA-256 hashes for inline styles
+ * @param baseUrl - Optional base URL for form-action directive
  */
-export function getCSPHeaderWithHashes(scriptHashes?: string[], styleHashes?: string[]): string {
+export function getCSPHeaderWithHashes(scriptHashes?: string[], styleHashes?: string[], baseUrl?: string): string {
+	const isProduction = environment.production;
+
 	const scriptSources = ["'self'"];
 	const styleSources = ["'self'"];
+
+	// Add Cloudflare Insights in production
+	if (isProduction) {
+		scriptSources.push('https://static.cloudflareinsights.com');
+	}
 
 	// Add script hashes if provided
 	if (scriptHashes && scriptHashes.length > 0) {
@@ -108,17 +135,22 @@ export function getCSPHeaderWithHashes(scriptHashes?: string[], styleHashes?: st
 		styleSources.push(...styleHashes.map((hash) => `'sha256-${hash}'`));
 	}
 
+	const baseUrlOrigin = baseUrl ? new URL(baseUrl).origin : undefined;
+	const formAction = baseUrlOrigin
+		? `form-action 'self' ${baseUrlOrigin}`
+		: "form-action 'self'";
+
 	const csp = [
 		"default-src 'self'",
 		`script-src ${scriptSources.join(' ')}`,
 		`style-src ${styleSources.join(' ')}`,
 		"img-src 'self' data: https:",
 		"font-src 'self' data:",
-		"connect-src 'self' https:",
+		"connect-src 'self' https: https://cloudflareinsights.com",
 		"media-src 'self'",
 		"object-src 'none'",
 		"base-uri 'self'",
-		"form-action 'self'",
+		formAction,
 		"frame-ancestors 'none'",
 		'upgrade-insecure-requests'
 	];
@@ -169,11 +201,13 @@ export class CSPNonceManager {
 
 	/**
 	 * Get security headers with current nonces
+	 * @param baseUrl - Optional base URL for form-action directive
 	 */
-	getSecurityHeaders(): Record<string, string> {
+	getSecurityHeaders(baseUrl?: string): Record<string, string> {
 		return getSecurityHeaders({
 			scriptNonce: this.scriptNonce,
-			styleNonce: this.styleNonce
+			styleNonce: this.styleNonce,
+			baseUrl
 		});
 	}
 

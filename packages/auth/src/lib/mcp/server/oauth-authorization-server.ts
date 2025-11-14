@@ -331,6 +331,9 @@ export class OAuth2AuthorizationServer {
 		this.app.use(session(sessionConfig));
 
 		// Security headers
+		// Extract origin from baseUrl for CSP (handles subdomain and scheme issues)
+		const baseUrlOrigin = new URL(this.config.baseUrl).origin;
+
 		this.app.use(helmet({
 			contentSecurityPolicy: {
 				directives: {
@@ -340,10 +343,11 @@ export class OAuth2AuthorizationServer {
 					imgSrc: ["'self'", "data:", "https:"],
 					scriptSrc: serverConfig.environment !== 'production'
 						? ["'self'", "'unsafe-inline'"]
-						: ["'self'"],
+						: ["'self'", "https://static.cloudflareinsights.com"],
+					connectSrc: ["'self'", "https://cloudflareinsights.com"],
 					objectSrc: ["'none'"],
 					baseUri: ["'self'"],
-					formAction: ["'self'"],
+					formAction: ["'self'", baseUrlOrigin],
 					frameAncestors: ["'none'"]
 				}
 			}
