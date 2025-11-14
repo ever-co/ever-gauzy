@@ -146,7 +146,7 @@ export function getCSPHeaderWithHashes(scriptHashes?: string[], styleHashes?: st
 		`style-src ${styleSources.join(' ')}`,
 		"img-src 'self' data: https:",
 		"font-src 'self' data:",
-		"connect-src 'self' https: https://cloudflareinsights.com",
+		"connect-src 'self' https://cloudflareinsights.com",
 		"media-src 'self'",
 		"object-src 'none'",
 		"base-uri 'self'",
