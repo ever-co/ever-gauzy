@@ -175,7 +175,7 @@ export class OAuth2AuthorizationServer {
 			cookieName: isHttps ? '__Host-mcp.x-csrf-token' : 'mcp-csrf-token',
 			cookieOptions: {
 				httpOnly: true,
-				sameSite: isHttps ? 'strict' : 'lax',
+				sameSite: 'lax',
 				secure: isHttps,
 				path: '/',
 			},
