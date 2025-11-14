@@ -251,10 +251,12 @@ if (environment.THROTTLE_ENABLED) {
 
 							try {
 								// Parse Redis URL
-								const isTls = url.startsWith('rediss://');
-								const [authPart, hostPort] = url.split('://')[1].split('@');
-								const [username, password] = authPart?.split(':') || [];
-								const [host, port] = hostPort?.split(':') || [];
+								const parsedUrl = new URL(url);
+								const isTls = parsedUrl.protocol === 'rediss:';
+								const username = parsedUrl.username || REDIS_USER;
+								const password = parsedUrl.password || REDIS_PASSWORD;
+								const host = parsedUrl.hostname || REDIS_HOST;
+								const port = parsedUrl.port || REDIS_PORT;
 
 								const primary = new Keyv({
 									store: new CacheableMemory({ ttl: '1h', lruSize: 10000 })
