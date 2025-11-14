@@ -250,21 +250,48 @@ if (environment.THROTTLE_ENABLED) {
 								})();
 
 							try {
+								// Parse Redis URL
+								const isTls = url.startsWith('rediss://');
+								const [authPart, hostPort] = url.split('://')[1].split('@');
+								const [username, password] = authPart?.split(':') || [];
+								const [host, port] = hostPort?.split(':') || [];
+
 								const primary = new Keyv({
 									store: new CacheableMemory({ ttl: '1h', lruSize: 10000 })
 								});
 								// Create non-blocking Redis secondary store using helper function
 								// This automatically configures:
 								// - disableOfflineQueue: true
-								// - socket.reconnectStrategy: false
+								// - socket.reconnectStrategy: false (overrides any custom strategy)
 								// - throwOnConnectError: false
+
 								const secondary = createKeyvNonBlocking({
 									url,
-									pingInterval: 30_000,
-									socket: {
-										connectTimeout: 10_000,
-										rejectUnauthorized: process.env.NODE_ENV === 'production'
-									}
+									username,
+									password,
+									socket: isTls
+										? {
+												// TLS socket options (RedisTlsOptions)
+												host,
+												port: parseInt(port),
+												tls: true,
+												passphrase: password,
+												rejectUnauthorized: process.env.NODE_ENV === 'production',
+												// Connection timeout
+												connectTimeout: 10_000
+										  }
+										: {
+												// TCP socket options (RedisTcpOptions)
+												host,
+												port: parseInt(port),
+												// TCP keepalive (value in milliseconds for initial delay)
+												keepAlive: true,
+												keepAliveInitialDelay: 10_000,
+												// Connection timeout
+												connectTimeout: 10_000
+										  },
+									// Send PING every 30s to keep connection alive
+									pingInterval: 30_000
 								});
 
 								// Create Cacheable instance with 2-layer caching
@@ -285,6 +312,7 @@ if (environment.THROTTLE_ENABLED) {
 
 								// Wrap cacheable to ensure type compatibility with cache-manager
 								// This provides proper type safety without 'as any' cast
+
 								return {
 									stores: [cacheable.primary, cacheable.secondary]
 								};
