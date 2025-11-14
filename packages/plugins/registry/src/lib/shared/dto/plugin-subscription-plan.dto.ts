@@ -158,6 +158,14 @@ export class CreatePluginSubscriptionPlanDTO extends BaseSubscriptionPlanFieldsD
  * Update Plugin Subscription Plan DTO
  */
 export class UpdatePluginSubscriptionPlanDTO {
+	@ApiProperty({
+		description: 'Unique identifier for the plugin',
+		example: '123e4567-e89b-12d3-a456-426614174000'
+	})
+	@IsUUID('4', { message: 'The plugin ID must be a valid UUID v4' })
+	@IsNotEmpty({ message: 'The plugin ID is required' })
+	readonly id?: ID;
+
 	@ApiPropertyOptional({ type: Number, description: 'Plan price' })
 	@IsOptional()
 	@IsNumber({}, { message: 'Price must be a valid number' })

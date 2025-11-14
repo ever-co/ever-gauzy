@@ -21,7 +21,7 @@ export class SubscriptionPlanOperationFactory {
 	 */
 	static getOperation(planData: PlanOperationDTO): ISubscriptionPlanOperation {
 		// If plan is UpdatePluginSubscriptionPlanDTO, use update strategy, otherwise use create strategy
-		if (planData instanceof UpdatePluginSubscriptionPlanDTO) {
+		if (planData && 'id' in planData) {
 			return this.updateOperation;
 		}
 		return this.createOperation;

@@ -12,7 +12,7 @@ export class UpdateSubscriptionPlanStrategy implements ISubscriptionPlanOperatio
 	 * @param context - The operation context (should include planId for updates)
 	 */
 	async execute(data: UpdatePluginSubscriptionPlanDTO, context: SubscriptionPlanOperationContext): Promise<void> {
-		const { commandBus, planId } = context;
+		const { commandBus, planId = data.id } = context;
 
 		if (!planId) {
 			throw new Error('Plan ID is required for update operation');

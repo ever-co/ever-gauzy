@@ -16,8 +16,6 @@ export class InstallPluginCommandHandler implements ICommandHandler<InstallPlugi
 		[PluginScope.ORGANIZATION]:
 			'Your organization does not have an active subscription for this plugin. Please contact your administrator.',
 		[PluginScope.TENANT]:
-			'Your tenant does not have an active subscription for this plugin. Please contact your administrator.',
-		[PluginScope.GLOBAL]:
 			'Your tenant does not have an active subscription for this plugin. Please contact your administrator.'
 	};
 

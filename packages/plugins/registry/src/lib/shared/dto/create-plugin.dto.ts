@@ -1,6 +1,6 @@
 import { PluginStatus, PluginType } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
 	IsArray,
 	IsBoolean,
@@ -58,6 +58,11 @@ export class CreatePluginDTO {
 	@IsString({ message: 'Homepage URL must be a string' })
 	homepage?: string;
 
+	@ApiProperty({ type: String, description: 'Repository URL', required: false })
+	@IsOptional()
+	@IsString({ message: 'Repository URL must be a string' })
+	repository?: string;
+
 	@ValidateNested()
 	@IsNotEmptyObject(
 		{ nullable: true },
@@ -77,6 +82,7 @@ export class CreatePluginDTO {
 
 	@ApiPropertyOptional({ type: Boolean, description: 'Whether plugin requires subscription', default: false })
 	@IsOptional()
+	@Transform(({ value }): boolean => Boolean(value))
 	@IsBoolean({ message: 'requiresSubscription must be a boolean' })
 	requiresSubscription?: boolean;
 

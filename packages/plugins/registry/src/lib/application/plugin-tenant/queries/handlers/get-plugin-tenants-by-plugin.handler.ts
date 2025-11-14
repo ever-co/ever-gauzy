@@ -1,8 +1,8 @@
-import { IPluginTenant } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PluginTenantService } from '../../../../domain';
 import { GetPluginTenantsByPluginQuery } from '../get-plugin-tenants-by-plugin.query';
+import { IPluginTenant } from '../../../../shared';
 
 @QueryHandler(GetPluginTenantsByPluginQuery)
 export class GetPluginTenantsByPluginHandler implements IQueryHandler<GetPluginTenantsByPluginQuery> {
