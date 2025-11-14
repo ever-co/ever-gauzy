@@ -38,6 +38,7 @@ import { GAUZY_ENV, environment } from '@gauzy/ui-config';
 import {
 	APIInterceptor,
 	AppInitService,
+	AuthRefreshInterceptor,
 	CoreModule,
 	FeatureService,
 	GoogleMapsLoaderService,
@@ -183,6 +184,11 @@ const FEATURE_MODULES = [
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TenantInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: AuthRefreshInterceptor,
 			multi: true
 		},
 		ServerConnectionService,

@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [buildjet-4vcpu-ubuntu-2204]
+        os: [ubicloud-standard-4]
 
     steps:
       - name: Check out Git repository
@@ -20,7 +20,7 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.1
         id: tag_version
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}          
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           release_branches: master,main,develop,stage
           pre_release_branches: something_to_possible_use_later
 

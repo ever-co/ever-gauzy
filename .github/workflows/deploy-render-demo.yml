@@ -2,14 +2,14 @@ name: Deploy to Render Demo
 
 on:
   workflow_run:
-    workflows: ['Build and Publish Docker Images Demo']
+    workflows: ["Build and Publish Docker Images Demo"]
     branches: [render]
     types:
       - completed
 
 jobs:
   deploy-demo:
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ubicloud-standard-4
 
     environment: demo
 

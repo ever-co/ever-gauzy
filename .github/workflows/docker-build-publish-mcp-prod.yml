@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   gauzy-mcp:
-    runs-on: buildjet-16vcpu-ubuntu-2204
+    runs-on: ubicloud-standard-16
     steps:
       - name: Checkout
         uses: actions/checkout@v4

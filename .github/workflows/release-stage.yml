@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [buildjet-4vcpu-ubuntu-2204]
+        os: [ubicloud-standard-4]
 
     steps:
       - name: Check out Git repository
