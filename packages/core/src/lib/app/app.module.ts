@@ -296,8 +296,9 @@ if (environment.THROTTLE_ENABLED) {
 								});
 
 								// Create Cacheable instance with 2-layer caching
-								// Layer 1 (Primary): In-memory LRU cache (default, managed by Cacheable)
-								// Layer 2 (Secondary): Redis cache for distributed persistence (non-blocking)
+								// Note: The Cacheable instance is prepared for future use but cache-manager currently
+								// uses the raw Keyv stores directly, bypassing Cacheable's coordination features.
+								// For full non-blocking semantics, a dedicated CacheService could use cacheable directly
 								const cacheable = new Cacheable({
 									primary,
 									// Layer 2: Redis secondary store (non-blocking)
