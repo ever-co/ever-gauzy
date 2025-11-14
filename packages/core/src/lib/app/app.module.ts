@@ -275,7 +275,7 @@ if (environment.THROTTLE_ENABLED) {
 										? {
 												// TLS socket options (RedisTlsOptions)
 												host,
-												port: parseInt(port),
+												port: parseInt(port, 10),
 												tls: true,
 												rejectUnauthorized: process.env.NODE_ENV === 'production',
 												// Connection timeout
@@ -284,7 +284,7 @@ if (environment.THROTTLE_ENABLED) {
 										: {
 												// TCP socket options (RedisTcpOptions)
 												host,
-												port: parseInt(port),
+												port: parseInt(port, 10),
 												// TCP keepalive (value in milliseconds for initial delay)
 												keepAlive: true,
 												keepAliveInitialDelay: 10_000,
