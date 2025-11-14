@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   gauzy-mcp-auth:
-    runs-on: buildjet-16vcpu-ubuntu-2204
+    runs-on: ubicloud-standard-16
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,7 +57,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Push to Docker Hub Registry
-        run: |          
+        run: |
           docker push everco/gauzy-mcp-auth-demo:latest
 
       - name: Install doctl
@@ -69,7 +69,7 @@ jobs:
         run: doctl registry login --expiry-seconds 3600
 
       - name: Push to DigitalOcean Registry
-        run: |          
+        run: |
           docker push registry.digitalocean.com/ever/gauzy-mcp-auth-demo:latest
 
       - name: Login to GitHub Container Registry
@@ -80,7 +80,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push to Github Registry
-        run: |          
+        run: |
           docker push ghcr.io/ever-co/gauzy-mcp-auth-demo:latest
 
       - name: Login to CW Container Registry

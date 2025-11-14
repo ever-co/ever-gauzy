@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   prepare:
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ubicloud-standard-4
     outputs:
       uuid: ${{ steps.uuid.outputs.value }}
     steps:
@@ -25,7 +25,7 @@ jobs:
 
   e2e-tests:
     runs-on: [self-hosted]
-    needs: ['prepare']
+    needs: ["prepare"]
 
     # we can try to run tests in the Docker containers later
     # container: cypress/browsers:node14.17.0-chrome88-ff89
