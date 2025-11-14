@@ -92,6 +92,25 @@ import {
 	UpdatePluginTagsPriorityHandler
 } from './plugin-tag/commands/handlers';
 import {
+	ApprovePluginTenantCommandHandler,
+	BulkUpdatePluginTenantCommandHandler,
+	CreatePluginTenantCommandHandler,
+	DeletePluginTenantCommandHandler,
+	DisablePluginTenantCommandHandler,
+	EnablePluginTenantCommandHandler,
+	UpdatePluginTenantCommandHandler,
+	UpdatePluginTenantConfigurationCommandHandler
+} from './plugin-tenant/commands/handlers';
+import {
+	CheckPluginTenantAccessHandler,
+	GetAllPluginTenantsHandler,
+	GetPluginTenantByIdHandler,
+	GetPluginTenantQuotaInfoHandler,
+	GetPluginTenantStatisticsHandler,
+	GetPluginTenantsByPluginHandler,
+	GetPluginTenantsByTenantHandler
+} from './plugin-tenant/queries/handlers';
+import {
 	AssignPluginSubscriptionUsersCommandHandler,
 	AssignUsersToPluginCommandHandler,
 	BulkAssignUsersToPluginsCommandHandler,
@@ -192,7 +211,17 @@ const commands = [
 	DeletePluginTagHandler,
 	ReplacePluginTagsHandler,
 	UpdatePluginTagHandler,
-	UpdatePluginTagsPriorityHandler
+	UpdatePluginTagsPriorityHandler,
+
+	// Plugin Tenant Command Handlers
+	ApprovePluginTenantCommandHandler,
+	BulkUpdatePluginTenantCommandHandler,
+	CreatePluginTenantCommandHandler,
+	DeletePluginTenantCommandHandler,
+	DisablePluginTenantCommandHandler,
+	EnablePluginTenantCommandHandler,
+	UpdatePluginTenantCommandHandler,
+	UpdatePluginTenantConfigurationCommandHandler
 ];
 
 const queries = [
@@ -231,7 +260,16 @@ const queries = [
 	GetPluginUserAssignmentsQueryHandler,
 	GetUserPluginAssignmentsQueryHandler,
 	CheckUserPluginAccessQueryHandler,
-	GetAllPluginUserAssignmentsQueryHandler
+	GetAllPluginUserAssignmentsQueryHandler,
+
+	// Plugin Tenant Query Handlers
+	CheckPluginTenantAccessHandler,
+	GetAllPluginTenantsHandler,
+	GetPluginTenantByIdHandler,
+	GetPluginTenantQuotaInfoHandler,
+	GetPluginTenantStatisticsHandler,
+	GetPluginTenantsByPluginHandler,
+	GetPluginTenantsByTenantHandler
 ];
 
 export const handlers = [...commands, ...queries];
@@ -262,6 +300,9 @@ export * from './plugin-billing';
 
 // Plugin User Access Management
 export * from './plugin-user-assignment';
+
+// Plugin Tenant Management
+export * from './plugin-tenant';
 
 // exports for backward compatibility
 export * from './strategies';

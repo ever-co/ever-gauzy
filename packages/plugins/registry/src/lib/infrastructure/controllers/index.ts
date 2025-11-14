@@ -17,6 +17,7 @@ import {
 	TagPluginsController
 } from './plugin-tag-management.controller';
 import { PluginTagController } from './plugin-tag.controller';
+import { PluginTenantController } from './plugin-tenant.controller';
 import {
 	PluginUserAssignmentController,
 	PluginUserAssignmentManagementController,
@@ -47,7 +48,8 @@ export const controllers = [
 	UserPluginAssignmentController,
 	PluginUserAssignmentManagementController,
 	PluginAnalyticsController,
-	PluginSubscriptionAnalyticsController
+	PluginSubscriptionAnalyticsController,
+	PluginTenantController
 ];
 
 export * from './plugin-activation.controller';
@@ -65,6 +67,7 @@ export * from './plugin-subscription-plan.controller';
 export * from './plugin-subscription.controller';
 export * from './plugin-tag-management.controller';
 export * from './plugin-tag.controller';
+export * from './plugin-tenant.controller';
 export * from './plugin-user-assignment.controller';
 export * from './plugin-version.controller';
 export * from './plugin.controller';

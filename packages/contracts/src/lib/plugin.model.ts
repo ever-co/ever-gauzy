@@ -6,7 +6,6 @@ import { IEmployee } from './employee.model';
 import { IUser } from './user.model';
 
 export enum PluginScope {
-	GLOBAL = 'global',
 	TENANT = 'tenant',
 	ORGANIZATION = 'organization',
 	USER = 'user'
