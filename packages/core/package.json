@@ -120,7 +120,7 @@
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.14.2",
 		"clarity-decode": "^0.8.26",
-		"cloudinary": "^1.33.0",
+		"cloudinary": "^2.7.0",
 		"connect-redis": "^7.1.0",
 		"cross-fetch": "^3.1.5",
 		"csurf": "^1.11.0",
