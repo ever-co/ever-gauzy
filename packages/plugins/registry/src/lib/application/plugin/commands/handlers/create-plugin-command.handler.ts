@@ -3,7 +3,7 @@ import { RequestContext } from '@gauzy/core';
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
-import { PluginService, PluginSourceService, PluginVersionService } from '../../../../domain';
+import { Plugin, PluginService, PluginSourceService, PluginVersionService } from '../../../../domain';
 import { CreatePluginSubscriptionPlanCommand } from '../../../plugin-subscription';
 import { CreatePluginCommand } from '../create-plugin.command';
 
@@ -43,7 +43,7 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 
 		try {
 			// Create the plugin
-			const plugin = Object.assign(new Plugin(), input);
+			const plugin = Plugin.create(input);
 			// Check if has plans
 			const requiresSubscription = input.subscriptionPlans && input.subscriptionPlans.length > 0;
 			// Requires subscription if plans are provided
