@@ -277,7 +277,6 @@ if (environment.THROTTLE_ENABLED) {
 												host,
 												port: parseInt(port),
 												tls: true,
-												passphrase: password,
 												rejectUnauthorized: process.env.NODE_ENV === 'production',
 												// Connection timeout
 												connectTimeout: 10_000
