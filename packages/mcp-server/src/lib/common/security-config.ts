@@ -42,7 +42,7 @@ function getCSPHeader(scriptNonce?: string, styleNonce?: string, baseUrl?: strin
 		styleSrc,
 		"img-src 'self' data: https:",
 		"font-src 'self' data:",
-		"connect-src 'self' https: https://cloudflareinsights.com",
+		"connect-src 'self' https://cloudflareinsights.com",
 		"media-src 'self'",
 		"object-src 'none'",
 		"base-uri 'self'",
