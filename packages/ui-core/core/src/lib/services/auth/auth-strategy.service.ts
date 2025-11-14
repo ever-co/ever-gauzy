@@ -319,7 +319,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				this.store.tenantId = user?.tenantId;
 				this.store.user = user;
 
-				this.electronAuthentication({ user, token });
+				this.electronAuthentication({ user, token, refresh_token  });
 
 				return new NbAuthResult(
 					true,
@@ -340,12 +340,13 @@ export class AuthStrategy extends NbAuthStrategy {
 		);
 	}
 
-	public electronAuthentication({ user, token }: IAuthResponse) {
+	public electronAuthentication({ user, token, refresh_token }: IAuthResponse) {
 		try {
 			if (this.electronService.isElectron) {
 				this.electronService.ipcRenderer.send('auth_success', {
 					user: user,
 					token: token,
+					refreshToken: refresh_token,
 					userId: user.id,
 					employeeId: user.employee ? user.employee.id : null,
 					organizationId: user.employee ? user.employee.organizationId : null,

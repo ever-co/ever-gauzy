@@ -384,7 +384,8 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 
 		this._authStrategy.electronAuthentication({
 			user: this.user,
-			token: this._store.token
+			token: this._store.token,
+			refresh_token: this._store.refresh_token
 		});
 
 		//When a new user registers & logs in for the first time, he/she does not have tenantId.

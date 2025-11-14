@@ -1,4 +1,4 @@
-name: 'Snyk'
+name: "Snyk"
 
 on:
   push:
@@ -14,7 +14,7 @@ concurrency:
 jobs:
   analyze:
     name: Analyze
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ubicloud-standard-4
 
     steps:
       - name: Checkout repository
