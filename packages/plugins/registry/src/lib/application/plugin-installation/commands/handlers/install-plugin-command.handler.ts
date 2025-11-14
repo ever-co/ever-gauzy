@@ -71,8 +71,8 @@ export class InstallPluginCommandHandler implements ICommandHandler<InstallPlugi
 		// Ensure user has access to install the plugin
 		this.ensurePluginAccess(state);
 
-		// Build where clause for finding existing installation
-		const whereClause: Partial<IPluginInstallation> = {
+		// Build where clause for finding existing installation (only include database properties)
+		const whereClause = {
 			pluginId,
 			versionId,
 			installedById,
