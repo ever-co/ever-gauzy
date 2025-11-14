@@ -256,7 +256,7 @@ if (environment.THROTTLE_ENABLED) {
 								const username = parsedUrl.username || REDIS_USER;
 								const password = parsedUrl.password || REDIS_PASSWORD;
 								const host = parsedUrl.hostname || REDIS_HOST;
-								const port = parsedUrl.port || REDIS_PORT;
+								const port = parsedUrl.port || REDIS_PORT || '6379';
 
 								const primary = new Keyv({
 									store: new CacheableMemory({ ttl: '1h', lruSize: 10000 })
