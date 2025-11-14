@@ -15,7 +15,7 @@ import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { MikroOrmPluginSourceRepository } from '../repositories/mikro-orm-plugin-source.repository';
 import { PluginVersion } from './plugin-version.entity';
 
-@MultiORMEntity('plugin_source', { mikroOrmRepository: () => MikroOrmPluginSourceRepository })
+@MultiORMEntity('plugin_sources', { mikroOrmRepository: () => MikroOrmPluginSourceRepository })
 export class PluginSource extends TenantOrganizationBaseEntity implements IPluginSource {
 	@MultiORMColumn({
 		type: 'simple-enum',

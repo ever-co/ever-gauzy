@@ -25,11 +25,16 @@ export class UpdatePluginSettingHandler implements ICommandHandler<UpdatePluginS
 				throw new BadRequestException('Access denied to this plugin setting');
 			}
 
-			// Add metadata to update DTO
-			const settingUpdateData = {
+			// Prepare update data with proper type conversion
+			const settingUpdateData: any = {
 				...updateDto,
 				updatedAt: new Date()
 			};
+
+			// Convert validationRules object to JSON string if present
+			if (updateDto.validationRules && typeof updateDto.validationRules === 'object') {
+				settingUpdateData.validationRules = JSON.stringify(updateDto.validationRules);
+			}
 
 			// Update the plugin setting
 			await this.pluginSettingService.update(id, settingUpdateData);

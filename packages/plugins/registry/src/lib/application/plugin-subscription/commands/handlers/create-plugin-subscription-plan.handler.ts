@@ -14,7 +14,13 @@ export class CreatePluginSubscriptionPlanCommandHandler
 		const { createDto, tenantId, organizationId } = command;
 
 		try {
-			return await this.pluginSubscriptionPlanService.createPlan(createDto, tenantId, organizationId);
+			// Add required defaults
+			const planData = {
+				...createDto,
+				isActive: createDto.isActive ?? true // Default to active if not specified
+			};
+
+			return await this.pluginSubscriptionPlanService.createPlan(planData, tenantId, organizationId);
 		} catch (error) {
 			throw new BadRequestException(`Failed to create plugin subscription plan: ${error.message}`);
 		}

@@ -7,7 +7,7 @@ import { CreatePluginDTO } from './create-plugin.dto';
 import { UpdatePluginSubscriptionPlanDTO } from './plugin-subscription-plan.dto';
 import { UpdatePluginVersionDTO } from './update-plugin-version.dto';
 
-export class UpdatePluginDTO extends PartialType(OmitType(CreatePluginDTO, ['version', 'subscriptionPlans'] as const)) {
+export class UpdatePluginDTO extends PartialType(OmitType(CreatePluginDTO, ['version'] as const)) {
 	@ApiProperty({
 		description: 'Unique identifier for the plugin',
 		example: '123e4567-e89b-12d3-a456-426614174000'

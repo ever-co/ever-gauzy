@@ -24,7 +24,9 @@ export class CreatePluginSettingHandler implements ICommandHandler<CreatePluginS
 				...createDto,
 				tenantId,
 				organizationId,
-				createdBy: userId
+				createdBy: userId,
+				// Convert validationRules object to JSON string if present
+				validationRules: createDto.validationRules ? JSON.stringify(createDto.validationRules) : undefined
 			};
 
 			// Create the plugin setting

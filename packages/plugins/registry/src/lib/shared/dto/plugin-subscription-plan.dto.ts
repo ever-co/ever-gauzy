@@ -1,4 +1,4 @@
-import { ID } from '@gauzy/contracts';
+import { CurrenciesEnum, ID } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
@@ -11,6 +11,7 @@ import {
 	IsOptional,
 	IsString,
 	IsUUID,
+	MaxLength,
 	Min
 } from 'class-validator';
 import { PluginSubscriptionPlan } from '../../domain/entities/plugin-subscription-plan.entity';
@@ -45,13 +46,12 @@ const transformToNumber = ({ value }: { value: any }): number => {
  * Base class for subscription plan fields with transformations
  */
 class BaseSubscriptionPlanFieldsDTO {
-	@ApiPropertyOptional({ type: Number, description: 'Plan price' })
-	@IsOptional()
+	@ApiProperty({ type: Number, description: 'Plan price' })
+	@IsNotEmpty({ message: 'Price is required' })
 	@IsNumber({}, { message: 'Price must be a valid number' })
 	@Min(0, { message: 'Price cannot be negative' })
 	@Type(() => Number)
-	@Transform(transformToOptionalNumber)
-	price?: number;
+	price: number;
 
 	@ApiPropertyOptional({ type: Boolean, description: 'Whether this plan is marked as popular' })
 	@IsOptional()
@@ -93,62 +93,169 @@ class BaseSubscriptionPlanFieldsDTO {
 /**
  * Create Plugin Subscription Plan DTO
  */
-export class CreatePluginSubscriptionPlanDTO extends IntersectionType(
-	PickType(PluginSubscriptionPlan, [
-		'name',
-		'description',
-		'type',
-		'currency',
-		'billingPeriod',
-		'features',
-		'limitations',
-		'isActive',
-		'metadata',
-		'sortOrder'
-	] as const),
-	BaseSubscriptionPlanFieldsDTO
-) {
-	@ApiPropertyOptional({ type: String, description: 'Plugin ID (will be auto-assigned during creation)' })
-	@IsOptional()
-	@IsUUID()
-	pluginId: string;
+export class CreatePluginSubscriptionPlanDTO extends BaseSubscriptionPlanFieldsDTO {
+	@ApiProperty({ type: String, description: 'Plan name' })
+	@IsNotEmpty({ message: 'Plan name is required' })
+	@IsString({ message: 'Name must be a string' })
+	@MaxLength(255, { message: 'Name cannot exceed 255 characters' })
+	name: string;
 
-	@ApiPropertyOptional({ type: String, description: 'User ID who created this plan' })
+	@ApiPropertyOptional({ type: String, description: 'Plan description' })
 	@IsOptional()
-	@IsUUID()
-	createdById?: string;
+	@IsString({ message: 'Description must be a string' })
+	description?: string;
 
-	// Override price to make it required for creation
-	@ApiProperty({ type: Number, description: 'Plan price' })
-	@IsNumber({}, { message: 'Price must be a valid number' })
-	@Min(0, { message: 'Price cannot be negative' })
+	@ApiProperty({ enum: PluginSubscriptionType, description: 'Plan type' })
+	@IsNotEmpty({ message: 'Plan type is required' })
+	@IsEnum(PluginSubscriptionType, { message: 'Invalid plan type' })
+	type: PluginSubscriptionType;
+
+	@ApiProperty({ enum: CurrenciesEnum, description: 'Plan currency' })
+	@IsNotEmpty({ message: 'Currency is required' })
+	@IsEnum(CurrenciesEnum, { message: 'Invalid currency' })
+	currency: CurrenciesEnum;
+
+	@ApiProperty({ enum: PluginBillingPeriod, description: 'Billing period' })
+	@IsNotEmpty({ message: 'Billing period is required' })
+	@IsEnum(PluginBillingPeriod, { message: 'Invalid billing period' })
+	billingPeriod: PluginBillingPeriod;
+
+	@ApiProperty({ type: [String], description: 'Plan features' })
+	@IsNotEmpty({ message: 'Features are required' })
+	@IsArray({ message: 'Features must be an array' })
+	@IsString({ each: true, message: 'Each feature must be a string' })
+	features: string[];
+
+	@ApiPropertyOptional({ type: Object, description: 'Plan limitations' })
+	@IsOptional()
+	@IsObject({ message: 'Limitations must be an object' })
+	limitations?: Record<string, any>;
+
+	@ApiProperty({ type: Boolean, description: 'Is plan active' })
+	@IsNotEmpty({ message: 'IsActive is required' })
+	@IsBoolean({ message: 'IsActive must be a boolean' })
+	@Transform(transformToBoolean)
+	isActive: boolean;
+
+	@ApiPropertyOptional({ type: Object, description: 'Plan metadata' })
+	@IsOptional()
+	@IsObject({ message: 'Metadata must be an object' })
+	metadata?: Record<string, any>;
+
+	@ApiPropertyOptional({ type: Number, description: 'Sort order' })
+	@IsOptional()
+	@IsNumber({}, { message: 'Sort order must be a number' })
 	@Type(() => Number)
-	@Transform(transformToNumber)
-	price: number;
+	@Transform(transformToOptionalNumber)
+	sortOrder?: number;
+
+	@ApiProperty({ type: String, description: 'Plugin ID' })
+	@IsNotEmpty({ message: 'Plugin ID is required' })
+	@IsUUID(4, { message: 'Plugin ID must be a valid UUID' })
+	pluginId: ID;
 }
 
 /**
  * Update Plugin Subscription Plan DTO
  */
-export class UpdatePluginSubscriptionPlanDTO extends IntersectionType(
-	PickType(PluginSubscriptionPlan, [
-		'name',
-		'description',
-		'type',
-		'currency',
-		'billingPeriod',
-		'features',
-		'limitations',
-		'isActive',
-		'metadata',
-		'sortOrder'
-	] as const),
-	BaseSubscriptionPlanFieldsDTO
-) {
-	@ApiPropertyOptional({ type: String, description: 'User ID who updated this plan' })
+export class UpdatePluginSubscriptionPlanDTO {
+	@ApiPropertyOptional({ type: Number, description: 'Plan price' })
 	@IsOptional()
-	@IsUUID()
-	id?: ID;
+	@IsNumber({}, { message: 'Price must be a valid number' })
+	@Min(0, { message: 'Price cannot be negative' })
+	@Type(() => Number)
+	price?: number;
+
+	@ApiPropertyOptional({ type: Boolean, description: 'Whether this plan is marked as popular' })
+	@IsOptional()
+	@IsBoolean({ message: 'isPopular must be a boolean' })
+	@Transform(transformToBoolean)
+	isPopular?: boolean;
+
+	@ApiPropertyOptional({ type: Boolean, description: 'Whether this plan is recommended' })
+	@IsOptional()
+	@IsBoolean({ message: 'isRecommended must be a boolean' })
+	@Transform(transformToBoolean)
+	isRecommended?: boolean;
+
+	@ApiPropertyOptional({ type: Number, description: 'Trial period duration in days' })
+	@IsOptional()
+	@IsNumber({}, { message: 'Trial days must be a number' })
+	@Min(0, { message: 'Trial days cannot be negative' })
+	@Type(() => Number)
+	@Transform(transformToOptionalNumber)
+	trialDays?: number;
+
+	@ApiPropertyOptional({ type: Number, description: 'Setup fee for the plan' })
+	@IsOptional()
+	@IsNumber({}, { message: 'Setup fee must be a number' })
+	@Min(0, { message: 'Setup fee cannot be negative' })
+	@Type(() => Number)
+	@Transform(transformToOptionalNumber)
+	setupFee?: number;
+
+	@ApiPropertyOptional({ type: Number, description: 'Discount percentage for the plan' })
+	@IsOptional()
+	@IsNumber({}, { message: 'Discount percentage must be a number' })
+	@Min(0, { message: 'Discount percentage cannot be negative' })
+	@Type(() => Number)
+	@Transform(transformToOptionalNumber)
+	discountPercentage?: number;
+
+	@ApiPropertyOptional({ type: String, description: 'Plan name' })
+	@IsOptional()
+	@IsString({ message: 'Name must be a string' })
+	@MaxLength(255, { message: 'Name cannot exceed 255 characters' })
+	name?: string;
+
+	@ApiPropertyOptional({ type: String, description: 'Plan description' })
+	@IsOptional()
+	@IsString({ message: 'Description must be a string' })
+	description?: string;
+
+	@ApiPropertyOptional({ enum: PluginSubscriptionType, description: 'Plan type' })
+	@IsOptional()
+	@IsEnum(PluginSubscriptionType, { message: 'Invalid plan type' })
+	type?: PluginSubscriptionType;
+
+	@ApiPropertyOptional({ enum: CurrenciesEnum, description: 'Plan currency' })
+	@IsOptional()
+	@IsEnum(CurrenciesEnum, { message: 'Invalid currency' })
+	currency?: CurrenciesEnum;
+
+	@ApiPropertyOptional({ enum: PluginBillingPeriod, description: 'Billing period' })
+	@IsOptional()
+	@IsEnum(PluginBillingPeriod, { message: 'Invalid billing period' })
+	billingPeriod?: PluginBillingPeriod;
+
+	@ApiPropertyOptional({ type: [String], description: 'Plan features' })
+	@IsOptional()
+	@IsArray({ message: 'Features must be an array' })
+	@IsString({ each: true, message: 'Each feature must be a string' })
+	features?: string[];
+
+	@ApiPropertyOptional({ type: Object, description: 'Plan limitations' })
+	@IsOptional()
+	@IsObject({ message: 'Limitations must be an object' })
+	limitations?: Record<string, any>;
+
+	@ApiPropertyOptional({ type: Boolean, description: 'Is plan active' })
+	@IsOptional()
+	@IsBoolean({ message: 'IsActive must be a boolean' })
+	@Transform(transformToBoolean)
+	isActive?: boolean;
+
+	@ApiPropertyOptional({ type: Object, description: 'Plan metadata' })
+	@IsOptional()
+	@IsObject({ message: 'Metadata must be an object' })
+	metadata?: Record<string, any>;
+
+	@ApiPropertyOptional({ type: Number, description: 'Sort order' })
+	@IsOptional()
+	@IsNumber({}, { message: 'Sort order must be a number' })
+	@Type(() => Number)
+	@Transform(transformToOptionalNumber)
+	sortOrder?: number;
 }
 
 /**

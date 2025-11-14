@@ -25,4 +25,5 @@ export interface SubscriptionPlanOperationContext {
 	organizationId?: ID;
 	userId?: ID;
 	commandBus: CommandBus;
+	planId?: ID; // Required for update operations
 }

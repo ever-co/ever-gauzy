@@ -57,9 +57,10 @@ export class PluginSettingController {
 		@Body() createDto: CreatePluginSettingDTO
 	): Promise<IPluginSetting> {
 		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
 		const userId = RequestContext.currentUserId();
 		return await this.commandBus.execute(
-			new CreatePluginSettingCommand({ ...createDto, pluginId }, tenantId, createDto.organizationId, userId)
+			new CreatePluginSettingCommand({ ...createDto, pluginId }, tenantId, organizationId, userId)
 		);
 	}
 

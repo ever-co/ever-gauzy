@@ -15,13 +15,13 @@ export class SubscriptionPlanOperationFactory {
 	private static readonly updateOperation = new UpdateSubscriptionPlanStrategy();
 
 	/**
-	 * Get the appropriate strategy based on whether the plan has an ID
+	 * Get the appropriate strategy based on the plan data type
 	 * @param planData - The plan data to check
 	 * @returns The appropriate strategy for the operation
 	 */
 	static getOperation(planData: PlanOperationDTO): ISubscriptionPlanOperation {
-		// If plan has an ID, use update strategy, otherwise use create strategy
-		if (planData instanceof UpdatePluginSubscriptionPlanDTO && planData.id) {
+		// If plan is UpdatePluginSubscriptionPlanDTO, use update strategy, otherwise use create strategy
+		if (planData instanceof UpdatePluginSubscriptionPlanDTO) {
 			return this.updateOperation;
 		}
 		return this.createOperation;

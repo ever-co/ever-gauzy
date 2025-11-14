@@ -28,7 +28,7 @@ import { PluginTenant } from './plugin-tenant.entity';
 import { PluginVersion } from './plugin-version.entity';
 
 @Index('plugin_name_unique', ['name'], { unique: true })
-@MultiORMEntity('plugin')
+@MultiORMEntity('plugins')
 export class Plugin extends BaseEntity implements IPlugin {
 	@ApiProperty({ type: String, description: 'Plugin name' })
 	@IsNotEmpty({ message: 'Plugin name is required' })

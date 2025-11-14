@@ -1,5 +1,5 @@
-import { TenantOrganizationBaseDTO } from '@gauzy/core';
-import { ApiProperty, ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
+import { ID } from '@gauzy/contracts';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsBoolean,
 	IsDateString,
@@ -12,7 +12,6 @@ import {
 	IsUUID,
 	Min
 } from 'class-validator';
-import { PluginSubscription } from '../../domain/entities/plugin-subscription.entity';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import {
 	PluginBillingPeriod,
@@ -23,37 +22,56 @@ import {
 /**
  * Create Plugin Subscription DTO
  */
-export class CreatePluginSubscriptionDTO extends IntersectionType(
-	TenantOrganizationBaseDTO,
-	PickType(PluginSubscription, [
-		'status',
-		'scope',
-		'startDate',
-		'endDate',
-		'trialEndDate',
-		'autoRenew',
-		'metadata'
-	] as const)
-) {
+export class CreatePluginSubscriptionDTO {
 	@ApiProperty({ type: String, description: 'Plugin ID' })
-	@IsNotEmpty()
-	@IsUUID()
-	pluginId: string;
+	@IsNotEmpty({ message: 'Plugin ID is required' })
+	@IsUUID(4, { message: 'Plugin ID must be a valid UUID' })
+	pluginId: ID;
+
+	@ApiProperty({ type: String, description: 'Subscription Plan ID' })
+	@IsNotEmpty({ message: 'Subscription Plan ID is required' })
+	@IsUUID(4, { message: 'Subscription Plan ID must be a valid UUID' })
+	subscriptionPlanId: ID;
+
+	@ApiProperty({ enum: PluginScope, description: 'Plugin scope' })
+	@IsNotEmpty({ message: 'Scope is required' })
+	@IsEnum(PluginScope, { message: 'Invalid plugin scope' })
+	scope: PluginScope;
 
 	@ApiProperty({ type: String, description: 'Plugin Tenant ID' })
-	@IsNotEmpty()
-	@IsUUID()
-	pluginTenantId: string;
+	@IsNotEmpty({ message: 'Plugin Tenant ID is required' })
+	@IsUUID(4, { message: 'Plugin Tenant ID must be a valid UUID' })
+	pluginTenantId: ID;
 
-	@ApiPropertyOptional({ type: String, description: 'Subscriber User ID' })
-	@IsOptional()
-	@IsUUID()
-	subscriberId?: string;
+	@ApiProperty({ enum: PluginSubscriptionStatus, description: 'Subscription status' })
+	@IsNotEmpty({ message: 'Status is required' })
+	@IsEnum(PluginSubscriptionStatus, { message: 'Invalid subscription status' })
+	status: PluginSubscriptionStatus;
 
-	@ApiPropertyOptional({ type: String, description: 'Subscription Plan ID' })
+	@ApiPropertyOptional({ type: String, description: 'Subscription start date' })
 	@IsOptional()
-	@IsUUID()
-	planId?: string;
+	@IsDateString({}, { message: 'Start date must be a valid date string' })
+	startDate?: string;
+
+	@ApiPropertyOptional({ type: String, description: 'Subscription end date' })
+	@IsOptional()
+	@IsDateString({}, { message: 'End date must be a valid date string' })
+	endDate?: string;
+
+	@ApiPropertyOptional({ type: String, description: 'Trial end date' })
+	@IsOptional()
+	@IsDateString({}, { message: 'Trial end date must be a valid date string' })
+	trialEndDate?: string;
+
+	@ApiProperty({ type: Boolean, description: 'Auto-renewal enabled' })
+	@IsNotEmpty({ message: 'Auto renew setting is required' })
+	@IsBoolean({ message: 'Auto renew must be a boolean' })
+	autoRenew: boolean;
+
+	@ApiPropertyOptional({ type: Object, description: 'Subscription metadata' })
+	@IsOptional()
+	@IsObject({ message: 'Metadata must be an object' })
+	metadata?: Record<string, any>;
 }
 
 /**
@@ -62,43 +80,33 @@ export class CreatePluginSubscriptionDTO extends IntersectionType(
 export class UpdatePluginSubscriptionDTO {
 	@ApiPropertyOptional({ enum: PluginSubscriptionStatus, description: 'Subscription status' })
 	@IsOptional()
-	@IsEnum(PluginSubscriptionStatus)
+	@IsEnum(PluginSubscriptionStatus, { message: 'Invalid subscription status' })
 	status?: PluginSubscriptionStatus;
 
-	@ApiPropertyOptional({ type: String, description: 'End date' })
+	@ApiPropertyOptional({ type: String, description: 'Subscription start date' })
 	@IsOptional()
-	@IsDateString()
+	@IsDateString({}, { message: 'Start date must be a valid date string' })
+	startDate?: string;
+
+	@ApiPropertyOptional({ type: String, description: 'Subscription end date' })
+	@IsOptional()
+	@IsDateString({}, { message: 'End date must be a valid date string' })
 	endDate?: string;
 
 	@ApiPropertyOptional({ type: String, description: 'Trial end date' })
 	@IsOptional()
-	@IsDateString()
+	@IsDateString({}, { message: 'Trial end date must be a valid date string' })
 	trialEndDate?: string;
 
 	@ApiPropertyOptional({ type: Boolean, description: 'Auto-renewal enabled' })
 	@IsOptional()
-	@IsBoolean()
+	@IsBoolean({ message: 'Auto renew must be a boolean' })
 	autoRenew?: boolean;
 
-	@ApiPropertyOptional({ type: String, description: 'Cancelled date' })
+	@ApiPropertyOptional({ type: Object, description: 'Subscription metadata' })
 	@IsOptional()
-	@IsDateString()
-	cancelledAt?: string;
-
-	@ApiPropertyOptional({ type: String, description: 'Cancellation reason' })
-	@IsOptional()
-	@IsString()
-	cancellationReason?: string;
-
-	@ApiPropertyOptional({ type: Object, description: 'Metadata' })
-	@IsOptional()
-	@IsObject()
+	@IsObject({ message: 'Metadata must be an object' })
 	metadata?: Record<string, any>;
-
-	@ApiPropertyOptional({ type: String, description: 'Plan ID' })
-	@IsOptional()
-	@IsUUID()
-	planId?: string;
 }
 
 /**

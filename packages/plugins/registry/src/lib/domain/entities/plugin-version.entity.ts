@@ -1,3 +1,5 @@
+import { isMySQL } from '@gauzy/config';
+import { ID } from '@gauzy/contracts';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -9,24 +11,22 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Min, ValidateIf } from 'class-validator';
-import { MikroOrmPluginVersionRepository } from '../repositories/mikro-orm-plugin-version.repository';
-import { Plugin } from './plugin.entity';
 import { Index, JoinColumn, RelationId } from 'typeorm';
-import { ID } from '@gauzy/contracts';
+import { IPluginInstallation } from '../../shared/models/plugin-installation.model';
+import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPlugin } from '../../shared/models/plugin.model';
-import { PluginSource } from './plugin-source.entity';
-import { IPluginSource } from '../../shared/models/plugin-source.model';
-import { isMySQL } from '@gauzy/config';
+import { MikroOrmPluginVersionRepository } from '../repositories/mikro-orm-plugin-version.repository';
 import { PluginInstallation } from './plugin-installation.entity';
-import { IPluginInstallation } from '../../shared/models/plugin-installation.model';
+import { PluginSource } from './plugin-source.entity';
+import { Plugin } from './plugin.entity';
 
 @Index(
 	'version_number_unique',
 	isMySQL ? ['number', 'pluginId', 'organizationId'] : ['number', 'pluginId', 'tenantId', 'organizationId'],
 	{ unique: true }
 )
-@MultiORMEntity('plugin_version', { mikroOrmRepository: () => MikroOrmPluginVersionRepository })
+@MultiORMEntity('plugin_versions', { mikroOrmRepository: () => MikroOrmPluginVersionRepository })
 export class PluginVersion extends TenantOrganizationBaseEntity implements IPluginVersion {
 	@ApiProperty({
 		type: () => String,

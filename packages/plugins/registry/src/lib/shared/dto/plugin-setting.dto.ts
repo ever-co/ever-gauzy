@@ -7,20 +7,7 @@ import { PluginSettingDataType } from '../../shared/models/plugin-setting.model'
 /**
  * Create Plugin Setting DTO
  */
-export class CreatePluginSettingDTO extends IntersectionType(
-	TenantOrganizationBaseDTO,
-	PickType(PluginSetting, [
-		'key',
-		'value',
-		'isRequired',
-		'isEncrypted',
-		'description',
-		'order',
-		'validationRules',
-		'dataType',
-		'defaultValue'
-	] as const)
-) {
+export class CreatePluginSettingDTO {
 	@ApiProperty({ type: String, description: 'Plugin ID' })
 	@IsNotEmpty()
 	@IsUUID()
@@ -30,21 +17,89 @@ export class CreatePluginSettingDTO extends IntersectionType(
 	@IsOptional()
 	@IsUUID()
 	pluginTenantId?: string;
+
+	@ApiProperty({ type: String, description: 'Setting key' })
+	@IsNotEmpty()
+	@IsString()
+	key: string;
+
+	@ApiPropertyOptional({ description: 'Setting value' })
+	@IsOptional()
+	value?: any;
+
+	@ApiPropertyOptional({ type: Boolean, description: 'Is setting required' })
+	@IsOptional()
+	@IsBoolean()
+	isRequired?: boolean;
+
+	@ApiPropertyOptional({ type: Boolean, description: 'Is setting encrypted' })
+	@IsOptional()
+	@IsBoolean()
+	isEncrypted?: boolean;
+
+	@ApiPropertyOptional({ type: String, description: 'Setting description' })
+	@IsOptional()
+	@IsString()
+	description?: string;
+
+	@ApiPropertyOptional({ type: Number, description: 'Setting order' })
+	@IsOptional()
+	order?: number;
+
+	@ApiPropertyOptional({ type: Object, description: 'Validation rules' })
+	@IsOptional()
+	validationRules?: Record<string, any>;
+
+	@ApiPropertyOptional({ enum: PluginSettingDataType, description: 'Data type' })
+	@IsOptional()
+	@IsEnum(PluginSettingDataType)
+	dataType?: PluginSettingDataType;
+
+	@ApiPropertyOptional({ description: 'Default value' })
+	@IsOptional()
+	defaultValue?: any;
 }
 
 /**
  * Update Plugin Setting DTO
  */
-export class UpdatePluginSettingDTO extends PickType(CreatePluginSettingDTO, [
-	'value',
-	'dataType',
-	'isRequired',
-	'isEncrypted',
-	'defaultValue',
-	'description',
-	'order',
-	'validationRules'
-] as const) {}
+export class UpdatePluginSettingDTO {
+	@ApiPropertyOptional({ description: 'Setting value' })
+	@IsOptional()
+	value?: any;
+
+	@ApiPropertyOptional({ enum: PluginSettingDataType, description: 'Data type' })
+	@IsOptional()
+	@IsEnum(PluginSettingDataType)
+	dataType?: PluginSettingDataType;
+
+	@ApiPropertyOptional({ type: Boolean, description: 'Is setting required' })
+	@IsOptional()
+	@IsBoolean()
+	isRequired?: boolean;
+
+	@ApiPropertyOptional({ type: Boolean, description: 'Is setting encrypted' })
+	@IsOptional()
+	@IsBoolean()
+	isEncrypted?: boolean;
+
+	@ApiPropertyOptional({ description: 'Default value' })
+	@IsOptional()
+	defaultValue?: any;
+
+	@ApiPropertyOptional({ type: String, description: 'Setting description' })
+	@IsOptional()
+	@IsString()
+	description?: string;
+
+	@ApiPropertyOptional({ type: Number, description: 'Setting order' })
+	@IsOptional()
+	order?: number;
+
+	@ApiPropertyOptional({ type: Object, description: 'Validation rules' })
+	@IsOptional()
+	validationRules?: Record<string, any>;
+}
 
 /**
  * Plugin Setting Query DTO
