@@ -3,7 +3,10 @@ import {
 	KbMouseActivityTO,
 	TTimeSlot,
 	TimerService,
-	Timer
+	Timer,
+	TimerTO,
+	ScreenshotService,
+	Screenshot
 } from '@gauzy/desktop-lib';
 import {
 	KbMouseActivityPool,
@@ -39,6 +42,7 @@ class PushActivities {
 	private workerQueue: WorkerQueue;
 	public currentSessionStartTime: Date;
 	public currentSessionTimeLogId: string | null;
+	private screenshotService: ScreenshotService;
 
 	constructor() {
 		this.kbMouseActivityService = new KbMouseActivityService();
@@ -49,6 +53,7 @@ class PushActivities {
 		this.trayUpdateMenuStatus('network', true);
 		this.timerService = new TimerService();
 		this.workerQueue = WorkerQueue.getInstance();
+		this.screenshotService = new ScreenshotService();
 	}
 
 	static getInstance(): PushActivities {
@@ -66,6 +71,7 @@ class PushActivities {
 			timeSlotQueueHandler: this.timeSlotQueueHandle.bind(this),
 			screenshotQueueHandler: this.screenshotsQueueHandle.bind(this)
 		});
+		this.workerQueue.imidietlyCheckUnSync();
 	}
 
 	getKbMousePoolModule() {
@@ -86,16 +92,19 @@ class PushActivities {
 				await this.syncTimer(job);
 				return cb(null);
 			} catch (error) {
-				if (job.attempts >= 10) {
-					return cb(new Error(error));
-				}
 				job.attempts += 1;
-				return cb(error);
+				if (!job.isRetry) {
+					job.isRetry = true;
+					job.queue = 'timer_retry';
+					this.workerQueue.desktopQueue.enqueueTimer(job);
+				}
+				return cb(new Error(error.message));
 			}
 		})();
 	}
 
 	timeSlotQueueHandle(job: ITimeslotQueuePayload, cb: (err?: any) => void) {
+		console.log('timeslot job', job);
 		if (!job.activityId) {
 			return cb(new Error('job is not valid'));
 		}
@@ -104,33 +113,51 @@ class PushActivities {
 				await this.syncTimeSlot(job);
 				return cb(null);
 			} catch (error) {
-				if (job.attempts >= 5) {
-					return cb(new Error(error.message));
-				}
 				job.attempts += 1;
-				return cb(error);
+				if (!job.isRetry) {
+					job.isRetry = true;
+					job.queue = 'time_slot_retry';
+					this.workerQueue.desktopQueue.enqueueTimeSlot(job);
+				}
+				return cb(new Error(error.message));
 			}
 		})();
 	}
 
 	screenshotsQueueHandle(job: IScreenshotQueuePayload, cb: (err?: any) => void) {
+		console.log('screenshot job', job);
 		(async () => {
 			if (!job.screenshotId) {
 				return cb(new Error('job is not valid'));
 			}
 			try {
 				await this.syncScreenshot(job);
+				if (job.data?.id) {
+					await this.screenshotService.update(new Screenshot({
+						id: job.data?.id,
+						synced: true
+					}));
+				}
 				return cb(null);
 			} catch (error) {
-				if ((error.message || '').toLowerCase().includes('image cannot be accessed')) {
-					job.attempts = 5;
-					return cb(new Error(error.message));
-				}
-				if (job.attempts >= 5) {
-					return cb(new Error(error.message));
-				}
 				job.attempts += 1;
-				return cb(error);
+				const screenshot = await this.screenshotService.saveAndReturn(new Screenshot({
+					timeslotId: job.data?.timeSlotId,
+					imagePath: job.data?.imagePath,
+					synced: false,
+					activityId: job.data?.activityId,
+					recordedAt: new Date(job.data?.recordedAt)
+				}));
+				if (!job.isRetry) {
+					job.isRetry = true;
+					job.queue = 'screenshot_retry';
+					job.data = {
+						...job.data,
+						id: screenshot.id
+					}
+					this.workerQueue.desktopQueue.enqueueScreenshot(job);
+				}
+				return cb(new Error(error.message));
 			}
 		})();
 	}
@@ -464,101 +491,152 @@ class PushActivities {
 		}
 	}
 
+	private async updateStopTimerSyncStatus(timer: TimerTO, synced: boolean): Promise<void> {
+		await this.timerService.update(new Timer({
+			id: timer?.id,
+			synced,
+			...(synced ? {} : { isStoppedOffline: true })
+		}));
+	}
+
+	private async updateStartTimerSyncStatus(timer: TimerTO, synced: boolean): Promise<void> {
+		await this.timerService.update(new Timer({
+			id: timer?.id,
+			synced,
+			...(synced ? {} : { isStartedOffline: true })
+		}));
+	}
+
 	public async syncTimer(job: ITimerCallbackPayload) {
 		this.agentLogger.info(`In coming job sync timer ${JSON.stringify(job)}`);
 		const authConfig = getAuthConfig();
 		const timerLocal = await this.timerService.findById({ id: job.timerId });
 		if (timerLocal?.id) {
 			if (job.data?.isStopped && timerLocal.stoppedAt && this.currentSessionTimeLogId === timerLocal.timelogId) {
-				await this.apiService.stopTimer({
-					organizationId: authConfig?.user?.employee?.organizationId,
-					tenantId: authConfig?.user?.employee?.tenantId,
-					startedAt: timerLocal.startedAt,
-					organizationTeamId: null,
-					organizationContactId: null,
-					stoppedAt: timerLocal.stoppedAt
-				});
-				await this.timerService.update(new Timer({
-					id: timerLocal?.id,
-					synced: true
-				}));
-				this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
-				return;
+				try {
+					await this.apiService.stopTimer({
+						organizationId: authConfig?.user?.employee?.organizationId,
+						tenantId: authConfig?.user?.employee?.tenantId,
+						startedAt: timerLocal.startedAt,
+						organizationTeamId: null,
+						organizationContactId: null,
+						stoppedAt: timerLocal.stoppedAt
+					});
+					await this.timerService.update(new Timer({
+						id: timerLocal?.id,
+						synced: true
+					}));
+					this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
+					return;
+				} catch (error) {
+					await this.updateStopTimerSyncStatus(timerLocal, false);
+					throw error;
+				}
 			}
 
 			if (job.data?.isStopped && timerLocal?.stoppedAt && timerLocal?.timelogId && this.currentSessionTimeLogId !== timerLocal.timelogId && !timerLocal?.synced) {
-				await this.apiService.updateTimeLog(timerLocal?.timelogId, {
-					tenantId: authConfig?.user?.employee?.tenantId,
-					organizationId: authConfig?.user?.employee?.organizationId,
-					startedAt: timerLocal?.startedAt,
-					stoppedAt: timerLocal?.stoppedAt,
-					isBillable: true,
-					employeeId: authConfig?.user?.employee?.id
-				});
-				await this.timerService.update(new Timer({
-					id: timerLocal?.id,
-					synced: true
-				}));
-				this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
-				return;
+				try {
+					await this.apiService.updateTimeLog(timerLocal?.timelogId, {
+						tenantId: authConfig?.user?.employee?.tenantId,
+						organizationId: authConfig?.user?.employee?.organizationId,
+						startedAt: timerLocal?.startedAt,
+						stoppedAt: timerLocal?.stoppedAt,
+						isBillable: true,
+						employeeId: authConfig?.user?.employee?.id
+					});
+					await this.timerService.update(new Timer({
+						id: timerLocal?.id,
+						synced: true
+					}));
+					this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
+					return;
+				} catch (error) {
+					await this.updateStopTimerSyncStatus(timerLocal, false);
+					throw error;
+				}
 			}
 
 			if (job.data?.isStopped && timerLocal?.stoppedAt && !timerLocal?.timelogId && !timerLocal?.synced) {
-				const resp = await this.apiService.addTimeLog({
-					tenantId: authConfig?.user?.employee?.tenantId,
-					organizationId: authConfig?.user?.employee?.organizationId,
-					startedAt: timerLocal?.startedAt,
-					stoppedAt: timerLocal?.stoppedAt,
-					isBillable: true,
-					employeeId: authConfig?.user?.employee?.id
-				});
-				await this.timerService.update(new Timer({
-					id: timerLocal?.id,
-					timelogId: resp?.id,
-					timesheetId: resp?.timesheetId,
-					synced: true
-				}));
-				this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
-				return;
+				try {
+					const resp = await this.apiService.addTimeLog({
+						tenantId: authConfig?.user?.employee?.tenantId,
+						organizationId: authConfig?.user?.employee?.organizationId,
+						startedAt: timerLocal?.startedAt,
+						stoppedAt: timerLocal?.stoppedAt,
+						isBillable: true,
+						employeeId: authConfig?.user?.employee?.id
+					});
+					await this.timerService.update(new Timer({
+						id: timerLocal?.id,
+						timelogId: resp?.id,
+						timesheetId: resp?.timesheetId,
+						synced: true
+					}));
+					this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
+					return;
+				} catch (error) {
+					await this.timerService.update(new Timer({
+						id: timerLocal?.id,
+						synced: false,
+						isStartedOffline: true,
+						isStoppedOffline: true
+					}));
+					throw error;
+				}
 			}
 
 			if (!job.data?.isStopped && timerLocal?.startedAt && !timerLocal?.stoppedAt && !timerLocal?.timelogId && !timerLocal?.synced) {
-				const resp = await this.apiService.startTimer({
-					organizationId: authConfig?.user?.employee?.organizationId,
-					startedAt: timerLocal.startedAt,
-					tenantId: authConfig?.user?.employee?.tenantId,
-					organizationTeamId: null,
-					organizationContactId: null
-				});
-				this.currentSessionStartTime = new Date(resp?.startedAt);
-				this.currentSessionTimeLogId = resp?.id;
-				this.agentLogger.info(`finished job timer sync ${JSON.stringify(job)}`);
-				await this.timerService.update(new Timer({
-					id: timerLocal?.id,
-					timelogId: resp?.id,
-					timesheetId: resp?.timesheetId
-				}));
-				this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
-				return;
+				try {
+					const resp = await this.apiService.startTimer({
+						organizationId: authConfig?.user?.employee?.organizationId,
+						startedAt: timerLocal.startedAt,
+						tenantId: authConfig?.user?.employee?.tenantId,
+						organizationTeamId: null,
+						organizationContactId: null
+					});
+					this.currentSessionStartTime = new Date(resp?.startedAt);
+					this.currentSessionTimeLogId = resp?.id;
+					this.agentLogger.info(`finished job timer sync ${JSON.stringify(job)}`);
+					await this.timerService.update(new Timer({
+						id: timerLocal?.id,
+						timelogId: resp?.id,
+						timesheetId: resp?.timesheetId
+					}));
+					this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
+					return;
+				} catch (error) {
+					await this.updateStartTimerSyncStatus(timerLocal, false);
+					throw error;
+				}
 			}
 
 			if (!job.data?.isStopped && timerLocal?.stoppedAt && timerLocal?.startedAt && !timerLocal?.timelogId && !timerLocal?.synced) {
-				const resp = await this.apiService.addTimeLog({
-					tenantId: authConfig?.user?.employee?.tenantId,
-					organizationId: authConfig?.user?.employee?.organizationId,
-					startedAt: timerLocal?.startedAt,
-					stoppedAt: timerLocal?.stoppedAt,
-					isBillable: true,
-					employeeId: authConfig?.user?.employee?.id
-				});
-				await this.timerService.update(new Timer({
-					id: timerLocal?.id,
-					timelogId: resp?.id,
-					timesheetId: resp?.timesheetId,
-					synced: true
-				}));
-				this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
-				return;
+				try {
+					const resp = await this.apiService.addTimeLog({
+						tenantId: authConfig?.user?.employee?.tenantId,
+						organizationId: authConfig?.user?.employee?.organizationId,
+						startedAt: timerLocal?.startedAt,
+						stoppedAt: timerLocal?.stoppedAt,
+						isBillable: true,
+						employeeId: authConfig?.user?.employee?.id
+					});
+					await this.timerService.update(new Timer({
+						id: timerLocal?.id,
+						timelogId: resp?.id,
+						timesheetId: resp?.timesheetId,
+						synced: true
+					}));
+					this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
+					return;
+				} catch (error) {
+					await this.timerService.update(new Timer({
+						id: timerLocal?.id,
+						synced: false,
+						isStoppedOffline: true,
+						isStartedOffline: true
+					}));
+					throw error;
+				}
 			}
 			this.agentLogger.warn(`This timer is already synced ${timerLocal?.id}, logId ${timerLocal?.timelogId}`);
 			return;
@@ -570,40 +648,52 @@ class PushActivities {
 		this.agentLogger.info(`In coming job timeSlot sync ${JSON.stringify(job)}`);
 		const timeSlotLocal = await this.kbMouseActivityService.findById({ id: job.activityId });
 		if (timeSlotLocal?.id) {
-			const params = this.timeSlotParams(timeSlotLocal);
-			if (!params) {
-				return;
-			}
-			this.agentLogger.info(`Preparing send activity recordedAt ${params.recordedAt} to service`);
-			const resp = await this.apiService.saveTimeSlot(params);
-			if (this.isNetworkError) {
-				this.isNetworkError = false;
-				this.trayUpdateMenuStatus('network', !this.isNetworkError);
-				this.trayStatusHandler('Working');
-			}
-			console.log(`Time slot saved for activity ${timeSlotLocal.id}:`, resp?.id);
-			const images = typeof timeSlotLocal.screenshots === 'string'
-				? (() => {
-					try {
-						return JSON.parse(timeSlotLocal.screenshots);
-					} catch (error) {
-						console.error('Failed to parse screenshots:', error);
-						return [];
-					}
-				})()
-				: timeSlotLocal.screenshots || [];
-			for (const image of images) {
-				this.workerQueue.desktopQueue.enqueueScreenshot({
-					attempts: 1,
-					queue: 'screenshot',
-					screenshotId: image,
-					data: {
-						imagePath: image,
-						timeSlotId: resp?.id,
-						recordedAt: moment(timeSlotLocal.timeStart).toISOString()
-					}
+			let resp: TResponseTimeSlot;
+			if (!timeSlotLocal?.syncedActivity) {
+				const params = this.timeSlotParams(timeSlotLocal);
+				if (!params) {
+					return;
+				}
+				this.agentLogger.info(`Preparing send activity recordedAt ${params.recordedAt} to service`);
+				resp = await this.apiService.saveTimeSlot(params);
+				await this.kbMouseActivityService.update({
+					id: timeSlotLocal?.id,
+					syncedActivity: true,
+					timeSlotId: resp.id
 				})
+				if (this.isNetworkError) {
+					this.isNetworkError = false;
+					this.trayUpdateMenuStatus('network', !this.isNetworkError);
+					this.trayStatusHandler('Working');
+				}
+				console.log(`Time slot saved for activity ${timeSlotLocal.id}:`, resp?.id);
 			}
+			if (resp?.id || timeSlotLocal?.timeSlotId) {
+				const images = typeof timeSlotLocal.screenshots === 'string'
+					? (() => {
+						try {
+							return JSON.parse(timeSlotLocal.screenshots);
+						} catch (error) {
+							console.error('Failed to parse screenshots:', error);
+							return [];
+						}
+					})()
+					: timeSlotLocal.screenshots || [];
+				for (const image of images) {
+					this.workerQueue.desktopQueue.enqueueScreenshot({
+						attempts: 1,
+						queue: 'screenshot',
+						screenshotId: image,
+						data: {
+							imagePath: image,
+							timeSlotId: resp?.id || timeSlotLocal?.timeSlotId,
+							recordedAt: moment(timeSlotLocal.timeStart).toISOString(),
+							activityId: timeSlotLocal?.id
+						}
+					})
+				}
+			}
+
 			this.agentLogger.info(`Finished process job timeSlot sync ${JSON.stringify(job)}`);
 			await this.removeCurrentActivity(timeSlotLocal.id);
 			return resp;

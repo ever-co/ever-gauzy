@@ -1,6 +1,6 @@
 import { DAO, IDatabaseProvider, IKbMouseTransaction } from '../../interfaces';
 import { ProviderFactory } from '../databases';
-import { TABLE_NAME_KB_MOUSE_ACTIVITY, KbMouseActivityTO } from '../dto';
+import { TABLE_NAME_KB_MOUSE_ACTIVITY, KbMouseActivityTO, TABLE_NAME_SCREENSHOT } from '../dto';
 import { KbMouseTransaction } from '../transactions';
 
 export class KbMouseActivityDAO implements DAO<KbMouseActivityTO> {
@@ -50,6 +50,25 @@ export class KbMouseActivityDAO implements DAO<KbMouseActivityTO> {
 			.andWhere('remoteId', remoteId)
 			.orderBy('timeStart', 'desc')
 			.limit(1);
+		return activities;
+	}
+
+	public async findUnsyncActivity(
+		remoteId: string,
+		organizationId: string,
+		tenantId: string,
+		timerId: number
+	): Promise<KbMouseActivityTO[] | undefined> {
+		const activities = await this._provider
+			.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
+			.where('timerId', timerId)
+			.andWhere('tenantId', tenantId)
+			.andWhere('organizationId', organizationId)
+			.andWhere('remoteId', remoteId)
+			.andWhere((builder) =>
+				builder.where('syncedActivity', false)
+			)
+			.orderBy('timeStart', 'desc')
 		return activities;
 	}
 }

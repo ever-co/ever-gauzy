@@ -80,4 +80,18 @@ export class KbMouseActivityService implements IKbMouseActivityService<KbMouseAc
 			throw new AppError('KB_MOUSE_SERVICE', error);
 		}
 	}
+
+	public async findUnsyncActivity(
+		remoteId: string,
+		organizationId: string,
+		tenantId: string,
+		timerId: number
+	): Promise<KbMouseActivityTO[]> {
+		try {
+			return await this._kbMouseDAO.findUnsyncActivity(remoteId, organizationId, tenantId, timerId)
+		} catch (error) {
+			console.error(error);
+			return [];
+		}
+	}
 }

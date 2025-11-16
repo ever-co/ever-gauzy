@@ -111,7 +111,7 @@ class PullActivities {
 			day: null,
 			duration: null,
 			synced: false,
-			isStartedOffline: true,
+			isStartedOffline: false,
 			isStoppedOffline: false,
 			version: null,
 			startedAt,
@@ -179,11 +179,16 @@ class PullActivities {
 		try {
 			const online = await isOnline({ timeout: 1200 }).catch(() => false);
 			if (online) {
-				const timerStatus = await this.apiService.timerStatus({
-					tenantId: authConfig.user.employee.tenantId,
-					organizationId: authConfig.user.employee.organizationId
-				});
-				this.lastTodayDuration = timerStatus?.duration;
+				try {
+					const timerStatus = await this.apiService.timerStatus({
+						tenantId: authConfig.user.employee.tenantId,
+						organizationId: authConfig.user.employee.organizationId
+					});
+					this.lastTodayDuration = timerStatus?.duration;
+				} catch (error) {
+					const localTodayDuration = await this.timerService.todayDurations();
+					this.lastTodayDuration = localTodayDuration;
+				}
 			} else {
 				const localTodayDuration = await this.timerService.todayDurations();
 				this.lastTodayDuration = localTodayDuration;
@@ -229,6 +234,10 @@ class PullActivities {
 			}));
 			return;
 		}
+		await this.timerService.update(new Timer({
+			id: this.currentTimerId,
+			isStoppedOffline: true
+		}));
 	}
 
 	async stopTimerApi() {
@@ -237,7 +246,7 @@ class PullActivities {
 		try {
 			await this.timerService.update(new Timer({
 				id: this.currentTimerId,
-				stoppedAt: this.stoppedDate
+				stoppedAt: this.stoppedDate,
 			}));
 			const online = await isOnline({ timeout: 1200 }).catch(() => false);
 			if (online) {
@@ -259,6 +268,20 @@ class PullActivities {
 						await this.handleManualTimeLog(authConfig);
 					} else {
 						console.error('Error stopping timer online', error.message);
+						this.timerService.update(new Timer({
+							id: this.currentTimerId,
+							isStoppedOffline: true
+						}));
+						this.workerQueue.desktopQueue.enqueueTimer({
+							attempts: 1,
+							queue: 'timer',
+							timerId: this.currentTimerId,
+							data: {
+								startedAt: this.startedDate.toISOString(),
+								stoppedAt: this.stoppedDate.toISOString(),
+								isStopped: true
+							}
+						});
 						this.agentLogger.error(`Error stopping timer online ${error.message}`);
 						throw error;
 					}
@@ -485,7 +508,9 @@ class PullActivities {
 				remoteId: this.remoteId,
 				screenshots: JSON.stringify(imgs.map((img) => img.filePath)),
 				afkDuration: afkDuration || 0,
-				activeWindows: JSON.stringify(activityWindow)
+				activeWindows: JSON.stringify(activityWindow),
+				syncedActivity: false,
+				timerId: this.currentTimerId
 			});
 			this.initWorkerQueue();
 			this.workerQueue.desktopQueue.enqueueTimeSlot({

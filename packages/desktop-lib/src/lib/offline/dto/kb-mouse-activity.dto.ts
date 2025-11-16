@@ -25,6 +25,7 @@ export type TActiveWindows = {
 
 export interface KbMouseActivityTO {
 	id?: number;
+	timerId: number;
 	timeStart: Date;
 	timeEnd: Date | null;
 	kbPressCount: number;
@@ -39,7 +40,8 @@ export interface KbMouseActivityTO {
 	screenshots: string[] | string;
 	afkDuration: number;
 	activeWindows: TActiveWindows[] | string;
-
+	syncedActivity: boolean;
+	timeSlotId?: string
 }
 
 export const TABLE_NAME_KB_MOUSE_ACTIVITY: string = 'kb_mouse_activity';

@@ -44,9 +44,6 @@ export class QueueAudit {
 	}
 
 	queued(id: string, queue: string, data: any, priority?: number) {
-		if (data.attempts >= 5) {
-			return;
-		}
 		const newQueue = {
 			queue_id: id,
 			queue,
@@ -64,9 +61,6 @@ export class QueueAudit {
 	}
 
 	running(id: string, data: any) {
-		if (data?.attempts >= 5) {
-			return;
-		}
 		this.dashboardEventUpdate('update', {
 			queue_id: id,
 			status: 'running'

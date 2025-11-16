@@ -26,6 +26,8 @@ export class KbMouseTimer {
 	/* dynamic interval screenshot for random screenshot */
 	private currentScreenshotInterval: number = 60;
 
+	private externalTickHandler: () => void;
+
 	private constructor() {
 		this.afkCountdown = this.afkThreshold;
 		this.activeWindowCallback = () => {};
@@ -37,6 +39,10 @@ export class KbMouseTimer {
 			KbMouseTimer.instance = new KbMouseTimer();
 		}
 		return KbMouseTimer.instance;
+	}
+
+	public setExternalTickHandler(callback: () => void) {
+		this.externalTickHandler = callback;
 	}
 
 	public setRandomScreenshotInterval(value: boolean) {
@@ -129,6 +135,9 @@ export class KbMouseTimer {
 		this.checkFlushTime();
 		this.afkHandler();
 		this.afkCounter();
+		if (this.externalTickHandler) {
+			this.externalTickHandler();
+		}
 	}
 
 	private resetAfkCount() {

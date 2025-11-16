@@ -7,3 +7,4 @@ export * from './user.dto';
 export * from './timer.dto';
 export * from './kb-mouse-activity.dto';
 export * from './queue-audit.dto';
+export * from './screenshot.dto';

@@ -6,8 +6,8 @@ export class QueueStore {
 	private db: Database.Database;
 	private tableName: string;
 
-	constructor(options: { path: string }) {
-		this.tableName = 'task';
+	constructor(options: { path: string, tableName?: string }) {
+		this.tableName = options.tableName || 'task';
 		this.db = new Database(options.path);
 		this.db.pragma('journal_mode = WAL');
 		this.db.pragma('synchronous = NORMAL');
@@ -68,6 +68,7 @@ export class QueueStore {
 
 	putTask(taskId: string, task: any, priority: number, cb: (err?: any) => void) {
 		try {
+			console.log('put task to sqlite');
 			this.db
 				.prepare(
 					`INSERT OR REPLACE INTO ${this.tableName} (id, lock, task, priority, added)
