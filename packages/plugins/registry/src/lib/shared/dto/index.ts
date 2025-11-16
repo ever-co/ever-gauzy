@@ -7,6 +7,7 @@ export * from './file.dto';
 export * from './install-plugin.dto';
 export * from './plugin-category-query.dto';
 export * from './plugin-publish.dto';
+export * from './plugin-query-options.dto';
 export * from './plugin-search-filter.dto';
 export * from './plugin-setting.dto';
 export * from './plugin-source.dto';

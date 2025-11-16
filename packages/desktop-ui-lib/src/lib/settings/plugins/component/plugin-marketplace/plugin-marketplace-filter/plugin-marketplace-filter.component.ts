@@ -150,10 +150,6 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 		// Update filter options when plugins change
 		if (changes['plugins'] && !changes['plugins'].firstChange) {
 			this.loadFilterOptions();
-			// Update category counts with new plugin data
-			if (this.categoryOptions.length > 0) {
-				this.updateCategoryCounts();
-			}
 		}
 	}
 
@@ -352,10 +348,8 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 						value: category.id,
 						label: category.name,
 						icon: category.icon || 'cube-outline',
-						count: 0 // Will be updated by updateCategoryCounts
+						count: 0
 					}));
-
-					this.updateCategoryCounts();
 					this.updateCategorySectionVisibility();
 				}),
 				untilDestroyed(this)
@@ -381,18 +375,6 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 		}
 
 		this.actions.dispatch(PluginCategoryActions.loadMore());
-	}
-
-	/**
-	 * @deprecated Removed - Categories are now loaded from backend via loadCategoriesFromBackend()
-	 * This method was used to infer categories from plugin names and descriptions.
-	 * Categories are now managed in the database and fetched via the PluginCategoryService.
-	 */
-
-	private updateCategoryCounts(): void {
-		this.categoryOptions.forEach((category) => {
-			category.count = this.plugins.filter((plugin) => plugin.category?.id === category.value).length;
-		});
 	}
 
 	/**

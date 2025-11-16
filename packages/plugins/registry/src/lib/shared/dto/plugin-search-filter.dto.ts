@@ -4,11 +4,12 @@ import { parseToBoolean } from '@gauzy/utils';
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
+import { IPlugin } from '../models';
 
 /**
  * DTO for plugin search and filtering functionality
  */
-export class PluginSearchFilterDTO extends PartialType(BaseQueryDTO) {
+export class PluginSearchFilterDTO extends PartialType(BaseQueryDTO<IPlugin>) {
 	@ApiPropertyOptional({
 		description: 'Search text to filter plugins by name, description, or author',
 		example: 'time tracking'

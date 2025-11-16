@@ -1,12 +1,12 @@
 import { Public } from '@gauzy/common';
 import { HttpStatus, ID, IPagination } from '@gauzy/contracts';
-import { BaseQueryDTO, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
+import { UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { GetPluginQuery, ListPluginsQuery, SearchPluginsQuery } from '../../application';
 import { Plugin } from '../../domain';
-import { IPlugin, PluginSearchFilterDTO } from '../../shared';
+import { IPlugin, PluginQueryOptions, PluginSearchFilterDTO } from '../../shared';
 
 @ApiTags('Plugin Registry')
 @Controller('/plugins')
@@ -100,7 +100,7 @@ export class PluginController {
 	@Get(':id')
 	public async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() options: BaseQueryDTO<IPlugin>
+		@Query() options: PluginQueryOptions
 	): Promise<IPlugin> {
 		return this.queryBus.execute(new GetPluginQuery(id, options));
 	}
