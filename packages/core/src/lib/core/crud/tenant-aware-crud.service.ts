@@ -18,6 +18,14 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	extends CrudService<T>
 	implements ICrudService<T>
 {
+	/**
+	 * Flag to skip automatic employeeId filtering.
+	 * When true, the service will not automatically filter by currentEmployeeId.
+	 * This is useful for services that need to implement custom access control logic
+	 * (e.g., team managers accessing their team members' data).
+	 */
+	protected skipEmployeeFilter = false;
+
 	constructor(typeOrmRepository: Repository<T>, mikroOrmRepository: MikroOrmBaseEntityRepository<T>) {
 		super(typeOrmRepository, mikroOrmRepository);
 	}
@@ -28,6 +36,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @returns The find conditions based on the current user's relationship with employees.
 	 */
 	private findConditionsWithEmployeeByUser(): FindOptionsWhere<T> {
+		// If skipEmployeeFilter is enabled, don't apply automatic filtering
+		if (this.skipEmployeeFilter) {
+			return {} as FindOptionsWhere<T>;
+		}
+
 		const employeeId = RequestContext.currentEmployeeId();
 		return (
 			/**
@@ -48,6 +61,30 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 					: {}
 			) as FindOptionsWhere<T>
 		);
+	}
+
+	/**
+	 * Executes a callback without automatic employeeId filtering.
+	 * This is useful when you need to implement custom access control logic.
+	 *
+	 * @param callback - The async function to execute without employee filtering
+	 * @returns The result of the callback
+	 *
+	 * @example
+	 * ```typescript
+	 * const dailyPlan = await this.withoutEmployeeFilter(async () => {
+	 *     return await this.findOneByIdString(planId);
+	 * });
+	 * ```
+	 */
+	protected async withoutEmployeeFilter<R>(callback: () => Promise<R>): Promise<R> {
+		const originalValue = this.skipEmployeeFilter;
+		this.skipEmployeeFilter = true;
+		try {
+			return await callback();
+		} finally {
+			this.skipEmployeeFilter = originalValue;
+		}
 	}
 
 	/**
