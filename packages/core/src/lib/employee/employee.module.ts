@@ -11,14 +11,19 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { CommandHandlers } from './commands/handlers';
 import { EmployeeController } from './employee.controller';
 import { EmployeeService } from './employee.service';
+import { ManagedEmployeeService } from './managed-employee.service';
 import { Employee } from './employee.entity';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
+import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
+import { OrganizationProjectEmployee } from '../organization-project/organization-project-employee.entity';
+import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
+import { TypeOrmOrganizationProjectEmployeeRepository } from '../organization-project/repository/type-orm-organization-project-employee.repository';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Employee]),
-		MikroOrmModule.forFeature([Employee]),
+		TypeOrmModule.forFeature([Employee, OrganizationTeamEmployee, OrganizationProjectEmployee]),
+		MikroOrmModule.forFeature([Employee, OrganizationTeamEmployee, OrganizationProjectEmployee]),
 		forwardRef(() => EmailSendModule),
 		forwardRef(() => UserOrganizationModule),
 		forwardRef(() => RolePermissionModule),
@@ -28,7 +33,22 @@ import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repo
 		CqrsModule
 	],
 	controllers: [EmployeeController],
-	providers: [EmployeeService, TypeOrmEmployeeRepository, MikroOrmEmployeeRepository, ...CommandHandlers],
-	exports: [EmployeeService, TypeOrmEmployeeRepository, MikroOrmEmployeeRepository]
+	providers: [
+		EmployeeService,
+		ManagedEmployeeService,
+		TypeOrmEmployeeRepository,
+		MikroOrmEmployeeRepository,
+		TypeOrmOrganizationTeamEmployeeRepository,
+		TypeOrmOrganizationProjectEmployeeRepository,
+		...CommandHandlers
+	],
+	exports: [
+		EmployeeService,
+		ManagedEmployeeService,
+		TypeOrmEmployeeRepository,
+		MikroOrmEmployeeRepository,
+		TypeOrmOrganizationTeamEmployeeRepository,
+		TypeOrmOrganizationProjectEmployeeRepository
+	]
 })
 export class EmployeeModule {}
