@@ -16,7 +16,7 @@ export interface ServerConfig {
 	port: number;
 	mcpAuthUrl: string;
 	baseUrl: string;
-	environment: 'development' | 'production' | 'test';
+	environment: 'development' | 'production' | 'stage';
 
 	// Security settings
 	sessionSecret: string;
@@ -64,10 +64,34 @@ export class ConfigManager {
 	}
 
 	private getEnvEnvironment(key: string, defaultEnv: ServerConfig['environment']): ServerConfig['environment'] {
-		const v = (process.env[key] || defaultEnv).toLowerCase();
-		if (v === 'production') return 'production';
-		if (v === 'test') return 'test';
-		return 'development';
+		const rawValue = process.env[key];
+
+		if (!rawValue || rawValue.trim() === '') {
+			return defaultEnv;
+		}
+
+		// Normalize: trim whitespace and convert to lowercase
+		const normalizedValue = rawValue.trim().toLowerCase();
+
+		// Explicitly handle each valid environment with common variations
+		switch (normalizedValue) {
+			case 'production':
+				return 'production';
+
+			// Development environment (local)
+			case 'development':
+				return 'development';
+
+			case 'stage':
+				this.securityLogger.info(`${key}="${rawValue}" detected. Treating staging as production environment.`);
+				return 'production';
+
+			default:
+				this.securityLogger.warn(
+					`Unexpected ${key} value: "${rawValue}". Valid values: production, development, test. Defaulting to "${defaultEnv}".`
+				);
+				return defaultEnv;
+		}
 	}
 
 	static getInstance(): ConfigManager {
