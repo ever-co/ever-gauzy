@@ -718,7 +718,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns An array of project budget limit report data.
 	 */
 	async getProjectBudgetLimit(request: IGetTimeLogReportInput) {
-		const { organizationId, employeeIds = [], projectIds = [], startDate, endDate } = request;
+		// Filter accessible employeeIds based on manager status and permissions
+		const filteredEmployeeIds = await this.filterEmployeeIds(request);
+
+		const { organizationId, projectIds = [], startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		// Step 1: Create a query builder for the OrganizationProject entity
@@ -762,9 +765,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				qb.andWhere(p(`"employee"."tenantId" =:tenantId`), {
 					tenantId
 				});
-				if (isNotEmpty(employeeIds)) {
+				if (isNotEmpty(filteredEmployeeIds)) {
 					qb.andWhere(p(`"employee"."id" IN (:...employeeIds)`), {
-						employeeIds
+						employeeIds: filteredEmployeeIds
 					});
 				}
 			})
@@ -783,9 +786,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					endDate: end
 				});
 
-				if (isNotEmpty(employeeIds)) {
+				if (isNotEmpty(filteredEmployeeIds)) {
 					qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
-						employeeIds
+						employeeIds: filteredEmployeeIds
 					});
 				}
 				if (isNotEmpty(projectIds)) {
@@ -846,7 +849,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns The client budget limit report.
 	 */
 	async getClientBudgetLimit(request: IGetTimeLogReportInput) {
-		const { organizationId, employeeIds = [], projectIds = [], startDate, endDate } = request;
+		// Filter accessible employeeIds based on manager status and permissions
+		const filteredEmployeeIds = await this.filterEmployeeIds(request);
+
+		const { organizationId, projectIds = [], startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
 
 		// Step 1: Create a query builder for the OrganizationClient entity
@@ -881,8 +887,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				qb.andWhere(p(`"employee"."organizationId" =:organizationId`), { organizationId });
 				qb.andWhere(p(`"employee"."tenantId" =:tenantId`), { tenantId });
 
-				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(p(`"employee"."id" IN (:...employeeIds)`), { employeeIds });
+				if (isNotEmpty(filteredEmployeeIds)) {
+					qb.andWhere(p(`"employee"."id" IN (:...employeeIds)`), { employeeIds: filteredEmployeeIds });
 				}
 			})
 		);
@@ -897,9 +903,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					endDate: end
 				});
 
-				if (isNotEmpty(employeeIds)) {
+				if (isNotEmpty(filteredEmployeeIds)) {
 					qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
-						employeeIds
+						employeeIds: filteredEmployeeIds
 					});
 				}
 
