@@ -88,7 +88,7 @@ export class ConfigManager {
 
 			default:
 				this.securityLogger.warn(
-					`Unexpected ${key} value: "${rawValue}". Valid values: production, development, test. Defaulting to "${defaultEnv}".`
+					`Unexpected ${key} value: "${rawValue}". Valid values: production, development, stage. Defaulting to "${defaultEnv}".`
 				);
 				return defaultEnv;
 		}
