@@ -1,4 +1,11 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	HttpException,
+	HttpStatus,
+	Injectable,
+	NotFoundException
+} from '@nestjs/common';
 import { SelectQueryBuilder, UpdateResult } from 'typeorm';
 import {
 	ID,
@@ -7,13 +14,15 @@ import {
 	IDailyPlansTasksUpdateInput,
 	IDailyPlanTasksUpdateInput,
 	IDailyPlanUpdateInput,
-	IPagination
+	IPagination,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context/request-context';
 import { EmployeeService } from '../../employee/employee.service';
+import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TaskService } from '../task.service';
 import { DailyPlan } from './daily-plan.entity';
 import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
@@ -25,7 +34,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		protected readonly typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
 		protected readonly mikroOrmDailyPlanRepository: MikroOrmDailyPlanRepository,
 		private readonly _employeeService: EmployeeService,
-		private readonly _taskService: TaskService
+		private readonly _taskService: TaskService,
+		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {
 		super(typeOrmDailyPlanRepository, mikroOrmDailyPlanRepository);
 	}
@@ -222,18 +232,65 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, taskId, organizationId } = input;
 
-			// Fetch the daily plan with the given conditions
-			const dailyPlan = await this.findOneByIdString(planId, {
-				where: {
+			// Check if user has global permission
+			const hasGlobalPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
+			let dailyPlan: IDailyPlan;
+
+			if (hasGlobalPermission) {
+				// User has global permission → Use normal flow (no bypass needed)
+				dailyPlan = await this.findOneByIdString(planId, {
+					where: {
+						employeeId,
+						tenantId,
+						organizationId
+					},
+					relations: { tasks: true }
+				});
+			} else {
+				// User is potentially a manager → Check access first
+				// Step 1: Fetch minimal data to get organizationTeamId
+				const planTeamInfo = await this.typeOrmRepository.findOne({
+					where: {
+						id: planId,
+						employeeId,
+						tenantId,
+						organizationId
+					},
+					select: ['id', 'organizationTeamId']
+				});
+
+				if (!planTeamInfo) {
+					throw new NotFoundException('Daily plan not found');
+				}
+
+				// Step 2: Check if current user can manage this employee in this team
+				const canManage = await this._managedEmployeeService.canManageEmployee(
 					employeeId,
-					tenantId,
-					organizationId
-				},
-				relations: { tasks: true } // Ensure we get the existing tasks
-			});
+					planTeamInfo.organizationTeamId
+				);
+
+				if (!canManage) {
+					throw new ForbiddenException(
+						`You do not have permission to manage daily plans for employee ${employeeId}`
+					);
+				}
+
+				// Step 3: Access verified → Fetch full data with bypass
+				dailyPlan = await this.withoutEmployeeFilter(async () => {
+					return await this.findOneByIdString(planId, {
+						where: {
+							employeeId,
+							tenantId,
+							organizationId
+						},
+						relations: { tasks: true }
+					});
+				});
+			}
 
 			if (!dailyPlan) {
-				throw new BadRequestException('Daily plan not found');
+				throw new NotFoundException('Daily plan not found');
 			}
 
 			// Fetch the task to be added
@@ -263,17 +320,65 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, taskId, organizationId } = input;
 
-			const dailyPlan = await this.findOneByIdString(planId, {
-				where: {
+			// Check if user has global permission
+			const hasGlobalPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
+			let dailyPlan: IDailyPlan;
+
+			if (hasGlobalPermission) {
+				// User has global permission → Use normal flow (no bypass needed)
+				dailyPlan = await this.findOneByIdString(planId, {
+					where: {
+						employeeId,
+						tenantId,
+						organizationId
+					},
+					relations: { tasks: true }
+				});
+			} else {
+				// User is potentially a manager → Check access first
+				// Step 1: Fetch minimal data to get organizationTeamId
+				const planTeamInfo = await this.typeOrmRepository.findOne({
+					where: {
+						id: planId,
+						employeeId,
+						tenantId,
+						organizationId
+					},
+					select: ['id', 'organizationTeamId']
+				});
+
+				if (!planTeamInfo) {
+					throw new NotFoundException('Daily plan not found');
+				}
+
+				// Step 2: Check if current user can manage this employee in this team
+				const canManage = await this._managedEmployeeService.canManageEmployee(
 					employeeId,
-					tenantId,
-					organizationId
-				},
-				relations: { tasks: true } // Include the existing tasks for the daily plan
-			});
+					planTeamInfo.organizationTeamId
+				);
+
+				if (!canManage) {
+					throw new ForbiddenException(
+						`You do not have permission to manage daily plans for employee ${employeeId}`
+					);
+				}
+
+				// Step 3: Access verified → Fetch full data with bypass
+				dailyPlan = await this.withoutEmployeeFilter(async () => {
+					return await this.findOneByIdString(planId, {
+						where: {
+							employeeId,
+							tenantId,
+							organizationId
+						},
+						relations: { tasks: true }
+					});
+				});
+			}
 
 			if (!dailyPlan) {
-				throw new BadRequestException('Daily plan not found');
+				throw new NotFoundException('Daily plan not found');
 			}
 
 			// Get task to be removed
@@ -386,18 +491,65 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			// Get the tenant ID from the current Request
 			const currentTenantId = RequestContext.currentTenantId();
 
-			// Fetch the daily plan to update
-			const dailyPlan = await this.findOneByIdString(id, {
-				where: {
+			// Check if user has global permission
+			const hasGlobalPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
+			let dailyPlan: IDailyPlan;
+
+			if (hasGlobalPermission) {
+				// User has global permission → Use normal flow (no bypass needed)
+				dailyPlan = await this.findOneByIdString(id, {
+					where: {
+						employeeId,
+						tenantId: currentTenantId,
+						organizationId
+					},
+					relations: { tasks: true }
+				});
+			} else {
+				// User is potentially a manager → Check access first
+				// Step 1: Fetch minimal data to get organizationTeamId
+				const planTeamInfo = await this.typeOrmRepository.findOne({
+					where: {
+						id,
+						employeeId,
+						tenantId: currentTenantId,
+						organizationId
+					},
+					select: ['id', 'organizationTeamId']
+				});
+
+				if (!planTeamInfo) {
+					throw new NotFoundException('Daily plan not found');
+				}
+
+				// Step 2: Check if current user can manage this employee in this team
+				const canManage = await this._managedEmployeeService.canManageEmployee(
 					employeeId,
-					tenantId: currentTenantId,
-					organizationId
-				},
-				relations: { tasks: true }
-			});
+					planTeamInfo.organizationTeamId
+				);
+
+				if (!canManage) {
+					throw new ForbiddenException(
+						`You do not have permission to manage daily plans for employee ${employeeId}`
+					);
+				}
+
+				// Step 3: Access verified → Fetch full data with bypass
+				dailyPlan = await this.withoutEmployeeFilter(async () => {
+					return await this.findOneByIdString(id, {
+						where: {
+							employeeId,
+							tenantId: currentTenantId,
+							organizationId
+						},
+						relations: { tasks: true }
+					});
+				});
+			}
 
 			if (!dailyPlan) {
-				throw new BadRequestException('Daily plan not found');
+				throw new NotFoundException('Daily plan not found');
 			}
 
 			// Return the updated daily plan
