@@ -1,11 +1,4 @@
-import {
-	BadRequestException,
-	ForbiddenException,
-	HttpException,
-	HttpStatus,
-	Injectable,
-	NotFoundException
-} from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { SelectQueryBuilder, UpdateResult } from 'typeorm';
 import {
 	ID,
@@ -260,20 +253,15 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					select: ['id', 'organizationTeamId']
 				});
 
-				if (!planTeamInfo) {
-					throw new NotFoundException('Daily plan not found');
-				}
-
 				// Step 2: Check if current user can manage this employee in this team
-				const canManage = await this._managedEmployeeService.canManageEmployee(
-					employeeId,
-					planTeamInfo.organizationTeamId
-				);
+				// Note: We check permissions even if plan doesn't exist to avoid leaking information
+				// about which plan IDs exist in the system
+				const canManage =
+					planTeamInfo &&
+					(await this._managedEmployeeService.canManageEmployee(employeeId, planTeamInfo.organizationTeamId));
 
-				if (!canManage) {
-					throw new ForbiddenException(
-						`You do not have permission to manage daily plans for employee ${employeeId}`
-					);
+				if (!planTeamInfo || !canManage) {
+					throw new NotFoundException('Daily plan not found or you do not have permission to access it');
 				}
 
 				// Step 3: Access verified → Fetch full data with bypass
@@ -348,20 +336,15 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					select: ['id', 'organizationTeamId']
 				});
 
-				if (!planTeamInfo) {
-					throw new NotFoundException('Daily plan not found');
-				}
-
 				// Step 2: Check if current user can manage this employee in this team
-				const canManage = await this._managedEmployeeService.canManageEmployee(
-					employeeId,
-					planTeamInfo.organizationTeamId
-				);
+				// Note: We check permissions even if plan doesn't exist to avoid leaking information
+				// about which plan IDs exist in the system
+				const canManage =
+					planTeamInfo &&
+					(await this._managedEmployeeService.canManageEmployee(employeeId, planTeamInfo.organizationTeamId));
 
-				if (!canManage) {
-					throw new ForbiddenException(
-						`You do not have permission to manage daily plans for employee ${employeeId}`
-					);
+				if (!planTeamInfo || !canManage) {
+					throw new NotFoundException('Daily plan not found or you do not have permission to access it');
 				}
 
 				// Step 3: Access verified → Fetch full data with bypass
@@ -519,20 +502,15 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					select: ['id', 'organizationTeamId']
 				});
 
-				if (!planTeamInfo) {
-					throw new NotFoundException('Daily plan not found');
-				}
-
 				// Step 2: Check if current user can manage this employee in this team
-				const canManage = await this._managedEmployeeService.canManageEmployee(
-					employeeId,
-					planTeamInfo.organizationTeamId
-				);
+				// Note: We check permissions even if plan doesn't exist to avoid leaking information
+				// about which plan IDs exist in the system
+				const canManage =
+					planTeamInfo &&
+					(await this._managedEmployeeService.canManageEmployee(employeeId, planTeamInfo.organizationTeamId));
 
-				if (!canManage) {
-					throw new ForbiddenException(
-						`You do not have permission to manage daily plans for employee ${employeeId}`
-					);
+				if (!planTeamInfo || !canManage) {
+					throw new NotFoundException('Daily plan not found or you do not have permission to access it');
 				}
 
 				// Step 3: Access verified → Fetch full data with bypass
