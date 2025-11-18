@@ -66,6 +66,50 @@ export interface IPluginSubscriptionPlan extends BaseEntityModel {
 
 	// Subscriptions using this plan
 	subscriptions?: IPluginSubscription[];
+
+	// ==========================================
+	// COMPUTED PROPERTIES AND HELPER METHODS
+	// ==========================================
+
+	/**
+	 * Check if the plan is free
+	 */
+	readonly isFree: boolean;
+
+	/**
+	 * Check if the plan offers a trial
+	 */
+	readonly hasTrial: boolean;
+
+	/**
+	 * Get the effective price (with discount applied)
+	 */
+	readonly effectivePrice: number;
+
+	/**
+	 * Get discount amount
+	 */
+	readonly discountAmount: number;
+
+	/**
+	 * Get total price including setup fee
+	 */
+	readonly totalPrice: number;
+
+	/**
+	 * Check if plan has any limitations
+	 */
+	readonly hasLimitations: boolean;
+
+	/**
+	 * Get formatted price string
+	 */
+	getFormattedPrice(): string;
+
+	/**
+	 * Get billing period display text
+	 */
+	getBillingPeriodText(): string;
 }
 
 /**
