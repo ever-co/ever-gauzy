@@ -259,8 +259,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			});
 
 			// Step 2: Check if current user can manage this employee in this team
-			// Note: We check permissions even if plan doesn't exist to avoid leaking information
-			// about which plan IDs exist in the system
+			// Note: We throw the same generic error whether the plan doesn't exist or the user lacks permission
+			// to avoid leaking information about which plan IDs exist in the system
 			const canManage =
 				planTeamInfo &&
 				(await this._managedEmployeeService.canManageEmployee(employeeId, planTeamInfo.organizationTeamId));
