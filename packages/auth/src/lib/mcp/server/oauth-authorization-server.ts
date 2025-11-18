@@ -335,6 +335,7 @@ export class OAuth2AuthorizationServer {
 		let baseUrlOrigin: string;
 		try {
 			baseUrlOrigin = new URL(this.config.baseUrl).origin;
+			this.securityLogger.debug(`CSP baseUrlOrigin: ${baseUrlOrigin}`);
 		} catch (error) {
 			this.securityLogger.error('Invalid baseUrl in configuration', { baseUrl: this.config.baseUrl, error });
 			throw new Error(`Failed to parse baseUrl: ${this.config.baseUrl}`);
@@ -344,13 +345,13 @@ export class OAuth2AuthorizationServer {
 			contentSecurityPolicy: {
 				directives: {
 					defaultSrc: ["'self'"],
-					styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-					fontSrc: ["'self'", "https://fonts.gstatic.com"],
+					styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
+					fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
 					imgSrc: ["'self'", "data:", "https:"],
-					scriptSrc: serverConfig.environment !== 'production'
-						? ["'self'", "'unsafe-inline'"]
-						: ["'self'", "https://static.cloudflareinsights.com"],
-					connectSrc: ["'self'", "https://cloudflareinsights.com"],
+					scriptSrc:  serverConfig.environment === 'production'
+						? ["'self'", "'unsafe-inline'", "https://static.cloudflareinsights.com"]
+						:["'self'", "https://static.cloudflareinsights.com"],
+					connectSrc: ["'self'", "https://cloudflareinsights.com", "https://cdn.jsdelivr.net"],
 					objectSrc: ["'none'"],
 					baseUri: ["'self'"],
 					formAction: ["'self'", baseUrlOrigin],
