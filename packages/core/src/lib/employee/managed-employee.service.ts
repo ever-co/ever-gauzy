@@ -139,6 +139,161 @@ export class ManagedEmployeeService {
 	}
 
 	/**
+	 * Checks if the current employee can manage a specific target employee.
+	 *
+	 * This method verifies access based on:
+	 * 1. Global permissions (CHANGE_SELECTED_EMPLOYEE)
+	 * 2. Self-access (currentEmployeeId === targetEmployeeId)
+	 * 3. Manager status in the specified team (if organizationTeamId provided)
+	 *
+	 * @param targetEmployeeId - The employee ID to check access for
+	 * @param organizationTeamId - Optional team ID to check manager status
+	 * @returns true if the current employee can manage the target employee
+	 */
+	async canManageEmployee(targetEmployeeId: ID, organizationTeamId?: ID): Promise<boolean> {
+		const user = RequestContext.currentUser();
+		const currentEmployeeId = user?.employeeId;
+
+		// Case 1: User has global permission to change selected employee
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return true;
+		}
+
+		// Case 2: No employeeId (user not logged in as employee)
+		if (!currentEmployeeId) {
+			return false;
+		}
+
+		// Case 3: User is accessing their own data
+		if (currentEmployeeId === targetEmployeeId) {
+			return true;
+		}
+
+		// Case 4: Check if user is manager of the target employee in the specified team
+		if (organizationTeamId) {
+			const tenantId = RequestContext.currentTenantId();
+
+			if (!tenantId) {
+				return false;
+			}
+
+			// Check if current user is manager of this team
+			const isManagerOfTeam = await this.typeOrmTeamEmployeeRepository.existsBy({
+				employeeId: currentEmployeeId,
+				organizationTeamId: organizationTeamId,
+				isManager: true,
+				isActive: true,
+				isArchived: false,
+				tenantId
+			});
+
+			if (!isManagerOfTeam) {
+				return false;
+			}
+
+			// Check if target employee is member of this team
+			const isTargetMemberOfTeam = await this.typeOrmTeamEmployeeRepository.existsBy({
+				employeeId: targetEmployeeId,
+				organizationTeamId: organizationTeamId,
+				isActive: true,
+				isArchived: false,
+				tenantId
+			});
+
+			return isTargetMemberOfTeam;
+		}
+
+		// Case 5: No team context provided → No access
+		return false;
+	}
+
+	/**
+	 * Checks if the current employee can manage ALL specified employees.
+	 *
+	 * This method verifies that the current user can manage every employee in the provided list.
+	 * It checks against the specified teams (if provided).
+	 *
+	 * @param targetEmployeeIds - Array of employee IDs to check access for
+	 * @param organizationTeamIds - Optional array of team IDs to check manager status
+	 * @returns true if the current employee can manage ALL target employees
+	 */
+	async canManageEmployees(targetEmployeeIds: ID[], organizationTeamIds?: ID[]): Promise<boolean> {
+		// No employees to check → return true
+		if (!isNotEmpty(targetEmployeeIds)) {
+			return true;
+		}
+
+		// Check each employee
+		for (const targetEmployeeId of targetEmployeeIds) {
+			// Check if user can manage this employee in at least one of the specified teams
+			let canManageThisEmployee = false;
+
+			if (isNotEmpty(organizationTeamIds)) {
+				// Check against specified teams
+				for (const teamId of organizationTeamIds) {
+					if (await this.canManageEmployee(targetEmployeeId, teamId)) {
+						canManageThisEmployee = true;
+						break;
+					}
+				}
+			} else {
+				// No teams specified → Check if user manages this employee in ANY team
+				canManageThisEmployee = await this.canManageEmployeeInAnyTeam(targetEmployeeId);
+			}
+
+			if (!canManageThisEmployee) {
+				return false; // At least one employee cannot be managed
+			}
+		}
+
+		return true; // All employees can be managed
+	}
+
+	/**
+	 * Checks if the current employee can manage a target employee in ANY team.
+	 *
+	 * @param targetEmployeeId - The employee ID to check access for
+	 * @returns true if the current employee manages the target employee in at least one team
+	 */
+	private async canManageEmployeeInAnyTeam(targetEmployeeId: ID): Promise<boolean> {
+		const currentEmployeeId = RequestContext.currentEmployeeId();
+		const tenantId = RequestContext.currentTenantId();
+
+		if (!currentEmployeeId || !tenantId) {
+			return false;
+		}
+
+		// Get all teams where current user is manager
+		const managedTeams = await this.typeOrmTeamEmployeeRepository.find({
+			where: {
+				employeeId: currentEmployeeId,
+				isManager: true,
+				isActive: true,
+				isArchived: false,
+				tenantId
+			},
+			select: ['organizationTeamId']
+		});
+
+		if (!isNotEmpty(managedTeams)) {
+			return false;
+		}
+
+		const managedTeamIds = managedTeams.map((t) => t.organizationTeamId);
+
+		// Check if target employee is member of any of these teams
+		const isTargetMember = await this.typeOrmTeamEmployeeRepository.existsBy({
+			employeeId: targetEmployeeId,
+			organizationTeamId: In(managedTeamIds),
+			isActive: true,
+			isArchived: false,
+			tenantId
+		});
+
+		return isTargetMember;
+	}
+
+	/**
 	 * Gets all employeeIds who are members of the specified teams and/or projects.
 	 *
 	 * @param teamIds - The teamIds to get members from

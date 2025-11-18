@@ -47,7 +47,6 @@ import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repos
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationProjectRepository } from '../../organization-project/repository/type-orm-organization-project.repository';
 import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
-import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TimeLog } from './time-log.entity';
 
 @Injectable()
@@ -58,8 +57,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
 		readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
-		private readonly commandBus: CommandBus,
-		private readonly managedEmployeeService: ManagedEmployeeService
+		private readonly commandBus: CommandBus
 	) {
 		super(typeOrmTimeLogRepository, mikroOrmTimeLogRepository);
 	}
@@ -70,9 +68,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns A Promise that resolves to an array of time logs.
 	 */
 	async getTimeLogs(request: IGetTimeLogReportInput): Promise<ITimeLog[]> {
-		// Filter accessible employeeIds based on manager status and permissions
-		const filteredEmployeeIds = await this.filterEmployeeIds(request);
-
 		// Create a query builder for the TimeLog entity
 		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
@@ -116,7 +111,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// Set up the where clause using the provided filter function
 		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request, filteredEmployeeIds);
+			this.getFilterTimeLogQuery(qb, request);
 		});
 
 		const timeLogs = await query.getMany();
@@ -131,9 +126,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns A Promise that resolves to an array of weekly report data.
 	 */
 	async getWeeklyReport(request: IGetTimeLogReportInput) {
-		// Filter accessible employeeIds based on manager status and permissions
-		const filteredEmployeeIds = await this.filterEmployeeIds(request);
-
 		// Create a query builder for the TimeLog entity
 		const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
@@ -181,7 +173,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 		// Apply additional conditions to the query based on request filters
 		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request, filteredEmployeeIds);
+			this.getFilterTimeLogQuery(qb, request);
 		});
 
 		// Execute the query and retrieve time logs
@@ -237,9 +229,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns An array of daily time log chart reports.
 	 */
 	async getDailyReportCharts(request: IGetTimeLogReportInput) {
-		// Filter accessible employeeIds based on manager status and permissions
-		const filteredEmployeeIds = await this.filterEmployeeIds(request);
-
 		// Create a query builder for the TimeLog entity
 		const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
@@ -256,7 +245,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 		// Apply additional conditions to the query based on request filters
 		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request, filteredEmployeeIds);
+			this.getFilterTimeLogQuery(qb, request);
 		});
 
 		// Execute the query and retrieve time logs
@@ -312,9 +301,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns A report containing time logs grouped by specified filters.
 	 */
 	async getDailyReport(request: IGetTimeLogReportInput) {
-		// Filter accessible employeeIds based on manager status and permissions
-		const filteredEmployeeIds = await this.filterEmployeeIds(request);
-
 		// Extract timezone from the request
 		const { timeZone } = request;
 
@@ -387,7 +373,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 		// Apply additional conditions to the query based on request filters
 		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request, filteredEmployeeIds);
+			this.getFilterTimeLogQuery(qb, request);
 		});
 
 		// Execute the query and retrieve time logs
@@ -420,9 +406,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns A Promise that resolves to an array of owed amount report data.
 	 */
 	async getOwedAmountReport(request: IGetTimeLogReportInput): Promise<IAmountOwedReport[]> {
-		// Filter accessible employeeIds based on manager status and permissions
-		const filteredEmployeeIds = await this.filterEmployeeIds(request);
-
 		// Extract timezone from the request
 		const { timeZone } = request;
 
@@ -464,7 +447,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// Apply additional conditions to the query based on request filters
 		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request, filteredEmployeeIds);
+			this.getFilterTimeLogQuery(qb, request);
 		});
 
 		// Execute the query and retrieve time logs
@@ -507,9 +490,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns An array of owed amount report chart data.
 	 */
 	async getOwedAmountReportCharts(request: IGetTimeLogReportInput) {
-		// Filter accessible employeeIds based on manager status and permissions
-		const filteredEmployeeIds = await this.filterEmployeeIds(request);
-
 		// Step 1: Create a query builder for the TimeLog entity
 		const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
@@ -547,7 +527,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 		// Apply additional conditions to the query based on request filters
 		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request, filteredEmployeeIds);
+			this.getFilterTimeLogQuery(qb, request);
 		});
 
 		// Execute the query and retrieve time logs
@@ -605,9 +585,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns An array of ITimeLimitReport containing information about time limits and durations for each date and employee.
 	 */
 	async getTimeLimit(request: IGetTimeLimitReportInput) {
-		// Filter accessible employeeIds based on manager status and permissions
-		const filteredEmployeeIds = await this.filterEmployeeIds(request);
-
 		// Set a default duration ('day') if not provided in the request.
 		if (!request.duration) {
 			request.duration = 'day';
@@ -650,7 +627,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 		// Apply additional conditions to the query based on request filters
 		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request, filteredEmployeeIds);
+			this.getFilterTimeLogQuery(qb, request);
 		});
 
 		// Execute the query and retrieve time logs
@@ -718,10 +695,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns An array of project budget limit report data.
 	 */
 	async getProjectBudgetLimit(request: IGetTimeLogReportInput) {
-		// Filter accessible employeeIds based on manager status and permissions
-		const filteredEmployeeIds = await this.filterEmployeeIds(request);
-
-		const { organizationId, projectIds = [], startDate, endDate } = request;
+		const { organizationId, employeeIds = [], projectIds = [], startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		// Step 1: Create a query builder for the OrganizationProject entity
@@ -765,9 +739,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				qb.andWhere(p(`"employee"."tenantId" =:tenantId`), {
 					tenantId
 				});
-				if (isNotEmpty(filteredEmployeeIds)) {
+				if (isNotEmpty(employeeIds)) {
 					qb.andWhere(p(`"employee"."id" IN (:...employeeIds)`), {
-						employeeIds: filteredEmployeeIds
+						employeeIds
 					});
 				}
 			})
@@ -786,9 +760,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					endDate: end
 				});
 
-				if (isNotEmpty(filteredEmployeeIds)) {
+				if (isNotEmpty(employeeIds)) {
 					qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
-						employeeIds: filteredEmployeeIds
+						employeeIds
 					});
 				}
 				if (isNotEmpty(projectIds)) {
@@ -849,10 +823,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns The client budget limit report.
 	 */
 	async getClientBudgetLimit(request: IGetTimeLogReportInput) {
-		// Filter accessible employeeIds based on manager status and permissions
-		const filteredEmployeeIds = await this.filterEmployeeIds(request);
-
-		const { organizationId, projectIds = [], startDate, endDate } = request;
+		const { organizationId, employeeIds = [], projectIds = [], startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
 
 		// Step 1: Create a query builder for the OrganizationClient entity
@@ -887,8 +858,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				qb.andWhere(p(`"employee"."organizationId" =:organizationId`), { organizationId });
 				qb.andWhere(p(`"employee"."tenantId" =:tenantId`), { tenantId });
 
-				if (isNotEmpty(filteredEmployeeIds)) {
-					qb.andWhere(p(`"employee"."id" IN (:...employeeIds)`), { employeeIds: filteredEmployeeIds });
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(p(`"employee"."id" IN (:...employeeIds)`), { employeeIds });
 				}
 			})
 		);
@@ -903,9 +874,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					endDate: end
 				});
 
-				if (isNotEmpty(filteredEmployeeIds)) {
+				if (isNotEmpty(employeeIds)) {
 					qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
-						employeeIds: filteredEmployeeIds
+						employeeIds
 					});
 				}
 
@@ -951,38 +922,30 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
-	 * Helper method to filter accessible employeeIds based on manager status and permissions.
-	 * This method should be called before building queries to ensure proper access control.
-	 *
-	 * @param request - The request containing employeeIds, teamIds, projectIds, and onlyMe flag
-	 * @returns Promise resolving to filtered employeeIds
-	 */
-	private async filterEmployeeIds(request: IGetTimeLogReportInput): Promise<ID[]> {
-		return this.managedEmployeeService.filterAccessibleEmployeeIds(
-			request.employeeIds || [],
-			request.teamIds || [],
-			request.projectIds || [],
-			request.onlyMe
-		);
-	}
-
-	/**
 	 * Modifies the provided query to filter TimeLogs based on the given criteria.
 	 * @param query - The query to be modified.
 	 * @param request - The criteria for filtering TimeLogs.
-	 * @param filteredEmployeeIds - Pre-filtered employeeIds (optional, will be calculated if not provided)
 	 * @returns The modified query.
 	 */
-	getFilterTimeLogQuery(
-		query: SelectQueryBuilder<TimeLog>,
-		request: IGetTimeLogReportInput,
-		filteredEmployeeIds?: ID[]
-	) {
+	getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogReportInput) {
 		const { organizationId, projectIds = [], teamIds = [], taskIds = [] } = request;
-		// Use pre-filtered employeeIds if provided, otherwise use request employeeIds
-		const employeeIds = filteredEmployeeIds !== undefined ? filteredEmployeeIds : request.employeeIds || [];
+		let { employeeIds = [] } = request;
 
 		const tenantId = RequestContext.currentTenantId();
+		const user = RequestContext.currentUser();
+
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		// Set employeeIds based on permissions and request
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+			employeeIds = [user.employeeId];
+		}
 
 		// Filters records based on the timesheetId.
 		if (isNotEmpty(request.timesheetId)) {

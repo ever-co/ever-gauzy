@@ -1,11 +1,4 @@
-import {
-	BadRequestException,
-	ForbiddenException,
-	HttpException,
-	HttpStatus,
-	Injectable,
-	NotFoundException
-} from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { SelectQueryBuilder, UpdateResult } from 'typeorm';
 import {
 	ID,
@@ -21,7 +14,6 @@ import { prepareSQLQuery as p } from '../../database/database.helper';
 import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context/request-context';
 import { EmployeeService } from '../../employee/employee.service';
-import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TaskService } from '../task.service';
 import { DailyPlan } from './daily-plan.entity';
 import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
@@ -33,31 +25,9 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		protected readonly typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
 		protected readonly mikroOrmDailyPlanRepository: MikroOrmDailyPlanRepository,
 		private readonly _employeeService: EmployeeService,
-		private readonly _taskService: TaskService,
-		private readonly managedEmployeeService: ManagedEmployeeService
+		private readonly _taskService: TaskService
 	) {
 		super(typeOrmDailyPlanRepository, mikroOrmDailyPlanRepository);
-	}
-
-	/**
-	 * Checks if the current user has access to the specified employee's data.
-	 * Throws ForbiddenException if access is denied.
-	 *
-	 * @param targetEmployeeId - The employee ID to check access for
-	 * @param teamIds - Optional team IDs for manager access verification
-	 * @param projectIds - Optional project IDs for manager access verification
-	 * @throws ForbiddenException if user doesn't have access
-	 */
-	private async checkEmployeeAccess(targetEmployeeId: ID, teamIds: ID[] = [], projectIds: ID[] = []): Promise<void> {
-		const accessibleIds = await this.managedEmployeeService.filterAccessibleEmployeeIds(
-			[targetEmployeeId],
-			teamIds,
-			projectIds
-		);
-
-		if (!accessibleIds.includes(targetEmployeeId)) {
-			throw new ForbiddenException(`You do not have permission to access data for employee ${targetEmployeeId}`);
-		}
 	}
 
 	/**
@@ -252,34 +222,24 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, taskId, organizationId } = input;
 
-			// Check if current user has access to this employee's data
-			await this.checkEmployeeAccess(employeeId);
-
-			// Fetch the daily plan WITHOUT automatic employeeId filtering
-			const dailyPlan = await this.withoutEmployeeFilter(async () => {
-				return await this.typeOrmDailyPlanRepository.findOne({
-					where: {
-						id: planId,
-						employeeId,
-						tenantId,
-						organizationId
-					},
-					relations: { tasks: true }
-				});
+			// Fetch the daily plan with the given conditions
+			const dailyPlan = await this.findOneByIdString(planId, {
+				where: {
+					employeeId,
+					tenantId,
+					organizationId
+				},
+				relations: { tasks: true } // Ensure we get the existing tasks
 			});
 
 			if (!dailyPlan) {
-				throw new NotFoundException('Daily plan not found');
+				throw new BadRequestException('Daily plan not found');
 			}
 
 			// Fetch the task to be added
 			const taskToAdd = await this._taskService.findOneByIdString(taskId, {
 				where: { organizationId, tenantId }
 			});
-
-			if (!taskToAdd) {
-				throw new NotFoundException('Task not found');
-			}
 
 			// Add the new task to the daily plan's tasks array
 			dailyPlan.tasks.push(taskToAdd);
@@ -303,24 +263,17 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, taskId, organizationId } = input;
 
-			// Check if current user has access to this employee's data
-			await this.checkEmployeeAccess(employeeId);
-
-			// Fetch the daily plan WITHOUT automatic employeeId filtering
-			const dailyPlan = await this.withoutEmployeeFilter(async () => {
-				return await this.typeOrmDailyPlanRepository.findOne({
-					where: {
-						id: planId,
-						employeeId,
-						tenantId,
-						organizationId
-					},
-					relations: { tasks: true }
-				});
+			const dailyPlan = await this.findOneByIdString(planId, {
+				where: {
+					employeeId,
+					tenantId,
+					organizationId
+				},
+				relations: { tasks: true } // Include the existing tasks for the daily plan
 			});
 
 			if (!dailyPlan) {
-				throw new NotFoundException('Daily plan not found');
+				throw new BadRequestException('Daily plan not found');
 			}
 
 			// Get task to be removed
@@ -329,7 +282,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			});
 
 			if (!taskToRemove) {
-				throw new NotFoundException('The task to remove not found');
+				throw new BadRequestException('The task to remove not found');
 			}
 
 			// Remove the task form the daily plan's tasks array
@@ -433,24 +386,18 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			// Get the tenant ID from the current Request
 			const currentTenantId = RequestContext.currentTenantId();
 
-			// Check if current user has access to this employee's data
-			await this.checkEmployeeAccess(employeeId);
-
-			// Fetch the daily plan WITHOUT automatic employeeId filtering
-			const dailyPlan = await this.withoutEmployeeFilter(async () => {
-				return await this.typeOrmDailyPlanRepository.findOne({
-					where: {
-						id,
-						employeeId,
-						tenantId: currentTenantId,
-						organizationId
-					},
-					relations: { tasks: true }
-				});
+			// Fetch the daily plan to update
+			const dailyPlan = await this.findOneByIdString(id, {
+				where: {
+					employeeId,
+					tenantId: currentTenantId,
+					organizationId
+				},
+				relations: { tasks: true }
 			});
 
 			if (!dailyPlan) {
-				throw new NotFoundException('Daily plan not found');
+				throw new BadRequestException('Daily plan not found');
 			}
 
 			// Return the updated daily plan
