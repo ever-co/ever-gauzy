@@ -185,6 +185,227 @@ export interface IPluginTenant extends IBasePerTenantAndOrganizationEntityModel 
 	 * Percentage of user quota used (0-100)
 	 */
 	userUtilization?: number;
+
+	/*
+	|--------------------------------------------------------------------------
+	| Business Logic Methods - Availability & Access Control
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Check if plugin is available for use in this tenant
+	 * @returns true if plugin is enabled
+	 */
+	isAvailable?(): boolean;
+
+	/**
+	 * Check if user has access to this plugin based on roles and explicit permissions
+	 * @param userId - User ID to check
+	 * @param userRoles - Array of roles the user has
+	 * @returns true if user has access
+	 */
+	hasUserAccess?(userId: string, userRoles: IRole[]): boolean;
+
+	/**
+	 * Check if tenant can install more instances based on quota
+	 * @returns true if more installations are allowed
+	 */
+	canInstallMore?(): boolean;
+
+	/**
+	 * Check if tenant can add more active users based on quota
+	 * @returns true if more users can be added
+	 */
+	canAddMoreUsers?(): boolean;
+
+	/**
+	 * Check if plugin is mandatory for users in this tenant
+	 * @returns true if plugin is mandatory and available
+	 */
+	isMandatoryForTenant?(): boolean;
+
+	/**
+	 * Check if plugin requires approval for installation
+	 * @returns true if approval is required
+	 */
+	needsApprovalForInstallation?(): boolean;
+
+	/**
+	 * Check if plugin can be auto-installed
+	 * @returns true if auto-install is enabled and requirements are met
+	 */
+	canAutoInstall?(): boolean;
+
+	/*
+	|--------------------------------------------------------------------------
+	| Configuration Management Methods
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Get effective configuration for this plugin tenant
+	 * @returns Merged configuration object
+	 */
+	getEffectiveConfiguration?(): Record<string, any>;
+
+	/**
+	 * Update tenant-specific configuration (merges with existing)
+	 * @param config - Configuration object to merge
+	 */
+	updateConfiguration?(config: Record<string, any>): void;
+
+	/**
+	 * Replace entire tenant configuration
+	 * @param config - New configuration object
+	 */
+	setConfiguration?(config: Record<string, any>): void;
+
+	/**
+	 * Update tenant preferences (merges with existing)
+	 * @param prefs - Preferences object to merge
+	 */
+	updatePreferences?(prefs: Record<string, any>): void;
+
+	/**
+	 * Replace entire preferences
+	 * @param prefs - New preferences object
+	 */
+	setPreferences?(prefs: Record<string, any>): void;
+
+	/*
+	|--------------------------------------------------------------------------
+	| Usage Tracking Methods
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Increment installation count
+	 * @throws Error if quota would be exceeded
+	 */
+	incrementInstallations?(): void;
+
+	/**
+	 * Decrement installation count (safely prevents negative values)
+	 */
+	decrementInstallations?(): void;
+
+	/**
+	 * Increment active user count
+	 * @throws Error if quota would be exceeded
+	 */
+	incrementActiveUsers?(): void;
+
+	/**
+	 * Decrement active user count (safely prevents negative values)
+	 */
+	decrementActiveUsers?(): void;
+
+	/**
+	 * Reset usage counters to zero
+	 */
+	resetUsageCounters?(): void;
+
+	/*
+	|--------------------------------------------------------------------------
+	| State Management Methods
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Enable plugin for tenant
+	 */
+	enable?(): void;
+
+	/**
+	 * Disable plugin for tenant
+	 */
+	disable?(): void;
+
+	/**
+	 * Toggle plugin enabled state
+	 * @returns New enabled state
+	 */
+	toggleEnabled?(): boolean;
+
+	/**
+	 * Approve plugin for tenant
+	 * @param approvedBy - User who approved the plugin
+	 */
+	approve?(approvedBy: IUser): void;
+
+	/**
+	 * Revoke approval for plugin
+	 */
+	revokeApproval?(): void;
+
+	/**
+	 * Check if plugin is approved
+	 * @returns true if plugin has been approved
+	 */
+	isApproved?(): boolean;
+
+	/*
+	|--------------------------------------------------------------------------
+	| Access Control Management Methods - Users
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Add user to allowed list
+	 * @param user - User to allow
+	 */
+	allowUser?(user: IUser): void;
+
+	/**
+	 * Remove user from allowed list
+	 * @param userId - ID of user to remove from allowed list
+	 */
+	removeAllowedUser?(userId: string): void;
+
+	/**
+	 * Add user to denied list
+	 * @param user - User to deny
+	 */
+	denyUser?(user: IUser): void;
+
+	/**
+	 * Remove user from denied list
+	 * @param userId - ID of user to remove from denied list
+	 */
+	removeDeniedUser?(userId: string): void;
+
+	/**
+	 * Clear all user-specific access controls
+	 */
+	clearUserAccessControls?(): void;
+
+	/*
+	|--------------------------------------------------------------------------
+	| Access Control Management Methods - Roles
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Add role to allowed list
+	 * @param role - Role to allow
+	 */
+	allowRole?(role: IRole): void;
+
+	/**
+	 * Remove role from allowed list
+	 * @param roleId - ID of role to remove
+	 */
+	removeAllowedRole?(roleId: string): void;
+
+	/**
+	 * Clear all role-based access controls
+	 */
+	clearRoleAccessControls?(): void;
+
+	/**
+	 * Clear all access controls (both users and roles)
+	 */
+	clearAllAccessControls?(): void;
 }
 
 /**
