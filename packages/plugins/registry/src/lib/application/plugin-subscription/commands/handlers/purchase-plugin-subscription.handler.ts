@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginSubscriptionService } from '../../../../domain';
 import { IPluginSubscription } from '../../../../shared';
@@ -21,19 +20,5 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 	 */
 	async execute(command: PurchasePluginSubscriptionCommand): Promise<IPluginSubscription> {
 		const { purchaseDto, tenantId, organizationId, userId } = command;
-
-		try {
-			// Purchase the subscription with automatic scope determination and status handling
-			const subscription = await this.pluginSubscriptionService.purchaseSubscription(
-				purchaseDto,
-				tenantId,
-				organizationId,
-				userId
-			);
-
-			return subscription;
-		} catch (error) {
-			throw new BadRequestException(`Failed to purchase plugin subscription: ${error.message}`);
-		}
 	}
 }
