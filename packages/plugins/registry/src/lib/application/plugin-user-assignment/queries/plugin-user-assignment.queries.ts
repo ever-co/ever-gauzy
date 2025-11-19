@@ -7,7 +7,13 @@ import { IQuery } from '@nestjs/cqrs';
 export class GetPluginUserAssignmentsQuery implements IQuery {
 	public static readonly type = '[Plugin User Assignment] Get Plugin User Assignments';
 
-	constructor(public readonly pluginId: ID, public readonly tenantId: ID, public readonly organizationId?: ID) {}
+	constructor(
+		public readonly pluginId: ID,
+		public readonly tenantId: ID,
+		public readonly organizationId?: ID,
+		public readonly skip?: number,
+		public readonly take?: number
+	) {}
 }
 
 /**
@@ -16,7 +22,13 @@ export class GetPluginUserAssignmentsQuery implements IQuery {
 export class GetUserPluginAssignmentsQuery implements IQuery {
 	public static readonly type = '[Plugin User Assignment] Get User Plugin Assignments';
 
-	constructor(public readonly userId: ID, public readonly tenantId: ID, public readonly organizationId?: ID) {}
+	constructor(
+		public readonly userId: ID,
+		public readonly tenantId: ID,
+		public readonly organizationId?: ID,
+		public readonly skip?: number,
+		public readonly take?: number
+	) {}
 }
 
 /**
@@ -39,5 +51,10 @@ export class CheckUserPluginAccessQuery implements IQuery {
 export class GetAllPluginUserAssignmentsQuery implements IQuery {
 	public static readonly type = '[Plugin User Assignment] Get All Plugin User Assignments';
 
-	constructor(public readonly tenantId: ID, public readonly organizationId?: ID) {}
+	constructor(
+		public readonly tenantId: ID,
+		public readonly organizationId?: ID,
+		public readonly skip?: number,
+		public readonly take?: number
+	) {}
 }

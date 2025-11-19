@@ -1,3 +1,4 @@
+import { IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, FindOptionsWhere } from 'typeorm';
@@ -120,18 +121,27 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 	 *
 	 * @param pluginId - The plugin ID
 	 * @param relations - Optional relations to include
-	 * @returns Array of plugin tenants
+	 * @param skip - Number of records to skip (for pagination)
+	 * @param take - Number of records to take (for pagination)
+	 * @returns IPagination of plugin tenants
 	 */
-	async findByPluginId(pluginId: string, relations: string[] = []): Promise<IPluginTenant[]> {
+	async findByPluginId(
+		pluginId: string,
+		relations: string[] = [],
+		skip?: number,
+		take?: number
+	): Promise<IPagination<IPluginTenant>> {
 		this.validatePluginId(pluginId);
 
 		const result = await this.findAll({
 			where: { pluginId },
 			relations,
-			order: { createdAt: 'DESC' }
+			order: { createdAt: 'DESC' },
+			...(skip !== undefined && { skip }),
+			...(take !== undefined && { take })
 		} as FindManyOptions);
 
-		return result.items || [];
+		return result;
 	}
 
 	/**
@@ -140,13 +150,17 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 	 * @param tenantId - The tenant ID
 	 * @param organizationId - Optional organization ID
 	 * @param relations - Optional relations to include
-	 * @returns Array of plugin tenants
+	 * @param skip - Number of records to skip (for pagination)
+	 * @param take - Number of records to take (for pagination)
+	 * @returns IPagination of plugin tenants
 	 */
 	async findByTenantId(
 		tenantId: string,
 		organizationId?: string,
-		relations: string[] = []
-	): Promise<IPluginTenant[]> {
+		relations: string[] = [],
+		skip?: number,
+		take?: number
+	): Promise<IPagination<IPluginTenant>> {
 		this.validateTenantId(tenantId);
 
 		const where: FindOptionsWhere<PluginTenant> = { tenantId };
@@ -157,10 +171,12 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 		const result = await this.findAll({
 			where,
 			relations,
-			order: { createdAt: 'DESC' }
+			order: { createdAt: 'DESC' },
+			...(skip !== undefined && { skip }),
+			...(take !== undefined && { take })
 		} as FindManyOptions);
 
-		return result.items || [];
+		return result;
 	}
 
 	/**

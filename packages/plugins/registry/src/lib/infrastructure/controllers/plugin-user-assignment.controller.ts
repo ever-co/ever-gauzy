@@ -1,16 +1,17 @@
-import { ID } from '@gauzy/contracts';
-import { UUIDValidationPipe } from '@gauzy/core';
-import { Body, Controller, Delete, Get, HttpStatus, Param, Post, ValidationPipe } from '@nestjs/common';
+import { ID, IPagination } from '@gauzy/contracts';
+import { RequestContext, UUIDValidationPipe } from '@gauzy/core';
+import { Body, Controller, Delete, Get, HttpStatus, Param, Post, Query, ValidationPipe } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	AssignUsersToPluginCommand,
 	CheckUserPluginAccessQuery,
+	GetAllPluginUserAssignmentsQuery,
 	GetPluginUserAssignmentsQuery,
 	GetUserPluginAssignmentsQuery,
 	UnassignUsersFromPluginCommand
 } from '../../application';
-import { AssignPluginUsersDTO, UnassignPluginUsersDTO } from '../../shared';
+import { AssignPluginUsersDTO, IPluginTenant, UnassignPluginUsersDTO } from '../../shared';
 
 /**
  * Plugin User Assignment Controller
@@ -30,13 +31,20 @@ export class PluginUserAssignmentController {
 		description: 'Retrieve all users assigned to a specific plugin.'
 	})
 	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: 'string', format: 'uuid' })
+	@ApiQuery({ name: 'skip', description: 'Number of records to skip', required: false, type: 'number' })
+	@ApiQuery({ name: 'take', description: 'Number of records to take', required: false, type: 'number' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Successfully retrieved plugin user assignments'
 	})
-	async getPluginUserAssignments(@Param('pluginId', UUIDValidationPipe) pluginId: ID): Promise<any> {
-		// TODO: Get tenantId and organizationId from request context
-		return this.queryBus.execute(new GetPluginUserAssignmentsQuery(pluginId, null, null));
+	async getPluginUserAssignments(
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
+		@Query('skip') skip?: number,
+		@Query('take') take?: number
+	): Promise<any> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		return this.queryBus.execute(new GetPluginUserAssignmentsQuery(pluginId, tenantId, organizationId, skip, take));
 	}
 
 	/**
@@ -57,9 +65,10 @@ export class PluginUserAssignmentController {
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
 		@Body(new ValidationPipe({ transform: true })) assignDto: AssignPluginUsersDTO
 	): Promise<any> {
-		// TODO: Get tenantId and organizationId from request context
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
 		return this.commandBus.execute(
-			new AssignUsersToPluginCommand(pluginId, assignDto.userIds, null, null, assignDto.reason)
+			new AssignUsersToPluginCommand(pluginId, assignDto.userIds, tenantId, organizationId, assignDto.reason)
 		);
 	}
 
@@ -81,9 +90,16 @@ export class PluginUserAssignmentController {
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
 		@Body(new ValidationPipe({ transform: true })) unassignDto: UnassignPluginUsersDTO
 	): Promise<any> {
-		// TODO: Get tenantId and organizationId from request context
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
 		return this.commandBus.execute(
-			new UnassignUsersFromPluginCommand(pluginId, unassignDto.userIds, null, null, unassignDto.reason)
+			new UnassignUsersFromPluginCommand(
+				pluginId,
+				unassignDto.userIds,
+				tenantId,
+				organizationId,
+				unassignDto.reason
+			)
 		);
 	}
 }
@@ -106,13 +122,20 @@ export class UserPluginAssignmentController {
 		description: 'Retrieve all plugins assigned to a specific user.'
 	})
 	@ApiParam({ name: 'userId', description: 'User ID', type: 'string', format: 'uuid' })
+	@ApiQuery({ name: 'skip', description: 'Number of records to skip', required: false, type: 'number' })
+	@ApiQuery({ name: 'take', description: 'Number of records to take', required: false, type: 'number' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Successfully retrieved user plugin assignments'
 	})
-	async getUserPluginAssignments(@Param('userId', UUIDValidationPipe) userId: ID): Promise<any> {
-		// TODO: Get tenantId and organizationId from request context
-		return this.queryBus.execute(new GetUserPluginAssignmentsQuery(userId, null, null));
+	async getUserPluginAssignments(
+		@Param('userId', UUIDValidationPipe) userId: ID,
+		@Query('skip') skip?: number,
+		@Query('take') take?: number
+	): Promise<IPagination<IPluginTenant>> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		return this.queryBus.execute(new GetUserPluginAssignmentsQuery(userId, tenantId, organizationId, skip, take));
 	}
 
 	/**
@@ -133,8 +156,9 @@ export class UserPluginAssignmentController {
 		@Param('userId', UUIDValidationPipe) userId: ID,
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID
 	): Promise<{ hasAccess: boolean }> {
-		// TODO: Get tenantId and organizationId from request context
-		return this.queryBus.execute(new CheckUserPluginAccessQuery(pluginId, userId, null, null));
+		const organizationId = RequestContext.currentOrganizationId();
+		const tenantId = RequestContext.currentTenantId();
+		return this.queryBus.execute(new CheckUserPluginAccessQuery(pluginId, userId, tenantId, organizationId));
 	}
 }
 
@@ -155,16 +179,15 @@ export class PluginUserAssignmentManagementController {
 		summary: 'Get all plugin user assignments',
 		description: 'Retrieve all plugin user assignments.'
 	})
+	@ApiQuery({ name: 'skip', description: 'Number of records to skip', required: false, type: 'number' })
+	@ApiQuery({ name: 'take', description: 'Number of records to take', required: false, type: 'number' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Successfully retrieved all plugin user assignments'
 	})
-	async getAllPluginUserAssignments(): Promise<any> {
-		// TODO: Get tenantId and organizationId from request context
-		// TODO: Implement query
-		return {
-			items: [],
-			total: 0
-		};
+	async getAllPluginUserAssignments(@Query('skip') skip?: number, @Query('take') take?: number): Promise<any> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		return this.queryBus.execute(new GetAllPluginUserAssignmentsQuery(tenantId, organizationId, skip, take));
 	}
 }

@@ -1,4 +1,4 @@
-import { RolePermissionModule, TagModule } from '@gauzy/core';
+import { RoleModule, RolePermissionModule, TagModule } from '@gauzy/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -12,6 +12,7 @@ import { controllers, subscribers } from './infrastructure';
 		TypeOrmModule.forFeature([...entities]),
 		MikroOrmModule.forFeature([...entities]),
 		RolePermissionModule,
+		RoleModule,
 		TagModule,
 		CqrsModule
 	],

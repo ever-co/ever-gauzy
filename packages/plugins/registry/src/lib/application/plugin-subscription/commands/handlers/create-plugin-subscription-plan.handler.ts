@@ -11,12 +11,14 @@ export class CreatePluginSubscriptionPlanCommandHandler
 	constructor(private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService) {}
 
 	async execute(command: CreatePluginSubscriptionPlanCommand): Promise<IPluginSubscriptionPlan> {
-		const { createDto, userId } = command;
+		const { createDto, tenantId, organizationId, userId } = command;
 
 		try {
 			// Add required defaults and context
 			const planData = {
 				...createDto,
+				...(tenantId && { tenantId }),
+				...(organizationId && { organizationId }),
 				...(userId && { createdById: userId }),
 				isActive: createDto.isActive ?? true
 			};
