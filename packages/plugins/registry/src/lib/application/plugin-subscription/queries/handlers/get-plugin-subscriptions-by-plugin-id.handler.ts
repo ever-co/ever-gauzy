@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { IPagination } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PluginSubscriptionService } from '../../../../domain';
 import { IPluginSubscription } from '../../../../shared';
@@ -10,16 +10,27 @@ export class GetPluginSubscriptionsByPluginIdQueryHandler
 {
 	constructor(private readonly pluginSubscriptionService: PluginSubscriptionService) {}
 
-	async execute(query: GetPluginSubscriptionsByPluginIdQuery): Promise<IPluginSubscription[]> {
+	async execute(query: GetPluginSubscriptionsByPluginIdQuery): Promise<IPagination<IPluginSubscription>> {
 		const { pluginId, relations } = query;
 
 		try {
-			return this.pluginSubscriptionService.findByPluginId(
-				pluginId,
-				relations || ['plugin', 'tenant', 'subscriber']
-			);
+			// Build where condition for finding subscriptions by plugin ID
+			const whereCondition = {
+				pluginId
+			};
+
+			// Find all subscriptions for the specified plugin
+			return this.pluginSubscriptionService.findAll({
+				where: whereCondition,
+				relations: relations || ['plugin', 'plan', 'subscriber', 'pluginTenant'],
+				order: {
+					createdAt: 'DESC'
+				}
+			});
 		} catch (error) {
-			throw new BadRequestException(`Failed to get plugin subscriptions by plugin ID: ${error.message}`);
+			// Log error and return empty array instead of throwing
+			console.error(`Error finding plugin subscriptions by plugin ID ${pluginId}:`, error);
+			return { items: [], total: 0 };
 		}
 	}
 }

@@ -55,13 +55,8 @@ export class PluginSubscriptionPlanController {
 	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post()
 	async create(@Body() createDto: CreatePluginSubscriptionPlanDTO): Promise<PluginSubscriptionPlan> {
-		const tenantId = RequestContext.currentTenantId();
-		const organizationId = RequestContext.currentOrganizationId();
-		const user = RequestContext.currentUser();
-
-		return await this.commandBus.execute(
-			new CreatePluginSubscriptionPlanCommand(createDto, tenantId, organizationId, user?.id)
-		);
+		const userId = RequestContext.currentUserId();
+		return await this.commandBus.execute(new CreatePluginSubscriptionPlanCommand(createDto, userId));
 	}
 
 	@ApiOperation({ summary: 'Get all plugin subscription plans' })

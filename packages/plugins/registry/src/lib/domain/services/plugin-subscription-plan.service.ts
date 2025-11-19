@@ -1,4 +1,4 @@
-import { ID } from '@gauzy/contracts';
+import { CurrenciesEnum, ID } from '@gauzy/contracts';
 import { CrudService } from '@gauzy/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, FindOneOptions } from 'typeorm';
@@ -7,6 +7,7 @@ import {
 	IPluginSubscriptionPlanCreateInput,
 	IPluginSubscriptionPlanFindInput,
 	IPluginSubscriptionPlanUpdateInput,
+	PluginBillingPeriod,
 	PluginSubscriptionType
 } from '../../shared/models/plugin-subscription.model';
 import { PluginSubscriptionPlan } from '../entities/plugin-subscription-plan.entity';
@@ -25,36 +26,46 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 	 * Create a new plugin subscription plan
 	 */
 	async createPlan(
-		createInput: IPluginSubscriptionPlanCreateInput,
-		tenantId: ID,
-		organizationId?: ID
+		createInput: Partial<IPluginSubscriptionPlanCreateInput> & {
+			name: string;
+			pluginId: ID;
+			type: PluginSubscriptionType;
+			price: number;
+			currency: string;
+			billingPeriod: PluginBillingPeriod;
+			features: string[];
+		}
 	): Promise<IPluginSubscriptionPlan> {
 		try {
-			// Validate the plugin exists
-			// Note: This should be done with a plugin service call
-			if (!createInput.pluginId) {
-				throw new BadRequestException('Plugin ID is required');
-			}
+			// Ensure required fields are set
+			const planData = {
+				...createInput,
+				isActive: createInput.isActive ?? true,
+				sortOrder: createInput.sortOrder ?? 0,
+				price: createInput.price ?? 0,
+				currency: createInput.currency ?? CurrenciesEnum.USD,
+				features: createInput.features ?? []
+			};
 
-			// Ensure unique plan names per plugin
+			// Validate that the plan name is unique per plugin
 			const existingPlan = await this.typeOrmRepository.findOne({
 				where: {
-					pluginId: createInput.pluginId,
-					name: createInput.name
+					pluginId: planData.pluginId,
+					name: planData.name
 				}
 			});
 
 			if (existingPlan) {
-				throw new BadRequestException(`A plan with name "${createInput.name}" already exists for this plugin`);
+				throw new BadRequestException(`A plan with name "${planData.name}" already exists for this plugin`);
 			}
 
-			// Create the plan
-			const plan = this.typeOrmRepository.create({
-				...createInput
-			});
-
-			return await this.typeOrmRepository.save(plan);
+			// Create and save the new plan
+			const newPlan = this.create(planData);
+			return this.save(newPlan);
 		} catch (error) {
+			if (error instanceof BadRequestException) {
+				throw error;
+			}
 			throw new BadRequestException(`Failed to create subscription plan: ${error.message}`);
 		}
 	}

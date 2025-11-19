@@ -11,16 +11,17 @@ export class CreatePluginSubscriptionPlanCommandHandler
 	constructor(private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService) {}
 
 	async execute(command: CreatePluginSubscriptionPlanCommand): Promise<IPluginSubscriptionPlan> {
-		const { createDto, tenantId, organizationId } = command;
+		const { createDto, userId } = command;
 
 		try {
-			// Add required defaults
+			// Add required defaults and context
 			const planData = {
 				...createDto,
-				isActive: createDto.isActive ?? true // Default to active if not specified
+				...(userId && { createdById: userId }),
+				isActive: createDto.isActive ?? true
 			};
 
-			return await this.pluginSubscriptionPlanService.createPlan(planData, tenantId, organizationId);
+			return this.pluginSubscriptionPlanService.createPlan(planData);
 		} catch (error) {
 			throw new BadRequestException(`Failed to create plugin subscription plan: ${error.message}`);
 		}
