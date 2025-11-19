@@ -56,25 +56,36 @@ export class PluginSubscriptionStore extends Store<IPluginSubscriptionState> {
 
 	// Subscription management
 	public setSubscriptions(subscriptions: IPluginSubscription[]): void {
-		this.update({ subscriptions });
+		// Defensive programming: ensure subscriptions is always an array
+		const normalizedSubscriptions = Array.isArray(subscriptions) ? subscriptions : [];
+		this.update({ subscriptions: normalizedSubscriptions });
 	}
 
 	public addSubscription(subscription: IPluginSubscription): void {
-		this.update((state) => ({
-			subscriptions: [subscription, ...state.subscriptions]
-		}));
+		this.update((state) => {
+			const currentSubscriptions = Array.isArray(state.subscriptions) ? state.subscriptions : [];
+			return {
+				subscriptions: [subscription, ...currentSubscriptions]
+			};
+		});
 	}
 
 	public updateSubscription(id: string, subscription: Partial<IPluginSubscription>): void {
-		this.update((state) => ({
-			subscriptions: state.subscriptions.map((s) => (s.id === id ? { ...s, ...subscription } : s))
-		}));
+		this.update((state) => {
+			const currentSubscriptions = Array.isArray(state.subscriptions) ? state.subscriptions : [];
+			return {
+				subscriptions: currentSubscriptions.map((s) => (s.id === id ? { ...s, ...subscription } : s))
+			};
+		});
 	}
 
 	public removeSubscription(id: string): void {
-		this.update((state) => ({
-			subscriptions: state.subscriptions.filter((s) => s.id !== id)
-		}));
+		this.update((state) => {
+			const currentSubscriptions = Array.isArray(state.subscriptions) ? state.subscriptions : [];
+			return {
+				subscriptions: currentSubscriptions.filter((s) => s.id !== id)
+			};
+		});
 	}
 
 	public selectSubscription(subscription: IPluginSubscription | null): void {
@@ -83,25 +94,36 @@ export class PluginSubscriptionStore extends Store<IPluginSubscriptionState> {
 
 	// Plan management
 	public setPlans(plans: IPluginSubscriptionPlan[]): void {
-		this.update({ plans });
+		// Defensive programming: ensure plans is always an array
+		const normalizedPlans = Array.isArray(plans) ? plans : [];
+		this.update({ plans: normalizedPlans });
 	}
 
 	public addPlan(plan: IPluginSubscriptionPlan): void {
-		this.update((state) => ({
-			plans: [...state.plans, plan]
-		}));
+		this.update((state) => {
+			const currentPlans = Array.isArray(state.plans) ? state.plans : [];
+			return {
+				plans: [...currentPlans, plan]
+			};
+		});
 	}
 
 	public updatePlan(id: string, plan: Partial<IPluginSubscriptionPlan>): void {
-		this.update((state) => ({
-			plans: state.plans.map((p) => (p.id === id ? { ...p, ...plan } : p))
-		}));
+		this.update((state) => {
+			const currentPlans = Array.isArray(state.plans) ? state.plans : [];
+			return {
+				plans: currentPlans.map((p) => (p.id === id ? { ...p, ...plan } : p))
+			};
+		});
 	}
 
 	public removePlan(id: string): void {
-		this.update((state) => ({
-			plans: state.plans.filter((p) => p.id !== id)
-		}));
+		this.update((state) => {
+			const currentPlans = Array.isArray(state.plans) ? state.plans : [];
+			return {
+				plans: currentPlans.filter((p) => p.id !== id)
+			};
+		});
 	}
 
 	public selectPlan(plan: IPluginSubscriptionPlan | null): void {

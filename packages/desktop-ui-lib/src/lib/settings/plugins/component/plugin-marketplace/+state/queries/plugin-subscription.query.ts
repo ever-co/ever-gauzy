@@ -42,45 +42,70 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 
 	// Computed selectors
 	public readonly activeSubscriptions$: Observable<IPluginSubscription[]> = this.subscriptions$.pipe(
-		map((subscriptions) =>
-			subscriptions.filter(
+		map((subscriptions) => {
+			const subscriptionsArray = Array.isArray(subscriptions) ? subscriptions : [];
+			return subscriptionsArray.filter(
 				(s) => s.status === PluginSubscriptionStatus.ACTIVE || s.status === PluginSubscriptionStatus.TRIAL
-			)
-		)
+			);
+		})
 	);
 
 	public readonly expiredSubscriptions$: Observable<IPluginSubscription[]> = this.subscriptions$.pipe(
-		map((subscriptions) => subscriptions.filter((s) => s.status === PluginSubscriptionStatus.EXPIRED))
+		map((subscriptions) => {
+			const subscriptionsArray = Array.isArray(subscriptions) ? subscriptions : [];
+			return subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.EXPIRED);
+		})
 	);
 
 	public readonly cancelledSubscriptions$: Observable<IPluginSubscription[]> = this.subscriptions$.pipe(
-		map((subscriptions) => subscriptions.filter((s) => s.status === PluginSubscriptionStatus.CANCELLED))
+		map((subscriptions) => {
+			const subscriptionsArray = Array.isArray(subscriptions) ? subscriptions : [];
+			return subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.CANCELLED);
+		})
 	);
 
 	public readonly trialSubscriptions$: Observable<IPluginSubscription[]> = this.subscriptions$.pipe(
-		map((subscriptions) => subscriptions.filter((s) => s.status === PluginSubscriptionStatus.TRIAL))
+		map((subscriptions) => {
+			const subscriptionsArray = Array.isArray(subscriptions) ? subscriptions : [];
+			return subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.TRIAL);
+		})
 	);
 
 	public readonly pastDueSubscriptions$: Observable<IPluginSubscription[]> = this.subscriptions$.pipe(
-		map((subscriptions) => subscriptions.filter((s) => s.status === PluginSubscriptionStatus.PAST_DUE))
+		map((subscriptions) => {
+			const subscriptionsArray = Array.isArray(subscriptions) ? subscriptions : [];
+			return subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.PAST_DUE);
+		})
 	);
 
 	public readonly suspendedSubscriptions$: Observable<IPluginSubscription[]> = this.subscriptions$.pipe(
-		map((subscriptions) => subscriptions.filter((s) => s.status === PluginSubscriptionStatus.SUSPENDED))
+		map((subscriptions) => {
+			const subscriptionsArray = Array.isArray(subscriptions) ? subscriptions : [];
+			return subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.SUSPENDED);
+		})
 	);
 
 	// Free vs paid plans
 	public readonly freePlans$: Observable<IPluginSubscriptionPlan[]> = this.plans$.pipe(
-		map((plans) => plans.filter((p) => p.price === 0))
+		map((plans) => {
+			const plansArray = Array.isArray(plans) ? plans : [];
+			return plansArray.filter((p) => p.price === 0);
+		})
 	);
 
 	public readonly paidPlans$: Observable<IPluginSubscriptionPlan[]> = this.plans$.pipe(
-		map((plans) => plans.filter((p) => p.price > 0))
+		map((plans) => {
+			const plansArray = Array.isArray(plans) ? plans : [];
+			return plansArray.filter((p) => p.price > 0);
+		})
 	);
 
 	// Featured/recommended plans
 	public readonly featuredPlans$: Observable<IPluginSubscriptionPlan[]> = this.plans$.pipe(
-		map((plans) => plans.filter((p) => p.isPopular || p.isRecommended))
+		map((plans) => {
+			const plansArray = Array.isArray(plans) ? plans : [];
+			return plansArray.filter((p) => p.isPopular || p.isRecommended);
+		})
 	);
 
 	// Combined loading state
@@ -94,7 +119,8 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 
 	// Getters for current values
 	public get subscriptions(): IPluginSubscription[] {
-		return this.getValue().subscriptions;
+		const value = this.getValue().subscriptions;
+		return Array.isArray(value) ? value : [];
 	}
 
 	public get selectedSubscription(): IPluginSubscription | null {
@@ -102,7 +128,8 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 	}
 
 	public get plans(): IPluginSubscriptionPlan[] {
-		return this.getValue().plans;
+		const value = this.getValue().plans;
+		return Array.isArray(value) ? value : [];
 	}
 
 	public get selectedPlan(): IPluginSubscriptionPlan | null {
@@ -127,12 +154,20 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 
 	// Utility methods
 	public getSubscriptionsByPluginId(pluginId: string): Observable<IPluginSubscription[]> {
-		return this.subscriptions$.pipe(map((subscriptions) => subscriptions.filter((s) => s.pluginId === pluginId)));
+		return this.subscriptions$.pipe(
+			map((subscriptions) => {
+				const subscriptionsArray = Array.isArray(subscriptions) ? subscriptions : [];
+				return subscriptionsArray.filter((s) => s.pluginId === pluginId);
+			})
+		);
 	}
 
 	public getActiveSubscriptionForPlugin(pluginId: string): Observable<IPluginSubscription | null> {
 		return this.activeSubscriptions$.pipe(
-			map((subscriptions) => subscriptions.find((s) => s.pluginId === pluginId) || null)
+			map((subscriptions) => {
+				const subscriptionsArray = Array.isArray(subscriptions) ? subscriptions : [];
+				return subscriptionsArray.find((s) => s.pluginId === pluginId) || null;
+			})
 		);
 	}
 
@@ -141,11 +176,21 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 	}
 
 	public getPlanById(planId: string): Observable<IPluginSubscriptionPlan | null> {
-		return this.plans$.pipe(map((plans) => plans.find((p) => p.id === planId) || null));
+		return this.plans$.pipe(
+			map((plans) => {
+				const plansArray = Array.isArray(plans) ? plans : [];
+				return plansArray.find((p) => p.id === planId) || null;
+			})
+		);
 	}
 
 	public getPlansForPlugin(pluginId: string): Observable<IPluginSubscriptionPlan[]> {
-		return this.plans$.pipe(map((plans) => plans.filter((p) => p.pluginId === pluginId)));
+		return this.plans$.pipe(
+			map((plans) => {
+				const plansArray = Array.isArray(plans) ? plans : [];
+				return plansArray.filter((p) => p.pluginId === pluginId);
+			})
+		);
 	}
 
 	// Subscription metrics
@@ -159,15 +204,18 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 		pastDue: number;
 	}> {
 		return this.subscriptions$.pipe(
-			map((subscriptions) => ({
-				total: subscriptions.length,
-				active: subscriptions.filter((s) => s.status === PluginSubscriptionStatus.ACTIVE).length,
-				trial: subscriptions.filter((s) => s.status === PluginSubscriptionStatus.TRIAL).length,
-				expired: subscriptions.filter((s) => s.status === PluginSubscriptionStatus.EXPIRED).length,
-				cancelled: subscriptions.filter((s) => s.status === PluginSubscriptionStatus.CANCELLED).length,
-				suspended: subscriptions.filter((s) => s.status === PluginSubscriptionStatus.SUSPENDED).length,
-				pastDue: subscriptions.filter((s) => s.status === PluginSubscriptionStatus.PAST_DUE).length
-			}))
+			map((subscriptions) => {
+				const subscriptionsArray = Array.isArray(subscriptions) ? subscriptions : [];
+				return {
+					total: subscriptionsArray.length,
+					active: subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.ACTIVE).length,
+					trial: subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.TRIAL).length,
+					expired: subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.EXPIRED).length,
+					cancelled: subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.CANCELLED).length,
+					suspended: subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.SUSPENDED).length,
+					pastDue: subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.PAST_DUE).length
+				};
+			})
 		);
 	}
 }

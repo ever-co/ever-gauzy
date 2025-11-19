@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { IPagination } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
-import { BehaviorSubject, Observable, of, shareReplay, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, of, shareReplay, tap } from 'rxjs';
 
 // Plugin subscription interfaces
 export interface IPluginSubscription {
@@ -193,6 +193,29 @@ export class PluginSubscriptionService {
 
 	constructor(private readonly http: HttpClient) {}
 
+	/**
+	 * Utility method to normalize API responses that may be arrays or paginated objects
+	 * @param response The API response
+	 * @returns Array of items, empty array if response format is unexpected
+	 */
+	private normalizeArrayResponse<T>(response: any): T[] {
+		// Handle direct array response
+		if (Array.isArray(response)) {
+			return response;
+		}
+		// Handle paginated response with items property
+		if (response && Array.isArray(response.items)) {
+			return response.items;
+		}
+		// Handle case where response might be an object with data property
+		if (response && Array.isArray(response.data)) {
+			return response.data;
+		}
+		// Fallback to empty array if response format is unexpected
+		console.warn('Unexpected response format in API call:', response);
+		return [];
+	}
+
 	// Subscription CRUD Operations
 	public getAllSubscriptions<T>(params = {} as T): Observable<IPagination<IPluginSubscription>> {
 		// Get all subscriptions across all plugins - this would be implemented if needed
@@ -213,11 +236,15 @@ export class PluginSubscriptionService {
 		const endpoint = userId
 			? `${this.subscriptionsEndPoint}/subscriptions/user/${userId}`
 			: `${this.subscriptionsEndPoint}/subscriptions/me`;
-		return this.http.get<IPluginSubscription[]>(endpoint);
+		return this.http
+			.get<any>(endpoint)
+			.pipe(map((response) => this.normalizeArrayResponse<IPluginSubscription>(response)));
 	}
 
 	public getPluginSubscriptions(pluginId: string): Observable<IPluginSubscription[]> {
-		return this.http.get<IPluginSubscription[]>(`${this.subscriptionsEndPoint}/${pluginId}/subscriptions`);
+		return this.http
+			.get<any>(`${this.subscriptionsEndPoint}/${pluginId}/subscriptions`)
+			.pipe(map((response) => this.normalizeArrayResponse<IPluginSubscription>(response)));
 	}
 
 	public createSubscription(subscription: IPluginSubscriptionCreateInput): Observable<IPluginSubscription> {
@@ -311,7 +338,9 @@ export class PluginSubscriptionService {
 	}
 
 	public getPluginPlans(pluginId: string): Observable<IPluginSubscriptionPlan[]> {
-		return this.http.get<IPluginSubscriptionPlan[]>(`${this.plansEndPoint}/plugin/${pluginId}`);
+		return this.http
+			.get<any>(`${this.plansEndPoint}/plugin/${pluginId}`)
+			.pipe(map((response) => this.normalizeArrayResponse<IPluginSubscriptionPlan>(response)));
 	}
 
 	public createPlan(plan: IPluginPlanCreateInput): Observable<IPluginSubscriptionPlan> {
