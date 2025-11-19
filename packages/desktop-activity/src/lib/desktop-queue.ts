@@ -131,6 +131,7 @@ export class DesktopQueue {
 			this.timerQueue = new Queue(
 				timerCallback,
 				{
+					id: (task, cb) => cb(null, `timer-queue:${task.timerId}`),
 					concurrent: 1,
 					maxRetries: 0,
 					filter: (task, cb) => {
@@ -147,6 +148,7 @@ export class DesktopQueue {
 			this.timerQueueRetry = new Queue(
 				timerCallback,
 				{
+					id: (task, cb) => cb(null, `timer-queue:${task.timerId}`),
 					concurrent: 1,
 					maxRetries: 20,
 					retryDelay: 15 * 1000,
@@ -166,6 +168,7 @@ export class DesktopQueue {
 			this.timeSlotQueue = new Queue(
 				timeSlotCallback,
 				{
+					id: (task, cb) => cb(null, `time-slot-queue-${task.activityId}`),
 					concurrent: 2,
 					maxRetries: 0,
 					filter: (task, cb) => {
@@ -182,6 +185,7 @@ export class DesktopQueue {
 			this.timeSlotQueueRetry = new Queue(
 				timeSlotCallback,
 				{
+					id: (task, cb) => cb(null, `time-slot-queue-${task.activityId}`),
 					concurrent: 2,
 					maxRetries: 20,
 					retryDelay: 15 * 1000,
@@ -201,6 +205,7 @@ export class DesktopQueue {
 			this.screenshotQueue = new Queue(
 				screenshotCallback,
 				{
+					id: (task, cb) => cb(null, `screenshot-queue-${task.screenshotId}`),
 					concurrent: 2,
 					maxRetries: 0,
 					filter: (task, cb) => {
@@ -217,6 +222,7 @@ export class DesktopQueue {
 			this.screenshotQueueRetry = new Queue(
 				screenshotCallback,
 				{
+					id: (task, cb) => cb(null, `screenshot-queue-${task.screenshotId}`),
 					concurrent: 2,
 					maxRetries: 20,
 					retryDelay: 15 * 1000,
@@ -266,7 +272,6 @@ export class DesktopQueue {
 
 	public async stopQueue() {
 		const drainPromises = [];
-
 		if (this.timerQueue) {
 			this.timerQueue.pause();
 			this.timerQueueRetry.pause();
@@ -330,18 +335,12 @@ export class DesktopQueue {
 		const serviceOk = await this.serviceCheckCallback();
 		if (ok && serviceOk && !this.online) {
 			this.online = true;
-			this.timerQueue.resume();
-			this.timeSlotQueue.resume();
-			this.screenshotQueue.resume();
 			this.timerQueueRetry.resume();
 			this.timeSlotQueueRetry.resume();
 			this.screenshotQueueRetry.resume();
 		}
 		if ((!ok || !serviceOk) && this.online) {
 			this.online = false;
-			this.timerQueue.pause();
-			this.timeSlotQueue.pause();
-			this.screenshotQueue.pause();
 			this.timerQueueRetry.pause();
 			this.timeSlotQueueRetry.pause();
 			this.screenshotQueueRetry.pause();

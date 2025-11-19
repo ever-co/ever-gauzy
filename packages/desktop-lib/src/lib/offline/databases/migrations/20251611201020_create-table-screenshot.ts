@@ -8,7 +8,8 @@ export async function up(knex: Knex): Promise<void> {
 		table.string('imagePath').notNullable().unique();
 		table.boolean('synced').nullable();
 		table.integer('activityId').notNullable();
-		table.timestamp('recordedAt');
+		table.timestamp('recordedAt').notNullable();
+		table.string('timeslotId').nullable();
 		table.timestamps(true, true, true);
 		table.index(['imagePath', 'activityId']);
 	});

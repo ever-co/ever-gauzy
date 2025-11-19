@@ -234,10 +234,6 @@ class PullActivities {
 			}));
 			return;
 		}
-		await this.timerService.update(new Timer({
-			id: this.currentTimerId,
-			isStoppedOffline: true
-		}));
 	}
 
 	async stopTimerApi() {
@@ -268,10 +264,6 @@ class PullActivities {
 						await this.handleManualTimeLog(authConfig);
 					} else {
 						console.error('Error stopping timer online', error.message);
-						this.timerService.update(new Timer({
-							id: this.currentTimerId,
-							isStoppedOffline: true
-						}));
 						this.workerQueue.desktopQueue.enqueueTimer({
 							attempts: 1,
 							queue: 'timer',
@@ -510,6 +502,7 @@ class PullActivities {
 				afkDuration: afkDuration || 0,
 				activeWindows: JSON.stringify(activityWindow),
 				syncedActivity: false,
+				isOffline: false,
 				timerId: this.currentTimerId
 			});
 			this.initWorkerQueue();

@@ -46,22 +46,22 @@ export class ScreenshotService implements IScreenshotService<ScreenshotTO> {
 		}
 	}
 
-	public async findById(activity: Partial<ScreenshotTO>): Promise<ScreenshotTO> {
+	public async findById(screenshot: Partial<ScreenshotTO>): Promise<ScreenshotTO> {
 		try {
-			if (!activity.id) {
+			if (!screenshot.id) {
 				console.error('WARN[SCREENSHOT_SERVICE]: No screenshot data, cannot find');
 				return null;
 			}
-			return await this._screenshotDAO.findOneById(activity.id);
+			return await this._screenshotDAO.findOneById(screenshot.id);
 		} catch (error) {
 			console.error(error);
 			return null;
 		}
 	}
 
-	public async remove(activity: Partial<ScreenshotTO>): Promise<void> {
+	public async remove(screenshot: Partial<ScreenshotTO>): Promise<void> {
 		try {
-			await this._screenshotDAO.delete(activity);
+			await this._screenshotDAO.delete(screenshot);
 		} catch (error) {
 			throw new AppError('SCREENSHOT_SERVICE', error);
 		}

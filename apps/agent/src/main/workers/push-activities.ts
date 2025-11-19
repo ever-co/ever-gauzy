@@ -6,7 +6,8 @@ import {
 	Timer,
 	TimerTO,
 	ScreenshotService,
-	Screenshot
+	Screenshot,
+	KbMouseActivity
 } from '@gauzy/desktop-lib';
 import {
 	KbMouseActivityPool,
@@ -71,7 +72,6 @@ class PushActivities {
 			timeSlotQueueHandler: this.timeSlotQueueHandle.bind(this),
 			screenshotQueueHandler: this.screenshotsQueueHandle.bind(this)
 		});
-		this.workerQueue.imidietlyCheckUnSync();
 	}
 
 	getKbMousePoolModule() {
@@ -104,7 +104,6 @@ class PushActivities {
 	}
 
 	timeSlotQueueHandle(job: ITimeslotQueuePayload, cb: (err?: any) => void) {
-		console.log('timeslot job', job);
 		if (!job.activityId) {
 			return cb(new Error('job is not valid'));
 		}
@@ -113,6 +112,10 @@ class PushActivities {
 				await this.syncTimeSlot(job);
 				return cb(null);
 			} catch (error) {
+				await this.kbMouseActivityService.update({
+					id: job.activityId,
+					isOffline: true
+				});
 				job.attempts += 1;
 				if (!job.isRetry) {
 					job.isRetry = true;
@@ -125,7 +128,6 @@ class PushActivities {
 	}
 
 	screenshotsQueueHandle(job: IScreenshotQueuePayload, cb: (err?: any) => void) {
-		console.log('screenshot job', job);
 		(async () => {
 			if (!job.screenshotId) {
 				return cb(new Error('job is not valid'));
@@ -133,21 +135,21 @@ class PushActivities {
 			try {
 				await this.syncScreenshot(job);
 				if (job.data?.id) {
-					await this.screenshotService.update(new Screenshot({
+					await this.screenshotService.update({
 						id: job.data?.id,
 						synced: true
-					}));
+					});
 				}
 				return cb(null);
 			} catch (error) {
 				job.attempts += 1;
-				const screenshot = await this.screenshotService.saveAndReturn(new Screenshot({
+				const screenshot = await this.screenshotService.saveAndReturn({
 					timeslotId: job.data?.timeSlotId,
 					imagePath: job.data?.imagePath,
 					synced: false,
 					activityId: job.data?.activityId,
 					recordedAt: new Date(job.data?.recordedAt)
-				}));
+				});
 				if (!job.isRetry) {
 					job.isRetry = true;
 					job.queue = 'screenshot_retry';
@@ -165,6 +167,7 @@ class PushActivities {
 	startPooling() {
 		try {
 			this.workerQueue?.desktopQueue?.initWorker();
+			this.workerQueue.imidietlyCheckUnSync();
 			this.agentLogger.info('Polling scheduler started');
 		} catch (error) {
 			console.error('Failed to start push activity pooling', error);

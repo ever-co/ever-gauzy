@@ -26,12 +26,8 @@ export class WorkerQueue {
 		this.queueAudit = QueueAudit.getInstance();
 		this.setQueueUpdateHandle();
 		this.setServerCheckHandle();
-		this.syncManager = new SyncManager(
-			this.desktopQueue.enqueueTimer.bind(this),
-			this.desktopQueue.enqueueTimeSlot.bind(this),
-			this.desktopQueue.enqueueScreenshot.bind(this)
-		);
 		this.desktopQueue.setWorkerHandler(this.workerHandler.bind(this))
+		this.syncManager = new SyncManager();
 	}
 
 	static getInstance(): WorkerQueue {
@@ -47,7 +43,24 @@ export class WorkerQueue {
 		this.desktopQueue.initScreenshotQueue(handler.screenshotQueueHandler);
 	}
 
+	private enqueueTimerRetry(payload: ITimerCallbackPayload) {
+		this.desktopQueue.enqueueTimer(payload);
+	}
+
+	private enqueueTimeslotRetry(payload: ITimeslotQueuePayload) {
+		this.desktopQueue.enqueueTimeSlot(payload);
+	}
+
+	private enqueueScreenshotRetry(payload: IScreenshotQueuePayload) {
+		this.desktopQueue.enqueueScreenshot(payload);
+	}
+
 	public imidietlyCheckUnSync() {
+		this.syncManager.setQueueCallback(
+			this.enqueueTimerRetry.bind(this),
+			this.enqueueTimeslotRetry.bind(this),
+			this.enqueueScreenshotRetry.bind(this)
+		);
 		this.syncManager.imidietlyCheck();
 	}
 
