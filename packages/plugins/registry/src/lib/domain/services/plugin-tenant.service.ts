@@ -1,4 +1,4 @@
-import { TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
@@ -27,36 +27,56 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 	 * @param organizationId - Optional organization ID
 	 * @returns The plugin tenant ID
 	 */
-	async findOrCreate(pluginId: string, tenantId: string, organizationId?: string): Promise<string> {
-		this.logger.debug(
-			`Finding or creating plugin tenant for pluginId: ${pluginId}, tenantId: ${tenantId}, organizationId: ${organizationId}`
-		);
-
-		// Validate inputs
+	async findOrCreate(
+		pluginId: string,
+		tenantId: string,
+		organizationId?: string,
+		scope?: PluginScope
+	): Promise<string> {
 		this.validatePluginTenantInput(pluginId, tenantId);
 
-		// Try to find existing plugin tenant
-		const existing = await this.findByPluginAndTenant(pluginId, tenantId, organizationId);
+		// First try to find existing plugin tenant
+		const existingPluginTenant = await this.findByPluginAndTenant(pluginId, tenantId, organizationId);
 
-		if (existing) {
-			this.logger.debug(`Found existing plugin tenant: ${existing.id}`);
-			return existing.id;
+		if (existingPluginTenant) {
+			this.logger.debug(`Found existing plugin tenant: ${existingPluginTenant.id}`);
+			return existingPluginTenant.id;
 		}
 
-		// Create new plugin tenant if it doesn't exist
-		this.logger.debug(`Creating new plugin tenant for pluginId: ${pluginId}, tenantId: ${tenantId}`);
-		const pluginTenant = Object.assign(new PluginTenant(), {
+		// Get current user Id from context
+		const currentUserId = RequestContext.currentUserId();
+
+		// Create new plugin tenant if not found
+		const createData: Partial<PluginTenant> = {
 			pluginId,
 			tenantId,
-			organizationId,
 			enabled: true,
-			scope: organizationId ? PluginScope.ORGANIZATION : PluginScope.TENANT
-		});
+			scope: scope ?? PluginScope.USER,
+			autoInstall: false,
+			requiresApproval: true,
+			isMandatory: false,
+			maxInstallations: null,
+			maxActiveUsers: null,
+			currentInstallations: 0,
+			currentActiveUsers: 0,
+			isDataCompliant: true,
+			approvedById: currentUserId
+		};
 
-		const tenant = await this.save(pluginTenant);
+		if (organizationId) {
+			createData.organizationId = organizationId;
+		}
 
-		this.logger.log(`Plugin tenant created: ${tenant.id}`);
-		return tenant.id;
+		try {
+			const createdPluginTenant = await this.create(createData);
+			this.logger.log(
+				`Created new plugin tenant: ${createdPluginTenant.id} for plugin ${pluginId} and tenant ${tenantId}`
+			);
+			return createdPluginTenant.id;
+		} catch (error) {
+			this.logger.error(`Failed to create plugin tenant for plugin ${pluginId} and tenant ${tenantId}`, error);
+			throw new BadRequestException(`Failed to create plugin tenant relationship: ${error.message}`);
+		}
 	}
 
 	/**

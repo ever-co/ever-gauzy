@@ -39,7 +39,8 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 		const pluginTenantId = await this.pluginTenantService.findOrCreate(
 			purchaseDto.pluginId,
 			tenantId,
-			organizationId
+			organizationId,
+			purchaseDto.scope
 		);
 
 		let subscription: PluginSubscription;
