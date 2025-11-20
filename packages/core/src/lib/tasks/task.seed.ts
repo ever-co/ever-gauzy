@@ -71,10 +71,14 @@ export const createDefaultTask = async (dataSource: DataSource, tenant: ITenant,
 		task.number = maxTaskNumber + 1;
 		task.createdByUser = faker.helpers.arrayElement(users);
 
-		if (count % 2 === 0) {
-			task.members = faker.helpers.arrayElements(employees, 5);
-		} else {
-			task.teams = [faker.helpers.arrayElement(teams)];
+		// Assign tasks to teams more frequently (70% to teams, 30% to individual members)
+		// This ensures teams have tasks assigned to them
+		if (count % 10 < 7 && teams.length > 0) {
+			// Assign to 1-2 teams
+			const numberOfTeams = faker.number.int({ min: 1, max: Math.min(2, teams.length) });
+			task.teams = faker.helpers.arrayElements(teams, numberOfTeams);
+		} else if (employees.length > 0) {
+			task.members = faker.helpers.arrayElements(employees, faker.number.int({ min: 1, max: 5 }));
 		}
 		await dataSource.manager.save(task);
 		count++;
@@ -151,15 +155,18 @@ export const createRandomTask = async (dataSource: DataSource, tenants: ITenant[
 				task.project = project;
 				task.prefix = project.name.substring(0, 3);
 				task.number = maxTaskNumber + 1;
-				task.teams = [faker.helpers.arrayElement(teams)];
 				task.createdByUser = faker.helpers.arrayElement(users);
 				task.organization = organization;
 				task.tenant = tenant;
 
-				if (count % 2 === 0) {
-					task.members = faker.helpers.arrayElements(employees, 5);
-				} else {
-					task.teams = [faker.helpers.arrayElement(teams)];
+				// Assign tasks to teams more frequently (70% to teams, 30% to individual members)
+				// This ensures teams have tasks assigned to them
+				if (count % 10 < 7 && teams.length > 0) {
+					// Assign to 1-2 teams
+					const numberOfTeams = faker.number.int({ min: 1, max: Math.min(2, teams.length) });
+					task.teams = faker.helpers.arrayElements(teams, numberOfTeams);
+				} else if (employees.length > 0) {
+					task.members = faker.helpers.arrayElements(employees, faker.number.int({ min: 1, max: 5 }));
 				}
 
 				await dataSource.manager.save(task);

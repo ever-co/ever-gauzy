@@ -2,5 +2,9 @@ export const DEFAULT_ORGANIZATION_PROJECTS: string[] = [
 	'Gauzy Platform (Open-Source)',
 	'Gauzy Web Site',
 	'Gauzy Platform SaaS',
-	'Gauzy Platform DevOps'
+	'Gauzy Platform DevOps',
+	'Ever Teams Platform',
+	'Mobile App Development',
+	'Marketing Campaign Q1',
+	'Customer Portal'
 ];

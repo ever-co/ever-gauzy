@@ -11,7 +11,13 @@ import {
 } from '@gauzy/contracts';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { DEFAULT_ORGANIZATION_PROJECTS } from './default-organization-projects';
-import { Employee, OrganizationContact, OrganizationProjectEmployee, Tag } from './../core/entities/internal';
+import {
+	Employee,
+	OrganizationContact,
+	OrganizationProjectEmployee,
+	OrganizationTeam,
+	Tag
+} from './../core/entities/internal';
 import { OrganizationProject } from './organization-project.entity';
 import { prepareSQLQuery as p } from '../database/database.helper';
 import { replacePlaceholders } from '../core/utils';
@@ -52,6 +58,12 @@ export const createDefaultOrganizationProjects = async (
 			organizationId
 		});
 
+		// Fetch all OrganizationTeams to assign projects to teams
+		const organizationTeams = await dataSource.manager.findBy(OrganizationTeam, {
+			tenantId,
+			organizationId
+		});
+
 		// Define a mapping between Budget Types and their respective min and max values
 		const budgetRanges: Record<OrganizationProjectBudgetTypeEnum, { min: number; max: number }> = {
 			[OrganizationProjectBudgetTypeEnum.COST]: { min: 500, max: 5000 },
@@ -74,9 +86,9 @@ export const createDefaultOrganizationProjects = async (
 			// Create a new OrganizationProject instance
 			const project = new OrganizationProject();
 			project.name = projectName;
-            project.status = faker.helpers.arrayElement(
-                Object.values(ProjectStatusEnum).filter((s) => s !== ProjectStatusEnum.CUSTOM)
-            );
+			project.status = faker.helpers.arrayElement(
+				Object.values(ProjectStatusEnum).filter((s) => s !== ProjectStatusEnum.CUSTOM)
+			);
 			project.tags = tags;
 			project.organizationContact = faker.helpers.arrayElement(organizationContacts);
 			project.organization = organization;
@@ -88,6 +100,12 @@ export const createDefaultOrganizationProjects = async (
 			// If organizationContacts is not empty, assign a random organization contact
 			if (organizationContacts.length > 0) {
 				project.organizationContact = faker.helpers.arrayElement(organizationContacts);
+			}
+
+			// Assign project to 1-3 random teams if teams exist
+			if (organizationTeams.length > 0) {
+				const numberOfTeams = faker.number.int({ min: 1, max: Math.min(3, organizationTeams.length) });
+				project.teams = faker.helpers.arrayElements(organizationTeams, numberOfTeams);
 			}
 
 			// Add project to projects array
@@ -171,9 +189,9 @@ export const createRandomOrganizationProjects = async (
 				const project = new OrganizationProject();
 				project.tags = [tags[Math.floor(Math.random() * tags.length)]];
 				project.name = faker.company.name();
-                project.status = faker.helpers.arrayElement(
-                    Object.values(ProjectStatusEnum).filter((s) => s !== ProjectStatusEnum.CUSTOM)
-                );
+				project.status = faker.helpers.arrayElement(
+					Object.values(ProjectStatusEnum).filter((s) => s !== ProjectStatusEnum.CUSTOM)
+				);
 				project.organization = organization;
 				project.tenant = tenant;
 				project.budgetType = budgetType;
