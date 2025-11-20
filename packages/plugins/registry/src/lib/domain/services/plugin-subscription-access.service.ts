@@ -415,7 +415,7 @@ class SubscriptionAccessContextFactory {
 			if (existing) return existing;
 
 			// Create with default settings if not found
-			const pluginTenantId = await this.pluginTenantService.findOrCreate(pluginId, tenantId, organizationId);
+			const pluginTenantId = await this.pluginTenantService.findOrCreate({ pluginId, tenantId, organizationId });
 			return await this.pluginTenantService.findOneByIdString(pluginTenantId);
 		} catch {
 			return null;

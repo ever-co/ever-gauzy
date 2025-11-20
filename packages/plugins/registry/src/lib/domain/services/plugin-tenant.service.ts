@@ -28,31 +28,23 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 	 * @param organizationId - Optional organization ID
 	 * @returns The plugin tenant ID
 	 */
-	async findOrCreate(
-		pluginId: string,
-		tenantId: string,
-		organizationId?: string,
-		scope?: PluginScope
-	): Promise<string> {
+	async findOrCreate(input: Partial<PluginTenant>): Promise<string> {
+		const { pluginId, tenantId, organizationId } = input;
 		this.validatePluginTenantInput(pluginId, tenantId);
 
 		// First try to find existing plugin tenant
 		const existingPluginTenant = await this.findByPluginAndTenant(pluginId, tenantId, organizationId);
-
 		if (existingPluginTenant) {
 			this.logger.debug(`Found existing plugin tenant: ${existingPluginTenant.id}`);
 			return existingPluginTenant.id;
 		}
 
 		// Get current user Id from context
-		const currentUserId = RequestContext.currentUserId();
+		const currentUser = RequestContext.currentUser();
 
 		// Create new plugin tenant if not found
 		const createData: Partial<PluginTenant> = {
-			pluginId,
-			tenantId,
 			enabled: true,
-			scope: scope ?? PluginScope.USER,
 			autoInstall: false,
 			requiresApproval: true,
 			isMandatory: false,
@@ -61,7 +53,8 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 			currentInstallations: 0,
 			currentActiveUsers: 0,
 			isDataCompliant: true,
-			approvedById: currentUserId
+			approvedById: currentUser?.id,
+			...input
 		};
 
 		if (organizationId) {
@@ -73,6 +66,10 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 			this.logger.log(
 				`Created new plugin tenant: ${createdPluginTenant.id} for plugin ${pluginId} and tenant ${tenantId}`
 			);
+			createdPluginTenant.allowUser(currentUser);
+
+			await this.save(createdPluginTenant);
+
 			return createdPluginTenant.id;
 		} catch (error) {
 			this.logger.error(`Failed to create plugin tenant for plugin ${pluginId} and tenant ${tenantId}`, error);

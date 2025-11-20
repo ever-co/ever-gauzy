@@ -1,31 +1,31 @@
 import { IUser } from '@gauzy/contracts';
 import {
-    MultiORMColumn,
-    MultiORMEntity,
-    MultiORMManyToOne,
-    MultiORMOneToMany,
-    TenantOrganizationBaseEntity,
-    User
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	MultiORMOneToMany,
+	TenantOrganizationBaseEntity,
+	User
 } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-    IsBoolean,
-    IsDate,
-    IsEnum,
-    IsNotEmpty,
-    IsObject,
-    IsOptional,
-    IsString,
-    IsUUID,
-    ValidateIf
+	IsBoolean,
+	IsDate,
+	IsEnum,
+	IsNotEmpty,
+	IsObject,
+	IsOptional,
+	IsString,
+	IsUUID,
+	ValidateIf
 } from 'class-validator';
 import { Index, JoinColumn, Relation, RelationId, Tree, TreeChildren, TreeParent } from 'typeorm';
 import { IPluginBilling, PluginBillingStatus } from '../../shared/models';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import {
-    IPluginSubscription,
-    IPluginSubscriptionPlan,
-    PluginSubscriptionStatus
+	IPluginSubscription,
+	IPluginSubscriptionPlan,
+	PluginSubscriptionStatus
 } from '../../shared/models/plugin-subscription.model';
 import type { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import type { IPlugin } from '../../shared/models/plugin.model';
@@ -316,10 +316,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	 * Validates if the subscription can be suspended
 	 */
 	canBeSuspended(): boolean {
-		return [
-			PluginSubscriptionStatus.ACTIVE,
-			PluginSubscriptionStatus.TRIAL
-		].includes(this.status);
+		return [PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL].includes(this.status);
 	}
 
 	/**
@@ -333,10 +330,9 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	 * Validates if the subscription can be renewed
 	 */
 	canBeRenewed(): boolean {
-		return [
-			PluginSubscriptionStatus.ACTIVE,
-			PluginSubscriptionStatus.EXPIRED
-		].includes(this.status) && this.autoRenew;
+		return (
+			[PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.EXPIRED].includes(this.status) && this.autoRenew
+		);
 	}
 
 	/**
@@ -357,33 +353,34 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	 * Validates if trial can be extended
 	 */
 	canExtendTrial(): boolean {
-		return this.status === PluginSubscriptionStatus.TRIAL &&
-			   this.trialEndDate &&
-			   this.trialEndDate > new Date();
+		return this.status === PluginSubscriptionStatus.TRIAL && this.trialEndDate && this.trialEndDate > new Date();
 	}
 
 	/**
 	 * Validates if child subscriptions can be created from this subscription
 	 */
 	canCreateChildSubscriptions(): boolean {
-		return this.status === PluginSubscriptionStatus.ACTIVE &&
-			   [PluginScope.TENANT, PluginScope.ORGANIZATION].includes(this.scope);
+		return (
+			this.status === PluginSubscriptionStatus.ACTIVE &&
+			[PluginScope.TENANT, PluginScope.ORGANIZATION].includes(this.scope)
+		);
 	}
 
 	/**
 	 * Validates if this is a valid parent subscription
 	 */
 	isValidParentSubscription(): boolean {
-		return [PluginScope.TENANT, PluginScope.ORGANIZATION].includes(this.scope) &&
-			   [PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL].includes(this.status);
+		return (
+			[PluginScope.TENANT, PluginScope.ORGANIZATION].includes(this.scope) &&
+			[PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL].includes(this.status)
+		);
 	}
 
 	/**
 	 * Validates assignment permissions based on scope
 	 */
 	hasAssignmentPermissions(): boolean {
-		return [PluginScope.ORGANIZATION, PluginScope.TENANT].includes(this.scope) &&
-			   this.isSubscriptionActive;
+		return [PluginScope.ORGANIZATION, PluginScope.TENANT].includes(this.scope) && this.isSubscriptionActive;
 	}
 
 	// ==========================================
@@ -738,13 +735,11 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	/**
 	 * Creates a child subscription from a parent subscription
 	 */
-	static createChildSubscription(
-		parentSubscription: IPluginSubscription,
-		subscriberId: string
-	): PluginSubscription {
+	static createChildSubscription(parentSubscription: IPluginSubscription, subscriberId: string): PluginSubscription {
 		// Validate parent subscription can create children
-		const canCreate = parentSubscription.status === PluginSubscriptionStatus.ACTIVE &&
-		                 [PluginScope.TENANT, PluginScope.ORGANIZATION].includes(parentSubscription.scope);
+		const canCreate =
+			parentSubscription.status === PluginSubscriptionStatus.ACTIVE &&
+			[PluginScope.TENANT, PluginScope.ORGANIZATION].includes(parentSubscription.scope);
 
 		if (!canCreate) {
 			throw new Error('Cannot create child subscription from parent');
@@ -883,12 +878,12 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	qualifiesForRefund(refundPolicyDays: number = 30): boolean {
 		if (!this.startDate) return false;
 
-		const daysSinceStart = Math.floor(
-			(new Date().getTime() - this.startDate.getTime()) / (1000 * 3600 * 24)
-		);
+		const daysSinceStart = Math.floor((new Date().getTime() - this.startDate.getTime()) / (1000 * 3600 * 24));
 
-		return daysSinceStart <= refundPolicyDays &&
-			   [PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL].includes(this.status);
+		return (
+			daysSinceStart <= refundPolicyDays &&
+			[PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL].includes(this.status)
+		);
 	}
 
 	/**
@@ -917,11 +912,10 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	 * Implements Specification pattern for complex business rules
 	 */
 	static isActiveAndAccessible(subscription: IPluginSubscription): boolean {
-		return [
-			PluginSubscriptionStatus.ACTIVE,
-			PluginSubscriptionStatus.TRIAL
-		].includes(subscription.status) &&
-		(!subscription.endDate || subscription.endDate > new Date());
+		return (
+			[PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL].includes(subscription.status) &&
+			(!subscription.endDate || subscription.endDate > new Date())
+		);
 	}
 
 	/**
@@ -933,81 +927,88 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 		const warningDate = new Date();
 		warningDate.setDate(warningDate.getDate() + warningDays);
 
-		return subscription.endDate <= warningDate &&
-			   subscription.endDate > new Date() &&
-			   subscription.status === PluginSubscriptionStatus.ACTIVE;
+		return (
+			subscription.endDate <= warningDate &&
+			subscription.endDate > new Date() &&
+			subscription.status === PluginSubscriptionStatus.ACTIVE
+		);
 	}
 
 	/**
 	 * Specification to check if subscription requires payment attention
 	 */
 	static requiresPaymentAttention(subscription: IPluginSubscription): boolean {
-		return [
-			PluginSubscriptionStatus.PENDING,
-			PluginSubscriptionStatus.SUSPENDED
-		].includes(subscription.status) ||
-		(subscription.status === PluginSubscriptionStatus.TRIAL &&
-		 subscription.trialEndDate &&
-		 subscription.trialEndDate <= new Date());
+		return (
+			[PluginSubscriptionStatus.PENDING, PluginSubscriptionStatus.SUSPENDED].includes(subscription.status) ||
+			(subscription.status === PluginSubscriptionStatus.TRIAL &&
+				subscription.trialEndDate &&
+				subscription.trialEndDate <= new Date())
+		);
 	}
 
 	/**
 	 * Specification to check if subscription is eligible for renewal
 	 */
 	static isEligibleForRenewal(subscription: IPluginSubscription): boolean {
-		return subscription.autoRenew &&
-			   [PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.EXPIRED].includes(subscription.status) &&
-			   (!subscription.parent || subscription.parent.status === PluginSubscriptionStatus.ACTIVE);
+		return (
+			subscription.autoRenew &&
+			[PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.EXPIRED].includes(subscription.status) &&
+			(!subscription.parent || subscription.parent.status === PluginSubscriptionStatus.ACTIVE)
+		);
 	}
 
 	/**
 	 * Specification to check if subscription can manage users
 	 */
 	static canManageUsers(subscription: IPluginSubscription): boolean {
-		return [PluginScope.ORGANIZATION, PluginScope.TENANT].includes(subscription.scope) &&
-			   PluginSubscription.isActiveAndAccessible(subscription) &&
-			   !subscription.parent;
+		return (
+			[PluginScope.ORGANIZATION, PluginScope.TENANT].includes(subscription.scope) &&
+			PluginSubscription.isActiveAndAccessible(subscription) &&
+			!subscription.parent
+		);
 	}
 
 	/**
 	 * Specification to check if subscription is a billable subscription
 	 */
 	static isBillable(subscription: IPluginSubscription): boolean {
-		return !!subscription.planId &&
-			   subscription.status !== PluginSubscriptionStatus.CANCELLED &&
-			   !subscription.parent; // Child subscriptions are not billed separately
+		return (
+			!!subscription.planId && subscription.status !== PluginSubscriptionStatus.CANCELLED && !subscription.parent
+		); // Child subscriptions are not billed separately
 	}
 
 	/**
 	 * Specification to check if subscription grants premium features
 	 */
 	static grantsPremiumFeatures(subscription: IPluginSubscription): boolean {
-		return PluginSubscription.isActiveAndAccessible(subscription) &&
-			   (!!subscription.planId || subscription.scope === PluginScope.TENANT);
+		return (
+			PluginSubscription.isActiveAndAccessible(subscription) &&
+			(!!subscription.planId || subscription.scope === PluginScope.TENANT)
+		);
 	}
 
 	/**
 	 * Specification to check if subscription is inherited from parent
 	 */
 	static isInheritedSubscription(subscription: IPluginSubscription): boolean {
-		return !!subscription.parent &&
-			   !!subscription.parentId &&
-			   subscription.scope === PluginScope.USER;
+		return !!subscription.parent && !!subscription.parentId && subscription.scope === PluginScope.USER;
 	}
 
 	/**
 	 * Specification to check if subscription needs billing attention
 	 */
 	static needsBillingAttention(subscription: IPluginSubscription): boolean {
-		const hasPendingPayments = subscription.billings?.some(
-			billing => billing.status === 'pending' && billing.dueDate <= new Date()
-		) || false;
+		const hasPendingPayments =
+			subscription.billings?.some((billing) => billing.status === 'pending' && billing.dueDate <= new Date()) ||
+			false;
 
-		return hasPendingPayments ||
-			   PluginSubscription.requiresPaymentAttention(subscription) ||
-			   (subscription.status === PluginSubscriptionStatus.ACTIVE &&
-			    subscription.endDate &&
-			    subscription.endDate <= new Date());
+		return (
+			hasPendingPayments ||
+			PluginSubscription.requiresPaymentAttention(subscription) ||
+			(subscription.status === PluginSubscriptionStatus.ACTIVE &&
+				subscription.endDate &&
+				subscription.endDate <= new Date())
+		);
 	}
 
 	// ==========================================

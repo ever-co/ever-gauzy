@@ -35,13 +35,12 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 			throw new BadRequestException('Tenant ID is required');
 		}
 
-		// Ensure plugin tenant relationship exists
-		const pluginTenantId = await this.pluginTenantService.findOrCreate(
-			purchaseDto.pluginId,
+		const pluginTenantInput = {
+			pluginId: purchaseDto.pluginId,
 			tenantId,
 			organizationId,
-			purchaseDto.scope
-		);
+			scope: purchaseDto.scope
+		};
 
 		let subscription: PluginSubscription;
 
@@ -52,6 +51,15 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 			if (!plan) {
 				throw new BadRequestException(`Plugin subscription plan with ID "${purchaseDto.planId}" not found`);
 			}
+
+			// Ensure plugin tenant relationship exists
+			const pluginTenantId = await this.pluginTenantService.findOrCreate({
+				...pluginTenantInput,
+				...(plan.hasLimitations && {
+					maxActiveUsers: plan.limitations?.['maxUsers'],
+					maxInstallations: plan.limitations?.['maxProjects']
+				})
+			});
 
 			if (plan.isFree) {
 				// Free plan - create immediate active subscription
@@ -92,6 +100,8 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 				);
 			}
 		} else {
+			// Get or create plugin tenant relationship
+			const pluginTenantId = await this.pluginTenantService.findOrCreate(pluginTenantInput);
 			// No plan specified - create free subscription
 			subscription = PluginSubscription.createFreeSubscription(
 				purchaseDto.pluginId,
