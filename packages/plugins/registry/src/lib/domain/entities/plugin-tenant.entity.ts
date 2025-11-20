@@ -605,7 +605,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	 * @returns true if plugin has been approved
 	 */
 	public isApproved(): boolean {
-		return this.approvedAt !== null && this.approvedAt !== undefined;
+		return (this.approvedAt !== null && this.approvedAt !== undefined) || !!this.approvedById;
 	}
 
 	/*

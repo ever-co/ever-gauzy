@@ -1,7 +1,7 @@
 import { CurrenciesEnum, ID } from '@gauzy/contracts';
 import { CrudService } from '@gauzy/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { FindManyOptions, FindOneOptions } from 'typeorm';
+import { FindManyOptions, FindOneOptions, MoreThan } from 'typeorm';
 import {
 	IPluginSubscriptionPlan,
 	IPluginSubscriptionPlanCreateInput,
@@ -361,6 +361,37 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 				throw error;
 			}
 			throw new BadRequestException(`Failed to get plan: ${error.message}`);
+		}
+	}
+
+	/**
+	 *
+	 * @param pluginId - The plugin ID
+	 * @returns
+	 */
+	async isSubscriptionRequired(pluginId: ID): Promise<boolean> {
+		try {
+			const count = await this.count({
+				where: [
+					{
+						pluginId,
+						isActive: true,
+						price: MoreThan(0)
+					},
+					{
+						isActive: true,
+						plugin: {
+							requiresSubscription: true,
+							id: pluginId
+						}
+					}
+				]
+			});
+			return count > 0;
+		} catch (error) {
+			// If there's an error checking, default to false (treat as free plugin)
+			console.error(`Error checking if plugin ${pluginId} requires subscription:`, error);
+			return false;
 		}
 	}
 }

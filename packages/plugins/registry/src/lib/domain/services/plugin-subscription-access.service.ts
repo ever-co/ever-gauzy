@@ -1,5 +1,6 @@
 import { ID, IPluginAccess, IUser } from '@gauzy/contracts';
 import { ForbiddenException, Injectable } from '@nestjs/common';
+import { FindOptionsWhere } from 'typeorm';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import {
 	IPluginSubscription,
@@ -266,7 +267,7 @@ class TenantSubscriptionFinder implements ISubscriptionFinderStrategy {
 
 	async findSubscription(context: ISubscriptionFindContext): Promise<IPluginSubscription | null> {
 		try {
-			const whereOptions: any = {
+			const whereOptions: FindOptionsWhere<IPluginSubscription> = {
 				pluginId: context.pluginId,
 				tenantId: context.tenantId,
 				scope: PluginScope.TENANT
@@ -290,10 +291,7 @@ class TenantSubscriptionFinder implements ISubscriptionFinderStrategy {
 class SubscriptionAccessContextFactory {
 	private readonly accessValidator = new AccessValidator();
 
-	constructor(
-		private readonly pluginSubscriptionService: PluginSubscriptionService,
-		private readonly pluginTenantService: PluginTenantService
-	) {}
+	constructor(private readonly pluginTenantService: PluginTenantService) {}
 
 	/**
 	 * Creates access context for free plugins using entity domain logic
@@ -579,10 +577,7 @@ export class PluginSubscriptionAccessService {
 		);
 
 		// Initialize context factory
-		this.accessContextFactory = new SubscriptionAccessContextFactory(
-			this.pluginSubscriptionService,
-			this.pluginTenantService
-		);
+		this.accessContextFactory = new SubscriptionAccessContextFactory(this.pluginTenantService);
 	}
 
 	/**
@@ -761,7 +756,7 @@ export class PluginSubscriptionAccessService {
 	 * Delegates to plan service following DIP
 	 */
 	async requiresSubscription(pluginId: ID): Promise<boolean> {
-		return this.pluginSubscriptionPlanService.hasPlans(pluginId);
+		return this.pluginSubscriptionPlanService.isSubscriptionRequired(pluginId);
 	}
 
 	/**
