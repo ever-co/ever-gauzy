@@ -56,10 +56,13 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		const tenantId = RequestContext.currentTenantId();
 		const membersToUpdate = new Set([...managerIds, ...memberIds].filter(Boolean));
 
-		// Fetch existing team members with their roles
+		// Fetch team members: current context OR legacy data (null tenantId/organizationId)
 		const teamMembers = await this.typeOrmRepository.find({
-			where: { tenantId, organizationId, organizationTeamId },
-			relations: { role: true }
+			where: [
+				{ organizationTeamId, tenantId, organizationId },
+				{ organizationTeamId, tenantId: null, organizationId: null }
+			],
+			relations: { role: true, employee: true }
 		});
 
 		// Create a map for fast lookup of current team members
