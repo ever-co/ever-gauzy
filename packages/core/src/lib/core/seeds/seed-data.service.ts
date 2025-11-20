@@ -520,11 +520,12 @@ export class SeedDataService {
 
 		const allDefaultEmployees = DEFAULT_EMPLOYEES.concat(DEFAULT_EVER_EMPLOYEES);
 		//User level data that needs dataSource, tenant, organization, role, users
+		// Create employees for all default users (including admins and super admins)
 		this.defaultEmployees = await createDefaultEmployees(
 			this.dataSource,
 			this.tenant,
 			this.defaultOrganization,
-			defaultEmployeeUsers,
+			defaultUsers, // Changed from defaultEmployeeUsers to include admins
 			allDefaultEmployees
 		);
 

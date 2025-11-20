@@ -15,31 +15,57 @@ export const createDefaultTeams = async (
 	roles: IRole[]
 ): Promise<OrganizationTeam[]> => {
 	const teams = DEFAULT_ORGANIZATION_TEAMS;
+	const { id: organizationId, tenantId } = organization;
 
 	const organizationTeams: OrganizationTeam[] = [];
 	for (let i = 0; i < teams.length; i++) {
 		const team = new OrganizationTeam();
 		team.name = teams[i].name;
-		team.organizationId = organization.id;
+		team.organizationId = organizationId;
 		team.tenant = organization.tenant;
 
-		const filteredEmployees = employees.filter((e) => (teams[i].defaultMembers || []).indexOf(e.user.email) > -1);
+		const managerEmails = teams[i].manager || [];
+		const memberEmails = teams[i].defaultMembers || [];
+		const managerRole = roles.find((x) => x.name === RolesEnum.MANAGER);
 
+		// Create a map to track employees and their manager status
+		const employeeMap = new Map<string, { employee: IEmployee; isManager: boolean }>();
+
+		// First, add all members
+		employees
+			.filter((e) => memberEmails.indexOf(e.user.email) > -1)
+			.forEach((emp) => {
+				employeeMap.set(emp.id, { employee: emp, isManager: false });
+			});
+
+		// Then, mark managers (this will update existing entries or add new ones)
+		employees
+			.filter((e) => managerEmails.indexOf(e.user.email) > -1)
+			.forEach((emp) => {
+				const existing = employeeMap.get(emp.id);
+				if (existing) {
+					// Employee is already a member, just mark as manager
+					existing.isManager = true;
+				} else {
+					// Employee is only a manager, add them
+					employeeMap.set(emp.id, { employee: emp, isManager: true });
+				}
+			});
+
+		// Create team employee records from the map
 		const teamEmployees: OrganizationTeamEmployee[] = [];
-
-		filteredEmployees.forEach((emp) => {
+		employeeMap.forEach(({ employee: emp, isManager }) => {
 			const teamEmployee = new OrganizationTeamEmployee();
+			// Set IDs
 			teamEmployee.employeeId = emp.id;
-			teamEmployees.push(teamEmployee);
-		});
-
-		const managers = employees.filter((e) => (teams[i].manager || []).indexOf(e.user.email) > -1);
-
-		managers.forEach((emp) => {
-			const teamEmployee = new OrganizationTeamEmployee();
-			teamEmployee.employeeId = emp.id;
-			teamEmployee.isManager = true;
-			teamEmployee.role = roles.filter((x) => x.name === RolesEnum.MANAGER)[0];
+			teamEmployee.organizationId = organizationId;
+			teamEmployee.tenantId = tenantId;
+			// Set relations
+			teamEmployee.employee = emp;
+			teamEmployee.organizationTeam = team;
+			// Set manager fields
+			teamEmployee.isManager = isManager;
+			teamEmployee.role = isManager ? managerRole : null;
 			teamEmployees.push(teamEmployee);
 		});
 

@@ -243,6 +243,11 @@ export const assignOrganizationProjectToEmployee = async (dataSource: DataSource
 		return;
 	}
 
+	// Guard against missing manager role
+	if (!managerRole) {
+		console.warn('Manager role not found for tenant. Projects will be assigned without managers.');
+	}
+
 	// Initialize an array to store the OrganizationProjectEmployee instances
 	const members: OrganizationProjectEmployee[] = [];
 
@@ -259,7 +264,8 @@ export const assignOrganizationProjectToEmployee = async (dataSource: DataSource
 			const project = projects[i];
 
 			// Make the first project assignment a manager role (25% chance to be manager)
-			const isManager = i === 0 && faker.datatype.boolean({ probability: 0.25 });
+			// Only if managerRole exists
+			const isManager = managerRole && i === 0 && faker.datatype.boolean({ probability: 0.25 });
 
 			const projectEmployee = new OrganizationProjectEmployee();
 			// Set IDs
