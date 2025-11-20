@@ -115,7 +115,8 @@ export const createRandomTeam = async (
 							employeeId: employee.id,
 							tenantId,
 							organizationId,
-							role: roles.filter(
+							isManager: true,
+							role: roles.find(
 								(role: IRole) => role.name === RolesEnum.MANAGER && role.tenantId === tenantId
 							)
 						})

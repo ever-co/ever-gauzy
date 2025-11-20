@@ -280,7 +280,7 @@ export const assignOrganizationProjectToEmployee = async (dataSource: DataSource
 			projectEmployee.tenant = organization.tenant;
 			// Set manager fields
 			projectEmployee.isManager = isManager;
-			projectEmployee.role = isManager ? managerRole : null;
+			projectEmployee.role = isManager ? managerRole : undefined;
 			projectEmployee.assignedAt = new Date();
 
 			members.push(projectEmployee);
