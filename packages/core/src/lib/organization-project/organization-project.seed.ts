@@ -257,14 +257,22 @@ export const assignOrganizationProjectToEmployee = async (dataSource: DataSource
 		// Create OrganizationProjectEmployee instances for the selected projects
 		for (let i = 0; i < projects.length; i++) {
 			const project = projects[i];
+
+			// Make the first project assignment a manager role (25% chance to be manager)
+			const isManager = i === 0 && faker.datatype.boolean({ probability: 0.25 });
+
 			const projectEmployee = new OrganizationProjectEmployee();
+			// Set IDs
+			projectEmployee.employeeId = employee.id;
+			projectEmployee.organizationProjectId = project.id;
+			projectEmployee.organizationId = organizationId;
+			projectEmployee.tenantId = tenantId;
+			// Set relations
 			projectEmployee.employee = employee;
 			projectEmployee.organizationProject = project;
 			projectEmployee.organization = organization;
 			projectEmployee.tenant = organization.tenant;
-
-			// Make the first project assignment a manager role (25% chance to be manager)
-			const isManager = i === 0 && faker.datatype.boolean({ probability: 0.25 });
+			// Set manager fields
 			projectEmployee.isManager = isManager;
 			projectEmployee.role = isManager ? managerRole : null;
 			projectEmployee.assignedAt = new Date();
