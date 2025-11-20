@@ -84,7 +84,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 							await this._entitySubscriptionService.delete({
 								entity: BaseEntityEnum.OrganizationTeam,
 								entityId: organizationTeamId,
-								employeeId: member.employee.id,
+								employeeId: member.employeeId,
 								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 								organizationId,
 								tenantId
