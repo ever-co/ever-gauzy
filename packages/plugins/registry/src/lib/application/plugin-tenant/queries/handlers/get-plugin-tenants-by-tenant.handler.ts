@@ -1,3 +1,4 @@
+import { IPagination } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PluginTenantService } from '../../../../domain';
@@ -15,19 +16,19 @@ export class GetPluginTenantsByTenantHandler implements IQueryHandler<GetPluginT
 	 * @returns Array of plugin tenants for the specified tenant/organization
 	 * @throws BadRequestException if tenant ID is invalid
 	 */
-	public async execute(query: GetPluginTenantsByTenantQuery): Promise<IPluginTenant[]> {
-		const { tenantId, organizationId } = query;
+	public async execute(query: GetPluginTenantsByTenantQuery): Promise<IPagination<IPluginTenant>> {
+		const { tenantId, organizationId, skip, take } = query;
 
 		if (!tenantId) {
 			throw new BadRequestException('Tenant ID is required');
 		}
 
-		return await this.pluginTenantService.findByTenantId(tenantId, organizationId, [
-			'plugin',
-			'approvedBy',
-			'allowedRoles',
-			'allowedUsers',
-			'deniedUsers'
-		]);
+		return this.pluginTenantService.findByTenantId(
+			tenantId,
+			organizationId,
+			['plugin', 'approvedBy', 'allowedRoles', 'allowedUsers', 'deniedUsers'],
+			skip,
+			take
+		);
 	}
 }

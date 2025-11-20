@@ -1,3 +1,4 @@
+import { IPagination } from '@gauzy/contracts';
 import { TenantPermissionGuard } from '@gauzy/core';
 import {
 	Body,
@@ -133,8 +134,12 @@ export class PluginTenantController {
 		type: [Object]
 	})
 	@Get('/by-plugin/:pluginId')
-	async findByPlugin(@Param('pluginId') pluginId: string): Promise<IPluginTenant[]> {
-		return this.queryBus.execute(new GetPluginTenantsByPluginQuery(pluginId));
+	async findByPlugin(
+		@Param('pluginId') pluginId: string,
+		@Query('skip') skip?: number,
+		@Query('take') take?: number
+	): Promise<IPluginTenant[]> {
+		return this.queryBus.execute(new GetPluginTenantsByPluginQuery(pluginId, skip, take));
 	}
 
 	/**
@@ -154,9 +159,11 @@ export class PluginTenantController {
 	@Get('/by-tenant/:tenantId')
 	async findByTenant(
 		@Param('tenantId') tenantId: string,
-		@Query('organizationId') organizationId?: string
-	): Promise<IPluginTenant[]> {
-		return this.queryBus.execute(new GetPluginTenantsByTenantQuery(tenantId, organizationId));
+		@Query('organizationId') organizationId?: string,
+		@Query('skip') skip?: number,
+		@Query('take') take?: number
+	): Promise<IPagination<IPluginTenant>> {
+		return this.queryBus.execute(new GetPluginTenantsByTenantQuery(tenantId, organizationId, skip, take));
 	}
 
 	/**

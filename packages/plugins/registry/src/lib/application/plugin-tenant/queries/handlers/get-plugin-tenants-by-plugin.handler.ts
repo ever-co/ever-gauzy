@@ -1,8 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { IPagination } from '../../../../../../../../../dist/packages/contracts/src/lib/core.model';
 import { PluginTenantService } from '../../../../domain';
-import { GetPluginTenantsByPluginQuery } from '../get-plugin-tenants-by-plugin.query';
 import { IPluginTenant } from '../../../../shared';
+import { GetPluginTenantsByPluginQuery } from '../get-plugin-tenants-by-plugin.query';
 
 @QueryHandler(GetPluginTenantsByPluginQuery)
 export class GetPluginTenantsByPluginHandler implements IQueryHandler<GetPluginTenantsByPluginQuery> {
@@ -15,19 +16,18 @@ export class GetPluginTenantsByPluginHandler implements IQueryHandler<GetPluginT
 	 * @returns Array of plugin tenants for the specified plugin
 	 * @throws BadRequestException if plugin ID is invalid
 	 */
-	public async execute(query: GetPluginTenantsByPluginQuery): Promise<IPluginTenant[]> {
-		const { pluginId } = query;
+	public async execute(query: GetPluginTenantsByPluginQuery): Promise<IPagination<IPluginTenant>> {
+		const { pluginId, skip, take } = query;
 
 		if (!pluginId) {
 			throw new BadRequestException('Plugin ID is required');
 		}
 
-		return await this.pluginTenantService.findByPluginId(pluginId, [
-			'plugin',
-			'approvedBy',
-			'allowedRoles',
-			'allowedUsers',
-			'deniedUsers'
-		]);
+		return this.pluginTenantService.findByPluginId(
+			pluginId,
+			['plugin', 'approvedBy', 'allowedRoles', 'allowedUsers', 'deniedUsers'],
+			skip,
+			take
+		);
 	}
 }
