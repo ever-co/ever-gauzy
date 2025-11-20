@@ -4,7 +4,9 @@ import { OrganizationTeamEmployee } from '../organization-team-employee/organiza
 import { IEmployee, IOrganization, IRole, ITenant, RolesEnum } from '@gauzy/contracts';
 import * as _ from 'underscore';
 import { faker } from '@faker-js/faker';
+import { environment } from '@gauzy/config';
 import { DEFAULT_ORGANIZATION_TEAMS } from './default-organization-teams';
+import { Employee, User } from '../core/entities/internal';
 
 export const createDefaultTeams = async (
 	dataSource: DataSource,
@@ -109,4 +111,69 @@ export const createRandomTeam = async (
 
 const insertOrganizationTeam = async (dataSource: DataSource, teams: OrganizationTeam[]): Promise<void> => {
 	await dataSource.manager.save(teams);
+};
+
+/**
+ * Update lastTeamId for demo users after teams are created
+ * This ensures demo users have a default team when they log in
+ */
+export const updateDemoUsersLastTeam = async (dataSource: DataSource, organization: IOrganization): Promise<void> => {
+	const { id: organizationId, tenantId } = organization;
+
+	// Get the demo user emails
+	const demoEmails = [
+		environment.demoCredentialConfig.superAdminEmail,
+		environment.demoCredentialConfig.adminEmail,
+		environment.demoCredentialConfig.employeeEmail
+	];
+
+	// Find the users
+	const users = await dataSource.manager.find(User, {
+		where: demoEmails.map((email) => ({ email, tenantId }))
+	});
+
+	if (users.length === 0) {
+		console.warn('No demo users found to update lastTeamId');
+		return;
+	}
+
+	// For each user, find their employee and first team
+	for (const user of users) {
+		// Find the employee for this user
+		const employee = await dataSource.manager.findOne(Employee, {
+			where: {
+				userId: user.id,
+				tenantId,
+				organizationId
+			}
+		});
+
+		if (!employee) {
+			console.warn(`No employee found for user ${user.email}`);
+			continue;
+		}
+
+		// Find the first team this employee is a member of
+		const teamMembership = await dataSource.manager.findOne(OrganizationTeamEmployee, {
+			where: {
+				employeeId: employee.id,
+				tenantId,
+				organizationId
+			},
+			relations: ['organizationTeam']
+		});
+
+		if (teamMembership && teamMembership.organizationTeam) {
+			// Update the user's lastTeamId
+			await dataSource.manager.update(
+				User,
+				{ id: user.id },
+				{
+					lastTeamId: teamMembership.organizationTeam.id,
+					defaultTeamId: teamMembership.organizationTeam.id
+				}
+			);
+			console.log(`Updated lastTeamId for ${user.email} to team: ${teamMembership.organizationTeam.name}`);
+		}
+	}
 };

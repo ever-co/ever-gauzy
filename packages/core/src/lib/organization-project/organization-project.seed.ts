@@ -7,6 +7,7 @@ import {
 	ITenant,
 	OrganizationProjectBudgetTypeEnum,
 	ProjectStatusEnum,
+	RolesEnum,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
 import { DatabaseTypeEnum } from '@gauzy/config';
@@ -16,6 +17,7 @@ import {
 	OrganizationContact,
 	OrganizationProjectEmployee,
 	OrganizationTeam,
+	Role,
 	Tag
 } from './../core/entities/internal';
 import { OrganizationProject } from './organization-project.entity';
@@ -228,10 +230,11 @@ export const createRandomOrganizationProjects = async (
 export const assignOrganizationProjectToEmployee = async (dataSource: DataSource, organization: IOrganization) => {
 	const { id: organizationId, tenantId } = organization;
 
-	// Fetch all projects and employees for the organization and tenant
-	const [organizationProjects, employees] = await Promise.all([
+	// Fetch all projects, employees, and manager role for the organization and tenant
+	const [organizationProjects, employees, managerRole] = await Promise.all([
 		dataSource.manager.findBy(OrganizationProject, { tenantId, organizationId }),
-		dataSource.manager.findBy(Employee, { tenantId, organizationId })
+		dataSource.manager.findBy(Employee, { tenantId, organizationId }),
+		dataSource.manager.findOneBy(Role, { tenantId, name: RolesEnum.MANAGER })
 	]);
 
 	// Check if there are enough projects to assign
@@ -252,12 +255,19 @@ export const assignOrganizationProjectToEmployee = async (dataSource: DataSource
 		const projects = chain(organizationProjects).shuffle().take(numberOfProjects).value();
 
 		// Create OrganizationProjectEmployee instances for the selected projects
-		for (const project of projects) {
+		for (let i = 0; i < projects.length; i++) {
+			const project = projects[i];
 			const projectEmployee = new OrganizationProjectEmployee();
 			projectEmployee.employee = employee;
 			projectEmployee.organizationProject = project;
 			projectEmployee.organization = organization;
 			projectEmployee.tenant = organization.tenant;
+
+			// Make the first project assignment a manager role (25% chance to be manager)
+			const isManager = i === 0 && faker.datatype.boolean({ probability: 0.25 });
+			projectEmployee.isManager = isManager;
+			projectEmployee.role = isManager ? managerRole : null;
+			projectEmployee.assignedAt = new Date();
 
 			members.push(projectEmployee);
 		}

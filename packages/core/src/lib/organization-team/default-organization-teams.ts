@@ -75,13 +75,18 @@ export const DEFAULT_ORGANIZATION_TEAMS = [
 	{
 		name: 'Default Team',
 		defaultMembers: [
+			`${environment.demoCredentialConfig.superAdminEmail}`,
 			`${environment.demoCredentialConfig.employeeEmail}`,
 			`${environment.demoCredentialConfig.adminEmail}`,
 			'ruslan@example-ever.co',
 			'alish@example-ever.co',
 			'julia@example-ever.co'
 		],
-		manager: [`${environment.demoCredentialConfig.superAdminEmail}`]
+		manager: [
+			`${environment.demoCredentialConfig.superAdminEmail}`,
+			`${environment.demoCredentialConfig.adminEmail}`,
+			`${environment.demoCredentialConfig.employeeEmail}`
+		]
 	},
 	{
 		name: 'Backend Team',

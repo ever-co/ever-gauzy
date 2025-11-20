@@ -37,7 +37,11 @@ import {
 	createRandomUsersOrganizations
 } from '../../user-organization/user-organization.seed';
 import { createCountries } from '../../country/country.seed';
-import { createDefaultTeams, createRandomTeam } from '../../organization-team/organization-team.seed';
+import {
+	createDefaultTeams,
+	createRandomTeam,
+	updateDemoUsersLastTeam
+} from '../../organization-team/organization-team.seed';
 import { createRolePermissions } from '../../role-permission/role-permission.seed';
 import { createDefaultTenant, createRandomTenants, DEFAULT_EVER_TENANT, DEFAULT_TENANT } from '../../tenant';
 import { createDefaultTenantSetting } from './../../tenant/tenant-setting/tenant-setting.seed';
@@ -633,6 +637,12 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Teams',
 			createDefaultTeams(this.dataSource, this.defaultOrganization, this.defaultEmployees, this.roles)
+		);
+
+		// Update demo users' lastTeamId after teams are created
+		await this.tryExecute(
+			'Update Demo Users Last Team',
+			updateDemoUsersLastTeam(this.dataSource, this.defaultOrganization)
 		);
 
 		this.defaultProjects = await this.tryExecute(
