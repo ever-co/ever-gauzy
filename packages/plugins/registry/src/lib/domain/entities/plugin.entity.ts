@@ -302,7 +302,7 @@ export class Plugin extends BaseEntity implements IPlugin {
 		Object.assign(plugin, {
 			status: PluginStatus.ACTIVE,
 			type: PluginType.DESKTOP,
-			isActive: false,
+			isActive: true,
 			requiresSubscription: false,
 			downloadCount: 0,
 			versions: [],
