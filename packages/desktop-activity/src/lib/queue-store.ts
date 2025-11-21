@@ -68,7 +68,6 @@ export class QueueStore {
 
 	putTask(taskId: string, task: any, priority: number, cb: (err?: any) => void) {
 		try {
-			console.log('put task to sqlite');
 			this.db
 				.prepare(
 					`INSERT OR REPLACE INTO ${this.tableName} (id, lock, task, priority, added)

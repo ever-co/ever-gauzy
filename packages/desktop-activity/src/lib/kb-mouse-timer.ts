@@ -26,7 +26,7 @@ export class KbMouseTimer {
 	/* dynamic interval screenshot for random screenshot */
 	private currentScreenshotInterval: number = 60;
 
-	private externalTickHandler: () => void;
+	private externalTickHandler?: () => void;
 
 	private constructor() {
 		this.afkCountdown = this.afkThreshold;

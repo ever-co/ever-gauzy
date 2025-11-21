@@ -11,7 +11,7 @@ export async function up(knex: Knex): Promise<void> {
 		table.timestamp('recordedAt').notNullable();
 		table.string('timeslotId').nullable();
 		table.timestamps(true, true, true);
-		table.index(['imagePath', 'activityId']);
+		table.index(['activityId']);
 	});
 }
 

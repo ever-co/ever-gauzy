@@ -4,13 +4,13 @@ import { TABLE_NAME_KB_MOUSE_ACTIVITY, TABLE_NAME_TIMERS } from '../../../offlin
 
 export async function up(knex: Knex): Promise<void> {
 	return knex.schema.alterTable(TABLE_NAME_KB_MOUSE_ACTIVITY, function(table) {
-		// Add  syncedActivity and isOffline and timerId column to track active app
+		// Add syncedActivity and isOffline and timerId column to track active app
 		table
 			.integer('timerId')
 			.unsigned()
 			.references(TABLE_NAME_TIMERS + '.id');
 		table.boolean('syncedActivity').nullable();
-		table.boolean('isOffline');
+		table.boolean('isOffline').nullable();
 		table.string('timeslotId').nullable();
 	});
 }

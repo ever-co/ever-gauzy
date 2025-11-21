@@ -50,6 +50,9 @@ export class SyncManager {
 	}
 
 	async syncTimer(sequences: ISequence[]) {
+		if (!this.enqueueTimer) {
+			return;
+		}
 		for (const sequence of sequences) {
 			const { timer } = sequence;
 			this.enqueueTimer({
@@ -66,6 +69,9 @@ export class SyncManager {
 	}
 
 	private async checkUnSyncedTimeSlot() {
+		if (!this.enqueueTimeSlot) {
+			return;
+		}
 		const authConfig = getAuthConfig();
 		const activities = await this.kbMouseActivityService.findUnSyncedActivity(
 			authConfig?.user?.id,
@@ -88,6 +94,9 @@ export class SyncManager {
 	}
 
 	private async checkUnSyncedScreenshot() {
+		if (!this.enqueueScreenshot) {
+			return;
+		}
 		const screenshots: ScreenshotTO[] = await this.screenshotService.findUnSyncedScreenshot();
 		if (screenshots.length) {
 			for (const screenshot of screenshots) {

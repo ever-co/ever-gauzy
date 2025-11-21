@@ -57,7 +57,7 @@ export class KbMouseActivityDAO implements DAO<KbMouseActivityTO> {
 		remoteId: string,
 		organizationId: string,
 		tenantId: string,
-	): Promise<KbMouseActivityTO[] | undefined> {
+	): Promise<KbMouseActivityTO[]> {
 		const activities = await this._provider
 			.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
 			.where('tenantId', tenantId)

@@ -239,7 +239,6 @@ export class DesktopQueue {
 
 	public enqueueTimer(job: ITimerCallbackPayload) {
 		if (job.isRetry && this.timerQueueRetry) {
-			console.log('timer retry');
 			return this.timerQueueRetry.push(job);
 		}
 		if (!this.timerQueue) {
@@ -250,7 +249,6 @@ export class DesktopQueue {
 
 	public enqueueTimeSlot(job: ITimeslotQueuePayload) {
 		if (job.isRetry && this.timeSlotQueueRetry) {
-			console.log('timeslot retry');
 			return this.timeSlotQueueRetry.push(job);
 		}
 		if (!this.timeSlotQueue) {
@@ -261,7 +259,6 @@ export class DesktopQueue {
 
 	public enqueueScreenshot(job: IScreenshotQueuePayload) {
 		if (job.isRetry && this.screenshotQueueRetry) {
-			console.log('screenshot retry');
 			return this.screenshotQueueRetry.push(job);
 		}
 		if (!this.screenshotQueue) {
@@ -332,7 +329,7 @@ export class DesktopQueue {
 		}
 		this.isOnlineIntervalCheck = 0;
 		const ok = await isOnline({ timeout: 1200 }).catch(() => false);
-		const serviceOk = await this.serviceCheckCallback();
+		const serviceOk = await this.serviceCheckCallback?.();
 		if (ok && serviceOk && !this.online) {
 			this.online = true;
 			this.timerQueueRetry.resume();

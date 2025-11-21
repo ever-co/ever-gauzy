@@ -24,7 +24,7 @@ export class ScreenshotDAO implements DAO<ScreenshotTO> {
 		return this._trx.createAndReturn(value);
 	}
 
-	public async findOneById(id: number): Promise<ScreenshotTO | undefined> {
+	public async findOneById(id: number): Promise<ScreenshotTO> {
 		const result = await this._provider
 			.connection<ScreenshotTO>(TABLE_NAME_SCREENSHOT)
 			.where('id', '=', id);
@@ -35,7 +35,7 @@ export class ScreenshotDAO implements DAO<ScreenshotTO> {
 	}
 	public async delete(value?: Partial<ScreenshotTO>): Promise<void> {
 		if (!value || value.id === undefined) {
-			throw new Error('Cannot delete activity: Missing or invalid id');
+			throw new Error('Cannot delete screenshot data: Missing or invalid id');
 		}
 		await this._provider
 			.connection<ScreenshotTO>(TABLE_NAME_SCREENSHOT)
@@ -43,7 +43,7 @@ export class ScreenshotDAO implements DAO<ScreenshotTO> {
 			.del();
 	}
 
-	public async findUnSyncedScreenshot(): Promise<ScreenshotTO[] | undefined> {
+	public async findUnSyncedScreenshot(): Promise<ScreenshotTO[]> {
 		const screenshots = await this._provider
 			.connection<ScreenshotTO>(TABLE_NAME_SCREENSHOT)
 			.where('synced', false)

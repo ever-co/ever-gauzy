@@ -46,7 +46,7 @@ export class ScreenshotService implements IScreenshotService<ScreenshotTO> {
 		}
 	}
 
-	public async findById(screenshot: Partial<ScreenshotTO>): Promise<ScreenshotTO> {
+	public async findById(screenshot: Partial<ScreenshotTO>): Promise<ScreenshotTO | null> {
 		try {
 			if (!screenshot.id) {
 				console.error('WARN[SCREENSHOT_SERVICE]: No screenshot data, cannot find');

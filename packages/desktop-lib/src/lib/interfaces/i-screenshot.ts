@@ -1,7 +1,7 @@
 
 /**
- * Service interface for managing keyboard and mouse activity data.
- * @template T The type of activity data being managed
+ * Service interface for managing screenshot data.
+ * @template T The type of screenshot data being managed
 */
 export interface IScreenshotService<T> {
 	save(activities: T): Promise<void>;
