@@ -7,23 +7,120 @@
 	border-radius: 12px;
 	background: var(--background-basic-color-1);
 	cursor: pointer;
-	transition: all 0.3s ease;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	height: 100%;
 
-	&:hover {
+	&:hover:not(.disabled) {
 		border-color: var(--color-primary-default);
-		transform: translateY(-2px);
-		box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+		transform: translateY(-4px);
+		box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+	}
+
+	&:focus-visible {
+		outline: 3px solid var(--color-primary-default);
+		outline-offset: 2px;
 	}
 
 	&.selected {
-		border-color: var(--color-success-default);
-		background: var(--background-basic-color-2);
-		box-shadow: 0 4px 12px rgba(var(--color-success-default-rgb), 0.2);
+		border-color: var(--color-primary-default);
+		border-width: 3px;
+		background: linear-gradient(135deg, var(--background-basic-color-1), var(--background-basic-color-2));
+		box-shadow: 0 8px 24px rgba(51, 102, 255, 0.25),
+					0 0 0 4px rgba(51, 102, 255, 0.1);
+		animation: selectedPulse 0.4s ease-out;
+		transform: scale(1.02);
+
+		&:hover:not(.disabled) {
+			box-shadow: 0 12px 32px rgba(51, 102, 255, 0.35),
+						0 0 0 4px rgba(51, 102, 255, 0.15);
+			transform: scale(1.02) translateY(-2px);
+		}
+
+		// Add selection indicator
+		&::after {
+			content: '';
+			position: absolute;
+			top: 1rem;
+			right: 1rem;
+			width: 28px;
+			height: 28px;
+			background: var(--color-primary-default);
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			box-shadow: 0 2px 8px rgba(51, 102, 255, 0.4);
+		}
+
+		&::before {
+			content: '✓';
+			position: absolute;
+			top: 1.35rem;
+			right: 1.5rem;
+			color: white;
+			font-size: 1rem;
+			font-weight: bold;
+			z-index: 1;
+		}
 	}
 
-	&.popular::before,
-	&.recommended::before {
+	&.current-plan {
+		border-color: var(--color-success-default);
+		border-width: 3px;
+		background: linear-gradient(135deg,
+					rgba(0, 214, 143, 0.05),
+					var(--background-basic-color-1),
+					var(--background-basic-color-2));
+		cursor: not-allowed;
+		box-shadow: 0 4px 16px rgba(0, 214, 143, 0.2),
+					0 0 0 4px rgba(0, 214, 143, 0.08);
+
+		&:hover {
+			transform: none;
+			box-shadow: 0 4px 16px rgba(0, 214, 143, 0.2),
+						0 0 0 4px rgba(0, 214, 143, 0.08);
+		}
+
+		// Current plan indicator
+		&::after {
+			content: '';
+			position: absolute;
+			top: 1rem;
+			right: 1rem;
+			width: 28px;
+			height: 28px;
+			background: var(--color-success-default);
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			box-shadow: 0 2px 8px rgba(0, 214, 143, 0.4);
+		}
+
+		&::before {
+			content: '★';
+			position: absolute;
+			top: 1.35rem;
+			right: 1.5rem;
+			color: white;
+			font-size: 1rem;
+			font-weight: bold;
+			z-index: 1;
+		}
+	}
+
+	&.disabled {
+		opacity: 0.7;
+		cursor: not-allowed;
+
+		&:hover {
+			transform: none;
+			border-color: var(--border-basic-color-3);
+			box-shadow: none;
+		}
+	}
+
+	&.popular::before {
 		content: '';
 		position: absolute;
 		top: -2px;
@@ -33,11 +130,49 @@
 		background: linear-gradient(135deg, var(--color-warning-default), var(--color-danger-default));
 		border-radius: 12px;
 		z-index: -1;
-		opacity: 0.3;
+		opacity: 0.4;
+		animation: gradientShift 3s ease infinite;
+	}
+
+	&.recommended::before {
+		content: '';
+		position: absolute;
+		top: -2px;
+		left: -2px;
+		right: -2px;
+		bottom: -2px;
+		background: linear-gradient(135deg, var(--color-info-default), var(--color-primary-default));
+		border-radius: 12px;
+		z-index: -1;
+		opacity: 0.4;
+		animation: gradientShift 3s ease infinite;
 	}
 
 	&.free {
 		border-color: var(--color-success-default);
+		background: linear-gradient(to bottom, var(--background-basic-color-1), rgba(var(--color-success-default-rgb), 0.05));
+	}
+}
+
+// Animations
+@keyframes selectedPulse {
+	0% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.02);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+@keyframes gradientShift {
+	0%, 100% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
 	}
 }
 

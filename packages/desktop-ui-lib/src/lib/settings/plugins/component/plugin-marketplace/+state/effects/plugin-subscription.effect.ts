@@ -5,7 +5,11 @@ import { EMPTY, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrNotificationService } from '../../../../../../services';
-import { IPluginSubscriptionPlan, PluginSubscriptionService } from '../../../../services/plugin-subscription.service';
+import {
+	IPluginSubscriptionPlan,
+	PluginSubscriptionService,
+	PluginSubscriptionStatus
+} from '../../../../services/plugin-subscription.service';
 import { PluginSubscriptionActions } from '../actions/plugin-subscription.action';
 import { PluginSubscriptionStore } from '../stores/plugin-subscription.store';
 
@@ -28,6 +32,15 @@ export class PluginSubscriptionEffects {
 				this.pluginSubscriptionService.getPluginSubscriptions(pluginId).pipe(
 					tap((subscriptions) => {
 						this.pluginSubscriptionStore.setSubscriptions(subscriptions);
+						// Also set the current subscription for this specific plugin
+						const currentSubscription =
+							subscriptions.find(
+								(s) =>
+									s.pluginId === pluginId &&
+									(s.status === PluginSubscriptionStatus.ACTIVE ||
+										s.status === PluginSubscriptionStatus.TRIAL)
+							) || null;
+						this.pluginSubscriptionStore.setCurrentPluginSubscription(pluginId, currentSubscription);
 					}),
 					finalize(() => this.pluginSubscriptionStore.setLoading(false)),
 					catchError((error) => {
@@ -49,6 +62,8 @@ export class PluginSubscriptionEffects {
 				this.pluginSubscriptionService.getPluginPlans(pluginId).pipe(
 					tap((plans) => {
 						this.pluginSubscriptionStore.setPlans(plans);
+						// IMPORTANT: Also set plans for the specific plugin in currentPluginPlans
+						this.pluginSubscriptionStore.setCurrentPluginPlans(pluginId, plans);
 					}),
 					finalize(() => this.pluginSubscriptionStore.setLoading(false)),
 					catchError((error) => {
@@ -193,7 +208,7 @@ export class PluginSubscriptionEffects {
 		this.actions$.pipe(
 			ofType(PluginSubscriptionActions.loadSubscriptionAnalytics),
 			tap(() => this.pluginSubscriptionStore.setLoading(true)),
-			switchMap(({ pluginId }) =>
+			switchMap(() =>
 				this.pluginSubscriptionService.getSubscriptionAnalytics().pipe(
 					tap((analytics) => {
 						this.pluginSubscriptionStore.setAnalytics(analytics);
@@ -260,6 +275,34 @@ export class PluginSubscriptionEffects {
 			ofType(PluginSubscriptionActions.resetState),
 			tap(() => {
 				this.pluginSubscriptionStore.reset();
+			})
+		)
+	);
+
+	// Plan comparison and confirmation step effects
+	updatePlanComparison$ = createEffect(() =>
+		this.actions$.pipe(
+			ofType(PluginSubscriptionActions.updatePlanComparison),
+			tap(({ comparison }) => {
+				this.pluginSubscriptionStore.updatePlanComparison(comparison);
+			})
+		)
+	);
+
+	resetPlanComparison$ = createEffect(() =>
+		this.actions$.pipe(
+			ofType(PluginSubscriptionActions.resetPlanComparison),
+			tap(() => {
+				this.pluginSubscriptionStore.resetPlanComparison();
+			})
+		)
+	);
+
+	setConfirmationStep$ = createEffect(() =>
+		this.actions$.pipe(
+			ofType(PluginSubscriptionActions.setConfirmationStep),
+			tap(({ step }) => {
+				this.pluginSubscriptionStore.setConfirmationStep(step);
 			})
 		)
 	);

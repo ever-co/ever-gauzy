@@ -7,6 +7,7 @@ import {
 	IPluginSubscriptionPlan,
 	IPluginSubscriptionUpdateInput
 } from '../../../../services/plugin-subscription.service';
+import { PlanActionType } from '../../plugin-subscription-selection/services/plan-comparison.service';
 
 export class PluginSubscriptionActions {
 	// Load Plugin Subscriptions
@@ -224,5 +225,36 @@ export class PluginSubscriptionActions {
 	public static bulkCreatePlansFailure = createAction(
 		'[Plugin Subscription] Bulk Create Plans Failure',
 		(error: string) => ({ error })
+	);
+
+	// Plan comparison actions
+	public static updatePlanComparison = createAction(
+		'[Plugin Subscription] Update Plan Comparison',
+		(comparison: {
+			currentPlanId?: string | null;
+			selectedPlanId?: string | null;
+			actionType?: PlanActionType;
+			isValidAction?: boolean;
+			requiresPayment?: boolean;
+			prorationAmount?: number;
+		}) => ({ comparison })
+	);
+
+	public static resetPlanComparison = createAction('[Plugin Subscription] Reset Plan Comparison');
+
+	public static setConfirmationStep = createAction(
+		'[Plugin Subscription] Set Confirmation Step',
+		(step: 'selection' | 'confirmation' | 'payment' | 'processing' | 'completed' | null) => ({ step })
+	);
+
+	// Current subscription state actions
+	public static setCurrentPluginSubscription = createAction(
+		'[Plugin Subscription] Set Current Plugin Subscription',
+		(pluginId: string, subscription: IPluginSubscription | null) => ({ pluginId, subscription })
+	);
+
+	public static setCurrentPluginPlans = createAction(
+		'[Plugin Subscription] Set Current Plugin Plans',
+		(pluginId: string, plans: IPluginSubscriptionPlan[]) => ({ pluginId, plans })
 	);
 }

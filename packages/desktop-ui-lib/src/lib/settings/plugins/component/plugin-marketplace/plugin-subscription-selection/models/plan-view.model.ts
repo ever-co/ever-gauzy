@@ -3,9 +3,10 @@ import {
 	PluginBillingPeriod,
 	PluginSubscriptionType
 } from '../../../../services/plugin-subscription.service';
+import { PlanActionType } from '../services/plan-comparison.service';
 
 /**
- * View model for displaying subscription plans
+ * View model for displaying subscription plans with comparison information
  * Follows SOLID principle: Single Responsibility - handles view data transformation
  */
 export interface IPlanViewModel {
@@ -39,8 +40,29 @@ export interface IPlanViewModel {
 	formattedSetupFee?: string;
 	discountPercentage?: number;
 
+	// Comparison state (populated when compared with current subscription)
+	comparisonResult?: IPlanComparisonDisplayInfo;
+
 	// Original plan data
 	originalPlan: IPluginSubscriptionPlan;
+}
+
+/**
+ * Display information for plan comparison
+ */
+export interface IPlanComparisonDisplayInfo {
+	actionType: PlanActionType;
+	actionText: string;
+	buttonVariant: 'primary' | 'success' | 'warning' | 'basic';
+	isDisabled: boolean;
+	canProceed: boolean;
+	requiresPayment: boolean;
+	prorationAmount?: number;
+	formattedProrationAmount?: string;
+	restrictions: string[];
+	benefits: string[];
+	badgeText?: string;
+	badgeColor?: string;
 }
 
 /**

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
 import { IPluginSubscription, IPluginSubscriptionPlan } from '../../../../services/plugin-subscription.service';
+import { PlanActionType } from '../../plugin-subscription-selection/services/plan-comparison.service';
 
 export interface IPluginSubscriptionState {
 	subscriptions: IPluginSubscription[];
@@ -12,6 +13,20 @@ export interface IPluginSubscriptionState {
 	updating: boolean;
 	deleting: boolean;
 	error: string | null;
+
+	// Current subscription tracking
+	currentPluginSubscriptions: Record<string, IPluginSubscription | null>;
+	currentPluginPlans: Record<string, IPluginSubscriptionPlan[]>;
+
+	// Plan comparison state
+	planComparison: {
+		currentPlanId: string | null;
+		selectedPlanId: string | null;
+		actionType: PlanActionType;
+		isValidAction: boolean;
+		requiresPayment: boolean;
+		prorationAmount?: number;
+	};
 
 	// Analytics data
 	analytics: {
@@ -28,6 +43,7 @@ export interface IPluginSubscriptionState {
 	// UI state
 	showSubscriptionDialog: boolean;
 	selectedPluginId: string | null;
+	confirmationStep: 'selection' | 'confirmation' | 'payment' | 'processing' | 'completed' | null;
 }
 
 export function createInitialSubscriptionState(): IPluginSubscriptionState {
@@ -41,9 +57,19 @@ export function createInitialSubscriptionState(): IPluginSubscriptionState {
 		updating: false,
 		deleting: false,
 		error: null,
+		currentPluginSubscriptions: {},
+		currentPluginPlans: {},
+		planComparison: {
+			currentPlanId: null,
+			selectedPlanId: null,
+			actionType: null,
+			isValidAction: false,
+			requiresPayment: false
+		},
 		analytics: null,
 		showSubscriptionDialog: false,
-		selectedPluginId: null
+		selectedPluginId: null,
+		confirmationStep: null
 	};
 }
 
@@ -152,9 +178,70 @@ export class PluginSubscriptionStore extends Store<IPluginSubscriptionState> {
 		this.update({ error });
 	}
 
-	// Analytics
-	public setAnalytics(analytics: IPluginSubscriptionState['analytics']): void {
-		this.update({ analytics });
+	// Current subscription management for specific plugins
+	public setCurrentPluginSubscription(pluginId: string, subscription: IPluginSubscription | null): void {
+		this.update((state) => ({
+			currentPluginSubscriptions: {
+				...state.currentPluginSubscriptions,
+				[pluginId]: subscription
+			}
+		}));
+	}
+
+	public setCurrentPluginPlans(pluginId: string, plans: IPluginSubscriptionPlan[]): void {
+		this.update((state) => ({
+			currentPluginPlans: {
+				...state.currentPluginPlans,
+				[pluginId]: plans
+			}
+		}));
+	}
+
+	// Plan comparison management
+	public updatePlanComparison(comparison: Partial<IPluginSubscriptionState['planComparison']>): void {
+		this.update((state) => ({
+			planComparison: {
+				...state.planComparison,
+				...comparison
+			}
+		}));
+	}
+
+	public setPlanComparison(
+		currentPlanId: string | null,
+		selectedPlanId: string | null,
+		actionType: PlanActionType,
+		isValidAction: boolean,
+		requiresPayment: boolean,
+		prorationAmount?: number
+	): void {
+		this.update({
+			planComparison: {
+				currentPlanId,
+				selectedPlanId,
+				actionType,
+				isValidAction,
+				requiresPayment,
+				prorationAmount
+			}
+		});
+	}
+
+	// Subscription flow management
+	public setConfirmationStep(step: IPluginSubscriptionState['confirmationStep']): void {
+		this.update({ confirmationStep: step });
+	}
+
+	public resetPlanComparison(): void {
+		this.update({
+			planComparison: {
+				currentPlanId: null,
+				selectedPlanId: null,
+				actionType: null,
+				isValidAction: false,
+				requiresPayment: false
+			}
+		});
 	}
 
 	// UI state
@@ -172,5 +259,20 @@ export class PluginSubscriptionStore extends Store<IPluginSubscriptionState> {
 
 	public resetError(): void {
 		this.update({ error: null });
+	}
+
+	public resetPluginState(pluginId: string): void {
+		this.update((state) => {
+			const { [pluginId]: removedSub, ...remainingSubs } = state.currentPluginSubscriptions;
+			const { [pluginId]: removedPlans, ...remainingPlans } = state.currentPluginPlans;
+			return {
+				currentPluginSubscriptions: remainingSubs,
+				currentPluginPlans: remainingPlans
+			};
+		});
+	}
+
+	public setAnalytics(analytics: any): void {
+		this.update({ analytics });
 	}
 }

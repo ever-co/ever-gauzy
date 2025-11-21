@@ -6,8 +6,10 @@ import {
 	IPluginSubscription,
 	IPluginSubscriptionCreateInput,
 	IPluginSubscriptionPlan,
-	IPluginSubscriptionUpdateInput
+	IPluginSubscriptionUpdateInput,
+	PluginSubscriptionType
 } from '../../../services/plugin-subscription.service';
+import { PlanActionType } from '../plugin-subscription-selection/services/plan-comparison.service';
 import { PluginSubscriptionActions } from './actions/plugin-subscription.action';
 import { PluginSubscriptionQuery } from './queries/plugin-subscription.query';
 
@@ -30,6 +32,20 @@ export class PluginSubscriptionFacade {
 	public readonly isLoading$ = this.query.isLoading$;
 	public readonly showSubscriptionDialog$ = this.query.showSubscriptionDialog$;
 	public readonly selectedPluginId$ = this.query.selectedPluginId$;
+	public readonly confirmationStep$ = this.query.confirmationStep$;
+
+	// Current plugin subscription state
+	public readonly currentPluginSubscriptions$ = this.query.currentPluginSubscriptions$;
+	public readonly currentPluginPlans$ = this.query.currentPluginPlans$;
+
+	// Plan comparison observables
+	public readonly planComparison$ = this.query.planComparison$;
+	public readonly currentPlanId$ = this.query.currentPlanId$;
+	public readonly selectedPlanId$ = this.query.selectedPlanId$;
+	public readonly actionType$ = this.query.actionType$;
+	public readonly isValidAction$ = this.query.isValidAction$;
+	public readonly requiresPayment$ = this.query.requiresPayment$;
+	public readonly prorationAmount$ = this.query.prorationAmount$;
 
 	// Computed observables
 	public readonly activeSubscriptions$ = this.query.activeSubscriptions$;
@@ -174,5 +190,84 @@ export class PluginSubscriptionFacade {
 		plansData: Array<Omit<IPluginSubscriptionPlan, 'id' | 'createdAt' | 'updatedAt' | 'isActive'>>
 	): void {
 		this.actions$.dispatch(PluginSubscriptionActions.bulkCreatePlans(plansData));
+	}
+
+	// Enhanced subscription flow management
+	public getCurrentPluginSubscription(pluginId: string): Observable<IPluginSubscription | null> {
+		return this.query.getCurrentPluginSubscription(pluginId);
+	}
+
+	public getCurrentPluginPlans(pluginId: string): Observable<IPluginSubscriptionPlan[]> {
+		return this.query.getCurrentPluginPlans(pluginId);
+	}
+
+	public getPlanComparisonForPlugin(pluginId: string): Observable<{
+		currentPlan: IPluginSubscriptionPlan | null;
+		selectedPlan: IPluginSubscriptionPlan | null;
+		actionType: PlanActionType;
+		isValidAction: boolean;
+		requiresPayment: boolean;
+		prorationAmount?: number;
+	}> {
+		return this.query.getPlanComparisonForPlugin(pluginId);
+	}
+
+	public getPluginSubscriptionStatus(pluginId: string): Observable<{
+		hasSubscription: boolean;
+		isActive: boolean;
+		isTrial: boolean;
+		isExpired: boolean;
+		currentPlanType: PluginSubscriptionType | null;
+		daysRemaining?: number;
+	}> {
+		return this.query.getPluginSubscriptionStatus(pluginId);
+	}
+
+	public canUpgradeFromPlan(fromPlanId: string, toPlanId: string): Observable<boolean> {
+		return this.query.canUpgradeFromPlan(fromPlanId, toPlanId);
+	}
+
+	public canDowngradeFromPlan(fromPlanId: string, toPlanId: string): Observable<boolean> {
+		return this.query.canDowngradeFromPlan(fromPlanId, toPlanId);
+	}
+
+	// Plan comparison actions
+	public updatePlanComparison(
+		currentPlanId: string | null,
+		selectedPlanId: string | null,
+		actionType: PlanActionType,
+		isValidAction: boolean,
+		requiresPayment: boolean,
+		prorationAmount?: number
+	): void {
+		this.actions$.dispatch(
+			PluginSubscriptionActions.updatePlanComparison({
+				currentPlanId,
+				selectedPlanId,
+				actionType,
+				isValidAction,
+				requiresPayment,
+				prorationAmount
+			})
+		);
+	}
+
+	public resetPlanComparison(): void {
+		this.actions$.dispatch(PluginSubscriptionActions.resetPlanComparison());
+	}
+
+	public setConfirmationStep(
+		step: 'selection' | 'confirmation' | 'payment' | 'processing' | 'completed' | null
+	): void {
+		this.actions$.dispatch(PluginSubscriptionActions.setConfirmationStep(step));
+	}
+
+	// Enhanced subscription actions
+	public upgradeSubscription(pluginId: string, subscriptionId: string, newPlanId: string): void {
+		this.actions$.dispatch(PluginSubscriptionActions.upgradeSubscription(pluginId, subscriptionId, newPlanId));
+	}
+
+	public downgradeSubscription(pluginId: string, subscriptionId: string, newPlanId: string): void {
+		this.actions$.dispatch(PluginSubscriptionActions.downgradeSubscription(pluginId, subscriptionId, newPlanId));
 	}
 }

@@ -1,0 +1,96 @@
+<div
+	class="plan-card"
+	[class.current-plan]="comparisonInfo?.actionType === PlanActionType.CURRENT"
+	[class.disabled]="comparisonInfo?.isDisabled"
+	[class.upgrade]="comparisonInfo?.actionType === PlanActionType.UPGRADE"
+	[class.downgrade]="comparisonInfo?.actionType === PlanActionType.DOWNGRADE"
+	[class.new]="comparisonInfo?.actionType === PlanActionType.NEW"
+>
+	<!-- Plan Header -->
+	<div class="plan-header">
+		<div class="plan-badges">
+			<nb-badge
+				*ngIf="comparisonInfo?.badgeText"
+				[status]="comparisonInfo.badgeColor || 'basic'"
+				position="top-right"
+			>
+				{{ comparisonInfo.badgeText }}
+			</nb-badge>
+			<nb-badge *ngIf="planViewModel.isPopular" status="warning" position="top-left"> Popular </nb-badge>
+			<nb-badge *ngIf="planViewModel.isRecommended" status="success" position="top-left"> Recommended </nb-badge>
+		</div>
+		<nb-icon [icon]="planViewModel.icon" [status]="planViewModel.colorStatus"></nb-icon>
+		<h5>{{ planViewModel.name }}</h5>
+		<p class="plan-description">{{ planViewModel.description }}</p>
+	</div>
+
+	<!-- Pricing Information -->
+	<div class="plan-pricing">
+		<div class="price-main">
+			<span class="price">{{ planViewModel.formattedPrice }}</span>
+			<span class="period" *ngIf="!planViewModel.isFree">/{{ planViewModel.formattedBillingPeriod }}</span>
+		</div>
+
+		<!-- Proration Information for Upgrades -->
+		<div class="proration-info" *ngIf="comparisonInfo?.prorationAmount && comparisonInfo.prorationAmount > 0">
+			<small class="text-hint"> Prorated amount: {{ comparisonInfo.formattedProrationAmount }} </small>
+		</div>
+
+		<!-- Trial Information -->
+		<div class="trial-info" *ngIf="planViewModel.trialText">
+			<small class="text-success">{{ planViewModel.trialText }}</small>
+		</div>
+	</div>
+
+	<!-- Features List -->
+	<div class="plan-features">
+		<h6>Features</h6>
+		<ul>
+			<li *ngFor="let feature of planViewModel.features">
+				<nb-icon icon="checkmark-outline" status="success"></nb-icon>
+				{{ feature }}
+			</li>
+		</ul>
+	</div>
+
+	<!-- Comparison Information -->
+	<div class="comparison-info" *ngIf="comparisonInfo">
+		<!-- Benefits -->
+		<div class="benefits" *ngIf="comparisonInfo.benefits.length > 0">
+			<h6>Benefits</h6>
+			<ul class="benefit-list">
+				<li *ngFor="let benefit of comparisonInfo.benefits" class="benefit-item">
+					<nb-icon icon="trending-up-outline" status="success"></nb-icon>
+					{{ benefit }}
+				</li>
+			</ul>
+		</div>
+
+		<!-- Restrictions/Warnings -->
+		<div class="restrictions" *ngIf="comparisonInfo.restrictions.length > 0">
+			<h6>Important Notes</h6>
+			<ul class="restriction-list">
+				<li *ngFor="let restriction of comparisonInfo.restrictions" class="restriction-item">
+					<nb-icon icon="alert-circle-outline" status="warning"></nb-icon>
+					{{ restriction }}
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<!-- Action Button -->
+	<div class="plan-action">
+		<button
+			nb-button
+			[status]="comparisonInfo?.buttonVariant || 'basic'"
+			[disabled]="comparisonInfo?.isDisabled"
+			[size]="'medium'"
+			[outline]="comparisonInfo?.actionType === PlanActionType.CURRENT"
+			fullWidth
+			(click)="onPlanSelect()"
+		>
+			<nb-icon *ngIf="getActionIcon()" [icon]="getActionIcon()" class="action-icon"></nb-icon>
+			{{ comparisonInfo?.actionText || 'Select Plan' }}
+		</button>
+	</div>
+</div>

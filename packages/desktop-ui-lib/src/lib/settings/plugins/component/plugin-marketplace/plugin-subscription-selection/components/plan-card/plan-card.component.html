@@ -7,6 +7,13 @@
 	[class.recommended]="plan.isRecommended"
 	[class.free]="plan.isFree"
 	(click)="onCardClick()"
+	(keydown)="onKeyDown($event)"
+	[attr.tabindex]="isDisabled || isCurrentPlan ? -1 : 0"
+	[attr.role]="'button'"
+	[attr.aria-pressed]="isSelected"
+	[attr.aria-label]="
+		'Select ' + plan.name + ' plan for ' + plan.formattedPrice + ' per ' + plan.formattedBillingPeriod
+	"
 >
 	<!-- Plan Header -->
 	<div class="plan-header">

@@ -36,6 +36,16 @@ export class PlanCardComponent {
 		this.planSelected.emit(this.plan);
 	}
 
+	/**
+	 * Handle keyboard navigation for accessibility
+	 */
+	public onKeyDown(event: KeyboardEvent): void {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			this.onCardClick();
+		}
+	}
+
 	public getLimitationEntries(): Array<[string, any]> {
 		if (!this.plan.limitations) {
 			return [];

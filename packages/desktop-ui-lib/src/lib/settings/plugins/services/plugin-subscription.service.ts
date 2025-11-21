@@ -8,6 +8,7 @@ import { BehaviorSubject, map, Observable, of, shareReplay, tap } from 'rxjs';
 export interface IPluginSubscription {
 	id: string;
 	pluginId: string;
+	planId?: string;
 	userId: string;
 	subscriptionType: PluginSubscriptionType;
 	billingPeriod: PluginBillingPeriod;
@@ -191,7 +192,7 @@ export class PluginSubscriptionService {
 	private readonly subscriptionsCache$ = new BehaviorSubject<IPluginSubscription[]>([]);
 	private readonly plansCache$ = new BehaviorSubject<IPluginSubscriptionPlan[]>([]);
 
-	constructor(private readonly http: HttpClient) {}
+	constructor(private readonly http: HttpClient) { }
 
 	/**
 	 * Utility method to normalize API responses that may be arrays or paginated objects
