@@ -44,7 +44,7 @@ export class SyncManager {
 			await this.checkUnSyncedTimeSlot();
 			await this.checkUnSyncedScreenshot();
 		} catch (error) {
-			console.error('Error check unsynced activity and timer');
+			console.error('Error check un synced activity and timer');
 		}
 
 	}
