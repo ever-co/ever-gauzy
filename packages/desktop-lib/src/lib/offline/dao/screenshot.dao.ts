@@ -43,7 +43,7 @@ export class ScreenshotDAO implements DAO<ScreenshotTO> {
 			.del();
 	}
 
-	public async findUnsyncScreenshot(): Promise<ScreenshotTO[] | undefined> {
+	public async findUnSyncedScreenshot(): Promise<ScreenshotTO[] | undefined> {
 		const screenshots = await this._provider
 			.connection<ScreenshotTO>(TABLE_NAME_SCREENSHOT)
 			.where('synced', false)

@@ -5,7 +5,7 @@
 */
 export interface IScreenshotService<T> {
 	save(activities: T): Promise<void>;
-	findUnsyncScreenshot(activityId: number): Promise<T[]>;
+	findUnSyncedScreenshot(activityId: number): Promise<T[]>;
 	remove(activity: T): Promise<void>;
 	update(activities: Partial<T>): Promise<void>;
 }

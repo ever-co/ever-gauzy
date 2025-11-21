@@ -67,9 +67,9 @@ export class ScreenshotService implements IScreenshotService<ScreenshotTO> {
 		}
 	}
 
-	public async findUnsyncScreenshot(): Promise<ScreenshotTO[]> {
+	public async findUnSyncedScreenshot(): Promise<ScreenshotTO[]> {
 		try {
-			return await this._screenshotDAO.findUnsyncScreenshot()
+			return await this._screenshotDAO.findUnSyncedScreenshot()
 		} catch (error) {
 			console.error(error);
 			return [];

@@ -53,7 +53,7 @@ export class KbMouseActivityDAO implements DAO<KbMouseActivityTO> {
 		return activities;
 	}
 
-	public async findUnsyncActivity(
+	public async findUnSyncedActivity(
 		remoteId: string,
 		organizationId: string,
 		tenantId: string,

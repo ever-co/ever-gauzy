@@ -34,13 +34,13 @@ export class SyncManager {
 		this.currentTimerSync = (this.currentTimerSync || 0) + 1;
 		if (this.currentTimerSync >= SYNC_INTERVAL) {
 			this.currentTimerSync = 0;
-			await this.checkUnsyncTimer();
-			await this.checkUnsyncTimeSlot();
-			await this.checkUnsyncScreenshot();
+			await this.checkUnSyncedTimer();
+			await this.checkUnSyncedTimeSlot();
+			await this.checkUnSyncedScreenshot();
 		}
 	}
 
-	async checkUnsyncTimer() {
+	async checkUnSyncedTimer() {
 		const timer = await this.timerService.findToSynced();
 		const timerOffline = timer.filter((t) => t.timer.isStartedOffline || t.timer.isStoppedOffline);
 
@@ -65,9 +65,9 @@ export class SyncManager {
 		}
 	}
 
-	private async checkUnsyncTimeSlot() {
+	private async checkUnSyncedTimeSlot() {
 		const authConfig = getAuthConfig();
-		const activities = await this.kbMouseActivityService.findUnsyncActivity(
+		const activities = await this.kbMouseActivityService.findUnSyncedActivity(
 			authConfig?.user?.id,
 			authConfig?.user?.employee?.organizationId,
 			authConfig?.user?.employee?.tenantId
@@ -87,8 +87,8 @@ export class SyncManager {
 		}
 	}
 
-	private async checkUnsyncScreenshot() {
-		const screenshots: ScreenshotTO[] = await this.screenshotService.findUnsyncScreenshot();
+	private async checkUnSyncedScreenshot() {
+		const screenshots: ScreenshotTO[] = await this.screenshotService.findUnSyncedScreenshot();
 		if (screenshots.length) {
 			for (const screenshot of screenshots) {
 				this.enqueueScreenshot({
@@ -109,9 +109,9 @@ export class SyncManager {
 
 	public async immediatelyCheck() {
 		setTimeout(async () => {
-			await this.checkUnsyncTimer();
-			await this.checkUnsyncTimeSlot();
-			await this.checkUnsyncScreenshot();
+			await this.checkUnSyncedTimer();
+			await this.checkUnSyncedTimeSlot();
+			await this.checkUnSyncedScreenshot();
 		}, 5000);
 	}
 
