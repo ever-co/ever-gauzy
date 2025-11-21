@@ -12,7 +12,7 @@ export class DesktopQueue {
 	private screenshotQueue: Queue;
 	private timerQueueRetry: Queue;
 	private timeSlotQueueRetry: Queue;
-	private screenshotQueueRetry: Queue
+	private screenshotQueueRetry: Queue;
 	private storeTimerQueue: QueueStore;
 	private storeTimeSlotQueue: QueueStore;
 	private storeScreenshotQueue: QueueStore;
@@ -271,11 +271,11 @@ export class DesktopQueue {
 		const drainPromises = [];
 		if (this.timerQueue) {
 			this.timerQueue.pause();
-			this.timerQueueRetry.pause();
+			this.timerQueueRetry?.pause();
 			drainPromises.push(
 				Promise.race([
 					new Promise<void>((resolve) => this.timerQueue.on('drain', () => resolve())),
-					new Promise<void>((resolve) => this.timerQueueRetry.on('drain', () => resolve())),
+					new Promise<void>((resolve) => this.timerQueueRetry?.on('drain', () => resolve())),
 					new Promise<void>((resolve) => setTimeout(resolve, 500))
 				])
 			);
@@ -283,11 +283,11 @@ export class DesktopQueue {
 
 		if (this.timeSlotQueue) {
 			this.timeSlotQueue.pause();
-			this.timeSlotQueueRetry.pause();
+			this.timeSlotQueueRetry?.pause();
 			drainPromises.push(
 				Promise.race([
 					new Promise<void>((resolve) => this.timeSlotQueue.on('drain', () => resolve())),
-					new Promise<void>((resolve) => this.timeSlotQueueRetry.on('drain', () => resolve())),
+					new Promise<void>((resolve) => this.timeSlotQueueRetry?.on('drain', () => resolve())),
 					new Promise<void>((resolve) => setTimeout(resolve, 500))
 				])
 			);
@@ -295,11 +295,11 @@ export class DesktopQueue {
 
 		if (this.screenshotQueue) {
 			this.screenshotQueue.pause();
-			this.screenshotQueueRetry.pause();
+			this.screenshotQueueRetry?.pause();
 			drainPromises.push(
 				Promise.race([
 					new Promise<void>((resolve) => this.screenshotQueue.on('drain', () => resolve())),
-					new Promise<void>((resolve) => this.screenshotQueueRetry.on('drain', () => resolve())),
+					new Promise<void>((resolve) => this.screenshotQueueRetry?.on('drain', () => resolve())),
 					new Promise<void>((resolve) => setTimeout(resolve, 500))
 				])
 			);
@@ -332,15 +332,15 @@ export class DesktopQueue {
 		const serviceOk = await this.serviceCheckCallback?.();
 		if (ok && serviceOk && !this.online) {
 			this.online = true;
-			this.timerQueueRetry.resume();
-			this.timeSlotQueueRetry.resume();
-			this.screenshotQueueRetry.resume();
+			this.timerQueueRetry?.resume();
+			this.timeSlotQueueRetry?.resume();
+			this.screenshotQueueRetry?.resume();
 		}
 		if ((!ok || !serviceOk) && this.online) {
 			this.online = false;
-			this.timerQueueRetry.pause();
-			this.timeSlotQueueRetry.pause();
-			this.screenshotQueueRetry.pause();
+			this.timerQueueRetry?.pause();
+			this.timeSlotQueueRetry?.pause();
+			this.screenshotQueueRetry?.pause();
 		}
 	}
 

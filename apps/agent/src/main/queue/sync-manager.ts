@@ -34,10 +34,19 @@ export class SyncManager {
 		this.currentTimerSync = (this.currentTimerSync || 0) + 1;
 		if (this.currentTimerSync >= SYNC_INTERVAL) {
 			this.currentTimerSync = 0;
+			await this.runCheckUnSyncedActivity();
+		}
+	}
+
+	async runCheckUnSyncedActivity() {
+		try {
 			await this.checkUnSyncedTimer();
 			await this.checkUnSyncedTimeSlot();
 			await this.checkUnSyncedScreenshot();
+		} catch (error) {
+			console.error('Error check unsynced activity and timer');
 		}
+
 	}
 
 	async checkUnSyncedTimer() {
@@ -118,9 +127,7 @@ export class SyncManager {
 
 	public async immediatelyCheck() {
 		setTimeout(async () => {
-			await this.checkUnSyncedTimer();
-			await this.checkUnSyncedTimeSlot();
-			await this.checkUnSyncedScreenshot();
+			await this.runCheckUnSyncedActivity();
 		}, 5000);
 	}
 
