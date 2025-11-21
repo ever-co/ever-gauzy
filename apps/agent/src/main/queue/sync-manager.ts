@@ -10,7 +10,7 @@ export class SyncManager {
 	private timerService: TimerService;
 	private screenshotService: ScreenshotService;
 	private kbMouseActivityService: KbMouseActivityService;
-	private enqueueTimer: (paylod: ITimerCallbackPayload) => void;
+	private enqueueTimer: (payload: ITimerCallbackPayload) => void;
 	private enqueueTimeSlot: (payload: ITimeslotQueuePayload) => void;
 	private enqueueScreenshot: (payload: IScreenshotQueuePayload) => void;
 	constructor() {
@@ -21,7 +21,7 @@ export class SyncManager {
 	}
 
 	public setQueueCallback(
-		enqueueTimer: (paylod: ITimerCallbackPayload) => void,
+		enqueueTimer: (payload: ITimerCallbackPayload) => void,
 		enqueueTimeSlot: (payload: ITimeslotQueuePayload) => void,
 		enqueueScreenshot: (payload: IScreenshotQueuePayload) => void
 	) {
@@ -107,7 +107,7 @@ export class SyncManager {
 		}
 	}
 
-	public async imidietlyCheck() {
+	public async immediatelyCheck() {
 		setTimeout(async () => {
 			await this.checkUnsyncTimer();
 			await this.checkUnsyncTimeSlot();

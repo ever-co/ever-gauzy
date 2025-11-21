@@ -16,7 +16,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	private _activeWindows: TActiveWindows[] | string;
 	private _syncedActivity: boolean;
 	private _timerId: number;
-	private _timeSlotId: string;
+	private _timeslotId: string;
 	private _isOffline: boolean;
 
 	constructor(kbMouseActivity: KbMouseActivityTO) {
@@ -34,7 +34,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 		this._activeWindows = kbMouseActivity.activeWindows;
 		this._syncedActivity = kbMouseActivity.syncedActivity;
 		this._timerId = kbMouseActivity.timerId;
-		this._timeSlotId = kbMouseActivity.timeSlotId;
+		this._timeslotId = kbMouseActivity.timeslotId;
 		this._isOffline = kbMouseActivity.isOffline;
 	}
 
@@ -122,11 +122,11 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	public get timerId(): number {
 		return this._timerId;
 	}
-	public set timeSlotId(value: string) {
-		this._timeSlotId = value;
+	public set timeslotId(value: string) {
+		this._timeslotId = value;
 	}
-	public get timeSlotId(): string {
-		return this._timeSlotId;
+	public get timeslotId(): string {
+		return this._timeslotId;
 	}
 
 	public toObject(): KbMouseActivityTO {
@@ -149,7 +149,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 			syncedActivity: this._syncedActivity,
 			isOffline: this._isOffline,
 			timerId: this._timerId,
-			timeSlotId: this._timeSlotId
+			timeslotId: this._timeslotId
 		};
 	}
 }

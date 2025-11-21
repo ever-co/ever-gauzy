@@ -55,13 +55,13 @@ export class WorkerQueue {
 		this.desktopQueue.enqueueScreenshot(payload);
 	}
 
-	public imidietlyCheckUnSync() {
+	public immediatelyCheckUnSync() {
 		this.syncManager.setQueueCallback(
 			this.enqueueTimerRetry.bind(this),
 			this.enqueueTimeslotRetry.bind(this),
 			this.enqueueScreenshotRetry.bind(this)
 		);
-		this.syncManager.imidietlyCheck();
+		this.syncManager.immediatelyCheck();
 	}
 
 	private queueAuditCallback(payload: IQueueUpdatePayload) {

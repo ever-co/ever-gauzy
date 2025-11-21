@@ -42,7 +42,7 @@ export interface KbMouseActivityTO {
 	activeWindows?: TActiveWindows[] | string;
 	syncedActivity?: boolean;
 	isOffline?: boolean;
-	timeSlotId?: string
+	timeslotId?: string
 }
 
 export const TABLE_NAME_KB_MOUSE_ACTIVITY: string = 'kb_mouse_activity';

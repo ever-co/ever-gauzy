@@ -167,7 +167,7 @@ class PushActivities {
 	startPooling() {
 		try {
 			this.workerQueue?.desktopQueue?.initWorker();
-			this.workerQueue.imidietlyCheckUnSync();
+			this.workerQueue.immediatelyCheckUnSync();
 			this.agentLogger.info('Polling scheduler started');
 		} catch (error) {
 			console.error('Failed to start push activity pooling', error);
@@ -662,7 +662,7 @@ class PushActivities {
 				await this.kbMouseActivityService.update({
 					id: timeSlotLocal?.id,
 					syncedActivity: true,
-					timeSlotId: resp.id
+					timeslotId: resp.id
 				})
 				if (this.isNetworkError) {
 					this.isNetworkError = false;
@@ -671,7 +671,7 @@ class PushActivities {
 				}
 				console.log(`Time slot saved for activity ${timeSlotLocal.id}:`, resp?.id);
 			}
-			if (resp?.id || timeSlotLocal?.timeSlotId) {
+			if (resp?.id || timeSlotLocal?.timeslotId) {
 				const images = typeof timeSlotLocal.screenshots === 'string'
 					? (() => {
 						try {
@@ -689,7 +689,7 @@ class PushActivities {
 						screenshotId: image,
 						data: {
 							imagePath: image,
-							timeSlotId: resp?.id || timeSlotLocal?.timeSlotId,
+							timeSlotId: resp?.id || timeSlotLocal?.timeslotId,
 							recordedAt: moment(timeSlotLocal.timeStart).toISOString(),
 							activityId: timeSlotLocal?.id
 						}
