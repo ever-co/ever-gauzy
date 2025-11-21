@@ -56,7 +56,7 @@ export class SyncManager {
 				attempts: 1,
 				isRetry: true,
 				queue: 'timer_retry',
-				timerId: timer?.id,
+				timerId: timer.id,
 				data: {
 					startedAt: moment(timer.startedAt).toISOString(),
 					...(timer.stoppedAt ? { stoppedAt: moment(timer.stoppedAt).toISOString(), isStopped: true } : { stoppedAt: null })
@@ -75,7 +75,7 @@ export class SyncManager {
 		for (const activity of activities) {
 			this.enqueueTimeSlot({
 				attempts: 1,
-				activityId: Number(activity?.id),
+				activityId: Number(activity.id),
 				isRetry: true,
 				queue: 'time_slot_retry',
 				data: {
@@ -100,7 +100,7 @@ export class SyncManager {
 						imagePath: screenshot.imagePath,
 						timeSlotId: screenshot.timeslotId,
 						recordedAt: moment(screenshot.recordedAt).toISOString(),
-						activityId: screenshot?.activityId
+						activityId: screenshot.activityId
 					}
 				})
 			}

@@ -6,8 +6,6 @@ import {
 	Timer,
 	TimerTO,
 	ScreenshotService,
-	Screenshot,
-	KbMouseActivity
 } from '@gauzy/desktop-lib';
 import {
 	KbMouseActivityPool,
@@ -167,7 +165,7 @@ class PushActivities {
 	startPooling() {
 		try {
 			this.workerQueue?.desktopQueue?.initWorker();
-			this.workerQueue.immediatelyCheckUnSync();
+			this.workerQueue?.immediatelyCheckUnSync();
 			this.agentLogger.info('Polling scheduler started');
 		} catch (error) {
 			console.error('Failed to start push activity pooling', error);
@@ -669,7 +667,7 @@ class PushActivities {
 					this.trayUpdateMenuStatus('network', !this.isNetworkError);
 					this.trayStatusHandler('Working');
 				}
-				console.log(`Time slot saved for activity ${timeSlotLocal.id}:`, resp?.id);
+				console.log(`Time slot saved for activity ${timeSlotLocal.id}:`, resp.id);
 			}
 			if (resp?.id || timeSlotLocal?.timeslotId) {
 				const images = typeof timeSlotLocal.screenshots === 'string'
