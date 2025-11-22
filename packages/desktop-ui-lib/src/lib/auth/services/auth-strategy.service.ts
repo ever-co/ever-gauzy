@@ -205,7 +205,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				// Set token expiry time
 				this.setTokenExpiry(token);
 
-				this.authService.electronAuthentication({ user, token });
+				this.authService.electronAuthentication({ user, token, refresh_token: refreshToken });
 
 				return new NbAuthResult(
 					true,
@@ -220,7 +220,8 @@ export class AuthStrategy extends NbAuthStrategy {
 				if (isLoginOffline) {
 					const res: IAuthResponse = {
 						user: this.store.user,
-						token: this.store.token
+						token: this.store.token,
+						refresh_token: this.store.refreshToken
 					};
 					this.authService.electronAuthentication(res);
 					return of(

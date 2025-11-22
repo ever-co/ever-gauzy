@@ -77,7 +77,7 @@ spec:
             - name: MCP_TRUSTED_PROXIES
               value: "$MCP_TRUSTED_PROXIES"
             - name: REDIS_ENABLED
-              value: '$REDIS_ENABLED'
+              value: "$REDIS_ENABLED"
             - name: REDIS_URL
               value: "$REDIS_URL"
             - name: REDIS_HOST
@@ -104,6 +104,7 @@ metadata:
   namespace: default
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
 spec:
   ingressClassName: nginx
   rules:

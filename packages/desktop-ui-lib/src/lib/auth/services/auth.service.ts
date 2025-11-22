@@ -132,7 +132,7 @@ export class AuthService {
 		return this.http.post<{ token: string }>(`${API_PREFIX}/auth/refresh-token`, { refresh_token });
 	}
 
-	public electronAuthentication({ user, token }: IAuthResponse) {
+	public electronAuthentication({ user, token, refresh_token }: IAuthResponse) {
 		try {
 			if (this.electronService.isElectron || this.electronService.isContextBridge) {
 				const channel = this.isAgent ? 'AUTH_SUCCESS' : 'auth_success';
@@ -142,7 +142,8 @@ export class AuthService {
 					userId: user.id,
 					employeeId: user.employee ? user.employee.id : null,
 					organizationId: user.employee ? user.employee.organizationId : null,
-					tenantId: user.tenantId ? user.tenantId : null
+					tenantId: user.tenantId ? user.tenantId : null,
+					refreshToken: refresh_token
 				};
 				if (this.isAgent) {
 					this.electronService.ipcRenderer.invoke(channel, authArg);
