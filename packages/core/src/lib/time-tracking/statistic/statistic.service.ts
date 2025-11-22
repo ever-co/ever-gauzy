@@ -48,6 +48,7 @@ import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-em
 import { TypeOrmActivityRepository } from '../activity/repository/type-orm-activity.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
+import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -62,7 +63,8 @@ export class StatisticService {
 		private readonly typeOrmActivityRepository: TypeOrmActivityRepository,
 		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		private readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
-		private readonly configService: ConfigService
+		private readonly configService: ConfigService,
+		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {}
 
 	/**
@@ -163,9 +165,25 @@ export class StatisticService {
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
-		// Set employeeIds based on user conditions and permissions
-		if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
+		// Set employeeIds based on permissions and request
+		if (user.employeeId && isOnlyMeSelected) {
+			// Case 1: User explicitly requests "Only Me"
 			employeeIds = [user.employeeId];
+		} else if (!hasChangeSelectedEmployeePermission && user.employeeId) {
+			// Case 2: User doesn't have global permission → Check if manager of requested employees
+			if (isNotEmpty(employeeIds)) {
+				// Verify if user can manage ALL requested employees in the specified teams
+				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
+
+				if (!canManageAll) {
+					// User is NOT manager of all requested employees → Override with currentEmployeeId
+					employeeIds = [user.employeeId];
+				}
+				// Otherwise → Keep the requested employeeIds (no override)
+			} else {
+				// No specific employees requested → Override with currentEmployeeId
+				employeeIds = [user.employeeId];
+			}
 		}
 
 		let weekActivities = {
@@ -299,11 +317,25 @@ export class StatisticService {
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
-		/**
-		 * Set employeeIds based on user conditions and permissions
-		 */
-		if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
+		// Set employeeIds based on permissions and request
+		if (user.employeeId && isOnlyMeSelected) {
+			// Case 1: User explicitly requests "Only Me"
 			employeeIds = [user.employeeId];
+		} else if (!hasChangeSelectedEmployeePermission && user.employeeId) {
+			// Case 2: User doesn't have global permission → Check if manager of requested employees
+			if (isNotEmpty(employeeIds)) {
+				// Verify if user can manage ALL requested employees in the specified teams
+				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
+
+				if (!canManageAll) {
+					// User is NOT manager of all requested employees → Override with currentEmployeeId
+					employeeIds = [user.employeeId];
+				}
+				// Otherwise → Keep the requested employeeIds (no override)
+			} else {
+				// No specific employees requested → Override with currentEmployeeId
+				employeeIds = [user.employeeId];
+			}
 		}
 
 		// Get average activity and total duration of the work for today.
@@ -446,9 +478,22 @@ export class StatisticService {
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
-		// Set employeeIds based on user conditions and permissions
-		if (user.employeeId || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
-			employeeIds = [user.employeeId];
+		// Set employeeIds based on permissions and request
+		if (!hasChangeSelectedEmployeePermission && user.employeeId) {
+			// User doesn't have global permission → Check if manager of requested employees
+			if (isNotEmpty(employeeIds)) {
+				// Verify if user can manage ALL requested employees in the specified teams
+				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
+
+				if (!canManageAll) {
+					// User is NOT manager of all requested employees → Override with currentEmployeeId
+					employeeIds = [user.employeeId];
+				}
+				// Otherwise → Keep the requested employeeIds (no override)
+			} else {
+				// No specific employees requested → Override with currentEmployeeId
+				employeeIds = [user.employeeId];
+			}
 		}
 
 		// Create a query builder for the Employee entity
@@ -799,11 +844,25 @@ export class StatisticService {
 		// Determine if the request specifies to retrieve data for the current user only
 		const isOnlyMeSelected: boolean = request.onlyMe;
 
-		/**
-		 * Set employeeIds based on user conditions and permissions
-		 */
-		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+		// Set employeeIds based on permissions and request
+		if (user.employeeId && isOnlyMeSelected) {
+			// Case 1: User explicitly requests "Only Me"
 			employeeIds = [user.employeeId];
+		} else if (!hasChangeSelectedEmployeePermission && user.employeeId) {
+			// Case 2: User doesn't have global permission → Check if manager of requested employees
+			if (isNotEmpty(employeeIds)) {
+				// Verify if user can manage ALL requested employees in the specified teams
+				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
+
+				if (!canManageAll) {
+					// User is NOT manager of all requested employees → Override with currentEmployeeId
+					employeeIds = [user.employeeId];
+				}
+				// Otherwise → Keep the requested employeeIds (no override)
+			} else {
+				// No specific employees requested → Override with currentEmployeeId
+				employeeIds = [user.employeeId];
+			}
 		}
 
 		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
@@ -996,20 +1055,30 @@ export class StatisticService {
 			end = range.end;
 		}
 
-		/*
-		 *  Get employees id of the organization or get current employee id
-		 */
-		if (
-			user &&
-			user.employeeId &&
-			(onlyMe || !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))
-		) {
+		// Set employeeIds based on permissions and request
+		if (user && user.employeeId && onlyMe) {
+			// Case 1: User explicitly requests "Only Me"
+			employeeIds = [user.employeeId];
+		} else if (user && user.employeeId && !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			// Case 2: User doesn't have global permission → Check if manager of requested employees
 			if (
 				isNotEmpty(organizationTeamId) ||
 				RequestContext.hasPermission(PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW)
 			) {
-				employeeIds = [...employeeIds];
+				// Special case: organizationTeamId provided or has ORG_MEMBER_LAST_LOG_VIEW permission
+				if (isNotEmpty(employeeIds)) {
+					// Verify if user can manage ALL requested employees in the specified teams
+					const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
+
+					if (!canManageAll) {
+						// User is NOT manager of all requested employees → Override with currentEmployeeId
+						employeeIds = [user.employeeId];
+					}
+					// Otherwise → Keep the requested employeeIds (no override)
+				}
+				// If no employeeIds provided, keep empty array (will fetch all team members)
 			} else {
+				// No team context → Override with currentEmployeeId
 				employeeIds = [user.employeeId];
 			}
 		}
@@ -1556,11 +1625,25 @@ export class StatisticService {
 		// Determine if the request specifies to retrieve data for the current user only
 		const isOnlyMeSelected: boolean = request.onlyMe;
 
-		/**
-		 * Set employeeIds based on user conditions and permissions
-		 */
-		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+		// Set employeeIds based on permissions and request
+		if (user.employeeId && isOnlyMeSelected) {
+			// Case 1: User explicitly requests "Only Me"
 			employeeIds = [user.employeeId];
+		} else if (!hasChangeSelectedEmployeePermission && user.employeeId) {
+			// Case 2: User doesn't have global permission → Check if manager of requested employees
+			if (isNotEmpty(employeeIds)) {
+				// Verify if user can manage ALL requested employees in the specified teams
+				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
+
+				if (!canManageAll) {
+					// User is NOT manager of all requested employees → Override with currentEmployeeId
+					employeeIds = [user.employeeId];
+				}
+				// Otherwise → Keep the requested employeeIds (no override)
+			} else {
+				// No specific employees requested → Override with currentEmployeeId
+				employeeIds = [user.employeeId];
+			}
 		}
 
 		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
@@ -1671,11 +1754,25 @@ export class StatisticService {
 		// Determine if the request specifies to retrieve data for the current user only
 		const isOnlyMeSelected: boolean = request.onlyMe;
 
-		/**
-		 * Set employeeIds based on user conditions and permissions
-		 */
-		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+		// Set employeeIds based on permissions and request
+		if (user.employeeId && isOnlyMeSelected) {
+			// Case 1: User explicitly requests "Only Me"
 			employeeIds = [user.employeeId];
+		} else if (!hasChangeSelectedEmployeePermission && user.employeeId) {
+			// Case 2: User doesn't have global permission → Check if manager of requested employees
+			if (isNotEmpty(employeeIds)) {
+				// Verify if user can manage ALL requested employees in the specified teams
+				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
+
+				if (!canManageAll) {
+					// User is NOT manager of all requested employees → Override with currentEmployeeId
+					employeeIds = [user.employeeId];
+				}
+				// Otherwise → Keep the requested employeeIds (no override)
+			} else {
+				// No specific employees requested → Override with currentEmployeeId
+				employeeIds = [user.employeeId];
+			}
 		}
 
 		const query = this.typeOrmActivityRepository.createQueryBuilder();
@@ -1820,11 +1917,25 @@ export class StatisticService {
 		// Determine if the request specifies to retrieve data for the current user only
 		const isOnlyMeSelected: boolean = request.onlyMe;
 
-		/**
-		 * Set employeeIds based on user conditions and permissions
-		 */
-		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+		// Set employeeIds based on permissions and request
+		if (user.employeeId && isOnlyMeSelected) {
+			// Case 1: User explicitly requests "Only Me"
 			employeeIds = [user.employeeId];
+		} else if (!hasChangeSelectedEmployeePermission && user.employeeId) {
+			// Case 2: User doesn't have global permission → Check if manager of requested employees
+			if (isNotEmpty(employeeIds)) {
+				// Verify if user can manage ALL requested employees in the specified teams
+				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
+
+				if (!canManageAll) {
+					// User is NOT manager of all requested employees → Override with currentEmployeeId
+					employeeIds = [user.employeeId];
+				}
+				// Otherwise → Keep the requested employeeIds (no override)
+			} else {
+				// No specific employees requested → Override with currentEmployeeId
+				employeeIds = [user.employeeId];
+			}
 		}
 
 		const query = this.typeOrmTimeLogRepository.createQueryBuilder();
