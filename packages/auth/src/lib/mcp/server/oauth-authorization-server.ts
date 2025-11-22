@@ -164,9 +164,9 @@ export class OAuth2AuthorizationServer {
 			if (isHttps && hostname !== 'localhost' && !/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
 				const parts = hostname.split('.');
 				if (parts.length >= 2) {
-					// Use the domain as-is for proper cookie scope
-					// This allows the cookie to work on the exact domain
-					cookieDomain = hostname;
+					// For subdomain sharing: use parent domain (e.g., 'example.com' from 'api.example.com')
+					// This allows cookies to be shared across subdomains
+					cookieDomain = parts.slice(-2).join('.');
 				}
 			}
 		} catch (error) {
