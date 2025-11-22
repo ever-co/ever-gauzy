@@ -331,8 +331,18 @@ export class OAuth2AuthorizationServer {
 
 		// Extract domain from baseUrl for session cookie configuration
 		const isHttps = this.config.baseUrl.startsWith('https');
-		// Use the exact hostname for session cookie (no subdomain sharing)
-		const sessionCookieDomain = this.extractCookieDomain(isHttps);
+		// Use root domain for session cookie to match CSRF cookie subdomain sharing
+		const hostname = this.extractCookieDomain(isHttps);
+		let sessionCookieDomain: string | undefined;
+
+		if (hostname) {
+			const parts = hostname.split('.');
+			if (parts.length >= 2) {
+				// Use root domain (e.g., 'example.com' from 'api.example.com') to match CSRF cookie behavior
+				// This ensures sessions and CSRF tokens have the same scope for subdomain sharing
+				sessionCookieDomain = parts.slice(-2).join('.');
+			}
+		}
 
 		// Session management
 		const sessionConfig: session.SessionOptions = {
