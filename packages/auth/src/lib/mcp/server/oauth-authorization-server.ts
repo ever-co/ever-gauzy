@@ -150,8 +150,56 @@ export class OAuth2AuthorizationServer {
 		this.validateConfiguration();
 	}
 
+	/**
+	 * Extracts cookie domain from baseUrl for HTTPS connections
+	 * @param isHttps Whether the connection is HTTPS
+	 * @returns The hostname if valid domain, undefined for IPs/localhost or non-HTTPS
+	 */
+	private extractCookieDomain(isHttps: boolean): string | undefined {
+		if (!isHttps) {
+			return undefined;
+		}
+
+		try {
+			const baseUrlObj = new URL(this.config.baseUrl);
+			const hostname = baseUrlObj.hostname;
+
+			// Don't set domain for localhost or IP addresses (IPv4 or IPv6)
+			const isIPv4 = /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
+			const isIPv6 = hostname.includes(':') || hostname.startsWith('[');
+
+			if (hostname === 'localhost' || isIPv4 || isIPv6) {
+				return undefined;
+			}
+
+			// Return hostname for valid domain names
+			return hostname;
+		} catch (error) {
+			this.securityLogger.error('Failed to parse baseUrl for cookie domain', { error });
+			return undefined;
+		}
+	}
+
 	private initializeCSRFProtection() {
 		const isHttps = this.config.baseUrl.startsWith('https');
+
+		// Extract domain from baseUrl for cookie configuration
+		const hostname = this.extractCookieDomain(isHttps);
+		let cookieDomain: string | undefined;
+
+		if (hostname) {
+			const parts = hostname.split('.');
+			if (parts.length >= 2) {
+				// For subdomain sharing: use registrable root domain (e.g., 'example.com' from 'api.example.com')
+				// This allows cookies to be shared across subdomains
+				cookieDomain = parts.slice(-2).join('.');
+			}
+		}
+
+		// Choose cookie name based on whether we're setting a domain
+		const csrfCookieName = isHttps
+			? (cookieDomain ? '__Secure-mcp.x-csrf-token' : '__Host-mcp.x-csrf-token')
+			: 'mcp-csrf-token';
 
 		const {
 			generateCsrfToken,
@@ -159,25 +207,30 @@ export class OAuth2AuthorizationServer {
 		} = doubleCsrf({
 			getSecret: () => this.config.sessionSecret,
 			getSessionIdentifier: (req) => {
-				// For local development, use a simple consistent identifier
-				if (!isHttps) {
-					return `local-session-${req.ip || '127.0.0.1'}`;
-				}
-				// Use session ID if available, otherwise fall back to IP + User-Agent
+				// Always prefer session ID if available (most reliable)
 				const sessionId = (req as any).sessionID;
 				if (sessionId) {
 					return sessionId;
 				}
+
+				if (!isHttps) {
+					return `local-session-${req.ip || '127.0.0.1'}`;
+				}
+
+				// Production fallback (should rarely be used if sessions are working)
+				this.securityLogger.warn('CSRF protection falling back to IP-based identifier. Sessions may not be working correctly.');
 				const ip = req.ip || req.connection.remoteAddress || 'unknown-ip';
 				const userAgent = req.get('User-Agent') || 'unknown-agent';
 				return `${ip}-${userAgent}`;
 			},
-			cookieName: isHttps ? '__Host-mcp.x-csrf-token' : 'mcp-csrf-token',
+			cookieName: csrfCookieName,
 			cookieOptions: {
 				httpOnly: true,
 				sameSite: 'lax',
 				secure: isHttps,
 				path: '/',
+				// Only set domain for HTTPS non-localhost environments
+				...(cookieDomain && isHttps ? { domain: cookieDomain } : {}),
 			},
 			size: 64,
 			ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
@@ -188,6 +241,15 @@ export class OAuth2AuthorizationServer {
 
 		this.csrfProtection = doubleCsrfProtection;
 		this.generateToken = generateCsrfToken;
+
+		// Log CSRF configuration for debugging
+		this.securityLogger.info('CSRF protection initialized', {
+			isHttps,
+			cookieDomain: cookieDomain || 'browser-default',
+			cookieName: csrfCookieName,
+			secure: isHttps,
+			sameSite: 'lax'
+		});
 	}
 
 	/**
@@ -267,6 +329,21 @@ export class OAuth2AuthorizationServer {
 		// Cookie parser
 		this.app.use(cookieParser());
 
+		// Extract domain from baseUrl for session cookie configuration
+		const isHttps = this.config.baseUrl.startsWith('https');
+		// Use root domain for session cookie to match CSRF cookie subdomain sharing
+		const hostname = this.extractCookieDomain(isHttps);
+		let sessionCookieDomain: string | undefined;
+
+		if (hostname) {
+			const parts = hostname.split('.');
+			if (parts.length >= 2) {
+				// Use root domain (e.g., 'example.com' from 'api.example.com') to match CSRF cookie behavior
+				// This ensures sessions and CSRF tokens have the same scope for subdomain sharing
+				sessionCookieDomain = parts.slice(-2).join('.');
+			}
+		}
+
 		// Session management
 		const sessionConfig: session.SessionOptions = {
 			secret: this.config.sessionSecret,
@@ -274,10 +351,12 @@ export class OAuth2AuthorizationServer {
 			resave: false,
 			saveUninitialized: false,
 			cookie: {
-				secure: this.config.baseUrl.startsWith('https'),
+				secure: isHttps,
 				httpOnly: true,
 				maxAge: 1000 * 60 * 60 * 24, // 24 hours
-				sameSite: 'lax'
+				sameSite: 'lax',
+				// Set domain for production HTTPS environments
+				...(sessionCookieDomain && isHttps ? { domain: sessionCookieDomain } : {}),
 			},
 			rolling: true
 		};
@@ -329,6 +408,16 @@ export class OAuth2AuthorizationServer {
 			this.securityLogger.info('Using in-memory session store for development');
 		}
 		this.app.use(session(sessionConfig));
+
+		// Log session configuration for debugging
+		this.securityLogger.info('Session configuration initialized', {
+			cookieName: sessionConfig.name,
+			cookieDomain: sessionCookieDomain || 'browser-default',
+			secure: sessionConfig.cookie?.secure,
+			sameSite: sessionConfig.cookie?.sameSite,
+			httpOnly: sessionConfig.cookie?.httpOnly,
+			hasStore: !!sessionConfig.store
+		});
 
 		// Security headers
 		// Extract origin from baseUrl for CSP (handles subdomain and scheme issues)
@@ -609,8 +698,13 @@ export class OAuth2AuthorizationServer {
 
 		// Generate CSRF token for the form
 		const csrfToken = this.generateToken(req, res);
-		const sessionId = !this.config.baseUrl.startsWith('https') ? `local-session-${req.ip || '127.0.0.1'}` : 'session-based';
-		this.securityLogger.debug(`Generated CSRF token for login form - Session ID: ${sessionId}`);
+		const sessionId = (req as any).sessionID;
+		// Sanitize returnUrl to avoid logging sensitive query params
+		const sanitizedReturnUrl = safeReturnUrl.split('?')[0];
+		this.securityLogger.debug('Generated CSRF token for login form', {
+			hasSessionId: !!sessionId,
+			returnUrl: sanitizedReturnUrl
+		});
 
 		res.send(this.generateLoginForm(error, safeReturnUrl, csrfToken));
 	}
@@ -657,8 +751,11 @@ export class OAuth2AuthorizationServer {
 	 */
 	private async handleLogin(req: Request, res: Response) {
 		try {
-			const sessionId = !this.config.baseUrl.startsWith('https') ? `local-session-${req.ip || '127.0.0.1'}` : 'session-based';
-			this.securityLogger.debug(`Processing login submission - Session ID: ${sessionId}`);
+			const sessionId = (req as any).sessionID;
+			this.securityLogger.debug('Processing login submission', {
+				hasSessionId: !!sessionId,
+				ip: req.ip
+			});
 			const { email, password, return_url } = req.body;
 			const returnUrl = return_url || this.config.authorizationEndpoint;
 
@@ -1656,10 +1753,24 @@ export class OAuth2AuthorizationServer {
 	private setupErrorHandling() {
 		this.app.use((error: any, req: Request, res: Response, next: NextFunction): void => {
 			if (error?.code === 'EBADCSRFTOKEN') {
+				// Enhanced logging for CSRF failures to aid debugging
+				const sessionId = (req as any).sessionID;
+				const csrfTokenFromRequest = req.body._csrf || req.headers['x-csrf-token'];
+				const cookies = req.cookies;
+
 				this.securityLogger.warn('CSRF token validation failed', {
 					ip: req.ip,
 					userAgent: req.get('User-Agent'),
-					url: req.originalUrl
+					url: req.originalUrl,
+					method: req.method,
+					hasSessionId: !!sessionId,
+					sessionId: sessionId ? `${sessionId.substring(0, 8)}...` : 'none',
+					hasCsrfToken: !!csrfTokenFromRequest,
+					csrfTokenLength: csrfTokenFromRequest?.length || 0,
+					hasCsrfCookie: !!(cookies['__Host-mcp.x-csrf-token'] || cookies['__Secure-mcp.x-csrf-token'] || cookies['mcp-csrf-token']),
+					hasSessionCookie: !!cookies['mcp-oauth-session'],
+					referer: req.get('Referer'),
+					origin: req.get('Origin')
 				});
 
 				// For OAuth redirects, send error to redirect_uri if available
